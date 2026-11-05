@@ -526,18 +526,20 @@ func run() error {
 	scheduler.SetWatchdogJob(func() error {
 		return svc.RunWatchdog(context.Background())
 	})
-	// Receiver watch: the daily dead-mans-switch sweep + due integrity checks for
-	// every enabled received off-site repo, notifying once per stale episode /
-	// integrity-failure transition through the same notify fan-out.
+	// Receiver watch: the daily dead-mans-switch for every enabled received
+	// off-site repo, and the tick behind their integrity checks, notifying once
+	// per episode through the same notify fan-out.
 	scheduler.SetReceiverJob(func() error {
-		return svc.RunReceiverChecks(context.Background())
+		return svc.RunReceiverWatch(context.Background())
 	})
-	// The pull sweep (#227). Wired next to the receiver for the same reason it
-	// sits next to it in the scheduler: both are app-wide daily ticks that decide
-	// which per-row jobs are due, rather than jobs with a frequency of their own.
+	scheduler.SetReceiverCheckJob(func() error {
+		return svc.RunReceiverChecks(context.Background())
+	}, svc.NextReceiverCheck)
+	// The pull sweep (#227), a tick like the receiver's checks: each source
+	// carries its own cadence.
 	scheduler.SetPullJob(func() error {
 		return svc.RunPulls(context.Background())
-	})
+	}, svc.NextPull)
 	// Fleet peer sweep: the daily poll of every enabled fleet peer's protection
 	// status (read-only, no notifications — each peer's own instance already
 	// alerts on its own overdue backups).

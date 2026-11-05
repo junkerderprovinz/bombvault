@@ -14,10 +14,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"path"
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,11 +50,13 @@ type ReceiverInventory struct {
 // ReceiverCheckResult is the outcome of an independent integrity check run on the
 // receiving hardware. Error is a scrubbed message ("" on success). RanReadData is
 // true when a deep --read-data-subset check ran (not just the structural check).
+// Unread says the repository could not be opened, which is no verdict.
 type ReceiverCheckResult struct {
 	OK          bool   `json:"ok"`
 	Error       string `json:"error"`
 	RanReadData bool   `json:"ranReadData"`
 	At          int64  `json:"at"` // Unix time the check finished
+	Unread      bool   `json:"unread"`
 }
 
 // receiverOpen opens a received repository read-only and returns the resolved
@@ -62,6 +66,9 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	loc := strings.TrimSpace(rr.Repo)
 	if loc == "" {
 		return "", restic.Mode{}, errors.New("missing repository location")
+	}
+	if folder, ok := s.ownReceiverFolder(loc, rr.MemberID); ok {
+		loc = folder
 	}
 	// resolveRepo passes remote backends through and resolves anything else, so
 	// a host path such as /mnt/user/backups, which does not exist inside the
@@ -88,15 +95,70 @@ func (s *Service) receiverOpen(ctx context.Context, rr store.ReceivedRepo) (stri
 	if err != nil {
 		return "", restic.Mode{}, err
 	}
+	var env []string
+	if ref := strings.TrimSpace(rr.CredsRef); ref != "" && restic.IsRemoteRepo(repo) {
+		settings, err := s.store.GetSettings()
+		if err != nil {
+			return "", restic.Mode{}, fmt.Errorf("read settings: %w", err)
+		}
+		c, err := s.savedSignIn(settings, ref)
+		if errors.Is(err, errUnknownSignIn) {
+			return "", restic.Mode{}, errors.New("the saved sign-in this repository used is gone, pick another one for it")
+		}
+		if err != nil {
+			return "", restic.Mode{}, err
+		}
+		env = cloudEnv(c)
+	}
 	// NoLock keeps the read-only probe from writing a lock file into the received
 	// (append-only) repo. Try the encrypted mode a BombVault sender always uses,
 	// then fall back to a plain repo.
-	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true}
-	mode, err := s.openOthersRepo(ctx, repo, encMode, restic.Mode{NoLock: true}, "received repository")
+	encMode := restic.Mode{Encrypted: true, Password: password, NoLock: true, Env: env}
+	mode, err := s.openOthersRepo(ctx, repo, encMode, restic.Mode{NoLock: true, Env: env}, "received repository")
 	if err != nil {
+		if restAuthHint(err.Error()) != "" {
+			return "", restic.Mode{}, errReceiverSignIn
+		}
 		return "", restic.Mode{}, err
 	}
 	return repo, mode, nil
+}
+
+// errReceiverSignIn answers a server that wants a login this repository does
+// not bring.
+var errReceiverSignIn = errors.New("the storage this repository lies on refused the sign-in (401). Pick the saved sign-in that holds its login under Credentials. On a rest-server with private repositories, that login also has to be the first folder of the address")
+
+// ownReceiverFolder maps an address on the receiving server this instance runs
+// to the folder behind it. The login there is the sender's, and on macvlan or
+// ipvlan this box cannot reach the published port at all. The member's login as
+// the first folder names this server even at an address only the sender uses.
+func (s *Service) ownReceiverFolder(loc, memberID string) (string, bool) {
+	rest, isRest := strings.CutPrefix(loc, "rest:")
+	if !isRest {
+		return "", false
+	}
+	u, err := url.Parse(rest)
+	if err != nil {
+		return "", false
+	}
+	rs, ok, err := s.store.GetReceiverServer()
+	if err != nil || !ok || u.Port() != strconv.Itoa(rs.Port) {
+		return "", false
+	}
+	// Rooted, so Clean cannot climb out of the folder.
+	rel := strings.TrimPrefix(path.Clean("/"+u.Path), "/")
+	first, _, _ := strings.Cut(rel, "/")
+	known := slices.ContainsFunc([]string{rs.Host, rs.ReachedHost, urlHost(s.selfDirectURL())}, func(h string) bool {
+		return h != "" && strings.EqualFold(h, u.Hostname())
+	})
+	if !known && memberID != "" {
+		l, ok, err := s.store.GetReceiverLogin(memberID)
+		known = err == nil && ok && l.User == first
+	}
+	if !known || rel == "" {
+		return "", false
+	}
+	return path.Join(rs.Folder, rel), true
 }
 
 // openOthersRepo opens a repository another instance writes, with that
@@ -287,7 +349,7 @@ func (s *Service) receiverCheck(ctx context.Context, rr store.ReceivedRepo, read
 	res := ReceiverCheckResult{At: time.Now().Unix()}
 	repo, mode, err := s.receiverOpen(ctx, rr)
 	if err != nil {
-		res.Error = scrubError(err)
+		res.Error, res.Unread = scrubError(err), true
 		return res
 	}
 	deep := readData && rr.ReadDataPercent > 0

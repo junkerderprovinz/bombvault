@@ -65,7 +65,7 @@ export function runDomainLabel(t: ReturnType<typeof useT>["t"], domain: string):
 // carry the domain literal (or the flash/config singleton id) in targetId, never
 // a resolvable item id.
 export function isDomainOpRunKind(kind: string): boolean {
-  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
+  return kind === "prune" || kind === "verify" || kind === "offsite" || kind === "pull" || kind === "drill" || kind === "drdrill" || kind === "tamper" || kind === "export";
 }
 
 // runTargetText resolves what to show in a run's "target" column. Domain-op

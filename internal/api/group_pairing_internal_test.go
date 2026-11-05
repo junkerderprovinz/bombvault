@@ -86,6 +86,7 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 		s.InstanceName = name
 		s.AuthPasswordHash = hash
 		s.FleetEnabled = true
+		s.PullEnabled = true
 		s.ContainersOffsite = ""
 		return nil
 	}); err != nil {
@@ -584,7 +585,7 @@ func TestMeshOfferReachesTheMemberOverTheGroup(t *testing.T) {
 	if err != nil || len(offers) != 1 {
 		t.Fatalf("offers on the member = %+v, %v", offers, err)
 	}
-	if offers[0].From != "cellar" || !strings.HasPrefix(offers[0].Repo, "rest:http://192.168.1.9:8000/bombvault-containers/containers") {
+	if offers[0].From != "cellar" || !strings.HasSuffix(offers[0].Repo, "/"+offers[0].RESTUser+"/containers") || !strings.HasPrefix(offers[0].Repo, "rest:http://192.168.1.9:8000/bombvault-containers-") {
 		t.Fatalf("offer = %+v", offers[0])
 	}
 }
@@ -607,7 +608,7 @@ func TestASelfBackupMeshOfferKeepsItsRepoOutOfRestServersConfigPath(t *testing.T
 	if err != nil || len(offers) != 1 {
 		t.Fatalf("offers on the member = %+v, %v", offers, err)
 	}
-	if want := "rest:http://192.168.1.9:8000/bombvault-config/selfbackup"; offers[0].Repo != want {
+	if want := "rest:http://192.168.1.9:8000/" + offers[0].RESTUser + "/selfbackup"; offers[0].Repo != want {
 		t.Fatalf("offered repo = %q, want %q", offers[0].Repo, want)
 	}
 }

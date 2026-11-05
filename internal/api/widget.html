@@ -242,6 +242,8 @@
       case "import":
         return ok ? name + ": Appdata.Backup archive imported (" + fmtBytes(r.bytes) + ", " + dur + ")" :
           failed ? name + ": Appdata.Backup import failed: " + r.error : other(name, r);
+      case "pull":
+        return failed ? "Pull failed (" + dom + "): " + r.error : other(dom, r);
       case "replica":
         return ok ? name + " replicated: " + fmtBytes(r.bytes) + " in " + dur :
           failed ? name + " replica failed: " + r.error : other(name, r);

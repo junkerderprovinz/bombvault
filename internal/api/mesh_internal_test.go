@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -141,6 +143,94 @@ func TestAcceptMeshOffer(t *testing.T) {
 	}
 	if targets, _ := st.ListOffsiteTargets(); len(targets) != 1 {
 		t.Fatalf("a rejected re-accept must not create a second target, got %d", len(targets))
+	}
+}
+
+func TestAnAcceptedOfferIsMarkedAppendOnlyLikeItsRecipe(t *testing.T) {
+	appKey := strings.Repeat("b", 64)
+	h, st := meshHandlerFixture(t, appKey)
+	enc, err := secret.Encrypt(appKey, []byte("peer-password"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	offer, err := st.CreateMeshOffer(store.MeshOffer{
+		From: "tower", SuggestedDomain: "files", Repo: "rest:http://192.168.1.50:8000/bombvault-files-a1b2c3/files",
+		RESTUser: "bombvault-files-a1b2c3", RESTPasswordEnc: enc,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	r := postJSONReq(t, "/api/fleet/mesh-offers/"+offer.ID+"/accept", map[string]any{"domain": "files"})
+	r.SetPathValue("id", offer.ID)
+	h.handleAcceptMeshOffer(w, r)
+	if resp := decodeResp(t, w); resp["ok"] != true {
+		t.Fatalf("accept: %v", resp)
+	}
+	targets, err := st.ListOffsiteTargets()
+	if err != nil || len(targets) != 1 {
+		t.Fatalf("targets %v, err %v", targets, err)
+	}
+	if !targets[0].Immutable {
+		t.Fatal("the target of an append-only recipe is not marked append-only, so a keep rule on it would run into a 403 at every prune")
+	}
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, refuses := h.svc.keepAt(settings, "files", sectionPlace{target: &targets[0]}); !refuses {
+		t.Fatal("the place does not refuse deletes, so a prune would be tried there")
+	}
+}
+
+func TestEveryOfferOfASectionGetsItsOwnLoginAndFolder(t *testing.T) {
+	first, firstRepo, err := buildOfferSnippet("files", "http://box:8000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, secondRepo, err := buildOfferSnippet("files", "http://box:8000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.User == second.User || firstRepo == secondRepo {
+		t.Fatalf("two offers share %q and %q, %q and %q", first.User, second.User, firstRepo, secondRepo)
+	}
+	if !strings.HasPrefix(firstRepo, "rest:http://box:8000/"+first.User+"/") {
+		t.Fatalf("repo %q does not lie under the login %q, which --private-repos asks for", firstRepo, first.User)
+	}
+	if !strings.Contains(first.DockerRun, first.Htpasswd) || !strings.Contains(first.DockerRun, first.User+"/files") {
+		t.Fatalf("the recipe names another login or folder than the offer: %s", first.DockerRun)
+	}
+	if !strings.Contains(first.Unraid, first.User+"/files") || !strings.Contains(first.Compose, first.User+"/files") {
+		t.Fatal("the compose or Unraid recipe names another folder than the offer")
+	}
+}
+
+func TestTwoOffersFollowedOnOneServerBothSignIn(t *testing.T) {
+	bin, err := exec.LookPath("restic")
+	if err != nil {
+		t.Skip("no restic")
+	}
+	serverBin, err := exec.LookPath("rest-server")
+	if err != nil {
+		t.Skip("no rest-server")
+	}
+	first, _, err := buildOfferSnippet("files", "http://x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _, err := buildOfferSnippet("files", "http://x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	host, stop := startRestServer(t, serverBin, first.User, first.Password, second.User, second.Password)
+	defer stop()
+	for _, snip := range []DeploySnippet{first, second} {
+		cmd := exec.Command(bin, "init", "--repo", "rest:http://"+host+"/"+snip.User+"/files") //nolint:gosec // G204: a test's own binary and address
+		cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=pw", "RESTIC_REST_USERNAME="+snip.User, "RESTIC_REST_PASSWORD="+snip.Password)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("%s cannot sign in: %v: %s", snip.User, err, out)
+		}
 	}
 }
 

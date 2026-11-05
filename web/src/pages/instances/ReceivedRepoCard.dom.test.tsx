@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { ReceivedRepoStatus } from "../../lib/api";
+import type { ReceivedRepoInput, ReceivedRepoStatus } from "../../lib/api";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 
 const repo: ReceivedRepoStatus = {
@@ -22,6 +22,7 @@ const repo: ReceivedRepoStatus = {
   enabled: true,
   createdAt: 0,
   sortOrder: 0,
+  credsRef: "",
   memberId: "member-1",
   needsPairing: false,
   lastReceived: "",
@@ -30,6 +31,7 @@ const repo: ReceivedRepoStatus = {
 };
 
 const checked: [string, boolean][] = [];
+const saved: ReceivedRepoInput[] = [];
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -38,6 +40,12 @@ vi.mock("../../lib/api", async (importOriginal) => {
     checkReceivedRepo: (id: string, readData: boolean) => {
       checked.push([id, readData]);
       return Promise.resolve({ ok: true, result: { ok: true, error: "", ranReadData: readData, at: 1 } });
+    },
+    getCloudCredSets: () => Promise.resolve({ ok: true, sets: [{ id: "set-1", name: "nas login", default: false }] }),
+    getGroup: () => Promise.resolve({ ok: true, members: [] }),
+    updateReceivedRepo: (_id: string, input: ReceivedRepoInput) => {
+      saved.push(input);
+      return Promise.resolve({ ok: true });
     },
     receiverInventory: () =>
       Promise.resolve({
@@ -54,7 +62,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   };
 });
 
-const { ReceivedRepoCard } = await import("./ReceivedRepoCard");
+const { ReceivedRepoCard, ReceiverDialog } = await import("./ReceivedRepoCard");
 
 // useIsDesktop keeps the first MediaQueryList it gets, so the stub answers
 // from a variable instead of being swapped per test.
@@ -100,6 +108,32 @@ async function openInventory() {
 afterEach(() => {
   cleanup();
   checked.length = 0;
+  saved.length = 0;
+});
+
+function Dialog() {
+  const { t } = useT();
+  return <ReceiverDialog initial={{ ...repo, credsRef: "set-1" }} t={t} onClose={() => undefined} onSaved={() => undefined} />;
+}
+
+describe("the received repo dialog", () => {
+  it("offers the saved sign-ins and keeps the one the repo has", async () => {
+    await act(async () => {
+      render(
+        <I18nProvider>
+          <ToastProvider>
+            <Dialog />
+          </ToastProvider>
+        </I18nProvider>,
+      );
+    });
+    expect(await screen.findAllByText(en["offsite.targets.credsLabel"])).not.toHaveLength(0);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["settings.save"] }));
+    });
+    expect(saved).toHaveLength(1);
+    expect(saved[0].credsRef).toBe("set-1");
+  });
 });
 
 describe("the received inventory", () => {

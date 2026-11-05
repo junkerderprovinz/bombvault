@@ -1236,6 +1236,10 @@ func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]
 	s.retellRoleAnswer(ctx, memberID, role)
 	var p peerPairing
 	if err := s.askPairing(ctx, memberID, &p); err != nil {
+		// The member's own words stay in its log, but this box knows why.
+		if errors.Is(err, errMemberRefused) && !s.memberAsked(memberID) {
+			return nil, nil, errMemberNotAsked
+		}
 		return nil, nil, err
 	}
 	switch {

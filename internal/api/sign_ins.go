@@ -432,6 +432,15 @@ func (s *Service) signInUsers(defaultID string) (map[string][]signInUser, error)
 			out[ref] = append(out[ref], signInUser{ID: "pull:" + ps.ID, Name: ps.Name})
 		}
 	}
+	repos, err := s.store.ListReceivedRepos()
+	if err != nil {
+		return nil, err
+	}
+	for _, rr := range repos {
+		if ref := strings.TrimSpace(rr.CredsRef); ref != "" {
+			out[ref] = append(out[ref], signInUser{ID: "received:" + rr.ID, Name: rr.Name})
+		}
+	}
 	return out, nil
 }
 

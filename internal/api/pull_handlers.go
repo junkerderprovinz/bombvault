@@ -213,6 +213,15 @@ func (h *Handler) handleCreatePullSource(w http.ResponseWriter, r *http.Request)
 	if !decodeBody(w, r, &in) {
 		return
 	}
+	settings, err := h.store.GetSettings()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if !settings.PullEnabled {
+		writeJSON(w, http.StatusOK, failEnvelope(errRoleNeedsPull))
+		return
+	}
 	ps, offered, msg := h.buildPullSource(r.Context(), in, store.PullSource{}, true)
 	if msg != "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
@@ -258,6 +267,13 @@ func (h *Handler) handleUpdatePullSource(w http.ResponseWriter, r *http.Request)
 	if err := h.store.UpdatePullSource(ps); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	// A source that now holds another section lands in that section's folder.
+	if ps.Domain != existing.Domain {
+		if err := h.store.SetPullSourceLanding(ps.ID, ""); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"source": pullSourceToView(ps)}))
 }

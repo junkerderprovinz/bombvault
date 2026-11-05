@@ -556,6 +556,7 @@ type Service struct {
 	// once. Found while auditing for siblings of the repo-size fan-out (#189).
 	receiverCheckMu  sync.Mutex
 	receiverChecking map[string]bool
+	receiverUnread   map[string]time.Time
 
 	// pullMu guards pulling, the pull sources a pull runs for.
 	pullMu  sync.Mutex

@@ -206,6 +206,7 @@ func TestReceiverOpenKeepsRemoteLocations(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	svc := receiverTestService(appKey)
 	svc.cfg.HostMountRoot = "/host/user"
+	svc.store = newReceiverFixture(t).st
 
 	for _, loc := range []string{"rest:http://box:8000/repo", "s3:s3.example.com/bucket", "rclone:remote:path"} {
 		eng := &signInEngine{answer: func(string, []string) error { return noRepository{} }}

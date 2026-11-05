@@ -12,6 +12,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { EXACT_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { NumberField } from "../../components/NumberField";
 import { PlanButton } from "../../components/PlanButton";
+import { SelectField } from "../../components/SelectField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
@@ -28,6 +29,7 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
+import { credSetLabel, useCloudCredSets } from "../../lib/useCloudCredSets";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { ToggleRow } from "../settings/shared";
 import { InstanceWindow } from "./InstanceWindow";
@@ -381,6 +383,8 @@ export function ReceiverDialog({
   const [name, setName] = useState(initial?.name ?? "");
   const [repo, setRepo] = useState(initial?.repo ?? "");
   const [memberId, setMemberId] = useState(initial ? "" : member);
+  const [credsRef, setCredsRef] = useState(initial?.credsRef ?? "");
+  const credSets = useCloudCredSets();
   const [deadManHours, setDeadManHours] = useState(initial?.deadManHours ?? 26);
   // The server reads a blank cadence as this one, and the picker reads blank as off.
   const [checkCadence, setCheckCadence] = useState(initial?.checkCadence || DEFAULT_CHECK_CADENCE);
@@ -418,6 +422,7 @@ export function ReceiverDialog({
       name: name.trim(),
       repo: repo.trim(),
       memberId,
+      credsRef,
       deadManHours: Number.isFinite(deadManHours) ? deadManHours : 26,
       checkCadence: checkCadence.trim(),
       readDataPercent: Math.max(0, Math.min(100, Number.isFinite(readDataPercent) ? readDataPercent : 0)),
@@ -507,6 +512,20 @@ export function ReceiverDialog({
             placeholder="rest:http://192.168.x.x:8000/tower-containers"
             dir="ltr"
             className={`${inputCls} w-72 max-w-full font-mono text-start`}
+          />
+        </SettingRow>
+
+        <SettingRow label={t("offsite.targets.credsLabel")} hint={t("receiver.credsHint")} htmlFor="bv-receiver-creds">
+          <SelectField
+            id="bv-receiver-creds"
+            value={credsRef}
+            onChange={setCredsRef}
+            label={t("offsite.targets.credsLabel")}
+            options={[
+              { value: "", label: t("receiver.credsNone") },
+              ...credSets.map((c) => ({ value: c.id, label: credSetLabel(t, c) })),
+            ]}
+            className={inputCls}
           />
         </SettingRow>
 

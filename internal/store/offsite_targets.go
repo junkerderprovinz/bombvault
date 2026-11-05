@@ -806,6 +806,7 @@ func (r *Repo) SwapCompanionCreds(repoID, from, to string) (bool, error) {
 func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
 	rows, err := r.db.Query(`SELECT creds_ref FROM offsite_targets WHERE creds_ref <> ''
 		UNION SELECT creds_ref FROM pull_sources WHERE creds_ref <> ''
+		UNION SELECT creds_ref FROM received_repos WHERE creds_ref <> ''
 		UNION SELECT creds_ref FROM former_own_folders WHERE creds_ref <> ''`)
 	if err != nil {
 		return nil, fmt.Errorf("CredsRefsInUse: %w", err)
@@ -845,8 +846,8 @@ func (r *Repo) ReposBySignIn() (map[string][]string, error) {
 }
 
 // CredsRefNamedBeyond reports whether a row other than the destination
-// destID, its domain targets and their direct repositories, or a pull source,
-// names the credential set ref.
+// destID, its domain targets and their direct repositories, or a pull source or
+// received repository, names the credential set ref.
 func (r *Repo) CredsRefNamedBeyond(ref, destID string) (bool, error) {
 	var named bool
 	err := r.db.QueryRow(`SELECT EXISTS (
@@ -854,8 +855,9 @@ func (r *Repo) CredsRefNamedBeyond(ref, destID string) (bool, error) {
 		WHERE creds_ref = ? AND id <> ? AND destination_id <> ?
 		  AND (companion_of = '' OR companion_of NOT IN (SELECT id FROM offsite_targets WHERE destination_id = ?))
 		UNION ALL SELECT 1 FROM pull_sources WHERE creds_ref = ?
+		UNION ALL SELECT 1 FROM received_repos WHERE creds_ref = ?
 		UNION ALL SELECT 1 FROM former_own_folders WHERE creds_ref = ?)`,
-		ref, destID, destID, destID, ref, ref).Scan(&named)
+		ref, destID, destID, destID, ref, ref, ref).Scan(&named)
 	if err != nil {
 		return false, fmt.Errorf("CredsRefNamedBeyond: %w", err)
 	}

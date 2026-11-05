@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"strings"
@@ -12,9 +13,9 @@ import (
 // domain's off-site repo. Password is the plaintext htpasswd password, shown
 // once and never stored; Htpasswd is its bcrypt line.
 type DeploySnippet struct {
-	User      string `json:"user"`      // htpasswd user "bombvault-<domain>"
+	User      string `json:"user"`      // htpasswd user "bombvault-<domain>", with a suffix on an offer
 	Password  string `json:"password"`  // one-time plaintext password (never stored)
-	Htpasswd  string `json:"htpasswd"`  // "bombvault-<domain>:<bcrypt-hash>"
+	Htpasswd  string `json:"htpasswd"`  // "<user>:<bcrypt-hash>"
 	DockerRun string `json:"dockerRun"` // docker run recipe (+ echo pre-step + repo-URL hint)
 	Compose   string `json:"compose"`   // docker-compose equivalent, same values
 	Unraid    string `json:"unraid"`    // Unraid container template (XML), same values
@@ -53,6 +54,26 @@ func randomDeployPassword() (string, error) {
 // fixed backup domains. Nothing is stored, so the password appears only in the
 // response that returns it.
 func buildDeploySnippet(domain string) (DeploySnippet, error) {
+	return deploySnippetFor(domain, "bombvault-"+domain)
+}
+
+// buildOfferSnippet builds the recipe of one storage offer and the repository
+// it leads to. An offer has a login and a folder of its own, because the recipe
+// appends to .htpasswd, where the last line of a login wins: a second offer
+// under the same login would lock out whoever took the first.
+func buildOfferSnippet(domain, base string) (DeploySnippet, string, error) {
+	suffix := make([]byte, 3)
+	if _, err := rand.Read(suffix); err != nil {
+		return DeploySnippet{}, "", fmt.Errorf("generate login: %w", err)
+	}
+	snip, err := deploySnippetFor(domain, "bombvault-"+domain+"-"+hex.EncodeToString(suffix))
+	if err != nil {
+		return DeploySnippet{}, "", err
+	}
+	return snip, destinationLocation("rest:"+base+"/"+snip.User, domain), nil
+}
+
+func deploySnippetFor(domain, user string) (DeploySnippet, error) {
 	switch domain {
 	case "containers", "vms", "flash", "config", "files", "zfs":
 	default:
@@ -63,7 +84,6 @@ func buildDeploySnippet(domain string) (DeploySnippet, error) {
 	if err != nil {
 		return DeploySnippet{}, err
 	}
-	user := "bombvault-" + domain
 	htpasswd, err := htpasswdLine(user, password)
 	if err != nil {
 		return DeploySnippet{}, err

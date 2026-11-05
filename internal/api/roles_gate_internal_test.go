@@ -198,8 +198,8 @@ func TestTheResticPasswordIsReleasedOnlyWhileTheFetcherRoleIsAllowed(t *testing.
 	if _, out := fetcher.do(t, http.MethodGet, repos, nil); out["ok"] != false {
 		t.Fatalf("repositories of an instance that asked for nothing: %v", out)
 	}
-	if _, out := fetcher.do(t, http.MethodPost, "/api/pull/sources", pull); out["ok"] != false {
-		t.Fatalf("a pull source of an instance that asked for nothing: %v", out)
+	if _, out := fetcher.do(t, http.MethodPost, "/api/pull/sources", pull); out["ok"] != false || out["error"] != errMemberNotAsked.Error() {
+		t.Fatalf("a pull source of an instance that asked for nothing: %v, want it to say that", out)
 	}
 
 	askForRole(t, source, fetcher, store.RoleFetcher, "containers")
@@ -238,6 +238,46 @@ func TestTheResticPasswordIsReleasedOnlyWhileTheFetcherRoleIsAllowed(t *testing.
 	}
 	if _, err := fetcher.svc.PullFromSource(context.Background(), sources[0]); err == nil || !strings.Contains(err.Error(), store.RoleRevoked) {
 		t.Fatalf("a pull after the source withdrew = %v, want it refused as revoked", err)
+	}
+}
+
+func TestAFetcherWithPullOffCannotBeAllowedAndSavesNoSource(t *testing.T) {
+	source := newInstance(t, "tower", strings.Repeat("a1", 32))
+	fetcher := newInstance(t, "vault", strings.Repeat("b2", 32))
+	pairThroughRelay(t, source, fetcher)
+	if _, err := fetcher.st.MutateSettings(func(s *store.Settings) error {
+		s.PullEnabled = false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	askForRole(t, source, fetcher, store.RoleFetcher, "containers")
+	req, _ := roleWith(t, fetcher, store.RoleRequestIn, source, store.RoleFetcher)
+
+	_, out := fetcher.do(t, http.MethodPost, "/api/group/roles/requests/"+req.ID, map[string]any{"decision": "allow", "sections": []string{"containers"}})
+	if out["ok"] != false || !strings.Contains(out["error"].(string), "Pull") {
+		t.Fatalf("allow with Pull off = %v, want a refusal that names Pull", out)
+	}
+	if got, _ := roleWith(t, source, store.RoleRequestOut, fetcher, store.RoleFetcher); got.State != store.RoleAsked {
+		t.Fatalf("the other instance's tile reads %q, want it still waiting", got.State)
+	}
+
+	_, out = fetcher.do(t, http.MethodPost, "/api/pull/sources", map[string]any{"name": "tower", "repo": "rest:https://box.example:8000/containers", "domain": "containers", "memberId": source.id(t)})
+	if out["ok"] != false || !strings.Contains(out["error"].(string), "Pull") {
+		t.Fatalf("a source with Pull off = %v, want a refusal that names Pull", out)
+	}
+	if sources, _ := fetcher.st.ListPullSources(); len(sources) != 0 {
+		t.Fatalf("a source nothing would ever run was saved: %+v", sources)
+	}
+
+	if _, err := fetcher.st.MutateSettings(func(s *store.Settings) error {
+		s.PullEnabled = true
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, out = fetcher.do(t, http.MethodPost, "/api/group/roles/requests/"+req.ID, map[string]any{"decision": "allow", "sections": []string{"containers"}}); out["ok"] != true {
+		t.Fatalf("allow with Pull on = %v", out)
 	}
 }
 
