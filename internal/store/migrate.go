@@ -3638,6 +3638,21 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
   keep_yearly  INTEGER NOT NULL
 );`,
 	},
+	{
+		// A record older than its target, with no copy to that target that ever
+		// worked, is about a location removed before the target was added, and it
+		// keeps every copy from starting. A named repository has no such runs to
+		// tell by, and keeps its record.
+		version: staleEstablishedMigration,
+		name:    "established_repos_forget_earlier_locations",
+		sql: `DELETE FROM established_repos
+ WHERE repo NOT LIKE '/%'
+   AND EXISTS (SELECT 1 FROM offsite_targets t
+                WHERE t.repo = established_repos.repo
+                  AND t.role = 'offsite'
+                  AND t.created_at > established_repos.created_at
+                  AND NOT EXISTS (SELECT 1 FROM offsite_runs r WHERE r.offsite_target_id = t.id AND r.ok = 1));`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4216,6 +4231,10 @@ const hiddenZeroRuleMigration = 700
 // locationKeepMigration numbers the How long to keep cards of folders that have
 // no row of their own.
 const locationKeepMigration = 720
+
+// staleEstablishedMigration numbers the clean-up of records of repositories
+// that were at a location's address before the location was added.
+const staleEstablishedMigration = 800
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

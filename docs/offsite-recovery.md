@@ -82,7 +82,7 @@ Every storage location has a page of its own. It shows only the cards that apply
 
 **Move** and **Remove storage location** stand among the page's actions, described under [Moving and removing](#move-remove).
 
-A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its repositories at once.
+A remote storage location that held backups and suddenly holds no repository, such as a rest-server whose disk did not mount, does not get a new, empty one on its own. Its page says so as soon as a backup or copy finds the repository gone. Mount the disk again. If you emptied the old repository on purpose, **Start a new repository here** starts over, for every section of the location and its repositories at once. The guard is for a location that stayed in place. A storage location you add, or a section you tick at one, starts clean: with no repository at that address, the first copy creates one, even where a location removed earlier had one.
 
 A receiving server that another instance of your group runs appears among the providers as **From your group**. See [Receiving server](#receiving-server).
 

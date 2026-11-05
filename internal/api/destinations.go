@@ -805,6 +805,9 @@ func (s *Service) SaveNewDestination(ctx context.Context, req draftRequest) (sto
 		}
 		return store.OffsiteTarget{}, err
 	}
+	for _, domain := range offsiteConfigDomains {
+		s.locationAddedAt(destinationLocation(saved.Repo, domain))
+	}
 	return saved, nil
 }
 
@@ -1075,6 +1078,8 @@ func (s *Service) takeUpOldBackups(ctx context.Context, d store.OffsiteTarget) {
 		if err != nil || len(held) == 0 {
 			continue
 		}
+		// Backups listed there mean a repository opened, which the guard covers.
+		s.markRepoEstablished(repo)
 		if _, _, err := s.store.EnsureDestinationTarget(d.ID, domain, loc); err != nil {
 			log.Printf("api: destination %q: the backups of %s there could not be taken up: %v", d.Name, domain, err) //nolint:gosec // G706: the name is %q-quoted, the domain a fixed literal
 		}
@@ -1258,6 +1263,9 @@ func (h *Handler) handleDestinationForDomain(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if created {
+		h.svc.locationAddedAt(stored.Repo)
 	}
 	h.replanAfterTargetChange()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(stored), "created": created}))

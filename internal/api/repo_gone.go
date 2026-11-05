@@ -35,6 +35,19 @@ func (s *Service) startOverAt(repo string) error {
 	return nil
 }
 
+// locationAddedAt starts loc clean: a location the user adds or moves there says
+// the address is meant to be used. A repository an earlier location had there is
+// not this one's to miss, and one still there opens and is recorded on its first
+// use. A folder on this host goes by its mount and keeps its record.
+func (s *Service) locationAddedAt(loc string) {
+	if !restic.IsRemoteRepo(loc) {
+		return
+	}
+	if err := s.startOverAt(loc); err != nil {
+		log.Printf("api: %v", err)
+	}
+}
+
 // StartOverAtLocation lets the next run create a new repository in every
 // remote repository of the storage location id that was found gone. A
 // destination holds one per section, and each was emptied with the disk.
