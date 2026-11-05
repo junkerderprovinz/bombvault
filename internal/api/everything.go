@@ -433,8 +433,8 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 		_, err := s.Backup(runCtx, t.ContainerName)
 		pass.itemDone()
 		if err != nil {
-			if errors.Is(err, backup.ErrContainerNotInstalled) || IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
-				continue // a removed container is a skip and already recorded; a cancel or a section with no place is no failure
+			if errors.Is(err, backup.ErrContainerNotInstalled) || IsBackupCancelled(err) {
+				continue // a removed container is a skip and already recorded; a cancel is no failure
 			}
 			if _, deferred := backup.IsDeferred(err); deferred {
 				continue // tried again on its own once its app is free
@@ -482,7 +482,7 @@ func (s *Service) everythingRunVMs(ctx context.Context, pass *everythingPass, se
 		_, err := s.BackupVM(runCtx, v.Name)
 		pass.itemDone()
 		if err != nil {
-			if errors.Is(err, backup.ErrVMNotInstalled) || IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
+			if errors.Is(err, backup.ErrVMNotInstalled) || IsBackupCancelled(err) {
 				continue // a VM gone from the host is a skip and already logged; a cancel or a section with no place is no failure
 			}
 			failed++
@@ -524,7 +524,7 @@ func (s *Service) everythingRunFiles(ctx context.Context, pass *everythingPass, 
 		_, err := s.BackupFileSet(runCtx, fs.ID)
 		pass.itemDone()
 		if err != nil {
-			if IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
+			if IsBackupCancelled(err) {
 				continue
 			}
 			failed++
@@ -564,7 +564,7 @@ func (s *Service) everythingRunZFS(ctx context.Context, pass *everythingPass, se
 		_, err := s.BackupZFSDataset(runCtx, d.ID)
 		pass.itemDone()
 		if err != nil {
-			if IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
+			if IsBackupCancelled(err) {
 				continue
 			}
 			failed++
@@ -590,7 +590,7 @@ func (s *Service) everythingRunFlash(ctx context.Context, pass *everythingPass) 
 	_, err := s.BackupFlash(WithRunGroup(ctx, pass.runID))
 	pass.itemDone()
 	if err != nil {
-		if IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
+		if IsBackupCancelled(err) {
 			return everythingDomainIdle(domain)
 		}
 		log.Printf("api: backup everything: flash: backup failed: %v", err)
@@ -609,7 +609,7 @@ func (s *Service) everythingRunConfig(ctx context.Context, pass *everythingPass)
 	_, err := s.BackupConfig(WithRunGroup(ctx, pass.runID))
 	pass.itemDone()
 	if err != nil {
-		if IsBackupCancelled(err) || errors.Is(err, ErrNoPlace) {
+		if IsBackupCancelled(err) {
 			return everythingDomainIdle(domain)
 		}
 		log.Printf("api: backup everything: config: backup failed: %v", err)

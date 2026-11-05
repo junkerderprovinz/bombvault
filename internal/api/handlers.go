@@ -2026,6 +2026,10 @@ func (h *Handler) handlePatchContainer(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+		if err := h.reloadScheduler(); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if body.PreHook != nil || body.PostHook != nil {
 		pre, post := strOr(body.PreHook), strOr(body.PostHook)
@@ -2179,6 +2183,10 @@ func (h *Handler) handleScheduleIncludeAll(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := h.svc.SetIncludeAll(r.Context(), body.Include); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.reloadScheduler(); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -6382,6 +6390,10 @@ func (h *Handler) handlePatchVM(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
+		if err := h.reloadScheduler(); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
 	}
 	if body.ScheduleCadence != nil {
 		if err := h.svc.SetVMScheduleCadence(r.Context(), name, *body.ScheduleCadence); err != nil {
@@ -6417,6 +6429,10 @@ func (h *Handler) handleVMScheduleIncludeAll(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := h.svc.SetVMIncludeAll(r.Context(), body.Include); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.reloadScheduler(); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -6985,9 +7001,11 @@ func (h *Handler) handlePatchFileSet(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
-		// Structural, exactly like the VM case above: reload so the set's own
-		// cron entry is registered or dropped. A file-set PATCH does not
-		// otherwise reload the scheduler.
+	}
+	// Structural, exactly like the VM case above: reload so the set's own cron
+	// entry is registered or dropped. A plan and the switch both decide that,
+	// and a file-set PATCH does not otherwise reload the scheduler.
+	if body.ScheduleCadence != nil || body.Enabled != nil {
 		if err := h.reloadScheduler(); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return

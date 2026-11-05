@@ -121,9 +121,9 @@ func TestLogSchedulerTimezone(t *testing.T) {
 	}
 }
 
-func TestARoundPassesOverAnEntryWhoseSectionHasNoPlace(t *testing.T) {
-	if err := roundItemErr(fmt.Errorf("files: %w", api.ErrNoPlace)); err != nil {
-		t.Fatalf("roundItemErr = %v, want no failure for a section with no place", err)
+func TestARoundCountsAnEntryWithNowhereToGoAsFailed(t *testing.T) {
+	if err := roundItemErr(fmt.Errorf("files: %w", api.ErrNoPlace)); err == nil {
+		t.Fatal("roundItemErr passed over an entry with nowhere to back up to")
 	}
 	if err := roundItemErr(errors.New("disk full")); err == nil {
 		t.Fatal("roundItemErr dropped a real failure")
