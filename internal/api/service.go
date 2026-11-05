@@ -19494,6 +19494,12 @@ func (s *Service) signInStillUsed(set CloudCredSet) error {
 	if len(names) > 0 {
 		return fmt.Errorf("%s still signs in with %s", strings.Join(names, ", "), set.Name)
 	}
+	if left, err := s.store.FormerOwnFoldersSignedInWith(set.ID); err == nil && len(left) > 0 {
+		for i, repo := range left {
+			left[i] = scrubRepoLocation(repo)
+		}
+		return fmt.Errorf("old backups at %s open with %s only, so it stays", strings.Join(left, ", "), set.Name)
+	}
 	return fmt.Errorf("%s is still in use, so it stays", set.Name)
 }
 

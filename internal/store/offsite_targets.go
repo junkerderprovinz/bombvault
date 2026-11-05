@@ -805,7 +805,8 @@ func (r *Repo) SwapCompanionCreds(repoID, from, to string) (bool, error) {
 // named repository or a pull source names.
 func (r *Repo) CredsRefsInUse() (map[string]bool, error) {
 	rows, err := r.db.Query(`SELECT creds_ref FROM offsite_targets WHERE creds_ref <> ''
-		UNION SELECT creds_ref FROM pull_sources WHERE creds_ref <> ''`)
+		UNION SELECT creds_ref FROM pull_sources WHERE creds_ref <> ''
+		UNION SELECT creds_ref FROM former_own_folders WHERE creds_ref <> ''`)
 	if err != nil {
 		return nil, fmt.Errorf("CredsRefsInUse: %w", err)
 	}
@@ -830,8 +831,9 @@ func (r *Repo) CredsRefNamedBeyond(ref, destID string) (bool, error) {
 		SELECT 1 FROM offsite_targets
 		WHERE creds_ref = ? AND id <> ? AND destination_id <> ?
 		  AND (companion_of = '' OR companion_of NOT IN (SELECT id FROM offsite_targets WHERE destination_id = ?))
-		UNION ALL SELECT 1 FROM pull_sources WHERE creds_ref = ?)`,
-		ref, destID, destID, destID, ref).Scan(&named)
+		UNION ALL SELECT 1 FROM pull_sources WHERE creds_ref = ?
+		UNION ALL SELECT 1 FROM former_own_folders WHERE creds_ref = ?)`,
+		ref, destID, destID, destID, ref, ref).Scan(&named)
 	if err != nil {
 		return false, fmt.Errorf("CredsRefNamedBeyond: %w", err)
 	}

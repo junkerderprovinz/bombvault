@@ -301,7 +301,7 @@ func (s *Service) RemoveSignIn(id string) error {
 		return err
 	}
 	if inUse[id] {
-		return fmt.Errorf("%s is still in use, so it stays", sets[i].Name)
+		return s.signInStillUsed(sets[i])
 	}
 	return s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
 		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })

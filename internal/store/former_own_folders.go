@@ -147,6 +147,25 @@ func (r *Repo) FormerOwnFolders(domain string) ([]FormerOwnFolder, error) {
 	return out, rows.Err()
 }
 
+// FormerOwnFoldersSignedInWith returns the places an own folder left that open
+// with the given saved sign-in.
+func (r *Repo) FormerOwnFoldersSignedInWith(ref string) ([]string, error) {
+	rows, err := r.db.Query(`SELECT repo FROM former_own_folders WHERE creds_ref = ? ORDER BY repo`, ref)
+	if err != nil {
+		return nil, fmt.Errorf("FormerOwnFoldersSignedInWith: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []string
+	for rows.Next() {
+		var repo string
+		if err := rows.Scan(&repo); err != nil {
+			return nil, fmt.Errorf("FormerOwnFoldersSignedInWith: %w", err)
+		}
+		out = append(out, repo)
+	}
+	return out, rows.Err()
+}
+
 // PlaceChangedSince reports whether the backups of an item may have been
 // written somewhere else from at on: its section's own folder moved, or the
 // item left a home. Both are counted in seconds, so a move in the second at
