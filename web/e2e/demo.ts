@@ -361,6 +361,14 @@ const NAS = {
 
 const LOCATIONS = [LOCAL, B2, NAS];
 
+/** The storage locations after a rebuild, where the folder sets found backups
+ *  of their own at B2 and their copies wait for the decision. */
+export const AWAITING_DECISION = [
+  LOCAL,
+  { ...B2, sections: B2.sections.map((s) => (s.domain === "files" ? { ...s, awaitsDecision: true, lastCopy: undefined } : s)) },
+  NAS,
+];
+
 function target(id: string, domain: string, destinationId: string, repo: string, over: Json = {}) {
   return {
     id,
