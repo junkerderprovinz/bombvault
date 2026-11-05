@@ -207,6 +207,17 @@ describe("needsOf", () => {
     expect(needs.map((n) => n.is)).toEqual(["failedRun", "unprotected", "failedCopy", "anomaly", "recoveryKit"]);
   });
 
+  it("asks once per section whose copies wait for the decision, whatever the number of locations", () => {
+    const waiting = copy({ lastCopy: undefined, awaitsDecision: true });
+    const locations = [box([waiting]), box([{ ...waiting, targetId: "t-b2" }], "destination:b2")];
+    expect(needsOf({ ...nothing, locations })).toEqual([{ is: "copyDecision", domain: "containers" }]);
+  });
+
+  it("asks for the decision before the first backup too, and before a failed copy", () => {
+    const locations = [box([copy({ awaitsDecision: true, domain: "files" }), copy()])];
+    expect(needsOf({ ...nothing, locations }).map((n) => n.is)).toEqual(["copyDecision", "failedCopy"]);
+  });
+
   it("puts a backup key that no longer opens before everything else", () => {
     const needs = needsOf({ ...nothing, runs: [run({ id: "r1" })], items: [item({})], keyLocked: true });
     expect(needs.map((n) => n.is)).toEqual(["keyLocked", "failedRun"]);

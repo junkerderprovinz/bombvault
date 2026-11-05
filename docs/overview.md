@@ -40,7 +40,7 @@ Every switched-on section has a row with four checks:
 | Check | It goes green when | Other words you may see |
 |---|---|---|
 | **Local** | the last backup is current | no backup yet, no schedule, last run failed, backup overdue, not every entry is protected, backup due soon |
-| **Off-site** | the last copy off the premises is current | no off-site copy, copy running, copy overdue, copy paused, no copy yet, replica failed |
+| **Off-site** | the last copy off the premises is current | no off-site copy, copy running, copy overdue, waits for your decision, no copy yet, replica failed |
 | **Delete protection** | a tamper test proved that the far side refuses deletes | none, none and risk accepted, not proven yet, test failed, not proven because its check is off |
 | **Trial restore** | a restore from the off-site copy passed | never run, running, failed, overdue, manual only, not possible for this section |
 

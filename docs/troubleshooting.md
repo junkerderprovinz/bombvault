@@ -181,9 +181,9 @@ The target holds snapshots newer than the newest one it shares with this server,
 
 BombVault follows each disk's backing chain and backs up every file in it. A chain that cannot be followed to its end fails the backup rather than leave out part of the disk, and the message names the file. Check that the file exists below `/mnt` and that the snapshot is still listed in the VM Manager. A file outside Host Data cannot be read at all. See [VMs with Unraid snapshots](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Off-site copies are paused after a rebuild {#copies-paused}
+## Off-site copies wait for your decision after a rebuild {#copies-paused}
 
-After **Discover backups** or the Emergency wizard without restored settings, off-site copies of every rebuilt section wait, because BombVault no longer knows which entries you left out. The overview says so. Press **Confirm default** in **Storage locations per section**, check the preview and leave out what should stay out. Importing a settings file does not end the pause. See [After a rebuild](offsite-recovery.md#after-a-rebuild).
+After **Discover backups** or the Emergency wizard without restored settings, or when a section finds backups of its own from before this database, off-site copies of that section wait, because BombVault no longer knows which entries you left out. **Needs you** and the storage location's page ask about it. Press **Take them as this server's own** to carry on, or **Check the rules first** to look at the section's rules before you do. Importing a settings file does not take the decision for you. See [After a rebuild](offsite-recovery.md#after-a-rebuild).
 
 ## Notifications do not arrive {#notifications-do-not-arrive}
 

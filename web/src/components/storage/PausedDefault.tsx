@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   confirmPlacementDefault,
   getConfirmPreview,
@@ -7,6 +8,7 @@ import {
   type TargetPreviewRow,
   type UnmatchedName,
 } from "../../lib/api";
+import { rulesAnchor } from "../../lib/copyDecision";
 import { useT } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
@@ -69,9 +71,10 @@ function ConfirmLines({
 }
 
 /**
- * PausedDefault says that a section's off-site copies wait for its default to
- * be confirmed, which they do after a rebuild lost the rules, and confirms it
- * after showing what the next run would copy.
+ * PausedDefault says that a section's off-site copies wait for the person to
+ * take backups found from before this database as this server's own, and does
+ * so after showing what the next run would copy. "Check the rules first"
+ * leads here, so the line comes into view when the address names it.
  */
 export function PausedDefault({ domain }: { domain: PlacementDomain }) {
   const { t, lang } = useT();
@@ -79,6 +82,13 @@ export function PausedDefault({ domain }: { domain: PlacementDomain }) {
   const { confirm, confirmDialog } = useConfirm();
   const [busy, setBusy] = useState(false);
   const label = t(DOMAIN_LABEL[domain]);
+  const anchor = rulesAnchor(domain);
+  const { hash } = useLocation();
+  const line = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // jsdom has no scrollIntoView.
+    if (hash === `#${anchor}`) line.current?.scrollIntoView?.({ block: "center" });
+  }, [hash, anchor]);
   const failed = (e: unknown): OkEnvelope => ({ ok: false, error: e instanceof Error ? e.message : undefined });
 
   async function confirmDefault() {
@@ -100,8 +110,8 @@ export function PausedDefault({ domain }: { domain: PlacementDomain }) {
       );
       const go = await confirm(t("placementDefaults.confirmAsk"), {
         extra: lines,
-        confirmLabel: t("placementDefaults.confirm"),
-        confirmLabelKey: "placementDefaults.confirm",
+        confirmLabel: t("copyDecision.take"),
+        confirmLabelKey: "copyDecision.take",
         cancelTone: "neutral",
       });
       if (!go) return;
@@ -110,7 +120,7 @@ export function PausedDefault({ domain }: { domain: PlacementDomain }) {
         push(placementErrorText(t, lang, res, "settings.error"), "fail");
         return;
       }
-      push(t("placementDefaults.confirmed"), "success");
+      push(t("copyDecision.taken").replaceAll("{domain}", () => label), "success");
       placementChanged();
     } finally {
       setBusy(false);
@@ -118,15 +128,15 @@ export function PausedDefault({ domain }: { domain: PlacementDomain }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+    <div id={anchor} ref={line} className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 scroll-mt-24">
       {confirmDialog}
       <span className="flex items-center gap-1.5 text-xs text-statusWarn">
         {label}: {t("placementDefaults.paused")}
-        <InfoBubble tip={t("placementDefaults.pausedHint").replace("{domain}", () => label)} />
+        <InfoBubble tip={t("placementDefaults.pausedHint").replaceAll("{domain}", () => label)} />
       </span>
       <Button
-        label={t("placementDefaults.confirm")}
-        labelKey="placementDefaults.confirm"
+        label={t("copyDecision.take")}
+        labelKey="copyDecision.take"
         glyph={<IconConfirm />}
         tone="neutral"
         disabled={busy}

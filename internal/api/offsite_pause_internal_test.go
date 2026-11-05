@@ -57,8 +57,8 @@ func TestAFirstListingThatFindsTheDomainAtTheTargetPauses(t *testing.T) {
 	if _, listed, err := f.st.TargetObservationFor("containers", b2.ID); err != nil || !listed {
 		t.Fatalf("the listing that found it was not recorded (listed=%v err=%v)", listed, err)
 	}
-	if msgs := sent(); len(msgs) != 1 || !strings.Contains(msgs[0], "paused") {
-		t.Fatalf("notifications = %q, want one about the pause", msgs)
+	if msgs := sent(); len(msgs) != 1 || !strings.Contains(msgs[0], "wait for your decision") || !strings.Contains(msgs[0], "take the backups as this server's own") {
+		t.Fatalf("notifications = %q, want one that asks for the decision", msgs)
 	}
 }
 

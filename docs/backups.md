@@ -35,7 +35,7 @@ Entries that are no longer installed but still have backups stand apart under **
 The page's main action floats at the bottom right: **Back up everything now** starts a run over every switched-on section. **More** holds the rest:
 
 - **Select** starts a selection, see below.
-- **Discover backups** reads what the storage locations hold and rebuilds entries from it, for example after a fresh install. A container with no data of its own has no snapshot, and it comes back from the definition mirrored beside the repository. Off-site copies of rebuilt sections then pause until you confirm their default, see [After a rebuild](offsite-recovery.md#after-a-rebuild).
+- **Discover backups** reads what the storage locations hold and rebuilds entries from it, for example after a fresh install. A container with no data of its own has no snapshot, and it comes back from the definition mirrored beside the repository. Off-site copies of rebuilt sections then wait until you take their backups as this server's own, see [After a rebuild](offsite-recovery.md#after-a-rebuild).
 - **ZFS connection to this server** opens the SSH test of the ZFS section, see [ZFS datasets](zfs-datasets.md#requirements).
 - **Replicate all now**, with the ZFS tile picked, sends the replica of every ZFS entry.
 

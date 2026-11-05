@@ -49,6 +49,14 @@ describe("buildLogLines", () => {
     expect(line.text).toContain("duration=30s");
   });
 
+  it("says on a backup's line that its off-site copy waits for the decision, in amber", () => {
+    const [line] = buildLogLines([makeRun({ copyWaits: true })], {}, [], resolveName, 2_000_000);
+    expect(line.status).toBe("success");
+    expect(line.text).toContain("activityLog.lineBackupSuccess");
+    expect(line.text.endsWith("; copyDecision.runNote")).toBe(true);
+    expect(line.warn).toBe(true);
+  });
+
   it("words a replica run as a replica and finds it under the backup filter", () => {
     const done = buildLogLines([makeRun({ kind: "replica", domain: "zfs", target: "cache/appdata" })], {}, [], resolveName, 2_000_000)[0];
     expect(done.status).toBe("success");

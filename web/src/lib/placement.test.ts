@@ -432,10 +432,10 @@ describe("planLines", () => {
     ).toEqual([{ text: "The location is decided at the first backup.", tone: "normal" }]);
   });
 
-  it("says only the pause while the domain is paused", () => {
+  it("says only that copies wait for the decision while they do", () => {
     expect(
       planLines(tEn, "en", "Unraid", "vms", placementPlan({ kind: "paused", targets: [], warn: true }), false)
-    ).toEqual([{ text: "Off-site paused until the default is confirmed.", tone: "warn" }]);
+    ).toEqual([{ text: "Off-site copies wait for your decision about backups from before this database.", tone: "warn" }]);
   });
 
   it("names a default that cannot be used", () => {

@@ -559,6 +559,9 @@ export interface Run {
   /** How many snapshots an off-site replication copied, null when it is not
    *  known or for any other run. */
   copied?: number | null;
+  /** The entry's newest backup, while its off-site copy waits for the person
+   *  to take backups found from before this database as this server's own. */
+  copyWaits?: boolean;
 }
 
 /** The one resource a slow backup waited on. share is how busy it was, or
@@ -8061,6 +8064,9 @@ export interface StorageLocationSection {
    *  `acknowledged` means every copy that failed since was dismissed. */
   lastCopy?: { at: number; ok: boolean; failingSince?: number; acknowledged?: boolean };
   lastTamper?: { domain: string; at: number; protected: boolean; detail: string };
+  /** The copy waits for the person to take backups found from before this
+   *  database as this server's own. */
+  awaitsDecision?: boolean;
 }
 
 /** The room on the volume a location sits on. A figure nobody measured is

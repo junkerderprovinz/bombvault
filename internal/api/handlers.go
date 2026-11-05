@@ -4422,6 +4422,10 @@ type runView struct {
 	StartedViaRevoked bool   `json:"startedViaRevoked"`
 	// Bottleneck is what held a slow backup back, when one thing clearly did.
 	Bottleneck *hostload.Cause `json:"bottleneck,omitempty"`
+	// CopyWaits marks an item's newest successful backup while its off-site
+	// copy waits for the user to take the backups found from before this
+	// database as this server's own.
+	CopyWaits bool `json:"copyWaits,omitempty"`
 }
 
 // runTargetMaps resolves target_id → (human name, domain) across every domain,
@@ -4531,6 +4535,10 @@ func (h *Handler) writeItemRuns(w http.ResponseWriter, kind, key string, limit i
 func (h *Handler) runViews(runs []store.Run) []runView {
 	name, domain := h.runTargetMaps()
 	keys := h.mcpKeysBehind(runs)
+	waiting, err := h.svc.itemsAwaitingDecision()
+	if err != nil {
+		log.Printf("api: runs: reading which copies wait for a decision failed: %v", err)
+	}
 	views := make([]runView, 0, len(runs))
 	for _, r := range runs {
 		target := name[r.TargetID]
@@ -4538,6 +4546,11 @@ func (h *Handler) runViews(runs []store.Run) []runView {
 			target = r.Subject
 		}
 		v := runView{Run: r, Target: scrubRepoLocation(target), Domain: domain[r.TargetID], Bottleneck: runBottleneck(r.Load)}
+		// Runs come newest first, so the first success of an item is its newest.
+		if waiting[r.TargetID] && r.Kind == "backup" && r.Status == "success" {
+			v.CopyWaits = true
+			delete(waiting, r.TargetID)
+		}
 		if key, ok := keys[r.StartedViaKey]; ok {
 			v.StartedViaLabel = scrubRepoLocation(key.Label)
 			v.StartedViaRevoked = key.RevokedAt > 0

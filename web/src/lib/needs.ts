@@ -1,8 +1,9 @@
 // What needs the person: the list behind the overview's first card, the
 // number in the status head and a count in the navigation.
 
-import type { AnomalyView, BackupItem, DeferredBackup, Run, StorageLocation, StorageLocationSection } from "./api";
+import type { AnomalyView, BackupItem, DeferredBackup, PlacementDomain, Run, StorageLocation, StorageLocationSection } from "./api";
 import { protection } from "./backupList";
+import { waitingDomains } from "./copyDecision";
 import { isFreshInstall } from "./freshInstall";
 import { tallyEntries } from "./protectionTally";
 import { failedRunsNeedingAttention } from "./runFailures";
@@ -21,6 +22,9 @@ export type Need =
   /** The off-site copies to one storage location that have failed since they
    *  last worked. `since` is when the first of them began, in Unix seconds. */
   | { is: "failedCopy"; location: StorageLocation; sections: StorageLocationSection[]; since: number }
+  /** A section that found backups from before this database, whose off-site
+   *  copies wait until the person takes them as this server's own. */
+  | { is: "copyDecision"; domain: PlacementDomain }
   | { is: "anomaly"; finding: AnomalyView }
   | { is: "recoveryKit" };
 
@@ -90,6 +94,7 @@ export function needsOf({ items, runs, locations, anomalies, kitDue, keyLocked =
     ...failed,
     ...unprotected,
     ...deferred,
+    ...waitingDomains(locations).map((domain): Need => ({ is: "copyDecision", domain })),
     ...failedCopies(locations),
     ...loud,
     ...(kitDue && !fresh ? [{ is: "recoveryKit" } as const] : []),

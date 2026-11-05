@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { HeldMark } from "../../components/anomalies/FindingLine";
 import type { MenuAction } from "../../components/backups/ActionMenu";
 import { MoreMenu } from "../../components/backups/MoreMenu";
+import { CopyDecisionActions, useCopyDecisionText } from "../../components/storage/CopyDecision";
 import { KIND_SCHEDULE_LABEL, entryName } from "../../components/backups/kinds";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
@@ -387,6 +388,16 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
   );
 }
 
+function CopyDecisionRow({ need }: { need: Need & { is: "copyDecision" } }) {
+  const { title, body } = useCopyDecisionText(need.domain);
+  return (
+    <Row testid="need-copy-decision" tone="warn" title={title} actions={<CopyDecisionActions domain={need.domain} className={WRAPPING} />}>
+      {/* Whole on a phone too: the row is where the decision is made. */}
+      <p className="text-sm text-carbon-textSub wrap-break-word">{body}</p>
+    </Row>
+  );
+}
+
 function AnomalyRow({ finding, t, lang }: { finding: AnomalyView; t: T; lang: string }) {
   const navigate = useNavigate();
   const target = `/anomalies?scope=item:${encodeURIComponent(finding.targetId)}`;
@@ -502,7 +513,9 @@ function RecoveryKitRow({ t }: { t: T }) {
 /**
  * NeedsCard lists what waits for the person, each with the action that
  * settles it: a backup key that does not open, a failed run, an entry
- * nothing backs up, a failed off-site copy, an anomaly, the recovery kit.
+ * nothing backs up, a section whose off-site copies wait until backups found
+ * from before this database are taken as this server's own, a failed off-site
+ * copy, an anomaly, the recovery kit.
  * An entry nothing backs up can also be left that way, which takes it off
  * the list. A backup that waits for its app stands there too, in amber,
  * with its next try, until it goes through or its wait ends.
@@ -544,6 +557,8 @@ export function NeedsCard({
                 );
               case "deferred":
                 return <DeferredRow key={`deferred:${need.item.key}`} need={need} t={t} />;
+              case "copyDecision":
+                return <CopyDecisionRow key={`decision:${need.domain}`} need={need} />;
               case "failedCopy":
                 return <FailedCopyRow key={`copy:${need.location.id}`} need={need} t={t} lang={lang} />;
               case "anomaly":

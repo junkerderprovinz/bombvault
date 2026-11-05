@@ -13,6 +13,7 @@ import { Badge } from "../Badge";
 import { RunDetailSheet } from "../mobile/RunDetailSheet";
 import { statusDotClass } from "../RecentRunsList";
 import { RunAnomalyBadge } from "../RunAnomalyBadge";
+import { CopyWaitsLink } from "../storage/CopyDecision";
 import { Rows } from "../storage/rows";
 import { ZFSRunDetailView } from "../zfs/ZFSDatasetRow";
 
@@ -103,6 +104,7 @@ export function EntryRuns({
                 {run.bottleneck && (
                   <span className="text-xs text-statusWarn">{bottleneckText(run.bottleneck, t)}</span>
                 )}
+                {run.copyWaits && <span className="text-xs text-statusWarn">{t("copyDecision.runNote")}</span>}
               </span>
               {run.finishedAt != null && (
                 <span className="flex-none text-xs tabular-nums text-carbon-textMuted">
@@ -113,9 +115,10 @@ export function EntryRuns({
                 {run.snapshotId !== "" && humanBytes(run.bytes)}
               </span>
             </button>
-            {/* The badge has a bubble button of its own, so it stands beside
-                the row's button and not inside it. */}
+            {/* The badge has a bubble button of its own and the link leads
+                elsewhere, so both stand beside the row's button. */}
             <RunAnomalyBadge findings={byRunId.get(run.id)} t={t} />
+            <CopyWaitsLink run={run} />
           </li>
         ))}
       </Rows>

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * A section whose off-site copies wait for its default to be confirmed.
+ * A section whose off-site copies wait until the backups found from before
+ * this database are taken as this server's own.
  *
  * Nothing is confirmed before the window said what the next run copies, and a
  * name in the backups without an entry here is left out only when its switch
@@ -28,48 +29,48 @@ function stagePreview() {
   });
 }
 
-describe("a paused default", () => {
+describe("a default that waits for the decision", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
   it("names the section and says in its bubble what waits", () => {
     renderWithProviders(<PausedDefault domain="containers" />);
 
-    expect(screen.getByText(/Containers: Off-site paused after a rebuild/)).toBeTruthy();
-    expect(screen.getByLabelText(/Nothing from Containers is copied off-site until this default is confirmed/)).toBeTruthy();
+    expect(screen.getByText(/Containers: Off-site copies wait for your decision/)).toBeTruthy();
+    expect(screen.getByLabelText(/Off-site copies of Containers wait until you take the backups as this server's own/)).toBeTruthy();
   });
 
   it("shows what the next run copies before anything is confirmed", async () => {
     stagePreview();
     renderWithProviders(<PausedDefault domain="containers" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Confirm default" }));
+    fireEvent.click(screen.getByRole("button", { name: "Take them as this server's own" }));
     const dialog = await screen.findByRole("dialog");
 
     expect(dialog.textContent).toContain("At the next run, this is copied:");
     expect(dialog.textContent).toContain("Items and project folders: 15");
     expect(dialog.textContent).toContain("Names in the backups without an entry here. Ticked ones are left out:");
-    expect(accentButtons(dialog)).toEqual(["Confirm default"]);
+    expect(accentButtons(dialog)).toEqual(["Take them as this server's own"]);
     expect(fake.callsTo("confirmPlacementDefault")).toEqual([]);
   });
 
   it("confirms with the names that were switched to stay out", async () => {
     stagePreview();
     renderWithProviders(<PausedDefault domain="containers" />);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm default" }));
+    fireEvent.click(screen.getByRole("button", { name: "Take them as this server's own" }));
     const dialog = await screen.findByRole("dialog");
 
     fireEvent.click(within(dialog).getByRole("switch", { name: "plex, snapshots: 12" }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm default" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Take them as this server's own" }));
 
     await waitFor(() => expect(fake.callsTo("confirmPlacementDefault")).toEqual([["containers", ["container:plex"]]]));
-    expect(await screen.findByText("Default confirmed. Off-site copies resume at the next run.")).toBeTruthy();
+    expect(await screen.findByText("Taken as this server's own. Off-site copies of Containers start again at the next run.")).toBeTruthy();
   });
 
   it("confirms nothing when the window is cancelled", async () => {
     stagePreview();
     renderWithProviders(<PausedDefault domain="containers" />);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm default" }));
+    fireEvent.click(screen.getByRole("button", { name: "Take them as this server's own" }));
     const dialog = await screen.findByRole("dialog");
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
@@ -82,7 +83,7 @@ describe("a paused default", () => {
     fake.reply("getConfirmPreview", new Error("Failed to fetch"));
     renderWithProviders(<PausedDefault domain="containers" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Confirm default" }));
+    fireEvent.click(screen.getByRole("button", { name: "Take them as this server's own" }));
 
     expect(await screen.findByText("Failed to fetch")).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();

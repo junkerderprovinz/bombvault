@@ -611,10 +611,11 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
   // backup, and any kind this client does not know yet.
   if (run.status === "success") {
     const text = resolveName("activityLog.lineBackupSuccess", { name, bytes: humanBytes(run.bytes), duration });
+    const waits = run.copyWaits ? [resolveName("copyDecision.runNote")] : [];
     // The line turns orange for these notes, so it has to say which one.
-    if (!isWarningNote(run.error)) return { status: "success", text };
+    if (!isWarningNote(run.error)) return { status: "success", text: [text, ...waits].join("; ") };
     const notes = backupNotes(run.error.trim()).map((note) => reasonText(note, resolveName));
-    return { status: "success", text: [text, ...notes].join("; ") };
+    return { status: "success", text: [text, ...notes, ...waits].join("; ") };
   }
   if (run.status === "failed") {
     return { status: "failed", text: resolveName("activityLog.lineBackupFailed", { name, error: reasonText(run.error, resolveName) }) };
@@ -746,7 +747,7 @@ function buildHistoryLines(runs: Run[], resolveName: ResolveName, superseded: Se
       kind: asLogKind(run.kind),
       live: false,
     };
-    if ((run.status === "success" && isWarningNote(run.error)) || run.status === "deferred") line.warn = true;
+    if ((run.status === "success" && (isWarningNote(run.error) || run.copyWaits)) || run.status === "deferred") line.warn = true;
     lines.push(line);
   }
   return lines;

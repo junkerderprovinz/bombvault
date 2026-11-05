@@ -18,6 +18,7 @@ import { providerName } from "../components/destinations/ProviderPicker";
 import { ConnectionCard } from "../components/storage/ConnectionCard";
 import { ConnectionWindow } from "../components/storage/ConnectionWindow";
 import { CopyCard } from "../components/storage/CopyCard";
+import { CopyDecision } from "../components/storage/CopyDecision";
 import { CredentialsCard } from "../components/storage/CredentialsCard";
 import { DirectCard } from "../components/storage/DirectCard";
 import { KeepCard } from "../components/storage/KeepCard";
@@ -37,6 +38,7 @@ import {
   type OkEnvelope,
   type StorageLocation,
 } from "../lib/api";
+import { waitingDomains } from "../lib/copyDecision";
 import { useT } from "../lib/i18n";
 import { REFUSAL_KEYS, REPO_GONE, offsiteVerdict } from "../lib/offsiteVerdict";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
@@ -190,6 +192,9 @@ function Location({ location, records }: { location: StorageLocation; records: L
           </div>
         </div>
         <VerdictLine verdict={test.verdict ?? (gone ? { ok: false, reason: t("placementCode.repoGone") } : refusal ? { ok: false, reason: t(refusal) } : null)} />
+        {waitingDomains([location]).map((domain) => (
+          <CopyDecision key={domain} domain={domain} />
+        ))}
         {(erasing || moveRun) && (
           <p className="text-sm text-accentText" role="status">
             {moveRun ? moveText(t, moveRun) : t("storage.remove.erasingNow")}

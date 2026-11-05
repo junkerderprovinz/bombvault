@@ -39,8 +39,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 function Where() {
-  const { pathname, search } = useLocation();
-  return <output>{pathname + search}</output>;
+  const { pathname, search, hash } = useLocation();
+  return <output>{pathname + search + hash}</output>;
 }
 
 /** Picks an action from the row's More menu. */
@@ -287,6 +287,38 @@ describe("NeedsCard", () => {
     expect(called("ackFailedCopies")).toEqual([[["t-containers", "t-flash"]]]);
     expect(changed).toHaveBeenCalledOnce();
     window.removeEventListener(ATTENTION_CHANGED_EVENT, changed);
+  });
+
+  it("asks whether the backups found of a section are this server's own", () => {
+    renderCard([{ is: "copyDecision", domain: "files" }]);
+
+    const row = within(screen.getByTestId("need-copy-decision"));
+    expect(row.getByText(en["copyDecision.title"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+    expect(row.getByText(en["copyDecision.body"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+    expect(row.queryByText(/paused/i)).toBeNull();
+  });
+
+  it("takes the backups as this server's own, which confirms the section's default", async () => {
+    const changed = vi.fn();
+    window.addEventListener(ATTENTION_CHANGED_EVENT, changed);
+    renderCard([{ is: "copyDecision", domain: "files" }]);
+
+    press(within(screen.getByTestId("need-copy-decision")), en["copyDecision.take"]);
+    await act(async () => {});
+
+    expect(called("confirmPlacementDefault")).toEqual([["files", []]]);
+    expect(screen.getByText(en["copyDecision.taken"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+    expect(changed).toHaveBeenCalledOnce();
+    window.removeEventListener(ATTENTION_CHANGED_EVENT, changed);
+  });
+
+  it("leads to the section's rules and confirms nothing on the way", () => {
+    renderCard([{ is: "copyDecision", domain: "files" }]);
+
+    press(within(screen.getByTestId("need-copy-decision")), en["copyDecision.check"]);
+
+    expect(screen.getByRole("status").textContent).toBe("/storage#copy-rules-files");
+    expect(called("confirmPlacementDefault")).toEqual([]);
   });
 
   it("names an anomaly's entry and says what it found", () => {

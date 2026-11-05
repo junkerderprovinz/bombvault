@@ -291,6 +291,7 @@ export function stagedApi<M extends object>(actual: M): M {
     getSpike: () => Promise.resolve({ checks: [], allOk: true }),
     backupEverythingNow: record("backupEverythingNow", { ok: true, started: true }),
     backupNow: record("backupNow"),
+    confirmPlacementDefault: record("confirmPlacementDefault"),
     setInclude: record("setInclude"),
     setBackupDeclined: vi.fn((kind: string, key: string, declined: boolean) => {
       if (Array.isArray(server.items)) {

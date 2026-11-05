@@ -553,15 +553,16 @@ var pauseReasons = map[pauseReason]string{
 	reasonDiscover:     "Discover rebuilt its items in a database that never backed them up or replicated them, so the rules that kept items from being copied are gone",
 }
 
-// notifyPlacementPaused says that a domain's replication waits for its default
-// to be confirmed, and where. Same gate and fan-out as notifyReplicationFailed.
+// notifyPlacementPaused says that a domain's copies wait for the person to take
+// the backups found as this server's own, and why. Same gate and fan-out as
+// notifyReplicationFailed.
 func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why pauseReason) {
 	c, err := s.NotifyConfig()
 	if err != nil || !c.Active() {
 		return
 	}
-	subject := "Off-site replication paused for " + domain
-	msg := fmt.Sprintf("Nothing in %s is copied off site: %s. Confirm the placement default under Settings, Storage locations, Placement defaults to resume.", domain, pauseReasons[why])
+	subject := "Off-site copies of " + domain + " wait for your decision"
+	msg := fmt.Sprintf("Nothing in %s is copied off site until you decide, because %s. Open BombVault to take the backups as this server's own or to check the rules first.", domain, pauseReasons[why])
 	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
 	if s.unraidGate(c.Unraid) {
 		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {

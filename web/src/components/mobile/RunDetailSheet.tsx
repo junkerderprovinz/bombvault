@@ -32,6 +32,7 @@ import { colorFor, glyphFor, glyphLabelKey } from "../ActivityLog";
 import { ProgressBar } from "../ProgressBar";
 import { IconClose } from "../navGlyphs";
 import { SnapshotFileTree } from "../SnapshotFileTree";
+import { CopyWaitsLink } from "../storage/CopyDecision";
 import { BottomSheet, type BottomSheetProps } from "./BottomSheet";
 import { SheetFoot } from "./SheetFoot";
 
@@ -668,6 +669,13 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
             dir={isOwnReason(run.error) ? undefined : "ltr"}
           >
             <RunReasonText reason={run.error} t={t} />
+          </p>
+        )}
+
+        {run.copyWaits && (
+          <p className="flex flex-wrap items-baseline gap-x-2 rounded-card bg-statusWarnBgSoft px-4 py-2 text-xs leading-relaxed text-statusWarn">
+            {t("copyDecision.runNote")}
+            <CopyWaitsLink run={run} />
           </p>
         )}
 

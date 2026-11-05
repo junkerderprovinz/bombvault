@@ -50,6 +50,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     testOffsiteTarget: vi.fn(),
     tamperTestOffsiteTarget: vi.fn(),
     startOverAtLocation: vi.fn(),
+    confirmPlacementDefault: vi.fn(),
   };
 });
 
@@ -72,6 +73,7 @@ const getRcloneSections = vi.mocked(api.getRcloneSections);
 const testOffsiteTarget = vi.mocked(api.testOffsiteTarget);
 const tamperTestOffsiteTarget = vi.mocked(api.tamperTestOffsiteTarget);
 const startOverAtLocation = vi.mocked(api.startOverAtLocation);
+const confirmPlacementDefault = vi.mocked(api.confirmPlacementDefault);
 
 const { StorageLocationPage } = await import("./StorageLocation");
 
@@ -1006,6 +1008,36 @@ describe("a location whose repository went away", () => {
     await waitFor(() => expect(startOverAtLocation).toHaveBeenCalledWith("destination:box"));
     expect(await screen.findByText("The repository does not exist yet. The first replication creates it.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Start a new repository here" })).toBeNull();
+  });
+
+  it("asks whether the backups found of a section are this server's own, and takes them on", async () => {
+    confirmPlacementDefault.mockResolvedValue({ ok: true });
+    stage(location({ sections: [section({ domain: "files", targetId: "t-files", awaitsDecision: true })] }));
+    await renderPage("destination:box");
+
+    const decision = within(screen.getByTestId("copy-decision"));
+    expect(decision.getByText(en["copyDecision.title"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+    expect(decision.getByText(en["copyDecision.body"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+    await click(decision.getByRole("button", { name: en["copyDecision.take"] }));
+
+    expect(confirmPlacementDefault).toHaveBeenCalledWith("files", []);
+    expect(await screen.findByText(en["copyDecision.taken"].replace("{domain}", en["nav.files"]))).toBeTruthy();
+  });
+
+  it("leads from the decision to the section's rules without taking anything on", async () => {
+    stage(location({ sections: [section({ domain: "files", targetId: "t-files", awaitsDecision: true })] }));
+    await renderPage("destination:box");
+
+    await click(within(screen.getByTestId("copy-decision")).getByRole("button", { name: en["copyDecision.check"] }));
+
+    expect(screen.getByText("the list")).toBeTruthy();
+    expect(confirmPlacementDefault).not.toHaveBeenCalled();
+  });
+
+  it("asks nothing while no copy here waits", async () => {
+    stage(location());
+    await renderPage("destination:box");
+    expect(screen.queryByTestId("copy-decision")).toBeNull();
   });
 
   it.each([

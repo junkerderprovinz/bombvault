@@ -1,7 +1,7 @@
 # Off-site & recovery
 
 !!! note "Off-site copies wait after a rebuild"
-    When the Emergency wizard or **Discover backups** rebuilds entries without the old settings, off-site copies of those sections pause until their default is confirmed. See [After a rebuild](#after-a-rebuild).
+    When the Emergency wizard or **Discover backups** rebuilds entries without the old settings, off-site copies of those sections wait until you take their backups as this server's own. See [After a rebuild](#after-a-rebuild).
 
 Local backups protect you from a lost container or a bad update. Off-site copies and a tested recovery kit protect you from the whole box, ransomware, or a fire. This page covers storage locations and off-site copies, making a copy tamper-proof, proving you can restore, pairing several servers, and getting everything back when BombVault itself is gone.
 
@@ -300,7 +300,9 @@ A ZFS replica is a copy off the premises, but not a backup with history. It keep
 
 ### After a rebuild {#after-a-rebuild}
 
-Copy choices live in BombVault's own settings. After a rebuild through **Discover backups** or the Emergency wizard without restored settings they are gone, and copying everything would send the entries you had left out to B2 again. Off-site copies of every rebuilt section therefore pause. The overview says so, and the **Storage locations per section** card offers **Confirm default** with a preview of what the next run copies and the names in the backups that have no entry, which you can leave out there. Only the confirmation ends the pause. Importing a settings file brings back rules and defaults but does not end it.
+Copy choices live in BombVault's own settings. After a rebuild through **Discover backups** or the Emergency wizard without restored settings they are gone, and copying everything would send the entries you had left out to B2 again. The same holds when a section that never copied off site from this database finds backups of its own at a storage location, or older ones in its own folder, for example after a location was added over the backups of an earlier install with the same `APP_KEY`. Off-site copies of that section then wait for your decision.
+
+**Needs you** on the overview and the page of each storage location the section copies to ask whether the backups are this server's own. **Take them as this server's own** confirms the section's default, and its copies run again from the next pass. **Check the rules first** leads to the section's line in **Storage locations per section**, where you see where each entry goes and can set a lost rule again on the entry's page. Copying keeps waiting there until you press **Take them as this server's own**, which first shows what the next run copies and the names in the backups that have no entry, which you can leave out. The newest backup of each entry that waits says so in its run, with a link to the decision, and a notification goes out when those are on. Importing a settings file brings back rules and defaults but does not take the decision for you.
 
 ## Delete protection (append-only) {#delete-protection-append-only}
 

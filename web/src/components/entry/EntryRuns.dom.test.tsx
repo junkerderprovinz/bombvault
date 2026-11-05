@@ -36,4 +36,16 @@ describe("EntryRuns", () => {
     renderWithProviders(<EntryRuns runs={[run({})]} />);
     expect(screen.queryByText(en["runReason.dataOutsideHost"], { exact: false })).toBeNull();
   });
+
+  it("says that a backup's off-site copy waits for the decision and leads to it", () => {
+    renderWithProviders(<EntryRuns runs={[run({ copyWaits: true, domain: "files", target: "photos" })]} />);
+    expect(screen.getByText(en["copyDecision.runNote"])).toBeTruthy();
+    expect(screen.getByRole("link", { name: en["copyDecision.decide"] }).getAttribute("href")).toBe("/storage#copy-rules-files");
+  });
+
+  it("says nothing of a decision for a run whose copy does not wait", () => {
+    renderWithProviders(<EntryRuns runs={[run({})]} />);
+    expect(screen.queryByText(en["copyDecision.runNote"])).toBeNull();
+    expect(screen.queryByRole("link", { name: en["copyDecision.decide"] })).toBeNull();
+  });
 });

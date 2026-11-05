@@ -108,6 +108,9 @@ type locationSection struct {
 	Own        []string          `json:"own"`
 	LastCopy   *copyState        `json:"lastCopy,omitempty"`
 	LastTamper *store.TamperTest `json:"lastTamper,omitempty"`
+	// AwaitsDecision marks a copy that waits for the user to take backups
+	// found from before this database as this server's own.
+	AwaitsDecision bool `json:"awaitsDecision,omitempty"`
 }
 
 // copyState is when a target last took a copy and whether one failed since.
@@ -290,12 +293,65 @@ func (s *Service) StorageLocations() ([]storageLocation, error) {
 			out = append(out, b.targetLocation(t))
 		}
 	}
+	waiting, err := s.domainsAwaitingDecision()
+	if err != nil {
+		return nil, err
+	}
 	for i := range out {
 		if out[i].Sections == nil {
 			out[i].Sections = []locationSection{}
 		}
+		for j, section := range out[i].Sections {
+			out[i].Sections[j].AwaitsDecision = section.Use == useCopy && waiting[section.Domain]
+		}
 		out[i].Gone = slices.ContainsFunc(out[i].repos, s.repoFoundGone)
 		out[i].Refused = s.lastCopyRefusal(out[i].Sections)
+	}
+	return out, nil
+}
+
+// domainsAwaitingDecision are the domains whose copies wait until their
+// default is confirmed.
+func (s *Service) domainsAwaitingDecision() (map[string]bool, error) {
+	defaults, err := s.store.ListPlacementDefaults()
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]bool{}
+	for _, d := range defaults {
+		if d.Paused() {
+			out[d.Domain] = true
+		}
+	}
+	return out, nil
+}
+
+// itemsAwaitingDecision are the items whose backups would be copied off site
+// but wait for that decision, by item id.
+func (s *Service) itemsAwaitingDecision() (map[string]bool, error) {
+	waiting, err := s.domainsAwaitingDecision()
+	if err != nil || len(waiting) == 0 {
+		return nil, err
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]bool{}
+	for domain := range waiting {
+		p, err := s.readPlacement(settings, domain)
+		if err != nil {
+			return nil, err
+		}
+		items, err := s.placedItems(settings, domain)
+		if err != nil {
+			return nil, err
+		}
+		for _, it := range items {
+			if len(p.copyTargets(it)) > 0 {
+				out[it.ID] = true
+			}
+		}
 	}
 	return out, nil
 }

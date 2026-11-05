@@ -33,11 +33,11 @@ describe("DiscoverFindings", () => {
   beforeEach(() => fake.reset());
   afterEach(cleanup);
 
-  it("names the paused domains and where their default is confirmed", () => {
+  it("names the sections whose copies wait for the decision and where it is made", () => {
     renderWithProviders(<DiscoverFindings paused={["containers", "files"]} leftOpen={[]} directRepos={[]} />);
     expect(
       screen.getByText(
-        "Off-site copies for Containers and Folders are paused until the default is confirmed under Storage locations."
+        "Off-site copies of Containers and Folders wait for your decision under Storage locations."
       )
     ).toBeTruthy();
   });

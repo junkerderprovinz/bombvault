@@ -5791,7 +5791,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 // errReplicationPaused and errNothingToCopy are the passes copyToOffsite ends
 // without a run, which a replication somebody started says up front.
 var (
-	errReplicationPaused = errors.New("off-site copies of this section are paused until its placement default is confirmed, so nothing was started")
+	errReplicationPaused = errors.New("off-site copies of this section wait for your decision about backups from before this database, so nothing was started")
 	errNothingToCopy     = errors.New("this section's own folder is switched off and its backups go straight to its storage locations, so there is nothing to copy")
 )
 

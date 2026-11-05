@@ -387,9 +387,9 @@ describe("PlacementRow", () => {
     expect(screen.queryByRole("button", { name: "Follow the default" })).toBeNull();
   });
 
-  it("shows the pause of its domain once", async () => {
+  it("says once that its section waits for the decision", async () => {
     renderRow(placementView({ paused: true, plan: placementPlan({ kind: "paused", warn: true }) }));
-    expect(await screen.findAllByText("Off-site paused until the default is confirmed.")).toHaveLength(1);
+    expect(await screen.findAllByText("Off-site copies wait for your decision about backups from before this database.")).toHaveLength(1);
   });
 
   it("shows only its sentence when the placement cannot be read", async () => {

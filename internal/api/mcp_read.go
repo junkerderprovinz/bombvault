@@ -1206,6 +1206,9 @@ func mcpRunRow(v runView) map[string]any {
 	if v.Bottleneck != nil {
 		row["bottleneck"] = bottleneckSentence(v.Bottleneck)
 	}
+	if v.CopyWaits {
+		row["copyWaits"] = true
+	}
 	return row
 }
 
