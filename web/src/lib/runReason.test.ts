@@ -6,7 +6,6 @@ import {
   backupNotes,
   isOwnReason,
   dataOutsideHost,
-  backupNotes,
   isWarningNote,
   runReason,
   runReasonParts,
@@ -27,6 +26,20 @@ function children(node: unknown): unknown[] {
   const kids = (node as ElementNode).props?.children;
   return Array.isArray(kids) ? kids : [kids];
 }
+
+describe("the notes of a restored stack member", () => {
+  it("say it stayed stopped and why the project folder failed", () => {
+    const left = restoreNotes("the project folder of this stack did not come back, so the container was left stopped: restic restore failed");
+    expect(left.stayedStopped).toBe(true);
+    expect(left.folderFailed).toBe("restic restore failed");
+  });
+
+  it("say it stayed stopped for a database without its data and for its dependents", () => {
+    expect(restoreNotes("restored without its data, because only database dumps of it exist: start it and import a dump").stayedStopped).toBe(true);
+    expect(restoreNotes('restored and left stopped: not started: dependency "pg" was not restored/started').stayedStopped).toBe(true);
+    expect(restoreNotes("").stayedStopped).toBe(false);
+  });
+});
 
 describe("runReason", () => {
   it("translates database dump reasons with detail", () => {

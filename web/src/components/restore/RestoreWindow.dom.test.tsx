@@ -38,6 +38,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   return {
     ...actual,
     openedWithoutPassword: vi.fn(() => false),
+    openedAsPairedPhone: vi.fn(() => false),
     checkRestore: vi.fn(),
     restore: vi.fn(),
     restoreVM: vi.fn(),
@@ -238,6 +239,7 @@ beforeEach(() => {
   zfsRestorePoints.mockResolvedValue({ ok: true, points: [] } as never);
   vi.mocked(api.zfsHostDatasets).mockResolvedValue({ ok: false } as never);
   listSnapshotFiles.mockResolvedValue({ ok: true, files: [{ path: "/config/app.db", type: "file", size: 10 }] } as never);
+  vi.mocked(api.openedAsPairedPhone).mockReturnValue(false);
   vi.mocked(api.listDbDumps).mockResolvedValue({ ok: true, dumps: [] });
   vi.mocked(api.listFlashPlugins).mockResolvedValue({ ok: true, plugins: [] } as never);
   vi.mocked(api.getTimelineDeletePreview).mockResolvedValue({ ok: true, delete: [], others: [] } as never);
@@ -318,6 +320,30 @@ describe("a container", () => {
     expect(screen.queryByText(/HTTP 403/)).toBeNull();
   });
 
+  it("gives a paired phone a new folder inside the restore folder, with no picker", async () => {
+    vi.mocked(api.openedAsPairedPhone).mockReturnValue(true);
+    await open(entryOf("container", { settings: { ...SETTINGS, restoreFolders: { containers: "user/restore/containers" } } }));
+    await press(toFolder()!);
+    expect(within(dialog()).queryByRole("textbox")).toBeNull();
+    expect(within(dialog()).getByText(/^user\/restore\/containers\/immich-\d{8}-\d{6}$/)).toBeTruthy();
+    const start = () => within(dialog()).getByRole("button", { name: en["restoreWindow.toFolderNamed"] }) as HTMLButtonElement;
+    await ready(start);
+    expect(lastCheck().targetPath).toMatch(/^user\/restore\/containers\/immich-/);
+    await press(start());
+    expect(restoreContainerToPath).toHaveBeenCalledWith("immich", NEWEST, expect.stringMatching(/^user\/restore\/containers\/immich-/), "local");
+  });
+
+  it("asks to back up the current state before ticked files replace the original", async () => {
+    await open(entryOf("container"));
+    await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
+    await waitFor(() => expect(listSnapshotFiles).toHaveBeenCalled());
+    await press(await within(dialog()).findByRole("checkbox", { name: "/config" }));
+    await press(target("replace")!);
+    expect(screen.getByRole("switch", { name: en["restoreWindow.backupFirst"] })).toBeTruthy();
+    expect(within(dialog()).getByText(new RegExp(en["restoreWindow.says.filesStop"]))).toBeTruthy();
+    await waitFor(() => expect(lastCheck()).toMatchObject({ kind: "containerFiles", backupFirst: true }));
+  });
+
   it("sends ticked files to the files route, which knows no copy next to the original", async () => {
     await open(entryOf("container"));
     await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
@@ -329,7 +355,7 @@ describe("a container", () => {
     const start = () => within(dialog()).getByRole("button", { name: en["restoreWindow.toFolderNamed"] }) as HTMLButtonElement;
     await ready(start);
     await press(start());
-    expect(restoreContainerFiles).toHaveBeenCalledWith("immich", NEWEST, ["/config"], "user/bombvault/restore", true, "local");
+    expect(restoreContainerFiles).toHaveBeenCalledWith("immich", NEWEST, ["/config"], "user/bombvault/restore", true, "local", undefined);
   });
 
   it("lists the database dumps of a database", async () => {

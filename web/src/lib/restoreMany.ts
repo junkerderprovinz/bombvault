@@ -1,11 +1,11 @@
 // Restoring several entries at once from the Restore page: which entries can
 // join, which backup each one takes, and where it goes.
 
-import { BEFORE_RESTORE_TAG, type AnomalyView, type BackupItem, type TimelinePlace, type TimelineRow } from "./api";
+import type { AnomalyView, BackupItem, TimelinePlace, TimelineRow } from "./api";
 import { ENTRY_KIND, type EntryKind } from "./backupEntry";
 import { isGone } from "./backupList";
 import { rowTime } from "./entry";
-import { recommend } from "./restorePlan";
+import { recommend, takenBeforeRestore } from "./restorePlan";
 import { autoMark, newestId, sourceOfPlace } from "./timeline";
 
 /** Why an entry with backups still cannot join a restore of several. A ZFS
@@ -46,15 +46,6 @@ export function whereFor(item: BackupItem, where: ManyWhere): ManyWhere {
 export function rowAt(rows: TimelineRow[], at: number | null): TimelineRow | undefined {
   if (at === null) return rows[0];
   return rows.find((row) => rowTime(row) <= at);
-}
-
-/** takenBeforeRestore is a backup BombVault took of what a restore was about
- *  to replace, which every copy of it is tagged with. */
-export function takenBeforeRestore(row: TimelineRow): boolean {
-  return (
-    row.places.length > 0 &&
-    row.places.every((mark) => mark.tags.some((tag) => tag === BEFORE_RESTORE_TAG || tag.startsWith(`${BEFORE_RESTORE_TAG}:`)))
-  );
 }
 
 export interface ManyPick {

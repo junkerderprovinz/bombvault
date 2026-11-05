@@ -21,7 +21,11 @@ function sentences(
       : ["restoreWindow.says.besideFolder", "restoreWindow.untouched"];
   }
   const first: TranslationKey[] = o.backupFirst ? ["restoreWindow.says.backupFirst"] : [];
-  if (what === "files") return ["restoreWindow.says.replaceFiles"];
+  if (what === "files") {
+    return kind === "container" && o.exists
+      ? ["restoreWindow.says.replaceFiles", "restoreWindow.says.filesStop", ...first]
+      : ["restoreWindow.says.replaceFiles"];
+  }
   if (kind === "container" && !o.exists) {
     return [
       "restoreWindow.says.createContainer",

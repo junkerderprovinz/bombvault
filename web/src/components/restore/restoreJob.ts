@@ -75,7 +75,7 @@ export function checkRequest(c: RestoreChoice): RestoreCheckRequest | null {
   const targetPath = c.where === "folder" ? c.folder : "";
   switch (c.kind) {
     case "container":
-      if (c.what === "files") return { kind: "containerFiles", name, snapshotId, source, paths: c.paths, targetPath };
+      if (c.what === "files") return { kind: "containerFiles", name, snapshotId, source, paths: c.paths, targetPath, ...options(c) };
       if (c.where === "folder") return { kind: "containerTo", name, snapshotId, source, targetPath };
       return { kind: "container", name, snapshotId, source, ...options(c) };
     case "vm":
@@ -102,7 +102,7 @@ export function startRestore(c: RestoreChoice): Promise<StartAnswer> {
   const stopped = c.where === "replace" && c.leaveStopped;
   switch (c.kind) {
     case "container":
-      if (c.what === "files") return restoreContainerFiles(id, snapshotId, c.paths, targetPath, true, source);
+      if (c.what === "files") return restoreContainerFiles(id, snapshotId, c.paths, targetPath, true, source, options(c).backupFirst);
       if (c.where === "folder") return restoreContainerToPath(id, snapshotId, targetPath, source);
       return restore(id, snapshotId, true, source, stopped, c.withoutRuntime, options(c));
     case "vm":
