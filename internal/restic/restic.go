@@ -2632,8 +2632,7 @@ func snapshotDirMode(m Mode) Mode {
 // RestoreAll restores a whole snapshot into target, leaving out what the
 // exclude patterns match.
 func (r Restic) RestoreAll(ctx context.Context, repo, snapshotID, target string, m Mode, excludes ...string) error {
-	_, err := r.run(ctx, RestoreAllArgs(repo, snapshotID, target, m, excludes...), m)
-	return err
+	return r.runRestore(ctx, RestoreAllArgs(repo, snapshotID, target, m, excludes...), target, m)
 }
 
 // RestoreVerify restores the given files of a snapshot into target and has
@@ -2884,8 +2883,7 @@ func (r Restic) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreeP
 	if file {
 		return r.restoreFileTo(ctx, repo, snapshotID, subtreePath, target, m)
 	}
-	_, err = r.run(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), m)
-	return err
+	return r.runRestore(ctx, RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target, m), target, m)
 }
 
 // RestoreSubtreeInclude restores ONLY includePath (relative to subtreePath) from a
@@ -2894,8 +2892,7 @@ func (r Restic) RestoreSubtreeTo(ctx context.Context, repo, snapshotID, subtreeP
 // RestoreSubtreeIncludeArgs). Used by the files-domain selective restore: each
 // selected path becomes an includePath relative to the set's backed-up root.
 func (r Restic) RestoreSubtreeInclude(ctx context.Context, repo, snapshotID, subtreePath, includePath, target string, m Mode) error {
-	_, err := r.run(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, target, m), m)
-	return err
+	return r.runRestore(ctx, RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, target, m), target, m)
 }
 
 // Snapshots lists snapshots in the repository and returns them as a slice.
@@ -3038,8 +3035,7 @@ func parseFileEntries(out []byte) []FileEntry {
 // RestoreInclude restores ONLY includePath from a snapshot to target. With
 // target "/" this writes the file back to its original absolute location.
 func (r Restic) RestoreInclude(ctx context.Context, repo, snapshotID, includePath, target string, m Mode) error {
-	_, err := r.run(ctx, RestoreIncludeArgs(repo, snapshotID, includePath, target, m), m)
-	return err
+	return r.runRestore(ctx, RestoreIncludeArgs(repo, snapshotID, includePath, target, m), target, m)
 }
 
 // Forget removes the given snapshots from the repo, optionally pruning the freed
