@@ -23,7 +23,7 @@ BombVault は、Unraid をはじめ、TrueNAS SCALE、ZimaOS、通常の Linux �
 | **コンテナ** | Appdata ディレクトリに加え、コンテナ定義（イメージ、環境変数、ポート、ラベル、ボリューム）。 |
 | **VM** | VM ディスクイメージ、XML 定義、UEFI NVRAM を、SSH 経由でバックアップ（libvirt のマウントなし）。 |
 | **フラッシュ** | USB フラッシュ全体（`/boot`）：OS、ライセンス、アレイ設定、共有、ネットワークおよびプラグイン設定。 |
-| **セルフバックアップ** | BombVault 自身の `/config`：設定データベース、保存先の認証情報、libvirt の SSH 鍵ペア。 |
+| **セルフバックアップ** | BombVault 自身の `/config`：設定データベース、保存先の認証情報、libvirt の SSH 鍵ペア、ZFS サーバーの鍵と固定したホスト鍵、証明書。 |
 | **フォルダー** | サーバー上の任意のフォルダーをフォルダーセットとして保存します。それぞれに除外パターンを任意で設定できます。 |
 | **ZFS データセット** | データセットとその下のすべてのデータセットを 1 つの ZFS スナップショットから読み取り、フォルダーと同じように保存します。[ZFS データセット](zfs-datasets.md)を参照してください。 |
 
@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault は **GNU Affero General Public
 - **Issue:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "ホストに対する root 相当の制御"
-    Docker ソケットを通じて、BombVault はコンテナの停止、削除、再作成を行い、appdata の読み書きができます。また VM バックアップのためにホストに SSH でログインして `virsh` を実行します。その Web UI に到達できる者は、実質的にホストの root 権限を持つことになります。BombVault は信頼できる、外部に公開されていないネットワークでのみ実行し、**設定、セキュリティ** でログインパスワードを設定してください。リカバリーキット、鍵の預け入れ、保存先のバックアップの削除にはパスワードが必要です。完全なセキュリティモデルについては[設定](configuration.md#security-model)を参照してください。
+    Docker ソケットを通じて、BombVault はコンテナの停止、削除、再作成を行い、appdata の読み書きができます。また VM バックアップのためにホストに SSH でログインして `virsh` を実行します。その Web UI に到達できる者は、実質的にホストの root 権限を持つことになります。BombVault は信頼できる、外部に公開されていないネットワークでのみ実行し、**設定、セキュリティ** でログインパスワードを設定してください。リカバリーキット、鍵の預け入れ、フラッシュ ZIP、フラッシュバックアップやセルフバックアップのエクスポート、保存先のバックアップの削除にはパスワードが必要です。完全なセキュリティモデルについては[設定](configuration.md#security-model)を参照してください。
