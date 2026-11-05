@@ -3205,6 +3205,18 @@ func (s *Service) OffsiteInUse(domain string) bool {
 		return true
 	}
 	return s.offsiteRepoFor(domain, settings) != ""
+// oldestUncopiedTarget is when the longest waiting of the domain's targets with
+// no successful copy was set up, 0 when none waits.
+func (s *Service) oldestUncopiedTarget(domain string) int64 {
+	var since int64
+	for _, t := range s.offsiteTargetsFor(domain) {
+		if _, found, err := s.store.LatestSuccessfulOffsiteRunForTarget(domain, t.ID); err == nil && !found && (since == 0 || t.CreatedAt < since) {
+			since = t.CreatedAt
+		}
+	}
+	return since
+}
+
 }
 
 // noOffsiteRepoErr says why a domain has no off-site repo to copy to.
@@ -3660,9 +3672,11 @@ type protInputs struct {
 //     the claim is "the last successful backup has a corresponding successful
 //     off-site copy". It goes overdue only once the gap between the last backup and
 //     the last successful replication exceeds a grace of 2× the backup period
-//     (conservative: a backup replicating shortly after is fine; a never-replicated
-//     backup is flagged only once it has sat unreplicated beyond the grace). Amber,
-//     never red.
+//     (conservative: a backup replicating shortly after is fine). Amber, never red.
+//   - A copy that never succeeded reads "never" while it has its first chance. It
+//     reads "overdue" once its attempt failed or the target has waited beyond the
+//     grace, counted from when the target was set up, since daily backups renew
+//     the last backup's stamp and would keep it from ever falling behind.
 //
 // A paused domain reports "paused". With copy rules each enabled target is judged
 // by the items copied there, and the worst of them counts; a target no item is
@@ -3675,11 +3689,11 @@ func replicationState(now int64, in protInputs) string {
 		return "paused"
 	}
 	if !in.byTarget {
-		return targetReplicationState(now, in, in.lastBackupAt, in.lastReplicationAt)
+		return targetReplicationState(now, in, in.lastBackupAt, in.lastReplicationAt, in.copySince)
 	}
 	worst := ""
 	for _, t := range in.targets {
-		if st := targetReplicationState(now, in, t.lastBackupAt, t.lastReplicationAt); replicationRank(st) > replicationRank(worst) {
+		if st := targetReplicationState(now, in, t.lastBackupAt, t.lastReplicationAt, t.since); replicationRank(st) > replicationRank(worst) {
 			worst = st
 		}
 	}
@@ -3687,14 +3701,21 @@ func replicationState(now int64, in protInputs) string {
 }
 
 // targetReplicationState is the currency of one target, or of the domain as a
-// whole, from the last successful backup and the last successful copy.
-func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt int64) string {
+// whole, from the last successful backup, the last successful copy and when the
+// target was set up (0 when that is not known).
+func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt, since int64) string {
+	neverCopied := func(grace int64) string {
+		if in.copyFailed || (since > 0 && now-since > grace) {
+			return "overdue"
+		}
+		return "never"
+	}
 	if in.offsitePeriod > 0 {
 		switch rpoStatus(now, lastReplicationAt, in.offsitePeriod, true) {
 		case "overdue":
 			return "overdue"
 		case "never":
-			return "never"
+			return neverCopied(in.offsitePeriod * 2)
 		default:
 			return "ok"
 		}
@@ -3705,12 +3726,7 @@ func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicat
 	}
 	grace := in.backupPeriod * 2
 	if lastReplicationAt == 0 {
-		// Never replicated: overdue only once the backup has sat unreplicated > grace
-		// (a just-made first backup replicating shortly after must not instantly flag).
-		if now-lastBackupAt > grace {
-			return "overdue"
-		}
-		return "ok"
+		return neverCopied(grace)
 	}
 	if lastReplicationAt < lastBackupAt && lastBackupAt-lastReplicationAt > grace {
 		return "overdue"
@@ -3769,6 +3785,8 @@ func protectionLevel(now int64, in protInputs) string {
 		}
 	}
 	// An append-only claim no check looks at, and a copy anyone can delete that
+	copySince         int64 // when the oldest target with no successful copy was set up; 0 = unknown
+	copyFailed        bool  // the newest replication attempt failed
 	// nobody accepted, are gaps the user can close, not proven losses.
 	if (in.offsiteImmutable && !in.hadTamper) || in.deleteGap {
 		return "amber"
@@ -4166,6 +4184,7 @@ func (s *Service) runDomains() map[string]string {
 	if ds, err := s.store.ListZFSDatasets(); err == nil {
 		for _, d := range ds {
 			domain[d.ID] = zfsDomain
+			copySince:         s.oldestUncopiedTarget(d.name),
 		}
 	}
 	return domain
@@ -4173,6 +4192,9 @@ func (s *Service) runDomains() map[string]string {
 
 // bucketRunsByDay is the pure heatmap-bucketing core: it produces one HistoryDay
 // for EVERY local calendar day in [startUnix, endUnix] (ascending), tallying
+		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
+			in.copyFailed = run.FinishedAt != 0 && !run.OK
+		}
 // each backup run's success/failed outcome into its domain via the target_id →
 // domain map. Days with no runs come back with zeros so the frontend gets a
 // contiguous grid. Non-backup kinds and "running" runs are ignored, as are runs
@@ -4714,21 +4736,6 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		}
 		return errors.New("no repository to replicate")
 	}
-	if perr == nil {
-		var paused bool
-		var pending []string
-		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
-			return nil
-		}
-		if perr == nil && len(pending) > 0 {
-			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
-				return slices.Contains(pending, t.ID)
-			})
-			if len(targets) == 0 {
-				perr = errNoTargetVisited
-			}
-		}
-	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
 	// the reserved domain target id, like prune/verify) so the replication shows
 	// up in the dashboard Activity Log/Run History as persisted history. This stays
@@ -4910,6 +4917,27 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 // startedAt is copyToOffsite's single progBegin capture, threaded through so this
 // target's live copy-progress events (see progBeginCopySink) carry the SAME
 // StartedAt as the domain-level begin/heartbeat/terminal events. lastCopy is
+	if perr == nil {
+		var paused bool
+		var pending []string
+		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
+			// A pass that stops here copied nothing and failed at nothing, like one
+			// that finds the section paused from the start.
+			if dErr := s.store.DeleteRun(activityRunID); dErr != nil {
+				log.Printf("api: offsite %s: could not drop the activity run of a paused pass: %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+			activityRunID = ""
+			return nil
+		}
+		if perr == nil && len(pending) > 0 {
+			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
+				return slices.Contains(pending, t.ID)
+			})
+			if len(targets) == 0 {
+				perr = errNoTargetVisited
+			}
+		}
+	}
 // copyToOffsite's shared heartbeat state (see offsiteLastCopy) that
 // progBeginCopySink updates with every real percentage this target reports;
 // a nil lastCopy (as a direct unit test of this function may pass) simply

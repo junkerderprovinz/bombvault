@@ -62,13 +62,20 @@ type digestStats struct {
 	// nobody has settled yet, whenever they were raised: the weekly reminder
 	// that a critical is still open and that deleting old backups is waiting.
 	AnomaliesCritical, AnomaliesWarning, AnomaliesHeld int
+	// Overdue holds one sentence per section whose backups have fallen behind,
+	// as the overview and the overdue alert judge it.
+	Overdue []string
 }
 
 // needsAttention reports whether the digest names something to act on beyond
-// the failed runs: an off-site copy that is stale or never made, a replica
-// behind, an open critical or deleting that waits on a finding. A schedule
-// that stopped firing fails no run, so only these lines tell of it.
+// the failed runs: backups that fell behind, an off-site copy that is stale or
+// never made, a replica behind, an open critical or deleting that waits on a
+// finding. A schedule that stopped firing fails no run, so only these lines
+// tell of it.
 func (st digestStats) needsAttention() bool {
+	if len(st.Overdue) > 0 {
+		return true
+	}
 	for _, line := range st.Offsite {
 		if line.LastOK == 0 || line.Stale {
 			return true
@@ -196,6 +203,18 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		stats.Offsite = append(stats.Offsite, line)
 	}
 	stats.Replicas, stats.ReplicasBehind = s.zfsReplicaDigestLines(stats.Now, settings)
+	for _, d := range s.statusDomains(settings) {
+		last, lErr := s.lastDomainSuccess(d)
+		if lErr != nil {
+			log.Printf("api: digest: last success of %s: %v", d.name, lErr) //nolint:gosec // G706: domain is a fixed literal
+			continue
+		}
+		period, _ := s.domainWindow(d.name, d.schedule, settings)
+		v := s.judgeSection(d, settings, stats.Now, last, period)
+		if v.status == "overdue" && !s.deferralHolds(d.name, stats.Now) {
+			stats.Overdue = append(stats.Overdue, overdueMessage(d.name, v, stats.Now))
+		}
+	}
 
 	counts, _, err := s.store.OpenAnomalyCounts()
 	if err != nil {
@@ -255,6 +274,10 @@ func composeDigest(stats digestStats) string {
 		if stats.BackupBytes > 0 {
 			fmt.Fprintf(&b, "New backup data: %s\n", humanBytes(stats.BackupBytes))
 		}
+	}
+
+	for _, line := range stats.Overdue {
+		b.WriteString(line + "\n")
 	}
 
 	if len(stats.Offsite) > 0 {
