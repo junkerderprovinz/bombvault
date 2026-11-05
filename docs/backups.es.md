@@ -9,10 +9,10 @@ Todo lo que BombVault copia está en una sola lista en **Copias de seguridad**: 
 
 | Sección | Qué se guarda |
 |---|---|
-| **Contenedores** | La carpeta appdata más la definición del contenedor: imagen, variables, puertos, etiquetas y volúmenes. La tarjeta **Carpetas a copiar** de la pestaña **Ajustes** del contenedor marca exactamente qué carpetas cubre la copia, con un recuento en vivo de las rutas y una lista de lo que dejaste fuera. Los datos que un contenedor guarda fuera de los datos del host, por ejemplo en un ixVolume de TrueNAS, no se copian, y la ejecución nombra las carpetas que dejó fuera. |
+| **Contenedores** | La carpeta appdata más la definición del contenedor: imagen, variables, puertos, etiquetas y volúmenes. La tarjeta **Carpetas a copiar** de la pestaña **Ajustes** del contenedor marca exactamente qué carpetas cubre la copia, con un recuento en vivo de las rutas y una lista de lo que dejaste fuera. Los datos que un contenedor guarda fuera de los datos del host, por ejemplo en un ixVolume de TrueNAS o en un proyecto de Compose bajo `/opt`, no se copian, y la ejecución nombra las carpetas que dejó fuera. La ejecución también nombra una carpeta dentro de los datos del host que ahora mismo no existe. Las rutas del sistema como `/etc/localtime` o el socket de Docker no cuentan como datos. |
 | **VMs** | Las imágenes de disco, la definición XML y la NVRAM UEFI, con un apagado ordenado o una instantánea en vivo, por SSH. Consulta [Copias de VMs](vm-backup-ssh-setup.md). |
 | **Flash** | Solo Unraid. Todo el USB flash (`/boot`): sistema operativo, licencia, configuración del array, recursos compartidos, red y configuración de plugins. |
-| **Autocopia** | El propio `/config` de BombVault: su base de datos de ajustes, las credenciales de los destinos y el par de claves SSH de libvirt, con una instantánea hecha con SQLite `VACUUM INTO` para que la base de datos nunca se capture a mitad de una escritura. |
+| **Autocopia** | El propio `/config` de BombVault: su base de datos de ajustes, las credenciales de los destinos, el par de claves SSH de libvirt, la clave y las claves de host fijadas de los servidores ZFS y los certificados, con una instantánea hecha con SQLite `VACUUM INTO` para que la base de datos nunca se capture a mitad de una escritura. |
 | **Carpetas** | Cualquier carpeta del servidor como conjunto de carpetas, por ejemplo un recurso compartido, tus documentos o una biblioteca de fotos, con patrones de exclusión opcionales. Los conjuntos de carpetas tienen calendarios, retención, copias externas, comprobaciones y simulacros de restauración como todo lo demás. |
 | **Conjuntos de datos ZFS** | Un conjunto de datos y todos los que tiene debajo, leídos de una sola instantánea ZFS para que todos procedan del mismo instante, y guardados con restic como una carpeta. Un elemento ZFS también puede mantener una réplica exacta a nivel de bloque en un segundo servidor ZFS. Consulta [Conjuntos de datos ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Los elementos que ya no están instalados pero aún tienen copias aparecen apart
 La acción principal de la página flota abajo a la derecha: **Copiar todo ahora** inicia una ejecución sobre todas las secciones activadas. **Más** contiene el resto:
 
 - **Seleccionar** inicia una selección, mira más abajo.
-- **Descubrir copias** lee lo que guardan los destinos y reconstruye elementos a partir de ello, por ejemplo tras una instalación nueva. Las copias externas de las secciones reconstruidas se pausan hasta que confirmes su valor predeterminado, consulta [Después de una reconstrucción](offsite-recovery.md#after-a-rebuild).
+- **Descubrir copias** lee lo que guardan los destinos y reconstruye elementos a partir de ello, por ejemplo tras una instalación nueva. Un contenedor sin datos propios no tiene instantánea, y vuelve a partir de la definición copiada junto al repositorio. Las copias externas de las secciones reconstruidas esperan entonces hasta que adoptes sus copias como propias de este servidor, consulta [Después de una reconstrucción](offsite-recovery.md#after-a-rebuild).
 - **Conexión ZFS con este servidor** abre la prueba SSH de la sección ZFS, consulta [Conjuntos de datos ZFS](zfs-datasets.md#requirements).
 - **Replicar todo ahora**, con el mosaico ZFS elegido, envía la réplica de cada elemento ZFS.
 
@@ -98,7 +98,7 @@ Las tarjetas de abajo dependen del tipo de elemento:
 | Contenedor | **Carpetas a copiar** (qué carpetas asignadas se copian, con **Omitir carpetas de caché (CACHEDIR.TAG)**), **Patrones de exclusión**, **Detener otros contenedores**, **Comandos antes y después**, **Base de datos**, **Cuando la app está ocupada**, **Actualizar tras una copia de seguridad correcta**, **Instantánea en vez de parada**, **Nombres anteriores** |
 | VM | **VM** con **Método** (**Ordenado (apagado)** o **Instantánea en vivo**) y **Solo bloques modificados**, consulta la [guía de copias de VMs](vm-backup-ssh-setup.md#per-vm-method) |
 | Conjunto de carpetas | **Carpeta** y **Patrones de exclusión** |
-| Unidad flash | **Exportación de Flash a zip**, que escribe cada copia del flash como un `.zip` normal en una carpeta que eliges |
+| Unidad flash | **Exportación de Flash a zip**, que escribe cada copia del flash como un `.zip` normal en una carpeta que eliges, de una sola vez para que una herramienta de sincronización nunca vea medio archivo. Una copia del flash que contiene menos de lo que debería deja el último ZIP en su sitio, y la ejecución de la exportación lo indica. |
 | Conjunto de datos ZFS | los conjuntos de datos hijos, los contenedores que detener y los comandos alrededor de la instantánea, **Réplica** y **Probar el acceso a instantáneas**, consulta [Conjuntos de datos ZFS](zfs-datasets.md) |
 
 Los ajustes se guardan solos conforme los cambias.
@@ -119,7 +119,7 @@ Los ajustes se guardan solos conforme los cambias.
 
 ## Patrones de exclusión {#excludes}
 
-La tarjeta **Patrones de exclusión** acepta un patrón por línea. Escribe las rutas como las ves dentro del contenedor, como `/config/Library/Application Support/Plex Media Server/Cache`, o un nombre suelto como `.git`, que coincide a cualquier profundidad. Una vista previa bajo el campo muestra a qué se resuelve cada línea y avisa cuando una línea no coincide con nada o excluiría todo. Una línea con `/` o `*`, o una que nombre una carpeta copiada entera, se ignora, así que una exclusión nunca puede vaciar una copia. Para dejar fuera una carpeta entera, desmárcala mejor en **Carpetas a copiar**.
+La tarjeta **Patrones de exclusión** acepta un patrón por línea. Escribe las rutas como las ves dentro del contenedor, como `/config/Library/Application Support/Plex Media Server/Cache`, o un nombre suelto como `.git`, que coincide a cualquier profundidad. En un conjunto de carpetas, escribe la ruta como la conoce el host, como `/mnt/user/data/cache`. Una vista previa bajo el campo muestra a qué se resuelve cada línea y avisa cuando una línea no coincide con nada o excluiría todo. Una línea con `/` o `*`, o una que nombre una carpeta copiada entera, se ignora, así que una exclusión nunca puede vaciar una copia. Para dejar fuera una carpeta entera, desmárcala mejor en **Carpetas a copiar**.
 
 Para imágenes conocidas como Plex, Jellyfin, Sonarr, Radarr, Immich y Nextcloud, la tarjeta ofrece las carpetas que la app vuelve a llenar por sí sola, como cachés, registros y miniaturas. No se excluye nada hasta que pulsas **Excluir selección**.
 
@@ -137,6 +137,8 @@ Un volcado fallido no hace fallar la copia. Aparece como una ejecución fallida 
 
 - **Comandos antes y después** se ejecutan dentro del contenedor con `sh -c`, por ejemplo para volcar una caché al disco. Un comando fallido antes de la copia la aborta. Un comando antes de la copia que termina con el código 75 aplaza una copia programada en su lugar, mira más abajo.
 - **Detener otros contenedores** nombra contenedores que detener mientras se copia este, como su base de datos. Después vuelven a arrancar en su orden `depends_on` de Compose, y de forma predeterminada cada uno tiene que informar de que está sano antes de que arranque el siguiente. La espera y su tiempo límite están en **Reinicio tras la copia de seguridad** en la tarjeta **Orden** de **Ajustes, Calendario**.
+- Un contenedor que comparte el espacio de nombres de red, PID o IPC de otro que se detiene, mediante `--net=container:` o `network_mode: service:` de Compose, se detiene y arranca con él aunque no esté en la lista, y arranca después del contenedor al que se une. Un contenedor reiniciado recibe una red nueva, y uno que siguiera en marcha en la red antigua solo tendría su loopback. La lista en sí se queda como la configuraste. Si no se pudo detener un contenedor así, la ejecución indica que no tiene red hasta que se reinicie. Lo mismo vale para el propio contenedor de BombVault, que nunca se detiene a sí mismo y no se puede poner en la lista.
+- Un contenedor que después no vuelve a arrancar se nombra en la ejecución y en una notificación, también cuando la propia copia falló.
 
 ## Cuando la app está ocupada {#app-busy}
 
@@ -177,7 +179,7 @@ Para tu propia comprobación, haz que el **Comando pre-copia** termine con el c�
 restic sigue siendo el motor, pero una exportación te da una copia que no necesita ni BombVault ni restic.
 
 - **Exportar contenedor** y **Exportar VM** bajo **Más** en la página de un elemento escriben una copia tal como está ahora, junto al repositorio: las carpetas a copiar del contenedor más su plantilla de Unraid, o las imágenes de disco de la VM más su definición, restaurable con `virsh define`.
-- **Exportar** en una instantánea escribe una copia guardada en la carpeta de exportación del servidor, como tar, zip o un repositorio restic propio, y puede tomar una instantánea o todas.
+- **Exportar** en una instantánea escribe una copia guardada en la carpeta de exportación del servidor, como tar, zip o un repositorio restic propio, y puede tomar una instantánea o todas. Una copia del flash y una autocopia contienen claves, así que exportarlas requiere una contraseña de acceso e iniciar sesión en la instancia.
 
 Las exportaciones son archivos normales por defecto. **Cifrar exportaciones con age** en **Ajustes, Sistema** las sella, el ZIP del flash incluido, para los destinatarios que indiques, cada uno una clave pública age o una clave pública SSH. Las descifras más tarde fuera del servidor con la clave privada correspondiente. Con el cifrado activado y ningún destinatario válido, una exportación falla con un error claro en lugar de escribir nunca archivos sin cifrar.
 

@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Cada VM tiene un **Método** en la tarjeta **VM** de su pestaña Ajustes (abre la VM en **Copias de seguridad**):
 
-- **Ordenado (apagado)** es el valor predeterminado. Apaga la VM, copia los discos y la vuelve a iniciar, así que la copia siempre es coherente. Espera hasta diez minutos a que el invitado se apague y nunca fuerza el apagado. Un invitado que sigue funcionando pasado ese tiempo se deja en paz, y esa copia falla con el motivo.
-- **Instantánea en vivo** copia una VM en ejecución mediante una instantánea externa y `blockcommit`. Necesita el agente invitado de qemu en la VM, para una instantánea con el sistema de archivos en reposo, y el disco en `/mnt/cache` o `/mnt/diskX`, no en `/mnt/user`. En una VM apagada, Instantánea en vivo pasa a Ordenado por sí sola, y cuando no se puede hacer la instantánea, también.
+- **Ordenado (apagado)** es el valor predeterminado. Apaga la VM, copia los discos y la vuelve a iniciar, así que la copia siempre es coherente. Espera hasta diez minutos a que el invitado se apague y nunca fuerza el apagado. Un invitado que sigue funcionando pasado ese tiempo se deja en paz, y esa copia falla con el motivo. Si el invitado se apaga dentro de la hora siguiente, BombVault lo vuelve a arrancar. Si ese arranque falla, la ejecución fallida lo indica.
+- **Instantánea en vivo** copia una VM en ejecución mediante una instantánea externa y `blockcommit`. Necesita el disco en `/mnt/cache` o `/mnt/diskX`, no en `/mnt/user`. Con el agente invitado de qemu en la VM, la instantánea se hace con el sistema de archivos en reposo, y sin él es coherente ante caídas. En una VM apagada, Instantánea en vivo pasa a Ordenado por sí sola. Cuando no se puede hacer la instantánea, esa copia falla y la VM sigue en marcha, porque una VM que elegiste copiar en vivo nunca se apaga para ello.
+
+## Lo que una copia deja fuera {#left-out}
+
+Una copia puede salir bien y aun así no contener toda la VM. La ejecución lleva entonces una nota en tono de aviso que nombra lo que falta:
+
+- **Discos que BombVault no lee.** Un disco de solo lectura, un `lun` y un disco `network` o `volume` se dejan fuera, y la nota nombra cada uno con su dispositivo de destino y su tipo. La definición de la copia sigue listándolos. Un cdrom y un disquete no se nombran. Un dispositivo de bloques normal que no es un zvol de ZFS hace fallar la copia en su lugar.
+- **El estado de un TPM emulado.** No tiene ruta en el XML del dominio. El VM Manager de Unraid configura un TPM así para una VM con la BIOS **OVMF TPM**, así que la nota también aparece en Unraid. Un invitado que guarda un secreto en su TPM, como puede hacer BitLocker, puede pedir su clave de recuperación tras una restauración que pierde ese estado. Ten esa clave a mano.
+
+## Discos finos {#thin-disks}
+
+Una restauración mantiene fino un disco fino, tanto si reemplaza el disco como si escribe uno nuevo: restic escribe las series de ceros como huecos en un archivo nuevo, y BombVault libera los bloques de ceros de un archivo reemplazado con `fallocate --dig-holes` una vez escrito. Mientras restic reemplaza un archivo, ese archivo ocupa su tamaño completo, si el pool tiene sitio. Un sistema de archivos que no permite perforar huecos deja el disco con su tamaño completo, y el registro lo indica. La comprobación de espacio sigue contando un disco nuevo con su tamaño completo.
+
+## Una restauración que falla {#restore-fails}
+
+Una restauración in situ apaga la VM, escribe los discos y reemplaza la definición y la NVRAM solo cuando los discos están escritos. Una restauración que falla deja la VM definida con su NVRAM. Si sus discos no cambiaron y estaba en marcha, vuelve a funcionar. Si pueden haber cambiado, se queda apagada, porque arrancar con un disco a medio escribir escribiría encima, y la ejecución lo indica. Restaurar de nuevo la misma copia termina el trabajo.
+
+Las instantáneas registradas en libvirt, que no es como las crea el VM Manager de Unraid, detienen una restauración in situ antes de tocar la VM, porque libvirt no puede eliminar una VM que las tenga. Bórralas primero.
 
 ## Solo bloques modificados {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault copia una VM así por completo:
 - **Una copia en vivo conserva las instantáneas.** **Instantánea en vivo** pone una superposición temporal encima mientras lee el disco y la fusiona de nuevo después, solo en la imagen inmediatamente inferior. La cadena es la misma después de la copia que antes. Una VM sin instantáneas se comporta como siempre.
 - **Una restauración devuelve la cadena.** Una restauración in situ escribe cada archivo de vuelta donde estaba y devuelve la lista de instantáneas de Unraid, así que el VM Manager vuelve a listar las instantáneas. Una restauración junto al original escribe los archivos en la carpeta de la copia y apunta los discos restaurados a los archivos restaurados, de modo que la copia nunca lee de las imágenes del original. La lista de instantáneas de Unraid solo vuelve con una restauración in situ, porque nombra los archivos donde se copiaron. Sin ella la copia arranca igual, y el VM Manager simplemente no lista instantáneas para ella.
 - **Solo bloques modificados** lee lo que ve el invitado, así que su restauración vuelve como un único archivo qcow2 aplanado sin las instantáneas.
+- **Una restauración devuelve el disco de la copia que elijas.** Las instantáneas tomadas o fusionadas desde esa copia no cambian eso. Una copia de antes de una instantánea define la VM sobre el archivo que contiene, y una copia de antes de una fusión devuelve su superposición y funciona sobre ella. Los archivos más nuevos se quedan donde están, sin usar y sin cambios. Una copia que contiene una superposición pero no el archivo de debajo se rechaza antes de tocar la VM. Tras una restauración, la definición de la VM no lista ninguna cadena, así que libvirt lee la cadena de los archivos restaurados.
 
 ### Ejemplo: una VM con dos instantáneas {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Los discos de archivo, como los que usa Unraid, no se ven afectados por nada de 
 Una VM puede tener un TPM virtual, que necesitan Secure Boot y los invitados con Windows 11. Su estado vive fuera del disco y de la NVRAM, así que una copia de solo esos dos devolvería un invitado con un TPM nuevo y vacío.
 
 - **Un TPM de paso directo**, un chip real pasado al invitado, nombra su ruta en el XML del dominio. BombVault guarda su estado junto a la NVRAM por SSH y lo escribe de vuelta antes de `virsh define`, en la medida de lo posible, igual que la NVRAM: una lectura o escritura fallida se registra y no hace fallar la copia ni la restauración.
-- **Un vTPM emulado**, el tipo que TrueNAS configura para invitados con Windows 11 y Secure Boot, no publica ninguna ruta de estado en el XML del dominio. BombVault informa entonces de "no TPM path found" en lugar de adivinar una ruta. Ten a mano la clave de recuperación de un invitado así, como su clave de BitLocker, antes de restaurarlo.
+- **Un vTPM emulado**, el tipo que TrueNAS configura para invitados con Windows 11 y Secure Boot, no publica ninguna ruta de estado en el XML del dominio, así que su estado no se copia. BombVault no adivina una ruta, y la copia termina con una nota de que el estado del TPM de la VM no está en ella. Ten a mano la clave de recuperación de un invitado así, como su clave de BitLocker, antes de restaurarlo.
 - **No puedes conectar tú mismo un TPM a una VM de TrueNAS.** La API de dispositivos de VM de TrueNAS SCALE 25.10 acepta solo `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` y `USB`, y rechaza `TPM` como tipo desconocido.
 
-El manejo del TPM solo está probado con pruebas unitarias y no se ha ejecutado contra un invitado real de TrueNAS con vTPM. Una VM sin TPM, como en Unraid, se copia y restaura exactamente como antes.
+El manejo del TPM solo está probado con pruebas unitarias y no se ha ejecutado contra un invitado real de TrueNAS con vTPM. Una VM sin TPM se copia y restaura exactamente como antes.
 
 La NVRAM se captura como de costumbre. TrueNAS la guarda por VM en `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, y el XML del dominio nombra esa ruta.
 

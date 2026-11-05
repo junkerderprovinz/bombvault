@@ -38,7 +38,7 @@ La copia de VMs habla con libvirt por SSH, nunca por un montaje.
 
 ## No se ejecutó una instantánea en vivo de una VM {#a-live-vm-snapshot-did-not-run}
 
-Las instantáneas en vivo necesitan el agente invitado de qemu instalado en la VM y el disco en `/mnt/cache` (o `/mnt/diskX`), no en `/mnt/user`. En una VM apagada, lo en vivo pasa automáticamente a ordenado. Una copia ordenada apaga la VM, copia los discos y luego la reinicia, así que siempre es coherente. Espera hasta diez minutos a que el invitado se apague y nunca fuerza el apagado, de modo que un invitado Windows que instala actualizaciones no se corta a medias. Un invitado que sigue funcionando pasado ese tiempo se deja en paz, y esa copia falla con el motivo.
+Las instantáneas en vivo necesitan el disco en `/mnt/cache` (o `/mnt/diskX`), no en `/mnt/user`. Con el agente invitado de qemu en la VM, la instantánea se hace con el sistema de archivos en reposo, y sin él es coherente ante caídas. En una VM apagada, lo en vivo pasa automáticamente a ordenado. Una copia ordenada apaga la VM, copia los discos y luego la reinicia, así que siempre es coherente. Espera hasta diez minutos a que el invitado se apague y nunca fuerza el apagado, de modo que un invitado Windows que instala actualizaciones no se corta a medias. Un invitado que sigue funcionando pasado ese tiempo se deja en paz, y esa copia falla con el motivo.
 
 ## Una copia falló con "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Lo impide una anomalía crítica abierta: el origen del elemento está casi vac�
 
 La misma causa: la poda deja en paz las copias antiguas de un elemento con una anomalía así y nombra el elemento en su mensaje. Todo lo demás se poda como de costumbre.
 
+## Una copia falla con "on no mounted pool or share" {#no-mounted-pool}
+
+En Unraid, `/mnt` vive en la memoria, así que una carpeta ahí sin un pool montado encima desaparece en el siguiente reinicio y queda oculta cuando el pool vuelve. BombVault se niega a escribir ahí una copia o un ZIP del flash, también cuando ya hay en esa carpeta un repositorio de una escritura anterior. Monta el pool y vuelve a ejecutar la copia.
+
 ## La importación del historial dice que no se pudo leer un repositorio {#history-import-says-a-repository-could-not-be-read}
 
 Tras la actualización BombVault lee una vez de cada repositorio los tamaños de las copias anteriores. Un repositorio al que no pudo llegar en ese momento, como un destino externo caído o un recurso compartido sin montar, se cuenta en la tarjeta **Anomalías** de **Ajustes, Verificación** y se vuelve a intentar una vez al día. Sus elementos aprenden mientras tanto de las copias nuevas.
@@ -177,15 +181,15 @@ El destino tiene instantáneas más nuevas que la más reciente que comparte con
 
 BombVault sigue la cadena de respaldo de cada disco y copia todos los archivos de ella. Una cadena que no se puede seguir hasta el final hace fallar la copia en lugar de dejar fuera parte del disco, y el mensaje nombra el archivo. Comprueba que el archivo existe bajo `/mnt` y que la instantánea sigue listada en el VM Manager. Un archivo fuera de Host Data no se puede leer en absoluto. Consulta [VMs con instantáneas de Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Las copias externas están en pausa tras una reconstrucción {#copies-paused}
+## Las copias externas esperan tu decisión tras una reconstrucción {#copies-paused}
 
-Tras **Descubrir copias** o el Asistente de emergencia sin ajustes restaurados, las copias externas de cada sección reconstruida esperan, porque BombVault ya no sabe qué elementos dejaste fuera. El resumen lo dice. Pulsa **Confirmar valor predeterminado** en **Destinos por sección**, revisa la vista previa y deja fuera lo que deba quedar fuera. Importar un archivo de ajustes no termina la pausa. Consulta [Después de una reconstrucción](offsite-recovery.md#after-a-rebuild).
+Tras **Descubrir copias** o el Asistente de emergencia sin ajustes restaurados, o cuando una sección encuentra copias propias de antes de esta base de datos, las copias externas de esa sección esperan, porque BombVault ya no sabe qué elementos dejaste fuera. **Necesita atención** y la página del destino lo preguntan. Pulsa **Adoptarlas como propias de este servidor** para seguir, o **Revisar primero las reglas** para mirar las reglas de la sección antes de hacerlo. Importar un archivo de ajustes no toma la decisión por ti. Consulta [Después de una reconstrucción](offsite-recovery.md#after-a-rebuild).
 
 ## Las notificaciones no llegan {#notifications-do-not-arrive}
 
 Empieza con **Enviar prueba** en **Ajustes, Notificaciones**. La línea bajo la tarjeta dice qué pasó.
 
-- **No se envía nada en absoluto.** Comprueba **Notificar**. Con **Nunca** no sale nada, y con **Solo en caso de fallo** una ejecución buena se queda en silencio. Con **Resumir las ejecuciones programadas** activado, una ejecución programada envía un resumen al final.
+- **No se envía nada en absoluto.** Comprueba **Notificar**. Con **Nunca** no sale ningún mensaje, solo los pings de una URL de Healthchecks, y con **Solo en caso de fallo** una ejecución buena se queda en silencio. Con **Resumir las ejecuciones programadas** activado, una ejecución programada envía un resumen al final.
 - **Una dirección nueva.** Tras cambiar el servidor de Matrix, Gotify o el correo, el campo vuelve a pedir el token o la contraseña, y la dirección nueva se guarda solo cuando lo escribes. BombVault no envía el secreto antiguo a un sitio nuevo.
 - **Gotify** dice que el servidor rechazó el token de la aplicación: cópialo de nuevo de la aplicación en Gotify. La **URL del servidor** es la dirección base, sin `/message`.
 - **Webhook:** comprueba que el **Formato del Webhook** encaje con el servicio. Una dirección de Discord necesita **Discord**, y ntfy necesita **ntfy**.
