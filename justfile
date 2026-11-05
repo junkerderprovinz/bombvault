@@ -13,6 +13,10 @@ build:
 test:
     go test ./...
 
+# Run the real end-to-end flows (needs restic on PATH and the release tags)
+flows:
+    go test -tags flows -count=1 -timeout 30m -v ./internal/flows/
+
 # Format all Go code in place
 fmt:
     gofmt -w .

@@ -1,6 +1,7 @@
 version: "2"
 run:
   timeout: 5m
+  build-tags: [flows]
 linters:
   enable:
     - errcheck
@@ -16,6 +17,10 @@ linters:
         text: "G304|G306"
       - path: node_modules/
         linters: [govet]
+      # The flows start the server and restic, and lay out folders a real
+      # install would have, with the modes one would have.
+      - path: internal/flows/
+        linters: [gosec]
       # staticcheck does not treat t.Fatal as terminating, so the usual
       # "if x == nil { t.Fatal(...) }; x.field" test pattern trips SA5011.
       - path: '_test\.go'
