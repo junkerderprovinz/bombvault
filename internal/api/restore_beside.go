@@ -606,7 +606,7 @@ func (s *Service) executeRestoreVMBeside(ctx context.Context, name string, plan 
 		Files:       b.files,
 		Backing:     s.backingLinks(b.backing),
 		TargetID:    plan.targetID,
-		Restic:      &resticAdapter{engine: s.engine, mode: plan.mode},
+		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode)},
 		Runs:        runsAdapter{st: s.store, ctx: ctx},
 	})
 	if rerr == nil {

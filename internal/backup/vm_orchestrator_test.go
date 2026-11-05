@@ -1354,3 +1354,21 @@ func (r *cancellingRestic) RestorePaths(context.Context, string, string, []strin
 	r.cancel()
 	return nil
 }
+
+func TestRestoreVMGivesEachRestoredDiskToSparsify(t *testing.T) {
+	var thinned []string
+	vm := &fakeVM{stateVal: "shut off"}
+	deps := sampleVMRestoreDeps(t, vm, &fakeRestic{}, &fakeRuns{})
+	deps.NVRAMPath = ""
+	deps.Sparsify = func(_ context.Context, file string) error {
+		thinned = append(thinned, file)
+		return errors.New("operation not supported")
+	}
+
+	if err := backup.RestoreVM(t.Context(), deps); err != nil {
+		t.Fatalf("a disk that stays thick must not fail the restore: %v", err)
+	}
+	if !slices.Equal(thinned, deps.DiskPaths) {
+		t.Fatalf("thinned %v, want %v", thinned, deps.DiskPaths)
+	}
+}

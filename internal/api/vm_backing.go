@@ -6,11 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os/exec"
 	"path"
 	"slices"
+	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/qcow2"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 )
 
@@ -347,6 +350,21 @@ func reachableLinks(links []vmBacking, disks []string) []vmBacking {
 		cur = next
 	}
 	return out
+}
+
+// sparseMode is mode for a restore of VM disks, which keeps a thin disk thin.
+func sparseMode(mode restic.Mode) restic.Mode {
+	mode.Sparse = true
+	return mode
+}
+
+// digHoles gives the zero blocks of a restored disk back to the filesystem.
+func digHoles(ctx context.Context, file string) error {
+	out, err := exec.CommandContext(ctx, "fallocate", "--dig-holes", file).CombinedOutput() //nolint:gosec // G204: a disk path the restore checked
+	if err != nil {
+		return fmt.Errorf("fallocate: %s: %w", strings.TrimSpace(string(out)), err)
+	}
+	return nil
 }
 
 // backingLinks is links as the restore repoints them.

@@ -91,6 +91,10 @@ A backup can succeed and still not hold the whole VM. The run then carries a not
 - **Disks BombVault does not read.** A read-only disk, a `lun` and a `network` or `volume` disk are left out, and the note names each with its target device and kind. The definition in the backup still lists them. A cdrom and a floppy are not named. A plain block device that is not a ZFS zvol fails the backup instead.
 - **The state of an emulated TPM.** It has no path in the domain XML. The Unraid VM Manager sets such a TPM up for a VM with the **OVMF TPM** BIOS, so the note also appears on Unraid. A guest that keeps a secret in its TPM, as BitLocker can, may ask for its recovery key after a restore that loses that state, so keep that key at hand.
 
+## Thin disks {#thin-disks}
+
+A restore keeps a thin disk thin, whether it replaces the disk or writes a new one: restic writes zero runs as holes in a new file, and BombVault gives the zero blocks of a replaced file back with `fallocate --dig-holes` once it is written. While restic replaces a file, that file takes its full size, if the pool has the room. A filesystem without hole punching keeps the disk at its full size, and the log says so. The room check still counts a new disk at its full size.
+
 ## A restore that fails {#restore-fails}
 
 A restore in place shuts the VM off, writes the disks, and replaces the definition and the NVRAM only once the disks are written. A restore that fails leaves the VM defined with its NVRAM. If its disks did not change and it was running, it runs again. If they may have changed it stays off, since booting a half-written disk would write on top of it, and the run says so. Restoring the same backup again finishes the job.

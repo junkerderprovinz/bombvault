@@ -302,6 +302,9 @@ type VMRestoreDeps struct {
 	// Backing leads each restored qcow2 image to the restored copy of its
 	// backing file before the VM is defined.
 	Backing []VMBackingLink
+	// Sparsify gives the zero blocks of a restored disk back to the filesystem.
+	// Nil leaves the disks as restic wrote them.
+	Sparsify func(ctx context.Context, file string) error
 
 	VM     VM
 	Restic Restic
@@ -918,7 +921,20 @@ func restoreVMDisks(ctx context.Context, d VMRestoreDeps, allPaths []string) err
 		return err
 	}
 	// A VM missing a disk it boots from is not defined.
-	return restoreBlockDisksAndLog(ctx, d)
+	if err := restoreBlockDisksAndLog(ctx, d); err != nil {
+		return err
+	}
+	// restic allocates a file it replaces in full, holes included, and a thin
+	// disk would stay that much larger. The disk still reads the same without
+	// this, so a failure only costs the room.
+	if d.Sparsify != nil {
+		for _, f := range allPaths {
+			if err := d.Sparsify(ctx, f); err != nil {
+				log.Printf("vm restore: making %s thin again: %v", path.Base(f), err)
+			}
+		}
+	}
+	return nil
 }
 
 // afterFailedDiskRestore puts a VM back as it was when its disks did not change,
@@ -947,19 +963,26 @@ func (e *vmHalfRestored) Error() string {
 
 func (e *vmHalfRestored) Unwrap() error { return e.err }
 
-// fileStamp is what tells whether a file was written to.
+// fileStamp is what tells whether a file was written to. A missing file has
+// the zero stamp.
 type fileStamp struct {
 	size    int64
 	modTime time.Time
 }
 
-// stampFiles records the files as they are now. A missing file has no stamp.
+func stampOf(file string) fileStamp {
+	fi, err := os.Stat(file)
+	if err != nil {
+		return fileStamp{}
+	}
+	return fileStamp{fi.Size(), fi.ModTime()}
+}
+
+// stampFiles records the files as they are now.
 func stampFiles(files []string) map[string]fileStamp {
 	stamps := make(map[string]fileStamp, len(files))
 	for _, f := range files {
-		if fi, err := os.Stat(f); err == nil {
-			stamps[f] = fileStamp{fi.Size(), fi.ModTime()}
-		}
+		stamps[f] = stampOf(f)
 	}
 	return stamps
 }
@@ -967,8 +990,8 @@ func stampFiles(files []string) map[string]fileStamp {
 // unchangedFiles reports whether the files still are as before records them.
 func unchangedFiles(before map[string]fileStamp) bool {
 	for f, was := range before {
-		fi, err := os.Stat(f)
-		if err != nil || fi.Size() != was.size || !fi.ModTime().Equal(was.modTime) {
+		now := stampOf(f)
+		if now.size != was.size || !now.modTime.Equal(was.modTime) {
 			return false
 		}
 	}

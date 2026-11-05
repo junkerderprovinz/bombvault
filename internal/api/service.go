@@ -14837,7 +14837,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		TargetID:    plan.targetID,
 		DataDir:     s.cfg.DataDir,
 		VM:          s.virsh,
-		Restic:      &resticAdapter{engine: s.engine, mode: plan.mode},
+		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode)},
 		Runs:        runsAdapter{st: s.store, ctx: ctx},
 		BlockDisks:  plan.blockDisks,
 		ZFSHost:     sshZFSHost{ssh: s.ssh},
@@ -14846,6 +14846,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		ImageDumper: &vmBlockRestic{engine: s.engine, mode: plan.mode},
 		Convert:     qemuImgConvert,
 		Backing:     s.backingLinks(plan.backing),
+		Sparsify:    digHoles,
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)

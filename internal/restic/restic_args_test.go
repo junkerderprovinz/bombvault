@@ -938,6 +938,13 @@ func TestRestoreSubtreeToArgs(t *testing.T) {
 			t.Fatalf("got %v want %v", got, want)
 		}
 	})
+	t.Run("sparse", func(t *testing.T) {
+		got := RestoreSubtreeToArgs("/repo", "abc123", "/p", "/t", Mode{Encrypted: true, Sparse: true})
+		want := []string{"-r", "/repo", "restore", "--sparse", "--json", "--target", "/t", "--", "abc123:/p"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v want %v", got, want)
+		}
+	})
 	t.Run("RestorePathArgs is the target==subtree special case", func(t *testing.T) {
 		got := RestorePathArgs("/repo", "abc123", "/p", Mode{Encrypted: true})
 		want := RestoreSubtreeToArgs("/repo", "abc123", "/p", "/p", Mode{Encrypted: true})
