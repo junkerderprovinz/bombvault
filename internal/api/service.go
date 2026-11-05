@@ -18544,6 +18544,10 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]str
 	return s.pruneDomain(ctx, domain, source, false)
 }
 
+// noBackupsToPrune is what a prune of a domain says when no repository of it
+// exists yet.
+const noBackupsToPrune = "no backups to prune yet"
+
 // PruneAfterBulk runs one local prune for a domain after a scheduled multi-item
 // run, whose items forgot their old snapshots without --prune (#95), so space
 // is reclaimed once per run. It records a prune run like a manual prune does,
@@ -18551,18 +18555,43 @@ func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]str
 // domain in the gap after the last item, the space still has to come back.
 // Off-site retention stays in copyToOffsite. It does nothing when no repository
 // of the domain ages by a keep-policy (its own, a named one, or a direct
-// repository under its target's rules), and failures are logged only.
+// repository under its target's rules), and failures are logged only. While the
+// section's own folder is off its items write straight to its targets, so those
+// are what the round forgot at and what gets pruned.
 func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		log.Printf("api: prune %s: batched prune: read settings: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
+	s.pruneSectionTargetsAfterBulk(ctx, settings, domain)
 	if !s.domainHasRetention(settings, domain) {
 		return // no repository of this domain ages by a policy, so nothing was forgotten
 	}
-	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil {
+	// A folder that never held a backup is no failed prune.
+	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil && err.Error() != noBackupsToPrune {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+}
+
+// pruneSectionTargetsAfterBulk prunes each target a section with its own folder
+// off wrote to, unless it ages by no rule or refuses deletes.
+func (s *Service) pruneSectionTargetsAfterBulk(ctx context.Context, settings store.Settings, domain string) {
+	off, err := s.localOff(domain)
+	if err != nil || !off {
+		return
+	}
+	places, err := s.sectionPlaces(settings, domain, "")
+	if err != nil {
+		return // no place, so nothing was written or forgotten
+	}
+	for _, pl := range places {
+		if p, appendOnly := s.keepAt(settings, domain, pl); !p.Any() || appendOnly {
+			continue
+		}
+		if _, err := s.pruneDomain(ctx, domain, pl.source(), true); err != nil {
+			log.Printf("api: prune %s: batched prune of %s failed: %v", domain, placementTargetName(*pl.target), err) //nolint:gosec // G706: domain is a fixed literal, the name passes through the safe namer
+		}
 	}
 }
 
@@ -18628,7 +18657,7 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 		}
 		return nil, refusal
 	}
-	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, prunable, "no backups to prune yet")
+	repos, missing, err := s.reposThatExist(ctx, settings, domain, source, prunable, noBackupsToPrune)
 	if err != nil {
 		return nil, err
 	}

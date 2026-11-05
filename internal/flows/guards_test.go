@@ -425,3 +425,28 @@ func TestSettingsRestoreThatRestoredNothingFails(t *testing.T) {
 	}
 	f.finish()
 }
+
+func TestBulkRunWithTheOwnFolderOffPrunesAtTheLocation(t *testing.T) {
+	f := typedFlow(t, "files")
+	sets := f.newSets()
+	id := f.b.namedLocation(secondName, secondFolder)
+	f.b.setLocationCard(id, secondName, keep{Last: 1})
+	f.b.call("POST", "/api/offsite/destinations/"+id+"/domains/files", nil, nil)
+	f.b.call("PUT", "/api/storage/sections/files/local", map[string]any{"on": false}, nil)
+	f.b.changeSettings(func(s map[string]any) { s["anomalyRetentionHold"] = false })
+	repo := secondFolder + "/files"
+
+	big := f.bigFile()
+	f.nextRound(sets, 1)
+	withBig := f.b.repoBytes(repo)
+	if err := os.Remove(big); err != nil {
+		f.t.Fatal(err)
+	}
+	f.nextRound(sets, 2)
+
+	f.wantSnapshots(repo, photosTag, 1)
+	if got := f.b.repoBytes(repo); got > withBig-bigFileBytes/2 {
+		f.errorf("the location went from %d to %d bytes, the file of %d bytes that only the forgotten backup held is still there", withBig, got, bigFileBytes)
+	}
+	f.finish()
+}
