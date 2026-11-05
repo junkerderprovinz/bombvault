@@ -7,8 +7,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -37,12 +39,12 @@ func TestMemberMeshOfferIsStoredPendingWithItsPasswordSealed(t *testing.T) {
 	appKey := strings.Repeat("a", 64)
 	h, st := meshHandlerFixture(t, appKey)
 
-	body, _ := json.Marshal(meshOfferRequest{
+	const member = "0123456789abcdef0123456789abcdef"
+	status, out := h.svc.servePeer(context.Background(), signedOfferCall(t, h.svc, pinnedSeed(t, st, member), member, meshOfferRequest{
 		FromName: "tower-a", SuggestedDomain: "containers",
 		Repo:     "rest:http://192.168.1.50:8000/bombvault-containers/containers",
 		RESTUser: "bombvault-containers", RESTPassword: "s3cr3t",
-	})
-	status, out := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: body})
+	}, time.Now().UnixMilli()))
 	if status != http.StatusOK {
 		t.Fatalf("offer: want 200, got %d body=%s", status, out)
 	}
@@ -412,5 +414,85 @@ func TestAMeshOfferOnAPlaceTheLocationCheckRefusesIsNotAccepted(t *testing.T) {
 	}
 	if sets, _ := h.svc.CloudCredSets(); len(sets) != 0 {
 		t.Fatalf("credential sets = %+v, want none left by a refused accept", sets)
+	}
+}
+
+// signedOfferCall is offer as member sends it to s, signed with seed.
+func signedOfferCall(t *testing.T, s *Service, seed []byte, member string, offer meshOfferRequest, counter int64) relay.ProxyCall {
+	t.Helper()
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	claim := keydeposit.Claim{Action: keydeposit.ProofMeshOffer, OwnerID: member, KeeperID: g.InstanceID, Counter: counter, Deposit: offer.signed()}
+	offer.peerProof = peerProof{Key: keydeposit.OwnerKey(seed), Counter: counter, Proof: keydeposit.Prove(seed, claim)}
+	body, err := json.Marshal(offer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: body, Sender: member}
+}
+
+// pinnedSeed makes up a signing key for member and pins it at st.
+func pinnedSeed(t *testing.T, st *store.Repo, member string) []byte {
+	t.Helper()
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := st.PinMemberKey(member, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	return seed
+}
+
+func TestAMeshOfferNeedsTheKeyOfTheMemberNamed(t *testing.T) {
+	h, st := meshHandlerFixture(t, strings.Repeat("a", 64))
+	const member = "0123456789abcdef0123456789abcdef"
+	offer := meshOfferRequest{FromName: "tower", SuggestedDomain: "files", Repo: "rest:http://box.example:8000/files", RESTUser: "bv", RESTPassword: "invented"}
+	offers := func() int {
+		t.Helper()
+		all, err := st.ListMeshOffers()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return len(all)
+	}
+	answer := func(call relay.ProxyCall) int {
+		t.Helper()
+		status, _ := h.svc.servePeer(context.Background(), call)
+		return status
+	}
+	unsigned, err := json.Marshal(offer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UnixMilli()
+
+	if got := answer(relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: unsigned, Sender: member}); got != http.StatusForbidden {
+		t.Errorf("an unsigned offer answered %d, want 403", got)
+	}
+	seed := pinnedSeed(t, st, member)
+	forger, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := answer(signedOfferCall(t, h.svc, forger, member, offer, now)); got != http.StatusForbidden {
+		t.Errorf("an offer signed with another key answered %d, want 403", got)
+	}
+	changed := signedOfferCall(t, h.svc, seed, member, offer, now+1)
+	changed.Body = []byte(strings.Replace(string(changed.Body), "box.example", "other.example", 1))
+	if got := answer(changed); got != http.StatusForbidden {
+		t.Errorf("a signed offer with another location put in answered %d, want 403", got)
+	}
+	if n := offers(); n != 0 {
+		t.Fatalf("%d offers stored, want none", n)
+	}
+
+	if got := answer(signedOfferCall(t, h.svc, seed, member, offer, now+2)); got != http.StatusOK {
+		t.Errorf("the member's own offer answered %d, want 200", got)
+	}
+	if n := offers(); n != 1 {
+		t.Fatalf("%d offers stored, want the member's own", n)
 	}
 }

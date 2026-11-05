@@ -2,14 +2,13 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -27,9 +26,10 @@ func refusedForItsShape(t *testing.T, what string, w *httptest.ResponseRecorder)
 
 func TestAMemberCannotOfferAHostThatReadsAsAnOption(t *testing.T) {
 	h, st := meshHandlerFixture(t, strings.Repeat("a", 64))
-	body, _ := json.Marshal(meshOfferRequest{FromName: "tower-a", Repo: optionLikeLocation, RESTUser: "bv", RESTPassword: "invented"})
+	const member = "0123456789abcdef0123456789abcdef"
+	call := signedOfferCall(t, h.svc, pinnedSeed(t, st, member), member, meshOfferRequest{FromName: "tower-a", Repo: optionLikeLocation, RESTUser: "bv", RESTPassword: "invented"}, time.Now().UnixMilli())
 
-	status, out := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: body})
+	status, out := h.svc.servePeer(context.Background(), call)
 
 	if status != http.StatusOK || !strings.Contains(string(out), "start with a dash") {
 		t.Errorf("offer answered %d %s, want the location refused", status, out)
