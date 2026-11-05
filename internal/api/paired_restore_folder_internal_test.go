@@ -233,3 +233,28 @@ func TestAPairedSessionCannotRestoreAZFSMemberIntoAFolderThatHoldsFiles(t *testi
 	}
 	zfsAwaitRestore(t, st, d.ID)
 }
+
+func TestARestoreCheckByAPairedSessionNamesNothingInAFolderThatHoldsFiles(t *testing.T) {
+	r := newFolderRestoreRig(t)
+	live := r.root + "/appdata/vaultwarden"
+	if err := os.MkdirAll(live, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(live+"/db.sqlite3", []byte("live"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	check := func(folder string) *httptest.ResponseRecorder {
+		t.Helper()
+		w := httptest.NewRecorder()
+		r.h.handleRestoreCheck(w, pairedPost(t, map[string]any{"kind": "containerTo", "name": "plex", "snapshotId": "aaaa1111", "targetPath": folder}))
+		return w
+	}
+
+	w := check("appdata/vaultwarden")
+	if w.Code != http.StatusForbidden || strings.Contains(w.Body.String(), "db.sqlite3") {
+		t.Errorf("a folder that holds files: %d %s", w.Code, w.Body)
+	}
+	if w := check("restore/new"); w.Code != http.StatusOK {
+		t.Errorf("a new folder: %d %s", w.Code, w.Body)
+	}
+}

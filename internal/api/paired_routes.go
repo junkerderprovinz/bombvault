@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 )
@@ -181,4 +182,15 @@ func refusePaired(w http.ResponseWriter) {
 		"error": "sign in at this instance's web interface to do this; the session of a paired phone does not reach it",
 		"code":  codeOwnLoginNeeded,
 	})
+}
+
+// targetHoldsFiles reports whether the restore folder sub names holds anything.
+// A folder that does not resolve is the restore check's own to refuse.
+func (s *Service) targetHoldsFiles(sub string) bool {
+	sub = strings.TrimSpace(sub)
+	if sub == "" {
+		return false
+	}
+	target, err := paths.ResolveForWrite(s.cfg.HostMountRoot, sub)
+	return err == nil && !paths.EmptyOrMissing(target)
 }

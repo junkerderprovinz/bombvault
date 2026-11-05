@@ -1578,6 +1578,12 @@ func (h *Handler) handleRestoreCheck(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
+	// The dry run names what the target holds beyond the backup. A paired phone
+	// restores only into a new or empty folder, so it has no use for that list.
+	if isPaired(r) && h.svc.targetHoldsFiles(req.TargetPath) {
+		refusePaired(w)
+		return
+	}
 	req.Source = normalizeSource(req.Source)
 	res, err := h.svc.CheckRestore(r.Context(), req)
 	if err != nil {
