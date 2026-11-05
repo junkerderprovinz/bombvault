@@ -21,16 +21,28 @@ import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import type { SaveState } from "./shared";
 
-/** settleHookClears turns a sent hook removal into the state it left behind.
- *  The clear flag holds for one write; kept, it would wipe the hook again on
- *  every later save, including the one that sets a new command. */
-function settleHookClears(s: Settings): Settings {
+/** settleHooks turns a sent hook into the state it left behind: stored once a
+ *  command went out, gone once a removal did. The clear flag holds for one
+ *  write; kept, it would wipe the hook again on every later save, including the
+ *  one that sets a new command. */
+function settleHooks(s: Settings): Settings {
   const { everythingPreHookClear, everythingPostHookClear, ...rest } = s;
   return {
     ...rest,
     everythingPreHookSet: everythingPreHookClear ? false : s.everythingPreHookSet,
     everythingPostHookSet: everythingPostHookClear ? false : s.everythingPostHookSet,
   };
+}
+
+/** clearingEmptiedHooks adds the removal to a hook emptied after it was saved.
+ *  A loaded baseline holds no command, since the server never sends one back, so
+ *  one there was typed here and the person can see it go. Blank alone means keep
+ *  to the server, which is what a field that merely stayed empty has to mean. */
+function clearingEmptiedHooks(base: Settings, patch: Partial<Settings>): Partial<Settings> {
+  const out = { ...patch };
+  if (patch.everythingPreHook === "" && base.everythingPreHook) out.everythingPreHookClear = true;
+  if (patch.everythingPostHook === "" && base.everythingPostHook) out.everythingPostHookClear = true;
+  return out;
 }
 
 /** rebaseSettings moves the live settings from base onto fresh: a field the
@@ -260,7 +272,7 @@ export function useSettingsStore() {
     // Persist only this card's fields, merged onto the server baseline rather
     // than the live `settings`, which may hold unsaved edits from other cards.
     try {
-      const { res, sent, revision, fresh } = await putSettingsPatch(base, savedRevision.current, patch);
+      const { res, sent, revision, fresh } = await putSettingsPatch(base, savedRevision.current, clearingEmptiedHooks(base, patch));
       savedRevision.current = revision;
       if (fresh) {
         // What changed elsewhere shows up too, except where a card here
@@ -271,10 +283,20 @@ export function useSettingsStore() {
       if (res.ok) {
         // Advance the baseline; reflect just the saved fields in the live state so
         // other cards' in-progress edits are left untouched.
-        savedBaseline.current = settleHookClears(sent);
-        setSettings((prev) =>
-          settleHookClears(prev ? { ...prev, ...patch, ...(echo ? echo(prev) : null) } : sent)
-        );
+        // What the server holds a number to wins over what was typed, unless the
+        // person has typed on since.
+        const applied = res.applied ?? {};
+        savedBaseline.current = settleHooks({ ...sent, ...applied });
+        setSettings((prev) => {
+          if (!prev) return settleHooks({ ...sent, ...applied });
+          const held = Object.fromEntries(
+            Object.entries(applied).filter(([key]) => {
+              const field = key as keyof Settings;
+              return key in patch && prev[field] === patch[field];
+            })
+          );
+          return settleHooks({ ...prev, ...clearingEmptiedHooks(base, patch), ...held, ...(echo ? echo(prev) : null) });
+        });
         setSaveState("idle");
         setFieldPulse((p) => {
           const next = { ...p };

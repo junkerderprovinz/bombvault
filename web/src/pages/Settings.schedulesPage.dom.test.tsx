@@ -294,6 +294,33 @@ describe("commands before and after", () => {
     await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/new.sh"), SAVED);
     expect(putBodies.at(-1)?.everythingPreHookClear).toBeFalsy();
   });
+
+  it("removes a command typed on the page when its field is emptied", async () => {
+    settingsOnServer = baseSettings({ everythingPreHookSet: false });
+    await renderPage();
+    const hooks = card("schedules.hooks");
+    const field = within(hooks).getByRole("textbox", { name: en["schedules.hookPre"] });
+    fireEvent.change(field, { target: { value: "/boot/typed.sh" } });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHook).toBe("/boot/typed.sh"), SAVED);
+    await within(hooks).findByRole("button", { name: en["offsite.targets.remove"] });
+
+    fireEvent.change(field, { target: { value: "" } });
+    await waitFor(() => expect(putBodies.at(-1)?.everythingPreHookClear).toBe(true), SAVED);
+    await waitFor(() => expect(within(hooks).queryByRole("button", { name: en["offsite.targets.remove"] })).toBeNull());
+    expect(field.getAttribute("placeholder")).toBe("/boot/config/scripts/before.sh");
+  });
+
+  it("keeps a stored command when a field that was typed in is emptied before it saved", async () => {
+    settingsOnServer = baseSettings({ everythingPreHookSet: true });
+    await renderPage();
+    const hooks = card("schedules.hooks");
+    const field = within(hooks).getByRole("textbox", { name: en["schedules.hookPre"] });
+    fireEvent.change(field, { target: { value: "x" } });
+    fireEvent.change(field, { target: { value: "" } });
+    await waitFor(() => expect(putBodies.length).toBeGreaterThan(0), SAVED);
+    expect(putBodies.at(-1)?.everythingPreHookClear).toBeFalsy();
+    expect(within(hooks).getByRole("button", { name: en["offsite.targets.remove"] })).toBeTruthy();
+  });
 });
 
 describe("a failed load", () => {
