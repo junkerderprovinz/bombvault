@@ -8,7 +8,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
-import { FakeEventSource, installMatchMedia, resetServer, run, server } from "./overview/overview.testsupport";
+import { FakeEventSource, failedCopy, installMatchMedia, location, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
 import { pickOption } from "../components/selectField.testsupport";
 
@@ -80,6 +80,17 @@ describe("the runs of the history card", () => {
     expect(within(rows[1]).getByText(en["run.statusSuccess"])).toBeTruthy();
     expect(within(rows[0]).getByText(/restic exited 1/).closest("span[class]")!.className).toContain("text-statusFail");
     expect(within(rows[1]).getByText(en["run.kindDbDump"])).toBeTruthy();
+  });
+
+  it("says on a backup that its off-site copy waits for the decision, and leads to the location that asks", async () => {
+    const waiting = failedCopy({ domain: "files", targetId: "t-files", lastCopy: undefined, awaitsDecision: true });
+    server.locations = [location({ id: "destination:box", object: "destination", kind: "offsite", sections: [waiting] })];
+    server.runs = [run({ id: "r1", domain: "files", target: "photos", copyWaits: true })];
+    await renderPage();
+
+    const row = within(within(historyCard()).getByRole("listitem"));
+    expect(row.getByText(en["copyDecision.runNote"]).className).toContain("text-statusWarn");
+    expect(row.getByRole("link", { name: en["copyDecision.decide"] }).getAttribute("href")).toBe("/storage/destination%3Abox");
   });
 
   it("names a failed replica by the sentence of its code", async () => {

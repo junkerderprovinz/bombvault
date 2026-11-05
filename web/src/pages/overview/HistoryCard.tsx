@@ -4,6 +4,7 @@ import { ActivityLog } from "../../components/ActivityLog";
 import { Badge } from "../../components/Badge";
 import { RunAnomalyBadge } from "../../components/RunAnomalyBadge";
 import { SelectField } from "../../components/SelectField";
+import { CopyWaitsLink } from "../../components/storage/CopyDecision";
 import { Selector } from "../../components/Selector";
 import type { AnomalyView, Run } from "../../lib/api";
 import type { useT } from "../../lib/i18n";
@@ -108,6 +109,12 @@ function RunRow({
           {span}
         </span>
         <RunReasonLine t={t} run={run} />
+        {run.copyWaits && (
+          <span className="relative z-10 flex flex-wrap items-baseline gap-x-2 text-xs text-statusWarn">
+            {t("copyDecision.runNote")}
+            <CopyWaitsLink run={run} />
+          </span>
+        )}
       </div>
       <div className="flex flex-none items-center gap-3 max-md:flex-col max-md:items-end max-md:gap-1">
         <Badge tone={statusTone(run.status)}>{result ? t(result) : statusLabel(run.status, t)}</Badge>
