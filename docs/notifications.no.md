@@ -9,20 +9,20 @@ BombVault kan si fra når en sikkerhetskopi feiler, når den lykkes, når en er 
 
 Kortet **Varsler** setter reglene for alle kanaler samtidig:
 
-- **Varsle**: **Aldri**, **Kun ved feil** eller **Ved suksess og feil**, for alle kanalene nedenfor.
+- **Varsle**: **Aldri**, **Kun ved feil** eller **Ved suksess og feil**, for alle kanalene nedenfor. En ny installasjon starter på **Kun ved feil**, så en kanal du fyller ut, sier fra når en sikkerhetskopi går i stykker.
 - **Oppsummer planlagte kjøringer**: én melding per planlagte kjøring, for eksempel *42 av 45 lyktes*, i stedet for én per container eller VM. En sikkerhetskopi du starter for hånd, sender fortsatt sin egen melding. En frosset gjest, en mislykket oppbevaring eller et overskredet vekstbudsjett går ut med en gang, også med oppsummeringer på.
 - **Varsle ved containeroppdatering**: én melding for hver container som **Oppdater containere etter en vellykket sikkerhetskopi** flyttet til et nyere image, så du kan sjekke at den fortsatt fungerer.
-- **Varsle om forsinkede sikkerhetskopier**: én gang om dagen klokken 09:00 sjekker BombVault om en sikkerhetskopi som er slått på er forsinket, altså eldre enn dobbelt så lenge som tidsplanen tilsier, og sender én melding per tilfelle. Den neste vellykkede sikkerhetskopien fjerner varselet.
+- **Varsle om forsinkede sikkerhetskopier**: én gang om dagen klokken 09:00 sjekker BombVault om en sikkerhetskopi som er slått på er forsinket, altså eldre enn dobbelt så lenge som tidsplanen tilsier, og sender én melding per tilfelle, med navnet på elementet som ble liggende etter. Den neste vellykkede sikkerhetskopien fjerner varselet.
 - **Unraid-varsler**: sender til Unraids eget varslingssystem, som kan videresende til Pushover, e-post eller Discord. Det går over SSH-tilkoblingen fra **Innstillinger, Integrasjoner, Verts-SSH**, så nøkkelen må være autorisert der. På TrueNAS og andre verter er det av.
-- **Ukentlig oppsummering**: én oppsummering i uken med antall kjøringer, nye sikkerhetskopidata, om de eksterne kopiene er à jour og de vanligste feilene. Planen er en knapp som alle andre planer, og **Av** slår den av. Se [Tidsplaner](schedules.md#plans).
+- **Ukentlig oppsummering**: én oppsummering i uken med antall kjøringer, nye sikkerhetskopidata, hvilke områder som er forsinket, om de eksterne kopiene er à jour og de vanligste feilene. Planen er en knapp som alle andre planer, og **Av** slår den av. Se [Tidsplaner](schedules.md#plans).
 
 Hvilke avvik som sender en melding, settes under **Innstillinger, Verifisering**, se [Avvik](anomalies.md). En utsatt sikkerhetskopi sender én melding når den begynner å vente og én når ventetiden er over, ikke én per forsøk.
 
-**Send test** nederst i kortet sender en testmelding gjennom hver kanal som er slått på, med verdiene slik de står i skjemaet.
+**Send test** nederst i kortet sender en testmelding gjennom hver kanal som er slått på, med verdiene slik de står i skjemaet, og nevner hver kanal som feilet. En Healthchecks-sjekk får en oppføring i loggen sin, som lar tilstanden dens være som den er.
 
 ## Kanaler {#channels}
 
-Hver kanal har sin egen bryter i kortet **Kanaler**, og feltene vises når den er på. Hver kanal sender for seg med sin egen tidsgrense, så én vert som aldri svarer, holder ikke opp de andre, og en melding ingen kanal tok imot, prøves på nytt.
+Hver kanal har sin egen bryter i kortet **Kanaler**, og feltene vises når den er på. Hver kanal sender for seg med sin egen tidsgrense, så én vert som aldri svarer, holder ikke opp de andre. Et varsel om forsinkelse, budsjett eller avvik som ingen kanal tok imot, prøves på nytt, og det samme gjelder en ukentlig oppsummering. Meldingen for en enkelt sikkerhetskopi eller en oppsummering sendes én gang.
 
 | Kanal | Felt | Merknader |
 |---|---|---|
@@ -36,7 +36,9 @@ Hemmeligheter som Matrix-tokenet, Gotify-app-tokenet og SMTP-passordet lagres kr
 
 ## Healthchecks {#healthchecks}
 
-En tjeneste som [Healthchecks.io](https://healthchecks.io) slår alarm når BombVault slutter å sjekke inn. Lim inn sjekkens **Ping-URL**, så pinger BombVault den gjennom hele forløpet til hver sikkerhetskopi: ved start, deretter ved suksess eller med `/fail`. Det skjer så lenge en URL er satt, uansett hva **Varsle** sier, så sjekken holder seg grønn ved suksess selv om du bare får melding ved feil.
+En tjeneste som [Healthchecks.io](https://healthchecks.io) slår alarm når BombVault slutter å sjekke inn. Lim inn sjekkens **Ping-URL**, så pinger BombVault den gjennom hele forløpet til hver sikkerhetskopi: ved start, deretter ved suksess eller med `/fail`. Det skjer så lenge en URL er satt, uansett hva **Varsle** sier, så sjekken holder seg grønn ved suksess selv om du bare får melding ved feil. Et område som ikke har noe sted å ta sikkerhetskopi til, regnes som feilet, så sjekken blir rød i stedet for å få høre om en suksess.
+
+Områder med samme URL deler én sjekk. Når en sikkerhetskopi av ett av dem har feilet, pinger også de vellykkede sikkerhetskopiene av de andre `/fail` og nevner det, så sjekken forblir rød til det elementet har en vellykket sikkerhetskopi igjen eller du kvitterer for feilen under **Krever oppmerksomhet**.
 
 Et område kan pinge en egen adresse: **Unntak** i kortet legger til en, og linjen sier **Alle andre områder pinger denne URL-en.**
 
