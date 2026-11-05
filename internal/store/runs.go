@@ -233,6 +233,22 @@ func (r *Repo) FailRunningRun(targetID, errMsg string) (int64, error) {
 	return n, nil
 }
 
+// AppendRunError adds to the reason of a finished run something that went wrong
+// after it ended.
+func (r *Repo) AppendRunError(runID, errMsg string) error {
+	res, err := r.db.Exec(`
+		UPDATE runs
+		SET error = CASE WHEN COALESCE(error, '') = '' THEN ? ELSE error || '; ' || ? END
+		WHERE id = ?`, errMsg, errMsg, runID)
+	if err != nil {
+		return fmt.Errorf("AppendRunError: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return fmt.Errorf("AppendRunError: run %s not found", runID)
+	}
+	return nil
+}
+
 // SetRunLoad stores how busy the host was during a finished run.
 func (r *Repo) SetRunLoad(runID, load string) error {
 	if _, err := r.db.Exec(`UPDATE runs SET load_summary = ? WHERE id = ?`, load, runID); err != nil {
@@ -390,6 +406,11 @@ const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runt
 // created again but left stopped, and the detail says why the restore stopped.
 const ReasonRestoreHalfDone = "restore did not finish: the container was created again, stopped, on partly restored data"
 
+// ReasonVMRestoreHalfDone begins the reason of a VM restore that stopped after
+// it began writing the disks, and the detail says why. The VM stays defined and
+// off, since its disks may be partly restored.
+const ReasonVMRestoreHalfDone = "restore did not finish: the VM was left off on partly restored disks"
+
 // Notes on a successful run, shown in a warning tone: the work was done, but
 // not as completely as the user would expect.
 const (
@@ -421,6 +442,14 @@ const (
 	// NoteFilesUnreadable is followed by ": " and restic's reason, which names
 	// a file it could not read.
 	NoteFilesUnreadable = "some files could not be read and are missing from this backup"
+
+	// NoteVMTPMLeftOut says a VM's backup does not hold the state of its TPM,
+	// which has no path BombVault can read, as with an emulated TPM.
+	NoteVMTPMLeftOut = "the state of the VM's TPM is not in this backup"
+
+	// NoteVMDisksLeftOut names after ": " the disks of a VM that its backup does
+	// not read, each with its kind.
+	NoteVMDisksLeftOut = "some disks of the VM are not in this backup"
 
 	NoteDBImportKeptOld = "database imported; the previous data folder was kept"
 	NoteDBImportErrors  = "database imported with errors"

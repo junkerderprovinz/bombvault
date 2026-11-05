@@ -16,6 +16,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/qcow2"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // parentDirs returns the deduplicated parent directories of the given absolute
@@ -184,11 +185,23 @@ type VMBackupDeps struct {
 	// before starting it again does it at its next start. Nil remembers
 	// nothing.
 	Restarts RestartMarker
+	// LateShutdown is called when the backup ends with the guest still on its
+	// way down, so that something starts it once it is off.
+	LateShutdown func()
 
 	VM     VM
 	Restic Restic
 	Runs   Runs
 }
+
+// VMRestartFailed begins the reason of a VM backup that left its VM off because
+// starting it again failed.
+const VMRestartFailed = "vm backup: restart vm"
+
+// VMLateShutdownWatch is how long a guest that has not shut off when its backup
+// ends is still started again once it does. After that it is taken to have
+// ignored the request, and if it stops later someone stopped it.
+const VMLateShutdownWatch = time.Hour
 
 // VMBlockDisk is one zvol disk of a VM to back up.
 type VMBlockDisk struct {
@@ -383,6 +396,16 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 	if err != nil {
 		return Summary{}, fmt.Errorf("vm backup: check active: %w", err)
 	}
+	// A guest on its way down counts as not running, and still writes to the
+	// disks restic is about to read. Someone else asked it to stop, so it stays
+	// off afterwards.
+	if !wasRunning {
+		if state, err := d.VM.State(ctx, d.Name); err == nil && state == "in shutdown" {
+			if err := waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); err != nil {
+				return Summary{}, fmt.Errorf("vm backup: %q was shutting down and did not finish: %w", d.Name, err)
+			}
+		}
+	}
 
 	var backupErr error
 	var summary Summary
@@ -399,26 +422,29 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 				return
 			}
 			atStep(d.Step, progress.StepStart)
-			// The guest goes on shutting down after a cancel or a timeout.
-			// Starting it while it is still up does nothing, and it would then
-			// stay off.
+			// The guest goes on shutting down after a cancel or a timeout, and a
+			// start while it is still up does nothing. The run does not wait for
+			// it: LateShutdown has the VM started once it is off, and its record
+			// covers a BombVault that stops before that.
 			if shuttingDown {
-				err := waitShutOff(restartCtx, d.VM, d.Name, d.ShutdownTimeout)
-				// It stays recorded: a guest that finishes its shutdown later
-				// is started at BombVault's next start.
-				if errors.Is(err, ErrVMShutdownTimeout) {
-					log.Printf("vm backup: %q has not shut off, so it is left running as it is", d.Name)
+				if state, err := d.VM.State(restartCtx, d.Name); err != nil || state != "shut off" {
+					log.Printf("vm backup: %q has not shut off yet, so it is started once it has", d.Name)
+					if d.LateShutdown != nil {
+						d.LateShutdown()
+					}
 					return
-				}
-				if err != nil {
-					log.Printf("vm backup: wait for %q to shut off before starting it again: %v", d.Name, err)
 				}
 			}
 			startErr := d.VM.Start(restartCtx, d.Name)
-			if startErr == nil {
+			switch {
+			case startErr == nil:
 				clearVMDown(d)
-			} else if backupErr == nil {
-				backupErr = fmt.Errorf("vm backup: restart vm: %w", startErr)
+			case backupErr == nil:
+				backupErr = fmt.Errorf("%s: %w", VMRestartFailed, startErr)
+			default:
+				// The VM being off comes first: it is what the user has to act on,
+				// and the run row keeps only the start of a long reason.
+				backupErr = fmt.Errorf("%s: %w; the backup failed too: %w", VMRestartFailed, startErr, backupErr)
 			}
 		}()
 
@@ -436,7 +462,8 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			if backupErr = waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); backupErr != nil {
 				if errors.Is(backupErr, ErrVMShutdownTimeout) {
 					backupErr = fmt.Errorf("%w: %q is still running after %s, so nothing was backed up and it was not forced off. "+
-						"If the guest ignores the shutdown request, back it up live instead", ErrVMShutdownTimeout, d.Name, shutdownWait(d.ShutdownTimeout))
+						"BombVault starts it again if it shuts off within the next %s. If the guest ignores the shutdown request, back it up live instead",
+						ErrVMShutdownTimeout, d.Name, shutdownWait(d.ShutdownTimeout), VMLateShutdownWatch)
 				}
 				return
 			}
@@ -695,11 +722,15 @@ func shutdownWait(maxPolls int) time.Duration {
 //
 //	guard Confirmed + validate snapshotID (hex) + validate paths
 //	→ recordRunStart
-//	→ if VM exists: Destroy (if running) + Undefine
+//	→ if VM exists: Destroy (if running)
 //	→ restic RestorePaths (diskPaths + nvram + tpm, per-path back to origin)
+//	→ if VM exists: Undefine
 //	→ write DomainXML to DataDir/vm-define/<name>.xml → Define
 //	→ Autostart(captured, or the VM's own) → Start (if StartAfter)
 //	→ recordRunFinish(success|failed)
+//
+// A failure while the disks are written leaves the VM defined, with its NVRAM.
+// It runs again if its disks did not change, and stays off if they may have.
 //
 // Returns an error WITHOUT recording a run when not confirmed or the snapshot
 // id is invalid (nothing destructive has happened yet).
@@ -761,15 +792,22 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 		}
 	}
 
-	// If the VM currently exists, destroy (if running) then undefine it.
+	// The VM goes off for the disks to be written, and its definition and NVRAM
+	// go only once they are, so a restore that fails leaves the VM defined.
 	state, err := d.VM.State(ctx, d.Name)
 	if err != nil {
 		return fmt.Errorf("vm restore: check state: %w", err)
 	}
+	defined := state != ""
+	// A paused, suspended or shutting-down VM is active too: its qemu would stay
+	// on the disks the restore is about to write.
+	active := defined && state != "shut off"
 	autostart := d.WasAutostart
-	if state != "" {
-		// VM exists on the host.
+	if defined {
 		if err := releaseCheckpointsForRestore(ctx, d.VM, d.Name); err != nil {
+			return err
+		}
+		if err := refuseSnapshotRecords(ctx, d.VM, d.Name); err != nil {
 			return err
 		}
 		// Undefining drops the flag, so without one from the backup the
@@ -781,21 +819,75 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 				log.Printf("vm restore: read the autostart setting of %q: %v", d.Name, err)
 			}
 		}
-		// A paused, suspended or shutting-down VM is active too: undefining it
-		// leaves its qemu running on the disks the restore is about to write.
-		if state != "shut off" {
+		if active {
 			if err := d.VM.Destroy(ctx, d.Name); err != nil {
 				return fmt.Errorf("vm restore: destroy running vm: %w", err)
 			}
 		}
-		if err := d.VM.Undefine(ctx, d.Name); err != nil {
-			return fmt.Errorf("vm restore: undefine: %w", err)
+	}
+
+	before := stampFiles(allPaths)
+	if err := restoreVMDisks(ctx, d, allPaths); err != nil {
+		if !defined {
+			return err
+		}
+		return afterFailedDiskRestore(ctx, d, active, unchangedFiles(before) && len(d.BlockDisks) == 0, err)
+	}
+
+	// The disks hold the backup from here on, so a cancel no longer stops the
+	// VM from getting its definition back.
+	finishCtx := context.WithoutCancel(ctx)
+	previous := ""
+	if defined {
+		if xml, err := d.VM.DumpXML(finishCtx, d.Name); err == nil {
+			previous = xml
+		} else {
+			log.Printf("vm restore: read the definition of %q before replacing it: %v", d.Name, err)
+		}
+		if err := d.VM.Undefine(finishCtx, d.Name); err != nil {
+			return &vmHalfRestored{fmt.Errorf("vm restore: undefine: %w", err)}
 		}
 	}
 
-	// VM disk images, NVRAM, and TPM state are all FILES; restic's
-	// <id>:<subpath> subtree form needs a DIRECTORY (a file path fails with
-	// "not a directory").
+	// Write the captured NVRAM back to the host (over SSH) now that the old
+	// domain is undefined (its nvram removed) and before define, so libvirt picks
+	// up the real var store. Best-effort: never blocks the restore.
+	if d.PreDefine != nil {
+		if err := d.PreDefine(finishCtx); err != nil {
+			return fmt.Errorf("vm restore: pre-define: %w", err)
+		}
+	}
+
+	if err := defineVM(finishCtx, d, d.DomainXML); err != nil {
+		err = fmt.Errorf("vm restore: define: %w", err)
+		if previous == "" {
+			return err
+		}
+		if perr := defineVM(finishCtx, d, previous); perr != nil {
+			return fmt.Errorf("%w; the previous definition could not be put back either: %w", err, perr)
+		}
+		return &vmHalfRestored{err}
+	}
+
+	if autostart != nil {
+		if err := d.VM.Autostart(finishCtx, d.Name, *autostart); err != nil {
+			return fmt.Errorf("vm restore: autostart: %w", err)
+		}
+	}
+
+	// Optionally boot the VM (e.g. it was running before).
+	if d.StartAfter {
+		if err := d.VM.Start(finishCtx, d.Name); err != nil {
+			return fmt.Errorf("vm restore: start: %w", err)
+		}
+	}
+	return nil
+}
+
+// restoreVMDisks writes the disks back and leads each image to its backing
+// file. VM disk images, NVRAM and TPM state are all files, and restic's
+// <id>:<subpath> subtree form needs a directory, so folders are restored.
+func restoreVMDisks(ctx context.Context, d VMRestoreDeps, allPaths []string) error {
 	if len(d.Images) > 0 {
 		for _, img := range d.Images {
 			if err := RestoreBlockImage(ctx, d.ImageDumper, d.Convert, d.RepoPath, d.SnapshotID, img); err != nil {
@@ -825,45 +917,97 @@ func runVMRestore(ctx context.Context, d VMRestoreDeps) error {
 	if err := repointBacking(d.Backing); err != nil {
 		return err
 	}
-
 	// A VM missing a disk it boots from is not defined.
-	if err := restoreBlockDisksAndLog(ctx, d); err != nil {
-		return err
-	}
+	return restoreBlockDisksAndLog(ctx, d)
+}
 
-	// Write the captured NVRAM back to the host (over SSH) now that the old
-	// domain is undefined (its nvram removed) and before define, so libvirt picks
-	// up the real var store. Best-effort — never blocks the restore.
-	if d.PreDefine != nil {
-		if err := d.PreDefine(ctx); err != nil {
-			return fmt.Errorf("vm restore: pre-define: %w", err)
+// afterFailedDiskRestore puts a VM back as it was when its disks did not change,
+// and otherwise leaves it off: booting a half-written disk would write on top
+// of a state that is neither the old one nor the backup's.
+func afterFailedDiskRestore(ctx context.Context, d VMRestoreDeps, active, untouched bool, cause error) error {
+	if !untouched {
+		return &vmHalfRestored{cause}
+	}
+	if !active {
+		return cause
+	}
+	if err := d.VM.Start(context.WithoutCancel(ctx), d.Name); err != nil {
+		return fmt.Errorf("%w; its disks did not change, but starting it again failed: %w", cause, err)
+	}
+	return fmt.Errorf("%w; its disks did not change and it was started again", cause)
+}
+
+// vmHalfRestored is a restore that stopped once it had begun writing the disks
+// and left the VM off. Its run reason begins with store.ReasonVMRestoreHalfDone.
+type vmHalfRestored struct{ err error }
+
+func (e *vmHalfRestored) Error() string {
+	return store.ReasonVMRestoreHalfDone + ": " + e.err.Error()
+}
+
+func (e *vmHalfRestored) Unwrap() error { return e.err }
+
+// fileStamp is what tells whether a file was written to.
+type fileStamp struct {
+	size    int64
+	modTime time.Time
+}
+
+// stampFiles records the files as they are now. A missing file has no stamp.
+func stampFiles(files []string) map[string]fileStamp {
+	stamps := make(map[string]fileStamp, len(files))
+	for _, f := range files {
+		if fi, err := os.Stat(f); err == nil {
+			stamps[f] = fileStamp{fi.Size(), fi.ModTime()}
 		}
 	}
+	return stamps
+}
 
-	// Write domain XML to a temp file then define it with virsh.
+// unchangedFiles reports whether the files still are as before records them.
+func unchangedFiles(before map[string]fileStamp) bool {
+	for f, was := range before {
+		fi, err := os.Stat(f)
+		if err != nil || fi.Size() != was.size || !fi.ModTime().Equal(was.modTime) {
+			return false
+		}
+	}
+	return true
+}
+
+// defineVM writes xml to a temp file and defines the VM with virsh.
+func defineVM(ctx context.Context, d VMRestoreDeps, xml string) error {
 	xmlDir := filepath.Join(d.DataDir, "vm-define")
 	if err := os.MkdirAll(xmlDir, 0o700); err != nil {
-		return fmt.Errorf("vm restore: create vm-define dir: %w", err)
+		return fmt.Errorf("create vm-define dir: %w", err)
 	}
 	xmlPath := filepath.Join(xmlDir, d.Name+".xml")
-	if err := os.WriteFile(xmlPath, []byte(d.DomainXML), 0o600); err != nil { //nolint:gosec // G306: 0600 is intentional (domain XML may contain sensitive paths)
-		return fmt.Errorf("vm restore: write domain xml: %w", err)
+	if err := os.WriteFile(xmlPath, []byte(xml), 0o600); err != nil { //nolint:gosec // G306: 0600 is intentional (domain XML may contain sensitive paths)
+		return fmt.Errorf("write domain xml: %w", err)
 	}
-	if err := d.VM.Define(ctx, xmlPath); err != nil {
-		return fmt.Errorf("vm restore: define: %w", err)
-	}
+	return d.VM.Define(ctx, xmlPath)
+}
 
-	if autostart != nil {
-		if err := d.VM.Autostart(ctx, d.Name, *autostart); err != nil {
-			return fmt.Errorf("vm restore: autostart: %w", err)
-		}
-	}
+// snapshotRecords is the part of a VM host that lists libvirt's own snapshot
+// records. A VM without it has none to worry about.
+type snapshotRecords interface {
+	SnapshotNames(ctx context.Context, domain string) ([]string, error)
+}
 
-	// Optionally boot the VM (e.g. it was running before).
-	if d.StartAfter {
-		if err := d.VM.Start(ctx, d.Name); err != nil {
-			return fmt.Errorf("vm restore: start: %w", err)
-		}
+// refuseSnapshotRecords stops the restore before the VM is touched when libvirt
+// would refuse to undefine it. Those records are the user's, as a foreign
+// checkpoint is, and the disks they name are not BombVault's to judge.
+func refuseSnapshotRecords(ctx context.Context, vm VM, name string) error {
+	sr, ok := vm.(snapshotRecords)
+	if !ok {
+		return nil
+	}
+	names, err := sr.SnapshotNames(ctx, name)
+	if err != nil {
+		return fmt.Errorf("vm restore: list snapshots: %w", err)
+	}
+	if len(names) > 0 {
+		return fmt.Errorf("vm restore: the VM has snapshots on record in libvirt (%s); libvirt cannot remove a VM that has them, so delete them first", strings.Join(names, ", "))
 	}
 	return nil
 }

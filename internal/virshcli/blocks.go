@@ -60,6 +60,22 @@ func (c *Client) CheckpointNames(ctx context.Context, domain string) ([]string, 
 	return names, nil
 }
 
+// SnapshotNames lists the snapshots libvirt keeps a record of. One made with
+// --no-metadata, as Unraid's and BombVault's own are, has none.
+func (c *Client) SnapshotNames(ctx context.Context, domain string) ([]string, error) {
+	out, err := c.run(ctx, "snapshot-list", "--name", "--", domain)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, line := range strings.Split(out, "\n") {
+		if n := strings.TrimSpace(line); n != "" {
+			names = append(names, n)
+		}
+	}
+	return names, nil
+}
+
 // CheckpointDelete implements BlockBackups.
 func (c *Client) CheckpointDelete(ctx context.Context, domain, checkpoint string) error {
 	_, err := c.run(ctx, "checkpoint-delete", "--", domain, checkpoint)

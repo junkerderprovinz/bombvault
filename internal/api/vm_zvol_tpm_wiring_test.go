@@ -251,3 +251,24 @@ func readVMDefinition(t *testing.T, st *store.Repo, name string) vmDefJSON {
 	}
 	return def
 }
+
+func TestBackupVMThatCannotReadNVRAMAndTPMKeepsWhatTheLastBackupRead(t *testing.T) {
+	ssh := &zvolTPMSSH{files: map[string][]byte{
+		"/dev/tpm0":                             []byte("captured-tpm-state"),
+		"/etc/libvirt/qemu/nvram/tpmvm_VARS.fd": []byte("captured-nvram"),
+	}}
+	svc, _, st, _ := vmZvolTestService(t, tpmVMDomainXML, ssh)
+	if _, err := svc.BackupVM(context.Background(), "tpmvm"); err != nil {
+		t.Fatalf("BackupVM: %v", err)
+	}
+
+	ssh.files = nil
+	if _, err := svc.BackupVM(context.Background(), "tpmvm"); err != nil {
+		t.Fatalf("second BackupVM: %v", err)
+	}
+
+	def := readVMDefinition(t, st, "tpmvm")
+	if string(def.NVRAMBytes) != "captured-nvram" || string(def.TPMBytes) != "captured-tpm-state" {
+		t.Fatalf("definition = %+v, want what the first backup read", def)
+	}
+}

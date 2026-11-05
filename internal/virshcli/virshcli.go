@@ -438,6 +438,9 @@ type domainXML struct {
 				// Dev is set instead of File for a type="block" disk, such
 				// as a TrueNAS zvol at /dev/zvol/<pool>/<dataset>.
 				Dev string `xml:"dev,attr"`
+				// Name is set for a network or volume disk, Pool for a volume disk.
+				Name string `xml:"name,attr"`
+				Pool string `xml:"pool,attr"`
 			} `xml:"source"`
 			Target struct {
 				Dev string `xml:"dev,attr"`
@@ -454,6 +457,23 @@ type domainXML struct {
 	} `xml:"os"`
 }
 
+// leftOutKind says what kind of disk with data a backup would leave out, and is
+// empty for a cdrom, a floppy and a disk with no source, which hold nothing to
+// back up.
+func leftOutKind(typ, device string, readOnly bool, sources ...string) string {
+	if device == "cdrom" || device == "floppy" || strings.Join(sources, "") == "" {
+		return ""
+	}
+	switch {
+	case device == "lun":
+		return "lun"
+	case readOnly:
+		return "read-only"
+	default:
+		return typ
+	}
+}
+
 // ParseDomain extracts the disks, NVRAM and vTPM paths, title and UUID from a
 // libvirt domain XML document.
 func ParseDomain(xmlStr string) (DomainInfo, error) {
@@ -466,6 +486,7 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 	var blockDisks []DiskRef
 	device := ""
 	var skip []string
+	var leftOut []LeftOutDisk
 	for _, disk := range d.Devices.Disks {
 		writable := disk.Type == "file" && disk.Device == "disk" && disk.Source.File != "" && disk.ReadOnly == nil
 		blockWritable := disk.Type == "block" && disk.Device == "disk" && disk.Source.Dev != "" && disk.ReadOnly == nil
@@ -486,6 +507,9 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		case disk.Target.Dev != "":
 			// A cdrom, read-only or source-less disk stays out of the live snapshot.
 			skip = append(skip, disk.Target.Dev)
+			if kind := leftOutKind(disk.Type, disk.Device, disk.ReadOnly != nil, disk.Source.File, disk.Source.Dev, disk.Source.Name, disk.Source.Pool); kind != "" {
+				leftOut = append(leftOut, LeftOutDisk{Dev: disk.Target.Dev, Kind: kind})
+			}
 		}
 	}
 	nvram := strings.TrimSpace(d.OS.NVRAM)
@@ -497,10 +521,12 @@ func ParseDomain(xmlStr string) (DomainInfo, error) {
 		Disks:            diskRefs,
 		NVRAMPath:        nvram,
 		TPMPath:          tpm,
+		TPMLeftOut:       d.Devices.TPM != nil && tpm == "",
 		Title:            title,
 		UUID:             uuid,
 		DiskDevice:       device,
 		SkipSnapshotDevs: skip,
 		BlockDisks:       blockDisks,
+		LeftOutDisks:     leftOut,
 	}, nil
 }

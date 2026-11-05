@@ -81,8 +81,21 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Each VM has a **Method** in the **VM** card on its Settings tab (open the VM under **Backups**):
 
-- **Graceful (shutdown)** is the default. It shuts the VM down, backs up the disks and starts it again, so the backup is always consistent. It waits up to ten minutes for the guest to shut down and never forces it off. A guest that still runs after that is left alone, and that backup fails with the reason.
-- **Live snapshot** backs up a running VM through an external snapshot and `blockcommit`. It needs the qemu guest agent in the VM, for a quiesced snapshot, and the disk on `/mnt/cache` or `/mnt/diskX`, not `/mnt/user`. On a VM that is shut off, Live falls back to Graceful by itself, and when the snapshot cannot be made, it falls back as well.
+- **Graceful (shutdown)** is the default. It shuts the VM down, backs up the disks and starts it again, so the backup is always consistent. It waits up to ten minutes for the guest to shut down and never forces it off. A guest that still runs after that is left alone, and that backup fails with the reason. If the guest shuts off within the next hour, BombVault starts it again. If that start fails, the failed run says so.
+- **Live snapshot** backs up a running VM through an external snapshot and `blockcommit`. It needs the disk on `/mnt/cache` or `/mnt/diskX`, not `/mnt/user`. With the qemu guest agent in the VM the snapshot is quiesced, and without it the snapshot is crash-consistent. On a VM that is shut off, Live falls back to Graceful by itself. When the snapshot cannot be made, that backup fails and the VM keeps running, since a VM you chose to back up live is never shut down for it.
+
+## What a backup leaves out {#left-out}
+
+A backup can succeed and still not hold the whole VM. The run then carries a note in a warning tone that names what is missing:
+
+- **Disks BombVault does not read.** A read-only disk, a `lun` and a `network` or `volume` disk are left out, and the note names each with its target device and kind. The definition in the backup still lists them. A cdrom and a floppy are not named. A plain block device that is not a ZFS zvol fails the backup instead.
+- **The state of an emulated TPM.** It has no path in the domain XML. The Unraid VM Manager sets such a TPM up for a VM with the **OVMF TPM** BIOS, so the note also appears on Unraid. A guest that keeps a secret in its TPM, as BitLocker can, may ask for its recovery key after a restore that loses that state, so keep that key at hand.
+
+## A restore that fails {#restore-fails}
+
+A restore in place shuts the VM off, writes the disks, and replaces the definition and the NVRAM only once the disks are written. A restore that fails leaves the VM defined with its NVRAM. If its disks did not change and it was running, it runs again. If they may have changed it stays off, since booting a half-written disk would write on top of it, and the run says so. Restoring the same backup again finishes the job.
+
+Snapshots on record in libvirt, which is not how the Unraid VM Manager makes them, stop a restore in place before the VM is touched, because libvirt cannot remove a VM that has them. Delete them first.
 
 ## Changed blocks only {#changed-blocks}
 
@@ -112,6 +125,7 @@ BombVault backs up such a VM in full:
 - **A live backup keeps the snapshots.** **Live snapshot** puts a temporary overlay on top while it reads the disk and merges it back afterwards, only into the image right below. The chain is the same after the backup as before it. A VM without snapshots behaves as it always has.
 - **A restore brings the chain back.** A restore in place writes every file back where it was and puts Unraid's snapshot list back, so the VM Manager lists the snapshots again. A restore next to the original writes the files into the folder of the copy and points the restored disks at the restored files, so the copy never reads from the original's images. Unraid's snapshot list goes back only with a restore in place, because it names the files where they were backed up. Without it the copy boots the same, and the VM Manager just lists no snapshots for it.
 - **Changed blocks only** reads what the guest sees, so its restore comes back as one flattened qcow2 file without the snapshots.
+- **A restore brings back the disk of the backup you pick.** Snapshots taken or merged since that backup don't change that. A backup from before a snapshot defines the VM on the file it holds, and a backup from before a merge brings its overlay back and runs on it. Newer files stay where they are, unused and unchanged. A backup that holds an overlay but not the file below it is refused before the VM is touched. The VM's definition lists no chain after a restore, so libvirt reads the chain from the restored files.
 
 ### Example: a VM with two snapshots {#example-unraid-snapshots}
 
@@ -199,10 +213,10 @@ File disks, as Unraid uses them, are not affected by any of this.
 A VM can have a virtual TPM, which Secure Boot and Windows 11 guests need. Its state lives outside the disk and the NVRAM, so a backup of only those two would bring a guest back with a new, empty TPM.
 
 - **A passthrough TPM**, a real chip passed to the guest, names its path in the domain XML. BombVault saves its state next to the NVRAM over SSH and writes it back before `virsh define`, best effort like the NVRAM: a failed read or write is logged and does not fail the backup or restore.
-- **An emulated vTPM**, the kind TrueNAS sets up for Windows 11 and Secure Boot guests, publishes no state path in the domain XML. BombVault then reports "no TPM path found" instead of guessing a path. Keep such a guest's recovery key, such as its BitLocker key, at hand before you restore it.
+- **An emulated vTPM**, the kind TrueNAS sets up for Windows 11 and Secure Boot guests, publishes no state path in the domain XML, so its state is not backed up. BombVault doesn't guess a path, and the backup finishes with a note that the state of the VM's TPM is not in it. Keep such a guest's recovery key, such as its BitLocker key, at hand before you restore it.
 - **You cannot attach a TPM to a TrueNAS VM yourself.** TrueNAS SCALE 25.10's VM device API accepts only `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` and `USB`, and refuses `TPM` as an unknown type.
 
-The TPM handling is unit-tested only and has not run against a real TrueNAS guest with a vTPM. A VM without a TPM, as on Unraid, backs up and restores exactly as before.
+The TPM handling is unit-tested only and has not run against a real TrueNAS guest with a vTPM. A VM without a TPM backs up and restores exactly as before.
 
 NVRAM is captured as usual. TrueNAS keeps it per VM at `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, and the domain XML names that path.
 

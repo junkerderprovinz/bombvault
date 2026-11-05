@@ -4,6 +4,7 @@
 package qcow2
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -296,4 +297,10 @@ func probe(file string) (string, error) {
 		return "", err
 	}
 	return "raw", nil
+}
+
+// HeaderOf reads a qcow2 header from the start of an image, for an image that
+// is not a file here, such as one inside a backup.
+func HeaderOf(start []byte) (Header, error) {
+	return readHeader(bytes.NewReader(start))
 }

@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // fakeVM satisfies backup.VM for unit tests — no real virsh needed.
@@ -1203,4 +1206,151 @@ func TestRunTagSetHasNoEffectOnRestoreCalls(t *testing.T) {
 	if len(runs.finishes) != 1 || runs.finishes[0] != "success" {
 		t.Fatalf("run finishes = %v, want [success]", runs.finishes)
 	}
+}
+
+func TestRestoreVMFailureOnUntouchedDisksKeepsTheDomainAndStartsTheGuest(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{restoreErr: errors.New("no space left on device")}
+	runs := &fakeRuns{}
+	deps := sampleVMRestoreDeps(t, vm, r, runs)
+
+	err := backup.RestoreVM(t.Context(), deps)
+	if err == nil || !strings.Contains(err.Error(), "no space left on device") || !strings.Contains(err.Error(), "started again") {
+		t.Fatalf("err = %v", err)
+	}
+	if vmContains(vm.log, "undefine:") || vmContains(vm.log, "define:") {
+		t.Fatalf("the definition was touched: %v", vm.log)
+	}
+	if !before(vm.log, "destroy:win10", "start:win10") {
+		t.Fatalf("the guest did not come back: %v", vm.log)
+	}
+}
+
+func TestRestoreVMFailureOnAShutOffVMLeavesItOff(t *testing.T) {
+	vm := &fakeVM{stateVal: "shut off"}
+	deps := sampleVMRestoreDeps(t, vm, &fakeRestic{restoreErr: errors.New("connection reset")}, &fakeRuns{})
+
+	if err := backup.RestoreVM(t.Context(), deps); err == nil {
+		t.Fatal("want the failure")
+	}
+	if vmContains(vm.log, "start:") || vmContains(vm.log, "undefine:") {
+		t.Fatalf("calls = %v", vm.log)
+	}
+}
+
+// partlyWritingRestic writes to a disk and then fails, as a restic run that
+// dies halfway does.
+type partlyWritingRestic struct {
+	fakeRestic
+	disk string
+}
+
+func (r *partlyWritingRestic) RestorePaths(context.Context, string, string, []string) error {
+	if err := os.WriteFile(r.disk, []byte("half written"), 0o600); err != nil {
+		return err
+	}
+	return errors.New("connection reset")
+}
+
+func TestRestoreVMFailureOnPartlyWrittenDisksLeavesTheGuestOffAndSaysWhy(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the restore takes only slash paths")
+	}
+	disk := filepath.Join(t.TempDir(), "win10.qcow2")
+	if err := os.WriteFile(disk, []byte("the old disk"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	vm := &fakeVM{stateVal: "running"}
+	runs := &fakeRuns{}
+	deps := sampleVMRestoreDeps(t, vm, &fakeRestic{}, runs)
+	deps.DiskPaths, deps.NVRAMPath = []string{disk}, ""
+	deps.Restic = &partlyWritingRestic{disk: disk}
+
+	err := backup.RestoreVM(t.Context(), deps)
+	if err == nil || !strings.HasPrefix(err.Error(), store.ReasonVMRestoreHalfDone+": ") || !strings.Contains(err.Error(), "connection reset") {
+		t.Fatalf("err = %v", err)
+	}
+	if vmContains(vm.log, "start:") || vmContains(vm.log, "undefine:") {
+		t.Fatalf("calls = %v", vm.log)
+	}
+}
+
+func TestRestoreVMThatLibvirtWillNotDefinePutsThePreviousDefinitionBack(t *testing.T) {
+	vm := &definitionRefusingVM{fakeVM: &fakeVM{stateVal: "shut off", dumpXMLVal: "<domain>previous</domain>"}}
+	deps := sampleVMRestoreDeps(t, vm.fakeVM, &fakeRestic{}, &fakeRuns{})
+	deps.VM = vm
+
+	err := backup.RestoreVM(t.Context(), deps)
+	if err == nil || !strings.HasPrefix(err.Error(), store.ReasonVMRestoreHalfDone) {
+		t.Fatalf("err = %v", err)
+	}
+	if want := []string{"<domain><name>win10</name></domain>", "<domain>previous</domain>"}; !slices.Equal(vm.defined, want) {
+		t.Fatalf("defined = %q, want %q", vm.defined, want)
+	}
+}
+
+// definitionRefusingVM refuses the first definition it is given.
+type definitionRefusingVM struct {
+	*fakeVM
+	defined []string
+}
+
+func (v *definitionRefusingVM) Define(_ context.Context, xmlPath string) error {
+	b, err := os.ReadFile(xmlPath) //nolint:gosec // G304: the path the restore under test wrote
+	if err != nil {
+		return err
+	}
+	v.defined = append(v.defined, string(b))
+	if len(v.defined) == 1 {
+		return errors.New("unsupported configuration")
+	}
+	return nil
+}
+
+// recordedSnapshotsVM has snapshots on record in libvirt.
+type recordedSnapshotsVM struct{ *fakeVM }
+
+func (recordedSnapshotsVM) SnapshotNames(context.Context, string) ([]string, error) {
+	return []string{"before-update"}, nil
+}
+
+func TestRestoreVMWithSnapshotsOnRecordIsRefusedBeforeTheGuestIsTouched(t *testing.T) {
+	vm := &fakeVM{stateVal: "running"}
+	r := &fakeRestic{}
+	deps := sampleVMRestoreDeps(t, vm, r, &fakeRuns{})
+	deps.VM = recordedSnapshotsVM{vm}
+
+	err := backup.RestoreVM(t.Context(), deps)
+	if err == nil || !strings.Contains(err.Error(), "before-update") {
+		t.Fatalf("err = %v", err)
+	}
+	if vmContains(vm.log, "destroy:") || vmContains(vm.log, "undefine:") || len(r.log) > 1 {
+		t.Fatalf("the VM was touched: %v, restic %v", vm.log, r.log)
+	}
+}
+
+func TestRestoreVMCancelledAfterItsDisksStillDefinesTheVM(t *testing.T) {
+	vm := &fakeVM{stateVal: "shut off"}
+	ctx, cancel := context.WithCancel(t.Context())
+	r := &cancellingRestic{cancel: cancel}
+	deps := sampleVMRestoreDeps(t, vm, &fakeRestic{}, &fakeRuns{})
+	deps.Restic = r
+
+	if err := backup.RestoreVM(ctx, deps); err != nil {
+		t.Fatal(err)
+	}
+	if !vmContains(vm.log, "define:") {
+		t.Fatalf("calls = %v", vm.log)
+	}
+}
+
+// cancellingRestic has the restore cancelled the moment the disks are written.
+type cancellingRestic struct {
+	fakeRestic
+	cancel context.CancelFunc
+}
+
+func (r *cancellingRestic) RestorePaths(context.Context, string, string, []string) error {
+	r.cancel()
+	return nil
 }

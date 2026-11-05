@@ -2,10 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"slices"
 	"strconv"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -27,6 +30,73 @@ const (
 	vmRecoveryInterval = 5 * time.Second
 	vmRecoveryBudget   = 15 * time.Minute
 )
+
+// watchLateShutdown starts a VM that is still shutting down when its backup
+// ends, once it is off. The run is over by then, so it goes on the run's row
+// and into a message when that fails. BombVault's next start takes over the
+// record if it stops first.
+func (s *Service) watchLateShutdown(name, runID string) {
+	ctx, cancel := context.WithTimeout(context.Background(), backup.VMLateShutdownWatch)
+	defer cancel()
+	s.awaitLateShutdown(ctx, name, runID, vmRecoveryInterval)
+}
+
+func (s *Service) awaitLateShutdown(ctx context.Context, name, runID string, interval time.Duration) {
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("api: %q did not shut off after its backup asked it to, so it counts as running on", name) //nolint:gosec // G706: %q-quoted
+			if err := s.store.ClearVMsStopped([]string{name}); err != nil {
+				log.Printf("api: clearing the shutdown record of %q failed: %v", name, err) //nolint:gosec // G706: %q-quoted
+			}
+			return
+		case <-time.After(interval):
+		}
+		if !s.stillRecordedDown(name) {
+			return
+		}
+		state, err := s.virsh.State(ctx, name)
+		if err != nil || state != "shut off" {
+			continue
+		}
+		s.startLateVM(context.WithoutCancel(ctx), name, runID)
+		return
+	}
+}
+
+// stillRecordedDown reports whether the VM still waits for its start. A later
+// backup or a restore that brought it back has dropped the record.
+func (s *Service) stillRecordedDown(name string) bool {
+	names, err := s.store.ListVMsStopped()
+	return err != nil || slices.Contains(names, name)
+}
+
+// startLateVM starts the VM behind the domain lock, because a backup that runs
+// now may be reading its disks. That backup may also have settled the matter.
+func (s *Service) startLateVM(ctx context.Context, name, runID string) {
+	defer s.lockDomainFor("vms", "late-restart")()
+	if !s.stillRecordedDown(name) {
+		return
+	}
+	if state, err := s.virsh.State(ctx, name); err != nil || state != "shut off" {
+		log.Printf("api: %q is no longer shut off, so it is not started: %v", name, err) //nolint:gosec // G706: %q-quoted
+		return
+	}
+	log.Printf("api: starting %q again, it finished shutting down after its backup had ended", name) //nolint:gosec // G706: %q-quoted
+	if err := s.virsh.Start(ctx, name); err != nil {
+		reason := fmt.Errorf("%s: %w", backup.VMRestartFailed, err)
+		log.Printf("api: %q: %v", name, reason) //nolint:gosec // G706: %q-quoted
+		if aErr := s.store.AppendRunError(runID, truncateRunErr(reason)); aErr != nil {
+			log.Printf("api: noting the failed start of %q on its run: %v", name, aErr) //nolint:gosec // G706: %q-quoted
+		}
+		s.notifyZFSUnsuppressed(notify.Event{Title: "BombVault", Message: "VM " + name + " finished shutting down after its backup and could not be started again: " + scrubError(err), OK: false})
+		return
+	}
+	if err := s.store.ClearVMsStopped([]string{name}); err != nil {
+		log.Printf("api: clearing the shutdown record of %q failed: %v", name, err) //nolint:gosec // G706: %q-quoted
+	}
+	s.notifyZFSUnsuppressed(notify.Event{Title: "BombVault", Message: "VM " + name + " finished shutting down after its backup and was started again", OK: true})
+}
 
 // RecoverVMRestarts starts the VMs a graceful backup left shut off when
 // BombVault stopped in the middle of it. virsh goes over SSH and a guest may
