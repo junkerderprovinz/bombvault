@@ -9,10 +9,10 @@ Minden, amit a BombVault ment, egyetlen listában áll a **Biztonsági mentések
 
 | Szakasz | Mi mentődik |
 |---|---|
-| **Konténerek** | Az appdata mappa és a konténer definíciója: image, változók, portok, címkék és kötetek. A konténer **Beállítások** lapján lévő **Mentett mappák** kártya pontosan kijelöli, mely mappákat fedi le a mentés, élő számlálóval az útvonalakról és a kihagyottak listájával. Az az adat, amelyet egy konténer a Host Data-n kívül tart, például egy TrueNAS ixVolume-ban, nem kerül mentésre, és a futás megnevezi a kihagyott mappákat. |
+| **Konténerek** | Az appdata mappa és a konténer definíciója: image, változók, portok, címkék és kötetek. A konténer **Beállítások** lapján lévő **Mentett mappák** kártya pontosan kijelöli, mely mappákat fedi le a mentés, élő számlálóval az útvonalakról és a kihagyottak listájával. Az az adat, amelyet egy konténer a Host Data-n kívül tart, például egy TrueNAS ixVolume-ban vagy egy `/opt` alatti Compose-projektben, nem kerül mentésre, és a futás megnevezi a kihagyott mappákat. A futás azt a Host Data-n belüli mappát is megnevezi, amely éppen nincs meg. Az olyan rendszerútvonalak, mint az `/etc/localtime` vagy a Docker-socket, nem számítanak adatnak. |
 | **VM-ek** | A lemezképek, az XML-definíció és az UEFI NVRAM, szabályos leállítással vagy élő pillanatképpel, SSH-n keresztül. Lásd: [VM-mentések](vm-backup-ssh-setup.md). |
 | **Flash** | Csak Unraidon. A teljes USB flash (`/boot`): operációs rendszer, licenc, tömbkonfiguráció, megosztások, hálózati és bővítménykonfiguráció. |
-| **Önmentés** | A BombVault saját `/config` mappája: a beállítási adatbázisa, a célok bejelentkezései és a libvirt SSH-kulcspárja, SQLite `VACUUM INTO` használatával pillanatképezve, hogy az adatbázis soha ne írás közben kerüljön mentésre. |
+| **Önmentés** | A BombVault saját `/config` mappája: a beállítási adatbázisa, a célok bejelentkezései, a libvirt SSH-kulcspárja, a ZFS-szerverek kulcsa és rögzített hosztkulcsai, valamint a tanúsítványok, SQLite `VACUUM INTO` használatával pillanatképezve, hogy az adatbázis soha ne írás közben kerüljön mentésre. |
 | **Mappák** | A szerver bármelyik mappája mappakészletként, például egy megosztás, a dokumentumaid vagy egy fotótár, opcionális kizárási mintákkal. A mappakészleteknek is van ütemezésük, megőrzésük, telephelyen kívüli másolatuk, ellenőrzésük és visszaállítási gyakorlatuk, mint mindennek. |
 | **ZFS-adatkészletek** | Egy adatkészlet és minden alatta lévő, egyetlen ZFS-pillanatképből olvasva, hogy mind ugyanabból a pillanatból származzon, és a resticcel tárolva, mint egy mappa. Egy ZFS-elem blokkpontos replikát is tarthat egy második ZFS-szerveren. Lásd: [ZFS-adatkészletek](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Azok az elemek, amelyek már nincsenek telepítve, de még vannak mentéseik, k�
 Az oldal fő művelete lebeg a jobb alsó sarokban: az **Összes mentése most** futást indít minden bekapcsolt szakaszon. A **Több** tartalmazza a többit:
 
 - A **Kijelölés** kijelölést indít, lásd lent.
-- A **Biztonsági mentések felfedezése** beolvassa, mit tartanak a célok, és elemeket épít újra belőle, például egy friss telepítés után. Az újraépített szakaszok telephelyen kívüli másolatai ekkor szünetelnek, amíg meg nem erősíted az alapértelmezésüket, lásd: [Újraépítés után](offsite-recovery.md#after-a-rebuild).
+- A **Biztonsági mentések felfedezése** beolvassa, mit tartanak a célok, és elemeket épít újra belőle, például egy friss telepítés után. Egy saját adat nélküli konténernek nincs pillanatképe, és a tároló mellé tükrözött definícióból tér vissza. Az újraépített szakaszok telephelyen kívüli másolatai ekkor várnak, amíg át nem veszed a mentéseiket a szerver saját mentéseiként, lásd: [Újraépítés után](offsite-recovery.md#after-a-rebuild).
 - A **ZFS-kapcsolat ehhez a kiszolgálóhoz** megnyitja a ZFS-szakasz SSH-tesztjét, lásd: [ZFS-adatkészletek](zfs-datasets.md#requirements).
 - Az **Összes replikálása most**, a ZFS csempe kiválasztva, minden ZFS-elem replikáját elküldi.
 
@@ -98,7 +98,7 @@ Az alatta lévő kártyák az elem fajtájától függnek:
 | Konténer | **Mentett mappák** (mely leképezett mappák kerülnek mentésre, a **Gyorsítótár-mappák kihagyása (CACHEDIR.TAG)** beállítással), **Kizárási minták**, **Más konténerek leállítása**, **Parancsok előtte és utána**, **Adatbázis**, **Ha az alkalmazás foglalt**, **Frissítés egy sikeres biztonsági mentés után**, **Pillanatkép leállítás helyett**, **Korábbi nevek** |
 | VM | **VM** a **Módszer** beállítással (**Szabályos (leállítás)** vagy **Élő pillanatkép**) és a **Csak a változott blokkok** beállítással, lásd a [VM-mentési útmutatót](vm-backup-ssh-setup.md#per-vm-method) |
 | Mappakészlet | **Mappa** és **Kizárási minták** |
-| Flash | **Flash ZIP-exportálás**, amely minden flash-mentést sima `.zip` fájlként kiír egy általad választott mappába |
+| Flash | **Flash ZIP-exportálás**, amely minden flash-mentést sima `.zip` fájlként kiír egy általad választott mappába, egy lépésben, így egy szinkronizáló eszköz soha nem lát félkész fájlt. Ha egy flash-mentés kevesebbet tartalmaz a kelleténél, az utolsó ZIP a helyén marad, és az export futása ezt jelzi. |
 | ZFS-adatkészlet | a gyermek-adatkészletek, a leállítandó konténerek és a pillanatkép körüli parancsok, a **Replika** és a **Próbáld ki a pillanatképek elérését**, lásd: [ZFS-adatkészletek](zfs-datasets.md) |
 
 A beállítások maguktól mentődnek, ahogy megváltoztatod őket.
@@ -119,7 +119,7 @@ A beállítások maguktól mentődnek, ahogy megváltoztatod őket.
 
 ## Kizárási minták {#excludes}
 
-A **Kizárási minták** kártya soronként egy mintát vár. Az útvonalakat úgy írd, ahogy a konténeren belül látod őket, például `/config/Library/Application Support/Plex Media Server/Cache`, vagy egy puszta nevet, például `.git`, amely tetszőleges mélységben illeszkedik. A mező alatti előnézet megmutatja, mivé oldódik fel az egyes sor, és figyelmeztet, ha egy sor semmire nem illik, vagy mindent kizárna. A `/` vagy `*` sort, illetve azt, amely egy egész mentett mappát nevez meg, figyelmen kívül hagyja, így egy kizárás soha nem ürítheti ki a mentést. Egy egész mappa kihagyásához inkább vedd ki a pipát a **Mentett mappák** alatt.
+A **Kizárási minták** kártya soronként egy mintát vár. Az útvonalakat úgy írd, ahogy a konténeren belül látod őket, például `/config/Library/Application Support/Plex Media Server/Cache`, vagy egy puszta nevet, például `.git`, amely tetszőleges mélységben illeszkedik. Mappakészletnél az útvonalat úgy írd, ahogy a hoszt ismeri, például `/mnt/user/data/cache`. A mező alatti előnézet megmutatja, mivé oldódik fel az egyes sor, és figyelmeztet, ha egy sor semmire nem illik, vagy mindent kizárna. A `/` vagy `*` sort, illetve azt, amely egy egész mentett mappát nevez meg, figyelmen kívül hagyja, így egy kizárás soha nem ürítheti ki a mentést. Egy egész mappa kihagyásához inkább vedd ki a pipát a **Mentett mappák** alatt.
 
 Jól ismert image-eknél, például Plex, Jellyfin, Sonarr, Radarr, Immich és Nextcloud esetén a kártya felkínálja azokat a mappákat, amelyeket az alkalmazás magától újra feltölt, például gyorsítótárakat, naplókat és bélyegképeket. Semmi nem kerül kizárásra, amíg meg nem nyomod a **Kijelöltek kizárása** gombot.
 
@@ -137,6 +137,8 @@ Egy sikertelen dump nem buktatja el a mentést. Saját sikertelen futásként je
 
 - A **Parancsok előtte és utána** a konténeren belül futnak `sh -c` segítségével, például hogy egy gyorsítótárat lemezre írjanak. A mentés előtti sikertelen parancs megszakítja azt. Az a mentés előtti parancs, amely 75-ös kóddal lép ki, ehelyett elhalaszt egy ütemezett mentést, lásd lent.
 - A **Más konténerek leállítása** megnevez konténereket, amelyek leállnak, amíg ez menti magát, például az adatbázisát. Utána a Compose `depends_on` sorrendjükben újra elindulnak, és alapértelmezés szerint mindegyiknek egészségesnek kell jelentkeznie, mielőtt a következő indul. A várakozás és az időkorlátja a **Beállítások, Ütemezések** alatti **Sorrend** kártya **Újraindítás biztonsági mentés után** részénél van.
+- Az a konténer, amely egy leálló konténer hálózati, PID- vagy IPC-névterén osztozik a `--net=container:` vagy a Compose `network_mode: service:` beállítása révén, vele együtt áll le és indul, akkor is, ha nincs a listán, és annak a konténernek az indulása után indul, amelyhez csatlakozik. Egy újraindított konténer új hálózatot kap, és a régi hálózaton futva hagyott konténernek csak a loopbackje maradna. Maga a lista úgy marad, ahogy beállítottad. Ha egy ilyen konténert nem sikerült leállítani, a futás jelzi, hogy nincs hálózata, amíg újra nem indítják. Ugyanez érvényes a BombVault saját konténerére, amely soha nem állítja le önmagát, és nem tehető fel a listára.
+- Az a konténer, amely utána nem fut újra, a futásban és egy értesítésben is név szerint szerepel, akkor is, ha maga a mentés meghiúsult.
 
 ## Ha az alkalmazás foglalt {#app-busy}
 
@@ -177,7 +179,7 @@ A saját ellenőrzésedhez add meg, hogy a **Biztonsági mentés előtti parancs
 A restic marad a motor, de az export olyan másolatot ad, amelyhez sem a BombVault, sem a restic nem kell.
 
 - A **Konténer exportálása** és a **VM exportálása** az elem oldalán a **Több** alatt a jelenlegi állapotról ír másolatot a tároló mellé: a konténer mentett mappáit az Unraid-sablonjával, vagy a VM lemezképeit a definíciójával, amely `virsh define` paranccsal visszaállítható.
-- Egy pillanatkép **Exportálás** művelete egy tárolt mentést ír a szerveren az exportmappába tarként, zipként vagy saját restic-tárolóként, és egy pillanatképet vagy az összeset is elvihet.
+- Egy pillanatkép **Exportálás** művelete egy tárolt mentést ír a szerveren az exportmappába tarként, zipként vagy saját restic-tárolóként, és egy pillanatképet vagy az összeset is elvihet. A flash-mentés és az önmentés kulcsokat tartalmaz, ezért az exportálásukhoz bejelentkezési jelszó és magán a példányon történő bejelentkezés kell.
 
 Az exportok alapértelmezés szerint sima fájlok. Az **Exportok titkosítása age-dzsel** a **Beállítások, Rendszer** alatt lezárja őket, a flash ZIP-et is, az általad felsorolt címzettek számára, amelyek mindegyike egy age nyilvános kulcs vagy egy SSH nyilvános kulcs. Később a megfelelő privát kulccsal fejted vissza őket a gépen kívül. Bekapcsolt titkosítás és érvényes címzett nélkül az export egyértelmű hibával meghiúsul ahelyett, hogy valaha sima fájlokat írna.
 

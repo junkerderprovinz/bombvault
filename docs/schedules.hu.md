@@ -27,7 +27,7 @@ A **Hét** kártya hétfőtől vasárnapig megrajzol minden tervezett futást, n
 
 A **Teljes biztonsági mentés** az alapértelmezett terv mindenre. A **Mikor futnak a mentések** állítja be: egy menet, amely sorban minden szakaszt lementi, a konténereket, VM-eket, a flasht, a mappákat, a ZFS-adatkészleteket és legvégül az önmentést. Az alatta lévő sor megmondja, mely szakaszokat foglalja magában. A **Ki** kikapcsolja, és akkor csak az fut, aminek saját terve van.
 
-- **Elmaradt biztonsági mentések pótlása indulás után**: ha a szerver ki volt kapcsolva egy tervezett időpontban, a BombVault az indulása után körülbelül két perccel lefuttatja azt a mentést.
+- **Elmaradt biztonsági mentések pótlása indulás után**: ha a szerver ki volt kapcsolva egy tervezett időpontban, a BombVault az indulása után körülbelül két perccel lefuttatja azt a mentést. Egy elem saját terve és egy telephelyen kívüli terv a következő tervezett időpontjára vár, és ugyanígy az a terv is, amely még soha nem sikerült.
 - **Parancsok előtte és utána**: a **Parancs a teljes biztonsági mentés előtt** a szerveren fut `sh -c` segítségével, mielőtt a menet elindul, például egy szkript, amely leállít egy szolgáltatást. Ha ez hibázik, a teljes mentés mégis lefut. A **Parancs a teljes biztonsági mentés után** egyszer fut, miután minden szakaszt megpróbált, akkor is, ha az egyik hibázott, ami egy olyan pinghez illik, amely megerősíti, hogy az egész szerver védett. Az egyes konténerek parancsai a saját oldalukon vannak.
 
 Az **Összes mentése most** a Biztonsági mentések oldalon ugyanazt a menetet indítja el kézzel, minden bekapcsolt szakaszon.
@@ -58,7 +58,7 @@ A mentés ugyanazokra az útvonalakra és címkékre kerül, mint a leállított
 
 ## Frissítések a mentés után {#updates}
 
-- **Konténerek frissítése egy sikeres biztonsági mentés után**: csak akkor húz újabb image-et, ha az előtte lévő mentés befejeződött, így mindig van friss visszaállítási pont. Alapértelmezés szerint ki van kapcsolva, és egy konténer a saját oldalán másképp is beállítható a **Frissítés egy sikeres biztonsági mentés után** alatt.
+- **Konténerek frissítése egy sikeres biztonsági mentés után**: csak akkor húz újabb image-et, ha az előtte lévő mentés befejeződött, így mindig van friss visszaállítási pont. Alapértelmezés szerint ki van kapcsolva, és egy konténer a saját oldalán másképp is beállítható a **Frissítés egy sikeres biztonsági mentés után** alatt. Az új image-re csak az kerül át, amit te állítottál be: azok a változók, címkék, a parancs, a felhasználó és a healthcheck, amelyek még a régi image szerintiek, az újat követik. Ha az új image-ből nem lehet létrehozni vagy elindítani a konténert, a konténer visszatér ahhoz az image-hez, amellyel futott, a frissítés sikertelenként jelenik meg, és a következő mentés újra megpróbálja. Az ennek következtében leállva maradt konténert a mentés futása és egy értesítés is megnevezi.
 - **A régi image eltávolítása frissítés után**: törli azt az image-et, amelyet a konténer elhagyott. Egy alapimage-et, amelyen más konténerek osztoznak, soha nem töröl.
 - **Az Unraid frissítési állapotának frissítése egy konténer frissítése után**: törli az Unraid frissítési szalagját arra a konténerre.
 

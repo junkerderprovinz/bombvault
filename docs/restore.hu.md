@@ -21,7 +21,7 @@ Minden visszaállítás a **Visszaállítás** oldalon indul: válassz egy szaka
 
 Egy elemre kattintva megnyílik a **Visszaállítás** a nevével. Lépésenként kérdez, és minden lépés megváltoztatható az indítás előtt:
 
-1. **Biztonsági mentés**: az ajánlott pillanatkép előre ki van választva. Ez a legújabb, vagy egy nyitott anomália után az azt megelőző utolsó. A régebbiek a listában vannak, és az **Összehasonlítás** megmutatja, miben különbözik kettő.
+1. **Biztonsági mentés**: az ajánlott pillanatkép előre ki van választva. Ez a legújabb, vagy egy nyitott anomália után az azt megelőző utolsó. Egy korábbi visszaállítás előtt készült mentés azt az állapotot tartalmazza, amelyet az a visszaállítás lecserélt, ezért kimarad, hacsak nincs más. A régebbiek a listában vannak, és az **Összehasonlítás** megmutatja, miben különbözik kettő.
 2. **Forrás**: honnan jönnek a fájlok, ha egy pillanatkép több helyen is megvan. A **Helyi** a leggyorsabb.
 3. **Mit**: **Összes**, vagy **Egyes fájlok**, ahol bepipálod a kívánt fájlokat és mappákat.
 4. **Hová**: a cél. A lehetőségek az elem fajtájától függnek:
@@ -29,7 +29,7 @@ Egy elemre kattintva megnyílik a **Visszaállítás** a nevével. Lépésenkén
     | Cél | Mit csinál |
     |---|---|
     | **Az eredeti mellé** | Az alapértelmezés. Egy konténer második konténerként tér vissza `<name>-restored` néven, saját portokkal, egy VM lemezei és NVRAM-ja egy `<folder>-restored` nevű mappába kerülnek, egy mappakészlet pedig `<path>-restored` néven jön vissza. Az eredeti nem változik meg. |
-    | **Eredeti cseréje** | Felülírja, ami most ott van. Az **Előbb a jelenlegi állapot mentése** esetén, amely alapértelmezés szerint be van kapcsolva, a BombVault először lementi a mai állapotot, hogy vissza lehessen menni. Ha ez a mentés sikertelen, a visszaállítás nem indul el. |
+    | **Eredeti cseréje** | Felülírja, ami most ott van. Az **Előbb a jelenlegi állapot mentése** esetén, amely alapértelmezés szerint be van kapcsolva, a BombVault először lementi a mai állapotot, hogy vissza lehessen menni. Ha ez a mentés sikertelen, a visszaállítás nem indul el. Ez olyan konténernél vagy VM-nél is működik, amely eltűnt a szerverről: a mappákat, amelyeket a visszaállítás felülír, külön lementi. |
     | **Egy mappába** | Csak a fájlok, böngészéshez. |
     | **Letöltés ZIP-ként** | A flash, egy új pendrive-hoz. A BombVault soha nem ír a futó flash-re. |
     | **Új adatkészletbe** és **Visszaállítás az adatkészletbe** | ZFS-adatkészletek, lásd: [ZFS-adatkészletek](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Mielőtt a **Visszaállítás** gomb elérhetővé válik, az ablak ellenőrzi, 
 
 Az ablak azt is megmutatja, mit változtat a visszaállítás ahhoz képest, ami most ott van: új, lecserélt és változatlan fájlokat, kérésre a listával, valamint azokat a fájlokat a célon, amelyek nincsenek a mentésben, és a helyükön maradnak. A restic ezt szárazfutásként számolja ki a méretből és a módosítási időből, a fájlok olvasása nélkül, és egy nagyon nagy fa 30 másodperc után megáll, és ezt kiírja. Konténereknél és VM-eknél összeveti azokat a beállításokat, amelyeket a visszaállítás újra létrehoz, a futókkal: image és címke, portok, változónevek és kötetek, illetve memória, vCPU-k, lemezek és hálózat.
 
-Néhány dolog megállíthat egy visszaállítást, mielőtt bármit megváltoztatna. Egy konténer statikus IP-címének és közzétett portjainak szabadnak kell lenniük, a hálózatának pedig léteznie kell. A helyben történő visszaállítás megnevezi minden más konténert, amelynek bind mountja olyan mappába nyúlik, amelybe ír, például „ezt az útvonalat a nextcloud-db is használja”, de ez csak figyelmeztet.
+Néhány dolog megállíthat egy visszaállítást, mielőtt bármit megváltoztatna. Egy konténer statikus IP-címének és közzétett portjainak szabadnak kell lenniük, a hálózatának pedig léteznie kell. Unraidon minden helyben történő visszaállítás elutasítja azt a mappát, amely nem csatolt poolon vagy megosztáson van, mert a fájlok a memóriába kerülnének, és újraindítás után eltűnnének. A helyben történő visszaállítás megnevezi minden más konténert, amelynek bind mountja olyan mappába nyúlik, amelybe ír, például „ezt az útvonalat a nextcloud-db is használja”, de ez csak figyelmeztet.
 
 Néhány lehetőség ott jelenik meg, ahol értelme van: **Utána hagyd leállítva**, hogy megnézhess egy konténert vagy VM-et, mielőtt újra fut, és **Visszaállítás GPU és futtatókörnyezet nélkül** egy olyan hoszton, amelyen nincs meg a GPU vagy a futtatókörnyezet, amellyel a mentés készült.
 
-A visszaállítás a háttérben fut. Bezárhatod az ablakot, és a haladás a **Most fut** alatt is látszik. A hosszú visszaállítás százalékot mutat, és megszakítható, a megszakított visszaállítás pedig megszakítottként van rögzítve, nem sikertelenként.
+A visszaállítás a háttérben fut. Bezárhatod az ablakot, és a haladás a **Most fut** alatt is látszik. A hosszú visszaállítás százalékot mutat, és megszakítható, a megszakított visszaállítás pedig megszakítottként van rögzítve, nem sikertelenként. Az a visszaállítás, amelyet a konténer leállása közben szakítottak meg, vagy amely nem tudja eltávolítani a konténert, még semmit sem állított vissza, ezért a konténer újra elindul. Az a konténer, amely a köteteit egy másiktól kapja a `--volumes-from` segítségével, megtartja őket, és a visszaállítás nem indul el, amíg az a másik konténer nem létezik.
 
 ![A visszaállítási ablak a Mit lépésnél, egyes fájlok bepipálva.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![A visszaállítási ablak a Mit lépésnél, egyes fájlok bepipálva.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Valaki tegnap éjjel átszerkesztette a Nextcloud `config.php` fájlját, és a 
 
 Az ablak ezzel zárul: **Kész: a fájlok itt vannak: /mnt/user/restore**. A fájlt `/mnt/user/restore/config.php` néven találod, a fölötte lévő mappák nélkül. Hasonlítsd össze a tönkrement fájllal, másold vissza az appdata mappába, és indítsd újra a Nextcloudot.
 
-Ha inkább rögtön a helyére tennéd vissza, az 5. lépésben válaszd az **Eredeti cseréje** lehetőséget. Hagyd bekapcsolva az **Előbb a jelenlegi állapot mentése** beállítást, hogy a BombVault írás előtt lementse a tönkrement állapotot, a megerősítéshez írd be a `nextcloud` szót, és nyomd meg a **Visszaállítás** gombot. A Nextcloud addig áll, amíg a kiválasztott fájl a helyére kerül, és csak azok a fájlok íródnak, amelyeket bepipáltál.
+Ha inkább rögtön a helyére tennéd vissza, az 5. lépésben válaszd az **Eredeti cseréje** lehetőséget. Hagyd bekapcsolva az **Előbb a jelenlegi állapot mentése** beállítást, hogy a BombVault írás előtt lementse a tönkrement állapotot, a megerősítéshez írd be a `nextcloud` szót, és nyomd meg a **Visszaállítás** gombot. A Nextcloud addig áll, amíg a kiválasztott fájl a helyére kerül, utána újraindul, és csak azok a fájlok íródnak, amelyeket bepipáltál. A félúton meghiúsuló visszaállítás leállítva hagyja a Nextcloudot, mert a fájl, amelyet olvas, félig írt lehet, és a futás ezt jelzi.
 
 ![A visszaállítási ablak a Mi történik lépésnél, az Eredeti cseréje kiválasztva.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![A visszaállítási ablak a Mi történik lépésnél, az Eredeti cseréje kiválasztva.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Ha inkább rögtön a helyére tennéd vissza, az 5. lépésben válaszd az **Er
 
 A **konténerek** a mentett definíciójukból jönnek létre újra a Docker API-n keresztül, az entrypointjukkal, hostnevükkel, leállítási beállításaikkal, köteteikkel és csatolásaikkal, erőforrás-korlátaikkal, naplómeghajtójukkal, DNS-beállításaikkal és régi linkjeikkel. A konténer arra az image-re tér vissza, amelyen a mentés idején futott, nem egy később letöltött újabbra, a hiányzó image-et pedig előbb letölti, a **Beállítások, Visszaállítás** alatti **Container registry-k** bejelentkezésével. A GPU-ja vagy futtatókörnyezete (`--gpus`, `--runtime=nvidia`) szintén visszatér. Olyan hoszton, amelyen nincs meg az az illesztő vagy futtatókörnyezet, a visszaállítás ezt közli, és felkínálja a **Visszaállítás GPU és futtatókörnyezet nélkül** lehetőséget. Egy hiányzó, vagy a visszaállított indulásakor leállított konténerre mutató link kimarad, és ezt a futási előzmények közlik. Az a visszaállítás, amely a konténer eltávolítása után hibázik, visszateszi azt, leállított állapotban.
 
+Egy mentés tartalmazhat olyan mappákat, amelyek a konténernél már nincsenek kiválasztva, például egy régebbi mentés, amely még azelőtt készült, hogy egy mappa eltűnt. Az eltűnt vagy üres mappa visszakerül. Amelyikben most fájlok vannak, az úgy marad, ahogy van, mert lehet, hogy szándékosan vetted ki a pipát, és a visszaállítás előtti ellenőrzés és a futási előzmények megnevezik. Az **Egyes fájlok** vagy az **Egy mappába** lehetőséggel kaphatod vissza.
+
 A **VM-ek** XML-jét újra definiálja SSH-n keresztül, lemezeiket és UEFI NVRAM-jukat pedig újra csatolja, még a VM törlése után is. A VM-ekről, amelyeknek Unraid-pillanatképeik vannak, és a zvolokon lévő lemezekről lásd: [VM-mentések](vm-backup-ssh-setup.md).
 
-A **mappakészletek** a tulajdonosukkal, módjaikkal és időbélyegeikkel térnek vissza, ahogy a restic tárolja őket.
+A **mappakészletek** a tulajdonosukkal, módjaikkal és időbélyegeikkel térnek vissza, ahogy a restic tárolja őket. Ahol a célmappa csak a tulajdonjogot utasítja el, ahogy a `/mnt/user` teszi, a futás egy erről szóló megjegyzéssel zárul. A BombVault ezután összeveti a fájlokat a mentéssel, és ha egy fájl nem érkezett meg, a visszaállítás meghiúsul.
 
-A **flash** soha nem érinti az éles `/boot`-ot. A visszaállítás egy `flash-<id>.zip` nevű letöltés, amely az Unraid USB Creatorba dobható. Az ablak felsorolja az egyes flash-mentésekben lévő bővítményeket a verziójukkal és méretükkel, és egyetlen bővítményt vissza is tud tenni a futó flash-re: a `.plg` fájlját, a `config/plugins` alatti mappáját és azokat a csomagfájlokat, amelyeket a mentés tartalmaz. Az Unraid a következő indításkor telepíti, vagy azonnal a **Plugins, Install Plugin** alatt.
+A **flash** soha nem érinti az éles `/boot`-ot. A visszaállítás egy `flash-<id>.zip` nevű letöltés, amely az Unraid USB Creatorba dobható. A ZIP tartalmazza az `APP_KEY`-t, ezért a letöltéséhez bejelentkezési jelszó és magán a példányon történő bejelentkezés kell. Az ablak felsorolja az egyes flash-mentésekben lévő bővítményeket a verziójukkal és méretükkel, és egyetlen bővítményt vissza is tud tenni a futó flash-re: a `.plg` fájlját, a `config/plugins` alatti mappáját és azokat a csomagfájlokat, amelyeket a mentés tartalmaz. Az Unraid a következő indításkor telepíti, vagy azonnal a **Plugins, Install Plugin** alatt.
 
 A **ZFS-adatkészletek** saját célokkal rendelkeznek, és megtartják a ZFS-tulajdonságaikat, lásd: [Visszaállítás](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Minden elemet ugyanúgy ellenőriz, mint egy egyedi visszaállítást, majd egym
 ## Egy stack visszaállítása {#stacks}
 
 A **Stackek** kártyán egy stackre kattintva megnyílik a **Stack visszaállítása**. Minden tagot a legutóbbi mentéséből állít vissza egyszerre, és az **Indítás függőségi sorrendben a visszaállítás után** esetén a `depends_on` sorrendjükben indítja: előbb az adatbázisokat és gyorsítótárakat, aztán az alkalmazást. Ha egy tag projektmappája hiányzik a kiválasztott helyen, az ablak a Helyi állapotát ajánlja fel helyette.
+
+A BombVault előbb ellenőrzi a tagokat és a projektmappát, és az a visszaállítás, amely nem működhetne, semmit sem változtat. Különben leállítja a futó tagokat, az alkalmazásokat az adatbázisaik előtt, aztán megírja a projektmappát, aztán visszaállítja a tagokat. Ha a projektmappa nem tér vissza, a tagok ettől még visszaállnak, de leállítva maradnak, mert a mappa félig írt lehet, és általában ott vannak a tagok bind mountjai. Ezt minden tag futása jelzi.
+
+Az az adatbázis, amelynek csak adatbázis-mentései vannak, fájlmentése nincs, és amelynek a konténere és a nevesített kötete eltűnt, az adatai nélkül tér vissza. Az ellenőrzés ezt még a visszaállítás előtt jelzi. Leállítva marad, és ugyanígy a tőle függő konténerek is, hogy egyetlen alkalmazás se futtassa le a kezdeti beállítását egy üres adatbázison. Indítsd el, importálj egy dumpot, és indítsd el a többit. Lásd: [Adatbázis-mentések](backups.md#database-dumps).
 
 ## Más források {#other-sources}
 

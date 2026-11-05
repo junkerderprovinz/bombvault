@@ -11,7 +11,7 @@ Ez az oldal felsorolja az összes csempét és a kártyáikat, és arra az oldal
 
 ## Általános {#general}
 
-- A **Szakaszok** szakaszonként be- vagy kikapcsolja: **Konténerek**, **VM-ek**, **Flash**, **Mappák**, **ZFS-adatkészletek** és **Önmentés**. A kikapcsolt szakaszról nem készül mentés, és az elemei nem számítanak. A **Flash** csak Unraidon látszik.
+- A **Szakaszok** szakaszonként be- vagy kikapcsolja: **Konténerek**, **VM-ek**, **Flash**, **Mappák**, **ZFS-adatkészletek** és **Önmentés**. A kikapcsolt szakaszról semmilyen ütemezés szerint nem készül mentés, egy elem saját tervét is beleértve, és az elemei nem számítanak. A **Biztonsági mentés most** továbbra is működik. A **Flash** csak Unraidon látszik.
 - A **Konténerek** azt tartalmazza, ami minden konténerre vonatkozik, például az **Automatikus adatbázis-mentések**. Ami egyetlen konténert érint, az a konténer oldalán van. Lásd: [Adatbázis-mentések](backups.md#database-dumps).
 
 ## Megjelenés {#look}
@@ -97,6 +97,6 @@ A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** 
 
 ## Információ {#info}
 
-- **Verzió**: BombVault, GlimStone, restic és rclone, a **Frissítések keresése** és az **Újdonságok** gombbal, amely megszámolja a még nem látott változásokat, és megnyitja az **Újdonságok** ablakot.
+- **Verzió**: BombVault, GlimStone, restic és rclone, a **Frissítések keresése** és az **Újdonságok** gombbal, amely megszámolja a még nem látott változásokat, és megnyit egy ablakot, amely felsorolja őket.
 - **Súgó**: a **Kézikönyv** megnyitja ezt a dokumentációt, a **Hibajelentés** pedig letölt egy kitakart ZIP-et egy GitHub-hibajegyhez. Belépési jelszó kell hozzá.
 - **A BombVault névjegye**: a projekt, a licence és az, hogyan érhető el a szerző.
