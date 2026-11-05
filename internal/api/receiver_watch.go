@@ -189,7 +189,7 @@ func (s *Service) eachReceivedRepo(do func(c notify.Config, alertsOn bool, rr st
 		log.Printf("api: receiver: read notify config: %v (alerts muted this run)", cErr)
 		c = notify.Config{}
 	}
-	alertsOn := c.On == "always" || c.On == "failure"
+	alertsOn := c.Active()
 	for _, rr := range repos {
 		if rr.Enabled {
 			do(c, alertsOn, rr)

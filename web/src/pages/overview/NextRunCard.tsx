@@ -56,6 +56,8 @@ function scheduleDomainLabel(t: ReturnType<typeof useT>["t"], domain: string): s
       return t("dashboard.domainFiles");
     case "config":
       return t("dashboard.domainConfig");
+    case "zfs":
+      return t("dashboard.domainZFS");
     case "everything":
       return t("activityLog.domainEverything");
     default:

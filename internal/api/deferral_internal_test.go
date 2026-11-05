@@ -202,7 +202,7 @@ func TestAtTheDeadlineAWaitThatGivesUpIsAFailureUnderNeedsYou(t *testing.T) {
 	tg := deferralTarget(t, st, "plex")
 	now := time.Now()
 	s.deferBackup(context.Background(), tg, "", "Plex has 1 active session", now.Add(-13*time.Hour))
-	if !s.deferralHolds("containers", now.Add(-2*time.Hour).Unix()) {
+	if !s.deferralHolds("containers", "", now.Add(-2*time.Hour).Unix()) {
 		t.Fatal("a wait within its deadline does not hold the overdue alert")
 	}
 	s.tryDeferrals(context.Background(), now)
@@ -220,7 +220,7 @@ func TestAtTheDeadlineAWaitThatGivesUpIsAFailureUnderNeedsYou(t *testing.T) {
 	if !s.deferralGaveUp(tg.ID) {
 		t.Fatal("coverage does not count the container as unprotected")
 	}
-	if s.deferralHolds("containers", now.Unix()) {
+	if s.deferralHolds("containers", "", now.Unix()) {
 		t.Fatal("a wait that ended still holds the overdue alert")
 	}
 	msgs := wh.messages()

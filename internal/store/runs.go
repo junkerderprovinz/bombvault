@@ -143,6 +143,41 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	return r.finishRun(id, status, snapshotID, bytes, errMsg, nil, "")
 }
 
+// NoteSectionPlan records what a section's plan is now, and the time when that
+// differs from the last look. The first look at a section knows no time, so a
+// plan older than this record reads 0.
+func (r *Repo) NoteSectionPlan(domain, signature string, now int64) error {
+	_, err := r.db.Exec(`
+		INSERT INTO section_plans (domain, signature, changed_at) VALUES (?1, ?2, 0)
+		ON CONFLICT (domain) DO UPDATE SET signature = ?2, changed_at = ?3 WHERE signature <> ?2`,
+		domain, signature, now)
+	if err != nil {
+		return fmt.Errorf("NoteSectionPlan: %w", err)
+	}
+	return nil
+}
+
+// SectionPlanChangedAt is when a section's plan last changed, 0 when unknown.
+func (r *Repo) SectionPlanChangedAt(domain string) (int64, error) {
+	var at int64
+	err := r.db.QueryRow(`SELECT changed_at FROM section_plans WHERE domain = ?`, domain).Scan(&at)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("SectionPlanChangedAt: %w", err)
+	}
+	return at, nil
+}
+
+// DeleteRun removes a run that turned out to be no run at all.
+func (r *Repo) DeleteRun(id string) error {
+	if _, err := r.db.Exec(`DELETE FROM runs WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("DeleteRun: %w", err)
+	}
+	return nil
+}
+
 // SetRunCopied notes on an off-site replication how many snapshots it copied.
 func (r *Repo) SetRunCopied(id string, n int) error {
 	if _, err := r.db.Exec(`UPDATE runs SET copied = ? WHERE id = ?`, n, id); err != nil {
@@ -473,6 +508,10 @@ const (
 	// BombVault cannot reach through Host Data, so its backup holds the
 	// definition only.
 	NoteDataOutsideHost = "data folders outside Host Data were not backed up"
+
+	// NoteDataMissing names after ": " the data folders of a container that lie
+	// inside Host Data and are not there right now.
+	NoteDataMissing = "data folders that could not be found were not backed up"
 
 	// NoteFilesUnreadable is followed by ": " and restic's reason, which names
 	// a file it could not read.

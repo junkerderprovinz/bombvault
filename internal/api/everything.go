@@ -448,7 +448,10 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 	s.ScheduledNotifyResult(ctx, domain, attempted, failed, failures)
 	// The members skip their compose project folders under the bulk flag, so
 	// the round backs each folder up once, before the prune that covers it.
-	s.BackupStacksAfterBulk(ctx, names)
+	if err := s.BackupStacksAfterBulk(ctx, names); err != nil {
+		failed++
+		failures = append(failures, schedule.ItemFailure{Name: "Compose stacks", Reason: truncateRunErr(err)})
+	}
 	// Pruning first leaves fewer snapshots to copy. Plain ctx, see
 	// everythingRunCtx.
 	s.PruneAfterBulk(ctx, domain)

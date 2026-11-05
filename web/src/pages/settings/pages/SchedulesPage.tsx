@@ -151,7 +151,7 @@ export function SchedulesPage() {
 
   return (
     <>
-      <WeekCard settings={settings} hueIndex={nextHue()} />
+      <WeekCard settings={settings} items={items} hueIndex={nextHue()} />
 
       <Card title={t("settings.everythingTitle")} hint={t("schedules.fullCardHint")} hueIndex={fullHue}>
         <div>

@@ -1232,6 +1232,7 @@ const uk: Partial<Translations> = {
   "runReason.dbimportFailed": "засіб імпорту повідомив про помилку",
   "runReason.dbimportKeptOld": "попередня тека з даними збережена",
   "runReason.dataOutsideHost": "дані розташовані поза Host Data і не були скопійовані",
+  "runReason.dataMissing": "теки з даними не знайдено і вони не були скопійовані",
   "runReason.filesUnreadable": "деякі файли не вдалося прочитати, і їх немає в цій резервній копії",
   "runReason.foldersMissing": "вибраних папок немає в цій резервній копії",
   "runReason.backupEmpty": "у цій резервній копії немає файлів, хоча в попередніх вони були",

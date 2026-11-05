@@ -564,7 +564,7 @@ func zfsRunCode(msg string) string {
 // and a scheduled summary does not swallow it.
 func (s *Service) notifyZFSReplica(d store.ZFSDataset, res zfsrepl.Result, runErr error) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	ctx := notify.WithHealthchecksSuppressed(context.Background())

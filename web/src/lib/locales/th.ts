@@ -1236,6 +1236,7 @@ const th: Partial<Translations> = {
   "runReason.dbimportFailed": "เครื่องมือนำเข้ารายงานข้อผิดพลาด",
   "runReason.dbimportKeptOld": "เก็บโฟลเดอร์ข้อมูลเดิมไว้",
   "runReason.dataOutsideHost": "ข้อมูลอยู่นอก Host Data และไม่ได้สำรองไว้",
+  "runReason.dataMissing": "ไม่พบโฟลเดอร์ข้อมูลและไม่ได้สำรองไว้",
   "runReason.filesUnreadable": "อ่านไฟล์บางไฟล์ไม่ได้ และไฟล์เหล่านั้นไม่อยู่ในข้อมูลสำรองนี้",
   "runReason.foldersMissing": "โฟลเดอร์ที่เลือกไม่อยู่ในข้อมูลสำรองนี้",
   "runReason.backupEmpty": "ข้อมูลสำรองนี้ไม่มีไฟล์ ขณะที่ข้อมูลสำรองก่อนหน้ามี",

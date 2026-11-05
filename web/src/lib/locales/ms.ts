@@ -1268,6 +1268,7 @@ const ms: Partial<Translations> = {
   "runReason.dbimportFailed": "alat import melaporkan satu ralat",
   "runReason.dbimportKeptOld": "folder data sebelumnya dikekalkan",
   "runReason.dataOutsideHost": "data berada di luar Host Data dan tidak disandarkan",
+  "runReason.dataMissing": "folder data tidak ditemui dan tidak disandarkan",
   "runReason.filesUnreadable": "sesetengah fail tidak dapat dibaca dan tiada dalam sandaran ini",
   "runReason.foldersMissing": "folder yang dipilih tiada dalam sandaran ini",
   "runReason.backupEmpty": "sandaran ini tiada fail, sedangkan sandaran terdahulu ada",

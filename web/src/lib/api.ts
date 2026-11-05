@@ -586,6 +586,9 @@ export interface DomainStatus {
   // `schedule` alone reported exactly that case as unprotected (#177).
   coveredBy: string;
   lastSuccess: number; // unix seconds; 0 = never
+  /** The entry that decides an overdue status, when that is not the section's
+   *  newest backup. */
+  staleEntry?: string;
   periodSeconds: number; // expected RPO window; 0 = no expectation
   status: string; // "off" | "never" | "overdue" | "warn" | "ok"
   lastVerified: number; // unix seconds of the last restore-verification drill; 0 = never
@@ -2366,7 +2369,7 @@ export function getSettings(): Promise<GetSettingsResponse> {
   return fetchJSON("/api/settings");
 }
 
-export type PutSettingsResponse = OkEnvelope & { warnings?: SaveWarning[]; notes?: string[]; revision?: string };
+export type PutSettingsResponse = OkEnvelope & { applied?: Partial<Settings>; warnings?: SaveWarning[]; notes?: string[]; revision?: string };
 
 /**
  * PUT /api/settings: persist the settings object. `warnings` says what the

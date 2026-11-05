@@ -1235,6 +1235,7 @@ const el: Partial<Translations> = {
   "runReason.dbimportFailed": "το εργαλείο εισαγωγής ανέφερε σφάλμα",
   "runReason.dbimportKeptOld": "ο προηγούμενος φάκελος δεδομένων διατηρήθηκε",
   "runReason.dataOutsideHost": "τα δεδομένα βρίσκονται εκτός του Host Data και δεν αντιγράφηκαν",
+  "runReason.dataMissing": "οι φάκελοι δεδομένων δεν βρέθηκαν και δεν αντιγράφηκαν",
   "runReason.filesUnreadable": "ορισμένα αρχεία δεν ήταν δυνατό να διαβαστούν και λείπουν από αυτό το αντίγραφο ασφαλείας",
   "runReason.foldersMissing": "επιλεγμένοι φάκελοι λείπουν από αυτό το αντίγραφο ασφαλείας",
   "runReason.backupEmpty": "αυτό το αντίγραφο ασφαλείας δεν περιέχει αρχεία, ενώ τα προηγούμενα περιείχαν",

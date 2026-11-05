@@ -1226,6 +1226,7 @@ const vi: Partial<Translations> = {
   "runReason.dbimportFailed": "công cụ nhập báo một lỗi",
   "runReason.dbimportKeptOld": "thư mục dữ liệu trước đó được giữ lại",
   "runReason.dataOutsideHost": "dữ liệu nằm ngoài Host Data và chưa được sao lưu",
+  "runReason.dataMissing": "không tìm thấy thư mục dữ liệu và chưa được sao lưu",
   "runReason.filesUnreadable": "một số tệp không đọc được và không có trong bản sao lưu này",
   "runReason.foldersMissing": "các thư mục đã chọn không có trong bản sao lưu này",
   "runReason.backupEmpty": "bản sao lưu này không có tệp nào, trong khi các bản trước có",

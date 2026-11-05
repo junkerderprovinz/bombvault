@@ -4,11 +4,14 @@ package flows
 
 import (
 	"archive/zip"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -480,6 +483,83 @@ func (b *bombvault) onSchedule(domain string) bool {
 	}) bool {
 		return r.Job == "backup" && r.Domain == domain
 	})
+}
+
+func TestCopyThatNeverCameReadsOverdueOnceItsGraceIsOver(t *testing.T) {
+	f := typedFlow(t, "files")
+	sets := f.newSets()
+	f.b.changeSettings(func(s map[string]any) { s["filesSchedule"] = "daily 03:00" })
+	f.nextRound(sets, 1)
+	f.copyTo(keep{})
+	f.b.age(72 * time.Hour)
+
+	if got := f.b.statusOf("files").ReplicationState; got != "overdue" {
+		f.errorf("a copy set up three days ago and never made reads %q", got)
+	}
+	f.finish()
+}
+
+// pingLog is a health check as BombVault sees it: it notes every ping in order.
+func pingLog(t *testing.T) (string, func() []string) {
+	t.Helper()
+	var mu sync.Mutex
+	var pings []string
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		pings = append(pings, r.URL.Path)
+	}))
+	t.Cleanup(srv.Close)
+	return srv.URL, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Clone(pings)
+	}
+}
+
+func TestFreshInstallPingsAWholeBackup(t *testing.T) {
+	f := typedFlow(t, "files")
+	sets := f.newSets()
+	url, pings := pingLog(t)
+	f.b.call("POST", "/api/notify", map[string]any{"healthchecksUrl": url}, nil)
+	f.backupSet(sets.photos)
+
+	if got := strings.Join(pings(), " "); got != "/start /" {
+		f.errorf("a good backup on a fresh install pinged %q", got)
+	}
+	f.finish()
+}
+
+func TestAGoodBackupDoesNotGreenAFailureOnTheSameCheck(t *testing.T) {
+	f := typedFlow(t, "files")
+	sets := f.newSets()
+	url, pings := pingLog(t)
+	f.b.call("POST", "/api/notify", map[string]any{"healthchecksUrl": url}, nil)
+	f.backupSet(sets.photos)
+
+	if err := os.RemoveAll(f.b.hostPath(photosPath)); err != nil {
+		f.t.Fatal(err)
+	}
+	if err := os.MkdirAll(f.b.hostPath(photosPath), 0o750); err != nil {
+		f.t.Fatal(err)
+	}
+	f.backupSet(sets.photos)
+	if f.lastRun("backup").Status != "failed" {
+		f.t.Fatalf("the emptied set did not fail: %+v", f.lastRun("backup"))
+	}
+	f.backupSet(sets.docs)
+	all := pings()
+	if len(all) == 0 || all[len(all)-1] != "/fail" {
+		f.errorf("the good backup beside a failed one left the check at %q", all)
+	}
+
+	f.b.write(photosPath, "a.txt", "back\n", 0o640)
+	f.backupSet(sets.photos)
+	all = pings()
+	if all[len(all)-1] != "/" {
+		f.errorf("the check stayed at %q after the failed set was good again", all)
+	}
+	f.finish()
 }
 
 func TestOwnPlanSetWhileSwitchedOffIsScheduled(t *testing.T) {

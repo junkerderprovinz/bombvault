@@ -131,7 +131,7 @@ func settleAroundTarget(target string, deps []backup.StopContainer) {
 // since a good backup says nothing about the app that went down for it.
 func (s *Service) notifyContainersNotBack(ctx context.Context, after string, names []string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	msg := fmt.Sprintf("After %s, these containers did not come back: %s", after, strings.Join(names, ", "))

@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"net/smtp"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -201,6 +202,9 @@ func (c *Config) decode(data []byte, strict bool) error {
 	if gates.GotifySuccess == nil {
 		out.GotifyPrioritySuccess = GotifyPrioritySuccess
 	}
+	if out.On == "" {
+		out.On = Defaults().On
+	}
 	*c = Config(out)
 	return nil
 }
@@ -218,15 +222,16 @@ type Event struct {
 	// for its app, which reaches the message channels of somebody who hears
 	// only about failures. A health check still counts it as a success.
 	Warning bool
+	// CheckHeld names a failure a success must not hide on the health check it
+	// shares with other backups. The check then hears this instead of a success.
+	CheckHeld string
 }
 
-// Active reports whether notifications are switched on at all. It is an
-// allowlist, so a corrupted or hand-edited value sends nothing. An empty On
-// means nobody has chosen yet and counts as "failure", because whoever fills
-// in a channel wants to hear when a backup breaks.
+// Active reports whether messages are switched on at all. It is an allowlist,
+// so a corrupted or hand-edited value sends nothing.
 func (c Config) Active() bool {
 	switch c.On {
-	case "", "always", "failure":
+	case "always", "failure":
 		return true
 	default:
 		return false
@@ -238,7 +243,7 @@ func (c Config) shouldSend(ok bool) bool {
 	switch c.On {
 	case "always":
 		return true
-	case "failure", "":
+	case "failure":
 		return !ok
 	default:
 		return false
@@ -275,14 +280,21 @@ func (c Config) Validate() error {
 	return nil
 }
 
-// Defaults is the config of an instance that never saved one.
+// Defaults is the config of an instance that never saved one, and of one that
+// saved channels without choosing a policy: whoever fills in a channel wants to
+// hear when a backup breaks.
 func Defaults() Config {
-	return Config{GotifyPriorityFailure: GotifyPriorityFailure, GotifyPrioritySuccess: GotifyPrioritySuccess}
+	return Config{On: "failure", GotifyPriorityFailure: GotifyPriorityFailure, GotifyPrioritySuccess: GotifyPrioritySuccess}
 }
 
-// healthchecksURLFor returns the domain's own Healthchecks URL, or the global
+// IsDefault reports whether c says nothing a never saved config would not.
+func (c Config) IsDefault() bool {
+	return reflect.DeepEqual(c, Defaults())
+}
+
+// HealthchecksURLFor returns the domain's own Healthchecks URL, or the global
 // one when the domain has none.
-func (c Config) healthchecksURLFor(domain string) string {
+func (c Config) HealthchecksURLFor(domain string) string {
 	if u := c.HealthchecksByDomain[normalizeHCDomain(domain)]; u != "" {
 		return u
 	}
@@ -295,7 +307,7 @@ func (c Config) healthchecksURLFor(domain string) string {
 // would miss the replication, drill and tamper failures.
 func normalizeHCDomain(domain string) string {
 	switch domain {
-	case "containers":
+	case "containers", "stack":
 		return "container"
 	case "vms", "VMs", "vm":
 		return "VM"
@@ -351,22 +363,14 @@ func (c Config) gotifyReady() bool {
 // It reports whether at least one message channel took the event, so an alert
 // sent once per episode can be tried again when none did. The On policy
 // applies to the message channels. Healthchecks is pinged on both outcomes
-// unless notifications are off, because a check needs its success pings to
-// stay green.
+// whenever a URL is set, because a check needs its success pings to stay green.
 func Send(ctx context.Context, c Config, domain string, ev Event) bool {
-	if !c.Active() {
-		return false
-	}
 	// A name in a message can hold a password somebody typed into it.
 	ev.Title, ev.Message = redact.Credentials(ev.Title), redact.Credentials(ev.Message)
 
 	var chans []channel
-	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
-		phase := "success"
-		if !ev.OK {
-			phase = "fail"
-		}
-		chans = append(chans, healthchecksChannel("healthchecks", hcURL, phase))
+	if hcURL := c.HealthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
+		chans = append(chans, eventCheckChannel(hcURL, ev))
 	}
 	// In summary mode Service.ScheduledNotifyResult reports the item instead.
 	folded := ev.ItemResult && MessagesSuppressed(ctx) && c.ScheduledSummary
@@ -414,6 +418,20 @@ func (c Config) messageChannels(ev Event) []channel {
 	return out
 }
 
+// eventCheckChannel is the ping that tells a health check how ev ended.
+func eventCheckChannel(base string, ev Event) channel {
+	phase, body := "success", ""
+	switch {
+	case !ev.OK:
+		phase = "fail"
+	case ev.CheckHeld != "":
+		phase, body = "fail", redact.Credentials(ev.CheckHeld)
+	}
+	return channel{"healthchecks", false, func(ctx context.Context, client *http.Client) error {
+		return pingHealthchecksBody(ctx, client, base, phase, body)
+	}}
+}
+
 func healthchecksChannel(name, base, phase string) channel {
 	return channel{name, false, func(ctx context.Context, client *http.Client) error {
 		return pingHealthchecks(ctx, client, base, phase)
@@ -454,11 +472,8 @@ func fanOut(ctx context.Context, chans []channel) bool {
 // The Apprise post needs On=always and is skipped for per-item sends in
 // summary mode.
 func SendStart(ctx context.Context, c Config, domain string) {
-	if !c.Active() {
-		return
-	}
 	var chans []channel
-	if hcURL := c.healthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
+	if hcURL := c.HealthchecksURLFor(domain); hcURL != "" && !healthchecksSuppressed(ctx) {
 		chans = append(chans, healthchecksChannel("healthchecks start", hcURL, "start"))
 	}
 	if c.appriseReady() && c.On == "always" && (!MessagesSuppressed(ctx) || !c.ScheduledSummary) {
@@ -477,8 +492,8 @@ func SendStart(ctx context.Context, c Config, domain string) {
 // place of the per-item SendStart pings the run suppresses. domain may use the
 // scheduler's plural spelling ("containers", "vms").
 func PingDomainStart(ctx context.Context, c Config, domain string) {
-	hcURL := c.healthchecksURLFor(domain)
-	if !c.Active() || hcURL == "" {
+	hcURL := c.HealthchecksURLFor(domain)
+	if hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -502,8 +517,8 @@ func Ping(ctx context.Context, c Config, domain string, ok bool) {
 // run, on <base> when ok and <base>/fail otherwise. summary, such as "1 of 3
 // items failed", is sent as the body so it shows in the check's event log.
 func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, summary string) {
-	hcURL := c.healthchecksURLFor(domain)
-	if !c.Active() || hcURL == "" {
+	hcURL := c.HealthchecksURLFor(domain)
+	if hcURL == "" {
 		return
 	}
 	ctx, cancel := context.WithTimeout(ctx, sendTimeout)
@@ -519,7 +534,8 @@ func PingDomainResult(ctx context.Context, c Config, domain string, ok bool, sum
 }
 
 // SendTest sends a fixed test event to every configured channel (ignoring the On
-// policy) and returns the first error so the UI can explain a failed test.
+// policy) and returns what failed so the UI can explain a failed test. A health
+// check gets a log entry, as a success ping would turn a red check green.
 func SendTest(ctx context.Context, c Config) error {
 	if !c.Configured() {
 		return fmt.Errorf("no notification channel configured")
@@ -527,14 +543,15 @@ func SendTest(ctx context.Context, c Config) error {
 	ev := Event{Title: "BombVault", Message: "Test notification: notifications are working.", OK: true}
 	chans := c.messageChannels(ev)
 	for _, u := range c.healthchecksURLs() {
-		chans = append(chans, healthchecksChannel("healthchecks", u, "success"))
+		chans = append(chans, healthchecksChannel("healthchecks", u, "log"))
 	}
+	var errs []error
 	for _, ch := range chans {
 		if err := ch.run(ctx); err != nil {
-			return fmt.Errorf("%s: %w", ch.name, err)
+			errs = append(errs, fmt.Errorf("%s: %w", ch.name, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // sendApprise posts ev to the Apprise /notify/<key> endpoint with the type
@@ -639,7 +656,7 @@ func sendMatrix(ctx context.Context, client *http.Client, c Config, ev Event) er
 }
 
 // pingHealthchecks sends a GET for the phase "start" (<base>/start), "success"
-// (<base>) or "fail" (<base>/fail).
+// (<base>), "fail" (<base>/fail) or "log" (<base>/log).
 func pingHealthchecks(ctx context.Context, client *http.Client, base, phase string) error {
 	return pingHealthchecksBody(ctx, client, base, phase, "")
 }
@@ -653,6 +670,8 @@ func pingHealthchecksBody(ctx context.Context, client *http.Client, base, phase,
 		u += "/start"
 	case "fail":
 		u += "/fail"
+	case "log":
+		u += "/log"
 	}
 	method := http.MethodGet
 	var reqBody io.Reader

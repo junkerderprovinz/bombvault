@@ -22,6 +22,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
   // Turning history off zeroes the stored count; this brings the user's count
   // back when it is turned on again.
   const [rememberedKeep, setRememberedKeep] = useState(7);
+  const [sealed, setSealed] = useState(false);
   const [busyEnabled, setBusyEnabled] = useState(false);
   const [busyKeep, setBusyKeep] = useState(false);
   const [shakeEnabled, setShakeEnabled] = useState(0);
@@ -38,6 +39,7 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
         setEnabled(res.settings.flashZipExportEnabled);
         setPath(res.settings.flashZipExportPath);
         setKeep(res.settings.flashZipExportKeep);
+        setSealed(res.settings.exportEncryptEnabled);
         if (res.settings.flashZipExportKeep > 0) setRememberedKeep(res.settings.flashZipExportKeep);
         setHostMountRoot(res.hostMountRoot);
       })
@@ -130,9 +132,11 @@ export function FlashZipExportCard({ t, hueIndex }: { t: ReturnType<typeof useT>
       />
       {enabled && (
         <>
-          <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
-            {t("flash.zipExport.plaintextWarn")}
-          </div>
+          {!sealed && (
+            <div className="rounded-card bg-statusWarnBg px-3 py-2.5 text-xs text-statusWarn leading-relaxed">
+              {t("flash.zipExport.plaintextWarn")}
+            </div>
+          )}
           <FolderBrowser
             label={t("flash.zipExport.path")}
             value={path}

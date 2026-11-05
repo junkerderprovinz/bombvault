@@ -1268,6 +1268,7 @@ const sk: Partial<Translations> = {
   "runReason.dbimportFailed": "nástroj na import ohlásil chybu",
   "runReason.dbimportKeptOld": "predchádzajúci priečinok s dátami zostal zachovaný",
   "runReason.dataOutsideHost": "dáta sú mimo Host Data a neboli zálohované",
+  "runReason.dataMissing": "priečinky s dátami sa nenašli a neboli zálohované",
   "runReason.filesUnreadable": "niektoré súbory sa nepodarilo prečítať a v tejto zálohe chýbajú",
   "runReason.foldersMissing": "vybrané priečinky v tejto zálohe chýbajú",
   "runReason.backupEmpty": "táto záloha neobsahuje žiadne súbory, skoršie zálohy ich obsahovali",

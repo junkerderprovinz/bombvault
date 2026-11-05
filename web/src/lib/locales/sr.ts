@@ -1266,6 +1266,7 @@ const sr: Partial<Translations> = {
   "runReason.dbimportFailed": "алат за увоз је пријавио грешку",
   "runReason.dbimportKeptOld": "претходна фасцикла са подацима је задржана",
   "runReason.dataOutsideHost": "подаци су изван Host Data и нису резервно копирани",
+  "runReason.dataMissing": "фасцикле са подацима нису пронађене и нису резервно копиране",
   "runReason.filesUnreadable": "неке датотеке није било могуће прочитати и недостају у овој резервној копији",
   "runReason.foldersMissing": "изабране фасцикле недостају у овој резервној копији",
   "runReason.backupEmpty": "ова резервна копија не садржи датотеке, а раније јесу",

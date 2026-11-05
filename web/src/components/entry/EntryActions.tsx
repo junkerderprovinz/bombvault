@@ -18,7 +18,7 @@ import { hostSilent, type Entry } from "../../lib/entry";
 import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
-import { dataOutsideHost, runReason } from "../../lib/runReason";
+import { dataMissing, dataOutsideHost, runReason } from "../../lib/runReason";
 import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -101,6 +101,8 @@ function BackupAction({ entry, onDone }: { entry: Entry; onDone: () => void }) {
       // A container without data folders has only its definition saved.
       if (item.kind === "container" && dataOutsideHost(state.note)) {
         push(t("backup.outsideHost"), "warn");
+      } else if (item.kind === "container" && dataMissing(state.note)) {
+        push(runReason(state.note, t), "warn");
       } else {
         push(item.kind === "container" && !state.snapshotId ? t("backup.configOnly") : `${t("common.done")}${id}`, "success");
       }

@@ -1268,6 +1268,7 @@ const lv: Partial<Translations> = {
   "runReason.dbimportFailed": "importa rīks ziņoja par kļūdu",
   "runReason.dbimportKeptOld": "iepriekšējā datu mape tika paturēta",
   "runReason.dataOutsideHost": "dati atrodas ārpus Host Data, un tiem nav izveidota rezerves kopija",
+  "runReason.dataMissing": "datu mapes netika atrastas, un tām nav izveidota rezerves kopija",
   "runReason.filesUnreadable": "dažus failus neizdevās nolasīt, un tie šajā dublējumā trūkst",
   "runReason.foldersMissing": "atlasītās mapes šajā dublējumā trūkst",
   "runReason.backupEmpty": "šajā dublējumā nav failu, lai gan iepriekšējos bija",

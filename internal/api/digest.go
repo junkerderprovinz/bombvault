@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -62,13 +63,20 @@ type digestStats struct {
 	// nobody has settled yet, whenever they were raised: the weekly reminder
 	// that a critical is still open and that deleting old backups is waiting.
 	AnomaliesCritical, AnomaliesWarning, AnomaliesHeld int
+	// Overdue holds one sentence per section whose backups have fallen behind,
+	// as the overview and the overdue alert judge it.
+	Overdue []string
 }
 
 // needsAttention reports whether the digest names something to act on beyond
-// the failed runs: an off-site copy that is stale or never made, a replica
-// behind, an open critical or deleting that waits on a finding. A schedule
-// that stopped firing fails no run, so only these lines tell of it.
+// the failed runs: backups that fell behind, an off-site copy that is stale or
+// never made, a replica behind, an open critical or deleting that waits on a
+// finding. A schedule that stopped firing fails no run, so only these lines
+// tell of it.
 func (st digestStats) needsAttention() bool {
+	if len(st.Overdue) > 0 {
+		return true
+	}
 	for _, line := range st.Offsite {
 		if line.LastOK == 0 || line.Stale {
 			return true
@@ -178,10 +186,9 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 			continue
 		}
 		line := digestOffsiteLine{Domain: domain}
-		if run, found, oErr := s.store.LatestSuccessfulOffsiteRun(domain); oErr != nil {
-			log.Printf("api: digest: latest off-site run for %s: %v", domain, oErr) //nolint:gosec // G706: domain is a fixed literal
-		} else if found {
-			line.LastOK = run.FinishedAt
+		// The oldest copy across the section's locations, as the status reads it.
+		if at, found := s.aggregateReplicationCurrency(domain); found {
+			line.LastOK = at
 			// Without its own off-site schedule a domain replicates after each
 			// local backup, including the Backup Everything pass. A domain covered
 			// only by that pass would otherwise have period 0 and never go stale.
@@ -196,6 +203,18 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 		stats.Offsite = append(stats.Offsite, line)
 	}
 	stats.Replicas, stats.ReplicasBehind = s.zfsReplicaDigestLines(stats.Now, settings)
+	for _, d := range s.statusDomains(settings) {
+		last, lErr := s.lastDomainSuccess(d)
+		if lErr != nil {
+			log.Printf("api: digest: last success of %s: %v", d.name, lErr) //nolint:gosec // G706: domain is a fixed literal
+			continue
+		}
+		period, _ := s.domainWindow(d.name, d.schedule, settings)
+		v := s.judgeSection(d, settings, stats.Now, last, period)
+		if v.status == "overdue" && !s.deferralHolds(d.name, v.stale, stats.Now) {
+			stats.Overdue = append(stats.Overdue, overdueMessage(d.name, v, stats.Now))
+		}
+	}
 
 	counts, _, err := s.store.OpenAnomalyCounts()
 	if err != nil {
@@ -257,6 +276,10 @@ func composeDigest(stats digestStats) string {
 		}
 	}
 
+	for _, line := range stats.Overdue {
+		b.WriteString(line + "\n")
+	}
+
 	if len(stats.Offsite) > 0 {
 		b.WriteString("Off-site currency:\n")
 		for _, line := range stats.Offsite {
@@ -303,13 +326,14 @@ func composeDigest(stats digestStats) string {
 // mirror without recording a run. The Healthchecks ping is suppressed because
 // a summary must not flip a domain check. A muted policy sends nothing, and
 // On="failure" lets notify.Send drop an all-green digest, one with no failed
-// run and nothing that needs attention.
+// run and nothing that needs attention. A digest no channel took is an error, so
+// the job does not record it as sent.
 func (s *Service) SendDigest(ctx context.Context) error {
 	c, err := s.NotifyConfig()
 	if err != nil {
 		return fmt.Errorf("read notify config: %w", err)
 	}
-	if c.On == "" || c.On == "never" {
+	if !c.Active() {
 		return nil
 	}
 	stats, err := s.collectDigestStats(time.Now())
@@ -318,16 +342,22 @@ func (s *Service) SendDigest(ctx context.Context) error {
 	}
 	ok := stats.TotalFailed == 0 && !stats.needsAttention()
 	msg := composeDigest(stats)
-	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest",
+	delivered := notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest",
 		notify.Event{Title: "BombVault", Message: msg, OK: ok})
-	if s.unraidGate(c.Unraid) && (c.On == "always" || !ok) {
+	unraid := s.unraidGate(c.Unraid)
+	if unraid && (c.On == "always" || !ok) {
 		level := "normal"
 		if !ok {
 			level = "warning"
 		}
 		if e := s.sendUnraidNotify(ctx, "BombVault: weekly digest", msg, level); e != nil {
 			log.Printf("notify: unraid: %v", e)
+		} else {
+			delivered = true
 		}
+	}
+	if !delivered && (c.On == "always" || !ok) && (c.HasMessageChannel() || unraid) {
+		return errors.New("no channel took the digest")
 	}
 	return nil
 }

@@ -12,9 +12,11 @@ import { render, screen, cleanup, waitFor, fireEvent, within } from "@testing-li
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const previewRetention = vi.fn();
+const listOffsiteTargets = vi.fn();
 
 vi.mock("../lib/api", () => ({
   previewRetention: (...a: unknown[]) => previewRetention(...a),
+  listOffsiteTargets: (...a: unknown[]) => listOffsiteTargets(...a),
 }));
 
 import { RetentionPreview } from "./RetentionPreview";
@@ -25,9 +27,13 @@ const t = ((key: string) => (en as Record<string, string>)[key] ?? key) as unkno
   typeof RetentionPreview
 >[0]["t"];
 
-function renderPanel(hasOffsite: (domain: string) => boolean = () => false) {
-  return render(<RetentionPreview t={t} hasOffsite={hasOffsite} />);
+/** Renders the panel for a section with these copies. */
+function renderPanel(copies: { id: string; name: string; repo?: string; enabled?: boolean }[] = []) {
+  listOffsiteTargets.mockResolvedValue({ ok: true, targets: copies.map((c) => ({ enabled: true, repo: "", ...c })) });
+  return render(<RetentionPreview t={t} />);
 }
+
+const COPY = { id: "t1", name: "B2" };
 
 const policy = (over: Record<string, unknown> = {}) => ({
   on: true,
@@ -43,7 +49,7 @@ const policy = (over: Record<string, unknown> = {}) => ({
 /** Answers the local and the off-site question each with its own preview. */
 function answer(local: unknown, offsite: unknown = { ok: false, error: "unused" }) {
   previewRetention.mockImplementation((_domain: string, source?: string) =>
-    Promise.resolve(source === "offsite" ? offsite : local)
+    Promise.resolve(source?.startsWith("offsite") ? offsite : local)
   );
 }
 
@@ -173,19 +179,38 @@ describe("RetentionPreview", () => {
   it("asks the server about the local and the off-site copy of the domain the picker names", async () => {
     answer({ ok: false, error: "no backups yet" }, { ok: false, error: "no backups yet" });
 
-    renderPanel((d) => d === "zfs");
+    renderPanel([COPY]);
     await pickOption(screen.getByRole("combobox"), en["settings.zfsEnabled"]);
     show();
 
     await waitFor(() => expect(previewRetention).toHaveBeenCalledTimes(2));
     expect(previewRetention).toHaveBeenCalledWith("zfs", undefined);
-    expect(previewRetention).toHaveBeenCalledWith("zfs", "offsite");
+    expect(listOffsiteTargets).toHaveBeenCalledWith("zfs");
+    expect(previewRetention).toHaveBeenCalledWith("zfs", "offsite:t1");
+  });
+
+  it("asks about every copy of a section, each under its name, and leaves out one switched off", async () => {
+    answer(
+      { ok: true, preview: { policy: policy({ keepLast: 5 }), repos: [] } },
+      { ok: true, preview: { policy: policy({ keepDaily: 7 }), repos: [] } }
+    );
+
+    renderPanel([COPY, { id: "t2", name: "NAS" }, { id: "t3", name: "Old", enabled: false }]);
+    show();
+
+    const copies = await waitFor(() => part(en["source.offsite"]));
+    await waitFor(() => expect(within(copies).getByText("B2")).toBeTruthy());
+    expect(within(copies).getByText("NAS")).toBeTruthy();
+    expect(within(copies).queryByText("Old")).toBeNull();
+    expect(previewRetention).toHaveBeenCalledWith("containers", "offsite:t1");
+    expect(previewRetention).toHaveBeenCalledWith("containers", "offsite:t2");
+    expect(previewRetention).not.toHaveBeenCalledWith("containers", "offsite:t3");
   });
 
   it("says a source without an off-site repository has no off-site copy, and asks nothing about it", async () => {
     answer({ ok: true, preview: { policy: policy({ keepLast: 5 }), repos: [] } });
 
-    renderPanel(() => false);
+    renderPanel();
     show();
 
     await waitFor(() => expect(within(part(en["source.offsite"])).getByText(en["dashboard.noOffsite"])).toBeTruthy());
@@ -246,7 +271,7 @@ describe("RetentionPreview", () => {
       { ok: false, error: "the off-site repository is not reachable" }
     );
 
-    renderPanel(() => true);
+    renderPanel([COPY]);
     show();
 
     await waitFor(() =>
@@ -275,7 +300,7 @@ describe("RetentionPreview's policy lines", () => {
       { ok: true, preview: { policy: policy({ keepDaily: 7, keepYearly: 2, own: true }), repos: [] } },
       { ok: true, preview: { policy: policy({ keepLast: 7 }), repos: [] } }
     );
-    renderPanel(() => true);
+    renderPanel([COPY]);
     show();
 
     await waitFor(() =>
@@ -295,7 +320,7 @@ describe("RetentionPreview's policy lines", () => {
       { ok: true, preview: { policy: policy({ keepLast: 5 }), repos: [] } },
       { ok: true, preview: { policy: policy({ keepMonthly: 12, own: true }), repos: [] } }
     );
-    renderPanel(() => true);
+    renderPanel([COPY]);
     show();
 
     await waitFor(() =>

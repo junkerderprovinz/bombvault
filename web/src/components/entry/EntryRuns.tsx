@@ -5,7 +5,7 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { formatClockTime, formatDuration, formatRecent } from "../../lib/reltime";
 import { runKindLabel } from "../../lib/runKind";
-import { dataOutsideHost, RunReasonText } from "../../lib/runReason";
+import { dataMissing, dataOutsideHost, RunReasonText } from "../../lib/runReason";
 import { snapshotFallbackText, snapshotWindowText } from "../../lib/snapshotRead";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
@@ -97,7 +97,7 @@ export function EntryRuns({
                 {run.snapshotFallback && (
                   <span className="text-xs text-carbon-textMuted">{snapshotFallbackText(t, run.snapshotFallback)}</span>
                 )}
-                {run.status === "success" && dataOutsideHost(run.error) && (
+                {run.status === "success" && (dataOutsideHost(run.error) || dataMissing(run.error)) && (
                   <span className="text-xs text-statusWarn"><RunReasonText reason={run.error} t={t} /></span>
                 )}
                 {run.bottleneck && (

@@ -262,9 +262,6 @@ func (s *Service) primaryAppendOnly(domain, repo string) appendOnlyFlag {
 		}
 		return appendOnlyNone
 	}
-	if !restic.IsRemoteRepo(repo) {
-		return appendOnlyNone
-	}
 	// Not through primaryRemoteTarget: it treats a read failure as unconfigured,
 	// which here would mean unprotected in front of forget and prune.
 	t, ok, err := s.store.PrimaryRemoteTarget(domain)
@@ -272,7 +269,13 @@ func (s *Service) primaryAppendOnly(domain, repo string) appendOnlyFlag {
 		log.Printf("api: could not read the remote-primary safety row for %s; treating %s as append-only until it can be read", domain, shortRepoName(repo)) //nolint:gosec // G706: domain is a fixed literal and the name is shortened
 		return appendOnlyUnreadable
 	}
-	if d, linked := s.ownFolderLocation(t); linked {
+	d, linked := s.ownFolderLocation(t)
+	// A folder on this host counts only as part of a location, whose switch says
+	// pruning there is refused.
+	if !linked && !restic.IsRemoteRepo(repo) {
+		return appendOnlyNone
+	}
+	if linked {
 		t = followLocation(t, d)
 	}
 	if ok && t.Enabled && t.Immutable {

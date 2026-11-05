@@ -1225,6 +1225,7 @@ const ro: Partial<Translations> = {
   "runReason.dbimportFailed": "instrumentul de import a raportat o eroare",
   "runReason.dbimportKeptOld": "dosarul de date anterior a fost păstrat",
   "runReason.dataOutsideHost": "datele sunt în afara Host Data și nu au fost salvate",
+  "runReason.dataMissing": "folderele de date nu au fost găsite și nu au fost salvate",
   "runReason.filesUnreadable": "unele fișiere nu au putut fi citite și lipsesc din această copie de rezervă",
   "runReason.foldersMissing": "dosarele selectate lipsesc din această copie de rezervă",
   "runReason.backupEmpty": "această copie de rezervă nu conține fișiere, deși cele anterioare conțineau",

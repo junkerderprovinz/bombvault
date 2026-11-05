@@ -387,7 +387,7 @@ func randomHex(nBytes int) (string, error) {
 // nothing when notifications are off.
 func (s *Service) notifyProtectionLost(ctx context.Context, domain, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Off-site protection LOST for " + domain

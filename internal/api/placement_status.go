@@ -263,7 +263,7 @@ func (s *Service) itemHomes(domain string) (map[string]store.HomeState, error) {
 }
 
 // stackNoteFor names the project folder when its copies differ from the member's.
-// Project folders always land on the domain path and follow the containers default.
+// Project folders land where the containers default points and copy by its rule.
 func stackNoteFor(p placementRead, item placementItem, plan *placementPlan) *stackNote {
 	if item.Stack == "" || plan.Kind == "paused" {
 		return nil

@@ -159,7 +159,7 @@ type ResticEngine interface {
 	// and tag, without changing the repository and without taking a lock, so it
 	// can answer while a backup is running. Inert when the policy has no
 	// dimension set, for the same reason ForgetPolicy is.
-	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tag string) ([]restic.ForgetGroup, error)
+	ForgetPreview(ctx context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags ...string) ([]restic.ForgetGroup, error)
 	// Ls lists the files in a snapshot (for file-level restore).
 	Ls(ctx context.Context, repo, snapshotID string, mode restic.Mode) ([]restic.FileEntry, error)
 	// LsStream lists a snapshot's nodes like Ls but hands each entry to onEntry
@@ -2918,9 +2918,10 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 
 // previewRetentionPerIdentity is the read-only twin of
 // applyRetentionPerIdentity: it reports what that pass WOULD remove, asking the
-// same question in the same shape: one tag-scoped preview per identity, with
-// the same repo-wide fallback when the listing fails or carries no identity
-// tags. The mirroring is what makes it right. A single repo-wide dry run is
+// same question in the same shape: one tag-scoped preview per identity, a renamed
+// entry's names as one, with the same repo-wide fallback when the listing fails or
+// carries no identity tags, and what that pass leaves alone listed as kept. The
+// mirroring is what makes it right. A single repo-wide dry run is
 // cheaper and answers a DIFFERENT question: it would show removals that never
 // happen and hide ones that do, because the per-identity pass is what actually
 // runs.
@@ -2933,7 +2934,7 @@ func (s *Service) foldTag(tag string, snaps []restic.Snapshot, domains []aliasFo
 // previewed and the failures come back alongside the groups that succeeded, so
 // an operator learns about the repositories that answered instead of seeing a
 // bare error for all of them.
-func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode) ([]restic.ForgetGroup, []string, error) {
+func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain string, p restic.RetentionPolicy, mode restic.Mode, spared ...string) ([]restic.ForgetGroup, []string, error) {
 	if !p.Any() {
 		return nil, nil, nil
 	}
@@ -2950,29 +2951,46 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain 
 		if len(held) > 0 {
 			return nil, held.names(), errRetentionPaused(len(held))
 		}
-		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, "")
+		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode)
 		return groups, nil, pErr
 	}
 	var out []restic.ForgetGroup
 	var paused []string
 	var errs []error
-	for _, tag := range domainIdentityTags(tags, domain) {
-		if held.holds(tag) {
-			paused = append(paused, tag)
-			out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+	keepAll := func(tag string) {
+		out = append(out, restic.ForgetGroup{Tags: []string{tag}, Keep: snapshotsTagged(snaps, tag)})
+	}
+	kept := slices.DeleteFunc(domainIdentityTags(tags, domain), func(t string) bool {
+		if slices.Contains(spared, t) {
+			keepAll(t)
+			return true
+		}
+		return false
+	})
+	groups, skipped := s.foldAliasedIdentityTags(kept, snaps)
+	for _, tag := range skipped {
+		keepAll(tag)
+	}
+	for _, group := range groups {
+		if held.holdsAny(group) {
+			paused = append(paused, group...)
+			for _, tag := range group {
+				keepAll(tag)
+			}
 			continue
 		}
-		groups, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, tag)
+		name := strings.Join(group, ", ")
+		answer, pErr := s.engine.ForgetPreview(ctx, repo, p, mode, group...)
 		if pErr != nil {
-			errs = append(errs, fmt.Errorf("%s: %w", tag, pErr))
+			errs = append(errs, fmt.Errorf("%s: %w", name, pErr))
 			continue
 		}
-		for _, g := range groups {
+		for _, g := range answer {
 			// restic reports an ungrouped forget's group with no tags of its own
 			// (cmd_forget.go copies the grouping key, and --group-by "" has none),
 			// so without this every item is labelled as the whole repository.
 			if len(g.Tags) == 0 {
-				g.Tags = []string{tag}
+				g.Tags = []string{name}
 			}
 			out = append(out, g)
 		}
@@ -3023,7 +3041,7 @@ func (s *Service) notifyRetentionFailed(ctx context.Context, domain, tag, detail
 // it has on its tile.
 func (s *Service) notifyMCPKeyChange(ctx context.Context, event string, k store.MCPKey, addr string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	title := "BombVault: MCP key " + event
@@ -3188,6 +3206,18 @@ func (s *Service) aggregateReplicationCurrency(domain string) (at int64, ok bool
 		}
 	}
 	return at, true
+}
+
+// oldestUncopiedTarget is when the longest waiting of the domain's targets with
+// no successful copy was set up, 0 when none waits.
+func (s *Service) oldestUncopiedTarget(domain string) int64 {
+	var since int64
+	for _, t := range s.offsiteTargetsFor(domain) {
+		if _, found, err := s.store.LatestSuccessfulOffsiteRunForTarget(domain, t.ID); err == nil && !found && (since == 0 || t.CreatedAt < since) {
+			since = t.CreatedAt
+		}
+	}
+	return since
 }
 
 // offsiteRepoFor returns the location of the domain's first off-site target
@@ -3383,8 +3413,11 @@ type DomainStatusEntry struct {
 	// client can render "the domain's cadence" and "covered by the whole-server
 	// pass" as the different statements they are. Without it the status read
 	// "Not scheduled" for a domain backed up nightly (#177).
-	CoveredBy     string `json:"coveredBy"`
-	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
+	CoveredBy   string `json:"coveredBy"`
+	LastSuccess int64  `json:"lastSuccess"` // unix time of the last successful backup, 0 = none
+	// StaleEntry names the entry that decides an overdue status, when that is not
+	// the section's newest backup.
+	StaleEntry    string `json:"staleEntry,omitempty"`
 	PeriodSeconds int64  `json:"periodSeconds"` // expected RPO window in seconds, 0 = no expectation
 	Status        string `json:"status"`        // "off" | "never" | "overdue" | "warn" | "ok"
 	// LastVerified is the unix time of the last LOCAL restore-verification drill
@@ -3524,6 +3557,7 @@ func domainCoverage(ownCadence, everythingCadence string) (period int64, covered
 // sectionEntry is one entry of a section as its schedule sees it, with when the
 // entry was set up.
 type sectionEntry struct {
+	id, name string
 	schedule schedule.EffectiveSchedule
 	since    int64
 }
@@ -3538,25 +3572,25 @@ func (s *Service) sectionEntries(domain string, settings store.Settings) ([]sect
 		var ts []store.Target
 		ts, err = s.store.ListTargets()
 		for _, t := range ts {
-			entries = append(entries, sectionEntry{schedule.EffectiveContainerSchedule(t, settings), t.CreatedAt})
+			entries = append(entries, sectionEntry{t.ID, t.ContainerName, schedule.EffectiveContainerSchedule(t, settings), t.CreatedAt})
 		}
 	case "vms":
 		var vs []store.VMTarget
 		vs, err = s.store.ListVMTargets()
 		for _, v := range vs {
-			entries = append(entries, sectionEntry{schedule.EffectiveVMSchedule(v, settings), v.CreatedAt})
+			entries = append(entries, sectionEntry{v.ID, v.Name, schedule.EffectiveVMSchedule(v, settings), v.CreatedAt})
 		}
 	case "files":
 		var sets []store.FileSet
 		sets, err = s.store.ListFileSets()
 		for _, set := range sets {
-			entries = append(entries, sectionEntry{schedule.EffectiveFileSetSchedule(set, settings), set.CreatedAt})
+			entries = append(entries, sectionEntry{set.ID, set.Name, schedule.EffectiveFileSetSchedule(set, settings), set.CreatedAt})
 		}
 	case zfsDomain:
 		var ds []store.ZFSDataset
 		ds, err = s.store.ListZFSDatasets()
 		for _, d := range ds {
-			entries = append(entries, sectionEntry{schedule.EffectiveZFSDatasetSchedule(d, settings), d.CreatedAt})
+			entries = append(entries, sectionEntry{d.ID, d.Dataset, schedule.EffectiveZFSDatasetSchedule(d, settings), d.CreatedAt})
 		}
 	default:
 		return nil, false
@@ -3569,19 +3603,33 @@ func (s *Service) sectionEntries(domain string, settings store.Settings) ([]sect
 }
 
 // domainWindow is domainCoverage for a domain whose entries may run on
-// schedules of their own. Without a section or full-backup cadence, the
-// shortest of those is the window, so a section backed up only by per-item
-// schedules still turns overdue when its backups stop. A section without an
-// entry that any schedule backs up has no window, since a scheduled run finds
-// nothing to do there and no recovery point can fall behind.
+// schedules of their own. Where every scheduled entry has its own plan, the
+// shortest of those is the window, whatever cadence the section or the full
+// backup has, since their runs find nothing to do there. A section backed up only
+// by per-item schedules still turns overdue when its backups stop. A section
+// without an entry that any schedule backs up has no window, since a scheduled
+// run finds nothing to do there and no recovery point can fall behind.
 func (s *Service) domainWindow(domain, ownCadence string, settings store.Settings) (period int64, coveredBy string) {
 	entries, listed := s.sectionEntries(domain, settings)
-	scheduled := slices.ContainsFunc(entries, func(e sectionEntry) bool { return e.schedule.Kind != schedule.EffectiveNone })
+	// An entry every run skips, since its container is gone, has nothing to fall
+	// behind on.
+	stamps, stampErr := s.store.LatestBackupsByTarget()
+	if stampErr != nil {
+		log.Printf("api: status %s: the entries' last backups could not be read: %v", domain, stampErr) //nolint:gosec // G706: domain is a fixed literal
+	}
+	scheduled := slices.ContainsFunc(entries, func(e sectionEntry) bool {
+		return e.schedule.Kind != schedule.EffectiveNone && stamps[e.id].LastRunStatus != statusSkipped
+	})
 	if listed && !scheduled {
 		return 0, ""
 	}
-	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
-		return period, coveredBy
+	reached := !listed || slices.ContainsFunc(entries, func(e sectionEntry) bool {
+		return e.schedule.Kind == schedule.EffectiveDomain || e.schedule.Kind == schedule.EffectiveEverything
+	})
+	if reached {
+		if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
+			return period, coveredBy
+		}
 	}
 	for _, e := range entries {
 		if p := cadencePeriodSeconds(e.schedule.Spec); e.schedule.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
@@ -3593,8 +3641,14 @@ func (s *Service) domainWindow(domain, ownCadence string, settings store.Setting
 
 // scheduledSince is when a section first had something to back up: its oldest
 // entry on a schedule, or the start of this database for flash and the
-// self-backup. It falls back to now, so a failed read never turns a section red.
+// self-backup, and not before its plan last changed. It falls back to now, so a
+// failed read never turns a section red.
 func (s *Service) scheduledSince(domain string, settings store.Settings, now int64) int64 {
+	changed, err := s.store.SectionPlanChangedAt(domain)
+	if err != nil {
+		log.Printf("api: status %s: when its plan changed could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return now
+	}
 	if entries, listed := s.sectionEntries(domain, settings); listed {
 		since := now
 		for _, e := range entries {
@@ -3602,14 +3656,113 @@ func (s *Service) scheduledSince(domain string, settings store.Settings, now int
 				since = e.since
 			}
 		}
-		return since
+		return max(since, changed)
 	}
 	born, err := s.store.DatabaseBornAt()
 	if err != nil {
 		log.Printf("api: status %s: when this database started could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return now
 	}
-	return born.Unix()
+	return max(born.Unix(), changed)
+}
+
+// NoteSectionPlans records when each section's plan last changed. It runs at
+// the start and after every save that can change one, so a plan set by any route
+// has its first run to wait for.
+func (s *Service) NoteSectionPlans() {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: status: read settings to note the plans: %v", err)
+		return
+	}
+	now := time.Now().Unix()
+	for _, d := range s.statusDomains(settings) {
+		if err := s.store.NoteSectionPlan(d.name, s.sectionPlanSignature(d, settings), now); err != nil {
+			log.Printf("api: status %s: %v", d.name, err) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}
+}
+
+// sectionPlanSignature is what a section's plan comes down to: the kinds of
+// schedule that reach its entries. An entry added under a plan the section has
+// already does not change it.
+func (s *Service) sectionPlanSignature(d statusDomain, settings store.Settings) string {
+	entries, listed := s.sectionEntries(d.name, settings)
+	if !listed {
+		period, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
+		if !d.enabled || period == 0 {
+			return "off"
+		}
+		return strconv.FormatInt(period, 10)
+	}
+	var plans []string
+	for _, e := range entries {
+		if e.schedule.Kind != schedule.EffectiveNone {
+			plans = append(plans, e.schedule.Kind+" "+e.schedule.Spec)
+		}
+	}
+	slices.Sort(plans)
+	return strings.Join(slices.Compact(plans), "; ")
+}
+
+// sectionVerdict is how a section's backups stand: the status, and the last
+// success and the period behind it. Stale names the entry that decided it when
+// that is not the section's newest backup.
+type sectionVerdict struct {
+	status       string
+	last, period int64
+	stale        string
+}
+
+// judgeSection decides the status of a section whose newest backup is newest. An
+// entry that fell behind or never got its backup decides, so one that stopped is
+// not hidden by a neighbour that runs. An entry whose container is gone is skipped
+// by every run and has nothing to catch up on. ZFS keeps the section's figure:
+// its items can be protected by a replica alone, which is no backup run.
+func (s *Service) judgeSection(d statusDomain, settings store.Settings, now, newest, period int64) sectionVerdict {
+	scheduled := d.enabled && period > 0
+	v := sectionVerdict{last: newest, period: period}
+	if d.name != zfsDomain && scheduled {
+		if name, last, p, found := s.mostBehindEntry(d.name, settings, now); found {
+			v.last, v.period, v.stale = last, p, name
+		}
+	}
+	v.status = s.sectionStatus(d.name, settings, now, v.last, v.period, scheduled)
+	return v
+}
+
+// mostBehindEntry is the scheduled entry furthest past its own period, if any is.
+func (s *Service) mostBehindEntry(domain string, settings store.Settings, now int64) (name string, last, period int64, found bool) {
+	entries, listed := s.sectionEntries(domain, settings)
+	if !listed {
+		return "", 0, 0, false
+	}
+	stamps, err := s.store.LatestBackupsByTarget()
+	if err != nil {
+		log.Printf("api: status %s: the entries' last backups could not be read, so the section's newest counts: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return "", 0, 0, false
+	}
+	changed, err := s.store.SectionPlanChangedAt(domain)
+	if err != nil {
+		log.Printf("api: status %s: when its plan changed could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return "", 0, 0, false
+	}
+	var worst float64
+	for _, e := range entries {
+		p := cadencePeriodSeconds(e.schedule.Spec)
+		stamp := stamps[e.id]
+		if e.schedule.Kind == schedule.EffectiveNone || p == 0 || stamp.LastRunStatus == statusSkipped {
+			continue
+		}
+		base := stamp.LastSuccessAt
+		if base == 0 {
+			base = max(e.since, changed)
+		}
+		if behind := float64(now-base) / float64(p); behind > 1 && behind > worst {
+			worst, name, last, period, found = behind, e.name, stamp.LastSuccessAt, p, true
+		}
+	}
+	return name, last, period, found
 }
 
 // sectionStatus is rpoStatus for a section's backups. A section without one
@@ -3639,6 +3792,8 @@ type protInputs struct {
 	lastTamperAt      int64
 	tamperPeriod      int64 // seconds; 0 = no/invalid tamper schedule
 	lastReplicationAt int64 // last SUCCESSFUL replication (currency source)
+	copySince         int64 // when the oldest target with no successful copy was set up; 0 = unknown
+	copyFailed        bool  // the newest replication attempt failed
 	offsitePeriod     int64 // seconds; 0 = replication coupled to each backup (no own schedule)
 	lastBackupAt      int64 // last SUCCESSFUL backup (coupled-replication currency basis)
 	backupPeriod      int64 // seconds; the domain's backup RPO period (coupled-grace basis)
@@ -3663,9 +3818,11 @@ type protInputs struct {
 //     the claim is "the last successful backup has a corresponding successful
 //     off-site copy". It goes overdue only once the gap between the last backup and
 //     the last successful replication exceeds a grace of 2× the backup period
-//     (conservative: a backup replicating shortly after is fine; a never-replicated
-//     backup is flagged only once it has sat unreplicated beyond the grace). Amber,
-//     never red.
+//     (conservative: a backup replicating shortly after is fine). Amber, never red.
+//   - A copy that never succeeded reads "never" while it has its first chance. It
+//     reads "overdue" once its attempt failed, or the last backup or the target has
+//     waited beyond the grace. The target counts because daily backups renew the
+//     last backup's stamp and would keep the copy from ever falling behind.
 //
 // A paused domain reports "paused". With copy rules each enabled target is judged
 // by the items copied there, and the worst of them counts; a target no item is
@@ -3678,11 +3835,11 @@ func replicationState(now int64, in protInputs) string {
 		return "paused"
 	}
 	if !in.byTarget {
-		return targetReplicationState(now, in, in.lastBackupAt, in.lastReplicationAt)
+		return targetReplicationState(now, in, in.lastBackupAt, in.lastReplicationAt, in.copySince)
 	}
 	worst := ""
 	for _, t := range in.targets {
-		if st := targetReplicationState(now, in, t.lastBackupAt, t.lastReplicationAt); replicationRank(st) > replicationRank(worst) {
+		if st := targetReplicationState(now, in, t.lastBackupAt, t.lastReplicationAt, t.since); replicationRank(st) > replicationRank(worst) {
 			worst = st
 		}
 	}
@@ -3690,14 +3847,21 @@ func replicationState(now int64, in protInputs) string {
 }
 
 // targetReplicationState is the currency of one target, or of the domain as a
-// whole, from the last successful backup and the last successful copy.
-func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt int64) string {
+// whole, from the last successful backup, the last successful copy and when the
+// target was set up (0 when that is not known).
+func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicationAt, since int64) string {
+	neverCopied := func(grace int64) string {
+		if in.copyFailed || (since > 0 && now-since > grace) || (lastBackupAt > 0 && now-lastBackupAt > grace) {
+			return "overdue"
+		}
+		return "never"
+	}
 	if in.offsitePeriod > 0 {
 		switch rpoStatus(now, lastReplicationAt, in.offsitePeriod, true) {
 		case "overdue":
 			return "overdue"
 		case "never":
-			return "never"
+			return neverCopied(in.offsitePeriod * 2)
 		default:
 			return "ok"
 		}
@@ -3708,12 +3872,7 @@ func targetReplicationState(now int64, in protInputs, lastBackupAt, lastReplicat
 	}
 	grace := in.backupPeriod * 2
 	if lastReplicationAt == 0 {
-		// Never replicated: overdue only once the backup has sat unreplicated > grace
-		// (a just-made first backup replicating shortly after must not instantly flag).
-		if now-lastBackupAt > grace {
-			return "overdue"
-		}
-		return "ok"
+		return neverCopied(grace)
 	}
 	if lastReplicationAt < lastBackupAt && lastBackupAt-lastReplicationAt > grace {
 		return "overdue"
@@ -3781,7 +3940,7 @@ func protectionLevel(now int64, in protInputs) string {
 	// a conservative grace (see replicationState) so off-site health is no longer
 	// invisible in the config most users run.
 	// A paused replication copies nothing at all, which is amber as well.
-	if st := replicationState(now, in); st == "overdue" || st == "paused" {
+	if st := replicationState(now, in); st == "overdue" || st == "paused" || (st == "never" && in.lastBackupAt > 0) {
 		return "amber"
 	}
 	// A recorded DR drill that FAILED downgrades the chip to amber (never green over
@@ -3949,6 +4108,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		// collapses to period 0, which reads "off".
 		period, coveredBy := s.domainWindow(d.name, d.schedule, settings)
 		scheduled := d.enabled && period > 0
+		verdict := s.judgeSection(d, settings, now, lastUnix, period)
 		sectionPeriod, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
 		entrySchedules := scheduled && sectionPeriod == 0
 
@@ -4035,12 +4195,16 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			lastTamperAt:      lastTamperAt,
 			tamperPeriod:      cadencePeriodSeconds(settings.TamperTestSchedule),
 			lastReplicationAt: lastReplicationAt,
+			copySince:         s.oldestUncopiedTarget(d.name),
 			offsitePeriod:     cadencePeriodSeconds(s.offsiteScheduleFor(d.name, settings)),
 			lastBackupAt:      lastUnix,
 			backupPeriod:      period,
 			lastDRDrillAt:     lastDRDrillAt,
 			lastDRDrillOK:     lastDRDrillOK,
 			drillPeriod:       drillPeriod,
+		}
+		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
+			in.copyFailed = run.FinishedAt != 0 && !run.OK
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		riskAccepted := s.deleteRiskAccepted(d.name, settings)
@@ -4068,26 +4232,37 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 		// A backup that waits for its app is late by choice until its deadline.
-		backupStatus := s.sectionStatus(d.name, settings, now, lastUnix, period, scheduled)
-		if backupStatus == "overdue" && s.deferralHolds(d.name, now) {
+		backupStatus := verdict.status
+		if backupStatus == "overdue" && s.deferralHolds(d.name, verdict.stale, now) {
 			backupStatus = "warn"
+		}
+		// The sentence on screen is about what fell behind, not its neighbour.
+		shownSuccess := lastUnix
+		if verdict.stale != "" {
+			shownSuccess = verdict.last
 		}
 
 		// A prune rule is "set" when the far side prunes (immutable), a growth
-		// budget is set, or a keep policy applies, off-site or to the own folder.
+		// budget is set, or a keep policy applies anywhere the section's backups
+		// go: a copy, a direct repository or the own folder.
 		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
 			s.offsiteRetentionPolicy(settings, d.name).Any() ||
-			s.retentionPolicy(settings, d.name).Any()
+			s.retentionPolicy(settings, d.name).Any() ||
+			s.domainHasRetention(settings, d.name) ||
+			slices.ContainsFunc(s.offsiteReplicationTargets(d.name, settings), func(t store.OffsiteTarget) bool {
+				return t.Immutable || targetOffsiteRetentionPolicy(t).Any()
+			})
 
 		out = append(out, DomainStatusEntry{
 			Domain:                d.name,
 			Enabled:               d.enabled,
 			Schedule:              d.schedule,
 			CoveredBy:             coveredBy,
-			LastSuccess:           lastUnix,
+			LastSuccess:           shownSuccess,
 			PeriodSeconds:         period,
 			Status:                backupStatus,
+			StaleEntry:            verdict.stale,
 			LastVerified:          lastVerified,
 			LastVerifiedOK:        lastVerifiedOK,
 			VerifiedDetail:        verifiedDetail,
@@ -4717,26 +4892,12 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 		}
 		return errors.New("no repository to replicate")
 	}
-	if perr == nil {
-		var paused bool
-		var pending []string
-		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
-			return nil
-		}
-		if perr == nil && len(pending) > 0 {
-			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
-				return slices.Contains(pending, t.ID)
-			})
-			if len(targets) == 0 {
-				perr = errNoTargetVisited
-			}
-		}
-	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
 	// the reserved domain target id, like prune/verify) so the replication shows
 	// up in the dashboard Activity Log/Run History as persisted history. This stays
-	// per-DOMAIN (one row per domain per call) — per-target activity/progress is a
-	// later stage, and with a single target it is identical to before. Best-effort.
+	// per-DOMAIN (one row per domain per call), and with a single target it is
+	// identical to before. Best-effort. It starts before the first look at a
+	// target, which at a dead address takes as long as restic keeps retrying.
 	activityRunID, aErr := s.startRun(ctx, domainRunTargetID(domain), "offsite")
 	if aErr != nil {
 		log.Printf("api: offsite %s: could not start activity run (continuing): %v", domain, aErr) //nolint:gosec // G706: domain is a fixed literal
@@ -4767,6 +4928,27 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
+	if perr == nil {
+		var paused bool
+		var pending []string
+		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
+			// A pass that stops here copied nothing and failed at nothing, like one
+			// that finds the section paused from the start.
+			if dErr := s.store.DeleteRun(activityRunID); dErr != nil {
+				log.Printf("api: offsite %s: could not drop the activity run of a paused pass: %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+			activityRunID = ""
+			return nil
+		}
+		if perr == nil && len(pending) > 0 {
+			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
+				return slices.Contains(pending, t.ID)
+			})
+			if len(targets) == 0 {
+				perr = errNoTargetVisited
+			}
+		}
+	}
 	if perr != nil {
 		err = s.failPass(domain, targets, perr)
 		return err
@@ -5294,7 +5476,7 @@ func (s *Service) applyGrowthBudget(ctx context.Context, domain, latchKey string
 // channel that could carry the alert failed.
 func (s *Service) notifyOverBudget(ctx context.Context, domain string, size, budget int64, kind string) (undelivered bool) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return false
 	}
 	subject := strings.ToUpper(kind[:1]) + kind[1:] + " backup over budget for " + domain
@@ -5646,7 +5828,7 @@ func (s *Service) ScheduledReplicateOffsite(ctx context.Context, domain string) 
 // when notifications are off.
 func (s *Service) notifyReplicationFailed(ctx context.Context, domain, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	subject := "Off-site replication FAILED for " + domain
@@ -6179,7 +6361,8 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // creates a missing bind source, so a path it reports that BombVault cannot see
 // lies on storage the host mount does not carry, such as TrueNAS ixVolume data
 // under /mnt/.ix-apps. System mounts (/etc/localtime, the Docker socket) are not
-// data and stay out. A Docker volume is data wherever it lives, and the
+// data and stay out. A Compose project's own folder outside Host Data counts, as
+// no stack backup reaches it. A Docker volume is data wherever it lives, and the
 // daemon's own volumes under /var/lib/docker are out of reach of a Host Data
 // at /mnt. An anonymous volume stays out, and so does a mount that one of the
 // container's exclude lines covers by either of its paths: the user has said
@@ -6199,8 +6382,50 @@ func (s *Service) dataOutsideHostMount(in model.Inspect, excludes []string) []st
 			out = append(out, src)
 		}
 	}
+	if project, ok := composeProjectDataDir(in.Config.Labels); ok && !isSystemPath(path.Clean(project)) {
+		clean := path.Clean(project)
+		_, inHostData := s.toContainerPath(clean)
+		if !inHostData && !seen[clean] && !slices.ContainsFunc(excludes, func(line string) bool { return s.excludeNamesHostSource(line, clean) }) {
+			out = append(out, clean)
+		}
+	}
 	sort.Strings(out)
 	return out
+}
+
+// partitionDataOutside splits what dataOutsideHostMount found into folders outside
+// Host Data and folders inside it that are not there right now, which take
+// different fixes.
+func (s *Service) partitionDataOutside(unreachable []string) (outside, missing []string) {
+	for _, src := range unreachable {
+		if _, inHostData := s.toContainerPath(src); inHostData {
+			missing = append(missing, src)
+		} else {
+			outside = append(outside, src)
+		}
+	}
+	return outside, missing
+}
+
+// isSystemPath reports whether a bind source belongs to the operating system
+// rather than to an app's data.
+func isSystemPath(src string) bool {
+	for _, root := range []string{"/bin", "/boot", "/dev", "/etc", "/lib", "/lib64", "/proc", "/run", "/sbin", "/sys", "/tmp", "/usr", "/var"} {
+		if src == root || strings.HasPrefix(src, root+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// underComposeProject reports whether a bind source lies in the container's
+// Compose project folder, which holds that stack's data wherever it is.
+func underComposeProject(src string, labels map[string]string) bool {
+	project, ok := composeProjectDataDir(labels)
+	if !ok {
+		return false
+	}
+	return isUnderAny(src, []string{path.Clean(project)})
 }
 
 // unreachableDataMounts returns the mounts behind dataOutsideHostMount before
@@ -6213,7 +6438,8 @@ func (s *Service) unreachableDataMounts(in model.Inspect) []model.Mount {
 			continue
 		}
 		src := path.Clean(m.Source)
-		if m.Type == "bind" && !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") {
+		if m.Type == "bind" && !labelOverride && !matchesAnyDataRootSegment(src, s.cfg.DataRootSegments) && !strings.HasPrefix(src, "/mnt/") &&
+			isSystemPath(src) && !underComposeProject(src, in.Config.Labels) {
 			continue
 		}
 		if cp, ok := s.toContainerPath(src); ok {
@@ -7028,13 +7254,15 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	}
 	var window *time.Duration
 	runs := &runIDRecorder{Runs: runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name}}
+	dataOutside, dataMissing := s.partitionDataOutside(s.dataOutsideHostMount(in, tg.Excludes))
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
 		FormerNames:          aliasOldNames(aliases),
 		ContainerName:        name,
 		RepoPath:             repo,
 		AppdataPaths:         effective,
-		UnreachableData:      s.dataOutsideHostMount(in, tg.Excludes),
+		UnreachableData:      dataOutside,
+		MissingData:          dataMissing,
 		StopTimeout:          30 * time.Second,
 		TargetID:             tg.ID,
 		SnapshotTemplatesDir: filepath.Join(s.cfg.DataDir, "templates"),
@@ -7679,6 +7907,9 @@ func (s *Service) StartBackupConfig(ctx context.Context) (bool, error) {
 // returns (false, nil) if one is already running, or (false, err) if the files
 // domain is already busy with another op.
 func (s *Service) StartBackupFileSet(ctx context.Context, id string) (bool, error) {
+	if _, err := s.store.GetFileSet(id); err != nil {
+		return false, errFileSetNotFound
+	}
 	if err := s.refuseNoPlace("files", id); err != nil {
 		return false, err
 	}
@@ -15442,8 +15673,22 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 	}
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
 		log.Printf("flash zip export failed (backup is still valid): %v", err)
+		s.notifyFlashExportFailed(ctx, err)
 	}
 	return sum, nil
+}
+
+// notifyFlashExportFailed tells that the ZIP meant to leave the server was not
+// written. The backup is fine, so the health check stays out of it.
+func (s *Service) notifyFlashExportFailed(ctx context.Context, cause error) {
+	c, err := s.NotifyConfig()
+	if err != nil || !c.Active() {
+		return
+	}
+	msg := fmt.Sprintf("The flash ZIP was not written, the backup itself is safe: %s", scrubError(cause))
+	s.sendAlert(notify.WithHealthchecksSuppressed(context.WithoutCancel(ctx)), c, "flash",
+		notify.Event{Title: "BombVault", Message: msg, OK: false},
+		"BombVault: flash ZIP export FAILED", msg, "warning")
 }
 
 // keepLastFlashZip leaves the ZIP of the last complete backup in place and says
@@ -15481,13 +15726,6 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
 		return nil
 	}
-	// Resolve age recipients up front: with export encryption on but no valid
-	// recipient this fails BEFORE the temp zip is created, so no plaintext artifact
-	// is ever produced when the user asked for encryption.
-	recipients, _, err := s.exportRecipients(settings)
-	if err != nil {
-		return err
-	}
 	// Publish a live "maintenance" progress pair keyed "export:flash" (mirroring
 	// prune:/verify:/drill:) so a long zip export of a big flash shows on the
 	// dashboard activity log WHILE it writes, not only after (#109). The terminal
@@ -15513,6 +15751,13 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 			log.Printf("api: flash zip export: could not finish run record: %v", fErr)
 		}
 	}()
+	// Resolve age recipients before the temp zip is created: with export encryption
+	// on but no valid recipient no plaintext artifact is ever produced, and the run
+	// says why no ZIP came.
+	recipients, _, err := s.exportRecipients(settings)
+	if err != nil {
+		return err
+	}
 	dir, err := s.flashZipExportDir(settings)
 	if err != nil {
 		return err
@@ -15555,12 +15800,28 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	if fi, statErr := os.Stat(final); statErr == nil {
 		zipBytes = fi.Size()
 	}
+	removeOtherLatestZips(dir, final)
 	// Prune in BOTH modes: in latest mode (Keep==0) the user opted out of history,
 	// so this deletes any stale flash-<ts>.zip left over from a previous history
 	// run; in history mode (Keep>0) it trims to the newest N. flash-latest.zip never
 	// matches flashZipRe, so it is never touched.
 	s.pruneFlashZips(dir, settings.FlashZipExportKeep)
 	return nil
+}
+
+// removeOtherLatestZips takes away the flash-latest file this export did not
+// write. After a switch of encryption or history it would stay beside the new
+// export, never updated, and a plain one holds what the person now wants sealed.
+func removeOtherLatestZips(dir, final string) {
+	for _, name := range []string{"flash-latest.zip", "flash-latest.zip.age"} {
+		p := filepath.Join(dir, name)
+		if p == final {
+			continue
+		}
+		if err := os.Remove(p); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			log.Printf("flash zip export: remove %q: %v", name, err)
+		}
+	}
 }
 
 // pruneFlashZips keeps the newest `keep` timestamped flash-*.zip files, deleting
@@ -15660,6 +15921,12 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	if err := s.refuseLinkOutOfMount(append([]string{src}, fileSetPositionals(set.SelectedPaths, src)...)); err != nil {
 		return backup.Summary{}, fmt.Errorf("files backup: %q: %w", set.Name, err)
 	}
+	// restic stores a link as a link, which holds none of the folder behind it.
+	if fi, lErr := os.Lstat(src); lErr == nil && fi.Mode()&os.ModeSymlink != 0 {
+		if src, err = filepath.EvalSymlinks(src); err != nil {
+			return backup.Summary{}, fmt.Errorf("files backup: resolve the link at the source path of %q: %w", set.Name, err)
+		}
+	}
 	// The set's OWN repository if it has one (#204), otherwise the domain's.
 	// Everything below takes `repo` as a parameter - EnsureRepo, the run record,
 	// applyRetention, makeRepoReadable, checkPrimaryRemoteBudget - so a per-set
@@ -15750,7 +16017,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		Repo:        repo,
 		TargetID:    set.ID,
 		SetName:     set.Name,
-		Excludes: append(append([]string{}, set.Excludes...),
+		Excludes: append(s.excludesAsSeenHere(set.Excludes),
 			excludedBranches(anchored)...),
 		Restic: &resticAdapter{
 			engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx)),
@@ -15863,6 +16130,22 @@ func fileSetSourceEmpty(src string) (bool, error) {
 		return false, err
 	}
 	return empty, nil
+}
+
+// excludesAsSeenHere writes the lines that name a host path the way restic sees
+// that path through the host mount, or they would match nothing.
+func (s *Service) excludesAsSeenHere(lines []string) []string {
+	out := make([]string, 0, len(lines))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "/") {
+			if here, ok := s.toContainerPath(trimmed); ok {
+				line = here
+			}
+		}
+		out = append(out, line)
+	}
+	return out
 }
 
 // errFileSetNotFound is the user-safe error for an unknown file-set id (the
@@ -18615,7 +18898,7 @@ func (s *Service) Drills(domain, source string, limit int) ([]store.RestoreDrill
 // policy + Unraid fan-out; a no-op when notifications are off.
 func (s *Service) notifyDrillFailure(ctx context.Context, domain, source, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	target := "Unraid flash"
@@ -19666,11 +19949,11 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 	return c, nil
 }
 
-// SetNotifyConfig encrypts + stores the notification config. A config with no
-// channel and no policy clears it.
+// SetNotifyConfig encrypts + stores the notification config. A config that says
+// nothing beyond the defaults clears it.
 func (s *Service) SetNotifyConfig(c notify.Config) error {
 	stored := ""
-	if c.Configured() || (c.On != "" && c.On != "never") {
+	if !c.IsDefault() {
 		blob, mErr := json.Marshal(c)
 		if mErr != nil {
 			return fmt.Errorf("marshal notify conf: %w", mErr)
@@ -20620,15 +20903,15 @@ func singletonItemName(domain string) string {
 }
 
 // notifyBackup sends a best-effort notification for a completed backup. It reads
-// the stored config each call (cheap; backups are infrequent) and is a no-op when
-// notifications are off. cancelKey is the key the backup registered its cancel
+// the stored config each call (cheap; backups are infrequent). With notifications
+// off only a health check hears of it. cancelKey is the key the backup registered its cancel
 // under, empty for a failure before it could be cancelled.
 func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey string, ok bool, sum backup.Summary, backupErr error) {
 	stalled, isStall := stalledReason(ctx, scrubError(backupErr))
 	// A cancelled or stalled run is reported on the context that just ended.
 	ctx = context.WithoutCancel(ctx)
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil {
 		return
 	}
 	target := singletonItemName(domain)
@@ -20671,14 +20954,17 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	if o := runOriginFromContext(ctx); o.Via != "" {
 		msg += " " + s.originSentence(o)
 	}
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete})
+	ev := notify.Event{Title: "BombVault", Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete}
+	if ev.OK {
+		ev.CheckHeld = s.healthcheckHold(c, domain)
+	}
+	notify.Send(ctx, c, domain, ev)
 
 	// Unraid native notification (delivered over SSH; notify.Send is HTTP-only).
-	// Honour the same policy: notifyBackup already returned for "never", so send
-	// on "always" or on any failure. In scheduled summary mode, drop the per-item
-	// Unraid push too — ScheduledNotifyResult sends the one aggregate (#56).
+	// Honour the same policy. In scheduled summary mode, drop the per-item Unraid
+	// push too, since ScheduledNotifyResult sends the one aggregate (#56).
 	failed := !ok && !cancelled && !interrupted
-	if s.unraidGate(c.Unraid) && (c.On == "always" || failed || incomplete) &&
+	if c.Active() && s.unraidGate(c.Unraid) && (c.On == "always" || failed || incomplete) &&
 		(!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
 		level := "normal"
 		subject := "BombVault: backup OK"
@@ -20753,10 +21039,10 @@ func (s *Service) recordAndNotifyContainerSkip(ctx context.Context, name string)
 	}
 	c, err := s.NotifyConfig()
 	// Honour the notify policy on BOTH channels (message + Unraid): when muted
-	// ("never"/unset) the skipped run row and the dashboard chip already surface it,
+	// the skipped run row and the dashboard chip already surface it,
 	// so no push should fire — otherwise a benign skip would be noisier than a real
 	// backup failure (which notifyBackup stays silent about under the same policy).
-	if err != nil || (c.On != "always" && c.On != "failure") {
+	if err != nil || !c.Active() {
 		return
 	}
 	// #111: the old wording ("…is still a scheduled backup target. It was skipped…")
@@ -20851,6 +21137,9 @@ func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string
 	var summary string
 	if ok {
 		summary = fmt.Sprintf("%d of %d items succeeded", attempted, attempted)
+		if held := s.healthcheckHold(c, domain); held != "" {
+			ok, summary = false, summary+". "+held
+		}
 	} else {
 		summary = fmt.Sprintf("%d of %d items failed", failed, attempted)
 	}
@@ -20867,10 +21156,9 @@ func (s *Service) ScheduledHealthchecksResult(ctx context.Context, domain string
 // count that leaves the user with no idea what to fix (#64).
 func (s *Service) ScheduledNotifyResult(ctx context.Context, domain string, attempted, failed int, failures []schedule.ItemFailure) {
 	c, err := s.NotifyConfig()
-	// Honour the notify policy on ALL channels (message + Unraid): muted ("never"/
-	// unset) sends nothing, so the Unraid push below can't leak past a muted policy.
-	if err != nil || !c.ScheduledSummary || attempted == 0 ||
-		(c.On != "always" && c.On != "failure") {
+	// Honour the notify policy on ALL channels (message + Unraid): muted sends
+	// nothing, so the Unraid push below can't leak past a muted policy.
+	if err != nil || !c.ScheduledSummary || attempted == 0 || !c.Active() {
 		return
 	}
 	ok := failed == 0

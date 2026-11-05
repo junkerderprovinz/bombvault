@@ -112,25 +112,25 @@ func TestHealthchecksURLFor(t *testing.T) {
 		HealthchecksURL:      "https://hc/global",
 		HealthchecksByDomain: map[string]string{"flash": "https://hc/flash", "config": ""},
 	}
-	if got := c.healthchecksURLFor("flash"); got != "https://hc/flash" {
+	if got := c.HealthchecksURLFor("flash"); got != "https://hc/flash" {
 		t.Fatalf("flash → %q, want the per-domain URL", got)
 	}
-	if got := c.healthchecksURLFor("config"); got != "https://hc/global" {
+	if got := c.HealthchecksURLFor("config"); got != "https://hc/global" {
 		t.Fatalf("blank per-domain entry should fall back to global, got %q", got)
 	}
-	if got := c.healthchecksURLFor("VM"); got != "https://hc/global" {
+	if got := c.HealthchecksURLFor("VM"); got != "https://hc/global" {
 		t.Fatalf("absent domain should fall back to global, got %q", got)
 	}
 	nilMap := Config{HealthchecksURL: "https://hc/global"}
-	if got := nilMap.healthchecksURLFor("flash"); got != "https://hc/global" {
+	if got := nilMap.HealthchecksURLFor("flash"); got != "https://hc/global" {
 		t.Fatalf("nil map should fall back to global, got %q", got)
 	}
 	// The off-site and tamper notifiers use the plural spellings.
 	norm := Config{HealthchecksByDomain: map[string]string{"container": "https://hc/ct", "VM": "https://hc/vm"}}
-	if got := norm.healthchecksURLFor("containers"); got != "https://hc/ct" {
+	if got := norm.HealthchecksURLFor("containers"); got != "https://hc/ct" {
 		t.Fatalf("containers should normalize to the container check, got %q", got)
 	}
-	if got := norm.healthchecksURLFor("vms"); got != "https://hc/vm" {
+	if got := norm.HealthchecksURLFor("vms"); got != "https://hc/vm" {
 		t.Fatalf("vms should normalize to the VM check, got %q", got)
 	}
 }

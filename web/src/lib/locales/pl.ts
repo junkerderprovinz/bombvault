@@ -1221,6 +1221,7 @@ const pl: Partial<Translations> = {
   "runReason.dbimportFailed": "narzędzie do importu zgłosiło błąd",
   "runReason.dbimportKeptOld": "poprzedni folder z danymi został zachowany",
   "runReason.dataOutsideHost": "dane są poza Host Data i nie zostały zarchiwizowane",
+  "runReason.dataMissing": "nie znaleziono folderów z danymi i nie zostały zarchiwizowane",
   "runReason.filesUnreadable": "niektórych plików nie udało się odczytać i brakuje ich w tej kopii zapasowej",
   "runReason.foldersMissing": "w tej kopii zapasowej brakuje wybranych folderów",
   "runReason.backupEmpty": "ta kopia zapasowa nie zawiera plików, a wcześniejsze zawierały",

@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   backupNotes,
   isOwnReason,
+  dataMissing,
   dataOutsideHost,
   isWarningNote,
   runReason,
@@ -268,6 +269,22 @@ describe("data outside Host Data", () => {
     const parts = runReasonParts(note, t);
     expect(parts.head).toBe("runReason.dataOutsideHost");
     expect(parts.detail).toBe("/mnt/.ix-apps/app_mounts/nc/data");
+  });
+});
+
+describe("data folders that are not there", () => {
+  const note = "data folders that could not be found were not backed up: /mnt/user/appdata/media";
+
+  it("is a warning of its own and is not called outside Host Data", () => {
+    expect(isWarningNote(note)).toBe(true);
+    expect(dataMissing(note)).toBe(true);
+    expect(dataOutsideHost(note)).toBe(false);
+  });
+
+  it("is translated up to the paths", () => {
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.dataMissing");
+    expect(parts.detail).toBe("/mnt/user/appdata/media");
   });
 });
 

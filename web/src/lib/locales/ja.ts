@@ -1218,6 +1218,7 @@ const ja: Partial<Translations> = {
   "runReason.dbimportFailed": "インポートツールがエラーを報告しました",
   "runReason.dbimportKeptOld": "以前のデータフォルダーを残しました",
   "runReason.dataOutsideHost": "データは Host Data の外にあり、バックアップされていません",
+  "runReason.dataMissing": "データフォルダーが見つからず、バックアップされていません",
   "runReason.filesUnreadable": "一部のファイルを読み取れず、このバックアップに含まれていません",
   "runReason.foldersMissing": "選択したフォルダーがこのバックアップに含まれていません",
   "runReason.backupEmpty": "このバックアップにはファイルがありません。以前のバックアップにはありました",

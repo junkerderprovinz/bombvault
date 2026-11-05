@@ -481,13 +481,39 @@ describe("a destination that holds own folders", () => {
   });
 
   it("describes its copies and its own folders apart when it holds both", async () => {
-    stage(location({ sections: [own("vms"), section({ domain: "containers", targetId: "t-containers" })], retention: NONE }), []);
+    stage(location({ sections: [own("vms"), section({ domain: "containers", targetId: "t-containers", retention: NONE })], retention: NONE }), []);
     await renderPage("destination:box");
 
     expect(cardTitles()).toContain("Copy");
     const prunes = card("Delete protection").textContent ?? "";
     expect(prunes).toContain("Nothing prunes this copy.");
     expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by this location's How long to keep card.");
+  });
+
+  it("goes by a copy's own values, not the card, for who prunes it", async () => {
+    const copy = { domain: "containers", targetId: "t-containers", own: ["retention"] } as const;
+    stage(location({ sections: [section({ ...copy, retention: BALANCED })], retention: NONE }), []);
+    await renderPage("destination:box");
+    expect(card("Delete protection").textContent).toContain(en["storage.lock.pruneHere"]);
+    cleanup();
+
+    stage(location({ sections: [section({ ...copy, retention: NONE })], retention: BALANCED }), []);
+    await renderPage("destination:box");
+    expect(card("Delete protection").textContent).toContain(en["storage.lock.pruneNone"]);
+  });
+
+  it("names the sections when their copies are pruned differently", async () => {
+    stage(location({
+      sections: [
+        section({ domain: "containers", targetId: "t-containers", retention: NONE }),
+        section({ domain: "vms", targetId: "t-vms", retention: BALANCED }),
+      ],
+      retention: NONE,
+    }), []);
+    await renderPage("destination:box");
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain(`Containers: ${en["storage.lock.pruneNone"]}`);
+    expect(prunes).toContain(`VMs: ${en["storage.lock.pruneHere"]}`);
   });
 
   it("says a section keeps everything by its own rule, and where to change that", async () => {

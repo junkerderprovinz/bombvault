@@ -1223,6 +1223,7 @@ const nl: Partial<Translations> = {
   "runReason.dbimportFailed": "het importgereedschap meldde een fout",
   "runReason.dbimportKeptOld": "de vorige gegevensmap is bewaard",
   "runReason.dataOutsideHost": "de gegevens staan buiten Host Data en zijn niet geback-upt",
+  "runReason.dataMissing": "de gegevensmappen zijn niet gevonden en niet geback-upt",
   "runReason.filesUnreadable": "sommige bestanden konden niet worden gelezen en ontbreken in deze back-up",
   "runReason.foldersMissing": "geselecteerde mappen ontbreken in deze back-up",
   "runReason.backupEmpty": "deze back-up bevat geen bestanden, terwijl eerdere back-ups die wel bevatten",

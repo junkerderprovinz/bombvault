@@ -644,7 +644,7 @@ func (s *Service) newDrillSandbox(settings store.Settings, prefix string) (strin
 // restore check is reported.
 func (s *Service) notifyProbeFailure(ctx context.Context, it probeItem, detail string) {
 	c, err := s.NotifyConfig()
-	if err != nil || c.On == "" || c.On == "never" {
+	if err != nil || !c.Active() {
 		return
 	}
 	msg := fmt.Sprintf("The restore check after the first backup of %s failed, so this backup may not be restorable: %s", it.name, detail)

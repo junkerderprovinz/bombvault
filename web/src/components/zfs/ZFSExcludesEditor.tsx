@@ -41,16 +41,18 @@ export function ZFSExcludesEditor({ item, t, onSaved }: { item: ZFSDatasetView; 
     setText(next);
     const list = next.split("\n").map((l) => l.trim()).filter(Boolean);
     debouncedSave(() => {
-      void patchZFSDataset(item.id, { excludes: list }).then((res) => {
-        if (res.ok) {
-          setRefusal("");
-          onSaved();
-        } else if (res.code) {
-          setRefusal(zfsCodeSentence(t, res.code, { names: list }));
-        } else {
-          push(res.error ?? t("excludes.error"), "fail");
-        }
-      });
+      void patchZFSDataset(item.id, { excludes: list })
+        .then((res) => {
+          if (res.ok) {
+            setRefusal("");
+            onSaved();
+          } else if (res.code) {
+            setRefusal(zfsCodeSentence(t, res.code, { names: list }));
+          } else {
+            push(res.error ?? t("excludes.error"), "fail");
+          }
+        })
+        .catch((err) => push(err instanceof Error ? err.message : t("excludes.error"), "fail"));
     });
   }
 

@@ -1268,6 +1268,7 @@ const bg: Partial<Translations> = {
   "runReason.dbimportFailed": "инструментът за внасяне съобщи за грешка",
   "runReason.dbimportKeptOld": "предишната папка с данни беше запазена",
   "runReason.dataOutsideHost": "данните са извън Host Data и не са архивирани",
+  "runReason.dataMissing": "папките с данни не бяха намерени и не са архивирани",
   "runReason.filesUnreadable": "някои файлове не можаха да бъдат прочетени и липсват в този архив",
   "runReason.foldersMissing": "избрани папки липсват в този архив",
   "runReason.backupEmpty": "този архив не съдържа файлове, а по-ранните съдържаха",

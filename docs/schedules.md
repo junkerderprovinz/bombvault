@@ -27,7 +27,7 @@ The **Week** card draws every planned run from Monday to Sunday, one line per da
 
 The **Full backup** is the default plan for everything. **When backups run** sets it: one pass that backs up every section in turn, containers, VMs, flash, folders, ZFS datasets and the self-backup last. The line under it says which sections it includes. **Off** turns it off, and then only what has a plan of its own runs.
 
-- **Catch up missed backups after start**: when the server was off at a planned time, BombVault runs that backup about two minutes after it starts.
+- **Catch up missed backups after start**: when the server was off at a planned time, BombVault runs that backup about two minutes after it starts. An entry's own plan and an off-site plan wait for their next planned time, and so does a plan that has never succeeded.
 - **Commands before and after**: **Command before the full backup** runs on the server with `sh -c` before the pass starts, for example a script that stops a service. If it fails, the full backup still runs. **Command after the full backup** runs once after every section was tried, even if one of them failed, which suits a ping that confirms the whole server is protected. Commands for a single container are on its page.
 
 **Back up everything now** on the Backups page starts the same pass by hand, over every switched-on section.

@@ -2,7 +2,7 @@
 // lane per day, so runs that crowd each other show before they collide.
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { IconAnomalies } from "../../components/navGlyphs";
-import { getScheduleNext, type ScheduleNext, type Settings } from "../../lib/api";
+import { getScheduleNext, type BackupItem, type ScheduleNext, type Settings } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { browserOffsetSeconds, useForeignScheduleZone } from "../../lib/scheduleZone";
 import { Card } from "./shared";
@@ -29,9 +29,9 @@ const HOURS = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 // A stroke is this many minutes wide, so a start can be seen and pointed at.
 const STROKE = 14;
 
-/** plansOf lists what the settings schedule, with the next fire of each plan
- *  the server reports one for. */
-export function plansOf(settings: Settings, next: ScheduleNext[], t: (k: TranslationKey) => string): Plan[] {
+/** plansOf lists what the settings and the entries' own plans schedule, with the
+ *  next fire of each plan the server reports one for. */
+export function plansOf(settings: Settings, next: ScheduleNext[], t: (k: TranslationKey) => string, items: BackupItem[] = []): Plan[] {
   const fire = (job: string, domain: string) => {
     const hit = next.find((n) => n.job === job && n.domain === domain);
     return hit ? new Date(hit.next) : undefined;
@@ -65,13 +65,17 @@ export function plansOf(settings: Settings, next: ScheduleNext[], t: (k: Transla
   if (settings.drillsEnabled) {
     plans.push({ key: "drills", kind: "probe", label: t("verify.trialRestore"), cadence: settings.drillsSchedule, next: fire("drill", "") });
   }
-  plans.push({
-    key: "tamper",
-    kind: "check",
-    label: t("verify.tamper"),
-    cadence: settings.tamperTestSchedule,
-    next: fire("tamper", ""),
-  });
+  for (const item of items) {
+    if (item.effectiveSchedule.kind === "own") {
+      plans.push({ key: `own-${item.kind}-${item.key}`, kind: "backup", label: item.name, cadence: item.effectiveSchedule.spec });
+    }
+  }
+  // The default stands on every install, and the job only where a section claims
+  // delete protection, which the server's list says.
+  const tamper = fire("tamper", "");
+  if (tamper) {
+    plans.push({ key: "tamper", kind: "check", label: t("verify.tamper"), cadence: settings.tamperTestSchedule, next: tamper });
+  }
   return plans;
 }
 
@@ -143,7 +147,7 @@ function Lane({
   );
 }
 
-export function WeekCard({ settings, hueIndex }: { settings: Settings; hueIndex: number }) {
+export function WeekCard({ settings, items, hueIndex }: { settings: Settings; items: BackupItem[]; hueIndex: number }) {
   const { t, lang } = useT();
   const [next, setNext] = useState<ScheduleNext[]>([]);
   const [pointed, setPointed] = useState<PlannedRun | null>(null);
@@ -170,7 +174,7 @@ export function WeekCard({ settings, hueIndex }: { settings: Settings; hueIndex:
     return () => window.clearInterval(id);
   }, []);
 
-  const runs = useMemo(() => weekRuns(plansOf(settings, next, t), offset), [settings, next, t, offset]);
+  const runs = useMemo(() => weekRuns(plansOf(settings, next, t, items), offset), [settings, items, next, t, offset]);
   // The needle stands on the server's clock, like the cadences.
   const server = new Date(Date.now() + offset * 1000);
   const today = (server.getUTCDay() + 6) % 7;

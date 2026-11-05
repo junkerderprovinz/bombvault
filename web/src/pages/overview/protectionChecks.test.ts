@@ -44,6 +44,16 @@ describe("the local check", () => {
     expect(local({ status: "overdue" })).toEqual({ tone: "fail", say: "overview.check.localOverdue" });
   });
 
+  it("reads a failed run past its period as overdue, the worst case first", () => {
+    const tally = tallyEntries([item({ lastRunStatus: "failed" })]);
+    expect(local({ status: "overdue" }, tally)).toEqual({ tone: "fail", say: "overview.check.localOverdue" });
+  });
+
+  it("names failing first backups before their period is over", () => {
+    const tally = tallyEntries([item({ lastBackup: 0, lastRunStatus: "failed" })]);
+    expect(local({ status: "never" }, tally)).toEqual({ tone: "warn", say: "overview.check.localFailed" });
+  });
+
   it("warns while an entry is not protected", () => {
     const tally = tallyEntries([item(), item({ key: "new", lastBackup: 0 })]);
     expect(local({}, tally)).toEqual({ tone: "warn", say: "overview.check.localPartly" });

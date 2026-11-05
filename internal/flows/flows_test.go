@@ -34,12 +34,6 @@ type knownFailure struct {
 // knownFailures names the cells that fail today, as go test names them, with * for
 // one level of the name.
 var knownFailures = []knownFailure{
-	{"TestZipExportWithoutARecipientSaysSo", "with export encryption on and no recipient the ZIP stops without a word", "no export run"},
-	{"TestPreviewOfADirectRepositoryKnowsItsRule", "the Preview of a section that writes straight to a location finds no backups", "no backups"},
-	{"TestStatusKnowsACopyPrunes", "the status says no prune rule is set while a copy prunes by its card", "pruneStrategySet"},
-	{"TestCopyThatNeverRanDoesNotReadOk", "an off-site copy that never ran reads ok", "reads ok"},
-	{"TestOwnWeeklyPlanIsNotOverdueByTheSectionPlan", "the section's plan makes an entry on its own weekly plan read overdue", "overdue"},
-	{"TestNewPlanIsNotOverdueAtOnce", "a plan set on an older database reads overdue at once", "overdue"},
 }
 
 // folderSets are the two sets every flow backs up.

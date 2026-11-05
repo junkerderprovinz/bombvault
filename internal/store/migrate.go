@@ -3653,6 +3653,17 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		sql:              `ALTER TABLE replaced_sign_ins ADD COLUMN added TEXT NOT NULL DEFAULT '';`,
 	},
 	{
+		// What each section's plan was at the last look and when that last changed,
+		// so a plan set today is not held to a database that is a month old.
+		version: sectionPlansMigration,
+		name:    "section_plans",
+		sql: `CREATE TABLE IF NOT EXISTS section_plans (
+  domain     TEXT PRIMARY KEY,
+  signature  TEXT NOT NULL,
+  changed_at INTEGER NOT NULL
+);`,
+	},
+	{
 		// A received repository on a server with a login needs that login, as a
 		// pull source does.
 		version:          receivedRepoSignInMigration,
@@ -4307,6 +4318,9 @@ const pullLandingMigration = 793
 // staleEstablishedMigration numbers the clean-up of records of repositories
 // that were at a location's address before the location was added.
 const staleEstablishedMigration = 800
+
+// sectionPlansMigration numbers the record of when a section's plan last changed.
+const sectionPlansMigration = 780
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

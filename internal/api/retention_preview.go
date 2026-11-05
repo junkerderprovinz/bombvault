@@ -96,6 +96,10 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	if err != nil {
 		return RetentionPreview{}, err
 	}
+	direct := s.directPlaces(settings, domain, source)
+	for _, pl := range direct {
+		repos = append(repos, domainRepoRef{Loc: pl.repo, Named: store.OffsiteTarget{Name: placementTargetName(*pl.target)}})
+	}
 
 	policy := s.retentionPolicyForSource(settings, domain, source)
 	_, own := settings.OwnRetention()[domain]
@@ -124,7 +128,9 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	previewable := make([]domainRepoRef, 0, len(repos))
 	for _, r := range repos {
 		immutable := false
-		if isOffsiteSource(source) {
+		if pl, isDirect := direct[r.Loc]; isDirect {
+			immutable = pl.target.Immutable
+		} else if isOffsiteSource(source) {
 			if immutable, err = s.offsiteSourceImmutable(settings, domain, source); err != nil {
 				return RetentionPreview{}, err
 			}
@@ -148,6 +154,10 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	// A repository is worked out by the rule it ages by, which for a named one
 	// need not be the own folder's, so the panel names one that applies at all.
 	policyOf := func(r domainRepoRef) restic.RetentionPolicy {
+		if pl, isDirect := direct[r.Loc]; isDirect {
+			p, _ := s.keepAt(settings, domain, pl)
+			return p
+		}
 		if isOffsiteSource(source) {
 			return policy
 		}
@@ -170,9 +180,20 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 			continue
 		}
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
+		if pl, isDirect := direct[r.Loc]; isDirect {
+			rMode = pl.mode
+		}
+		var spared []string
+		if !isOffsiteSource(source) {
+			if spared, err = s.leftBehind(settings, domain, r); err != nil {
+				row.Error = scrubError(err)
+				out.Repos = append(out.Repos, row)
+				continue
+			}
+		}
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
-		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, rPolicy, rMode)
+		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, rPolicy, rMode, spared...)
 		cancel()
 
 		if pErr != nil {
@@ -192,6 +213,31 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		out.Repos = append(out.Repos, row)
 	}
 	return out, nil
+}
+
+// directPlaces are the locations a section writes to straight away while its own
+// folder is off, by repository. Flash, ZFS and the self-backup have no entry a
+// direct repository would show up on, so the local preview would find nothing
+// there, while the real pass ages each of them by its own rule.
+func (s *Service) directPlaces(settings store.Settings, domain, source string) map[string]sectionPlace {
+	if isOffsiteSource(source) || validPlacementDomain(domain) {
+		return nil
+	}
+	off, err := s.localOff(domain)
+	if err != nil || !off {
+		return nil
+	}
+	places, err := s.sectionPlacesSwitchedOn(settings, domain, "")
+	if err != nil {
+		return nil
+	}
+	out := make(map[string]sectionPlace, len(places))
+	for _, pl := range places {
+		if !pl.own() {
+			out[pl.repo] = pl
+		}
+	}
+	return out
 }
 
 // previewTagOf names a forget group for the UI. A tag-scoped group carries the

@@ -49,16 +49,17 @@ export function drilledText(t: (key: TranslationKey) => string, item: string | u
   return t("drill.restored").replace("{name}", item).replace("{snapshot}", snapshot);
 }
 
+// Overdue comes before a failed run: backups that have failed for a month are the
+// worst case and must not read milder than ones that merely stopped.
 function localCheck(d: DomainStatus, tally: Tally): Verdict {
   if (tally.total === 0) return ["neutral", "overview.check.localNothing"];
-  if (d.status === "never") {
+  const failed = tally.entries.some((item) => item.lastRunStatus === "failed");
+  if (d.status === "never" && !failed) {
     return ["neutral", tally.replicaPending === tally.total ? "overview.check.localNeverReplica" : "overview.check.localNever"];
   }
   if (d.status === "off") return ["neutral", "overview.check.localNoSchedule"];
-  if (tally.entries.some((item) => item.lastRunStatus === "failed")) {
-    return ["warn", "overview.check.localFailed", d.lastSuccess];
-  }
   if (d.status === "overdue") return ["fail", "overview.check.localOverdue", d.lastSuccess];
+  if (failed) return ["warn", "overview.check.localFailed", d.lastSuccess];
   if (tally.none > 0 || tally.pending > 0) return ["warn", "overview.check.localPartly", d.lastSuccess];
   if (d.status === "warn") return ["warn", "overview.check.localDueSoon", d.lastSuccess];
   return ["ok", "overview.check.localCurrent", d.lastSuccess];

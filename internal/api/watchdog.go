@@ -57,7 +57,7 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 	if err != nil {
 		return fmt.Errorf("read notify config: %w", err)
 	}
-	if c.On == "" || c.On == "never" {
+	if !c.Active() {
 		return nil
 	}
 	settings, err := s.store.GetSettings()
@@ -75,14 +75,14 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		// entries' own schedules has no cadence of its own, and period 0 would
 		// disarm the watchdog for it.
 		period, _ := s.domainWindow(d.name, d.schedule, settings)
+		verdict := s.judgeSection(d, settings, now, lastUnix, period)
 
 		state, haveState, sErr := s.store.GetWatchdogState(d.name)
 		if sErr != nil {
 			log.Printf("api: watchdog: %s state read failed (skipping): %v", d.name, sErr) //nolint:gosec // G706: domain is a fixed literal
 			continue
 		}
-		status := s.sectionStatus(d.name, settings, now, lastUnix, period, d.enabled && period > 0)
-		notifyNeeded, clearState := watchdogDecision(status, lastUnix, state, haveState)
+		notifyNeeded, clearState := watchdogDecision(verdict.status, verdict.last, state, haveState)
 		if clearState {
 			if dErr := s.store.DeleteWatchdogState(d.name); dErr != nil {
 				log.Printf("api: watchdog: %s state clear failed: %v", d.name, dErr) //nolint:gosec // G706: domain is a fixed literal
@@ -91,17 +91,17 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 		if !notifyNeeded {
 			continue
 		}
-		if s.deferralHolds(d.name, now) {
+		if s.deferralHolds(d.name, verdict.stale, now) {
 			log.Printf("api: watchdog: %s backups are overdue, but one waits for its app until its deadline", d.name) //nolint:gosec // G706: domain is a fixed literal
 			continue
 		}
-		if !s.notifyBackupOverdue(ctx, c, d.name, lastUnix, period, now) {
+		if !s.notifyBackupOverdue(ctx, c, d.name, verdict, now) {
 			// No channel took it, so the next run tries again.
 			continue
 		}
 		// Recording after the send means a failed record costs one duplicate
 		// alert on the next run instead of a lost one.
-		if uErr := s.store.UpsertWatchdogState(store.WatchdogState{Domain: d.name, NotifiedAt: now, LastSuccessAt: lastUnix}); uErr != nil {
+		if uErr := s.store.UpsertWatchdogState(store.WatchdogState{Domain: d.name, NotifiedAt: now, LastSuccessAt: verdict.last}); uErr != nil {
 			log.Printf("api: watchdog: %s state record failed: %v", d.name, uErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}
@@ -109,19 +109,23 @@ func (s *Service) runWatchdogAt(ctx context.Context, now int64) error {
 }
 
 // overdueMessage is the text of the overdue alert.
-func overdueMessage(domain string, lastSuccess, period, now int64) string {
-	if lastSuccess == 0 {
-		return fmt.Sprintf("Backups for %s are overdue: none has succeeded yet, expected every %s.", domain, watchdogPeriod(period))
+func overdueMessage(domain string, v sectionVerdict, now int64) string {
+	who := ""
+	if v.stale != "" {
+		who = fmt.Sprintf("%q: ", v.stale)
 	}
-	return fmt.Sprintf("Backups for %s are overdue: last success %s, expected every %s.", domain, digestAge(now, lastSuccess), watchdogPeriod(period))
+	if v.last == 0 {
+		return fmt.Sprintf("Backups for %s are overdue: %snone has succeeded yet, expected every %s.", domain, who, watchdogPeriod(v.period))
+	}
+	return fmt.Sprintf("Backups for %s are overdue: %slast success %s, expected every %s.", domain, who, digestAge(now, v.last), watchdogPeriod(v.period))
 }
 
 // notifyBackupOverdue sends the overdue alert to the message channels and the
 // Unraid mirror. The Healthchecks ping is suppressed: the alert is about runs
 // that did not happen, and a /fail ping would break the check's start/success
 // pairing. It reports whether a channel took the alert.
-func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, lastSuccess, period, now int64) bool {
-	msg := overdueMessage(domain, lastSuccess, period, now)
+func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, v sectionVerdict, now int64) bool {
+	msg := overdueMessage(domain, v, now)
 	delivered, _ := s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, domain,
 		notify.Event{Title: "BombVault", Message: msg, OK: false},
 		"BombVault: backups overdue for "+domain, msg, "warning")

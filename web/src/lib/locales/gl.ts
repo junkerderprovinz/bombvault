@@ -1268,6 +1268,7 @@ const gl: Partial<Translations> = {
   "runReason.dbimportFailed": "a ferramenta de importación informou dun erro",
   "runReason.dbimportKeptOld": "conservouse o cartafol de datos anterior",
   "runReason.dataOutsideHost": "os datos están fóra de Host Data e non se copiaron",
+  "runReason.dataMissing": "non se atoparon os cartafoles de datos e non se copiaron",
   "runReason.filesUnreadable": "algúns ficheiros non se puideron ler e faltan nesta copia de seguridade",
   "runReason.foldersMissing": "faltan cartafoles seleccionados nesta copia de seguridade",
   "runReason.backupEmpty": "esta copia de seguridade non contén ficheiros, mentres que as anteriores si",

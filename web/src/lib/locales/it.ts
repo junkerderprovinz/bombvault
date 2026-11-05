@@ -1217,6 +1217,7 @@ const it: Partial<Translations> = {
   "runReason.dbimportFailed": "lo strumento di importazione ha segnalato un errore",
   "runReason.dbimportKeptOld": "la cartella dati precedente è stata conservata",
   "runReason.dataOutsideHost": "i dati sono fuori da Host Data e non sono stati salvati",
+  "runReason.dataMissing": "le cartelle dei dati non sono state trovate e non sono state salvate",
   "runReason.filesUnreadable": "alcuni file non sono stati letti e mancano da questo backup",
   "runReason.foldersMissing": "mancano cartelle selezionate da questo backup",
   "runReason.backupEmpty": "questo backup non contiene file, mentre i precedenti ne contenevano",

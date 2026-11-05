@@ -113,7 +113,7 @@ A location with delete protection is never pruned from this box. Its far side ke
 
 A backup that holds less than it should never ages out the ones before it. That is a backup that reads no files where earlier ones held some, misses a selected folder, or could not read some files. Its run ends with a warning that names what is missing and says the older backups were kept, you get the same message on your notification channels, and no prune, at the entry's own folder or at its copies, touches that entry's old backups until a complete backup comes through. A first backup, and a selected folder that was always empty, count as complete.
 
-To see what the next run would really delete, open **Preview** under **Settings, Storage locations**. It lists **What the next run would remove**, per repository and per entry with the restore points named. It takes no lock and changes nothing.
+To see what the next run would really delete, open **Preview** under **Settings, Storage locations**. It lists **What the next run would remove** for the section's own folder and for each of its copies, per repository and per entry with the restore points named. It takes no lock and changes nothing.
 
 ![How long to keep with Balanced picked: the dots show which of the 40 sample backups stay.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![How long to keep with Balanced picked: the dots show which of the 40 sample backups stay.](assets/screenshots/storage/keep-light.png#only-light)
@@ -150,7 +150,7 @@ To keep the containers longer than the rest at this location, press **Change rul
 A sign-in is the key or password BombVault uses for an S3 service or a rest-server. Sign-ins are one list, the **Sign-ins** card under **Settings, Storage locations**, and each row says which storage locations use it (**Used by**).
 
 - **Saved when you add a location.** Add storage location saves the keys you type as a sign-in. The next location at the same service can pick it under **Saved sign-in** instead of **New keys**, and a change to it later applies to every location that uses it.
-- **The default.** A star marks the default sign-in. It is used wherever no sign-in is picked, such as an address typed in by hand, a pull source, or a recovery on a fresh install. **Make default** gives the star to another one.
+- **The default.** A star marks the default sign-in. It is used wherever no sign-in is picked, such as an address typed in by hand or a recovery on a fresh install. A pull source does not borrow it. **Make default** gives the star to another one.
 - **Edit and Test.** **Edit**, here or in the **Sign-in** card of a location, opens one window for the sign-in. **Test** signs in to every location that uses it with what you typed, before anything is saved. **Save** stores it.
 - **Removing.** A sign-in can be removed only when no storage location, pull source or received repository uses it and no old backups need it, and the default goes only as the last one. Old backups need it when an own folder moved away from a place that signs in with it and left them there. BombVault then says which place it is.
 - **Changing a location's connection** never rewrites a sign-in other places share. The location gets a sign-in of its own instead, and the window says beforehand that its sign-in is shared. To change the shared one everywhere, edit it in the **Sign-ins** card.

@@ -1221,6 +1221,7 @@ const ru: Partial<Translations> = {
   "runReason.dbimportFailed": "средство импорта сообщило об ошибке",
   "runReason.dbimportKeptOld": "прежняя папка с данными сохранена",
   "runReason.dataOutsideHost": "данные находятся вне Host Data и не были скопированы",
+  "runReason.dataMissing": "папки с данными не найдены и не были скопированы",
   "runReason.filesUnreadable": "некоторые файлы не удалось прочитать, и их нет в этой резервной копии",
   "runReason.foldersMissing": "выбранных папок нет в этой резервной копии",
   "runReason.backupEmpty": "в этой резервной копии нет файлов, хотя в предыдущих они были",

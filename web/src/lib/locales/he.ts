@@ -1227,6 +1227,7 @@ const he: Partial<Translations> = {
   "runReason.dbimportFailed": "כלי הייבוא דיווח על שגיאה",
   "runReason.dbimportKeptOld": "תיקיית הנתונים הקודמת נשמרה",
   "runReason.dataOutsideHost": "הנתונים נמצאים מחוץ ל-Host Data ולא גובו",
+  "runReason.dataMissing": "תיקיות הנתונים לא נמצאו ולא גובו",
   "runReason.filesUnreadable": "חלק מהקבצים לא היה אפשר לקרוא והם חסרים בגיבוי הזה",
   "runReason.foldersMissing": "תיקיות שנבחרו חסרות בגיבוי הזה",
   "runReason.backupEmpty": "הגיבוי הזה לא מכיל קבצים, בעוד שגיבויים קודמים הכילו",
