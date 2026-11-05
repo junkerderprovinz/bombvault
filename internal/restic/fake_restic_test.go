@@ -27,6 +27,16 @@ func TestMain(m *testing.M) {
 	case "sleep":
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
+	case "snapshots-unreadable":
+		// What restic 0.19.1 does with a snapshots folder it cannot read.
+		fmt.Println("[]")
+		fmt.Fprintln(os.Stderr, "List(snapshot) failed: open /repo/snapshots: permission denied")
+		fmt.Fprintln(os.Stderr, "could not load snapshots: open /repo/snapshots: permission denied")
+		os.Exit(0)
+	case "snapshot-damaged":
+		fmt.Println(`[{"id":"aa11","time":"2026-11-05T07:16:14Z","paths":["/s"]}]`)
+		fmt.Fprintln(os.Stderr, `Ignoring "00": failed to load snapshot 00: LoadRaw(<snapshot/00>): invalid data returned`)
+		os.Exit(0)
 	case "exit3":
 		fmt.Println(`{"message_type":"summary","snapshot_id":"5e1f","files_new":2}`)
 		fmt.Fprintln(os.Stderr, unreadableLines)
@@ -51,6 +61,29 @@ func TestACancelledCopyUnwrapsToContextCanceled(t *testing.T) {
 		if !errors.Is(err, context.Canceled) {
 			t.Fatalf("sink=%v: a cancelled copy returned %v, want context.Canceled", withSink, err)
 		}
+	}
+}
+
+func TestASnapshotListingThatFailedIsAnError(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(fakeResticEnv, "snapshots-unreadable")
+	for _, ctx := range []context.Context{context.Background(), progress.WithSink(context.Background(), func(float64) {})} {
+		snaps, err := r.Snapshots(ctx, "/repo", Mode{})
+		if err == nil || !strings.Contains(err.Error(), "could not load snapshots") {
+			t.Fatalf("listing = %v, %v, want the error restic printed", snaps, err)
+		}
+		if _, err := r.SnapshotsMeta(ctx, "/repo", Mode{}); err == nil {
+			t.Fatal("the listing with counters reads a failure as no backups")
+		}
+	}
+}
+
+func TestADamagedSnapshotLeavesTheOthersListed(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(fakeResticEnv, "snapshot-damaged")
+	snaps, err := r.Snapshots(context.Background(), "/repo", Mode{})
+	if err != nil || len(snaps) != 1 {
+		t.Fatalf("listing = %v, %v, want the one good snapshot", snaps, err)
 	}
 }
 

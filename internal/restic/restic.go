@@ -1545,6 +1545,9 @@ func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, err
 		}
 		return nil, runError(args, stderr.String())
 	}
+	if lErr := snapshotsLoadErr(args, stderr.String()); lErr != nil {
+		return nil, lErr
+	}
 	return stdout.Bytes(), nil
 }
 
@@ -1605,6 +1608,9 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 			return out, werr
 		}
 		return nil, runError(args, stderr.String())
+	}
+	if lErr := snapshotsLoadErr(args, stderr.String()); lErr != nil {
+		return nil, lErr
 	}
 	return out, nil
 }
@@ -1946,6 +1952,17 @@ func repoNotExistErrFor(args []string, err error, stderr string) error {
 		return nil
 	}
 	return &repoNotExistErr{msg: stderrError(args, stderr).Error()}
+}
+
+// snapshotsLoadErr is the failure restic snapshots reports while exiting 0: it
+// writes "could not load snapshots" to stderr and an empty list to stdout, which
+// would read as a repository with no backups. A single damaged snapshot is
+// another matter: restic names it with "Ignoring" and lists the others.
+func snapshotsLoadErr(args []string, stderr string) error {
+	if subcommand(args) != "snapshots" || !strings.Contains(stderr, "could not load snapshots") {
+		return nil
+	}
+	return runError(args, stderr)
 }
 
 // backupExit3Err returns a backupUnreadableErr (success-with-warning) when a BACKUP

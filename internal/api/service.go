@@ -2903,13 +2903,16 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain 
 	if !p.Any() {
 		return nil, nil, nil
 	}
-	held, hErr := s.anomalies.HeldIdentityTags()
+	held, hErr := s.heldIdentityTags()
 	if hErr != nil {
 		return nil, nil, fmt.Errorf("read which items are paused: %w", hErr)
 	}
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list snapshots for the preview: %w", err)
+	}
 	tags := identityTags(snaps)
-	if err != nil || len(tags) == 0 {
+	if len(tags) == 0 {
 		if len(held) > 0 {
 			return nil, held.names(), errRetentionPaused(len(held))
 		}
