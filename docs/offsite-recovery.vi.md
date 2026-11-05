@@ -1,7 +1,7 @@
 # Off-site & khôi phục
 
 !!! note "Các bản sao off-site chờ sau một lần xây dựng lại"
-    Khi Trình hướng dẫn khẩn cấp hoặc **Tìm bản sao lưu** dựng lại các mục mà không có cài đặt cũ, bản sao off-site của các phần đó tạm dừng cho đến khi mặc định của chúng được xác nhận. Xem [Sau khi dựng lại](#after-a-rebuild).
+    Khi Trình hướng dẫn khẩn cấp hoặc **Tìm bản sao lưu** dựng lại các mục mà không có cài đặt cũ, bản sao off-site của các phần đó sẽ chờ cho đến khi bạn nhận các bản sao lưu của chúng là của máy chủ này. Xem [Sau khi dựng lại](#after-a-rebuild).
 
 Bản sao lưu cục bộ bảo vệ bạn khỏi một container bị mất hay một bản cập nhật hỏng. Bản sao off-site và một bộ khôi phục đã được thử nghiệm bảo vệ bạn khỏi mất cả máy, ransomware hay hỏa hoạn. Trang này nói về đích sao lưu và bản sao off-site, cách làm một bản sao chống can thiệp, chứng minh rằng bạn khôi phục được, ghép nối nhiều máy chủ và lấy lại mọi thứ khi chính BombVault đã mất.
 
@@ -82,7 +82,9 @@ Mỗi đích sao lưu có một trang riêng. Nó chỉ hiện các thẻ áp d�
 
 **Di chuyển** và **Xóa đích sao lưu** nằm trong các thao tác của trang, được mô tả dưới [Di chuyển và gỡ bỏ](#move-remove).
 
-Một đích sao lưu từ xa từng chứa bản sao lưu mà bỗng không còn kho nào, chẳng hạn một rest-server có đĩa chưa được gắn, sẽ không tự nhận một kho mới, trống. Trang của nó báo điều đó ngay khi một lần sao lưu hoặc sao chép phát hiện kho đã biến mất. Hãy gắn lại đĩa. Nếu bạn cố ý làm trống kho cũ, **Tạo kho mới ở đây** bắt đầu lại từ đầu, cho mọi phần của đích và các kho của nó cùng một lúc.
+Một đích sao lưu từ xa từng chứa bản sao lưu mà bỗng không còn kho nào, chẳng hạn một rest-server có đĩa chưa được gắn, sẽ không tự nhận một kho mới, trống. Trang của nó báo điều đó ngay khi một lần sao lưu hoặc sao chép phát hiện kho đã biến mất. Hãy gắn lại đĩa. Nếu bạn cố ý làm trống kho cũ, **Tạo kho mới ở đây** bắt đầu lại từ đầu, cho mọi phần của đích và các kho của nó cùng một lúc. Cơ chế bảo vệ này dành cho một đích vẫn ở nguyên chỗ. Một đích sao lưu bạn thêm vào, hoặc một phần bạn đánh dấu ở đó, sẽ bắt đầu sạch: khi không có kho nào ở địa chỉ đó, lần sao chép đầu tiên sẽ tạo một kho, kể cả khi một đích đã gỡ trước đây từng có kho ở đó.
+
+Hai lời từ chối nêu rõ cần sửa gì, trên lần chạy của bản sao và trên trang của đích. **Bucket này không tồn tại trên máy chủ** xuất hiện ngay khi một máy chủ S3 báo như vậy, và BombVault không tạo gì ở đó, nên một tên bucket gõ sai vẫn hiện rõ. Một máy chủ hoàn toàn không trả lời là một trường hợp khác: restic tiếp tục thử lại khoảng 15 phút cho mỗi lệnh gọi, phòng khi nó quay lại. **Ở đây đã có một kho restic và khóa của phiên bản này không mở được nó** nghĩa là các bản sao lưu ở đó thuộc về một `APP_KEY` khác.
 
 Một máy chủ nhận mà phiên bản khác trong nhóm của bạn chạy hiện trong số các nhà cung cấp với tên **Từ nhóm của bạn**. Xem [Máy chủ nhận](#receiving-server).
 
@@ -105,11 +107,15 @@ Một quy tắc giữ một bản sao lưu cho mỗi ngày, tuần, tháng và n
 
 **Giá trị riêng** cho bạn tự đặt năm số đếm. Số 0 tắt số đếm đó, và một quy tắc có mọi số đếm bằng 0 giữ tất cả. Các chấm trong thẻ cho thấy quy tắc giữ những bản nào trong 40 bản sao lưu mẫu, bản mới nhất ở ngoài cùng bên phải. Mẫu này giống nhau cho mọi đích, vì hình được vẽ trước khi BombVault đọc các bản sao lưu ở đó. Mẫu này đếm lùi từ hôm nay, nên số chấm còn lại thay đổi theo ngày.
 
+Một thư mục trên máy chủ này và một thư mục từ xa gõ tay cũng có thẻ riêng, áp dụng cho các thư mục riêng trong thư mục đó và không gì khác. Cho đến khi bạn lưu thẻ, một thư mục như vậy được dọn theo quy tắc BombVault đã có cho nó.
+
 **Hỏi trước khi giữ ít hơn**, bật theo mặc định, hỏi trước khi lưu một thay đổi giữ ít bản sao lưu hơn, và cho biết quy tắc mới loại bỏ bao nhiêu trong 40 bản sao lưu mẫu. Nó áp dụng cho mọi đích sao lưu. **Đặt lại theo đích** dưới **Quy tắc theo phần** cũng hỏi cùng câu đó.
 
 Một đích có bảo vệ chống xóa không bao giờ bị dọn từ máy này. Phía bên kia của nó giữ hoặc bỏ các bản sao lưu cũ theo quy tắc riêng. Khi một mục có bất thường nghiêm trọng đang mở về dữ liệu bị mất, chính sách lưu giữ giữ các bản sao lưu cũ của mục đó cho đến khi bạn xác nhận. Xem [Bất thường](anomalies.md).
 
-Để xem lần chạy tới thật sự sẽ xóa gì, hãy mở **Xem trước** dưới **Cài đặt, Đích sao lưu**. Nó liệt kê **Những gì lần chạy tới sẽ xóa**, theo từng kho và từng mục, kèm tên các điểm khôi phục. Nó không khóa gì và không thay đổi gì.
+Một bản sao lưu chứa ít hơn mức cần có sẽ không bao giờ làm các bản trước nó bị loại theo thời gian. Đó là một bản sao lưu không đọc được tệp nào trong khi các bản trước có tệp, thiếu một thư mục đã chọn, hoặc không đọc được một số tệp. Lần chạy của nó kết thúc với một cảnh báo nêu tên những gì còn thiếu và cho biết các bản sao lưu cũ hơn đã được giữ lại, bạn nhận cùng thông báo đó trên các kênh thông báo của mình, và không lần dọn dẹp nào, ở thư mục riêng của mục hay ở các bản sao của nó, đụng tới các bản sao lưu cũ của mục đó cho đến khi có một bản sao lưu đầy đủ. Bản sao lưu đầu tiên, và một thư mục đã chọn mà luôn trống, được tính là đầy đủ.
+
+Để xem lần chạy tới thật sự sẽ xóa gì, hãy mở **Xem trước** dưới **Cài đặt, Đích sao lưu**. Nó liệt kê **Những gì lần chạy tới sẽ xóa** cho thư mục riêng của phần và cho từng bản sao của nó, theo từng kho và từng mục, kèm tên các điểm khôi phục. Nó không khóa gì và không thay đổi gì.
 
 ![Giữ trong bao lâu với Cân bằng được chọn: các chấm cho thấy bản nào trong 40 bản sao lưu mẫu được giữ.](assets/screenshots/storage/keep-dark.png#only-dark)
 ![Giữ trong bao lâu với Cân bằng được chọn: các chấm cho thấy bản nào trong 40 bản sao lưu mẫu được giữ.](assets/screenshots/storage/keep-light.png#only-light)
@@ -146,9 +152,9 @@ Chuyển từ **Cân bằng** sang **Ngắn** sẽ hỏi trước, nhờ **Hỏi
 Một thông tin đăng nhập là khóa hoặc mật khẩu mà BombVault dùng cho một dịch vụ S3 hoặc một rest-server. Các thông tin đăng nhập là một danh sách, thẻ **Thông tin đăng nhập** dưới **Cài đặt, Đích sao lưu**, và mỗi dòng cho biết những đích sao lưu nào dùng nó (**Được dùng bởi**).
 
 - **Được lưu khi bạn thêm một đích.** Thêm đích lưu các khóa bạn gõ thành một thông tin đăng nhập. Đích kế tiếp ở cùng dịch vụ có thể chọn nó dưới **Thông tin đăng nhập đã lưu** thay cho **Khóa mới**, và một thay đổi sau này áp dụng cho mọi đích dùng nó.
-- **Mặc định.** Một ngôi sao đánh dấu thông tin đăng nhập mặc định. Nó được dùng ở bất cứ nơi nào không chọn thông tin đăng nhập, như một địa chỉ gõ tay, một nguồn kéo, hoặc một lần khôi phục trên bản cài mới. **Đặt làm mặc định** trao ngôi sao cho cái khác.
+- **Mặc định.** Một ngôi sao đánh dấu thông tin đăng nhập mặc định. Nó được dùng ở bất cứ nơi nào không chọn thông tin đăng nhập, như một địa chỉ gõ tay hoặc một lần khôi phục trên bản cài mới. Một nguồn kéo không mượn nó. **Đặt làm mặc định** trao ngôi sao cho cái khác.
 - **Chỉnh sửa và Kiểm tra.** **Chỉnh sửa**, ở đây hoặc trong thẻ **Thông tin đăng nhập** của một đích, mở một cửa sổ cho thông tin đăng nhập. **Kiểm tra** đăng nhập vào mọi đích dùng nó bằng những gì bạn đã gõ, trước khi lưu bất cứ gì. **Lưu** lưu nó.
-- **Xóa.** Một thông tin đăng nhập chỉ xóa được khi không có đích sao lưu hay nguồn kéo nào dùng nó, và cái mặc định chỉ đi khi là cái cuối cùng. Khi đó dòng cho biết còn gì đang dùng nó.
+- **Xóa.** Một thông tin đăng nhập chỉ xóa được khi không có đích sao lưu, nguồn kéo hay kho đã nhận nào dùng nó và không có bản sao lưu cũ nào cần nó, và cái mặc định chỉ đi khi là cái cuối cùng. Các bản sao lưu cũ cần nó khi một thư mục riêng đã chuyển khỏi một nơi đăng nhập bằng nó và để chúng lại ở đó. Khi đó BombVault cho biết đó là nơi nào.
 - **Đổi kết nối của một đích** không bao giờ ghi đè một thông tin đăng nhập mà các nơi khác dùng chung. Đích đó nhận một thông tin đăng nhập riêng, và cửa sổ nói trước rằng thông tin đăng nhập của nó đang được dùng chung. Để đổi cái dùng chung ở mọi nơi, hãy sửa nó trong thẻ **Thông tin đăng nhập**.
 
 ![Thẻ Thông tin đăng nhập: mỗi thông tin đăng nhập đã lưu cùng thứ đang dùng nó, và ngôi sao ở cái mặc định.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +231,7 @@ Một thư mục riêng cũng có thể nằm trong một đích sao lưu bạn 
 1. Mở đích sao lưu sẽ giữ thư mục riêng và chọn **Dùng làm thư mục riêng**, hoặc **Thêm phần** trong thẻ **Thư mục riêng** của nó. Để chuyển nhiều phần cùng lúc, hãy chọn **Chuyển thư mục riêng** bên cạnh **Thư mục riêng ở đây** trong thẻ **Kết nối** của đích Cục bộ.
 2. Chọn các phần dưới **Phần** và nơi đến dưới **Chuyển đến**. **Nơi khác** nhận một thư mục trên máy chủ này hoặc địa chỉ của một kho từ xa gõ tay, với một thông tin đăng nhập từ các thông tin đăng nhập đã lưu của bạn.
 3. Đọc **Điều gì xảy ra**. Với từng phần, nó cho biết các bản sao lưu mới đi đâu, một bản sao đã nằm ở nơi mới có trở thành thư mục riêng không, và các bản sao lưu nào được sao chép sang trước.
-4. **Sao chép các bản sao lưu đã tạo** được bật theo mặc định. Khi tắt, các bản sao lưu cũ ở yên chỗ và vẫn khôi phục được từ đó.
+4. **Sao chép các bản sao lưu đã tạo** được bật theo mặc định. Khi tắt, các bản sao lưu cũ ở yên chỗ, nhưng mục không còn liệt kê chúng nữa. **Từ thư mục sao lưu cũ** trên trang Khôi phục vẫn đọc được chúng bằng địa chỉ của thư mục và, với thư mục từ xa, thông tin đăng nhập của nó.
 5. Chọn **Chuyển**. Khi thẻ **Giữ trong bao lâu** của nơi mới giữ ít hơn quy tắc hiện tại của phần, BombVault hỏi trước **Giữ ít hơn?** Ở đó, **Giữ các giá trị hiện tại của phần đó trong Quy tắc theo phần** mang các giá trị hiện tại theo, **Vẫn lưu** cứ tiếp tục, còn **Quay lại** để mọi thứ như cũ. Khi cần sao chép các bản sao lưu trước, BombVault sao chép chúng rồi mới chuyển thư mục riêng. Khi chúng đã có ở đó, nó kiểm tra chúng trước khi chuyển.
 
 Sau khi chuyển, các bản sao lưu mới đi tới thư mục riêng đã chuyển, kể cả với một phần đã tắt **Cục bộ** và sao lưu thẳng tới một bản sao. Một bản sao đã nằm ở nơi mới sẽ trở thành thư mục riêng, và việc sao chép tới đó kết thúc. Khi bản sao ấy giữ một số bản sao lưu lâu hơn quy tắc giữ của phần, phần sẽ giữ bất cứ thứ gì một trong hai quy tắc giữ, nên không bản nào bị mất.
@@ -252,7 +258,7 @@ BombVault sao chép các bản sao lưu ở chế độ nền rồi chuyển th�
 
 Thẻ **Kết nối** của đích Cục bộ vẫn nhận một địa chỉ từ xa cho thư mục riêng của một phần: **Đổi** bên cạnh phần mở một cửa sổ có công tắc **Cục bộ / Từ xa**. **Từ xa** nhận một địa chỉ restic như `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` hoặc `rclone:remote:bucket/path`, và **Cài đặt an toàn cho kho chính từ xa** thêm một phép kiểm tra kết nối, giới hạn tải lên và tải xuống, bảo vệ append-only với cùng phép thử can thiệp như một đích off-site, và một cảnh báo hạn mức tăng trưởng.
 
-Một địa chỉ như vậy đăng nhập bằng thông tin đăng nhập mặc định. Khi nó nằm trong một thư mục của một đích sao lưu bạn có, trang của đích đó liệt kê phần dưới **Đã nằm dưới đích này**, và tiếp nhận nó sẽ cho nó thông tin đăng nhập, lớp lưu trữ và bảo vệ chống xóa của đích. Chuyển thư mục riêng vào một đích sao lưu bằng **Dùng làm thư mục riêng** là cách đơn giản hơn, vì cửa sổ kiểm tra các bản sao lưu đã tạo trước khi thay đổi bất cứ gì.
+Một địa chỉ như vậy đăng nhập bằng thông tin đăng nhập mặc định. Khi nó đúng là thư mục mà một đích sao lưu bạn có giữ cho phần đó, nó tự đi theo đích đó, kể cả thẻ của đích và công tắc **Sẵn dùng** của nó, trừ khi nó đăng nhập khác đi hoặc là append-only trong khi đích thì không. Một quy tắc đã dọn thư mục đó cho đến lúc ấy vẫn là quy tắc riêng của phần dưới **Quy tắc theo phần**. Khi nó nằm trong một thư mục khác của đích đó, trang của đích liệt kê phần dưới **Đã nằm dưới đích này**, và tiếp nhận nó sẽ cho nó thông tin đăng nhập, lớp lưu trữ và bảo vệ chống xóa của đích. Chuyển thư mục riêng vào một đích sao lưu bằng **Dùng làm thư mục riêng** là cách đơn giản hơn, vì cửa sổ kiểm tra các bản sao lưu đã tạo trước khi thay đổi bất cứ gì.
 
 ## Nơi lưu trữ theo từng mục {#placement}
 
@@ -294,7 +300,12 @@ Một bản nhân bản ZFS là một bản sao ngoài cơ sở, nhưng không p
 
 ### Sau khi dựng lại {#after-a-rebuild}
 
-Các lựa chọn sao chép nằm trong cài đặt riêng của BombVault. Sau khi dựng lại bằng **Tìm bản sao lưu** hoặc trình hướng dẫn khẩn cấp mà không khôi phục cài đặt, chúng mất đi, và sao chép tất cả sẽ gửi lại những mục bạn đã loại ra tới B2. Vì vậy các bản sao off-site của mọi phần được dựng lại sẽ tạm dừng. Trang tổng quan cho biết điều đó, và thẻ **Đích theo phần** đưa ra **Xác nhận mặc định** kèm bản xem trước những gì lần chạy tới sao chép và các tên trong những bản sao lưu không có mục, mà bạn có thể loại ra ở đó. Chỉ việc xác nhận mới kết thúc việc tạm dừng. Nhập một tệp cài đặt đưa các quy tắc và mặc định trở lại nhưng không kết thúc nó.
+Các lựa chọn sao chép nằm trong cài đặt riêng của BombVault. Sau khi dựng lại bằng **Tìm bản sao lưu** hoặc trình hướng dẫn khẩn cấp mà không khôi phục cài đặt, chúng mất đi, và sao chép tất cả sẽ gửi lại những mục bạn đã loại ra tới B2. Điều tương tự cũng đúng khi một phần chưa từng sao chép off-site từ cơ sở dữ liệu này tìm thấy các bản sao lưu của chính nó tại một đích sao lưu, hoặc các bản cũ hơn trong thư mục riêng của nó, chẳng hạn sau khi một đích được thêm vào trên các bản sao lưu của một bản cài trước có cùng `APP_KEY`. Khi đó các bản sao off-site của phần đó chờ bạn quyết định.
+
+**Cần chú ý** trên trang tổng quan và trang của từng đích sao lưu mà phần đó sao chép tới sẽ hỏi các bản sao lưu có phải của máy chủ này không. **Nhận là bản sao lưu của máy chủ này** xác nhận mặc định của phần, và các bản sao của nó chạy lại từ lượt kế tiếp. **Kiểm tra quy tắc trước** dẫn tới dòng của phần trong **Đích theo phần**, nơi bạn thấy từng mục đi đâu và có thể đặt lại một quy tắc đã mất trên trang của mục. Việc sao chép vẫn chờ ở đó cho đến khi bạn bấm **Nhận là bản sao lưu của máy chủ này**, nút này trước hết cho thấy những gì lần chạy tới sao chép và các tên trong những bản sao lưu không có mục, mà bạn có thể loại ra. Bản sao lưu mới nhất của mỗi mục đang chờ sẽ ghi điều đó trong lần chạy của nó, kèm liên kết tới quyết định, và một thông báo được gửi đi khi các thông báo đó đang bật. Nhập một tệp cài đặt đưa các quy tắc và mặc định trở lại nhưng không thay bạn đưa ra quyết định.
+
+![Cần chú ý sau khi dựng lại: các bộ thư mục đã tìm thấy bản sao lưu từ trước cơ sở dữ liệu này, và các bản sao off-site của chúng chờ quyết định.](assets/screenshots/offsite/copy-decision-dark.png#only-dark)
+![Cần chú ý sau khi dựng lại: các bộ thư mục đã tìm thấy bản sao lưu từ trước cơ sở dữ liệu này, và các bản sao off-site của chúng chờ quyết định.](assets/screenshots/offsite/copy-decision-light.png#only-light)
 
 ## Bảo vệ chống xóa (append-only) {#delete-protection-append-only}
 
@@ -371,7 +382,7 @@ Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hi�
 Mỗi thẻ hiển thị trạng thái bảo vệ của thành viên và các vai trò của nó dưới dạng ô. Một vai trò là điều một phiên bản làm cho phiên bản khác:
 
 - **Bộ nhận** giữ các bản sao off-site của máy chủ này trong một rest-server ở chế độ append-only. Máy chủ này gửi sau mỗi bản sao lưu và không xóa được gì ở đó, kể cả khi ai đó chiếm quyền nó.
-- **Bên kéo** kéo các bản sao lưu của máy chủ này theo lịch riêng của nó. Máy chủ này không cần đang bật.
+- **Bên kéo** kéo các bản sao lưu của máy chủ này theo lịch riêng của nó. Máy chủ này không cần đang bật. Phiên bản kéo cần bật **Kéo về** trước khi có thể cho phép yêu cầu.
 - **Máy chủ ZFS** nhận các bản nhân bản ZFS của máy chủ này. Mỗi mục ZFS chọn nó dưới **Bản nhân bản** trong cài đặt của mình.
 - **Bên giữ khóa** giữ một bản niêm phong của bộ khôi phục của máy chủ này. Xem [Bên giữ khóa](#key-keeper).
 
@@ -379,7 +390,7 @@ Bật một vai trò gửi một yêu cầu, và không gì bắt đầu cho đ�
 
 **Chi tiết** trên một thẻ mở phần còn lại: kho đã nhận và nguồn kéo của thành viên đó, đề nghị lưu trữ, giám sát, **Xóa** và **Quên khóa**.
 
-Một thành viên có thể đưa ra bộ nhớ off-site của riêng nó cho một thành viên khác qua nhóm. Quản trị viên bên kia thấy lời đề nghị trong **Chi tiết** của thành viên và chấp nhận hoặc từ chối. Chấp nhận sẽ tạo một thông tin đăng nhập đã lưu và một đích sao lưu bình thường, sau cùng các kiểm tra như một đích bạn tự gõ vào. Chỉ thông tin kết nối đi theo cách này, không bao giờ là dữ liệu sao lưu. **Kiểm tra ngay** yêu cầu một thành viên xác minh kho của một phần. Không có gì trên trang này có thể bắt đầu sao lưu, khôi phục hay xóa bất cứ thứ gì trên một máy khác.
+Một thành viên có thể đưa ra bộ nhớ off-site của riêng nó cho một thành viên khác qua nhóm. Quản trị viên bên kia thấy lời đề nghị trong **Chi tiết** của thành viên và chấp nhận hoặc từ chối. Chấp nhận sẽ tạo một thông tin đăng nhập đã lưu và một đích sao lưu bình thường, sau cùng các kiểm tra như một đích bạn tự gõ vào. Đích sao lưu đến với bảo vệ chống xóa đã bật, vì công thức mà lời đề nghị hiển thị là một rest-server append-only, nên **Giữ trong bao lâu** không áp dụng ở đó. Mỗi lời đề nghị có thông tin đăng nhập và thư mục riêng, nên việc đề nghị lại một phần, cho cùng thành viên hay cho một thành viên khác, sẽ để yên các bản sao của đối tác đầu tiên: hãy thêm dòng mới vào `.htpasswd` và giữ máy chủ tiếp tục chạy. Chỉ thông tin kết nối đi theo cách này, không bao giờ là dữ liệu sao lưu. **Kiểm tra ngay** yêu cầu một thành viên xác minh kho của một phần. Không có gì trên trang này có thể bắt đầu sao lưu, khôi phục hay xóa bất cứ thứ gì trên một máy khác.
 
 Các phiên bản đã tắt và điện thoại đã đóng ứng dụng vẫn giữ thẻ của mình ở trạng thái **Không hoạt động**, màu xám, kèm thời điểm được thấy lần cuối, và hiện mờ trong mạng cho đến khi bạn **Xóa** chúng. Ngay sau khi máy chủ này khởi động, thẻ như vậy hiện **Đang kiểm tra** cho đến khi nhóm hoạt động trở lại. **Xóa** dùng được trên thẻ như vậy bất kể phần nào đang bật, và nó cũng kết thúc các yêu cầu đang mở của thành viên, các khe nhận ZFS đang rảnh và các yêu cầu khóa đang chờ của thành viên đó. Thẻ **Phiên bản** trên trang ghép nối cũng liệt kê những thành viên này là **Không hoạt động**.
 
@@ -390,12 +401,16 @@ Trên máy **nhận** các bản sao append-only từ một BombVault khác, cá
 - **Bản kiểm kê theo nguồn**, để thấy chính xác container, VM và bộ thư mục nào đã đến.
 - **Nhận lần cuối** cho từng nguồn, để biết mỗi nguồn mới đến đâu.
 - **Một `restic check` độc lập** chạy trên phần cứng bên nhận, nên tính toàn vẹn được xác minh ngay nơi dữ liệu thực sự nằm, không chỉ trên bên gửi.
-- **Một công tắc người chết:** một cảnh báo khi một nguồn ngừng gửi trong một khoảng thời gian bạn đặt.
-- **Cảnh báo toàn vẹn:** một cảnh báo khi một lần kiểm tra ở phía nhận thất bại.
+- **Một công tắc người chết:** một cảnh báo khi một nguồn ngừng gửi trong một khoảng thời gian bạn đặt. Nó kiểm tra mỗi ngày một lần, lúc 09:15. Bạn cũng nhận một cảnh báo khi hoàn toàn không đọc được kho, bất kể lịch kiểm tra nói gì, và khi chưa có gì đến sau trọn một khoảng thời gian kể từ lúc bạn thêm nó. Một kho bạn thêm trước lần sao chép đầu tiên của bên gửi vẫn ổn cho đến lúc đó.
+- **Cảnh báo toàn vẹn:** một cảnh báo khi một lần kiểm tra ở phía nhận thất bại. Một lần kiểm tra không mở được kho thì không nói gì về tính toàn vẹn, nên nó không để lại kết luận nào và thử lại vào ngày hôm sau cùng giờ.
+
+Một kho trên máy chủ khác cần thông tin đăng nhập của máy chủ đó: hãy lưu nó thành một [thông tin đăng nhập](#sign-ins) và chọn nó dưới **Thông tin xác thực** trong hộp thoại.
 
 Bên nhận hoàn toàn chỉ đọc. Nó không bao giờ ghi vào kho đã nhận, nên không bao giờ phá được bảo đảm append-only mà bên gửi dựa vào.
 
-Bên kéo hoạt động theo chiều ngược lại: khi bật **Kéo về**, một phiên bản đọc các bản sao lưu của một thành viên khác theo lịch của riêng nó, vào một kho riêng cho mỗi nguồn, nên chúng không bao giờ được tính là bản sao lưu của máy này. Các nguồn của nó cũng nằm trong phần chi tiết của thành viên đó: vị trí kho, loại bản sao lưu nó chứa và bao lâu thì kéo một lần. Mật khẩu restic đến qua nhóm, không bao giờ là APP_KEY, và phía xa không cần thiết lập thêm gì và không cần đang chạy. Nguồn chỉ được đọc, và mỗi bên giữ thông tin đăng nhập riêng. Một nguồn `rclone:` bị từ chối, vì rclone sẽ tới nó bằng các remote của phiên bản này.
+Bên kéo hoạt động theo chiều ngược lại: khi bật **Kéo về**, một phiên bản đọc các bản sao lưu của một thành viên khác theo lịch của riêng nó, vào một kho riêng cho mỗi nguồn, nên chúng không bao giờ được tính là bản sao lưu của máy này. Các nguồn của nó cũng nằm trong phần chi tiết của thành viên đó: vị trí kho, loại bản sao lưu nó chứa và bao lâu thì kéo một lần. Mật khẩu restic đến qua nhóm, không bao giờ là APP_KEY, và phía xa không cần thiết lập thêm gì và không cần đang chạy. Nguồn chỉ được đọc, và mỗi bên giữ thông tin đăng nhập riêng. Một lần kéo chạy vào ngày và giờ mà lịch của nó ghi, và một nguồn mới cũng chờ đến giờ đó. **Kéo ngay** thì không chờ. Một lần kéo bị lỡ vì máy này đang tắt sẽ chạy khi máy bật lại. Một lần kéo thất bại sẽ thử lại vào ngày hôm sau cùng giờ, kể cả với lịch hằng tuần, và một lần kéo thất bại hiện trong nhật ký hoạt động và gửi một cảnh báo cho đến khi có một lần kéo thành công trở lại. Một nguồn `rclone:` bị từ chối, vì rclone sẽ tới nó bằng các remote của phiên bản này.
+
+Một bản sao đã kéo về chỉ lớn thêm. BombVault thêm vào nó mà không dọn dẹp hay kiểm tra nó, nên những gì nguồn đã quên từ lâu vẫn ở lại đây cho đến khi bạn xóa thư mục, và trang Đích sao lưu không tính nó. Nó nằm trong `pulled/<source id>` bên trong thư mục riêng của phần, và khi thư mục đó chuyển đi, bản sao vẫn ở nguyên chỗ và các lần kéo về sau tiếp tục ở đó thay vì sao chép lại mọi thứ. Nếu bạn xóa nó, lần kéo kế tiếp bắt đầu lại trong thư mục riêng mà phần có vào lúc đó.
 
 ### Máy chủ nhận {#receiving-server}
 
@@ -432,7 +447,7 @@ Kiểm tra can thiệp trả lời những gì:
 | **không được bảo vệ** | VAULT đã chấp nhận một lần xóa. `--append-only` bị thiếu hoặc đã bị gỡ. |
 | **không kết luận được** | Không thuộc trường hợp nào. Thường là địa chỉ không phải địa chỉ mà chính restic dùng, hoặc thông tin đăng nhập đã đổi. Không có gì được ghi lại và không có cảnh báo nào. |
 
-**5. Theo dõi những gì đến, nếu bạn muốn.** Bật **Bộ nhận** dưới **Cài đặt, Phiên bản** trên VAULT, mở **Chi tiết** của TOWER và thêm kho đã nhận. VAULT nhận mật khẩu restic của TOWER qua nhóm. Không ai gõ khóa.
+**5. Theo dõi những gì đến, nếu bạn muốn.** Bật **Bộ nhận** dưới **Cài đặt, Phiên bản** trên VAULT, mở **Chi tiết** của TOWER và thêm kho đã nhận: bấm vào một trong các vị trí mà hộp thoại liệt kê. VAULT nhận mật khẩu restic của TOWER qua nhóm, và vì vị trí đó nằm trên máy chủ nhận của chính VAULT nên nó đọc thẳng thư mục. Không ai phải gõ khóa hay thông tin đăng nhập.
 
 **6. Làm cho nó hai chiều.** Lặp lại các bước theo chiều ngược lại: VAULT nhờ TOWER làm bên nhận của nó. Mỗi máy khi đó thực thi append-only cho máy kia, và không máy nào xóa được bản sao lưu của máy kia.
 
@@ -465,14 +480,14 @@ Máy chủ TOWER đã chết cùng các đĩa của nó. Nó có 23 container v�
 1. **Cài BombVault** trên máy mới và cho nó một `APP_KEY` mới, như trên mọi bản cài mới. Hãy thiết lập liên kết VM trong **Cài đặt, Tích hợp, SSH máy chủ** nếu bạn muốn lấy lại các VM, vì việc khôi phục VM cần nó.
 2. **Bắt đầu trình hướng dẫn.** Ở **Chào mừng bạn đến với BombVault**, chọn **Khôi phục từ bản sao lưu**. Trên trang Khôi phục, chọn **Bắt đầu trình hướng dẫn khẩn cấp** dưới **Khẩn cấp**.
 3. **Truy cập.** Chọn **Tải lên bộ khôi phục** và thả tệp vào. BombVault thử khóa của nó trên mọi đích sao lưu và báo, ví dụ, **Đã đọc bộ khôi phục. Khóa của nó mở được 0 trong 2 vị trí sao lưu.** Thư mục cục bộ ghi **không tìm thấy**, vì đĩa đã chết, và Backblaze B2 ghi **thiếu thông tin đăng nhập**.
-4. **Lưu thông tin đăng nhập.** Bộ khôi phục mang thông tin đăng nhập của các đích từ xa. Bấm **Lưu thông tin đăng nhập**, các đích được thử lại, và Backblaze B2 giờ ghi **đọc được**.
+4. **Lưu thông tin đăng nhập.** Bộ khôi phục mang thông tin đăng nhập của mọi đích. Bấm **Lưu thông tin đăng nhập**, các đích được thử lại, và Backblaze B2 giờ ghi **đọc được**. Một bộ khôi phục được tạo trước 10.5 chỉ chứa thông tin đăng nhập mặc định. Ở nơi một đích vẫn ghi **thiếu thông tin đăng nhập**, hãy nhập thông tin đăng nhập của nó dưới **Nhập thông tin đăng nhập còn thiếu** và bấm **Thử lại các đích sao lưu**.
 5. **Tiếp nhận khóa.** Máy chủ này giờ ghi các bản sao lưu bằng khóa cũ, nên các bản sao lưu mới khớp với các bản cũ. Nó giữ `APP_KEY` riêng của nó trong mẫu. **Hoàn tác việc tiếp nhận** dùng được cho đến khi bản sao lưu đầu tiên chạy.
-6. **Cài đặt.** Chọn **Khôi phục cài đặt**, đọc bản tự sao lưu mới nhất từ B2. BombVault khởi động lại để áp dụng, và trình hướng dẫn tự tiếp tục. Các đích sao lưu, lịch trình và quy tắc của bạn đã trở lại, và bạn tiếp tục đăng nhập bằng mật khẩu của máy chủ này. Hãy nhập lại các bí mật mà trình hướng dẫn liệt kê, chẳng hạn cài đặt thông báo.
-7. **Lựa chọn.** Đặt **Các bản sao lưu nằm ở đâu?** thành các bản sao off-site, vì các bản cục bộ đã đi cùng máy chủ cũ. BombVault liệt kê 23 container và 2 VM với snapshot mới nhất được chọn sẵn, và bạn có thể chọn snapshot khác cho bất kỳ mục nào.
+6. **Cài đặt.** Bước này mở ở nơi mà khóa đã tìm thấy bản tự sao lưu, ở đây là B2, với địa chỉ đã được điền sẵn. Chọn **Khôi phục cài đặt**, đọc bản tự sao lưu mới nhất từ đó. BombVault khởi động lại để áp dụng, và trình hướng dẫn tự tiếp tục. Các đích sao lưu, lịch trình và quy tắc của bạn đã trở lại, và bạn tiếp tục đăng nhập bằng mật khẩu của máy chủ này. Hãy nhập lại các bí mật mà trình hướng dẫn liệt kê, chẳng hạn cài đặt thông báo.
+7. **Lựa chọn.** **Các bản sao lưu nằm ở đâu?** mở ở các bản sao off-site khi không còn gì ở cục bộ. BombVault đọc mọi đích, nên một đích đã chết không che các đích khác, liệt kê 23 container và 2 VM và khôi phục từng mục từ đích chứa snapshot mới nhất của nó.
 8. **Khôi phục.** Bật **Để dừng sau đó**, cách an toàn nhất sau một mất mát hoàn toàn, rồi bắt đầu. **Điều gì xảy ra** cho biết những gì trở lại. Dòng kết quả ghi, ví dụ, **Đã khôi phục 25, thất bại 0. Khi cần, hãy khởi động chúng ở mục Bản sao lưu.**
 9. **Hoàn tất.** Khởi động các cơ sở dữ liệu của bạn trước, rồi đến các ứng dụng dùng chúng. Mở **Cài đặt, Khôi phục** và tải một bộ khôi phục mới, vì bộ cũ thuộc về bản cài trước. Kiểm tra **Cần chú ý** trên trang tổng quan, và chạy **Sao lưu tất cả ngay** một lần khi mọi thứ đã hoạt động.
 
-Nếu tự sao lưu cũng bị thiếu, hãy chọn **Bỏ qua, tôi không có Tự sao lưu**. Khi đó các đích sao lưu chỉ đến từ bộ khôi phục, bạn thiết lập lại lịch trình và quy tắc, và các bản sao off-site tạm dừng cho đến khi bạn xác nhận mặc định của các phần, xem [Sau khi dựng lại](#after-a-rebuild).
+Nếu tự sao lưu cũng bị thiếu, bước này mở ở **Bỏ qua, tôi không có Tự sao lưu** và nói rõ điều đó. Khi đó các đích sao lưu chỉ đến từ bộ khôi phục, bạn thiết lập lại lịch trình và quy tắc, và các bản sao off-site sẽ chờ cho đến khi bạn nhận các bản sao lưu của chúng là của máy chủ này, xem [Sau khi dựng lại](#after-a-rebuild). **Lựa chọn** vẫn liệt kê những gì các bản sao off-site chứa. Bộ thư mục được đưa vào một thư mục bạn chọn. Container và VM trở lại dưới dạng tệp thuần trong một thư mục dưới **Chỉ có tệp mới khôi phục được**, vì định nghĩa của chúng nằm cạnh kho cục bộ và trong bản tự sao lưu, mà một bản sao off-site thì không chứa cái nào.
 
 !!! tip "Di chuyển theo kế hoạch so với thảm họa"
     Trình hướng dẫn khẩn cấp khôi phục cài đặt riêng của BombVault từ một bản sao lưu. Với một lần chuyển sang máy mới *có kế hoạch*, bạn có thể thay vào đó mang cấu hình sang trực tiếp bằng thẻ **Xuất / nhập cài đặt** (một tệp JSON di động). Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
@@ -480,6 +495,10 @@ Nếu tự sao lưu cũng bị thiếu, hãy chọn **Bỏ qua, tôi không có 
 ### Từ thư mục sao lưu cũ {#restore-from-another-bombvault-repo}
 
 **Từ thư mục sao lưu cũ** dưới **Nguồn khác** trên trang Khôi phục mở kho của một phiên bản BombVault *khác* (một share đã gắn dưới `/mnt`, hoặc một địa chỉ từ xa) bằng bộ khôi phục của phiên bản đó hoặc `APP_KEY` nhập tay, trong một phiên chỉ đọc dùng một lần. Duyệt các container, VM, bộ thư mục và tập dữ liệu ZFS lưu ở đó, chọn một bản sao lưu và khôi phục nó, và đối tượng được khôi phục trở thành một container, VM hoặc bộ thư mục cục bộ bình thường. Không bao giờ có gì được ghi vào kho kia, và cài đặt sao lưu của riêng bạn không bị đụng tới (phiên sống trong bộ nhớ và tự hết hạn). Chuyển một container từ máy chủ A sang máy chủ B không có nghĩa là trỏ lại cài đặt của bạn rồi hoàn lại sau. Cửa sổ này dùng một lần: nó mở một phiên, khôi phục những gì bạn chọn và quên phiên bản kia. Nếu bạn muốn một sắp xếp lâu dài, trong đó máy này kéo bản sao lưu của phiên bản khác vào kho của chính mình theo lịch, đó là vai trò **Bên kéo** trên trang Phiên bản.
+
+### Những gì máy chủ này đã kéo về {#restore-what-was-fetched}
+
+Mỗi nguồn mà máy chủ này đã kéo về có một dòng **Lấy từ** riêng dưới **Nguồn khác** trên trang Khôi phục. Một bản sao đã kéo về được khóa bằng khóa riêng của máy chủ này, không phải của nguồn, nên không có gì phải hỏi: khóa của nguồn không mở được nó. Bộ thư mục và tập dữ liệu ZFS được đưa vào một thư mục bạn chọn. Container và VM trở lại dưới dạng tệp thuần trong một thư mục, vì một lần kéo mang theo các snapshot chứ không mang định nghĩa. Để tạo lại chúng, hãy dùng bộ khôi phục và bản tự sao lưu của nguồn trong Trình hướng dẫn khẩn cấp.
 
 Một container có mạng không tồn tại trên máy chủ này, ví dụ mạng `br0` của Unraid trên một máy chủ Docker thông thường, sẽ hiện phần chọn mạng dưới hàng của nó. BombVault tạo container trên mạng bạn chọn, giữ nguyên các mạng khác. Địa chỉ IP cố định và địa chỉ MAC thuộc về mạng cũ nên bị bỏ, và mạng mới sẽ cấp chúng.
 
@@ -532,7 +551,7 @@ printf 'bombvault:restic-repo' \
 !!! warning "Với kho đã nhận, hãy dùng khóa của bản chạy GỬI"
     Một kho đến đây qua bản sao off-site được tạo bởi máy gửi nó, với khóa **của nó**. Dẫn xuất từ khóa của máy nhận tạo ra một mật khẩu mà restic sẽ từ chối, và điều đó đọc giống hệt một kho bị hỏng nhưng không phải vậy. Đây là lý do thông thường khiến `restic check` trên kho đã nhận cứ hỏi mật khẩu hết lần này đến lần khác.
 
-Vì các định nghĩa khôi phục nằm **bên trong** mỗi kho (`<repo>/def`, `<repo>/vm-def`), một thư mục kho được sao chép hoàn toàn tự chứa, nên bộ khôi phục cộng với kho là tất cả những gì một lần khôi phục bare-metal cần.
+Vì các định nghĩa khôi phục nằm **bên trong** mỗi kho (`<repo>/def`, `<repo>/vm-def`), một thư mục kho được sao chép hoàn toàn tự chứa, nên bộ khôi phục cộng với kho là tất cả những gì một lần khôi phục bare-metal cần. Một bản sao off-site và một bản sao đã kéo về chứa các snapshot mà không có định nghĩa: chúng trả lại tệp, còn container hoặc VM được tạo lại từ bản tự sao lưu.
 
 ## Lấy lại một bản kết xuất cơ sở dữ liệu {#database-dumps}
 

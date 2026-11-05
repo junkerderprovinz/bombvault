@@ -38,7 +38,7 @@ Sao lưu VM kết nối libvirt qua SSH, không bao giờ qua một điểm gắ
 
 ## Một snapshot VM trực tiếp đã không chạy {#a-live-vm-snapshot-did-not-run}
 
-Snapshot trực tiếp cần qemu guest agent được cài đặt trong VM và đĩa nằm trên `/mnt/cache` (hoặc `/mnt/diskX`), không phải `/mnt/user`. Trên một VM đã tắt, trực tiếp tự động rơi về êm ái. Một lần sao lưu êm ái tắt VM xuống, sao lưu các đĩa, rồi khởi động lại nó, nên nó luôn nhất quán. Nó chờ tối đa mười phút để máy khách tắt và không bao giờ buộc tắt máy khách, nên một máy khách Windows đang cài bản cập nhật không bị cắt ngang giữa chừng. Một máy khách vẫn còn chạy sau thời gian đó sẽ được để yên, và lần sao lưu đó thất bại kèm lý do.
+Snapshot trực tiếp cần đĩa nằm trên `/mnt/cache` (hoặc `/mnt/diskX`), không phải `/mnt/user`. Có qemu guest agent trong VM thì snapshot là snapshot tĩnh, còn không có thì snapshot chỉ nhất quán như sau một lần sập máy (crash-consistent). Trên một VM đã tắt, trực tiếp tự động rơi về êm ái. Một lần sao lưu êm ái tắt VM xuống, sao lưu các đĩa, rồi khởi động lại nó, nên nó luôn nhất quán. Nó chờ tối đa mười phút để máy khách tắt và không bao giờ buộc tắt máy khách, nên một máy khách Windows đang cài bản cập nhật không bị cắt ngang giữa chừng. Một máy khách vẫn còn chạy sau thời gian đó sẽ được để yên, và lần sao lưu đó thất bại kèm lý do.
 
 ## Một lần sao lưu thất bại với "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 
@@ -127,6 +127,10 @@ Một bất thường nghiêm trọng đang mở đang giữ chúng: nguồn c�
 
 Cùng nguyên nhân: dọn dẹp để yên các bản sao lưu cũ của một mục có bất thường như vậy và nêu tên mục trong thông báo của nó. Mọi thứ khác được dọn như thường.
 
+## Một bản sao lưu lỗi với "on no mounted pool or share" {#no-mounted-pool}
+
+Trên Unraid, `/mnt` nằm trong bộ nhớ, nên một thư mục ở đó mà không có pool nào gắn vào sẽ mất ở lần khởi động lại kế tiếp và bị che khuất khi pool trở lại. BombVault từ chối ghi bản sao lưu hoặc tệp ZIP flash vào đó, kể cả khi trong thư mục ấy đã có sẵn một kho từ lần ghi trước. Hãy gắn kết pool rồi chạy lại bản sao lưu.
+
 ## Nhập lịch sử báo rằng không đọc được một kho lưu trữ {#history-import-says-a-repository-could-not-be-read}
 
 Sau khi nâng cấp, BombVault đọc dung lượng của các bản sao lưu trước đó từ mỗi kho lưu trữ một lần. Một kho mà lúc đó nó không tới được, chẳng hạn một đích off-site đang tắt hoặc một share chưa được gắn kết, được đếm trong thẻ **Bất thường** dưới **Cài đặt, Xác minh** và được thử lại mỗi ngày một lần. Trong lúc đó các mục của nó học từ những bản sao lưu mới.
@@ -177,15 +181,15 @@ Bản sao lưu trước đã xong, và bản sao của nó vẫn đang trên đ�
 
 BombVault lần theo chuỗi backing của từng đĩa và sao lưu mọi tệp trong đó. Một chuỗi không thể theo tới cuối sẽ làm bản sao lưu lỗi thay vì bỏ sót một phần của đĩa, và thông báo nêu tên tệp. Hãy kiểm tra tệp có tồn tại bên dưới `/mnt` không và snapshot còn được liệt kê trong VM Manager không. Một tệp bên ngoài Host Data hoàn toàn không đọc được. Xem [VM có snapshot Unraid](vm-backup-ssh-setup.md#unraid-snapshots).
 
-## Bản sao ngoài site bị tạm dừng sau khi dựng lại {#copies-paused}
+## Bản sao ngoài site chờ bạn quyết định sau khi dựng lại {#copies-paused}
 
-Sau **Tìm bản sao lưu** hoặc trình hướng dẫn khẩn cấp mà không khôi phục cài đặt, các bản sao ngoài site của mọi phần được dựng lại phải chờ, vì BombVault không còn biết bạn đã loại mục nào ra. Trang tổng quan cho biết điều đó. Hãy bấm **Xác nhận mặc định** trong **Đích theo phần**, xem bản xem trước và bỏ ra những gì nên ở ngoài. Nhập một tệp cài đặt không kết thúc việc tạm dừng. Xem [Sau khi dựng lại](offsite-recovery.md#after-a-rebuild).
+Sau **Tìm bản sao lưu** hoặc trình hướng dẫn khẩn cấp mà không khôi phục cài đặt, hoặc khi một phần tìm thấy các bản sao lưu của chính nó từ trước cơ sở dữ liệu này, các bản sao ngoài site của phần đó phải chờ, vì BombVault không còn biết bạn đã loại mục nào ra. **Cần chú ý** và trang của đích sao lưu sẽ hỏi bạn về điều đó. Hãy bấm **Nhận là bản sao lưu của máy chủ này** để tiếp tục, hoặc **Kiểm tra quy tắc trước** để xem các quy tắc của phần trước khi làm vậy. Nhập một tệp cài đặt không thay bạn đưa ra quyết định. Xem [Sau khi dựng lại](offsite-recovery.md#after-a-rebuild).
 
 ## Thông báo không đến {#notifications-do-not-arrive}
 
 Bắt đầu với **Gửi thử** dưới **Cài đặt, Thông báo**. Dòng bên dưới thẻ cho biết chuyện gì đã xảy ra.
 
-- **Không có gì được gửi cả.** Hãy kiểm tra **Thông báo**. Với **Không bao giờ** thì không gì đi ra, và với **Chỉ khi thất bại** thì một lần chạy tốt vẫn im lặng. Khi bật **Tóm tắt các lần chạy theo lịch**, một lần chạy theo lịch gửi một bản tóm tắt vào cuối.
+- **Không có gì được gửi cả.** Hãy kiểm tra **Thông báo**. Với **Không bao giờ** thì không tin nhắn nào đi ra, chỉ còn các lần ping tới một URL Healthchecks, và với **Chỉ khi thất bại** thì một lần chạy tốt vẫn im lặng. Khi bật **Tóm tắt các lần chạy theo lịch**, một lần chạy theo lịch gửi một bản tóm tắt vào cuối.
 - **Một địa chỉ mới.** Sau khi bạn đổi máy chủ của Matrix, Gotify hay email, ô sẽ hỏi lại token hoặc mật khẩu, và địa chỉ mới chỉ được lưu khi bạn gõ nó. BombVault không gửi bí mật cũ tới nơi mới.
 - **Gotify** báo máy chủ từ chối token ứng dụng: hãy sao chép lại từ ứng dụng trong Gotify. **URL máy chủ** là địa chỉ gốc, không có `/message`.
 - **Webhook:** hãy kiểm tra **Định dạng Webhook** có khớp với dịch vụ không. Địa chỉ Discord cần **Discord**, và ntfy cần **ntfy**.

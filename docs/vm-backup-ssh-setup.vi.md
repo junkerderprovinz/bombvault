@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Mỗi VM có một **Phương thức** trong thẻ **VM** ở tab Cài đặt của nó (mở VM dưới **Bản sao lưu**):
 
-- **Êm ái (tắt máy)** là mặc định. Nó tắt VM, sao lưu các đĩa và khởi động lại, nên bản sao lưu luôn nhất quán. Nó chờ tối đa mười phút để hệ điều hành khách tắt và không bao giờ ép tắt. Một máy khách vẫn còn chạy sau đó sẽ được để yên, và bản sao lưu đó lỗi kèm lý do.
-- **Snapshot trực tiếp** sao lưu một VM đang chạy qua một snapshot ngoài và `blockcommit`. Nó cần qemu guest agent trong VM, để có một snapshot tĩnh, và đĩa nằm trên `/mnt/cache` hoặc `/mnt/diskX`, không phải `/mnt/user`. Với một VM đã tắt, Trực tiếp tự chuyển về Êm ái, và khi không tạo được snapshot thì cũng chuyển về như vậy.
+- **Êm ái (tắt máy)** là mặc định. Nó tắt VM, sao lưu các đĩa và khởi động lại, nên bản sao lưu luôn nhất quán. Nó chờ tối đa mười phút để hệ điều hành khách tắt và không bao giờ ép tắt. Một máy khách vẫn còn chạy sau đó sẽ được để yên, và bản sao lưu đó lỗi kèm lý do. Nếu máy khách tắt trong vòng một giờ sau đó, BombVault sẽ khởi động lại nó. Nếu lần khởi động đó thất bại, lần chạy lỗi sẽ nói rõ điều đó.
+- **Snapshot trực tiếp** sao lưu một VM đang chạy qua một snapshot ngoài và `blockcommit`. Nó cần đĩa nằm trên `/mnt/cache` hoặc `/mnt/diskX`, không phải `/mnt/user`. Có qemu guest agent trong VM thì snapshot là snapshot tĩnh, còn không có thì snapshot chỉ nhất quán như sau một lần sập máy (crash-consistent). Với một VM đã tắt, Trực tiếp tự chuyển về Êm ái. Khi không tạo được snapshot, bản sao lưu đó thất bại và VM vẫn tiếp tục chạy, vì một VM bạn đã chọn sao lưu trực tiếp không bao giờ bị tắt vì việc này.
+
+## Những gì một bản sao lưu bỏ ra {#left-out}
+
+Một bản sao lưu có thể thành công mà vẫn không chứa toàn bộ VM. Khi đó lần chạy mang một ghi chú ở mức cảnh báo, nêu tên những gì còn thiếu:
+
+- **Các đĩa BombVault không đọc.** Một đĩa chỉ đọc, một `lun` và một đĩa `network` hoặc `volume` sẽ bị bỏ ra, và ghi chú nêu tên từng đĩa kèm thiết bị đích và loại của nó. Định nghĩa trong bản sao lưu vẫn liệt kê chúng. Ổ cdrom và ổ đĩa mềm không được nêu tên. Một thiết bị khối thông thường không phải zvol ZFS thì làm bản sao lưu thất bại.
+- **Trạng thái của một TPM giả lập.** Nó không có đường dẫn trong XML của domain. Unraid VM Manager thiết lập một TPM như vậy cho VM dùng BIOS **OVMF TPM**, nên ghi chú cũng xuất hiện trên Unraid. Một máy khách giữ bí mật trong TPM của nó, như BitLocker có thể làm, có thể hỏi khóa khôi phục sau một lần khôi phục làm mất trạng thái đó, nên hãy giữ sẵn khóa ấy.
+
+## Đĩa thin {#thin-disks}
+
+Một lần khôi phục giữ một đĩa thin vẫn là thin, dù nó thay thế đĩa hay ghi một đĩa mới: restic ghi các đoạn số không thành lỗ trống trong một tệp mới, và BombVault trả lại các khối số không của một tệp được thay thế bằng `fallocate --dig-holes` sau khi tệp được ghi xong. Trong lúc restic thay thế một tệp, tệp đó chiếm đủ kích thước của nó, nếu pool còn chỗ. Một hệ thống tệp không hỗ trợ đục lỗ sẽ giữ đĩa ở kích thước đầy đủ, và nhật ký sẽ nói rõ điều đó. Bước kiểm tra dung lượng vẫn tính một đĩa mới theo kích thước đầy đủ.
+
+## Một lần khôi phục thất bại {#restore-fails}
+
+Một lần khôi phục tại chỗ tắt VM, ghi các đĩa, và chỉ thay định nghĩa cùng NVRAM sau khi các đĩa đã được ghi xong. Một lần khôi phục thất bại sẽ để VM vẫn được định nghĩa cùng NVRAM của nó. Nếu các đĩa của nó không đổi và nó đang chạy, nó sẽ chạy lại. Nếu chúng có thể đã thay đổi, nó vẫn tắt, vì khởi động từ một đĩa mới ghi một nửa sẽ ghi đè lên đĩa đó, và lần chạy sẽ nói rõ điều đó. Khôi phục lại cùng bản sao lưu đó sẽ hoàn tất công việc.
+
+Các snapshot có hồ sơ trong libvirt (Unraid VM Manager không tạo snapshot theo cách này) sẽ chặn một lần khôi phục tại chỗ trước khi VM bị đụng tới, vì libvirt không thể xóa một VM có các snapshot đó. Hãy xóa chúng trước.
 
 ## Chỉ các khối đã đổi {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault sao lưu một VM như vậy đầy đủ:
 - **Một bản sao lưu trực tiếp giữ nguyên các snapshot.** **Snapshot trực tiếp** đặt một lớp phủ tạm lên trên trong lúc đọc đĩa và gộp nó lại sau đó, chỉ vào ảnh ngay bên dưới. Chuỗi sau bản sao lưu giống như trước. Một VM không có snapshot hoạt động như vẫn luôn thế.
 - **Một lần khôi phục đưa chuỗi trở lại.** Khôi phục tại chỗ ghi mọi tệp về chỗ cũ và đặt lại danh sách snapshot của Unraid, nên VM Manager liệt kê lại các snapshot. Khôi phục bên cạnh bản gốc ghi các tệp vào thư mục của bản sao và trỏ các đĩa được khôi phục tới các tệp được khôi phục, nên bản sao không bao giờ đọc từ ảnh của bản gốc. Danh sách snapshot của Unraid chỉ trở lại khi khôi phục tại chỗ, vì nó nêu tên các tệp ở nơi chúng được sao lưu. Không có nó, bản sao vẫn khởi động như thường, chỉ là VM Manager không liệt kê snapshot nào cho nó.
 - **Chỉ các khối đã đổi** đọc những gì máy khách thấy, nên bản khôi phục của nó trở lại thành một tệp qcow2 đã làm phẳng, không có các snapshot.
+- **Một lần khôi phục đưa lại đĩa của bản sao lưu bạn chọn.** Các snapshot được tạo hoặc gộp kể từ bản sao lưu đó không làm thay đổi điều này. Một bản sao lưu từ trước một snapshot sẽ định nghĩa VM trên tệp mà nó chứa, và một bản sao lưu từ trước một lần gộp sẽ đưa lớp phủ của nó trở lại và chạy trên đó. Các tệp mới hơn vẫn nằm nguyên chỗ, không được dùng và không bị thay đổi. Một bản sao lưu chứa lớp phủ nhưng không chứa tệp bên dưới nó sẽ bị từ chối trước khi VM bị đụng tới. Sau một lần khôi phục, định nghĩa của VM không liệt kê chuỗi nào, nên libvirt đọc chuỗi từ các tệp đã khôi phục.
 
 ### Ví dụ: một VM với hai snapshot {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Một lần khôi phục ghi từng zvol trở lại tại chỗ, như một đ�
 Một VM có thể có TPM ảo, thứ mà Secure Boot và máy khách Windows 11 cần. Trạng thái của nó nằm ngoài đĩa và NVRAM, nên một bản sao lưu chỉ có hai thứ đó sẽ đưa máy khách trở lại với một TPM mới, trống.
 
 - **Một TPM passthrough**, một chip thật được chuyển cho máy khách, nêu đường dẫn của nó trong XML của domain. BombVault lưu trạng thái của nó cạnh NVRAM qua SSH và ghi trở lại trước `virsh define`, theo kiểu hết sức có thể như NVRAM: một lần đọc hoặc ghi lỗi được ghi nhật ký và không làm hỏng việc sao lưu hay khôi phục.
-- **Một vTPM giả lập**, loại TrueNAS thiết lập cho máy khách Windows 11 và Secure Boot, không công bố đường dẫn trạng thái trong XML của domain. Khi đó BombVault báo "no TPM path found" thay vì đoán đường dẫn. Hãy giữ sẵn khóa khôi phục của máy khách đó, chẳng hạn khóa BitLocker, trước khi bạn khôi phục nó.
+- **Một vTPM giả lập**, loại TrueNAS thiết lập cho máy khách Windows 11 và Secure Boot, không công bố đường dẫn trạng thái trong XML của domain, nên trạng thái của nó không được sao lưu. BombVault không đoán đường dẫn, và bản sao lưu kết thúc với một ghi chú rằng trạng thái TPM của VM không có trong đó. Hãy giữ sẵn khóa khôi phục của máy khách đó, chẳng hạn khóa BitLocker, trước khi bạn khôi phục nó.
 - **Bạn không thể tự gắn TPM vào một VM TrueNAS.** API thiết bị VM của TrueNAS SCALE 25.10 chỉ nhận `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` và `USB`, và từ chối `TPM` là loại không xác định.
 
-Việc xử lý TPM chỉ được kiểm thử đơn vị và chưa chạy trên một máy khách TrueNAS thật có vTPM. Một VM không có TPM, như trên Unraid, được sao lưu và khôi phục y như trước.
+Việc xử lý TPM chỉ được kiểm thử đơn vị và chưa chạy trên một máy khách TrueNAS thật có vTPM. Một VM không có TPM được sao lưu và khôi phục y như trước.
 
 NVRAM được lấy như thường lệ. TrueNAS giữ nó theo từng VM tại `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, và XML của domain nêu đường dẫn đó.
 

@@ -23,7 +23,7 @@ Mỗi container, VM, bộ thư mục, ổ flash, mỗi tập dữ liệu ZFS và
 | **Containers** | Thư mục appdata cùng với định nghĩa container (image, biến môi trường, cổng, nhãn, volume). |
 | **VMs** | (Các) ảnh đĩa VM, định nghĩa XML và UEFI NVRAM, được sao lưu qua SSH (không gắn kết libvirt). |
 | **Flash** | Toàn bộ USB flash (`/boot`): OS, giấy phép, cấu hình mảng, share, cấu hình mạng và plugin. |
-| **Tự sao lưu** | `/config` của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập của các đích sao lưu và cặp khóa SSH libvirt. |
+| **Tự sao lưu** | `/config` của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập của các đích sao lưu, cặp khóa SSH libvirt, khóa và host pin của các máy chủ ZFS cùng các chứng chỉ. |
 | **Thư mục** | Bất kỳ thư mục nào trên máy chủ dưới dạng một bộ thư mục, mỗi bộ có tùy chọn mẫu loại trừ riêng. |
 | **Tập dữ liệu ZFS** | Một tập dữ liệu cùng mọi tập bên dưới, đọc từ một ảnh chụp ZFS và lưu như một thư mục. Xem [Tập dữ liệu ZFS](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Tên và thương hiệu không được cấp phép. AGPL chỉ áp dụng cho 
 - **Vấn đề (Issues):** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Quyền kiểm soát máy chủ tương đương root"
-    Thông qua Docker socket, BombVault có thể dừng, xóa và tạo lại các container cũng như đọc/ghi appdata, và để sao lưu VM nó đăng nhập vào máy chủ qua SSH để chạy `virsh`. Bất kỳ ai truy cập được giao diện web của nó thực chất đều có quyền root trên máy chủ. Chỉ chạy BombVault trên một mạng tin cậy, không phơi ra ngoài, và đặt mật khẩu đăng nhập trong **Cài đặt, Bảo mật**. Bộ khôi phục, bản gửi khóa và việc xóa các bản sao lưu ở một đích sao lưu đều cần mật khẩu đó. Xem [Cấu hình](configuration.md#security-model) để biết mô hình bảo mật đầy đủ.
+    Thông qua Docker socket, BombVault có thể dừng, xóa và tạo lại các container cũng như đọc/ghi appdata, và để sao lưu VM nó đăng nhập vào máy chủ qua SSH để chạy `virsh`. Bất kỳ ai truy cập được giao diện web của nó thực chất đều có quyền root trên máy chủ. Chỉ chạy BombVault trên một mạng tin cậy, không phơi ra ngoài, và đặt mật khẩu đăng nhập trong **Cài đặt, Bảo mật**. Bộ khôi phục, bản gửi khóa, tệp ZIP flash, việc xuất một bản sao lưu flash hoặc bản tự sao lưu và việc xóa các bản sao lưu ở một đích sao lưu đều cần mật khẩu đó. Xem [Cấu hình](configuration.md#security-model) để biết mô hình bảo mật đầy đủ.

@@ -9,10 +9,10 @@ Mọi thứ BombVault sao lưu đều nằm trong một danh sách dưới **B�
 
 | Phần | Những gì được lưu |
 |---|---|
-| **Containers** | Thư mục appdata cùng định nghĩa container: image, biến, cổng, nhãn và volume. Thẻ **Thư mục sao lưu** ở tab **Cài đặt** của container đánh dấu chính xác thư mục nào được bản sao lưu bao phủ, với số đường dẫn đếm trực tiếp và danh sách những gì bạn đã bỏ ra. Dữ liệu mà container giữ bên ngoài Host Data, chẳng hạn trong một ixVolume của TrueNAS, không được sao lưu, và lần chạy nêu tên các thư mục bị bỏ ra. |
+| **Containers** | Thư mục appdata cùng định nghĩa container: image, biến, cổng, nhãn và volume. Thẻ **Thư mục sao lưu** ở tab **Cài đặt** của container đánh dấu chính xác thư mục nào được bản sao lưu bao phủ, với số đường dẫn đếm trực tiếp và danh sách những gì bạn đã bỏ ra. Dữ liệu mà container giữ bên ngoài Host Data, chẳng hạn trong một ixVolume của TrueNAS hoặc một dự án Compose dưới `/opt`, không được sao lưu, và lần chạy nêu tên các thư mục bị bỏ ra. Lần chạy cũng nêu tên một thư mục bên trong Host Data mà hiện không có ở đó. Các đường dẫn hệ thống như `/etc/localtime` hay Docker socket không được tính là dữ liệu. |
 | **VMs** | Các ảnh đĩa, định nghĩa XML và UEFI NVRAM, với việc tắt máy êm ái hoặc snapshot trực tiếp, qua SSH. Xem [Sao lưu VM](vm-backup-ssh-setup.md). |
 | **Flash** | Chỉ Unraid. Toàn bộ USB flash (`/boot`): hệ điều hành, giấy phép, cấu hình mảng, share, mạng và cấu hình plugin. |
-| **Tự sao lưu** | `/config` của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập của các đích sao lưu và cặp khóa SSH libvirt, được chụp bằng SQLite `VACUUM INTO` để cơ sở dữ liệu không bao giờ bị lấy giữa lúc đang ghi. |
+| **Tự sao lưu** | `/config` của chính BombVault: cơ sở dữ liệu cài đặt, thông tin đăng nhập của các đích sao lưu, cặp khóa SSH libvirt, khóa và host pin của các máy chủ ZFS cùng các chứng chỉ, được chụp bằng SQLite `VACUUM INTO` để cơ sở dữ liệu không bao giờ bị lấy giữa lúc đang ghi. |
 | **Thư mục** | Bất kỳ thư mục nào trên máy chủ dưới dạng một bộ thư mục, chẳng hạn một share, tài liệu của bạn hoặc thư viện ảnh, với các mẫu loại trừ tùy chọn. Bộ thư mục có lịch trình, chính sách lưu giữ, bản sao ngoài site, kiểm tra và diễn tập khôi phục như mọi thứ khác. |
 | **Tập dữ liệu ZFS** | Một dataset và mọi dataset bên dưới nó, đọc từ một snapshot ZFS để tất cả đến từ cùng một thời điểm, và lưu bằng restic như một thư mục. Một mục ZFS cũng có thể giữ một bản sao khớp từng khối trên một máy chủ ZFS thứ hai. Xem [Tập dữ liệu ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Các mục không còn được cài nhưng vẫn có bản sao lưu nằm riên
 Hành động chính của trang nổi ở góc dưới bên phải: **Sao lưu tất cả ngay** bắt đầu một lượt chạy trên mọi phần đang bật. **Thêm** chứa phần còn lại:
 
 - **Chọn** bắt đầu một lựa chọn, xem bên dưới.
-- **Tìm bản sao lưu** đọc những gì các đích sao lưu đang chứa và dựng lại các mục từ đó, ví dụ sau một lần cài mới. Các bản sao ngoài site của những phần được dựng lại sẽ tạm dừng cho đến khi bạn xác nhận mặc định của chúng, xem [Sau khi dựng lại](offsite-recovery.md#after-a-rebuild).
+- **Tìm bản sao lưu** đọc những gì các đích sao lưu đang chứa và dựng lại các mục từ đó, ví dụ sau một lần cài mới. Một container không có dữ liệu riêng thì không có snapshot, và nó được dựng lại từ định nghĩa được sao chép bên cạnh kho. Các bản sao ngoài site của những phần được dựng lại sẽ chờ cho đến khi bạn nhận các bản sao lưu của chúng là của máy chủ này, xem [Sau khi dựng lại](offsite-recovery.md#after-a-rebuild).
 - **Kết nối ZFS tới máy chủ này** mở phép thử SSH của phần ZFS, xem [Tập dữ liệu ZFS](zfs-datasets.md#requirements).
 - **Nhân bản tất cả ngay**, khi ô ZFS được chọn, gửi bản sao của mọi mục ZFS.
 
@@ -98,7 +98,7 @@ Các thẻ bên dưới phụ thuộc vào loại mục:
 | Container | **Thư mục sao lưu** (thư mục đã ánh xạ nào được sao lưu, với **Bỏ qua thư mục bộ nhớ đệm (CACHEDIR.TAG)**), **Mẫu loại trừ**, **Dừng các container khác**, **Lệnh trước và sau**, **Cơ sở dữ liệu**, **Khi ứng dụng đang bận**, **Cập nhật sau khi sao lưu thành công**, **Ảnh chụp thay cho dừng**, **Tên trước đây** |
 | VM | **VM** với **Phương thức** (**Êm ái (tắt máy)** hoặc **Snapshot trực tiếp**) và **Chỉ các khối đã đổi**, xem [hướng dẫn sao lưu VM](vm-backup-ssh-setup.md#per-vm-method) |
 | Bộ thư mục | **Thư mục** và **Mẫu loại trừ** |
-| Ổ flash | **Xuất ZIP flash**, ghi mọi bản sao lưu flash ra thành một tệp `.zip` thuần vào thư mục bạn chọn |
+| Ổ flash | **Xuất ZIP flash**, ghi mọi bản sao lưu flash ra thành một tệp `.zip` thuần vào thư mục bạn chọn, trong một bước để công cụ đồng bộ không bao giờ thấy một tệp mới ghi một nửa. Một bản sao lưu flash chứa ít hơn mức cần có sẽ giữ nguyên tệp ZIP cuối cùng, và lần chạy của việc xuất sẽ nói rõ điều đó. |
 | Tập dữ liệu ZFS | các dataset con, các container cần dừng và các lệnh quanh snapshot, **Bản nhân bản** và **Thử truy cập ảnh chụp**, xem [Tập dữ liệu ZFS](zfs-datasets.md) |
 
 Cài đặt tự lưu khi bạn thay đổi.
@@ -119,7 +119,7 @@ Cài đặt tự lưu khi bạn thay đổi.
 
 ## Mẫu loại trừ {#excludes}
 
-Thẻ **Mẫu loại trừ** nhận mỗi dòng một mẫu. Gõ đường dẫn như bạn thấy bên trong container, chẳng hạn `/config/Library/Application Support/Plex Media Server/Cache`, hoặc một tên trần như `.git`, khớp ở mọi độ sâu. Một bản xem trước dưới ô cho thấy mỗi dòng được hiểu thành gì, và cảnh báo khi một dòng không khớp gì hoặc sẽ loại trừ tất cả. Một dòng `/` hoặc `*`, hoặc dòng nêu cả một thư mục được sao lưu, bị bỏ qua, nên một mẫu loại trừ không bao giờ làm rỗng một bản sao lưu. Để bỏ cả một thư mục ra, hãy bỏ chọn nó dưới **Thư mục sao lưu**.
+Thẻ **Mẫu loại trừ** nhận mỗi dòng một mẫu. Gõ đường dẫn như bạn thấy bên trong container, chẳng hạn `/config/Library/Application Support/Plex Media Server/Cache`, hoặc một tên trần như `.git`, khớp ở mọi độ sâu. Với một bộ thư mục, hãy gõ đường dẫn như máy chủ thấy nó, chẳng hạn `/mnt/user/data/cache`. Một bản xem trước dưới ô cho thấy mỗi dòng được hiểu thành gì, và cảnh báo khi một dòng không khớp gì hoặc sẽ loại trừ tất cả. Một dòng `/` hoặc `*`, hoặc dòng nêu cả một thư mục được sao lưu, bị bỏ qua, nên một mẫu loại trừ không bao giờ làm rỗng một bản sao lưu. Để bỏ cả một thư mục ra, hãy bỏ chọn nó dưới **Thư mục sao lưu**.
 
 Với các image quen thuộc như Plex, Jellyfin, Sonarr, Radarr, Immich và Nextcloud, thẻ đưa ra những thư mục mà ứng dụng tự làm đầy lại, như bộ nhớ đệm, log và ảnh thu nhỏ. Không có gì bị loại trừ cho đến khi bạn bấm **Loại trừ mục đã chọn**.
 
@@ -137,6 +137,8 @@ Một bản kết xuất lỗi không làm hỏng bản sao lưu. Nó hiện th�
 
 - **Lệnh trước và sau** chạy bên trong container với `sh -c`, ví dụ để ghi một bộ nhớ đệm xuống đĩa. Một lệnh lỗi trước bản sao lưu sẽ hủy nó. Một lệnh trước bản sao lưu thoát với mã 75 thì hoãn một bản sao lưu theo lịch, xem bên dưới.
 - **Dừng các container khác** nêu tên các container cần dừng trong lúc container này được sao lưu, chẳng hạn cơ sở dữ liệu của nó. Sau đó chúng khởi động lại theo thứ tự `depends_on` trong Compose, và theo mặc định mỗi container phải báo khỏe trước khi cái kế tiếp khởi động. Việc chờ và thời gian chờ của nó nằm dưới **Khởi động lại sau khi sao lưu** trong thẻ **Thứ tự** thuộc **Cài đặt, Lịch trình**.
+- Một container dùng chung namespace mạng, PID hoặc IPC với một container bị dừng, qua `--net=container:` hoặc `network_mode: service:` của Compose, sẽ dừng và khởi động cùng nó ngay cả khi không có trong danh sách, và nó khởi động sau container mà nó tham gia. Một container được khởi động lại sẽ có mạng mới, còn một container để chạy tiếp trên mạng cũ chỉ còn loopback. Bản thân danh sách vẫn giữ như bạn đã đặt. Nếu không dừng được một container như vậy, lần chạy sẽ báo rằng nó không có mạng cho đến khi được khởi động lại. Điều này cũng áp dụng cho container của chính BombVault, vốn không bao giờ tự dừng và không thể đưa vào danh sách.
+- Một container không chạy lại được sau đó sẽ được nêu tên trên lần chạy và trong một thông báo, kể cả khi chính bản sao lưu bị lỗi.
 
 ## Khi ứng dụng đang bận {#app-busy}
 
@@ -177,7 +179,7 @@ Với kiểm tra của riêng bạn, hãy cho **Lệnh trước sao lưu** thoá
 restic vẫn là bộ máy, nhưng một bản xuất cho bạn một bản sao không cần BombVault hay restic.
 
 - **Xuất container** và **Xuất máy ảo** dưới **Thêm** trên trang của một mục ghi một bản sao đúng như lúc này, bên cạnh kho: các thư mục sao lưu của container cùng mẫu Unraid của nó, hoặc các ảnh đĩa của VM cùng định nghĩa của nó, khôi phục được bằng `virsh define`.
-- **Xuất** trên một snapshot ghi một bản sao lưu đã lưu vào thư mục xuất trên máy chủ, dưới dạng tar, zip hoặc một kho restic riêng, và có thể lấy một snapshot hoặc tất cả.
+- **Xuất** trên một snapshot ghi một bản sao lưu đã lưu vào thư mục xuất trên máy chủ, dưới dạng tar, zip hoặc một kho restic riêng, và có thể lấy một snapshot hoặc tất cả. Một bản sao lưu flash và một bản tự sao lưu có chứa khóa, nên việc xuất chúng cần mật khẩu đăng nhập và đăng nhập ngay tại phiên bản.
 
 Bản xuất mặc định là tệp thuần. **Mã hóa bản xuất bằng age** trong **Cài đặt, Hệ thống** niêm phong chúng, kể cả ZIP của flash, cho những người nhận bạn liệt kê, mỗi người là một khóa công khai age hoặc khóa công khai SSH. Sau này bạn giải mã chúng ở ngoài máy chủ bằng khóa riêng tương ứng. Khi bật mã hóa mà không có người nhận hợp lệ, một bản xuất sẽ lỗi với thông báo rõ ràng thay vì ghi ra tệp thuần.
 

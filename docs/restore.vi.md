@@ -21,7 +21,7 @@ Mọi lần khôi phục đều bắt đầu từ trang **Khôi phục**: chọn
 
 Bấm vào một mục sẽ mở **Khôi phục** với tên của nó. Cửa sổ hỏi theo từng bước, và mỗi bước có thể đổi trước khi bạn bắt đầu:
 
-1. **Bản sao lưu**: snapshot được khuyên dùng đã được chọn sẵn. Đó là snapshot mới nhất, hoặc sau một bất thường đang mở là snapshot cuối cùng trước nó. Các snapshot cũ hơn nằm trong danh sách, và **So sánh** cho thấy hai snapshot khác nhau ở đâu.
+1. **Bản sao lưu**: snapshot được khuyên dùng đã được chọn sẵn. Đó là snapshot mới nhất, hoặc sau một bất thường đang mở là snapshot cuối cùng trước nó. Bản sao lưu được tạo trước một lần khôi phục trước đó chứa trạng thái mà lần khôi phục ấy đã thay thế, nên nó bị bỏ qua trừ khi không còn bản nào khác. Các snapshot cũ hơn nằm trong danh sách, và **So sánh** cho thấy hai snapshot khác nhau ở đâu.
 2. **Nguồn**: nơi các tệp đến từ, khi một snapshot nằm ở nhiều chỗ. **Cục bộ** là nhanh nhất.
 3. **Cái gì**: **Tất cả**, hoặc **Từng tập tin**, nơi bạn chọn các tệp và thư mục muốn lấy.
 4. **Đến đâu**: đích đến. Các lựa chọn phụ thuộc vào loại mục:
@@ -29,7 +29,7 @@ Bấm vào một mục sẽ mở **Khôi phục** với tên của nó. Cửa s�
     | Đích | Tác dụng |
     |---|---|
     | **Bên cạnh bản gốc** | Mặc định. Một container trở lại thành container thứ hai tên `<name>-restored` với các cổng riêng, đĩa và NVRAM của một VM nằm trong thư mục tên `<folder>-restored`, và một bộ thư mục trở lại thành `<path>-restored`. Bản gốc không bị thay đổi gì. |
-    | **Thay thế bản gốc** | Ghi đè những gì đang có. Với **Sao lưu trạng thái hiện tại trước**, được bật theo mặc định, BombVault sao lưu trạng thái hôm nay trước để bạn có thể quay lại. Nếu bản sao lưu đó lỗi, việc khôi phục không bắt đầu. |
+    | **Thay thế bản gốc** | Ghi đè những gì đang có. Với **Sao lưu trạng thái hiện tại trước**, được bật theo mặc định, BombVault sao lưu trạng thái hôm nay trước để bạn có thể quay lại. Nếu bản sao lưu đó lỗi, việc khôi phục không bắt đầu. Điều này cũng áp dụng cho một container hoặc VM đã không còn trên máy chủ: các thư mục mà việc khôi phục ghi đè sẽ được sao lưu riêng. |
     | **Vào một thư mục** | Chỉ các tệp, để duyệt xem. |
     | **Tải xuống dạng ZIP** | Ổ flash, cho một chiếc USB mới. BombVault không bao giờ ghi vào ổ flash đang chạy. |
     | **Vào một tập dữ liệu mới** và **Khôi phục vào chính tập dữ liệu** | Tập dữ liệu ZFS, xem [Tập dữ liệu ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Trước khi **Khôi phục** được mở khóa, cửa sổ kiểm tra rằng 
 
 Cửa sổ cũng cho thấy việc khôi phục thay đổi gì so với những gì đang có: các tệp mới, được thay thế và không đổi, với danh sách khi bạn yêu cầu, và các tệp ở đích không có trong bản sao lưu và sẽ được để nguyên. restic tính điều này như một lần chạy thử từ kích thước và thời gian sửa đổi, không đọc các tệp, và một cây rất lớn sẽ dừng sau 30 giây và nói rõ như vậy. Với container và VM, nó so sánh các thiết lập mà việc khôi phục tạo lại với những thiết lập đang chạy: image và tag, cổng, tên biến và volume, hoặc bộ nhớ, vCPU, đĩa và mạng.
 
-Một số điều có thể chặn việc khôi phục trước khi nó thay đổi bất cứ thứ gì. IP tĩnh và các cổng đã công bố của một container phải còn trống, và mạng của nó phải tồn tại. Một lần khôi phục tại chỗ nêu tên mọi container khác có bind mount chạm vào một thư mục mà nó ghi vào, chẳng hạn "đường dẫn này cũng được nextcloud-db dùng", nhưng chỉ để cảnh báo.
+Một số điều có thể chặn việc khôi phục trước khi nó thay đổi bất cứ thứ gì. IP tĩnh và các cổng đã công bố của một container phải còn trống, và mạng của nó phải tồn tại. Trên Unraid, mọi lần khôi phục tại chỗ đều từ chối một thư mục không nằm trên pool hoặc share đã gắn kết, vì các tệp sẽ nằm trong bộ nhớ và mất sau khi khởi động lại. Một lần khôi phục tại chỗ nêu tên mọi container khác có bind mount chạm vào một thư mục mà nó ghi vào, chẳng hạn "đường dẫn này cũng được nextcloud-db dùng", nhưng chỉ để cảnh báo.
 
 Một vài tùy chọn xuất hiện ở nơi chúng áp dụng: **Để dừng sau đó**, để xem một container hoặc VM trước khi nó chạy lại, và **Khôi phục không có GPU và runtime** trên một máy chủ thiếu GPU hoặc runtime mà bản sao lưu đã được tạo với.
 
-Việc khôi phục chạy ở chế độ nền. Bạn có thể đóng cửa sổ, và tiến trình cũng hiện dưới **Đang chạy**. Một lần khôi phục dài hiện phần trăm và có thể bị hủy, và một lần khôi phục bị hủy được ghi là đã hủy, không phải thất bại.
+Việc khôi phục chạy ở chế độ nền. Bạn có thể đóng cửa sổ, và tiến trình cũng hiện dưới **Đang chạy**. Một lần khôi phục dài hiện phần trăm và có thể bị hủy, và một lần khôi phục bị hủy được ghi là đã hủy, không phải thất bại. Một lần khôi phục bị hủy trong lúc container đang dừng, hoặc một lần không gỡ được container, thì chưa khôi phục gì cả, nên container được khởi động lại. Một container lấy volume từ container khác bằng `--volumes-from` sẽ giữ chúng, và việc khôi phục từ chối bắt đầu khi container kia chưa tồn tại.
 
 ![Cửa sổ khôi phục ở bước Cái gì, với các tệp riêng lẻ đã được chọn.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![Cửa sổ khôi phục ở bước Cái gì, với các tệp riêng lẻ đã được chọn.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Ai đó đã sửa `config.php` của Nextcloud đêm qua và Nextcloud không c
 
 Cửa sổ kết thúc với **Xong: các tệp nằm trong /mnt/user/restore**. Bạn tìm thấy tệp là `/mnt/user/restore/config.php`, không có các thư mục phía trên. Hãy so sánh nó với tệp hỏng, chép nó trở lại thư mục appdata và khởi động lại Nextcloud.
 
-Để đặt tệp trở lại thẳng chỗ cũ, hãy chọn **Thay thế bản gốc** ở bước 5. Giữ **Sao lưu trạng thái hiện tại trước** đang bật, để BombVault sao lưu trạng thái hỏng trước khi ghi, gõ `nextcloud` để xác nhận và bấm **Khôi phục**. Nextcloud bị dừng trong lúc tệp đã chọn được ghi trở lại chỗ của nó, và chỉ những tệp bạn đã đánh dấu mới được ghi.
+Để đặt tệp trở lại thẳng chỗ cũ, hãy chọn **Thay thế bản gốc** ở bước 5. Giữ **Sao lưu trạng thái hiện tại trước** đang bật, để BombVault sao lưu trạng thái hỏng trước khi ghi, gõ `nextcloud` để xác nhận và bấm **Khôi phục**. Nextcloud bị dừng trong lúc tệp đã chọn được ghi trở lại chỗ của nó và được khởi động lại sau đó, và chỉ những tệp bạn đã đánh dấu mới được ghi. Một lần khôi phục lỗi giữa chừng sẽ để Nextcloud ở trạng thái dừng, vì tệp nó đọc có thể mới ghi được một nửa, và lần chạy sẽ nói rõ điều đó.
 
 ![Cửa sổ khôi phục ở bước Điều gì xảy ra, với Thay thế bản gốc đã được chọn.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Cửa sổ khôi phục ở bước Điều gì xảy ra, với Thay thế bản gốc đã được chọn.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Cửa sổ kết thúc với **Xong: các tệp nằm trong /mnt/user/restore**.
 
 **Container** được tạo lại từ định nghĩa đã lưu qua Docker API, với entrypoint, hostname, thiết lập dừng, volume và mount, giới hạn tài nguyên, log driver, thiết lập DNS và các link cũ. Một container trở lại trên image mà nó chạy lúc bản sao lưu được tạo, không phải trên image mới hơn kéo về sau này, và image còn thiếu sẽ được kéo trước, với thông tin đăng nhập từ **Registry container** trong **Cài đặt, Khôi phục**. GPU hoặc runtime của nó (`--gpus`, `--runtime=nvidia`) cũng trở lại. Trên máy chủ không có driver hoặc runtime đó, việc khôi phục nói rõ và đưa ra **Khôi phục không có GPU và runtime**. Một link tới container đang thiếu, hoặc đã dừng trong lúc container được khôi phục khởi động, sẽ bị bỏ, và lịch sử chạy cho biết như vậy. Một lần khôi phục lỗi sau khi container đã bị gỡ sẽ đặt nó trở lại, ở trạng thái dừng.
 
+Một bản sao lưu có thể chứa những thư mục mà container không còn chọn nữa, chẳng hạn một bản cũ hơn được tạo trước khi một thư mục biến mất. Một thư mục đã mất hoặc đang trống sẽ được đưa trở lại. Một thư mục hiện đang có tệp thì được giữ nguyên, vì có thể bạn đã cố ý bỏ chọn nó, và bước kiểm tra trước khi khôi phục cùng lịch sử chạy sẽ nêu tên nó. Hãy lấy lại nó bằng **Từng tập tin** hoặc **Vào một thư mục**.
+
 **VM** có XML được định nghĩa lại qua SSH và đĩa cùng UEFI NVRAM được gắn lại, kể cả sau khi VM đã bị xóa. Xem [Sao lưu VM](vm-backup-ssh-setup.md) cho các VM có snapshot Unraid và đĩa trên zvol.
 
-**Bộ thư mục** trở lại với quyền sở hữu, chế độ và dấu thời gian như restic lưu.
+**Bộ thư mục** trở lại với quyền sở hữu, chế độ và dấu thời gian như restic lưu. Khi đích chỉ từ chối quyền sở hữu, như `/mnt/user`, lần chạy kết thúc với một ghi chú nói rõ điều đó. Khi đó BombVault so sánh các tệp với bản sao lưu, và một tệp không đến nơi sẽ làm việc khôi phục thất bại.
 
-**Ổ flash** không bao giờ chạm vào `/boot` đang chạy. Việc khôi phục là một bản tải xuống tên `flash-<id>.zip`, sẵn sàng để thả vào Unraid USB Creator. Cửa sổ cũng liệt kê các plugin trong từng bản sao lưu flash với phiên bản và kích thước của chúng, và có thể đặt riêng một plugin trở lại ổ flash đang chạy: tệp `.plg` của nó, thư mục của nó dưới `config/plugins` và các tệp gói mà bản sao lưu có. Unraid cài nó vào lần khởi động tiếp theo, hoặc ngay lập tức dưới **Plugins, Install Plugin**.
+**Ổ flash** không bao giờ chạm vào `/boot` đang chạy. Việc khôi phục là một bản tải xuống tên `flash-<id>.zip`, sẵn sàng để thả vào Unraid USB Creator. Tệp ZIP chứa `APP_KEY`, nên việc tải nó xuống cần mật khẩu đăng nhập và đăng nhập ngay tại phiên bản. Cửa sổ cũng liệt kê các plugin trong từng bản sao lưu flash với phiên bản và kích thước của chúng, và có thể đặt riêng một plugin trở lại ổ flash đang chạy: tệp `.plg` của nó, thư mục của nó dưới `config/plugins` và các tệp gói mà bản sao lưu có. Unraid cài nó vào lần khởi động tiếp theo, hoặc ngay lập tức dưới **Plugins, Install Plugin**.
 
 **Tập dữ liệu ZFS** có các đích riêng và giữ các thuộc tính ZFS của chúng, xem [Khôi phục](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Mỗi mục được kiểm tra như một lần khôi phục đơn lẻ, rồi 
 ## Khôi phục một stack {#stacks}
 
 Bấm vào một stack trong thẻ **Stack** sẽ mở **Khôi phục stack**. Nó khôi phục mọi thành viên từ bản sao lưu mới nhất của chúng cùng một lúc, và với **Khởi động theo thứ tự phụ thuộc sau khi khôi phục**, nó khởi động chúng theo thứ tự `depends_on`: cơ sở dữ liệu và bộ nhớ đệm trước, rồi mới đến ứng dụng. Khi thư mục dự án của một thành viên không có ở nơi bạn đã chọn, cửa sổ đưa ra trạng thái từ Cục bộ thay thế.
+
+Trước tiên BombVault kiểm tra các thành viên và thư mục dự án, và một lần khôi phục không thể thành công sẽ không thay đổi gì. Nếu không, nó dừng các thành viên đang chạy, ứng dụng trước cơ sở dữ liệu của chúng, rồi ghi thư mục dự án, rồi khôi phục các thành viên. Nếu thư mục dự án không trở lại được, các thành viên vẫn được khôi phục nhưng giữ ở trạng thái dừng, vì thư mục có thể mới ghi được một nửa và đó thường là nơi chứa bind mount của một thành viên. Lần chạy của mỗi thành viên sẽ nói rõ điều đó.
+
+Một cơ sở dữ liệu chỉ có bản kết xuất cơ sở dữ liệu mà không có bản sao lưu tệp, và container cùng named volume của nó đã mất, sẽ trở lại mà không có dữ liệu. Bước kiểm tra nói điều đó trước khi khôi phục. Nó vẫn ở trạng thái dừng, các container phụ thuộc vào nó cũng vậy, để không ứng dụng nào chạy bước thiết lập trên một cơ sở dữ liệu trống. Hãy khởi động nó, nhập một bản kết xuất rồi khởi động các container còn lại. Xem [Kết xuất cơ sở dữ liệu](backups.md#database-dumps).
 
 ## Nguồn khác {#other-sources}
 

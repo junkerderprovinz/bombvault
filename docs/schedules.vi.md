@@ -27,7 +27,7 @@ Thẻ **Tuần** vẽ mọi lần chạy đã lên kế hoạch từ thứ Hai �
 
 **Sao lưu toàn bộ** là kế hoạch mặc định cho mọi thứ. **Khi nào sao lưu chạy** đặt kế hoạch đó: một lượt sao lưu lần lượt từng phần, containers, VMs, flash, thư mục, tập dữ liệu ZFS và tự sao lưu ở cuối. Dòng bên dưới cho biết nó gồm những phần nào. **Tắt** sẽ tắt nó, và khi đó chỉ những gì có kế hoạch riêng mới chạy.
 
-- **Chạy bù các bản sao lưu bị bỏ lỡ sau khi khởi động**: khi máy chủ tắt vào lúc đã định, BombVault chạy bản sao lưu đó khoảng hai phút sau khi nó khởi động.
+- **Chạy bù các bản sao lưu bị bỏ lỡ sau khi khởi động**: khi máy chủ tắt vào lúc đã định, BombVault chạy bản sao lưu đó khoảng hai phút sau khi nó khởi động. Kế hoạch riêng của một mục và kế hoạch ngoài site sẽ chờ đến giờ đã định kế tiếp, một kế hoạch chưa từng thành công cũng vậy.
 - **Lệnh trước và sau**: **Lệnh trước khi sao lưu toàn bộ** chạy trên máy chủ với `sh -c` trước khi lượt sao lưu bắt đầu, ví dụ một script dừng một dịch vụ. Nếu nó lỗi, bản sao lưu toàn bộ vẫn chạy. **Lệnh sau khi sao lưu toàn bộ** chạy một lần sau khi mọi phần đã được thử, kể cả khi một trong số đó lỗi, thích hợp cho một ping xác nhận cả máy chủ đã được bảo vệ. Lệnh cho từng container nằm trên trang của nó.
 
 **Sao lưu tất cả ngay** trên trang Bản sao lưu bắt đầu cùng lượt đó bằng tay, trên mọi phần đang bật.
@@ -58,7 +58,7 @@ Bản sao lưu nằm dưới cùng các đường dẫn và thẻ như bản đ�
 
 ## Cập nhật sau khi sao lưu {#updates}
 
-- **Cập nhật container sau khi sao lưu thành công** chỉ kéo một image mới hơn sau khi bản sao lưu trước đó đã xong, nên luôn có một điểm khôi phục mới trước. Tùy chọn này tắt theo mặc định, và một container đơn lẻ có thể được đặt khác đi trên trang của nó ở **Cập nhật sau khi sao lưu thành công**.
+- **Cập nhật container sau khi sao lưu thành công** chỉ kéo một image mới hơn sau khi bản sao lưu trước đó đã xong, nên luôn có một điểm khôi phục mới trước. Tùy chọn này tắt theo mặc định, và một container đơn lẻ có thể được đặt khác đi trên trang của nó ở **Cập nhật sau khi sao lưu thành công**. Chỉ những gì bạn đặt mới được mang sang image mới: các biến, nhãn, lệnh, người dùng và healthcheck vẫn giống như trong image cũ sẽ theo image mới. Nếu không tạo hoặc khởi động được image mới, container quay lại image nó đã chạy, bản cập nhật hiện là thất bại, và bản sao lưu kế tiếp sẽ thử lại. Một container bị dừng vì việc đó sẽ được nêu tên trên lần chạy của bản sao lưu và trong một thông báo.
 - **Xóa image cũ sau khi cập nhật** xóa image mà container đã bỏ lại. Một image nền mà các container khác dùng chung thì không bao giờ bị xóa.
 - **Làm mới trạng thái cập nhật của Unraid sau khi cập nhật một container** xóa biểu ngữ cập nhật của Unraid cho container đó.
 

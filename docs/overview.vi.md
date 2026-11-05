@@ -40,13 +40,13 @@ Mỗi phần đang bật có một dòng với bốn kiểm tra:
 | Kiểm tra | Chuyển xanh khi | Những cách diễn đạt khác bạn có thể thấy |
 |---|---|---|
 | **Cục bộ** | bản sao lưu gần nhất còn mới | chưa có bản sao lưu, chưa có lịch, lần chạy gần nhất bị lỗi, bản sao lưu quá hạn, chưa phải mọi mục đều được bảo vệ, sắp đến hạn sao lưu |
-| **Ngoài site** | bản sao ra ngoài cơ sở gần nhất còn mới | chưa có bản sao ngoài site, đang sao chép, bản sao quá hạn, bản sao bị tạm dừng, chưa có bản sao, bản sao ZFS bị lỗi |
+| **Ngoài site** | bản sao ra ngoài cơ sở gần nhất còn mới | chưa có bản sao ngoài site, đang sao chép, bản sao quá hạn, đang chờ bạn quyết định, chưa có bản sao, bản sao ZFS bị lỗi |
 | **Bảo vệ chống xóa** | một phép thử phá hoại đã chứng minh phía bên kia từ chối xóa | không có, không có và đã chấp nhận rủi ro, chưa được chứng minh, phép thử thất bại, chưa được chứng minh vì kiểm tra của nó đang tắt |
 | **Khôi phục thử** | một lần khôi phục từ bản sao ngoài site đã đạt | chưa bao giờ chạy, đang chạy, thất bại, quá hạn, chỉ chạy thủ công, không thể thực hiện với phần này |
 
 Một phần chỉ xanh khi dựa trên sự thật đã được kiểm chứng. Một bản sao trên chính máy chủ này không được tính là ngoài site, và một đích bạn đã đánh dấu **Chấp nhận khi không có bảo vệ chống xóa** hiện một vòng xám thay vì chấm hổ phách, nên màu của phần đó theo các kiểm tra còn lại.
 
-Một phần có lịch sẽ báo **Chưa có bản sao lưu nào** và giữ trung tính cho đến khi lần chạy đầu tiên đến hạn. Sau đó nó báo **Quá hạn** và cảnh báo một lần. Một phần không có gì để sao lưu, vì không lịch nào với tới các mục của nó, sẽ báo **Chưa lên lịch** và không bao giờ quá hạn.
+Một phần có lịch sẽ báo **Chưa có bản sao lưu nào** và giữ trung tính cho đến khi lần chạy đầu tiên đến hạn, tính từ lần cuối kế hoạch của nó được đặt. Sau đó nó báo **Quá hạn** và cảnh báo một lần. **Quá hạn** dựa vào mục bị tụt lại xa nhất so với kế hoạch của chính nó, nên một mục bên cạnh vẫn chạy không che đi một mục đã ngừng. Một mục có container đã mất hoặc không lịch nào với tới thì không được tính. Một mục có kế hoạch hằng tuần riêng không bị xét theo kế hoạch hằng ngày của phần. Một phần không có gì để sao lưu, vì không lịch nào với tới các mục của nó, sẽ báo **Chưa lên lịch** và không bao giờ quá hạn.
 
 Bấm vào một phần sẽ mở cửa sổ của nó với từng kiểm tra được giải thích rõ, các mục nó đang đếm và **Bắt đầu khôi phục thử** hoặc **Chạy lại khôi phục thử**. Cửa sổ cũng cho biết **Đã đặt quy tắc dọn bớt** hoặc **Chưa có quy tắc dọn bớt**, và quy tắc giữ của thư mục riêng của một phần cũng được tính như các quy tắc ngoài site của phần đó.
 
