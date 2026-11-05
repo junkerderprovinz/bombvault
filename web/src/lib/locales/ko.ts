@@ -3328,6 +3328,9 @@ const ko: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "복원 폴더는 이 호스트의 Host Data 아래 폴더여야 합니다.",
   "placementCode.pathAbsolute": "이것은 호스트의 전체 경로입니다. 여기서 경로는 Host Data에서 시작하므로 거기까지의 부분을 빼거나 rest:, s3:, rclone: 같은 restic 원격을 쓰세요.",
   "placementCode.pathOutside": "이 경로는 Host Data 밖으로 나갑니다. 그 안의 경로나 rest:, s3:, rclone: 같은 restic 원격을 입력하세요.",
+  "placementCode.locationPasswordHidden": "이 위치의 비밀번호는 숨겨져 있으며 해당 서버에만 사용됩니다. 다른 서버를 쓰려면 비밀번호를 포함한 위치 전체를 입력하세요.",
+  "placementCode.locationDash": "저장 위치의 호스트나 rclone 리모트는 대시로 시작할 수 없습니다. 실제 이름을 입력하세요.",
+  "placementCode.linkOutOfMount": "이 경로 위의 링크가 Host Data 밖으로 나가므로 이를 통해 읽거나 쓰지 않습니다. 링크를 제거하거나 다른 경로를 선택하세요.",
   "placementCode.pathAbsoluteTo": "이것은 호스트의 전체 경로입니다. 여기서 경로는 Host Data에서 시작하므로 대신 {path}를 입력하거나 rest:, s3:, rclone: 같은 restic 원격을 쓰세요.",
 
   // Warnings

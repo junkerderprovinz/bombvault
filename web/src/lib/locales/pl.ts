@@ -3334,6 +3334,9 @@ const pl: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Folder przywracania musi być folderem na tym hoście, pod Host Data.",
   "placementCode.pathAbsolute": "To pełna ścieżka na hoście. Ścieżki zaczynają się tu od Host Data, więc pomiń część do tego miejsca albo użyj zdalnego miejsca restic, takiego jak rest:, s3: lub rclone:.",
   "placementCode.pathOutside": "Ta ścieżka wychodzi poza Host Data. Podaj ścieżkę w jego obrębie albo zdalne miejsce restic, takie jak rest:, s3: lub rclone:.",
+  "placementCode.locationPasswordHidden": "Hasło tej lokalizacji jest ukryte i zostaje przy jej serwerze. Aby użyć innego serwera, wpisz całą lokalizację z hasłem.",
+  "placementCode.locationDash": "Host lub zdalne miejsce rclone lokalizacji nie może zaczynać się od myślnika. Podaj prawdziwą nazwę.",
+  "placementCode.linkOutOfMount": "Dowiązanie nad tą ścieżką wychodzi poza Host Data, więc nic nie jest przez nie odczytywane ani zapisywane. Usuń dowiązanie albo wybierz inną ścieżkę.",
   "placementCode.pathAbsoluteTo": "To pełna ścieżka na hoście. Ścieżki zaczynają się tu od Host Data, więc zamiast niej wpisz {path} albo użyj zdalnego miejsca restic, takiego jak rest:, s3: lub rclone:.",
 
   // Warnings

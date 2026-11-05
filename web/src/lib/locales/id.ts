@@ -3347,6 +3347,9 @@ const id: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Folder pemulihan harus berupa folder di host ini, di bawah Host Data.",
   "placementCode.pathAbsolute": "Ini path lengkap di host. Path di sini dimulai dari Host Data, jadi hilangkan bagian sampai ke sana, atau gunakan remote restic seperti rest:, s3: atau rclone:.",
   "placementCode.pathOutside": "Path ini keluar dari Host Data. Masukkan path di dalamnya atau remote restic seperti rest:, s3: atau rclone:.",
+  "placementCode.locationPasswordHidden": "Kata sandi lokasi ini disembunyikan dan tetap bersama servernya. Untuk memakai server lain, ketik seluruh lokasi beserta kata sandinya.",
+  "placementCode.locationDash": "Host atau remote rclone dari lokasi penyimpanan tidak boleh diawali tanda hubung. Masukkan nama aslinya.",
+  "placementCode.linkOutOfMount": "Tautan di atas path ini keluar dari Host Data, jadi tidak ada yang dibaca atau ditulis melaluinya. Hapus tautan itu atau pilih path lain.",
   "placementCode.pathAbsoluteTo": "Ini path lengkap di host. Path di sini dimulai dari Host Data, jadi masukkan {path} sebagai gantinya, atau gunakan remote restic seperti rest:, s3: atau rclone:.",
 
   // Warnings

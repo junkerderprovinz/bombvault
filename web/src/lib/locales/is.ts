@@ -3347,6 +3347,9 @@ const is: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Endurheimtarmappa verður að vera mappa á þessum hýsli, undir Host Data.",
   "placementCode.pathAbsolute": "Þetta er fullur slóði á hýslinum. Slóðar hér byrja í Host Data, svo slepptu hlutanum þangað eða notaðu restic-fjartengingu eins og rest:, s3: eða rclone:.",
   "placementCode.pathOutside": "Þessi slóði liggur út úr Host Data. Sláðu inn slóða innan þess eða restic-fjartengingu eins og rest:, s3: eða rclone:.",
+  "placementCode.locationPasswordHidden": "Lykilorð þessarar staðsetningar er falið og fylgir netþjóni hennar. Til að nota annan netþjón skaltu slá inn alla staðsetninguna með lykilorðinu.",
+  "placementCode.locationDash": "Hýsill eða rclone-fjartenging geymslustaðar getur ekki byrjað á bandstriki. Sláðu inn rétta nafnið.",
+  "placementCode.linkOutOfMount": "Tengill fyrir ofan þennan slóða liggur út úr Host Data, svo ekkert er lesið eða skrifað í gegnum hann. Fjarlægðu tengilinn eða veldu annan slóða.",
   "placementCode.pathAbsoluteTo": "Þetta er fullur slóði á hýslinum. Slóðar hér byrja í Host Data, svo sláðu inn {path} í staðinn eða notaðu restic-fjartengingu eins og rest:, s3: eða rclone:.",
 
   // Warnings

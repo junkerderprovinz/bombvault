@@ -3337,6 +3337,9 @@ const sv: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "En återställningsmapp måste vara en mapp på den här värden, under Host Data.",
   "placementCode.pathAbsolute": "Det här är en fullständig sökväg på värden. Sökvägar här börjar vid Host Data, så utelämna delen dit, eller använd en restic-fjärrplats som rest:, s3: eller rclone:.",
   "placementCode.pathOutside": "Den här sökvägen leder ut ur Host Data. Ange en sökväg inuti den eller en restic-fjärrplats som rest:, s3: eller rclone:.",
+  "placementCode.locationPasswordHidden": "Lösenordet för den här platsen är dolt och stannar hos sin server. Skriv hela platsen med lösenordet för att använda en annan server.",
+  "placementCode.locationDash": "Värden eller rclone-fjärrplatsen för en lagringsplats kan inte börja med ett bindestreck. Ange det riktiga namnet.",
+  "placementCode.linkOutOfMount": "En länk ovanför den här sökvägen leder ut ur Host Data, så inget läses eller skrivs genom den. Ta bort länken eller välj en annan sökväg.",
   "placementCode.pathAbsoluteTo": "Det här är en fullständig sökväg på värden. Sökvägar här börjar vid Host Data, så skriv {path} i stället, eller använd en restic-fjärrplats som rest:, s3: eller rclone:.",
 
   // Warnings

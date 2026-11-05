@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -121,6 +122,12 @@ type peerRoleAsk struct {
 	Sections []string `json:"sections"`
 	Store    string   `json:"store,omitempty"`
 	Renew    bool     `json:"renew"`
+	peerProof
+}
+
+// signed spells what the ask says, for its claim.
+func (a peerRoleAsk) signed() []byte {
+	return callPayload(a.Name, a.Role, strings.Join(a.Sections, ","), a.Store, strconv.FormatBool(a.Renew))
 }
 
 // peerRoleState is the answer to an ask: where the request stands here.
@@ -164,6 +171,10 @@ func (s *Service) handlePeerRoleAsk(w http.ResponseWriter, r *http.Request) {
 	asker, ok := s.roleAsker(r)
 	if !ok {
 		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), asker, keydeposit.ProofRoleAsk, in.signed(), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
 	sections, where, msg := checkRoleAsk(in.Role, in.Sections, in.Store)
@@ -306,6 +317,9 @@ func (s *Service) sendRoleAsk(ctx context.Context, req store.RoleRequest, renew 
 		return "", err
 	}
 	ask := peerRoleAsk{Name: instanceDisplayName(settings), Role: req.Role, Sections: req.Sections, Store: req.Store, Renew: renew}
+	if ask.peerProof, err = s.signCall(keydeposit.ProofRoleAsk, req.MemberID, ask.signed()); err != nil {
+		return "", err
+	}
 	var ans peerRoleState
 	if err := s.callMember(ctx, req.MemberID, http.MethodPost, "/api/group/peer/roles/ask", ask, &ans); err != nil {
 		return "", err

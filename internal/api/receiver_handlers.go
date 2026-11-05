@@ -73,7 +73,7 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 	return receivedRepoView{
 		ID:                rr.ID,
 		Name:              rr.Name,
-		Repo:              rr.Repo,
+		Repo:              scrubRepoLocation(rr.Repo),
 		DeadManHours:      rr.DeadManHours,
 		CheckCadence:      rr.CheckCadence,
 		ReadDataPercent:   rr.ReadDataPercent,
@@ -113,6 +113,10 @@ func (h *Handler) buildReceivedRepo(ctx context.Context, in receivedRepoInput, e
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
 		return store.ReceivedRepo{}, nil, "repo must not be empty"
+	}
+	repo, err := unhideLocation(repo, existing.Repo)
+	if err != nil {
+		return store.ReceivedRepo{}, nil, err.Error()
 	}
 
 	rr := existing

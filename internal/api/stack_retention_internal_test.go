@@ -21,6 +21,17 @@ type stackEngine struct {
 	snaps     []restic.Snapshot
 	forgets   []stackForget
 	prunes    int
+	restored  int
+}
+
+func (e *stackEngine) RestorePath(context.Context, string, string, string, restic.Mode) error {
+	e.restored++
+	return nil
+}
+
+func (e *stackEngine) RestoreSubtreeTo(context.Context, string, string, string, string, restic.Mode) error {
+	e.restored++
+	return nil
 }
 
 type stackForget struct {

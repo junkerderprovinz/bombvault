@@ -3337,6 +3337,9 @@ const da: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "En gendannelsesmappe skal være en mappe på denne vært, under Host Data.",
   "placementCode.pathAbsolute": "Det er en fuld sti på værten. Stier her starter ved Host Data, så udelad delen dertil, eller brug et restic-fjernlager som rest:, s3: eller rclone:.",
   "placementCode.pathOutside": "Denne sti fører ud af Host Data. Angiv en sti inden i den eller et restic-fjernlager som rest:, s3: eller rclone:.",
+  "placementCode.locationPasswordHidden": "Adgangskoden til denne placering er skjult og bliver hos sin server. Skriv hele placeringen med adgangskoden for at bruge en anden server.",
+  "placementCode.locationDash": "Værten eller rclone-fjernlageret for en lagerplacering kan ikke starte med en bindestreg. Angiv det rigtige navn.",
+  "placementCode.linkOutOfMount": "Et link over denne sti fører ud af Host Data, så intet læses eller skrives gennem det. Fjern linket, eller vælg en anden sti.",
   "placementCode.pathAbsoluteTo": "Det er en fuld sti på værten. Stier her starter ved Host Data, så skriv {path} i stedet, eller brug et restic-fjernlager som rest:, s3: eller rclone:.",
 
   // Warnings

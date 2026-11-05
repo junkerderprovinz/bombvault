@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -33,18 +32,16 @@ func anotherKeySection(key string) string {
 func TestAMeshOfferWhoseRepositorySpansLinesIsRefused(t *testing.T) {
 	f := encryptedFixture(t)
 	theirs := strings.Repeat("9", 64)
+	const member = "0123456789abcdef0123456789abcdef"
+	seed := pinnedSeed(t, f.st, member)
+	counter := time.Now().UnixMilli()
 	for name, offer := range map[string]meshOfferRequest{
 		"repository": {FromName: "attic", SuggestedDomain: "files", Repo: "rest:https://box:8000/files\n\n" + anotherKeySection(theirs), RESTUser: "bv", RESTPassword: "x"},
 		"name":       {FromName: "attic\r\n## Encryption", SuggestedDomain: "files", Repo: "rest:https://box:8000/files", RESTUser: "bv", RESTPassword: "x"},
 		"user":       {FromName: "attic", SuggestedDomain: "files", Repo: "rest:https://box:8000/files", RESTUser: "bv\nx", RESTPassword: "x"},
 	} {
-		body, err := json.Marshal(offer)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, answer := f.svc.servePeer(context.Background(), relay.ProxyCall{
-			Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: body, Sender: "0123456789abcdef0123456789abcdef",
-		})
+		counter++
+		_, answer := f.svc.servePeer(context.Background(), signedOfferCall(t, f.svc, seed, member, offer, counter))
 		var out struct {
 			OK bool `json:"ok"`
 		}

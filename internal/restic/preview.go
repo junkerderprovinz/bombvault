@@ -75,6 +75,9 @@ func (r Restic) RestorePreview(ctx context.Context, repo string, st PreviewStep,
 
 func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode, onItem func(PreviewItem)) error {
 	args := RestorePreviewArgs(repo, st, m)
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)

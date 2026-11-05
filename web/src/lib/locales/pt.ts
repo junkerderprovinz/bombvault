@@ -3337,6 +3337,9 @@ const pt: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Uma pasta de restauro tem de ser uma pasta neste anfitrião, sob Host Data.",
   "placementCode.pathAbsolute": "Este é um caminho completo no anfitrião. Aqui os caminhos começam em Host Data, por isso retira a parte até lá, ou usa um remoto restic como rest:, s3: ou rclone:.",
   "placementCode.pathOutside": "Este caminho sai de Host Data. Indica um caminho dentro dele ou um remoto restic como rest:, s3: ou rclone:.",
+  "placementCode.locationPasswordHidden": "A palavra-passe deste local está oculta e fica com o seu servidor. Para usar outro servidor, escreve o local completo com a palavra-passe.",
+  "placementCode.locationDash": "O anfitrião ou o remoto rclone de um local de armazenamento não pode começar por um hífen. Indica o nome real.",
+  "placementCode.linkOutOfMount": "Uma ligação acima deste caminho sai de Host Data, por isso nada é lido nem escrito através dela. Remove a ligação ou escolhe outro caminho.",
   "placementCode.pathAbsoluteTo": "Este é um caminho completo no anfitrião. Aqui os caminhos começam em Host Data, por isso escreve {path} em vez disso, ou usa um remoto restic como rest:, s3: ou rclone:.",
 
   // Warnings

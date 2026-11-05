@@ -209,3 +209,53 @@ func TestResolveAndWithinIdentityRoot(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckStoredPathRefusesALinkAboveThePathThatLeavesTheRoot(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "root")
+	outside := filepath.Join(base, "outside")
+	for _, dir := range []string{filepath.Join(root, "appdata"), filepath.Join(root, "real", "app"), filepath.Join(outside, "app")} {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "appdata", "escape")); err != nil {
+		t.Skipf("no symlinks here: %v", err)
+	}
+	if err := os.Symlink(filepath.Join(root, "real"), filepath.Join(root, "appdata", "inside")); err != nil {
+		t.Fatal(err)
+	}
+
+	for stored, want := range map[string]error{
+		filepath.Join(root, "appdata", "escape", "app"):     paths.ErrLinkEscape,
+		filepath.Join(root, "appdata", "escape", "not-yet"): paths.ErrLinkEscape,
+		filepath.Join(root, "appdata", "inside", "app"):     nil,
+		filepath.Join(root, "real", "app"):                  nil,
+		filepath.Join(root, "not", "there", "yet"):          nil,
+		filepath.Join(outside, "app"):                       nil,
+	} {
+		if err := paths.CheckStoredPath(filepath.ToSlash(root), filepath.ToSlash(stored)); !errors.Is(err, want) {
+			t.Errorf("CheckStoredPath(%s) = %v, want %v", stored, err, want)
+		}
+	}
+}
+
+func TestEmptyOrMissing(t *testing.T) {
+	dir := t.TempDir()
+	if !paths.EmptyOrMissing(filepath.Join(dir, "not-there")) {
+		t.Error("a missing folder should count")
+	}
+	if !paths.EmptyOrMissing(dir) {
+		t.Error("an empty folder should count")
+	}
+	file := filepath.Join(dir, "file")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if paths.EmptyOrMissing(dir) {
+		t.Error("a folder that holds a file should not count")
+	}
+	if paths.EmptyOrMissing(file) {
+		t.Error("a file should not count")
+	}
+}

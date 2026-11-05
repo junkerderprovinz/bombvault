@@ -3347,6 +3347,9 @@ const gl: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Un cartafol de restauración ten que ser un cartafol deste equipo, baixo Host Data.",
   "placementCode.pathAbsolute": "Isto é unha ruta completa do equipo. Aquí as rutas comezan en Host Data, así que quita a parte ata alí ou usa un remoto de restic como rest:, s3: ou rclone:.",
   "placementCode.pathOutside": "Esta ruta sae de Host Data. Escribe unha ruta dentro ou un remoto de restic como rest:, s3: ou rclone:.",
+  "placementCode.locationPasswordHidden": "O contrasinal deste lugar está oculto e queda co seu servidor. Para usar outro servidor, escribe o lugar completo co seu contrasinal.",
+  "placementCode.locationDash": "O host ou o remoto de rclone dun lugar de almacenamento non pode comezar cun guión. Escribe o seu nome real.",
+  "placementCode.linkOutOfMount": "Unha ligazón por riba desta ruta sae de Host Data, así que non se le nin se escribe nada a través dela. Quita a ligazón ou escolle outra ruta.",
   "placementCode.pathAbsoluteTo": "Isto é unha ruta completa do equipo. Aquí as rutas comezan en Host Data, así que escribe {path}, ou usa un remoto de restic como rest:, s3: ou rclone:.",
 
   // Warnings

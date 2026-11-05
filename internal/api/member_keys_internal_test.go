@@ -159,3 +159,78 @@ func TestTheOwnerForgetsAMembersKeyAndRemovingOrLeavingDropsIt(t *testing.T) {
 		t.Fatalf("leaving the group left a member's key: %d", code)
 	}
 }
+
+// pinnedRoleSeed makes up a signing key for member and pins it at in.
+func pinnedRoleSeed(t *testing.T, in *instance, member string) []byte {
+	t.Helper()
+	seed, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := in.st.PinMemberKey(member, keydeposit.OwnerKey(seed)); err != nil {
+		t.Fatal(err)
+	}
+	return seed
+}
+
+// signedRoleAsk is ask as member sends it to in, signed with seed.
+func signedRoleAsk(t *testing.T, in *instance, seed []byte, member string, ask peerRoleAsk, counter int64) peerRoleAsk {
+	t.Helper()
+	claim := keydeposit.Claim{Action: keydeposit.ProofRoleAsk, OwnerID: member, KeeperID: in.id(t), Counter: counter, Deposit: ask.signed()}
+	ask.peerProof = peerProof{Key: keydeposit.OwnerKey(seed), Counter: counter, Proof: keydeposit.Prove(seed, claim)}
+	return ask
+}
+
+func TestARoleAskNeedsTheKeyOfTheMemberNamed(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	const member = "0123456789abcdef0123456789abcdef"
+	ask := func(body peerRoleAsk) map[string]any {
+		t.Helper()
+		return peerCallAs(t, in, member, "/api/group/peer/roles/ask", body)
+	}
+	wide := peerRoleAsk{Name: "tower", Role: store.RoleFetcher, Sections: []string{"containers", "vms"}}
+	narrow := peerRoleAsk{Name: "tower", Role: store.RoleFetcher, Sections: []string{"containers"}}
+	now := time.Now().UnixMilli()
+
+	if out := ask(wide); out["ok"] != false {
+		t.Errorf("an unsigned ask = %v, want it refused", out)
+	}
+	if roleRequestCount(t, in) != 0 {
+		t.Fatal("an unsigned ask left a request behind")
+	}
+
+	seed := pinnedRoleSeed(t, in, member)
+	forger, err := keydeposit.NewOwnerSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out := ask(signedRoleAsk(t, in, forger, member, wide, now)); out["ok"] != false {
+		t.Errorf("an ask signed with another key = %v, want it refused", out)
+	}
+	if out := ask(signedRoleAsk(t, in, seed, member, wide, now+1)); out["ok"] != true {
+		t.Fatalf("the member's own ask = %v", out)
+	}
+	asked, _, err := in.st.FindRoleRequest(store.RoleRequestIn, member, store.RoleFetcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := in.st.DecideRoleRequest(asked.ID, store.RoleDecision{State: store.RoleAllowed, Sections: asked.Sections}); err != nil {
+		t.Fatal(err)
+	}
+
+	if out := ask(signedRoleAsk(t, in, forger, member, narrow, now+2)); out["ok"] != false {
+		t.Errorf("a forged narrower ask = %v, want it refused", out)
+	}
+	signedWide := signedRoleAsk(t, in, seed, member, wide, now+3)
+	signedWide.Sections = []string{"containers"}
+	if out := ask(signedWide); out["ok"] != false {
+		t.Errorf("a signed ask with other sections put in = %v, want it refused", out)
+	}
+	req, _, err := in.st.FindRoleRequest(store.RoleRequestIn, member, store.RoleFetcher)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(req.Sections) != 2 {
+		t.Errorf("sections = %v, want the member's own two", req.Sections)
+	}
+}

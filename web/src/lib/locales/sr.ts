@@ -3331,6 +3331,9 @@ const sr: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Фасцикла за враћање мора бити фасцикла на овом домаћину, под Host Data.",
   "placementCode.pathAbsolute": "Ово је пуна путања на домаћину. Путање овде почињу од Host Data, па изостави део до тамо или користи restic удаљену локацију као rest:, s3: или rclone:.",
   "placementCode.pathOutside": "Ова путања води ван Host Data. Унеси путању унутар њега или restic удаљену локацију као rest:, s3: или rclone:.",
+  "placementCode.locationPasswordHidden": "Лозинка ове локације је скривена и остаје уз њен сервер. За други сервер унеси целу локацију са лозинком.",
+  "placementCode.locationDash": "Хост или rclone удаљена локација места за складиштење не може почињати цртицом. Унеси право име.",
+  "placementCode.linkOutOfMount": "Веза изнад ове путање води ван Host Data, па се кроз њу ништа не чита ни не пише. Уклони везу или изабери другу путању.",
   "placementCode.pathAbsoluteTo": "Ово је пуна путања на домаћину. Путање овде почињу од Host Data, па уместо тога унеси {path} или користи restic удаљену локацију као rest:, s3: или rclone:.",
 
   // Warnings

@@ -141,6 +141,9 @@ func (s *Service) ExportContainer(ctx context.Context, name string) (string, err
 		return "", fmt.Errorf("inspect container: %w", err)
 	}
 	appdata := s.effectiveBackupPaths(name, in)
+	if err := s.refuseLinkOutOfMount(appdata); err != nil {
+		return "", err
+	}
 
 	if xml, ok, _ := template.Read(s.cfg.FlashTemplatesDir, name); ok && xml != "" {
 		if _, err := writeExportFile(filepath.Join(dir, name+".xml"), []byte(xml), recipients); err != nil {

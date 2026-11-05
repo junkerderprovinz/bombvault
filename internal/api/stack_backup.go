@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
 
@@ -74,6 +75,9 @@ func (s *Service) backupStackDir(ctx context.Context, project, dir string) error
 	}
 	mode := s.primaryModeFor(settings, "containers", repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
+		return fmt.Errorf("stack %s: %w", project, err)
+	}
+	if err := s.refuseLinkOutOfMount([]string{dir}); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
 	tag := stackSnapshotTag(project)
@@ -168,6 +172,14 @@ func (s *Service) RestoreStackDir(ctx context.Context, project, source string) (
 	}
 	if !d.found || len(d.snap.Paths) == 0 {
 		return false, nil
+	}
+	// The recorded path comes from the repository, which is less to be trusted than
+	// what is stored here, as for the mapped paths of a container restore.
+	if !paths.Within(s.cfg.HostMountRoot, d.snap.Paths[0]) {
+		return false, fmt.Errorf("restore stack %s: the backup names a path outside the host mount, so refusing to restore", project)
+	}
+	if err := s.refuseLinkOutOfMount(d.snap.Paths); err != nil {
+		return false, fmt.Errorf("restore stack %s: %w", project, err)
 	}
 	if err := s.engine.RestorePath(ctx, d.repo, d.snap.ID, d.snap.Paths[0], d.mode); err != nil {
 		return false, fmt.Errorf("restore stack %s: %w", project, err)

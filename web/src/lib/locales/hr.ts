@@ -3347,6 +3347,9 @@ const hr: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Mapa za vraćanje mora biti mapa na ovom računalu, pod Host Data.",
   "placementCode.pathAbsolute": "Ovo je puna putanja na računalu. Putanje ovdje počinju od Host Data, pa izostavite dio do tamo ili koristite restic udaljenu lokaciju poput rest:, s3: ili rclone:.",
   "placementCode.pathOutside": "Ova putanja vodi izvan Host Data. Unesite putanju unutar njega ili restic udaljenu lokaciju poput rest:, s3: ili rclone:.",
+  "placementCode.locationPasswordHidden": "Lozinka ove lokacije je skrivena i ostaje uz njezin poslužitelj. Za drugi poslužitelj unesite cijelu lokaciju s lozinkom.",
+  "placementCode.locationDash": "Host ili rclone udaljena lokacija mjesta za pohranu ne može počinjati crticom. Unesite pravi naziv.",
+  "placementCode.linkOutOfMount": "Poveznica iznad ove putanje vodi izvan Host Data, pa se kroz nju ništa ne čita ni ne piše. Uklonite poveznicu ili odaberite drugu putanju.",
   "placementCode.pathAbsoluteTo": "Ovo je puna putanja na računalu. Putanje ovdje počinju od Host Data, pa umjesto toga unesite {path} ili koristite restic udaljenu lokaciju poput rest:, s3: ili rclone:.",
 
   // Warnings

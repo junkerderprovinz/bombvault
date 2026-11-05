@@ -3328,6 +3328,9 @@ const zh: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "恢复文件夹必须是此主机上 Host Data 下的文件夹。",
   "placementCode.pathAbsolute": "这是主机上的完整路径。这里的路径从 Host Data 开始，请省略到那里为止的部分，或使用 rest:、s3: 或 rclone: 这样的 restic 远程位置。",
   "placementCode.pathOutside": "此路径超出了 Host Data。请输入其中的路径，或 rest:、s3: 或 rclone: 这样的 restic 远程位置。",
+  "placementCode.locationPasswordHidden": "此位置的密码已隐藏，并只用于其服务器。要使用其他服务器，请输入包含密码的完整位置。",
+  "placementCode.locationDash": "存储位置的主机或 rclone 远程不能以短横线开头。请输入其真实名称。",
+  "placementCode.linkOutOfMount": "此路径上方的链接超出了 Host Data，因此不会通过它读取或写入任何内容。请移除该链接或选择其他路径。",
   "placementCode.pathAbsoluteTo": "这是主机上的完整路径。这里的路径从 Host Data 开始，请改为输入 {path}，或使用 rest:、s3: 或 rclone: 这样的 restic 远程位置。",
 
   // Warnings

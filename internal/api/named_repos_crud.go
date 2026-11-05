@@ -100,7 +100,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 			n = -1
 		}
 		out = append(out, namedRepoView{
-			ID: t.ID, Name: t.Name, Repo: t.Repo, CredsRef: t.CredsRef,
+			ID: t.ID, Name: t.Name, Repo: scrubRepoLocation(t.Repo), CredsRef: t.CredsRef,
 			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
 			OffPremises: t.OffPremises, InUse: n,
@@ -113,19 +113,13 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 }
 
 // handleListNamedRepos serves GET /api/repos.
-func (h *Handler) handleListNamedRepos(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleListNamedRepos(w http.ResponseWriter, _ *http.Request) {
 	rows, err := h.store.ListNamedRepos()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	views := h.namedRepoViews(rows)
-	if isPaired(r) {
-		for i := range views {
-			views[i].Repo = scrubRepoLocation(views[i].Repo)
-		}
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repos": views})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "repos": h.namedRepoViews(rows)})
 }
 
 // namedRepoBody is the create/update payload. Pointers on update so a form that
@@ -201,6 +195,9 @@ func staticNamedRepoRefusals(loc, mountRoot, sourceRoot string) error {
 	loc = strings.TrimSpace(loc)
 	if loc == "" {
 		return errLocationNeeded
+	}
+	if err := restic.CheckLocation(loc); err != nil {
+		return err
 	}
 	// "BackBlaze:bucket/cold" is an rclone REMOTE NAME, not a restic location:
 	// restic does not know that scheme, so it would be taken for a relative path
@@ -372,6 +369,14 @@ func (h *Handler) handleUpdateNamedRepo(w http.ResponseWriter, r *http.Request) 
 			placementFail(w, errMirroredField, map[string]any{"fields": fields})
 			return
 		}
+	}
+	if body.Repo != nil {
+		restored, err := unhideLocation(*body.Repo, row.Repo)
+		if err != nil {
+			placementFail(w, err, nil)
+			return
+		}
+		body.Repo = &restored
 	}
 	current := strings.TrimSpace(row.Repo)
 	moving := body.Repo != nil && strings.TrimSpace(*body.Repo) != current

@@ -51,7 +51,7 @@ func pullSourceToView(ps store.PullSource) pullSourceView {
 	v := pullSourceView{
 		ID:              ps.ID,
 		Name:            ps.Name,
-		Repo:            ps.Repo,
+		Repo:            scrubRepoLocation(ps.Repo),
 		CredsRef:        ps.CredsRef,
 		Domain:          ps.Domain,
 		Cadence:         ps.Cadence,
@@ -84,6 +84,10 @@ func (h *Handler) buildPullSource(ctx context.Context, in pullSourceInput, exist
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
 		return store.PullSource{}, nil, "the repository location must not be empty"
+	}
+	repo, err := unhideLocation(repo, existing.Repo)
+	if err != nil {
+		return store.PullSource{}, nil, err.Error()
 	}
 	if isRcloneLocation(repo) {
 		return store.PullSource{}, nil, "an rclone: location cannot be a pull source, because rclone would reach it with THIS instance's remotes. Use the repository's own address (rest:, s3:, sftp: or b2:) and its own credentials"

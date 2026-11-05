@@ -3338,6 +3338,9 @@ const th: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "โฟลเดอร์กู้คืนต้องเป็นโฟลเดอร์บนโฮสต์นี้ ใต้ Host Data",
   "placementCode.pathAbsolute": "นี่คือพาธเต็มบนโฮสต์ พาธที่นี่เริ่มที่ Host Data จึงให้ตัดส่วนจนถึงตรงนั้นออก หรือใช้รีโมตของ restic เช่น rest:, s3: หรือ rclone:",
   "placementCode.pathOutside": "พาธนี้ออกไปนอก Host Data ให้ใส่พาธภายใน หรือรีโมตของ restic เช่น rest:, s3: หรือ rclone:",
+  "placementCode.locationPasswordHidden": "รหัสผ่านของตำแหน่งนี้ถูกซ่อนและอยู่กับเซิร์ฟเวอร์ของมัน หากต้องการใช้เซิร์ฟเวอร์อื่น ให้พิมพ์ตำแหน่งทั้งหมดพร้อมรหัสผ่าน",
+  "placementCode.locationDash": "โฮสต์หรือรีโมต rclone ของตำแหน่งจัดเก็บขึ้นต้นด้วยขีดกลางไม่ได้ ให้ใส่ชื่อจริง",
+  "placementCode.linkOutOfMount": "ลิงก์เหนือพาธนี้ออกไปนอก Host Data จึงไม่มีการอ่านหรือเขียนผ่านลิงก์นั้น ให้ลบลิงก์หรือเลือกพาธอื่น",
   "placementCode.pathAbsoluteTo": "นี่คือพาธเต็มบนโฮสต์ พาธที่นี่เริ่มที่ Host Data จึงให้ใส่ {path} แทน หรือใช้รีโมตของ restic เช่น rest:, s3: หรือ rclone:",
 
   // Warnings

@@ -3335,6 +3335,9 @@ const es: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Una carpeta de restauración tiene que ser una carpeta de este equipo, bajo Host Data.",
   "placementCode.pathAbsolute": "Esto es una ruta completa del equipo. Aquí las rutas empiezan en Host Data, así que quita la parte hasta allí o usa un remoto de restic como rest:, s3: o rclone:.",
   "placementCode.pathOutside": "Esta ruta sale de Host Data. Escribe una ruta dentro o un remoto de restic como rest:, s3: o rclone:.",
+  "placementCode.locationPasswordHidden": "La contraseña de esta ubicación está oculta y se queda con su servidor. Para usar otro servidor, escribe la ubicación completa con su contraseña.",
+  "placementCode.locationDash": "El host o el remoto de rclone de una ubicación de almacenamiento no puede empezar por un guion. Escribe su nombre real.",
+  "placementCode.linkOutOfMount": "Un enlace por encima de esta ruta sale de Host Data, así que no se lee ni se escribe nada a través de él. Quita el enlace o elige otra ruta.",
   "placementCode.pathAbsoluteTo": "Esto es una ruta completa del equipo. Aquí las rutas empiezan en Host Data, así que escribe {path}, o usa un remoto de restic como rest:, s3: o rclone:.",
 
   // Warnings

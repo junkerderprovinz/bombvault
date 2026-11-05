@@ -22,6 +22,9 @@ func LsNoLockArgs(repo, snapshotID string, m Mode) []string {
 // LsStreamNoLock is LsStream without a repository lock.
 func (r Restic) LsStreamNoLock(ctx context.Context, repo, snapshotID string, m Mode, onEntry func(FileEntry)) error {
 	args := LsNoLockArgs(repo, snapshotID, m)
+	if err := checkRepoArgs(args); err != nil {
+		return err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)
@@ -49,6 +52,9 @@ type DiffChange struct {
 // however large the snapshots are.
 func (r Restic) DiffStream(ctx context.Context, repo, snap1, snap2 string, m Mode, onChange func(DiffChange)) (DiffResult, error) {
 	args := DiffArgs(repo, snap1, snap2, m)
+	if err := checkRepoArgs(args); err != nil {
+		return DiffResult{}, err
+	}
 	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
 	configureProcGroup(cmd)
 	cmd.Env = r.authEnv(m)

@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import {
   flashDownloadURL,
   listDbDumps,
-  openedAsPairedPhone,
   listSnapshotFiles,
   listSnapshotFilesFileSet,
   listSnapshotFilesZFS,
@@ -48,7 +47,7 @@ import {
   type RestoreWhat,
   type RestoreWhere,
 } from "../../lib/restorePlan";
-import { secretsSentence } from "../../lib/secretsRefusal";
+import { flashZipRefusal, secretsSentence } from "../../lib/secretsRefusal";
 import { SNAPSHOT_MISSING, autoMark, newestId, sourceOfPlace } from "../../lib/timeline";
 import { useToast } from "../../lib/toast";
 import { useOpenAnomalies } from "../../lib/useAnomalies";
@@ -767,12 +766,11 @@ function RestoreForm({
   }
 
   const listed = what === "dumps" || what === "plugins";
-  // A paired phone's session is refused the download.
-  const downloadRefused = where === "zip" && openedAsPairedPhone();
+  const zipRefused = where === "zip" ? flashZipRefusal(t) : undefined;
   const blockReason = blockedByOther
     ? t(busyPhraseKey(running.phase, running.stage))
-    : downloadRefused
-      ? t("restoreMany.flashOwnLogin")
+    : zipRefused
+      ? zipRefused
     : what === "files" && picked.size === 0
       ? t("files.selectHint")
       : where === "folder" && folder.trim() === ""
@@ -842,7 +840,7 @@ function RestoreForm({
               glyph={where === "zip" ? <IconDownload /> : <IconRestore />}
               tone="accent"
               onClick={() => void begin()}
-              disabled={!choice || blockedByOther || downloadRefused || !check.ready || preparing}
+              disabled={!choice || blockedByOther || zipRefused !== undefined || !check.ready || preparing}
               busy={preparing}
               hint={blockReason}
             />
@@ -1117,6 +1115,7 @@ function RestoreForm({
               )}
 
               <RestoreCheckPanel check={checkComing ? { ...check, state: { phase: "running" } } : check} t={t} />
+              {zipRefused && <p className="text-sm text-statusWarn">{zipRefused}</p>}
               {where && (
                 <WhatHappens
                   kind={kind}

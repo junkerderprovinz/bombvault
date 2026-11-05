@@ -3337,6 +3337,9 @@ const he: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "תיקיית שחזור חייבת להיות תיקייה במארח הזה, תחת Host Data.",
   "placementCode.pathAbsolute": "זה נתיב מלא במארח. הנתיבים כאן מתחילים ב־Host Data, אז צריך להשמיט את החלק עד שם, או להשתמש במרוחק של restic כמו rest:, s3: או rclone:.",
   "placementCode.pathOutside": "הנתיב הזה יוצא מ־Host Data. צריך להזין נתיב בתוכו או מרוחק של restic כמו rest:, s3: או rclone:.",
+  "placementCode.locationPasswordHidden": "הסיסמה של המיקום הזה מוסתרת ונשארת עם השרת שלו. כדי להשתמש בשרת אחר, צריך להקליד את כל המיקום עם הסיסמה.",
+  "placementCode.locationDash": "המארח או המרוחק של rclone במיקום אחסון לא יכול להתחיל במקף. צריך להזין את השם האמיתי.",
+  "placementCode.linkOutOfMount": "קישור מעל הנתיב הזה יוצא מ־Host Data, ולכן שום דבר לא נקרא או נכתב דרכו. צריך להסיר את הקישור או לבחור נתיב אחר.",
   "placementCode.pathAbsoluteTo": "זה נתיב מלא במארח. הנתיבים כאן מתחילים ב־Host Data, אז צריך להזין {path} במקום, או להשתמש במרוחק של restic כמו rest:, s3: או rclone:.",
 
   // Warnings

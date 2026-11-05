@@ -22,6 +22,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     getTimelinePlace: vi.fn(),
     cancelRestore: vi.fn(),
     openedAsPairedPhone: vi.fn(() => false),
+    openedWithoutPassword: vi.fn(() => false),
   };
 });
 
@@ -462,5 +463,13 @@ describe("a flash backup", () => {
     open([item("flash", { kind: "flash", name: "flash" })]);
     await waitFor(() => expect(entry("lash").textContent).toContain(en["restoreMany.flashOwnLogin"]));
     expect(within(entry("lash")).queryByRole("button", { name: en["tile.info.download"] })).toBeNull();
+  });
+
+  it("tells a server without a password to set one first, in the words of the recovery kit", async () => {
+    vi.mocked(api.openedWithoutPassword).mockReturnValue(true);
+    open([item("flash", { kind: "flash", name: "flash" })]);
+    await waitFor(() => expect(entry("lash").textContent).toContain(en["secrets.passwordNotSet"]));
+    expect(within(entry("lash")).queryByRole("button", { name: en["tile.info.download"] })).toBeNull();
+    vi.mocked(api.openedWithoutPassword).mockReturnValue(false);
   });
 });

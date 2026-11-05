@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -457,6 +458,9 @@ func TestRestoreStackBlocksDependentOnFailedDependency(t *testing.T) {
 // from B2, and so does the project folder unless stackDirSource names another
 // place.
 func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("paths.Within only reads Linux paths")
+	}
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, FlashTemplatesDir: filepath.Join(dir, "flash")}
 	st := newMemStore(t)
@@ -484,13 +488,13 @@ func TestRestoreStackTakesTheProjectFolderFromTheSourceItIsGiven(t *testing.T) {
 	seedStackTarget(t, st, "/host/user", "svc-a", "media", "a", "")
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{
 		{ID: "aaaa1111", Time: "2026-09-18T03:00:00Z", Tags: []string{"container:svc-a"}},
-		{ID: "eeee5555", Time: "2026-09-18T03:00:00Z", Tags: []string{"stack:media"}, Paths: []string{"/appdata/media"}},
+		{ID: "eeee5555", Time: "2026-09-18T03:00:00Z", Tags: []string{"stack:media"}, Paths: []string{dir + "/appdata/media"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
 
 	for _, c := range []struct{ dirSource, want string }{
-		{"", "s3:host/b2:eeee5555:/appdata/media"},
-		{"local", local + ":eeee5555:/appdata/media"},
+		{"", "s3:host/b2:eeee5555:" + dir + "/appdata/media"},
+		{"local", local + ":eeee5555:" + dir + "/appdata/media"},
 	} {
 		eng.restored = nil
 		if _, err := svc.RestoreStack(context.Background(), "media", "offsite:"+b2.ID, c.dirSource, false, true); err != nil {

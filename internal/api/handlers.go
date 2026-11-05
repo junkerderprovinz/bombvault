@@ -1578,6 +1578,12 @@ func (h *Handler) handleRestoreCheck(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
+	// The dry run names what the target holds beyond the backup. A paired phone
+	// restores only into a new or empty folder, so it has no use for that list.
+	if isPaired(r) && h.svc.targetHoldsFiles(req.TargetPath) {
+		refusePaired(w)
+		return
+	}
 	req.Source = normalizeSource(req.Source)
 	res, err := h.svc.CheckRestore(r.Context(), req)
 	if err != nil {
@@ -2725,13 +2731,13 @@ func clampHealthTimeoutSec(sec int) int {
 // so everything below would otherwise go to any host on the LAN unauthenticated.
 // Two different treatments, because the two fields are not the same kind of thing:
 //
-//   - The off-site LOCATIONS are scrubbed, not blanked. scrubRepoLocation's own
-//     doc comment settles it: a location is not itself a secret, "which bucket a
+//   - The LOCATIONS, a section's own path as well as its off-site one, are
+//     scrubbed, not blanked. A location is not itself a secret, "which bucket a
 //     box replicates to is the portable part", but it CAN carry one, because
 //     restic accepts rest:https://user:pass@host/repo. Blanking would take the
 //     wizard's backend inference, its cron snippet and the plain answer to "where
-//     does my off-site copy live" with it. A location that comes back on PUT still
-//     carrying the marker keeps the stored one.
+//     does my off-site copy live" with it. A location that comes back on PUT with
+//     the marker keeps the stored password (unhideLocation).
 //   - The HOOKS are blanked, with ...Set reporting presence, because a hook's
 //     whole value is often the secret (a healthchecks.io ping is a UUID). The
 //     settings export already blanks them for exactly this reason
@@ -2739,12 +2745,9 @@ func clampHealthTimeoutSec(sec int) int {
 //     did not. Blank on PUT keeps the stored command, and the ...Clear flags
 //     remove one.
 func scrubGetSettingsSecrets(v settingsView) settingsView {
-	v.ContainersOffsite = scrubRepoLocation(v.ContainersOffsite)
-	v.VMsOffsite = scrubRepoLocation(v.VMsOffsite)
-	v.FlashOffsite = scrubRepoLocation(v.FlashOffsite)
-	v.ConfigOffsite = scrubRepoLocation(v.ConfigOffsite)
-	v.FilesOffsite = scrubRepoLocation(v.FilesOffsite)
-	v.ZFSOffsite = scrubRepoLocation(v.ZFSOffsite)
+	for _, f := range settingsLocationFields(&v, store.Settings{}) {
+		*f.incoming = scrubRepoLocation(*f.incoming)
+	}
 	v.EverythingPreHook = ""
 	v.EverythingPostHook = ""
 	return v
@@ -2757,12 +2760,6 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	view := scrubGetSettingsSecrets(toView(s))
-	if isPaired(r) {
-		// A section's own path can be a remote location with its sign-in.
-		for _, p := range []*string{&view.ContainersPath, &view.VMsPath, &view.FlashPath, &view.ConfigPath, &view.FilesPath, &view.ZFSPath} {
-			*p = scrubRepoLocation(*p)
-		}
-	}
 	view.RestoreFolders = restoreFolders(s)
 	// Registry credentials (#106) live encrypted in the settings row, so toView
 	// (a pure store.Settings mapping) can't decode them — fill the view here.
@@ -2975,6 +2972,9 @@ func (h *Handler) settingsLocationRefusal(next, cur store.Settings) error {
 	if err := rejectInvalidSettingsPaths(v, h.cfg.HostMountRoot, h.cfg.HostSourceRoot); err != nil {
 		return err
 	}
+	if err := rejectOptionLikeSettingsLocations(v, cur); err != nil {
+		return err
+	}
 	if err := h.rejectSettingsPathOnNamedRepo(v, cur); err != nil {
 		return err
 	}
@@ -3172,6 +3172,14 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	revision := r.Header.Get(settingsRevisionHeader)
 	if revision != "" && settingsRevision(cur) != revision {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errSettingsStale, "settings-stale"))
+		return
+	}
+	if err := unhideSettingsLocations(&v, cur); err != nil {
+		placementFail(w, err, nil)
+		return
+	}
+	if err := rejectOptionLikeSettingsLocations(v, cur); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	if err := h.rejectSettingsPathOnNamedRepo(v, cur); err != nil {
@@ -6238,6 +6246,9 @@ func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
 // (restic dump). GET so it can be a plain link; non-destructive — the live /boot
 // is never touched. ?snapshot=<id> selects the snapshot ("" / "latest" = newest).
 func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, r, "downloading a flash backup") {
+		return
+	}
 	id := r.URL.Query().Get("snapshot")
 	// When export encryption is on, DownloadFlashZip age-seals the stream, so the
 	// attachment is <name>.zip.age and the browser must save it under that name.
@@ -6726,9 +6737,7 @@ func (h *Handler) handleListFileSets(w http.ResponseWriter, r *http.Request) {
 	placements := h.svc.listPlacements(r.Context(), "files", items)
 	for i := range views {
 		views[i].Placement = placements[views[i].ID]
-		if isPaired(r) {
-			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
-		}
+		views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "fileSets": views})
 }

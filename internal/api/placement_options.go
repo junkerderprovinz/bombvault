@@ -26,7 +26,7 @@ type excludedItem struct {
 type homeOption struct {
 	ID       string   `json:"id"` // "" = domain path
 	Name     string   `json:"name"`
-	Location string   `json:"location"` // as stored, never resolved
+	Location string   `json:"location"` // as stored with its password hidden, never resolved
 	Kind     homeKind `json:"kind"`     // domain, domain-remote, local
 	Scheme   string   `json:"scheme"`   // domain-remote: s3, b2, rest, sftp, ...
 }
@@ -95,14 +95,14 @@ func (s *Service) placementOptionsFor(domain string) (placementOptions, error) {
 
 func (s *Service) homeOptions(settings store.Settings, domain string, repos []store.OffsiteTarget, named map[string]store.OffsiteTarget) []homeOption {
 	path := domainPathRaw(domain, settings)
-	domainHome := homeOption{Location: path, Kind: s.homeKindOf(settings, domain, "", named)}
+	domainHome := homeOption{Location: scrubRepoLocation(path), Kind: s.homeKindOf(settings, domain, "", named)}
 	if domainHome.Kind == homeDomainRemote {
 		domainHome.Scheme, _, _ = strings.Cut(path, ":")
 	}
 	homes := []homeOption{domainHome}
 	for _, r := range repos {
 		if r.Enabled && s.homeKindOf(settings, domain, r.ID, named) == homeLocal {
-			homes = append(homes, homeOption{ID: r.ID, Name: r.Name, Location: r.Repo, Kind: homeLocal})
+			homes = append(homes, homeOption{ID: r.ID, Name: r.Name, Location: scrubRepoLocation(r.Repo), Kind: homeLocal})
 		}
 	}
 	return homes
@@ -153,11 +153,11 @@ func (s *Service) sendToOptions(settings store.Settings, p placementRead, repos 
 		if has && !d.Enabled {
 			continue
 		}
-		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: placementTargetName(t), Location: d.Repo})
+		out = append(out, sendToOption{Kind: homeDirect, RepoID: d.ID, TargetID: t.ID, Name: placementTargetName(t), Location: scrubRepoLocation(d.Repo)})
 	}
 	for _, r := range repos {
 		if r.Enabled && s.homeKindOf(settings, p.Domain, r.ID, named) == homeRemote {
-			out = append(out, sendToOption{Kind: homeRemote, RepoID: r.ID, Name: r.Name, Location: r.Repo})
+			out = append(out, sendToOption{Kind: homeRemote, RepoID: r.ID, Name: r.Name, Location: scrubRepoLocation(r.Repo)})
 		}
 	}
 	return out
@@ -286,8 +286,13 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "repo is required"})
 		return
 	}
-	targetID := r.URL.Query().Get("target")
-	if err := h.newLocationRefusal(domain, targetID, r.URL.Query().Get("repo"), r.URL.Query().Get("as")); err != nil {
+	targetID, as := r.URL.Query().Get("target"), r.URL.Query().Get("as")
+	loc, err := h.askedLocation(domain, targetID, r.URL.Query().Get("repo"), as)
+	if err != nil {
+		placementFail(w, err, map[string]any{"saveRefused": true})
+		return
+	}
+	if err := h.newLocationRefusal(domain, targetID, loc, as); err != nil {
 		placementFail(w, err, map[string]any{"saveRefused": true})
 		return
 	}
@@ -296,17 +301,20 @@ func (h *Handler) handleNewTargetPreview(w http.ResponseWriter, r *http.Request)
 		placementFail(w, err, nil)
 		return
 	}
-	pv.Held = h.svc.heldAtNewLocation(r.Context(), targetID, r.URL.Query().Get("repo"), pv.counted)
+	pv.Held = h.svc.heldAtNewLocation(r.Context(), targetID, loc, pv.counted)
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"preview": pv}))
 }
 
 // newLocationRefusal is the refusal a save of loc meets as the domain's
 // off-site field ("field") or as the target with the id ("target", "" for a
 // new one). The question before such a save asks it first, so it never opens
-// on a location the save refuses. Without as the location is not checked,
-// since what it becomes is not known.
+// on a location the save refuses. Without as only its shape is checked, since
+// what it becomes is not known.
 func (h *Handler) newLocationRefusal(domain, targetID, loc, as string) error {
 	loc = strings.TrimSpace(loc)
+	if err := restic.CheckLocation(loc); err != nil {
+		return err
+	}
 	switch as {
 	case "field":
 		cur, err := h.store.GetSettings()

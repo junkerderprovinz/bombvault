@@ -3334,6 +3334,9 @@ const uk: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Тека відновлення має бути текою на цьому хості, в Host Data.",
   "placementCode.pathAbsolute": "Це повний шлях на хості. Шляхи тут починаються від Host Data, тож приберіть частину до нього або використайте віддалене місце restic, наприклад rest:, s3: чи rclone:.",
   "placementCode.pathOutside": "Цей шлях виходить за межі Host Data. Вкажіть шлях усередині нього або віддалене місце restic, наприклад rest:, s3: чи rclone:.",
+  "placementCode.locationPasswordHidden": "Пароль цього розташування приховано, і він лишається при своєму сервері. Щоб використати інший сервер, введіть усе розташування разом із паролем.",
+  "placementCode.locationDash": "Хост або віддалене сховище rclone місця зберігання не може починатися з дефіса. Вкажіть справжню назву.",
+  "placementCode.linkOutOfMount": "Посилання над цим шляхом виходить за межі Host Data, тому через нього нічого не читається і не записується. Видаліть посилання або виберіть інший шлях.",
   "placementCode.pathAbsoluteTo": "Це повний шлях на хості. Шляхи тут починаються від Host Data, тож уведіть натомість {path} або використайте віддалене місце restic, наприклад rest:, s3: чи rclone:.",
 
   // Warnings

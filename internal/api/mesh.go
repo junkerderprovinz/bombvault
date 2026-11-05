@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -35,6 +37,12 @@ type meshOfferRequest struct {
 	Repo            string `json:"repo"`
 	RESTUser        string `json:"restUser"`
 	RESTPassword    string `json:"restPassword"`
+	peerProof
+}
+
+// signed spells what the offer says, for its claim.
+func (o meshOfferRequest) signed() []byte {
+	return callPayload(o.FromName, o.SuggestedDomain, o.Repo, o.RESTUser, o.RESTPassword)
 }
 
 // meshOfferBodyMax caps an offer's body. A real offer is a few hundred bytes,
@@ -50,6 +58,15 @@ func (s *Service) handlePeerMeshOffer(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed mesh offer body"})
 		return
 	}
+	offerer, ok := s.roleAsker(r)
+	if !ok {
+		refuseUnnamedPeer(w)
+		return
+	}
+	if err := s.verifyMember(r.Context(), offerer, keydeposit.ProofMeshOffer, in.signed(), in.peerProof); err != nil {
+		writeJSON(w, http.StatusForbidden, failEnvelope(err))
+		return
+	}
 	repo := strings.TrimSpace(in.Repo)
 	if repo == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "offer repo must not be empty"})
@@ -59,6 +76,10 @@ func (s *Service) handlePeerMeshOffer(w http.ResponseWriter, r *http.Request) {
 	// line would read as an entry of its own.
 	if spansLines(repo, strings.TrimSpace(in.FromName), strings.TrimSpace(in.SuggestedDomain), strings.TrimSpace(in.RESTUser), in.RESTPassword) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "every value of an offer must be on one line"})
+		return
+	}
+	if err := restic.CheckLocation(repo); err != nil {
+		placementFail(w, err, nil)
 		return
 	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(in.RESTPassword))
@@ -97,7 +118,7 @@ func meshOfferToView(o store.MeshOffer) meshOfferView {
 		ID:              o.ID,
 		From:            o.From,
 		SuggestedDomain: o.SuggestedDomain,
-		Repo:            o.Repo,
+		Repo:            scrubRepoLocation(o.Repo),
 		RESTUser:        o.RESTUser,
 		Status:          o.Status,
 		ReceivedAt:      o.ReceivedAt,
@@ -248,7 +269,7 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	h.replanAfterTargetChange()
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": offsiteTargetToView(stored)}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"target": shownTarget(stored)}))
 }
 
 // handleDeclineMeshOffer marks an offer declined. An unknown id answers 404.
@@ -323,13 +344,18 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.svc.callMember(r.Context(), peer.MemberID, http.MethodPost, "/api/group/peer/mesh-offer", meshOfferRequest{
+	offer := meshOfferRequest{
 		FromName:        instanceDisplayName(settings),
 		SuggestedDomain: in.Domain,
 		Repo:            repo,
 		RESTUser:        snip.User,
 		RESTPassword:    snip.Password,
-	}, nil); err != nil {
+	}
+	if offer.peerProof, err = h.svc.signCall(keydeposit.ProofMeshOffer, peer.MemberID, offer.signed()); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	if err := h.svc.callMember(r.Context(), peer.MemberID, http.MethodPost, "/api/group/peer/mesh-offer", offer, nil); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(fmt.Errorf("send offer to peer: %w", err)))
 		return
 	}

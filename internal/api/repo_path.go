@@ -160,3 +160,21 @@ func (s *Service) ownRepoFor(settings store.Settings, domain string) (string, er
 	}
 	return own, err
 }
+
+// errLinkOutOfMount refuses a stored path with a link above it that leads out of
+// the host mount. A container that writes into its own share can plant such a
+// link, and a backup would then read through it and a restore write through it.
+var errLinkOutOfMount = errors.New("a link above this path leads out of the Host Data mount, so nothing is read or written through it. Remove the link or choose another path")
+
+// refuseLinkOutOfMount holds stored paths to errLinkOutOfMount.
+func (s *Service) refuseLinkOutOfMount(stored []string) error {
+	for _, p := range stored {
+		if err := paths.CheckStoredPath(s.cfg.HostMountRoot, p); err != nil {
+			if errors.Is(err, paths.ErrLinkEscape) {
+				return fmt.Errorf("%s: %w", s.toHostPath(p), errLinkOutOfMount)
+			}
+			return err
+		}
+	}
+	return nil
+}

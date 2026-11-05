@@ -415,6 +415,9 @@ func (s *Service) probeDirectLocation(ctx context.Context, target store.OffsiteT
 	if err != nil {
 		return false, false, fmt.Errorf("read settings: %w", err)
 	}
+	if location, err = unhideLocation(location, target.Repo); err != nil {
+		return false, false, err
+	}
 	loc, err := s.directLocation(settings, target, location)
 	if err != nil {
 		return false, false, err
@@ -466,7 +469,9 @@ func (h *Handler) handleGetDirectRepo(w http.ResponseWriter, r *http.Request) {
 	if found {
 		repo = h.namedRepoViews([]store.OffsiteTarget{direct})[0]
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": repo, "suggestion": directLocationFor(target)}))
+	suggestion := directLocationFor(target)
+	suggestion.Location = scrubRepoLocation(suggestion.Location)
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"repo": repo, "suggestion": suggestion}))
 }
 
 // handleTestDirectLocation serves POST /api/offsite/targets/{id}/direct/test.
@@ -517,6 +522,9 @@ func (s *Service) createDirectRepo(ctx context.Context, targetID, name, location
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return store.OffsiteTarget{}, fmt.Errorf("read settings: %w", err)
+	}
+	if location, err = unhideLocation(location, target.Repo); err != nil {
+		return store.OffsiteTarget{}, err
 	}
 	loc, err := s.directLocation(settings, target, location)
 	if err != nil {

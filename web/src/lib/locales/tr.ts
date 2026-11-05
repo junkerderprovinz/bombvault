@@ -3337,6 +3337,9 @@ const tr: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Geri yükleme klasörü bu ana bilgisayarda, Host Data altında bir klasör olmalı.",
   "placementCode.pathAbsolute": "Bu, ana bilgisayardaki tam bir yol. Buradaki yollar Host Data'dan başlar, o yüzden oraya kadarki kısmı çıkar ya da rest:, s3: veya rclone: gibi bir restic uzak yeri kullan.",
   "placementCode.pathOutside": "Bu yol Host Data'nın dışına çıkıyor. İçinde bir yol ya da rest:, s3: veya rclone: gibi bir restic uzak yeri gir.",
+  "placementCode.locationPasswordHidden": "Bu konumun parolası gizli ve kendi sunucusunda kalır. Başka bir sunucu kullanmak için konumun tamamını parolasıyla birlikte yaz.",
+  "placementCode.locationDash": "Bir depolama konumunun ana makinesi veya rclone uzak konumu tire ile başlayamaz. Gerçek adını gir.",
+  "placementCode.linkOutOfMount": "Bu yolun üstündeki bir bağlantı Host Data'nın dışına çıkıyor, bu yüzden onun üzerinden hiçbir şey okunmaz veya yazılmaz. Bağlantıyı kaldır veya başka bir yol seç.",
   "placementCode.pathAbsoluteTo": "Bu, ana bilgisayardaki tam bir yol. Buradaki yollar Host Data'dan başlar, o yüzden yerine {path} gir ya da rest:, s3: veya rclone: gibi bir restic uzak yeri kullan.",
 
   // Warnings

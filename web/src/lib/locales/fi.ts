@@ -3337,6 +3337,9 @@ const fi: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Palautuskansion on oltava kansio tällä isännällä, Host Datan alla.",
   "placementCode.pathAbsolute": "Tämä on isännän täydellinen polku. Polut alkavat täällä Host Datasta, joten jätä osa sinne asti pois tai käytä restic-etäsijaintia, kuten rest:, s3: tai rclone:.",
   "placementCode.pathOutside": "Tämä polku johtaa ulos Host Datasta. Anna polku sen sisältä tai restic-etäsijainti, kuten rest:, s3: tai rclone:.",
+  "placementCode.locationPasswordHidden": "Tämän sijainnin salasana on piilotettu ja pysyy palvelimellaan. Jos haluat käyttää toista palvelinta, kirjoita koko sijainti salasanoineen.",
+  "placementCode.locationDash": "Tallennussijainnin isäntä tai rclone-etäsijainti ei voi alkaa viivalla. Anna sen oikea nimi.",
+  "placementCode.linkOutOfMount": "Tämän polun yläpuolella oleva linkki johtaa ulos Host Datasta, joten sen kautta ei lueta eikä kirjoiteta mitään. Poista linkki tai valitse toinen polku.",
   "placementCode.pathAbsoluteTo": "Tämä on isännän täydellinen polku. Polut alkavat täällä Host Datasta, joten kirjoita sen sijaan {path} tai käytä restic-etäsijaintia, kuten rest:, s3: tai rclone:.",
 
   // Warnings

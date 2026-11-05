@@ -3347,6 +3347,9 @@ const ca: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Una carpeta de restauració ha de ser una carpeta d'aquest amfitrió, sota Host Data.",
   "placementCode.pathAbsolute": "Això és un camí complet de l'amfitrió. Aquí els camins comencen a Host Data, així que treu la part fins allà o fes servir un remot de restic com rest:, s3: o rclone:.",
   "placementCode.pathOutside": "Aquest camí surt de Host Data. Escriu un camí de dins o un remot de restic com rest:, s3: o rclone:.",
+  "placementCode.locationPasswordHidden": "La contrasenya d'aquesta ubicació està amagada i es queda amb el seu servidor. Per fer servir un altre servidor, escriu tota la ubicació amb la contrasenya.",
+  "placementCode.locationDash": "L'amfitrió o el remot de rclone d'una ubicació d'emmagatzematge no pot començar amb un guió. Escriu-ne el nom real.",
+  "placementCode.linkOutOfMount": "Un enllaç per sobre d'aquest camí surt de Host Data, així que no s'hi llegeix ni s'hi escriu res a través. Treu l'enllaç o tria un altre camí.",
   "placementCode.pathAbsoluteTo": "Això és un camí complet de l'amfitrió. Aquí els camins comencen a Host Data, així que escriu {path}, o fes servir un remot de restic com rest:, s3: o rclone:.",
 
   // Warnings

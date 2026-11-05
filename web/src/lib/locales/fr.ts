@@ -3337,6 +3337,9 @@ const fr: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Un dossier de restauration doit être un dossier de cet hôte, sous Host Data.",
   "placementCode.pathAbsolute": "Ceci est un chemin complet de l'hôte. Ici les chemins partent de Host Data, retirez donc la partie jusque-là, ou utilisez un distant restic comme rest:, s3: ou rclone:.",
   "placementCode.pathOutside": "Ce chemin sort de Host Data. Saisissez un chemin à l'intérieur, ou un distant restic comme rest:, s3: ou rclone:.",
+  "placementCode.locationPasswordHidden": "Le mot de passe de cet emplacement est masqué et reste avec son serveur. Pour utiliser un autre serveur, saisissez l'emplacement complet avec son mot de passe.",
+  "placementCode.locationDash": "L'hôte ou le distant rclone d'un emplacement de stockage ne peut pas commencer par un tiret. Saisissez son vrai nom.",
+  "placementCode.linkOutOfMount": "Un lien au-dessus de ce chemin sort de Host Data, donc rien n'est lu ni écrit à travers lui. Supprimez le lien ou choisissez un autre chemin.",
   "placementCode.pathAbsoluteTo": "Ceci est un chemin complet de l'hôte. Ici les chemins partent de Host Data, saisissez donc {path} à la place, ou utilisez un distant restic comme rest:, s3: ou rclone:.",
 
   // Warnings

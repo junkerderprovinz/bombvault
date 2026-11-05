@@ -3331,6 +3331,9 @@ const sl: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Mapa za obnovitev mora biti mapa na tem gostitelju, pod Host Data.",
   "placementCode.pathAbsolute": "To je polna pot na gostitelju. Poti se tu začnejo pri Host Data, zato izpusti del do tja ali uporabi oddaljeno lokacijo restic, kot je rest:, s3: ali rclone:.",
   "placementCode.pathOutside": "Ta pot vodi iz Host Data. Vnesi pot znotraj njega ali oddaljeno lokacijo restic, kot je rest:, s3: ali rclone:.",
+  "placementCode.locationPasswordHidden": "Geslo te lokacije je skrito in ostane pri njenem strežniku. Za drug strežnik vnesi celotno lokacijo z geslom.",
+  "placementCode.locationDash": "Gostitelj ali oddaljena lokacija rclone ne more začeti s pomišljajem. Vnesi pravo ime.",
+  "placementCode.linkOutOfMount": "Povezava nad to potjo vodi iz Host Data, zato se prek nje nič ne bere in ne piše. Odstrani povezavo ali izberi drugo pot.",
   "placementCode.pathAbsoluteTo": "To je polna pot na gostitelju. Poti se tu začnejo pri Host Data, zato namesto tega vnesi {path} ali uporabi oddaljeno lokacijo restic, kot je rest:, s3: ali rclone:.",
 
   // Warnings

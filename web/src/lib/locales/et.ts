@@ -3347,6 +3347,9 @@ const et: Partial<Translations> = {
   "placementCode.restoreFolderRemote": "Taastekaust peab olema kaust selles hostis, Host Data all.",
   "placementCode.pathAbsolute": "See on täielik tee hostis. Teed algavad siin Host Data juurest, nii et jäta osa sinnani ära või kasuta restic-kaugkohta nagu rest:, s3: või rclone:.",
   "placementCode.pathOutside": "See tee viib Host Data'st välja. Sisesta tee selle sees või restic-kaugkoht nagu rest:, s3: või rclone:.",
+  "placementCode.locationPasswordHidden": "Selle asukoha parool on peidetud ja jääb oma serveri juurde. Teise serveri kasutamiseks sisesta kogu asukoht koos parooliga.",
+  "placementCode.locationDash": "Salvestuskoha host või rclone-kaugkoht ei saa alata sidekriipsuga. Sisesta selle päris nimi.",
+  "placementCode.linkOutOfMount": "Link selle tee kohal viib Host Data'st välja, seega ei loeta ega kirjutata selle kaudu midagi. Eemalda link või vali teine tee.",
   "placementCode.pathAbsoluteTo": "See on täielik tee hostis. Teed algavad siin Host Data juurest, nii et sisesta {path} või kasuta restic-kaugkohta nagu rest:, s3: või rclone:.",
 
   // Warnings

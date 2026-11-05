@@ -2633,6 +2633,9 @@ export const en = {
   "placementCode.restoreFolderRemote": "A restore folder has to be a folder on this host, under the Host Data mount.",
   "placementCode.pathAbsolute": "This is a full path on the host. Paths here start at the Host Data mount, so leave out the part up to it, or use a restic remote such as rest:, s3: or rclone:.",
   "placementCode.pathOutside": "This path leads out of the Host Data mount. Enter a path inside it, or a restic remote such as rest:, s3: or rclone:.",
+  "placementCode.locationPasswordHidden": "The password of this location is hidden and stays with its server. To use another server, type the whole location with its password.",
+  "placementCode.locationDash": "The host or rclone remote of a storage location can't start with a dash. Enter its real name.",
+  "placementCode.linkOutOfMount": "A link above this path leads out of the Host Data mount, so nothing is read or written through it. Remove the link or choose another path.",
   "placementCode.pathAbsoluteTo": "This is a full path on the host. Paths here start at the Host Data mount, so enter {path} instead, or use a restic remote such as rest:, s3: or rclone:.",
 
   // Warnings
@@ -7709,6 +7712,9 @@ export const de: Translations = {
   "placementCode.restoreFolderRemote": "Ein Wiederherstellungsordner muss ein Ordner auf diesem Host sein, unter dem Host-Data-Mount.",
   "placementCode.pathAbsolute": "Das ist ein vollständiger Pfad auf dem Host. Pfade hier beginnen beim Host-Data-Mount, lass also den Teil bis dorthin weg, oder nimm ein restic-Remote wie rest:, s3: oder rclone:.",
   "placementCode.pathOutside": "Dieser Pfad führt aus dem Host-Data-Mount hinaus. Gib einen Pfad darin an oder ein restic-Remote wie rest:, s3: oder rclone:.",
+  "placementCode.locationPasswordHidden": "Das Passwort dieses Orts ist ausgeblendet und bleibt bei seinem Server. Für einen anderen Server gib den ganzen Ort mit seinem Passwort ein.",
+  "placementCode.locationDash": "Der Host oder das rclone-Remote eines Speicherorts kann nicht mit einem Bindestrich beginnen. Gib den echten Namen ein.",
+  "placementCode.linkOutOfMount": "Ein Link über diesem Pfad führt aus dem Host-Data-Mount hinaus, darum wird durch ihn nichts gelesen oder geschrieben. Entferne den Link oder wähl einen anderen Pfad.",
   "placementCode.pathAbsoluteTo": "Das ist ein vollständiger Pfad auf dem Host. Pfade hier beginnen beim Host-Data-Mount, gib also {path} ein, oder nimm ein restic-Remote wie rest:, s3: oder rclone:.",
 
   // Warnings

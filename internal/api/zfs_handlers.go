@@ -52,9 +52,9 @@ func (h *Handler) handleListZFSDatasets(w http.ResponseWriter, r *http.Request) 
 	if views == nil {
 		views = []ZFSDatasetView{}
 	}
-	if isPaired(r) {
-		for i := range views {
-			views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+	for i := range views {
+		views[i].RepoEffective = scrubRepoLocation(views[i].RepoEffective)
+		if isPaired(r) {
 			views[i].PreSnapshot, views[i].PostSnapshot = "", ""
 		}
 	}
