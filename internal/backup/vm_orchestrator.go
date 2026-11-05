@@ -465,8 +465,8 @@ func runVMGraceful(ctx context.Context, d VMBackupDeps) (Summary, error) {
 			if backupErr = waitShutOff(ctx, d.VM, d.Name, d.ShutdownTimeout); backupErr != nil {
 				if errors.Is(backupErr, ErrVMShutdownTimeout) {
 					backupErr = fmt.Errorf("%w: %q is still running after %s, so nothing was backed up and it was not forced off. "+
-						"BombVault starts it again if it shuts off within the next %s. If the guest ignores the shutdown request, back it up live instead",
-						ErrVMShutdownTimeout, d.Name, shutdownWait(d.ShutdownTimeout), VMLateShutdownWatch)
+						"BombVault starts it again if it shuts off within the next hour. If the guest ignores the shutdown request, back it up live instead",
+						ErrVMShutdownTimeout, d.Name, shutdownWait(d.ShutdownTimeout))
 				}
 				return
 			}
