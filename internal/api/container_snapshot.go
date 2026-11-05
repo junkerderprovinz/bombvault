@@ -525,13 +525,7 @@ func (s *Service) RecoverContainerRestarts(ctx context.Context) {
 			continue
 		}
 		log.Printf("api: starting %q again, an interrupted backup left it stopped", name) //nolint:gosec // G706: %q-quoted
-		deps = append(deps, backup.StopContainer{
-			Name:       name,
-			ID:         in.ID,
-			WasRunning: true,
-			Service:    composeService(in.Config.Labels),
-			DependsOn:  parseDependsOn(in.Config.Labels),
-		})
+		deps = append(deps, stopContainerOf(name, in))
 	}
 	backup.RestartInOrder(ctx, s.docker, deps, false, 0)
 

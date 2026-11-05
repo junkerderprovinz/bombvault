@@ -1276,6 +1276,7 @@ const sl: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "obnovljeno brez GPU-ja in izvajalnega okolja vsebnika",
   "runReason.restoredWithoutLinks": "obnovljeno brez povezav do vsebnikov, ki ne tečejo",
   "runReason.containersNotBack": "nekateri vsebniki se niso znova zagnali",
+  "runReason.noNetworkUntilRestart": "nekateri vsebniki nimajo omrežja, dokler se znova ne zaženejo",
   "runReason.vmRestoreHalfDone": "obnovitev se je ustavila na pol poti. Navidezni stroj še obstaja, vendar ostaja izklopljen, ker so njegovi diski morda obnovljeni le delno. Pred zagonom ga znova obnovi",
   "runReason.vmTpmLeftOut": "stanja TPM navideznega stroja ni v tej varnostni kopiji",
   "runReason.vmDisksLeftOut": "nekaterih diskov navideznega stroja ni v tej varnostni kopiji",

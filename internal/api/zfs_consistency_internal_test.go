@@ -39,6 +39,25 @@ func callIndex(calls []string, want string) int {
 	return -1
 }
 
+func TestZFSConsistencyTakesAlongTheContainersSharingAStoppedNetwork(t *testing.T) {
+	dock := newZFSFakeDocker("vpn", "peer", "other")
+	dock.containers["peer"].joins = "vpn"
+	s, _, _, d := zfsStopFixture(t, dock, "vpn")
+
+	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
+		t.Fatalf("backup: %v", err)
+	}
+	calls := dock.recorded()
+	stopPeer, stopVPN := callIndex(calls, "stop:peer"), callIndex(calls, "stop:vpn")
+	startVPN, startPeer := callIndex(calls, "start:vpn"), callIndex(calls, "start:peer")
+	if stopPeer < 0 || stopPeer > stopVPN || startVPN < 0 || startPeer < startVPN {
+		t.Fatalf("calls = %v, want the sharer down first and up last", calls)
+	}
+	if callIndex(calls, "stop:other") >= 0 {
+		t.Fatalf("calls = %v, want the others left alone", calls)
+	}
+}
+
 func TestZFSConsistencyStopsOnlyRunningAndRestartsInOrder(t *testing.T) {
 	dock := newZFSFakeDocker("db", "web", "idle")
 	dock.containers["web"].dependsOn = "db"

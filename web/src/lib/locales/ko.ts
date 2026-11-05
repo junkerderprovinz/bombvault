@@ -1230,6 +1230,7 @@ const ko: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "컨테이너의 GPU와 런타임 없이 복원했습니다",
   "runReason.restoredWithoutLinks": "실행 중이 아닌 컨테이너로의 링크 없이 복원했습니다",
   "runReason.containersNotBack": "일부 컨테이너가 다시 시작되지 않았습니다",
+  "runReason.noNetworkUntilRestart": "일부 컨테이너는 다시 시작할 때까지 네트워크를 사용할 수 없습니다",
   "runReason.vmRestoreHalfDone": "복원이 중간에 멈췄습니다. VM은 그대로 있지만 디스크가 일부만 복원되었을 수 있어 꺼진 상태로 남아 있습니다. 시작하기 전에 다시 복원하세요",
   "runReason.vmTpmLeftOut": "VM의 TPM 상태는 이 백업에 없습니다",
   "runReason.vmDisksLeftOut": "VM의 일부 디스크는 이 백업에 없습니다",

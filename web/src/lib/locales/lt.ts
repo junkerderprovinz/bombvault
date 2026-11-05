@@ -1278,6 +1278,7 @@ const lt: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "atkurta be konteinerio GPU ir vykdymo aplinkos",
   "runReason.restoredWithoutLinks": "atkurta be nuorodų į neveikiančius konteinerius",
   "runReason.containersNotBack": "kai kurie konteineriai nebuvo vėl paleisti",
+  "runReason.noNetworkUntilRestart": "kai kurie konteineriai neturi tinklo, kol nebus vėl paleisti",
   "runReason.vmRestoreHalfDone": "atkūrimas sustojo pusiaukelėje. VM vis dar yra, bet lieka išjungta, nes jos diskai gali būti atkurti tik iš dalies. Prieš paleisdamas atkurk ją dar kartą",
   "runReason.vmTpmLeftOut": "VM TPM būsenos šioje atsarginėje kopijoje nėra",
   "runReason.vmDisksLeftOut": "kai kurių VM diskų šioje atsarginėje kopijoje nėra",

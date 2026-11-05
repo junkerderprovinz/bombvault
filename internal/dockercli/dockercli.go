@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -185,6 +187,25 @@ func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error
 	out.HostConfig.PidMode = c.namespaceByName(ctx, out.HostConfig.PidMode)
 	out.HostConfig.IpcMode = c.namespaceByName(ctx, out.HostConfig.IpcMode)
 	return out, nil
+}
+
+// FromNewImage returns the definition a container is recreated from when its
+// tag has moved to a newer image: only what the user set carries over, and what
+// came from the image it runs now follows the new one. Without that image the
+// definition stays as it is, which recreates the container as it ran.
+func (c *Client) FromNewImage(ctx context.Context, in model.Inspect) model.Inspect {
+	img, err := c.api.ImageInspect(ctx, in.Image)
+	if err != nil || img.Config == nil {
+		return in
+	}
+	own := imageDefaults{Env: img.Config.Env, Labels: img.Config.Labels, Cmd: img.Config.Cmd, User: img.Config.User}
+	if hc := img.Config.Healthcheck; hc != nil && len(hc.Test) > 0 {
+		own.Healthcheck = &model.Healthcheck{
+			Test: hc.Test, Interval: hc.Interval, Timeout: hc.Timeout, StartPeriod: hc.StartPeriod, Retries: hc.Retries,
+		}
+	}
+	withoutInherited(&in.Config, own)
+	return in
 }
 
 // namespaceByName turns "container:<id>" into "container:<name>". Docker
@@ -827,6 +848,10 @@ func ownHostname(resp container.InspectResponse) (string, string) {
 type imageDefaults struct {
 	Entrypoint, Cmd        []string
 	WorkingDir, StopSignal string
+	Env                    []string
+	Labels                 map[string]string
+	User                   string
+	Healthcheck            *model.Healthcheck
 }
 
 // withoutImageDefaults clears what the container took over from its image
@@ -844,6 +869,31 @@ func withoutImageDefaults(cfg *model.Config, img imageDefaults) {
 	}
 	if cfg.StopSignal == img.StopSignal {
 		cfg.StopSignal = ""
+	}
+}
+
+// withoutInherited clears what the container took over from the image it runs,
+// which withoutImageDefaults keeps because the rest of BombVault reads it, such
+// as a database's variables. Docker copies the image's variables and labels
+// into the container, so one that still reads as in the image counts as the
+// image's. The command goes only when no entrypoint stays: next to one, Docker
+// would not fill it back in.
+func withoutInherited(cfg *model.Config, img imageDefaults) {
+	cfg.Env = slices.DeleteFunc(slices.Clone(cfg.Env), func(e string) bool { return slices.Contains(img.Env, e) })
+	labels := maps.Clone(cfg.Labels)
+	maps.DeleteFunc(labels, func(k, v string) bool {
+		own, ok := img.Labels[k]
+		return ok && own == v
+	})
+	cfg.Labels = labels
+	if len(cfg.Entrypoint) == 0 && slices.Equal(cfg.Cmd, img.Cmd) {
+		cfg.Cmd = nil
+	}
+	if cfg.User == img.User {
+		cfg.User = ""
+	}
+	if cfg.Healthcheck != nil && reflect.DeepEqual(cfg.Healthcheck, img.Healthcheck) {
+		cfg.Healthcheck = nil
 	}
 }
 
@@ -903,6 +953,7 @@ func mapPrimaryNetwork(resp container.InspectResponse) model.NetworkEndpoint {
 func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 	out := model.HostConfig{
 		Binds:          hc.Binds,
+		VolumesFrom:    hc.VolumesFrom,
 		CapAdd:         []string(hc.CapAdd),
 		CapDrop:        []string(hc.CapDrop),
 		Privileged:     hc.Privileged,
@@ -1086,6 +1137,7 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	hc := in.HostConfig
 	hostCfg := &container.HostConfig{
 		Binds:          hc.Binds,
+		VolumesFrom:    hc.VolumesFrom,
 		Privileged:     hc.Privileged,
 		ReadonlyRootfs: hc.ReadonlyRootfs,
 		SecurityOpt:    hc.SecurityOpt,

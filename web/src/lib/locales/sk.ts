@@ -1278,6 +1278,7 @@ const sk: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "obnovené bez GPU a behového prostredia kontajnera",
   "runReason.restoredWithoutLinks": "obnovené bez odkazov na kontajnery, ktoré nebežia",
   "runReason.containersNotBack": "niektoré kontajnery sa znova nespustili",
+  "runReason.noNetworkUntilRestart": "niektoré kontajnery nemajú sieť, kým sa znova nespustia",
   "runReason.vmRestoreHalfDone": "obnovenie sa zastavilo v polovici. VM stále existuje, ale zostáva vypnutá, pretože jej disky môžu byť obnovené len čiastočne. Obnov ju znova, skôr než ju spustíš",
   "runReason.vmTpmLeftOut": "stav TPM tejto VM v tejto zálohe nie je",
   "runReason.vmDisksLeftOut": "niektoré disky VM v tejto zálohe nie sú",

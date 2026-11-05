@@ -1278,6 +1278,7 @@ const et: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "taastati ilma konteineri GPU ja käituskeskkonnata",
   "runReason.restoredWithoutLinks": "taastati ilma linkideta konteineritele, mis ei tööta",
   "runReason.containersNotBack": "mõned konteinerid ei käivitunud uuesti",
+  "runReason.noNetworkUntilRestart": "mõnel konteineril pole võrku enne uuesti käivitamist",
   "runReason.vmRestoreHalfDone": "taastamine peatus poole peal. VM on endiselt olemas, kuid jääb väljalülitatuks, sest selle kettad võivad olla taastatud vaid osaliselt. Taasta see uuesti, enne kui selle käivitad",
   "runReason.vmTpmLeftOut": "VM-i TPM-i olekut selles varukoopias ei ole",
   "runReason.vmDisksLeftOut": "mõnda VM-i ketast selles varukoopias ei ole",

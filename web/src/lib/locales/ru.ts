@@ -1233,6 +1233,7 @@ const ru: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "восстановлен без GPU и среды выполнения контейнера",
   "runReason.restoredWithoutLinks": "восстановлен без ссылок на контейнеры, которые не запущены",
   "runReason.containersNotBack": "некоторые контейнеры не запустились снова",
+  "runReason.noNetworkUntilRestart": "некоторые контейнеры остаются без сети до перезапуска",
   "runReason.vmRestoreHalfDone": "восстановление остановилось на полпути. ВМ на месте, но остаётся выключенной, потому что её диски могут быть восстановлены лишь частично. Восстановите её ещё раз перед запуском",
   "runReason.vmTpmLeftOut": "состояния TPM этой ВМ нет в этой резервной копии",
   "runReason.vmDisksLeftOut": "некоторых дисков ВМ нет в этой резервной копии",

@@ -1278,6 +1278,7 @@ const ms: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "dipulihkan tanpa GPU atau runtime bekas",
   "runReason.restoredWithoutLinks": "dipulihkan tanpa pautan ke bekas yang tidak berjalan",
   "runReason.containersNotBack": "sesetengah bekas tidak bermula semula",
+  "runReason.noNetworkUntilRestart": "sesetengah bekas tiada rangkaian sehingga dimulakan semula",
   "runReason.vmRestoreHalfDone": "pemulihan terhenti separuh jalan. VM masih ada, tetapi kekal mati kerana cakeranya mungkin dipulihkan sebahagian sahaja. Pulihkan semula sebelum anda memulakannya",
   "runReason.vmTpmLeftOut": "keadaan TPM VM tiada dalam sandaran ini",
   "runReason.vmDisksLeftOut": "sesetengah cakera VM tiada dalam sandaran ini",

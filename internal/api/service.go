@@ -6942,7 +6942,12 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// carry WasRunning (mirroring the target's in.Running). A dependency we
 	// cannot inspect (e.g. removed) is logged and left untouched.
 	var deps []backup.StopContainer
+	self := s.selfContainerName(ctx)
 	for _, dep := range tg.StopContainers {
+		if dep == self {
+			log.Printf("api: backup: %q is BombVault itself, leaving it out of the stop list of %q", dep, name) //nolint:gosec // G706: %q-quoted
+			continue
+		}
 		di, dErr := s.inspectNamed(ctx, dep)
 		if dErr != nil {
 			log.Printf("api: backup: inspect dependency %q: %v (leaving as-is)", dep, dErr) //nolint:gosec // G706: dep is %q-quoted
@@ -6951,15 +6956,13 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		// Carry the dependency's compose identity so the restart-after-backup phase
 		// can bring the stopped set back up in depends_on order (dependencies first)
 		// and, when enabled, wait for each to be healthy before its dependents (#119).
-		deps = append(deps, backup.StopContainer{
-			Name:         dep,
-			ID:           di.ID,
-			WasRunning:   di.Running,
-			Service:      composeService(di.Config.Labels),
-			DependsOn:    parseDependsOn(di.Config.Labels),
-			BeforeTarget: startsBefore(in, dep, di),
-		})
+		sc := stopContainerOf(dep, di)
+		sc.WasRunning = di.Running
+		sc.BeforeTarget = startsBefore(in, dep, di)
+		deps = append(deps, sc)
 	}
+	deps, cutOff := s.withSharers(ctx, name, in, deps)
+	settleAroundTarget(name, deps)
 
 	// #119 follow-up: "update after successful backup" RECREATES the container
 	// (stop/remove/create) after the backup. If the stopped dependents were already
@@ -6969,9 +6972,9 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// UpdateAfterBackup step so the recreate happens while the dependents are
 	// down. Only for a running, opted-in container; otherwise nil, so the
 	// dependents restart right after the backup.
-	var updateStep func() func()
+	var updateStep func() func() []string
 	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
-		updateStep = func() func() { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
+		updateStep = func() func() []string { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
 	}
 
 	// A container on ZFS is held down only for a snapshot of its data. Without
@@ -7039,12 +7042,16 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		Busy:                 s.busyCheck(tg, in),
 		Regardless:           !waitsForApp(ctx) || isBeforeRestore(ctx) || backsUpRegardless(ctx),
 		StopContainers:       deps,
-		HealthWait:           settings.RestartHealthWait,
-		HealthTimeout:        time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
-		UpdateAfterBackup:    updateStep,
-		Snapshot:             snapshot,
-		OnWindow:             func(w time.Duration) { window = &w },
-		Restarts:             containerRestarts{st: s.store},
+		CutOff:               cutOff,
+		OnNotBack: func(names []string) {
+			s.notifyContainersNotBack(ctx, fmt.Sprintf("the backup of %q", name), names)
+		},
+		HealthWait:        settings.RestartHealthWait,
+		HealthTimeout:     time.Duration(settings.RestartHealthTimeoutSec) * time.Second,
+		UpdateAfterBackup: updateStep,
+		Snapshot:          snapshot,
+		OnWindow:          func(w time.Duration) { window = &w },
+		Restarts:          containerRestarts{st: s.store},
 		// User-owned exclude patterns stay first; the selection-derived tail
 		// enforces the stored exclusion branches strictly below an included
 		// root on the argv (review finding WR-01, gap closure per the
@@ -7142,7 +7149,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 // recorded as its own "update" run so it is visible in Run History.
 // Best-effort: a failure here never fails the backup, and the fresh snapshot
 // lets the user roll back a bad update.
-func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) func() {
+func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID string) func() []string {
 	ref := in.Config.Image
 	if ref == "" {
 		ref = in.Image
@@ -7191,12 +7198,13 @@ func (s *Service) checkUpdateAfterBackup(ctx context.Context, name string, in mo
 			log.Printf("api: update-after-backup: lift the hold of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
-	return func() { s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
+	return func() []string { return s.applyUpdateAfterBackup(ctx, name, in, targetID, ref) }
 }
 
 // applyUpdateAfterBackup recreates the container from the newer image the
-// check pulled, as its own "update" run.
-func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID, ref string) {
+// check pulled, as its own "update" run, and returns the containers that do not
+// run afterwards.
+func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in model.Inspect, targetID, ref string) []string {
 	// context.Background(), not ctx: an "update" run is a side effect of the
 	// container backup, not one of the five domain steps a "Backup Everything"
 	// pass groups (see runGroupKey's doc comment) — deliberately excluded here,
@@ -7207,14 +7215,20 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 	runID, rErr := runsAdapter{st: s.store, ctx: context.Background()}.Start(targetID, "update")
 	if rErr != nil {
 		log.Printf("api: update-after-backup: start run for %q: %v", name, rErr) //nolint:gosec // G706: name is %q-quoted
-		return
+		return nil
 	}
-	notBack, err := s.recreateForUpdate(ctx, name, in)
+	// A cancel from here on would land between the remove and the create.
+	ctx = context.WithoutCancel(ctx)
+	notBack, err := s.recreateForUpdate(ctx, name, in, ref)
 	if err != nil {
-		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err))
+		reason := truncateRunErr(err)
+		if len(notBack) > 0 {
+			reason += "; " + store.NoteContainersNotBack + ": " + strings.Join(notBack, ", ")
+		}
+		_ = runsAdapter{st: s.store, ctx: context.Background()}.Finish(runID, "failed", backup.Summary{}, reason)
 		s.setUpdateCheck(name, "failed")
 		log.Printf("api: update-after-backup: recreate %q failed (backup is safe): %v", name, err) //nolint:gosec // G706: name is %q-quoted
-		return
+		return notBack
 	}
 	note := ""
 	if len(notBack) > 0 {
@@ -7257,33 +7271,86 @@ func (s *Service) applyUpdateAfterBackup(ctx context.Context, name string, in mo
 			}
 		}
 	}
+	return notBack
 }
 
 // recreateForUpdate stops, removes and recreates+starts the container from its
-// captured inspect — which, after the preceding Pull, resolves to the newer
-// image. Mirrors the restore recreate path minus the appdata restore (the data
-// is already current). The containers that share this one's namespaces are
-// recreated after it, since Docker binds them to its old ID; it returns those
-// that could not be.
-func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect) ([]string, error) {
+// captured inspect, which after the preceding Pull resolves to the newer image.
+// Mirrors the restore recreate path minus the appdata restore (the data is
+// already current). The containers that share this one's namespaces are
+// recreated after it, since Docker binds them to its old ID. When the new image
+// does not come up, the container goes back to the old one. It returns the
+// containers that do not run afterwards.
+func (s *Service) recreateForUpdate(ctx context.Context, name string, in model.Inspect, ref string) ([]string, error) {
+	fresh := s.docker.FromNewImage(ctx, in)
+	s.markUpdateRemoval(name, fresh, in.ID)
 	if err := s.docker.Stop(ctx, name, 30*time.Second); err != nil {
 		_ = err // absent/already-stopped is fine; a real problem surfaces at Remove
 	}
 	if err := s.docker.Remove(ctx, name); err != nil {
-		return nil, fmt.Errorf("remove container: %w", err)
+		s.forgetRestoreRemoval(name)
+		err = fmt.Errorf("remove container: %w", err)
+		if startErr := s.docker.Start(ctx, name); startErr != nil {
+			log.Printf("api: update-after-backup: starting %q again: %v", name, startErr) //nolint:gosec // G706: name is %q-quoted
+			return []string{name}, err
+		}
+		return nil, fmt.Errorf("%w; it runs its previous image again", err)
+	}
+	if err := s.docker.CreateAndStart(ctx, fresh, true); err != nil {
+		return s.rollBackUpdate(ctx, name, in, ref, fmt.Errorf("recreate container: %w", err))
+	}
+	s.forgetRestoreRemoval(name)
+	return s.rejoinAfterUpdate(ctx, name, in.ID), nil
+}
+
+// rollBackUpdate creates the container again on the image it ran, after the
+// new one could not be created or started. A refused start leaves the new
+// container behind, and the tag has to point at the old image before the
+// container can be created from it. While the container is gone, the record of
+// its removal stays for the next boot.
+func (s *Service) rollBackUpdate(ctx context.Context, name string, in model.Inspect, ref string, cause error) ([]string, error) {
+	if err := s.docker.Remove(ctx, name); err != nil {
+		s.forgetRestoreRemoval(name)
+		return []string{name}, fmt.Errorf("%w; the new container could not be removed: %w", cause, err)
+	}
+	if err := s.docker.ImageTag(ctx, in.Image, ref); err != nil {
+		log.Printf("api: update-after-backup: point %s back at the image of %q: %v", ref, name, err) //nolint:gosec // G706: name is %q-quoted
 	}
 	if err := s.docker.CreateAndStart(ctx, in, true); err != nil {
-		return nil, fmt.Errorf("recreate container: %w", err)
+		if live, lErr := s.docker.InspectName(ctx, name); lErr == nil && live != "" {
+			s.forgetRestoreRemoval(name)
+		}
+		return []string{name}, fmt.Errorf("%w; the previous image did not start either: %w", cause, err)
 	}
+	s.forgetRestoreRemoval(name)
+	return s.rejoinAfterUpdate(ctx, name, in.ID), fmt.Errorf("%w; it runs its previous image again", cause)
+}
+
+// rejoinAfterUpdate moves the containers bound to the old ID onto the recreated
+// container and returns those it could not bring over.
+func (s *Service) rejoinAfterUpdate(ctx context.Context, name, oldID string) []string {
 	r, ok := s.docker.(backup.NamespaceRejoiner)
 	if !ok {
-		return nil, nil
+		return nil
 	}
-	notBack, err := r.RejoinNamespace(ctx, in.ID, name)
+	notBack, err := r.RejoinNamespace(ctx, oldID, name)
 	if err != nil {
 		log.Printf("api: update-after-backup: containers sharing a namespace with %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
 	}
-	return notBack, nil
+	return notBack
+}
+
+// markUpdateRemoval records the container an update is about to remove, so the
+// next boot creates it when the process dies before the update has. Failing to
+// record it costs only that.
+func (s *Service) markUpdateRemoval(name string, in model.Inspect, oldID string) {
+	def, err := json.Marshal(in)
+	if err == nil {
+		err = s.store.MarkRestoreRemoval(store.RestoreRemoval{Name: name, Definition: string(def), OldID: oldID, At: time.Now().Unix(), Update: true})
+	}
+	if err != nil {
+		log.Printf("api: update-after-backup: record the removal of %q: %v", name, err) //nolint:gosec // G706: name is %q-quoted
+	}
 }
 
 // reconcileUnraidUpdateStatus asks the platform to refresh its own cached
@@ -9227,6 +9294,9 @@ func (s *Service) executeRestore(ctx context.Context, name string, plan containe
 		Templates:         templatesAdapter{},
 		Runs:              runsAdapter{st: s.store, ctx: ctx},
 		Removals:          restoreRemovals{st: s.store},
+		OnNotBack: func(names []string) {
+			s.notifyContainersNotBack(ctx, fmt.Sprintf("the restore of %q", name), names)
+		},
 	})
 	if rerr == nil {
 		if leftImage != "" {
@@ -17309,14 +17379,19 @@ func (s *Service) SetUpdateAfterBackup(_ context.Context, name string, updateAft
 }
 
 // SetStopContainers stores the other container names to stop during this
-// container's backup. Names are trimmed + de-duplicated; blanks are dropped.
-func (s *Service) SetStopContainers(_ context.Context, name string, stop []string) error {
+// container's backup. Names are trimmed + de-duplicated; blanks are dropped, and
+// BombVault's own container is refused.
+func (s *Service) SetStopContainers(ctx context.Context, name string, stop []string) error {
 	var clean []string
 	seen := map[string]bool{}
+	self := s.selfContainerName(ctx)
 	for _, c := range stop {
 		c = strings.TrimSpace(c)
 		if c == "" || c == name || seen[c] {
-			continue // skip blanks, self, and duplicates
+			continue // skip blanks, the target itself, and duplicates
+		}
+		if c == self {
+			return fmt.Errorf("%q is BombVault's own container, which a backup never stops", c)
 		}
 		seen[c] = true
 		clean = append(clean, c)

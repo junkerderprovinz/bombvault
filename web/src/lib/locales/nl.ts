@@ -1235,6 +1235,7 @@ const nl: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "hersteld zonder de GPU of runtime van de container",
   "runReason.restoredWithoutLinks": "hersteld zonder links naar containers die niet draaien",
   "runReason.containersNotBack": "sommige containers zijn niet opnieuw gestart",
+  "runReason.noNetworkUntilRestart": "sommige containers hebben geen netwerk totdat ze opnieuw zijn gestart",
   "runReason.vmRestoreHalfDone": "het herstel stopte halverwege. De VM is er nog, maar blijft uit, omdat de schijven misschien maar gedeeltelijk hersteld zijn. Herstel hem opnieuw voordat je hem start",
   "runReason.vmTpmLeftOut": "de TPM-status van de VM zit niet in deze back-up",
   "runReason.vmDisksLeftOut": "sommige schijven van de VM zitten niet in deze back-up",

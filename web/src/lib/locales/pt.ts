@@ -1236,6 +1236,7 @@ const pt: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restaurado sem a GPU nem o runtime do container",
   "runReason.restoredWithoutLinks": "restaurado sem as ligações a containers que não estão em execução",
   "runReason.containersNotBack": "alguns contentores não voltaram a iniciar",
+  "runReason.noNetworkUntilRestart": "alguns contentores não têm rede até voltarem a iniciar",
   "runReason.vmRestoreHalfDone": "o restauro parou a meio. A VM continua lá, mas fica desligada, porque os seus discos podem estar restaurados só em parte. Restaura-a outra vez antes de a iniciares",
   "runReason.vmTpmLeftOut": "o estado do TPM da VM não está neste backup",
   "runReason.vmDisksLeftOut": "alguns discos da VM não estão neste backup",

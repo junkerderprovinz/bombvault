@@ -1239,6 +1239,7 @@ const he: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "שוחזר בלי ה-GPU או סביבת הריצה של הקונטיינר",
   "runReason.restoredWithoutLinks": "שוחזר בלי קישורים לקונטיינרים שאינם פועלים",
   "runReason.containersNotBack": "חלק מהמכולות לא הופעלו מחדש",
+  "runReason.noNetworkUntilRestart": "לחלק מהמכולות אין רשת עד שיופעלו מחדש",
   "runReason.vmRestoreHalfDone": "השחזור נעצר באמצע. ה-VM עדיין קיים אבל נשאר כבוי, כי ייתכן שהדיסקים שלו שוחזרו רק בחלקם. יש לשחזר אותו שוב לפני שמפעילים אותו",
   "runReason.vmTpmLeftOut": "מצב ה-TPM של ה-VM לא נמצא בגיבוי הזה",
   "runReason.vmDisksLeftOut": "חלק מהדיסקים של ה-VM לא נמצאים בגיבוי הזה",

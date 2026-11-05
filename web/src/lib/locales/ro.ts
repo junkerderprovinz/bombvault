@@ -1237,6 +1237,7 @@ const ro: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restaurat fără GPU-ul sau runtime-ul containerului",
   "runReason.restoredWithoutLinks": "restaurat fără legăturile către containere care nu rulează",
   "runReason.containersNotBack": "unele containere nu au pornit din nou",
+  "runReason.noNetworkUntilRestart": "unele containere nu au rețea până când sunt pornite din nou",
   "runReason.vmRestoreHalfDone": "restaurarea s-a oprit la jumătate. VM-ul există în continuare, dar rămâne oprit, pentru că discurile lui ar putea fi restaurate doar parțial. Restaurează-l din nou înainte să îl pornești",
   "runReason.vmTpmLeftOut": "starea TPM a VM-ului nu este în această copie de rezervă",
   "runReason.vmDisksLeftOut": "unele discuri ale VM-ului nu sunt în această copie de rezervă",

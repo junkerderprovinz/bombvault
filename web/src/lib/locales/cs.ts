@@ -1245,6 +1245,7 @@ const cs: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "obnoveno bez GPU a běhového prostředí kontejneru",
   "runReason.restoredWithoutLinks": "obnoveno bez odkazů na kontejnery, které neběží",
   "runReason.containersNotBack": "některé kontejnery se znovu nespustily",
+  "runReason.noNetworkUntilRestart": "některé kontejnery nemají síť, dokud se znovu nespustí",
   "runReason.vmRestoreHalfDone": "obnova se zastavila v půlce. VM stále existuje, ale zůstává vypnutá, protože její disky mohou být obnovené jen částečně. Obnov ji znovu, než ji spustíš",
   "runReason.vmTpmLeftOut": "stav TPM této VM v záloze není",
   "runReason.vmDisksLeftOut": "některé disky VM v této záloze nejsou",

@@ -1239,6 +1239,7 @@ const fr: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restauré sans le GPU ni le runtime du conteneur",
   "runReason.restoredWithoutLinks": "restauré sans les liens vers des conteneurs qui ne tournent pas",
   "runReason.containersNotBack": "certains conteneurs n'ont pas redémarré",
+  "runReason.noNetworkUntilRestart": "certains conteneurs n'ont pas de réseau tant qu'ils n'ont pas redémarré",
   "runReason.vmRestoreHalfDone": "la restauration s'est arrêtée en cours de route. La VM existe toujours mais reste éteinte, car ses disques ne sont peut-être restaurés qu'en partie. Restaurez-la à nouveau avant de la démarrer",
   "runReason.vmTpmLeftOut": "l'état du TPM de la VM n'est pas dans cette sauvegarde",
   "runReason.vmDisksLeftOut": "certains disques de la VM ne sont pas dans cette sauvegarde",

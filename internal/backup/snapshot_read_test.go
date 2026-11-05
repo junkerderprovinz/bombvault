@@ -230,7 +230,7 @@ func TestSnapshotBackupReadsLiveDataOfAStoppedContainer(t *testing.T) {
 func TestSnapshotBackupWithoutAnUpdateStopsTheDependentsOnce(t *testing.T) {
 	checked := false
 	r := runSnapshotBackup(t.Context(), t, func(d *backup.BackupDeps, _ *fakeSnapshot) {
-		d.UpdateAfterBackup = func() func() {
+		d.UpdateAfterBackup = func() func() []string {
 			checked = true
 			return nil
 		}
@@ -250,8 +250,11 @@ func TestSnapshotBackupRecreatesWithTheDependentsDown(t *testing.T) {
 	var d *fakeDocker
 	r := runSnapshotBackup(t.Context(), t, func(deps *backup.BackupDeps, s *fakeSnapshot) {
 		d = s.d
-		deps.UpdateAfterBackup = func() func() {
-			return func() { _ = d.CreateAndStart(context.Background(), model.Inspect{Name: "/app"}, true) }
+		deps.UpdateAfterBackup = func() func() []string {
+			return func() []string {
+				_ = d.CreateAndStart(context.Background(), model.Inspect{Name: "/app"}, true)
+				return nil
+			}
 		}
 	})
 	if r.err != nil {
@@ -281,7 +284,7 @@ func TestSnapshotBackupRunsNoUpdateWhenTheContainerDidNotComeBack(t *testing.T) 
 	checked := false
 	r := runSnapshotBackup(t.Context(), t, func(d *backup.BackupDeps, s *fakeSnapshot) {
 		s.d.waitRunningErr = errors.New("not running after 60s")
-		d.UpdateAfterBackup = func() func() {
+		d.UpdateAfterBackup = func() func() []string {
 			checked = true
 			return nil
 		}
@@ -301,7 +304,7 @@ func TestSnapshotBackupRunsNoUpdateAfterAFailedRead(t *testing.T) {
 	checked := false
 	r := runSnapshotBackup(t.Context(), t, func(d *backup.BackupDeps, s *fakeSnapshot) {
 		s.readErr = errors.New("restic failed")
-		d.UpdateAfterBackup = func() func() {
+		d.UpdateAfterBackup = func() func() []string {
 			checked = true
 			return nil
 		}

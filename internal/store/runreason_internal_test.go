@@ -63,6 +63,7 @@ func namedReasons() map[string]string {
 		"NoteRestoredWithoutRuntime": NoteRestoredWithoutRuntime,
 		"NoteRestoredWithoutLinks":   NoteRestoredWithoutLinks,
 		"NoteContainersNotBack":      NoteContainersNotBack,
+		"NoteNoNetworkUntilRestart":  NoteNoNetworkUntilRestart,
 		"NoteFilesUnreadable":        NoteFilesUnreadable,
 		"NoteFoldersMissing":         NoteFoldersMissing,
 		"NoteBackupEmpty":            NoteBackupEmpty,

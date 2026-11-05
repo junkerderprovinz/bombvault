@@ -1278,6 +1278,7 @@ const eu: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "edukiontziaren GPUrik eta exekuzio-ingurunerik gabe leheneratua",
   "runReason.restoredWithoutLinks": "martxan ez dauden edukiontzietarako estekarik gabe leheneratua",
   "runReason.containersNotBack": "edukiontzi batzuk ez dira berriz abiarazi",
+  "runReason.noNetworkUntilRestart": "edukiontzi batzuek ez dute sarerik berriz abiarazi arte",
   "runReason.vmRestoreHalfDone": "berrezarpena erdibidean gelditu da. VMa hor dago oraindik, baina itzalita geratzen da, bere diskoak partzialki bakarrik berrezarrita egon daitezkeelako. Berrezarri berriro abiarazi aurretik",
   "runReason.vmTpmLeftOut": "VMaren TPM egoera ez dago babeskopia honetan",
   "runReason.vmDisksLeftOut": "VMaren disko batzuk ez daude babeskopia honetan",

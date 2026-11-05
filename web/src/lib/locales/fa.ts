@@ -1278,6 +1278,7 @@ const fa: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "بدون GPU یا محیط اجرایی کانتینر بازیابی شد",
   "runReason.restoredWithoutLinks": "بدون پیوند به کانتینرهایی که در حال اجرا نیستند بازیابی شد",
   "runReason.containersNotBack": "برخی کانتینرها دوباره اجرا نشدند",
+  "runReason.noNetworkUntilRestart": "برخی کانتینرها تا اجرای دوباره شبکه ندارند",
   "runReason.vmRestoreHalfDone": "بازیابی نیمه‌کاره متوقف شد. ماشین مجازی هنوز هست اما خاموش می‌ماند، چون ممکن است دیسک‌هایش فقط تا حدی بازیابی شده باشند. پیش از راه‌اندازی، آن را دوباره بازیابی کنید",
   "runReason.vmTpmLeftOut": "وضعیت TPM ماشین مجازی در این پشتیبان نیست",
   "runReason.vmDisksLeftOut": "برخی دیسک‌های ماشین مجازی در این پشتیبان نیستند",

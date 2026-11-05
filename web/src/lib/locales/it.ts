@@ -1229,6 +1229,7 @@ const it: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "ripristinato senza la GPU né il runtime del container",
   "runReason.restoredWithoutLinks": "ripristinato senza i link a container che non sono in esecuzione",
   "runReason.containersNotBack": "alcuni container non sono ripartiti",
+  "runReason.noNetworkUntilRestart": "alcuni container non hanno rete finché non vengono riavviati",
   "runReason.vmRestoreHalfDone": "il ripristino si è fermato a metà. La VM esiste ancora ma resta spenta, perché i suoi dischi potrebbero essere ripristinati solo in parte. Ripristinala di nuovo prima di avviarla",
   "runReason.vmTpmLeftOut": "lo stato del TPM della VM non è in questo backup",
   "runReason.vmDisksLeftOut": "alcuni dischi della VM non sono in questo backup",

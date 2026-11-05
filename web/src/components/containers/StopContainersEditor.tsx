@@ -57,6 +57,9 @@ export function StopContainersEditor({
   // removable, marked as not installed. Dropping it on the next save would
   // lose data the user never asked to lose.
   const candidateNames = new Set(candidates.map((c) => c.name));
+  // A list saved by an older version can still hold BombVault's own container,
+  // which the server refuses, so saving leaves it out.
+  const ownNames = new Set(installedContainers.filter((c) => c.self).map((c) => c.name));
   const installedNames = new Set(installedContainers.map((c) => c.name));
 
   async function toggle(n: string) {
@@ -67,7 +70,7 @@ export function StopContainersEditor({
     setSelected(next);
     setRowBusy((b) => ({ ...b, [n]: true }));
     try {
-      const r = await setStopContainers(name, [...next]);
+      const r = await setStopContainers(name, [...next].filter((n) => !ownNames.has(n)));
       if (r.ok) {
         push(t("settings.saved"), "success");
       } else {

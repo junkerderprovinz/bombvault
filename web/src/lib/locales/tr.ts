@@ -1247,6 +1247,7 @@ const tr: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "konteynerin GPU'su ve çalışma ortamı olmadan geri yüklendi",
   "runReason.restoredWithoutLinks": "çalışmayan konteynerlere bağlantılar olmadan geri yüklendi",
   "runReason.containersNotBack": "bazı konteynerler yeniden başlamadı",
+  "runReason.noNetworkUntilRestart": "bazı konteynerlerin yeniden başlatılana kadar ağı yok",
   "runReason.vmRestoreHalfDone": "geri yükleme yarıda kaldı. VM hâlâ duruyor ama kapalı kalıyor, çünkü diskleri yalnızca kısmen geri yüklenmiş olabilir. Başlatmadan önce onu yeniden geri yükle",
   "runReason.vmTpmLeftOut": "VM'nin TPM durumu bu yedekte yok",
   "runReason.vmDisksLeftOut": "VM'nin bazı diskleri bu yedekte yok",

@@ -40,8 +40,8 @@ func isDatabaseServer(in model.Inspect) bool {
 }
 
 // dependsOnContainer reports whether the container in needs other, named
-// name: its compose file makes other's service a dependency, or a legacy link
-// points at it.
+// name: its compose file makes other's service a dependency, a legacy link
+// points at it, or it joins one of its namespaces.
 func dependsOnContainer(in model.Inspect, name string, other model.Inspect) bool {
 	project, service := composeProject(in.Config.Labels), composeService(other.Config.Labels)
 	if project != "" && service != "" && composeProject(other.Config.Labels) == project &&
@@ -53,7 +53,7 @@ func dependsOnContainer(in model.Inspect, name string, other model.Inspect) bool
 			return true
 		}
 	}
-	return false
+	return slices.Contains(namespaceOwners(in), name)
 }
 
 // StackMemberResult is the per-container outcome of a stack restore.

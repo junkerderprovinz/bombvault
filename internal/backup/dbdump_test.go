@@ -95,7 +95,7 @@ func TestDBDumpRunsAfterPreHookAndBeforeStop(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	want := []string{"exec:pg:sh -c echo pre", "dbdump", "stop:pg", "start:pg", "waitRunning:pg"}
+	want := []string{"exec:pg:sh -c echo pre", "dbdump", "stop:pg", "start:pg", "waitRunning:pg", "health:pg"}
 	if len(d.log) != len(want) {
 		t.Fatalf("docker log = %v, want %v", d.log, want)
 	}
@@ -458,7 +458,7 @@ func TestRestoreNeverExecsForDatabaseImage(t *testing.T) {
 		t.Fatalf("unexpected: %v", err)
 	}
 
-	want := []string{"inspectName:plex", "pull:postgres:16", "stop:plex", "remove:plex", "createAndStart:/plex"}
+	want := []string{"inspectName:plex", "pull:postgres:16", "health:plex", "stop:plex", "remove:plex", "createAndStart:/plex"}
 	if len(d.log) != len(want) {
 		t.Fatalf("docker log = %v, want %v", d.log, want)
 	}

@@ -1278,6 +1278,7 @@ const ca: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "restaurat sense la GPU ni l'entorn d'execució del contenidor",
   "runReason.restoredWithoutLinks": "restaurat sense els enllaços a contenidors que no s'executen",
   "runReason.containersNotBack": "alguns contenidors no s'han tornat a iniciar",
+  "runReason.noNetworkUntilRestart": "alguns contenidors no tenen xarxa fins que es tornin a iniciar",
   "runReason.vmRestoreHalfDone": "la restauració s'ha aturat a mitges. La VM encara hi és, però queda aturada perquè els seus discos poden estar restaurats només en part. Torna-la a restaurar abans d'iniciar-la",
   "runReason.vmTpmLeftOut": "l'estat del TPM de la VM no és en aquesta còpia de seguretat",
   "runReason.vmDisksLeftOut": "alguns discos de la VM no són en aquesta còpia de seguretat",

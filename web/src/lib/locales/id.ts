@@ -1278,6 +1278,7 @@ const id: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "dipulihkan tanpa GPU atau runtime milik container",
   "runReason.restoredWithoutLinks": "dipulihkan tanpa tautan ke container yang tidak berjalan",
   "runReason.containersNotBack": "beberapa container tidak berjalan lagi",
+  "runReason.noNetworkUntilRestart": "beberapa container tidak punya jaringan sampai dijalankan lagi",
   "runReason.vmRestoreHalfDone": "pemulihan berhenti di tengah jalan. VM masih ada, tetapi tetap mati karena disknya mungkin baru sebagian dipulihkan. Pulihkan lagi sebelum Anda menjalankannya",
   "runReason.vmTpmLeftOut": "status TPM VM tidak ada di cadangan ini",
   "runReason.vmDisksLeftOut": "beberapa disk VM tidak ada di cadangan ini",

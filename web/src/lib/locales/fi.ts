@@ -1247,6 +1247,7 @@ const fi: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "palautettiin ilman kontin GPU:ta ja ajoympäristöä",
   "runReason.restoredWithoutLinks": "palautettiin ilman linkkejä kontteihin, jotka eivät ole käynnissä",
   "runReason.containersNotBack": "osa säiliöistä ei käynnistynyt uudelleen",
+  "runReason.noNetworkUntilRestart": "osalla säiliöistä ei ole verkkoa ennen uudelleenkäynnistystä",
   "runReason.vmRestoreHalfDone": "palautus pysähtyi kesken. Virtuaalikone on yhä olemassa, mutta se pysyy sammutettuna, koska sen levyt voivat olla palautettuja vain osittain. Palauta se uudelleen ennen kuin käynnistät sen",
   "runReason.vmTpmLeftOut": "virtuaalikoneen TPM-tila ei ole tässä varmuuskopiossa",
   "runReason.vmDisksLeftOut": "osa virtuaalikoneen levyistä ei ole tässä varmuuskopiossa",

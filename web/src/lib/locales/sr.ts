@@ -1276,6 +1276,7 @@ const sr: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "враћено без GPU-а и окружења за извршавање контејнера",
   "runReason.restoredWithoutLinks": "враћено без веза ка контејнерима који не раде",
   "runReason.containersNotBack": "неки контејнери се нису поново покренули",
+  "runReason.noNetworkUntilRestart": "неки контејнери немају мрежу док се поново не покрену",
   "runReason.vmRestoreHalfDone": "враћање је стало на пола пута. Виртуелна машина још постоји, али остаје искључена, јер су јој дискови можда враћени само делимично. Вратите је поново пре него што је покренете",
   "runReason.vmTpmLeftOut": "стање TPM-а виртуелне машине није у овој резервној копији",
   "runReason.vmDisksLeftOut": "неки дискови виртуелне машине нису у овој резервној копији",

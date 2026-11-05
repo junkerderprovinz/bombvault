@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -156,13 +157,11 @@ func (c *zfsConsistency) running(ctx context.Context) ([]backup.StopContainer, e
 		if !in.Running {
 			continue
 		}
-		deps = append(deps, backup.StopContainer{
-			Name:       name,
-			ID:         in.ID,
-			WasRunning: true,
-			Service:    composeService(in.Config.Labels),
-			DependsOn:  parseDependsOn(in.Config.Labels),
-		})
+		deps = append(deps, stopContainerOf(name, in))
+	}
+	deps, cutOff := c.svc.withSharers(ctx, "", model.Inspect{}, deps)
+	if len(cutOff) > 0 {
+		log.Printf("api: zfs: %s share the network of a container stopped for %s and have none until restarted", strings.Join(cutOff, ", "), c.item.Dataset) //nolint:gosec // G706: names Docker reported
 	}
 	return deps, nil
 }
@@ -381,13 +380,7 @@ func (s *Service) recoverItemRestarts(ctx context.Context, d store.ZFSDataset) i
 			continue
 		}
 		log.Printf("api: zfs: starting %q again, an interrupted snapshot of %s left it stopped", name, d.Dataset) //nolint:gosec // G706: %q-quoted
-		deps = append(deps, backup.StopContainer{
-			Name:       name,
-			ID:         in.ID,
-			WasRunning: true,
-			Service:    composeService(in.Config.Labels),
-			DependsOn:  parseDependsOn(in.Config.Labels),
-		})
+		deps = append(deps, stopContainerOf(name, in))
 	}
 	backup.RestartInOrder(ctx, s.docker, deps, false, 0)
 

@@ -1248,6 +1248,7 @@ const ar: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "استُعيدت دون المعالج الرسومي أو بيئة التشغيل التي استخدمتها الحاوية",
   "runReason.restoredWithoutLinks": "استُعيدت دون الروابط إلى حاويات لا تعمل",
   "runReason.containersNotBack": "لم تبدأ بعض الحاويات من جديد",
+  "runReason.noNetworkUntilRestart": "بعض الحاويات بلا شبكة حتى يُعاد تشغيلها",
   "runReason.vmRestoreHalfDone": "توقفت الاستعادة في منتصفها. الجهاز الافتراضي ما زال موجودًا لكنه يبقى متوقفًا، لأن أقراصه قد تكون مستعادة جزئيًا فقط. استعده مرة أخرى قبل تشغيله",
   "runReason.vmTpmLeftOut": "حالة TPM الخاصة بالجهاز الافتراضي غير موجودة في هذه النسخة الاحتياطية",
   "runReason.vmDisksLeftOut": "بعض أقراص الجهاز الافتراضي غير موجودة في هذه النسخة الاحتياطية",

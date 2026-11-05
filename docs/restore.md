@@ -44,7 +44,7 @@ Some things can stop a restore before it changes anything. A container's static 
 
 A few options appear where they apply: **Leave stopped afterwards**, to look at a container or VM before it runs again, and **Restore without GPU and runtime** on a host that lacks the GPU or runtime the backup was made with.
 
-The restore runs in the background. You can close the window, and the progress also shows under **Running now**. A long restore shows a percentage and can be cancelled, and a cancelled restore is recorded as cancelled, not as failed.
+The restore runs in the background. You can close the window, and the progress also shows under **Running now**. A long restore shows a percentage and can be cancelled, and a cancelled restore is recorded as cancelled, not as failed. A restore cancelled while the container is stopping, or one that cannot remove the container, has restored nothing yet, so the container starts again. A container that takes its volumes from another with `--volumes-from` keeps them, and the restore refuses to begin while that other container does not exist.
 
 ![The restore window at the What step, with single files ticked.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![The restore window at the What step, with single files ticked.](assets/screenshots/restore/window-what-light.png#only-light)

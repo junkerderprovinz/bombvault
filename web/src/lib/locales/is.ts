@@ -1278,6 +1278,7 @@ const is: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "endurheimt án GPU og keyrsluumhverfis gámsins",
   "runReason.restoredWithoutLinks": "endurheimt án tengla við gáma sem eru ekki í gangi",
   "runReason.containersNotBack": "sumir gámar ræstust ekki aftur",
+  "runReason.noNetworkUntilRestart": "sumir gámar hafa ekkert net fyrr en þeir eru ræstir aftur",
   "runReason.vmRestoreHalfDone": "endurheimtin stöðvaðist í miðjum klíðum. Sýndarvélin er enn til en er áfram slökkt, því diskar hennar gætu aðeins verið endurheimtir að hluta. Endurheimtu hana aftur áður en þú ræsir hana",
   "runReason.vmTpmLeftOut": "TPM-staða sýndarvélarinnar er ekki í þessu afriti",
   "runReason.vmDisksLeftOut": "sumir diskar sýndarvélarinnar eru ekki í þessu afriti",

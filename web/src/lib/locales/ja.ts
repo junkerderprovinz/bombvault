@@ -1230,6 +1230,7 @@ const ja: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "コンテナの GPU とランタイムなしで復元しました",
   "runReason.restoredWithoutLinks": "実行されていないコンテナへのリンクなしで復元しました",
   "runReason.containersNotBack": "一部のコンテナが再起動しませんでした",
+  "runReason.noNetworkUntilRestart": "一部のコンテナは再起動するまでネットワークを使えません",
   "runReason.vmRestoreHalfDone": "復元が途中で止まりました。VM は残っていますが、ディスクが一部しか復元されていない可能性があるため停止したままです。起動する前にもう一度復元してください",
   "runReason.vmTpmLeftOut": "VM の TPM の状態はこのバックアップに含まれていません",
   "runReason.vmDisksLeftOut": "VM の一部のディスクはこのバックアップに含まれていません",

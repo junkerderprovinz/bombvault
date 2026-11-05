@@ -69,6 +69,9 @@ type fakeDocker struct {
 	// daemon carries that stop through anyway.
 	onStop      func()
 	stopCtxErrs []error
+	// onRemove runs inside Remove, for a test that cancels the run once the
+	// container is gone.
+	onRemove func()
 
 	// images maps a reference or image id to the local image id it resolves
 	// to; one missing from it is not on the host.
@@ -139,6 +142,9 @@ func (d *fakeDocker) Health(_ context.Context, name string) (model.Health, error
 
 func (d *fakeDocker) Remove(_ context.Context, name string) error {
 	d.log = append(d.log, "remove:"+name)
+	if d.onRemove != nil {
+		d.onRemove()
+	}
 	return d.removeErr
 }
 
@@ -1188,8 +1194,8 @@ func TestRestoreHappyPathOrder(t *testing.T) {
 	if runs.log[0] != "runStart:target-1:restore" {
 		t.Fatalf("runs.log[0] = %q", runs.log[0])
 	}
-	// docker order: inspectName → pull → stop → remove → createAndStart
-	want := []string{"inspectName:plex", "pull:lscr.io/linuxserver/plex:latest", "stop:plex", "remove:plex", "createAndStart:/plex"}
+	// docker order: inspectName → pull → health → stop → remove → createAndStart
+	want := []string{"inspectName:plex", "pull:lscr.io/linuxserver/plex:latest", "health:plex", "stop:plex", "remove:plex", "createAndStart:/plex"}
 	if len(d.log) != len(want) {
 		t.Fatalf("docker log = %v, want %v", d.log, want)
 	}
@@ -1348,7 +1354,7 @@ func TestCancelledRestoreCreatesTheContainerAgainStopped(t *testing.T) {
 	r := &fakeRestic{restoreErr: context.Canceled}
 	tpl := &fakeTemplates{}
 	runs := &fakeRuns{}
-	d.onStop = cancel
+	d.onRemove = cancel
 
 	err := backup.RestoreContainer(ctx, restoreDeps(d, r, tpl, runs))
 	if !errors.Is(err, context.Canceled) {

@@ -1247,6 +1247,7 @@ const da: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "gendannet uden containerens GPU eller runtime",
   "runReason.restoredWithoutLinks": "gendannet uden links til containere, der ikke kører",
   "runReason.containersNotBack": "nogle containere startede ikke igen",
+  "runReason.noNetworkUntilRestart": "nogle containere har intet netværk, før de startes igen",
   "runReason.vmRestoreHalfDone": "gendannelsen stoppede halvvejs. VM'en findes stadig, men forbliver slukket, fordi dens diske måske kun er delvist gendannet. Gendan den igen, før du starter den",
   "runReason.vmTpmLeftOut": "VM'ens TPM-tilstand er ikke i denne sikkerhedskopi",
   "runReason.vmDisksLeftOut": "nogle af VM'ens diske er ikke i denne sikkerhedskopi",

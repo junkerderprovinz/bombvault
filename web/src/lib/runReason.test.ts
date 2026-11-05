@@ -6,7 +6,6 @@ import {
   backupNotes,
   isOwnReason,
   dataOutsideHost,
-  backupNotes,
   isWarningNote,
   runReason,
   runReasonParts,
@@ -281,6 +280,17 @@ describe("a backup that saw less than it should", () => {
 
   it("is a warning on the run of a stack's member", () => {
     expect(isWarningNote("the project folder of this stack holds no files and was not backed up: /mnt/user/stacks/site")).toBe(true);
+  });
+});
+
+describe("containers left without a network", () => {
+  const note = "some containers have no network until they are restarted: bombvault";
+
+  it("is a warning, translated up to the names", () => {
+    expect(isWarningNote(note)).toBe(true);
+    const parts = runReasonParts(note, t);
+    expect(parts.head).toBe("runReason.noNetworkUntilRestart");
+    expect(parts.detail).toBe("bombvault");
   });
 });
 

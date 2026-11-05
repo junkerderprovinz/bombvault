@@ -3638,6 +3638,12 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
   keep_yearly  INTEGER NOT NULL
 );`,
 	},
+	{
+		version:          removalByUpdateMigration,
+		name:             "container_removal_by_update",
+		alreadySatisfied: columnPresent("container_restore_removals", "by_update"),
+		sql:              `ALTER TABLE container_restore_removals ADD COLUMN by_update INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4216,6 +4222,10 @@ const hiddenZeroRuleMigration = 700
 // locationKeepMigration numbers the How long to keep cards of folders that have
 // no row of their own.
 const locationKeepMigration = 720
+
+// removalByUpdateMigration tells a container an update removed from one a
+// restore removed.
+const removalByUpdateMigration = 760
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

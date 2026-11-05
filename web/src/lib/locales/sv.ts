@@ -1247,6 +1247,7 @@ const sv: Partial<Translations> = {
   "runReason.restoredWithoutRuntime": "återställd utan containerns GPU eller runtime",
   "runReason.restoredWithoutLinks": "återställd utan länkar till containrar som inte körs",
   "runReason.containersNotBack": "några containrar startade inte igen",
+  "runReason.noNetworkUntilRestart": "några containrar har inget nätverk förrän de startas igen",
   "runReason.vmRestoreHalfDone": "återställningen stannade halvvägs. VM:en finns kvar men förblir avstängd, eftersom dess diskar kanske bara är delvis återställda. Återställ den igen innan du startar den",
   "runReason.vmTpmLeftOut": "VM:ens TPM-tillstånd finns inte i den här säkerhetskopian",
   "runReason.vmDisksLeftOut": "vissa av VM:ens diskar finns inte i den här säkerhetskopian",
