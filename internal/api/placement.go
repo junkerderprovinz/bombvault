@@ -411,13 +411,16 @@ func (s *Service) itemIdentity(item store.ItemRef) (string, error) {
 
 // retentionPolicyForRef is the keep-policy a repository ages by. A direct
 // repository takes its target's rules as mirrored onto its row, word for word,
-// so all zero keeps everything; every other repository takes the domain's
-// local policy.
+// so all zero keeps everything. A named repository takes the rule its own page
+// shows, and only the section's own folder can follow a location's card.
 func (s *Service) retentionPolicyForRef(settings store.Settings, domain string, ref domainRepoRef) restic.RetentionPolicy {
 	if ref.Named.CompanionOf != "" {
 		p := targetOffsiteRetentionPolicy(ref.Named)
 		p.Direct = true
 		return p
+	}
+	if ref.Named.ID != "" {
+		return keepPolicy(namedRepoKeep(settings, domain))
 	}
 	return s.retentionPolicy(settings, domain)
 }

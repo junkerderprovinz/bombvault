@@ -103,15 +103,18 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		t, err := s.offsiteTargetForSource(settings, domain, source)
 		own = err == nil && t.DestinationID != "" && t.Keeps(store.OwnRetention)
 	}
-	out := RetentionPreview{Policy: RetentionPolicyView{
-		On:          policy.Any(),
-		KeepLast:    policy.KeepLast,
-		KeepDaily:   policy.KeepDaily,
-		KeepWeekly:  policy.KeepWeekly,
-		KeepMonthly: policy.KeepMonthly,
-		KeepYearly:  policy.KeepYearly,
-		Own:         own,
-	}, Repos: []RetentionPreviewRepo{}}
+	view := func(p restic.RetentionPolicy) RetentionPolicyView {
+		return RetentionPolicyView{
+			On:          p.Any(),
+			KeepLast:    p.KeepLast,
+			KeepDaily:   p.KeepDaily,
+			KeepWeekly:  p.KeepWeekly,
+			KeepMonthly: p.KeepMonthly,
+			KeepYearly:  p.KeepYearly,
+			Own:         own,
+		}
+	}
+	out := RetentionPreview{Policy: view(policy), Repos: []RetentionPreviewRepo{}}
 
 	// Append-only repositories are classified exactly as pruneDomain classifies
 	// them, and then REPORTED instead of refused. pruneDomain has to refuse,
@@ -142,22 +145,34 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 	skipped = append(skipped, missing...)
 	out.Skipped = skipNames(skipped)
 
-	if !policy.Any() {
-		// Retention is off. Every repository is still named, so the panel can
-		// say "these exist, and nothing would be removed from any of them"
-		// rather than showing an empty box that reads like a failure.
-		for _, r := range existing {
-			out.Repos = append(out.Repos, RetentionPreviewRepo{Name: s.refName(r), Items: []RetentionPreviewItem{}})
+	// A repository is worked out by the rule it ages by, which for a named one
+	// need not be the own folder's, so the panel names one that applies at all.
+	policyOf := func(r domainRepoRef) restic.RetentionPolicy {
+		if isOffsiteSource(source) {
+			return policy
 		}
-		return out, nil
+		return s.retentionPolicyForRef(settings, domain, r)
+	}
+	if !policy.Any() {
+		if i := slices.IndexFunc(existing, func(r domainRepoRef) bool { return policyOf(r).Any() }); i >= 0 {
+			out.Policy = view(policyOf(existing[i]))
+		}
 	}
 
 	for _, r := range existing {
 		row := RetentionPreviewRepo{Name: s.refName(r), Items: []RetentionPreviewItem{}}
+		rPolicy := policyOf(r)
+		if !rPolicy.Any() {
+			// Still named, so the panel can say "this exists, and nothing would be
+			// removed from it" rather than show an empty box that reads like a
+			// failure.
+			out.Repos = append(out.Repos, row)
+			continue
+		}
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 
 		rCtx, cancel := context.WithTimeout(ctx, previewPerRepoTimeout)
-		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, policy, rMode)
+		groups, paused, pErr := s.previewRetentionPerIdentity(rCtx, r.Loc, domain, rPolicy, rMode)
 		cancel()
 
 		if pErr != nil {

@@ -2268,16 +2268,26 @@ func globPartsMatch(pat, parts []string) bool {
 	return ok && globPartsMatch(pat[1:], parts[1:])
 }
 
-// retentionPolicy is the local keep-policy of a domain, the one localKeep
+// retentionPolicy is the keep-policy of a domain's own folder, the one localKeep
 // names.
 func (s *Service) retentionPolicy(settings store.Settings, domain string) restic.RetentionPolicy {
 	return keepPolicy(s.localKeep(settings, domain))
 }
 
-// localKeep is the domain's own local keep-policy when it has one. Without
-// one, a section whose own folder was put into a storage location ages by that
-// location's How long to keep card, as a copy there does, and any other by the
-// shared local policy.
+// namedRepoKeep is what a named repository of the domain ages by, wherever the
+// section's own folder lies: the domain's own local keep-policy when it has one,
+// the shared local one otherwise.
+func namedRepoKeep(settings store.Settings, domain string) store.RetentionKeep {
+	if k, own := settings.OwnRetention()[domain]; own {
+		return k
+	}
+	return sharedLocalKeep(settings)
+}
+
+// localKeep is what the domain's own folder ages by: the domain's own local
+// keep-policy when it has one. Without one, an own folder put into a storage
+// location ages by that location's How long to keep card, as a copy there does,
+// and any other by the shared local policy.
 func (s *Service) localKeep(settings store.Settings, domain string) store.RetentionKeep {
 	if k, own := settings.OwnRetention()[domain]; own {
 		return k

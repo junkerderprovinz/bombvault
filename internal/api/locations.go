@@ -479,7 +479,7 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 	for _, domain := range domains {
 		loc.Sections = append(loc.Sections, locationSection{
 			Domain: domain, Use: useHome, RepoID: r.ID, Where: loc.Where, Enabled: r.Enabled, Immutable: r.Immutable,
-			Retention: b.s.localKeep(b.settings, domain), Compression: loc.Compression,
+			Retention: namedRepoKeep(b.settings, domain), Compression: loc.Compression,
 			LimitUpload: r.LimitUpload, LimitDownload: r.LimitDownload, Own: b.ownLocalKeep(domain),
 		})
 	}
