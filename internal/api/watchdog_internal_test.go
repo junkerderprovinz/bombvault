@@ -278,11 +278,11 @@ func TestTheOverdueAlertSaysWhenNoBackupHasSucceededYet(t *testing.T) {
 	const day = int64(86400)
 	now := int64(1_800_000_000)
 	want := "Backups for vms are overdue: none has succeeded yet, expected every 1d."
-	if got := overdueMessage("vms", 0, day, now); got != want {
+	if got := overdueMessage("vms", sectionVerdict{period: day}, now); got != want {
 		t.Fatalf("message = %q, want %q", got, want)
 	}
 	want = "Backups for vms are overdue: last success 3d ago, expected every 1d."
-	if got := overdueMessage("vms", now-3*day, day, now); got != want {
+	if got := overdueMessage("vms", sectionVerdict{last: now - 3*day, period: day}, now); got != want {
 		t.Fatalf("message = %q, want %q", got, want)
 	}
 }

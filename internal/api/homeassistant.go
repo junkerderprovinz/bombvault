@@ -126,23 +126,33 @@ func (h *Handler) haState(ctx context.Context) (homeassistant.State, error) {
 	return st, nil
 }
 
-// lastBackupResult is how the newest finished backup of a domain ended, or ""
-// before the first one.
+// lastBackupResult is how a domain's last round of backups ended, or "" before
+// the first one: "failed" when any entry's newest finished backup failed, as the
+// overview reads it, or else how the newest of them ended. One entry that fails
+// is not hidden by the neighbour that finished after it.
 func (h *Handler) lastBackupResult(domain string) string {
 	ids, err := h.mcpDomainTargetIDs(domain)
 	if err != nil {
 		return ""
 	}
-	runs, err := h.store.ListRunsFiltered(store.RunFilter{
-		TargetIDs: ids,
-		Kinds:     []string{"backup"},
-		Statuses:  []string{"success", "failed", "cancelled", "skipped", "deferred"},
-		Limit:     1,
-	})
-	if err != nil || len(runs) == 0 {
+	stamps, err := h.store.LatestBackupsByTarget()
+	if err != nil {
 		return ""
 	}
-	return runs[0].Status
+	result, newest := "", int64(0)
+	for _, id := range ids {
+		stamp, found := stamps[id]
+		if !found {
+			continue
+		}
+		if stamp.LastRunStatus == "failed" {
+			return "failed"
+		}
+		if stamp.LastRunAt >= newest {
+			result, newest = stamp.LastRunStatus, stamp.LastRunAt
+		}
+	}
+	return result
 }
 
 // haRunning names what runs now in one short line, "idle" when nothing does.

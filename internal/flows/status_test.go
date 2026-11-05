@@ -23,11 +23,20 @@ func (b *bombvault) age(by time.Duration) {
 	}
 	defer func() { _ = db.Close() }()
 	secs := int64(by / time.Second)
-	for _, stmt := range []string{
+	stmts := []string{
 		"UPDATE runs SET started_at = started_at - $1, finished_at = finished_at - $1",
 		"UPDATE file_sets SET created_at = created_at - $1",
 		"UPDATE schema_migrations SET applied_at = applied_at - $1",
-	} {
+	}
+	// A database the release before wrote has no such table yet.
+	var plans int
+	if err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE name = 'section_plans'").Scan(&plans); err != nil {
+		b.t.Fatal(err)
+	}
+	if plans > 0 {
+		stmts = append(stmts, "UPDATE section_plans SET changed_at = MAX(changed_at - $1, 0)")
+	}
+	for _, stmt := range stmts {
 		if _, err := db.Exec(stmt, secs); err != nil {
 			b.t.Fatalf("%s: %v", stmt, err)
 		}

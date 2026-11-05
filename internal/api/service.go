@@ -3410,8 +3410,11 @@ type DomainStatusEntry struct {
 	// client can render "the domain's cadence" and "covered by the whole-server
 	// pass" as the different statements they are. Without it the status read
 	// "Not scheduled" for a domain backed up nightly (#177).
-	CoveredBy     string `json:"coveredBy"`
-	LastSuccess   int64  `json:"lastSuccess"`   // unix time of the last successful backup, 0 = none
+	CoveredBy   string `json:"coveredBy"`
+	LastSuccess int64  `json:"lastSuccess"` // unix time of the last successful backup, 0 = none
+	// StaleEntry names the entry that decides an overdue status, when that is not
+	// the section's newest backup.
+	StaleEntry    string `json:"staleEntry,omitempty"`
 	PeriodSeconds int64  `json:"periodSeconds"` // expected RPO window in seconds, 0 = no expectation
 	Status        string `json:"status"`        // "off" | "never" | "overdue" | "warn" | "ok"
 	// LastVerified is the unix time of the last LOCAL restore-verification drill
@@ -3565,25 +3568,25 @@ func (s *Service) sectionEntries(domain string, settings store.Settings) ([]sect
 		var ts []store.Target
 		ts, err = s.store.ListTargets()
 		for _, t := range ts {
-			entries = append(entries, sectionEntry{schedule.EffectiveContainerSchedule(t, settings), t.CreatedAt})
+			entries = append(entries, sectionEntry{t.ID, t.ContainerName, schedule.EffectiveContainerSchedule(t, settings), t.CreatedAt})
 		}
 	case "vms":
 		var vs []store.VMTarget
 		vs, err = s.store.ListVMTargets()
 		for _, v := range vs {
-			entries = append(entries, sectionEntry{schedule.EffectiveVMSchedule(v, settings), v.CreatedAt})
+			entries = append(entries, sectionEntry{v.ID, v.Name, schedule.EffectiveVMSchedule(v, settings), v.CreatedAt})
 		}
 	case "files":
 		var sets []store.FileSet
 		sets, err = s.store.ListFileSets()
 		for _, set := range sets {
-			entries = append(entries, sectionEntry{schedule.EffectiveFileSetSchedule(set, settings), set.CreatedAt})
+			entries = append(entries, sectionEntry{set.ID, set.Name, schedule.EffectiveFileSetSchedule(set, settings), set.CreatedAt})
 		}
 	case zfsDomain:
 		var ds []store.ZFSDataset
 		ds, err = s.store.ListZFSDatasets()
 		for _, d := range ds {
-			entries = append(entries, sectionEntry{schedule.EffectiveZFSDatasetSchedule(d, settings), d.CreatedAt})
+			entries = append(entries, sectionEntry{d.ID, d.Dataset, schedule.EffectiveZFSDatasetSchedule(d, settings), d.CreatedAt})
 		}
 	default:
 		return nil, false
@@ -3607,8 +3610,13 @@ func (s *Service) domainWindow(domain, ownCadence string, settings store.Setting
 	if listed && !scheduled {
 		return 0, ""
 	}
-	if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
-		return period, coveredBy
+	reached := !listed || slices.ContainsFunc(entries, func(e sectionEntry) bool {
+		return e.schedule.Kind == schedule.EffectiveDomain || e.schedule.Kind == schedule.EffectiveEverything
+	})
+	if reached {
+		if period, coveredBy = domainCoverage(ownCadence, settings.EverythingSchedule); period > 0 {
+			return period, coveredBy
+		}
 	}
 	for _, e := range entries {
 		if p := cadencePeriodSeconds(e.schedule.Spec); e.schedule.Kind == schedule.EffectiveOwn && p > 0 && (period == 0 || p < period) {
@@ -3620,23 +3628,128 @@ func (s *Service) domainWindow(domain, ownCadence string, settings store.Setting
 
 // scheduledSince is when a section first had something to back up: its oldest
 // entry on a schedule, or the start of this database for flash and the
-// self-backup. It falls back to now, so a failed read never turns a section red.
+// self-backup, and not before its plan last changed. It falls back to now, so a
+// failed read never turns a section red.
 func (s *Service) scheduledSince(domain string, settings store.Settings, now int64) int64 {
 	if entries, listed := s.sectionEntries(domain, settings); listed {
 		since := now
+	changed, err := s.store.SectionPlanChangedAt(domain)
+	if err != nil {
+		log.Printf("api: status %s: when its plan changed could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return now
+	}
 		for _, e := range entries {
 			if e.schedule.Kind != schedule.EffectiveNone && e.since < since {
 				since = e.since
 			}
 		}
-		return since
+		return max(since, changed)
 	}
 	born, err := s.store.DatabaseBornAt()
 	if err != nil {
 		log.Printf("api: status %s: when this database started could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 		return now
 	}
-	return born.Unix()
+	return max(born.Unix(), changed)
+}
+
+// NoteSectionPlans records when each section's plan last changed. It runs at
+// the start and after every save that can change one, so a plan set by any route
+// has its first run to wait for.
+func (s *Service) NoteSectionPlans() {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		log.Printf("api: status: read settings to note the plans: %v", err)
+		return
+	}
+	now := time.Now().Unix()
+	for _, d := range s.statusDomains(settings) {
+		if err := s.store.NoteSectionPlan(d.name, s.sectionPlanSignature(d, settings), now); err != nil {
+			log.Printf("api: status %s: %v", d.name, err) //nolint:gosec // G706: domain is a fixed literal
+		}
+	}
+}
+
+// sectionPlanSignature is what a section's plan comes down to: the kinds of
+// schedule that reach its entries. An entry added under a plan the section has
+// already does not change it.
+func (s *Service) sectionPlanSignature(d statusDomain, settings store.Settings) string {
+	entries, listed := s.sectionEntries(d.name, settings)
+	if !listed {
+		period, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
+		if !d.enabled || period == 0 {
+			return "off"
+		}
+		return strconv.FormatInt(period, 10)
+	}
+	var plans []string
+	for _, e := range entries {
+		if e.schedule.Kind != schedule.EffectiveNone {
+			plans = append(plans, e.schedule.Kind+" "+e.schedule.Spec)
+		}
+	}
+	slices.Sort(plans)
+	return strings.Join(slices.Compact(plans), "; ")
+}
+
+// sectionVerdict is how a section's backups stand: the status, and the last
+// success and the period behind it. Stale names the entry that decided it when
+// that is not the section's newest backup.
+type sectionVerdict struct {
+	status       string
+	last, period int64
+	stale        string
+}
+
+// judgeSection decides the status of a section whose newest backup is newest. An
+// entry that fell behind or never got its backup decides, so one that stopped is
+// not hidden by a neighbour that runs. An entry whose container is gone is skipped
+// by every run and has nothing to catch up on. ZFS keeps the section's figure:
+// its items can be protected by a replica alone, which is no backup run.
+func (s *Service) judgeSection(d statusDomain, settings store.Settings, now, newest, period int64) sectionVerdict {
+	scheduled := d.enabled && period > 0
+	v := sectionVerdict{last: newest, period: period}
+	if d.name != zfsDomain && scheduled {
+		if name, last, p, found := s.mostBehindEntry(d.name, settings, now); found {
+			v.last, v.period, v.stale = last, p, name
+		}
+	}
+	v.status = s.sectionStatus(d.name, settings, now, v.last, v.period, scheduled)
+	return v
+}
+
+// mostBehindEntry is the scheduled entry furthest past its own period, if any is.
+func (s *Service) mostBehindEntry(domain string, settings store.Settings, now int64) (name string, last, period int64, found bool) {
+	entries, listed := s.sectionEntries(domain, settings)
+	if !listed {
+		return "", 0, 0, false
+	}
+	stamps, err := s.store.LatestBackupsByTarget()
+	if err != nil {
+		log.Printf("api: status %s: the entries' last backups could not be read, so the section's newest counts: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return "", 0, 0, false
+	}
+	changed, err := s.store.SectionPlanChangedAt(domain)
+	if err != nil {
+		log.Printf("api: status %s: when its plan changed could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+		return "", 0, 0, false
+	}
+	var worst float64
+	for _, e := range entries {
+		p := cadencePeriodSeconds(e.schedule.Spec)
+		stamp := stamps[e.id]
+		if e.schedule.Kind == schedule.EffectiveNone || p == 0 || stamp.LastRunStatus == statusSkipped {
+			continue
+		}
+		base := stamp.LastSuccessAt
+		if base == 0 {
+			base = max(e.since, changed)
+		}
+		if behind := float64(now-base) / float64(p); behind > 1 && behind > worst {
+			worst, name, last, period, found = behind, e.name, stamp.LastSuccessAt, p, true
+		}
+	}
+	return name, last, period, found
 }
 
 // sectionStatus is rpoStatus for a section's backups. A section without one
@@ -3984,6 +4097,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		scheduled := d.enabled && period > 0
 		sectionPeriod, _ := domainCoverage(d.schedule, settings.EverythingSchedule)
 		entrySchedules := scheduled && sectionPeriod == 0
+		verdict := s.judgeSection(d, settings, now, lastUnix, period)
 
 		// The latest LOCAL restore-verification drill drives the "last verified
 		// restorable" badge. Best-effort: a read error leaves the badge at "never"
@@ -4101,7 +4215,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		protection := protectionLevel(now, in)
 		checks := protectionChecks(now, in)
 		// A backup that waits for its app is late by choice until its deadline.
-		backupStatus := s.sectionStatus(d.name, settings, now, lastUnix, period, scheduled)
+		backupStatus := verdict.status
 		if backupStatus == "overdue" && s.deferralHolds(d.name, now) {
 			backupStatus = "warn"
 		}
@@ -4111,6 +4225,11 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		pruneStrategySet := offsiteImmutableFor(d.name, settings) ||
 			settings.OffsiteGrowthBudgetGB > 0 ||
 			s.offsiteRetentionPolicy(settings, d.name).Any() ||
+		// The sentence on screen is about what fell behind, not its neighbour.
+		shownSuccess := lastUnix
+		if verdict.stale != "" {
+			shownSuccess = verdict.last
+		}
 			s.retentionPolicy(settings, d.name).Any()
 
 		out = append(out, DomainStatusEntry{
@@ -4118,7 +4237,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			Enabled:               d.enabled,
 			Schedule:              d.schedule,
 			CoveredBy:             coveredBy,
-			LastSuccess:           lastUnix,
+			LastSuccess:           shownSuccess,
 			PeriodSeconds:         period,
 			Status:                backupStatus,
 			LastVerified:          lastVerified,
@@ -4132,6 +4251,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			LastReplicationAt:     lastReplicationAt,
 			LastReplicationOK:     lastReplicationOK,
 			LastDRDrillAt:         lastDRDrillAt,
+			StaleEntry:            verdict.stale,
 			LastDRDrillOK:         lastDRDrillOK,
 			LastDRDrillItem:       drItem,
 			LastDRDrillSnapshot:   drSnapshot,

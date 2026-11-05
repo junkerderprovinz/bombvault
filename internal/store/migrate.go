@@ -3644,6 +3644,17 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		alreadySatisfied: columnPresent("container_restore_removals", "by_update"),
 		sql:              `ALTER TABLE container_restore_removals ADD COLUMN by_update INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// What each section's plan was at the last look and when that last changed,
+		// so a plan set today is not held to a database that is a month old.
+		version: sectionPlansMigration,
+		name:    "section_plans",
+		sql: `CREATE TABLE IF NOT EXISTS section_plans (
+  domain     TEXT PRIMARY KEY,
+  signature  TEXT NOT NULL,
+  changed_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4226,6 +4237,9 @@ const locationKeepMigration = 720
 // removalByUpdateMigration tells a container an update removed from one a
 // restore removed.
 const removalByUpdateMigration = 760
+
+// sectionPlansMigration numbers the record of when a section's plan last changed.
+const sectionPlansMigration = 780
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

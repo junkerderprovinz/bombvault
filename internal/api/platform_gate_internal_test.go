@@ -145,7 +145,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyBackupOverdue", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		s.notifyBackupOverdue(context.Background(), notify.Config{Unraid: true}, "containers", 0, 3600, time.Now().Unix())
+		s.notifyBackupOverdue(context.Background(), notify.Config{Unraid: true}, "containers", sectionVerdict{period: 3600}, time.Now().Unix())
 	})
 
 	t.Run("notifyReceiverDeadMan", func(t *testing.T) {

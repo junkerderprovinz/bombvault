@@ -2185,6 +2185,7 @@ func (h *Handler) dueGates() schedule.DueGates {
 // including the per-item override entries (#121). Called after a change that alters
 // the schedule structure outside the settings form (a per-item cadence PATCH).
 func (h *Handler) reloadScheduler() error {
+	h.svc.NoteSectionPlans()
 	s, err := h.store.GetSettings()
 	if err != nil {
 		return err
@@ -3478,6 +3479,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	// restart — a backup already in flight keeps the value it began with.
 	restic.SetMaxProcs(s.BackupCores)
 	restic.SetMemLimitMB(s.BackupMemoryMB)
+	h.svc.NoteSectionPlans()
 	if err := h.scheduler.ReloadWithGates(s, h.dueGates()); err != nil {
 		// Settings persisted but the scheduler could not re-register — report it.
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(err)})
