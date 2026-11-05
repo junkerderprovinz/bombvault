@@ -9,10 +9,10 @@ Tutto ciò che BombVault salva sta in un unico elenco sotto **Backup**: containe
 
 | Sezione | Cosa viene salvato |
 |---|---|
-| **Container** | La cartella appdata più la definizione del container: immagine, variabili, porte, label e volumi. La scheda **Cartelle da salvare** nella scheda **Impostazioni** del container spunta con precisione quali cartelle copre il backup, con un conteggio in tempo reale dei percorsi e un elenco di ciò che hai lasciato fuori. I dati che un container tiene fuori da Host Data, per esempio in un ixVolume di TrueNAS, non vengono salvati, e l'esecuzione nomina le cartelle che ha lasciato fuori. |
+| **Container** | La cartella appdata più la definizione del container: immagine, variabili, porte, label e volumi. La scheda **Cartelle da salvare** nella scheda **Impostazioni** del container spunta con precisione quali cartelle copre il backup, con un conteggio in tempo reale dei percorsi e un elenco di ciò che hai lasciato fuori. I dati che un container tiene fuori da Host Data, per esempio in un ixVolume di TrueNAS o in un progetto Compose sotto `/opt`, non vengono salvati, e l'esecuzione nomina le cartelle che ha lasciato fuori. L'esecuzione nomina anche una cartella dentro Host Data che al momento non c'è. I percorsi di sistema come `/etc/localtime` o il socket Docker non contano come dati. |
 | **VM** | Le immagini disco, la definizione XML e la NVRAM UEFI, con uno spegnimento ordinato o uno snapshot a caldo, via SSH. Vedi [Backup delle VM](vm-backup-ssh-setup.md). |
 | **Flash** | Solo Unraid. L'intera chiavetta USB (`/boot`): sistema operativo, licenza, configurazione dell'array, condivisioni, rete e configurazione dei plugin. |
-| **Auto-backup** | Il `/config` di BombVault stesso: il suo database delle impostazioni, le credenziali delle destinazioni e la coppia di chiavi SSH di libvirt, copiati con `VACUUM INTO` di SQLite così il database non viene mai catturato nel mezzo di una scrittura. |
+| **Auto-backup** | Il `/config` di BombVault stesso: il suo database delle impostazioni, le credenziali delle destinazioni, la coppia di chiavi SSH di libvirt, la chiave e le chiavi host fissate dei server ZFS e i certificati, copiati con `VACUUM INTO` di SQLite così il database non viene mai catturato nel mezzo di una scrittura. |
 | **Cartelle** | Qualsiasi cartella del server come set di cartelle, per esempio una condivisione, i tuoi documenti o una libreria di foto, con pattern di esclusione opzionali. I set di cartelle hanno pianificazioni, conservazione, copie off-site, controlli e prove di ripristino come ogni altra cosa. |
 | **Dataset ZFS** | Un dataset con tutti i dataset sottostanti, letto da un unico snapshot ZFS così che tutti provengano dallo stesso istante, e salvato con restic come una cartella. Un elemento ZFS può anche tenere una replica identica a livello di blocchi su un secondo server ZFS. Vedi [Dataset ZFS](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Gli elementi che non sono più installati ma hanno ancora backup stanno a parte 
 L'azione principale della pagina galleggia in basso a destra: **Esegui il backup di tutto ora** avvia un'esecuzione su ogni sezione attivata. **Altro** contiene il resto:
 
 - **Seleziona** avvia una selezione, vedi sotto.
-- **Scopri backup** legge ciò che contengono le destinazioni e ne ricostruisce gli elementi, per esempio dopo un'installazione nuova. Le copie off-site delle sezioni ricostruite restano allora in pausa finché non confermi il loro valore predefinito, vedi [Dopo una ricostruzione](offsite-recovery.md#after-a-rebuild).
+- **Scopri backup** legge ciò che contengono le destinazioni e ne ricostruisce gli elementi, per esempio dopo un'installazione nuova. Un container senza dati propri non ha uno snapshot, e torna dalla definizione copiata accanto al repository. Le copie off-site delle sezioni ricostruite restano allora in attesa finché non adotti i loro backup per questo server, vedi [Dopo una ricostruzione](offsite-recovery.md#after-a-rebuild).
 - **Connessione ZFS a questo server** apre la prova SSH della sezione ZFS, vedi [Dataset ZFS](zfs-datasets.md#requirements).
 - **Replica tutto ora**, con il riquadro ZFS selezionato, invia la replica di ogni elemento ZFS.
 
@@ -98,7 +98,7 @@ Le schede sotto dipendono dal tipo di elemento:
 | Container | **Cartelle da salvare** (quali cartelle mappate vengono salvate, con **Salta le cartelle di cache (CACHEDIR.TAG)**), **Pattern di esclusione**, **Arresta altri container**, **Comandi prima e dopo**, **Database**, **Quando l'app è occupata**, **Aggiorna dopo un backup riuscito**, **Snapshot invece dello stop**, **Nomi precedenti** |
 | VM | **VM** con **Metodo** (**Ordinato (spegnimento)** o **Snapshot a caldo**) e **Solo blocchi modificati**, vedi la [guida al backup delle VM](vm-backup-ssh-setup.md#per-vm-method) |
 | Set di cartelle | **Cartella** e **Pattern di esclusione** |
-| Chiavetta flash | **Esportazione zip del flash**, che scrive ogni backup della flash come semplice `.zip` in una cartella a tua scelta |
+| Chiavetta flash | **Esportazione zip del flash**, che scrive ogni backup della flash come semplice `.zip` in una cartella a tua scelta, in un solo passaggio così uno strumento di sincronizzazione non vede mai un file a metà. Un backup della flash che contiene meno del dovuto lascia al suo posto l'ultimo ZIP, e l'esecuzione dell'esportazione lo segnala. |
 | Dataset ZFS | i dataset figli, i container da fermare e i comandi attorno allo snapshot, **Replica** e **Prova l'accesso agli snapshot**, vedi [Dataset ZFS](zfs-datasets.md) |
 
 Le impostazioni si salvano da sole mentre le cambi.
@@ -119,7 +119,7 @@ Le impostazioni si salvano da sole mentre le cambi.
 
 ## Pattern di esclusione {#excludes}
 
-La scheda **Pattern di esclusione** accetta un pattern per riga. Scrivi i percorsi come li vedi dentro il container, come `/config/Library/Application Support/Plex Media Server/Cache`, oppure un nome semplice come `.git`, che corrisponde a qualsiasi profondità. Un'anteprima sotto il campo mostra a cosa corrisponde ogni riga, e avvisa quando una riga non corrisponde a nulla o escluderebbe tutto. Una riga con `/` o `*`, o una che nomina un'intera cartella salvata, viene ignorata, così un'esclusione non può mai svuotare un backup. Per lasciare fuori un'intera cartella, deselezionala invece in **Cartelle da salvare**.
+La scheda **Pattern di esclusione** accetta un pattern per riga. Scrivi i percorsi come li vedi dentro il container, come `/config/Library/Application Support/Plex Media Server/Cache`, oppure un nome semplice come `.git`, che corrisponde a qualsiasi profondità. Su un set di cartelle, scrivi il percorso come lo conosce l'host, come `/mnt/user/data/cache`. Un'anteprima sotto il campo mostra a cosa corrisponde ogni riga, e avvisa quando una riga non corrisponde a nulla o escluderebbe tutto. Una riga con `/` o `*`, o una che nomina un'intera cartella salvata, viene ignorata, così un'esclusione non può mai svuotare un backup. Per lasciare fuori un'intera cartella, deselezionala invece in **Cartelle da salvare**.
 
 Per le immagini note come Plex, Jellyfin, Sonarr, Radarr, Immich e Nextcloud la scheda propone le cartelle che l'app riempie di nuovo da sola, come cache, log e miniature. Nulla viene escluso finché non premi **Escludi selezionati**.
 
@@ -137,6 +137,8 @@ Un dump fallito non fa fallire il backup. Compare come esecuzione fallita a sé 
 
 - **Comandi prima e dopo** girano dentro il container con `sh -c`, per esempio per scrivere una cache su disco. Un comando prima del backup che fallisce lo interrompe. Un comando prima del backup che esce con il codice 75 rinvia invece un backup pianificato, vedi sotto.
 - **Arresta altri container** nomina i container da fermare mentre questo viene salvato, come il suo database. Poi ripartono nel loro ordine `depends_on` di Compose, e di default ciascuno deve risultare sano prima che parta il successivo. L'attesa e il suo timeout si trovano sotto **Riavvio dopo il backup** nella scheda **Ordine** in **Impostazioni, Calendario**.
+- Un container che condivide il namespace di rete, PID o IPC di uno che viene fermato, tramite `--net=container:` o `network_mode: service:` di Compose, si ferma e riparte con esso anche se non è nell'elenco, e parte dopo il container a cui si aggancia. Un container riavviato riceve una nuova rete, e uno rimasto in esecuzione sulla vecchia rete avrebbe solo il suo loopback. L'elenco stesso resta come l'hai impostato. Se non è stato possibile fermare un container del genere, l'esecuzione segnala che resta senza rete finché non viene riavviato. Lo stesso vale per il container di BombVault, che non ferma mai se stesso e non può essere messo nell'elenco.
+- Un container che dopo non torna in esecuzione viene nominato nell'esecuzione e in una notifica, anche quando il backup stesso è fallito.
 
 ## Quando l'app è occupata {#app-busy}
 
@@ -177,7 +179,7 @@ Per un tuo controllo, fai uscire il **Comando pre-backup** con il codice 75 ment
 restic resta il motore, ma un'esportazione ti dà una copia che non richiede né BombVault né restic.
 
 - **Esporta container** ed **Esporta VM** sotto **Altro** nella pagina di un elemento scrivono una copia com'è in questo momento, accanto al repository: le cartelle da salvare del container più il suo template Unraid, oppure le immagini disco della VM più la sua definizione, ripristinabile con `virsh define`.
-- **Esporta** su uno snapshot scrive un backup salvato nella cartella di esportazione del server, come tar, zip o un repository restic a sé, e può prendere uno snapshot o tutti.
+- **Esporta** su uno snapshot scrive un backup salvato nella cartella di esportazione del server, come tar, zip o un repository restic a sé, e può prendere uno snapshot o tutti. Un backup della flash e un auto-backup contengono chiavi, quindi per esportarli servono una password di accesso e un accesso sull'istanza.
 
 Le esportazioni sono file semplici di default. **Cifra le esportazioni con age** in **Impostazioni, Sistema** le sigilla, ZIP della flash compreso, per i destinatari che elenchi, ciascuno una chiave pubblica age o una chiave pubblica SSH. Le decifri più tardi fuori dal server con la chiave privata corrispondente. Con la cifratura attiva e nessun destinatario valido, un'esportazione fallisce con un errore chiaro invece di scrivere mai file in chiaro.
 

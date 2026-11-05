@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Ogni VM ha un **Metodo** nella scheda **VM** della sua scheda Impostazioni (apri la VM in **Backup**):
 
-- **Ordinato (spegnimento)** è il predefinito. Spegne la VM, salva i dischi e la riavvia, quindi il backup è sempre coerente. Aspetta fino a dieci minuti che il guest si spenga e non lo forza mai. Un guest che gira ancora dopo quel tempo viene lasciato in pace, e quel backup fallisce con il motivo.
-- **Snapshot a caldo** salva una VM in esecuzione tramite uno snapshot esterno e `blockcommit`. Richiede il guest agent di qemu nella VM, per uno snapshot quiescente, e il disco su `/mnt/cache` o `/mnt/diskX`, non su `/mnt/user`. Su una VM spenta, il metodo a caldo ripiega da solo su quello ordinato, e lo stesso fa quando lo snapshot non si può creare.
+- **Ordinato (spegnimento)** è il predefinito. Spegne la VM, salva i dischi e la riavvia, quindi il backup è sempre coerente. Aspetta fino a dieci minuti che il guest si spenga e non lo forza mai. Un guest che gira ancora dopo quel tempo viene lasciato in pace, e quel backup fallisce con il motivo. Se il guest si spegne entro l'ora successiva, BombVault lo riavvia. Se quell'avvio fallisce, l'esecuzione fallita lo segnala.
+- **Snapshot a caldo** salva una VM in esecuzione tramite uno snapshot esterno e `blockcommit`. Richiede il disco su `/mnt/cache` o `/mnt/diskX`, non su `/mnt/user`. Con il guest agent di qemu nella VM lo snapshot è quiescente, e senza è coerente come dopo un crash. Su una VM spenta, il metodo a caldo ripiega da solo su quello ordinato. Quando lo snapshot non si può creare, quel backup fallisce e la VM continua a girare, perché una VM che hai scelto di salvare a caldo non viene mai spenta per questo.
+
+## Cosa lascia fuori un backup {#left-out}
+
+Un backup può riuscire e comunque non contenere l'intera VM. L'esecuzione porta allora una nota con tono di avviso che nomina ciò che manca:
+
+- **Dischi che BombVault non legge.** Un disco in sola lettura, un `lun` e un disco `network` o `volume` vengono lasciati fuori, e la nota nomina ciascuno con il suo dispositivo di destinazione e il suo tipo. La definizione nel backup li elenca comunque. Un cdrom e un floppy non vengono nominati. Un semplice dispositivo a blocchi che non è uno zvol ZFS fa invece fallire il backup.
+- **Lo stato di un TPM emulato.** Non ha un percorso nell'XML del dominio. Il VM Manager di Unraid imposta un TPM simile per una VM con il BIOS **OVMF TPM**, quindi la nota compare anche su Unraid. Un guest che tiene un segreto nel suo TPM, come può fare BitLocker, potrebbe chiedere la sua chiave di recupero dopo un ripristino che perde quello stato. Tieni quindi quella chiave a portata di mano.
+
+## Dischi thin {#thin-disks}
+
+Un ripristino mantiene thin un disco thin, sia che sostituisca il disco sia che ne scriva uno nuovo: restic scrive le sequenze di zeri come buchi in un file nuovo, e BombVault libera i blocchi di zeri di un file sostituito con `fallocate --dig-holes` una volta scritto. Mentre restic sostituisce un file, quel file occupa la sua dimensione piena, se il pool ha spazio. Un filesystem che non sa creare buchi mantiene il disco alla sua dimensione piena, e il log lo dice. Il controllo dello spazio conta comunque un disco nuovo alla sua dimensione piena.
+
+## Un ripristino che fallisce {#restore-fails}
+
+Un ripristino sul posto spegne la VM, scrive i dischi, e sostituisce la definizione e la NVRAM solo dopo che i dischi sono scritti. Un ripristino che fallisce lascia la VM definita con la sua NVRAM. Se i suoi dischi non sono cambiati ed era in esecuzione, torna a girare. Se potrebbero essere cambiati resta spenta, perché avviare un disco scritto a metà ci scriverebbe sopra, e l'esecuzione lo segnala. Ripristinare di nuovo lo stesso backup completa il lavoro.
+
+Gli snapshot registrati in libvirt, che non è il modo in cui li crea il VM Manager di Unraid, fermano un ripristino sul posto prima che la VM venga toccata, perché libvirt non può rimuovere una VM che li ha. Eliminali prima.
 
 ## Solo blocchi modificati {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault salva una VM simile per intero:
 - **Un backup a caldo conserva gli snapshot.** **Snapshot a caldo** mette sopra un overlay temporaneo mentre legge il disco e lo riunisce poi, solo nell'immagine appena sotto. La catena è la stessa dopo il backup come prima. Una VM senza snapshot si comporta come ha sempre fatto.
 - **Un ripristino riporta la catena.** Un ripristino sul posto riscrive ogni file dov'era e rimette l'elenco degli snapshot di Unraid, così il VM Manager elenca di nuovo gli snapshot. Un ripristino accanto all'originale scrive i file nella cartella della copia e punta i dischi ripristinati ai file ripristinati, così la copia non legge mai dalle immagini dell'originale. L'elenco degli snapshot di Unraid torna solo con un ripristino sul posto, perché nomina i file dove sono stati salvati. Senza di esso la copia si avvia allo stesso modo, e il VM Manager semplicemente non elenca snapshot per essa.
 - **Solo blocchi modificati** legge ciò che vede il guest, quindi il suo ripristino torna come un unico file qcow2 appiattito senza gli snapshot.
+- **Un ripristino riporta il disco del backup che scegli.** Gli snapshot creati o riuniti dopo quel backup non cambiano questo. Un backup di prima di uno snapshot definisce la VM sul file che contiene, e un backup di prima di un'unione riporta il suo overlay e gira su di esso. I file più recenti restano dove sono, inutilizzati e invariati. Un backup che contiene un overlay ma non il file sotto di esso viene rifiutato prima che la VM venga toccata. Dopo un ripristino la definizione della VM non elenca alcuna catena, quindi libvirt legge la catena dai file ripristinati.
 
 ### Esempio: una VM con due snapshot {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ I dischi file, come li usa Unraid, non sono toccati da nulla di tutto questo.
 Una VM può avere un TPM virtuale, di cui hanno bisogno Secure Boot e i guest Windows 11. Il suo stato vive fuori dal disco e dalla NVRAM, quindi un backup solo di quei due riporterebbe un guest con un TPM nuovo e vuoto.
 
 - **Un TPM passthrough**, un chip reale passato al guest, nomina il suo percorso nell'XML del dominio. BombVault salva il suo stato accanto alla NVRAM via SSH e lo riscrive prima di `virsh define`, al meglio delle possibilità come la NVRAM: una lettura o scrittura fallita viene registrata e non fa fallire il backup o il ripristino.
-- **Un vTPM emulato**, quello che TrueNAS imposta per i guest Windows 11 e Secure Boot, non pubblica alcun percorso di stato nell'XML del dominio. BombVault riporta allora "no TPM path found" invece di indovinare un percorso. Tieni a portata di mano la chiave di recupero di un guest simile, come la sua chiave BitLocker, prima di ripristinarlo.
+- **Un vTPM emulato**, quello che TrueNAS imposta per i guest Windows 11 e Secure Boot, non pubblica alcun percorso di stato nell'XML del dominio, quindi il suo stato non viene salvato. BombVault non indovina un percorso, e il backup termina con una nota che dice che lo stato del TPM della VM non è incluso. Tieni a portata di mano la chiave di recupero di un guest simile, come la sua chiave BitLocker, prima di ripristinarlo.
 - **Non puoi collegare tu un TPM a una VM TrueNAS.** L'API dei dispositivi VM di TrueNAS SCALE 25.10 accetta solo `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` e `USB`, e rifiuta `TPM` come tipo sconosciuto.
 
-La gestione del TPM è provata solo con test unitari e non ha girato su un vero guest TrueNAS con un vTPM. Una VM senza TPM, come su Unraid, viene salvata e ripristinata esattamente come prima.
+La gestione del TPM è provata solo con test unitari e non ha girato su un vero guest TrueNAS con un vTPM. Una VM senza TPM viene salvata e ripristinata esattamente come prima.
 
 La NVRAM viene catturata come al solito. TrueNAS la tiene per VM in `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, e l'XML del dominio nomina quel percorso.
 

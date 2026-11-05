@@ -40,13 +40,13 @@ Ogni sezione attivata ha una riga con quattro controlli:
 | Controllo | Diventa verde quando | Altre parole che puoi vedere |
 |---|---|---|
 | **Locale** | l'ultimo backup è aggiornato | nessun backup ancora, nessuna pianificazione, ultima esecuzione fallita, backup in ritardo, non ogni elemento è protetto, backup in scadenza |
-| **Off-site** | l'ultima copia fuori sede è aggiornata | nessuna copia off-site, copia in corso, copia in ritardo, copia in pausa, nessuna copia ancora, replica fallita |
+| **Off-site** | l'ultima copia fuori sede è aggiornata | nessuna copia off-site, copia in corso, copia in ritardo, attende la tua decisione, nessuna copia ancora, replica fallita |
 | **Protezione dall'eliminazione** | una prova di manomissione ha dimostrato che il lato remoto rifiuta le cancellazioni | nessuna, nessuna e rischio accettato, non ancora dimostrata, prova fallita, non dimostrata perché il suo controllo è disattivato |
 | **Ripristino di prova** | un ripristino dalla copia off-site è riuscito | mai eseguito, in corso, fallito, in ritardo, solo manuale, non possibile per questa sezione |
 
 Una sezione è verde solo sulla base di fatti verificati. Una copia su questo server non conta come off-site, e una destinazione che hai segnato **Accetta senza protezione dall'eliminazione** mostra un anello grigio invece di un punto ambra, così il colore della sezione segue gli altri suoi controlli.
 
-Una sezione pianificata mostra **Ancora nessun backup** e resta neutra finché non arriva l'ora della sua prima esecuzione. Dopo mostra **In ritardo** e avvisa una volta. Una sezione senza nulla da salvare, perché nessuna pianificazione raggiunge i suoi elementi, mostra **Non pianificato** e non è mai in ritardo.
+Una sezione pianificata mostra **Ancora nessun backup** e resta neutra finché non arriva l'ora della sua prima esecuzione, contata da quando il suo piano è stato impostato l'ultima volta. Dopo mostra **In ritardo** e avvisa una volta. **In ritardo** si basa sull'elemento rimasto più indietro rispetto al proprio piano, così un vicino che gira non nasconde uno che si è fermato. Un elemento il cui container non c'è più, o che nessuna pianificazione raggiunge, non conta. Un elemento con un proprio piano settimanale non è vincolato al piano giornaliero della sezione. Una sezione senza nulla da salvare, perché nessuna pianificazione raggiunge i suoi elementi, mostra **Non pianificato** e non è mai in ritardo.
 
 Un clic su una sezione apre la sua finestra con ogni controllo spiegato per esteso, gli elementi che conta e **Avvia il ripristino di prova** o **Ripeti il ripristino di prova**. Indica anche **Regola di potatura impostata** o **Nessuna regola di potatura**, e la regola di conservazione della cartella propria di una sezione conta quanto le sue regole off-site.
 

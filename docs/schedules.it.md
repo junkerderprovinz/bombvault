@@ -27,7 +27,7 @@ La scheda **Settimana** disegna ogni esecuzione prevista da lunedì a domenica, 
 
 Il **Backup completo** è il piano predefinito per tutto. Lo imposta **Quando vengono eseguiti i backup**: un unico passaggio che salva in sequenza ogni sezione, container, VM, flash, cartelle, dataset ZFS e per ultimo l'auto-backup. La riga sotto dice quali sezioni include. **Disattivato** lo spegne, e allora gira solo ciò che ha un piano proprio.
 
-- **Recupera i backup mancati dopo l'avvio**: quando il server era spento a un orario previsto, BombVault esegue quel backup circa due minuti dopo l'avvio.
+- **Recupera i backup mancati dopo l'avvio**: quando il server era spento a un orario previsto, BombVault esegue quel backup circa due minuti dopo l'avvio. Il piano proprio di un elemento e un piano off-site aspettano il loro prossimo orario previsto, e lo stesso vale per un piano che non è mai riuscito.
 - **Comandi prima e dopo**: il **Comando prima del backup completo** gira sul server con `sh -c` prima che parta il passaggio, per esempio uno script che ferma un servizio. Se fallisce, il backup completo gira comunque. Il **Comando dopo il backup completo** gira una volta dopo che ogni sezione è stata tentata, anche se una è fallita, il che va bene per un ping che conferma che l'intero server è protetto. I comandi per un singolo container sono nella sua pagina.
 
 **Esegui il backup di tutto ora** nella pagina Backup avvia a mano lo stesso passaggio, su ogni sezione attivata.
@@ -58,7 +58,7 @@ Il backup finisce sotto gli stessi percorsi e tag di uno fatto con il container 
 
 ## Aggiornamenti dopo il backup {#updates}
 
-- **Aggiorna i container dopo un backup riuscito** scarica un'immagine più recente solo dopo che il backup precedente è finito, così esiste sempre prima un punto di ripristino fresco. È disattivato di default, e un singolo container può essere impostato diversamente nella sua pagina sotto **Aggiorna dopo un backup riuscito**.
+- **Aggiorna i container dopo un backup riuscito** scarica un'immagine più recente solo dopo che il backup precedente è finito, così esiste sempre prima un punto di ripristino fresco. È disattivato di default, e un singolo container può essere impostato diversamente nella sua pagina sotto **Aggiorna dopo un backup riuscito**. Alla nuova immagine passa solo ciò che hai impostato tu: variabili, label, comando, utente e healthcheck ancora uguali a quelli della vecchia immagine prendono quelli della nuova. Se la nuova immagine non si può creare o avviare, il container torna all'immagine con cui girava, l'aggiornamento risulta fallito e il backup successivo riprova. Un container rimasto fermo per questo viene nominato nell'esecuzione del backup e in una notifica.
 - **Rimuovi la vecchia image dopo un aggiornamento** elimina l'immagine che il container ha lasciato. Un'immagine di base condivisa con altri container non viene mai eliminata.
 - **Aggiorna lo stato degli aggiornamenti di Unraid dopo aver aggiornato un container** cancella il banner degli aggiornamenti di Unraid per quel container.
 
