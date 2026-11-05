@@ -231,6 +231,8 @@ func (s *Service) OpenForeign(ctx context.Context, location, foreignKey string, 
 		mode = encMode
 	case s.engine.RepoOpens(ctx, repo, plainMode):
 		mode = plainMode
+	case strings.Contains(filepath.ToSlash(repo), "/pulled/"):
+		return "", ForeignInventory{}, errors.New("could not open the repository. A fetched copy is locked with the key of the server that fetched it, not the key of its source: on that server it opens from the Restore page under Other sources")
 	default:
 		return "", ForeignInventory{}, errors.New("could not open the repository: wrong APP_KEY, or the location is not a BombVault or restic repository")
 	}

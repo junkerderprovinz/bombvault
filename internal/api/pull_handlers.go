@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -71,6 +72,59 @@ func pullSourceToView(ps store.PullSource) pullSourceView {
 		v.LastPullOK = &ok
 	}
 	return v
+}
+
+// errNothingFetched is a source that has not handed anything over yet.
+var errNothingFetched = errors.New("nothing has been fetched from this source yet")
+
+// OpenPulledCopy opens what was fetched from a source as a read-only session. A
+// fetched copy is locked with this server's own key, whoever wrote its snapshots,
+// and a fetch brings no definitions, so its containers and VMs come back as files.
+func (s *Service) OpenPulledCopy(ctx context.Context, id string) (string, ForeignInventory, error) {
+	ps, found, err := s.store.GetPullSource(id)
+	if err != nil {
+		return "", ForeignInventory{}, err
+	}
+	if !found {
+		return "", ForeignInventory{}, errNothingFetched
+	}
+	settings, domainRepo, err := s.domainRepoSource(strings.TrimSpace(ps.Domain), "local")
+	if err != nil {
+		return "", ForeignInventory{}, err
+	}
+	repo := pulledRepo(domainRepo, ps.ID)
+	if localRepoMissing(repo) {
+		return "", ForeignInventory{}, errNothingFetched
+	}
+	key, err := s.backupKey()
+	if err != nil {
+		return "", ForeignInventory{}, err
+	}
+	mode := s.primaryModeFor(settings, ps.Domain, repo)
+	mode.NoLock = true
+	inv, err := s.foreignInventory(ctx, repo, mode)
+	if err != nil {
+		return "", ForeignInventory{}, err
+	}
+	session, err := s.openOwnRepoSession(repo, key, mode)
+	if err != nil {
+		return "", ForeignInventory{}, err
+	}
+	s.markForeignDefinitions(foreignSession{id: session, repo: repo, key: key, mode: mode}, &inv)
+	return session, inv, nil
+}
+
+// handleOpenPulledCopy serves POST /api/pull/sources/{id}/open.
+func (h *Handler) handleOpenPulledCopy(w http.ResponseWriter, r *http.Request) {
+	if !crossOriginGuard(w, r) {
+		return
+	}
+	session, inv, err := h.svc.OpenPulledCopy(r.Context(), r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"session": session, "inventory": inv}))
 }
 
 // pullDomains is where a pulled snapshot may land. It is the same set the

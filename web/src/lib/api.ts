@@ -5963,13 +5963,26 @@ export interface OffsiteEntries {
   containers: Record<string, number>;
   vms: Record<string, number>;
   fileSets: Record<string, number>;
+  /** The source that reads each entry's newest snapshot. */
+  from: {
+    containers: Record<string, string>;
+    vms: Record<string, string>;
+    fileSets: Record<string, string>;
+  };
   unread?: Record<string, string>;
 }
 
-/** GET /api/emergency/offsite-entries: what the off-site copies hold, for an
- *  emergency whose local backups went down with the old server. */
+/** POST /api/emergency/offsite-entries: what the off-site copies hold, for an
+ *  emergency whose local backups went down with the old server. Each folder set
+ *  in the answer has a row afterwards, which its restore goes by. */
 export function emergencyOffsiteEntries(): Promise<OkEnvelope & { entries?: OffsiteEntries }> {
-  return fetchJSON("/api/emergency/offsite-entries");
+  return fetchJSON("/api/emergency/offsite-entries", { method: "POST", body: "{}" });
+}
+
+/** POST /api/emergency/offsite-open: opens one off-site copy of this server as
+ *  a read-only session, for files that cannot be recreated from it. */
+export function openOffsiteCopy(domain: "containers" | "vms", source: string): Promise<OkEnvelope & { session?: string }> {
+  return fetchJSON("/api/emergency/offsite-open", { method: "POST", body: JSON.stringify({ domain, source }) });
 }
 
 /** POST /api/emergency/read with a recovery kit: starts an emergency and
@@ -6000,6 +6013,18 @@ export function adoptEmergencyKey(session: string): Promise<EmergencyAnswer> {
  *  "sign-ins-exist" unless `replace` is set; undoEmergency puts them back. */
 export function storeEmergencySignIns(session: string, replace = false): Promise<EmergencyAnswer> {
   return fetchKeyJSON("/api/emergency/sign-ins", { method: "POST", body: JSON.stringify({ session, replace }) });
+}
+
+/** POST /api/emergency/try-again: looks into the places of the emergency again
+ *  after a sign-in was entered by hand on this server. */
+export function tryEmergencyPlacesAgain(session: string): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/try-again", { method: "POST", body: JSON.stringify({ session }) });
+}
+
+/** POST /api/emergency/attach: gives this server the off-site targets of the
+ *  places the kit names, each with the sign-in it opens with. */
+export function attachEmergencyPlaces(session: string): Promise<EmergencyAnswer> {
+  return fetchKeyJSON("/api/emergency/attach", { method: "POST", body: JSON.stringify({ session }) });
 }
 
 /** POST /api/emergency/finish: ends the emergency and keeps what it took
@@ -6306,6 +6331,12 @@ export function testPullSource(id: string): Promise<OkEnvelope> {
 
 /** POST /api/pull/sources/{id}/run - pull now. Answers with how many snapshots
  *  the copy was asked to carry. */
+/** POST /api/pull/sources/{id}/open: opens what was fetched from a source as a
+ *  read-only session under this server's own key. */
+export function openPulledCopy(id: string): Promise<ForeignOpenResponse> {
+  return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/open`, { method: "POST", body: "{}" });
+}
+
 export function runPullSource(id: string): Promise<OkEnvelope & { snapshots?: number }> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/run`, { method: "POST" });
 }

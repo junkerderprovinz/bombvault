@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-import type { AnomalyView } from "../lib/api";
+import { listPullSources, openPulledCopy, type AnomalyView, type PullSourceView } from "../lib/api";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import type { ProgressMap } from "../lib/progress";
 import { RESTORE_NO_RUNTIME } from "../lib/runReason";
@@ -35,6 +35,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     cancelRestore: vi.fn(),
     listDbDumps: vi.fn(),
     getVMSSH: vi.fn(async () => ({ ok: false })),
+    listPullSources: vi.fn(async () => ({ ok: true, sources: [] })),
+    openPulledCopy: vi.fn(),
     restore: vi.fn(),
     restoreVM: vi.fn(),
     restoreFileSet: vi.fn(),
@@ -407,6 +409,33 @@ describe("the other sources", () => {
     await press(screen.getByRole("button", { name: new RegExp(`^${en["recovery.abTitle"]}`) }));
     const appdata = screen.getByRole("dialog", { name: en["recovery.abTitle"] });
     expect(within(appdata).getByRole("button", { name: en["recovery.abScan"] })).toBeTruthy();
+  });
+
+  it("name what this server fetched and open it with no key to enter", async () => {
+    vi.mocked(listPullSources).mockResolvedValueOnce({
+      ok: true,
+      sources: [{ id: "p1", name: "tower", snapshotsPulled: 3, lastPullOk: true } as PullSourceView],
+    });
+    vi.mocked(openPulledCopy).mockResolvedValueOnce({
+      ok: true,
+      session: "s1",
+      inventory: {
+        containers: [{ name: "plex", snapshots: [], noDefinition: true }],
+        vms: [],
+        fileSets: [{ name: "photos", snapshots: [] }],
+        dbDumps: [],
+        zfs: [],
+      },
+    });
+    await renderPage();
+    const title = en["restorePage.fetched"].replace("{name}", "tower");
+    await press(await screen.findByRole("button", { name: new RegExp(`^${title}`) }));
+    const window = await screen.findByRole("dialog", { name: title });
+    expect(openPulledCopy).toHaveBeenCalledWith("p1");
+    expect(within(window).getByText(en["restorePage.fetchedIntro"].replaceAll("{name}", "tower"))).toBeTruthy();
+    expect(within(window).getByText("photos")).toBeTruthy();
+    expect(window.textContent).toContain(en["recovery.foreignNoDefinition"].split("{name}")[1]);
+    expect(within(window).queryByRole("button", { name: en["recovery.foreignConnect"] })).toBeNull();
   });
 
   it("do not offer another instance through the group, which the server cannot reach yet", async () => {

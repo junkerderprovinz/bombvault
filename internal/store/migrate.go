@@ -3645,6 +3645,14 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		sql:              `ALTER TABLE container_restore_removals ADD COLUMN by_update INTEGER NOT NULL DEFAULT 0;`,
 	},
 	{
+		// What an emergency added beside what it replaced, for an undo: the
+		// saved sign-ins of a recovery kit and the targets of its places.
+		version:          emergencyAddedMigration,
+		name:             "replaced_sign_ins_added",
+		alreadySatisfied: columnPresent("replaced_sign_ins", "added"),
+		sql:              `ALTER TABLE replaced_sign_ins ADD COLUMN added TEXT NOT NULL DEFAULT '';`,
+	},
+	{
 		// A record older than its target, with no copy to that target that ever
 		// worked, is about a location removed before the target was added, and it
 		// keeps every copy from starting. A named repository has no such runs to
@@ -4241,6 +4249,10 @@ const locationKeepMigration = 720
 // removalByUpdateMigration tells a container an update removed from one a
 // restore removed.
 const removalByUpdateMigration = 760
+
+// emergencyAddedMigration records what an emergency added beside what it
+// replaced.
+const emergencyAddedMigration = 770
 
 // staleEstablishedMigration numbers the clean-up of records of repositories
 // that were at a location's address before the location was added.

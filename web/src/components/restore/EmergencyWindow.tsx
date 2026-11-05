@@ -4,10 +4,13 @@
 // settings come back with a restart that ends the first one.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  attachEmergencyPlaces,
   discoverAll,
   downloadRecoveryKit,
   emergencyOffsiteEntries,
   fileSetSnapshots,
+  foreignClose,
+  foreignRestore,
   cancelEmergency,
   finishEmergency,
   getEmergency,
@@ -17,6 +20,7 @@ import {
   listFileSets,
   listVMs,
   listZFSDatasets,
+  openOffsiteCopy,
   putSettings,
   restore,
   restoreConfig,
@@ -33,7 +37,7 @@ import {
   type ZFSDatasetView,
 } from "../../lib/api";
 import { fireAndWaitRun } from "../../lib/backupWatch";
-import { lossText, refusalText, sessionKeyInUse, settingsOfPlaces, takenOver } from "../../lib/emergency";
+import { lossText, refusalText, selfBackupPlace, sessionKeyInUse, settingsOfPlaces, takenOver } from "../../lib/emergency";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
@@ -82,6 +86,10 @@ interface Picked {
   name: string;
   /** What the recorded run names the entry by. */
   runTarget: string;
+  /** The copy it comes from, undefined for the local repository. */
+  source?: string;
+  /** Goes into this folder as plain files, without a definition to recreate it. */
+  folder?: string;
 }
 
 type Outcome = "waiting" | "running" | "done" | "failed";
@@ -174,6 +182,10 @@ export function EmergencyWindow({
 
   const [useBackup, setUseBackup] = useState(true);
   const [configSource, setConfigSource] = useState<RepoSource>("local");
+  // The first step opened a self-backup at the place the settings step starts on.
+  const [configFound, setConfigFound] = useState(false);
+  // No place the kit names holds a self-backup the key opened.
+  const [configNone, setConfigNone] = useState(false);
   const [configPhase, setConfigPhase] = useState<ConfigPhase>("idle");
   const [configError, setConfigError] = useState<string | null>(null);
 
@@ -189,13 +201,16 @@ export function EmergencyWindow({
   const [keepStopped, setKeepStopped] = useState(true);
   const [vmSsh, setVmSsh] = useState<boolean | null>(null);
   // The local backups may have gone down with the old server, so the entries
-  // can also come from the off-site copies.
+  // can also come from the off-site copies. With nothing local the window
+  // starts there, once it has read them.
   const [entrySource, setEntrySource] = useState<RepoSource>("local");
   const [offsite, setOffsite] = useState<OffsiteEntries | null>(null);
   const [offsiteError, setOffsiteError] = useState<string | null>(null);
 
   const [queue, setQueue] = useState<Picked[]>([]);
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
+  // Why an entry failed, which is what the person acts on next.
+  const [reasons, setReasons] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
   const [runtimeRefused, setRuntimeRefused] = useState<string[]>([]);
   const [kitError, setKitError] = useState<string | null>(null);
@@ -208,7 +223,6 @@ export function EmergencyWindow({
   const restoring = queue.length > 0 && !finished;
   const searched = useRef(false);
   const fromOffsite = isOffsiteSource(entrySource);
-  const offsiteLoading = fromOffsite && offsite === null && offsiteError === null;
 
   // The restores run one after the other from this page, so leaving it drops
   // the ones that have not started.
@@ -228,23 +242,6 @@ export function EmergencyWindow({
       releaseLock.current();
     };
   }, []);
-
-  useEffect(() => {
-    if (step !== "selection" || !offsiteLoading) return;
-    let current = true;
-    emergencyOffsiteEntries()
-      .then((res) => {
-        if (!current) return;
-        if (res.ok && res.entries) setOffsite(res.entries);
-        else setOffsiteError(res.error ?? t("settings.error"));
-      })
-      .catch((err: unknown) => {
-        if (current) setOffsiteError(err instanceof Error ? err.message : String(err));
-      });
-    return () => {
-      current = false;
-    };
-  }, [step, offsiteLoading, t]);
 
   useEffect(() => {
     getSettings()
@@ -284,9 +281,20 @@ export function EmergencyWindow({
   useEffect(() => {
     if (!kitPlaces) return;
     const named = settingsOfPlaces(kitPlaces);
-    setSettings((prev) => (prev ? { ...prev, ...named } : prev));
-    if (!named.configPath && named.configOffsite) setConfigSource("offsite");
+    const self = selfBackupPlace(kitPlaces);
+    setSettings((prev) => (prev ? { ...prev, ...named, ...(self?.address ? { configOffsite: self.address } : {}) } : prev));
+    setConfigSource(self?.source ?? "local");
+    setConfigFound(self?.readable ?? false);
+    setConfigNone(!self?.readable);
+    setUseBackup(self?.readable ?? false);
   }, [kitPlaces]);
+
+  // A kit's places reach this server as off-site targets with their sign-ins.
+  async function attachKitPlaces(): Promise<string | null> {
+    if (!session || session.source === "typed") return null;
+    const res = await attachEmergencyPlaces(session.id);
+    return res.ok ? null : refusalText(t, res.code, res.error);
+  }
 
   // Without a settings backup the places of the first step are all this
   // server learns about the old one, so they are saved before the search.
@@ -295,7 +303,9 @@ export function EmergencyWindow({
     const patch: Partial<Settings> = {};
     for (const [name] of [...SECTION_PATHS, ...SECTION_OFFSITE]) patch[name] = settings[name];
     if (session.places.some((place) => place.state === "readable")) patch.encryptionEnabled = session.encrypted;
-    const refused = await saveOnto(patch).catch((err: unknown) => (err instanceof Error ? err.message : t("settings.error")));
+    const refused = await saveOnto(patch)
+      .then((saved) => saved ?? attachKitPlaces())
+      .catch((err: unknown) => (err instanceof Error ? err.message : t("settings.error")));
     if (refused !== null) {
       push(refused, "fail");
       return false;
@@ -356,7 +366,9 @@ export function EmergencyWindow({
     const offsite = configSource === "offsite";
     try {
       // The location is saved first, so the server restores from the right repository.
-      const refused = await saveOnto(offsite ? { configOffsite: settings.configOffsite } : { configPath: settings.configPath });
+      const refused = offsite
+        ? ((await saveOnto({ configOffsite: settings.configOffsite })) ?? (await attachKitPlaces()))
+        : await saveOnto({ configPath: settings.configPath });
       if (refused !== null) return fail(refused);
       const check = await checkRestoreOnce({ kind: "config", snapshotId: "latest", source: offsite ? "offsite" : undefined });
       const blocked = restoreBlockReason(check, t);
@@ -392,6 +404,15 @@ export function EmergencyWindow({
       const counts = await discoverAll();
       // A search that failed in one place keeps what it found in the others.
       if (counts.error) setSearchError(isKeyMismatch(counts.error) ? t("emergency.keyRemedy") : counts.error);
+      // Before the lists: a folder set only an off-site copy holds gets its row here.
+      setOffsiteError(null);
+      const copies = await emergencyOffsiteEntries().catch((err: unknown) => ({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        entries: undefined,
+      }));
+      if (copies.ok && copies.entries) setOffsite(copies.entries);
+      else setOffsiteError(copies.error ?? t("settings.error"));
       const [cs, vs, fs, zs] = await Promise.all([listContainers(), listVMs(), listFileSets(), listZFSDatasets()]);
       const sets = fs.ok ? (fs.fileSets ?? []) : [];
       setContainers(cs.containers ?? []);
@@ -400,13 +421,29 @@ export function EmergencyWindow({
       setZFSItems(zs.ok ? (zs.datasets ?? []) : []);
       // What this server still has would be replaced, so only what it lacks
       // starts switched on.
+      const known = {
+        containers: new Set((cs.containers ?? []).map((c) => c.name)),
+        vms: new Set((vs.vms ?? []).map((v) => v.libvirtName)),
+      };
       setOn(
         new Set([
           ...(cs.containers ?? []).filter((c) => !c.installed && !c.dumpOnly && !c.self).map((c) => `container:${c.name}`),
           ...(vs.vms ?? []).filter((v) => v.state === "not-installed").map((v) => `vm:${v.libvirtName}`),
           ...sets.filter((s) => s.path === "").map((s) => `files:${s.id}`),
+          ...Object.keys(copies.entries?.containers ?? {})
+            .filter((name) => !known.containers.has(name))
+            .map((name) => `extract:containers:${name}`),
+          ...Object.keys(copies.entries?.vms ?? {})
+            .filter((name) => !known.vms.has(name))
+            .map((name) => `extract:vms:${name}`),
         ])
       );
+      const localEntries =
+        (cs.containers ?? []).some((c) => !c.self && !c.dumpOnly && c.lastBackup) ||
+        (vs.vms ?? []).some((v) => v.lastBackup) ||
+        sets.some((s) => s.lastBackup);
+      const inCopies = copies.entries && [copies.entries.containers, copies.entries.vms, copies.entries.fileSets].some((held) => Object.keys(held).length > 0);
+      if (!localEntries && inCopies) setEntrySource("offsite");
       setFound(counts);
       if (counts.paused.length > 0 || counts.leftOpen.length > 0) placementChanged();
     } catch (err) {
@@ -430,25 +467,52 @@ export function EmergencyWindow({
   );
   const dumpOnly = fromOffsite ? [] : containers.filter((c) => c.dumpOnly);
   const backedUpVMs = vms.filter((v) => (fromOffsite ? inOffsite(offsite?.vms, v.libvirtName) : v.lastBackup));
-  const shownSets = fromOffsite ? fileSets.filter((s) => inOffsite(offsite?.fileSets, s.name)) : fileSets;
-  const source = fromOffsite ? entrySource : undefined;
+  // A set that only a copy holds has nothing to offer from here.
+  const shownSets = fromOffsite ? fileSets.filter((s) => inOffsite(offsite?.fileSets, s.name)) : fileSets.filter((s) => s.lastBackup || !inOffsite(offsite?.fileSets, s.name));
+  // The copy that holds an entry's newest snapshot, whichever of several it is.
+  const copyOf = (held: Record<string, string> | undefined, name: string) => (fromOffsite ? (held?.[name] ?? entrySource) : undefined);
+  const filesOnly = fromOffsite
+    ? [
+        ...Object.keys(offsite?.containers ?? {})
+          .filter((name) => !containers.some((c) => c.name === name))
+          .map((name) => ({ domain: "containers" as const, name })),
+        ...Object.keys(offsite?.vms ?? {})
+          .filter((name) => !vms.some((v) => v.libvirtName === name))
+          .map((name) => ({ domain: "vms" as const, name })),
+      ]
+    : [];
+  const extractKey = (item: { domain: string; name: string }) => `extract:${item.domain}:${item.name}`;
+  const extractFolder = (item: { domain: string; name: string }) =>
+    folders[extractKey(item)] ?? (settings ? `${restoreFolderFor(settings, "files")}/${item.name}` : "");
   const folderOf = (set: FileSetView) =>
     folders[set.id] ?? (settings ? `${restoreFolderFor(settings, "files")}/${set.name}` : "");
 
   const picked: Picked[] = [
     ...restorable
       .filter((c) => on.has(`container:${c.name}`))
-      .map((c) => ({ kind: "container" as const, id: c.name, name: c.name, runTarget: c.name })),
+      .map((c) => ({ kind: "container" as const, id: c.name, name: c.name, runTarget: c.name, source: copyOf(offsite?.from.containers, c.name) })),
     // The host and the recorded run know a VM by its libvirt name.
     ...backedUpVMs
       .filter((v) => on.has(`vm:${v.libvirtName}`))
-      .map((v) => ({ kind: "vm" as const, id: v.libvirtName, name: v.name, runTarget: v.libvirtName })),
+      .map((v) => ({ kind: "vm" as const, id: v.libvirtName, name: v.name, runTarget: v.libvirtName, source: copyOf(offsite?.from.vms, v.libvirtName) })),
     ...shownSets
       .filter((s) => on.has(`files:${s.id}`))
-      .map((s) => ({ kind: "files" as const, id: s.id, name: s.name, runTarget: s.name })),
+      .map((s) => ({ kind: "files" as const, id: s.id, name: s.name, runTarget: s.name, source: copyOf(offsite?.from.fileSets, s.name) })),
+    ...filesOnly
+      .filter((item) => on.has(extractKey(item)))
+      .map((item) => ({
+        kind: item.domain === "vms" ? ("vm" as const) : ("container" as const),
+        id: item.name,
+        name: item.name,
+        runTarget: item.name,
+        source: copyOf(item.domain === "vms" ? offsite?.from.vms : offsite?.from.containers, item.name),
+        folder: extractFolder(item).trim(),
+      })),
   ];
-  const keyOf = (p: Picked) => `${p.kind}:${p.id}`;
-  const missingFolder = shownSets.some((s) => on.has(`files:${s.id}`) && folderOf(s).trim() === "");
+  const keyOf = (p: Picked) => `${p.folder === undefined ? "" : "extract:"}${p.kind}:${p.id}`;
+  const missingFolder =
+    shownSets.some((s) => on.has(`files:${s.id}`) && folderOf(s).trim() === "") ||
+    filesOnly.some((item) => on.has(extractKey(item)) && extractFolder(item).trim() === "");
 
   function toggle(key: string, next: boolean) {
     setOn((prev) => {
@@ -461,6 +525,27 @@ export function EmergencyWindow({
 
   async function restoreOne(p: Picked): Promise<{ ok: boolean; error?: string }> {
     const matchRun = (r: { domain: string; target: string }) => r.domain === p.kind && r.target === p.runTarget;
+    const source = p.source as RepoSource | undefined;
+    if (p.folder !== undefined) {
+      const domain = p.kind === "vm" ? ("vms" as const) : ("containers" as const);
+      const opened = await openOffsiteCopy(domain, source ?? "offsite");
+      if (!opened.ok || !opened.session) return { ok: false, error: opened.error ?? t("settings.error") };
+      const session = opened.session;
+      const choice = { session, domain, toFolder: true };
+      try {
+        const check = await checkRestoreOnce({ ...choice, kind: "foreign", name: p.id, snapshotId: "latest", targetPath: p.folder });
+        const blocked = restoreBlockReason(check, t);
+        if (blocked !== undefined) return { ok: false, error: blocked };
+        return await fireAndWaitRun({
+          kind: "restore",
+          matchRun,
+          start: () => foreignRestore({ ...choice, item: p.id, snapshot: "latest", confirm: true, target: p.folder }),
+          t,
+        });
+      } finally {
+        foreignClose(session).catch(() => undefined);
+      }
+    }
     if (p.kind === "container") {
       return fireAndWaitRun({ kind: "restore", matchRun, start: () => restore(p.id, "latest", true, source, keepStopped), t });
     }
@@ -493,6 +578,7 @@ export function EmergencyWindow({
     const list = picked;
     setQueue(list);
     setOutcomes(Object.fromEntries(list.map((p) => [keyOf(p), "waiting" as Outcome])));
+    setReasons({});
     setFinished(false);
     setRuntimeRefused([]);
     setStep("restore");
@@ -509,6 +595,7 @@ export function EmergencyWindow({
       const res = await restoreOne(p).catch((err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
       if (gone.current) return;
       setOutcomes((prev) => ({ ...prev, [keyOf(p)]: res.ok ? "done" : "failed" }));
+      if (!res.ok && res.error) setReasons((prev) => ({ ...prev, [keyOf(p)]: res.error as string }));
       if (p.kind === "container" && isRuntimeRefusal(res.error)) refused.push(p.id);
     }
     clearNotStarted();
@@ -533,7 +620,7 @@ export function EmergencyWindow({
   const reloadable = configPhase === "reload" || configPhase === "restarting";
   const at = EMERGENCY_STEPS.indexOf(step) + 1;
   const total = found ? found.containers + found.vms + found.files + found.zfs : 0;
-  const offered = restorable.length + backedUpVMs.length + shownSets.length + zfsItems.length + dumpOnly.length;
+  const offered = restorable.length + backedUpVMs.length + shownSets.length + filesOnly.length + zfsItems.length + dumpOnly.length;
   const count = (kind: Picked["kind"]) => picked.filter((p) => p.kind === kind).length;
   const words = [
     count("container") > 0 && t("emergency.count.containers", count("container")),
@@ -699,8 +786,10 @@ export function EmergencyWindow({
               />
             </div>
           )}
+          {configNone && !useBackup && <Note tone="neutral">{t("emergency.settingsNone")}</Note>}
           {useBackup && settings && configPhase !== "restarting" && (
             <>
+              {configFound && <Note tone="ok">{t("emergency.settingsFound")}</Note>}
               <SettingRow label={t("recovery.configSourceLabel")}>
                 <SourceToggle source={configSource} onChange={setConfigSource} disabled={configBusy} />
               </SettingRow>
@@ -747,31 +836,25 @@ export function EmergencyWindow({
               {found.zfs > 0 && <> {t("recovery.zfsFound", found.zfs)}</>}
             </Note>
           )}
-          {found && !searching && !offsiteLoading && offered === 0 && <Note tone="warn">{t("recovery.foundNone")}</Note>}
-          {found && found.skipped.length > 0 && (
+          {found && !searching && offered === 0 && <Note tone="warn">{t("emergency.foundNone")}</Note>}
+          {/* The search reads the local folders only, so what it left out says
+              nothing about the copies shown here. */}
+          {found && !fromOffsite && found.skipped.length > 0 && (
             <Note tone="warn">{t("common.discoverSkipped").replace("{list}", found.skipped.join(", "))}</Note>
           )}
           {found && <DiscoverFindings paused={found.paused} leftOpen={found.leftOpen} directRepos={found.directRepos} />}
-          {searchError && <Note tone="fail">{searchError}</Note>}
-          {found && (
+          {searchError && !fromOffsite && <Note tone="fail">{searchError}</Note>}
+          {found && !searching && (
             <SettingRow label={t("emergency.entrySource")} hint={t("emergency.entrySourceHint")}>
-              <SourceToggle
-                source={entrySource}
-                onChange={(next) => {
-                  setEntrySource(next);
-                  setOffsite(null);
-                  setOffsiteError(null);
-                }}
-              />
+              <SourceToggle source={entrySource} onChange={setEntrySource} />
             </SettingRow>
           )}
-          {offsiteLoading && <p className="text-sm text-carbon-textMuted">{t("emergency.searching")}</p>}
           {fromOffsite && offsiteError && <Note tone="fail">{offsiteError}</Note>}
           {fromOffsite && offsite?.unread && Object.keys(offsite.unread).length > 0 && (
-            <Note tone="fail">{Object.values(offsite.unread).join(" ")}</Note>
+            <Note tone={offered > 0 ? "warn" : "fail"}>{Object.values(offsite.unread).join(" ")}</Note>
           )}
 
-          {!searching && restorable.length + backedUpVMs.length + shownSets.length > 0 && (
+          {!searching && restorable.length + backedUpVMs.length + shownSets.length + filesOnly.length > 0 && (
             <p className="text-xs text-carbon-textMuted">
               {t("emergency.selectionHint")} {t("emergency.selectionKept")}
             </p>
@@ -818,6 +901,31 @@ export function EmergencyWindow({
                         value={folderOf(s)}
                         hostMountRoot={hostMountRoot}
                         onChange={(v) => setFolders((prev) => ({ ...prev, [s.id]: v }))}
+                      />
+                    )}
+                  </PickRow>
+                ))}
+              </Rows>
+            </Section>
+          )}
+          {!searching && filesOnly.length > 0 && (
+            <Section title={t("emergency.filesOnly")} hint={t("recovery.filesRestoreHint")}>
+              <Note tone="neutral">{t("emergency.filesOnlyHint")}</Note>
+              <Rows>
+                {filesOnly.map((item) => (
+                  <PickRow
+                    key={extractKey(item)}
+                    kind={item.domain === "vms" ? "vm" : "container"}
+                    name={item.name}
+                    on={on.has(extractKey(item))}
+                    onToggle={(v) => toggle(extractKey(item), v)}
+                  >
+                    {on.has(extractKey(item)) && (
+                      <FolderBrowser
+                        label={t("restore.targetPath")}
+                        value={extractFolder(item)}
+                        hostMountRoot={hostMountRoot}
+                        onChange={(v) => setFolders((prev) => ({ ...prev, [extractKey(item)]: v }))}
                       />
                     )}
                   </PickRow>
@@ -882,7 +990,10 @@ export function EmergencyWindow({
                   <span className="flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 text-accentText [&_svg]:h-[18px] [&_svg]:w-[18px]">
                     <KindGlyph kind={p.kind} />
                   </span>
-                  <span className="min-w-0 flex-1 text-sm text-carbon-text wrap-anywhere">{p.name}</span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-sm text-carbon-text wrap-anywhere">{p.name}</span>
+                    {reasons[keyOf(p)] && <span className="text-xs leading-relaxed text-carbon-textMuted wrap-break-word">{reasons[keyOf(p)]}</span>}
+                  </span>
                   {outcome === "done" ? (
                     <span className="text-sm text-statusOk">{t("common.done")}</span>
                   ) : outcome === "failed" ? (

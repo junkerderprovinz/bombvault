@@ -477,7 +477,24 @@ function ForeignItemRow({
   );
 }
 
-export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: string; onClose: () => void }) {
+export function OldFolderWindow({
+  hostMountRoot,
+  onClose,
+  opened,
+}: {
+  hostMountRoot: string;
+  onClose: () => void;
+  /** A copy this server opens by itself, such as what it fetched from another
+   *  instance. There is no address or key to ask for. */
+  opened?: {
+    title: string;
+    intro: string;
+    session: string;
+    inventory: ForeignInventory;
+    /** Opens it again after the session lapsed. */
+    reopen: () => Promise<{ session: string; inventory: ForeignInventory } | null>;
+  };
+}) {
   const { t } = useT();
   const { push } = useToast();
   const [remote, setRemote] = useState(false);
@@ -501,8 +518,8 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
 
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
-  const [session, setSession] = useState<string | null>(null);
-  const [inventory, setInventory] = useState<ForeignInventory | null>(null);
+  const [session, setSession] = useState<string | null>(opened?.session ?? null);
+  const [inventory, setInventory] = useState<ForeignInventory | null>(opened?.inventory ?? null);
   const [expired, setExpired] = useState(false);
   // "container:x" and "vm:y" of this host, read when the session opens, so
   // each row knows whether its restore overwrites something.
@@ -581,6 +598,18 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
       setConnecting(false);
     }
   }, [location, key, via, remote, creds, t]);
+
+  async function reopen() {
+    if (!opened) return;
+    setConnecting(true);
+    const again = await opened.reopen();
+    setConnecting(false);
+    if (!again) return;
+    setExpired(false);
+    setSession(again.session);
+    setInventory(again.inventory);
+    setOpenItem(null);
+  }
 
   function disconnect() {
     if (sessionRef.current) foreignClose(sessionRef.current).catch(() => undefined);
@@ -664,16 +693,20 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
   }
 
   return (
-    <InstanceWindow title={t("restorePage.oldFolder")} hint={t("oldFolder.intro")} onClose={onClose} footer={foot}>
-      <StepBar
-        steps={[t("recovery.foreignConnect"), t("oldFolder.browse")]}
-        current={browsing ? 2 : 1}
-        reach={browsing ? 2 : 1}
-        label={t("restorePage.oldFolder")}
-        onGo={(n) => {
-          if (n === 1 && browsing) disconnect();
-        }}
-      />
+    <InstanceWindow title={opened?.title ?? t("restorePage.oldFolder")} hint={opened ? undefined : t("oldFolder.intro")} onClose={onClose} footer={foot}>
+      {opened ? (
+        <p className="text-sm leading-relaxed text-carbon-text">{opened.intro}</p>
+      ) : (
+        <StepBar
+          steps={[t("recovery.foreignConnect"), t("oldFolder.browse")]}
+          current={browsing ? 2 : 1}
+          reach={browsing ? 2 : 1}
+          label={t("restorePage.oldFolder")}
+          onGo={(n) => {
+            if (n === 1 && browsing) disconnect();
+          }}
+        />
+      )}
 
       {!browsing && (
         <>
@@ -780,10 +813,16 @@ export function OldFolderWindow({ hostMountRoot, onClose }: { hostMountRoot: str
           {expired ? (
             <div className="flex flex-wrap items-center gap-3 rounded-card bg-statusWarnBg px-3 py-2.5 text-xs leading-relaxed text-statusWarn">
               <span className="flex-1">{t("recovery.foreignExpired")}</span>
-              <Button label={t("recovery.foreignReconnect")} labelKey="recovery.foreignReconnect" onClick={() => void connect()} busy={connecting} />
+              <Button
+                label={t("recovery.foreignReconnect")}
+                labelKey="recovery.foreignReconnect"
+                onClick={() => void (opened ? reopen() : connect())}
+                busy={connecting}
+              />
             </div>
           ) : (
-            openItem === null && (
+            openItem === null &&
+            !opened && (
               <div className="flex flex-wrap items-center gap-3 rounded-card bg-statusOkBg px-3 py-2.5 text-sm text-statusOk">
                 <span className="flex-1">{t("recovery.foreignConnected")}</span>
                 <Button label={t("recovery.foreignClose")} labelKey="recovery.foreignClose" glyph={<IconClose />} tone="subtle" onClick={disconnect} />

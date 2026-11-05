@@ -186,6 +186,35 @@ func TestApplyPendingRejectsTruncatedDB(t *testing.T) {
 	}
 }
 
+func TestApplyPendingBringsBackTheReplicaKeyAndTheCertificates(t *testing.T) {
+	dataDir := newDataDir(t)
+	writeSQLiteMarker(t, filepath.Join(dataDir, "bombvault.sqlite"), "OLD")
+	staged := selfrestore.RestoredSnapshotDir(dataDir)
+	writes := map[string]string{"ssh-replica/hosts/x/known_hosts": "PIN", "ssh-replica/id_ed25519": "KEY", "certs/ca.pem": "CA"}
+	for name, body := range writes {
+		file := filepath.Join(staged, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(file), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeSQLiteMarker(t, filepath.Join(staged, "bombvault.sqlite"), "NEW")
+	if err := selfrestore.WriteMarker(dataDir); err != nil {
+		t.Fatal(err)
+	}
+	if applied, err := selfrestore.ApplyPending(dataDir); err != nil || !applied {
+		t.Fatalf("applied=%v err=%v", applied, err)
+	}
+	for name, body := range writes {
+		got, err := os.ReadFile(filepath.Join(dataDir, filepath.FromSlash(name))) //nolint:gosec // G304: a test folder
+		if err != nil || string(got) != body {
+			t.Errorf("%s: %q, %v", name, got, err)
+		}
+	}
+}
+
 func TestApplyPendingNoMarkerIsNoop(t *testing.T) {
 	dataDir := newDataDir(t)
 	applied, err := selfrestore.ApplyPending(dataDir)

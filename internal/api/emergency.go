@@ -39,8 +39,8 @@ const (
 	placeMissing     = "missing"
 	placeWrongKey    = "wrong-key"
 	placeUnreachable = "unreachable"
-	// placeNeedsSignIn is a remote place the emergency has no sign-in for. It
-	// comes back with the settings backup.
+	// placeNeedsSignIn is a remote place the emergency has no sign-in for, or
+	// one that refused the sign-in it was tried with.
 	placeNeedsSignIn = "sign-in"
 )
 
@@ -90,12 +90,43 @@ type emergencySession struct {
 	encrypted             bool
 	creds                 CloudCreds
 	rcloneConf            string
-	places                []emergencyPlace
+	// signIns are the saved sign-ins of the kit. byHand names the places the
+	// person entered a sign-in for after the kit's did not open them, so those
+	// go by handCreds, this server's default, from then on.
+	signIns   []kitSignIn
+	byHand    map[string]bool
+	handCreds CloudCreds
+	places    []emergencyPlace
 	// signInsStored says the kit's sign-ins are this server's, so a place
 	// behind an rclone remote can be looked into.
 	signInsStored bool
 	expires       time.Time
 	timer         *time.Timer
+}
+
+// signInFor is the saved sign-in of the kit that place opens with, nil when it
+// goes by the default.
+func (sess *emergencySession) signInFor(place string) *kitSignIn {
+	if sess.byHand[place] {
+		return nil
+	}
+	for i, in := range sess.signIns {
+		if in.holds(place) {
+			return &sess.signIns[i]
+		}
+	}
+	return nil
+}
+
+// credsFor are the keys place is tried with.
+func (sess *emergencySession) credsFor(place string) CloudCreds {
+	if sess.byHand[place] && sess.handCreds != (CloudCreds{}) {
+		return sess.handCreds
+	}
+	if in := sess.signInFor(place); in != nil {
+		return in.creds
+	}
+	return sess.creds
 }
 
 // emergencyView is what the routes of an emergency answer with. It names no
@@ -221,13 +252,13 @@ func (s *Service) probePlace(ctx context.Context, sess *emergencySession, loc ki
 		if !sess.signInsStored {
 			return placeNeedsSignIn
 		}
-	} else if len(cloudEnv(sess.creds)) == 0 && !strings.Contains(repo, "@") {
+	} else if len(cloudEnv(sess.credsFor(repo))) == 0 && !strings.Contains(repo, "@") {
 		return placeNeedsSignIn
 	}
 	// This server's rclone config goes along only once it is the kit's.
 	mode := restic.Mode{
 		Encrypted: sess.encrypted, Password: restickey.Derive(sess.backupKey),
-		Env: cloudEnv(sess.creds), NoLock: true, NoAmbientCreds: !sess.signInsStored || !isRcloneLocation(repo),
+		Env: cloudEnv(sess.credsFor(repo)), NoLock: true, NoAmbientCreds: !sess.signInsStored || !isRcloneLocation(repo),
 	}
 	modes := []restic.Mode{mode}
 	if typed {
@@ -252,7 +283,21 @@ func (s *Service) probePlace(ctx context.Context, sess *emergencySession, loc ki
 	if isWrongKey(last) {
 		return placeWrongKey
 	}
+	if signInRefused(last) {
+		return placeNeedsSignIn
+	}
 	return placeUnreachable
+}
+
+// signInRefused reports whether a remote answered that the sign-in is wrong,
+// which says nothing about the key or the backups behind it.
+func signInRefused(err error) bool {
+	if err == nil {
+		return false
+	}
+	low := strings.ToLower(err.Error())
+	return isAuthRefusal(low) || strings.Contains(low, "access denied") || strings.Contains(low, "forbidden") ||
+		strings.Contains(low, "invalidaccesskeyid") || strings.Contains(low, "signaturedoesnotmatch")
 }
 
 // beginEmergency replaces the emergency in progress with sess.
@@ -421,7 +466,7 @@ func (s *Service) EmergencyState() (emergencyView, error) {
 	view.Session = &emergencySessionView{
 		ID: sess.id, Source: sess.source, Kit: sess.origin, Encrypted: sess.encrypted, Places: sess.places,
 		ExpiresAt: sess.expires.Unix(), Refusal: emergencyCode(s.adoptionRefusal(sess, s.BackupInProgress())),
-		CloudSignIn: sess.creds != (CloudCreds{}), RcloneConfig: strings.TrimSpace(sess.rcloneConf) != "",
+		CloudSignIn: sess.creds != (CloudCreds{}) || len(sess.signIns) > 0, RcloneConfig: strings.TrimSpace(sess.rcloneConf) != "",
 		Replaces: replaces,
 	}
 	return view, nil
@@ -484,7 +529,7 @@ func (s *Service) beginEmergencyFromKit(ctx context.Context, kit recoveryKit, so
 	origin.Server, origin.WrittenAt = kit.Server, kit.WrittenAt
 	sess := &emergencySession{
 		source: source, backupKey: kit.appKey, sealingKey: kit.sealingKey, origin: origin,
-		encrypted: kit.Encrypted, creds: kit.creds, rcloneConf: kit.rcloneConf,
+		encrypted: kit.Encrypted, creds: kit.creds, rcloneConf: kit.rcloneConf, signIns: kit.signIns,
 		places: []emergencyPlace{},
 	}
 	for _, loc := range kit.Locations {
@@ -554,7 +599,8 @@ func (s *Service) FinishEmergency(id string) error {
 
 // restoreReplacedSignIns puts back the sign-ins an emergency stored a kit's
 // over: the default sign-in's keys, or none when there was no default, and
-// the rclone config.
+// the rclone config. What it added goes: the off-site targets it made for the
+// kit's places, then the saved sign-ins nothing names any more.
 func (s *Service) restoreReplacedSignIns() error {
 	before, found, err := s.store.ReplacedSignIns()
 	if err != nil || !found {
@@ -575,6 +621,14 @@ func (s *Service) restoreReplacedSignIns() error {
 	}
 	if err := s.writeRcloneFile(before.RcloneConf); err != nil {
 		return err
+	}
+	for _, id := range before.Added.Targets {
+		if err := s.store.DeleteOffsiteTarget(id); err != nil {
+			return err
+		}
+	}
+	for _, id := range before.Added.SignIns {
+		s.removeCredSet(id)
 	}
 	return s.store.ClearReplacedSignIns()
 }
@@ -619,11 +673,11 @@ func (s *Service) UndoAdoption() error {
 	return nil
 }
 
-// StoreEmergencySignIns saves the shared sign-ins the kit of the emergency
-// carries, so the places it names can be reached before any settings come
-// back, and looks into those places again. They are sealed under APP_KEY like
-// every sign-in typed in by hand. Sign-ins this server has of its own are
-// replaced only with replace, and kept for an undo.
+// StoreEmergencySignIns saves the sign-ins the kit of the emergency carries, so
+// the places it names can be reached before any settings come back, and looks
+// into those places again. They are sealed under APP_KEY like every sign-in
+// typed in by hand. Sign-ins this server has of its own are replaced only with
+// replace, and kept for an undo.
 func (s *Service) StoreEmergencySignIns(ctx context.Context, id string, replace bool) error {
 	sess, err := s.emergencyByID(id)
 	if err != nil {
@@ -636,6 +690,29 @@ func (s *Service) StoreEmergencySignIns(ctx context.Context, id string, replace 
 	if (replaces.CloudSignIn || replaces.RcloneConfig) && !replace {
 		return errSignInsExist
 	}
+	if err := s.keepSignInsForUndo(); err != nil {
+		return err
+	}
+	if sess.creds != (CloudCreds{}) {
+		if err := s.SetCloudCreds(sess.creds); err != nil {
+			return err
+		}
+	}
+	if strings.TrimSpace(sess.rcloneConf) != "" {
+		if err := s.SetRcloneConf(sess.rcloneConf); err != nil {
+			return err
+		}
+	}
+	if err := s.storeKitSignIns(sess); err != nil {
+		return err
+	}
+	sess.signInsStored = true
+	s.probePlaces(ctx, sess, sess.source == store.KeyFromTyped)
+	return nil
+}
+
+// keepSignInsForUndo remembers what this server has, once per emergency.
+func (s *Service) keepSignInsForUndo() error {
 	// The copy kept for an undo has to hold the tokens rclone refreshed.
 	if err := s.WriteRcloneConfFile(); err != nil {
 		return err
@@ -652,22 +729,151 @@ func (s *Service) StoreEmergencySignIns(ctx context.Context, id string, replace 
 	if err != nil {
 		return err
 	}
-	if err := s.store.KeepReplacedSignIns(store.ReplacedSignIns{CloudConf: sealed, RcloneConf: settings.RcloneConf}); err != nil {
+	return s.store.KeepReplacedSignIns(store.ReplacedSignIns{CloudConf: sealed, RcloneConf: settings.RcloneConf})
+}
+
+// storeKitSignIns saves the kit's saved sign-ins. One with the keys of a saved
+// sign-in this server has is that one.
+func (s *Service) storeKitSignIns(sess *emergencySession) error {
+	var added []string
+	err := s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
+		added = nil
+		for i := range sess.signIns {
+			in := &sess.signIns[i]
+			if at := slices.IndexFunc(sets, func(c CloudCredSet) bool { return c.KeptFor == "" && c.CloudCreds == in.creds }); at >= 0 {
+				in.id = sets[at].ID
+				continue
+			}
+			in.id = newCredSetID()
+			added = append(added, in.id)
+			sets = append(sets, CloudCredSet{ID: in.id, Name: freeSetName(sets, cmp.Or(in.name, defaultSignInName)), CloudCreds: in.creds})
+		}
+		return sets
+	})
+	if err != nil {
 		return err
 	}
-	if sess.creds != (CloudCreds{}) {
-		if err := s.SetCloudCreds(sess.creds); err != nil {
-			return err
-		}
+	return s.store.NoteAddedInEmergency(store.AddedInEmergency{SignIns: added})
+}
+
+// TryEmergencyPlacesAgain looks into the places of the emergency again after
+// the person entered a sign-in by hand on this server. A place that did not
+// open goes by this server's default sign-in and rclone config from then on,
+// whatever the kit says for it.
+func (s *Service) TryEmergencyPlacesAgain(ctx context.Context, id string) error {
+	sess, err := s.emergencyByID(id)
+	if err != nil {
+		return err
 	}
-	if strings.TrimSpace(sess.rcloneConf) != "" {
-		if err := s.SetRcloneConf(sess.rcloneConf); err != nil {
-			return err
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	if sess.handCreds, err = s.decodeCloud(settings); err != nil {
+		return err
+	}
+	if sess.byHand == nil {
+		sess.byHand = map[string]bool{}
+	}
+	for _, p := range sess.places {
+		if p.State != placeReadable {
+			sess.byHand[p.Location] = true
 		}
 	}
 	sess.signInsStored = true
 	s.probePlaces(ctx, sess, sess.source == store.KeyFromTyped)
 	return nil
+}
+
+// AttachEmergencyPlaces gives this server the off-site targets of the places a
+// kit names, with the sign-in each opens with, for a section's copies and for a
+// self-backup that lies in a storage location. Without a settings backup they
+// are all it learns about the old install's copies. A target at the place
+// already keeps what it has, apart from a sign-in it lacks.
+func (s *Service) AttachEmergencyPlaces(ctx context.Context, id string) error {
+	sess, err := s.emergencyByID(id)
+	if err != nil {
+		return err
+	}
+	// A place can read through the sign-ins in memory, which the targets cannot.
+	// What would replace this server's own waits for the person to agree.
+	if !sess.signInsStored {
+		err := s.StoreEmergencySignIns(ctx, id, false)
+		if err != nil && !errors.Is(err, errSignInsExist) {
+			return err
+		}
+	}
+	if err := s.keepSignInsForUndo(); err != nil {
+		return err
+	}
+	var added []string
+	for _, p := range sess.places {
+		if p.Domain == "" || !restic.IsRemoteRepo(p.Location) {
+			continue
+		}
+		ref := ""
+		if in := sess.signInFor(p.Location); in != nil {
+			ref = in.id
+		}
+		if p.Kind == kitLocal && p.Domain != "config" {
+			if err := s.attachOwnFolder(p, ref); err != nil {
+				return err
+			}
+			continue
+		}
+		made, err := s.attachOffsiteTarget(p, ref)
+		if err != nil {
+			return err
+		}
+		if made != "" {
+			added = append(added, made)
+		}
+	}
+	return s.store.NoteAddedInEmergency(store.AddedInEmergency{Targets: added})
+}
+
+// attachOffsiteTarget makes sure a section has a target at the place and says
+// which one it made, empty when it was there.
+func (s *Service) attachOffsiteTarget(p emergencyPlace, ref string) (string, error) {
+	targets, err := s.store.OffsiteTargetsForDomain(p.Domain)
+	if err != nil {
+		return "", err
+	}
+	if at := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return sameRepoLocation(t.Repo, p.Location) }); at >= 0 {
+		if ref == "" || targets[at].CredsRef != "" {
+			return "", nil
+		}
+		targets[at].CredsRef = ref
+		_, err := s.store.UpsertOffsiteTarget(targets[at])
+		return "", err
+	}
+	name, err := s.freeTargetName(cmp.Or(p.Name, locationName(p.Location)), "")
+	if err != nil {
+		return "", err
+	}
+	order, err := s.nextOffsiteSortOrder(p.Domain)
+	if err != nil {
+		return "", err
+	}
+	made, err := s.store.UpsertOffsiteTarget(store.OffsiteTarget{
+		Domain: p.Domain, Name: name, Repo: p.Location, CredsRef: ref, Enabled: true, SortOrder: order,
+	})
+	return made.ID, err
+}
+
+// attachOwnFolder gives a section whose own folder lies at a remote place the
+// sign-in that opens it.
+func (s *Service) attachOwnFolder(p emergencyPlace, ref string) error {
+	if ref == "" {
+		return nil
+	}
+	row, ok, err := s.store.PrimaryRemoteTarget(p.Domain)
+	if err != nil || (ok && row.CredsRef != "") {
+		return err
+	}
+	row.Repo, row.CredsRef, row.Enabled = p.Location, ref, true
+	_, err = s.store.UpsertPrimaryRemoteTarget(p.Domain, row)
+	return err
 }
 
 func (h *Handler) answerEmergency(w http.ResponseWriter, ctx context.Context, kind string, err error) {
@@ -742,6 +948,26 @@ func (h *Handler) handleEmergencySignIns(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	h.answerEmergency(w, r.Context(), keyEventSignIns, h.svc.StoreEmergencySignIns(r.Context(), body.Session, body.Replace))
+}
+
+// handleEmergencyTryAgain serves POST /api/emergency/try-again with the body
+// {session}.
+func (h *Handler) handleEmergencyTryAgain(w http.ResponseWriter, r *http.Request) {
+	var body emergencyAct
+	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "trying the sign-ins of this server on the places of a recovery kit") {
+		return
+	}
+	h.answerEmergency(w, r.Context(), keyEventSignIns, h.svc.TryEmergencyPlacesAgain(r.Context(), body.Session))
+}
+
+// handleEmergencyAttach serves POST /api/emergency/attach with the body
+// {session}.
+func (h *Handler) handleEmergencyAttach(w http.ResponseWriter, r *http.Request) {
+	var body emergencyAct
+	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "taking over the storage locations of a recovery kit") {
+		return
+	}
+	h.answerEmergency(w, r.Context(), "", h.svc.AttachEmergencyPlaces(r.Context(), body.Session))
 }
 
 // handleEmergencyCancel serves DELETE /api/emergency?session=: the emergency

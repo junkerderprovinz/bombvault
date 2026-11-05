@@ -320,11 +320,15 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/recovery-kit/read", h.handleReadRecoveryKit)
 	mux.HandleFunc("GET /api/emergency", h.handleEmergencyState)
 	mux.HandleFunc("GET /api/emergency/offsite-entries", h.handleEmergencyOffsiteEntries)
+	mux.HandleFunc("POST /api/emergency/offsite-entries", h.handleEmergencyOffsiteAdopt)
+	mux.HandleFunc("POST /api/emergency/offsite-open", h.handleEmergencyOffsiteOpen)
 	mux.HandleFunc("DELETE /api/emergency", h.handleEmergencyCancel)
 	mux.HandleFunc("POST /api/emergency/undo", h.handleEmergencyUndo)
 	mux.HandleFunc("POST /api/emergency/read", h.handleEmergencyRead)
 	mux.HandleFunc("POST /api/emergency/adopt", h.handleEmergencyAdopt)
 	mux.HandleFunc("POST /api/emergency/sign-ins", h.handleEmergencySignIns)
+	mux.HandleFunc("POST /api/emergency/try-again", h.handleEmergencyTryAgain)
+	mux.HandleFunc("POST /api/emergency/attach", h.handleEmergencyAttach)
 	mux.HandleFunc("POST /api/emergency/finish", h.handleEmergencyFinish)
 	mux.HandleFunc("POST /api/recovery-kit/ack", h.handleRecoveryKitAck)
 	mux.HandleFunc("GET /api/rclone", h.handleRcloneInfo)
@@ -630,6 +634,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/pull/sources/{id}", h.handleDeletePullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/test", h.handleTestPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/run", h.handleRunPullSource)
+	mux.HandleFunc("POST /api/pull/sources/{id}/open", h.handleOpenPulledCopy)
 
 	// Fleet view (read-only): the members of this instance's pairing group,
 	// polled over the group for their protection status. Gated behind the

@@ -12,7 +12,7 @@ Everything BombVault backs up stands in one list under **Backups**: containers, 
 | **Containers** | The appdata folder plus the container definition: image, variables, ports, labels and volumes. The **Backup folders** card on the container's **Settings** tab ticks exactly which folders the backup covers, with a live count of the paths and a list of what you left out. Data a container keeps outside Host Data, such as in a TrueNAS ixVolume, is not backed up, and the run names the folders it left out. |
 | **VMs** | The disk images, the XML definition and the UEFI NVRAM, with a graceful shutdown or a live snapshot, over SSH. See [VM backups](vm-backup-ssh-setup.md). |
 | **Flash** | Unraid only. The whole USB flash (`/boot`): OS, license, array config, shares, network and plugin config. |
-| **Self-backup** | BombVault's own `/config`: its settings database, the sign-ins of the storage locations and the libvirt SSH keypair, snapshotted with SQLite `VACUUM INTO` so the database is never captured in the middle of a write. |
+| **Self-backup** | BombVault's own `/config`: its settings database, the sign-ins of the storage locations, the libvirt SSH keypair, the key and host pins of the ZFS servers and the certificates, snapshotted with SQLite `VACUUM INTO` so the database is never captured in the middle of a write. |
 | **Folders** | Any folder on the server as a folder set, such as a share, your documents or a photo library, with optional exclude patterns. Folder sets have schedules, retention, off-site copies, checks and restore drills like everything else. |
 | **ZFS datasets** | A dataset and every dataset below it, read from one ZFS snapshot so all of them come from the same instant, and stored with restic like a folder. A ZFS entry can also keep a block-exact replica on a second ZFS server. See [ZFS datasets](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Entries that are no longer installed but still have backups stand apart under **
 The page's main action floats at the bottom right: **Back up everything now** starts a run over every switched-on section. **More** holds the rest:
 
 - **Select** starts a selection, see below.
-- **Discover backups** reads what the storage locations hold and rebuilds entries from it, for example after a fresh install. Off-site copies of rebuilt sections then pause until you confirm their default, see [After a rebuild](offsite-recovery.md#after-a-rebuild).
+- **Discover backups** reads what the storage locations hold and rebuilds entries from it, for example after a fresh install. A container with no data of its own has no snapshot, and it comes back from the definition mirrored beside the repository. Off-site copies of rebuilt sections then pause until you confirm their default, see [After a rebuild](offsite-recovery.md#after-a-rebuild).
 - **ZFS connection to this server** opens the SSH test of the ZFS section, see [ZFS datasets](zfs-datasets.md#requirements).
 - **Replicate all now**, with the ZFS tile picked, sends the replica of every ZFS entry.
 

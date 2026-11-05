@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
@@ -479,6 +480,7 @@ func (s *Service) executeRestoreBeside(ctx context.Context, name string, plan co
 	rkey := "container:" + name
 	rctx, startedAt := s.progBegin(ctx, rkey, "restore")
 	undo := func() {}
+	refused := new(atomic.Bool)
 	rerr := backup.RestoreContainerBeside(rctx, backup.BesideContainerDeps{
 		Original:     name,
 		Copy:         plan.inspect,
@@ -497,8 +499,8 @@ func (s *Service) executeRestoreBeside(ctx context.Context, name string, plan co
 			id, _ := s.docker.ImageID(ctx, ref)
 			return id
 		},
-		Restic: &resticAdapter{engine: s.engine, mode: plan.mode},
-		Runs:   runsAdapter{st: s.store, ctx: ctx},
+		Restic: &resticAdapter{engine: s.engine, mode: plan.mode, metadataRefused: refused},
+		Runs:   metadataNoteRuns{runsAdapter{st: s.store, ctx: ctx}, refused},
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
@@ -592,6 +594,7 @@ func (s *Service) executeRestoreVMBeside(ctx context.Context, name string, plan 
 		targets = append(targets, backup.VMRestoreDir{Target: path.Dir(img.Target)})
 	}
 	undo := func() {}
+	refused := new(atomic.Bool)
 	rerr := backup.RestoreVMBeside(rctx, backup.BesideVMDeps{
 		RepoPath:   plan.repo,
 		SnapshotID: plan.snapshotID,
@@ -606,8 +609,8 @@ func (s *Service) executeRestoreVMBeside(ctx context.Context, name string, plan 
 		Files:       b.files,
 		Backing:     s.backingLinks(b.backing),
 		TargetID:    plan.targetID,
-		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode)},
-		Runs:        runsAdapter{st: s.store, ctx: ctx},
+		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode), metadataRefused: refused},
+		Runs:        metadataNoteRuns{runsAdapter{st: s.store, ctx: ctx}, refused},
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, b.dirs)

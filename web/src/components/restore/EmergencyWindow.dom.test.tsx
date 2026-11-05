@@ -100,7 +100,22 @@ const fileSetSnapshots = vi.fn((id: string, source?: string) => {
   return Promise.resolve({ ok: true, snapshots: [{ id: "f-old", time: "2026-09-01T03:00:00Z" }, { id: "f-new", time: "2026-09-20T03:00:00Z" }] });
 });
 // What the off-site copies hold, by entry.
-let offsiteOnServer: OffsiteEntries = { containers: {}, vms: {}, fileSets: {} };
+const NOTHING_OFFSITE: OffsiteEntries = { containers: {}, vms: {}, fileSets: {}, from: { containers: {}, vms: {}, fileSets: {} } };
+let offsiteOnServer: OffsiteEntries = NOTHING_OFFSITE;
+const attachEmergencyPlaces = vi.fn((session: string) => {
+  void session;
+  return Promise.resolve({ ok: true });
+});
+const tryEmergencyPlacesAgain = vi.fn(() => answer());
+const openOffsiteCopy = vi.fn((domain: string, source: string) => {
+  void domain;
+  void source;
+  return Promise.resolve({ ok: true, session: "copy-1" });
+});
+const foreignRestore = vi.fn((req: { item: string }) => {
+  runsOnServer = [...runsOnServer, finishedRun("restore", "container", req.item)];
+  return Promise.resolve({ ok: true, started: true });
+});
 const importDbDump = vi.fn((name: string) => {
   runsOnServer = [...runsOnServer, finishedRun("dbimport", "container", name)];
   return Promise.resolve({ ok: true, started: true });
@@ -290,6 +305,11 @@ vi.mock("../../lib/api", async (importOriginal) => {
     checkRestore: () => Promise.resolve({ ok: true, ready: true, checks: [], plan: null }),
     fileSetSnapshots: (...a: unknown[]) => fileSetSnapshots(...(a as [string, string?])),
     emergencyOffsiteEntries: () => Promise.resolve({ ok: true, entries: offsiteOnServer }),
+    attachEmergencyPlaces: (session: string) => attachEmergencyPlaces(session),
+    tryEmergencyPlacesAgain: () => tryEmergencyPlacesAgain(),
+    openOffsiteCopy: (domain: string, source: string) => openOffsiteCopy(domain, source),
+    foreignRestore: (req: { item: string }) => foreignRestore(req),
+    foreignClose: () => Promise.resolve({ ok: true }),
     listDbDumps: () => Promise.resolve({ ok: true, dumps: dumpsOnServer }),
     importDbDump: (...a: unknown[]) => importDbDump(...(a as [string])),
     downloadRecoveryKit: () => Promise.resolve(null),
@@ -337,7 +357,7 @@ beforeEach(() => {
   dumpsOnServer = [];
   runsOnServer = [];
   needsRuntime = [];
-  offsiteOnServer = { containers: {}, vms: {}, fileSets: {} };
+  offsiteOnServer = NOTHING_OFFSITE;
   emergencyOnServer = { backupKey: "own", undoable: false };
   inGroup = false;
   localStorage.clear();
@@ -632,11 +652,64 @@ describe("taking the key over", () => {
     await open();
     await upload("kit");
     await waitFor(() => expect(places()).toHaveLength(4));
-    expect(screen.queryByText(en["emergency.signInByHand"])).toBeNull();
-    await press(button(en["emergency.adopt"]));
-    await press(within(screen.getAllByRole("dialog").at(-1)!).getByRole("button", { name: en["emergency.adopt"] }));
     expect(await screen.findByText(en["emergency.signInByHand"])).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["emergency.signInsSave"] })).toBeNull();
+  });
+
+  // The server refuses the takeover until a place opens, and the rclone places
+  // of a kit open only once their config is saved here.
+  it("lets the sign-ins of a kit be saved before the key can be taken over", async () => {
+    const closed = session({
+      rcloneConfig: true,
+      refusal: "adopt-nothing-readable",
+      places: [{ domain: "files", kind: "offsite", location: "rclone:box:files", state: "sign-in" }],
+    });
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: closed };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    expect(button(en["emergency.adopt"]).disabled).toBe(true);
+    expect(screen.getByText(en["emergency.signInFirst"])).toBeTruthy();
+    expect(screen.queryByText(en["emergency.code.adopt-nothing-readable"])).toBeNull();
+    expect(screen.queryByText(en["emergency.signInByHand"])).toBeNull();
+
+    storeEmergencySignIns.mockImplementationOnce(() => {
+      emergencyOnServer = {
+        ...emergencyOnServer,
+        session: { ...closed, refusal: undefined, places: [{ ...closed.places[0], state: "readable" }] },
+      };
+      return answer();
+    });
+    await press(button(en["emergency.signInsSave"]));
+    expect(await screen.findByText(en["emergency.signInsSaved"])).toBeTruthy();
+    expect(button(en["emergency.adopt"]).disabled).toBe(false);
+  });
+
+  it("offers the sign-in by hand and tries the places again when the kit carries none", async () => {
+    const closed = session({
+      cloudSignIn: false,
+      refusal: "adopt-nothing-readable",
+      places: [{ domain: "files", kind: "offsite", location: "rclone:box:files", state: "sign-in" }],
+    });
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: closed };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    expect(screen.getByText(en["emergency.signInByHand"])).toBeTruthy();
+    tryEmergencyPlacesAgain.mockImplementationOnce(() => {
+      emergencyOnServer = {
+        ...emergencyOnServer,
+        session: { ...closed, refusal: undefined, places: [{ ...closed.places[0], state: "readable" }] },
+      };
+      return answer();
+    });
+    await press(button(en["emergency.signInRetry"]));
+    await waitFor(() => expect(button(en["emergency.adopt"]).disabled).toBe(false));
+    expect(screen.queryByText(en["emergency.signInByHand"])).toBeNull();
   });
 });
 
@@ -911,6 +984,43 @@ describe("the settings", () => {
       restoreFolder: SETTINGS.restoreFolder,
     });
     await waitFor(() => expect(discoverAll).toHaveBeenCalled());
+    expect(attachEmergencyPlaces).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts on the place of the self-backup the key opened, with its address filled in", async () => {
+    const places = [
+      { domain: "config", kind: "local", location: "/host/user/dead/config", folder: "dead/config", state: "missing" },
+      { domain: "config", kind: "destination", name: "Box", location: "rest:http://box:8000/bv/selfbackup", state: "readable" },
+    ] as EmergencySession["places"];
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: session({ places }) };
+      return answer();
+    });
+    await open();
+    await takeOver();
+    await press(next());
+    expect(screen.getByText(en["emergency.settingsFound"])).toBeTruthy();
+    expect((screen.getByLabelText(en["recovery.configOffsiteUrl"]) as HTMLInputElement).value).toBe("rest:http://box:8000/bv/selfbackup");
+    await press(button(en["emergency.settingsGo"]));
+    await waitFor(() => expect(restoreConfig).toHaveBeenCalled());
+    expect(restoreConfig.mock.calls[0][1]).toBe("offsite");
+    expect(attachEmergencyPlaces).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts on Skip and says why when no place holds a self-backup the key opened", async () => {
+    const places = [
+      { domain: "files", kind: "offsite", location: "rest:http://box:8000/bv/files", state: "readable" },
+      { domain: "config", kind: "local", location: "/host/user/dead/config", folder: "dead/config", state: "missing" },
+    ] as EmergencySession["places"];
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = { ...emergencyOnServer, session: session({ places }) };
+      return answer();
+    });
+    await open();
+    await takeOver();
+    await press(next());
+    expect(screen.getByText(en["emergency.settingsNone"])).toBeTruthy();
+    expect(screen.getByRole("radio", { name: new RegExp(`^${en["recovery.configSkip"]}`) }).getAttribute("aria-checked")).toBe("true");
   });
 });
 
@@ -962,7 +1072,8 @@ describe("the selection", () => {
 
   it("says so when nothing was found", async () => {
     await open("selection");
-    expect(screen.getByText(en["recovery.foundNone"])).toBeTruthy();
+    expect(screen.getByText(en["emergency.foundNone"])).toBeTruthy();
+    expect(screen.queryByText(en["recovery.foundNone"])).toBeNull();
     expect(button(en["snapshots.restore"]).disabled).toBe(true);
   });
 
@@ -1061,22 +1172,72 @@ describe("the restore", () => {
   it("lists and restores from the off-site copies when the local backups are gone", async () => {
     containersOnServer = [gone({ lastBackup: null })];
     vmsOnServer = [vmView({ state: "not-installed", lastBackup: null })];
-    setsOnServer = [fileSetView({ path: "" })];
-    offsiteOnServer = { containers: { sonarr: 1_790_000_000 }, vms: { win11: 1_790_000_000 }, fileSets: { Photos: 1_790_000_000 } };
+    setsOnServer = [fileSetView({ path: "", lastBackup: 0 })];
+    offsiteOnServer = {
+      containers: { sonarr: 1_790_000_000 },
+      vms: { win11: 1_790_000_000 },
+      fileSets: { Photos: 1_790_000_000 },
+      from: { containers: { sonarr: "offsite:a" }, vms: { win11: "offsite:b" }, fileSets: { Photos: "offsite:c" } },
+    };
     vi.useFakeTimers();
     await open("selection");
-    expect(screen.queryByRole("switch", { name: "sonarr" })).toBeNull();
-
-    fireEvent.click(screen.getByRole("tab", { name: en["source.offsite"] }));
     await act(() => vi.advanceTimersByTimeAsync(100));
     expect(isOn("sonarr")).toBe(true);
     fireEvent.click(button(en["snapshots.restore"]));
     await act(() => vi.advanceTimersByTimeAsync(30_000));
 
-    expect(restore.mock.calls[0]).toEqual(["sonarr", "latest", true, "offsite", true]);
-    expect(restoreVM.mock.calls[0]).toEqual(["win11", "latest", true, "offsite", true]);
-    expect(fileSetSnapshots.mock.calls[0]).toEqual([setsOnServer[0].id, "offsite"]);
-    expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos", "offsite"]);
+    expect(restore.mock.calls[0]).toEqual(["sonarr", "latest", true, "offsite:a", true]);
+    expect(restoreVM.mock.calls[0]).toEqual(["win11", "latest", true, "offsite:b", true]);
+    expect(fileSetSnapshots.mock.calls[0]).toEqual([setsOnServer[0].id, "offsite:c"]);
+    expect(restoreFileSet.mock.calls[0]).toEqual([setsOnServer[0].id, "f-new", true, "user/bombvault/restore/Photos", "offsite:c"]);
+  });
+
+  it("says why an entry could not come back", async () => {
+    containersOnServer = [gone()];
+    restore.mockImplementationOnce((name: string) => {
+      runsOnServer = [...runsOnServer, finishedRun("restore", "container", name, "the target folder is full")];
+      return Promise.resolve({ ok: true, started: true });
+    });
+    vi.useFakeTimers();
+    await open("selection");
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(screen.getByTestId("emergency-run").textContent).toContain("the target folder is full");
+  });
+
+  it("does not leave the local backups when some are there", async () => {
+    containersOnServer = [gone()];
+    offsiteOnServer = { ...NOTHING_OFFSITE, fileSets: { Photos: 1_790_000_000 }, from: { ...NOTHING_OFFSITE.from, fileSets: { Photos: "offsite:c" } } };
+    await open("selection");
+    expect(screen.getByRole("tab", { name: en["source.local"] }).getAttribute("aria-selected")).toBe("true");
+    expect(isOn("sonarr")).toBe(true);
+  });
+
+  it("brings back as plain files what a copy holds and nothing can recreate", async () => {
+    offsiteOnServer = {
+      ...NOTHING_OFFSITE,
+      containers: { nextcloud: 1_790_000_000 },
+      from: { ...NOTHING_OFFSITE.from, containers: { nextcloud: "offsite:a" } },
+    };
+    vi.useFakeTimers();
+    await open("selection");
+    await act(() => vi.advanceTimersByTimeAsync(100));
+    expect(screen.getByText(en["emergency.filesOnly"])).toBeTruthy();
+    expect(isOn("nextcloud")).toBe(true);
+    fireEvent.click(button(en["snapshots.restore"]));
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+
+    expect(openOffsiteCopy.mock.calls[0]).toEqual(["containers", "offsite:a"]);
+    expect(foreignRestore.mock.calls[0][0]).toMatchObject({
+      session: "copy-1",
+      domain: "containers",
+      item: "nextcloud",
+      snapshot: "latest",
+      confirm: true,
+      target: "user/bombvault/restore/nextcloud",
+      toFolder: true,
+    });
+    expect(restore).not.toHaveBeenCalled();
   });
 
   it("holds the page and the window while it runs, keeps what has not started, and can stop", async () => {

@@ -1887,10 +1887,12 @@ func TestStatsCarriesForecast(t *testing.T) {
 // auto-restart was scheduled (autoRestart:true — the SPA then waits for the app
 // to come back rather than telling the user to restart manually).
 func TestRestoreConfigHandlerStagesAndAutoRestarts(t *testing.T) {
+	skipStagingOnWindows(t)
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // ignore any ambient override; resolve via docker.Self
 	d := &fakeServiceDocker{selfName: "BombVault"}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	h, st, _ := newTestRouterSvc(t, d, eng)
+	eng.stageFrom = st
 
 	s, err := st.GetSettings()
 	if err != nil {
@@ -1919,10 +1921,12 @@ func TestRestoreConfigHandlerStagesAndAutoRestarts(t *testing.T) {
 // the restore is still staged but autoRestart:false — the SPA then instructs the
 // user to restart the BombVault container manually to apply the restore.
 func TestRestoreConfigHandlerManualRestartWhenSelfUnknown(t *testing.T) {
+	skipStagingOnWindows(t)
 	t.Setenv("BOMBVAULT_SELF_CONTAINER", "") // no ambient override; docker.Self returns "" below
 	d := &fakeServiceDocker{selfName: ""}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	h, st, _ := newTestRouterSvc(t, d, eng)
+	eng.stageFrom = st
 
 	s, err := st.GetSettings()
 	if err != nil {

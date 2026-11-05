@@ -145,3 +145,6 @@ The **Export / import settings** card under **Settings, System** writes your who
 
 !!! warning "The export can contain credentials"
     You choose whether to include the off-site, notification and MQTT broker credentials in the file. With credentials included, the export is as sensitive as your recovery kit, so store it somewhere safe. Without them, the file holds only non-secret settings.
+
+!!! warning "The APP_KEY does not travel with the file"
+    The repositories are locked with a password derived from the `APP_KEY`, and the file does not hold it. For a planned move, give the new box the old `APP_KEY` in its template, or take the key over with the recovery kit under **Emergency**. Under another key the repositories answer with a wrong password. Nothing is lost, and setting the right key opens them again.

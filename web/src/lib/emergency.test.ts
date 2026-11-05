@@ -9,6 +9,7 @@ import {
   recoveryCodeComplete,
   recoveryCodeShown,
   refusalText,
+  selfBackupPlace,
   sessionKeyInUse,
   settingsOfPlaces,
   takenOver,
@@ -139,6 +140,38 @@ describe("settingsOfPlaces", () => {
         place({ domain: "someday", folder: "old/someday" }),
       ])
     ).toEqual({});
+  });
+
+  it("keeps an own folder that lies at a remote address", () => {
+    expect(settingsOfPlaces([place({ domain: "files", location: "rest:http://box:8000/files" })])).toEqual({
+      filesPath: "rest:http://box:8000/files",
+    });
+  });
+});
+
+describe("selfBackupPlace", () => {
+  const dead = place({ domain: "config", location: "/host/user/old/config", folder: "old/config", state: "missing" });
+  const inLocation = place({ domain: "config", kind: "destination", name: "Box", location: "rest:http://box/selfbackup", state: "readable" });
+
+  it("goes to the place the key opened", () => {
+    expect(selfBackupPlace([dead, inLocation])).toEqual({ source: "offsite", address: "rest:http://box/selfbackup", readable: true });
+  });
+
+  it("prefers a local folder the key opened", () => {
+    expect(selfBackupPlace([inLocation, { ...dead, state: "readable" }])).toEqual({ source: "local", readable: true });
+  });
+
+  it("reads an own folder in a storage location as an off-site copy", () => {
+    const own = place({ domain: "config", location: "rest:http://box/config", state: "readable" });
+    expect(selfBackupPlace([own])).toEqual({ source: "offsite", address: "rest:http://box/config", readable: true });
+  });
+
+  it("stays on the local folder the kit names when nothing opened", () => {
+    expect(selfBackupPlace([dead, { ...inLocation, state: "sign-in" }])).toEqual({ source: "local", readable: false });
+  });
+
+  it("has nothing to say without a place of the self-backup", () => {
+    expect(selfBackupPlace([place({ domain: "files", location: "rest:http://box/files" })])).toBeUndefined();
   });
 });
 
