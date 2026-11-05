@@ -296,7 +296,6 @@ test("the dots lead from the navigation over a backup's button into the restore 
   await fromNavigation.click();
   await expect(page).toHaveURL(/\/restore$/);
   await expectOn(dotOf(page, "restore-tiles"), marked(page, "restore-tiles"));
-  await expectOn(dotOf(page, "restore-fetched"), marked(page, "restore-fetched"));
   await expect(fromNavigation).toHaveCount(0);
   // Picking several entries starts at the button beside the search.
   await expectOn(dotOf(page, "restore-many"), marked(page, "restore-many"));
@@ -325,6 +324,8 @@ test("the dots lead from the navigation over a backup's button into the restore 
   await marked(page, "restore-emergency").scrollIntoViewIfNeeded();
   await expectOn(dotOf(page, "restore-emergency"), marked(page, "restore-emergency"));
   await picture(page, `restore-emergency-${testInfo.project.name}`);
+  await marked(page, "restore-fetched").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "restore-fetched"), marked(page, "restore-fetched"));
 });
 
 test("a container's page carries its dots, and the tab leads to the one on its settings", async ({ page }, testInfo) => {
