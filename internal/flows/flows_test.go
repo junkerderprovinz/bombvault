@@ -33,8 +33,7 @@ type knownFailure struct {
 
 // knownFailures names the cells that fail today, as go test names them, with * for
 // one level of the name.
-var knownFailures = []knownFailure{
-}
+var knownFailures = []knownFailure{}
 
 // folderSets are the two sets every flow backs up.
 type folderSets struct {
