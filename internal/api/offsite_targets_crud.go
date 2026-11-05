@@ -329,6 +329,7 @@ func (h *Handler) handleCreateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	h.svc.locationAddedAt(stored.Repo)
 	if v.AlsoExclude != nil {
 		if err := h.svc.excludeFromTarget(stored.Domain, stored.ID, *v.AlsoExclude); err != nil {
 			placementFail(w, h.removeHalfMadeTarget(stored.ID, err), nil)
@@ -452,6 +453,9 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
+	}
+	if moved {
+		h.svc.locationAddedAt(stored.Repo)
 	}
 	// The settings write every other value of the primary on each save, so
 	// its switch is kept apart for that save to leave alone.

@@ -3473,6 +3473,13 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	h.svc.syncAllPrimaryOffsiteTargets(s)
 	h.svc.LinkTypedOwnFolders()
+	for _, domain := range offsiteConfigDomains {
+		for _, field := range []func(string, store.Settings) string{domainPathRaw, offsiteRepoFromSettings} {
+			if loc := field(domain, s); !sameRepoLocation(strings.TrimSpace(loc), strings.TrimSpace(field(domain, existing))) {
+				h.svc.locationAddedAt(loc)
+			}
+		}
+	}
 	// The CPU cap reaches restic through the process environment of the NEXT
 	// child it starts ([558]), so applying it here takes effect without a
 	// restart — a backup already in flight keeps the value it began with.
