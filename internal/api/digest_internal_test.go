@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -58,6 +60,16 @@ func TestTheDigestOffSiteLineReadsTheOldestCopyAsTheStatusDoes(t *testing.T) {
 	}
 	if msg := composeDigest(stats); !strings.Contains(msg, "containers: no successful copy yet") {
 		t.Fatalf("a second copy that never ran reads:\n%s", msg)
+	}
+}
+
+func TestADigestNoChannelTookIsNoSuccess(t *testing.T) {
+	s, _, _, _ := watchdogTestService(t)
+	if err := s.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: "http://127.0.0.1:1/none"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SendDigest(context.Background()); err == nil {
+		t.Fatal("a digest no channel took reads as sent")
 	}
 }
 

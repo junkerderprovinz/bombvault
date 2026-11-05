@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -161,6 +162,52 @@ func TestExportFlashZipAgeRoundTrip(t *testing.T) {
 }
 
 // Encryption on without a recipient is an error and writes nothing.
+func TestExportFlashZipRemovesTheLatestFileItDidNotWrite(t *testing.T) {
+	root := t.TempDir()
+	fake := &flashZipFakeEngine{dumpBytes: buildTestStoredZip(t, map[string][]byte{"bzimage": []byte("x")})}
+	svc := &Service{cfg: config.Config{HostMountRoot: root, DataDir: t.TempDir(), FlashDir: "/boot"}, engine: fake, store: newFlashExportStore(t)}
+	dir := filepath.Join(root, "export")
+	if err := os.MkdirAll(dir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	stale := filepath.Join(dir, "flash-latest.zip.age")
+	if err := os.WriteFile(stale, []byte("sealed once"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings := store.Settings{FlashZipExportEnabled: true, FlashZipExportPath: "export"}
+	if err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Fatalf("the sealed file of before stayed beside the plain export: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "flash-latest.zip")); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestExportWithoutARecipientLeavesAFailedRun(t *testing.T) {
+	root := t.TempDir()
+	svc := &Service{cfg: config.Config{HostMountRoot: root, FlashDir: "/boot"}, engine: &flashZipFakeEngine{}, store: newFlashExportStore(t)}
+	settings := store.Settings{FlashZipExportEnabled: true, FlashZipExportPath: "export", ExportEncryptEnabled: true}
+	if err := svc.exportFlashZip(context.Background(), settings, "deadbeef", restic.Mode{}, "/repo"); err == nil {
+		t.Fatal("no error")
+	}
+	run, err := svc.store.LastRunOfKind(store.FlashTargetID, "export")
+	if err != nil || run == nil || run.Status != "failed" {
+		t.Fatalf("run = %+v, %v", run, err)
+	}
+}
+
+func TestExcludesTypedAsHostPathsReadAsResticSeesThem(t *testing.T) {
+	s := &Service{cfg: config.Config{HostSourceRoot: "/mnt", HostMountRoot: "/host/user"}}
+	got := s.excludesAsSeenHere([]string{"/mnt/user/data/cache", ".git", "*.tmp", "/config/cache"})
+	want := []string{"/host/user/user/data/cache", ".git", "*.tmp", "/config/cache"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
 func TestExportFlashZipEncryptionNoRecipientFailsLoud(t *testing.T) {
 	root := t.TempDir()
 	fake := &flashZipFakeEngine{dumpBytes: []byte("nope")}

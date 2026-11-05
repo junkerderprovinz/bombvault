@@ -65,6 +65,13 @@ func stackFixture(t *testing.T, workingDir string, eng api.ResticEngine) (*api.S
 	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st
 }
 
+func TestABackupOfASetThatDoesNotExistIsRefused(t *testing.T) {
+	svc, _ := stackFixture(t, "/mnt/stacks/site", &fakeResticEngine{})
+	if started, err := svc.StartBackupFileSet(context.Background(), "undefined"); err == nil || started {
+		t.Fatalf("started = %v, err = %v", started, err)
+	}
+}
+
 func TestAFailedStackBackupIsAFailedRunAndAMessage(t *testing.T) {
 	var mu sync.Mutex
 	var messages []string

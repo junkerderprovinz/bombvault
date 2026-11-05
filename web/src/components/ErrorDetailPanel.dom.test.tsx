@@ -4,8 +4,9 @@
 // has to say which kind of run failed, or a failed dump reads as a failed
 // container backup. listRuns and ackRuns are mocked.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { countText, I18nProvider, en } from "../lib/i18n";
+import { ToastProvider } from "../lib/toast";
 import type { Run } from "../lib/api";
 import { openSelect } from "./selectField.testsupport";
 
@@ -41,7 +42,9 @@ function renderPanel(runs: Run[]) {
   listRuns.mockResolvedValue({ ok: true, runs });
   return render(
     <I18nProvider>
-      <ErrorDetailPanel onClose={() => {}} />
+      <ToastProvider>
+        <ErrorDetailPanel onClose={() => {}} />
+      </ToastProvider>
     </I18nProvider>
   );
 }
@@ -53,6 +56,15 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+describe("resolving a failure", () => {
+  it("says so when the server refused it", async () => {
+    ackRuns.mockResolvedValue({ ok: false, error: "no" });
+    renderPanel([run()]);
+    fireEvent.click(await screen.findByRole("button", { name: en["errorPanel.resolve"] }));
+    await screen.findByText(en["common.saveFailed"]);
+  });
 });
 
 describe("ErrorDetailPanel with the Backup Everything domain", () => {

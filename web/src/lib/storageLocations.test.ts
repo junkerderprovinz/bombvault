@@ -185,6 +185,11 @@ describe("the sections of a location", () => {
     });
     expect(usedByText(t, "en", loc)).toBe("Used by Containers (off) and VMs");
   });
+
+  it("leaves out a section that is switched off there", () => {
+    const loc = location({ sections: [section({ domain: "containers", enabled: true }), section({ domain: "vms", enabled: false })] });
+    expect(usedByText(t, "en", loc)).toBe("Used by Containers");
+  });
 });
 
 describe("canFollow", () => {
