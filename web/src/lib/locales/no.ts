@@ -3334,6 +3334,7 @@ const no: Partial<Translations> = {
   "placementCode.directAccessDenied": "Nøkkelen kan ikke lese dette stedet. En nøkkel som er begrenset til målets egen mappe, når ikke mappen ved siden av; begrens i stedet nøkkelen til mappen over målet.",
   "placementCode.restPathTooDeep": "En rest-server oppretter depoter høyst to mapper dypt, for eksempel /files-direct eller /user/files-direct. Velg en kortere sti.",
   "placementCode.repoWrongKey": "Her ligger det allerede et restic-depot, og nøkkelen til denne instansen åpner det ikke. Velg et tomt sted, eller bruk APP_KEY-en det ble opprettet med.",
+  "placementCode.bucketMissing": "Denne bucketen finnes ikke på serveren, så ingenting kan kopieres dit. Opprett bucketen på serveren, eller velg en som finnes.",
   "placementCode.repoUnopened": "Depotet ble opprettet, men åpnes ikke, så ingenting ble lagret. Sjekk stedet og påloggingen til det, og prøv igjen.",
   "placementCode.repoGone": "Depotet som lå her, er borte, eller disken det ligger på, er ikke montert på serveren. BombVault lager ikke et nytt, tomt depot i stedet. Monter disken igjen, eller opprett et nytt depot her hvis du tømte det gamle med vilje.",
   "placementCode.destinationHoldsBackups": "Plasseringen kan ikke flyttes så lenge det sikkerhetskopieres hit: alt som er skrevet så langt, ville bli liggende, og neste sikkerhetskopi ville støte på et tomt depot. Legg til et ekstra mål og pek elementene dit.",

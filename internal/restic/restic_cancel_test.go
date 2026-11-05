@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 )
 
 // resticHelperEnv set to "1" turns a child copy of the test binary into a
@@ -102,6 +104,13 @@ func TestResticTalker(t *testing.T) {
 	case "wrongkey":
 		fmt.Fprintln(os.Stderr, wrongKeyLine)
 		os.Exit(12)
+	case "nobucket":
+		fmt.Fprintln(os.Stderr, bucketMissingLine)
+		time.Sleep(30 * time.Second)
+	case "serverdown":
+		fmt.Fprintln(os.Stderr, serverDownLine)
+		time.Sleep(3 * time.Second)
+		os.Exit(1)
 	}
 }
 
@@ -189,5 +198,62 @@ func TestFailedRunLogsResticsStderr(t *testing.T) {
 	}
 	if !strings.Contains(out, talkerLine) {
 		t.Fatalf("a failed run must log restic's stderr, got:\n%s", out)
+	}
+}
+
+const (
+	bucketMissingLine = "Stat(<config/>) returned error, retrying after 1.46s: Stat: The specified bucket does not exist"
+	serverDownLine    = "Stat(<config/>) returned error, retrying after 1.46s: dial tcp 192.0.2.1:9000: connect: connection refused"
+)
+
+// restic retries a missing bucket like a server that is down, for 15 minutes on
+// each call, and a copy makes four calls before it says anything.
+func TestMissingBucketStopsResticAtTheServersAnswer(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "nobucket")
+
+	start := time.Now()
+	_, err := r.run(context.Background(), []string{"-test.run=^TestResticTalker$", "--", "cat", "config"}, Mode{})
+	if !errors.Is(err, ErrBucketMissing) {
+		t.Fatalf("want ErrBucketMissing, got %v", err)
+	}
+	if took := time.Since(start); took > 15*time.Second {
+		t.Fatalf("restic ran for %s after the server said the bucket is missing", took)
+	}
+}
+
+func TestMissingBucketStopsARunWithProgress(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "nobucket")
+
+	ctx := progress.WithSink(context.Background(), func(float64) {})
+	_, err := r.run(ctx, []string{"-test.run=^TestResticTalker$", "--", "snapshots"}, Mode{})
+	if !errors.Is(err, ErrBucketMissing) {
+		t.Fatalf("want ErrBucketMissing, got %v", err)
+	}
+}
+
+func TestAServerThatIsDownLeavesResticRetrying(t *testing.T) {
+	r := Restic{Bin: os.Args[0]}
+	t.Setenv(resticTalkerEnv, "serverdown")
+
+	start := time.Now()
+	_, err := r.run(context.Background(), []string{"-test.run=^TestResticTalker$", "--", "cat", "config"}, Mode{})
+	if err == nil || errors.Is(err, ErrBucketMissing) {
+		t.Fatalf("a server that is down is no missing bucket, got %v", err)
+	}
+	if took := time.Since(start); took < 2*time.Second {
+		t.Fatalf("restic was stopped after %s, while it was waiting for the server", took)
+	}
+}
+
+func TestAFileNamedLikeTheAnswerDoesNotStopABackup(t *testing.T) {
+	stopped := false
+	w := stderrWatch{stop: func() error { stopped = true; return nil }}
+	if _, err := w.Write([]byte("error: open /data/the specified bucket does not exist: permission denied\n")); err != nil {
+		t.Fatal(err)
+	}
+	if stopped {
+		t.Fatal("a line about a file stopped the run")
 	}
 }

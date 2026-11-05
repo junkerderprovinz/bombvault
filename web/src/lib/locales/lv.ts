@@ -3344,6 +3344,7 @@ const lv: Partial<Translations> = {
   "placementCode.directAccessDenied": "Atslēga nevar nolasīt šo vietu. Atslēga, kas ir ierobežota tikai ar mērķa paša mapi, nevar piekļūt blakus esošajai mapei; tā vietā ierobežojiet atslēgu ar mapi virs mērķa.",
   "placementCode.restPathTooDeep": "rest-server izveido krātuves ne dziļāk par divām mapēm, piemēram, /files-direct vai /user/files-direct. Izvēlieties īsāku ceļu.",
   "placementCode.repoWrongKey": "Šeit jau ir restic krātuve, un šīs instances atslēga to neatver. Izvēlieties tukšu vietu vai izmantojiet APP_KEY, ar kuru tā tika izveidota.",
+  "placementCode.bucketMissing": "Šis bucket serverī nepastāv, tāpēc tajā neko nevar kopēt. Izveido bucket serverī vai izvēlies esošu.",
   "placementCode.repoUnopened": "Krātuve tika izveidota, bet neatveras, tāpēc nekas netika saglabāts. Pārbaudiet vietu un tās pieteikšanās datus un mēģiniet vēlreiz.",
   "placementCode.repoGone": "Šeit bijusī krātuve ir pazudusi, vai tās disks serverī nav pievienots. BombVault tās vietā neizveido jaunu, tukšu krātuvi. Pievienojiet disku vēlreiz vai izveidojiet šeit jaunu krātuvi, ja veco iztukšojāt apzināti.",
   "placementCode.destinationHoldsBackups": "Vietu nevar pārvietot, kamēr uz šejieni tiek veidoti dublējumi: viss līdz šim rakstītais paliktu aiz muguras, un nākamais dublējums uzrastos uz tukšu krātuvi. Pievienojiet otru mērķi un norādiet ierakstus uz to.",

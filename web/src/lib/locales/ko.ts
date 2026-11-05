@@ -3325,6 +3325,7 @@ const ko: Partial<Translations> = {
   "placementCode.directAccessDenied": "키는 이 위치를 읽을 수 없습니다. 대상 자신의 폴더로 제한된 키는 그 옆 폴더에는 닿지 못합니다. 대신 키를 대상보다 한 단계 위 폴더로 제한하세요.",
   "placementCode.restPathTooDeep": "rest-server는 저장소를 최대 두 폴더 깊이까지만 만듭니다(예: /files-direct 또는 /user/files-direct). 더 짧은 경로를 선택하세요.",
   "placementCode.repoWrongKey": "여기에 이미 restic 저장소가 있으며 이 인스턴스의 키로는 열리지 않습니다. 빈 위치를 선택하거나 저장소를 만들 때 사용한 APP_KEY를 사용하세요.",
+  "placementCode.bucketMissing": "이 버킷은 서버에 없어서 아무것도 복사할 수 없습니다. 서버에서 버킷을 만들거나 있는 버킷을 선택하세요.",
   "placementCode.repoUnopened": "저장소는 만들어졌지만 열리지 않아 아무것도 저장되지 않았습니다. 위치와 로그인 정보를 확인한 뒤 다시 시도하세요.",
   "placementCode.repoGone": "여기에 있던 저장소가 사라졌거나 그 디스크가 서버에 마운트되어 있지 않습니다. BombVault는 그 자리에 새 빈 저장소를 만들지 않습니다. 디스크를 다시 마운트하거나, 이전 저장소를 일부러 비웠다면 여기에 새 저장소를 만드세요.",
   "placementCode.destinationHoldsBackups": "여기로 백업하는 동안에는 위치를 옮길 수 없습니다. 지금까지 기록된 내용은 그대로 남고, 다음 백업은 빈 저장소를 만나게 됩니다. 대상을 하나 더 추가하고 항목을 그쪽으로 지정하세요.",

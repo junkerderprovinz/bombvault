@@ -3335,6 +3335,7 @@ const hu: Partial<Translations> = {
   "placementCode.directAccessDenied": "A kulcs nem tudja beolvasni ezt a helyet. A cél saját mappájára korlátozott kulcs nem éri el a mellette lévő mappát; korlátozd inkább a kulcsot a cél feletti mappára.",
   "placementCode.restPathTooDeep": "A rest-server legfeljebb két mappa mélységben hoz létre tárolókat, például /files-direct vagy /user/files-direct. Válassz rövidebb útvonalat.",
   "placementCode.repoWrongKey": "Itt már van egy restic-tároló, és ennek a példánynak a kulcsa nem nyitja meg. Válassz üres helyet, vagy használd azt az APP_KEY-t, amellyel létrehozták.",
+  "placementCode.bucketMissing": "Ez a bucket nem létezik a szerveren, ezért semmit sem lehet rá másolni. Hozd létre a bucketet a szerveren, vagy válassz egy létezőt.",
   "placementCode.repoUnopened": "A tároló létrejött, de nem nyílik meg, ezért semmi sem lett mentve. Ellenőrizd a helyet és a belépési adatait, majd próbáld újra.",
   "placementCode.repoGone": "Az itt lévő tároló eltűnt, vagy a lemeze nincs csatolva a szerveren. A BombVault nem hoz létre a helyén új, üres tárolót. Csatold újra a lemezt, vagy hozz létre itt új tárolót, ha a régit szándékosan ürítetted ki.",
   "placementCode.destinationHoldsBackups": "A hely nem helyezhető át, amíg ide mentés történik: minden, ami eddig íródott, hátramaradna, a következő mentés pedig üres tárolóba futna. Adj hozzá egy második célt, és irányítsd rá az elemeket.",

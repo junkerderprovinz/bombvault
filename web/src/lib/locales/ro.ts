@@ -3335,6 +3335,7 @@ const ro: Partial<Translations> = {
   "placementCode.directAccessDenied": "Cheia nu poate citi acest loc. O cheie limitată la dosarul propriu al destinației nu poate ajunge la dosarul alăturat; limitează în schimb cheia la dosarul de deasupra destinației.",
   "placementCode.restPathTooDeep": "Un rest-server creează depozite la cel mult două foldere adâncime, de exemplu /files-direct sau /user/files-direct. Alege o cale mai scurtă.",
   "placementCode.repoWrongKey": "Aici există deja un depozit restic, iar cheia acestei instanțe nu îl deschide. Alege un loc gol sau folosește APP_KEY cu care a fost creat.",
+  "placementCode.bucketMissing": "Acest bucket nu există pe server, așa că nu se poate copia nimic în el. Creează bucketul pe server sau alege unul care există.",
   "placementCode.repoUnopened": "Depozitul a fost creat, dar nu se deschide, așa că nu s-a salvat nimic. Verifică locul și datele de autentificare pentru el, apoi încearcă din nou.",
   "placementCode.repoGone": "Depozitul care era aici a dispărut sau discul lui nu este montat pe server. BombVault nu creează în locul lui un depozit nou, gol. Montează din nou discul sau creează aici un depozit nou dacă l-ai golit intenționat pe cel vechi.",
   "placementCode.destinationHoldsBackups": "Locația nu poate fi mutată cât timp se face aici o copie de rezervă: tot ce s-a scris până acum ar rămâne în urmă, iar următoarea copie ar da peste un depozit gol. Adaugă o a doua destinație și îndreaptă elementele spre ea.",

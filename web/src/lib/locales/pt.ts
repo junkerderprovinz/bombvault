@@ -3334,6 +3334,7 @@ const pt: Partial<Translations> = {
   "placementCode.directAccessDenied": "A chave não consegue ler este lugar. Uma chave limitada à pasta do próprio destino não consegue alcançar a pasta ao lado dela; limite antes a chave à pasta acima do destino.",
   "placementCode.restPathTooDeep": "Um rest-server cria repositórios no máximo a duas pastas de profundidade, como /files-direct ou /user/files-direct. Escolhe um caminho mais curto.",
   "placementCode.repoWrongKey": "Já existe aqui um repositório restic, e a chave desta instância não o abre. Escolhe um lugar vazio ou usa a APP_KEY com que ele foi criado.",
+  "placementCode.bucketMissing": "Este bucket não existe no servidor, por isso não se pode copiar nada para ele. Cria o bucket no servidor ou escolhe um que exista.",
   "placementCode.repoUnopened": "O repositório foi criado, mas não abre, por isso nada foi guardado. Verifica o lugar e as credenciais dele e tenta novamente.",
   "placementCode.repoGone": "O repositório que estava aqui desapareceu, ou o disco dele não está montado no servidor. O BombVault não cria um novo repositório vazio no lugar dele. Volta a montar o disco, ou cria aqui um repositório novo se esvaziaste o antigo de propósito.",
   "placementCode.destinationHoldsBackups": "O local não pode ser movido enquanto se fizerem backups para aqui: tudo o que foi escrito até agora ficaria para trás e o backup seguinte encontraria um repositório vazio. Adiciona um segundo destino e aponta as entradas para ele.",

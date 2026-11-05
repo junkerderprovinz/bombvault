@@ -3332,6 +3332,7 @@ const cs: Partial<Translations> = {
   "placementCode.directAccessDenied": "Klíč nemůže tento cíl přečíst. Klíč omezený na vlastní složku cíle se nedostane do složky vedle ní; omez klíč místo toho na složku nad cílem.",
   "placementCode.restPathTooDeep": "rest-server vytváří repozitáře nejvýše dvě složky hluboko, například /files-direct nebo /user/files-direct. Zvol kratší cestu.",
   "placementCode.repoWrongKey": "Tady už je repozitář restic a klíč této instance ho neotevře. Zvol prázdné místo, nebo použij APP_KEY, se kterým byl vytvořen.",
+  "placementCode.bucketMissing": "Tento bucket na serveru neexistuje, takže do něj nelze nic kopírovat. Vytvoř bucket na serveru nebo vyber takový, který existuje.",
   "placementCode.repoUnopened": "Repozitář byl vytvořen, ale nejde otevřít, takže se nic neuložilo. Zkontroluj místo a přihlašovací údaje k němu a zkus to znovu.",
   "placementCode.repoGone": "Repozitář, který tu byl, zmizel, nebo jeho disk není na serveru připojený. BombVault na jeho místě nový prázdný nezakládá. Připoj disk znovu, nebo tu založ nový repozitář, pokud jsi starý vyprázdnil záměrně.",
   "placementCode.destinationHoldsBackups": "Umístění nejde přesunout, dokud se sem zálohuje: vše dosud zapsané by zůstalo pozadu a další záloha by narazila na prázdný repozitář. Přidej druhý cíl a nasměruj na něj položky.",

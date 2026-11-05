@@ -3328,6 +3328,7 @@ const sl: Partial<Translations> = {
   "placementCode.directAccessDenied": "Ključ ne more prebrati tega mesta. Ključ, omejen na lastno mapo cilja, ne more doseči mape ob njej; namesto tega omeji ključ na mapo nad ciljem.",
   "placementCode.restPathTooDeep": "rest-server ustvari repozitorije največ dve mapi globoko, na primer /files-direct ali /user/files-direct. Izberi krajšo pot.",
   "placementCode.repoWrongKey": "Tu je že repozitorij restic, ključ te instance pa ga ne odpre. Izberi prazno mesto ali uporabi APP_KEY, s katerim je bil ustvarjen.",
+  "placementCode.bucketMissing": "Tega vedra na strežniku ni, zato vanj ni mogoče ničesar kopirati. Ustvari vedro na strežniku ali izberi takega, ki obstaja.",
   "placementCode.repoUnopened": "Repozitorij je bil ustvarjen, vendar se ne odpre, zato ni bilo nič shranjeno. Preveri mesto in podatke za prijavo ter poskusi znova.",
   "placementCode.repoGone": "Repozitorij, ki je bil tukaj, je izginil, ali pa njegov disk na strežniku ni priklopljen. BombVault na njegovem mestu ne ustvari novega, praznega repozitorija. Znova priklopi disk ali tukaj ustvari nov repozitorij, če si starega namerno izpraznil.",
   "placementCode.destinationHoldsBackups": "Lokacije ni mogoče premakniti, dokler se sem ustvarjajo varnostne kopije: vse, kar je bilo doslej zapisano, bi ostalo zadaj, naslednja kopija pa bi naletela na prazen repozitorij. Dodaj drugi cilj in nanj usmeri vnose.",

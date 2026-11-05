@@ -3344,6 +3344,7 @@ const lt: Partial<Translations> = {
   "placementCode.directAccessDenied": "Raktas negali nuskaityti šios vietos. Raktas, apribotas tik iki pačios paskirties vietos aplanko, negali pasiekti šalia esančio aplanko; vietoj to apribok raktą iki aplanko virš paskirties vietos.",
   "placementCode.restPathTooDeep": "rest-server kuria saugyklas ne giliau kaip dviem aplankais, pvz., /files-direct arba /user/files-direct. Pasirink trumpesnį kelią.",
   "placementCode.repoWrongKey": "Čia jau yra restic saugykla, ir šio egzemplioriaus raktas jos neatidaro. Pasirink tuščią vietą arba naudok APP_KEY, su kuriuo ji buvo sukurta.",
+  "placementCode.bucketMissing": "Šio bucket serveryje nėra, todėl į jį nieko negalima kopijuoti. Sukurk bucket serveryje arba pasirink esamą.",
   "placementCode.repoUnopened": "Saugykla sukurta, bet neatsidaro, todėl niekas neišsaugota. Patikrink vietą ir jos prisijungimo duomenis, tada bandyk dar kartą.",
   "placementCode.repoGone": "Čia buvusi saugykla dingo arba jos diskas serveryje neprijungtas. BombVault jos vietoje nekuria naujos tuščios saugyklos. Vėl prijunk diską arba sukurk čia naują saugyklą, jei senąją ištuštinai tyčia.",
   "placementCode.destinationHoldsBackups": "Vietos negalima perkelti, kol čia daromos atsarginės kopijos: viskas, kas iki šiol įrašyta, liktų ten, o kita kopija atsitrenktų į tuščią saugyklą. Pridėk antrą paskirties vietą ir nukreipk įrašus į ją.",

@@ -3331,6 +3331,7 @@ const pl: Partial<Translations> = {
   "placementCode.directAccessDenied": "Klucz nie może odczytać tego miejsca. Klucz ograniczony do własnego katalogu miejsca docelowego nie sięga do katalogu obok niego; ogranicz klucz zamiast tego do katalogu nad miejscem docelowym.",
   "placementCode.restPathTooDeep": "rest-server tworzy repozytoria najwyżej dwa foldery w głąb, np. /files-direct lub /user/files-direct. Wybierz krótszą ścieżkę.",
   "placementCode.repoWrongKey": "Tu już jest repozytorium restic, a klucz tej instancji go nie otwiera. Wybierz puste miejsce albo użyj APP_KEY, z którym zostało utworzone.",
+  "placementCode.bucketMissing": "Ten bucket nie istnieje na serwerze, więc nie można do niego nic skopiować. Utwórz bucket na serwerze albo wybierz istniejący.",
   "placementCode.repoUnopened": "Repozytorium zostało utworzone, ale się nie otwiera, więc nic nie zapisano. Sprawdź miejsce i dane logowania do niego, a potem spróbuj ponownie.",
   "placementCode.repoGone": "Repozytorium, które tu było, zniknęło albo jego dysk nie jest zamontowany na serwerze. BombVault nie tworzy na jego miejscu nowego, pustego repozytorium. Zamontuj dysk ponownie albo utwórz tu nowe repozytorium, jeśli celowo opróżniłeś stare.",
   "placementCode.destinationHoldsBackups": "Lokalizacji nie można przenieść, dopóki kopie zapasowe trafiają tutaj: wszystko zapisane do tej pory zostałoby w starym miejscu, a następna kopia trafiłaby na puste repozytorium. Dodaj drugie miejsce docelowe i skieruj do niego elementy.",

@@ -77,6 +77,9 @@ func failEnvelope(err error) map[string]any {
 	if errors.Is(err, errRemoteRepoGone) {
 		return codedFailEnvelope(err, codeRepoGone)
 	}
+	if errors.Is(err, errRepoWrongKey) || errors.Is(err, errBucketMissing) {
+		return codedFailEnvelope(err, placementCode(err))
+	}
 	if code := busyCode(err); code != "" {
 		return codedFailEnvelope(err, code)
 	}

@@ -45,6 +45,7 @@ const CODE_KEYS: Record<string, TranslationKey> = {
   "direct-access-denied": "placementCode.directAccessDenied",
   "rest-path-too-deep": "placementCode.restPathTooDeep",
   "repo-wrong-key": "placementCode.repoWrongKey",
+  "bucket-missing": "placementCode.bucketMissing",
   "repo-unopened": "placementCode.repoUnopened",
   "repo-gone": "placementCode.repoGone",
   "destination-holds-backups": "placementCode.destinationHoldsBackups",

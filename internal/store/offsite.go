@@ -276,6 +276,21 @@ func (r *Repo) FirstUnacknowledgedOffsiteFailureAfter(targetID string, since int
 	return r.firstOffsiteFailureAfter(targetID, since, " AND acknowledged = 0")
 }
 
+// LastOffsiteRunError is the error of the target's last finished run, "" when it
+// worked or none ran.
+func (r *Repo) LastOffsiteRunError(targetID string) (string, error) {
+	var msg string
+	err := r.db.QueryRow(`SELECT error FROM offsite_runs WHERE offsite_target_id = ? AND finished_at IS NOT NULL
+		ORDER BY started_at DESC, rowid DESC LIMIT 1`, targetID).Scan(&msg)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("LastOffsiteRunError: %w", err)
+	}
+	return msg, nil
+}
+
 func (r *Repo) firstOffsiteFailureAfter(targetID string, since int64, also string) (int64, error) {
 	var at sql.NullInt64
 	//nolint:gosec // G202: also is one of the two fixed clauses above; every value travels as a parameter.

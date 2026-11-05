@@ -4716,17 +4716,23 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	}
 	if perr == nil {
 		var paused bool
-		var pending []string
+		var pending map[string]error
 		if paused, pending, perr = s.pauseOnFirstListing(ctx, settings, pass, targets, localRepos); paused && perr == nil {
 			return nil
 		}
 		if perr == nil && len(pending) > 0 {
-			targets = slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
-				return slices.Contains(pending, t.ID)
+			visited := slices.DeleteFunc(slices.Clone(targets), func(t store.OffsiteTarget) bool {
+				_, left := pending[t.ID]
+				return left
 			})
-			if len(targets) == 0 {
+			if len(visited) == 0 {
+				// The target's own reason, or the run row would only say that none was visited.
 				perr = errNoTargetVisited
+				for _, t := range targets {
+					perr = fmt.Errorf("%w: %w", perr, pending[t.ID])
+				}
 			}
+			targets = visited
 		}
 	}
 	// Additive kind="offsite" row in the SHARED runs table (StartRun/FinishRun on
@@ -5758,6 +5764,9 @@ func (s *Service) probeOffsiteRepo(ctx context.Context, repo string, mode restic
 	if probe(s.oppositeMode(mode)) == nil {
 		return true, true, &otherEncryptionErr{encrypted: !mode.Encrypted}
 	}
+	if err := refusalOf(primaryErr); err != nil {
+		return false, false, err
+	}
 	// A reachable REMOTE destination that simply has no repository yet (no
 	// replication has run) is not a failure — same signal listSnapshots already
 	// treats as "empty, not fatal" (#117). Report it as the UI's uninitialized
@@ -5818,6 +5827,12 @@ func (e *otherEncryptionErr) Error() string {
 var errRemoteRepoGone = errors.New("the repository that was at this location is gone, or the disk behind it is not mounted on the server, " +
 	"so no new, empty one was created there. Mount it again, or start a new repository there from the storage location's page")
 
+// errBucketMissing marks a location whose S3 server says its bucket does not
+// exist. A new repository there would hide a bucket name typed wrong or a bucket
+// that went missing, so the user is told instead.
+var errBucketMissing = errors.New("this bucket does not exist on the server, so nothing was created or copied there. " +
+	"Create the bucket on the server, or choose one that exists")
+
 // errRepoUnopened marks a repository restic reported as created that still does
 // not open, so nothing may be pointed at it.
 var errRepoUnopened = errors.New("the repository was set up but does not open")
@@ -5832,6 +5847,18 @@ func isWrongKey(err error) bool {
 var unreachableMarkers = []string{
 	"dial tcp", "no route to host", "connection refused", "network is unreachable",
 	"no such host", "i/o timeout", "temporary failure in name resolution",
+}
+
+// refusalOf is the refusal a user can put right behind a restic failure, nil for
+// any other failure.
+func refusalOf(err error) error {
+	switch {
+	case errors.Is(err, restic.ErrBucketMissing):
+		return errBucketMissing
+	case isWrongKey(err):
+		return errRepoWrongKey
+	}
+	return nil
 }
 
 // isUnreachable reports whether a restic open failure means the backend's host
@@ -5887,6 +5914,9 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	// message that reads as if the location were empty.
 	if isUnreachable(openErr) {
 		return false, fmt.Errorf("could not reach the repository, so nothing was created there: %w", openErr)
+	}
+	if errors.Is(openErr, restic.ErrBucketMissing) {
+		return false, errBucketMissing
 	}
 	// A remote server answers for a folder whose disk did not mount as if it
 	// were empty, and a new repository there would take the copies until the

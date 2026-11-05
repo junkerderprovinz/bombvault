@@ -3344,6 +3344,7 @@ const ca: Partial<Translations> = {
   "placementCode.directAccessDenied": "La clau no pot llegir aquest lloc. Una clau limitada a la carpeta pròpia de la destinació no pot arribar a la carpeta del costat; limita la clau a la carpeta superior a la destinació.",
   "placementCode.restPathTooDeep": "Un rest-server crea repositoris com a màxim a dues carpetes de profunditat, com ara /files-direct o /user/files-direct. Tria un camí més curt.",
   "placementCode.repoWrongKey": "Aquí ja hi ha un repositori de restic i la clau d'aquesta instància no l'obre. Tria un lloc buit o fes servir l'APP_KEY amb què es va crear.",
+  "placementCode.bucketMissing": "Aquest bucket no existeix al servidor, així que no s'hi pot copiar res. Crea el bucket al servidor o tria'n un que existeixi.",
   "placementCode.repoUnopened": "El repositori s'ha creat però no s'obre, així que no s'ha desat res. Comprova el lloc i les seves credencials i torna-ho a provar.",
   "placementCode.repoGone": "El repositori que hi havia aquí ha desaparegut, o el seu disc no està muntat al servidor. BombVault no en crea un de nou i buit al seu lloc. Torna a muntar el disc, o crea aquí un repositori nou si vas buidar l'antic expressament.",
   "placementCode.destinationHoldsBackups": "La ubicació no es pot moure mentre aquí es faci còpia de seguretat: tot el que s'ha escrit fins ara es quedaria enrere, i la propera còpia es trobaria un repositori buit. Afegeix una segona destinació i apunta-hi els elements.",

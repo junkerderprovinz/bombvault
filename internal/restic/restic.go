@@ -1539,10 +1539,14 @@ func ctxCancelErr(ctx context.Context, args []string, err error) error {
 // terminated received", "context canceled" for every tree it was walking), so
 // it stays out of the log and the caller reports the stop.
 func runBuffered(ctx context.Context, cmd *exec.Cmd, args []string) ([]byte, error) {
-	var stdout, stderr bytes.Buffer
+	var stdout bytes.Buffer
+	stderr := stderrWatch{stop: cmd.Cancel}
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		if stderr.bucketMissing {
+			return nil, fmt.Errorf("restic %s failed: %w", subcommand(args), ErrBucketMissing)
+		}
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return stdout.Bytes(), werr
 		}
@@ -1601,7 +1605,7 @@ func runToWriter(cmd *exec.Cmd, args []string, w io.Writer) error {
 // has no --json mode at all — see Restic.Copy's doc comment); the two differ
 // only in what a line means, not in how it is read.
 func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, error) {
-	var stderr bytes.Buffer
+	stderr := stderrWatch{stop: cmd.Cancel}
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -1613,6 +1617,9 @@ func scanLines(cmd *exec.Cmd, args []string, onLine func(line []byte)) ([]byte, 
 
 	out := scanStdout(stdout, args, onLine)
 	if err := cmd.Wait(); err != nil {
+		if stderr.bucketMissing {
+			return nil, fmt.Errorf("restic %s failed: %w", subcommand(args), ErrBucketMissing)
+		}
 		if werr := backupExit3Err(args, err, stderr.String()); werr != nil {
 			return out, werr
 		}
@@ -1965,6 +1972,36 @@ func repoNotExistErrFor(args []string, err error, stderr string) error {
 	}
 	return &repoNotExistErr{msg: stderrError(args, stderr).Error()}
 }
+
+// ErrBucketMissing is the server's own answer that a repository's bucket does
+// not exist.
+var ErrBucketMissing = errors.New("the server says this bucket does not exist")
+
+// bucketMissingRe matches restic's retry line for a missing bucket. A file with
+// these words in its name gets no such line.
+var bucketMissingRe = regexp.MustCompile(`(?i)returned error, retrying[^\n]*the specified bucket does not exist`)
+
+// stderrWatch is restic's stderr, which stops the run once the server says the
+// bucket is missing. restic retries that answer for 15 minutes per call, as it
+// does a server that is down, and no wait brings a bucket back. Anything else
+// stays with restic's retries, since a server can come back. The buffer is a
+// field, as an embedded one would hand io.Copy its ReadFrom and pass Write by.
+type stderrWatch struct {
+	buf           bytes.Buffer
+	stop          func() error
+	bucketMissing bool
+}
+
+func (w *stderrWatch) Write(p []byte) (int, error) {
+	n, err := w.buf.Write(p)
+	if !w.bucketMissing && w.stop != nil && bucketMissingRe.Match(w.buf.Bytes()) {
+		w.bucketMissing = true
+		_ = w.stop()
+	}
+	return n, err
+}
+
+func (w *stderrWatch) String() string { return w.buf.String() }
 
 // snapshotsLoadErr is the failure restic snapshots reports while exiting 0: it
 // writes "could not load snapshots" to stderr and an empty list to stdout, which

@@ -3333,6 +3333,7 @@ const nl: Partial<Translations> = {
   "placementCode.directAccessDenied": "De sleutel kan deze plek niet lezen. Een sleutel die beperkt is tot de eigen map van de bestemming, kan niet bij de map ernaast; beperk de sleutel in plaats daarvan tot de map boven de bestemming.",
   "placementCode.restPathTooDeep": "Een rest-server maakt repository's hoogstens twee mappen diep aan, zoals /files-direct of /user/files-direct. Kies een korter pad.",
   "placementCode.repoWrongKey": "Hier staat al een restic-repository, en de sleutel van deze instantie opent het niet. Kies een lege plek, of gebruik de APP_KEY waarmee het is aangemaakt.",
+  "placementCode.bucketMissing": "Deze bucket bestaat niet op de server, dus er kan niets naartoe gekopieerd worden. Maak de bucket op de server aan, of kies er een die bestaat.",
   "placementCode.repoUnopened": "Het repository is aangemaakt maar gaat niet open, dus er is niets opgeslagen. Controleer de plek en de inloggegevens ervan en probeer het opnieuw.",
   "placementCode.repoGone": "Het repository dat hier stond is weg, of de schijf ervan is niet gekoppeld op de server. BombVault maakt op die plek geen nieuw, leeg repository aan. Koppel de schijf opnieuw, of maak hier een nieuw repository aan als je het oude met opzet hebt geleegd.",
   "placementCode.destinationHoldsBackups": "De locatie kan niet verhuizen zolang er hierheen een back-up wordt gemaakt: alles wat tot nu toe is geschreven zou achterblijven en de volgende back-up zou in een leeg repository lopen. Voeg een tweede bestemming toe en wijs de items daarheen.",

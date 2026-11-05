@@ -3334,6 +3334,7 @@ const tr: Partial<Translations> = {
   "placementCode.directAccessDenied": "Anahtar bu yeri okuyamaz. Hedefin kendi klasörüyle sınırlı bir anahtar, yanındaki klasöre erişemez; bunun yerine anahtarı hedefin üstündeki klasörle sınırla.",
   "placementCode.restPathTooDeep": "rest-server depoları en fazla iki klasör derinliğinde oluşturur, örneğin /files-direct veya /user/files-direct. Daha kısa bir yol seç.",
   "placementCode.repoWrongKey": "Burada zaten bir restic deposu var ve bu örneğin anahtarı onu açmıyor. Boş bir yer seç ya da deponun oluşturulduğu APP_KEY'i kullan.",
+  "placementCode.bucketMissing": "Bu bucket sunucuda yok, bu yüzden içine hiçbir şey kopyalanamaz. Bucket'ı sunucuda oluştur veya var olan birini seç.",
   "placementCode.repoUnopened": "Depo oluşturuldu ama açılmıyor, bu yüzden hiçbir şey kaydedilmedi. Yeri ve oturum açma bilgilerini kontrol edip yeniden dene.",
   "placementCode.repoGone": "Burada olan depo kaybolmuş ya da diski sunucuda bağlı değil. BombVault onun yerine yeni, boş bir depo oluşturmaz. Diski yeniden bağla ya da eskisini bilerek boşalttıysan burada yeni bir depo oluştur.",
   "placementCode.destinationHoldsBackups": "Buraya yedekleme yapılırken konum taşınamaz: şimdiye kadar yazılan her şey geride kalır ve sonraki yedek boş bir depoyla karşılaşır. İkinci bir hedef ekle ve ögeleri oraya yönlendir.",

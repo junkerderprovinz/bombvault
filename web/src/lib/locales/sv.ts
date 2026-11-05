@@ -3334,6 +3334,7 @@ const sv: Partial<Translations> = {
   "placementCode.directAccessDenied": "Nyckeln kan inte läsa den här platsen. En nyckel som är begränsad till målets egen mapp når inte mappen bredvid den; begränsa i stället nyckeln till mappen ovanför målet.",
   "placementCode.restPathTooDeep": "En rest-server skapar arkiv högst två mappar djupt, till exempel /files-direct eller /user/files-direct. Välj en kortare sökväg.",
   "placementCode.repoWrongKey": "Här finns redan ett restic-arkiv, och den här instansens nyckel öppnar det inte. Välj en tom plats, eller använd den APP_KEY det skapades med.",
+  "placementCode.bucketMissing": "Den här bucketen finns inte på servern, så inget kan kopieras dit. Skapa bucketen på servern eller välj en som finns.",
   "placementCode.repoUnopened": "Arkivet skapades men går inte att öppna, så inget sparades. Kontrollera platsen och inloggningen till den och försök igen.",
   "placementCode.repoGone": "Arkivet som låg här är borta, eller så är dess disk inte monterad på servern. BombVault skapar inget nytt, tomt arkiv i dess ställe. Montera disken igen, eller skapa ett nytt arkiv här om du tömde det gamla med flit.",
   "placementCode.destinationHoldsBackups": "Platsen kan inte flyttas så länge det säkerhetskopieras hit: allt som skrivits hittills skulle bli kvar, och nästa säkerhetskopia skulle möta ett tomt arkiv. Lägg till ett andra mål och peka posterna dit.",

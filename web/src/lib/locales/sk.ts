@@ -3344,6 +3344,7 @@ const sk: Partial<Translations> = {
   "placementCode.directAccessDenied": "Kľúč nedokáže prečítať toto miesto. Kľúč obmedzený na vlastný priečinok cieľa sa nedostane do priečinka vedľa neho; namiesto toho obmedz kľúč na priečinok nad cieľom.",
   "placementCode.restPathTooDeep": "rest-server vytvára repozitáre najviac dva priečinky hlboko, napríklad /files-direct alebo /user/files-direct. Zvoľ kratšiu cestu.",
   "placementCode.repoWrongKey": "Tu už je repozitár restic a kľúč tejto inštancie ho neotvorí. Zvoľ prázdne miesto alebo použi APP_KEY, s ktorým bol vytvorený.",
+  "placementCode.bucketMissing": "Tento bucket na serveri neexistuje, takže doň nemožno nič kopírovať. Vytvor bucket na serveri alebo vyber taký, ktorý existuje.",
   "placementCode.repoUnopened": "Repozitár sa vytvoril, ale nedá sa otvoriť, takže sa nič neuložilo. Skontroluj miesto a prihlasovacie údaje k nemu a skús to znova.",
   "placementCode.repoGone": "Repozitár, ktorý tu bol, zmizol, alebo jeho disk nie je na serveri pripojený. BombVault na jeho mieste nový prázdny nezakladá. Pripoj disk znova alebo tu založ nový repozitár, ak si starý vyprázdnil zámerne.",
   "placementCode.destinationHoldsBackups": "Umiestnenie sa nedá presunúť, kým sa sem zálohuje: všetko doteraz zapísané by zostalo pozadu a ďalšia záloha by narazila na prázdny repozitár. Pridaj druhý cieľ a nasmeruj naň položky.",

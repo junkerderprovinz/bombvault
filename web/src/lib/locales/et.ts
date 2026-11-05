@@ -3344,6 +3344,7 @@ const et: Partial<Translations> = {
   "placementCode.directAccessDenied": "Võti ei saa seda kohta lugeda. Sihtkoha enda kausta piiratud võti ei pääse selle kõrval olevasse kausta; piira võti selle asemel sihtkohast ülalpool oleva kaustaga.",
   "placementCode.restPathTooDeep": "rest-server loob hoidlaid kõige rohkem kahe kausta sügavusele, näiteks /files-direct või /user/files-direct. Vali lühem tee.",
   "placementCode.repoWrongKey": "Siin on juba restic-hoidla ja selle eksemplari võti ei ava seda. Vali tühi koht või kasuta APP_KEY-d, millega see loodi.",
+  "placementCode.bucketMissing": "Seda bucketit serveris pole, seega ei saa sinna midagi kopeerida. Loo bucket serveris või vali selline, mis on olemas.",
   "placementCode.repoUnopened": "Hoidla loodi, kuid see ei avane, seega ei salvestatud midagi. Kontrolli kohta ja selle sisselogimisandmeid ning proovi uuesti.",
   "placementCode.repoGone": "Siin olnud hoidla on kadunud või selle ketas pole serveris ühendatud. BombVault ei loo selle asemele uut tühja hoidlat. Ühenda ketas uuesti või loo siia uus hoidla, kui tühjendasid vana meelega.",
   "placementCode.destinationHoldsBackups": "Asukohta ei saa teisaldada, kuni siia varundatakse: kõik seni kirjutatu jääks maha ja järgmine varundus satuks tühja hoidlasse. Lisa teine sihtkoht ja suuna kirjed sinna.",

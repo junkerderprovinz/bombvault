@@ -38,7 +38,7 @@ import {
   type StorageLocation,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { REPO_GONE, offsiteVerdict } from "../lib/offsiteVerdict";
+import { REFUSAL_KEYS, REPO_GONE, offsiteVerdict } from "../lib/offsiteVerdict";
 import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { useProgress } from "../lib/progress";
 import { objectId } from "../lib/storageFlow";
@@ -95,6 +95,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
   const [startedOver, setStartedOver] = useState(false);
   if (startedOver && !location.gone) setStartedOver(false);
   const gone = testedGone || (!!location.gone && !startedOver);
+  const refusal = location.refused ? REFUSAL_KEYS[location.refused] : undefined;
   const { confirm, confirmDialog } = useConfirm();
   const nextHue = hueCounter();
 
@@ -188,7 +189,7 @@ function Location({ location, records }: { location: StorageLocation; records: L
             )}
           </div>
         </div>
-        <VerdictLine verdict={test.verdict ?? (gone ? { ok: false, reason: t("placementCode.repoGone") } : null)} />
+        <VerdictLine verdict={test.verdict ?? (gone ? { ok: false, reason: t("placementCode.repoGone") } : refusal ? { ok: false, reason: t(refusal) } : null)} />
         {(erasing || moveRun) && (
           <p className="text-sm text-accentText" role="status">
             {moveRun ? moveText(t, moveRun) : t("storage.remove.erasingNow")}

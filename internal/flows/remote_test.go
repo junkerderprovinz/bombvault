@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // restServer speaks restic's REST protocol over a folder, which is what lets a
@@ -163,23 +165,36 @@ func (f *flow) lastCopy() run {
 	return copies[0]
 }
 
-// foundGone reads what the page of the location says.
-func (f *flow) foundGone(id string) bool {
+// pageOf reads what the page of the location says.
+func (f *flow) pageOf(id string) (gone bool, refused string) {
 	f.t.Helper()
 	var got struct {
 		Locations []struct {
-			ID   string `json:"id"`
-			Gone bool   `json:"gone"`
+			ID      string `json:"id"`
+			Gone    bool   `json:"gone"`
+			Refused string `json:"refused"`
 		} `json:"locations"`
 	}
 	f.b.call("GET", "/api/storage/locations", nil, &got)
 	for _, l := range got.Locations {
 		if l.ID == "destination:"+id {
-			return l.Gone
+			return l.Gone, l.Refused
 		}
 	}
 	f.t.Fatalf("the location %s is not listed", id)
-	return false
+	return false, ""
+}
+
+func (f *flow) foundGone(id string) bool {
+	f.t.Helper()
+	gone, _ := f.pageOf(id)
+	return gone
+}
+
+func (f *flow) refusedAt(id string) string {
+	f.t.Helper()
+	_, refused := f.pageOf(id)
+	return refused
 }
 
 func (f *flow) wantCopyAt(s *restServer, set string) {
@@ -264,5 +279,77 @@ func TestAnUpdateFreesALocationAddedAgainBeforeIt(t *testing.T) {
 		f.errorf("the page still says a repository this location never had is gone")
 	}
 	f.wantCopyAt(s, set)
+	f.finish()
+}
+
+func TestALocationOverARepositoryOfAnotherKeySaysSo(t *testing.T) {
+	f := typedFlow(t, "files")
+	s := newRESTServer(t)
+	foreign := exec.Command("restic", "-r", "rest:"+s.url+"/nas/files", "init")
+	foreign.Env = append(os.Environ(), "RESTIC_PASSWORD=the key of another install")
+	if out, err := foreign.CombinedOutput(); err != nil {
+		t.Fatalf("restic init: %v\n%s", err, out)
+	}
+	f.b.write(photosPath, "a.txt", "photo\n", 0o640)
+	set := f.b.createSet("photos", photosPath)
+	id := f.addRESTLocation(s)
+
+	f.backupSet(set)
+	if c := f.lastCopy(); c.Status != "failed" || !strings.Contains(c.Error, "key does not open it") {
+		f.errorf("the copy is %s: %s", c.Status, c.Error)
+	}
+	if got := f.refusedAt(id); got != "repo-wrong-key" {
+		f.errorf("the page has the refusal %q", got)
+	}
+	f.finish()
+}
+
+// noBucketServer answers as an S3 server does for a bucket that does not exist.
+// restic reads the code from a header on a HEAD, which has no body.
+func noBucketServer(t *testing.T) string {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		w.Header().Set("x-minio-error-code", "NoSuchBucket")
+		w.Header().Set("x-minio-error-desc", `"The specified bucket does not exist"`)
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, `<Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message></Error>`)
+	}))
+	return srv.URL
+}
+
+func TestACopyToAMissingBucketFailsSoonAndSaysSo(t *testing.T) {
+	f := typedFlow(t, "files")
+	f.b.write(photosPath, "a.txt", "photo\n", 0o640)
+	set := f.b.createSet("photos", photosPath)
+	var added struct {
+		Destination struct {
+			ID string `json:"id"`
+		} `json:"destination"`
+	}
+	f.b.call("POST", "/api/offsite/destinations", map[string]any{"provider": "s3", "name": "NAS", "dir": "missing/primary", "settings": map[string]string{
+		"endpoint": noBucketServer(t), "region": "us-east-1", "access_key_id": "invented", "secret_access_key": "invented-too",
+	}}, &added)
+	id := added.Destination.ID
+	f.b.call("POST", "/api/offsite/destinations/"+id+"/domains/files", nil, nil)
+	var planned struct {
+		Impact json.RawMessage `json:"impact"`
+	}
+	change := map[string]any{"skip": []string{}}
+	f.b.call("POST", "/api/placement/default/files/preview", change, &planned)
+	change["expect"] = planned.Impact
+	f.b.call("PUT", "/api/placement/default/files", change, nil)
+
+	start := time.Now()
+	f.backupSet(set)
+	if took := time.Since(start); took > 2*time.Minute {
+		f.errorf("the backup and its copy took %s", took)
+	}
+	if c := f.lastCopy(); c.Status != "failed" || !strings.Contains(c.Error, "bucket does not exist") {
+		f.errorf("the copy is %s: %s", c.Status, c.Error)
+	}
+	if got := f.refusedAt(id); got != "bucket-missing" {
+		f.errorf("the page has the refusal %q", got)
+	}
 	f.finish()
 }

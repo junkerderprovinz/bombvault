@@ -3344,6 +3344,7 @@ const hr: Partial<Translations> = {
   "placementCode.directAccessDenied": "Ključ ne može pročitati ovo mjesto. Ključ ograničen na vlastitu mapu odredišta ne može doprijeti do susjedne mape; umjesto toga ograniči ključ na mapu iznad odredišta.",
   "placementCode.restPathTooDeep": "rest-server stvara repozitorije najviše dvije mape duboko, npr. /files-direct ili /user/files-direct. Odaberite kraću putanju.",
   "placementCode.repoWrongKey": "Ovdje već postoji restic repozitorij i ključ ove instance ga ne otvara. Odaberite prazno mjesto ili koristite APP_KEY s kojim je stvoren.",
+  "placementCode.bucketMissing": "Ovaj bucket ne postoji na poslužitelju, pa se u njega ništa ne može kopirati. Stvorite bucket na poslužitelju ili odaberite onaj koji postoji.",
   "placementCode.repoUnopened": "Repozitorij je stvoren, ali se ne otvara, pa ništa nije spremljeno. Provjerite mjesto i podatke za prijavu te pokušajte ponovno.",
   "placementCode.repoGone": "Repozitorij koji je bio ovdje je nestao ili njegov disk nije montiran na poslužitelju. BombVault na njegovo mjesto ne stvara novi, prazan repozitorij. Ponovno montirajte disk ili ovdje stvorite novi repozitorij ako ste stari namjerno ispraznili.",
   "placementCode.destinationHoldsBackups": "Lokacija se ne može premjestiti dok se ovamo sigurnosno kopira: sve zapisano do sada ostalo bi iza, a sljedeća kopija naletjela bi na prazan repozitorij. Dodajte drugo odredište i usmjerite stavke na njega.",

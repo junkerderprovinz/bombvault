@@ -3344,6 +3344,7 @@ const id: Partial<Translations> = {
   "placementCode.directAccessDenied": "Kunci tidak dapat membaca tempat ini. Kunci yang dibatasi pada folder tujuan itu sendiri tidak dapat menjangkau folder di sebelahnya; batasi kunci itu pada folder di atas tujuan sebagai gantinya.",
   "placementCode.restPathTooDeep": "rest-server membuat repositori paling dalam dua folder, seperti /files-direct atau /user/files-direct. Pilih jalur yang lebih pendek.",
   "placementCode.repoWrongKey": "Di sini sudah ada repositori restic, dan kunci instans ini tidak dapat membukanya. Pilih tempat yang kosong, atau gunakan APP_KEY yang dipakai saat membuatnya.",
+  "placementCode.bucketMissing": "Bucket ini tidak ada di server, jadi tidak ada yang bisa disalin ke sana. Buat bucket di server, atau pilih bucket yang ada.",
   "placementCode.repoUnopened": "Repositori sudah dibuat tetapi tidak dapat dibuka, jadi tidak ada yang disimpan. Periksa tempat dan data masuknya, lalu coba lagi.",
   "placementCode.repoGone": "Repositori yang ada di sini sudah hilang, atau disknya tidak terpasang di server. BombVault tidak membuat repositori baru yang kosong sebagai gantinya. Pasang lagi disknya, atau buat repositori baru di sini jika Anda sengaja mengosongkan yang lama.",
   "placementCode.destinationHoldsBackups": "Lokasi tidak bisa dipindahkan selama ada pencadangan ke sini: semua yang sudah ditulis akan tertinggal, dan pencadangan berikutnya akan menemui repositori kosong. Tambahkan tujuan kedua dan arahkan entri ke sana.",
