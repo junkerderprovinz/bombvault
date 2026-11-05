@@ -181,6 +181,9 @@ func (s *Service) eachReceivedRepo(do func(c notify.Config, alertsOn bool, rr st
 	if err != nil {
 		return fmt.Errorf("list received repos: %w", err)
 	}
+	if len(repos) == 0 {
+		return nil
+	}
 	c, cErr := s.NotifyConfig()
 	if cErr != nil {
 		log.Printf("api: receiver: read notify config: %v (alerts muted this run)", cErr)

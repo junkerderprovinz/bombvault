@@ -226,7 +226,7 @@ func TestTwoOffersFollowedOnOneServerBothSignIn(t *testing.T) {
 	host, stop := startRestServer(t, serverBin, first.User, first.Password, second.User, second.Password)
 	defer stop()
 	for _, snip := range []DeploySnippet{first, second} {
-		cmd := exec.Command(bin, "init", "--repo", "rest:http://"+host+"/"+snip.User+"/files")
+		cmd := exec.Command(bin, "init", "--repo", "rest:http://"+host+"/"+snip.User+"/files") //nolint:gosec // G204: a test's own binary and address
 		cmd.Env = append(os.Environ(), "RESTIC_PASSWORD=pw", "RESTIC_REST_USERNAME="+snip.User, "RESTIC_REST_PASSWORD="+snip.Password)
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("%s cannot sign in: %v: %s", snip.User, err, out)

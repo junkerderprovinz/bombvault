@@ -214,6 +214,13 @@ func (h *Handler) handleUpdatePullSource(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	// A source that now holds another section lands in that section's folder.
+	if ps.Domain != existing.Domain {
+		if err := h.store.SetPullSourceLanding(ps.ID, ""); err != nil {
+			writeJSON(w, http.StatusOK, failEnvelope(err))
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"source": pullSourceToView(ps)}))
 }
 

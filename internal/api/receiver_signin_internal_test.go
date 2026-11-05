@@ -156,7 +156,7 @@ func TestARefusedSignInSaysWhatToPickAndNamesNoConnectionTest(t *testing.T) {
 	loc := "rest:http://" + host + "/tower/files"
 
 	password := "the-senders-restic-password"
-	initAt := exec.Command(bin, "init", "--repo", loc)
+	initAt := exec.Command(bin, "init", "--repo", loc) //nolint:gosec // G204: a test's own binary and address
 	initAt.Env = append(os.Environ(), "RESTIC_PASSWORD="+password, "RESTIC_REST_USERNAME=tower", "RESTIC_REST_PASSWORD=secret-pw")
 	if out, err := initAt.CombinedOutput(); err != nil {
 		t.Fatalf("init: %v\n%s", err, out)
@@ -205,7 +205,7 @@ func startRestServer(t *testing.T, bin string, logins ...string) (string, func()
 	if err := l.Close(); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(bin, "--path", data, "--listen", host, "--append-only", "--private-repos", "--htpasswd-file", filepath.Join(data, htpasswdName))
+	cmd := exec.Command(bin, "--path", data, "--listen", host, "--append-only", "--private-repos", "--htpasswd-file", filepath.Join(data, htpasswdName)) //nolint:gosec // G204: a test's own binary and address
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

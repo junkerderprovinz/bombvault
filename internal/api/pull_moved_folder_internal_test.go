@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -110,6 +113,29 @@ func TestAPullFollowsTheOwnFolderOnceTheOldCopyIsGone(t *testing.T) {
 	got, _, _ := st.GetPullSource(ps.ID)
 	if got.Landing != filepath.Join(mount, "second", "containers", "pulled", ps.ID) && filepath.ToSlash(got.Landing) != filepath.ToSlash(mount)+"/second/containers/pulled/"+ps.ID {
 		t.Fatalf("landing = %q", got.Landing)
+	}
+}
+
+func TestASourceEditedToAnotherSectionLandsInThatSectionsFolder(t *testing.T) {
+	eng := &pullRecorder{snaps: map[string][]restic.Snapshot{pullSrcLoc: {{ID: "aaa"}}}}
+	svc, st, ps := pullFixture(t, eng)
+	h := &Handler{svc: svc, store: st, cfg: svc.cfg}
+	if _, err := svc.PullFromSource(context.Background(), ps); err != nil {
+		t.Fatal(err)
+	}
+	if got, _, _ := st.GetPullSource(ps.ID); got.Landing == "" {
+		t.Fatal("a pull recorded no landing")
+	}
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPut, "/api/pull/sources/"+ps.ID, strings.NewReader(`{"name":"Tower","repo":"`+pullSrcLoc+`","domain":"files","cadence":"off"}`))
+	r.SetPathValue("id", ps.ID)
+	h.handleUpdatePullSource(w, r)
+	if !strings.Contains(w.Body.String(), `"ok":true`) {
+		t.Fatalf("edit: %s", w.Body.String())
+	}
+	if got, _, _ := st.GetPullSource(ps.ID); got.Landing != "" {
+		t.Fatalf("landing = %q, want it to follow the new section", got.Landing)
 	}
 }
 
