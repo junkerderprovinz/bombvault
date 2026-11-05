@@ -1136,6 +1136,10 @@ const pl: Partial<Translations> = {
   "whatsNew.deleteRisk": "Lokalizację bez ochrony przed usunięciem możesz zaakceptować taką, jaka jest. Przegląd przestaje wtedy przed nią ostrzegać i nadal mówi, że kopie tam można usunąć.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
+  "whatsNew.copyDecision": "Gdy BombVault znajdzie w miejscu docelowym kopie zapasowe sekcji sprzed tej bazy danych, Wymaga uwagi i strona miejsca docelowego pytają, czy wybierasz Przejmij jako własne kopie tego serwera, czy Najpierw sprawdź reguły.",
+  "whatsNew.folderKeep": "Folder na tym hoście i wpisany zdalny folder mają każdy własną kartę Jak długo przechowywać, która obejmuje tylko własne foldery w nim.",
+  "whatsNew.restoreFetched": "W Inne źródła na stronie Przywracanie Pobrano z otwiera to, co ten serwer pobrał z innej instancji, i nie potrzebujesz do tego klucza.",
+  "whatsNew.kitSignIns": "Zestaw odzyskiwania zawiera wszystkie dane logowania, których używają miejsca docelowe, a nowy serwer wczytuje je z powrotem przyciskiem Zapisz dane dostępowe.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Udostępnij /metrics",

@@ -1150,6 +1150,10 @@ const da: Partial<Translations> = {
   "whatsNew.deleteRisk": "En lagerplacering uden beskyttelse mod sletning kan accepteres, som den er. Oversigten holder så op med at advare om den og siger stadig, at sikkerhedskopierne der kan slettes.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversigten, vugger kortene let for at vise, at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, ligesom Hjørner og Animation.",
+  "whatsNew.copyDecision": "Når BombVault finder sikkerhedskopier af en sektion fra før denne database på en destination, spørger Kræver opmærksomhed og destinationens side, om du vil Overtag dem som denne servers egne eller Tjek reglerne først.",
+  "whatsNew.folderKeep": "En mappe på denne vært og en indtastet fjernmappe har hver deres eget kort Hvor længe der gemmes, som kun dækker de egne mapper i den.",
+  "whatsNew.restoreFetched": "Under Andre kilder på siden Gendannelse åbner Hentet fra det, som denne server har hentet fra en anden instans, og du skal ikke bruge nogen nøgle til det.",
+  "whatsNew.kitSignIns": "Gendannelseskittet indeholder alle de adgangsoplysninger, destinationerne bruger, og en ny server læser dem ind igen med Gem adgangsoplysninger.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

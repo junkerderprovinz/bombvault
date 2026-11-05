@@ -1139,6 +1139,10 @@ const no: Partial<Translations> = {
   "whatsNew.deleteRisk": "Et lagringssted uten beskyttelse mot sletting kan godtas som det er. Oversikten slutter da å advare om det og sier fortsatt at sikkerhetskopiene der kan slettes.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversikten, vugger kortene lett for å vise at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, som Hjørner og Animasjon.",
+  "whatsNew.copyDecision": "Når BombVault finner sikkerhetskopier av en seksjon fra før denne databasen på et mål, spør Krever oppmerksomhet og målets side om du vil Overta dem som denne serverens egne eller Sjekk reglene først.",
+  "whatsNew.folderKeep": "En mappe på denne verten og en innskrevet ekstern mappe har hver sitt eget kort Hvor lenge det beholdes, som bare dekker de egne mappene i den.",
+  "whatsNew.restoreFetched": "Under Andre kilder på siden Gjenoppretting åpner Hentet fra det denne serveren har hentet fra en annen instans, og du trenger ingen nøkkel til det.",
+  "whatsNew.kitSignIns": "Gjenopprettingssettet har med alle påloggingene målene bruker, og en ny server leser dem inn igjen med Lagre påloggingsopplysninger.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

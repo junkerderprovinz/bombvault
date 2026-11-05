@@ -831,6 +831,10 @@ const lt: Partial<Translations> = {
   "whatsNew.deleteRisk": "Saugojimo vietą be apsaugos nuo trynimo gali priimti tokią, kokia ji yra. Apžvalga tada nustoja dėl jos įspėti ir toliau sako, kad ten esančias kopijas galima ištrinti.",
   "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
   "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
+  "whatsNew.copyDecision": "Kai BombVault paskirties vietoje randa sekcijos atsargines kopijas, padarytas prieš šią duomenų bazę, Reikia dėmesio ir paskirties vietos puslapis klausia, ar nori Perimti kaip šio serverio kopijas, ar Pirmiau patikrinti taisykles.",
+  "whatsNew.folderKeep": "Šio kompiuterio aplankas ir įvestas nuotolinis aplankas turi kiekvienas savo kortelę Kiek laiko saugoti, kuri apima tik jame esančius savus aplankus.",
+  "whatsNew.restoreFetched": "Puslapio Atkūrimas skiltyje Kiti šaltiniai Gauta iš atveria tai, ką šis serveris gavo iš kito egzemplioriaus, ir rakto tam nereikia.",
+  "whatsNew.kitSignIns": "Atkūrimo rinkinyje yra visi prisijungimai, kuriuos naudoja paskirties vietos, o naujas serveris juos vėl nuskaito mygtuku Išsaugoti prisijungimo duomenis.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",

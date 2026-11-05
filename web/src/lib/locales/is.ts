@@ -831,6 +831,10 @@ const is: Partial<Translations> = {
   "whatsNew.deleteRisk": "Geymslustað án varnar gegn eyðingu má samþykkja eins og hann er. Yfirlitið hættir þá að vara við honum og segir áfram að afritunum þar megi eyða.",
   "whatsNew.overviewMoveMode": "Á meðan þú sérsníður yfirlitið vagga spjöldin þess létt til að sýna að þú getur fært þau.",
   "whatsNew.labelGlyphs": "Merkingar sýnir tákn fyrir hvern valkost, eins og Horn og Hreyfimynd.",
+  "whatsNew.copyDecision": "Þegar BombVault finnur á áfangastað afrit hluta frá því fyrir þennan gagnagrunn spyrja Krefst athygli og síða áfangastaðarins hvort þú viljir Taka þau sem eigin afrit þjónsins eða Athuga reglurnar fyrst.",
+  "whatsNew.folderKeep": "Mappa á þessum hýsli og innslegin fjarlæg mappa hafa hvor sitt eigið spjald Hve lengi á að geyma, sem nær aðeins yfir eigin möppur í henni.",
+  "whatsNew.restoreFetched": "Undir Aðrar heimildir á síðunni Endurheimt opnar Sótt frá það sem þessi þjónn sótti úr annarri uppsetningu, og þú þarft engan lykil til þess.",
+  "whatsNew.kitSignIns": "Endurheimtarpakkinn geymir allar innskráningar sem áfangastaðirnir nota, og nýr þjónn les þær aftur inn með Vista aðgangsupplýsingar.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sýna /metrics",

@@ -831,6 +831,10 @@ const id: Partial<Translations> = {
   "whatsNew.deleteRisk": "Lokasi penyimpanan tanpa perlindungan dari penghapusan bisa diterima apa adanya. Ringkasan lalu berhenti memperingatkannya dan tetap menyebutkan bahwa cadangan di sana bisa dihapus.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
+  "whatsNew.copyDecision": "Saat BombVault menemukan cadangan sebuah bagian dari sebelum basis data ini di sebuah tujuan, Perlu perhatian dan halaman tujuan itu bertanya: Ambil sebagai milik server ini atau Periksa aturan dulu.",
+  "whatsNew.folderKeep": "Folder di host ini dan folder jarak jauh yang diketik masing-masing punya kartu Berapa lama disimpan sendiri, yang hanya mencakup folder sendiri di dalamnya.",
+  "whatsNew.restoreFetched": "Di Sumber lain pada halaman Pemulihan, Diambil dari membuka apa yang diambil server ini dari instance lain, tanpa perlu memasukkan kunci.",
+  "whatsNew.kitSignIns": "Kit pemulihan membawa semua kredensial yang dipakai tujuan, dan server baru membacanya kembali dengan Simpan kredensial.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ekspos /metrics",

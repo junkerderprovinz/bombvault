@@ -831,6 +831,10 @@ const sl: Partial<Translations> = {
   "whatsNew.deleteRisk": "Mesto shranjevanja brez zaščite pred brisanjem lahko sprejmeš takšno, kot je. Pregled potem ne opozarja več nanj in še naprej pove, da se kopije tam lahko izbrišejo.",
   "whatsNew.overviewMoveMode": "Med prilagajanjem pregleda se njegove kartice rahlo zibljejo, da pokažejo, da jih lahko premikaš.",
   "whatsNew.labelGlyphs": "Oznake prikazujejo simbol za vsako izbiro, tako kot Oglišča in Animacija.",
+  "whatsNew.copyDecision": "Ko BombVault na cilju najde varnostne kopije razdelka iz časa pred to bazo podatkov, Zahteva pozornost in stran cilja vprašata, ali želiš Prevzemi kot varnostne kopije tega strežnika ali Najprej preveri pravila.",
+  "whatsNew.folderKeep": "Mapa na tem gostitelju in vpisana oddaljena mapa imata vsaka svojo kartico Kako dolgo hraniti, ki zajema samo lastne mape v njej.",
+  "whatsNew.restoreFetched": "V Drugi viri na strani Obnova Prejeto iz odpre tisto, kar je ta strežnik prejel iz druge instance, in ključa za to ne potrebuješ.",
+  "whatsNew.kitSignIns": "Obnovitveni komplet vsebuje vse poverilnice, ki jih uporabljajo cilji, nov strežnik pa jih znova prebere z gumbom Shrani poverilnice.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izpostavi /metrics",

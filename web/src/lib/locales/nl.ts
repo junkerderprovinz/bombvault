@@ -1138,6 +1138,10 @@ const nl: Partial<Translations> = {
   "whatsNew.deleteRisk": "Een opslaglocatie zonder bescherming tegen verwijderen kun je accepteren zoals ze is. Het overzicht waarschuwt er dan niet meer voor en zegt nog steeds dat de back-ups daar verwijderd kunnen worden.",
   "whatsNew.overviewMoveMode": "Terwijl je het overzicht aanpast, wiegen de kaarten zachtjes om te laten zien dat je ze kunt verplaatsen.",
   "whatsNew.labelGlyphs": "Labels toont voor elke keuze een symbool, net als Hoeken en Animatie.",
+  "whatsNew.copyDecision": "Vindt BombVault op een bestemming back-ups van een onderdeel van vóór deze database, dan vragen Aandacht nodig en de pagina van de bestemming of je ze Als back-ups van deze server overnemen of Eerst de regels controleren wilt.",
+  "whatsNew.folderKeep": "Een map op deze host en een getypte externe map hebben elk een eigen kaart Hoe lang bewaren, die alleen de eigen mappen erin dekt.",
+  "whatsNew.restoreFetched": "Onder Andere bronnen op de pagina Herstel opent Opgehaald van wat deze server van een andere instantie heeft opgehaald, en je hebt er geen sleutel voor nodig.",
+  "whatsNew.kitSignIns": "De Herstelkit bevat alle inloggegevens die de bestemmingen gebruiken, en een nieuwe server leest ze terug met Inloggegevens opslaan.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics beschikbaar maken",

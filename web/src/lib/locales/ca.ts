@@ -831,6 +831,10 @@ const ca: Partial<Translations> = {
   "whatsNew.deleteRisk": "Una ubicació sense protecció contra l'esborrat es pot acceptar tal com és. La vista general deixa d'avisar-ne i continua dient que les còpies d'allà es poden esborrar.",
   "whatsNew.overviewMoveMode": "Mentre personalitzes el resum, les targetes es balancegen suaument per mostrar que les pots moure.",
   "whatsNew.labelGlyphs": "Etiquetes mostra un símbol per a cada opció, com Cantonades i Animació.",
+  "whatsNew.copyDecision": "Quan BombVault troba en una destinació còpies de seguretat d'una secció d'abans d'aquesta base de dades, Necessita atenció i la pàgina de la destinació pregunten si vols Adopta-les com a pròpies d'aquest servidor o Revisa primer les regles.",
+  "whatsNew.folderKeep": "Una carpeta d'aquest amfitrió i una carpeta remota escrita a mà tenen cadascuna la seva targeta Quant de temps conservar, que només cobreix les carpetes pròpies que conté.",
+  "whatsNew.restoreFetched": "A Altres fonts de la pàgina Restauració, Obtingut de obre el que aquest servidor ha obtingut d'una altra instància, i no cal cap clau.",
+  "whatsNew.kitSignIns": "El Kit de recuperació porta totes les credencials que fan servir les destinacions, i un servidor nou les torna a llegir amb Desa les credencials.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposa /metrics",

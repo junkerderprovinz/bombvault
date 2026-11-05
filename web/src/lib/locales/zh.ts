@@ -1141,6 +1141,10 @@ const zh: Partial<Translations> = {
   "whatsNew.deleteRisk": "没有防删除保护的存储位置现在可以按原样接受。概览随后不再为此发出警告，但仍会说明那里的备份可以被删除。",
   "whatsNew.overviewMoveMode": "自定义概览时，卡片会轻轻摆动，表示你可以移动它们。",
   "whatsNew.labelGlyphs": "标签像圆角和动画一样，为每个选项显示一个符号。",
+  "whatsNew.copyDecision": "当 BombVault 在某个目标中发现某部分在此数据库之前的备份时，需要处理和该目标的页面会询问你是要接收为此服务器自己的备份，还是先检查规则。",
+  "whatsNew.folderKeep": "此主机上的文件夹和手动输入的远程文件夹各有自己的保留多久卡片，只涵盖其中的专属文件夹。",
+  "whatsNew.restoreFetched": "在恢复页面的其他来源下，可以打开这台服务器从另一个实例获取的备份，无需输入密钥。",
+  "whatsNew.kitSignIns": "恢复工具包包含目标使用的所有凭据，新服务器用保存凭据把它们读回来。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "暴露 /metrics",

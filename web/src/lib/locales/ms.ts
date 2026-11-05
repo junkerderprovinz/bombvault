@@ -831,6 +831,10 @@ const ms: Partial<Translations> = {
   "whatsNew.deleteRisk": "Lokasi storan tanpa perlindungan daripada pemadaman boleh diterima seadanya. Gambaran keseluruhan kemudian berhenti memberi amaran tentangnya dan masih menyatakan bahawa sandaran di sana boleh dipadamkan.",
   "whatsNew.overviewMoveMode": "Semasa anda menyesuaikan Ikhtisar, kadnya bergoyang perlahan untuk menunjukkan bahawa anda boleh mengalihkannya.",
   "whatsNew.labelGlyphs": "Label memaparkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
+  "whatsNew.copyDecision": "Apabila BombVault menemui sandaran sesuatu bahagian dari sebelum pangkalan data ini di sesuatu destinasi, Perlukan perhatian dan halaman destinasi itu bertanya: Ambil sebagai milik pelayan ini atau Semak peraturan dahulu.",
+  "whatsNew.folderKeep": "Folder pada hos ini dan folder jauh yang ditaip masing-masing mempunyai kad Berapa lama disimpan sendiri, yang hanya meliputi folder sendiri di dalamnya.",
+  "whatsNew.restoreFetched": "Di Sumber lain pada halaman Pemulihan, Diambil daripada membuka apa yang diambil pelayan ini daripada contoh lain, tanpa perlu memasukkan kunci.",
+  "whatsNew.kitSignIns": "Kit pemulihan membawa semua bukti kelayakan yang digunakan destinasi, dan pelayan baharu membacanya semula dengan Simpan bukti kelayakan.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Dedahkan /metrics",

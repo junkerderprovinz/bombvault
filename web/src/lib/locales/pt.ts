@@ -1139,6 +1139,10 @@ const pt: Partial<Translations> = {
   "whatsNew.deleteRisk": "Um local de armazenamento sem proteção contra eliminação pode ser aceite tal como está. A vista geral deixa então de avisar sobre ele e continua a dizer que as cópias lá podem ser eliminadas.",
   "whatsNew.overviewMoveMode": "Enquanto personalizas a visão geral, os cartões balançam ligeiramente para mostrar que os podes mover.",
   "whatsNew.labelGlyphs": "Rótulos mostra um símbolo para cada opção, como Cantos e Animação.",
+  "whatsNew.copyDecision": "Quando o BombVault encontra num destino backups de uma secção de antes desta base de dados, Precisa de atenção e a página do destino perguntam se queres Assumir como backups deste servidor ou Verificar primeiro as regras.",
+  "whatsNew.folderKeep": "Uma pasta deste host e uma pasta remota escrita à mão têm cada uma o seu próprio cartão Durante quanto tempo guardar, que cobre apenas as pastas próprias que contém.",
+  "whatsNew.restoreFetched": "Em Outras origens na página Restauração, Obtido de abre o que este servidor obteve de outra instância, e não precisas de nenhuma chave.",
+  "whatsNew.kitSignIns": "O Kit de recuperação leva todas as credenciais que os destinos usam, e um servidor novo volta a lê-las com Guardar credenciais.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

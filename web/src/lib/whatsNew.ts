@@ -61,6 +61,24 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.5.0",
+    changes: [
+      {
+        id: "folder-keep",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "folder"],
+        text: "whatsNew.folderKeep",
+      },
+      { id: "restore-fetched", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreFetched" },
+      // The question shows only while backups wait for it, and the kit is a
+      // download, so neither has an element to carry a dot.
+      { id: "copy-decision", text: "whatsNew.copyDecision" },
+      { id: "kit-sign-ins", text: "whatsNew.kitSignIns" },
+    ],
+  },
+  {
     version: "10.4.1",
     changes: [
       { id: "restore-stacks", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreStacks" },

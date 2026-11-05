@@ -87,29 +87,30 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
   }
 
   const mode: Mode = custom ? "custom" : presetOf(draft);
+  const rule = editable ? (
+    <Selector
+      items={MODES.map(({ id, label }) => ({ id, label: t(label) }))}
+      label={t("storage.keep.title")}
+      select="one"
+      activation="manual"
+      inline
+      pairsOnPhone
+      active={mode}
+      onChange={(id) => pick(id as Mode)}
+      disabled={busy}
+    />
+  ) : (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge tone="neutral" wrap>
+        {mode === "custom" ? keepSummary(t, retention) : t(`storage.keep.${mode}`)}
+      </Badge>
+    </div>
+  );
 
   return (
     <Card title={t("storage.keep.title")} hint={t("storage.keep.hint")} hueIndex={hueIndex} newId="location-keep">
       {less.dialog}
-      {editable ? (
-        <Selector
-          items={MODES.map(({ id, label }) => ({ id, label: t(label) }))}
-          label={t("storage.keep.title")}
-          select="one"
-          activation="manual"
-          inline
-          pairsOnPhone
-          active={mode}
-          onChange={(id) => pick(id as Mode)}
-          disabled={busy}
-        />
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="neutral" wrap>
-            {mode === "custom" ? keepSummary(t, retention) : t(`storage.keep.${mode}`)}
-          </Badge>
-        </div>
-      )}
+      {location.object === "path" ? <div data-new="folder-keep">{rule}</div> : rule}
 
       {editable && custom && (
         <KeepCountFields

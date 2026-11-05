@@ -1141,6 +1141,10 @@ const vi: Partial<Translations> = {
   "whatsNew.deleteRisk": "Một vị trí lưu trữ không có bảo vệ chống xóa giờ có thể được chấp nhận như hiện trạng. Phần tổng quan khi đó ngừng cảnh báo về nó và vẫn cho biết các bản sao lưu ở đó có thể bị xóa.",
   "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
   "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
+  "whatsNew.copyDecision": "Khi BombVault tìm thấy bản sao lưu của một phần từ trước cơ sở dữ liệu này ở một đích, Cần chú ý và trang của đích đó sẽ hỏi bạn muốn Nhận là bản sao lưu của máy chủ này hay Kiểm tra quy tắc trước.",
+  "whatsNew.folderKeep": "Một thư mục trên máy chủ này và một thư mục từ xa được gõ vào đều có thẻ Giữ trong bao lâu riêng, chỉ áp dụng cho các thư mục riêng nằm trong đó.",
+  "whatsNew.restoreFetched": "Trong Nguồn khác trên trang Khôi phục, Lấy từ mở những gì máy chủ này lấy từ một phiên bản khác, và bạn không cần nhập khóa.",
+  "whatsNew.kitSignIns": "Bộ khôi phục mang theo mọi thông tin đăng nhập mà các đích dùng, và một máy chủ mới đọc lại chúng bằng Lưu thông tin đăng nhập.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

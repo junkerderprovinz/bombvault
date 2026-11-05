@@ -1150,6 +1150,10 @@ const tr: Partial<Translations> = {
   "whatsNew.deleteRisk": "Silmeye karşı koruması olmayan bir depolama konumu olduğu gibi kabul edilebilir. Genel bakış bundan sonra onun için uyarmaz ve oradaki yedeklerin silinebileceğini söylemeye devam eder.",
   "whatsNew.overviewMoveMode": "Genel bakışı özelleştirirken kartları hafifçe sallanarak onları taşıyabileceğinizi gösterir.",
   "whatsNew.labelGlyphs": "Etiketler, Köşeler ve Animasyon gibi her seçenek için bir simge gösterir.",
+  "whatsNew.copyDecision": "BombVault bir hedefte bir bölümün bu veritabanından önceki yedeklerini bulduğunda, İlgi bekliyor ve hedefin sayfası Bu sunucunun kendi yedekleri olarak al mı yoksa Önce kuralları kontrol et mi istediğini sorar.",
+  "whatsNew.folderKeep": "Bu ana bilgisayardaki bir klasörün ve elle yazılmış bir uzak klasörün her birinin kendi Ne kadar saklanır kartı vardır ve bu kart yalnızca içindeki kendi klasörleri kapsar.",
+  "whatsNew.restoreFetched": "Geri yükleme sayfasındaki Diğer kaynaklar altında bu sunucunun başka bir örnekten aldıkları açılır ve bunun için anahtar gerekmez.",
+  "whatsNew.kitSignIns": "Kurtarma kiti, hedeflerin kullandığı tüm kimlik bilgilerini taşır ve yeni bir sunucu bunları Kimlik bilgilerini kaydet ile geri okur.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics'i yayınla",

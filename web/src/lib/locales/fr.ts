@@ -1142,6 +1142,10 @@ const fr: Partial<Translations> = {
   "whatsNew.deleteRisk": "Un emplacement sans protection contre la suppression peut être accepté tel quel. L'aperçu cesse alors d'avertir à son sujet et indique toujours que les sauvegardes qui s'y trouvent peuvent être supprimées.",
   "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
   "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
+  "whatsNew.copyDecision": "Quand BombVault trouve sur une destination des sauvegardes d'une section antérieures à cette base de données, À traiter et la page de la destination vous demandent si vous voulez Les adopter pour ce serveur ou Vérifier d'abord les règles.",
+  "whatsNew.folderKeep": "Un dossier sur cet hôte et un dossier distant saisi à la main ont chacun leur propre carte Durée de conservation, qui ne couvre que les dossiers propres qu'il contient.",
+  "whatsNew.restoreFetched": "Sous Autres sources sur la page Restauration, Récupéré depuis ouvre ce que ce serveur a récupéré depuis une autre instance, et aucune clé n'est à saisir.",
+  "whatsNew.kitSignIns": "Le Kit de récupération contient tous les identifiants qu'utilisent les destinations, et un nouveau serveur les relit avec Enregistrer les identifiants.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposer /metrics",

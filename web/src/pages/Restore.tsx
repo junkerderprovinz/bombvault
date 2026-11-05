@@ -668,7 +668,7 @@ export function Restore() {
             onOpen={openEmergency}
           />
         </Card>
-        <Card title={t("restorePage.otherSources")} hueIndex={nextHue()}>
+        <Card title={t("restorePage.otherSources")} hueIndex={nextHue()} newId="restore-fetched">
           <Rows>
             <Way
               glyph={<IconFolder />}

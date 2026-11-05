@@ -831,6 +831,10 @@ const sk: Partial<Translations> = {
   "whatsNew.deleteRisk": "Úložisko bez ochrany proti zmazaniu môžeš prijať také, aké je. Prehľad potom pred ním prestane varovať a naďalej uvádza, že zálohy tam sa dajú zmazať.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
+  "whatsNew.copyDecision": "Keď BombVault nájde v cieli zálohy sekcie spred tejto databázy, Vyžaduje pozornosť a stránka cieľa sa spýtajú, či ich chceš Prevziať ako vlastné zálohy tohto servera, alebo Najprv skontrolovať pravidlá.",
+  "whatsNew.folderKeep": "Priečinok na tomto hostiteľovi aj ručne zadaný vzdialený priečinok majú každý vlastnú kartu Ako dlho uchovávať, ktorá platí len pre vlastné priečinky v ňom.",
+  "whatsNew.restoreFetched": "V Ďalšie zdroje na stránke Obnova otvorí Stiahnuté z to, čo tento server stiahol z inej inštancie, a nepotrebuješ na to kľúč.",
+  "whatsNew.kitSignIns": "Súprava na obnovenie nesie všetky prihlasovacie údaje, ktoré ciele používajú, a nový server ich načíta späť tlačidlom Uložiť prihlasovacie údaje.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sprístupniť /metrics",

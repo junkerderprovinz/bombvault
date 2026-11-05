@@ -831,6 +831,10 @@ const gl: Partial<Translations> = {
   "whatsNew.deleteRisk": "Unha localización sen protección contra a eliminación pódese aceptar tal como é. A vista xeral deixa entón de avisar dela e segue dicindo que as copias de alí se poden eliminar.",
   "whatsNew.overviewMoveMode": "Mentres personalizas a vista xeral, as súas tarxetas balancéanse suavemente para amosar que as podes mover.",
   "whatsNew.labelGlyphs": "Etiquetas amosa un símbolo para cada opción, como Esquinas e Animación.",
+  "whatsNew.copyDecision": "Cando BombVault atopa nun destino copias de seguranza dunha sección de antes desta base de datos, Precisa atención e a páxina do destino preguntan se queres Adoptalas como propias deste servidor ou Revisar antes as regras.",
+  "whatsNew.folderKeep": "Un cartafol deste host e un cartafol remoto escrito a man teñen cadansúa tarxeta Canto tempo conservar, que só cobre os cartafoles propios que contén.",
+  "whatsNew.restoreFetched": "En Outras orixes da páxina Restauración, Obtido de abre o que este servidor obtivo doutra instancia, e non precisas ningunha clave.",
+  "whatsNew.kitSignIns": "O Kit de recuperación leva todas as credenciais que usan os destinos, e un servidor novo vólveas ler con Gardar as credenciais.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

@@ -1150,6 +1150,10 @@ const sv: Partial<Translations> = {
   "whatsNew.deleteRisk": "En lagringsplats utan skydd mot radering kan accepteras som den är. Översikten slutar då varna för den och säger fortfarande att säkerhetskopiorna där kan raderas.",
   "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
   "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
+  "whatsNew.copyDecision": "När BombVault hittar säkerhetskopior av en sektion från tiden före den här databasen på ett mål frågar Behöver uppmärksamhet och målets sida om du vill Ta över dem som den här serverns egna eller Kontrollera reglerna först.",
+  "whatsNew.folderKeep": "En mapp på den här värden och en inskriven fjärrmapp har var sitt eget kort Hur länge det bevaras, som bara gäller de egna mapparna i den.",
+  "whatsNew.restoreFetched": "Under Andra källor på sidan Återställning öppnar Hämtat från det som den här servern har hämtat från en annan instans, och du behöver ingen nyckel för det.",
+  "whatsNew.kitSignIns": "Återställningskitet innehåller alla inloggningar som målen använder, och en ny server läser in dem igen med Spara inloggningsuppgifter.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponera /metrics",

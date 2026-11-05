@@ -831,6 +831,10 @@ const hr: Partial<Translations> = {
   "whatsNew.deleteRisk": "Mjesto pohrane bez zaštite od brisanja možeš prihvatiti takvo kakvo jest. Pregled tada prestaje upozoravati na njega i i dalje kaže da se kopije ondje mogu izbrisati.",
   "whatsNew.overviewMoveMode": "Dok prilagođavate pregled, njegove se kartice lagano njišu kako bi pokazale da ih možete premjestiti.",
   "whatsNew.labelGlyphs": "Oznake prikazuju simbol za svaki izbor, kao i Kutovi i Animacija.",
+  "whatsNew.copyDecision": "Kad BombVault na odredištu pronađe sigurnosne kopije odjeljka od prije ove baze podataka, Traži pažnju i stranica odredišta pitaju želite li Preuzmi ih za ovaj poslužitelj ili Najprije provjeri pravila.",
+  "whatsNew.folderKeep": "Mapa na ovom računalu i ručno upisana udaljena mapa imaju svaka svoju karticu Koliko dugo zadržati, koja pokriva samo vlastite mape u njoj.",
+  "whatsNew.restoreFetched": "Pod Ostali izvori na stranici Vraćanje, Dohvaćeno s otvara ono što je ovaj poslužitelj dohvatio s druge instance, i za to vam ne treba ključ.",
+  "whatsNew.kitSignIns": "Komplet za oporavak sadrži sve pristupne podatke koje odredišta koriste, a novi poslužitelj ih ponovno učitava gumbom Spremi pristupne podatke.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",

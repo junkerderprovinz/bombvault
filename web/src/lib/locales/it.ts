@@ -1142,6 +1142,10 @@ const it: Partial<Translations> = {
   "whatsNew.deleteRisk": "Una posizione di archiviazione senza protezione dall'eliminazione può essere accettata così com'è. La panoramica smette allora di segnalarla e continua a dire che i backup lì possono essere eliminati.",
   "whatsNew.overviewMoveMode": "Mentre personalizzi la panoramica, le sue schede ondeggiano leggermente per mostrare che puoi spostarle.",
   "whatsNew.labelGlyphs": "Etichette mostra un simbolo per ogni scelta, come Angoli e Animazione.",
+  "whatsNew.copyDecision": "Quando BombVault trova su una destinazione backup di una sezione precedenti a questo database, Richiede attenzione e la pagina della destinazione chiedono se vuoi Adottali per questo server o Prima controlla le regole.",
+  "whatsNew.folderKeep": "Una cartella di questo host e una cartella remota digitata a mano hanno ciascuna la propria scheda Per quanto tempo conservare, che copre solo le cartelle proprie al suo interno.",
+  "whatsNew.restoreFetched": "In Altre sorgenti sulla pagina Ripristino, Recuperato da apre ciò che questo server ha recuperato da un'altra istanza, e non ti serve nessuna chiave.",
+  "whatsNew.kitSignIns": "Il Kit di ripristino contiene tutte le credenziali usate dalle destinazioni, e un nuovo server le rilegge con Salva le credenziali.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Esponi /metrics",

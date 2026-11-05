@@ -925,6 +925,10 @@ export const en = {
   "whatsNew.deleteRisk": "A storage location without delete protection can be accepted as it is. The overview then stops warning about it and still says the backups there can be deleted.",
   "whatsNew.overviewMoveMode": "While you customize the overview, its cards rock gently to show that you can move them.",
   "whatsNew.labelGlyphs": "Labels shows a symbol for each choice, like Corners and Animation.",
+  "whatsNew.copyDecision": "When BombVault finds a section's backups from before this database at a storage location, Needs you and the location's page ask whether to Take them as this server's own or Check the rules first.",
+  "whatsNew.folderKeep": "A folder on this host and a typed remote folder each have a How long to keep card of their own, which covers only the own folders in it.",
+  "whatsNew.restoreFetched": "Under Other sources on the Restore page, Fetched from opens what this server fetched from another instance, and you need no key for it.",
+  "whatsNew.kitSignIns": "The recovery kit carries every sign-in a storage location uses, and a new server reads them back with Save sign-ins.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expose /metrics",
@@ -6220,6 +6224,10 @@ export const de: Translations = {
   "whatsNew.deleteRisk": "Einen Speicherort ohne Löschschutz kannst du so akzeptieren, wie er ist. Die Übersicht warnt dann nicht mehr davor und sagt weiter, dass die Sicherungen dort gelöscht werden können.",
   "whatsNew.overviewMoveMode": "Während du die Übersicht anpasst, wiegen sich ihre Karten leicht, damit du siehst, dass du sie verschieben kannst.",
   "whatsNew.labelGlyphs": "Beschriftungen zeigt wie Ecken und Animation für jede Auswahl ein Symbol.",
+  "whatsNew.copyDecision": "Findet BombVault an einem Speicherort Sicherungen eines Bereichs aus der Zeit vor dieser Datenbank, fragen Braucht dich und die Seite des Speicherorts, ob du sie Als eigene dieses Servers übernehmen oder Erst die Regeln prüfen willst.",
+  "whatsNew.folderKeep": "Ein Ordner auf diesem Host und ein eingetippter entfernter Ordner haben je eine eigene Karte Wie lange aufheben, die nur für die eigenen Ordner darin gilt.",
+  "whatsNew.restoreFetched": "Unter Andere Quellen auf der Seite Wiederherstellung öffnet Geholt von, was dieser Server von einer anderen Instanz geholt hat, und du brauchst dafür keinen Schlüssel.",
+  "whatsNew.kitSignIns": "Das Recovery-Kit enthält alle Zugangsdaten, die die Speicherorte nutzen, und ein neuer Server liest sie mit Zugangsdaten speichern wieder ein.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics bereitstellen",

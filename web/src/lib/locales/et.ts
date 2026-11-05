@@ -831,6 +831,10 @@ const et: Partial<Translations> = {
   "whatsNew.deleteRisk": "Kustutamiskaitseta salvestuskoha saab aktsepteerida sellisena, nagu see on. Ülevaade lõpetab siis selle kohta hoiatamise ja ütleb endiselt, et sealsed varukoopiad saab kustutada.",
   "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
   "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
+  "whatsNew.copyDecision": "Kui BombVault leiab sihtkohast jaotise varundusi ajast enne seda andmebaasi, küsivad Vajab tähelepanu ja sihtkoha leht, kas Võta üle selle serveri omadena või Kontrolli enne reegleid.",
+  "whatsNew.folderKeep": "Selle hosti kaustal ja käsitsi sisestatud kaugkaustal on kummalgi oma kaart Kui kaua säilitada, mis hõlmab ainult selles olevaid oma kaustu.",
+  "whatsNew.restoreFetched": "Lehe Taastamine kaardil Muud allikad avab Toodud selle, mille see server tõi teisest eksemplarist, ja võtit pole vaja.",
+  "whatsNew.kitSignIns": "Taastekomplekt sisaldab kõiki sisselogimisi, mida sihtkohad kasutavad, ja uus server loeb need nupuga Salvesta sisselogimisandmed tagasi.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",

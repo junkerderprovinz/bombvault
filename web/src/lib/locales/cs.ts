@@ -1148,6 +1148,10 @@ const cs: Partial<Translations> = {
   "whatsNew.deleteRisk": "Úložiště bez ochrany proti smazání můžeš přijmout tak, jak je. Přehled pak před ním přestane varovat a dál uvádí, že zálohy tam lze smazat.",
   "whatsNew.overviewMoveMode": "Když přizpůsobujete přehled, jeho karty se jemně pohupují, aby bylo vidět, že je můžete přesouvat.",
   "whatsNew.labelGlyphs": "Popisky zobrazují u každé volby symbol, stejně jako Rohy a Animace.",
+  "whatsNew.copyDecision": "Když BombVault najde v cíli zálohy sekce z doby před touto databází, Vyžaduje pozornost a stránka cíle se zeptají, jestli je chceš Převzít pro tento server, nebo Nejdřív zkontrolovat pravidla.",
+  "whatsNew.folderKeep": "Složka na tomto hostiteli i ručně zadaná vzdálená složka mají každá vlastní kartu Jak dlouho uchovávat, která platí jen pro vlastní složky v ní.",
+  "whatsNew.restoreFetched": "V Další zdroje na stránce Obnova otevře Staženo z to, co tento server stáhl z jiné instance, a nepotřebuješ k tomu klíč.",
+  "whatsNew.kitSignIns": "Sada pro obnovu nese všechny přihlašovací údaje, které cíle používají, a nový server je načte zpět tlačítkem Uložit přihlašovací údaje.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

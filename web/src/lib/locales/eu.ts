@@ -831,6 +831,10 @@ const eu: Partial<Translations> = {
   "whatsNew.deleteRisk": "Ezabatzearen aurkako babesik gabeko biltegiratze-kokaleku bat dagoen bezala onar daiteke. Orduan ikuspegi orokorrak ez du horri buruz ohartarazten, eta han dauden babeskopiak ezaba daitezkeela esaten jarraitzen du.",
   "whatsNew.overviewMoveMode": "Laburpena pertsonalizatzen duzun bitartean, txartelak leunki kulunkatzen dira, mugi ditzakezula erakusteko.",
   "whatsNew.labelGlyphs": "Etiketak aukera bakoitzeko ikur bat erakusten du, Ertzak eta Animazioa bezala.",
+  "whatsNew.copyDecision": "BombVault-ek helmuga batean datu-base hau baino lehenagoko atal baten babeskopiak aurkitzen dituenean, Arreta behar du atalak eta helmugaren orriak galdetzen dute ea Hartu zerbitzari honen propiotzat edo Egiaztatu arauak lehenik aukeratzen duzun.",
+  "whatsNew.folderKeep": "Ostalari honetako karpeta batek eta eskuz idatzitako urruneko karpeta batek beren Zenbat denbora mantendu txartela dute, eta barruko karpeta propioak bakarrik hartzen ditu.",
+  "whatsNew.restoreFetched": "Berrezarpena orriko Beste iturri batzuk txartelean irekitzen da zerbitzari honek beste instantzia batetik ekarritakoa, eta ez duzu gakorik behar.",
+  "whatsNew.kitSignIns": "Berreskuratze-kitak helmugek erabiltzen dituzten kredentzial guztiak ditu, eta zerbitzari berri batek berriro irakurtzen ditu Gorde kredentzialak botoiarekin.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Erakutsi /metrics",

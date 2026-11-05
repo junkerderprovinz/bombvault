@@ -1133,6 +1133,10 @@ const ko: Partial<Translations> = {
   "whatsNew.deleteRisk": "삭제 방지가 없는 저장 위치를 있는 그대로 수락할 수 있습니다. 그러면 개요는 더 이상 경고하지 않고, 그곳의 백업이 삭제될 수 있다는 점은 계속 알려 줍니다.",
   "whatsNew.overviewMoveMode": "개요를 사용자 지정하는 동안 카드가 살짝 흔들려 옮길 수 있음을 알려 줍니다.",
   "whatsNew.labelGlyphs": "레이블은 모서리와 애니메이션처럼 선택지마다 기호를 표시합니다.",
+  "whatsNew.copyDecision": "BombVault가 대상에서 이 데이터베이스 이전의 섹션 백업을 찾으면, 조치 필요와 대상 페이지에서 이 서버의 백업으로 넘겨받기와 먼저 규칙 확인 중 무엇을 할지 묻습니다.",
+  "whatsNew.folderKeep": "이 호스트의 폴더와 직접 입력한 원격 폴더에는 각각 전용 보존 기간 카드가 있으며, 그 안의 전용 폴더에만 적용됩니다.",
+  "whatsNew.restoreFetched": "복원 페이지의 다른 출처에서 이 서버가 다른 인스턴스에서 가져온 백업을 열 수 있으며, 키를 입력할 필요가 없습니다.",
+  "whatsNew.kitSignIns": "복구 키트에는 대상이 쓰는 모든 자격 증명이 들어 있으며, 새 서버는 자격 증명 저장으로 이를 다시 읽어 들입니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

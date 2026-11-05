@@ -1133,6 +1133,10 @@ const ja: Partial<Translations> = {
   "whatsNew.deleteRisk": "削除に対する保護がない保存先を、そのまま承認できるようになりました。概要はそれについて警告しなくなり、そこにあるバックアップが削除されうることは引き続き示します。",
   "whatsNew.overviewMoveMode": "概要をカスタマイズしている間は、カードが小さく揺れて移動できることを示します。",
   "whatsNew.labelGlyphs": "ラベルは、角の形状やアニメーションと同じく選択肢ごとに記号が表示されます。",
+  "whatsNew.copyDecision": "BombVault が保存先で、このデータベースより前のセクションのバックアップを見つけると、要対応と保存先のページで「このサーバーのものとして引き継ぐ」か「先にルールを確認」かを尋ねます。",
+  "whatsNew.folderKeep": "このホストのフォルダーと、入力したリモートフォルダーには、それぞれ専用の保持期間カードがあり、その中の専用フォルダーだけが対象です。",
+  "whatsNew.restoreFetched": "復元ページのほかの取得元で、このサーバーが別のインスタンスから取得したものを開けます。キーの入力は不要です。",
+  "whatsNew.kitSignIns": "リカバリーキットには保存先が使うすべての認証情報が入っていて、新しいサーバーは「認証情報を保存」でそれを読み戻します。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics を公開",

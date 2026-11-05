@@ -1140,6 +1140,10 @@ const ro: Partial<Translations> = {
   "whatsNew.deleteRisk": "O locație de stocare fără protecție împotriva ștergerii poate fi acceptată așa cum este. Prezentarea generală nu mai avertizează atunci despre ea și spune în continuare că copiile de acolo pot fi șterse.",
   "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
   "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
+  "whatsNew.copyDecision": "Când BombVault găsește pe o destinație copii de rezervă ale unei secțiuni de dinainte de această bază de date, Necesită atenție și pagina destinației te întreabă dacă vrei Preia-le ca fiind ale acestui server sau Verifică mai întâi regulile.",
+  "whatsNew.folderKeep": "Un dosar de pe această gazdă și un dosar la distanță scris de mână au fiecare propriul card Cât timp se păstrează, care acoperă doar dosarele proprii din el.",
+  "whatsNew.restoreFetched": "În Alte surse pe pagina Restaurare, Preluat de la deschide ce a preluat acest server de la altă instanță, și nu îți trebuie nicio cheie.",
+  "whatsNew.kitSignIns": "Kitul de recuperare conține toate credențialele pe care le folosesc destinațiile, iar un server nou le citește înapoi cu Salvează credențialele.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expune /metrics",

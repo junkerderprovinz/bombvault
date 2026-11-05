@@ -831,6 +831,10 @@ const lv: Partial<Translations> = {
   "whatsNew.deleteRisk": "Krātuves vietu bez aizsardzības pret dzēšanu var pieņemt tādu, kāda tā ir. Pārskats tad vairs nebrīdina par to un joprojām norāda, ka tur esošās kopijas var izdzēst.",
   "whatsNew.overviewMoveMode": "Kamēr tu pielāgo pārskatu, tā kartītes viegli šūpojas, lai parādītu, ka tās vari pārvietot.",
   "whatsNew.labelGlyphs": "Uzraksti rāda simbolu katrai izvēlei, tāpat kā Stūri un Animācija.",
+  "whatsNew.copyDecision": "Kad BombVault mērķī atrod sadaļas rezerves kopijas, kas izveidotas pirms šīs datubāzes, Nepieciešama uzmanība un mērķa lapa jautā, vai vēlaties Pārņemt kā šī servera kopijas vai Vispirms pārbaudīt noteikumus.",
+  "whatsNew.folderKeep": "Šī resursdatora mapei un ievadītai attālai mapei katrai ir sava kartīte Cik ilgi glabāt, kas attiecas tikai uz tajā esošajām pašu mapēm.",
+  "whatsNew.restoreFetched": "Lapas Atjaunošana sadaļā Citi avoti Iegūts no atver to, ko šis serveris ieguva no citas instances, un atslēga jums nav vajadzīga.",
+  "whatsNew.kitSignIns": "Atkopšanas komplektā ir visi pieteikšanās dati, ko izmanto mērķi, un jauns serveris tos nolasa atpakaļ ar Saglabāt akreditācijas datus.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Atklāt /metrics",

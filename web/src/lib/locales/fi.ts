@@ -1150,6 +1150,10 @@ const fi: Partial<Translations> = {
   "whatsNew.deleteRisk": "Tallennuspaikan ilman poistosuojaa voi hyväksyä sellaisenaan. Yleiskatsaus lakkaa silloin varoittamasta siitä ja kertoo edelleen, että siellä olevat varmuuskopiot voi poistaa.",
   "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
   "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
+  "whatsNew.copyDecision": "Kun BombVault löytää kohteesta osion varmuuskopioita ajalta ennen tätä tietokantaa, Vaatii huomiota ja kohteen sivu kysyvät, valitsetko Ota ne tämän palvelimen omiksi vai Tarkista ensin säännöt.",
+  "whatsNew.folderKeep": "Tämän isännän kansiolla ja kirjoitetulla etäkansiolla on kummallakin oma Kuinka kauan säilytetään -kortti, joka koskee vain sen sisällä olevia omia kansioita.",
+  "whatsNew.restoreFetched": "Palautus-sivun kohdassa Muut lähteet Haettu avaa sen, minkä tämä palvelin haki toisesta instanssista, eikä siihen tarvita avainta.",
+  "whatsNew.kitSignIns": "Palautuspaketti sisältää kaikki tunnukset, joita kohteet käyttävät, ja uusi palvelin lukee ne takaisin painikkeella Tallenna tunnukset.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",

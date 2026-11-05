@@ -1143,6 +1143,10 @@ const hu: Partial<Translations> = {
   "whatsNew.deleteRisk": "Egy törlés elleni védelem nélküli tárolóhelyet úgy is elfogadhatsz, ahogy van. Az áttekintés ekkor már nem figyelmeztet miatta, de továbbra is jelzi, hogy az ottani mentések törölhetők.",
   "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
   "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
+  "whatsNew.copyDecision": "Ha a BombVault egy célon ennél az adatbázisnál régebbi mentéseket talál egy szakaszból, a Figyelmet igényel és a cél oldala megkérdezi, hogy az Átvétel a szerver saját mentéseiként vagy az Előbb a szabályok ellenőrzése legyen.",
+  "whatsNew.folderKeep": "Egy mappának ezen a gépen és egy beírt távoli mappának is saját Meddig őrizze meg kártyája van, amely csak a benne lévő saját mappákra vonatkozik.",
+  "whatsNew.restoreFetched": "A Visszaállítás oldal Más források kártyáján a Lekérve innen megnyitja, amit ez a szerver egy másik példányról lekért, és ehhez nem kell kulcs.",
+  "whatsNew.kitSignIns": "A Helyreállítási csomag tartalmazza az összes hozzáférési adatot, amelyet a célok használnak, és egy új szerver a Hozzáférési adatok mentése gombbal olvassa vissza őket.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",
