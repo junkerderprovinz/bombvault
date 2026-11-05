@@ -147,8 +147,8 @@ func TestARepositoryThatWasReadAndWentIsNotTakenForANewOne(t *testing.T) {
 			if err := svc.runReceiverWatchAt(context.Background(), deadEndNow); err != nil {
 				t.Fatal(err)
 			}
-			if got := alerts(); len(got) != 1 || !strings.Contains(got[0], "cannot be read") {
-				t.Fatalf("alerts = %q, want one at once", got)
+			if got := alerts(); len(got) != 1 || !strings.Contains(got[0], "no longer at its location") || strings.Contains(got[0], "first copy") {
+				t.Fatalf("alerts = %q, want one at once that says it went", got)
 			}
 		})
 	}

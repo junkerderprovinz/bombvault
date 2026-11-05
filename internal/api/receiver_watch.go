@@ -231,12 +231,18 @@ func (s *Service) receiverDeadManSweep(ctx context.Context, c notify.Config, ale
 			return
 		}
 		log.Printf("api: receiver: dead-man scan for %q cannot read the repository: %v", rr.Name, err) //nolint:gosec // G706: rr.Name is %q-quoted
-		if everRead := rr.LastReadAt > 0 || (rr.LastCheckOK.Valid && rr.LastCheckOK.Bool); !everRead && errors.As(err, new(notThereYetError)) {
+		everRead := rr.LastReadAt > 0 || (rr.LastCheckOK.Valid && rr.LastCheckOK.Bool)
+		absent := errors.As(err, new(notThereYetError))
+		if absent && !everRead {
 			s.receiverNothingYet(ctx, c, alertsOn, rr, now, deadManSeconds)
 			return
 		}
+		detail := scrubError(err)
+		if absent {
+			detail = "it is no longer at its location"
+		}
 		s.receiverEpisodeOnce(ctx, alertsOn, rr, receiverUnreadEpisode, now, func() {
-			s.notifyReceiver(ctx, c, "BombVault: received repository unreadable", fmt.Sprintf("Received repository %s cannot be read: %s", repoLabel(rr.Name), scrubError(err)))
+			s.notifyReceiver(ctx, c, "BombVault: received repository unreadable", fmt.Sprintf("Received repository %s cannot be read: %s", repoLabel(rr.Name), detail))
 		})
 		return
 	}
