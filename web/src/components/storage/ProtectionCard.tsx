@@ -32,22 +32,25 @@ const COPY_PRUNER: Record<Pruner, TranslationKey> = {
   here: "storage.lock.pruneHere",
 };
 
-/** Own folders that prune by this location's card, or by values their section
- *  holds itself. */
-type OwnPruner = Pruner | "own";
+/** Own folders that prune by this location's card, by values their section holds
+ *  itself, or keep everything because those values are all zero. */
+type OwnPruner = Pruner | "own" | "ownZero";
 
 const OWN_PRUNER: Record<OwnPruner, TranslationKey> = {
   far: "storage.lock.ownPruneFar",
   none: "storage.lock.ownPruneNone",
   here: "storage.lock.ownPruneHere",
   own: "storage.lock.ownPruneOwn",
+  ownZero: "storage.lock.ownPruneOwnZero",
 };
 
-const OWN_PRUNER_TONE: Record<OwnPruner, keyof typeof NOTE_TONE> = { ...PRUNER_TONE, own: "ok" };
+const OWN_PRUNER_TONE: Record<OwnPruner, keyof typeof NOTE_TONE> = { ...PRUNER_TONE, own: "ok", ownZero: "warn" };
 
 function ownPruner(section: StorageLocationSection): OwnPruner {
   const by = pruner(section.immutable, section.retention);
-  return by === "here" && section.own.includes("retention") ? "own" : by;
+  if (!section.own.includes("retention")) return by;
+  if (by === "here") return "own";
+  return by === "none" ? "ownZero" : by;
 }
 
 /** Who clears old backups out of a repository, and whether anyone does. */

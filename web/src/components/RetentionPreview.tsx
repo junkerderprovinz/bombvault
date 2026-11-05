@@ -159,7 +159,7 @@ function PartView({ part, t }: { part: Part; t: ReturnType<typeof useT>["t"] }) 
     <>
       {preview.policy.on && <p className="text-xs text-carbon-textSub">{policyLine(preview.policy, t)}</p>}
 
-      {!preview.policy.on && <p className="text-sm text-carbon-textSub">{t("retentionPreview.off")}</p>}
+      {!preview.policy.on && <p className="text-sm text-carbon-textSub">{t(preview.policy.own ? "retentionPreview.offOwn" : "retentionPreview.off")}</p>}
 
       {preview.policy.on && removalCount === 0 && (
         <p className="text-sm text-carbon-textSub">{t("retentionPreview.nothing")}</p>

@@ -113,6 +113,15 @@ describe("RetentionPreview", () => {
     await waitFor(() => expect(screen.getByText(en["retentionPreview.off"])).toBeTruthy());
   });
 
+  it("says retention is off by the section's own rule and where to change it", async () => {
+    answer({ ok: true, preview: { policy: policy({ on: false, own: true }), repos: [{ name: "Containers", appendOnly: false, items: [] }] } });
+
+    renderPanel();
+    show();
+
+    await waitFor(() => expect(screen.getByText(en["retentionPreview.offOwn"])).toBeTruthy());
+  });
+
   // The dangerous false positive, inverted: an append-only repository shows no
   // removals BECAUSE retention never runs there. Without the note, the empty
   // list reads as "nothing to do today".

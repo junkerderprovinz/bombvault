@@ -487,6 +487,24 @@ describe("a destination that holds own folders", () => {
     expect(prunes).toContain("BombVault prunes the own folder of VMs after each backup, by this location's How long to keep card.");
   });
 
+  it("says a section keeps everything by its own rule, and where to change that", async () => {
+    stage(location({ sections: [{ ...own("vms"), retention: NONE, own: ["retention"] }], retention: BALANCED }), []);
+    await renderPage("destination:box");
+
+    expect(card("Delete protection").textContent).toContain(
+      "Nothing prunes the own folder of VMs. Every keep value of that section is 0, so it grows until the space runs out. That is the section's own rule: change it under Rules per section.",
+    );
+  });
+
+  it("leaves the section's own rule out when only the card is at zero", async () => {
+    stage(location({ sections: [{ ...own("vms"), retention: NONE }], retention: NONE }), []);
+    await renderPage("destination:box");
+
+    const prunes = card("Delete protection").textContent ?? "";
+    expect(prunes).toContain("Nothing prunes the own folder of VMs.");
+    expect(prunes).not.toContain("own rule");
+  });
+
   it("names a section that prunes by values of its own apart from those on the card", async () => {
     stage(location({ sections: [own("containers"), { ...own("vms"), own: ["retention"] }], retention: BALANCED }), []);
     await renderPage("destination:box");
