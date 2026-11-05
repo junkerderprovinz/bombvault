@@ -252,6 +252,8 @@ func (h *Handler) handleAcceptMeshOffer(w http.ResponseWriter, r *http.Request) 
 		CredsRef:  setID,
 		Enabled:   true,
 		SortOrder: sortOrder,
+		// Every offer comes with the append-only recipe.
+		Immutable: true,
 	}
 	stored, err := h.store.CreateOffsiteTarget(target)
 	if err != nil {
@@ -332,12 +334,11 @@ func (h *Handler) handleProposeMeshOffer(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	snip, err := buildDeploySnippet(in.Domain)
+	snip, repo, err := buildOfferSnippet(in.Domain, base)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	repo := destinationLocation("rest:"+base+"/"+snip.User, in.Domain)
 
 	settings, err := h.store.GetSettings()
 	if err != nil {
