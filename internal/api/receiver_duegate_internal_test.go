@@ -46,6 +46,7 @@ func seedDueGateRepo(t *testing.T, st *store.Repo, appKey, cadence string, lastC
 	rr.Name = "Off-site A"
 	rr.DeadManHours = 0
 	rr.CheckCadence = cadence
+	rr.CreatedAt = time.Date(2026, time.January, 1, 0, 0, 0, 0, time.Local).Unix()
 	created, err := st.CreateReceivedRepo(rr)
 	if err != nil {
 		t.Fatal(err)
@@ -109,20 +110,64 @@ func TestReceiverWeeklyCheckRunsOnTheSeventhDay(t *testing.T) {
 	}
 }
 
-// Inside the cadence the gate stays closed, or every daily sweep would run a
-// full check on every received repo.
+// Between two fires the gate stays closed, or every tick would run a full check
+// on every received repo. March 11th 2026 is a Wednesday.
 func TestReceiverCheckStillHeldInsideTheCadence(t *testing.T) {
 	appKey := strings.Repeat("ab", 32)
 	svc, st := dueGateService(t, appKey)
 
 	sweep := time.Date(2026, time.March, 11, 9, 15, 0, 0, time.Local)
-	rr := seedDueGateRepo(t, st, appKey, "weekly Tue 05:00", sweep.AddDate(0, 0, -3))
+	rr := seedDueGateRepo(t, st, appKey, "weekly Tue 05:00", sweep.AddDate(0, 0, -1))
 
 	if err := svc.runReceiverChecksAt(context.Background(), sweep.Unix()); err != nil {
 		t.Fatalf("runReceiverChecksAt: %v", err)
 	}
 	if checked(t, st, rr.ID) {
-		t.Fatal("a weekly repo checked three days ago must not be checked again on today's sweep")
+		t.Fatal("a weekly repo checked after this week's fire was checked again")
+	}
+}
+
+func TestReceiverCheckHoldsItsDayAndTime(t *testing.T) {
+	appKey := strings.Repeat("ab", 32)
+	wednesday := time.Date(2026, time.March, 11, 9, 15, 0, 0, time.Local)
+	sunday := time.Date(2026, time.March, 15, 2, 0, 0, 0, time.Local)
+	for _, tc := range []struct {
+		name string
+		at   time.Time
+		want bool
+	}{
+		{"on the wrong day", wednesday, false},
+		{"a minute before its time", sunday.Add(-time.Minute), false},
+		{"at its time", sunday, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, st := dueGateService(t, appKey)
+			rr := seedDueGateRepo(t, st, appKey, "weekly Sun 02:00", sunday.AddDate(0, 0, -7).Add(time.Hour))
+			if err := svc.runReceiverChecksAt(context.Background(), tc.at.Unix()); err != nil {
+				t.Fatal(err)
+			}
+			if got := checked(t, st, rr.ID); got != tc.want {
+				t.Fatalf("checked = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestANewReceivedRepoWaitsForItsFirstCheckFire(t *testing.T) {
+	appKey := strings.Repeat("ab", 32)
+	svc, st := dueGateService(t, appKey)
+	now := time.Date(2026, time.March, 11, 9, 15, 0, 0, time.Local)
+	rr := makeReceivedRepo(t, appKey, strings.Repeat("cd", 32), t.TempDir()+"/no-such-repo", 0)
+	rr.CheckCadence, rr.CreatedAt = "daily 04:00", now.Add(-time.Hour).Unix()
+	created, err := st.CreateReceivedRepo(rr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.runReceiverChecksAt(context.Background(), now.Unix()); err != nil {
+		t.Fatal(err)
+	}
+	if checked(t, st, created.ID) {
+		t.Fatal("a repo saved after today's 04:00 was checked at once")
 	}
 }
 

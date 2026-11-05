@@ -165,14 +165,14 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 
 	// 100h after the newest snapshot, with a 26h switch, both sources are stale.
 	staleNow := newest + 100*hour
-	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
-		t.Fatalf("runReceiverChecksAt: %v", err)
+	if err := svc.runReceiverWatchAt(context.Background(), staleNow); err != nil {
+		t.Fatalf("runReceiverWatchAt: %v", err)
 	}
 	if n := countContaining(bodies(), "No backup received from"); n != 2 {
 		t.Fatalf("first stale sweep must alert both sources once, got %d", n)
 	}
 
-	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
+	if err := svc.runReceiverWatchAt(context.Background(), staleNow); err != nil {
 		t.Fatal(err)
 	}
 	if n := countContaining(bodies(), "No backup received from"); n != 2 {
@@ -181,7 +181,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 
 	// A fresh sweep clears the episodes, which re-arms the switch.
 	freshNow := newest + hour
-	if err := svc.runReceiverChecksAt(context.Background(), freshNow); err != nil {
+	if err := svc.runReceiverWatchAt(context.Background(), freshNow); err != nil {
 		t.Fatal(err)
 	}
 	if n := countContaining(bodies(), "No backup received from"); n != 2 {
@@ -194,7 +194,7 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	}
 
 	// Stale again after the recovery is a new episode.
-	if err := svc.runReceiverChecksAt(context.Background(), staleNow); err != nil {
+	if err := svc.runReceiverWatchAt(context.Background(), staleNow); err != nil {
 		t.Fatal(err)
 	}
 	if n := countContaining(bodies(), "No backup received from"); n != 4 {

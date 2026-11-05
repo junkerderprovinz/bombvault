@@ -454,6 +454,54 @@ const (
 	periodScanMaxFires = 2048
 )
 
+// FireDue reports whether a fire of the cadence has come since a job last ran
+// at since, for a job a tick walks instead of a cron entry of its own. A fire
+// missed while the box was off counts, as a backup's does. A since in the future
+// is a wrong clock's, and the job that would write a new one is the one it holds
+// back, so it is due.
+func (c Cadence) FireDue(since, now time.Time) bool {
+	fire, ok := c.LastFire(now)
+	if !ok {
+		return false
+	}
+	if since.After(now) {
+		return true
+	}
+	return fire.After(since) && (c.IntervalDays == 0 || EveryNDue(since, fire, c.IntervalDays))
+}
+
+// RetryDue reports whether a job that failed at lastAttempt may try again: at
+// each fire, and in between at the clock time of its last fire on every following
+// day. The slot someone picked to stay away from other work holds for a retry
+// too, and a weekly job does not wait a week.
+func (c Cadence) RetryDue(lastAttempt, now time.Time) bool {
+	slot, ok := c.LastFire(now)
+	if !ok {
+		return false
+	}
+	for next := slot.AddDate(0, 0, 1); !next.After(now); next = next.AddDate(0, 0, 1) {
+		slot = next
+	}
+	return slot.After(lastAttempt) || lastAttempt.After(now)
+}
+
+// NextDue returns the first fire after now that FireDue would let through, and
+// false when the cadence has none.
+func (c Cadence) NextDue(since, now time.Time) (time.Time, bool) {
+	if !c.Enabled || c.Spec == "" {
+		return time.Time{}, false
+	}
+	sched, err := cron.ParseStandard(c.Spec)
+	if err != nil {
+		return time.Time{}, false
+	}
+	next := sched.Next(now)
+	for i := 0; i < c.IntervalDays && !next.IsZero() && !EveryNDue(since, next, c.IntervalDays); i++ {
+		next = sched.Next(next)
+	}
+	return next, !next.IsZero()
+}
+
 // LastFire returns the most recent fire of the cadence at or before now, the
 // Prev that robfig/cron lacks, for the catch-up after downtime. It walks Next
 // forward from a point in the past, doubling the lookback until a fire falls
@@ -490,16 +538,15 @@ func (c Cadence) LastFire(now time.Time) (time.Time, bool) {
 // overnight backups to have finished.
 const WatchdogCadence = "daily 09:00"
 
-// ReceiverCadence is the fixed daily cadence of the receiver watch, which runs
-// the dead-mans-switch and the due integrity checks for received off-site repos.
-// Each repo sets its own check cadence; the daily tick only decides which are
-// due. 09:15 keeps it out of the watchdog's minute.
+// ReceiverCadence is the fixed daily cadence of the dead-mans-switch for received
+// off-site repos. 09:15 keeps it out of the watchdog's minute.
 const ReceiverCadence = "daily 09:15"
 
-// PullCadence is the fixed daily cadence of the pull sweep. The tick decides
-// which sources are due; each source carries its own cadence, as received repos
-// do for their integrity checks.
-const PullCadence = "daily 09:30"
+// SweepCadence is the tick of the jobs whose rows each carry a cadence of their
+// own: the pull sweep and the received repos' integrity checks. Each tick asks
+// the rows which have a fire to run, so their time and weekday hold without a
+// reload every time a row changes.
+const SweepCadence = "* * * * *"
 
 // FleetCadence is the fixed daily cadence of the fleet sweep, which polls every
 // enabled peer's protection status. The Fleet page shows the result of the last
@@ -556,26 +603,6 @@ func calendarDaysSinceFire(last, now time.Time) int {
 		days++ // the pass fired the previous day and ran past midnight
 	}
 	return days
-}
-
-// PeriodDue applies EveryNDue's calendar-day rule to a cadence given as a period
-// in seconds (Cadence.PeriodSeconds), for gates evaluated by a daily sweep rather
-// than by the cadence's own cron entry. Measured in seconds, a check that took a
-// few minutes last time would push a daily cadence to every 48h.
-//
-// It counts from the stamp rather than from a fire: now is the sweep's fire, and
-// the gated cadence never fires on its own, so there is no fire to map the stamp
-// onto.
-//
-// A period under a day is due at every evaluation, since the sweep runs only
-// daily; this includes a period <= 0, and callers check their own cadence first.
-// Otherwise whole days are compared, rounded down, which errs toward checking
-// early.
-func PeriodDue(last, now time.Time, periodSeconds int64) bool {
-	if periodSeconds < 86400 || notAMeasurement(last, now) {
-		return true
-	}
-	return calendarDaysBetween(last, now) >= int(periodSeconds/86400)
 }
 
 // calendarDaysBetween returns the number of local calendar days from `from` to
@@ -716,7 +743,10 @@ type Scheduler struct {
 	digestFn          func() error
 	watchdogFn        func() error
 	receiverFn        func() error
+	receiverCheckFn   func() error
+	receiverCheckNext func(time.Time) (time.Time, bool)
 	pullFn            func() error
+	pullNext          func(time.Time) (time.Time, bool)
 	fleetFn           func() error
 	everythingFn      func() error
 	// offsiteInUse reports whether a domain has an off-site target to copy to;
@@ -778,6 +808,9 @@ type scheduledEntry struct {
 	domain       string
 	intervalDays int         // >0 for everyN cadences only
 	lastRun      LastRunFunc // set whenever intervalDays > 0
+	// next replaces the entry's own fires for a tick; without an answer the
+	// entry is left out.
+	next func(time.Time) (time.Time, bool)
 }
 
 // NextRun is one upcoming scheduled fire for the activity log's "up next" line.
@@ -802,7 +835,7 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "digest", ""
 	case "watchdog":
 		return "watchdog", ""
-	case "receiver":
+	case "receiver", "receiver-check":
 		return "receiver", ""
 	case "pull":
 		return "pull", ""
@@ -838,6 +871,12 @@ func (s *Scheduler) NextRuns() []NextRun {
 		entry := s.c.Entry(e.id)
 		next := entry.Next
 		if next.IsZero() {
+			continue
+		}
+		if e.next != nil {
+			if due, ok := e.next(time.Now()); ok {
+				out = append(out, NextRun{Job: e.job, Domain: e.domain, Next: due})
+			}
 			continue
 		}
 		out = append(out, NextRun{Job: e.job, Domain: e.domain, Next: nextDueFire(entry.Schedule, next, e)})
@@ -1120,17 +1159,24 @@ func (s *Scheduler) SetWatchdogJob(watchdogFn func() error) {
 	s.watchdogFn = watchdogFn
 }
 
-// SetReceiverJob wires the daily receiver watch (ReceiverCadence). receiverFn
-// evaluates each enabled received repo's dead-mans-switch and runs its integrity
-// check when due. Call before Reload.
+// SetReceiverJob wires the daily dead-mans-switch (ReceiverCadence). receiverFn
+// evaluates each enabled received repo's sources. Call before Reload.
 func (s *Scheduler) SetReceiverJob(receiverFn func() error) {
 	s.receiverFn = receiverFn
 }
 
-// SetPullJob wires the daily pull sweep (PullCadence). pullFn fetches every
-// enabled pull source whose own cadence is due. Call before Reload.
-func (s *Scheduler) SetPullJob(pullFn func() error) {
-	s.pullFn = pullFn
+// SetReceiverCheckJob wires the received repos' integrity checks (SweepCadence).
+// checkFn runs every check with a fire due, and next says when the soonest comes
+// next. Call before Reload.
+func (s *Scheduler) SetReceiverCheckJob(checkFn func() error, next func(time.Time) (time.Time, bool)) {
+	s.receiverCheckFn, s.receiverCheckNext = checkFn, next
+}
+
+// SetPullJob wires the pull sweep (SweepCadence). pullFn fetches every enabled
+// pull source with a fire due, and next says when the soonest comes next. Call
+// before Reload.
+func (s *Scheduler) SetPullJob(pullFn func() error, next func(time.Time) (time.Time, bool)) {
+	s.pullFn, s.pullNext = pullFn, next
 }
 
 // SetFleetJob wires the daily fleet sweep (FleetCadence). fleetFn polls every
@@ -1186,6 +1232,9 @@ type domainSpec struct {
 	// nothing to do, or returns "". A skipped fire is logged with that reason
 	// and fn does not run.
 	skip func() string
+	// next, set on a tick, says when the job really has something to do, for
+	// NextRuns.
+	next func(time.Time) (time.Time, bool)
 }
 
 // Reload registers all entries from settings, replacing earlier ones, so it can
@@ -1581,12 +1630,25 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				}
 			},
 		})
+		if s.receiverCheckFn != nil {
+			domains = append(domains, domainSpec{
+				cadence: SweepCadence,
+				name:    "receiver-check",
+				next:    s.receiverCheckNext,
+				fn: func() {
+					if err := s.receiverCheckFn(); err != nil {
+						log.Printf("schedule: receiver-check job: %v", err)
+					}
+				},
+			})
+		}
 	}
 
 	if settings.PullEnabled {
 		domains = append(domains, domainSpec{
-			cadence: PullCadence,
+			cadence: SweepCadence,
 			name:    "pull",
+			next:    s.pullNext,
 			fn: func() {
 				if s.pullFn == nil {
 					log.Print("schedule: pull job skipped - pull not wired (SetPullJob)")
@@ -1635,6 +1697,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		domainName := d.name
 		jobFn := d.fn
 		skip := d.skip
+		tick := d.cadence == SweepCadence
 
 		// An everyN cadence is a daily trigger plus a due-gate, so without a
 		// last-run query the job would run every day. The API rejects everyN for
@@ -1677,7 +1740,10 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 					return
 				}
 			}
-			log.Printf("schedule: running %s job", domainName)
+			// Most ticks have nothing to do, and the jobs log what they start.
+			if !tick {
+				log.Printf("schedule: running %s job", domainName)
+			}
 			jobFn()
 		})
 		if err != nil {
@@ -1689,7 +1755,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		// will actually run on. The guard above keeps them set together.
 		s.entries = append(s.entries, scheduledEntry{
 			id: id, job: job, domain: domain,
-			intervalDays: cad.IntervalDays, lastRun: d.lastRun,
+			intervalDays: cad.IntervalDays, lastRun: d.lastRun, next: d.next,
 		})
 		// Backup entries with a last-run query join the catch-up, since only they
 		// can tell whether their last fire was covered by a success.

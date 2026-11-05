@@ -510,10 +510,48 @@ func copyAccess(dest string, destEnv []string, src string, srcEnv []string) (cop
 	return copyDest, copySrc, env, nil
 }
 
-// RunPulls is the scheduled sweep: every enabled source whose cadence says it is
-// due gets pulled once. A source that fails does not stop the others. One
-// that is not pulled still has its earlier pulls moved.
+// pullDue reports whether a source has a pull to run at now. One that has not
+// run yet waits for its first fire after it was saved.
+func pullDue(ps store.PullSource, now time.Time) bool {
+	cad, err := schedule.ParseCadence(ps.Cadence)
+	if err != nil {
+		return false
+	}
+	last := time.Unix(max(ps.LastPullAt, ps.CreatedAt), 0)
+	if ps.LastPullOK.Valid && !ps.LastPullOK.Bool {
+		return cad.RetryDue(last, now)
+	}
+	return cad.FireDue(last, now)
+}
+
+// NextPull is when the soonest enabled source comes up next.
+func (s *Service) NextPull(now time.Time) (time.Time, bool) {
+	sources, err := s.store.ListPullSources()
+	if err != nil {
+		return time.Time{}, false
+	}
+	var soonest time.Time
+	for _, ps := range sources {
+		cad, err := schedule.ParseCadence(ps.Cadence)
+		if err != nil || !ps.Enabled {
+			continue
+		}
+		if next, ok := cad.NextDue(time.Unix(max(ps.LastPullAt, ps.CreatedAt), 0), now); ok && (soonest.IsZero() || next.Before(soonest)) {
+			soonest = next
+		}
+	}
+	return soonest, !soonest.IsZero()
+}
+
+// RunPulls is the scheduled sweep, at every tick: each enabled source with a
+// fire due gets pulled once. A source that fails does not stop the others.
 func (s *Service) RunPulls(ctx context.Context) error {
+	return s.runPullsAt(ctx, time.Now())
+}
+
+// runPullsAt is RunPulls with an injectable now. One that is not pulled still
+// has its earlier pulls moved, once a day since that reads both repositories.
+func (s *Service) runPullsAt(ctx context.Context, now time.Time) error {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
@@ -522,16 +560,10 @@ func (s *Service) RunPulls(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("list pull sources: %w", err)
 	}
-	now := time.Now()
 	for _, ps := range sources {
-		period := cadencePeriodSeconds(ps.Cadence)
-		// schedule.PeriodDue rather than "now minus last exceeds the period",
-		// which drifts: each late start pushes the next run later, until a daily
-		// job runs every other day. A period of 0 is 'off', or a cadence with
-		// no period: only the button runs it.
-		if !settings.PullEnabled || !ps.Enabled || period <= 0 || !schedule.PeriodDue(time.Unix(ps.LastPullAt, 0), now, period) {
-			if s.claimPull(ps.ID) {
-				s.settleEarlierPulls(ctx, ps, s.pullReachDue(ps.ID))
+		if !settings.PullEnabled || !ps.Enabled || !pullDue(ps, now) {
+			if moved, err := s.store.PullLeftoversMoved(ps.ID); err == nil && !moved && s.pullReachDue(ps.ID) && s.claimPull(ps.ID) {
+				s.settleEarlierPulls(ctx, ps, true)
 				s.releasePull(ps.ID)
 			}
 			continue

@@ -1,16 +1,16 @@
 package api
 
 // The receiver watch is the overdue-backup watchdog for a box that receives
-// off-site copies. On its daily tick (schedule.ReceiverCadence, gated on
-// Settings.ReceiverEnabled) it walks every enabled received repo:
+// off-site copies, gated on Settings.ReceiverEnabled:
 //
-//   - Dead-man's switch: it finds the newest snapshot per source (host and item
-//     tag) and alerts once per stale episode for a source older than the repo's
+//   - Dead-man's switch: on its daily tick (schedule.ReceiverCadence) it finds the
+//     newest snapshot per source (host and item tag) of every enabled received
+//     repo and alerts once per stale episode for a source older than the repo's
 //     dead_man_hours. received_alert_state remembers which snapshot the alert
 //     was based on, and a newer one ends the episode.
-//   - Integrity: when the repo's CheckCadence is due it runs an independent
-//     restic check on the receiving hardware, persists the verdict and alerts
-//     only on the transition into failure.
+//   - Integrity: at a fire of a repo's CheckCadence (schedule.SweepCadence asks)
+//     it runs an independent restic check on the receiving hardware, persists the
+//     verdict and alerts only on the transition into failure.
 //
 // Verdicts are persisted whatever the notify policy says; only the alerts
 // follow it.
@@ -127,34 +127,67 @@ func receiverDeadManSourcesOf(snaps []restic.Snapshot) []receiverDeadManSource {
 	return out
 }
 
-// RunReceiverChecks runs the daily receiver watch across every enabled
+// RunReceiverWatch runs the daily dead-man's switch across every enabled
 // received repo.
+func (s *Service) RunReceiverWatch(ctx context.Context) error {
+	return s.runReceiverWatchAt(ctx, time.Now().Unix())
+}
+
+// RunReceiverChecks runs the integrity checks that have a fire due.
 func (s *Service) RunReceiverChecks(ctx context.Context) error {
 	return s.runReceiverChecksAt(ctx, time.Now().Unix())
 }
 
-// runReceiverChecksAt is RunReceiverChecks with an injectable now. A muted
-// notify policy still runs and persists the checks but sends no alerts.
+func (s *Service) runReceiverWatchAt(ctx context.Context, now int64) error {
+	return s.eachReceivedRepo(func(c notify.Config, alertsOn bool, rr store.ReceivedRepo) {
+		s.receiverDeadManSweep(ctx, c, alertsOn, rr, now)
+	})
+}
+
 func (s *Service) runReceiverChecksAt(ctx context.Context, now int64) error {
+	return s.eachReceivedRepo(func(c notify.Config, alertsOn bool, rr store.ReceivedRepo) {
+		s.receiverScheduledCheck(ctx, c, alertsOn, rr, now)
+	})
+}
+
+// eachReceivedRepo walks the enabled received repos. A muted notify policy still
+// runs and persists the work but sends no alerts.
+func (s *Service) eachReceivedRepo(do func(c notify.Config, alertsOn bool, rr store.ReceivedRepo)) error {
+	repos, err := s.store.ListReceivedRepos()
+	if err != nil {
+		return fmt.Errorf("list received repos: %w", err)
+	}
 	c, cErr := s.NotifyConfig()
 	if cErr != nil {
 		log.Printf("api: receiver: read notify config: %v (alerts muted this run)", cErr)
 		c = notify.Config{}
 	}
 	alertsOn := c.On == "always" || c.On == "failure"
-
-	repos, err := s.store.ListReceivedRepos()
-	if err != nil {
-		return fmt.Errorf("list received repos: %w", err)
-	}
 	for _, rr := range repos {
-		if !rr.Enabled {
-			continue
+		if rr.Enabled {
+			do(c, alertsOn, rr)
 		}
-		s.receiverDeadManSweep(ctx, c, alertsOn, rr, now)
-		s.receiverScheduledCheck(ctx, c, alertsOn, rr, now)
 	}
 	return nil
+}
+
+// NextReceiverCheck is when the soonest enabled repo's check comes up next.
+func (s *Service) NextReceiverCheck(now time.Time) (time.Time, bool) {
+	repos, err := s.store.ListReceivedRepos()
+	if err != nil {
+		return time.Time{}, false
+	}
+	var soonest time.Time
+	for _, rr := range repos {
+		cad, err := schedule.ParseCadence(rr.CheckCadence)
+		if err != nil || !rr.Enabled {
+			continue
+		}
+		if next, ok := cad.NextDue(time.Unix(max(rr.LastCheckAt, rr.CreatedAt), 0), now); ok && (soonest.IsZero() || next.Before(soonest)) {
+			soonest = next
+		}
+	}
+	return soonest, !soonest.IsZero()
 }
 
 // receiverDeadManSweep evaluates the dead-man's switch for one repo's sources
@@ -200,25 +233,14 @@ func (s *Service) receiverDeadManSweep(ctx context.Context, c notify.Config, ale
 	}
 }
 
-// receiverScheduledCheck runs the independent restic check for one repo when
-// its CheckCadence is due, persists the verdict and alerts only on the
+// receiverScheduledCheck runs the independent restic check for one repo at a
+// fire of its CheckCadence, persists the verdict and alerts only on the
 // transition into failure. A cadence of "off", or one that does not parse,
-// disables the scheduled check; the dead-man's switch still runs.
-//
-// The due gate is schedule.PeriodDue, which compares calendar days.
-// LastCheckAt is stamped when the previous check finished, minutes after its
-// sweep fired, so in elapsed seconds the next sweep falls short of the period
-// and the check would slip by a whole day.
+// disables the scheduled check; the dead-man's switch still runs. A new repo
+// waits for its first fire after it was saved.
 func (s *Service) receiverScheduledCheck(ctx context.Context, c notify.Config, alertsOn bool, rr store.ReceivedRepo, now int64) {
-	period := cadencePeriodSeconds(rr.CheckCadence)
-	if period <= 0 {
-		return
-	}
-	var lastCheck time.Time
-	if rr.LastCheckAt != 0 {
-		lastCheck = time.Unix(rr.LastCheckAt, 0)
-	}
-	if !schedule.PeriodDue(lastCheck, time.Unix(now, 0), period) {
+	cad, err := schedule.ParseCadence(rr.CheckCadence)
+	if err != nil || !cad.FireDue(time.Unix(max(rr.LastCheckAt, rr.CreatedAt), 0), time.Unix(now, 0)) {
 		return
 	}
 	prev := rr.LastCheckOK
