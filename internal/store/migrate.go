@@ -4377,6 +4377,16 @@ const keyRolesMigration = 345
 // contested 89/90/91 numbering survives contact with databases born under either
 // numbering. See the NUMBERING HAZARD note above v90.
 func Migrate(db *sql.DB) error {
+	if reuseMigrations.Load() {
+		if done, err := startFromImage(db); done || err != nil {
+			return err
+		}
+	}
+	return migrateSteps(db)
+}
+
+// migrateSteps runs the migrations themselves.
+func migrateSteps(db *sql.DB) error {
 	// Ensure the tracking table exists.
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_migrations (
 		version    INTEGER PRIMARY KEY,
