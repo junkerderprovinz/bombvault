@@ -81,7 +81,7 @@ func TestPreviewRetentionPerIdentityMirrorsTheRealPass(t *testing.T) {
 		snapWithTags("c3", "container:plex"),
 		snapWithTags("d4", "flash"),
 	}}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: newTestStore(t)}
 
 	if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
@@ -99,28 +99,27 @@ func TestPreviewRetentionPerIdentityMirrorsTheRealPass(t *testing.T) {
 	}
 }
 
-// TestPreviewRetentionFallsBackToRepoWide pins the same fallback
-// applyRetentionPerIdentity has: when the snapshot listing fails, or carries no
-// identity tags at all, retention runs ONE repo-wide paths-grouped pass. The
-// preview has to show that pass, or it would claim nothing would be removed
-// while the real run removes plenty.
+// TestPreviewRetentionFallsBackToRepoWide pins what applyRetentionPerIdentity
+// does: a listing that fails forgets nothing and says so, and one with no
+// identity tags at all runs one repo-wide paths-grouped pass, which the preview
+// has to show.
 func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 	t.Run("listing failed", func(t *testing.T) {
 		eng := &previewEngine{snapsErr: errors.New("repository is unreachable")}
-		s := &Service{engine: eng}
+		s := &Service{engine: eng, store: newTestStore(t)}
 
 		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
-			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
-			t.Fatalf("want no error, got %v", err)
+			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err == nil {
+			t.Fatal("a failed listing reads as a preview")
 		}
-		if len(eng.previewTags) != 1 || eng.previewTags[0] != "" {
-			t.Fatalf("want a single repo-wide preview (empty tag), got %v", eng.previewTags)
+		if len(eng.previewTags) != 0 {
+			t.Fatalf("want no preview, got %v", eng.previewTags)
 		}
 	})
 
 	t.Run("no identity tags", func(t *testing.T) {
 		eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "p1", "live")}}
-		s := &Service{engine: eng}
+		s := &Service{engine: eng, store: newTestStore(t)}
 
 		if _, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 			restic.RetentionPolicy{KeepLast: 5}, restic.Mode{}); err != nil {
@@ -138,7 +137,7 @@ func TestPreviewRetentionFallsBackToRepoWide(t *testing.T) {
 // about to be removed (forget with no --keep-* flag keeps nothing).
 func TestPreviewRetentionInertPolicyAsksNothing(t *testing.T) {
 	eng := &previewEngine{snaps: []restic.Snapshot{snapWithTags("a1", "container:plex")}}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: newTestStore(t)}
 
 	groups, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{}, restic.Mode{})
@@ -163,7 +162,7 @@ func TestPreviewRetentionSurvivesOneFailingTag(t *testing.T) {
 		snaps:      []restic.Snapshot{snapWithTags("a1", "container:plex"), snapWithTags("b2", "vm:win11")},
 		previewErr: errors.New("no such snapshot"),
 	}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: newTestStore(t)}
 
 	_, _, err := s.previewRetentionPerIdentity(context.Background(), "/repo", "",
 		restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
@@ -188,7 +187,7 @@ func TestPreviewStampsQueriedIdentity(t *testing.T) {
 		},
 		previewGroups: []restic.ForgetGroup{{Keep: []restic.Snapshot{snapWithTags("a1")}}},
 	}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: newTestStore(t)}
 
 	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
 		"/repo", "", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})
@@ -212,7 +211,7 @@ func TestPreviewKeepsATagResticReported(t *testing.T) {
 		snaps:         []restic.Snapshot{snapWithTags("a1", "container:pg")},
 		previewGroups: []restic.ForgetGroup{{Tags: []string{"container:pg", "p1"}}},
 	}
-	s := &Service{engine: eng}
+	s := &Service{engine: eng, store: newTestStore(t)}
 
 	groups, _, err := s.previewRetentionPerIdentity(context.Background(),
 		"/repo", "", restic.RetentionPolicy{KeepLast: 5}, restic.Mode{})

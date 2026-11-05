@@ -665,7 +665,7 @@ func TestAScheduledSummaryNamesABackupThatMissedFiles(t *testing.T) {
 		t.Fatalf("%d summaries with failures-only alerts, want one", len(ssh.runs))
 	}
 	sent := strings.Join(ssh.runs[0], " ")
-	if !strings.Contains(sent, `1 backup could not read some files`) || !strings.Contains(sent, `files "Documents": locked.db`) || !strings.Contains(sent, "warning") {
+	if !strings.Contains(sent, `1 backup holds less than it should`) || !strings.Contains(sent, `files "Documents": `+store.NoteFilesUnreadable+`: locked.db`) || !strings.Contains(sent, "warning") {
 		t.Errorf("summary = %s", sent)
 	}
 }

@@ -7816,6 +7816,12 @@ export function renameStorageLocation(id: string, name: string): Promise<OkEnvel
   return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/name`, { method: "PUT", body: JSON.stringify({ name }) });
 }
 
+/** PUT /api/storage/locations/{id}/keep: saves the How long to keep card of a
+ *  folder the domain paths share, for that folder alone. */
+export function saveFolderCard(id: string, keep: RetentionKeep): Promise<OkEnvelope & { location?: StorageLocation }> {
+  return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/keep`, { method: "PUT", body: JSON.stringify(keep) });
+}
+
 /** PUT /api/storage/locations/{id}/risk-accepted: accepts that a location
  *  copies go to cannot refuse a delete, or takes that back. Only how the
  *  overview words the gap changes. */

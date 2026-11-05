@@ -66,8 +66,8 @@ func (s *Service) offTheirMount(name string, effective []string, mountsNow map[s
 
 // refuseEmptiedAppdata refuses a backup whose folders hold no files at all
 // while an earlier backup of the container held data, the rule a folder set
-// follows for its source. A folder that cannot be walked, and a history that
-// cannot be read, are left to restic, which reports both.
+// follows for its source. A folder that cannot be walked is left to restic,
+// which reports it. A history that cannot be read counts as one that held data.
 func (s *Service) refuseEmptiedAppdata(ctx context.Context, repo string, mode restic.Mode, name string, effective []string) error {
 	if len(effective) == 0 {
 		return nil
@@ -80,7 +80,8 @@ func (s *Service) refuseEmptiedAppdata(ctx context.Context, repo string, mode re
 	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.containerIdentity(name))
 	if err != nil {
 		log.Printf("api: backup: %q: could not check earlier backups: %v", name, err) //nolint:gosec // G706: name is %q-quoted
-		return nil
+		return fmt.Errorf("backup %q: its backup folders hold no files, and earlier backups could not be read to tell whether they held data. "+
+			"Refusing an empty backup that retention would count as a real one", name)
 	}
 	// Only a snapshot with a recorded size counts, so an app whose folder was
 	// always empty keeps backing up. Restic before 0.17 recorded none.

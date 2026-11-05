@@ -194,11 +194,11 @@ func logSchedulerTimezone() {
 }
 
 // roundItemErr is an item's error as a scheduled round counts it: a backup the
-// user cancelled is no failure of the round, and its own run says cancelled.
-// Nor is an entry whose section was given no place to back up to, a state
-// chosen on purpose that the overview already counts as not protected.
+// user cancelled is no failure of the round, and its own run says cancelled. An
+// entry with nowhere to back up to is one: nothing was backed up, and a monitor
+// that hears success stays green for a server with no backups.
 func roundItemErr(err error) error {
-	if api.IsBackupCancelled(err) || errors.Is(err, api.ErrNoPlace) {
+	if api.IsBackupCancelled(err) {
 		return nil
 	}
 	return err
@@ -317,6 +317,7 @@ func run() error {
 	if err := svc.ConvertSharedSignIns(); err != nil {
 		log.Printf("main: turning the shared cloud sign-in into a saved one (tried again at the next start): %v", err)
 	}
+	svc.LinkTypedOwnFolders()
 	svc.StartGroup()
 	defer svc.StopGroup()
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which

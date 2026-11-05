@@ -105,9 +105,13 @@ A rule keeps one backup per day, week, month and year, as far back as you set, a
 
 **Custom values** sets the five counts yourself. A 0 switches that count off, and a rule with every count at 0 keeps everything. The dots in the card show which of 40 sample backups a rule keeps, the newest on the far right. The sample is the same for every location, since the picture is drawn before BombVault has read the backups there. It counts back from today, so how many dots stay changes with the date.
 
+A folder on this host and a remote folder typed by hand have a card of their own too, which covers the own folders in that folder and no other. Until you save it, such a folder ages by the rule BombVault already had for it.
+
 **Ask before keeping less**, on by default, asks before a change that keeps fewer backups is saved, and says how many of the 40 sample backups the new rule removes. It applies to every storage location. **Reset to the storage location** under **Rules per section** asks the same question.
 
 A location with delete protection is never pruned from this box. Its far side keeps or drops old backups by its own rules. While an entry has an open critical anomaly about lost data, retention keeps that entry's old backups until you acknowledge it. See [Anomalies](anomalies.md).
+
+A backup that holds less than it should never ages out the ones before it. That is a backup that reads no files where earlier ones held some, misses a selected folder, or could not read some files. Its run ends with a warning that names what is missing and says the older backups were kept, you get the same message on your notification channels, and no prune, at the entry's own folder or at its copies, touches that entry's old backups until a complete backup comes through. A first backup, and a selected folder that was always empty, count as complete.
 
 To see what the next run would really delete, open **Preview** under **Settings, Storage locations**. It lists **What the next run would remove**, per repository and per entry with the restore points named. It takes no lock and changes nothing.
 
@@ -148,7 +152,7 @@ A sign-in is the key or password BombVault uses for an S3 service or a rest-serv
 - **Saved when you add a location.** Add storage location saves the keys you type as a sign-in. The next location at the same service can pick it under **Saved sign-in** instead of **New keys**, and a change to it later applies to every location that uses it.
 - **The default.** A star marks the default sign-in. It is used wherever no sign-in is picked, such as an address typed in by hand, a pull source, or a recovery on a fresh install. **Make default** gives the star to another one.
 - **Edit and Test.** **Edit**, here or in the **Sign-in** card of a location, opens one window for the sign-in. **Test** signs in to every location that uses it with what you typed, before anything is saved. **Save** stores it.
-- **Removing.** A sign-in can be removed only when no storage location or pull source uses it, and the default goes only as the last one. The row then says what still uses it.
+- **Removing.** A sign-in can be removed only when no storage location or pull source uses it and no old backups need it, and the default goes only as the last one. Old backups need it when an own folder moved away from a place that signs in with it and left them there. BombVault then says which place it is.
 - **Changing a location's connection** never rewrites a sign-in other places share. The location gets a sign-in of its own instead, and the window says beforehand that its sign-in is shared. To change the shared one everywhere, edit it in the **Sign-ins** card.
 
 ![The Sign-ins card: each saved sign-in with what uses it, and the star on the default.](assets/screenshots/storage/signins-dark.png#only-dark)
@@ -225,7 +229,7 @@ An own folder can also lie in a storage location you already have, such as a NAS
 1. Open the storage location that should hold the own folder and choose **Use as own folder**, or **Add sections** in its **Own folders** card. To move several sections at once, choose **Move own folders** beside **Own folders here** in the **Connection** card of the Local location.
 2. Pick the sections under **Sections** and the place under **Move to**. **Another place** takes a folder on this host or the address of a remote repository typed by hand, with a sign-in from your saved sign-ins.
 3. Read **What happens**. For each section it says where new backups go, whether a copy that is already at the new place becomes the own folder, and which backups are copied over first.
-4. **Copy the backups already made** is on by default. Switched off, the old backups stay where they are and can still be restored from there.
+4. **Copy the backups already made** is on by default. Switched off, the old backups stay where they are, but the entry no longer lists them. **From an old backup folder** on the Restore page still reads them with the folder's address and, for a remote folder, its login.
 5. Choose **Switch**. When the new place's **How long to keep** card keeps less than the section's rule today, BombVault first asks **Keep less?** There, **Keep the current values for** that section **under Rules per section** carries today's values along, **Save anyway** goes ahead, and **Back** leaves everything as it was. When backups have to be copied first, BombVault copies them and then switches the own folder. When they are there already, it checks them before the switch.
 
 After the move, new backups go to the moved own folder, also for a section that had **Local** switched off and backed up straight to a copy. A copy that already sat at the new place becomes the own folder, and copying there ends. Where that copy kept some backups longer than the section's keep rules, the section keeps whatever either rule keeps, so none of them is lost.
@@ -252,7 +256,7 @@ BombVault copies the backups in the background and then switches the own folder.
 
 The **Connection** card of the Local location still takes a remote address for a section's own folder: **Change** beside the section opens a window with a **Local / Remote** switch. **Remote** takes a restic address such as `s3:...`, `rest:http://host:8000/repo`, `sftp:user@host:/repo` or `rclone:remote:bucket/path`, and **Remote primary safety settings** add a connection test, upload and download limits, append-only protection with the same tamper test an off-site location gets, and a growth-budget alarm.
 
-Such an address signs in with the default sign-in. When it lies in a folder of a storage location you have, that location's page lists the section under **Already under this storage location**, and taking it over gives it the location's sign-in, storage class and delete protection. Moving the own folder into a storage location with **Use as own folder** is the simpler way, because the window checks the backups already made before anything changes.
+Such an address signs in with the default sign-in. When it is exactly the folder a storage location you have keeps for the section, it follows that location by itself, the location's card and its **Available** switch included, unless it signs in differently or is append-only where the location is not. A rule that pruned the folder until then stays as the section's own under **Rules per section**. When it lies in another folder of that location, the location's page lists the section under **Already under this storage location**, and taking it over gives it the location's sign-in, storage class and delete protection. Moving the own folder into a storage location with **Use as own folder** is the simpler way, because the window checks the backups already made before anything changes.
 
 ## Placement per entry {#placement}
 

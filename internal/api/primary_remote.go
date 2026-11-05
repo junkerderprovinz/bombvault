@@ -99,6 +99,29 @@ func followLocation(t, d store.OffsiteTarget) store.OffsiteTarget {
 	return t
 }
 
+// locationOffErr refuses a write into a storage location that is switched off.
+type locationOffErr struct{ name string }
+
+func (e locationOffErr) Error() string {
+	return fmt.Sprintf("the storage location %s is switched off, so nothing is written there. Switch it on under Settings, Storage locations, or move this section's own folder", e.name)
+}
+
+// refuseOwnFolderOff refuses a write into a section's own folder while the
+// storage location it lies in is switched off.
+func (s *Service) refuseOwnFolderOff(settings store.Settings, domain string) error {
+	row, ok, err := s.store.PrimaryRemoteTarget(domain)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return nil
+	}
+	if d, linked := s.linkedLocation(settings, row); linked && !d.Enabled {
+		return locationOffErr{name: d.Name}
+	}
+	return nil
+}
+
 // formerOwnFolderMode is the mode a folder a section's own folder left is read
 // with: the sign-in of the storage location it lay in while that is still
 // there, or the one it was typed with.

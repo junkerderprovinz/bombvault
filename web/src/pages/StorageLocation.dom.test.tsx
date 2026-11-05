@@ -41,6 +41,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     adoptIntoDestination: vi.fn(),
     getSettings: vi.fn(),
     putSettings: vi.fn(),
+    saveFolderCard: vi.fn(),
     getProviders: vi.fn(),
     getCloud: vi.fn(),
     getCloudCredSets: vi.fn(),
@@ -63,6 +64,7 @@ const listRepos = vi.mocked(api.listRepos);
 const adoptIntoDestination = vi.mocked(api.adoptIntoDestination);
 const getSettings = vi.mocked(api.getSettings);
 const putSettings = vi.mocked(api.putSettings);
+const saveFolderCard = vi.mocked(api.saveFolderCard);
 const getProviders = vi.mocked(api.getProviders);
 const getCloud = vi.mocked(api.getCloud);
 const getCloudCredSets = vi.mocked(api.getCloudCredSets);
@@ -232,6 +234,7 @@ beforeEach(() => {
   updateRepo.mockResolvedValue({ ok: true });
   listRepos.mockResolvedValue({ ok: true, repos: [] });
   putSettings.mockResolvedValue({ ok: true });
+  saveFolderCard.mockResolvedValue({ ok: true });
   getSettings.mockResolvedValue({
     ok: true,
     settings: { flashOffsiteSchedule: "daily 03:00", containersOffsiteSchedule: "", ownRetention: { vms: SHORT } } as unknown as Settings,
@@ -536,13 +539,15 @@ describe("a folder on this host", () => {
     expect(within(protection).queryByText("Who prunes")).toBeNull();
   });
 
-  it("saves the shared local rule into the settings, without a question and without the switch for one", async () => {
+  it("asks before a folder's card keeps less, and saves it for that folder alone", async () => {
     await renderPage("path:abc");
 
-    expect(within(card("How long to keep")).queryByRole("switch")).toBeNull();
     await click(within(keepRule()).getByRole("radio", { name: "Short" }));
-    expect(screen.queryByRole("dialog")).toBeNull();
-    await waitFor(() => expect(putSettings).toHaveBeenCalledWith(expect.objectContaining({ retentionKeepMonthly: 3, retentionKeepYearly: 0 })));
+    const question = await screen.findByRole("dialog");
+    expect(saveFolderCard).not.toHaveBeenCalled();
+    await click(within(question).getByRole("button", { name: "Save anyway" }));
+    await waitFor(() => expect(saveFolderCard).toHaveBeenCalledWith("path:abc", expect.objectContaining({ keepMonthly: 3, keepYearly: 0 })));
+    expect(putSettings).not.toHaveBeenCalled();
   });
 
   it("lets a section with a local rule of its own go back to the shared one", async () => {

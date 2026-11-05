@@ -128,6 +128,26 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 	return svc, st, docker, tg
 }
 
+func TestAContainerBackupNamesASelectedFolderThatIsGone(t *testing.T) {
+	svc, st, _, tg := everythingTestService(t, &fakeResticEngine{})
+	gone := filepath.ToSlash(filepath.Join(filepath.Dir(tg.SelectedPaths[0]), "gone"))
+	tg.SelectedPaths = append(tg.SelectedPaths, gone)
+	if err := st.SetBackupPaths(tg.ContainerName, tg.SelectedPaths); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Backup(context.Background(), tg.ContainerName); err != nil {
+		t.Fatalf("Backup: %v", err)
+	}
+	last, err := st.LastSuccessfulBackup(tg.ID)
+	if err != nil || last == nil {
+		t.Fatalf("no run: %v", err)
+	}
+	if !strings.Contains(last.Error, store.NoteFoldersMissing+": ") || !strings.Contains(last.Error, "gone") ||
+		!strings.Contains(last.Error, store.NoteOlderBackupsKept) {
+		t.Fatalf("the run reads %q, want the gone folder named and the older backups kept", last.Error)
+	}
+}
+
 // waitForEverythingDone blocks until StartBackupEverything's goroutine has
 // released the guard.
 func waitForEverythingDone(t *testing.T, svc *api.Service) {
@@ -341,7 +361,7 @@ func TestBackupEverythingRunsZFSAfterFiles(t *testing.T) {
 	}
 }
 
-func TestBackupEverythingPassesOverSectionsWithNoPlace(t *testing.T) {
+func TestBackupEverythingCountsSectionsWithNoPlaceAsFailed(t *testing.T) {
 	svc, st, _, _ := everythingTestService(t, &fakeResticEngine{})
 	if _, err := st.PutPlacementDefault("containers", store.HomeNowhere, nil); err != nil {
 		t.Fatal(err)
@@ -354,12 +374,12 @@ func TestBackupEverythingPassesOverSectionsWithNoPlace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BackupEverything: %v", err)
 	}
-	if sum.Status != "success" {
-		t.Fatalf("Status = %q, want success for sections switched off on purpose (domains: %+v)", sum.Status, sum.Domains)
+	if sum.Status != "failed" {
+		t.Fatalf("Status = %q, want failed with nothing backed up in two sections (domains: %+v)", sum.Status, sum.Domains)
 	}
 	for _, d := range sum.Domains {
-		if (d.Domain == "containers" || d.Domain == "flash") && d.Failed != 0 {
-			t.Fatalf("%s counted %d failures, want none", d.Domain, d.Failed)
+		if (d.Domain == "containers" || d.Domain == "flash") && d.Failed != 1 {
+			t.Fatalf("%s counted %d failures, want 1", d.Domain, d.Failed)
 		}
 	}
 }

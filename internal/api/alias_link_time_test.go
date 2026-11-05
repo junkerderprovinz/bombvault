@@ -253,6 +253,9 @@ func containerRetentionService(t *testing.T, snaps []restic.Snapshot) (*api.Serv
 	if err := os.MkdirAll(appdata, 0o750); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(appdata, "app.db"), []byte("data"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
 		Name:    "/radarr",
 		Image:   "radarr:latest",

@@ -104,16 +104,19 @@ func (s *Service) ConvertSharedSignIns() error {
 			return err
 		}
 	}
-	note.Linked = s.linkTypedOwnFolders()
+	note.Linked = s.LinkTypedOwnFolders()
 	return s.store.FinishSignIns(note)
 }
 
-// linkTypedOwnFolders hangs each remote own folder typed in by hand on the
-// storage location whose folder for the section it is. A folder that signs in
-// differently, or that is append-only where the location is not, stays as
+// LinkTypedOwnFolders hangs each own folder typed in by hand on the storage
+// location whose folder for the section it is, so the location's card, sign-in
+// and switch reach it as they reach one put there with Use as own folder. It
+// runs at every start and after every settings save. A remote folder that signs
+// in differently, or that is append-only where the location is not, stays as
 // typed, since following the location would change how it is reached or let
-// retention prune it.
-func (s *Service) linkTypedOwnFolders() []string {
+// retention prune it. A rule that pruned the folder until now stays as the
+// section's own unless the card says the same.
+func (s *Service) LinkTypedOwnFolders() []string {
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		log.Printf("api: sign-ins: could not read the settings to link own folders: %v", err)
@@ -127,11 +130,14 @@ func (s *Service) linkTypedOwnFolders() []string {
 	var linked []string
 	for _, domain := range offsiteConfigDomains {
 		path := strings.TrimSpace(domainPathRaw(domain, settings))
-		if !restic.IsRemoteRepo(path) {
+		if path == "" {
 			continue
 		}
-		row, ok, err := s.store.PrimaryRemoteTarget(domain)
-		if err != nil || ok && row.DestinationID != "" {
+		row, _, err := s.store.PrimaryRemoteTarget(domain)
+		if err != nil {
+			continue
+		}
+		if _, already := s.linkedLocation(settings, row); already {
 			continue
 		}
 		i := slices.IndexFunc(destinations, func(d store.OffsiteTarget) bool {
@@ -141,19 +147,45 @@ func (s *Service) linkTypedOwnFolders() []string {
 			continue
 		}
 		d := destinations[i]
-		own, oErr := s.decodeCloudFor(settings, row.CredsRef)
-		theirs, tErr := s.decodeCloudFor(settings, d.CredsRef)
-		if oErr != nil || tErr != nil || own != theirs || row.Immutable && !d.Immutable {
+		if restic.IsRemoteRepo(path) {
+			own, oErr := s.decodeCloudFor(settings, row.CredsRef)
+			theirs, tErr := s.decodeCloudFor(settings, d.CredsRef)
+			if oErr != nil || tErr != nil || own != theirs || row.Immutable && !d.Immutable {
+				continue
+			}
+		}
+		if err := s.keepTheRuleOfATypedFolder(settings, domain, d); err != nil {
+			log.Printf("api: could not keep the rule of the own folder of %s: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			continue
 		}
 		row.Repo, row.DestinationID, row.Enabled = path, d.ID, true
 		if _, err := s.store.UpsertPrimaryRemoteTarget(domain, row); err != nil {
-			log.Printf("api: sign-ins: could not link the own folder of %s to %s: %v", domain, d.Name, err) //nolint:gosec // G706: domain is a fixed literal, the name the user's own
+			log.Printf("api: could not link the own folder of %s to %s: %v", domain, d.Name, err) //nolint:gosec // G706: domain is a fixed literal, the name the user's own
 			continue
 		}
+		log.Printf("api: the own folder of %s lies in the folder of storage location %s and follows it from now on", domain, d.Name) //nolint:gosec // G706: domain is a fixed literal, the name the user's own
 		linked = append(linked, domain)
 	}
 	return linked
+}
+
+// keepTheRuleOfATypedFolder gives a section the rule its typed own folder aged
+// by as its own, when that rule prunes and the card it is about to follow differs.
+func (s *Service) keepTheRuleOfATypedFolder(settings store.Settings, domain string, d store.OffsiteTarget) error {
+	if _, own := settings.OwnRetention()[domain]; own {
+		return nil
+	}
+	keep := s.folderKeep(settings, domainPathRaw(domain, settings))
+	if keep == (store.RetentionKeep{}) || keep == targetKeep(d) {
+		return nil
+	}
+	_, err := s.store.MutateSettings(func(st *store.Settings) error {
+		own := st.OwnRetention()
+		own[domain] = keep
+		st.SetOwnRetention(own)
+		return nil
+	})
+	return err
 }
 
 // signInFromSaved fills a draft's login fields from the saved sign-in it
@@ -298,7 +330,7 @@ func (s *Service) RemoveSignIn(id string) error {
 		return err
 	}
 	if inUse[id] {
-		return fmt.Errorf("%s is still in use, so it stays", sets[i].Name)
+		return s.signInStillUsed(sets[i])
 	}
 	return s.editCloudCredSets(func(sets []CloudCredSet) []CloudCredSet {
 		return slices.DeleteFunc(sets, func(c CloudCredSet) bool { return c.ID == id })

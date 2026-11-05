@@ -2305,7 +2305,31 @@ func (s *Service) localKeep(settings store.Settings, domain string) store.Retent
 	if d, linked := s.linkedLocation(settings, row); linked {
 		return targetKeep(d)
 	}
+	return s.folderKeep(settings, domainPathRaw(domain, settings))
+}
+
+// folderKeep is what a typed own folder ages by: the card of the folder it lies
+// in once that was saved, the shared local rule until then.
+func (s *Service) folderKeep(settings store.Settings, raw string) store.RetentionKeep {
+	if k := s.folderCard(raw); k != nil {
+		return *k
+	}
 	return sharedLocalKeep(settings)
+}
+
+// folderCard reads the card saved for the folder a typed own folder lies in, nil
+// when it has none. Without the answer nothing can say what may go, so a failed
+// read keeps everything.
+func (s *Service) folderCard(raw string) *store.RetentionKeep {
+	cards, err := s.store.LocationKeeps()
+	if err != nil {
+		log.Printf("api: could not read the card of %s, so nothing is pruned there this time: %v", scrubRepoLocation(pathRoot(raw)), err) //nolint:gosec // G706: the location is scrubbed
+		return &store.RetentionKeep{}
+	}
+	if k, ok := cards[repoLocationKey(scrubRepoLocation(pathRoot(raw)))]; ok {
+		return &k
+	}
+	return nil
 }
 
 func sharedLocalKeep(settings store.Settings) store.RetentionKeep {
@@ -2545,6 +2569,10 @@ func (s *Service) forgetAt(ctx context.Context, repo string, p restic.RetentionP
 		log.Printf("api: %s: retention skipped: the item has no identity tag", domain) //nolint:gosec // G706: domain is a fixed literal
 		return
 	}
+	if s.lastBackupSawLess(hold) {
+		log.Printf("api: %s: retention paused for %s: its last backup held less than it should", domain, id.tag) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
+		return
+	}
 	held, why, err := s.anomalies.RetentionHeld(ctx, hold)
 	if err != nil {
 		log.Printf("api: %s: retention skipped for %s: the anomaly check failed: %v", domain, id.tag, err) //nolint:gosec // G706: domain is a fixed literal and tags are validated names
@@ -2722,7 +2750,7 @@ func (s *Service) applyRetentionPerIdentity(ctx context.Context, repo, domain st
 	if !p.Any() {
 		return nil, nil
 	}
-	held, err := s.anomalies.HeldIdentityTags()
+	held, err := s.heldIdentityTags()
 	if err != nil {
 		return nil, fmt.Errorf("read which items are paused: %w", err)
 	}
@@ -2906,13 +2934,16 @@ func (s *Service) previewRetentionPerIdentity(ctx context.Context, repo, domain 
 	if !p.Any() {
 		return nil, nil, nil
 	}
-	held, hErr := s.anomalies.HeldIdentityTags()
+	held, hErr := s.heldIdentityTags()
 	if hErr != nil {
 		return nil, nil, fmt.Errorf("read which items are paused: %w", hErr)
 	}
 	snaps, err := s.engine.Snapshots(ctx, repo, mode)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list snapshots for the preview: %w", err)
+	}
 	tags := identityTags(snaps)
-	if err != nil || len(tags) == 0 {
+	if len(tags) == 0 {
 		if len(held) > 0 {
 			return nil, held.names(), errRetentionPaused(len(held))
 		}
@@ -5834,6 +5865,9 @@ func (s *Service) ensureRepo(ctx context.Context, repo string, mode restic.Mode)
 	if _, err := s.backupKey(); err != nil {
 		return false, err
 	}
+	if s.inHostMemory(repo) {
+		return false, errRepoInHostMemory{}
+	}
 	if s.engine.RepoOpens(ctx, repo, mode) {
 		s.markRepoEstablished(repo) // remember it for the not-mounted guard (#55)
 		return true, nil
@@ -6980,7 +7014,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	reader := func(root string) backup.Restic {
 		m := readMode
 		m.Root = root
-		return &resticAdapter{engine: step.engine, mode: m, selectionFP: selectionFP, extraTags: readerTags}
+		return &resticAdapter{engine: step.engine, mode: m, selectionFP: selectionFP, extraTags: readerTags, missing: selectedFoldersGone(selection, configured, effective)}
 	}
 	var snapshot backup.ContainerSnapshot
 	if plan != nil {
@@ -12647,6 +12681,10 @@ type resticAdapter struct {
 	// more right before restic writes there, since the plan was checked before the
 	// container had stopped.
 	refuseWrite func(targets []string) error
+	// missing and watchEmpty are for the backup of a selection: the folders the
+	// run found gone or emptied, and whether a run that reads nothing is news.
+	missing    string
+	watchEmpty bool
 }
 
 var (
@@ -12667,7 +12705,33 @@ func (a *resticAdapter) Backup(ctx context.Context, repo string, paths, tags []s
 	out := backupSummaryFrom(sum)
 	out.SelectionFP = a.selectionFP
 	out.HasParent = a.parentFlag(ctx, repo, out)
+	out.Missing = a.missing
+	out.Emptied = a.emptiedAfterData(ctx, repo, tags, out)
 	return out, nil
+}
+
+// emptiedAfterData reports whether a backup that read no files follows one that
+// held some. A first backup of an empty folder, and a folder that was always
+// empty, are nothing to warn about. Restic before 0.17 recorded no counters, so
+// a snapshot without them counts as one that held data, and so does a history
+// that cannot be read.
+func (a *resticAdapter) emptiedAfterData(ctx context.Context, repo string, tags []string, sum backup.Summary) bool {
+	if !a.watchEmpty || !sum.Measured || sum.SourceFiles > 0 || len(tags) == 0 {
+		return false
+	}
+	snaps, err := a.engine.Snapshots(ctx, repo, a.mode)
+	if err != nil {
+		log.Printf("api: backup: could not read whether earlier backups of %s held files: %v", tags[0], err) //nolint:gosec // G706: tags are validated names
+		return true
+	}
+	return slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool {
+		return slices.Contains(sn.Tags, tags[0]) && heldData(sn)
+	})
+}
+
+// heldData reports whether a snapshot read anything, as far as it recorded.
+func heldData(sn restic.Snapshot) bool {
+	return sn.Summary == nil || sn.Summary.TotalBytesProcessed > 0
 }
 
 // backupSummaryFrom converts what restic reported about a finished backup. A
@@ -12884,19 +12948,34 @@ func stalledReason(ctx context.Context, errMsg string) (string, bool) {
 	return stall.Error(), true
 }
 
-// withUnreadableNote adds the files restic could not read to a successful
-// backup's notes. The snapshot exists, so the run succeeded, but a restore
-// from it lacks those files. It goes first because the run's tone is read
-// from the first note.
+// withUnreadableNote adds what a successful backup left out to its notes. The
+// snapshot exists, so the run succeeded, but a restore from it lacks those files,
+// and its item's old backups stay until a complete one. It goes first because
+// the run's tone is read from the first note.
 func (s *Service) withUnreadableNote(status, note string, sum backup.Summary) string {
-	if status != "success" || sum.Unreadable == "" {
+	if status != "success" || !sum.SawLess() {
 		return note
 	}
-	skipped := store.NoteFilesUnreadable + ": " + s.hostPathsIn(sum.Unreadable)
-	if note == "" {
-		return skipped
+	notes := append(s.sawLessNotes(sum), store.NoteOlderBackupsKept)
+	if note != "" {
+		notes = append(notes, note)
 	}
-	return skipped + "; " + note
+	return strings.Join(notes, "; ")
+}
+
+// sawLessNotes says what a backup left out, as its run lists it. A named folder
+// already says what an empty backup would.
+func (s *Service) sawLessNotes(sum backup.Summary) []string {
+	var notes []string
+	if sum.Missing != "" {
+		notes = append(notes, store.NoteFoldersMissing+": "+s.hostPathsIn(sum.Missing))
+	} else if sum.Emptied {
+		notes = append(notes, store.NoteBackupEmpty)
+	}
+	if sum.Unreadable != "" {
+		notes = append(notes, store.NoteFilesUnreadable+": "+s.hostPathsIn(sum.Unreadable))
+	}
+	return notes
 }
 
 func (r runsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
@@ -15070,10 +15149,31 @@ func (s *Service) BackupFlash(ctx context.Context) (_ backup.Summary, retErr err
 		s.checkPrimaryRemoteBudget(ctx, "flash", repo, settings)
 	}
 	s.collectStatsAfterItem(ctx, "flash")
+	if sum.SawLess() {
+		s.keepLastFlashZip(ctx, settings)
+		return sum, nil
+	}
 	if err := s.exportFlashZip(ctx, settings, sum.SnapshotID, mode, repo); err != nil {
 		log.Printf("flash zip export failed (backup is still valid): %v", err)
 	}
 	return sum, nil
+}
+
+// keepLastFlashZip leaves the ZIP of the last complete backup in place and says
+// so on an export run: the ZIP is the copy meant to leave the server, and this
+// backup holds less than it does.
+func (s *Service) keepLastFlashZip(ctx context.Context, settings store.Settings) {
+	if !settings.FlashZipExportEnabled || settings.FlashZipExportPath == "" {
+		return
+	}
+	runID, err := s.startRun(ctx, store.FlashTargetID, "export")
+	if err != nil {
+		log.Printf("api: flash zip export: could not start run record: %v", err)
+		return
+	}
+	if err := s.store.FinishRun(runID, "failed", "", 0, store.ReasonFlashZipKept); err != nil {
+		log.Printf("api: flash zip export: could not finish run record: %v", err)
+	}
 }
 
 // flashZipRe matches ONLY the timestamped export filenames pruneFlashZips is
@@ -15129,6 +15229,9 @@ func (s *Service) exportFlashZip(ctx context.Context, settings store.Settings, s
 	dir, err := s.flashZipExportDir(settings)
 	if err != nil {
 		return err
+	}
+	if s.inHostMemory(dir) {
+		return errors.New("flash zip export: this folder is on no mounted pool or share, so the ZIP would be written into the host's memory. Mount the pool and back up again")
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil { //nolint:gosec // G301: operator-configured sync folder must be readable by the off-server sync tool
 		return fmt.Errorf("flash zip export: mkdir: %w", err)
@@ -15305,6 +15408,11 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 			return backup.Summary{}, fmt.Errorf("files backup: %s", reason)
 		}
 	}
+	positionals := fileSetPositionals(set.SelectedPaths, src)
+	present, missing := s.sortSelectedFolders(ctx, repo, mode, set, positionals, src)
+	if len(present) == 0 {
+		return backup.Summary{}, fmt.Errorf("files backup: none of the folders selected for %q exists (%s); check whether they moved", set.Name, strings.Join(positionals, ", "))
+	}
 	// Healthchecks /start ping: deferred to here, past the source-exists + EnsureRepo
 	// guards, so the paired done/fail notifyBackup below always follows (no dangling /start).
 	s.notifyBackupStart(ctx, "files")
@@ -15324,7 +15432,6 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	// literal (excludedBranches(nil) is empty, so the unconditional append is
 	// legacy-safe). Patterns travel as typed builder arguments (excludes
 	// before --, positionals after) — never through a shell.
-	positionals := fileSetPositionals(set.SelectedPaths, src)
 	// The exclusion tail is derived against the SAME anchored view, never the
 	// raw stored list. The two halves used to be built through different
 	// lenses: positionals re-anchored against this run's resolved root, the
@@ -15352,14 +15459,17 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	})
 	sum, err := backup.BackupFileSetDir(fctx, backup.FileSetBackupDeps{
 		SourceDir:   src,
-		SourcePaths: positionals,
+		SourcePaths: present,
 		Repo:        repo,
 		TargetID:    set.ID,
 		SetName:     set.Name,
 		Excludes: append(append([]string{}, set.Excludes...),
 			excludedBranches(anchored)...),
-		Restic: &resticAdapter{engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx))},
-		Runs:   runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
+		Restic: &resticAdapter{
+			engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx)),
+			missing: strings.Join(missing, ", "), watchEmpty: true,
+		},
+		Runs: runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "files:" + set.Name},
 	})
 	s.progEnd(key, "backup", err == nil, startedAt)
 	s.notifyBackup(ctx, "files", set.Name, "files:"+set.Name, err == nil, sum, err)
@@ -15373,6 +15483,74 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 	s.collectStatsAfterItem(ctx, "files")
 	s.checkPrimaryRemoteBudget(ctx, "files", repo, settings)
 	return sum, nil
+}
+
+// selectedFoldersGone names the folders a container's stored selection holds
+// and this backup found no trace of. Folders the backup finds by itself are no
+// selection: one that went away was only ever a guess.
+func selectedFoldersGone(selection, configured, effective []string) string {
+	if len(selection) == 0 {
+		return ""
+	}
+	gone := slices.DeleteFunc(slices.Clone(configured), func(p string) bool { return slices.Contains(effective, p) })
+	return strings.Join(gone, ", ")
+}
+
+// sortSelectedFolders splits a set's selection into the folders restic gets and
+// the ones this run misses: gone from disk, or without a file where the last
+// complete backup held one. A folder that was always empty stays a normal part
+// of the selection, and a set without a selection has only its root, which the
+// guard above has already looked at.
+func (s *Service) sortSelectedFolders(ctx context.Context, repo string, mode restic.Mode, set store.FileSet, positionals []string, src string) (present, missing []string) {
+	var emptied []string
+	for _, p := range positionals {
+		if p == src {
+			present = append(present, p)
+			continue
+		}
+		if _, err := os.Stat(p); errors.Is(err, fs.ErrNotExist) {
+			missing = append(missing, p)
+			continue
+		}
+		present = append(present, p)
+		if empty, err := fileSetSourceEmpty(p); err == nil && empty {
+			emptied = append(emptied, p)
+		}
+	}
+	if len(emptied) > 0 {
+		missing = append(missing, s.foldersThatHeldFiles(ctx, repo, mode, set, emptied)...)
+	}
+	return present, missing
+}
+
+// foldersThatHeldFiles keeps the folders the last complete backup of a set held
+// files in, or its newest backup when no run says which was complete. A backup
+// that cannot be read says nothing, so every folder stays in.
+func (s *Service) foldersThatHeldFiles(ctx context.Context, repo string, mode restic.Mode, set store.FileSet, folders []string) []string {
+	snaps, err := s.snapshotsForTag(ctx, repo, mode, "fileset:"+set.Name)
+	if err != nil {
+		log.Printf("api: files backup: %q: could not read earlier backups: %v", set.Name, err) //nolint:gosec // G706: name is %q-quoted
+		return folders
+	}
+	if len(snaps) == 0 {
+		return nil
+	}
+	id := slices.MaxFunc(snaps, func(a, b restic.Snapshot) int { return strings.Compare(a.Time, b.Time) }).ID
+	if run, rErr := s.store.LastCompleteBackup(set.ID); rErr == nil && run != nil {
+		if held, ok := heldAs(snaps, run.SnapshotID); ok {
+			id = held
+		}
+	}
+	entries, err := s.lsSelfHeal(ctx, repo, id, mode)
+	if err != nil {
+		log.Printf("api: files backup: %q: could not read backup %s: %v", set.Name, shortID(id), err) //nolint:gosec // G706: name is %q-quoted
+		return folders
+	}
+	return slices.DeleteFunc(slices.Clone(folders), func(folder string) bool {
+		return !slices.ContainsFunc(entries, func(e restic.FileEntry) bool {
+			return e.Type != "dir" && isStrictDescendant(e.Path, folder)
+		})
+	})
 }
 
 // walkFileSetSource is fileSetSourceEmpty's directory walk, replaceable in
@@ -18658,6 +18836,13 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 			}
 			continue
 		}
+		if off := s.pruneLocationOff(settings, domain, source, r); off != nil {
+			if refusal == nil {
+				refusal = off
+			}
+			skipped = append(skipped, repoSkip{Name: s.refName(r), Reason: off.Error(), Note: true})
+			continue
+		}
 		prunable = append(prunable, r)
 	}
 	if len(prunable) == 0 {
@@ -18780,6 +18965,28 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	}
 	err = skippedError("this prune", skipped)
 	return paused, err
+}
+
+// pruneLocationOff is the refusal for pruning a repository in a storage location
+// that is switched off: a section's own folder there, or a copy there.
+func (s *Service) pruneLocationOff(settings store.Settings, domain, source string, r domainRepoRef) error {
+	if isOffsiteSource(source) {
+		t, err := s.offsiteTargetForSource(settings, domain, source)
+		if err != nil || t.Enabled {
+			return nil //nolint:nilerr // the append-only check right after reports a target it cannot read
+		}
+		return locationOffErr{name: placementTargetName(t)}
+	}
+	if !r.Own {
+		return nil
+	}
+	if err := s.refuseOwnFolderOff(settings, domain); err != nil {
+		if off, ok := errors.AsType[locationOffErr](err); ok {
+			return off
+		}
+		log.Printf("api: prune %s: could not read where its own folder lies: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	return nil
 }
 
 // DeleteSnapshot forgets a single snapshot by id from a domain's repo (restic
@@ -19483,6 +19690,12 @@ func (s *Service) signInStillUsed(set CloudCredSet) error {
 	if len(names) > 0 {
 		return fmt.Errorf("%s still signs in with %s", strings.Join(names, ", "), set.Name)
 	}
+	if left, err := s.store.FormerOwnFoldersSignedInWith(set.ID); err == nil && len(left) > 0 {
+		for i, repo := range left {
+			left[i] = scrubRepoLocation(repo)
+		}
+		return fmt.Errorf("old backups at %s open with %s only, so it stays", strings.Join(left, ", "), set.Name)
+	}
 	return fmt.Errorf("%s is still in use, so it stays", set.Name)
 }
 
@@ -20036,15 +20249,19 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	interrupted := !ok && s.IsShuttingDown()
 	cancelled := !ok && !interrupted && !isStall && s.backupWasCancelled(cancelKey)
 	var msg string
-	incomplete := ok && sum.Unreadable != ""
+	incomplete := ok && sum.SawLess()
 	switch {
 	case incomplete:
-		msg = fmt.Sprintf("Backup of %s finished (snapshot %s, %s), but some files could not be read and are missing from it: %s",
-			target, shortID(sum.SnapshotID), humanBytes(sum.Bytes), s.hostPathsIn(sum.Unreadable))
+		left := strings.Join(s.sawLessNotes(sum), "; ")
+		msg = fmt.Sprintf("Backup of %s finished (snapshot %s, %s), but: %s. Older backups were kept.",
+			target, shortID(sum.SnapshotID), humanBytes(sum.Bytes), left)
+		if sum.SnapshotID == "" {
+			msg = fmt.Sprintf("Backup of %s was skipped: %s. Older backups were kept.", target, left)
+		}
 		// In summary mode this message is folded away, and the round counts
 		// the item as a success, so the summary has to name it.
 		if tally := roundTallyFrom(ctx); tally != nil && c.ScheduledSummary && notify.MessagesSuppressed(ctx) {
-			tally.addIncomplete(fmt.Sprintf("- %s: %s", target, s.hostPathsIn(sum.Unreadable)))
+			tally.addIncomplete(fmt.Sprintf("- %s: %s", target, left))
 		}
 	case ok:
 		msg = fmt.Sprintf("Backup of %s succeeded (snapshot %s, %s).", target, shortID(sum.SnapshotID), humanBytes(sum.Bytes))

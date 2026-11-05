@@ -1699,7 +1699,7 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		s.mu.Unlock()
 	}
 
-	if err := s.registerPerItemEntries(); err != nil {
+	if err := s.registerPerItemEntries(settings); err != nil {
 		return err
 	}
 	if err := s.registerZFSReplicaEntries(settings); err != nil {
@@ -1714,9 +1714,10 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 // domain run (aggregated Healthchecks, then prune and off-site). The item lists
 // are read once here, so a new or changed override takes effect at the next
 // reload, which every settings save triggers. Each entry re-checks its item when
-// it fires and skips one that was removed or excluded since.
-func (s *Scheduler) registerPerItemEntries() error {
-	if s.listFn != nil {
+// it fires and skips one that was removed or excluded since. A section that is
+// off runs nothing, whatever plans its items have.
+func (s *Scheduler) registerPerItemEntries(settings store.Settings) error {
+	if s.listFn != nil && settings.ContainersEnabled {
 		targets, err := s.listFn()
 		if err != nil {
 			log.Printf("schedule: per-item containers: list targets: %v", err)
@@ -1738,7 +1739,7 @@ func (s *Scheduler) registerPerItemEntries() error {
 			}
 		}
 	}
-	if s.backupVM != nil && s.listVMsFn != nil {
+	if s.backupVM != nil && s.listVMsFn != nil && settings.VMsEnabled {
 		vms, err := s.listVMsFn()
 		if err != nil {
 			log.Printf("schedule: per-item vms: list VM targets: %v", err)
@@ -1760,7 +1761,7 @@ func (s *Scheduler) registerPerItemEntries() error {
 			}
 		}
 	}
-	if s.backupFiles != nil && s.listFileSetsFn != nil {
+	if s.backupFiles != nil && s.listFileSetsFn != nil && settings.FilesEnabled {
 		sets, err := s.listFileSetsFn()
 		if err != nil {
 			log.Printf("schedule: per-item files: list file sets: %v", err)
@@ -1782,7 +1783,7 @@ func (s *Scheduler) registerPerItemEntries() error {
 			}
 		}
 	}
-	if s.backupZFS != nil && s.listZFSFn != nil {
+	if s.backupZFS != nil && s.listZFSFn != nil && settings.ZFSEnabled {
 		ds, err := s.listZFSFn()
 		if err != nil {
 			log.Printf("schedule: per-item zfs: list datasets: %v", err)

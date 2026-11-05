@@ -356,8 +356,10 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 	})
 
 	t.Run("disjoint branches compile to two positionals in canonical order", func(t *testing.T) {
-		if err := os.MkdirAll(srcDir, 0o750); err != nil {
-			t.Fatal(err)
+		for _, branch := range []string{"a", "b"} {
+			if err := os.MkdirAll(filepath.Join(srcDir, branch), 0o750); err != nil {
+				t.Fatal(err)
+			}
 		}
 		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 		st := newMemStore(t)

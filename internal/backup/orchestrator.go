@@ -90,6 +90,17 @@ type Summary struct {
 	// Unreadable is restic's reason when it left out files it could not read,
 	// empty when it read everything.
 	Unreadable string
+	// Missing names the selected folders this backup found gone or emptied,
+	// comma-separated.
+	Missing string
+	// Emptied says it read no files at all where earlier backups held some.
+	Emptied bool
+}
+
+// SawLess reports whether the backup holds less than it was meant to, so that
+// it must not count against the good ones before it.
+func (s Summary) SawLess() bool {
+	return s.Unreadable != "" || s.Missing != "" || s.Emptied
 }
 
 // Plus adds o into s: the file disks of a VM plus each of its zvol disks. The

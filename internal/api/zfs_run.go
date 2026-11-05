@@ -444,7 +444,9 @@ func (s *Service) backupZFSToRepo(ctx context.Context, id string) (_ backup.Summ
 	// its ended context.
 	if ctx.Err() == nil {
 		for _, pl := range places {
-			s.applyRetentionTags(ctx, settings, pl, tags, zfsDomain)
+			if !sum.SawLess() {
+				s.applyRetentionTags(ctx, settings, pl, tags, zfsDomain)
+			}
 			makeLocalRepoReadable(pl.repo, s.cfg.DataDir) // a target on a mounted share as well as the own folder
 		}
 		if places[0].own() {

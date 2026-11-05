@@ -91,6 +91,39 @@ func (s *Service) restoreTargetMounted(p string) bool {
 	return bound && isStrictSubpath(root, path.Clean(filepath.ToSlash(p)))
 }
 
+// inHostMemory reports whether a folder would land in the host's RAM: on Unraid
+// the Host Data bind is /mnt, which lives in memory, so a folder on no mount below
+// it is a pool that is down. An existing repository there proves nothing, since
+// it is what an earlier write into that folder left behind. Any other bind, a
+// host that keeps its data on the bind itself, and a mount table that cannot be
+// read leave the answer at no.
+func (s *Service) inHostMemory(p string) bool {
+	if restic.IsRemoteRepo(p) || path.Clean(s.cfg.HostSourceRoot) != "/mnt" {
+		return false
+	}
+	mounts, ok := mountTable()
+	if !ok {
+		return false
+	}
+	if _, bound := mounts[path.Clean(filepath.ToSlash(s.cfg.HostMountRoot))]; !bound {
+		return false
+	}
+	if _, on := s.storageMountOf(mounts, p); on {
+		return false
+	}
+	return s.platformFn().Kind() == platform.KindUnraid
+}
+
+// errRepoInHostMemory refuses a repository inHostMemory answers yes for. It is a
+// not-mounted refusal, with the reason the person can act on.
+type errRepoInHostMemory struct{}
+
+func (errRepoInHostMemory) Error() string {
+	return "this folder is on no mounted pool or share, so a backup there would be written into the host's memory. Mount the pool and back up again"
+}
+
+func (errRepoInHostMemory) Is(target error) bool { return target == ErrBackupPathNotMounted }
+
 // folderOnStorage is the check guardRestoreFolder makes. The test binary
 // swaps it, because its temp folders lie on no mount of their own.
 var folderOnStorage = (*Service).restoreTargetMounted

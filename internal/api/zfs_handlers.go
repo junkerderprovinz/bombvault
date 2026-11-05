@@ -167,9 +167,9 @@ func (h *Handler) handlePatchZFSDataset(w http.ResponseWriter, r *http.Request) 
 		zfsFail(w, err)
 		return
 	}
-	// A cadence change is structural: without a reload the item keeps the cron
-	// entry it had, or never gets one.
-	if body.ScheduleCadence != nil {
+	// A cadence change and the switch are structural: without a reload the item
+	// keeps the cron entry it had, or never gets one.
+	if body.ScheduleCadence != nil || body.Enabled != nil {
 		if rErr := h.reloadScheduler(); rErr != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(rErr))
 			return

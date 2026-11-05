@@ -137,6 +137,117 @@ func TestEmptiedSelectionKeepsTheGoodBackups(t *testing.T) {
 	if !f.holdsFile(f.own.repo, photosTag, "docs/b.txt") {
 		f.errorf("no backup holds docs/b.txt any more, and the last run is %+v", f.lastRun("backup"))
 	}
+	f.wantWarning(f.lastRun("backup"), olderKept)
+	f.finish()
+}
+
+// olderKept is what the run of a backup that saw less than it should ends on.
+const olderKept = "older backups were kept"
+
+// wantWarning asserts a run that went through and says so in its note.
+func (f *flow) wantWarning(r run, says string) {
+	f.t.Helper()
+	if r.Status != "success" || !strings.Contains(r.Error, says) {
+		f.errorf("the run reads %s %q, want a success with a note that says %q", r.Status, r.Error, says)
+	}
+}
+
+func TestACompleteBackupAfterAGapAgesAgain(t *testing.T) {
+	f := typedFlow(t, "files")
+	f.b.setSharedCard(keep{Last: 1})
+	f.b.write(photosPath, "docs/a.txt", "one\n", 0o640)
+	f.b.write(photosPath, "pics/p.txt", "two\n", 0o640)
+	id := f.b.createSet("photos", photosPath)
+	f.selectFolders(id, photosPath, "docs", "pics")
+	f.backupSet(id)
+
+	pics := filepath.Join(f.b.hostPath(photosPath), "pics")
+	if err := os.RemoveAll(pics); err != nil {
+		f.t.Fatal(err)
+	}
+	f.backupSet(id)
+	f.backupSet(id)
+	if got := len(f.b.snapshotsIn(f.own.repo, photosTag)); got != 3 {
+		f.errorf("%d backups after two that missed a folder, want all 3 kept", got)
+	}
+
+	f.b.write(photosPath, "pics/p.txt", "back\n", 0o640)
+	f.backupSet(id)
+	if last := f.lastRun("backup"); last.Status != "success" || last.Error != "" {
+		f.errorf("the complete backup reads %s %q", last.Status, last.Error)
+	}
+	if got := len(f.b.snapshotsIn(f.own.repo, photosTag)); got != 1 {
+		f.errorf("%d backups after a complete one under keep-last 1", got)
+	}
+	f.finish()
+}
+
+func TestSmallFolderAndAFirstBackupStayPlain(t *testing.T) {
+	f := typedFlow(t, "files")
+	f.b.setSharedCard(keep{Last: 1})
+	f.b.write(photosPath, "a.txt", "small\n", 0o640)
+	id := f.b.createSet("photos", photosPath)
+	f.backupSet(id)
+	if first := f.lastRun("backup"); first.Status != "success" || first.Error != "" {
+		f.errorf("a first backup reads %s %q", first.Status, first.Error)
+	}
+	f.b.write(photosPath, "a.txt", "still small\n", 0o640)
+	f.backupSet(id)
+	if got := len(f.b.snapshotsIn(f.own.repo, photosTag)); got != 1 {
+		f.errorf("a small folder under keep-last 1 holds %d backups", got)
+	}
+	f.finish()
+}
+
+func TestAlwaysEmptySelectedFolderIsNoWarning(t *testing.T) {
+	f := typedFlow(t, "files")
+	f.b.setSharedCard(keep{Last: 1})
+	f.b.write(photosPath, "docs/a.txt", "one\n", 0o640)
+	if err := os.MkdirAll(filepath.Join(f.b.hostPath(photosPath), "inbox"), 0o755); err != nil {
+		f.t.Fatal(err)
+	}
+	id := f.b.createSet("photos", photosPath)
+	f.selectFolders(id, photosPath, "docs", "inbox")
+	f.backupSet(id)
+	f.backupSet(id)
+	if last := f.lastRun("backup"); last.Status != "success" || last.Error != "" {
+		f.errorf("a folder that was always empty gives a run that reads %s %q", last.Status, last.Error)
+	}
+	if got := len(f.b.snapshotsIn(f.own.repo, photosTag)); got != 1 {
+		f.errorf("%d backups under keep-last 1, with nothing missing", got)
+	}
+	f.finish()
+}
+
+func TestABackupThatMissedAFolderHoldsItsCopyAndAPruneByHand(t *testing.T) {
+	f := typedFlow(t, "files")
+	f.b.setSharedCard(keep{Last: 1})
+	f.b.write(photosPath, "docs/a.txt", "one\n", 0o640)
+	f.b.write(photosPath, "pics/p.txt", "two\n", 0o640)
+	id := f.b.createSet("photos", photosPath)
+	f.selectFolders(id, photosPath, "docs", "pics")
+	f.copyTo(keep{Last: 1})
+	f.backupSet(id)
+	copies := secondFolder + "/files"
+	if !f.holdsFile(copies, photosTag, "pics/p.txt") {
+		f.t.Fatalf("the copy never held pics/p.txt")
+	}
+
+	if err := os.RemoveAll(filepath.Join(f.b.hostPath(photosPath), "pics")); err != nil {
+		f.t.Fatal(err)
+	}
+	f.backupSet(id)
+	f.backupSet(id)
+	if !f.holdsFile(copies, photosTag, "pics/p.txt") {
+		f.errorf("the copy aged out the last backup that holds pics/p.txt")
+	}
+
+	f.b.signIn()
+	f.b.call("POST", "/api/prune/files", nil, nil)
+	f.b.settle()
+	if !f.holdsFile(f.own.repo, photosTag, "pics/p.txt") {
+		f.errorf("a prune by hand aged out the last backup that holds pics/p.txt")
+	}
 	f.finish()
 }
 
@@ -156,6 +267,11 @@ func TestMissingSelectedFolderKeepsTheCompleteBackup(t *testing.T) {
 
 	if !f.holdsFile(f.own.repo, photosTag, "pics/p.txt") {
 		f.errorf("no backup holds pics/p.txt any more, and the last run is %+v", f.lastRun("backup"))
+	}
+	last := f.lastRun("backup")
+	f.wantWarning(last, olderKept)
+	if !strings.Contains(last.Error, "pics") {
+		f.errorf("the run does not name the folder it missed: %q", last.Error)
 	}
 	f.finish()
 }
@@ -208,6 +324,10 @@ func TestEmptyFlashKeepsTheGoodZipAndBackups(t *testing.T) {
 	if !f.holdsFile(f.own.repo, "", "config/go") {
 		f.errorf("no backup holds config/go any more")
 	}
+	f.wantWarning(f.lastRun("backup"), olderKept)
+	if export := f.lastRun("export"); export.Status != "failed" || !strings.Contains(export.Error, "last ZIP was kept") {
+		f.errorf("the export of an empty flash reads %s %q", export.Status, export.Error)
+	}
 	f.finish()
 }
 
@@ -246,6 +366,52 @@ func TestSwitchedOffLocationTakesNoBackups(t *testing.T) {
 	if after := ids(f.b.snapshotsIn(f.own.repo, photosTag)); !slices.Equal(after, before) {
 		f.errorf("the location holds %v while it is switched off, it held %v", after, before)
 	}
+	if last := f.lastRun("backup"); last.Status != "failed" || !strings.Contains(last.Error, "switched off") {
+		f.errorf("a backup into a switched-off location reads %s %q", last.Status, last.Error)
+	}
+
+	f.b.signIn()
+	if _, raw := f.b.send("POST", "/api/prune/files", nil); !strings.Contains(string(raw), "switched off") {
+		f.errorf("a prune of a switched-off location answers %s", raw)
+	}
+	f.b.settle()
+	if after := ids(f.b.snapshotsIn(f.own.repo, photosTag)); !slices.Equal(after, before) {
+		f.errorf("the prune changed a switched-off location: %v, it held %v", after, before)
+	}
+	f.finish()
+}
+
+func TestCardOfOneTypedFolderLeavesTheOther(t *testing.T) {
+	f := typedFlow(t, "files")
+	typeOwnFolder(f.b, "flash", "user/slow/flash")
+	typeOwnFolder(f.b, "files", "user/fast/files")
+	f.own.repo = "user/fast/files"
+	sets := f.newSets()
+	var fast, slow location
+	for _, l := range f.b.locations() {
+		switch l.Where {
+		case "user/fast":
+			fast = l
+		case "user/slow":
+			slow = l
+		}
+	}
+	if fast.ID == "" || slow.ID == "" {
+		f.t.Fatalf("no location for each typed folder: %+v", f.b.locations())
+	}
+	rule := keep{Last: 1}
+	f.b.call("PUT", "/api/storage/locations/"+fast.ID+"/keep", rule, nil)
+
+	if got := f.b.locationByID(fast.ID).Retention; *got != rule {
+		f.errorf("the card of the folder reads %+v after saving %+v", *got, rule)
+	}
+	if got := f.b.locationByID(slow.ID).Retention; *got != (keep{}) {
+		f.errorf("saving one card changed the other to %+v", *got)
+	}
+	f.nextRound(sets, 1)
+	f.nextRound(sets, 2)
+	f.wantSnapshots(f.own.repo, photosTag, 1)
+	f.agrees("files", rule, false)
 	f.finish()
 }
 
@@ -362,7 +528,7 @@ func TestNowhereToBackUpIsNoSuccess(t *testing.T) {
 	if i < 0 {
 		f.t.Fatalf("no run of the full backup in %+v", all)
 	}
-	if all[i].Status == "success" && all[i].Error == "" {
+	if all[i].Status == "success" {
 		f.errorf("a full backup with nowhere to put anything is recorded as success: %+v", all[i])
 	}
 	f.finish()

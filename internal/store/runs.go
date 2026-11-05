@@ -390,6 +390,10 @@ const ReasonRestoreNoRuntime = "restore failed: the container used a GPU or runt
 // created again but left stopped, and the detail says why the restore stopped.
 const ReasonRestoreHalfDone = "restore did not finish: the container was created again, stopped, on partly restored data"
 
+// ReasonFlashZipKept is the export run of a flash backup that held less than it
+// should. The ZIP from the last complete backup stays in place.
+const ReasonFlashZipKept = "the flash backup held less than it should, so the last ZIP was kept"
+
 // Notes on a successful run, shown in a warning tone: the work was done, but
 // not as completely as the user would expect.
 const (
@@ -421,6 +425,21 @@ const (
 	// NoteFilesUnreadable is followed by ": " and restic's reason, which names
 	// a file it could not read.
 	NoteFilesUnreadable = "some files could not be read and are missing from this backup"
+
+	// NoteFoldersMissing names after ": " the selected folders a backup found
+	// gone or emptied.
+	NoteFoldersMissing = "selected folders are missing from this backup"
+
+	// NoteBackupEmpty is a backup that read no files where earlier ones held some.
+	NoteBackupEmpty = "this backup holds no files, while earlier backups held some"
+
+	// NoteOlderBackupsKept follows any of the notes above. It is what holds the
+	// item's old backups back from every aging pass until a complete backup.
+	NoteOlderBackupsKept = "older backups were kept"
+
+	// NoteStackFolderEmpty names after ": " the project folder of a stack, on the
+	// run of a member, since a stack's folder has no run of its own.
+	NoteStackFolderEmpty = "the project folder of this stack holds no files and was not backed up"
 
 	NoteDBImportKeptOld = "database imported; the previous data folder was kept"
 	NoteDBImportErrors  = "database imported with errors"
@@ -485,7 +504,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success'
-		ORDER BY started_at DESC
+		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1`, targetID)
 	run, err := scanRun(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -495,6 +514,63 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 		return nil, fmt.Errorf("LastSuccessfulBackup: %w", err)
 	}
 	return &run, nil
+}
+
+// LastCompleteBackup returns the most recent successful backup run for targetID
+// that saw all it should, or nil.
+func (r *Repo) LastCompleteBackup(targetID string) (*Run, error) {
+	row := r.db.QueryRow(`
+		SELECT `+runCols+`
+		FROM runs
+		WHERE target_id = ? AND kind = 'backup' AND status = 'success' AND snapshot_id != ''
+		  AND COALESCE(error, '') NOT LIKE '%' || ? || '%'
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT 1`, targetID, NoteOlderBackupsKept)
+	run, err := scanRun(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("LastCompleteBackup: %w", err)
+	}
+	return &run, nil
+}
+
+// TargetsWithOlderBackupsKept lists the targets whose newest successful backup
+// holds less than it should. A failed run writes no snapshot and decides nothing.
+func (r *Repo) TargetsWithOlderBackupsKept() (map[string]bool, error) {
+	rows, err := r.db.Query(`
+		SELECT target_id FROM runs AS newest
+		WHERE kind = 'backup' AND status = 'success' AND error LIKE '%' || ? || '%'
+		  AND NOT EXISTS (
+			SELECT 1 FROM runs AS later
+			WHERE later.target_id = newest.target_id AND later.kind = 'backup'
+			  AND later.status = 'success'
+			  AND (later.started_at > newest.started_at OR later.started_at = newest.started_at AND later.rowid > newest.rowid))`,
+		NoteOlderBackupsKept)
+	if err != nil {
+		return nil, fmt.Errorf("TargetsWithOlderBackupsKept: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("TargetsWithOlderBackupsKept: %w", err)
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
+// AddRunNote puts a note in front of what a finished run already says.
+func (r *Repo) AddRunNote(id, note string) error {
+	_, err := r.db.Exec(`
+		UPDATE runs SET error = CASE WHEN COALESCE(error, '') = '' THEN ? ELSE ? || '; ' || error END WHERE id = ?`, note, note, id)
+	if err != nil {
+		return fmt.Errorf("AddRunNote: %w", err)
+	}
+	return nil
 }
 
 // LastRunForTarget returns the most recent backup run for targetID whatever its

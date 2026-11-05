@@ -131,7 +131,16 @@ func (s *Service) sectionPlaces(settings store.Settings, domain, own string) ([]
 			return nil, ErrNoPlace
 		}
 	}
-	return s.sectionPlacesSwitchedOn(settings, domain, own)
+	places, err := s.sectionPlacesSwitchedOn(settings, domain, own)
+	if err != nil {
+		return nil, err
+	}
+	if places[0].own() {
+		if err := s.refuseOwnFolderOff(settings, domain); err != nil {
+			return nil, err
+		}
+	}
+	return places, nil
 }
 
 // sectionPlacesSwitchedOn is sectionPlaces by the switches of the places
@@ -196,7 +205,7 @@ func (s *Service) placesAdapter(settings store.Settings, domain string, places [
 			engine = unlockOnLockErr{ResticEngine: s.engine, s: s}
 		}
 		a.adapters = append(a.adapters, &resticAdapter{
-			engine: engine, mode: pl.mode, selectionFP: selectionFP, extraTags: s.directTags(settings, domain, pl.repo),
+			engine: engine, mode: pl.mode, selectionFP: selectionFP, extraTags: s.directTags(settings, domain, pl.repo), watchEmpty: true,
 		})
 	}
 	return a

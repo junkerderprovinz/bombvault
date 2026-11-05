@@ -100,6 +100,22 @@ export const DATA_OUTSIDE_HOST = "data folders outside Host Data were not backed
  *  ": " and restic's reason. Keep in step with NoteFilesUnreadable. */
 export const FILES_UNREADABLE = "some files could not be read and are missing from this backup";
 
+/** The note of a backup that found selected folders gone or emptied, followed by
+ *  ": " and their host paths. Keep in step with NoteFoldersMissing. */
+export const FOLDERS_MISSING = "selected folders are missing from this backup";
+
+/** The note of a backup that read no files where earlier ones held some. Keep
+ *  in step with NoteBackupEmpty. */
+export const BACKUP_EMPTY = "this backup holds no files, while earlier backups held some";
+
+/** Follows any note of a backup that holds less than it should. Keep in step
+ *  with NoteOlderBackupsKept. */
+export const OLDER_BACKUPS_KEPT = "older backups were kept";
+
+/** The note on a member's run when its stack's project folder is empty,
+ *  followed by ": " and the folder. Keep in step with NoteStackFolderEmpty. */
+export const STACK_FOLDER_EMPTY = "the project folder of this stack holds no files and was not backed up";
+
 /** Whether a run's note says the container's data was out of reach. */
 export function dataOutsideHost(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
@@ -158,6 +174,11 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database import failed: the import tool reported an error": "runReason.dbimportFailed",
   [DATA_OUTSIDE_HOST]: "runReason.dataOutsideHost",
   [FILES_UNREADABLE]: "runReason.filesUnreadable",
+  [FOLDERS_MISSING]: "runReason.foldersMissing",
+  [BACKUP_EMPTY]: "runReason.backupEmpty",
+  [OLDER_BACKUPS_KEPT]: "runReason.olderBackupsKept",
+  [STACK_FOLDER_EMPTY]: "runReason.stackFolderEmpty",
+  "the flash backup held less than it should, so the last ZIP was kept": "runReason.flashZipKept",
   "database imported; the previous data folder was kept": "runReason.dbimportKeptOld",
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
@@ -234,6 +255,10 @@ const WARNING_NOTES = [
   DATA_OUTSIDE_HOST,
   FILES_UNREADABLE,
   CONTAINERS_NOT_BACK,
+  FOLDERS_MISSING,
+  BACKUP_EMPTY,
+  OLDER_BACKUPS_KEPT,
+  STACK_FOLDER_EMPTY,
 ];
 
 /**
@@ -242,7 +267,7 @@ const WARNING_NOTES = [
  * below; any other "; " belongs to the note before it.
  */
 export function backupNotes(raw: string): string[] {
-  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK];
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY];
   const notes: string[] = [];
   for (const part of raw.split("; ")) {
     const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));

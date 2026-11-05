@@ -385,7 +385,7 @@ func (s *Service) leaveOutWhatTheTargetForgets(plan []sourceCopy, dst []restic.S
 // group, and one sharing a snapshot with another group, whose outcome depends
 // on the order the forgets run in, removes nothing here.
 func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionPolicy) map[string]bool {
-	held, err := s.anomalies.HeldIdentityTags()
+	held, err := s.heldIdentityTags()
 	if err != nil {
 		return nil
 	}
@@ -406,7 +406,7 @@ func (s *Service) forgottenByPolicy(snaps []restic.Snapshot, p restic.RetentionP
 // remove anything from snaps. A group whose outcome cannot be predicted counts
 // as one that would; a held group is left alone by the forget as well.
 func (s *Service) policyWouldForget(snaps []restic.Snapshot, p restic.RetentionPolicy) bool {
-	held, err := s.anomalies.HeldIdentityTags()
+	held, err := s.heldIdentityTags()
 	if err != nil {
 		return true
 	}
@@ -581,7 +581,7 @@ func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mod
 		paused, err = s.applyRetentionPerIdentity(ctx, dest, scope, op, mode)
 	} else {
 		var held heldIdentityTags
-		if held, err = s.anomalies.HeldIdentityTags(); err != nil {
+		if held, err = s.heldIdentityTags(); err != nil {
 			err = fmt.Errorf("read which items are paused: %w", err)
 		} else {
 			paused, err = s.applyRetentionToTags(ctx, dest, op, mode, domainIdentityTags(tags, scope), snaps, held)

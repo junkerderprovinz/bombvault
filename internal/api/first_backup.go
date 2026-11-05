@@ -180,6 +180,11 @@ func (s *Service) prepareHome(ctx context.Context, settings store.Settings, item
 	if err != nil {
 		return homeStep{}, err
 	}
+	if repoID == "" {
+		if err := s.refuseOwnFolderOff(settings, item.Domain); err != nil {
+			return homeStep{}, err
+		}
+	}
 	mode := s.primaryModeFor(settings, item.Domain, repo)
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return homeStep{}, err

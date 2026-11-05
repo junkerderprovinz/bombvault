@@ -97,6 +97,9 @@ type ownFolderStep struct {
 	// into is the storage location the own folder goes into, nil for a
 	// folder that lies in none.
 	into *store.OffsiteTarget
+	// folderCard is the card of the typed folder it goes into instead, nil when
+	// that folder has none.
+	folderCard *store.RetentionKeep
 	// keepCurrent says the section holds on to Keep as its own rule.
 	keepCurrent bool
 	// places are the storage locations the move reads and writes, by the id
@@ -182,6 +185,10 @@ func (s *Service) planOwnFolders(ctx context.Context, req ownFolderRequest) ([]o
 	return steps, nil
 }
 
+// errTypedFolderStays answers Use as own folder for a folder typed on exactly
+// the place, where a settings save has already linked what it could.
+var errTypedFolderStays = errors.New("this own folder is at the location's folder already, but it signs in differently or is append-only where the location is not, so it stays as typed")
+
 func sectionDomains(loc storageLocation) []string {
 	var out []string
 	for _, sec := range loc.Sections {
@@ -202,6 +209,9 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	}
 	fromDest, linked := s.ownFolderLocation(row)
 	if place.dest != nil {
+		if !linked && sameRepoLocation(from, to) {
+			return ownFolderStep{}, errTypedFolderStays
+		}
 		step.Same = linked && row.DestinationID == place.dest.ID || sameRepoLocation(from, to)
 	} else {
 		step.Same = here || sameRepoLocation(from, to)
@@ -219,6 +229,9 @@ func (s *Service) planOwnFolder(ctx context.Context, settings store.Settings, do
 	step.into = place.dest
 	step.keepCurrent = slices.Contains(req.KeepRules, domain)
 	step.Keep = s.localKeep(settings, domain)
+	if place.dest == nil {
+		step.folderCard = s.folderCard(to)
+	}
 	step.KeepThere = step.keepAfter(settings)
 	if validPlacementDomain(domain) {
 		if step.direct, step.WritesTo, err = s.directDefault(domain); err != nil {
@@ -429,6 +442,9 @@ func (step ownFolderStep) keepAfter(settings store.Settings) store.RetentionKeep
 	}
 	if step.into != nil {
 		return targetKeep(*step.into)
+	}
+	if step.folderCard != nil {
+		return *step.folderCard
 	}
 	return sharedLocalKeep(settings)
 }

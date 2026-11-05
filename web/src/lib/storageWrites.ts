@@ -7,6 +7,7 @@ import {
   getSettings,
   putSettings,
   renameStorageLocation,
+  saveFolderCard,
   updateDestination,
   updateDestinationConnection,
   updateOffsiteTarget,
@@ -90,7 +91,6 @@ export function writable(location: StorageLocation, records: LocationRecords): S
     case "repo":
       return new Set(withCredentials ? [...REPO, "credsRef"] : REPO);
     case "path":
-      // The folder the domains write to ages by the shared local rule.
       return new Set(["name", "retention"]);
   }
 }
@@ -133,9 +133,7 @@ export async function saveLocation(
     case "path": {
       if (patch.name !== undefined) return renameStorageLocation(location.id, patch.name);
       if (!patch.retention) return { ok: false };
-      const read = await getSettings();
-      if (!read.ok) return read;
-      return putSettings({ ...read.settings, ...keepColumns(patch.retention) });
+      return saveFolderCard(location.id, patch.retention);
     }
   }
 }
