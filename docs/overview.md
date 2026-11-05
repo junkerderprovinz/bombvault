@@ -46,7 +46,7 @@ Every switched-on section has a row with four checks:
 
 A section is green only on verified facts. A copy on this server does not count as off-site, and a location you marked **Accept without delete protection** shows a grey ring instead of an amber dot, so the section's colour follows its other checks.
 
-A scheduled section says **No backup yet** and stays neutral until its first run was due. After that it reads **Overdue** and alerts once. A section with nothing to back up, because no schedule reaches any of its entries, says **Not scheduled** and is never overdue.
+A scheduled section says **No backup yet** and stays neutral until its first run was due, counted from when its plan was last set. After that it reads **Overdue** and alerts once. **Overdue** goes by the entry that fell furthest behind its own plan, so a neighbour that runs does not hide one that stopped. An entry whose container is gone or that no schedule reaches does not count. An entry on a weekly plan of its own is not held to the section's daily plan. A section with nothing to back up, because no schedule reaches any of its entries, says **Not scheduled** and is never overdue.
 
 A click on a section opens its window with every check spelled out, the entries it counts and **Start trial restore** or **Run trial restore again**. It also says **Prune rule set** or **No prune rule set**, and the keep rule of a section's own folder counts as well as its off-site rules.
 

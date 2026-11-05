@@ -9,12 +9,12 @@ BombVault can tell you when a backup fails, when it succeeds, when one is overdu
 
 The **Notifications** card sets the rules for every channel at once:
 
-- **Notify**: **Never**, **Only on failure** or **On success and failure**, for every channel below.
+- **Notify**: **Never**, **Only on failure** or **On success and failure**, for every channel below. A fresh install starts on **Only on failure**, so a channel you fill in tells you when a backup breaks.
 - **Summarise scheduled runs**: one message per scheduled run, such as *42 of 45 succeeded*, instead of one per container or VM. A backup you start by hand still sends its own message. A frozen guest, a failed retention or a crossed growth budget goes out right away even with summaries on.
 - **Notify on container update**: one message for each container that **Update containers after a successful backup** moved to a newer image, so you can check that it still works.
-- **Report overdue backups**: once a day at 09:00 BombVault checks whether a switched-on backup is overdue, which means older than twice its schedule, and sends one message per case. The next successful backup clears it.
+- **Report overdue backups**: once a day at 09:00 BombVault checks whether a switched-on backup is overdue, which means older than twice its schedule, and sends one message per case, naming the entry that fell behind. The next successful backup clears it.
 - **Unraid notifications**: sends to Unraid's own notification system, which can forward to Pushover, email or Discord. It runs over the SSH connection from **Settings, Integrations, Host SSH**, so that key has to be authorised. On TrueNAS and other hosts it stays off.
-- **Weekly digest**: one summary a week with run counts, new backup data, whether the off-site copies are current and the top failures. Its plan is a button like every other plan, and **Off** switches it off. See [Schedules](schedules.md#plans).
+- **Weekly digest**: one summary a week with run counts, new backup data, which sections are overdue, whether the off-site copies are current and the top failures. Its plan is a button like every other plan, and **Off** switches it off. See [Schedules](schedules.md#plans).
 
 Which anomalies send a message is set under **Settings, Verify**, see [Anomalies](anomalies.md). A deferred backup sends one message when it starts to wait and one when the wait ends, not one per try.
 
@@ -37,6 +37,8 @@ Secrets such as the Matrix token, the Gotify app token and the SMTP password are
 ## Healthchecks {#healthchecks}
 
 A service such as [Healthchecks.io](https://healthchecks.io) raises the alarm when BombVault stops checking in. Paste the check's **Ping URL**, and BombVault pings it for the whole lifecycle of every backup: at the start, then on success or with `/fail`. It does so whenever a URL is set, whatever **Notify** says, so the check stays green on success even with failure-only messages. A section with nowhere to back up to counts as failed, so its check goes red instead of hearing a success.
+
+Sections on the same URL share one check. Once a backup of one has failed, the good backups of the others ping `/fail` as well and name it, so the check stays red until that entry has a good backup again or you acknowledge the failure under **Needs you**.
 
 A section can ping an address of its own: **Exception** in the card adds one, and the line says **All other sections ping this URL.**
 

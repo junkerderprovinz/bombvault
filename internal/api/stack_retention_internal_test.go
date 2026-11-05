@@ -250,7 +250,9 @@ func TestTheScheduledStackJobLeavesThePruneToTheRound(t *testing.T) {
 		"com.docker.compose.project":             "immich",
 		"com.docker.compose.project.working_dir": "/mnt/appdata/immich",
 	}}
-	s.BackupStacksAfterBulk(context.Background(), []string{"immich-server", "immich-db"})
+	if err := s.BackupStacksAfterBulk(context.Background(), []string{"immich-server", "immich-db"}); err != nil {
+		t.Fatal(err)
+	}
 	if want := []stackForget{{Tag: "stack:immich", Prune: false}}; !slices.Equal(eng.forgets, want) || eng.prunes != 0 {
 		t.Fatalf("forgets = %v, prunes = %d; want %v and no prune", eng.forgets, eng.prunes, want)
 	}

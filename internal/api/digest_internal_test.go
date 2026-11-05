@@ -17,7 +17,7 @@ func TestTheDigestNamesBackupsThatStopped(t *testing.T) {
 	if strings.Contains(msg, "All good") {
 		t.Fatalf("a digest with stopped backups says all is good:\n%s", msg)
 	}
-	if !strings.Contains(msg, "Backups for containers are overdue: last success 30d ago, expected every 1d.") {
+	if !strings.Contains(msg, `Backups for containers are overdue: "plex": last success 30d ago, expected every 1d.`) {
 		t.Fatalf("the digest does not name the overdue section:\n%s", msg)
 	}
 	if !stats.needsAttention() {

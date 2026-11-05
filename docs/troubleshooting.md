@@ -189,7 +189,7 @@ After **Discover backups** or the Emergency wizard without restored settings, of
 
 Start with **Send test** under **Settings, Notifications**. The line below the card says what happened.
 
-- **Nothing is sent at all.** Check **Notify**. With **Never** nothing goes out, and with **Only on failure** a good run stays quiet. With **Summarise scheduled runs** on, a scheduled run sends one summary at its end.
+- **Nothing is sent at all.** Check **Notify**. With **Never** no message goes out, only the pings of a Healthchecks URL, and with **Only on failure** a good run stays quiet. With **Summarise scheduled runs** on, a scheduled run sends one summary at its end.
 - **A new address.** After you change the server of Matrix, Gotify or email, the field asks for the token or password again, and the new address is saved only once you type it. BombVault does not send the old secret to a new place.
 - **Gotify** says the server refused the app token: copy it again from the application in Gotify. The **Server URL** is the base address, without `/message`.
 - **Webhook:** check that **Webhook format** fits the service. A Discord address needs **Discord**, and ntfy needs **ntfy**.

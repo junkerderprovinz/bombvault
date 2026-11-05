@@ -27,6 +27,7 @@ func (b *bombvault) age(by time.Duration) {
 		"UPDATE runs SET started_at = started_at - $1, finished_at = finished_at - $1",
 		"UPDATE file_sets SET created_at = created_at - $1",
 		"UPDATE schema_migrations SET applied_at = applied_at - $1",
+		"UPDATE offsite_targets SET created_at = created_at - $1",
 	}
 	// A database the release before wrote has no such table yet.
 	var plans int

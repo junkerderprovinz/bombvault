@@ -9,7 +9,7 @@ Everything BombVault backs up stands in one list under **Backups**: containers, 
 
 | Section | What is saved |
 |---|---|
-| **Containers** | The appdata folder plus the container definition: image, variables, ports, labels and volumes. The **Backup folders** card on the container's **Settings** tab ticks exactly which folders the backup covers, with a live count of the paths and a list of what you left out. Data a container keeps outside Host Data, such as in a TrueNAS ixVolume, is not backed up, and the run names the folders it left out. |
+| **Containers** | The appdata folder plus the container definition: image, variables, ports, labels and volumes. The **Backup folders** card on the container's **Settings** tab ticks exactly which folders the backup covers, with a live count of the paths and a list of what you left out. Data a container keeps outside Host Data, such as in a TrueNAS ixVolume or a Compose project under `/opt`, is not backed up, and the run names the folders it left out. The run also names a folder inside Host Data that is not there right now. System paths such as `/etc/localtime` or the Docker socket do not count as data. |
 | **VMs** | The disk images, the XML definition and the UEFI NVRAM, with a graceful shutdown or a live snapshot, over SSH. See [VM backups](vm-backup-ssh-setup.md). |
 | **Flash** | Unraid only. The whole USB flash (`/boot`): OS, license, array config, shares, network and plugin config. |
 | **Self-backup** | BombVault's own `/config`: its settings database, the sign-ins of the storage locations and the libvirt SSH keypair, snapshotted with SQLite `VACUUM INTO` so the database is never captured in the middle of a write. |
@@ -119,7 +119,7 @@ Settings save themselves as you change them.
 
 ## Exclude patterns {#excludes}
 
-The **Exclude patterns** card takes one pattern per line. Type paths as you see them inside the container, such as `/config/Library/Application Support/Plex Media Server/Cache`, or a bare name such as `.git`, which matches at any depth. A preview under the field shows what each line resolves to, and warns when a line matches nothing or would exclude everything. A line of `/` or `*`, or one that names a whole backed-up folder, is ignored, so an exclude can never empty a backup. To leave a whole folder out, untick it under **Backup folders** instead.
+The **Exclude patterns** card takes one pattern per line. Type paths as you see them inside the container, such as `/config/Library/Application Support/Plex Media Server/Cache`, or a bare name such as `.git`, which matches at any depth. On a folder set, type a path as the host knows it, such as `/mnt/user/data/cache`. A preview under the field shows what each line resolves to, and warns when a line matches nothing or would exclude everything. A line of `/` or `*`, or one that names a whole backed-up folder, is ignored, so an exclude can never empty a backup. To leave a whole folder out, untick it under **Backup folders** instead.
 
 For well-known images such as Plex, Jellyfin, Sonarr, Radarr, Immich and Nextcloud, the card offers the folders the app fills again on its own, such as caches, logs and thumbnails. Nothing is excluded until you press **Exclude selected**.
 
