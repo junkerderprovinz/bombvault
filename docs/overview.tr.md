@@ -40,13 +40,13 @@ Açık olan her bölümün dört denetimli bir satırı vardır:
 | Denetim | Şu olunca yeşile döner | Görebileceğin diğer ifadeler |
 |---|---|---|
 | **Yerel** | son yedek güncel | henüz yedek yok, zamanlama yok, son çalıştırma başarısız, yedek gecikmiş, her öge korunmuyor, yedek yakında gerekecek |
-| **Site dışı** | tesis dışındaki son kopya güncel | site dışı kopya yok, kopyalama sürüyor, kopya gecikmiş, kopyalama duraklatıldı, henüz kopya yok, replika başarısız |
+| **Site dışı** | tesis dışındaki son kopya güncel | site dışı kopya yok, kopyalama sürüyor, kopya gecikmiş, kararını bekliyor, henüz kopya yok, replika başarısız |
 | **Silmeye karşı koruma** | bir kurcalama testi karşı tarafın silmeyi reddettiğini kanıtladı | yok, yok ve risk kabul edildi, henüz kanıtlanmadı, test başarısız, denetimi kapalı olduğu için kanıtlanmadı |
 | **Deneme geri yüklemesi** | site dışı kopyadan bir geri yükleme geçti | hiç çalıştırılmadı, çalışıyor, başarısız, gecikmiş, yalnızca elle, bu bölüm için mümkün değil |
 
 Bir bölüm yalnızca doğrulanmış gerçeklerle yeşil olur. Bu sunucudaki bir kopya site dışı sayılmaz, **Silmeye karşı koruma olmadan kabul et** olarak işaretlediğin bir hedef kehribar noktası yerine gri bir halka gösterir, böylece bölümün rengini diğer denetimleri belirler.
 
-Zamanlanmış bir bölüm **Henüz yedek yok** der ve ilk çalıştırmasının zamanı gelene kadar nötr kalır. Sonrasında **Gecikmiş** der ve bir kez uyarır. Hiçbir zamanlama ögelerine ulaşmadığı için yedekleyecek bir şeyi olmayan bir bölüm **Zamanlanmamış** der ve hiçbir zaman gecikmiş sayılmaz.
+Zamanlanmış bir bölüm **Henüz yedek yok** der ve ilk çalıştırmasının zamanı gelene kadar nötr kalır, bu zaman planının en son ayarlandığı andan itibaren sayılır. Sonrasında **Gecikmiş** der ve bir kez uyarır. **Gecikmiş**, kendi planının en çok gerisine düşen ögeye bakar, böylece çalışan bir komşu, durmuş olanı gizlemez. Konteyneri artık olmayan ya da hiçbir zamanlamanın ulaşmadığı bir öge sayılmaz. Kendine ait haftalık bir planı olan bir öge, bölümün günlük planına tabi tutulmaz. Hiçbir zamanlama ögelerine ulaşmadığı için yedekleyecek bir şeyi olmayan bir bölüm **Zamanlanmamış** der ve hiçbir zaman gecikmiş sayılmaz.
 
 Bir bölüme tıklamak, her denetimin ayrıntılı yazıldığı, saydığı ögelerin ve **Deneme geri yüklemesini başlat** ya da **Deneme geri yüklemesini yeniden çalıştır**'ın bulunduğu penceresini açar. Ayrıca **Budama kuralı ayarlı** ya da **Budama kuralı yok** der ve bölümün kendi klasörünün saklama kuralı da site dışı kuralları kadar sayılır.
 

@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Her VM'in Ayarlar sekmesindeki **VM** kartında bir **Yöntem** vardır (VM'i **Yedekler** altında aç):
 
-- **Düzgün (kapatma)** varsayılandır. VM'i kapatır, diskleri yedekler ve yeniden başlatır, bu yüzden yedek her zaman tutarlıdır. Konuğun kapanmasını on dakikaya kadar bekler ve onu hiçbir zaman zorla kapatmaz. Bundan sonra hâlâ çalışan bir konuğa dokunulmaz ve o yedek nedeniyle başarısız olur.
-- **Canlı anlık görüntü**, çalışan bir VM'i harici bir anlık görüntü ve `blockcommit` ile yedekler. Tutarlı bir anlık görüntü için VM'de qemu guest agent'a ve diskin `/mnt/user` üzerinde değil `/mnt/cache` ya da `/mnt/diskX` üzerinde olmasına ihtiyaç duyar. Kapalı bir VM'de Canlı kendiliğinden Düzgün'e döner ve anlık görüntü alınamadığında da döner.
+- **Düzgün (kapatma)** varsayılandır. VM'i kapatır, diskleri yedekler ve yeniden başlatır, bu yüzden yedek her zaman tutarlıdır. Konuğun kapanmasını on dakikaya kadar bekler ve onu hiçbir zaman zorla kapatmaz. Bundan sonra hâlâ çalışan bir konuğa dokunulmaz ve o yedek nedeniyle başarısız olur. Konuk sonraki bir saat içinde kapanırsa BombVault onu yeniden başlatır. Bu başlatma başarısız olursa başarısız çalıştırma bunu söyler.
+- **Canlı anlık görüntü**, çalışan bir VM'i harici bir anlık görüntü ve `blockcommit` ile yedekler. Diskin `/mnt/user` üzerinde değil `/mnt/cache` ya da `/mnt/diskX` üzerinde olmasına ihtiyaç duyar. VM'de qemu guest agent varsa anlık görüntü tutarlı (quiesced) alınır, yoksa çökme tutarlıdır (crash-consistent). Kapalı bir VM'de Canlı kendiliğinden Düzgün'e döner. Anlık görüntü alınamadığında o yedek başarısız olur ve VM çalışmaya devam eder, çünkü canlı yedeklemeyi seçtiğin bir VM bunun için hiçbir zaman kapatılmaz.
+
+## Bir yedeğin dışarıda bıraktıkları {#left-out}
+
+Bir yedek başarılı olup yine de VM'in tamamını tutmayabilir. Çalıştırma o zaman neyin eksik olduğunu söyleyen, uyarı tonunda bir not taşır:
+
+- **BombVault'un okumadığı diskler.** Salt okunur bir disk, bir `lun` ve bir `network` ya da `volume` diski dışarıda bırakılır ve not her birini hedef aygıtı ve türüyle adlandırır. Yedekteki tanım onları yine de listeler. Bir cdrom ve bir disket sürücüsü adlandırılmaz. ZFS zvol olmayan düz bir blok aygıtı ise yedeği başarısız kılar.
+- **Emüle edilmiş bir TPM'in durumu.** Domain XML'inde bir yolu yoktur. Unraid VM Manager böyle bir TPM'i **OVMF TPM** BIOS'lu bir VM için kurar, bu yüzden not Unraid'de de görünür. TPM'inde bir sır tutan bir konuk, BitLocker'ın yapabildiği gibi, o durumu kaybeden bir geri yüklemeden sonra kurtarma anahtarını isteyebilir, bu yüzden o anahtarı elinin altında tut.
+
+## İnce diskler {#thin-disks}
+
+Bir geri yükleme, diski değiştirse de yeni bir disk yazsa da ince bir diski ince tutar: restic sıfır dizilerini yeni bir dosyada delik olarak yazar ve BombVault değiştirilen bir dosyanın sıfır bloklarını dosya yazıldıktan sonra `fallocate --dig-holes` ile geri verir. restic bir dosyayı değiştirirken o dosya, havuzda yer varsa, tam boyutunu kaplar. Delik açmayı desteklemeyen bir dosya sistemi diski tam boyutunda tutar ve günlük bunu söyler. Yer denetimi yeni bir diski yine de tam boyutuyla sayar.
+
+## Başarısız olan bir geri yükleme {#restore-fails}
+
+Yerinde bir geri yükleme VM'i kapatır, diskleri yazar ve tanımı ile NVRAM'i ancak diskler yazıldıktan sonra değiştirir. Başarısız olan bir geri yükleme VM'i NVRAM'iyle birlikte tanımlı bırakır. Diskleri değişmediyse ve çalışıyorsa yeniden çalışır. Değişmiş olabilirlerse kapalı kalır, çünkü yarım yazılmış bir diskten açılmak onun üzerine yazardı, ve çalıştırma bunu söyler. Aynı yedeği yeniden geri yüklemek işi tamamlar.
+
+libvirt'te kayıtlı anlık görüntüler (Unraid VM Manager anlık görüntüleri böyle almaz), VM'e dokunulmadan önce yerinde bir geri yüklemeyi durdurur, çünkü libvirt bunlara sahip bir VM'i kaldıramaz. Önce onları sil.
 
 ## Yalnızca değişen bloklar {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault böyle bir VM'i tam olarak yedekler:
 - **Canlı bir yedek anlık görüntüleri korur.** **Canlı anlık görüntü** diski okurken üstüne geçici bir katman koyar ve sonra onu yalnızca hemen altındaki image'e geri birleştirir. Zincir yedekten sonra öncekiyle aynıdır. Anlık görüntüsü olmayan bir VM her zamanki gibi davranır.
 - **Bir geri yükleme zinciri geri getirir.** Yerinde bir geri yükleme her dosyayı olduğu yere geri yazar ve Unraid'in anlık görüntü listesini geri koyar, böylece VM Manager anlık görüntüleri yeniden listeler. Orijinalin yanına bir geri yükleme dosyaları kopyanın klasörüne yazar ve geri yüklenen diskleri geri yüklenen dosyalara yönlendirir, böylece kopya hiçbir zaman orijinalin image'lerinden okumaz. Unraid'in anlık görüntü listesi yalnızca yerinde bir geri yüklemeyle geri gelir, çünkü dosyaları yedeklendikleri yerde adlandırır. Onsuz kopya aynı şekilde açılır, VM Manager ise onun için yalnızca anlık görüntü listelemez.
 - **Yalnızca değişen bloklar** konuğun gördüğünü okur, bu yüzden geri yüklemesi anlık görüntüler olmadan tek bir düzleştirilmiş qcow2 dosyası olarak gelir.
+- **Bir geri yükleme, seçtiğin yedeğin diskini geri getirir.** O yedekten sonra alınan ya da birleştirilen anlık görüntüler bunu değiştirmez. Bir anlık görüntüden önceki bir yedek, VM'i tuttuğu dosya üzerinde tanımlar, bir birleştirmeden önceki bir yedek ise katmanını geri getirir ve onun üzerinde çalışır. Daha yeni dosyalar kullanılmadan ve değişmeden olduğu yerde kalır. Bir katman tutup altındaki dosyayı tutmayan bir yedek, VM'e dokunulmadan önce reddedilir. Bir geri yüklemeden sonra VM'in tanımı hiçbir zincir listelemez, böylece libvirt zinciri geri yüklenen dosyalardan okur.
 
 ### Örnek: iki anlık görüntülü bir VM {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Unraid'in kullandığı dosya diskleri bunların hiçbirinden etkilenmez.
 Bir VM'in sanal bir TPM'i olabilir, Secure Boot ve Windows 11 konukları buna ihtiyaç duyar. Durumu diskin ve NVRAM'ın dışında yaşar, bu yüzden yalnızca bu ikisinin yedeği bir konuğu yeni, boş bir TPM ile geri getirirdi.
 
 - **Bir passthrough TPM**, konuğa verilen gerçek bir çip, yolunu domain XML'inde adlandırır. BombVault durumunu NVRAM'ın yanında SSH üzerinden kaydeder ve `virsh define`'dan önce geri yazar, NVRAM gibi elinden geleni yaparak: başarısız bir okuma ya da yazma günlüğe yazılır ve yedeği ya da geri yüklemeyi başarısız kılmaz.
-- **Emüle edilmiş bir vTPM**, TrueNAS'ın Windows 11 ve Secure Boot konukları için kurduğu türden, domain XML'inde bir durum yolu yayınlamaz. BombVault o zaman bir yol tahmin etmek yerine "no TPM path found" bildirir. Böyle bir konuğu geri yüklemeden önce kurtarma anahtarını, örneğin BitLocker anahtarını, elinin altında tut.
+- **Emüle edilmiş bir vTPM**, TrueNAS'ın Windows 11 ve Secure Boot konukları için kurduğu türden, domain XML'inde bir durum yolu yayınlamaz, bu yüzden durumu yedeklenmez. BombVault bir yol tahmin etmez ve yedek, VM'in TPM durumunun içinde olmadığını söyleyen bir notla biter. Böyle bir konuğu geri yüklemeden önce kurtarma anahtarını, örneğin BitLocker anahtarını, elinin altında tut.
 - **Bir TrueNAS VM'ine kendin TPM ekleyemezsin.** TrueNAS SCALE 25.10'un VM aygıt API'si yalnızca `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` ve `USB` kabul eder ve `TPM`'i bilinmeyen bir tür olarak reddeder.
 
-TPM işleme yalnızca birim testlidir ve vTPM'li gerçek bir TrueNAS konuğuna karşı çalıştırılmamıştır. TPM'i olmayan bir VM, Unraid'deki gibi, tamamen eskisi gibi yedeklenir ve geri yüklenir.
+TPM işleme yalnızca birim testlidir ve vTPM'li gerçek bir TrueNAS konuğuna karşı çalıştırılmamıştır. TPM'i olmayan bir VM tamamen eskisi gibi yedeklenir ve geri yüklenir.
 
 NVRAM her zamanki gibi alınır. TrueNAS onu VM başına `/var/db/system/vm/nvram/<id>_<name>_VARS.fd` içinde tutar ve domain XML'i bu yolu adlandırır.
 

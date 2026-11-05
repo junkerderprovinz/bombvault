@@ -9,20 +9,20 @@ BombVault bir yedekleme başarısız olduğunda, başarılı olduğunda, gecikti
 
 **Bildirimler** kartı tüm kanallar için kuralları bir arada belirler:
 
-- **Bildir**: aşağıdaki tüm kanallar için **Hiç**, **Yalnızca başarısızlıkta** ya da **Başarı ve başarısızlıkta**.
+- **Bildir**: aşağıdaki tüm kanallar için **Hiç**, **Yalnızca başarısızlıkta** ya da **Başarı ve başarısızlıkta**. Yeni bir kurulum **Yalnızca başarısızlıkta** ile başlar, böylece doldurduğun bir kanal bir yedek bozulduğunda sana haber verir.
 - **Zamanlanmış çalıştırmaları özetle**: her konteyner ya da VM için ayrı mesaj yerine, zamanlanmış her çalıştırma için tek mesaj, örneğin *45'ten 42'si başarılı*. Elle başlattığın bir yedekleme yine kendi mesajını gönderir. Donmuş bir konuk, başarısız bir saklama ya da aşılmış bir büyüme bütçesi, özetler açıkken bile hemen gönderilir.
 - **Container güncellemesinde bildir**: **Başarılı bir yedeklemeden sonra konteynerleri güncelle** seçeneğinin daha yeni bir image'e taşıdığı her konteyner için bir mesaj, böylece hâlâ çalıştığını kontrol edebilirsin.
-- **Geciken yedekleri bildir**: günde bir kez 09:00'da BombVault açık bir yedeğin gecikip gecikmediğine, yani zamanlamasının iki katından eski olup olmadığına bakar ve her durum için bir mesaj gönderir. Sonraki başarılı yedek bunu temizler.
+- **Geciken yedekleri bildir**: günde bir kez 09:00'da BombVault açık bir yedeğin gecikip gecikmediğine, yani zamanlamasının iki katından eski olup olmadığına bakar ve her durum için, geride kalan ögeyi adlandıran bir mesaj gönderir. Sonraki başarılı yedek bunu temizler.
 - **Unraid bildirimleri**: Pushover'a, e-postaya ya da Discord'a iletebilen Unraid'in kendi bildirim sistemine gönderir. **Ayarlar, Entegrasyonlar, Ana makine SSH** altındaki SSH bağlantısı üzerinden çalışır, bu yüzden o anahtarın yetkilendirilmiş olması gerekir. TrueNAS'ta ve diğer ana makinelerde kapalı kalır.
-- **Haftalık özet**: çalıştırma sayıları, yeni yedek verisi, site dışı kopyaların güncel olup olmadığı ve başlıca hatalarla haftada bir özet. Planı diğer planlar gibi bir düğmedir, **Kapalı** onu kapatır. Bkz. [Zamanlamalar](schedules.md#plans).
+- **Haftalık özet**: çalıştırma sayıları, yeni yedek verisi, hangi bölümlerin geciktiği, site dışı kopyaların güncel olup olmadığı ve başlıca hatalarla haftada bir özet. Planı diğer planlar gibi bir düğmedir, **Kapalı** onu kapatır. Bkz. [Zamanlamalar](schedules.md#plans).
 
 Hangi anormalliklerin mesaj göndereceği **Ayarlar, Doğrulama** altında ayarlanır, bkz. [Anormallikler](anomalies.md). Ertelenen bir yedek, beklemeye başlarken bir, bekleme biterken bir mesaj gönderir, her deneme için ayrı mesaj göndermez.
 
-Kartın altındaki **Test gönder**, açık olan her kanaldan, formda o an duran değerlerle bir test mesajı gönderir.
+Kartın altındaki **Test gönder**, açık olan her kanaldan, formda o an duran değerlerle bir test mesajı gönderir ve başarısız olan her kanalı adlandırır. Bir Healthchecks denetimi günlüğüne bir kayıt alır, durumu ise olduğu gibi kalır.
 
 ## Kanallar {#channels}
 
-**Kanallar** kartında her kanalın kendi anahtarı vardır ve alanları açıldıktan sonra görünür. Her kanal kendi zaman sınırıyla kendi başına gönderir, hiç yanıt vermeyen bir ana makine diğerlerini bekletmez ve hiçbir kanalın almadığı mesaj yeniden denenir.
+**Kanallar** kartında her kanalın kendi anahtarı vardır ve alanları açıldıktan sonra görünür. Her kanal kendi zaman sınırıyla kendi başına gönderir, hiç yanıt vermeyen bir ana makine diğerlerini bekletmez. Hiçbir kanalın almadığı bir gecikme, bütçe ya da anormallik uyarısı yeniden denenir, haftalık özet de öyle. Tek bir yedeğin mesajı ya da bir özet bir kez gönderilir.
 
 | Kanal | Alanlar | Notlar |
 |---|---|---|
@@ -36,7 +36,9 @@ Matrix belirteci, Gotify uygulama belirteci ve SMTP parolası gibi gizli bilgile
 
 ## Healthchecks {#healthchecks}
 
-[Healthchecks.io](https://healthchecks.io) gibi bir servis, BombVault haber vermeyi bıraktığında alarm verir. Denetimin **Ping URL'si**'ni yapıştır, BombVault her yedeğin tüm yaşam döngüsü boyunca ona ping atar: başlangıçta, sonra başarıda ya da `/fail` ile. Bir URL ayarlı olduğu sürece, **Bildir** ne derse desin bunu yapar, böylece yalnızca başarısızlık mesajlarıyla bile denetim başarıda yeşil kalır.
+[Healthchecks.io](https://healthchecks.io) gibi bir servis, BombVault haber vermeyi bıraktığında alarm verir. Denetimin **Ping URL'si**'ni yapıştır, BombVault her yedeğin tüm yaşam döngüsü boyunca ona ping atar: başlangıçta, sonra başarıda ya da `/fail` ile. Bir URL ayarlı olduğu sürece, **Bildir** ne derse desin bunu yapar, böylece yalnızca başarısızlık mesajlarıyla bile denetim başarıda yeşil kalır. Yedekleyecek hiçbir yeri olmayan bir bölüm başarısız sayılır, bu yüzden denetimi bir başarı duymak yerine kırmızıya döner.
+
+Aynı URL'yi kullanan bölümler tek bir denetimi paylaşır. Birinin yedeği başarısız olduğunda, diğerlerinin iyi yedekleri de `/fail` ping'i atar ve onu adlandırır, böylece denetim o ögenin yeniden iyi bir yedeği olana ya da başarısızlığı **İlgi bekliyor** altında onaylayana kadar kırmızı kalır.
 
 Bir bölüm kendi adresine ping atabilir: karttaki **İstisna** bir tane ekler, satırda **Diğer tüm bölümler bu URL'ye ping atar.** yazar.
 

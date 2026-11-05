@@ -27,7 +27,7 @@ Tüm saatler sunucunun saat dilimindedir. Unraid'de bu sistemin kendi saat dilim
 
 **Tam yedekleme** her şey için varsayılan plandır. Onu **Yedeklemeler ne zaman çalışır** ayarlar: her bölümü sırayla yedekleyen tek bir geçiş, konteynerler, VM'ler, flash, klasörler, ZFS veri kümeleri ve en son öz yedek. Altındaki satır hangi bölümleri içerdiğini söyler. **Kapalı** onu kapatır, o zaman yalnızca kendi planı olanlar çalışır.
 
-- **Başlangıçtan sonra kaçırılan yedeklemeleri telafi et**: sunucu planlanan zamanda kapalıysa BombVault o yedeği açıldıktan yaklaşık iki dakika sonra çalıştırır.
+- **Başlangıçtan sonra kaçırılan yedeklemeleri telafi et**: sunucu planlanan zamanda kapalıysa BombVault o yedeği açıldıktan yaklaşık iki dakika sonra çalıştırır. Bir ögenin kendi planı ve bir site dışı plan, sonraki planlanan zamanlarını bekler, hiç başarılı olmamış bir plan da öyle.
 - **Öncesi ve sonrası komutları**: **Tam yedekleme öncesi komut** geçiş başlamadan önce sunucuda `sh -c` ile çalışır, örneğin bir servisi durduran bir betik. Başarısız olursa tam yedekleme yine de çalışır. **Tam yedekleme sonrası komut** her bölüm denendikten sonra, biri başarısız olsa bile, bir kez çalışır, bu, tüm sunucunun korunduğunu doğrulayan bir ping için uygundur. Tek bir konteynerin komutları kendi sayfasındadır.
 
 Yedekler sayfasındaki **Şimdi tümünü yedekle**, aynı geçişi elle, açık olan tüm bölümler üzerinde başlatır.
@@ -58,7 +58,7 @@ Yedek, konteyner durdurulmuşken alınanla aynı yollara ve etiketlere düşer, 
 
 ## Yedeklemeden sonra güncellemeler {#updates}
 
-- **Başarılı bir yedeklemeden sonra konteynerleri güncelle**, yeni bir image'i yalnızca öncesindeki yedek bittikten sonra çeker, böylece taze bir geri yükleme noktası her zaman önce vardır. Varsayılan olarak kapalıdır, tek bir konteyner kendi sayfasında **Başarılı bir yedeklemeden sonra güncelle** altında farklı ayarlanabilir.
+- **Başarılı bir yedeklemeden sonra konteynerleri güncelle**, yeni bir image'i yalnızca öncesindeki yedek bittikten sonra çeker, böylece taze bir geri yükleme noktası her zaman önce vardır. Varsayılan olarak kapalıdır, tek bir konteyner kendi sayfasında **Başarılı bir yedeklemeden sonra güncelle** altında farklı ayarlanabilir. Yeni image'e yalnızca senin ayarladıkların taşınır: hâlâ eski image'dakiyle aynı olan değişkenler, etiketler, komut, kullanıcı ve healthcheck yenisini izler. Yeni image ile konteyner oluşturulamaz ya da başlatılamazsa konteyner çalıştığı image'e geri döner, güncelleme başarısız olarak görünür ve sonraki yedek yeniden dener. Bu yüzden kapalı kalan bir konteyner, yedeğin çalıştırmasında ve bir bildirimde adıyla belirtilir.
 - **Güncellemeden sonra eski image'i kaldır**, konteynerin geride bıraktığı image'i siler. Başka konteynerlerin paylaştığı bir temel image hiçbir zaman silinmez.
 - **Bir konteyneri güncelledikten sonra Unraid'in güncelleme durumunu yenile**, Unraid'in o konteyner için güncelleme bannerını temizler.
 

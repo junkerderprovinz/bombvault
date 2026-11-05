@@ -11,7 +11,7 @@ Bu sayfa her kutucuğu ve kartlarını listeler, her birini derinlemesine anlata
 
 ## Genel {#general}
 
-- **Bölümler**, her bölümü açar ya da kapatır: **Konteynerler**, **VM'ler**, **Flash**, **Klasörler**, **ZFS veri kümeleri** ve **Öz yedek**. Kapalı bir bölüm yedeklenmez ve ögeleri sayılmaz. **Flash** yalnızca Unraid'de görünür.
+- **Bölümler**, her bölümü açar ya da kapatır: **Konteynerler**, **VM'ler**, **Flash**, **Klasörler**, **ZFS veri kümeleri** ve **Öz yedek**. Kapalı bir bölüm, bir ögenin kendi planı dahil hiçbir zamanlamayla yedeklenmez ve ögeleri sayılmaz. **Şimdi yedekle** yine de çalışır. **Flash** yalnızca Unraid'de görünür.
 - **Konteynerler**, tüm konteynerler için geçerli olanı barındırır, örneğin **Otomatik veritabanı dökümleri**. Tek bir konteyneri etkileyen her şey onun sayfasındadır. Bkz. [Veritabanı dökümleri](backups.md#database-dumps).
 
 ## Görünüm {#look}
@@ -97,6 +97,6 @@ Kurtarma kiti, anahtar emanetleri ve yedekleri kalıcı silme gibi bazı şeyler
 
 ## Bilgi {#info}
 
-- **Sürüm**: BombVault, GlimStone, restic ve rclone, **Güncellemeleri denetle** ve henüz görmediğin değişiklikleri sayıp **Yenilikler**'i açan **Yeni** ile.
+- **Sürüm**: BombVault, GlimStone, restic ve rclone, **Güncellemeleri denetle** ve henüz görmediğin değişiklikleri sayıp onları listeleyen bir pencere açan **Yeni** ile.
 - **Yardım**: **Kılavuz** bu belgeleri açar, **Hata bildirimi** bir GitHub issue'su için temizlenmiş bir ZIP indirir. Giriş parolası gerekir.
 - **BombVault hakkında**: proje, lisansı ve yazara nasıl ulaşılacağı.

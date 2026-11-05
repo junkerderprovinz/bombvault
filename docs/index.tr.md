@@ -23,7 +23,7 @@ Her konteyner, VM, klasör kümesi, flash sürücü, her ZFS veri kümesi ve Bom
 | **Konteynerler** | Appdata dizini ve konteyner tanımı (image, ortam değişkenleri, portlar, etiketler, birimler). |
 | **VM'ler** | VM disk image'leri, XML tanımı ve UEFI NVRAM, SSH üzerinden yedeklenir (libvirt bağlaması yok). |
 | **Flash** | Tüm USB flash (`/boot`): işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması. |
-| **Öz yedek** | BombVault'un kendi `/config`'i: ayar veritabanı, hedeflerinin oturum açma bilgileri ve libvirt SSH anahtar çifti. |
+| **Öz yedek** | BombVault'un kendi `/config`'i: ayar veritabanı, hedeflerinin oturum açma bilgileri, libvirt SSH anahtar çifti, ZFS sunucularının anahtarı ile sabitlenmiş ana makine anahtarları ve sertifikalar. |
 | **Klasörler** | Sunucudaki herhangi bir klasör, bir klasör kümesi olarak, her birinin isteğe bağlı hariç tutma desenleri vardır. |
 | **ZFS veri kümeleri** | Bir veri kümesi ve altındaki her veri kümesi, tek bir ZFS anlık görüntüsünden okunur ve bir klasör gibi saklanır. Bkz. [ZFS veri kümeleri](zfs-datasets.md). |
 
@@ -102,4 +102,4 @@ Ad ve marka lisanslanmaz. AGPL yalnızca kaynak kodu kapsar: "BombVault", logosu
 - **Issue'lar:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "Ana makine üzerinde root'a denk denetim"
-    Docker soketi aracılığıyla BombVault konteynerleri durdurabilir, kaldırabilir ve yeniden oluşturabilir, appdata'yı okuyup yazabilir, VM yedekleme için de `virsh` çalıştırmak üzere SSH ile ana makinede oturum açar. Web arayüzüne ulaşabilen herkes fiilen ana makinede root'tur. BombVault'u yalnızca güvenilir, dışa açık olmayan bir ağda çalıştır ve **Ayarlar, Güvenlik** altında bir giriş parolası ayarla. Kurtarma kiti, anahtar emanetleri ve bir hedefteki yedekleri silme bunu gerektirir. Tam güvenlik modeli için bkz. [Yapılandırma](configuration.md#security-model).
+    Docker soketi aracılığıyla BombVault konteynerleri durdurabilir, kaldırabilir ve yeniden oluşturabilir, appdata'yı okuyup yazabilir, VM yedekleme için de `virsh` çalıştırmak üzere SSH ile ana makinede oturum açar. Web arayüzüne ulaşabilen herkes fiilen ana makinede root'tur. BombVault'u yalnızca güvenilir, dışa açık olmayan bir ağda çalıştır ve **Ayarlar, Güvenlik** altında bir giriş parolası ayarla. Kurtarma kiti, anahtar emanetleri, flash ZIP'i, bir flash yedeğini ya da öz yedeği dışa aktarma ve bir hedefteki yedekleri silme bunu gerektirir. Tam güvenlik modeli için bkz. [Yapılandırma](configuration.md#security-model).

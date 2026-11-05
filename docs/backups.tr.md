@@ -9,10 +9,10 @@ BombVault'un yedeklediği her şey **Yedekler** altındaki tek bir listede durur
 
 | Bölüm | Ne saklanır |
 |---|---|
-| **Konteynerler** | Appdata klasörü ve konteyner tanımı: image, değişkenler, portlar, etiketler ve birimler. Konteynerin **Ayarlar** sekmesindeki **Yedeklenecek klasörler** kartı, yedeğin tam olarak hangi klasörleri kapsadığını işaretler, yolların canlı sayısı ve dışarıda bıraktıklarının listesiyle. Bir konteynerin Host Data dışında tuttuğu veri, örneğin bir TrueNAS ixVolume'unda, yedeklenmez ve çalıştırma dışarıda bıraktığı klasörleri söyler. |
+| **Konteynerler** | Appdata klasörü ve konteyner tanımı: image, değişkenler, portlar, etiketler ve birimler. Konteynerin **Ayarlar** sekmesindeki **Yedeklenecek klasörler** kartı, yedeğin tam olarak hangi klasörleri kapsadığını işaretler, yolların canlı sayısı ve dışarıda bıraktıklarının listesiyle. Bir konteynerin Host Data dışında tuttuğu veri, örneğin bir TrueNAS ixVolume'unda ya da `/opt` altındaki bir Compose projesinde, yedeklenmez ve çalıştırma dışarıda bıraktığı klasörleri söyler. Çalıştırma, Host Data içinde şu an bulunmayan bir klasörü de söyler. `/etc/localtime` ya da Docker soketi gibi sistem yolları veri sayılmaz. |
 | **VM'ler** | Disk image'leri, XML tanımı ve UEFI NVRAM, düzgün kapatma ya da canlı anlık görüntüyle, SSH üzerinden. Bkz. [VM yedekleri](vm-backup-ssh-setup.md). |
 | **Flash** | Yalnızca Unraid. Tüm USB flash (`/boot`): işletim sistemi, lisans, dizi yapılandırması, paylaşımlar, ağ ve eklenti yapılandırması. |
-| **Öz yedek** | BombVault'un kendi `/config`'i: ayar veritabanı, hedeflerin oturum açma bilgileri ve libvirt SSH anahtar çifti, veritabanı yazma ortasında hiç yakalanmasın diye SQLite `VACUUM INTO` ile anlık görüntüsü alınır. |
+| **Öz yedek** | BombVault'un kendi `/config`'i: ayar veritabanı, hedeflerin oturum açma bilgileri, libvirt SSH anahtar çifti, ZFS sunucularının anahtarı ile sabitlenmiş ana makine anahtarları ve sertifikalar, veritabanı yazma ortasında hiç yakalanmasın diye SQLite `VACUUM INTO` ile anlık görüntüsü alınır. |
 | **Klasörler** | Sunucudaki herhangi bir klasör, bir paylaşım, belgelerin ya da bir fotoğraf kitaplığı gibi, bir klasör kümesi olarak, isteğe bağlı hariç tutma desenleriyle. Klasör kümelerinin de diğer her şey gibi zamanlamaları, saklaması, site dışı kopyaları, denetimleri ve geri yükleme tatbikatları vardır. |
 | **ZFS veri kümeleri** | Bir veri kümesi ve altındaki her veri kümesi, hepsi aynı andan olsun diye tek bir ZFS anlık görüntüsünden okunur ve restic ile bir klasör gibi saklanır. Bir ZFS ögesi ikinci bir ZFS sunucusunda blok blok aynı bir replika da tutabilir. Bkz. [ZFS veri kümeleri](zfs-datasets.md). |
 
@@ -35,7 +35,7 @@ Artık kurulu olmayan ama hâlâ yedekleri olan ögeler **Kurulu değil (yalnız
 Sayfanın ana eylemi sağ altta yüzer: **Şimdi tümünü yedekle**, açık olan her bölüm üzerinde bir geçiş başlatır. **Diğer** gerisini barındırır:
 
 - **Seç** bir seçim başlatır, aşağıya bak.
-- **Yedekleri keşfet**, hedeflerin tuttuklarını okur ve ögeleri bunlardan yeniden kurar, örneğin temiz bir kurulumdan sonra. Yeniden kurulan bölümlerin site dışı kopyaları, varsayılanlarını onaylayana kadar duraklar, bkz. [Yeniden kurulumdan sonra](offsite-recovery.md#after-a-rebuild).
+- **Yedekleri keşfet**, hedeflerin tuttuklarını okur ve ögeleri bunlardan yeniden kurar, örneğin temiz bir kurulumdan sonra. Kendine ait verisi olmayan bir konteynerin anlık görüntüsü yoktur ve deponun yanında saklanan tanımdan geri gelir. Yeniden kurulan bölümlerin site dışı kopyaları, bunların yedeklerini bu sunucunun kendi yedekleri olarak alana kadar bekler, bkz. [Yeniden kurulumdan sonra](offsite-recovery.md#after-a-rebuild).
 - **Bu sunucuyla ZFS bağlantısı**, ZFS bölümünün SSH testini açar, bkz. [ZFS veri kümeleri](zfs-datasets.md#requirements).
 - ZFS kutucuğu seçiliyken **Şimdi tümünü çoğalt**, her ZFS ögesinin replikasını gönderir.
 
@@ -98,7 +98,7 @@ Aşağıdaki kartlar ögenin türüne bağlıdır:
 | Konteyner | **Yedeklenecek klasörler** (hangi eşlenmiş klasörlerin yedeklendiği, **Önbellek klasörlerini atla (CACHEDIR.TAG)** ile), **Hariç tutma desenleri**, **Diğer konteynerleri durdur**, **Öncesi ve sonrası komutları**, **Veritabanı**, **Uygulama meşgulken**, **Başarılı bir yedeklemeden sonra güncelle**, **Durdurma yerine anlık görüntü**, **Önceki adlar** |
 | VM | **Yöntem** (**Düzgün (kapatma)** ya da **Canlı anlık görüntü**) ve **Yalnızca değişen bloklar** içeren **VM**, bkz. [VM yedekleme kılavuzu](vm-backup-ssh-setup.md#per-vm-method) |
 | Klasör kümesi | **Klasör** ve **Hariç tutma desenleri** |
-| Flash sürücü | Her flash yedeğini seçtiğin bir klasöre düz bir `.zip` olarak yazan **Flash ZIP dışa aktarma** |
+| Flash sürücü | Her flash yedeğini seçtiğin bir klasöre düz bir `.zip` olarak yazan **Flash ZIP dışa aktarma**. Tek adımda yazar, böylece bir eşitleme aracı hiçbir zaman yarım bir dosya görmez. Olması gerekenden az şey tutan bir flash yedeği son ZIP'i yerinde bırakır ve dışa aktarmanın çalıştırması bunu söyler. |
 | ZFS veri kümesi | alt veri kümeleri, durdurulacak konteynerler ve anlık görüntü etrafındaki komutlar, **Replika** ve **Anlık görüntü erişimini dene**, bkz. [ZFS veri kümeleri](zfs-datasets.md) |
 
 Ayarlar sen değiştirdikçe kendiliğinden kaydedilir.
@@ -119,7 +119,7 @@ Ayarlar sen değiştirdikçe kendiliğinden kaydedilir.
 
 ## Hariç tutma desenleri {#excludes}
 
-**Hariç tutma desenleri** kartı satır başına bir desen alır. Yolları konteynerin içinde gördüğün gibi yaz, örneğin `/config/Library/Application Support/Plex Media Server/Cache`, ya da her derinlikte eşleşen `.git` gibi çıplak bir ad. Alanın altındaki bir önizleme her satırın neyi gösterdiğini gösterir ve bir satır hiçbir şeyle eşleşmiyorsa ya da her şeyi hariç tutacaksa uyarır. `/` ya da `*` olan bir satır veya yedeklenen bir klasörün tamamını adlandıran bir satır yok sayılır, bu yüzden bir hariç tutma bir yedeği hiçbir zaman boşaltamaz. Bir klasörün tamamını dışarıda bırakmak için bunun yerine **Yedeklenecek klasörler** altında işaretini kaldır.
+**Hariç tutma desenleri** kartı satır başına bir desen alır. Yolları konteynerin içinde gördüğün gibi yaz, örneğin `/config/Library/Application Support/Plex Media Server/Cache`, ya da her derinlikte eşleşen `.git` gibi çıplak bir ad. Bir klasör kümesinde yolu ana makinenin bildiği gibi yaz, örneğin `/mnt/user/data/cache`. Alanın altındaki bir önizleme her satırın neyi gösterdiğini gösterir ve bir satır hiçbir şeyle eşleşmiyorsa ya da her şeyi hariç tutacaksa uyarır. `/` ya da `*` olan bir satır veya yedeklenen bir klasörün tamamını adlandıran bir satır yok sayılır, bu yüzden bir hariç tutma bir yedeği hiçbir zaman boşaltamaz. Bir klasörün tamamını dışarıda bırakmak için bunun yerine **Yedeklenecek klasörler** altında işaretini kaldır.
 
 Plex, Jellyfin, Sonarr, Radarr, Immich ve Nextcloud gibi tanınmış image'ler için kart, uygulamanın kendi kendine yeniden doldurduğu klasörleri, örneğin önbellekleri, günlükleri ve küçük resimleri sunar. **Seçilenleri hariç tut**'a basana kadar hiçbir şey hariç tutulmaz.
 
@@ -137,6 +137,8 @@ Başarısız bir döküm çevresindeki yedeği başarısız kılmaz. Nedeniyle b
 
 - **Öncesi ve sonrası komutları** konteynerin içinde `sh -c` ile çalışır, örneğin bir önbelleği diske yazmak için. Yedek öncesi başarısız bir komut yedeği iptal eder. 75 koduyla çıkan bir yedek öncesi komut, bunun yerine zamanlanmış bir yedeği erteler, aşağıya bak.
 - **Diğer konteynerleri durdur**, bu konteyner yedeklenirken durdurulacak konteynerleri, örneğin veritabanını, adlandırır. Sonra Compose `depends_on` sırasıyla yeniden başlarlar ve varsayılan olarak her biri, sonraki başlamadan önce sağlıklı bildirmelidir. Bekleme ve zaman aşımı **Ayarlar, Zamanlama** altındaki **Sıra** kartındaki **Yedeklemeden sonra yeniden başlatma**'dadır.
+- Duran bir konteynerin ağ, PID ya da IPC ad alanını `--net=container:` veya Compose'un `network_mode: service:` ayarıyla paylaşan bir konteyner, listede olmasa bile onunla birlikte durur ve başlar, ve katıldığı konteynerden sonra başlar. Yeniden başlatılan bir konteyner yeni bir ağ alır, eski ağda çalışmaya devam eden bir konteynerin ise yalnızca loopback'i kalırdı. Listenin kendisi senin ayarladığın gibi kalır. Böyle bir konteyner durdurulamadıysa, çalıştırma onun yeniden başlatılana kadar ağı olmadığını söyler. Aynısı, kendini hiç durdurmayan ve listeye konamayan BombVault'un kendi konteyneri için de geçerlidir.
+- Sonrasında yeniden çalışmayan bir konteyner, yedeğin kendisi başarısız olduğunda da, çalıştırmada ve bir bildirimde adıyla belirtilir.
 
 ## Uygulama meşgulken {#app-busy}
 
@@ -177,7 +179,7 @@ Kendi denetimin için, uygulama meşgulken **Yedekleme öncesi komut**'un 75 kod
 restic motor olarak kalır, ama bir dışa aktarma sana ne BombVault'a ne de restic'e ihtiyaç duyan bir kopya verir.
 
 - Bir ögenin sayfasında **Diğer** altındaki **Konteyneri dışa aktar** ve **VM'yi dışa aktar**, bir kopyayı şu an olduğu haliyle, deponun yanına yazar: konteynerin yedeklenecek klasörleri ve Unraid şablonu ya da VM'in disk image'leri ve tanımı, `virsh define` ile geri yüklenebilir.
-- Bir anlık görüntüdeki **Dışa aktar**, saklanmış bir yedeği sunucudaki dışa aktarma klasörüne tar, zip ya da kendi restic deposu olarak yazar ve tek bir anlık görüntüyü ya da hepsini alabilir.
+- Bir anlık görüntüdeki **Dışa aktar**, saklanmış bir yedeği sunucudaki dışa aktarma klasörüne tar, zip ya da kendi restic deposu olarak yazar ve tek bir anlık görüntüyü ya da hepsini alabilir. Bir flash yedeği ve bir öz yedek anahtarlar tutar, bu yüzden bunları dışa aktarmak bir giriş parolası ve örneğin kendisinde bir oturum açma gerektirir.
 
 Dışa aktarmalar varsayılan olarak düz dosyalardır. **Ayarlar, Sistem** altındaki **Dışa aktarmaları age ile şifrele**, onları, flash ZIP'i dahil, her biri bir age açık anahtarı ya da bir SSH açık anahtarı olan, listelediğin alıcılar için mühürler. Onları sonra sunucu dışında eşleşen özel anahtarla çözersin. Şifreleme açıkken ve geçerli alıcı yokken, bir dışa aktarma hiçbir zaman düz dosya yazmak yerine açık bir hatayla başarısız olur.
 
