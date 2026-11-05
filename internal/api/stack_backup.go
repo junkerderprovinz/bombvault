@@ -88,7 +88,7 @@ func (s *Service) backupStackDir(ctx context.Context, project string, folder sta
 	if err := s.EnsureRepo(ctx, repo, mode); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
-	if err := s.refuseLinkOutOfMount([]string{dir}); err != nil {
+	if err := s.refuseLinkOutOfMount([]string{folder.dir}); err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
 	tag := stackSnapshotTag(project)
