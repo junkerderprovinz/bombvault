@@ -116,6 +116,14 @@ export const OLDER_BACKUPS_KEPT = "older backups were kept";
  *  followed by ": " and the folder. Keep in step with NoteStackFolderEmpty. */
 export const STACK_FOLDER_EMPTY = "the project folder of this stack holds no files and was not backed up";
 
+/** The note of a VM backup that does not hold the state of the VM's TPM. Keep
+ *  in step with NoteVMTPMLeftOut. */
+export const VM_TPM_LEFT_OUT = "the state of the VM's TPM is not in this backup";
+
+/** The note of a VM backup that does not read some of the VM's disks, followed
+ *  by ": " and the disks with their kinds. Keep in step with NoteVMDisksLeftOut. */
+export const VM_DISKS_LEFT_OUT = "some disks of the VM are not in this backup";
+
 /** Whether a run's note says the container's data was out of reach. */
 export function dataOutsideHost(raw: string | null | undefined): boolean {
   const text = raw?.trim() ?? "";
@@ -183,6 +191,9 @@ export const RUN_REASON_PREFIXES: Record<string, TranslationKey> = {
   "database imported with errors": "runReason.dbimportErrors",
   [RESTORE_NO_RUNTIME]: "runReason.restoreNoRuntime",
   "restore did not finish: the container was created again, stopped, on partly restored data": "runReason.restoreHalfDone",
+  "restore did not finish: the VM was left off on partly restored disks": "runReason.vmRestoreHalfDone",
+  [VM_TPM_LEFT_OUT]: "runReason.vmTpmLeftOut",
+  [VM_DISKS_LEFT_OUT]: "runReason.vmDisksLeftOut",
   [RESTORED_WITHOUT_RUNTIME]: "runReason.restoredWithoutRuntime",
   [RESTORED_WITHOUT_LINKS]: "runReason.restoredWithoutLinks",
   [CONTAINERS_NOT_BACK]: "runReason.containersNotBack",
@@ -259,6 +270,8 @@ const WARNING_NOTES = [
   BACKUP_EMPTY,
   OLDER_BACKUPS_KEPT,
   STACK_FOLDER_EMPTY,
+  VM_TPM_LEFT_OUT,
+  VM_DISKS_LEFT_OUT,
 ];
 
 /**
@@ -267,7 +280,7 @@ const WARNING_NOTES = [
  * below; any other "; " belongs to the note before it.
  */
 export function backupNotes(raw: string): string[] {
-  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY];
+  const heads = [FILES_UNREADABLE, DATA_OUTSIDE_HOST, CONTAINERS_NOT_BACK, FOLDERS_MISSING, BACKUP_EMPTY, OLDER_BACKUPS_KEPT, STACK_FOLDER_EMPTY, VM_TPM_LEFT_OUT, VM_DISKS_LEFT_OUT];
   const notes: string[] = [];
   for (const part of raw.split("; ")) {
     const starts = part.startsWith("database dump ") || heads.some((h) => part === h || part.startsWith(h + ": "));

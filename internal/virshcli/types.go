@@ -43,6 +43,9 @@ type DomainInfo struct {
 	// without a <tpm> element and for a shape tpm.go does not trust, since
 	// either way there is nothing safe to capture.
 	TPMPath string
+	// TPMLeftOut is set for a <tpm> with no path to read its state from, such
+	// as an emulated one, whose state no backup holds.
+	TPMLeftOut bool
 	// Title is the trimmed <title> element. Only TrueNAS 26 relies on it,
 	// where the domain name is a UUID and the VM's own name lives here.
 	Title string
@@ -63,6 +66,16 @@ type DomainInfo struct {
 	// path, so each is read from a ZFS snapshot as a raw image instead (see
 	// BackupZvolDisk in internal/backup and zvol.go).
 	BlockDisks []DiskRef
+	// LeftOutDisks are the disks with data that a backup does not read. A cdrom
+	// or a floppy is not among them.
+	LeftOutDisks []LeftOutDisk
+}
+
+// LeftOutDisk is a disk a backup does not read, and what kind of disk it is:
+// "read-only", "lun", or the libvirt disk type, such as "network" or "volume".
+type LeftOutDisk struct {
+	Dev  string
+	Kind string
 }
 
 // Virsh is the host-control surface the VM backup orchestrator depends on.

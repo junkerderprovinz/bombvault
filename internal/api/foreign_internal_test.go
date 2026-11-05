@@ -543,6 +543,7 @@ func TestForeignInventoryGrouping(t *testing.T) {
 		{ID: "bbbbbbbb22222222", Time: "2026-07-02T10:00:00Z", Tags: []string{"container:web"}},
 		{ID: "cccccccc33333333", Time: "2026-07-03T10:00:00Z", Tags: []string{"container:alpha"}},
 		{ID: "dddddddd44444444", Time: "2026-07-04T10:00:00Z", Tags: []string{"vm:win11"}},
+		{ID: "dddddddd44444445", Time: "2026-07-04T10:00:00Z", Tags: []string{"vm:win11:zvol:vda"}},
 		{ID: "eeeeeeee55555555", Time: "2026-07-05T10:00:00Z", Tags: []string{"fileset:docs"}},
 		{ID: "ffffffff66666666", Time: "2026-07-06T10:00:00Z"}, // untagged → in no group
 	}

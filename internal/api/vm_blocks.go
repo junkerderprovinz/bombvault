@@ -66,6 +66,11 @@ const minBlocksBudget = 256 << 20
 
 const remoteNBDSocketPrefix = "/tmp/bombvault-nbd-"
 
+// vmBlocksListingWait bounds the listing a changed-block backup starts with.
+// restic keeps retrying a repository folder it cannot read, for many minutes,
+// and all that time the backup holds every other VM back.
+const vmBlocksListingWait = 5 * time.Minute
+
 // vmBlockPlan is everything a changed-block backup of one VM needs, or the
 // reason it cannot run.
 type vmBlockPlan struct {
@@ -144,9 +149,21 @@ func (s *Service) planBlockBackup(ctx context.Context, name string, domain virsh
 // means nothing was written and no run recorded.
 func (s *Service) backupVMBlocks(ctx context.Context, name string, tg store.VMTarget, plan vmBlockPlan, repo string, mode restic.Mode, extraTags, formerNames []string, runs backup.Runs) (backup.VMBlocksResult, error) {
 	var latest *backup.BlocksLatest
-	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.vmIdentity(name))
+	listCtx, cancelList := context.WithTimeout(ctx, vmBlocksListingWait)
+	defer cancelList()
+	snaps, err := s.snapshotsOwnedBy(listCtx, repo, mode, s.vmIdentity(name))
 	if err != nil {
-		return backup.VMBlocksResult{}, fmt.Errorf("backup vm: list snapshots: %w", err)
+		if errors.Is(listCtx.Err(), context.DeadlineExceeded) {
+			err = fmt.Errorf("the repository did not list its snapshots within %s: %w", vmBlocksListingWait, err)
+		}
+		err = fmt.Errorf("backup vm: list snapshots: %w", err)
+		// The run is open and the orchestrator that closes it is never reached.
+		if runID, sErr := runs.Start(tg.ID, "backup"); sErr == nil {
+			if fErr := runs.Finish(runID, "failed", backup.Summary{}, truncateRunErr(err)); fErr != nil {
+				log.Printf("api: backup vm: closing the run of %q: %v", name, fErr) //nolint:gosec // G706: %q-quoted
+			}
+		}
+		return backup.VMBlocksResult{}, err
 	}
 	if len(snaps) > 0 {
 		last := snaps[len(snaps)-1]

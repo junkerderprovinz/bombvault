@@ -387,7 +387,10 @@ func (s *Service) foreignInventory(ctx context.Context, repo string, mode restic
 				containers[rest] = append(containers[rest], snap)
 			}
 			if rest, ok := strings.CutPrefix(tag, "vm:"); ok && rest != "" {
-				vms[rest] = append(vms[rest], snap)
+				// The image of a zvol disk belongs to its VM, whose run snapshot lists it.
+				if _, isDisk := splitDisk(rest); !isDisk {
+					vms[rest] = append(vms[rest], snap)
+				}
 			}
 			if rest, ok := strings.CutPrefix(tag, "fileset:"); ok && rest != "" {
 				fileSets[rest] = append(fileSets[rest], snap)

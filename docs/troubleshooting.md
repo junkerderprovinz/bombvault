@@ -38,7 +38,7 @@ VM backup talks to libvirt over SSH, never a mount.
 
 ## A live VM snapshot did not run {#a-live-vm-snapshot-did-not-run}
 
-Live snapshots need the qemu guest agent installed in the VM and the disk on `/mnt/cache` (or `/mnt/diskX`), not `/mnt/user`. On a shut-off VM, live automatically falls back to graceful. A graceful backup shuts the VM down, backs up the disks, then restarts it, so it is always consistent. It waits up to ten minutes for the guest to shut down and never forces it off, so a Windows guest installing updates is not cut off halfway. A guest that still runs after that is left alone, and that backup fails with the reason.
+Live snapshots need the disk on `/mnt/cache` (or `/mnt/diskX`), not `/mnt/user`. With the qemu guest agent in the VM the snapshot is quiesced, and without it the snapshot is crash-consistent. On a shut-off VM, live automatically falls back to graceful. A graceful backup shuts the VM down, backs up the disks, then restarts it, so it is always consistent. It waits up to ten minutes for the guest to shut down and never forces it off, so a Windows guest installing updates is not cut off halfway. A guest that still runs after that is left alone, and that backup fails with the reason.
 
 ## A backup failed with "repository is already locked" {#a-backup-failed-with-repository-is-already-locked}
 

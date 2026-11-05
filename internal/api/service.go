@@ -13034,6 +13034,8 @@ type startedRunsAdapter struct {
 	cancelKey string
 	// ctx is the backup's context, whose cause tells a stall apart.
 	ctx context.Context
+	// note joins the notes of a successful run.
+	note string
 }
 
 var _ backup.Runs = startedRunsAdapter{}
@@ -13041,7 +13043,8 @@ var _ backup.Runs = startedRunsAdapter{}
 func (r startedRunsAdapter) Start(string, string) (string, error) { return r.runID, nil }
 
 func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, errMsg string) error {
-	if r.svc != nil {
+	// A VM left off stays on the row whatever else ended the backup.
+	if r.svc != nil && !strings.HasPrefix(errMsg, backup.VMRestartFailed) {
 		stalled, isStall := stalledReason(r.ctx, errMsg)
 		if newStatus, newMsg, changed := r.svc.shutdownStatus(status); changed {
 			status, errMsg = newStatus, newMsg
@@ -13056,7 +13059,31 @@ func (r startedRunsAdapter) Finish(runID, status string, sum backup.Summary, err
 		}
 	}
 	errMsg = r.svc.withUnreadableNote(status, errMsg, sum)
+	if status == "success" && r.note != "" {
+		if errMsg == "" {
+			errMsg = r.note
+		} else {
+			errMsg += "; " + r.note
+		}
+	}
 	return r.st.FinishRunMeasured(runID, status, sum.SnapshotID, sum.Bytes, errMsg, metricsOf(sum), sum.SelectionFP)
+}
+
+// vmLeftOutNote says what a green backup of domain does not hold. Without it the
+// run reads as if the whole VM could be brought back from it.
+func vmLeftOutNote(domain virshcli.DomainInfo) string {
+	var notes []string
+	if domain.TPMLeftOut {
+		notes = append(notes, store.NoteVMTPMLeftOut)
+	}
+	if len(domain.LeftOutDisks) > 0 {
+		disks := make([]string, len(domain.LeftOutDisks))
+		for i, d := range domain.LeftOutDisks {
+			disks[i] = d.Dev + " (" + d.Kind + ")"
+		}
+		notes = append(notes, store.NoteVMDisksLeftOut+": "+strings.Join(disks, ", "))
+	}
+	return strings.Join(notes, "; ")
 }
 
 // sshZFSHost runs the zvol commands on the host over SSH, as virsh is run, so
@@ -13786,22 +13813,21 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		if b, rerr := s.ssh.ReadFile(ctx, domain.NVRAMPath); rerr == nil {
 			nvramBytes = b
 		} else {
-			log.Printf("api: BackupVM: WARN NVRAM read over SSH failed for %q (%v) — the disks are backed up, but on restore the UEFI variables (boot entries) will be regenerated from the firmware template, not restored", name, rerr) //nolint:gosec // G706: name is %q-quoted
+			nvramBytes = s.storedVMDefinition(name).NVRAMBytes
+			log.Printf("api: BackupVM: WARN NVRAM read over SSH failed for %q (%v). The disks are backed up, and a restore gets the UEFI variables of the last backup that could read them, or else regenerates them from the firmware template", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
 
-	// TPM (vTPM) state is captured the SAME way as NVRAM above — read over SSH
-	// from domain.TPMPath (already parsed by ParseDomain) and kept IN the
-	// definition. Empty-safe: skipped entirely when TPMPath is "" (no vTPM on
-	// this domain, or an unrecognized <tpm> backend shape — see
-	// virshcli.DomainInfo.TPMPath's doc comment), exactly like NVRAM. A read
-	// failure is non-fatal (v8.0.0 VM service-layer integration, Task 2).
+	// TPM (vTPM) state is captured the same way as NVRAM above: read over SSH
+	// from domain.TPMPath and kept in the definition. It is skipped when TPMPath
+	// is "", which vmLeftOutNote reports for a <tpm> element without a path.
 	var tpmBytes []byte
 	if domain.TPMPath != "" && s.ssh != nil {
 		if b, rerr := s.ssh.ReadFile(ctx, domain.TPMPath); rerr == nil {
 			tpmBytes = b
 		} else {
-			log.Printf("api: BackupVM: WARN TPM state read over SSH failed for %q (%v) — the disks are backed up, but on restore the vTPM will start fresh/empty, not restore its captured state", name, rerr) //nolint:gosec // G706: name is %q-quoted
+			tpmBytes = s.storedVMDefinition(name).TPMBytes
+			log.Printf("api: BackupVM: WARN TPM state read over SSH failed for %q (%v). The disks are backed up, and a restore gets the TPM state of the last backup that could read it, or else starts with an empty vTPM", name, rerr) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
 
@@ -13981,7 +14007,8 @@ func (s *Service) BackupVM(ctx context.Context, name string) (_ backup.Summary, 
 		return backup.Summary{}, fmt.Errorf("backup vm: record run start: %w", err)
 	}
 	s.bindBackupRun("vm:"+name, runID)
-	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name, ctx: ctx}
+	deps.Runs = startedRunsAdapter{st: s.store, runID: runID, svc: s, cancelKey: "vm:" + name, ctx: ctx, note: vmLeftOutNote(domain)}
+	deps.LateShutdown = func() { go s.watchLateShutdown(name, runID) }
 	// RunTag correlates every snapshot ONE backup invocation produces — only
 	// meaningful (and only set) when this backup will actually produce MORE
 	// than one restic snapshot (a file-only VM's single snapshot is already
@@ -14239,8 +14266,25 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 	}
 
 	// A changed-block snapshot holds each disk whole, so only a snapshot of
-	// the files brings back the backing chains with the disks.
+	// the files brings back the backing chains with the disks. It holds them as
+	// segments, not as files at their paths, so its manifest says which it holds.
 	blocks := slices.Contains(snap.Tags, backup.BlocksTag)
+	var blockManifest *backup.BlocksManifest
+	held := snapshotFiles(snap.Paths)
+	if blocks {
+		m, mErr := (&vmBlockRestic{engine: s.engine, mode: ref.mode}).Manifest(ctx, ref.repo, snapshotID)
+		if mErr != nil {
+			return vmRestorePlan{}, fmt.Errorf("restore vm: read the snapshot's disk list: %w", mErr)
+		}
+		blockManifest, held = &m, nil
+		for _, d := range m.Disks {
+			held = append(held, d.Path)
+		}
+	}
+	def, err := s.definitionAsBackedUp(ctx, ref, snapshotID, def, held, blockManifest)
+	if err != nil {
+		return vmRestorePlan{}, err
+	}
 	diskPaths := def.DiskPaths
 	if !blocks {
 		diskPaths = append(slices.Clone(def.DiskPaths), heldBackingFiles(def, snap.Paths)...)
@@ -14256,21 +14300,14 @@ func (s *Service) prepareRestoreVMForTarget(ctx context.Context, ref repoRef, na
 		}
 	}
 	backedUp := diskPaths
-	// A changed-block snapshot holds each disk as segments, not as a file at
-	// its path, so its disks are matched through the manifest instead.
-	var blockManifest *backup.BlocksManifest
 	var blockDiskIdx []int
 	sources := diskPaths
 	if blocks {
-		m, mErr := (&vmBlockRestic{engine: s.engine, mode: ref.mode}).Manifest(ctx, ref.repo, snapshotID)
-		if mErr != nil {
-			return vmRestorePlan{}, fmt.Errorf("restore vm: read the snapshot's disk list: %w", mErr)
-		}
-		idx, iErr := blockRestoreImages(m, diskPaths)
+		idx, iErr := blockRestoreImages(*blockManifest, diskPaths)
 		if iErr != nil {
 			return vmRestorePlan{}, iErr
 		}
-		blockManifest, blockDiskIdx = &m, idx
+		blockDiskIdx = idx
 	} else {
 		var err error
 		if sources, err = snapshotDiskSources(diskPaths, snap.Paths); err != nil {
@@ -14912,7 +14949,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		TargetID:    plan.targetID,
 		DataDir:     s.cfg.DataDir,
 		VM:          s.virsh,
-		Restic:      &resticAdapter{engine: s.engine, mode: plan.mode},
+		Restic:      &resticAdapter{engine: s.engine, mode: sparseMode(plan.mode)},
 		Runs:        runsAdapter{st: s.store, ctx: ctx},
 		BlockDisks:  plan.blockDisks,
 		ZFSHost:     sshZFSHost{ssh: s.ssh},
@@ -14921,6 +14958,7 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		ImageDumper: &vmBlockRestic{engine: s.engine, mode: plan.mode},
 		Convert:     qemuImgConvert,
 		Backing:     s.backingLinks(plan.backing),
+		Sparsify:    digHoles,
 	})
 	if rerr == nil {
 		s.healRestoreDirOwnership(rctx, plan.repo, plan.snapshotID, plan.mode, plan.restoreDirs)
@@ -14928,6 +14966,11 @@ func (s *Service) executeRestoreVM(ctx context.Context, name string, plan vmRest
 		// points at.
 		if tg, err := s.store.GetVMTargetByName(name); err == nil {
 			s.blockCheckpointFile(tg.ID).clear()
+		}
+		// The restore decided how the VM stands, and a record left by a backup
+		// would start it at the next start of BombVault.
+		if err := s.store.ClearVMsStopped([]string{name}); err != nil {
+			log.Printf("api: restore vm: clearing the shutdown record of %q failed: %v", name, err) //nolint:gosec // G706: %q-quoted
 		}
 	}
 	s.progEnd(rkey, "restore", rerr == nil, startedAt)

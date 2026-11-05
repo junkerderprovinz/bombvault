@@ -1,6 +1,9 @@
 package virshcli
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 var (
 	// diskSourceFileRe captures a <disk> <source file='PATH'/> element's path,
@@ -13,6 +16,11 @@ var (
 	// (groups: 1=open tag, 2=path, 3=close tag). A self-closing or empty
 	// <nvram> has no path and does not match.
 	nvramInnerRe = regexp.MustCompile(`(<nvram(?:\s[^>]*)?>)([^<]+)(</nvram>)`)
+
+	backingStoreTagRe = regexp.MustCompile(`</?backingStore\b[^>]*>`)
+	diskElementRe     = regexp.MustCompile(`(?s)<disk\b.*?</disk>`)
+	// diskDriverTypeRe groups: 1=up to `type=`, 2=quote, 3=type, 4=quote.
+	diskDriverTypeRe = regexp.MustCompile(`(<driver\b[^>]*?\stype=)(['"])([^'"]*)(['"])`)
 )
 
 // RewriteDiskSources replaces each <disk> <source file='OLD'/> whose OLD path
@@ -56,5 +64,61 @@ func RewriteNVRAM(domainXML, newPath string) string {
 		done = true
 		sub := nvramInnerRe.FindStringSubmatch(m)
 		return sub[1] + newPath + sub[3]
+	})
+}
+
+// StripBackingStore removes every <backingStore> from a domain XML, so libvirt
+// reads the chain from the image headers. A definition that lists a chain makes
+// qemu read through it whatever the image says, and a restored image is the
+// only thing that knows its chain as it was backed up.
+func StripBackingStore(domainXML string) string {
+	const open, closeTag = "<backingStore", "</backingStore>"
+	var b strings.Builder
+	rest := domainXML
+	for {
+		i := strings.Index(rest, open)
+		if i < 0 {
+			b.WriteString(rest)
+			return b.String()
+		}
+		b.WriteString(strings.TrimRight(rest[:i], " \t\r\n"))
+		end, ok := backingStoreEnd(rest[i:])
+		if !ok {
+			b.WriteString(rest[i:])
+			return b.String()
+		}
+		rest = rest[i+end:]
+	}
+}
+
+// backingStoreEnd returns where the element s starts with ends. The elements
+// nest, one per image of the chain, and the innermost is often self-closed.
+func backingStoreEnd(s string) (int, bool) {
+	depth, at := 0, 0
+	for _, m := range backingStoreTagRe.FindAllString(s, -1) {
+		at += strings.Index(s[at:], m) + len(m)
+		switch {
+		case strings.HasPrefix(m, "</"):
+			depth--
+		case !strings.HasSuffix(m, "/>"):
+			depth++
+		}
+		if depth == 0 {
+			return at, true
+		}
+	}
+	return 0, false
+}
+
+// RewriteDiskFormat sets the driver type of the file disk at source, for a disk
+// that is restored as a file of another format than the one it has now, such
+// as a raw base under a qcow2 snapshot.
+func RewriteDiskFormat(domainXML, source, format string) string {
+	return diskElementRe.ReplaceAllStringFunc(domainXML, func(disk string) string {
+		m := diskSourceFileRe.FindStringSubmatch(disk)
+		if m == nil || m[3] != source {
+			return disk
+		}
+		return diskDriverTypeRe.ReplaceAllString(disk, "${1}${2}"+format+"${4}")
 	})
 }

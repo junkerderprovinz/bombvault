@@ -6,6 +6,7 @@ import {
   backupNotes,
   isOwnReason,
   dataOutsideHost,
+  backupNotes,
   isWarningNote,
   runReason,
   runReasonParts,
@@ -307,5 +308,16 @@ describe("isWarningNote", () => {
     expect(
       isWarningNote("database imported; the previous data folder was kept: /mnt/pg.old; could not start these apps again: immich_server")
     ).toBe(true);
+  });
+});
+
+describe("what a VM backup leaves out", () => {
+  const tpm = "the state of the VM's TPM is not in this backup";
+  const disks = "some disks of the VM are not in this backup: vdb (network), sda (lun)";
+
+  it("is a warning on a successful run, each note on its own", () => {
+    expect(isWarningNote(tpm)).toBe(true);
+    expect(isWarningNote(disks)).toBe(true);
+    expect(backupNotes(`${tpm}; ${disks}`)).toEqual([tpm, disks]);
   });
 });

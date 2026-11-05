@@ -68,6 +68,9 @@ type Mode struct {
 	// Env is extra environment passed to the restic process ("KEY=VALUE"), used
 	// for backend credentials (S3 AWS_*, REST RESTIC_REST_*). Never in argv.
 	Env []string
+	// Sparse, when true, adds --sparse to a restore, so a thin VM disk stays
+	// thin. restic applies it to the files it creates, not to one it replaces.
+	Sparse bool
 	// NoLock, when true, adds --no-lock to the restore, ls, dump and check
 	// builders below, so a read never writes a lock file into the repository.
 	// A copy reads it from From instead, for its source. It is set only for
@@ -765,6 +768,9 @@ func RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target string, m Mode) 
 	}
 	if m.NoLock {
 		args = append(args, "--no-lock") // a foreign restore only reads the source repo
+	}
+	if m.Sparse {
+		args = append(args, "--sparse")
 	}
 	args = append(args, "--json")
 	args = append(args, "--target", target)
