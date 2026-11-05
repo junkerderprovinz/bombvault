@@ -50,11 +50,13 @@ type ReceiverInventory struct {
 // ReceiverCheckResult is the outcome of an independent integrity check run on the
 // receiving hardware. Error is a scrubbed message ("" on success). RanReadData is
 // true when a deep --read-data-subset check ran (not just the structural check).
+// Unread says the repository could not be opened, which is no verdict.
 type ReceiverCheckResult struct {
 	OK          bool   `json:"ok"`
 	Error       string `json:"error"`
 	RanReadData bool   `json:"ranReadData"`
 	At          int64  `json:"at"` // Unix time the check finished
+	Unread      bool   `json:"unread"`
 }
 
 // receiverOpen opens a received repository read-only and returns the resolved
@@ -347,7 +349,7 @@ func (s *Service) receiverCheck(ctx context.Context, rr store.ReceivedRepo, read
 	res := ReceiverCheckResult{At: time.Now().Unix()}
 	repo, mode, err := s.receiverOpen(ctx, rr)
 	if err != nil {
-		res.Error = scrubError(err)
+		res.Error, res.Unread = scrubError(err), true
 		return res
 	}
 	deep := readData && rr.ReadDataPercent > 0

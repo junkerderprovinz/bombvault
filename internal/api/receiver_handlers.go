@@ -324,7 +324,7 @@ func (h *Handler) handleReceiverCheck(w http.ResponseWriter, r *http.Request) {
 		// Refused, not queued, while one is running. Received repos are outside
 		// repoMu, and a second check with --read-data-subset reads the packs again.
 		res, err := h.svc.receiverCheckExclusive(ctx, rr, readData)
-		if err == nil {
+		if err == nil && !res.Unread {
 			err = h.store.UpdateReceivedRepoCheckResult(rr.ID, res.At, nullCheckOK(res.OK), res.Error, res.RanReadData)
 		}
 		return checked{res, err}

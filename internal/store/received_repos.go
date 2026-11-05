@@ -31,6 +31,9 @@ type ReceivedRepo struct {
 	// CredsRef names a set in the encrypted cloud-credentials blob, the login
 	// for the storage the repository lies on.
 	CredsRef string
+	// LastReadAt is when the dead-man's switch last read the repository, 0 if
+	// never. A repository that was read and is not there is gone, not new.
+	LastReadAt int64
 	// DeadManHours is how long without a new snapshot before the dead man's
 	// switch alert fires. Default 26.
 	DeadManHours int
@@ -58,7 +61,7 @@ type ReceivedRepo struct {
 func (rr ReceivedRepo) NeedsPairing() bool { return rr.MemberID == "" }
 
 const receivedRepoCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, dead_man_hours, check_cadence, read_data_percent,
-	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order, creds_ref`
+	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order, creds_ref, last_read_at`
 
 // CreateReceivedRepo inserts a new received repo, assigning an ID and CreatedAt
 // when they are unset, and returns the stored row.
@@ -76,10 +79,10 @@ func (r *Repo) CreateReceivedRepo(rr ReceivedRepo) (ReceivedRepo, error) {
 	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO received_repos (`+receivedRepoCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		rr.ID, rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
-		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder, rr.CredsRef,
+		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder, rr.CredsRef, rr.LastReadAt,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("CreateReceivedRepo: %w", err)
@@ -142,6 +145,15 @@ func (r *Repo) UpdateReceivedRepoCheckResult(id string, at int64, ok sql.NullBoo
 	return nil
 }
 
+// SetReceivedRepoRead notes that the dead-man's switch read repo id at the Unix
+// time at. Updating a missing id is not an error.
+func (r *Repo) SetReceivedRepoRead(id string, at int64) error {
+	if _, err := r.db.Exec(`UPDATE received_repos SET last_read_at = ? WHERE id = ?`, at, id); err != nil {
+		return fmt.Errorf("SetReceivedRepoRead: %w", err)
+	}
+	return nil
+}
+
 // ListReceivedRepos returns all received repos in display order.
 func (r *Repo) ListReceivedRepos() ([]ReceivedRepo, error) {
 	rows, err := r.db.Query(`SELECT ` + receivedRepoCols + ` FROM received_repos ORDER BY sort_order, created_at`)
@@ -189,7 +201,7 @@ func scanReceivedRepo(s scanner) (ReceivedRepo, error) {
 	var readData, enabled int
 	err := s.Scan(
 		&rr.ID, &rr.MemberID, &rr.Name, &rr.Repo, &rr.ResticPasswordEnc, &rr.LegacyAppKeyEnc, &rr.DeadManHours, &rr.CheckCadence, &rr.ReadDataPercent,
-		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder, &rr.CredsRef,
+		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder, &rr.CredsRef, &rr.LastReadAt,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("scanReceivedRepo: %w", err)

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -149,10 +150,11 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	}
 
 	// The sweeps below place "now" relative to the newest snapshot.
-	sources, err := svc.receiverDeadManSources(context.Background(), created)
+	snaps, err := svc.receiverSnapshots(context.Background(), created)
 	if err != nil {
-		t.Fatalf("receiverDeadManSources: %v", err)
+		t.Fatalf("receiverSnapshots: %v", err)
 	}
+	sources := receiverDeadManSourcesOf(snaps)
 	if len(sources) != 2 {
 		t.Fatalf("want 2 sources, got %d: %+v", len(sources), sources)
 	}
@@ -202,8 +204,8 @@ func TestReceiverWatchDeadMansSwitch(t *testing.T) {
 	}
 }
 
-// A wrong stored sending key makes the check fail, and the dead-man's switch is
-// off, so only the integrity path can alert.
+// A pack that is gone makes the check fail, and the dead-man's switch is off, so
+// only the integrity path can alert.
 func TestReceiverWatchIntegrityAlert(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
@@ -213,8 +215,21 @@ func TestReceiverWatchIntegrityAlert(t *testing.T) {
 	sendingKey := strings.Repeat("cd", 32)
 	repo := seedReceivedRepo(t, sendingKey)
 
+	packs, err := filepath.Glob(filepath.Join(repo, "data", "*", "*"))
+	if err != nil || len(packs) == 0 {
+		t.Fatalf("packs %v, err %v", packs, err)
+	}
+	for _, pack := range packs {
+		if err := os.Chmod(pack, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Remove(pack); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	svc, st, bodies := receiverWatchService(t, appKey)
-	rr := makeReceivedRepo(t, appKey, strings.Repeat("ef", 32), repo, 0)
+	rr := makeReceivedRepo(t, appKey, sendingKey, repo, 0)
 	rr.Name = "Broken repo"
 	rr.DeadManHours = 0 // disable the dead-mans-switch: only integrity may alert
 	rr.CheckCadence = "daily 04:00"

@@ -1,20 +1,19 @@
 package api
 
-// The received-repo integrity check has to run on its configured cadence. The
-// receiver watch is a fixed daily sweep, and last_check_at is stamped when the
-// previous check finished, minutes after its sweep fired. Measured in elapsed
-// seconds, the next sweep then falls just short of a day and the check slips
-// to the sweep after.
+// The received-repo integrity check has to run on its configured cadence, and
+// last_check_at is stamped when the previous check finished, minutes after its
+// fire. Measured in elapsed seconds, the next fire falls just short of a day and
+// the check would slip to the one after.
 
 import (
 	"context"
 	"database/sql"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -31,9 +30,7 @@ func dueGateService(t *testing.T, appKey string) (*Service, *store.Repo) {
 		t.Fatal(err)
 	}
 	st := store.New(db)
-	// The real engine, pointed at a path with no repo. The check fails without
-	// needing a restic binary, and a failure is still a recorded verdict.
-	return &Service{cfg: config.Config{AppKey: appKey}, store: st, engine: restic.Restic{Bin: "restic"}}, st
+	return &Service{cfg: config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}, store: st, engine: &endEngine{}}, st
 }
 
 // seedDueGateRepo registers one enabled received repo on cadence whose last
