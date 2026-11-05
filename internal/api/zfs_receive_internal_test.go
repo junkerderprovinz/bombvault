@@ -846,7 +846,7 @@ func TestPinnedTLSChecksAChainAgainstTheHostItDialled(t *testing.T) {
 	}
 }
 
-func TestAnIncrementFromAnOlderBaseIsNeverRolledBackOnto(t *testing.T) {
+func TestAnIncrementIntoASlotIsNeverRolledBackOnto(t *testing.T) {
 	pool := newFakePool(&atomic.Uint64{}, "tank", receiveRoot, receiveRoot+"/tower", receiveRoot+"/tower/cache")
 	target := receiveRoot + "/tower/cache/appdata"
 	pool.ds[target] = newFakeDataset("filesystem")
@@ -854,16 +854,13 @@ func TestAnIncrementFromAnOlderBaseIsNeverRolledBackOnto(t *testing.T) {
 	host := zfsrepl.NewSSHEnd(zfs.NewSSHHost(pool), pool)
 	slot := store.ZFSReceiveSlot{PeerID: "0a0a0a0a", Root: receiveRoot, SourceServer: "tower"}
 
-	for _, c := range []struct {
-		from  uint64
-		force bool
-	}{{12, true}, {11, false}} {
-		args, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{FromGUID: c.from, ToGUID: 13})
+	for _, from := range []uint64{12, 11} {
+		args, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{FromGUID: from, ToGUID: 13})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if slices.Contains(args, "-F") != c.force {
-			t.Errorf("an increment from guid %d got %q, want -F %v", c.from, args, c.force)
+		if slices.Contains(args, "-F") {
+			t.Errorf("an increment from guid %d got %q, which would throw away what was written to the copy", from, args)
 		}
 	}
 	if _, err := zfsSlotReceiveArgs(context.Background(), host, slot, target, zfs.StreamBegin{ToGUID: 13}); zfsrepl.Code(err) != "dataset-exists" {
@@ -971,7 +968,13 @@ func TestASlotStopsAtACopyInUseAndLeavesItsSnapshots(t *testing.T) {
 	before := r.dstPool.snapNames(targets[0])
 	receives := len(r.dstPool.callsOf("receive"))
 
-	for _, m := range r.run(t, end).Members {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	res, err := zfsrepl.Run(ctx, r.srcEnd(), end, zfsrepl.Entry{Root: "cache/appdata", TargetBase: "tower", Now: func() time.Time { return r.now }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range res.Members {
 		if m.Code != "target-written" {
 			t.Errorf("%s: code %q, err %v, want target-written", m.Dataset, m.Code, m.Err)
 		}
@@ -981,18 +984,6 @@ func TestASlotStopsAtACopyInUseAndLeavesItsSnapshots(t *testing.T) {
 	}
 	if got := len(r.dstPool.callsOf("receive")); got != receives {
 		t.Errorf("%d more receives into a copy in use, want none", got-receives)
-	}
-}
-
-func TestASlotNeverRollsACopyBack(t *testing.T) {
-	r := newReceiveRig(t)
-	end := r.allowed(t, [5]int{0, 7, 3, 0, 0})
-	r.run(t, end)
-	r.run(t, end)
-	for _, argv := range r.dstPool.callsOf("receive") {
-		if slices.Contains(argv, "-F") {
-			t.Errorf("%q would throw away what was written to the copy", argv)
-		}
 	}
 }
 
