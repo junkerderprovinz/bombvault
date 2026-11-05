@@ -92,6 +92,9 @@ func sharingService(t *testing.T, d *sharingDocker) (*api.Service, *store.Repo) 
 	s := mustSettings(t, st)
 	s.EncryptionEnabled = false
 	s.ContainersPath = "backups/containers"
+	// These tests pin the order of the starts, and each wait would cost the
+	// four second grace of a container without a healthcheck.
+	s.RestartHealthWait = false
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}

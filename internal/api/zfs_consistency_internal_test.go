@@ -42,7 +42,15 @@ func callIndex(calls []string, want string) int {
 func TestZFSConsistencyTakesAlongTheContainersSharingAStoppedNetwork(t *testing.T) {
 	dock := newZFSFakeDocker("vpn", "peer", "other")
 	dock.containers["peer"].joins = "vpn"
-	s, _, _, d := zfsStopFixture(t, dock, "vpn")
+	s, st, _, d := zfsStopFixture(t, dock, "vpn")
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.RestartHealthWait = false
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
 
 	if _, err := s.BackupZFSDataset(context.Background(), d.ID); err != nil {
 		t.Fatalf("backup: %v", err)
