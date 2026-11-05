@@ -182,6 +182,36 @@ func TestAttachingTheKitGivesTheCopiesTheirSignIn(t *testing.T) {
 	}
 }
 
+func TestAttachingTheKitSavesSignInsThePersonDidNotSaveYet(t *testing.T) {
+	text := kitWithWizardLocation(t)
+	f := newPlacementFixture(t)
+	f.eng.opens[wizardRepo+"/files"] = true
+	_, view := f.emergency("POST", "/api/emergency/read", map[string]any{"kit": text})
+	if res, _ := f.emergency("POST", "/api/emergency/attach", map[string]any{"session": view.Session.ID}); res["ok"] != true {
+		t.Fatalf("attach: %v", res)
+	}
+	sets, err := f.svc.CloudCredSets()
+	if err != nil || len(sets) != 1 {
+		t.Fatalf("the saved sign-ins: %+v, %v", sets, err)
+	}
+}
+
+func TestAnOwnFolderInALocationGetsItsSignIn(t *testing.T) {
+	f := newPlacementFixture(t)
+	sess := &emergencySession{signIns: []kitSignIn{{name: "Box", repos: []string{wizardRepo}, creds: CloudCreds{RESTUser: "bv"}, id: "set1"}}}
+	sess.places = []emergencyPlace{{kitLocation: kitLocation{Domain: "files", Kind: kitLocal, Location: wizardRepo + "/files"}}}
+	if err := f.svc.keepSignInsForUndo(); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.attachOwnFolder(sess.places[0], sess.signInFor(wizardRepo+"/files").id); err != nil {
+		t.Fatal(err)
+	}
+	row, ok, err := f.st.PrimaryRemoteTarget("files")
+	if err != nil || !ok || row.CredsRef != "set1" {
+		t.Fatalf("the own folder's row: %+v %v %v", row, ok, err)
+	}
+}
+
 func TestADeadOffsiteCopyDoesNotHideTheOtherOne(t *testing.T) {
 	f := newPlacementFixture(t)
 	d1 := f.destination("House", "rest:http://dead:8000/bv")
