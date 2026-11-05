@@ -504,7 +504,7 @@ func (r *Repo) LastSuccessfulBackup(targetID string) (*Run, error) {
 		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success'
-		ORDER BY started_at DESC
+		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1`, targetID)
 	run, err := scanRun(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -523,8 +523,8 @@ func (r *Repo) LastCompleteBackup(targetID string) (*Run, error) {
 		SELECT `+runCols+`
 		FROM runs
 		WHERE target_id = ? AND kind = 'backup' AND status = 'success' AND snapshot_id != ''
-		  AND error NOT LIKE '%' || ? || '%'
-		ORDER BY started_at DESC
+		  AND COALESCE(error, '') NOT LIKE '%' || ? || '%'
+		ORDER BY started_at DESC, rowid DESC
 		LIMIT 1`, targetID, NoteOlderBackupsKept)
 	run, err := scanRun(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -545,7 +545,8 @@ func (r *Repo) TargetsWithOlderBackupsKept() (map[string]bool, error) {
 		  AND NOT EXISTS (
 			SELECT 1 FROM runs AS later
 			WHERE later.target_id = newest.target_id AND later.kind = 'backup'
-			  AND later.status = 'success' AND later.started_at > newest.started_at)`,
+			  AND later.status = 'success'
+			  AND (later.started_at > newest.started_at OR later.started_at = newest.started_at AND later.rowid > newest.rowid))`,
 		NoteOlderBackupsKept)
 	if err != nil {
 		return nil, fmt.Errorf("TargetsWithOlderBackupsKept: %w", err)
@@ -565,7 +566,7 @@ func (r *Repo) TargetsWithOlderBackupsKept() (map[string]bool, error) {
 // AddRunNote puts a note in front of what a finished run already says.
 func (r *Repo) AddRunNote(id, note string) error {
 	_, err := r.db.Exec(`
-		UPDATE runs SET error = CASE WHEN error = '' THEN ? ELSE ? || '; ' || error END WHERE id = ?`, note, note, id)
+		UPDATE runs SET error = CASE WHEN COALESCE(error, '') = '' THEN ? ELSE ? || '; ' || error END WHERE id = ?`, note, note, id)
 	if err != nil {
 		return fmt.Errorf("AddRunNote: %w", err)
 	}

@@ -213,8 +213,8 @@ func TestALeftoverRepositoryUnderAMountDoesNotTurnTheRefusalOff(t *testing.T) {
 	s.store = newTestStore(t)
 	s.cfg.AppKey = strings.Repeat("7c", 32)
 	err := s.EnsureRepo(context.Background(), "/host/user/nvme/repos/files", restic.Mode{})
-	if !errors.Is(err, ErrBackupPathNotMounted) || !strings.Contains(err.Error(), "/mnt/nvme/repos/files") {
-		t.Fatalf("EnsureRepo = %v, want the refusal naming the folder", err)
+	if !errors.Is(err, ErrBackupPathNotMounted) || !strings.Contains(err.Error(), "host's memory") {
+		t.Fatalf("EnsureRepo = %v, want the refusal that says why", err)
 	}
 }
 

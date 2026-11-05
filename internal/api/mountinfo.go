@@ -114,6 +114,16 @@ func (s *Service) inHostMemory(p string) bool {
 	return s.platformFn().Kind() == platform.KindUnraid
 }
 
+// errRepoInHostMemory refuses a repository inHostMemory answers yes for. It is a
+// not-mounted refusal, with the reason the person can act on.
+type errRepoInHostMemory struct{}
+
+func (errRepoInHostMemory) Error() string {
+	return "this folder is on no mounted pool or share, so a backup there would be written into the host's memory. Mount the pool and back up again"
+}
+
+func (errRepoInHostMemory) Is(target error) bool { return target == ErrBackupPathNotMounted }
+
 // folderOnStorage is the check guardRestoreFolder makes. The test binary
 // swaps it, because its temp folders lie on no mount of their own.
 var folderOnStorage = (*Service).restoreTargetMounted

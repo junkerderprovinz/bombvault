@@ -766,9 +766,9 @@ func (t *roundTally) take() string {
 		out = append(out, fmt.Sprintf("%d %s: %s%s", len(dumps), what, strings.Join(names, ", "), tail))
 	}
 	if len(incomplete) > 0 {
-		what := "backups could not read some files, which are missing from them:"
+		what := "backups hold less than they should, and older backups were kept:"
 		if len(incomplete) == 1 {
-			what = "backup could not read some files, which are missing from it:"
+			what = "backup holds less than it should, and older backups were kept:"
 		}
 		out = append(out, fmt.Sprintf("%d %s", len(incomplete), what))
 		for i, line := range incomplete {
