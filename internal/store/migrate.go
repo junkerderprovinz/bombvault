@@ -3646,6 +3646,35 @@ UPDATE zfs_datasets SET schedule_cadence = '' WHERE (SELECT per_item_schedules F
 		alreadySatisfied: columnPresent("received_repos", "creds_ref"),
 		sql:              `ALTER TABLE received_repos ADD COLUMN creds_ref TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Telling a repository that went from one that never came needs to know
+		// it was read once.
+		version:          receivedRepoReadMigration,
+		name:             "received_repo_last_read",
+		alreadySatisfied: columnPresent("received_repos", "last_read_at"),
+		sql:              `ALTER TABLE received_repos ADD COLUMN last_read_at INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// A repository that could not be opened was recorded as a failed integrity
+		// check, which says nothing about its integrity, and held back the alert of
+		// the next real failure.
+		version: receivedRepoUnreadVerdictMigration,
+		name:    "received_repo_drops_unread_verdicts",
+		sql: `UPDATE received_repos SET last_check_ok = NULL, last_check_error = ''
+WHERE last_check_ok = 0 AND (
+  last_check_error LIKE 'the received repository does not exist yet%'
+  OR last_check_error LIKE 'could not reach the received repository%'
+  OR last_check_error LIKE 'could not open the received repository%'
+  OR last_check_error LIKE 'the rest-server rejected these credentials%');`,
+	},
+	{
+		// Where a source's snapshots lie, so moving the own folder does not copy
+		// them all again.
+		version:          pullLandingMigration,
+		name:             "pull_source_landing",
+		alreadySatisfied: columnPresent("pull_sources", "landing"),
+		sql:              `ALTER TABLE pull_sources ADD COLUMN landing TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4227,6 +4256,16 @@ const locationKeepMigration = 720
 
 // receivedRepoSignInMigration numbers the saved sign-in of a received repository.
 const receivedRepoSignInMigration = 790
+
+// receivedRepoReadMigration numbers when a received repository was last read.
+const receivedRepoReadMigration = 791
+
+// receivedRepoUnreadVerdictMigration numbers the clean-up of integrity verdicts
+// on repositories that could not be opened.
+const receivedRepoUnreadVerdictMigration = 792
+
+// pullLandingMigration numbers the repository a pull source's snapshots lie in.
+const pullLandingMigration = 793
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -56,11 +56,14 @@ type PullSource struct {
 	Enabled         bool
 	CreatedAt       int64
 	SortOrder       int
+	// Landing is the repository the pulled snapshots lie in, empty before the
+	// first pull. It stays when the domain's own folder moves.
+	Landing string
 }
 
 const pullSourceCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, creds_ref, domain, cadence,
 	limit_download, limit_upload, last_pull_at, last_pull_ok, last_pull_error,
-	snapshots_pulled, enabled, created_at, sort_order`
+	snapshots_pulled, enabled, created_at, sort_order, landing`
 
 // CreatePullSource inserts a new pull source, assigning an ID and CreatedAt
 // when they are unset, and returns the stored row.
@@ -78,10 +81,10 @@ func (r *Repo) CreatePullSource(ps PullSource) (PullSource, error) {
 	ps.LegacyAppKeyEnc = notNullBlob(ps.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO pull_sources (`+pullSourceCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		ps.ID, ps.MemberID, ps.Name, ps.Repo, ps.ResticPasswordEnc, ps.LegacyAppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
 		ps.LimitDownload, ps.LimitUpload, ps.LastPullAt, nullBool(ps.LastPullOK), ps.LastPullError,
-		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.CreatedAt, ps.SortOrder,
+		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.CreatedAt, ps.SortOrder, ps.Landing,
 	)
 	if err != nil {
 		return PullSource{}, fmt.Errorf("CreatePullSource: %w", err)
@@ -141,6 +144,15 @@ func (r *Repo) UpdatePullSourceResult(id string, at int64, ok sql.NullBool, pull
 	)
 	if err != nil {
 		return fmt.Errorf("UpdatePullSourceResult: %w", err)
+	}
+	return nil
+}
+
+// SetPullSourceLanding records the repository source id's snapshots lie in.
+// Updating a missing id is not an error.
+func (r *Repo) SetPullSourceLanding(id, landing string) error {
+	if _, err := r.db.Exec(`UPDATE pull_sources SET landing = ? WHERE id = ?`, landing, id); err != nil {
+		return fmt.Errorf("SetPullSourceLanding: %w", err)
 	}
 	return nil
 }
@@ -217,7 +229,7 @@ func scanPullSource(s scanner) (PullSource, error) {
 	err := s.Scan(
 		&ps.ID, &ps.MemberID, &ps.Name, &ps.Repo, &ps.ResticPasswordEnc, &ps.LegacyAppKeyEnc, &ps.CredsRef, &ps.Domain, &ps.Cadence,
 		&ps.LimitDownload, &ps.LimitUpload, &ps.LastPullAt, &ps.LastPullOK, &ps.LastPullError,
-		&ps.SnapshotsPulled, &enabled, &ps.CreatedAt, &ps.SortOrder,
+		&ps.SnapshotsPulled, &enabled, &ps.CreatedAt, &ps.SortOrder, &ps.Landing,
 	)
 	if err != nil {
 		return PullSource{}, fmt.Errorf("scanPullSource: %w", err)

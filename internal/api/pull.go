@@ -94,7 +94,7 @@ func (s *Service) pullOpen(ctx context.Context, ps store.PullSource, settings st
 	return repo, mode, nil
 }
 
-// pulledRepo is the repository a source's snapshots land in: one of its own
+// pulledRepo is the repository a source's snapshots land first: one of its own
 // inside the domain's location. restic copy keeps each snapshot's host and
 // tags, so in the domain's own repository a neighbour's container:plex or flash
 // would be the same item as this box's: retention would age the two as one and
@@ -104,6 +104,40 @@ func pulledRepo(domainRepo, sourceID string) string {
 		return strings.TrimRight(domainRepo, "/") + "/pulled/" + sourceID
 	}
 	return filepath.Join(domainRepo, "pulled", sourceID)
+}
+
+// pullLanding is the repository a source's snapshots land in and the mode to
+// reach it. Once it has one, that stays when the domain's own folder moves, or
+// the next pull would copy everything again. It follows the folder only when
+// the old one is gone for certain.
+func (s *Service) pullLanding(ctx context.Context, ps store.PullSource, settings store.Settings, domain, domainRepo string) (string, restic.Mode) {
+	here := pulledRepo(domainRepo, ps.ID)
+	if ps.Landing == "" || ps.Landing == here {
+		return here, s.primaryModeFor(settings, domain, here)
+	}
+	mode := s.primaryModeFor(settings, domain, ps.Landing)
+	if restic.IsRemoteRepo(ps.Landing) {
+		mode = s.formerLandingMode(settings, domain, ps.Landing, mode)
+	}
+	if err := s.engine.RepoOpensErr(ctx, ps.Landing, mode); err != nil && isRepoDefinitelyAbsent(err) {
+		return here, s.primaryModeFor(settings, domain, here)
+	}
+	return ps.Landing, mode
+}
+
+// formerLandingMode signs in with what the former own folder a landing lies in
+// used, since the section's sign-in belongs to the folder it has now.
+func (s *Service) formerLandingMode(settings store.Settings, domain, landing string, fallback restic.Mode) restic.Mode {
+	former, err := s.store.FormerOwnFolders(domain)
+	if err != nil {
+		return fallback
+	}
+	for _, f := range former {
+		if strings.HasPrefix(landing, strings.TrimRight(f.Repo, "/")+"/pulled/") {
+			return s.formerOwnFolderMode(settings, domain, f)
+		}
+	}
+	return fallback
 }
 
 // errPullBusy refuses a second pull of a source while one runs. Both would
@@ -162,7 +196,8 @@ func (s *Service) PullFromSource(ctx context.Context, ps store.PullSource) (int,
 // first pull is the normal setup order: the other instance has not made its
 // first copy yet, and the source's card says so.
 func (s *Service) reportPullFailure(ctx context.Context, ps store.PullSource, err error, msg string) {
-	if !(ps.LastPullOK.Valid && ps.LastPullOK.Bool) && errors.As(err, new(notThereYetError)) {
+	everWorked := ps.LastPullOK.Valid && ps.LastPullOK.Bool
+	if !everWorked && errors.As(err, new(notThereYetError)) {
 		return
 	}
 	s.recordDomainRunOf(strings.TrimSpace(ps.Domain), "pull", false, msg, ps.Name, "")
@@ -201,7 +236,6 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 	if err != nil {
 		return 0, fmt.Errorf("resolve the local %s repository: %w", domain, err)
 	}
-	dest := pulledRepo(domainRepo, ps.ID)
 	src, srcMode, err := s.pullOpen(ctx, ps, settings)
 	if err != nil {
 		return 0, err
@@ -209,9 +243,14 @@ func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int,
 
 	// From here on only dest is written. The source appears twice more: in the
 	// listing, which is read-only by mode, and as Copy's source argument.
-	destMode := s.primaryModeFor(settings, domain, dest)
+	dest, destMode := s.pullLanding(ctx, ps, settings, domain, domainRepo)
 	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
 		return 0, fmt.Errorf("ensure the local %s repository: %w", domain, err)
+	}
+	if dest != ps.Landing {
+		if err := s.store.SetPullSourceLanding(ps.ID, dest); err != nil {
+			return 0, fmt.Errorf("record where the source's snapshots lie: %w", err)
+		}
 	}
 	// dest lies inside the domain's repository, whose own relax pass waits for
 	// the domain's next backup.
@@ -276,8 +315,7 @@ func (s *Service) settleEarlierPulls(ctx context.Context, ps store.PullSource, r
 		log.Printf("api: pull %s: earlier pulls stay in the %s repository for now: %v", ps.ID, domain, err) //nolint:gosec // G706: ps.ID is an opaque store-generated id, domain comes from a fixed set
 		return
 	}
-	dest := pulledRepo(domainRepo, ps.ID)
-	destMode := s.primaryModeFor(settings, domain, dest)
+	dest, destMode := s.pullLanding(ctx, ps, settings, domain, domainRepo)
 	if err := s.EnsureRepo(ctx, dest, destMode); err != nil {
 		log.Printf("api: pull %s: earlier pulls stay in the %s repository for now: %v", ps.ID, domain, err) //nolint:gosec // G706: see above
 		return

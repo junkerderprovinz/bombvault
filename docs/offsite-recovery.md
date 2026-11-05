@@ -375,7 +375,7 @@ The **Instances** page (a settings tile that can be pinned to the sidebar) shows
 Each card shows the member's protection status and its roles as tiles. A role is something one instance does for another:
 
 - **Receiver** keeps this server's off-site copies in a rest-server in append-only mode. This server sends after every backup and cannot delete anything there, even if someone takes it over.
-- **Fetcher** fetches this server's backups on its own schedule. This server does not have to be awake for it.
+- **Fetcher** fetches this server's backups on its own schedule. This server does not have to be awake for it. The instance that fetches needs **Pull** switched on before it can allow the request.
 - **ZFS server** takes this server's ZFS replicas. Each ZFS entry picks it under **Replica** in its settings.
 - **Key keeper** keeps a sealed copy of this server's recovery kit. See [Key keeper](#key-keeper).
 
@@ -394,14 +394,16 @@ On the box that **receives** append-only copies from another BombVault, the rece
 - **An inventory by source**, so you can see exactly which containers, VMs and folder sets have landed.
 - **Last received** per source, so you know how fresh each one is.
 - **An independent `restic check`** run on the receiving hardware, so integrity is verified where the data actually sits, not only on the sender.
-- **A dead-man's switch:** an alert when a source stops sending within a window you set. It looks once a day, at 09:15.
-- **Integrity alerts:** an alert when a check on the receiving side fails.
+- **A dead-man's switch:** an alert when a source stops sending within a window you set. It looks once a day, at 09:15. You get one alert as well when the repository cannot be read at all, whatever the check schedule says, and when nothing has arrived a full window after you added it. A repository you add before the sender's first copy is fine until then.
+- **Integrity alerts:** an alert when a check on the receiving side fails. A check that could not open the repository says nothing about integrity, so it leaves no verdict and tries again the next day at the same time.
 
 A repository on another server needs that server's login: save it as a [sign-in](#sign-ins) and pick it under **Credentials** in the dialog.
 
 The receiver is strictly read-only. It never writes to the received repository, so it can never break the append-only guarantee the sender relies on.
 
 A fetcher works the other way round: with **Pull** switched on, an instance reads another member's backups on its own schedule, into a repository of its own for each source, so they never count as this box's own backups. Its sources stand in that member's details as well: the repository location, which kind of backup it holds and how often to fetch. The restic password comes over the group, never the APP_KEY, and the far side has nothing more to set up and does not have to be running. The source is only ever read, and each side keeps its own sign-in. A pull runs at the day and time its schedule says, and a new source waits for that time too; **Pull now** does not wait. A pull missed because this box was off runs once it is back. One that failed tries again the next day at the same time, also on a weekly schedule, and a failed pull shows in the activity log and sends one alert until a pull works again. An `rclone:` source is refused, because rclone would reach it with this instance's remotes.
+
+A fetched copy only grows. BombVault adds to it and neither prunes it nor checks it, so what the source has long forgotten stays here until you delete the folder, and the Storage locations page does not count it. It lies in `pulled/<source id>` inside the section's own folder, and when that folder moves, the copy stays where it is and later fetches go on there instead of copying everything again. If you delete it, the next fetch starts over in the own folder the section has by then.
 
 ### Receiving server {#receiving-server}
 
