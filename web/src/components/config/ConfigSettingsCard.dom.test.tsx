@@ -45,7 +45,8 @@ describe("the self-backup switch", () => {
     const toggle = show();
     fireEvent.click(toggle);
     await screen.findByText("refused");
-    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("true"));
+    // The shake remounts the row, so the switch is read again.
+    await waitFor(() => expect(screen.getByRole("switch", { name: en["config.enabled"] }).getAttribute("aria-checked")).toBe("true"), { timeout: 5000 });
   });
 
   it("tells the shell after a save", async () => {
