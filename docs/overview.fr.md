@@ -40,13 +40,13 @@ Chaque section activée a une ligne avec quatre contrôles :
 | Contrôle | Il passe au vert quand | Autres formulations possibles |
 |---|---|---|
 | **Local** | la dernière sauvegarde est à jour | pas encore de sauvegarde, pas de planning, dernière exécution échouée, sauvegarde en retard, tous les éléments ne sont pas protégés, sauvegarde bientôt due |
-| **Hors site** | la dernière copie hors des locaux est à jour | pas de copie hors site, copie en cours, copie en retard, copie en pause, pas encore de copie, échec de la réplique |
+| **Hors site** | la dernière copie hors des locaux est à jour | pas de copie hors site, copie en cours, copie en retard, attend votre décision, pas encore de copie, échec de la réplique |
 | **Protection contre la suppression** | un test d'altération a prouvé que l'autre côté refuse les suppressions | aucune, aucune et risque accepté, pas encore prouvée, échec du test, non prouvée car son contrôle est désactivé |
 | **Restauration de test** | une restauration depuis la copie hors site a réussi | jamais lancée, en cours, échouée, en retard, manuelle uniquement, impossible pour cette section |
 
 Une section n'est verte que sur des faits vérifiés. Une copie sur ce serveur ne compte pas comme hors site, et une destination que vous avez marquée **Accepter sans protection contre la suppression** montre un anneau gris au lieu d'un point ambre, si bien que la couleur de la section suit ses autres contrôles.
 
-Une section planifiée affiche **Pas encore de sauvegarde** et reste neutre jusqu'à ce que sa première exécution soit due. Ensuite, elle indique **En retard** et alerte une fois. Une section qui n'a rien à sauvegarder, parce qu'aucun planning n'atteint ses éléments, affiche **Non planifié** et n'est jamais en retard.
+Une section planifiée affiche **Pas encore de sauvegarde** et reste neutre jusqu'à ce que sa première exécution soit due, à compter du dernier réglage de son planning. Ensuite, elle indique **En retard** et alerte une fois. **En retard** se fonde sur l'élément qui a pris le plus de retard sur son propre planning, si bien qu'un voisin qui tourne ne cache pas un élément qui s'est arrêté. Un élément dont le conteneur a disparu ou qu'aucun planning n'atteint ne compte pas. Un élément avec son propre planning hebdomadaire n'est pas tenu au planning quotidien de la section. Une section qui n'a rien à sauvegarder, parce qu'aucun planning n'atteint ses éléments, affiche **Non planifié** et n'est jamais en retard.
 
 Un clic sur une section ouvre sa fenêtre avec chaque contrôle détaillé, les éléments qu'elle compte et **Lancer la restauration de test** ou **Relancer la restauration de test**. Elle indique aussi **Règle d'élagage définie** ou **Aucune règle d'élagage**, et la règle de conservation du dossier propre d'une section compte autant que ses règles hors site.
 

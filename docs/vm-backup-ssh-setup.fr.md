@@ -81,8 +81,25 @@ docker exec BombVault virsh -c "qemu+ssh://root@192.168.1.10:22/system?keyfile=/
 
 Chaque VM a une **Méthode** dans la carte **VM** de son onglet Paramètres (ouvrez la VM sous **Sauvegardes**) :
 
-- **Propre (arrêt)** est le réglage par défaut. Elle arrête la VM, sauvegarde les disques et la redémarre, la sauvegarde est donc toujours cohérente. Elle attend jusqu'à dix minutes que l'invité s'arrête et ne force jamais l'extinction. Un invité qui tourne encore après cela est laissé tranquille, et cette sauvegarde échoue avec la raison.
-- **Instantané à chaud** sauvegarde une VM en marche via un instantané externe et `blockcommit`. Il faut l'agent invité qemu dans la VM, pour un instantané figé, et le disque sur `/mnt/cache` ou `/mnt/diskX`, pas sur `/mnt/user`. Sur une VM éteinte, le mode à chaud retombe tout seul sur le mode propre, et quand l'instantané ne peut pas être fait, il retombe aussi.
+- **Propre (arrêt)** est le réglage par défaut. Elle arrête la VM, sauvegarde les disques et la redémarre, la sauvegarde est donc toujours cohérente. Elle attend jusqu'à dix minutes que l'invité s'arrête et ne force jamais l'extinction. Un invité qui tourne encore après cela est laissé tranquille, et cette sauvegarde échoue avec la raison. Si l'invité s'éteint dans l'heure qui suit, BombVault le redémarre. Si ce démarrage échoue, l'exécution en échec le signale.
+- **Instantané à chaud** sauvegarde une VM en marche via un instantané externe et `blockcommit`. Il faut le disque sur `/mnt/cache` ou `/mnt/diskX`, pas sur `/mnt/user`. Avec l'agent invité qemu dans la VM, l'instantané est figé, et sans lui, il est cohérent en cas de plantage. Sur une VM éteinte, le mode à chaud retombe tout seul sur le mode propre. Quand l'instantané ne peut pas être fait, cette sauvegarde échoue et la VM continue de tourner, car une VM que vous avez choisi de sauvegarder à chaud n'est jamais arrêtée pour cela.
+
+## Ce qu'une sauvegarde laisse de côté {#left-out}
+
+Une sauvegarde peut réussir sans contenir toute la VM. L'exécution porte alors une note sur un ton d'avertissement qui nomme ce qui manque :
+
+- **Les disques que BombVault ne lit pas.** Un disque en lecture seule, un `lun` et un disque `network` ou `volume` sont laissés de côté, et la note nomme chacun avec son périphérique cible et son type. La définition dans la sauvegarde les liste toujours. Un cdrom et une disquette ne sont pas nommés. Un périphérique bloc ordinaire qui n'est pas un zvol ZFS fait au contraire échouer la sauvegarde.
+- **L'état d'un TPM émulé.** Il n'a pas de chemin dans le XML du domaine. Le VM Manager d'Unraid configure un tel TPM pour une VM avec le BIOS **OVMF TPM**, la note apparaît donc aussi sur Unraid. Un invité qui garde un secret dans son TPM, comme peut le faire BitLocker, peut demander sa clé de récupération après une restauration qui perd cet état. Gardez donc cette clé sous la main.
+
+## Disques à allocation fine {#thin-disks}
+
+Une restauration conserve l'allocation fine d'un disque, qu'elle remplace le disque ou en écrive un nouveau : restic écrit les suites de zéros comme des trous dans un nouveau fichier, et BombVault libère les blocs de zéros d'un fichier remplacé avec `fallocate --dig-holes` une fois qu'il est écrit. Pendant que restic remplace un fichier, ce fichier occupe sa taille complète, si le pool a la place. Un système de fichiers qui ne sait pas percer de trous garde le disque à sa taille complète, et le journal le signale. Le contrôle de place compte toujours un nouveau disque à sa taille complète.
+
+## Une restauration qui échoue {#restore-fails}
+
+Une restauration sur place éteint la VM, écrit les disques, et ne remplace la définition et la NVRAM qu'une fois les disques écrits. Une restauration qui échoue laisse la VM définie avec sa NVRAM. Si ses disques n'ont pas changé et qu'elle tournait, elle tourne de nouveau. S'ils ont pu changer, elle reste éteinte, car démarrer sur un disque à moitié écrit écrirait par-dessus, et l'exécution le signale. Restaurer de nouveau la même sauvegarde termine le travail.
+
+Des instantanés enregistrés dans libvirt, ce qui n'est pas la façon dont le VM Manager d'Unraid les crée, arrêtent une restauration sur place avant que la VM soit touchée, car libvirt ne peut pas supprimer une VM qui en a. Supprimez-les d'abord.
 
 ## Blocs modifiés uniquement {#changed-blocks}
 
@@ -112,6 +129,7 @@ BombVault sauvegarde une telle VM en entier :
 - **Une sauvegarde à chaud garde les instantanés.** **Instantané à chaud** pose une surcouche temporaire par-dessus pendant qu'il lit le disque et la fusionne ensuite, seulement dans l'image juste en dessous. La chaîne est la même après la sauvegarde qu'avant. Une VM sans instantanés se comporte comme toujours.
 - **Une restauration ramène la chaîne.** Une restauration sur place réécrit chaque fichier là où il était et remet la liste des instantanés d'Unraid, si bien que le VM Manager liste de nouveau les instantanés. Une restauration à côté de l'original écrit les fichiers dans le dossier de la copie et fait pointer les disques restaurés vers les fichiers restaurés, si bien que la copie ne lit jamais les images de l'original. La liste des instantanés d'Unraid ne revient qu'avec une restauration sur place, car elle nomme les fichiers là où ils ont été sauvegardés. Sans elle, la copie démarre pareil, et le VM Manager ne liste simplement aucun instantané pour elle.
 - **Blocs modifiés uniquement** lit ce que voit l'invité, sa restauration revient donc comme un seul fichier qcow2 aplati, sans les instantanés.
+- **Une restauration ramène le disque de la sauvegarde que vous choisissez.** Les instantanés pris ou fusionnés depuis cette sauvegarde n'y changent rien. Une sauvegarde d'avant un instantané définit la VM sur le fichier qu'elle contient, et une sauvegarde d'avant une fusion ramène sa surcouche et tourne dessus. Les fichiers plus récents restent où ils sont, inutilisés et inchangés. Une sauvegarde qui contient une surcouche mais pas le fichier en dessous est refusée avant que la VM soit touchée. Après une restauration, la définition de la VM ne liste aucune chaîne, si bien que libvirt lit la chaîne à partir des fichiers restaurés.
 
 ### Exemple : une VM avec deux instantanés {#example-unraid-snapshots}
 
@@ -199,10 +217,10 @@ Les disques fichiers, tels que les utilise Unraid, ne sont pas concernés par to
 Une VM peut avoir un TPM virtuel, dont ont besoin le Secure Boot et les invités Windows 11. Son état vit en dehors du disque et de la NVRAM, si bien qu'une sauvegarde de ces deux seuls éléments ramènerait un invité avec un nouveau TPM vide.
 
 - **Un TPM en passthrough**, une vraie puce passée à l'invité, nomme son chemin dans le XML du domaine. BombVault enregistre son état à côté de la NVRAM via SSH et le réécrit avant `virsh define`, au mieux comme la NVRAM : une lecture ou une écriture qui échoue est consignée dans le journal et ne fait pas échouer la sauvegarde ou la restauration.
-- **Un vTPM émulé**, celui que TrueNAS configure pour les invités Windows 11 et Secure Boot, ne publie aucun chemin d'état dans le XML du domaine. BombVault signale alors « no TPM path found » au lieu de deviner un chemin. Gardez sous la main la clé de récupération d'un tel invité, comme sa clé BitLocker, avant de le restaurer.
+- **Un vTPM émulé**, celui que TrueNAS configure pour les invités Windows 11 et Secure Boot, ne publie aucun chemin d'état dans le XML du domaine, son état n'est donc pas sauvegardé. BombVault ne devine pas de chemin, et la sauvegarde se termine avec une note indiquant que l'état du TPM de la VM n'y figure pas. Gardez sous la main la clé de récupération d'un tel invité, comme sa clé BitLocker, avant de le restaurer.
 - **Vous ne pouvez pas attacher vous-même un TPM à une VM TrueNAS.** L'API de périphériques de VM de TrueNAS SCALE 25.10 n'accepte que `CDROM`, `DISPLAY`, `NIC`, `PCI`, `RAW`, `DISK` et `USB`, et refuse `TPM` comme type inconnu.
 
-La gestion du TPM n'est testée qu'en tests unitaires et n'a pas tourné sur un vrai invité TrueNAS avec un vTPM. Une VM sans TPM, comme sur Unraid, se sauvegarde et se restaure exactement comme avant.
+La gestion du TPM n'est testée qu'en tests unitaires et n'a pas tourné sur un vrai invité TrueNAS avec un vTPM. Une VM sans TPM se sauvegarde et se restaure exactement comme avant.
 
 La NVRAM est capturée comme d'habitude. TrueNAS la garde par VM à `/var/db/system/vm/nvram/<id>_<name>_VARS.fd`, et le XML du domaine nomme ce chemin.
 

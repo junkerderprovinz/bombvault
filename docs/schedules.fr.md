@@ -27,7 +27,7 @@ La carte **Semaine** dessine chaque exécution prévue du lundi au dimanche, une
 
 La **Sauvegarde complète** est le planning par défaut pour tout. **Quand les sauvegardes s'exécutent** la règle : un seul passage qui sauvegarde chaque section à tour de rôle, conteneurs, VMs, clé flash, dossiers, jeux de données ZFS et l'auto-sauvegarde en dernier. La ligne en dessous dit quelles sections elle inclut. **Désactivé** la coupe, et alors seul ce qui a un planning propre s'exécute.
 
-- **Rattraper les sauvegardes manquées après le démarrage** : quand le serveur était éteint à l'heure prévue, BombVault lance cette sauvegarde environ deux minutes après son démarrage.
+- **Rattraper les sauvegardes manquées après le démarrage** : quand le serveur était éteint à l'heure prévue, BombVault lance cette sauvegarde environ deux minutes après son démarrage. Le propre planning d'un élément et un planning de copie hors site attendent leur prochaine heure prévue, tout comme un planning qui n'a encore jamais réussi.
 - **Commandes avant et après** : **Commande avant la sauvegarde complète** s'exécute sur le serveur avec `sh -c` avant le début du passage, par exemple un script qui arrête un service. Si elle échoue, la sauvegarde complète s'exécute quand même. **Commande après la sauvegarde complète** s'exécute une fois que chaque section a été tentée, même si l'une a échoué, ce qui convient à un ping qui confirme que tout le serveur est protégé. Les commandes d'un seul conteneur se trouvent sur sa page.
 
 **Tout sauvegarder maintenant** sur la page Sauvegardes lance le même passage à la main, sur toutes les sections activées.
@@ -58,7 +58,7 @@ La sauvegarde atterrit sous les mêmes chemins et les mêmes tags que celle fait
 
 ## Mises à jour après la sauvegarde {#updates}
 
-- **Mettre à jour les conteneurs après une sauvegarde réussie** ne tire une image plus récente qu'une fois la sauvegarde précédente terminée, si bien qu'un point de restauration frais existe toujours d'abord. C'est désactivé par défaut, et un conteneur peut être réglé autrement sur sa page sous **Mettre à jour après une sauvegarde réussie**.
+- **Mettre à jour les conteneurs après une sauvegarde réussie** ne tire une image plus récente qu'une fois la sauvegarde précédente terminée, si bien qu'un point de restauration frais existe toujours d'abord. C'est désactivé par défaut, et un conteneur peut être réglé autrement sur sa page sous **Mettre à jour après une sauvegarde réussie**. Seul ce que vous avez réglé passe à la nouvelle image : les variables, les étiquettes, la commande, l'utilisateur et le healthcheck encore identiques à ceux de l'ancienne image prennent ceux de la nouvelle. Si la nouvelle image ne peut pas être créée ou démarrée, le conteneur revient à l'image avec laquelle il tournait, la mise à jour apparaît en échec, et la sauvegarde suivante réessaie. Un conteneur resté arrêté à cause de cela est nommé dans l'exécution de la sauvegarde et dans une notification.
 - **Supprimer l'ancienne image après une mise à jour** supprime l'image que le conteneur a quittée. Une image de base partagée avec d'autres conteneurs n'est jamais supprimée.
 - **Actualiser l'état des mises à jour d'Unraid après la mise à jour d'un conteneur** efface la bannière de mise à jour d'Unraid pour ce conteneur.
 

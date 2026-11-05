@@ -21,7 +21,7 @@ Chaque restauration commence sur la page **Restauration** : choisissez une secti
 
 Un clic sur un élément ouvre **Restauration** avec son nom. Elle pose ses questions par étapes, et chaque étape peut être modifiée avant le départ :
 
-1. **Sauvegarde** : l'instantané recommandé est présélectionné. C'est le plus récent, ou, après une anomalie ouverte, le dernier avant elle. Les plus anciens figurent dans la liste, et **Comparer** montre ce qui diffère entre deux d'entre eux.
+1. **Sauvegarde** : l'instantané recommandé est présélectionné. C'est le plus récent, ou, après une anomalie ouverte, le dernier avant elle. La sauvegarde prise avant une restauration précédente contient l'état que cette restauration a remplacé, elle est donc écartée sauf s'il n'y en a pas d'autre. Les plus anciens figurent dans la liste, et **Comparer** montre ce qui diffère entre deux d'entre eux.
 2. **Source** : d'où viennent les fichiers, quand un instantané existe à plusieurs endroits. **Local** est le plus rapide.
 3. **Quoi** : **Tous**, ou **Fichiers individuels**, où vous cochez les fichiers et dossiers voulus.
 4. **Où** : la cible. Les choix dépendent du type d'élément :
@@ -29,7 +29,7 @@ Un clic sur un élément ouvre **Restauration** avec son nom. Elle pose ses ques
     | Cible | Ce qu'elle fait |
     |---|---|
     | **À côté de l'original** | Le réglage par défaut. Un conteneur revient comme un second conteneur nommé `<name>-restored` avec ses propres ports, les disques et la NVRAM d'une VM atterrissent dans un dossier nommé `<folder>-restored`, et un ensemble de dossiers revient sous `<path>-restored`. Rien ne change sur l'original. |
-    | **Remplacer l'original** | Écrase ce qui s'y trouve maintenant. Avec **Sauvegarder d'abord l'état actuel**, activé par défaut, BombVault sauvegarde d'abord l'état d'aujourd'hui pour que vous puissiez revenir en arrière. Si cette sauvegarde échoue, la restauration ne démarre pas. |
+    | **Remplacer l'original** | Écrase ce qui s'y trouve maintenant. Avec **Sauvegarder d'abord l'état actuel**, activé par défaut, BombVault sauvegarde d'abord l'état d'aujourd'hui pour que vous puissiez revenir en arrière. Si cette sauvegarde échoue, la restauration ne démarre pas. Cela fonctionne aussi pour un conteneur ou une VM qui a disparu du serveur : les dossiers que la restauration écrase sont sauvegardés à part. |
     | **Dans un dossier** | Seulement les fichiers, pour les parcourir. |
     | **Télécharger en ZIP** | La clé flash, pour une nouvelle clé. BombVault n'écrit jamais dans la clé flash en service. |
     | **Dans un nouveau jeu de données** et **Restaurer dans le jeu de données** | Jeux de données ZFS, voir [Jeux de données ZFS](zfs-datasets.md#restore). |
@@ -40,11 +40,11 @@ Avant que **Restaurer** se déverrouille, la fenêtre vérifie que le dépôt r�
 
 La fenêtre montre aussi ce que la restauration change par rapport à ce qui est là maintenant : fichiers nouveaux, remplacés et inchangés, avec la liste à la demande, et les fichiers de la cible qui ne sont pas dans la sauvegarde et restent où ils sont. restic établit cela à blanc d'après la taille et la date de modification, sans lire les fichiers, et une très grande arborescence s'arrête après 30 secondes et le dit. Pour les conteneurs et les VMs, elle compare les réglages que la restauration recrée à ceux en service : image et tag, ports, noms de variables et volumes, ou mémoire, vCPUs, disques et réseau.
 
-Certaines choses peuvent arrêter une restauration avant qu'elle change quoi que ce soit. L'IP statique et les ports publiés d'un conteneur doivent être libres, et son réseau doit exister. Une restauration sur place nomme tous les autres conteneurs dont un montage bind atteint un dossier dans lequel elle écrit, par exemple « ce chemin est aussi utilisé par nextcloud-db », mais ce n'est qu'un avertissement.
+Certaines choses peuvent arrêter une restauration avant qu'elle change quoi que ce soit. L'IP statique et les ports publiés d'un conteneur doivent être libres, et son réseau doit exister. Sur Unraid, toute restauration sur place refuse un dossier qui n'est pas sur un pool ou un partage monté, car les fichiers atterriraient en mémoire et disparaîtraient au redémarrage. Une restauration sur place nomme tous les autres conteneurs dont un montage bind atteint un dossier dans lequel elle écrit, par exemple « ce chemin est aussi utilisé par nextcloud-db », mais ce n'est qu'un avertissement.
 
 Quelques options apparaissent là où elles s'appliquent : **Laisser arrêté ensuite**, pour examiner un conteneur ou une VM avant qu'il ne tourne de nouveau, et **Restaurer sans GPU ni runtime** sur un hôte qui n'a pas le GPU ou le runtime avec lequel la sauvegarde a été faite.
 
-La restauration s'exécute en arrière-plan. Vous pouvez fermer la fenêtre, et la progression s'affiche aussi sous **En cours**. Une longue restauration affiche un pourcentage et peut être annulée, et une restauration annulée est enregistrée comme annulée, pas comme échouée.
+La restauration s'exécute en arrière-plan. Vous pouvez fermer la fenêtre, et la progression s'affiche aussi sous **En cours**. Une longue restauration affiche un pourcentage et peut être annulée, et une restauration annulée est enregistrée comme annulée, pas comme échouée. Une restauration annulée pendant que le conteneur s'arrête, ou qui ne peut pas supprimer le conteneur, n'a encore rien restauré, donc le conteneur redémarre. Un conteneur qui prend ses volumes d'un autre avec `--volumes-from` les garde, et la restauration refuse de commencer tant que cet autre conteneur n'existe pas.
 
 ![La fenêtre de restauration à l'étape Quoi, avec des fichiers isolés cochés.](assets/screenshots/restore/window-what-dark.png#only-dark)
 ![La fenêtre de restauration à l'étape Quoi, avec des fichiers isolés cochés.](assets/screenshots/restore/window-what-light.png#only-light)
@@ -66,7 +66,7 @@ Quelqu'un a modifié le `config.php` de Nextcloud cette nuit et Nextcloud ne dé
 
 La fenêtre se termine par **Terminé : les fichiers sont dans /mnt/user/restore**. Vous trouvez le fichier sous `/mnt/user/restore/config.php`, sans les dossiers au-dessus. Comparez-le à celui qui est cassé, recopiez-le dans le dossier appdata et redémarrez Nextcloud.
 
-Pour remettre le fichier directement à sa place, choisissez **Remplacer l'original** à l'étape 5. Gardez **Sauvegarder d'abord l'état actuel** activé, pour que BombVault sauvegarde l'état cassé avant d'écrire, tapez `nextcloud` pour confirmer et appuyez sur **Restaurer**. Nextcloud est arrêté pendant que le fichier choisi est réécrit à sa place, et seuls les fichiers que vous avez cochés sont écrits.
+Pour remettre le fichier directement à sa place, choisissez **Remplacer l'original** à l'étape 5. Gardez **Sauvegarder d'abord l'état actuel** activé, pour que BombVault sauvegarde l'état cassé avant d'écrire, tapez `nextcloud` pour confirmer et appuyez sur **Restaurer**. Nextcloud est arrêté pendant que le fichier choisi est réécrit à sa place, puis redémarré, et seuls les fichiers que vous avez cochés sont écrits. Une restauration qui échoue en cours de route laisse Nextcloud arrêté, car le fichier qu'il lit peut être à moitié écrit, et l'exécution le signale.
 
 ![La fenêtre de restauration à l'étape Ce qui se passe, avec Remplacer l'original choisi.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La fenêtre de restauration à l'étape Ce qui se passe, avec Remplacer l'original choisi.](assets/screenshots/restore/window-replace-light.png#only-light)
@@ -75,11 +75,13 @@ Pour remettre le fichier directement à sa place, choisissez **Remplacer l'origi
 
 Les **conteneurs** sont recréés à partir de leur définition enregistrée via l'API Docker, avec leur entrypoint, leur nom d'hôte, leurs réglages d'arrêt, leurs volumes et montages, leurs limites de ressources, leur pilote de journaux, leurs réglages DNS et leurs liens hérités. Un conteneur revient sur l'image avec laquelle il tournait au moment de la sauvegarde, pas sur une plus récente tirée plus tard, et une image manquante est d'abord tirée, avec l'identifiant de **Registres de containers** sous **Paramètres, Restauration**. Son GPU ou son runtime (`--gpus`, `--runtime=nvidia`) revient aussi. Sur un hôte sans ce pilote ou ce runtime, la restauration le dit et propose **Restaurer sans GPU ni runtime**. Un lien vers un conteneur qui manque, ou qui est arrêté pendant que le conteneur restauré démarre, est omis, et l'historique des exécutions le dit. Une restauration qui échoue après la suppression du conteneur le remet en place, arrêté.
 
+Une sauvegarde peut contenir des dossiers que le conteneur n'a plus sélectionnés, par exemple une sauvegarde plus ancienne prise avant qu'un dossier disparaisse. Un dossier qui a disparu ou qui est vide revient. Un dossier qui contient maintenant des fichiers reste tel quel, car vous l'avez peut-être décoché exprès, et le contrôle avant la restauration ainsi que l'historique des exécutions le nomment. Récupérez-le avec **Fichiers individuels** ou **Dans un dossier**.
+
 Les **VMs** voient leur XML défini de nouveau via SSH et leurs disques et leur NVRAM UEFI rattachés, même après la suppression de la VM. Voir [Sauvegardes de VM](vm-backup-ssh-setup.md) pour les VMs avec des instantanés Unraid et des disques sur des zvols.
 
-Les **ensembles de dossiers** reviennent avec leurs propriétaires, leurs modes et leurs horodatages tels que restic les stocke.
+Les **ensembles de dossiers** reviennent avec leurs propriétaires, leurs modes et leurs horodatages tels que restic les stocke. Là où la cible refuse seulement les propriétaires, comme le fait `/mnt/user`, l'exécution se termine par une note qui le dit. BombVault compare alors les fichiers avec la sauvegarde, et un fichier qui n'est pas arrivé fait échouer la restauration.
 
-La **clé flash** ne touche jamais le `/boot` en service. La restauration est un téléchargement appelé `flash-<id>.zip`, prêt à être déposé dans l'Unraid USB Creator. La fenêtre liste aussi les plugins de chaque sauvegarde de la clé flash avec leur version et leur taille, et peut en remettre un seul dans la clé flash en service : son fichier `.plg`, son dossier sous `config/plugins` et les fichiers de paquet que la sauvegarde contient. Unraid l'installe au prochain démarrage, ou tout de suite sous **Plugins, Install Plugin**.
+La **clé flash** ne touche jamais le `/boot` en service. La restauration est un téléchargement appelé `flash-<id>.zip`, prêt à être déposé dans l'Unraid USB Creator. Le ZIP contient `APP_KEY`, donc le télécharger demande un mot de passe de connexion et une connexion sur l'instance. La fenêtre liste aussi les plugins de chaque sauvegarde de la clé flash avec leur version et leur taille, et peut en remettre un seul dans la clé flash en service : son fichier `.plg`, son dossier sous `config/plugins` et les fichiers de paquet que la sauvegarde contient. Unraid l'installe au prochain démarrage, ou tout de suite sous **Plugins, Install Plugin**.
 
 Les **jeux de données ZFS** ont leurs propres cibles et gardent leurs propriétés ZFS, voir [Restaurer](zfs-datasets.md#restore).
 
@@ -102,6 +104,10 @@ Chaque élément est contrôlé comme pour une restauration isolée, puis ils s'
 ## Restaurer une stack {#stacks}
 
 Un clic sur une stack dans la carte **Stacks** ouvre **Restaurer la stack**. Elle restaure chaque membre depuis sa dernière sauvegarde en même temps, et avec **Démarrer dans l'ordre des dépendances après la restauration** elle les démarre dans leur ordre `depends_on` : bases de données et caches d'abord, puis l'application. Quand le dossier de projet d'un membre manque à l'endroit que vous avez choisi, la fenêtre propose l'état depuis Local à la place.
+
+BombVault vérifie d'abord les membres et le dossier de projet, et une restauration qui ne pourrait pas aboutir ne change rien. Sinon, il arrête les membres en marche, les applications avant leurs bases de données, puis écrit le dossier de projet, puis restaure les membres. Si le dossier de projet ne revient pas, les membres sont tout de même restaurés mais restent arrêtés, car le dossier peut être à moitié écrit et c'est là que se trouvent en général les montages bind d'un membre. L'exécution de chaque membre le signale.
+
+Une base de données qui n'a que des dumps de base de données et aucune sauvegarde de fichiers, et dont le conteneur et le volume nommé ont disparu, revient sans ses données. Le contrôle le signale avant la restauration. Elle reste arrêtée, tout comme les conteneurs qui en dépendent, pour qu'aucune application ne lance sa configuration initiale sur une base vide. Démarrez-la, importez un dump et démarrez les autres. Voir [Dumps de base de données](backups.md#database-dumps).
 
 ## Autres sources {#other-sources}
 

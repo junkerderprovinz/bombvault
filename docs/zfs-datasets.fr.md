@@ -138,13 +138,13 @@ Toute machine avec ZFS et SSH peut recevoir, par exemple un second Unraid ou un 
 Avec root, rien d'autre n'est nécessaire. Un utilisateur à part a besoin de ces permissions sur le pool de la cible, que la boîte de dialogue montre aussi :
 
 ```
-zfs allow <user> receive,create,mount,rollback,destroy,userprop <pool>
+zfs allow <user> receive,create,mount,rollback,destroy,userprop,readonly,canmount <pool>
 ```
 
 Sur la source, le même genre d'utilisateur a besoin de celles-ci sur le jeu de données du haut de l'élément :
 
 ```
-zfs allow <user> send,snapshot,hold,release,bookmark,destroy <dataset>
+zfs allow <user> send,snapshot,hold,release,bookmark,destroy,mount <dataset>
 ```
 
 Dans ce sens, le BombVault qui détient l'élément détient aussi une clé qui peut écrire sur le serveur.
@@ -161,7 +161,7 @@ Un BombVault appairé peut recevoir lui-même la réplique. Personne n'obtient d
 2. Sur l'instance réceptrice, ouvrez **Instances**. La demande apparaît sur la carte de l'instance émettrice sous forme de badge, et ses **Détails** la listent. Choisissez le pool et la racine sur ce serveur et le nombre d'instantanés qui restent, puis appuyez sur **Autoriser** ou **Refuser**.
 3. Après **Autoriser**, la source envoie selon son propre planning, comme pour toute autre cible.
 
-L'instance réceptrice n'accepte que ce que couvre l'approbation : les jeux de données de l'élément, dans sa propre racine. Elle exécute elle-même `zfs receive`, et la source n'a aucun moyen de supprimer ou de ramener quoi que ce soit là-bas en arrière. La copie survit donc à une source dont quelqu'un a pris le contrôle. L'instance réceptrice garde sa propre rétention. La source ne fait que suggérer une règle quand elle demande.
+L'instance réceptrice n'accepte que ce que couvre l'approbation : les jeux de données de l'élément, dans sa propre racine. Elle exécute elle-même `zfs receive`, et la source n'a aucun moyen de supprimer ou de ramener quoi que ce soit là-bas en arrière. La copie survit donc à une source dont quelqu'un a pris le contrôle. L'instance réceptrice garde sa propre rétention. La source ne fait que suggérer une règle quand elle demande. Une telle source peut tout de même envoyer de nouveaux instantanés, et avec le temps ils font sortir les plus anciens selon la règle, comme tous les autres. Un nom d'instantané daté en avance sur l'horloge de l'instance réceptrice ne compte pas pour la règle tant que cette heure n'est pas arrivée.
 
 **Révoquer l'accès** sur l'instance réceptrice met fin à l'approbation à tout moment et le dit à la source, qui montre alors que l'approbation a été retirée et s'arrête. Ce que l'instance réceptrice détient déjà y reste. Une demande refusée reste refusée. D'autres jeux de données, ou une demande après une révocation, redemandent.
 
@@ -179,13 +179,15 @@ La copie sur la cible est en lecture seule. Par défaut, elle n'est pas montée,
 
 Tout ce que l'élément sauvegarde entre, et les volumes en dessous aussi, que la sauvegarde ignore. Un jeu de données enfant que vous avez désactivé dans l'élément reste dehors. Tous les jeux de données d'une exécution viennent d'un seul instantané, comme dans la sauvegarde.
 
+Une copie qu'un autre BombVault réplique vers ce serveur n'est pas transmise plus loin, car cela réduirait l'historique dont sa source a encore besoin. Quand l'arborescence d'un élément en contient une, l'exécution échoue pour ce jeu de données et dit pourquoi, jusqu'à ce que vous le désactiviez dans l'élément. Un élément qui est lui-même une telle copie ne peut pas répliquer du tout. Supprimer un élément ou désactiver sa réplique laisse ces copies et leurs instantanés tranquilles. Une fois que vous reprenez une copie, comme décrit sous [Utiliser la réplique](#replica-use), elle compte comme un jeu de données normal.
+
 ### Combien de temps les instantanés restent {#replica-retention}
 
-Sur la cible, une nouvelle réplique garde 7 instantanés quotidiens et 3 hebdomadaires. Choisissez plutôt **Court**, **Équilibré** ou **Long**, ou réglez des **Valeurs personnalisées**. Seuls les instantanés nommés `bombvault-replica-<14 digits>` y sont jamais supprimés, et jamais le plus récent que les deux côtés partagent.
+Sur la cible, une nouvelle réplique garde 7 instantanés quotidiens et 3 hebdomadaires. Choisissez plutôt **Court**, **Équilibré** ou **Long**, ou réglez des **Valeurs personnalisées**. Des valeurs personnalisées toutes à zéro gardent chaque instantané, et la carte le dit. Seuls les instantanés nommés `bombvault-replica-<14 digits>` y sont jamais supprimés, et jamais le plus récent que les deux côtés partagent.
 
 Sur la source, BombVault garde le dernier instantané de réplique, plus un bookmark pour chaque état qu'il a envoyé. Les bookmarks ne coûtent pas de place. Le transfert suivant part d'eux.
 
-Pour en garder plus aussi sur la source, réglez **Conserver sur ce serveur** sur la carte Réplique, par exemple sur 7. Autant des instantanés de réplique les plus récents restent alors sur ce serveur après chaque réplique, à côté de ce que garde la cible. 0 ou 1 ne garde que le dernier. Le dernier porte un hold, pour que la base du transfert suivant ne soit pas détruite par accident. Les plus anciens n'en ont pas. Chaque instantané retient les blocs qui ont changé après lui, si bien que chacun que vous gardez prend de la place sur le pool. Désactiver la réplique ou la passer à une autre cible, ou supprimer l'élément, les supprime aussi de ce serveur.
+Pour en garder plus aussi sur la source, réglez **Conserver sur ce serveur** sur la carte Réplique, par exemple sur 7. Autant des instantanés de réplique les plus récents restent alors sur ce serveur après chaque réplique, à côté de ce que garde la cible. 0 ou 1 ne garde que le dernier. Le dernier porte un hold, pour que la base du transfert suivant ne soit pas détruite par accident. Les plus anciens n'en ont pas. Chaque instantané retient les blocs qui ont changé après lui, si bien que chacun que vous gardez prend de la place sur le pool. Désactiver la réplique ou la passer à une autre cible, ou supprimer l'élément, les supprime aussi de ce serveur. Les instantanés d'un autre élément imbriqué en dessous restent. Si l'hôte ne peut pas être joint pendant que vous supprimez l'élément, les instantanés restent aussi et la page le dit. Supprimez-les à la main : `zfs release -r bombvault-replica <dataset>@<snapshot>`, puis `zfs destroy`.
 
 Les fichiers d'un instantané conservé peuvent être lus ou copiés tout de suite, depuis le dossier `.zfs/snapshot` du jeu de données ou depuis un clone, sans toucher au jeu de données ni à la réplique :
 
@@ -228,12 +230,12 @@ zfs clone backup/bombvault-replica/tower/cache/appdata@bombvault-replica-2026100
 Si la source tombe en panne, transformez la copie en jeu de données normal et inscriptible sur la cible :
 
 ```
-zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs inherit -r canmount backup/bombvault-replica/tower/cache/appdata && zfs mount -a
+zfs inherit -r readonly backup/bombvault-replica/tower/cache/appdata && zfs list -rH -o name -t filesystem backup/bombvault-replica/tower/cache/appdata | xargs zfs set canmount=on && zfs mount -a
 ```
 
-BombVault cesse ensuite de répliquer vers ce jeu de données, jusqu'à ce que vous démarriez une nouvelle première exécution.
+BombVault cesse ensuite de répliquer vers ce jeu de données et ses enfants. L'exécution suivante échoue avec une raison, et ce que vous avez écrit reste. Il en va de même pour tout ce qui a été écrit d'autre dans la copie depuis son instantané le plus récent : BombVault ne ramène jamais une copie en arrière. Pour y répliquer de nouveau, déplacez ce dont vous avez besoin hors de la copie et détruisez-la sur la cible. L'exécution suivante renvoie alors tout depuis le début.
 
-Pour récupérer un état vers la source, appuyez sur **Restaurer comme nouveau jeu de données** dans la feuille. BombVault envoie l'instantané dans un nouveau jeu de données à côté de l'original, nommé `<dataset>-bombvault-restore-` plus un horodatage. Il n'écrit jamais par-dessus l'original.
+Pour récupérer un état vers la source, appuyez sur **Restaurer comme nouveau jeu de données** dans la feuille. BombVault envoie l'instantané dans un nouveau jeu de données à côté de l'original, nommé `<dataset>-bombvault-restore-` plus un horodatage. Il n'écrit jamais par-dessus l'original. Un jeu de données enfant perdu sur la source revient aussi, tant que la copie contient encore cet instantané. Un enfant qui ne le contient pas est laissé de côté, et l'exécution le dit.
 
 ### Exemple : une réplique vers un second serveur Unraid {#example-replica}
 
