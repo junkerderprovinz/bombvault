@@ -66,7 +66,7 @@ En kort katalog över vad BombVault gör. Varje rad länkar till sidan som förk
 
 - **Skydd mot radering (append-only)**, upprätthållet av andra sidan och bevisat med ett manipuleringstest. [Skydd mot radering](offsite-recovery.md#delete-protection-append-only)
 - **Acceptera utan skydd mot radering** för en plats som inte kan vägra en radering. [Skydd mot radering](offsite-recovery.md#delete-protection-append-only)
-- **Att radera säkerhetskopior för gott kräver ett inloggningslösenord.** [Säkerhetsmodell](configuration.md#security-model)
+- **Att radera säkerhetskopior för gott kräver din egen inloggning** när ett inloggningslösenord är satt, och en parkopplad telefon kan inte göra det. [Säkerhetsmodell](configuration.md#security-model)
 - **Återställningskit**, på begäran förseglat med age, och en **nyckelförvarare** i din grupp. [Återställningskit](offsite-recovery.md#recovery-kit), [Nyckelförvarare](offsite-recovery.md#key-keeper)
 
 ## Flera servrar {#several-servers}

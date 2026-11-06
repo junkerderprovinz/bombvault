@@ -64,7 +64,7 @@ BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa
 - **Android-sovellus**: **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla**, jolloin pariliitetty puhelin voi kirjautua ilman salasanaa.
 - **Salaus**: **Salaa varmuuskopiot**, oletuksena päällä.
 
-Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti, avainten tallennus ja varmuuskopioiden poistaminen lopullisesti. Katso [Tietoturvamalli](configuration.md#security-model).
+Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tallennus. Katso [Tietoturvamalli](configuration.md#security-model).
 
 ## Ilmentymät {#instances}
 

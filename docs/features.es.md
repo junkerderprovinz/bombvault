@@ -66,7 +66,7 @@ Un breve catálogo de lo que hace BombVault. Cada línea enlaza con la página q
 
 - **Protección contra borrado (append-only)**, aplicada por el otro lado y demostrada con una prueba de manipulación. [Protección contra borrado](offsite-recovery.md#delete-protection-append-only)
 - **Aceptar sin protección contra borrado** para un lugar que no puede rechazar un borrado. [Protección contra borrado](offsite-recovery.md#delete-protection-append-only)
-- **Borrar copias para siempre requiere una contraseña de acceso.** [Modelo de seguridad](configuration.md#security-model)
+- **Borrar copias para siempre requiere que inicies sesión tú mismo** cuando hay una contraseña de acceso, y un teléfono emparejado no puede hacerlo. [Modelo de seguridad](configuration.md#security-model)
 - **Kit de recuperación**, opcionalmente sellado con age, y un **guardián de claves** en tu grupo. [Kit de recuperación](offsite-recovery.md#recovery-kit), [Guardián de claves](offsite-recovery.md#key-keeper)
 
 ## Varios servidores {#several-servers}

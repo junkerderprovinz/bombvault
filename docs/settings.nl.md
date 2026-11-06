@@ -64,7 +64,7 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 - **Android-app**: **Telefoons kunnen koppelen met de twaalf woorden van de groep**, waarmee een gekoppelde telefoon zich zonder het wachtwoord kan aanmelden.
 - **Versleuteling**: **Back-ups versleutelen**, standaard aan.
 
-Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit, bewaarkopieën van de sleutel en het definitief verwijderen van back-ups. Zie [Beveiligingsmodel](configuration.md#security-model).
+Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarkopieën van de sleutel. Zie [Beveiligingsmodel](configuration.md#security-model).
 
 ## Instanties {#instances}
 

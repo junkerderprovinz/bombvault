@@ -64,7 +64,7 @@ Die Karte **Streaming**, die das Upload-Limit senkt, während Plex, Jellyfin ode
 - **Android-App**: **Handys können sich mit den zwölf Wörtern der Gruppe koppeln**, womit sich ein gekoppeltes Handy ohne das Passwort anmelden kann.
 - **Verschlüsselung**: **Sicherungen verschlüsseln**, standardmäßig an.
 
-Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit, Schlüsselhinterlegungen und das endgültige Löschen von Sicherungen. Siehe [Sicherheitsmodell](configuration.md#security-model).
+Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterlegungen. Siehe [Sicherheitsmodell](configuration.md#security-model).
 
 ## Instanzen {#instances}
 

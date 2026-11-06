@@ -64,7 +64,7 @@ Cardul **Streaming**, care coboară limita de încărcare cât timp Plex, Jellyf
 - **Aplicația Android**: **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului**, ceea ce permite unui telefon împerecheat să se conecteze fără parolă.
 - **Criptare**: **Criptează copiile de rezervă**, pornit implicit.
 
-Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare, depunerile de chei și ștergerea definitivă a backupurilor. Vezi [Model de securitate](configuration.md#security-model).
+Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și depunerile de chei. Vezi [Model de securitate](configuration.md#security-model).
 
 ## Instanțe {#instances}
 

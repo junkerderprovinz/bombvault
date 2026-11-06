@@ -64,7 +64,7 @@ Thẻ **Phát trực tuyến**, giảm giới hạn tải lên khi Plex, Jellyfi
 - **Ứng dụng Android**: **Điện thoại có thể ghép nối bằng mười hai từ của nhóm**, cho phép một điện thoại đã ghép nối đăng nhập mà không cần mật khẩu.
 - **Mã hóa**: **Mã hóa bản sao lưu**, bật theo mặc định.
 
-Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi phục, ký gửi khóa và xóa vĩnh viễn các bản sao lưu. Xem [Mô hình bảo mật](configuration.md#security-model).
+Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi phục và ký gửi khóa. Xem [Mô hình bảo mật](configuration.md#security-model).
 
 ## Phiên bản {#instances}
 

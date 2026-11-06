@@ -66,7 +66,7 @@ BombVault가 하는 일을 짧게 모은 목록입니다. 각 줄은 그것을 �
 
 - 상대편이 강제하고 변조 테스트로 증명하는 **삭제 방지 (append-only)**. [삭제 방지](offsite-recovery.md#delete-protection-append-only)
 - 삭제를 거부할 수 없는 곳을 위한 **삭제 방지 없이 수락**. [삭제 방지](offsite-recovery.md#delete-protection-append-only)
-- **백업의 영구 삭제에는 로그인 비밀번호가 필요합니다.** [보안 모델](configuration.md#security-model)
+- **로그인 비밀번호를 설정했다면 백업의 영구 삭제에는 본인 로그인이 필요합니다.** 페어링한 휴대폰으로는 삭제할 수 없습니다. [보안 모델](configuration.md#security-model)
 - age로 봉인할 수 있는 **복구 키트**와 그룹 안의 **키 보관 측**. [복구 키트](offsite-recovery.md#recovery-kit), [키 보관 측](offsite-recovery.md#key-keeper)
 
 ## 여러 서버 {#several-servers}

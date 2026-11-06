@@ -66,7 +66,7 @@ Stručný katalog toho, co BombVault umí. Každý řádek odkazuje na stránku,
 
 - **Ochrana proti smazání (append-only)**, vynucená druhou stranou a prokázaná tamper testem. [Ochrana proti smazání](offsite-recovery.md#delete-protection-append-only)
 - **Přijmout bez ochrany proti smazání** pro místo, které smazání odmítnout neumí. [Ochrana proti smazání](offsite-recovery.md#delete-protection-append-only)
-- **Trvalé mazání záloh vyžaduje přihlašovací heslo.** [Bezpečnostní model](configuration.md#security-model)
+- **Trvalé mazání záloh vyžaduje tvoje vlastní přihlášení**, jakmile je nastavené přihlašovací heslo, a spárovaný telefon to nedokáže. [Bezpečnostní model](configuration.md#security-model)
 - **Sada pro obnovu**, volitelně zapečetěná pomocí age, a **strážce klíče** ve tvé skupině. [Sada pro obnovu](offsite-recovery.md#recovery-kit), [Strážce klíče](offsite-recovery.md#key-keeper)
 
 ## Více serverů {#several-servers}

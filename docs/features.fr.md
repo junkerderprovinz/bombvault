@@ -66,7 +66,7 @@ Un court catalogue de ce que fait BombVault. Chaque ligne renvoie vers la page q
 
 - **Protection contre la suppression (ajout seul)**, imposée par l'autre côté et prouvée par un test d'altération. [Protection contre la suppression](offsite-recovery.md#delete-protection-append-only)
 - **Accepter sans protection contre la suppression** pour un endroit qui ne peut pas refuser une suppression. [Protection contre la suppression](offsite-recovery.md#delete-protection-append-only)
-- **Supprimer des sauvegardes pour de bon demande un mot de passe de connexion.** [Modèle de sécurité](configuration.md#security-model)
+- **Supprimer des sauvegardes pour de bon demande votre propre connexion** dès qu'un mot de passe de connexion est défini, et un téléphone appairé ne le peut pas. [Modèle de sécurité](configuration.md#security-model)
 - **Kit de récupération**, éventuellement scellé avec age, et un **gardien** dans votre groupe. [Kit de récupération](offsite-recovery.md#recovery-kit), [Gardien](offsite-recovery.md#key-keeper)
 
 ## Plusieurs serveurs {#several-servers}

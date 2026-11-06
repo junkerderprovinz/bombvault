@@ -66,7 +66,7 @@
 
 - **הגנה מפני מחיקה (append-only)**, שהצד הרחוק אוכף ובדיקת חבלה מוכיחה. [הגנה מפני מחיקה](offsite-recovery.md#delete-protection-append-only)
 - **לקבל ללא הגנה מפני מחיקה** למקום שלא יכול לסרב למחיקה. [הגנה מפני מחיקה](offsite-recovery.md#delete-protection-append-only)
-- **מחיקת גיבויים לצמיתות דורשת סיסמת התחברות.** [מודל האבטחה](configuration.md#security-model)
+- **מחיקת גיבויים לצמיתות דורשת התחברות שלך** כשמוגדרת סיסמת התחברות, וטלפון מוצמד לא יכול לעשות זאת. [מודל האבטחה](configuration.md#security-model)
 - **ערכת שחזור**, אופציונלית אטומה עם age, ו**שומר מפתח** בקבוצה שלך. [ערכת שחזור](offsite-recovery.md#recovery-kit), [שומר מפתח](offsite-recovery.md#key-keeper)
 
 ## כמה שרתים {#several-servers}

@@ -64,7 +64,7 @@ La tarjeta **Streaming**, que baja el límite de subida mientras Plex, Jellyfin 
 - **App de Android**: **Los teléfonos pueden emparejarse con las doce palabras del grupo**, que permite a un teléfono emparejado iniciar sesión sin la contraseña.
 - **Cifrado**: **Cifrar las copias**, activado por defecto.
 
-Varias cosas requieren una contraseña de acceso, como el kit de recuperación, los depósitos de claves y el borrado definitivo de copias. Consulta [Modelo de seguridad](configuration.md#security-model).
+Varias cosas requieren una contraseña de acceso, como el kit de recuperación y los depósitos de claves. Consulta [Modelo de seguridad](configuration.md#security-model).
 
 ## Instancias {#instances}
 

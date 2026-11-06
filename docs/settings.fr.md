@@ -64,7 +64,7 @@ La carte **Streaming**, qui abaisse la limite d'envoi pendant que Plex, Jellyfin
 - **Application Android** : **Les téléphones peuvent s'appairer avec les douze mots du groupe**, ce qui permet à un téléphone appairé de se connecter sans le mot de passe.
 - **Chiffrement** : **Chiffrer les sauvegardes**, activé par défaut.
 
-Plusieurs choses demandent un mot de passe de connexion, comme le kit de récupération, les dépôts de clés et la suppression définitive de sauvegardes. Voir [Modèle de sécurité](configuration.md#security-model).
+Plusieurs choses demandent un mot de passe de connexion, comme le kit de récupération et les dépôts de clés. Voir [Modèle de sécurité](configuration.md#security-model).
 
 ## Instances {#instances}
 

@@ -66,7 +66,7 @@ Um catálogo curto do que o BombVault faz. Cada linha liga à página que a expl
 
 - **Proteção contra eliminação (append-only)**, imposta pelo outro lado e provada por um teste de adulteração. [Proteção contra eliminação](offsite-recovery.md#delete-protection-append-only)
 - **Aceitar sem proteção contra eliminação** para um lugar que não consegue recusar uma eliminação. [Proteção contra eliminação](offsite-recovery.md#delete-protection-append-only)
-- **Eliminar backups de vez pede uma palavra-passe de acesso.** [Modelo de segurança](configuration.md#security-model)
+- **Eliminar backups de vez pede o teu próprio início de sessão** quando há uma palavra-passe de acesso, e um telemóvel emparelhado não o pode fazer. [Modelo de segurança](configuration.md#security-model)
 - **Kit de recuperação**, opcionalmente selado com age, e um **guardião da chave** no teu grupo. [Kit de recuperação](offsite-recovery.md#recovery-kit), [Guardião da chave](offsite-recovery.md#key-keeper)
 
 ## Vários servidores {#several-servers}

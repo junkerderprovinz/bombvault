@@ -66,7 +66,7 @@ Un scurt catalog cu ce face BombVault. Fiecare rând trimite la pagina care îl 
 
 - **Protecție împotriva ștergerii (append-only)**, impusă de partea îndepărtată și dovedită printr-un test de manipulare. [Protecție împotriva ștergerii](offsite-recovery.md#delete-protection-append-only)
 - **Acceptă fără protecție împotriva ștergerii** pentru un loc care nu poate refuza o ștergere. [Protecție împotriva ștergerii](offsite-recovery.md#delete-protection-append-only)
-- **Ștergerea definitivă a backupurilor cere o parolă de conectare.** [Model de securitate](configuration.md#security-model)
+- **Ștergerea definitivă a backupurilor cere propria ta conectare** când este setată o parolă de conectare, iar un telefon asociat nu o poate face. [Model de securitate](configuration.md#security-model)
 - **Kit de recuperare**, opțional sigilat cu age, și un **păstrător de cheie** în grupul tău. [Kit de recuperare](offsite-recovery.md#recovery-kit), [Păstrător de cheie](offsite-recovery.md#key-keeper)
 
 ## Mai multe servere {#several-servers}

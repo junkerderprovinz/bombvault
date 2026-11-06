@@ -66,7 +66,7 @@ Một danh mục ngắn về những gì BombVault làm. Mỗi dòng liên kết
 
 - **Bảo vệ chống xóa (append-only)**, do phía bên kia thực thi và được chứng minh bằng phép thử phá hoại. [Bảo vệ chống xóa](offsite-recovery.md#delete-protection-append-only)
 - **Chấp nhận khi không có bảo vệ chống xóa** cho một nơi không thể từ chối việc xóa. [Bảo vệ chống xóa](offsite-recovery.md#delete-protection-append-only)
-- **Xóa vĩnh viễn các bản sao lưu cần mật khẩu đăng nhập.** [Mô hình bảo mật](configuration.md#security-model)
+- **Xóa vĩnh viễn các bản sao lưu cần chính bạn đăng nhập** khi đã đặt mật khẩu đăng nhập, và điện thoại đã ghép nối không làm được. [Mô hình bảo mật](configuration.md#security-model)
 - **Bộ khôi phục**, có thể niêm phong bằng age, và một **bên giữ khóa** trong nhóm của bạn. [Bộ khôi phục](offsite-recovery.md#recovery-kit), [Bên giữ khóa](offsite-recovery.md#key-keeper)
 
 ## Nhiều máy chủ {#several-servers}

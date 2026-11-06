@@ -66,7 +66,7 @@ Rövid katalógus arról, mit tud a BombVault. Minden sor arra az oldalra mutat,
 
 - **Törlés elleni védelem (append-only)**, a túloldal kényszeríti ki, és manipulációs teszt bizonyítja. [Törlés elleni védelem](offsite-recovery.md#delete-protection-append-only)
 - **Elfogadás törlés elleni védelem nélkül** olyan helyhez, amely nem tud visszautasítani egy törlést. [Törlés elleni védelem](offsite-recovery.md#delete-protection-append-only)
-- **A mentések végleges törléséhez belépési jelszó kell.** [Biztonsági modell](configuration.md#security-model)
+- **A mentések végleges törléséhez saját bejelentkezés kell**, ha van belépési jelszó, és párosított telefon nem teheti meg. [Biztonsági modell](configuration.md#security-model)
 - **Helyreállítási csomag**, igény szerint age-dzsel lezárva, és egy **kulcsőrző** a csoportodban. [Helyreállítási csomag](offsite-recovery.md#recovery-kit), [Kulcsőrző](offsite-recovery.md#key-keeper)
 
 ## Több szerver {#several-servers}

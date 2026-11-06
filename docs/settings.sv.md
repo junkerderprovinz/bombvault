@@ -64,7 +64,7 @@ Kortet **Streaming**, som sänker uppladdningsgränsen medan Plex, Jellyfin elle
 - **Android-app**: **Telefoner kan parkopplas med gruppens tolv ord**, vilket låter en parkopplad telefon logga in utan lösenordet.
 - **Kryptering**: **Kryptera säkerhetskopior**, på som standard.
 
-Flera saker kräver ett inloggningslösenord, till exempel återställningskitet, nyckeldepositioner och att radera säkerhetskopior för gott. Se [Säkerhetsmodell](configuration.md#security-model).
+Flera saker kräver ett inloggningslösenord, till exempel återställningskitet och nyckeldepositioner. Se [Säkerhetsmodell](configuration.md#security-model).
 
 ## Instanser {#instances}
 

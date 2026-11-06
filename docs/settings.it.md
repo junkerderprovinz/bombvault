@@ -64,7 +64,7 @@ La scheda **Streaming**, che abbassa il limite di upload mentre Plex, Jellyfin o
 - **App Android**: **I telefoni possono associarsi con le dodici parole del gruppo**, cosa che permette a un telefono associato di accedere senza la password.
 - **Crittografia**: **Crittografa i backup**, attivo di default.
 
-Diverse cose richiedono una password di accesso, come il kit di ripristino, i depositi della chiave e l'eliminazione definitiva dei backup. Vedi [Modello di sicurezza](configuration.md#security-model).
+Diverse cose richiedono una password di accesso, come il kit di ripristino e i depositi della chiave. Vedi [Modello di sicurezza](configuration.md#security-model).
 
 ## Istanze {#instances}
 

@@ -66,7 +66,7 @@ Et kort katalog over hva BombVault gjør. Hver linje lenker til siden som forkla
 
 - **Beskyttelse mot sletting (append-only)**, håndhevet av den andre siden og bevist med en tamper-test. [Beskyttelse mot sletting](offsite-recovery.md#delete-protection-append-only)
 - **Godta uten beskyttelse mot sletting** for et sted som ikke kan nekte en sletting. [Beskyttelse mot sletting](offsite-recovery.md#delete-protection-append-only)
-- **Å slette sikkerhetskopier for godt krever et innloggingspassord.** [Sikkerhetsmodell](configuration.md#security-model)
+- **Å slette sikkerhetskopier for godt krever din egen innlogging** når et innloggingspassord er satt, og en paret telefon kan ikke gjøre det. [Sikkerhetsmodell](configuration.md#security-model)
 - **Gjenopprettingssett**, eventuelt forseglet med age, og en **nøkkelvokter** i gruppen din. [Gjenopprettingssett](offsite-recovery.md#recovery-kit), [Nøkkelvokter](offsite-recovery.md#key-keeper)
 
 ## Flere servere {#several-servers}

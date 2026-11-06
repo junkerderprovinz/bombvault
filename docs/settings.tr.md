@@ -64,7 +64,7 @@ Plex, Jellyfin ya da Emby yayın yaparken yükleme sınırını düşüren **Yay
 - **Android uygulaması**: **Telefonlar grubun on iki kelimesiyle eşleşebilir**, eşleşmiş bir telefonun parolasız oturum açmasını sağlar.
 - **Şifreleme**: varsayılan olarak açık **Yedekleri şifrele**.
 
-Kurtarma kiti, anahtar emanetleri ve yedekleri kalıcı silme gibi bazı şeyler bir giriş parolası gerektirir. Bkz. [Güvenlik modeli](configuration.md#security-model).
+Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gerektirir. Bkz. [Güvenlik modeli](configuration.md#security-model).
 
 ## Örnekler {#instances}
 

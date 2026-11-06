@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault는 **GNU Affero General Public 
 - **이슈:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "호스트에 대한 root 수준의 제어"
-    Docker 소켓을 통해 BombVault는 컨테이너를 중지, 제거, 재생성하고 appdata를 읽고 쓸 수 있으며, VM 백업을 위해 호스트에 SSH로 로그인해 `virsh`를 실행합니다. 웹 UI에 접근할 수 있는 사람은 사실상 호스트의 root 권한을 가집니다. BombVault는 신뢰할 수 있고 외부에 노출되지 않은 네트워크에서만 실행하고, **설정, 보안**에서 로그인 비밀번호를 설정하세요. 복구 키트, 키 보관, 플래시 ZIP, 플래시 백업이나 셀프 백업 내보내기, 대상의 백업 삭제에는 비밀번호가 필요합니다. 전체 보안 모델은 [구성](configuration.md#security-model)을 참고하세요.
+    Docker 소켓을 통해 BombVault는 컨테이너를 중지, 제거, 재생성하고 appdata를 읽고 쓸 수 있으며, VM 백업을 위해 호스트에 SSH로 로그인해 `virsh`를 실행합니다. 웹 UI에 접근할 수 있는 사람은 사실상 호스트의 root 권한을 가집니다. BombVault는 신뢰할 수 있고 외부에 노출되지 않은 네트워크에서만 실행하고, **설정, 보안**에서 로그인 비밀번호를 설정하세요. 복구 키트, 키 보관, 플래시 ZIP, 플래시 백업이나 셀프 백업 내보내기에는 비밀번호가 필요합니다. 전체 보안 모델은 [구성](configuration.md#security-model)을 참고하세요.

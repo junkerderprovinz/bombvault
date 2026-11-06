@@ -64,7 +64,7 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 - **Android-app**: **Telefoner kan pare med gruppens tolv ord**, som lar en paret telefon logge inn uten passordet.
 - **Kryptering**: **Krypter sikkerhetskopier**, på som standard.
 
-Flere ting krever et innloggingspassord, som gjenopprettingssettet, nøkkeldeponering og endelig sletting av sikkerhetskopier. Se [Sikkerhetsmodell](configuration.md#security-model).
+Flere ting krever et innloggingspassord, som gjenopprettingssettet og nøkkeldeponering. Se [Sikkerhetsmodell](configuration.md#security-model).
 
 ## Instanser {#instances}
 

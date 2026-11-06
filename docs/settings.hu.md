@@ -64,7 +64,7 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 - **Android-alkalmazás**: **A telefonok párosíthatók a csoport tizenkét szavával**, ami lehetővé teszi, hogy egy párosított telefon jelszó nélkül jelentkezzen be.
 - **Titkosítás**: **Mentések titkosítása**, alapértelmezés szerint bekapcsolva.
 
-Néhány dologhoz belépési jelszó kell, például a helyreállítási csomaghoz, a kulcsletétekhez és a mentések végleges törléséhez. Lásd: [Biztonsági modell](configuration.md#security-model).
+Néhány dologhoz belépési jelszó kell, például a helyreállítási csomaghoz és a kulcsletétekhez. Lásd: [Biztonsági modell](configuration.md#security-model).
 
 ## Példányok {#instances}
 

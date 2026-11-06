@@ -66,7 +66,7 @@ BombVault ができることの短い一覧です。各行から、その説明�
 
 - **削除に対する保護（append-only）**：相手側が強制し、改ざんテストで証明されます。[削除に対する保護](offsite-recovery.md#delete-protection-append-only)
 - 削除を拒否できない場所のための**削除に対する保護なしで承認**。[削除に対する保護](offsite-recovery.md#delete-protection-append-only)
-- **バックアップの完全な削除にはログインパスワードが必要です。**[セキュリティモデル](configuration.md#security-model)
+- **ログインパスワードを設定している場合、バックアップの完全な削除には本人のサインインが必要です。** ペアリングしたスマートフォンからは削除できません。[セキュリティモデル](configuration.md#security-model)
 - **リカバリーキット**（age による暗号化も選べます）と、グループ内の**鍵の保管側**。[リカバリーキット](offsite-recovery.md#recovery-kit)、[鍵の保管側](offsite-recovery.md#key-keeper)
 
 ## 複数のサーバー {#several-servers}

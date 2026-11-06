@@ -64,7 +64,7 @@ O cartão **Streaming**, que baixa o limite de envio enquanto o Plex, o Jellyfin
 - **App para Android**: **Os telemóveis podem emparelhar com as doze palavras do grupo**, o que deixa um telemóvel emparelhado iniciar sessão sem a palavra-passe.
 - **Encriptação**: **Encriptar backups**, ligado por predefinição.
 
-Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperação, os depósitos de chaves e eliminar backups de vez. Vê [Modelo de segurança](configuration.md#security-model).
+Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperação e os depósitos de chaves. Vê [Modelo de segurança](configuration.md#security-model).
 
 ## Instâncias {#instances}
 

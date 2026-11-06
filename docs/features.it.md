@@ -66,7 +66,7 @@ Un breve catalogo di ciò che BombVault sa fare. Ogni riga rimanda alla pagina c
 
 - **Protezione dall'eliminazione (append-only)**, imposta dal lato remoto e provata da una prova di manomissione. [Protezione dall'eliminazione](offsite-recovery.md#delete-protection-append-only)
 - **Accetta senza protezione dall'eliminazione** per un posto che non sa rifiutare una cancellazione. [Protezione dall'eliminazione](offsite-recovery.md#delete-protection-append-only)
-- **Eliminare i backup in via definitiva richiede una password di accesso.** [Modello di sicurezza](configuration.md#security-model)
+- **Eliminare i backup in via definitiva richiede il tuo accesso** quando è impostata una password di accesso, e un telefono associato non può farlo. [Modello di sicurezza](configuration.md#security-model)
 - **Kit di ripristino**, se vuoi sigillato con age, e un **custode della chiave** nel tuo gruppo. [Kit di ripristino](offsite-recovery.md#recovery-kit), [Custode della chiave](offsite-recovery.md#key-keeper)
 
 ## Più server {#several-servers}

@@ -66,7 +66,7 @@ A short catalogue of what BombVault does. Each line links to the page that expla
 
 - **Delete protection (append-only)**, enforced by the far side and proven by a tamper test. [Delete protection](offsite-recovery.md#delete-protection-append-only)
 - **Accept without delete protection** for a place that cannot refuse a delete. [Delete protection](offsite-recovery.md#delete-protection-append-only)
-- **Deleting backups for good takes a login password.** [Security model](configuration.md#security-model)
+- **Deleting backups for good takes your own sign-in** once a login password is set, and a paired phone cannot do it. [Security model](configuration.md#security-model)
 - **Recovery kit**, optionally sealed with age, and a **key keeper** in your group. [Recovery kit](offsite-recovery.md#recovery-kit), [Key keeper](offsite-recovery.md#key-keeper)
 
 ## Several servers {#several-servers}

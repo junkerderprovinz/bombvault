@@ -66,7 +66,7 @@ BombVault 功能的简短目录。每一行都链接到讲解它的页面。
 
 - **防删除保护（append-only）**，由对方强制执行，并通过防篡改测试证明。[防删除保护](offsite-recovery.md#delete-protection-append-only)
 - 对无法拒绝删除的位置，可以**在没有防删除保护的情况下接受**。[防删除保护](offsite-recovery.md#delete-protection-append-only)
-- **永久删除备份需要登录密码。**[安全模型](configuration.md#security-model)
+- **设置了登录密码时，永久删除备份需要你本人登录，已配对的手机无法删除。**[安全模型](configuration.md#security-model)
 - **恢复工具包**，可选地用 age 封存，以及你组里的**密钥保管端**。[恢复工具包](offsite-recovery.md#recovery-kit)、[密钥保管端](offsite-recovery.md#key-keeper)
 
 ## 多台服务器 {#several-servers}

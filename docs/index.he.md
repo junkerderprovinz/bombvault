@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault היא תוכנה חופשית 
 - **Issues:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "שליטה בהיקף root על המארח"
-    דרך שקע Docker BombVault יכולה לעצור, להסיר וליצור מחדש קונטיינרים ולקרוא ולכתוב appdata, ולגיבוי VM היא נכנסת למארח דרך SSH כדי להריץ `virsh`. כל מי שיכול להגיע לממשק הרשת שלה למעשה מחזיק ב-root במארח. מריצים את BombVault רק ברשת מהימנה ולא חשופה, וקובעים סיסמת התחברות תחת **הגדרות, אבטחה**. ערכת השחזור, פיקדונות מפתח, ה-ZIP של ה-flash, ייצוא של גיבוי flash או גיבוי עצמי ומחיקת הגיבויים ביעד דורשים אחת. ראו [הגדרות](configuration.md#security-model) למודל האבטחה המלא.
+    דרך שקע Docker BombVault יכולה לעצור, להסיר וליצור מחדש קונטיינרים ולקרוא ולכתוב appdata, ולגיבוי VM היא נכנסת למארח דרך SSH כדי להריץ `virsh`. כל מי שיכול להגיע לממשק הרשת שלה למעשה מחזיק ב-root במארח. מריצים את BombVault רק ברשת מהימנה ולא חשופה, וקובעים סיסמת התחברות תחת **הגדרות, אבטחה**. ערכת השחזור, פיקדונות מפתח, ה-ZIP של ה-flash וייצוא של גיבוי flash או גיבוי עצמי דורשים אחת. ראו [הגדרות](configuration.md#security-model) למודל האבטחה המלא.

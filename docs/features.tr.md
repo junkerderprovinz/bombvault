@@ -66,7 +66,7 @@ BombVault'un neler yaptığının kısa bir kataloğu. Her satır, onu açıklay
 
 - Karşı tarafça uygulanan ve bir kurcalama testiyle kanıtlanan **silmeye karşı koruma (append-only)**. [Silmeye karşı koruma](offsite-recovery.md#delete-protection-append-only)
 - Silmeyi reddedemeyen bir yer için **Silmeye karşı koruma olmadan kabul et**. [Silmeye karşı koruma](offsite-recovery.md#delete-protection-append-only)
-- **Yedekleri kalıcı silmek bir giriş parolası gerektirir.** [Güvenlik modeli](configuration.md#security-model)
+- **Bir giriş parolası ayarlıysa yedekleri kalıcı silmek kendi oturum açmanı gerektirir**, eşleşmiş bir telefon bunu yapamaz. [Güvenlik modeli](configuration.md#security-model)
 - İsteğe bağlı olarak age ile mühürlenen **kurtarma kiti** ve grubundaki bir **anahtar bekçisi**. [Kurtarma kiti](offsite-recovery.md#recovery-kit), [Anahtar bekçisi](offsite-recovery.md#key-keeper)
 
 ## Birden çok sunucu {#several-servers}

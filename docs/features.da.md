@@ -66,7 +66,7 @@ Et kort katalog over, hvad BombVault kan. Hver linje linker til den side, der fo
 
 - **Beskyttelse mod sletning (append-only)**, håndhævet af den fjerne side og bevist af en manipulationstest. [Beskyttelse mod sletning](offsite-recovery.md#delete-protection-append-only)
 - **Accepter uden beskyttelse mod sletning** til et sted, der ikke kan afvise en sletning. [Beskyttelse mod sletning](offsite-recovery.md#delete-protection-append-only)
-- **At slette sikkerhedskopier for altid kræver en loginadgangskode.** [Sikkerhedsmodel](configuration.md#security-model)
+- **At slette sikkerhedskopier for altid kræver dit eget login**, når en loginadgangskode er angivet, og en parret telefon kan ikke gøre det. [Sikkerhedsmodel](configuration.md#security-model)
 - **Gendannelseskit**, om du vil forseglet med age, og en **nøgleholder** i din gruppe. [Gendannelseskit](offsite-recovery.md#recovery-kit), [Nøgleholder](offsite-recovery.md#key-keeper)
 
 ## Flere servere {#several-servers}

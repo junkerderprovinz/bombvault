@@ -64,7 +64,7 @@ Kortet **Streaming**, som sænker upload-grænsen, mens Plex, Jellyfin eller Emb
 - **Android-app**: **Telefoner kan parre med gruppens tolv ord**, hvilket lader en parret telefon logge ind uden adgangskoden.
 - **Kryptering**: **Kryptér sikkerhedskopier**, slået til som standard.
 
-Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet, nøgledepoter og at slette sikkerhedskopier for altid. Se [Sikkerhedsmodel](configuration.md#security-model).
+Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgledepoter. Se [Sikkerhedsmodel](configuration.md#security-model).
 
 ## Instanser {#instances}
 

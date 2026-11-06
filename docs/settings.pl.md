@@ -64,7 +64,7 @@ Karta **Streaming**, która obniża limit wysyłania, gdy Plex, Jellyfin lub Emb
 - **Aplikacja na Androida**: **Telefony mogą się sparować z dwunastoma słowami grupy**, co pozwala sparowanemu telefonowi zalogować się bez hasła.
 - **Szyfrowanie**: **Szyfruj kopie zapasowe**, domyślnie włączone.
 
-Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania, depozyty kluczy i trwałe usuwanie kopii. Zobacz [Model bezpieczeństwa](configuration.md#security-model).
+Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy. Zobacz [Model bezpieczeństwa](configuration.md#security-model).
 
 ## Instancje {#instances}
 

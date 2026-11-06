@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault 是自由软件，采用 **GNU 
 - **问题反馈：** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "等同于主机 root 的控制权"
-    通过 Docker 套接字，BombVault 可以停止、删除和重新创建容器，并读写 appdata。做虚拟机备份时，它还会通过 SSH 登录主机来运行 `virsh`。任何能访问它的 Web 界面的人，实际上都拥有主机的 root 权限。请只在受信任、不对外暴露的网络上运行 BombVault，并在**设置、安全**中设置登录密码。恢复工具包、密钥托管、闪存 ZIP、导出闪存备份或自我备份，以及删除某个存储位置上的备份，都需要密码。完整的安全模型参见[配置](configuration.md#security-model)。
+    通过 Docker 套接字，BombVault 可以停止、删除和重新创建容器，并读写 appdata。做虚拟机备份时，它还会通过 SSH 登录主机来运行 `virsh`。任何能访问它的 Web 界面的人，实际上都拥有主机的 root 权限。请只在受信任、不对外暴露的网络上运行 BombVault，并在**设置、安全**中设置登录密码。恢复工具包、密钥托管、闪存 ZIP 以及导出闪存备份或自我备份都需要密码。完整的安全模型参见[配置](configuration.md#security-model)。

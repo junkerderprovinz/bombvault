@@ -64,7 +64,7 @@ Karta **Streamování**, která snižuje limit nahrávání, zatímco streamuje 
 - **Aplikace pro Android**: **Telefony se mohou spárovat s dvanácti slovy skupiny**, což spárovanému telefonu dovolí přihlásit se bez hesla.
 - **Šifrování**: **Šifrovat zálohy**, ve výchozím stavu zapnuto.
 
-Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu, uložení klíčů u strážce a trvalé mazání záloh. Viz [Bezpečnostní model](configuration.md#security-model).
+Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a uložení klíčů u strážce. Viz [Bezpečnostní model](configuration.md#security-model).
 
 ## Instance {#instances}
 

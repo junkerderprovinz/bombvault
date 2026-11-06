@@ -66,7 +66,7 @@ Een korte catalogus van wat BombVault doet. Elke regel linkt naar de pagina die 
 
 - **Bescherming tegen verwijderen (append-only)**, afgedwongen door de andere kant en bewezen door een sabotagetest. [Bescherming tegen verwijderen](offsite-recovery.md#delete-protection-append-only)
 - **Accepteren zonder bescherming tegen verwijderen** voor een plek die een verwijdering niet kan weigeren. [Bescherming tegen verwijderen](offsite-recovery.md#delete-protection-append-only)
-- **Back-ups definitief verwijderen vereist een inlogwachtwoord.** [Beveiligingsmodel](configuration.md#security-model)
+- **Back-ups definitief verwijderen vraagt je eigen aanmelding** zodra er een inlogwachtwoord is ingesteld, en een gekoppelde telefoon kan het niet. [Beveiligingsmodel](configuration.md#security-model)
 - **Herstelkit**, eventueel verzegeld met age, en een **sleutelbewaarder** in je groep. [Herstelkit](offsite-recovery.md#recovery-kit), [Sleutelbewaarder](offsite-recovery.md#key-keeper)
 
 ## Meerdere servers {#several-servers}

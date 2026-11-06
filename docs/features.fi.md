@@ -66,7 +66,7 @@ Lyhyt luettelo siitä, mitä BombVault tekee. Jokainen rivi linkittää sivulle,
 
 - **Poistosuoja (append-only)**, jonka toinen pää panee täytäntöön ja jonka peukalointitesti todistaa. [Poistosuoja](offsite-recovery.md#delete-protection-append-only)
 - **Hyväksy ilman poistosuojaa** paikalle, joka ei voi kieltäytyä poistosta. [Poistosuoja](offsite-recovery.md#delete-protection-append-only)
-- **Varmuuskopioiden poistaminen lopullisesti vaatii kirjautumissalasanan.** [Tietoturvamalli](configuration.md#security-model)
+- **Varmuuskopioiden poistaminen lopullisesti vaatii oman kirjautumisesi**, kun kirjautumissalasana on asetettu, eikä pariliitetty puhelin voi tehdä sitä. [Tietoturvamalli](configuration.md#security-model)
 - **Palautuspaketti**, halutessasi age:lla sinetöitynä, ja **säilyttäjä** ryhmässäsi. [Palautuspaketti](offsite-recovery.md#recovery-kit), [Säilyttäjä](offsite-recovery.md#key-keeper)
 
 ## Useita palvelimia {#several-servers}

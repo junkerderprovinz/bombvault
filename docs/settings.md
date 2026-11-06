@@ -64,7 +64,7 @@ The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Em
 - **Android app**: **Phones can pair with the group's twelve words**, which lets a paired phone sign in without the password.
 - **Encryption**: **Encrypt backups**, on by default.
 
-Several things need a login password, such as the recovery kit, key deposits and deleting backups for good. See [Security model](configuration.md#security-model).
+Several things need a login password, such as the recovery kit and key deposits. See [Security model](configuration.md#security-model).
 
 ## Instances {#instances}
 

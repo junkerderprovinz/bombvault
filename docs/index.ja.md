@@ -102,4 +102,4 @@ Copyright (C) 2026 Junker der Provinz. BombVault は **GNU Affero General Public
 - **Issue:** [github.com/junkerderprovinz/bombvault/issues](https://github.com/junkerderprovinz/bombvault/issues)
 
 !!! warning "ホストに対する root 相当の制御"
-    Docker ソケットを通じて、BombVault はコンテナの停止、削除、再作成を行い、appdata の読み書きができます。また VM バックアップのためにホストに SSH でログインして `virsh` を実行します。その Web UI に到達できる者は、実質的にホストの root 権限を持つことになります。BombVault は信頼できる、外部に公開されていないネットワークでのみ実行し、**設定、セキュリティ** でログインパスワードを設定してください。リカバリーキット、鍵の預け入れ、フラッシュ ZIP、フラッシュバックアップやセルフバックアップのエクスポート、保存先のバックアップの削除にはパスワードが必要です。完全なセキュリティモデルについては[設定](configuration.md#security-model)を参照してください。
+    Docker ソケットを通じて、BombVault はコンテナの停止、削除、再作成を行い、appdata の読み書きができます。また VM バックアップのためにホストに SSH でログインして `virsh` を実行します。その Web UI に到達できる者は、実質的にホストの root 権限を持つことになります。BombVault は信頼できる、外部に公開されていないネットワークでのみ実行し、**設定、セキュリティ** でログインパスワードを設定してください。リカバリーキット、鍵の預け入れ、フラッシュ ZIP、フラッシュバックアップやセルフバックアップのエクスポートにはパスワードが必要です。完全なセキュリティモデルについては[設定](configuration.md#security-model)を参照してください。

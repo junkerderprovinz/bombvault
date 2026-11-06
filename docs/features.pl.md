@@ -66,7 +66,7 @@ Krótki katalog tego, co robi BombVault. Każda linia odsyła do strony, która 
 
 - **Ochrona przed usunięciem (append-only)**, wymuszana po drugiej stronie i udowadniana testem manipulacji. [Ochrona przed usunięciem](offsite-recovery.md#delete-protection-append-only)
 - **Akceptuj bez ochrony przed usunięciem** dla miejsca, które nie potrafi odmówić usunięcia. [Ochrona przed usunięciem](offsite-recovery.md#delete-protection-append-only)
-- **Trwałe usuwanie kopii wymaga hasła logowania.** [Model bezpieczeństwa](configuration.md#security-model)
+- **Trwałe usuwanie kopii wymaga twojego własnego logowania**, gdy ustawione jest hasło logowania, a sparowany telefon nie może tego zrobić. [Model bezpieczeństwa](configuration.md#security-model)
 - **Zestaw odzyskiwania**, opcjonalnie zabezpieczony przez age, oraz **Przechowawca klucza** w Twojej grupie. [Zestaw odzyskiwania](offsite-recovery.md#recovery-kit), [Przechowawca klucza](offsite-recovery.md#key-keeper)
 
 ## Kilka serwerów {#several-servers}

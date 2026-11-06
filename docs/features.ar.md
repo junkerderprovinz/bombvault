@@ -66,7 +66,7 @@
 
 - **الحماية من الحذف (append-only)**، يفرضها الجانب البعيد ويثبتها اختبار عبث. [الحماية من الحذف](offsite-recovery.md#delete-protection-append-only)
 - **القبول بدون حماية من الحذف** لمكان لا يستطيع رفض الحذف. [الحماية من الحذف](offsite-recovery.md#delete-protection-append-only)
-- **الحذف النهائي للنسخ يتطلب كلمة مرور دخول.** [نموذج الأمان](configuration.md#security-model)
+- **الحذف النهائي للنسخ يتطلب تسجيل دخولك أنت** متى ضُبطت كلمة مرور دخول، ولا يستطيعه هاتف مقترن. [نموذج الأمان](configuration.md#security-model)
 - **حقيبة الاستعادة**، مختومة اختياريًا بـ age، و**حافظ مفتاح** في مجموعتك. [حقيبة الاستعادة](offsite-recovery.md#recovery-kit)، [حافظ المفتاح](offsite-recovery.md#key-keeper)
 
 ## عدة خوادم {#several-servers}

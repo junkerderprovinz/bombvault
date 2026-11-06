@@ -66,7 +66,7 @@ Ein kurzer Katalog dessen, was BombVault kann. Jede Zeile verlinkt auf die Seite
 
 - **Löschschutz (append-only)**, von der Gegenseite durchgesetzt und durch einen Manipulationstest belegt. [Löschschutz](offsite-recovery.md#delete-protection-append-only)
 - **Ohne Löschschutz akzeptieren** für einen Ort, der ein Löschen nicht verweigern kann. [Löschschutz](offsite-recovery.md#delete-protection-append-only)
-- **Das endgültige Löschen von Sicherungen braucht ein Login-Passwort.** [Sicherheitsmodell](configuration.md#security-model)
+- **Das endgültige Löschen von Sicherungen braucht deine eigene Anmeldung**, sobald ein Login-Passwort gesetzt ist, und ein gekoppeltes Handy kann es nicht. [Sicherheitsmodell](configuration.md#security-model)
 - **Recovery-Kit**, auf Wunsch mit age versiegelt, und ein **Schlüsselhüter** in deiner Gruppe. [Recovery-Kit](offsite-recovery.md#recovery-kit), [Schlüsselhüter](offsite-recovery.md#key-keeper)
 
 ## Mehrere Server {#several-servers}
