@@ -260,7 +260,9 @@ func TestAnUpdateFreesALocationAddedAgainBeforeIt(t *testing.T) {
 	f := newFlow(t)
 	s := newRESTServer(t)
 	var set, id string
-	starts[1].boot(f, func() {
+	// v10.4.2 is the last release whose copies failed once a location was
+	// added again, and this flow is the update away from it.
+	upgrade(f, releaseBinary(f.t, "v10.4.2"), func() {
 		f.own = typedPath.prepare(f.b, "files")
 		f.b.write(photosPath, "a.txt", "photo\n", 0o640)
 		set = f.b.createSet("photos", photosPath)
@@ -271,7 +273,7 @@ func TestAnUpdateFreesALocationAddedAgainBeforeIt(t *testing.T) {
 		id = f.addRESTLocation(s)
 		f.backupSet(set)
 		if c := f.lastCopy(); c.Status != "failed" {
-			f.t.Fatalf("the previous release copied after the location was added again: %s", c.Status)
+			f.t.Fatalf("v10.4.2 copied after the location was added again: %s", c.Status)
 		}
 	})
 

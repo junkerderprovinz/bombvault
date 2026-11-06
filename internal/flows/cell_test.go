@@ -33,12 +33,18 @@ var starts = []start{
 		prepare()
 	}},
 	{"updated", func(f *flow, prepare func()) {
-		f.b.start(previousBinary(f.t))
-		prepare()
-		f.b.settle()
-		f.b.stop()
-		f.b.start(currentBinary)
+		upgrade(f, previousBinary(f.t), prepare)
 	}},
+}
+
+// upgrade sets the install up on the binary from, then updates it to this
+// build.
+func upgrade(f *flow, from string, prepare func()) {
+	f.b.start(from)
+	prepare()
+	f.b.settle()
+	f.b.stop()
+	f.b.start(currentBinary)
 }
 
 var (
