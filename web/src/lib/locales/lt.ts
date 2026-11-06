@@ -835,6 +835,8 @@ const lt: Partial<Translations> = {
   "whatsNew.folderKeep": "Šio kompiuterio aplankas ir įvestas nuotolinis aplankas turi kiekvienas savo kortelę Kiek laiko saugoti, kuri apima tik jame esančius savus aplankus.",
   "whatsNew.restoreFetched": "Puslapio Atkūrimas skiltyje Kiti šaltiniai Gauta iš atveria tai, ką šis serveris gavo iš kito egzemplioriaus, ir rakto tam nereikia.",
   "whatsNew.kitSignIns": "Atkūrimo rinkinyje yra visi prisijungimai, kuriuos naudoja paskirties vietos, o naujas serveris juos vėl nuskaito mygtuku Išsaugoti prisijungimo duomenis.",
+  "whatsNew.keepNow": "Taikyti dabar paskirties vietos kortelėje Kiek laiko saugoti parodo, kurių atsarginių kopijų taisyklė nebesaugo, ir jas pašalina. Nereikia laukti kitos atsarginės kopijos.",
+  "whatsNew.deleteNoPassword": "Atsarginių kopijų trynimas ir valymas veikia be prisijungimo slaptažodžio. Jei jį nustatai, pirma prisijungi prie šio serverio.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",

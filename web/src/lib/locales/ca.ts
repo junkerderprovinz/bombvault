@@ -835,6 +835,8 @@ const ca: Partial<Translations> = {
   "whatsNew.folderKeep": "Una carpeta d'aquest amfitrió i una carpeta remota escrita a mà tenen cadascuna la seva targeta Quant de temps conservar, que només cobreix les carpetes pròpies que conté.",
   "whatsNew.restoreFetched": "A Altres fonts de la pàgina Restauració, Obtingut de obre el que aquest servidor ha obtingut d'una altra instància, i no cal cap clau.",
   "whatsNew.kitSignIns": "El Kit de recuperació porta totes les credencials que fan servir les destinacions, i un servidor nou les torna a llegir amb Desa les credencials.",
+  "whatsNew.keepNow": "Aplica ara a la targeta Quant de temps conservar d'una destinació mostra quines còpies de seguretat ja no conserva la regla i les elimina. No cal que esperis a la còpia següent.",
+  "whatsNew.deleteNoPassword": "Esborrar i podar còpies de seguretat funciona sense contrasenya d'accés. Si en defineixes una, primer inicies la sessió en aquest servidor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposa /metrics",

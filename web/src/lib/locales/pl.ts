@@ -1140,6 +1140,8 @@ const pl: Partial<Translations> = {
   "whatsNew.folderKeep": "Folder na tym hoście i wpisany zdalny folder mają każdy własną kartę Jak długo przechowywać, która obejmuje tylko własne foldery w nim.",
   "whatsNew.restoreFetched": "W Inne źródła na stronie Przywracanie Pobrano z otwiera to, co ten serwer pobrał z innej instancji, i nie potrzebujesz do tego klucza.",
   "whatsNew.kitSignIns": "Zestaw odzyskiwania zawiera wszystkie dane logowania, których używają miejsca docelowe, a nowy serwer wczytuje je z powrotem przyciskiem Zapisz dane dostępowe.",
+  "whatsNew.keepNow": "Zastosuj teraz na karcie Jak długo przechowywać miejsca docelowego pokazuje, których kopii reguła już nie zachowuje, i je usuwa. Nie musisz czekać na następną kopię.",
+  "whatsNew.deleteNoPassword": "Usuwanie i przycinanie kopii działa bez hasła logowania. Jeśli je ustawisz, najpierw logujesz się na tym serwerze.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Udostępnij /metrics",

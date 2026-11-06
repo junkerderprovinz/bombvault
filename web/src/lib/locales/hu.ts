@@ -1147,6 +1147,8 @@ const hu: Partial<Translations> = {
   "whatsNew.folderKeep": "Egy mappának ezen a gépen és egy beírt távoli mappának is saját Meddig őrizze meg kártyája van, amely csak a benne lévő saját mappákra vonatkozik.",
   "whatsNew.restoreFetched": "A Visszaállítás oldal Más források kártyáján a Lekérve innen megnyitja, amit ez a szerver egy másik példányról lekért, és ehhez nem kell kulcs.",
   "whatsNew.kitSignIns": "A Helyreállítási csomag tartalmazza az összes hozzáférési adatot, amelyet a célok használnak, és egy új szerver a Hozzáférési adatok mentése gombbal olvassa vissza őket.",
+  "whatsNew.keepNow": "A cél Meddig őrizze meg kártyáján az Alkalmazás most megmutatja, mely mentéseket nem tartja meg többé a szabály, és eltávolítja őket. Nem kell megvárnod a következő mentést.",
+  "whatsNew.deleteNoPassword": "A mentések törlése és ritkítása bejelentkezési jelszó nélkül is működik. Ha beállítasz egyet, előbb bejelentkezel ezen a szerveren.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",

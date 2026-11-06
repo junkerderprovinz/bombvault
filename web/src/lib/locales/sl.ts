@@ -835,6 +835,8 @@ const sl: Partial<Translations> = {
   "whatsNew.folderKeep": "Mapa na tem gostitelju in vpisana oddaljena mapa imata vsaka svojo kartico Kako dolgo hraniti, ki zajema samo lastne mape v njej.",
   "whatsNew.restoreFetched": "V Drugi viri na strani Obnova Prejeto iz odpre tisto, kar je ta strežnik prejel iz druge instance, in ključa za to ne potrebuješ.",
   "whatsNew.kitSignIns": "Obnovitveni komplet vsebuje vse poverilnice, ki jih uporabljajo cilji, nov strežnik pa jih znova prebere z gumbom Shrani poverilnice.",
+  "whatsNew.keepNow": "Uporabi zdaj na kartici Kako dolgo hraniti pri cilju pokaže, katerih varnostnih kopij pravilo ne hrani več, in jih odstrani. Ni ti treba čakati na naslednjo varnostno kopijo.",
+  "whatsNew.deleteNoPassword": "Brisanje in čiščenje varnostnih kopij deluje brez gesla za prijavo. Če ga nastaviš, se najprej prijaviš na tem strežniku.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izpostavi /metrics",

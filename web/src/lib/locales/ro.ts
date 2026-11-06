@@ -1144,6 +1144,8 @@ const ro: Partial<Translations> = {
   "whatsNew.folderKeep": "Un dosar de pe această gazdă și un dosar la distanță scris de mână au fiecare propriul card Cât timp se păstrează, care acoperă doar dosarele proprii din el.",
   "whatsNew.restoreFetched": "În Alte surse pe pagina Restaurare, Preluat de la deschide ce a preluat acest server de la altă instanță, și nu îți trebuie nicio cheie.",
   "whatsNew.kitSignIns": "Kitul de recuperare conține toate credențialele pe care le folosesc destinațiile, iar un server nou le citește înapoi cu Salvează credențialele.",
+  "whatsNew.keepNow": "Aplică acum pe cardul Cât timp se păstrează al unei destinații arată ce copii de rezervă nu mai păstrează regula și le elimină. Nu trebuie să aștepți următoarea copie de rezervă.",
+  "whatsNew.deleteNoPassword": "Ștergerea și curățarea copiilor de rezervă funcționează fără parolă de autentificare. Dacă setezi una, te autentifici mai întâi pe acest server.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expune /metrics",

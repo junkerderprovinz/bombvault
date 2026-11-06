@@ -1146,6 +1146,8 @@ const it: Partial<Translations> = {
   "whatsNew.folderKeep": "Una cartella di questo host e una cartella remota digitata a mano hanno ciascuna la propria scheda Per quanto tempo conservare, che copre solo le cartelle proprie al suo interno.",
   "whatsNew.restoreFetched": "In Altre sorgenti sulla pagina Ripristino, Recuperato da apre ciò che questo server ha recuperato da un'altra istanza, e non ti serve nessuna chiave.",
   "whatsNew.kitSignIns": "Il Kit di ripristino contiene tutte le credenziali usate dalle destinazioni, e un nuovo server le rilegge con Salva le credenziali.",
+  "whatsNew.keepNow": "Applica ora sulla scheda Per quanto tempo conservare di una destinazione mostra quali backup la regola non conserva più e li rimuove. Non devi aspettare il prossimo backup.",
+  "whatsNew.deleteNoPassword": "Eliminare e potare i backup funziona senza password di accesso. Se ne imposti una, prima accedi a questo server.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Esponi /metrics",

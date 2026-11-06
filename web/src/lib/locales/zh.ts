@@ -1145,6 +1145,8 @@ const zh: Partial<Translations> = {
   "whatsNew.folderKeep": "此主机上的文件夹和手动输入的远程文件夹各有自己的保留多久卡片，只涵盖其中的专属文件夹。",
   "whatsNew.restoreFetched": "在恢复页面的其他来源下，可以打开这台服务器从另一个实例获取的备份，无需输入密钥。",
   "whatsNew.kitSignIns": "恢复工具包包含目标使用的所有凭据，新服务器用保存凭据把它们读回来。",
+  "whatsNew.keepNow": "目标的保留多久卡片上的立即应用会列出规则不再保留的备份并将其删除，无需等到下一次备份。",
+  "whatsNew.deleteNoPassword": "删除和清理备份无需登录密码。如果设置了密码，仍需先在这台服务器上登录。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "暴露 /metrics",

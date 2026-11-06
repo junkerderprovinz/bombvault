@@ -835,6 +835,8 @@ const eu: Partial<Translations> = {
   "whatsNew.folderKeep": "Ostalari honetako karpeta batek eta eskuz idatzitako urruneko karpeta batek beren Zenbat denbora mantendu txartela dute, eta barruko karpeta propioak bakarrik hartzen ditu.",
   "whatsNew.restoreFetched": "Berrezarpena orriko Beste iturri batzuk txartelean irekitzen da zerbitzari honek beste instantzia batetik ekarritakoa, eta ez duzu gakorik behar.",
   "whatsNew.kitSignIns": "Berreskuratze-kitak helmugek erabiltzen dituzten kredentzial guztiak ditu, eta zerbitzari berri batek berriro irakurtzen ditu Gorde kredentzialak botoiarekin.",
+  "whatsNew.keepNow": "Helmuga baten Zenbat denbora mantendu txarteleko Aplikatu orain aukerak erakusten du zein babeskopia ez dituen arauak gehiago gordetzen, eta kendu egiten ditu. Ez duzu hurrengo babeskopiaren zain egon beharrik.",
+  "whatsNew.deleteNoPassword": "Babeskopiak ezabatzeak eta garbitzeak saioa hasteko pasahitzik gabe funtzionatzen du. Bat ezartzen baduzu, lehenik zerbitzari honetan hasiko duzu saioa.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Erakutsi /metrics",

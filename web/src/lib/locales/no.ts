@@ -1143,6 +1143,8 @@ const no: Partial<Translations> = {
   "whatsNew.folderKeep": "En mappe på denne verten og en innskrevet ekstern mappe har hver sitt eget kort Hvor lenge det beholdes, som bare dekker de egne mappene i den.",
   "whatsNew.restoreFetched": "Under Andre kilder på siden Gjenoppretting åpner Hentet fra det denne serveren har hentet fra en annen instans, og du trenger ingen nøkkel til det.",
   "whatsNew.kitSignIns": "Gjenopprettingssettet har med alle påloggingene målene bruker, og en ny server leser dem inn igjen med Lagre påloggingsopplysninger.",
+  "whatsNew.keepNow": "Bruk nå på kortet Hvor lenge det beholdes for et mål viser hvilke sikkerhetskopier regelen ikke lenger beholder, og fjerner dem. Du trenger ikke vente på neste sikkerhetskopi.",
+  "whatsNew.deleteNoPassword": "Sletting og opprydding av sikkerhetskopier virker uten innloggingspassord. Har du satt et, logger du først inn på denne serveren.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

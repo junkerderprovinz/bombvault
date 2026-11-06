@@ -835,6 +835,8 @@ const lv: Partial<Translations> = {
   "whatsNew.folderKeep": "Šī resursdatora mapei un ievadītai attālai mapei katrai ir sava kartīte Cik ilgi glabāt, kas attiecas tikai uz tajā esošajām pašu mapēm.",
   "whatsNew.restoreFetched": "Lapas Atjaunošana sadaļā Citi avoti Iegūts no atver to, ko šis serveris ieguva no citas instances, un atslēga jums nav vajadzīga.",
   "whatsNew.kitSignIns": "Atkopšanas komplektā ir visi pieteikšanās dati, ko izmanto mērķi, un jauns serveris tos nolasa atpakaļ ar Saglabāt akreditācijas datus.",
+  "whatsNew.keepNow": "Lietot tagad mērķa kartītē Cik ilgi glabāt parāda, kuras rezerves kopijas noteikums vairs neglabā, un tās noņem. Nav jāgaida nākamā rezerves kopija.",
+  "whatsNew.deleteNoPassword": "Rezerves kopiju dzēšana un tīrīšana darbojas bez pieteikšanās paroles. Ja to iestatāt, vispirms piesakāties šajā serverī.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Atklāt /metrics",

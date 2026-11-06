@@ -1154,6 +1154,8 @@ const tr: Partial<Translations> = {
   "whatsNew.folderKeep": "Bu ana bilgisayardaki bir klasörün ve elle yazılmış bir uzak klasörün her birinin kendi Ne kadar saklanır kartı vardır ve bu kart yalnızca içindeki kendi klasörleri kapsar.",
   "whatsNew.restoreFetched": "Geri yükleme sayfasındaki Diğer kaynaklar altında bu sunucunun başka bir örnekten aldıkları açılır ve bunun için anahtar gerekmez.",
   "whatsNew.kitSignIns": "Kurtarma kiti, hedeflerin kullandığı tüm kimlik bilgilerini taşır ve yeni bir sunucu bunları Kimlik bilgilerini kaydet ile geri okur.",
+  "whatsNew.keepNow": "Bir hedefin Ne kadar saklanır kartındaki Şimdi uygula, kuralın artık saklamadığı yedekleri gösterir ve kaldırır. Bir sonraki yedeği beklemen gerekmez.",
+  "whatsNew.deleteNoPassword": "Yedekleri silmek ve budamak giriş parolası olmadan da çalışır. Bir parola ayarlarsan önce bu sunucuda oturum açarsın.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics'i yayınla",

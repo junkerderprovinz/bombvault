@@ -835,6 +835,8 @@ const et: Partial<Translations> = {
   "whatsNew.folderKeep": "Selle hosti kaustal ja käsitsi sisestatud kaugkaustal on kummalgi oma kaart Kui kaua säilitada, mis hõlmab ainult selles olevaid oma kaustu.",
   "whatsNew.restoreFetched": "Lehe Taastamine kaardil Muud allikad avab Toodud selle, mille see server tõi teisest eksemplarist, ja võtit pole vaja.",
   "whatsNew.kitSignIns": "Taastekomplekt sisaldab kõiki sisselogimisi, mida sihtkohad kasutavad, ja uus server loeb need nupuga Salvesta sisselogimisandmed tagasi.",
+  "whatsNew.keepNow": "Rakenda kohe sihtkoha kaardil Kui kaua säilitada näitab, milliseid varukoopiaid reegel enam ei säilita, ja eemaldab need. Järgmist varukoopiat pole vaja oodata.",
+  "whatsNew.deleteNoPassword": "Varukoopiate kustutamine ja puhastamine töötab ilma sisselogimisparoolita. Kui sa selle määrad, logid enne sellesse serverisse sisse.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",

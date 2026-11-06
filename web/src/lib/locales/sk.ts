@@ -835,6 +835,8 @@ const sk: Partial<Translations> = {
   "whatsNew.folderKeep": "Priečinok na tomto hostiteľovi aj ručne zadaný vzdialený priečinok majú každý vlastnú kartu Ako dlho uchovávať, ktorá platí len pre vlastné priečinky v ňom.",
   "whatsNew.restoreFetched": "V Ďalšie zdroje na stránke Obnova otvorí Stiahnuté z to, čo tento server stiahol z inej inštancie, a nepotrebuješ na to kľúč.",
   "whatsNew.kitSignIns": "Súprava na obnovenie nesie všetky prihlasovacie údaje, ktoré ciele používajú, a nový server ich načíta späť tlačidlom Uložiť prihlasovacie údaje.",
+  "whatsNew.keepNow": "Použiť hneď na karte Ako dlho uchovávať pri cieli ukáže, ktoré zálohy už pravidlo neuchováva, a odstráni ich. Nemusíš čakať na ďalšiu zálohu.",
+  "whatsNew.deleteNoPassword": "Mazanie a prečisťovanie záloh funguje aj bez prihlasovacieho hesla. Keď nejaké nastavíš, najprv sa prihlásiš na tomto serveri.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sprístupniť /metrics",

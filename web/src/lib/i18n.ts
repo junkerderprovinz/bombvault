@@ -929,6 +929,8 @@ export const en = {
   "whatsNew.folderKeep": "A folder on this host and a typed remote folder each have a How long to keep card of their own, which covers only the own folders in it.",
   "whatsNew.restoreFetched": "Under Other sources on the Restore page, Fetched from opens what this server fetched from another instance, and you need no key for it.",
   "whatsNew.kitSignIns": "The recovery kit carries every sign-in a storage location uses, and a new server reads them back with Save sign-ins.",
+  "whatsNew.keepNow": "Apply now on a storage location's How long to keep card shows which backups the rule no longer keeps and removes them. You don't have to wait for the next backup.",
+  "whatsNew.deleteNoPassword": "Deleting and pruning backups works without a login password. If you set one, you still sign in on this server first.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expose /metrics",
@@ -6236,6 +6238,8 @@ export const de: Translations = {
   "whatsNew.folderKeep": "Ein Ordner auf diesem Host und ein eingetippter entfernter Ordner haben je eine eigene Karte Wie lange aufheben, die nur für die eigenen Ordner darin gilt.",
   "whatsNew.restoreFetched": "Unter Andere Quellen auf der Seite Wiederherstellung öffnet Geholt von, was dieser Server von einer anderen Instanz geholt hat, und du brauchst dafür keinen Schlüssel.",
   "whatsNew.kitSignIns": "Das Recovery-Kit enthält alle Zugangsdaten, die die Speicherorte nutzen, und ein neuer Server liest sie mit Zugangsdaten speichern wieder ein.",
+  "whatsNew.keepNow": "Jetzt anwenden auf der Karte Wie lange aufheben eines Speicherorts zeigt, welche Sicherungen die Regel nicht mehr behält, und entfernt sie. Du musst nicht auf die nächste Sicherung warten.",
+  "whatsNew.deleteNoPassword": "Sicherungen löschen und aufräumen geht ohne Login-Passwort. Hast du eines gesetzt, meldest du dich vorher an diesem Server an.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics bereitstellen",

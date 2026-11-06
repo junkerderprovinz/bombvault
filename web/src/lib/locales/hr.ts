@@ -835,6 +835,8 @@ const hr: Partial<Translations> = {
   "whatsNew.folderKeep": "Mapa na ovom računalu i ručno upisana udaljena mapa imaju svaka svoju karticu Koliko dugo zadržati, koja pokriva samo vlastite mape u njoj.",
   "whatsNew.restoreFetched": "Pod Ostali izvori na stranici Vraćanje, Dohvaćeno s otvara ono što je ovaj poslužitelj dohvatio s druge instance, i za to vam ne treba ključ.",
   "whatsNew.kitSignIns": "Komplet za oporavak sadrži sve pristupne podatke koje odredišta koriste, a novi poslužitelj ih ponovno učitava gumbom Spremi pristupne podatke.",
+  "whatsNew.keepNow": "Primijeni sada na kartici Koliko dugo zadržati odredišta pokazuje koje sigurnosne kopije pravilo više ne zadržava i uklanja ih. Ne morate čekati sljedeću sigurnosnu kopiju.",
+  "whatsNew.deleteNoPassword": "Brisanje i čišćenje sigurnosnih kopija radi bez lozinke za prijavu. Ako je postavite, najprije se prijavite na ovom poslužitelju.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",

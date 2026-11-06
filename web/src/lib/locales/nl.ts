@@ -1142,6 +1142,8 @@ const nl: Partial<Translations> = {
   "whatsNew.folderKeep": "Een map op deze host en een getypte externe map hebben elk een eigen kaart Hoe lang bewaren, die alleen de eigen mappen erin dekt.",
   "whatsNew.restoreFetched": "Onder Andere bronnen op de pagina Herstel opent Opgehaald van wat deze server van een andere instantie heeft opgehaald, en je hebt er geen sleutel voor nodig.",
   "whatsNew.kitSignIns": "De Herstelkit bevat alle inloggegevens die de bestemmingen gebruiken, en een nieuwe server leest ze terug met Inloggegevens opslaan.",
+  "whatsNew.keepNow": "Nu toepassen op de kaart Hoe lang bewaren van een bestemming laat zien welke back-ups de regel niet meer bewaart en verwijdert ze. Je hoeft niet op de volgende back-up te wachten.",
+  "whatsNew.deleteNoPassword": "Back-ups verwijderen en opschonen werkt zonder inlogwachtwoord. Stel je er een in, dan log je eerst in op deze server.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics beschikbaar maken",

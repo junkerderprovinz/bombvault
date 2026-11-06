@@ -1137,6 +1137,8 @@ const ko: Partial<Translations> = {
   "whatsNew.folderKeep": "이 호스트의 폴더와 직접 입력한 원격 폴더에는 각각 전용 보존 기간 카드가 있으며, 그 안의 전용 폴더에만 적용됩니다.",
   "whatsNew.restoreFetched": "복원 페이지의 다른 출처에서 이 서버가 다른 인스턴스에서 가져온 백업을 열 수 있으며, 키를 입력할 필요가 없습니다.",
   "whatsNew.kitSignIns": "복구 키트에는 대상이 쓰는 모든 자격 증명이 들어 있으며, 새 서버는 자격 증명 저장으로 이를 다시 읽어 들입니다.",
+  "whatsNew.keepNow": "대상의 보존 기간 카드에 있는 지금 적용은 규칙이 더 이상 보존하지 않는 백업을 보여 주고 삭제합니다. 다음 백업까지 기다릴 필요가 없습니다.",
+  "whatsNew.deleteNoPassword": "백업 삭제와 정리는 로그인 비밀번호 없이도 됩니다. 비밀번호를 설정했다면 먼저 이 서버에 로그인합니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

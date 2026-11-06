@@ -1154,6 +1154,8 @@ const sv: Partial<Translations> = {
   "whatsNew.folderKeep": "En mapp på den här värden och en inskriven fjärrmapp har var sitt eget kort Hur länge det bevaras, som bara gäller de egna mapparna i den.",
   "whatsNew.restoreFetched": "Under Andra källor på sidan Återställning öppnar Hämtat från det som den här servern har hämtat från en annan instans, och du behöver ingen nyckel för det.",
   "whatsNew.kitSignIns": "Återställningskitet innehåller alla inloggningar som målen använder, och en ny server läser in dem igen med Spara inloggningsuppgifter.",
+  "whatsNew.keepNow": "Tillämpa nu på kortet Hur länge det bevaras för ett mål visar vilka säkerhetskopior regeln inte längre bevarar och tar bort dem. Du behöver inte vänta på nästa säkerhetskopia.",
+  "whatsNew.deleteNoPassword": "Att ta bort och rensa säkerhetskopior fungerar utan inloggningslösenord. Har du satt ett loggar du först in på den här servern.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponera /metrics",

@@ -835,6 +835,8 @@ const gl: Partial<Translations> = {
   "whatsNew.folderKeep": "Un cartafol deste host e un cartafol remoto escrito a man teñen cadansúa tarxeta Canto tempo conservar, que só cobre os cartafoles propios que contén.",
   "whatsNew.restoreFetched": "En Outras orixes da páxina Restauración, Obtido de abre o que este servidor obtivo doutra instancia, e non precisas ningunha clave.",
   "whatsNew.kitSignIns": "O Kit de recuperación leva todas as credenciais que usan os destinos, e un servidor novo vólveas ler con Gardar as credenciais.",
+  "whatsNew.keepNow": "Aplicar agora na tarxeta Canto tempo conservar dun destino mostra que copias xa non conserva a regra e elimínaas. Non tes que agardar á seguinte copia.",
+  "whatsNew.deleteNoPassword": "Borrar e podar copias funciona sen contrasinal de acceso. Se defines un, primeiro inicias sesión neste servidor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

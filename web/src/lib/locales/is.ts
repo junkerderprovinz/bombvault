@@ -835,6 +835,8 @@ const is: Partial<Translations> = {
   "whatsNew.folderKeep": "Mappa á þessum hýsli og innslegin fjarlæg mappa hafa hvor sitt eigið spjald Hve lengi á að geyma, sem nær aðeins yfir eigin möppur í henni.",
   "whatsNew.restoreFetched": "Undir Aðrar heimildir á síðunni Endurheimt opnar Sótt frá það sem þessi þjónn sótti úr annarri uppsetningu, og þú þarft engan lykil til þess.",
   "whatsNew.kitSignIns": "Endurheimtarpakkinn geymir allar innskráningar sem áfangastaðirnir nota, og nýr þjónn les þær aftur inn með Vista aðgangsupplýsingar.",
+  "whatsNew.keepNow": "Nota núna á spjaldinu Hve lengi á að geyma fyrir áfangastað sýnir hvaða afrit reglan geymir ekki lengur og fjarlægir þau. Þú þarft ekki að bíða eftir næsta afriti.",
+  "whatsNew.deleteNoPassword": "Það er hægt að eyða og grisja afrit án innskráningarlykilorðs. Ef þú setur eitt, skráirðu þig fyrst inn á þennan þjón.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sýna /metrics",

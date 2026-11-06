@@ -1145,6 +1145,8 @@ const vi: Partial<Translations> = {
   "whatsNew.folderKeep": "Một thư mục trên máy chủ này và một thư mục từ xa được gõ vào đều có thẻ Giữ trong bao lâu riêng, chỉ áp dụng cho các thư mục riêng nằm trong đó.",
   "whatsNew.restoreFetched": "Trong Nguồn khác trên trang Khôi phục, Lấy từ mở những gì máy chủ này lấy từ một phiên bản khác, và bạn không cần nhập khóa.",
   "whatsNew.kitSignIns": "Bộ khôi phục mang theo mọi thông tin đăng nhập mà các đích dùng, và một máy chủ mới đọc lại chúng bằng Lưu thông tin đăng nhập.",
+  "whatsNew.keepNow": "Áp dụng ngay trên thẻ Giữ trong bao lâu của một đích cho thấy những bản sao lưu mà quy tắc không còn giữ và xóa chúng. Bạn không cần đợi lần sao lưu tiếp theo.",
+  "whatsNew.deleteNoPassword": "Xóa và dọn bớt bản sao lưu vẫn hoạt động mà không cần mật khẩu đăng nhập. Nếu bạn đặt một mật khẩu, bạn đăng nhập trên máy chủ này trước.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

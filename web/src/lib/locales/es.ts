@@ -1162,6 +1162,8 @@ const es: Partial<Translations> = {
   "whatsNew.folderKeep": "Una carpeta de este host y una carpeta remota escrita a mano tienen cada una su propia tarjeta Cuánto tiempo conservar, que solo cubre las carpetas propias que contiene.",
   "whatsNew.restoreFetched": "En Otras fuentes de la página Restauración, Obtenido de abre lo que este servidor obtuvo de otra instancia, y no necesitas ninguna clave para ello.",
   "whatsNew.kitSignIns": "El Kit de recuperación lleva todas las credenciales que usan los destinos, y un servidor nuevo las vuelve a leer con Guardar credenciales.",
+  "whatsNew.keepNow": "Aplicar ahora en la tarjeta Cuánto tiempo conservar de un destino muestra qué copias ya no conserva la regla y las elimina. No hace falta esperar a la próxima copia.",
+  "whatsNew.deleteNoPassword": "Borrar y purgar copias funciona sin contraseña de acceso. Si defines una, primero inicias sesión en este servidor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponer /metrics",

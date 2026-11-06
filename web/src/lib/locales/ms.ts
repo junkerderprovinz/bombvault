@@ -835,6 +835,8 @@ const ms: Partial<Translations> = {
   "whatsNew.folderKeep": "Folder pada hos ini dan folder jauh yang ditaip masing-masing mempunyai kad Berapa lama disimpan sendiri, yang hanya meliputi folder sendiri di dalamnya.",
   "whatsNew.restoreFetched": "Di Sumber lain pada halaman Pemulihan, Diambil daripada membuka apa yang diambil pelayan ini daripada contoh lain, tanpa perlu memasukkan kunci.",
   "whatsNew.kitSignIns": "Kit pemulihan membawa semua bukti kelayakan yang digunakan destinasi, dan pelayan baharu membacanya semula dengan Simpan bukti kelayakan.",
+  "whatsNew.keepNow": "Guna sekarang pada kad Berapa lama disimpan bagi sesuatu destinasi menunjukkan sandaran yang tidak lagi disimpan oleh peraturan itu dan membuangnya. Anda tidak perlu menunggu sandaran seterusnya.",
+  "whatsNew.deleteNoPassword": "Memadam dan memangkas sandaran berfungsi tanpa kata laluan log masuk. Jika Anda menetapkannya, Anda log masuk di pelayan ini dahulu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Dedahkan /metrics",

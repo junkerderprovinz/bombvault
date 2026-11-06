@@ -835,6 +835,8 @@ const id: Partial<Translations> = {
   "whatsNew.folderKeep": "Folder di host ini dan folder jarak jauh yang diketik masing-masing punya kartu Berapa lama disimpan sendiri, yang hanya mencakup folder sendiri di dalamnya.",
   "whatsNew.restoreFetched": "Di Sumber lain pada halaman Pemulihan, Diambil dari membuka apa yang diambil server ini dari instance lain, tanpa perlu memasukkan kunci.",
   "whatsNew.kitSignIns": "Kit pemulihan membawa semua kredensial yang dipakai tujuan, dan server baru membacanya kembali dengan Simpan kredensial.",
+  "whatsNew.keepNow": "Terapkan sekarang di kartu Berapa lama disimpan pada sebuah tujuan menunjukkan cadangan mana yang tidak lagi disimpan aturan dan menghapusnya. Anda tidak perlu menunggu cadangan berikutnya.",
+  "whatsNew.deleteNoPassword": "Menghapus dan memangkas cadangan bisa dilakukan tanpa kata sandi login. Jika Anda mengaturnya, Anda masuk dulu di server ini.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ekspos /metrics",

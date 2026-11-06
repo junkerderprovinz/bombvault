@@ -1152,6 +1152,8 @@ const cs: Partial<Translations> = {
   "whatsNew.folderKeep": "Složka na tomto hostiteli i ručně zadaná vzdálená složka mají každá vlastní kartu Jak dlouho uchovávat, která platí jen pro vlastní složky v ní.",
   "whatsNew.restoreFetched": "V Další zdroje na stránce Obnova otevře Staženo z to, co tento server stáhl z jiné instance, a nepotřebuješ k tomu klíč.",
   "whatsNew.kitSignIns": "Sada pro obnovu nese všechny přihlašovací údaje, které cíle používají, a nový server je načte zpět tlačítkem Uložit přihlašovací údaje.",
+  "whatsNew.keepNow": "Použít hned na kartě Jak dlouho uchovávat u cíle ukáže, které zálohy už pravidlo neuchovává, a odstraní je. Nemusíš čekat na další zálohu.",
+  "whatsNew.deleteNoPassword": "Mazání a pročišťování záloh funguje i bez přihlašovacího hesla. Když nějaké nastavíš, nejdřív se přihlásíš na tomto serveru.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

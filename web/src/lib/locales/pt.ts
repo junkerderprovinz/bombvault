@@ -1143,6 +1143,8 @@ const pt: Partial<Translations> = {
   "whatsNew.folderKeep": "Uma pasta deste host e uma pasta remota escrita à mão têm cada uma o seu próprio cartão Durante quanto tempo guardar, que cobre apenas as pastas próprias que contém.",
   "whatsNew.restoreFetched": "Em Outras origens na página Restauração, Obtido de abre o que este servidor obteve de outra instância, e não precisas de nenhuma chave.",
   "whatsNew.kitSignIns": "O Kit de recuperação leva todas as credenciais que os destinos usam, e um servidor novo volta a lê-las com Guardar credenciais.",
+  "whatsNew.keepNow": "Aplicar agora no cartão Durante quanto tempo guardar de um destino mostra que backups a regra já não guarda e remove-os. Não precisas de esperar pelo próximo backup.",
+  "whatsNew.deleteNoPassword": "Apagar e podar backups funciona sem palavra-passe de início de sessão. Se definires uma, inicias sessão primeiro neste servidor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",

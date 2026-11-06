@@ -124,7 +124,9 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
         />
       )}
 
-      <KeepTimeline counts={draft} backups={less.backups} />
+      <div data-new="keep-now">
+        <KeepTimeline counts={draft} backups={less.backups} />
+      </div>
 
       <Rows>
         <Deviations

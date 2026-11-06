@@ -1146,6 +1146,8 @@ const fr: Partial<Translations> = {
   "whatsNew.folderKeep": "Un dossier sur cet hôte et un dossier distant saisi à la main ont chacun leur propre carte Durée de conservation, qui ne couvre que les dossiers propres qu'il contient.",
   "whatsNew.restoreFetched": "Sous Autres sources sur la page Restauration, Récupéré depuis ouvre ce que ce serveur a récupéré depuis une autre instance, et aucune clé n'est à saisir.",
   "whatsNew.kitSignIns": "Le Kit de récupération contient tous les identifiants qu'utilisent les destinations, et un nouveau serveur les relit avec Enregistrer les identifiants.",
+  "whatsNew.keepNow": "Appliquer maintenant sur la carte Durée de conservation d'une destination montre quelles sauvegardes la règle ne conserve plus et les supprime. Inutile d'attendre la prochaine sauvegarde.",
+  "whatsNew.deleteNoPassword": "Supprimer et élaguer des sauvegardes fonctionne sans mot de passe de connexion. Si vous en définissez un, vous vous connectez d'abord sur ce serveur.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposer /metrics",

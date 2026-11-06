@@ -1154,6 +1154,8 @@ const da: Partial<Translations> = {
   "whatsNew.folderKeep": "En mappe på denne vært og en indtastet fjernmappe har hver deres eget kort Hvor længe der gemmes, som kun dækker de egne mapper i den.",
   "whatsNew.restoreFetched": "Under Andre kilder på siden Gendannelse åbner Hentet fra det, som denne server har hentet fra en anden instans, og du skal ikke bruge nogen nøgle til det.",
   "whatsNew.kitSignIns": "Gendannelseskittet indeholder alle de adgangsoplysninger, destinationerne bruger, og en ny server læser dem ind igen med Gem adgangsoplysninger.",
+  "whatsNew.keepNow": "Anvend nu på kortet Hvor længe der gemmes for en destination viser, hvilke sikkerhedskopier reglen ikke længere beholder, og fjerner dem. Du behøver ikke vente på den næste sikkerhedskopi.",
+  "whatsNew.deleteNoPassword": "Sletning og oprydning af sikkerhedskopier virker uden en login-adgangskode. Har du angivet en, logger du først ind på denne server.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

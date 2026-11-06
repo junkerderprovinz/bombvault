@@ -1154,6 +1154,8 @@ const fi: Partial<Translations> = {
   "whatsNew.folderKeep": "Tämän isännän kansiolla ja kirjoitetulla etäkansiolla on kummallakin oma Kuinka kauan säilytetään -kortti, joka koskee vain sen sisällä olevia omia kansioita.",
   "whatsNew.restoreFetched": "Palautus-sivun kohdassa Muut lähteet Haettu avaa sen, minkä tämä palvelin haki toisesta instanssista, eikä siihen tarvita avainta.",
   "whatsNew.kitSignIns": "Palautuspaketti sisältää kaikki tunnukset, joita kohteet käyttävät, ja uusi palvelin lukee ne takaisin painikkeella Tallenna tunnukset.",
+  "whatsNew.keepNow": "Kohteen Kuinka kauan säilytetään -kortin Käytä nyt näyttää, mitä varmuuskopioita sääntö ei enää säilytä, ja poistaa ne. Seuraavaa varmuuskopiota ei tarvitse odottaa.",
+  "whatsNew.deleteNoPassword": "Varmuuskopioiden poistaminen ja karsiminen toimii ilman kirjautumissalasanaa. Jos salasana on asetettu, tähän palvelimeen kirjaudutaan ensin.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",

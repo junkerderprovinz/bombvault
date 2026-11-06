@@ -1137,6 +1137,8 @@ const ja: Partial<Translations> = {
   "whatsNew.folderKeep": "このホストのフォルダーと、入力したリモートフォルダーには、それぞれ専用の保持期間カードがあり、その中の専用フォルダーだけが対象です。",
   "whatsNew.restoreFetched": "復元ページのほかの取得元で、このサーバーが別のインスタンスから取得したものを開けます。キーの入力は不要です。",
   "whatsNew.kitSignIns": "リカバリーキットには保存先が使うすべての認証情報が入っていて、新しいサーバーは「認証情報を保存」でそれを読み戻します。",
+  "whatsNew.keepNow": "保存先の「保持期間」カードにある「今すぐ適用」で、ルールが保持しなくなったバックアップを確認して削除できます。次のバックアップを待つ必要はありません。",
+  "whatsNew.deleteNoPassword": "バックアップの削除と整理は、ログインパスワードがなくても行えます。パスワードを設定している場合は、先にこのサーバーでログインします。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics を公開",
