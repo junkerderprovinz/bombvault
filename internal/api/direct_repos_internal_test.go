@@ -766,7 +766,7 @@ func TestADirectRepositoryAgesByItsTargetsRules(t *testing.T) {
 	}
 
 	f.hold(loc, snap("a1", 100, "container:web", restic.DirectTag))
-	if _, err := f.svc.pruneDomain(ctx, "containers", "local", false); err != nil {
+	if _, err := f.svc.pruneDomain(ctx, "containers", "local", nil, false); err != nil {
 		t.Fatal(err)
 	}
 	pruned := forgetsAt(f, loc)

@@ -327,3 +327,66 @@ func TestRuleSetBeforeTheUpdateStillDecides(t *testing.T) {
 		})
 	}
 }
+
+// ownFolderLocation is the id of the storage location that lists the section's
+// own folder.
+func (b *bombvault) ownFolderLocation(domain string) string {
+	b.t.Helper()
+	for _, l := range b.locations() {
+		if slices.ContainsFunc(l.Sections, func(s section) bool {
+			return s.Domain == domain && s.Use == "home" && s.RepoID == "" && s.TargetID == ""
+		}) {
+			return l.ID
+		}
+	}
+	b.t.Fatalf("no storage location lists the own folder of %s", domain)
+	return ""
+}
+
+func TestApplyNowRemovesWhatItsPreviewNames(t *testing.T) {
+	setsCell(t, ownFolderPlaces, func(f *flow, sets folderSets) {
+		f.own.card(keep{Last: 3})
+		f.nextRound(sets, 1)
+		f.nextRound(sets, 2)
+		f.nextRound(sets, 3)
+		f.b.settle()
+		f.own.card(keep{Last: 1})
+		id := f.b.ownFolderLocation("files")
+		before := ids(f.b.snapshotsIn(f.own.repo, ""))
+
+		f.b.signIn()
+		var answer struct {
+			Preview struct {
+				Sections []struct {
+					Preview preview `json:"preview"`
+				} `json:"sections"`
+			} `json:"preview"`
+		}
+		f.b.call("GET", "/api/storage/locations/"+id+"/keep/preview", nil, &answer)
+		var named []string
+		for _, sec := range answer.Preview.Sections {
+			named = append(named, sec.Preview.removals()...)
+		}
+		slices.Sort(named)
+		if len(named) == 0 {
+			f.errorf("with the card cut to one and %d snapshots the preview names nothing to remove", len(before))
+		}
+		prunes := len(f.b.runsOf("prune"))
+
+		f.b.call("POST", "/api/storage/locations/"+id+"/keep/apply", nil, nil)
+		f.b.settle()
+
+		after := ids(f.b.snapshotsIn(f.own.repo, ""))
+		removed := slices.DeleteFunc(slices.Clone(before), func(id string) bool { return slices.Contains(after, id) })
+		if !slices.Equal(named, removed) {
+			f.errorf("the preview named %v, applying the card removed %v", named, removed)
+		}
+		f.wantSnapshots(f.own.repo, photosTag, 1)
+		f.wantSnapshots(f.own.repo, docsTag, 1)
+		if got := len(f.b.runsOf("prune")); got != prunes+1 {
+			f.errorf("applying the card left %d prune runs in the history, want %d", got, prunes+1)
+		}
+		f.b.restic(f.b.hostPath(f.own.repo), "check")
+		f.wantNoFailedRuns()
+	})
+}

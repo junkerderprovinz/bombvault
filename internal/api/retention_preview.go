@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
@@ -68,6 +69,9 @@ type RetentionPreview struct {
 	Skipped []string `json:"skipped,omitempty"`
 }
 
+// noBackupsYet is what a preview says when no repository it covers exists yet.
+const noBackupsYet = "no backups yet"
+
 // previewPerRepoTimeout bounds one repository's share of a preview.
 //
 // The cost is real and worth stating: the preview mirrors the per-identity pass,
@@ -92,11 +96,23 @@ const previewPerRepoTimeout = 10 * time.Minute
 // concurrent forget and name a snapshot that is already gone. Stale but
 // harmless, the same trade every read-only restic call in this codebase makes.
 func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (RetentionPreview, error) {
+	return s.previewRetention(ctx, domain, source, nil)
+}
+
+// previewRetention is PreviewRetention over the repositories pick takes, every
+// one of the source for a nil pick. A pick leaves out the direct places too:
+// their repositories are a target's, which its own source covers.
+func (s *Service) previewRetention(ctx context.Context, domain, source string, pick repoPick) (RetentionPreview, error) {
 	settings, repos, skipped, err := s.domainReposForOp(domain, source)
 	if err != nil {
 		return RetentionPreview{}, err
 	}
-	direct := s.directPlaces(settings, domain, source)
+	var direct map[string]sectionPlace
+	if pick == nil {
+		direct = s.directPlaces(settings, domain, source)
+	} else if repos, skipped = pick.from(repos), nil; len(repos) == 0 {
+		return RetentionPreview{}, errors.New(noBackupsYet)
+	}
 	for _, pl := range direct {
 		repos = append(repos, domainRepoRef{Loc: pl.repo, Named: store.OffsiteTarget{Name: placementTargetName(*pl.target)}})
 	}
@@ -144,7 +160,7 @@ func (s *Service) PreviewRetention(ctx context.Context, domain, source string) (
 		previewable = append(previewable, r)
 	}
 
-	existing, missing, err := s.reposThatExist(ctx, settings, domain, source, previewable, "no backups yet")
+	existing, missing, err := s.reposThatExist(ctx, settings, domain, source, previewable, noBackupsYet)
 	if err != nil && len(out.Repos) == 0 {
 		return RetentionPreview{}, err
 	}

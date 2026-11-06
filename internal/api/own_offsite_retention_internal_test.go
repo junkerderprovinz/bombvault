@@ -169,7 +169,7 @@ func TestAManualOffsitePruneAgesByTheSourcesOwnOffsitePolicy(t *testing.T) {
 	f.makeRepo(dest)
 	f.hold(dest, snap("o1", 100, "container:plex"), snap("o2", 100, "vm:win11"))
 
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	want := []forgetCall{{Repo: dest, Tags: []string{"container:plex"}, Policy: restic.RetentionPolicy{KeepWeekly: 8, Direct: true}}}
@@ -185,7 +185,7 @@ func TestAManualOffsitePruneOfAnotherSourceKeepsTheSharedOffsitePolicy(t *testin
 	f.makeRepo(dest)
 	f.hold(dest, snap("o1", 100, "container:plex"))
 
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "offsite", nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 3, Direct: true}) {
@@ -206,7 +206,7 @@ func TestAManualPruneOfAnAdditionalTargetIgnoresTheSourcesOwnOffsitePolicy(t *te
 	f.makeRepo(dest)
 	f.hold(dest, snap("e1", 100, "container:plex"))
 
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", offsiteSourcePrefix+extra.ID, false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", offsiteSourcePrefix+extra.ID, nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	if got := forgetsAt(f, dest); len(got) != 1 || got[0].Policy != (restic.RetentionPolicy{KeepLast: 5, Direct: true}) {

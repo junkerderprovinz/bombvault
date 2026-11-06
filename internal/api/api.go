@@ -471,6 +471,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/storage/locations/{id}", h.handleGetStorageLocation)
 	mux.HandleFunc("PUT /api/storage/locations/{id}/name", h.handleRenameStorageLocation)
 	mux.HandleFunc("PUT /api/storage/locations/{id}/keep", h.handleSaveFolderCard)
+	mux.HandleFunc("GET /api/storage/locations/{id}/keep/preview", h.handleLocationKeepPreview)
+	mux.HandleFunc("POST /api/storage/locations/{id}/keep/apply", h.handleApplyLocationKeep)
 	mux.HandleFunc("PUT /api/storage/locations/{id}/risk-accepted", h.handleAcceptDeleteRisk)
 	mux.HandleFunc("GET /api/storage/locations/{id}/removal", h.handleLocationRemovalPreview)
 	mux.HandleFunc("POST /api/storage/locations/{id}/removal", h.handleRemoveLocation)

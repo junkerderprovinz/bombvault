@@ -19398,7 +19398,7 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 // The tags it returns are the items whose old backups it kept because an
 // unusual backup is holding them.
 func (s *Service) PruneDomain(ctx context.Context, domain, source string) ([]string, error) {
-	return s.pruneDomain(ctx, domain, source, false)
+	return s.pruneDomain(ctx, domain, source, nil, false)
 }
 
 // noBackupsToPrune is what a prune of a domain says when no repository of it
@@ -19426,7 +19426,7 @@ func (s *Service) PruneAfterBulk(ctx context.Context, domain string) {
 		return // no repository of this domain ages by a policy, so nothing was forgotten
 	}
 	// A folder that never held a backup is no failed prune.
-	if _, err := s.pruneDomain(ctx, domain, "local", true); err != nil && err.Error() != noBackupsToPrune {
+	if _, err := s.pruneDomain(ctx, domain, "local", nil, true); err != nil && err.Error() != noBackupsToPrune {
 		log.Printf("api: prune %s: batched prune failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 	}
 }
@@ -19446,18 +19446,19 @@ func (s *Service) pruneSectionTargetsAfterBulk(ctx context.Context, settings sto
 		if p, appendOnly := s.keepAt(settings, domain, pl); !p.Any() || appendOnly {
 			continue
 		}
-		if _, err := s.pruneDomain(ctx, domain, pl.source(), true); err != nil {
+		if _, err := s.pruneDomain(ctx, domain, pl.source(), nil, true); err != nil {
 			log.Printf("api: prune %s: batched prune of %s failed: %v", domain, placementTargetName(*pl.target), err) //nolint:gosec // G706: domain is a fixed literal, the name passes through the safe namer
 		}
 	}
 }
 
-// pruneDomain is the shared core of PruneDomain and PruneAfterBulk. A manual
-// prune applies a configured retention policy (forget --keep-* per identity,
-// then one prune) and refuses a busy domain. The pass after a bulk run
-// (afterBulk) is a plain `restic prune`, since the items' forgets already ran,
-// and waits for the domain.
-func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterBulk bool) (paused []string, err error) {
+// pruneDomain is the shared core of PruneDomain, PruneAfterBulk and
+// ApplyLocationKeep. A manual prune applies a configured retention policy
+// (forget --keep-* per identity, then one prune) and refuses a busy domain. The
+// pass after a bulk run (afterBulk) is a plain `restic prune`, since the items'
+// forgets already ran, and waits for the domain. A pick narrows the pass to
+// the repositories it takes, nil takes every one of the source.
+func (s *Service) pruneDomain(ctx context.Context, domain, source string, pick repoPick, afterBulk bool) (paused []string, err error) {
 	// EVERY repository this domain's items write to (#204). Prune is what turns a
 	// forgotten snapshot back into free space, so pruning only the domain
 	// repository means the space retention freed on a named one is never
@@ -19465,6 +19466,11 @@ func (s *Service) pruneDomain(ctx context.Context, domain, source string, afterB
 	settings, repos, skipped, err := s.domainReposForOp(domain, source)
 	if err != nil {
 		return nil, err
+	}
+	if pick != nil {
+		if repos, skipped = pick.from(repos), nil; len(repos) == 0 {
+			return nil, errors.New(noBackupsToPrune)
+		}
 	}
 	// An immutable repo is never pruned from this box (append-only is the point),
 	// and that is now a decision PER repository rather than for the domain:

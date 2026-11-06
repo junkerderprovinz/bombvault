@@ -132,7 +132,7 @@ func TestAManualPruneAgesByTheDomainsOwnPolicy(t *testing.T) {
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepLast: 10, KeepYearly: 1}})
 	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
 	f.hold(f.root+"/nas", snap("b1", 100, "container:nginx"))
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	if len(f.eng.forgets) != 2 {
@@ -181,7 +181,7 @@ func TestAManualPruneLeavesAnotherDomainsBackupsInASharedRepository(t *testing.T
 	f := newPlacementFixture(t)
 	sharedWithAVM(f)
 	withOwnRetention(t, f.st, 3, map[string]store.RetentionKeep{"containers": {KeepDaily: 7}})
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	want := []forgetCall{

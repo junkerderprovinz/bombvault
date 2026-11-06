@@ -54,7 +54,7 @@ func TestAManualPruneAgesEveryRepositoryOfTheDomain(t *testing.T) {
 	localKeepLast(t, f, 3)
 	f.hold(f.domainPath("containers"), snap("a1", 100, "container:plex"))
 	f.hold(f.root+"/nas", snap("b1", 100, "container:nginx"))
-	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", false); err != nil {
+	if _, err := f.svc.pruneDomain(context.Background(), "containers", "local", nil, false); err != nil {
 		t.Fatalf("pruneDomain: %v", err)
 	}
 	var aged []string
