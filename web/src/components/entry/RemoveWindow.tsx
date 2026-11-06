@@ -10,7 +10,6 @@ import {
   type ZFSDeleteResult,
 } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -63,7 +62,7 @@ export function RemoveWindow({
     try {
       const res = await call();
       if (!res.ok) {
-        if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.removeFailed"), "fail");
+        if (!ownLogin.handled(res)) push(res.error ?? t("common.removeFailed"), "fail");
         return;
       }
       push(t(way === "keep" ? "entry.remove.kept" : "entry.remove.dropped").replace("{name}", () => name), "success");

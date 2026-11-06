@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { deleteBackupsZFSDataset, listContainers, patchZFSDataset, probeZFSDataset } from "../../lib/api";
 import type { AnomalySeriesInfo, Container, ZFSDatasetPatch, ZFSDatasetView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { useToast } from "../../lib/toast";
@@ -123,7 +122,7 @@ export function ZFSItemSettings({
     try {
       const res = await deleteBackupsZFSDataset(item.id);
       if (res.ok) onChanged();
-      else if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.deleteBackupsFailed"), "fail");
+      else if (!ownLogin.handled(res)) push(res.error ?? t("common.deleteBackupsFailed"), "fail");
     } catch (err) {
       push(failText(t, err), "fail");
     }

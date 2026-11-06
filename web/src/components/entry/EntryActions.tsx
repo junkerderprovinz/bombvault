@@ -19,7 +19,6 @@ import { humanBytes } from "../../lib/forecast";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { dataMissing, dataOutsideHost, runReason } from "../../lib/runReason";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useDeclineBackup } from "../../lib/useDeclineBackup";
@@ -300,7 +299,7 @@ export function EntryHeadActions({
     try {
       const res = await call();
       if (res.ok) done();
-      else if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.removeFailed"), "fail");
+      else if (!ownLogin.handled(res)) push(res.error ?? t("common.removeFailed"), "fail");
     } catch (err) {
       push(err instanceof Error ? err.message : t("common.removeFailed"), "fail");
     } finally {

@@ -133,12 +133,12 @@ describe("OffsiteRemovalDialog", () => {
     expect(await screen.findByText("The target is append-only. Nothing here may delete from it.")).toBeTruthy();
   });
 
-  it("closes saying that deleting takes a login password when none is set", async () => {
-    fake.reply("deleteAtTarget", { ok: false, code: "password-not-set", error: "set a login password before deleting an off-site copy" });
+  it("closes with the server's own words when it refuses the delete", async () => {
+    fake.reply("deleteAtTarget", { ok: false, error: "B2 could not be reached" });
     const { onClose } = open();
     fireEvent.click(await screen.findByRole("button", { name: "Delete in B2" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(await screen.findByText("Deleting backups takes a login password. Set one under Settings, Security.")).toBeTruthy();
+    expect(await screen.findByText("B2 could not be reached")).toBeTruthy();
   });
 
   it("offers a paired phone the sign-in before it closes", async () => {

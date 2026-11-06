@@ -5,7 +5,6 @@ import { useState } from "react";
 import { applyLocationKeep, previewLocationKeep, type LocationKeepPreview, type StorageLocation } from "../../lib/api";
 import { heldTagLabels } from "../../lib/anomalies";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
@@ -32,7 +31,7 @@ export function KeepNow({ location }: { location: StorageLocation }) {
   const say = (key: TranslationKey) => t(key).replace("{name}", () => location.name);
 
   function refused(answer: { code?: string; error?: string }) {
-    if (!ownLogin.handled(answer)) push(deleteSentence(t, answer.code) ?? answer.error ?? t("storage.keep.pruneNowFailed"), "fail");
+    if (!ownLogin.handled(answer)) push(answer.error ?? t("storage.keep.pruneNowFailed"), "fail");
   }
 
   async function ask(): Promise<boolean> {

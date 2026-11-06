@@ -153,12 +153,12 @@ describe("TimelineDeleteDialog", () => {
     expect(await screen.findByText("Already deleted at: B2")).toBeTruthy();
   });
 
-  it("says that deleting takes a login password when none is set", async () => {
+  it("says in the server's words why the delete was refused", async () => {
     fake.reply("getTimelineDeletePreview", { ok: true, delete: [atHome], others: [] });
-    fake.reply("deleteTimelineRow", { ok: false, code: "password-not-set", error: "set a login password before deleting backups" });
+    fake.reply("deleteTimelineRow", { ok: false, error: "the repository at home is locked" });
     open();
     fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
-    expect(await screen.findByText("Deleting backups takes a login password. Set one under Settings, Security.")).toBeTruthy();
+    expect(await screen.findByText("the repository at home is locked")).toBeTruthy();
     expect(screen.queryByText(/HTTP 403/)).toBeNull();
   });
 

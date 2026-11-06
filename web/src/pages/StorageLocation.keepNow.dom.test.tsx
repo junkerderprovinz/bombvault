@@ -238,13 +238,13 @@ describe("applying the rule now", () => {
   });
 
   it("puts the server's refusal on screen", async () => {
-    previewLocationKeep.mockResolvedValue({ ok: false, code: "password-not-set" });
+    previewLocationKeep.mockResolvedValue({ ok: false, error: "Disk could not be reached" });
     await renderPage();
 
     await click(applyNow()!);
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(applyLocationKeep).not.toHaveBeenCalled();
-    expect(screen.getByText("Deleting backups takes a login password. Set one under Settings, Security.")).toBeTruthy();
+    expect(screen.getByText("Disk could not be reached")).toBeTruthy();
   });
 });

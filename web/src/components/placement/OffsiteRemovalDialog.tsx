@@ -4,7 +4,6 @@ import { useT } from "../../lib/i18n";
 import { repoDisplayName } from "../../lib/directRepo";
 import { placementErrorText } from "../../lib/placementCodes";
 import { formatTs } from "../../lib/reltime";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useLocalName } from "../../lib/useLocalName";
@@ -108,7 +107,7 @@ export function OffsiteRemovalDialog({
           continue;
         }
         if (ownLogin.handled(del, onClose)) return;
-        push(deleteSentence(t, del.code) ?? placementErrorText(t, lang, del, "settings.error"), "fail");
+        push(placementErrorText(t, lang, del, "settings.error"), "fail");
         onClose();
         return;
       }

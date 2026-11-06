@@ -37,12 +37,6 @@ function failed(e: unknown): Answer {
   return { ok: false, error: e instanceof Error ? e.message : undefined };
 }
 
-/** The sentence for a refusal over the login. The shared one for a missing
- *  password speaks of keys, so deleting has its own. */
-function refusalSentence(t: (key: TranslationKey) => string, code: string | undefined): string | undefined {
-  return code === "password-not-set" ? t("storage.remove.passwordNeeded") : secretsSentence(t, code);
-}
-
 /** The sentence for a removal refused because a section stayed busy, which
  *  names the section and, where the refusal says, what holds it. */
 function removalBusySentence(t: (key: TranslationKey) => string, res: Answer): string | undefined {
@@ -149,7 +143,7 @@ export function RemovalWindow({
       .then((res) => {
         if (!alive) return;
         if (res.ok && res.erasure) setErasure(res.erasure);
-        else setProblem(refusalSentence(t, res.code) ?? res.error ?? t("settings.error"));
+        else setProblem(secretsSentence(t, res.code) ?? res.error ?? t("settings.error"));
       });
     return () => {
       alive = false;
@@ -218,7 +212,7 @@ export function RemovalWindow({
     const res = await eraseLocation(id, erasure.removal, named, sentHome).catch(failed);
     setBusy(false);
     if (!res.ok) {
-      setProblem(refusalSentence(t, res.code) ?? removalBusySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
+      setProblem(secretsSentence(t, res.code) ?? removalBusySentence(t, res) ?? placementErrorText(t, lang, res, "settings.error"));
       setLastToo(false);
       if (res.erasure) setErasure(res.erasure);
       else if (res.removal || res.code === "stale") {

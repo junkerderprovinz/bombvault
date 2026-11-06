@@ -17,12 +17,6 @@ export function secretsSentence(t: (key: TranslationKey) => string, code: string
   return code !== undefined && code in SECRETS_SENTENCE ? t(SECRETS_SENTENCE[code as SecretsRefusal]) : undefined;
 }
 
-/** deleteSentence is secretsSentence for a call that deletes backups for good,
- *  whose missing password is not about keys. */
-export function deleteSentence(t: (key: TranslationKey) => string, code: string | undefined): string | undefined {
-  return code === "password-not-set" ? t("secrets.deletePasswordNotSet") : secretsSentence(t, code);
-}
-
 /** flashZipRefusal says why the server would refuse the ZIP of a flash backup.
  *  The download is a plain link, and a refusal in its place would leave the page. */
 export function flashZipRefusal(t: (key: TranslationKey) => string): string | undefined {

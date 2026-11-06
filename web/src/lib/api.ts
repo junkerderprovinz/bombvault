@@ -963,11 +963,11 @@ async function fetchJSON<T>(
   return res.json() as Promise<T>;
 }
 
-/** What a route that makes or hands out key material, or deletes backups for
- *  good, answers a 403 with:
+/** What a route that makes or hands out key material answers a 403 with:
  *  the server has no login password, or the session is the one a paired phone
- *  got for the group's words. After the second, signing in at this instance
- *  (login) and sending the same request again goes through. */
+ *  got for the group's words. A route that deletes backups for good answers
+ *  only the second. After it, signing in at this instance (login) and sending
+ *  the same request again goes through. */
 export type SecretsRefusal = "password-not-set" | "own-login-needed";
 
 /** fetchJSON for the routes that can answer with a SecretsRefusal: that 403

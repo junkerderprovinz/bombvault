@@ -557,14 +557,14 @@ describe("removing a ZFS entry", () => {
     await waitFor(() => expect(deleteZFSDataset).toHaveBeenCalledWith(ZFS_ID, true));
   });
 
-  it("says that taking the safety snapshots along needs a login password", async () => {
+  it("says in the server's words why the safety snapshots stay", async () => {
     serve({ safetyCount: 2 });
-    deleteZFSDataset.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password before deleting safety snapshots" });
+    deleteZFSDataset.mockResolvedValue({ ok: false, error: "the pool is busy" });
     await renderPage();
     const dialog = await openRemoval();
     await press(within(dialog).getByRole("switch", { name: SAFETY_TOO }));
     await press(within(dialog).getByRole("button", { name: en["entry.remove.keepGo"] }));
-    await waitFor(() => expect(pushed).toContainEqual({ message: en["secrets.deletePasswordNotSet"], severity: "fail" }));
+    await waitFor(() => expect(pushed).toContainEqual({ message: "the pool is busy", severity: "fail" }));
     expect(screen.queryByText("at /backups?kind=zfs")).toBeNull();
   });
 

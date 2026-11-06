@@ -437,12 +437,12 @@ describe("removing a destination and deleting the backups there", () => {
     expect(screen.queryByText("the list")).toBeNull();
   });
 
-  it("asks for a login password before anything is read or deleted", async () => {
-    previewLocationErasure.mockResolvedValueOnce({ ok: false, code: "password-not-set", error: "set a login password first" });
+  it("keeps the deletion shut and says why when the backups here cannot be listed", async () => {
+    previewLocationErasure.mockResolvedValueOnce({ ok: false, error: "Storage Box could not be reached" });
     await renderPage();
     const dialog = await openDeletion();
 
-    expect(within(dialog).getByText(en["storage.remove.passwordNeeded"])).toBeTruthy();
+    expect(within(dialog).getByText("Storage Box could not be reached")).toBeTruthy();
     expect(erase(dialog).disabled).toBe(true);
   });
 

@@ -4,7 +4,6 @@ import type { ZFSDatasetView, ZFSSafetySnapshot } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
 import { useOwnLogin } from "../../lib/useOwnLogin";
@@ -58,7 +57,7 @@ export function ZFSSafetySection({
         load();
         onRefresh();
       } else {
-        if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.deleteFailed"), "fail");
+        if (!ownLogin.handled(res)) push(res.error ?? t("common.deleteFailed"), "fail");
       }
     } catch (err) {
       push(failText(t, err), "fail");

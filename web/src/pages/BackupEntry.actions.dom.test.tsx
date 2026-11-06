@@ -708,15 +708,15 @@ describe("BombVault's own container", () => {
 });
 
 describe("a delete the server refuses over the login", () => {
-  const noPassword = { ok: false, code: "password-not-set", error: "set a login password before deleting backups" };
+  const locked = { ok: false, error: "the repository is locked" };
   const phone = { ok: false, code: "own-login-needed", error: "sign in at this instance's web interface before deleting backups" };
 
-  it("says a container's backups need a login password", async () => {
-    deleteBackups.mockResolvedValue(noPassword);
+  it("says in the server's words why a container's backups stay", async () => {
+    deleteBackups.mockResolvedValue(locked);
     await renderPage("/backups/container/pihole");
     await choose(en["containers.deleteBackups"]);
     await confirmWith(en["containers.deleteBackups"]);
-    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([en["secrets.deletePasswordNotSet"]]));
+    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([locked.error]));
   });
 
   it("offers a paired phone the sign-in instead of a failure", async () => {
@@ -730,14 +730,14 @@ describe("a delete the server refuses over the login", () => {
     expect(pushed).toEqual([]);
   });
 
-  it("says a folder set's backups need a login password", async () => {
-    deleteFileSetBackups.mockResolvedValue(noPassword);
+  it("says in the server's words why a folder set's backups stay", async () => {
+    deleteFileSetBackups.mockResolvedValue(locked);
     await renderPage(`/backups/files/${SET_ID}`);
     await choose(en["zfs.removeMissing"]);
     const window = within(await screen.findByRole("dialog"));
     await press(window.getByRole("radio", { name: new RegExp(`^${en["entry.remove.drop"]}`) }));
     await confirmWith(en["entry.remove.dropGo"]);
-    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([en["secrets.deletePasswordNotSet"]]));
+    await waitFor(() => expect(pushed.map((toast) => toast.message)).toEqual([locked.error]));
     expect(screen.queryByText("at /backups?kind=files")).toBeNull();
   });
 });

@@ -27,7 +27,6 @@ import {
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { STALE_MS, useProgress, type ProgressState } from "../../lib/progress";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useOwnLogin } from "../../lib/useOwnLogin";
@@ -186,7 +185,7 @@ export function IntegrityCard({ t, hueIndex }: { t: T; hueIndex?: number }) {
         const paused: string[] = "paused" in r && Array.isArray(r.paused) ? r.paused : [];
         if (r.ok && paused.length) push(t("anomaly.prunePaused").replace("{names}", heldTagLabels(paused, t).join(", ")), "warn");
         if (!r.ok) {
-          if (!ownLogin.handled(r)) push(deleteSentence(t, r.code) ?? r.error ?? t("integrity.failed"), "fail");
+          if (!ownLogin.handled(r)) push(r.error ?? t("integrity.failed"), "fail");
         }
         else if (action === "unlock") push(say("integrity.unlocked"), "success");
         else if (action === "prune") push(say("integrity.pruned"), "success");

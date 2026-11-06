@@ -4,7 +4,6 @@ import { repoDisplayName } from "../../lib/directRepo";
 import { useT } from "../../lib/i18n";
 import { formatList } from "../../lib/placement";
 import { placementErrorText } from "../../lib/placementCodes";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useLocalName } from "../../lib/useLocalName";
@@ -102,7 +101,7 @@ export function TimelineDeleteDialog({
       const skipped = out.skipped ?? [];
       const done = out.deleted ?? [];
       if (!out.ok) {
-        push(deleteSentence(t, out.code) ?? placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
+        push(placementErrorText(t, lang, out, "common.deleteFailed"), "fail");
         // A refusal can come after places were emptied, and those copies are
         // gone for good, so the failure never stands on its own.
         if (done.length > 0) push(t("timeline.deletePartial").replace("{list}", () => names(done)));

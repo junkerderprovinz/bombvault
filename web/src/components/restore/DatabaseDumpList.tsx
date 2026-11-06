@@ -21,7 +21,6 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
 import { isWarningNote, RunReasonText } from "../../lib/runReason";
-import { deleteSentence } from "../../lib/secretsRefusal";
 import { useConfirm } from "../../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
 import { useToast } from "../../lib/toast";
@@ -225,7 +224,7 @@ function DumpRow({
       const res = await deleteSnapshot("containers", dump.id, source);
       if (res.ok) onChanged();
       else {
-        if (!ownLogin.handled(res)) push(deleteSentence(t, res.code) ?? res.error ?? t("common.deleteFailed"), "fail");
+        if (!ownLogin.handled(res)) push(res.error ?? t("common.deleteFailed"), "fail");
         setShake((n) => n + 1);
       }
     } catch (err) {

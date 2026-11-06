@@ -95,10 +95,10 @@ it("stays quiet about anomalies when nothing was held", async () => {
   expect(push.mock.calls.every(([, tone]) => tone !== "warn")).toBe(true);
 });
 
-it("says that pruning takes a login password when none is set", async () => {
-  pruneDomain.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password before pruning backups" });
+it("says in the server's words why a prune failed", async () => {
+  pruneDomain.mockResolvedValue({ ok: false, error: "the repository is locked" });
   await prune();
-  await waitFor(() => expect(push).toHaveBeenCalledWith(en["secrets.deletePasswordNotSet"], "fail"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("the repository is locked", "fail"));
 });
 
 it("says a prune whose answer a proxy dropped goes on on the server", async () => {
