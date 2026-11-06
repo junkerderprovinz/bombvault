@@ -134,7 +134,7 @@ func (s *Service) ApplyLocationKeep(ctx context.Context, id string) (LocationKee
 // before the list rather than after it.
 // GET /api/storage/locations/{id}/keep/preview
 func (h *Handler) handleLocationKeepPreview(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "pruning backups") {
+	if !h.requireSignIn(w, r, "pruning backups") {
 		return
 	}
 	preview, err := h.svc.PreviewLocationKeep(r.Context(), r.PathValue("id"))
@@ -152,7 +152,7 @@ func (h *Handler) handleLocationKeepPreview(w http.ResponseWriter, r *http.Reque
 // section kept there, without waiting for the next backup.
 // POST /api/storage/locations/{id}/keep/apply
 func (h *Handler) handleApplyLocationKeep(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "pruning backups") {
+	if !h.requireSignIn(w, r, "pruning backups") {
 		return
 	}
 	ctx, done := h.maintenanceContext(r)

@@ -512,7 +512,7 @@ func (h *Handler) handleRemoveLocation(w http.ResponseWriter, r *http.Request) {
 // location takes away.
 // GET /api/storage/locations/{id}/erasure
 func (h *Handler) handleLocationErasurePreview(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "listing what deleting the backups at a storage location takes") {
+	if !h.requireSignIn(w, r, "listing what deleting the backups at a storage location takes") {
 		return
 	}
 	job, err := h.erasureJob(r.PathValue("id"), nil, "")
@@ -531,11 +531,10 @@ func (h *Handler) handleLocationErasurePreview(w http.ResponseWriter, r *http.Re
 // handleEraseLocation starts deleting the backups at a storage location and
 // removing it afterwards. The body carries the removal that was shown, the
 // identities of the entries that may lose their only backup and, for a
-// section folder, the folder its sections move to. Without a login password
-// anybody on the network could delete the backups, so it takes one.
+// section folder, the folder its sections move to.
 // POST /api/storage/locations/{id}/erasure
 func (h *Handler) handleEraseLocation(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "deleting the backups at a storage location") {
+	if !h.requireSignIn(w, r, "deleting the backups at a storage location") {
 		return
 	}
 	var body struct {

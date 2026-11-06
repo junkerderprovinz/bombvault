@@ -324,7 +324,7 @@ func (h *Handler) handleOffsiteRemovalPreview(w http.ResponseWriter, r *http.Req
 // fresh preview carries it, so the dialog can ask again with the new list.
 func (h *Handler) handleOffsiteRemoval(w http.ResponseWriter, r *http.Request) {
 	item, targetID, ok := h.removalParams(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting an off-site copy") {
+	if !ok || !h.requireSignIn(w, r, "deleting an off-site copy") {
 		return
 	}
 	var body struct {

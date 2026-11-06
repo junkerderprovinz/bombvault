@@ -896,7 +896,7 @@ func (h *Handler) handleTimelineDelete(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !h.requireAuthForSecrets(w, r, "deleting backups") {
+	if !h.requireSignIn(w, r, "deleting backups") {
 		return
 	}
 	var body struct {

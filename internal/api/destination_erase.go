@@ -717,7 +717,7 @@ func (s *Service) emptyRepo(ctx context.Context, repo erasureRepo) error {
 // destination would take away.
 // GET /api/offsite/destinations/{id}/erasure
 func (h *Handler) handleDestinationErasurePreview(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "listing what deleting the backups at a destination takes") {
+	if !h.requireSignIn(w, r, "listing what deleting the backups at a destination takes") {
 		return
 	}
 	plan, err := h.svc.planErasure(r.Context(), r.PathValue("id"))
@@ -735,11 +735,10 @@ func (h *Handler) handleDestinationErasurePreview(w http.ResponseWriter, r *http
 // handleEraseDestination starts deleting the backups at a destination and
 // removing it afterwards. The body carries the removal that was shown and the
 // identities of the entries that may lose their only backup. A refusal on a
-// fresh listing carries that listing. Without a login password anybody on the
-// network could delete the backups, so it takes one.
+// fresh listing carries that listing.
 // POST /api/offsite/destinations/{id}/erasure
 func (h *Handler) handleEraseDestination(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "deleting the backups at a destination") {
+	if !h.requireSignIn(w, r, "deleting the backups at a destination") {
 		return
 	}
 	var body struct {

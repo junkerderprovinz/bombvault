@@ -1126,7 +1126,7 @@ func (h *Handler) vmNameParam(w http.ResponseWriter, r *http.Request) (string, b
 // source. DELETE /api/containers/{name}/backups?source=
 func (h *Handler) handleDeleteBackups(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
+	if !ok || !h.requireSignIn(w, r, "deleting backups") {
 		return
 	}
 	ctx, done := h.svc.outlastRequest(r.Context())
@@ -1259,7 +1259,7 @@ func (h *Handler) handleUnlinkVMAlias(w http.ResponseWriter, r *http.Request) {
 // DELETE /api/vms/{name}/backups?source=
 func (h *Handler) handleDeleteBackupsVM(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.vmNameParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
+	if !ok || !h.requireSignIn(w, r, "deleting backups") {
 		return
 	}
 	ctx, done := h.svc.outlastRequest(r.Context())
@@ -3768,7 +3768,7 @@ func (h *Handler) handlePrune(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if !h.requireAuthForSecrets(w, r, "pruning backups") {
+	if !h.requireSignIn(w, r, "pruning backups") {
 		return
 	}
 	ctx, done := h.maintenanceContext(r)
@@ -3833,7 +3833,7 @@ func (h *Handler) handleDeleteSnapshot(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "unknown domain"})
 		return
 	}
-	if !h.requireAuthForSecrets(w, r, "deleting a backup") {
+	if !h.requireSignIn(w, r, "deleting a backup") {
 		return
 	}
 	if err := h.svc.DeleteSnapshot(r.Context(), domain, r.PathValue("id"), sourceParam(r)); err != nil {
@@ -7102,7 +7102,7 @@ func (h *Handler) handleDeleteFileSet(w http.ResponseWriter, r *http.Request) {
 // selected source. DELETE /api/files/sets/{id}/backups?source=
 func (h *Handler) handleDeleteBackupsFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
+	if !ok || !h.requireSignIn(w, r, "deleting backups") {
 		return
 	}
 	ctx, done := h.svc.outlastRequest(r.Context())

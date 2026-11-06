@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"slices"
 	"strings"
 	"testing"
@@ -566,28 +565,17 @@ func TestAMoveWaitsForAnErasureAtEitherPlace(t *testing.T) {
 	}
 }
 
-func TestDeletingTheBackupsAtADestinationTakesALoginPassword(t *testing.T) {
+func TestDeletingTheBackupsAtADestinationWorksWithoutALoginPassword(t *testing.T) {
 	f := newPlacementFixture(t)
 	box, _ := boxWithVMs(f)
+	preview := f.erasurePreview(box)
 
-	for _, req := range []struct {
-		method string
-		body   any
-	}{
-		{"GET", nil},
-		{"POST", map[string]any{"expect": locationRemoval{}, "lastCopies": []string{"vm:old"}}},
-	} {
-		code, res := f.call(req.method, "/api/offsite/destinations/"+box.ID+"/erasure", req.body)
-		if code != http.StatusForbidden || res["code"] != codeNoPassword {
-			t.Fatalf("%s without a login password = %d %v, want %s", req.method, code, res, codeNoPassword)
-		}
+	if res := f.erase(box, preview.Removal, "vm:old"); res["ok"] != true || res["started"] != true {
+		t.Fatalf("answer without a login password = %v, want a started run", res)
 	}
 	f.waitForErasure("vms")
-	if len(f.eng.deletes) != 0 {
-		t.Fatalf("the erasure forgot %+v", f.eng.deletes)
-	}
-	if res := f.do("POST", "/api/offsite/destinations/"+box.ID+"/removal", map[string]any{"expect": f.removalPreview(box)}); res["ok"] != true {
-		t.Fatalf("removing the destination and keeping its backups = %v, want it done", res)
+	if left := f.held(boxRepo + "/vms"); !slices.Equal(left, []string{"hand"}) {
+		t.Fatalf("the vms repository still holds %v, want the snapshot written by hand alone", left)
 	}
 }
 

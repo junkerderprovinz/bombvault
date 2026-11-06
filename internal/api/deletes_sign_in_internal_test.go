@@ -19,6 +19,7 @@ func deleteRoutes(f *placementFixture, b2ID string) []deleteRoute {
 	tank, _ := f.zfsItem("tank/apps")
 	dest := f.destination("Disk", "disk1/backups")
 	b2 := url.QueryEscape("offsite:" + b2ID)
+	location := url.PathEscape("destination:" + dest.ID)
 	return []deleteRoute{
 		{http.MethodDelete, "/api/items/containers/nginx/timeline/a1a1a1a1", map[string]any{"places": []map[string]any{{"place": "offsite:" + b2ID, "label": "B2", "snapshotIds": []string{"b1b1b1b1"}}}}},
 		{http.MethodDelete, "/api/snapshots/containers/b1b1b1b1?source=" + b2, nil},
@@ -32,26 +33,23 @@ func deleteRoutes(f *placementFixture, b2ID string) []deleteRoute {
 		{http.MethodDelete, "/api/items/containers/nginx/offsite/" + b2ID + "/removal", map[string]any{"onlyThere": []string{"a7a7a7a7"}, "typedName": "nginx"}},
 		{http.MethodGet, "/api/offsite/destinations/" + dest.ID + "/erasure", nil},
 		{http.MethodPost, "/api/offsite/destinations/" + dest.ID + "/erasure", map[string]any{}},
+		{http.MethodGet, "/api/storage/locations/" + location + "/erasure", nil},
+		{http.MethodPost, "/api/storage/locations/" + location + "/erasure", map[string]any{}},
+		{http.MethodGet, "/api/storage/locations/" + location + "/keep/preview", nil},
+		{http.MethodPost, "/api/storage/locations/" + location + "/keep/apply", nil},
 	}
 }
 
-func TestDeletingBackupsForGoodNeedsALoginPassword(t *testing.T) {
+func TestDeletingBackupsForGoodWorksWithoutALoginPassword(t *testing.T) {
 	f, b2 := nginxAtHomeAndB2(t)
-	routes := deleteRoutes(f, b2.ID)
-	for _, r := range routes {
+	for _, r := range deleteRoutes(f, b2.ID) {
 		code, out := f.call(r.method, r.path, r.body)
-		if code != http.StatusForbidden || out["code"] != codeNoPassword {
+		if code == http.StatusForbidden || out["code"] == codeNoPassword {
 			t.Errorf("%s %s without a password: %d %v", r.method, r.path, code, out)
 		}
 	}
-	if len(f.eng.deletes) != 0 {
-		t.Fatalf("forgotten without a password: %v", f.eng.deletes)
-	}
-
-	f.signIn()
-	timeline := routes[0]
-	if m := f.do(timeline.method, timeline.path, timeline.body); m["ok"] != true {
-		t.Fatalf("delete signed in = %v", m)
+	if len(f.eng.deletes) == 0 {
+		t.Fatal("nothing was forgotten without a password")
 	}
 }
 

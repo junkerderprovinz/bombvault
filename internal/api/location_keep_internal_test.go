@@ -215,31 +215,36 @@ func TestApplyingTheKeepRuleOfALocationWithoutBackupsSaysSo(t *testing.T) {
 	}
 }
 
-func TestApplyingALocationsKeepRuleNeedsTheOwnersOwnLogin(t *testing.T) {
+func TestApplyingALocationsKeepRuleWorksWithoutALoginPassword(t *testing.T) {
 	f := newKeepFixture(t, store.RetentionKeep{KeepLast: 1})
-	routes := []string{
-		"GET /api/storage/locations/" + f.id + "/keep/preview",
-		"POST /api/storage/locations/" + f.id + "/keep/apply",
+	if res := f.do(http.MethodGet, "/api/storage/locations/"+f.id+"/keep/preview", nil); res["ok"] != true {
+		t.Fatalf("preview without a login password = %v", res)
 	}
-	refused := func(code string) {
-		t.Helper()
-		for _, r := range routes {
-			method, path, _ := strings.Cut(r, " ")
-			got, out := f.call(method, path, nil)
-			if got != http.StatusForbidden || out["code"] != code {
-				t.Errorf("%s: %d %v, want 403 %s", r, got, out, code)
-			}
-		}
+	if res := f.do(http.MethodPost, "/api/storage/locations/"+f.id+"/keep/apply", nil); res["ok"] != true {
+		t.Fatalf("apply without a login password = %v", res)
 	}
+	if got := f.idsAt(f.there); !slices.Equal(got, []string{"a4"}) {
+		t.Fatalf("left at the location: %v, want only a4", got)
+	}
+}
 
-	refused(codeNoPassword)
+func TestApplyingALocationsKeepRuleNeedsTheOwnersOwnLoginOnceAPasswordIsSet(t *testing.T) {
+	f := newKeepFixture(t, store.RetentionKeep{KeepLast: 1})
 	f.withPassword("a password of the owner")
 	settings, err := f.st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
 	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch)
-	refused(codeOwnLoginNeeded)
+	for _, r := range []string{
+		"GET /api/storage/locations/" + f.id + "/keep/preview",
+		"POST /api/storage/locations/" + f.id + "/keep/apply",
+	} {
+		method, path, _ := strings.Cut(r, " ")
+		if got, out := f.call(method, path, nil); got != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+			t.Errorf("%s from a paired phone: %d %v, want 403 %s", r, got, out, codeOwnLoginNeeded)
+		}
+	}
 	if got := forgetsAt(f.placementFixture, f.there); len(got) != 0 {
 		t.Fatalf("forgotten without the owner's login: %+v", got)
 	}

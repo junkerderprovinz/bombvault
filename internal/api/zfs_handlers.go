@@ -186,7 +186,7 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	safety := r.URL.Query().Get("safety") == "true"
-	if safety && !h.requireAuthForSecrets(w, r, "deleting safety snapshots") {
+	if safety && !h.requireSignIn(w, r, "deleting safety snapshots") {
 		return
 	}
 	res, err := h.svc.DeleteZFSDataset(r.Context(), id, safety)
@@ -211,7 +211,7 @@ func (h *Handler) handleDeleteZFSDataset(w http.ResponseWriter, r *http.Request)
 // DELETE /api/zfs/datasets/{id}/backups?safety=true|false
 func (h *Handler) handleDeleteBackupsZFSDataset(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.zfsIDParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting backups") {
+	if !ok || !h.requireSignIn(w, r, "deleting backups") {
 		return
 	}
 	ctx, done := h.svc.outlastRequest(r.Context())
@@ -255,7 +255,7 @@ func (h *Handler) handleListZFSSafetySnapshots(w http.ResponseWriter, r *http.Re
 // DELETE /api/zfs/datasets/{id}/safety-snapshots?dataset=&name=
 func (h *Handler) handleDeleteZFSSafetySnapshot(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.zfsIDParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "deleting a safety snapshot") {
+	if !ok || !h.requireSignIn(w, r, "deleting a safety snapshot") {
 		return
 	}
 	q := r.URL.Query()
