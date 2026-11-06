@@ -9,6 +9,7 @@ import { Badge } from "../Badge";
 import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
 import { KeepCountFields, useKeepLessQuestion } from "./keepFields";
+import { KeepNow } from "./KeepNow";
 import { KeepTimeline } from "./KeepTimeline";
 import { Deviations, Rows, SettingRow } from "./rows";
 import type { LocationEdit } from "./useLocationEdit";
@@ -60,6 +61,9 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
     setDraft(stored);
   }
   const editable = can("retention");
+  // A rule of all zeros never prunes, and a location that refuses deletes or
+  // is switched off is never pruned from here.
+  const prunable = stored.some((n) => n > 0) && location.enabled && !location.protection.immutable;
 
   function revert() {
     setDraft(stored);
@@ -135,6 +139,7 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
             <Toggle hideLabel label={t("storage.keep.ask")} checked={ask} onChange={setAskKeepLess} />
           </SettingRow>
         )}
+        {prunable && <KeepNow location={location} />}
       </Rows>
     </Card>
   );

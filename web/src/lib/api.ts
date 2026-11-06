@@ -7871,6 +7871,35 @@ export function saveFolderCard(id: string, keep: RetentionKeep): Promise<OkEnvel
   return fetchJSON(`/api/storage/locations/${encodeURIComponent(id)}/keep`, { method: "PUT", body: JSON.stringify(keep) });
 }
 
+/** One section's part of what applying a location's keep rule now removes. */
+export type LocationKeepSection = {
+  domain: OffsiteDomain;
+  use: "home" | "copy";
+  preview: RetentionPreview;
+  /** The section has no backups at this location yet. */
+  empty?: boolean;
+  error?: string;
+};
+
+export type LocationKeepPreview = {
+  sections: LocationKeepSection[];
+  /** No section has backups at this location yet. */
+  empty?: boolean;
+};
+
+/** GET /api/storage/locations/{id}/keep/preview: what applying the location's
+ *  keep rule now would remove, without removing anything. */
+export function previewLocationKeep(id: string): Promise<OkEnvelope & { preview?: LocationKeepPreview }> {
+  return fetchKeyJSON(`/api/storage/locations/${encodeURIComponent(id)}/keep/preview`);
+}
+
+/** POST /api/storage/locations/{id}/keep/apply: applies the location's keep
+ *  rule to every section there now instead of after the next backup. `paused`
+ *  names the entries whose old backups an unusual backup holds. */
+export function applyLocationKeep(id: string): Promise<OkEnvelope & { paused?: string[]; empty?: boolean }> {
+  return fetchKeyJSON(`/api/storage/locations/${encodeURIComponent(id)}/keep/apply`, { method: "POST" });
+}
+
 /** PUT /api/storage/locations/{id}/risk-accepted: accepts that a location
  *  copies go to cannot refuse a delete, or takes that back. Only how the
  *  overview words the gap changes. */

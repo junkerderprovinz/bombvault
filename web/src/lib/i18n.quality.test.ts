@@ -27,6 +27,7 @@ const SAME_AS_EN_IS_FINE = new Set<string>([
   "anomaly.figure",
   "cadence.fmtCron",
   "placement.flow",
+  "storage.keep.pruneNowSection",
   "dbdump.versionLabel",
   "zfs.safety.row",
 
