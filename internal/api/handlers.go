@@ -1092,13 +1092,10 @@ func (h *Handler) nameParam(w http.ResponseWriter, r *http.Request) (string, boo
 	return name, true
 }
 
-// validVMName accepts libvirt domain names, which (unlike Docker container
-// names) routinely contain spaces — e.g. "Windows 11", "Home Assistant". The VM
-// name never becomes a filesystem path or template filename (it only flows into
-// argv-separated virsh args, restic tags after "--", and SQLite params), so the
-// strict resourceNameRe is wrong here. We still block what could be dangerous:
-// empty, over-long, path separators / "..", a leading "-" (option injection),
-// and control characters.
+// validVMName accepts libvirt domain names, which often contain spaces, so the
+// stricter resourceNameRe does not fit. The name becomes the file name of the
+// domain XML under vm-define and a virsh argument, so path separators, "..", a
+// leading dash and control characters are refused.
 func validVMName(name string) bool {
 	if name == "" || len(name) > 128 {
 		return false
