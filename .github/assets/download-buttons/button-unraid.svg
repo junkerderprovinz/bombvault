@@ -15,10 +15,10 @@
   <style>
     @keyframes pass {
       0%       { transform: translateX(-278.4px); }
-      10.50%   { transform: translateX(1120.3px); }
+      9.24%   { transform: translateX(1120.3px); }
       100%     { transform: translateX(1120.3px); }
     }
-    .band { animation: pass 10.126s linear 0.000s infinite backwards; }
+    .band { animation: pass 11.512s linear 0.693s infinite backwards; }
     @media (prefers-reduced-motion: reduce) {
       .band { animation: none; opacity: 0; }
     }
@@ -27,8 +27,7 @@
   <g transform="translate(68.5 40.15) scale(0.32227)" fill="#ffffff">
     <path d="M243.3 181.9h24.9v147.8h-24.9zM24.9 329.7H0V181.9h24.9zm96.8 17.6h24.9v56.4h-24.9zM60.6 284h24.9v91.3H60.6zm121.7 0h24.9v91.3h-24.9zm304.8-102.1H512v147.8h-24.9zm-96.8-17.2h-24.9v-56.4h24.9zm61.1 62.9h-24.9v-91h24.9zm-122.1 0h-24.9v-91h24.9z"/>
   </g>
-  <text x="300" y="108" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Unraid</text>
-  <text x="302" y="186" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="64" font-weight="400" fill="#ffffff" fill-opacity="0.9">Template</text>
+  <text x="300" y="151" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">Unraid</text>
   <g clip-path="url(#edge)">
     <g class="band">
       <rect x="0" y="-60" width="173.6" height="365.3"

@@ -8,9 +8,13 @@ README.md.
 The buttons come in the same five groups, in this order: the server (the
 Unraid template, the container, the source and the manual), the desktop apps,
 the phone apps, the browser extensions and the house's companion apps. What a
-repository does not ship is left out. A group fills a row of four places
-before it starts the next, and a blank line stands between two groups, so the
-gap between groups is about twice the gap between rows.
+repository does not ship is left out. Each group opens with its title, drawn
+in a button's shape and size but without a link, and fills a row of four
+places before it starts the next. A blank line stands between two groups, so
+the gap between groups is about twice the gap between rows.
+
+A button carries one line, its name, as the apps' buttons do at rest. Only a
+listing still to come adds a second line saying so.
 Windows on ARM and the portable build are segments of the Windows button, and
 Linux on ARM one of the Linux button, so the desktop row keeps to the four
 places a row has.
@@ -84,8 +88,10 @@ FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-se
 
 COMPANIONS = 4
 # Every button a repository can have, in the order the rows show them: group,
-# brand file, background, ink, heading, second line, accessible name. The same
-# thing carries the same words in every README.
+# brand file, background, ink, name, segment label, accessible name. The same
+# thing carries the same words in every README. The group's title already says
+# Server, Desktop or Android, so a name says only what tells the buttons of a
+# group apart. The segment label is the one line a segment shows.
 WINDOWS = ("#0078d4", "#ffffff")
 KINDS = {
     # The middle of the orange in Unraid's logo, where white holds 3.4:1,
@@ -101,7 +107,7 @@ KINDS = {
     "docker":           (0, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
     "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Slate, since GitHub's black vanishes in the dark theme.
-    "source":           (0, "zip", "#4d5562", "#ffffff", "Source", "zip archive", "Download the source archive"),
+    "source":           (0, "zip", "#4d5562", "#ffffff", "Source code", "zip archive", "Download the source archive"),
     # "Docs" rather than "Documentation": 13 characters at font-size 82 need
     # more than the 542 units left of the right edge. The yellow is the coffee
     # button's #fd0, and white on yellow fails contrast, so the ink is dark.
@@ -118,17 +124,17 @@ KINDS = {
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
-    # The heading is the platform, since "Google Play" is too wide for it.
-    "google-play":      (2, "google-play", "#01875f", "#ffffff", "Android", "Google Play", "Get it on Google Play"),
-    "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "Android", "F-Droid", "Get it on F-Droid"),
-    "apk":              (2, "android", "#3ddc84", "#1b1b1b", "Android", "APK", "Download the Android app"),
+    "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
+    "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
+    "apk":              (2, "android", "#3ddc84", "#1b1b1b", "APK", "APK", "Download the Android app"),
     # The App Store's blue, where white holds 3.1:1.
-    "app-store":        (2, "apple", "#0d96f6", "#ffffff", "iOS", "App Store", "Download on the App Store"),
+    "app-store":        (2, "apple", "#0d96f6", "#ffffff", "App Store", "App Store", "Download on the App Store"),
     # One button per browser, in the colours of KnightLoader's browser tiles.
     # White holds 3.3:1 on Brave's orange, about as much as on Unraid's, and
     # more on the others. On Firefox's lighter orange it falls to 2.7:1, so
-    # that ink is dark.
-    "chrome":           (3, "chrome", "#1a73e8", "#ffffff", "Chrome", "Extension", "Install the extension for Chrome"),
+    # that ink is dark. Chrome takes the green of its own mark, since its blue
+    # beside Edge's read as one colour; white holds 5:1 on it.
+    "chrome":           (3, "chrome", "#188038", "#ffffff", "Chrome", "Extension", "Install the extension for Chrome"),
     "edge":             (3, "edge", "#0078d7", "#ffffff", "Edge", "Extension", "Install the extension for Edge"),
     "brave":            (3, "brave", "#fb542b", "#ffffff", "Brave", "Extension", "Install the extension for Brave"),
     "opera":            (3, "opera", "#ff1b2d", "#ffffff", "Opera", "Extension", "Install the extension for Opera"),
@@ -141,14 +147,32 @@ KINDS = {
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
-# A store listing that does not exist yet is drawn without a link.
+# A store listing that does not exist yet is drawn without a link, with "Soon"
+# under its name, or nobody could tell why the button leads nowhere.
 SOON = {
-    "google-play": ("Play Store soon", "On Google Play soon"),
-    "f-droid": ("F-Droid soon", "On F-Droid soon"),
-    "firefox": ("coming soon", "The add-on for Firefox, soon"),
-    "unraid": ("coming soon", "In Unraid's Community Applications soon"),
-    "unraid-plugin": ("coming soon", "In Unraid's Community Applications soon"),
+    "google-play": "On Google Play soon",
+    "f-droid": "On F-Droid soon",
+    "firefox": "The add-on for Firefox, soon",
+    "unraid": "In Unraid's Community Applications soon",
+    "unraid-plugin": "In Unraid's Community Applications soon",
 }
+SOON_LINE = "Soon"
+
+# Each group's title: its icon, drawn in strokes on a 24 unit grid, and its word.
+# The phone group says Android unless the App Store is in it.
+TITLE_BG, TITLE_INK = "#1f2328", "#ffffff"
+TITLES = {
+    0: ("Server", '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/>'),
+    1: ("Desktop", '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M1.5 20h21M8 16l-1 4M16 16l1 4"/>'),
+    2: ("Android", '<rect x="6.5" y="2" width="11" height="20" rx="2.5"/><path d="M11 18.5h2"/>'),
+    3: ("Browser", '<rect x="2.5" y="3.5" width="19" height="17" rx="2"/><path d="M2.5 8.5h19M5.5 6h.01M8 6h.01M10.5 6h.01M9 14.5l2 2 4-4"/>'),
+    COMPANIONS: ("Works with", '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L11.6 6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.6-1.6"/>'),
+}
+PHONES = "Phone"
+# The icon fills the square the brand marks are drawn into, a little smaller,
+# since a line icon reaches its box's edge where a mark keeps a margin.
+TITLE_ICON = 124.0
+TITLE_STROKE = 1.9
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
           "unraid.net", "mos-official.net", "github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
@@ -225,17 +249,24 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 </svg>
 """
 
-FULL_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
+MARK = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
 {paths}
   </g>
-  <text x="{head_x}" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
+"""
+# The one line sits on the baseline that centres a cap height of 82 units.
+NAME = """  <text x="{head_x}" y="151" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>"""
+NAME_AND_SOON = """  <text x="{head_x}" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
   <text x="{sub_x}" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # A segment has no mark, and its left edge is a darker line against the part
-# before it. The baselines are the full button's, so the lines read across.
+# before it. It names only what differs from the button it joins.
 SEGMENT_FACE = """  <rect width="{divider}" height="{h}" fill="#000" fill-opacity="0.28"/>
-  <text x="{mid}" y="108" text-anchor="middle" font-family="{font}" font-size="72" font-weight="700" fill="{ink}">{head}</text>
-  <text x="{mid}" y="186" text-anchor="middle" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
+  <text x="{mid}" y="151" text-anchor="middle" font-family="{font}" font-size="72" font-weight="700" fill="{ink}">{sub_text}</text>"""
+
+TITLE_FACE = """  <g transform="translate({gx} {gy}) scale({scale})" fill="none" stroke="{ink}" stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round">
+    {icon}
+  </g>
+"""
 
 # Every button on the page shows one file, buttons.svg, through its own
 # #svgView fragment. The shine's clock starts when an <img> gets its file, and
@@ -261,10 +292,6 @@ GIVE = [
 README = os.path.join(HERE, "..", "README.md")
 ROW_OPEN = "<!-- download-buttons: written by scripts/gen_download_buttons.py -->"
 ROW_CLOSE = "<!-- /download-buttons -->"
-# Inside the paragraph of the last row that downloads a release file, so it
-# sits right under those buttons rather than a paragraph margin away.
-CAPTION = "Always downloads the latest build"
-LATEST = "/releases/latest/download/"
 GIVE_OPEN = "<!-- give-buttons: written by scripts/gen_download_buttons.py -->"
 GIVE_CLOSE = "<!-- /give-buttons -->"
 # The Android row again, in the README's section on the app.
@@ -276,12 +303,27 @@ APP_ROW = 2
 class Part:
     """One image in a row: a whole button, or one piece of a segmented one."""
 
+    title = False
+
     def __init__(self, kind, href, width, corners):
         self.kind, self.href, self.width, self.corners = kind, href, width, corners
-        _row, self.mark, self.bg, self.ink, self.head, self.sub, self.alt = KINDS[kind]
-        if href is None:
-            self.sub, self.alt = SOON[kind]
+        self.group, self.mark, self.bg, self.ink, self.head, self.sub, self.alt = KINDS[kind]
+        self.soon = href is None
+        if self.soon:
+            self.sub, self.alt = SOON_LINE, SOON[kind]
         self.px = width / SCALE
+
+
+class Title:
+    """A group's title: a button's shape and size, an icon and a word, no link."""
+
+    title, soon, mark, href, corners, width = True, False, None, None, "all", W
+    bg, ink, px = TITLE_BG, TITLE_INK, RENDER_PX
+
+    def __init__(self, group, word):
+        self.group, self.head, self.alt = group, word, word
+        self.icon = TITLES[group][1]
+        self.kind = "title-" + word.lower().replace(" ", "-")
 
 
 def rows():
@@ -312,7 +354,16 @@ def rows():
         else:
             item = [Part(kind, href, W, "all")]
         out[spec[0]].append(item)
-    return [row for items in out if items for row in split(items)]
+    table = []
+    for group, items in enumerate(out):
+        if not items:
+            continue
+        word = TITLES[group][0]
+        if group == APP_ROW and "app-store" in config.BUTTONS:
+            word = PHONES
+        table.append([[Title(group, word)]])
+        table += split(items)
+    return table
 
 
 def split(items):
@@ -370,12 +421,16 @@ def num(x):
 
 def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
-    common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub)
-    if part.mark:
+    common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub if part.soon else "")
+    words = (NAME_AND_SOON if part.soon else NAME).format(head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
+    if part.title:
+        face = TITLE_FACE.format(gx=num(GX + (GLYPH - TITLE_ICON) / 2), gy=num((H - TITLE_ICON) / 2), scale=num(TITLE_ICON / 24),
+                                 stroke=TITLE_STROKE, icon=part.icon, ink=part.ink) + words
+    elif part.mark:
         markup, scale, dx, dy = brand(part.mark, part.ink)
-        face = FULL_FACE.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup,
-                                head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
+        face = MARK.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup, ink=part.ink) + words
     else:
+        common["sub_text"] = part.sub
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)
     crossing = (part.width + 2 * CLEAR) / SCALE / SPEED
     return TEMPLATE.format(
@@ -492,7 +547,7 @@ def read_readme():
     return text
 
 
-def row(items, nl, url, caption=None):
+def row(items, nl, url):
     """One centred row: a link per image, the separator on its own line, two
     spaces in, because that is the gap GAP_PX was measured on. The parts of one
     button share a line with nothing between them."""
@@ -506,8 +561,6 @@ def row(items, nl, url, caption=None):
                    % (url, num(x), num(width), num(height), escape(alt), num(render), num(render * height / width)))
             imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
         lines.append("  " + "".join(imgs))
-    if caption:
-        lines.append("  <br><sub>%s</sub>" % caption)
     lines.append("</p>")
     return nl.join(lines) + nl
 
@@ -518,15 +571,14 @@ def write_readme(text, downloads, groups, apps, donations, url):
     Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
-    blocks_out = ((ROW_OPEN, ROW_CLOSE, downloads, groups, CAPTION), (APP_OPEN, APP_CLOSE, apps, [APP_ROW] * len(apps), CAPTION),
-                  (GIVE_OPEN, GIVE_CLOSE, donations, [0], None))
-    for opener, closer, table, group, caption in blocks_out:
+    blocks_out = ((ROW_OPEN, ROW_CLOSE, downloads, groups), (APP_OPEN, APP_CLOSE, apps, [APP_ROW] * len(apps)),
+                  (GIVE_OPEN, GIVE_CLOSE, donations, [0]))
+    for opener, closer, table, group in blocks_out:
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
-            last = max((i for i, items in enumerate(table) if any(LATEST in p[0] for parts in items for p in parts if p[0])), default=None)
             # A <br> between paragraphs is the one spacer GitHub keeps, and it
             # sets a new group about twice as far off as the next row.
-            body = "".join(("<br>" + nl if i and group[i] != group[i - 1] else "") + row(items, nl, url, caption if i == last else None)
+            body = "".join(("<br>" + nl if i and group[i] != group[i - 1] else "") + row(items, nl, url)
                            for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
@@ -623,13 +675,14 @@ def main():
 
     place = iter(xs)
     table_out = [[[(p.href, p.alt, next(place), p.width, H, p.px) for p in item] for item in items] for items in table]
-    apps = [out for items, out in zip(table, table_out) if KINDS[items[0][0].kind][0] == APP_ROW]
+    # The app's own section has its heading, so its rows come without the title.
+    apps = [out for items, out in zip(table, table_out) if items[0][0].group == APP_ROW and not items[0][0].title]
     donations = [[[(href, alt, xs[len(parts) + i], gives[i][1], gives[i][2], GIVE_RENDER_PX)]
                   for i, (_s, href, alt) in enumerate(GIVE)]]
     # Browsers and GitHub keep the sprite for a while, and an old sprite cut at
     # new offsets shows the wrong buttons, so its address changes with it.
     url = "%s?v=%s" % (SPRITE_URL, hashlib.sha256(whole.encode("utf-8")).hexdigest()[:12])
-    groups = [KINDS[items[0][0].kind][0] for items in table]
+    groups = [items[0][0].group for items in table]
     write_readme(readme, table_out, groups, apps, donations, url)
 
 
