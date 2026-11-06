@@ -8,7 +8,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 
 import { en } from "../lib/i18n";
 import { Dashboard } from "./Dashboard";
-import { FakeEventSource, failedCopy, installMatchMedia, location, resetServer, run, server } from "./overview/overview.testsupport";
+import { FakeEventSource, NOW, failedCopy, installMatchMedia, location, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
 import { pickOption } from "../components/selectField.testsupport";
 
@@ -115,16 +115,21 @@ describe("the runs of the history card", () => {
   });
 
   it("narrows the list to one day", async () => {
-    const yesterday = Math.floor(Date.now() / 1000) - 86400;
+    // Noon two calendar days before the other run, so the two never share a
+    // day, whatever the hour the suite runs at.
+    const day = new Date((NOW - 60) * 1000);
+    day.setDate(day.getDate() - 2);
+    day.setHours(12, 0, 0, 0);
+    const earlier = day.getTime() / 1000;
     server.runs = [
       run({ id: "r2", target: "immich" }),
-      run({ id: "r1", target: "plex", startedAt: yesterday, finishedAt: yesterday + 30 }),
+      run({ id: "r1", target: "plex", startedAt: earlier, finishedAt: earlier + 30 }),
     ];
     await renderPage();
     const card = within(historyCard());
     expect(card.getAllByRole("listitem")).toHaveLength(2);
 
-    await pickOption(card.getByRole("combobox", { name: en["run.filterDay"] }), new Date(yesterday * 1000).toLocaleDateString("en"));
+    await pickOption(card.getByRole("combobox", { name: en["run.filterDay"] }), day.toLocaleDateString("en"));
 
     const rows = card.getAllByRole("listitem");
     expect(rows).toHaveLength(1);
