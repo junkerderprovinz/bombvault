@@ -6438,8 +6438,12 @@ func (s *Service) partitionDataOutside(unreachable []string) (outside, missing [
 }
 
 // isSystemPath reports whether a bind source belongs to the operating system
-// rather than to an app's data.
+// rather than to an app's data. The host root itself counts: monitoring apps
+// mount it read-only to look at the disks.
 func isSystemPath(src string) bool {
+	if src == "/" {
+		return true
+	}
 	for _, root := range []string{"/bin", "/boot", "/dev", "/etc", "/lib", "/lib64", "/proc", "/run", "/sbin", "/sys", "/tmp", "/usr", "/var"} {
 		if src == root || strings.HasPrefix(src, root+"/") {
 			return true

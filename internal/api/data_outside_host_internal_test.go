@@ -35,6 +35,20 @@ func TestDataOutsideHostMount(t *testing.T) {
 	}
 }
 
+// A monitoring app such as Glances mounts the host's root read-only to read
+// its disks. That is the system, not data an app keeps.
+func TestDataOutsideHostMountKeepsQuietAboutTheHostRoot(t *testing.T) {
+	s := &Service{cfg: config.Config{
+		HostSourceRoot:   "/mnt",
+		HostMountRoot:    filepath.ToSlash(t.TempDir()),
+		DataRootSegments: []string{"appdata"},
+	}}
+	in := model.Inspect{Mounts: []model.Mount{{Type: "bind", Source: "/", Destination: "/rootfs"}}}
+	if got := s.dataOutsideHostMount(in, nil); len(got) != 0 {
+		t.Fatalf("dataOutsideHostMount = %v, want nothing for the host root", got)
+	}
+}
+
 // A named volume under Docker's own data root lies outside a Host Data at
 // /mnt, so its backup says the data was not backed up instead of passing for
 // a definition-only one. A volume Host Data reaches is backed up as usual.
