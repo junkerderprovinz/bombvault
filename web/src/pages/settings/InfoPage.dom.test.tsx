@@ -8,7 +8,7 @@ import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-libra
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
-import { IconUpdate } from "../../components/glyphs";
+import { IconSync } from "../../components/navGlyphs";
 
 const api = vi.hoisted(() => ({
   getVersions: vi.fn(),
@@ -106,10 +106,10 @@ describe("the Version card", () => {
     expect(checkButton().textContent).toContain(en["tile.info.check"]);
   });
 
-  it("wears the update glyph before the check has run", async () => {
+  it("wears the two arrows before the check has run", async () => {
     await renderPage();
     const drawn = checkButton().querySelector("svg")?.innerHTML;
-    const { container } = render(<IconUpdate />);
+    const { container } = render(<IconSync />);
     expect(drawn).toBe(container.querySelector("svg")?.innerHTML);
   });
 
