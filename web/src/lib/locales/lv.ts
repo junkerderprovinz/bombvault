@@ -635,6 +635,7 @@ const lv: Partial<Translations> = {
   "settings.theme": "Tēma",
   "settings.oled": "OLED",
   "settings.oledHint": "Īsti melna OLED un AMOLED ekrāniem, kamēr redzama tumšā tēma. Katra ierīce izvēli atceras pati.",
+  "settings.oledLight": "Tikai ar {dark} vai {system}. Augšā ir izvēlēts {light}.",
   "settings.save": "Saglabāt",
   "settings.saved": "Iestatījumi saglabāti",
   "settings.error": "Kļūda saglabājot",

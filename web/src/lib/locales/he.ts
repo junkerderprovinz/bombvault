@@ -323,6 +323,7 @@ const he: Partial<Translations> = {
   "settings.theme": "ערכת נושא",
   "settings.oled": "OLED",
   "settings.oledHint": "שחור אמיתי למסכי OLED ו-AMOLED, כל עוד ערכת הנושא הכהה מוצגת. כל מכשיר שומר את הבחירה לעצמו.",
+  "settings.oledLight": "רק עם {dark} או {system}. למעלה נבחר {light}.",
   "settings.save": "שמירה",
   "settings.saved": "ההגדרות נשמרו",
   "settings.error": "שגיאה בשמירה",

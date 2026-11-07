@@ -635,6 +635,7 @@ const sk: Partial<Translations> = {
   "settings.theme": "Motív",
   "settings.oled": "OLED",
   "settings.oledHint": "Skutočná čierna pre obrazovky OLED a AMOLED, kým je vidieť tmavý motív. Každé zariadenie si voľbu pamätá samo.",
+  "settings.oledLight": "Len s {dark} alebo {system}. Hore je zvolené {light}.",
   "settings.save": "Uložiť",
   "settings.saved": "Nastavenia uložené",
   "settings.error": "Chyba pri ukladaní",

@@ -323,6 +323,7 @@ const it: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Nero vero per gli schermi OLED e AMOLED mentre si vede il tema scuro. Ogni dispositivo tiene la scelta per sé.",
+  "settings.oledLight": "Solo con {dark} o {system}. Sopra è scelto {light}.",
   "settings.save": "Salva",
   "settings.saved": "Impostazioni salvate",
   "settings.error": "Errore durante il salvataggio",

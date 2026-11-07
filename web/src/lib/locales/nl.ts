@@ -320,6 +320,7 @@ const nl: Partial<Translations> = {
   "settings.theme": "Thema",
   "settings.oled": "OLED",
   "settings.oledHint": "Echt zwart voor OLED- en AMOLED-schermen zolang het donkere thema te zien is. Elk apparaat onthoudt de keuze voor zichzelf.",
+  "settings.oledLight": "Alleen met {dark} of {system}. Hierboven is {light} gekozen.",
   "settings.save": "Opslaan",
   "settings.saved": "Instellingen opgeslagen",
   "settings.error": "Fout bij opslaan",

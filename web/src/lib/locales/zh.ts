@@ -323,6 +323,7 @@ const zh: Partial<Translations> = {
   "settings.theme": "主题",
   "settings.oled": "OLED",
   "settings.oledHint": "深色主题显示时，为 OLED 和 AMOLED 屏幕使用纯黑。每台设备各自记住这个选择。",
+  "settings.oledLight": "仅在{dark}或{system}下可用。上方选择的是{light}。",
   "settings.save": "保存",
   "settings.saved": "设置已保存",
   "settings.error": "保存设置出错",

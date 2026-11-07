@@ -66,4 +66,50 @@ describe("the OLED switch", () => {
     await act(async () => setTheme("dark"));
     expect(label().className).not.toContain("opacity-50");
   });
+
+  it("refuses while Light is chosen and says why", () => {
+    localStorage.setItem("bv-theme", "light");
+    applyStoredTheme();
+    render(
+      <I18nProvider>
+        <Harness />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(oledSwitch());
+
+    expect(oledSwitch().getAttribute("aria-disabled")).toBe("true");
+    expect(oledSwitch().getAttribute("aria-checked")).toBe("false");
+    expect(localStorage.getItem("bv-oled")).toBeNull();
+    expect(screen.getByText("Only with Dark or System. Light is chosen above.")).toBeTruthy();
+  });
+
+  it("stays switchable under System on a light device, for the device's dark", () => {
+    localStorage.setItem("bv-theme", "system");
+    applyStoredTheme();
+    render(
+      <I18nProvider>
+        <Harness />
+      </I18nProvider>,
+    );
+
+    fireEvent.click(oledSwitch());
+
+    expect(oledSwitch().hasAttribute("aria-disabled")).toBe(false);
+    expect(localStorage.getItem("bv-oled")).toBe("1");
+  });
+
+  it("stops refusing as soon as Dark is chosen", async () => {
+    localStorage.setItem("bv-theme", "light");
+    applyStoredTheme();
+    render(
+      <I18nProvider>
+        <Harness />
+      </I18nProvider>,
+    );
+
+    await act(async () => setTheme("dark"));
+
+    expect(oledSwitch().hasAttribute("aria-disabled")).toBe(false);
+  });
 });

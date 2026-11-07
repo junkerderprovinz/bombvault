@@ -320,6 +320,7 @@ const no: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Ekte svart for OLED- og AMOLED-skjermer så lenge det mørke temaet vises. Hver enhet husker valget for seg selv.",
+  "settings.oledLight": "Bare med {dark} eller {system}. Ovenfor er {light} valgt.",
   "settings.save": "Lagre",
   "settings.saved": "Innstillinger lagret",
   "settings.error": "Feil ved lagring av innstillinger",

@@ -635,6 +635,7 @@ const fa: Partial<Translations> = {
   "settings.theme": "تم",
   "settings.oled": "OLED",
   "settings.oledHint": "سیاه واقعی برای صفحه‌نمایش‌های OLED و AMOLED، تا وقتی تم تیره دیده می‌شود. هر دستگاه این انتخاب را برای خودش نگه می‌دارد.",
+  "settings.oledLight": "فقط با {dark} یا {system}. در بالا {light} انتخاب شده است.",
   "settings.save": "ذخیره",
   "settings.saved": "تنظیمات ذخیره شد",
   "settings.error": "خطا در ذخیره‌سازی",

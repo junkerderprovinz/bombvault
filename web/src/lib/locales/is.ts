@@ -635,6 +635,7 @@ const is: Partial<Translations> = {
   "settings.theme": "Þema",
   "settings.oled": "OLED",
   "settings.oledHint": "Alvöru svart fyrir OLED- og AMOLED-skjái á meðan dökka þemað sést. Hvert tæki geymir valið fyrir sig.",
+  "settings.oledLight": "Aðeins með {dark} eða {system}. Hér fyrir ofan er {light} valið.",
   "settings.save": "Vista",
   "settings.saved": "Stillingar vistaðar",
   "settings.error": "Villa við vistun",

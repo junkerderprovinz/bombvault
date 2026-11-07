@@ -635,6 +635,7 @@ const id: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Hitam pekat untuk layar OLED dan AMOLED selama tema gelap tampil. Setiap perangkat menyimpan pilihan ini untuk dirinya sendiri.",
+  "settings.oledLight": "Hanya dengan {dark} atau {system}. Di atas dipilih {light}.",
   "settings.save": "Simpan",
   "settings.saved": "Pengaturan disimpan",
   "settings.error": "Gagal menyimpan",

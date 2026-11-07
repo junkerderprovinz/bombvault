@@ -323,6 +323,7 @@ const ja: Partial<Translations> = {
   "settings.theme": "テーマ",
   "settings.oled": "OLED",
   "settings.oledHint": "ダークテーマが表示されているあいだ、OLED と AMOLED の画面を真っ黒にします。選択はデバイスごとに覚えます。",
+  "settings.oledLight": "{dark} または {system} のときだけ使えます。上で {light} が選ばれています。",
   "settings.save": "保存",
   "settings.saved": "設定を保存しました",
   "settings.error": "保存エラー",

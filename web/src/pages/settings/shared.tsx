@@ -226,6 +226,7 @@ export function ToggleRow({
   onChange,
   disabled,
   resting,
+  refused,
   shakeNonce,
   pulseNonce,
   hueIndex,
@@ -243,6 +244,8 @@ export function ToggleRow({
   /** Dims a switch that has no effect right now but keeps its state, and its
    *  click, for when it does. */
   resting?: boolean;
+  /** Why the switch cannot be flipped right now; see Toggle. */
+  refused?: string;
   /** Bump to replay the .glim-shake error animation once. It becomes part of
    *  the Toggle's key, so a new value remounts the switch and the animation
    *  restarts even when the same row fails twice in a row. */
@@ -291,6 +294,7 @@ export function ToggleRow({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
+        refused={refused}
         className={`mt-0.5 ${resting ? "opacity-50" : ""} ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
       />
     </div>

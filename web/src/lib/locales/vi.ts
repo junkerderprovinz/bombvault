@@ -323,6 +323,7 @@ const vi: Partial<Translations> = {
   "settings.theme": "Giao diện",
   "settings.oled": "OLED",
   "settings.oledHint": "Màu đen tuyền cho màn hình OLED và AMOLED khi giao diện tối đang hiển thị. Mỗi thiết bị tự nhớ lựa chọn này.",
+  "settings.oledLight": "Chỉ dùng được với {dark} hoặc {system}. Phía trên đang chọn {light}.",
   "settings.save": "Lưu",
   "settings.saved": "Đã lưu cài đặt",
   "settings.error": "Lỗi khi lưu cài đặt",

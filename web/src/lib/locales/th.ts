@@ -323,6 +323,7 @@ const th: Partial<Translations> = {
   "settings.theme": "ธีม",
   "settings.oled": "OLED",
   "settings.oledHint": "สีดำสนิทสำหรับหน้าจอ OLED และ AMOLED ตราบที่ธีมมืดแสดงอยู่ แต่ละอุปกรณ์จำตัวเลือกนี้ไว้เอง",
+  "settings.oledLight": "ใช้ได้เฉพาะกับ {dark} หรือ {system} ด้านบนเลือก {light} ไว้",
   "settings.save": "บันทึก",
   "settings.saved": "บันทึกการตั้งค่าแล้ว",
   "settings.error": "เกิดข้อผิดพลาดในการบันทึก",

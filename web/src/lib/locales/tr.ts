@@ -323,6 +323,7 @@ const tr: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Koyu tema göründüğü sürece OLED ve AMOLED ekranlar için gerçek siyah. Her cihaz bu seçimi kendisi için saklar.",
+  "settings.oledLight": "Yalnızca {dark} veya {system} ile. Yukarıda {light} seçili.",
   "settings.save": "Kaydet",
   "settings.saved": "Ayarlar kaydedildi",
   "settings.error": "Ayarlar kaydedilemedi",

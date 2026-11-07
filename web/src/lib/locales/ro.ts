@@ -320,6 +320,7 @@ const ro: Partial<Translations> = {
   "settings.theme": "Temă",
   "settings.oled": "OLED",
   "settings.oledHint": "Negru adevărat pentru ecranele OLED și AMOLED cât timp se vede tema întunecată. Fiecare dispozitiv păstrează alegerea pentru sine.",
+  "settings.oledLight": "Doar cu {dark} sau {system}. Mai sus este ales {light}.",
   "settings.save": "Salvare",
   "settings.saved": "Setări salvate",
   "settings.error": "Eroare la salvare",

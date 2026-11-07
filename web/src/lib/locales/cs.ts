@@ -323,6 +323,7 @@ const cs: Partial<Translations> = {
   "settings.theme": "Motiv",
   "settings.oled": "OLED",
   "settings.oledHint": "Opravdová černá pro obrazovky OLED a AMOLED, dokud je vidět tmavý motiv. Každé zařízení si volbu pamatuje samo.",
+  "settings.oledLight": "Jen s {dark} nebo {system}. Nahoře je zvoleno {light}.",
   "settings.save": "Uložit",
   "settings.saved": "Nastavení uloženo",
   "settings.error": "Chyba při ukládání nastavení",

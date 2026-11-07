@@ -1,3 +1,7 @@
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { shake } from "../lib/shake";
+import { useTipBubble } from "../lib/useTipBubble";
+
 export interface ToggleProps {
   checked: boolean;
   /** Called with the flipped value when the switch is activated. */
@@ -9,8 +13,21 @@ export interface ToggleProps {
    *  count. */
   hideLabel?: boolean;
   disabled?: boolean;
+  /** Why the switch cannot be flipped right now, such as OLED while Light is
+   *  chosen. It keeps its state and its place in the tab order, its track
+   *  dims, a press shakes it, and the reason is its bubble, or a line under
+   *  the row on a touch screen. */
+  refused?: string;
   /** Extra classes for the outer wrapper. */
   className?: string;
+}
+
+interface Refusal {
+  frame: RefObject<HTMLSpanElement | null>;
+  button: (el: HTMLElement | null) => void;
+  handlers: ReturnType<typeof useTipBubble>["handlers"];
+  describedBy: string;
+  press: () => void;
 }
 
 // Toggle is the shared switch. The focus ring sits outside the track, on the
@@ -20,17 +37,50 @@ export interface ToggleProps {
 // coarse pointer the button grows to the control height while the track keeps
 // its size, so the larger target stays inside the switch's own box and cannot
 // take taps from a neighbouring control.
-export function Toggle({ checked, onChange, label, hideLabel = false, disabled, className }: ToggleProps) {
+export function Toggle(props: ToggleProps) {
+  // The plain switch stays free of hooks, so its tests can call it as a function.
+  if (props.refused) return <RefusedToggle {...props} refused={props.refused} />;
+  return frame(props);
+}
+
+function RefusedToggle(props: ToggleProps & { refused: string }) {
+  const frameEl = useRef<HTMLSpanElement>(null);
+  const [shakes, setShakes] = useState(0);
+  useEffect(() => (shakes > 0 ? shake(frameEl.current!) : undefined), [shakes]);
+  const tip = useTipBubble(props.refused);
+  const reason = useId();
   return (
-    <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
+    <>
+      {frame(props, {
+        frame: frameEl,
+        button: tip.ref,
+        handlers: tip.handlers,
+        describedBy: [reason, tip.describedBy].filter(Boolean).join(" "),
+        press: () => setShakes((n) => n + 1),
+      })}
+      <span id={reason} className="glim-toggle-refusal">
+        {props.refused}
+      </span>
+      {tip.bubble}
+    </>
+  );
+}
+
+function frame({ checked, onChange, label, hideLabel = false, disabled, className }: ToggleProps, refusal?: Refusal) {
+  return (
+    <span ref={refusal?.frame} className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       {!hideLabel && <span className="text-sm text-carbon-text">{label}</span>}
       <button
+        {...refusal?.handlers}
+        ref={refusal?.button}
         type="button"
         role="switch"
         aria-checked={checked}
         aria-label={label}
+        aria-disabled={refusal ? true : undefined}
+        aria-describedby={refusal?.describedBy}
         disabled={disabled}
-        onClick={() => onChange(!checked)}
+        onClick={refusal ? refusal.press : () => onChange(!checked)}
         // No title: the label is always visible next to the switch, so a
         // tooltip would only repeat it.
         className="group inline-flex h-5 w-9 shrink-0 items-center pointer-coarse:h-(--btn-h) focus-visible:outline-none disabled:opacity-50"
