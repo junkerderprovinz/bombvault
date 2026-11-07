@@ -1478,6 +1478,9 @@ describe("the notes above the list", () => {
     await renderPage();
     const note = within(screen.getByTestId("dump-intro"));
     expect(note.getByRole("link", { name: "immich_postgres" }).getAttribute("href")).toBe("/backups/container/immich_postgres");
+    // A button on the note's own surface does not read as one.
+    const surface = screen.getByTestId("dump-intro").className.match(/\bbg-\S+/)?.[0];
+    expect(note.getByRole("button", { name: "Got it" }).className).not.toContain(surface);
     await press(note.getByRole("button", { name: "Got it" }));
     expect(screen.queryByTestId("dump-intro")).toBeNull();
 
