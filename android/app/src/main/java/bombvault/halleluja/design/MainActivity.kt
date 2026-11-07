@@ -399,7 +399,7 @@ class MainActivity : ComponentActivity() {
                 serverPage = reply
                 reply.postMessage(deviceMessage())
             }
-            "oled" -> if (server.id == current?.id) setOled(msg.optBoolean("on"))
+            "oled" -> if (server.id == current?.id) applyOled(msg.optBoolean("on"))
             // Leaves the way Back from a server's first page does, so its history goes with it.
             "home" -> if (server.id == current?.id) showLauncher()
         }
@@ -411,7 +411,7 @@ class MainActivity : ComponentActivity() {
             // The launcher's look can differ from the phone's dark or light.
             "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
             "device" -> launcher?.postMessage(deviceMessage())
-            "oled" -> setOled(msg.optBoolean("on"))
+            "oled" -> applyOled(msg.optBoolean("on"))
             "save" -> {
                 val s = msg.getJSONObject("server")
                 val saved = servers.save(s.optString("id").ifEmpty { null }, s.getString("name"), s.getString("url"))
@@ -489,7 +489,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun setOled(on: Boolean) {
+    private fun applyOled(on: Boolean) {
         oled = on
         tellDevice()
     }
