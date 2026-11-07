@@ -1347,11 +1347,12 @@
    warn and fail chips, which stand further from a #161616 card than from a
    #262626 one.
 
-   A shadow on black is invisible, so the elevation becomes a ring in the
-   border colour. The switch track keeps #525252, where surface3 would leave
-   it at 1.6:1 on the card. A lit brand tile in a near-black colour, OpenAI's
-   or GitHub's, would vanish into the card, so --tile-edge rings every lit
-   tile. */
+   The shadow stays dark's: it is lost on black, where the card's #161616 is
+   edge enough, and a ring in its place would frame every card. Over a card it
+   still lifts a bubble or a menu off it. The switch track keeps #525252, where
+   surface3 would leave it at 1.6:1 on the card. A lit brand tile in a
+   near-black colour, OpenAI's or GitHub's, would vanish into the card, so
+   --tile-edge rings every lit tile. */
 [data-theme="dark"][data-oled] {
   --carbon-bg:         #000000;
   --carbon-sidebar:    #161616;
@@ -1362,7 +1363,6 @@
   --carbon-hover-raised: #525252;
   --carbon-border:     #262626;
   --toggle-off:        #525252;
-  --elevation: 0 0 0 1px #262626;
   --tile-edge: rgba(255, 255, 255, .2);
 }
 
@@ -1378,7 +1378,6 @@
     --carbon-hover-raised: #525252;
     --carbon-border:     #262626;
     --toggle-off:        #525252;
-    --elevation: 0 0 0 1px #262626;
     --tile-edge: rgba(255, 255, 255, .2);
   }
 }
