@@ -2527,8 +2527,8 @@ body {
   --motion-tab-travel: 18px;
   --motion-tab-dur: 220ms;
 
-  --motion-wiggle-dur: 280ms;
-  --motion-wiggle-angle: .6deg;
+  --motion-wiggle-dur: 120ms;
+  --motion-wiggle-angle: 2deg;
   /* A row in move mode: one beat of its wiggle, how far it tilts and how far
      it lifts. A wide row turns far at its ends, so the tilt is a fraction of
      the long-press wiggle's. */
@@ -2638,8 +2638,8 @@ body {
   --motion-tab-travel: 34px;
   --motion-tab-dur: 380ms;
 
-  --motion-wiggle-dur: 220ms;
-  --motion-wiggle-angle: 1deg;
+  --motion-wiggle-dur: 100ms;
+  --motion-wiggle-angle: 2.8deg;
   --motion-row-wiggle-dur: 260ms;
   --motion-row-wiggle-tilt: .26deg;
   --motion-row-wiggle-lift: 1.5px;
@@ -2732,8 +2732,8 @@ body {
   --motion-tab-travel: 10px;
   --motion-tab-dur: 130ms;
 
-  --motion-wiggle-dur: 360ms;
-  --motion-wiggle-angle: .3deg;
+  --motion-wiggle-dur: 140ms;
+  --motion-wiggle-angle: 1.4deg;
   --motion-row-wiggle-dur: 440ms;
   --motion-row-wiggle-tilt: .08deg;
   --motion-row-wiggle-lift: .5px;
@@ -3270,6 +3270,10 @@ body {
   .glim-drag-armed > :not(.glim-drag-lift) {
     animation: glim-wiggle var(--motion-wiggle-dur) ease-in-out infinite alternate;
   }
+  /* Neighbours tremble out of step, so the list reads as loose items rather
+     than one tilting block. */
+  .glim-drag-armed > :nth-child(2n) { animation-delay: calc(var(--motion-wiggle-dur) * -.5); }
+  .glim-drag-armed > :nth-child(3n) { animation-delay: calc(var(--motion-wiggle-dur) * -.33); }
 
   /* The row under the pointer, the focused one and the one being carried hold
      still: a transformed row is the containing block of a menu opened from it.
