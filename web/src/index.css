@@ -3179,8 +3179,8 @@ body {
    list is editable. `rotate` composes with the drag's `translate` and
    `scale`. */
 @keyframes glim-wiggle {
-  from { rotate: calc(var(--motion-wiggle-angle, .6deg) * -1); }
-  to   { rotate: var(--motion-wiggle-angle, .6deg); }
+  from { rotate: calc(var(--motion-wiggle-angle, 2deg) * -1); }
+  to   { rotate: var(--motion-wiggle-angle, 2deg); }
 }
 
 /* A row of a list in move mode ("Move mode" in the design language). Each
