@@ -635,6 +635,7 @@ const bg: Partial<Translations> = {
   "settings.theme": "Тема",
   "settings.oled": "OLED",
   "settings.oledHint": "Истинско черно за OLED и AMOLED екрани, докато се показва тъмната тема. Всяко устройство пази избора за себе си.",
+  "settings.oledLight": "Само с {dark} или {system}. Горе е избрано {light}.",
   "settings.save": "Запази",
   "settings.saved": "Настройките са запазени",
   "settings.error": "Грешка при запазването",

@@ -103,7 +103,7 @@ export function ToastCard({
       {/* The action stands under the message, so the message keeps the card's
           width. */}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <p className="text-sm leading-snug wrap-break-word text-pretty">
+        <p className="text-sm leading-5 wrap-break-word text-pretty">
           {softBreaks(message).map((part, i) => (
             <Fragment key={i}>
               {i > 0 && <wbr />}

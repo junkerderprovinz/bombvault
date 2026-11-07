@@ -323,6 +323,7 @@ const el: Partial<Translations> = {
   "settings.theme": "Θέμα",
   "settings.oled": "OLED",
   "settings.oledHint": "Πραγματικό μαύρο για οθόνες OLED και AMOLED, όσο φαίνεται το σκοτεινό θέμα. Κάθε συσκευή κρατά την επιλογή για τον εαυτό της.",
+  "settings.oledLight": "Μόνο με {dark} ή {system}. Επάνω είναι επιλεγμένο το {light}.",
   "settings.save": "Αποθήκευση",
   "settings.saved": "Οι ρυθμίσεις αποθηκεύτηκαν",
   "settings.error": "Σφάλμα αποθήκευσης ρυθμίσεων",

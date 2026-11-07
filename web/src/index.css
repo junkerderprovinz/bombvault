@@ -1347,11 +1347,12 @@
    warn and fail chips, which stand further from a #161616 card than from a
    #262626 one.
 
-   A shadow on black is invisible, so the elevation becomes a ring in the
-   border colour. The switch track keeps #525252, where surface3 would leave
-   it at 1.6:1 on the card. A lit brand tile in a near-black colour, OpenAI's
-   or GitHub's, would vanish into the card, so --tile-edge rings every lit
-   tile. */
+   The shadow stays dark's: it is lost on black, where the card's #161616 is
+   edge enough, and a ring in its place would frame every card. Over a card it
+   still lifts a bubble or a menu off it. The switch track keeps #525252, where
+   surface3 would leave it at 1.6:1 on the card. A lit brand tile in a
+   near-black colour, OpenAI's or GitHub's, would vanish into the card, so
+   --tile-edge rings every lit tile. */
 [data-theme="dark"][data-oled] {
   --carbon-bg:         #000000;
   --carbon-sidebar:    #161616;
@@ -1362,7 +1363,6 @@
   --carbon-hover-raised: #525252;
   --carbon-border:     #262626;
   --toggle-off:        #525252;
-  --elevation: 0 0 0 1px #262626;
   --tile-edge: rgba(255, 255, 255, .2);
 }
 
@@ -1378,7 +1378,6 @@
     --carbon-hover-raised: #525252;
     --carbon-border:     #262626;
     --toggle-off:        #525252;
-    --elevation: 0 0 0 1px #262626;
     --tile-edge: rgba(255, 255, 255, .2);
   }
 }
@@ -1661,6 +1660,120 @@ body {
    its first row holds the focus without the ring (rule 42). */
 [role="menu"][data-pointer] :focus-visible {
   outline: none;
+}
+
+/* A refused switch (Toggle's `refused`) keeps its focus, so the track's fill
+   dims rather than the whole button, whose focus ring stays at full strength.
+   Why it refuses is the switch's bubble for a pointer, and a line under the
+   row on a touch screen, which has no hover. */
+[role="switch"][aria-disabled="true"] > span {
+  background-color: color-mix(in srgb, var(--toggle-off) 50%, transparent);
+}
+[role="switch"][aria-disabled="true"][aria-checked="true"] > span {
+  background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.glim-toggle-refusal { display: none; }
+@media (hover: none) {
+  .glim-toggle-refusal {
+    display: block;
+    flex-basis: 100%;
+    font-size: var(--text-meta);
+    color: var(--carbon-text-sub);
+  }
+  :has(> .glim-toggle-refusal) { flex-wrap: wrap; }
+}
+
+/* The sign-in page (components/SignInCard.tsx, after GlimStone's SignInCard):
+   one card 24rem wide, the full width less the gutter on a phone. Its top edge
+   sits where a card of the usual height, about 28rem, starts when centred, and
+   stays there, so a reason above Sign in or the code step makes it grow
+   downwards instead of jumping by half a line. */
+.glim-signin {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: max(1rem, calc(50dvh - 14rem)) 1rem 1rem;
+  background-color: var(--carbon-bg);
+  color: var(--carbon-text);
+}
+.glim-signin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: min(24rem, 100%);
+  padding: 2rem;
+}
+.glim-signin-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+/* Every logo gets the same height and the width its shape asks for, so an
+   upright one stands as large as a square or a wide one. The height sits on
+   the image because a percentage would not resolve while the head measures
+   the logo's width. */
+.glim-signin-logo {
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
+}
+.glim-signin-logo > img {
+  display: block;
+  width: auto;
+  height: 7.5rem;
+  max-width: 100%;
+  object-fit: contain;
+}
+.glim-signin-name {
+  margin: 0;
+  font-size: var(--text-status);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.glim-signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0;
+}
+/* Every button as wide as the fields, also one a bubble wraps while it works. */
+.glim-signin-form > .glim-btn,
+.glim-signin-form > span:has(> .glim-btn),
+.glim-signin-form > span > .glim-btn {
+  width: 100%;
+}
+.glim-signin-form p { margin: 0; }
+.glim-signin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.glim-signin-field[hidden] { display: none; }
+.glim-signin-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--carbon-text-sub);
+  font-size: var(--text-meta);
+  font-weight: 500;
+}
+.glim-signin-hint {
+  color: var(--carbon-text-sub);
+  font-size: var(--text-meta);
+}
+.glim-signin-error {
+  color: var(--status-fail-text);
+  font-size: var(--text-meta);
+}
+.glim-signin-code { letter-spacing: 0.35em; }
+.glim-signin-log-code,
+.glim-signin-log-code::placeholder {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
 }
 
 /* Toast chrome. The layout is Tailwind classes in components/Toast.tsx, but
@@ -3066,8 +3179,8 @@ body {
    list is editable. `rotate` composes with the drag's `translate` and
    `scale`. */
 @keyframes glim-wiggle {
-  from { rotate: calc(var(--motion-wiggle-angle, .6deg) * -1); }
-  to   { rotate: var(--motion-wiggle-angle, .6deg); }
+  from { rotate: calc(var(--motion-wiggle-angle, 2deg) * -1); }
+  to   { rotate: var(--motion-wiggle-angle, 2deg); }
 }
 
 /* A row of a list in move mode ("Move mode" in the design language). Each
@@ -3242,7 +3355,9 @@ body {
 
   .glim-fade { animation: glim-fade-in var(--motion-fade-dur, 110ms) ease both; }
 
-  .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both; }
+  /* Backwards, not both: a held end leaves an identity transform, which makes
+     the card the containing block of any fixed element inside it. */
+  .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) backwards; }
 
   /* A flat ease-out rather than --motion-page-ease, whose overshoot reads as
      a bounce on a window. */
@@ -3735,7 +3850,7 @@ body {
   :root:not([data-motion="storm"]) .glim-modal-card { animation: glim-fade-in 150ms ease both; }
 
   /* The toast drops its slide and only fades in. */
-  :root:not([data-motion="storm"]) .glim-toast { animation: glim-fade-in 160ms ease both; }
+  :root:not([data-motion="storm"]) .glim-toast { animation: glim-fade-in 160ms ease backwards; }
 
   /* No shake: the failure still registers as a fade pulse, which is a generic
      opacity pulse despite its name. */
@@ -3774,7 +3889,7 @@ body {
   :root[data-motion="storm"] .glim-modal-backdrop { animation: glim-fade-in var(--motion-modal-dur) ease both; }
   :root[data-motion="storm"] .glim-modal-card { animation: glim-modal-in var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1) both; }
   :root[data-motion="storm"] .glim-toast {
-    animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both;
+    animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) backwards;
   }
   :root[data-motion="storm"] .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
 }

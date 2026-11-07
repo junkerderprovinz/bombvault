@@ -635,6 +635,7 @@ const ms: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Hitam sebenar untuk skrin OLED dan AMOLED selagi tema gelap dipaparkan. Setiap peranti menyimpan pilihan ini untuk dirinya sendiri.",
+  "settings.oledLight": "Hanya dengan {dark} atau {system}. Di atas, {light} dipilih.",
   "settings.save": "Simpan",
   "settings.saved": "Tetapan disimpan",
   "settings.error": "Ralat semasa menyimpan",

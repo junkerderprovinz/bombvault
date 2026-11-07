@@ -635,6 +635,7 @@ const et: Partial<Translations> = {
   "settings.theme": "Teema",
   "settings.oled": "OLED",
   "settings.oledHint": "Päris must OLED- ja AMOLED-ekraanidele, kuni tume teema on näha. Iga seade jätab valiku endale meelde.",
+  "settings.oledLight": "Ainult koos {dark} või {system} valikuga. Üleval on valitud {light}.",
   "settings.save": "Salvesta",
   "settings.saved": "Seaded salvestatud",
   "settings.error": "Viga salvestamisel",

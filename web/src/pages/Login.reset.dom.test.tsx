@@ -43,8 +43,8 @@ async function openReset() {
 
 async function fillAndSubmit(code: string, password: string, confirm = password) {
   type("bv-reset-code", code);
-  type("bv-reset-password", password);
-  type("bv-reset-confirm", confirm);
+  type("bv-new", password);
+  type("bv-confirm", confirm);
   await press(en["auth.setPassword"]);
 }
 
@@ -151,7 +151,7 @@ describe("LoginPage, a forgotten password", () => {
 
     await waitFor(() => expect(screen.getByRole("alert").textContent).toBe(en["auth.resetCodeRejected"]));
     expect((document.getElementById("bv-reset-code") as HTMLInputElement).value).toBe("ABCD-EFGH-JKLM");
-    expect((document.getElementById("bv-reset-password") as HTMLInputElement).value).toBe("correct horse battery");
+    expect((document.getElementById("bv-new") as HTMLInputElement).value).toBe("correct horse battery");
     expect(startPasswordReset).toHaveBeenCalledTimes(2);
   });
 

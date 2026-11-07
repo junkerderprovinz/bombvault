@@ -635,6 +635,7 @@ const gl: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Negro de verdade para pantallas OLED e AMOLED mentres se ve o tema escuro. Cada dispositivo garda a elección para si.",
+  "settings.oledLight": "Só con {dark} ou {system}. Arriba está escollido {light}.",
   "settings.save": "Gardar",
   "settings.saved": "Configuración gardada",
   "settings.error": "Erro ao gardar",

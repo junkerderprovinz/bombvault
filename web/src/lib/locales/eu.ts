@@ -635,6 +635,7 @@ const eu: Partial<Translations> = {
   "settings.theme": "Itxura",
   "settings.oled": "OLED",
   "settings.oledHint": "Benetako beltza OLED eta AMOLED pantailetarako, itxura iluna ikusten den bitartean. Gailu bakoitzak beretzat gordetzen du aukera.",
+  "settings.oledLight": "{dark} edo {system} aukerarekin bakarrik. Goian {light} dago aukeratuta.",
   "settings.save": "Gorde",
   "settings.saved": "Ezarpenak gordeta",
   "settings.error": "Errorea gordetzean",

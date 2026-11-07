@@ -323,6 +323,7 @@ const uk: Partial<Translations> = {
   "settings.theme": "Тема",
   "settings.oled": "OLED",
   "settings.oledHint": "Справжній чорний для екранів OLED і AMOLED, поки видно темну тему. Кожен пристрій запам'ятовує вибір сам.",
+  "settings.oledLight": "Лише з {dark} або {system}. Вище вибрано {light}.",
   "settings.save": "Зберегти",
   "settings.saved": "Налаштування збережено",
   "settings.error": "Помилка збереження",

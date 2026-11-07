@@ -635,6 +635,7 @@ const ca: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Negre de veritat per a pantalles OLED i AMOLED mentre es veu el tema fosc. Cada dispositiu guarda l'elecció per a si mateix.",
+  "settings.oledLight": "Només amb {dark} o {system}. A dalt hi ha triat {light}.",
   "settings.save": "Desa",
   "settings.saved": "Configuració desada",
   "settings.error": "Error en desar",

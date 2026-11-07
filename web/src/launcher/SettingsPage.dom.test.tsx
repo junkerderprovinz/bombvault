@@ -53,6 +53,21 @@ describe("the app's appearance", () => {
     expect(following()).toBe(true);
   });
 
+  it("refuses OLED while Light is chosen and frees it again under Dark", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("radio", { name: "Light" }));
+
+    const oled = screen.getByRole("switch", { name: "OLED" });
+    fireEvent.click(oled);
+    expect(oled.getAttribute("aria-disabled")).toBe("true");
+    expect(document.documentElement.hasAttribute("data-oled")).toBe(false);
+    expect(screen.getByText("Only with Dark or System. Light is chosen above.")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
+    fireEvent.click(screen.getByRole("switch", { name: "OLED" }));
+    expect(document.documentElement.hasAttribute("data-oled")).toBe(true);
+  });
+
   it("offers Material You's colour first and keeps the choice on the phone", () => {
     renderPage();
     expect(screen.queryByRole("button", { name: "System color" })).toBeNull();

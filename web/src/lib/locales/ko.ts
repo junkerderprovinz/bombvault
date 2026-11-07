@@ -323,6 +323,7 @@ const ko: Partial<Translations> = {
   "settings.theme": "테마",
   "settings.oled": "OLED",
   "settings.oledHint": "어두운 테마가 보이는 동안 OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 선택은 기기마다 따로 기억합니다.",
+  "settings.oledLight": "{dark} 또는 {system}에서만 됩니다. 위에서 {light}이(가) 선택되어 있습니다.",
   "settings.save": "저장",
   "settings.saved": "설정이 저장되었습니다",
   "settings.error": "설정 저장 오류",

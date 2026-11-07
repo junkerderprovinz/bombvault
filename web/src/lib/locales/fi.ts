@@ -323,6 +323,7 @@ const fi: Partial<Translations> = {
   "settings.theme": "Teema",
   "settings.oled": "OLED",
   "settings.oledHint": "Aito musta OLED- ja AMOLED-näytöille, kun tumma teema on näkyvissä. Jokainen laite muistaa valinnan itse.",
+  "settings.oledLight": "Vain asetuksella {dark} tai {system}. Ylhäällä on valittu {light}.",
   "settings.save": "Tallenna",
   "settings.saved": "Asetukset tallennettu",
   "settings.error": "Virhe asetusten tallennuksessa",

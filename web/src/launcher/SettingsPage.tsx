@@ -28,7 +28,7 @@ import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
-import { darkShowing, getOled, getResolvedTheme, getTheme, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
+import { darkShowing, getOled, getResolvedTheme, getTheme, oledRefusal, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
 import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
@@ -71,8 +71,9 @@ function Section({ title, hue, info, children }: { title: string; hue: number; i
 
 /** A label with an optional line under it, and its control at the end. */
 function Row({ label, sub, info, dim, children }: { label: string; sub?: string; info?: string; dim?: boolean; children?: ReactNode }) {
+  // Wraps for a refused switch's reason, which takes a line of its own.
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex flex-wrap items-center gap-3 py-2">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
           <span className={`text-sm ${dim ? "text-carbon-textMuted" : "text-carbon-text"}`}>{label}</span>
@@ -86,10 +87,23 @@ function Row({ label, sub, info, dim, children }: { label: string; sub?: string;
 }
 
 /** A switch at its own rainbow position among the switches of its card. */
-function Switch({ label, checked, onChange, hue }: { label: string; checked: boolean; onChange: (on: boolean) => void; hue: number }) {
+function Switch({
+  label,
+  checked,
+  onChange,
+  hue,
+  refused,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (on: boolean) => void;
+  hue: number;
+  refused?: string;
+}) {
+  // `contents`, so a refused switch's reason lines up with the row it stands in.
   return (
-    <span className="glim-hue flex" style={hueVars(hue) as CSSProperties}>
-      <Toggle hideLabel label={label} checked={checked} onChange={onChange} />
+    <span className="glim-hue contents" style={hueVars(hue) as CSSProperties}>
+      <Toggle hideLabel label={label} checked={checked} onChange={onChange} refused={refused} />
     </span>
   );
 }
@@ -361,6 +375,12 @@ export function SettingsPage({
               setOledLocal(on);
             }}
             hue={1}
+            refused={oledRefusal(theme, {
+              sentence: t("settings.oledLight"),
+              dark: t("theme.dark"),
+              system: t("theme.system"),
+              light: t("theme.light"),
+            })}
           />
         </Row>
         <div className={`flex flex-col ${follows ? "opacity-40" : ""}`}>

@@ -635,6 +635,7 @@ const hi: Partial<Translations> = {
   "settings.theme": "थीम",
   "settings.oled": "OLED",
   "settings.oledHint": "डार्क थीम दिखने तक OLED और AMOLED स्क्रीन के लिए असली काला। हर डिवाइस यह चुनाव अपने लिए रखता है।",
+  "settings.oledLight": "केवल {dark} या {system} के साथ। ऊपर {light} चुना गया है।",
   "settings.save": "सहेजें",
   "settings.saved": "सेटिंग्स सहेज ली गईं",
   "settings.error": "सहेजने में त्रुटि",

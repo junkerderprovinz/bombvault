@@ -104,10 +104,38 @@ function paint(theme: Theme): void {
   if (systemAccentChosen()) applyStoredAccent();
 }
 
+const themeListeners = new Set<() => void>();
+
 export function setTheme(theme: Theme): void {
   localStorage.setItem(STORAGE_KEY, theme);
   saveDisplayPrefs();
   paint(theme);
+  themeListeners.forEach((fn) => fn());
+}
+
+/** Calls `onChange` whenever a theme is chosen, also one that changes nothing
+ *  on screen, such as Light after System on a light device, which
+ *  watchDarkShowing misses. Returns the function that stops watching. */
+export function watchTheme(onChange: () => void): () => void {
+  themeListeners.add(onChange);
+  return () => themeListeners.delete(onChange);
+}
+
+/** The words of the OLED switch's refusal, with the theme names as the
+ *  theme picker shows them. */
+export interface OledRefusalText {
+  /** The sentence, with `{dark}`, `{system}` and `{light}` for the names. */
+  sentence: string;
+  dark: string;
+  system: string;
+  light: string;
+}
+
+/** Why the OLED switch refuses under a theme choice, or undefined while it may
+ *  be flipped. Under System it may, for the device's dark. */
+export function oledRefusal(theme: Theme, text: OledRefusalText): string | undefined {
+  if (theme !== "light") return undefined;
+  return text.sentence.replace(/\{(dark|system|light)\}/g, (_, name: "dark" | "system" | "light") => text[name]);
 }
 
 /** Subscribes `onChange` to OS dark/light flips whatever the stored preference;

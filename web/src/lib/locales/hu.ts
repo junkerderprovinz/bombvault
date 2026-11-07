@@ -323,6 +323,7 @@ const hu: Partial<Translations> = {
   "settings.theme": "Téma",
   "settings.oled": "OLED",
   "settings.oledHint": "Valódi fekete OLED és AMOLED kijelzőkhöz, amíg a sötét téma látszik. Minden eszköz magának jegyzi meg a választást.",
+  "settings.oledLight": "Csak {dark} vagy {system} mellett. Fent a(z) {light} van kiválasztva.",
   "settings.save": "Mentés",
   "settings.saved": "Beállítások mentve",
   "settings.error": "Hiba a beállítások mentésekor",

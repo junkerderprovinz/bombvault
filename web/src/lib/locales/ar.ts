@@ -323,6 +323,7 @@ const ar: Partial<Translations> = {
   "settings.theme": "المظهر",
   "settings.oled": "OLED",
   "settings.oledHint": "أسود حقيقي لشاشات OLED وAMOLED ما دام المظهر الداكن ظاهرًا. ويحتفظ كل جهاز بهذا الاختيار لنفسه.",
+  "settings.oledLight": "فقط مع {dark} أو {system}. تم اختيار {light} في الأعلى.",
   "settings.save": "حفظ",
   "settings.saved": "تم حفظ الإعدادات",
   "settings.error": "خطأ في الحفظ",

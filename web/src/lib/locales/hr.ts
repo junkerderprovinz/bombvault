@@ -635,6 +635,7 @@ const hr: Partial<Translations> = {
   "settings.theme": "Tema",
   "settings.oled": "OLED",
   "settings.oledHint": "Prava crna za OLED i AMOLED zaslone dok se prikazuje tamna tema. Svaki uređaj pamti izbor za sebe.",
+  "settings.oledLight": "Samo uz {dark} ili {system}. Gore je odabrano {light}.",
   "settings.save": "Spremi",
   "settings.saved": "Postavke spremljene",
   "settings.error": "Greška pri spremanju",

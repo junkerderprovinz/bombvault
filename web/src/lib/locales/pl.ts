@@ -320,6 +320,7 @@ const pl: Partial<Translations> = {
   "settings.theme": "Motyw",
   "settings.oled": "OLED",
   "settings.oledHint": "Prawdziwa czerń dla ekranów OLED i AMOLED, dopóki widać ciemny motyw. Każde urządzenie zapamiętuje wybór dla siebie.",
+  "settings.oledLight": "Tylko przy {dark} lub {system}. Powyżej wybrano {light}.",
   "settings.save": "Zapisz",
   "settings.saved": "Ustawienia zapisane",
   "settings.error": "Błąd podczas zapisywania",
