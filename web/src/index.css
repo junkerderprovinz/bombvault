@@ -3262,7 +3262,9 @@ body {
 
   .glim-fade { animation: glim-fade-in var(--motion-fade-dur, 110ms) ease both; }
 
-  .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both; }
+  /* Backwards, not both: a held end leaves an identity transform, which makes
+     the card the containing block of any fixed element inside it. */
+  .glim-toast { animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) backwards; }
 
   /* A flat ease-out rather than --motion-page-ease, whose overshoot reads as
      a bounce on a window. */
@@ -3755,7 +3757,7 @@ body {
   :root:not([data-motion="storm"]) .glim-modal-card { animation: glim-fade-in 150ms ease both; }
 
   /* The toast drops its slide and only fades in. */
-  :root:not([data-motion="storm"]) .glim-toast { animation: glim-fade-in 160ms ease both; }
+  :root:not([data-motion="storm"]) .glim-toast { animation: glim-fade-in 160ms ease backwards; }
 
   /* No shake: the failure still registers as a fade pulse, which is a generic
      opacity pulse despite its name. */
@@ -3794,7 +3796,7 @@ body {
   :root[data-motion="storm"] .glim-modal-backdrop { animation: glim-fade-in var(--motion-modal-dur) ease both; }
   :root[data-motion="storm"] .glim-modal-card { animation: glim-modal-in var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1) both; }
   :root[data-motion="storm"] .glim-toast {
-    animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) both;
+    animation: glim-toast-in var(--motion-toast-dur, 220ms) var(--motion-toast-ease, cubic-bezier(.2, .6, .2, 1)) backwards;
   }
   :root[data-motion="storm"] .glim-shake { animation: glim-shake var(--motion-shake-dur, 360ms) ease-in-out; }
 }

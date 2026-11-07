@@ -1,6 +1,9 @@
 // The toast components use no hooks, so these tests call them as plain
 // functions and inspect the returned element trees. Timing lives in
 // lib/toastEngine.test.ts.
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { ToastCard, ToastViewport } from "./Toast";
 
@@ -187,6 +190,29 @@ describe("ToastCard", () => {
   it("has no coloured side border", () => {
     const tree = ToastCard({ ...baseProps, severity: "fail" }) as ElementNode;
     expect(tree.props?.className).not.toMatch(/border-l|border-left/);
+  });
+
+  // A line of 1.375em comes out at 19.25px, and every toast stacked beside it
+  // lands on a fraction that Chromium rounds differently from paint to paint.
+  it("sets its message on whole-pixel lines", () => {
+    const tree = ToastCard(baseProps) as ElementNode;
+    const [message] = findShallow(tree, (n) => n.type === "p");
+    expect(String(message.props?.className)).toMatch(/\bleading-5\b/);
+  });
+});
+
+describe("the toast's entrance", () => {
+  const css = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "index.css"), "utf8");
+
+  // A held end is an identity matrix rather than none, and any transform makes
+  // the card the containing block of a fixed element inside it.
+  it("holds nothing once the toast is in", () => {
+    const rules = [...css.matchAll(/\.glim-toast\s*\{([^}]*)\}/g)].map((m) => m[1]).filter((r) => /animation\s*:/.test(r));
+    expect(rules.length).toBeGreaterThanOrEqual(3);
+    for (const rule of rules) {
+      expect(rule).toMatch(/\bbackwards\b/);
+      expect(rule).not.toMatch(/\b(both|forwards)\b/);
+    }
   });
 });
 
