@@ -6936,12 +6936,23 @@ func (s *Service) emptyBackupRefusal(name string, in model.Inspect, effective []
 	}
 	switch {
 	case !s.noLongerMounted(tg, in, gone):
-		return fmt.Errorf("backup %q: its backup folders are not reachable right now (%s; is the appdata share mounted?). Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))
+		return &foldersGoneErr{fmt.Sprintf("backup %q: its backup folders are not reachable right now (%s; is the appdata share mounted?). Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))}
 	case len(tg.SelectedPaths) > 0:
-		return fmt.Errorf("backup %q: the folders chosen for it are gone (%s) and it mounts other folders than at its last backup, so choose its backup folders again. Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))
+		return &foldersGoneErr{fmt.Sprintf("backup %q: the folders chosen for it are gone (%s) and it mounts other folders than at its last backup, so choose its backup folders again. Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))}
 	}
 	return nil
 }
+
+// errFoldersGone tags an empty-backup refusal. The folders it names are the
+// container's own, which the folder selector shows anyway, and the refusal
+// cannot be acted on without them, so they pass the path scrubber.
+var errFoldersGone = errors.New("backup folders gone")
+
+type foldersGoneErr struct{ msg string }
+
+func (e *foldersGoneErr) Error() string { return e.msg }
+
+func (e *foldersGoneErr) Is(target error) bool { return target == errFoldersGone }
 
 // noLongerMounted reports whether each of gone came from a mount the container
 // had at its last backup and has no more. A path no recorded mount gave, such

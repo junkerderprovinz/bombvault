@@ -284,6 +284,10 @@ func scrubBypassMessage(err error) (string, bool) {
 		// Same deal again: the ZFS dataset and pool names are the message (see
 		// errZvolRebaseFailed).
 		return err.Error(), true
+	case errors.Is(err, errFoldersGone):
+		// The missing folders are what the operator has to check or choose
+		// again (see errFoldersGone).
+		return err.Error(), true
 	case errors.Is(err, errDBImportFolders):
 		// The data folders an import set aside are what the operator has to act
 		// on, so they must survive the scrubber (see errDBImportFolders).
