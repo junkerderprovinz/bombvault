@@ -1,3 +1,4 @@
+import { dateLocale } from "./dateLocale";
 import type { useT } from "./i18n";
 
 type T = ReturnType<typeof useT>["t"];
@@ -30,7 +31,7 @@ export const NO_VALUE = "\u2014";
  */
 export function formatTs(unix: number | null | undefined): string {
   if (!unix) return NO_VALUE;
-  return new Date(unix * 1000).toLocaleString();
+  return new Date(unix * 1000).toLocaleString(dateLocale());
 }
 
 const DAY_MS = 86_400_000;
@@ -47,17 +48,18 @@ function startOfDay(ms: number): number {
  * further off is the date alone.
  */
 export function formatRecent(unix: number, lang: string, now = Date.now()): string {
+  const locale = dateLocale(lang);
   const then = new Date(unix * 1000);
-  const time = then.toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" });
+  const time = then.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   const days = Math.round((startOfDay(now) - startOfDay(then.getTime())) / DAY_MS);
   if (Math.abs(days) <= 1) {
-    return `${new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(-days, "day")} ${time}`;
+    return `${new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(-days, "day")} ${time}`;
   }
-  if (Math.abs(days) < 7) return `${then.toLocaleDateString(lang, { weekday: "short" })} ${time}`;
+  if (Math.abs(days) < 7) return `${then.toLocaleDateString(locale, { weekday: "short" })} ${time}`;
   if (then.getFullYear() === new Date(now).getFullYear()) {
-    return `${then.toLocaleDateString(lang, { day: "2-digit", month: "2-digit" })} ${time}`;
+    return `${then.toLocaleDateString(locale, { day: "2-digit", month: "2-digit" })} ${time}`;
   }
-  return then.toLocaleDateString(lang, { day: "2-digit", month: "2-digit", year: "numeric" });
+  return then.toLocaleDateString(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 /**

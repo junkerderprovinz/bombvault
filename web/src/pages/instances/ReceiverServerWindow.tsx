@@ -27,6 +27,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "./InstanceWindow";
+import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -276,7 +277,7 @@ export function ReceiverServerWindow({
                     label={l.name}
                     note={
                       <span>
-                        <bdi dir="ltr" className="font-mono">{l.user}</bdi> · {new Date(l.createdAt * 1000).toLocaleDateString()}
+                        <bdi dir="ltr" className="font-mono">{l.user}</bdi> · {new Date(l.createdAt * 1000).toLocaleDateString(dateLocale())}
                       </span>
                     }
                   >

@@ -11,6 +11,7 @@ import { useDebouncedSave } from "../../lib/useDebouncedSave";
 import { IconSearch } from "../glyphs";
 import { ExcludePresetPanel } from "../ExcludePresetPanel";
 import { Rows, SettingRow } from "../storage/rows";
+import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -18,7 +19,7 @@ type T = ReturnType<typeof useT>["t"];
 // source line. An unparseable value is shown as it came, not as "Invalid Date".
 function formatSnapshotWhen(rfc3339: string): string {
   const d = new Date(rfc3339);
-  return Number.isNaN(d.getTime()) ? rfc3339 : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? rfc3339 : d.toLocaleString(dateLocale());
 }
 
 // Past this age the assistant says that its list describes the past: a folder

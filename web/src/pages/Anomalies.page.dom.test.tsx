@@ -17,6 +17,7 @@ import { ToastProvider } from "../lib/toast";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { ANOMALY_CHANGED_EVENT } from "../lib/anomalies";
 import type { AnomalyFilter, AnomalyItem, AnomalySummary, AnomalyView, Settings, StorageLocation } from "../lib/api";
+import { dateLocale } from "../lib/dateLocale";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -52,7 +53,7 @@ const { Anomalies } = await import("./Anomalies");
 
 const GB = 1024 ** 3;
 const SEEN = 1700000000;
-const SEEN_TEXT = isolateLtr(new Date(SEEN * 1000).toLocaleString());
+const SEEN_TEXT = isolateLtr(new Date(SEEN * 1000).toLocaleString(dateLocale()));
 
 function summary(over: Partial<AnomalySummary> = {}): AnomalySummary {
   return {

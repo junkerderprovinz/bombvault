@@ -39,6 +39,7 @@ import {
   stackNote,
   targetOption,
 } from "./placement.testsupport";
+import { dateLocale } from "./dateLocale";
 import { formatTs } from "./reltime";
 
 const t = ((key: string) => en[key as keyof typeof en] ?? key) as never;
@@ -506,7 +507,7 @@ describe("observedLine", () => {
       })
     );
     expect(lines.slice(1, 3)).toEqual([
-      { text: `B2: latest copy from ${new Date(1_757_000_000 * 1000).toLocaleDateString()}`, tone: "muted" },
+      { text: `B2: latest copy from ${new Date(1_757_000_000 * 1000).toLocaleDateString(dateLocale())}`, tone: "muted" },
       { text: "Hetzner (off)", tone: "muted" },
     ]);
   });

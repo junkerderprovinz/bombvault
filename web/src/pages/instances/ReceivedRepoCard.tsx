@@ -34,6 +34,7 @@ import { useIsDesktop } from "../../lib/useMediaQuery";
 import { ToggleRow } from "../settings/shared";
 import { InstanceWindow } from "./InstanceWindow";
 import { MemberField } from "./MemberField";
+import { dateLocale } from "../../lib/dateLocale";
 
 const DEFAULT_CHECK_CADENCE = "daily 04:00";
 
@@ -49,7 +50,7 @@ function itemLabel(item: string, t: T): string {
 function fmtReceived(iso: string, t: T): string {
   if (!iso) return t("receiver.never");
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(dateLocale());
 }
 
 function InventoryPanel({ repo, t }: { repo: ReceivedRepoStatus; t: T }) {

@@ -12,6 +12,7 @@ import { IconBack, IconConfirm, IconImport, IconSearch } from "../glyphs";
 import { ProgressBar } from "../ProgressBar";
 import { Rows, SettingRow } from "../storage/rows";
 import { StepBar } from "./StepBar";
+import { dateLocale } from "../../lib/dateLocale";
 
 /** The progress key the server publishes an import under. */
 export const APPDATA_IMPORT_KEY = "import:containers";
@@ -207,7 +208,7 @@ export function AppdataWindow({ hostMountRoot, onClose }: { hostMountRoot: strin
                   }
                   note={
                     <span className="tabular-nums">
-                      {new Date(a.time * 1000).toLocaleString()} · {humanBytes(a.size)}
+                      {new Date(a.time * 1000).toLocaleString(dateLocale())} · {humanBytes(a.size)}
                     </span>
                   }
                 >

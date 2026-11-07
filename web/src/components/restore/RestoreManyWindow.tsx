@@ -55,6 +55,7 @@ import { SelectField } from "../SelectField";
 import { Toggle } from "../Toggle";
 import { checkRequest, startRestore, type RestoreChoice } from "./restoreJob";
 import { WhereOption } from "./RestoreWindow";
+import { dateLocale } from "../../lib/dateLocale";
 
 interface Timeline {
   places: TimelinePlace[];
@@ -578,7 +579,7 @@ export function RestoreManyWindow({ items, onClose }: { items: BackupItem[]; onC
                   label={t("restoreMany.atLabel")}
                   options={times.map((time) => ({
                     value: String(time),
-                    label: new Date(time * 1000).toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" }),
+                    label: new Date(time * 1000).toLocaleString(dateLocale(lang), { dateStyle: "medium", timeStyle: "short" }),
                   }))}
                   className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
                 />

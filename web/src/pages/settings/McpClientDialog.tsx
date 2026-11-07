@@ -15,6 +15,7 @@ import { InstanceWindow } from "../instances/InstanceWindow";
 import { ClientMark } from "./McpClientMark";
 import { connectorUrl, McpOAuthSettings } from "./McpOAuthSettings";
 import { IconConfirm } from "../../components/glyphs";
+import { dateLocale } from "../../lib/dateLocale";
 
 /** A key handed out by create, with the row it belongs to. */
 export interface FreshKey {
@@ -272,7 +273,7 @@ export function McpClientDialog({
           <span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-statusOkSolid" />
           {fill("mcp.oauthSignedIn", {
             name: signedIn.label,
-            time: new Date(signedIn.createdAt * 1000).toLocaleTimeString(),
+            time: new Date(signedIn.createdAt * 1000).toLocaleTimeString(dateLocale()),
           })}
         </p>
       );
@@ -560,7 +561,7 @@ export function McpClientDialog({
     if (connected && chosen) {
       const values = {
         name: chosen.label,
-        time: new Date(chosen.lastUsedAt * 1000).toLocaleTimeString(),
+        time: new Date(chosen.lastUsedAt * 1000).toLocaleTimeString(dateLocale()),
         addr: chosen.lastUsedFrom,
       };
       content = (

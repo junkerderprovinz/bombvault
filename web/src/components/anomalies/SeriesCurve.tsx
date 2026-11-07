@@ -21,6 +21,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatMillis } from "../../lib/reltime";
 import { formatNumber } from "../../lib/numberFormat";
+import { dateLocale } from "../../lib/dateLocale";
 
 type Tone = "fail" | "warn" | "accent" | "quiet";
 
@@ -64,7 +65,7 @@ function formatValue(quantity: CurveQuantity, value: number): string {
 }
 
 function shortDate(unix: number): string {
-  return new Date(unix * 1000).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
+  return new Date(unix * 1000).toLocaleDateString(dateLocale(), { day: "2-digit", month: "2-digit" });
 }
 
 /** The usual range in words, or how long it takes until there is one. */

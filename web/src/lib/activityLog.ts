@@ -9,6 +9,7 @@ import { IDLE_REASON_KEYS } from "./idleWaits";
 import { dumpLeftRunning, dumpWasCancelled, importHadErrors } from "./dbdump";
 import type { OffsiteThrottle, ProgressMap, ProgressStage, ProgressState } from "./progress";
 import { offsiteRunProgress, STALE_MS } from "./progress";
+import { dateLocale } from "./dateLocale";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
@@ -842,15 +843,12 @@ export function buildLogLines(
 
 /**
  * formatLogDate renders `atMs` as a short day and month in the locale's own
- * order ("23.07." for de, "07/23" for en-US). The app leaves `locale`
- * undefined, which runs the same default-locale negotiation as every other
- * date here; navigator.language can disagree with the browser's formatting
- * locale (an en-US interface in a Portuguese region). Tests pass one
- * explicitly. filterLogLines searches the same string, so a typed date
- * matches what is shown. The time stays on formatClockTime's fixed 24-hour
- * face.
+ * order ("23.07." for de, "07/23" for en-US). The app leaves `locale` out and
+ * gets dateLocale, like every other date here. Tests pass one explicitly.
+ * filterLogLines searches the same string, so a typed date matches what is
+ * shown. The time stays on formatClockTime's fixed 24-hour face.
  */
-export function formatLogDate(atMs: number, locale?: string): string {
+export function formatLogDate(atMs: number, locale = dateLocale()): string {
   return new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit" }).format(new Date(atMs));
 }
 

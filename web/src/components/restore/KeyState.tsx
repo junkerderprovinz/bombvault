@@ -10,6 +10,7 @@ import { useConfirm } from "../../lib/useConfirm";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { Button } from "../Button";
 import { Note } from "./EmergencyParts";
+import { dateLocale } from "../../lib/dateLocale";
 
 const ADOPTED_FROM: Record<NonNullable<EmergencyState["source"]>, TranslationKey> = {
   kit: "restorePage.keyAdopted.kit",
@@ -44,7 +45,7 @@ export function KeyState({ state, onChanged }: { state: EmergencyState | null; o
     }
   }
 
-  const on = state.adoptedAt ? new Date(state.adoptedAt * 1000).toLocaleDateString(lang, { dateStyle: "medium" }) : "";
+  const on = state.adoptedAt ? new Date(state.adoptedAt * 1000).toLocaleDateString(dateLocale(lang), { dateStyle: "medium" }) : "";
   return (
     <div data-testid="key-adopted" className="flex flex-col gap-2 rounded-card bg-carbon-surface2 px-3 py-2.5 text-sm text-carbon-text">
       <p className="leading-relaxed">

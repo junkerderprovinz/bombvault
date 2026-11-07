@@ -21,6 +21,7 @@ import { InstanceWindow, WindowCard } from "./InstanceWindow";
 import { RecoveryCodeDialog } from "./KeeperDialogs";
 import { depositStateLabel } from "./RoleTile";
 import type { InstancesState } from "./useInstances";
+import { dateLocale } from "../../lib/dateLocale";
 
 type Sent = Deposits["sent"][number];
 
@@ -113,7 +114,7 @@ export function KeyDepositWindow({ state, onClose }: { state: InstancesState; on
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <span data-testid="code-since" className="text-sm text-carbon-text">
-              {t("keeper.own.codeSince").replace("{date}", () => new Date(unixOf(codeSince) * 1000).toLocaleDateString())}
+              {t("keeper.own.codeSince").replace("{date}", () => new Date(unixOf(codeSince) * 1000).toLocaleDateString(dateLocale()))}
             </span>
             <Button
               label={t("keeper.own.newCode")}

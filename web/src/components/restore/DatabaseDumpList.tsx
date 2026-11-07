@@ -35,6 +35,7 @@ import { IconDatabase, IconDownload, IconRestore, IconTrash } from "../navGlyphs
 import { MissingRestorePoint, restorePointOf } from "./MissingRestorePoint";
 import { RestoreCheckPanel } from "./RestoreCheckPanel";
 import { RestoreProgress } from "./RestoreProgress";
+import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -245,7 +246,7 @@ function DumpRow({
         <span dir="ltr" className="font-mono text-start text-carbon-text text-xs w-20 shrink-0">
           {dump.id.slice(0, 8)}
         </span>
-        <span className="text-carbon-textMuted text-xs">{new Date(dump.time).toLocaleString()}</span>
+        <span className="text-carbon-textMuted text-xs">{new Date(dump.time).toLocaleString(dateLocale())}</span>
         <Badge tone={dump.engine ? "neutral" : "muted"} size="small">
           {engineName || t("dbdump.engineUnknown")}
         </Badge>

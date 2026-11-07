@@ -7,6 +7,7 @@ import { useT } from "../lib/i18n";
 import { Button } from "./Button";
 import { SelectField } from "./SelectField";
 import { Rows, SettingRow } from "./storage/rows";
+import { dateLocale } from "../lib/dateLocale";
 
 type Domain = OffsiteDomain;
 
@@ -48,7 +49,7 @@ function policyLine(policy: Preview["policy"], t: ReturnType<typeof useT>["t"]):
 function stamp(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return d.toLocaleString(dateLocale());
 }
 
 type Source = "local" | "offsite";

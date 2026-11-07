@@ -4,12 +4,13 @@ import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useTipBubble } from "../../lib/useTipBubble";
 import { Card } from "../../pages/settings/shared";
+import { dateLocale } from "../../lib/dateLocale";
 
 const BAR = "w-full rounded-t-xs";
 const COLUMNS = "grid grid-cols-[repeat(14,minmax(0,1fr))] gap-1.5 max-md:gap-0.5";
 
 function dayLabel(day: HistoryDay, lang: string): string {
-  return new Date(day.start).toLocaleDateString(lang, { day: "2-digit", month: "2-digit" });
+  return new Date(day.start).toLocaleDateString(dateLocale(lang), { day: "2-digit", month: "2-digit" });
 }
 
 function Day({
@@ -114,7 +115,7 @@ export function BackupHistory({
             return (
               <span key={day.start} className={`flex flex-col leading-tight ${onPhone ? "" : "max-md:invisible"}`}>
                 <b className="font-semibold text-carbon-textSub capitalize max-md:hidden">
-                  {last ? today : new Date(day.start).toLocaleDateString(lang, { weekday: "short" })}
+                  {last ? today : new Date(day.start).toLocaleDateString(dateLocale(lang), { weekday: "short" })}
                 </b>
                 <span className="tabular-nums max-md:whitespace-nowrap">{dayLabel(day, lang)}</span>
               </span>

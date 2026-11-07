@@ -18,6 +18,7 @@ import { useOwnLogin } from "../../lib/useOwnLogin";
 import { ROLES } from "./RoleTile";
 import type { InstancesState } from "./useInstances";
 import { IconConfirm } from "../../components/glyphs";
+import { dateLocale } from "../../lib/dateLocale";
 
 type Kept = Deposits["kept"][number];
 
@@ -76,7 +77,7 @@ export function ReleaseRequests({ releases, state }: { releases: DepositRelease[
               </span>
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-carbon-textMuted">
                 {r.knownSince ? (
-                  <span>{t("keeper.release.known").replace("{date}", () => new Date(unixOf(r.knownSince) * 1000).toLocaleDateString())}</span>
+                  <span>{t("keeper.release.known").replace("{date}", () => new Date(unixOf(r.knownSince) * 1000).toLocaleDateString(dateLocale()))}</span>
                 ) : (
                   <Badge tone="warn">{t("keeper.release.unknown")}</Badge>
                 )}

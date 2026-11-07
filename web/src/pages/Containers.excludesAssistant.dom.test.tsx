@@ -27,6 +27,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { I18nProvider, useT } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 import type { ExcludeSuggestion } from "../lib/api";
+import { dateLocale } from "../lib/dateLocale";
 
 type SuggestReply = {
   ok: boolean;
@@ -288,7 +289,7 @@ describe("exclusion assistant size presentation", () => {
 
     // As-of-last-backup sizes are only honest WITH their date, so the source
     // line must carry a rendered timestamp, not an empty placeholder.
-    const when = new Date("2026-08-01T10:00:00Z").toLocaleString();
+    const when = new Date("2026-08-01T10:00:00Z").toLocaleString(dateLocale());
     expect(screen.getByText(`Sizes come from the backup of ${when}, so they are exact.`)).toBeTruthy();
     expect(screen.getByText("2.0 MB")).toBeTruthy();
     expect(screen.queryByText(/at least/)).toBeNull();

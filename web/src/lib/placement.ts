@@ -21,6 +21,7 @@ import { repoDisplayName } from "./directRepo";
 import type { TranslationKey, useT } from "./i18n";
 import { withLtrIsolates } from "./ltrFragments";
 import { formatTs } from "./reltime";
+import { dateLocale } from "./dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -464,7 +465,7 @@ function placeLine(t: T, p: ObservedPlace): StatusLine {
       };
     case "old-copy":
       return {
-        text: at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString()),
+        text: at("placement.oldCopy").replace("{date}", () => new Date(p.latest * 1000).toLocaleDateString(dateLocale())),
         tone: "muted",
       };
     case "no-copy":

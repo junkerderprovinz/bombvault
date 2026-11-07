@@ -31,6 +31,7 @@ import { formatRecent } from "../lib/reltime";
 import { AnomalyProvider } from "../lib/useAnomalies";
 import { replica } from "../components/zfs/replica/replica.testsupport";
 import { TANK, ZFS_ID, backupRun, serveEntries, timelineOf, watched, zfsView } from "./backupEntry.testsupport";
+import { dateLocale } from "../lib/dateLocale";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
@@ -836,7 +837,7 @@ function point(stamp: string, time: number, childSnapshot: string): ZFSRestorePo
 
 const EMPTIED_AT = 1_789_086_400;
 const GOOD_AT = 1_789_000_000;
-const localTime = (at: number) => new Date(at * 1000).toLocaleString();
+const localTime = (at: number) => new Date(at * 1000).toLocaleString(dateLocale());
 /** A backup as the restore window names it in its list. */
 const listed = (at: number) => formatRecent(at, "en");
 

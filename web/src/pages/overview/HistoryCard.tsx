@@ -16,6 +16,7 @@ import { useOpenAnomalies } from "../../lib/useAnomalies";
 import { replicaRunSentence, zfsRollbackTargets } from "../../lib/zfsCodes";
 import { RollbackLine } from "../../components/zfs/replica/RollbackLine";
 import { Card } from "./Card";
+import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -124,7 +125,7 @@ function RunRow({
   );
 }
 
-const dayOf = (run: Run, lang: string) => new Date(run.startedAt * 1000).toLocaleDateString(lang);
+const dayOf = (run: Run, lang: string) => new Date(run.startedAt * 1000).toLocaleDateString(dateLocale(lang));
 
 function RunList({
   t,

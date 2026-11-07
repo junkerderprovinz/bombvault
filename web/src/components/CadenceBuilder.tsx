@@ -5,6 +5,7 @@ import { Selector } from "./Selector";
 import { NumberField } from "./NumberField";
 import { TimePicker } from "./TimePicker";
 import { tLtr } from "../lib/ltrFragments";
+import { dateLocale } from "../lib/dateLocale";
 
 export type CadenceMode = "off" | "daily" | "weekly" | "everyN" | "cron";
 
@@ -349,7 +350,7 @@ export function CadenceBuilder({
 // locale rendering if Intl rejects the language tag.
 function formatFireTime(d: Date, lang: string): string {
   try {
-    return new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "short" }).format(d);
+    return new Intl.DateTimeFormat(dateLocale(lang), { dateStyle: "medium", timeStyle: "short" }).format(d);
   } catch {
     return d.toLocaleString();
   }

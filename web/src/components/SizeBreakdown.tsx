@@ -5,6 +5,7 @@ import { humanBytes } from "../lib/forecast";
 import type { useT } from "../lib/i18n";
 import { Button } from "./Button";
 import { IconFolder } from "./Sidebar";
+import { dateLocale } from "../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -100,7 +101,7 @@ export function SizeBreakdown({ domain, item, t }: { domain: BreakdownDomain; it
               .replace("{size}", humanBytes(data.size))
               .replace("{files}", t("breakdown.files", data.files))
               .replace("{added}", humanBytes(data.added))}
-            {data.time && <> {t("breakdown.from").replace("{time}", new Date(data.time).toLocaleString())}</>}
+            {data.time && <> {t("breakdown.from").replace("{time}", new Date(data.time).toLocaleString(dateLocale()))}</>}
           </p>
           {data.first && <p className="text-caption text-carbon-textMuted">{t("breakdown.first")}</p>}
           {data.partial && <p className="text-caption text-statusWarn">{t("breakdown.partial")}</p>}

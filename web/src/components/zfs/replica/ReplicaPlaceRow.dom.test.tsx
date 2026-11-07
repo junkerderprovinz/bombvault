@@ -10,6 +10,7 @@ import type { ZFSReplica } from "../../../lib/api";
 import type { ProgressMap } from "../../../lib/progress";
 import { group, replica, server } from "./replica.testsupport";
 import { openSelect, settle } from "../../selectField.testsupport";
+import { dateLocale } from "../../../lib/dateLocale";
 
 let current: ZFSReplica;
 const restores: string[] = [];
@@ -131,7 +132,7 @@ describe("replica storage row", () => {
     renderRow();
     fireEvent.click(await screen.findByRole("button", { name: en["zfs.replica.view"] }));
     await openSelect(screen.getByRole("combobox", { name: en["zfs.replica.sheet.snapshot"] }));
-    const older = new Date("2026-10-05T01:40:00Z").toLocaleString();
+    const older = new Date("2026-10-05T01:40:00Z").toLocaleString(dateLocale());
     await settle(() => fireEvent.click(screen.getByRole("option", { name: older })));
     expect(screen.getByText(/@bombvault-replica-20261005014000 /)).toBeTruthy();
 

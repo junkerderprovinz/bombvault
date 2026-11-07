@@ -18,6 +18,7 @@ import type { LogFilterDomain, LogFilterKind, LogStatus, ResolveName } from "../
 import { formatClockTime } from "../lib/reltime";
 import { Button } from "./Button";
 import { useIsDesktop } from "../lib/useMediaQuery";
+import { dateLocale } from "../lib/dateLocale";
 
 const POLL_RUNS_MS = 10000;
 const POLL_SCHEDULE_MS = 30000;
@@ -185,7 +186,7 @@ export function ActivityLog({
     [runs, progressMap, scheduleNext, resolveName, now, liveNow, waits]
   );
 
-  // Without lang the date search uses the browser locale, the same one
+  // Without lang the date search uses dateLocale, the same locale
   // formatLogDate and every other date in the app render with.
   const filteredLines = useMemo(
     () =>
@@ -256,7 +257,7 @@ export function ActivityLog({
         {dayFilter && (
           <span className="inline-flex items-center gap-1 rounded-pill bg-accent text-accentContrast ps-2.5 pe-1 py-0.5 text-xs font-medium">
             {resolveName("activityLog.dayFilterChip", {
-              date: new Date(dayFilter + "T00:00:00").toLocaleDateString(),
+              date: new Date(dayFilter + "T00:00:00").toLocaleDateString(dateLocale()),
             })}
             <Button
               label={t("activityLog.clearDayFilter")}

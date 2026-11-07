@@ -45,6 +45,7 @@ import { Toggle } from "../Toggle";
 import { KitIdentityField, KitPicker, takeIdentity } from "./KitPicker";
 import { RestoreCheckPanel } from "./RestoreCheckPanel";
 import { StepBar } from "./StepBar";
+import { dateLocale } from "../../lib/dateLocale";
 
 type ForeignDomain = "containers" | "vms" | "files" | "zfs";
 
@@ -342,7 +343,7 @@ function ForeignItemRow({
           disabled={busy}
           options={[
             { value: "latest", label: t("recovery.foreignLatest") },
-            ...snaps.map((s) => ({ value: s.id, label: `${new Date(s.time).toLocaleString()}, ${s.id.slice(0, 8)}` })),
+            ...snaps.map((s) => ({ value: s.id, label: `${new Date(s.time).toLocaleString(dateLocale())}, ${s.id.slice(0, 8)}` })),
           ]}
           className={SELECT}
         />

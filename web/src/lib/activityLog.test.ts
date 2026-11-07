@@ -3,6 +3,7 @@
 // the translation key and its params assertable.
 import { describe, expect, it } from "vitest";
 import { buildLogLines, domainLabel, filterLogLines, formatLogDate } from "./activityLog";
+import { dateLocale } from "./dateLocale";
 import type { LogLine, ResolveName } from "./activityLog";
 import type { Run, ScheduleNext } from "./api";
 import { countText, de, en } from "./i18n";
@@ -699,13 +700,12 @@ describe("filterLogLines run filter", () => {
   });
 });
 
-// Without a locale the date follows the engine's default, like every other
-// date in the app, rather than navigator.language, which can disagree with it
-// (a macOS "en-US" UI language with a Portuguese region).
+// Without a locale the date follows dateLocale, like every other date in the
+// app.
 describe("formatLogDate without a locale", () => {
-  it("matches toLocaleDateString's default-locale day/month rendering", () => {
+  it("writes day and month in dateLocale", () => {
     const ts = new Date(2026, 6, 23, 5, 0, 0).getTime();
-    const expected = new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "2-digit" }).format(new Date(ts));
+    const expected = new Intl.DateTimeFormat(dateLocale(), { day: "2-digit", month: "2-digit" }).format(new Date(ts));
     expect(formatLogDate(ts)).toBe(expected);
   });
 });

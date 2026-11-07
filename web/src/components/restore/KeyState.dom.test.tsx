@@ -9,6 +9,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import type { EmergencyState } from "../../lib/api";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
+import { dateLocale } from "../../lib/dateLocale";
 
 const undoEmergency = vi.fn();
 
@@ -55,7 +56,7 @@ describe("the key this server backs up under", () => {
 
   it("is named with the day and the way it was taken over, and with what the kit prints", () => {
     show(adopted());
-    const on = new Date(ADOPTED_AT * 1000).toLocaleDateString("en", { dateStyle: "medium" });
+    const on = new Date(ADOPTED_AT * 1000).toLocaleDateString(dateLocale("en"), { dateStyle: "medium" });
     const line = screen.getByTestId("key-adopted");
     expect(line.textContent).toContain(en["restorePage.keyAdopted.kit"].replace("{date}", on));
     expect(line.textContent).toContain(en["restorePage.keyAdoptedKit"]);

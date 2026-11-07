@@ -6,6 +6,7 @@ import { observedLine, planLines, STATUS_TONE_CLASS, stackNoteText } from "../..
 import { useLocalName } from "../../lib/useLocalName";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { OffsiteRemovalDialog } from "./OffsiteRemovalDialog";
+import { dateLocale } from "../../lib/dateLocale";
 
 /** PlacementStatus is the result line under a card's placement bar: where the
  *  next backup goes, where its copies actually are, and what a target still
@@ -52,7 +53,7 @@ export function PlacementStatus({
             {t("placement.older")
               .replace("{target}", () => o.name)
               .replace("{n}", String(o.count))
-              .replace("{date}", () => new Date(o.seenAt * 1000).toLocaleDateString())}
+              .replace("{date}", () => new Date(o.seenAt * 1000).toLocaleDateString(dateLocale()))}
           </span>
           <Button
             label={t("offsiteRemoval.delete").replace("{target}", () => o.name)}

@@ -49,6 +49,7 @@ import {
 } from "./instances/instances.testsupport";
 import { receiveRequest, replica, server } from "../components/zfs/replica/replica.testsupport";
 import { destination } from "../lib/placement.testsupport";
+import { dateLocale } from "../lib/dateLocale";
 
 const peer = (over: Partial<FleetPeer>) => fleetPeer({ name: "DXP480T", lastPollVersion: "v8.0.0+main.e3db401", ...over });
 const M1 = groupMember({ name: "DXP480T" });
@@ -519,7 +520,7 @@ describe("this server's own card", () => {
     await click(within(card("self")).getByRole("button", { name: en["keeper.window.title"] }));
     const opened = screen.getByRole("dialog", { name: en["keeper.window.title"] });
     expect(within(opened).getByTestId("code-since").textContent).toBe(
-      en["keeper.own.codeSince"].replace("{date}", new Date(SINCE).toLocaleDateString()),
+      en["keeper.own.codeSince"].replace("{date}", new Date(SINCE).toLocaleDateString(dateLocale())),
     );
     await click(within(opened).getByRole("button", { name: en["common.done"] }));
     expect(screen.queryByRole("dialog")).toBeNull();
