@@ -49,6 +49,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
+import java.util.Locale
 import javax.net.ssl.SSLException
 
 /**
@@ -220,8 +221,24 @@ class MainActivity : ComponentActivity() {
         return WebViewCompat.addDocumentStartJavaScript(view, "window.bombvaultDevice = $told;\n$pageScript", setOf("*"))
     }
 
-    /** What belongs to this phone's screen rather than to a server. */
-    private fun device(): JSONObject = JSONObject().put("oled", oled)
+    /**
+     * What belongs to this phone's screen rather than to a server: OLED, and
+     * from Android 12 Material You's primary as Material 3 takes it for the
+     * light and the dark theme. Below 12 there is no palette to read, and the
+     * pages offer no colour of the system's.
+     */
+    private fun device(): JSONObject {
+        val d = JSONObject().put("oled", oled)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            d.put(
+                "accent",
+                JSONObject()
+                    .put("light", hex(getColor(android.R.color.system_accent1_600)))
+                    .put("dark", hex(getColor(android.R.color.system_accent1_200))),
+            )
+        }
+        return d
+    }
 
     private fun deviceMessage() = device().put("op", "device").toString()
 
@@ -263,9 +280,17 @@ class MainActivity : ComponentActivity() {
         routes.forget()
     }
 
+    // A new wallpaper brings a new palette, which can arrive while the app is
+    // in front.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        tellDevice()
+    }
+
     override fun onResume() {
         super.onResume()
-        // The camera may have been allowed on the settings page in between.
+        // The camera may have been allowed on the settings page in between,
+        // and the palette changed with the wallpaper.
         pushState()
         tellDevice()
         if (current == null) discovery.start()
@@ -710,6 +735,8 @@ class MainActivity : ComponentActivity() {
         // The muted text of either theme, for the relay line on its ground.
 
         private fun parseColor(s: String): Int? = runCatching { Color.parseColor(s) }.getOrNull()
+
+        private fun hex(color: Int) = String.format(Locale.ROOT, "#%06X", color and 0xFFFFFF)
     }
 }
 
