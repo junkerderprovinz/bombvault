@@ -158,6 +158,13 @@ export function useReorder({ ids, container, attr, axis, arm, enabled, onReorder
   const slideFrom = useRef<Map<string, Point> | null>(null);
   const swallow = useRef(false);
 
+  // While an item is in the hand the others wiggle, in every list, so the
+  // class comes from here rather than from each list. It runs after every
+  // render because a list that rewrites its className would drop it.
+  useLayoutEffect(() => {
+    container.current?.classList.toggle("glim-drag-armed", held !== null);
+  });
+
   // Ref mirrors for the document listeners, which bind once and must read
   // current values.
   const liveRef = useRef<string[] | null>(null);

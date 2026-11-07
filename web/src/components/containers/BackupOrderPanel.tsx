@@ -130,7 +130,7 @@ export function BackupOrderPanel({
           <>
             {/* The list is the rows' offsetParent, the layout a drag measures
                 in. While a row is carried the others wiggle. */}
-            <ol ref={list} className={`relative flex flex-col gap-1 ${drag.held !== null ? "glim-drag-armed" : ""}`}>
+            <ol ref={list} className="relative flex flex-col gap-1">
               {drag.order.map((name, i) => (
                 <li
                   key={name}
