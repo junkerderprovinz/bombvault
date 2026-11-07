@@ -921,9 +921,12 @@
 
      --ink-mix is how far the accent is mixed toward black to become ink. The
      themes only set this number, so the rainbow block needs no light-theme
-     twin. 100% of a colour mixed with black is the colour itself. */
+     twin. 100% of a colour mixed with black is the colour itself. An accent
+     the mix leaves under 4.5:1, which a picked or a device's colour can be,
+     gets its ink from lib/accent.ts as --accent-ink-dark or
+     --accent-ink-light. No preset needs one. */
   --ink-mix:          100%;
-  --accent-text:      color-mix(in srgb, var(--accent) var(--ink-mix), black);
+  --accent-text:      var(--accent-ink-dark, color-mix(in srgb, var(--accent) var(--ink-mix), black));
 
   /* One elevation, one hairline, one focus ring. Elevation and hairline are
      GlimStone's; the ring derives from the accent. */
@@ -1062,6 +1065,7 @@
      3.74:1 on surface2. At 45% the worst of the eight presets measures 5.13:1
      on surface2, 6.15:1 on a card and 6.77:1 on white. */
   --ink-mix: 45%;
+  --accent-text: var(--accent-ink-light, color-mix(in srgb, var(--accent) var(--ink-mix), black));
 
   /* Anything painting the flat --accent as text or a thin graphic misses the
      contrast minimums on these surfaces and should use the accentText
@@ -1176,6 +1180,7 @@
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
     --ink-mix: 45%;
+    --accent-text: var(--accent-ink-light, color-mix(in srgb, var(--accent) var(--ink-mix), black));
     --status-offsite-text: #0043ce;
     --keep-band-daily: #0f62fe;
     --keep-band-weekly: #007d79;
