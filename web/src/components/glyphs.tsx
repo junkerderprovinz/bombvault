@@ -340,7 +340,7 @@ export function IconInstall() {
   );
 }
 
-/** Fetch an update, check for one, update now. */
+/** An updates tab or section. */
 export function IconUpdate() {
   return (
     <G box="0.013 0.013 13.974 13.974">
