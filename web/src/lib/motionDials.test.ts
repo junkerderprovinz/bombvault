@@ -58,6 +58,23 @@ describe("the motion dials", () => {
     expect(body).toMatch(/--radius-pill var\(--motion-shape-dur\) var\(--motion-shape-ease\)/);
   });
 
+  it("tremble the other items of a list in the hand hard enough to see at once", () => {
+    // A level can open several blocks; the one that declares the dial counts.
+    const level = (selector: string, dial: string) => {
+      for (let at = CSS.indexOf(selector + " {"); at >= 0; at = CSS.indexOf(selector + " {", at + 1)) {
+        const m = CSS.slice(at, CSS.indexOf("}", at)).match(new RegExp(`${dial}:\\s*([\\d.]+)`));
+        if (m) return Number(m[1]);
+      }
+      throw new Error(`${selector} declares no ${dial}`);
+    };
+    for (const selector of [":root", ':root[data-motion="subtle"]', ':root[data-motion="storm"]']) {
+      expect(level(selector, "--motion-wiggle-angle"), selector).toBeGreaterThanOrEqual(1.2);
+      expect(level(selector, "--motion-wiggle-dur"), selector).toBeLessThanOrEqual(160);
+    }
+    expect(level(':root[data-motion="off"]', "--motion-wiggle-angle")).toBe(0);
+    expect(CSS).toMatch(/\.glim-drag-armed > :nth-child\(2n\) \{ animation-delay: calc\(var\(--motion-wiggle-dur\) \* -\.5\); \}/);
+  });
+
   it("swell a success through the confirm dials", () => {
     expect(ruleBody(".glim-confirm", gate)).toMatch(/glim-confirm var\(--motion-confirm-dur\)/);
     expect(keyframes("glim-confirm")).toMatch(/var\(--motion-confirm-scale/);
