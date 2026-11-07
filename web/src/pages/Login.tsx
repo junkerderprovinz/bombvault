@@ -1,83 +1,42 @@
 import { useEffect, useState } from "react";
 import {
   finishPasskeyWithCode,
+  finishPasswordReset,
+  getAuth,
   login,
   loginWithPasskey,
   passkeyStatus,
   passkeysAvailableInBrowser,
   startPasswordReset,
+  type PasswordResetRemoved,
 } from "../lib/api";
 import { useT } from "../lib/i18n";
-import { RevealInput } from "../components/RevealInput";
+import type { SignInText } from "../lib/signIn";
 import { Button } from "../components/Button";
-import { PasswordResetForm } from "../components/PasswordResetForm";
-import { useReveal } from "../lib/useReveal";
+import { SignInCard } from "../components/SignInCard";
 
 interface LoginPageProps {
   /** Called after a successful login so the parent can re-check auth state. */
   onLogin: () => void;
 }
 
-// LoginPage is the full-screen login form shown while auth is on and nobody is
+// LoginPage is the full-screen login shown while auth is on and nobody is
 // signed in. The password goes first; when a second factor is armed the
 // server answers needCode and the code field appears, with the password kept.
 // The field waits for that answer even when GET /api/auth already reports a
 // factor, so nobody spends a 30-second code window on a mistyped password.
 export function LoginPage({ onLogin }: LoginPageProps) {
   const { t } = useT();
-  const reveal = useReveal();
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [needCode, setNeedCode] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   // Set once a passkey signed in and the server asks for the code on top.
   const [passkeyHandle, setPasskeyHandle] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      if (passkeyHandle) {
-        const res = await finishPasskeyWithCode(passkeyHandle, code);
-        if (res.ok) {
-          onLogin();
-          return;
-        }
-        setPasskeyHandle(res.needCode && res.ceremonyId ? res.ceremonyId : null);
-        setNeedCode(!!res.needCode);
-        setCode("");
-        setError(res.error ?? t("auth.codeInvalid"));
-        return;
-      }
-      const res = await login(password, needCode ? code : undefined);
-      if (res.ok) {
-        onLogin();
-        return;
-      }
-      if (res.needCode) {
-        setNeedCode(true);
-        setCode("");
-        // The first needCode answer only reveals the field; a message waits
-        // until a code has been tried and rejected.
-        setError(code === "" ? null : (res.error ?? t("auth.codeInvalid")));
-        return;
-      }
-      setError(res.error ?? t("auth.invalidPassword"));
-    } catch {
-      setError(t("auth.loginError"));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const [minLen, setMinLen] = useState(12);
+  // What a reset removed, held until the reader has seen it.
+  const [removed, setRemoved] = useState<PasswordResetRemoved | null>(null);
 
   // The passkey button needs WebAuthn in the browser, an address that can carry
   // a passkey (a bare IP cannot, see internal/api/passkeys.go) and a key
   // registered for it. A prompt that cannot succeed is worse than no button.
   const [passkeyOffer, setPasskeyOffer] = useState(false);
-  const [passkeyBusy, setPasskeyBusy] = useState(false);
   useEffect(() => {
     if (!passkeysAvailableInBrowser()) return;
     let live = true;
@@ -91,167 +50,138 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     };
   }, []);
 
-  async function signInWithPasskey() {
-    setPasskeyBusy(true);
-    setError(null);
-    try {
-      const res = await loginWithPasskey();
-      if (res.ok) {
-        onLogin();
-        return;
-      }
-      if (res.needCode && res.ceremonyId) {
-        setPasskeyHandle(res.ceremonyId);
-        setNeedCode(true);
-        setCode("");
-        return;
-      }
-      setError(res.code === "passkeyNeedsVerification" ? t("auth.passkeyNeedsVerification") : (res.error ?? t("auth.passkeySignInFailed")));
-    } catch (err) {
-      // A cancelled prompt lands here too, and its own message says more than
-      // a generic one.
-      setError(err instanceof Error ? err.message : t("auth.passkeySignInFailed"));
-    } finally {
-      setPasskeyBusy(false);
-    }
-  }
-
-  // The reset form shows only after the server has written a code to its log,
-  // so the form never asks for a code that does not exist.
-  const [resetting, setResetting] = useState(false);
-  const [resetBusy, setResetBusy] = useState(false);
-
-  async function forgotPassword() {
-    setResetBusy(true);
-    setError(null);
-    try {
-      const res = await startPasswordReset();
-      if (res.ok) {
-        setResetting(true);
-        return;
-      }
-      setError(res.error ?? t("auth.loginError"));
-    } catch {
-      setError(t("auth.loginError"));
-    } finally {
-      setResetBusy(false);
-    }
-  }
-
-  const submitDisabled = busy || (passkeyHandle ? code.trim() === "" : password === "" || (needCode && code.trim() === ""));
+  const text: SignInText = {
+    password: t("auth.passwordLabel"),
+    signIn: t("auth.signIn"),
+    signingIn: t("auth.signingIn"),
+    passkey: t("auth.signInWithPasskey"),
+    forgot: t("auth.forgotPassword"),
+    code: t("auth.codeLabel"),
+    codeHint: t("auth.codeHint"),
+    codeInvalid: t("auth.codeInvalid"),
+    back: t("common.back"),
+    resetCode: t("auth.resetCodeLabel"),
+    resetCodeTip: t("auth.resetCodeTip"),
+    newPassword: t("auth.newPassword"),
+    confirmPassword: t("auth.confirmPassword"),
+    setPassword: t("auth.setPassword"),
+    saving: t("auth.saving"),
+    mismatch: t("auth.passwordMismatch"),
+    tooShort: t("auth.passwordMinHint", minLen),
+    resetRejected: t("auth.resetCodeRejected"),
+    failed: t("auth.loginError"),
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-carbon-background">
-      <div className="w-full max-w-sm rounded-card bg-carbon-surface p-8 flex flex-col gap-6 shadow-lg">
-        {/* This screen has no rail, so the mark tells which instance is being
-            unlocked. It stays hidden from assistive technology, since the
-            heading names the product. */}
-        <div className="flex flex-col items-center gap-3">
-          <span className="flex h-16 w-16 items-center justify-center">
-            <img
-              src="/logo.svg"
-              alt=""
-              aria-hidden="true"
-              draggable={false}
-              className="h-16 w-16 object-contain block"
-            />
-          </span>
-          <h1 className="text-status font-semibold text-carbon-text text-center">
-            {t("auth.loginTitle")}
-          </h1>
-        </div>
+    <SignInCard
+      logo="/logo.svg"
+      appName={t("auth.loginTitle")}
+      text={text}
+      idPrefix="bv"
+      passkey={passkeyOffer}
+      reset
+      minPassword={minLen}
+      step={removed ? <ResetDone removed={removed} onDone={onLogin} /> : undefined}
+      onSignIn={async ({ password, code, passkey }) => {
+        try {
+          if (passkey) {
+            const res = await finishPasskeyWithCode(passkeyHandle!, code!);
+            if (res.ok) {
+              onLogin();
+              return { ok: true };
+            }
+            const again = res.needCode && res.ceremonyId ? res.ceremonyId : null;
+            setPasskeyHandle(again);
+            return { needCode: !!again, error: res.error ?? t("auth.codeInvalid") };
+          }
+          const res = await login(password, code);
+          if (res.ok) {
+            onLogin();
+            return { ok: true };
+          }
+          if (res.needCode) return { needCode: true, error: res.error ?? t("auth.codeInvalid") };
+          return { error: res.error ?? t("auth.invalidPassword") };
+        } catch {
+          return { error: t("auth.loginError") };
+        }
+      }}
+      onPasskey={async () => {
+        try {
+          const res = await loginWithPasskey();
+          if (res.ok) {
+            onLogin();
+            return { ok: true };
+          }
+          if (res.needCode && res.ceremonyId) {
+            setPasskeyHandle(res.ceremonyId);
+            return { needCode: true };
+          }
+          return {
+            error: res.code === "passkeyNeedsVerification" ? t("auth.passkeyNeedsVerification") : (res.error ?? t("auth.passkeySignInFailed")),
+          };
+        } catch (err) {
+          // A cancelled prompt lands here too, and its own message says more than
+          // a generic one.
+          return { error: err instanceof Error ? err.message : t("auth.passkeySignInFailed") };
+        }
+      }}
+      // The reset form shows only after the server has written a code to its
+      // log, so the form never asks for a code that does not exist.
+      onAskCode={async () => {
+        try {
+          const res = await startPasswordReset();
+          if (!res.ok) return { error: res.error ?? t("auth.loginError") };
+          void getAuth()
+            .then((a) => {
+              if (a.minPasswordLen) setMinLen(a.minPasswordLen);
+            })
+            .catch(() => undefined);
+          return { ok: true };
+        } catch {
+          return { error: t("auth.loginError") };
+        }
+      }}
+      onSetPassword={async ({ code, password }) => {
+        try {
+          const res = await finishPasswordReset(code, password);
+          if (res.ok) {
+            // The answer already carries the session.
+            if (res.removed) setRemoved(res.removed);
+            else onLogin();
+            return { ok: true };
+          }
+          if (res.code === "resetCodeRejected") return { rejected: true };
+          return { error: res.error ?? t("auth.saveError") };
+        } catch {
+          return { error: t("auth.saveError") };
+        }
+      }}
+    />
+  );
+}
 
-        {resetting ? (
-          <PasswordResetForm onDone={onLogin} onBack={() => setResetting(false)} />
-        ) : (
-          <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-            {/* bv-convention-exception: setting-row-beside-label: a sign-in form is a page of its own; its fields keep the label above them */}
-            <div className="flex flex-col gap-1.5" hidden={!!passkeyHandle}>
-              <label
-                htmlFor="bv-password"
-                className="text-xs text-carbon-textSub font-medium"
-              >
-                {t("auth.passwordLabel")}
-              </label>
-              <RevealInput
-                {...reveal}
-                id="bv-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoFocus
-                autoComplete="current-password"
-                wrapperClassName="w-full"
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 glim-field-focus"
-              />
-            </div>
-
-            {/* Second factor, once the password has been accepted. */}
-            {/* bv-convention-exception: setting-row-beside-label: a sign-in form is a page of its own; its fields keep the label above them */}
-            {needCode && (
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="bv-code"
-                  className="text-xs text-carbon-textSub font-medium"
-                >
-                  {t("auth.codeLabel")}
-                </label>
-                <input
-                  id="bv-code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  autoFocus
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="000000"
-                  className="w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 tracking-[0.35em] glim-field-focus"
-                />
-                <p className="text-xs text-carbon-textSub">{t("auth.codeHint")}</p>
-              </div>
-            )}
-
-            {error && (
-              <p className="text-xs text-statusFail" role="alert">
-                {error}
-              </p>
-            )}
-
-            <Button
-              label={t("auth.signIn")}
-              labelKey="auth.signIn"
-              tone="accent"
-              type="submit"
-              disabled={submitDisabled}
-              busy={busy}
-              title={busy ? t("auth.signingIn") : undefined}
-            />
-
-            {/* Below the password, which always works. Hidden rather than
-                disabled where it cannot work: a disabled control on a login
-                screen reads as "you are locked out". */}
-            {passkeyOffer && !needCode && (
-              <Button
-                label={t("auth.signInWithPasskey")}
-                labelKey="auth.signInWithPasskey"
-                tone="neutral"
-                type="button"
-                onClick={() => void signInWithPasskey()}
-                disabled={busy || passkeyBusy}
-                busy={passkeyBusy}
-              />
-            )}
-
-            <Button
-              label={t("auth.forgotPassword")}
-              labelKey="auth.forgotPassword"
-              tone="subtle"
-              type="button"
-              onClick={() => void forgotPassword()}
-              disabled={busy || resetBusy}
-              busy={resetBusy}
-            />
-          </form>
-        )}
+/** ResetDone lists what the reset removed before the app opens. The owner has
+ *  to know that the passkeys are gone, or the next sign-in looks for a key that
+ *  no longer exists. */
+function ResetDone({ removed, onDone }: { removed: PasswordResetRemoved; onDone: () => void }) {
+  const { t } = useT();
+  const keysGone = removed.passkeys + removed.apiTokens + removed.mcpKeys > 0;
+  return (
+    <div className="glim-signin-form" role="status">
+      <h2 className="text-sm font-semibold text-carbon-text">{t("auth.resetDoneTitle")}</h2>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs text-carbon-textSub font-medium">{t("auth.resetDoneIntro")}</p>
+        <ul className="list-disc ps-5 text-sm text-carbon-text flex flex-col gap-1">
+          <li>{t("auth.resetDoneSessions")}</li>
+          {removed.phonePairingOff && <li>{t("auth.resetDonePhones")}</li>}
+          {removed.twoFactor && <li>{t("auth.twoFactorOffNow")}</li>}
+          {removed.passkeys > 0 && <li>{t("auth.resetDonePasskeys", removed.passkeys)}</li>}
+          {removed.apiTokens > 0 && <li>{t("auth.resetDoneApiTokens", removed.apiTokens)}</li>}
+          {removed.mcpKeys > 0 && <li>{t("auth.resetDoneMcpKeys", removed.mcpKeys)}</li>}
+        </ul>
       </div>
+      {keysGone && <p className="text-xs text-carbon-textSub font-medium">{t("auth.resetDoneHint")}</p>}
+      <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={onDone} />
     </div>
   );
 }
