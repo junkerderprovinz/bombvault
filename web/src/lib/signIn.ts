@@ -270,7 +270,7 @@ function shown(el: Element): boolean {
   return true;
 }
 
-const FIELDS = 'input:not([type="hidden"], [type="checkbox"], [type="radio"], :disabled), textarea:not(:disabled)';
+const FIELDS = 'input:not([type="hidden"], :disabled), textarea:not(:disabled)';
 
 /**
  * Puts the focus in the first empty field inside `root`, or in its first field

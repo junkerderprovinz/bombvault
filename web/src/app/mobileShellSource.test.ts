@@ -82,7 +82,8 @@ const EXPECTED_FOUC_SCRIPT = `    <script>
             .querySelector('meta[name="theme-color"]')
             ?.setAttribute("content", THEME_COLOR[resolved]);
         } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
+          var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
         }
       })();
     </script>`;
