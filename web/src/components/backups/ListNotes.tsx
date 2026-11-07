@@ -86,7 +86,7 @@ export function DumpIntro({ databases, onDismiss, t }: { databases: BackupItem[]
         </Link>
         {after}
       </p>
-      <Button label={t("common.gotIt")} labelKey="common.gotIt" onClick={onDismiss} />
+      <Button label={t("common.gotIt")} labelKey="common.gotIt" tone="accent" onClick={onDismiss} />
     </ListNote>
   );
 }
