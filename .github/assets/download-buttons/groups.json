@@ -1,0 +1,17 @@
+[
+  {
+    "id": "group-server",
+    "word": "Server",
+    "icon": "<rect x=\"3\" y=\"3.5\" width=\"18\" height=\"7\" rx=\"2\"/><rect x=\"3\" y=\"13.5\" width=\"18\" height=\"7\" rx=\"2\"/><path d=\"M7 7h.01M7 17h.01M11 7h6M11 17h6\"/>"
+  },
+  {
+    "id": "group-android",
+    "word": "Android",
+    "icon": "<rect x=\"6.5\" y=\"2\" width=\"11\" height=\"20\" rx=\"2.5\"/><path d=\"M11 18.5h2\"/>"
+  },
+  {
+    "id": "group-works-with",
+    "word": "Works with",
+    "icon": "<path d=\"M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L11.6 6\"/><path d=\"M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.6-1.6\"/>"
+  }
+]
