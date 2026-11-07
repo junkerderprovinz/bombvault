@@ -1,0 +1,1 @@
+BombVault 10.5.2 bringt echtes Schwarz für OLED-Bildschirme und übernimmt auf Wunsch die Material-You-Farbe deines Handys als Akzent. Sicherungen finden die Ordner von Compose-Stacks, die Dockhand startet, und Datumsangaben folgen der Reihenfolge deiner Region.
