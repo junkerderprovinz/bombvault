@@ -11,6 +11,7 @@ import { Dashboard } from "./Dashboard";
 import { FakeEventSource, NOW, failedCopy, installMatchMedia, location, resetServer, run, server } from "./overview/overview.testsupport";
 import { inApp } from "./overview/overviewApp.testsupport";
 import { pickOption } from "../components/selectField.testsupport";
+import { dateLocale } from "../lib/dateLocale";
 
 vi.mock("../lib/api", async (importOriginal) => {
   const { stagedApi } = await import("./overview/overview.testsupport");
@@ -129,7 +130,7 @@ describe("the runs of the history card", () => {
     const card = within(historyCard());
     expect(card.getAllByRole("listitem")).toHaveLength(2);
 
-    await pickOption(card.getByRole("combobox", { name: en["run.filterDay"] }), day.toLocaleDateString("en"));
+    await pickOption(card.getByRole("combobox", { name: en["run.filterDay"] }), day.toLocaleDateString(dateLocale("en")));
 
     const rows = card.getAllByRole("listitem");
     expect(rows).toHaveLength(1);
