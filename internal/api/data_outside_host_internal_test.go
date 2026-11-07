@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -28,7 +29,7 @@ func TestDataOutsideHostMount(t *testing.T) {
 		{Type: "bind", Source: "/etc/localtime", Destination: "/etc/localtime"},
 		{Type: "bind", Source: "/var/run/docker.sock", Destination: "/var/run/docker.sock"},
 	}}
-	got := s.dataOutsideHostMount(in, nil)
+	got := s.dataOutsideHostMount(context.Background(), in, nil)
 	want := []string{"/mnt/.ix-apps/app_mounts/nextcloud/data", "/mnt/tank/apps/missing"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("dataOutsideHostMount = %v, want %v", got, want)
@@ -44,7 +45,7 @@ func TestDataOutsideHostMountKeepsQuietAboutTheHostRoot(t *testing.T) {
 		DataRootSegments: []string{"appdata"},
 	}}
 	in := model.Inspect{Mounts: []model.Mount{{Type: "bind", Source: "/", Destination: "/rootfs"}}}
-	if got := s.dataOutsideHostMount(in, nil); len(got) != 0 {
+	if got := s.dataOutsideHostMount(context.Background(), in, nil); len(got) != 0 {
 		t.Fatalf("dataOutsideHostMount = %v, want nothing for the host root", got)
 	}
 }
@@ -67,7 +68,7 @@ func TestDataOutsideHostMountNamesAVolumeItCannotReach(t *testing.T) {
 		{Type: "volume", Source: "/mnt/user/volumes/cache/_data", Destination: "/cache"},
 		{Type: "volume", Destination: "/unresolved"},
 	}}
-	got := s.dataOutsideHostMount(in, nil)
+	got := s.dataOutsideHostMount(context.Background(), in, nil)
 	want := []string{"/var/lib/docker/volumes/stack_db_data/_data"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("dataOutsideHostMount = %v, want %v", got, want)
@@ -100,7 +101,7 @@ func TestDataOutsideHostMountKeepsQuietAboutAnAnonymousVolume(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := s.dataOutsideHostMount(model.Inspect{Mounts: []model.Mount{tc.mount}}, nil)
+			got := s.dataOutsideHostMount(context.Background(), model.Inspect{Mounts: []model.Mount{tc.mount}}, nil)
 			if warns := len(got) > 0; warns != tc.warns {
 				t.Fatalf("dataOutsideHostMount = %v, want a warning: %v", got, tc.warns)
 			}
@@ -151,7 +152,7 @@ func TestDataOutsideHostMountLeavesOutAMountAnExcludeCovers(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := s.dataOutsideHostMount(in, tc.excludes)
+			got := s.dataOutsideHostMount(context.Background(), in, tc.excludes)
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("dataOutsideHostMount(%q) = %v, want %v", tc.excludes, got, tc.want)
 			}

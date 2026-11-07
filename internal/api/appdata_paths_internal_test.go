@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"os"
 	"path"
 	"strings"
@@ -167,7 +168,7 @@ func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 		t.Errorf("resolveAppdataPaths = %v, want none: the project directory is the stack's, not the member's", got)
 	}
 
-	project, dir, ok := s.stackDirFor(in)
+	project, dir, ok := s.stackDirFor(context.Background(), in)
 	if !ok {
 		t.Fatal("stackDirFor found nothing: the directory moved out of the member and nowhere else")
 	}
@@ -181,9 +182,10 @@ func TestResolveAppdataPathsComposeWorkingDirBelongsToTheStack(t *testing.T) {
 
 func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
 	s := svcWithMount()
+	s.docker = &listOnlyDocker{}
 
 	// No compose labels at all.
-	if _, _, ok := s.stackDirFor(model.Inspect{}); ok {
+	if _, _, ok := s.stackDirFor(context.Background(), model.Inspect{}); ok {
 		t.Error("a container with no compose labels must have no stack directory")
 	}
 
@@ -192,7 +194,7 @@ func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
 		"com.docker.compose.project":             "myapp",
 		"com.docker.compose.project.working_dir": "/somewhere/else/myapp",
 	}}}
-	if _, _, ok := s.stackDirFor(outside); ok {
+	if _, _, ok := s.stackDirFor(context.Background(), outside); ok {
 		t.Error("a project directory outside the host mount is unreachable and must be skipped, not guessed")
 	}
 
@@ -200,7 +202,7 @@ func TestStackDirForIgnoresNonComposeAndUnreachable(t *testing.T) {
 	noDir := model.Inspect{Config: model.Config{Labels: map[string]string{
 		"com.docker.compose.project": "myapp",
 	}}}
-	if _, _, ok := s.stackDirFor(noDir); ok {
+	if _, _, ok := s.stackDirFor(context.Background(), noDir); ok {
 		t.Error("no working_dir label means no stack directory")
 	}
 }

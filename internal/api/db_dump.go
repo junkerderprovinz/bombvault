@@ -245,7 +245,7 @@ func (s *Service) dbDumpRows(ctx context.Context, infos []dockercli.ContainerInf
 			engine = rec.Suggested
 		}
 		effective, _, _ := s.effectiveBackupPathsWithSelection(c.Name, in)
-		_, stackDir, _ := s.stackDirFor(in)
+		_, stackDir, _ := s.stackDirFor(ctx, in)
 
 		row.Engine, row.Suggested, row.Tier = string(rec.Engine), string(rec.Suggested), string(rec.Tier)
 		row.LabelOff = rec.LabelOff

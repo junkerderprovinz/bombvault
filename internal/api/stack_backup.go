@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
@@ -25,12 +28,12 @@ func stackSnapshotTag(project string) string { return "stack:" + project }
 // into this process's view and checked for containment, plus the project name.
 // ok is false when the container is not part of a compose project, carries no
 // working-dir label, or the directory lies outside the host mount.
-func (s *Service) stackDirFor(in model.Inspect) (project, dir string, ok bool) {
+func (s *Service) stackDirFor(ctx context.Context, in model.Inspect) (project, dir string, ok bool) {
 	project = composeProject(in.Config.Labels)
 	if project == "" {
 		return "", "", false
 	}
-	host, has := composeProjectDataDir(in.Config.Labels)
+	host, has := s.projectFolder(ctx, in.Config.Labels)
 	if !has {
 		return "", "", false
 	}
@@ -39,6 +42,76 @@ func (s *Service) stackDirFor(in model.Inspect) (project, dir string, ok bool) {
 		return "", "", false
 	}
 	return project, cand, true
+}
+
+// projectFolder returns the host path of a container's Compose project folder.
+// A manager such as Dockhand runs Compose inside its own container, so the
+// labels name the folder as that container sees it. The container mounting it
+// there gives the host path, once the stack's compose file turns up below it.
+func (s *Service) projectFolder(ctx context.Context, labels map[string]string) (string, bool) {
+	dir, ok := composeProjectDataDir(labels)
+	if !ok {
+		return "", false
+	}
+	dir = path.Clean(dir)
+	if _, inMount := s.toContainerPath(dir); inMount {
+		return dir, true
+	}
+	infos, err := s.docker.List(ctx)
+	if err != nil {
+		log.Printf("api: compose project folder %s: %v", dir, err)
+		return dir, true
+	}
+	files := composeFiles(dir, labels)
+	for _, c := range infos {
+		for _, m := range c.Mounts {
+			host, ok := seenFromHost(dir, m)
+			if !ok {
+				continue
+			}
+			for _, f := range files {
+				hostFile, ok := seenFromHost(f, m)
+				if !ok {
+					continue
+				}
+				if cp, inMount := s.toContainerPath(hostFile); inMount {
+					if _, err := os.Stat(cp); err == nil { //nolint:gosec // G703: cp is a mount source translated under the host mount and only checked for existence
+						return host, true
+					}
+				}
+			}
+		}
+	}
+	return dir, true
+}
+
+// composeFiles lists where a stack's compose file can be. Dockhand pipes the
+// file into Compose, which then labels it "-", so the names Compose looks for
+// in the project folder stand in.
+func composeFiles(dir string, labels map[string]string) []string {
+	var out []string
+	for f := range strings.SplitSeq(labels["com.docker.compose.project.config_files"], ",") {
+		if f = strings.TrimSpace(f); path.IsAbs(f) {
+			out = append(out, path.Clean(f))
+		}
+	}
+	if len(out) > 0 {
+		return out
+	}
+	for _, name := range []string{"compose.yaml", "compose.yml", "docker-compose.yml", "docker-compose.yaml"} {
+		out = append(out, path.Join(dir, name))
+	}
+	return out
+}
+
+// seenFromHost maps p, a path inside a container, to the host through one of
+// its bind mounts.
+func seenFromHost(p string, m dockercli.MountPoint) (string, bool) {
+	dest := path.Clean(m.Destination)
+	if p != dest && !strings.HasPrefix(p, dest+"/") {
+		return "", false
+	}
+	return path.Join(m.Source, strings.TrimPrefix(p, dest)), true
 }
 
 // stackDirsFor maps each compose project among the named containers to its
@@ -53,7 +126,7 @@ func (s *Service) stackDirsFor(ctx context.Context, names []string) map[string]s
 			log.Printf("api: stack backup: inspect %s: %v", name, err)
 			continue
 		}
-		project, dir, ok := s.stackDirFor(in)
+		project, dir, ok := s.stackDirFor(ctx, in)
 		if !ok {
 			continue
 		}

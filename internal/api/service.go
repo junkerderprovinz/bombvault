@@ -6397,7 +6397,7 @@ func (s *Service) resolveAppdataPaths(name string, in model.Inspect) []string {
 // at /mnt. An anonymous volume stays out, and so does a mount that one of the
 // container's exclude lines covers by either of its paths: the user has said
 // that folder need not be backed up.
-func (s *Service) dataOutsideHostMount(in model.Inspect, excludes []string) []string {
+func (s *Service) dataOutsideHostMount(ctx context.Context, in model.Inspect, excludes []string) []string {
 	var out []string
 	seen := map[string]bool{}
 	for _, m := range s.unreachableDataMounts(in) {
@@ -6412,11 +6412,10 @@ func (s *Service) dataOutsideHostMount(in model.Inspect, excludes []string) []st
 			out = append(out, src)
 		}
 	}
-	if project, ok := composeProjectDataDir(in.Config.Labels); ok && !isSystemPath(path.Clean(project)) {
-		clean := path.Clean(project)
-		_, inHostData := s.toContainerPath(clean)
-		if !inHostData && !seen[clean] && !slices.ContainsFunc(excludes, func(line string) bool { return s.excludeNamesHostSource(line, clean) }) {
-			out = append(out, clean)
+	if folder, ok := s.projectFolder(ctx, in.Config.Labels); ok && !isSystemPath(folder) {
+		_, inHostData := s.toContainerPath(folder)
+		if !inHostData && !seen[folder] && !slices.ContainsFunc(excludes, func(line string) bool { return s.excludeNamesHostSource(line, folder) }) {
+			out = append(out, folder)
 		}
 	}
 	sort.Strings(out)
@@ -7343,7 +7342,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	}
 	var window *time.Duration
 	runs := &runIDRecorder{Runs: runsAdapter{st: s.store, ctx: ctx, svc: s, cancelKey: "container:" + name}}
-	dataOutside, dataMissing := s.partitionDataOutside(s.dataOutsideHostMount(in, tg.Excludes))
+	dataOutside, dataMissing := s.partitionDataOutside(s.dataOutsideHostMount(ctx, in, tg.Excludes))
 	sum, err := backup.BackupContainer(bctx, backup.BackupDeps{
 		ContainerRef:         name,
 		FormerNames:          aliasOldNames(aliases),
