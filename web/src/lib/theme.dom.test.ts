@@ -21,6 +21,18 @@ async function theme() {
   return import("./theme");
 }
 
+const oledPainted = () => document.documentElement.hasAttribute("data-oled");
+
+/** The Android app's message port and what it says about the phone, as the app sets them before a page runs. */
+function inApp(oled: boolean): string[] {
+  const posted: string[] = [];
+  Object.assign(window, {
+    bombvaultApp: { postMessage: (m: string) => posted.push(m), addEventListener: () => {}, removeEventListener: () => {} },
+    bombvaultDevice: { oled },
+  });
+  return posted;
+}
+
 const painted = () => document.documentElement.getAttribute("data-theme");
 const chrome = () => document.querySelector('meta[name="theme-color"]')?.getAttribute("content");
 
@@ -43,7 +55,10 @@ beforeEach(() => {
 
 afterEach(() => {
   document.documentElement.removeAttribute("data-theme");
+  document.documentElement.removeAttribute("data-oled");
   document.head.innerHTML = "";
+  delete (window as { bombvaultApp?: unknown }).bombvaultApp;
+  delete (window as { bombvaultDevice?: unknown }).bombvaultDevice;
 });
 
 describe("the stored theme", () => {
@@ -141,5 +156,76 @@ describe("a theme that was chosen", () => {
     setTheme("dark");
     deviceTurns(false);
     expect(painted()).toBe("dark");
+  });
+});
+
+describe("OLED", () => {
+  it("is off in a browser that never chose it", async () => {
+    const { applyStoredTheme, getOled } = await theme();
+    applyStoredTheme();
+    expect(getOled()).toBe(false);
+    expect(oledPainted()).toBe(false);
+  });
+
+  it("puts the dark theme and the browser's chrome on black, and is kept in this browser", async () => {
+    localStorage.setItem(KEY, "dark");
+    const { applyStoredTheme, setOled } = await theme();
+    applyStoredTheme();
+    setOled(true);
+    expect(oledPainted()).toBe(true);
+    expect(chrome()).toBe("#000000");
+    expect(localStorage.getItem("bv-oled")).toBe("1");
+
+    setOled(false);
+    expect(oledPainted()).toBe(false);
+    expect(chrome()).toBe("#161616");
+    expect(localStorage.getItem("bv-oled")).toBeNull();
+  });
+
+  it("stays on through the light theme, which it leaves as it is", async () => {
+    localStorage.setItem("bv-oled", "1");
+    const { applyStoredTheme } = await theme();
+    applyStoredTheme();
+    expect(painted()).toBe("light");
+    expect(oledPainted()).toBe(true);
+    expect(chrome()).toBe("#f4f4f4");
+
+    deviceTurns(true);
+    expect(chrome()).toBe("#000000");
+  });
+
+  it("takes the phone's choice inside the app over this page's own storage", async () => {
+    localStorage.setItem(KEY, "dark");
+    localStorage.setItem("bv-oled", "1");
+    inApp(false);
+    const { applyStoredTheme, getOled } = await theme();
+    applyStoredTheme();
+    expect(getOled()).toBe(false);
+    expect(chrome()).toBe("#161616");
+  });
+
+  it("hands a change inside the app to the phone, which keeps it for every server", async () => {
+    localStorage.setItem(KEY, "dark");
+    const posted = inApp(false);
+    const { applyStoredTheme, getOled, setOled } = await theme();
+    applyStoredTheme();
+    setOled(true);
+    expect(getOled()).toBe(true);
+    expect(posted.map((m) => JSON.parse(m))).toContainEqual({ op: "oled", on: true });
+    expect(chrome()).toBe("#000000");
+  });
+});
+
+describe("whether dark shows", () => {
+  it("tells a watcher when the painted theme turns", async () => {
+    const { applyStoredTheme, darkShowing, watchDarkShowing } = await theme();
+    applyStoredTheme();
+    expect(darkShowing()).toBe(false);
+    const seen: boolean[] = [];
+    const stop = watchDarkShowing(() => seen.push(darkShowing()));
+    deviceTurns(true);
+    await Promise.resolve();
+    expect(seen).toEqual([true]);
+    stop();
   });
 });

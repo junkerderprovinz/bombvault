@@ -321,6 +321,8 @@ const tr: Partial<Translations> = {
   "settings.schedule": "Zamanlama",
   "settings.language": "Dil",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Koyu tema göründüğü sürece OLED ve AMOLED ekranlar için gerçek siyah. Her cihaz bu seçimi kendisi için saklar.",
   "settings.save": "Kaydet",
   "settings.saved": "Ayarlar kaydedildi",
   "settings.error": "Ayarlar kaydedilemedi",
@@ -1156,6 +1158,7 @@ const tr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kurtarma kiti, hedeflerin kullandığı tüm kimlik bilgilerini taşır ve yeni bir sunucu bunları Kimlik bilgilerini kaydet ile geri okur.",
   "whatsNew.keepNow": "Bir hedefin Ne kadar saklanır kartındaki Şimdi uygula, kuralın artık saklamadığı yedekleri gösterir ve kaldırır. Bir sonraki yedeği beklemen gerekmez.",
   "whatsNew.deleteNoPassword": "Yedekleri silmek ve budamak giriş parolası olmadan da çalışır. Bir parola ayarlarsan önce bu sunucuda oturum açarsın.",
+  "whatsNew.oled": "Tema altındaki OLED, koyu tema her göründüğünde, cihazı izlediğinde de, OLED ve AMOLED ekranlara gerçek siyah verir. Her cihaz kendi seçimini saklar.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics'i yayınla",

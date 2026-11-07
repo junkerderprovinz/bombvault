@@ -321,6 +321,8 @@ const hu: Partial<Translations> = {
   "settings.schedule": "Ütemezés",
   "settings.language": "Nyelv",
   "settings.theme": "Téma",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Valódi fekete OLED és AMOLED kijelzőkhöz, amíg a sötét téma látszik. Minden eszköz magának jegyzi meg a választást.",
   "settings.save": "Mentés",
   "settings.saved": "Beállítások mentve",
   "settings.error": "Hiba a beállítások mentésekor",
@@ -1149,6 +1151,7 @@ const hu: Partial<Translations> = {
   "whatsNew.kitSignIns": "A Helyreállítási csomag tartalmazza az összes hozzáférési adatot, amelyet a célok használnak, és egy új szerver a Hozzáférési adatok mentése gombbal olvassa vissza őket.",
   "whatsNew.keepNow": "A cél Meddig őrizze meg kártyáján az Alkalmazás most megmutatja, mely mentéseket nem tartja meg többé a szabály, és eltávolítja őket. Nem kell megvárnod a következő mentést.",
   "whatsNew.deleteNoPassword": "A mentések törlése és ritkítása bejelentkezési jelszó nélkül is működik. Ha beállítasz egyet, előbb bejelentkezel ezen a szerveren.",
+  "whatsNew.oled": "A Téma alatti OLED valódi feketét ad az OLED és AMOLED kijelzőknek, valahányszor a sötét téma látszik, akkor is, ha az eszközt követi. Minden eszköz a saját választását jegyzi meg.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics közzététele",

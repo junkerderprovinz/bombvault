@@ -321,6 +321,8 @@ const es: Partial<Translations> = {
   "settings.schedule": "Calendario",
   "settings.language": "Idioma",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Negro de verdad para pantallas OLED y AMOLED mientras se ve el tema oscuro. Cada dispositivo guarda la elección para sí.",
   "settings.save": "Guardar",
   "settings.saved": "Ajustes guardados",
   "settings.error": "Error al guardar los ajustes",
@@ -1164,6 +1166,7 @@ const es: Partial<Translations> = {
   "whatsNew.kitSignIns": "El Kit de recuperación lleva todas las credenciales que usan los destinos, y un servidor nuevo las vuelve a leer con Guardar credenciales.",
   "whatsNew.keepNow": "Aplicar ahora en la tarjeta Cuánto tiempo conservar de un destino muestra qué copias ya no conserva la regla y las elimina. No hace falta esperar a la próxima copia.",
   "whatsNew.deleteNoPassword": "Borrar y purgar copias funciona sin contraseña de acceso. Si defines una, primero inicias sesión en este servidor.",
+  "whatsNew.oled": "OLED, debajo de Tema, da negro de verdad a las pantallas OLED y AMOLED siempre que se ve el tema oscuro, también cuando sigue al dispositivo. Cada dispositivo guarda su propia elección.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponer /metrics",

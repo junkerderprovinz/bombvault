@@ -321,6 +321,8 @@ const fi: Partial<Translations> = {
   "settings.schedule": "Aikataulu",
   "settings.language": "Kieli",
   "settings.theme": "Teema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Aito musta OLED- ja AMOLED-näytöille, kun tumma teema on näkyvissä. Jokainen laite muistaa valinnan itse.",
   "settings.save": "Tallenna",
   "settings.saved": "Asetukset tallennettu",
   "settings.error": "Virhe asetusten tallennuksessa",
@@ -1156,6 +1158,7 @@ const fi: Partial<Translations> = {
   "whatsNew.kitSignIns": "Palautuspaketti sisältää kaikki tunnukset, joita kohteet käyttävät, ja uusi palvelin lukee ne takaisin painikkeella Tallenna tunnukset.",
   "whatsNew.keepNow": "Kohteen Kuinka kauan säilytetään -kortin Käytä nyt näyttää, mitä varmuuskopioita sääntö ei enää säilytä, ja poistaa ne. Seuraavaa varmuuskopiota ei tarvitse odottaa.",
   "whatsNew.deleteNoPassword": "Varmuuskopioiden poistaminen ja karsiminen toimii ilman kirjautumissalasanaa. Jos salasana on asetettu, tähän palvelimeen kirjaudutaan ensin.",
+  "whatsNew.oled": "Teeman alla oleva OLED antaa OLED- ja AMOLED-näytöille aidon mustan aina, kun tumma teema näkyy, myös kun se seuraa laitetta. Jokainen laite muistaa oman valintansa.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Tarjoa /metrics",

@@ -633,6 +633,8 @@ const hr: Partial<Translations> = {
   "settings.schedule": "Raspored",
   "settings.language": "Jezik",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Prava crna za OLED i AMOLED zaslone dok se prikazuje tamna tema. Svaki uređaj pamti izbor za sebe.",
   "settings.save": "Spremi",
   "settings.saved": "Postavke spremljene",
   "settings.error": "Greška pri spremanju",
@@ -837,6 +839,7 @@ const hr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Komplet za oporavak sadrži sve pristupne podatke koje odredišta koriste, a novi poslužitelj ih ponovno učitava gumbom Spremi pristupne podatke.",
   "whatsNew.keepNow": "Primijeni sada na kartici Koliko dugo zadržati odredišta pokazuje koje sigurnosne kopije pravilo više ne zadržava i uklanja ih. Ne morate čekati sljedeću sigurnosnu kopiju.",
   "whatsNew.deleteNoPassword": "Brisanje i čišćenje sigurnosnih kopija radi bez lozinke za prijavu. Ako je postavite, najprije se prijavite na ovom poslužitelju.",
+  "whatsNew.oled": "OLED ispod Teme daje pravu crnu OLED i AMOLED zaslonima kad god se prikazuje tamna tema, i kad prati uređaj. Svaki uređaj pamti vlastiti izbor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",

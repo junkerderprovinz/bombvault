@@ -321,6 +321,8 @@ const zh: Partial<Translations> = {
   "settings.schedule": "计划",
   "settings.language": "语言",
   "settings.theme": "主题",
+  "settings.oled": "OLED",
+  "settings.oledHint": "深色主题显示时，为 OLED 和 AMOLED 屏幕使用纯黑。每台设备各自记住这个选择。",
   "settings.save": "保存",
   "settings.saved": "设置已保存",
   "settings.error": "保存设置出错",
@@ -1147,6 +1149,7 @@ const zh: Partial<Translations> = {
   "whatsNew.kitSignIns": "恢复工具包包含目标使用的所有凭据，新服务器用保存凭据把它们读回来。",
   "whatsNew.keepNow": "目标的保留多久卡片上的立即应用会列出规则不再保留的备份并将其删除，无需等到下一次备份。",
   "whatsNew.deleteNoPassword": "删除和清理备份无需登录密码。如果设置了密码，仍需先在这台服务器上登录。",
+  "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "暴露 /metrics",

@@ -725,6 +725,8 @@ export const en = {
   "settings.schedule": "Schedule",
   "settings.language": "Language",
   "settings.theme": "Theme",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Gives true black for OLED and AMOLED screens while the dark theme shows. This device keeps the choice for itself.",
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
@@ -931,6 +933,7 @@ export const en = {
   "whatsNew.kitSignIns": "The recovery kit carries every sign-in a storage location uses, and a new server reads them back with Save sign-ins.",
   "whatsNew.keepNow": "Apply now on a storage location's How long to keep card shows which backups the rule no longer keeps and removes them. You don't have to wait for the next backup.",
   "whatsNew.deleteNoPassword": "Deleting and pruning backups works without a login password. If you set one, you still sign in on this server first.",
+  "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expose /metrics",
@@ -6036,6 +6039,8 @@ export const de: Translations = {
   "settings.schedule": "Zeitplan",
   "settings.language": "Sprache",
   "settings.theme": "Design",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Echtes Schwarz für OLED- und AMOLED-Bildschirme, solange das dunkle Design zu sehen ist. Jedes Gerät merkt sich die Wahl für sich.",
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
@@ -6240,6 +6245,7 @@ export const de: Translations = {
   "whatsNew.kitSignIns": "Das Recovery-Kit enthält alle Zugangsdaten, die die Speicherorte nutzen, und ein neuer Server liest sie mit Zugangsdaten speichern wieder ein.",
   "whatsNew.keepNow": "Jetzt anwenden auf der Karte Wie lange aufheben eines Speicherorts zeigt, welche Sicherungen die Regel nicht mehr behält, und entfernt sie. Du musst nicht auf die nächste Sicherung warten.",
   "whatsNew.deleteNoPassword": "Sicherungen löschen und aufräumen geht ohne Login-Passwort. Hast du eines gesetzt, meldest du dich vorher an diesem Server an.",
+  "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics bereitstellen",

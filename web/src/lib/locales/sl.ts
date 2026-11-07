@@ -633,6 +633,8 @@ const sl: Partial<Translations> = {
   "settings.schedule": "Urnik",
   "settings.language": "Jezik",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Prava črna za zaslone OLED in AMOLED, dokler je prikazana temna tema. Vsaka naprava si izbiro zapomni zase.",
   "settings.save": "Shrani",
   "settings.saved": "Nastavitve shranjene",
   "settings.error": "Napaka pri shranjevanju nastavitev",
@@ -837,6 +839,7 @@ const sl: Partial<Translations> = {
   "whatsNew.kitSignIns": "Obnovitveni komplet vsebuje vse poverilnice, ki jih uporabljajo cilji, nov strežnik pa jih znova prebere z gumbom Shrani poverilnice.",
   "whatsNew.keepNow": "Uporabi zdaj na kartici Kako dolgo hraniti pri cilju pokaže, katerih varnostnih kopij pravilo ne hrani več, in jih odstrani. Ni ti treba čakati na naslednjo varnostno kopijo.",
   "whatsNew.deleteNoPassword": "Brisanje in čiščenje varnostnih kopij deluje brez gesla za prijavo. Če ga nastaviš, se najprej prijaviš na tem strežniku.",
+  "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izpostavi /metrics",

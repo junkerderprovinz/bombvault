@@ -321,6 +321,8 @@ const da: Partial<Translations> = {
   "settings.schedule": "Tidsplan",
   "settings.language": "Sprog",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Ægte sort til OLED- og AMOLED-skærme, så længe det mørke tema vises. Hver enhed husker valget for sig selv.",
   "settings.save": "Gem",
   "settings.saved": "Indstillinger gemt",
   "settings.error": "Fejl ved gemning af indstillinger",
@@ -1156,6 +1158,7 @@ const da: Partial<Translations> = {
   "whatsNew.kitSignIns": "Gendannelseskittet indeholder alle de adgangsoplysninger, destinationerne bruger, og en ny server læser dem ind igen med Gem adgangsoplysninger.",
   "whatsNew.keepNow": "Anvend nu på kortet Hvor længe der gemmes for en destination viser, hvilke sikkerhedskopier reglen ikke længere beholder, og fjerner dem. Du behøver ikke vente på den næste sikkerhedskopi.",
   "whatsNew.deleteNoPassword": "Sletning og oprydning af sikkerhedskopier virker uden en login-adgangskode. Har du angivet en, logger du først ind på denne server.",
+  "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",

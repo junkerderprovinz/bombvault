@@ -633,6 +633,8 @@ const id: Partial<Translations> = {
   "settings.schedule": "Jadwal",
   "settings.language": "Bahasa",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Hitam pekat untuk layar OLED dan AMOLED selama tema gelap tampil. Setiap perangkat menyimpan pilihan ini untuk dirinya sendiri.",
   "settings.save": "Simpan",
   "settings.saved": "Pengaturan disimpan",
   "settings.error": "Gagal menyimpan",
@@ -837,6 +839,7 @@ const id: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kit pemulihan membawa semua kredensial yang dipakai tujuan, dan server baru membacanya kembali dengan Simpan kredensial.",
   "whatsNew.keepNow": "Terapkan sekarang di kartu Berapa lama disimpan pada sebuah tujuan menunjukkan cadangan mana yang tidak lagi disimpan aturan dan menghapusnya. Anda tidak perlu menunggu cadangan berikutnya.",
   "whatsNew.deleteNoPassword": "Menghapus dan memangkas cadangan bisa dilakukan tanpa kata sandi login. Jika Anda mengaturnya, Anda masuk dulu di server ini.",
+  "whatsNew.oled": "OLED di bawah Tema memberi hitam pekat pada layar OLED dan AMOLED setiap kali tema gelap tampil, juga saat tema mengikuti perangkat. Setiap perangkat menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ekspos /metrics",

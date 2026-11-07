@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { AccentCard, IconResetArrow } from "../AccentCard";
-import { ThemePicker } from "../ThemeCard";
+import { OledRow, ThemePicker } from "../ThemeCard";
 import { LanguagePicker } from "../LanguageCard";
 import { Button } from "../../../components/Button";
 import {
@@ -169,6 +169,9 @@ export function LookPage() {
           <SettingRow label={t("settings.theme")}>
             <ThemePicker t={t} />
           </SettingRow>
+          <div className="py-3">
+            <OledRow t={t} />
+          </div>
           <SettingRow label={t("settings.shape")} hint={t("settings.shapeHint")}>
             <Selector
               items={[...SHAPES, ...(leafFound || shape === "leaf" ? (["leaf"] as const) : [])].map((s) => ({

@@ -633,6 +633,8 @@ const lt: Partial<Translations> = {
   "settings.schedule": "Tvarkaraštis",
   "settings.language": "Kalba",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Tikra juoda OLED ir AMOLED ekranams, kol rodoma tamsi tema. Kiekvienas įrenginys pasirinkimą įsimena sau.",
   "settings.save": "Išsaugoti",
   "settings.saved": "Nustatymai išsaugoti",
   "settings.error": "Klaida išsaugant",
@@ -837,6 +839,7 @@ const lt: Partial<Translations> = {
   "whatsNew.kitSignIns": "Atkūrimo rinkinyje yra visi prisijungimai, kuriuos naudoja paskirties vietos, o naujas serveris juos vėl nuskaito mygtuku Išsaugoti prisijungimo duomenis.",
   "whatsNew.keepNow": "Taikyti dabar paskirties vietos kortelėje Kiek laiko saugoti parodo, kurių atsarginių kopijų taisyklė nebesaugo, ir jas pašalina. Nereikia laukti kitos atsarginės kopijos.",
   "whatsNew.deleteNoPassword": "Atsarginių kopijų trynimas ir valymas veikia be prisijungimo slaptažodžio. Jei jį nustatai, pirma prisijungi prie šio serverio.",
+  "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Rodyti /metrics",

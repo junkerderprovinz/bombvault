@@ -39,6 +39,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.JavaScriptReplyProxy
+import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +102,22 @@ class MainActivity : ComponentActivity() {
 
     private val pageScript by lazy { assets.open("page.js").bufferedReader().use { it.readText() } }
 
+    /** page.js as the WebView runs it before every page, with the screen's look in front. */
+    private var startScript: ScriptHandler? = null
+
+    /** The look the pages were last given, to tell a change from none. */
+    private var told: String? = null
+
+    /** The server page on screen that asked to hear of the screen's look. */
+    private var serverPage: JavaScriptReplyProxy? = null
+
+    private val look by lazy { getSharedPreferences("look", MODE_PRIVATE) }
+
+    /** True black for the dark theme, a matter of this phone's screen rather than of a server. */
+    private var oled: Boolean
+        get() = look.getBoolean("oled", false)
+        set(on) = look.edit().putBoolean("oled", on).apply()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         servers = Servers(this)
@@ -147,7 +164,7 @@ class MainActivity : ComponentActivity() {
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
-        paintBars(if (night()) DARK else LIGHT)
+        paintBars(ground())
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -190,7 +207,31 @@ class MainActivity : ComponentActivity() {
         WebViewCompat.addWebMessageListener(this, "bombvaultApp", setOf("*")) { _, message, origin, isMainFrame, reply ->
             if (isMainFrame) onMessage(JSONObject(message.data ?: "{}"), origin.toString().trimEnd('/'), reply)
         }
-        WebViewCompat.addDocumentStartJavaScript(this, pageScript, setOf("*"))
+        startScript = runAtStart(this)
+    }
+
+    /**
+     * Registers page.js on [view] behind window.bombvaultDevice, so every page,
+     * the launcher and each server's alike, paints the screen's look in its
+     * first frame. It reaches the next page that loads.
+     */
+    private fun runAtStart(view: WebView): ScriptHandler {
+        told = device().toString()
+        return WebViewCompat.addDocumentStartJavaScript(view, "window.bombvaultDevice = $told;\n$pageScript", setOf("*"))
+    }
+
+    /** What belongs to this phone's screen rather than to a server. */
+    private fun device(): JSONObject = JSONObject().put("oled", oled)
+
+    private fun deviceMessage() = device().put("op", "device").toString()
+
+    /** Hands a changed look to the pages still to load, and to the launcher and the server page on screen. */
+    private fun tellDevice() {
+        if (device().toString() == told) return
+        startScript?.remove()
+        startScript = runAtStart(web)
+        launcher?.postMessage(deviceMessage())
+        serverPage?.postMessage(deviceMessage())
     }
 
     /** Puts a fresh WebView in the place of [gone], whose renderer is gone and which cannot be used again. */
@@ -202,6 +243,7 @@ class MainActivity : ComponentActivity() {
         web = newWebView()
         column.addView(web, at, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         launcher = null
+        serverPage = null
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -225,6 +267,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // The camera may have been allowed on the settings page in between.
         pushState()
+        tellDevice()
         if (current == null) discovery.start()
     }
 
@@ -327,6 +370,11 @@ class MainActivity : ComponentActivity() {
             "body" -> if (relayMember(Uri.parse(origin).host) != null) pages.body(msg.getString("ticket"), msg.getString("data"))
             "file" -> saveFile(msg.getString("name"), msg.optString("type").ifEmpty { null }, msg.getString("data"))
             "bars" -> parseColor(msg.optString("color"))?.let { if (server.id == current?.id) paintBars(it) }
+            "device" -> if (server.id == current?.id) {
+                serverPage = reply
+                reply.postMessage(deviceMessage())
+            }
+            "oled" -> if (server.id == current?.id) setOled(msg.optBoolean("on"))
             // Leaves the way Back from a server's first page does, so its history goes with it.
             "home" -> if (server.id == current?.id) showLauncher()
         }
@@ -337,6 +385,8 @@ class MainActivity : ComponentActivity() {
             "state" -> pushState()
             // The launcher's look can differ from the phone's dark or light.
             "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
+            "device" -> launcher?.postMessage(deviceMessage())
+            "oled" -> setOled(msg.optBoolean("on"))
             "save" -> {
                 val s = msg.getJSONObject("server")
                 val saved = servers.save(s.optString("id").ifEmpty { null }, s.getString("name"), s.getString("url"))
@@ -412,6 +462,11 @@ class MainActivity : ComponentActivity() {
                 launcher?.postMessage(JSONObject().put("op", "pasted").put("ticket", msg.getInt("ticket")).put("text", text).toString())
             }
         }
+    }
+
+    private fun setOled(on: Boolean) {
+        oled = on
+        tellDevice()
     }
 
     private fun cameraAllowed() =
@@ -506,6 +561,13 @@ class MainActivity : ComponentActivity() {
     private fun night() =
         resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
+    /** The page's ground before the page says it, for the phone's own dark or light. */
+    private fun ground() = when {
+        !night() -> LIGHT
+        oled -> OLED
+        else -> DARK
+    }
+
     private inner class Client : WebViewClient() {
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
             val member = relayMember(request.url.host) ?: return loader.shouldInterceptRequest(request.url)
@@ -532,6 +594,7 @@ class MainActivity : ComponentActivity() {
         override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
             if (url.startsWith(LAUNCHER_ORIGIN)) {
                 pages.shown = null
+                serverPage = null
                 if (current != null) {
                     screen.launcher()
                     discovery.start()
@@ -638,10 +701,11 @@ class MainActivity : ComponentActivity() {
         // A server at home answers its own address well within this.
         private const val HEAD_START_MS = 1000L
 
-        // The ground of BombVault's dark and light themes, the same values its
-        // theme-color meta carries.
+        // The ground of BombVault's dark, light and OLED themes, the same values
+        // its theme-color meta carries.
         private val DARK = Color.parseColor("#161616")
         private val LIGHT = Color.parseColor("#f4f4f4")
+        private val OLED = Color.parseColor("#000000")
 
         // The muted text of either theme, for the relay line on its ground.
 

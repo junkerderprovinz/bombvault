@@ -321,6 +321,8 @@ const ko: Partial<Translations> = {
   "settings.schedule": "일정",
   "settings.language": "언어",
   "settings.theme": "테마",
+  "settings.oled": "OLED",
+  "settings.oledHint": "어두운 테마가 보이는 동안 OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 선택은 기기마다 따로 기억합니다.",
   "settings.save": "저장",
   "settings.saved": "설정이 저장되었습니다",
   "settings.error": "설정 저장 오류",
@@ -1139,6 +1141,7 @@ const ko: Partial<Translations> = {
   "whatsNew.kitSignIns": "복구 키트에는 대상이 쓰는 모든 자격 증명이 들어 있으며, 새 서버는 자격 증명 저장으로 이를 다시 읽어 들입니다.",
   "whatsNew.keepNow": "대상의 보존 기간 카드에 있는 지금 적용은 규칙이 더 이상 보존하지 않는 백업을 보여 주고 삭제합니다. 다음 백업까지 기다릴 필요가 없습니다.",
   "whatsNew.deleteNoPassword": "백업 삭제와 정리는 로그인 비밀번호 없이도 됩니다. 비밀번호를 설정했다면 먼저 이 서버에 로그인합니다.",
+  "whatsNew.oled": "테마 아래의 OLED는 어두운 테마가 보일 때마다, 기기를 따를 때도, OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 각 기기가 자신의 선택을 기억합니다.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics 노출",

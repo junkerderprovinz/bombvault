@@ -633,6 +633,8 @@ const eu: Partial<Translations> = {
   "settings.schedule": "Egutegia",
   "settings.language": "Hizkuntza",
   "settings.theme": "Itxura",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Benetako beltza OLED eta AMOLED pantailetarako, itxura iluna ikusten den bitartean. Gailu bakoitzak beretzat gordetzen du aukera.",
   "settings.save": "Gorde",
   "settings.saved": "Ezarpenak gordeta",
   "settings.error": "Errorea gordetzean",
@@ -837,6 +839,7 @@ const eu: Partial<Translations> = {
   "whatsNew.kitSignIns": "Berreskuratze-kitak helmugek erabiltzen dituzten kredentzial guztiak ditu, eta zerbitzari berri batek berriro irakurtzen ditu Gorde kredentzialak botoiarekin.",
   "whatsNew.keepNow": "Helmuga baten Zenbat denbora mantendu txarteleko Aplikatu orain aukerak erakusten du zein babeskopia ez dituen arauak gehiago gordetzen, eta kendu egiten ditu. Ez duzu hurrengo babeskopiaren zain egon beharrik.",
   "whatsNew.deleteNoPassword": "Babeskopiak ezabatzeak eta garbitzeak saioa hasteko pasahitzik gabe funtzionatzen du. Bat ezartzen baduzu, lehenik zerbitzari honetan hasiko duzu saioa.",
+  "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Erakutsi /metrics",

@@ -184,6 +184,7 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
+  resting,
   shakeNonce,
   pulseNonce,
   hueIndex,
@@ -198,6 +199,9 @@ export function ToggleRow({
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  /** Dims a switch that has no effect right now but keeps its state, and its
+   *  click, for when it does. */
+  resting?: boolean;
   /** Bump to replay the .glim-shake error animation once. It becomes part of
    *  the Toggle's key, so a new value remounts the switch and the animation
    *  restarts even when the same row fails twice in a row. */
@@ -217,7 +221,7 @@ export function ToggleRow({
   // The switch dims itself (Toggle.tsx), so only the label needs `dim`. A
   // plain <div> rather than <fieldset disabled>: around a single control a
   // fieldset only adds an unnamed group to the accessibility tree.
-  const dim = disabled ? "opacity-50" : "";
+  const dim = disabled || resting ? "opacity-50" : "";
   const hueOn = hueIndex !== undefined;
   // shakeNonce and pulseNonce count independently, so the key combines both;
   // either alone would stop changing once the other one fired. It stays
@@ -246,7 +250,7 @@ export function ToggleRow({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className={`mt-0.5 ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
+        className={`mt-0.5 ${resting ? "opacity-50" : ""} ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
       />
     </div>
   );

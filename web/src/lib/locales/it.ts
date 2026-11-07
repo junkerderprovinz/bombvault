@@ -321,6 +321,8 @@ const it: Partial<Translations> = {
   "settings.schedule": "Calendario",
   "settings.language": "Lingua",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Nero vero per gli schermi OLED e AMOLED mentre si vede il tema scuro. Ogni dispositivo tiene la scelta per sé.",
   "settings.save": "Salva",
   "settings.saved": "Impostazioni salvate",
   "settings.error": "Errore durante il salvataggio",
@@ -1148,6 +1150,7 @@ const it: Partial<Translations> = {
   "whatsNew.kitSignIns": "Il Kit di ripristino contiene tutte le credenziali usate dalle destinazioni, e un nuovo server le rilegge con Salva le credenziali.",
   "whatsNew.keepNow": "Applica ora sulla scheda Per quanto tempo conservare di una destinazione mostra quali backup la regola non conserva più e li rimuove. Non devi aspettare il prossimo backup.",
   "whatsNew.deleteNoPassword": "Eliminare e potare i backup funziona senza password di accesso. Se ne imposti una, prima accedi a questo server.",
+  "whatsNew.oled": "OLED, sotto Tema, dà un nero vero agli schermi OLED e AMOLED ogni volta che si vede il tema scuro, anche quando segue il dispositivo. Ogni dispositivo tiene la propria scelta.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Esponi /metrics",

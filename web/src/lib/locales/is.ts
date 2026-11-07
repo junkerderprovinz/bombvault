@@ -633,6 +633,8 @@ const is: Partial<Translations> = {
   "settings.schedule": "Tímaáætlun",
   "settings.language": "Tungumál",
   "settings.theme": "Þema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Alvöru svart fyrir OLED- og AMOLED-skjái á meðan dökka þemað sést. Hvert tæki geymir valið fyrir sig.",
   "settings.save": "Vista",
   "settings.saved": "Stillingar vistaðar",
   "settings.error": "Villa við vistun",
@@ -837,6 +839,7 @@ const is: Partial<Translations> = {
   "whatsNew.kitSignIns": "Endurheimtarpakkinn geymir allar innskráningar sem áfangastaðirnir nota, og nýr þjónn les þær aftur inn með Vista aðgangsupplýsingar.",
   "whatsNew.keepNow": "Nota núna á spjaldinu Hve lengi á að geyma fyrir áfangastað sýnir hvaða afrit reglan geymir ekki lengur og fjarlægir þau. Þú þarft ekki að bíða eftir næsta afriti.",
   "whatsNew.deleteNoPassword": "Það er hægt að eyða og grisja afrit án innskráningarlykilorðs. Ef þú setur eitt, skráirðu þig fyrst inn á þennan þjón.",
+  "whatsNew.oled": "OLED undir Þema gefur OLED- og AMOLED-skjám alvöru svart í hvert sinn sem dökka þemað sést, líka þegar það fylgir tækinu. Hvert tæki geymir sitt eigið val.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sýna /metrics",

@@ -65,8 +65,10 @@ const BANNED_VIEWPORT_HEIGHTS = ["100vh", "min-h-screen", "h-screen"];
 // which is what makes a plain template literal safe here.)
 const EXPECTED_FOUC_SCRIPT = `    <script>
       (function () {
-        var THEME_COLOR = { dark: "#161616", light: "#f4f4f4" };
         try {
+          var device = window.bombvaultApp && window.bombvaultDevice;
+          var oled = device ? device.oled === true : localStorage.getItem("bv-oled") === "1";
+          var THEME_COLOR = { dark: oled ? "#000000" : "#161616", light: "#f4f4f4" };
           var stored = localStorage.getItem("bv-theme");
           var resolved =
             stored === "dark" || stored === "light"
@@ -75,6 +77,7 @@ const EXPECTED_FOUC_SCRIPT = `    <script>
                 ? "dark"
                 : "light";
           document.documentElement.setAttribute("data-theme", resolved);
+          if (oled) document.documentElement.setAttribute("data-oled", "");
           document
             .querySelector('meta[name="theme-color"]')
             ?.setAttribute("content", THEME_COLOR[resolved]);

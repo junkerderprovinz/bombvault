@@ -7,6 +7,7 @@ import "@fontsource-variable/noto-sans-thai";
 import "../index.css";
 import { I18nProvider, applyStoredLanguage } from "../lib/i18n";
 import { applyStoredTheme } from "../lib/theme";
+import { watchDeviceLook } from "../lib/deviceLook";
 import { applyStoredAccent } from "../lib/accent";
 import { applyStoredShape } from "../lib/shape";
 import { applyStoredRainbow } from "../lib/appearance";
@@ -22,6 +23,7 @@ document.documentElement.dataset.app = "";
 // The look the settings page keeps, or the followed server's, before the
 // first paint; on a fresh install the defaults.
 applyStoredTheme();
+watchDeviceLook();
 applyStoredLanguage();
 applyStoredAccent();
 applyStoredRainbow();

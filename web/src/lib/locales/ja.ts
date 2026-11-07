@@ -321,6 +321,8 @@ const ja: Partial<Translations> = {
   "settings.schedule": "スケジュール",
   "settings.language": "言語",
   "settings.theme": "テーマ",
+  "settings.oled": "OLED",
+  "settings.oledHint": "ダークテーマが表示されているあいだ、OLED と AMOLED の画面を真っ黒にします。選択はデバイスごとに覚えます。",
   "settings.save": "保存",
   "settings.saved": "設定を保存しました",
   "settings.error": "保存エラー",
@@ -1139,6 +1141,7 @@ const ja: Partial<Translations> = {
   "whatsNew.kitSignIns": "リカバリーキットには保存先が使うすべての認証情報が入っていて、新しいサーバーは「認証情報を保存」でそれを読み戻します。",
   "whatsNew.keepNow": "保存先の「保持期間」カードにある「今すぐ適用」で、ルールが保持しなくなったバックアップを確認して削除できます。次のバックアップを待つ必要はありません。",
   "whatsNew.deleteNoPassword": "バックアップの削除と整理は、ログインパスワードがなくても行えます。パスワードを設定している場合は、先にこのサーバーでログインします。",
+  "whatsNew.oled": "「テーマ」の下にある「OLED」は、ダークテーマが表示されているとき、デバイスに合わせている場合も含めて、OLED と AMOLED の画面を真っ黒にします。それぞれのデバイスが自分の選択を覚えます。",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics を公開",

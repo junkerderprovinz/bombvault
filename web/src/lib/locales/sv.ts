@@ -321,6 +321,8 @@ const sv: Partial<Translations> = {
   "settings.schedule": "Schema",
   "settings.language": "Språk",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Äkta svart för OLED- och AMOLED-skärmar så länge det mörka temat visas. Varje enhet minns valet för sig själv.",
   "settings.save": "Spara",
   "settings.saved": "Inställningar sparade",
   "settings.error": "Fel vid sparande av inställningar",
@@ -1156,6 +1158,7 @@ const sv: Partial<Translations> = {
   "whatsNew.kitSignIns": "Återställningskitet innehåller alla inloggningar som målen använder, och en ny server läser in dem igen med Spara inloggningsuppgifter.",
   "whatsNew.keepNow": "Tillämpa nu på kortet Hur länge det bevaras för ett mål visar vilka säkerhetskopior regeln inte längre bevarar och tar bort dem. Du behöver inte vänta på nästa säkerhetskopia.",
   "whatsNew.deleteNoPassword": "Att ta bort och rensa säkerhetskopior fungerar utan inloggningslösenord. Har du satt ett loggar du först in på den här servern.",
+  "whatsNew.oled": "OLED under Tema ger OLED- och AMOLED-skärmar äkta svart varje gång det mörka temat visas, även när det följer enheten. Varje enhet minns sitt eget val.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponera /metrics",

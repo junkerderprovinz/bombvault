@@ -9,6 +9,7 @@ import "./providerMarks.css";
 import "flag-icons/css/flag-icons.min.css";
 import { AppRouter } from "./app/router";
 import { applyStoredTheme } from "./lib/theme";
+import { watchDeviceLook } from "./lib/deviceLook";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
 import { applyStoredRainbow } from "./lib/appearance";
@@ -20,6 +21,7 @@ import { ADOPTED_EVENT, sync as syncDisplayPrefs } from "./lib/displayPrefs";
 
 // Apply stored preferences before the first paint, so the defaults never flash.
 applyStoredTheme();
+watchDeviceLook();
 applyStoredLanguage();
 applyStoredAccent();
 applyStoredRainbow();

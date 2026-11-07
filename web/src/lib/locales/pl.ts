@@ -318,6 +318,8 @@ const pl: Partial<Translations> = {
   "settings.schedule": "Harmonogram",
   "settings.language": "Język",
   "settings.theme": "Motyw",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Prawdziwa czerń dla ekranów OLED i AMOLED, dopóki widać ciemny motyw. Każde urządzenie zapamiętuje wybór dla siebie.",
   "settings.save": "Zapisz",
   "settings.saved": "Ustawienia zapisane",
   "settings.error": "Błąd podczas zapisywania",
@@ -1142,6 +1144,7 @@ const pl: Partial<Translations> = {
   "whatsNew.kitSignIns": "Zestaw odzyskiwania zawiera wszystkie dane logowania, których używają miejsca docelowe, a nowy serwer wczytuje je z powrotem przyciskiem Zapisz dane dostępowe.",
   "whatsNew.keepNow": "Zastosuj teraz na karcie Jak długo przechowywać miejsca docelowego pokazuje, których kopii reguła już nie zachowuje, i je usuwa. Nie musisz czekać na następną kopię.",
   "whatsNew.deleteNoPassword": "Usuwanie i przycinanie kopii działa bez hasła logowania. Jeśli je ustawisz, najpierw logujesz się na tym serwerze.",
+  "whatsNew.oled": "OLED pod Motywem daje ekranom OLED i AMOLED prawdziwą czerń zawsze, gdy widać ciemny motyw, także gdy podąża on za urządzeniem. Każde urządzenie zapamiętuje własny wybór.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Udostępnij /metrics",

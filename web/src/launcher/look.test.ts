@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
-import { adopt, following, keepAsOwn, setFollowing } from "./look";
+import { FOLLOWED_KEYS, adopt, following, keepAsOwn, setFollowing } from "./look";
 
 afterEach(() => localStorage.clear());
 
@@ -43,5 +43,14 @@ describe("a change made while following", () => {
     keepAsOwn();
     setFollowing(false);
     expect(localStorage.getItem("bv-accent")).toBe("#be95ff");
+  });
+});
+
+describe("what stays the phone's own", () => {
+  it("leaves OLED out of a followed look", () => {
+    expect(FOLLOWED_KEYS).not.toContain("bv-oled");
+    localStorage.setItem("bv-oled", "1");
+    adopt(JSON.stringify({ ok: true, prefs: { "bv-oled": "", "bv-accent": "#ff7eb6" }, stored: true }));
+    expect(localStorage.getItem("bv-oled")).toBe("1");
   });
 });

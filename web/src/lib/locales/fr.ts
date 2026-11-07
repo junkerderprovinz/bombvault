@@ -321,6 +321,8 @@ const fr: Partial<Translations> = {
   "settings.schedule": "Planning",
   "settings.language": "Langue",
   "settings.theme": "Thème",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Un vrai noir pour les écrans OLED et AMOLED, tant que le thème sombre s'affiche. Chaque appareil garde ce choix pour lui.",
   "settings.save": "Enregistrer",
   "settings.saved": "Paramètres enregistrés",
   "settings.error": "Erreur lors de l'enregistrement",
@@ -1148,6 +1150,7 @@ const fr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Le Kit de récupération contient tous les identifiants qu'utilisent les destinations, et un nouveau serveur les relit avec Enregistrer les identifiants.",
   "whatsNew.keepNow": "Appliquer maintenant sur la carte Durée de conservation d'une destination montre quelles sauvegardes la règle ne conserve plus et les supprime. Inutile d'attendre la prochaine sauvegarde.",
   "whatsNew.deleteNoPassword": "Supprimer et élaguer des sauvegardes fonctionne sans mot de passe de connexion. Si vous en définissez un, vous vous connectez d'abord sur ce serveur.",
+  "whatsNew.oled": "OLED, sous Thème, donne un vrai noir aux écrans OLED et AMOLED dès que le thème sombre s'affiche, même quand il suit l'appareil. Chaque appareil garde son propre choix.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposer /metrics",

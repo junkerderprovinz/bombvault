@@ -899,6 +899,9 @@
   --glim-tile-switch-off:   var(--carbon-hover-raised);
   --glim-tile-well:         var(--carbon-bg);
 
+  /* A switch's track while off. OLED holds it where the dark theme has it. */
+  --toggle-off:             var(--carbon-surface3);
+
   /* The default accent, sunflower yellow. lib/accent.ts overrides it at
      runtime and computes --accent-contrast and --accent-soft for the active
      hex; these are the values before hydration or without JS. BombVault keeps
@@ -1193,6 +1196,52 @@
   :root:not([data-theme]) {
     /* Already the :root default; stated so the pair reads complete. */
     color-scheme: dark;
+  }
+}
+
+/* OLED, the dark theme on true black for OLED and AMOLED screens. data-oled on
+   <html> asks for it and counts only while the dark theme shows, so it can
+   stay on through light. The surfaces move one Carbon step down and keep
+   their order, so a rule that names a step still lands on the step it meant:
+   the hover stays between the card and surface2, and hover-raised is the step
+   above surface3. The text, the accent and the state hues stay, since they
+   were measured on lighter grounds than they get here, and so do the opaque
+   warn and fail chips, which stand further from a #161616 card than from a
+   #262626 one.
+
+   A shadow on black is invisible, so the elevation becomes a ring in the
+   border colour. The switch track keeps #525252, where surface3 would leave
+   it at 1.6:1 on the card. A lit brand tile in a near-black colour, OpenAI's
+   or GitHub's, would vanish into the card, so --tile-edge rings every lit
+   tile. */
+[data-theme="dark"][data-oled] {
+  --carbon-bg:         #000000;
+  --carbon-sidebar:    #161616;
+  --carbon-surface:    #161616;
+  --carbon-surface2:   #262626;
+  --carbon-surface3:   #393939;
+  --carbon-hover:      #232323;
+  --carbon-hover-raised: #525252;
+  --carbon-border:     #262626;
+  --toggle-off:        #525252;
+  --elevation: 0 0 0 1px #262626;
+  --tile-edge: rgba(255, 255, 255, .2);
+}
+
+/* The same for a page without data-theme, which only JavaScript sets. */
+@media (prefers-color-scheme: dark) {
+  :root[data-oled]:not([data-theme]) {
+    --carbon-bg:         #000000;
+    --carbon-sidebar:    #161616;
+    --carbon-surface:    #161616;
+    --carbon-surface2:   #262626;
+    --carbon-surface3:   #393939;
+    --carbon-hover:      #232323;
+    --carbon-hover-raised: #525252;
+    --carbon-border:     #262626;
+    --toggle-off:        #525252;
+    --elevation: 0 0 0 1px #262626;
+    --tile-edge: rgba(255, 255, 255, .2);
   }
 }
 
@@ -1613,6 +1662,7 @@ body {
   .glim-brand-tile:hover {
     background-color: var(--tile);
     color: var(--tile-ink);
+    box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
     --mark-ink: var(--tile-ink);
     --mark-cut: var(--tile);
     --brand-android: var(--tile-ink);
@@ -1665,6 +1715,7 @@ body {
   [data-app] .group:active > .glim-brand-tile {
     background-color: var(--tile);
     color: var(--tile-ink);
+    box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
     --mark-ink: var(--tile-ink);
     --mark-cut: var(--tile);
     --brand-android: var(--tile-ink);
@@ -1965,6 +2016,7 @@ body {
 .glim-provider-pick .glim-brand-tile:focus-visible {
   background-color: var(--tile);
   color: var(--tile-ink);
+  box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
   --mark-ink: var(--tile-ink);
   --mark-cut: var(--tile);
 }

@@ -37,7 +37,7 @@ export function Toggle({ checked, onChange, label, hideLabel = false, disabled, 
       >
         <span
           className={`inline-flex h-5 w-9 items-center rounded-pill transition-colors group-focus-visible:outline-solid group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-(--focus-ring) ${
-            checked ? "bg-accent" : "bg-carbon-surface3"
+            checked ? "bg-accent" : "bg-(--toggle-off)"
           }`}
         >
           <span

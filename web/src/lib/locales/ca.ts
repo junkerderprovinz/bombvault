@@ -633,6 +633,8 @@ const ca: Partial<Translations> = {
   "settings.schedule": "Horari",
   "settings.language": "Idioma",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Negre de veritat per a pantalles OLED i AMOLED mentre es veu el tema fosc. Cada dispositiu guarda l'elecció per a si mateix.",
   "settings.save": "Desa",
   "settings.saved": "Configuració desada",
   "settings.error": "Error en desar",
@@ -837,6 +839,7 @@ const ca: Partial<Translations> = {
   "whatsNew.kitSignIns": "El Kit de recuperació porta totes les credencials que fan servir les destinacions, i un servidor nou les torna a llegir amb Desa les credencials.",
   "whatsNew.keepNow": "Aplica ara a la targeta Quant de temps conservar d'una destinació mostra quines còpies de seguretat ja no conserva la regla i les elimina. No cal que esperis a la còpia següent.",
   "whatsNew.deleteNoPassword": "Esborrar i podar còpies de seguretat funciona sense contrasenya d'accés. Si en defineixes una, primer inicies la sessió en aquest servidor.",
+  "whatsNew.oled": "OLED, a sota de Tema, dona negre de veritat a les pantalles OLED i AMOLED sempre que es veu el tema fosc, també quan segueix el dispositiu. Cada dispositiu guarda la seva pròpia elecció.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exposa /metrics",

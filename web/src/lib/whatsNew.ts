@@ -61,6 +61,18 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.0",
+    changes: [
+      {
+        id: "look-oled",
+        page: "/settings/look",
+        where: ["nav.settings", "settings.tab.look"],
+        way: ["/settings", "/settings/look"],
+        text: "whatsNew.oled",
+      },
+    ],
+  },
+  {
     version: "10.5.1",
     changes: [
       // Apply now shows only while the rule would remove backups, and the card

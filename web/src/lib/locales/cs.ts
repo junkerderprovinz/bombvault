@@ -321,6 +321,8 @@ const cs: Partial<Translations> = {
   "settings.schedule": "Plán",
   "settings.language": "Jazyk",
   "settings.theme": "Motiv",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Opravdová černá pro obrazovky OLED a AMOLED, dokud je vidět tmavý motiv. Každé zařízení si volbu pamatuje samo.",
   "settings.save": "Uložit",
   "settings.saved": "Nastavení uloženo",
   "settings.error": "Chyba při ukládání nastavení",
@@ -1154,6 +1156,7 @@ const cs: Partial<Translations> = {
   "whatsNew.kitSignIns": "Sada pro obnovu nese všechny přihlašovací údaje, které cíle používají, a nový server je načte zpět tlačítkem Uložit přihlašovací údaje.",
   "whatsNew.keepNow": "Použít hned na kartě Jak dlouho uchovávat u cíle ukáže, které zálohy už pravidlo neuchovává, a odstraní je. Nemusíš čekat na další zálohu.",
   "whatsNew.deleteNoPassword": "Mazání a pročišťování záloh funguje i bez přihlašovacího hesla. Když nějaké nastavíš, nejdřív se přihlásíš na tomto serveru.",
+  "whatsNew.oled": "OLED pod Motivem dává obrazovkám OLED a AMOLED opravdovou černou, kdykoli je vidět tmavý motiv, i když se řídí zařízením. Každé zařízení si pamatuje vlastní volbu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

@@ -66,14 +66,14 @@ describe("Toggle", () => {
     expect(btn.props.role).toBe("switch");
     expect(btn.props["aria-checked"]).toBe(true);
     expect(track(tree).props?.className).toContain("bg-accent");
-    expect(track(tree).props?.className).not.toContain("bg-carbon-surface3");
+    expect(track(tree).props?.className).not.toContain("bg-(--toggle-off)");
   });
 
   it("renders the off state with the neutral track", () => {
     const tree = Toggle({ checked: false, onChange: () => {}, label: "X" });
     const btn = findOneButton(tree);
     expect(btn.props["aria-checked"]).toBe(false);
-    expect(track(tree).props?.className).toContain("bg-carbon-surface3");
+    expect(track(tree).props?.className).toContain("bg-(--toggle-off)");
     expect(track(tree).props?.className).not.toContain("bg-accent");
   });
 

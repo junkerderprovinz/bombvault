@@ -39,6 +39,12 @@ describe("collect", () => {
     expect(got["bv-password"]).toBeUndefined();
   });
 
+  it("leaves OLED to this screen, since the same server opens on an LCD laptop too", () => {
+    localStorage.setItem("bv-theme", "dark");
+    localStorage.setItem("bv-oled", "1");
+    expect(collect()).toEqual({ "bv-theme": "dark" });
+  });
+
   it("omits keys this browser never set", () => {
     localStorage.setItem("bv-theme", "dark");
     const got = collect();

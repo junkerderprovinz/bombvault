@@ -633,6 +633,8 @@ const ms: Partial<Translations> = {
   "settings.schedule": "Jadual",
   "settings.language": "Bahasa",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Hitam sebenar untuk skrin OLED dan AMOLED selagi tema gelap dipaparkan. Setiap peranti menyimpan pilihan ini untuk dirinya sendiri.",
   "settings.save": "Simpan",
   "settings.saved": "Tetapan disimpan",
   "settings.error": "Ralat semasa menyimpan",
@@ -837,6 +839,7 @@ const ms: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kit pemulihan membawa semua bukti kelayakan yang digunakan destinasi, dan pelayan baharu membacanya semula dengan Simpan bukti kelayakan.",
   "whatsNew.keepNow": "Guna sekarang pada kad Berapa lama disimpan bagi sesuatu destinasi menunjukkan sandaran yang tidak lagi disimpan oleh peraturan itu dan membuangnya. Anda tidak perlu menunggu sandaran seterusnya.",
   "whatsNew.deleteNoPassword": "Memadam dan memangkas sandaran berfungsi tanpa kata laluan log masuk. Jika Anda menetapkannya, Anda log masuk di pelayan ini dahulu.",
+  "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Dedahkan /metrics",

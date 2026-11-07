@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
@@ -17,7 +17,7 @@ import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
-import { getResolvedTheme, getTheme, setTheme, type Theme } from "../lib/theme";
+import { darkShowing, getOled, getResolvedTheme, getTheme, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
 import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
@@ -199,6 +199,8 @@ export function SettingsPage({
 
   const [follows, setFollows] = useState(isFollowing);
   const [theme, setThemeLocal] = useState<Theme>(getTheme);
+  const [oled, setOledLocal] = useState(getOled);
+  const dark = useSyncExternalStore(watchDarkShowing, darkShowing);
   const [shape, setShapeLocal] = useState<Shape>(getShape);
   const [accent, setAccentLocal] = useState(getAccent);
   const [presets, setPresetsLocal] = useState(getAccentPresets);
@@ -327,6 +329,21 @@ export function SettingsPage({
               takeOver();
             }}
           />
+        </div>
+        {/* OLED is this phone's own, so following leaves it alone, and the
+            app hands it to every server it opens. It rests while light shows. */}
+        <Row label={t("settings.oled")} info={t("settings.oledHint")} dim={!dark}>
+          <Switch
+            label={t("settings.oled")}
+            checked={oled}
+            onChange={(on) => {
+              setOled(on);
+              setOledLocal(on);
+            }}
+            hue={1}
+          />
+        </Row>
+        <div className={`flex flex-col ${follows ? "opacity-40" : ""}`}>
           <Axis>{t("settings.shape")}</Axis>
           <Well
             label={t("settings.shape")}
@@ -395,7 +412,7 @@ export function SettingsPage({
                   setDiscoLocal(true);
                 }
               }}
-              hue={1}
+              hue={2}
             />
           </Row>
           {/* Disco hangs off the rainbow and stays hidden until found. Its
@@ -409,7 +426,7 @@ export function SettingsPage({
                   setDisco(on);
                   setDiscoLocal(on);
                 }}
-                hue={2}
+                hue={3}
               />
             </Row>
           )}
