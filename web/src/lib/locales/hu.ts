@@ -336,6 +336,7 @@ const hu: Partial<Translations> = {
   "settings.accentRainbowHint": "A szivárványmód be van kapcsolva. Kapcsold ki, hogy újra kiemelőszínt válassz.",
   "settings.accentPreset": "Előbeállítás",
   "settings.accentReset": "Kiemelőszín és előbeállítások visszaállítása",
+  "settings.systemAccent": "Rendszerszín",
   "settings.shape": "Sarkok",
   "settings.shapeHint": "Egyszerre vonatkozik a kártyákra, gombokra, fülekre, mezőkre és jelvényekre.",
   "settings.shape.round": "Kerekített",
@@ -1151,6 +1152,7 @@ const hu: Partial<Translations> = {
   "whatsNew.kitSignIns": "A Helyreállítási csomag tartalmazza az összes hozzáférési adatot, amelyet a célok használnak, és egy új szerver a Hozzáférési adatok mentése gombbal olvassa vissza őket.",
   "whatsNew.keepNow": "A cél Meddig őrizze meg kártyáján az Alkalmazás most megmutatja, mely mentéseket nem tartja meg többé a szabály, és eltávolítja őket. Nem kell megvárnod a következő mentést.",
   "whatsNew.deleteNoPassword": "A mentések törlése és ritkítása bejelentkezési jelszó nélkül is működik. Ha beállítasz egyet, előbb bejelentkezel ezen a szerveren.",
+  "whatsNew.systemAccent": "A kiemelőszínek elején álló varázspálca az eszközöd saját színét veszi át: az Android-alkalmazásban Android 12-től a Material You színét, Firefoxban és Safariban a rendszerszínt. Minden eszköz magának jegyzi meg ezt a választást.",
   "whatsNew.oled": "A Téma alatti OLED valódi feketét ad az OLED és AMOLED kijelzőknek, valahányszor a sötét téma látszik, akkor is, ha az eszközt követi. Minden eszköz a saját választását jegyzi meg.",
 
   // Monitoring (Prometheus)

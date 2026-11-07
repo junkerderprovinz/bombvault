@@ -336,6 +336,7 @@ const sv: Partial<Translations> = {
   "settings.accentRainbowHint": "Regnbågsläget är på. Stäng av det för att välja en accentfärg igen.",
   "settings.accentPreset": "Förinställning",
   "settings.accentReset": "Återställ accentfärg och förinställningar",
+  "settings.systemAccent": "Systemfärg",
   "settings.shape": "Hörn",
   "settings.shapeHint": "Gäller kort, knappar, flikar, fält och märken på en gång.",
   "settings.shape.round": "Runda",
@@ -1158,6 +1159,7 @@ const sv: Partial<Translations> = {
   "whatsNew.kitSignIns": "Återställningskitet innehåller alla inloggningar som målen använder, och en ny server läser in dem igen med Spara inloggningsuppgifter.",
   "whatsNew.keepNow": "Tillämpa nu på kortet Hur länge det bevaras för ett mål visar vilka säkerhetskopior regeln inte längre bevarar och tar bort dem. Du behöver inte vänta på nästa säkerhetskopia.",
   "whatsNew.deleteNoPassword": "Att ta bort och rensa säkerhetskopior fungerar utan inloggningslösenord. Har du satt ett loggar du först in på den här servern.",
+  "whatsNew.systemAccent": "Trollstaven först bland accentfärgerna tar enhetens egen färg: Material You i Android-appen från Android 12 och systemfärgen i Firefox och Safari. Varje enhet minns det här valet för sig själv.",
   "whatsNew.oled": "OLED under Tema ger OLED- och AMOLED-skärmar äkta svart varje gång det mörka temat visas, även när det följer enheten. Varje enhet minns sitt eget val.",
 
   // Monitoring (Prometheus)

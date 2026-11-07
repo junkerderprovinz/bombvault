@@ -3,7 +3,10 @@
 import { Badge } from "../../components/Badge";
 import { ColorPickerSwatch } from "../../components/ColorPickerPopover";
 import { InfoBubble } from "../../components/InfoBubble";
+import { IconAccentSystem } from "../../components/glyphs";
+import { IconTipButton } from "../../components/IconTipButton";
 import { Toggle } from "../../components/Toggle";
+import { contrastOn } from "../../lib/accent";
 import { hueVars } from "../../lib/appearance";
 import { type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
@@ -173,6 +176,44 @@ export function AccentPresetSwatch({
         label={label}
         className="w-7 h-7 rounded-pill"
       />
+    </span>
+  );
+}
+
+/** SystemAccentSwatch is the device's own colour, wearing the wand. It holds
+ *  nothing to edit, so a click only chooses it. */
+export function SystemAccentSwatch({
+  hex,
+  active,
+  onSelect,
+  disabled = false,
+  label,
+}: {
+  hex: string;
+  active: boolean;
+  onSelect: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <span
+      aria-disabled={disabled || undefined}
+      className={`inline-flex rounded-pill border-2 transition-transform ${
+        disabled ? "pointer-events-none" : "hover:scale-110"
+      }`}
+      style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
+    >
+      {/* bv-convention-exception: one-icon-badge-size: a colour disc in the
+          same 2px ring as the presets beside it, 32px in all, not a badge. */}
+      <IconTipButton
+        tip={label}
+        onClick={onSelect}
+        ariaPressed={active}
+        className="inline-flex w-7 h-7 items-center justify-center rounded-pill"
+        style={{ background: hex, color: contrastOn(hex) }}
+      >
+        <IconAccentSystem />
+      </IconTipButton>
     </span>
   );
 }

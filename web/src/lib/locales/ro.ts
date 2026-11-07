@@ -333,6 +333,7 @@ const ro: Partial<Translations> = {
   "settings.accentRainbowHint": "Modul curcubeu este pornit. Oprește-l pentru a alege din nou o culoare de accent.",
   "settings.accentPreset": "Presetare",
   "settings.accentReset": "Resetează culoarea de accent și presetările",
+  "settings.systemAccent": "Culoarea sistemului",
   "settings.shape": "Colțuri",
   "settings.shapeHint": "Se aplică simultan cardurilor, butoanelor, filelor, câmpurilor și insignelor.",
   "settings.shape.round": "Rotunjite",
@@ -1148,6 +1149,7 @@ const ro: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kitul de recuperare conține toate credențialele pe care le folosesc destinațiile, iar un server nou le citește înapoi cu Salvează credențialele.",
   "whatsNew.keepNow": "Aplică acum pe cardul Cât timp se păstrează al unei destinații arată ce copii de rezervă nu mai păstrează regula și le elimină. Nu trebuie să aștepți următoarea copie de rezervă.",
   "whatsNew.deleteNoPassword": "Ștergerea și curățarea copiilor de rezervă funcționează fără parolă de autentificare. Dacă setezi una, te autentifici mai întâi pe acest server.",
+  "whatsNew.systemAccent": "Bagheta magică de la începutul culorilor de accent preia culoarea dispozitivului tău: Material You în aplicația Android începând cu Android 12 și culoarea sistemului în Firefox și Safari. Fiecare dispozitiv păstrează această alegere pentru sine.",
   "whatsNew.oled": "OLED, sub Temă, dă ecranelor OLED și AMOLED negru adevărat ori de câte ori se vede tema întunecată, și atunci când urmează dispozitivul. Fiecare dispozitiv își păstrează propria alegere.",
 
   // Monitoring (Prometheus)

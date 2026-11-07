@@ -1,9 +1,37 @@
-import { AccentPresetSwatch } from "../settings/shared";
+import { AccentPresetSwatch, SystemAccentSwatch } from "../settings/shared";
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
-import { getAccent, setAccent, DEFAULT_ACCENT, getAccentPresets, setAccentPresets, DEFAULT_ACCENT_PRESETS } from "../../lib/accent";
-import { useState } from "react";
+import {
+  getAccent,
+  setAccent,
+  DEFAULT_ACCENT,
+  getAccentPresets,
+  setAccentPresets,
+  DEFAULT_ACCENT_PRESETS,
+  chooseSystemAccent,
+  subscribeSystemAccent,
+  systemAccent,
+  systemAccentChosen,
+} from "../../lib/accent";
+import { watchDarkShowing } from "../../lib/theme";
+import { useState, useSyncExternalStore } from "react";
 import { useT } from "../../lib/i18n";
+
+// The device's colour has a tone per theme, so a theme switch changes it too.
+function subscribeSystemColour(onChange: () => void): () => void {
+  const stopSource = subscribeSystemAccent(onChange);
+  const stopTheme = watchDarkShowing(onChange);
+  return () => {
+    stopSource();
+    stopTheme();
+  };
+}
+
+/** useSystemAccent is the device's colour for the theme on screen, or
+ *  undefined where it has none and the wand swatch stays away. */
+export function useSystemAccent(): string | undefined {
+  return useSyncExternalStore(subscribeSystemColour, systemAccent);
+}
 
 export function AccentCard({
   t,
@@ -18,10 +46,14 @@ export function AccentCard({
 }) {
   const [accentHex, setAccentHex] = useState<string>(() => getAccent());
   const [presets, setPresets] = useState<string[]>(() => getAccentPresets());
+  const [systemChosen, setSystemChosen] = useState(systemAccentChosen);
+  const system = useSystemAccent();
+  const systemShown = systemChosen && system !== undefined;
 
   function selectAccent(hex: string) {
     setAccentHex(hex);
     setAccent(hex);
+    setSystemChosen(false);
   }
 
   function changePreset(index: number, hex: string) {
@@ -34,7 +66,7 @@ export function AccentCard({
 
   // One reset restores both the accent and the presets, so it is enabled when
   // either has drifted.
-  const accentIsDefault = accentHex.toLowerCase() === DEFAULT_ACCENT.toLowerCase();
+  const accentIsDefault = !systemChosen && accentHex.toLowerCase() === DEFAULT_ACCENT.toLowerCase();
   const presetsAreDefault = presets.every(
     (hex, i) => hex.toLowerCase() === DEFAULT_ACCENT_PRESETS[i]?.toLowerCase()
   );
@@ -52,6 +84,18 @@ export function AccentCard({
           would suggest the control itself needs explaining. */}
       {rainbowOn && <InfoBubble tip={t("settings.accentRainbowHint")} />}
       <div className={`flex items-center gap-2 flex-wrap ms-auto ${rainbowOn ? "opacity-45" : ""}`}>
+        {system !== undefined && (
+          <SystemAccentSwatch
+            hex={system}
+            active={systemShown}
+            onSelect={() => {
+              chooseSystemAccent();
+              setSystemChosen(true);
+            }}
+            disabled={rainbowOn}
+            label={t("settings.systemAccent")}
+          />
+        )}
         {/* Every preset opens the colour picker, so a custom colour is set by
             editing a preset. */}
         {presets.map((hex, i) => (
@@ -59,7 +103,7 @@ export function AccentCard({
             key={i}
             hex={hex}
             index={i}
-            active={accentHex.toLowerCase() === hex.toLowerCase()}
+            active={!systemShown && accentHex.toLowerCase() === hex.toLowerCase()}
             onSelect={selectAccent}
             onChangePreset={(v) => changePreset(i, v)}
             disabled={rainbowOn}

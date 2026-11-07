@@ -839,6 +839,7 @@ const eu: Partial<Translations> = {
   "whatsNew.kitSignIns": "Berreskuratze-kitak helmugek erabiltzen dituzten kredentzial guztiak ditu, eta zerbitzari berri batek berriro irakurtzen ditu Gorde kredentzialak botoiarekin.",
   "whatsNew.keepNow": "Helmuga baten Zenbat denbora mantendu txarteleko Aplikatu orain aukerak erakusten du zein babeskopia ez dituen arauak gehiago gordetzen, eta kendu egiten ditu. Ez duzu hurrengo babeskopiaren zain egon beharrik.",
   "whatsNew.deleteNoPassword": "Babeskopiak ezabatzeak eta garbitzeak saioa hasteko pasahitzik gabe funtzionatzen du. Bat ezartzen baduzu, lehenik zerbitzari honetan hasiko duzu saioa.",
+  "whatsNew.systemAccent": "Azentu-koloreen hasierako makila magikoak zure gailuaren kolorea hartzen du: Material You Android aplikazioan Android 12tik aurrera, eta sistemaren kolorea Firefox eta Safarin. Gailu bakoitzak beretzat gordetzen du aukera hori.",
   "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)
@@ -1187,6 +1188,7 @@ const eu: Partial<Translations> = {
   "settings.accentRainbowHint": "Ostadar modua piztuta dago. Itzali ezazu berriro azentu-kolore bat hautatzeko.",
   "settings.accentPreset": "Aurrezarpena",
   "settings.accentReset": "Berrezarri azentu-kolorea eta aurrezarpenak",
+  "settings.systemAccent": "Sistemaren kolorea",
   "settings.shape": "Ertzak",
   "settings.shapeHint": "Txartel, botoi, fitxa, sarrera-eremu eta bereizgarrietan aldi berean aplikatzen da.",
   "settings.shape.round": "Biribilak",

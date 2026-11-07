@@ -336,6 +336,7 @@ const tr: Partial<Translations> = {
   "settings.accentRainbowHint": "Gökkuşağı modu açık. Yeniden vurgu rengi seçmek için kapat.",
   "settings.accentPreset": "Ön ayar",
   "settings.accentReset": "Vurgu rengini ve ön ayarları sıfırla",
+  "settings.systemAccent": "Sistem rengi",
   "settings.shape": "Köşeler",
   "settings.shapeHint": "Kartlara, düğmelere, sekmelere, alanlara ve rozetlere aynı anda uygulanır.",
   "settings.shape.round": "Yuvarlak",
@@ -1158,6 +1159,7 @@ const tr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kurtarma kiti, hedeflerin kullandığı tüm kimlik bilgilerini taşır ve yeni bir sunucu bunları Kimlik bilgilerini kaydet ile geri okur.",
   "whatsNew.keepNow": "Bir hedefin Ne kadar saklanır kartındaki Şimdi uygula, kuralın artık saklamadığı yedekleri gösterir ve kaldırır. Bir sonraki yedeği beklemen gerekmez.",
   "whatsNew.deleteNoPassword": "Yedekleri silmek ve budamak giriş parolası olmadan da çalışır. Bir parola ayarlarsan önce bu sunucuda oturum açarsın.",
+  "whatsNew.systemAccent": "Vurgu renklerinin başındaki sihirli değnek cihazının kendi rengini alır: Android uygulamasında Android 12'den itibaren Material You, Firefox ve Safari'de sistem rengi. Her cihaz bu seçimi kendisi için saklar.",
   "whatsNew.oled": "Tema altındaki OLED, koyu tema her göründüğünde, cihazı izlediğinde de, OLED ve AMOLED ekranlara gerçek siyah verir. Her cihaz kendi seçimini saklar.",
 
   // Monitoring (Prometheus)

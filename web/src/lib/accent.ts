@@ -7,29 +7,87 @@ export { contrastOn };
 // --accent-contrast (the ink that reads best on the accent) and --accent-soft
 // (a 14% alpha tint). Where index.css's own accent text would fall short of
 // 4.5:1 on a theme, --accent-ink-light or --accent-ink-dark carries the ink.
+//
+// The device can lend its own colour instead: Material You in the Android
+// app, AccentColor in Firefox and Safari. Choosing it stores the word system
+// under a key of this device's own, which never goes to the server, so other
+// devices keep the synced accent, and so does this one while its source has
+// nothing to say.
 
 export const DEFAULT_ACCENT = "#FCC419";
 export const DEFAULT_ACCENT_CONTRAST = "#161616";
+export const SYSTEM_ACCENT = "system";
 
 const STORAGE_KEY = "bv-accent";
+const DEVICE_KEY = "bv-accent-device";
 
+/** The device's colour for each theme; a browser reports one for both. */
+export interface SystemTones {
+  light: string;
+  dark: string;
+}
+
+let systemTones: SystemTones | undefined;
+const systemListeners = new Set<() => void>();
+
+/** The synced accent, or the default for anything stored that is no colour. */
 export function getAccent(): string {
-  return localStorage.getItem(STORAGE_KEY) ?? DEFAULT_ACCENT;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored !== null && parseHex(stored) ? stored : DEFAULT_ACCENT;
 }
 
 export function setAccent(hex: string): void {
   localStorage.setItem(STORAGE_KEY, hex);
+  localStorage.removeItem(DEVICE_KEY);
   saveDisplayPrefs();
   applyAccent(hex);
 }
 
-export function applyAccent(hex?: string): void {
-  const color = hex ?? getAccent();
+/** Whether this device chose its own colour. It shows only while a source reports one. */
+export function systemAccentChosen(): boolean {
+  try {
+    return localStorage.getItem(DEVICE_KEY) === SYSTEM_ACCENT;
+  } catch {
+    return false;
+  }
+}
+
+export function chooseSystemAccent(): void {
+  try {
+    localStorage.setItem(DEVICE_KEY, SYSTEM_ACCENT);
+  } catch {
+    // Without storage the choice lasts until the next load.
+  }
+  applyStoredAccent();
+}
+
+/** The device's colour for the theme on screen, or undefined where it has none. */
+export function systemAccent(): string | undefined {
+  if (!systemTones) return undefined;
+  return document.documentElement.getAttribute("data-theme") === "light" ? systemTones.light : systemTones.dark;
+}
+
+/** Feeds what the device's source reports, or undefined for no source, and
+ *  repaints when the device's colour is the one chosen. */
+export function setSystemAccent(tones: SystemTones | undefined): void {
+  const next = tones && parseHex(tones.light) && parseHex(tones.dark) ? tones : undefined;
+  if (next?.light === systemTones?.light && next?.dark === systemTones?.dark) return;
+  systemTones = next;
+  if (systemAccentChosen()) applyStoredAccent();
+  for (const fn of systemListeners) fn();
+}
+
+export function subscribeSystemAccent(fn: () => void): () => void {
+  systemListeners.add(fn);
+  return () => systemListeners.delete(fn);
+}
+
+export function applyAccent(hex: string): void {
   const root = document.documentElement.style;
-  root.setProperty("--accent", color);
-  root.setProperty("--accent-contrast", contrastOn(color));
-  root.setProperty("--accent-soft", softTint(color));
-  for (const [theme, ink] of Object.entries(accentInks(color))) {
+  root.setProperty("--accent", hex);
+  root.setProperty("--accent-contrast", contrastOn(hex));
+  root.setProperty("--accent-soft", softTint(hex));
+  for (const [theme, ink] of Object.entries(accentInks(hex))) {
     if (ink) root.setProperty(`--accent-ink-${theme}`, ink);
     else root.removeProperty(`--accent-ink-${theme}`);
   }
@@ -38,7 +96,7 @@ export function applyAccent(hex?: string): void {
 /** applyStoredAccent runs in main.tsx before the first render, so the page
  * never flashes the default accent. */
 export function applyStoredAccent(): void {
-  applyAccent(getAccent());
+  applyAccent((systemAccentChosen() ? systemAccent() : undefined) ?? getAccent());
 }
 
 /** textInkOn is the ink for text on a brand colour: contrastOn's pick where

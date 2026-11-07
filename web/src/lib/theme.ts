@@ -10,6 +10,7 @@
 // index.html's inline <head> script repeats the resolution below (the storage
 // keys included) to set both attributes before first paint, since it cannot
 // import this module. Keep the two in sync.
+import { applyStoredAccent, systemAccentChosen } from "./accent";
 import { appDevice, tellAppOled } from "./appDevice";
 import { save as saveDisplayPrefs } from "./displayPrefs";
 
@@ -99,6 +100,8 @@ function paint(theme: Theme): void {
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", resolved === "dark" && oled ? OLED_COLOR : THEME_COLOR[resolved]);
+  // The device's colour has a tone for each theme.
+  if (systemAccentChosen()) applyStoredAccent();
 }
 
 export function setTheme(theme: Theme): void {

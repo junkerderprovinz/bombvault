@@ -53,4 +53,12 @@ describe("what stays the phone's own", () => {
     adopt(JSON.stringify({ ok: true, prefs: { "bv-oled": "", "bv-accent": "#ff7eb6" }, stored: true }));
     expect(localStorage.getItem("bv-oled")).toBe("1");
   });
+
+  it("keeps the phone's own colour chosen under a followed accent", () => {
+    expect(FOLLOWED_KEYS).not.toContain("bv-accent-device");
+    localStorage.setItem("bv-accent-device", "system");
+    adopt(followed("#ff7eb6"));
+    expect(localStorage.getItem("bv-accent-device")).toBe("system");
+    expect(localStorage.getItem("bv-accent")).toBe("#ff7eb6");
+  });
 });

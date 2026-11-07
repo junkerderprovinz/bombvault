@@ -73,6 +73,7 @@ ACTION = [
     "IconMoon",
     "IconSun",
     "IconThemeSystem",
+    "IconAccentSystem",
     "IconCornerRound",
     "IconCornerSoft",
     "IconCornerSquare",

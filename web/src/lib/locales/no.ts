@@ -333,6 +333,7 @@ const no: Partial<Translations> = {
   "settings.accentRainbowHint": "Regnbuemodus er på. Slå den av for å velge en aksentfarge igjen.",
   "settings.accentPreset": "Forhåndsinnstilling",
   "settings.accentReset": "Tilbakestill aksentfarge og forhåndsinnstillinger",
+  "settings.systemAccent": "Systemfarge",
   "settings.shape": "Hjørner",
   "settings.shapeHint": "Gjelder for kort, knapper, faner, felt og merker på én gang.",
   "settings.shape.round": "Runde",
@@ -1147,6 +1148,7 @@ const no: Partial<Translations> = {
   "whatsNew.kitSignIns": "Gjenopprettingssettet har med alle påloggingene målene bruker, og en ny server leser dem inn igjen med Lagre påloggingsopplysninger.",
   "whatsNew.keepNow": "Bruk nå på kortet Hvor lenge det beholdes for et mål viser hvilke sikkerhetskopier regelen ikke lenger beholder, og fjerner dem. Du trenger ikke vente på neste sikkerhetskopi.",
   "whatsNew.deleteNoPassword": "Sletting og opprydding av sikkerhetskopier virker uten innloggingspassord. Har du satt et, logger du først inn på denne serveren.",
+  "whatsNew.systemAccent": "Tryllestaven først blant aksentfargene tar enhetens egen farge: Material You i Android-appen fra Android 12 og systemfargen i Firefox og Safari. Hver enhet husker dette valget for seg selv.",
   "whatsNew.oled": "OLED under Tema gir OLED- og AMOLED-skjermer ekte svart hver gang det mørke temaet vises, også når det følger enheten. Hver enhet husker sitt eget valg.",
 
   // Monitoring (Prometheus)

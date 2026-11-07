@@ -333,6 +333,7 @@ const pt: Partial<Translations> = {
   "settings.accentRainbowHint": "O modo arco-íris está ativado. Desativa-o para escolher novamente uma cor de destaque.",
   "settings.accentPreset": "Predefinição",
   "settings.accentReset": "Redefinir a cor de destaque e as predefinições",
+  "settings.systemAccent": "Cor do sistema",
   "settings.shape": "Cantos",
   "settings.shapeHint": "Aplica-se de uma vez a cartões, botões, abas, campos e emblemas.",
   "settings.shape.round": "Arredondados",
@@ -1147,6 +1148,7 @@ const pt: Partial<Translations> = {
   "whatsNew.kitSignIns": "O Kit de recuperação leva todas as credenciais que os destinos usam, e um servidor novo volta a lê-las com Guardar credenciais.",
   "whatsNew.keepNow": "Aplicar agora no cartão Durante quanto tempo guardar de um destino mostra que backups a regra já não guarda e remove-os. Não precisas de esperar pelo próximo backup.",
   "whatsNew.deleteNoPassword": "Apagar e podar backups funciona sem palavra-passe de início de sessão. Se definires uma, inicias sessão primeiro neste servidor.",
+  "whatsNew.systemAccent": "A varinha no início das cores de destaque usa a cor do teu dispositivo: Material You na app Android a partir do Android 12, e a cor do sistema no Firefox e no Safari. Cada dispositivo guarda esta escolha para si.",
   "whatsNew.oled": "OLED, por baixo de Tema, dá preto verdadeiro aos ecrãs OLED e AMOLED sempre que o tema escuro está visível, também quando segue o dispositivo. Cada dispositivo guarda a sua própria escolha.",
 
   // Monitoring (Prometheus)

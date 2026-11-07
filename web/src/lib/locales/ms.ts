@@ -839,6 +839,7 @@ const ms: Partial<Translations> = {
   "whatsNew.kitSignIns": "Kit pemulihan membawa semua bukti kelayakan yang digunakan destinasi, dan pelayan baharu membacanya semula dengan Simpan bukti kelayakan.",
   "whatsNew.keepNow": "Guna sekarang pada kad Berapa lama disimpan bagi sesuatu destinasi menunjukkan sandaran yang tidak lagi disimpan oleh peraturan itu dan membuangnya. Anda tidak perlu menunggu sandaran seterusnya.",
   "whatsNew.deleteNoPassword": "Memadam dan memangkas sandaran berfungsi tanpa kata laluan log masuk. Jika Anda menetapkannya, Anda log masuk di pelayan ini dahulu.",
+  "whatsNew.systemAccent": "Tongkat sakti di awal warna aksen mengambil warna peranti Anda sendiri: Material You dalam apl Android mulai Android 12, dan warna sistem dalam Firefox dan Safari. Setiap peranti menyimpan pilihan ini untuk dirinya sendiri.",
   "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)
@@ -1187,6 +1188,7 @@ const ms: Partial<Translations> = {
   "settings.accentRainbowHint": "Mod pelangi dihidupkan. Matikannya untuk memilih warna aksen semula.",
   "settings.accentPreset": "Praset",
   "settings.accentReset": "Set semula warna aksen dan praset",
+  "settings.systemAccent": "Warna sistem",
   "settings.shape": "Sudut",
   "settings.shapeHint": "Terpakai serentak kepada kad, butang, tab, medan input dan lencana.",
   "settings.shape.round": "Bulat",

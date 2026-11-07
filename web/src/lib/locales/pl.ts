@@ -333,6 +333,7 @@ const pl: Partial<Translations> = {
   "settings.accentRainbowHint": "Tryb tęczy jest włączony. Wyłącz go, aby ponownie wybrać kolor akcentu.",
   "settings.accentPreset": "Ustawienie wstępne",
   "settings.accentReset": "Resetuj kolor akcentu i ustawienia wstępne",
+  "settings.systemAccent": "Kolor systemu",
   "settings.shape": "Narożniki",
   "settings.shapeHint": "Dotyczy jednocześnie kart, przycisków, zakładek, pól i odznak.",
   "settings.shape.round": "Zaokrąglone",
@@ -1144,6 +1145,7 @@ const pl: Partial<Translations> = {
   "whatsNew.kitSignIns": "Zestaw odzyskiwania zawiera wszystkie dane logowania, których używają miejsca docelowe, a nowy serwer wczytuje je z powrotem przyciskiem Zapisz dane dostępowe.",
   "whatsNew.keepNow": "Zastosuj teraz na karcie Jak długo przechowywać miejsca docelowego pokazuje, których kopii reguła już nie zachowuje, i je usuwa. Nie musisz czekać na następną kopię.",
   "whatsNew.deleteNoPassword": "Usuwanie i przycinanie kopii działa bez hasła logowania. Jeśli je ustawisz, najpierw logujesz się na tym serwerze.",
+  "whatsNew.systemAccent": "Czarodziejska różdżka na początku kolorów akcentu bierze własny kolor twojego urządzenia: Material You w aplikacji na Androida od Androida 12 oraz kolor systemu w Firefoksie i Safari. Każde urządzenie zapamiętuje ten wybór dla siebie.",
   "whatsNew.oled": "OLED pod Motywem daje ekranom OLED i AMOLED prawdziwą czerń zawsze, gdy widać ciemny motyw, także gdy podąża on za urządzeniem. Każde urządzenie zapamiętuje własny wybór.",
 
   // Monitoring (Prometheus)

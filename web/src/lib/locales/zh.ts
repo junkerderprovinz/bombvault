@@ -336,6 +336,7 @@ const zh: Partial<Translations> = {
   "settings.accentRainbowHint": "彩虹模式已开启。关闭它即可重新选择强调色。",
   "settings.accentPreset": "预设",
   "settings.accentReset": "重置强调色和预设",
+  "settings.systemAccent": "系统颜色",
   "settings.shape": "圆角",
   "settings.shapeHint": "同时应用于卡片、按钮、标签页、输入框和徽章。",
   "settings.shape.round": "圆润",
@@ -1149,6 +1150,7 @@ const zh: Partial<Translations> = {
   "whatsNew.kitSignIns": "恢复工具包包含目标使用的所有凭据，新服务器用保存凭据把它们读回来。",
   "whatsNew.keepNow": "目标的保留多久卡片上的立即应用会列出规则不再保留的备份并将其删除，无需等到下一次备份。",
   "whatsNew.deleteNoPassword": "删除和清理备份无需登录密码。如果设置了密码，仍需先在这台服务器上登录。",
+  "whatsNew.systemAccent": "强调色最前面的魔杖使用设备自己的颜色：Android 应用中从 Android 12 起使用 Material You，Firefox 和 Safari 中使用系统颜色。每台设备各自记住这个选择。",
   "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)

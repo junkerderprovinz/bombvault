@@ -839,6 +839,7 @@ const sl: Partial<Translations> = {
   "whatsNew.kitSignIns": "Obnovitveni komplet vsebuje vse poverilnice, ki jih uporabljajo cilji, nov strežnik pa jih znova prebere z gumbom Shrani poverilnice.",
   "whatsNew.keepNow": "Uporabi zdaj na kartici Kako dolgo hraniti pri cilju pokaže, katerih varnostnih kopij pravilo ne hrani več, in jih odstrani. Ni ti treba čakati na naslednjo varnostno kopijo.",
   "whatsNew.deleteNoPassword": "Brisanje in čiščenje varnostnih kopij deluje brez gesla za prijavo. Če ga nastaviš, se najprej prijaviš na tem strežniku.",
+  "whatsNew.systemAccent": "Čarobna paličica na začetku poudarjenih barv prevzame barvo tvoje naprave: Material You v aplikaciji za Android od Androida 12 naprej ter barvo sistema v Firefoxu in Safariju. Vsaka naprava si to izbiro zapomni zase.",
   "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)
@@ -1185,6 +1186,7 @@ const sl: Partial<Translations> = {
   "settings.accentRainbowHint": "Mavrični način je vklopljen. Izklopi ga, če želiš znova izbrati poudarno barvo.",
   "settings.accentPreset": "Prednastavitev",
   "settings.accentReset": "Ponastavi poudarjeno barvo in prednastavitve",
+  "settings.systemAccent": "Barva sistema",
   "settings.shape": "Oglišča",
   "settings.shapeHint": "Velja hkrati za kartice, gumbe, zavihke, vnosna polja in značke.",
   "settings.shape.round": "Okroglo",

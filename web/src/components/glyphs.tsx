@@ -471,6 +471,15 @@ export function IconThemeSystem() {
   );
 }
 
+/** The accent takes the system's colour. */
+export function IconAccentSystem() {
+  return (
+    <G box="0.5 0.5 13 13">
+      <path d="M0.793 11.793L6.893 5.693A1 1 0 0 1 8.307 7.107L2.207 13.207A1 1 0 0 1 0.793 11.793ZM10.5 0.5Q11 3 13.5 3.5Q11 4 10.5 6.5Q10 4 7.5 3.5Q10 3 10.5 0.5ZM3.75 2.25Q4.1 3.65 5.5 4Q4.1 4.35 3.75 5.75Q3.4 4.35 2 4Q3.4 3.65 3.75 2.25ZM11 9Q11.35 10.4 12.75 10.75Q11.35 11.1 11 12.5Q10.65 11.1 9.25 10.75Q10.65 10.4 11 9Z" />
+    </G>
+  );
+}
+
 /** Round corners. */
 export function IconCornerRound() {
   return (

@@ -229,3 +229,16 @@ describe("whether dark shows", () => {
     stop();
   });
 });
+
+describe("the device's colour", () => {
+  it("takes the tone of the theme it turns to", async () => {
+    const { setTheme } = await theme();
+    const { chooseSystemAccent, setSystemAccent } = await import("./accent");
+    setTheme("dark");
+    setSystemAccent({ light: "#3F5F91", dark: "#A8C8FF" });
+    chooseSystemAccent();
+    setTheme("light");
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#3F5F91");
+    document.documentElement.removeAttribute("style");
+  });
+});

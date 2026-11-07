@@ -839,6 +839,7 @@ const lt: Partial<Translations> = {
   "whatsNew.kitSignIns": "Atkūrimo rinkinyje yra visi prisijungimai, kuriuos naudoja paskirties vietos, o naujas serveris juos vėl nuskaito mygtuku Išsaugoti prisijungimo duomenis.",
   "whatsNew.keepNow": "Taikyti dabar paskirties vietos kortelėje Kiek laiko saugoti parodo, kurių atsarginių kopijų taisyklė nebesaugo, ir jas pašalina. Nereikia laukti kitos atsarginės kopijos.",
   "whatsNew.deleteNoPassword": "Atsarginių kopijų trynimas ir valymas veikia be prisijungimo slaptažodžio. Jei jį nustatai, pirma prisijungi prie šio serverio.",
+  "whatsNew.systemAccent": "Burtų lazdelė akcentinių spalvų pradžioje paima paties įrenginio spalvą: Android programėlėje nuo Android 12 tai Material You, o Firefox ir Safari naršyklėse sistemos spalva. Kiekvienas įrenginys šį pasirinkimą įsimena sau.",
   "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)
@@ -1187,6 +1188,7 @@ const lt: Partial<Translations> = {
   "settings.accentRainbowHint": "Vaivorykštės režimas įjungtas. Išjunk jį, kad vėl galėtum pasirinkti akcento spalvą.",
   "settings.accentPreset": "Išankstinis nustatymas",
   "settings.accentReset": "Atkurti akcentinę spalvą ir išankstinius nustatymus",
+  "settings.systemAccent": "Sistemos spalva",
   "settings.shape": "Kampai",
   "settings.shapeHint": "Taikoma vienu metu kortelėms, mygtukams, skirtukams, įvesties laukams ir ženkleliams.",
   "settings.shape.round": "Apvalūs",

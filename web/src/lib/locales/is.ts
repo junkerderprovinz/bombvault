@@ -839,6 +839,7 @@ const is: Partial<Translations> = {
   "whatsNew.kitSignIns": "Endurheimtarpakkinn geymir allar innskráningar sem áfangastaðirnir nota, og nýr þjónn les þær aftur inn með Vista aðgangsupplýsingar.",
   "whatsNew.keepNow": "Nota núna á spjaldinu Hve lengi á að geyma fyrir áfangastað sýnir hvaða afrit reglan geymir ekki lengur og fjarlægir þau. Þú þarft ekki að bíða eftir næsta afriti.",
   "whatsNew.deleteNoPassword": "Það er hægt að eyða og grisja afrit án innskráningarlykilorðs. Ef þú setur eitt, skráirðu þig fyrst inn á þennan þjón.",
+  "whatsNew.systemAccent": "Töfrasprotinn fremst í áherslulitunum tekur lit tækisins þíns: Material You í Android-appinu frá Android 12 og lit kerfisins í Firefox og Safari. Hvert tæki geymir þetta val fyrir sig.",
   "whatsNew.oled": "OLED undir Þema gefur OLED- og AMOLED-skjám alvöru svart í hvert sinn sem dökka þemað sést, líka þegar það fylgir tækinu. Hvert tæki geymir sitt eigið val.",
 
   // Monitoring (Prometheus)
@@ -1187,6 +1188,7 @@ const is: Partial<Translations> = {
   "settings.accentRainbowHint": "Regnbogastilling er kveikt. Slökktu á henni til að velja áherslulit aftur.",
   "settings.accentPreset": "Forstilling",
   "settings.accentReset": "Endurstilla áherslulit og forstillingar",
+  "settings.systemAccent": "Litur kerfisins",
   "settings.shape": "Horn",
   "settings.shapeHint": "Gildir samtímis fyrir spjöld, hnappa, flipa, innsláttarreiti og merki.",
   "settings.shape.round": "Kringlótt",

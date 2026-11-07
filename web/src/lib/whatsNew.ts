@@ -70,6 +70,9 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/look"],
         text: "whatsNew.oled",
       },
+      // The wand shows only where the device has a colour, which most
+      // browsers do not, so its dot stands in the list.
+      { id: "accent-system", text: "whatsNew.systemAccent" },
     ],
   },
   {

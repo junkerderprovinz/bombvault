@@ -336,6 +336,7 @@ const fr: Partial<Translations> = {
   "settings.accentRainbowHint": "Le mode arc-en-ciel est activé. Désactivez-le pour choisir de nouveau une couleur d'accent.",
   "settings.accentPreset": "Préréglage",
   "settings.accentReset": "Réinitialiser la couleur d'accentuation et les préréglages",
+  "settings.systemAccent": "Couleur du système",
   "settings.shape": "Angles",
   "settings.shapeHint": "S'applique d'un coup aux cartes, boutons, onglets, champs et badges.",
   "settings.shape.round": "Arrondis",
@@ -1150,6 +1151,7 @@ const fr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Le Kit de récupération contient tous les identifiants qu'utilisent les destinations, et un nouveau serveur les relit avec Enregistrer les identifiants.",
   "whatsNew.keepNow": "Appliquer maintenant sur la carte Durée de conservation d'une destination montre quelles sauvegardes la règle ne conserve plus et les supprime. Inutile d'attendre la prochaine sauvegarde.",
   "whatsNew.deleteNoPassword": "Supprimer et élaguer des sauvegardes fonctionne sans mot de passe de connexion. Si vous en définissez un, vous vous connectez d'abord sur ce serveur.",
+  "whatsNew.systemAccent": "La baguette magique au début des couleurs d'accentuation reprend la couleur de votre appareil : Material You dans l'application Android à partir d'Android 12, et la couleur du système dans Firefox et Safari. Chaque appareil garde ce choix pour lui.",
   "whatsNew.oled": "OLED, sous Thème, donne un vrai noir aux écrans OLED et AMOLED dès que le thème sombre s'affiche, même quand il suit l'appareil. Chaque appareil garde son propre choix.",
 
   // Monitoring (Prometheus)

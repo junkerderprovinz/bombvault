@@ -336,6 +336,7 @@ const it: Partial<Translations> = {
   "settings.accentRainbowHint": "La modalità arcobaleno è attiva. Disattivala per scegliere di nuovo un colore d'accento.",
   "settings.accentPreset": "Predefinito",
   "settings.accentReset": "Reimposta il colore di accento e i predefiniti",
+  "settings.systemAccent": "Colore di sistema",
   "settings.shape": "Angoli",
   "settings.shapeHint": "Si applica insieme a schede, pulsanti, tab, campi e badge.",
   "settings.shape.round": "Arrotondati",
@@ -1150,6 +1151,7 @@ const it: Partial<Translations> = {
   "whatsNew.kitSignIns": "Il Kit di ripristino contiene tutte le credenziali usate dalle destinazioni, e un nuovo server le rilegge con Salva le credenziali.",
   "whatsNew.keepNow": "Applica ora sulla scheda Per quanto tempo conservare di una destinazione mostra quali backup la regola non conserva più e li rimuove. Non devi aspettare il prossimo backup.",
   "whatsNew.deleteNoPassword": "Eliminare e potare i backup funziona senza password di accesso. Se ne imposti una, prima accedi a questo server.",
+  "whatsNew.systemAccent": "La bacchetta magica all'inizio dei colori di accento prende il colore del tuo dispositivo: Material You nell'app Android da Android 12 in poi, e il colore di sistema in Firefox e Safari. Ogni dispositivo tiene questa scelta per sé.",
   "whatsNew.oled": "OLED, sotto Tema, dà un nero vero agli schermi OLED e AMOLED ogni volta che si vede il tema scuro, anche quando segue il dispositivo. Ogni dispositivo tiene la propria scelta.",
 
   // Monitoring (Prometheus)
