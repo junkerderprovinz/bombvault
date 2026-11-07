@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { pointerWasLastInput } from "../../lib/useTipBubble";
 
 export interface MenuAction {
   id: string;
@@ -56,6 +57,10 @@ export function ActionMenu({
   closeRef.current = onClose;
   const placeRef = useRef(place);
   placeRef.current = place;
+  // A menu the pointer opened holds the focus on its first row unlit until a
+  // key is pressed in it, so the row does not read as a choice already made
+  // (rule 42). Opened from the keyboard, the ring shows at once.
+  const [byPointer, setByPointer] = useState(() => !("anchor" in place) || pointerWasLastInput());
 
   useLayoutEffect(() => {
     if (panel.current) setPos(placeOf(place, panel.current));
@@ -98,6 +103,7 @@ export function ActionMenu({
   }, []);
 
   function onKeyDown(e: KeyboardEvent) {
+    setByPointer(false);
     const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
     const at = items.indexOf(document.activeElement as HTMLElement);
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -118,6 +124,7 @@ export function ActionMenu({
       ref={panel}
       role="menu"
       aria-label={label}
+      data-pointer={byPointer ? "" : undefined}
       onKeyDown={onKeyDown}
       onContextMenu={(e) => e.preventDefault()}
       style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? "visible" : "hidden" }}
@@ -135,7 +142,7 @@ export function ActionMenu({
             onClose();
             action.onSelect();
           }}
-          className="flex items-center gap-2.5 rounded-control px-3 py-2 text-start text-sm text-carbon-text hover:bg-carbon-hover focus-visible:bg-carbon-hover focus-visible:outline-none pointer-coarse:min-h-11"
+          className={`flex items-center gap-2.5 rounded-control px-3 py-2 text-start text-sm text-carbon-text hover:bg-carbon-hover ${byPointer ? "" : "focus-visible:bg-carbon-hover"} pointer-coarse:min-h-11`}
         >
           <span className="flex flex-none text-accentText">{action.glyph}</span>
           {action.label}

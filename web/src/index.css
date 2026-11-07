@@ -1657,6 +1657,12 @@ body {
   outline-offset: 2px;
 }
 
+/* A menu the pointer opened marks itself until a key is pressed in it, and
+   its first row holds the focus without the ring (rule 42). */
+[role="menu"][data-pointer] :focus-visible {
+  outline: none;
+}
+
 /* Toast chrome. The layout is Tailwind classes in components/Toast.tsx, but
    --elevation and --hairline are not in Tailwind's shadow scale, so the shadow
    needs a rule. The entrance animation is bound further down. */
