@@ -73,7 +73,7 @@ func securityHeaders(next http.Handler) http.Handler {
 	// TestThemeBootScriptCSPHashMatches fails when this hash does not match the
 	// inline script in web/index.html, whitespace included.
 	const csp = "default-src 'self'; " +
-		"script-src 'self' 'sha256-rt0RY3dLCBYxb1KbEq+TfSFYo+gVL0lfmq8p81r9Kh4=' " + paypalHosts + "; " +
+		"script-src 'self' 'sha256-BreQo0LeDBkvYNaawOkm39d0N8UhyESYXdOSt0feeCc=' " + paypalHosts + "; " +
 		"style-src 'self' 'unsafe-inline'; " +
 		"img-src 'self' data: https://www.paypalobjects.com; " +
 		"font-src 'self' data:; " +
