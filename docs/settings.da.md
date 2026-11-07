@@ -16,11 +16,11 @@ Denne side viser hver flise og dens kort og linker til den side, der forklarer h
 
 ## Udseende {#look}
 
-- **Udseende**: **Sprog** (42 sprog), **Tema** (**Mørkt**, **Lyst** eller **System**), **Hjørner**, **Animation** (**Fra**, **Diskret**, **Vild** eller **Stormende**), **Stille notifikationer**, som skjuler succesmeldinger som bekræftelser af gem, og **Rækkefølgen af indstillingssiderne**, hvor du holder en flise og trækker den på plads eller bruger Alt og piletasterne.
+- **Udseende**: **Sprog** (42 sprog), **Tema** (**Mørkt**, **Lyst** eller **System**) med **OLED** nedenunder, som giver OLED- og AMOLED-skærme ægte sort, så længe det mørke tema vises, **Hjørner**, **Animation** (**Fra**, **Diskret**, **Vild** eller **Stormende**), **Stille notifikationer**, som skjuler succesmeldinger som bekræftelser af gem, og **Rækkefølgen af indstillingssiderne**, hvor du holder en flise og trækker den på plads eller bruger Alt og piletasterne.
 - **Etiketter**: hvor meget af en kontrol der vises, hver for sig for **Knapper**, **Sidepanel**, **Faner** og **Bundpanel**: **Tekst**, **Tekst og symbol**, **Symbol** eller **Reaktiv**, som kun viser symbolet og glider ordene ind, når du peger på det. **Sidepanel** påvirker kun skrivebordslayoutet og **Bundpanel** kun telefonlayoutet.
-- **Farver**: én **Accentfarve** eller **Regnbuetilstand**, hvor hver række i en liste får sin egen farve fra en palet på otte. Regnbuetilstand tilføjer **Diskotilstand**, hvor farverne glider langsomt til den næste, **Reaktiv tilstand**, hvor en rækkes farve kun vises, mens du peger på den, den kører eller er valgt, **Farverotation** og selve **Farvepaletten**.
+- **Farver**: én **Accentfarve** eller **Regnbuetilstand**, hvor hver række i en liste får sin egen farve fra en palet på otte. Regnbuetilstand tilføjer **Diskotilstand**, hvor farverne glider langsomt til den næste, **Reaktiv tilstand**, hvor en rækkes farve kun vises, mens du peger på den, den kører eller er valgt, **Farverotation** og selve **Farvepaletten**. Tryllestaven forrest i accentfarverne, **Systemfarve**, tager din enheds egen farve: Material You i Android-appen fra Android 12, og systemfarven i Firefox og Safari. Den vises kun, hvor enheden har sådan en farve.
 
-BombVault gemmer udseendet på serveren. En browser, der kommer for første gang, overtager det. Når dit system beder om mindre bevægelse, vinder det altid over **Animation**.
+BombVault gemmer udseendet på serveren. En browser, der kommer for første gang, overtager det. **OLED** og **Systemfarve** er undtagelsen: hver enhed beholder dem for sig selv, da de afhænger af dens skærm. Når dit system beder om mindre bevægelse, vinder det altid over **Animation**.
 
 ## Tidsplan {#schedule}
 

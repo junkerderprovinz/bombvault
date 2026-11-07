@@ -16,11 +16,11 @@ Den här sidan listar varje bricka och dess kort, och länkar till sidan som fö
 
 ## Utseende {#look}
 
-- **Utseende**: **Språk** (42 språk), **Tema** (**Mörkt**, **Ljust** eller **System**), **Hörn**, **Animation** (**Av**, **Subtil**, **Vild** eller **Stormig**), **Tysta aviseringar**, som döljer lyckade meddelanden som sparbekräftelser, och **Ordning på inställningssidorna**, där du håller en bricka och drar den på plats, eller använder Alt och piltangenterna.
+- **Utseende**: **Språk** (42 språk), **Tema** (**Mörkt**, **Ljust** eller **System**) med **OLED** under, som ger OLED- och AMOLED-skärmar äkta svart så länge det mörka temat visas, **Hörn**, **Animation** (**Av**, **Subtil**, **Vild** eller **Stormig**), **Tysta aviseringar**, som döljer lyckade meddelanden som sparbekräftelser, och **Ordning på inställningssidorna**, där du håller en bricka och drar den på plats, eller använder Alt och piltangenterna.
 - **Etiketter**: hur mycket av ett reglage som visas, separat för **Knappar**, **Sidofält**, **Flikar** och **Nedre fält**: **Text**, **Text och symbol**, **Symbol** eller **Reaktiv**, som visar bara symbolen och låter orden glida in när du pekar på den. **Sidofält** påverkar bara skrivbordslayouten och **Nedre fält** bara telefonlayouten.
-- **Färger**: en **Accentfärg**, eller **Regnbågsläge**, där varje rad i en lista får sin egen färg från en palett på åtta. Regnbågsläget lägger till **Discoläge**, där färgerna sakta glider till nästa, **Reaktivt läge**, där en rads färg visas bara medan du pekar på den, den körs eller är vald, **Färgrotation** och själva **Färgpaletten**.
+- **Färger**: en **Accentfärg**, eller **Regnbågsläge**, där varje rad i en lista får sin egen färg från en palett på åtta. Regnbågsläget lägger till **Discoläge**, där färgerna sakta glider till nästa, **Reaktivt läge**, där en rads färg visas bara medan du pekar på den, den körs eller är vald, **Färgrotation** och själva **Färgpaletten**. Trollstaven först bland accentfärgerna, **Systemfärg**, tar enhetens egen färg: Material You i Android-appen från Android 12, och systemfärgen i Firefox och Safari. Den visas bara där enheten har en sådan färg.
 
-BombVault sparar utseendet på servern. En webbläsare som kommer för första gången tar över det. När ditt system ber om mindre rörelse gäller det alltid före **Animation**.
+BombVault sparar utseendet på servern. En webbläsare som kommer för första gången tar över det. **OLED** och **Systemfärg** är undantaget: varje enhet behåller dem för sig själv, eftersom de beror på dess skärm. När ditt system ber om mindre rörelse gäller det alltid före **Animation**.
 
 ## Schema {#schedule}
 

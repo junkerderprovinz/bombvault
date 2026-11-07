@@ -16,11 +16,11 @@ Tato stránka vypisuje každou dlaždici a její karty a odkazuje na stránku, k
 
 ## Vzhled {#look}
 
-- **Vzhled**: **Jazyk** (42 jazyků), **Motiv** (**Tmavý**, **Světlý** nebo **Systémový**), **Rohy**, **Animace** (**Vypnuto**, **Jemné**, **Divoké** nebo **Bouřlivé**), **Tichá oznámení**, která skrývají oznámení o úspěchu, například potvrzení uložení, a **Pořadí stránek nastavení**, kde dlaždici podržíš a přetáhneš na místo, nebo použiješ Alt a šipky.
+- **Vzhled**: **Jazyk** (42 jazyků), **Motiv** (**Tmavý**, **Světlý** nebo **Systémový**) s volbou **OLED** pod ním, která dá obrazovkám OLED a AMOLED opravdovou černou, dokud je vidět tmavý motiv, **Rohy**, **Animace** (**Vypnuto**, **Jemné**, **Divoké** nebo **Bouřlivé**), **Tichá oznámení**, která skrývají oznámení o úspěchu, například potvrzení uložení, a **Pořadí stránek nastavení**, kde dlaždici podržíš a přetáhneš na místo, nebo použiješ Alt a šipky.
 - **Popisky**: kolik z ovládacího prvku se ukáže, zvlášť pro **Tlačítka**, **Postranní panel**, **Karty** a **Spodní panel**: **Text**, **Text a symbol**, **Symbol**, nebo **Reaktivní**, které ukáže jen symbol a slova vysune, když na něj ukážeš. **Postranní panel** ovlivňuje jen rozvržení na počítači a **Spodní panel** jen rozvržení v telefonu.
-- **Barvy**: jedna **Barva zvýraznění**, nebo **Duhový režim**, kde každý řádek seznamu dostane vlastní barvu z palety osmi. Duhový režim přidává **Režim disko**, kde barvy pomalu přeplouvají na další, **Reaktivní režim**, kde se barva řádku ukazuje, jen když na něj ukážeš, běží nebo je vybraný, **Rotace barev** a samotnou **Barevnou paletu**.
+- **Barvy**: jedna **Barva zvýraznění**, nebo **Duhový režim**, kde každý řádek seznamu dostane vlastní barvu z palety osmi. Duhový režim přidává **Režim disko**, kde barvy pomalu přeplouvají na další, **Reaktivní režim**, kde se barva řádku ukazuje, jen když na něj ukážeš, běží nebo je vybraný, **Rotace barev** a samotnou **Barevnou paletu**. Kouzelná hůlka na začátku barev zvýraznění, **Barva systému**, převezme vlastní barvu tvého zařízení: Material You v aplikaci pro Android od Androidu 12 a systémovou barvu ve Firefoxu a Safari. Ukáže se jen tam, kde zařízení takovou barvu má.
 
-BombVault drží vzhled na serveru. Prohlížeč, který přijde poprvé, ho převezme. Když tvůj systém žádá méně pohybu, vždy to vyhraje nad **Animace**.
+BombVault drží vzhled na serveru. Prohlížeč, který přijde poprvé, ho převezme. **OLED** a **Barva systému** jsou výjimka: každé zařízení si je drží samo, protože závisí na jeho obrazovce. Když tvůj systém žádá méně pohybu, vždy to vyhraje nad **Animace**.
 
 ## Plán {#schedule}
 

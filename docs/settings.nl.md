@@ -16,11 +16,11 @@ Deze pagina toont elke tegel en zijn kaarten, en linkt naar de pagina die elk er
 
 ## Uiterlijk {#look}
 
-- **Uiterlijk**: **Taal** (42 talen), **Thema** (**Donker**, **Licht** of **Systeem**), **Hoeken**, **Animatie** (**Uit**, **Subtiel**, **Wild** of **Razend**), **Stille meldingen**, die succesmeldingen zoals bevestigingen van opslaan verbergt, en **Volgorde van de instellingenpagina's**, waar je een tegel vasthoudt en op zijn plek sleept, of Alt en de pijltjestoetsen gebruikt.
+- **Uiterlijk**: **Taal** (42 talen), **Thema** (**Donker**, **Licht** of **Systeem**) met **OLED** eronder, dat OLED- en AMOLED-schermen echt zwart geeft zolang het donkere thema te zien is, **Hoeken**, **Animatie** (**Uit**, **Subtiel**, **Wild** of **Razend**), **Stille meldingen**, die succesmeldingen zoals bevestigingen van opslaan verbergt, en **Volgorde van de instellingenpagina's**, waar je een tegel vasthoudt en op zijn plek sleept, of Alt en de pijltjestoetsen gebruikt.
 - **Labels**: hoeveel van een bedieningselement wordt getoond, apart voor **Knoppen**, **Zijbalk**, **Tabbladen** en **Onderbalk**: **Tekst**, **Tekst en symbool**, **Symbool**, of **Reactief**, dat alleen het symbool toont en de woorden inschuift als je erop wijst. **Zijbalk** geldt alleen voor de desktopindeling en **Onderbalk** alleen voor de telefoonindeling.
-- **Kleuren**: één **Accentkleur**, of **Regenboogmodus**, waarin elke rij van een lijst een eigen kleur uit een palet van acht krijgt. De Regenboogmodus voegt **Discomodus** toe, waarin de kleuren langzaam naar de volgende glijden, **Reactieve modus**, waarin de kleur van een rij alleen zichtbaar is terwijl je erop wijst, hij loopt of is geselecteerd, **Kleurrotatie** en het **Kleurenpalet** zelf.
+- **Kleuren**: één **Accentkleur**, of **Regenboogmodus**, waarin elke rij van een lijst een eigen kleur uit een palet van acht krijgt. De Regenboogmodus voegt **Discomodus** toe, waarin de kleuren langzaam naar de volgende glijden, **Reactieve modus**, waarin de kleur van een rij alleen zichtbaar is terwijl je erop wijst, hij loopt of is geselecteerd, **Kleurrotatie** en het **Kleurenpalet** zelf. Het toverstafje aan het begin van de accentkleuren, **Systeemkleur**, neemt de eigen kleur van je apparaat over: Material You in de Android-app vanaf Android 12, en de systeemkleur in Firefox en Safari. Het verschijnt alleen waar het apparaat zo'n kleur heeft.
 
-BombVault houdt het uiterlijk op de server. Een browser die voor het eerst komt, neemt het over. Vraagt je systeem om minder beweging, dan wint dat altijd van **Animatie**.
+BombVault houdt het uiterlijk op de server. Een browser die voor het eerst komt, neemt het over. **OLED** en **Systeemkleur** zijn de uitzondering: elk apparaat houdt ze voor zichzelf, omdat ze van zijn scherm afhangen. Vraagt je systeem om minder beweging, dan wint dat altijd van **Animatie**.
 
 ## Planning {#schedule}
 

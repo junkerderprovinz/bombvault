@@ -16,11 +16,11 @@ This page lists every tile and its cards, and links to the page that explains ea
 
 ## Look {#look}
 
-- **Appearance**: **Language** (42 languages), **Theme** (**Dark**, **Light** or **System**), **Corners**, **Animation** (**Off**, **Subtle**, **Wild** or **Storm**), **Quiet notifications**, which hides success notices such as save confirmations, and **Order of the settings pages**, where you hold a tile and drag it into place, or use Alt and the arrow keys.
+- **Appearance**: **Language** (42 languages), **Theme** (**Dark**, **Light** or **System**) with **OLED** below it, which gives OLED and AMOLED screens true black while the dark theme shows, **Corners**, **Animation** (**Off**, **Subtle**, **Wild** or **Storm**), **Quiet notifications**, which hides success notices such as save confirmations, and **Order of the settings pages**, where you hold a tile and drag it into place, or use Alt and the arrow keys.
 - **Labels**: how much of a control is shown, separately for **Buttons**, **Sidebar**, **Tabs** and **Bottom bar**: **Text**, **Text and symbol**, **Symbol**, or **Reactive**, which shows the symbol alone and slides the words in when you point at it. **Sidebar** affects the desktop layout only and **Bottom bar** the phone layout only.
-- **Colors**: one **Accent color**, or **Rainbow Mode**, where each row of a list gets its own colour from a palette of eight. Rainbow Mode adds **Disco Mode**, where the colours glide slowly to the next one, **Reactive Mode**, where a row's colour shows only while you point at it, runs or is selected, **Colour Rotation** and the **Colour palette** itself.
+- **Colors**: one **Accent color**, or **Rainbow Mode**, where each row of a list gets its own colour from a palette of eight. Rainbow Mode adds **Disco Mode**, where the colours glide slowly to the next one, **Reactive Mode**, where a row's colour shows only while you point at it, runs or is selected, **Colour Rotation** and the **Colour palette** itself. The wand at the start of the accent colors, **System color**, takes your device's own color: Material You in the Android app from Android 12 on, and the system color in Firefox and Safari. It shows only where the device has such a color.
 
-BombVault keeps the look on the server. A browser that comes for the first time takes it over. When your system asks for less motion, that always wins over **Animation**.
+BombVault keeps the look on the server. A browser that comes for the first time takes it over. **OLED** and **System color** are the exception: each device keeps them for itself, since they depend on its screen. When your system asks for less motion, that always wins over **Animation**.
 
 ## Schedule {#schedule}
 

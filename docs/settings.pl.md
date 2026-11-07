@@ -16,11 +16,11 @@ Ta strona wymienia każdy kafelek i jego karty oraz odsyła do strony, która ob
 
 ## Wygląd {#look}
 
-- **Wygląd**: **Język** (42 języki), **Motyw** (**Ciemny**, **Jasny** lub **Systemowy**), **Narożniki**, **Animacja** (**Wył.**, **Subtelny**, **Dziki** lub **Burzliwy**), **Ciche powiadomienia**, które ukrywają komunikaty o sukcesie, jak potwierdzenia zapisu, oraz **Kolejność stron ustawień**, gdzie przytrzymujesz kafelek i przeciągasz go na miejsce albo używasz Alt i klawiszy strzałek.
+- **Wygląd**: **Język** (42 języki), **Motyw** (**Ciemny**, **Jasny** lub **Systemowy**) z opcją **OLED** pod spodem, która daje ekranom OLED i AMOLED prawdziwą czerń, dopóki widać ciemny motyw, **Narożniki**, **Animacja** (**Wył.**, **Subtelny**, **Dziki** lub **Burzliwy**), **Ciche powiadomienia**, które ukrywają komunikaty o sukcesie, jak potwierdzenia zapisu, oraz **Kolejność stron ustawień**, gdzie przytrzymujesz kafelek i przeciągasz go na miejsce albo używasz Alt i klawiszy strzałek.
 - **Etykiety**: ile z kontrolki jest pokazane, osobno dla **Przyciski**, **Panel boczny**, **Karty** i **Panel dolny**: **Tekst**, **Tekst i symbol**, **Symbol** albo **Reaktywny**, który pokazuje sam symbol i wsuwa słowa, gdy go wskażesz. **Panel boczny** dotyczy tylko układu na komputerze, a **Panel dolny** tylko układu w telefonie.
-- **Kolory**: jeden **Kolor akcentu** albo **Tryb tęczowy**, w którym każdy wiersz listy dostaje własny kolor z palety ośmiu. Tryb tęczowy dodaje **Tryb disco**, w którym kolory powoli przechodzą do następnego, **Tryb reaktywny**, w którym kolor wiersza widać tylko, gdy go wskażesz, gdy działa albo jest zaznaczony, **Rotacja kolorów** i samą **Paletę kolorów**.
+- **Kolory**: jeden **Kolor akcentu** albo **Tryb tęczowy**, w którym każdy wiersz listy dostaje własny kolor z palety ośmiu. Tryb tęczowy dodaje **Tryb disco**, w którym kolory powoli przechodzą do następnego, **Tryb reaktywny**, w którym kolor wiersza widać tylko, gdy go wskażesz, gdy działa albo jest zaznaczony, **Rotacja kolorów** i samą **Paletę kolorów**. Różdżka na początku kolorów akcentu, **Kolor systemu**, przejmuje własny kolor Twojego urządzenia: Material You w aplikacji na Androida od Androida 12 oraz kolor systemu w Firefoksie i Safari. Pojawia się tylko tam, gdzie urządzenie ma taki kolor.
 
-BombVault trzyma wygląd na serwerze. Przeglądarka, która przychodzi pierwszy raz, przejmuje go. Gdy Twój system prosi o mniej ruchu, to zawsze wygrywa z **Animacja**.
+BombVault trzyma wygląd na serwerze. Przeglądarka, która przychodzi pierwszy raz, przejmuje go. **OLED** i **Kolor systemu** to wyjątek: każde urządzenie zachowuje je dla siebie, bo zależą od jego ekranu. Gdy Twój system prosi o mniej ruchu, to zawsze wygrywa z **Animacja**.
 
 ## Harmonogram {#schedule}
 

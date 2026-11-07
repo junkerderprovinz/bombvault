@@ -16,11 +16,11 @@ Esta página lista cada mosaico e os seus cartões, e liga à página que explic
 
 ## Aspeto {#look}
 
-- **Aspeto**: **Idioma** (42 idiomas), **Tema** (**Escuro**, **Claro** ou **Sistema**), **Cantos**, **Animação** (**Desativado**, **Subtil**, **Selvagem** ou **Furioso**), **Notificações discretas**, que esconde avisos de sucesso como as confirmações de gravação, e **Ordem das páginas de definições**, onde seguras um mosaico e o arrastas para o lugar, ou usas Alt e as setas.
+- **Aspeto**: **Idioma** (42 idiomas), **Tema** (**Escuro**, **Claro** ou **Sistema**) com **OLED** por baixo, que dá preto verdadeiro aos ecrãs OLED e AMOLED enquanto o tema escuro está visível, **Cantos**, **Animação** (**Desativado**, **Subtil**, **Selvagem** ou **Furioso**), **Notificações discretas**, que esconde avisos de sucesso como as confirmações de gravação, e **Ordem das páginas de definições**, onde seguras um mosaico e o arrastas para o lugar, ou usas Alt e as setas.
 - **Rótulos**: quanto de um controlo é mostrado, em separado para **Botões**, **Barra lateral**, **Separadores** e **Barra inferior**: **Texto**, **Texto e símbolo**, **Símbolo**, ou **Reativo**, que mostra só o símbolo e desliza as palavras quando apontas para ele. A **Barra lateral** afeta só a disposição de secretária e a **Barra inferior** só a do telemóvel.
-- **Cores**: uma **Cor de destaque**, ou o **Modo arco-íris**, em que cada linha de uma lista tem a sua própria cor de uma paleta de oito. O Modo arco-íris acrescenta o **Modo disco**, em que as cores deslizam devagar para a seguinte, o **Modo reativo**, em que a cor de uma linha só aparece enquanto apontas para ela, ela corre ou está selecionada, a **Rotação de cores** e a própria **Paleta de cores**.
+- **Cores**: uma **Cor de destaque**, ou o **Modo arco-íris**, em que cada linha de uma lista tem a sua própria cor de uma paleta de oito. O Modo arco-íris acrescenta o **Modo disco**, em que as cores deslizam devagar para a seguinte, o **Modo reativo**, em que a cor de uma linha só aparece enquanto apontas para ela, ela corre ou está selecionada, a **Rotação de cores** e a própria **Paleta de cores**. A varinha no início das cores de destaque, **Cor do sistema**, usa a cor própria do teu dispositivo: Material You na app Android a partir do Android 12, e a cor do sistema no Firefox e no Safari. Só aparece onde o dispositivo tem uma cor assim.
 
-O BombVault guarda o aspeto no servidor. Um navegador que chega pela primeira vez adota-o. Quando o teu sistema pede menos movimento, isso ganha sempre à **Animação**.
+O BombVault guarda o aspeto no servidor. Um navegador que chega pela primeira vez adota-o. **OLED** e **Cor do sistema** são a exceção: cada dispositivo guarda-os para si, já que dependem do seu ecrã. Quando o teu sistema pede menos movimento, isso ganha sempre à **Animação**.
 
 ## Agendamento {#schedule}
 

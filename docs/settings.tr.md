@@ -16,11 +16,11 @@ Bu sayfa her kutucuğu ve kartlarını listeler, her birini derinlemesine anlata
 
 ## Görünüm {#look}
 
-- **Görünüm**: **Dil** (42 dil), **Tema** (**Koyu**, **Açık** veya **Sistem**), **Köşeler**, **Animasyon** (**Kapalı**, **Hafif**, **Vahşi** veya **Fırtına**), kaydetme onayları gibi başarı bildirimlerini gizleyen **Sessiz bildirimler** ve bir kutucuğu tutup yerine sürüklediğin ya da Alt ve ok tuşlarını kullandığın **Ayar sayfalarının sırası**.
+- **Görünüm**: **Dil** (42 dil), **Tema** (**Koyu**, **Açık** veya **Sistem**) ve altında, koyu tema göründüğü sürece OLED ve AMOLED ekranlara gerçek siyah veren **OLED**, **Köşeler**, **Animasyon** (**Kapalı**, **Hafif**, **Vahşi** veya **Fırtına**), kaydetme onayları gibi başarı bildirimlerini gizleyen **Sessiz bildirimler** ve bir kutucuğu tutup yerine sürüklediğin ya da Alt ve ok tuşlarını kullandığın **Ayar sayfalarının sırası**.
 - **Etiketler**: bir kontrolün ne kadarının gösterileceği, **Düğmeler**, **Kenar çubuğu**, **Sekmeler** ve **Alt çubuk** için ayrı ayrı: **Metin**, **Metin ve simge**, **Simge** ya da yalnızca simgeyi gösterip üstüne gelince sözcükleri kaydıran **Tepkisel**. **Kenar çubuğu** yalnızca masaüstü düzenini, **Alt çubuk** yalnızca telefon düzenini etkiler.
-- **Renkler**: tek bir **Vurgu rengi** ya da bir listenin her satırının sekiz renkli bir paletten kendi rengini aldığı **Gökkuşağı modu**. Gökkuşağı modu şunları ekler: renklerin yavaşça sonrakine kaydığı **Disko modu**, bir satırın renginin yalnızca üstüne geldiğinde, çalıştığında ya da seçildiğinde göründüğü **Reaktif mod**, **Renk döngüsü** ve **Renk paleti**'nin kendisi.
+- **Renkler**: tek bir **Vurgu rengi** ya da bir listenin her satırının sekiz renkli bir paletten kendi rengini aldığı **Gökkuşağı modu**. Gökkuşağı modu şunları ekler: renklerin yavaşça sonrakine kaydığı **Disko modu**, bir satırın renginin yalnızca üstüne geldiğinde, çalıştığında ya da seçildiğinde göründüğü **Reaktif mod**, **Renk döngüsü** ve **Renk paleti**'nin kendisi. Vurgu renklerinin başındaki sihirli değnek, **Sistem rengi**, cihazının kendi rengini alır: Android uygulamasında Android 12'den itibaren Material You, Firefox ve Safari'de ise sistem rengi. Yalnızca cihazın böyle bir rengi olduğu yerde görünür.
 
-BombVault görünümü sunucuda tutar. İlk kez gelen bir tarayıcı onu devralır. Sistemin daha az hareket istediğinde bu her zaman **Animasyon**'dan önce gelir.
+BombVault görünümü sunucuda tutar. İlk kez gelen bir tarayıcı onu devralır. **OLED** ve **Sistem rengi** bunun istisnasıdır: ekrana bağlı oldukları için her cihaz bunları kendine saklar. Sistemin daha az hareket istediğinde bu her zaman **Animasyon**'dan önce gelir.
 
 ## Zamanlama {#schedule}
 

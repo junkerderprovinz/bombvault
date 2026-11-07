@@ -16,11 +16,11 @@ Denne siden lister hver flis og kortene i den, og lenker til siden som forklarer
 
 ## Utseende {#look}
 
-- **Utseende**: **Språk** (42 språk), **Tema** (**Mørkt**, **Lyst** eller **System**), **Hjørner**, **Animasjon** (**Av**, **Diskret**, **Vill** eller **Stormende**), **Stille varsler**, som skjuler suksessmeldinger som lagringsbekreftelser, og **Rekkefølgen på innstillingssidene**, der du holder en flis og drar den på plass, eller bruker Alt og piltastene.
+- **Utseende**: **Språk** (42 språk), **Tema** (**Mørkt**, **Lyst** eller **System**) med **OLED** under, som gir OLED- og AMOLED-skjermer ekte svart så lenge det mørke temaet vises, **Hjørner**, **Animasjon** (**Av**, **Diskret**, **Vill** eller **Stormende**), **Stille varsler**, som skjuler suksessmeldinger som lagringsbekreftelser, og **Rekkefølgen på innstillingssidene**, der du holder en flis og drar den på plass, eller bruker Alt og piltastene.
 - **Etiketter**: hvor mye av en kontroll som vises, separat for **Knapper**, **Sidefelt**, **Faner** og **Bunnfelt**: **Tekst**, **Tekst og symbol**, **Symbol** eller **Reaktiv**, som viser bare symbolet og skyver ordene inn når du peker på det. **Sidefelt** påvirker bare skrivebordsvisningen og **Bunnfelt** bare telefonvisningen.
-- **Farger**: én **Aksentfarge**, eller **Regnbuemodus**, der hver rad i en liste får sin egen farge fra en palett på åtte. Regnbuemodus legger til **Diskomodus**, der fargene glir sakte over i den neste, **Reaktiv modus**, der en rads farge bare vises mens du peker på den, den kjører eller er valgt, **Fargerotasjon** og selve **Fargepalett**.
+- **Farger**: én **Aksentfarge**, eller **Regnbuemodus**, der hver rad i en liste får sin egen farge fra en palett på åtte. Regnbuemodus legger til **Diskomodus**, der fargene glir sakte over i den neste, **Reaktiv modus**, der en rads farge bare vises mens du peker på den, den kjører eller er valgt, **Fargerotasjon** og selve **Fargepalett**. Tryllestaven først blant aksentfargene, **Systemfarge**, tar enhetens egen farge: Material You i Android-appen fra Android 12, og systemfargen i Firefox og Safari. Den vises bare der enheten har en slik farge.
 
-BombVault husker utseendet på serveren. En nettleser som kommer for første gang, overtar det. Når systemet ditt ber om mindre bevegelse, vinner det alltid over **Animasjon**.
+BombVault husker utseendet på serveren. En nettleser som kommer for første gang, overtar det. **OLED** og **Systemfarge** er unntaket: hver enhet beholder dem for seg selv, siden de avhenger av skjermen. Når systemet ditt ber om mindre bevegelse, vinner det alltid over **Animasjon**.
 
 ## Tidsplan {#schedule}
 

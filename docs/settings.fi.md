@@ -16,11 +16,11 @@ Tällä sivulla listataan jokainen ruutu ja sen kortit sekä linkit sivulle, jok
 
 ## Ulkoasu {#look}
 
-- **Ulkoasu**: **Kieli** (42 kieltä), **Teema** (**Tumma**, **Vaalea** tai **Järjestelmä**), **Kulmat**, **Animaatio** (**Pois**, **Hillitty**, **Villi** tai **Myrskyisä**), **Hiljaiset ilmoitukset**, joka piilottaa onnistumisilmoitukset, kuten tallennusvahvistukset, ja **Asetussivujen järjestys**, jossa pidät ruutua pohjassa ja vedät sen paikalleen tai käytät Alt-näppäintä ja nuolinäppäimiä.
+- **Ulkoasu**: **Kieli** (42 kieltä), **Teema** (**Tumma**, **Vaalea** tai **Järjestelmä**) ja sen alla **OLED**, joka antaa OLED- ja AMOLED-näytöille aidon mustan, kun tumma teema on näkyvissä, **Kulmat**, **Animaatio** (**Pois**, **Hillitty**, **Villi** tai **Myrskyisä**), **Hiljaiset ilmoitukset**, joka piilottaa onnistumisilmoitukset, kuten tallennusvahvistukset, ja **Asetussivujen järjestys**, jossa pidät ruutua pohjassa ja vedät sen paikalleen tai käytät Alt-näppäintä ja nuolinäppäimiä.
 - **Nimikkeet**: kuinka paljon säätimestä näytetään, erikseen kohdille **Painikkeet**, **Sivupalkki**, **Välilehdet** ja **Alapalkki**: **Teksti**, **Teksti ja symboli**, **Symboli** tai **Reagoiva**, joka näyttää pelkän symbolin ja liu'uttaa sanat esiin, kun osoitat sitä. **Sivupalkki** vaikuttaa vain työpöytäasetteluun ja **Alapalkki** vain puhelinasetteluun.
-- **Värit**: yksi **Korostusväri** tai **Sateenkaaritila**, jossa jokainen listan rivi saa oman värinsä kahdeksan värin paletista. Sateenkaaritila lisää **Disko-tilan**, jossa värit liukuvat hitaasti seuraavaan, **Reaktiivisen tilan**, jossa rivin väri näkyy vain, kun osoitat sitä, se on käynnissä tai valittuna, **Värikierron** ja itse **Väripaletin**.
+- **Värit**: yksi **Korostusväri** tai **Sateenkaaritila**, jossa jokainen listan rivi saa oman värinsä kahdeksan värin paletista. Sateenkaaritila lisää **Disko-tilan**, jossa värit liukuvat hitaasti seuraavaan, **Reaktiivisen tilan**, jossa rivin väri näkyy vain, kun osoitat sitä, se on käynnissä tai valittuna, **Värikierron** ja itse **Väripaletin**. Korostusvärien alussa oleva taikasauva, **Järjestelmän väri**, ottaa käyttöön laitteesi oman värin: Material You Android-sovelluksessa Android 12:sta alkaen sekä järjestelmän värin Firefoxissa ja Safarissa. Se näkyy vain, jos laitteella on tällainen väri.
 
-BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa, ottaa sen käyttöön. Kun järjestelmäsi pyytää vähemmän liikettä, se voittaa aina **Animaation**.
+BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa, ottaa sen käyttöön. **OLED** ja **Järjestelmän väri** ovat poikkeus: jokainen laite pitää ne itsellään, koska ne riippuvat sen näytöstä. Kun järjestelmäsi pyytää vähemmän liikettä, se voittaa aina **Animaation**.
 
 ## Aikataulut {#schedule}
 

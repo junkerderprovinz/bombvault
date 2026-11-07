@@ -16,11 +16,11 @@ Această pagină listează fiecare placă și cardurile ei și trimite la pagina
 
 ## Aspect {#look}
 
-- **Aspect**: **Limbă** (42 de limbi), **Temă** (**Întunecat**, **Luminos** sau **Sistem**), **Colțuri**, **Animație** (**Oprit**, **Discretă**, **Sălbatică** sau **Furtunoasă**), **Notificări discrete**, care ascunde mesajele de succes, cum sunt confirmările de salvare, și **Ordinea paginilor de setări**, unde ții apăsată o placă și o tragi la locul ei sau folosești Alt și tastele săgeți.
+- **Aspect**: **Limbă** (42 de limbi), **Temă** (**Întunecat**, **Luminos** sau **Sistem**) cu **OLED** dedesubt, care dă un negru adevărat ecranelor OLED și AMOLED cât timp se vede tema întunecată, **Colțuri**, **Animație** (**Oprit**, **Discretă**, **Sălbatică** sau **Furtunoasă**), **Notificări discrete**, care ascunde mesajele de succes, cum sunt confirmările de salvare, și **Ordinea paginilor de setări**, unde ții apăsată o placă și o tragi la locul ei sau folosești Alt și tastele săgeți.
 - **Etichete**: cât din un control este afișat, separat pentru **Butoane**, **Bară laterală**, **File** și **Bară inferioară**: **Text**, **Text și simbol**, **Simbol** sau **Reactiv**, care arată doar simbolul și face să alunece cuvintele când treci cu mouse-ul peste el. **Bară laterală** afectează doar aspectul de desktop, iar **Bară inferioară** doar aspectul de telefon.
-- **Culori**: o singură **Culoare de accent** sau **Mod curcubeu**, în care fiecare rând al unei liste primește propria culoare dintr-o paletă de opt. Modul curcubeu adaugă **Mod disco**, în care culorile alunecă lent spre următoarea, **Mod reactiv**, în care culoarea unui rând se vede doar cât treci peste el, rulează sau este selectat, **Rotația culorilor** și **Paleta de culori** însăși.
+- **Culori**: o singură **Culoare de accent** sau **Mod curcubeu**, în care fiecare rând al unei liste primește propria culoare dintr-o paletă de opt. Modul curcubeu adaugă **Mod disco**, în care culorile alunecă lent spre următoarea, **Mod reactiv**, în care culoarea unui rând se vede doar cât treci peste el, rulează sau este selectat, **Rotația culorilor** și **Paleta de culori** însăși. Bagheta de la începutul culorilor de accent, **Culoarea sistemului**, preia culoarea proprie a dispozitivului tău: Material You în aplicația Android începând cu Android 12, și culoarea sistemului în Firefox și Safari. Apare doar acolo unde dispozitivul are o astfel de culoare.
 
-BombVault păstrează aspectul pe server. Un browser care vine pentru prima dată îl preia. Când sistemul tău cere mai puțină mișcare, asta câștigă întotdeauna în fața **Animației**.
+BombVault păstrează aspectul pe server. Un browser care vine pentru prima dată îl preia. **OLED** și **Culoarea sistemului** sunt excepția: fiecare dispozitiv le păstrează pentru sine, pentru că depind de ecranul lui. Când sistemul tău cere mai puțină mișcare, asta câștigă întotdeauna în fața **Animației**.
 
 ## Programare {#schedule}
 

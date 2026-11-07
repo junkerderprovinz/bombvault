@@ -16,11 +16,11 @@ Ez az oldal felsorolja az összes csempét és a kártyáikat, és arra az oldal
 
 ## Megjelenés {#look}
 
-- **Megjelenés**: **Nyelv** (42 nyelv), **Téma** (**Sötét**, **Világos** vagy **Rendszer**), **Sarkok**, **Animáció** (**Ki**, **Visszafogott**, **Vad** vagy **Viharos**), **Csendes értesítések**, amely elrejti a sikerértesítéseket, például a mentés visszajelzéseit, és **A beállítási oldalak sorrendje**, ahol egy csempét megfogsz és a helyére húzod, vagy az Alt és a nyílbillentyűk segítségével mozgatod.
+- **Megjelenés**: **Nyelv** (42 nyelv), **Téma** (**Sötét**, **Világos** vagy **Rendszer**), alatta az **OLED**, amely valódi feketét ad az OLED és AMOLED kijelzőknek, amíg a sötét téma látszik, **Sarkok**, **Animáció** (**Ki**, **Visszafogott**, **Vad** vagy **Viharos**), **Csendes értesítések**, amely elrejti a sikerértesítéseket, például a mentés visszajelzéseit, és **A beállítási oldalak sorrendje**, ahol egy csempét megfogsz és a helyére húzod, vagy az Alt és a nyílbillentyűk segítségével mozgatod.
 - **Feliratok**: mennyit mutat egy vezérlőből, külön a **Gombok**, az **Oldalsáv**, a **Lapok** és az **Alsó sáv** esetén: **Szöveg**, **Szöveg és szimbólum**, **Szimbólum**, vagy **Reaktív**, amely csak a szimbólumot mutatja, és becsúsztatja a szavakat, ha rámutatsz. Az **Oldalsáv** csak az asztali elrendezést érinti, az **Alsó sáv** csak a telefonosat.
-- **Színek**: egy **Kiemelőszín**, vagy a **Szivárvány mód**, ahol a lista minden sora saját színt kap egy nyolcszínű palettáról. A Szivárvány mód hozzáadja a **Diszkó módot**, ahol a színek lassan átsiklanak a következőre, a **Reaktív módot**, ahol a sor színe csak akkor látszik, ha rámutatsz, fut, vagy ki van jelölve, a **Színforgatást** és magát a **Színpalettát**.
+- **Színek**: egy **Kiemelőszín**, vagy a **Szivárvány mód**, ahol a lista minden sora saját színt kap egy nyolcszínű palettáról. A Szivárvány mód hozzáadja a **Diszkó módot**, ahol a színek lassan átsiklanak a következőre, a **Reaktív módot**, ahol a sor színe csak akkor látszik, ha rámutatsz, fut, vagy ki van jelölve, a **Színforgatást** és magát a **Színpalettát**. A kiemelőszínek elején álló varázspálca, a **Rendszerszín**, átveszi az eszközöd saját színét: az Android-alkalmazásban Android 12-től a Material You színét, Firefoxban és Safariban pedig a rendszer színét. Csak ott jelenik meg, ahol az eszköznek van ilyen színe.
 
-A BombVault a megjelenést a szerveren tárolja. Az első alkalommal érkező böngésző átveszi. Ha a rendszered kevesebb mozgást kér, az mindig erősebb az **Animációnál**.
+A BombVault a megjelenést a szerveren tárolja. Az első alkalommal érkező böngésző átveszi. Az **OLED** és a **Rendszerszín** kivétel: ezeket minden eszköz magának tartja meg, mert a képernyőjétől függnek. Ha a rendszered kevesebb mozgást kér, az mindig erősebb az **Animációnál**.
 
 ## Ütemezések {#schedule}
 

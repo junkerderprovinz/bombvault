@@ -16,11 +16,11 @@ Trang này liệt kê mọi ô cùng các thẻ của nó, và liên kết tới
 
 ## Giao diện {#look}
 
-- **Giao diện**: **Ngôn ngữ** (42 ngôn ngữ), **Giao diện** (**Tối**, **Sáng** hoặc **Hệ thống**), **Góc**, **Hoạt ảnh** (**Tắt**, **Nhẹ**, **Sôi động** hoặc **Bão**), **Thông báo im lặng**, ẩn các thông báo thành công như xác nhận đã lưu, và **Thứ tự các trang cài đặt**, nơi bạn giữ một ô rồi kéo vào vị trí, hoặc dùng Alt cùng các phím mũi tên.
+- **Giao diện**: **Ngôn ngữ** (42 ngôn ngữ), **Giao diện** (**Tối**, **Sáng** hoặc **Hệ thống**) với **OLED** bên dưới, cho màn hình OLED và AMOLED màu đen tuyền khi giao diện tối đang hiển thị, **Góc**, **Hoạt ảnh** (**Tắt**, **Nhẹ**, **Sôi động** hoặc **Bão**), **Thông báo im lặng**, ẩn các thông báo thành công như xác nhận đã lưu, và **Thứ tự các trang cài đặt**, nơi bạn giữ một ô rồi kéo vào vị trí, hoặc dùng Alt cùng các phím mũi tên.
 - **Nhãn**: mức độ hiển thị của một điều khiển, riêng cho **Nút**, **Thanh bên**, **Thẻ** và **Thanh dưới**: **Chữ**, **Chữ và biểu tượng**, **Biểu tượng**, hoặc **Phản hồi**, chỉ hiện biểu tượng và trượt chữ ra khi bạn trỏ vào. **Thanh bên** chỉ ảnh hưởng bố cục máy tính và **Thanh dưới** chỉ ảnh hưởng bố cục điện thoại.
-- **Màu sắc**: một **Màu nhấn**, hoặc **Chế độ cầu vồng**, nơi mỗi dòng của danh sách có màu riêng từ bảng tám màu. Chế độ cầu vồng thêm **Chế độ disco**, nơi các màu trượt chậm sang màu kế tiếp, **Chế độ phản ứng**, nơi màu của một dòng chỉ hiện khi bạn trỏ vào, khi nó chạy hoặc được chọn, **Luân chuyển màu** và chính **Bảng màu**.
+- **Màu sắc**: một **Màu nhấn**, hoặc **Chế độ cầu vồng**, nơi mỗi dòng của danh sách có màu riêng từ bảng tám màu. Chế độ cầu vồng thêm **Chế độ disco**, nơi các màu trượt chậm sang màu kế tiếp, **Chế độ phản ứng**, nơi màu của một dòng chỉ hiện khi bạn trỏ vào, khi nó chạy hoặc được chọn, **Luân chuyển màu** và chính **Bảng màu**. Cây đũa thần ở đầu các màu nhấn, **Màu hệ thống**, lấy màu riêng của thiết bị bạn: Material You trong ứng dụng Android từ Android 12 trở lên, và màu hệ thống trong Firefox và Safari. Nó chỉ hiện khi thiết bị có màu như vậy.
 
-BombVault giữ giao diện trên máy chủ. Một trình duyệt lần đầu đến sẽ lấy nó. Khi hệ thống của bạn yêu cầu ít chuyển động hơn, điều đó luôn thắng **Hoạt ảnh**.
+BombVault giữ giao diện trên máy chủ. Một trình duyệt lần đầu đến sẽ lấy nó. **OLED** và **Màu hệ thống** là ngoại lệ: mỗi thiết bị tự giữ chúng cho mình, vì chúng phụ thuộc vào màn hình của thiết bị. Khi hệ thống của bạn yêu cầu ít chuyển động hơn, điều đó luôn thắng **Hoạt ảnh**.
 
 ## Lịch trình {#schedule}
 
