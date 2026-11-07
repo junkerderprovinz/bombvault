@@ -211,3 +211,34 @@ func TestEmptyBackupRefusedWhenTheChosenFoldersAreStale(t *testing.T) {
 		t.Fatalf("want a refusal that asks for the folders again, got %v", err)
 	}
 }
+
+// The folders are what the user has to act on, so the run history and the
+// API keep them.
+func TestEmptyBackupRefusalsNameTheirFoldersWhereTheUserReadsThem(t *testing.T) {
+	s, st, root := hostDataService(t)
+	in := bindsTo("/mnt/user/appdata/gluetun")
+	seedBackedUp(t, st, "arr-gluetun-1", in, root+"/user/appdata/gluetun")
+	unmounted := s.emptyBackupRefusal("arr-gluetun-1", in, nil)
+
+	before := bindsTo("/mnt/user/appdata/compose/arr/sonarr")
+	seedBackedUp(t, st, "arr-sonarr-1", before, root+"/user/appdata/compose/arr/sonarr")
+	if err := st.SetBackupPaths("arr-sonarr-1", []string{root + "/user/appdata/compose/arr/sonarr"}); err != nil {
+		t.Fatal(err)
+	}
+	stale := s.emptyBackupRefusal("arr-sonarr-1", bindsTo("/mnt/user/appdata/dockhand/stacks/DXP6800/arr/sonarr"), nil)
+
+	for folder, err := range map[string]error{"/mnt/user/appdata/gluetun": unmounted, "/mnt/user/appdata/compose/arr/sonarr": stale} {
+		if err == nil {
+			t.Fatalf("no refusal for %s", folder)
+		}
+		if folder == "/mnt/user/appdata/compose/arr/sonarr" && !strings.Contains(err.Error(), "choose its backup folders again") {
+			t.Errorf("want the stale-selection refusal for %s, got %v", folder, err)
+		}
+		if got := truncateRunErr(err); !strings.Contains(got, folder) {
+			t.Errorf("run history = %q, want it to name %s", got, folder)
+		}
+		if got := scrubError(err); !strings.Contains(got, folder) {
+			t.Errorf("API error = %q, want it to name %s", got, folder)
+		}
+	}
+}
