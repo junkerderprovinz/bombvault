@@ -1,10 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -59,7 +63,7 @@ func TestEmptyBackupAllowedAfterDeselectingEveryFolder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s.emptyBackupIsUnreachable("myapp", nil) {
+	if s.emptyBackupRefusal("myapp", model.Inspect{}, nil) != nil {
 		t.Fatal("refused a backup after the user deselected every folder, with the folder still on disk")
 	}
 }
@@ -73,7 +77,7 @@ func TestEmptyBackupRefusedWhenCapturedDataVanishes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !s.emptyBackupIsUnreachable("myapp", nil) {
+	if s.emptyBackupRefusal("myapp", model.Inspect{}, nil) == nil {
 		t.Fatal("accepted an empty backup after the captured data disappeared from disk")
 	}
 }
@@ -89,7 +93,7 @@ func TestEmptyBackupRefusedWhenSelectedPathsVanish(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !s.emptyBackupIsUnreachable("myapp", nil) {
+	if s.emptyBackupRefusal("myapp", model.Inspect{}, nil) == nil {
 		t.Fatal("accepted an empty backup while the user's selected folders were missing")
 	}
 }
@@ -98,7 +102,7 @@ func TestEmptyBackupRefusedWhenSelectedPathsVanish(t *testing.T) {
 func TestEmptyBackupAllowedForAFirstRun(t *testing.T) {
 	s, _ := guardService(t)
 
-	if s.emptyBackupIsUnreachable("fresh", nil) {
+	if s.emptyBackupRefusal("fresh", model.Inspect{}, nil) != nil {
 		t.Fatal("refused the first backup of a container that has never been backed up")
 	}
 }
@@ -109,7 +113,7 @@ func TestEmptyBackupAllowedWhenNothingWasEverCaptured(t *testing.T) {
 	s, st := guardService(t)
 	seedCaptured(t, st, "stateless")
 
-	if s.emptyBackupIsUnreachable("stateless", nil) {
+	if s.emptyBackupRefusal("stateless", model.Inspect{}, nil) != nil {
 		t.Fatal("refused a stateless container that never captured any data")
 	}
 }
@@ -122,7 +126,88 @@ func TestNonEmptyBackupNeverRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s.emptyBackupIsUnreachable("myapp", []string{"/host/user/appdata/myapp"}) {
+	if s.emptyBackupRefusal("myapp", model.Inspect{}, []string{"/host/user/appdata/myapp"}) != nil {
 		t.Fatal("refused a backup that had paths to back up")
+	}
+}
+
+// hostDataService maps host /mnt onto a temp folder, as Host Data does.
+func hostDataService(t *testing.T) (*Service, *store.Repo, string) {
+	t.Helper()
+	s, st := guardService(t)
+	root := filepath.ToSlash(t.TempDir())
+	s.cfg = config.Config{HostMountRoot: root, HostSourceRoot: "/mnt", DataRootSegments: []string{"appdata"}}
+	return s, st, root
+}
+
+func bindsTo(sources ...string) model.Inspect {
+	in := model.Inspect{Name: "/arr-gluetun-1"}
+	for _, src := range sources {
+		in.Mounts = append(in.Mounts, model.Mount{Type: "bind", Source: src, Destination: "/gluetun"})
+	}
+	return in
+}
+
+// seedBackedUp records a last backup that took captured from a container
+// mounted as in.
+func seedBackedUp(t *testing.T, st *store.Repo, name string, in model.Inspect, captured ...string) {
+	t.Helper()
+	def, err := json.Marshal(containerDefinition{Inspect: in, AppdataPaths: captured})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.UpsertTarget(store.Target{ContainerName: name, AppdataPaths: captured, Definition: string(def)}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A stack deployed again from another manager mounts its data from a path
+// outside Host Data. The folder the last backup took is gone because the data
+// moved, not because a share is missing, so the backup goes ahead and warns.
+func TestEmptyBackupAllowedWhenTheDataMovedOutsideHostData(t *testing.T) {
+	s, st, root := hostDataService(t)
+	before := bindsTo("/mnt/user/appdata/compose/arr/gluetun")
+	seedBackedUp(t, st, "arr-gluetun-1", before, root+"/user/appdata/compose/arr/gluetun")
+
+	now := bindsTo("/app/data/stacks/DXP6800/arr/gluetun")
+	if err := s.emptyBackupRefusal("arr-gluetun-1", now, s.effectiveBackupPaths("arr-gluetun-1", now)); err != nil {
+		t.Fatalf("refused a container whose data moved outside Host Data: %v", err)
+	}
+}
+
+// The container still mounts the folder its last backup took, and that folder
+// is gone: that is an unmounted share.
+func TestEmptyBackupRefusedWhileTheContainerStillMountsTheVanishedFolder(t *testing.T) {
+	s, st, root := hostDataService(t)
+	in := bindsTo("/mnt/user/appdata/gluetun")
+	seedBackedUp(t, st, "arr-gluetun-1", in, root+"/user/appdata/gluetun")
+
+	err := s.emptyBackupRefusal("arr-gluetun-1", in, s.effectiveBackupPaths("arr-gluetun-1", in))
+	if err == nil {
+		t.Fatal("accepted an empty backup while the mounted folder was missing")
+	}
+	if !strings.Contains(err.Error(), "/mnt/user/appdata/gluetun") {
+		t.Fatalf("the refusal does not name the missing folder: %v", err)
+	}
+}
+
+// A chosen folder that vanished while the container moved its data to a
+// folder Host Data reaches would back up nothing of it, so the backup still
+// refuses and asks for the folders to be chosen again.
+func TestEmptyBackupRefusedWhenTheChosenFoldersAreStale(t *testing.T) {
+	s, st, root := hostDataService(t)
+	before := bindsTo("/mnt/user/appdata/compose/arr/gluetun")
+	seedBackedUp(t, st, "arr-gluetun-1", before, root+"/user/appdata/compose/arr/gluetun")
+	if err := st.SetBackupPaths("arr-gluetun-1", []string{root + "/user/appdata/compose/arr/gluetun"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(root+"/user/appdata/dockhand/stacks/DXP6800/arr/gluetun", 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	now := bindsTo("/mnt/user/appdata/dockhand/stacks/DXP6800/arr/gluetun")
+	err := s.emptyBackupRefusal("arr-gluetun-1", now, s.effectiveBackupPaths("arr-gluetun-1", now))
+	if err == nil || !strings.Contains(err.Error(), "choose its backup folders again") {
+		t.Fatalf("want a refusal that asks for the folders again, got %v", err)
 	}
 }

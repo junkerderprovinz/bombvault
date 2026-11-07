@@ -200,7 +200,7 @@ func (s *Service) containerNothingToSave(ctx context.Context, name string) (stri
 		return "", err
 	case !found:
 		return reasonGone, nil
-	case s.emptyBackupIsUnreachable(name, s.effectiveBackupPaths(name, in)):
+	case s.emptyBackupRefusal(name, in, s.effectiveBackupPaths(name, in)) != nil:
 		return reasonEmpty, nil
 	}
 	return "", nil

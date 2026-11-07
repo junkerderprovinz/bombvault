@@ -6895,34 +6895,90 @@ func (s *Service) effectiveBackupPathsWithSelection(name string, in model.Inspec
 	return onlyExistingPaths(configured), configured, stored
 }
 
-// emptyBackupIsUnreachable decides what an empty effective path list MEANS, and
-// therefore whether a container backup should be refused (#181, manilx).
+// emptyBackupRefusal decides what an empty effective path list means for a
+// container backup and returns the reason to refuse it, or nil.
 //
-// Three states produce an empty list and only one of them is a fault:
+// Several states produce an empty list and only one of them is a fault:
 //
-//   - Nothing configured, nothing ever stored — a stateless container. Correct,
-//     back up its definition only.
-//   - Nothing configured, but a previous backup DID capture data — the user has
-//     deselected every folder since. Also correct: the container is stateless
-//     from now on. This was refused before, which left no way forward except
-//     re-selecting the folder that had just been deliberately removed.
-//   - The data a previous backup captured is GONE from disk — the share is not
-//     mounted or HOST_SOURCE_ROOT is wrong. THIS is the fault worth refusing,
-//     because recording it would look successful and overwrite the stored path
-//     list with nothing.
+//   - Nothing configured and nothing ever stored: a stateless container, so
+//     its definition alone is backed up.
+//   - Nothing configured, while a previous backup captured data: the user has
+//     deselected every folder since, and the container is stateless from now on.
+//   - A selection whose every entry is an exclusion: explicit-none, even with
+//     the deselected folder still on disk.
+//   - The captured data is gone and the container no longer mounts the folders
+//     it came from, as when another manager deploys a Compose stack again. The
+//     data moved, and the run's outside-Host-Data warning says where to.
+//   - The captured data is gone while the container still mounts it: the share
+//     is not mounted or HOST_SOURCE_ROOT is wrong. Recording that would look
+//     successful and overwrite the stored path list with nothing.
 //
-// Only storedDataIsGone separates the second case from the third. The store
-// cannot: an emptied selection is indistinguishable there from one that was
-// never made (both are an empty SelectedPaths, meaning "use automatic
-// detection"), and the configured list cannot either, because the appdata
-// fallback in resolveAppdataPaths is itself stat-gated and so disappears along
-// with the folder. Since the "!"-prefixed flat encoding (internal/api/
-// selection.go) there is a fourth shape with the same empty effective list: a
-// selection whose every entry is an exclusion — explicit-none, deliberate,
-// never a fault, even though the deselected folder is still on disk (threat
-// T-01-03).
-func (s *Service) emptyBackupIsUnreachable(name string, effective []string) bool {
-	return len(effective) == 0 && s.storedDataIsGone(name)
+// The store cannot tell the deselect from the fault, since an emptied selection
+// is stored like one never made, and the configured list cannot either, because
+// the appdata fallback in resolveAppdataPaths is stat-gated and disappears with
+// the folder. So storedDataIsGone checks the disk, and noLongerMounted tells a
+// move from a missing share. A chosen folder whose data moved is still refused:
+// the selection names only the old place, and the run would take nothing.
+func (s *Service) emptyBackupRefusal(name string, in model.Inspect, effective []string) error {
+	if len(effective) > 0 || !s.storedDataIsGone(name) {
+		return nil
+	}
+	tg, err := s.store.GetTargetByContainer(name)
+	if err != nil {
+		return nil
+	}
+	gone := includesOnly(tg.SelectedPaths)
+	if len(tg.SelectedPaths) == 0 {
+		gone = tg.AppdataPaths
+	}
+	hostPaths := make([]string, len(gone))
+	for i, p := range gone {
+		hostPaths[i] = s.toHostPath(p)
+	}
+	switch {
+	case !s.noLongerMounted(tg, in, gone):
+		return fmt.Errorf("backup %q: its backup folders are not reachable right now (%s; is the appdata share mounted?). Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))
+	case len(tg.SelectedPaths) > 0:
+		return fmt.Errorf("backup %q: the folders chosen for it are gone (%s) and it mounts other folders than at its last backup, so choose its backup folders again. Refusing an empty backup that would look successful", name, strings.Join(hostPaths, ", "))
+	}
+	return nil
+}
+
+// noLongerMounted reports whether each of gone came from a mount the container
+// had at its last backup and has no more. A path no recorded mount gave, such
+// as a folder added by hand, cannot tell a move from a missing share, and
+// neither can a definition that does not parse.
+func (s *Service) noLongerMounted(tg store.Target, in model.Inspect, gone []string) bool {
+	var def containerDefinition
+	if len(gone) == 0 || tg.Definition == "" || json.Unmarshal([]byte(tg.Definition), &def) != nil {
+		return false
+	}
+	now := map[string]bool{}
+	for _, m := range in.Mounts {
+		if m.Source != "" {
+			now[path.Clean(m.Source)] = true
+		}
+	}
+	for _, p := range gone {
+		gave := false
+		for _, m := range def.Inspect.Mounts {
+			if (m.Type != "bind" && m.Type != "volume") || m.Source == "" {
+				continue
+			}
+			cp, ok := s.toContainerPath(m.Source)
+			if !ok || !isUnderAny(p, []string{cp}) {
+				continue
+			}
+			if now[path.Clean(m.Source)] {
+				return false
+			}
+			gave = true
+		}
+		if !gave {
+			return false
+		}
+	}
+	return true
 }
 
 // storedDataIsGone reports whether the paths a previous backup actually captured
@@ -7143,8 +7199,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// no way forward except re-selecting the folder the user had just deliberately
 	// removed. The guard therefore measures what its own message claims: whether
 	// the data a previous backup captured has disappeared from disk.
-	if s.emptyBackupIsUnreachable(name, effective) {
-		err := fmt.Errorf("backup %q: its backup folders are not reachable right now (is the appdata share mounted?). Refusing an empty backup that would look successful", name)
+	if err := s.emptyBackupRefusal(name, in, effective); err != nil {
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
