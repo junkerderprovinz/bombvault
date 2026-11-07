@@ -633,6 +633,8 @@ const sk: Partial<Translations> = {
   "settings.schedule": "Plán",
   "settings.language": "Jazyk",
   "settings.theme": "Motív",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Skutočná čierna pre obrazovky OLED a AMOLED, kým je vidieť tmavý motív. Každé zariadenie si voľbu pamätá samo.",
   "settings.save": "Uložiť",
   "settings.saved": "Nastavenia uložené",
   "settings.error": "Chyba pri ukladaní",
@@ -837,6 +839,8 @@ const sk: Partial<Translations> = {
   "whatsNew.kitSignIns": "Súprava na obnovenie nesie všetky prihlasovacie údaje, ktoré ciele používajú, a nový server ich načíta späť tlačidlom Uložiť prihlasovacie údaje.",
   "whatsNew.keepNow": "Použiť hneď na karte Ako dlho uchovávať pri cieli ukáže, ktoré zálohy už pravidlo neuchováva, a odstráni ich. Nemusíš čakať na ďalšiu zálohu.",
   "whatsNew.deleteNoPassword": "Mazanie a prečisťovanie záloh funguje aj bez prihlasovacieho hesla. Keď nejaké nastavíš, najprv sa prihlásiš na tomto serveri.",
+  "whatsNew.systemAccent": "Čarovný prútik na začiatku zvýrazňujúcich farieb prevezme farbu tvojho zariadenia: Material You v aplikácii pre Android od Androidu 12 a systémovú farbu vo Firefoxe a Safari. Každé zariadenie si túto voľbu pamätá samo.",
+  "whatsNew.oled": "OLED pod Motívom dáva obrazovkám OLED a AMOLED skutočnú čiernu vždy, keď je vidieť tmavý motív, aj keď sa riadi zariadením. Každé zariadenie si pamätá vlastnú voľbu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Sprístupniť /metrics",
@@ -1184,6 +1188,7 @@ const sk: Partial<Translations> = {
   "settings.accentRainbowHint": "Dúhový režim je zapnutý. Vypni ho, ak chceš znova zvoliť farbu zvýraznenia.",
   "settings.accentPreset": "Predvoľba",
   "settings.accentReset": "Obnoviť zvýrazňujúcu farbu a predvoľby",
+  "settings.systemAccent": "Farba systému",
   "settings.shape": "Rohy",
   "settings.shapeHint": "Platí súčasne pre karty, tlačidlá, karty (taby), vstupné polia a odznaky.",
   "settings.shape.round": "Zaoblené",

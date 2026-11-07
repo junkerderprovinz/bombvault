@@ -321,6 +321,8 @@ const th: Partial<Translations> = {
   "settings.schedule": "ตารางเวลา",
   "settings.language": "ภาษา",
   "settings.theme": "ธีม",
+  "settings.oled": "OLED",
+  "settings.oledHint": "สีดำสนิทสำหรับหน้าจอ OLED และ AMOLED ตราบที่ธีมมืดแสดงอยู่ แต่ละอุปกรณ์จำตัวเลือกนี้ไว้เอง",
   "settings.save": "บันทึก",
   "settings.saved": "บันทึกการตั้งค่าแล้ว",
   "settings.error": "เกิดข้อผิดพลาดในการบันทึก",
@@ -334,6 +336,7 @@ const th: Partial<Translations> = {
   "settings.accentRainbowHint": "โหมดสายรุ้งเปิดอยู่ ปิดโหมดนี้เพื่อเลือกสีเน้นอีกครั้ง",
   "settings.accentPreset": "ค่าที่ตั้งไว้ล่วงหน้า",
   "settings.accentReset": "รีเซ็ตสีเน้นและค่าที่ตั้งไว้ล่วงหน้า",
+  "settings.systemAccent": "สีของระบบ",
   "settings.shape": "มุม",
   "settings.shapeHint": "มีผลกับการ์ด ปุ่ม แท็บ ช่องกรอกข้อมูล และป้ายกำกับพร้อมกัน",
   "settings.shape.round": "โค้งมน",
@@ -1157,6 +1160,8 @@ const th: Partial<Translations> = {
   "whatsNew.kitSignIns": "ชุดกู้คืนเก็บข้อมูลรับรองทุกชุดที่ปลายทางใช้ และเซิร์ฟเวอร์ใหม่อ่านกลับมาได้ด้วยบันทึกข้อมูลรับรอง",
   "whatsNew.keepNow": "ใช้ทันทีบนการ์ดเก็บไว้นานแค่ไหนของปลายทางจะแสดงว่ากฎไม่เก็บข้อมูลสำรองใดไว้แล้วและลบออกให้ คุณไม่ต้องรอข้อมูลสำรองครั้งถัดไป",
   "whatsNew.deleteNoPassword": "การลบและการล้างข้อมูลสำรองทำได้โดยไม่ต้องมีรหัสผ่านเข้าสู่ระบบ หากคุณตั้งรหัสผ่านไว้ คุณจะลงชื่อเข้าใช้บนเซิร์ฟเวอร์นี้ก่อน",
+  "whatsNew.systemAccent": "ไม้กายสิทธิ์ที่ต้นแถวสีเน้นจะใช้สีของอุปกรณ์คุณเอง: Material You ในแอป Android ตั้งแต่ Android 12 และสีของระบบใน Firefox และ Safari แต่ละอุปกรณ์จำตัวเลือกนี้ไว้เอง",
+  "whatsNew.oled": "OLED ใต้ธีมให้สีดำสนิทกับหน้าจอ OLED และ AMOLED ทุกครั้งที่ธีมมืดแสดงอยู่ รวมถึงตอนที่ธีมตามอุปกรณ์ แต่ละอุปกรณ์จำตัวเลือกของตัวเอง",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "เปิดเผย /metrics",

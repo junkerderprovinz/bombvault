@@ -1,70 +1,111 @@
+import { accentInks, contrastOn } from "./contrast";
 import { save as saveDisplayPrefs } from "./displayPrefs";
+
+export { contrastOn };
 
 // The accent colour lives in localStorage and is applied as --accent,
 // --accent-contrast (the ink that reads best on the accent) and --accent-soft
-// (a 14% alpha tint).
+// (a 14% alpha tint). Where index.css's own accent text would fall short of
+// 4.5:1 on a theme, --accent-ink-light or --accent-ink-dark carries the ink.
+//
+// The device can lend its own colour instead: Material You in the Android
+// app, AccentColor in Firefox and Safari. Choosing it stores the word system
+// under a key of this device's own, which never goes to the server, so other
+// devices keep the synced accent, and so does this one while its source has
+// nothing to say.
 
 export const DEFAULT_ACCENT = "#FCC419";
 export const DEFAULT_ACCENT_CONTRAST = "#161616";
+export const SYSTEM_ACCENT = "system";
 
 const STORAGE_KEY = "bv-accent";
+const DEVICE_KEY = "bv-accent-device";
 
+/** The device's colour for each theme; a browser reports one for both. */
+export interface SystemTones {
+  light: string;
+  dark: string;
+}
+
+let systemTones: SystemTones | undefined;
+const systemListeners = new Set<() => void>();
+
+/** The synced accent, or the default for anything stored that is no colour. */
 export function getAccent(): string {
-  return localStorage.getItem(STORAGE_KEY) ?? DEFAULT_ACCENT;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored !== null && parseHex(stored) ? stored : DEFAULT_ACCENT;
 }
 
 export function setAccent(hex: string): void {
   localStorage.setItem(STORAGE_KEY, hex);
+  localStorage.removeItem(DEVICE_KEY);
   saveDisplayPrefs();
   applyAccent(hex);
 }
 
-export function applyAccent(hex?: string): void {
-  const color = hex ?? getAccent();
+/** Whether this device chose its own colour. It shows only while a source reports one. */
+export function systemAccentChosen(): boolean {
+  try {
+    return localStorage.getItem(DEVICE_KEY) === SYSTEM_ACCENT;
+  } catch {
+    return false;
+  }
+}
+
+export function chooseSystemAccent(): void {
+  try {
+    localStorage.setItem(DEVICE_KEY, SYSTEM_ACCENT);
+  } catch {
+    // Without storage the choice lasts until the next load.
+  }
+  applyStoredAccent();
+}
+
+/** The device's colour for the theme on screen, or undefined where it has none. */
+export function systemAccent(): string | undefined {
+  if (!systemTones) return undefined;
+  return document.documentElement.getAttribute("data-theme") === "light" ? systemTones.light : systemTones.dark;
+}
+
+/** Feeds what the device's source reports, or undefined for no source, and
+ *  repaints when the device's colour is the one chosen. */
+export function setSystemAccent(tones: SystemTones | undefined): void {
+  const next = tones && parseHex(tones.light) && parseHex(tones.dark) ? tones : undefined;
+  if (next?.light === systemTones?.light && next?.dark === systemTones?.dark) return;
+  systemTones = next;
+  if (systemAccentChosen()) applyStoredAccent();
+  for (const fn of systemListeners) fn();
+}
+
+export function subscribeSystemAccent(fn: () => void): () => void {
+  systemListeners.add(fn);
+  return () => systemListeners.delete(fn);
+}
+
+export function applyAccent(hex: string): void {
   const root = document.documentElement.style;
-  root.setProperty("--accent", color);
-  const ink = contrastOn(color);
-  root.setProperty("--accent-contrast", ink);
-  root.setProperty("--accent-soft", softTint(color));
+  root.setProperty("--accent", hex);
+  root.setProperty("--accent-contrast", contrastOn(hex));
+  root.setProperty("--accent-soft", softTint(hex));
+  for (const [theme, ink] of Object.entries(accentInks(hex))) {
+    if (ink) root.setProperty(`--accent-ink-${theme}`, ink);
+    else root.removeProperty(`--accent-ink-${theme}`);
+  }
 }
 
 /** applyStoredAccent runs in main.tsx before the first render, so the page
  * never flashes the default accent. */
 export function applyStoredAccent(): void {
-  applyAccent(getAccent());
+  applyAccent((systemAccentChosen() ? systemAccent() : undefined) ?? getAccent());
 }
 
-/** contrastOn returns the dark or the white ink, whichever contrasts more with
- * the given colour, or the default ink for an unparseable hex. */
-export function contrastOn(hex: string): string {
-  const parsed = parseHex(hex);
-  if (!parsed) return DEFAULT_ACCENT_CONTRAST;
-  // The dark ink is Carbon's #161616; a warm near-black reads as a smudge on
-  // yellow. Since it is not pure black, no fixed luminance cutoff picks the
-  // right ink for every colour, so the two contrast ratios are compared.
-  const bg = luminance(parsed.r, parsed.g, parsed.b);
-  const darkInk = luminance(0x16, 0x16, 0x16);
-  const whiteInk = 1; // luminance(255, 255, 255) === 1 exactly
-  return contrastRatio(bg, darkInk) >= contrastRatio(bg, whiteInk) ? "#161616" : "#FFFFFF";
-}
-
-/** textInkOn is the ink for text on a brand colour: contrastOn's pick where it
- * reaches the 4.5:1 that small text needs, and black on the mid tones where
- * neither of its inks does. */
+/** textInkOn is the ink for text on a brand colour: contrastOn's pick where
+ * white or the near-black reaches 4.5:1, and plain black on the mid tones
+ * where neither does. */
 export function textInkOn(hex: string): string {
-  const parsed = parseHex(hex);
-  if (!parsed) return DEFAULT_ACCENT_CONTRAST;
+  if (!parseHex(hex)) return DEFAULT_ACCENT_CONTRAST;
   const ink = contrastOn(hex);
-  const inkLuminance = ink === "#FFFFFF" ? 1 : luminance(0x16, 0x16, 0x16);
-  return contrastRatio(luminance(parsed.r, parsed.g, parsed.b), inkLuminance) >= 4.5 ? ink : "#000000";
-}
-
-/** contrastRatio is the WCAG contrast ratio of two relative luminances, given
- * in either order. */
-function contrastRatio(l1: number, l2: number): number {
-  const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
-  return (lighter + 0.05) / (darker + 0.05);
+  return ink === "#FFFFFF" || ink === DEFAULT_ACCENT_CONTRAST ? ink : "#000000";
 }
 
 /** softTint is the colour at 14% alpha, for washes behind accent-coloured UI.
@@ -134,16 +175,4 @@ export function setAccentPresets(next: string[]): string[] {
     // Without storage the presets last until the next load.
   }
   return usable;
-}
-
-/**
- * luminance is the WCAG relative luminance. The sRGB channels are linearised
- * first, because the raw values overstate blue and understate green.
- */
-function luminance(r: number, g: number, b: number): number {
-  const lin = (c: number) => {
-    const v = c / 255;
-    return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }

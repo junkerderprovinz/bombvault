@@ -633,6 +633,8 @@ const et: Partial<Translations> = {
   "settings.schedule": "Ajakava",
   "settings.language": "Keel",
   "settings.theme": "Teema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Päris must OLED- ja AMOLED-ekraanidele, kuni tume teema on näha. Iga seade jätab valiku endale meelde.",
   "settings.save": "Salvesta",
   "settings.saved": "Seaded salvestatud",
   "settings.error": "Viga salvestamisel",
@@ -837,6 +839,8 @@ const et: Partial<Translations> = {
   "whatsNew.kitSignIns": "Taastekomplekt sisaldab kõiki sisselogimisi, mida sihtkohad kasutavad, ja uus server loeb need nupuga Salvesta sisselogimisandmed tagasi.",
   "whatsNew.keepNow": "Rakenda kohe sihtkoha kaardil Kui kaua säilitada näitab, milliseid varukoopiaid reegel enam ei säilita, ja eemaldab need. Järgmist varukoopiat pole vaja oodata.",
   "whatsNew.deleteNoPassword": "Varukoopiate kustutamine ja puhastamine töötab ilma sisselogimisparoolita. Kui sa selle määrad, logid enne sellesse serverisse sisse.",
+  "whatsNew.systemAccent": "Võlukepp aktsendivärvide alguses võtab seadme enda värvi: Android-rakenduses Material You alates Android 12-st ning Firefoxis ja Safaris süsteemi värvi. Iga seade jätab selle valiku endale meelde.",
+  "whatsNew.oled": "Teema all olev OLED annab OLED- ja AMOLED-ekraanidele päris musta alati, kui tume teema on näha, ka siis, kui see järgib seadet. Iga seade jätab oma valiku meelde.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Ava /metrics",
@@ -1184,6 +1188,7 @@ const et: Partial<Translations> = {
   "settings.accentRainbowHint": "Vikerkaarerežiim on sees. Lülita see välja, et jälle rõhuvärv valida.",
   "settings.accentPreset": "Eelseade",
   "settings.accentReset": "Lähtesta aktsendivärv ja eelseaded",
+  "settings.systemAccent": "Süsteemi värv",
   "settings.shape": "Nurgad",
   "settings.shapeHint": "Kehtib korraga kaartidele, nuppudele, vahekaartidele, sisestusväljadele ja märgistele.",
   "settings.shape.round": "Ümarad",

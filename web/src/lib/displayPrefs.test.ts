@@ -39,6 +39,18 @@ describe("collect", () => {
     expect(got["bv-password"]).toBeUndefined();
   });
 
+  it("leaves OLED to this screen, since the same server opens on an LCD laptop too", () => {
+    localStorage.setItem("bv-theme", "dark");
+    localStorage.setItem("bv-oled", "1");
+    expect(collect()).toEqual({ "bv-theme": "dark" });
+  });
+
+  it("sends the synced accent and never this device's own colour", () => {
+    localStorage.setItem("bv-accent", "#1D99F3");
+    localStorage.setItem("bv-accent-device", "system");
+    expect(collect()).toEqual({ "bv-accent": "#1D99F3" });
+  });
+
   it("omits keys this browser never set", () => {
     localStorage.setItem("bv-theme", "dark");
     const got = collect();

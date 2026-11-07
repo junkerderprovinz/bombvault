@@ -84,6 +84,22 @@ for (const [stored, device] of [
   });
 }
 
+test("OLED puts the dark theme on black whenever it shows, and the browser keeps it", async ({ page }) => {
+  await stage(page, "dark");
+  await page.goto("/settings/look");
+  await page.getByRole("switch", { name: "OLED" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-oled", "");
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#000000");
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe("rgb(0, 0, 0)");
+
+  await page.emulateMedia({ colorScheme: "light" });
+  await expectTheme(page, "light");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.reload();
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#000000");
+  await expect(page.getByRole("switch", { name: "OLED" })).toHaveAttribute("aria-checked", "true");
+});
+
 interface Placed {
   name: string;
   /** The mark's box, the centre of its ink and the ink's longer side, from the

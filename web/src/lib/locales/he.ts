@@ -321,6 +321,8 @@ const he: Partial<Translations> = {
   "settings.schedule": "לוח זמנים",
   "settings.language": "שפה",
   "settings.theme": "ערכת נושא",
+  "settings.oled": "OLED",
+  "settings.oledHint": "שחור אמיתי למסכי OLED ו-AMOLED, כל עוד ערכת הנושא הכהה מוצגת. כל מכשיר שומר את הבחירה לעצמו.",
   "settings.save": "שמירה",
   "settings.saved": "ההגדרות נשמרו",
   "settings.error": "שגיאה בשמירה",
@@ -334,6 +336,7 @@ const he: Partial<Translations> = {
   "settings.accentRainbowHint": "מצב הקשת פעיל. כיבוי שלו מאפשר לבחור שוב צבע הדגשה.",
   "settings.accentPreset": "ערכה מוגדרת מראש",
   "settings.accentReset": "איפוס צבע ההדגשה והערכות המוגדרות מראש",
+  "settings.systemAccent": "צבע המערכת",
   "settings.shape": "פינות",
   "settings.shapeHint": "חל בו-זמנית על כרטיסים, כפתורים, לשוניות, שדות ותגיות.",
   "settings.shape.round": "מעוגלות",
@@ -1148,6 +1151,8 @@ const he: Partial<Translations> = {
   "whatsNew.kitSignIns": "“ערכת שחזור” מכילה את כל פרטי הגישה שהיעדים משתמשים בהם, ושרת חדש קורא אותם בחזרה עם “שמירת פרטי הגישה”.",
   "whatsNew.keepNow": "“החל עכשיו” בכרטיס “כמה זמן לשמור” של יעד מראה אילו גיבויים הכלל כבר לא שומר ומסיר אותם. לא צריך לחכות לגיבוי הבא.",
   "whatsNew.deleteNoPassword": "מחיקה וניקוי של גיבויים עובדים בלי סיסמת כניסה. אם מגדירים סיסמה, נכנסים קודם לשרת הזה.",
+  "whatsNew.systemAccent": "שרביט הקסמים בתחילת צבעי ההדגשה לוקח את הצבע של המכשיר שלך: Material You באפליקציית Android החל מ-Android 12, וצבע המערכת ב-Firefox וב-Safari. כל מכשיר שומר את הבחירה הזאת לעצמו.",
+  "whatsNew.oled": "האפשרות OLED מתחת ל“ערכת נושא” נותנת שחור אמיתי למסכי OLED ו-AMOLED בכל פעם שערכת הנושא הכהה מוצגת, גם כשהיא עוקבת אחרי המכשיר. כל מכשיר שומר את הבחירה שלו.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "חשיפת /metrics",

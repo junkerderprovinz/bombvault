@@ -3,7 +3,10 @@
 import { Badge } from "../../components/Badge";
 import { ColorPickerSwatch } from "../../components/ColorPickerPopover";
 import { InfoBubble } from "../../components/InfoBubble";
+import { IconAccentSystem } from "../../components/glyphs";
+import { IconTipButton } from "../../components/IconTipButton";
 import { Toggle } from "../../components/Toggle";
+import { contrastOn } from "../../lib/accent";
 import { hueVars } from "../../lib/appearance";
 import { type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
@@ -177,6 +180,44 @@ export function AccentPresetSwatch({
   );
 }
 
+/** SystemAccentSwatch is the device's own colour, wearing the wand. It holds
+ *  nothing to edit, so a click only chooses it. */
+export function SystemAccentSwatch({
+  hex,
+  active,
+  onSelect,
+  disabled = false,
+  label,
+}: {
+  hex: string;
+  active: boolean;
+  onSelect: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <span
+      aria-disabled={disabled || undefined}
+      className={`inline-flex rounded-pill border-2 transition-transform ${
+        disabled ? "pointer-events-none" : "hover:scale-110"
+      }`}
+      style={{ borderColor: active ? "var(--carbon-text)" : "var(--carbon-border)" }}
+    >
+      {/* bv-convention-exception: one-icon-badge-size: a colour disc in the
+          same 2px ring as the presets beside it, 32px in all, not a badge. */}
+      <IconTipButton
+        tip={label}
+        onClick={onSelect}
+        ariaPressed={active}
+        className="inline-flex w-7 h-7 items-center justify-center rounded-pill"
+        style={{ background: hex, color: contrastOn(hex) }}
+      >
+        <IconAccentSystem />
+      </IconTipButton>
+    </span>
+  );
+}
+
 export function ToggleRow({
   label,
   accessibleName,
@@ -184,6 +225,7 @@ export function ToggleRow({
   checked,
   onChange,
   disabled,
+  resting,
   shakeNonce,
   pulseNonce,
   hueIndex,
@@ -198,6 +240,9 @@ export function ToggleRow({
   checked: boolean;
   onChange: (v: boolean) => void;
   disabled?: boolean;
+  /** Dims a switch that has no effect right now but keeps its state, and its
+   *  click, for when it does. */
+  resting?: boolean;
   /** Bump to replay the .glim-shake error animation once. It becomes part of
    *  the Toggle's key, so a new value remounts the switch and the animation
    *  restarts even when the same row fails twice in a row. */
@@ -217,7 +262,7 @@ export function ToggleRow({
   // The switch dims itself (Toggle.tsx), so only the label needs `dim`. A
   // plain <div> rather than <fieldset disabled>: around a single control a
   // fieldset only adds an unnamed group to the accessibility tree.
-  const dim = disabled ? "opacity-50" : "";
+  const dim = disabled || resting ? "opacity-50" : "";
   const hueOn = hueIndex !== undefined;
   // shakeNonce and pulseNonce count independently, so the key combines both;
   // either alone would stop changing once the other one fired. It stays
@@ -246,7 +291,7 @@ export function ToggleRow({
         checked={checked}
         onChange={onChange}
         disabled={disabled}
-        className={`mt-0.5 ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
+        className={`mt-0.5 ${resting ? "opacity-50" : ""} ${shakeNonce ? "glim-shake" : pulseNonce ? "glim-confirm" : ""}`}
       />
     </div>
   );

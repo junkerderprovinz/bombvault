@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ground">#161616</color>
+    <!-- Black rather than the dark theme's #161616: the window shows before the
+         app has read whether OLED is on, and on an OLED screen a grey frame
+         before a black page shows more than a black one before a grey page. -->
+    <color name="ground">#000000</color>
 </resources>

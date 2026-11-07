@@ -633,6 +633,8 @@ const lv: Partial<Translations> = {
   "settings.schedule": "Grafiks",
   "settings.language": "Valoda",
   "settings.theme": "Tēma",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Īsti melna OLED un AMOLED ekrāniem, kamēr redzama tumšā tēma. Katra ierīce izvēli atceras pati.",
   "settings.save": "Saglabāt",
   "settings.saved": "Iestatījumi saglabāti",
   "settings.error": "Kļūda saglabājot",
@@ -837,6 +839,8 @@ const lv: Partial<Translations> = {
   "whatsNew.kitSignIns": "Atkopšanas komplektā ir visi pieteikšanās dati, ko izmanto mērķi, un jauns serveris tos nolasa atpakaļ ar Saglabāt akreditācijas datus.",
   "whatsNew.keepNow": "Lietot tagad mērķa kartītē Cik ilgi glabāt parāda, kuras rezerves kopijas noteikums vairs neglabā, un tās noņem. Nav jāgaida nākamā rezerves kopija.",
   "whatsNew.deleteNoPassword": "Rezerves kopiju dzēšana un tīrīšana darbojas bez pieteikšanās paroles. Ja to iestatāt, vispirms piesakāties šajā serverī.",
+  "whatsNew.systemAccent": "Burvju nūjiņa akcenta krāsu sākumā ņem pašas ierīces krāsu: Android lietotnē no Android 12 tā ir Material You, bet Firefox un Safari sistēmas krāsa. Katra ierīce šo izvēli atceras pati.",
+  "whatsNew.oled": "OLED zem Tēma dod OLED un AMOLED ekrāniem īsti melnu krāsu ikreiz, kad redzama tumšā tēma, arī tad, ja tā seko ierīcei. Katra ierīce atceras savu izvēli.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Atklāt /metrics",
@@ -1184,6 +1188,7 @@ const lv: Partial<Translations> = {
   "settings.accentRainbowHint": "Varavīksnes režīms ir ieslēgts. Izslēdziet to, lai atkal izvēlētos akcenta krāsu.",
   "settings.accentPreset": "Sākotnējais iestatījums",
   "settings.accentReset": "Atiestatīt akcenta krāsu un sākotnējos iestatījumus",
+  "settings.systemAccent": "Sistēmas krāsa",
   "settings.shape": "Stūri",
   "settings.shapeHint": "Attiecas vienlaikus uz kartēm, pogām, cilnēm, ievades laukiem un nozīmītēm.",
   "settings.shape.round": "Apaļi",

@@ -321,6 +321,8 @@ const cs: Partial<Translations> = {
   "settings.schedule": "Plán",
   "settings.language": "Jazyk",
   "settings.theme": "Motiv",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Opravdová černá pro obrazovky OLED a AMOLED, dokud je vidět tmavý motiv. Každé zařízení si volbu pamatuje samo.",
   "settings.save": "Uložit",
   "settings.saved": "Nastavení uloženo",
   "settings.error": "Chyba při ukládání nastavení",
@@ -334,6 +336,7 @@ const cs: Partial<Translations> = {
   "settings.accentRainbowHint": "Duhový režim je zapnutý. Vypni ho, chceš-li znovu zvolit barvu zvýraznění.",
   "settings.accentPreset": "Předvolba",
   "settings.accentReset": "Obnovit barvu zvýraznění a předvolby",
+  "settings.systemAccent": "Barva systému",
   "settings.shape": "Rohy",
   "settings.shapeHint": "Platí najednou pro karty, tlačítka, karty záložek, pole a odznaky.",
   "settings.shape.round": "Kulaté",
@@ -1154,6 +1157,8 @@ const cs: Partial<Translations> = {
   "whatsNew.kitSignIns": "Sada pro obnovu nese všechny přihlašovací údaje, které cíle používají, a nový server je načte zpět tlačítkem Uložit přihlašovací údaje.",
   "whatsNew.keepNow": "Použít hned na kartě Jak dlouho uchovávat u cíle ukáže, které zálohy už pravidlo neuchovává, a odstraní je. Nemusíš čekat na další zálohu.",
   "whatsNew.deleteNoPassword": "Mazání a pročišťování záloh funguje i bez přihlašovacího hesla. Když nějaké nastavíš, nejdřív se přihlásíš na tomto serveru.",
+  "whatsNew.systemAccent": "Kouzelná hůlka na začátku barev zvýraznění převezme barvu tvého zařízení: Material You v aplikaci pro Android od Androidu 12 a systémovou barvu ve Firefoxu a Safari. Každé zařízení si tuto volbu pamatuje samo.",
+  "whatsNew.oled": "OLED pod Motivem dává obrazovkám OLED a AMOLED opravdovou černou, kdykoli je vidět tmavý motiv, i když se řídí zařízením. Každé zařízení si pamatuje vlastní volbu.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Zpřístupnit /metrics",

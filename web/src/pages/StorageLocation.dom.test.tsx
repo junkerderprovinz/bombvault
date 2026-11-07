@@ -346,7 +346,7 @@ describe("a destination", () => {
 
     await click(within(keepRule()).getByRole("radio", { name: "Short" }));
     const dialog = screen.getByRole("dialog");
-    await click(within(dialog).getByRole("switch", { name: "Don't ask again" }));
+    await click(within(dialog).getByRole("checkbox", { name: "Don't ask again" }));
     await click(within(dialog).getByRole("button", { name: "Save anyway" }));
 
     expect(readAskKeepLess()).toBe(false);
@@ -358,12 +358,12 @@ describe("a destination", () => {
     expect(updateDestination).toHaveBeenLastCalledWith("box", expect.objectContaining({ retention: BALANCED }));
   });
 
-  it("does not remember the switch of a question answered with no", async () => {
+  it("does not remember the box of a question answered with no", async () => {
     await renderPage("destination:box");
 
     await click(within(keepRule()).getByRole("radio", { name: "Short" }));
     const dialog = screen.getByRole("dialog");
-    await click(within(dialog).getByRole("switch", { name: "Don't ask again" }));
+    await click(within(dialog).getByRole("checkbox", { name: "Don't ask again" }));
     await click(within(dialog).getByRole("button", { name: "Back" }));
     expect(readAskKeepLess()).toBe(true);
   });

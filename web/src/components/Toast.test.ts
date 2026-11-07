@@ -35,6 +35,19 @@ function findAll(node: unknown, pred: (n: ElementNode) => boolean, out: ElementN
   return out;
 }
 
+// The card's own elements, without calling the components inside it, since
+// Button uses hooks.
+function findShallow(node: unknown, pred: (n: ElementNode) => boolean, out: ElementNode[] = []): ElementNode[] {
+  if (Array.isArray(node)) {
+    for (const c of node) findShallow(c, pred, out);
+    return out;
+  }
+  if (!isElementNode(node)) return out;
+  if (pred(node)) out.push(node);
+  if (node.props?.children !== undefined) findShallow(node.props.children, pred, out);
+  return out;
+}
+
 function findAllButtons(tree: unknown): ElementNode[] {
   return findAll(tree, (n) => n.type === "button");
 }
@@ -144,11 +157,26 @@ describe("ToastCard", () => {
       action: { label: "Undo", labelKey: "takeover.undo", onClick: () => ran++ },
       onDismiss: (id) => (dismissed = id),
     }) as ElementNode;
-    const children = tree.props!.children as unknown[];
-    const action = children.find((c): c is ElementNode => isElementNode(c) && c.props?.label === "Undo");
-    action!.props!.onClick();
+    const [action] = findShallow(tree, (n) => n.props?.label === "Undo");
+    (action.props!.onClick as () => void)();
     expect(ran).toBe(1);
     expect(dismissed).toBe("t1");
+  });
+
+  it("puts its action under the message, so the message keeps the card's width", () => {
+    const tree = ToastCard({
+      ...baseProps,
+      action: { label: "Undo", labelKey: "takeover.undo", onClick: noop },
+    }) as ElementNode;
+    const [body] = findShallow(tree, (n) => n.type === "div" && /\bflex-col\b/.test(String(n.props?.className)));
+    expect(findShallow(body, (n) => n.type === "p")).toHaveLength(1);
+    expect(findShallow(body, (n) => n.props?.label === "Undo")).toHaveLength(1);
+  });
+
+  it("lets a path break after each slash", () => {
+    const tree = ToastCard({ ...baseProps, message: "Saved to /mnt/user" }) as ElementNode;
+    expect(findShallow(tree, (n) => n.type === "wbr")).toHaveLength(2);
+    expect(visibleText(tree)).toContain("Saved to /mnt/user");
   });
 
   it("takes pointer events on the card", () => {

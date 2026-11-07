@@ -318,6 +318,8 @@ const nl: Partial<Translations> = {
   "settings.schedule": "Planning",
   "settings.language": "Taal",
   "settings.theme": "Thema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Echt zwart voor OLED- en AMOLED-schermen zolang het donkere thema te zien is. Elk apparaat onthoudt de keuze voor zichzelf.",
   "settings.save": "Opslaan",
   "settings.saved": "Instellingen opgeslagen",
   "settings.error": "Fout bij opslaan",
@@ -331,6 +333,7 @@ const nl: Partial<Translations> = {
   "settings.accentRainbowHint": "De regenboogmodus staat aan. Zet hem uit om weer een accentkleur te kiezen.",
   "settings.accentPreset": "Voorinstelling",
   "settings.accentReset": "Accentkleur en voorinstellingen herstellen",
+  "settings.systemAccent": "Systeemkleur",
   "settings.shape": "Hoeken",
   "settings.shapeHint": "Geldt tegelijk voor kaarten, knoppen, tabbladen, velden en badges.",
   "settings.shape.round": "Rond",
@@ -1144,6 +1147,8 @@ const nl: Partial<Translations> = {
   "whatsNew.kitSignIns": "De Herstelkit bevat alle inloggegevens die de bestemmingen gebruiken, en een nieuwe server leest ze terug met Inloggegevens opslaan.",
   "whatsNew.keepNow": "Nu toepassen op de kaart Hoe lang bewaren van een bestemming laat zien welke back-ups de regel niet meer bewaart en verwijdert ze. Je hoeft niet op de volgende back-up te wachten.",
   "whatsNew.deleteNoPassword": "Back-ups verwijderen en opschonen werkt zonder inlogwachtwoord. Stel je er een in, dan log je eerst in op deze server.",
+  "whatsNew.systemAccent": "Het toverstafje vooraan bij de accentkleuren neemt de eigen kleur van je apparaat over: Material You in de Android-app vanaf Android 12, en de systeemkleur in Firefox en Safari. Elk apparaat onthoudt deze keuze voor zichzelf.",
+  "whatsNew.oled": "OLED onder Thema geeft OLED- en AMOLED-schermen echt zwart zodra het donkere thema te zien is, ook als het thema het apparaat volgt. Elk apparaat onthoudt zijn eigen keuze.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics beschikbaar maken",

@@ -633,6 +633,8 @@ const gl: Partial<Translations> = {
   "settings.schedule": "Horario",
   "settings.language": "Idioma",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Negro de verdade para pantallas OLED e AMOLED mentres se ve o tema escuro. Cada dispositivo garda a elección para si.",
   "settings.save": "Gardar",
   "settings.saved": "Configuración gardada",
   "settings.error": "Erro ao gardar",
@@ -837,6 +839,8 @@ const gl: Partial<Translations> = {
   "whatsNew.kitSignIns": "O Kit de recuperación leva todas as credenciais que usan os destinos, e un servidor novo vólveas ler con Gardar as credenciais.",
   "whatsNew.keepNow": "Aplicar agora na tarxeta Canto tempo conservar dun destino mostra que copias xa non conserva a regra e elimínaas. Non tes que agardar á seguinte copia.",
   "whatsNew.deleteNoPassword": "Borrar e podar copias funciona sen contrasinal de acceso. Se defines un, primeiro inicias sesión neste servidor.",
+  "whatsNew.systemAccent": "A variña ao comezo das cores de acento toma a cor do teu dispositivo: Material You na app de Android desde Android 12, e a cor do sistema en Firefox e Safari. Cada dispositivo garda esta elección para si.",
+  "whatsNew.oled": "OLED, debaixo de Tema, dá negro de verdade ás pantallas OLED e AMOLED sempre que se ve o tema escuro, tamén cando segue o dispositivo. Cada dispositivo garda a súa propia elección.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expor /metrics",
@@ -1184,6 +1188,7 @@ const gl: Partial<Translations> = {
   "settings.accentRainbowHint": "O modo arco da vella está activado. Desactívao para volver escoller unha cor de acento.",
   "settings.accentPreset": "Predefinición",
   "settings.accentReset": "Restaurar a cor de acento e as predefinicións",
+  "settings.systemAccent": "Cor do sistema",
   "settings.shape": "Esquinas",
   "settings.shapeHint": "Aplícase á vez a tarxetas, botóns, lapelas, campos de entrada e insignias.",
   "settings.shape.round": "Redondas",

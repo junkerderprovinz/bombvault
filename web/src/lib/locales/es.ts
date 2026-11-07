@@ -321,6 +321,8 @@ const es: Partial<Translations> = {
   "settings.schedule": "Calendario",
   "settings.language": "Idioma",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Negro de verdad para pantallas OLED y AMOLED mientras se ve el tema oscuro. Cada dispositivo guarda la elección para sí.",
   "settings.save": "Guardar",
   "settings.saved": "Ajustes guardados",
   "settings.error": "Error al guardar los ajustes",
@@ -334,6 +336,7 @@ const es: Partial<Translations> = {
   "settings.accentRainbowHint": "El modo arcoíris está activado. Desactívalo para volver a elegir un color de acento.",
   "settings.accentPreset": "Predeterminado",
   "settings.accentReset": "Restablecer el color de acento y los predeterminados",
+  "settings.systemAccent": "Color del sistema",
   "settings.shape": "Esquinas",
   "settings.shapeHint": "Se aplica a la vez a tarjetas, botones, pestañas, campos e insignias.",
   "settings.shape.round": "Redondas",
@@ -1164,6 +1167,8 @@ const es: Partial<Translations> = {
   "whatsNew.kitSignIns": "El Kit de recuperación lleva todas las credenciales que usan los destinos, y un servidor nuevo las vuelve a leer con Guardar credenciales.",
   "whatsNew.keepNow": "Aplicar ahora en la tarjeta Cuánto tiempo conservar de un destino muestra qué copias ya no conserva la regla y las elimina. No hace falta esperar a la próxima copia.",
   "whatsNew.deleteNoPassword": "Borrar y purgar copias funciona sin contraseña de acceso. Si defines una, primero inicias sesión en este servidor.",
+  "whatsNew.systemAccent": "La varita al principio de los colores de acento toma el color de tu dispositivo: Material You en la app de Android a partir de Android 12, y el color del sistema en Firefox y Safari. Cada dispositivo guarda esta elección para sí.",
+  "whatsNew.oled": "OLED, debajo de Tema, da negro de verdad a las pantallas OLED y AMOLED siempre que se ve el tema oscuro, también cuando sigue al dispositivo. Cada dispositivo guarda su propia elección.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Exponer /metrics",

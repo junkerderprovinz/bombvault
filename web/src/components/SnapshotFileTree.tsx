@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { FileEntry } from "../lib/api";
 import type { useT } from "../lib/i18n";
 import { SelectDot, SelectMark } from "./backups/SelectMark";
+import { fileKindGlyph } from "./fileKindGlyph";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -64,8 +65,8 @@ function FileRow({
       className="flex w-full items-center gap-2 py-1 text-xs border-b border-carbon-border last:border-0 cursor-pointer glim-field-focus"
     >
       <SelectDot checked={selected} />
+      <span className="flex shrink-0 text-carbon-textMuted [&>svg]:size-3.5" aria-hidden="true">{fileKindGlyph(file.path, file.type === "dir")}</span>
       <span dir="ltr" className="font-mono text-carbon-textSub flex-1 min-w-0 truncate text-start" title={file.path}>
-        {file.type === "dir" ? "📁 " : ""}
         {file.path}
       </span>
     </button>
@@ -111,7 +112,7 @@ function TreeRow({
           <span className="w-4 shrink-0" />
         )}
         <SelectMark checked={selected.has(node.path)} label={node.path} onChange={() => onToggle(node.path)} bare />
-        <span className="shrink-0">{isDir ? "📁" : "📄"}</span>
+        <span className="flex shrink-0 text-carbon-textMuted [&>svg]:size-3.5" aria-hidden="true">{fileKindGlyph(node.name, isDir)}</span>
         <span dir="ltr" className="font-mono text-carbon-textSub flex-1 truncate text-start" title={node.path}>
           {node.name}
         </span>

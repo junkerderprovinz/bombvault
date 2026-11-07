@@ -321,6 +321,8 @@ const ar: Partial<Translations> = {
   "settings.schedule": "الجدول الزمني",
   "settings.language": "اللغة",
   "settings.theme": "المظهر",
+  "settings.oled": "OLED",
+  "settings.oledHint": "أسود حقيقي لشاشات OLED وAMOLED ما دام المظهر الداكن ظاهرًا. ويحتفظ كل جهاز بهذا الاختيار لنفسه.",
   "settings.save": "حفظ",
   "settings.saved": "تم حفظ الإعدادات",
   "settings.error": "خطأ في الحفظ",
@@ -334,6 +336,7 @@ const ar: Partial<Translations> = {
   "settings.accentRainbowHint": "وضع قوس قزح مفعّل. إيقافه يتيح اختيار لون تمييز من جديد.",
   "settings.accentPreset": "إعداد مسبق",
   "settings.accentReset": "إعادة تعيين لون التمييز والإعدادات المسبقة",
+  "settings.systemAccent": "لون النظام",
   "settings.shape": "الزوايا",
   "settings.shapeHint": "تُطبَّق دفعة واحدة على البطاقات والأزرار والتبويبات وحقول الإدخال والشارات.",
   "settings.shape.round": "دائرية",
@@ -1157,6 +1160,8 @@ const ar: Partial<Translations> = {
   "whatsNew.kitSignIns": "تحمل «حقيبة الاستعادة» كل بيانات الاعتماد التي تستخدمها الوجهات، ويقرؤها خادم جديد مرة أخرى بزر «حفظ بيانات الاعتماد».",
   "whatsNew.keepNow": "يعرض «تطبيق الآن» في بطاقة «مدة الاحتفاظ» لكل وجهة النسخ الاحتياطية التي لم تعد القاعدة تحتفظ بها ويزيلها. ولا داعي لانتظار النسخة الاحتياطية التالية.",
   "whatsNew.deleteNoPassword": "يعمل حذف النسخ الاحتياطية وتنظيفها دون كلمة مرور لتسجيل الدخول. وإن ضبطت واحدة، فستسجّل الدخول على هذا الخادم أولًا.",
+  "whatsNew.systemAccent": "تأخذ العصا السحرية في بداية ألوان التمييز لون جهازك: Material You في تطبيق Android بدءًا من Android 12، ولون النظام في Firefox وSafari. ويحتفظ كل جهاز بهذا الاختيار لنفسه.",
+  "whatsNew.oled": "يمنح «OLED» تحت «المظهر» شاشات OLED وAMOLED أسود حقيقيًا كلما ظهر المظهر الداكن، حتى عندما يتبع الجهاز. ويحتفظ كل جهاز باختياره الخاص.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "إتاحة /metrics",

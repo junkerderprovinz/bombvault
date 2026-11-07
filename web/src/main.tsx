@@ -9,9 +9,10 @@ import "./providerMarks.css";
 import "flag-icons/css/flag-icons.min.css";
 import { AppRouter } from "./app/router";
 import { applyStoredTheme } from "./lib/theme";
+import { watchDeviceLook } from "./lib/deviceLook";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
-import { applyStoredRainbow } from "./lib/appearance";
+import { applyStoredRainbow, watchPageHue } from "./lib/appearance";
 import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
 import { applyStoredDisco } from "./lib/disco";
@@ -20,6 +21,7 @@ import { ADOPTED_EVENT, sync as syncDisplayPrefs } from "./lib/displayPrefs";
 
 // Apply stored preferences before the first paint, so the defaults never flash.
 applyStoredTheme();
+watchDeviceLook();
 applyStoredLanguage();
 applyStoredAccent();
 applyStoredRainbow();
@@ -28,6 +30,7 @@ applyStoredMotionIntensity();
 applyStoredLabelModes();
 // Disco only walks hued elements, so it needs the rainbow state applied first.
 applyStoredDisco();
+watchPageHue();
 
 // When the server hands this browser a different look after boot, localStorage
 // changes underneath the page and every axis has to be applied again, in the

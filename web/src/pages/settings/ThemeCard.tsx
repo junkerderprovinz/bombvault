@@ -1,9 +1,10 @@
 import type { Theme } from "../../lib/theme";
 import { Selector } from "../../components/Selector";
 import { IconMoon, IconSun, IconThemeSystem } from "../../components/glyphs";
-import { getTheme, setTheme } from "../../lib/theme";
-import { useState } from "react";
+import { darkShowing, getOled, getTheme, setOled, setTheme, watchDarkShowing } from "../../lib/theme";
+import { useState, useSyncExternalStore } from "react";
 import { useT } from "../../lib/i18n";
+import { ToggleRow } from "./shared";
 
 /** ThemePicker chooses the dark or the light theme, or leaves it to the
  *  device, which is also the way back from a choice once made. */
@@ -27,6 +28,27 @@ export function ThemePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
       active={theme}
       onChange={(id) => selectTheme(id as Theme)}
       inline
+    />
+  );
+}
+
+/** OledRow puts the dark theme on true black. The choice belongs to this
+ *  screen, so it never goes to the server, and it rests while the light theme
+ *  shows without letting go. */
+export function OledRow({ t }: { t: ReturnType<typeof useT>["t"] }) {
+  const [on, setOn] = useState(getOled);
+  const dark = useSyncExternalStore(watchDarkShowing, darkShowing);
+  return (
+    <ToggleRow
+      label={t("settings.oled")}
+      hint={t("settings.oledHint")}
+      checked={on}
+      onChange={(next) => {
+        setOled(next);
+        setOn(next);
+      }}
+      resting={!dark}
+      newId="look-oled"
     />
   );
 }

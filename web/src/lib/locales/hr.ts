@@ -633,6 +633,8 @@ const hr: Partial<Translations> = {
   "settings.schedule": "Raspored",
   "settings.language": "Jezik",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Prava crna za OLED i AMOLED zaslone dok se prikazuje tamna tema. Svaki uređaj pamti izbor za sebe.",
   "settings.save": "Spremi",
   "settings.saved": "Postavke spremljene",
   "settings.error": "Greška pri spremanju",
@@ -837,6 +839,8 @@ const hr: Partial<Translations> = {
   "whatsNew.kitSignIns": "Komplet za oporavak sadrži sve pristupne podatke koje odredišta koriste, a novi poslužitelj ih ponovno učitava gumbom Spremi pristupne podatke.",
   "whatsNew.keepNow": "Primijeni sada na kartici Koliko dugo zadržati odredišta pokazuje koje sigurnosne kopije pravilo više ne zadržava i uklanja ih. Ne morate čekati sljedeću sigurnosnu kopiju.",
   "whatsNew.deleteNoPassword": "Brisanje i čišćenje sigurnosnih kopija radi bez lozinke za prijavu. Ako je postavite, najprije se prijavite na ovom poslužitelju.",
+  "whatsNew.systemAccent": "Čarobni štapić na početku naglasnih boja preuzima boju vašeg uređaja: Material You u aplikaciji za Android od Androida 12 te boju sustava u Firefoxu i Safariju. Svaki uređaj pamti taj izbor za sebe.",
+  "whatsNew.oled": "OLED ispod Teme daje pravu crnu OLED i AMOLED zaslonima kad god se prikazuje tamna tema, i kad prati uređaj. Svaki uređaj pamti vlastiti izbor.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Izloži /metrics",
@@ -1184,6 +1188,7 @@ const hr: Partial<Translations> = {
   "settings.accentRainbowHint": "Dugin način rada je uključen. Isključite ga da biste ponovno odabrali boju naglaska.",
   "settings.accentPreset": "Predložak",
   "settings.accentReset": "Vrati naglasnu boju i predloške na zadano",
+  "settings.systemAccent": "Boja sustava",
   "settings.shape": "Kutovi",
   "settings.shapeHint": "Primjenjuje se istovremeno na kartice, gumbe, kartice s karticama, unosna polja i oznake.",
   "settings.shape.round": "Zaobljeni",

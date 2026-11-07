@@ -234,6 +234,13 @@ let pointerWasLast = false;
 let touchWasLast = false;
 let tracking = false;
 
+/** Whether the user's last input was a pointer, for a menu that puts the
+ *  focus on its first row and should not light it for a mouse user. */
+export function pointerWasLastInput(): boolean {
+  trackInputModality();
+  return pointerWasLast;
+}
+
 /** How long the bubble of a tapped trigger stays. */
 const TAP_TIP_MS = 1500;
 

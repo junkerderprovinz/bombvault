@@ -18,36 +18,26 @@
          of overlaying it, which is the behavior the Layout-level keyboard
          mechanism builds on. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <!-- Browser-chrome color (mobile address bar / task switcher). The static
-         content (#161616 = dark --carbon-bg) is what a no-JS browser shows;
-         the FOUC script below resolves the real theme before first paint and
-         mirrors it into THIS tag (#f4f4f4 light), and src/lib/theme.ts's
-         paint() takes over on every theme application afterwards. The tag
-         sits ABOVE the script on purpose (maintainer #244 round 3, bug B8):
-         it used to live ~18 lines below it, so the script's own write
-         addressed a tag that did not exist yet and the first paint kept the
-         static dark value even in light mode. All three sets of values (the
-         static fallback, the script's map, theme.ts's THEME_COLOR) must
-         change together. -->
+    <!-- Browser-chrome color (mobile address bar, task switcher). The static
+         content is the dark ground, which a browser without JavaScript shows.
+         The script below writes the resolved theme's ground here before the
+         first paint, which is why the tag stands above it, and
+         src/lib/theme.ts's paint() takes over afterwards. The static value,
+         the script's map and theme.ts's THEME_COLOR change together. -->
     <meta name="theme-color" content="#161616" />
-    <!-- FOUC prevention (GlimStone form-engine #1): data-theme is no longer
-         hard-coded above, so the theme now genuinely defaults to the OS via
-         prefers-color-scheme (design-language.md's "Default is system, not
-         a hard-coded light or dark"). This script stamps the resolved
-         data-theme attribute synchronously — before any CSS paints — so
-         there's no flash of the wrong theme while lib/theme.ts's module
-         script (deferred by `type="module"`) is still loading. It also
-         mirrors the resolved theme into the theme-color meta above it, so
-         the browser chrome is right from the first paint too. It ONLY sets
-         attributes, it never hides content, matching this project's
-         established FOUC-killer convention (additive gating, never a blank
-         page). Duplicates lib/theme.ts's storage key/resolution logic and
-         THEME_COLOR map since it can't import that module here, so keep the
-         two in sync. -->
+    <!-- Stamps data-theme, and data-oled where this screen wants true black,
+         before any CSS paints, so the wrong theme never flashes while
+         lib/theme.ts, a deferred module script, is still loading. It only sets
+         attributes and never hides content. It repeats lib/theme.ts's storage
+         keys and resolution, since it cannot import that module, so keep the
+         two in sync. Inside the Android app the phone's OLED choice comes as
+         window.bombvaultDevice. -->
     <script>
       (function () {
-        var THEME_COLOR = { dark: "#161616", light: "#f4f4f4" };
         try {
+          var device = window.bombvaultApp && window.bombvaultDevice;
+          var oled = device ? device.oled === true : localStorage.getItem("bv-oled") === "1";
+          var THEME_COLOR = { dark: oled ? "#000000" : "#161616", light: "#f4f4f4" };
           var stored = localStorage.getItem("bv-theme");
           var resolved =
             stored === "dark" || stored === "light"
@@ -56,6 +46,7 @@
                 ? "dark"
                 : "light";
           document.documentElement.setAttribute("data-theme", resolved);
+          if (oled) document.documentElement.setAttribute("data-oled", "");
           document
             .querySelector('meta[name="theme-color"]')
             ?.setAttribute("content", THEME_COLOR[resolved]);

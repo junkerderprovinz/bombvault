@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
-import { DEFAULT_ACCENT_PRESETS, getAccentPresets, setAccentPresets } from "./accent";
+import { DEFAULT_ACCENT, DEFAULT_ACCENT_PRESETS, applyAccent, getAccentPresets, setAccentPresets } from "./accent";
 
 const STORAGE_KEY = "bv-accent-presets";
 
@@ -76,5 +76,24 @@ describe("setAccentPresets", () => {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(stored).toEqual(DEFAULT_ACCENT_PRESETS);
     expect(stored).not.toEqual(bad);
+  });
+});
+
+describe("accent text on a colour the presets never come near", () => {
+  const root = document.documentElement.style;
+
+  it("carries an ink of its own for the theme the mix falls short on", () => {
+    applyAccent("#FAFAFA");
+    expect(root.getPropertyValue("--accent-ink-light")).toMatch(/^#[0-9A-F]{6}$/);
+    expect(root.getPropertyValue("--accent-ink-dark")).toBe("");
+    applyAccent("#0000FF");
+    expect(root.getPropertyValue("--accent-ink-dark")).toMatch(/^#[0-9A-F]{6}$/);
+  });
+
+  it("lets the stylesheet's mix stand again for a preset", () => {
+    applyAccent("#0000FF");
+    applyAccent(DEFAULT_ACCENT);
+    expect(root.getPropertyValue("--accent-ink-light")).toBe("");
+    expect(root.getPropertyValue("--accent-ink-dark")).toBe("");
   });
 });

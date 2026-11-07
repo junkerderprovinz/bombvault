@@ -633,6 +633,8 @@ const hi: Partial<Translations> = {
   "settings.schedule": "शेड्यूल",
   "settings.language": "भाषा",
   "settings.theme": "थीम",
+  "settings.oled": "OLED",
+  "settings.oledHint": "डार्क थीम दिखने तक OLED और AMOLED स्क्रीन के लिए असली काला। हर डिवाइस यह चुनाव अपने लिए रखता है।",
   "settings.save": "सहेजें",
   "settings.saved": "सेटिंग्स सहेज ली गईं",
   "settings.error": "सहेजने में त्रुटि",
@@ -837,6 +839,8 @@ const hi: Partial<Translations> = {
   "whatsNew.kitSignIns": "रिकवरी किट में वे सभी लॉगिन होते हैं जो गंतव्य इस्तेमाल करते हैं, और नया सर्वर उन्हें लॉगिन विवरण सहेजें से फिर से पढ़ लेता है।",
   "whatsNew.keepNow": "किसी गंतव्य के कितने समय तक रखें कार्ड पर अभी लागू करें दिखाता है कि नियम अब कौन से बैकअप नहीं रखता, और उन्हें हटा देता है। अगले बैकअप का इंतज़ार नहीं करना पड़ता।",
   "whatsNew.deleteNoPassword": "बैकअप हटाना और छाँटना लॉगिन पासवर्ड के बिना भी काम करता है। अगर आप पासवर्ड सेट करते हैं, तो पहले इस सर्वर पर लॉगिन करते हैं।",
+  "whatsNew.systemAccent": "एक्सेंट रंगों की शुरुआत में जादू की छड़ी आपके डिवाइस का अपना रंग लेती है: Android ऐप में Android 12 से Material You, और Firefox और Safari में सिस्टम रंग। हर डिवाइस यह चुनाव अपने लिए रखता है।",
+  "whatsNew.oled": "थीम के नीचे OLED, डार्क थीम दिखने पर हर बार OLED और AMOLED स्क्रीन को असली काला देता है, तब भी जब थीम डिवाइस के हिसाब से चलती है। हर डिवाइस अपना चुनाव खुद रखता है।",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics दिखाएँ",
@@ -1184,6 +1188,7 @@ const hi: Partial<Translations> = {
   "settings.accentRainbowHint": "रेनबो मोड चालू है। एक्सेंट रंग दोबारा चुनने के लिए इसे बंद करें।",
   "settings.accentPreset": "प्रीसेट",
   "settings.accentReset": "एक्सेंट रंग और प्रीसेट रीसेट करें",
+  "settings.systemAccent": "सिस्टम रंग",
   "settings.shape": "कोने",
   "settings.shapeHint": "यह कार्ड, बटन, टैब, इनपुट फ़ील्ड और बैज पर एक साथ लागू होता है।",
   "settings.shape.round": "गोल",

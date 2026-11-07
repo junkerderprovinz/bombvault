@@ -51,4 +51,23 @@ describe("MoreMenu", () => {
     renderMenu([action("one"), action("two")]);
     expect(document.querySelector('[data-new="menu"]')).not.toBeNull();
   });
+
+  it("holds the first row unlit when the pointer opened the menu, until a key is pressed", () => {
+    renderMenu([action("one"), action("two")]);
+    fireEvent.pointerDown(more()!);
+    fireEvent.click(more()!);
+    const menu = screen.getByRole("menu");
+    expect(menu.hasAttribute("data-pointer")).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Do one" }));
+
+    fireEvent.keyDown(menu, { key: "ArrowDown" });
+    expect(menu.hasAttribute("data-pointer")).toBe(false);
+  });
+
+  it("shows the focus at once when the keyboard opened the menu", () => {
+    renderMenu([action("one"), action("two")]);
+    fireEvent.keyDown(more()!, { key: "Enter" });
+    fireEvent.click(more()!);
+    expect(screen.getByRole("menu").hasAttribute("data-pointer")).toBe(false);
+  });
 });

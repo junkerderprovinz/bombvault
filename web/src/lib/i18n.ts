@@ -725,6 +725,8 @@ export const en = {
   "settings.schedule": "Schedule",
   "settings.language": "Language",
   "settings.theme": "Theme",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Gives true black for OLED and AMOLED screens while the dark theme shows. This device keeps the choice for itself.",
   "settings.save": "Save",
   "settings.saved": "Settings saved",
   "settings.error": "Error saving settings",
@@ -931,6 +933,8 @@ export const en = {
   "whatsNew.kitSignIns": "The recovery kit carries every sign-in a storage location uses, and a new server reads them back with Save sign-ins.",
   "whatsNew.keepNow": "Apply now on a storage location's How long to keep card shows which backups the rule no longer keeps and removes them. You don't have to wait for the next backup.",
   "whatsNew.deleteNoPassword": "Deleting and pruning backups works without a login password. If you set one, you still sign in on this server first.",
+  "whatsNew.systemAccent": "The wand at the start of the accent colors takes your device's own color: Material You in the Android app from Android 12 on, and the system color in Firefox and Safari. Each device keeps this choice for itself.",
+  "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Expose /metrics",
@@ -1348,6 +1352,7 @@ export const en = {
   // reader can keep the old, now-wrong meaning in mind.
   "settings.accentPreset": "Preset",
   "settings.accentReset": "Reset accent color and presets",
+  "settings.systemAccent": "System color",
   // Shape (GlimStone form-engine — shape engine): round/soft/square corner
   // radius, applied everywhere via one attribute (index.css's [data-shape]
   // rules, lib/shape.ts's applyShape()). Wording matches KnightLoader's own
@@ -6036,6 +6041,8 @@ export const de: Translations = {
   "settings.schedule": "Zeitplan",
   "settings.language": "Sprache",
   "settings.theme": "Design",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Echtes Schwarz für OLED- und AMOLED-Bildschirme, solange das dunkle Design zu sehen ist. Jedes Gerät merkt sich die Wahl für sich.",
   "settings.save": "Speichern",
   "settings.saved": "Einstellungen gespeichert",
   "settings.error": "Fehler beim Speichern",
@@ -6240,6 +6247,8 @@ export const de: Translations = {
   "whatsNew.kitSignIns": "Das Recovery-Kit enthält alle Zugangsdaten, die die Speicherorte nutzen, und ein neuer Server liest sie mit Zugangsdaten speichern wieder ein.",
   "whatsNew.keepNow": "Jetzt anwenden auf der Karte Wie lange aufheben eines Speicherorts zeigt, welche Sicherungen die Regel nicht mehr behält, und entfernt sie. Du musst nicht auf die nächste Sicherung warten.",
   "whatsNew.deleteNoPassword": "Sicherungen löschen und aufräumen geht ohne Login-Passwort. Hast du eines gesetzt, meldest du dich vorher an diesem Server an.",
+  "whatsNew.systemAccent": "Der Zauberstab am Anfang der Akzentfarben übernimmt die Farbe deines Geräts: Material You in der Android-App ab Android 12 und die Systemfarbe in Firefox und Safari. Jedes Gerät merkt sich diese Wahl für sich.",
+  "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "/metrics bereitstellen",
@@ -6590,6 +6599,7 @@ export const de: Translations = {
   "settings.accentRainbowHint": "Der Regenbogenmodus ist an. Schalte ihn aus, um wieder eine Akzentfarbe zu wählen.",
   "settings.accentPreset": "Voreinstellung",
   "settings.accentReset": "Akzentfarbe und Voreinstellungen zurücksetzen",
+  "settings.systemAccent": "Systemfarbe",
   "settings.shape": "Ecken",
   "settings.shapeHint": "Gilt für Karten, Knöpfe, Reiter, Eingabefelder und Abzeichen zugleich.",
   "settings.shape.round": "Rund",

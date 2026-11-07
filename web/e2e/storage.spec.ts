@@ -368,7 +368,7 @@ test.describe("on the desktop", () => {
     expect(staged.writes).toEqual([]);
 
     await keep.getByRole("radio", { name: "Kurz" }).click();
-    await page.getByRole("dialog").getByRole("switch", { name: "Nicht mehr fragen" }).click();
+    await page.getByRole("dialog").getByRole("checkbox", { name: "Nicht mehr fragen" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Trotzdem speichern" }).click();
     await expect.poll(() => staged.writes.length).toBe(1);
     expect(staged.writes[0]).toMatchObject({

@@ -321,6 +321,8 @@ const vi: Partial<Translations> = {
   "settings.schedule": "Lịch trình",
   "settings.language": "Ngôn ngữ",
   "settings.theme": "Giao diện",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Màu đen tuyền cho màn hình OLED và AMOLED khi giao diện tối đang hiển thị. Mỗi thiết bị tự nhớ lựa chọn này.",
   "settings.save": "Lưu",
   "settings.saved": "Đã lưu cài đặt",
   "settings.error": "Lỗi khi lưu cài đặt",
@@ -334,6 +336,7 @@ const vi: Partial<Translations> = {
   "settings.accentRainbowHint": "Chế độ cầu vồng đang bật. Tắt nó để chọn lại màu nhấn.",
   "settings.accentPreset": "Cài đặt sẵn",
   "settings.accentReset": "Đặt lại màu nhấn và cài đặt sẵn",
+  "settings.systemAccent": "Màu hệ thống",
   "settings.shape": "Góc",
   "settings.shapeHint": "Áp dụng cùng lúc cho thẻ, nút, tab, ô nhập và huy hiệu.",
   "settings.shape.round": "Bo tròn",
@@ -1147,6 +1150,8 @@ const vi: Partial<Translations> = {
   "whatsNew.kitSignIns": "Bộ khôi phục mang theo mọi thông tin đăng nhập mà các đích dùng, và một máy chủ mới đọc lại chúng bằng Lưu thông tin đăng nhập.",
   "whatsNew.keepNow": "Áp dụng ngay trên thẻ Giữ trong bao lâu của một đích cho thấy những bản sao lưu mà quy tắc không còn giữ và xóa chúng. Bạn không cần đợi lần sao lưu tiếp theo.",
   "whatsNew.deleteNoPassword": "Xóa và dọn bớt bản sao lưu vẫn hoạt động mà không cần mật khẩu đăng nhập. Nếu bạn đặt một mật khẩu, bạn đăng nhập trên máy chủ này trước.",
+  "whatsNew.systemAccent": "Cây đũa phép ở đầu các màu nhấn lấy màu riêng của thiết bị bạn: Material You trong ứng dụng Android từ Android 12, và màu hệ thống trong Firefox và Safari. Mỗi thiết bị tự nhớ lựa chọn này.",
+  "whatsNew.oled": "OLED bên dưới Giao diện cho màn hình OLED và AMOLED màu đen tuyền mỗi khi giao diện tối hiển thị, kể cả khi giao diện theo thiết bị. Mỗi thiết bị nhớ lựa chọn riêng của mình.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Cung cấp /metrics",

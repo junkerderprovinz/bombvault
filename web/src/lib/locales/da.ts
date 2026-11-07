@@ -321,6 +321,8 @@ const da: Partial<Translations> = {
   "settings.schedule": "Tidsplan",
   "settings.language": "Sprog",
   "settings.theme": "Tema",
+  "settings.oled": "OLED",
+  "settings.oledHint": "Ægte sort til OLED- og AMOLED-skærme, så længe det mørke tema vises. Hver enhed husker valget for sig selv.",
   "settings.save": "Gem",
   "settings.saved": "Indstillinger gemt",
   "settings.error": "Fejl ved gemning af indstillinger",
@@ -334,6 +336,7 @@ const da: Partial<Translations> = {
   "settings.accentRainbowHint": "Regnbuetilstand er slået til. Slå den fra for at vælge en accentfarve igen.",
   "settings.accentPreset": "Forudindstilling",
   "settings.accentReset": "Nulstil accentfarve og forudindstillinger",
+  "settings.systemAccent": "Systemfarve",
   "settings.shape": "Hjørner",
   "settings.shapeHint": "Gælder for kort, knapper, faner, felter og mærkater på én gang.",
   "settings.shape.round": "Runde",
@@ -1156,6 +1159,8 @@ const da: Partial<Translations> = {
   "whatsNew.kitSignIns": "Gendannelseskittet indeholder alle de adgangsoplysninger, destinationerne bruger, og en ny server læser dem ind igen med Gem adgangsoplysninger.",
   "whatsNew.keepNow": "Anvend nu på kortet Hvor længe der gemmes for en destination viser, hvilke sikkerhedskopier reglen ikke længere beholder, og fjerner dem. Du behøver ikke vente på den næste sikkerhedskopi.",
   "whatsNew.deleteNoPassword": "Sletning og oprydning af sikkerhedskopier virker uden en login-adgangskode. Har du angivet en, logger du først ind på denne server.",
+  "whatsNew.systemAccent": "Tryllestaven forrest blandt accentfarverne tager din enheds egen farve: Material You i Android-appen fra Android 12 og systemfarven i Firefox og Safari. Hver enhed husker dette valg for sig selv.",
+  "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)
   "settings.metricsEnable": "Eksponer /metrics",
