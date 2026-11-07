@@ -11,6 +11,7 @@ import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import { depositRelease, deposits, keptDeposit, NO_SELF_ROLES, NOW_S, sentDeposit } from "./instances.testsupport";
 import type { InstancesState } from "./useInstances";
+import { dateLocale } from "../../lib/dateLocale";
 
 const NEW_CODE = "B4TXW-8JHQZ-R2MKC-6YPDN";
 const SINCE = new Date(2026, 2, 9, 12).toISOString();
@@ -128,7 +129,7 @@ describe("this server's own deposit", () => {
 
   it("says when the recovery code was made, and explains the deposit in the heading", async () => {
     const win = await open({ codeSince: SINCE });
-    expect(within(own()).getByTestId("code-since").textContent).toBe(`Recovery code made on ${new Date(SINCE).toLocaleDateString()}`);
+    expect(within(own()).getByTestId("code-since").textContent).toBe(`Recovery code made on ${new Date(SINCE).toLocaleDateString(dateLocale())}`);
     expect(within(win.parentElement as HTMLElement).getByLabelText(en["keeper.window.tip"])).toBeTruthy();
   });
 
@@ -295,7 +296,7 @@ describe("a request to hand a deposit out", () => {
   it("says since when it has known an instance it has seen before", async () => {
     await open({ releases: [depositRelease({ knownSince: SINCE, requests: 1, requestsLastHour: 1 })] });
     const row = request("rel1");
-    expect(row.textContent).toContain(`First seen here on ${new Date(SINCE).toLocaleDateString()}.`);
+    expect(row.textContent).toContain(`First seen here on ${new Date(SINCE).toLocaleDateString(dateLocale())}.`);
     expect(within(row).queryByText(en["keeper.release.unknown"])).toBeNull();
     expect(row.textContent).toContain("1 request from it so far, 1 in the last hour");
   });
