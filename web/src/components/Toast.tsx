@@ -1,5 +1,5 @@
-import type { Ref } from "react";
-import type { ToastAction, ToastSeverity } from "../lib/toastEngine";
+import { Fragment, type Ref } from "react";
+import { softBreaks, type ToastAction, type ToastSeverity } from "../lib/toastEngine";
 import { Button } from "./Button";
 import { glyphFor } from "./glyphFor";
 
@@ -97,28 +97,39 @@ export function ToastCard({
           onDismiss(id);
         }
       }}
-      className="glim-toast pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-2.5 rounded-card bg-carbon-surface px-3.5 py-3 text-carbon-text"
+      className="glim-toast pointer-events-auto flex w-96 max-w-[calc(100vw-2rem)] items-start gap-2.5 rounded-card bg-carbon-surface px-3.5 py-3 text-carbon-text max-[600px]:w-full max-[600px]:max-w-none"
     >
       <ToastGlyph severity={severity} />
-      <p className="min-w-0 flex-1 text-sm leading-snug wrap-break-word">{message}</p>
-      {action && (
-        <Button
-          label={action.label}
-          labelKey={null}
-          glyph={glyphFor(action.labelKey)}
-          tone="neutral"
-          onClick={() => {
-            action.onClick();
-            onDismiss(id);
-          }}
-          className="shrink-0"
-        />
-      )}
+      {/* The action stands under the message, so the message keeps the card's
+          width. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <p className="text-sm leading-snug wrap-break-word text-pretty">
+          {softBreaks(message).map((part, i) => (
+            <Fragment key={i}>
+              {i > 0 && <wbr />}
+              {part}
+            </Fragment>
+          ))}
+        </p>
+        {action && (
+          <Button
+            label={action.label}
+            labelKey={null}
+            glyph={glyphFor(action.labelKey)}
+            tone="neutral"
+            onClick={() => {
+              action.onClick();
+              onDismiss(id);
+            }}
+            className="self-end"
+          />
+        )}
+      </div>
       <button
         type="button"
         onClick={() => onDismiss(id)}
         aria-label={dismissLabel}
-        className="-m-1 shrink-0 rounded-pill p-1 text-carbon-textMuted opacity-80 hover:bg-carbon-hover hover:text-carbon-text hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
+        className="glim-btn-bare -m-1 shrink-0 rounded-pill p-1 text-carbon-textMuted opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--focus-ring)"
       >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
           <rect x="6.8" y="2.5" width="2.4" height="11" rx="0.6" transform="rotate(45 8 8)" />
@@ -157,7 +168,9 @@ export interface ToastViewportProps {
 // off each card's shadow and the start of its slide-in.
 export function ToastViewport({ toasts, dismissLabel, onDismiss, onMouseEnter, onMouseLeave, onFocus, onBlur, ref }: ToastViewportProps) {
   return (
-    <div ref={ref} className="glim-toasts pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4">
+    // On a phone the newest two take the window's width, so the page stays in
+    // view.
+    <div ref={ref} className="glim-toasts pointer-events-none fixed bottom-0 end-0 z-[70] flex max-h-screen flex-col gap-2 overflow-y-auto p-4 max-[600px]:start-0 max-[600px]:p-2 max-[600px]:[&>:nth-last-child(n+3)]:hidden">
       {toasts.map((t) => (
         <ToastCard
           key={t.id}

@@ -13,6 +13,7 @@ import {
   removeToast,
   resumeToast,
   shouldShowToast,
+  softBreaks,
   type ToastEngagement,
   type ToastEntry,
 } from "./toastEngine";
@@ -288,6 +289,17 @@ describe("resumeToast", () => {
     const b = resumed.find((t) => t.id === "b")!;
     expect(a.expiresAt).toBe(5000 + 3000); // a's own frozen remainder (4000-1000)
     expect(b.expiresAt).toBeNull(); // b is still paused, untouched
+  });
+});
+
+describe("softBreaks", () => {
+  it("cuts a path after each slash, so it breaks at a folder", () => {
+    expect(softBreaks("Saved to /mnt/user/backups")).toEqual(["Saved to /", "mnt/", "user/", "backups"]);
+    expect(softBreaks("C:\\Users\\jdp")).toEqual(["C:\\", "Users\\", "jdp"]);
+  });
+
+  it("leaves a message without a path whole", () => {
+    expect(softBreaks("Settings saved")).toEqual(["Settings saved"]);
   });
 });
 

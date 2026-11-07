@@ -127,6 +127,12 @@ export function applyEngagement(
   return { next, engaged: next.hover || next.focus };
 }
 
+/** A message cut after each slash, for a <wbr> between the parts, so a path
+ *  breaks at a folder rather than inside a name. */
+export function softBreaks(message: string): string[] {
+  return message.split(/(?<=[/\\])/);
+}
+
 /** Quiet mode hides routine successes; warnings and failures always show. */
 export function shouldShowToast(severity: ToastSeverity, quiet: boolean): boolean {
   return !quiet || severity !== "success";
