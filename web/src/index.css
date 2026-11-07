@@ -324,7 +324,46 @@
    an unlayered rule always wins over it regardless of class order. Without a
    floor the button shrinks to whatever the row leaves it, down to the
    ellipsis `.glim-btn-label` already sets up. */
-.glim-btn-elastic { min-width: 0; }
+.glim-btn-elastic {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* A button keeps its words: in a flex row what stands beside it gives way, and
+   in a window's foot it moves to the next line. In the components layer, so a
+   flex utility on a button still wins. */
+@layer components {
+  .glim-btn {
+    flex-shrink: 0;
+    max-width: 100%;
+  }
+}
+
+/* A window's foot holds several answers in one row, so they hug their words
+   down to the smallest floor, and the row wraps before a button is cut off. A
+   button wider than the whole foot, as on a phone, runs its words onto a
+   second line and grows with them. An explicit stage sets a width of its own
+   and stays. The span is the box a hint or a disabled tip puts around a
+   button. */
+[data-dialog-actions] {
+  flex-wrap: wrap;
+}
+:is([data-dialog-actions], [data-dialog-actions] > span) > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
+  min-width: var(--btn-w-xs);
+}
+:is([data-dialog-actions], [data-dialog-actions] > span) > .glim-btn {
+  height: auto;
+  min-height: var(--btn-h);
+  padding-block: 0.375rem;
+}
+:is([data-dialog-actions], [data-dialog-actions] > span) > .glim-btn-key {
+  min-height: var(--btn-h-key);
+}
+:is([data-dialog-actions], [data-dialog-actions] > span) > .glim-btn > .glim-btn-label {
+  white-space: normal;
+  text-wrap: balance;
+  text-align: center;
+}
 
 /* For a button whose words are the only thing that tells it from its
    neighbours. Below 48rem the column can be narrower than the label, so the
@@ -336,6 +375,7 @@
     height: auto;
     min-height: var(--btn-h);
     min-width: 0;
+    flex-shrink: 1;
     max-width: 100%;
     padding-block: 0.375rem;
   }
