@@ -26,7 +26,7 @@ function List({ onReorder }: { onReorder: (ids: string[]) => void }) {
     },
   });
   return (
-    <ol ref={list} data-testid="list" className={drag.held !== null ? "glim-drag-armed" : ""}>
+    <ol ref={list} data-testid="list">
       {drag.order.map((id) => (
         <li key={id} data-id={id} className={drag.look(id)} onPointerDown={(e) => drag.press(e, id)}>
           {id}
@@ -91,6 +91,7 @@ it("lifts the carried row and lets the others make room as it passes", () => {
   pointer("pointerup", document, 10 + ROW + 5);
   expect(onReorder).toHaveBeenCalledTimes(1);
   expect(onReorder).toHaveBeenCalledWith(["b", "a", "c"]);
+  expect(screen.getByTestId("list").className).toBe("");
 });
 
 it("writes nothing for a drop where the row started", () => {
