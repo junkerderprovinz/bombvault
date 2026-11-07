@@ -357,6 +357,53 @@
   }
 }
 
+/* The checkbox (components/Checkbox.tsx), the one place a box stands instead
+   of a switch (rule 39). Drawn rather than the system's, at the control radius
+   held small enough to stay a box, and when ticked the accent with the tick in
+   its contrast ink. */
+@layer components {
+  .glim-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2rem;
+    padding-inline: 0.4rem;
+    border-radius: var(--radius-control);
+    font-size: var(--text-body);
+    color: var(--carbon-text);
+    text-align: start;
+    cursor: pointer;
+  }
+  .glim-checkbox:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .glim-checkbox-box {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: min(var(--radius-control), 5px);
+    background-color: color-mix(in srgb, var(--carbon-surface3) 60%, transparent);
+    color: transparent;
+  }
+  .glim-checkbox-box > svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  [aria-checked="true"] > .glim-checkbox-box {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  @media (hover: hover) {
+    .glim-checkbox:not(:disabled):hover { background-color: var(--carbon-hover); }
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .glim-checkbox-box { transition: background-color var(--motion-control-dur, 150ms) ease; }
+}
+
 .glim-btn-xs { min-width: var(--btn-w-xs); }
 .glim-btn-sm { min-width: var(--btn-w-sm); }
 .glim-btn-md { min-width: var(--btn-w-md); }

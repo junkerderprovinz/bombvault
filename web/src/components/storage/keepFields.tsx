@@ -5,7 +5,8 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { setAskKeepLess, useAskKeepLess } from "../../lib/keepAsk";
 import { lostByChange, sampleBackups, type KeepCounts, type KeepInput } from "../../lib/keepPlan";
 import { useConfirm } from "../../lib/useConfirm";
-import { ToggleRow } from "../../pages/settings/shared";
+import { Checkbox } from "../Checkbox";
+import { InfoBubble } from "../InfoBubble";
 import { NumberSetting } from "./fields";
 import { Rows, SettingRow } from "./rows";
 
@@ -42,21 +43,23 @@ export function KeepCountFields({
   );
 }
 
-/** The switch in the question itself. It reports up, because the answer is
- *  only stored once the question is answered with yes. */
+/** The box in the question itself (rule 39). It reports up, because the
+ *  answer is only stored once the question is answered with yes. */
 function DontAskAgain({ onChange }: { onChange: (quiet: boolean) => void }) {
   const { t } = useT();
   const [quiet, setQuiet] = useState(false);
   return (
-    <ToggleRow
-      label={t("storage.keep.dontAsk")}
-      hint={t("storage.keep.dontAskHint")}
-      checked={quiet}
-      onChange={(next) => {
-        setQuiet(next);
-        onChange(next);
-      }}
-    />
+    <span className="flex items-center gap-1.5">
+      <Checkbox
+        label={t("storage.keep.dontAsk")}
+        checked={quiet}
+        onChange={(next) => {
+          setQuiet(next);
+          onChange(next);
+        }}
+      />
+      <InfoBubble tip={t("storage.keep.dontAskHint")} />
+    </span>
   );
 }
 
