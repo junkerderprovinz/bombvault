@@ -12,7 +12,7 @@ import { applyStoredTheme } from "./lib/theme";
 import { watchDeviceLook } from "./lib/deviceLook";
 import { applyStoredLanguage } from "./lib/i18n";
 import { applyStoredAccent } from "./lib/accent";
-import { applyStoredRainbow } from "./lib/appearance";
+import { applyStoredRainbow, watchPageHue } from "./lib/appearance";
 import { applyStoredShape, armShapeTransitions } from "./lib/shape";
 import { applyStoredMotionIntensity } from "./lib/motion";
 import { applyStoredDisco } from "./lib/disco";
@@ -30,6 +30,7 @@ applyStoredMotionIntensity();
 applyStoredLabelModes();
 // Disco only walks hued elements, so it needs the rainbow state applied first.
 applyStoredDisco();
+watchPageHue();
 
 // When the server hands this browser a different look after boot, localStorage
 // changes underneath the page and every axis has to be applied again, in the

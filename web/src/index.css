@@ -313,6 +313,50 @@
   cursor: not-allowed;
 }
 
+/* Rule 40: a button takes the accent when it is reached for. On a grey button
+   the step up the ramp alone is a few units and reads as nothing happening, so
+   a surface-filled button mixes 22% of the tint into its hovered ground and
+   turns its glyph to the tint. Its words keep the text colour, which the accent
+   on a tinted ground would not be legible against. A bare glyph button has no
+   ground to tint, so only its glyph turns. --btn-tint reads --accent-glyph, and
+   under rainbow takePageHue() in lib/appearance.ts sets it inline to the
+   button's own position on the page. The pointer half sits behind
+   (hover: hover), as Tailwind's hover: does, so a tap on a phone leaves no tint
+   behind. */
+.glim-btn-neutral,
+.glim-btn-subtle,
+.glim-btn-bare {
+  --btn-tint: var(--accent-glyph);
+}
+.glim-btn-subtle:not(:disabled):focus-visible {
+  background-color: color-mix(in srgb, var(--carbon-surface3), var(--btn-tint) 22%);
+}
+.glim-btn-neutral:not(:disabled):focus-visible {
+  background-color: color-mix(in srgb, var(--carbon-hover-raised), var(--btn-tint) 22%);
+}
+:is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):focus-visible > .glim-btn-glyph,
+.glim-btn-bare:not(:disabled):focus-visible {
+  color: var(--btn-tint);
+}
+.glim-btn-bare:not([aria-pressed="true"]):focus-visible {
+  background-color: transparent;
+}
+@media (hover: hover) {
+  .glim-btn-subtle:not(:disabled):hover {
+    background-color: color-mix(in srgb, var(--carbon-surface3), var(--btn-tint) 22%);
+  }
+  .glim-btn-neutral:not(:disabled):hover {
+    background-color: color-mix(in srgb, var(--carbon-hover-raised), var(--btn-tint) 22%);
+  }
+  :is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):hover > .glim-btn-glyph,
+  .glim-btn-bare:not(:disabled):hover {
+    color: var(--btn-tint);
+  }
+  .glim-btn-bare:not([aria-pressed="true"]):hover {
+    background-color: transparent;
+  }
+}
+
 .glim-btn-xs { min-width: var(--btn-w-xs); }
 .glim-btn-sm { min-width: var(--btn-w-sm); }
 .glim-btn-md { min-width: var(--btn-w-md); }

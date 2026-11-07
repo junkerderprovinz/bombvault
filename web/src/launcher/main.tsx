@@ -10,7 +10,7 @@ import { applyStoredTheme } from "../lib/theme";
 import { watchDeviceLook } from "../lib/deviceLook";
 import { applyStoredAccent } from "../lib/accent";
 import { applyStoredShape } from "../lib/shape";
-import { applyStoredRainbow } from "../lib/appearance";
+import { applyStoredRainbow, watchPageHue } from "../lib/appearance";
 import { applyStoredMotionIntensity } from "../lib/motion";
 import { applyStoredDisco } from "../lib/disco";
 import { appBridge } from "./bridge";
@@ -30,6 +30,7 @@ applyStoredRainbow();
 applyStoredShape();
 applyStoredMotionIntensity();
 applyStoredDisco();
+watchPageHue();
 
 const bridge = appBridge() ?? (import.meta.env.DEV ? previewBridge() : null);
 

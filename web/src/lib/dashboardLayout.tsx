@@ -351,7 +351,7 @@ function ColumnsIcon() {
 }
 
 const iconBtn =
-  "rounded-pill p-1 text-carbon-textSub hover:text-carbon-text hover:bg-carbon-hover " +
+  "glim-btn-bare rounded-pill p-1 text-carbon-textSub " +
   "disabled:opacity-40 disabled:pointer-events-none motion-safe:transition-colors";
 
 // The share of the row a card takes, as its width button names it.

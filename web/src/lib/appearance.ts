@@ -193,6 +193,45 @@ export function hueVars(i: number): Record<string, string> {
   };
 }
 
+// The buttons that take the accent when they are reached for (rule 40),
+// whatever else a button of the app wears.
+const TINTED = ".glim-btn-neutral, .glim-btn-subtle, .glim-btn-bare";
+
+/**
+ * takePageHue gives a button the palette position of its place among the
+ * page's tinted buttons, so under rainbow two buttons side by side light up in
+ * different colours. It runs when the pointer or the keyboard reaches the
+ * button, since the order changes with the page and only the hover and focus
+ * look read the tint.
+ */
+export function takePageHue(el: HTMLElement): void {
+  if (!state.on) {
+    el.style.removeProperty("--btn-tint");
+    return;
+  }
+  const i = Array.prototype.indexOf.call(document.querySelectorAll(TINTED), el);
+  const n = ((i % RAINBOW.length) + RAINBOW.length) % RAINBOW.length;
+  el.style.setProperty("--btn-tint", `color-mix(in srgb, var(--rb-${n}) var(--ink-mix), black)`);
+}
+
+/**
+ * watchPageHue calls takePageHue for every tinted button the pointer or the
+ * keyboard reaches under `root`. A button with a palette position of its own
+ * keeps that one.
+ */
+export function watchPageHue(root: Document | HTMLElement = document): () => void {
+  const reach = (e: Event) => {
+    const el = e.target instanceof Element ? e.target.closest<HTMLElement>(TINTED) : null;
+    if (el && !el.classList.contains("glim-hue")) takePageHue(el);
+  };
+  root.addEventListener("pointerover", reach);
+  root.addEventListener("focusin", reach);
+  return () => {
+    root.removeEventListener("pointerover", reach);
+    root.removeEventListener("focusin", reach);
+  };
+}
+
 /**
  * isValidPalette is the all-or-nothing check applyRainbow applies, exported
  * so the Settings UI can validate a candidate before handing it over.
