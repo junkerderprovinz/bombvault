@@ -126,7 +126,8 @@ KINDS = {
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
-    "linux-flatpak":    (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak", "Download the Linux Flatpak"),
+    "linux-flatpak":    (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak x64", "Download the Linux Flatpak"),
+    "linux-flatpak-arm": (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak ARM64", "Download the Linux Flatpak for ARM"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
@@ -150,7 +151,7 @@ KINDS = {
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
-SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm", "linux-flatpak")}
+SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm", "linux-flatpak", "linux-flatpak-arm")}
 # A store listing that does not exist yet is drawn without a link, with "Soon"
 # under its name, or nobody could tell why the button leads nowhere.
 SOON = {
