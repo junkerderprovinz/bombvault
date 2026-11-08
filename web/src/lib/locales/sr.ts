@@ -3538,6 +3538,16 @@ const sr: Partial<Translations> = {
   "offsiteRemoval.typeName": "Упиши {name} за потврду",
   "offsiteRemoval.done": "Избрисано код {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} је само за додавање. Одавде се из њега ништа не сме брисати.",
+  "removeEverywhere.menu": "Избриши резервне копије свуда",
+  "removeEverywhere.ask": "Избрисати сваку резервну копију {name} на свим местима испод? Ставка и њена подешавања остају.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, остају јер је само за додавање",
+  "removeEverywhere.unreadable": "{place}: није могло да се прочита, тамо се ништа не брише",
+  "removeEverywhere.go": "Избриши свуда",
+  "removeEverywhere.done": "Избрисане резервне копије за {name}: {n}",
+  "removeEverywhere.kept": "{place} је само за додавање, резервне копије су тамо остале.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} нема резервних копија нигде.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Аномалије",

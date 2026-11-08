@@ -3517,6 +3517,53 @@ export function deleteAtTarget(
   });
 }
 
+/** One place that holds backups of an item: its home ("local") or an off-site target. */
+export interface PlaceOfItem {
+  place: string;
+  /** The target's name, or the home's repository name; "" for the section's own folder. */
+  label: string;
+  /** null where the place could not be read. */
+  count: number | null;
+  appendOnly: boolean;
+  unreadable: boolean;
+}
+
+export interface EverywhereRemoval {
+  /** The name the delete compares the typed text with. */
+  name: string;
+  places: PlaceOfItem[];
+}
+
+export interface PlaceResult {
+  place: string;
+  label: string;
+  deleted: number;
+  kept?: "append-only";
+  error?: string;
+}
+
+function everywherePath(item: ItemRef): string {
+  return `/api/items/${encodeURIComponent(item.domain)}/${encodeURIComponent(item.key)}/removal`;
+}
+
+/** Every place that holds backups of the item, with how many. */
+export function getEverywhereRemoval(item: ItemRef): Promise<OkEnvelope & Partial<EverywhereRemoval>> {
+  return fetchJSON(everywherePath(item));
+}
+
+/** Deletes the item's backups at every place in `places`, the list the window
+ *  showed. A place it did not show refuses the whole removal with a fresh list. */
+export function deleteEverywhere(
+  item: ItemRef,
+  typedName: string,
+  places: string[]
+): Promise<OkEnvelope & { results?: PlaceResult[]; preview?: EverywhereRemoval }> {
+  return fetchKeyJSON(everywherePath(item), {
+    method: "DELETE",
+    body: JSON.stringify({ typedName, places }),
+  });
+}
+
 export interface DefaultCounts {
   follow: number;
   own: number;

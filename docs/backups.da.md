@@ -65,7 +65,9 @@ En post, du med vilje udelader, for eksempel en testcontainer, kan markeres **Si
 
 ## En posts side {#entry-page}
 
-Et klik på en række åbner postens side. Hovedet nævner posten og dens tilstand på én linje, for eksempel **Senest sikkerhedskopieret for 3 timer siden** eller **Udsat, næste forsøg kl. 03:15**, og rummer dens handlinger: **Sikkerhedskopier nu**, **Gendan** og under **Mere** de sjældne, for eksempel **Eksporter nyeste sikkerhedskopi**, **Eksporter container** eller **Eksporter VM**, **Knyt til et tidligere element**, **Slet alle sikkerhedskopier** og **Fjern element**. En tilbageknap til venstre for ikonet fører til listen. Mens en sikkerhedskopiering kører, står **Annullér sikkerhedskopi** ved siden af dens fremdrift, og en annulleret kørsel registreres som annulleret, ikke som mislykket.
+Et klik på en række åbner postens side. Hovedet nævner posten og dens tilstand på én linje, for eksempel **Senest sikkerhedskopieret for 3 timer siden** eller **Udsat, næste forsøg kl. 03:15**, og rummer dens handlinger: **Sikkerhedskopier nu**, **Gendan** og under **Mere** de sjældne, for eksempel **Eksporter nyeste sikkerhedskopi**, **Eksporter container** eller **Eksporter VM**, **Knyt til et tidligere element**, **Slet alle sikkerhedskopier**, **Fjern element** og **Slet sikkerhedskopier overalt**. En tilbageknap til venstre for ikonet fører til listen. Mens en sikkerhedskopiering kører, står **Annullér sikkerhedskopi** ved siden af dens fremdrift, og en annulleret kørsel registreres som annulleret, ikke som mislykket.
+
+**Slet sikkerhedskopier overalt** fjerner postens sikkerhedskopier på alle destinationer på én gang, off-site-kopier medregnet. Vinduet viser hvert sted med antallet af sikkerhedskopier der, og knappen låses op, når du skriver postens navn. Et sted, der er sat til append-only, beholder sine sikkerhedskopier og siger det. Posten og dens indstillinger bliver, så en post, du ikke længere sikkerhedskopierer, forbliver sådan, og kun dens sikkerhedskopier og deres historik forsvinder.
 
 Siden har tre faner: **Sikkerhedskopier**, **Indstillinger** og **Verificering**.
 

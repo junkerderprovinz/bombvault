@@ -3535,6 +3535,16 @@ const zh: Partial<Translations> = {
   "offsiteRemoval.typeName": "输入 {name} 以确认",
   "offsiteRemoval.done": "已在 {target} 删除：{n}",
   "offsiteRemoval.appendOnly": "{target} 是 append-only。此处无法从中删除任何内容。",
+  "removeEverywhere.menu": "删除所有位置的备份",
+  "removeEverywhere.ask": "删除下列所有位置中 {name} 的每一个备份？条目及其设置会保留。",
+  "removeEverywhere.place": "{place}：{n}",
+  "removeEverywhere.appendOnly": "{place}：{n}，因为是 append-only 而保留",
+  "removeEverywhere.unreadable": "{place}：无法读取，那里不会删除任何内容",
+  "removeEverywhere.go": "在所有位置删除",
+  "removeEverywhere.done": "已删除 {name} 的备份：{n}",
+  "removeEverywhere.kept": "{place} 是 append-only，保留了其备份。",
+  "removeEverywhere.failed": "{place}：{error}",
+  "removeEverywhere.none": "{name} 在任何位置都没有备份。",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "异常",

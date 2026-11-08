@@ -65,7 +65,9 @@ An entry you leave out on purpose, such as a test container, can be marked **Don
 
 ## The page of an entry {#entry-page}
 
-A click on a row opens the entry's page. The head names the entry and its state in one line, such as **Last backed up 3 hours ago** or **Deferred, next try at 03:15**, and holds its actions: **Back up now**, **Restore**, and under **More** the rare ones, such as **Export newest backup**, **Export container** or **Export VM**, **Link to a former entry**, **Delete all backups** and **Remove entry**. A back button left of the icon leads to the list. While a backup runs, **Cancel backup** stands beside its progress, and a cancelled run is recorded as cancelled, not as failed.
+A click on a row opens the entry's page. The head names the entry and its state in one line, such as **Last backed up 3 hours ago** or **Deferred, next try at 03:15**, and holds its actions: **Back up now**, **Restore**, and under **More** the rare ones, such as **Export newest backup**, **Export container** or **Export VM**, **Link to a former entry**, **Delete all backups**, **Remove entry** and **Delete backups everywhere**. A back button left of the icon leads to the list. While a backup runs, **Cancel backup** stands beside its progress, and a cancelled run is recorded as cancelled, not as failed.
+
+**Delete backups everywhere** removes the entry's backups at every storage location in one go, off-site copies included. The window lists each place with how many backups it holds, and the button unlocks once you type the entry's name. A place set to append-only keeps its backups and says so. The entry and its settings stay, so an entry you no longer back up stays that way and only its backups and their history are gone.
 
 The page has three tabs: **Backups**, **Settings** and **Verify**.
 

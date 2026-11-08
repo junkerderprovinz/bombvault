@@ -65,7 +65,9 @@ Un élément que vous laissez de côté exprès, comme un conteneur de test, peu
 
 ## La page d'un élément {#entry-page}
 
-Un clic sur une ligne ouvre la page de l'élément. L'en-tête nomme l'élément et son état en une ligne, comme **Dernière sauvegarde il y a 3 heures** ou **Reportée, prochain essai à 03:15**, et contient ses actions : **Sauvegarder maintenant**, **Restaurer**, et sous **Plus** les plus rares, comme **Exporter la dernière sauvegarde**, **Exporter le conteneur** ou **Exporter la VM**, **Lier à un ancien élément**, **Supprimer toutes les sauvegardes** et **Supprimer l'élément**. Un bouton retour à gauche de l'icône ramène à la liste. Pendant qu'une sauvegarde tourne, **Annuler la sauvegarde** se tient à côté de sa progression, et une exécution annulée est enregistrée comme annulée, pas comme échouée.
+Un clic sur une ligne ouvre la page de l'élément. L'en-tête nomme l'élément et son état en une ligne, comme **Dernière sauvegarde il y a 3 heures** ou **Reportée, prochain essai à 03:15**, et contient ses actions : **Sauvegarder maintenant**, **Restaurer**, et sous **Plus** les plus rares, comme **Exporter la dernière sauvegarde**, **Exporter le conteneur** ou **Exporter la VM**, **Lier à un ancien élément**, **Supprimer toutes les sauvegardes**, **Supprimer l'élément** et **Supprimer les sauvegardes partout**. Un bouton retour à gauche de l'icône ramène à la liste. Pendant qu'une sauvegarde tourne, **Annuler la sauvegarde** se tient à côté de sa progression, et une exécution annulée est enregistrée comme annulée, pas comme échouée.
+
+**Supprimer les sauvegardes partout** efface d'un coup les sauvegardes de l'élément dans chaque destination, copies hors site comprises. La fenêtre indique chaque endroit avec le nombre de sauvegardes qu'il contient, et le bouton se débloque dès que vous tapez le nom de l'élément. Un endroit réglé en append-only garde ses sauvegardes et le signale. L'élément et ses paramètres restent, donc un élément que vous ne sauvegardez plus reste ainsi, et seules ses sauvegardes et leur historique disparaissent.
 
 La page a trois onglets : **Sauvegardes**, **Paramètres** et **Vérification**.
 

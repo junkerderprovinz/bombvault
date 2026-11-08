@@ -272,6 +272,7 @@ func TestPlacementRefusalsCarryTheirCodes(t *testing.T) {
 		errExclusionUnsaved:             "exclusion-unsaved",
 		errAppendOnlyOffsiteTarget:      "append-only",
 		errRemovalGrown:                 "removal-grown",
+		errPlacesChanged:                "places-changed",
 		errNameMismatch:                 "name-mismatch",
 		errHomeUnreadable:               "home-unreadable",
 		errDomainBusy:                   "domain-busy",

@@ -3554,6 +3554,16 @@ const id: Partial<Translations> = {
   "offsiteRemoval.typeName": "Ketik {name} untuk konfirmasi",
   "offsiteRemoval.done": "Dihapus di {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} bersifat append-only. Tidak ada yang boleh dihapus dari sini.",
+  "removeEverywhere.menu": "Hapus cadangan di semua tempat",
+  "removeEverywhere.ask": "Hapus setiap cadangan {name} di semua tempat di bawah ini? Entri dan pengaturannya tetap ada.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, tetap ada karena bersifat append-only",
+  "removeEverywhere.unreadable": "{place}: tidak dapat dibaca, tidak ada yang dihapus di sana",
+  "removeEverywhere.go": "Hapus di semua tempat",
+  "removeEverywhere.done": "Cadangan {name} dihapus: {n}",
+  "removeEverywhere.kept": "{place} bersifat append-only dan tetap menyimpan cadangannya.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} tidak punya cadangan di mana pun.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomali",

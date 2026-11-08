@@ -3554,6 +3554,16 @@ const gl: Partial<Translations> = {
   "offsiteRemoval.typeName": "Escribe {name} para confirmar",
   "offsiteRemoval.done": "Borrada en {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} é append-only. Desde aquí non se pode borrar nada del.",
+  "removeEverywhere.menu": "Eliminar copias en todas partes",
+  "removeEverywhere.ask": "Eliminar todas as copias de {name} en todos os lugares de abaixo? O elemento e a súa configuración quedan.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, quedan porque é append-only",
+  "removeEverywhere.unreadable": "{place}: non se puido ler, alí non se elimina nada",
+  "removeEverywhere.go": "Eliminar en todas partes",
+  "removeEverywhere.done": "Copias de {name} eliminadas: {n}",
+  "removeEverywhere.kept": "{place} é append-only e conservou as súas copias.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} non ten copias en ningún sitio.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalías",

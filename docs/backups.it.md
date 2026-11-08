@@ -65,7 +65,9 @@ Un elemento che lasci fuori di proposito, come un container di prova, può esser
 
 ## La pagina di un elemento {#entry-page}
 
-Un clic su una riga apre la pagina dell'elemento. L'intestazione nomina l'elemento e il suo stato in una riga, come **Ultimo backup 3 ore fa** o **Rinviato, prossimo tentativo alle 03:15**, e contiene le sue azioni: **Esegui backup ora**, **Ripristina**, e sotto **Altro** quelle rare, come **Esporta il backup più recente**, **Esporta container** o **Esporta VM**, **Collega a un elemento precedente**, **Elimina tutti i backup** e **Rimuovi elemento**. Un pulsante indietro a sinistra dell'icona porta all'elenco. Mentre un backup è in corso, **Annulla backup** sta accanto al suo avanzamento, e un'esecuzione annullata viene registrata come annullata, non come fallita.
+Un clic su una riga apre la pagina dell'elemento. L'intestazione nomina l'elemento e il suo stato in una riga, come **Ultimo backup 3 ore fa** o **Rinviato, prossimo tentativo alle 03:15**, e contiene le sue azioni: **Esegui backup ora**, **Ripristina**, e sotto **Altro** quelle rare, come **Esporta il backup più recente**, **Esporta container** o **Esporta VM**, **Collega a un elemento precedente**, **Elimina tutti i backup**, **Rimuovi elemento** e **Elimina i backup ovunque**. Un pulsante indietro a sinistra dell'icona porta all'elenco. Mentre un backup è in corso, **Annulla backup** sta accanto al suo avanzamento, e un'esecuzione annullata viene registrata come annullata, non come fallita.
+
+**Elimina i backup ovunque** cancella in un colpo solo i backup dell'elemento in ogni destinazione, comprese le copie off-site. La finestra elenca ogni posto con quanti backup contiene, e il pulsante si sblocca appena scrivi il nome dell'elemento. Un posto impostato come append-only conserva i suoi backup e lo dice. L'elemento e le sue impostazioni restano, quindi un elemento di cui non fai più il backup resta così, e spariscono solo i suoi backup e la loro cronologia.
 
 La pagina ha tre schede: **Backup**, **Impostazioni** e **Verifica**.
 

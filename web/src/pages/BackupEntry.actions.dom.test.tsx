@@ -70,6 +70,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     takeOverContainer: vi.fn(),
     takeOverVM: vi.fn(),
     setBackupDeclined: vi.fn(),
+    getEverywhereRemoval: vi.fn(),
   };
 });
 
@@ -103,6 +104,7 @@ const forgetVM = vi.mocked(api.forgetVM);
 const takeOverContainer = vi.mocked(api.takeOverContainer);
 const takeOverVM = vi.mocked(api.takeOverVM);
 const setBackupDeclined = vi.mocked(api.setBackupDeclined);
+const getEverywhereRemoval = vi.mocked(api.getEverywhereRemoval);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -598,6 +600,37 @@ describe("a read older than a placement write", () => {
   });
 });
 
+describe("deleting backups everywhere", () => {
+  const NO_SCHEDULE = { kind: "none", spec: "", reason: "excluded" } as const;
+  const setAside = { ...GITEA, lastBackup: PIHOLE.lastBackup, effectiveSchedule: NO_SCHEDULE, backupDeclined: true };
+
+  it("is offered last for a running container set aside that has backups", async () => {
+    serveEntries(mocks, { items: [setAside] });
+    await renderPage("/backups/container/gitea");
+    const names = (await openMenu()).getAllByRole("button").map((entry) => entry.textContent);
+    expect(names.at(-1)).toBe(en["removeEverywhere.menu"]);
+  });
+
+  it("opens the window that lists every place", async () => {
+    serveEntries(mocks, { items: [setAside] });
+    getEverywhereRemoval.mockResolvedValue({
+      ok: true,
+      name: "gitea",
+      places: [{ place: "offsite:t-b2", label: "B2", count: 4, appendOnly: false, unreadable: false }],
+    });
+    await renderPage("/backups/container/gitea");
+    await choose(en["removeEverywhere.menu"]);
+    expect(await screen.findByText("B2: 4")).toBeTruthy();
+    expect(getEverywhereRemoval).toHaveBeenCalledWith({ domain: "containers", key: "gitea" });
+  });
+
+  it("is not offered while the entry has no backups", async () => {
+    serveEntries(mocks, { items: [{ ...setAside, lastBackup: 0 }] });
+    await renderPage("/backups/container/gitea");
+    expect((await openMenu()).queryByRole("button", { name: en["removeEverywhere.menu"] })).toBeNull();
+  });
+});
+
 describe("saying that an entry is not to be backed up", () => {
   const NO_SCHEDULE = { kind: "none", spec: "", reason: "excluded" } as const;
   const gitea = (declined: boolean): Staged => ({
@@ -651,7 +684,7 @@ describe("saying that an entry is not to be backed up", () => {
     serveEntries(mocks, { items: [{ ...PHOTOS, included: false, effectiveSchedule: NO_SCHEDULE }] });
     await renderPage(`/backups/files/${SET_ID}`);
     const names = (await openMenu()).getAllByRole("button").map((entry) => entry.textContent);
-    expect(names.slice(-2)).toEqual([en["backups.decline"], en["zfs.removeMissing"]]);
+    expect(names.slice(-3)).toEqual([en["backups.decline"], en["zfs.removeMissing"], en["removeEverywhere.menu"]]);
   });
 
   it("is not offered while a schedule reaches the entry", async () => {

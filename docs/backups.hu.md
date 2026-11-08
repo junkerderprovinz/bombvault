@@ -65,7 +65,9 @@ Az az elem, amelyet szándékosan kihagysz, például egy teszt konténer, megje
 
 ## Egy elem oldala {#entry-page}
 
-Egy sorra kattintva megnyílik az elem oldala. A fej egy sorban megnevezi az elemet és az állapotát, például **Utoljára mentve 3 órája** vagy **Elhalasztva, következő próba 03:15-kor**, és tartalmazza a műveleteit: **Biztonsági mentés most**, **Visszaállítás**, valamint a **Több** alatt a ritkábbakat, például **Legújabb mentés exportálása**, **Konténer exportálása** vagy **VM exportálása**, **Összekötés korábbi elemmel**, **Összes biztonsági mentés törlése** és **Elem eltávolítása**. Az ikontól balra lévő vissza gomb a listához vezet. Amíg egy mentés fut, a haladása mellett ott áll a **Biztonsági mentés megszakítása**, a megszakított futás pedig megszakítottként van rögzítve, nem sikertelenként.
+Egy sorra kattintva megnyílik az elem oldala. A fej egy sorban megnevezi az elemet és az állapotát, például **Utoljára mentve 3 órája** vagy **Elhalasztva, következő próba 03:15-kor**, és tartalmazza a műveleteit: **Biztonsági mentés most**, **Visszaállítás**, valamint a **Több** alatt a ritkábbakat, például **Legújabb mentés exportálása**, **Konténer exportálása** vagy **VM exportálása**, **Összekötés korábbi elemmel**, **Összes biztonsági mentés törlése**, **Elem eltávolítása** és **Biztonsági mentések törlése mindenhol**. Az ikontól balra lévő vissza gomb a listához vezet. Amíg egy mentés fut, a haladása mellett ott áll a **Biztonsági mentés megszakítása**, a megszakított futás pedig megszakítottként van rögzítve, nem sikertelenként.
+
+A **Biztonsági mentések törlése mindenhol** egyszerre törli az elem biztonsági mentéseit minden célon, a telephelyen kívüli másolatokkal együtt. Az ablak minden helyet felsorol azzal együtt, hány mentés van rajta, és a gomb akkor válik elérhetővé, amikor begépeled az elem nevét. Az append-only módra állított hely megtartja a mentéseit, és ezt jelzi is. Az elem és a beállításai megmaradnak, így egy elem, amelyről már nem készítesz mentést, az is marad, csak a mentései és azok előzményei tűnnek el.
 
 Az oldalnak három lapja van: **Biztonsági mentések**, **Beállítások** és **Ellenőrzés**.
 

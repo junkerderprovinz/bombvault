@@ -3541,6 +3541,16 @@ const uk: Partial<Translations> = {
   "offsiteRemoval.typeName": "Введіть {name} для підтвердження",
   "offsiteRemoval.done": "Видалено в {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} працює в режимі append-only. Звідси з нього нічого не можна видалити.",
+  "removeEverywhere.menu": "Видалити резервні копії всюди",
+  "removeEverywhere.ask": "Видалити всі резервні копії {name} у всіх місцях нижче? Запис і його налаштування залишаться.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, залишаються, бо працює в режимі append-only",
+  "removeEverywhere.unreadable": "{place}: не вдалося прочитати, там нічого не видаляється",
+  "removeEverywhere.go": "Видалити всюди",
+  "removeEverywhere.done": "Видалено резервних копій {name}: {n}",
+  "removeEverywhere.kept": "{place} працює в режимі append-only, резервні копії там залишилися.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "У {name} ніде немає резервних копій.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Аномалії",

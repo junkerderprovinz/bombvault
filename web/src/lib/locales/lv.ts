@@ -3554,6 +3554,16 @@ const lv: Partial<Translations> = {
   "offsiteRemoval.typeName": "Ievadiet {name}, lai apstiprinātu",
   "offsiteRemoval.done": "Izdzēsta vietā {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} ir tikai pievienošanai. No šejienes no tā neko nedrīkst dzēst.",
+  "removeEverywhere.menu": "Dzēst rezerves kopijas visur",
+  "removeEverywhere.ask": "Dzēst katru {name} rezerves kopiju visās zemāk norādītajās vietās? Ieraksts un tā iestatījumi paliek.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, paliek, jo tā ir tikai pievienošanai",
+  "removeEverywhere.unreadable": "{place}: neizdevās nolasīt, tur nekas netiek dzēsts",
+  "removeEverywhere.go": "Dzēst visur",
+  "removeEverywhere.done": "Izdzēstas {name} rezerves kopijas: {n}",
+  "removeEverywhere.kept": "{place} ir tikai pievienošanai, rezerves kopijas tur palika.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} nekur nav rezerves kopiju.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomālijas",

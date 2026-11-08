@@ -6,6 +6,7 @@ import type {
   DefaultRow,
   Destination,
   DroppedTarget,
+  EverywhereRemoval,
   HomeOption,
   NamedRepo,
   ObservedPlace,
@@ -199,6 +200,17 @@ export function removalPreview(over?: Partial<RemovalPreview>): RemovalPreview {
   };
 }
 
+export function everywhereRemoval(over?: Partial<EverywhereRemoval>): EverywhereRemoval {
+  return {
+    name: "vaultwarden",
+    places: [
+      { place: "local", label: "NAS Keller", count: 14, appendOnly: false, unreadable: false },
+      { place: "offsite:t-b2", label: "B2", count: 12, appendOnly: false, unreadable: false },
+    ],
+    ...over,
+  };
+}
+
 export function timelinePlace(over?: Partial<TimelinePlace>): TimelinePlace {
   return {
     place: "local",
@@ -285,6 +297,14 @@ const DEFAULTS: Record<string, Reply> = {
   listRepos: () => ({ ok: true, repos: [] }),
   getOffsiteRemoval: () => ({ ok: true, ...removalPreview() }),
   deleteAtTarget: () => ({ ok: true, deleted: 14 }),
+  getEverywhereRemoval: () => ({ ok: true, ...everywhereRemoval() }),
+  deleteEverywhere: () => ({
+    ok: true,
+    results: [
+      { place: "offsite:t-b2", label: "B2", deleted: 12 },
+      { place: "local", label: "NAS Keller", deleted: 14 },
+    ],
+  }),
   createFileSet: () => ({ ok: true, id: "set-new" }),
   createOffsiteTarget: (...args) => ({ ok: true, target: { ...(args[0] as object), id: "t-new", createdAt: 1 } }),
   listDestinations: () => ({ ok: true, destinations: [] }),

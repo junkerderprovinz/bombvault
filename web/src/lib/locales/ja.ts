@@ -3535,6 +3535,16 @@ const ja: Partial<Translations> = {
   "offsiteRemoval.typeName": "確認のため {name} と入力してください",
   "offsiteRemoval.done": "{target} で削除済み: {n}",
   "offsiteRemoval.appendOnly": "{target} はappend-onlyです。ここから削除することはできません。",
+  "removeEverywhere.menu": "すべての場所のバックアップを削除",
+  "removeEverywhere.ask": "下に並ぶすべての場所から {name} のバックアップをすべて削除しますか? 項目とその設定は残ります。",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}、append-onlyのため残ります",
+  "removeEverywhere.unreadable": "{place}: 読み取れませんでした。そこでは何も削除されません",
+  "removeEverywhere.go": "すべての場所で削除",
+  "removeEverywhere.done": "{name} のバックアップを削除しました: {n}",
+  "removeEverywhere.kept": "{place} はappend-onlyのため、バックアップを保持しました。",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} のバックアップはどこにもありません。",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "異常",

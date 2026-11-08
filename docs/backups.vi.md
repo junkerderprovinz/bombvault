@@ -65,7 +65,9 @@ Một mục bạn cố ý bỏ ra, chẳng hạn một container thử nghiệm,
 
 ## Trang của một mục {#entry-page}
 
-Bấm vào một dòng sẽ mở trang của mục. Phần đầu nêu tên mục và trạng thái của nó trong một dòng, chẳng hạn **Sao lưu lần cuối 3 giờ trước** hoặc **Đã hoãn, thử lại lúc 03:15**, và chứa các hành động: **Sao lưu ngay**, **Khôi phục**, và dưới **Thêm** là những cái hiếm dùng, như **Xuất bản sao lưu mới nhất**, **Xuất container** hoặc **Xuất máy ảo**, **Liên kết với mục cũ**, **Xóa tất cả bản sao lưu** và **Xóa mục**. Nút quay lại bên trái biểu tượng dẫn về danh sách. Khi một bản sao lưu đang chạy, **Hủy sao lưu** nằm cạnh tiến trình của nó, và một lần chạy bị hủy được ghi là đã hủy, không phải thất bại.
+Bấm vào một dòng sẽ mở trang của mục. Phần đầu nêu tên mục và trạng thái của nó trong một dòng, chẳng hạn **Sao lưu lần cuối 3 giờ trước** hoặc **Đã hoãn, thử lại lúc 03:15**, và chứa các hành động: **Sao lưu ngay**, **Khôi phục**, và dưới **Thêm** là những cái hiếm dùng, như **Xuất bản sao lưu mới nhất**, **Xuất container** hoặc **Xuất máy ảo**, **Liên kết với mục cũ**, **Xóa tất cả bản sao lưu**, **Xóa mục** và **Xóa bản sao lưu ở mọi nơi**. Nút quay lại bên trái biểu tượng dẫn về danh sách. Khi một bản sao lưu đang chạy, **Hủy sao lưu** nằm cạnh tiến trình của nó, và một lần chạy bị hủy được ghi là đã hủy, không phải thất bại.
+
+**Xóa bản sao lưu ở mọi nơi** xóa các bản sao lưu của mục ở mọi đích sao lưu trong một lần, kể cả các bản ngoài site. Cửa sổ liệt kê từng nơi cùng số bản sao lưu ở đó, và nút chỉ mở khóa khi bạn gõ tên của mục. Một nơi được đặt append-only giữ lại các bản sao lưu của nó và báo cho bạn biết. Mục và cài đặt của nó vẫn giữ nguyên, nên một mục bạn không còn sao lưu vẫn như vậy, chỉ các bản sao lưu và lịch sử của chúng là mất đi.
 
 Trang có ba tab: **Bản sao lưu**, **Cài đặt** và **Xác minh**.
 

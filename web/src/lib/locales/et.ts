@@ -3554,6 +3554,16 @@ const et: Partial<Translations> = {
   "offsiteRemoval.typeName": "Kinnitamiseks sisesta {name}",
   "offsiteRemoval.done": "Kustutatud kohas {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} on ainult lisamiseks. Siit ei tohi sealt midagi kustutada.",
+  "removeEverywhere.menu": "Kustuta varundused kõikjal",
+  "removeEverywhere.ask": "Kas kustutada kõik {name} varundused kõigis allpool loetletud kohtades? Kirje ja selle seaded jäävad alles.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, jäävad alles, sest see on ainult lisamiseks",
+  "removeEverywhere.unreadable": "{place}: ei saanud lugeda, seal ei kustutata midagi",
+  "removeEverywhere.go": "Kustuta kõikjal",
+  "removeEverywhere.done": "{name} varundusi kustutatud: {n}",
+  "removeEverywhere.kept": "{place} on ainult lisamiseks ja jättis oma varundused alles.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} varundusi pole kusagil.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Kõrvalekalded",

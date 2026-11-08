@@ -65,7 +65,9 @@ Element, który celowo pomijasz, na przykład testowy kontener, można oznaczyć
 
 ## Strona elementu {#entry-page}
 
-Kliknięcie wiersza otwiera stronę elementu. Nagłówek podaje element i jego stan w jednej linii, na przykład **Ostatnia kopia 3 godziny temu** albo **Odroczono, następna próba o 03:15**, i zawiera jego akcje: **Utwórz kopię teraz**, **Przywróć**, a pod **Więcej** te rzadkie, jak **Eksportuj najnowszą kopię zapasową**, **Eksportuj kontener** albo **Eksportuj maszynę wirtualną**, **Połącz z dawnym wpisem**, **Usuń wszystkie kopie zapasowe** i **Usuń wpis**. Przycisk wstecz po lewej od ikony prowadzi do listy. Gdy kopia trwa, obok jej postępu stoi **Anuluj kopię**, a anulowany przebieg jest zapisany jako anulowany, nie jako nieudany.
+Kliknięcie wiersza otwiera stronę elementu. Nagłówek podaje element i jego stan w jednej linii, na przykład **Ostatnia kopia 3 godziny temu** albo **Odroczono, następna próba o 03:15**, i zawiera jego akcje: **Utwórz kopię teraz**, **Przywróć**, a pod **Więcej** te rzadkie, jak **Eksportuj najnowszą kopię zapasową**, **Eksportuj kontener** albo **Eksportuj maszynę wirtualną**, **Połącz z dawnym wpisem**, **Usuń wszystkie kopie zapasowe**, **Usuń wpis** i **Usuń kopie zapasowe wszędzie**. Przycisk wstecz po lewej od ikony prowadzi do listy. Gdy kopia trwa, obok jej postępu stoi **Anuluj kopię**, a anulowany przebieg jest zapisany jako anulowany, nie jako nieudany.
+
+**Usuń kopie zapasowe wszędzie** usuwa za jednym razem kopie zapasowe elementu ze wszystkich miejsc docelowych, łącznie z kopiami poza siedzibą. Okno wymienia każde miejsce i liczbę kopii, które w nim są, a przycisk odblokowuje się po wpisaniu nazwy elementu. Miejsce ustawione jako append-only zachowuje swoje kopie i o tym informuje. Element i jego ustawienia zostają, więc element, którego już nie kopiujesz, zostaje taki, jaki jest, a znikają tylko jego kopie zapasowe i ich historia.
 
 Strona ma trzy karty: **Kopie zapasowe**, **Ustawienia** i **Weryfikacja**.
 

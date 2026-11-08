@@ -65,7 +65,9 @@ Un element pe care îl lași deoparte intenționat, de exemplu un container de t
 
 ## Pagina unui element {#entry-page}
 
-Un clic pe un rând deschide pagina elementului. Antetul numește elementul și starea lui într-un rând, de exemplu **Ultimul backup acum 3 ore** sau **Amânat, următoarea încercare la 03:15**, și conține acțiunile lui: **Copiază acum**, **Restaurare** și, sub **Mai mult**, cele rare, de exemplu **Exportă cea mai nouă copie**, **Exportă containerul** sau **Exportă VM-ul**, **Leagă de un element mai vechi**, **Șterge toate copiile de rezervă** și **Elimină elementul**. Un buton înapoi în stânga pictogramei duce la listă. Cât rulează un backup, **Anulează copia** stă lângă progresul lui, iar o rulare anulată este înregistrată ca anulată, nu ca eșuată.
+Un clic pe un rând deschide pagina elementului. Antetul numește elementul și starea lui într-un rând, de exemplu **Ultimul backup acum 3 ore** sau **Amânat, următoarea încercare la 03:15**, și conține acțiunile lui: **Copiază acum**, **Restaurare** și, sub **Mai mult**, cele rare, de exemplu **Exportă cea mai nouă copie**, **Exportă containerul** sau **Exportă VM-ul**, **Leagă de un element mai vechi**, **Șterge toate copiile de rezervă**, **Elimină elementul** și **Șterge copiile de rezervă peste tot**. Un buton înapoi în stânga pictogramei duce la listă. Cât rulează un backup, **Anulează copia** stă lângă progresul lui, iar o rulare anulată este înregistrată ca anulată, nu ca eșuată.
+
+**Șterge copiile de rezervă peste tot** elimină dintr-odată copiile de rezervă ale elementului din fiecare destinație, inclusiv copiile off-site. Fereastra arată fiecare loc și câte copii de rezervă are, iar butonul se deblochează după ce tastezi numele elementului. Un loc setat ca append-only își păstrează copiile și spune asta. Elementul și setările lui rămân, așa că un element pe care nu-l mai salvezi rămâne așa și dispar doar copiile lui de rezervă și istoricul lor.
 
 Pagina are trei file: **Copii de rezervă**, **Setări** și **Verificare**.
 

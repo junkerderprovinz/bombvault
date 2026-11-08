@@ -65,7 +65,9 @@ En post som du lämnar utanför med avsikt, till exempel en testcontainer, kan m
 
 ## Postens sida {#entry-page}
 
-Ett klick på en rad öppnar postens sida. Huvudet nämner posten och dess läge på en rad, till exempel **Senast säkerhetskopierad för 3 timmar sedan** eller **Uppskjuten, nästa försök 03:15**, och innehåller dess åtgärder: **Säkerhetskopiera nu**, **Återställ**, och under **Mer** de sällsynta, till exempel **Exportera senaste säkerhetskopian**, **Exportera container** eller **Exportera VM**, **Länka till en tidigare post**, **Ta bort alla säkerhetskopior** och **Ta bort post**. En bakåtknapp till vänster om ikonen leder till listan. Medan en säkerhetskopiering körs står **Avbryt säkerhetskopiering** bredvid dess förlopp, och en avbruten körning loggas som avbruten, inte som misslyckad.
+Ett klick på en rad öppnar postens sida. Huvudet nämner posten och dess läge på en rad, till exempel **Senast säkerhetskopierad för 3 timmar sedan** eller **Uppskjuten, nästa försök 03:15**, och innehåller dess åtgärder: **Säkerhetskopiera nu**, **Återställ**, och under **Mer** de sällsynta, till exempel **Exportera senaste säkerhetskopian**, **Exportera container** eller **Exportera VM**, **Länka till en tidigare post**, **Ta bort alla säkerhetskopior**, **Ta bort post** och **Ta bort säkerhetskopior överallt**. En bakåtknapp till vänster om ikonen leder till listan. Medan en säkerhetskopiering körs står **Avbryt säkerhetskopiering** bredvid dess förlopp, och en avbruten körning loggas som avbruten, inte som misslyckad.
+
+**Ta bort säkerhetskopior överallt** tar bort postens säkerhetskopior på alla lagringsmål på en gång, externa kopior inräknade. Fönstret visar varje plats med hur många säkerhetskopior den har, och knappen låses upp när du skriver postens namn. En plats som är inställd på append-only behåller sina säkerhetskopior och säger det. Posten och dess inställningar finns kvar, så en post du inte längre säkerhetskopierar förblir så, och bara dess säkerhetskopior och deras historik försvinner.
 
 Sidan har tre flikar: **Säkerhetskopior**, **Inställningar** och **Verifiering**.
 

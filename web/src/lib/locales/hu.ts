@@ -3545,6 +3545,16 @@ const hu: Partial<Translations> = {
   "offsiteRemoval.typeName": "Írd be a(z) {name} nevet a megerősítéshez",
   "offsiteRemoval.done": "Törölve itt: {target}: {n}",
   "offsiteRemoval.appendOnly": "A {target} append-only. Innen semmi sem törölhető belőle.",
+  "removeEverywhere.menu": "Biztonsági mentések törlése mindenhol",
+  "removeEverywhere.ask": "Törlöd a(z) {name} összes biztonsági mentését minden lent felsorolt helyen? Az elem és a beállításai megmaradnak.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, megmaradnak, mert append-only",
+  "removeEverywhere.unreadable": "{place}: nem olvasható, ott semmi sem törlődik",
+  "removeEverywhere.go": "Törlés mindenhol",
+  "removeEverywhere.done": "A(z) {name} törölt biztonsági mentései: {n}",
+  "removeEverywhere.kept": "{place} append-only, és megtartotta a biztonsági mentéseit.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "A(z) {name} elemnek sehol nincs biztonsági mentése.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomáliák",

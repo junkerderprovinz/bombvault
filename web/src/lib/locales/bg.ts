@@ -3554,6 +3554,16 @@ const bg: Partial<Translations> = {
   "offsiteRemoval.typeName": "Въведи {name}, за да потвърдиш",
   "offsiteRemoval.done": "Изтрито в {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} е само за добавяне. Оттук нищо не може да се изтрива от него.",
+  "removeEverywhere.menu": "Изтрий архивиранията навсякъде",
+  "removeEverywhere.ask": "Изтриване на всяко архивиране на {name} на всяко място по-долу? Записът и настройките му остават.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, остават, защото е само за добавяне",
+  "removeEverywhere.unreadable": "{place}: не може да бъде прочетено, там нищо не се изтрива",
+  "removeEverywhere.go": "Изтрий навсякъде",
+  "removeEverywhere.done": "Изтрити архивирания на {name}: {n}",
+  "removeEverywhere.kept": "{place} е само за добавяне и архивиранията там остават.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} няма архивирания никъде.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Аномалии",

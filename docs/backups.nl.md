@@ -65,7 +65,9 @@ Een item dat je bewust weglaat, zoals een testcontainer, kun je markeren met **N
 
 ## De pagina van een item {#entry-page}
 
-Een klik op een rij opent de pagina van het item. De kop noemt het item en zijn toestand in één regel, zoals **Laatste back-up 3 uur geleden** of **Uitgesteld, volgende poging om 03:15**, en bevat zijn acties: **Nu back-up maken**, **Herstellen** en onder **Meer** de zeldzame, zoals **Nieuwste back-up exporteren**, **Container exporteren** of **VM exporteren**, **Koppelen aan een eerder item**, **Alle back-ups verwijderen** en **Item verwijderen**. Een terugknop links van het icoon leidt naar de lijst. Terwijl een back-up loopt, staat **Back-up annuleren** naast de voortgang, en een geannuleerde run wordt als geannuleerd vastgelegd, niet als mislukt.
+Een klik op een rij opent de pagina van het item. De kop noemt het item en zijn toestand in één regel, zoals **Laatste back-up 3 uur geleden** of **Uitgesteld, volgende poging om 03:15**, en bevat zijn acties: **Nu back-up maken**, **Herstellen** en onder **Meer** de zeldzame, zoals **Nieuwste back-up exporteren**, **Container exporteren** of **VM exporteren**, **Koppelen aan een eerder item**, **Alle back-ups verwijderen**, **Item verwijderen** en **Back-ups overal verwijderen**. Een terugknop links van het icoon leidt naar de lijst. Terwijl een back-up loopt, staat **Back-up annuleren** naast de voortgang, en een geannuleerde run wordt als geannuleerd vastgelegd, niet als mislukt.
+
+**Back-ups overal verwijderen** verwijdert de back-ups van het item in één keer op elke bestemming, off-site-kopieën inbegrepen. Het venster toont elke plek met het aantal back-ups dat er staat, en de knop wordt vrijgegeven zodra je de naam van het item typt. Een plek die op append-only staat, houdt zijn back-ups en meldt dat. Het item en de instellingen blijven, dus een item dat je niet meer back-upt, blijft zo, en alleen de back-ups en hun geschiedenis zijn weg.
 
 De pagina heeft drie tabbladen: **Back-ups**, **Instellingen** en **Verificatie**.
 

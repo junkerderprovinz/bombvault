@@ -3542,6 +3542,16 @@ const cs: Partial<Translations> = {
   "offsiteRemoval.typeName": "Pro potvrzení napiš {name}",
   "offsiteRemoval.done": "Smazáno v {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} je append-only. Odsud se z něj nesmí nic mazat.",
+  "removeEverywhere.menu": "Smazat zálohy všude",
+  "removeEverywhere.ask": "Smazat všechny zálohy {name} na všech místech níže? Položka a její nastavení zůstanou.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, zůstávají, protože je append-only",
+  "removeEverywhere.unreadable": "{place}: nelze přečíst, nic se tam nesmaže",
+  "removeEverywhere.go": "Smazat všude",
+  "removeEverywhere.done": "Smazané zálohy {name}: {n}",
+  "removeEverywhere.kept": "{place} je append-only, zálohy tam zůstaly.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} nemá nikde žádné zálohy.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomálie",

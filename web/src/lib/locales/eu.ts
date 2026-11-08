@@ -3554,6 +3554,16 @@ const eu: Partial<Translations> = {
   "offsiteRemoval.typeName": "Idatzi {name} berresteko",
   "offsiteRemoval.done": "Ezabatuta {target}-en: {n}",
   "offsiteRemoval.appendOnly": "{target} gehitu soilik da. Hemendik ezin da ezer ezabatu handik.",
+  "removeEverywhere.menu": "Ezabatu babeskopiak leku guztietan",
+  "removeEverywhere.ask": "{name}(r)en babeskopia guztiak ezabatu behean zerrendatutako leku guztietan? Elementua eta bere ezarpenak geratzen dira.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, geratzen dira gehitu soilik delako",
+  "removeEverywhere.unreadable": "{place}: ezin izan da irakurri, ez da ezer ezabatzen han",
+  "removeEverywhere.go": "Ezabatu leku guztietan",
+  "removeEverywhere.done": "{name}(r)en babeskopiak ezabatuta: {n}",
+  "removeEverywhere.kept": "{place} gehitu soilik da eta bere babeskopiak gorde ditu.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "Ez dago {name}(r)en babeskopiarik inon.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomaliak",

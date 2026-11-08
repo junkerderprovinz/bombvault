@@ -3544,6 +3544,16 @@ const tr: Partial<Translations> = {
   "offsiteRemoval.typeName": "Onaylamak için {name} yaz",
   "offsiteRemoval.done": "{target} içinde silindi: {n}",
   "offsiteRemoval.appendOnly": "{target} append-only. Buradan hiçbir şey silinemez.",
+  "removeEverywhere.menu": "Yedekleri her yerde sil",
+  "removeEverywhere.ask": "{name} ögesinin aşağıdaki tüm yerlerdeki her yedeği silinsin mi? Öge ve ayarları kalır.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, append-only olduğu için kalır",
+  "removeEverywhere.unreadable": "{place}: okunamadı, orada hiçbir şey silinmez",
+  "removeEverywhere.go": "Her yerde sil",
+  "removeEverywhere.done": "{name} yedekleri silindi: {n}",
+  "removeEverywhere.kept": "{place} append-only ve yedeklerini korudu.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} için hiçbir yerde yedek yok.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anormallikler",

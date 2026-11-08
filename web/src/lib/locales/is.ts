@@ -3554,6 +3554,16 @@ const is: Partial<Translations> = {
   "offsiteRemoval.typeName": "Sláðu inn {name} til að staðfesta",
   "offsiteRemoval.done": "Eytt hjá {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} er einungis viðbætur. Ekkert hér má eyða úr honum.",
+  "removeEverywhere.menu": "Eyða afritum alls staðar",
+  "removeEverywhere.ask": "Eyða öllum afritum af {name} á öllum stöðunum hér fyrir neðan? Færslan og stillingar hennar verða áfram.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, verða áfram því þar eru einungis viðbætur",
+  "removeEverywhere.unreadable": "{place}: ekki tókst að lesa, engu er eytt þar",
+  "removeEverywhere.go": "Eyða alls staðar",
+  "removeEverywhere.done": "Afritum af {name} eytt: {n}",
+  "removeEverywhere.kept": "{place} er einungis viðbætur og afritin þar verða áfram.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} á hvergi afrit.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Frávik",

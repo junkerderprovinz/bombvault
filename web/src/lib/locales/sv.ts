@@ -3544,6 +3544,16 @@ const sv: Partial<Translations> = {
   "offsiteRemoval.typeName": "Skriv {name} för att bekräfta",
   "offsiteRemoval.done": "Raderad hos {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} är append-only. Härifrån får inget raderas från det.",
+  "removeEverywhere.menu": "Ta bort säkerhetskopior överallt",
+  "removeEverywhere.ask": "Ta bort varje säkerhetskopia av {name} på alla platser nedan? Posten och dess inställningar finns kvar.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, finns kvar eftersom den är append-only",
+  "removeEverywhere.unreadable": "{place}: kunde inte läsas, inget tas bort där",
+  "removeEverywhere.go": "Ta bort överallt",
+  "removeEverywhere.done": "Säkerhetskopior av {name} borttagna: {n}",
+  "removeEverywhere.kept": "{place} är append-only och behöll sina säkerhetskopior.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} har inga säkerhetskopior någonstans.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Avvikelser",

@@ -3554,6 +3554,16 @@ const fa: Partial<Translations> = {
   "offsiteRemoval.typeName": "برای تأیید {name} را تایپ کن",
   "offsiteRemoval.done": "حذف‌شده در {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} فقط‌افزودنی است. از اینجا نمی‌توان چیزی از آن حذف کرد.",
+  "removeEverywhere.menu": "حذف پشتیبان‌ها در همه‌جا",
+  "removeEverywhere.ask": "همهٔ پشتیبان‌های {name} در همهٔ جاهای فهرست‌شده در زیر حذف شود؟ مورد و تنظیماتش می‌مانند.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}، می‌مانند چون فقط‌افزودنی است",
+  "removeEverywhere.unreadable": "{place}: خوانده نشد، آنجا چیزی حذف نمی‌شود",
+  "removeEverywhere.go": "حذف در همه‌جا",
+  "removeEverywhere.done": "پشتیبان‌های حذف‌شدهٔ {name}: {n}",
+  "removeEverywhere.kept": "{place} فقط‌افزودنی است و پشتیبان‌هایش را نگه داشت.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} هیچ‌جا پشتیبانی ندارد.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "ناهنجاری‌ها",

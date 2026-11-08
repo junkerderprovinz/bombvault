@@ -65,7 +65,9 @@ Bilerek dışarıda bıraktığın bir öge, örneğin bir test konteyneri, **Ye
 
 ## Bir ögenin sayfası {#entry-page}
 
-Bir satıra tıklamak ögenin sayfasını açar. Başlık ögeyi ve durumunu tek satırda söyler, örneğin **Son yedek 3 saat önce** ya da **Ertelendi, sonraki deneme 03:15'te**, ve eylemlerini barındırır: **Şimdi yedekle**, **Geri yükle** ve **Diğer** altında nadir olanlar, **En yeni yedeği dışa aktar**, **Konteyneri dışa aktar** ya da **VM'yi dışa aktar**, **Önceki bir ögeye bağla**, **Tüm yedekleri sil** ve **Ögeyi kaldır** gibi. Simgenin solundaki bir geri düğmesi listeye götürür. Bir yedekleme çalışırken ilerlemesinin yanında **Yedeklemeyi iptal et** durur ve iptal edilen bir çalıştırma başarısız değil iptal edilmiş olarak kaydedilir.
+Bir satıra tıklamak ögenin sayfasını açar. Başlık ögeyi ve durumunu tek satırda söyler, örneğin **Son yedek 3 saat önce** ya da **Ertelendi, sonraki deneme 03:15'te**, ve eylemlerini barındırır: **Şimdi yedekle**, **Geri yükle** ve **Diğer** altında nadir olanlar, **En yeni yedeği dışa aktar**, **Konteyneri dışa aktar** ya da **VM'yi dışa aktar**, **Önceki bir ögeye bağla**, **Tüm yedekleri sil**, **Ögeyi kaldır** ve **Yedekleri her yerde sil** gibi. Simgenin solundaki bir geri düğmesi listeye götürür. Bir yedekleme çalışırken ilerlemesinin yanında **Yedeklemeyi iptal et** durur ve iptal edilen bir çalıştırma başarısız değil iptal edilmiş olarak kaydedilir.
+
+**Yedekleri her yerde sil**, ögenin yedeklerini site dışı kopyalar dahil tüm hedeflerden tek seferde siler. Pencere her yeri orada kaç yedek bulunduğuyla birlikte listeler ve düğme, ögenin adını yazdığında açılır. Append-only olarak ayarlanmış bir yer yedeklerini korur ve bunu belirtir. Öge ve ayarları kalır, yani artık yedeklemediğin bir öge öyle kalır ve yalnızca yedekleri ile onların geçmişi gider.
 
 Sayfanın üç sekmesi vardır: **Yedekler**, **Ayarlar** ve **Doğrulama**.
 

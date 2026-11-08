@@ -3544,6 +3544,16 @@ const he: Partial<Translations> = {
   "offsiteRemoval.typeName": "הקלדת {name} לאישור",
   "offsiteRemoval.done": "נמחק ב-{target}: {n}",
   "offsiteRemoval.appendOnly": "{target} הוא append-only. אי אפשר למחוק ממנו מכאן.",
+  "removeEverywhere.menu": "מחיקת גיבויים בכל מקום",
+  "removeEverywhere.ask": "למחוק כל גיבוי של {name} בכל המקומות שלמטה? הפריט וההגדרות שלו נשארים.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, נשארים כי הוא append-only",
+  "removeEverywhere.unreadable": "{place}: לא ניתן היה לקרוא, שם לא נמחק דבר",
+  "removeEverywhere.go": "מחיקה בכל מקום",
+  "removeEverywhere.done": "גיבויים של {name} נמחקו: {n}",
+  "removeEverywhere.kept": "{place} הוא append-only ושמר את הגיבויים שלו.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "ל-{name} אין גיבויים בשום מקום.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "חריגות",

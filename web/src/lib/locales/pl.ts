@@ -3541,6 +3541,16 @@ const pl: Partial<Translations> = {
   "offsiteRemoval.typeName": "Wpisz {name}, aby potwierdzić",
   "offsiteRemoval.done": "Usunięto w {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} jest typu append-only. Stąd nic nie można z niego usunąć.",
+  "removeEverywhere.menu": "Usuń kopie zapasowe wszędzie",
+  "removeEverywhere.ask": "Usunąć każdą kopię zapasową {name} we wszystkich miejscach poniżej? Wpis i jego ustawienia zostają.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, zostają, bo jest typu append-only",
+  "removeEverywhere.unreadable": "{place}: nie udało się odczytać, nic tam nie zostanie usunięte",
+  "removeEverywhere.go": "Usuń wszędzie",
+  "removeEverywhere.done": "Usunięte kopie zapasowe {name}: {n}",
+  "removeEverywhere.kept": "{place} jest typu append-only, więc kopie zapasowe zostały.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} nie ma nigdzie kopii zapasowych.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalie",

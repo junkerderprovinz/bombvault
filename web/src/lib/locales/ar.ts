@@ -3545,6 +3545,16 @@ const ar: Partial<Translations> = {
   "offsiteRemoval.typeName": "كتابة {name} للتأكيد",
   "offsiteRemoval.done": "حُذفت في {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} append-only. لا يجوز حذف أي شيء من هنا.",
+  "removeEverywhere.menu": "حذف النسخ الاحتياطية في كل مكان",
+  "removeEverywhere.ask": "حذف كل نسخة احتياطية من {name} في كل الأماكن المذكورة أدناه؟ يبقى العنصر وإعداداته.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}، تبقى لأنه append-only",
+  "removeEverywhere.unreadable": "{place}: تعذّرت قراءته، لا يُحذف شيء هناك",
+  "removeEverywhere.go": "حذف في كل مكان",
+  "removeEverywhere.done": "حُذفت النسخ الاحتياطية لـ {name}: {n}",
+  "removeEverywhere.kept": "{place} append-only واحتفظ بنسخه الاحتياطية.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "لا توجد نسخ احتياطية لـ {name} في أي مكان.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "الحالات الشاذة",

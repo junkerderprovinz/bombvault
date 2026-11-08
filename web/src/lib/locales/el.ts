@@ -3544,6 +3544,16 @@ const el: Partial<Translations> = {
   "offsiteRemoval.typeName": "Πληκτρολογήστε {name} για επιβεβαίωση",
   "offsiteRemoval.done": "Διαγράφηκε στο {target}: {n}",
   "offsiteRemoval.appendOnly": "Το {target} είναι append-only. Τίποτα εδώ δεν μπορεί να διαγραφεί από αυτό.",
+  "removeEverywhere.menu": "Διαγραφή αντιγράφων παντού",
+  "removeEverywhere.ask": "Διαγραφή κάθε αντιγράφου του {name} σε κάθε θέση παρακάτω; Το στοιχείο και οι ρυθμίσεις του μένουν.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, μένουν επειδή είναι append-only",
+  "removeEverywhere.unreadable": "{place}: δεν ήταν δυνατή η ανάγνωση, εκεί δεν διαγράφεται τίποτα",
+  "removeEverywhere.go": "Διαγραφή παντού",
+  "removeEverywhere.done": "Διαγράφηκαν αντίγραφα του {name}: {n}",
+  "removeEverywhere.kept": "Το {place} είναι append-only και κράτησε τα αντίγραφά του.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "Το {name} δεν έχει αντίγραφα πουθενά.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Ανωμαλίες",

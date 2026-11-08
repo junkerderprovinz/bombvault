@@ -65,7 +65,9 @@ Un elemento que dejas fuera a propósito, como un contenedor de prueba, se puede
 
 ## La página de un elemento {#entry-page}
 
-Un clic en una fila abre la página del elemento. La cabecera nombra el elemento y su estado en una línea, como **Última copia de seguridad hace 3 horas** o **Aplazada, próximo intento a las 03:15**, y contiene sus acciones: **Copiar ahora**, **Restaurar**, y bajo **Más** las poco frecuentes, como **Exportar la copia más reciente**, **Exportar contenedor** o **Exportar VM**, **Vincular con un elemento anterior**, **Eliminar todas las copias** y **Eliminar elemento**. Un botón de retroceso a la izquierda del icono lleva a la lista. Mientras se ejecuta una copia, **Cancelar copia** está junto a su progreso, y una ejecución cancelada se registra como cancelada, no como fallida.
+Un clic en una fila abre la página del elemento. La cabecera nombra el elemento y su estado en una línea, como **Última copia de seguridad hace 3 horas** o **Aplazada, próximo intento a las 03:15**, y contiene sus acciones: **Copiar ahora**, **Restaurar**, y bajo **Más** las poco frecuentes, como **Exportar la copia más reciente**, **Exportar contenedor** o **Exportar VM**, **Vincular con un elemento anterior**, **Eliminar todas las copias**, **Eliminar elemento** y **Eliminar copias en todas partes**. Un botón de retroceso a la izquierda del icono lleva a la lista. Mientras se ejecuta una copia, **Cancelar copia** está junto a su progreso, y una ejecución cancelada se registra como cancelada, no como fallida.
+
+**Eliminar copias en todas partes** borra de una vez las copias del elemento en todos los destinos, también las externas. La ventana muestra cada lugar con cuántas copias guarda, y el botón se desbloquea en cuanto escribes el nombre del elemento. Un lugar configurado como append-only conserva sus copias y lo indica. El elemento y sus ajustes se quedan, así que un elemento que ya no copias sigue así y solo desaparecen sus copias y su historial.
 
 La página tiene tres pestañas: **Copias de seguridad**, **Ajustes** y **Verificación**.
 

@@ -3554,6 +3554,16 @@ const ms: Partial<Translations> = {
   "offsiteRemoval.typeName": "Taip {name} untuk sahkan",
   "offsiteRemoval.done": "Dipadam di {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} adalah tambah sahaja. Tiada apa-apa di sini boleh dipadam daripadanya.",
+  "removeEverywhere.menu": "Padam sandaran di semua tempat",
+  "removeEverywhere.ask": "Padam setiap sandaran {name} di semua tempat yang disenaraikan di bawah? Entri dan tetapannya kekal.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, kekal kerana ia tambah sahaja",
+  "removeEverywhere.unreadable": "{place}: tidak dapat dibaca, tiada apa-apa dipadam di sana",
+  "removeEverywhere.go": "Padam di semua tempat",
+  "removeEverywhere.done": "Sandaran {name} dipadam: {n}",
+  "removeEverywhere.kept": "{place} adalah tambah sahaja dan mengekalkan sandarannya.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} tiada sandaran di mana-mana.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomali",

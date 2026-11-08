@@ -65,7 +65,9 @@ Položku, kterou vynecháš schválně, například testovací kontejner, lze oz
 
 ## Stránka položky {#entry-page}
 
-Klik na řádek otevře stránku položky. Hlavička jmenuje položku a její stav v jednom řádku, například **Naposledy zálohováno před 3 hodinami** nebo **Odloženo, další pokus v 03:15**, a drží její akce: **Zálohovat nyní**, **Obnova** a pod **Více** ty vzácné, například **Exportovat nejnovější zálohu**, **Exportovat kontejner** nebo **Exportovat VM**, **Propojit s dřívější položkou**, **Smazat všechny zálohy** a **Odebrat položku**. Tlačítko zpět vlevo od ikony vede do seznamu. Zatímco záloha běží, vedle jejího průběhu stojí **Zrušit zálohu** a zrušený běh se zapíše jako zrušený, ne jako neúspěšný.
+Klik na řádek otevře stránku položky. Hlavička jmenuje položku a její stav v jednom řádku, například **Naposledy zálohováno před 3 hodinami** nebo **Odloženo, další pokus v 03:15**, a drží její akce: **Zálohovat nyní**, **Obnova** a pod **Více** ty vzácné, například **Exportovat nejnovější zálohu**, **Exportovat kontejner** nebo **Exportovat VM**, **Propojit s dřívější položkou**, **Smazat všechny zálohy**, **Odebrat položku** a **Smazat zálohy všude**. Tlačítko zpět vlevo od ikony vede do seznamu. Zatímco záloha běží, vedle jejího průběhu stojí **Zrušit zálohu** a zrušený běh se zapíše jako zrušený, ne jako neúspěšný.
+
+**Smazat zálohy všude** odstraní zálohy položky ve všech cílech najednou, včetně kopií mimo lokalitu. Okno vypíše každé místo s počtem záloh, které na něm jsou, a tlačítko se odemkne, až napíšeš název položky. Místo nastavené jako append-only si své zálohy ponechá a řekne to. Položka a její nastavení zůstanou, takže položka, kterou už nezálohuješ, tak zůstane a zmizí jen její zálohy a jejich historie.
 
 Stránka má tři záložky: **Zálohy**, **Nastavení** a **Ověření**.
 

@@ -65,7 +65,9 @@ Uma entrada que deixas de fora de propósito, por exemplo um container de teste,
 
 ## A página de uma entrada {#entry-page}
 
-Um clique numa linha abre a página da entrada. O cabeçalho nomeia a entrada e o seu estado numa linha, por exemplo **Último backup há 3 horas** ou **Adiado, próxima tentativa às 03:15**, e guarda as suas ações: **Fazer backup agora**, **Restauração**, e em **Mais** as raras, como **Exportar o backup mais recente**, **Exportar container** ou **Exportar VM**, **Associar a uma entrada anterior**, **Eliminar todos os backups** e **Remover entrada**. Um botão de voltar à esquerda do ícone leva à lista. Enquanto um backup corre, **Cancelar backup** fica ao lado do progresso, e uma execução cancelada fica registada como cancelada, não como falhada.
+Um clique numa linha abre a página da entrada. O cabeçalho nomeia a entrada e o seu estado numa linha, por exemplo **Último backup há 3 horas** ou **Adiado, próxima tentativa às 03:15**, e guarda as suas ações: **Fazer backup agora**, **Restauração**, e em **Mais** as raras, como **Exportar o backup mais recente**, **Exportar container** ou **Exportar VM**, **Associar a uma entrada anterior**, **Eliminar todos os backups**, **Remover entrada** e **Eliminar backups em todo o lado**. Um botão de voltar à esquerda do ícone leva à lista. Enquanto um backup corre, **Cancelar backup** fica ao lado do progresso, e uma execução cancelada fica registada como cancelada, não como falhada.
+
+**Eliminar backups em todo o lado** apaga de uma vez os backups da entrada em todos os destinos, incluindo as cópias externas. A janela mostra cada lugar com quantos backups guarda, e o botão desbloqueia assim que escreves o nome da entrada. Um lugar configurado como append-only mantém os seus backups e diz isso. A entrada e as suas definições ficam, por isso uma entrada de que já não fazes backup continua assim, e só desaparecem os seus backups e o histórico deles.
 
 A página tem três separadores: **Backups**, **Definições** e **Verificação**.
 

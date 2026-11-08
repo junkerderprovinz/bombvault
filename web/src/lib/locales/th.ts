@@ -3545,6 +3545,16 @@ const th: Partial<Translations> = {
   "offsiteRemoval.typeName": "พิมพ์ {name} เพื่อยืนยัน",
   "offsiteRemoval.done": "ลบแล้วที่ {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} เป็น append-only จากที่นี่ไม่สามารถลบสิ่งใดออกจากมันได้",
+  "removeEverywhere.menu": "ลบข้อมูลสำรองทุกที่",
+  "removeEverywhere.ask": "ลบข้อมูลสำรองทุกชุดของ {name} ในทุกที่ที่แสดงด้านล่างหรือไม่? รายการและการตั้งค่าจะยังอยู่",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n} ยังอยู่เพราะเป็น append-only",
+  "removeEverywhere.unreadable": "{place}: อ่านไม่ได้ จะไม่มีการลบสิ่งใดที่นั่น",
+  "removeEverywhere.go": "ลบทุกที่",
+  "removeEverywhere.done": "ลบข้อมูลสำรองของ {name} แล้ว: {n}",
+  "removeEverywhere.kept": "{place} เป็น append-only และยังเก็บข้อมูลสำรองไว้",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} ไม่มีข้อมูลสำรองที่ใดเลย",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "ความผิดปกติ",

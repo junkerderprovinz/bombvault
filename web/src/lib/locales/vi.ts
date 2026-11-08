@@ -3535,6 +3535,16 @@ const vi: Partial<Translations> = {
   "offsiteRemoval.typeName": "Gõ {name} để xác nhận",
   "offsiteRemoval.done": "Đã xóa tại {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} là append-only. Không thể xóa bất cứ thứ gì khỏi đó từ đây.",
+  "removeEverywhere.menu": "Xóa bản sao lưu ở mọi nơi",
+  "removeEverywhere.ask": "Xóa mọi bản sao lưu của {name} ở tất cả các nơi bên dưới? Mục và cài đặt của nó vẫn giữ nguyên.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, vẫn giữ lại vì là append-only",
+  "removeEverywhere.unreadable": "{place}: không đọc được, không xóa gì ở đó",
+  "removeEverywhere.go": "Xóa ở mọi nơi",
+  "removeEverywhere.done": "Đã xóa bản sao lưu của {name}: {n}",
+  "removeEverywhere.kept": "{place} là append-only và đã giữ lại các bản sao lưu.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} không có bản sao lưu ở đâu cả.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Bất thường",

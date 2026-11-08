@@ -67,15 +67,25 @@ func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings,
 		return itemAtTarget{}, err
 	}
 	at := itemAtTarget{Target: target, Repo: repo, Mode: s.offsiteModeForTarget(settings, target)}
-	all, err := s.listRepo(ctx, repo, at.Mode)
-	if err != nil {
+	if at.Snaps, err = s.ownedIn(ctx, domain, identity, repo, at.Mode, scope); err != nil {
 		return itemAtTarget{}, err
+	}
+	return at, nil
+}
+
+// ownedIn lists what identity owns in one repository, as far as the scope
+// reaches.
+func (s *Service) ownedIn(ctx context.Context, domain, identity, repo string, mode restic.Mode, scope snapScope) ([]restic.Snapshot, error) {
+	all, err := s.listRepo(ctx, repo, mode)
+	if err != nil {
+		return nil, err
 	}
 	oc, err := s.ownerContextFor(domain)
 	if err != nil {
-		return itemAtTarget{}, err
+		return nil, err
 	}
 	owners := oc.owners(all)
+	var out []restic.Snapshot
 	for _, snap := range all {
 		if owners[snap.ID].Owner != identity {
 			continue
@@ -83,9 +93,9 @@ func (s *Service) listItemAtTarget(ctx context.Context, settings store.Settings,
 		if scope == taggedForItem && !oc.namesItem(snap, identity) {
 			continue
 		}
-		at.Snaps = append(at.Snaps, snap)
+		out = append(out, snap)
 	}
-	return at, nil
+	return out, nil
 }
 
 // refuseAppendOnlyTarget asks whether the target a source names is append-only,

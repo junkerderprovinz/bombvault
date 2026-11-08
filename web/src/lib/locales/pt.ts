@@ -3544,6 +3544,16 @@ const pt: Partial<Translations> = {
   "offsiteRemoval.typeName": "Escreve {name} para confirmar",
   "offsiteRemoval.done": "Apagada em {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} é append-only. Daqui não se pode apagar nada dele.",
+  "removeEverywhere.menu": "Eliminar backups em todo o lado",
+  "removeEverywhere.ask": "Eliminar todos os backups de {name} em todos os locais abaixo? A entrada e as suas definições ficam.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, ficam porque é append-only",
+  "removeEverywhere.unreadable": "{place}: não foi possível ler, nada é eliminado lá",
+  "removeEverywhere.go": "Eliminar em todo o lado",
+  "removeEverywhere.done": "Backups de {name} eliminados: {n}",
+  "removeEverywhere.kept": "{place} é append-only e manteve os seus backups.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} não tem backups em lado nenhum.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalias",

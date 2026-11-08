@@ -560,6 +560,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/items/{kind}/{key}/declined", h.handleDeclineBackup)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemovalPreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/offsite/{target}/removal", h.handleOffsiteRemoval)
+	mux.HandleFunc("GET /api/items/{domain}/{name}/removal", h.handleEverywhereRemovalPreview)
+	mux.HandleFunc("DELETE /api/items/{domain}/{name}/removal", h.handleEverywhereRemoval)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline", h.handleTimeline)
 	mux.HandleFunc("GET /api/items/{domain}/{name}/timeline/{key}/delete", h.handleTimelineDeletePreview)
 	mux.HandleFunc("DELETE /api/items/{domain}/{name}/timeline/{key}", h.handleTimelineDelete)

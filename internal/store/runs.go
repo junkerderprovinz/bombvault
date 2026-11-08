@@ -143,6 +143,23 @@ func (r *Repo) FinishRun(id, status, snapshotID string, bytes int64, errMsg stri
 	return r.finishRun(id, status, snapshotID, bytes, errMsg, nil, "")
 }
 
+// ForgetBackupHistory removes an entry's runs and the anomalies they raised,
+// once none of its backups exist anymore. The entry and its settings stay.
+func (r *Repo) ForgetBackupHistory(targetID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("ForgetBackupHistory begin: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // no-op after Commit
+	for _, table := range []string{"runs", "anomalies", "anomaly_expectations"} {
+		//nolint:gosec // G202: the table names are literals from this list.
+		if _, err := tx.Exec(`DELETE FROM `+table+` WHERE target_id = ?`, targetID); err != nil {
+			return fmt.Errorf("ForgetBackupHistory %s: %w", table, err)
+		}
+	}
+	return tx.Commit()
+}
+
 // NoteSectionPlan records what a section's plan is now, and the time when that
 // differs from the last look. The first look at a section knows no time, so a
 // plan older than this record reads 0.

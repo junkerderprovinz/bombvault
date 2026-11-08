@@ -94,6 +94,7 @@ var placementCodes = []struct {
 	{errRestPathTooDeep, "rest-path-too-deep"},
 	{errAppendOnlyOffsiteTarget, "append-only"},
 	{errRemovalGrown, "removal-grown"},
+	{errPlacesChanged, "places-changed"},
 	{errNameMismatch, "name-mismatch"},
 	{errHomeUnreadable, "home-unreadable"},
 	{errDomainBusy, "domain-busy"},

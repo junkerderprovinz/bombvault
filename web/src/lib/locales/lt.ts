@@ -3554,6 +3554,16 @@ const lt: Partial<Translations> = {
   "offsiteRemoval.typeName": "Įvesk {name} patvirtinimui",
   "offsiteRemoval.done": "Ištrinta iš {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} yra tik pridėti. Iš čia iš jos nieko negalima trinti.",
+  "removeEverywhere.menu": "Ištrinti atsargines kopijas visur",
+  "removeEverywhere.ask": "Ištrinti kiekvieną {name} atsarginę kopiją visose žemiau išvardytose vietose? Įrašas ir jo nustatymai lieka.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, lieka, nes veikia tik pridėjimo režimu",
+  "removeEverywhere.unreadable": "{place}: nepavyko nuskaityti, ten niekas netrinama",
+  "removeEverywhere.go": "Ištrinti visur",
+  "removeEverywhere.done": "Ištrinta {name} atsarginių kopijų: {n}",
+  "removeEverywhere.kept": "{place} veikia tik pridėjimo režimu, atsarginės kopijos ten liko.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} niekur neturi atsarginių kopijų.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalijos",

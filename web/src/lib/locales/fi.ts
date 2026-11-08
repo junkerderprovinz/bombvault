@@ -3544,6 +3544,16 @@ const fi: Partial<Translations> = {
   "offsiteRemoval.typeName": "Vahvista kirjoittamalla {name}",
   "offsiteRemoval.done": "Poistettu kohteessa {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} on append-only. Täältä ei saa poistaa siitä mitään.",
+  "removeEverywhere.menu": "Poista varmuuskopiot kaikkialta",
+  "removeEverywhere.ask": "Poistetaanko kaikki kohteen {name} varmuuskopiot kaikista alla luetelluista paikoista? Merkintä ja sen asetukset säilyvät.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, säilyvät, koska se on append-only",
+  "removeEverywhere.unreadable": "{place}: ei voitu lukea, sieltä ei poisteta mitään",
+  "removeEverywhere.go": "Poista kaikkialta",
+  "removeEverywhere.done": "Kohteen {name} varmuuskopioita poistettu: {n}",
+  "removeEverywhere.kept": "{place} on append-only ja säilytti varmuuskopionsa.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "Kohteella {name} ei ole varmuuskopioita missään.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Poikkeamat",

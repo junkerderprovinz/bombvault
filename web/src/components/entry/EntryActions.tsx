@@ -7,6 +7,7 @@ import {
   deleteBackupsVM,
   forgetContainer,
   forgetVM,
+  type ItemRef,
   type OkEnvelope,
   type Run,
 } from "../../lib/api";
@@ -37,6 +38,7 @@ import { PauseButton } from "../SchedulePause";
 import { useReplica } from "../zfs/replica/replicaStore";
 import { useReplicateNow } from "../zfs/replica/useReplicateNow";
 import type { TimelineState } from "./BackupPlaces";
+import { EverywhereRemovalDialog } from "./EverywhereRemovalDialog";
 import { ExportWindow, LiveExportWindow } from "./ExportWindow";
 import { LinkWindow } from "./LinkWindow";
 import { RemoveWindow, type Removable } from "./RemoveWindow";
@@ -251,7 +253,20 @@ export function EntryCorner({
   );
 }
 
-type MenuWindow = "link" | "export" | "exportNewest" | "connection" | "remove";
+/** The placement key of an entry whose backups can be deleted everywhere at once. */
+function everywhereRef({ detail }: Entry): ItemRef | null {
+  switch (detail.kind) {
+    case "container":
+      return detail.container.self ? null : { domain: "containers", key: detail.container.name };
+    case "vm":
+      return { domain: "vms", key: detail.vm.libvirtName };
+    case "files":
+      return { domain: "files", key: detail.set.id };
+  }
+  return null;
+}
+
+type MenuWindow = "link" | "export" | "exportNewest" | "connection" | "remove" | "everywhere";
 
 /**
  * EntryHeadActions are the buttons beside an entry's name: linking it to the
@@ -392,6 +407,12 @@ export function EntryHeadActions({
     );
   }
 
+  // Last in the menu, as it reaches further than every other removal.
+  const everywhere = hostSilent(detail) ? null : everywhereRef(entry);
+  if (everywhere && hasBackups) {
+    add("remove-everywhere", t("removeEverywhere.menu"), <IconTrash />, () => setShown("everywhere"));
+  }
+
   if (actions.length === 0) return null;
   const removable: Removable | null =
     detail.kind === "files"
@@ -433,6 +454,18 @@ export function EntryHeadActions({
         <ExportWindow entry={entry} name={name} row={newest} timeline={timeline} onClose={close} />
       )}
       {shown === "connection" && <ZFSConnectionWindow onClose={close} />}
+      {shown === "everywhere" && everywhere && (
+        <EverywhereRemovalDialog
+          item={everywhere}
+          name={name}
+          onDone={() => {
+            close();
+            onChanged();
+            timeline.reload();
+          }}
+          onClose={close}
+        />
+      )}
       {shown === "remove" && removable && (
         <RemoveWindow target={removable} name={name} hasBackups={hasBackups} onRemoved={onRemoved} onClose={close} />
       )}

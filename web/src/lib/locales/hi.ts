@@ -3554,6 +3554,16 @@ const hi: Partial<Translations> = {
   "offsiteRemoval.typeName": "पुष्टि के लिए {name} टाइप करें",
   "offsiteRemoval.done": "{target} में मिटाया गया: {n}",
   "offsiteRemoval.appendOnly": "{target} केवल-जोड़ें है। यहाँ से इसमें से कुछ भी मिटाया नहीं जा सकता।",
+  "removeEverywhere.menu": "हर जगह से बैकअप हटाएँ",
+  "removeEverywhere.ask": "नीचे दी गई हर जगह से {name} का हर बैकअप हटाएँ? प्रविष्टि और उसकी सेटिंग्स बनी रहती हैं।",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, बने रहते हैं क्योंकि यह केवल-जोड़ें है",
+  "removeEverywhere.unreadable": "{place}: पढ़ा नहीं जा सका, वहाँ कुछ नहीं हटाया जाता",
+  "removeEverywhere.go": "हर जगह हटाएँ",
+  "removeEverywhere.done": "{name} के बैकअप हटाए गए: {n}",
+  "removeEverywhere.kept": "{place} केवल-जोड़ें है और उसके बैकअप बने रहे।",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} का कहीं कोई बैकअप नहीं है।",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "विसंगतियाँ",

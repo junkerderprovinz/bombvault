@@ -3554,6 +3554,16 @@ const ca: Partial<Translations> = {
   "offsiteRemoval.typeName": "Escriu {name} per confirmar",
   "offsiteRemoval.done": "Esborrada a {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} és append-only. Res d'aquí es pot esborrar.",
+  "removeEverywhere.menu": "Elimina les còpies a tot arreu",
+  "removeEverywhere.ask": "Eliminar totes les còpies de {name} a tots els llocs de sota? L'element i la seva configuració es queden.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, es queden perquè és append-only",
+  "removeEverywhere.unreadable": "{place}: no s'ha pogut llegir, allà no s'elimina res",
+  "removeEverywhere.go": "Elimina a tot arreu",
+  "removeEverywhere.done": "Còpies de {name} eliminades: {n}",
+  "removeEverywhere.kept": "{place} és append-only i ha conservat les seves còpies.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} no té còpies enlloc.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalies",

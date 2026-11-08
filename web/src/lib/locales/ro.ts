@@ -3545,6 +3545,16 @@ const ro: Partial<Translations> = {
   "offsiteRemoval.typeName": "Tastează {name} pentru a confirma",
   "offsiteRemoval.done": "Șters în {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} este append-only. De aici nu se poate șterge nimic din ea.",
+  "removeEverywhere.menu": "Șterge copiile de rezervă peste tot",
+  "removeEverywhere.ask": "Ștergi fiecare copie de rezervă a {name} din toate locurile de mai jos? Elementul și setările lui rămân.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, rămân pentru că este append-only",
+  "removeEverywhere.unreadable": "{place}: nu a putut fi citit, acolo nu se șterge nimic",
+  "removeEverywhere.go": "Șterge peste tot",
+  "removeEverywhere.done": "Copii de rezervă ale {name} șterse: {n}",
+  "removeEverywhere.kept": "{place} este append-only și și-a păstrat copiile de rezervă.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} nu are copii de rezervă nicăieri.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalii",

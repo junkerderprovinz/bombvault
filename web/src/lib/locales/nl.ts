@@ -3543,6 +3543,16 @@ const nl: Partial<Translations> = {
   "offsiteRemoval.typeName": "Typ {name} om te bevestigen",
   "offsiteRemoval.done": "Verwijderd bij {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} is append-only. Hiervandaan mag er niets uit worden verwijderd.",
+  "removeEverywhere.menu": "Back-ups overal verwijderen",
+  "removeEverywhere.ask": "Elke back-up van {name} op alle plekken hieronder verwijderen? Het item en de instellingen blijven.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, blijven omdat het append-only is",
+  "removeEverywhere.unreadable": "{place}: kon niet worden gelezen, daar wordt niets verwijderd",
+  "removeEverywhere.go": "Overal verwijderen",
+  "removeEverywhere.done": "Back-ups van {name} verwijderd: {n}",
+  "removeEverywhere.kept": "{place} is append-only en heeft de back-ups behouden.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} heeft nergens back-ups.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Anomalieën",

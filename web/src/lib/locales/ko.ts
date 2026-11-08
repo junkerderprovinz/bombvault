@@ -3535,6 +3535,16 @@ const ko: Partial<Translations> = {
   "offsiteRemoval.typeName": "확인하려면 {name}을(를) 입력하세요",
   "offsiteRemoval.done": "{target}에서 삭제됨: {n}",
   "offsiteRemoval.appendOnly": "{target}은(는) append-only입니다. 여기서는 아무것도 삭제할 수 없습니다.",
+  "removeEverywhere.menu": "모든 위치에서 백업 삭제",
+  "removeEverywhere.ask": "아래에 나열된 모든 위치에서 {name}의 백업을 모두 삭제할까요? 항목과 설정은 그대로 남습니다.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, append-only라서 남습니다",
+  "removeEverywhere.unreadable": "{place}: 읽을 수 없어 그곳에서는 아무것도 삭제하지 않습니다",
+  "removeEverywhere.go": "모든 위치에서 삭제",
+  "removeEverywhere.done": "{name}의 백업 삭제됨: {n}",
+  "removeEverywhere.kept": "{place}은(는) append-only라서 백업을 유지했습니다.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name}의 백업이 어디에도 없습니다.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "이상 징후",

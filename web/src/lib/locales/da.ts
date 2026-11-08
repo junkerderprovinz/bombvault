@@ -3544,6 +3544,16 @@ const da: Partial<Translations> = {
   "offsiteRemoval.typeName": "Skriv {name} for at bekræfte",
   "offsiteRemoval.done": "Slettet i {target}: {n}",
   "offsiteRemoval.appendOnly": "{target} er append-only. Herfra kan intet slettes fra det.",
+  "removeEverywhere.menu": "Slet sikkerhedskopier overalt",
+  "removeEverywhere.ask": "Slet hver sikkerhedskopi af {name} alle steder nedenfor? Elementet og dets indstillinger bliver.",
+  "removeEverywhere.place": "{place}: {n}",
+  "removeEverywhere.appendOnly": "{place}: {n}, bliver, fordi det er append-only",
+  "removeEverywhere.unreadable": "{place}: kunne ikke læses, der slettes intet der",
+  "removeEverywhere.go": "Slet overalt",
+  "removeEverywhere.done": "Sikkerhedskopier af {name} slettet: {n}",
+  "removeEverywhere.kept": "{place} er append-only og beholdt sine sikkerhedskopier.",
+  "removeEverywhere.failed": "{place}: {error}",
+  "removeEverywhere.none": "{name} har ingen sikkerhedskopier nogen steder.",
 
   // Anomaly detection over the backup history.
   "nav.anomalies": "Afvigelser",

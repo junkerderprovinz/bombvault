@@ -65,7 +65,9 @@ Et element du bevisst lar stå utenfor, for eksempel en testcontainer, kan merke
 
 ## Siden til et element {#entry-page}
 
-Et klikk på en rad åpner elementets side. Hodet nevner elementet og tilstanden i én linje, for eksempel **Sist sikkerhetskopiert for 3 timer siden** eller **Utsatt, neste forsøk kl. 03:15**, og har handlingene: **Sikkerhetskopier nå**, **Gjenopprett**, og under **Mer** de sjeldne, som **Eksporter nyeste sikkerhetskopi**, **Eksporter container** eller **Eksporter VM**, **Koble til et tidligere element**, **Slett alle sikkerhetskopier** og **Fjern element**. En tilbakeknapp til venstre for ikonet fører til listen. Mens en sikkerhetskopi kjører, står **Avbryt sikkerhetskopi** ved siden av framdriften, og en avbrutt kjøring registreres som avbrutt, ikke som mislykket.
+Et klikk på en rad åpner elementets side. Hodet nevner elementet og tilstanden i én linje, for eksempel **Sist sikkerhetskopiert for 3 timer siden** eller **Utsatt, neste forsøk kl. 03:15**, og har handlingene: **Sikkerhetskopier nå**, **Gjenopprett**, og under **Mer** de sjeldne, som **Eksporter nyeste sikkerhetskopi**, **Eksporter container** eller **Eksporter VM**, **Koble til et tidligere element**, **Slett alle sikkerhetskopier**, **Fjern element** og **Slett sikkerhetskopier overalt**. En tilbakeknapp til venstre for ikonet fører til listen. Mens en sikkerhetskopi kjører, står **Avbryt sikkerhetskopi** ved siden av framdriften, og en avbrutt kjøring registreres som avbrutt, ikke som mislykket.
+
+**Slett sikkerhetskopier overalt** fjerner elementets sikkerhetskopier på alle mål på én gang, eksterne kopier medregnet. Vinduet viser hvert sted med hvor mange sikkerhetskopier det har, og knappen låses opp når du skriver inn navnet på elementet. Et sted som er satt til append-only, beholder sikkerhetskopiene sine og sier fra om det. Elementet og innstillingene blir værende, så et element du ikke lenger sikkerhetskopierer, forblir slik, og bare sikkerhetskopiene og historikken deres forsvinner.
 
 Siden har tre faner: **Sikkerhetskopier**, **Innstillinger** og **Verifisering**.
 

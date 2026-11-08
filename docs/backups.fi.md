@@ -65,7 +65,9 @@ Merkinnän, jonka jätät tarkoituksella pois, esimerkiksi testikontin, voi merk
 
 ## Merkinnän sivu {#entry-page}
 
-Rivin napsautus avaa merkinnän sivun. Pää nimeää merkinnän ja sen tilan yhdellä rivillä, esimerkiksi **Viimeksi varmuuskopioitu 3 tuntia sitten** tai **Lykätty, seuraava yritys kello 03.15**, ja sisältää sen toiminnot: **Varmuuskopioi nyt**, **Palauta** ja kohdassa **Lisää** harvinaisemmat, kuten **Vie uusin varmuuskopio**, **Vie kontti** tai **Vie VM**, **Yhdistä aiempaan merkintään**, **Poista kaikki varmuuskopiot** ja **Poista merkintä**. Takaisin-painike kuvakkeen vasemmalla puolella johtaa listaan. Kun varmuuskopiointi on käynnissä, **Peruuta varmuuskopiointi** on edistymisen vieressä, ja peruutettu ajo kirjataan peruutetuksi, ei epäonnistuneeksi.
+Rivin napsautus avaa merkinnän sivun. Pää nimeää merkinnän ja sen tilan yhdellä rivillä, esimerkiksi **Viimeksi varmuuskopioitu 3 tuntia sitten** tai **Lykätty, seuraava yritys kello 03.15**, ja sisältää sen toiminnot: **Varmuuskopioi nyt**, **Palauta** ja kohdassa **Lisää** harvinaisemmat, kuten **Vie uusin varmuuskopio**, **Vie kontti** tai **Vie VM**, **Yhdistä aiempaan merkintään**, **Poista kaikki varmuuskopiot**, **Poista merkintä** ja **Poista varmuuskopiot kaikkialta**. Takaisin-painike kuvakkeen vasemmalla puolella johtaa listaan. Kun varmuuskopiointi on käynnissä, **Peruuta varmuuskopiointi** on edistymisen vieressä, ja peruutettu ajo kirjataan peruutetuksi, ei epäonnistuneeksi.
+
+**Poista varmuuskopiot kaikkialta** poistaa merkinnän varmuuskopiot kerralla jokaisesta kohteesta, myös etäkopiot. Ikkuna näyttää jokaisen paikan ja sen, montako varmuuskopiota siellä on, ja painike avautuu, kun kirjoitat merkinnän nimen. Append-only-tilaan asetettu paikka säilyttää varmuuskopionsa ja kertoo sen. Merkintä ja sen asetukset säilyvät, joten merkintä, jota et enää varmuuskopioi, pysyy sellaisena, ja vain sen varmuuskopiot ja niiden historia katoavat.
 
 Sivulla on kolme välilehteä: **Varmuuskopiot**, **Asetukset** ja **Tarkista**.
 
