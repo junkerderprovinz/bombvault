@@ -1452,6 +1452,11 @@ func (r Restic) authEnv(m Mode) []string {
 	if r.CacheDir != "" {
 		env = append(env, "RESTIC_CACHE_DIR="+r.CacheDir)
 	}
+	// Proton Drive keeps an upload that broke off as a draft and refuses the
+	// file name until the draft goes, so one failed upload would stop every
+	// later copy. A pack's name is the hash of its content, so replacing the
+	// draft loses nothing.
+	env = append(env, "RCLONE_PROTONDRIVE_REPLACE_EXISTING_DRAFT=true")
 	// GOMAXPROCS caps restic's own worker parallelism ([558]). Appended before
 	// m.Env so a caller could still override it deliberately.
 	if n := maxProcs.Load(); n > 0 {
