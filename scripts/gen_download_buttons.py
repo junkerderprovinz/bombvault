@@ -18,8 +18,8 @@ groups, so the gap between groups is about twice the gap between rows.
 A button carries one line, its name, as the apps' buttons do at rest. Only a
 listing still to come adds a second line saying so.
 Windows on ARM and the portable build are segments of the Windows button, and
-Linux on ARM one of the Linux button, so the desktop row keeps to the four
-places a row has.
+Linux on ARM and the Flatpak ones of the Linux button, so the desktop row keeps
+to the four places a row has.
 
 Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
@@ -126,6 +126,7 @@ KINDS = {
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
+    "linux-flatpak":    (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak", "Download the Linux Flatpak"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
@@ -149,7 +150,7 @@ KINDS = {
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
-SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",)}
+SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm", "linux-flatpak")}
 # A store listing that does not exist yet is drawn without a link, with "Soon"
 # under its name, or nobody could tell why the button leads nowhere.
 SOON = {
