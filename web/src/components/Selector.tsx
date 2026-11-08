@@ -14,7 +14,9 @@
 // search field or buttons passes `inline` and hugs its segments instead. Every
 // strip keeps to one row: it never wraps or scrolls and no label takes a
 // second line. Where the labels do not fit, a strip with a glyph on every
-// segment shows the glyphs alone, and any other cuts its long labels short.
+// segment shows the glyphs alone. A strip of one then turns into SelectField,
+// every label whole in its list, and a strip of many cuts its long labels
+// short, since a dropdown holds one value.
 //
 // Under rainbow a selector that sets a value wears one colour, its place among
 // the page's selectors (lib/selectorHue.ts), on its chosen segment, and the
@@ -40,6 +42,7 @@ import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
 import { segmentFit, type SegmentFit } from "../lib/segmentLayout";
+import { SelectField } from "./SelectField";
 
 export interface SelectorItem {
   /** Stable id, handed back by onChange. */
@@ -235,7 +238,8 @@ const sameLayout = (a: SelectorLayout | null, b: SelectorLayout) =>
  * from them and share out what is left, so a long name such as
  * "Benachrichtigungen" keeps its words while the short ones give up room.
  * Squeezed or cut short, they take even shares of the row, and their floor
- * gives way so the row never overflows its box.
+ * gives way so the row never overflows its box. Behind a dropdown they are
+ * hidden, and the track takes the whole box as it does for cut labels.
  *
  * The track's labels do not size it (`contain: inline-size`), so a hugging
  * track is given its width here: its segments side by side while they fit,
@@ -252,7 +256,7 @@ export function selectorFlex({ layout, inline, fit }: { layout: SelectorLayout |
   const pinned = layout?.pinned ?? 0;
   const cap: Record<string, string> = fit ? { maxWidth: `${MAX_PINNED_WIDTH}px` } : {};
   const segment: Record<string, string> =
-    mode === "squeezed" || mode === "truncated"
+    mode === "squeezed" || mode === "list" || mode === "truncated"
       ? { flex: "1 1 0", minWidth: "0", ...cap }
       : fit
         ? { flex: mode === "content" ? "1 0 auto" : "1 1 0", minWidth: "0", ...cap }
@@ -336,6 +340,9 @@ interface SelectorTabProps {
   squeezed: boolean;
   /** The label is cut short to keep the strip to its row. */
   cut: boolean;
+  /** The strip shows its dropdown, and the segment is only there to be
+   *  measured. */
+  listed: boolean;
   onSelect: () => void;
   /** The label-mode axis the strip follows; see labelAxis in Selector. */
   axis: ControlAxis;
@@ -353,6 +360,7 @@ function SelectorTab({
   flex,
   squeezed,
   cut,
+  listed,
   onSelect,
   axis,
   panelId,
@@ -398,8 +406,9 @@ function SelectorTab({
           aria-pressed={kind === "toggle" ? on : undefined}
           aria-label={nameHidden ? item.label : undefined}
           aria-describedby={hiddenDescId ?? tooltip.describedBy}
+          aria-hidden={listed || undefined}
           disabled={disabled}
-          tabIndex={roved ? 0 : -1}
+          tabIndex={roved && !listed ? 0 : -1}
           style={
             reactive
               ? ({ ...style, ...flex, "--reactive-chars": labelWidth(item.label) } as CSSProperties)
@@ -495,8 +504,9 @@ export function Selector(props: SelectorProps) {
   // How the segments share the strip's one row, from segmentFit. It needs
   // each label's one-line width, which only the DOM knows. Measured again when
   // the box or a segment resizes: a late web font changes what a label needs.
-  // Labels dropped for glyphs are put back on screen for the reading, so a
-  // strip sees when they fit again.
+  // Labels dropped for glyphs and segments hidden behind the dropdown are put
+  // back for the reading, so a strip sees when they fit again, and both forms
+  // read the same room.
   //
   // itemsKey stands in for `items` in the deps. Callers rebuild the array on
   // every render, and measuring each time would be wasted work.
@@ -517,6 +527,8 @@ export function Selector(props: SelectorProps) {
       if (segs.length === 0) return;
       const hidden = Array.from(el.querySelectorAll("[data-sel-label].sr-only"));
       for (const l of hidden) l.classList.remove("sr-only");
+      const asList = el.hasAttribute("data-listed");
+      el.removeAttribute("data-listed");
       // A hugging track is only as wide as its segments, and a box sized to
       // its content only as wide as the track; given the whole box and
       // wanting the whole screen for the reading, the track shows the room it
@@ -530,12 +542,13 @@ export function Selector(props: SelectorProps) {
       const gap = parseFloat(own.columnGap) || 0;
       Object.assign(el.style, { width, minWidth, containIntrinsicInlineSize });
       for (const l of hidden) l.classList.add("sr-only");
+      if (asList) el.setAttribute("data-listed", "");
       // A hidden box measures nothing; it is laid out once it shows.
       if (room <= 0) return;
       const count = segs.length;
       const pinned = pinWidth ? pinnedWidth(Math.max(...oneLine), count, room, gap) : 0;
       const even = pinned || (fit ? Math.floor((room - gap * (count - 1)) / count) : null);
-      const fits = segmentFit(room, even, oneLine, gap, canSqueeze);
+      const fits = segmentFit(room, even, oneLine, gap, canSqueeze, !many);
       const segmentsWidth =
         fits.fit === "even" ? (even ?? 0) * count : fits.fit === "content" ? oneLine.reduce((sum, w) => sum + w, 0) : 0;
       // A pixel over, so rounding cannot leave the last segment short of room.
@@ -552,9 +565,10 @@ export function Selector(props: SelectorProps) {
     for (const seg of segments()) watch.observe(seg);
     void document.fonts?.ready.then(measure);
     return () => watch.disconnect();
-  }, [pinWidth, fit, canSqueeze, itemsKey, disabledKey, size, labelModeForStrip]);
+  }, [pinWidth, fit, canSqueeze, many, itemsKey, disabledKey, size, labelModeForStrip]);
 
   const flex = selectorFlex({ layout, inline: hugs, fit });
+  const listed = layout?.fit === "list";
 
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
   const isItemDisabled = (item: SelectorItem) => disabled || !!item.disabled;
@@ -572,7 +586,8 @@ export function Selector(props: SelectorProps) {
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (!NAV_KEYS.includes(e.key)) return;
+    // The dropdown's keys reach the track through its portal too.
+    if (listed || !NAV_KEYS.includes(e.key)) return;
     const nodes = segNodes();
     if (nodes.length === 0) return;
 
@@ -599,10 +614,11 @@ export function Selector(props: SelectorProps) {
   return (
     <div
       ref={strip}
-      role={many ? "group" : manual ? "radiogroup" : "tablist"}
-      aria-label={label}
-      aria-orientation="horizontal"
+      role={listed ? undefined : many ? "group" : manual ? "radiogroup" : "tablist"}
+      aria-label={listed ? undefined : label}
+      aria-orientation={listed ? undefined : "horizontal"}
       data-new={newId}
+      data-listed={listed ? "" : undefined}
       onKeyDown={onKeyDown}
       // The "well" groove is surface3 to stand out from both parents it sits
       // on, a Card (surface) and a CadenceBuilder well (surface2), and 0.2rem is
@@ -614,12 +630,14 @@ export function Selector(props: SelectorProps) {
       // width it asks for (selectorFlex), which then reads as less room. A
       // hugging track takes its width from selectorFlex too; `self-start`
       // would hug, but it top-aligns the strip in rows that centre a label
-      // beside it.
+      // beside it. Behind the dropdown the segments and the groove go, and
+      // the measuring lifts data-listed to read them as the strip shows them.
       className={[
         "flex flex-nowrap items-center [contain:inline-size] w-full min-w-0",
+        "data-listed:[&>:not([data-sel-list])]:hidden",
         hugs ? "max-w-full" : "",
         well
-          ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
+          ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem] data-listed:bg-transparent data-listed:p-0"
           : "gap-1",
         className,
       ]
@@ -686,6 +704,7 @@ export function Selector(props: SelectorProps) {
             flex={flex.segment as CSSProperties}
             squeezed={layout?.fit === "squeezed"}
             cut={!!layout?.cut[i]}
+            listed={listed}
             panelId={panelId}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);
@@ -693,6 +712,19 @@ export function Selector(props: SelectorProps) {
           />
         );
       })}
+      {listed && (
+        <div data-sel-list className="min-w-0 flex-1">
+          <SelectField
+            value={only ?? ""}
+            onChange={onChange}
+            options={items.map((item, i) => ({ value: item.id, label: item.label, glyph: item.icon, disabled: disabledFlags[i] }))}
+            label={label}
+            disabled={disabledFlags.every(Boolean)}
+            wrap
+            className="w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+          />
+        </div>
+      )}
     </div>
   );
 }

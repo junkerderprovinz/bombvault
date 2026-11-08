@@ -10,7 +10,8 @@
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { Selector, MAX_PINNED_WIDTH, MIN_PINNED_WIDTH, type SelectorItem } from "./Selector";
+import { Selector, MAX_PINNED_WIDTH, MIN_PINNED_WIDTH, selectorTabId, type SelectorItem } from "./Selector";
+import { settle } from "./selectField.testsupport";
 import { RAINBOW_OFF, applyRainbow } from "../lib/appearance";
 import { setLabelMode } from "../lib/controls";
 
@@ -277,16 +278,17 @@ describe("Selector as a big well beside a button", () => {
 });
 
 // jsdom lays nothing out, so the room and each segment's one-line width are
-// stubbed: the track reports the room as its clientWidth, and a segment
-// measured at max-content reports its entry in `widths`. `room` is read on
-// every call, so a test can change it and fire a resize.
+// stubbed: the track, the box that contains its inline size, reports the room
+// as its clientWidth, and a segment measured at max-content reports its entry
+// in `widths`. `room` is read on every call, so a test can change it and fire
+// a resize.
 function layOut(room: number | (() => number), widths: Record<string, number>) {
   const roomNow = typeof room === "number" ? () => room : room;
   const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, "clientWidth")!;
   Object.defineProperty(Element.prototype, "clientWidth", {
     configurable: true,
     get(this: Element) {
-      return this.getAttribute("aria-orientation") === "horizontal" ? roomNow() : 0;
+      return this.classList.contains("[contain:inline-size]") ? roomNow() : 0;
     },
   });
   const computed = window.getComputedStyle;
@@ -363,11 +365,11 @@ describe("Selector on one row", () => {
     }
   });
 
-  it("cuts the long labels short in even shares of the box once they do not fit, the whole label in the bubble", () => {
+  it("cuts the long labels of a strip of many short in even shares of the box, the whole label in the bubble", () => {
     const restore = layOut(230, oneLine(90, 106, 64));
     try {
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} inline />);
-      expect(screen.getByRole("tablist").style.width).toBe("100%");
+      render(<Selector items={ITEMS} label="Test strip" select="many" active={new Set(["a"])} onChange={() => {}} inline />);
+      expect(screen.getByRole("group").style.width).toBe("100%");
       for (const id of ["a", "b", "c"]) {
         expect(seg(id).style.flex).toBe("1 1 0px");
         expect(labelOf(id).className).toContain("truncate");
@@ -382,7 +384,7 @@ describe("Selector on one row", () => {
   it("gives a label that still fits its share no bubble of its own", () => {
     const restore = layOut(230, oneLine(90, 106, 64));
     try {
-      render(<Selector items={ITEMS} label="Test strip" active="a" onChange={() => {}} inline />);
+      render(<Selector items={ITEMS} label="Test strip" select="many" active={new Set(["a"])} onChange={() => {}} inline />);
       expect(bubbleOn("c")).toBeUndefined();
     } finally {
       restore();
@@ -462,18 +464,164 @@ describe("Selector on one row", () => {
     }
   });
 
-  it("cuts the labels of a strip in text mode rather than dropping them", () => {
+  it("turns a strip in text mode into the dropdown rather than dropping its labels for glyphs", () => {
     setLabelMode("buttons", "text");
     const restore = layOut(300, oneLine(140, 150, 160));
     try {
       render(<Selector items={GLYPHS} label="Test strip" active="a" onChange={() => {}} />);
       expect(labelOf("a").className).not.toContain("sr-only");
-      expect(labelOf("a").className).toContain("truncate");
-      expect(bubbleOn("a")).toBe("Alpha");
+      expect(document.querySelector("[data-sel-list] [role='combobox']")).not.toBeNull();
     } finally {
       restore();
       setLabelMode("buttons", "textGlyph");
     }
+  });
+});
+
+describe("Selector as a dropdown", () => {
+  // The role dialog's place picker on a 320px phone.
+  const PLACES: SelectorItem[] = [
+    { id: "rest", label: "Empfangsserver von Schwiegereltern Tower Gmunden Keller" },
+    { id: "share", label: "Freigabe" },
+  ];
+  const WIDTHS = { rest: 330, share: 80 };
+
+  function Places({
+    onChangeSpy,
+    disabled = false,
+    activation = "manual",
+    panelId,
+  }: {
+    onChangeSpy?: (id: string) => void;
+    disabled?: boolean;
+    activation?: "auto" | "manual";
+    panelId?: string;
+  }) {
+    const [place, setPlace] = useState("rest");
+    return (
+      <Selector
+        items={PLACES}
+        label="Ablageort"
+        select="one"
+        activation={activation}
+        inline
+        active={place}
+        onChange={(id) => {
+          setPlace(id);
+          onChangeSpy?.(id);
+        }}
+        disabled={disabled}
+        panelId={panelId}
+      />
+    );
+  }
+
+  // The label the trigger shows; the others are stacked under it, invisible,
+  // so the trigger is as wide as the widest.
+  const shownValue = (trigger: Element) =>
+    [...trigger.querySelectorAll("span.row-start-1")].find((s) => !s.className.includes("invisible"))?.textContent;
+
+  it("turns a strip of one into the dropdown under the strip's name once its labels do not fit", async () => {
+    const restore = layOut(240, WIDTHS);
+    render(<Places />);
+    restore();
+    await settle();
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    const trigger = screen.getByRole("combobox", { name: "Ablageort" });
+    expect(shownValue(trigger)).toBe("Empfangsserver von Schwiegereltern Tower Gmunden Keller");
+  });
+
+  it("lists every label whole and chooses as a segment does", async () => {
+    const spy = vi.fn();
+    const restore = layOut(240, WIDTHS);
+    render(<Places onChangeSpy={spy} />);
+    restore();
+    await settle();
+    const trigger = screen.getByRole("combobox", { name: "Ablageort" });
+    await settle(() => fireEvent.click(trigger));
+    const options = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(options).toEqual(["Empfangsserver von Schwiegereltern Tower Gmunden Keller", "Freigabe"]);
+    for (const label of screen.getByRole("listbox").querySelectorAll("span")) expect(label.className).not.toContain("truncate");
+    await settle(() => fireEvent.click(screen.getByRole("option", { name: "Freigabe" })));
+    expect(spy).toHaveBeenCalledWith("share");
+    expect(shownValue(trigger)).toBe("Freigabe");
+  });
+
+  it("keeps the segments out of sight, out of the tab order and away from a screen reader", () => {
+    const restore = layOut(240, WIDTHS);
+    try {
+      render(<Places />);
+      const track = seg("rest").parentElement!;
+      expect(track.hasAttribute("data-listed")).toBe(true);
+      expect(track.getAttribute("role")).toBeNull();
+      expect(track.getAttribute("aria-label")).toBeNull();
+      for (const id of ["rest", "share"]) {
+        expect(seg(id).getAttribute("aria-hidden")).toBe("true");
+        expect(seg(id).tabIndex).toBe(-1);
+      }
+    } finally {
+      restore();
+    }
+  });
+
+  it("stays a dropdown while the row has no room and comes back as segments once it has", () => {
+    let room = 240;
+    const restore = layOut(() => room, WIDTHS);
+    const watch = watchResizes();
+    try {
+      render(<Places />);
+      const combobox = () => document.querySelector("[role='combobox']");
+      expect(combobox()).not.toBeNull();
+      watch.resize();
+      expect(combobox()).not.toBeNull();
+      room = 600;
+      watch.resize();
+      expect(combobox()).toBeNull();
+      expect(document.querySelector("[role='radiogroup']")).not.toBeNull();
+      expect(seg("rest").getAttribute("aria-hidden")).toBeNull();
+      expect(seg("rest").tabIndex).toBe(0);
+    } finally {
+      watch.restore();
+      restore();
+    }
+  });
+
+  it("is disabled with the strip", async () => {
+    const restore = layOut(240, WIDTHS);
+    render(<Places disabled />);
+    restore();
+    await settle();
+    expect((screen.getByRole("combobox", { name: "Ablageort" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("leaves the arrow keys to the dropdown in a tab strip", async () => {
+    const spy = vi.fn();
+    const restore = layOut(240, WIDTHS);
+    render(<Places onChangeSpy={spy} activation="auto" />);
+    restore();
+    await settle();
+    const trigger = screen.getByRole("combobox", { name: "Ablageort" });
+    trigger.focus();
+    // The closed dropdown steps to the next option on its own; the hidden
+    // tabs take no part.
+    await settle(() => fireEvent.keyDown(trigger, { key: "ArrowRight" }));
+    expect(spy.mock.calls).toEqual([["share"]]);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("keeps the panel of a tab strip named by its chosen tab", async () => {
+    const restore = layOut(240, WIDTHS);
+    render(
+      <>
+        <Places activation="auto" panelId="place-panel" />
+        <div role="tabpanel" id="place-panel" aria-labelledby={selectorTabId("place-panel", "rest")} />
+      </>,
+    );
+    restore();
+    await settle();
+    expect(screen.getByRole("combobox", { name: "Ablageort" })).toBeTruthy();
+    expect(screen.getByRole("tabpanel", { name: "Empfangsserver von Schwiegereltern Tower Gmunden Keller" })).toBeTruthy();
   });
 });
 
@@ -621,8 +769,10 @@ describe("Selector equalWidth", () => {
     const eight = ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) => ({ id, label: id.toUpperCase() }));
     const restore = layOut(900, Object.fromEntries(eight.map((i) => [i.id, 150])));
     try {
-      render(<Selector items={eight} label="Test strip" active="a" onChange={() => {}} equalWidth inline variant="chip" />);
-      expect(screen.getByRole("tablist").style.width).toBe("100%");
+      render(
+        <Selector items={eight} label="Test strip" select="many" active={new Set(["a"])} onChange={() => {}} equalWidth inline variant="chip" />,
+      );
+      expect(screen.getByRole("group").style.width).toBe("100%");
       for (const item of eight) expect(seg(item.id).style.flex).toBe("1 1 0px");
     } finally {
       restore();
@@ -733,13 +883,12 @@ describe("Selector fit", () => {
     }
   });
 
-  it("cuts the labels short instead where an item has no glyph to fall back to", () => {
+  it("turns into the dropdown instead where an item has no glyph to fall back to", () => {
     const restore = layOut(120, oneLine(500, 90));
     try {
       render(<Selector items={ITEMS.slice(0, 2)} label="Test strip" active="a" onChange={() => {}} fit />);
       expect(labelOf("a").className).not.toContain("sr-only");
-      expect(labelOf("a").className).toContain("truncate");
-      expect(bubbleOn("a")).toBe("Alpha");
+      expect(document.querySelector("[data-sel-list] [role='combobox']")).not.toBeNull();
     } finally {
       restore();
     }

@@ -53,7 +53,8 @@ export function SelectField<T extends string>({
   /** Classes for the trigger. */
   className?: string;
   /** Lets a label run onto a second line where the row is narrower than it,
-   *  for a value whose end says as much as its start, such as a location. */
+   *  in the trigger and in the open list, for a value whose end says as much
+   *  as its start, such as a location. */
   wrap?: boolean;
   /** Set on the trigger, for a visible <label htmlFor>. */
   id?: string;
@@ -165,7 +166,7 @@ export function SelectField<T extends string>({
                 <li key={item.value} {...api.getItemProps({ item })} className="glim-select-item">
                   <span {...api.getItemTextProps({ item })} className="flex min-w-0 items-center gap-2.5">
                     {item.glyph}
-                    <span className="truncate">{item.label}</span>
+                    <span className={wrap ? "wrap-break-word" : "truncate"}>{item.label}</span>
                   </span>
                   <span {...api.getItemIndicatorProps({ item })} className="glim-select-check">
                     <IconCheck />
