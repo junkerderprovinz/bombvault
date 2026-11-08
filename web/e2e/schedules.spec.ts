@@ -87,7 +87,8 @@ test("the full backup opens its plan editor from the sentence", async ({ page })
   await page.getByRole("button", { name: /^Full backup: daily at 3:00/i }).click();
   const editor = page.getByRole("dialog", { name: "Full backup" });
   await expect(editor).toBeVisible();
-  await expect(editor.getByRole("tab", { name: "Weekly" })).toBeVisible();
+  // On a phone the cadences do not fit one row and the strip is a dropdown.
+  await expect(editor.getByRole("tab", { name: "Weekly" }).or(editor.locator("[data-listed]")).first()).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(editor).toBeHidden();
 });

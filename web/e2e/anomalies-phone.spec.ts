@@ -568,7 +568,9 @@ for (const width of [320, 390]) {
     await expectWindowFits(page);
 
     await fromMore(page, "Überwachung");
-    await expect(page.getByRole("dialog").getByRole("radiogroup", { name: "Empfindlichkeit" })).toBeVisible();
+    // Too long for one row on a phone, the picker is a dropdown there.
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("radiogroup", { name: "Empfindlichkeit" }).or(dialog.locator("[data-listed]")).first()).toBeVisible();
     await expectWindowFits(page);
     await closeWindow(page);
 

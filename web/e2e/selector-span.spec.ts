@@ -41,11 +41,12 @@ function widths(strip: Locator): Promise<{ track: number; box: number }> {
 test("a card's selector spans the card's content box", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the strips are measured at desktop width");
   await stage(page);
-  // The calendar is one of the cards a browser starts without.
+  // The calendar is one of the cards a browser starts without. At full width
+  // its six sections fit one row, so it stays a strip at 768px too.
   await page.addInitScript(() =>
     window.localStorage.setItem(
       "bombvault.dashboardLayout",
-      JSON.stringify({ v: 2, order: ["heatmap"], hidden: [], widths: { heatmap: 6 }, heights: {} }),
+      JSON.stringify({ v: 2, order: ["heatmap"], hidden: [], widths: { heatmap: 12 }, heights: {} }),
     ),
   );
 
