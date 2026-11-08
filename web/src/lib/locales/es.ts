@@ -1169,6 +1169,7 @@ const es: Partial<Translations> = {
   "whatsNew.keepNow": "Aplicar ahora en la tarjeta Cuánto tiempo conservar de un destino muestra qué copias ya no conserva la regla y las elimina. No hace falta esperar a la próxima copia.",
   "whatsNew.deleteNoPassword": "Borrar y purgar copias funciona sin contraseña de acceso. Si defines una, primero inicias sesión en este servidor.",
   "whatsNew.systemAccent": "La varita al principio de los colores de acento toma el color de tu dispositivo: Material You en la app de Android a partir de Android 12, y el color del sistema en Firefox y Safari. Cada dispositivo guarda esta elección para sí.",
+  "whatsNew.deleteEverywhere": "«Eliminar copias en todas partes», en el menú de un elemento, elimina sus copias en casa y en cada destino externo en un solo paso, en cuanto escribes el nombre del elemento. El elemento y sus ajustes se quedan.",
   "whatsNew.oled": "OLED, debajo de Tema, da negro de verdad a las pantallas OLED y AMOLED siempre que se ve el tema oscuro, también cuando sigue al dispositivo. Cada dispositivo guarda su propia elección.",
 
   // Monitoring (Prometheus)

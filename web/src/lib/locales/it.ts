@@ -1153,6 +1153,7 @@ const it: Partial<Translations> = {
   "whatsNew.keepNow": "Applica ora sulla scheda Per quanto tempo conservare di una destinazione mostra quali backup la regola non conserva più e li rimuove. Non devi aspettare il prossimo backup.",
   "whatsNew.deleteNoPassword": "Eliminare e potare i backup funziona senza password di accesso. Se ne imposti una, prima accedi a questo server.",
   "whatsNew.systemAccent": "La bacchetta magica all'inizio dei colori di accento prende il colore del tuo dispositivo: Material You nell'app Android da Android 12 in poi, e il colore di sistema in Firefox e Safari. Ogni dispositivo tiene questa scelta per sé.",
+  "whatsNew.deleteEverywhere": "«Elimina i backup ovunque» nel menu di un elemento elimina i suoi backup a casa e su ogni destinazione off-site in un solo passaggio, non appena scrivi il nome dell'elemento. L'elemento e le sue impostazioni restano.",
   "whatsNew.oled": "OLED, sotto Tema, dà un nero vero agli schermi OLED e AMOLED ogni volta che si vede il tema scuro, anche quando segue il dispositivo. Ogni dispositivo tiene la propria scelta.",
 
   // Monitoring (Prometheus)

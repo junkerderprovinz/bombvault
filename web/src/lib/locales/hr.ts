@@ -841,6 +841,7 @@ const hr: Partial<Translations> = {
   "whatsNew.keepNow": "Primijeni sada na kartici Koliko dugo zadržati odredišta pokazuje koje sigurnosne kopije pravilo više ne zadržava i uklanja ih. Ne morate čekati sljedeću sigurnosnu kopiju.",
   "whatsNew.deleteNoPassword": "Brisanje i čišćenje sigurnosnih kopija radi bez lozinke za prijavu. Ako je postavite, najprije se prijavite na ovom poslužitelju.",
   "whatsNew.systemAccent": "Čarobni štapić na početku naglasnih boja preuzima boju vašeg uređaja: Material You u aplikaciji za Android od Androida 12 te boju sustava u Firefoxu i Safariju. Svaki uređaj pamti taj izbor za sebe.",
+  "whatsNew.deleteEverywhere": "„Izbriši sigurnosne kopije svugdje“ u izborniku stavke u jednom koraku briše njezine sigurnosne kopije kod kuće i na svakom odredištu izvan lokacije, čim upišete naziv stavke. Stavka i njezine postavke ostaju.",
   "whatsNew.oled": "OLED ispod Teme daje pravu crnu OLED i AMOLED zaslonima kad god se prikazuje tamna tema, i kad prati uređaj. Svaki uređaj pamti vlastiti izbor.",
 
   // Monitoring (Prometheus)

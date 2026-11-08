@@ -1161,6 +1161,7 @@ const sv: Partial<Translations> = {
   "whatsNew.keepNow": "Tillämpa nu på kortet Hur länge det bevaras för ett mål visar vilka säkerhetskopior regeln inte längre bevarar och tar bort dem. Du behöver inte vänta på nästa säkerhetskopia.",
   "whatsNew.deleteNoPassword": "Att ta bort och rensa säkerhetskopior fungerar utan inloggningslösenord. Har du satt ett loggar du först in på den här servern.",
   "whatsNew.systemAccent": "Trollstaven först bland accentfärgerna tar enhetens egen färg: Material You i Android-appen från Android 12 och systemfärgen i Firefox och Safari. Varje enhet minns det här valet för sig själv.",
+  "whatsNew.deleteEverywhere": "”Ta bort säkerhetskopior överallt” i en posts meny tar bort postens säkerhetskopior hemma och på varje externt mål i ett steg, så fort du skriver postens namn. Posten och dess inställningar finns kvar.",
   "whatsNew.oled": "OLED under Tema ger OLED- och AMOLED-skärmar äkta svart varje gång det mörka temat visas, även när det följer enheten. Varje enhet minns sitt eget val.",
 
   // Monitoring (Prometheus)

@@ -841,6 +841,7 @@ const ca: Partial<Translations> = {
   "whatsNew.keepNow": "Aplica ara a la targeta Quant de temps conservar d'una destinació mostra quines còpies de seguretat ja no conserva la regla i les elimina. No cal que esperis a la còpia següent.",
   "whatsNew.deleteNoPassword": "Esborrar i podar còpies de seguretat funciona sense contrasenya d'accés. Si en defineixes una, primer inicies la sessió en aquest servidor.",
   "whatsNew.systemAccent": "La vareta màgica al començament dels colors d'accent agafa el color del teu dispositiu: Material You a l'aplicació d'Android a partir d'Android 12, i el color del sistema a Firefox i Safari. Cada dispositiu guarda aquesta elecció per a si mateix.",
+  "whatsNew.deleteEverywhere": "«Elimina les còpies a tot arreu», al menú d'un element, elimina les seves còpies a casa i a cada destinació externa en un sol pas, quan escrius el nom de l'element. L'element i la seva configuració es queden.",
   "whatsNew.oled": "OLED, a sota de Tema, dona negre de veritat a les pantalles OLED i AMOLED sempre que es veu el tema fosc, també quan segueix el dispositiu. Cada dispositiu guarda la seva pròpia elecció.",
 
   // Monitoring (Prometheus)

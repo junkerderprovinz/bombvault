@@ -1150,6 +1150,7 @@ const no: Partial<Translations> = {
   "whatsNew.keepNow": "Bruk nå på kortet Hvor lenge det beholdes for et mål viser hvilke sikkerhetskopier regelen ikke lenger beholder, og fjerner dem. Du trenger ikke vente på neste sikkerhetskopi.",
   "whatsNew.deleteNoPassword": "Sletting og opprydding av sikkerhetskopier virker uten innloggingspassord. Har du satt et, logger du først inn på denne serveren.",
   "whatsNew.systemAccent": "Tryllestaven først blant aksentfargene tar enhetens egen farge: Material You i Android-appen fra Android 12 og systemfargen i Firefox og Safari. Hver enhet husker dette valget for seg selv.",
+  "whatsNew.deleteEverywhere": "«Slett sikkerhetskopier overalt» i menyen til et element sletter elementets sikkerhetskopier hjemme og på hvert eksternt mål i ett steg, så snart du skriver inn navnet på elementet. Elementet og innstillingene blir værende.",
   "whatsNew.oled": "OLED under Tema gir OLED- og AMOLED-skjermer ekte svart hver gang det mørke temaet vises, også når det følger enheten. Hver enhet husker sitt eget valg.",
 
   // Monitoring (Prometheus)

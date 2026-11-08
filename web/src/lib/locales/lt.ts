@@ -841,6 +841,7 @@ const lt: Partial<Translations> = {
   "whatsNew.keepNow": "Taikyti dabar paskirties vietos kortelėje Kiek laiko saugoti parodo, kurių atsarginių kopijų taisyklė nebesaugo, ir jas pašalina. Nereikia laukti kitos atsarginės kopijos.",
   "whatsNew.deleteNoPassword": "Atsarginių kopijų trynimas ir valymas veikia be prisijungimo slaptažodžio. Jei jį nustatai, pirma prisijungi prie šio serverio.",
   "whatsNew.systemAccent": "Burtų lazdelė akcentinių spalvų pradžioje paima paties įrenginio spalvą: Android programėlėje nuo Android 12 tai Material You, o Firefox ir Safari naršyklėse sistemos spalva. Kiekvienas įrenginys šį pasirinkimą įsimena sau.",
+  "whatsNew.deleteEverywhere": "„Ištrinti atsargines kopijas visur“ įrašo meniu vienu žingsniu ištrina jo atsargines kopijas pradinėje vietoje ir kiekvienoje nuotolinėje paskirties vietoje, kai įvedi įrašo pavadinimą. Įrašas ir jo nustatymai lieka.",
   "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)

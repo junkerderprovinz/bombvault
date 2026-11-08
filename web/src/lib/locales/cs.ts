@@ -1159,6 +1159,7 @@ const cs: Partial<Translations> = {
   "whatsNew.keepNow": "Použít hned na kartě Jak dlouho uchovávat u cíle ukáže, které zálohy už pravidlo neuchovává, a odstraní je. Nemusíš čekat na další zálohu.",
   "whatsNew.deleteNoPassword": "Mazání a pročišťování záloh funguje i bez přihlašovacího hesla. Když nějaké nastavíš, nejdřív se přihlásíš na tomto serveru.",
   "whatsNew.systemAccent": "Kouzelná hůlka na začátku barev zvýraznění převezme barvu tvého zařízení: Material You v aplikaci pro Android od Androidu 12 a systémovou barvu ve Firefoxu a Safari. Každé zařízení si tuto volbu pamatuje samo.",
+  "whatsNew.deleteEverywhere": "„Smazat zálohy všude“ v nabídce položky smaže její zálohy doma i v každém cíli mimo lokalitu jedním krokem, jakmile napíšeš název položky. Položka a její nastavení zůstanou.",
   "whatsNew.oled": "OLED pod Motivem dává obrazovkám OLED a AMOLED opravdovou černou, kdykoli je vidět tmavý motiv, i když se řídí zařízením. Každé zařízení si pamatuje vlastní volbu.",
 
   // Monitoring (Prometheus)

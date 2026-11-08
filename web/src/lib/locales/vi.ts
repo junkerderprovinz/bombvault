@@ -1152,6 +1152,7 @@ const vi: Partial<Translations> = {
   "whatsNew.keepNow": "Áp dụng ngay trên thẻ Giữ trong bao lâu của một đích cho thấy những bản sao lưu mà quy tắc không còn giữ và xóa chúng. Bạn không cần đợi lần sao lưu tiếp theo.",
   "whatsNew.deleteNoPassword": "Xóa và dọn bớt bản sao lưu vẫn hoạt động mà không cần mật khẩu đăng nhập. Nếu bạn đặt một mật khẩu, bạn đăng nhập trên máy chủ này trước.",
   "whatsNew.systemAccent": "Cây đũa phép ở đầu các màu nhấn lấy màu riêng của thiết bị bạn: Material You trong ứng dụng Android từ Android 12, và màu hệ thống trong Firefox và Safari. Mỗi thiết bị tự nhớ lựa chọn này.",
+  "whatsNew.deleteEverywhere": "“Xóa bản sao lưu ở mọi nơi” trong menu của một mục sẽ xóa các bản sao lưu của mục đó ở vị trí gốc và ở mọi đích ngoài site trong một bước, ngay khi bạn nhập tên của mục. Mục và cài đặt của nó vẫn giữ nguyên.",
   "whatsNew.oled": "OLED bên dưới Giao diện cho màn hình OLED và AMOLED màu đen tuyền mỗi khi giao diện tối hiển thị, kể cả khi giao diện theo thiết bị. Mỗi thiết bị nhớ lựa chọn riêng của mình.",
 
   // Monitoring (Prometheus)

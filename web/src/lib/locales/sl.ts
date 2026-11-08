@@ -841,6 +841,7 @@ const sl: Partial<Translations> = {
   "whatsNew.keepNow": "Uporabi zdaj na kartici Kako dolgo hraniti pri cilju pokaže, katerih varnostnih kopij pravilo ne hrani več, in jih odstrani. Ni ti treba čakati na naslednjo varnostno kopijo.",
   "whatsNew.deleteNoPassword": "Brisanje in čiščenje varnostnih kopij deluje brez gesla za prijavo. Če ga nastaviš, se najprej prijaviš na tem strežniku.",
   "whatsNew.systemAccent": "Čarobna paličica na začetku poudarjenih barv prevzame barvo tvoje naprave: Material You v aplikaciji za Android od Androida 12 naprej ter barvo sistema v Firefoxu in Safariju. Vsaka naprava si to izbiro zapomni zase.",
+  "whatsNew.deleteEverywhere": "»Izbriši varnostne kopije povsod« v meniju vnosa v enem koraku izbriše njegove varnostne kopije doma in na vsakem zunanjem cilju, takoj ko vpišeš ime vnosa. Vnos in njegove nastavitve ostanejo.",
   "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)

@@ -841,6 +841,7 @@ const eu: Partial<Translations> = {
   "whatsNew.keepNow": "Helmuga baten Zenbat denbora mantendu txarteleko Aplikatu orain aukerak erakusten du zein babeskopia ez dituen arauak gehiago gordetzen, eta kendu egiten ditu. Ez duzu hurrengo babeskopiaren zain egon beharrik.",
   "whatsNew.deleteNoPassword": "Babeskopiak ezabatzeak eta garbitzeak saioa hasteko pasahitzik gabe funtzionatzen du. Bat ezartzen baduzu, lehenik zerbitzari honetan hasiko duzu saioa.",
   "whatsNew.systemAccent": "Azentu-koloreen hasierako makila magikoak zure gailuaren kolorea hartzen du: Material You Android aplikazioan Android 12tik aurrera, eta sistemaren kolorea Firefox eta Safarin. Gailu bakoitzak beretzat gordetzen du aukera hori.",
+  "whatsNew.deleteEverywhere": "Elementu baten menuko «Ezabatu babeskopiak leku guztietan» aukerak elementuaren babeskopiak etxean eta kanpoko helmuga guztietan ezabatzen ditu urrats bakarrean, elementuaren izena idazten duzunean. Elementua eta bere ezarpenak geratzen dira.",
   "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)

@@ -841,6 +841,7 @@ const et: Partial<Translations> = {
   "whatsNew.keepNow": "Rakenda kohe sihtkoha kaardil Kui kaua säilitada näitab, milliseid varukoopiaid reegel enam ei säilita, ja eemaldab need. Järgmist varukoopiat pole vaja oodata.",
   "whatsNew.deleteNoPassword": "Varukoopiate kustutamine ja puhastamine töötab ilma sisselogimisparoolita. Kui sa selle määrad, logid enne sellesse serverisse sisse.",
   "whatsNew.systemAccent": "Võlukepp aktsendivärvide alguses võtab seadme enda värvi: Android-rakenduses Material You alates Android 12-st ning Firefoxis ja Safaris süsteemi värvi. Iga seade jätab selle valiku endale meelde.",
+  "whatsNew.deleteEverywhere": "„Kustuta varundused kõikjal“ kirje menüüs kustutab kirje varundused kodus ja igas välises sihtkohas ühe sammuga, kui oled kirje nime sisestanud. Kirje ja selle seaded jäävad alles.",
   "whatsNew.oled": "Teema all olev OLED annab OLED- ja AMOLED-ekraanidele päris musta alati, kui tume teema on näha, ka siis, kui see järgib seadet. Iga seade jätab oma valiku meelde.",
 
   // Monitoring (Prometheus)

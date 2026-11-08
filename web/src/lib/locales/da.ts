@@ -1161,6 +1161,7 @@ const da: Partial<Translations> = {
   "whatsNew.keepNow": "Anvend nu på kortet Hvor længe der gemmes for en destination viser, hvilke sikkerhedskopier reglen ikke længere beholder, og fjerner dem. Du behøver ikke vente på den næste sikkerhedskopi.",
   "whatsNew.deleteNoPassword": "Sletning og oprydning af sikkerhedskopier virker uden en login-adgangskode. Har du angivet en, logger du først ind på denne server.",
   "whatsNew.systemAccent": "Tryllestaven forrest blandt accentfarverne tager din enheds egen farve: Material You i Android-appen fra Android 12 og systemfarven i Firefox og Safari. Hver enhed husker dette valg for sig selv.",
+  "whatsNew.deleteEverywhere": "»Slet sikkerhedskopier overalt« i et elements menu sletter elementets sikkerhedskopier på hjemstedet og på hver ekstern destination i ét trin, så snart du skriver elementets navn. Elementet og dets indstillinger bliver.",
   "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)

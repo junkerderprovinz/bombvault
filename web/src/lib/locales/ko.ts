@@ -1144,6 +1144,7 @@ const ko: Partial<Translations> = {
   "whatsNew.keepNow": "대상의 보존 기간 카드에 있는 지금 적용은 규칙이 더 이상 보존하지 않는 백업을 보여 주고 삭제합니다. 다음 백업까지 기다릴 필요가 없습니다.",
   "whatsNew.deleteNoPassword": "백업 삭제와 정리는 로그인 비밀번호 없이도 됩니다. 비밀번호를 설정했다면 먼저 이 서버에 로그인합니다.",
   "whatsNew.systemAccent": "강조 색상 맨 앞의 마법 지팡이는 기기 고유의 색을 가져옵니다. Android 앱에서는 Android 12부터 Material You, Firefox와 Safari에서는 시스템 색상입니다. 이 선택은 기기마다 따로 기억합니다.",
+  "whatsNew.deleteEverywhere": "항목 메뉴의 “모든 위치에서 백업 삭제”는 항목 이름을 입력하면 원래 위치와 모든 오프사이트 대상에 있는 그 항목의 백업을 한 번에 삭제합니다. 항목과 설정은 그대로 남습니다.",
   "whatsNew.oled": "테마 아래의 OLED는 어두운 테마가 보일 때마다, 기기를 따를 때도, OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 각 기기가 자신의 선택을 기억합니다.",
 
   // Monitoring (Prometheus)

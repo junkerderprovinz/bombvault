@@ -1161,6 +1161,7 @@ const fi: Partial<Translations> = {
   "whatsNew.keepNow": "Kohteen Kuinka kauan säilytetään -kortin Käytä nyt näyttää, mitä varmuuskopioita sääntö ei enää säilytä, ja poistaa ne. Seuraavaa varmuuskopiota ei tarvitse odottaa.",
   "whatsNew.deleteNoPassword": "Varmuuskopioiden poistaminen ja karsiminen toimii ilman kirjautumissalasanaa. Jos salasana on asetettu, tähän palvelimeen kirjaudutaan ensin.",
   "whatsNew.systemAccent": "Korostusvärien alussa oleva taikasauva ottaa laitteen oman värin: Android-sovelluksessa Material You Android 12:sta alkaen sekä Firefoxissa ja Safarissa järjestelmän värin. Jokainen laite muistaa tämän valinnan itse.",
+  "whatsNew.deleteEverywhere": "Merkinnän valikon ”Poista varmuuskopiot kaikkialta” poistaa merkinnän varmuuskopiot kotipaikasta ja jokaisesta etäkohteesta yhdellä kertaa, kun kirjoitat merkinnän nimen. Merkintä ja sen asetukset säilyvät.",
   "whatsNew.oled": "Teeman alla oleva OLED antaa OLED- ja AMOLED-näytöille aidon mustan aina, kun tumma teema näkyy, myös kun se seuraa laitetta. Jokainen laite muistaa oman valintansa.",
 
   // Monitoring (Prometheus)

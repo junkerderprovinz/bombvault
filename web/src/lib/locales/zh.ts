@@ -1152,6 +1152,7 @@ const zh: Partial<Translations> = {
   "whatsNew.keepNow": "目标的保留多久卡片上的立即应用会列出规则不再保留的备份并将其删除，无需等到下一次备份。",
   "whatsNew.deleteNoPassword": "删除和清理备份无需登录密码。如果设置了密码，仍需先在这台服务器上登录。",
   "whatsNew.systemAccent": "强调色最前面的魔杖使用设备自己的颜色：Android 应用中从 Android 12 起使用 Material You，Firefox 和 Safari 中使用系统颜色。每台设备各自记住这个选择。",
+  "whatsNew.deleteEverywhere": "条目菜单中的“删除所有位置的备份”会在你输入条目名称后，一步删除它在原位置和每个异地目标上的备份。条目及其设置会保留。",
   "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)

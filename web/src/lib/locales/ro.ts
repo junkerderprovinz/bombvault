@@ -1151,6 +1151,7 @@ const ro: Partial<Translations> = {
   "whatsNew.keepNow": "Aplică acum pe cardul Cât timp se păstrează al unei destinații arată ce copii de rezervă nu mai păstrează regula și le elimină. Nu trebuie să aștepți următoarea copie de rezervă.",
   "whatsNew.deleteNoPassword": "Ștergerea și curățarea copiilor de rezervă funcționează fără parolă de autentificare. Dacă setezi una, te autentifici mai întâi pe acest server.",
   "whatsNew.systemAccent": "Bagheta magică de la începutul culorilor de accent preia culoarea dispozitivului tău: Material You în aplicația Android începând cu Android 12 și culoarea sistemului în Firefox și Safari. Fiecare dispozitiv păstrează această alegere pentru sine.",
+  "whatsNew.deleteEverywhere": "„Șterge copiile de rezervă peste tot” din meniul unui element îi șterge copiile de rezervă de acasă și de pe fiecare destinație externă într-un singur pas, imediat ce tastezi numele elementului. Elementul și setările lui rămân.",
   "whatsNew.oled": "OLED, sub Temă, dă ecranelor OLED și AMOLED negru adevărat ori de câte ori se vede tema întunecată, și atunci când urmează dispozitivul. Fiecare dispozitiv își păstrează propria alegere.",
 
   // Monitoring (Prometheus)

@@ -1161,6 +1161,7 @@ const tr: Partial<Translations> = {
   "whatsNew.keepNow": "Bir hedefin Ne kadar saklanır kartındaki Şimdi uygula, kuralın artık saklamadığı yedekleri gösterir ve kaldırır. Bir sonraki yedeği beklemen gerekmez.",
   "whatsNew.deleteNoPassword": "Yedekleri silmek ve budamak giriş parolası olmadan da çalışır. Bir parola ayarlarsan önce bu sunucuda oturum açarsın.",
   "whatsNew.systemAccent": "Vurgu renklerinin başındaki sihirli değnek cihazının kendi rengini alır: Android uygulamasında Android 12'den itibaren Material You, Firefox ve Safari'de sistem rengi. Her cihaz bu seçimi kendisi için saklar.",
+  "whatsNew.deleteEverywhere": "Bir ögenin menüsündeki “Yedekleri her yerde sil”, ögenin adını yazdığın anda yedeklerini ana yerde ve her site dışı hedefte tek adımda siler. Öge ve ayarları kalır.",
   "whatsNew.oled": "Tema altındaki OLED, koyu tema her göründüğünde, cihazı izlediğinde de, OLED ve AMOLED ekranlara gerçek siyah verir. Her cihaz kendi seçimini saklar.",
 
   // Monitoring (Prometheus)

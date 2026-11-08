@@ -841,6 +841,7 @@ const id: Partial<Translations> = {
   "whatsNew.keepNow": "Terapkan sekarang di kartu Berapa lama disimpan pada sebuah tujuan menunjukkan cadangan mana yang tidak lagi disimpan aturan dan menghapusnya. Anda tidak perlu menunggu cadangan berikutnya.",
   "whatsNew.deleteNoPassword": "Menghapus dan memangkas cadangan bisa dilakukan tanpa kata sandi login. Jika Anda mengaturnya, Anda masuk dulu di server ini.",
   "whatsNew.systemAccent": "Tongkat ajaib di awal warna aksen mengambil warna perangkat Anda sendiri: Material You di aplikasi Android mulai Android 12, dan warna sistem di Firefox dan Safari. Setiap perangkat menyimpan pilihan ini untuk dirinya sendiri.",
+  "whatsNew.deleteEverywhere": "“Hapus cadangan di semua tempat” di menu sebuah entri menghapus cadangannya di lokasi asal dan di setiap tujuan off-site dalam satu langkah, begitu Anda mengetik nama entri itu. Entri dan pengaturannya tetap ada.",
   "whatsNew.oled": "OLED di bawah Tema memberi hitam pekat pada layar OLED dan AMOLED setiap kali tema gelap tampil, juga saat tema mengikuti perangkat. Setiap perangkat menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

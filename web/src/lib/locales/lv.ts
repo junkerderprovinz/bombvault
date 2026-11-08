@@ -841,6 +841,7 @@ const lv: Partial<Translations> = {
   "whatsNew.keepNow": "Lietot tagad mērķa kartītē Cik ilgi glabāt parāda, kuras rezerves kopijas noteikums vairs neglabā, un tās noņem. Nav jāgaida nākamā rezerves kopija.",
   "whatsNew.deleteNoPassword": "Rezerves kopiju dzēšana un tīrīšana darbojas bez pieteikšanās paroles. Ja to iestatāt, vispirms piesakāties šajā serverī.",
   "whatsNew.systemAccent": "Burvju nūjiņa akcenta krāsu sākumā ņem pašas ierīces krāsu: Android lietotnē no Android 12 tā ir Material You, bet Firefox un Safari sistēmas krāsa. Katra ierīce šo izvēli atceras pati.",
+  "whatsNew.deleteEverywhere": "“Dzēst rezerves kopijas visur” ieraksta izvēlnē vienā solī dzēš tā rezerves kopijas sākotnējā vietā un katrā attālinātajā mērķī, tiklīdz ievadāt ieraksta nosaukumu. Ieraksts un tā iestatījumi paliek.",
   "whatsNew.oled": "OLED zem Tēma dod OLED un AMOLED ekrāniem īsti melnu krāsu ikreiz, kad redzama tumšā tēma, arī tad, ja tā seko ierīcei. Katra ierīce atceras savu izvēli.",
 
   // Monitoring (Prometheus)

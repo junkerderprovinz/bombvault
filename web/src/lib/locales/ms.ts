@@ -841,6 +841,7 @@ const ms: Partial<Translations> = {
   "whatsNew.keepNow": "Guna sekarang pada kad Berapa lama disimpan bagi sesuatu destinasi menunjukkan sandaran yang tidak lagi disimpan oleh peraturan itu dan membuangnya. Anda tidak perlu menunggu sandaran seterusnya.",
   "whatsNew.deleteNoPassword": "Memadam dan memangkas sandaran berfungsi tanpa kata laluan log masuk. Jika Anda menetapkannya, Anda log masuk di pelayan ini dahulu.",
   "whatsNew.systemAccent": "Tongkat sakti di awal warna aksen mengambil warna peranti Anda sendiri: Material You dalam apl Android mulai Android 12, dan warna sistem dalam Firefox dan Safari. Setiap peranti menyimpan pilihan ini untuk dirinya sendiri.",
+  "whatsNew.deleteEverywhere": "“Padam sandaran di semua tempat” dalam menu sesuatu entri memadam sandarannya di lokasi asal dan di setiap destinasi luar tapak dalam satu langkah, sebaik sahaja Anda menaip nama entri itu. Entri dan tetapannya kekal.",
   "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)
