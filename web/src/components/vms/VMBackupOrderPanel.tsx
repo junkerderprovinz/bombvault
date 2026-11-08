@@ -137,7 +137,7 @@ export function VMBackupOrderPanel({
           <>
             {/* The list is the rows' offsetParent, the layout a drag measures
                 in. While a row is carried the others wiggle. */}
-            <ol ref={list} className="relative flex flex-col gap-1">
+            <ol ref={list} className="glim-drag-rows relative flex flex-col gap-1">
               {drag.order.map((name, i) => (
                 <li
                   key={name}

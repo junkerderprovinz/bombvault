@@ -2642,6 +2642,8 @@ body {
 
   --motion-wiggle-dur: 120ms;
   --motion-wiggle-angle: 2deg;
+  --motion-row-tremble-tilt: .15deg;
+  --motion-row-tremble-lift: 1.5px;
   /* A row in move mode: one beat of its wiggle, how far it tilts and how far
      it lifts. A wide row turns far at its ends, so the tilt is a fraction of
      the long-press wiggle's. */
@@ -2753,6 +2755,8 @@ body {
 
   --motion-wiggle-dur: 100ms;
   --motion-wiggle-angle: 2.8deg;
+  --motion-row-tremble-tilt: .2deg;
+  --motion-row-tremble-lift: 2px;
   --motion-row-wiggle-dur: 260ms;
   --motion-row-wiggle-tilt: .26deg;
   --motion-row-wiggle-lift: 1.5px;
@@ -2847,6 +2851,8 @@ body {
 
   --motion-wiggle-dur: 140ms;
   --motion-wiggle-angle: 1.4deg;
+  --motion-row-tremble-tilt: .1deg;
+  --motion-row-tremble-lift: 1px;
   --motion-row-wiggle-dur: 440ms;
   --motion-row-wiggle-tilt: .08deg;
   --motion-row-wiggle-lift: .5px;
@@ -2953,6 +2959,8 @@ body {
   /* A long period rather than none, with no angle, so nothing moves. */
   --motion-wiggle-dur: 400ms;
   --motion-wiggle-angle: 0deg;
+  --motion-row-tremble-tilt: 0deg;
+  --motion-row-tremble-lift: 0px;
   /* Declared so this level does not inherit the lively numbers; the row
      wiggle leaves this level out altogether. */
   --motion-row-wiggle-dur: 440ms;
@@ -3382,8 +3390,19 @@ body {
   .glim-confirm { animation: glim-confirm var(--motion-confirm-dur) ease-out; }
 
   /* Every item but the held one, which floats under the pointer instead. */
-  .glim-drag-armed > :not(.glim-drag-lift) {
+  /* The held item floats under the pointer instead, whether the lift class,
+     aria-grabbed or data-held marks it. */
+  .glim-drag-armed > :not(.glim-drag-lift, [aria-grabbed="true"], [data-held="true"]) {
     animation: glim-wiggle var(--motion-wiggle-dur) ease-in-out infinite alternate;
+  }
+  /* A row as wide as the list would swing its ends far at a tile's angle, so it
+     lifts and tilts with the row wiggle on the same beat. Longhands only, or the
+     delays below would lose to this selector. */
+  .glim-drag-armed.glim-drag-rows > :not(.glim-drag-lift, [aria-grabbed="true"], [data-held="true"]) {
+    --motion-row-wiggle-tilt: var(--motion-row-tremble-tilt);
+    --motion-row-wiggle-lift: var(--motion-row-tremble-lift);
+    animation-name: glim-row-wiggle;
+    animation-duration: calc(var(--motion-wiggle-dur) * 2);
   }
   /* Neighbours tremble out of step, so the list reads as loose items rather
      than one tilting block. */

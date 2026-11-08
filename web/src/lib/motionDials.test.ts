@@ -75,15 +75,21 @@ describe("the motion dials", () => {
     expect(CSS).toMatch(/\.glim-drag-armed > :nth-child\(2n\) \{ animation-delay: calc\(var\(--motion-wiggle-dur\) \* -\.5\); \}/);
   });
 
+  it("lift a list of full-width rows instead of turning it, and keep any held item still", () => {
+    const held = ':not(.glim-drag-lift, [aria-grabbed="true"], [data-held="true"])';
+    expect(ruleBody(`.glim-drag-armed > ${held}`, gate)).toMatch(/glim-wiggle var\(--motion-wiggle-dur\)/);
+    const rows = ruleBody(`.glim-drag-armed.glim-drag-rows > ${held}`, gate);
+    expect(rows).toMatch(/--motion-row-wiggle-tilt: var\(--motion-row-tremble-tilt\)/);
+    expect(rows).toMatch(/--motion-row-wiggle-lift: var\(--motion-row-tremble-lift\)/);
+    expect(rows).toMatch(/animation-name: glim-row-wiggle/);
+  });
+
   it("swell a success through the confirm dials", () => {
     expect(ruleBody(".glim-confirm", gate)).toMatch(/glim-confirm var\(--motion-confirm-dur\)/);
     expect(keyframes("glim-confirm")).toMatch(/var\(--motion-confirm-scale/);
   });
 
-  it("rock every item of a list being reordered but the one in the hand", () => {
-    expect(ruleBody(".glim-drag-armed > :not(.glim-drag-lift)", gate)).toMatch(
-      /glim-wiggle var\(--motion-wiggle-dur\)/
-    );
+  it("turn an item of a list being reordered by the wiggle angle", () => {
     expect(keyframes("glim-wiggle")).toMatch(/rotate:\s*var\(--motion-wiggle-angle/);
   });
 
