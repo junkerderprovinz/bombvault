@@ -30,7 +30,7 @@ export function releaseTag(version: string): string {
   return bare.startsWith("v") ? bare : `v${bare}`;
 }
 
-/** A version as the card shows it: `v4.2.7` reads "4.2.7". The "v" names the tag, not the version. */
+/** A version as the card shows it: `v4.2.8` reads "4.2.8". The "v" names the tag, not the version. */
 export function shownVersion(version: string): string {
   const trimmed = version.trim();
   return /^v\d/.test(trimmed) ? trimmed.slice(1) : trimmed;

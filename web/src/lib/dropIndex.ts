@@ -39,8 +39,10 @@ export function dropIndex(
   { axis = "y", rtl = false }: DropOptions = {},
 ): number {
   if (axis === "y") return before(others.map(down), leading(down(held), down(from)));
-  // Mirrored, a line that reads from the right reads from the left.
-  const read = (r: DropRect) => (rtl ? { ...r, left: -r.left - r.width } : r);
+  // Mirrored, a line that reads from the right reads from the left. The sides
+  // are copied by name, since a DOMRect keeps them as getters a spread drops.
+  const read = (r: DropRect): DropRect =>
+    rtl ? { left: -r.left - r.width, top: r.top, width: r.width, height: r.height } : r;
   if (axis === "x") return before(others.map(read).map(across), leading(across(read(held)), across(read(from))));
   return inGrid(read(held), read(from), others.map(read));
 }
@@ -104,9 +106,15 @@ function inGrid(held: DropRect, from: DropRect, others: readonly DropRect[]): nu
     const up = lines.findIndex((l, i) => i < above && middle(l) > held.top);
     if (up >= 0) [line, edge] = [up, held.left];
   } else if (held.top > from.top) {
+    const start = own >= 0 ? own + 1 : above;
     let next = -1;
-    for (let i = own >= 0 ? own + 1 : above; i < lines.length && middle(lines[i]) < held.top + held.height; i++) next = i;
+    for (const [i, l] of lines.entries()) {
+      if (i < start) continue;
+      if (middle(l) >= held.top + held.height) break;
+      next = i;
+    }
     if (next >= 0) [line, edge] = [next, held.left + held.width];
   }
-  return line < 0 ? count(above) : count(line) + before(lines[line].items, edge);
+  const target = lines[line];
+  return target ? count(line) + before(target.items, edge) : count(above);
 }
