@@ -584,14 +584,14 @@ describe("the actions beside the name", () => {
     await press(within(document.querySelector<HTMLElement>('[data-new="entry-menu"]')!).getByRole("button", { name: action }));
   }
 
-  it("offers a running container its export and no removal", async () => {
+  it("offers a running container its export and deleting its backups everywhere", async () => {
     await renderPage("/backups/container/immich");
-    expect(menuItems()).toEqual([en["entry.menu.exportContainer"]]);
+    expect(menuItems()).toEqual([en["entry.menu.exportContainer"], en["removeEverywhere.menu"]]);
   });
 
-  it("offers a VM its export and the delete of its local backups", async () => {
+  it("offers a VM its export, the delete of its local backups and the delete everywhere", async () => {
     await renderPage("/backups/vm/win11");
-    expect(menuItems()).toEqual([en["entry.menu.exportVM"], en["entry.deleteLocal"]]);
+    expect(menuItems()).toEqual([en["entry.menu.exportVM"], en["entry.deleteLocal"], en["removeEverywhere.menu"]]);
   });
 
   it("offers the flash drive its newest backup as an export and as a ZIP", async () => {

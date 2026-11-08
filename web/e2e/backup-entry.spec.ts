@@ -698,7 +698,7 @@ test("the buttons beside the name take a folder set off the list in one of two w
   await openEntry(page, `/backups/files/${SET_ID}`, "Fotos");
 
   const actions = page.locator('[data-new="entry-menu"]');
-  await expect(actions.getByRole("button")).toHaveText(["Neueste Sicherung exportieren", "Aus der Liste entfernen"]);
+  await expect(actions.getByRole("button")).toHaveText(["Neueste Sicherung exportieren", "Aus der Liste entfernen", "Sicherungen überall löschen"]);
   await actions.getByRole("button", { name: "Aus der Liste entfernen" }).click();
   const remove = page.getByRole("dialog", { name: "Fotos aus der Liste nehmen?" });
   await expect(remove.getByRole("radio")).toHaveCount(2);
