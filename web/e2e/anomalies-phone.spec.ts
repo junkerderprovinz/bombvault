@@ -658,7 +658,7 @@ async function resolved(page: Page, props: Record<string, string>): Promise<Reco
 }
 
 for (const theme of ["dark", "light"] as const) {
-  test(`${theme}: a finding shows its severity by its edge and badge, on the surface every finding has`, async ({ page }, testInfo) => {
+  test(`${theme}: a finding shows its severity by its badge alone, on the surface every finding has`, async ({ page }, testInfo) => {
     test.skip(
       testInfo.project.name !== "desktop-1280" && testInfo.project.name !== "mobile-iphone",
       "the colours are the same at every width, so one desktop and one phone engine",
@@ -673,9 +673,6 @@ for (const theme of ["dark", "light"] as const) {
 
     const want = await resolved(page, {
       surface: "var(--carbon-surface)",
-      failEdge: "var(--status-fail-solid)",
-      warnEdge: "var(--status-warn-solid)",
-      noteEdge: "var(--carbon-surface3)",
       failBg: "var(--status-fail-bg)",
       failInk: "var(--status-fail-text)",
       warnBg: "var(--status-warn-bg-strong)",
@@ -692,10 +689,8 @@ for (const theme of ["dark", "light"] as const) {
     for (const [severity, paint] of Object.entries(paints)) {
       expect.soft(paint.row, `a ${severity} finding paints no block of its own`).toBe(CLEAR);
       expect.soft(paint.ground, `a ${severity} finding stands on the card's surface`).toBe(want.surface);
+      expect.soft(paint.edge, `a ${severity} finding draws no bar on its leading edge`).toBe("none");
     }
-    expect.soft(paints.critical.edge).toContain(want.failEdge);
-    expect.soft(paints.warning.edge).toContain(want.warnEdge);
-    expect.soft(paints.info.edge).toContain(want.noteEdge);
     expect.soft(paints.critical.badge).toEqual({ bg: want.failBg, ink: want.failInk });
     expect.soft(paints.warning.badge).toEqual({ bg: want.warnBg, ink: want.warnInk });
 
