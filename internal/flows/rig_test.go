@@ -202,6 +202,7 @@ func (b *bombvault) start(bin string) {
 	if b.platform != "" {
 		cmd.Env = append(cmd.Env, "PLATFORM="+b.platform)
 	}
+	ownGroup(cmd)
 	if err := cmd.Start(); err != nil {
 		b.t.Fatalf("start %s: %v", bin, err)
 	}
@@ -249,6 +250,7 @@ func (b *bombvault) stop() {
 		<-b.exited
 		b.t.Errorf("the server did not stop within 30 seconds of being asked")
 	}
+	endGroup(b.proc.Process)
 	b.proc = nil
 }
 
