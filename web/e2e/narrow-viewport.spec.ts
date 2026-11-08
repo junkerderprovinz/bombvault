@@ -501,54 +501,42 @@ test("settings rail @ 390px in a desktop window: a strip above the content, noth
   expect(pan, "#bv-main scrolls horizontally").toBeLessThanOrEqual(1);
 });
 
-// The appearance card's pinned wells, which spread over the row they get once
-// they wrap (segmentLayout). A groove is a raised surface, so track with
-// nothing on it reads as part of the control; the check is that every row the
-// groove draws is covered, in a locale whose labels run longer than English so
-// a row cannot pass by being roomy.
+// The appearance card's wells keep to one row at every width, giving up their
+// pinned widths, then their words, before they would wrap (segmentFit). A
+// groove is a raised surface, so track with nothing on it reads as part of
+// the control; the check is that every groove is covered, in a locale whose
+// labels run longer than English so a row cannot pass by being roomy.
 for (const width of [390, 360, 320]) {
-  test(`appearance wells @ ${width}px: every groove row is filled`, async ({ page }, testInfo) => {
-    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the wells only wrap below 48rem");
+  test(`appearance wells @ ${width}px: every groove is one filled row`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the wells run out of room below 48rem");
     await bootSeededPage(page, "de", width, "/settings/look");
 
     const wells = page.locator('[role="tablist"].bg-carbon-surface3, [role="group"].bg-carbon-surface3');
     await expect(wells.first()).toBeVisible();
     await settle(page);
 
-    const bare = await wells.evaluateAll((strips) =>
-      strips.flatMap((strip) => {
+    const strips = await wells.evaluateAll((all) =>
+      all.map((strip) => {
         const segments = [...strip.children].map((child) => child.getBoundingClientRect());
-        if (segments.length === 0) return [];
         const inner = strip.getBoundingClientRect().width - 2 * 3.2;
-        const rows = [...new Set(segments.map((box) => Math.round(box.top)))];
-        return rows
-          .map((top) => {
-            const row = segments.filter((box) => Math.round(box.top) === top);
-            const used = row.reduce((sum, box) => sum + box.width, 0) + (row.length - 1) * 3.2;
-            return { label: strip.getAttribute("aria-label"), top, spare: inner - used };
-          })
-          .filter((row) => row.spare > 1);
+        const used = segments.reduce((sum, box) => sum + box.width, 0) + (segments.length - 1) * 3.2;
+        return {
+          label: strip.getAttribute("aria-label"),
+          rows: new Set(segments.map((box) => Math.round(box.top))).size,
+          spare: inner - used,
+          heights: segments.map((box) => Math.round(box.height)),
+          wrappedLabels: [...strip.querySelectorAll<HTMLElement>("[data-sel-label]")]
+            .filter((label) => label.getBoundingClientRect().height > 1.5 * parseFloat(getComputedStyle(label).lineHeight))
+            .map((label) => label.textContent),
+        };
       }),
     );
 
-    expect(bare, `grooves with bare track: ${JSON.stringify(bare)}`).toEqual([]);
-
-    // The segments stay tappable while they spread, and each row is a row of
-    // equals. A short last row stretches its cells rather than leaving a hole,
-    // so the rows may differ from each other by that much.
-    const ragged = await wells.evaluateAll((strips) =>
-      strips
-        .map((strip) => {
-          const boxes = [...strip.children].map((child) => child.getBoundingClientRect());
-          const rows = [...new Set(boxes.map((box) => Math.round(box.top)))].map((top) => [
-            ...new Set(boxes.filter((box) => Math.round(box.top) === top).map((box) => Math.round(box.width))),
-          ]);
-          const heights = boxes.map((box) => Math.round(box.height));
-          return { label: strip.getAttribute("aria-label"), rows, heights };
-        })
-        .filter((strip) => strip.rows.some((row) => row.length > 1) || strip.heights.some((h) => h < 40)),
-    );
-    expect(ragged, `uneven or untappable segments: ${JSON.stringify(ragged)}`).toEqual([]);
+    expect(strips.filter((s) => s.rows > 1), "grooves on more than one row").toEqual([]);
+    expect(strips.filter((s) => s.spare > 1), "grooves with bare track").toEqual([]);
+    expect(strips.filter((s) => s.wrappedLabels.length > 0), "labels on a second line").toEqual([]);
+    // The segments stay tappable however little room they get.
+    expect(strips.filter((s) => s.heights.some((h) => h < 40)), "untappable segments").toEqual([]);
   });
 }
 

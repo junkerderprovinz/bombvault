@@ -279,7 +279,6 @@ export function LookPage() {
                   labelModeChanged();
                 }}
                 inline
-                pairsOnPhone
               />
             </SettingRow>
           ))}

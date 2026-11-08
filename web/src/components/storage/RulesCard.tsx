@@ -150,7 +150,6 @@ function RulesWindow({ edit, section, onClose }: { edit: LocationEdit; section: 
               label={t("settings.compression")}
               size="sm"
               inline
-              pairsOnPhone
               select="one"
               activation="manual"
               active={section.own.includes("compression") ? section.compression : LIKE}

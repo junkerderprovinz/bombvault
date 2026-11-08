@@ -112,7 +112,6 @@ function FlowSwitches({
                   label={label}
                   select="many"
                   inline
-                  pairsOnPhone
                   active={new Set(row.lines.filter((line) => line.on).map((line) => line.key))}
                   disabled={busy}
                   onChange={(key) => {

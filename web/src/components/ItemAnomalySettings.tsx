@@ -109,7 +109,6 @@ function PrefsFields({ item, globals, t }: { item: AnomalyItem; globals: Anomaly
           select="one"
           activation="manual"
           inline
-          pairsOnPhone
           active={sensitivity || FOLLOW}
           onChange={(id) => {
             const before = sensitivity;
@@ -125,7 +124,6 @@ function PrefsFields({ item, globals, t }: { item: AnomalyItem; globals: Anomaly
           select="one"
           activation="manual"
           inline
-          pairsOnPhone
           active={notifyMin || FOLLOW}
           onChange={(id) => {
             const before = notifyMin;

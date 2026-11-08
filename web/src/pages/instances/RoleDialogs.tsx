@@ -162,7 +162,6 @@ export function RoleAskDialog({
             select="one"
             activation="manual"
             inline
-            pairsOnPhone
             active={store}
             onChange={(id) => setStore(id as RoleStore)}
             // What was allowed was allowed for the place it named.

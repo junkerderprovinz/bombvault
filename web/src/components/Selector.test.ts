@@ -7,7 +7,9 @@ import {
   nextFocusIndex,
   pinnedWidth,
   rovedIndex,
+  selectorFlex,
   stepFor,
+  type SelectorLayout,
   type SelectorNavKey,
 } from "./Selector";
 
@@ -138,5 +140,51 @@ describe("pinnedWidth", () => {
 
   it("stops at the cap for a label longer than it", () => {
     expect(pinnedWidth(500, 3, 1400, GAP)).toBe(MAX_PINNED_WIDTH);
+  });
+});
+
+describe("selectorFlex", () => {
+  const layout = (over: Partial<SelectorLayout>): SelectorLayout => ({ fit: "even", cut: [], pinned: 200, row: 0, hug: 0, ...over });
+
+  it("never wraps the track", () => {
+    for (const fit of ["even", "content", "squeezed", "truncated"] as const) {
+      for (const inline of [false, true]) {
+        const { segment, track } = selectorFlex({ layout: layout({ fit }), inline, fit: false });
+        expect(segment.flexWrap).toBeUndefined();
+        expect(track.flexWrap).toBeUndefined();
+      }
+    }
+  });
+
+  it("holds the pinned width only while the segments fit at it", () => {
+    expect(selectorFlex({ layout: layout({ fit: "even" }), inline: false, fit: false }).segment.minWidth).toBe("200px");
+    expect(selectorFlex({ layout: layout({ fit: "content" }), inline: false, fit: false }).segment.minWidth).not.toBe("200px");
+  });
+
+  it("shares the row evenly once the labels are squeezed or cut", () => {
+    for (const fit of ["squeezed", "truncated"] as const) {
+      const { segment } = selectorFlex({ layout: layout({ fit }), inline: false, fit: false });
+      expect(segment.flex).toBe("1 1 0");
+      expect(segment.minWidth).toBe("0");
+    }
+  });
+
+  it("ends a hugging track where its segments do while they fit, and gives it the box once they do not", () => {
+    expect(selectorFlex({ layout: layout({ fit: "content", pinned: 0, row: 306, hug: 312 }), inline: true, fit: false }).track.width).toBe("312px");
+    expect(selectorFlex({ layout: layout({ fit: "truncated", pinned: 0 }), inline: true, fit: false }).track.width).toBe("100%");
+    expect(selectorFlex({ layout: layout({ fit: "content", pinned: 0, row: 306, hug: 312 }), inline: false, fit: false }).track.width).toBeUndefined();
+  });
+
+  it("asks a box that sizes to its content for its row while it fits, and for all the room the box has once it does not", () => {
+    for (const inline of [false, true]) {
+      const fits = selectorFlex({ layout: layout({ fit: "content", pinned: 0, row: 306, hug: 312 }), inline, fit: false });
+      const squeezed = selectorFlex({ layout: layout({ fit: "squeezed" }), inline, fit: false });
+      expect(fits.track.containIntrinsicInlineSize).toBe("306px");
+      expect(squeezed.track.containIntrinsicInlineSize).toBe("100vw");
+    }
+  });
+
+  it("leaves an unmeasured track to its stylesheet", () => {
+    expect(selectorFlex({ layout: null, inline: true, fit: false }).track).toEqual({});
   });
 });

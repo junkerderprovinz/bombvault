@@ -98,7 +98,6 @@ export function KeepCard({ edit, retention, hueIndex }: { edit: LocationEdit; re
       select="one"
       activation="manual"
       inline
-      pairsOnPhone
       active={mode}
       onChange={(id) => pick(id as Mode)}
       disabled={busy}

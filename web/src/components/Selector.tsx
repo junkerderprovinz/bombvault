@@ -11,9 +11,10 @@
 //
 // The strip spans its box and its segments share the width, so a card of
 // stacked selectors ends in one edge. A strip that shares a toolbar row with a
-// search field or buttons passes `inline` and hugs its segments instead. Page
-// tabs pass `fit` and stay on one row. On a phone a well pins its segments
-// either way, so every row it wraps onto is a row of equals.
+// search field or buttons passes `inline` and hugs its segments instead. Every
+// strip keeps to one row: it never wraps or scrolls and no label takes a
+// second line. Where the labels do not fit, a strip with a glyph on every
+// segment shows the glyphs alone, and any other cuts its long labels short.
 //
 // Under rainbow a selector that sets a value wears one colour, its place among
 // the page's selectors (lib/selectorHue.ts), on its chosen segment, and the
@@ -38,8 +39,7 @@ import { useLabelMode } from "../lib/useLabelMode";
 import type { ControlAxis } from "../lib/controls";
 import { hidesLabel, labelWidth } from "../lib/controls";
 import { useTipBubble } from "../lib/useTipBubble";
-import { useIsDesktop } from "../lib/useMediaQuery";
-import { segmentLayout, type SegmentWidths } from "../lib/segmentLayout";
+import { segmentFit, type SegmentFit } from "../lib/segmentLayout";
 
 export interface SelectorItem {
   /** Stable id, handed back by onChange. */
@@ -94,20 +94,15 @@ interface SelectorCommon {
   /** Pin every segment to the widest one's measured width, at least
    *  MIN_PINNED_WIDTH where the row has room for it, instead of letting each
    *  hug its label. Under "well" it also fixes the height at `--badge-md`,
-   *  which makes the big page-level picker. */
+   *  which makes the big page-level picker. Where the pinned widths do not
+   *  fit the row, the segments share it by their labels. */
   equalWidth?: boolean;
   /** Hug the segments instead of spanning the box, for a strip that shares a
    *  toolbar row with a search field or buttons. */
   inline?: boolean;
-  /** Keep every segment on one row, up to MAX_PINNED_WIDTH each, for page
-   *  tabs. The segments share the row evenly while the widest label fits a
-   *  share, then size to their labels, and once the labels do not fit
-   *  together every segment shows its glyph alone, the label staying its
-   *  accessible name and tooltip. Overrides `equalWidth` and `inline`. */
+  /** Share the row evenly without a pinned width, up to MAX_PINNED_WIDTH
+   *  each, for page tabs. Overrides `equalWidth` and `inline`. */
   fit?: boolean;
-  /** Below 600px, sets the segments two to a row and lets a label wrap rather
-   *  than truncate, so a strip of three on a phone reads as two full rows. */
-  pairsOnPhone?: boolean;
   /** Disables every item (e.g. SourceToggle mid-restore). A per-item
    *  `disabled` still applies on top of this. */
   disabled?: boolean;
@@ -169,11 +164,16 @@ function segmentPadding(size: SelectorSize, hasGlyph: boolean, buttonHeight: boo
 
 const WELL_TOUCH = "pointer-coarse:min-h-(--btn-h-key)";
 
+// The width a track asks of a box that sizes to its content while it reads
+// its room and once its labels do not fit: more than any box can give, so
+// the box gives what it has.
+const WHOLE_ROOM = "100vw";
+
 // MIN_PINNED_WIDTH is the narrowest a pinned segment gets. The shared floor
 // keeps the pinned strips on one page at one width instead of each following
 // its own widest label; a label that needs more still gets it, up to
 // MAX_PINNED_WIDTH, so one long translation does not widen every segment of
-// its strip. Past that the label wraps, or the row is laid out by content.
+// its strip. Past that the row is laid out by its labels.
 export const MIN_PINNED_WIDTH = 200;
 export const MAX_PINNED_WIDTH = 352;
 
@@ -190,42 +190,85 @@ export function pinnedWidth(widest: number, count: number, room: number, gap: nu
 }
 
 /**
- * segmentWidths measures each segment with its label on one line and at its
- * narrowest. The segments are held to their flex share, so each is set to the
- * size being read and given its own style back straight after. The width
- * comes from the computed style, since a window's scale-in animation shrinks
- * the bounding box.
+ * segmentWidths measures each segment with its label on one line. The
+ * segments are held to their flex share, so each is set to the size being
+ * read and given its own style back straight after. The width comes from the
+ * computed style, since a window's scale-in animation shrinks the bounding
+ * box.
  */
-function segmentWidths(segs: HTMLElement[]): SegmentWidths[] {
+function segmentWidths(segs: HTMLElement[]): number[] {
   const own = segs.map((s) => s.style.cssText);
-  const at = (width: string) => {
-    for (const s of segs) Object.assign(s.style, { flex: "none", width, minWidth: "0", maxWidth: "none" });
-    return segs.map((s) => parseFloat(getComputedStyle(s).width));
-  };
-  const oneLine = at("max-content");
-  const narrowest = at("min-content");
+  for (const s of segs) Object.assign(s.style, { flex: "none", width: "max-content", minWidth: "0", maxWidth: "none" });
+  const oneLine = segs.map((s) => parseFloat(getComputedStyle(s).width));
   segs.forEach((s, i) => (s.style.cssText = own[i]));
-  return segs.map((_, i) => ({ oneLine: oneLine[i], narrowest: narrowest[i] }));
+  return oneLine;
 }
 
-interface RowLayout {
+/**
+ * How a strip holds its one row. `pinned` is the width its segments are
+ * pinned to while they fit at it, or 0 for a strip that does not pin. `row`
+ * is the width of its segments side by side, and `hug` that of a hugging
+ * track around them; both are 0 once they do not fit and the track takes the
+ * whole box.
+ */
+export interface SelectorLayout extends SegmentFit {
   pinned: number;
-  room: number;
-  gap: number;
-  /** The track's own padding, which a hugging track adds to its segments. */
-  inset: number;
-  perRow: number;
-  byContent: boolean;
+  row: number;
+  hug: number;
 }
 
-const sameLayout = (a: RowLayout | null, b: RowLayout) =>
+const sameLayout = (a: SelectorLayout | null, b: SelectorLayout) =>
   !!a &&
-  a.perRow === b.perRow &&
-  a.byContent === b.byContent &&
+  a.fit === b.fit &&
   Math.abs(a.pinned - b.pinned) < 0.5 &&
-  Math.abs(a.room - b.room) < 0.5 &&
-  a.gap === b.gap &&
-  a.inset === b.inset;
+  Math.abs(a.row - b.row) < 0.5 &&
+  Math.abs(a.hug - b.hug) < 0.5 &&
+  a.cut.join() === b.cut.join();
+
+/**
+ * selectorFlex is the flex style of every segment and the style of the track,
+ * from the measured layout.
+ *
+ * Pinned segments that fit keep the pinned width as their floor and grow into
+ * an even share of a spanning track; in a hugging track they start from it
+ * and the track ends where they do. Segments laid out by their labels start
+ * from them and share out what is left, so a long name such as
+ * "Benachrichtigungen" keeps its words while the short ones give up room.
+ * Squeezed or cut short, they take even shares of the row, and their floor
+ * gives way so the row never overflows its box.
+ *
+ * The track's labels do not size it (`contain: inline-size`), so a hugging
+ * track is given its width here: its segments side by side while they fit,
+ * the whole box once they do not. A box that sizes to its content, such as
+ * SettingRow's control box, would then size to nothing, so the track also
+ * names the width it wants: its row while that fits, and the screen's once it
+ * does not, which such a box caps at the room it has.
+ */
+export function selectorFlex({ layout, inline, fit }: { layout: SelectorLayout | null; inline: boolean; fit: boolean }): {
+  segment: Record<string, string>;
+  track: Record<string, string>;
+} {
+  const mode = layout?.fit ?? "even";
+  const pinned = layout?.pinned ?? 0;
+  const cap: Record<string, string> = fit ? { maxWidth: `${MAX_PINNED_WIDTH}px` } : {};
+  const segment: Record<string, string> =
+    mode === "squeezed" || mode === "truncated"
+      ? { flex: "1 1 0", minWidth: "0", ...cap }
+      : fit
+        ? { flex: mode === "content" ? "1 0 auto" : "1 1 0", minWidth: "0", ...cap }
+        : mode === "even" && pinned > 0
+          ? inline
+            ? { flex: `1 0 ${pinned}px` }
+            : { flex: "1 1 0", minWidth: `${pinned}px` }
+          : { flex: "1 0 auto" };
+  const track: Record<string, string> = layout
+    ? {
+        containIntrinsicInlineSize: layout.row ? `${layout.row}px` : WHOLE_ROOM,
+        ...(inline && { width: layout.hug ? `${layout.hug}px` : "100%" }),
+      }
+    : {};
+  return { segment, track };
+}
 
 // The navigation math is pure so Selector.test.ts can cover it without a DOM.
 
@@ -287,13 +330,12 @@ interface SelectorTabProps {
   /** How the segment sits in the row. It goes on whatever element is the
    *  row's flex item, the button or the span a disabled tip wraps it in. */
   flex: CSSProperties;
-  /** Lets the label break onto a second line, for a pinned segment, where
-   *  segmentLayout decides when a label may wrap. Elsewhere it truncates. */
-  wraps: boolean;
-  /** Shows the glyph alone because the label does not fit a strip that keeps
-   *  to one row. The label stays in the DOM as the accessible name, and so
-   *  the strip can measure it again. */
+  /** Shows the glyph alone because the labels do not fit the strip's row.
+   *  The label stays in the DOM as the accessible name, and so the strip can
+   *  measure it again. */
   squeezed: boolean;
+  /** The label is cut short to keep the strip to its row. */
+  cut: boolean;
   onSelect: () => void;
   /** The label-mode axis the strip follows; see labelAxis in Selector. */
   axis: ControlAxis;
@@ -309,8 +351,8 @@ function SelectorTab({
   className,
   style,
   flex,
-  wraps,
   squeezed,
+  cut,
   onSelect,
   axis,
   panelId,
@@ -328,7 +370,7 @@ function SelectorTab({
   // `title`, the reason for the segment's state, is appended. Identical parts
   // collapse because the Settings tab strip passes `title: label` for its
   // truncated labels.
-  const explains = item.tip ?? (nameHidden || squeezed ? item.label : undefined);
+  const explains = item.tip ?? (nameHidden || squeezed || cut ? item.label : undefined);
   const tip = [...new Set([explains, item.title].filter(Boolean))].join(": ") || undefined;
   // No bubble in reactive mode, where hovering brings the words back. A
   // disabled segment keeps it: it takes no hover, so its tip is the only thing
@@ -378,7 +420,7 @@ function SelectorTab({
           ) : (
             (labelMode === "text" || !item.iconOnly) &&
             (!hidesLabel(labelMode) || !item.icon) && (
-              <span data-sel-label className={squeezed ? "sr-only" : wraps ? undefined : "truncate"}>
+              <span data-sel-label className={squeezed ? "sr-only" : "truncate"}>
                 {item.label}
               </span>
             )
@@ -408,7 +450,6 @@ export function Selector(props: SelectorProps) {
     equalWidth = false,
     inline = false,
     fit = false,
-    pairsOnPhone = false,
     disabled = false,
     activation = "auto",
     panelId,
@@ -416,11 +457,7 @@ export function Selector(props: SelectorProps) {
     className = "",
   } = props;
   const well = variant === "well";
-  // Below the desktop shell a well soon runs out of row, and segments that hug
-  // their labels then wrap into rows of odd widths. Pinned to the widest label
-  // they stay equal and wrap into even rows. A strip of glyphs alone keeps its
-  // squares.
-  const phoneWell = !useIsDesktop() && well && !fit && !pairsOnPhone && !items.every((i) => i.iconOnly);
+  const hugs = inline && !fit;
 
   // `lg` strips are the page-level tabs and pickers and follow the Tabs label
   // mode; smaller strips sit in form rows beside buttons and follow the Buttons
@@ -436,10 +473,10 @@ export function Selector(props: SelectorProps) {
   // stays a row of equal tabs in glyph mode.
   const labelsOffScreen = hidesLabel(labelModeForStrip) && items.every((i) => !!i.icon);
   const reactiveStrip = labelModeForStrip === "reactive" && items.every((i) => !!i.icon && !i.iconOnly);
-  const pinWidth = (equalWidth || phoneWell) && !fit && !(labelsOffScreen && size !== "lg");
-  // A strip that keeps to one row can only drop its labels where they are on
-  // screen and every segment has a glyph to show instead.
-  const canSqueeze = fit && labelModeForStrip === "textGlyph" && items.every((i) => !!i.icon);
+  const pinWidth = equalWidth && !fit && !(labelsOffScreen && size !== "lg");
+  // A strip can only drop its labels where they are on screen and every
+  // segment has a glyph to show instead.
+  const canSqueeze = labelModeForStrip === "textGlyph" && items.every((i) => !!i.icon);
 
   const many = props.select === "many";
   const chosen = props.select === "many" ? props.active : null;
@@ -455,13 +492,11 @@ export function Selector(props: SelectorProps) {
     if (counted && strip.current) return countSelector(strip.current);
   }, [counted]);
 
-  // How pinned segments share the row, from segmentLayout. Pinning needs each
-  // segment's natural width, which only the DOM knows; a flex share alone
-  // (`flex-1`) lets a shrink-to-fit parent add up zero bases and truncate the
-  // widest label. The room is the track's own content box while it spans, and
-  // its parent's while it hugs, since a hugging track is only as wide as the
-  // segments it holds. Measured again when the box or a segment resizes: a
-  // late web font changes what a label needs.
+  // How the segments share the strip's one row, from segmentFit. It needs
+  // each label's one-line width, which only the DOM knows. Measured again when
+  // the box or a segment resizes: a late web font changes what a label needs.
+  // Labels dropped for glyphs are put back on screen for the reading, so a
+  // strip sees when they fit again.
   //
   // itemsKey stands in for `items` in the deps. Callers rebuild the array on
   // every render, and measuring each time would be wasted work.
@@ -472,124 +507,54 @@ export function Selector(props: SelectorProps) {
   // no computed width, and measuring it would drop the pinned width.
   const itemsKey = items.map((it) => it.label).join("\n");
   const disabledKey = items.map((it) => (disabled || it.disabled ? "1" : "0")).join("");
-  const [layout, setLayout] = useState<RowLayout | null>(null);
+  const [layout, setLayout] = useState<SelectorLayout | null>(null);
   useLayoutEffect(() => {
-    if (!pinWidth) {
-      setLayout(null);
-      return;
-    }
     const el = strip.current!;
-    const box = inline ? el.parentElement! : el;
     const segments = () => Array.from(el.querySelectorAll<HTMLElement>("[data-sel-id]"));
-    if (segments().length === 0) return;
+    let last: SelectorLayout | null = null;
     const measure = () => {
       const segs = segments();
-      const own = getComputedStyle(el);
-      const inset = parseFloat(own.paddingLeft) + parseFloat(own.paddingRight);
-      const outer = inline ? getComputedStyle(box) : own;
-      const room =
-        box.clientWidth -
-        parseFloat(outer.paddingLeft) -
-        parseFloat(outer.paddingRight) -
-        (inline ? inset : 0);
-      // A hidden box measures nothing; it is laid out once it shows.
-      if (room <= 0) return;
-      const gap = parseFloat(own.columnGap) || 0;
-      const widths = segmentWidths(segs);
-      const widest = Math.max(...widths.map((w) => w.oneLine));
-      // The shared floor belongs to the strips that asked to be pinned. A phone
-      // well takes its widest label, so one beside a caption still hugs.
-      let pinned = equalWidth ? pinnedWidth(widest, segs.length, room, gap) : Math.min(widest, room);
-      let rows = segmentLayout(room, pinned, widths, gap);
-      // A hugging strip that wraps takes the floor its rows have room for, so
-      // a tab is as wide in a strip of eight as in a strip of four. A phone
-      // well has no floor and takes its even share of the row instead.
-      if (inline && !rows.byContent && rows.perRow < segs.length) {
-        pinned = equalWidth
-          ? pinnedWidth(widest, rows.perRow, room, gap)
-          : Math.floor((room - gap * (rows.perRow - 1)) / rows.perRow);
-        rows = segmentLayout(room, pinned, widths, gap);
-      }
-      const next: RowLayout = { pinned, room, gap, inset, ...rows };
-      setLayout((prev) => (sameLayout(prev, next) ? prev : next));
-    };
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(box);
-    for (const seg of segments()) watch.observe(seg);
-    return () => watch.disconnect();
-  }, [pinWidth, equalWidth, inline, itemsKey, disabledKey, size, labelModeForStrip]);
-
-  // How a one-row strip holds its labels: in even shares while the widest
-  // fits one, at each label's own width while they fit together, and as
-  // glyphs alone after that. The labels are put back on screen for the
-  // measurement, so a strip that has dropped them sees when they fit again.
-  const [fitMode, setFitMode] = useState<"even" | "content" | "squeezed">("even");
-  const squeezed = fitMode === "squeezed";
-  useLayoutEffect(() => {
-    if (!canSqueeze) {
-      setFitMode("even");
-      return;
-    }
-    const el = strip.current!;
-    const measure = () => {
-      const segs = Array.from(el.querySelectorAll<HTMLElement>("[data-sel-id]"));
-      const own = getComputedStyle(el);
-      const room = el.clientWidth - parseFloat(own.paddingLeft) - parseFloat(own.paddingRight);
-      if (room <= 0 || segs.length === 0) return;
-      const gap = parseFloat(own.columnGap) || 0;
+      if (segs.length === 0) return;
       const hidden = Array.from(el.querySelectorAll("[data-sel-label].sr-only"));
       for (const l of hidden) l.classList.remove("sr-only");
-      const widths = segmentWidths(segs).map((w) => w.oneLine);
+      // A hugging track is only as wide as its segments, and a box sized to
+      // its content only as wide as the track; given the whole box and
+      // wanting the whole screen for the reading, the track shows the room it
+      // could take.
+      const { width, minWidth, containIntrinsicInlineSize } = el.style;
+      Object.assign(el.style, { width: "100%", minWidth: "0", containIntrinsicInlineSize: WHOLE_ROOM });
+      const oneLine = segmentWidths(segs);
+      const own = getComputedStyle(el);
+      const inset = parseFloat(own.paddingLeft) + parseFloat(own.paddingRight);
+      const room = el.clientWidth - inset;
+      const gap = parseFloat(own.columnGap) || 0;
+      Object.assign(el.style, { width, minWidth, containIntrinsicInlineSize });
       for (const l of hidden) l.classList.add("sr-only");
-      const free = room - gap * (segs.length - 1);
-      const needed = widths.reduce((sum, w) => sum + w, 0);
-      setFitMode(Math.max(...widths) <= free / segs.length ? "even" : needed <= free ? "content" : "squeezed");
+      // A hidden box measures nothing; it is laid out once it shows.
+      if (room <= 0) return;
+      const count = segs.length;
+      const pinned = pinWidth ? pinnedWidth(Math.max(...oneLine), count, room, gap) : 0;
+      const even = pinned || (fit ? Math.floor((room - gap * (count - 1)) / count) : null);
+      const fits = segmentFit(room, even, oneLine, gap, canSqueeze);
+      const segmentsWidth =
+        fits.fit === "even" ? (even ?? 0) * count : fits.fit === "content" ? oneLine.reduce((sum, w) => sum + w, 0) : 0;
+      // A pixel over, so rounding cannot leave the last segment short of room.
+      const row = segmentsWidth && segmentsWidth + gap * (count - 1) + 1;
+      const next: SelectorLayout = { ...fits, pinned, row, hug: row && row + inset };
+      if (sameLayout(last, next)) return;
+      last = next;
+      setLayout(next);
     };
     measure();
     const watch = new ResizeObserver(measure);
     watch.observe(el);
+    if (el.parentElement) watch.observe(el.parentElement);
+    for (const seg of segments()) watch.observe(seg);
     void document.fonts?.ready.then(measure);
     return () => watch.disconnect();
-  }, [canSqueeze, itemsKey, disabledKey, size]);
+  }, [pinWidth, fit, canSqueeze, itemsKey, disabledKey, size, labelModeForStrip]);
 
-  // A pinned segment keeps the pinned width as its floor and grows into its
-  // share of the row, so every row ends at the track's edge once it wraps. The
-  // basis leaves one gap of slack against sub-pixel rounding, and the growth
-  // takes it back. The floor gives way to the room, so a box narrower than one
-  // segment squeezes it instead of pushing it out of the card. A segment that
-  // hugs its label grows too, and so does a pinned one whose row is laid out
-  // by content.
-  //
-  // In a hugging strip the pinned segments start from their width, and the
-  // track is held to one row's worth of them, a pixel over against rounding, so
-  // it wraps into even rows that end where the segments do. A short last row
-  // grows its segments rather than leave a hole.
-  const byContent = pinWidth && !!layout?.byContent;
-  const pinnedRows = pinWidth && layout && !layout.byContent ? layout : null;
-  const hugged = inline && pinnedRows;
-  // In the content mode a segment starts from its label's width and shares
-  // out what is left, so a long name such as "Benachrichtigungen" keeps its
-  // words while the short ones give up room.
-  const segmentFlex: CSSProperties = fit
-    ? { flex: fitMode === "content" ? "1 1 auto" : "1 1 0", minWidth: 0, maxWidth: `${MAX_PINNED_WIDTH}px` }
-    : hugged
-      ? { flex: `1 0 ${Math.min(hugged.pinned, hugged.room)}px` }
-      : pinnedRows
-        ? {
-            minWidth: `${Math.min(pinnedRows.pinned, pinnedRows.room)}px`,
-            flex: `1 0 calc((100% - ${pinnedRows.perRow} * ${pinnedRows.gap}px) / ${pinnedRows.perRow})`,
-          }
-        : { flex: pairsOnPhone ? "1 0 var(--seg-basis, auto)" : "1 0 auto" };
-  const trackStyle: CSSProperties | undefined = fit
-    ? { flexWrap: "nowrap" }
-    : byContent
-      ? { width: "100%", flexWrap: "nowrap" }
-      : hugged
-        ? {
-            maxWidth: `${hugged.perRow * hugged.pinned + (hugged.perRow - 1) * hugged.gap + hugged.inset + 1}px`,
-          }
-        : undefined;
+  const flex = selectorFlex({ layout, inline: hugs, fit });
 
   const isOn = (id: string) => (chosen ? chosen.has(id) : only === id);
   const isItemDisabled = (item: SelectorItem) => disabled || !!item.disabled;
@@ -641,18 +606,18 @@ export function Selector(props: SelectorProps) {
       onKeyDown={onKeyDown}
       // The "well" groove is surface3 to stand out from both parents it sits
       // on, a Card (surface) and a CadenceBuilder well (surface2), and 0.2rem is
-      // the thinnest ring that still reads as a groove. A hugging track is
-      // `w-fit`; `self-start` would hug too, but it top-aligns the strip in rows
-      // that centre a label beside it. Tracks wrap rather than scroll, except
-      // one laid out by content, whose fit already allows for a pixel of
-      // rounding that would otherwise push its last segment onto a row alone.
+      // the thinnest ring that still reads as a groove. The track keeps to one
+      // row, and its labels do not size it (`contain: inline-size`): a row that
+      // does not fit gives way inside its box, where a grid or flex parent
+      // would otherwise grow to hold it and the strip would never see that it
+      // ran out of room. `min-w-0` lets a flex parent shrink it below the
+      // width it asks for (selectorFlex), which then reads as less room. A
+      // hugging track takes its width from selectorFlex too; `self-start`
+      // would hug, but it top-aligns the strip in rows that centre a label
+      // beside it.
       className={[
-        // Paired segments stretch, so a label that wraps to two lines keeps its
-        // neighbour on the same top and the same height.
-        pairsOnPhone ? "flex flex-wrap items-stretch" : "flex flex-wrap items-center",
-        inline && !fit ? "w-fit max-w-full" : "w-full",
-        // The larger of the two gaps, so two segments always fit a row.
-        pairsOnPhone ? "max-[600px]:[--seg-basis:calc(50%_-_0.25rem)]" : "",
+        "flex flex-nowrap items-center [contain:inline-size] w-full min-w-0",
+        hugs ? "max-w-full" : "",
         well
           ? "gap-[0.2rem] rounded-pill bg-carbon-surface3 p-[0.2rem]"
           : "gap-1",
@@ -660,7 +625,7 @@ export function Selector(props: SelectorProps) {
       ]
         .filter(Boolean)
         .join(" ")}
-      style={trackStyle}
+      style={flex.track as CSSProperties}
     >
       {items.map((item, i) => {
         const on = isOn(item.id);
@@ -698,7 +663,7 @@ export function Selector(props: SelectorProps) {
             ? buttonHeight
               ? `text-center px-3 glim-seg-btn ${WELL_TOUCH}`
               : `text-center h-[var(--badge-md)] ${SIZE[size].padding} ${WELL_TOUCH}`
-            : equalWidth || phoneWell || pairsOnPhone
+            : equalWidth
               ? `text-center ${segmentPadding(size, !!item.icon, buttonHeight, well)}`
               : item.iconOnly
                 ? "h-8 w-8 p-0"
@@ -718,9 +683,9 @@ export function Selector(props: SelectorProps) {
             roved={i === roved}
             className={cls}
             style={perTab ? (hueVars(i + hueOffset) as CSSProperties) : undefined}
-            flex={segmentFlex}
-            wraps={pinWidth || pairsOnPhone}
-            squeezed={canSqueeze && squeezed}
+            flex={flex.segment as CSSProperties}
+            squeezed={layout?.fit === "squeezed"}
+            cut={!!layout?.cut[i]}
             panelId={panelId}
             onSelect={() => {
               if (!itemDisabled) onChange(item.id);

@@ -1,52 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { perRowFor, segmentLayout } from "./segmentLayout";
+import { segmentFit } from "./segmentLayout";
 
 const GAP = 3.2;
-const fixed = (...widths: number[]) => widths.map((w) => ({ oneLine: w, narrowest: w }));
 
-describe("perRowFor", () => {
-  it("keeps every segment on one row while they fit", () => {
-    expect(perRowFor(3, 900, 200, GAP)).toBe(3);
+describe("segmentFit", () => {
+  it("keeps the pinned width while the segments fit side by side at it", () => {
+    expect(segmentFit(900, 200, [120, 180, 90], GAP, false)).toEqual({ fit: "even", cut: [false, false, false] });
   });
 
-  it("splits six that fit four to a row three and three", () => {
-    expect(perRowFor(6, 4 * 200 + 3 * GAP + 50, 200, GAP)).toBe(3);
+  it("shares the row by the labels when the pinned widths do not fit", () => {
+    expect(segmentFit(360, 200, [100, 110, 120], GAP, false).fit).toBe("content");
   });
 
-  it("splits seven that fit four to a row four and three", () => {
-    expect(perRowFor(7, 4 * 200 + 3 * GAP + 50, 200, GAP)).toBe(4);
+  it("shares the row by the labels when one is longer than the pinned width", () => {
+    expect(segmentFit(900, 200, [90, 260, 90], GAP, false).fit).toBe("content");
   });
 
-  it("puts one segment on a row when not even two fit", () => {
-    expect(perRowFor(3, 250, 200, GAP)).toBe(1);
-  });
-});
-
-describe("segmentLayout", () => {
-  it("keeps the pinned width while every label fits it", () => {
-    expect(segmentLayout(900, 200, fixed(120, 180, 90), GAP)).toEqual({ byContent: false, perRow: 3 });
+  it("keeps the labels of a hugging strip while they fit", () => {
+    expect(segmentFit(400, null, [80, 90, 100], GAP, false).fit).toBe("content");
   });
 
-  it("lays the segments out by content when a label would wrap and they fit side by side", () => {
-    const segments = [
-      { oneLine: 420, narrowest: 180 },
-      { oneLine: 90, narrowest: 90 },
-      { oneLine: 90, narrowest: 90 },
-    ];
-    expect(segmentLayout(700, 200, segments, GAP)).toEqual({ byContent: true, perRow: 3 });
+  it("drops the labels for glyphs when they do not fit and every segment has one", () => {
+    expect(segmentFit(300, 200, [140, 150, 160], GAP, true)).toEqual({ fit: "squeezed", cut: [false, false, false] });
   });
 
-  it("goes back to even rows at the pinned width when they do not fit side by side either", () => {
-    const segments = [
-      { oneLine: 420, narrowest: 180 },
-      { oneLine: 300, narrowest: 300 },
-      { oneLine: 90, narrowest: 90 },
-    ];
-    expect(segmentLayout(700, 200, segments, GAP)).toEqual({ byContent: false, perRow: 3 });
-    expect(segmentLayout(500, 200, segments, GAP)).toEqual({ byContent: false, perRow: 2 });
+  it("shares the row evenly and cuts only the labels too long for a share when a segment has no glyph", () => {
+    // (300 - 2 * 3.2) / 3 leaves each segment 97.87px.
+    expect(segmentFit(300, 200, [60, 150, 97], GAP, false)).toEqual({ fit: "truncated", cut: [false, true, false] });
   });
 
-  it("keeps the pinned width for a single word longer than it, which cannot wrap", () => {
-    expect(segmentLayout(900, 200, fixed(260, 90), GAP)).toEqual({ byContent: false, perRow: 2 });
+  it("does not cut a row that fits to the pixel short over clientWidth rounding", () => {
+    expect(segmentFit(299, null, [100, 100, 99.6], 0, false).fit).toBe("content");
   });
 });

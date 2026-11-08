@@ -1,8 +1,8 @@
 // Vitest setup; guarded no-op window.ResizeObserver stub.
 //
-// jsdom does not implement ResizeObserver, and Selector observes a pinned
-// strip and its segments the moment one mounts, which is every suite that
-// renders the appearance card. Wired via test.setupFiles in vitest.config.ts.
+// jsdom does not implement ResizeObserver, and Selector observes its strip
+// and segments the moment one mounts, which is nearly every suite that renders
+// a page. Wired via test.setupFiles in vitest.config.ts.
 //
 // A no-op is the honest stub: jsdom reports every box as zero, and Selector
 // lays out nothing in a box that measures nothing. Suites that drive a resize

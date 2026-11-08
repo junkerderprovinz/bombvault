@@ -1,23 +1,22 @@
-// How the pinned segments of a horizontal selector share the room they have
-// ("The one horizontal selector" in design-language.md). The module has no
-// imports, so a check can run it in Node without a bundler.
+// How the segments of a horizontal selector share their one row ("The one
+// horizontal selector" in design-language.md). The module has no imports, so
+// a check can run it in Node without a bundler.
 
 /**
- * SegmentWidths is how wide a segment is with its label on one line, and with
- * the label broken wherever it can break.
+ * How a strip holds its labels on its one row: at its own widths while they
+ * fit there, at each label's one-line width while they fit together, as
+ * glyphs alone after that, and last in even shares with the long labels cut
+ * short.
  */
-export interface SegmentWidths {
-  oneLine: number;
-  narrowest: number;
-}
+export type SelectorFit = "even" | "content" | "squeezed" | "truncated";
 
 /**
- * SegmentLayout is `perRow` pinned segments to a row or, with `byContent`, all
- * of them on one row, each as wide as its label and an even share of the rest.
+ * SegmentFit is how a strip holds its labels, and for each segment whether
+ * its label is cut short.
  */
-export interface SegmentLayout {
-  byContent: boolean;
-  perRow: number;
+export interface SegmentFit {
+  fit: SelectorFit;
+  cut: boolean[];
 }
 
 /**
@@ -27,32 +26,24 @@ export interface SegmentLayout {
 const ROUNDING = 1;
 
 /**
- * perRowFor is how many pinned segments share a row: all of them while they
- * fit, otherwise as even a share as the rows allow, so six that fit four to a
- * row go three and three and seven go four and three ("A selector that wraps
- * fills its box").
+ * segmentFit decides how segments whose labels need `oneLine` pixels on one
+ * line share `room`. `even` is the width each one takes in the strip's own
+ * layout, pinned or an even share, and null for a strip whose segments hug
+ * their labels. `glyphs` says every segment may show its glyph alone.
  */
-export function perRowFor(count: number, room: number, width: number, gap: number): number {
-  const fit = Math.max(1, Math.floor((room + gap) / (width + gap)));
-  if (count <= fit) return count;
-  const rows = Math.ceil(count / fit);
-  return Math.ceil(count / rows);
-}
-
-/**
- * segmentLayout decides how segments pinned to `pinned` pixels fill `room`.
- * While no label wraps at the pinned width, they keep it. Where one would, and
- * the segments fit side by side at their one-line widths, they share the row
- * by those widths instead. Only when they do not fit that way either do they
- * wrap into even rows at the pinned width.
- *
- * A label of one word cannot wrap. Too long for the pinned width, it runs into
- * the segment's padding, and the selector keeps its pinned widths.
- */
-export function segmentLayout(room: number, pinned: number, segments: SegmentWidths[], gap: number): SegmentLayout {
-  const count = segments.length;
-  const wraps = segments.some((s) => s.oneLine > pinned && s.narrowest < s.oneLine);
-  const inline = segments.reduce((sum, s) => sum + s.oneLine, 0) + gap * (count - 1);
-  if (wraps && inline <= room + ROUNDING) return { byContent: true, perRow: count };
-  return { byContent: false, perRow: perRowFor(count, room, pinned, gap) };
+export function segmentFit(
+  room: number,
+  even: number | null,
+  oneLine: readonly number[],
+  gap: number,
+  glyphs: boolean,
+): SegmentFit {
+  const count = oneLine.length;
+  const free = room + ROUNDING - gap * (count - 1);
+  const whole = (fit: SelectorFit): SegmentFit => ({ fit, cut: oneLine.map(() => false) });
+  if (even !== null && even * count <= free && oneLine.every((w) => w <= even + ROUNDING)) return whole("even");
+  if (oneLine.reduce((sum, w) => sum + w, 0) <= free) return whole("content");
+  if (glyphs) return whole("squeezed");
+  const share = (room - gap * (count - 1)) / count;
+  return { fit: "truncated", cut: oneLine.map((w) => w > share + ROUNDING) };
 }
