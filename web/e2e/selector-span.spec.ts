@@ -41,12 +41,11 @@ function widths(strip: Locator): Promise<{ track: number; box: number }> {
 test("a card's selector spans the card's content box", async ({ page }, testInfo) => {
   test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "desktop-only: the strips are measured at desktop width");
   await stage(page);
-  // The calendar is one of the cards a browser starts without. At full width
-  // its six sections fit one row, so it stays a strip at 768px too.
+  // The calendar is one of the cards a browser starts without.
   await page.addInitScript(() =>
     window.localStorage.setItem(
       "bombvault.dashboardLayout",
-      JSON.stringify({ v: 2, order: ["heatmap"], hidden: [], widths: { heatmap: 12 }, heights: {} }),
+      JSON.stringify({ v: 2, order: ["heatmap"], hidden: [], widths: { heatmap: 6 }, heights: {} }),
     ),
   );
 
@@ -57,7 +56,11 @@ test("a card's selector spans the card's content box", async ({ page }, testInfo
   expect(Math.abs(themeWidths.track - themeWidths.box), JSON.stringify(themeWidths)).toBeLessThanOrEqual(1);
 
   await page.goto("/dashboard");
-  const history = page.getByRole("tablist", { name: "Calendar" });
+  // At 768px its six sections do not fit one row and it is a dropdown, which
+  // spans the card all the same.
+  const history = page
+    .getByRole("tablist", { name: "Calendar" })
+    .or(page.locator("[data-listed]").filter({ has: page.getByRole("combobox", { name: /Calendar/ }) }));
   await expect(history).toBeVisible();
   expect(await history.evaluate((el) => el.parentElement!.classList.contains("rounded-card"))).toBe(true);
   const historyWidths = await widths(history);

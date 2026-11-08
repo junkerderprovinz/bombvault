@@ -574,7 +574,7 @@ for (const width of [320, 390]) {
     await expectWindowFits(page);
     await closeWindow(page);
 
-    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+    await showClosed(page);
     await expect(page.getByText(`Notiz: ${NOTE}`, { exact: false })).toBeVisible();
     await expectNothingPansOrClips(page);
   });
@@ -641,6 +641,18 @@ async function paintOf(row: Locator, label: string): Promise<Paint> {
   }, label);
 }
 
+/** Switches the list to the closed findings, through the dropdown where the
+ *  filter does not fit one row. */
+async function showClosed(page: Page) {
+  const closed = page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" });
+  if (await closed.isVisible()) {
+    await closed.click();
+    return;
+  }
+  await page.locator("[data-listed]").filter({ hasText: "Offen" }).getByRole("combobox").click();
+  await page.getByRole("option", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+}
+
 /** What a few custom properties resolve to inside the list's card. */
 async function resolved(page: Page, props: Record<string, string>): Promise<Record<string, string>> {
   return findings(page)
@@ -701,7 +713,7 @@ for (const theme of ["dark", "light"] as const) {
     await critical.getByRole("button", { name: "Quittieren", exact: true }).focus();
     expect.soft((await paintOf(critical, "Kritisch")).row, "a critical finding paints no block under focus").toBe(CLEAR);
 
-    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+    await showClosed(page);
     await expect(findings(page)).toHaveCount(CLOSED.length);
     for (const li of await findings(page).all()) {
       expect.soft(await li.evaluate((el) => getComputedStyle(el).backgroundColor), "a closed finding paints no block of its own").toBe(CLEAR);
@@ -843,7 +855,7 @@ test.describe("on the desktop", () => {
   test("the selector lists what was closed, with its note", async ({ page }) => {
     await stage(page, 1280);
     await openPage(page);
-    await page.getByRole("tab", { name: "Geschlossen in den letzten 30 Tagen" }).click();
+    await showClosed(page);
 
     await expect(findings(page)).toHaveCount(CLOSED.length);
     await expect(page.getByRole("group", { name: "Schweregrad" }).getByRole("button", { name: /^Alle/ })).toContainText(
