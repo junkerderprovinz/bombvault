@@ -20,7 +20,7 @@ import {
   anomalyWhere,
   type TranslateAnomaly,
 } from "../../lib/anomalies";
-import type { AnomalySeverity, AnomalyView } from "../../lib/api";
+import type { AnomalyView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { isolateLtr } from "../../lib/ltrFragments";
 import { formatTs } from "../../lib/reltime";
@@ -32,15 +32,6 @@ import { formatNumber } from "../../lib/numberFormat";
 
 /** Closes findings one way or the other and says whether it went through. */
 export type SettleFindings = (list: AnomalyView[], how: "acknowledge" | "expected") => Promise<boolean>;
-
-// The bar on the leading edge, which flips sides with the reading direction.
-// It and the badge are all that show the severity: every finding keeps the
-// same surface, so a red one does not read as a different kind of card.
-const EDGE: Record<AnomalySeverity, string> = {
-  critical: "shadow-[inset_3px_0_0_var(--status-fail-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-fail-solid)]",
-  warning: "shadow-[inset_3px_0_0_var(--status-warn-solid)] rtl:shadow-[inset_-3px_0_0_var(--status-warn-solid)]",
-  info: "shadow-[inset_3px_0_0_var(--carbon-surface3)] rtl:shadow-[inset_-3px_0_0_var(--carbon-surface3)]",
-};
 
 export function findingWhen(unix: number): string {
   return isolateLtr(formatTs(unix));
@@ -123,7 +114,7 @@ export function FindingLine({
   return (
     <li
       id={`finding-${a.id}`}
-      className={`flex min-w-0 scroll-mt-10 flex-col gap-1.5 py-3 ps-3.5 first:pt-0 last:pb-0 ${EDGE[a.severity]}`}
+      className="flex min-w-0 scroll-mt-10 flex-col gap-1.5 py-3 first:pt-0 last:pb-0"
     >
       <div className="flex flex-wrap items-center gap-2">
         {closed && (

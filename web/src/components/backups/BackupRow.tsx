@@ -362,7 +362,7 @@ export function BackupRow({
       style={hueVars(kindHue(item.kind)) as CSSProperties}
       className={`group glim-hue relative cursor-pointer rounded-control pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none] ${ROW} ${
         picked
-          ? "bg-accentSoft shadow-[inset_3px_0_0_var(--accent)] rtl:shadow-[inset_-3px_0_0_var(--accent)]"
+          ? "bg-accentSoft"
           : "hover:bg-carbon-hover"
       }${dim ? " opacity-55" : ""}`}
     >
