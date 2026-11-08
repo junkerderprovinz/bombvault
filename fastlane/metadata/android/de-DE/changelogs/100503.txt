@@ -1,0 +1,1 @@
+BombVault 10.5.3 löscht die Sicherungen eines Eintrags auf Wunsch an allen Orten in einem Schritt, kopiert nach einem abgebrochenen Upload wieder zu Proton Drive und hält jeden Auswahlschalter auf einer Zeile. Passt er nicht, wird er zur Auswahlliste.
