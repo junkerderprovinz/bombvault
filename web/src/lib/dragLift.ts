@@ -265,15 +265,18 @@ export function useReorder({ ids, container, attr, axis, arm, enabled, onReorder
 
   /**
    * aim returns the order the held item's position asks for. An item counts
-   * as before it once the held item's centre passes the item's centre; the
-   * passed item then moves away by the held item's own size, so two items of
-   * different sizes cannot trade places back and forth. Measured boxes, never
-   * one assumed size, since the items need not match.
+   * as before it once the held item's leading edge, in the direction it
+   * travels, passes the item's centre; at rest its centre stands in. By the
+   * centre a large item needs far more travel than a small one to reach an
+   * end. The passed item then moves away by the held item's own size, so two
+   * items of different sizes cannot trade places back and forth. Measured
+   * boxes, never one assumed size, since the items need not match.
    */
   function aim(h: Lifted): string[] {
     const at = heldAt(h, false);
-    const cx = at.x + h.from.w / 2;
-    const cy = at.y + h.from.h / 2;
+    const lead = (pos: number, size: number, moved: number) => (moved > 0 ? pos + size : moved < 0 ? pos : pos + size / 2);
+    const cx = lead(at.x, h.from.w, at.x - h.from.x);
+    const cy = lead(at.y, h.from.h, at.y - h.from.y);
     const rest: string[] = [];
     let ahead = 0;
     for (const node of nodes()) {

@@ -123,3 +123,29 @@ it("puts every row back on Escape", () => {
   expect(onReorder).not.toHaveBeenCalled();
   expect(order()).toEqual(["a", "b", "c"]);
 });
+
+it("places a taller row by its leading edge, so it passes a short one as soon as that edge does", () => {
+  // a is three rows tall; b and c follow it without a gap.
+  const height: Record<string, number> = { a: 3 * ROW, b: ROW, c: ROW };
+  const top = (el: HTMLElement) => {
+    let y = 0;
+    for (const sib of Array.from(el.parentElement?.children ?? [])) {
+      if (sib === el) break;
+      y += height[(sib as HTMLElement).dataset["id"] ?? ""] ?? 0;
+    }
+    return y;
+  };
+  vi.spyOn(HTMLElement.prototype, "offsetTop", "get").mockImplementation(function (this: HTMLElement) {
+    return this.dataset["id"] ? top(this) : 0;
+  });
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return height[this.dataset["id"] ?? ""] ?? 0;
+  });
+  render(<List onReorder={vi.fn()} />);
+
+  pointer("pointerdown", screen.getByText("a"), 10);
+  pointer("pointermove", document, 20);
+  // Its bottom edge now sits past b's middle; its centre is still far above it.
+  pointer("pointermove", document, 10 + ROW / 2 + 5);
+  expect(order()).toEqual(["b", "a", "c"]);
+});
