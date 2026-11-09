@@ -22,6 +22,7 @@ import { AppdataWindow } from "../components/restore/AppdataWindow";
 import { BackupRail } from "../components/restore/BackupRail";
 import { EmergencyScene } from "../components/restore/EmergencyScene";
 import { EmergencyWindow } from "../components/restore/EmergencyWindow";
+import { FileSearch } from "../components/restore/FileSearch";
 import { KeyState } from "../components/restore/KeyState";
 import { NotStartedNotice } from "../components/restore/NotStartedNotice";
 import { OldFolderWindow } from "../components/restore/OldFolderWindow";
@@ -259,6 +260,21 @@ function PickedEntry({
   );
 }
 
+/** The restore window on a backup a file search found. A backup that lies only
+ *  at a place the timeline reads on request is read for it. */
+function FoundRestore({ item, ask, onClose }: { item: BackupItem; ask: RestoreAsk; onClose: () => void }) {
+  const { t } = useT();
+  const domain = ENTRY_KIND[item.kind].timelineDomain;
+  const read = useTimeline(domain, item.key, true);
+  const timeline = useMemo(() => ({ ...read, domain }), [read, domain]);
+  const { places, loadPlace } = read;
+  const unread = places.some((p) => p.place === ask.place && p.state === "unchecked");
+  useEffect(() => {
+    if (unread && ask.place) void loadPlace(ask.place);
+  }, [unread, ask.place, loadPlace]);
+  return <EntryRestore item={item} name={entryName(item, t)} timeline={timeline} ask={ask} onClose={onClose} />;
+}
+
 /** The restores that run, each with its progress and the way to stop it. */
 function RunningCard({
   running,
@@ -354,6 +370,7 @@ export function Restore() {
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
   const [many, setMany] = useState<BackupItem[] | null>(null);
   const [stackOpen, setStackOpen] = useState<string | null>(null);
+  const [foundOpen, setFoundOpen] = useState<{ item: BackupItem; ask: RestoreAsk } | null>(null);
 
   // The emergency window can take a key over or give it back, so the key is
   // read again each time it closes.
@@ -512,6 +529,7 @@ export function Restore() {
       )}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
+      {foundOpen && <FoundRestore item={foundOpen.item} ask={foundOpen.ask} onClose={() => setFoundOpen(null)} />}
       {stackOpen !== null && stacks.length > 0 && (
         <StackWindow stacks={stacks} initial={stackOpen} onClose={() => setStackOpen(null)} onStarted={load} />
       )}
@@ -651,6 +669,8 @@ export function Restore() {
                   </div>
                 </Card>
               )}
+
+              <FileSearch items={items} hueIndex={nextHue()} onOpen={(item, ask) => setFoundOpen({ item, ask })} />
             </>
           )}
         </>

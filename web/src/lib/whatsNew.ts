@@ -61,6 +61,10 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.0",
+    changes: [{ id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" }],
+  },
+  {
     version: "10.5.3",
     changes: [{ id: "delete-everywhere", text: "whatsNew.deleteEverywhere" }],
   },

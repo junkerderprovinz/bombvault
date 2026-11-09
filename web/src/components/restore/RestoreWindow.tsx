@@ -96,6 +96,9 @@ export interface RestoreAsk {
   place?: string;
   /** The dataset of a ZFS entry the request is about. */
   dataset?: string;
+  /** A file or folder of the backup to bring back alone, as a file search
+   *  found it. */
+  path?: string;
 }
 
 /** ZFS: the member states that make writing into the live dataset impossible. */
@@ -347,10 +350,10 @@ function RestoreForm({
 
   const [rowKey, setRowKey] = useState<string | null>(null);
   const [placePick, setPlacePick] = useState(ask.place);
-  const [whatPick, setWhat] = useState<RestoreWhat>("all");
+  const [whatPick, setWhat] = useState<RestoreWhat>(ask.path ? "files" : "all");
   const [wherePick, setWherePick] = useState<RestoreWhere | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState(ask.path ?? "");
   const [folderPick, setFolder] = useState<string | null>(null);
   const defaultFolder = entry ? restoreFolderFor(entry.settings, kind) : "";
   const onPhone = openedAsPairedPhone();
@@ -461,6 +464,9 @@ function RestoreForm({
   const fileSnapshot = zfsItem ? (member?.snapshotId ?? "") : snapshotId;
 
   const [files, setFiles] = useState<FileEntry[]>([]);
+  // The found path is ticked in the first listing only, so a backup picked
+  // afterwards starts empty like any other.
+  const foundPath = useRef(ask.path);
   const [filesLoading, setFilesLoading] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
   useEffect(() => {
@@ -481,6 +487,9 @@ function RestoreForm({
         if (!current) return;
         setFiles(res.ok ? (res.files ?? []) : []);
         if (!res.ok) setFilesError(loadErrorMessage(res, t("files.loadFailed")));
+        const found = foundPath.current;
+        foundPath.current = undefined;
+        if (found && res.files?.some((f) => f.path === found)) setPicked(new Set([found]));
       })
       .catch(() => {
         if (current) setFilesError(t("files.loadFailed"));

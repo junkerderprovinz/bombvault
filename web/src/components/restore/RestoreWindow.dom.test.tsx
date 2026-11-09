@@ -153,7 +153,7 @@ const onClose = vi.fn();
 
 async function open(
   entry: Entry,
-  props: { timeline?: TimelineState; snapshot?: string; place?: string; deletable?: boolean; reading?: boolean } = {}
+  props: { timeline?: TimelineState; snapshot?: string; place?: string; path?: string; deletable?: boolean; reading?: boolean } = {}
 ) {
   const timeline = props.timeline ?? timelineState(DOMAIN[entry.item.kind]);
   await act(async () => {
@@ -169,7 +169,7 @@ async function open(
                   entry={props.reading ? null : entry}
                   name={entry.item.name}
                   timeline={timeline}
-                  ask={{ snapshot: props.snapshot, place: props.place }}
+                  ask={{ snapshot: props.snapshot, place: props.place, path: props.path }}
                   deletable={props.deletable}
                   onClose={onClose}
                 />
@@ -356,6 +356,25 @@ describe("a container", () => {
     await ready(start);
     await press(start());
     expect(restoreContainerFiles).toHaveBeenCalledWith("immich", NEWEST, ["/config"], "user/bombvault/restore", true, "local", undefined);
+  });
+
+  it("opens on the file a search found, ticked and alone in the list", async () => {
+    listSnapshotFiles.mockResolvedValue({
+      ok: true,
+      files: [
+        { path: "/config/app.db", type: "file", size: 10 },
+        { path: "/config/other.db", type: "file", size: 4 },
+      ],
+    } as never);
+    await open(entryOf("container"), { snapshot: NEWEST, path: "/config/app.db" });
+    await waitFor(() => expect(listSnapshotFiles).toHaveBeenCalledWith("immich", NEWEST, "local"));
+    const found = await within(dialog()).findByRole("checkbox", { name: "/config/app.db" });
+    expect(found.getAttribute("aria-checked")).toBe("true");
+    expect(within(dialog()).queryByRole("checkbox", { name: "/config/other.db" })).toBeNull();
+    const start = () => within(dialog()).getByRole("button", { name: en["restoreWindow.toFolderNamed"] }) as HTMLButtonElement;
+    await ready(start);
+    await press(start());
+    expect(restoreContainerFiles).toHaveBeenCalledWith("immich", NEWEST, ["/config/app.db"], "user/bombvault/restore", true, "local", undefined);
   });
 
   it("lists the database dumps of a database", async () => {

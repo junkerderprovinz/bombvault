@@ -9,6 +9,7 @@ Elk herstel begint op de pagina **Herstel**: kies een onderdeel, zoek wat je ter
 
 - **Onderdelen** toont de onderdelen als tegels, elk met hoeveel items snapshots hebben.
 - **Wat wil je terughalen?** doorzoekt de items van het gekozen onderdeel. Elke rij toont zijn nieuwste snapshot, en **Item openen** leidt naar de pagina van het item.
+- **Bestand zoeken** zoekt een bestand of map op naam in elke back-up, zie [Een bestand zoeken](#find-a-file).
 - **Stacks** toont de Compose-projecten met minstens twee geback-upte containers, zoals `immich` met zijn database en Redis. Het zoekveld vindt een stack op zijn naam of op een van zijn containers.
 - **Bezig** toont een herstel terwijl het loopt, ook nadat je zijn venster sloot.
 - **Noodgeval** start de Noodassistent voor een server die weg is of opnieuw is ingesteld, zie [Noodassistent](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Om het bestand in plaats daarvan meteen terug te zetten, kies je in stap 5 **Ori
 
 ![Het herstelvenster bij Wat er gebeurt, met Origineel vervangen gekozen.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Het herstelvenster bij Wat er gebeurt, met Origineel vervangen gekozen.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Een bestand zoeken {#find-a-file}
+
+Weet je de naam van een bestand, maar niet welk item of welke back-up het nog heeft, typ dan de naam in **Bestand zoeken** en druk op **Zoeken**. Gewone tekst past op elke plek in de naam en let niet op hoofdletters, dus `invoice` vindt `Invoice-2024.pdf`. Met `*` of `?` moet het patroon op de hele naam passen, dus `*.pdf` vindt elke pdf. Typ alleen de naam, zonder map.
+
+De zoekopdracht leest elke back-up van de containers, mappensets, ZFS-datasets en de flash. Elke treffer toont het item, het pad en elke back-up waarin het bestand staat, de nieuwste eerst, met de datum, de grootte en de bestemming waar het is gelezen. Een back-up waarin het bestand dezelfde grootte en wijzigingstijd heeft als in de vorige, zegt **ongewijzigd**, zodat je ziet waar het bestand voor het laatst veranderde. Een klik op een back-up opent het herstelvenster daarop, met **Losse bestanden** gekozen en het bestand aangevinkt. Een bestand van de flash komt terug als deel van de ZIP van de flash, omdat de flash alleen als geheel wordt hersteld.
+
+Zoeken duurt even, omdat restic door elke back-up loopt. **Stoppen** beëindigt het, en de pagina verlaten ook. Onder het veld staat welke bestemmingen het las:
+
+- Bestemmingen op deze server en in je netwerk worden altijd doorzocht.
+- Een back-up die op meerdere bestemmingen staat, wordt maar één keer gelezen, bij de eerste. Een bestemming waarvan alle back-ups elders zijn gelezen, zegt **al bij een andere bestemming doorzocht**.
+- Off-site-bestemmingen zoals S3, B2 of SFTP blijven buiten de zoekopdracht, tenzij je **Ook off-site-bestemmingen doorzoeken** aanzet. Dan worden daar alleen de back-ups gelezen die geen bestemming hier heeft, meestal de oudere die een langere bewaartermijn off-site houdt. De eerste zoekopdracht op zo'n bestemming kan lang duren, en sommige aanbieders rekenen de gedownloade data aan.
+- Een bestemming die niet kon worden geopend, zegt **kon niet worden gelezen**, en de (i) ernaast vertelt waarom. De andere bestemmingen worden gewoon doorzocht.
+
+Virtuele machines worden als hele schijven opgeslagen, dus de bestanden erin worden niet doorzocht. De zelf-back-up en de back-ups van een andere BombVault onder **Andere bronnen** worden ook niet doorzocht. Een zoekopdracht toont de eerste 200 bestanden, dus bij een korte naam zoals `log` heb je misschien een paar letters meer nodig.
 
 ## Wat er terugkomt, per soort {#kinds}
 

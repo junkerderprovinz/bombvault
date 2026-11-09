@@ -173,6 +173,9 @@ type ResticEngine interface {
 	// Neither takes a lock, so both run beside backups.
 	LsStreamNoLock(ctx context.Context, repo, snapshotID string, mode restic.Mode, onEntry func(restic.FileEntry)) error
 	DiffStream(ctx context.Context, repo, snap1, snap2 string, mode restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error)
+	// Find searches the given snapshots for names matching a
+	// restic.FileNamePattern and hands over each snapshot's matches.
+	Find(ctx context.Context, repo string, snapshotIDs []string, pattern string, mode restic.Mode, onSnapshot func(snapshotID string, files []restic.FoundFile)) error
 	// LsPath lists one directory's own node plus its direct children, scoped to
 	// dirPath (a subtree root) — used to read back a restored directory's
 	// original owner/mode after a remapped restore, since restic's restorer

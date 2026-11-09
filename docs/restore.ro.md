@@ -9,6 +9,7 @@ Fiecare restaurare începe pe pagina **Restaurare**: alege o secțiune, caută c
 
 - **Secțiuni** listează secțiunile ca plăci, fiecare cu numărul de elemente care au instantanee.
 - **Ce vrei să readuci?** caută în elementele secțiunii alese. Fiecare rând arată cel mai nou instantaneu al lui, iar **Deschide elementul** duce la pagina elementului.
+- **Găsește un fișier** caută un fișier sau un folder după nume în fiecare backup, vezi [Găsirea unui fișier](#find-a-file).
 - **Stack-uri** listează proiectele Compose cu cel puțin două containere salvate, de exemplu `immich` cu baza de date și Redis. Căutarea găsește un stack după nume sau după oricare dintre containerele lui.
 - **În desfășurare** arată o restaurare cât rulează, și după ce ai închis fereastra ei.
 - **Urgență** pornește asistentul de urgență pentru un server care a dispărut sau a fost configurat din nou, vezi [Asistentul de urgență](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Ca să pui fișierul direct la loc, alege la pasul 5 **Înlocuiește originalul*
 
 ![Fereastra de restaurare la Ce se întâmplă, cu Înlocuiește originalul ales.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Fereastra de restaurare la Ce se întâmplă, cu Înlocuiește originalul ales.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Găsirea unui fișier {#find-a-file}
+
+Când știi numele unui fișier, dar nu și ce element sau ce backup îl mai are, scrie numele în **Găsește un fișier** și apasă **Caută**. Textul simplu se potrivește oriunde în nume și nu ține cont de majuscule, așa că `invoice` găsește `Invoice-2024.pdf`. Cu `*` sau `?`, modelul trebuie să se potrivească cu tot numele, așa că `*.pdf` găsește fiecare PDF. Scrie doar numele, fără folder.
+
+Căutarea citește fiecare backup al containerelor, al seturilor de foldere, al seturilor de date ZFS și al unității flash. Fiecare rezultat arată elementul, calea și fiecare backup care conține fișierul, cel mai nou primul, cu data, dimensiunea și destinația din care a fost citit. Un backup în care fișierul are aceeași dimensiune și aceeași oră de modificare ca în cel dinainte arată **neschimbat**, așa că vezi unde s-a schimbat fișierul ultima dată. Un clic pe un backup deschide fereastra de restaurare pe el, cu **Fișiere individuale** ales și fișierul bifat. Un fișier de pe unitatea flash revine ca parte din ZIP-ul unității flash, pentru că unitatea flash se restaurează doar în întregime.
+
+Căutarea durează o vreme, pentru că restic trece prin fiecare backup. **Oprește** o încheie, la fel ca părăsirea paginii. Sub câmp scrie ce destinații a citit:
+
+- Destinațiile de pe acest server și din rețeaua ta sunt căutate mereu.
+- Un backup aflat în mai multe destinații este citit o singură dată, în prima. O destinație ale cărei backupuri au fost citite toate în altă parte arată **deja căutată în altă destinație**.
+- Destinațiile externe, precum S3, B2 sau SFTP, rămân pe dinafară, dacă nu activezi **Caută și în destinațiile externe**. Atunci acolo sunt citite doar backupurile pe care nu le are nicio destinație de aici, de obicei cele mai vechi, pe care o retenție mai lungă le păstrează în afara locului. Prima căutare într-o astfel de destinație poate dura mult, iar unii furnizori taxează datele descărcate.
+- O destinație care nu a putut fi deschisă arată **nu a putut fi citită**, iar (i) de lângă ea spune de ce. Celelalte destinații sunt căutate în continuare.
+
+Mașinile virtuale sunt salvate ca discuri întregi, așa că fișierele din ele nu sunt căutate. Nici auto-backupul și nici backupurile unui alt BombVault de la **Alte surse** nu sunt căutate. O căutare listează primele 200 de fișiere, așa că pentru un nume scurt precum `log` poate fi nevoie de câteva litere în plus.
 
 ## Ce revine, pe tipuri {#kinds}
 

@@ -171,6 +171,53 @@ const FINDING = {
   stillPresent: true,
 };
 
+// A search for "maschinell" finds one file of immich in its three newest
+// backups, read at home, and leaves the Storage Box alone.
+const FOUND_PATH = "/mnt/user/appdata/immich/config/einstellungen-der-maschinellen-lernfunktionen.json";
+const FOUND = {
+  ok: true,
+  files: [
+    {
+      domain: "containers",
+      key: "immich",
+      path: FOUND_PATH,
+      type: "file",
+      versions: DAYS.slice(0, 3).map((daysAgo, i) => ({
+        at: 0,
+        row: snapshotOf("immich", i),
+        time: new Date((NOW - 4 * HOUR - daysAgo * DAY) * 1000).toISOString(),
+        place: "local",
+        snapshot: snapshotOf("immich", i),
+        size: i === 0 ? 3 * 1024 : 2 * 1024,
+        modified: i === 0 ? "2026-11-02T10:00:00Z" : "2026-10-20T10:00:00Z",
+      })),
+    },
+  ],
+  places: [
+    { label: "", domain: "containers", remote: false, state: "searched", backups: 15 },
+    { label: "Storage Box", domain: "containers", remote: true, state: "notAsked", backups: 0 },
+  ],
+  more: false,
+};
+
+async function stageSearch(page: Page): Promise<void> {
+  await page.route(
+    (url) => url.pathname === "/api/search/files",
+    (route) => route.fulfill({ json: FOUND }),
+  );
+  await page.route(
+    (url) => url.pathname === "/api/containers/immich/files",
+    (route) => route.fulfill({ json: { ok: true, files: [{ path: FOUND_PATH, type: "file", size: 3 * 1024 }] } }),
+  );
+}
+
+async function searchFile(page: Page): Promise<void> {
+  await page.getByRole("searchbox", { name: "Dateiname, etwa config.php oder *.pdf" }).fill("maschinell");
+  await page.getByRole("button", { name: "Suchen" }).click();
+  await expect(page.getByTestId("found-file")).toBeVisible();
+  await settle(page);
+}
+
 const checks: Record<string, unknown>[] = [];
 
 async function stage(page: Page, theme: "dark" | "light" = "dark"): Promise<void> {
@@ -525,6 +572,25 @@ test("the tiles and the search narrow the entries", async ({ page }, testInfo) =
   await expect(page.getByRole("heading", { level: 2, name: "Fotos" })).toBeAttached();
   await page.getByRole("searchbox").fill("gibt es nicht");
   await expect(page.getByText("Kein Eintrag passt.")).toBeVisible();
+});
+
+test("a file found in the backups opens the restore window with just that file ticked", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  await stageSearch(page);
+  await openPage(page);
+  await searchFile(page);
+
+  const hit = page.getByTestId("found-file");
+  await expect(hit).toContainText("immich");
+  await expect(hit).toContainText(FOUND_PATH);
+  await expect(hit.getByRole("button")).toHaveCount(3);
+  await expect(hit.getByRole("button").nth(1)).toContainText("unverändert");
+  await expect(page.getByRole("list", { name: "Durchsuchte Speicherorte" })).toContainText("nicht durchsucht, off-site");
+
+  await hit.getByRole("button").first().click();
+  const win = page.getByRole("dialog", { name: "immich wiederherstellen" });
+  await expect(win.getByRole("checkbox", { name: FOUND_PATH })).toHaveAttribute("aria-checked", "true");
 });
 
 test("a backup is picked with the keys and by dragging the handle", async ({ page }, testInfo) => {
@@ -953,6 +1019,28 @@ for (const width of [320, 360]) {
     const inWizard = await edges(page);
     expect(inWizard.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
     expect(inWizard.clipped, "the emergency window clips the edge").toEqual([]);
+  });
+}
+
+for (const width of [320, 390]) {
+  test(`find a file @ ${width}px: the hits and the window keep inside the edge`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+    await stage(page);
+    await stageSearch(page);
+    await page.setViewportSize({ width, height: 800 });
+    await openPage(page);
+    await searchFile(page);
+
+    const onPage = await edges(page);
+    expect(onPage.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(onPage.mainPan!, "#bv-main scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(onPage.clipped, "controls clip the viewport edge").toEqual([]);
+
+    await page.getByTestId("found-file").getByRole("button").first().click();
+    const win = page.getByRole("dialog", { name: "immich wiederherstellen" });
+    await expect(win.getByRole("checkbox", { name: FOUND_PATH })).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the restore window clips the edge").toEqual([]);
   });
 }
 

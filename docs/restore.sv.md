@@ -9,6 +9,7 @@ Varje återställning börjar på sidan **Återställning**: välj ett avsnitt, 
 
 - **Avsnitt** listar avsnitten som brickor, var och en med hur många poster som har ögonblicksbilder.
 - **Vad vill du få tillbaka?** söker bland posterna i det valda avsnittet. Varje rad visar sin nyaste ögonblicksbild, och **Öppna posten** leder till postens sida.
+- **Hitta en fil** letar efter en fil eller mapp med dess namn i varje säkerhetskopia, se [Hitta en fil](#find-a-file).
 - **Stackar** listar Compose-projekten med minst två säkerhetskopierade containrar, till exempel `immich` med sin databas och Redis. Sökningen hittar en stack på dess namn eller på någon av dess containrar.
 - **Körs nu** visar en återställning medan den pågår, även efter att du stängt dess fönster.
 - **Nödläge** startar Nödguiden för en server som är borta eller som har satts upp på nytt, se [Nödguide](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Om du hellre vill lägga tillbaka filen direkt väljer du **Ersätt originalet**
 
 ![Återställningsfönstret vid Vad som händer, med Ersätt originalet valt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Återställningsfönstret vid Vad som händer, med Ersätt originalet valt.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Hitta en fil {#find-a-file}
+
+När du vet namnet på en fil men inte vilken post eller säkerhetskopia som fortfarande har den, skriver du namnet i **Hitta en fil** och trycker på **Sök**. Vanlig text matchar var som helst i namnet och bryr sig inte om stora och små bokstäver, så `invoice` hittar `Invoice-2024.pdf`. Med `*` eller `?` måste mönstret matcha hela namnet, så `*.pdf` hittar varje PDF. Skriv bara namnet, utan mapp.
+
+Sökningen läser varje säkerhetskopia av containrarna, mappuppsättningarna, ZFS-datauppsättningarna och flashenheten. Varje träff visar posten, sökvägen och varje säkerhetskopia som har filen, nyaste först, med datum, storlek och platsen den lästes på. En säkerhetskopia där filen har samma storlek och ändringstid som i den före säger **oförändrad**, så du ser var filen senast ändrades. Ett klick på en säkerhetskopia öppnar återställningsfönstret för den, med **Enskilda filer** valt och filen förbockad. En fil från flashenheten kommer tillbaka som en del av flashenhetens ZIP, eftersom flashenheten bara återställs som helhet.
+
+Sökningen tar en stund, eftersom restic går igenom varje säkerhetskopia. **Stoppa** avslutar den, och det gör det också om du lämnar sidan. Under fältet står vilka platser den läste:
+
+- Platser på den här servern och i ditt nätverk genomsöks alltid.
+- En säkerhetskopia som ligger på flera platser läses bara en gång, på den första. En plats vars säkerhetskopior alla lästes någon annanstans säger **redan genomsökt på en annan plats**.
+- Externa platser som S3, B2 eller SFTP hoppas över, om du inte slår på **Sök även på externa platser**. Då läses där bara de säkerhetskopior som ingen plats här har, oftast de äldre som sparas längre externt. Den första sökningen på en sådan plats kan ta lång tid, och vissa leverantörer tar betalt för den data som laddas ner.
+- En plats som inte gick att öppna säger **kunde inte läsas**, och (i) bredvid förklarar varför. De andra platserna genomsöks ändå.
+
+Virtuella maskiner sparas som hela diskar, så filerna i dem genomsöks inte. Auto-säkerhetskopian och säkerhetskopiorna från en annan BombVault under **Andra källor** genomsöks inte heller. En sökning listar de första 200 filerna, så ett kort namn som `log` kan behöva fler bokstäver.
 
 ## Vad som kommer tillbaka, per typ {#kinds}
 

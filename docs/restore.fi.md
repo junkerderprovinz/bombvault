@@ -9,6 +9,7 @@ Jokainen palautus alkaa **Palautus**-sivulta: valitse osio, hae haluamasi ja val
 
 - **Osiot** listaa osiot ruutuina, kussakin se, kuinka monella merkinnällä on tilannevedoksia.
 - **Mitä haluat palauttaa?** hakee valitun osion merkinnöistä. Jokaisella rivillä näkyy sen uusin tilannevedos, ja **Avaa merkintä** johtaa merkinnän sivulle.
+- **Etsi tiedosto** etsii tiedostoa tai kansiota sen nimellä jokaisesta varmuuskopiosta, katso [Tiedoston etsiminen](#find-a-file).
 - **Stackit** listaa Compose-projektit, joissa on vähintään kaksi varmuuskopioitua konttia, kuten `immich` tietokantoineen ja Redisineen. Haku löytää stackin nimellä tai minkä tahansa sen kontin nimellä.
 - **Käynnissä nyt** näyttää palautuksen sen ajan, kun se on käynnissä, myös sen jälkeen kun suljit sen ikkunan.
 - **Hätätilanne** käynnistää Hätäohjatun toiminnon palvelimelle, joka on poissa tai pystytettiin uudelleen, katso [Hätäohjattu toiminto](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Jos haluat laittaa tiedoston suoraan takaisin, valitse vaiheessa 5 **Korvaa alku
 
 ![Palautusikkuna Mitä tapahtuu -vaiheessa, Korvaa alkuperäinen valittuna.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Palautusikkuna Mitä tapahtuu -vaiheessa, Korvaa alkuperäinen valittuna.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Tiedoston etsiminen {#find-a-file}
+
+Kun tiedät tiedoston nimen mutta et sitä, missä merkinnässä tai varmuuskopiossa se vielä on, kirjoita nimi kenttään **Etsi tiedosto** ja paina **Hae**. Pelkkä teksti osuu mihin kohtaan nimeä tahansa eikä välitä kirjainkoosta, joten `invoice` löytää tiedoston `Invoice-2024.pdf`. Kun käytät merkkiä `*` tai `?`, kuvion on vastattava koko nimeä, joten `*.pdf` löytää jokaisen PDF:n. Kirjoita pelkkä nimi, ilman kansiota.
+
+Haku lukee jokaisen konttien, kansiojoukkojen, ZFS-tietojoukkojen ja flash-aseman varmuuskopion. Jokainen osuma näyttää merkinnän, polun ja jokaisen varmuuskopion, jossa tiedosto on, uusin ensin, sekä päivämäärän, koon ja paikan, josta se luettiin. Varmuuskopio, jossa tiedostolla on sama koko ja muokkausaika kuin sitä edeltävässä, näyttää **ennallaan**, joten näet, missä kohtaa tiedosto viimeksi muuttui. Varmuuskopion napsautus avaa sille palautusikkunan, jossa **Yksittäiset tiedostot** on valittu ja tiedosto rastitettu. Flash-aseman tiedosto palautuu osana flash-aseman ZIP-tiedostoa, koska flash-asema palautetaan vain kokonaisena.
+
+Haku kestää hetken, koska restic käy läpi jokaisen varmuuskopion. **Pysäytä** lopettaa sen, ja niin tekee myös sivulta poistuminen. Kentän alla kerrotaan, mitkä paikat haku luki:
+
+- Tämän palvelimen ja verkkosi paikoista haetaan aina.
+- Varmuuskopio, joka on useassa paikassa, luetaan vain kerran, ensimmäisestä. Paikka, jonka kaikki varmuuskopiot luettiin muualta, näyttää **käyty jo läpi toisessa paikassa**.
+- Etäpaikat, kuten S3, B2 tai SFTP, jätetään pois, ellet kytke päälle valintaa **Hae myös etäpaikoista**. Silloin niistä luetaan vain ne varmuuskopiot, joita mikään paikka täällä ei sisällä, yleensä vanhemmat, jotka pidempi säilytys pitää etänä. Ensimmäinen haku tällaisesta paikasta voi kestää kauan, ja jotkin palveluntarjoajat laskuttavat ladattavasta datasta.
+- Paikka, jota ei voitu avata, näyttää **ei voitu lukea**, ja sen vieressä oleva (i) kertoo syyn. Muista paikoista haetaan silti.
+
+Virtuaalikoneet tallennetaan kokonaisina levyinä, joten haku ei käy läpi niiden sisällä olevia tiedostoja. Myöskään itsevarmuuskopiota ja kohdan **Muut lähteet** toisen BombVaultin varmuuskopioita haku ei käy läpi. Haku listaa ensimmäiset 200 tiedostoa, joten lyhyt nimi kuten `log` voi tarvita lisää kirjaimia.
 
 ## Mitä palautuu, lajeittain {#kinds}
 

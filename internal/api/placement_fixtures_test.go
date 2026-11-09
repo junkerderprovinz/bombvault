@@ -545,7 +545,10 @@ type placementEngine struct {
 	diffs       []string                       // "from->to" of each DiffStream call
 	diffChanges map[string][]restic.DiffChange // what a DiffStream call reports, by "from->to"
 	files       map[string][]restic.FileEntry  // what a snapshot lists, by its id
-	ensured     []string                       // Init calls: the repositories EnsureRepo had to create
+	found       map[string][]restic.FoundFile  // what a snapshot holds for Find, by its id
+	findErr     map[string]error               // Find fails here
+	finds       []findCall
+	ensured     []string // Init calls: the repositories EnsureRepo had to create
 	// onSnapshots, when set, runs synchronously after every Snapshots call, so a
 	// test can rewrite state a caller already captured before it listed.
 	onSnapshots func()
@@ -586,6 +589,12 @@ type forgetCall struct {
 type forgetIDsCall struct {
 	Repo string
 	IDs  []string
+}
+
+type findCall struct {
+	Repo    string
+	IDs     []string
+	Pattern string
 }
 
 type tagCall struct {
@@ -776,6 +785,32 @@ func (e *placementEngine) LsStreamNoLock(_ context.Context, _, id string, _ rest
 	e.mu.Unlock()
 	for _, entry := range entries {
 		onEntry(entry)
+	}
+	return nil
+}
+
+// Find hands over, for each snapshot asked for, what found holds of it that
+// the pattern matches, the way restic find's name filter does.
+func (e *placementEngine) Find(_ context.Context, repo string, ids []string, pattern string, _ restic.Mode, onSnapshot func(string, []restic.FoundFile)) error {
+	e.mu.Lock()
+	key := filepath.ToSlash(repo)
+	e.finds = append(e.finds, findCall{Repo: key, IDs: slices.Clone(ids), Pattern: pattern})
+	err := e.findErr[key]
+	found := maps.Clone(e.found)
+	e.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		var files []restic.FoundFile
+		for _, f := range found[id] {
+			if restic.MatchesName(pattern, f.Path) {
+				files = append(files, f)
+			}
+		}
+		if len(files) > 0 {
+			onSnapshot(id, files)
+		}
 	}
 	return nil
 }

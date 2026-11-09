@@ -1427,6 +1427,55 @@ export function listSnapshotFiles(
   );
 }
 
+/** One backup that holds a found file. `at` is the index of the place in
+ *  FileSearchResponse.places it was read at, `row` the key of its timeline row. */
+export interface FoundVersion {
+  at: number;
+  row: string;
+  time: string;
+  place: string;
+  snapshot: string;
+  size: number;
+  modified: string;
+}
+
+/** A file or folder of one entry and every backup holding it, newest first.
+ *  `dataset` names the ZFS dataset whose backup holds the path. */
+export interface FoundFile {
+  domain: TimelineDomain;
+  key: string;
+  dataset?: string;
+  path: string;
+  type: string;
+  versions: FoundVersion[];
+}
+
+/** A repository the search read, or why it did not. An empty label stands
+ *  for the folder of the section in `domain`. */
+export interface SearchedPlace {
+  label: string;
+  directOf?: string;
+  domain: TimelineDomain;
+  remote: boolean;
+  state: "searched" | "covered" | "notAsked" | "failed";
+  backups: number;
+  error?: string;
+}
+
+export interface FileSearchResponse extends OkEnvelope {
+  files?: FoundFile[];
+  places?: SearchedPlace[];
+  /** More files matched than the answer lists. */
+  more?: boolean;
+}
+
+/** GET /api/search/files: the files and folders whose name matches `name` in
+ *  every backup of the entries the Restore page lists. Remote places are read
+ *  only with `offsite`. Aborting the signal stops the search on the server. */
+export function searchFiles(name: string, offsite: boolean, signal: AbortSignal): Promise<FileSearchResponse> {
+  return fetchJSON(`/api/search/files?q=${encodeURIComponent(name)}${offsite ? "&offsite=1" : ""}`, { signal });
+}
+
 /** Response from POST /api/containers/{name}/restore-files */
 export interface RestoreFilesResponse extends OkEnvelope {
   /** True once the server accepted the job and is running it detached. */

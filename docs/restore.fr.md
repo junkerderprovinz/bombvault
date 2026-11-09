@@ -9,6 +9,7 @@ Chaque restauration commence sur la page **Restauration** : choisissez une secti
 
 - **Sections** liste les sections sous forme de tuiles, chacune avec le nombre d'éléments qui ont des instantanés.
 - **Que voulez-vous restaurer ?** cherche parmi les éléments de la section choisie. Chaque ligne montre son instantané le plus récent, et **Ouvrir l'élément** mène à la page de l'élément.
+- **Trouver un fichier** cherche un fichier ou un dossier par son nom dans chaque sauvegarde, voir [Retrouver un fichier](#find-a-file).
 - **Stacks** liste les projets Compose avec au moins deux conteneurs sauvegardés, comme `immich` avec sa base de données et Redis. La recherche trouve une stack par son nom ou par n'importe lequel de ses conteneurs.
 - **En cours** montre une restauration pendant qu'elle tourne, même après la fermeture de sa fenêtre.
 - **Urgence** lance l'assistant d'urgence pour un serveur qui a disparu ou qui a été reconfiguré, voir [Assistant d'urgence](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Pour remettre le fichier directement à sa place, choisissez **Remplacer l'origi
 
 ![La fenêtre de restauration à l'étape Ce qui se passe, avec Remplacer l'original choisi.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La fenêtre de restauration à l'étape Ce qui se passe, avec Remplacer l'original choisi.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Retrouver un fichier {#find-a-file}
+
+Quand vous connaissez le nom d'un fichier mais pas l'élément ou la sauvegarde qui l'a encore, saisissez le nom dans **Trouver un fichier** et appuyez sur **Rechercher**. Un texte simple peut se trouver n'importe où dans le nom et ignore la casse, donc `invoice` trouve `Invoice-2024.pdf`. Avec `*` ou `?`, le motif doit correspondre au nom entier, donc `*.pdf` trouve tous les PDF. Saisissez seulement le nom, sans dossier.
+
+La recherche lit chaque sauvegarde des conteneurs, des ensembles de dossiers, des jeux de données ZFS et de la clé flash. Chaque résultat montre l'élément, le chemin et chaque sauvegarde qui contient le fichier, de la plus récente à la plus ancienne, avec la date, la taille et l'endroit où elle a été lue. Une sauvegarde où le fichier a la même taille et la même date de modification que dans la précédente indique **inchangé**, ce qui vous permet de voir quand le fichier a changé pour la dernière fois. Un clic sur une sauvegarde ouvre la fenêtre de restauration sur celle-ci, avec **Fichiers individuels** choisi et le fichier coché. Un fichier de la clé flash revient dans le ZIP de la clé flash, car la clé flash ne se restaure qu'en entier.
+
+La recherche prend un moment, car restic parcourt chaque sauvegarde. **Arrêter** l'interrompt, tout comme quitter la page. Sous le champ, elle indique quels endroits elle a lus :
+
+- Les endroits sur ce serveur et sur votre réseau sont toujours parcourus.
+- Une sauvegarde présente à plusieurs endroits n'est lue qu'une fois, au premier. Un endroit dont toutes les sauvegardes ont été lues ailleurs indique **déjà parcouru à un autre endroit**.
+- Les endroits hors site comme S3, B2 ou SFTP sont laissés de côté, sauf si vous activez **Chercher aussi dans les endroits hors site**. Seules les sauvegardes qu'aucun endroit ici ne contient y sont alors lues, en général les plus anciennes qu'une rétention plus longue garde hors site. La première recherche à un tel endroit peut être longue, et certains fournisseurs facturent les données téléchargées.
+- Un endroit qui n'a pas pu être ouvert indique **lecture impossible**, et le (i) à côté dit pourquoi. Les autres endroits sont tout de même parcourus.
+
+Les machines virtuelles sont sauvegardées comme disques entiers, donc les fichiers qu'elles contiennent ne sont pas parcourus. L'auto-sauvegarde et les sauvegardes d'un autre BombVault sous **Autres sources** ne le sont pas non plus. Une recherche liste les 200 premiers fichiers, donc un nom court comme `log` peut demander quelques lettres de plus.
 
 ## Ce qui revient, selon le type {#kinds}
 

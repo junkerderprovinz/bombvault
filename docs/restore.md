@@ -9,6 +9,7 @@ Every restore starts on the **Restore** page: pick a section, search for what yo
 
 - **Sections** lists the sections as tiles, each with how many entries have snapshots.
 - **What do you want to bring back?** searches the entries of the picked section. Each row shows its newest snapshot, and **Open entry** leads to the entry's page.
+- **Find a file** looks for a file or folder by its name in every backup, see [Finding a file](#find-a-file).
 - **Stacks** lists the Compose projects with at least two backed-up containers, such as `immich` with its database and Redis. The search finds a stack by its name or by any of its containers.
 - **Running now** shows a restore while it runs, also after you closed its window.
 - **Emergency** starts the Emergency wizard for a server that is gone or was set up again, see [Emergency wizard](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ To put the file straight back instead, choose **Replace original** in step 5. Ke
 
 ![The restore window at What happens, with Replace original picked.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![The restore window at What happens, with Replace original picked.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Finding a file {#find-a-file}
+
+When you know the name of a file but not which entry or backup still has it, type the name into **Find a file** and press **Search**. Plain text matches anywhere in the name and ignores case, so `invoice` finds `Invoice-2024.pdf`. With `*` or `?` the pattern has to match the whole name, so `*.pdf` finds every PDF. Type just the name, without a folder.
+
+The search reads every backup of the containers, folder sets, ZFS datasets and the flash drive. Each hit shows the entry, the path and every backup that holds the file, newest first, with the date, the size and the place it was read at. A backup in which the file has the same size and modification time as in the one before it says **unchanged**, so you can tell where the file last changed. A click on a backup opens the restore window on it, with **Individual files** picked and the file ticked. A file from the flash drive comes back as part of the flash drive ZIP, because the flash drive is only restored as a whole.
+
+The search takes a while, because restic walks through every backup. **Stop** ends it, and so does leaving the page. Under the field it says which places it read:
+
+- Places on this server and on your network are always searched.
+- A backup that lies at several places is read only once, at the first one. A place whose backups were all read elsewhere says **already searched at another place**.
+- Off-site places such as S3, B2 or SFTP are left out unless you switch on **Also search off-site places**. Then only the backups that no place here holds are read there, usually the older ones a longer retention keeps off-site. The first search at such a place can take long, and some providers charge for the data it downloads.
+- A place that could not be opened says **could not be read**, and the (i) beside it tells why. The other places are still searched.
+
+Virtual machines are saved as whole disks, so the files inside them are not searched. The self-backup and the backups of another BombVault under **Other sources** are not searched either. A search lists the first 200 files, so a short name such as `log` may need more letters.
 
 ## What comes back, by kind {#kinds}
 
