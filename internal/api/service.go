@@ -19272,12 +19272,9 @@ func isRepoUninitialized(err error) bool {
 		containsAny(msg, repoAbsenceMarkers) && !containsAny(msg, transportFailureMarkers)
 }
 
-// unlockStale clears the locks restic calls stale and the ones an earlier run
-// of BombVault on this host left in a local repository (see restic.Unlock).
-// That second rule assumes BombVault is the only writer of a local repository:
-// every install uses the hostname bombvault, so a second instance sharing the
-// path cannot be told from an earlier run and its held lock can go. Logged,
-// never fatal.
+// unlockStale clears the locks no running restic relies on (see
+// restic.Unlock). A lock that is still refreshed stays, so a second install
+// writing to the same repository keeps its lock. Logged, never fatal.
 func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
 	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {
 		log.Printf("api: stale-unlock failed (continuing): %v", err)
@@ -19381,10 +19378,11 @@ func (s *Service) pathsPresentInSnapshot(ctx context.Context, repo, snapshotID s
 	return present, nil
 }
 
-// UnlockDomain removes locks from a domain's repo (restic unlock --remove-all).
-// BombVault is the sole writer and serialises its operations, so a leftover lock
-// is always safe to clear — this is the manual counterpart to the automatic
-// stale-lock cleanup done before each backup.
+// UnlockDomain removes the locks of a domain's repositories, the manual
+// counterpart to the stale-lock cleanup before each backup. It asks for every
+// lock to go, and restic.Unlock still keeps one that is being refreshed: the
+// domain lock keeps this install's own runs out, but another install may write
+// to the same repository.
 //
 // EVERY repository this domain's items write to (#204). The button exists for
 // the case where something is stuck, and a lock left on an item's named
@@ -19422,26 +19420,22 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 	// Per repository, so a domain with several gets the same time for each.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*2*time.Minute)
 	defer cancel()
-	// removeAll (a FORCE removal, live locks included) is only safe where this
-	// process is provably the only writer, and the in-process serialisation is
-	// keyed by DOMAIN. A named repository can be shared between domains - nothing
-	// scopes one to a single domain and the same picker offers it to all three -
-	// so forcing on a shared repository yanks the lock out from under another
-	// domain's running backup. There a STALE clear is the right tool: it removes
-	// a lock restic itself deems dead and leaves a live one alone, which is
-	// exactly what every other site in this file uses.
+	// The in-process serialisation is keyed by domain, and a named repository
+	// can be shared between domains: nothing scopes one to a single domain and
+	// the same picker offers it to all three. Another domain's running backup
+	// holds a refreshed lock there, which is no error, so a shared repository
+	// gets the stale clear every other site in this file uses.
 	var firstErr error
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		if s.repoSharedWithAnotherDomain(settings, domain, r) {
 			log.Printf("api: unlock %s: %s is shared with another domain; clearing only stale locks there", domain, s.refName(r)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
-			// Reported, not silently downgraded. `restic unlock` without --remove-all
-			// removes only what restic itself calls stale, and a lock left by a
-			// previous container incarnation is not stale until it is old enough - so
-			// the button that exists for exactly that case can come back green having
-			// changed nothing. There is no way to ask restic afterwards whether the
-			// lock is gone, so the honest answer is to say which repository got the
-			// weaker treatment and why.
+			// Reported, not silently downgraded. A stale clear keeps a lock that
+			// still looks refreshed, and a lock left by a previous container
+			// incarnation looks that way until it is old enough - so the button that
+			// exists for exactly that case can come back green having changed
+			// nothing. So the answer names the repository that got the weaker
+			// treatment, and why.
 			if uErr := s.engine.Unlock(ctx, r.Loc, false, rMode); uErr != nil && firstErr == nil {
 				firstErr = fmt.Errorf("clearing stale locks on %s: %w", s.refName(r), uErr)
 			}

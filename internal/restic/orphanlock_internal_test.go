@@ -90,7 +90,7 @@ func TestOwnerMayLiveKeepsTheLockOfAResticThisProcessRuns(t *testing.T) {
 	}
 }
 
-func TestRemoveOrphanLocksLeavesTheLockOfAResticThisProcessRuns(t *testing.T) {
+func TestUnlockLeavesTheLockOfAResticThisProcessRuns(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("reads /proc and runs a shell script as restic")
 	}
@@ -115,7 +115,8 @@ func TestRemoveOrphanLocksLeavesTheLockOfAResticThisProcessRuns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lock := `{"time":"2020-01-01T00:00:00Z","hostname":"` + host + `","pid":` + strconv.Itoa(child.Process.Pid) + `}`
+	taken := time.Now().Add(-lockRefreshSilence - time.Minute).UTC().Format(time.RFC3339)
+	lock := `{"time":"` + taken + `","hostname":"` + host + `","pid":` + strconv.Itoa(child.Process.Pid) + `}`
 	script := "#!/bin/sh\n" +
 		"case \"$*\" in\n" +
 		"*\"list locks\"*) echo " + id + " ;;\n" +
@@ -126,7 +127,7 @@ func TestRemoveOrphanLocksLeavesTheLockOfAResticThisProcessRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := (Restic{Bin: bin}).removeOrphanLocks(context.Background(), repo, Mode{}, processStart, time.Now()); err != nil {
+	if err := (Restic{Bin: bin}).clearLocks(context.Background(), repo, false, Mode{}, processStart, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(lockPath); err != nil {
