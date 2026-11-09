@@ -9,6 +9,7 @@ Ogni ripristino parte dalla pagina **Ripristino**: scegli una sezione, cerca ci�
 
 - **Sezioni** elenca le sezioni come riquadri, ciascuno con quanti elementi hanno snapshot.
 - **Cosa vuoi riportare indietro?** cerca tra gli elementi della sezione scelta. Ogni riga mostra il suo snapshot più recente, e **Apri elemento** porta alla pagina dell'elemento.
+- **Trova un file** cerca un file o una cartella per nome in ogni backup, vedi [Trovare un file](#find-a-file).
 - **Stack** elenca i progetti Compose con almeno due container salvati, come `immich` con il suo database e Redis. La ricerca trova uno stack dal suo nome o da uno qualsiasi dei suoi container.
 - **In esecuzione** mostra un ripristino mentre gira, anche dopo che ne hai chiuso la finestra.
 - **Emergenza** avvia la Procedura guidata di emergenza per un server che non c'è più o è stato reinstallato, vedi [Procedura guidata di emergenza](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Per rimettere il file direttamente al suo posto, al passaggio 5 scegli invece **
 
 ![La finestra di ripristino a Cosa succede, con Sostituisci l'originale scelto.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La finestra di ripristino a Cosa succede, con Sostituisci l'originale scelto.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Trovare un file {#find-a-file}
+
+Quando conosci il nome di un file ma non sai quale elemento o backup lo ha ancora, scrivi il nome in **Trova un file** e premi **Cerca**. Il testo semplice può trovarsi in qualsiasi punto del nome e non distingue tra maiuscole e minuscole, quindi `invoice` trova `Invoice-2024.pdf`. Con `*` o `?` il modello deve corrispondere al nome intero, quindi `*.pdf` trova ogni PDF. Scrivi solo il nome, senza cartella.
+
+La ricerca legge ogni backup dei container, dei set di cartelle, dei dataset ZFS e della chiavetta flash. Ogni risultato mostra l'elemento, il percorso e ogni backup che contiene il file, dal più recente, con la data, la dimensione e il posto in cui è stato letto. Un backup in cui il file ha la stessa dimensione e la stessa data di modifica di quello precedente indica **invariato**, così capisci quando il file è cambiato l'ultima volta. Un clic su un backup apre su di esso la finestra di ripristino, con **File singoli** scelto e il file spuntato. Un file della chiavetta flash torna come parte dello ZIP della chiavetta flash, perché la chiavetta flash si ripristina solo per intero.
+
+La ricerca richiede un po' di tempo, perché restic percorre ogni backup. **Ferma** la interrompe, e lo stesso succede se lasci la pagina. Sotto il campo è indicato quali posti ha letto:
+
+- I posti su questo server e nella tua rete vengono sempre esaminati.
+- Un backup che si trova in più posti viene letto una volta sola, nel primo. Un posto i cui backup sono stati tutti letti altrove indica **già esaminato in un altro posto**.
+- I posti off-site come S3, B2 o SFTP restano fuori, a meno che tu non attivi **Cerca anche nei posti off-site**. Allora lì vengono letti solo i backup che nessun posto qui contiene, di solito quelli più vecchi che una conservazione più lunga tiene off-site. La prima ricerca in un posto del genere può richiedere molto tempo, e alcuni fornitori fanno pagare i dati scaricati.
+- Un posto che non è stato possibile aprire indica **lettura non riuscita**, e la (i) accanto spiega il motivo. Gli altri posti vengono esaminati lo stesso.
+
+Le macchine virtuali vengono salvate come dischi interi, quindi i file al loro interno non vengono cercati. Nemmeno l'auto-backup e i backup di un altro BombVault in **Altre sorgenti** vengono cercati. Una ricerca elenca i primi 200 file, quindi un nome corto come `log` può richiedere qualche lettera in più.
 
 ## Cosa torna indietro, per tipo {#kinds}
 

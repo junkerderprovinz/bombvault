@@ -9,6 +9,7 @@ Každá obnova začíná na stránce **Obnova**: vyber sekci, vyhledej, co chce�
 
 - **Sekce** vypisuje sekce jako dlaždice, u každé s počtem položek, které mají snapshoty.
 - **Co chceš vrátit?** prohledává položky vybrané sekce. Každý řádek ukazuje svůj nejnovější snapshot a **Otevřít položku** vede na stránku položky.
+- **Najít soubor** hledá soubor nebo složku podle názvu ve všech zálohách, viz [Hledání souboru](#find-a-file).
 - **Stacky** vypisují projekty Compose s nejméně dvěma zálohovanými kontejnery, například `immich` s databází a Redisem. Vyhledávání najde stack podle jeho jména nebo podle kteréhokoli z jeho kontejnerů.
 - **Právě běží** ukazuje obnovu, dokud běží, i poté, co jsi zavřel její okno.
 - **Nouze** spustí Nouzového průvodce pro server, který je pryč nebo byl nastaven znovu, viz [Nouzový průvodce](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Chceš-li soubor vrátit rovnou na místo, zvol v kroku 5 **Nahradit originál**
 
 ![Okno obnovy v kroku Co se stane, s vybraným Nahradit originál.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Okno obnovy v kroku Co se stane, s vybraným Nahradit originál.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Hledání souboru {#find-a-file}
+
+Když znáš název souboru, ale nevíš, která položka nebo záloha ho ještě má, napiš název do **Najít soubor** a stiskni **Hledat**. Obyčejný text se najde kdekoli v názvu a na velikosti písmen nezáleží, takže `invoice` najde `Invoice-2024.pdf`. S `*` nebo `?` musí vzor odpovídat celému názvu, takže `*.pdf` najde každé PDF. Napiš jen název, bez složky.
+
+Hledání čte každou zálohu kontejnerů, sad složek, datových sad ZFS a flashky. Každý nález ukazuje položku, cestu a všechny zálohy, které soubor obsahují, od nejnovější, s datem, velikostí a místem, odkud se četla. Záloha, ve které má soubor stejnou velikost a čas změny jako v té předchozí, říká **beze změny**, takže poznáš, kde se soubor naposledy změnil. Klik na zálohu otevře na ní okno obnovy s vybranými **Jednotlivé soubory** a zaškrtnutým souborem. Soubor z flashky se vrátí jako součást ZIPu flashky, protože flashka se obnovuje jen celá.
+
+Hledání chvíli trvá, protože restic prochází každou zálohu. **Zastavit** ho ukončí, stejně jako odchod ze stránky. Pod polem je vidět, která místa přečetlo:
+
+- Místa na tomto serveru a ve tvé síti se prohledávají vždy.
+- Záloha, která leží na více místech, se čte jen jednou, na prvním z nich. Místo, jehož zálohy se všechny přečetly jinde, říká **už prohledáno na jiném místě**.
+- Místa mimo lokalitu jako S3, B2 nebo SFTP se vynechají, dokud nezapneš **Hledat i na místech mimo lokalitu**. Pak se tam čtou jen zálohy, které nemá žádné místo tady, obvykle ty starší, které delší uchovávání drží mimo lokalitu. První hledání na takovém místě může trvat dlouho a někteří poskytovatelé si stažená data účtují.
+- Místo, které nešlo otevřít, říká **nešlo přečíst** a (i) vedle něj řekne proč. Ostatní místa se prohledají i tak.
+
+Virtuální stroje se ukládají jako celé disky, proto se soubory v nich neprohledávají. Neprohledává se ani autozáloha a zálohy jiného BombVaultu pod **Další zdroje**. Hledání vypíše prvních 200 souborů, takže krátký název jako `log` může potřebovat víc písmen.
 
 ## Co se vrací, podle druhu {#kinds}
 

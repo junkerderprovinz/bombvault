@@ -9,6 +9,7 @@ Hver gendannelse starter på siden **Gendannelse**: Vælg et område, søg efter
 
 - **Områder** viser områderne som fliser, hver med hvor mange poster der har gendannelsespunkter.
 - **Hvad vil du hente tilbage?** søger i posterne i det valgte område. Hver række viser sit nyeste gendannelsespunkt, og **Åbn element** fører til postens side.
+- **Find en fil** leder efter en fil eller mappe ud fra navnet i hver sikkerhedskopi, se [Søg efter en fil](#find-a-file).
 - **Stakke** viser Compose-projekterne med mindst to sikkerhedskopierede containere, for eksempel `immich` med sin database og Redis. Søgningen finder en stak på dens navn eller på en af dens containere.
 - **Kører nu** viser en gendannelse, mens den kører, også efter at du har lukket dens vindue.
 - **Nødsituation** starter nødguiden for en server, der er væk eller blev sat op igen, se [Nødguide](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Vil du i stedet lægge filen direkte tilbage, så vælg **Erstat originalen** i 
 
 ![Gendannelsesvinduet ved Hvad der sker med Erstat originalen valgt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Gendannelsesvinduet ved Hvad der sker med Erstat originalen valgt.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Søg efter en fil {#find-a-file}
+
+Når du kender navnet på en fil, men ikke ved, hvilken post eller sikkerhedskopi der stadig har den, så skriv navnet i **Find en fil**, og tryk på **Søg**. Almindelig tekst matcher hvor som helst i navnet og ser bort fra store og små bogstaver, så `invoice` finder `Invoice-2024.pdf`. Med `*` eller `?` skal mønstret matche hele navnet, så `*.pdf` finder hver PDF. Skriv kun navnet, uden mappe.
+
+Søgningen læser hver sikkerhedskopi af containerne, mappesættene, ZFS-datasættene og flashdrevet. Hvert fund viser posten, stien og hver sikkerhedskopi, der indeholder filen, nyeste først, med dato, størrelse og det sted, den blev læst fra. En sikkerhedskopi, hvor filen har samme størrelse og ændringstidspunkt som i den forrige, siger **uændret**, så du kan se, hvor filen sidst ændrede sig. Et klik på en sikkerhedskopi åbner gendannelsesvinduet på den, med **Enkelte filer** valgt og flueben ved filen. En fil fra flashdrevet kommer tilbage som en del af flashdrevets ZIP, fordi flashdrevet kun gendannes som helhed.
+
+Søgningen tager et stykke tid, fordi restic går gennem hver sikkerhedskopi. **Stop** afslutter den, og det gør det også at forlade siden. Under feltet står, hvilke steder den har læst:
+
+- Steder på denne server og på dit netværk gennemsøges altid.
+- En sikkerhedskopi, der ligger flere steder, læses kun én gang, på det første. Et sted, hvis sikkerhedskopier alle blev læst andetsteds, siger **allerede gennemsøgt et andet sted**.
+- Eksterne steder som S3, B2 eller SFTP springes over, medmindre du slår **Søg også på eksterne steder** til. Så læses der kun de sikkerhedskopier, som intet sted her har, typisk de ældre, som en længere opbevaring beholder eksternt. Den første søgning på sådan et sted kan tage lang tid, og nogle udbydere tager betaling for de data, den henter.
+- Et sted, der ikke kunne åbnes, siger **kunne ikke læses**, og (i) ved siden af fortæller hvorfor. De andre steder gennemsøges alligevel.
+
+Virtuelle maskiner gemmes som hele diske, så filerne i dem gennemsøges ikke. Auto-sikkerhedskopien og sikkerhedskopierne fra en anden BombVault under **Andre kilder** gennemsøges heller ikke. En søgning viser de første 200 filer, så et kort navn som `log` kan have brug for flere bogstaver.
 
 ## Hvad der kommer tilbage, efter slags {#kinds}
 

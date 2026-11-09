@@ -9,6 +9,7 @@ Każde przywracanie zaczyna się na stronie **Przywracanie**: wybierz sekcję, w
 
 - **Sekcje** wymieniają sekcje jako kafelki, każdy z liczbą elementów, które mają migawki.
 - **Co chcesz przywrócić?** przeszukuje elementy wybranej sekcji. Każdy wiersz pokazuje swoją najnowszą migawkę, a **Otwórz wpis** prowadzi do strony elementu.
+- **Znajdź plik** szuka pliku lub folderu po nazwie w każdej kopii zapasowej, zobacz [Szukanie pliku](#find-a-file).
 - **Stacki** wymieniają projekty Compose z co najmniej dwoma skopiowanymi kontenerami, na przykład `immich` z jego bazą danych i Redis. Wyszukiwarka znajduje stack po nazwie albo po któremkolwiek z jego kontenerów.
 - **W toku** pokazuje przywracanie, gdy trwa, także po zamknięciu jego okna.
 - **Awaria** uruchamia Kreator awaryjny dla serwera, którego już nie ma albo który postawiono od nowa, zobacz [Kreator awaryjny](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Okno kończy się komunikatem **Gotowe: pliki są w /mnt/user/restore**. Plik zn
 
 ![Okno przywracania w kroku Co się stanie, z wybraną opcją Zastąp oryginał.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Okno przywracania w kroku Co się stanie, z wybraną opcją Zastąp oryginał.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Szukanie pliku {#find-a-file}
+
+Gdy znasz nazwę pliku, ale nie wiesz, który wpis albo która kopia wciąż go ma, wpisz nazwę w **Znajdź plik** i naciśnij **Szukaj**. Zwykły tekst pasuje w dowolnym miejscu nazwy i nie zwraca uwagi na wielkość liter, więc `invoice` znajdzie `Invoice-2024.pdf`. Z `*` albo `?` wzorzec musi pasować do całej nazwy, więc `*.pdf` znajdzie każdy plik PDF. Wpisz samą nazwę, bez folderu.
+
+Wyszukiwanie czyta każdą kopię kontenerów, zestawów folderów, zbiorów danych ZFS i dysku flash. Każde trafienie pokazuje wpis, ścieżkę i każdą kopię, która zawiera plik, od najnowszej, z datą, rozmiarem i miejscem docelowym, z którego ją odczytano. Kopia, w której plik ma ten sam rozmiar i czas modyfikacji co w poprzedniej, ma oznaczenie **bez zmian**, więc widać, gdzie plik zmienił się ostatnio. Kliknięcie kopii otwiera na niej okno przywracania, z wybraną opcją **Pojedyncze pliki** i zaznaczonym plikiem. Plik z dysku flash wraca jako część pliku ZIP dysku flash, bo dysk flash przywraca się tylko w całości.
+
+Wyszukiwanie chwilę trwa, bo restic przechodzi przez każdą kopię. **Zatrzymaj** je kończy, podobnie jak opuszczenie strony. Pod polem widać, które miejsca docelowe zostały odczytane:
+
+- Miejsca docelowe na tym serwerze i w twojej sieci są przeszukiwane zawsze.
+- Kopia, która leży w kilku miejscach docelowych, jest czytana tylko raz, w pierwszym z nich. Miejsce docelowe, którego wszystkie kopie odczytano gdzie indziej, ma oznaczenie **już przeszukane w innym miejscu docelowym**.
+- Miejsca docelowe poza siedzibą, takie jak S3, B2 czy SFTP, są pomijane, chyba że włączysz **Przeszukaj też miejsca docelowe poza siedzibą**. Wtedy czytane są tam tylko kopie, których nie ma żadne miejsce docelowe tutaj, zwykle starsze, które dłuższe przechowywanie trzyma poza siedzibą. Pierwsze wyszukiwanie w takim miejscu może długo trwać, a niektórzy dostawcy naliczają opłaty za pobrane dane.
+- Miejsce docelowe, którego nie udało się otworzyć, ma oznaczenie **nie udało się odczytać**, a (i) obok mówi dlaczego. Pozostałe miejsca docelowe są przeszukiwane dalej.
+
+Maszyny wirtualne są zapisywane jako całe dyski, więc pliki w nich nie są przeszukiwane. Autokopia i kopie innego BombVault w **Inne źródła** również nie są przeszukiwane. Wyszukiwanie wymienia pierwszych 200 plików, więc przy krótkiej nazwie, takiej jak `log`, może trzeba będzie dopisać kilka liter.
 
 ## Co wraca, według rodzaju {#kinds}
 

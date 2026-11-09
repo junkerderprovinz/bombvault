@@ -9,6 +9,7 @@ Hver gjenoppretting starter på siden **Gjenoppretting**: velg et område, søk 
 
 - **Områder** lister områdene som fliser, hver med hvor mange elementer som har øyeblikksbilder.
 - **Hva vil du hente tilbake?** søker i elementene i det valgte området. Hver rad viser det nyeste øyeblikksbildet, og **Åpne element** fører til elementets side.
+- **Finn en fil** leter etter en fil eller mappe etter navnet i hver sikkerhetskopi, se [Finne en fil](#find-a-file).
 - **Stacker** lister Compose-prosjektene med minst to sikkerhetskopierte containere, for eksempel `immich` med databasen og Redis. Søket finner en stack på navnet eller på en av containerne.
 - **Pågår nå** viser en gjenoppretting mens den kjører, også etter at du har lukket vinduet.
 - **Nød** starter nødveiviseren for en server som er borte eller satt opp på nytt, se [Nødveiviser](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ For å legge filen rett tilbake i stedet velger du **Erstatt originalen** i trin
 
 ![Gjenopprettingsvinduet ved Hva som skjer, med Erstatt originalen valgt.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Gjenopprettingsvinduet ved Hva som skjer, med Erstatt originalen valgt.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Finne en fil {#find-a-file}
+
+Når du vet navnet på en fil, men ikke hvilket element eller hvilken sikkerhetskopi som fortsatt har den, skriver du navnet i **Finn en fil** og trykker på **Søk**. Vanlig tekst treffer hvor som helst i navnet og skiller ikke mellom store og små bokstaver, så `invoice` finner `Invoice-2024.pdf`. Med `*` eller `?` må mønsteret passe til hele navnet, så `*.pdf` finner alle PDF-er. Skriv bare navnet, uten mappe.
+
+Søket leser hver sikkerhetskopi av containerne, mappesamlingene, ZFS-datasettene og flash-disken. Hvert treff viser elementet, stien og hver sikkerhetskopi som har filen, nyeste først, med dato, størrelse og målet den ble lest fra. En sikkerhetskopi der filen har samme størrelse og endringstid som i den forrige, viser **uendret**, så du ser hvor filen sist ble endret. Et klikk på en sikkerhetskopi åpner gjenopprettingsvinduet på den, med **Enkeltfiler** valgt og filen krysset av. En fil fra flash-disken kommer tilbake som en del av ZIP-filen til flash-disken, fordi flash-disken bare gjenopprettes som en helhet.
+
+Søket tar litt tid, fordi restic går gjennom hver sikkerhetskopi. **Stopp** avslutter det, og det gjør det også å forlate siden. Under feltet står det hvilke mål det leste:
+
+- Mål på denne serveren og i nettverket ditt blir alltid gjennomsøkt.
+- En sikkerhetskopi som ligger på flere mål, leses bare én gang, på det første. Et mål der alle sikkerhetskopiene ble lest et annet sted, viser **allerede gjennomsøkt på et annet mål**.
+- Off-site-mål som S3, B2 eller SFTP holdes utenfor, med mindre du slår på **Søk også i off-site-mål**. Da leses bare sikkerhetskopiene som ingen mål her har, som regel de eldre som en lengre oppbevaring beholder off-site. Det første søket på et slikt mål kan ta lang tid, og noen leverandører tar betalt for dataene som lastes ned.
+- Et mål som ikke kunne åpnes, viser **kunne ikke leses**, og (i)-en ved siden av forteller hvorfor. De andre målene blir fortsatt gjennomsøkt.
+
+Virtuelle maskiner lagres som hele disker, så filene inni dem blir ikke gjennomsøkt. Auto-sikkerhetskopien og sikkerhetskopiene til en annen BombVault under **Andre kilder** blir heller ikke gjennomsøkt. Et søk lister de første 200 filene, så et kort navn som `log` kan trenge noen flere bokstaver.
 
 ## Hva som kommer tilbake, etter type {#kinds}
 

@@ -9,6 +9,7 @@ Mọi lần khôi phục đều bắt đầu từ trang **Khôi phục**: chọn
 
 - **Phần** liệt kê các phần dưới dạng ô, mỗi ô cho biết có bao nhiêu mục có snapshot.
 - **Bạn muốn khôi phục gì?** tìm trong các mục của phần đã chọn. Mỗi dòng hiện snapshot mới nhất của nó, và **Mở mục** dẫn tới trang của mục.
+- **Tìm một tệp** tìm một tệp hoặc thư mục theo tên trong mọi bản sao lưu, xem [Tìm một tệp](#find-a-file).
 - **Stack** liệt kê các dự án Compose có ít nhất hai container đã được sao lưu, chẳng hạn `immich` cùng cơ sở dữ liệu và Redis của nó. Ô tìm kiếm tìm một stack theo tên hoặc theo bất kỳ container nào của nó.
 - **Đang chạy** hiện một lần khôi phục khi nó đang chạy, kể cả sau khi bạn đã đóng cửa sổ của nó.
 - **Khẩn cấp** khởi động trình hướng dẫn khẩn cấp cho một máy chủ đã mất hoặc được thiết lập lại, xem [Trình hướng dẫn khẩn cấp](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Cửa sổ kết thúc với **Xong: các tệp nằm trong /mnt/user/restore**.
 
 ![Cửa sổ khôi phục ở bước Điều gì xảy ra, với Thay thế bản gốc đã được chọn.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Cửa sổ khôi phục ở bước Điều gì xảy ra, với Thay thế bản gốc đã được chọn.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Tìm một tệp {#find-a-file}
+
+Khi bạn biết tên một tệp nhưng không biết mục hay bản sao lưu nào còn giữ nó, hãy nhập tên vào **Tìm một tệp** rồi bấm **Tìm**. Văn bản thường khớp ở bất kỳ đâu trong tên và không phân biệt chữ hoa chữ thường, nên `invoice` tìm thấy `Invoice-2024.pdf`. Với `*` hoặc `?`, mẫu phải khớp với cả tên, nên `*.pdf` tìm thấy mọi tệp PDF. Chỉ nhập tên, không kèm thư mục.
+
+Việc tìm kiếm đọc mọi bản sao lưu của các container, bộ thư mục, tập dữ liệu ZFS và ổ flash. Mỗi kết quả hiện mục, đường dẫn và mọi bản sao lưu có tệp đó, mới nhất trước, kèm ngày, kích thước và nơi nó được đọc. Một bản sao lưu mà tệp trong đó có cùng kích thước và thời gian sửa đổi như ở bản trước sẽ hiện **không đổi**, nhờ vậy bạn biết tệp thay đổi lần cuối ở bản nào. Bấm vào một bản sao lưu sẽ mở cửa sổ khôi phục cho bản đó, với **Từng tập tin** đã được chọn và tệp đã được đánh dấu. Một tệp từ ổ flash trở lại như một phần của tệp ZIP ổ flash, vì ổ flash chỉ được khôi phục nguyên khối.
+
+Việc tìm kiếm mất một lúc, vì restic đi qua từng bản sao lưu. **Dừng** kết thúc nó, rời khỏi trang cũng vậy. Bên dưới ô nhập có ghi những nơi nó đã đọc:
+
+- Các nơi trên máy chủ này và trong mạng của bạn luôn được tìm.
+- Một bản sao lưu nằm ở nhiều nơi chỉ được đọc một lần, ở nơi đầu tiên. Một nơi mà mọi bản sao lưu của nó đã được đọc ở nơi khác sẽ hiện **đã tìm ở một nơi khác**.
+- Các nơi ngoài site như S3, B2 hay SFTP được bỏ qua, trừ khi bạn bật **Tìm cả ở các nơi ngoài site**. Khi đó ở đấy chỉ đọc những bản sao lưu mà không nơi nào ở đây có, thường là các bản cũ hơn được giữ lâu hơn ngoài site nhờ chính sách lưu giữ dài hơn. Lần tìm đầu tiên ở một nơi như vậy có thể mất lâu, và một số nhà cung cấp tính phí cho dữ liệu tải xuống.
+- Một nơi không mở được sẽ hiện **không đọc được**, và (i) bên cạnh cho biết lý do. Các nơi khác vẫn được tìm.
+
+Máy ảo được lưu dưới dạng nguyên ổ đĩa, nên các tệp bên trong không được tìm. Tự sao lưu và các bản sao lưu của một BombVault khác trong **Nguồn khác** cũng không được tìm. Một lần tìm liệt kê 200 tệp đầu tiên, nên một tên ngắn như `log` có thể cần thêm vài chữ.
 
 ## Những gì trở lại, theo loại {#kinds}
 

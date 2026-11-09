@@ -9,6 +9,7 @@ Toda restauración empieza en la página **Restauración**: elige una sección, 
 
 - **Secciones** lista las secciones como mosaicos, cada una con cuántos elementos tienen instantáneas.
 - **¿Qué quieres recuperar?** busca entre los elementos de la sección elegida. Cada fila muestra su instantánea más reciente, y **Abrir elemento** lleva a la página del elemento.
+- **Buscar un archivo** busca un archivo o una carpeta por su nombre en cada copia, consulta [Buscar un archivo](#find-a-file).
 - **Stacks** lista los proyectos de Compose con al menos dos contenedores copiados, como `immich` con su base de datos y Redis. La búsqueda encuentra un stack por su nombre o por cualquiera de sus contenedores.
 - **En curso** muestra una restauración mientras se ejecuta, también después de cerrar su ventana.
 - **Emergencia** inicia el Asistente de emergencia para un servidor que ha desaparecido o se volvió a configurar, consulta [Asistente de emergencia](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Para devolver el archivo directamente a su sitio, elige **Reemplazar original** 
 
 ![La ventana de restauración en Qué pasa, con Reemplazar original elegido.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![La ventana de restauración en Qué pasa, con Reemplazar original elegido.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Buscar un archivo {#find-a-file}
+
+Cuando sabes el nombre de un archivo pero no qué elemento o qué copia lo tiene todavía, escribe el nombre en **Buscar un archivo** y pulsa **Buscar**. El texto normal coincide en cualquier parte del nombre y no distingue mayúsculas de minúsculas, así que `invoice` encuentra `Invoice-2024.pdf`. Con `*` o `?` el patrón tiene que coincidir con el nombre entero, así que `*.pdf` encuentra cada PDF. Escribe solo el nombre, sin carpeta.
+
+La búsqueda lee cada copia de los contenedores, los conjuntos de carpetas, los conjuntos de datos ZFS y la unidad flash. Cada resultado muestra el elemento, la ruta y cada copia que contiene el archivo, de la más reciente a la más antigua, con la fecha, el tamaño y el lugar donde se leyó. Una copia en la que el archivo tiene el mismo tamaño y la misma hora de modificación que en la anterior dice **sin cambios**, así ves dónde cambió el archivo por última vez. Un clic en una copia abre sobre ella la ventana de restauración, con **Archivos individuales** elegido y el archivo marcado. Un archivo de la unidad flash vuelve como parte del ZIP de la unidad flash, porque la unidad flash solo se restaura entera.
+
+La búsqueda tarda un rato, porque restic recorre cada copia. **Detener** la termina, y salir de la página también. Debajo del campo se indica qué lugares leyó:
+
+- Los lugares de este servidor y de tu red se revisan siempre.
+- Una copia que está en varios lugares se lee solo una vez, en el primero. Un lugar cuyas copias se leyeron todas en otro sitio dice **ya revisado en otro lugar**.
+- Los lugares externos como S3, B2 o SFTP se dejan fuera salvo que actives **Buscar también en lugares externos**. Entonces allí solo se leen las copias que no tiene ningún lugar de aquí, normalmente las más antiguas que una retención más larga guarda fuera. La primera búsqueda en un lugar así puede tardar bastante, y algunos proveedores cobran los datos que descarga.
+- Un lugar que no se pudo abrir dice **no se pudo leer**, y la (i) a su lado explica por qué. En los demás lugares se busca igualmente.
+
+Las máquinas virtuales se guardan como discos completos, así que no se busca en los archivos que contienen. Tampoco se busca en la autocopia ni en las copias de otro BombVault en **Otras fuentes**. Una búsqueda lista los primeros 200 archivos, así que un nombre corto como `log` puede necesitar más letras.
 
 ## Qué se recupera, según el tipo {#kinds}
 

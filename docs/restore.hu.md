@@ -9,6 +9,7 @@ Minden visszaállítás a **Visszaállítás** oldalon indul: válassz egy szaka
 
 - A **Szakaszok** csempékként sorolja fel a szakaszokat, mindegyiknél azzal, hány elemnek vannak pillanatképei.
 - A **Mit szeretnél visszahozni?** a kiválasztott szakasz elemei között keres. Minden sor a legújabb pillanatképét mutatja, és az **Elem megnyitása** az elem oldalára vezet.
+- A **Fájl keresése** a neve alapján keres egy fájlt vagy mappát minden mentésben, lásd: [Fájl megkeresése](#find-a-file).
 - A **Stackek** azokat a Compose-projekteket sorolja fel, amelyekben legalább két lementett konténer van, például az `immich` az adatbázisával és a Redisszel. A keresés a stacket a nevéről vagy bármelyik konténeréről megtalálja.
 - A **Most fut** egy visszaállítást mutat, amíg fut, akkor is, ha bezártad az ablakát.
 - A **Vészhelyzet** elindítja a Vészhelyzet varázslót egy olyan szerverhez, amely elveszett vagy újra lett felállítva, lásd: [Vészhelyzet varázsló](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Ha inkább rögtön a helyére tennéd vissza, az 5. lépésben válaszd az **Er
 
 ![A visszaállítási ablak a Mi történik lépésnél, az Eredeti cseréje kiválasztva.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![A visszaállítási ablak a Mi történik lépésnél, az Eredeti cseréje kiválasztva.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Fájl megkeresése {#find-a-file}
+
+Ha tudod egy fájl nevét, de azt nem, melyik elem vagy mentés őrzi még, írd be a nevet a **Fájl keresése** mezőbe, és nyomd meg a **Keresés** gombot. A sima szöveg a név bármely részén egyezhet, és nem számít benne a kis- és nagybetű, így az `invoice` megtalálja az `Invoice-2024.pdf` fájlt. `*` vagy `?` használatakor a mintának a teljes névre kell illeszkednie, így a `*.pdf` minden PDF-et megtalál. Csak a nevet írd be, mappa nélkül.
+
+A keresés a konténerek, a mappakészletek, a ZFS-adatkészletek és a flash minden mentését beolvassa. Minden találat mutatja az elemet, az elérési utat és minden mentést, amelyben a fájl megvan, a legújabbal kezdve, a dátummal, a mérettel és azzal a hellyel, ahonnan beolvasta. Ha egy mentésben a fájl mérete és módosítási ideje ugyanaz, mint az előzőben, ott a **változatlan** felirat áll, így láthatod, mikor változott a fájl utoljára. Egy mentésre kattintva megnyílik rajta a visszaállítási ablak, az **Egyes fájlok** lehetőséggel kiválasztva és a fájl bepipálva. A flash egy fájlja a flash ZIP-jének részeként tér vissza, mert a flash csak egészben állítható vissza.
+
+A keresés eltart egy ideig, mert a restic végigjár minden mentést. A **Leállítás** befejezi, és az oldal elhagyása is. A mező alatt látszik, mely helyeket olvasta be:
+
+- Az ezen a szerveren és a hálózatodon lévő helyeken mindig keres.
+- Egy több helyen is meglévő mentést csak egyszer olvas be, az elsőn. Az a hely, amelynek minden mentését már máshol beolvasta, a **már átkeresve egy másik helyen** feliratot mutatja.
+- A telephelyen kívüli helyek, például S3, B2 vagy SFTP, kimaradnak, hacsak be nem kapcsolod a **Keresés a telephelyen kívüli helyeken is** lehetőséget. Ekkor ott csak azokat a mentéseket olvassa be, amelyek egyik itteni helyen sincsenek meg, általában a régebbieket, amelyeket egy hosszabb megőrzés a telephelyen kívül tart. Az első keresés egy ilyen helyen sokáig tarthat, és egyes szolgáltatók díjat kérnek a letöltött adatokért.
+- Az a hely, amelyet nem sikerült megnyitni, a **nem sikerült beolvasni** feliratot mutatja, és a mellette lévő (i) elmondja, miért. A többi helyen ettől még keres.
+
+A virtuális gépek teljes lemezként mentődnek, ezért a bennük lévő fájlokban nem keres. Az önmentésben és a **Más források** alatti másik BombVault mentéseiben sem keres. Egy keresés az első 200 fájlt sorolja fel, így egy rövid névhez, például a `log`-hoz, több betű kellhet.
 
 ## Mi tér vissza, fajtánként {#kinds}
 

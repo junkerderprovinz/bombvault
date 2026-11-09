@@ -9,6 +9,7 @@ Her geri yükleme **Geri yükleme** sayfasında başlar: bir bölüm seç, geri 
 
 - **Bölümler**, bölümleri kutucuk olarak listeler, her birinde kaç ögenin anlık görüntüsü olduğu yazar.
 - **Neyi geri getirmek istiyorsun?** seçilen bölümün ögelerinde arar. Her satır en yeni anlık görüntüsünü gösterir, **Ögeyi aç** ögenin sayfasına götürür.
+- **Dosya bul**, bir dosyayı ya da klasörü her yedekte adıyla arar, bkz. [Bir dosya bulmak](#find-a-file).
 - **Stack'ler**, en az iki yedeklenmiş konteyneri olan Compose projelerini listeler, örneğin veritabanı ve Redis'iyle `immich`. Arama bir stack'i adıyla ya da konteynerlerinden herhangi biriyle bulur.
 - **Şu an çalışıyor**, bir geri yüklemeyi, penceresini kapattıktan sonra da, çalışırken gösterir.
 - **Acil durum**, kaybolmuş ya da yeniden kurulmuş bir sunucu için Acil durum sihirbazını başlatır, bkz. [Acil durum sihirbazı](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Dosyayı doğrudan yerine koymak için 5. adımda **Orijinali değiştir**'i se�
 
 ![Orijinali değiştir seçili, Ne olur adımındaki geri yükleme penceresi.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Orijinali değiştir seçili, Ne olur adımındaki geri yükleme penceresi.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Bir dosya bulmak {#find-a-file}
+
+Bir dosyanın adını biliyor ama hangi ögede ya da yedekte hâlâ durduğunu bilmiyorsan, adı **Dosya bul** alanına yaz ve **Ara**'ya bas. Düz metin adın herhangi bir yerinde eşleşir ve büyük küçük harfe bakmaz, yani `invoice`, `Invoice-2024.pdf` dosyasını bulur. `*` ya da `?` ile desen adın tamamıyla eşleşmelidir, yani `*.pdf` her PDF'yi bulur. Klasör olmadan yalnızca adı yaz.
+
+Arama konteynerlerin, klasör kümelerinin, ZFS veri kümelerinin ve flash sürücünün her yedeğini okur. Her sonuç ögeyi, yolu ve dosyayı içeren her yedeği gösterir, en yenisi önce, tarih, boyut ve okunduğu yerle birlikte. Dosyanın bir önceki yedektekiyle aynı boyuta ve değiştirilme zamanına sahip olduğu bir yedekte **değişmedi** yazar, böylece dosyanın en son nerede değiştiğini görürsün. Bir yedeğe tıklamak, geri yükleme penceresini o yedek için **Tekil dosyalar** seçili ve dosya işaretli olarak açar. Flash sürücüden bir dosya, flash sürücü ZIP'inin bir parçası olarak geri gelir, çünkü flash sürücü yalnızca bütün olarak geri yüklenir.
+
+Arama biraz sürer, çünkü restic her yedeği tek tek dolaşır. **Durdur** onu bitirir, sayfadan ayrılmak da öyle. Alanın altında hangi yerleri okuduğu yazar:
+
+- Bu sunucudaki ve ağındaki yerler her zaman aranır.
+- Birkaç yerde duran bir yedek yalnızca bir kez, ilk yerde okunur. Tüm yedekleri başka bir yerde okunmuş bir yerde **başka bir yerde zaten arandı** yazar.
+- S3, B2 ya da SFTP gibi site dışı yerler, **Site dışı yerlerde de ara**'yı açmadıkça dışarıda kalır. O zaman orada yalnızca buradaki hiçbir yerde olmayan yedekler okunur, genellikle daha uzun bir saklamanın site dışında tuttuğu eski yedekler. Böyle bir yerdeki ilk arama uzun sürebilir ve bazı sağlayıcılar indirilen veri için ücret alır.
+- Açılamayan bir yerde **okunamadı** yazar, yanındaki (i) nedenini söyler. Diğer yerler yine de aranır.
+
+Sanal makineler bütün diskler olarak kaydedilir, bu yüzden içlerindeki dosyalar aranmaz. Öz yedek ve **Diğer kaynaklar** altındaki başka bir BombVault'un yedekleri de aranmaz. Bir arama ilk 200 dosyayı listeler, bu yüzden `log` gibi kısa bir ad daha fazla harf gerektirebilir.
 
 ## Türe göre neler geri gelir {#kinds}
 

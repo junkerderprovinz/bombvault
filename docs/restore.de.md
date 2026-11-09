@@ -9,6 +9,7 @@ Jede Wiederherstellung beginnt auf der Seite **Wiederherstellung**: Wähle einen
 
 - **Bereiche** listet die Bereiche als Kacheln auf, jede mit der Zahl der Einträge, die Snapshots haben.
 - **Was willst du zurückholen?** durchsucht die Einträge des gewählten Bereichs. Jede Zeile zeigt ihren neuesten Snapshot, und **Eintrag öffnen** führt zur Seite des Eintrags.
+- **Datei finden** sucht eine Datei oder einen Ordner über den Namen in jeder Sicherung, siehe [Eine Datei finden](#find-a-file).
 - **Stacks** listet die Compose-Projekte mit mindestens zwei gesicherten Containern auf, etwa `immich` mit seiner Datenbank und Redis. Die Suche findet einen Stack über seinen Namen oder über einen seiner Container.
 - **Läuft gerade** zeigt eine Wiederherstellung, solange sie läuft, auch nachdem du ihr Fenster geschlossen hast.
 - **Notfall** startet den Notfall-Assistenten für einen Server, der weg ist oder neu aufgesetzt wurde, siehe [Notfall-Assistent](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Um die Datei stattdessen direkt zurückzulegen, wähle in Schritt 5 **Original e
 
 ![Das Wiederherstellungsfenster im Schritt Was passiert, mit gewähltem Original ersetzen.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![Das Wiederherstellungsfenster im Schritt Was passiert, mit gewähltem Original ersetzen.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Eine Datei finden {#find-a-file}
+
+Wenn du den Namen einer Datei kennst, aber nicht weißt, welcher Eintrag oder welche Sicherung sie noch hat, tippe den Namen in **Datei finden** und drücke **Suchen**. Einfacher Text passt an jeder Stelle im Namen, und Groß- und Kleinschreibung spielt keine Rolle, also findet `invoice` auch `Invoice-2024.pdf`. Mit `*` oder `?` muss das Muster auf den ganzen Namen passen, also findet `*.pdf` jedes PDF. Gib nur den Namen ein, ohne Ordner.
+
+Die Suche liest jede Sicherung der Container, Ordner-Sets, ZFS-Datasets und des Flash. Jeder Treffer zeigt den Eintrag, den Pfad und jede Sicherung, die die Datei enthält, die neueste zuerst, mit Datum, Größe und dem Speicherort, an dem sie gelesen wurde. Eine Sicherung, in der die Datei dieselbe Größe und Änderungszeit hat wie in der davor, zeigt **unverändert**. So siehst du, in welcher Sicherung sich die Datei zuletzt geändert hat. Ein Klick auf eine Sicherung öffnet das Wiederherstellungsfenster dafür. Dort ist **Einzelne Dateien** schon gewählt und die Datei abgehakt. Eine Datei vom Flash kommt als Teil des Flash-ZIPs zurück, weil der Flash nur als Ganzes wiederhergestellt wird.
+
+Die Suche dauert eine Weile, weil restic jede Sicherung durchgeht. **Stoppen** beendet sie, und das Verlassen der Seite auch. Unter dem Feld steht, welche Speicherorte sie gelesen hat:
+
+- Speicherorte auf diesem Server und in deinem Netzwerk werden immer durchsucht.
+- Eine Sicherung, die an mehreren Speicherorten liegt, wird nur einmal gelesen, und zwar am ersten. Ein Speicherort, dessen Sicherungen alle anderswo gelesen wurden, zeigt **schon an einem anderen Speicherort durchsucht**.
+- Off-site-Speicherorte wie S3, B2 oder SFTP bleiben außen vor, außer du schaltest **Auch Off-site-Speicherorte durchsuchen** ein. Dann werden dort nur die Sicherungen gelesen, die kein Speicherort hier hat, meist die älteren, die eine längere Aufbewahrung off-site hält. Die erste Suche an so einem Speicherort kann lange dauern, und manche Anbieter verrechnen die Daten, die dabei geladen werden.
+- Ein Speicherort, der sich nicht öffnen ließ, zeigt **konnte nicht gelesen werden**, und das (i) daneben sagt, warum. Die anderen Speicherorte werden trotzdem durchsucht.
+
+Virtuelle Maschinen werden als ganze Festplatten gesichert, darum werden die Dateien darin nicht durchsucht. Das Selbstbackup und die Sicherungen eines anderen BombVault unter **Andere Quellen** werden ebenfalls nicht durchsucht. Eine Suche listet die ersten 200 Dateien, ein kurzer Name wie `log` braucht also vielleicht ein paar Buchstaben mehr.
 
 ## Was zurückkommt, nach Art {#kinds}
 

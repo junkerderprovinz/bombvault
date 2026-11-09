@@ -9,6 +9,7 @@ Toda a restauração começa na página **Restauração**: escolhe uma secção,
 
 - **Secções** lista as secções como mosaicos, cada um com quantas entradas têm instantâneos.
 - **O que queres trazer de volta?** pesquisa as entradas da secção escolhida. Cada linha mostra o seu instantâneo mais recente, e **Abrir entrada** leva à página da entrada.
+- **Encontrar um ficheiro** procura um ficheiro ou uma pasta pelo nome em todos os backups, vê [Encontrar um ficheiro](#find-a-file).
 - **Stacks** lista os projetos Compose com pelo menos dois containers copiados, por exemplo `immich` com a sua base de dados e o Redis. A pesquisa encontra uma stack pelo nome ou por qualquer um dos seus containers.
 - **A decorrer** mostra uma restauração enquanto corre, também depois de fechares a janela.
 - **Emergência** inicia o assistente de emergência para um servidor que desapareceu ou foi configurado de novo, vê [Assistente de emergência](offsite-recovery.md#emergency).
@@ -70,6 +71,21 @@ Para pôr o ficheiro diretamente de volta, escolhe **Substituir o original** no 
 
 ![A janela de restauração em O que acontece, com Substituir o original escolhido.](assets/screenshots/restore/window-replace-dark.png#only-dark)
 ![A janela de restauração em O que acontece, com Substituir o original escolhido.](assets/screenshots/restore/window-replace-light.png#only-light)
+
+## Encontrar um ficheiro {#find-a-file}
+
+Quando sabes o nome de um ficheiro, mas não sabes que entrada ou que backup ainda o tem, escreve o nome em **Encontrar um ficheiro** e carrega em **Pesquisar**. O texto simples corresponde em qualquer parte do nome e ignora maiúsculas e minúsculas, por isso `invoice` encontra `Invoice-2024.pdf`. Com `*` ou `?`, o padrão tem de corresponder ao nome inteiro, por isso `*.pdf` encontra todos os PDF. Escreve só o nome, sem pasta.
+
+A pesquisa lê todos os backups dos containers, dos conjuntos de pastas, dos conjuntos de dados ZFS e da unidade flash. Cada resultado mostra a entrada, o caminho e todos os backups que têm o ficheiro, do mais recente para o mais antigo, com a data, o tamanho e o destino onde foi lido. Um backup em que o ficheiro tem o mesmo tamanho e a mesma hora de modificação que no anterior diz **sem alterações**, para veres onde o ficheiro mudou pela última vez. Um clique num backup abre nele a janela de restauração, com **Ficheiros individuais** escolhido e o ficheiro marcado. Um ficheiro da unidade flash volta como parte do ZIP da unidade flash, porque a unidade flash só é restaurada por inteiro.
+
+A pesquisa demora um pouco, porque o restic percorre todos os backups. **Parar** termina-a, e sair da página também. Por baixo do campo aparece que destinos foram lidos:
+
+- Os destinos neste servidor e na tua rede são sempre pesquisados.
+- Um backup que está em vários destinos só é lido uma vez, no primeiro. Um destino cujos backups foram todos lidos noutro sítio diz **já pesquisado noutro destino**.
+- Os destinos externos, como S3, B2 ou SFTP, ficam de fora, a não ser que ligues **Pesquisar também nos destinos externos**. Aí só são lidos os backups que nenhum destino aqui tem, normalmente os mais antigos que uma retenção mais longa mantém lá. A primeira pesquisa num destino destes pode demorar bastante, e alguns fornecedores cobram pelos dados que são transferidos.
+- Um destino que não foi possível abrir diz **não foi possível ler**, e o (i) ao lado explica porquê. Os outros destinos continuam a ser pesquisados.
+
+As máquinas virtuais são guardadas como discos inteiros, por isso os ficheiros dentro delas não são pesquisados. O auto-backup e os backups de outro BombVault em **Outras origens** também não são pesquisados. Uma pesquisa lista os primeiros 200 ficheiros, por isso um nome curto como `log` pode precisar de mais algumas letras.
 
 ## O que volta, por tipo {#kinds}
 
