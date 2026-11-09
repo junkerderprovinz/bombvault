@@ -4,7 +4,9 @@ name: Build Docker Image
 #
 # Every branch is pushed as ghcr.io/junkerderprovinz/bombvault:<branch> (slashes
 # become hyphens), so it can be tried on a server before it is merged. latest,
-# edge, the semver tags and Docker Hub stay with main and release tags.
+# edge, the semver tags and Docker Hub stay with main and release tags. The
+# weekly cron and a manual run rebuild the newest release without the layer
+# cache, under its version tags and latest.
 on:
   push:
     branches: ["**"]
@@ -18,6 +20,9 @@ on:
       - "internal/releasenotes/notes/**"
   pull_request:
     branches: [main]
+  # Weekly, to rebuild the newest release on fresh base images and packages.
+  schedule:
+    - cron: '20 6 * * 0'
   workflow_dispatch:
 
 permissions:
@@ -27,9 +32,9 @@ permissions:
 
 # A newer push cancels a running branch build. Builds of main and of tags are
 # left to finish, since a release build cut off halfway leaves the registry
-# half-written.
+# half-written. A rebuild of the newest release queues apart from main.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'rebuild' || github.ref }}
   cancel-in-progress: ${{ github.ref_type != 'tag' && github.ref_name != github.event.repository.default_branch }}
 
 env:
@@ -37,14 +42,37 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # Rebuilds refresh the newest release, which is what people run, not the
+  # tip of main.
+  release:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.newest.outputs.tag }}
+    steps:
+      - name: Find the newest release
+        id: newest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          echo "rebuilding $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   # The build job waits for this, so an image that does not boot never reaches
   # the registry.
   smoke:
+    needs: release
+    if: ${{ !failure() && !cancelled() }}
     name: Boot smoke test (amd64)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.release.outputs.tag }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - name: Build amd64 image (load locally)
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
@@ -54,9 +82,10 @@ jobs:
           load: true
           tags: bombvault:smoke
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=${{ needs.release.outputs.tag || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: ${{ needs.release.outputs.tag != '' }}
       - name: Run container + health check
         run: |
           docker run -d --name bv-smoke \
@@ -107,11 +136,14 @@ jobs:
 
   build:
     name: Build (amd64 + arm64)
-    needs: smoke
+    needs: [ release, smoke ]
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.release.outputs.tag }}
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
@@ -158,11 +190,12 @@ jobs:
           # but no branches.
           images: |
             ${{ env.IMAGE }}
-            name=docker.io/${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},enable=${{ vars.DOCKERHUB_USERNAME != '' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch) }}
+            name=docker.io/${{ vars.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }},enable=${{ vars.DOCKERHUB_USERNAME != '' && (github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch || needs.release.outputs.tag != '') }}
           # latest is the newest release, so an unreleased merge never reaches
-          # people who pull it. The action adds latest to every semver tag unless
-          # the flavor turns that off. The tip of main goes to edge, and any other
-          # branch gets a tag of its own name and nothing else.
+          # people who pull it, and a rebuild of that release moves it too. The
+          # action adds latest to every semver tag unless the flavor turns that
+          # off. The tip of main goes to edge, and any other branch gets a tag
+          # of its own name and nothing else.
           #
           # {{major}} and {{major}}.{{minor}} follow whichever tag built last,
           # so re-cutting an old version moves them back. After that, re-run
@@ -171,25 +204,29 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha,format=short
-            type=ref,event=branch,enable=${{ github.ref_type == 'branch' && github.ref_name != github.event.repository.default_branch }}
-            type=raw,value=edge,enable=${{ github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch }}
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && steps.newest.outputs.is_newest == 'true' }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=sha,format=short,enable=${{ needs.release.outputs.tag == '' }}
+            type=ref,event=branch,enable=${{ github.ref_type == 'branch' && github.ref_name != github.event.repository.default_branch && needs.release.outputs.tag == '' }}
+            type=raw,value=edge,enable=${{ github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch && needs.release.outputs.tag == '' }}
+            type=raw,value=latest,enable=${{ (github.ref_type == 'tag' && steps.newest.outputs.is_newest == 'true') || needs.release.outputs.tag != '' }}
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.tag }}
+            type=semver,pattern={{major}},value=${{ needs.release.outputs.tag }}
 
-      # Tag builds use the tag. Other builds use the latest release plus branch
-      # and short SHA (v3.1.0+main.4c0c987), so the log banner and the WebUI
-      # show where the image came from. SemVer build metadata allows only
-      # alphanumerics, hyphens and dots, and internal/releasenotes parses the
-      # version, so slashes and underscores become hyphens.
+      # Tag builds and rebuilds of the newest release use the tag. Other builds
+      # use the latest release plus branch and short SHA (v3.1.0+main.4c0c987),
+      # so the log banner and the WebUI show where the image came from. SemVer
+      # build metadata allows only alphanumerics, hyphens and dots, and
+      # internal/releasenotes parses the version, so slashes and underscores
+      # become hyphens.
       - name: Compute version
         id: ver
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.release.outputs.tag }}
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
+          if [ -n "$RELEASE" ]; then
+            v="$RELEASE"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
             v="${{ github.ref_name }}"
           else
             tag=$(gh release view -R "${{ github.repository }}" --json tagName --jq .tagName 2>/dev/null || true)
@@ -211,6 +248,7 @@ jobs:
             VERSION=${{ steps.ver.outputs.v }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: ${{ needs.release.outputs.tag != '' }}
           provenance: true
           sbom: true
 
