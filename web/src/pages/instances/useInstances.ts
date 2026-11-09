@@ -137,13 +137,15 @@ export function useInstances(modules: Modules | null): InstancesState {
 
   const loadSelf = useCallback(
     (): Promise<void> =>
-      Promise.all([getGroup(), getHealth(), getStatus()])
+      // A status that cannot be read leaves this server on the page, only
+      // without its domains.
+      Promise.all([getGroup(), getHealth(), getStatus().catch(() => null)])
         .then(([group, health, status]) => {
           setSelf({
             name: group.name,
             address: group.selfAddress,
             version: health.version ?? "",
-            domains: status.domains ?? [],
+            domains: status?.domains ?? [],
           });
           setMembers(group.members);
           setAway(group.away);

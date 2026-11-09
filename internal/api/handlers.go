@@ -4639,15 +4639,19 @@ func invalidAck(runIDs, copyTargets []string) string {
 
 // handleStatus returns the per-domain RPO (protection) status for the dashboard's
 // "are my backups current?" indicator. GET /api/status
+//
+// A status that cannot be read answers 500, as /api/v1/status does, so a
+// monitor that checks only the status line sees the failure. The body is the
+// usual envelope, which pages that read ok keep reading.
 func (h *Handler) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	settings, err := h.store.GetSettings()
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
 		return
 	}
 	domains, err := h.svc.domainStatusFrom(settings)
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
 		return
 	}
 	if domains == nil {
