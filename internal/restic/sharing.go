@@ -1,6 +1,14 @@
 package restic
 
-import "context"
+import (
+	"context"
+	"errors"
+	"slices"
+)
+
+// ErrSharedRepoWide refuses a keep policy over every entry of a shared
+// repository at once.
+var ErrSharedRepoWide = errors.New("a shared repository is aged entry by entry and host by host, never as a whole")
 
 // Sharing is what this server may do in a repository: write to it alone, add
 // to one that other servers of its group write to as well, or hold such a
@@ -43,4 +51,13 @@ func EveryHostSnapshotsArgs(repo string, m Mode) []string {
 // puts on it.
 func (r Restic) SnapshotsOfEveryHost(ctx context.Context, repo string, m Mode) ([]Snapshot, error) {
 	return r.snapshots(ctx, EveryHostSnapshotsArgs(repo, m), m)
+}
+
+// refuseRepoWide refuses a keep policy without tags in a shared repository.
+// restic would group by paths there, across the hosts of every server.
+func (m Mode) refuseRepoWide(tags []string) error {
+	if m.Sharing == SharingNone || slices.ContainsFunc(tags, func(t string) bool { return t != "" }) {
+		return nil
+	}
+	return ErrSharedRepoWide
 }

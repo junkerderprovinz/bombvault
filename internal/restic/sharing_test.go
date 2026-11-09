@@ -2,6 +2,8 @@ package restic_test
 
 import (
 	"context"
+	"errors"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -89,6 +91,65 @@ func TestAMemberSeesOnlyItsOwnSnapshotsInASharedRepository(t *testing.T) {
 	}
 	if got := snapshotIDs(every); !slices.Equal(got, sorted(own, other)) {
 		t.Fatalf("every host listed %v, want %v", got, sorted(own, other))
+	}
+}
+
+func TestAKeepPolicyInASharedRepositorySelectsTheModesHost(t *testing.T) {
+	m := restic.Mode{Host: ownHost, Sharing: restic.SharingOwner}
+	p := restic.RetentionPolicy{KeepLast: 3}
+	for name, args := range map[string][]string{
+		"forget":  restic.ForgetPolicyArgs("/repo", p, m, []string{"container:plex"}, false),
+		"preview": restic.ForgetPreviewArgs("/repo", p, m, "container:plex"),
+	} {
+		if got := hostsIn(args); !slices.Equal(got, []string{ownHost}) {
+			t.Errorf("%s: hosts %v in %v, want only %s", name, got, args, ownHost)
+		}
+	}
+}
+
+// Old and new snapshots of an entry age together in a repository of this
+// server alone, whatever host they carry.
+func TestAKeepPolicyInARepositoryOfThisServerAloneSelectsNoHost(t *testing.T) {
+	m := restic.Mode{Host: ownHost}
+	p := restic.RetentionPolicy{KeepLast: 3}
+	for name, args := range map[string][]string{
+		"forget":  restic.ForgetPolicyArgs("/repo", p, m, []string{"container:plex"}, false),
+		"preview": restic.ForgetPreviewArgs("/repo", p, m, "container:plex"),
+	} {
+		if got := hostsIn(args); len(got) != 0 {
+			t.Errorf("%s: hosts %v, want none", name, got)
+		}
+	}
+}
+
+// Grouped by paths, a pass over the whole repository would put two servers'
+// snapshots of one folder into one group.
+func TestAPassOverAWholeSharedRepositoryIsRefused(t *testing.T) {
+	r := restic.Restic{Bin: filepath.Join(t.TempDir(), "no-restic")}
+	m := restic.Mode{Host: ownHost, Sharing: restic.SharingOwner}
+	p := restic.RetentionPolicy{KeepLast: 3}
+	if err := r.ForgetPolicy(context.Background(), "/repo", p, m, nil, true); !errors.Is(err, restic.ErrSharedRepoWide) {
+		t.Errorf("forget: err = %v, want ErrSharedRepoWide", err)
+	}
+	if _, err := r.ForgetPreview(context.Background(), "/repo", p, m); !errors.Is(err, restic.ErrSharedRepoWide) {
+		t.Errorf("preview: err = %v, want ErrSharedRepoWide", err)
+	}
+}
+
+func TestEachServerKeepsItsOwnHistoryOfAnEntryBothBackUp(t *testing.T) {
+	repo, own, other := sharedRepo(t)
+	r, ctx := restic.Restic{Bin: "restic"}, context.Background()
+	owner := restic.Mode{Host: ownHost, Sharing: restic.SharingOwner}
+
+	if err := r.ForgetPolicy(ctx, repo, restic.RetentionPolicy{KeepLast: 1}, owner, []string{"container:plex"}, false); err != nil {
+		t.Fatal(err)
+	}
+	every, err := r.SnapshotsOfEveryHost(ctx, repo, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := snapshotIDs(every), sorted(own[1:], other); !slices.Equal(got, want) {
+		t.Fatalf("keep-last 1 under %s left %v, want its newest and the other server's %v", ownHost, got, want)
 	}
 }
 

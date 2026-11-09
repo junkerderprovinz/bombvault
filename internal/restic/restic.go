@@ -152,7 +152,9 @@ type Mode struct {
 	// the same files, and without it restic would read every file again.
 	IgnoreInode bool
 	// Host is the restic host a backup is written with, this server's own
-	// (restickey.Host). Empty writes LegacyHost.
+	// (restickey.Host). Empty writes LegacyHost. In a shared repository it is
+	// also the one host a listing or a keep policy there selects, so the owner
+	// ages a member's snapshots under a mode carrying that member's host.
 	Host string
 	// Sharing says whether other servers write to the repository too.
 	Sharing Sharing
@@ -1317,7 +1319,8 @@ func keepFlags(p RetentionPolicy) []string {
 // receiving snapshots is never emptied by restic's keep-*. Several tags are a
 // renamed entry's old and new names. restic matches a snapshot carrying any of
 // several --tag flags, whereas a comma inside one --tag would require all of
-// them and match nothing.
+// them and match nothing. In a shared repository the group is also narrowed to
+// the mode's host, so two servers' snapshots of one entry age apart.
 //
 // prune controls --prune: per-item passes over the same repo forget without
 // prune and reclaim space once at the end (prune is the expensive part).
@@ -1337,6 +1340,7 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 		for _, t := range tags {
 			args = append(args, "--tag", t)
 		}
+		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		// Repo-wide pass: group by paths only, not restic's default host+paths,
@@ -1385,6 +1389,7 @@ func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) [
 		}
 	}
 	if selected {
+		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		args = append(args, "--group-by", "paths")
@@ -3189,6 +3194,9 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	if !p.Any() {
 		return nil
 	}
+	if err := m.refuseRepoWide(tags); err != nil {
+		return err
+	}
 	return r.runCounted(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
 }
 
@@ -3204,6 +3212,9 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolicy, m Mode, tags ...string) ([]ForgetGroup, error) {
 	if !p.Any() {
 		return nil, nil
+	}
+	if err := m.refuseRepoWide(tags); err != nil {
+		return nil, err
 	}
 	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tags...), m)
 	if err != nil {
