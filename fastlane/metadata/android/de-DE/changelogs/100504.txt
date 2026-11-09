@@ -1,0 +1,1 @@
+BombVault 10.5.4 übernimmt deine Sicherungsjobs aus Duplicati und Duplicacy, findet eine Datei per Name in jeder Sicherung und holt genau sie zurück, schlägt bei neuen Ordner-Sets vor, Systemmüll wegzulassen, und lässt dich je Speicherort einstellen, wie viele Verbindungen restic öffnet.

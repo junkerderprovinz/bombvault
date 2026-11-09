@@ -1,0 +1,1 @@
+BombVault 10.5.4 takes over your backup jobs from Duplicati and Duplicacy, finds a file by name in every backup and restores just that file, suggests leaving out system junk in new folder sets, and lets a storage location set how many connections restic opens.
