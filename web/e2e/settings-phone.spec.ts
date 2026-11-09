@@ -685,8 +685,11 @@ test("settings schedules on a phone: the every-N-days field shows three digits b
     const style = getComputedStyle(input);
     const ctx = document.createElement("canvas").getContext("2d")!;
     ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    // From the border box: Chromium leaves an input's padding out of
+    // clientWidth.
+    const insets = ["borderLeftWidth", "paddingLeft", "paddingRight", "borderRightWidth"] as const;
     return {
-      content: input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+      content: input.offsetWidth - insets.reduce((sum, side) => sum + parseFloat(style[side]), 0),
       digits: ctx.measureText("000").width,
     };
   });
