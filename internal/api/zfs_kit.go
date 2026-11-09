@@ -23,10 +23,10 @@ back needs restic only, no ZFS tools and no BombVault.
 
 const zfsKitCommands = `
 List the snapshots of one dataset:
-    restic -r '<repo>' snapshots --tag 'zfs:<dataset>'
+    restic -r '<repo>' snapshots {hosts} --tag 'zfs:<dataset>'
 
 Restore the newest snapshot of one dataset into a new folder:
-    restic -r '<repo>' restore latest --tag 'zfs:<dataset>' --target '/mnt/<pool>/restored-<name>'
+    restic -r '<repo>' restore latest {hosts} --tag 'zfs:<dataset>' --target '/mnt/<pool>/restored-<name>'
 
 After data loss the newest snapshot can be the emptied or encrypted one. The
 list above shows each snapshot's size; use the id of an older one when the
@@ -48,9 +48,10 @@ its mountpoint. ZFS properties are not part of the backup.
 
 // zfsKitSection is the recovery kit's ZFS chapter: the fixed explanation, one
 // line per item with the repository its snapshots are in, and the restic
-// commands that get the files back without BombVault. oneLine is false when
-// something an item prints spans lines, which a kit must not carry.
-func (s *Service) zfsKitSection(settings store.Settings) (section string, oneLine bool) {
+// commands that get the files back without BombVault, which select by hosts.
+// oneLine is false when something an item prints spans lines, which a kit must
+// not carry.
+func (s *Service) zfsKitSection(settings store.Settings, hosts string) (section string, oneLine bool) {
 	oneLine = true
 	var b strings.Builder
 	b.WriteString(zfsKitIntro)
@@ -75,7 +76,7 @@ func (s *Service) zfsKitSection(settings store.Settings) (section string, oneLin
 		}
 	}
 
-	b.WriteString(zfsKitCommands)
+	b.WriteString(strings.ReplaceAll(zfsKitCommands, kitHosts, hosts))
 	return b.String(), oneLine
 }
 

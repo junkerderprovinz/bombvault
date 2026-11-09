@@ -368,7 +368,7 @@ func TestRecoveryKitHasZFSSection(t *testing.T) {
 		"datasets: cache/appdata, cache/appdata/plex",
 		"left out: cache/appdata/cachey",
 		"stopped for the snapshot: plex",
-		"restic -r '<repo>' snapshots --tag 'zfs:<dataset>'",
+		"restic -r '<repo>' snapshots " + kitHostFlags(s.cfg.AppKey) + " --tag 'zfs:<dataset>'",
 		"zfs snapshot '<dataset>@before-restore'",
 	} {
 		if !strings.Contains(kit, want) {

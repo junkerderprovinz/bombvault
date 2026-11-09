@@ -409,6 +409,22 @@ func TestBackupArgs(t *testing.T) {
 	}
 }
 
+func TestEveryBackupCarriesTheHostOfItsMode(t *testing.T) {
+	m := Mode{Host: "bv-0123456789ab"}
+	for name, args := range map[string][]string{
+		"paths":   BackupArgs("/repo", []string{"/src"}, []string{"t"}, m),
+		"dir":     BackupDirArgs("/repo", []string{"t"}, m),
+		"blocks":  BackupDirFromArgs("/repo", "", []string{"t"}, m),
+		"stdin":   BackupStdinArgs("/repo", "/disk", []string{"t"}, m),
+		"command": BackupCommandArgs("/repo", "/dump.sql", []string{"t"}, m, []string{"pg_dumpall"}),
+	} {
+		i := slices.Index(args, "--host")
+		if i < 0 || args[i+1] != "bv-0123456789ab" || slices.Contains(args, LegacyHost) {
+			t.Errorf("%s: %v does not carry the mode's host alone", name, args)
+		}
+	}
+}
+
 func TestBackupArgsUnencrypted(t *testing.T) {
 	got := BackupArgs("/repo", []string{"/src"}, []string{"t"}, Mode{Encrypted: false})
 	want := []string{"-r", "/repo", "--retry-lock", "5m", "backup", "--insecure-no-password", "--json", "--host", "bombvault", "--tag", "t", "--", "/src"}

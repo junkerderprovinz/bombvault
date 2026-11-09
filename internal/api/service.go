@@ -1554,7 +1554,7 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 	if err != nil {
 		log.Printf("api: cloud creds decode failed (ignoring): %v", err)
 	}
-	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass}
+	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass, Host: s.resticHost()}
 	if settings.EncryptionEnabled {
 		m.Encrypted = true
 		m.Password = s.backupPassword()
@@ -20882,8 +20882,12 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("2. The repositories have no password — pass --insecure-no-password to every\n")
 		w("   restic command below (e.g. `restic -r <repo> --insecure-no-password snapshots`).\n\n")
 	}
-	w("3. List the snapshots in a repository (use a path or remote from the list above):\n\n")
-	w("       restic -r <repo> snapshots\n\n")
+	hosts := kitHostFlags(key)
+	w("3. List this server's snapshots in a repository (use a path or remote from the\n")
+	w("   list above). This server writes its backups under the restic host %s.\n", restickey.Host(key))
+	w("   Those it made before it had a host of its own carry %s. Naming both\n", restic.LegacyHost)
+	w("   leaves out the backups of any other server that writes to the repository:\n\n")
+	w("       restic -r <repo> snapshots %s\n\n", hosts)
 	w("4. Restore a snapshot into a target directory (`restic restore`):\n\n")
 	w("       restic -r <repo> restore <snapshot-id> --target <restore-dir>\n\n")
 	w("   Pick the snapshot with care. Since restic 0.17, `restic snapshots` shows each\n")
@@ -20900,7 +20904,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
-	zfsSection, oneLine := s.zfsKitSection(settings)
+	zfsSection, oneLine := s.zfsKitSection(settings, hosts)
 	if !oneLine && broken == "" {
 		broken = "ZFS datasets"
 	}
@@ -20908,9 +20912,19 @@ func (s *Service) RecoveryKit() (string, error) {
 		return "", fmt.Errorf("%w (section %q)", errKitLineBreak, broken)
 	}
 	b.WriteString(zfsSection)
-	b.WriteString(dbDumpKitSection)
+	b.WriteString(strings.ReplaceAll(dbDumpKitSection, kitHosts, hosts))
 
 	return b.String(), nil
+}
+
+// kitHosts stands in the kit's restic commands for the --host flags of
+// kitHostFlags.
+const kitHosts = "{hosts}"
+
+// kitHostFlags selects the snapshots this server wrote under the backup key: its
+// own host and the legacy one.
+func kitHostFlags(key string) string {
+	return "--host " + restickey.Host(key) + " --host " + restic.LegacyHost
 }
 
 // dbDumpKitSection explains how to get a database dump back with restic and the
@@ -20926,13 +20940,13 @@ file, /dbdump/<container>.sql.
 1. List the dumps of one container (the tags dbversion:<version> and
    dbname:<database> show the server version and the databases each dump holds):
 
-       restic -r <repo> snapshots --tag dbdump:<container>
+       restic -r <repo> snapshots {hosts} --tag dbdump:<container>
 
 2. Write the newest dump to a file (or replace "latest" with a snapshot id). A
    complete file ends with "-- PostgreSQL database cluster dump complete" or
    "-- Dump completed":
 
-       restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+       restic -r <repo> dump {hosts} --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 
    After data loss the newest dump can be the one taken of an emptied
    database. The list from step 1 shows each dump's size; skip one that is far

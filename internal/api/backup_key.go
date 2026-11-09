@@ -107,6 +107,17 @@ func (s *Service) backupPassword() string {
 	return restickey.Derive(key)
 }
 
+// resticHost is the restic host this server's backups are written with. It
+// follows the backup key, so a server that took over another one's backups
+// goes on under that one's host. A key that does not open gives none.
+func (s *Service) resticHost() string {
+	key, err := s.backupKey()
+	if err != nil {
+		return ""
+	}
+	return restickey.Host(key)
+}
+
 // sealDefinition seals a container or VM definition for the backup storage.
 func (s *Service) sealDefinition(def []byte) ([]byte, error) {
 	key, err := s.backupKey()

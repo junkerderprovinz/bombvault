@@ -148,6 +148,17 @@ type Mode struct {
 	// through another view than its parent did sees other inode numbers for
 	// the same files, and without it restic would read every file again.
 	IgnoreInode bool
+	// Host is the restic host a backup is written with, this server's own
+	// (restickey.Host). Empty writes LegacyHost.
+	Host string
+}
+
+// backupHost is the --host a backup under m carries.
+func (m Mode) backupHost() string {
+	if m.Host == "" {
+		return LegacyHost
+	}
+	return m.Host
 }
 
 // Compression is restic's --compression mode.
@@ -435,12 +446,11 @@ func (r Restic) bin() string {
 // insecureFlag is the restic flag for password-less repos (requires restic ≥0.17).
 const insecureFlag = "--insecure-no-password"
 
-// backupHost is a fixed restic --host for every backup. restic otherwise defaults
-// host to the machine hostname, which inside a container is a random short
-// container ID that changes whenever the container is recreated (e.g. on update).
-// Pinning it keeps a target's snapshots under one host so retention can group and
-// prune them together — see ForgetPolicyArgs.
-const backupHost = "bombvault"
+// LegacyHost is the host every server wrote before each got its own. restic
+// would otherwise take the container's hostname, which changes whenever the
+// container is recreated. In a repository only one server writes to, it names
+// that server.
+const LegacyHost = "bombvault"
 
 // repoFlag returns the common leading args for every restic subcommand.
 func repoFlag(repo string) []string {
@@ -564,10 +574,7 @@ func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, po
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--json")
-	// Pin a stable host (see backupHost) so a target's snapshots stay in one
-	// restic group across container recreations; otherwise retention silently
-	// stops collapsing snapshots after an update.
-	args = append(args, "--host", backupHost)
+	args = append(args, "--host", m.backupHost())
 	if groupBy != "" {
 		args = append(args, "--group-by", groupBy)
 	}
@@ -646,7 +653,7 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--json")
-	args = append(args, "--host", backupHost)
+	args = append(args, "--host", m.backupHost())
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
@@ -673,7 +680,7 @@ func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []
 		args = append(args, insecureFlag)
 	}
 	args = append(args, "--json")
-	args = append(args, "--host", backupHost)
+	args = append(args, "--host", m.backupHost())
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
@@ -2599,8 +2606,12 @@ func (r Restic) RepoOpensErr(ctx context.Context, repo string, m Mode) error {
 // Backup backs up paths into the repo, tagging each snapshot with tags, and
 // returns the parsed backup summary.
 func (r Restic) Backup(ctx context.Context, repo string, paths []string, tags []string, m Mode, excludes ...string) (Summary, error) {
+	args := withParent(BackupArgs(repo, paths, tags, m, excludes...), r.legacyParent(ctx, repo, m, nil, paths))
 	start := time.Now()
-	out, err := r.run(ctx, BackupArgs(repo, paths, tags, m, excludes...), m)
+	out, err := r.run(ctx, args, m)
+	if err == nil || errors.Is(err, ErrBackupSourceUnreadable) {
+		settleHost(repo, m, nil, paths)
+	}
 	if err != nil {
 		// restic exit 3 (a source file could not be read) still created the snapshot,
 		// so parse its summary and treat the backup as successful, with the reason in
@@ -2629,8 +2640,12 @@ func (r Restic) BackupDir(ctx context.Context, repo, dir string, tags []string, 
 		return Summary{}, fmt.Errorf("restic repository %q is not absolute", repo)
 	}
 	m = snapshotDirMode(m)
+	args := withParent(BackupDirArgs(repo, tags, m, excludes...), r.legacyParent(ctx, repo, m, tags, nil))
 	start := time.Now()
-	out, err := r.runIn(ctx, dir, BackupDirArgs(repo, tags, m, excludes...), m)
+	out, err := r.runIn(ctx, dir, args, m)
+	if err == nil || errors.Is(err, ErrBackupSourceUnreadable) {
+		settleHost(repo, m, tags, nil)
+	}
 	if err != nil {
 		// Exit 3 means a source file could not be read but the snapshot exists,
 		// the same as in Backup.
