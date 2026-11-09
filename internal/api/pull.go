@@ -209,16 +209,11 @@ func (s *Service) reportPullFailure(ctx context.Context, ps store.PullSource, er
 		log.Printf("api: pull source %s: read notify config: %v", ps.ID, cErr) //nolint:gosec // G706: ps.ID is an opaque store-generated id
 		return
 	}
-	if c.On != "always" && c.On != "failure" {
+	if !c.Active() {
 		return
 	}
 	text := fmt.Sprintf("Pull from %s failed: %s", ps.Name, msg)
-	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "pull", notify.Event{Title: "BombVault", Message: text, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: pull failed", text, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "pull", notify.Event{Title: "BombVault: pull failed", Message: text})
 }
 
 func (s *Service) pullFromSource(ctx context.Context, ps store.PullSource) (int, error) {

@@ -48,9 +48,7 @@ func (p *pathRecorder) got() []string {
 func TestScheduledSummaryStillSendsTheAlertsOfAnItem(t *testing.T) {
 	wh := newPathRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL, WebhookFormat: "generic", ScheduledSummary: true,
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL, "webhookFormat": "generic", "scheduledSummary": true})); err != nil {
 		t.Fatal(err)
 	}
 	item := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
@@ -72,10 +70,7 @@ func TestScheduledSummaryStillSendsTheAlertsOfAnItem(t *testing.T) {
 func TestARetentionFailurePingsTheDomainsCheck(t *testing.T) {
 	global, containers := newPathRecorder(t), newPathRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "failure", HealthchecksURL: global.srv.URL,
-		HealthchecksByDomain: map[string]string{"container": containers.srv.URL},
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": global.srv.URL, "healthchecksByDomain": map[string]string{"container": containers.srv.URL}})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -95,7 +90,7 @@ func TestABudgetAlertThatReachedNobodyIsSentAgain(t *testing.T) {
 	wh := newPathRecorder(t)
 	wh.status.Store(http.StatusBadGateway)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL, WebhookFormat: "generic"}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()

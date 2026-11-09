@@ -3,822 +3,365 @@ package notify_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 
+	kit "github.com/junkerderprovinz/parleyport/kit/notify"
+
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
-func TestSendRespectsPolicy(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-
-	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: true})
-	if hits != 0 {
-		t.Fatalf("success under failure-policy should not send, hits=%d", hits)
-	}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
-	if hits != 1 {
-		t.Fatalf("failure under failure-policy should send once, hits=%d", hits)
-	}
+// hit is one request a fake service received.
+type hit struct {
+	method, path, body string
 }
 
-func TestASuccessThatLeftSomethingOutReachesAFailurePolicyAndPingsSuccess(t *testing.T) {
-	var webhookHits int
-	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
-	defer wh.Close()
-	var hcPath string
-	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { hcPath = r.URL.Path }))
-	defer hc.Close()
-
-	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", HealthchecksURL: hc.URL}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: true, Warning: true})
-	if webhookHits != 1 {
-		t.Fatalf("a backup with files missing under failure-policy: webhook hits = %d, want 1", webhookHits)
-	}
-	if hcPath != "/" {
-		t.Fatalf("the health check got %q, want the success ping", hcPath)
-	}
+type service struct {
+	*httptest.Server
+	mu   sync.Mutex
+	hits []hit
 }
 
-func TestWebhookDiscordPayload(t *testing.T) {
-	var got map[string]any
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+func newService(t *testing.T) *service {
+	t.Helper()
+	s := &service{}
+	s.Server = httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &got)
+		s.mu.Lock()
+		s.hits = append(s.hits, hit{r.Method, r.URL.Path, string(b)})
+		s.mu.Unlock()
 	}))
-	defer srv.Close()
-	notify.Send(context.Background(),
-		notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "discord"},
-		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
-	if got["content"] != "BombVault: hi" {
-		t.Fatalf("discord content = %v", got["content"])
-	}
+	t.Cleanup(s.Close)
+	return s
 }
 
-func TestMatrixEndpointAndAuth(t *testing.T) {
-	var path, auth string
-	var body map[string]string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		path, auth = r.URL.Path, r.Header.Get("Authorization")
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &body)
-	}))
-	defer srv.Close()
-	notify.Send(context.Background(),
-		notify.Config{On: "always", MatrixEnabled: true, MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
-		"", notify.Event{Title: "BombVault", Message: "done", OK: true})
-	if !strings.HasPrefix(path, "/_matrix/client/v3/rooms/") || !strings.Contains(path, "/send/m.room.message/") {
-		t.Fatalf("matrix path = %q", path)
-	}
-	if auth != "Bearer tok" {
-		t.Fatalf("matrix auth = %q", auth)
-	}
-	if body["msgtype"] != "m.text" || body["body"] != "BombVault: done" {
-		t.Fatalf("matrix body = %v", body)
-	}
+func (s *service) got() []hit {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Clone(s.hits)
 }
 
-func TestGotifyPostsToMessageWithItsKeyAndPriority(t *testing.T) {
-	type post struct {
-		path, key string
-		body      map[string]any
-	}
-	var posts []post
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		var body map[string]any
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &body)
-		posts = append(posts, post{r.URL.Path, r.Header.Get("X-Gotify-Key"), body})
-	}))
-	defer srv.Close()
-	cfg := notify.Config{On: "always", GotifyEnabled: true, GotifyURL: srv.URL + "/gotify/", GotifyToken: "app-token",
-		GotifyPriorityFailure: 9, GotifyPrioritySuccess: 2}
-	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "done", OK: true})
-	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "broke", OK: false})
-	if len(posts) != 2 {
-		t.Fatalf("posts = %d, want 2", len(posts))
-	}
-	for _, p := range posts {
-		if p.path != "/gotify/message" || p.key != "app-token" {
-			t.Fatalf("post went to %q with key %q", p.path, p.key)
+func webhook(id, url string, on kit.On) kit.Channel {
+	return kit.Channel{ID: id, Kind: kit.KindWebhook, Enabled: true, On: on,
+		Webhook: &kit.Webhook{URL: url, Headers: map[string]string{"Content-Type": "application/json"}, Body: `{"title":"%%title%%","ok":%%ok%%}`}}
+}
+
+func checks(url string, byKey map[string]string) kit.Channel {
+	return kit.Channel{ID: "checks", Kind: kit.KindHealthchecks, Enabled: true, On: kit.OnAlways,
+		Healthchecks: &kit.Healthchecks{URL: url, ByKey: byKey}}
+}
+
+func channelByID(t *testing.T, cs []kit.Channel, id string) kit.Channel {
+	t.Helper()
+	for _, c := range cs {
+		if c.ID == id {
+			return c
 		}
 	}
-	if posts[0].body["title"] != "BombVault" || posts[0].body["message"] != "done" || posts[0].body["priority"] != float64(2) {
-		t.Fatalf("success body = %v", posts[0].body)
-	}
-	if posts[1].body["priority"] != float64(9) {
-		t.Fatalf("failure priority = %v, want 9", posts[1].body["priority"])
-	}
+	t.Fatalf("no channel %q among %d", id, len(cs))
+	return kit.Channel{}
 }
 
-func TestGotifyStartsWithItsDefaultPriorities(t *testing.T) {
+func TestAStoredConfigFromBeforeChannelsKeepsEveryChannel(t *testing.T) {
+	data, err := os.ReadFile("testdata/stored-before-channels.json")
+	if err != nil {
+		t.Fatal(err)
+	}
 	var c notify.Config
-	if err := json.Unmarshal([]byte(`{"on":"always","gotifyUrl":"https://push.example","gotifyToken":"t"}`), &c); err != nil {
+	if err := json.Unmarshal(data, &c); err != nil {
 		t.Fatal(err)
 	}
-	if !c.GotifyEnabled || c.GotifyPriorityFailure != notify.GotifyPriorityFailure || c.GotifyPrioritySuccess != notify.GotifyPrioritySuccess {
-		t.Fatalf("decoded %+v", c)
+	if !notify.Legacy(data) {
+		t.Error("the stored config is not recognised as the old form")
 	}
-	if err := json.Unmarshal([]byte(`{"gotifyEnabled":false,"gotifyPriorityFailure":0,"gotifyPrioritySuccess":0}`), &c); err != nil {
+	if !c.ScheduledSummary || !c.NotifyOnUpdate {
+		t.Errorf("switches = %v, %v, want both on", c.ScheduledSummary, c.NotifyOnUpdate)
+	}
+	if len(c.Channels) != 7 {
+		t.Fatalf("got %d channels, want 7: %+v", len(c.Channels), c.Channels)
+	}
+
+	discord := channelByID(t, c.Channels, "webhook")
+	if discord.Kind != kit.KindDiscord || !discord.Enabled || discord.On != kit.OnFailure ||
+		discord.Discord.URL != "https://discord.com/api/webhooks/1234567890/AbCdEfGhIjKlMnOpQrStUvWxYz" {
+		t.Errorf("webhook became %+v %+v", discord, discord.Discord)
+	}
+	matrix := channelByID(t, c.Channels, "matrix")
+	if matrix.Enabled || matrix.Matrix.Token != "syt_YmFja3Vwcw_token" || matrix.Matrix.Room != "!backups:example.org" {
+		t.Errorf("matrix, switched off before, became %+v %+v", matrix, matrix.Matrix)
+	}
+	gotify := channelByID(t, c.Channels, "gotify")
+	if !gotify.Enabled || gotify.Gotify.Token != "AbCdEfGhIjKlMnO" || *gotify.Gotify.PriorityFailure != 9 || *gotify.Gotify.PrioritySuccess != 0 {
+		t.Errorf("gotify became %+v %+v", gotify, gotify.Gotify)
+	}
+	smtp := channelByID(t, c.Channels, "smtp")
+	if !smtp.Enabled || smtp.SMTP.Port != 587 || smtp.SMTP.TLS != "starttls" || smtp.SMTP.Password != "app-password" || smtp.SMTP.To != "ops@example.org; admin@example.org" {
+		t.Errorf("smtp became %+v %+v", smtp, smtp.SMTP)
+	}
+	apprise := channelByID(t, c.Channels, "apprise")
+	if !apprise.Enabled || apprise.Apprise.URL != "http://apprise:8000/notify/backups" || apprise.Apprise.Tags != "backup" {
+		t.Errorf("apprise became %+v %+v", apprise, apprise.Apprise)
+	}
+	hc := channelByID(t, c.Channels, "healthchecks")
+	want := map[string]string{
+		"container": "https://hc-ping.com/0c2d7e6b-3f19-4e8a-9a51-5f0b6c1e8d4a",
+		"VM":        "https://hc-ping.com/9a510c2d-7e6b-4e8a-3f19-5f0b6c1e8d4a",
+	}
+	if !hc.Enabled || hc.Healthchecks.URL != "https://hc-ping.com/5f0b6c1e-8d4a-4e8a-9a51-0c2d7e6b3f19" || len(hc.Healthchecks.ByKey) != 2 ||
+		hc.Healthchecks.ByKey["container"] != want["container"] || hc.Healthchecks.ByKey["VM"] != want["VM"] {
+		t.Errorf("healthchecks became %+v %+v", hc, hc.Healthchecks)
+	}
+	unraid := channelByID(t, c.Channels, "unraid")
+	if !unraid.Enabled || unraid.On != kit.OnFailure {
+		t.Errorf("unraid became %+v", unraid)
+	}
+}
+
+func TestAConvertedConfigIsStoredInTheChannelForm(t *testing.T) {
+	data, err := os.ReadFile("testdata/stored-before-channels.json")
+	if err != nil {
 		t.Fatal(err)
 	}
-	if c.GotifyEnabled || c.GotifyPriorityFailure != 0 || c.GotifyPrioritySuccess != 0 {
-		t.Fatalf("a stored switch and priority 0 must be kept: %+v", c)
-	}
-}
-
-func TestGotifyPriorityStaysWithinGotifysRange(t *testing.T) {
-	for _, p := range []int{-1, 11} {
-		if err := (notify.Config{GotifyPriorityFailure: p}).Validate(); err == nil {
-			t.Fatalf("priority %d was accepted", p)
-		}
-	}
-	if err := (notify.Config{GotifyPriorityFailure: 10, GotifyPrioritySuccess: 0}).Validate(); err != nil {
+	var old notify.Config
+	if err := json.Unmarshal(data, &old); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestGotifyNamesARefusedToken(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	defer srv.Close()
-	err := notify.SendTest(context.Background(), notify.Config{GotifyEnabled: true, GotifyURL: srv.URL, GotifyToken: "wrong"})
-	if !errors.Is(err, notify.ErrGotifyKey) {
-		t.Fatalf("err = %v, want the refused token", err)
-	}
-	if strings.Contains(err.Error(), "wrong") {
-		t.Fatalf("the error carries the token: %v", err)
-	}
-}
-
-func TestANeverSavedConfigStartsGotifyAtItsDefaults(t *testing.T) {
-	c := notify.Defaults()
-	if c.GotifyPriorityFailure != notify.GotifyPriorityFailure || c.GotifyPrioritySuccess != notify.GotifyPrioritySuccess || c.Configured() {
-		t.Fatalf("defaults = %+v", c)
-	}
-}
-
-func TestSendGotifyDisabledSkips(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-	cfg := notify.Config{On: "always", GotifyURL: srv.URL, GotifyToken: "t"}
-	if cfg.Configured() {
-		t.Fatal("a Gotify block with GotifyEnabled false must not count as configured")
-	}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
-	if hits != 0 {
-		t.Fatalf("a switched-off Gotify channel was posted to %d times", hits)
-	}
-}
-
-func TestHealthchecksFailEndpoint(t *testing.T) {
-	var path string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
-	defer srv.Close()
-	notify.Send(context.Background(),
-		notify.Config{On: "always", HealthchecksURL: srv.URL},
-		"", notify.Event{OK: false})
-	if !strings.HasSuffix(path, "/fail") {
-		t.Fatalf("healthchecks failure should hit /fail, got %q", path)
-	}
-}
-
-func TestSendHealthchecksSuccessDecoupledFromPolicy(t *testing.T) {
-	var hcPath string
-	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { hcPath = r.URL.Path }))
-	defer hc.Close()
-	var webhookHits int
-	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
-	defer wh.Close()
-
-	notify.Send(context.Background(),
-		notify.Config{On: "failure", HealthchecksURL: hc.URL, WebhookURL: wh.URL, WebhookFormat: "generic"},
-		"", notify.Event{OK: true})
-
-	if hcPath != "/" {
-		t.Fatalf("success ping should hit the base path, got %q", hcPath)
-	}
-	if webhookHits != 0 {
-		t.Fatalf("webhook must stay suppressed on success under failure-policy, hits=%d", webhookHits)
-	}
-}
-
-func TestSendHealthchecksFailPathUnderFailurePolicy(t *testing.T) {
-	var path string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
-	defer srv.Close()
-	notify.Send(context.Background(),
-		notify.Config{On: "failure", HealthchecksURL: srv.URL},
-		"", notify.Event{OK: false})
-	if path != "/fail" {
-		t.Fatalf("failure should hit /fail, got %q", path)
-	}
-}
-
-func TestSendStartPingsStart(t *testing.T) {
-	var path string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
-	defer srv.Close()
-	notify.SendStart(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL}, "")
-	if path != "/start" {
-		t.Fatalf("SendStart should hit /start, got %q", path)
-	}
-}
-
-func TestSendStartNeedsAURL(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-
-	notify.SendStart(context.Background(), notify.Config{On: "always"}, "")
-	if hits != 0 {
-		t.Fatalf("SendStart with no URL should not ping, hits=%d", hits)
-	}
-}
-
-func TestAnUnknownPolicySendsNoMessage(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-
-	cfg := notify.Config{On: "bogus", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: true})
-	notify.Send(context.Background(), cfg, "", notify.Event{OK: false})
-	notify.SendStart(context.Background(), cfg, "")
-	if hits != 0 {
-		t.Fatalf("an unknown On policy sent %d messages", hits)
-	}
-}
-
-func TestAConfigThatNeverChoseReadsAsFailureOnly(t *testing.T) {
-	for _, stored := range []string{`{"webhookUrl":"http://x"}`, `{"on":"","webhookUrl":"http://x"}`} {
-		var c notify.Config
-		if err := json.Unmarshal([]byte(stored), &c); err != nil {
-			t.Fatal(err)
-		}
-		if c.On != "failure" {
-			t.Fatalf("%s reads On=%q", stored, c.On)
-		}
-	}
-	var chosen notify.Config
-	if err := json.Unmarshal([]byte(`{"on":"never"}`), &chosen); err != nil {
+	stored, err := json.Marshal(old)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if chosen.On != "never" {
-		t.Fatalf("a chosen Never reads On=%q", chosen.On)
+	if notify.Legacy(stored) {
+		t.Fatalf("the converted config still reads as the old form: %s", stored)
 	}
-	if !notify.Defaults().IsDefault() {
-		t.Fatal("the defaults are not default")
+	var again notify.Config
+	if err := json.Unmarshal(stored, &again); err != nil {
+		t.Fatal(err)
 	}
-	if (notify.Config{On: "never", GotifyPriorityFailure: notify.GotifyPriorityFailure, GotifyPrioritySuccess: notify.GotifyPrioritySuccess}).IsDefault() {
-		t.Fatal("a chosen Never counts as saying nothing")
-	}
-}
-
-func TestAHeldSuccessPingsFailWithItsReason(t *testing.T) {
-	var path, body string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		b, _ := io.ReadAll(r.Body)
-		path, body = r.URL.Path, string(b)
-	}))
-	defer srv.Close()
-	notify.Send(context.Background(), notify.Config{On: "failure", HealthchecksURL: srv.URL}, "flash", notify.Event{OK: true, CheckHeld: "files u1 failed"})
-	if path != "/fail" || body != "files u1 failed" {
-		t.Fatalf("ping = %q %q", path, body)
+	if len(again.Channels) != len(old.Channels) || !again.ScheduledSummary || !again.NotifyOnUpdate {
+		t.Fatalf("reading it back gave %+v", again)
 	}
 }
 
-func TestHealthchecksPhasePaths(t *testing.T) {
-	var path string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { path = r.URL.Path }))
-	defer srv.Close()
-	base := notify.Config{On: "always", HealthchecksURL: srv.URL}
-
-	notify.SendStart(context.Background(), base, "")
-	if path != "/start" {
-		t.Fatalf("start phase → %q, want /start", path)
+func TestAStrictDecodeRefusesAMisspelledField(t *testing.T) {
+	var c notify.Config
+	if err := c.DecodeStrict([]byte(`{"channels":[],"scheduledSumary":true}`)); err == nil {
+		t.Fatal("a misspelled switch was accepted")
 	}
-	notify.Send(context.Background(), base, "", notify.Event{OK: true})
-	if path != "/" {
-		t.Fatalf("success phase → %q, want /", path)
+	if err := c.DecodeStrict([]byte(`{"channels":[{"id":"a","kind":"unraid","enabled":true,"onn":"always"}]}`)); err == nil {
+		t.Fatal("a misspelled channel field was accepted")
 	}
-	notify.Send(context.Background(), base, "", notify.Event{OK: false})
-	if path != "/fail" {
-		t.Fatalf("fail phase → %q, want /fail", path)
+	if err := c.DecodeStrict([]byte(`{"channels":[{"id":"a","kind":"unraid","enabled":true}],"scheduledSummary":true}`)); err != nil || len(c.Channels) != 1 {
+		t.Fatalf("a well-formed body: %v, %+v", err, c)
 	}
 }
 
-func TestSendPerDomainURLRouted(t *testing.T) {
-	var flashHits, globalHits int
-	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
-	defer flash.Close()
-	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
-	defer global.Close()
+func TestAFailurePolicyHearsOfFailuresAndOfSuccessesThatLeftSomethingOut(t *testing.T) {
+	wh := newService(t)
+	c := notify.Config{Channels: []kit.Channel{webhook("hook", wh.URL, kit.OnFailure)}}
 
-	cfg := notify.Config{
-		On:                   "always",
-		HealthchecksURL:      global.URL,
-		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	if notify.Send(context.Background(), c, "container", notify.Event{Title: "BombVault", Message: "fine", OK: true}) {
+		t.Error("a plain success counts as delivered")
 	}
-	notify.Send(context.Background(), cfg, "flash", notify.Event{OK: true})
-	if flashHits != 1 {
-		t.Fatalf("flash per-domain URL should be pinged once, hits=%d", flashHits)
+	if !notify.Send(context.Background(), c, "container", notify.Event{Title: "BombVault: backup FAILED", Message: "broke"}) {
+		t.Error("a failure was not delivered")
 	}
-	if globalHits != 0 {
-		t.Fatalf("global URL must not be pinged for a per-domain-routed domain, hits=%d", globalHits)
+	notify.Send(context.Background(), c, "container", notify.Event{Title: "BombVault: backup incomplete", Message: "some left out", OK: true, Warning: true})
+	hits := wh.got()
+	if len(hits) != 2 {
+		t.Fatalf("webhook got %d messages, want the failure and the warning: %+v", len(hits), hits)
+	}
+	if hits[0].body != `{"title":"BombVault: backup FAILED","ok":false}` {
+		t.Errorf("the failure was sent as %s", hits[0].body)
 	}
 }
 
-func TestSendUnmappedDomainFallsBackToGlobal(t *testing.T) {
-	var flashHits, globalHits int
-	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
-	defer flash.Close()
-	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
-	defer global.Close()
+func TestAnItemOfAScheduledRunIsFoldedIntoTheSummaryButStillPings(t *testing.T) {
+	wh, hc := newService(t), newService(t)
+	c := notify.Config{ScheduledSummary: true, Channels: []kit.Channel{webhook("hook", wh.URL, kit.OnAlways), checks(hc.URL, nil)}}
+	ctx := notify.WithMessagesSuppressed(context.Background())
 
-	cfg := notify.Config{
-		On:                   "always",
-		HealthchecksURL:      global.URL,
-		HealthchecksByDomain: map[string]string{"flash": flash.URL},
+	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault", Message: "item done", OK: true, ItemResult: true})
+	if n := len(wh.got()); n != 0 {
+		t.Errorf("webhook got %d messages for a folded item", n)
 	}
-	notify.Send(context.Background(), cfg, "config", notify.Event{OK: true})
-	if globalHits != 1 {
-		t.Fatalf("unmapped domain should ping the global URL once, hits=%d", globalHits)
-	}
-	if flashHits != 0 {
-		t.Fatalf("the flash per-domain URL must not be pinged for the config domain, hits=%d", flashHits)
+	if hits := hc.got(); len(hits) != 1 || hits[0].path != "/" {
+		t.Errorf("health check got %+v, want one success ping", hits)
 	}
 }
 
-func TestSendStartPerDomainURL(t *testing.T) {
-	var flashPath string
-	var globalHits int
-	flash := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) { flashPath = r.URL.Path }))
-	defer flash.Close()
-	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
-	defer global.Close()
-
-	cfg := notify.Config{
-		On:                   "always",
-		HealthchecksURL:      global.URL,
-		HealthchecksByDomain: map[string]string{"flash": flash.URL},
-	}
-	notify.SendStart(context.Background(), cfg, "flash")
-	if flashPath != "/start" {
-		t.Fatalf("SendStart should hit the flash /start, got %q", flashPath)
-	}
-	if globalHits != 0 {
-		t.Fatalf("global URL must not be pinged when the domain has its own URL, hits=%d", globalHits)
+func TestAHeldCheckHearsAFailureWithItsReason(t *testing.T) {
+	hc := newService(t)
+	c := notify.Config{Channels: []kit.Channel{checks(hc.URL, nil)}}
+	notify.Send(context.Background(), c, "container", notify.Event{Title: "BombVault", Message: "ok", OK: true, CheckHeld: "nextcloud failed earlier"})
+	hits := hc.got()
+	if len(hits) != 1 || hits[0].path != "/fail" || hits[0].body != "nextcloud failed earlier" {
+		t.Fatalf("health check got %+v", hits)
 	}
 }
 
-func TestSendTestPingsEveryDistinctURL(t *testing.T) {
-	var globalHits, flashHits, configHits int
-	global := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { globalHits++ }))
-	defer global.Close()
-	flash := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { flashHits++ }))
-	defer flash.Close()
-	config := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { configHits++ }))
-	defer config.Close()
-
-	cfg := notify.Config{
-		HealthchecksURL: global.URL,
-		HealthchecksByDomain: map[string]string{
-			"flash":     flash.URL,
-			"config":    config.URL,
-			"container": global.URL, // same as the global URL
-		},
-	}
-	if err := notify.SendTest(context.Background(), cfg); err != nil {
-		t.Fatalf("SendTest: %v", err)
-	}
-	if globalHits != 1 || flashHits != 1 || configHits != 1 {
-		t.Fatalf("each distinct URL should be pinged once: global=%d flash=%d config=%d", globalHits, flashHits, configHits)
+func TestSuppressedChecksAreNotPinged(t *testing.T) {
+	hc := newService(t)
+	c := notify.Config{Channels: []kit.Channel{checks(hc.URL, nil)}}
+	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "container", notify.Event{Message: "broke"})
+	if n := len(hc.got()); n != 0 {
+		t.Fatalf("a suppressed check got %d pings", n)
 	}
 }
 
-func TestConfiguredWithOnlyPerDomainURL(t *testing.T) {
-	cfg := notify.Config{HealthchecksByDomain: map[string]string{"flash": "https://hc/flash"}}
-	if !cfg.Configured() {
-		t.Fatal("Configured() should be true when only a per-domain Healthchecks URL is set")
+func TestEachSectionPingsItsOwnCheck(t *testing.T) {
+	hc := newService(t)
+	c := notify.Config{Channels: []kit.Channel{checks(hc.URL+"/all", map[string]string{"container": hc.URL + "/containers", "VM": hc.URL + "/vms"})}}
+	notify.PingDomainStart(context.Background(), c, "containers")
+	notify.PingDomainResult(context.Background(), c, "vms", false, "1 of 2 items failed")
+	notify.PingDomainResult(context.Background(), c, "flash", true, "")
+	want := []hit{
+		{http.MethodGet, "/containers/start", ""},
+		{http.MethodPost, "/vms/fail", "1 of 2 items failed"},
+		{http.MethodGet, "/all", ""},
+	}
+	if got := hc.got(); !slices.Equal(got, want) {
+		t.Fatalf("checks got %+v, want %+v", got, want)
 	}
 }
 
-func TestSendTestLeavesAHealthCheckItsStateAndTriesEveryChannel(t *testing.T) {
-	var mu sync.Mutex
-	var paths []string
-	hc := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		defer mu.Unlock()
-		paths = append(paths, r.URL.Path)
-	}))
-	defer hc.Close()
-	refused := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusBadRequest) }))
-	defer refused.Close()
-
-	err := notify.SendTest(context.Background(), notify.Config{HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: refused.URL, WebhookFormat: "generic"})
-	if err == nil || !strings.Contains(err.Error(), "webhook") {
-		t.Fatalf("err = %v, want the refused webhook named", err)
+func TestAStartPostsOnlyToAppriseChannelsThatHearEverything(t *testing.T) {
+	wh, ap, hc := newService(t), newService(t), newService(t)
+	c := notify.Config{Channels: []kit.Channel{
+		webhook("hook", wh.URL, kit.OnAlways),
+		{ID: "apprise", Kind: kit.KindApprise, Enabled: true, On: kit.OnAlways, Apprise: &kit.Apprise{URL: ap.URL + "/notify/key"}},
+		checks(hc.URL, nil),
+	}}
+	notify.SendStart(context.Background(), c, "flash")
+	if n := len(wh.got()); n != 0 {
+		t.Errorf("the webhook heard of a start %d times", n)
 	}
-	mu.Lock()
-	defer mu.Unlock()
-	if len(paths) != 1 || paths[0] != "/log" {
-		t.Fatalf("the check heard %v, want one entry in its log", paths)
+	hits := ap.got()
+	if len(hits) != 1 || !strings.Contains(hits[0].body, `"type":"info"`) || !strings.Contains(hits[0].body, "Backup started (flash)") {
+		t.Errorf("apprise got %+v", hits)
+	}
+	if hits := hc.got(); len(hits) != 1 || hits[0].path != "/start" {
+		t.Errorf("health check got %+v", hits)
 	}
 }
 
-func TestSendTestNoChannel(t *testing.T) {
-	if err := notify.SendTest(context.Background(), notify.Config{}); err == nil {
-		t.Fatal("SendTest with no channel should error")
-	}
+type runner struct {
+	mu   sync.Mutex
+	runs [][]string
 }
 
-func TestSendTestSMTPDisabledSkips(t *testing.T) {
-	cfg := notify.Config{SMTPHost: "smtp.example.com", SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // SMTPEnabled false
-	if err := notify.SendTest(context.Background(), cfg); err == nil {
-		t.Fatal("SendTest with SMTPEnabled=false should report no channel configured")
-	}
+func (r *runner) Run(_ context.Context, name string, args ...string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.runs = append(r.runs, append([]string{name}, args...))
+	return nil
 }
 
-func TestSendTestSMTPMissingHostErrors(t *testing.T) {
-	cfg := notify.Config{SMTPEnabled: true, SMTPFrom: "a@x.com", SMTPTo: "b@x.com"} // no host
-	if err := notify.SendTest(context.Background(), cfg); err == nil {
-		t.Fatal("SendTest with SMTP enabled but no host should error")
+func TestUnraidHearsThroughTheRunnerItIsGiven(t *testing.T) {
+	unraid := kit.Channel{ID: "unraid", Kind: kit.KindUnraid, Enabled: true, On: kit.OnFailure}
+	c := notify.Config{Channels: []kit.Channel{unraid}}
+	if c.TakesMessages() {
+		t.Error("an Unraid channel without a way to the host takes messages")
 	}
-}
-
-func TestSendTestSMTPUnreachableErrorsClearly(t *testing.T) {
-	cfg := notify.Config{
-		SMTPEnabled: true,
-		SMTPHost:    "127.0.0.1",
-		SMTPPort:    1, // nothing listens here
-		SMTPFrom:    "a@x.com",
-		SMTPTo:      "b@x.com",
-		SMTPTLS:     "none",
-	}
-	err := notify.SendTest(context.Background(), cfg)
-	if err == nil {
-		t.Fatal("SendTest against an unreachable SMTP server should error")
-	}
-	if !strings.Contains(err.Error(), "smtp:") {
-		t.Fatalf("expected a clear smtp error, got %q", err)
-	}
-}
-
-func TestSendTestWebhookDisabledSkips(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-	cfg := notify.Config{WebhookURL: srv.URL, WebhookFormat: "generic"} // WebhookEnabled false
-	if cfg.Configured() {
-		t.Fatal("a webhook URL with WebhookEnabled=false must not count as configured")
-	}
-	if err := notify.SendTest(context.Background(), cfg); err == nil {
-		t.Fatal("SendTest with WebhookEnabled=false should report no channel configured")
-	}
-	if hits != 0 {
-		t.Fatalf("a disabled webhook must never be dialed, hits=%d", hits)
-	}
-}
-
-func TestSendMatrixDisabledSkips(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-	cfg := notify.Config{MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"} // MatrixEnabled false
-	if cfg.Configured() {
-		t.Fatal("a Matrix block with MatrixEnabled=false must not count as configured")
-	}
-	notify.Send(context.Background(), notify.Config{On: "always", MatrixHomeserver: srv.URL, MatrixToken: "tok", MatrixRoom: "!room:hs"},
-		"", notify.Event{OK: true})
-	if hits != 0 {
-		t.Fatalf("a disabled Matrix channel must never be posted to, hits=%d", hits)
-	}
-}
-
-func TestSendTestAppriseDisabledSkips(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-	cfg := notify.Config{AppriseURL: srv.URL} // AppriseEnabled false
-	if cfg.Configured() {
-		t.Fatal("an Apprise URL with AppriseEnabled=false must not count as configured")
-	}
-	if err := notify.SendTest(context.Background(), cfg); err == nil {
-		t.Fatal("SendTest with AppriseEnabled=false should report no channel configured")
-	}
-	if hits != 0 {
-		t.Fatalf("a disabled Apprise channel must never be posted to, hits=%d", hits)
-	}
-}
-
-func TestSuppressedHealthchecksSkipsPingNotChannels(t *testing.T) {
-	var hcHits, webhookHits int
-	hc := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hcHits++ }))
-	defer hc.Close()
-	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { webhookHits++ }))
-	defer wh.Close()
-
-	cfg := notify.Config{On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}
-	ctx := notify.WithHealthchecksSuppressed(context.Background())
-
-	notify.SendStart(ctx, cfg, "container")
-	notify.Send(ctx, cfg, "container", notify.Event{Title: "BombVault", Message: "ok", OK: true})
-
-	if hcHits != 0 {
-		t.Fatalf("suppressed context must not ping Healthchecks, hits=%d", hcHits)
-	}
-	if webhookHits != 1 {
-		t.Fatalf("message channels must still fire under suppression, webhook hits=%d", webhookHits)
-	}
-}
-
-func TestPingDomainStartAndResultEndpoints(t *testing.T) {
-	var path, body string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		path = r.URL.Path
-		b, _ := io.ReadAll(r.Body)
-		body = string(b)
-	}))
-	defer srv.Close()
-	cfg := notify.Config{On: "always", HealthchecksURL: srv.URL}
-
-	notify.PingDomainStart(context.Background(), cfg, "containers")
-	if path != "/start" {
-		t.Fatalf("PingDomainStart should hit /start, got %q", path)
+	if notify.Send(context.Background(), c, "vms", notify.Event{Title: "BombVault: VM may still be frozen", Message: "thaw it", Critical: true}) {
+		t.Error("an Unraid channel without a way to the host delivered")
 	}
 
-	notify.PingDomainResult(context.Background(), cfg, "containers", true, "3 of 3 items succeeded")
-	if path != "/" {
-		t.Fatalf("PingDomainResult(ok) should hit the success base path, got %q", path)
+	r := &runner{}
+	c = c.WithUnraid(r)
+	if !c.TakesMessages() {
+		t.Error("an Unraid channel with a way to the host takes no messages")
 	}
-	if body != "3 of 3 items succeeded" {
-		t.Fatalf("success summary should be sent as the body, got %q", body)
+	notify.Send(context.Background(), c, "vms", notify.Event{Title: "BombVault: VM may still be frozen", Message: "thaw it", Critical: true})
+	notify.Send(context.Background(), c, "container", notify.Event{Title: "BombVault: backup FAILED", Message: "broke"})
+	want := [][]string{
+		{kit.UnraidNotifyScript, "-e", "BombVault", "-s", "BombVault: VM may still be frozen", "-d", "thaw it", "-i", "alert"},
+		{kit.UnraidNotifyScript, "-e", "BombVault", "-s", "BombVault: backup FAILED", "-d", "broke", "-i", "warning"},
 	}
-
-	notify.PingDomainResult(context.Background(), cfg, "containers", false, "1 of 3 items failed")
-	if path != "/fail" {
-		t.Fatalf("PingDomainResult(!ok) should hit /fail, got %q", path)
+	if len(r.runs) != len(want) {
+		t.Fatalf("runner ran %v", r.runs)
 	}
-	if body != "1 of 3 items failed" {
-		t.Fatalf("fail summary should be sent as the body, got %q", body)
-	}
-}
-
-func TestPingDomainNeedsOnlyAURL(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-
-	notify.PingDomainStart(context.Background(), notify.Config{On: "always"}, "containers")
-	notify.PingDomainResult(context.Background(), notify.Config{On: "always"}, "containers", true, "x")
-	if hits != 0 {
-		t.Fatalf("aggregate pings without a URL went somewhere, hits=%d", hits)
-	}
-	notify.PingDomainStart(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers")
-	notify.PingDomainResult(context.Background(), notify.Config{On: "never", HealthchecksURL: srv.URL}, "containers", true, "x")
-	if hits != 2 {
-		t.Fatalf("a check under Never heard %d pings, want 2: Notify is about messages", hits)
-	}
-}
-
-func TestApprisePayloadAndTypeMapping(t *testing.T) {
-	var got map[string]any
-	var path, contentType string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		path, contentType = r.URL.Path, r.Header.Get("Content-Type")
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &got)
-	}))
-	defer srv.Close()
-	cfg := notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL + "/notify/mykey"}
-
-	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "backup done", OK: true})
-	if path != "/notify/mykey" || contentType != "application/json" {
-		t.Fatalf("apprise POST path=%q content-type=%q", path, contentType)
-	}
-	if got["title"] != "BombVault" || got["body"] != "backup done" || got["type"] != "success" {
-		t.Fatalf("success payload = %v", got)
-	}
-	if _, ok := got["tag"]; ok {
-		t.Fatalf("no tag configured must mean no tag key, payload = %v", got)
-	}
-
-	notify.Send(context.Background(), cfg, "", notify.Event{Title: "BombVault", Message: "backup failed", OK: false})
-	if got["type"] != "failure" {
-		t.Fatalf("failure event should map to type=failure, payload = %v", got)
-	}
-}
-
-func TestAppriseTagPassedThrough(t *testing.T) {
-	var got map[string]any
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &got)
-	}))
-	defer srv.Close()
-	notify.Send(context.Background(),
-		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL, AppriseTags: "backups,homelab"},
-		"", notify.Event{Title: "BombVault", Message: "hi", OK: true})
-	if got["tag"] != "backups,homelab" {
-		t.Fatalf("tag = %v, want backups,homelab", got["tag"])
-	}
-}
-
-func TestAppriseStartPostsInfo(t *testing.T) {
-	var got map[string]any
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		hits++
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &got)
-	}))
-	defer srv.Close()
-
-	notify.SendStart(context.Background(), notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
-	if hits != 1 {
-		t.Fatalf("On=always should post an apprise start, hits=%d", hits)
-	}
-	if got["type"] != "info" || got["body"] != "Backup started (containers)" {
-		t.Fatalf("start payload = %v", got)
-	}
-
-	notify.SendStart(notify.WithHealthchecksSuppressed(context.Background()),
-		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
-	if hits != 2 {
-		t.Fatalf("HC suppression must not silence the apprise start, hits=%d", hits)
-	}
-
-	notify.SendStart(context.Background(), notify.Config{On: "failure", AppriseEnabled: true, AppriseURL: srv.URL}, "containers")
-	if hits != 2 {
-		t.Fatalf("On=failure must not post a start notice, hits=%d", hits)
-	}
-}
-
-func TestAppriseScheduledSummarySuppression(t *testing.T) {
-	var hits int
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer srv.Close()
-	cfg := notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL, ScheduledSummary: true}
-	ictx := notify.WithMessagesSuppressed(context.Background())
-
-	notify.Send(ictx, cfg, "container", notify.Event{OK: true, ItemResult: true})
-	notify.SendStart(ictx, cfg, "container")
-	if hits != 0 {
-		t.Fatalf("summary mode must suppress per-item apprise sends, hits=%d", hits)
-	}
-	// The summary itself is not marked.
-	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
-	if hits != 1 {
-		t.Fatalf("a non-marked apprise message must still send, hits=%d", hits)
-	}
-	cfg.ScheduledSummary = false
-	notify.Send(ictx, cfg, "container", notify.Event{OK: true, ItemResult: true})
-	if hits != 2 {
-		t.Fatalf("with summary off a marked apprise message must send, hits=%d", hits)
-	}
-}
-
-func TestAppriseSendErrorRedactsURL(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
-	deadURL := srv.URL + "/notify/secretkey"
-	srv.Close() // makes the send fail with a *url.Error that carries the URL
-
-	var buf strings.Builder
-	prev := log.Writer()
-	log.SetOutput(&buf)
-	defer log.SetOutput(prev)
-
-	notify.Send(context.Background(),
-		notify.Config{On: "always", AppriseEnabled: true, AppriseURL: deadURL},
-		"", notify.Event{Title: "BombVault", Message: "x", OK: true})
-
-	if !strings.Contains(buf.String(), "notify: apprise:") {
-		t.Fatalf("failed apprise send should be logged, log=%q", buf.String())
-	}
-	if strings.Contains(buf.String(), "secretkey") {
-		t.Fatalf("logged apprise error must not leak the notify key, log=%q", buf.String())
-	}
-}
-
-func TestConfiguredWithOnlyAppriseURL(t *testing.T) {
-	var got map[string]any
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		b, _ := io.ReadAll(r.Body)
-		_ = json.Unmarshal(b, &got)
-	}))
-	defer srv.Close()
-	cfg := notify.Config{AppriseEnabled: true, AppriseURL: srv.URL}
-	if !cfg.Configured() {
-		t.Fatal("Configured() should be true with an enabled Apprise URL")
-	}
-	if err := notify.SendTest(context.Background(), cfg); err != nil {
-		t.Fatalf("SendTest: %v", err)
-	}
-	if got["type"] != "success" || got["title"] == "" {
-		t.Fatalf("test payload = %v", got)
-	}
-}
-
-func TestScheduledSummarySuppressesPerItemMessages(t *testing.T) {
-	var hits int
-	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer wh.Close()
-	cfg := notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
-
-	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true, ItemResult: true})
-	if hits != 0 {
-		t.Fatalf("summary mode must suppress a per-item message, hits=%d", hits)
-	}
-	// The summary and container update notices are not marked.
-	notify.Send(context.Background(), cfg, "containers", notify.Event{OK: true})
-	if hits != 1 {
-		t.Fatalf("a non-marked message must still send, hits=%d", hits)
-	}
-	cfg.ScheduledSummary = false
-	notify.Send(notify.WithMessagesSuppressed(context.Background()), cfg, "container", notify.Event{OK: true, ItemResult: true})
-	if hits != 2 {
-		t.Fatalf("with summary off a marked message must send, hits=%d", hits)
-	}
-}
-
-// A guest left frozen or a retention that failed is no item result, and the
-// summary that replaces the item results does not mention it.
-func TestScheduledSummaryKeepsTheAlertsOfAnItem(t *testing.T) {
-	var hits int
-	wh := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
-	defer wh.Close()
-	cfg := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true}
-
-	item := notify.WithMessagesSuppressed(notify.WithHealthchecksSuppressed(context.Background()))
-	if !notify.Send(item, cfg, "vms", notify.Event{Title: "BombVault", Message: "VM win11 may still be frozen", OK: false}) || hits != 1 {
-		t.Fatalf("an alert on a scheduled item's context must be delivered, hits=%d", hits)
-	}
-}
-
-// TestSendOnUnsetNotifiesFailures covers the empty On a fresh install stores,
-// which must behave like "failure".
-func TestSendOnUnsetNotifiesFailures(t *testing.T) {
-	cases := []struct {
-		name     string
-		on       string
-		ok       bool
-		wantSent bool
-	}{
-		{"explicit never stays silent on failure", "never", false, false},
-		{"explicit never stays silent on success", "never", true, false},
-		{"failure sends a failure", "failure", false, true},
-		{"always sends a success too", "always", true, true},
-		{"an unknown value stays silent", "wat", false, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			var hits int
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				hits++
-				w.WriteHeader(http.StatusOK)
-			}))
-			defer srv.Close()
-			notify.Send(context.Background(),
-				notify.Config{On: c.on, WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"},
-				"", notify.Event{Title: "t", Message: "m", OK: c.ok})
-			if got := hits > 0; got != c.wantSent {
-				t.Fatalf("On=%q ok=%v: sent=%v, want %v", c.on, c.ok, got, c.wantSent)
-			}
-		})
-	}
-}
-
-func TestAPasswordInANameIsNotSentOnAnyChannel(t *testing.T) {
-	var bodies []string
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		b, _ := io.ReadAll(r.Body)
-		bodies = append(bodies, r.Header.Get("X-Title")+string(b))
-	}))
-	defer srv.Close()
-	ev := notify.Event{Title: "BombVault (https://bob:hunter2@nas.local)", Message: `backup of "bob:hunter2@nas" failed`, OK: false}
-	for _, format := range []string{"json", "discord", "ntfy", "gotify", "slack"} {
-		notify.Send(context.Background(), notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: format}, "", ev)
-	}
-	notify.Send(context.Background(), notify.Config{On: "always", AppriseEnabled: true, AppriseURL: srv.URL}, "", ev)
-	notify.Send(context.Background(), notify.Config{On: "always", MatrixEnabled: true, MatrixHomeserver: srv.URL, MatrixRoom: "!r:x", MatrixToken: "t"}, "", ev)
-	if len(bodies) == 0 {
-		t.Fatal("nothing was sent")
-	}
-	for _, b := range bodies {
-		if strings.Contains(b, "hunter2") {
-			t.Errorf("a notification carries the password: %s", b)
+	for i := range want {
+		if !slices.Equal(r.runs[i], want[i]) {
+			t.Errorf("run %d = %q, want %q", i, r.runs[i], want[i])
 		}
+	}
+}
+
+func TestOnlyAChannelThatCarriesMessagesTakesMessages(t *testing.T) {
+	never := webhook("hook", "https://hooks.example.org/in", kit.OnNever)
+	off := webhook("off", "https://hooks.example.org/in", kit.OnAlways)
+	off.Enabled = false
+	for _, c := range []notify.Config{
+		{},
+		{Channels: []kit.Channel{checks("https://hc-ping.com/x", nil)}},
+		{Channels: []kit.Channel{never, off}},
+	} {
+		if c.TakesMessages() {
+			t.Errorf("%+v takes messages", c.Channels)
+		}
+	}
+	if !(notify.Config{Channels: []kit.Channel{webhook("hook", "https://hooks.example.org/in", kit.OnFailure)}}).TakesMessages() {
+		t.Error("a webhook on failure takes no messages")
+	}
+}
+
+func TestAHealthCheckAloneMakesNotificationsActive(t *testing.T) {
+	if (notify.Config{}).Active() {
+		t.Error("a config without channels is active")
+	}
+	if !(notify.Config{Channels: []kit.Channel{checks("https://hc-ping.com/x", nil)}}).Active() {
+		t.Error("a health check alone is not active")
+	}
+	never := webhook("hook", "https://hooks.example.org/in", kit.OnNever)
+	if (notify.Config{Channels: []kit.Channel{never}}).Active() {
+		t.Error("a channel that hears nothing is active")
+	}
+}
+
+func TestADefaultConfigSaysNothing(t *testing.T) {
+	if !(notify.Config{}).IsDefault() {
+		t.Error("the empty config is not the default")
+	}
+	if (notify.Config{NotifyOnUpdate: true}).IsDefault() {
+		t.Error("a config with a switch on is the default")
+	}
+	if (notify.Config{Channels: []kit.Channel{{ID: "u", Kind: kit.KindUnraid}}}).IsDefault() {
+		t.Error("a config with a channel is the default")
+	}
+}
+
+func TestCarriesTellsWhetherAnyChannelWantsTheEvent(t *testing.T) {
+	failure := notify.Config{Channels: []kit.Channel{webhook("hook", "https://hooks.example.org/in", kit.OnFailure)}}
+	if failure.Carries(notify.Event{OK: true}) {
+		t.Error("a channel on failure carries a plain success")
+	}
+	if !failure.Carries(notify.Event{OK: true, Warning: true}) || !failure.Carries(notify.Event{}) {
+		t.Error("a channel on failure does not carry a warning or a failure")
+	}
+	always := notify.Config{Channels: []kit.Channel{webhook("hook", "https://hooks.example.org/in", kit.OnAlways)}}
+	if !always.Carries(notify.Event{OK: true}) {
+		t.Error("a channel on always does not carry a success")
+	}
+}
+
+func TestChecksNamesWhatASectionPings(t *testing.T) {
+	c := notify.Config{Channels: []kit.Channel{
+		checks("https://hc-ping.com/all", map[string]string{"VM": "https://hc-ping.com/vms"}),
+		{ID: "more", Kind: kit.KindHealthchecks, Enabled: true, Healthchecks: &kit.Healthchecks{ByKey: map[string]string{"VM": "https://hc-ping.com/vms-too"}}},
+	}}
+	if got := c.Checks("containers"); !slices.Equal(got, []string{"https://hc-ping.com/all"}) {
+		t.Errorf("containers ping %q", got)
+	}
+	if got := c.Checks("vms"); !slices.Equal(got, []string{"https://hc-ping.com/vms", "https://hc-ping.com/vms-too"}) {
+		t.Errorf("vms ping %q", got)
+	}
+	if got := (notify.Config{}).Checks("flash"); len(got) != 0 {
+		t.Errorf("without a check flash pings %q", got)
 	}
 }

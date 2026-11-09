@@ -14,7 +14,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
@@ -635,7 +634,7 @@ func zfsCaptureNotifications(t *testing.T, s *Service) func() []string {
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(srv.Close)
-	if err := s.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatalf("configure notifications: %v", err)
 	}
 	return func() []string {

@@ -14,7 +14,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -107,7 +106,7 @@ func receiverWatchService(t *testing.T, appKey string) (*Service, *store.Repo, f
 	// A received repo has to live under the host mount like any repo path, and
 	// t.TempDir() is inside the OS temp root.
 	svc := &Service{cfg: config.Config{AppKey: appKey, HostMountRoot: os.TempDir()}, store: st, engine: restic.Restic{Bin: "restic"}}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	get := func() []string {
@@ -268,7 +267,7 @@ func TestReceiverWatchMutedPolicyStillPersists(t *testing.T) {
 	repo := seedReceivedRepo(t, sendingKey)
 
 	svc, st, bodies := receiverWatchService(t, appKey)
-	if err := svc.SetNotifyConfig(notify.Config{On: "never"}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "never"})); err != nil {
 		t.Fatal(err)
 	}
 	rr := makeReceivedRepo(t, appKey, sendingKey, repo, 0)

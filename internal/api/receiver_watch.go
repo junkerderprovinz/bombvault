@@ -365,17 +365,11 @@ func (s *Service) receiverScheduledCheck(ctx context.Context, c notify.Config, a
 	}
 }
 
-// notifyReceiver sends a receiver alert through the notify channels and the
-// Unraid mirror, like notifyBackupOverdue. The Healthchecks ping is suppressed:
+// notifyReceiver sends a receiver alert, like notifyBackupOverdue. The Healthchecks ping is suppressed:
 // this is an alert about a repository, not a run event.
 func (s *Service) notifyReceiver(ctx context.Context, c notify.Config, subject, msg string) {
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "receiver",
-		notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, subject, msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+		notify.Event{Title: subject, Message: msg})
 }
 
 func (s *Service) notifyReceiverDeadMan(ctx context.Context, c notify.Config, repoName, source string, hours int) {

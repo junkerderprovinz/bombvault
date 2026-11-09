@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
+
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
@@ -68,7 +70,7 @@ func unraidNotifyService(t *testing.T, ssh HostSSH) *Service {
 func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -82,7 +84,7 @@ func TestNotifyBackupUnraidHonoursPolicy(t *testing.T) {
 		t.Fatalf("expected 1 Unraid notify on failure, got %d", len(ssh.runs))
 	}
 	joined := strings.Join(ssh.runs[0], " ")
-	if !strings.Contains(joined, "/usr/local/emhttp/webGui/scripts/notify") {
+	if !strings.Contains(joined, kitnotify.UnraidNotifyScript) {
 		t.Fatalf("host notify script not invoked: %v", ssh.runs[0])
 	}
 	if !strings.Contains(joined, "warning") {
@@ -112,9 +114,7 @@ func TestNotifyBackupReportsACancelAsNoFailure(t *testing.T) {
 
 			ssh := &fakeHostSSH{}
 			s := unraidNotifyService(t, ssh)
-			if err := s.SetNotifyConfig(notify.Config{
-				On: on, Unraid: true, HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
-			}); err != nil {
+			if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": on, "unraid": true, "healthchecksUrl": hc.URL, "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 				t.Fatal(err)
 			}
 			ctx, cancel := context.WithCancel(context.Background())
@@ -164,7 +164,7 @@ func TestNotifyBackupNamesTheStallGuard(t *testing.T) {
 	}))
 	defer wh.Close()
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 	ctx, stop := context.WithCancelCause(context.Background())
@@ -202,9 +202,7 @@ func TestNotifyBackupReportsAShutdownAsAnInterruption(t *testing.T) {
 	defer wh.Close()
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", Unraid: true, HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true, "healthchecksUrl": hc.URL, "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -232,7 +230,7 @@ func TestNotifyBackupReportsAShutdownAsAnInterruption(t *testing.T) {
 
 func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 	s.notifyBackup(context.Background(), "flash", "", "", true, backup.Summary{}, nil)
@@ -243,7 +241,7 @@ func TestNotifyBackupUnraidSkippedWithoutSSH(t *testing.T) {
 func TestNotifyBackupConfigLabel(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
-	if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -263,7 +261,7 @@ func TestNotifyBackupConfigLabel(t *testing.T) {
 func TestTestNotifyUnraid(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
-	if err := s.TestNotify(context.Background(), notify.Config{Unraid: true}); err != nil {
+	if err := s.TestNotify(context.Background(), unraidChannel).Err; err != nil {
 		t.Fatalf("TestNotify: %v", err)
 	}
 	if len(ssh.runs) != 1 {
@@ -271,10 +269,11 @@ func TestTestNotifyUnraid(t *testing.T) {
 	}
 }
 
-func TestTestNotifyNothingConfigured(t *testing.T) {
+func TestTestingAnIncompleteChannelSaysWhatIsMissing(t *testing.T) {
 	s := unraidNotifyService(t, &fakeHostSSH{})
-	if err := s.TestNotify(context.Background(), notify.Config{}); err == nil {
-		t.Fatal("expected an error when no channel is configured")
+	res := s.TestNotify(context.Background(), kitnotify.Channel{ID: "hook", Kind: kitnotify.KindWebhook, Enabled: true, Webhook: &kitnotify.Webhook{}})
+	if res.OK() || res.Code != kitnotify.CodeInvalid {
+		t.Fatalf("an empty webhook tested as %+v", res)
 	}
 }
 
@@ -286,7 +285,7 @@ func TestNotifyBackupStartPingsHealthchecks(t *testing.T) {
 	defer srv.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	s.notifyBackupStart(context.Background(), "container")
@@ -303,7 +302,7 @@ func TestAHealthCheckHearsAWholeBackupWhateverNotifySays(t *testing.T) {
 			defer srv.Close()
 
 			s := unraidNotifyService(t, nil)
-			if err := s.SetNotifyConfig(notify.Config{On: on, HealthchecksURL: srv.URL}); err != nil {
+			if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": on, "healthchecksUrl": srv.URL})); err != nil {
 				t.Fatal(err)
 			}
 			s.notifyBackupStart(context.Background(), "flash")
@@ -326,15 +325,15 @@ func TestANeverChosenPolicySendsAFailedBackupsMessage(t *testing.T) {
 	defer srv.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	c, err := s.NotifyConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.On != "failure" {
-		t.Fatalf("a config that never chose reads On=%q, want failure", c.On)
+	if on := channelOf(c, "webhook").On; on != kitnotify.OnFailure {
+		t.Fatalf("a config that never chose reads On=%q, want failure", on)
 	}
 	s.notifyBackup(context.Background(), "flash", "", "flash", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
 	if len(messages) != 0 {
@@ -343,32 +342,6 @@ func TestANeverChosenPolicySendsAFailedBackupsMessage(t *testing.T) {
 	s.notifyBackup(context.Background(), "flash", "", "flash", false, backup.Summary{}, errors.New("boom"))
 	if len(messages) != 1 || !strings.Contains(messages[0], "FAILED") {
 		t.Fatalf("a failed backup sent %v", messages)
-	}
-}
-
-func TestChosenPoliciesStayAfterASaveWithNoChannel(t *testing.T) {
-	for _, on := range []string{"never", "failure", "always"} {
-		s := unraidNotifyService(t, nil)
-		if err := s.SetNotifyConfig(notify.Config{On: on, GotifyPriorityFailure: notify.GotifyPriorityFailure, GotifyPrioritySuccess: notify.GotifyPrioritySuccess}); err != nil {
-			t.Fatal(err)
-		}
-		c, err := s.NotifyConfig()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if c.On != on {
-			t.Fatalf("saved %q, read %q", on, c.On)
-		}
-	}
-}
-
-func TestAFreshInstallReadsTheDefaultPolicy(t *testing.T) {
-	c, err := unraidNotifyService(t, nil).NotifyConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if c.On != "failure" {
-		t.Fatalf("fresh install reads On=%q, want failure", c.On)
 	}
 }
 
@@ -406,7 +379,7 @@ func recordFinishedBackup(t *testing.T, s *Service, targetID, status string) str
 func TestASectionsSuccessDoesNotGreenAFailureOnASharedCheck(t *testing.T) {
 	url, pings := pingRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 	switchSectionsOn(t, s)
@@ -431,7 +404,7 @@ func TestASectionsSuccessDoesNotGreenAFailureOnASharedCheck(t *testing.T) {
 func TestAGoodBackupOfTheFailedEntryGreensTheCheck(t *testing.T) {
 	url, pings := pingRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 	switchSectionsOn(t, s)
@@ -448,7 +421,7 @@ func TestAFailureOnAnotherCheckHoldsNothing(t *testing.T) {
 	url, pings := pingRecorder(t)
 	own, _ := pingRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url, HealthchecksByDomain: map[string]string{"flash": own}}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": url, "healthchecksByDomain": map[string]string{"flash": own}})); err != nil {
 		t.Fatal(err)
 	}
 	switchSectionsOn(t, s)
@@ -463,7 +436,7 @@ func TestAFailureOnAnotherCheckHoldsNothing(t *testing.T) {
 func TestAScheduledRoundReportsAnEarlierFailureOfItsCheck(t *testing.T) {
 	url, pings := pingRecorder(t)
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: url}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 	switchSectionsOn(t, s)
@@ -498,11 +471,7 @@ func TestNotifyBackupStartPerDomainURL(t *testing.T) {
 	defer global.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On:                   "failure",
-		HealthchecksURL:      global.URL,
-		HealthchecksByDomain: map[string]string{"flash": flash.URL},
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": global.URL, "healthchecksByDomain": map[string]string{"flash": flash.URL}})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -529,11 +498,7 @@ func TestNotifyBackupStartFilesPerDomainURL(t *testing.T) {
 	defer global.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On:                   "failure",
-		HealthchecksURL:      global.URL,
-		HealthchecksByDomain: map[string]string{"files": files.URL},
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": global.URL, "healthchecksByDomain": map[string]string{"files": files.URL}})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -588,9 +553,7 @@ func TestScheduledContainersRunSendsOneStartOneSuccess(t *testing.T) {
 	defer wh.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "healthchecksUrl": hc.URL, "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -624,9 +587,7 @@ func TestScheduledContainersRunFailsWhenAnyItemFails(t *testing.T) {
 	defer wh.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", HealthchecksURL: hc.URL, WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic",
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "healthchecksUrl": hc.URL, "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -655,7 +616,7 @@ func TestManualSingleBackupStillPingsHealthchecksOnce(t *testing.T) {
 	defer srv.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{On: "always", HealthchecksURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "healthchecksUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -705,7 +666,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("it says how the files backup went", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true}))
 
 		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth+": FATAL: password authentication failed for user \"immich\"")
 		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, store.ReasonDBDumpAuth+": FATAL: password authentication failed for user \"immich\""), true)
@@ -730,7 +691,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("a backup that failed as well", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true}))
 
 		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpTool)
 		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(runID, store.ReasonDBDumpTool), false)
@@ -745,7 +706,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("a dump left running in the container", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true}))
 
 		reason := withOrphanStopFailed(store.ReasonDBDumpTool + ": pg_dumpall: error: query failed")
 		runID := recordDumpRun(t, s, targetID, "failed", reason)
@@ -765,7 +726,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("the same failure twice", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true}))
 
 		first := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)
 		s.notifyDBDumpFailed(context.Background(), targetID, "pg", failed(first, store.ReasonDBDumpAuth), true)
@@ -792,7 +753,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("a cancelled dump", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "always", Unraid: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "always", "unraid": true}))
 
 		runID := recordDumpRun(t, s, targetID, "cancelled", store.ReasonCancelled)
 		s.notifyDBDumpFailed(context.Background(), targetID, "pg",
@@ -807,7 +768,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 	t.Run("a scheduled round in summary mode", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true, "scheduledSummary": true}))
 
 		ctx := withRoundTally(notify.WithMessagesSuppressed(context.Background()))
 		runID := recordDumpRun(t, s, targetID, "failed", store.ReasonDBDumpAuth)
@@ -828,7 +789,7 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 
 func TestAScheduledSummaryNamesABackupThatMissedFiles(t *testing.T) {
 	ssh := &fakeHostSSH{}
-	s, _ := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+	s, _ := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true, "scheduledSummary": true}))
 	rounds := NewScheduledRounds()
 
 	rounds.Begin("files")
@@ -855,7 +816,7 @@ func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {
 
 	t.Run("the items and the summary share the round", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true, "scheduledSummary": true}))
 		rounds := NewScheduledRounds()
 
 		rounds.Begin("containers")
@@ -876,7 +837,7 @@ func TestScheduledRoundNamesAFailedDumpInItsSummary(t *testing.T) {
 
 	t.Run("overlapping rounds name the dump once", func(t *testing.T) {
 		ssh := &fakeHostSSH{}
-		s, targetID := dumpNotifyService(t, ssh, notify.Config{On: "failure", Unraid: true, ScheduledSummary: true})
+		s, targetID := dumpNotifyService(t, ssh, oldNotify(map[string]any{"on": "failure", "unraid": true, "scheduledSummary": true}))
 		rounds := NewScheduledRounds()
 
 		rounds.Begin("containers")

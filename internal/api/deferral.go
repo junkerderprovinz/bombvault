@@ -222,8 +222,7 @@ func (s *Service) dropDeferral(tg store.Target, d store.Deferral, why string, no
 		return
 	}
 	msg := fmt.Sprintf("Backup of container %q is not tried again: %s. It had waited since %s.", tg.ContainerName, why, clockAt(time.Unix(d.Since, 0), now))
-	s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, Warning: true},
-		"BombVault: deferred backup ended", msg, "normal")
+	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "container", notify.Event{Title: "BombVault: deferred backup ended", Message: msg, OK: true, Warning: true})
 }
 
 // containersBusy reports whether a backup of the containers runs or is about
@@ -364,8 +363,7 @@ func (s *Service) giveUpDeferral(tg store.Target, d store.Deferral, now time.Tim
 	}
 	msg := fmt.Sprintf("Backup of container %q gave up: the app was still busy when its wait ended (deferred since %s, %d tries, last: %s). It is under Needs you, where Retry backs it up.",
 		tg.ContainerName, clockAt(time.Unix(d.Since, 0), now), d.Tries, d.Reason)
-	s.sendAlert(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: false},
-		"BombVault: deferred backup gave up", msg, "warning")
+	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault: deferred backup gave up", Message: msg})
 }
 
 // notifyDeferred tells once that a backup waits for its app. In summary mode
@@ -386,12 +384,7 @@ func (s *Service) notifyDeferred(ctx context.Context, name, reason string, next,
 	if tally := roundTallyFrom(ctx); tally != nil && summary {
 		tally.addDeferred(fmt.Sprintf("- %s: %s, next try %s", name, reason, clockAt(next, now)))
 	}
-	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, ItemResult: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")})
-	if s.unraidGate(c.Unraid) && !summary {
-		if e := s.sendUnraidNotify(ctx, "BombVault: backup deferred", msg, "normal"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault: backup deferred", Message: msg, OK: true, ItemResult: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")})
 }
 
 // notifyDeferralDone tells that a deferred backup went through, in place of
@@ -411,8 +404,7 @@ func (s *Service) notifyDeferralDone(ctx context.Context, name string, d store.D
 	}
 	msg := fmt.Sprintf("Backup of container %q went through %s (snapshot %s, %s). It had waited since %s.",
 		name, how, shortID(sum.SnapshotID), humanBytes(sum.Bytes), clockAt(time.Unix(d.Since, 0), time.Now()))
-	s.sendAlert(ctx, c, "container", notify.Event{Title: "BombVault", Message: msg, OK: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")},
-		"BombVault: deferred backup done", msg, "normal")
+	notify.Send(ctx, c, "container", notify.Event{Title: "BombVault: deferred backup done", Message: msg, OK: true, Warning: true, CheckHeld: s.healthcheckHold(c, "container")})
 }
 
 // clockAt is t as the time of day, with the day in front when it is not the

@@ -564,12 +564,7 @@ func (s *Service) notifyPlacementPaused(ctx context.Context, domain string, why 
 	}
 	subject := "Off-site copies of " + domain + " wait for your decision"
 	msg := fmt.Sprintf("Nothing in %s is copied off site until you decide, because %s. Open BombVault to take the backups as this server's own or to check the rules first.", domain, pauseReasons[why])
-	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault", Message: subject + ": " + msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: "+subject, msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(ctx, c, domain, notify.Event{Title: "BombVault: " + subject, Message: msg})
 }
 
 // listTargetInBackground lists one target for one domain once, so a change that

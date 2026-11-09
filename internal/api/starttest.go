@@ -625,10 +625,5 @@ func (s *Service) notifyStartTestFailure(ctx context.Context, rec store.StartTes
 		return
 	}
 	msg := fmt.Sprintf("The start test of %s failed: a copy restored from its backup did not come up (%s).", rec.Container, rec.Detail)
-	notify.Send(ctx, c, "containers", notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: start test failed", msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(ctx, c, "containers", notify.Event{Title: "BombVault: start test failed", Message: msg})
 }

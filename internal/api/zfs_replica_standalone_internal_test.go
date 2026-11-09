@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfsrepl"
@@ -89,7 +88,7 @@ func TestAnItemWithOnlyAReplicaIsNotRefusedForWantingAPlace(t *testing.T) {
 func TestTheWatchdogJudgesAReplicaOnlyItemByItsReplica(t *testing.T) {
 	r := replicaOnlyRig(t)
 	wh := newPathRecorder(t)
-	if err := r.s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+	if err := r.s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.s.BackupZFSDataset(context.Background(), r.item.ID); err != nil {

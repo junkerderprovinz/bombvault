@@ -317,6 +317,9 @@ func run() error {
 	if err := svc.ConvertSharedSignIns(); err != nil {
 		log.Printf("main: turning the shared cloud sign-in into a saved one (tried again at the next start): %v", err)
 	}
+	if err := svc.ConvertNotifyChannels(); err != nil {
+		log.Printf("main: turning the notification settings into channels (tried again at the next start): %v", err)
+	}
 	svc.LinkTypedOwnFolders()
 	svc.NoteSectionPlans()
 	svc.StartGroup()

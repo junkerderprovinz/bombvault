@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -153,7 +152,7 @@ func TestHoldCheckErrorSkipsTheForgetAndAlerts(t *testing.T) {
 	defer wh.Close()
 	// An unset policy, the state of an install where a channel was configured
 	// and the policy never touched.
-	if err := f.svc.SetNotifyConfig(notify.Config{WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic"}); err != nil {
+	if err := f.svc.SetNotifyConfig(oldNotify(map[string]any{"webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 	f.e.items = func(store.Settings) (map[string]anomalyItemRef, error) {

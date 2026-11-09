@@ -198,12 +198,7 @@ func (s *Service) notifyGuestStillFrozen(ctx context.Context, name string, err e
 		return
 	}
 	msg := fmt.Sprintf("BombVault froze the filesystems of VM %s for its backup and could not thaw them again (%v). Nothing inside the VM can write until they are thawed: run \"virsh domfsthaw %s\" on the host or restart the VM.", name, scrubError(err), name)
-	notify.Send(ctx, c, "vms", notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: VM "+name+" may still be frozen", msg, "alert"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(ctx, c, "vms", notify.Event{Title: "BombVault: VM " + name + " may still be frozen", Message: msg, Critical: true})
 }
 
 // recordBlockRun stores how a VM with changed-block backups on was read.

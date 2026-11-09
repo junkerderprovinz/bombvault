@@ -322,12 +322,11 @@ func composeDigest(stats digestStats) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// SendDigest sends the weekly digest to the notify channels and the Unraid
-// mirror without recording a run. The Healthchecks ping is suppressed because
-// a summary must not flip a domain check. A muted policy sends nothing, and
-// On="failure" lets notify.Send drop an all-green digest, one with no failed
-// run and nothing that needs attention. A digest no channel took is an error, so
-// the job does not record it as sent.
+// SendDigest sends the weekly digest without recording a run. The Healthchecks
+// ping is suppressed because a summary must not flip a domain check. A channel
+// on failure leaves out an all-green digest, one with no failed run and nothing
+// that needs attention. A digest no channel took is an error, so the job does
+// not record it as sent.
 func (s *Service) SendDigest(ctx context.Context) error {
 	c, err := s.NotifyConfig()
 	if err != nil {
@@ -342,21 +341,8 @@ func (s *Service) SendDigest(ctx context.Context) error {
 	}
 	ok := stats.TotalFailed == 0 && !stats.needsAttention()
 	msg := composeDigest(stats)
-	delivered := notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest",
-		notify.Event{Title: "BombVault", Message: msg, OK: ok})
-	unraid := s.unraidGate(c.Unraid)
-	if unraid && (c.On == "always" || !ok) {
-		level := "normal"
-		if !ok {
-			level = "warning"
-		}
-		if e := s.sendUnraidNotify(ctx, "BombVault: weekly digest", msg, level); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		} else {
-			delivered = true
-		}
-	}
-	if !delivered && (c.On == "always" || !ok) && (c.HasMessageChannel() || unraid) {
+	ev := notify.Event{Title: "BombVault: weekly digest", Message: msg, OK: ok}
+	if !notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "digest", ev) && c.Carries(ev) {
 		return errors.New("no channel took the digest")
 	}
 	return nil

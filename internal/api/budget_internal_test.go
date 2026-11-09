@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -48,7 +47,7 @@ func TestCheckOffsiteBudgetFiresOncePerCrossing(t *testing.T) {
 		ssh:               ssh,
 		offsiteOverBudget: map[string]bool{},
 	}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -90,7 +89,7 @@ func TestCheckOffsiteBudgetDisabledAndUnder(t *testing.T) {
 		ssh:               ssh,
 		offsiteOverBudget: map[string]bool{},
 	}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 

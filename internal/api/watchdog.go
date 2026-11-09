@@ -126,8 +126,5 @@ func overdueMessage(domain string, v sectionVerdict, now int64) string {
 // pairing. It reports whether a channel took the alert.
 func (s *Service) notifyBackupOverdue(ctx context.Context, c notify.Config, domain string, v sectionVerdict, now int64) bool {
 	msg := overdueMessage(domain, v, now)
-	delivered, _ := s.sendAlert(notify.WithHealthchecksSuppressed(ctx), c, domain,
-		notify.Event{Title: "BombVault", Message: msg, OK: false},
-		"BombVault: backups overdue for "+domain, msg, "warning")
-	return delivered
+	return notify.Send(notify.WithHealthchecksSuppressed(ctx), c, domain, notify.Event{Title: "BombVault: backups overdue for " + domain, Message: msg})
 }

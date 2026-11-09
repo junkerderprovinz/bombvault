@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -32,7 +31,7 @@ func TestScheduledReplicateOffsiteNotifiesOnFailure(t *testing.T) {
 	url, hits := webhookCounter(t)
 	eng := &fakeResticEngine{copyErr: errors.New("copy exploded")}
 	svc, _ := offsiteReplTestService(t, eng)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: url}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -62,7 +61,7 @@ func TestReplicateOffsiteFirstOverBudgetAlarms(t *testing.T) {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: url}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 

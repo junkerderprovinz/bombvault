@@ -12,7 +12,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/model"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -59,7 +58,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyRetentionFailed", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyRetentionFailed(context.Background(), "containers", "container:web", "boom")
@@ -68,7 +67,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyOverBudget", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyOverBudget(context.Background(), "containers", 100, 50, "off-site")
@@ -77,7 +76,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyReplicationFailed", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyReplicationFailed(context.Background(), "containers", "boom")
@@ -86,7 +85,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyDrillFailure", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyDrillFailure(context.Background(), "containers", "plex", "boom")
@@ -95,7 +94,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyProtectionLost", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyProtectionLost(context.Background(), "containers", "boom")
@@ -104,7 +103,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyBackup", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.notifyBackup(context.Background(), "container", "plex", "", true, backup.Summary{SnapshotID: "deadbeef"}, nil)
@@ -116,7 +115,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 		if _, err := s.store.UpsertTarget(store.Target{ContainerName: "plex"}); err != nil {
 			t.Fatal(err)
 		}
-		if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.recordAndNotifyContainerSkip(context.Background(), "plex")
@@ -125,7 +124,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("ScheduledNotifyResult", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true, ScheduledSummary: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true, "scheduledSummary": true})); err != nil {
 			t.Fatal(err)
 		}
 		s.ScheduledNotifyResult(context.Background(), "containers", 1, 0, nil)
@@ -134,7 +133,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("SendDigest", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		if err := s.SetNotifyConfig(notify.Config{On: "always", Unraid: true}); err != nil {
+		if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true})); err != nil {
 			t.Fatal(err)
 		}
 		if err := s.SendDigest(context.Background()); err != nil {
@@ -145,26 +144,26 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 	t.Run("notifyBackupOverdue", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		s.notifyBackupOverdue(context.Background(), notify.Config{Unraid: true}, "containers", sectionVerdict{period: 3600}, time.Now().Unix())
+		s.notifyBackupOverdue(context.Background(), oldNotify(map[string]any{"unraid": true}), "containers", sectionVerdict{period: 3600}, time.Now().Unix())
 	})
 
 	t.Run("notifyReceiverDeadMan", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		s.notifyReceiverDeadMan(context.Background(), notify.Config{Unraid: true}, "repo", "host", 24)
+		s.notifyReceiverDeadMan(context.Background(), oldNotify(map[string]any{"unraid": true}), "repo", "host", 24)
 	})
 
 	t.Run("notifyReceiverIntegrity", func(t *testing.T) {
 		s := unraidNotifyService(t, failIfCalledSSH{t})
 		s.SetPlatform(platform.Generic{})
-		s.notifyReceiverIntegrity(context.Background(), notify.Config{Unraid: true}, "repo", "boom")
+		s.notifyReceiverIntegrity(context.Background(), oldNotify(map[string]any{"unraid": true}), "repo", "boom")
 	})
 
 	t.Run("checkUpdateAfterBackup", func(t *testing.T) {
 		svc, st := newUpdateTestSvc(t)
 		svc.ssh = failIfCalledSSH{t}
 		svc.SetPlatform(platform.Generic{})
-		if err := svc.SetNotifyConfig(notify.Config{On: "always", Unraid: true, NotifyOnUpdate: true}); err != nil {
+		if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "unraid": true, "notifyOnUpdate": true})); err != nil {
 			t.Fatal(err)
 		}
 		tg, err := st.UpsertTarget(store.Target{ContainerName: "plex"})
@@ -182,7 +181,7 @@ func TestSendUnraidNotifyCallSitesSkipOnNonUnraidPlatform(t *testing.T) {
 func TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
-	if err := s.TestNotify(context.Background(), notify.Config{Unraid: true}); err == nil {
+	if err := s.TestNotify(context.Background(), unraidChannel).Err; err == nil {
 		t.Fatal("expected an error: the Unraid test-notify channel must not be attempted on a non-Unraid platform")
 	}
 }
@@ -297,7 +296,7 @@ func TestUnraidGateNoWarnWhenSSHUnconfigured(t *testing.T) {
 func TestTestNotifyPlatformMismatchErrorIsActionable(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.Generic{})
-	err := s.TestNotify(context.Background(), notify.Config{Unraid: true})
+	err := s.TestNotify(context.Background(), unraidChannel).Err
 	if err == nil {
 		t.Fatal("expected an error")
 	}
@@ -342,7 +341,7 @@ func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
 func TestUnraidOnlyRefusalOnTrueNASLeavesOutTheMountAdvice(t *testing.T) {
 	s := unraidNotifyService(t, failIfCalledSSH{t})
 	s.SetPlatform(platform.TrueNAS{})
-	err := s.TestNotify(context.Background(), notify.Config{Unraid: true})
+	err := s.TestNotify(context.Background(), unraidChannel).Err
 	want := "unraid: the Unraid notification channel is only available on Unraid hosts, and this one runs TrueNAS."
 	if got := scrubError(err); got != want {
 		t.Fatalf("TestNotify on TrueNAS = %q, want %q", got, want)
@@ -362,7 +361,7 @@ func TestUnraidOnlyRefusalOnAnExplicitPlatformLeavesOutTheMountAdvice(t *testing
 		t.Fatalf("StartBackupFlash with PLATFORM=generic = %q, want %q", got, want)
 	}
 
-	err = s.TestNotify(context.Background(), notify.Config{Unraid: true})
+	err = s.TestNotify(context.Background(), unraidChannel).Err
 	want = `unraid: the Unraid notification channel is only available on Unraid hosts, and PLATFORM sets this one to "generic".`
 	if got := scrubError(err); got != want {
 		t.Fatalf("TestNotify with PLATFORM=generic = %q, want %q", got, want)

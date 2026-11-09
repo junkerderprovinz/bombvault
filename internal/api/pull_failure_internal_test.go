@@ -11,7 +11,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -54,7 +53,7 @@ func catchAlerts(t *testing.T, svc *Service) func() []string {
 		bodies = append(bodies, string(b))
 	}))
 	t.Cleanup(srv.Close)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	return func() []string {

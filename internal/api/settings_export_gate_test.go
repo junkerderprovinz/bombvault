@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
 // Distinctive values, so an assertion on the response body cannot pass by
@@ -33,10 +32,7 @@ func seedExportSecrets(t *testing.T, svc *api.Service) {
 	if err := svc.SetRcloneConf(exportRclone); err != nil {
 		t.Fatalf("seed rclone conf: %v", err)
 	}
-	if err := svc.SetNotifyConfig(notify.Config{
-		On: "failure", SMTPEnabled: true, SMTPHost: "smtp.example", SMTPUsername: "bv", SMTPPassword: exportSMTPPass,
-		MatrixEnabled: true, MatrixHomeserver: "https://matrix.example", MatrixRoom: "!r:example", MatrixToken: exportMatrixTok,
-	}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "smtpEnabled": true, "smtpHost": "smtp.example", "smtpUsername": "bv", "smtpPassword": exportSMTPPass, "matrixEnabled": true, "matrixHomeserver": "https://matrix.example", "matrixRoom": "!r:example", "matrixToken": exportMatrixTok})); err != nil {
 		t.Fatalf("seed notify config: %v", err)
 	}
 }

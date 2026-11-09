@@ -135,10 +135,5 @@ func (s *Service) notifyContainersNotBack(ctx context.Context, after string, nam
 		return
 	}
 	msg := fmt.Sprintf("After %s, these containers did not come back: %s", after, strings.Join(names, ", "))
-	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers", notify.Event{Title: "BombVault", Message: msg})
-	if s.unraidGate(c.Unraid) {
-		if err := s.sendUnraidNotify(context.WithoutCancel(ctx), "BombVault: containers did not come back", msg, "warning"); err != nil {
-			log.Printf("notify: unraid: %v", err)
-		}
-	}
+	notify.Send(notify.WithHealthchecksSuppressed(context.Background()), c, "containers", notify.Event{Title: "BombVault: containers did not come back", Message: msg})
 }

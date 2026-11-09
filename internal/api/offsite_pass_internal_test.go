@@ -12,7 +12,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -77,7 +76,7 @@ func placementWebhook(t *testing.T, f *placementFixture) func() []string {
 		mu.Unlock()
 	}))
 	t.Cleanup(srv.Close)
-	c := notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL, WebhookFormat: "generic"}
+	c := oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL, "webhookFormat": "generic"})
 	if err := f.svc.SetNotifyConfig(c); err != nil {
 		t.Fatal(err)
 	}

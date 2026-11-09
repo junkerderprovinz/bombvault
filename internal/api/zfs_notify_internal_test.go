@@ -71,7 +71,9 @@ func TestZFSLeftoverIsReportedWithThePolicyUnset(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.On = ""
+	for i := range c.Channels {
+		c.Channels[i].On = ""
+	}
 	if err := s.SetNotifyConfig(c); err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +188,7 @@ func TestZFSSideNotificationsLeaveHealthchecksAlone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.HealthchecksURL = hc.URL
+	c.Channels = append(c.Channels, oldNotify(map[string]any{"healthchecksUrl": hc.URL}).Channels...)
 	if err := s.SetNotifyConfig(c); err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +239,7 @@ func TestZFSRestartRecoveryLeavesHealthchecksAlone(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.HealthchecksURL = hc.URL
+	c.Channels = append(c.Channels, oldNotify(map[string]any{"healthchecksUrl": hc.URL}).Channels...)
 	if err := s.SetNotifyConfig(c); err != nil {
 		t.Fatal(err)
 	}

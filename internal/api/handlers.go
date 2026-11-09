@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"crypto/rand"
@@ -26,6 +27,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -3990,146 +3993,77 @@ func (h *Handler) handleSetRclone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleGetNotify returns the notification config without the stored credentials:
-// the SMTP password, the Matrix access token and the Gotify app token are blanked
-// and reported through "is-set" flags, so the UI can edit the config without the
-// secrets reaching the browser. GET /api/notify
+// handleGetNotify returns the notification config with every token, password
+// and header value replaced by a placeholder, so the stored secrets never reach
+// the browser. The placeholder sent back keeps the secret. GET /api/notify
 func (h *Handler) handleGetNotify(w http.ResponseWriter, _ *http.Request) {
 	c, err := h.svc.NotifyConfig()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	smtpPasswordSet := c.SMTPPassword != ""
-	matrixTokenSet := c.MatrixToken != ""
-	gotifyTokenSet := c.GotifyToken != ""
-	c.SMTPPassword = ""
-	c.MatrixToken = ""
-	c.GotifyToken = ""
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"notify":          c,
-		"smtpPasswordSet": smtpPasswordSet,
-		"matrixTokenSet":  matrixTokenSet,
-		"gotifyTokenSet":  gotifyTokenSet,
-	}))
+	c.Channels = kitnotify.Redacted(c.Channels)
+	if c.Channels == nil {
+		c.Channels = []kitnotify.Channel{}
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"notify": c}))
 }
 
-// decodeNotifyBody decodes a POSTed notify.Config with the unknown-field
-// rejection every other request body gets. It cannot go through decodeBody
-// alone: notify.Config has its own UnmarshalJSON (it back-fills the channel
-// gates), and encoding/json hands the whole object to that method, so
-// DisallowUnknownFields never reaches the fields and a misspelled key would be
-// dropped in silence. The body is taken raw here and decoded by
-// notify.Config.DecodeStrict, which owns the field names.
-func decodeNotifyBody(w http.ResponseWriter, r *http.Request, c *notify.Config) bool {
+// decodeNotifyBody decodes a POSTed body with the unknown-field rejection
+// every other request body gets. notify.Config has its own UnmarshalJSON, and
+// encoding/json hands the whole object to that method, so
+// DisallowUnknownFields would never reach the fields. decode owns them.
+func decodeNotifyBody(w http.ResponseWriter, r *http.Request, decode func([]byte) error) bool {
 	var raw json.RawMessage
 	if !decodeBody(w, r, &raw) {
 		return false
 	}
-	if err := c.DecodeStrict(raw); err != nil {
+	if err := decode(raw); err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid request body"})
 		return false
 	}
 	return true
 }
 
-// fillNotifySecrets fills blank credential fields from the stored config. The
-// browser never gets the stored secrets, so an unchanged form sends them blank,
-// and blank means "keep the stored one".
-func (h *Handler) fillNotifySecrets(c notify.Config) (notify.Config, error) {
-	if c.SMTPPassword != "" && c.MatrixToken != "" && c.GotifyToken != "" {
-		return c, nil
-	}
+// withStoredSecrets puts back the secrets the browser got as placeholders. A
+// secret comes back only to the channel it was stored for, unchanged in id,
+// kind and destination: otherwise a request could point a channel at a server
+// of its choosing and have the stored token sent there.
+func (h *Handler) withStoredSecrets(channels []kitnotify.Channel) ([]kitnotify.Channel, error) {
 	cur, err := h.svc.NotifyConfig()
 	if err != nil {
-		return c, nil
+		return nil, err
 	}
-	// A stored secret is only ever refilled for the destination it was stored
-	// FOR. Both fields are refilled from the encrypted store while the rest of
-	// the config comes from the request, so without this check a request could
-	// name any destination it liked, leave the secret blank, and have the real
-	// one attached: POST /api/notify/test with matrixEnabled, a homeserver of
-	// the caller's choosing and an empty token sent the stored Matrix token
-	// there as a bearer header. It is a read of a secret the API otherwise
-	// never hands back, dressed as a connection test.
-	//
-	// Refusing rather than blanking, because blanking would be a silent
-	// half-configuration: notifications would simply stop, at the moment
-	// somebody was setting them up and being told it worked.
-	if c.MatrixToken == "" && cur.MatrixToken != "" {
-		if !sameMatrixTarget(c, cur) {
-			return c, errMatrixTokenAgain
-		}
-		c.MatrixToken = cur.MatrixToken
-	}
-	if c.SMTPPassword == "" && cur.SMTPPassword != "" {
-		if !sameSMTPTarget(c, cur) {
-			return c, errSMTPPasswordAgain
-		}
-		c.SMTPPassword = cur.SMTPPassword
-	}
-	if c.GotifyToken == "" && cur.GotifyToken != "" {
-		if c.GotifyURL != cur.GotifyURL {
-			return c, errGotifyTokenAgain
-		}
-		c.GotifyToken = cur.GotifyToken
-	}
-	return c, nil
+	return kitnotify.Merge(channels, cur.Channels), nil
 }
 
-var (
-	errMatrixTokenAgain  = errors.New("enter the Matrix access token again: the stored one belongs to the previous homeserver")
-	errSMTPPasswordAgain = errors.New("enter the SMTP password again: the stored one belongs to the previous server")
-	errGotifyTokenAgain  = errors.New("enter the Gotify app token again: the stored one belongs to the previous server")
-)
-
-// notifyFailEnvelope is failEnvelope with the codes the notification card turns
-// into a sentence in the reader's language.
-func notifyFailEnvelope(err error) map[string]any {
-	for code, known := range map[string]error{
-		"matrix-token-again":  errMatrixTokenAgain,
-		"smtp-password-again": errSMTPPasswordAgain,
-		"gotify-token-again":  errGotifyTokenAgain,
-		"gotify-priority":     notify.ErrGotifyPriority,
-		"gotify-key-refused":  notify.ErrGotifyKey,
-	} {
-		if errors.Is(err, known) {
-			return codedFailEnvelope(err, code)
-		}
+// notifyProblemsEnvelope answers a refused config with the problems the card
+// places at their fields.
+func notifyProblemsEnvelope(err error) map[string]any {
+	var problems kitnotify.Problems
+	if errors.As(err, &problems) {
+		return map[string]any{"ok": false, "error": err.Error(), "code": "invalid", "problems": problems}
 	}
 	return failEnvelope(err)
 }
 
-// sameMatrixTarget reports whether a request names the same Matrix destination
-// the stored token was saved for. The homeserver is where the token is SENT;
-// the room is where it grants access, so a changed room is a changed
-// destination too.
-func sameMatrixTarget(req, cur notify.Config) bool {
-	return req.MatrixHomeserver == cur.MatrixHomeserver && req.MatrixRoom == cur.MatrixRoom
-}
-
-// sameSMTPTarget is the SMTP counterpart: host, port and username together
-// identify the account the stored password belongs to.
-func sameSMTPTarget(req, cur notify.Config) bool {
-	return req.SMTPHost == cur.SMTPHost && req.SMTPPort == cur.SMTPPort && req.SMTPUsername == cur.SMTPUsername
-}
-
-// handleSetNotify stores the notification config, encrypted. A blank SMTP
-// password, Matrix token or Gotify token keeps the stored one. POST /api/notify
+// handleSetNotify stores the notification config, encrypted. POST /api/notify
 func (h *Handler) handleSetNotify(w http.ResponseWriter, r *http.Request) {
 	var c notify.Config
-	if !decodeNotifyBody(w, r, &c) {
+	if !decodeNotifyBody(w, r, c.DecodeStrict) {
 		return
 	}
-	filled, err := h.fillNotifySecrets(c)
-	if err == nil {
-		err = filled.Validate()
-	}
+	channels, err := h.withStoredSecrets(c.Channels)
 	if err != nil {
-		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.svc.SetNotifyConfig(filled); err != nil {
+	c.Channels = channels
+	if err := c.Validate(); err != nil {
+		writeJSON(w, http.StatusOK, notifyProblemsEnvelope(err))
+		return
+	}
+	if err := h.svc.SetNotifyConfig(c); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -4306,23 +4240,28 @@ func (h *Handler) signInsSaved(w http.ResponseWriter, r *http.Request, before st
 	}))
 }
 
-// handleTestNotify sends a test notification using the POSTed config (so the
-// user can test the form before saving). POST /api/notify/test
+// handleTestNotify sends a test through the POSTed channel, so a channel can
+// be tried before it is saved. POST /api/notify/test  body {channel}
 func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
-	var c notify.Config
-	if !decodeNotifyBody(w, r, &c) {
+	var body struct {
+		Channel kitnotify.Channel `json:"channel"`
+	}
+	strict := func(raw []byte) error {
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.DisallowUnknownFields()
+		return dec.Decode(&body)
+	}
+	if !decodeNotifyBody(w, r, strict) {
 		return
 	}
-	filled, err := h.fillNotifySecrets(c)
-	if err == nil {
-		err = filled.Validate()
-	}
+	channels, err := h.withStoredSecrets([]kitnotify.Channel{body.Channel})
 	if err != nil {
-		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
+		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.svc.TestNotify(r.Context(), filled); err != nil {
-		writeJSON(w, http.StatusOK, notifyFailEnvelope(err))
+	res := h.svc.TestNotify(r.Context(), channels[0])
+	if !res.OK() {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": scrubError(res.Err), "code": res.Code, "status": res.Status})
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))

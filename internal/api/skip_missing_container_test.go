@@ -14,7 +14,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -68,7 +67,7 @@ func TestBackupSkipsRemovedContainer(t *testing.T) {
 		webhookHits++
 	}))
 	defer wh.Close()
-	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: wh.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": wh.URL})); err != nil {
 		t.Fatalf("SetNotifyConfig: %v", err)
 	}
 

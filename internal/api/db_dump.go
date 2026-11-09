@@ -884,11 +884,6 @@ func (s *Service) notifyDBDumpFailed(ctx context.Context, targetID, name string,
 	// chat room and a mailbox are not where a database error belongs.
 	notify.Send(notify.WithHealthchecksSuppressed(ctx), c, "containers",
 		notify.Event{Title: "BombVault: database dump FAILED", Message: msg, OK: false, ItemResult: true})
-	if s.unraidGate(c.Unraid) && (!notify.MessagesSuppressed(ctx) || !c.ScheduledSummary) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: database dump FAILED", msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
 }
 
 // dbDumpFailedBefore reports whether the target's previous dump run already

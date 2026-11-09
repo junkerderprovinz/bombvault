@@ -294,7 +294,7 @@ func webhookMessages(t *testing.T, svc *api.Service) func() []notify.Event {
 		mu.Unlock()
 	}))
 	t.Cleanup(srv.Close)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	return func() []notify.Event {

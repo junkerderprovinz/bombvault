@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -79,7 +78,7 @@ func TestCheckOffsiteBudgetForTargetPerTargetLatch(t *testing.T) {
 		ssh:               ssh,
 		offsiteOverBudget: map[string]bool{},
 	}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,7 +98,7 @@ func TestCheckOffsiteBudgetForTargetPerTargetLatch(t *testing.T) {
 
 	ssh2 := &fakeHostSSH{}
 	svc2 := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st, ssh: ssh2, offsiteOverBudget: map[string]bool{}}
-	if err := svc2.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc2.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 	svc2.checkOffsiteBudgetForTarget(context.Background(), "containers", tHi)

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 )
 
@@ -61,9 +60,7 @@ func TestScheduledNotifyResultEnumeratesFailedContainers(t *testing.T) {
 	defer wh.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic", "scheduledSummary": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -96,9 +93,7 @@ func TestScheduledNotifyResultAllSuccessNoList(t *testing.T) {
 	defer wh.Close()
 
 	s := unraidNotifyService(t, nil)
-	if err := s.SetNotifyConfig(notify.Config{
-		On: "always", WebhookEnabled: true, WebhookURL: wh.URL, WebhookFormat: "generic", ScheduledSummary: true,
-	}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": wh.URL, "webhookFormat": "generic", "scheduledSummary": true})); err != nil {
 		t.Fatal(err)
 	}
 

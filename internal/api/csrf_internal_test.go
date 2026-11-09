@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
+
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
@@ -129,76 +131,57 @@ func TestJSONBodyWithCharsetIsAccepted(t *testing.T) {
 	}
 }
 
-// TestNotifySecretStaysWithItsDestination: POST /api/notify/test refills blank
-// secrets from the store but takes the destination from the request. Without
-// this check, a request naming another homeserver would get the stored token
-// sent there as a bearer header.
+// TestNotifySecretStaysWithItsDestination: the API puts stored secrets back
+// where the browser sent a placeholder, but takes the destination from the
+// request. Without this check, a request naming another homeserver would get
+// the stored token sent there as a bearer header.
 func TestNotifySecretStaysWithItsDestination(t *testing.T) {
 	svc := unraidNotifyService(t, nil)
-	stored := notify.Config{
-		On:               "always",
-		MatrixEnabled:    true,
-		MatrixHomeserver: "https://matrix.example",
-		MatrixRoom:       "!room:example",
-		MatrixToken:      "real-token",
-		SMTPHost:         "smtp.example",
-		SMTPPort:         587,
-		SMTPUsername:     "bombvault",
-		SMTPPassword:     "real-password",
-		GotifyEnabled:    true,
-		GotifyURL:        "https://push.example",
-		GotifyToken:      "real-app-token",
-	}
+	stored := oldNotify(map[string]any{"on": "always", "matrixEnabled": true, "matrixHomeserver": "https://matrix.example", "matrixRoom": "!room:example", "matrixToken": "real-token", "smtpEnabled": true, "smtpHost": "smtp.example", "smtpPort": 587, "smtpUsername": "bombvault", "smtpPassword": "real-password", "smtpFrom": "bv@example", "smtpTo": "me@example", "gotifyEnabled": true, "gotifyUrl": "https://push.example", "gotifyToken": "real-app-token"})
 	if err := svc.SetNotifyConfig(stored); err != nil {
 		t.Fatal(err)
 	}
 	h := &Handler{svc: svc}
+	browser := func() notify.Config { return notify.Config{Channels: kitnotify.Redacted(stored.Channels)} }
 
-	t.Run("another homeserver is refused, not silently answered", func(t *testing.T) {
-		req := stored
-		req.MatrixHomeserver = "https://attacker.example"
-		req.MatrixToken = ""
-		req.SMTPPassword = ""
-		got, err := h.fillNotifySecrets(req)
-		if err == nil {
-			t.Fatalf("a changed homeserver with a blank token must be refused, got token %q", got.MatrixToken)
+	t.Run("another homeserver gets no token", func(t *testing.T) {
+		req := browser()
+		channelOf(req, "matrix").Matrix.Homeserver = "https://attacker.example"
+		got, err := h.withStoredSecrets(req.Channels)
+		if err != nil {
+			t.Fatal(err)
 		}
-		if got.MatrixToken == stored.MatrixToken {
-			t.Fatal("the stored token must never reach a destination it was not saved for")
-		}
-	})
-
-	t.Run("another SMTP server is refused too", func(t *testing.T) {
-		req := stored
-		req.SMTPHost = "smtp.attacker.example"
-		req.SMTPPassword = ""
-		req.MatrixToken = "supplied"
-		if _, err := h.fillNotifySecrets(req); err == nil {
-			t.Fatal("a changed SMTP host with a blank password must be refused")
+		if tok := channelOf(notify.Config{Channels: got}, "matrix").Matrix.Token; tok != "" {
+			t.Fatalf("the stored token went to another homeserver: %q", tok)
 		}
 	})
 
-	t.Run("another Gotify server is refused too", func(t *testing.T) {
-		req := stored
-		req.GotifyURL = "https://attacker.example"
-		req.GotifyToken = ""
-		got, err := h.fillNotifySecrets(req)
-		if err == nil || got.GotifyToken == stored.GotifyToken {
-			t.Fatal("a changed Gotify server with a blank token must be refused")
+	t.Run("another SMTP server gets no password", func(t *testing.T) {
+		req := browser()
+		channelOf(req, "smtp").SMTP.Host = "smtp.attacker.example"
+		got, _ := h.withStoredSecrets(req.Channels)
+		if pw := channelOf(notify.Config{Channels: got}, "smtp").SMTP.Password; pw != "" {
+			t.Fatalf("the stored password went to another server: %q", pw)
+		}
+	})
+
+	t.Run("another Gotify server gets no token", func(t *testing.T) {
+		req := browser()
+		channelOf(req, "gotify").Gotify.URL = "https://attacker.example"
+		got, _ := h.withStoredSecrets(req.Channels)
+		if tok := channelOf(notify.Config{Channels: got}, "gotify").Gotify.Token; tok != "" {
+			t.Fatalf("the stored token went to another server: %q", tok)
 		}
 	})
 
 	t.Run("the unchanged destination still gets its secrets back", func(t *testing.T) {
-		req := stored
-		req.MatrixToken = ""
-		req.SMTPPassword = ""
-		req.GotifyToken = ""
-		got, err := h.fillNotifySecrets(req)
+		got, err := h.withStoredSecrets(browser().Channels)
 		if err != nil {
-			t.Fatalf("an unchanged destination must keep working: %v", err)
+			t.Fatal(err)
 		}
-		if got.MatrixToken != "real-token" || got.SMTPPassword != "real-password" || got.GotifyToken != "real-app-token" {
-			t.Fatalf("secrets were not refilled: %+v", got)
+		c := notify.Config{Channels: got}
+		if matrixToken(c) != "real-token" || channelOf(c, "smtp").SMTP.Password != "real-password" || channelOf(c, "gotify").Gotify.Token != "real-app-token" {
+			t.Fatalf("secrets were not put back: %+v", got)
 		}
 	})
 }

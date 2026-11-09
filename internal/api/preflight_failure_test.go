@@ -10,7 +10,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -42,7 +41,7 @@ func preflightService(t *testing.T, eng *fakeResticEngine, hc *hcRecorder) (*api
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: hc.srv.URL + "/hc"}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": hc.srv.URL + "/hc"})); err != nil {
 		t.Fatal(err)
 	}
 	return svc, st, flashDir

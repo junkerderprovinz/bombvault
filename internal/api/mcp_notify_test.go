@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 )
 
 // A backup the operator did not start is the one that needs explaining, so the
@@ -44,9 +43,7 @@ func TestMCPOriginInNotificationsAndErrorPanelData(t *testing.T) {
 	docker := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
 	rig := newMCPStartRig(t, docker, eng)
 	tg := rig.target(t, "plex")
-	if err := rig.svc.SetNotifyConfig(notify.Config{
-		On: "always", WebhookEnabled: true, WebhookURL: hook.URL, WebhookFormat: "generic",
-	}); err != nil {
+	if err := rig.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": hook.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 

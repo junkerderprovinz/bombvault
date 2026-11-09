@@ -18,6 +18,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -1770,98 +1771,87 @@ func TestSettingsRestartHealthWaitRoundTrip(t *testing.T) {
 	}
 }
 
-// TestNotifyAppriseRoundTrip guards the /api/notify wire boundary for the Apprise
-// channel. Unlike the toggles above, the Apprise URL lives in the encrypted
-// notify_conf blob (like the webhook URL), NOT in a settings column — so the seam
-// is the strict POST decoder (rejects unknown fields → appriseUrl/appriseTags must
-// be on notify.Config) and the GET, which returns the URL as-is: like webhookUrl
-// and healthchecksUrl it is an endpoint the form edits in place, not a blanked
-// secret (only the SMTP password / Matrix token get the is-set treatment).
-func TestNotifyAppriseRoundTrip(t *testing.T) {
-	d := &fakeServiceDocker{}
-	h, _ := newTestRouter(t, d, &fakeResticEngine{})
+// TestNotifyChannelsRoundTrip guards the /api/notify wire boundary: a channel
+// list goes in, comes back with its addresses as typed and its secrets as the
+// placeholder, and the placeholder sent back keeps the secret.
+func TestNotifyChannelsRoundTrip(t *testing.T) {
+	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
-	body := `{
-		"on": "failure",
-		"appriseUrl": "http://apprise:8000/notify/bombvault",
-		"appriseTags": "backups"
-	}`
+	body := `{"channels":[
+		{"id":"apprise","kind":"apprise","enabled":true,"on":"failure","apprise":{"url":"http://apprise:8000/notify","urls":["tgram://bot/chat"],"tags":"backups"}},
+		{"id":"phone","kind":"ntfy","enabled":true,"on":"always","ntfy":{"url":"https://ntfy.example/vault","token":"tk_secret"}}
+	],"scheduledSummary":true,"notifyOnUpdate":false}`
 	w, m := doJSON(t, h, http.MethodPost, "/api/notify", body)
 	if w.Code != http.StatusOK || m["ok"] != true {
 		t.Fatalf("post status=%d body=%s", w.Code, w.Body.String())
 	}
-	w, m = doJSON(t, h, http.MethodGet, "/api/notify", "")
-	if w.Code != http.StatusOK || m["ok"] != true {
-		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
+	w, _ = doJSON(t, h, http.MethodGet, "/api/notify", "")
+	var got struct {
+		Notify notify.Config `json:"notify"`
 	}
-	cfg, ok := m["notify"].(map[string]any)
-	if !ok {
-		t.Fatalf("notify config missing or not nested: %v", m)
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
 	}
-	if cfg["appriseUrl"] != "http://apprise:8000/notify/bombvault" {
-		t.Fatalf("appriseUrl not round-tripped: got %v", cfg["appriseUrl"])
+	c := got.Notify
+	if len(c.Channels) != 2 || !c.ScheduledSummary {
+		t.Fatalf("read back %+v", c)
 	}
-	if cfg["appriseTags"] != "backups" {
-		t.Fatalf("appriseTags not round-tripped: got %v", cfg["appriseTags"])
+	if a := c.Channels[0].Apprise; a == nil || a.URL != "http://apprise:8000/notify" || len(a.URLs) != 1 || a.Tags != "backups" {
+		t.Fatalf("apprise read back as %+v", a)
+	}
+	if n := c.Channels[1].Ntfy; n == nil || n.Token != "********" {
+		t.Fatalf("the ntfy token reached the browser: %+v", n)
+	}
+
+	echo, err := json.Marshal(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w, m := doJSON(t, h, http.MethodPost, "/api/notify", string(echo)); w.Code != http.StatusOK || m["ok"] != true {
+		t.Fatalf("posting the form back: status=%d body=%s", w.Code, w.Body.String())
+	}
+	stored, err := svc.NotifyConfig()
+	if err != nil || stored.Channels[1].Ntfy.Token != "tk_secret" {
+		t.Fatalf("the placeholder lost the token: %+v (%v)", stored.Channels[1].Ntfy, err)
 	}
 }
 
-// TestNotifyRejectsUnknownField pins the strictness the test above depends on.
-// notify.Config carries its own UnmarshalJSON (it back-fills the channel gates
-// for a config stored before they existed), and encoding/json hands the whole
-// object to that method — so DisallowUnknownFields on the request decoder never
-// reaches the fields, and a misspelled key is silently dropped instead of
-// refused. Here that is not a cosmetic slip: "webhookEnable" is discarded, the
-// back-fill then reads the non-empty URL and switches the channel ON, and the
-// user's explicit off is inverted. Both POST routes take a notify.Config, so
-// both are checked.
+// TestNotifyRejectsUnknownField pins the strict decoding of both POST routes. A
+// misspelled key would otherwise be dropped in silence, and a channel the user
+// switched off could come back on.
 func TestNotifyRejectsUnknownField(t *testing.T) {
-	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
-	const misspelled = `{
-		"on": "failure",
-		"webhookEnable": false,
-		"webhookUrl": "https://discord.com/api/webhooks/123/abc"
-	}`
-	for _, path := range []string{"/api/notify", "/api/notify/test"} {
-		w, m := doJSON(t, h, http.MethodPost, path, misspelled)
+	for path, body := range map[string]string{
+		"/api/notify":      `{"channels":[{"id":"hook","kind":"webhook","enabld":false,"webhook":{"url":"https://hooks.example/in"}}]}`,
+		"/api/notify/test": `{"channel":{"id":"hook","kind":"webhook","enabld":false,"webhook":{"url":"https://hooks.example/in"}}}`,
+	} {
+		w, m := doJSON(t, h, http.MethodPost, path, body)
 		if w.Code == http.StatusOK && m["ok"] == true {
 			t.Fatalf("POST %s accepted an unknown field: status=%d body=%s", path, w.Code, w.Body.String())
 		}
 	}
-
-	// Nothing from the refused body may have reached the store.
-	w, m := doJSON(t, h, http.MethodGet, "/api/notify", "")
-	if w.Code != http.StatusOK || m["ok"] != true {
-		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
-	}
-	cfg, ok := m["notify"].(map[string]any)
-	if !ok {
-		t.Fatalf("notify config missing or not nested: %v", m)
-	}
-	if cfg["webhookUrl"] != "" {
-		t.Fatalf("a refused body was stored anyway: webhookUrl=%v", cfg["webhookUrl"])
+	if w, m := doJSON(t, h, http.MethodPost, "/api/notify", `{"on":"failure","webhookUrl":"https://hooks.example/in"}`); w.Code == http.StatusOK && m["ok"] == true {
+		t.Fatalf("the form of before channels was accepted: %s", w.Body.String())
 	}
 
-	// The other half of the contract: an ABSENT gate key is not unknown. It is a
-	// body from an older client, and it must still be accepted and back-filled.
-	w, m = doJSON(t, h, http.MethodPost, "/api/notify", `{
-		"on": "failure",
-		"webhookUrl": "https://discord.com/api/webhooks/123/abc"
-	}`)
-	if w.Code != http.StatusOK || m["ok"] != true {
-		t.Fatalf("post status=%d body=%s", w.Code, w.Body.String())
+	stored, err := svc.NotifyConfig()
+	if err != nil || len(stored.Channels) != 0 {
+		t.Fatalf("a refused body was stored anyway: %+v (%v)", stored, err)
 	}
-	w, m = doJSON(t, h, http.MethodGet, "/api/notify", "")
-	if w.Code != http.StatusOK || m["ok"] != true {
-		t.Fatalf("get status=%d body=%s", w.Code, w.Body.String())
+}
+
+// TestNotifyNamesTheProblemsOfARefusedChannel lets the card put each problem at
+// its field.
+func TestNotifyNamesTheProblemsOfARefusedChannel(t *testing.T) {
+	h, _ := newTestRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	w, m := doJSON(t, h, http.MethodPost, "/api/notify", `{"channels":[{"id":"hook","kind":"webhook","enabled":true,"webhook":{"url":"ftp://hooks.example/in"}}]}`)
+	problems, _ := m["problems"].([]any)
+	if w.Code != http.StatusOK || m["ok"] != false || len(problems) == 0 {
+		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
 	}
-	cfg, ok = m["notify"].(map[string]any)
-	if !ok {
-		t.Fatalf("notify config missing or not nested: %v", m)
-	}
-	if cfg["webhookEnabled"] != true {
-		t.Fatalf("an absent gate key must be back-filled from the filled-in URL: got %v", cfg["webhookEnabled"])
+	if p, _ := problems[0].(map[string]any); p["code"] != "bad_url" || p["field"] != "webhook.url" {
+		t.Fatalf("problem = %v", problems[0])
 	}
 }
 

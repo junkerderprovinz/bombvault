@@ -144,7 +144,7 @@ func (w *webhookRecorder) messages() []string {
 }
 
 func (w *webhookRecorder) config(on string) notify.Config {
-	return notify.Config{On: on, WebhookEnabled: true, WebhookURL: w.srv.URL, WebhookFormat: "generic"}
+	return oldNotify(map[string]any{"on": on, "webhookEnabled": true, "webhookUrl": w.srv.URL, "webhookFormat": "generic"})
 }
 
 func TestAnomalyNotificationsGateAndDedupe(t *testing.T) {
@@ -365,7 +365,7 @@ func TestAnomaliesReachAnUnraidOnlySetup(t *testing.T) {
 	f.svc.ssh = ssh
 	f.svc.SetPlatform(platform.Unraid{})
 	f.collapseRow(t, f.container(t, "nextcloud"))
-	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := f.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -390,7 +390,7 @@ func TestAHealthCheckAloneDoesNotTakeAnomalies(t *testing.T) {
 	f := newEngineFixture(t)
 	hc := newPathRecorder(t)
 	f.collapseRow(t, f.container(t, "nextcloud"))
-	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", HealthchecksURL: hc.srv.URL}); err != nil {
+	if err := f.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "healthchecksUrl": hc.srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -411,7 +411,7 @@ func TestAnAnomalyPushThatReachedNobodyIsSentAgain(t *testing.T) {
 	wh := newPathRecorder(t)
 	wh.status.Store(http.StatusBadGateway)
 	f.collapseRow(t, f.container(t, "nextcloud"))
-	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+	if err := f.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	settings := mustEngineSettings(t, f)
@@ -438,7 +438,7 @@ func TestAnAnomalyPushThatReachedNobodyIsSentAgainOnAnIdleTick(t *testing.T) {
 	wh := newPathRecorder(t)
 	wh.status.Store(http.StatusBadGateway)
 	f.collapseRow(t, f.container(t, "nextcloud"))
-	if err := f.svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+	if err := f.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	if err := f.e.sendNotifications(context.Background(), mustEngineSettings(t, f)); err != nil {

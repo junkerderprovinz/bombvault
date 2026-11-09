@@ -517,11 +517,20 @@ func pingLog(t *testing.T) (string, func() []string) {
 	}
 }
 
+// checkOnly is a notification config with one Healthchecks channel and
+// nothing else.
+func checkOnly(url string) map[string]any {
+	return map[string]any{"channels": []map[string]any{{
+		"id": "checks", "kind": "healthchecks", "enabled": true, "on": "always",
+		"healthchecks": map[string]any{"url": url},
+	}}}
+}
+
 func TestFreshInstallPingsAWholeBackup(t *testing.T) {
 	f := typedFlow(t, "files")
 	sets := f.newSets()
 	url, pings := pingLog(t)
-	f.b.call("POST", "/api/notify", map[string]any{"healthchecksUrl": url}, nil)
+	f.b.call("POST", "/api/notify", checkOnly(url), nil)
 	f.backupSet(sets.photos)
 
 	if got := strings.Join(pings(), " "); got != "/start /" {
@@ -534,7 +543,7 @@ func TestAGoodBackupDoesNotGreenAFailureOnTheSameCheck(t *testing.T) {
 	f := typedFlow(t, "files")
 	sets := f.newSets()
 	url, pings := pingLog(t)
-	f.b.call("POST", "/api/notify", map[string]any{"healthchecksUrl": url}, nil)
+	f.b.call("POST", "/api/notify", checkOnly(url), nil)
 	f.backupSet(sets.photos)
 
 	if err := os.RemoveAll(f.b.hostPath(photosPath)); err != nil {

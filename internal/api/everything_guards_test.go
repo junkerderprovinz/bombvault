@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -160,14 +159,11 @@ func TestEverythingIdleDomainSkipsPingAndTail(t *testing.T) {
 
 	// One check per domain. The fixture has one container target and no VMs or
 	// file sets, so only containers has work.
-	if err := svc.SetNotifyConfig(notify.Config{
-		On: "always",
-		HealthchecksByDomain: map[string]string{
-			"container": hc.srv.URL + "/container",
-			"VM":        hc.srv.URL + "/vm",
-			"files":     hc.srv.URL + "/files",
-		},
-	}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "healthchecksByDomain": map[string]string{
+		"container": hc.srv.URL + "/container",
+		"VM":        hc.srv.URL + "/vm",
+		"files":     hc.srv.URL + "/files",
+	}})); err != nil {
 		t.Fatalf("SetNotifyConfig: %v", err)
 	}
 

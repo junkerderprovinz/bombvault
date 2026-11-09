@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -224,7 +223,7 @@ func TestRunTamperTestUnprotectedFlipNotifies(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	svc, st := tamperService(t, "rest:"+srv.URL, ssh)
 	// Notify on failure via the Unraid channel (recorded by fakeHostSSH.Run).
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 	// A previous protected verdict makes the new one a flip.
@@ -351,7 +350,7 @@ func TestRunTamperTestInconclusiveStatuses(t *testing.T) {
 
 			ssh := &fakeHostSSH{}
 			svc, st := tamperService(t, "rest:"+srv.URL, ssh)
-			if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+			if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 				t.Fatal(err)
 			}
 			// A protected verdict that has to stay the latest.
@@ -387,7 +386,7 @@ func TestRunTamperTestConcurrentFlipNotifiesOnce(t *testing.T) {
 
 	ssh := &fakeHostSSH{}
 	svc, st := tamperService(t, "rest:"+srv.URL, ssh)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 	// Without the lock both runs would see this protected verdict and alert.

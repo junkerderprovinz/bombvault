@@ -569,23 +569,13 @@ func (s *Service) notifyZFSReplica(d store.ZFSDataset, res zfsrepl.Result, runEr
 	}
 	ctx := notify.WithHealthchecksSuppressed(context.Background())
 	where := s.zfsReplicaTargetName(d)
-	var msg string
-	if runErr == nil {
-		msg = fmt.Sprintf("Replica of zfs %q to %s is current (%d datasets, %s sent).",
-			d.Dataset, where, len(res.Members), humanBytes(zfsReplicaBytes(res)))
-	} else {
-		msg = fmt.Sprintf("Replica of zfs %q to %s FAILED: %s [%s]", d.Dataset, where, scrubError(errors.New(zfsReplicaDetail(runErr))), zfsReplicaCode(runErr))
+	ev := notify.Event{Title: "BombVault: replica OK", OK: true,
+		Message: fmt.Sprintf("Replica of zfs %q to %s is current (%d datasets, %s sent).", d.Dataset, where, len(res.Members), humanBytes(zfsReplicaBytes(res)))}
+	if runErr != nil {
+		ev = notify.Event{Title: "BombVault: replica FAILED",
+			Message: fmt.Sprintf("Replica of zfs %q to %s FAILED: %s [%s]", d.Dataset, where, scrubError(errors.New(zfsReplicaDetail(runErr))), zfsReplicaCode(runErr))}
 	}
-	notify.Send(ctx, c, zfsDomain, notify.Event{Title: "BombVault", Message: msg, OK: runErr == nil})
-	if s.unraidGate(c.Unraid) && (c.On == "always" || runErr != nil) {
-		subject, level := "BombVault: replica OK", "normal"
-		if runErr != nil {
-			subject, level = "BombVault: replica FAILED", "warning"
-		}
-		if err := s.sendUnraidNotify(ctx, subject, msg, level); err != nil {
-			log.Printf("notify: unraid: %v", err)
-		}
-	}
+	notify.Send(ctx, c, zfsDomain, ev)
 }
 
 // zfsReplicaTargetName is how a message names where the item replicates to.

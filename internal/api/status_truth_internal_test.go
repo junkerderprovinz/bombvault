@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -230,7 +229,7 @@ func TestTheOverdueAlertNamesTheEntryThatFellBehind(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 	s, st, db := statusFixture(t, func(*store.Settings) {})
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	container(t, st, db, "plex", "success", time.Hour)

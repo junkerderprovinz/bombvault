@@ -208,29 +208,19 @@ func (e *anomalyEngine) sendNotifications(ctx context.Context, settings store.Se
 	if err != nil {
 		return err
 	}
-	if !e.svc.anomalyAlertsReach(cfg) {
+	if !cfg.TakesMessages() {
 		return nil
 	}
 	title, body := anomalyNotifyText(views)
-	level := "warning"
-	if slices.ContainsFunc(views, func(v AnomalyView) bool { return v.Severity == "critical" }) {
-		level = "alert"
-	}
+	critical := slices.ContainsFunc(views, func(v AnomalyView) bool { return v.Severity == "critical" })
 	// The findings of one pass can come from several domains, and none of them
 	// is the run a health check watches.
-	delivered, _ := e.svc.sendAlert(notify.WithHealthchecksSuppressed(ctx), cfg, "anomaly",
-		notify.Event{Title: title, Message: body, OK: false}, title, body, level)
+	delivered := notify.Send(notify.WithHealthchecksSuppressed(ctx), cfg, "anomaly", notify.Event{Title: title, Message: body, Critical: critical})
 	e.pushOwed.Store(!delivered)
 	if !delivered {
 		return nil
 	}
 	return e.svc.store.MarkAnomaliesNotified(ids, severities, now)
-}
-
-// anomalyAlertsReach reports whether an anomaly message has somewhere to go.
-// Healthchecks does not count: the message never pings it.
-func (s *Service) anomalyAlertsReach(c notify.Config) bool {
-	return c.Active() && (c.HasMessageChannel() || s.unraidGate(c.Unraid))
 }
 
 // eventEndedAt is when the run behind a finding ended, the time an event

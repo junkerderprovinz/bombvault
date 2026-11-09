@@ -14,7 +14,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -256,7 +255,7 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 
 	st := newMemStore(t)
 	h, svc := newMCPKeyRouter(t, st, mcpAppKey)
-	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -318,14 +317,14 @@ func TestMCPKeyChangesNotify(t *testing.T) {
 		t.Fatalf("the revoke message %q does not carry the hint %q", revoked, row.Hint)
 	}
 
-	if err := svc.SetNotifyConfig(notify.Config{On: "never", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "never", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	_, quiet := createMCPKey(t, h, "Desktop", true)
 
 	// One more change that does notify, so the silent one is settled by a
 	// message that arrived rather than by waiting for one that never does.
-	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	if _, m := doMCPKey(t, h, http.MethodPost, "/api/mcp/keys/"+quiet+"/revoke", ""); m["ok"] != true {
@@ -362,7 +361,7 @@ func TestMCPKeyChangeNotificationNamesTheClientBehindAProxy(t *testing.T) {
 	h, svc := mcpRouterWith(t, newMemStore(t), config.Config{
 		AppKey: mcpAppKey, DataDir: dir, HostMountRoot: dir, TrustedProxies: []net.IPNet{*proxies},
 	})
-	if err := svc.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -728,9 +727,7 @@ func TestMCPKeyReachesTheOperatorBeforeTheNotification(t *testing.T) {
 
 	st := newMemStore(t)
 	h, svc := newMCPKeyRouter(t, st, mcpAppKey)
-	if err := svc.SetNotifyConfig(notify.Config{
-		On: "always", WebhookEnabled: true, WebhookURL: hook.URL, WebhookFormat: "generic",
-	}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": hook.URL, "webhookFormat": "generic"})); err != nil {
 		t.Fatal(err)
 	}
 

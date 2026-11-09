@@ -16,7 +16,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/model"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -84,7 +83,7 @@ func TestAFailedStackBackupIsAFailedRunAndAMessage(t *testing.T) {
 	defer srv.Close()
 
 	svc, st := stackFixture(t, "/mnt/stacks/site", &failStackEngine{})
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := svc.Backup(context.Background(), "web"); err != nil {

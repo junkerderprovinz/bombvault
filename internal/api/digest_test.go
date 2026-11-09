@@ -14,7 +14,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -37,7 +36,7 @@ func digestTestService(t *testing.T, on string) (*api.Service, *store.Repo, func
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
-	if err := svc.SetNotifyConfig(notify.Config{On: on, WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": on, "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	return svc, st, func() string {
@@ -100,7 +99,7 @@ func TestSendDigestRespectsNeverPolicy(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir)}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
-	if err := svc.SetNotifyConfig(notify.Config{On: "never", WebhookURL: url}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "never", "webhookUrl": url})); err != nil {
 		t.Fatal(err)
 	}
 

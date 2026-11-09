@@ -19,8 +19,8 @@ const healthcheckHoldNames = 5
 // A backup counts until its entry has a newer good run or somebody acknowledged
 // the failure under Needs you. Empty means the check may hear the success.
 func (s *Service) healthcheckHold(c notify.Config, domain string) string {
-	url := c.HealthchecksURLFor(domain)
-	if url == "" {
+	checks := c.Checks(domain)
+	if len(checks) == 0 {
 		return ""
 	}
 	settings, err := s.store.GetSettings()
@@ -35,7 +35,7 @@ func (s *Service) healthcheckHold(c notify.Config, domain string) string {
 	}
 	var failed []string
 	for _, section := range s.statusDomains(settings) {
-		if !section.enabled || c.HealthchecksURLFor(section.name) != url {
+		if !section.enabled || !slices.Equal(c.Checks(section.name), checks) {
 			continue
 		}
 		for _, entry := range s.backupEntriesOf(section.name) {

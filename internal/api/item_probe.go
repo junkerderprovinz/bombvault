@@ -648,10 +648,5 @@ func (s *Service) notifyProbeFailure(ctx context.Context, it probeItem, detail s
 		return
 	}
 	msg := fmt.Sprintf("The restore check after the first backup of %s failed, so this backup may not be restorable: %s", it.name, detail)
-	notify.Send(ctx, c, it.domain, notify.Event{Title: "BombVault", Message: msg, OK: false})
-	if s.unraidGate(c.Unraid) {
-		if e := s.sendUnraidNotify(ctx, "BombVault: restore check failed", msg, "warning"); e != nil {
-			log.Printf("notify: unraid: %v", e)
-		}
-	}
+	notify.Send(ctx, c, it.domain, notify.Event{Title: "BombVault: restore check failed", Message: msg})
 }

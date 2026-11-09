@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -90,7 +89,7 @@ func seedSource(t *testing.T, h *Handler, st *store.Repo) {
 	if err := h.svc.SetRcloneConf("[b2]\ntype = b2\naccount = acct\nkey = rclonesecret\n"); err != nil {
 		t.Fatal(err)
 	}
-	if err := h.svc.SetNotifyConfig(notify.Config{On: "always", MatrixHomeserver: "https://m.example", MatrixToken: "matrixsecret", MatrixRoom: "!r:example"}); err != nil {
+	if err := h.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "matrixHomeserver": "https://m.example", "matrixToken": "matrixsecret", "matrixRoom": "!r:example"})); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -138,7 +137,7 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 	if exp.Credentials == nil {
 		t.Fatal("credentials block missing on includeCredentials=true export")
 	}
-	if exp.Credentials.Cloud.S3Secret != "topsecret" || !strings.Contains(exp.Credentials.Rclone, "rclonesecret") || exp.Credentials.Notify.MatrixToken != "matrixsecret" {
+	if exp.Credentials.Cloud.S3Secret != "topsecret" || !strings.Contains(exp.Credentials.Rclone, "rclonesecret") || matrixToken(exp.Credentials.Notify) != "matrixsecret" {
 		t.Fatalf("credentials not decrypted into the export: %+v", exp.Credentials)
 	}
 
@@ -198,7 +197,7 @@ func TestSettingsExportImportRoundTrip(t *testing.T) {
 		t.Fatalf("rclone conf not re-encrypted/readable on dst: %q (err=%v)", rc, err)
 	}
 	nc, err := dst.svc.NotifyConfig()
-	if err != nil || nc.MatrixToken != "matrixsecret" {
+	if err != nil || matrixToken(nc) != "matrixsecret" {
 		t.Fatalf("notify conf not re-encrypted/readable on dst: %+v (err=%v)", nc, err)
 	}
 }
@@ -453,7 +452,7 @@ func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {
 	if err := dst.svc.SetCloudCreds(CloudCreds{S3KeyID: "EXIST", S3Secret: "keepme"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := dst.svc.SetNotifyConfig(notify.Config{On: "always", MatrixHomeserver: "https://keep", MatrixToken: "keeptoken", MatrixRoom: "!k:x"}); err != nil {
+	if err := dst.svc.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "matrixHomeserver": "https://keep", "matrixToken": "keeptoken", "matrixRoom": "!k:x"})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -474,7 +473,7 @@ func TestImportWithoutCredentialsPreservesExisting(t *testing.T) {
 		t.Fatalf("missing credentials must not wipe existing cloud creds: %+v", cloud)
 	}
 	nc, _ := dst.svc.NotifyConfig()
-	if nc.MatrixToken != "keeptoken" {
+	if matrixToken(nc) != "keeptoken" {
 		t.Fatalf("missing credentials must not wipe existing notify creds: %+v", nc)
 	}
 	// The settings themselves still import.

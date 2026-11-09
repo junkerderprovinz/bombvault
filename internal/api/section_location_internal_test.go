@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -206,7 +205,7 @@ func TestNotificationsCarryNoDashes(t *testing.T) {
 	ssh := &fakeHostSSH{}
 	s := unraidNotifyService(t, ssh)
 	s.SetPlatform(platform.Unraid{})
-	if err := s.SetNotifyConfig(notify.Config{On: "failure", Unraid: true}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "unraid": true})); err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()

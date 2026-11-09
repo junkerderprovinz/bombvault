@@ -3723,6 +3723,18 @@ WHERE last_check_ok = 0 AND (
 		alreadySatisfied: columnPresent("offsite_targets", "connections"),
 		sql:              `ALTER TABLE offsite_targets ADD COLUMN connections INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// The notification settings turn into a list of channels at the next
+		// start. They are sealed with APP_KEY, so the API converts them and
+		// this table keeps the config it converted from.
+		version: notifyChannelsMigration,
+		name:    "notify_before_channels",
+		sql: `CREATE TABLE IF NOT EXISTS notify_before_channels (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  conf         TEXT    NOT NULL,
+  converted_at INTEGER NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4332,6 +4344,10 @@ const connectionsMigration = 830
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780
+
+// notifyChannelsMigration numbers the notification config kept from before
+// channels.
+const notifyChannelsMigration = 850
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

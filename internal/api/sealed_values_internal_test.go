@@ -44,7 +44,7 @@ var sealSites = map[string]string{
 	"addHtpasswdUser":        "receiver_logins.password_enc",
 	"EncodeRegistryAuths":    "settings.registry_auths",
 	"storeRcloneConf":        "settings.rclone_conf",
-	"SetNotifyConfig":        "settings.notify_conf",
+	"sealNotifyConf":         "settings.notify_conf",
 	"sealSharedBlob":         "replaced_sign_ins.cloud_conf_enc",
 	"encodeCloudCredSets":    "settings.cloud_cred_sets",
 	"zfsReceiveAllow":        "zfs_receive_slots.token_enc",

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -65,7 +64,7 @@ func TestTheDigestOffSiteLineReadsTheOldestCopyAsTheStatusDoes(t *testing.T) {
 
 func TestADigestNoChannelTookIsNoSuccess(t *testing.T) {
 	s, _, _, _ := watchdogTestService(t)
-	if err := s.SetNotifyConfig(notify.Config{On: "always", WebhookEnabled: true, WebhookURL: "http://127.0.0.1:1/none"}); err != nil {
+	if err := s.SetNotifyConfig(oldNotify(map[string]any{"on": "always", "webhookEnabled": true, "webhookUrl": "http://127.0.0.1:1/none"})); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.SendDigest(context.Background()); err == nil {

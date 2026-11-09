@@ -1,0 +1,33 @@
+{
+  "on": "failure",
+  "webhookUrl": "https://discord.com/api/webhooks/1234567890/AbCdEfGhIjKlMnOpQrStUvWxYz",
+  "webhookFormat": "discord",
+  "matrixEnabled": false,
+  "matrixHomeserver": "https://matrix.example.org",
+  "matrixToken": "syt_YmFja3Vwcw_token",
+  "matrixRoom": "!backups:example.org",
+  "gotifyEnabled": true,
+  "gotifyUrl": "https://gotify.example.org",
+  "gotifyToken": "AbCdEfGhIjKlMnO",
+  "gotifyPriorityFailure": 9,
+  "gotifyPrioritySuccess": 0,
+  "healthchecksUrl": "https://hc-ping.com/5f0b6c1e-8d4a-4e8a-9a51-0c2d7e6b3f19",
+  "healthchecksByDomain": {
+    "container": "https://hc-ping.com/0c2d7e6b-3f19-4e8a-9a51-5f0b6c1e8d4a",
+    "flash": "",
+    "VM": "https://hc-ping.com/9a510c2d-7e6b-4e8a-3f19-5f0b6c1e8d4a"
+  },
+  "unraid": true,
+  "smtpEnabled": true,
+  "smtpHost": "smtp.example.org",
+  "smtpPort": 0,
+  "smtpUsername": "backups@example.org",
+  "smtpPassword": "app-password",
+  "smtpFrom": "backups@example.org",
+  "smtpTo": "ops@example.org; admin@example.org",
+  "smtpTls": "",
+  "appriseUrl": "http://apprise:8000/notify/backups",
+  "appriseTags": "backup",
+  "scheduledSummary": true,
+  "notifyOnUpdate": true
+}

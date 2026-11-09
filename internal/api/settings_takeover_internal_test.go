@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -63,7 +62,7 @@ func settingsOfTheOldInstall(t *testing.T, key string) string {
 	if err := svc.SetRcloneConf("[box]\ntype = sftp"); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.SetNotifyConfig(notify.Config{WebhookURL: "https://hooks.example/abc", On: "failure"}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"webhookUrl": "https://hooks.example/abc", "on": "failure"})); err != nil {
 		t.Fatal(err)
 	}
 	group, err := secret.Encrypt(key, []byte(strings.Repeat("g", 16)))
@@ -151,7 +150,7 @@ func TestSettingsOfTheOldInstallComeBackUnderThisServersKey(t *testing.T) {
 	if conf, err := svc.decodeRcloneConf(settings); err != nil || !strings.Contains(conf, "type = sftp") {
 		t.Fatalf("the rclone config reads %q, %v", conf, err)
 	}
-	if n, err := svc.NotifyConfig(); err != nil || n.WebhookURL != "https://hooks.example/abc" {
+	if n, err := svc.NotifyConfig(); err != nil || channelOf(n, "webhook").Webhook == nil || channelOf(n, "webhook").Webhook.URL != "https://hooks.example/abc" {
 		t.Fatalf("the notification settings read %+v, %v", n, err)
 	}
 	g, err := st.GetGroupState()

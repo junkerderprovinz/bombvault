@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 )
 
@@ -38,7 +37,7 @@ func TestTheWatchdogJudgesAZFSDomainThatOnlyReplicatesByItsReplicas(t *testing.T
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(srv.Close)
-	if err := r.s.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := r.s.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.s.BackupZFSDataset(context.Background(), r.item.ID); err != nil {

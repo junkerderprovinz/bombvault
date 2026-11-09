@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
-	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -84,7 +83,7 @@ func watchdogTestService(t *testing.T) (*Service, *store.Repo, *int32, int64) {
 	}
 	st := store.New(db)
 	svc := &Service{cfg: config.Config{AppKey: strings.Repeat("a", 64)}, store: st}
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 
@@ -156,7 +155,7 @@ func TestWatchdogNotifiesOncePerEpisode(t *testing.T) {
 // episode, so turning them on later still reports a long-running overdue state.
 func TestWatchdogMutedPolicyIsSilent(t *testing.T) {
 	svc, st, hits, seeded := watchdogTestService(t)
-	if err := svc.SetNotifyConfig(notify.Config{On: "never"}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "never"})); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.runWatchdogAt(context.Background(), seeded+3*86400); err != nil {
@@ -220,7 +219,7 @@ func TestWatchdogRetriesAnAlertThatReachedNobody(t *testing.T) {
 	svc, st, _, seeded := watchdogTestService(t)
 	wh := newPathRecorder(t)
 	wh.status.Store(http.StatusServiceUnavailable)
-	if err := svc.SetNotifyConfig(notify.Config{On: "failure", WebhookEnabled: true, WebhookURL: wh.srv.URL}); err != nil {
+	if err := svc.SetNotifyConfig(oldNotify(map[string]any{"on": "failure", "webhookEnabled": true, "webhookUrl": wh.srv.URL})); err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
