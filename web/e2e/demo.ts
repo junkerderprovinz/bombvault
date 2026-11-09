@@ -901,33 +901,16 @@ const SETTINGS = {
 };
 
 const NOTIFY = {
-  on: "failure",
-  webhookEnabled: false,
-  webhookUrl: "",
-  webhookFormat: "generic",
-  matrixEnabled: false,
-  matrixHomeserver: "",
-  matrixToken: "",
-  matrixRoom: "",
-  healthchecksUrl: "",
-  healthchecksByDomain: {},
-  unraid: true,
-  smtpEnabled: false,
-  smtpHost: "",
-  smtpPort: 587,
-  smtpUsername: "",
-  smtpPassword: "",
-  smtpFrom: "",
-  smtpTo: "",
-  smtpTls: "starttls",
-  appriseEnabled: false,
-  appriseUrl: "",
-  appriseTags: "",
-  gotifyEnabled: true,
-  gotifyUrl: "https://gotify.home.arpa",
-  gotifyToken: "",
-  gotifyPriorityFailure: 8,
-  gotifyPrioritySuccess: 3,
+  channels: [
+    { id: "unraid", kind: "unraid", enabled: true, on: "failure" },
+    {
+      id: "gotify",
+      kind: "gotify",
+      enabled: true,
+      on: "failure",
+      gotify: { url: "https://gotify.home.arpa", token: "********", priorityFailure: 8, prioritySuccess: 3 },
+    },
+  ],
   scheduledSummary: true,
   notifyOnUpdate: true,
 };
@@ -1351,7 +1334,7 @@ export async function stageDemo(page: Page, demo: Demo): Promise<void> {
   await ok(/^\/api\/storage\/sections\/[^/]+\/local$/);
 
   // Notifications, the group and ZFS.
-  await json("/api/notify", { ok: true, notify: NOTIFY, gotifyTokenSet: true, matrixTokenSet: false, smtpPasswordSet: false });
+  await json("/api/notify", { ok: true, notify: NOTIFY });
   await json("/api/group", GROUP);
   await json("/api/group/roles", { ok: true, members: ROLES, self: SELF_ROLES });
   await json("/api/group/deposits", { ok: true, deposits: DEPOSITS });

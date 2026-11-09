@@ -1624,59 +1624,83 @@ export function setContainerTargets(name: string, body: ContainerTargetsBody): P
   });
 }
 
-/** Notification config (webhook / Matrix / Healthchecks / Unraid / email). */
+/** The services a notification channel can deliver to. */
+export type NotifyKind =
+  | "webhook"
+  | "discord"
+  | "slack"
+  | "gotify"
+  | "ntfy"
+  | "matrix"
+  | "smtp"
+  | "apprise"
+  | "healthchecks"
+  | "unraid";
+
+/** Which news a channel carries. An empty value means "failure". */
+export type NotifyOn = "never" | "failure" | "always";
+
+/** What the server sends in place of a stored secret. Sent back unchanged, it
+ *  keeps the secret, as long as the channel still points where it did. */
+export const REDACTED = "********";
+
+/** One stored notification channel. Only the block named by kind is read, and
+ *  an Unraid channel has none. */
+export interface NotifyChannel {
+  id: string;
+  kind: NotifyKind;
+  name?: string;
+  enabled: boolean;
+  on?: NotifyOn | "";
+  events?: string[];
+  attempts?: number;
+  timeoutSeconds?: number;
+  webhook?: { url: string; method?: string; headers?: Record<string, string>; body?: string };
+  discord?: { url: string };
+  slack?: { url: string };
+  gotify?: { url: string; token?: string; priorityFailure?: number; prioritySuccess?: number };
+  ntfy?: { url: string; token?: string };
+  matrix?: { homeserver: string; room: string; token: string };
+  smtp?: {
+    host: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    from: string;
+    to: string;
+    tls?: string;
+  };
+  apprise?: { url: string; urls?: string[]; tags?: string };
+  // byKey gives a section ("container", "VM", "flash", ...) a check of its own.
+  healthchecks?: { url?: string; byKey?: Record<string, string> };
+}
+
+/** The notification settings: the channels and the switches that decide what
+ *  BombVault sends. */
 export interface NotifyConfig {
-  on: string; // "never" | "failure" | "always"
-  // webhookEnabled/matrixEnabled/appriseEnabled gate their respective channels —
-  // same enable/disable shape as smtpEnabled below, mirrored on the Go side
-  // (internal/notify.Config's WebhookEnabled/MatrixEnabled/AppriseEnabled).
-  webhookEnabled: boolean;
-  webhookUrl: string;
-  webhookFormat: string; // generic | discord | slack | gotify | ntfy
-  matrixEnabled: boolean;
-  matrixHomeserver: string;
-  matrixToken: string;
-  matrixRoom: string;
-  gotifyEnabled: boolean;
-  gotifyUrl: string;
-  gotifyToken: string;
-  // 0 to 10, as Gotify's clients read them.
-  gotifyPriorityFailure: number;
-  gotifyPrioritySuccess: number;
-  healthchecksUrl: string;
-  // Optional per-domain Healthchecks ping URLs, keyed by domain ("container",
-  // "VM", "flash", "config"). A set URL overrides healthchecksUrl for that
-  // domain; a blank/absent entry falls back to the global healthchecksUrl.
-  healthchecksByDomain?: Record<string, string>;
-  unraid: boolean;
-  smtpEnabled: boolean;
-  smtpHost: string;
-  smtpPort: number;
-  smtpUsername: string;
-  smtpPassword: string;
-  smtpFrom: string;
-  smtpTo: string;
-  smtpTls: string; // "starttls" | "tls" | "none"
-  appriseEnabled: boolean;
-  // Full notify endpoint of a user-run Apprise API server (caronc/apprise-api),
-  // typically http://host:8000/notify/<key> — fans out to Apprise's 100+ services.
-  appriseUrl: string;
-  // Optional comma-separated Apprise tag filter (payload "tag"); blank = all targets.
-  appriseTags: string;
-  // #56: collapse a scheduled per-domain run's per-item messages into one summary.
+  channels: NotifyChannel[];
+  // One summary per scheduled run instead of a message per item.
   scheduledSummary: boolean;
-  // #56: notify per container updated by the post-backup image update.
+  // A message for each container the update after a backup replaced.
   notifyOnUpdate: boolean;
+}
+
+/** One reason the server refused a channel. index points into the channels
+ *  that were sent, field is the path inside that channel, such as "gotify.url". */
+export interface NotifyProblem {
+  index: number;
+  channel?: string;
+  field?: string;
+  code: string;
 }
 
 export interface GetNotifyResponse extends OkEnvelope {
   notify?: NotifyConfig;
-  // The SMTP password / Matrix token are never sent to the browser; these flags
-  // report whether one is stored so the form can show "configured" and treat a
-  // blank submit as "keep the stored secret".
-  smtpPasswordSet?: boolean;
-  matrixTokenSet?: boolean;
-  gotifyTokenSet?: boolean;
+}
+
+export interface NotifyAnswer extends OkEnvelope {
+  problems?: NotifyProblem[];
+  status?: number;
 }
 
 /** GET /api/notify — the current (decrypted) notification config. */
@@ -1685,7 +1709,7 @@ export function getNotify(): Promise<GetNotifyResponse> {
 }
 
 /** POST /api/notify — store the notification config (encrypted at rest). */
-export function setNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
+export function setNotify(cfg: NotifyConfig): Promise<NotifyAnswer> {
   return fetchJSON("/api/notify", { method: "POST", body: JSON.stringify(cfg) });
 }
 
@@ -1815,9 +1839,10 @@ export function setCloudCredSets(sets: CloudCredSet[]): Promise<OkEnvelope & { w
   return fetchJSON("/api/cloud/creds-sets", { method: "POST", body: JSON.stringify({ sets }) });
 }
 
-/** POST /api/notify/test — send a test notification using the given config. */
-export function testNotify(cfg: NotifyConfig): Promise<OkEnvelope> {
-  return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify(cfg) });
+/** POST /api/notify/test sends a test message through one channel, saved or
+ *  not. */
+export function testNotify(channel: NotifyChannel): Promise<NotifyAnswer> {
+  return fetchJSON("/api/notify/test", { method: "POST", body: JSON.stringify({ channel }) });
 }
 
 /** POST /api/containers/{name}/export — write a plain tar+xml export, returns the folder. */

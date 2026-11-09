@@ -137,6 +137,9 @@ export const METRICS_ENDPOINT_LTR_FRAGMENTS = ["/metrics"] as const;
  *  and the prefix holds the leading slash. */
 export const APPRISE_ENDPOINT_LTR_FRAGMENTS = ["/notify/"] as const;
 
+/** Apprise's endpoint without a key, which takes the addresses in the body. */
+export const APPRISE_STATELESS_LTR_FRAGMENTS = ["/notify"] as const;
+
 /** The authorized-keys path the VM SSH card tells the user to append to. */
 export const VM_SSH_KEY_PATH_LTR_FRAGMENTS = ["/root/.ssh/authorized_keys"] as const;
 
@@ -203,6 +206,7 @@ export const LTR_FRAGMENTS_BY_KEY = {
   "settings.flashEnabledHint": BOOT_VOLUME_LTR_FRAGMENTS,
   "notify.unraidPlatformMismatch": UNRAID_PLATFORM_MISMATCH_LTR_FRAGMENTS,
   "notify.appriseHint": APPRISE_ENDPOINT_LTR_FRAGMENTS,
+  "notify.appriseUrlsHint": APPRISE_STATELESS_LTR_FRAGMENTS,
   "settings.metricsEnable": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "settings.metricsHint": METRICS_ENDPOINT_LTR_FRAGMENTS,
   "vm.ssh.publicKey": VM_SSH_KEY_PATH_LTR_FRAGMENTS,

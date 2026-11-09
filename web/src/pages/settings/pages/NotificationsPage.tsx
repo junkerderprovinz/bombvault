@@ -57,7 +57,6 @@ export function NotificationsPage() {
       platformSet={platformSet}
       hueIndex={firstHue}
       channelsHueIndex={nextHue()}
-      healthchecksHueIndex={nextHue()}
       sections={SECTION_SWITCH.filter(([, on]) => settings[on]).map(([kind]) => kind)}
       tail={
         <SettingRow label={t("settings.digestToggle")} hint={t("settings.digestHint")}>

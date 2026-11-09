@@ -9,7 +9,11 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    getNotify: () => Promise.resolve({ ok: true, notify: { unraid: true } }),
+    getNotify: () =>
+      Promise.resolve({
+        ok: true,
+        notify: { scheduledSummary: false, notifyOnUpdate: false, channels: [{ id: "unraid", kind: "unraid", enabled: true }] },
+      }),
   };
 });
 

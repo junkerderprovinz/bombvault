@@ -47,35 +47,9 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
   } as unknown as Settings;
 }
 
-const notify: NotifyConfig = {
-  on: "failure",
-  webhookEnabled: false,
-  webhookUrl: "",
-  webhookFormat: "generic",
-  matrixEnabled: false,
-  matrixHomeserver: "",
-  matrixToken: "",
-  matrixRoom: "",
-  healthchecksUrl: "https://hc-ping.com/all",
-  healthchecksByDomain: { zfs: "https://hc-ping.com/zfs" },
-  unraid: false,
-  smtpEnabled: false,
-  smtpHost: "",
-  smtpPort: 587,
-  smtpUsername: "",
-  smtpPassword: "",
-  smtpFrom: "",
-  smtpTo: "",
-  smtpTls: "starttls",
-  appriseEnabled: false,
-  appriseUrl: "",
-  appriseTags: "",
-  scheduledSummary: false,
-  notifyOnUpdate: false,
-};
+const notify: NotifyConfig = { channels: [], scheduledSummary: false, notifyOnUpdate: false };
 
 const putBodies: Settings[] = [];
-const notifyBodies: NotifyConfig[] = [];
 let settingsOnServer = baseSettings();
 
 vi.mock("../lib/api", async (importOriginal) => {
@@ -89,10 +63,7 @@ vi.mock("../lib/api", async (importOriginal) => {
       return Promise.resolve({ ok: true });
     },
     getNotify: () => Promise.resolve({ ok: true, notify }),
-    setNotify: (cfg: NotifyConfig) => {
-      notifyBodies.push(cfg);
-      return Promise.resolve({ ok: true });
-    },
+    setNotify: () => Promise.resolve({ ok: true }),
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [{ name: "plex" }] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
@@ -157,7 +128,6 @@ beforeEach(() => {
   stubBrowser();
   vi.stubGlobal("EventSource", FakeEventSource);
   putBodies.length = 0;
-  notifyBodies.length = 0;
   settingsOnServer = baseSettings();
 });
 
@@ -181,38 +151,6 @@ describe("the weekly digest", () => {
     settingsOnServer = baseSettings({ digestEnabled: false });
     await renderPage("notifications");
     expect(screen.getByRole("button", { name: /^Weekly digest: ?Off$/ })).toBeTruthy();
-  });
-});
-
-describe("Healthchecks per section", () => {
-  it("lists a section with its own URL and says that the others ping the shared one", async () => {
-    await renderPage("notifications");
-    const hc = card(en["notify.healthchecksTitle"]);
-    await waitFor(() => expect(within(hc).getByDisplayValue("https://hc-ping.com/zfs")).toBeTruthy());
-    expect(within(hc).getByText(en["notify.hcRuleOthers"])).toBeTruthy();
-  });
-
-  it("gives an added section its own URL", async () => {
-    await renderPage("notifications");
-    const hc = card(en["notify.healthchecksTitle"]);
-    await waitFor(() => within(hc).getByDisplayValue("https://hc-ping.com/zfs"));
-    fireEvent.click(within(hc).getByRole("button", { name: en["exceptions.add"] }));
-    fireEvent.click(await screen.findByRole("option", { name: en["nav.containers"] }));
-    const field = within(hc).getByRole("textbox", { name: `${en["notify.healthchecks"]}: ${en["nav.containers"]}` });
-    fireEvent.change(field, { target: { value: "https://hc-ping.com/ct" } });
-    await waitFor(
-      () => expect(notifyBodies.at(-1)?.healthchecksByDomain).toEqual({ zfs: "https://hc-ping.com/zfs", container: "https://hc-ping.com/ct" }),
-      SAVED
-    );
-  });
-
-  it("hands a section back to the shared URL when its exception is removed", async () => {
-    await renderPage("notifications");
-    const hc = card(en["notify.healthchecksTitle"]);
-    await waitFor(() => within(hc).getByDisplayValue("https://hc-ping.com/zfs"));
-    fireEvent.click(within(hc).getByRole("button", { name: `${en["exceptions.remove"]}: ${en["nav.zfs"]}` }));
-    await waitFor(() => expect(notifyBodies.at(-1)?.healthchecksByDomain).toEqual({ zfs: "" }));
-    expect(within(hc).getByText(en["notify.hcRuleAll"])).toBeTruthy();
   });
 });
 

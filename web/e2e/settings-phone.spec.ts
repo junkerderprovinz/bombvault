@@ -165,28 +165,55 @@ const CRED_SETS = [
 ];
 
 const NOTIFY = {
-  on: "failure",
-  webhookEnabled: true,
-  webhookUrl: "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz",
-  webhookFormat: "discord",
-  matrixEnabled: true,
-  matrixHomeserver: "https://matrix.example-homeserver.org",
-  matrixToken: "",
-  matrixRoom: "!aBcDeFgHiJkLmNoP:example-homeserver.org",
-  healthchecksUrl: "https://hc-ping.com/5f1c3d2e-8a7b-4c6d-9e0f-1a2b3c4d5e6f",
-  healthchecksByDomain: { containers: "https://hc-ping.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
-  unraid: true,
-  smtpEnabled: true,
-  smtpHost: "smtp.mailbox-provider.example.com",
-  smtpPort: 587,
-  smtpUsername: "bombvault@example.com",
-  smtpPassword: "",
-  smtpFrom: "BombVault <bombvault@example.com>",
-  smtpTo: "admin@example.com, zweitadmin@example.com",
-  smtpTls: "starttls",
-  appriseEnabled: true,
-  appriseUrl: "http://apprise.lan:8000/notify/bombvault",
-  appriseTags: "backup,unraid",
+  channels: [
+    {
+      id: "webhook",
+      kind: "discord",
+      enabled: true,
+      on: "failure",
+      discord: { url: "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz" },
+    },
+    {
+      id: "matrix",
+      kind: "matrix",
+      enabled: true,
+      on: "failure",
+      matrix: { homeserver: "https://matrix.example-homeserver.org", room: "!aBcDeFgHiJkLmNoP:example-homeserver.org", token: "********" },
+    },
+    {
+      id: "healthchecks",
+      kind: "healthchecks",
+      enabled: true,
+      on: "always",
+      healthchecks: {
+        url: "https://hc-ping.com/5f1c3d2e-8a7b-4c6d-9e0f-1a2b3c4d5e6f",
+        byKey: { container: "https://hc-ping.com/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+      },
+    },
+    { id: "unraid", kind: "unraid", enabled: true, on: "failure" },
+    {
+      id: "smtp",
+      kind: "smtp",
+      enabled: true,
+      on: "failure",
+      smtp: {
+        host: "smtp.mailbox-provider.example.com",
+        port: 587,
+        username: "bombvault@example.com",
+        password: "********",
+        from: "BombVault <bombvault@example.com>",
+        to: "admin@example.com, zweitadmin@example.com",
+        tls: "starttls",
+      },
+    },
+    {
+      id: "apprise",
+      kind: "apprise",
+      enabled: true,
+      on: "failure",
+      apprise: { url: "http://apprise.lan:8000/notify/bombvault", tags: "backup,unraid" },
+    },
+  ],
   scheduledSummary: true,
   notifyOnUpdate: true,
 };
@@ -363,7 +390,7 @@ async function stage(page: Page): Promise<void> {
   );
   await page.route("**/api/cloud/creds-sets", json({ ok: true, sets: CRED_SETS }));
   await page.route("**/api/rclone", json({ ok: true, remotes: ["gdrive-familienarchiv", "onedrive-business-backup"] }));
-  await page.route("**/api/notify", json({ ok: true, notify: NOTIFY, matrixTokenSet: true, smtpPasswordSet: true }));
+  await page.route("**/api/notify", json({ ok: true, notify: NOTIFY }));
   await page.route("**/api/mcp/keys?*", json(MCP));
   await page.route("**/api/mcp/keys/*/activity", json(MCP_ACTIVITY));
   await page.route("**/api/dashboard-plugin", json({ ok: true, sshConfigured: true, installed: true, version: "2026.09.20" }));
