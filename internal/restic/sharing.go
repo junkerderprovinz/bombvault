@@ -10,6 +10,10 @@ import (
 // repository at once.
 var ErrSharedRepoWide = errors.New("a shared repository is aged entry by entry and host by host, never as a whole")
 
+// ErrSharedLocks is what a member asked to remove every lock of a shared
+// repository answers with.
+var ErrSharedLocks = errors.New("the locks of a shared repository are cleared by the server that holds it")
+
 // Sharing is what this server may do in a repository: write to it alone, add
 // to one that other servers of its group write to as well, or hold such a
 // repository as its owner, the one server that forgets and prunes there.

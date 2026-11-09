@@ -53,9 +53,14 @@ func orphanLock(l lockFile, host string, started, now time.Time, ownerMayLive fu
 	return l.Hostname == host && l.Time.Before(started) && now.Sub(l.Time) > lockRefreshSilence && !ownerMayLive(l.PID)
 }
 
-// staleLock reports whether no running restic can rely on l any more.
-func staleLock(l lockFile, host string, started, now time.Time) bool {
-	return now.Sub(l.Time) > staleLockTimeout || orphanLock(l, host, started, now, ownerMayLive)
+// staleLock reports whether no running restic can rely on l any more. In a
+// shared repository the hostname of a lock does not say whose it is, so only
+// its age counts there.
+func staleLock(l lockFile, host string, sharing Sharing, started, now time.Time) bool {
+	if now.Sub(l.Time) > staleLockTimeout {
+		return true
+	}
+	return sharing == SharingNone && orphanLock(l, host, started, now, ownerMayLive)
 }
 
 // clearLocks removes the stale locks of repo and leaves every other one alone.
@@ -71,8 +76,18 @@ func staleLock(l lockFile, host string, started, now time.Time) bool {
 //
 // removeAll asks for every lock to go. A lock still being refreshed stays all
 // the same, and the answer is ErrLockHeld.
+//
+// In a shared repository a member clears nothing: a lock it cannot place may
+// be the owner's prune. The owner removes the locks it holds as files, and
+// never runs restic unlock there.
 func (r Restic) clearLocks(ctx context.Context, repo string, removeAll bool, m Mode, started, now time.Time) error {
 	if m.NoLock {
+		return nil
+	}
+	if m.Sharing == SharingMember {
+		if removeAll {
+			return ErrSharedLocks
+		}
 		return nil
 	}
 	locks, err := r.readLocks(ctx, repo, m)
@@ -84,14 +99,14 @@ func (r Restic) clearLocks(ctx context.Context, repo string, removeAll bool, m M
 	var held *repoLock
 	for i, l := range locks {
 		switch {
-		case staleLock(l.lockFile, host, started, now):
+		case staleLock(l.lockFile, host, m.Sharing, started, now):
 			stale = append(stale, l.id)
 		case held == nil || l.Time.After(held.Time):
 			held = &locks[i]
 		}
 	}
 	if IsRemoteRepo(repo) {
-		if held == nil && len(stale) > 0 {
+		if held == nil && len(stale) > 0 && m.Sharing == SharingNone {
 			_, err = r.run(ctx, UnlockArgs(repo, false, m), m)
 		}
 	} else {

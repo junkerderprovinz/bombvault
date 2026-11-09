@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -149,5 +150,60 @@ func TestUnlockRemovesALockUnrefreshedForHalfAnHour(t *testing.T) {
 	}
 	if n := lockFiles(t, filepath.Join(repo, "locks")); n != 0 {
 		t.Fatalf("a lock unrefreshed for 31 minutes is still there: %d locks", n)
+	}
+}
+
+// A member's restic would take the owner's live prune lock for its own by
+// hostname and PID, so a member leaves every lock to the owner and does not
+// even read them.
+func TestAMemberOfASharedRepositoryLeavesItsLocksAlone(t *testing.T) {
+	r := Restic{Bin: filepath.Join(t.TempDir(), "no-restic")}
+	m := Mode{Sharing: SharingMember}
+	if err := r.Unlock(context.Background(), "rest:http://127.0.0.1:1/shared", false, m); err != nil {
+		t.Fatalf("stale clear: %v, want nothing done", err)
+	}
+	if err := r.Unlock(context.Background(), "rest:http://127.0.0.1:1/shared", true, m); !errors.Is(err, ErrSharedLocks) {
+		t.Fatalf("removing every lock: %v, want ErrSharedLocks", err)
+	}
+}
+
+// The lock of a killed restic under this hostname may be another server's in
+// a shared repository, so the owner waits out the half hour for it.
+func TestTheOwnerOfASharedRepositoryRemovesOnlyLocksUnrefreshedForHalfAnHour(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("reads /proc")
+	}
+	needsRestic(t)
+	repo := newRepo(t)
+	holdLock(t, repo)()
+	locks := filepath.Join(repo, "locks")
+
+	r, ctx := Restic{Bin: "restic"}, context.Background()
+	orphaned := time.Now().Add(lockRefreshSilence + time.Minute)
+	if err := r.clearLocks(ctx, repo, false, Mode{Sharing: SharingOwner}, time.Now(), orphaned); err != nil {
+		t.Fatal(err)
+	}
+	if n := lockFiles(t, locks); n != 1 {
+		t.Fatalf("the owner took a lock unrefreshed for 11 minutes: %d locks left", n)
+	}
+	if err := r.clearLocks(ctx, repo, false, Mode{Sharing: SharingOwner}, time.Now(), time.Now().Add(staleLockTimeout+time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if n := lockFiles(t, locks); n != 0 {
+		t.Fatalf("a lock unrefreshed for 31 minutes is still there: %d locks", n)
+	}
+}
+
+// restic unlock applies restic's own hostname rule, so the owner of a shared
+// repository it reaches only over the network leaves it to the server that
+// holds the files.
+func TestTheOwnerNeverRunsResticUnlockOnASharedRepository(t *testing.T) {
+	id := strings.Repeat("ef", 32)
+	bin, log := fakeLockRestic(t, id, lockJSON(time.Now().Add(-staleLockTimeout-time.Minute), "nas", 7))
+	if err := (Restic{Bin: bin}).Unlock(context.Background(), "rest:http://127.0.0.1:1/shared", false, Mode{Sharing: SharingOwner}); err != nil {
+		t.Fatal(err)
+	}
+	if got := calls(t, log); got != "list cat" {
+		t.Fatalf("calls = %q, want only the lock read", got)
 	}
 }

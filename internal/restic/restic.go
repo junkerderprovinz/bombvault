@@ -3228,6 +3228,7 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 // BombVault on this host left behind (see orphanLock). A lock that is still
 // refreshed stays, because another install may write to the same repository.
 // removeAll reports such a lock with ErrLockHeld instead of passing over it.
+// In a shared repository only the owner removes locks, and only by age.
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
 	return r.clearLocks(ctx, repo, removeAll, m, processStart, time.Now())
 }
