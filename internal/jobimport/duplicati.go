@@ -270,7 +270,8 @@ func cronDays(days []time.Weekday) string {
 }
 
 // duplicatiDestination reads a target URL as Duplicati's backends take it:
-// scheme://server/path?options, with the sign-in among the options.
+// scheme://server/path?options, with the sign-in among the options or, as
+// Duplicati also takes it, in front of the server.
 func duplicatiDestination(target string) (Destination, []Note) {
 	scheme, rest, ok := strings.Cut(strings.TrimSpace(target), "://")
 	if !ok {
@@ -291,6 +292,7 @@ func duplicatiDestination(target string) (Destination, []Note) {
 	}
 	host, folder, _ := strings.Cut(rest, "/")
 	folder = strings.TrimRight(folder, "/")
+	host, user, password := splitUserinfo(host)
 
 	switch scheme {
 	case "s3":
@@ -306,23 +308,23 @@ func duplicatiDestination(target string) (Destination, []Note) {
 		if strings.EqualFold(opt("use-ssl"), "true") || strings.HasSuffix(server, ".amazonaws.com") {
 			proto = "https"
 		}
+		id, secret := signIn(opt("auth-username", "aws-access-key-id"), opt("auth-password", "aws-secret-access-key"), user, password)
 		return Destination{
 			Kind:         KindS3,
 			Location:     "s3:" + proto + "://" + underSubfolder(server, host, folder),
 			Region:       region,
 			StorageClass: opt("s3-storage-class"),
-			KeyID:        opt("auth-username", "aws-access-key-id"),
-			Secret:       opt("auth-password", "aws-secret-access-key"),
+			KeyID:        id,
+			Secret:       secret,
 		}, nil
 	case "b2":
-		return Destination{
-			Kind:   KindB2,
-			Path:   underSubfolder(host, folder),
-			KeyID:  opt("auth-username", "b2-accountid"),
-			Secret: opt("auth-password", "b2-applicationkey"),
-		}, nil
+		id, secret := signIn(opt("auth-username", "b2-accountid"), opt("auth-password", "b2-applicationkey"), user, password)
+		return Destination{Kind: KindB2, Path: underSubfolder(host, folder), KeyID: id, Secret: secret}, nil
 	case "ssh":
-		if user := opt("auth-username"); user != "" {
+		if u := opt("auth-username"); u != "" {
+			user = u
+		}
+		if user != "" {
 			host = user + "@" + host
 		}
 		return sftpDestination(host, folder), []Note{{Code: NoteSSHKey}}

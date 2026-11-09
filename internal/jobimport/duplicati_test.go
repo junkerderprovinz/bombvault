@@ -216,6 +216,37 @@ func TestDuplicatiTargetURLs(t *testing.T) {
 			want: Destination{Kind: KindLocal, Path: "C:/Backups/Duplicati"},
 		},
 		{
+			url:  "ssh://bob:hunter2@nas.lan:22/backups?auth-username=bob",
+			want: Destination{Kind: KindSFTP, Location: "sftp://bob@nas.lan:22/backups/bombvault"},
+			note: Note{Code: NoteSSHKey},
+		},
+		{
+			url:  "ssh://bob:hunter2@nas.lan/backups",
+			want: Destination{Kind: KindSFTP, Location: "sftp://bob@nas.lan/backups/bombvault"},
+			note: Note{Code: NoteSSHKey},
+		},
+		{
+			url:  "s3://AKIA:topsecret@bucket/folder",
+			want: Destination{Kind: KindS3, Location: "s3:https://s3.amazonaws.com/bucket/folder/bombvault", KeyID: "AKIA", Secret: "topsecret"},
+		},
+		{
+			url:  "s3://old:hunter2@bucket?auth-username=k&auth-password=s",
+			want: Destination{Kind: KindS3, Location: "s3:https://s3.amazonaws.com/bucket/bombvault", KeyID: "k", Secret: "s"},
+		},
+		{
+			url:  "s3://old:hunter2@bucket?auth-username=k",
+			want: Destination{Kind: KindS3, Location: "s3:https://s3.amazonaws.com/bucket/bombvault", KeyID: "k"},
+		},
+		{
+			url:  "b2://id:hunter2@bucket/folder",
+			want: Destination{Kind: KindB2, Path: "bucket/folder/bombvault", KeyID: "id", Secret: "hunter2"},
+		},
+		{
+			url:  "rclone://bob:hunter2@onedrive/Backups",
+			want: Destination{Kind: KindRclone, Location: "rclone:onedrive:Backups/bombvault"},
+			note: Note{Code: NoteRcloneRemote, Detail: "onedrive"},
+		},
+		{
 			url:  "webdav://cloud.example.org/remote.php/dav?auth-username=me&auth-password=pw",
 			want: Destination{},
 			note: Note{Code: NoteDestination, Detail: "webdav"},
@@ -223,6 +254,9 @@ func TestDuplicatiTargetURLs(t *testing.T) {
 	}
 	for _, c := range cases {
 		got, notes := duplicatiDestination(c.url)
+		if containsFold(got.Location+got.Path, "hunter2") || containsFold(got.Location+got.Path, "topsecret") {
+			t.Errorf("%s: the location carries a password: %+v", c.url, got)
+		}
 		if got != c.want {
 			t.Errorf("%s: got %+v, want %+v", c.url, got, c.want)
 		}

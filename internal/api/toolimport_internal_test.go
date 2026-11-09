@@ -288,3 +288,26 @@ func TestToolImportRefusesWhatItCannotRead(t *testing.T) {
 		}
 	}
 }
+
+func TestToolImportPreviewNeverShowsAPasswordFromTheTargetAddress(t *testing.T) {
+	f := toolImportFixture(t, "user/photos")
+	export := func(target string) map[string]any {
+		return map[string]any{"name": "x.json", "text": `{"Backup":{"Name":"Photos","Sources":["/source/photos/"],"TargetURL":"` + target + `"}}`}
+	}
+	res := f.do(http.MethodPost, "/api/import/tools/preview", map[string]any{"tool": "duplicati", "files": []any{
+		export("ssh://bob:hunter2@nas.lan:22/backups?auth-username=bob"),
+		export("s3://AKIA:hunter2@bucket/folder"),
+		export("rclone://bob:hunter2@onedrive/Backups"),
+	}})
+	if res["ok"] != true {
+		t.Fatalf("preview = %v", res)
+	}
+	raw, _ := json.Marshal(res)
+	if strings.Contains(string(raw), "hunter2") {
+		t.Fatalf("the preview carries the password: %s", raw)
+	}
+	jobs := asJSON[[]toolJobView](t, res["jobs"])
+	if jobs[0].Dest.Location != "sftp://bob@nas.lan:22/backups/bombvault" || jobs[1].Dest.SignIn != signInCarried {
+		t.Errorf("jobs = %+v", jobs)
+	}
+}

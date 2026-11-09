@@ -207,17 +207,32 @@ func TestDuplicacyStorageURLs(t *testing.T) {
 		{url: "flat:///mnt/disks/usb/dup", want: Destination{Kind: KindLocal, Path: "/mnt/disks/usb/dup"}},
 		{url: "samba:///mnt/remotes/nas/dup", want: Destination{Kind: KindLocal, Path: "/mnt/remotes/nas/dup"}},
 		{url: `D:\Duplicacy`, want: Destination{Kind: KindLocal, Path: "D:/Duplicacy"}},
+		{url: "sftp://bob:hunter2@nas.lan/backups", want: Destination{Kind: KindSFTP, Location: "sftp://bob@nas.lan/backups/bombvault"}, note: Note{Code: NoteSSHKey}},
+		{url: "s3://id:hunter2@s3.example.com/bucket", want: Destination{Kind: KindS3, Location: "s3:https://s3.example.com/bucket/bombvault", KeyID: "id", Secret: "secret"}},
+		{url: "minio://key:hunter2@minio.lan/backups", want: Destination{Kind: KindS3, Location: "s3:http://minio.lan/backups/bombvault", KeyID: "id", Secret: "secret"}},
+		{url: "wasabi://wk2:hunter2@s3.wasabisys.com/bucket", want: Destination{Kind: KindS3, Location: "s3:https://s3.wasabisys.com/bucket/bombvault", KeyID: "wk", Secret: "ws"}},
 		{url: "webdav://me@dav.example.org/dup", note: Note{Code: NoteDestination, Detail: "webdav"}},
 		{url: "b2-custom://endpoint/bucket", note: Note{Code: NoteDestination, Detail: "b2-custom"}},
 		{url: "no scheme", note: Note{Code: NoteDestination}},
 	}
 	for _, c := range cases {
 		got, notes := duplicacyDestination(c.url, func(kind string) string { return keys[kind] })
+		if containsFold(got.Location+got.Path, "hunter2") {
+			t.Errorf("%s: the location carries a password: %+v", c.url, got)
+		}
 		if got != c.want {
 			t.Errorf("%s: got %+v, want %+v", c.url, got, c.want)
 		}
 		if c.note.Code != "" && !hasNote(notes, c.note.Code, c.note.Detail) {
 			t.Errorf("%s: notes %+v lack %+v", c.url, notes, c.note)
 		}
+	}
+}
+
+func TestDuplicacyStorageURLSignInComesFromTheUserPartWhenNothingIsSaved(t *testing.T) {
+	got, _ := duplicacyDestination("s3://id:hunter2@s3.example.com/bucket", func(string) string { return "" })
+	want := Destination{Kind: KindS3, Location: "s3:https://s3.example.com/bucket/bombvault", KeyID: "id", Secret: "hunter2"}
+	if got != want {
+		t.Errorf("got %+v, want %+v", got, want)
 	}
 }

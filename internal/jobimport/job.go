@@ -4,7 +4,10 @@
 // data stays with the other tool, and nothing here touches it.
 package jobimport
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
 
 // The tools a job can come from.
 const (
@@ -122,4 +125,31 @@ func sftpDestination(host, folder string) Destination {
 		folder += "/"
 	}
 	return Destination{Kind: KindSFTP, Location: "sftp://" + host + "/" + folder + Subfolder}
+}
+
+// splitUserinfo takes a user and password written in front of a host off it,
+// so a password never ends up in a location the preview shows or the store
+// keeps.
+func splitUserinfo(host string) (rest, user, password string) {
+	at := strings.LastIndex(host, "@")
+	if at < 0 {
+		return host, "", ""
+	}
+	user, password, _ = strings.Cut(host[:at], ":")
+	if u, err := url.PathUnescape(user); err == nil {
+		user = u
+	}
+	if p, err := url.PathUnescape(password); err == nil {
+		password = p
+	}
+	return host[at+1:], user, password
+}
+
+// signIn is the key pair the options name, or the one in front of the host
+// when they name none. The two are never mixed.
+func signIn(id, secret, infoID, infoSecret string) (string, string) {
+	if id == "" && secret == "" {
+		return infoID, infoSecret
+	}
+	return id, secret
 }

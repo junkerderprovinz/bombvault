@@ -310,17 +310,14 @@ func duplicacyDestination(raw string, key func(kind string) string) (Destination
 	}
 	scheme, user, host, dir := m[1], m[2], m[3], m[5]
 	region := strings.TrimSuffix(user, "@")
+	// The CLI's pattern leaves a user with a password in the host part.
+	host, infoUser, password := splitUserinfo(host)
 	s3 := func(proto, idKind, secretKind string) Destination {
 		if strings.EqualFold(host, "amazon") || strings.EqualFold(host, "amazon.com") {
 			host = "s3.amazonaws.com"
 		}
-		return Destination{
-			Kind:     KindS3,
-			Location: "s3:" + proto + "://" + underSubfolder(host, dir),
-			Region:   region,
-			KeyID:    key(idKind),
-			Secret:   key(secretKind),
-		}
+		id, secret := signIn(key(idKind), key(secretKind), infoUser, password)
+		return Destination{Kind: KindS3, Location: "s3:" + proto + "://" + underSubfolder(host, dir), Region: region, KeyID: id, Secret: secret}
 	}
 	switch scheme {
 	case "s3", "s3c", "minios":
@@ -330,8 +327,12 @@ func duplicacyDestination(raw string, key func(kind string) string) (Destination
 	case "wasabi":
 		return s3("https", "wasabi_key", "wasabi_secret"), nil
 	case "b2":
-		return Destination{Kind: KindB2, Path: underSubfolder(host, dir), KeyID: key("b2_id"), Secret: key("b2_key")}, nil
+		id, secret := signIn(key("b2_id"), key("b2_key"), infoUser, password)
+		return Destination{Kind: KindB2, Path: underSubfolder(host, dir), KeyID: id, Secret: secret}, nil
 	case "sftp", "sftpc":
+		if user == "" && infoUser != "" {
+			user = infoUser + "@"
+		}
 		return sftpDestination(user+host, dir), []Note{{Code: NoteSSHKey}}
 	}
 	return Destination{}, []Note{{Code: NoteDestination, Detail: scheme}}
