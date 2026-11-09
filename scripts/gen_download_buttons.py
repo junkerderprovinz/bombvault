@@ -18,14 +18,14 @@ groups, so the gap between groups is about twice the gap between rows.
 A button carries one line, its name, as the apps' buttons do at rest. Only a
 listing still to come adds a second line saying so.
 Windows on ARM and the portable build are segments of the Windows button, and
-Linux on ARM and the Flatpak ones of the Linux button, so the desktop row keeps
-to the four places a row has.
+the ARM builds of Linux and the Flatpak segments of theirs.
 
 Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
-icons), Vivaldi's from Simple Icons, F-Droid's from its 2015 logo in
+icons), Vivaldi's and Flatpak's from Simple Icons (Flatpak's mark is CC BY 3.0,
+flatpak.org/press), F-Droid's from its 2015 logo in
 gitlab.com/fdroid/artwork (CC BY-SA 3.0 or GPL-3.0-or-later) with the eyes,
 ring and F cut out, and Unraid's from Dashboard Icons (Apache-2.0); see
 scripts/brand-paths/. The companions carry their own
@@ -116,7 +116,7 @@ KINDS = {
     # button's #fd0, and white on yellow fails contrast, so the ink is dark.
     "docs":             (0, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
     "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
-    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM64", "Download for Windows on ARM"),
+    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM", "Download for Windows on ARM"),
     "windows-portable": (1, None, *WINDOWS, "Windows", "Portable", "Download the portable Windows app"),
     "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
     # Space grey, since black vanishes against GitHub's dark theme.
@@ -125,9 +125,10 @@ KINDS = {
     "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Intel, ARM", "Download for macOS on Intel or Apple silicon"),
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
-    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
-    "linux-flatpak":    (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak x64", "Download the Linux Flatpak"),
-    "linux-flatpak-arm": (1, None, "#fcc624", "#1b1b1b", "Linux", "Flatpak ARM64", "Download the Linux Flatpak for ARM"),
+    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM", "Download for Linux on ARM"),
+    # Flatpak's own blue, where white holds 3.3:1, about as much as on Unraid's orange.
+    "flatpak":          (1, "flatpak", "#4a90d9", "#ffffff", "Flatpak", "x64", "Download the Flatpak"),
+    "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM", "Download the Flatpak for ARM"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
@@ -151,7 +152,7 @@ KINDS = {
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
-SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm", "linux-flatpak", "linux-flatpak-arm")}
+SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",), "flatpak": ("flatpak-arm",)}
 # A store listing that does not exist yet is drawn without a link, with "Soon"
 # under its name, or nobody could tell why the button leads nowhere.
 SOON = {
@@ -362,7 +363,11 @@ def rows():
 
 
 def split(items):
-    """A group as rows of at most PLACES, each filled before the next begins."""
+    """A group as rows of at most PLACES, each filled before the next begins.
+
+    A plain button left alone below a full row takes the last one of that row
+    with it. One with segments is wide enough to stand alone and stays.
+    """
     out, used = [[]], 0.0
     for parts in items:
         size = 1 + (len(parts) - 1) / 2
@@ -371,6 +376,8 @@ def split(items):
             used = 0.0
         out[-1].append(parts)
         used += size
+    if len(out) > 1 and len(out[-1]) == 1 and len(out[-1][0]) == 1 and len(out[-2]) > 1:
+        out[-1].insert(0, out[-2].pop())
     return out
 
 
