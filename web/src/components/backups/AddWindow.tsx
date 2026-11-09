@@ -194,13 +194,15 @@ export function AddWindow({
     t("backups.add.title"),
     t("backups.add.hint"),
     <div className="grid gap-3 md:grid-cols-2">
-      <Choice
-        kind="files"
-        title={t("backups.add.folder")}
-        line={folderLine}
-        disabled={!enabled.files}
-        onChoose={() => setKind("files")}
-      />
+      <span data-new-way={enabled.files ? "add-folder" : undefined} className="grid">
+        <Choice
+          kind="files"
+          title={t("backups.add.folder")}
+          line={folderLine}
+          disabled={!enabled.files}
+          onChoose={() => setKind("files")}
+        />
+      </span>
       <Choice
         kind="zfs"
         title={t("backups.add.dataset")}

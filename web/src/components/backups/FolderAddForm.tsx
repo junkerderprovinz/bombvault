@@ -234,7 +234,7 @@ export function FolderAddForm({
         <ExcludesEverythingNote text={excludes} />
 
         {junkEntries.length > 0 && (
-          <section className="flex flex-col gap-2">
+          <section data-new="files-junk" className="flex flex-col gap-2">
             <h3 className="flex items-center gap-1.5 text-sm text-carbon-text">
               {t("excludes.junk.title")}
               <InfoBubble tip={t("excludes.junk.hint")} />

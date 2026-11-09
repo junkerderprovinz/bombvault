@@ -65,8 +65,17 @@ export const RELEASES: Release[] = [
     changes: [
       { id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" },
       { id: "restore-tool-import", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.toolImport" },
-      { id: "files-junk", text: "whatsNew.systemJunk" },
-      { id: "location-connections", text: "whatsNew.connections" },
+      // A new folder set meets the junk lines first, in the form that Add
+      // opens, and an existing set only behind a button on its Settings tab.
+      { id: "files-junk", page: "/backups", where: ["backups.title"], way: ["/backups", "add-entry", "add-folder"], text: "whatsNew.systemJunk" },
+      {
+        id: "location-connections",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "network"],
+        text: "whatsNew.connections",
+      },
     ],
   },
   {
