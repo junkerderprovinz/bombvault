@@ -1,10 +1,14 @@
 name: Instant Repo-Watch Ping
 
 # The same file sits in every repository of this account; repo-watch's README lists
-# them and explains how to add a new one. It hands new issues, pull requests,
-# discussions, comments and reviews from other people to junkerderprovinz/repo-watch
-# as a repository_dispatch event, and repo-watch posts to Matrix with its own
+# them and explains how to add a new one. It hands new issues, discussions, comments
+# and reviews from other people to junkerderprovinz/repo-watch as a
+# repository_dispatch event, and repo-watch posts to Matrix with its own
 # credentials, so no Matrix secret ever reaches this repository.
+#
+# A new pull request is left to repo-watch's poll. pull_request gets no secrets on
+# a fork's pull request, and GitHub refuses pull_request_target in a public
+# repository that has no explicit Actions policy for it.
 #
 # Repositories the account does not own cannot run this, because GitHub only fires
 # these triggers for a repository's own workflows. Replies there are picked up by
@@ -12,12 +16,6 @@ name: Instant Repo-Watch Ping
 
 on:
   issues:
-    types: [opened]
-  # pull_request_target, because a pull request from a fork gets no secrets under
-  # pull_request, so gh would fail without REPOWATCH_PAT exactly when a stranger
-  # opens one. It is safe here: the job checks out no code, and every event field
-  # reaches the script through an environment variable.
-  pull_request_target:
     types: [opened]
   issue_comment:
     types: [created]
@@ -54,7 +52,6 @@ jobs:
           COMMENT_URL: ${{ github.event.comment.html_url }}
           REVIEW_URL: ${{ github.event.review.html_url }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
           DISCUSSION_URL: ${{ github.event.discussion.html_url }}
           ACTOR: ${{ github.event.sender.login }}
         # Titles are attacker-controlled on a public repository. Read from the
@@ -66,9 +63,6 @@ jobs:
           title="$ISSUE_TITLE"
           url="$ISSUE_URL"
           case "$EVENT_NAME" in
-            # github.event_name carries pull_request_target for the trigger above.
-            pull_request|pull_request_target)
-              kind="pr"; number="$PR_NUMBER"; title="$PR_TITLE"; url="$PR_URL" ;;
             issue_comment)
               kind="comment"; number="$ISSUE_NUMBER"; title="$ISSUE_TITLE"; url="$COMMENT_URL" ;;
             pull_request_review)
