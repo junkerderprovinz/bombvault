@@ -79,13 +79,15 @@ const (
 )
 
 // receiverSnapshots opens a received repo read-only and lists its snapshots
-// once. It reads no stats, so the daily scan stays cheap.
+// once, with the legacy host folded into the sender's (see foldLegacyHost). It
+// reads no stats, so the daily scan stays cheap.
 func (s *Service) receiverSnapshots(ctx context.Context, rr store.ReceivedRepo) ([]restic.Snapshot, error) {
 	repo, mode, err := s.receiverOpen(ctx, rr)
 	if err != nil {
 		return nil, err
 	}
-	return s.listSnapshots(ctx, repo, mode)
+	snaps, err := s.listSnapshots(ctx, repo, mode)
+	return foldLegacyHost(snaps), err
 }
 
 // receiverDeadManSourcesOf groups snapshots into the sources the sweep watches:

@@ -112,6 +112,39 @@ func TestReceiverInventoryGroupsBySource(t *testing.T) {
 	}
 }
 
+// A sender writes the legacy host until it updates and its own host after,
+// and an item it backed up on both sides is still one source.
+func TestReceiverInventoryShowsAnItemSentAcrossTheHostSwitchOnce(t *testing.T) {
+	if _, err := exec.LookPath("restic"); err != nil {
+		t.Skip("no restic")
+	}
+	appKey := strings.Repeat("ab", 32)
+	sendingKey := strings.Repeat("cd", 32)
+	repo := seedReceivedRepo(t, sendingKey)
+	src := filepath.Join(filepath.Dir(repo), "src")
+	m := restic.Mode{Encrypted: true, Password: restickey.Derive(sendingKey), Host: restickey.Host(sendingKey)}
+	if _, err := (restic.Restic{Bin: "restic"}).Backup(context.Background(), repo, []string{src}, []string{"container:web"}, m); err != nil {
+		t.Fatal(err)
+	}
+
+	s := receiverTestService(appKey)
+	inv, err := s.receiverInventory(context.Background(), makeReceivedRepo(t, appKey, sendingKey, repo, 0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(inv.Sources) != 2 {
+		t.Fatalf("sources = %+v, want container:web and vm:db once each", inv.Sources)
+	}
+	for _, src := range inv.Sources {
+		if src.Host != restickey.Host(sendingKey) {
+			t.Fatalf("%s is shown under host %q, want the sender's %q", src.Item, src.Host, restickey.Host(sendingKey))
+		}
+		if src.Item == "container:web" && src.SnapshotCount != 3 {
+			t.Fatalf("container:web counts %d snapshots, want 3", src.SnapshotCount)
+		}
+	}
+}
+
 func TestReceiverCheckGoodAndWrongKey(t *testing.T) {
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
