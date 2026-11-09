@@ -308,7 +308,7 @@ func (s *Service) planErasure(ctx context.Context, id string) (erasurePlan, erro
 		}
 		left := store.OffsiteTarget{
 			Domain: domain, Repo: destinationLocation(d.Repo, domain),
-			CredsRef: d.CredsRef, StorageClass: d.StorageClass, Immutable: d.Immutable,
+			CredsRef: d.CredsRef, StorageClass: d.StorageClass, Connections: d.Connections, Immutable: d.Immutable,
 		}
 		loc, err := s.resolveRepo(left.Repo)
 		if err != nil || !s.engine.RepoOpens(ctx, loc, s.offsiteModeForTarget(settings, left)) {

@@ -125,6 +125,8 @@ Kortet **Ekskluderingsmønstre** tar ett mønster per linje. Skriv stiene slik d
 
 For kjente images som Plex, Jellyfin, Sonarr, Radarr, Immich og Nextcloud tilbyr kortet mappene appen fyller på nytt av seg selv, for eksempel cacher, logger og miniatyrbilder. Ingenting utelates før du trykker på **Unnta valgte**.
 
+Et nytt mappesett starter med gruppen **Systemrask** slått på: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraid Recycle Bin plugin), `.Trash-*` og `*.tmp`. Hver linje er et bart navn, så den treffer på hvilken som helst dybde under mappen, og du kan slå av hvilken som helst av dem før du oppretter settet. Et eksisterende mappesett beholder unntakene det har. **Unnta systemrask** i redigeringsvinduet tilbyr de samme linjene, og de kommer først inn i settet når du trykker på **Unnta valgte** og lagrer.
+
 Det samme kortet har advarsler en mappeskanning ikke kan se. Immich holder for eksempel albumene, ansiktene og datoene sine i en PostgreSQL-database i en egen container, så en filsikkerhetskopi av Immich-containeren alene gjenoppretter bildene uten noe av det, og gjenopprettingen ser ut til å ha virket. Ta sikkerhetskopi av databasecontaineren også.
 
 ## Databasedumper {#database-dumps}

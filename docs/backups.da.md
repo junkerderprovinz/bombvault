@@ -125,6 +125,8 @@ Kortet **Udelukkelsesmønstre** tager ét mønster pr. linje. Skriv stier, som d
 
 For velkendte images som Plex, Jellyfin, Sonarr, Radarr, Immich og Nextcloud tilbyder kortet de mapper, appen selv fylder op igen, for eksempel caches, logs og miniaturebilleder. Intet udelukkes, før du trykker på **Udeluk valgte**.
 
+Et nyt mappesæt starter med gruppen **Systemaffald** slået til: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Recycle Bin-pluginen til Unraid), `.Trash-*` og `*.tmp`. Hver af dem er et blottet navn, så den passer på enhver dybde under mappen, og du kan slå hvilken som helst af dem fra, før du opretter sættet. Et eksisterende mappesæt beholder de udelukkelser, det har. **Udeluk systemaffald** i dets redigeringsvindue tilbyder de samme linjer, og de kommer først med i sættet, når du trykker på **Udeluk valgte** og gemmer.
+
 Det samme kort bærer advarsler, som en mappescanning ikke kan se. Immich gemmer for eksempel sine albummer, ansigter og datoer i en PostgreSQL-database i en separat container, så en filsikkerhedskopi af Immich-containeren alene gendanner billederne uden noget af det, og gendannelsen ser ud til at være lykkedes. Sikkerhedskopiér også databasecontaineren.
 
 ## Databasedumps {#database-dumps}

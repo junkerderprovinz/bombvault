@@ -7,6 +7,7 @@ import { ToggleRow } from "../../pages/settings/shared";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
 import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
+import { knownEntries, PresetRows, presetPicks } from "../ExcludePresetPanel";
 import { createPlacedFileSet } from "../files/createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { InfoBubble } from "../InfoBubble";
@@ -34,6 +35,15 @@ export interface FolderAddParts {
 function nameFor(folder: string): string {
   const clean = folder.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^[^A-Za-z0-9]+/, "");
   return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+/** The typed exclude lines with the picked junk lines behind them, each once. */
+export function withJunk(typed: string, junk: string[]): string[] {
+  const lines = typed
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+  return [...lines, ...junk.filter((line) => !lines.includes(line))];
 }
 
 const FIELD = "rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
@@ -77,6 +87,12 @@ export function FolderAddForm({
   const [placement, setPlacement] = useState<PlacementDraftValue>({});
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
+  // Only the switches the user flipped are held, so the group arrives ticked
+  // however late the preset comes in.
+  const [junkFlipped, setJunkFlipped] = useState<Record<string, boolean>>({});
+  const junk = preset?.junk;
+  const junkEntries = junk ? knownEntries(junk) : [];
+  const junkPicked = { ...(junk ? presetPicks(junk) : {}), ...junkFlipped };
 
   const offered: FoundFolder[] = [
     ...found,
@@ -97,10 +113,7 @@ export function FolderAddForm({
         {
           name: name.trim(),
           path: path.trim(),
-          excludes: excludes
-            .split("\n")
-            .map((line) => line.trim())
-            .filter((line) => line !== ""),
+          excludes: withJunk(excludes, junkEntries.filter((e) => junkPicked[e.line]).map((e) => e.line)),
           enabled,
         },
         placement,
@@ -219,6 +232,22 @@ export function FolderAddForm({
           />
         </label>
         <ExcludesEverythingNote text={excludes} />
+
+        {junkEntries.length > 0 && (
+          <section className="flex flex-col gap-2">
+            <h3 className="flex items-center gap-1.5 text-sm text-carbon-text">
+              {t("excludes.junk.title")}
+              <InfoBubble tip={t("excludes.junk.hint")} />
+            </h3>
+            <PresetRows
+              entries={junkEntries}
+              picked={junkPicked}
+              onPick={(line, on) => setJunkFlipped((flipped) => ({ ...flipped, [line]: on }))}
+              disabled={saving}
+              t={t}
+            />
+          </section>
+        )}
       </div>
     </>
   );

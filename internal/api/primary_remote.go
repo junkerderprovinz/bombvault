@@ -93,7 +93,7 @@ func (s *Service) linkedLocation(settings store.Settings, t store.OffsiteTarget)
 // followLocation gives a section's own folder the sign-in, protection and
 // limits of the storage location it lies in, as a copy made from it has.
 func followLocation(t, d store.OffsiteTarget) store.OffsiteTarget {
-	t.CredsRef, t.StorageClass, t.Immutable = d.CredsRef, d.StorageClass, d.Immutable
+	t.CredsRef, t.StorageClass, t.Connections, t.Immutable = d.CredsRef, d.StorageClass, d.Connections, d.Immutable
 	t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB = d.LimitUpload, d.LimitDownload, d.GrowthBudgetGB
 	t.Enabled = true
 	return t
@@ -167,7 +167,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 		mode.Limits = restic.Limits{UploadKBps: named.LimitUpload, DownloadKBps: named.LimitDownload}
 		mode.Compression = storedCompression(named.Compression)
 		if restic.IsRemoteRepo(repo) {
-			mode = s.withRowStorageClass(s.applyTargetCreds(mode, settings, named), named)
+			mode = s.withRowBackend(s.applyTargetCreds(mode, settings, named), named)
 		}
 		return mode
 	}
@@ -180,7 +180,7 @@ func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) r
 	if !ok {
 		return mode
 	}
-	return s.withRowStorageClass(s.applyTargetCreds(mode, settings, t), t)
+	return s.withRowBackend(s.applyTargetCreds(mode, settings, t), t)
 }
 
 // namedRepoForLocation finds the named repository a resolved location belongs

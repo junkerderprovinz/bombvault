@@ -125,6 +125,8 @@ Thẻ **Mẫu loại trừ** nhận mỗi dòng một mẫu. Gõ đường dẫn
 
 Với các image quen thuộc như Plex, Jellyfin, Sonarr, Radarr, Immich và Nextcloud, thẻ đưa ra những thư mục mà ứng dụng tự làm đầy lại, như bộ nhớ đệm, log và ảnh thu nhỏ. Không có gì bị loại trừ cho đến khi bạn bấm **Loại trừ mục đã chọn**.
 
+Một bộ thư mục mới bắt đầu với nhóm **Tệp rác hệ thống** được bật: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (plugin Recycle Bin của Unraid), `.Trash-*` và `*.tmp`. Mỗi mục là một tên trần, nên khớp ở mọi độ sâu bên dưới thư mục, và bạn có thể tắt bất kỳ mục nào trước khi tạo bộ. Bộ thư mục có sẵn giữ nguyên các loại trừ nó đang có. **Loại trừ tệp rác hệ thống** trong cửa sổ chỉnh sửa của nó đưa ra đúng các dòng đó, và chúng chỉ vào bộ khi bạn bấm **Loại trừ mục đã chọn** rồi lưu.
+
 Cùng thẻ đó mang các cảnh báo mà việc quét thư mục không thấy được. Chẳng hạn Immich giữ album, khuôn mặt và ngày tháng trong cơ sở dữ liệu PostgreSQL ở một container riêng, nên chỉ sao lưu tệp của container Immich thì khôi phục được ảnh mà không có gì trong số đó, và việc khôi phục trông như đã thành công. Hãy sao lưu cả container cơ sở dữ liệu.
 
 ## Kết xuất cơ sở dữ liệu {#database-dumps}

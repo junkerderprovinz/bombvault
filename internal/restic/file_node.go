@@ -15,7 +15,7 @@ import (
 // folder, and takes no lock.
 func (r Restic) HoldsFile(ctx context.Context, repo, snapshotID, p string, m Mode) (bool, error) {
 	p = path.Clean(p)
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "ls", "--json", "--no-lock")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)

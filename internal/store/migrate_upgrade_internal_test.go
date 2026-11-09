@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -81,6 +82,26 @@ func applyThrough(t *testing.T, db *sql.DB, maxVersion int) {
 			t.Fatalf("seed v%d (%s): %v", m.version, m.name, err)
 		}
 		record(t, db, m.version, m.name)
+	}
+}
+
+// bootForTodaysCode is bootAs for a test that seeds the old database through
+// today's store code, which writes every column a later migration adds. It
+// adds those columns as well and leaves every other later migration to the
+// test's own Migrate.
+func bootForTodaysCode(t *testing.T, db *sql.DB, maxVersion int) {
+	t.Helper()
+	bootAs(t, db, maxVersion)
+	for _, m := range migrations {
+		if m.version <= maxVersion || !strings.HasPrefix(m.sql, "ALTER TABLE") || strings.Count(m.sql, ";") > 1 {
+			continue
+		}
+		if _, err := db.Exec(m.sql); err != nil {
+			t.Fatalf("add the column of v%d: %v", m.version, err)
+		}
+		if _, err := db.Exec(`INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, 0)`, m.version, m.name); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

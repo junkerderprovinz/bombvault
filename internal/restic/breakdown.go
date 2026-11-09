@@ -11,7 +11,7 @@ import (
 // beside backups and prunes and must not hold them up. A prune that removes a
 // pack under it makes the listing fail, never return wrong data.
 func LsNoLockArgs(repo, snapshotID string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "ls", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)

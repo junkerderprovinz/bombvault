@@ -25,10 +25,10 @@ var ErrDestinationInUse = errors.New("destination is in use")
 // destinationMirroredCols are the fields every domain target takes from its
 // destination on each save of the destination. The settings FollowedSettings
 // lists are carried too, into the targets that do not keep their own.
-var destinationMirroredCols = []string{"name", "creds_ref", "storage_class", "immutable", "provider"}
+var destinationMirroredCols = []string{"name", "creds_ref", "storage_class", "connections", "immutable", "provider"}
 
 func destinationMirroredValues(d OffsiteTarget) []any {
-	return []any{d.Name, d.CredsRef, d.StorageClass, boolInt(d.Immutable), d.Provider}
+	return []any{d.Name, d.CredsRef, d.StorageClass, d.Connections, boolInt(d.Immutable), d.Provider}
 }
 
 // ListDestinations returns every destination in the order they were created.
@@ -124,16 +124,16 @@ func (r *Repo) SaveDestination(d OffsiteTarget) (OffsiteTarget, error) {
 func writeDestinationTx(tx *sql.Tx, d OffsiteTarget) error {
 	//nolint:gosec // G202: the column lists are built from the fixed followedCols names; every value travels in args.
 	_, err := tx.Exec(`
-		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
+		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, connections, immutable,
 		  created_at, sort_order, provider, off_premises, `+strings.Join(followedCols, ", ")+`)
-		VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 		  name = excluded.name, repo = excluded.repo, creds_ref = excluded.creds_ref,
-		  storage_class = excluded.storage_class, immutable = excluded.immutable, provider = excluded.provider,
+		  storage_class = excluded.storage_class, connections = excluded.connections, immutable = excluded.immutable, provider = excluded.provider,
 		  delete_risk_accepted = CASE WHEN excluded.immutable = 1 THEN 0 ELSE offsite_targets.delete_risk_accepted END,
 		  off_premises = excluded.off_premises, `+assignments(followedCols, "excluded.")+`
 		WHERE offsite_targets.role = excluded.role`,
-		slices.Concat([]any{d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, boolInt(d.Immutable),
+		slices.Concat([]any{d.ID, d.Name, d.Repo, RoleDestination, d.CredsRef, d.StorageClass, d.Connections, boolInt(d.Immutable),
 			d.CreatedAt, d.Provider, boolInt(d.OffPremises)}, followedValues(d))...)
 	if err != nil {
 		return err
@@ -335,11 +335,11 @@ func (r *Repo) EnsureDestinationTarget(id, domain, location string) (t OffsiteTa
 		tid := newID()
 		//nolint:gosec // G202: the column list is built from the fixed followedCols names; every value travels in args.
 		_, err = tx.Exec(`
-			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable,
+			INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, connections, immutable,
 			  created_at, sort_order, provider, destination_id, `+strings.Join(followedCols, ", ")+`)
-			SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, MAX(COALESCE(MAX(sort_order), 0) + 1, 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+			SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, MAX(COALESCE(MAX(sort_order), 0) + 1, 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 			  FROM offsite_targets WHERE role = ? AND domain = ?`,
-			slices.Concat([]any{tid, domain, d.Name, location, RoleOffsite, d.CredsRef, d.StorageClass, boolInt(d.Immutable),
+			slices.Concat([]any{tid, domain, d.Name, location, RoleOffsite, d.CredsRef, d.StorageClass, d.Connections, boolInt(d.Immutable),
 				now, d.Provider, id}, followedValues(d), []any{RoleOffsite, domain})...)
 		if err != nil {
 			return err
@@ -602,11 +602,11 @@ func followDestinationTx(tx *sql.Tx, t, d OffsiteTarget) (OffsiteTarget, error) 
 		return OffsiteTarget{}, ErrTargetFollowsDestination
 	}
 	t.DestinationID, t.Own = d.ID, t.differingFrom(d)
-	t.Name, t.CredsRef, t.StorageClass, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Immutable, d.Provider
+	t.Name, t.CredsRef, t.StorageClass, t.Connections, t.Immutable, t.Provider = d.Name, d.CredsRef, d.StorageClass, d.Connections, d.Immutable, d.Provider
 	if _, err := tx.Exec(`UPDATE offsite_targets SET destination_id = ?, name = ?, creds_ref = ?, storage_class = ?,
-		  immutable = ?, provider = ?, own_settings = ?
+		  connections = ?, immutable = ?, provider = ?, own_settings = ?
 		WHERE id = ? AND role = ?`,
-		t.DestinationID, t.Name, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Provider, t.Own,
+		t.DestinationID, t.Name, t.CredsRef, t.StorageClass, t.Connections, boolInt(t.Immutable), t.Provider, t.Own,
 		t.ID, RoleOffsite); err != nil {
 		return OffsiteTarget{}, err
 	}

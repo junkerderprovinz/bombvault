@@ -125,6 +125,8 @@ Die Karte **Ausschlussmuster** nimmt ein Muster pro Zeile. Gib Pfade so ein, wie
 
 Für bekannte Images wie Plex, Jellyfin, Sonarr, Radarr, Immich und Nextcloud bietet die Karte die Ordner an, die die App von selbst wieder füllt, etwa Caches, Logs und Vorschaubilder. Ausgeschlossen wird nichts, bis du **Auswahl ausschließen** drückst.
 
+Bei einem neuen Ordner-Set ist die Gruppe **Systemmüll** schon eingeschaltet: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (das Recycle-Bin-Plugin von Unraid), `.Trash-*` und `*.tmp`. Jede Zeile ist ein bloßer Name, passt also in jeder Tiefe unterhalb des Ordners, und du kannst jede davon abschalten, bevor du das Set anlegst. Ein bestehendes Ordner-Set behält seine Ausschlüsse. **Systemmüll ausschließen** in seinem Bearbeitungsfenster bietet dieselben Zeilen an, und ins Set kommen sie erst, wenn du **Auswahl ausschließen** drückst und speicherst.
+
 Dieselbe Karte trägt Warnungen, die ein Ordnerscan nicht sehen kann. Immich zum Beispiel hält seine Alben, Gesichter und Datumsangaben in einer PostgreSQL-Datenbank in einem separaten Container, daher stellt eine Dateisicherung allein des Immich-Containers die Bilder ohne all das wieder her, und die Wiederherstellung sieht aus, als hätte sie geklappt. Sichere den Datenbank-Container auch.
 
 ## Datenbank-Dumps {#database-dumps}

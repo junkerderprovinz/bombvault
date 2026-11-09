@@ -3,7 +3,7 @@ import type { Compression, OffsiteDomain } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { STORAGE_CLASSES } from "../../lib/storageClasses";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
-import { storageClassOf } from "../../lib/storageWrites";
+import { MAX_CONNECTIONS, storageClassOf } from "../../lib/storageWrites";
 import { Card } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { COMPRESSION_MODES } from "../CompressionSelector";
@@ -14,7 +14,7 @@ import { Selector } from "../Selector";
 import { Toggle } from "../Toggle";
 import { useConfirm } from "../../lib/useConfirm";
 import { useNamedRepos } from "../../lib/useNamedRepos";
-import { TextSetting } from "./fields";
+import { CountSetting, TextSetting } from "./fields";
 import { Deviations, DomainGlyph, Rows, SettingRow } from "./rows";
 import { OwnFolderWindow } from "./OwnFolderWindow";
 import type { LocationEdit } from "./useLocationEdit";
@@ -186,6 +186,19 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
                 ...classes.map((name) => ({ value: name, label: name })),
               ]}
               className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+            />
+          </SettingRow>
+        )}
+
+        {location.connections !== undefined && can("connections") && (
+          <SettingRow label={t("storage.connections")} hint={t("storage.connectionsHint").replace("{max}", String(MAX_CONNECTIONS))}>
+            <CountSetting
+              label={t("storage.connections")}
+              value={location.connections}
+              max={MAX_CONNECTIONS}
+              placeholder="5"
+              disabled={busy}
+              onCommit={(connections) => void save({ connections })}
             />
           </SettingRow>
         )}

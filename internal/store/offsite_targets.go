@@ -72,7 +72,11 @@ type OffsiteTarget struct {
 	// encrypted cloud_conf blob, which the pure-SQL backfill migration cannot
 	// decode (it needs the app secret key), so the backfill leaves this empty and
 	// stage 2 copies it once ModeFor is target-aware.
-	StorageClass         string
+	StorageClass string
+	// Connections is how many connections restic opens to the location at
+	// once, 0 for restic's default. A derived target and a direct
+	// repository carry their location's.
+	Connections          int
 	Immutable            bool
 	Schedule             string
 	RetentionKeepLast    int
@@ -274,6 +278,7 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 		switch {
 		case err == nil:
 			t.Own |= t.differingFrom(d)
+			t.Connections = d.Connections
 		case errors.Is(err, ErrNotDestination):
 			t.Own = 0
 		default:
@@ -289,8 +294,8 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 			  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 			  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
 			  companion_of, companion_lost, off_premises, retention_keep_yearly, compression, destination_id, provider,
-			  own_settings)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			  own_settings, connections)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT(id) DO UPDATE SET
 			  domain                 = excluded.domain,
 			  name                   = excluded.name,
@@ -314,13 +319,14 @@ func (r *Repo) upsertOffsiteTarget(t OffsiteTarget, moved bool) (OffsiteTarget, 
 			  compression            = excluded.compression,
 			  destination_id         = CASE excluded.destination_id WHEN '' THEN offsite_targets.destination_id ELSE excluded.destination_id END,
 			  provider               = CASE excluded.provider WHEN '' THEN offsite_targets.provider ELSE excluded.provider END,
-			  own_settings           = excluded.own_settings
+			  own_settings           = excluded.own_settings,
+			  connections            = excluded.connections
 			WHERE offsite_targets.role = excluded.role`,
 			t.ID, t.Domain, t.Name, t.Repo, t.Role, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 			t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 			t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt, t.SortOrder,
 			t.CompanionOf, boolInt(t.CompanionLost), boolInt(t.Role == RoleRepo && t.CompanionOf == "" && t.OffPremises),
-			t.RetentionKeepYearly, t.Compression, t.DestinationID, t.Provider, t.Own,
+			t.RetentionKeepYearly, t.Compression, t.DestinationID, t.Provider, t.Own, t.Connections,
 		)
 	}
 	if err != nil {
@@ -418,14 +424,15 @@ func (r *Repo) CreateOffsiteTarget(t OffsiteTarget) (OffsiteTarget, error) {
 	_, err = tx.Exec(`
 		INSERT INTO offsite_targets (id, domain, name, repo, role, creds_ref, storage_class, immutable, schedule,
 		  retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
-		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression)
+		  limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order, retention_keep_yearly, compression,
+		  connections)
 		SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-		  CASE WHEN ? > 0 THEN ? ELSE COALESCE(MAX(sort_order), 0) + 1 END, ?, ?
+		  CASE WHEN ? > 0 THEN ? ELSE COALESCE(MAX(sort_order), 0) + 1 END, ?, ?, ?
 		  FROM offsite_targets WHERE role = ? AND domain = ?`,
 		t.ID, t.Domain, t.Name, t.Repo, RoleOffsite, t.CredsRef, t.StorageClass, boolInt(t.Immutable), t.Schedule,
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB, boolInt(t.Enabled), t.CreatedAt,
-		t.SortOrder, t.SortOrder, t.RetentionKeepYearly, t.Compression, RoleOffsite, t.Domain,
+		t.SortOrder, t.SortOrder, t.RetentionKeepYearly, t.Compression, t.Connections, RoleOffsite, t.Domain,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("CreateOffsiteTarget: %w", err)
@@ -542,7 +549,7 @@ const offsiteTargetCols = `id, domain, name, repo, role, creds_ref, storage_clas
 	retention_keep_last, retention_keep_daily, retention_keep_weekly, retention_keep_monthly,
 	limit_upload, limit_download, growth_budget_gb, enabled, created_at, sort_order,
 	companion_of, companion_lost, off_premises, retention_keep_yearly, compression, provider, destination_id,
-	own_settings, delete_risk_accepted`
+	own_settings, delete_risk_accepted, connections`
 
 // ListOffsiteTargets returns all off-site REPLICATION DESTINATIONS (role =
 // 'offsite'; a domain's "primary" safety-config row, if any, is never among
@@ -648,7 +655,7 @@ var (
 // target save skips it: new credentials reach the direct repository only
 // once they open it.
 var mirroredCols = []string{
-	"creds_ref", "storage_class", "immutable",
+	"creds_ref", "storage_class", "connections", "immutable",
 	"retention_keep_last", "retention_keep_daily", "retention_keep_weekly", "retention_keep_monthly",
 	"retention_keep_yearly", "compression",
 	"limit_upload", "limit_download", "growth_budget_gb",
@@ -656,7 +663,7 @@ var mirroredCols = []string{
 
 func mirroredValues(t OffsiteTarget) []any {
 	return []any{
-		t.CredsRef, t.StorageClass, boolInt(t.Immutable),
+		t.CredsRef, t.StorageClass, t.Connections, boolInt(t.Immutable),
 		t.RetentionKeepLast, t.RetentionKeepDaily, t.RetentionKeepWeekly, t.RetentionKeepMonthly,
 		t.RetentionKeepYearly, mirroredCompression(t.Compression),
 		t.LimitUpload, t.LimitDownload, t.GrowthBudgetGB,
@@ -1367,7 +1374,7 @@ func scanOffsiteTarget(s scanner) (OffsiteTarget, error) {
 		&t.RetentionKeepLast, &t.RetentionKeepDaily, &t.RetentionKeepWeekly, &t.RetentionKeepMonthly,
 		&t.LimitUpload, &t.LimitDownload, &t.GrowthBudgetGB, &enabled, &t.CreatedAt, &t.SortOrder,
 		&t.CompanionOf, &lost, &offPremises, &t.RetentionKeepYearly, &t.Compression, &t.Provider, &t.DestinationID,
-		&t.Own, &riskAccepted,
+		&t.Own, &riskAccepted, &t.Connections,
 	)
 	if err != nil {
 		return OffsiteTarget{}, fmt.Errorf("scanOffsiteTarget: %w", err)

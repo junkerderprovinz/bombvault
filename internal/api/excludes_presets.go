@@ -9,15 +9,22 @@ import (
 // presetKinds are the entry kinds the interface has a sentence for. Each one
 // says what the folder holds and how the app fills it again after a restore.
 var presetKinds = map[string]bool{
-	"cache":        true,
-	"logs":         true,
-	"crashReports": true,
-	"previews":     true,
-	"trickplay":    true,
-	"metadata":     true,
-	"covers":       true,
-	"encodedVideo": true,
-	"models":       true,
+	"cache":                 true,
+	"logs":                  true,
+	"crashReports":          true,
+	"previews":              true,
+	"trickplay":             true,
+	"metadata":              true,
+	"covers":                true,
+	"encodedVideo":          true,
+	"models":                true,
+	"macMetadata":           true,
+	"windowsThumbnails":     true,
+	"windowsFolderSettings": true,
+	"synologyIndex":         true,
+	"recycleBin":            true,
+	"trash":                 true,
+	"tempFiles":             true,
 }
 
 // presetEntry is one exclude line in the container's own view. Optional
@@ -119,6 +126,28 @@ var appPresets = []appPreset{
 		{line: "/config/cache", kind: "cache"},
 		{line: "/config/logs", kind: "logs"},
 	}},
+}
+
+// systemJunk is what operating systems, NAS indexers and recycle bins leave in
+// shared folders. Every line is a bare name, which restic matches at any depth
+// below the backed-up folder.
+var systemJunk = appPreset{app: "systemJunk", entries: []presetEntry{
+	{line: ".DS_Store", kind: "macMetadata"},
+	{line: "Thumbs.db", kind: "windowsThumbnails"},
+	{line: "desktop.ini", kind: "windowsFolderSettings"},
+	{line: "@eaDir", kind: "synologyIndex"},
+	{line: ".Recycle.Bin", kind: "recycleBin"},
+	{line: ".Trash-*", kind: "trash"},
+	{line: "*.tmp", kind: "tempFiles"},
+}}
+
+// systemJunkPreset offers every system junk line, for a folder set to start with.
+func systemJunkPreset() ExcludePreset {
+	out := ExcludePreset{App: systemJunk.app}
+	for _, e := range systemJunk.entries {
+		out.Entries = append(out.Entries, ExcludePresetOption{Line: e.line, Kind: e.kind, Optional: e.optional})
+	}
+	return out
 }
 
 // ExcludePreset is what the assistant offers for a recognised app: the lines

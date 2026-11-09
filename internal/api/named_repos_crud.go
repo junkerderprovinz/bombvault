@@ -37,6 +37,7 @@ type namedRepoView struct {
 	Repo          string `json:"repo"`
 	CredsRef      string `json:"credsRef"`
 	StorageClass  string `json:"storageClass"`
+	Connections   int    `json:"connections"`
 	LimitUpload   int    `json:"limitUpload"`
 	LimitDownload int    `json:"limitDownload"`
 	// Immutable marks the repository append-only: nothing on this box may delete
@@ -101,7 +102,7 @@ func (h *Handler) namedRepoViews(rows []store.OffsiteTarget) []namedRepoView {
 		}
 		out = append(out, namedRepoView{
 			ID: t.ID, Name: t.Name, Repo: scrubRepoLocation(t.Repo), CredsRef: t.CredsRef,
-			StorageClass: t.StorageClass, LimitUpload: t.LimitUpload,
+			StorageClass: t.StorageClass, Connections: t.Connections, LimitUpload: t.LimitUpload,
 			LimitDownload: t.LimitDownload, Immutable: t.Immutable, Enabled: t.Enabled,
 			OffPremises: t.OffPremises, InUse: n,
 			Compression: normalizedCompression(t.Compression),
@@ -131,6 +132,7 @@ type namedRepoBody struct {
 	Repo          *string `json:"repo"`
 	CredsRef      *string `json:"credsRef"`
 	StorageClass  *string `json:"storageClass"`
+	Connections   *int    `json:"connections"`
 	LimitUpload   *int    `json:"limitUpload"`
 	LimitDownload *int    `json:"limitDownload"`
 	Immutable     *bool   `json:"immutable"`
@@ -166,6 +168,9 @@ func (b namedRepoBody) applyTo(t *store.OffsiteTarget) {
 		// refused over a field the card does not even offer, so neither safety
 		// toggle could be used and the only escape was deleting the repository.
 		t.StorageClass = strings.ToUpper(strings.TrimSpace(t.StorageClass))
+	}
+	if b.Connections != nil {
+		t.Connections = *b.Connections
 	}
 	if b.LimitUpload != nil {
 		t.LimitUpload = *b.LimitUpload
@@ -239,6 +244,9 @@ func (h *Handler) validateNamedRepo(t store.OffsiteTarget, checkClass, checkLoca
 		return err
 	}
 	if _, err := restic.ParseCompression(t.Compression); err != nil {
+		return err
+	}
+	if err := restic.CheckConnections(t.Connections); err != nil {
 		return err
 	}
 	// The same class whitelist the off-site destinations are held to. The field is

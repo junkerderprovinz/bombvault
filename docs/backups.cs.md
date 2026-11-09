@@ -125,6 +125,8 @@ Karta **Vzory vyloučení** bere jeden vzor na řádek. Piš cesty tak, jak je v
 
 U známých image, jako jsou Plex, Jellyfin, Sonarr, Radarr, Immich a Nextcloud, karta nabízí složky, které aplikace sama znovu naplní, například mezipaměti, logy a náhledy. Nic se nevyloučí, dokud nestiskneš **Vyloučit vybrané**.
 
+Nová sada složek začíná se zapnutou skupinou **Systémové smetí**: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (plugin Recycle Bin pro Unraid), `.Trash-*` a `*.tmp`. Každá položka je holé jméno, takže odpovídá v jakékoli hloubce pod složkou, a kteroukoli z nich můžeš před vytvořením sady vypnout. Stávající sada složek si ponechá vyloučení, která má. **Vyloučit systémové smetí** v jejím okně úprav nabídne stejné řádky a do sady se dostanou, až když stiskneš **Vyloučit vybrané** a uložíš.
+
 Stejná karta nese upozornění, která prohlídka složek nevidí. Immich například drží alba, obličeje a data v databázi PostgreSQL v samostatném kontejneru, takže souborová záloha samotného kontejneru Immich obnoví obrázky bez toho všeho a obnova vypadá, že se povedla. Zálohuj i kontejner s databází.
 
 ## Výpisy databází {#database-dumps}

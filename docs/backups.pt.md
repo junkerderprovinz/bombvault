@@ -125,6 +125,8 @@ O cartão **Padrões de exclusão** aceita um padrão por linha. Escreve os cami
 
 Para imagens conhecidas como Plex, Jellyfin, Sonarr, Radarr, Immich e Nextcloud, o cartão oferece as pastas que a aplicação volta a encher sozinha, como caches, registos e miniaturas. Nada é excluído até carregares em **Excluir seleção**.
 
+Um novo conjunto de pastas começa com o grupo **Lixo do sistema** ligado: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (o Unraid Recycle Bin plugin), `.Trash-*` e `*.tmp`. Cada linha é um nome simples, por isso corresponde a qualquer profundidade dentro da pasta, e podes desligar qualquer uma antes de criar o conjunto. Um conjunto de pastas existente mantém as exclusões que tem. **Excluir lixo do sistema** na sua janela de edição oferece as mesmas linhas, e elas só entram no conjunto quando carregas em **Excluir seleção** e guardas.
+
 O mesmo cartão traz avisos que uma análise de pastas não vê. O Immich, por exemplo, guarda os seus álbuns, rostos e datas numa base de dados PostgreSQL num container à parte, por isso um backup de ficheiros só do container do Immich restaura as fotografias sem nada disso, e o restauro parece ter corrido bem. Faz também backup do container da base de dados.
 
 ## Despejos da base de dados {#database-dumps}

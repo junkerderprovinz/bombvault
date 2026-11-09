@@ -3715,6 +3715,14 @@ WHERE last_check_ok = 0 AND (
                   AND t.created_at > established_repos.created_at
                   AND NOT EXISTS (SELECT 1 FROM offsite_runs r WHERE r.offsite_target_id = t.id AND r.ok = 1));`,
 	},
+	{
+		// How many connections restic opens to a storage location. Zero, which
+		// every row from before holds, is restic's default.
+		version:          connectionsMigration,
+		name:             "offsite_targets_connections",
+		alreadySatisfied: columnPresent("offsite_targets", "connections"),
+		sql:              `ALTER TABLE offsite_targets ADD COLUMN connections INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4318,6 +4326,9 @@ const pullLandingMigration = 793
 // staleEstablishedMigration numbers the clean-up of records of repositories
 // that were at a location's address before the location was added.
 const staleEstablishedMigration = 800
+
+// connectionsMigration numbers the connections a storage location allows.
+const connectionsMigration = 830
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780

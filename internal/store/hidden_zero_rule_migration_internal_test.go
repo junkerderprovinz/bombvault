@@ -47,7 +47,7 @@ func readMovedInstall(t *testing.T) movedInstall {
 func seedMovedInstall(t *testing.T, m movedInstall) *Repo {
 	t.Helper()
 	db := OpenMem(t)
-	bootAs(t, db, hiddenZeroRuleMigration-1)
+	bootForTodaysCode(t, db, hiddenZeroRuleMigration-1)
 	r := New(db)
 	if _, err := r.MutateSettings(func(s *Settings) error {
 		s.RetentionKeepDaily = m.Settings.RetentionKeepDaily

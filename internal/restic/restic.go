@@ -101,6 +101,9 @@ type Mode struct {
 	// rclone.conf, and for a non-whitelisted value. Not a secret (a class name), so
 	// it may travel in argv unlike the credentials in Env.
 	StorageClass string
+	// Connections is how many connections restic opens to a network backend at
+	// once. Zero leaves restic's default of five.
+	Connections int
 	// Limits caps restic's transfer bandwidth (KiB/s each way) for a backup,
 	// forget or prune run against this repo. It travels on Mode, unlike CopyArgs'
 	// lim parameter, because Mode already reaches every Backup call site through
@@ -452,9 +455,45 @@ const insecureFlag = "--insecure-no-password"
 // that server.
 const LegacyHost = "bombvault"
 
-// repoFlag returns the common leading args for every restic subcommand.
-func repoFlag(repo string) []string {
-	return []string{"-r", repo}
+// repoFlag returns the common leading args for every restic subcommand: the
+// repository and how many connections restic may open to it.
+func repoFlag(repo string, m Mode) []string {
+	return append([]string{"-r", repo}, connectionFlags(repo, m.Connections)...)
+}
+
+// MaxConnections is the most connections a storage location can be given.
+// Past it a backend tends to throttle rather than go faster.
+const MaxConnections = 32
+
+// connectionBackends are the restic backends whose connections option counts
+// network connections. The local backend has one too, but it counts disk
+// operations, which a folder on this host gains nothing from raising.
+var connectionBackends = []string{"s3", "rest", "b2", "azure", "gs", "swift", "rclone", "sftp"}
+
+// CheckConnections refuses a count outside 1 to MaxConnections. Zero is
+// restic's default.
+func CheckConnections(n int) error {
+	if n < 0 || n > MaxConnections {
+		return fmt.Errorf("connections must be between 1 and %d, or empty for restic's default", MaxConnections)
+	}
+	return nil
+}
+
+// TakesConnections reports whether repo lies on a backend whose number of
+// connections can be set.
+func TakesConnections(repo string) bool {
+	scheme, _, _ := strings.Cut(repo, ":")
+	return slices.Contains(connectionBackends, scheme)
+}
+
+// connectionFlags returns restic's -o <backend>.connections=<n> for the
+// backend repo is on, nothing for zero or a local repository.
+func connectionFlags(repo string, n int) []string {
+	if n <= 0 || !TakesConnections(repo) {
+		return nil
+	}
+	scheme, _, _ := strings.Cut(repo, ":")
+	return []string{"-o", scheme + ".connections=" + strconv.Itoa(n)}
 }
 
 // Limits caps restic's transfer bandwidth in KiB/s. A zero value omits that cap
@@ -493,7 +532,7 @@ func retryLockFlags() []string { return []string{"--retry-lock", resticRetryLock
 
 // InitArgs returns the argv slice (without the binary name) for `restic init`.
 func InitArgs(repo string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, "init")
 	if !m.Encrypted {
@@ -521,7 +560,7 @@ func InitArgs(repo string, m Mode) []string {
 // backend: ... permission denied", even though the actual config read would
 // have succeeded fine. Removing the write entirely removes the failure mode.
 func CatConfigArgs(repo string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "cat", "config")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -564,7 +603,7 @@ func ImportDirArgs(repo string, tags []string, at time.Time, m Mode) []string {
 }
 
 func backupArgs(repo string, tags []string, m Mode, groupBy string, excludes, positionals []string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
@@ -618,7 +657,7 @@ func DumpTarArgs(repo, snapshotID, subfolder string, m Mode) []string {
 }
 
 func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "dump", "-a", format)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -643,7 +682,7 @@ func dumpArchiveArgs(repo, format, snapshotID, subfolder string, m Mode) []strin
 // It is for content with no file to hand restic, such as the raw image of a
 // zvol. path is only recorded as the file's name in the snapshot, never read.
 func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
@@ -670,7 +709,7 @@ func BackupStdinArgs(repo, path string, tags []string, m Mode) []string {
 // The command takes the positional slot BackupArgs uses for paths. A dump walks
 // no filesystem, so there is no --exclude-caches.
 func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
@@ -698,7 +737,7 @@ func BackupCommandArgs(repo, stdinPath string, tags []string, m Mode, command []
 // piped in (see the zvol VM-disk restore path). The snapshot id + path go
 // after -- (arg-injection guard); callers validate the id as hex.
 func DumpRawArgs(repo, snapshotID, path string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "dump")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -718,7 +757,7 @@ func DumpRawArgs(repo, snapshotID, path string, m Mode) []string {
 // restic's global --limit-upload / --limit-download (zero = unlimited), placed
 // before the subcommand as restic requires for global flags.
 func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode) []string {
-	args := repoFlag(destRepo)
+	args := repoFlag(destRepo, m)
 	args = append(args, storageClassFlags(destRepo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(lim)...)
@@ -768,7 +807,7 @@ func CopyArgs(destRepo, srcRepo string, snapshotIDs []string, lim Limits, m Mode
 // pathsPresentInSnapshot. The selector goes after -- (arg-injection guard); callers
 // also validate the id.
 func RestoreSubtreeToArgs(repo, snapshotID, subtreePath, target string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -812,7 +851,7 @@ type FileEntry struct {
 // LsArgs returns the argv slice for `restic ls --json <snapshotID>` (snapshot id
 // after -- as an arg-injection guard; callers also validate it as hex).
 func LsArgs(repo, snapshotID string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "ls", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -831,7 +870,7 @@ func LsArgs(repo, snapshotID string, m Mode) []string {
 // same shape RestoreSubtreeToArgs's subtreePath requires) — restic itself
 // rejects a non-absolute directory argument.
 func LsPathArgs(repo, snapshotID, dirPath string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "ls", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -848,7 +887,7 @@ func LsPathArgs(repo, snapshotID, dirPath string, m Mode) []string {
 // absolute location (in-place file-level restore). The snapshot id is the
 // arg-injection-guarded positional.
 func RestoreIncludeArgs(repo, snapshotID, includePath, target string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -888,7 +927,7 @@ func EscapeGlob(p string) string {
 // content hashes (--verify). The paths are include patterns, so a caller must
 // leave out any path with a glob character in it.
 func RestoreVerifyArgs(repo, snapshotID string, files []string, target string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -912,7 +951,7 @@ func RestoreVerifyArgs(repo, snapshotID string, files []string, target string, m
 // selected path made relative to it (so it always starts with "/"). subtreePath is
 // the arg-injection-guarded positional (after --); includePath is a flag value.
 func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, target string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -930,7 +969,7 @@ func RestoreSubtreeIncludeArgs(repo, snapshotID, subtreePath, includePath, targe
 // in target without the absolute path of the run that stored them. excludes
 // are patterns restic leaves out of the restore.
 func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -951,7 +990,7 @@ func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string)
 // (--no-lock) so it never writes a lock into the received repo; otherwise it
 // carries --retry-lock so the off-site DR check waits out a transient lock.
 func CheckArgs(repo string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	if m.NoLock {
 		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
 	} else {
@@ -978,7 +1017,7 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 	} else if subsetPercent > 100 {
 		subsetPercent = 100
 	}
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	if m.NoLock {
 		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
 	} else {
@@ -998,7 +1037,7 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 // latest-backup-times / restore listing read blank). Worst case is a marginally
 // stale listing, never corruption, and the writer is never blocked (#57).
 func SnapshotsArgs(repo string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "snapshots")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1026,7 +1065,7 @@ func SnapshotArgs(repo, snapshotID string, m Mode) []string {
 // logical size and file count of the restored data. The mode is a fixed
 // caller-chosen literal, never user input.
 func StatsArgs(repo, mode string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "stats", "--no-lock", "--json", "--mode", mode)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1044,7 +1083,7 @@ func StatsArgs(repo, mode string, m Mode) []string {
 // hex + scope it to the target first. Used by the DR drill to compare restic's
 // own accounting against an on-disk walk of the restored sandbox.
 func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "stats", "--mode", "restore-size", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1063,7 +1102,7 @@ func StatsRestoreSizeArgs(repo, snapshotID string, m Mode) []string {
 // per line (many "change" lines then a final "statistics" object), parsed by
 // Diff.
 func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "diff", "--no-lock", "--json")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1077,7 +1116,7 @@ func DiffArgs(repo, snap1, snap2 string, m Mode) []string {
 // can be read as a flag. restic separates tags by commas, so the caller refuses
 // a tag with one.
 func TagArgs(repo string, snapIDs, add, remove []string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "tag")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1095,7 +1134,7 @@ func TagArgs(repo string, snapIDs, add, remove []string, m Mode) []string {
 // ForgetArgs returns the argv slice for `restic forget` of specific snapshot IDs,
 // optionally pruning the freed data. IDs are placed after -- (arg-injection guard).
 func ForgetArgs(repo string, snapshotIDs []string, prune bool, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
 	if prune {
@@ -1274,7 +1313,7 @@ func keepFlags(p RetentionPolicy) []string {
 // prune controls --prune: per-item passes over the same repo forget without
 // prune and reclaim space once at the end (prune is the expensive part).
 func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, prune bool) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
 	if prune {
@@ -1323,7 +1362,7 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 // the whole index, which is expensive and goes over the network for a remote
 // repo) and --retry-lock (there is no lock to wait for).
 func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "forget")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1348,7 +1387,7 @@ func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) [
 // --remove-all, which clears ALL locks (not just stale ones) — safe because
 // BombVault is the sole writer to its repos and serialises its operations.
 func UnlockArgs(repo string, removeAll bool, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "unlock")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
@@ -1363,7 +1402,7 @@ func UnlockArgs(repo string, removeAll bool, m Mode) []string {
 // forgotten snapshots). A prune repacks, downloading and uploading data, so it
 // keeps to the repository's bandwidth caps as a backup does.
 func PruneArgs(repo string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, storageClassFlags(repo, m.StorageClass)...)
 	args = append(args, retryLockFlags()...)
 	args = append(args, limitFlags(m.Limits)...)
@@ -2552,7 +2591,7 @@ var subcommandValueFlags = map[string]bool{
 	"--limit-upload":   true,
 	"--limit-download": true,
 	"--compression":    true,
-	"-o":               true, // -o s3.storage-class=<class> (storageClassFlags)
+	"-o":               true, // storageClassFlags and connectionFlags
 }
 
 // subcommand extracts the subcommand name from an args slice for use in error

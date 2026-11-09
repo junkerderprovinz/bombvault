@@ -148,7 +148,7 @@ func removeLocks(repo string, ids []string) error {
 
 // lockArgs reads the lock list without taking a lock of its own.
 func lockArgs(repo string, m Mode, cmd ...string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "--no-lock")
 	args = append(args, cmd...)
 	if !m.Encrypted {

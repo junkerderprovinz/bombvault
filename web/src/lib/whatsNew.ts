@@ -65,6 +65,8 @@ export const RELEASES: Release[] = [
     changes: [
       { id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" },
       { id: "restore-tool-import", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.toolImport" },
+      { id: "files-junk", text: "whatsNew.systemJunk" },
+      { id: "location-connections", text: "whatsNew.connections" },
     ],
   },
   {

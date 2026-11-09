@@ -125,6 +125,8 @@ La carte **Motifs d'exclusion** prend un motif par ligne. Saisissez les chemins 
 
 Pour les images bien connues comme Plex, Jellyfin, Sonarr, Radarr, Immich et Nextcloud, la carte propose les dossiers que l'application remplit de nouveau toute seule, comme les caches, les journaux et les miniatures. Rien n'est exclu tant que vous n'appuyez pas sur **Exclure la sélection**.
 
+Un nouvel ensemble de dossiers démarre avec le groupe **Résidus système** activé : `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (le plugin Recycle Bin d'Unraid), `.Trash-*` et `*.tmp`. Chacun est un simple nom, il correspond donc à n'importe quelle profondeur sous le dossier, et vous pouvez désactiver n'importe lequel avant de créer l'ensemble. Un ensemble de dossiers existant garde ses exclusions. **Exclure les résidus système**, dans sa fenêtre de modification, propose les mêmes lignes, et elles n'arrivent dans l'ensemble qu'une fois que vous appuyez sur **Exclure la sélection** et enregistrez.
+
 La même carte porte des avertissements qu'une analyse de dossiers ne peut pas voir. Immich, par exemple, garde ses albums, ses visages et ses dates dans une base PostgreSQL dans un conteneur séparé : une sauvegarde de fichiers du seul conteneur Immich restaure donc les images sans rien de tout cela, et la restauration a l'air d'avoir réussi. Sauvegardez aussi le conteneur de la base.
 
 ## Sauvegardes SQL de la base {#database-dumps}

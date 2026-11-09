@@ -125,6 +125,8 @@ De kaart **Uitsluitpatronen** neemt één patroon per regel. Typ paden zoals je 
 
 Voor bekende images zoals Plex, Jellyfin, Sonarr, Radarr, Immich en Nextcloud biedt de kaart de mappen aan die de app zelf weer vult, zoals caches, logs en miniaturen. Er wordt niets uitgesloten tot je op **Selectie uitsluiten** drukt.
 
+Een nieuwe mappenset begint met de groep **Systeemrommel** ingeschakeld: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (de Unraid Recycle Bin plugin), `.Trash-*` en `*.tmp`. Elke regel is een kale naam en past dus op elke diepte onder de map, en je kunt elke regel uitzetten voordat je de set aanmaakt. Een bestaande mappenset houdt de uitsluitingen die hij heeft. **Systeemrommel uitsluiten** in het bewerkvenster biedt dezelfde regels aan, en die komen pas in de set als je op **Selectie uitsluiten** drukt en opslaat.
+
 Dezelfde kaart bevat waarschuwingen die een mappenscan niet kan zien. Immich bewaart bijvoorbeeld zijn albums, gezichten en data in een PostgreSQL-database in een aparte container, dus een bestandsback-up van alleen de Immich-container herstelt de foto's zonder dat alles, en het herstel ziet er geslaagd uit. Maak ook een back-up van de databasecontainer.
 
 ## Databasedumps {#database-dumps}

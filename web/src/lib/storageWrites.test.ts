@@ -105,7 +105,9 @@ describe("writable", () => {
   it("lets a destination change everything it carries, the storage class on S3 only", () => {
     const can = writable(location(), { destination: DESTINATION, targets: [] });
     expect([...can].sort()).toEqual(
-      ["compression", "enabled", "immutable", "limitDownload", "limitUpload", "name", "offPremises", "retention", "riskAccepted", "storageClass"].sort()
+      [
+        "compression", "connections", "enabled", "immutable", "limitDownload", "limitUpload", "name", "offPremises", "retention", "riskAccepted", "storageClass",
+      ].sort()
     );
     expect(writable(location({ backend: "rclone" }), { destination: DESTINATION, targets: [] }).has("storageClass")).toBe(false);
   });
@@ -173,6 +175,11 @@ describe("saveLocation", () => {
       })
     );
     expect(updateOffsiteTarget.mock.calls[0][1]).not.toHaveProperty("retention");
+  });
+
+  it("sends a destination its connections with what its route wants back", async () => {
+    await saveLocation(location(), { destination: DESTINATION, targets: [] }, { connections: 12 });
+    expect(updateDestination).toHaveBeenCalledWith("d1", { name: "Bucket", storageClass: "GLACIER_IR", immutable: true, connections: 12 });
   });
 
   it("patches a named repository with the change alone", async () => {

@@ -22,6 +22,7 @@ type offsiteTargetView struct {
 	Repo                 string `json:"repo"`
 	CredsRef             string `json:"credsRef"`
 	StorageClass         string `json:"storageClass"`
+	Connections          int    `json:"connections"`
 	Immutable            bool   `json:"immutable"`
 	Schedule             string `json:"schedule"`
 	RetentionKeepLast    int    `json:"retentionKeepLast"`
@@ -98,6 +99,7 @@ func offsiteTargetToView(t store.OffsiteTarget) offsiteTargetView {
 		Repo:                 t.Repo,
 		CredsRef:             t.CredsRef,
 		StorageClass:         t.StorageClass,
+		Connections:          t.Connections,
 		Immutable:            t.Immutable,
 		Schedule:             t.Schedule,
 		RetentionKeepLast:    t.RetentionKeepLast,
@@ -156,6 +158,7 @@ func (v offsiteTargetView) toStoreTarget() store.OffsiteTarget {
 		Repo:                 strings.TrimSpace(v.Repo),
 		CredsRef:             v.CredsRef,
 		StorageClass:         strings.ToUpper(strings.TrimSpace(v.StorageClass)),
+		Connections:          v.Connections,
 		Immutable:            v.Immutable,
 		Schedule:             v.Schedule,
 		RetentionKeepLast:    max(0, v.RetentionKeepLast),
@@ -189,6 +192,9 @@ func validateOffsiteTargetInput(t store.OffsiteTarget) string {
 		return "unsupported storage class " + t.StorageClass + " (allowed: " + strings.Join(restic.AllowedStorageClasses, ", ") + ")"
 	}
 	if _, err := restic.ParseCompression(t.Compression); err != nil {
+		return err.Error()
+	}
+	if err := restic.CheckConnections(t.Connections); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -415,7 +421,7 @@ func (h *Handler) handleUpdateOffsiteTarget(w http.ResponseWriter, r *http.Reque
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this target takes append-only from its storage location, which has it off: switch on append-only for that location under Storage locations"})
 			return
 		}
-		t.Name, t.CredsRef, t.StorageClass, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Immutable
+		t.Name, t.CredsRef, t.StorageClass, t.Connections, t.Immutable = existing.Name, existing.CredsRef, existing.StorageClass, existing.Connections, existing.Immutable
 		t.Own = existing.Own
 	}
 	if len(v.Follow) > 0 {

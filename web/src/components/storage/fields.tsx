@@ -50,6 +50,63 @@ export function NumberSetting({
   );
 }
 
+/** The count typed into a CountSetting: 0 for an empty field, undefined for
+ *  one that is no whole number from 1 to max. */
+export function typedCount(text: string, max: number): number | undefined {
+  if (text.trim() === "") return 0;
+  const n = Number(text);
+  return Number.isInteger(n) && n >= 1 && n <= max ? n : undefined;
+}
+
+/**
+ * CountSetting is a count from 1 to max that may also be left empty, which
+ * saves 0. A number outside the range is marked and not saved.
+ */
+export function CountSetting({
+  label,
+  value,
+  max,
+  placeholder,
+  onCommit,
+  disabled,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  /** What an empty field stands for. */
+  placeholder: string;
+  onCommit: (next: number) => void;
+  disabled?: boolean;
+}) {
+  const shown = value > 0 ? String(value) : "";
+  const [draft, setDraft] = useState(shown);
+  const [seen, setSeen] = useState(value);
+  const { debouncedSave } = useDebouncedSave();
+  if (seen !== value) {
+    setSeen(value);
+    setDraft(shown);
+  }
+  const valid = typedCount(draft, max) !== undefined;
+  return (
+    <NumberField
+      min={1}
+      max={max}
+      value={draft}
+      placeholder={placeholder}
+      aria-label={label}
+      aria-invalid={valid ? undefined : true}
+      disabled={disabled}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const next = typedCount(e.target.value, max);
+        if (next !== undefined) debouncedSave(() => onCommit(next));
+      }}
+      wrapperClassName="w-28"
+      className={`${FIELD} w-full border ${valid ? "border-transparent" : "border-statusFail"}`}
+    />
+  );
+}
+
 /** TextSetting saves when the field is left or Enter is pressed, and only a
  *  value that changed and is not empty. */
 export function TextSetting({

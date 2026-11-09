@@ -15,7 +15,7 @@ import (
 func ownFoldersBeforeTheUpgrade(t *testing.T, shared, card RetentionKeep, own map[string]RetentionKeep, domains ...string) *Repo {
 	t.Helper()
 	db := OpenMem(t)
-	bootAs(t, db, ownFolderKeepMigration-1)
+	bootForTodaysCode(t, db, ownFolderKeepMigration-1)
 	r := New(db)
 	if _, err := r.MutateSettings(func(s *Settings) error {
 		s.RetentionKeepLast, s.RetentionKeepDaily, s.RetentionKeepWeekly = shared.KeepLast, shared.KeepDaily, shared.KeepWeekly
