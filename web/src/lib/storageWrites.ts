@@ -41,6 +41,7 @@ export interface LocationPatch {
   retention?: RetentionKeep;
   limitUpload?: number;
   limitDownload?: number;
+  connections?: number;
   credsRef?: string;
   /** Accepts that the location cannot refuse a delete. */
   riskAccepted?: boolean;
@@ -48,11 +49,16 @@ export interface LocationPatch {
 
 export type LocationSetting = keyof LocationPatch;
 
+/** The most connections a location takes, restic.MaxConnections on the server. */
+export const MAX_CONNECTIONS = 32;
+
 export type SaveAnswer = OkEnvelope & { warnings?: SaveWarning[] };
 
-const DESTINATION: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable", "retention", "limitUpload", "limitDownload", "riskAccepted"];
-const TARGET: LocationSetting[] = ["name", "enabled", "compression", "immutable", "retention", "limitUpload", "limitDownload", "riskAccepted"];
-const REPO: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable"];
+const DESTINATION: LocationSetting[] = [
+  "name", "enabled", "compression", "offPremises", "immutable", "retention", "limitUpload", "limitDownload", "connections", "riskAccepted",
+];
+const TARGET: LocationSetting[] = ["name", "enabled", "compression", "immutable", "retention", "limitUpload", "limitDownload", "connections", "riskAccepted"];
+const REPO: LocationSetting[] = ["name", "enabled", "compression", "offPremises", "immutable", "connections"];
 
 function idOf(location: StorageLocation): string {
   return location.id.slice(location.id.indexOf(":") + 1);

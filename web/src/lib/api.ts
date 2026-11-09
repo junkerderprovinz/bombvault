@@ -3159,6 +3159,8 @@ export interface OffsiteTarget {
   credsRef: string;
   /** S3 storage class ("" = provider default); one of the restore-readable tiers. */
   storageClass: string;
+  /** Connections restic opens to it at once, 0 for restic's default. */
+  connections: number;
   /** Append-only (immutable): BombVault never prunes/deletes this repo. */
   immutable: boolean;
   /** Per-target schedule is NOT exposed in the UI: every target of a domain
@@ -3204,6 +3206,7 @@ export interface NamedRepo {
   repo: string;
   credsRef: string;
   storageClass: string;
+  connections: number;
   limitUpload: number;
   limitDownload: number;
   /** Append-only: nothing on this box may delete from it, so prune and snapshot
@@ -4891,6 +4894,8 @@ export interface FileSetPresetResponse {
   name: string;
   path: string;
   excludes: string[];
+  /** The system junk lines a folder set is offered, every one ticked. */
+  junk?: ExcludePreset;
   error?: string;
 }
 
@@ -7771,6 +7776,8 @@ export interface Destination {
   repo: string;
   credsRef: string;
   storageClass: string;
+  /** Connections restic opens to it at once, 0 for restic's default. */
+  connections: number;
   /** The storage classes its provider takes. */
   storageClasses?: string[];
   immutable: boolean;
@@ -7800,6 +7807,7 @@ export interface DestinationEdit {
   compression?: Compression;
   limitUpload?: number;
   limitDownload?: number;
+  connections?: number;
   enabled?: boolean;
   offPremises?: boolean;
 }
@@ -8189,6 +8197,9 @@ export interface StorageLocation {
   compression?: Compression;
   limitUpload?: number;
   limitDownload?: number;
+  /** Connections restic opens to it at once, 0 for restic's default.
+   *  Absent where its backend has no such setting. */
+  connections?: number;
   protection: {
     immutable: boolean;
     /** The tamper test can probe it, which it can for a rest-server only. */

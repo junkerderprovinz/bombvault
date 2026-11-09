@@ -125,6 +125,8 @@ Cardul **Modele de excludere** primește un model pe rând. Scrie căile așa cu
 
 Pentru imaginile cunoscute, cum sunt Plex, Jellyfin, Sonarr, Radarr, Immich și Nextcloud, cardul oferă folderele pe care aplicația le umple din nou singură, de exemplu cache-uri, jurnale și miniaturi. Nimic nu este exclus până nu apeși **Exclude selecția**.
 
+Un set de foldere nou pornește cu grupul **Gunoi de sistem** activat: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraid Recycle Bin plugin), `.Trash-*` și `*.tmp`. Fiecare rând este un nume simplu, așa că se potrivește la orice adâncime sub folder, și poți opri oricare dintre ele înainte să creezi setul. Un set de foldere existent își păstrează excluderile pe care le are. **Exclude gunoiul de sistem** din fereastra lui de editare oferă aceleași rânduri, iar ele ajung în set abia după ce apeși **Exclude selecția** și salvezi.
+
 Același card poartă avertismente pe care o scanare de foldere nu le poate vedea. Immich, de exemplu, ține albumele, fețele și datele într-o bază de date PostgreSQL dintr-un container separat, așa că un backup de fișiere doar al containerului Immich restaurează pozele fără nimic din toate acestea, iar restaurarea pare că a mers. Salvează și containerul bazei de date.
 
 ## Dumpuri de baze de date {#database-dumps}

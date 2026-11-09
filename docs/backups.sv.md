@@ -125,6 +125,8 @@ Kortet **Uteslutningsmönster** tar ett mönster per rad. Skriv sökvägar som d
 
 För välkända images som Plex, Jellyfin, Sonarr, Radarr, Immich och Nextcloud erbjuder kortet de mappar som appen fyller på igen av sig själv, till exempel cachar, loggar och miniatyrer. Ingenting utesluts förrän du trycker på **Undanta markerade**.
 
+En ny mappuppsättning börjar med gruppen **Systemskräp** påslagen: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraids Recycle Bin-plugin), `.Trash-*` och `*.tmp`. Vart och ett är ett enkelt namn, så det matchar på vilket djup som helst under mappen, och du kan stänga av vilket som helst av dem innan du skapar uppsättningen. En befintlig mappuppsättning behåller de undantag den har. **Undanta systemskräp** i dess redigeringsfönster erbjuder samma rader, och de hamnar i uppsättningen först när du trycker på **Undanta markerade** och sparar.
+
 Samma kort bär varningar som en mappskanning inte kan se. Immich håller till exempel sina album, ansikten och datum i en PostgreSQL-databas i en separat container, så en filsäkerhetskopia av enbart Immich-containern återställer bilderna utan något av det, och återställningen ser ut att ha fungerat. Säkerhetskopiera databascontainern också.
 
 ## Databasdumpar {#database-dumps}

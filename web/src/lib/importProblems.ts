@@ -53,6 +53,11 @@ const ROW_KEYS: Record<string, Record<string, TranslationKey>> = {
     repository: "settingsIO.problem.repositoryCompression",
     destination: "settingsIO.problem.destinationCompression",
   },
+  "import-row-connections": {
+    target: "settingsIO.problem.targetConnections",
+    repository: "settingsIO.problem.repositoryConnections",
+    destination: "settingsIO.problem.destinationConnections",
+  },
   "import-place-taken": {
     "repository:path": "settingsIO.problem.repositoryOnPath",
     "repository:offsite": "settingsIO.problem.repositoryOnOffsite",

@@ -1,6 +1,6 @@
-import { useId, useState } from "react";
-import { patchFileSet } from "../../lib/api";
-import type { FileSetView, OkEnvelope } from "../../lib/api";
+import { useEffect, useId, useState } from "react";
+import { getFileSetPreset, patchFileSet } from "../../lib/api";
+import type { ExcludePreset, FileSetView, OkEnvelope } from "../../lib/api";
 import { PlacementDraft, type PlacementDraftValue } from "../placement/PlacementDraft";
 import { placementErrorText } from "../../lib/placementCodes";
 import { createPlacedFileSet } from "./createPlacedFileSet";
@@ -9,6 +9,7 @@ import { useT } from "../../lib/i18n";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
+import { ExcludePresetPanel } from "../ExcludePresetPanel";
 import { SettingRow } from "../storage/rows";
 import { ToggleRow } from "../../pages/settings/shared";
 import { useToast } from "../../lib/toast";
@@ -52,6 +53,22 @@ export function FileSetDialog({
   const hasBackups = Boolean(initial) && (initial?.lastBackup ?? 0) > 0;
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
+
+  // A set that exists keeps what it backs up: the junk group is offered, and
+  // only lines the user applies reach its excludes.
+  const [junk, setJunk] = useState<ExcludePreset | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getFileSetPreset()
+      .then((res) => {
+        if (alive && res.ok && res.junk) setJunk(res.junk);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const excludeLines = excludesText.split("\n").map((line) => line.trim());
 
   const canSave = name.trim() !== "" && path.trim() !== "" && !saving;
 
@@ -161,6 +178,16 @@ export function FileSetDialog({
           className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus text-start"
         />
         <ExcludesEverythingNote text={excludesText} />
+        {junk && (
+          <ExcludePresetPanel
+            preset={junk}
+            loadKey="excludes.junk.load"
+            currentLines={excludeLines}
+            saving={saving}
+            onApply={(lines) => setExcludesText([...excludeLines.filter((line) => line !== ""), ...lines].join("\n"))}
+            t={t}
+          />
+        )}
       </div>
 
       {/* A new set has no card yet, so its placement is chosen here; an

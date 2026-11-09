@@ -125,6 +125,8 @@ Karta **Wzorce wykluczeń** przyjmuje jeden wzorzec na linię. Wpisuj ścieżki 
 
 Dla znanych obrazów, takich jak Plex, Jellyfin, Sonarr, Radarr, Immich i Nextcloud, karta proponuje foldery, które aplikacja sama wypełnia na nowo, na przykład pamięci podręczne, logi i miniatury. Nic nie jest wykluczone, dopóki nie naciśniesz **Wyklucz zaznaczone**.
 
+Nowy zestaw folderów zaczyna z włączoną grupą **Śmieci systemowe**: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraid Recycle Bin plugin), `.Trash-*` i `*.tmp`. Każda linia to sama nazwa, więc pasuje na dowolnej głębokości pod folderem, a przed utworzeniem zestawu możesz wyłączyć dowolną z nich. Istniejący zestaw folderów zachowuje wykluczenia, które ma. **Wyklucz śmieci systemowe** w jego oknie edycji proponuje te same linie, a trafiają one do zestawu dopiero wtedy, gdy naciśniesz **Wyklucz zaznaczone** i zapiszesz.
+
 Ta sama karta niesie ostrzeżenia, których skan folderów nie widzi. Immich na przykład trzyma albumy, twarze i daty w bazie PostgreSQL w osobnym kontenerze, więc sama kopia plików kontenera Immich przywraca zdjęcia bez tego wszystkiego, a przywrócenie wygląda na udane. Skopiuj też kontener bazy danych.
 
 ## Zrzuty baz danych {#database-dumps}

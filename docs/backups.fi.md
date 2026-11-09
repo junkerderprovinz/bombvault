@@ -125,6 +125,8 @@ Asetukset tallentuvat itsestään, kun muutat niitä.
 
 Tunnetuille imageille, kuten Plex, Jellyfin, Sonarr, Radarr, Immich ja Nextcloud, kortti tarjoaa kansiot, jotka sovellus täyttää itse uudelleen, kuten välimuistit, lokit ja pikkukuvat. Mitään ei suljeta pois, ennen kuin painat **Sulje valitut pois**.
 
+Uusi kansiojoukko alkaa **Järjestelmäroska**-ryhmä päällä: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraidin Recycle Bin -lisäosa), `.Trash-*` ja `*.tmp`. Jokainen niistä on pelkkä nimi, joten se täsmää millä tahansa syvyydellä kansion alla, ja voit kytkeä minkä tahansa niistä pois ennen kuin luot joukon. Olemassa oleva kansiojoukko säilyttää poissulkunsa. Sen muokkausikkunassa **Sulje järjestelmäroska pois** tarjoaa samat rivit, ja ne päätyvät joukkoon vasta, kun painat **Sulje valitut pois** ja tallennat.
+
 Samalla kortilla on varoituksia, joita kansioiden skannaus ei näe. Immich esimerkiksi pitää albuminsa, kasvonsa ja päivämääränsä PostgreSQL-tietokannassa erillisessä kontissa, joten pelkän Immich-kontin tiedostovarmuuskopio palauttaa kuvat ilman mitään tästä, ja palautus näyttää onnistuneen. Varmuuskopioi myös tietokantakontti.
 
 ## Tietokantavedokset {#database-dumps}

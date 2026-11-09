@@ -125,6 +125,8 @@ A **Kizárási minták** kártya soronként egy mintát vár. Az útvonalakat ú
 
 Jól ismert image-eknél, például Plex, Jellyfin, Sonarr, Radarr, Immich és Nextcloud esetén a kártya felkínálja azokat a mappákat, amelyeket az alkalmazás magától újra feltölt, például gyorsítótárakat, naplókat és bélyegképeket. Semmi nem kerül kizárásra, amíg meg nem nyomod a **Kijelöltek kizárása** gombot.
 
+Egy új mappakészlet a **Rendszerszemét** csoporttal bekapcsolva indul: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (az Unraid Recycle Bin bővítménye), `.Trash-*` és `*.tmp`. Mindegyik puszta név, így a mappa alatt tetszőleges mélységben illeszkedik, és bármelyiket kikapcsolhatod, mielőtt létrehozod a készletet. Egy meglévő mappakészlet megtartja a kizárásait. A szerkesztőablakában a **Rendszerszemét kizárása** ugyanezeket a sorokat kínálja fel, és ezek csak akkor kerülnek a készletbe, ha megnyomod a **Kijelöltek kizárása** gombot, és mentesz.
+
 Ugyanez a kártya olyan figyelmeztetéseket is hordoz, amelyeket egy mappaellenőrzés nem láthat. Az Immich például az albumait, arcait és dátumait egy külön konténerben lévő PostgreSQL-adatbázisban tartja, így az Immich konténer önmagában vett fájlmentése a képeket úgy állítja vissza, hogy ezek egyike sincs meg, és a visszaállítás úgy néz ki, mintha sikerült volna. Mentsd le az adatbázis-konténert is.
 
 ## Adatbázis-mentések {#database-dumps}

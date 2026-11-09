@@ -125,6 +125,8 @@ Ayarlar sen değiştirdikçe kendiliğinden kaydedilir.
 
 Plex, Jellyfin, Sonarr, Radarr, Immich ve Nextcloud gibi tanınmış image'ler için kart, uygulamanın kendi kendine yeniden doldurduğu klasörleri, örneğin önbellekleri, günlükleri ve küçük resimleri sunar. **Seçilenleri hariç tut**'a basana kadar hiçbir şey hariç tutulmaz.
 
+Yeni bir klasör kümesi **Sistem çöpü** grubu açık olarak başlar: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (Unraid Recycle Bin eklentisi), `.Trash-*` ve `*.tmp`. Her biri çıplak bir ad olduğundan klasörün altında her derinlikte eşleşir ve kümeyi oluşturmadan önce istediğini kapatabilirsin. Mevcut bir klasör kümesi sahip olduğu hariç tutmaları korur. Düzenleme penceresindeki **Sistem çöpünü hariç tut** aynı satırları sunar ve bunlar kümeye ancak **Seçilenleri hariç tut**'a basıp kaydettiğinde girer.
+
 Aynı kart, bir klasör taramasının göremeyeceği uyarıları da taşır. Örneğin Immich albümlerini, yüzleri ve tarihleri ayrı bir konteynerdeki bir PostgreSQL veritabanında tutar, bu yüzden tek başına Immich konteynerinin dosya yedeği, bunların hiçbiri olmadan fotoğrafları geri getirir ve geri yükleme işe yaramış gibi görünür. Veritabanı konteynerini de yedekle.
 
 ## Veritabanı dökümleri {#database-dumps}

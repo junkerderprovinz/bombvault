@@ -125,6 +125,8 @@ La scheda **Pattern di esclusione** accetta un pattern per riga. Scrivi i percor
 
 Per le immagini note come Plex, Jellyfin, Sonarr, Radarr, Immich e Nextcloud la scheda propone le cartelle che l'app riempie di nuovo da sola, come cache, log e miniature. Nulla viene escluso finché non premi **Escludi selezionati**.
 
+Un nuovo set di cartelle parte con il gruppo **Residui di sistema** attivo: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (il plugin Recycle Bin di Unraid), `.Trash-*` e `*.tmp`. Ognuno è un nome semplice, quindi corrisponde a qualsiasi profondità sotto la cartella, e puoi disattivarne uno qualsiasi prima di creare il set. Un set di cartelle esistente mantiene le esclusioni che ha. **Escludi residui di sistema** nella sua finestra di modifica offre le stesse righe, che entrano nel set solo dopo che premi **Escludi selezionati** e salvi.
+
 La stessa scheda porta avvisi che la scansione di una cartella non può vedere. Immich, per esempio, tiene album, volti e date in un database PostgreSQL in un container separato, quindi un backup dei file del solo container Immich ripristina le immagini senza nulla di tutto questo, e il ripristino sembra riuscito. Salva anche il container del database.
 
 ## Dump dei database {#database-dumps}

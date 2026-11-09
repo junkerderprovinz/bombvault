@@ -125,6 +125,8 @@ La tarjeta **Patrones de exclusión** acepta un patrón por línea. Escribe las 
 
 Para imágenes conocidas como Plex, Jellyfin, Sonarr, Radarr, Immich y Nextcloud, la tarjeta ofrece las carpetas que la app vuelve a llenar por sí sola, como cachés, registros y miniaturas. No se excluye nada hasta que pulsas **Excluir selección**.
 
+Un conjunto de carpetas nuevo empieza con el grupo **Basura del sistema** activado: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (el plugin Recycle Bin de Unraid), `.Trash-*` y `*.tmp`. Cada uno es un nombre suelto, así que coincide a cualquier profundidad bajo la carpeta, y puedes desactivar cualquiera de ellos antes de crear el conjunto. Un conjunto de carpetas existente conserva las exclusiones que tiene. **Excluir basura del sistema**, en su ventana de edición, ofrece las mismas líneas, y solo llegan al conjunto cuando pulsas **Excluir selección** y guardas.
+
 La misma tarjeta lleva avisos que un análisis de carpetas no puede ver. Immich, por ejemplo, guarda sus álbumes, caras y fechas en una base de datos PostgreSQL en un contenedor aparte, así que una copia de archivos solo del contenedor de Immich restaura las fotos sin nada de eso, y la restauración parece haber funcionado. Copia también el contenedor de la base de datos.
 
 ## Volcados de bases de datos {#database-dumps}

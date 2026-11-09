@@ -125,6 +125,8 @@ The **Exclude patterns** card takes one pattern per line. Type paths as you see 
 
 For well-known images such as Plex, Jellyfin, Sonarr, Radarr, Immich and Nextcloud, the card offers the folders the app fills again on its own, such as caches, logs and thumbnails. Nothing is excluded until you press **Exclude selected**.
 
+A new folder set starts with the **System junk** group switched on: `.DS_Store`, `Thumbs.db`, `desktop.ini`, `@eaDir` (Synology), `.Recycle.Bin` (the Unraid Recycle Bin plugin), `.Trash-*` and `*.tmp`. Each is a bare name, so it matches at any depth below the folder, and you can switch any of them off before you create the set. An existing folder set keeps the excludes it has. **Exclude system junk** in its edit window offers the same lines, and they reach the set only once you press **Exclude selected** and save.
+
 The same card carries warnings a folder scan cannot see. Immich, for example, keeps its albums, faces and dates in a PostgreSQL database in a separate container, so a file backup of the Immich container alone restores the pictures without any of that, and the restore looks like it worked. Back up the database container too.
 
 ## Database dumps {#database-dumps}
