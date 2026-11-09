@@ -15,6 +15,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 | `get_activity` | Vad som körs just nu, med fas och procent | läsa |
 | `get_storage_stats` | Storlekshistorik för ett avsnitts primära repository och dess tillväxt per vecka, plus använt, ledigt och totalt utrymme på disken eller fjärrlagringen för vart och ett av dess repositories | läsa |
 | `get_size_breakdown` | Vilka mappar och filer som tar plats i den senaste säkerhetskopian av en container, en VM eller en mappuppsättning, och hur mycket av det den senaste säkerhetskopian lade till | läsa |
+| `search_files` | Hittar filer och mappar efter namn i säkerhetskopiorna av alla poster, ett avsnitt eller en post (virtuella maskiner genomsöks inte) och visar för varje träff alla säkerhetskopior som innehåller den | läsa |
 | `list_anomalies` | Avvikelser som BombVault har upptäckt i säkerhetskopiorna, kan filtreras på tillstånd, allvarlighet och avsnitt, med en sammanfattning av det som är öppet | läsa |
 | `get_anomaly` | En av dessa avvikelser, med anteckningen som lämnades när den kvitterades | läsa |
 | `start_backup` | Säkerhetskopierar en post direkt | starta |
@@ -24,7 +25,7 @@ BombVault har en inbyggd server för Model Context Protocol (MCP), protokollet s
 
 Detta stannar i webbgränssnittet: återställningar av alla slag (även att ladda ner, spara eller importera en databasdump), att radera säkerhetskopior, prune, unlock, kontroller och övningar, off-site-replikering, inställningar, inloggningsuppgifter och MCP-nycklar, samt att avbryta en säkerhetskopia som schemat, webbgränssnittet eller en annan nyckel har startat. Detsamma gäller att kvittera en avvikelse eller markera den som förväntad, vilket görs på sidan **Avvikelser**. Skälet är att verktygens svar innehåller namn och felmeddelanden från din server, och vilket som helst av dem kan innehålla text som skrivits för att styra assistenten. En assistent som går på sådan text kan i värsta fall starta en säkerhetskopia inom gränserna nedan eller avbryta en som den själv startat.
 
-Om en posts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP. Vad avvikelsekontrollerna tittar på beskrivs under [Avvikelser](anomalies.md), och hur en ZFS-post har en ögonblicksbild per datauppsättning under [ZFS-datauppsättningar](zfs-datasets.md#contents).
+Om en posts primära repository ligger någon annanstans (S3, REST, SFTP, rclone) kontaktar `list_restore_points` det, och anropet kan ta en stund. Off-site-kopior kan inte listas via MCP. `search_files` läser fjärr-repositoryn, off-site-kopior inräknade, bara när assistenten ber om det, eftersom det tar längre tid och vissa leverantörer tar betalt för data som laddas ner. En sökning kan ta flera minuter, så det första anropet startar den i bakgrunden och ett senare anrop hämtar resultatet. Vad avvikelsekontrollerna tittar på beskrivs under [Avvikelser](anomalies.md), och hur en ZFS-post har en ögonblicksbild per datauppsättning under [ZFS-datauppsättningar](zfs-datasets.md#contents).
 
 ## Vad en startad säkerhetskopia gör {#starting-backups}
 
@@ -243,7 +244,7 @@ Bakom en proxy bär varje förfrågan proxyns adress. Fem felaktiga nycklar frå
 
 ## Vad som lämnar maskinen {#privacy}
 
-Det som en assistent läser går till AI-leverantören bakom den: postnamn, scheman, körningshistorik med felmeddelanden, id:n och tider för återställningspunkter, namn på databasmotorer och storlekar på dumpar, pågående aktivitet, lagringssiffror, täckning och status. BombVault tar bort värdsökvägar, repository-platser, värdnamn, inloggningsuppgifter, hook-kommandon och nycklar innan något lämnar maskinen.
+Det som en assistent läser går till AI-leverantören bakom den: postnamn, scheman, körningshistorik med felmeddelanden, id:n och tider för återställningspunkter, namn på databasmotorer och storlekar på dumpar, pågående aktivitet, lagringssiffror, täckning och status. En filsökning skickar också de filer den hittar: namn, storlek och sökväg inuti säkerhetskopian. BombVault tar bort värdsökvägar, repository-platser, värdnamn, inloggningsuppgifter, hook-kommandon och nycklar innan något lämnar maskinen.
 
 ## Felsökning {#troubleshooting}
 

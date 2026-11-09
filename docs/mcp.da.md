@@ -15,6 +15,7 @@ BombVault har en indbygget server til Model Context Protocol (MCP), den protokol
 | `get_activity` | Hvad der kører lige nu, med fase og procent | læse |
 | `get_storage_stats` | Størrelseshistorik for et områdes primære repository og dets vækst pr. uge samt brugt, fri og samlet plads på disken eller fjernlageret for hvert af dets repositories | læse |
 | `get_size_breakdown` | Hvilke mapper og filer der fylder i den nyeste sikkerhedskopi af en container, en VM eller et mappesæt, og hvor meget af det den seneste sikkerhedskopi tilføjede | læse |
+| `search_files` | Finder filer og mapper efter navn i sikkerhedskopierne af alle elementer, ét område eller ét element (VM'er gennemsøges ikke) og viser alle sikkerhedskopier, der indeholder hvert fund | læse |
 | `list_anomalies` | Afvigelser, som BombVault har bemærket i sikkerhedskopierne, kan filtreres efter tilstand, alvor og område, med en oversigt over det, der er åbent | læse |
 | `get_anomaly` | Én af disse afvigelser, med den note, der blev skrevet, da den blev kvitteret | læse |
 | `start_backup` | Sikkerhedskopierer ét element med det samme | starte |
@@ -24,7 +25,7 @@ BombVault har en indbygget server til Model Context Protocol (MCP), den protokol
 
 Dette bliver i webgrænsefladen: gendannelser af enhver art (også download, gem og import af et databasedump), sletning af sikkerhedskopier, prune, unlock, kontroller og øvelser, off-site-replikering, indstillinger, legitimationsoplysninger og MCP-nøgler samt annullering af en sikkerhedskopi, som tidsplanen, webgrænsefladen eller en anden nøgle har startet. Det samme gælder for at kvittere for en afvigelse eller markere den som forventet, hvilket sker på siden **Afvigelser**. Grunden er, at værktøjernes svar indeholder navne og fejlmeddelelser fra din server, og hver af dem kan rumme tekst, der er skrevet for at styre assistenten. En assistent, der falder for den slags tekst, kan i værste fald starte en sikkerhedskopi inden for grænserne nedenfor eller annullere en, den selv har startet.
 
-Ligger et elements primære repository et andet sted (S3, REST, SFTP, rclone), kontakter `list_restore_points` det, og kaldet kan tage et stykke tid. Off-site-kopier kan ikke vises via MCP. Hvad afvigelsestjekkene ser på, står under [Afvigelser](anomalies.md), og hvordan et ZFS-element har ét snapshot pr. datasæt, under [ZFS-datasæt](zfs-datasets.md#contents).
+Ligger et elements primære repository et andet sted (S3, REST, SFTP, rclone), kontakter `list_restore_points` det, og kaldet kan tage et stykke tid. Off-site-kopier kan ikke vises via MCP. `search_files` læser kun fjernrepositorier, off-site-kopier iberegnet, når assistenten beder om det, fordi det tager længere tid, og nogle udbydere tager betaling for de data, den henter. En søgning kan tage flere minutter, så det første kald starter den i baggrunden, og et senere kald henter resultatet. Hvad afvigelsestjekkene ser på, står under [Afvigelser](anomalies.md), og hvordan et ZFS-element har ét snapshot pr. datasæt, under [ZFS-datasæt](zfs-datasets.md#contents).
 
 ## Hvad en startet sikkerhedskopi gør {#starting-backups}
 
@@ -243,7 +244,7 @@ Bag en proxy bærer hver forespørgsel proxyens adresse. Fem forkerte nøgler fr
 
 ## Hvad der forlader maskinen {#privacy}
 
-Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, tidsplaner, kørselshistorik med fejlmeddelelser, id'er og tidspunkter for gendannelsespunkter, navne på databasemotorer og størrelser på dumps, igangværende aktivitet, lagertal, dækning og status. BombVault fjerner værtsstier, repository-placeringer, værtsnavne, legitimationsoplysninger, hook-kommandoer og nøgler, før noget forlader maskinen.
+Det, en assistent læser, går til AI-udbyderen bag den: navne på elementer, tidsplaner, kørselshistorik med fejlmeddelelser, id'er og tidspunkter for gendannelsespunkter, navne på databasemotorer og størrelser på dumps, igangværende aktivitet, lagertal, dækning og status. En filsøgning sender også de filer, den finder: deres navne, størrelser og stier inde i sikkerhedskopien. BombVault fjerner værtsstier, repository-placeringer, værtsnavne, legitimationsoplysninger, hook-kommandoer og nøgler, før noget forlader maskinen.
 
 ## Fejlfinding {#troubleshooting}
 

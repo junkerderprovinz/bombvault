@@ -15,6 +15,7 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 | `get_activity` | What is running right now, with phase and percentage | read |
 | `get_storage_stats` | Size history of one domain's primary repository and its growth per week, and the used, free and total space on the disk or remote of each of its repositories | read |
 | `get_size_breakdown` | Which folders and files take the space in the newest backup of one container, VM or folder set, and how much of each the latest backup added | read |
+| `search_files` | Finds files and folders by name in the backups of all items, of one domain or of one item (VMs are not searched), and lists every backup that holds each match | read |
 | `list_anomalies` | Anomalies BombVault noticed in the backups, filterable by state, severity and domain, with a summary of what is open | read |
 | `get_anomaly` | One of those findings, with the note left when it was acknowledged | read |
 | `start_backup` | Backs up one item now | start |
@@ -24,7 +25,7 @@ BombVault has a built-in server for the Model Context Protocol (MCP), the protoc
 
 These stay in the web interface: restores of any kind (including downloading, saving or importing a database dump), deleting backups, prune, unlock, checks and drills, off-site replication, settings, credentials and MCP keys, and cancelling a backup that the schedule, the web interface or another key started. The same goes for acknowledging an anomaly or marking it as expected, which happens on the **Anomalies** page. The reason is that tool output contains names and error messages from your server, and any of them could carry text written to steer the assistant. An assistant that falls for such text can at worst start a backup within the limits below, or cancel one it started itself.
 
-If the primary repository of an item is remote (S3, REST, SFTP, rclone), `list_restore_points` contacts it, so the call can take a while. Off-site copies cannot be listed through MCP. What the anomaly checks look at is described under [Anomalies](anomalies.md), and how a ZFS item keeps one snapshot per dataset under [ZFS datasets](zfs-datasets.md#contents).
+If the primary repository of an item is remote (S3, REST, SFTP, rclone), `list_restore_points` contacts it, so the call can take a while. Off-site copies cannot be listed through MCP. `search_files` reads remote repositories, off-site copies among them, only when the assistant asks for it, because that takes longer and some providers charge for the data it downloads. A search can take minutes, so the first call starts it in the background and a later call collects the result. What the anomaly checks look at is described under [Anomalies](anomalies.md), and how a ZFS item keeps one snapshot per dataset under [ZFS datasets](zfs-datasets.md#contents).
 
 ## What a started backup does {#starting-backups}
 
@@ -243,7 +244,7 @@ Behind a proxy every request carries the proxy's address. Five wrong keys from o
 
 ## What leaves the box {#privacy}
 
-Whatever an assistant reads goes to the AI provider behind it: item names, schedules, run history with error messages, restore point ids and times, database engine names and dump sizes, current activity, storage figures, coverage and status. BombVault removes host paths, repository locations, host names, credentials, hook commands and keys before anything leaves.
+Whatever an assistant reads goes to the AI provider behind it: item names, schedules, run history with error messages, restore point ids and times, database engine names and dump sizes, current activity, storage figures, coverage and status. A file search also sends the files it finds: their names, sizes and paths inside the backup. BombVault removes host paths, repository locations, host names, credentials, hook commands and keys before anything leaves.
 
 ## Troubleshooting {#troubleshooting}
 

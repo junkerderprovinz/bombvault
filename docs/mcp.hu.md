@@ -15,6 +15,7 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 | `get_activity` | Mi fut éppen, fázissal és százalékkal | olvasás |
 | `get_storage_stats` | Egy szakasz elsődleges tárolójának méretelőzménye és heti növekedése, valamint a foglalt, szabad és teljes hely minden tárolójának lemezén vagy távoli helyén | olvasás |
 | `get_size_breakdown` | Mely mappák és fájlok foglalnak helyet egy konténer, VM vagy mappakészlet legújabb mentésében, és ebből mennyit adott hozzá a legutóbbi mentés | olvasás |
+| `search_files` | Név alapján keres fájlokat és mappákat az összes elem, egy szakasz vagy egy elem mentéseiben (a VM-eket nem keresi), és minden találathoz felsorolja az összes mentést, amely tartalmazza | olvasás |
 | `list_anomalies` | Anomáliák, amelyeket a BombVault a mentésekben észrevett, állapot, súlyosság és szakasz szerint szűrhetők, a nyitott tételek összesítésével | olvasás |
 | `get_anomaly` | Egy ilyen észlelés, a nyugtázáskor hagyott megjegyzéssel | olvasás |
 | `start_backup` | Azonnal elmenti egy elem adatait | indítás |
@@ -24,7 +25,7 @@ A BombVault beépített kiszolgálót tartalmaz a Model Context Protocolhoz (MCP
 
 Ezek a webes felületen maradnak: bármilyen visszaállítás (beleértve egy adatbázis-dump letöltését, mentését vagy importálását is), mentések törlése, prune, unlock, ellenőrzések és gyakorlatok, off-site replikáció, beállítások, hitelesítő adatok és MCP-kulcsok, valamint olyan mentés megszakítása, amelyet az ütemezés, a webes felület vagy egy másik kulcs indított. Ugyanez vonatkozik egy anomália nyugtázására vagy vártként megjelölésére, ami az **Anomáliák** oldalon történik. Az ok: az eszközök válaszai a kiszolgálódról származó neveket és hibaüzeneteket tartalmaznak, és bármelyikükben lehet olyan szöveg, amelyet az asszisztens irányítására írtak. Egy asszisztens, amely bedől ennek, legrosszabb esetben elindít egy mentést az alábbi korlátokon belül, vagy megszakít egyet, amelyet maga indított.
 
-Ha egy elem elsődleges tárolója máshol van (S3, REST, SFTP, rclone), a `list_restore_points` kapcsolódik hozzá, és a hívás eltarthat egy ideig. Az off-site másolatok MCP-n keresztül nem listázhatók. Hogy az anomáliaellenőrzések mit néznek, azt a [Anomáliák](anomalies.md) oldal írja le, hogy egy ZFS-elem adatkészletenként egy pillanatképet tart, azt pedig a [ZFS-adatkészletek](zfs-datasets.md#contents) oldal.
+Ha egy elem elsődleges tárolója máshol van (S3, REST, SFTP, rclone), a `list_restore_points` kapcsolódik hozzá, és a hívás eltarthat egy ideig. Az off-site másolatok MCP-n keresztül nem listázhatók. A `search_files` a távoli tárolókat, az off-site másolatokat is beleértve, csak akkor olvassa, ha az asszisztens kéri, mert ez tovább tart, és egyes szolgáltatók felszámítják a letöltött adatot. Egy keresés percekig is tarthat, ezért az első hívás a háttérben indítja el, és egy későbbi hívás veszi át az eredményt. Hogy az anomáliaellenőrzések mit néznek, azt a [Anomáliák](anomalies.md) oldal írja le, hogy egy ZFS-elem adatkészletenként egy pillanatképet tart, azt pedig a [ZFS-adatkészletek](zfs-datasets.md#contents) oldal.
 
 ## Mit csinál egy elindított mentés {#starting-backups}
 
@@ -243,7 +244,7 @@ Proxy mögött minden kérés a proxy címét viseli. Egyetlen rosszul beállít
 
 ## Mi hagyja el a gépet {#privacy}
 
-Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz kerül: az elemek nevei, az ütemezések, a futási előzmények hibaüzenetekkel, a visszaállítási pontok azonosítói és időpontjai, az adatbázismotorok nevei és a dumpok mérete, a folyamatban lévő tevékenység, a tárolási adatok, a lefedettség és az állapot. A BombVault eltávolítja a gazdagép útvonalait, a tárolók helyét, a gazdagépneveket, a hitelesítő adatokat, a hook-parancsokat és a kulcsokat, mielőtt bármi kimenne.
+Mindaz, amit egy asszisztens elolvas, a mögötte álló MI-szolgáltatóhoz kerül: az elemek nevei, az ütemezések, a futási előzmények hibaüzenetekkel, a visszaállítási pontok azonosítói és időpontjai, az adatbázismotorok nevei és a dumpok mérete, a folyamatban lévő tevékenység, a tárolási adatok, a lefedettség és az állapot. A fájlkeresés a talált fájlokat is elküldi: a nevüket, a méretüket és a mentésen belüli útvonalukat. A BombVault eltávolítja a gazdagép útvonalait, a tárolók helyét, a gazdagépneveket, a hitelesítő adatokat, a hook-parancsokat és a kulcsokat, mielőtt bármi kimenne.
 
 ## Hibaelhárítás {#troubleshooting}
 

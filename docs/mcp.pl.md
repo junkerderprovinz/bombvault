@@ -15,6 +15,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 | `get_activity` | Co działa w tej chwili, z etapem i procentem | odczyt |
 | `get_storage_stats` | Historia rozmiaru głównego repozytorium sekcji i jego przyrost tygodniowy oraz zajęte, wolne i całkowite miejsce na dysku lub zdalnym magazynie każdego z jej repozytoriów | odczyt |
 | `get_size_breakdown` | Które foldery i pliki zajmują miejsce w najnowszej kopii kontenera, maszyny wirtualnej lub zestawu folderów i ile z tego dodała ostatnia kopia | odczyt |
+| `search_files` | Szuka plików i folderów po nazwie w kopiach wszystkich elementów, jednej sekcji albo jednego elementu (maszyn wirtualnych nie przeszukuje) i przy każdym trafieniu wymienia wszystkie kopie, które je zawierają | odczyt |
 | `list_anomalies` | Anomalie, które BombVault zauważył w kopiach, z filtrowaniem według stanu, wagi i sekcji oraz podsumowaniem tego, co otwarte | odczyt |
 | `get_anomaly` | Jedno z tych zgłoszeń wraz z notatką zostawioną przy jego potwierdzeniu | odczyt |
 | `start_backup` | Od razu robi kopię jednego elementu | uruchomienie |
@@ -24,7 +25,7 @@ BombVault ma wbudowany serwer Model Context Protocol (MCP), protokołu, którym 
 
 W interfejsie WWW zostaje: przywracanie każdego rodzaju (także pobieranie, zapisywanie i import zrzutu bazy danych), usuwanie kopii, prune, unlock, kontrole i ćwiczenia, replikacja off-site, ustawienia, dane logowania i klucze MCP oraz anulowanie kopii uruchomionej przez harmonogram, interfejs WWW albo inny klucz. To samo dotyczy potwierdzenia anomalii lub oznaczenia jej jako oczekiwanej, co robi się na stronie **Anomalie**. Powód: odpowiedzi narzędzi zawierają nazwy i komunikaty błędów z twojego serwera, a w każdym z nich może się znaleźć tekst napisany po to, by sterować asystentem. Asystent, który się na to nabierze, może w najgorszym razie uruchomić kopię w granicach opisanych niżej albo anulować kopię, którą sam uruchomił.
 
-Jeśli główne repozytorium elementu jest zdalne (S3, REST, SFTP, rclone), `list_restore_points` się z nim łączy i wywołanie może chwilę potrwać. Kopii off-site nie da się wylistować przez MCP. Na co patrzą kontrole anomalii, opisuje strona [Anomalie](anomalies.md), a jak element ZFS trzyma jedną migawkę na każdy zbiór danych, strona [Zbiory danych ZFS](zfs-datasets.md#contents).
+Jeśli główne repozytorium elementu jest zdalne (S3, REST, SFTP, rclone), `list_restore_points` się z nim łączy i wywołanie może chwilę potrwać. Kopii off-site nie da się wylistować przez MCP. `search_files` czyta zdalne repozytoria, w tym kopie off-site, tylko wtedy, gdy asystent o to poprosi, bo to trwa dłużej, a niektórzy dostawcy liczą sobie za pobrane dane. Wyszukiwanie może trwać kilka minut, więc pierwsze wywołanie uruchamia je w tle, a późniejsze odbiera wynik. Na co patrzą kontrole anomalii, opisuje strona [Anomalie](anomalies.md), a jak element ZFS trzyma jedną migawkę na każdy zbiór danych, strona [Zbiory danych ZFS](zfs-datasets.md#contents).
 
 ## Co robi uruchomiona kopia {#starting-backups}
 
@@ -243,7 +244,7 @@ Za proxy każde żądanie niesie adres proxy. Pięć złych kluczy od jednego ź
 
 ## Co opuszcza maszynę {#privacy}
 
-Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy elementów, harmonogramy, historia przebiegów z komunikatami błędów, id i czasy punktów przywracania, nazwy silników baz danych i rozmiary zrzutów, bieżąca aktywność, dane o miejscu, pokrycie i stan. BombVault usuwa ścieżki hosta, lokalizacje repozytoriów, nazwy hostów, dane logowania, polecenia hooków i klucze, zanim cokolwiek wyjdzie.
+Wszystko, co czyta asystent, trafia do dostawcy AI, który za nim stoi: nazwy elementów, harmonogramy, historia przebiegów z komunikatami błędów, id i czasy punktów przywracania, nazwy silników baz danych i rozmiary zrzutów, bieżąca aktywność, dane o miejscu, pokrycie i stan. Wyszukiwanie plików wysyła też znalezione pliki: ich nazwy, rozmiary i ścieżki wewnątrz kopii. BombVault usuwa ścieżki hosta, lokalizacje repozytoriów, nazwy hostów, dane logowania, polecenia hooków i klucze, zanim cokolwiek wyjdzie.
 
 ## Rozwiązywanie problemów {#troubleshooting}
 

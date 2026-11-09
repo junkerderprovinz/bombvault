@@ -15,6 +15,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 | `get_activity` | Ce rulează chiar acum, cu fază și procent | citire |
 | `get_storage_stats` | Istoricul de dimensiune al depozitului principal al unei secțiuni și creșterea lui pe săptămână, plus spațiul folosit, liber și total pe discul sau locația la distanță a fiecăruia dintre depozitele sale | citire |
 | `get_size_breakdown` | Ce dosare și fișiere ocupă spațiu în cea mai nouă copie a unui container, a unei VM sau a unui set de dosare, și cât din ele a adăugat ultima copie | citire |
+| `search_files` | Caută fișiere și dosare după nume în copiile tuturor elementelor, ale unei secțiuni sau ale unui element (VM-urile nu sunt căutate) și arată pentru fiecare rezultat fiecare copie care îl conține | citire |
 | `list_anomalies` | Anomaliile observate de BombVault în copii, filtrabile după stare, gravitate și secțiune, cu un rezumat al celor deschise | citire |
 | `get_anomaly` | Una dintre aceste constatări, cu nota lăsată la confirmarea ei | citire |
 | `start_backup` | Face imediat copia unui element | pornire |
@@ -24,7 +25,7 @@ BombVault are un server integrat pentru Model Context Protocol (MCP), protocolul
 
 Rămân în interfața web: restaurările de orice fel (inclusiv descărcarea, salvarea sau importul unui dump de bază de date), ștergerea copiilor, prune, unlock, verificările și exercițiile, replicarea off-site, setările, datele de autentificare și cheile MCP, precum și anularea unei copii pornite de programare, de interfața web sau de altă cheie. La fel și confirmarea unei anomalii sau marcarea ei ca așteptată, care se face pe pagina **Anomalii**. Motivul: răspunsurile uneltelor conțin nume și mesaje de eroare de pe serverul tău, iar oricare dintre ele poate conține un text scris ca să manipuleze asistentul. Un asistent care se lasă păcălit de un asemenea text poate cel mult să pornească o copie în limitele de mai jos sau să anuleze una pe care a pornit-o el.
 
-Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP. Ce urmăresc verificările de anomalii se descrie în [Anomalii](anomalies.md), iar cum păstrează un element ZFS câte un snapshot pentru fiecare set de date, în [Seturi de date ZFS](zfs-datasets.md#contents).
+Dacă depozitul principal al unui element e la distanță (S3, REST, SFTP, rclone), `list_restore_points` îl contactează, iar apelul poate dura puțin. Copiile off-site nu pot fi listate prin MCP. `search_files` citește depozitele la distanță, inclusiv copiile off-site, doar când asistentul cere asta, pentru că durează mai mult și unii furnizori taxează datele descărcate. O căutare poate dura minute, așa că primul apel o pornește în fundal, iar un apel ulterior ridică rezultatul. Ce urmăresc verificările de anomalii se descrie în [Anomalii](anomalies.md), iar cum păstrează un element ZFS câte un snapshot pentru fiecare set de date, în [Seturi de date ZFS](zfs-datasets.md#contents).
 
 ## Ce face o copie pornită {#starting-backups}
 
@@ -243,7 +244,7 @@ location /mcp {
 
 ## Ce iese din mașină {#privacy}
 
-Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele elementelor, programările, istoricul rulărilor cu mesajele de eroare, id-urile și orele punctelor de restaurare, numele motoarelor de baze de date și dimensiunile dumpurilor, activitatea în curs, cifrele de stocare, acoperirea și starea. BombVault scoate căile gazdei, locațiile depozitelor, numele gazdelor, datele de autentificare, comenzile de hook și cheile înainte ca ceva să iasă.
+Tot ce citește un asistent ajunge la furnizorul de IA din spatele lui: numele elementelor, programările, istoricul rulărilor cu mesajele de eroare, id-urile și orele punctelor de restaurare, numele motoarelor de baze de date și dimensiunile dumpurilor, activitatea în curs, cifrele de stocare, acoperirea și starea. O căutare de fișiere trimite și fișierele găsite: numele, dimensiunile și căile lor în interiorul copiei. BombVault scoate căile gazdei, locațiile depozitelor, numele gazdelor, datele de autentificare, comenzile de hook și cheile înainte ca ceva să iasă.
 
 ## Depanare {#troubleshooting}
 

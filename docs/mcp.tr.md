@@ -15,6 +15,7 @@ BombVault'ta, Claude Code ve Claude Desktop gibi yapay zeka asistanlarının dı
 | `get_activity` | Şu an ne çalışıyor, aşama ve yüzdeyle | okuma |
 | `get_storage_stats` | Bir bölümün birincil deposunun boyut geçmişi ve haftalık büyümesi, ve her deposunun diskinde ya da uzak hedefinde kullanılan, boş ve toplam alan | okuma |
 | `get_size_breakdown` | Bir konteynerin, VM'in ya da klasör kümesinin en yeni yedeğinde yeri hangi klasörlerin ve dosyaların kapladığı ve son yedeğin her birinden ne kadar eklediği | okuma |
+| `search_files` | Tüm ögelerin, bir bölümün ya da bir ögenin yedeklerinde dosya ve klasörleri adına göre bulur (VM'lerde aramaz) ve her sonuç için onu içeren tüm yedekleri listeler | okuma |
 | `list_anomalies` | BombVault'un yedeklerde fark ettiği anormallikler, duruma, önem düzeyine ve bölüme göre süzülebilir, açık olanların özetiyle | okuma |
 | `get_anomaly` | Bu bulgulardan biri, onaylandığında bırakılan notla | okuma |
 | `start_backup` | Bir ögeyi şimdi yedekler | başlatma |
@@ -24,7 +25,7 @@ BombVault'ta, Claude Code ve Claude Desktop gibi yapay zeka asistanlarının dı
 
 Şunlar web arayüzünde kalır: her türlü geri yükleme (bir veritabanı dökümünü indirme, kaydetme ya da içe aktarma dahil), yedekleri silme, budama, kilit açma, denetimler ve tatbikatlar, site dışı çoğaltma, ayarlar, kimlik bilgileri ve MCP anahtarları ve zamanlamanın, web arayüzünün ya da başka bir anahtarın başlattığı bir yedeği iptal etme. Aynısı bir anormalliği onaylamak ya da beklenen olarak işaretlemek için de geçerlidir, bu **Anormallikler** sayfasında yapılır. Nedeni, araç çıktısının sunucundan isimler ve hata mesajları içermesi ve bunlardan herhangi birinin asistanı yönlendirmek için yazılmış metin taşıyabilmesidir. Böyle bir metne kanan bir asistan en kötü ihtimalle aşağıdaki sınırlar içinde bir yedekleme başlatabilir ya da kendi başlattığını iptal edebilir.
 
-Bir ögenin birincil deposu uzaksa (S3, REST, SFTP, rclone), `list_restore_points` ona bağlanır, bu yüzden çağrı biraz sürebilir. Site dışı kopyalar MCP ile listelenemez. Anormallik denetimlerinin neye baktığı [Anormallikler](anomalies.md) altında, bir ZFS ögesinin veri kümesi başına nasıl bir anlık görüntü tuttuğu ise [ZFS veri kümeleri](zfs-datasets.md#contents) altında anlatılır.
+Bir ögenin birincil deposu uzaksa (S3, REST, SFTP, rclone), `list_restore_points` ona bağlanır, bu yüzden çağrı biraz sürebilir. Site dışı kopyalar MCP ile listelenemez. `search_files` site dışı kopyalar dahil uzak depoları yalnızca asistan isterse okur, çünkü bu daha uzun sürer ve bazı sağlayıcılar indirilen veri için ücret alır. Bir arama dakikalar sürebilir, bu yüzden ilk çağrı onu arka planda başlatır ve sonraki bir çağrı sonucu alır. Anormallik denetimlerinin neye baktığı [Anormallikler](anomalies.md) altında, bir ZFS ögesinin veri kümesi başına nasıl bir anlık görüntü tuttuğu ise [ZFS veri kümeleri](zfs-datasets.md#contents) altında anlatılır.
 
 ## Başlatılan bir yedek ne yapar {#starting-backups}
 
@@ -243,7 +244,7 @@ Bir proxy'nin arkasında her istek proxy'nin adresini taşır. Yanlış yapılan
 
 ## Sunucudan ne çıkar {#privacy}
 
-Bir asistanın okuduğu her şey arkasındaki yapay zeka sağlayıcısına gider: öge adları, zamanlamalar, hata mesajlarıyla çalıştırma geçmişi, geri yükleme noktası kimlikleri ve zamanları, veritabanı motoru adları ve döküm boyutları, güncel etkinlik, depolama rakamları, kapsam ve durum. BombVault bir şey çıkmadan önce ana makine yollarını, depo konumlarını, ana makine adlarını, kimlik bilgilerini, kanca komutlarını ve anahtarları kaldırır.
+Bir asistanın okuduğu her şey arkasındaki yapay zeka sağlayıcısına gider: öge adları, zamanlamalar, hata mesajlarıyla çalıştırma geçmişi, geri yükleme noktası kimlikleri ve zamanları, veritabanı motoru adları ve döküm boyutları, güncel etkinlik, depolama rakamları, kapsam ve durum. Dosya araması bulduğu dosyaları da gönderir: adlarını, boyutlarını ve yedek içindeki yollarını. BombVault bir şey çıkmadan önce ana makine yollarını, depo konumlarını, ana makine adlarını, kimlik bilgilerini, kanca komutlarını ve anahtarları kaldırır.
 
 ## Sorun giderme {#troubleshooting}
 
