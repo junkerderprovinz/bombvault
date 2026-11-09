@@ -58,7 +58,7 @@
 - **فحص الاستعادة** بعد أول نسخة، و**اختبار التشغيل** في نسخة معزولة. [تبويب تحقق](backups.md#verify-tab)
 - **فحوصات مجدولة واستعادات تجريبية** من النسخة خارج الموقع. [تمارين DR](offsite-recovery.md#dr-drills)
 - **الحجم حسب المجلد**، ولماذا كانت نسخة بطيئة. [ما يخبرك به تشغيل](backups.md#run-notes)
-- **الإشعارات**: webhook وGotify وMatrix والبريد وApprise وUnraid وHealthchecks، مع ملخص أسبوعي وتقرير تأخر. [الإشعارات](notifications.md)
+- **الإشعارات**: قائمة قنوات لـ Unraid وntfy وGotify وDiscord وSlack وMatrix والبريد وApprise وأي webhook وHealthchecks، لكل منها قاعدتها الخاصة، مع ملخص أسبوعي وتقرير تأخر. [الإشعارات](notifications.md)
 - **Prometheus**، وجهاز Home Assistant، وواجهة HTTP API وmDNS. [واجهة API والتكاملات](api.md)
 - **بلاغ خطأ**: ملف ZIP منقّح لمسألة GitHub. [استكشاف الأخطاء](troubleshooting.md#still-stuck)
 

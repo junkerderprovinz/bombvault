@@ -29,7 +29,7 @@
 ## להישאר מעודכנים {#staying-informed}
 
 - [Gotify בטלפון](notifications.md#example-gotify): כשלונות מצלצלים והצלחות מגיעות בשקט.
-- [ntfy כ-webhook](notifications.md#example-ntfy): הודעות בלי חשבון.
+- [ntfy בלי חשבון](notifications.md#example-ntfy): הודעות לנושא משלך.
 
 ## כמה שרתים {#several-servers}
 

@@ -58,7 +58,7 @@
 - **Перевірка відновлення** після першої копії та **Тест запуску** в ізольованій копії. [Вкладка «Перевірка»](backups.md#verify-tab)
 - **Планові перевірки та пробні відновлення** із зовнішньої копії. [DR-перевірки](offsite-recovery.md#dr-drills)
 - **Розмір за теками** і чому копія була повільною. [Що розповідає запуск](backups.md#run-notes)
-- **Сповіщення**: webhook, Gotify, Matrix, пошта, Apprise, Unraid і Healthchecks, з щотижневим підсумком і звітом про прострочення. [Сповіщення](notifications.md)
+- **Сповіщення**: список каналів для Unraid, ntfy, Gotify, Discord, Slack, Matrix, пошти, Apprise, будь-якого вебхука та Healthchecks, у кожного своє правило, з щотижневим підсумком і звітом про прострочення. [Сповіщення](notifications.md)
 - **Prometheus**, пристрій Home Assistant, HTTP API та mDNS. [API та інтеграції](api.md)
 - **Звіт про помилку**: очищений ZIP для GitHub issue. [Усунення несправностей](troubleshooting.md#still-stuck)
 

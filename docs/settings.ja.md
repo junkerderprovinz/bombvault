@@ -48,7 +48,7 @@ Plex、Jellyfin、Emby のストリーミング中にアップロード制限を
 
 ## 通知 {#notifications}
 
-**通知する**、まとめ通知、**遅延したバックアップを報告**、**Unraid 通知**、**週次ダイジェスト**を持つ**通知**、Webhook、Apprise、Matrix、Gotify、メール (SMTP) を持つ**チャンネル**、そして **Healthchecks**。[通知](notifications.md)を参照してください。
+まとめ通知、**遅延したバックアップを報告**、**週次ダイジェスト**を持つ**通知**、そして**チャンネル**。チャンネルは Unraid、ntfy、Gotify、Discord、Slack、Matrix、メール、Apprise、Webhook、Healthchecks の一覧で、それぞれに専用のスイッチ、**通知する**、**テスト送信**があります。[通知](notifications.md)を参照してください。
 
 ## 検証 {#verify}
 

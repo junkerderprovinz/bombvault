@@ -29,7 +29,7 @@ Hvert av disse tar én ekte oppgave fra start til slutt, med navn og tall fylt i
 ## Hold deg informert {#staying-informed}
 
 - [Gotify på telefonen](notifications.md#example-gotify): feil ringer, og vellykkede kjøringer kommer stille.
-- [ntfy som webhook](notifications.md#example-ntfy): meldinger uten konto.
+- [ntfy uten konto](notifications.md#example-ntfy): meldinger til ditt eget emne.
 
 ## Flere servere {#several-servers}
 

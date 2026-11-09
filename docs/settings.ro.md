@@ -48,7 +48,7 @@ Cardul **Streaming**, care coboară limita de încărcare cât timp Plex, Jellyf
 
 ## Notificări {#notifications}
 
-**Notificări** cu **Notifică**, rezumatele, **Raportează backupurile întârziate**, **Notificări Unraid** și **Rezumat săptămânal**, **Canale** cu Webhook, Apprise, Matrix, Gotify și E-mail (SMTP), plus **Healthchecks**. Vezi [Notificări](notifications.md).
+**Notificări** cu rezumatele, **Raportează backupurile întârziate** și **Rezumat săptămânal**, iar **Canale** este o listă de canale Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, webhook și Healthchecks, fiecare cu propriul comutator, **Notifică** și **Trimite test**. Vezi [Notificări](notifications.md).
 
 ## Verificare {#verify}
 

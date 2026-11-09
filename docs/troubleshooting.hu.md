@@ -187,16 +187,17 @@ A **Biztonsági mentések felfedezése** vagy a visszaállított beállítások 
 
 ## Az értesítések nem érkeznek meg {#notifications-do-not-arrive}
 
-Kezdd a **Teszt küldése** gombbal a **Beállítások, Értesítések** alatt. A kártya alatti sor megmondja, mi történt.
+Kezdd a csatorna **Teszt küldése** gombjával a **Beállítások, Értesítések** alatt. A csatorna alatti sor megmondja, mi történt.
 
-- **Egyáltalán nem megy ki semmi.** Ellenőrizd az **Értesítés** beállítást. A **Soha** mellett nem megy ki üzenet, csak egy Healthchecks URL pingjei, a **Csak hiba esetén** mellett pedig egy sikeres futás csendben marad. Bekapcsolt **Ütemezett futások összegzése** mellett az ütemezett futás a végén egy összegzést küld.
-- **Új cím.** Miután megváltoztatod a Matrix, a Gotify vagy az e-mail szerverét, a mező újra kéri a tokent vagy a jelszót, és az új cím csak akkor mentődik, ha beírod. A BombVault nem küldi el a régi titkot egy új helyre.
+- **Egyáltalán nem megy ki semmi.** Ellenőrizd, hogy a csatorna be van-e kapcsolva, és nézd meg az **Értesítés** beállítását. A **Soha** mellett semmit sem küld, a **Csak hiba esetén** mellett pedig egy sikeres futás csendben marad. Bekapcsolt **Ütemezett futások összegzése** mellett az ütemezett futás a végén egy összegzést küld.
+- **Új cím.** Miután megváltoztatod, hová küld egy csatorna, például a Matrix, a Gotify vagy az ntfy szerverét, vagy egy e-mail-csatorna hosztját, a mező újra kéri a tokent vagy a jelszót, és az új cím csak akkor mentődik, ha beírod. A BombVault nem küldi el a régi titkot egy új helyre.
 - **A Gotify** azt mondja, hogy a szerver visszautasította az alkalmazás-tokent: másold ki újra a Gotify alkalmazásából. A **Szerver URL** az alapcím, a `/message` nélkül.
-- **Webhook:** ellenőrizd, hogy a **Webhook formátum** illik-e a szolgáltatáshoz. Egy Discord-cím a **Discord** formátumot kéri, az ntfy pedig az **ntfy**-t.
-- Az **Unraid-értesítések** a Gazdagép SSH-kapcsolaton futnak, ezért azt teszteld előbb a **Beállítások, Integrációk** alatt. Más platformon kikapcsolva maradnak, és a kártya ezt jelzi.
+- **A Discord, a Slack és az ntfy** saját csatornák. Egy **Webhook** csatornában megadott Discord-cím olyan JSON-t kap, amelyet a Discord nem ért, ezért vegyél fel neki egy **Discord** csatornát.
+- **Webhook:** az a helyőrző, amelyet a BombVault nem ismer, úgy marad, ahogy írtad, ezért ellenőrizd a helyesírást, például `%%title%%`. JSON-törzshöz hagyd a `Content-Type` fejlécet `application/json` értéken, hogy az értékek JSON-ként kódolódjanak.
+- Az **Unraid-értesítések** a Gazdagép SSH-kapcsolaton futnak, ezért azt teszteld előbb a **Beállítások, Integrációk** alatt. Más platformon kikapcsolva maradnak, és a csatorna ezt jelzi.
 - **Egy értesítő e-mail sosem érkezik meg.** Ellenőrizd a **Titkosítás** értékét a porthoz képest, általában **STARTTLS** a 587-en vagy **TLS (implicit)** a 465-ön.
 
-A Healthchecks pingek nem függnek ezektől, lásd: [Healthchecks](notifications.md#healthchecks).
+A Healthchecks pingek nem függnek az **Értesítés** beállítástól, lásd: [Healthchecks](notifications.md#healthchecks).
 
 ## Az Android-alkalmazás nem tud megnyitni egy szervert {#android-cannot-open}
 

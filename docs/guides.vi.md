@@ -29,7 +29,7 @@ Mỗi ví dụ dưới đây đi qua một công việc thật từ đầu đế
 ## Luôn nắm thông tin {#staying-informed}
 
 - [Gotify trên điện thoại của bạn](notifications.md#example-gotify): lỗi thì reo chuông, còn thành công đến lặng lẽ.
-- [ntfy làm webhook](notifications.md#example-ntfy): nhận tin nhắn mà không cần tài khoản.
+- [ntfy không cần tài khoản](notifications.md#example-ntfy): tin nhắn tới một topic của riêng bạn.
 
 ## Nhiều máy chủ {#several-servers}
 

@@ -48,7 +48,7 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 
 ## Meldingen {#notifications}
 
-**Meldingen** met **Melden**, de samenvattingen, **Achterstallige back-ups melden**, **Unraid-meldingen** en de **Wekelijkse samenvatting**, **Kanalen** met Webhook, Apprise, Matrix, Gotify en E-mail (SMTP), en **Healthchecks**. Zie [Meldingen](notifications.md).
+**Meldingen** met de samenvattingen, **Achterstallige back-ups melden** en de **Wekelijkse samenvatting**, en **Kanalen**, een lijst met Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, e-mail-, Apprise-, webhook- en Healthchecks-kanalen, elk met een eigen schakelaar, **Melden** en **Test versturen**. Zie [Meldingen](notifications.md).
 
 ## Verificatie {#verify}
 

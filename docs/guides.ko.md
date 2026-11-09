@@ -29,7 +29,7 @@
 ## 알림 받기 {#staying-informed}
 
 - [휴대폰의 Gotify](notifications.md#example-gotify): 실패는 소리로 알리고 성공은 조용히 도착합니다.
-- [Webhook으로 쓰는 ntfy](notifications.md#example-ntfy): 계정 없이 받는 메시지.
+- [계정 없이 쓰는 ntfy](notifications.md#example-ntfy): 나만의 토픽으로 받는 메시지.
 
 ## 서버가 여러 대일 때 {#several-servers}
 

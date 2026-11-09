@@ -29,7 +29,7 @@
 ## Быть в курсе {#staying-informed}
 
 - [Gotify на телефоне](notifications.md#example-gotify): сбои звонят, а успехи приходят тихо.
-- [ntfy как вебхук](notifications.md#example-ntfy): сообщения без учётной записи.
+- [ntfy без учётной записи](notifications.md#example-ntfy): сообщения в собственную тему.
 
 ## Несколько серверов {#several-servers}
 

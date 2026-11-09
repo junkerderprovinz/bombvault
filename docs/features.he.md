@@ -58,7 +58,7 @@
 - **בדיקת שחזור** אחרי הגיבוי הראשון, ו**בדיקת הפעלה** בעותק מבודד. [לשונית אימות](backups.md#verify-tab)
 - **בדיקות מתוזמנות ושחזורי ניסיון** מהעותק מחוץ לאתר. [תרגילי DR](offsite-recovery.md#dr-drills)
 - **גודל לפי תיקייה**, ולמה גיבוי היה איטי. [מה ריצה מספרת לך](backups.md#run-notes)
-- **התראות**: webhook,‏ Gotify,‏ Matrix, אימייל, Apprise, Unraid ו-Healthchecks, עם תקציר שבועי ודוח איחורים. [התראות](notifications.md)
+- **התראות**: רשימת ערוצים ל-Unraid,‏ ntfy,‏ Gotify,‏ Discord,‏ Slack,‏ Matrix, אימייל, Apprise, כל webhook ו-Healthchecks, כל אחד עם כלל משלו, עם תקציר שבועי ודוח איחורים. [התראות](notifications.md)
 - **Prometheus**, התקן Home Assistant, API ב-HTTP ו-mDNS. [API ושילובים](api.md)
 - **דיווח על באג**: ZIP עם פרטים מוסתרים לדיווח ב-GitHub. [פתרון בעיות](troubleshooting.md#still-stuck)
 

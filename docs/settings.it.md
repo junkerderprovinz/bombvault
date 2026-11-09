@@ -48,7 +48,7 @@ La scheda **Streaming**, che abbassa il limite di upload mentre Plex, Jellyfin o
 
 ## Notifiche {#notifications}
 
-**Notifiche** con **Notifica**, i riepiloghi, **Segnala i backup in ritardo**, **Notifiche Unraid** e il **Riepilogo settimanale**, **Canali** con Webhook, Apprise, Matrix, Gotify ed Email (SMTP), e **Healthchecks**. Vedi [Notifiche](notifications.md).
+**Notifiche** con i riepiloghi, **Segnala i backup in ritardo** e il **Riepilogo settimanale**, e **Canali**, un elenco di canali Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, webhook e Healthchecks, ognuno con il suo interruttore, **Notifica** e **Invia test**. Vedi [Notifiche](notifications.md).
 
 ## Verifica {#verify}
 

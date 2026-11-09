@@ -58,7 +58,7 @@ Een korte catalogus van wat BombVault doet. Elke regel linkt naar de pagina die 
 - **Herstelcontrole** na de eerste back-up, en **Starttest** in een geïsoleerde kopie. [Tabblad Verificatie](backups.md#verify-tab)
 - **Geplande controles en testherstellen** vanaf de off-site-kopie. [DR-oefeningen](offsite-recovery.md#dr-drills)
 - **Grootte per map**, en waarom een back-up traag was. [Wat een run je vertelt](backups.md#run-notes)
-- **Meldingen**: webhook, Gotify, Matrix, e-mail, Apprise, Unraid en Healthchecks, met een wekelijkse samenvatting en een melding van achterstallige back-ups. [Meldingen](notifications.md)
+- **Meldingen**: een lijst met kanalen voor Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, elke webhook en Healthchecks, elk met een eigen regel, met een wekelijkse samenvatting en een melding van achterstallige back-ups. [Meldingen](notifications.md)
 - **Prometheus**, een Home Assistant-apparaat, een HTTP-API en mDNS. [API en integraties](api.md)
 - **Bugrapport**: een geredigeerde ZIP voor een GitHub-issue. [Problemen oplossen](troubleshooting.md#still-stuck)
 

@@ -187,16 +187,17 @@ Efter **Opdag sikkerhedskopier** eller nødguiden uden gendannede indstillinger,
 
 ## Notifikationer kommer ikke frem {#notifications-do-not-arrive}
 
-Start med **Send test** under **Indstillinger, Notifikationer**. Linjen under kortet siger, hvad der skete.
+Start med **Send test** på kanalen under **Indstillinger, Notifikationer**. Linjen under kanalen siger, hvad der skete.
 
-- **Der sendes slet intet.** Tjek **Underret**. Med **Aldrig** går ingen besked ud, kun pingene til en Healthchecks-URL, og med **Kun ved fejl** forbliver en god kørsel stille. Med **Opsummer planlagte kørsler** slået til sender en planlagt kørsel én opsummering til sidst.
-- **En ny adresse.** Når du ændrer serveren for Matrix, Gotify eller e-mail, beder feltet igen om tokenet eller adgangskoden, og den nye adresse gemmes først, når du har skrevet det. BombVault sender ikke den gamle hemmelighed til et nyt sted.
+- **Der sendes slet intet.** Tjek, at kanalen er slået til, og se på dens **Underret**. Med **Aldrig** sender den intet, og med **Kun ved fejl** forbliver en god kørsel stille. Med **Opsummer planlagte kørsler** slået til sender en planlagt kørsel én opsummering til sidst.
+- **En ny adresse.** Når du ændrer, hvor en kanal sender hen, for eksempel serveren for Matrix, Gotify eller ntfy, eller værten for en e-mail-kanal, beder feltet igen om tokenet eller adgangskoden, og den nye adresse gemmes først, når du har skrevet det. BombVault sender ikke den gamle hemmelighed til et nyt sted.
 - **Gotify** siger, at serveren afviste app-tokenet: Kopiér det igen fra programmet i Gotify. **Server-URL** er basisadressen uden `/message`.
-- **Webhook:** Tjek, at **Webhook-format** passer til tjenesten. En Discord-adresse kræver **Discord**, og ntfy kræver **ntfy**.
-- **Unraid-notifikationer** kører over Værts-SSH-forbindelsen, så test den først under **Indstillinger, Integrationer**. På en anden platform forbliver de slået fra, og kortet siger det.
+- **Discord, Slack og ntfy** er kanaler for sig. En Discord-adresse i en **Webhook**-kanal får JSON, som Discord ikke forstår, så tilføj en **Discord**-kanal til den.
+- **Webhook:** En pladsholder, BombVault ikke kender, bliver stående, som den er skrevet, så tjek stavningen, for eksempel `%%title%%`. Til et JSON-indhold skal headeren `Content-Type` blive på `application/json`, så værdierne escapes som JSON.
+- **Unraid-notifikationer** kører over Værts-SSH-forbindelsen, så test den først under **Indstillinger, Integrationer**. På en anden platform forbliver de slået fra, og kanalen siger det.
 - **En notifikationsmail kommer aldrig.** Tjek **Kryptering** mod porten, som regel **STARTTLS** på 587 eller **TLS (implicit)** på 465.
 
-Healthchecks-ping afhænger ikke af noget af dette, se [Healthchecks](notifications.md#healthchecks).
+Healthchecks-ping afhænger ikke af **Underret**, se [Healthchecks](notifications.md#healthchecks).
 
 ## Android-appen kan ikke åbne en server {#android-cannot-open}
 

@@ -29,7 +29,7 @@ Vart och ett av de här går igenom en verklig uppgift från början till slut, 
 ## Håll dig informerad {#staying-informed}
 
 - [Gotify i telefonen](notifications.md#example-gotify): fel ringer och lyckade körningar kommer tyst.
-- [ntfy som webhook](notifications.md#example-ntfy): meddelanden utan konto.
+- [ntfy utan konto](notifications.md#example-ntfy): meddelanden till ett eget ämne.
 
 ## Flera servrar {#several-servers}
 

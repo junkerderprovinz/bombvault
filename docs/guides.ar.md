@@ -29,7 +29,7 @@
 ## البقاء على اطلاع {#staying-informed}
 
 - [Gotify على هاتفك](notifications.md#example-gotify): الأعطال ترنّ والنجاحات تصل بهدوء.
-- [ntfy كـ webhook](notifications.md#example-ntfy): رسائل بلا حساب.
+- [ntfy بلا حساب](notifications.md#example-ntfy): رسائل إلى موضوع خاص بك.
 
 ## عدة خوادم {#several-servers}
 

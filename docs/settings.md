@@ -48,7 +48,7 @@ The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Em
 
 ## Notifications {#notifications}
 
-**Notifications** with **Notify**, the summaries, **Report overdue backups**, **Unraid notifications** and the **Weekly digest**, **Channels** with Webhook, Apprise, Matrix, Gotify and Email (SMTP), and **Healthchecks**. See [Notifications](notifications.md).
+**Notifications** with the summaries, **Report overdue backups** and the **Weekly digest**, and **Channels**, a list of Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, webhook and Healthchecks channels, each with its own switch, **Notify** and **Send test**. See [Notifications](notifications.md).
 
 ## Verify {#verify}
 

@@ -48,7 +48,7 @@ Die Karte **Streaming**, die das Upload-Limit senkt, während Plex, Jellyfin ode
 
 ## Benachrichtigungen {#notifications}
 
-**Benachrichtigungen** mit **Benachrichtigen**, den Zusammenfassungen, **Überfällige Sicherungen melden**, **Unraid-Benachrichtigungen** und dem **Wochenbericht**, **Kanäle** mit Webhook, Apprise, Matrix, Gotify und E-Mail (SMTP) sowie **Healthchecks**. Siehe [Benachrichtigungen](notifications.md).
+**Benachrichtigungen** mit den Zusammenfassungen, **Überfällige Sicherungen melden** und dem **Wochenbericht**, und **Kanäle**, eine Liste von Kanälen für Unraid, ntfy, Gotify, Discord, Slack, Matrix, E-Mail, Apprise, Webhook und Healthchecks, jeder mit eigenem Schalter, **Benachrichtigen** und **Test senden**. Siehe [Benachrichtigungen](notifications.md).
 
 ## Prüfung {#verify}
 

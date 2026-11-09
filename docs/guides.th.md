@@ -29,7 +29,7 @@
 ## รับรู้ข่าวสาร {#staying-informed}
 
 - [Gotify บนโทรศัพท์](notifications.md#example-gotify): ความล้มเหลวดัง ความสำเร็จมาแบบเงียบ ๆ
-- [ntfy เป็น webhook](notifications.md#example-ntfy): ข้อความโดยไม่ต้องมีบัญชี
+- [ntfy แบบไม่ต้องมีบัญชี](notifications.md#example-ntfy): ข้อความไปยังหัวข้อของคุณเอง
 
 ## หลายเซิร์ฟเวอร์ {#several-servers}
 

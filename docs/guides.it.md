@@ -29,7 +29,7 @@ Ognuno di questi passa in rassegna un compito reale dall'inizio alla fine, con n
 ## Restare informati {#staying-informed}
 
 - [Gotify sul telefono](notifications.md#example-gotify): gli errori suonano e i successi arrivano in silenzio.
-- [ntfy come webhook](notifications.md#example-ntfy): messaggi senza un account.
+- [ntfy senza account](notifications.md#example-ntfy): messaggi a un topic tutto tuo.
 
 ## Più server {#several-servers}
 

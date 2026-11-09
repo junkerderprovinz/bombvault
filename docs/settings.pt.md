@@ -48,7 +48,7 @@ O cartão **Streaming**, que baixa o limite de envio enquanto o Plex, o Jellyfin
 
 ## Notificações {#notifications}
 
-**Notificações** com **Notificar**, os resumos, **Comunicar backups em atraso**, **Notificações do Unraid** e o **Resumo semanal**, **Canais** com Webhook, Apprise, Matrix, Gotify e E-mail (SMTP), e **Healthchecks**. Vê [Notificações](notifications.md).
+**Notificações** com os resumos, **Comunicar backups em atraso** e o **Resumo semanal**, e **Canais**, uma lista de canais Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, webhook e Healthchecks, cada um com o seu próprio interruptor, **Notificar** e **Enviar teste**. Vê [Notificações](notifications.md).
 
 ## Verificação {#verify}
 

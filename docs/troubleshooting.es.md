@@ -187,16 +187,17 @@ Tras **Descubrir copias** o el Asistente de emergencia sin ajustes restaurados, 
 
 ## Las notificaciones no llegan {#notifications-do-not-arrive}
 
-Empieza con **Enviar prueba** en **Ajustes, Notificaciones**. La línea bajo la tarjeta dice qué pasó.
+Empieza con **Enviar prueba** en el canal, en **Ajustes, Notificaciones**. La línea bajo el canal dice qué pasó.
 
-- **No se envía nada en absoluto.** Comprueba **Notificar**. Con **Nunca** no sale ningún mensaje, solo los pings de una URL de Healthchecks, y con **Solo en caso de fallo** una ejecución buena se queda en silencio. Con **Resumir las ejecuciones programadas** activado, una ejecución programada envía un resumen al final.
-- **Una dirección nueva.** Tras cambiar el servidor de Matrix, Gotify o el correo, el campo vuelve a pedir el token o la contraseña, y la dirección nueva se guarda solo cuando lo escribes. BombVault no envía el secreto antiguo a un sitio nuevo.
+- **No se envía nada en absoluto.** Comprueba que el canal esté activado y mira su **Notificar**. Con **Nunca** no envía nada, y con **Solo en caso de fallo** una ejecución buena se queda en silencio. Con **Resumir las ejecuciones programadas** activado, una ejecución programada envía un resumen al final.
+- **Una dirección nueva.** Tras cambiar adónde envía un canal, como el servidor de Matrix, Gotify o ntfy, o el host de un canal de correo, el campo vuelve a pedir el token o la contraseña, y la dirección nueva se guarda solo cuando lo escribes. BombVault no envía el secreto antiguo a un sitio nuevo.
 - **Gotify** dice que el servidor rechazó el token de la aplicación: cópialo de nuevo de la aplicación en Gotify. La **URL del servidor** es la dirección base, sin `/message`.
-- **Webhook:** comprueba que el **Formato del Webhook** encaje con el servicio. Una dirección de Discord necesita **Discord**, y ntfy necesita **ntfy**.
-- **Las notificaciones de Unraid** funcionan por la conexión SSH del host, así que prueba antes eso en **Ajustes, Integraciones**. En otra plataforma se quedan desactivadas, y la tarjeta lo dice.
+- **Discord, Slack y ntfy** son canales propios. Una dirección de Discord en un canal **Webhook** recibe un JSON que Discord no entiende, así que añade un canal **Discord** para ella.
+- **Webhook:** un marcador que BombVault no conoce se queda tal cual, así que revisa cómo está escrito, como `%%title%%`. Para un cuerpo JSON deja la cabecera `Content-Type` en `application/json`, para que los valores se escapen como JSON.
+- **Las notificaciones de Unraid** funcionan por la conexión SSH del host, así que prueba antes eso en **Ajustes, Integraciones**. En otra plataforma se quedan desactivadas, y el canal lo dice.
 - **Nunca llega un correo de notificación.** Comprueba **Cifrado** contra el puerto, normalmente **STARTTLS** en el 587 o **TLS (implicit)** en el 465.
 
-Los pings de Healthchecks no dependen de nada de esto, consulta [Healthchecks](notifications.md#healthchecks).
+Los pings de Healthchecks no dependen de **Notificar**, consulta [Healthchecks](notifications.md#healthchecks).
 
 ## La app de Android no puede abrir un servidor {#android-cannot-open}
 

@@ -48,7 +48,7 @@ Karta **Streamování**, která snižuje limit nahrávání, zatímco streamuje 
 
 ## Oznámení {#notifications}
 
-**Oznámení** s **Oznámit**, souhrny, **Hlásit zálohy po termínu**, **Oznámení Unraid** a **Týdenní souhrn**, **Kanály** s Webhookem, Apprise, Matrixem, Gotify a e-mailem (SMTP) a **Healthchecks**. Viz [Oznámení](notifications.md).
+**Oznámení** se souhrny, **Hlásit zálohy po termínu** a **Týdenní souhrn**, dále **Kanály**, seznam kanálů Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, webhook a Healthchecks, každý s vlastním přepínačem, **Oznámit** a **Odeslat test**. Viz [Oznámení](notifications.md).
 
 ## Ověření {#verify}
 

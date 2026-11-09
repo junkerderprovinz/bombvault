@@ -29,7 +29,7 @@ Jokainen näistä käy läpi yhden oikean tehtävän alusta loppuun, nimet ja lu
 ## Pysy ajan tasalla {#staying-informed}
 
 - [Gotify puhelimessasi](notifications.md#example-gotify): virheet soivat ja onnistumiset saapuvat hiljaa.
-- [ntfy webhookina](notifications.md#example-ntfy): ilmoitukset ilman tiliä.
+- [ntfy ilman tiliä](notifications.md#example-ntfy): ilmoitukset omaan aiheeseesi.
 
 ## Useita palvelimia {#several-servers}
 

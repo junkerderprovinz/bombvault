@@ -187,16 +187,17 @@ Po **Objevit zálohy** nebo po Nouzovém průvodci bez obnovených nastavení, n
 
 ## Oznámení nedorazí {#notifications-do-not-arrive}
 
-Začni s **Odeslat test** v **Nastavení, Oznámení**. Řádek pod kartou říká, co se stalo.
+Začni s **Odeslat test** u kanálu v **Nastavení, Oznámení**. Řádek pod kanálem říká, co se stalo.
 
-- **Neodchází vůbec nic.** Zkontroluj **Oznámit**. S **Nikdy** neodejde žádná zpráva, jen pingy URL Healthchecks, a s **Pouze při selhání** zůstává dobrý běh potichu. Se zapnutým **Shrnout naplánované běhy** pošle naplánovaný běh na svém konci jeden souhrn.
-- **Nová adresa.** Po změně serveru u Matrixu, Gotify nebo e-mailu se pole znovu zeptá na token nebo heslo a nová adresa se uloží, až ho napíšeš. BombVault staré tajemství na nové místo neposílá.
+- **Neodchází vůbec nic.** Zkontroluj, že je kanál zapnutý, a podívej se na jeho **Oznámit**. S **Nikdy** nepošle nic a s **Pouze při selhání** zůstává dobrý běh potichu. Se zapnutým **Shrnout naplánované běhy** pošle naplánovaný běh na svém konci jeden souhrn.
+- **Nová adresa.** Když změníš, kam kanál posílá, třeba server u Matrixu, Gotify či ntfy nebo hostitele e-mailového kanálu, pole se znovu zeptá na token nebo heslo a nová adresa se uloží, až ho napíšeš. BombVault staré tajemství na nové místo neposílá.
 - **Gotify** říká, že server odmítl token aplikace: zkopíruj ho znovu z aplikace v Gotify. **URL serveru** je základní adresa, bez `/message`.
-- **Webhook:** zkontroluj, že **Formát Webhook** odpovídá službě. Adresa Discordu potřebuje **Discord** a ntfy potřebuje **ntfy**.
-- **Oznámení Unraid** běží přes spojení SSH k hostiteli, proto ho nejdřív otestuj v **Nastavení, Integrace**. Na jiné platformě zůstávají vypnutá a karta to říká.
+- **Discord, Slack a ntfy** jsou samostatné kanály. Adresa Discordu v kanálu **Webhook** dostane JSON, kterému Discord nerozumí, takže pro ni přidej kanál **Discord**.
+- **Webhook:** zástupný symbol, který BombVault nezná, zůstane tak, jak je napsaný, takže zkontroluj pravopis, třeba `%%title%%`. U těla v JSON nech hlavičku `Content-Type` na `application/json`, aby se hodnoty escapovaly jako JSON.
+- **Oznámení Unraid** běží přes spojení SSH k hostiteli, proto ho nejdřív otestuj v **Nastavení, Integrace**. Na jiné platformě zůstávají vypnutá a kanál to říká.
 - **E-mail s oznámením nikdy nepřijde.** Zkontroluj **Šifrování** proti portu, obvykle **STARTTLS** na 587 nebo **TLS (implicit)** na 465.
 
-Pingy Healthchecks na ničem z toho nezávisejí, viz [Healthchecks](notifications.md#healthchecks).
+Pingy Healthchecks nezávisejí na **Oznámit**, viz [Healthchecks](notifications.md#healthchecks).
 
 ## Aplikace pro Android neotevře server {#android-cannot-open}
 

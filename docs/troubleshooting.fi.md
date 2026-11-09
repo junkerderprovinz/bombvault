@@ -187,16 +187,17 @@ Toiminnon **Tunnista varmuuskopiot** tai Hätäohjatun toiminnon jälkeen, kun a
 
 ## Ilmoitukset eivät saavu perille {#notifications-do-not-arrive}
 
-Aloita kohdasta **Lähetä testi** kohdassa **Asetukset, Ilmoitukset**. Kortin alla oleva rivi kertoo, mitä tapahtui.
+Aloita kanavan painikkeesta **Lähetä testi** kohdassa **Asetukset, Ilmoitukset**. Kanavan alla oleva rivi kertoo, mitä tapahtui.
 
-- **Mitään ei lähde lainkaan.** Tarkista **Ilmoita**. Arvolla **Ei koskaan** mitään viestiä ei lähde, vain Healthchecks-URL:n pingit, ja arvolla **Vain epäonnistuessa** onnistunut ajo pysyy hiljaa. Kun **Tiivistä ajastetut ajot** on päällä, ajastettu ajo lähettää yhden yhteenvedon loppuunsa.
-- **Uusi osoite.** Kun vaihdat Matrixin, Gotifyn tai sähköpostin palvelimen, kenttä kysyy tunnistetta tai salasanaa uudelleen, ja uusi osoite tallentuu vasta, kun kirjoitat sen. BombVault ei lähetä vanhaa salaisuutta uuteen paikkaan.
+- **Mitään ei lähde lainkaan.** Tarkista, että kanava on päällä, ja katso sen **Ilmoita**-valinta. Arvolla **Ei koskaan** se ei lähetä mitään, ja arvolla **Vain epäonnistuessa** onnistunut ajo pysyy hiljaa. Kun **Tiivistä ajastetut ajot** on päällä, ajastettu ajo lähettää yhden yhteenvedon loppuunsa.
+- **Uusi osoite.** Kun muutat, minne kanava lähettää, esimerkiksi Matrixin, Gotifyn tai ntfy:n palvelimen tai sähköpostikanavan isännän, kenttä kysyy tunnistetta tai salasanaa uudelleen, ja uusi osoite tallentuu vasta, kun kirjoitat sen. BombVault ei lähetä vanhaa salaisuutta uuteen paikkaan.
 - **Gotify** sanoo, että palvelin hylkäsi sovellustunnuksen: kopioi se uudelleen Gotifyn sovelluksesta. **Palvelimen URL** on perusosoite ilman `/message`.
-- **Webhook:** tarkista, että **Webhook-muoto** sopii palveluun. Discord-osoite tarvitsee arvon **Discord** ja ntfy arvon **ntfy**.
-- **Unraid-ilmoitukset** kulkevat isännän SSH-yhteyden kautta, joten testaa se ensin kohdassa **Asetukset, Integraatiot**. Muulla alustalla ne pysyvät pois päältä, ja kortti kertoo sen.
+- **Discord, Slack ja ntfy** ovat omia kanaviaan. **Webhook**-kanavan Discord-osoite saa JSONia, jota Discord ei ymmärrä, joten lisää sitä varten **Discord**-kanava.
+- **Webhook:** paikkamerkki, jota BombVault ei tunne, jää sellaisekseen, joten tarkista kirjoitusasu, esimerkiksi `%%title%%`. Pidä JSON-rungossa `Content-Type`-otsakkeen arvona `application/json`, jotta arvot koodataan JSONina.
+- **Unraid-ilmoitukset** kulkevat isännän SSH-yhteyden kautta, joten testaa se ensin kohdassa **Asetukset, Integraatiot**. Muulla alustalla ne pysyvät pois päältä, ja kanava kertoo sen.
 - **Ilmoitussähköposti ei koskaan tule.** Tarkista **Salaus** suhteessa porttiin, yleensä **STARTTLS** portissa 587 tai **TLS (implicit)** portissa 465.
 
-Healthchecks-pingit eivät riipu tästä mistään, katso [Healthchecks](notifications.md#healthchecks).
+Healthchecks-pingit eivät riipu **Ilmoita**-valinnasta, katso [Healthchecks](notifications.md#healthchecks).
 
 ## Android-sovellus ei avaa palvelinta {#android-cannot-open}
 

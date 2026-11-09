@@ -48,7 +48,7 @@ Karta **Streaming**, która obniża limit wysyłania, gdy Plex, Jellyfin lub Emb
 
 ## Powiadomienia {#notifications}
 
-**Powiadomienia** z **Powiadom**, podsumowaniami, **Zgłaszaj opóźnione kopie zapasowe**, **Powiadomienia Unraid** i **Cotygodniowe podsumowanie**, **Kanały** z Webhook, Apprise, Matrix, Gotify i E-mail (SMTP) oraz **Healthchecks**. Zobacz [Powiadomienia](notifications.md).
+**Powiadomienia** z podsumowaniami, **Zgłaszaj opóźnione kopie zapasowe** i **Cotygodniowe podsumowanie** oraz **Kanały**, czyli lista kanałów typu Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, webhook i Healthchecks, każdy z własnym przełącznikiem, **Powiadom** i **Wyślij test**. Zobacz [Powiadomienia](notifications.md).
 
 ## Weryfikacja {#verify}
 

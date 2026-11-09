@@ -58,7 +58,7 @@ BombVault'un neler yaptığının kısa bir kataloğu. Her satır, onu açıklay
 - İlk yedekten sonra **geri yükleme denetimi** ve yalıtılmış bir kopyada **Başlatma testi**. [Doğrulama sekmesi](backups.md#verify-tab)
 - Site dışı kopyadan **zamanlanmış denetimler ve deneme geri yüklemeleri**. [DR tatbikatları](offsite-recovery.md#dr-drills)
 - **Klasöre göre boyut** ve bir yedeğin neden yavaş olduğu. [Bir çalıştırma sana ne söyler](backups.md#run-notes)
-- **Bildirimler**: webhook, Gotify, Matrix, e-posta, Apprise, Unraid ve Healthchecks, haftalık özet ve gecikme raporuyla. [Bildirimler](notifications.md)
+- **Bildirimler**: Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-posta, Apprise, herhangi bir webhook ve Healthchecks için, her birinin kendi kuralı olan bir kanal listesi, haftalık özet ve gecikme raporuyla. [Bildirimler](notifications.md)
 - **Prometheus**, bir Home Assistant cihazı, bir HTTP API'si ve mDNS. [API ve entegrasyonlar](api.md)
 - **Hata bildirimi**: bir GitHub issue'su için temizlenmiş bir ZIP. [Sorun Giderme](troubleshooting.md#still-stuck)
 

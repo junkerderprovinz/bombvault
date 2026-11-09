@@ -29,7 +29,7 @@ Jedes dieser Beispiele führt eine echte Aufgabe von Anfang bis Ende durch, mit 
 ## Auf dem Laufenden bleiben {#staying-informed}
 
 - [Gotify auf dem Handy](notifications.md#example-gotify): Fehler klingeln, Erfolge kommen leise an.
-- [ntfy als Webhook](notifications.md#example-ntfy): Nachrichten ohne Konto.
+- [ntfy ohne Konto](notifications.md#example-ntfy): Nachrichten an ein eigenes Topic.
 
 ## Mehrere Server {#several-servers}
 

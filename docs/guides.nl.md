@@ -29,7 +29,7 @@ Elk voorbeeld loopt één echte klus van begin tot eind door, met namen en getal
 ## Op de hoogte blijven {#staying-informed}
 
 - [Gotify op je telefoon](notifications.md#example-gotify): mislukkingen gaan over, successen komen stil binnen.
-- [ntfy als webhook](notifications.md#example-ntfy): berichten zonder account.
+- [ntfy zonder account](notifications.md#example-ntfy): berichten naar een eigen topic.
 
 ## Meerdere servers {#several-servers}
 

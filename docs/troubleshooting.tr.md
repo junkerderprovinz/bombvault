@@ -187,16 +187,17 @@ BombVault her diskin dayanak zincirini izler ve içindeki her dosyayı yedekler.
 
 ## Bildirimler gelmiyor {#notifications-do-not-arrive}
 
-**Ayarlar, Bildirimler** altında **Test gönder** ile başla. Kartın altındaki satır ne olduğunu söyler.
+**Ayarlar, Bildirimler** altında kanaldaki **Test gönder** ile başla. Kanalın altındaki satır ne olduğunu söyler.
 
-- **Hiçbir şey gönderilmiyor.** **Bildir**'i kontrol et. **Hiç** ile hiçbir mesaj gitmez, yalnızca bir Healthchecks URL'sinin ping'leri gider, **Yalnızca başarısızlıkta** ile de iyi bir çalıştırma sessiz kalır. **Zamanlanmış çalıştırmaları özetle** açıkken zamanlanmış bir çalıştırma sonunda tek bir özet gönderir.
-- **Yeni bir adres.** Matrix, Gotify ya da e-posta sunucusunu değiştirdikten sonra alan belirteci ya da parolayı yeniden ister ve yeni adres yalnızca sen yazınca kaydedilir. BombVault eski gizli bilgiyi yeni yere göndermez.
+- **Hiçbir şey gönderilmiyor.** Kanalın açık olduğunu kontrol et ve **Bildir** ayarına bak. **Asla** ile kanal hiçbir şey göndermez, **Yalnızca başarısızlıkta** ile de iyi bir çalıştırma sessiz kalır. **Zamanlanmış çalıştırmaları özetle** açıkken zamanlanmış bir çalıştırma sonunda tek bir özet gönderir.
+- **Yeni bir adres.** Bir kanalın nereye gönderdiğini, örneğin Matrix, Gotify ya da ntfy sunucusunu veya bir e-posta kanalının sunucusunu değiştirdikten sonra alan belirteci ya da parolayı yeniden ister ve yeni adres yalnızca sen yazınca kaydedilir. BombVault eski gizli bilgiyi yeni yere göndermez.
 - **Gotify**, sunucunun uygulama belirtecini reddettiğini söylüyor: onu Gotify'daki uygulamadan yeniden kopyala. **Sunucu URL'si** `/message` olmadan temel adrestir.
-- **Webhook:** **Webhook biçimi**'nin servise uyduğunu kontrol et. Bir Discord adresi **Discord**, ntfy ise **ntfy** ister.
-- **Unraid bildirimleri** Ana makine SSH bağlantısı üzerinden çalışır, bu yüzden önce onu **Ayarlar, Entegrasyonlar** altında test et. Başka bir platformda kapalı kalırlar ve kart bunu söyler.
+- **Discord, Slack ve ntfy** ayrı kanallardır. Bir **Webhook** kanalındaki Discord adresi, Discord'un anlamadığı bir JSON alır, bu yüzden onun için bir **Discord** kanalı ekle.
+- **Webhook:** BombVault'un tanımadığı bir yer tutucu yazıldığı gibi kalır, bu yüzden yazımını kontrol et, örneğin `%%title%%`. JSON gövdesi için `Content-Type` üst bilgisini `application/json` olarak bırak, böylece değerler JSON olarak kaçışlanır.
+- **Unraid bildirimleri** Ana makine SSH bağlantısı üzerinden çalışır, bu yüzden önce onu **Ayarlar, Entegrasyonlar** altında test et. Başka bir platformda kapalı kalırlar ve kanal bunu söyler.
 - **Bildirim e-postası hiç gelmiyor.** **Şifreleme**'yi porta göre kontrol et, genellikle 587'de **STARTTLS** ya da 465'te **TLS (implicit)**.
 
-Healthchecks pingleri bunların hiçbirine bağlı değildir, bkz. [Healthchecks](notifications.md#healthchecks).
+Healthchecks pingleri **Bildir** ayarına bağlı değildir, bkz. [Healthchecks](notifications.md#healthchecks).
 
 ## Android uygulaması bir sunucuyu açamıyor {#android-cannot-open}
 

@@ -58,7 +58,7 @@ Et kort katalog over hva BombVault gjør. Hver linje lenker til siden som forkla
 - **Gjenopprettingskontroll** etter den første sikkerhetskopien, og **Starttest** i en isolert kopi. [Fanen Verifisering](backups.md#verify-tab)
 - **Planlagte kontroller og prøvegjenopprettinger** fra den eksterne kopien. [DR-øvelser](offsite-recovery.md#dr-drills)
 - **Størrelse per mappe**, og hvorfor en sikkerhetskopi var treg. [Hva en kjøring forteller deg](backups.md#run-notes)
-- **Varsler**: webhook, Gotify, Matrix, e-post, Apprise, Unraid og Healthchecks, med en ukentlig oppsummering og en rapport om forsinkelser. [Varsler](notifications.md)
+- **Varsler**: en liste over kanaler for Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-post, Apprise, en hvilken som helst webhook og Healthchecks, hver med sin egen regel, med en ukentlig oppsummering og en rapport om forsinkelser. [Varsler](notifications.md)
 - **Prometheus**, en Home Assistant-enhet, et HTTP-API og mDNS. [API og integrasjoner](api.md)
 - **Feilrapport**: en renset ZIP for en GitHub-sak. [Feilsøking](troubleshooting.md#still-stuck)
 

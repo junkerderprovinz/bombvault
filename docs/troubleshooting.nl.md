@@ -187,16 +187,17 @@ Na **Back-ups ontdekken** of de Noodassistent zonder herstelde instellingen, of 
 
 ## Meldingen komen niet aan {#notifications-do-not-arrive}
 
-Begin met **Test versturen** onder **Instellingen, Meldingen**. De regel onder de kaart zegt wat er gebeurde.
+Begin met **Test versturen** bij het kanaal onder **Instellingen, Meldingen**. De regel onder het kanaal zegt wat er gebeurde.
 
-- **Er wordt helemaal niets verstuurd.** Controleer **Melden**. Met **Nooit** gaat er geen bericht uit, alleen de pings van een Healthchecks-URL, en met **Alleen bij mislukking** blijft een goede run stil. Met **Geplande runs samenvatten** aan stuurt een geplande run aan het einde één samenvatting.
-- **Een nieuw adres.** Nadat je de server van Matrix, Gotify of e-mail wijzigt, vraagt het veld opnieuw om het token of wachtwoord, en het nieuwe adres wordt pas opgeslagen zodra je het intypt. BombVault stuurt het oude geheim niet naar een nieuwe plek.
+- **Er wordt helemaal niets verstuurd.** Controleer of het kanaal aanstaat en kijk naar zijn **Melden**. Met **Nooit** verstuurt het niets, en met **Alleen bij mislukking** blijft een goede run stil. Met **Geplande runs samenvatten** aan stuurt een geplande run aan het einde één samenvatting.
+- **Een nieuw adres.** Nadat je wijzigt waarheen een kanaal verstuurt, zoals de server van Matrix, Gotify of ntfy, of de host van een e-mailkanaal, vraagt het veld opnieuw om het token of wachtwoord, en het nieuwe adres wordt pas opgeslagen zodra je het intypt. BombVault stuurt het oude geheim niet naar een nieuwe plek.
 - **Gotify** zegt dat de server het app-token weigerde: kopieer het opnieuw uit de applicatie in Gotify. De **Server-URL** is het basisadres, zonder `/message`.
-- **Webhook:** controleer of het **Webhook-formaat** bij de dienst past. Een Discord-adres heeft **Discord** nodig, en ntfy heeft **ntfy** nodig.
-- **Unraid-meldingen** lopen over de Host-SSH-verbinding, dus test die eerst onder **Instellingen, Integraties**. Op een ander platform blijven ze uit, en de kaart zegt dat.
+- **Discord, Slack en ntfy** zijn eigen kanalen. Een Discord-adres in een **Webhook**-kanaal krijgt JSON die Discord niet begrijpt, dus voeg er een **Discord**-kanaal voor toe.
+- **Webhook:** een placeholder die BombVault niet kent, blijft staan zoals je hem schreef, dus controleer de spelling, zoals `%%title%%`. Laat voor een JSON-body de header `Content-Type` op `application/json` staan, zodat de waarden als JSON worden geëscaped.
+- **Unraid-meldingen** lopen over de Host-SSH-verbinding, dus test die eerst onder **Instellingen, Integraties**. Op een ander platform blijven ze uit, en het kanaal zegt dat.
 - **Een e-mailmelding komt nooit.** Controleer **Versleuteling** tegen de poort, meestal **STARTTLS** op 587 of **TLS (implicit)** op 465.
 
-Healthchecks-pings zijn hier niet van afhankelijk, zie [Healthchecks](notifications.md#healthchecks).
+Healthchecks-pings zijn niet afhankelijk van **Melden**, zie [Healthchecks](notifications.md#healthchecks).
 
 ## De Android-app kan een server niet openen {#android-cannot-open}
 

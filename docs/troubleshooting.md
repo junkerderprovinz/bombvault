@@ -187,16 +187,17 @@ After **Discover backups** or the Emergency wizard without restored settings, or
 
 ## Notifications do not arrive {#notifications-do-not-arrive}
 
-Start with **Send test** under **Settings, Notifications**. The line below the card says what happened.
+Start with **Send test** on the channel under **Settings, Notifications**. The line under the channel says what happened.
 
-- **Nothing is sent at all.** Check **Notify**. With **Never** no message goes out, only the pings of a Healthchecks URL, and with **Only on failure** a good run stays quiet. With **Summarise scheduled runs** on, a scheduled run sends one summary at its end.
-- **A new address.** After you change the server of Matrix, Gotify or email, the field asks for the token or password again, and the new address is saved only once you type it. BombVault does not send the old secret to a new place.
+- **Nothing is sent at all.** Check that the channel is switched on and look at its **Notify**. With **Never** it sends nothing, and with **Only on failure** a good run stays quiet. With **Summarise scheduled runs** on, a scheduled run sends one summary at its end.
+- **A new address.** After you change where a channel sends to, such as the server of Matrix, Gotify or ntfy, or the host of an email channel, the field asks for the token or password again, and the new address is saved only once you type it. BombVault does not send the old secret to a new place.
 - **Gotify** says the server refused the app token: copy it again from the application in Gotify. The **Server URL** is the base address, without `/message`.
-- **Webhook:** check that **Webhook format** fits the service. A Discord address needs **Discord**, and ntfy needs **ntfy**.
-- **Unraid notifications** run over the Host SSH connection, so test that first under **Settings, Integrations**. On another platform they stay off, and the card says so.
+- **Discord, Slack and ntfy** are channels of their own. A Discord address in a **Webhook** channel gets JSON that Discord does not understand, so add a **Discord** channel for it.
+- **Webhook:** a placeholder BombVault does not know stays as written, so check the spelling, such as `%%title%%`. For a JSON body keep the `Content-Type` header at `application/json`, so the values are escaped as JSON.
+- **Unraid notifications** run over the Host SSH connection, so test that first under **Settings, Integrations**. On another platform they stay off, and the channel says so.
 - **A notification mail never comes.** Check **Encryption** against the port, usually **STARTTLS** on 587 or **TLS (implicit)** on 465.
 
-Healthchecks pings do not depend on any of this, see [Healthchecks](notifications.md#healthchecks).
+Healthchecks pings do not depend on **Notify**, see [Healthchecks](notifications.md#healthchecks).
 
 ## The Android app cannot open a server {#android-cannot-open}
 

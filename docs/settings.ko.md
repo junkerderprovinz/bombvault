@@ -48,7 +48,7 @@ Plex, Jellyfin, Emby가 스트리밍하는 동안 업로드 제한을 낮추는 
 
 ## 알림 {#notifications}
 
-**알림**의 **알림**, 요약, **지연된 백업 보고**, **Unraid 알림**, **주간 요약**, Webhook, Apprise, Matrix, Gotify, 이메일(SMTP)이 있는 **채널**, 그리고 **Healthchecks**입니다. [알림](notifications.md)을 참고하세요.
+요약, **지연된 백업 보고**, **주간 요약**이 있는 **알림**, 그리고 **채널**입니다. **채널**은 Unraid, ntfy, Gotify, Discord, Slack, Matrix, 이메일, Apprise, webhook, Healthchecks 채널의 목록이며, 채널마다 자기 스위치, **알림**, **테스트 보내기**가 있습니다. [알림](notifications.md)을 참고하세요.
 
 ## 검증 {#verify}
 

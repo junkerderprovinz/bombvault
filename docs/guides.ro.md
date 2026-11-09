@@ -29,7 +29,7 @@ Fiecare dintre ele parcurge o sarcină reală de la început până la sfârșit
 ## Rămâi informat {#staying-informed}
 
 - [Gotify pe telefon](notifications.md#example-gotify): eșecurile sună, iar succesele sosesc în liniște.
-- [ntfy ca webhook](notifications.md#example-ntfy): mesaje fără cont.
+- [ntfy fără cont](notifications.md#example-ntfy): mesaje către un topic al tău.
 
 ## Mai multe servere {#several-servers}
 

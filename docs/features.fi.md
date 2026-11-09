@@ -58,7 +58,7 @@ Lyhyt luettelo siitä, mitä BombVault tekee. Jokainen rivi linkittää sivulle,
 - **Palautustarkistus** ensimmäisen varmuuskopion jälkeen ja **Käynnistystesti** eristetyssä kopiossa. [Tarkista-välilehti](backups.md#verify-tab)
 - **Ajastetut tarkistukset ja koepalautukset** etäkopiosta. [DR-harjoitukset](offsite-recovery.md#dr-drills)
 - **Koko kansioittain** ja se, miksi varmuuskopio oli hidas. [Mitä ajo kertoo sinulle](backups.md#run-notes)
-- **Ilmoitukset**: webhook, Gotify, Matrix, sähköposti, Apprise, Unraid ja Healthchecks, viikkokoosteella ja myöhässä-raportilla. [Ilmoitukset](notifications.md)
+- **Ilmoitukset**: kanavaluettelo, jossa on Unraid, ntfy, Gotify, Discord, Slack, Matrix, sähköposti, Apprise, mikä tahansa webhook ja Healthchecks, kullakin oma sääntönsä, sekä viikkokooste ja myöhässä-raportti. [Ilmoitukset](notifications.md)
 - **Prometheus**, Home Assistant -laite, HTTP-API ja mDNS. [API ja integraatiot](api.md)
 - **Virheraportti**: sensuroitu ZIP GitHub-issuea varten. [Vianmääritys](troubleshooting.md#still-stuck)
 

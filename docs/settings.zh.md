@@ -48,7 +48,7 @@ BombVault 把外观保存在服务器上。第一次来的浏览器会接管它�
 
 ## 通知 {#notifications}
 
-带**通知**、摘要、**报告逾期的备份**、**Unraid 通知**和**每周摘要**的**通知**，带 Webhook、Apprise、Matrix、Gotify 和邮件 (SMTP) 的**渠道**，以及 **Healthchecks**。参见[通知](notifications.md)。
+带摘要、**报告逾期的备份**和**每周摘要**的**通知**，以及**渠道**：一组 Unraid、ntfy、Gotify、Discord、Slack、Matrix、邮件、Apprise、webhook 和 Healthchecks 渠道，每个都有自己的开关、**通知**和**发送测试**。参见[通知](notifications.md)。
 
 ## 验证 {#verify}
 

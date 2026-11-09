@@ -58,7 +58,7 @@ BombVault가 하는 일을 짧게 모은 목록입니다. 각 줄은 그것을 �
 - 첫 백업 뒤의 **복원 검사**와 격리된 사본에서의 **시작 테스트**. [검증 탭](backups.md#verify-tab)
 - 오프사이트 복사본으로 하는 **예약된 검사와 테스트 복원**. [DR 훈련](offsite-recovery.md#dr-drills)
 - **폴더별 크기**와 백업이 느렸던 이유. [실행이 알려 주는 것](backups.md#run-notes)
-- **알림**: webhook, Gotify, Matrix, 이메일, Apprise, Unraid, Healthchecks이며 주간 요약과 지연 보고가 있습니다. [알림](notifications.md)
+- **알림**: Unraid, ntfy, Gotify, Discord, Slack, Matrix, 이메일, Apprise, 모든 webhook, Healthchecks 채널 목록이며, 채널마다 자기 규칙이 있고 주간 요약과 지연 보고가 있습니다. [알림](notifications.md)
 - **Prometheus**, Home Assistant 기기, HTTP API, mDNS. [API와 연동](api.md)
 - **버그 신고**: GitHub 이슈용으로 민감한 정보를 가린 ZIP. [문제 해결](troubleshooting.md#still-stuck)
 

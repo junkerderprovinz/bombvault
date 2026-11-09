@@ -48,7 +48,7 @@ BombVault שומרת את המראה בשרת. דפדפן שבא בפעם הרא
 
 ## התראות {#notifications}
 
-**התראות** עם **התראה**, הסיכומים, **דיווח על גיבויים באיחור**, **התראות Unraid** ו**תקציר שבועי**, **ערוצים** עם Webhook,‏ Apprise,‏ Matrix,‏ Gotify ואימייל (SMTP), ו-**Healthchecks**. ראו [התראות](notifications.md).
+**התראות** עם הסיכומים, **דיווח על גיבויים באיחור** ו**תקציר שבועי**, ו**ערוצים**, רשימה של ערוצי Unraid,‏ ntfy,‏ Gotify,‏ Discord,‏ Slack,‏ Matrix, אימייל, Apprise,‏ webhook ו-Healthchecks, כל אחד עם מתג משלו, **התראה** ו**שליחת בדיקה**. ראו [התראות](notifications.md).
 
 ## אימות {#verify}
 

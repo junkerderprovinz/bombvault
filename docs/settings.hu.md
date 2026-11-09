@@ -48,7 +48,7 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 
 ## Értesítések {#notifications}
 
-**Értesítések** az **Értesítés**, az összegzések, a **Késő mentések jelentése**, az **Unraid-értesítések** és a **Heti összefoglaló** beállításokkal, **Csatornák** a Webhook, Apprise, Matrix, Gotify és E-mail (SMTP) csatornákkal, és **Healthchecks**. Lásd: [Értesítések](notifications.md).
+**Értesítések** az összegzésekkel, a **Késő mentések jelentése** és a **Heti összefoglaló** beállításokkal, valamint **Csatornák**: Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, e-mail-, Apprise-, webhook- és Healthchecks-csatornák listája, mindegyik saját kapcsolóval, **Értesítés** beállítással és **Teszt küldése** gombbal. Lásd: [Értesítések](notifications.md).
 
 ## Ellenőrzés {#verify}
 

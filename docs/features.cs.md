@@ -58,7 +58,7 @@ Stručný katalog toho, co BombVault umí. Každý řádek odkazuje na stránku,
 - **Kontrola obnovy** po první záloze a **Test spuštění** v izolované kopii. [Záložka Ověření](backups.md#verify-tab)
 - **Plánované kontroly a zkušební obnovy** z kopie mimo lokalitu. [Cvičení DR](offsite-recovery.md#dr-drills)
 - **Velikost podle složek** a proč byla záloha pomalá. [Co ti běh řekne](backups.md#run-notes)
-- **Oznámení**: webhook, Gotify, Matrix, e-mail, Apprise, Unraid a Healthchecks, s týdenním souhrnem a hlášením záloh po termínu. [Oznámení](notifications.md)
+- **Oznámení**: seznam kanálů pro Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, libovolný webhook a Healthchecks, každý s vlastním pravidlem, s týdenním souhrnem a hlášením záloh po termínu. [Oznámení](notifications.md)
 - **Prometheus**, zařízení Home Assistantu, API přes HTTP a mDNS. [API a integrace](api.md)
 - **Hlášení chyby**: vyčištěné ZIP pro issue na GitHubu. [Řešení problémů](troubleshooting.md#still-stuck)
 

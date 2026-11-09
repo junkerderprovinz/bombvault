@@ -48,7 +48,7 @@ BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa
 
 ## Ilmoitukset {#notifications}
 
-**Ilmoitukset** kohtineen **Ilmoita**, yhteenvedot, **Ilmoita myöhässä olevista varmuuskopioista**, **Unraid-ilmoitukset** ja **Viikkokooste**, **Kanavat** kanavineen Webhook, Apprise, Matrix, Gotify ja sähköposti (SMTP), sekä **Healthchecks**. Katso [Ilmoitukset](notifications.md).
+**Ilmoitukset**, jossa ovat yhteenvedot, **Ilmoita myöhässä olevista varmuuskopioista** ja **Viikkokooste**, sekä **Kanavat**, luettelo Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, sähköposti-, Apprise-, webhook- ja Healthchecks-kanavista, joilla kullakin on oma kytkin, **Ilmoita** ja **Lähetä testi**. Katso [Ilmoitukset](notifications.md).
 
 ## Tarkista {#verify}
 

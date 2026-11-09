@@ -187,16 +187,17 @@ BombVault 会沿着每个磁盘的后备链，备份其中的每个文件。无�
 
 ## 收不到通知 {#notifications-do-not-arrive}
 
-先从**设置、通知**下的**发送测试**开始。卡片下面的那一行会说明发生了什么。
+先从**设置、通知**下该渠道的**发送测试**开始。渠道下面的那一行会说明发生了什么。
 
-- **什么都没有发送。** 检查**通知**。设为**从不**时不会发出任何消息，只有 Healthchecks 网址的 ping，设为**仅在失败时**时，成功的运行保持安静。开启**汇总计划运行**时，计划运行会在结束时发送一份摘要。
-- **新的地址。** 更改 Matrix、Gotify 或邮件的服务器之后，字段会再次要求输入令牌或密码，新地址只有在你输入之后才会保存。BombVault 不会把旧的密钥发到新的地方。
+- **什么都没有发送。** 检查渠道是否已开启，再看它的**通知**。设为**从不**时它什么都不发送，设为**仅在失败时**时，成功的运行保持安静。开启**汇总计划运行**时，计划运行会在结束时发送一份摘要。
+- **新的地址。** 更改渠道发送的目标之后，例如 Matrix、Gotify 或 ntfy 的服务器，或者邮件渠道的主机，字段会再次要求输入令牌或密码，新地址只有在你输入之后才会保存。BombVault 不会把旧的密钥发到新的地方。
 - **Gotify** 说服务器拒绝了应用令牌：请从 Gotify 里的应用中重新复制。**服务器 URL** 是基础地址，不带 `/message`。
-- **Webhook：** 检查 **Webhook 格式**是否适合该服务。Discord 地址需要 **Discord**，ntfy 需要 **ntfy**。
-- **Unraid 通知**通过主机 SSH 连接运行，所以请先在**设置、集成**下测试它。在其他平台上它保持关闭，卡片会这样说明。
-- **通知邮件始终收不到。** 对照端口检查**加密**，通常 587 端口用 **STARTTLS**，465 端口用 **TLS（隐式）**。
+- **Discord、Slack 和 ntfy** 都是独立的渠道。把 Discord 地址填进 **Webhook** 渠道，Discord 会收到它看不懂的 JSON，所以请为它添加一个 **Discord** 渠道。
+- **Webhook：** BombVault 不认识的占位符会原样保留，所以请检查拼写，例如 `%%title%%`。JSON 正文请让 `Content-Type` 请求头保持为 `application/json`，这样值才会按 JSON 转义。
+- **Unraid 通知**通过主机 SSH 连接运行，所以请先在**设置、集成**下测试它。在其他平台上它保持关闭，渠道会这样说明。
+- **通知邮件始终收不到。** 对照端口检查**加密**，通常 587 端口用 **STARTTLS**，465 端口用 **TLS (implicit)**。
 
-Healthchecks 的 ping 不依赖以上任何一项，参见 [Healthchecks](notifications.md#healthchecks)。
+Healthchecks 的 ping 不依赖**通知**，参见 [Healthchecks](notifications.md#healthchecks)。
 
 ## Android 应用打不开某台服务器 {#android-cannot-open}
 

@@ -29,7 +29,7 @@ Každý z nich provede jedním skutečným úkolem od začátku do konce, s dopl
 ## Být v obraze {#staying-informed}
 
 - [Gotify v telefonu](notifications.md#example-gotify): selhání zvoní a úspěchy dorazí potichu.
-- [ntfy jako webhook](notifications.md#example-ntfy): zprávy bez účtu.
+- [ntfy bez účtu](notifications.md#example-ntfy): zprávy do vlastního tématu.
 
 ## Více serverů {#several-servers}
 

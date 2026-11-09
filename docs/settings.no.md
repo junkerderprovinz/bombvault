@@ -48,7 +48,7 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 
 ## Varsler {#notifications}
 
-**Varsler** med **Varsle**, oppsummeringene, **Varsle om forsinkede sikkerhetskopier**, **Unraid-varsler** og **Ukentlig oppsummering**, **Kanaler** med Webhook, Apprise, Matrix, Gotify og E-post (SMTP), og **Healthchecks**. Se [Varsler](notifications.md).
+**Varsler** med oppsummeringene, **Varsle om forsinkede sikkerhetskopier** og **Ukentlig oppsummering**, og **Kanaler**, en liste over Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, e-post-, Apprise-, webhook- og Healthchecks-kanaler, hver med sin egen bryter, **Varsle** og **Send test**. Se [Varsler](notifications.md).
 
 ## Verifisering {#verify}
 

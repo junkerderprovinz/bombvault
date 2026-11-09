@@ -48,7 +48,7 @@ Kortet **Streaming**, som sänker uppladdningsgränsen medan Plex, Jellyfin elle
 
 ## Aviseringar {#notifications}
 
-**Aviseringar** med **Avisera**, sammanfattningarna, **Rapportera försenade säkerhetskopior**, **Unraid-aviseringar** och **Veckosammanfattning**, **Kanaler** med Webhook, Apprise, Matrix, Gotify och E-post (SMTP), och **Healthchecks**. Se [Aviseringar](notifications.md).
+**Aviseringar** med sammanfattningarna, **Rapportera försenade säkerhetskopior** och **Veckosammanfattning**, och **Kanaler**, en lista med Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, e-post-, Apprise-, webhook- och Healthchecks-kanaler, var och en med egen omkopplare, **Avisera** och **Skicka test**. Se [Aviseringar](notifications.md).
 
 ## Verifiera {#verify}
 

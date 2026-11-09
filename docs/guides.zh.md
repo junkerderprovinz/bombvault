@@ -29,7 +29,7 @@
 ## 保持知情 {#staying-informed}
 
 - [手机上的 Gotify](notifications.md#example-gotify)：失败时响铃，成功时静静到达。
-- [把 ntfy 当作 webhook](notifications.md#example-ntfy)：不需要账号的消息。
+- [无需账号的 ntfy](notifications.md#example-ntfy)：消息发到你自己的主题。
 
 ## 多台服务器 {#several-servers}
 

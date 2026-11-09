@@ -29,7 +29,7 @@ Chacun de ces exemples suit une vraie tâche du début à la fin, avec des noms 
 ## Rester informé {#staying-informed}
 
 - [Gotify sur votre téléphone](notifications.md#example-gotify) : les échecs sonnent et les réussites arrivent discrètement.
-- [ntfy comme webhook](notifications.md#example-ntfy) : des messages sans compte.
+- [ntfy sans compte](notifications.md#example-ntfy) : des messages vers un sujet à vous.
 
 ## Plusieurs serveurs {#several-servers}
 

@@ -58,7 +58,7 @@ Un scurt catalog cu ce face BombVault. Fiecare rând trimite la pagina care îl 
 - **Verificare de restaurare** după primul backup și **Test de pornire** într-o copie izolată. [Fila Verificare](backups.md#verify-tab)
 - **Verificări programate și restaurări de test** din copia off-site. [Teste DR](offsite-recovery.md#dr-drills)
 - **Dimensiune pe dosar** și de ce a fost lent un backup. [Ce îți spune o rulare](backups.md#run-notes)
-- **Notificări**: webhook, Gotify, Matrix, e-mail, Apprise, Unraid și Healthchecks, cu un rezumat săptămânal și un raport de întârziere. [Notificări](notifications.md)
+- **Notificări**: o listă de canale pentru Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, orice webhook și Healthchecks, fiecare cu regula lui, cu un rezumat săptămânal și un raport de întârziere. [Notificări](notifications.md)
 - **Prometheus**, un dispozitiv Home Assistant, un API HTTP și mDNS. [API și integrări](api.md)
 - **Raport de eroare**: un ZIP cu date șterse pentru un issue GitHub. [Depanare](troubleshooting.md#still-stuck)
 

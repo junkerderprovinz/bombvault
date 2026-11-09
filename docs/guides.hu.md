@@ -29,7 +29,7 @@ Mindegyik példa egy valódi feladatot visz végig az elejétől a végéig, kit
 ## Tájékozottság {#staying-informed}
 
 - [Gotify a telefonodon](notifications.md#example-gotify): a hibák csörögnek, a sikerek csendben érkeznek.
-- [Az ntfy webhookként](notifications.md#example-ntfy): üzenetek fiók nélkül.
+- [Az ntfy fiók nélkül](notifications.md#example-ntfy): üzenetek egy saját témába.
 
 ## Több szerver {#several-servers}
 

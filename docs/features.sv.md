@@ -58,7 +58,7 @@ En kort katalog över vad BombVault gör. Varje rad länkar till sidan som förk
 - **Återställningskontroll** efter den första säkerhetskopian, och **Starttest** i en isolerad kopia. [Fliken Verifiering](backups.md#verify-tab)
 - **Schemalagda kontroller och teståterställningar** från den externa kopian. [DR-övningar](offsite-recovery.md#dr-drills)
 - **Storlek per mapp**, och varför en säkerhetskopiering var långsam. [Vad en körning berättar](backups.md#run-notes)
-- **Aviseringar**: webhook, Gotify, Matrix, e-post, Apprise, Unraid och Healthchecks, med en veckosammanfattning och en rapport om förseningar. [Aviseringar](notifications.md)
+- **Aviseringar**: en lista med kanaler för Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-post, Apprise, valfri webhook och Healthchecks, var och en med sin egen regel, med en veckosammanfattning och en rapport om förseningar. [Aviseringar](notifications.md)
 - **Prometheus**, en Home Assistant-enhet, ett HTTP-API och mDNS. [API och integrationer](api.md)
 - **Felrapport**: en redigerad ZIP-fil för ett GitHub-ärende. [Felsökning](troubleshooting.md#still-stuck)
 

@@ -58,7 +58,7 @@
 - **การตรวจกู้คืน** หลังการสำรองครั้งแรก และ **ทดสอบการเริ่ม** ในสำเนาที่แยกไว้ [แท็บยืนยัน](backups.md#verify-tab)
 - **การตรวจตามกำหนดและการทดสอบกู้คืน** จากสำเนานอกสถานที่ [การซ้อม DR](offsite-recovery.md#dr-drills)
 - **ขนาดตามโฟลเดอร์** และเหตุที่การสำรองช้า [การรันบอกอะไรคุณ](backups.md#run-notes)
-- **การแจ้งเตือน**: webhook, Gotify, Matrix, อีเมล, Apprise, Unraid และ Healthchecks พร้อมสรุปประจำสัปดาห์และรายงานที่ล่าช้า [การแจ้งเตือน](notifications.md)
+- **การแจ้งเตือน**: รายการช่องทางสำหรับ Unraid, ntfy, Gotify, Discord, Slack, Matrix, อีเมล, Apprise, webhook ใดก็ได้ และ Healthchecks แต่ละช่องทางมีกฎของตัวเอง พร้อมสรุปประจำสัปดาห์และรายงานที่ล่าช้า [การแจ้งเตือน](notifications.md)
 - **Prometheus** อุปกรณ์ Home Assistant, HTTP API และ mDNS [API และการเชื่อมต่อ](api.md)
 - **รายงานบั๊ก**: ZIP ที่ปกปิดข้อมูลสำหรับ issue บน GitHub [การแก้ปัญหา](troubleshooting.md#still-stuck)
 

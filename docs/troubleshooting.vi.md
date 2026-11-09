@@ -187,16 +187,17 @@ Sau **Tìm bản sao lưu** hoặc trình hướng dẫn khẩn cấp mà không
 
 ## Thông báo không đến {#notifications-do-not-arrive}
 
-Bắt đầu với **Gửi thử** dưới **Cài đặt, Thông báo**. Dòng bên dưới thẻ cho biết chuyện gì đã xảy ra.
+Bắt đầu với **Gửi thử** trên kênh, dưới **Cài đặt, Thông báo**. Dòng bên dưới kênh cho biết chuyện gì đã xảy ra.
 
-- **Không có gì được gửi cả.** Hãy kiểm tra **Thông báo**. Với **Không bao giờ** thì không tin nhắn nào đi ra, chỉ còn các lần ping tới một URL Healthchecks, và với **Chỉ khi thất bại** thì một lần chạy tốt vẫn im lặng. Khi bật **Tóm tắt các lần chạy theo lịch**, một lần chạy theo lịch gửi một bản tóm tắt vào cuối.
-- **Một địa chỉ mới.** Sau khi bạn đổi máy chủ của Matrix, Gotify hay email, ô sẽ hỏi lại token hoặc mật khẩu, và địa chỉ mới chỉ được lưu khi bạn gõ nó. BombVault không gửi bí mật cũ tới nơi mới.
+- **Không có gì được gửi cả.** Hãy kiểm tra kênh đã bật chưa và xem mục **Thông báo** của nó. Với **Không bao giờ** thì kênh không gửi gì, và với **Chỉ khi thất bại** thì một lần chạy tốt vẫn im lặng. Khi bật **Tóm tắt các lần chạy theo lịch**, một lần chạy theo lịch gửi một bản tóm tắt vào cuối.
+- **Một địa chỉ mới.** Sau khi bạn đổi nơi một kênh gửi tới, chẳng hạn máy chủ của Matrix, Gotify hay ntfy, hoặc máy chủ của một kênh email, ô sẽ hỏi lại token hoặc mật khẩu, và địa chỉ mới chỉ được lưu khi bạn gõ nó. BombVault không gửi bí mật cũ tới nơi mới.
 - **Gotify** báo máy chủ từ chối token ứng dụng: hãy sao chép lại từ ứng dụng trong Gotify. **URL máy chủ** là địa chỉ gốc, không có `/message`.
-- **Webhook:** hãy kiểm tra **Định dạng Webhook** có khớp với dịch vụ không. Địa chỉ Discord cần **Discord**, và ntfy cần **ntfy**.
-- **Thông báo Unraid** chạy qua kết nối SSH máy chủ, nên hãy thử cái đó trước dưới **Cài đặt, Tích hợp**. Trên nền tảng khác chúng vẫn tắt, và thẻ ghi như vậy.
+- **Discord, Slack và ntfy** là các kênh riêng. Một địa chỉ Discord trong kênh **Webhook** sẽ nhận JSON mà Discord không hiểu, nên hãy thêm một kênh **Discord** cho nó.
+- **Webhook:** một biến giữ chỗ mà BombVault không biết sẽ giữ nguyên như đã viết, nên hãy kiểm tra chính tả, chẳng hạn `%%title%%`. Với nội dung JSON, hãy để tiêu đề `Content-Type` là `application/json`, để các giá trị được escape theo JSON.
+- **Thông báo Unraid** chạy qua kết nối SSH máy chủ, nên hãy thử cái đó trước dưới **Cài đặt, Tích hợp**. Trên nền tảng khác chúng vẫn tắt, và kênh ghi như vậy.
 - **Thư thông báo không bao giờ đến.** Hãy kiểm tra **Mã hóa** so với cổng, thường là **STARTTLS** ở 587 hoặc **TLS (implicit)** ở 465.
 
-Các ping Healthchecks không phụ thuộc vào bất cứ điều nào ở trên, xem [Healthchecks](notifications.md#healthchecks).
+Các ping Healthchecks không phụ thuộc vào **Thông báo**, xem [Healthchecks](notifications.md#healthchecks).
 
 ## Ứng dụng Android không mở được một máy chủ {#android-cannot-open}
 

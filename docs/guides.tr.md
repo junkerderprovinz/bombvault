@@ -29,7 +29,7 @@ Bu örneklerin her biri gerçek bir işi baştan sona anlatır, isimler ve sayı
 ## Haberdar kalmak {#staying-informed}
 
 - [Telefonunda Gotify](notifications.md#example-gotify): hatalar çalar, başarılar sessizce gelir.
-- [Webhook olarak ntfy](notifications.md#example-ntfy): hesap gerektirmeyen mesajlar.
+- [Hesap olmadan ntfy](notifications.md#example-ntfy): sana ait bir konuya mesajlar.
 
 ## Birden çok sunucu {#several-servers}
 

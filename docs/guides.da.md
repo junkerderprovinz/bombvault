@@ -29,7 +29,7 @@ Hvert af disse følger ét rigtigt job fra start til slut med navne og tal udfyl
 ## Hold dig informeret {#staying-informed}
 
 - [Gotify på din telefon](notifications.md#example-gotify): fejl ringer, og succeser kommer stille.
-- [ntfy som webhook](notifications.md#example-ntfy): beskeder uden en konto.
+- [ntfy uden konto](notifications.md#example-ntfy): beskeder til dit eget emne.
 
 ## Flere servere {#several-servers}
 

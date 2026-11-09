@@ -58,7 +58,7 @@ Một danh mục ngắn về những gì BombVault làm. Mỗi dòng liên kết
 - **Kiểm tra khôi phục** sau bản sao lưu đầu tiên, và **Kiểm tra khởi động** trong một bản sao cô lập. [Tab Xác minh](backups.md#verify-tab)
 - **Kiểm tra theo lịch và khôi phục thử** từ bản sao ngoài site. [Diễn tập DR](offsite-recovery.md#dr-drills)
 - **Dung lượng theo thư mục**, và vì sao một bản sao lưu chậm. [Một lần chạy cho bạn biết gì](backups.md#run-notes)
-- **Thông báo**: webhook, Gotify, Matrix, email, Apprise, Unraid và Healthchecks, với bản tóm tắt hằng tuần và báo cáo trễ hạn. [Thông báo](notifications.md)
+- **Thông báo**: một danh sách kênh cho Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, mọi webhook và Healthchecks, mỗi kênh có quy tắc riêng, kèm bản tóm tắt hằng tuần và báo cáo trễ hạn. [Thông báo](notifications.md)
 - **Prometheus**, một thiết bị Home Assistant, một HTTP API và mDNS. [API và tích hợp](api.md)
 - **Báo lỗi**: một tệp ZIP đã che thông tin nhạy cảm cho issue trên GitHub. [Xử lý sự cố](troubleshooting.md#still-stuck)
 

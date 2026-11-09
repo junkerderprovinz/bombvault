@@ -58,7 +58,7 @@ Rövid katalógus arról, mit tud a BombVault. Minden sor arra az oldalra mutat,
 - **Visszaállítás-ellenőrzés** az első mentés után, és **Indítási teszt** egy elszigetelt másolatban. [Ellenőrzés lap](backups.md#verify-tab)
 - **Ütemezett ellenőrzések és próba-visszaállítások** a telephelyen kívüli másolatból. [DR-próbák](offsite-recovery.md#dr-drills)
 - **Méret mappánként**, és hogy miért volt lassú egy mentés. [Amit egy futás elmond](backups.md#run-notes)
-- **Értesítések**: webhook, Gotify, Matrix, e-mail, Apprise, Unraid és Healthchecks, heti összefoglalóval és késés-jelentéssel. [Értesítések](notifications.md)
+- **Értesítések**: csatornalista az Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, bármilyen webhook és Healthchecks számára, mindegyik saját szabállyal, heti összefoglalóval és késés-jelentéssel. [Értesítések](notifications.md)
 - **Prometheus**, egy Home Assistant eszköz, egy HTTP API és mDNS. [API és integrációk](api.md)
 - **Hibajelentés**: kitakart ZIP egy GitHub-hibajegyhez. [Hibaelhárítás](troubleshooting.md#still-stuck)
 

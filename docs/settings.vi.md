@@ -48,7 +48,7 @@ Thẻ **Phát trực tuyến**, giảm giới hạn tải lên khi Plex, Jellyfi
 
 ## Thông báo {#notifications}
 
-**Thông báo** với **Thông báo**, các bản tóm tắt, **Báo cáo bản sao lưu bị trễ**, **Thông báo Unraid** và **Tóm tắt hằng tuần**, **Kênh** với Webhook, Apprise, Matrix, Gotify và Email (SMTP), và **Healthchecks**. Xem [Thông báo](notifications.md).
+**Thông báo** với các bản tóm tắt, **Báo cáo bản sao lưu bị trễ** và **Tóm tắt hằng tuần**, và **Kênh**, một danh sách các kênh Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, webhook và Healthchecks, mỗi kênh có công tắc riêng, **Thông báo** và **Gửi thử**. Xem [Thông báo](notifications.md).
 
 ## Xác minh {#verify}
 

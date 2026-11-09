@@ -48,7 +48,7 @@ Kortet **Streaming**, som sænker upload-grænsen, mens Plex, Jellyfin eller Emb
 
 ## Notifikationer {#notifications}
 
-**Notifikationer** med **Underret**, opsummeringerne, **Meld forsinkede sikkerhedskopier**, **Unraid-notifikationer** og den **Ugentlige oversigt**, **Kanaler** med Webhook, Apprise, Matrix, Gotify og E-mail (SMTP) og **Healthchecks**. Se [Notifikationer](notifications.md).
+**Notifikationer** med opsummeringerne, **Meld forsinkede sikkerhedskopier** og den **Ugentlige oversigt**, og **Kanaler**, en liste over Unraid-, ntfy-, Gotify-, Discord-, Slack-, Matrix-, e-mail-, Apprise-, webhook- og Healthchecks-kanaler, hver med sin egen kontakt, **Underret** og **Send test**. Se [Notifikationer](notifications.md).
 
 ## Verificering {#verify}
 

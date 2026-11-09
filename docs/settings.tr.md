@@ -48,7 +48,7 @@ Plex, Jellyfin ya da Emby yayın yaparken yükleme sınırını düşüren **Yay
 
 ## Bildirimler {#notifications}
 
-**Bildir**, özetler, **Geciken yedekleri bildir**, **Unraid bildirimleri** ve **Haftalık özet** içeren **Bildirimler**, Webhook, Apprise, Matrix, Gotify ve E-posta (SMTP) içeren **Kanallar** ve **Healthchecks**. Bkz. [Bildirimler](notifications.md).
+Özetler, **Geciken yedekleri bildir** ve **Haftalık özet** içeren **Bildirimler**, bir de **Kanallar**: Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-posta, Apprise, webhook ve Healthchecks kanallarından oluşan, her birinin kendi anahtarı, **Bildir** ayarı ve **Test gönder** düğmesi olan bir liste. Bkz. [Bildirimler](notifications.md).
 
 ## Doğrulama {#verify}
 

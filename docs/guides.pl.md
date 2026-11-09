@@ -29,7 +29,7 @@ Każdy z nich prowadzi przez jedno prawdziwe zadanie od początku do końca, z w
 ## Bądź na bieżąco {#staying-informed}
 
 - [Gotify w telefonie](notifications.md#example-gotify): błędy dzwonią, a sukcesy przychodzą po cichu.
-- [ntfy jako webhook](notifications.md#example-ntfy): wiadomości bez konta.
+- [ntfy bez konta](notifications.md#example-ntfy): wiadomości do własnego tematu.
 
 ## Kilka serwerów {#several-servers}
 

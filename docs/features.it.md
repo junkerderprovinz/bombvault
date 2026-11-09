@@ -58,7 +58,7 @@ Un breve catalogo di ciò che BombVault sa fare. Ogni riga rimanda alla pagina c
 - **Verifica del ripristino** dopo il primo backup, e **Test di avvio** in una copia isolata. [Scheda Verifica](backups.md#verify-tab)
 - **Controlli pianificati e ripristini di prova** dalla copia off-site. [Prove DR](offsite-recovery.md#dr-drills)
 - **Dimensione per cartella**, e perché un backup è stato lento. [Cosa ti dice un'esecuzione](backups.md#run-notes)
-- **Notifiche**: webhook, Gotify, Matrix, email, Apprise, Unraid e Healthchecks, con un riepilogo settimanale e un rapporto sui ritardi. [Notifiche](notifications.md)
+- **Notifiche**: un elenco di canali per Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, qualsiasi webhook e Healthchecks, ognuno con la sua regola, con un riepilogo settimanale e un rapporto sui ritardi. [Notifiche](notifications.md)
 - **Prometheus**, un dispositivo Home Assistant, un'API HTTP e mDNS. [API e integrazioni](api.md)
 - **Segnala bug**: uno ZIP ripulito per una issue su GitHub. [Risoluzione dei problemi](troubleshooting.md#still-stuck)
 

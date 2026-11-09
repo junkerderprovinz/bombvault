@@ -29,7 +29,7 @@
 ## 状況を知らせてもらう {#staying-informed}
 
 - [スマートフォンで Gotify](notifications.md#example-gotify)：失敗は音で、成功は静かに届きます。
-- [Webhook として ntfy](notifications.md#example-ntfy)：アカウントなしでメッセージを受け取ります。
+- [アカウントなしで ntfy](notifications.md#example-ntfy)：自分専用のトピックにメッセージを受け取ります。
 
 ## 複数のサーバー {#several-servers}
 

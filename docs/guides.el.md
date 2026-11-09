@@ -29,7 +29,7 @@
 ## Ενημέρωση {#staying-informed}
 
 - [Gotify στο κινητό σας](notifications.md#example-gotify): οι αποτυχίες χτυπούν, οι επιτυχίες φτάνουν αθόρυβα.
-- [Το ntfy ως webhook](notifications.md#example-ntfy): μηνύματα χωρίς λογαριασμό.
+- [ntfy χωρίς λογαριασμό](notifications.md#example-ntfy): μηνύματα σε ένα δικό σας θέμα.
 
 ## Περισσότεροι διακομιστές {#several-servers}
 

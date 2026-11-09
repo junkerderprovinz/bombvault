@@ -58,7 +58,7 @@ Et kort katalog over, hvad BombVault kan. Hver linje linker til den side, der fo
 - **Gendannelsestjek** efter den første sikkerhedskopi og **Starttest** i en isoleret kopi. [Fanen Verificering](backups.md#verify-tab)
 - **Planlagte tjek og testgendannelser** fra off-site-kopien. [DR-test](offsite-recovery.md#dr-drills)
 - **Størrelse pr. mappe** og hvorfor en sikkerhedskopiering var langsom. [Hvad en kørsel fortæller dig](backups.md#run-notes)
-- **Notifikationer**: webhook, Gotify, Matrix, e-mail, Apprise, Unraid og Healthchecks, med en ugentlig oversigt og en rapport om forsinkelser. [Notifikationer](notifications.md)
+- **Notifikationer**: en liste over kanaler til Unraid, ntfy, Gotify, Discord, Slack, Matrix, e-mail, Apprise, enhver webhook og Healthchecks, hver med sin egen regel, med en ugentlig oversigt og en rapport om forsinkelser. [Notifikationer](notifications.md)
 - **Prometheus**, en Home Assistant-enhed, et HTTP-API og mDNS. [API og integrationer](api.md)
 - **Fejlrapport**: en redigeret ZIP til et GitHub-issue. [Fejlfinding](troubleshooting.md#still-stuck)
 

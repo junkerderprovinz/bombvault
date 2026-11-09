@@ -58,7 +58,7 @@
 - **Έλεγχος επαναφοράς** μετά το πρώτο αντίγραφο, και **Δοκιμή εκκίνησης** σε απομονωμένο αντίγραφο. [Καρτέλα Επαλήθευση](backups.md#verify-tab)
 - **Προγραμματισμένοι έλεγχοι και δοκιμαστικές επαναφορές** από το αντίγραφο εκτός τόπου. [Δοκιμές DR](offsite-recovery.md#dr-drills)
 - **Μέγεθος ανά φάκελο**, και γιατί ένα αντίγραφο ήταν αργό. [Τι σας λέει μια εκτέλεση](backups.md#run-notes)
-- **Ειδοποιήσεις**: webhook, Gotify, Matrix, email, Apprise, Unraid και Healthchecks, με εβδομαδιαία σύνοψη και αναφορά καθυστερήσεων. [Ειδοποιήσεις](notifications.md)
+- **Ειδοποιήσεις**: μια λίστα καναλιών για Unraid, ntfy, Gotify, Discord, Slack, Matrix, email, Apprise, οποιοδήποτε webhook και Healthchecks, το καθένα με τον δικό του κανόνα, με εβδομαδιαία σύνοψη και αναφορά καθυστερήσεων. [Ειδοποιήσεις](notifications.md)
 - **Prometheus**, μια συσκευή Home Assistant, ένα HTTP API και mDNS. [API και ενσωματώσεις](api.md)
 - **Αναφορά σφάλματος**: ένα ZIP με απόκρυψη ευαίσθητων στοιχείων για ένα issue στο GitHub. [Αντιμετώπιση προβλημάτων](troubleshooting.md#still-stuck)
 

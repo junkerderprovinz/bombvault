@@ -58,7 +58,7 @@ BombVault ができることの短い一覧です。各行から、その説明�
 - 最初のバックアップのあとの**復元チェック**と、隔離したコピーでの**起動テスト**。[検証タブ](backups.md#verify-tab)
 - オフサイトのコピーからの**スケジュールされたチェックとテスト復元**。[DR ドリル](offsite-recovery.md#dr-drills)
 - **フォルダー別のサイズ**と、バックアップが遅かった理由。[実行から分かること](backups.md#run-notes)
-- **通知**：Webhook、Gotify、Matrix、メール、Apprise、Unraid、Healthchecks。週次ダイジェストと遅延の報告つき。[通知](notifications.md)
+- **通知**：Unraid、ntfy、Gotify、Discord、Slack、Matrix、メール、Apprise、任意の Webhook、Healthchecks のチャンネル一覧。それぞれに独自の規則があり、週次ダイジェストと遅延の報告つき。[通知](notifications.md)
 - **Prometheus**、Home Assistant デバイス、HTTP API、mDNS。[API と連携](api.md)
 - **バグ報告**：GitHub の issue 用に情報を伏せた ZIP。[トラブルシューティング](troubleshooting.md#still-stuck)
 

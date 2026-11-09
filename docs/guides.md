@@ -29,7 +29,7 @@ Each of these walks through one real job from start to end, with names and numbe
 ## Staying informed {#staying-informed}
 
 - [Gotify on your phone](notifications.md#example-gotify): failures ring and successes arrive quietly.
-- [ntfy as a webhook](notifications.md#example-ntfy): messages without an account.
+- [ntfy without an account](notifications.md#example-ntfy): messages to a topic of your own.
 
 ## Several servers {#several-servers}
 

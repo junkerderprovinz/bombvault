@@ -187,16 +187,17 @@ După **Descoperă copii de rezervă** sau după Asistentul de urgență fără 
 
 ## Notificările nu ajung {#notifications-do-not-arrive}
 
-Începe cu **Trimite test** la **Setări, Notificări**. Rândul de sub card spune ce s-a întâmplat.
+Începe cu **Trimite test** pe canal, la **Setări, Notificări**. Rândul de sub canal spune ce s-a întâmplat.
 
-- **Nu se trimite nimic.** Verifică **Notifică**. Cu **Niciodată** nu pleacă niciun mesaj, doar pingurile unui URL Healthchecks, iar cu **Doar la eșec** o rulare reușită rămâne tăcută. Cu **Rezumă rulările programate** pornit, o rulare programată trimite un singur rezumat la sfârșit.
-- **O adresă nouă.** După ce schimbi serverul Matrix, Gotify sau al e-mailului, câmpul cere din nou tokenul sau parola, iar noua adresă se salvează abia după ce le scrii. BombVault nu trimite vechiul secret către un loc nou.
+- **Nu se trimite nimic.** Verifică dacă acel canal este pornit și ce are la **Notifică**. Cu **Niciodată** nu trimite nimic, iar cu **Doar la eșec** o rulare reușită rămâne tăcută. Cu **Rezumă rulările programate** pornit, o rulare programată trimite un singur rezumat la sfârșit.
+- **O adresă nouă.** După ce schimbi unde trimite un canal, de exemplu serverul Matrix, Gotify sau ntfy, ori gazda unui canal de e-mail, câmpul cere din nou tokenul sau parola, iar noua adresă se salvează abia după ce le scrii. BombVault nu trimite vechiul secret către un loc nou.
 - **Gotify** spune că serverul a refuzat tokenul aplicației: copiază-l din nou din aplicația din Gotify. **URL-ul serverului** este adresa de bază, fără `/message`.
-- **Webhook:** verifică dacă **Format Webhook** se potrivește serviciului. O adresă Discord cere **Discord**, iar ntfy cere **ntfy**.
-- **Notificările Unraid** merg prin conexiunea SSH a gazdei, așa că testeaz-o mai întâi la **Setări, Integrări**. Pe altă platformă rămân oprite, iar cardul spune asta.
+- **Discord, Slack și ntfy** sunt canale separate. O adresă Discord într-un canal **Webhook** primește JSON pe care Discord nu îl înțelege, așa că adaugă pentru ea un canal **Discord**.
+- **Webhook:** un substituent pe care BombVault nu îl cunoaște rămâne cum l-ai scris, așa că verifică ortografia, de exemplu `%%title%%`. Pentru un conținut JSON, lasă antetul `Content-Type` pe `application/json`, ca valorile să fie codificate ca JSON.
+- **Notificările Unraid** merg prin conexiunea SSH a gazdei, așa că testeaz-o mai întâi la **Setări, Integrări**. Pe altă platformă rămân oprite, iar canalul spune asta.
 - **Un e-mail de notificare nu vine niciodată.** Verifică **Criptare** față de port, de obicei **STARTTLS** pe 587 sau **TLS (implicit)** pe 465.
 
-Pingurile Healthchecks nu depind de nimic din toate acestea, vezi [Healthchecks](notifications.md#healthchecks).
+Pingurile Healthchecks nu depind de **Notifică**, vezi [Healthchecks](notifications.md#healthchecks).
 
 ## Aplicația Android nu poate deschide un server {#android-cannot-open}
 

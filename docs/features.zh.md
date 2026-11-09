@@ -58,7 +58,7 @@ BombVault 功能的简短目录。每一行都链接到讲解它的页面。
 - 第一次备份之后的**恢复检查**，以及在隔离副本中的**启动测试**。[验证标签页](backups.md#verify-tab)
 - 来自异地副本的**计划检查和测试恢复**。[DR 演练](offsite-recovery.md#dr-drills)
 - **按文件夹统计大小**，以及备份为什么慢。[运行会告诉你什么](backups.md#run-notes)
-- **通知**：webhook、Gotify、Matrix、邮件、Apprise、Unraid 和 Healthchecks，带每周摘要和逾期报告。[通知](notifications.md)
+- **通知**：一组渠道，可用 Unraid、ntfy、Gotify、Discord、Slack、Matrix、邮件、Apprise、任意 webhook 和 Healthchecks，每个渠道有自己的规则，带每周摘要和逾期报告。[通知](notifications.md)
 - **Prometheus**、Home Assistant 设备、HTTP API 和 mDNS。[API 与集成](api.md)
 - **错误报告**：去除敏感信息的 ZIP，用于 GitHub issue。[故障排除](troubleshooting.md#still-stuck)
 
