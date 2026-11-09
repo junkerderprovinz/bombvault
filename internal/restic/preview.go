@@ -42,7 +42,7 @@ type PreviewItem struct {
 // run stats the live files and never reads them. It takes no lock, like
 // every other read of a repository that may be in use.
 func RestorePreviewArgs(repo string, st PreviewStep, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "restore", "--dry-run", "--delete", "--no-lock")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)

@@ -192,7 +192,7 @@ func (s *Service) planMove(ctx context.Context, targetID, destID string) (movePl
 		return movePlan{}, errNestedLocation
 	}
 	arrived := t
-	arrived.Repo, arrived.CredsRef, arrived.StorageClass = to, d.CredsRef, d.StorageClass
+	arrived.Repo, arrived.CredsRef, arrived.StorageClass, arrived.Connections = to, d.CredsRef, d.StorageClass, d.Connections
 	plan.srcMode, plan.mode = s.offsiteModeForTarget(settings, t), s.offsiteModeForTarget(settings, arrived)
 	if err := plan.joinSignIns(); err != nil {
 		return movePlan{}, err

@@ -2423,7 +2423,7 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // target takes the class of its destination, whose empty class means the
 // provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
-	mode := s.withRowStorageClass(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
+	mode := s.withRowBackend(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
@@ -2431,12 +2431,13 @@ func (s *Service) offsiteModeForTarget(settings store.Settings, target store.Off
 	return mode
 }
 
-// withRowStorageClass puts a row's own storage class on mode, after its
-// credentials. A row that follows a storage location carries that location's
-// class, where empty means the provider's default, so it beats the class of
-// the sign-in and of the default sign-in. A direct repository follows the
-// location its target follows.
-func (s *Service) withRowStorageClass(mode restic.Mode, t store.OffsiteTarget) restic.Mode {
+// withRowBackend puts a row's own storage class and connections on mode,
+// after its credentials. A row that follows a storage location carries that
+// location's class, where empty means the provider's default, so it beats the
+// class of the sign-in and of the default sign-in. A direct repository follows
+// the location its target follows.
+func (s *Service) withRowBackend(mode restic.Mode, t store.OffsiteTarget) restic.Mode {
+	mode.Connections = t.Connections
 	if t.StorageClass != "" || t.DestinationID != "" || s.targetFollowsLocation(t.CompanionOf) {
 		mode.StorageClass = t.StorageClass
 	}

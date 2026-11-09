@@ -40,6 +40,7 @@ type destinationView struct {
 	Compression   string              `json:"compression"`
 	LimitUpload   int                 `json:"limitUpload"`
 	LimitDownload int                 `json:"limitDownload"`
+	Connections   int                 `json:"connections"`
 	Enabled       bool                `json:"enabled"`
 	// OffPremises counts the destination as a site of its own.
 	OffPremises bool `json:"offPremises"`
@@ -84,7 +85,8 @@ func (s *Service) destinationView(d store.OffsiteTarget) (destinationView, error
 		CreatedAt: d.CreatedAt, Domains: domains, Adoptable: adoptable,
 		Retention: targetKeep(d), Compression: normalizedCompression(d.Compression),
 		LimitUpload: d.LimitUpload, LimitDownload: d.LimitDownload,
-		Enabled: d.Enabled, OffPremises: d.OffPremises,
+		Connections: d.Connections,
+		Enabled:     d.Enabled, OffPremises: d.OffPremises,
 	}, nil
 }
 
@@ -1096,6 +1098,7 @@ type destinationEdit struct {
 	Compression   *string              `json:"compression"`
 	LimitUpload   *int                 `json:"limitUpload"`
 	LimitDownload *int                 `json:"limitDownload"`
+	Connections   *int                 `json:"connections"`
 	Enabled       *bool                `json:"enabled"`
 	OffPremises   *bool                `json:"offPremises"`
 }
@@ -1119,6 +1122,12 @@ func (e destinationEdit) apply(d *store.OffsiteTarget) error {
 	}
 	if e.LimitDownload != nil {
 		d.LimitDownload = max(0, *e.LimitDownload)
+	}
+	if e.Connections != nil {
+		if err := restic.CheckConnections(*e.Connections); err != nil {
+			return err
+		}
+		d.Connections = *e.Connections
 	}
 	if e.Enabled != nil {
 		d.Enabled = *e.Enabled

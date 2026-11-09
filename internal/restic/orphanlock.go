@@ -87,7 +87,7 @@ func (r Restic) removeOrphanLocks(ctx context.Context, repo string, m Mode, star
 
 // lockArgs reads the lock list without taking a lock of its own.
 func lockArgs(repo string, m Mode, cmd ...string) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "--no-lock")
 	args = append(args, cmd...)
 	if !m.Encrypted {

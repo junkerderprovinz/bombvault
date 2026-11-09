@@ -28,7 +28,7 @@ func keptDestination(t *testing.T, r *Repo, name string, keep RetentionKeep) Off
 
 func TestTheUpgradeBringsEveryPlaceOnBalancedAlong(t *testing.T) {
 	db := OpenMem(t)
-	bootAs(t, db, balancedKeepMigration-1)
+	bootForTodaysCode(t, db, balancedKeepMigration-1)
 	r := New(db)
 	box := keptDestination(t, r, "Box", oldBalanced)
 	vault := keptDestination(t, r, "Vault", RetentionKeep{KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 6, KeepYearly: 3})
@@ -102,7 +102,7 @@ func TestTheUpgradeBringsEveryPlaceOnBalancedAlong(t *testing.T) {
 
 func TestTheUpgradeLeavesAnInstallWithoutBalancedAlone(t *testing.T) {
 	db := OpenMem(t)
-	bootAs(t, db, balancedKeepMigration-1)
+	bootForTodaysCode(t, db, balancedKeepMigration-1)
 
 	if err := Migrate(db); err != nil {
 		t.Fatalf("Migrate: %v", err)

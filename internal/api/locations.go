@@ -62,8 +62,11 @@ type storageLocation struct {
 	Compression   string               `json:"compression,omitempty"`
 	LimitUpload   *int                 `json:"limitUpload,omitempty"`
 	LimitDownload *int                 `json:"limitDownload,omitempty"`
-	Protection    locationProtection   `json:"protection"`
-	Capacity      locationCapacity     `json:"capacity"`
+	// Connections is how many connections restic opens to the location, left
+	// out where its backend has no such setting.
+	Connections *int               `json:"connections,omitempty"`
+	Protection  locationProtection `json:"protection"`
+	Capacity    locationCapacity   `json:"capacity"`
 	// Gone says a remote repository here that held backups was found empty,
 	// and nothing is written there until the user starts over.
 	Gone bool `json:"gone,omitempty"`
@@ -457,6 +460,14 @@ func pathRoot(loc string) string {
 	return loc[:strings.LastIndexByte(loc, ':')+1]
 }
 
+// connectionsOf is the row's connections where its backend takes the setting.
+func connectionsOf(t store.OffsiteTarget) *int {
+	if !restic.TakesConnections(strings.TrimSpace(t.Repo)) {
+		return nil
+	}
+	return &t.Connections
+}
+
 // backendOf names what restic talks to at loc.
 func backendOf(loc string) string {
 	if !restic.IsRemoteRepo(loc) {
@@ -556,7 +567,8 @@ func (b *locationBuilder) repoLocation(r store.OffsiteTarget, domains []string) 
 		Enabled: r.Enabled, OffPremises: r.OffPremises,
 		Retention: &keep, Compression: normalizedCompression(r.Compression),
 		LimitUpload: &r.LimitUpload, LimitDownload: &r.LimitDownload,
-		Protection: locationProtection{Immutable: r.Immutable, Testable: backendOf(r.Repo) == "rest"},
+		Connections: connectionsOf(r),
+		Protection:  locationProtection{Immutable: r.Immutable, Testable: backendOf(r.Repo) == "rest"},
 	}
 	for _, domain := range domains {
 		loc.Sections = append(loc.Sections, locationSection{
@@ -584,7 +596,8 @@ func (b *locationBuilder) destinationLocation(d store.OffsiteTarget) storageLoca
 		Enabled: d.Enabled, OffPremises: d.OffPremises,
 		Retention: &keep, Compression: normalizedCompression(d.Compression),
 		LimitUpload: &d.LimitUpload, LimitDownload: &d.LimitDownload,
-		Protection: locationProtection{Immutable: d.Immutable, Testable: backendOf(d.Repo) == "rest", RiskAccepted: d.DeleteRiskAccepted},
+		Connections: connectionsOf(d),
+		Protection:  locationProtection{Immutable: d.Immutable, Testable: backendOf(d.Repo) == "rest", RiskAccepted: d.DeleteRiskAccepted},
 	}
 	if repo, err := b.s.resolveRepo(d.Repo); err == nil {
 		loc.volumes = []string{repo}
@@ -630,7 +643,8 @@ func (b *locationBuilder) targetLocation(t store.OffsiteTarget) storageLocation 
 		Enabled: t.Enabled, OffPremises: targetOffPremises(t, nil),
 		Retention: &keep, Compression: normalizedCompression(t.Compression),
 		LimitUpload: &t.LimitUpload, LimitDownload: &t.LimitDownload,
-		Protection: locationProtection{Immutable: t.Immutable, Testable: backendOf(t.Repo) == "rest", RiskAccepted: t.DeleteRiskAccepted},
+		Connections: connectionsOf(t),
+		Protection:  locationProtection{Immutable: t.Immutable, Testable: backendOf(t.Repo) == "rest", RiskAccepted: t.DeleteRiskAccepted},
 	}
 	b.addTarget(&loc, t)
 	loc.Protection.LastTamper = foldTamper(loc.Sections)

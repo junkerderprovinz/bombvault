@@ -736,6 +736,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 		if _, err := restic.ParseCompression(t.Compression); err != nil {
 			return rowProblem("import-row-compression", importPartTarget, i, nil, "off-site target #%d: %s", i+1, err)
 		}
+		if err := restic.CheckConnections(t.Connections); err != nil {
+			return rowProblem("import-row-connections", importPartTarget, i, nil, "off-site target #%d: %s", i+1, err)
+		}
 		if msg := validateOffsiteTargetInput(t); msg != "" {
 			return rowProblem("import-row-invalid", importPartTarget, i, nil, "off-site target #%d: %s", i+1, msg)
 		}
@@ -771,6 +774,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
 			return rowProblem("import-row-compression", importPartRepository, i, nil, "repository #%d (%s): %s", i+1, tv.Name, err)
 		}
+		if err := restic.CheckConnections(tv.Connections); err != nil {
+			return rowProblem("import-row-connections", importPartRepository, i, nil, "repository #%d (%s): %s", i+1, tv.Name, err)
+		}
 	}
 	for i, tv := range exp.Destinations {
 		if strings.TrimSpace(tv.Name) == "" {
@@ -784,6 +790,9 @@ func validateExport(exp settingsExport, mountRoot, sourceRoot string) error {
 		}
 		if _, err := restic.ParseCompression(tv.Compression); err != nil {
 			return rowProblem("import-row-compression", importPartDestination, i, nil, "destination #%d (%s): %s", i+1, tv.Name, err)
+		}
+		if err := restic.CheckConnections(tv.Connections); err != nil {
+			return rowProblem("import-row-connections", importPartDestination, i, nil, "destination #%d (%s): %s", i+1, tv.Name, err)
 		}
 	}
 	// Every schedule cadence in the imported settings must parse (same grammar the
@@ -1294,7 +1303,7 @@ func (h *Handler) importDestinations(views []offsiteTargetView) error {
 			d = store.OffsiteTarget{Enabled: true, OffPremises: true}
 		}
 		d.ID, d.Name, d.Repo = id, strings.TrimSpace(v.Name), importedLocation(old.Repo, strings.TrimSpace(v.Repo))
-		d.CredsRef, d.StorageClass, d.Immutable = v.CredsRef, strings.ToUpper(strings.TrimSpace(v.StorageClass)), v.Immutable
+		d.CredsRef, d.StorageClass, d.Connections, d.Immutable = v.CredsRef, strings.ToUpper(strings.TrimSpace(v.StorageClass)), v.Connections, v.Immutable
 		d.Provider, d.CreatedAt = v.Provider, v.CreatedAt
 		ds[i] = d
 	}

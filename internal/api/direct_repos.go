@@ -700,6 +700,7 @@ func lockedFieldsSet(b namedRepoBody) []string {
 	}
 	add("credsRef", b.CredsRef != nil)
 	add("storageClass", b.StorageClass != nil)
+	add("connections", b.Connections != nil)
 	add("limitUpload", b.LimitUpload != nil)
 	add("limitDownload", b.LimitDownload != nil)
 	add("immutable", b.Immutable != nil)
@@ -723,6 +724,7 @@ func mirroredFieldsChanged(b namedRepoBody, row store.OffsiteTarget) []string {
 	add("repo", differs(b.Repo, row.Repo))
 	add("credsRef", differs(b.CredsRef, row.CredsRef))
 	add("storageClass", b.StorageClass != nil && !strings.EqualFold(strings.TrimSpace(*b.StorageClass), row.StorageClass))
+	add("connections", b.Connections != nil && *b.Connections != row.Connections)
 	add("limitUpload", b.LimitUpload != nil && *b.LimitUpload != row.LimitUpload)
 	add("limitDownload", b.LimitDownload != nil && *b.LimitDownload != row.LimitDownload)
 	add("immutable", b.Immutable != nil && *b.Immutable != row.Immutable)
