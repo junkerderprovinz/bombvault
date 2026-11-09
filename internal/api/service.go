@@ -2428,6 +2428,7 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
 	mode := s.withRowBackend(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
+	mode.Sharing = s.sharingAt(target.Repo)
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
