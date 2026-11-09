@@ -1,6 +1,6 @@
 module github.com/junkerderprovinz/bombvault
 
-go 1.26.0
+go 1.26.10
 
 require (
 	filippo.io/age v1.3.2
@@ -10,6 +10,7 @@ require (
 	github.com/docker/go-connections v0.8.2
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-webauthn/webauthn v0.18.2
+	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261109190927-566ab90c3be7
 	github.com/klauspost/compress v1.20.4
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/pkg/sftp v1.13.12
@@ -54,6 +55,7 @@ require (
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect
@@ -69,6 +71,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.45.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 	modernc.org/libc v1.80.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
