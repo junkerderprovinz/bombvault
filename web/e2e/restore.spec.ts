@@ -570,7 +570,7 @@ test("the tiles and the search narrow the entries", async ({ page }, testInfo) =
   await expect(entries(page).getByRole("button")).toHaveCount(1);
   await entries(page).getByRole("button", { name: /^Fotos/ }).click();
   await expect(page.getByRole("heading", { level: 2, name: "Fotos" })).toBeAttached();
-  await page.getByRole("searchbox").fill("gibt es nicht");
+  await page.getByRole("searchbox", { name: "Was willst du zurückholen?" }).fill("gibt es nicht");
   await expect(page.getByText("Kein Eintrag passt.")).toBeVisible();
 });
 

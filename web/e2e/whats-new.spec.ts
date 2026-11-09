@@ -289,7 +289,7 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const fromNavigation = page.locator(`[data-new-dot="way"][aria-label*="${TILES_NEWS}"][aria-label*="${WHERE_NEWS}"]`);
   await expectOn(fromNavigation, restore);
   // One change to a line.
-  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(7);
+  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(9);
   await fromNavigation.hover();
   await picture(page, `way-bubble-${testInfo.project.name}`);
 
