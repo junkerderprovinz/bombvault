@@ -4715,6 +4715,76 @@ export function importAppdataBackup(path: string): Promise<OkEnvelope & { starte
   return fetchJSON("/api/import/appdata-backup", { method: "POST", body: JSON.stringify({ path }) });
 }
 
+/** Where the settings of another backup tool come from: Duplicati exports
+ *  read in the browser, or a Duplicacy folder under the host mount. */
+export type ToolImportInput =
+  | { tool: "duplicati"; files: { name: string; text: string }[] }
+  | { tool: "duplicacy"; path: string };
+
+export interface ToolImportNote {
+  code: string;
+  detail?: string;
+}
+
+export interface ToolImportSet {
+  key: string;
+  name: string;
+  /** The folder as the other tool named it. */
+  source: string;
+  /** Where it lies under the host mount, empty when it was not found. */
+  path: string;
+  /** A folder set that backs the same folder up already. */
+  taken?: string;
+  excludes: string[];
+}
+
+export interface ToolImportJob {
+  key: string;
+  tool: "duplicati" | "duplicacy" | "duplicacy-web";
+  name: string;
+  enabled: boolean;
+  sets: ToolImportSet[];
+  /** A BombVault cadence, empty when the sets follow the Folders schedule. */
+  schedule: string;
+  dest: {
+    kind: "" | "local" | "s3" | "b2" | "sftp" | "rclone";
+    location: string;
+    b2Path?: string;
+    signIn: "carried" | "needed" | "none";
+    existing?: string;
+  };
+  notes: ToolImportNote[];
+}
+
+export interface ToolImportChoice {
+  key: string;
+  sets: { key: string; path?: string }[];
+  /** Replaces the proposed location; the empty string leaves it out. */
+  location?: string;
+  keyId?: string;
+  secret?: string;
+}
+
+export interface ToolImportResult {
+  key: string;
+  sets: string[];
+  location: string;
+  error?: string;
+}
+
+/** POST /api/import/tools/preview: what an import would make of each job. */
+export function previewToolImport(input: ToolImportInput): Promise<OkEnvelope & { jobs?: ToolImportJob[] }> {
+  return fetchJSON("/api/import/tools/preview", { method: "POST", body: JSON.stringify(input) });
+}
+
+/** POST /api/import/tools: creates the chosen sets, locations and sign-ins. */
+export function applyToolImport(
+  input: ToolImportInput,
+  jobs: ToolImportChoice[]
+): Promise<OkEnvelope & { jobs?: ToolImportResult[] }> {
+  return fetchJSON("/api/import/tools", { method: "POST", body: JSON.stringify({ ...input, jobs }) });
+}
+
 /** POST /api/flash/plugins/restore: writes one plugin back into the live flash. */
 export function restoreFlashPlugin(
   snapshot: string,
