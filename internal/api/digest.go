@@ -181,27 +181,7 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	if err != nil {
 		return digestStats{}, fmt.Errorf("read settings: %w", err)
 	}
-	for _, domain := range offsiteConfigDomains {
-		if s.offsiteRepoFor(domain, settings) == "" {
-			continue
-		}
-		line := digestOffsiteLine{Domain: domain}
-		// The oldest copy across the section's locations, as the status reads it.
-		if at, found := s.aggregateReplicationCurrency(domain); found {
-			line.LastOK = at
-			// Without its own off-site schedule a domain replicates after each
-			// local backup, including the Backup Everything pass. A domain covered
-			// only by that pass would otherwise have period 0 and never go stale.
-			period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings))
-			if period == 0 {
-				period, _ = s.domainWindow(domain, digestBackupScheduleFor(domain, settings), settings)
-			}
-			if period > 0 && stats.Now-line.LastOK > 2*period {
-				line.Stale = true
-			}
-		}
-		stats.Offsite = append(stats.Offsite, line)
-	}
+	stats.Offsite = s.offsiteCurrency(settings, stats.Now)
 	stats.Replicas, stats.ReplicasBehind = s.zfsReplicaDigestLines(stats.Now, settings)
 	for _, d := range s.statusDomains(settings) {
 		last, lErr := s.lastDomainSuccess(d)
@@ -223,6 +203,34 @@ func (s *Service) collectDigestStats(now time.Time) (digestStats, error) {
 	stats.AnomaliesCritical, stats.AnomaliesWarning = counts["critical"], counts["warning"]
 	stats.AnomaliesHeld = s.anomalies.summary().RetentionHeld
 	return stats, nil
+}
+
+// offsiteCurrency is the last successful copy of each section with an off-site
+// repository, as of now in unix seconds.
+func (s *Service) offsiteCurrency(settings store.Settings, now int64) []digestOffsiteLine {
+	var out []digestOffsiteLine
+	for _, domain := range offsiteConfigDomains {
+		if s.offsiteRepoFor(domain, settings) == "" {
+			continue
+		}
+		line := digestOffsiteLine{Domain: domain}
+		// The oldest copy across the section's locations, as the status reads it.
+		if at, found := s.aggregateReplicationCurrency(domain); found {
+			line.LastOK = at
+			// Without its own off-site schedule a domain replicates after each
+			// local backup, including the Backup Everything pass. A domain covered
+			// only by that pass would otherwise have period 0 and never go stale.
+			period := cadencePeriodSeconds(s.offsiteScheduleFor(domain, settings))
+			if period == 0 {
+				period, _ = s.domainWindow(domain, digestBackupScheduleFor(domain, settings), settings)
+			}
+			if period > 0 && now-line.LastOK > 2*period {
+				line.Stale = true
+			}
+		}
+		out = append(out, line)
+	}
+	return out
 }
 
 // digestAge renders the age of at relative to now, both unix seconds, as

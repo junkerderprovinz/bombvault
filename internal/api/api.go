@@ -169,6 +169,9 @@ func (h *Handler) Router() http.Handler {
 	// and is allow-listed in authGate. The token routes below manage those
 	// tokens and stay session-protected.
 	h.mountAPIV1(mux)
+	// The fortress status gates itself the same way, on an API token or a
+	// signed-in browser, and is allow-listed in authGate too.
+	h.registerFortress(mux)
 	mux.HandleFunc("GET /api/tokens", h.handleListAPITokens)
 	mux.HandleFunc("POST /api/tokens", h.handleCreateAPIToken)
 	mux.HandleFunc("PATCH /api/tokens/{id}", h.handleUpdateMCPKey)

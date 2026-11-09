@@ -2060,3 +2060,30 @@ func scanSizes(rows *sql.Rows, label string) (map[string]int64, error) {
 	}
 	return out, rows.Err()
 }
+
+// FinishedRunsAfter returns up to limit finished runs that ended after the run
+// that finished at at with the given id, ordered by end and then id, so a
+// reader can page through the history with the last run it got.
+func (r *Repo) FinishedRunsAfter(at int64, id string, limit int) ([]Run, error) {
+	rows, err := r.db.Query(`
+		SELECT `+runCols+`
+		FROM runs
+		WHERE finished_at IS NOT NULL AND status != 'running'
+		  AND (finished_at > ? OR (finished_at = ? AND id > ?))
+		ORDER BY finished_at, id
+		LIMIT ?`, at, at, id, limit)
+	if err != nil {
+		return nil, fmt.Errorf("FinishedRunsAfter: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+
+	var out []Run
+	for rows.Next() {
+		run, err := scanRun(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}

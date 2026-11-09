@@ -20,10 +20,11 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// routeBuilders are the functions that register routes from a table rather
-// than a literal: the public API, which its own tokens gate, and the routes
-// members call over the group channel, which never pass authGate.
-var routeBuilders = []string{"mountAPIV1", "peerMux"}
+// routeBuilders are the functions that register routes from a table or a
+// constant of another package: the public API and the fortress status, which
+// gate themselves on their own tokens, and the routes members call over the
+// group channel, which never pass authGate.
+var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
 // its source.

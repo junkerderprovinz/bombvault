@@ -29,6 +29,7 @@ import (
 	"unicode/utf8"
 
 	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
+	kitstatus "github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
 	"github.com/junkerderprovinz/bombvault/internal/backup"
@@ -5808,6 +5809,9 @@ func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 //     It is self-gated on its own keys and answers 404 while none exists, so it
 //     is never open. The key management routes under /api/mcp stay
 //     session-protected.)
+//   - the fortress status and log  (other apps and dashboards read them.
+//     authorizeFortress demands an API token or a signed-in browser, with or
+//     without a login password.)
 //   - everything under /api/v1/  (the public API for scripts and home
 //     automation. Every route but the OpenAPI description demands an API token
 //     inside serveAPIV1, with or without a login password. The token routes
@@ -5927,7 +5931,7 @@ func authGatePublicPath(path string) bool {
 		"/api/group/call", relayConnectPath,
 		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
 		"/api/auth/reset", "/api/auth/reset/finish",
-		mcpEndpointPath,
+		mcpEndpointPath, kitstatus.StatusPath, kitstatus.LogPath,
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
 	}
