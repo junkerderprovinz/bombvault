@@ -3723,6 +3723,24 @@ WHERE last_check_ok = 0 AND (
 		alreadySatisfied: columnPresent("offsite_targets", "connections"),
 		sql:              `ALTER TABLE offsite_targets ADD COLUMN connections INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		version: sharedReposMigration,
+		name:    "shared_repos",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repos (
+  id         TEXT PRIMARY KEY,
+  repo       TEXT NOT NULL UNIQUE,
+  owner      TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS shared_repo_members (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  host           TEXT NOT NULL,
+  instance_id    TEXT NOT NULL,
+  name           TEXT NOT NULL DEFAULT '',
+  position       INTEGER NOT NULL,
+  PRIMARY KEY (shared_repo_id, host)
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4329,6 +4347,10 @@ const staleEstablishedMigration = 800
 
 // connectionsMigration numbers the connections a storage location allows.
 const connectionsMigration = 830
+
+// sharedReposMigration numbers the repositories several servers of a group
+// back up into.
+const sharedReposMigration = 840
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780
