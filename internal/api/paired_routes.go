@@ -51,6 +51,7 @@ var pairedRoutes = map[string]bool{
 	"GET /api/items/{kind}/{key}":                 true,
 	"GET /api/items/{domain}/{name}/timeline":     true,
 	"GET /api/items/{domain}/{name}/diff":         true,
+	"GET /api/search/files":                       true,
 	"GET /api/containers":                         true,
 	"GET /api/containers/{name}":                  true,
 	"GET /api/containers/backup-order":            true,

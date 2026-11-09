@@ -6000,6 +6000,11 @@ func (f *fakeResticEngine) LsStreamNoLock(_ context.Context, _, _ string, _ rest
 	return nil
 }
 
+// Find finds nothing. The file search is tested on the placement fixture.
+func (f *fakeResticEngine) Find(context.Context, string, []string, string, restic.Mode, func(string, []restic.FoundFile)) error {
+	return nil
+}
+
 func (f *fakeResticEngine) DiffStream(_ context.Context, _, snap1, snap2 string, _ restic.Mode, onChange func(restic.DiffChange)) (restic.DiffResult, error) {
 	f.diffCalls++
 	f.diffPairs = append(f.diffPairs, snap1+"->"+snap2)

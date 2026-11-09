@@ -307,6 +307,11 @@ func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]r
 	if err != nil {
 		return nil, err
 	}
+	return s.ownedAmong(it, all)
+}
+
+// ownedAmong keeps the snapshots of one listing that the item owns.
+func (s *Service) ownedAmong(it timelineItem, all []restic.Snapshot) ([]restic.Snapshot, error) {
 	if it.zfsRoot != "" {
 		var own []restic.Snapshot
 		for _, snap := range all {
