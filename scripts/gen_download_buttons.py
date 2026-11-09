@@ -148,7 +148,7 @@ KINDS = {
     "firefox":          (3, "firefox-browser", "#ff7139", "#1b1b1b", "Firefox", "Add-on", "Install the add-on for Firefox"),
     # ParleyPort's dark is the README badges' ground. The grey is the widget
     # logo's darker half, since a one-ink mark cannot carry its colours.
-    "parleyport":       (COMPANIONS, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for KnightLoader and BombVault"),
+    "parleyport":       (COMPANIONS, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for apps that pair their instances"),
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
