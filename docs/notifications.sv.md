@@ -40,16 +40,16 @@ Varje kanal skickar på egen hand med sin egen tidsgräns, så en värd som aldr
 | **Matrix** | **Homeserver-URL**, **Åtkomsttoken**, **Rums-ID** | Kontot bakom token måste vara med i rummet. |
 | **E-post (SMTP)** | **SMTP-värd**, **Port**, **Kryptering**, **Användarnamn**, **Lösenord**, **Avsändaradress**, **Mottagaradress** | **Kryptering** är **STARTTLS**, **TLS (implicit)** eller **None**. |
 | **Apprise** | **Apprise API-URL**, **Taggar (valfritt)**, **Apprise-adresser (valfritt)** | Peka den på `/notify/<key>`-slutpunkten i din Apprise API-container för att nå dess 100+ tjänster, och taggar väljer en delmängd av den nyckelns mål. Eller lista Apprise-adresser, en per rad, till exempel `tgram://` för Telegram eller `pover://` för Pushover, och låt API-URL:en sluta på `/notify` utan nyckel. |
-| **Webhook** | **Webhook-URL**, **Metod**, **Rubriker**, **Innehåll** | En begäran som du formar själv, se [Webhook](#webhook). |
+| **Webhook** | **Webhook-URL**, **Metod**, **HTTP-huvuden**, **Innehåll** | En begäran som du formar själv, se [Webhook](#webhook). |
 | **Healthchecks** | **Ping-URL** | Se [Healthchecks](#healthchecks). |
 
-Hemligheter som tokens, SMTP-lösenordet och värdena i webhook-rubriker lagras krypterade, och servern lämnar aldrig tillbaka dem till sidan. Under en sparad hemlighet står det i fältet **Sparad. Lämna fältet tomt för att behålla den.** När du ändrar vart en kanal skickar, går den gamla hemligheten inte till det nya stället: fältet säger **Den nya adressen sparas när du anger detta igen.**, och den nya adressen sparas så fort du skrivit den.
+Hemligheter som tokens, SMTP-lösenordet och värdena i webhookens HTTP-huvuden lagras krypterade, och servern lämnar aldrig tillbaka dem till sidan. Under en sparad hemlighet står det i fältet **Sparad. Lämna fältet tomt för att behålla den.** När du ändrar vart en kanal skickar, går den gamla hemligheten inte till det nya stället: fältet säger **Den nya adressen sparas när du anger detta igen.**, och den nya adressen sparas så fort du skrivit den.
 
 Inställningar från en version före kanallistan förs över vid första starten, och inget går förlorat. Varje kanal du hade fyllt i blir en egen post med det val under **Avisera** som du hade. En webhook inställd på formatet Discord, Slack, Gotify eller ntfy blir en kanal av den sorten, och en Generic JSON-webhook fortsätter att posta `title`, `message` och `ok` genom sitt **Innehåll**. Unraid-omkopplaren blir en Unraid-kanal, och Healthchecks-URL:en med sina undantag blir en Healthchecks-kanal.
 
 ### Webhook {#webhook}
 
-En **Webhook**-kanal skickar en HTTP-begäran till valfri adress. **Metod** är GET, POST eller PUT. **Lägg till rubrik** lägger till en rad under **Rubriker**, och rubrikernas värden sparas som hemligheter, så en `Authorization`-rubrik är säker där. **Innehåll** skickas precis som du skriver det, med de här platshållarna ifyllda:
+En **Webhook**-kanal skickar en HTTP-begäran till valfri adress. **Metod** är GET, POST eller PUT. **Lägg till HTTP-huvud** lägger till en rad under **HTTP-huvuden**, och deras värden sparas som hemligheter, så ett `Authorization`-huvud är säkert där. **Innehåll** skickas precis som du skriver det, med de här platshållarna ifyllda:
 
 | Platshållare | Blir |
 |---|---|
@@ -64,7 +64,7 @@ En **Webhook**-kanal skickar en HTTP-begäran till valfri adress. **Metod** är 
 | `%%time%%` | tiden i UTC, till exempel `2026-11-09T03:00:00Z` |
 | `%%source%%` | `BombVault` |
 
-Platshållare fungerar även i adressen och i rubrikvärden, och varje värde escapas efter var det står: som JSON när rubriken `Content-Type` säger JSON, och som frågevärde i adressen. En ny webhook börjar med den rubriken och postar `{"title":"%%title%%","message":"%%body%%","ok":%%ok%%}`. Ett namn som BombVault inte känner till står kvar som det är skrivet, så ett stavfel syns i meddelandet. Lämna **Innehåll** tomt för att inte skicka något innehåll.
+Platshållare fungerar även i adressen och i värdena för HTTP-huvuden, och varje värde escapas efter var det står: som JSON när HTTP-huvudet `Content-Type` säger JSON, och som frågevärde i adressen. En ny webhook börjar med det HTTP-huvudet och postar `{"title":"%%title%%","message":"%%body%%","ok":%%ok%%}`. Ett namn som BombVault inte känner till står kvar som det är skrivet, så ett stavfel syns i meddelandet. Lämna **Innehåll** tomt för att inte skicka något innehåll.
 
 ## Healthchecks {#healthchecks}
 
@@ -96,7 +96,7 @@ ntfy behöver inget konto för ett publikt ämne. Välj ett ämnesnamn som är s
 2. Ange ämnets adress som **Ämnes-URL**, till exempel `https://ntfy.sh/bombvault-tower-7f3k`, eller ett ämne på din egen ntfy-server. Lämna **Åtkomsttoken (valfritt)** tomt för ett publikt ämne.
 3. Prenumerera på samma ämne i ntfy-appen, slå på kanalen och tryck på **Skicka test**.
 
-BombVault postar meddelandet som kroppen med titeln i rubriken `Title`. Ett fel går ut med hög prioritet och taggen `warning`, så det syns tydligt i appen, och en VM som blir kvar fryst går ut som brådskande.
+BombVault postar meddelandet som kroppen med titeln i HTTP-huvudet `Title`. Ett fel går ut med hög prioritet och taggen `warning`, så det syns tydligt i appen, och en VM som blir kvar fryst går ut som brådskande.
 
 ## När meddelanden inte kommer fram {#troubleshooting}
 

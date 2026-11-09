@@ -1080,7 +1080,7 @@ const bg: Partial<Translations> = {
   "notify.ntfyToken": "Токен за достъп (по избор)",
   "notify.ntfyHint": "Адресът завършва с твоята тема, например https://ntfy.sh/my-backups. Токен ти трябва само за защитена тема.",
   "notify.webhookMethod": "Метод",
-  "notify.webhookHeaders": "Заглавки",
+  "notify.webhookHeaders": "HTTP заглавки",
   "notify.webhookHeaderName": "Име на заглавката",
   "notify.webhookHeaderValue": "Стойност на заглавката",
   "notify.webhookHeaderAdd": "Добави заглавка",

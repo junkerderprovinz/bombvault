@@ -1007,7 +1007,7 @@ const ru: Partial<Translations> = {
   "notify.ntfyToken": "Токен доступа (необязательно)",
   "notify.ntfyHint": "Адрес заканчивается вашей темой, например https://ntfy.sh/my-backups. Токен нужен только для защищённой темы.",
   "notify.webhookMethod": "Метод",
-  "notify.webhookHeaders": "Заголовки",
+  "notify.webhookHeaders": "HTTP-заголовки",
   "notify.webhookHeaderName": "Имя заголовка",
   "notify.webhookHeaderValue": "Значение заголовка",
   "notify.webhookHeaderAdd": "Добавить заголовок",

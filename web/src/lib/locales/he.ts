@@ -1013,7 +1013,7 @@ const he: Partial<Translations> = {
   "notify.ntfyToken": "אסימון גישה (רשות)",
   "notify.ntfyHint": "הכתובת מסתיימת בנושא שלכם, למשל https://ntfy.sh/my-backups. אסימון נחוץ רק לנושא מוגן.",
   "notify.webhookMethod": "שיטה",
-  "notify.webhookHeaders": "כותרות",
+  "notify.webhookHeaders": "כותרות HTTP",
   "notify.webhookHeaderName": "שם הכותרת",
   "notify.webhookHeaderValue": "ערך הכותרת",
   "notify.webhookHeaderAdd": "הוספת כותרת",

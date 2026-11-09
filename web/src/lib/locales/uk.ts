@@ -1010,7 +1010,7 @@ const uk: Partial<Translations> = {
   "notify.ntfyToken": "Токен доступу (необов'язково)",
   "notify.ntfyHint": "Адреса закінчується вашою темою, наприклад https://ntfy.sh/my-backups. Токен потрібен лише для захищеної теми.",
   "notify.webhookMethod": "Метод",
-  "notify.webhookHeaders": "Заголовки",
+  "notify.webhookHeaders": "HTTP-заголовки",
   "notify.webhookHeaderName": "Назва заголовка",
   "notify.webhookHeaderValue": "Значення заголовка",
   "notify.webhookHeaderAdd": "Додати заголовок",

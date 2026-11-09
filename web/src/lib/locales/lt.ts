@@ -1080,7 +1080,7 @@ const lt: Partial<Translations> = {
   "notify.ntfyToken": "Prieigos raktas (nebūtina)",
   "notify.ntfyHint": "Adresas baigiasi tavo tema, pavyzdžiui, https://ntfy.sh/my-backups. Raktas reikalingas tik apsaugotai temai.",
   "notify.webhookMethod": "Metodas",
-  "notify.webhookHeaders": "Antraštės",
+  "notify.webhookHeaders": "HTTP antraštės",
   "notify.webhookHeaderName": "Antraštės pavadinimas",
   "notify.webhookHeaderValue": "Antraštės reikšmė",
   "notify.webhookHeaderAdd": "Pridėti antraštę",
