@@ -65,6 +65,7 @@ func TestConnectionsReachEveryCommandThatOpensTheRepository(t *testing.T) {
 		"restore":  RestoreAllArgs(repo, "abc123", "/restore", m),
 		"snapshot": SnapshotsArgs(repo, m),
 		"ls":       LsArgs(repo, "abc123", m),
+		"find":     FindArgs(repo, []string{"abc123"}, "notes", m),
 		"unlock":   UnlockArgs(repo, false, m),
 	}
 	for name, args := range commands {

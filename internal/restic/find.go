@@ -65,7 +65,7 @@ type FoundFile struct {
 // repository, so the caller passes at least one. find only reads, and it
 // takes no lock so a search never waits for a backup or holds up a prune.
 func FindArgs(repo string, snapshotIDs []string, pattern string, m Mode) []string {
-	args := repoFlag(repo)
+	args := repoFlag(repo, m)
 	args = append(args, "find", "--no-lock", "--json", "--ignore-case")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
