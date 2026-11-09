@@ -324,11 +324,8 @@ type Service struct {
 	// this package's existing tests) gets, reproducing bombvault's original
 	// Unraid-only behavior exactly rather than panicking on a nil interface.
 	platform platform.Platform
-	// platformMismatchOnce guards warnUnraidPlatformMismatch: an operator whose
-	// notify.Config.Unraid is on but whose platform detection did not resolve
-	// to Unraid gets exactly ONE diagnostic log line per process, not one per
-	// notification (a busy day with many failed backups would otherwise drown
-	// the log in copies of the same explanation). Zero value is ready to use.
+	// platformMismatchOnce keeps the platform mismatch to one log line per
+	// process, so a day of failed backups does not repeat it per message.
 	platformMismatchOnce sync.Once
 	// resticCacheDir is the on-disk location of restic's persistent cache — the
 	// same path main.go exports to the engine as RESTIC_CACHE_DIR (set via
@@ -1145,35 +1142,12 @@ func (s *Service) platformFn() platform.Platform {
 	return platform.Unraid{}
 }
 
-// unraidGate reports whether an Unraid-only, best-effort host-SSH step (the
-// webGUI notification mirror — every sendUnraidNotify call site) should run:
-// the caller wants it (unraidWanted, always notify.Config.Unraid today), SSH
-// is configured, AND the detected/overridden platform genuinely is Unraid.
-//
-// Why the platform check stays a hard requirement rather than trusting
-// unraidWanted on its own (Platform expansion PR #149, Task 6 — see
-// platform_gate_internal_test.go's failIfCalledSSH fakes, which fail the
-// test the instant one of these steps is attempted on a non-Unraid
-// platform): notify.Config.Unraid can be stale — e.g. a settings.json copied
-// from an old Unraid box onto a genuinely different TrueNAS or
-// generic-Docker host — and an Unraid-only command (the webGUI notify
-// script, the #116 PHP-over-SSH reconcile, the `plugin` CLI) attempted
-// against a host where it has no meaning would only fail predictably,
-// adding noisy log spam on every run rather than accomplishing anything.
-// Task 6's whole point was to skip that attempt entirely instead of letting
-// it fail loudly every time; trusting the toggle blindly would reintroduce
-// exactly that noise.
-//
-// Why a platform mismatch is NOT just silently treated as "feature off"
-// either: internal/platform.Detect's only Unraid signal is one filesystem
-// marker (config/plugins/dockerMan) under the container's /host/boot mount —
-// a mount BombVault's own shipped template did not wire until months after
-// this gate shipped. A genuinely Unraid host whose mount is missing (an old
-// template, or a hand-edited container config) resolves to KindGeneric
-// despite being real Unraid with SSH fully configured, and every gate here
-// used to go dark with no way to tell "the user turned this off" apart from
-// "detection is wrong". warnUnraidPlatformMismatch logs the specific,
-// actionable diagnostic instead.
+// unraidGate reports whether an Unraid-only, best-effort host-SSH step should
+// run: the caller wants it, SSH is set up, and the platform is Unraid. A
+// setting copied from an Unraid box to another host would otherwise try the
+// Unraid scripts there on every run and only fill the log. A mismatch is
+// logged once with its likely fix, since a real Unraid host without the
+// template's /boot mount is detected as generic.
 func (s *Service) unraidGate(unraidWanted bool) bool {
 	if !unraidWanted || s.ssh == nil {
 		return false
@@ -1185,22 +1159,19 @@ func (s *Service) unraidGate(unraidWanted bool) bool {
 	return false
 }
 
-// warnUnraidPlatformMismatch logs, once per process (platformMismatchOnce),
-// that notify.Config.Unraid is enabled but the platform is not Unraid. When
-// the platform was detected, it names the most likely fix, so an operator can
-// tell "I turned this off" apart from "BombVault misdetected my host" without
-// reading source. See unraidGate's doc comment for why the underlying gate
-// does not just trust the toggle instead.
+// warnUnraidPlatformMismatch logs once per process that Unraid notifications
+// are on but the platform is not Unraid, and names the most likely fix when
+// the platform was detected.
 func (s *Service) warnUnraidPlatformMismatch() {
 	s.platformMismatchOnce.Do(func() {
 		kind := s.platformFn().Kind()
 		switch {
 		case kind == platform.KindTrueNAS:
-			log.Printf("platform: notify.Config.Unraid is enabled but this host runs TrueNAS, so the Unraid-only host features stay disabled")
+			log.Printf("platform: Unraid notifications are on but this host runs TrueNAS, so the Unraid-only host features stay disabled")
 		case s.cfg.PlatformOverride != "":
-			log.Printf("platform: notify.Config.Unraid is enabled but PLATFORM sets this host to %q, so the Unraid-only host features stay disabled", kind)
+			log.Printf("platform: Unraid notifications are on but PLATFORM sets this host to %q, so the Unraid-only host features stay disabled", kind)
 		default:
-			log.Printf("platform: notify.Config.Unraid is enabled but BombVault detected platform=%q (not %q), so "+
+			log.Printf("platform: Unraid notifications are on but BombVault detected platform=%q (not %q), so "+
 				"Unraid-only host features (webGUI notifications, the update-status reconcile, the dashboard-tile "+
 				"plugin) stay disabled. If this is an Unraid host, verify the host's /boot is bind-mounted to "+
 				"/host/boot inside the container (see the BombVault Unraid template) and restart the container; "+

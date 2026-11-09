@@ -226,7 +226,7 @@ func TestUnraidGateMismatchWarnsOncePerService(t *testing.T) {
 	}
 
 	out := buf.String()
-	const marker = "notify.Config.Unraid is enabled but BombVault detected platform"
+	const marker = "Unraid notifications are on but BombVault detected platform"
 	if got := strings.Count(out, marker); got != 1 {
 		t.Fatalf("expected exactly 1 mismatch diagnostic across 3 calls (once per process/Service), got %d; log=%s", got, out)
 	}
@@ -273,7 +273,7 @@ func TestUnraidGateNoWarnWhenToggleOff(t *testing.T) {
 }
 
 // Without SSH the platform is not what blocks, so a mismatch line would
-// mislead. sendUnraidNotify reports the missing SSH itself.
+// mislead. The Unraid test reports the missing SSH itself.
 func TestUnraidGateNoWarnWhenSSHUnconfigured(t *testing.T) {
 	s := unraidNotifyService(t, nil)
 	s.SetPlatform(platform.Generic{})
