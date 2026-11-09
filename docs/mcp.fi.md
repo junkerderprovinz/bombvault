@@ -15,6 +15,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 | `get_activity` | Mikä on käynnissä juuri nyt, vaiheen ja prosentin kera | luku |
 | `get_storage_stats` | Osion ensisijaisen repositorion koon historia ja kasvu viikossa sekä käytetty, vapaa ja kokonaistila kunkin sen repositorion levyllä tai etäkohteessa | luku |
 | `get_size_breakdown` | Mitkä kansiot ja tiedostot vievät tilaa kontin, virtuaalikoneen tai kansiojoukon uusimmassa varmuuskopiossa ja kuinka paljon niistä viimeisin varmuuskopio lisäsi | luku |
+| `search_files` | Etsii tiedostoja ja kansioita nimen perusteella kaikkien merkintöjen, yhden osion tai yhden merkinnän varmuuskopioista (virtuaalikoneita ei haeta) ja luettelee jokaiselle osumalle kaikki varmuuskopiot, joissa se on | luku |
 | `list_anomalies` | Poikkeamat, jotka BombVault on huomannut varmuuskopioissa, suodatettavissa tilan, vakavuuden ja osion mukaan, sekä yhteenveto avoimista | luku |
 | `get_anomaly` | Yksi näistä havainnoista sekä muistiinpano, joka jätettiin sitä kuitatessa | luku |
 | `start_backup` | Varmuuskopioi yhden merkinnän heti | käynnistys |
@@ -24,7 +25,7 @@ BombVaultissa on sisäänrakennettu palvelin Model Context Protocolille (MCP), j
 
 Nämä jäävät verkkokäyttöliittymään: kaikenlaiset palautukset (myös tietokantadumpin lataaminen, tallentaminen tai tuonti), varmuuskopioiden poistaminen, prune, unlock, tarkistukset ja harjoitukset, off-site-replikointi, asetukset, tunnukset ja MCP-avaimet sekä sellaisen varmuuskopion peruminen, jonka ajastus, verkkokäyttöliittymä tai toinen avain käynnisti. Sama koskee poikkeaman kuittaamista tai sen merkitsemistä odotetuksi, mikä tehdään **Poikkeamat**-sivulla. Syy on se, että työkalujen vastauksissa on palvelimesi nimiä ja virheilmoituksia, ja mikä tahansa niistä voi sisältää tekstiä, joka on kirjoitettu ohjaamaan avustajaa. Avustaja, joka lankeaa sellaiseen, voi pahimmillaan käynnistää varmuuskopion alla olevien rajojen sisällä tai perua sellaisen, jonka se itse käynnisti.
 
-Jos merkinnän ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Poikkeamat](anomalies.md), ja miten ZFS-merkintä pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
+Jos merkinnän ensisijainen repositorio on muualla (S3, REST, SFTP, rclone), `list_restore_points` ottaa siihen yhteyttä, ja kutsu voi kestää hetken. Off-site-kopioita ei voi listata MCP:n kautta. `search_files` lukee etärepositorioita, off-site-kopiot mukaan lukien, vain kun avustaja pyytää, koska se kestää kauemmin ja jotkin palveluntarjoajat laskuttavat ladatusta datasta. Haku voi kestää minuutteja, joten ensimmäinen kutsu käynnistää sen taustalla ja myöhempi kutsu noutaa tuloksen. Mitä poikkeamien tarkistukset katsovat, kerrotaan sivulla [Poikkeamat](anomalies.md), ja miten ZFS-merkintä pitää yhden tilannevedoksen tietojoukkoa kohden, sivulla [ZFS-tietojoukot](zfs-datasets.md#contents).
 
 ## Mitä käynnistetty varmuuskopio tekee {#starting-backups}
 
@@ -243,7 +244,7 @@ Välityspalvelimen takana jokaisessa pyynnössä on välityspalvelimen osoite. V
 
 ## Mitä koneelta lähtee {#privacy}
 
-Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoajalle: merkintöjen nimet, ajastukset, ajohistoria virheilmoituksineen, palautuspisteiden tunnisteet ja ajat, tietokantamoottorien nimet ja dumppien koot, käynnissä oleva toiminta, tallennustilan luvut, kattavuus ja tila. BombVault poistaa isännän polut, repositorioiden sijainnit, isäntänimet, tunnukset, hook-komennot ja avaimet ennen kuin mitään lähtee.
+Kaikki, mitä avustaja lukee, menee sen takana olevalle tekoälypalvelun tarjoajalle: merkintöjen nimet, ajastukset, ajohistoria virheilmoituksineen, palautuspisteiden tunnisteet ja ajat, tietokantamoottorien nimet ja dumppien koot, käynnissä oleva toiminta, tallennustilan luvut, kattavuus ja tila. Tiedostohaku lähettää lisäksi löytämänsä tiedostot: niiden nimet, koot ja polut varmuuskopion sisällä. BombVault poistaa isännän polut, repositorioiden sijainnit, isäntänimet, tunnukset, hook-komennot ja avaimet ennen kuin mitään lähtee.
 
 ## Vianmääritys {#troubleshooting}
 

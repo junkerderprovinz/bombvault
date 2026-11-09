@@ -15,6 +15,7 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 | `get_activity` | Hva som kjører akkurat nå, med fase og prosent | lese |
 | `get_storage_stats` | Størrelseshistorikk for et områdes primære repository og veksten per uke, pluss brukt, ledig og total plass på disken eller fjernlageret til hvert av repositoriene | lese |
 | `get_size_breakdown` | Hvilke mapper og filer som tar plass i den nyeste sikkerhetskopien av en container, en VM eller et mappesett, og hvor mye av det den siste sikkerhetskopien la til | lese |
+| `search_files` | Finner filer og mapper etter navn i sikkerhetskopiene av alle elementer, ett område eller ett element (VM-er søkes ikke i) og viser alle sikkerhetskopier som inneholder hvert treff | lese |
 | `list_anomalies` | Avvik BombVault har lagt merke til i sikkerhetskopiene, kan filtreres på tilstand, alvorlighet og område, med en oversikt over det som er åpent | lese |
 | `get_anomaly` | Ett av disse avvikene, med notatet som ble skrevet da det ble kvittert ut | lese |
 | `start_backup` | Sikkerhetskopierer ett element med en gang | starte |
@@ -24,7 +25,7 @@ BombVault har en innebygd server for Model Context Protocol (MCP), protokollen s
 
 Dette blir værende i webgrensesnittet: gjenopprettinger av alle slag (også å laste ned, lagre eller importere en databasedump), sletting av sikkerhetskopier, prune, unlock, kontroller og øvelser, off-site-replikering, innstillinger, påloggingsdetaljer og MCP-nøkler, og å avbryte en sikkerhetskopi som tidsplanen, webgrensesnittet eller en annen nøkkel har startet. Det samme gjelder å kvittere ut et avvik eller merke det som forventet, noe som skjer på siden **Avvik**. Grunnen er at verktøyenes svar inneholder navn og feilmeldinger fra serveren din, og hvilken som helst av dem kan inneholde tekst skrevet for å styre assistenten. En assistent som går på slik tekst, kan i verste fall starte en sikkerhetskopi innenfor grensene nedenfor eller avbryte en den selv har startet.
 
-Ligger det primære repositoryet til et element et annet sted (S3, REST, SFTP, rclone), kontakter `list_restore_points` det, og kallet kan ta litt tid. Off-site-kopier kan ikke listes via MCP. Hva avvikskontrollene ser på, står under [Avvik](anomalies.md), og hvordan et ZFS-element har ett øyeblikksbilde per datasett, under [ZFS-datasett](zfs-datasets.md#contents).
+Ligger det primære repositoryet til et element et annet sted (S3, REST, SFTP, rclone), kontakter `list_restore_points` det, og kallet kan ta litt tid. Off-site-kopier kan ikke listes via MCP. `search_files` leser eksterne repositoryer, off-site-kopier inkludert, bare når assistenten ber om det, fordi det tar lengre tid og noen leverandører tar betalt for dataene den laster ned. Et søk kan ta flere minutter, så det første kallet starter det i bakgrunnen og et senere kall henter resultatet. Hva avvikskontrollene ser på, står under [Avvik](anomalies.md), og hvordan et ZFS-element har ett øyeblikksbilde per datasett, under [ZFS-datasett](zfs-datasets.md#contents).
 
 ## Hva en startet sikkerhetskopi gjør {#starting-backups}
 
@@ -243,7 +244,7 @@ Bak en proxy bærer hver forespørsel proxyens adresse. Fem feil nøkler fra én
 
 ## Hva som forlater maskinen {#privacy}
 
-Det en assistent leser, går til AI-leverandøren bak den: navn på elementer, tidsplaner, kjøringshistorikk med feilmeldinger, id-er og tidspunkter for gjenopprettingspunkter, navn på databasemotorer og størrelser på dumper, pågående aktivitet, lagringstall, dekning og status. BombVault fjerner vertsstier, repository-plasseringer, vertsnavn, påloggingsdetaljer, hook-kommandoer og nøkler før noe forlater maskinen.
+Det en assistent leser, går til AI-leverandøren bak den: navn på elementer, tidsplaner, kjøringshistorikk med feilmeldinger, id-er og tidspunkter for gjenopprettingspunkter, navn på databasemotorer og størrelser på dumper, pågående aktivitet, lagringstall, dekning og status. Et filsøk sender også filene det finner: navn, størrelse og sti inne i sikkerhetskopien. BombVault fjerner vertsstier, repository-plasseringer, vertsnavn, påloggingsdetaljer, hook-kommandoer og nøkler før noe forlater maskinen.
 
 ## Feilsøking {#troubleshooting}
 

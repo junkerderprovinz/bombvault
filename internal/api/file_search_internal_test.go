@@ -2,12 +2,17 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
@@ -255,5 +260,270 @@ func TestFileSearchRouteRefusesAPathAndSearchesAName(t *testing.T) {
 func TestFileSearchRouteIsOpenToAPairedPhone(t *testing.T) {
 	if !pairedRoutes["GET /api/search/files"] {
 		t.Fatal("a paired phone cannot search for a file it can restore")
+	}
+}
+
+// callSearchFiles calls search_files once, the way the transport would.
+func (f *placementFixture) callSearchFiles(args string) *mcp.CallToolResult {
+	f.t.Helper()
+	res, err := f.h.toolSearchFiles(mcpStartCaller("0b7e", false), &mcp.CallToolRequest{Params: &mcp.CallToolParamsRaw{
+		Name: "search_files", Arguments: json.RawMessage(args),
+	}})
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	return res
+}
+
+// searchFilesUntilDone calls search_files the way an assistant does, again and
+// again while the search runs.
+func (f *placementFixture) searchFilesUntilDone(args string) map[string]any {
+	f.t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		out := mcpStructured(f.t, f.callSearchFiles(args))
+		if out["state"] != "running" {
+			return out
+		}
+		if time.Now().After(deadline) {
+			f.t.Fatal("the search never finished")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func foundFilesOf(t *testing.T, out map[string]any) []map[string]any {
+	t.Helper()
+	list, ok := out["files"].([]any)
+	if !ok {
+		t.Fatalf("files = %v, want a list", out["files"])
+	}
+	files := make([]map[string]any, 0, len(list))
+	for _, f := range list {
+		files = append(files, f.(map[string]any))
+	}
+	return files
+}
+
+func repositoryNamed(t *testing.T, out map[string]any, name string) map[string]any {
+	t.Helper()
+	list, _ := out["repositories"].([]any)
+	for _, r := range list {
+		if repo := r.(map[string]any); repo["name"] == name {
+			return repo
+		}
+	}
+	t.Fatalf("no repository %q in %v", name, out["repositories"])
+	return nil
+}
+
+func TestMCPFileSearchHandsTheResultOverOnALaterCall(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	older := snap("a1a1a1a1", 1_758_000_000, "container:nginx")
+	newer := snap("a2a2a2a2", 1_759_000_000, "container:nginx")
+	older.Paths = []string{"/host/user/appdata/nginx"}
+	newer.Paths = older.Paths
+	f.hold(f.domainPath("containers"), older, newer)
+	f.holdsFiles("a1a1a1a1", foundAt("/host/user/appdata/nginx/conf/nginx.conf", 10))
+	f.holdsFiles("a2a2a2a2", foundAt("/host/user/appdata/nginx/conf/nginx.conf", 30))
+	args := `{"name":"nginx.conf"}`
+
+	if first := mcpStructured(t, f.callSearchFiles(args)); first["state"] != "running" {
+		t.Fatalf("first call = %v, want the search started", first)
+	}
+	out := f.searchFilesUntilDone(args)
+
+	if out["state"] != "ready" || out["truncated"] != false {
+		t.Fatalf("result = %v", out)
+	}
+	files := foundFilesOf(t, out)
+	if len(files) != 1 {
+		t.Fatalf("files = %v, want nginx.conf alone", files)
+	}
+	file := files[0]
+	if file["domain"] != "containers" || file["item"] != "nginx" || file["path"] != "conf/nginx.conf" || file["type"] != "file" {
+		t.Fatalf("file = %v, want its path inside the backup", file)
+	}
+	versions, _ := file["versions"].([]any)
+	if len(versions) != 2 {
+		t.Fatalf("versions = %v, want both backups", versions)
+	}
+	newest := versions[0].(map[string]any)
+	if newest["size"] != float64(30) || newest["snapshot"] != "a2a2a2a2" || newest["repository"] != "folder containers" ||
+		newest["time"] != time.Unix(1_759_000_000, 0).UTC().Format(time.RFC3339) {
+		t.Fatalf("newest version = %v", newest)
+	}
+	if home := repositoryNamed(t, out, "folder containers"); home["state"] != "searched" || home["backups"] != float64(2) || home["remote"] != false {
+		t.Fatalf("home = %v", home)
+	}
+	if raw, _ := json.Marshal(out); strings.Contains(string(raw), "/host") {
+		t.Fatalf("a host path reached the assistant: %s", raw)
+	}
+	if again := mcpStructured(t, f.callSearchFiles(args)); again["state"] != "running" {
+		t.Fatalf("a call after the handover = %v, want a new search", again)
+	}
+	f.searchFilesUntilDone(args)
+}
+
+func TestMCPFileSearchLeavesRemoteRepositoriesOutUnlessAsked(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.target("containers", "B2", "b2:bucket:containers")
+	f.hold(f.domainPath("containers"), snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
+	f.hold("b2:bucket:containers", snap("b0b0b0b0", 1_700_000_000, "container:nginx"))
+	f.holdsFiles("b0b0b0b0", foundAt("/appdata/nginx/nginx.conf", 7))
+
+	out := f.searchFilesUntilDone(`{"name":"nginx.conf"}`)
+	if b2 := repositoryNamed(t, out, "B2"); b2["state"] != "notAsked" || b2["remote"] != true {
+		t.Fatalf("B2 = %v, want left alone", b2)
+	}
+	if files := foundFilesOf(t, out); len(files) != 0 {
+		t.Fatalf("files = %v, want none from the home", files)
+	}
+
+	out = f.searchFilesUntilDone(`{"name":"nginx.conf","offsite":true}`)
+	if b2 := repositoryNamed(t, out, "B2"); b2["state"] != "searched" {
+		t.Fatalf("B2 = %v, want searched", b2)
+	}
+	if files := foundFilesOf(t, out); len(files) != 1 {
+		t.Fatalf("files = %v, want the one B2 holds", files)
+	}
+}
+
+func TestMCPFileSearchNarrowsToADomainOrOneItem(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.container("caddy", "")
+	f.fileSet("configs", "")
+	f.hold(f.domainPath("containers"),
+		snap("a1a1a1a1", 1_758_000_000, "container:nginx"),
+		snap("c1c1c1c1", 1_758_000_000, "container:caddy"))
+	f.hold(f.domainPath("files"), snap("f1f1f1f1", 1_758_000_000, "fileset:configs"))
+	for _, id := range []string{"a1a1a1a1", "c1c1c1c1", "f1f1f1f1"} {
+		f.holdsFiles(id, foundAt("/data/site.conf", 1))
+	}
+
+	for _, tc := range []struct {
+		name string
+		args string
+		want []string
+	}{
+		{"everything", `{"name":"site.conf"}`, []string{"caddy", "configs", "nginx"}},
+		{"one domain", `{"name":"site.conf","domain":"containers"}`, []string{"caddy", "nginx"}},
+		{"one container", `{"name":"site.conf","domain":"containers","item":"nginx"}`, []string{"nginx"}},
+		{"one folder set by name", `{"name":"site.conf","domain":"files","item":"configs"}`, []string{"configs"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var items []string
+			for _, file := range foundFilesOf(t, f.searchFilesUntilDone(tc.args)) {
+				items = append(items, file["item"].(string))
+			}
+			slices.Sort(items)
+			if !slices.Equal(items, tc.want) {
+				t.Fatalf("items = %v, want %v", items, tc.want)
+			}
+		})
+	}
+}
+
+func TestMCPFileSearchRefusesWhatItCannotSearch(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+
+	for _, tc := range []struct {
+		name string
+		args string
+		code string
+	}{
+		{"a path", `{"name":"etc/passwd"}`, "invalid_argument"},
+		{"no name", `{}`, "invalid_argument"},
+		{"a domain saved as whole disks", `{"name":"x","domain":"vms"}`, "invalid_argument"},
+		{"an item without its domain", `{"name":"x","item":"nginx"}`, "invalid_argument"},
+		{"an unknown argument", `{"name":"x","path":"/"}`, "invalid_argument"},
+		{"an item nobody protects", `{"name":"x","domain":"containers","item":"ghost"}`, "not_found"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if code := mcpErrorCode(t, f.callSearchFiles(tc.args)); code != tc.code {
+				t.Fatalf("code = %q, want %q", code, tc.code)
+			}
+		})
+	}
+	if n := len(f.eng.finds); n != 0 {
+		t.Fatalf("a refused call searched %d times", n)
+	}
+}
+
+func TestMCPFileSearchAnswersBusyWhileAnotherSearchRuns(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
+	entered, release := make(chan struct{}), make(chan struct{})
+	var once sync.Once
+	f.eng.onFind = func() {
+		once.Do(func() { close(entered) })
+		<-release
+	}
+
+	f.callSearchFiles(`{"name":"nginx.conf"}`)
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the search never reached restic")
+	}
+	if code := mcpErrorCode(t, f.callSearchFiles(`{"name":"mime.types"}`)); code != "busy" {
+		t.Fatalf("another name while one runs = %q, want busy", code)
+	}
+	if same := mcpStructured(t, f.callSearchFiles(`{"name":"nginx.conf"}`)); same["state"] != "running" {
+		t.Fatalf("the same search again = %v, want running", same)
+	}
+	close(release)
+	if out := f.searchFilesUntilDone(`{"name":"nginx.conf"}`); out["state"] != "ready" {
+		t.Fatalf("result = %v", out)
+	}
+}
+
+func TestMCPFileSearchSaysWhenMoreFilesMatched(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
+	files := make([]restic.FoundFile, 0, maxFoundFiles+1)
+	for i := range maxFoundFiles + 1 {
+		files = append(files, foundAt(fmt.Sprintf("/appdata/log-%03d.txt", i), 1))
+	}
+	f.holdsFiles("a1a1a1a1", files...)
+
+	out := f.searchFilesUntilDone(`{"name":"log"}`)
+
+	if got := len(foundFilesOf(t, out)); got != maxFoundFiles || out["truncated"] != true {
+		t.Fatalf("%d files, truncated %v, want %d and truncated", got, out["truncated"], maxFoundFiles)
+	}
+}
+
+func TestMCPFileSearchNamesTheDatasetOfAZFSHit(t *testing.T) {
+	f := newPlacementFixture(t)
+	tank, home := f.zfsItem("tank/apps")
+	f.hold(home, zfsSnap("a1a1a1a1", "tank/apps", firstRun), zfsSnap("a2a2a2a2", "tank/apps/db", firstRun))
+	f.zfsRun(tank.ID, firstRun, "tank/apps", "tank/apps/db")
+	f.holdsFiles("a2a2a2a2", foundAt("/pg_hba.conf", 3))
+
+	files := foundFilesOf(t, f.searchFilesUntilDone(`{"name":"pg_hba","domain":"zfs","item":"tank/apps"}`))
+
+	if len(files) != 1 || files[0]["item"] != "tank/apps" || files[0]["dataset"] != "tank/apps/db" || files[0]["path"] != "pg_hba.conf" {
+		t.Fatalf("files = %v, want pg_hba.conf in tank/apps/db", files)
+	}
+}
+
+func TestMCPFileSearchKeepsHostPathsOutOfAFailedRepository(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.container("nginx", "")
+	f.hold(f.domainPath("containers"), snap("a1a1a1a1", 1_758_000_000, "container:nginx"))
+	f.eng.findErr = map[string]error{f.domainPath("containers"): errors.New("unable to load tree of /host/user/appdata/nginx")}
+
+	home := repositoryNamed(t, f.searchFilesUntilDone(`{"name":"nginx.conf"}`), "folder containers")
+
+	msg, _ := home["error"].(string)
+	if home["state"] != "failed" || msg == "" || strings.Contains(msg, "/host") {
+		t.Fatalf("home = %v, want failed with the reason and no host path", home)
 	}
 }

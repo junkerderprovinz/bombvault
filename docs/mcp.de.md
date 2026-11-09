@@ -15,6 +15,7 @@ BombVault hat einen eingebauten Server für das Model Context Protocol (MCP), da
 | `get_activity` | Was gerade läuft, mit Phase und Prozentzahl | lesen |
 | `get_storage_stats` | Größenverlauf des primären Repositorys einer Domain und sein Wachstum pro Woche sowie der belegte, freie und gesamte Platz auf der Platte oder dem Remote jedes ihrer Repositories | lesen |
 | `get_size_breakdown` | Welche Ordner und Dateien in der neuesten Sicherung eines Containers, einer VM oder eines Ordner-Sets den Platz belegen und wie viel davon jeweils die letzte Sicherung hinzugefügt hat | lesen |
+| `search_files` | Findet Dateien und Ordner nach Namen in den Sicherungen aller Elemente, einer Domain oder eines Elements (VMs werden nicht durchsucht) und nennt zu jedem Treffer jede Sicherung, die ihn enthält | lesen |
 | `list_anomalies` | Anomalien, die BombVault in den Sicherungen bemerkt hat, filterbar nach Status, Schweregrad und Domain, mit einer Zusammenfassung dessen, was offen ist | lesen |
 | `get_anomaly` | Einer dieser Funde, mit der Notiz, die beim Quittieren hinterlassen wurde | lesen |
 | `start_backup` | Sichert ein Element jetzt | starten |
@@ -24,7 +25,7 @@ BombVault hat einen eingebauten Server für das Model Context Protocol (MCP), da
 
 Diese bleiben in der Weboberfläche: Wiederherstellungen jeder Art (auch das Herunterladen, Speichern oder Importieren eines Datenbank-Dumps), das Löschen von Sicherungen, Aufräumen, Entsperren, Prüfungen und Tests, Off-site-Replikation, Einstellungen, Zugangsdaten und MCP-Schlüssel sowie das Abbrechen einer Sicherung, die der Zeitplan, die Weboberfläche oder ein anderer Schlüssel gestartet hat. Dasselbe gilt für das Quittieren einer Anomalie oder das Markieren als erwartet, was auf der Seite **Anomalien** geschieht. Der Grund ist, dass die Ausgabe der Tools Namen und Fehlermeldungen von deinem Server enthält, und jede davon könnte Text tragen, der geschrieben wurde, um den Assistenten zu lenken. Ein Assistent, der auf solchen Text hereinfällt, kann schlimmstenfalls innerhalb der Limits unten eine Sicherung starten oder eine abbrechen, die er selbst gestartet hat.
 
-Ist das primäre Repository eines Elements entfernt (S3, REST, SFTP, rclone), kontaktiert `list_restore_points` es, der Aufruf kann also eine Weile dauern. Off-site-Kopien lassen sich über MCP nicht auflisten. Was die Anomalieprüfungen ansehen, beschreibt [Anomalien](anomalies.md), und wie ein ZFS-Element einen Snapshot pro Dataset hält, steht unter [ZFS-Datasets](zfs-datasets.md#contents).
+Ist das primäre Repository eines Elements entfernt (S3, REST, SFTP, rclone), kontaktiert `list_restore_points` es, der Aufruf kann also eine Weile dauern. Off-site-Kopien lassen sich über MCP nicht auflisten. `search_files` liest entfernte Repositories, Off-site-Kopien eingeschlossen, nur dann, wenn der Assistent darum bittet, weil das länger dauert und manche Anbieter die heruntergeladenen Daten berechnen. Eine Suche kann Minuten dauern. Deshalb startet der erste Aufruf sie im Hintergrund, und ein späterer Aufruf holt das Ergebnis ab. Was die Anomalieprüfungen ansehen, beschreibt [Anomalien](anomalies.md), und wie ein ZFS-Element einen Snapshot pro Dataset hält, steht unter [ZFS-Datasets](zfs-datasets.md#contents).
 
 ## Was eine gestartete Sicherung tut {#starting-backups}
 
@@ -243,7 +244,7 @@ Hinter einem Proxy trägt jede Anfrage die Adresse des Proxys. Fünf falsche Sch
 
 ## Was die Box verlässt {#privacy}
 
-Alles, was ein Assistent liest, geht an den KI-Anbieter dahinter: Elementnamen, Zeitpläne, Laufverlauf mit Fehlermeldungen, IDs und Zeiten von Wiederherstellungspunkten, Namen von Datenbank-Engines und Dump-Größen, aktuelle Aktivität, Speicherzahlen, Abdeckung und Status. BombVault entfernt Host-Pfade, Repository-Orte, Hostnamen, Zugangsdaten, Hook-Befehle und Schlüssel, bevor etwas hinausgeht.
+Alles, was ein Assistent liest, geht an den KI-Anbieter dahinter: Elementnamen, Zeitpläne, Laufverlauf mit Fehlermeldungen, IDs und Zeiten von Wiederherstellungspunkten, Namen von Datenbank-Engines und Dump-Größen, aktuelle Aktivität, Speicherzahlen, Abdeckung und Status. Eine Dateisuche schickt außerdem die gefundenen Dateien mit: ihre Namen, Größen und Pfade innerhalb der Sicherung. BombVault entfernt Host-Pfade, Repository-Orte, Hostnamen, Zugangsdaten, Hook-Befehle und Schlüssel, bevor etwas hinausgeht.
 
 ## Fehlersuche {#troubleshooting}
 

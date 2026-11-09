@@ -15,6 +15,7 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 | `get_activity` | Wat er nu loopt, met fase en percentage | lezen |
 | `get_storage_stats` | Groottegeschiedenis van het primaire repository van één onderdeel en zijn groei per week, en de gebruikte, vrije en totale ruimte op de schijf of remote van elk van zijn repository's | lezen |
 | `get_size_breakdown` | Welke mappen en bestanden de ruimte innemen in de nieuwste back-up van één container, VM of mappenset, en hoeveel van elk de laatste back-up erbij bracht | lezen |
+| `search_files` | Zoekt bestanden en mappen op naam in de back-ups van alle items, van één onderdeel of van één item (VM's worden niet doorzocht) en toont bij elke vondst elke back-up die hem bevat | lezen |
 | `list_anomalies` | Anomalieën die BombVault in de back-ups opmerkte, te filteren op status, ernst en onderdeel, met een samenvatting van wat openstaat | lezen |
 | `get_anomaly` | Eén van die bevindingen, met de notitie die is achtergelaten toen ze werd bevestigd | lezen |
 | `start_backup` | Maakt nu een back-up van één item | starten |
@@ -24,7 +25,7 @@ BombVault heeft een ingebouwde server voor het Model Context Protocol (MCP), het
 
 Dit blijft in de webinterface: herstellen van elk soort (ook het downloaden, opslaan of importeren van een databasedump), back-ups verwijderen, opschonen, ontgrendelen, controles en oefeningen, off-site-replicatie, instellingen, inloggegevens en MCP-sleutels, en het annuleren van een back-up die de planning, de webinterface of een andere sleutel startte. Hetzelfde geldt voor het bevestigen van een anomalie of het markeren ervan als verwacht, wat op de pagina **Anomalieën** gebeurt. De reden is dat de uitvoer van een tool namen en foutmeldingen van je server bevat, en elk daarvan kan tekst dragen die is geschreven om de assistent te sturen. Een assistent die voor zulke tekst valt, kan hoogstens een back-up starten binnen de onderstaande limieten, of er een annuleren die hij zelf startte.
 
-Is het primaire repository van een item extern (S3, REST, SFTP, rclone), dan neemt `list_restore_points` er contact mee op, dus de aanroep kan even duren. Off-site-kopieën kunnen niet via MCP worden getoond. Wat de anomaliecontroles bekijken, staat onder [Anomalieën](anomalies.md), en hoe een ZFS-item één snapshot per dataset bewaart onder [ZFS-datasets](zfs-datasets.md#contents).
+Is het primaire repository van een item extern (S3, REST, SFTP, rclone), dan neemt `list_restore_points` er contact mee op, dus de aanroep kan even duren. Off-site-kopieën kunnen niet via MCP worden getoond. `search_files` leest externe repository's, off-site-kopieën inbegrepen, alleen als de assistent erom vraagt, omdat dat langer duurt en sommige aanbieders de gedownloade data in rekening brengen. Een zoekopdracht kan minuten duren, dus de eerste aanroep start hem op de achtergrond en een latere aanroep haalt het resultaat op. Wat de anomaliecontroles bekijken, staat onder [Anomalieën](anomalies.md), en hoe een ZFS-item één snapshot per dataset bewaart onder [ZFS-datasets](zfs-datasets.md#contents).
 
 ## Wat een gestarte back-up doet {#starting-backups}
 
@@ -243,7 +244,7 @@ Achter een proxy draagt elk verzoek het adres van de proxy. Vijf foute sleutels 
 
 ## Wat de server verlaat {#privacy}
 
-Wat een assistent ook leest, gaat naar de AI-aanbieder erachter: itemnamen, planningen, runhistorie met foutmeldingen, id's en tijden van herstelpunten, namen van database-engines en dumpgroottes, de huidige activiteit, opslagcijfers, dekking en status. BombVault verwijdert hostpaden, repositorylocaties, hostnamen, inloggegevens, hookopdrachten en sleutels voordat er iets vertrekt.
+Wat een assistent ook leest, gaat naar de AI-aanbieder erachter: itemnamen, planningen, runhistorie met foutmeldingen, id's en tijden van herstelpunten, namen van database-engines en dumpgroottes, de huidige activiteit, opslagcijfers, dekking en status. Een bestandszoekopdracht stuurt ook de gevonden bestanden mee: hun namen, groottes en paden binnen de back-up. BombVault verwijdert hostpaden, repositorylocaties, hostnamen, inloggegevens, hookopdrachten en sleutels voordat er iets vertrekt.
 
 ## Problemen oplossen {#troubleshooting}
 

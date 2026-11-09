@@ -15,6 +15,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 | `get_activity` | Những gì đang chạy ngay lúc này, kèm giai đoạn và phần trăm | đọc |
 | `get_storage_stats` | Lịch sử dung lượng kho chính của một phần và mức tăng mỗi tuần, cùng dung lượng đã dùng, còn trống và tổng trên ổ đĩa hoặc nơi lưu từ xa của từng kho | đọc |
 | `get_size_breakdown` | Thư mục và tệp nào chiếm chỗ trong bản sao lưu mới nhất của một container, VM hoặc bộ thư mục, và lần sao lưu gần nhất đã thêm bao nhiêu | đọc |
+| `search_files` | Tìm tệp và thư mục theo tên trong các bản sao lưu của mọi mục, của một phần hoặc của một mục (không tìm trong VM), và liệt kê mọi bản sao lưu chứa từng kết quả | đọc |
 | `list_anomalies` | Những bất thường mà BombVault nhận thấy trong các bản sao lưu, lọc được theo trạng thái, mức độ nghiêm trọng và phần, kèm bản tóm tắt những mục còn mở | đọc |
 | `get_anomaly` | Một trong các phát hiện đó, kèm ghi chú để lại khi xác nhận | đọc |
 | `start_backup` | Sao lưu ngay một mục | bắt đầu |
@@ -24,7 +25,7 @@ BombVault có sẵn một máy chủ cho Model Context Protocol (MCP), giao th�
 
 Những việc sau vẫn nằm trong giao diện web: mọi kiểu khôi phục (kể cả tải xuống, lưu hoặc nhập một bản dump cơ sở dữ liệu), xóa bản sao lưu, prune, unlock, kiểm tra và diễn tập, sao chép off-site, cài đặt, thông tin đăng nhập và khóa MCP, cùng việc hủy một lần sao lưu do lịch, giao diện web hoặc khóa khác bắt đầu. Việc xác nhận một bất thường hoặc đánh dấu nó là dự kiến cũng vậy, và được thực hiện trên trang **Bất thường**. Lý do: câu trả lời của công cụ chứa tên và thông báo lỗi từ máy chủ của bạn, và bất kỳ mục nào trong đó cũng có thể chứa văn bản viết ra để điều khiển trợ lý. Một trợ lý mắc bẫy văn bản như vậy, trong trường hợp xấu nhất, chỉ có thể bắt đầu một lần sao lưu trong các giới hạn bên dưới hoặc hủy một lần sao lưu do chính nó bắt đầu.
 
-Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP. Những gì các bước kiểm tra bất thường xem xét được mô tả trong [Bất thường](anomalies.md), và cách một mục ZFS giữ một snapshot cho mỗi tập dữ liệu được mô tả trong [Tập dữ liệu ZFS](zfs-datasets.md#contents).
+Nếu kho chính của một mục nằm ở nơi khác (S3, REST, SFTP, rclone), `list_restore_points` sẽ kết nối tới đó và lệnh gọi có thể mất một lúc. Không thể liệt kê bản sao off-site qua MCP. `search_files` chỉ đọc các kho từ xa, kể cả bản sao off-site, khi trợ lý yêu cầu, vì việc này lâu hơn và một số nhà cung cấp tính phí dữ liệu tải xuống. Một lần tìm có thể mất vài phút, nên lệnh gọi đầu tiên bắt đầu nó ở chế độ nền và một lệnh gọi sau sẽ nhận kết quả. Những gì các bước kiểm tra bất thường xem xét được mô tả trong [Bất thường](anomalies.md), và cách một mục ZFS giữ một snapshot cho mỗi tập dữ liệu được mô tả trong [Tập dữ liệu ZFS](zfs-datasets.md#contents).
 
 ## Một lần sao lưu được bắt đầu sẽ làm gì {#starting-backups}
 
@@ -243,7 +244,7 @@ Sau một proxy, mọi yêu cầu đều mang địa chỉ của proxy. Khi đó
 
 ## Những gì rời khỏi máy {#privacy}
 
-Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đứng sau nó: tên mục, lịch, lịch sử chạy kèm thông báo lỗi, id và thời điểm của các điểm khôi phục, tên các engine cơ sở dữ liệu và kích thước bản dump, hoạt động đang diễn ra, số liệu lưu trữ, độ bao phủ và trạng thái. BombVault loại bỏ đường dẫn trên máy chủ, vị trí kho, tên máy chủ, thông tin đăng nhập, lệnh hook và khóa trước khi bất cứ thứ gì rời đi.
+Mọi thứ trợ lý đọc đều được gửi tới nhà cung cấp AI đứng sau nó: tên mục, lịch, lịch sử chạy kèm thông báo lỗi, id và thời điểm của các điểm khôi phục, tên các engine cơ sở dữ liệu và kích thước bản dump, hoạt động đang diễn ra, số liệu lưu trữ, độ bao phủ và trạng thái. Một lần tìm tệp cũng gửi đi các tệp nó tìm thấy: tên, kích thước và đường dẫn bên trong bản sao lưu. BombVault loại bỏ đường dẫn trên máy chủ, vị trí kho, tên máy chủ, thông tin đăng nhập, lệnh hook và khóa trước khi bất cứ thứ gì rời đi.
 
 ## Khắc phục sự cố {#troubleshooting}
 

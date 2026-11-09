@@ -15,6 +15,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 | `get_activity` | Ce qui tourne en ce moment, avec la phase et le pourcentage | lecture |
 | `get_storage_stats` | Historique de taille du dépôt principal d'une section et sa croissance par semaine, avec l'espace utilisé, libre et total sur le disque ou le distant de chacun de ses dépôts | lecture |
 | `get_size_breakdown` | Quels dossiers et fichiers occupent de la place dans la sauvegarde la plus récente d'un conteneur, d'une VM ou d'un ensemble de dossiers, et combien la dernière sauvegarde en a ajouté | lecture |
+| `search_files` | Cherche des fichiers et des dossiers par leur nom dans les sauvegardes de tous les éléments, d'une section ou d'un élément (les VM ne sont pas fouillées), avec chaque sauvegarde qui contient chaque résultat | lecture |
 | `list_anomalies` | Les anomalies repérées par BombVault dans les sauvegardes, filtrables par état, gravité et section, avec un résumé de ce qui est ouvert | lecture |
 | `get_anomaly` | Une de ces anomalies, avec la note laissée lors de sa prise en compte | lecture |
 | `start_backup` | Sauvegarde un élément tout de suite | lancement |
@@ -24,7 +25,7 @@ BombVault intègre un serveur pour le Model Context Protocol (MCP), le protocole
 
 Tout ceci reste dans l'interface web : les restaurations de toute sorte (y compris télécharger, enregistrer ou importer un dump de base de données), la suppression de sauvegardes, prune, unlock, les vérifications et les exercices, la réplication hors site, les paramètres, les identifiants et les clés MCP, ainsi que l'annulation d'une sauvegarde lancée par la planification, par l'interface web ou par une autre clé. Il en va de même pour prendre acte d'une anomalie ou la marquer comme attendue, ce qui se fait sur la page **Anomalies**. La raison : les réponses des outils contiennent des noms et des messages d'erreur venant de votre serveur, et n'importe lequel d'entre eux peut contenir un texte écrit pour manipuler l'assistant. Un assistant qui s'y laisse prendre peut au pire lancer une sauvegarde dans les limites ci-dessous, ou annuler une sauvegarde qu'il a lancée lui-même.
 
-Si le dépôt principal d'un élément est distant (S3, REST, SFTP, rclone), `list_restore_points` le contacte, et l'appel peut prendre un moment. Les copies hors site ne peuvent pas être listées par MCP. Ce que regardent les contrôles d'anomalies est décrit dans [Anomalies](anomalies.md), et la façon dont un élément ZFS garde un instantané par jeu de données, dans [Jeux de données ZFS](zfs-datasets.md#contents).
+Si le dépôt principal d'un élément est distant (S3, REST, SFTP, rclone), `list_restore_points` le contacte, et l'appel peut prendre un moment. Les copies hors site ne peuvent pas être listées par MCP. `search_files` ne lit les dépôts distants, copies hors site comprises, que si l'assistant le demande, car c'est plus long et certains fournisseurs facturent les données téléchargées. Une recherche peut durer plusieurs minutes : le premier appel la lance donc en arrière-plan et un appel suivant récupère le résultat. Ce que regardent les contrôles d'anomalies est décrit dans [Anomalies](anomalies.md), et la façon dont un élément ZFS garde un instantané par jeu de données, dans [Jeux de données ZFS](zfs-datasets.md#contents).
 
 ## Ce que fait une sauvegarde lancée {#starting-backups}
 
@@ -243,7 +244,7 @@ Derrière un proxy, chaque requête porte l'adresse du proxy. Cinq mauvaises cl�
 
 ## Ce qui sort de la machine {#privacy}
 
-Tout ce qu'un assistant lit part chez le fournisseur d'IA qui se trouve derrière lui : noms des éléments, planifications, historique des exécutions avec les messages d'erreur, identifiants et dates des points de restauration, noms des moteurs de base de données et tailles des dumps, activité en cours, chiffres de stockage, couverture et état. BombVault retire les chemins de l'hôte, les emplacements des dépôts, les noms d'hôte, les identifiants, les commandes de hook et les clés avant que quoi que ce soit ne sorte.
+Tout ce qu'un assistant lit part chez le fournisseur d'IA qui se trouve derrière lui : noms des éléments, planifications, historique des exécutions avec les messages d'erreur, identifiants et dates des points de restauration, noms des moteurs de base de données et tailles des dumps, activité en cours, chiffres de stockage, couverture et état. Une recherche de fichiers envoie aussi les fichiers trouvés : leurs noms, leurs tailles et leurs chemins dans la sauvegarde. BombVault retire les chemins de l'hôte, les emplacements des dépôts, les noms d'hôte, les identifiants, les commandes de hook et les clés avant que quoi que ce soit ne sorte.
 
 ## Dépannage {#troubleshooting}
 

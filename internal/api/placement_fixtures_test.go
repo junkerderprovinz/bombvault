@@ -559,6 +559,9 @@ type placementEngine struct {
 	onCheck func()
 	// onUnlock, when set, runs as a stale-lock clear starts.
 	onUnlock func()
+	// onFind, when set, runs before a Find reads anything, so a test can hold a
+	// search in the middle.
+	onFind func()
 	// copyDrops are the source snapshot ids a Copy leaves out without a word.
 	copyDrops map[string]bool
 	// signIns lists the environment each Init, Snapshots, Check and Copy ran
@@ -792,6 +795,9 @@ func (e *placementEngine) LsStreamNoLock(_ context.Context, _, id string, _ rest
 // Find hands over, for each snapshot asked for, what found holds of it that
 // the pattern matches, the way restic find's name filter does.
 func (e *placementEngine) Find(_ context.Context, repo string, ids []string, pattern string, _ restic.Mode, onSnapshot func(string, []restic.FoundFile)) error {
+	if e.onFind != nil {
+		e.onFind()
+	}
 	e.mu.Lock()
 	key := filepath.ToSlash(repo)
 	e.finds = append(e.finds, findCall{Repo: key, IDs: slices.Clone(ids), Pattern: pattern})

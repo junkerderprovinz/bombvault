@@ -15,6 +15,7 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 | `get_activity` | Cosa è in esecuzione adesso, con fase e percentuale | lettura |
 | `get_storage_stats` | Storico delle dimensioni del repository principale di una sezione e la sua crescita settimanale, con lo spazio usato, libero e totale sul disco o sul remoto di ciascuno dei suoi repository | lettura |
 | `get_size_breakdown` | Quali cartelle e file occupano spazio nel backup più recente di un container, una VM o un insieme di cartelle, e quanto ne ha aggiunto l'ultimo backup | lettura |
+| `search_files` | Cerca file e cartelle per nome nei backup di tutti gli elementi, di una sezione o di un elemento (le VM non vengono cercate) ed elenca per ogni risultato ogni backup che lo contiene | lettura |
 | `list_anomalies` | Anomalie notate da BombVault nei backup, filtrabili per stato, gravità e sezione, con un riepilogo di ciò che è aperto | lettura |
 | `get_anomaly` | Una di queste segnalazioni, con la nota lasciata quando è stata confermata | lettura |
 | `start_backup` | Esegue subito il backup di un elemento | avvio |
@@ -24,7 +25,7 @@ BombVault ha un server integrato per il Model Context Protocol (MCP), il protoco
 
 Restano nell'interfaccia web: i ripristini di ogni tipo (compresi scaricare, salvare o importare un dump di database), l'eliminazione di backup, prune, unlock, verifiche ed esercitazioni, la replica off-site, le impostazioni, le credenziali e le chiavi MCP, e l'annullamento di un backup avviato dalla pianificazione, dall'interfaccia web o da un'altra chiave. Lo stesso vale per confermare un'anomalia o segnarla come prevista, cosa che si fa nella pagina **Anomalie**. Il motivo: le risposte degli strumenti contengono nomi e messaggi di errore del tuo server, e ognuno di essi potrebbe contenere un testo scritto per manipolare l'assistente. Un assistente che ci casca può al massimo avviare un backup entro i limiti qui sotto, o annullarne uno che ha avviato lui stesso.
 
-Se il repository principale di un elemento è remoto (S3, REST, SFTP, rclone), `list_restore_points` lo contatta e la chiamata può richiedere un po' di tempo. Le copie off-site non si possono elencare tramite MCP. Cosa guardano i controlli delle anomalie è descritto in [Anomalie](anomalies.md), e come un elemento ZFS tiene uno snapshot per ogni dataset in [Dataset ZFS](zfs-datasets.md#contents).
+Se il repository principale di un elemento è remoto (S3, REST, SFTP, rclone), `list_restore_points` lo contatta e la chiamata può richiedere un po' di tempo. Le copie off-site non si possono elencare tramite MCP. `search_files` legge i repository remoti, comprese le copie off-site, solo se l'assistente lo chiede, perché ci vuole di più e alcuni fornitori fanno pagare i dati che scarica. Una ricerca può durare minuti, quindi la prima chiamata la avvia in background e una chiamata successiva ne ritira il risultato. Cosa guardano i controlli delle anomalie è descritto in [Anomalie](anomalies.md), e come un elemento ZFS tiene uno snapshot per ogni dataset in [Dataset ZFS](zfs-datasets.md#contents).
 
 ## Cosa fa un backup avviato {#starting-backups}
 
@@ -243,7 +244,7 @@ Dietro un proxy ogni richiesta porta l'indirizzo del proxy. Cinque chiavi sbagli
 
 ## Cosa esce dalla macchina {#privacy}
 
-Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi degli elementi, pianificazioni, cronologia delle esecuzioni con i messaggi di errore, id e orari dei punti di ripristino, nomi dei motori di database e dimensioni dei dump, attività in corso, dati di archiviazione, copertura e stato. BombVault toglie i percorsi dell'host, le posizioni dei repository, i nomi host, le credenziali, i comandi hook e le chiavi prima che qualcosa esca.
+Tutto ciò che un assistente legge va al fornitore di IA che sta dietro: nomi degli elementi, pianificazioni, cronologia delle esecuzioni con i messaggi di errore, id e orari dei punti di ripristino, nomi dei motori di database e dimensioni dei dump, attività in corso, dati di archiviazione, copertura e stato. Una ricerca di file invia anche i file che trova: nomi, dimensioni e percorsi dentro il backup. BombVault toglie i percorsi dell'host, le posizioni dei repository, i nomi host, le credenziali, i comandi hook e le chiavi prima che qualcosa esca.
 
 ## Risoluzione dei problemi {#troubleshooting}
 

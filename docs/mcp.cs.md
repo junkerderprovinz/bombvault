@@ -15,6 +15,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 | `get_activity` | Co právě běží, s fází a procenty | čtení |
 | `get_storage_stats` | Historie velikosti primárního repozitáře sekce a její týdenní růst, k tomu obsazené, volné a celkové místo na disku nebo vzdáleném úložišti každého jejího repozitáře | čtení |
 | `get_size_breakdown` | Které složky a soubory zabírají místo v nejnovější záloze kontejneru, VM nebo sady složek a kolik z nich přidala poslední záloha | čtení |
+| `search_files` | Hledá soubory a složky podle názvu v zálohách všech položek, jedné sekce nebo jedné položky (VM se neprohledávají) a ke každému nálezu vypíše všechny zálohy, které ho obsahují | čtení |
 | `list_anomalies` | Anomálie, kterých si BombVault všiml v zálohách, lze filtrovat podle stavu, závažnosti a sekce, se souhrnem toho, co je otevřené | čtení |
 | `get_anomaly` | Jedno z těchto zjištění s poznámkou, která zůstala při jeho potvrzení | čtení |
 | `start_backup` | Hned zazálohuje jednu položku | spuštění |
@@ -24,7 +25,7 @@ BombVault má vestavěný server pro Model Context Protocol (MCP), protokol, kte
 
 Ve webovém rozhraní zůstává: obnova jakéhokoli druhu (včetně stažení, uložení nebo importu databázového dumpu), mazání záloh, prune, unlock, kontroly a cvičení, replikace off-site, nastavení, přihlašovací údaje a klíče MCP a také zrušení zálohy, kterou spustil plán, webové rozhraní nebo jiný klíč. Totéž platí pro potvrzení anomálie nebo její označení jako očekávané, což se dělá na stránce **Anomálie**. Důvod: odpovědi nástrojů obsahují názvy a chybové zprávy z tvého serveru a kterákoli z nich může nést text napsaný tak, aby asistenta ovládl. Asistent, který na takový text naletí, může nanejvýš spustit zálohu v mezích uvedených níže nebo zrušit zálohu, kterou sám spustil.
 
-Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze. Na co se kontroly anomálií dívají, popisuje stránka [Anomálie](anomalies.md), a jak položka ZFS drží jeden snímek pro každou datovou sadu, stránka [Datové sady ZFS](zfs-datasets.md#contents).
+Pokud je primární repozitář položky vzdálený (S3, REST, SFTP, rclone), `list_restore_points` se k němu připojí a volání může chvíli trvat. Kopie off-site přes MCP vypsat nelze. `search_files` čte vzdálené repozitáře, mezi nimi i kopie off-site, jen když o to asistent požádá, protože to trvá déle a někteří poskytovatelé si účtují stažená data. Hledání může trvat i minuty, proto ho první volání spustí na pozadí a výsledek si vyzvedne pozdější volání. Na co se kontroly anomálií dívají, popisuje stránka [Anomálie](anomalies.md), a jak položka ZFS drží jeden snímek pro každou datovou sadu, stránka [Datové sady ZFS](zfs-datasets.md#contents).
 
 ## Co spuštěná záloha dělá {#starting-backups}
 
@@ -243,7 +244,7 @@ Za proxy nese každý požadavek adresu proxy. Pět špatných klíčů od jedin
 
 ## Co opouští stroj {#privacy}
 
-Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ním: názvy položek, plány, historie běhů s chybovými zprávami, id a časy bodů obnovy, názvy databázových strojů a velikosti dumpů, probíhající činnost, údaje o úložišti, pokrytí a stav. BombVault odstraní cesty hostitele, umístění repozitářů, názvy hostitelů, přihlašovací údaje, příkazy hooků a klíče dřív, než cokoli odejde.
+Vše, co asistent přečte, odchází k poskytovateli umělé inteligence za ním: názvy položek, plány, historie běhů s chybovými zprávami, id a časy bodů obnovy, názvy databázových strojů a velikosti dumpů, probíhající činnost, údaje o úložišti, pokrytí a stav. Hledání souborů navíc posílá nalezené soubory: jejich názvy, velikosti a cesty uvnitř zálohy. BombVault odstraní cesty hostitele, umístění repozitářů, názvy hostitelů, přihlašovací údaje, příkazy hooků a klíče dřív, než cokoli odejde.
 
 ## Řešení potíží {#troubleshooting}
 
