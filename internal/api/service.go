@@ -501,8 +501,9 @@ type Service struct {
 	// load measures the host while backups run, for the bottleneck line.
 	load *hostload.Sampler
 
-	breakdowns breakdowns
-	changes    changeComparisons
+	breakdowns   breakdowns
+	fileSearches fileSearches
+	changes      changeComparisons
 	// trafficSt watches media servers and busy apps; see traffic.go.
 	trafficOnce sync.Once
 	trafficSt   *trafficState
