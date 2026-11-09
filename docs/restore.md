@@ -13,7 +13,7 @@ Every restore starts on the **Restore** page: pick a section, search for what yo
 - **Stacks** lists the Compose projects with at least two backed-up containers, such as `immich` with its database and Redis. The search finds a stack by its name or by any of its containers.
 - **Running now** shows a restore while it runs, also after you closed its window.
 - **Emergency** starts the Emergency wizard for a server that is gone or was set up again, see [Emergency wizard](offsite-recovery.md#emergency).
-- **Other sources** holds **From an old backup folder**, for the backups of another BombVault, and **Import from the Appdata.Backup plugin**.
+- **Other sources** holds **From an old backup folder**, for the backups of another BombVault, **Import from the Appdata.Backup plugin** and **Jobs from Duplicati or Duplicacy**.
 
 ![The Restore page on a phone.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![The Restore page on a phone.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ A database that has only database dumps and no files backup, and whose container
 
 - **From an old backup folder** opens the repository of another BombVault that no longer runs, on a disk or at an off-site storage location, with its recovery kit or its typed `APP_KEY`. The session is read-only and lives only in memory. See [From an old backup folder](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Import from the Appdata.Backup plugin** reads the plugin's backup folder. Each container archive becomes a restore point of its container, dated when the plugin made it. Archives imported before are skipped, and the archives themselves are only read. The container needs one backup in BombVault first, so the restore has its definition. Retention leaves imported restore points alone, so delete one yourself when you no longer need it.
+- **Jobs from Duplicati or Duplicacy** turns the backup jobs of those tools into folder sets. It reads their settings only. The old backups stay with the old tool, and BombVault starts with a first backup of its own. Neither tool has to be installed here.
+    - **From Duplicati**: export each job in Duplicati to a file without a password, and pick the `.json` files. An export that includes the passwords brings the destination's sign-in along.
+    - **From Duplicacy**: pick the Duplicacy Web folder that holds `duplicacy.json`, or a folder you back up with the Duplicacy command line, which holds `.duplicacy`. Keys the command line saved in `.duplicacy/preferences` come along. Duplicacy Web keeps its sign-ins encrypted, so the window asks for them.
+
+    Nothing is created before you have seen the preview. Each source folder becomes a folder set, with the folder on this server it was found at, the exclusions that could be translated and the schedule. When the old tool ran in a container of its own and a folder was not found, you pick it. The backups go to a new storage location in a folder `bombvault` inside the old destination, for a local folder, S3, SFTP, an rclone remote, or Backblaze B2 by its S3 address. A sign-in from the file is saved with your other sign-ins, and one the file lacks is asked for. Notes under each job say what did not come along, such as include rules, regular expressions, how long backups were kept, and the old encryption password, which BombVault does not need.
 
 ## After a restore {#after}
 

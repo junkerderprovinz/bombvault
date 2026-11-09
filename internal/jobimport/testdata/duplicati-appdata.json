@@ -1,0 +1,53 @@
+{
+  "CreatedByVersion": "2.1.0.2",
+  "Schedule": {
+    "ID": 3,
+    "Tags": [
+      "ID=3"
+    ],
+    "Time": "2026-03-07T03:00:00Z",
+    "Repeat": "1W",
+    "LastRun": "2026-02-28T03:00:41Z",
+    "Rule": "",
+    "AllowedDays": null
+  },
+  "Backup": {
+    "ID": "3",
+    "Name": "Appdata (nightly)",
+    "Description": "",
+    "Tags": [],
+    "TargetURL": "file:///backups/duplicati/appdata",
+    "DBPath": "ZXCVBNMASD.sqlite",
+    "OperationType": "Backup",
+    "Enabled": true,
+    "Sources": [
+      "/source/appdata/"
+    ],
+    "Settings": [
+      {
+        "Filter": "",
+        "Name": "encryption-module",
+        "Value": "",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "--no-encryption",
+        "Value": "true",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "keep-versions",
+        "Value": "5",
+        "Argument": null
+      }
+    ],
+    "Filters": [],
+    "Metadata": {},
+    "IsTemporary": false
+  },
+  "DisplayNames": {
+    "/source/appdata/": "appdata"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "CreatedByVersion": "2.0.8.1",
+  "Schedule": {
+    "ID": 2,
+    "Tags": [
+      "ID=2"
+    ],
+    "Time": "2026-03-02T00:15:00Z",
+    "Repeat": "6h",
+    "LastRun": "2026-03-01T18:15:04Z",
+    "Rule": "AllowedWeekDays=Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
+    "AllowedDays": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ]
+  },
+  "Backup": {
+    "ID": "2",
+    "Name": "Documents",
+    "Description": "",
+    "Tags": [],
+    "TargetURL": "b2://example-docs/duplicati/documents?b2-page-size=500",
+    "DBPath": "QWERTYUIOP.sqlite",
+    "OperationType": "Backup",
+    "Enabled": false,
+    "Sources": [
+      "/source/documents/"
+    ],
+    "Settings": [
+      {
+        "Filter": "",
+        "Name": "encryption-module",
+        "Value": "aes",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "keep-time",
+        "Value": "6M",
+        "Argument": null
+      }
+    ],
+    "Filters": [
+      {
+        "Order": 0,
+        "Include": true,
+        "Expression": "/source/documents/Work/"
+      },
+      {
+        "Order": 1,
+        "Include": false,
+        "Expression": "*"
+      }
+    ],
+    "Metadata": {},
+    "IsTemporary": false
+  },
+  "DisplayNames": {
+    "/source/documents/": "documents"
+  }
+}

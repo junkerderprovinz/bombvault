@@ -30,6 +30,7 @@ import { PlaceChecks } from "../components/restore/PlaceChecks";
 import { RestoreManyWindow } from "../components/restore/RestoreManyWindow";
 import { RestoreWindow, type RestoreAsk } from "../components/restore/RestoreWindow";
 import { StackWindow, membersLine } from "../components/restore/StackWindow";
+import { ToolImportWindow } from "../components/restore/ToolImportWindow";
 import { RestoreCancelButton } from "../components/RestoreCancelButton";
 import { Rows } from "../components/storage/rows";
 import {
@@ -316,6 +317,7 @@ function Way({
   sub,
   warn = false,
   onOpen,
+  newId,
 }: {
   glyph: ReactNode;
   name: string;
@@ -323,11 +325,14 @@ function Way({
   /** The emergency stands out from the ways that are only rare. */
   warn?: boolean;
   onOpen: () => void;
+  /** The change in lib/whatsNew.ts the way is, which puts its dot on it. */
+  newId?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onOpen}
+      data-new={newId}
       className="group flex w-full items-center gap-3.5 rounded-control px-1.5 py-3 text-start transition-colors hover:bg-carbon-surface2"
     >
       <span
@@ -361,7 +366,7 @@ export function Restore() {
   const [kind, setKind] = useState<EntryKind | null>(null);
   const [query, setQuery] = useState("");
   const [pick, setPick] = useState<string | null>(null);
-  const [source, setSource] = useState<"oldFolder" | "appdata" | null>(null);
+  const [source, setSource] = useState<"oldFolder" | "appdata" | "tools" | null>(null);
   const { push } = useToast();
   // What this server fetched from other instances, one way back per source.
   const [fetched, setFetched] = useState<PullSourceView[]>([]);
@@ -528,6 +533,7 @@ export function Restore() {
         />
       )}
       {source === "appdata" && <AppdataWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
+      {source === "tools" && <ToolImportWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
       {many && <RestoreManyWindow items={many} onClose={() => setMany(null)} />}
       {foundOpen && <FoundRestore item={foundOpen.item} ask={foundOpen.ask} onClose={() => setFoundOpen(null)} />}
       {stackOpen !== null && stacks.length > 0 && (
@@ -701,6 +707,13 @@ export function Restore() {
               name={t("recovery.abTitle")}
               sub={t("restorePage.appdataHint")}
               onOpen={() => setSource("appdata")}
+            />
+            <Way
+              glyph={<IconArchive />}
+              name={t("toolImport.title")}
+              sub={t("toolImport.hint")}
+              onOpen={() => setSource("tools")}
+              newId="restore-tool-import"
             />
             {fetched.map((pull) => (
               <Way

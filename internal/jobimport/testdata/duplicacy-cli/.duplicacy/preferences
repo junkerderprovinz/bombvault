@@ -1,0 +1,50 @@
+[
+    {
+        "name": "default",
+        "id": "music",
+        "repository": "",
+        "storage": "b2://example-music/library",
+        "encrypted": true,
+        "no_backup": false,
+        "no_restore": false,
+        "no_save_password": false,
+        "nobackup_file": ".nobackup",
+        "keys": {
+            "b2_id": "0001234567890ab0000000001",
+            "b2_key": "K001exampleApplicationKeyNotReal",
+            "password": "storage password not real"
+        },
+        "filters": "",
+        "exclude_by_attribute": false
+    },
+    {
+        "name": "nas",
+        "id": "music",
+        "repository": "",
+        "storage": "sftp://backup@nas.example.lan:2222/srv/duplicacy",
+        "encrypted": false,
+        "no_backup": false,
+        "no_restore": false,
+        "no_save_password": false,
+        "nobackup_file": "",
+        "keys": {
+            "nas_ssh_password": "not-a-real-password"
+        },
+        "filters": "",
+        "exclude_by_attribute": true
+    },
+    {
+        "name": "offline",
+        "id": "music",
+        "repository": "",
+        "storage": "/mnt/disks/archive/duplicacy",
+        "encrypted": false,
+        "no_backup": true,
+        "no_restore": false,
+        "no_save_password": false,
+        "nobackup_file": "",
+        "keys": null,
+        "filters": "",
+        "exclude_by_attribute": false
+    }
+]

@@ -444,6 +444,8 @@ var pairedRefused = []string{
 	"POST /api/files/discover",
 	"POST /api/import/appdata-backup",
 	"POST /api/import/appdata-backup/scan",
+	"POST /api/import/tools",
+	"POST /api/import/tools/preview",
 	"POST /api/notify",
 	"POST /api/notify/test",
 	"POST /api/settings/import",
