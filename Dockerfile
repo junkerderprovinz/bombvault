@@ -38,7 +38,7 @@ FROM --platform=$BUILDPLATFORM debian:stable-slim@sha256:13e0a2e78aa0554ad5ff66e
 # renovate: datasource=github-releases depName=restic/restic
 ARG RESTIC_VERSION=0.19.1
 # renovate: datasource=github-releases depName=rclone/rclone
-ARG RCLONE_VERSION=1.75.2
+ARG RCLONE_VERSION=1.76.0
 ARG TARGETARCH
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl gpg gpgv bzip2 unzip \
