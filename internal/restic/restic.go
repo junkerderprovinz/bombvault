@@ -993,10 +993,11 @@ func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string)
 // integrity check on a received / append-only repo) the check is lock-free
 // (--no-lock) so it never writes a lock into the received repo; otherwise it
 // carries --retry-lock so the off-site DR check waits out a transient lock.
+// A member of a shared repository checks it without a lock as well.
 func CheckArgs(repo string, m Mode) []string {
 	args := repoFlag(repo, m)
-	if m.NoLock {
-		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	if m.checkWithoutLock() {
+		args = append(args, "--no-lock")
 	} else {
 		args = append(args, retryLockFlags()...)
 	}
@@ -1022,8 +1023,8 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 		subsetPercent = 100
 	}
 	args := repoFlag(repo, m)
-	if m.NoLock {
-		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	if m.checkWithoutLock() {
+		args = append(args, "--no-lock")
 	} else {
 		args = append(args, retryLockFlags()...)
 	}

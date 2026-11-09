@@ -153,6 +153,32 @@ func TestEachServerKeepsItsOwnHistoryOfAnEntryBothBackUp(t *testing.T) {
 	}
 }
 
+// check without --no-lock locks exclusively, and a member must never hold up
+// the owner's prune or the other members' copies.
+func TestAMemberChecksASharedRepositoryWithoutALock(t *testing.T) {
+	for _, c := range []struct {
+		sharing restic.Sharing
+		noLock  bool
+	}{
+		{restic.SharingMember, true},
+		{restic.SharingOwner, false},
+		{restic.SharingNone, false},
+	} {
+		m := restic.Mode{Host: ownHost, Sharing: c.sharing}
+		for name, args := range map[string][]string{
+			"check": restic.CheckArgs("/repo", m),
+			"data":  restic.CheckDataArgs("/repo", 5, m),
+		} {
+			if got := slices.Contains(args, "--no-lock"); got != c.noLock {
+				t.Errorf("sharing %v, %s: %v, want --no-lock %v", c.sharing, name, args, c.noLock)
+			}
+			if slices.Contains(args, "--no-lock") == slices.Contains(args, "--retry-lock") {
+				t.Errorf("sharing %v, %s: %v, want either --no-lock or --retry-lock", c.sharing, name, args)
+			}
+		}
+	}
+}
+
 func TestListingEveryHostOfASharedRepositoryLeavesOutTheFilter(t *testing.T) {
 	m := restic.Mode{Host: ownHost, Sharing: restic.SharingOwner}
 	if got := hostsIn(restic.EveryHostSnapshotsArgs("/repo", m)); len(got) != 0 {

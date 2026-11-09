@@ -65,3 +65,10 @@ func (m Mode) refuseRepoWide(tags []string) error {
 	}
 	return ErrSharedRepoWide
 }
+
+// checkWithoutLock reports whether a check leaves the repository unlocked: a
+// read-only session must not write a lock, and a member's exclusive check lock
+// would hold up the owner's prune and every other member's copy.
+func (m Mode) checkWithoutLock() bool {
+	return m.NoLock || m.Sharing == SharingMember
+}
