@@ -20,5 +20,6 @@ BUTTONS = {
     "google-play": None,
     "f-droid": "https://f-droid.org/packages/bombvault.halleluja.design/",
     "apk": "https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk",
+    "parleyport": "https://github.com/junkerderprovinz/parleyport",
     "bombvault-widget": "https://github.com/junkerderprovinz/bombvault-widget",
 }

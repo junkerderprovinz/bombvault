@@ -363,11 +363,7 @@ def rows():
 
 
 def split(items):
-    """A group as rows of at most PLACES, each filled before the next begins.
-
-    A plain button left alone below a full row takes the last one of that row
-    with it. One with segments is wide enough to stand alone and stays.
-    """
+    """A group as rows of at most PLACES, each filled before the next begins."""
     out, used = [[]], 0.0
     for parts in items:
         size = 1 + (len(parts) - 1) / 2
@@ -376,8 +372,6 @@ def split(items):
             used = 0.0
         out[-1].append(parts)
         used += size
-    if len(out) > 1 and len(out[-1]) == 1 and len(out[-1][0]) == 1 and len(out[-2]) > 1:
-        out[-1].insert(0, out[-2].pop())
     return out
 
 
