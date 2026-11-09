@@ -13,7 +13,7 @@ Toda a restauração começa na página **Restauração**: escolhe uma secção,
 - **Stacks** lista os projetos Compose com pelo menos dois containers copiados, por exemplo `immich` com a sua base de dados e o Redis. A pesquisa encontra uma stack pelo nome ou por qualquer um dos seus containers.
 - **A decorrer** mostra uma restauração enquanto corre, também depois de fechares a janela.
 - **Emergência** inicia o assistente de emergência para um servidor que desapareceu ou foi configurado de novo, vê [Assistente de emergência](offsite-recovery.md#emergency).
-- **Outras origens** guarda **De uma pasta de backups antiga**, para os backups de outro BombVault, e **Importar do plugin Appdata.Backup**.
+- **Outras origens** guarda **De uma pasta de backups antiga**, para os backups de outro BombVault, **Importar do plugin Appdata.Backup** e **Tarefas do Duplicati ou do Duplicacy**.
 
 ![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Uma base de dados que só tem despejos da base de dados e nenhum backup de fiche
 
 - **De uma pasta de backups antiga** abre o repositório de outro BombVault que já não corre, num disco ou num destino externo, com o seu kit de recuperação ou o `APP_KEY` escrito à mão. A sessão é só de leitura e vive apenas na memória. Vê [De uma pasta de backups antiga](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importar do plugin Appdata.Backup** lê a pasta de backups do plugin. Cada arquivo de container passa a ser um ponto de restauro do seu container, datado de quando o plugin o fez. Os arquivos já importados antes são ignorados, e os arquivos em si só são lidos. O container precisa primeiro de um backup no BombVault, para a restauração ter a sua definição. A retenção deixa em paz os pontos de restauro importados, por isso elimina um tu mesmo quando já não precisares dele.
+- **Tarefas do Duplicati ou do Duplicacy** transforma as tarefas de backup dessas ferramentas em conjuntos de pastas. Só lê as configurações delas. Os backups antigos ficam com a ferramenta antiga, e o BombVault começa com um primeiro backup próprio. Nenhuma das duas ferramentas precisa de estar instalada aqui.
+    - **Do Duplicati**: no Duplicati, exporta cada tarefa para um ficheiro sem palavra-passe e escolhe os ficheiros `.json`. Uma exportação que inclua as palavras-passe traz também as credenciais do destino.
+    - **Do Duplicacy**: escolhe a pasta do Duplicacy Web que contém o `duplicacy.json`, ou uma pasta de que fazes backup pela linha de comandos do Duplicacy, que contém `.duplicacy`. As chaves que a linha de comandos guardou em `.duplicacy/preferences` vêm junto. O Duplicacy Web guarda as suas credenciais encriptadas, por isso a janela pede-tas.
+
+    Nada é criado antes de veres a pré-visualização. Cada pasta de origem passa a ser um conjunto de pastas, com a pasta deste servidor onde foi encontrada, as exclusões que foi possível converter e o agendamento. Se a ferramenta antiga corria num container próprio e uma pasta não foi encontrada, és tu que a escolhes. Os backups vão para um novo destino, numa pasta `bombvault` dentro do destino antigo, seja ele uma pasta local, S3, SFTP, um remote do rclone ou o Backblaze B2 pelo seu endereço S3. As credenciais que vêm no ficheiro ficam guardadas com as tuas outras credenciais, e as que faltam são-te pedidas. As notas por baixo de cada tarefa dizem o que não veio junto, como as regras de inclusão, as expressões regulares, o tempo durante o qual os backups eram guardados e a palavra-passe de encriptação antiga, de que o BombVault não precisa.
 
 ## Depois de uma restauração {#after}
 

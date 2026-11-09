@@ -36,7 +36,7 @@ Et kort katalog over, hvad BombVault kan. Hver linje linker til den side, der fo
 - **Flash som en ZIP** og ét plugin ad gangen tilbage i det kørende flashdrev. [Hvad der kommer tilbage](restore.md#kinds)
 - **ZFS** ind i datasættet med et sikkerhedssnapshot, til en mappe eller til et nyt datasæt med dets egenskaber. [ZFS-datasæt](zfs-datasets.md#restore)
 - **Nødguide** til en tabt server, med gendannelseskittet, gennem gruppen eller med den indtastede nøgle. [Nødguide](offsite-recovery.md#emergency)
-- **Fra en gammel sikkerhedskopimappe** og **Importér fra Appdata.Backup-pluginnet**. [Andre kilder](restore.md#other-sources)
+- **Fra en gammel sikkerhedskopimappe**, **Importér fra Appdata.Backup-pluginnet** og **Job fra Duplicati eller Duplicacy**, som gør deres sikkerhedskopijob til mappesæt. [Andre kilder](restore.md#other-sources)
 
 ## Lager og tidsplaner {#storage-scheduling}
 

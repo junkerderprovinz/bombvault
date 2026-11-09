@@ -13,7 +13,7 @@ Her geri yükleme **Geri yükleme** sayfasında başlar: bir bölüm seç, geri 
 - **Stack'ler**, en az iki yedeklenmiş konteyneri olan Compose projelerini listeler, örneğin veritabanı ve Redis'iyle `immich`. Arama bir stack'i adıyla ya da konteynerlerinden herhangi biriyle bulur.
 - **Şu an çalışıyor**, bir geri yüklemeyi, penceresini kapattıktan sonra da, çalışırken gösterir.
 - **Acil durum**, kaybolmuş ya da yeniden kurulmuş bir sunucu için Acil durum sihirbazını başlatır, bkz. [Acil durum sihirbazı](offsite-recovery.md#emergency).
-- **Diğer kaynaklar**, başka bir BombVault'un yedekleri için **Eski bir yedek klasöründen** ve **Appdata.Backup eklentisinden içe aktar**'ı barındırır.
+- **Diğer kaynaklar**, başka bir BombVault'un yedekleri için **Eski bir yedek klasöründen**, **Appdata.Backup eklentisinden içe aktar** ve **Duplicati ya da Duplicacy işleri**'ni barındırır.
 
 ![Telefonda Geri yükleme sayfası.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Telefonda Geri yükleme sayfası.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Yalnızca veritabanı dökümleri olan, dosya yedeği olmayan ve konteyneri ile 
 
 - **Eski bir yedek klasöründen**, artık çalışmayan başka bir BombVault'un deposunu, bir diskte ya da site dışı bir hedefte, kurtarma kiti ya da yazılmış `APP_KEY` ile açar. Oturum salt okunurdur ve yalnızca bellekte yaşar. Bkz. [Eski bir yedek klasöründen](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Appdata.Backup eklentisinden içe aktar**, eklentinin yedek klasörünü okur. Her konteyner arşivi, eklentinin yaptığı tarihle o konteynerin bir geri yükleme noktası olur. Daha önce içe aktarılan arşivler atlanır ve arşivlerin kendisi yalnızca okunur. Geri yüklemenin tanımı olsun diye konteynerin önce BombVault'ta bir yedeğe ihtiyacı vardır. Saklama içe aktarılan geri yükleme noktalarına dokunmaz, bu yüzden artık gerekmediğinde birini kendin sil.
+- **Duplicati ya da Duplicacy işleri**, bu araçların yedekleme işlerini klasör kümelerine dönüştürür. Yalnızca ayarlarını okur. Eski yedekler eski araçta kalır ve BombVault kendi ilk yedeğiyle başlar. Araçlardan hiçbirinin burada kurulu olması gerekmez.
+    - **Duplicati'den**: Duplicati'de her işi parolasız bir dosyaya dışa aktar ve `.json` dosyalarını seç. Parolaları da içeren bir dışa aktarma, hedefin oturum açma bilgilerini de beraberinde getirir.
+    - **Duplicacy'den**: `duplicacy.json` dosyasını içeren Duplicacy Web klasörünü ya da Duplicacy komut satırıyla yedeklediğin ve `.duplicacy` içeren bir klasörü seç. Komut satırının `.duplicacy/preferences` içine kaydettiği anahtarlar da gelir. Duplicacy Web oturum açma bilgilerini şifreli saklar, bu yüzden pencere onları sorar.
+
+    Önizlemeyi görmeden hiçbir şey oluşturulmaz. Her kaynak klasör, bu sunucuda bulunduğu klasörle, aktarılabilen hariç tutmalarla ve zamanlamayla bir klasör kümesi olur. Eski araç kendi konteynerinde çalıştıysa ve bir klasör bulunamadıysa, onu sen seçersin. Eski hedef yerel bir klasör, S3, SFTP, bir rclone remote'u ya da S3 adresiyle Backblaze B2 ise, yedekler yeni bir hedefe, eski hedefin içindeki `bombvault` klasörüne gider. Dosyadaki oturum açma bilgileri diğer oturum açma bilgilerinle birlikte kaydedilir, dosyada olmayanlar ise pencerede sorulur. Her işin altındaki notlar neyin aktarılmadığını söyler, örneğin dahil etme kuralları, düzenli ifadeler, yedeklerin ne kadar süre saklandığı ve BombVault'un ihtiyaç duymadığı eski şifreleme parolası.
 
 ## Bir geri yüklemeden sonra {#after}
 

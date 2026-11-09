@@ -36,7 +36,7 @@ Een korte catalogus van wat BombVault doet. Elke regel linkt naar de pagina die 
 - **Flash als ZIP**, en één plug-in per keer terug in de draaiende flash. [Wat er terugkomt](restore.md#kinds)
 - **ZFS** in de dataset met een veiligheidssnapshot, naar een map of in een nieuwe dataset met zijn eigenschappen. [ZFS-datasets](zfs-datasets.md#restore)
 - **Noodassistent** voor een verloren server, met de herstelkit, via de groep of met de ingetypte sleutel. [Noodassistent](offsite-recovery.md#emergency)
-- **Uit een oude back-upmap**, en **Importeren uit de Appdata.Backup-plug-in**. [Andere bronnen](restore.md#other-sources)
+- **Uit een oude back-upmap**, **Importeren uit de Appdata.Backup-plug-in** en **Taken uit Duplicati of Duplicacy**, waarmee hun back-uptaken mappensets worden. [Andere bronnen](restore.md#other-sources)
 
 ## Opslag en planning {#storage-scheduling}
 

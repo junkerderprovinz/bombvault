@@ -13,7 +13,7 @@ Ogni ripristino parte dalla pagina **Ripristino**: scegli una sezione, cerca ci�
 - **Stack** elenca i progetti Compose con almeno due container salvati, come `immich` con il suo database e Redis. La ricerca trova uno stack dal suo nome o da uno qualsiasi dei suoi container.
 - **In esecuzione** mostra un ripristino mentre gira, anche dopo che ne hai chiuso la finestra.
 - **Emergenza** avvia la Procedura guidata di emergenza per un server che non c'è più o è stato reinstallato, vedi [Procedura guidata di emergenza](offsite-recovery.md#emergency).
-- **Altre sorgenti** contiene **Da una vecchia cartella di backup**, per i backup di un altro BombVault, e **Importa dal plugin Appdata.Backup**.
+- **Altre sorgenti** contiene **Da una vecchia cartella di backup**, per i backup di un altro BombVault, **Importa dal plugin Appdata.Backup** e **Job da Duplicati o Duplicacy**.
 
 ![La pagina Ripristino su un telefono.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La pagina Ripristino su un telefono.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Un database che ha solo dump del database e nessun backup dei file, e il cui con
 
 - **Da una vecchia cartella di backup** apre il repository di un altro BombVault che non gira più, su un disco o in una destinazione off-site, con il suo kit di ripristino o la sua `APP_KEY` digitata. La sessione è di sola lettura e vive solo in memoria. Vedi [Da una vecchia cartella di backup](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importa dal plugin Appdata.Backup** legge la cartella di backup del plugin. Ogni archivio di container diventa un punto di ripristino del suo container, datato a quando il plugin lo ha creato. Gli archivi importati prima vengono saltati, e gli archivi stessi vengono solo letti. Il container ha bisogno prima di un backup in BombVault, così il ripristino ha la sua definizione. La conservazione lascia in pace i punti di ripristino importati, quindi eliminane uno tu quando non ti serve più.
+- **Job da Duplicati o Duplicacy** trasforma i job di backup di questi strumenti in set di cartelle. Ne legge soltanto le impostazioni. I vecchi backup restano al vecchio strumento, e BombVault parte con un primo backup tutto suo. Nessuno dei due strumenti deve essere installato qui.
+    - **Da Duplicati**: in Duplicati esporta ogni job in un file senza password, poi scegli i file `.json`. Un'esportazione che include le password porta con sé anche le credenziali della destinazione.
+    - **Da Duplicacy**: scegli la cartella di Duplicacy Web che contiene `duplicacy.json`, oppure una cartella di cui fai il backup con la riga di comando di Duplicacy, che contiene `.duplicacy`. Le chiavi che la riga di comando ha salvato in `.duplicacy/preferences` vengono importate. Duplicacy Web conserva le sue credenziali cifrate, quindi la finestra te le chiede.
+
+    Non viene creato nulla prima che tu abbia visto l'anteprima. Ogni cartella di origine diventa un set di cartelle, con la cartella di questo server in cui è stata trovata, le esclusioni che è stato possibile convertire e la pianificazione. Se il vecchio strumento girava in un container tutto suo e una cartella non è stata trovata, la scegli tu. I backup vanno in una nuova destinazione, in una cartella `bombvault` dentro la vecchia destinazione, che sia una cartella locale, S3, SFTP, un remote rclone o Backblaze B2 tramite il suo indirizzo S3. Le credenziali presenti nel file vengono salvate insieme alle tue altre credenziali, e quelle che mancano ti vengono chieste. Le note sotto ogni job dicono cosa non è stato importato, come le regole di inclusione, le espressioni regolari, per quanto tempo venivano conservati i backup e la vecchia password di cifratura, che a BombVault non serve.
 
 ## Dopo un ripristino {#after}
 

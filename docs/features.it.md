@@ -36,7 +36,7 @@ Un breve catalogo di ciò che BombVault sa fare. Ogni riga rimanda alla pagina c
 - **La flash come ZIP**, e un plugin alla volta di nuovo nella flash in esecuzione. [Cosa torna indietro](restore.md#kinds)
 - **ZFS** dentro il dataset con uno snapshot di sicurezza, in una cartella o in un nuovo dataset con le sue proprietà. [Dataset ZFS](zfs-datasets.md#restore)
 - **Procedura guidata di emergenza** per un server perso, con il kit di ripristino, tramite il gruppo o con la chiave digitata. [Procedura guidata di emergenza](offsite-recovery.md#emergency)
-- **Da una vecchia cartella di backup**, e **Importa dal plugin Appdata.Backup**. [Altre sorgenti](restore.md#other-sources)
+- **Da una vecchia cartella di backup**, **Importa dal plugin Appdata.Backup** e **Job da Duplicati o Duplicacy**, che trasforma i loro job di backup in set di cartelle. [Altre sorgenti](restore.md#other-sources)
 
 ## Archiviazione e pianificazione {#storage-scheduling}
 

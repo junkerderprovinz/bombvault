@@ -13,7 +13,7 @@ Elk herstel begint op de pagina **Herstel**: kies een onderdeel, zoek wat je ter
 - **Stacks** toont de Compose-projecten met minstens twee geback-upte containers, zoals `immich` met zijn database en Redis. Het zoekveld vindt een stack op zijn naam of op een van zijn containers.
 - **Bezig** toont een herstel terwijl het loopt, ook nadat je zijn venster sloot.
 - **Noodgeval** start de Noodassistent voor een server die weg is of opnieuw is ingesteld, zie [Noodassistent](offsite-recovery.md#emergency).
-- **Andere bronnen** bevat **Uit een oude back-upmap**, voor de back-ups van een andere BombVault, en **Importeren uit de Appdata.Backup-plug-in**.
+- **Andere bronnen** bevat **Uit een oude back-upmap**, voor de back-ups van een andere BombVault, **Importeren uit de Appdata.Backup-plug-in** en **Taken uit Duplicati of Duplicacy**.
 
 ![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Een database die alleen databasedumps heeft en geen back-up van bestanden, en wa
 
 - **Uit een oude back-upmap** opent het repository van een andere BombVault die niet meer draait, op een schijf of op een off-site-bestemming, met zijn herstelkit of zijn ingetypte `APP_KEY`. De sessie is alleen-lezen en leeft alleen in het geheugen. Zie [Uit een oude back-upmap](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importeren uit de Appdata.Backup-plug-in** leest de back-upmap van de plug-in. Elk containerarchief wordt een herstelpunt van zijn container, gedateerd op het moment dat de plug-in het maakte. Eerder geïmporteerde archieven worden overgeslagen, en de archieven zelf worden alleen gelezen. De container heeft eerst één back-up in BombVault nodig, zodat het herstel zijn definitie heeft. Het bewaarbeleid laat geïmporteerde herstelpunten met rust, dus verwijder er zelf een als je hem niet meer nodig hebt.
+- **Taken uit Duplicati of Duplicacy** maakt van de back-uptaken van die tools mappensets. Het leest alleen hun instellingen. De oude back-ups blijven bij de oude tool, en BombVault begint met een eigen eerste back-up. Geen van beide tools hoeft hier geïnstalleerd te zijn.
+    - **Uit Duplicati**: exporteer in Duplicati elke taak zonder wachtwoord naar een bestand en kies de `.json`-bestanden. Een export met de wachtwoorden erin neemt ook de inloggegevens van de bestemming mee.
+    - **Uit Duplicacy**: kies de map van Duplicacy Web waarin `duplicacy.json` staat, of een map die je met de opdrachtregel van Duplicacy back-upt en waarin `.duplicacy` staat. Sleutels die de opdrachtregel in `.duplicacy/preferences` heeft opgeslagen, gaan mee. Duplicacy Web bewaart zijn inloggegevens versleuteld, dus het venster vraagt je erom.
+
+    Er wordt niets aangemaakt voordat je het voorbeeld hebt gezien. Elke bronmap wordt een mappenset, met de map op deze server waar hij is gevonden, de uitsluitingen die konden worden omgezet en de planning. Draaide de oude tool in een eigen container en is een map niet gevonden, dan kies je die zelf. De back-ups gaan naar een nieuwe bestemming, in een map `bombvault` binnen de oude bestemming, of dat nu een lokale map, S3, SFTP, een rclone-remote of Backblaze B2 via zijn S3-adres is. Inloggegevens uit het bestand worden bij je andere inloggegevens opgeslagen, en wat er in het bestand ontbreekt, wordt je gevraagd. Notities onder elke taak vertellen wat niet is meegekomen, zoals insluitregels, reguliere expressies, hoe lang back-ups werden bewaard en het oude versleutelingswachtwoord, dat BombVault niet nodig heeft.
 
 ## Na een herstel {#after}
 

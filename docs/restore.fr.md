@@ -13,7 +13,7 @@ Chaque restauration commence sur la page **Restauration** : choisissez une secti
 - **Stacks** liste les projets Compose avec au moins deux conteneurs sauvegardés, comme `immich` avec sa base de données et Redis. La recherche trouve une stack par son nom ou par n'importe lequel de ses conteneurs.
 - **En cours** montre une restauration pendant qu'elle tourne, même après la fermeture de sa fenêtre.
 - **Urgence** lance l'assistant d'urgence pour un serveur qui a disparu ou qui a été reconfiguré, voir [Assistant d'urgence](offsite-recovery.md#emergency).
-- **Autres sources** contient **Depuis un ancien dossier de sauvegarde**, pour les sauvegardes d'un autre BombVault, et **Importer depuis le plugin Appdata.Backup**.
+- **Autres sources** contient **Depuis un ancien dossier de sauvegarde**, pour les sauvegardes d'un autre BombVault, **Importer depuis le plugin Appdata.Backup** et **Tâches de Duplicati ou Duplicacy**.
 
 ![La page Restauration sur un téléphone.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La page Restauration sur un téléphone.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Une base de données qui n'a que des dumps de base de données et aucune sauvega
 
 - **Depuis un ancien dossier de sauvegarde** ouvre le dépôt d'un autre BombVault qui ne tourne plus, sur un disque ou dans une destination hors site, avec son kit de récupération ou son `APP_KEY` saisie. La session est en lecture seule et ne vit qu'en mémoire. Voir [Depuis un ancien dossier de sauvegarde](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importer depuis le plugin Appdata.Backup** lit le dossier de sauvegarde du plugin. Chaque archive de conteneur devient un point de restauration de son conteneur, daté du moment où le plugin l'a faite. Les archives déjà importées sont ignorées, et les archives elles-mêmes ne sont que lues. Le conteneur a d'abord besoin d'une sauvegarde dans BombVault, pour que la restauration ait sa définition. La rétention laisse les points de restauration importés tranquilles, supprimez-en donc un vous-même quand vous n'en avez plus besoin.
+- **Tâches de Duplicati ou Duplicacy** transforme les tâches de sauvegarde de ces outils en ensembles de dossiers. Seuls leurs paramètres sont lus. Les anciennes sauvegardes restent avec l'ancien outil, et BombVault commence par une première sauvegarde bien à lui. Aucun des deux outils n'a besoin d'être installé ici.
+    - **Depuis Duplicati** : dans Duplicati, exportez chaque tâche dans un fichier sans mot de passe, puis choisissez les fichiers `.json`. Un export qui inclut les mots de passe apporte aussi les identifiants de la destination.
+    - **Depuis Duplicacy** : choisissez le dossier de Duplicacy Web qui contient `duplicacy.json`, ou un dossier que vous sauvegardez avec la ligne de commande de Duplicacy et qui contient `.duplicacy`. Les clés que la ligne de commande a enregistrées dans `.duplicacy/preferences` sont reprises. Duplicacy Web garde ses identifiants chiffrés, la fenêtre vous les demande donc.
+
+    Rien n'est créé tant que vous n'avez pas vu l'aperçu. Chaque dossier source devient un ensemble de dossiers, avec le dossier de ce serveur où il a été trouvé, les exclusions qui ont pu être reprises et le planning. Si l'ancien outil tournait dans son propre conteneur et qu'un dossier est introuvable, c'est vous qui le choisissez. Les sauvegardes vont vers une nouvelle destination, dans un dossier `bombvault` à l'intérieur de l'ancienne destination, que celle-ci soit un dossier local, S3, SFTP, un remote rclone ou Backblaze B2 via son adresse S3. Les identifiants trouvés dans le fichier sont enregistrés avec vos autres identifiants, et ceux qui manquent vous sont demandés. Des notes sous chaque tâche indiquent ce qui n'a pas été repris, comme les règles d'inclusion, les expressions régulières, la durée de conservation des sauvegardes et l'ancien mot de passe de chiffrement, dont BombVault n'a pas besoin.
 
 ## Après une restauration {#after}
 

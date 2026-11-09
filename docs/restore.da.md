@@ -13,7 +13,7 @@ Hver gendannelse starter på siden **Gendannelse**: Vælg et område, søg efter
 - **Stakke** viser Compose-projekterne med mindst to sikkerhedskopierede containere, for eksempel `immich` med sin database og Redis. Søgningen finder en stak på dens navn eller på en af dens containere.
 - **Kører nu** viser en gendannelse, mens den kører, også efter at du har lukket dens vindue.
 - **Nødsituation** starter nødguiden for en server, der er væk eller blev sat op igen, se [Nødguide](offsite-recovery.md#emergency).
-- **Andre kilder** rummer **Fra en gammel sikkerhedskopimappe**, til en anden BombVaults sikkerhedskopier, og **Importér fra Appdata.Backup-pluginnet**.
+- **Andre kilder** rummer **Fra en gammel sikkerhedskopimappe**, til en anden BombVaults sikkerhedskopier, **Importér fra Appdata.Backup-pluginnet** og **Job fra Duplicati eller Duplicacy**.
 
 ![Siden Gendannelse på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Siden Gendannelse på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ En database, der kun har databasedumps og ingen sikkerhedskopi af filer, og hvis
 
 - **Fra en gammel sikkerhedskopimappe** åbner repositoryet fra en anden BombVault, som ikke kører mere, på en disk eller på en off-site-destination, med dens gendannelseskit eller dens indtastede `APP_KEY`. Sessionen er skrivebeskyttet og lever kun i hukommelsen. Se [Fra en gammel sikkerhedskopimappe](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importér fra Appdata.Backup-pluginnet** læser pluginnets sikkerhedskopimappe. Hvert containerarkiv bliver et gendannelsespunkt for sin container, dateret til det tidspunkt, pluginnet lavede det. Arkiver, der er importeret før, springes over, og selve arkiverne bliver kun læst. Containeren skal først have én sikkerhedskopi i BombVault, så gendannelsen har dens definition. Opbevaringen lader importerede gendannelsespunkter være, så slet dem selv, når du ikke har brug for dem mere.
+- **Job fra Duplicati eller Duplicacy** gør de to værktøjers sikkerhedskopijob til mappesæt. Importen læser kun deres indstillinger. De gamle sikkerhedskopier bliver hos det gamle værktøj, og BombVault starter med sin egen første sikkerhedskopi. Ingen af værktøjerne behøver at være installeret her.
+    - **Fra Duplicati**: eksportér hvert job i Duplicati til en fil uden adgangskode, og vælg `.json`-filerne. En eksport med adgangskoderne tager destinationens adgangsoplysninger med.
+    - **Fra Duplicacy**: vælg den mappe til Duplicacy Web, der indeholder `duplicacy.json`, eller en mappe, du sikkerhedskopierer med Duplicacys kommandolinje, som indeholder `.duplicacy`. Nøgler, som kommandolinjen har gemt i `.duplicacy/preferences`, kommer med. Duplicacy Web gemmer sine adgangsoplysninger krypteret, så vinduet beder om dem.
+
+    Der oprettes intet, før du har set forhåndsvisningen. Hver kildemappe bliver et mappesæt med den mappe på denne server, hvor den blev fundet, de udelukkelser, der kunne oversættes, og tidsplanen. Hvis det gamle værktøj kørte i sin egen container, og en mappe ikke blev fundet, vælger du den selv. Sikkerhedskopierne havner på en ny destination i en mappe `bombvault` inde i den gamle destination, når den er en lokal mappe, S3, SFTP, en rclone-remote eller Backblaze B2 via dens S3-adresse. Adgangsoplysninger fra filen gemmes sammen med dine andre adgangsoplysninger, og dem, filen mangler, bliver du spurgt om. Noter under hvert job fortæller, hvad der ikke kom med, for eksempel inkluderingsregler, regulære udtryk, hvor længe sikkerhedskopierne blev gemt, og den gamle krypteringsadgangskode, som BombVault ikke har brug for.
 
 ## Efter en gendannelse {#after}
 

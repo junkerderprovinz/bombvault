@@ -36,7 +36,7 @@ Et kort katalog over hva BombVault gjør. Hver linje lenker til siden som forkla
 - **Flash som ZIP**, og ett programtillegg om gangen tilbake på den kjørende flash-disken. [Hva som kommer tilbake](restore.md#kinds)
 - **ZFS** inn i datasettet med et sikkerhetsøyeblikksbilde, til en mappe eller til et nytt datasett med egenskapene sine. [ZFS-datasett](zfs-datasets.md#restore)
 - **Nødveiviser** for en tapt server, med gjenopprettingssettet, gjennom gruppen eller med den innskrevne nøkkelen. [Nødveiviser](offsite-recovery.md#emergency)
-- **Fra en gammel sikkerhetskopimappe**, og **Importer fra Appdata.Backup-programtillegget**. [Andre kilder](restore.md#other-sources)
+- **Fra en gammel sikkerhetskopimappe**, **Importer fra Appdata.Backup-programtillegget**, og **Jobber fra Duplicati eller Duplicacy**, som gjør sikkerhetskopijobbene deres om til mappesett. [Andre kilder](restore.md#other-sources)
 
 ## Lagring og tidsplan {#storage-scheduling}
 

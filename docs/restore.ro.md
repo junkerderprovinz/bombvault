@@ -13,7 +13,7 @@ Fiecare restaurare începe pe pagina **Restaurare**: alege o secțiune, caută c
 - **Stack-uri** listează proiectele Compose cu cel puțin două containere salvate, de exemplu `immich` cu baza de date și Redis. Căutarea găsește un stack după nume sau după oricare dintre containerele lui.
 - **În desfășurare** arată o restaurare cât rulează, și după ce ai închis fereastra ei.
 - **Urgență** pornește asistentul de urgență pentru un server care a dispărut sau a fost configurat din nou, vezi [Asistentul de urgență](offsite-recovery.md#emergency).
-- **Alte surse** conține **Dintr-un folder vechi de copii**, pentru backupurile unui alt BombVault, și **Import din pluginul Appdata.Backup**.
+- **Alte surse** conține **Dintr-un folder vechi de copii**, pentru backupurile unui alt BombVault, **Import din pluginul Appdata.Backup** și **Sarcini din Duplicati sau Duplicacy**.
 
 ![Pagina Restaurare pe un telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Pagina Restaurare pe un telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ O bază de date care are doar dumpuri de baze de date și niciun backup de fiși
 
 - **Dintr-un folder vechi de copii** deschide depozitul unui alt BombVault care nu mai rulează, pe un disc sau într-o destinație off-site, cu kitul lui de recuperare sau cu `APP_KEY` scris de tine. Sesiunea este doar pentru citire și trăiește doar în memorie. Vezi [Dintr-un folder vechi de copii](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Import din pluginul Appdata.Backup** citește folderul de backup al pluginului. Fiecare arhivă de container devine un punct de restaurare al containerului ei, datat de când l-a făcut pluginul. Arhivele importate înainte sunt sărite, iar arhivele în sine sunt doar citite. Containerul are nevoie mai întâi de un backup în BombVault, ca restaurarea să aibă definiția lui. Retenția lasă în pace punctele de restaurare importate, așa că șterge-l singur pe unul când nu mai ai nevoie de el.
+- **Sarcini din Duplicati sau Duplicacy** transformă sarcinile de backup ale acestor instrumente în seturi de foldere. Le citește doar setările. Backupurile vechi rămân la instrumentul vechi, iar BombVault începe cu un prim backup propriu. Niciunul dintre cele două instrumente nu trebuie să fie instalat aici.
+    - **Din Duplicati**: în Duplicati, exportă fiecare sarcină într-un fișier fără parolă și alege fișierele `.json`. Un export care include parolele aduce cu el și autentificarea destinației.
+    - **Din Duplicacy**: alege folderul Duplicacy Web care conține `duplicacy.json` sau un folder căruia îi faci backup cu linia de comandă Duplicacy, care conține `.duplicacy`. Cheile pe care linia de comandă le-a salvat în `.duplicacy/preferences` vin și ele. Duplicacy Web își păstrează autentificările criptate, așa că fereastra ți le cere.
+
+    Nu se creează nimic înainte să vezi previzualizarea. Fiecare folder sursă devine un set de foldere, cu folderul de pe acest server unde a fost găsit, excluderile care au putut fi preluate și programul. Dacă instrumentul vechi rula într-un container propriu și un folder nu a fost găsit, îl alegi tu. Backupurile merg într-o destinație nouă, într-un folder `bombvault` din vechea destinație, fie că e un folder local, S3, SFTP, un remote rclone sau Backblaze B2 prin adresa lui S3. O autentificare din fișier se salvează împreună cu celelalte autentificări ale tale, iar cea care lipsește din fișier ți se cere. Notele de sub fiecare sarcină spun ce nu a fost preluat, cum ar fi regulile de includere, expresiile regulate, cât timp erau păstrate backupurile și parola veche de criptare, de care BombVault nu are nevoie.
 
 ## După o restaurare {#after}
 

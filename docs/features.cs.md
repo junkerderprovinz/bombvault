@@ -36,7 +36,7 @@ Stručný katalog toho, co BombVault umí. Každý řádek odkazuje na stránku,
 - **Flash jako ZIP** a po jednom pluginu zpět do běžící flashky. [Co se vrací](restore.md#kinds)
 - **ZFS** do datové sady s bezpečnostním snapshotem, do složky nebo do nové datové sady s jejími vlastnostmi. [Datové sady ZFS](zfs-datasets.md#restore)
 - **Nouzový průvodce** pro ztracený server, se sadou pro obnovu, přes skupinu nebo napsaným klíčem. [Nouzový průvodce](offsite-recovery.md#emergency)
-- **Ze staré složky se zálohami** a **Import z pluginu Appdata.Backup**. [Další zdroje](restore.md#other-sources)
+- **Ze staré složky se zálohami**, **Import z pluginu Appdata.Backup** a **Úlohy z Duplicati nebo Duplicacy**, kde se jejich zálohovací úlohy převedou na sady složek. [Další zdroje](restore.md#other-sources)
 
 ## Úložiště a plánování {#storage-scheduling}
 

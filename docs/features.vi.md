@@ -36,7 +36,7 @@ Một danh mục ngắn về những gì BombVault làm. Mỗi dòng liên kết
 - **Flash dưới dạng ZIP**, và từng plugin một trở lại ổ flash đang chạy. [Những gì trở lại](restore.md#kinds)
 - **ZFS** vào chính tập dữ liệu với snapshot an toàn, vào một thư mục hoặc vào một tập dữ liệu mới với các thuộc tính của nó. [Tập dữ liệu ZFS](zfs-datasets.md#restore)
 - **Trình hướng dẫn khẩn cấp** cho một máy chủ đã mất, với bộ khôi phục, qua nhóm hoặc bằng khóa gõ tay. [Trình hướng dẫn khẩn cấp](offsite-recovery.md#emergency)
-- **Từ thư mục sao lưu cũ**, và **Nhập từ plugin Appdata.Backup**. [Nguồn khác](restore.md#other-sources)
+- **Từ thư mục sao lưu cũ**, **Nhập từ plugin Appdata.Backup**, và **Tác vụ từ Duplicati hoặc Duplicacy**, giúp chuyển các tác vụ sao lưu của hai công cụ này thành bộ thư mục. [Nguồn khác](restore.md#other-sources)
 
 ## Lưu trữ và lịch trình {#storage-scheduling}
 

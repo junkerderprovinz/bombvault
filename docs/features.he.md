@@ -36,7 +36,7 @@
 - **Flash כ-ZIP**, ותוסף אחד בכל פעם בחזרה ל-flash שפועל. [מה חוזר](restore.md#kinds)
 - **ZFS** אל תוך מערך הנתונים עם תצלום בטיחות, לתיקייה או למערך נתונים חדש עם המאפיינים שלו. [מערכי נתונים של ZFS](zfs-datasets.md#restore)
 - **אשף החירום** לשרת שאבד, עם ערכת השחזור, דרך הקבוצה או עם המפתח בהקלדה. [אשף החירום](offsite-recovery.md#emergency)
-- **מתיקיית גיבויים ישנה**, ו**ייבוא מהתוסף Appdata.Backup**. [מקורות אחרים](restore.md#other-sources)
+- **מתיקיית גיבויים ישנה**, **ייבוא מהתוסף Appdata.Backup**, ו**משימות מ-Duplicati או מ-Duplicacy**, שהופך את משימות הגיבוי שלהם לערכות תיקיות. [מקורות אחרים](restore.md#other-sources)
 
 ## אחסון ותזמון {#storage-scheduling}
 

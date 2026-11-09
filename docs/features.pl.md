@@ -36,7 +36,7 @@ Krótki katalog tego, co robi BombVault. Każda linia odsyła do strony, która 
 - **Flash jako ZIP** i po jednej wtyczce z powrotem na działający flash. [Co wraca](restore.md#kinds)
 - **ZFS** do zbioru danych z migawką bezpieczeństwa, do folderu albo do nowego zbioru danych z jego właściwościami. [Zbiory danych ZFS](zfs-datasets.md#restore)
 - **Kreator awaryjny** dla utraconego serwera, z zestawem odzyskiwania, przez grupę albo z wpisanym kluczem. [Kreator awaryjny](offsite-recovery.md#emergency)
-- **Ze starego folderu z kopiami** i **Import z wtyczki Appdata.Backup**. [Inne źródła](restore.md#other-sources)
+- **Ze starego folderu z kopiami**, **Import z wtyczki Appdata.Backup** i **Zadania z Duplicati lub Duplicacy**, gdzie ich zadania kopii zapasowych stają się zestawami folderów. [Inne źródła](restore.md#other-sources)
 
 ## Pamięć i harmonogram {#storage-scheduling}
 

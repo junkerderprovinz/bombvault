@@ -36,7 +36,7 @@ BombVault ができることの短い一覧です。各行から、その説明�
 - **ZIP としてのフラッシュ**と、動作中のフラッシュへ 1 つずつ戻せるプラグイン。[種類ごとに戻るもの](restore.md#kinds)
 - **ZFS** は、安全のためのスナップショットを取ってデータセットの中へ、フォルダーへ、またはプロパティつきの新しいデータセットへ。[ZFS データセット](zfs-datasets.md#restore)
 - 失われたサーバーのための**緊急ウィザード**。リカバリーキット、グループ経由、または入力した鍵で。[緊急ウィザード](offsite-recovery.md#emergency)
-- **古いバックアップフォルダーから**と、**Appdata.Backup プラグインから取り込む**。[ほかの取得元](restore.md#other-sources)
+- **古いバックアップフォルダーから**、**Appdata.Backup プラグインから取り込む**、そして各ツールのバックアップジョブをフォルダーセットに変換する**Duplicati または Duplicacy のジョブ**。[ほかの取得元](restore.md#other-sources)
 
 ## ストレージとスケジュール {#storage-scheduling}
 

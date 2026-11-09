@@ -36,7 +36,7 @@ Un scurt catalog cu ce face BombVault. Fiecare rând trimite la pagina care îl 
 - **Flash ca ZIP** și câte un plugin înapoi în unitatea flash aflată în uz. [Ce revine](restore.md#kinds)
 - **ZFS** în setul de date cu un instantaneu de siguranță, într-un folder sau într-un set de date nou cu proprietățile lui. [Seturi de date ZFS](zfs-datasets.md#restore)
 - **Asistent de urgență** pentru un server pierdut, cu kitul de recuperare, prin grup sau cu cheia scrisă de mână. [Asistentul de urgență](offsite-recovery.md#emergency)
-- **Dintr-un folder vechi de copii** și **Import din pluginul Appdata.Backup**. [Alte surse](restore.md#other-sources)
+- **Dintr-un folder vechi de copii**, **Import din pluginul Appdata.Backup** și **Sarcini din Duplicati sau Duplicacy**, care transformă sarcinile lor de backup în seturi de foldere. [Alte surse](restore.md#other-sources)
 
 ## Stocare și programare {#storage-scheduling}
 

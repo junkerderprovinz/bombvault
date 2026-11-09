@@ -13,7 +13,7 @@
 - **堆栈**列出至少有两个已备份容器的 Compose 项目，例如带有数据库和 Redis 的 `immich`。搜索可以按堆栈名称或其中任意一个容器找到它。
 - **正在运行**在恢复进行期间显示它，即使你已经关闭了它的窗口。
 - **紧急**为已经消失或重新搭建的服务器启动应急向导，参见[应急向导](offsite-recovery.md#emergency)。
-- **其他来源**里有**从旧的备份文件夹**，用于另一个 BombVault 的备份，以及**从 Appdata.Backup 插件导入**。
+- **其他来源**里有**从旧的备份文件夹**，用于另一个 BombVault 的备份，以及**从 Appdata.Backup 插件导入**和**来自 Duplicati 或 Duplicacy 的任务**。
 
 ![手机上的恢复页面。](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![手机上的恢复页面。](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ BombVault 会先检查各成员和项目文件夹，无法成功的恢复不会�
 
 - **从旧的备份文件夹**会打开另一个已不再运行的 BombVault 的仓库，可以在磁盘上，也可以在异地存储位置，使用它的恢复工具包或输入的 `APP_KEY`。这个会话是只读的，只存在于内存中。参见[从旧的备份文件夹](offsite-recovery.md#restore-from-another-bombvault-repo)。
 - **从 Appdata.Backup 插件导入**会读取该插件的备份文件夹。每个容器归档成为该容器的一个恢复点，日期是插件创建它的时间。之前导入过的归档会跳过，归档本身只读取。容器需要先在 BombVault 里做一次备份，恢复才有它的定义。保留规则不会动导入的恢复点，所以不再需要时请自己删除。
+- **来自 Duplicati 或 Duplicacy 的任务**会把这两个工具的备份任务变成文件夹集。它只读取它们的设置。旧备份留在旧工具那里，BombVault 从自己的首次备份开始。这台服务器上不需要安装其中任何一个工具。
+    - **从 Duplicati 导入**：在 Duplicati 中把每个任务导出为不带密码的文件，然后选择这些 `.json` 文件。如果导出时包含了密码，目标的凭据也会一并带过来。
+    - **从 Duplicacy 导入**：选择存放 `duplicacy.json` 的 Duplicacy Web 文件夹，或者你用 Duplicacy 命令行备份、里面有 `.duplicacy` 的文件夹。命令行保存在 `.duplicacy/preferences` 中的密钥也会一并带过来。Duplicacy Web 加密保存它的凭据，所以窗口会请你输入。
+
+    在你看过预览之前，不会创建任何东西。每个源文件夹都会变成一个文件夹集，带上它在这台服务器上对应的文件夹、能够转换的排除项以及计划。如果旧工具运行在自己的容器里，而某个文件夹没有找到，就由你来选择。备份会存到一个新的存储位置，也就是旧目标里的 `bombvault` 文件夹，支持本地文件夹、S3、SFTP、rclone 远端，以及通过 S3 地址访问的 Backblaze B2。文件里带有的凭据会和你的其他凭据保存在一起，文件里没有的则会询问你。每个任务下方的说明会列出没有带过来的内容，例如包含规则、正则表达式、备份保留时长，以及 BombVault 并不需要的旧加密密码。
 
 ## 恢复之后 {#after}
 

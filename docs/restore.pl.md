@@ -13,7 +13,7 @@ Każde przywracanie zaczyna się na stronie **Przywracanie**: wybierz sekcję, w
 - **Stacki** wymieniają projekty Compose z co najmniej dwoma skopiowanymi kontenerami, na przykład `immich` z jego bazą danych i Redis. Wyszukiwarka znajduje stack po nazwie albo po któremkolwiek z jego kontenerów.
 - **W toku** pokazuje przywracanie, gdy trwa, także po zamknięciu jego okna.
 - **Awaria** uruchamia Kreator awaryjny dla serwera, którego już nie ma albo który postawiono od nowa, zobacz [Kreator awaryjny](offsite-recovery.md#emergency).
-- **Inne źródła** zawierają **Ze starego folderu z kopiami**, dla kopii innego BombVault, oraz **Import z wtyczki Appdata.Backup**.
+- **Inne źródła** zawierają **Ze starego folderu z kopiami**, dla kopii innego BombVault, **Import z wtyczki Appdata.Backup** oraz **Zadania z Duplicati lub Duplicacy**.
 
 ![Strona Przywracanie w telefonie.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Strona Przywracanie w telefonie.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Baza danych, która ma tylko zrzuty bazy, bez kopii plików, i której kontenera
 
 - **Ze starego folderu z kopiami** otwiera repozytorium innego BombVault, który już nie działa, na dysku albo w miejscu docelowym poza siedzibą, z jego zestawem odzyskiwania albo wpisanym `APP_KEY`. Sesja jest tylko do odczytu i żyje wyłącznie w pamięci. Zobacz [Ze starego folderu z kopiami](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Import z wtyczki Appdata.Backup** czyta folder kopii wtyczki. Każde archiwum kontenera staje się punktem przywracania jego kontenera, z datą utworzenia przez wtyczkę. Archiwa zaimportowane wcześniej są pomijane, a same archiwa są tylko czytane. Kontener potrzebuje najpierw jednej kopii w BombVault, żeby przywracanie miało jego definicję. Przechowywanie omija zaimportowane punkty przywracania, więc usuń taki sam, gdy już go nie potrzebujesz.
+- Sekcja **Zadania z Duplicati lub Duplicacy** zamienia zadania kopii zapasowych tych narzędzi w zestawy folderów. Odczytuje przy tym tylko ich ustawienia. Stare kopie zostają przy starym narzędziu, a BombVault zaczyna od własnej pierwszej kopii. Żadne z tych narzędzi nie musi być tu zainstalowane.
+    - **Z Duplicati**: w Duplicati wyeksportuj każde zadanie do pliku bez hasła i wybierz pliki `.json`. Eksport z hasłami przenosi też dane logowania do miejsca docelowego.
+    - **Z Duplicacy**: wybierz folder Duplicacy Web, w którym jest `duplicacy.json`, albo folder, którego kopię robisz z wiersza poleceń Duplicacy i w którym jest `.duplicacy`. Klucze zapisane przez wiersz poleceń w `.duplicacy/preferences` zostaną przeniesione. Duplicacy Web przechowuje swoje dane logowania w postaci zaszyfrowanej, więc okno o nie poprosi.
+
+    Nic nie powstaje, dopóki nie zobaczysz podglądu. Każdy folder źródłowy staje się zestawem folderów z folderem na tym serwerze, w którym go znaleziono, z wykluczeniami, które dało się przełożyć, i z harmonogramem. Jeśli stare narzędzie działało we własnym kontenerze i jakiegoś folderu nie znaleziono, wybierasz go sam. Kopie trafiają do nowego miejsca docelowego w folderze `bombvault` wewnątrz starego miejsca docelowego, gdy jest nim folder lokalny, S3, SFTP, zdalny zasób rclone albo Backblaze B2 przez jego adres S3. Dane logowania z pliku są zapisywane razem z twoimi pozostałymi danymi logowania, a o te, których w pliku brakuje, okno zapyta. Notatki pod każdym zadaniem mówią, co nie zostało przeniesione, na przykład reguły dołączania, wyrażenia regularne, jak długo przechowywano kopie oraz stare hasło szyfrowania, którego BombVault nie potrzebuje.
 
 ## Po przywróceniu {#after}
 

@@ -36,7 +36,7 @@ BombVault가 하는 일을 짧게 모은 목록입니다. 각 줄은 그것을 �
 - **ZIP으로 플래시**, 그리고 실행 중인 플래시에 플러그인을 한 번에 하나씩 되돌리기. [무엇이 돌아오는가](restore.md#kinds)
 - 안전 스냅샷과 함께 데이터세트 안으로, 폴더로, 또는 속성을 유지한 채 새 데이터세트로 **ZFS** 복원. [ZFS 데이터세트](zfs-datasets.md#restore)
 - 복구 키트, 그룹을 통해, 또는 직접 입력한 키로 하는 잃어버린 서버를 위한 **긴급 마법사**. [긴급 마법사](offsite-recovery.md#emergency)
-- **이전 백업 폴더에서**, 그리고 **Appdata.Backup 플러그인에서 가져오기**. [다른 출처](restore.md#other-sources)
+- **이전 백업 폴더에서**, **Appdata.Backup 플러그인에서 가져오기**, 그리고 두 도구의 백업 작업을 폴더 세트로 바꿔 주는 **Duplicati 또는 Duplicacy의 작업**. [다른 출처](restore.md#other-sources)
 
 ## 저장소와 일정 {#storage-scheduling}
 

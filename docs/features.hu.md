@@ -36,7 +36,7 @@ Rövid katalógus arról, mit tud a BombVault. Minden sor arra az oldalra mutat,
 - **A flash ZIP-ként**, és egyszerre egy bővítmény vissza a futó flash-re. [Mi tér vissza](restore.md#kinds)
 - **ZFS** az adatkészletbe biztonsági pillanatképpel, egy mappába vagy egy új adatkészletbe a tulajdonságaival. [ZFS-adatkészletek](zfs-datasets.md#restore)
 - **Vészvarázsló** egy elveszett szerverhez, a helyreállítási csomaggal, a csoporton át vagy a beírt kulccsal. [Vészvarázsló](offsite-recovery.md#emergency)
-- **Régi mentési mappából**, és **Importálás az Appdata.Backup bővítményből**. [Más források](restore.md#other-sources)
+- **Régi mentési mappából**, **Importálás az Appdata.Backup bővítményből**, és **Feladatok a Duplicatiból vagy a Duplicacyből**, amely a mentési feladataikból mappakészleteket készít. [Más források](restore.md#other-sources)
 
 ## Tárolás és ütemezés {#storage-scheduling}
 

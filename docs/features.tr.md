@@ -36,7 +36,7 @@ BombVault'un neler yaptığının kısa bir kataloğu. Her satır, onu açıklay
 - **ZIP olarak flash** ve çalışan flash'a her seferinde bir eklenti. [Neler geri gelir](restore.md#kinds)
 - Güvenlik anlık görüntüsüyle veri kümesinin içine, bir klasöre ya da özellikleriyle yeni bir veri kümesine **ZFS**. [ZFS veri kümeleri](zfs-datasets.md#restore)
 - Kayıp bir sunucu için kurtarma kitiyle, grup üzerinden ya da yazılmış anahtarla **Acil durum sihirbazı**. [Acil durum sihirbazı](offsite-recovery.md#emergency)
-- **Eski bir yedek klasöründen** ve **Appdata.Backup eklentisinden içe aktar**. [Diğer kaynaklar](restore.md#other-sources)
+- **Eski bir yedek klasöründen**, **Appdata.Backup eklentisinden içe aktar** ve onların yedekleme işlerini klasör kümelerine dönüştüren **Duplicati ya da Duplicacy işleri**. [Diğer kaynaklar](restore.md#other-sources)
 
 ## Depolama ve zamanlama {#storage-scheduling}
 

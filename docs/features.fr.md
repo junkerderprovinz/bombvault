@@ -36,7 +36,7 @@ Un court catalogue de ce que fait BombVault. Chaque ligne renvoie vers la page q
 - **La clé flash en ZIP**, et un plugin à la fois de retour dans la clé flash en service. [Ce qui revient](restore.md#kinds)
 - **ZFS** dans le jeu de données avec un instantané de sécurité, dans un dossier ou dans un nouveau jeu de données avec ses propriétés. [Jeux de données ZFS](zfs-datasets.md#restore)
 - **Assistant d'urgence** pour un serveur perdu, avec le kit de récupération, via le groupe ou avec la clé saisie. [Assistant d'urgence](offsite-recovery.md#emergency)
-- **Depuis un ancien dossier de sauvegarde**, et **Importer depuis le plugin Appdata.Backup**. [Autres sources](restore.md#other-sources)
+- **Depuis un ancien dossier de sauvegarde**, **Importer depuis le plugin Appdata.Backup** et **Tâches de Duplicati ou Duplicacy**, qui transforme leurs tâches de sauvegarde en ensembles de dossiers. [Autres sources](restore.md#other-sources)
 
 ## Stockage et planification {#storage-scheduling}
 

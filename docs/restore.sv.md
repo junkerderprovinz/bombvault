@@ -13,7 +13,7 @@ Varje återställning börjar på sidan **Återställning**: välj ett avsnitt, 
 - **Stackar** listar Compose-projekten med minst två säkerhetskopierade containrar, till exempel `immich` med sin databas och Redis. Sökningen hittar en stack på dess namn eller på någon av dess containrar.
 - **Körs nu** visar en återställning medan den pågår, även efter att du stängt dess fönster.
 - **Nödläge** startar Nödguiden för en server som är borta eller som har satts upp på nytt, se [Nödguide](offsite-recovery.md#emergency).
-- **Andra källor** innehåller **Från en gammal säkerhetskopiemapp**, för säkerhetskopiorna från en annan BombVault, och **Importera från pluginet Appdata.Backup**.
+- **Andra källor** innehåller **Från en gammal säkerhetskopiemapp**, för säkerhetskopiorna från en annan BombVault, **Importera från pluginet Appdata.Backup** och **Jobb från Duplicati eller Duplicacy**.
 
 ![Sidan Återställning på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Sidan Återställning på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ En databas som bara har databasdumpar och ingen filsäkerhetskopia, och vars con
 
 - **Från en gammal säkerhetskopiemapp** öppnar repositoriet från en annan BombVault som inte längre körs, på en disk eller på ett externt lagringsmål, med dess återställningskit eller dess inskrivna `APP_KEY`. Sessionen är skrivskyddad och lever bara i minnet. Se [Från en gammal säkerhetskopiemapp](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importera från pluginet Appdata.Backup** läser pluginets säkerhetskopiemapp. Varje containerarkiv blir en återställningspunkt för sin container, daterad när pluginet gjorde den. Arkiv som importerats tidigare hoppas över, och själva arkiven läses bara. Containern behöver först en säkerhetskopia i BombVault, så att återställningen har dess definition. Gallringen låter importerade återställningspunkter vara, så radera en själv när du inte behöver den längre.
+- **Jobb från Duplicati eller Duplicacy** gör om säkerhetskopieringsjobben i de verktygen till mappuppsättningar. Importen läser bara deras inställningar. De gamla säkerhetskopiorna stannar hos det gamla verktyget, och BombVault börjar med en egen första säkerhetskopia. Inget av verktygen behöver vara installerat här.
+    - **Från Duplicati**: exportera varje jobb i Duplicati till en fil utan lösenord och välj `.json`-filerna. En export som innehåller lösenorden tar med inloggningen till lagringsmålet.
+    - **Från Duplicacy**: välj mappen för Duplicacy Web där `duplicacy.json` ligger, eller en mapp som du säkerhetskopierar med Duplicacys kommandorad och där `.duplicacy` ligger. Nycklar som kommandoraden har sparat i `.duplicacy/preferences` följer med. Duplicacy Web sparar sina inloggningar krypterade, så fönstret frågar efter dem.
+
+    Inget skapas förrän du har sett förhandsvisningen. Varje källmapp blir en mappuppsättning, med mappen på den här servern där den hittades, de undantag som gick att översätta och schemat. Om det gamla verktyget körde i en egen container och en mapp inte hittades, väljer du den själv. Säkerhetskopiorna hamnar på ett nytt lagringsmål i en mapp `bombvault` inuti det gamla lagringsmålet, när det är en lokal mapp, S3, SFTP, en rclone-remote eller Backblaze B2 via dess S3-adress. En inloggning från filen sparas med dina andra inloggningar, och en som saknas i filen blir du tillfrågad om. Anteckningar under varje jobb visar vad som inte följde med, till exempel inkluderingsregler, reguljära uttryck, hur länge säkerhetskopiorna sparades och det gamla krypteringslösenordet, som BombVault inte behöver.
 
 ## Efter en återställning {#after}
 

@@ -13,7 +13,7 @@ Hver gjenoppretting starter på siden **Gjenoppretting**: velg et område, søk 
 - **Stacker** lister Compose-prosjektene med minst to sikkerhetskopierte containere, for eksempel `immich` med databasen og Redis. Søket finner en stack på navnet eller på en av containerne.
 - **Pågår nå** viser en gjenoppretting mens den kjører, også etter at du har lukket vinduet.
 - **Nød** starter nødveiviseren for en server som er borte eller satt opp på nytt, se [Nødveiviser](offsite-recovery.md#emergency).
-- **Andre kilder** har **Fra en gammel sikkerhetskopimappe**, for sikkerhetskopiene til en annen BombVault, og **Importer fra Appdata.Backup-programtillegget**.
+- **Andre kilder** har **Fra en gammel sikkerhetskopimappe**, for sikkerhetskopiene til en annen BombVault, **Importer fra Appdata.Backup-programtillegget** og **Jobber fra Duplicati eller Duplicacy**.
 
 ![Siden Gjenoppretting på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Siden Gjenoppretting på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ En database som bare har databasedumper og ingen filsikkerhetskopi, og der conta
 
 - **Fra en gammel sikkerhetskopimappe** åpner depotet til en annen BombVault som ikke lenger kjører, på en disk eller på et eksternt mål, med gjenopprettingssettet eller en innskrevet `APP_KEY`. Økten er skrivebeskyttet og lever bare i minnet. Se [Fra en gammel sikkerhetskopimappe](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importer fra Appdata.Backup-programtillegget** leser programtilleggets sikkerhetskopimappe. Hvert containerarkiv blir et gjenopprettingspunkt for containeren sin, datert til når programtillegget laget det. Arkiver som er importert før, hoppes over, og selve arkivene bare leses. Containeren trenger først én sikkerhetskopi i BombVault, så gjenopprettingen har definisjonen. Oppbevaring lar importerte gjenopprettingspunkter være i fred, så slett ett selv når du ikke trenger det mer.
+- **Jobber fra Duplicati eller Duplicacy** gjør sikkerhetskopijobbene i disse verktøyene om til mappesett. Importen leser bare innstillingene deres. De gamle sikkerhetskopiene blir igjen hos det gamle verktøyet, og BombVault begynner med en egen første sikkerhetskopi. Ingen av verktøyene trenger å være installert her.
+    - **Fra Duplicati**: eksporter hver jobb til en fil uten passord i Duplicati, og velg `.json`-filene. En eksport som tar med passordene, tar også med påloggingen til målet.
+    - **Fra Duplicacy**: velg Duplicacy Web-mappen som inneholder `duplicacy.json`, eller en mappe du sikkerhetskopierer med Duplicacys kommandolinje, som inneholder `.duplicacy`. Nøkler som kommandolinjen har lagret i `.duplicacy/preferences`, blir med. Duplicacy Web lagrer påloggingene sine kryptert, så vinduet ber deg om dem.
+
+    Ingenting opprettes før du har sett forhåndsvisningen. Hver kildemappe blir et mappesett med mappen på denne serveren der den ble funnet, ekskluderingene som kunne oversettes, og tidsplanen. Hvis det gamle verktøyet kjørte i en egen container og en mappe ikke ble funnet, velger du den selv. Sikkerhetskopiene går til et nytt mål i en mappe `bombvault` inne i det gamle målet, når det er en lokal mappe, S3, SFTP, en rclone-remote eller Backblaze B2 via S3-adressen. En pålogging fra filen lagres sammen med de andre påloggingene dine, og en pålogging som mangler i filen, blir du spurt om. Merknader under hver jobb forteller hva som ikke ble med, for eksempel inkluderingsregler, regulære uttrykk, hvor lenge sikkerhetskopiene ble beholdt, og det gamle krypteringspassordet, som BombVault ikke trenger.
 
 ## Etter en gjenoppretting {#after}
 

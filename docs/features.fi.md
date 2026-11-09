@@ -36,7 +36,7 @@ Lyhyt luettelo siitä, mitä BombVault tekee. Jokainen rivi linkittää sivulle,
 - **Flash ZIP-tiedostona**, ja yksi liitännäinen kerrallaan takaisin käynnissä olevalle flashille. [Mitä palautuu](restore.md#kinds)
 - **ZFS** tietojoukkoon turvatilannevedoksella, kansioon tai uuteen tietojoukkoon ominaisuuksineen. [ZFS-tietojoukot](zfs-datasets.md#restore)
 - **Hätäohjattu toiminto** kadonneelle palvelimelle, palautuspaketilla, ryhmän kautta tai kirjoitetulla avaimella. [Hätäohjattu toiminto](offsite-recovery.md#emergency)
-- **Vanhasta varmuuskopiokansiosta** ja **Tuo Appdata.Backup-liitännäisestä**. [Muut lähteet](restore.md#other-sources)
+- **Vanhasta varmuuskopiokansiosta**, **Tuo Appdata.Backup-liitännäisestä** ja **Tehtävät Duplicatista tai Duplicacysta**, joka muuttaa niiden varmuuskopiointitehtävät kansiojoukoiksi. [Muut lähteet](restore.md#other-sources)
 
 ## Tallennus ja ajastus {#storage-scheduling}
 

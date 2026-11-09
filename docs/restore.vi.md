@@ -13,7 +13,7 @@ Mọi lần khôi phục đều bắt đầu từ trang **Khôi phục**: chọn
 - **Stack** liệt kê các dự án Compose có ít nhất hai container đã được sao lưu, chẳng hạn `immich` cùng cơ sở dữ liệu và Redis của nó. Ô tìm kiếm tìm một stack theo tên hoặc theo bất kỳ container nào của nó.
 - **Đang chạy** hiện một lần khôi phục khi nó đang chạy, kể cả sau khi bạn đã đóng cửa sổ của nó.
 - **Khẩn cấp** khởi động trình hướng dẫn khẩn cấp cho một máy chủ đã mất hoặc được thiết lập lại, xem [Trình hướng dẫn khẩn cấp](offsite-recovery.md#emergency).
-- **Nguồn khác** chứa **Từ thư mục sao lưu cũ**, cho các bản sao lưu của một BombVault khác, và **Nhập từ plugin Appdata.Backup**.
+- **Nguồn khác** chứa **Từ thư mục sao lưu cũ**, cho các bản sao lưu của một BombVault khác, **Nhập từ plugin Appdata.Backup** và **Tác vụ từ Duplicati hoặc Duplicacy**.
 
 ![Trang Khôi phục trên điện thoại.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Trang Khôi phục trên điện thoại.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Một cơ sở dữ liệu chỉ có bản kết xuất cơ sở dữ liệu mà
 
 - **Từ thư mục sao lưu cũ** mở kho của một BombVault khác không còn chạy, trên một đĩa hoặc tại một đích sao lưu ngoài site, bằng bộ khôi phục của nó hoặc `APP_KEY` gõ vào. Phiên này chỉ đọc và chỉ tồn tại trong bộ nhớ. Xem [Từ thư mục sao lưu cũ](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Nhập từ plugin Appdata.Backup** đọc thư mục sao lưu của plugin. Mỗi tệp lưu trữ container trở thành một điểm khôi phục của container đó, có ngày là lúc plugin tạo ra nó. Các tệp lưu trữ đã nhập trước đó sẽ bị bỏ qua, và bản thân các tệp lưu trữ chỉ được đọc. Container cần một bản sao lưu trong BombVault trước, để việc khôi phục có định nghĩa của nó. Chính sách lưu giữ để yên các điểm khôi phục đã nhập, nên hãy tự xóa một điểm khi bạn không còn cần nó.
+- **Tác vụ từ Duplicati hoặc Duplicacy** chuyển các tác vụ sao lưu của hai công cụ này thành bộ thư mục. Nó chỉ đọc cài đặt của chúng. Các bản sao lưu cũ vẫn ở lại với công cụ cũ, và BombVault bắt đầu bằng một bản sao lưu đầu tiên của riêng mình. Bạn không cần cài công cụ nào trong hai công cụ này ở đây.
+    - **Từ Duplicati**: trong Duplicati, xuất từng tác vụ ra một tệp không có mật khẩu, rồi chọn các tệp `.json`. Bản xuất có kèm mật khẩu sẽ mang theo cả thông tin đăng nhập của đích sao lưu.
+    - **Từ Duplicacy**: chọn thư mục Duplicacy Web chứa `duplicacy.json`, hoặc một thư mục bạn sao lưu bằng dòng lệnh Duplicacy, nơi có `.duplicacy`. Các khóa mà dòng lệnh đã lưu trong `.duplicacy/preferences` cũng được mang theo. Duplicacy Web lưu thông tin đăng nhập ở dạng mã hóa, nên cửa sổ sẽ hỏi bạn nhập lại.
+
+    Chưa có gì được tạo trước khi bạn xem bản xem trước. Mỗi thư mục nguồn trở thành một bộ thư mục, cùng với thư mục được tìm thấy trên máy chủ này, các mục loại trừ chuyển được và lịch trình. Khi công cụ cũ chạy trong container riêng của nó và không tìm thấy một thư mục, bạn sẽ tự chọn thư mục đó. Các bản sao lưu đi vào một đích sao lưu mới, trong thư mục `bombvault` bên trong đích cũ, dành cho thư mục cục bộ, S3, SFTP, rclone remote hoặc Backblaze B2 qua địa chỉ S3 của nó. Thông tin đăng nhập có trong tệp được lưu cùng các thông tin đăng nhập khác của bạn, còn thông tin mà tệp không có thì cửa sổ sẽ hỏi bạn. Ghi chú dưới mỗi tác vụ cho biết những gì không được mang sang, chẳng hạn quy tắc bao gồm, biểu thức chính quy, thời gian giữ các bản sao lưu và mật khẩu mã hóa cũ, thứ mà BombVault không cần.
 
 ## Sau khi khôi phục {#after}
 

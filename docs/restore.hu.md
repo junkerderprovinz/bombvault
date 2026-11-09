@@ -13,7 +13,7 @@ Minden visszaállítás a **Visszaállítás** oldalon indul: válassz egy szaka
 - A **Stackek** azokat a Compose-projekteket sorolja fel, amelyekben legalább két lementett konténer van, például az `immich` az adatbázisával és a Redisszel. A keresés a stacket a nevéről vagy bármelyik konténeréről megtalálja.
 - A **Most fut** egy visszaállítást mutat, amíg fut, akkor is, ha bezártad az ablakát.
 - A **Vészhelyzet** elindítja a Vészhelyzet varázslót egy olyan szerverhez, amely elveszett vagy újra lett felállítva, lásd: [Vészhelyzet varázsló](offsite-recovery.md#emergency).
-- A **Más források** tartalmazza a **Régi mentési mappából** és az **Importálás az Appdata.Backup bővítményből** lehetőséget, egy másik BombVault mentéseihez, illetve a bővítményéhez.
+- A **Más források** tartalmazza a **Régi mentési mappából** lehetőséget egy másik BombVault mentéseihez, valamint az **Importálás az Appdata.Backup bővítményből** és a **Feladatok a Duplicatiból vagy a Duplicacyből** lehetőséget.
 
 ![A Visszaállítás oldal telefonon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![A Visszaállítás oldal telefonon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Az az adatbázis, amelynek csak adatbázis-mentései vannak, fájlmentése nincs
 
 - A **Régi mentési mappából** megnyitja egy másik, már nem futó BombVault tárolóját egy lemezen vagy egy telephelyen kívüli célon, a helyreállítási csomagjával vagy a beírt `APP_KEY` értékével. A munkamenet csak olvasható, és csak a memóriában él. Lásd: [Régi mentési mappából](offsite-recovery.md#restore-from-another-bombvault-repo).
 - Az **Importálás az Appdata.Backup bővítményből** a bővítmény mentési mappáját olvassa. Minden konténerarchívum a konténerének visszaállítási pontja lesz, azzal a dátummal, amikor a bővítmény készítette. A korábban importált archívumokat kihagyja, és magukat az archívumokat csak olvassa. A konténernek előbb kell egy mentés a BombVaultban, hogy a visszaállításnak meglegyen a definíciója. A megőrzés békén hagyja az importált visszaállítási pontokat, ezért töröld magad, ha már nincs rájuk szükséged.
+- A **Feladatok a Duplicatiból vagy a Duplicacyből** ennek a két eszköznek a mentési feladataiból mappakészleteket készít. Csak a beállításaikat olvassa. A régi mentések a régi eszköznél maradnak, a BombVault pedig egy saját első mentéssel kezd. Egyik eszköznek sem kell itt telepítve lennie.
+    - **Duplicatiból**: a Duplicatiban exportáld az összes feladatot jelszó nélkül egy-egy fájlba, és válaszd ki a `.json` fájlokat. Ha az export a jelszavakat is tartalmazza, a cél bejelentkezése is átkerül vele.
+    - **Duplicacyből**: válaszd ki a Duplicacy Web mappáját, amelyben a `duplicacy.json` van, vagy egy mappát, amelyet a Duplicacy parancssorával mentesz, és amelyben a `.duplicacy` található. A kulcsok, amelyeket a parancssor a `.duplicacy/preferences` fájlba mentett, szintén átkerülnek. A Duplicacy Web titkosítva tárolja a bejelentkezéseit, ezért az ablak elkéri őket.
+
+    Semmi sem jön létre, amíg meg nem nézted az előnézetet. Minden forrásmappából mappakészlet lesz, azzal a mappával ezen a szerveren, ahol a BombVault megtalálta, a kizárásokkal, amelyeket át lehetett venni, és az ütemezéssel. Ha a régi eszköz saját konténerben futott, és egy mappa nem került elő, azt te választod ki. Ha a régi cél helyi mappa, S3, SFTP, rclone-remote vagy az S3-címén elért Backblaze B2 volt, a mentések egy új célra kerülnek, a régi célon belüli `bombvault` mappába. A fájlban talált bejelentkezés a többi bejelentkezésed mellé kerül, azt pedig, amelyik hiányzik a fájlból, az ablak elkéri. Az egyes feladatok alatti megjegyzések elmondják, mi nem került át, például a belefoglalási szabályok, a reguláris kifejezések, az, hogy meddig őrizte meg a mentéseket a régi eszköz, és a régi titkosítási jelszó, amelyre a BombVaultnak nincs szüksége.
 
 ## Egy visszaállítás után {#after}
 

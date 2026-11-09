@@ -13,7 +13,7 @@ Jokainen palautus alkaa **Palautus**-sivulta: valitse osio, hae haluamasi ja val
 - **Stackit** listaa Compose-projektit, joissa on vähintään kaksi varmuuskopioitua konttia, kuten `immich` tietokantoineen ja Redisineen. Haku löytää stackin nimellä tai minkä tahansa sen kontin nimellä.
 - **Käynnissä nyt** näyttää palautuksen sen ajan, kun se on käynnissä, myös sen jälkeen kun suljit sen ikkunan.
 - **Hätätilanne** käynnistää Hätäohjatun toiminnon palvelimelle, joka on poissa tai pystytettiin uudelleen, katso [Hätäohjattu toiminto](offsite-recovery.md#emergency).
-- **Muut lähteet** sisältää kohdat **Vanhasta varmuuskopiokansiosta**, toisen BombVaultin varmuuskopioille, ja **Tuo Appdata.Backup-liitännäisestä**.
+- **Muut lähteet** sisältää kohdat **Vanhasta varmuuskopiokansiosta**, toisen BombVaultin varmuuskopioille, **Tuo Appdata.Backup-liitännäisestä** ja **Tehtävät Duplicatista tai Duplicacysta**.
 
 ![Palautus-sivu puhelimella.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Palautus-sivu puhelimella.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Tietokanta, jolla on vain tietokantavedoksia eikä tiedostovarmuuskopiota ja jon
 
 - **Vanhasta varmuuskopiokansiosta** avaa sellaisen toisen BombVaultin repon, jota ei enää ajeta, levyltä tai etäkohteesta, sen palautuspaketilla tai kirjoitetulla `APP_KEY`-arvolla. Istunto on vain luku ja elää vain muistissa. Katso [Vanhasta varmuuskopiokansiosta](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Tuo Appdata.Backup-liitännäisestä** lukee liitännäisen varmuuskopiokansion. Jokaisesta konttiarkistosta tulee kontin palautuspiste, päivätty sen mukaan, milloin liitännäinen sen teki. Aiemmin tuodut arkistot ohitetaan, ja arkistoja itseään vain luetaan. Kontille tarvitaan ensin yksi varmuuskopio BombVaultissa, jotta palautuksella on sen määritys. Säilytys jättää tuodut palautuspisteet rauhaan, joten poista sellainen itse, kun et enää tarvitse sitä.
+- **Tehtävät Duplicatista tai Duplicacysta** muuttaa näiden työkalujen varmuuskopiointitehtävät kansiojoukoiksi. Se lukee vain niiden asetukset. Vanhat varmuuskopiot jäävät vanhaan työkaluun, ja BombVault aloittaa omalla ensimmäisellä varmuuskopiollaan. Kumpaakaan työkalua ei tarvitse asentaa tänne.
+    - **Duplicatista**: vie Duplicatissa jokainen tehtävä tiedostoon ilman salasanaa ja valitse `.json`-tiedostot. Jos vienti sisältää salasanat, mukaan tulevat myös kohteen tunnukset.
+    - **Duplicacysta**: valitse Duplicacy Webin kansio, jossa on `duplicacy.json`, tai kansio, jonka varmuuskopioit Duplicacyn komentoriviltä ja jossa on `.duplicacy`. Avaimet, jotka komentorivi on tallentanut tiedostoon `.duplicacy/preferences`, tulevat mukana. Duplicacy Web säilyttää tunnuksensa salattuina, joten ikkuna kysyy ne.
+
+    Mitään ei luoda ennen kuin olet nähnyt esikatselun. Jokaisesta lähdekansiosta tulee kansiojoukko, johon tulevat kansio siitä paikasta tällä palvelimella, josta se löytyi, poissulut, jotka voitiin kääntää, ja aikataulu. Jos vanha työkalu toimi omassa kontissaan eikä jotain kansiota löytynyt, valitset sen itse. Varmuuskopiot menevät uuteen kohteeseen, kansioon `bombvault` vanhan kohteen sisällä, kun vanha kohde on paikallinen kansio, S3, SFTP, rclone-remote tai Backblaze B2 S3-osoitteensa kautta. Tiedostosta saadut tunnukset tallennetaan muiden tunnustesi joukkoon, ja ne, jotka tiedostosta puuttuvat, kysytään sinulta. Kunkin tehtävän alla olevat huomautukset kertovat, mikä ei tullut mukaan, esimerkiksi sisällytyssäännöt, säännölliset lausekkeet, kuinka kauan varmuuskopioita säilytettiin ja vanha salaussalasana, jota BombVault ei tarvitse.
 
 ## Palautuksen jälkeen {#after}
 

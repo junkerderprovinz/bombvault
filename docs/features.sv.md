@@ -36,7 +36,7 @@ En kort katalog över vad BombVault gör. Varje rad länkar till sidan som förk
 - **Flash som ZIP**, och ett plugin i taget tillbaka in i den körande flashen. [Vad som kommer tillbaka](restore.md#kinds)
 - **ZFS** in i datauppsättningen med en säkerhetsögonblicksbild, till en mapp eller till en ny datauppsättning med sina egenskaper. [ZFS-datauppsättningar](zfs-datasets.md#restore)
 - **Nödguide** för en förlorad server, med återställningskitet, via gruppen eller med den inskrivna nyckeln. [Nödguide](offsite-recovery.md#emergency)
-- **Från en gammal säkerhetskopiemapp**, och **Importera från pluginet Appdata.Backup**. [Andra källor](restore.md#other-sources)
+- **Från en gammal säkerhetskopiemapp**, **Importera från pluginet Appdata.Backup**, och **Jobb från Duplicati eller Duplicacy**, som gör om deras säkerhetskopieringsjobb till mappuppsättningar. [Andra källor](restore.md#other-sources)
 
 ## Lagring och scheman {#storage-scheduling}
 

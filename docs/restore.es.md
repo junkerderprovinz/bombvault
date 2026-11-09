@@ -13,7 +13,7 @@ Toda restauración empieza en la página **Restauración**: elige una sección, 
 - **Stacks** lista los proyectos de Compose con al menos dos contenedores copiados, como `immich` con su base de datos y Redis. La búsqueda encuentra un stack por su nombre o por cualquiera de sus contenedores.
 - **En curso** muestra una restauración mientras se ejecuta, también después de cerrar su ventana.
 - **Emergencia** inicia el Asistente de emergencia para un servidor que ha desaparecido o se volvió a configurar, consulta [Asistente de emergencia](offsite-recovery.md#emergency).
-- **Otras fuentes** contiene **De una carpeta de copias antigua**, para las copias de otro BombVault, e **Importar desde el plugin Appdata.Backup**.
+- **Otras fuentes** contiene **De una carpeta de copias antigua**, para las copias de otro BombVault, **Importar desde el plugin Appdata.Backup** y **Tareas de Duplicati o Duplicacy**.
 
 ![La página Restauración en un teléfono.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La página Restauración en un teléfono.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Una base de datos que solo tiene volcados de base de datos y ninguna copia de ar
 
 - **De una carpeta de copias antigua** abre el repositorio de otro BombVault que ya no funciona, en un disco o en un destino externo, con su kit de recuperación o su `APP_KEY` escrita. La sesión es de solo lectura y vive solo en memoria. Consulta [De una carpeta de copias antigua](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Importar desde el plugin Appdata.Backup** lee la carpeta de copias del plugin. Cada archivo de contenedor se convierte en un punto de restauración de su contenedor, con la fecha en que lo hizo el plugin. Los archivos importados antes se omiten, y los archivos en sí solo se leen. El contenedor necesita antes una copia en BombVault, para que la restauración tenga su definición. La retención deja en paz los puntos de restauración importados, así que borra uno tú cuando ya no lo necesites.
+- **Tareas de Duplicati o Duplicacy** convierte las tareas de copia de esas herramientas en conjuntos de carpetas. Solo lee sus ajustes. Las copias antiguas se quedan con la herramienta antigua, y BombVault empieza con una primera copia propia. No hace falta tener instalada aquí ninguna de las dos.
+    - **Desde Duplicati**: en Duplicati, exporta cada tarea a un archivo sin contraseña y elige los archivos `.json`. Si la exportación incluye las contraseñas, también trae las credenciales del destino.
+    - **Desde Duplicacy**: elige la carpeta de Duplicacy Web que contiene `duplicacy.json`, o una carpeta que copias con la línea de comandos de Duplicacy, que contiene `.duplicacy`. Las claves que la línea de comandos guardó en `.duplicacy/preferences` también se importan. Duplicacy Web guarda sus credenciales cifradas, así que la ventana te las pide.
+
+    No se crea nada hasta que hayas revisado la vista previa. Cada carpeta de origen se convierte en un conjunto de carpetas, con la carpeta de este servidor donde se encontró, las exclusiones que se pudieron trasladar y el calendario. Si la herramienta antigua funcionaba en su propio contenedor y no se encontró una carpeta, la eliges tú. Las copias van a un destino nuevo, en una carpeta `bombvault` dentro del destino antiguo, ya sea una carpeta local, S3, SFTP, un remoto de rclone o Backblaze B2 con su dirección S3. Las credenciales que vienen en el archivo se guardan junto a tus otras credenciales, y las que faltan se te piden. Las notas bajo cada tarea dicen lo que no se ha trasladado, como las reglas de inclusión, las expresiones regulares, cuánto tiempo se guardaban las copias y la contraseña de cifrado antigua, que BombVault no necesita.
 
 ## Después de una restauración {#after}
 

@@ -13,7 +13,7 @@ Každá obnova začíná na stránce **Obnova**: vyber sekci, vyhledej, co chce�
 - **Stacky** vypisují projekty Compose s nejméně dvěma zálohovanými kontejnery, například `immich` s databází a Redisem. Vyhledávání najde stack podle jeho jména nebo podle kteréhokoli z jeho kontejnerů.
 - **Právě běží** ukazuje obnovu, dokud běží, i poté, co jsi zavřel její okno.
 - **Nouze** spustí Nouzového průvodce pro server, který je pryč nebo byl nastaven znovu, viz [Nouzový průvodce](offsite-recovery.md#emergency).
-- **Další zdroje** drží **Ze staré složky se zálohami**, pro zálohy jiného BombVaultu, a **Import z pluginu Appdata.Backup**.
+- **Další zdroje** drží **Ze staré složky se zálohami**, pro zálohy jiného BombVaultu, **Import z pluginu Appdata.Backup** a **Úlohy z Duplicati nebo Duplicacy**.
 
 ![Stránka Obnova v telefonu.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Stránka Obnova v telefonu.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Databáze, která má jen výpisy databáze a žádnou zálohu souborů a její�
 
 - **Ze staré složky se zálohami** otevře repozitář jiného BombVaultu, který už neběží, na disku nebo v cíli mimo lokalitu, s jeho sadou pro obnovu nebo napsaným `APP_KEY`. Relace je jen pro čtení a žije jen v paměti. Viz [Ze staré složky se zálohami](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Import z pluginu Appdata.Backup** čte složku záloh pluginu. Každý archiv kontejneru se stane bodem obnovy svého kontejneru, datovaným podle toho, kdy ho plugin vytvořil. Dříve importované archivy se přeskočí a samotné archivy se jen čtou. Kontejner potřebuje v BombVaultu nejdřív jednu zálohu, aby měla obnova jeho definici. Uchovávání importované body obnovy nechává na pokoji, takže jeden smaž sám, až ho nebudeš potřebovat.
+- Sekce **Úlohy z Duplicati nebo Duplicacy** převede zálohovací úlohy těchto nástrojů na sady složek. Čte přitom jen jejich nastavení. Staré zálohy zůstávají u starého nástroje a BombVault začne vlastní první zálohou. Ani jeden z nástrojů tu nemusí být nainstalovaný.
+    - **Z Duplicati**: v Duplicati exportuj každou úlohu do souboru bez hesla a vyber soubory `.json`. Export, který obsahuje hesla, přenese i přihlašovací údaje k cíli.
+    - **Z Duplicacy**: vyber složku Duplicacy Web, ve které je `duplicacy.json`, nebo složku, kterou zálohuješ z příkazové řádky Duplicacy a ve které je `.duplicacy`. Klíče, které příkazová řádka uložila do `.duplicacy/preferences`, se přenesou. Duplicacy Web ukládá své přihlašovací údaje šifrovaně, takže si o ně okno řekne.
+
+    Nic se nevytvoří, dokud neuvidíš náhled. Z každé zdrojové složky vznikne sada složek se složkou na tomto serveru, kde byla nalezena, s vyloučeními, která šlo převést, a s plánem. Když starý nástroj běžel ve vlastním kontejneru a nějaká složka se nenašla, vybereš ji sám. Zálohy půjdou do nového cíle ve složce `bombvault` uvnitř starého cíle, a to pro místní složku, S3, SFTP, remote rclone nebo Backblaze B2 přes jeho adresu S3. Přihlašovací údaje ze souboru se uloží k tvým ostatním přihlašovacím údajům a o ty, které v souboru chybí, si okno řekne. Poznámky pod každou úlohou říkají, co se nepřeneslo, například pravidla zahrnutí, regulární výrazy, jak dlouho se zálohy uchovávaly, a staré šifrovací heslo, které BombVault nepotřebuje.
 
 ## Po obnově {#after}
 

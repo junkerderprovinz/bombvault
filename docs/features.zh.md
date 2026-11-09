@@ -36,7 +36,7 @@ BombVault 功能的简短目录。每一行都链接到讲解它的页面。
 - **闪存以 ZIP 形式恢复**，也可以一次把一个插件放回正在运行的闪存。[按种类恢复什么](restore.md#kinds)
 - **ZFS** 恢复到数据集（带安全快照）、恢复到文件夹，或恢复到带属性的新数据集。[ZFS 数据集](zfs-datasets.md#restore)
 - **应急向导**用于丢失的服务器，使用恢复工具包、通过组，或输入密钥。[应急向导](offsite-recovery.md#emergency)
-- **从旧的备份文件夹**，以及**从 Appdata.Backup 插件导入**。[其他来源](restore.md#other-sources)
+- **从旧的备份文件夹**、**从 Appdata.Backup 插件导入**，以及**来自 Duplicati 或 Duplicacy 的任务**，它会把这两个工具的备份任务变成文件夹集。[其他来源](restore.md#other-sources)
 
 ## 存储与计划 {#storage-scheduling}
 

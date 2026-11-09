@@ -36,7 +36,7 @@ Un breve catálogo de lo que hace BombVault. Cada línea enlaza con la página q
 - **El flash como ZIP**, y un plugin cada vez de vuelta al flash en funcionamiento. [Qué se recupera](restore.md#kinds)
 - **ZFS** dentro del conjunto de datos con una instantánea de seguridad, en una carpeta o en un conjunto de datos nuevo con sus propiedades. [Conjuntos de datos ZFS](zfs-datasets.md#restore)
 - **Asistente de emergencia** para un servidor perdido, con el kit de recuperación, a través del grupo o con la clave escrita. [Asistente de emergencia](offsite-recovery.md#emergency)
-- **Desde una carpeta de copias antigua**, e **Importar desde el plugin Appdata.Backup**. [Otras fuentes](restore.md#other-sources)
+- **Desde una carpeta de copias antigua**, **Importar desde el plugin Appdata.Backup** y **Tareas de Duplicati o Duplicacy**, que convierte sus tareas de copia en conjuntos de carpetas. [Otras fuentes](restore.md#other-sources)
 
 ## Almacenamiento y calendarios {#storage-scheduling}
 

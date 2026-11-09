@@ -13,7 +13,7 @@ Jede Wiederherstellung beginnt auf der Seite **Wiederherstellung**: Wähle einen
 - **Stacks** listet die Compose-Projekte mit mindestens zwei gesicherten Containern auf, etwa `immich` mit seiner Datenbank und Redis. Die Suche findet einen Stack über seinen Namen oder über einen seiner Container.
 - **Läuft gerade** zeigt eine Wiederherstellung, solange sie läuft, auch nachdem du ihr Fenster geschlossen hast.
 - **Notfall** startet den Notfall-Assistenten für einen Server, der weg ist oder neu aufgesetzt wurde, siehe [Notfall-Assistent](offsite-recovery.md#emergency).
-- **Andere Quellen** enthält **Aus einem alten Sicherungsordner** für die Sicherungen eines anderen BombVault und **Aus dem Appdata.Backup-Plugin übernehmen**.
+- **Andere Quellen** enthält **Aus einem alten Sicherungsordner** für die Sicherungen eines anderen BombVault, **Aus dem Appdata.Backup-Plugin übernehmen** und **Jobs aus Duplicati oder Duplicacy**.
 
 ![Die Seite Wiederherstellung auf einem Handy.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Die Seite Wiederherstellung auf einem Handy.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -129,6 +129,11 @@ Eine Datenbank, die nur Datenbank-Dumps und keine Dateisicherung hat und deren C
 
 - **Aus einem alten Sicherungsordner** öffnet das Repository eines anderen BombVault, das nicht mehr läuft, auf einer Platte oder an einem Off-site-Speicherort, mit seinem Recovery-Kit oder dem eingetippten `APP_KEY`. Die Sitzung ist schreibgeschützt und lebt nur im Arbeitsspeicher. Siehe [Aus einem alten Sicherungsordner](offsite-recovery.md#restore-from-another-bombvault-repo).
 - **Aus dem Appdata.Backup-Plugin übernehmen** liest den Sicherungsordner des Plugins. Jedes Container-Archiv wird zu einem Wiederherstellungspunkt seines Containers, datiert auf den Zeitpunkt, an dem das Plugin es erstellt hat. Schon früher importierte Archive werden übersprungen, und die Archive selbst werden nur gelesen. Der Container braucht zuerst eine Sicherung in BombVault, damit die Wiederherstellung seine Definition hat. Die Aufbewahrung lässt importierte Wiederherstellungspunkte in Ruhe, lösche also selbst einen, wenn du ihn nicht mehr brauchst.
+- **Jobs aus Duplicati oder Duplicacy** macht aus den Sicherungsjobs dieser Werkzeuge Ordner-Sets. Es liest nur ihre Einstellungen. Die alten Sicherungen bleiben beim alten Werkzeug, und BombVault beginnt mit einer eigenen ersten Sicherung. Keines der beiden Werkzeuge muss hier installiert sein.
+    - **Aus Duplicati**: Exportiere in Duplicati jeden Job ohne Passwort in eine Datei und wähle die `.json`-Dateien. Ein Export mit Passwörtern bringt die Zugangsdaten des Ziels gleich mit.
+    - **Aus Duplicacy**: Wähle den Ordner von Duplicacy Web, in dem `duplicacy.json` liegt, oder einen Ordner, den du mit der Duplicacy-Kommandozeile sicherst und in dem `.duplicacy` liegt. Schlüssel, die die Kommandozeile in `.duplicacy/preferences` gespeichert hat, kommen mit. Duplicacy Web speichert seine Zugangsdaten verschlüsselt, deshalb fragt das Fenster danach.
+
+    Angelegt wird nichts, bevor du die Vorschau gesehen hast. Jeder Quellordner wird zu einem Ordner-Set, mit dem Ordner auf diesem Server, an dem er gefunden wurde, den Ausschlüssen, die sich übertragen ließen, und dem Zeitplan. Lief das alte Werkzeug in einem eigenen Container und wurde ein Ordner nicht gefunden, wählst du ihn aus. Die Sicherungen gehen an einen neuen Speicherort in einem Ordner `bombvault` innerhalb des alten Ziels, für einen lokalen Ordner, S3, SFTP, ein rclone-Remote oder Backblaze B2 über seine S3-Adresse. Zugangsdaten aus der Datei werden bei deinen anderen Zugangsdaten gespeichert, und fehlende werden abgefragt. Hinweise unter jedem Job sagen, was nicht mitgekommen ist, etwa Einschlussregeln, reguläre Ausdrücke, wie lange Sicherungen aufbewahrt wurden, und das alte Verschlüsselungspasswort, das BombVault nicht braucht.
 
 ## Nach einer Wiederherstellung {#after}
 
