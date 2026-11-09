@@ -1,0 +1,141 @@
+{
+    "storages": [
+        {
+            "name": "wasabi",
+            "url": "wasabi://eu-central-1@s3.eu-central-1.wasabisys.com/example-backups/unraid",
+            "encrypted": true,
+            "ras_encrypted": false,
+            "erasure_coding": "",
+            "credentials": {
+                "password": "Bm90IGEgcmVhbCBlbmNyeXB0ZWQgdmFsdWUgMQ==",
+                "wasabi_key": "Bm90IGEgcmVhbCBlbmNyeXB0ZWQgdmFsdWUgMg==",
+                "wasabi_secret": "Bm90IGEgcmVhbCBlbmNyeXB0ZWQgdmFsdWUgMw=="
+            }
+        },
+        {
+            "name": "usb",
+            "url": "/backuproot/usb-disk/duplicacy",
+            "encrypted": false,
+            "ras_encrypted": false,
+            "erasure_coding": "",
+            "credentials": {}
+        },
+        {
+            "name": "drive",
+            "url": "gcd://Backups/duplicacy",
+            "encrypted": true,
+            "ras_encrypted": false,
+            "erasure_coding": "",
+            "credentials": {
+                "password": "Bm90IGEgcmVhbCBlbmNyeXB0ZWQgdmFsdWUgNA==",
+                "gcd_token": "Bm90IGEgcmVhbCBlbmNyeXB0ZWQgdmFsdWUgNQ=="
+            }
+        }
+    ],
+    "computers": [
+        {
+            "name": "localhost",
+            "hostname": "tower",
+            "repositories": [
+                {
+                    "index": 0,
+                    "id": "documents",
+                    "path": "/backuproot/documents",
+                    "storage": "wasabi",
+                    "global_options": "",
+                    "options": "",
+                    "report_url_enabled": false,
+                    "report_url": "",
+                    "report_url_on_failure": false,
+                    "nobackup_file": "",
+                    "exclude_by_attribute": false,
+                    "filters": true
+                },
+                {
+                    "index": 1,
+                    "id": "appdata",
+                    "path": "/backuproot/appdata",
+                    "storage": "usb",
+                    "global_options": "",
+                    "options": "",
+                    "report_url_enabled": false,
+                    "report_url": "",
+                    "report_url_on_failure": false,
+                    "nobackup_file": "",
+                    "exclude_by_attribute": false,
+                    "filters": false
+                },
+                {
+                    "index": 2,
+                    "id": "camera",
+                    "path": "/backuproot/camera",
+                    "storage": "drive",
+                    "global_options": "",
+                    "options": "",
+                    "report_url_enabled": false,
+                    "report_url": "",
+                    "report_url_on_failure": false,
+                    "nobackup_file": "",
+                    "exclude_by_attribute": false,
+                    "filters": false
+                }
+            ]
+        }
+    ],
+    "schedules": [
+        {
+            "name": "Nightly",
+            "start": "02:30",
+            "max": "",
+            "frequency": 86400,
+            "days": "1111111",
+            "jobs": [
+                {
+                    "type": "backup",
+                    "computer": "localhost",
+                    "repository": 0,
+                    "source": "",
+                    "storage": "wasabi",
+                    "options": "-threads 4",
+                    "parallel": false,
+                    "global_options": ""
+                },
+                {
+                    "type": "prune",
+                    "computer": "localhost",
+                    "repository": 0,
+                    "source": "",
+                    "storage": "wasabi",
+                    "options": "-keep 0:360 -keep 30:180 -keep 7:30 -keep 1:7 -a",
+                    "parallel": false,
+                    "global_options": ""
+                }
+            ]
+        },
+        {
+            "name": "Workdays",
+            "start": "12:00",
+            "max": "",
+            "frequency": 21600,
+            "days": "0011111",
+            "jobs": [
+                {
+                    "type": "backup",
+                    "computer": "localhost",
+                    "repository": 1,
+                    "source": "",
+                    "storage": "usb",
+                    "options": "",
+                    "parallel": false,
+                    "global_options": ""
+                }
+            ]
+        }
+    ],
+    "key_iterations": 16384,
+    "encryption_data": "Tm90IHJlYWwgZW5jcnlwdGlvbiBkYXRh",
+    "cli_version": "3.2.3",
+    "administration_token": "",
+    "administration_token_expiration": 0,
+    "license_id": ""
+}

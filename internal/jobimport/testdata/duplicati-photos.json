@@ -1,0 +1,122 @@
+{
+  "CreatedByVersion": "2.1.0.5",
+  "Schedule": {
+    "ID": 1,
+    "Tags": [
+      "ID=1"
+    ],
+    "Time": "2026-03-02T01:30:00Z",
+    "Repeat": "1D",
+    "LastRun": "2026-03-01T01:30:12Z",
+    "Rule": "AllowedWeekDays=Monday,Tuesday,Wednesday,Thursday,Friday",
+    "AllowedDays": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri"
+    ]
+  },
+  "Backup": {
+    "ID": "1",
+    "ExternalID": null,
+    "Name": "Family photos",
+    "Description": "Photos and videos from the phones",
+    "Tags": [],
+    "TargetURL": "s3://example-photos/duplicati?s3-server-name=s3.eu-central-1.amazonaws.com&s3-location-constraint=eu-central-1&s3-storage-class=STANDARD_IA&s3-client=aws&use-ssl=true&auth-username=example-access-key-id&auth-password=exampleSecretKey%2Fnot-real",
+    "ConnectionStringID": -1,
+    "OperationType": "Backup",
+    "Enabled": true,
+    "DBPath": "XKQWJZPLMV.sqlite",
+    "Sources": [
+      "/source/photos/",
+      "/source/videos/"
+    ],
+    "Settings": [
+      {
+        "Filter": "",
+        "Name": "encryption-module",
+        "Value": "aes",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "compression-module",
+        "Value": "zip",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "dblock-size",
+        "Value": "50mb",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "passphrase",
+        "Value": "correct horse battery staple",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "retention-policy",
+        "Value": "1W:1D,4W:1W,12M:1M",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "--skip-files-larger-than",
+        "Value": "2GB",
+        "Argument": null
+      },
+      {
+        "Filter": "",
+        "Name": "--exclude-files-attributes",
+        "Value": "temporary,system",
+        "Argument": null
+      }
+    ],
+    "Filters": [
+      {
+        "Order": 0,
+        "Include": false,
+        "Expression": "*.tmp"
+      },
+      {
+        "Order": 1,
+        "Include": false,
+        "Expression": "*thumbnails*/"
+      },
+      {
+        "Order": 2,
+        "Include": false,
+        "Expression": "/source/photos/.trash/"
+      },
+      {
+        "Order": 3,
+        "Include": false,
+        "Expression": "[.*\\.bak$]"
+      },
+      {
+        "Order": 4,
+        "Include": false,
+        "Expression": "{TemporaryFiles}"
+      },
+      {
+        "Order": 5,
+        "Include": true,
+        "Expression": "/source/videos/keep.tmp"
+      }
+    ],
+    "Metadata": {
+      "LastBackupDate": "20260301T013012Z",
+      "SourceFilesCount": "18234"
+    },
+    "IsTemporary": false,
+    "AdditionalTargetURLs": []
+  },
+  "DisplayNames": {
+    "/source/photos/": "photos",
+    "/source/videos/": "videos"
+  }
+}

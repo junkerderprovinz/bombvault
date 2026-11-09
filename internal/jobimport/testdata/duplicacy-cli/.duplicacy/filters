@@ -1,0 +1,11 @@
+# Skip caches and half-finished downloads
+-*.tmp
+-.cache/
+-*/node_modules/
+-Downloads/incomplete/
+@shared-filters
++Playlists/
+-Playlists/*
+e:\.(?i:bak)$
+i:\.flac$
+-*
