@@ -83,12 +83,14 @@ describe("the relay in four forms", () => {
     expect(out).toHaveLength(2);
     expect(into.filter((l) => l.classList.contains("glim-letter-back"))).toHaveLength(1);
     expect(out.filter((l) => l.classList.contains("glim-letter-back"))).toHaveLength(1);
-    // Both legs of one direction meet at the relay.
-    const path = (el: Element) => (el as SVGElement).style.getPropertyValue("offset-path");
+    // Both legs of one direction meet at the relay. The points are compared as
+    // numbers because engines space serialised path data differently.
+    const coords = (el: Element) =>
+      ((el as SVGElement).style.getPropertyValue("offset-path").match(/-?\d*\.?\d+/g) ?? []).map(Number);
     const there = into.find((l) => !l.classList.contains("glim-letter-back"))!;
     const onward = out.find((l) => !l.classList.contains("glim-letter-back"))!;
-    expect(path(there)).toMatch(/L180 70"\)$/);
-    expect(path(onward)).toMatch(/^path\("M180 70 /);
+    expect(coords(there).slice(-2)).toEqual([180, 70]);
+    expect(coords(onward).slice(0, 2)).toEqual([180, 70]);
     expect(root.querySelector(".glim-relay-ring")).toBeTruthy();
     expect(root.querySelector(".glim-relay-hop")).toBeTruthy();
   });
