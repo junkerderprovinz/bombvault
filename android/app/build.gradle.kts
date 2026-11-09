@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application") version "9.5.0"
+    id("com.android.application") version "9.5.1"
 }
 
 // The app and the server it ships with carry one number, set in
