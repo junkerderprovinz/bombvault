@@ -36,7 +36,7 @@ A short catalogue of what BombVault does. Each line links to the page that expla
 - **Flash as a ZIP**, and one plugin at a time back into the running flash. [What comes back](restore.md#kinds)
 - **ZFS** into the dataset with a safety snapshot, into a folder or into a new dataset with its properties. [ZFS datasets](zfs-datasets.md#restore)
 - **Emergency wizard** for a lost server, with the recovery kit, through the group or with the typed key. [Emergency wizard](offsite-recovery.md#emergency)
-- **From an old backup folder**, and **Import from the Appdata.Backup plugin**. [Other sources](restore.md#other-sources)
+- **From an old backup folder**, **Import from the Appdata.Backup plugin**, and **Jobs from Duplicati or Duplicacy**, which turns their backup jobs into folder sets. [Other sources](restore.md#other-sources)
 
 ## Storage & scheduling {#storage-scheduling}
 
