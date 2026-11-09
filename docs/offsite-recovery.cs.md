@@ -398,7 +398,7 @@ Instance, které jsou vypnuté, a telefony se zavřenou aplikací si ponechají 
 
 Na krabici, která **přijímá** kopie append-only od jiného BombVaultu, ti přijaté repozitáře dávají nezávislé sledování jen pro čtení na přijímajícím hardwaru, takže tiché selhání na druhém konci nezůstane bez povšimnutí. Zapni **Přijímač** v **Nastavení, Instance**, pak otevři **Podrobnosti** odesílající instance na stránce Instance a přidej přijatý repozitář (jen pro čtení, otevřený heslem resticu odesílající instance, které dostane přes [skupinu párování](#pairing)). Dostaneš:
 
-- **Soupis podle zdroje**, takže přesně vidíš, které kontejnery, VM a sady složek dorazily.
+- **Soupis podle zdroje**, takže přesně vidíš, které kontejnery, VM a sady složek dorazily. Zálohy, které odesílající instance vytvořila dřív, než měla [vlastní host](#backup-host), se počítají ke stejnému zdroji.
 - **Naposledy přijato** u každého zdroje, takže víš, jak je každý čerstvý.
 - **Nezávislý `restic check`** spuštěný na přijímajícím hardwaru, takže se integrita ověřuje tam, kde data skutečně leží, ne jen na odesílateli.
 - **Spínač mrtvého muže:** upozornění, když zdroj přestane posílat v okně, které nastavíš. Kontroluje jednou denně, v 09:15. Jedno upozornění dostaneš také, když repozitář nejde přečíst vůbec, ať plán kontrol říká cokoli, a když celé okno po jeho přidání nic nedorazilo. Repozitář, který přidáš před první kopií odesílatele, je do té doby v pořádku.
@@ -529,6 +529,10 @@ Tohle je kus, který umožňuje obnovu po havárii i tehdy, když žádný BombV
 !!! warning "Nejnovější snapshot není vždy ten, který chceš obnovit"
     Od resticu 0.17 ukazuje `restic snapshots` velikost každého snapshotu. Po ztrátě dat může být nejnovější snapshot ten vyprázdněný, takže neobnovuj snapshot, který je výrazně menší než ty před ním. Po ransomwaru to může být ten zašifrovaný v obvyklé velikosti. Pokud BombVault ještě běží, podívej se nejdřív na jeho stránku **Anomálie**: jmenuje poslední dobrou zálohu a okno obnovy ji předvybere. Obnova nepotřebuje žádná data anomálií BombVaultu a pozastavení uchovávání vždy jen drží víc snapshotů.
 
+### Host záloh serveru {#backup-host}
+
+Každý server zapisuje své zálohy pod vlastním hostem resticu: `bv-` a dvanáct znaků vypočtených z klíče záloh, například `bv-3f9a0c41d2e7`. Zálohy z doby, kdy server ještě vlastní host neměl, nesou host `bombvault`. Sada uvádí host tohoto serveru a její příkazy předávají oba přes `--host`, takže `latest` nikdy nevybere zálohu, kterou do stejného repozitáře zapsal jiný server. Server, který převezme zálohy jiného, pokračuje pod hostem toho serveru, protože host pochází z klíče.
+
 ### Zapečetění sady {#sealing-the-kit}
 
 Pokud jsi zapnul **Šifrovat exporty pomocí age** v **Nastavení, Systém**, sada je jím zapečetěna také a stáhne se jako `bombvault-recovery-kit.md.age`. Je v ASCII obalu, ne binární, takže je to pořád prostý text: vložení do správce hesel nebo vytištění funguje přesně jako dřív, obsah je bez tvého klíče nečitelný.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 To je HMAC-SHA256 nad pevným řetězcem `bombvault:restic-repo`, s klíčem ze surových bajtů hex `APP_KEY`, vypsané jako 64 malých hex znaků. Stejná hodnota je v sadě, vypsaná jako odvozené heslo resticu. Je to pro den, kdy je sada někde, kde nejsi. Na serveru, který převzal zálohy jiného, použij převzatý klíč záloh, což je starý APP_KEY toho serveru.
 
+[Host](#backup-host) pochází ze stejného klíče a řetězce `bombvault:host`: `bv-` a prvních dvanáct z těchto znaků.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "U přijatého repozitáře použij klíč ODESÍLAJÍCÍ instance"
     Repozitář, který sem dorazil přes kopii mimo lokalitu, vytvořil stroj, který ho poslal, s **jeho** klíčem. Odvození z klíče přijímající krabice dá heslo, které restic odmítne, což vypadá přesně jako poškozený repozitář, a není. To je obvyklý důvod, proč `restic check` na přijatém repozitáři žádá o heslo pořád dokola.
 
@@ -558,9 +568,11 @@ Protože definice pro obnovu žijí **uvnitř** každého repozitáře (`<repo>/
 Výpis databáze je vlastní bod obnovy v repozitáři kontejnerů, označený `dbdump:<container>`, s jediným souborem `/dbdump/<container>.sql`. BombVault je vypisuje, stahuje a importuje na záložce **Zálohy** kontejneru. Níže jsou stejné kroky jen s resticem, pro den, kdy BombVault není k dispozici.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` je [host](#backup-host) serveru ze sady pro obnovu.
 
 Štítky `dbversion:` a `dbname:` u každého výpisu říkají, z jaké verze serveru pochází a které databáze drží. Úplný soubor končí `-- PostgreSQL database cluster dump complete` nebo `-- Dump completed`.
 

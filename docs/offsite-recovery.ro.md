@@ -398,7 +398,7 @@ Instanțele oprite și telefoanele cu aplicația închisă își păstrează car
 
 Pe stația care **primește** copii append-only de la alt BombVault, depozitele primite îți oferă monitorizare independentă, doar în citire, pe hardware-ul care primește, ca un eșec silențios de la capătul îndepărtat să nu treacă neobservat. Pornește **Receptor** la **Setări, Instanțe**, apoi deschide **Detalii** ale instanței care trimite, pe pagina Instanțe, și adaugă depozitul primit (doar în citire, deschis cu parola restic a instanței care trimite, pe care o primește prin [grupul de împerechere](#pairing)). Primești:
 
-- **Un inventar pe surse**, ca să vezi exact ce containere, VM-uri și seturi de foldere au ajuns.
+- **Un inventar pe surse**, ca să vezi exact ce containere, VM-uri și seturi de foldere au ajuns. Copiile făcute de instanța care trimite înainte să aibă o [gazdă](#backup-host) proprie se socotesc la aceeași sursă.
 - **Ultima primire** pe sursă, ca să știi cât de proaspătă este fiecare.
 - **Un `restic check` independent** rulat pe hardware-ul care primește, ca integritatea să fie verificată acolo unde se află datele, nu doar la expeditor.
 - **Un comutator de om mort:** o alertă când o sursă nu mai trimite într-o fereastră stabilită de tine. Se uită o dată pe zi, la 09:15. Primești o alertă și când depozitul nu poate fi citit deloc, indiferent de programul verificării, și când nu a sosit nimic la o fereastră întreagă după ce l-ai adăugat. Un depozit pe care îl adaugi înaintea primei copii a expeditorului este în regulă până atunci.
@@ -529,6 +529,10 @@ Aceasta este piesa care face posibilă recuperarea după dezastru chiar și cân
 !!! warning "Cel mai nou instantaneu nu este mereu cel de restaurat"
     De la restic 0.17, `restic snapshots` arată dimensiunea fiecărui instantaneu. După o pierdere de date, cel mai nou instantaneu poate fi cel golit, așa că nu restaura un instantaneu mult mai mic decât cele dinaintea lui. După ransomware poate fi cel criptat, de dimensiunea obișnuită. Dacă BombVault încă rulează, verifică mai întâi pagina **Anomalii**: numește ultima copie bună, iar fereastra de restaurare o preselectează. O restaurare nu are nevoie de niciun dat de anomalii al BombVault, iar pauza de retenție doar păstrează mai multe instantanee.
 
+### Gazda copiilor unui server {#backup-host}
+
+Fiecare server își scrie copiile sub o gazdă restic proprie: `bv-` și douăsprezece caractere calculate din cheia copiilor, de exemplu `bv-3f9a0c41d2e7`. Copiile de dinainte ca un server să aibă una poartă gazda `bombvault`. Kitul numește gazda acestui server, iar comenzile din el le transmit pe amândouă cu `--host`, astfel încât `latest` să nu aleagă niciodată o copie scrisă de alt server în același depozit. Un server care preia copiile altuia continuă sub gazda acelui server, pentru că gazda vine din cheie.
+
 ### Sigilarea kitului {#sealing-the-kit}
 
 Dacă ai pornit **Criptează exporturile cu age** la **Setări, Sistem**, și kitul este sigilat cu el și se descarcă drept `bombvault-recovery-kit.md.age`. Este în armură ASCII, nu binar, deci rămâne text simplu: lipirea lui într-un manager de parole sau tipărirea funcționează exact ca înainte, conținutul pur și simplu nu poate fi citit fără cheia ta.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Aceasta este HMAC-SHA256 peste șirul fix `bombvault:restic-repo`, cu cheia ca octeții bruți ai `APP_KEY` hex, tipărit ca 64 de caractere hex cu litere mici. Aceeași valoare este în kit, listată ca parola restic derivată. Asta este pentru ziua în care kitul e într-un loc unde nu ești. Pe un server care a preluat copiile altuia, folosește cheia de rezervă preluată, care este vechiul APP_KEY al acelui server.
 
+[Gazda](#backup-host) vine din aceeași cheie și din șirul `bombvault:host`: `bv-` și primele douăsprezece dintre aceste caractere.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Pentru un depozit primit, folosește cheia instanței CARE TRIMITE"
     Un depozit care a ajuns aici printr-o copie off-site a fost creat de mașina care l-a trimis, cu cheia **ei**. Derivarea din cheia stației care primește produce o parolă pe care restic o va respinge, ceea ce arată exact ca un depozit corupt și nu este. Acesta este motivul obișnuit pentru care `restic check` pe un depozit primit cere parola iar și iar.
 
@@ -558,9 +568,11 @@ Pentru că definițiile de recuperare se află **în interiorul** fiecărui depo
 Un dump de bază de date este un punct de restaurare propriu în depozitul containerelor, etichetat `dbdump:<container>`, care conține singurul fișier `/dbdump/<container>.sql`. BombVault le listează, le descarcă și le importă în fila **Copii de rezervă** a containerului. Mai jos sunt aceiași pași doar cu restic, pentru ziua în care BombVault nu mai este.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` este [gazda](#backup-host) serverului din kitul de recuperare.
 
 Etichetele `dbversion:` și `dbname:` de pe fiecare dump spun din ce versiune de server provine și ce baze de date conține. Un fișier complet se încheie cu `-- PostgreSQL database cluster dump complete` sau `-- Dump completed`.
 

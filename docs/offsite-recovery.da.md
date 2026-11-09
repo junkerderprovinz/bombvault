@@ -398,7 +398,7 @@ Instanser, der er lukket ned, og telefoner med appen lukket beholder deres kort 
 
 På den boks, der **modtager** append-only-kopier fra en anden BombVault, giver de modtagne repositories dig uafhængig, skrivebeskyttet overvågning på modtagerhardwaren, så en stille fejl i den anden ende ikke går ubemærket hen. Slå **Modtager** til under **Indstillinger, Instanser**, åbn så den sendende instans' **Detaljer** på siden Instanser og tilføj det modtagne repository (skrivebeskyttet, åbnet med den sendende instans' restic-adgangskode, som den får over [parringsgruppen](#pairing)). Du får:
 
-- **En beholdning efter kilde**, så du kan se præcis, hvilke containere, VM'er og mappesæt der er landet.
+- **En beholdning efter kilde**, så du kan se præcis, hvilke containere, VM'er og mappesæt der er landet. Sikkerhedskopier, som den sendende instans tog, før den havde sin [egen host](#backup-host), tæller med under samme kilde.
 - **Sidst modtaget** pr. kilde, så du ved, hvor frisk hver er.
 - **Et uafhængigt `restic check`** kørt på den modtagende hardware, så integritet verificeres, hvor data faktisk sidder, ikke kun på afsenderen.
 - **En dødmandsknap:** en advarsel, når en kilde holder op med at sende inden for et vindue, du sætter. Den kigger én gang om dagen, kl. 09:15. Du får også én advarsel, når repositoryet slet ikke kan læses, uanset hvad tjekplanen siger, og når intet er kommet et helt vindue efter, at du tilføjede det. Et repository, du tilføjer før afsenderens første kopi, er i orden indtil da.
@@ -530,6 +530,10 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 !!! warning "Den nyeste sikkerhedskopi er ikke altid den, der skal gendannes"
     Siden restic 0.17 viser `restic snapshots` hvert snapshots størrelse. Efter datatab kan den nyeste sikkerhedskopi være den tømte, så gendan ikke en sikkerhedskopi, der er langt mindre end dem før den. Efter ransomware kan den være den krypterede i den sædvanlige størrelse. Hvis BombVault stadig kører, så tjek først siden **Afvigelser**: den navngiver den sidste gode sikkerhedskopi, og gendannelsesvinduet forvælger den. En gendannelse behøver ingen af BombVaults afvigelsesdata, og opbevaringspausen beholder altid kun flere sikkerhedskopier.
 
+### Hosten for en servers sikkerhedskopier {#backup-host}
+
+Hver server skriver sine sikkerhedskopier under sin egen restic-host: `bv-` og tolv tegn beregnet ud fra sikkerhedskopiernes nøgle, for eksempel `bv-3f9a0c41d2e7`. Sikkerhedskopier fra før en server fik sin egen host, har hosten `bombvault`. Kittet angiver denne servers host, og dets kommandoer giver begge med `--host`, så `latest` aldrig vælger en sikkerhedskopi, som en anden server har skrevet til samme repository. En server, der overtager en andens sikkerhedskopier, fortsætter under den servers host, fordi hosten kommer fra nøglen.
+
 ### Forsegling af kittet {#sealing-the-kit}
 
 Hvis du har slået **Krypter eksporter med age** til under **Indstillinger, System**, er kittet forseglet med det også og downloades som `bombvault-recovery-kit.md.age`. Det er ASCII-armeret frem for binært, så det er stadig klartekst: at indsætte det i en adgangskodemanager eller udskrive det virker præcis som før, indholdet er bare ulæseligt uden din nøgle.
@@ -549,6 +553,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Det er HMAC-SHA256 over den faste streng `bombvault:restic-repo`, med de rå bytes af den hexadecimale `APP_KEY` som nøgle, udskrevet som 64 små hexadecimale tegn. Den samme værdi står i kittet, oplistet som det afledte restic-kodeord. Dette er til den dag, kittet er et sted, hvor du ikke er. På en server, der overtog en andens sikkerhedskopier, bruges den overtagne sikkerhedskopinøgle, som er den servers gamle APP_KEY.
 
+[Hosten](#backup-host) kommer fra samme nøgle og strengen `bombvault:host`: `bv-` og de første tolv af disse tegn.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Brug den AFSENDENDE instans' nøgle ved et modtaget arkiv"
     Et repository, der kom hertil gennem en off-site-kopi, blev oprettet af maskinen, der sendte det, med **dens** nøgle. At udlede fra modtagerboksens nøgle giver en adgangskode, restic afviser, hvilket ser nøjagtig ud som et beskadiget repository og ikke er det. Det er den sædvanlige grund til, at `restic check` på et modtaget repo bliver ved med at bede om en adgangskode.
 
@@ -559,9 +569,11 @@ Fordi gendannelsesdefinitioner lever **inde** i hvert repo (`<repo>/def`, `<repo
 Et databasedump er et gendannelsespunkt for sig i containerrepositoriet, mærket `dbdump:<container>`, med den ene fil `/dbdump/<container>.sql`. BombVault oplister, downloader og importerer dem under containerens fane **Sikkerhedskopier**. Nedenfor er de samme trin med restic alene, til den dag BombVault ikke er der.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` er serverens [host](#backup-host) fra gendannelseskittet.
 
 Etiketterne `dbversion:` og `dbname:` på hvert dump fortæller, hvilken serverversion det kommer fra, og hvilke databaser det rummer. En komplet fil slutter med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
 

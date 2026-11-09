@@ -52,7 +52,7 @@ Karta **Streaming**, która obniża limit wysyłania, gdy Plex, Jellyfin lub Emb
 
 ## Weryfikacja {#verify}
 
-- **Sprawdź kopie zapasowe**: wynik ostatniego `restic check` dla każdej sekcji, z **Odblokuj** i **Przytnij** pod **Więcej** w każdym wierszu. **Odblokuj** czyści starą blokadę, a **Przytnij** stosuje reguły przechowywania na żądanie.
+- **Sprawdź kopie zapasowe**: wynik ostatniego `restic check` dla każdej sekcji, z **Odblokuj** i **Przytnij** pod **Więcej** w każdym wierszu. **Odblokuj** czyści starą blokadę i zostawia taką, która jest nadal odświeżana, a **Przytnij** stosuje reguły przechowywania na żądanie.
 - **Automatyczne kontrole**: zaplanowane sprawdzanie przywracania z **Próbka danych (%)** i celami testów, **Test uruchomienia**, który przywraca też jeden kontener do odizolowanej kopii i ją uruchamia, **Zaplanowana próba DR poza siedzibą** i **Sprawdzaj ochronę przed usunięciem**, czyli zaplanowany test manipulacji. Zobacz [Próby DR](offsite-recovery.md#dr-drills) i [Test manipulacji](offsite-recovery.md#tamper-test).
 - **Anomalie**: wykrywanie, czułość i to, które znaleziska wysyłają wiadomość. Zobacz [Anomalie](anomalies.md).
 

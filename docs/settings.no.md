@@ -52,7 +52,7 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 
 ## Verifisering {#verify}
 
-- **Kontroller sikkerhetskopier**: resultatet av den siste `restic check` per område, med **Lås opp** og **Beskjær** under **Mer** i hver rad. **Lås opp** fjerner en gammel lås, og **Beskjær** bruker beholdningsreglene på forespørsel.
+- **Kontroller sikkerhetskopier**: resultatet av den siste `restic check` per område, med **Lås opp** og **Beskjær** under **Mer** i hver rad. **Lås opp** fjerner en gammel lås og lar en som fortsatt blir fornyet, være i fred, og **Beskjær** bruker beholdningsreglene på forespørsel.
 - **Automatiske kontroller**: den planlagte gjenopprettingskontrollen med **Datautvalg (%)** og testmål, **Starttest**, som også gjenoppretter én container til en isolert kopi og starter den, den **Planlagt off-site DR-øvelse** og **Kontroller slettebeskyttelse**, den planlagte tamper-testen. Se [DR-øvelser](offsite-recovery.md#dr-drills) og [Tamper-test](offsite-recovery.md#tamper-test).
 - **Avvik**: oppdagelse, følsomhet og hvilke funn som sender en melding. Se [Avvik](anomalies.md).
 

@@ -227,6 +227,7 @@ func (s *Service) receiverInventory(ctx context.Context, rr store.ReceivedRepo) 
 	if err != nil {
 		return ReceiverInventory{}, err
 	}
+	snaps = foldLegacyHost(snaps)
 
 	type agg struct {
 		host, item string
@@ -294,6 +295,30 @@ func (s *Service) receiverInventory(ctx context.Context, rr store.ReceivedRepo) 
 		inv.TotalSize = st.TotalSize
 	}
 	return inv, nil
+}
+
+// foldLegacyHost gives the snapshots under restic.LegacyHost the host of the
+// newest snapshot under any other. A received repository holds one sender's
+// backups, and an item it sent on both sides of the switch to its own host
+// would otherwise show as two sources.
+func foldLegacyHost(snaps []restic.Snapshot) []restic.Snapshot {
+	var host string
+	var newest time.Time
+	for _, sn := range snaps {
+		if when := parseSnapshotTime(sn.Time); sn.Hostname != restic.LegacyHost && (host == "" || when.After(newest)) {
+			host, newest = sn.Hostname, when
+		}
+	}
+	if host == "" {
+		return snaps
+	}
+	out := slices.Clone(snaps)
+	for i := range out {
+		if out[i].Hostname == restic.LegacyHost {
+			out[i].Hostname = host
+		}
+	}
+	return out
 }
 
 // claimReceiverCheck takes the in-flight slot for one received repo and

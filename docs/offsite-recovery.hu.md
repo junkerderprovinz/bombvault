@@ -398,7 +398,7 @@ A leállított példányok és a bezárt alkalmazású telefonok **Inaktív** á
 
 Azon a gépen, amely egy másik BombVaulttól append-only másolatokat **fogad**, a fogadott tárolók független, csak olvasható felügyeletet adnak a fogadó hardveren, így a túlsó végen történő csendes hiba nem marad észrevétlen. Kapcsold be a **Fogadó** opciót a **Beállítások, Példányok** alatt, majd nyisd meg a küldő példány **Részletek** gombját a Példányok oldalon, és add hozzá a fogadott tárolót (csak olvasható, a küldő példány restic-jelszavával nyitva, amelyet a [párosítási csoporton](#pairing) át kap meg). Ezt kapod:
 
-- **Forrásonkénti leltár**, hogy pontosan lásd, mely konténerek, VM-ek és mappakészletek érkeztek meg.
+- **Forrásonkénti leltár**, hogy pontosan lásd, mely konténerek, VM-ek és mappakészletek érkeztek meg. Azok a mentések, amelyeket a küldő azelőtt készített, hogy saját [hosztja](#backup-host) lett volna, ugyanahhoz a forráshoz számítanak.
 - **Utoljára fogadva** forrásonként, hogy tudd, mindegyik mennyire friss.
 - **Független `restic check`** a fogadó hardveren, hogy az integritást ott ellenőrizzék, ahol az adatok ténylegesen vannak, ne csak a küldőn.
 - **Holtember-kapcsoló:** riasztás, ha egy forrás az általad megadott időablakon belül nem küld. Naponta egyszer néz rá, 09:15-kor. Egy riasztást akkor is kapsz, ha a tároló egyáltalán nem olvasható, függetlenül attól, mit mond az ellenőrzési ütemezés, és akkor is, ha a hozzáadása után egy teljes időablakon át semmi sem érkezett. Az a tároló, amelyet a küldő első másolata előtt adsz hozzá, addig rendben van.
@@ -529,6 +529,10 @@ A **Beállítások, Visszaállítás** alatti **Vészhelyzetre** kártyán a **H
 !!! warning "A legújabb pillanatkép nem mindig az, amit vissza kell állítani"
     A restic 0.17 óta a `restic snapshots` mutatja minden pillanatkép méretét. Adatvesztés után a legújabb pillanatkép lehet a kiürített, ezért ne állíts vissza olyan pillanatképet, amely jóval kisebb a korábbiaknál. Zsarolóvírus után lehet a titkosított, a szokásos méretben. Ha a BombVault még fut, előbb nézd meg az **Anomáliák** oldalát: megnevezi az utolsó jó mentést, és a visszaállítási ablak ezt jelöli ki előre. A visszaállításhoz nincs szükség a BombVault anomáliaadataira, és a megőrzési szünet mindig csak több pillanatképet tart meg.
 
+### Egy szerver mentéseinek hosztja {#backup-host}
+
+Minden szerver saját restic-hoszt alatt írja a mentéseit: `bv-` és tizenkét karakter, amelyet a mentések kulcsából számítanak ki, például `bv-3f9a0c41d2e7`. Azoknak a mentéseknek, amelyek még azelőtt készültek, hogy a szervernek saját hosztja lett volna, `bombvault` a hosztjuk. A csomag megnevezi ennek a szervernek a hosztját, a parancsai pedig mindkettőt átadják a `--host` kapcsolóval, így a `latest` soha nem választ olyan mentést, amelyet egy másik szerver írt ugyanabba a tárolóba. Az a szerver, amely átveszi egy másik mentéseit, annak a szervernek a hosztja alatt folytatja, mert a hoszt a kulcsból származik.
+
 ### A csomag lezárása {#sealing-the-kit}
 
 Ha bekapcsoltad az **Exportok titkosítása age-dzsel** opciót a **Beállítások, Rendszer** alatt, a csomagot is ezzel zárják le, és `bombvault-recovery-kit.md.age` néven töltődik le. ASCII-páncélozott, nem bináris, tehát továbbra is egyszerű szöveg: jelszókezelőbe illesztése vagy kinyomtatása pontosan úgy működik, mint korábban, csak a tartalom olvashatatlan a kulcsod nélkül.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Ez egy HMAC-SHA256 a rögzített `bombvault:restic-repo` karakterláncon, kulcsként a hexadecimális `APP_KEY` nyers bájtjaival, 64 kisbetűs hexadecimális karakterként kiírva. Ugyanez az érték szerepel a csomagban származtatott restic-jelszóként. Ez arra a napra való, amikor a csomag ott van, ahol te nem. Azon a szerveren, amely átvette egy másik mentéseit, használd az átvett mentési kulcsot, vagyis annak a szervernek a régi APP_KEY-ét.
 
+A [hoszt](#backup-host) ugyanebből a kulcsból és a `bombvault:host` karakterláncból származik: `bv-` és ezeknek a karaktereknek az első tizenkettője.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Fogadott tárolónál a KÜLDŐ példány kulcsát használd"
     Az a tároló, amely telephelyen kívüli másolattal érkezett ide, a küldő gépen jött létre, annak **saját** kulcsával. A fogadó gép kulcsából származtatva olyan jelszó adódik, amelyet a restic elutasít, és ez pontosan úgy néz ki, mint egy sérült tároló, de nem az. Ez a szokásos oka annak, hogy a `restic check` egy fogadott tárolón újra meg újra jelszót kér.
 
@@ -558,9 +568,11 @@ Mivel a helyreállítási definíciók minden tárolón **belül** élnek (`<rep
 Az adatbázis-dump a konténerek tárolójában külön visszaállítási pont `dbdump:<container>` címkével, amely az egyetlen `/dbdump/<container>.sql` fájlt tartalmazza. A BombVault a konténer **Biztonsági mentések** lapján listázza, tölti le és importálja őket. Lent ugyanezek a lépések csak a resticcel, arra a napra, amikor a BombVault nincs ott.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+A `<host>` a szerver [hosztja](#backup-host) a helyreállítási csomagból.
 
 Az egyes dumpokon a `dbversion:` és `dbname:` címke megmondja, melyik kiszolgálóverzióból való és mely adatbázisokat tartalmazza. A teljes fájl vége `-- PostgreSQL database cluster dump complete` vagy `-- Dump completed`.
 

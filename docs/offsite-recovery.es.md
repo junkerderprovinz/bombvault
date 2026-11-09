@@ -398,7 +398,7 @@ Las instancias apagadas y los teléfonos con la app cerrada conservan su tarjeta
 
 En el equipo que **recibe** copias append-only de otro BombVault, los repositorios recibidos te dan una supervisión independiente y de solo lectura en el hardware receptor, de modo que un fallo silencioso en el otro extremo no pase desapercibido. Activa **Receptor** en **Ajustes, Instancias**, luego abre los **Detalles** de la instancia emisora en la página Instancias y añade el repositorio recibido (de solo lectura, abierto con la contraseña de restic de la instancia emisora, que recibe por el [grupo de emparejamiento](#pairing)). Obtienes:
 
-- **Un inventario por origen**, para ver exactamente qué contenedores, VMs y conjuntos de carpetas han llegado.
+- **Un inventario por origen**, para ver exactamente qué contenedores, VMs y conjuntos de carpetas han llegado. Las copias que la instancia emisora hizo antes de tener un [host propio](#backup-host) cuentan para el mismo origen.
 - **Última recepción** por origen, para saber lo reciente que es cada uno.
 - **Un `restic check` independiente** ejecutado en el hardware receptor, de modo que la integridad se verifica donde están realmente los datos, no solo en el emisor.
 - **Un interruptor de hombre muerto:** una alerta cuando un origen deja de enviar dentro de una ventana que fijes. Mira una vez al día, a las 09:15. También recibes una alerta cuando el repositorio no se puede leer en absoluto, diga lo que diga el calendario de comprobaciones, y cuando no ha llegado nada una ventana completa después de añadirlo. Un repositorio que añades antes de la primera copia del emisor está bien hasta entonces.
@@ -529,6 +529,10 @@ Esta es la pieza que hace posible la recuperación ante desastres incluso cuando
 !!! warning "La instantánea más reciente no siempre es la que hay que restaurar"
     Desde restic 0.17, `restic snapshots` muestra el tamaño de cada instantánea. Tras una pérdida de datos la instantánea más reciente puede ser la vaciada, así que no restaures una instantánea que sea mucho más pequeña que las anteriores. Tras un ransomware puede ser la cifrada, con el tamaño habitual. Si BombVault aún funciona, mira antes su página **Anomalías**: nombra la última copia buena, y la ventana de restauración la preselecciona. Una restauración no necesita ninguno de los datos de anomalías de BombVault, y la pausa de retención solo conserva más instantáneas.
 
+### El host de las copias de un servidor {#backup-host}
+
+Cada servidor escribe sus copias bajo un host de restic propio: `bv-` y doce caracteres calculados a partir de la clave de las copias, como `bv-3f9a0c41d2e7`. Las copias de antes de que un servidor tuviera uno llevan el host `bombvault`. El kit nombra el host de este servidor, y sus comandos pasan ambos con `--host`, así que `latest` nunca elige una copia que otro servidor escribió en el mismo repositorio. Un servidor que adopta las copias de otro sigue bajo el host de ese servidor, porque el host sale de la clave.
+
 ### Sellar el kit {#sealing-the-kit}
 
 Si has activado **Cifrar exportaciones con age** en **Ajustes, Sistema**, el kit también se sella con ello y se descarga como `bombvault-recovery-kit.md.age`. Está en armadura ASCII en lugar de binario, así que sigue siendo texto sin formato: pegarlo en un gestor de contraseñas o imprimirlo funciona exactamente como antes, el contenido es ilegible sin tu clave.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Eso es HMAC-SHA256 sobre la cadena fija `bombvault:restic-repo`, con clave en los bytes en bruto de la `APP_KEY` hexadecimal, impreso como 64 caracteres hexadecimales en minúsculas. El mismo valor está en el kit, listado como la contraseña de restic derivada. Esto es para el día en que el kit esté donde tú no estás. En un servidor que adoptó las copias de otro, usa la clave de las copias adoptada, que es la antigua APP_KEY de ese servidor.
 
+El [host](#backup-host) sale de la misma clave y la cadena `bombvault:host`: `bv-` y los doce primeros de esos caracteres.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Para un repositorio recibido, usa la clave de la instancia EMISORA"
     Un repositorio que llegó aquí mediante una copia externa lo creó la máquina que lo envió, con **su** clave. Derivar de la clave del equipo receptor produce una contraseña que restic rechazará, lo que se lee exactamente como un repositorio corrupto y no lo es. Es la razón habitual por la que `restic check` en un repositorio recibido pide una y otra vez una contraseña.
 
@@ -558,9 +568,11 @@ Como las definiciones de recuperación viven **dentro** de cada repositorio (`<r
 Un volcado de base de datos es un punto de restauración propio en el repositorio de contenedores, con la etiqueta `dbdump:<container>`, que contiene el único archivo `/dbdump/<container>.sql`. BombVault los lista, descarga e importa en la pestaña **Copias de seguridad** del contenedor. A continuación están los mismos pasos solo con restic, para el día en que BombVault no esté.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` es el [host](#backup-host) del servidor que figura en el kit de recuperación.
 
 Las etiquetas `dbversion:` y `dbname:` de cada volcado dicen de qué versión del servidor procede y qué bases de datos contiene. Un archivo completo termina con `-- PostgreSQL database cluster dump complete` o `-- Dump completed`.
 

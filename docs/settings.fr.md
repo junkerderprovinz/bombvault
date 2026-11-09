@@ -52,7 +52,7 @@ La carte **Streaming**, qui abaisse la limite d'envoi pendant que Plex, Jellyfin
 
 ## Vérification {#verify}
 
-- **Vérifier les sauvegardes** : le résultat du dernier `restic check` par section, avec **Déverrouiller** et **Élaguer** sous **Plus** dans chaque ligne. **Déverrouiller** lève un verrou périmé, et **Élaguer** applique les règles de conservation à la demande.
+- **Vérifier les sauvegardes** : le résultat du dernier `restic check` par section, avec **Déverrouiller** et **Élaguer** sous **Plus** dans chaque ligne. **Déverrouiller** lève un verrou périmé et laisse en place un verrou encore rafraîchi, et **Élaguer** applique les règles de conservation à la demande.
 - **Vérifications automatiques** : le contrôle de restauration planifié avec son **Échantillon de données (%)** et ses cibles de test, **Test de démarrage**, qui restaure aussi un conteneur dans une copie isolée et le démarre, l'**Exercice DR hors site planifié** et **Vérifier la protection contre la suppression**, le test d'altération planifié. Voir [Exercices de reprise](offsite-recovery.md#dr-drills) et [Test d'altération](offsite-recovery.md#tamper-test).
 - **Anomalies** : la détection, la sensibilité et les anomalies qui envoient un message. Voir [Anomalies](anomalies.md).
 

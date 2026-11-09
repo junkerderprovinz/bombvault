@@ -52,7 +52,7 @@ La tarjeta **Streaming**, que baja el límite de subida mientras Plex, Jellyfin 
 
 ## Verificación {#verify}
 
-- **Comprobar las copias**: el resultado del último `restic check` por sección, con **Desbloquear** y **Podar** bajo **Más** en cada fila. **Desbloquear** limpia un bloqueo caducado, y **Podar** aplica las reglas de conservación a demanda.
+- **Comprobar las copias**: el resultado del último `restic check` por sección, con **Desbloquear** y **Podar** bajo **Más** en cada fila. **Desbloquear** limpia un bloqueo caducado y deja uno que se sigue renovando, y **Podar** aplica las reglas de conservación a demanda.
 - **Comprobaciones automáticas**: la comprobación de restauración programada con su **Muestra de datos (%)** y sus destinos de prueba, **Prueba de arranque**, que además restaura un contenedor en una copia aislada y lo arranca, el **Simulacro DR externo programado** y **Comprobar la protección contra borrado**, la prueba de manipulación programada. Consulta [Simulacros de DR](offsite-recovery.md#dr-drills) y [Prueba de manipulación](offsite-recovery.md#tamper-test).
 - **Anomalías**: la detección, la sensibilidad y qué hallazgos envían un mensaje. Consulta [Anomalías](anomalies.md).
 

@@ -34,3 +34,27 @@ func TestDeriveKnownVector(t *testing.T) {
 		t.Fatalf("known-vector mismatch:\n got  %s\n want %s", got, want)
 	}
 }
+
+func TestHostIsStableForAKeyAndDiffersBetweenKeys(t *testing.T) {
+	a := restickey.Host(strings.Repeat("a", 64))
+	if a != restickey.Host(strings.Repeat("a", 64)) {
+		t.Fatal("the same key gave two hosts")
+	}
+	if a == restickey.Host(strings.Repeat("b", 64)) {
+		t.Fatal("two keys gave the same host")
+	}
+	if !regexp.MustCompile(`^bv-[0-9a-f]{12}$`).MatchString(a) {
+		t.Fatalf("host %q is not bv- and twelve hex characters", a)
+	}
+	if strings.Contains(restickey.Derive(strings.Repeat("a", 64)), strings.TrimPrefix(a, "bv-")) {
+		t.Fatal("the host gives away part of the repository password")
+	}
+}
+
+// The documentation shows how to work the host out with openssl, and a change
+// here would leave a server's history under another host.
+func TestHostKnownVector(t *testing.T) {
+	if got := restickey.Host(strings.Repeat("a", 64)); got != "bv-6f81fda40ac6" {
+		t.Fatalf("Host = %q, want bv-6f81fda40ac6", got)
+	}
+}

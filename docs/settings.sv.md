@@ -52,7 +52,7 @@ Kortet **Streaming**, som sänker uppladdningsgränsen medan Plex, Jellyfin elle
 
 ## Verifiera {#verify}
 
-- **Kontrollera säkerhetskopior**: resultatet av den senaste `restic check` per avsnitt, med **Lås upp** och **Rensa** under **Mer** på varje rad. **Lås upp** rensar ett gammalt lås, och **Rensa** tillämpar behållreglerna på begäran.
+- **Kontrollera säkerhetskopior**: resultatet av den senaste `restic check` per avsnitt, med **Lås upp** och **Rensa** under **Mer** på varje rad. **Lås upp** rensar ett gammalt lås och låter ett som fortfarande förnyas vara kvar, och **Rensa** tillämpar behållreglerna på begäran.
 - **Automatiska kontroller**: den schemalagda återställningskontrollen med sitt **Dataurval (%)** och sina testmål, **Starttest**, som också återställer en container till en isolerad kopia och startar den, den **Schemalagda off-site DR-övningen** och **Kontrollera raderingsskydd**, det schemalagda manipuleringstestet. Se [DR-övningar](offsite-recovery.md#dr-drills) och [Manipuleringstest](offsite-recovery.md#tamper-test).
 - **Avvikelser**: upptäckt, känslighet och vilka fynd som skickar ett meddelande. Se [Avvikelser](anomalies.md).
 

@@ -1554,7 +1554,7 @@ func (s *Service) ModeFor(settings store.Settings) restic.Mode {
 	if err != nil {
 		log.Printf("api: cloud creds decode failed (ignoring): %v", err)
 	}
-	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass}
+	m := restic.Mode{Env: cloudEnv(c), StorageClass: c.S3StorageClass, Host: s.resticHost()}
 	if settings.EncryptionEnabled {
 		m.Encrypted = true
 		m.Password = s.backupPassword()
@@ -19272,12 +19272,9 @@ func isRepoUninitialized(err error) bool {
 		containsAny(msg, repoAbsenceMarkers) && !containsAny(msg, transportFailureMarkers)
 }
 
-// unlockStale clears the locks restic calls stale and the ones an earlier run
-// of BombVault on this host left in a local repository (see restic.Unlock).
-// That second rule assumes BombVault is the only writer of a local repository:
-// every install uses the hostname bombvault, so a second instance sharing the
-// path cannot be told from an earlier run and its held lock can go. Logged,
-// never fatal.
+// unlockStale clears the locks no running restic relies on (see
+// restic.Unlock). A lock that is still refreshed stays, so a second install
+// writing to the same repository keeps its lock. Logged, never fatal.
 func (s *Service) unlockStale(ctx context.Context, repo string, mode restic.Mode) {
 	if err := s.engine.Unlock(ctx, repo, false, mode); err != nil {
 		log.Printf("api: stale-unlock failed (continuing): %v", err)
@@ -19381,10 +19378,11 @@ func (s *Service) pathsPresentInSnapshot(ctx context.Context, repo, snapshotID s
 	return present, nil
 }
 
-// UnlockDomain removes locks from a domain's repo (restic unlock --remove-all).
-// BombVault is the sole writer and serialises its operations, so a leftover lock
-// is always safe to clear — this is the manual counterpart to the automatic
-// stale-lock cleanup done before each backup.
+// UnlockDomain removes the locks of a domain's repositories, the manual
+// counterpart to the stale-lock cleanup before each backup. It asks for every
+// lock to go, and restic.Unlock still keeps one that is being refreshed: the
+// domain lock keeps this install's own runs out, but another install may write
+// to the same repository.
 //
 // EVERY repository this domain's items write to (#204). The button exists for
 // the case where something is stuck, and a lock left on an item's named
@@ -19422,26 +19420,22 @@ func (s *Service) UnlockDomain(ctx context.Context, domain, source string) ([]st
 	// Per repository, so a domain with several gets the same time for each.
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(len(repos))*2*time.Minute)
 	defer cancel()
-	// removeAll (a FORCE removal, live locks included) is only safe where this
-	// process is provably the only writer, and the in-process serialisation is
-	// keyed by DOMAIN. A named repository can be shared between domains - nothing
-	// scopes one to a single domain and the same picker offers it to all three -
-	// so forcing on a shared repository yanks the lock out from under another
-	// domain's running backup. There a STALE clear is the right tool: it removes
-	// a lock restic itself deems dead and leaves a live one alone, which is
-	// exactly what every other site in this file uses.
+	// The in-process serialisation is keyed by domain, and a named repository
+	// can be shared between domains: nothing scopes one to a single domain and
+	// the same picker offers it to all three. Another domain's running backup
+	// holds a refreshed lock there, which is no error, so a shared repository
+	// gets the stale clear every other site in this file uses.
 	var firstErr error
 	for _, r := range repos {
 		rMode := s.repoModeFor(settings, domain, source, r.Loc)
 		if s.repoSharedWithAnotherDomain(settings, domain, r) {
 			log.Printf("api: unlock %s: %s is shared with another domain; clearing only stale locks there", domain, s.refName(r)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
-			// Reported, not silently downgraded. `restic unlock` without --remove-all
-			// removes only what restic itself calls stale, and a lock left by a
-			// previous container incarnation is not stale until it is old enough - so
-			// the button that exists for exactly that case can come back green having
-			// changed nothing. There is no way to ask restic afterwards whether the
-			// lock is gone, so the honest answer is to say which repository got the
-			// weaker treatment and why.
+			// Reported, not silently downgraded. A stale clear keeps a lock that
+			// still looks refreshed, and a lock left by a previous container
+			// incarnation looks that way until it is old enough - so the button that
+			// exists for exactly that case can come back green having changed
+			// nothing. So the answer names the repository that got the weaker
+			// treatment, and why.
 			if uErr := s.engine.Unlock(ctx, r.Loc, false, rMode); uErr != nil && firstErr == nil {
 				firstErr = fmt.Errorf("clearing stale locks on %s: %w", s.refName(r), uErr)
 			}
@@ -20888,8 +20882,12 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("2. The repositories have no password — pass --insecure-no-password to every\n")
 		w("   restic command below (e.g. `restic -r <repo> --insecure-no-password snapshots`).\n\n")
 	}
-	w("3. List the snapshots in a repository (use a path or remote from the list above):\n\n")
-	w("       restic -r <repo> snapshots\n\n")
+	hosts := kitHostFlags(key)
+	w("3. List this server's snapshots in a repository (use a path or remote from the\n")
+	w("   list above). This server writes its backups under the restic host %s.\n", restickey.Host(key))
+	w("   Those it made before it had a host of its own carry %s. Naming both\n", restic.LegacyHost)
+	w("   leaves out the backups of any other server that writes to the repository:\n\n")
+	w("       restic -r <repo> snapshots %s\n\n", hosts)
 	w("4. Restore a snapshot into a target directory (`restic restore`):\n\n")
 	w("       restic -r <repo> restore <snapshot-id> --target <restore-dir>\n\n")
 	w("   Pick the snapshot with care. Since restic 0.17, `restic snapshots` shows each\n")
@@ -20906,7 +20904,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	w("  (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY for S3, RESTIC_REST_USERNAME /\n")
 	w("  RESTIC_REST_PASSWORD for a REST server) and use the repo verbatim.\n")
 
-	zfsSection, oneLine := s.zfsKitSection(settings)
+	zfsSection, oneLine := s.zfsKitSection(settings, hosts)
 	if !oneLine && broken == "" {
 		broken = "ZFS datasets"
 	}
@@ -20914,9 +20912,19 @@ func (s *Service) RecoveryKit() (string, error) {
 		return "", fmt.Errorf("%w (section %q)", errKitLineBreak, broken)
 	}
 	b.WriteString(zfsSection)
-	b.WriteString(dbDumpKitSection)
+	b.WriteString(strings.ReplaceAll(dbDumpKitSection, kitHosts, hosts))
 
 	return b.String(), nil
+}
+
+// kitHosts stands in the kit's restic commands for the --host flags of
+// kitHostFlags.
+const kitHosts = "{hosts}"
+
+// kitHostFlags selects the snapshots this server wrote under the backup key: its
+// own host and the legacy one.
+func kitHostFlags(key string) string {
+	return "--host " + restickey.Host(key) + " --host " + restic.LegacyHost
 }
 
 // dbDumpKitSection explains how to get a database dump back with restic and the
@@ -20932,13 +20940,13 @@ file, /dbdump/<container>.sql.
 1. List the dumps of one container (the tags dbversion:<version> and
    dbname:<database> show the server version and the databases each dump holds):
 
-       restic -r <repo> snapshots --tag dbdump:<container>
+       restic -r <repo> snapshots {hosts} --tag dbdump:<container>
 
 2. Write the newest dump to a file (or replace "latest" with a snapshot id). A
    complete file ends with "-- PostgreSQL database cluster dump complete" or
    "-- Dump completed":
 
-       restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+       restic -r <repo> dump {hosts} --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 
    After data loss the newest dump can be the one taken of an emptied
    database. The list from step 1 shows each dump's size; skip one that is far

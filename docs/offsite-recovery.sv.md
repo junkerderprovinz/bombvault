@@ -398,7 +398,7 @@ Instanser som är avstängda och telefoner med appen stängd behåller sitt kort
 
 På lådan som **tar emot** append-only-kopior från en annan BombVault ger de mottagna repositorierna dig oberoende, skrivskyddad övervakning på mottagarhårdvaran, så att ett tyst fel i andra änden inte går obemärkt förbi. Slå på **Mottagare** under **Inställningar, Instanser**, öppna sedan den skickande instansens **Detaljer** på sidan Instanser och lägg till det mottagna repositoriet (skrivskyddat, öppnat med den skickande instansens restic-lösenord, som den får över [parkopplingsgruppen](#pairing)). Du får:
 
-- **En inventering per källa**, så att du ser exakt vilka containrar, VM:ar och mappuppsättningar som har landat.
+- **En inventering per källa**, så att du ser exakt vilka containrar, VM:ar och mappuppsättningar som har landat. Säkerhetskopior som den skickande instansen gjorde innan den hade en [egen host](#backup-host) räknas till samma källa.
 - **Senast mottagen** per källa, så att du vet hur färsk var och en är.
 - **En oberoende `restic check`** som körs på mottagarhårdvaran, så att integriteten verifieras där datan faktiskt ligger, inte bara hos avsändaren.
 - **En död mans knapp:** ett larm när en källa slutar skicka inom ett fönster du ställer in. Den tittar en gång om dagen, klockan 09:15. Du får också ett larm när repositoriet inte går att läsa alls, oavsett vad kontrollschemat säger, och när inget har kommit fram ett helt fönster efter att du lade till det. Ett repositorium du lägger till före avsändarens första kopia är i ordning fram till dess.
@@ -529,6 +529,10 @@ Det här är biten som gör katastrofåterställning möjlig även när det inte
 !!! warning "Den nyaste ögonblicksbilden är inte alltid den att återställa"
     Sedan restic 0.17 visar `restic snapshots` varje ögonblicksbilds storlek. Efter dataförlust kan den nyaste ögonblicksbilden vara den tömda, så återställ inte en ögonblicksbild som är mycket mindre än de före den. Efter ransomware kan den vara den krypterade i vanlig storlek. Om BombVault fortfarande körs, kontrollera först dess sida **Avvikelser**: den nämner den sista goda säkerhetskopian, och återställningsfönstret förväljer den. En återställning behöver ingen av BombVaults avvikelsedata, och gallringspausen behåller bara fler ögonblicksbilder.
 
+### Hosten för en servers säkerhetskopior {#backup-host}
+
+Varje server skriver sina säkerhetskopior under en egen restic-host: `bv-` och tolv tecken som räknas fram ur säkerhetskopiornas nyckel, till exempel `bv-3f9a0c41d2e7`. Säkerhetskopior från innan en server fick en egen host har hosten `bombvault`. Kitet anger den här serverns host, och dess kommandon skickar med båda via `--host`, så att `latest` aldrig väljer en säkerhetskopia som en annan server har skrivit till samma repositorium. En server som tar över en annans säkerhetskopior fortsätter under den serverns host, eftersom hosten kommer från nyckeln.
+
 ### Försegla kitet {#sealing-the-kit}
 
 Om du har slagit på **Kryptera exporter med age** under **Inställningar, System** förseglas kitet med det också och laddas ner som `bombvault-recovery-kit.md.age`. Det är ASCII-pansrat snarare än binärt, så det är fortfarande vanlig text: att klistra in det i en lösenordshanterare eller skriva ut det fungerar precis som förut, innehållet är oläsligt utan din nyckel.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Det är HMAC-SHA256 över den fasta strängen `bombvault:restic-repo`, nyckelad med råbyten av den hexadecimala `APP_KEY`, utskriven som 64 hexadecimala tecken med gemener. Samma värde finns i kitet, listat som det härledda restic-lösenordet. Det här är för den dag kitet ligger någonstans där du inte är. På en server som tagit över en annans säkerhetskopior använder du den övertagna säkerhetskopienyckeln, som är den serverns gamla APP_KEY.
 
+[Hosten](#backup-host) kommer från samma nyckel och strängen `bombvault:host`: `bv-` och de första tolv av de tecknen.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "För ett mottaget repositorium, använd den SKICKANDE instansens nyckel"
     Ett repositorium som kom hit genom en off-site-kopia skapades av maskinen som skickade det, med **dess** nyckel. Att härleda från den mottagande lådans nyckel ger ett lösenord som restic avvisar, vilket läses precis som ett skadat repositorium och inte är det. Det här är den vanliga orsaken till att `restic check` på ett mottaget repositorium frågar efter ett lösenord om och om igen.
 
@@ -558,9 +568,11 @@ Eftersom återställningsdefinitionerna ligger **inuti** varje repositorium (`<r
 En databasdump är en egen återställningspunkt i containrarnas repositorium, taggad `dbdump:<container>`, som håller den enda filen `/dbdump/<container>.sql`. BombVault listar, laddar ner och importerar dem på containerns flik **Säkerhetskopior**. Nedan är samma steg med bara restic, för den dag BombVault inte finns.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` är serverns [host](#backup-host) från återställningskitet.
 
 Taggarna `dbversion:` och `dbname:` på varje dump säger vilken serverversion den kom från och vilka databaser den innehåller. En komplett fil slutar med `-- PostgreSQL database cluster dump complete` eller `-- Dump completed`.
 

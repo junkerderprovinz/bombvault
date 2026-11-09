@@ -309,3 +309,20 @@ func TestDeadManSkipsDBDumpItems(t *testing.T) {
 		t.Fatalf("source = %q, want the container item", got[0].source)
 	}
 }
+
+// An item that a sender keeps sending after the switch to its own host has not
+// stopped, though nothing new arrives under the legacy host.
+func TestDeadManWatchesAnItemAcrossTheHostSwitchAsOneSource(t *testing.T) {
+	snaps := foldLegacyHost([]restic.Snapshot{
+		{Hostname: restic.LegacyHost, Time: "2026-07-01T10:00:00Z", Tags: []string{"container:pg", "p1"}},
+		{Hostname: "bv-0123456789ab", Time: "2026-07-09T10:00:00Z", Tags: []string{"container:pg", "p1"}},
+	})
+
+	got := receiverDeadManSourcesOf(snaps)
+	if len(got) != 1 || got[0].source != "container:pg @ bv-0123456789ab" {
+		t.Fatalf("sources = %+v, want container:pg once under the sender's host", got)
+	}
+	if want := parseSnapshotTime("2026-07-09T10:00:00Z").Unix(); got[0].newest != want {
+		t.Fatalf("newest = %d, want the snapshot under the new host %d", got[0].newest, want)
+	}
+}

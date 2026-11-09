@@ -52,7 +52,7 @@ Kortet **Streaming**, som sænker upload-grænsen, mens Plex, Jellyfin eller Emb
 
 ## Verificering {#verify}
 
-- **Tjek sikkerhedskopier**: resultatet af det sidste `restic check` pr. område, med **Lås op** og **Beskær** under **Mere** i hver række. **Lås op** rydder en forældet lås, og **Beskær** anvender behold-reglerne på forlangende.
+- **Tjek sikkerhedskopier**: resultatet af det sidste `restic check` pr. område, med **Lås op** og **Beskær** under **Mere** i hver række. **Lås op** rydder en forældet lås og lader en lås, der stadig bliver fornyet, være, og **Beskær** anvender behold-reglerne på forlangende.
 - **Automatiske tjek**: det planlagte gendannelsestjek med sin **Datastikprøve (%)** og testmål, **Starttest**, som også gendanner én container til en isoleret kopi og starter den, den **Planlagte off-site DR-test** og **Tjek sletningsbeskyttelse**, den planlagte manipulationstest. Se [DR-test](offsite-recovery.md#dr-drills) og [Manipulationstest](offsite-recovery.md#tamper-test).
 - **Afvigelser**: registrering, følsomhed og hvilke fund der sender en besked. Se [Afvigelser](anomalies.md).
 

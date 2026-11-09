@@ -52,7 +52,7 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 
 ## Verificatie {#verify}
 
-- **Back-ups controleren**: het resultaat van de laatste `restic check` per onderdeel, met **Ontgrendelen** en **Opschonen** onder **Meer** in elke rij. **Ontgrendelen** wist een verouderde lock, en **Opschonen** past de bewaarregels op verzoek toe.
+- **Back-ups controleren**: het resultaat van de laatste `restic check` per onderdeel, met **Ontgrendelen** en **Opschonen** onder **Meer** in elke rij. **Ontgrendelen** wist een verouderde lock en laat er een staan die nog wordt ververst, en **Opschonen** past de bewaarregels op verzoek toe.
 - **Automatische controles**: de geplande herstelcontrole met zijn **Datasteekproef (%)** en testdoelen, **Starttest**, die ook één container in een geïsoleerde kopie herstelt en start, de **Geplande off-site DR-test** en **Verwijderbeveiliging controleren**, de geplande sabotagetest. Zie [DR-oefeningen](offsite-recovery.md#dr-drills) en [Sabotagetest](offsite-recovery.md#tamper-test).
 - **Anomalieën**: detectie, gevoeligheid en welke bevindingen een bericht sturen. Zie [Anomalieën](anomalies.md).
 

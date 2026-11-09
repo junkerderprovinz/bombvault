@@ -111,6 +111,63 @@ func TestAnAdoptedKeyTakesOverTheBackupsAndNothingElse(t *testing.T) {
 	}
 }
 
+// The host follows the backup key, so a fresh install that takes over a
+// server's backups goes on with its history, and one under its own key
+// starts its own.
+func TestBackupsWriteTheHostOfTheBackupKey(t *testing.T) {
+	old := strings.Repeat("d", 64)
+	original := newPlacementFixture(t)
+	original.svc.cfg.AppKey = old
+	original.svc.forgetBackupKey()
+	settings := original.encrypted()
+	if got := original.svc.ModeFor(settings).Host; got != restickey.Host(old) {
+		t.Fatalf("host = %q, want the one derived from APP_KEY", got)
+	}
+
+	takeover := newPlacementFixture(t)
+	settings = takeover.encrypted()
+	if got := takeover.svc.ModeFor(settings).Host; got == restickey.Host(old) {
+		t.Fatal("an install under another APP_KEY writes the same host")
+	}
+	takeover.adopt(old, takeover.svc.cfg.AppKey)
+	if got := takeover.svc.ModeFor(settings).Host; got != restickey.Host(old) {
+		t.Fatalf("host after the takeover = %q, want %q of the server taken over", got, restickey.Host(old))
+	}
+	settings.EncryptionEnabled = false
+	if got := takeover.svc.ModeFor(settings).Host; got != restickey.Host(old) {
+		t.Fatalf("a repository without a password is written with host %q, want %q", got, restickey.Host(old))
+	}
+}
+
+// Plain restic picks latest across every host, so each command of the kit
+// that selects a snapshot names this server's hosts.
+func TestTheRecoveryKitSelectsSnapshotsByTheHostsOfTheBackupKey(t *testing.T) {
+	f := newPlacementFixture(t)
+	f.encrypted()
+	old := strings.Repeat("d", 64)
+	f.adopt(old, f.svc.cfg.AppKey)
+
+	kit, err := f.svc.RecoveryKit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	hosts := "--host " + restickey.Host(old) + " --host " + restic.LegacyHost
+	for _, cmd := range []string{
+		"restic -r <repo> snapshots " + hosts + "\n",
+		"restic -r <repo> snapshots " + hosts + " --tag dbdump:<container>",
+		"restic -r <repo> dump " + hosts + " --tag dbdump:<container> latest",
+		"restic -r '<repo>' snapshots " + hosts + " --tag 'zfs:<dataset>'",
+		"restic -r '<repo>' restore latest " + hosts + " --tag 'zfs:<dataset>'",
+	} {
+		if !strings.Contains(kit, cmd) {
+			t.Errorf("the kit lacks %q", cmd)
+		}
+	}
+	if strings.Contains(kit, kitHosts) {
+		t.Error("the kit still holds the hosts placeholder")
+	}
+}
+
 func TestAnAdoptedKeyThatNoLongerOpensLocksTheBackups(t *testing.T) {
 	f := newPlacementFixture(t)
 	settings := f.encrypted()

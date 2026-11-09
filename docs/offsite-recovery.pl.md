@@ -396,7 +396,7 @@ Wyłączone instancje i telefony z zamkniętą aplikacją zachowują swoją kart
 
 Na maszynie, która **odbiera** kopie append-only od innego BombVault, odbierane repozytoria dają niezależne monitorowanie tylko do odczytu na sprzęcie odbiorcy, żeby cicha awaria po drugiej stronie nie przeszła niezauważona. Włącz **Odbiornik** w **Ustawienia, Instancje**, potem otwórz **Szczegóły** instancji wysyłającej na stronie Instancje i dodaj odbierane repozytorium (tylko do odczytu, otwierane hasłem restic instancji wysyłającej, które dostaje przez [grupę parowania](#pairing)). Dostajesz:
 
-- **Inwentarz według źródła**, żebyś widział dokładnie, które kontenery, maszyny wirtualne i zestawy folderów dotarły.
+- **Inwentarz według źródła**, żebyś widział dokładnie, które kontenery, maszyny wirtualne i zestawy folderów dotarły. Kopie, które instancja wysyłająca zrobiła, zanim miała [własny host](#backup-host), liczą się do tego samego źródła.
 - **Ostatnio odebrano** dla każdego źródła, żebyś wiedział, jak świeże jest każde z nich.
 - **Niezależny `restic check`** uruchamiany na sprzęcie odbiorcy, żeby integralność była weryfikowana tam, gdzie dane naprawdę leżą, a nie tylko u nadawcy.
 - **Wyłącznik martwego człowieka:** alert, gdy źródło przestaje wysyłać w ustawionym oknie. Sprawdza raz dziennie, o 09:15. Alert dostajesz też wtedy, gdy repozytorium w ogóle nie da się odczytać, bez względu na harmonogram kontroli, i gdy przez całe okno od jego dodania nic nie dotarło. Repozytorium dodane przed pierwszą kopią nadawcy jest do tego czasu w porządku.
@@ -527,6 +527,10 @@ To element, który umożliwia odzyskiwanie po awarii nawet wtedy, gdy nie dział
 !!! warning "Najnowsza migawka nie zawsze jest tą do przywrócenia"
     Od restic 0.17 `restic snapshots` pokazuje rozmiar każdej migawki. Po utracie danych najnowsza migawka może być opróżniona, więc nie przywracaj migawki, która jest znacznie mniejsza od poprzednich. Po ransomware może to być zaszyfrowana migawka o zwykłym rozmiarze. Jeśli BombVault nadal działa, najpierw sprawdź jego stronę **Anomalie**: wskazuje ostatnią dobrą kopię, a okno przywracania zaznacza ją z góry. Przywracanie nie potrzebuje żadnych danych anomalii BombVault, a wstrzymanie przechowywania zawsze tylko zachowuje więcej migawek.
 
+### Host kopii serwera {#backup-host}
+
+Każdy serwer zapisuje swoje kopie pod własnym hostem restic: `bv-` i dwanaście znaków obliczonych z klucza kopii, na przykład `bv-3f9a0c41d2e7`. Kopie z czasów, zanim serwer miał własny host, mają host `bombvault`. Zestaw podaje host tego serwera, a jego polecenia przekazują oba przez `--host`, więc `latest` nigdy nie wybierze kopii, którą inny serwer zapisał do tego samego repozytorium. Serwer, który przejmuje kopie innego, działa dalej pod hostem tamtego serwera, bo host pochodzi z klucza.
+
 ### Pieczętowanie zestawu {#sealing-the-kit}
 
 Jeśli włączyłeś **Szyfruj eksporty za pomocą age** w **Ustawienia, System**, zestaw jest nim także pieczętowany i pobiera się jako `bombvault-recovery-kit.md.age`. Jest w pancerzu ASCII, a nie binarny, więc nadal jest zwykłym tekstem: wklejenie do menedżera haseł albo wydruk działa dokładnie jak przedtem, a zawartość jest nieczytelna bez Twojego klucza.
@@ -546,6 +550,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 To HMAC-SHA256 ze stałego ciągu `bombvault:restic-repo`, z kluczem będącym surowymi bajtami szesnastkowego `APP_KEY`, wypisany jako 64 małe znaki szesnastkowe. Ta sama wartość jest w zestawie, podana jako wyprowadzone hasło restic. To na dzień, gdy zestaw leży tam, gdzie Cię nie ma. Na serwerze, który przejął kopie innego, użyj przejętego klucza kopii, czyli dawnego APP_KEY tamtego serwera.
 
+[Host](#backup-host) pochodzi z tego samego klucza i ciągu `bombvault:host`: `bv-` i pierwsze dwanaście z tych znaków.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Dla odebranego repozytorium użyj klucza instancji WYSYŁAJĄCEJ"
     Repozytorium, które trafiło tu przez kopię poza siedzibą, utworzyła maszyna, która je wysłała, ze **swoim** kluczem. Wyprowadzenie z klucza maszyny odbierającej daje hasło, które restic odrzuci, co wygląda dokładnie jak uszkodzone repozytorium, a nim nie jest. To zwykły powód, dla którego `restic check` na odebranym repozytorium raz po raz prosi o hasło.
 
@@ -556,9 +566,11 @@ Ponieważ definicje odzyskiwania leżą **wewnątrz** każdego repozytorium (`<r
 Zrzut bazy danych to osobny punkt przywracania w repozytorium kontenerów, oznaczony tagiem `dbdump:<container>`, zawierający jeden plik `/dbdump/<container>.sql`. BombVault wymienia, pobiera i importuje je na karcie **Kopie zapasowe** kontenera. Poniżej te same kroki samym restic, na dzień, gdy BombVault nie ma.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` to [host](#backup-host) serwera z zestawu odzyskiwania.
 
 Tagi `dbversion:` i `dbname:` na każdym zrzucie mówią, z jakiej wersji serwera pochodzi i jakie bazy zawiera. Kompletny plik kończy się `-- PostgreSQL database cluster dump complete` albo `-- Dump completed`.
 

@@ -52,7 +52,7 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 
 ## Ellenőrzés {#verify}
 
-- **Mentések ellenőrzése**: az utolsó `restic check` eredménye szakaszonként, a **Feloldás** és a **Nyesés** műveletekkel a **Több** alatt minden sorban. A **Feloldás** feloldja a megmaradt zárat, a **Nyesés** pedig kérésre alkalmazza a megőrzési szabályokat.
+- **Mentések ellenőrzése**: az utolsó `restic check` eredménye szakaszonként, a **Feloldás** és a **Nyesés** műveletekkel a **Több** alatt minden sorban. A **Feloldás** feloldja a megmaradt zárat, a még frissülőt viszont meghagyja, a **Nyesés** pedig kérésre alkalmazza a megőrzési szabályokat.
 - **Automatikus ellenőrzések**: az ütemezett visszaállítás-ellenőrzés az **Adatminta (%)** értékével és a teszt célokkal, az **Indítási teszt**, amely egy konténert is visszaállít egy elszigetelt másolatba, és elindítja, az **Ütemezett telephelyen kívüli DR-próba** és a **Törlésvédelem ellenőrzése**, az ütemezett manipulációs teszt. Lásd: [DR-próbák](offsite-recovery.md#dr-drills) és [Manipulációs teszt](offsite-recovery.md#tamper-test).
 - **Anomáliák**: a felismerés, az érzékenység, és hogy mely leletek küldenek üzenetet. Lásd: [Anomáliák](anomalies.md).
 

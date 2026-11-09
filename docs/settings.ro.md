@@ -52,7 +52,7 @@ Cardul **Streaming**, care coboară limita de încărcare cât timp Plex, Jellyf
 
 ## Verificare {#verify}
 
-- **Verifică copiile de rezervă**: rezultatul ultimului `restic check` pe secțiune, cu **Deblochează** și **Curăță** sub **Mai mult** în fiecare rând. **Deblochează** șterge o blocare rămasă, iar **Curăță** aplică la cerere regulile de păstrare.
+- **Verifică copiile de rezervă**: rezultatul ultimului `restic check` pe secțiune, cu **Deblochează** și **Curăță** sub **Mai mult** în fiecare rând. **Deblochează** șterge o blocare rămasă și o lasă neatinsă pe cea care încă este reîmprospătată, iar **Curăță** aplică la cerere regulile de păstrare.
 - **Verificări automate**: verificarea de restaurare programată cu **Eșantion de date (%)** și țintele de test, **Test de pornire**, care restaurează și un container într-o copie izolată și îl pornește, **Test DR extern programat** și **Verifică protecția la ștergere**, testul programat de manipulare. Vezi [Teste DR](offsite-recovery.md#dr-drills) și [Test de manipulare](offsite-recovery.md#tamper-test).
 - **Anomalii**: detectarea, sensibilitatea și ce constatări trimit un mesaj. Vezi [Anomalii](anomalies.md).
 

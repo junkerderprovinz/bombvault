@@ -52,7 +52,7 @@ The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Em
 
 ## Verify {#verify}
 
-- **Check backups**: the result of the last `restic check` per section, with **Unlock** and **Prune** under **More** in each row. **Unlock** clears a stale lock, and **Prune** applies the keep rules on demand.
+- **Check backups**: the result of the last `restic check` per section, with **Unlock** and **Prune** under **More** in each row. **Unlock** clears a stale lock and leaves one that is still being refreshed, and **Prune** applies the keep rules on demand.
 - **Automatic checks**: the scheduled restore check with its **Data sample (%)** and test targets, **Start test**, which also restores one container into an isolated copy and starts it, the **Scheduled off-site DR drill** and **Check delete protection**, the scheduled tamper test. See [DR drills](offsite-recovery.md#dr-drills) and [Tamper test](offsite-recovery.md#tamper-test).
 - **Anomalies**: detection, sensitivity and which findings send a message. See [Anomalies](anomalies.md).
 

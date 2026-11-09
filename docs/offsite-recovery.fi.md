@@ -398,7 +398,7 @@ Sammutetut instanssit ja puhelimet, joiden sovellus on suljettu, säilyttävät 
 
 Laatikossa, joka **vastaanottaa** append-only-kopioita toiselta BombVaultilta, vastaanotetut repositoryt antavat riippumattoman, vain luku -tilaisen valvonnan vastaanottavalla laitteistolla, jotta äänetön vika vastapäässä ei jää huomaamatta. Kytke **Vastaanotin** päälle kohdassa **Asetukset, Ilmentymät**, avaa sitten lähettävän instanssin **Tiedot** Ilmentymät-sivulla ja lisää vastaanotettu repository (vain luku, avattuna lähettäjäinstanssin restic-salasanalla, joka tulee [pariliitosryhmän](#pairing) kautta). Saat:
 
-- **Tilannevedosluettelon lähteittäin ryhmiteltynä**, jotta näet tarkalleen, mitkä kontit, VMs ja kansiojoukot ovat saapuneet.
+- **Tilannevedosluettelon lähteittäin ryhmiteltynä**, jotta näet tarkalleen, mitkä kontit, VMs ja kansiojoukot ovat saapuneet. Varmuuskopiot, jotka lähettäjä teki ennen kuin sillä oli oma [isäntä](#backup-host), lasketaan samaan lähteeseen.
 - **Viimeksi vastaanotettu** lähteittäin, jotta tiedät, kuinka tuore kukin on.
 - **Riippumattoman `restic check`** -ajon vastaanottavalla laitteistolla, jotta eheys todennetaan siellä missä data tosiasiassa sijaitsee, ei vain lähettäjällä.
 - **Kuolleen miehen kytkimen:** hälytys, kun lähde lakkaa lähettämästä asettamasi ikkunan sisällä. Se tarkistaa kerran päivässä, kello 09.15. Saat yhden hälytyksen myös silloin, kun repositorya ei voi lukea lainkaan, sanoi tarkistusaikataulu mitä tahansa, ja kun mitään ei ole saapunut kokonaisen ikkunan aikana sen lisäämisen jälkeen. Repository, jonka lisäät ennen lähettäjän ensimmäistä kopiota, on siihen asti kunnossa.
@@ -529,6 +529,10 @@ Tämä on se pala, joka tekee katastrofista toipumisen mahdolliseksi silloinkin 
 !!! warning "Uusin varmuuskopio ei aina ole se, joka kannattaa palauttaa"
     Resticistä 0.17 lähtien `restic snapshots` näyttää kunkin tilannevedoksen koon. Tietojen menetyksen jälkeen uusin varmuuskopio voi olla tyhjennetty, joten älä palauta varmuuskopiota, joka on paljon pienempi kuin sitä edeltävät. Kiristysohjelman jälkeen se voi olla salattu tavallisen kokoinen. Jos BombVault yhä toimii, katso ensin sen **Poikkeamat**-sivu: se nimeää viimeisen hyvän varmuuskopion, ja palautusikkuna esivalitsee sen. Palautus ei tarvitse mitään BombVaultin poikkeamadataa, ja säilytyksen tauko vain säilyttää enemmän varmuuskopioita.
 
+### Palvelimen varmuuskopioiden isäntä {#backup-host}
+
+Jokainen palvelin kirjoittaa varmuuskopionsa omalla restic-isännällään: `bv-` ja kaksitoista merkkiä, jotka lasketaan varmuuskopioiden avaimesta, esimerkiksi `bv-3f9a0c41d2e7`. Varmuuskopioiden isäntä on `bombvault`, jos ne on tehty ennen kuin palvelimella oli oma isäntä. Paketti nimeää tämän palvelimen isännän, ja sen komennot antavat molemmat `--host`-valitsimella, joten `latest` ei koskaan valitse varmuuskopiota, jonka jokin toinen palvelin on kirjoittanut samaan repositoryyn. Palvelin, joka ottaa haltuunsa toisen varmuuskopiot, jatkaa sen palvelimen isännällä, koska isäntä tulee avaimesta.
+
 ### Paketin sinetöinti {#sealing-the-kit}
 
 Jos olet kytkenyt päälle **Salaa viennit age:lla** kohdassa **Asetukset, Järjestelmä**, paketti sinetöidään myös sillä ja latautuu nimellä `bombvault-recovery-kit.md.age`. Se on ASCII-panssaroitu eikä binäärinen, joten se on yhä tekstiä: sen liittäminen salasanahallintaan tai tulostaminen toimii täsmälleen kuten ennen, sisältö vain on lukukelvoton ilman avaintasi.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Se on HMAC-SHA256 kiinteälle merkkijonolle `bombvault:restic-repo`, avaimena heksa-`APP_KEY`:n raakatavut, tulostettuna 64 pienenä heksamerkkinä. Sama arvo on paketissa, listattuna johdettuna restic-salasanana. Tämä on sitä päivää varten, kun paketti on jossain, missä et ole. Palvelimella, joka otti haltuunsa toisen varmuuskopiot, käytä haltuun otettua varmuuskopioavainta, joka on kyseisen palvelimen vanha APP_KEY.
 
+[Isäntä](#backup-host) lasketaan samasta avaimesta ja merkkijonosta `bombvault:host`: `bv-` ja näistä merkeistä kaksitoista ensimmäistä.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Vastaanotetussa arkistossa käytä LÄHETTÄVÄN instanssin avainta"
     Repository, joka saapui tänne etäkopion kautta, on sen lähettäneen koneen luoma **sen** avaimella. Johtaminen vastaanottavan laatikon avaimesta tuottaa salasanan, jonka restic hylkää, mikä näyttää täsmälleen vioittuneelta repositorylta eikä ole sitä. Tämä on tavallinen syy siihen, että `restic check` vastaanotetulla repolla kysyy salasanaa yhä uudelleen.
 
@@ -558,9 +568,11 @@ Koska palautusmääritykset asuvat kunkin repon **sisällä** (`<repo>/def`, `<r
 Tietokantavedos on oma palautuspisteensä konttien repositoryssä, tunnisteella `dbdump:<kontti>`, ja sisältää yhden tiedoston `/dbdump/<kontti>.sql`. BombVault listaa, lataa ja tuo ne kontin **Varmuuskopiot**-välilehdellä. Alla ovat samat vaiheet pelkällä resticillä sitä päivää varten, kun BombVaultia ei ole.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` on palautuspaketissa mainittu palvelimen [isäntä](#backup-host).
 
 Kunkin vedoksen tunnisteet `dbversion:` ja `dbname:` kertovat, mistä palvelinversiosta se on ja mitä tietokantoja se sisältää. Täydellinen tiedosto päättyy riviin `-- PostgreSQL database cluster dump complete` tai `-- Dump completed`.
 

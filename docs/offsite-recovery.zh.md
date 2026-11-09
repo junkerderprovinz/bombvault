@@ -398,7 +398,7 @@ BombVault 提供两个层次的证明，表明你的备份确实可以恢复，�
 
 在**接收**另一个 BombVault 的 append-only 副本的机器上，接收的仓库让你在接收硬件上获得独立的只读监控，这样对方那一端悄悄发生的故障不会被忽略。在**设置、实例**下开启**接收端**，然后在实例页面上打开发送实例的**详情**，添加接收的仓库（只读，用发送实例的 restic 密码打开，这个密码通过[配对的组](#pairing)得到）。你会得到：
 
-- **按来源的清单**，让你能确切地看到哪些容器、虚拟机和文件夹集已经到达。
+- **按来源的清单**，让你能确切地看到哪些容器、虚拟机和文件夹集已经到达。发送实例在有[自己的主机](#backup-host)之前做的备份，也算在同一个来源里。
 - 每个来源的**最后接收**，让你知道每个有多新。
 - 在接收硬件上运行的**独立 `restic check`**，这样完整性是在数据真正所在的地方验证的，而不只是在发送端。
 - **失联开关：** 当某个来源在你设置的时间窗口内停止发送时发出警报。它每天检查一次，在 09:15。无论检查计划怎么设，仓库完全无法读取时，以及添加之后过了整整一个时间窗口仍什么都没到达时，你也会收到一次警报。在发送方第一次复制之前添加的仓库，在那之前都没问题。
@@ -529,6 +529,10 @@ BombVault 提供两个层次的证明，表明你的备份确实可以恢复，�
 !!! warning "最新的快照不一定是该恢复的那个"
     自 restic 0.17 起，`restic snapshots` 会显示每个快照的大小。数据丢失之后，最新的快照可能是被清空的那个，所以不要恢复比之前的小得多的快照。勒索软件之后，它可能是大小正常、但已被加密的那个。如果 BombVault 还在运行，请先看它的**异常**页面：它会点出最后一份好的备份，恢复窗口会预先选中它。恢复不需要 BombVault 的任何异常数据，保留暂停也只会保留更多的快照。
 
+### 服务器备份的主机 {#backup-host}
+
+每台服务器都把备份写在自己的 restic 主机下：`bv-` 加上由备份密钥算出的十二个字符，例如 `bv-3f9a0c41d2e7`。服务器有主机之前的备份带有主机 `bombvault`。工具包写明了这台服务器的主机，其中的命令用 `--host` 把两者都传进去，所以 `latest` 绝不会选中另一台服务器写进同一个仓库的备份。接管了另一台服务器备份的服务器，会继续使用那台服务器的主机，因为主机来自密钥。
+
 ### 封存工具包 {#sealing-the-kit}
 
 如果你在**设置、系统**下开启了**使用 age 加密导出**，工具包也会被它封存，并下载为 `bombvault-recovery-kit.md.age`。它是 ASCII 封装的，而不是二进制的，所以仍然是纯文本：粘贴到密码管理器或打印的方式和以前完全一样，没有你的密钥则无法读取其内容。
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 这是对固定字符串 `bombvault:restic-repo` 做 HMAC-SHA256，用十六进制 `APP_KEY` 的原始字节作密钥，输出 64 个小写十六进制字符。同样的值在工具包里，列为派生的 restic 密码。这是为工具包不在你身边的那一天准备的。在接管了另一台服务器备份的服务器上，请使用接管的备份密钥，也就是那台服务器旧的 APP_KEY。
 
+[主机](#backup-host)来自同一个密钥和字符串 `bombvault:host`：`bv-` 加上这些字符中的前十二个。
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "对于接收的仓库，请使用发送实例的密钥"
     通过异地副本到达这里的仓库，是由发送它的那台机器用**它的**密钥创建的。用接收机器的密钥派生，得到的密码会被 restic 拒绝，这看起来恰恰像仓库损坏，其实不是。这就是对接收的仓库运行 `restic check` 时一再要求输入密码的常见原因。
 
@@ -558,9 +568,11 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 数据库转储是容器仓库里单独的恢复点，带有标签 `dbdump:<container>`，包含单个文件 `/dbdump/<container>.sql`。BombVault 在容器的**备份**标签页上列出、下载和导入它们。下面是只用 restic 的同样步骤，为 BombVault 不在的那一天准备。
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` 是恢复工具包里列出的服务器[主机](#backup-host)。
 
 每个转储上的标签 `dbversion:` 和 `dbname:` 说明它来自哪个服务器版本，以及它包含哪些数据库。完整的文件以 `-- PostgreSQL database cluster dump complete` 或 `-- Dump completed` 结尾。
 

@@ -398,7 +398,7 @@ APP_KEY를 직접 입력받는 유일한 곳은 [이전 백업 폴더에서](#re
 
 다른 BombVault의 append-only 사본을 **받는** 장비에서는, 수신 저장소가 수신 하드웨어에서 독립적인 읽기 전용 모니터링을 제공하므로 먼 쪽의 조용한 실패가 눈에 띄지 않고 지나가지 않습니다. **설정, 인스턴스**에서 **수신기**를 켜고, 인스턴스 페이지에서 보내는 인스턴스의 **세부 정보**를 열어 수신 저장소를 추가하세요(읽기 전용이며, [페어링 그룹](#pairing)을 통해 받은 보내는 인스턴스의 restic 비밀번호로 엽니다). 다음을 얻습니다.
 
-- **출처별 인벤토리**: 어떤 컨테이너, 가상 머신, 폴더 세트가 도착했는지 정확히 볼 수 있습니다.
+- **출처별 인벤토리**: 어떤 컨테이너, 가상 머신, 폴더 세트가 도착했는지 정확히 볼 수 있습니다. 보내는 인스턴스가 [자기 호스트](#backup-host)를 갖기 전에 만든 백업도 같은 출처로 셉니다.
 - 출처별 **마지막 수신**: 각각이 얼마나 최신인지 알 수 있습니다.
 - **독립적인 `restic check`**: 수신 하드웨어에서 실행되므로, 보내는 쪽만이 아니라 데이터가 실제로 있는 곳에서 무결성을 검증합니다.
 - **데드맨 스위치**: 출처가 정한 시간 안에 보내지 않으면 경보가 울립니다. 하루 한 번 09:15에 확인합니다. 검사 일정과 상관없이 저장소를 전혀 읽을 수 없을 때, 그리고 추가한 뒤 정한 시간이 다 지나도록 아무것도 도착하지 않았을 때도 경보가 한 번 울립니다. 보내는 쪽의 첫 사본보다 먼저 추가한 저장소는 그때까지 괜찮습니다.
@@ -529,6 +529,10 @@ BombVault가 실행 중이지 않아도 재해 복구를 가능하게 하는 조
 !!! warning "가장 새로운 스냅샷이 복원할 스냅샷이라고는 할 수 없습니다"
     restic 0.17부터 `restic snapshots`는 각 스냅샷의 크기를 보여 줍니다. 데이터를 잃은 뒤에는 가장 새로운 스냅샷이 비워진 것일 수 있으므로, 이전 것들보다 훨씬 작은 스냅샷은 복원하지 마세요. 랜섬웨어 뒤에는 평소 크기의 암호화된 스냅샷일 수 있습니다. BombVault가 아직 실행 중이면 먼저 **이상 징후** 페이지를 확인하세요. 마지막 정상 백업을 알려 주며, 복원 창이 그것을 미리 선택합니다. 복원에는 BombVault의 이상 징후 데이터가 필요하지 않으며, 보존 일시 중지는 스냅샷을 더 많이 남길 뿐입니다.
 
+### 서버 백업의 호스트 {#backup-host}
+
+각 서버는 자기만의 restic 호스트 아래에 백업을 씁니다. `bv-` 뒤에 백업의 키에서 계산한 12자를 붙인 것으로, 예를 들면 `bv-3f9a0c41d2e7`입니다. 서버에 호스트가 생기기 전의 백업에는 `bombvault` 호스트가 붙어 있습니다. 키트에는 이 서버의 호스트가 적혀 있고, 키트의 명령은 `--host`로 둘 다 넘깁니다. 그래서 `latest`가 다른 서버가 같은 저장소에 쓴 백업을 고르는 일은 없습니다. 다른 서버의 백업을 넘겨받은 서버는 그 서버의 호스트로 계속 씁니다. 호스트가 키에서 나오기 때문입니다.
+
 ### 키트 봉인 {#sealing-the-kit}
 
 **설정, 시스템**에서 **age 로 내보내기 암호화**를 켜면 키트도 그것으로 봉인되어 `bombvault-recovery-kit.md.age`로 내려받습니다. 바이너리가 아니라 ASCII 아머이므로 여전히 일반 텍스트입니다. 비밀번호 관리자에 붙여 넣거나 인쇄하는 것은 전과 똑같이 되며, 내용은 키 없이는 읽을 수 없습니다.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 고정 문자열 `bombvault:restic-repo`에 대한 HMAC-SHA256이며, 16진수 `APP_KEY`의 원시 바이트를 키로 쓰고 소문자 16진수 64자로 출력합니다. 같은 값이 키트에 유도된 restic 비밀번호로 나열되어 있습니다. 키트가 없는 곳에 있는 날을 위한 것입니다. 다른 서버의 백업을 넘겨받은 서버에서는 넘겨받은 백업 키, 즉 그 서버의 이전 APP_KEY를 쓰세요.
 
+[호스트](#backup-host)는 같은 키와 문자열 `bombvault:host`에서 나옵니다. `bv-` 뒤에 그 문자 중 처음 12자를 붙인 것입니다.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "수신 저장소에는 보내는 인스턴스의 키를 쓰세요"
     오프사이트 사본으로 이곳에 도착한 저장소는 그것을 보낸 장비가 **자기** 키로 만든 것입니다. 받는 장비의 키에서 유도하면 restic이 거부하는 비밀번호가 나오는데, 손상된 저장소처럼 보이지만 그렇지 않습니다. 수신 저장소에서 `restic check`가 비밀번호를 계속 묻는 흔한 이유입니다.
 
@@ -558,9 +568,11 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 데이터베이스 덤프는 컨테이너 저장소에서 `dbdump:<container>` 태그가 붙은 독립된 복원 지점이며, `/dbdump/<container>.sql` 파일 하나가 들어 있습니다. BombVault는 컨테이너의 **백업** 탭에서 이를 나열하고, 내려받고, 가져옵니다. 아래는 BombVault가 없는 날을 위해 restic만으로 같은 일을 하는 단계입니다.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>`는 복구 키트에 적힌 서버의 [호스트](#backup-host)입니다.
 
 각 덤프의 `dbversion:`과 `dbname:` 태그는 어느 서버 버전에서 왔고 어떤 데이터베이스가 들어 있는지 알려 줍니다. 완전한 파일은 `-- PostgreSQL database cluster dump complete` 또는 `-- Dump completed`로 끝납니다.
 
