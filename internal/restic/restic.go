@@ -154,6 +154,8 @@ type Mode struct {
 	// Host is the restic host a backup is written with, this server's own
 	// (restickey.Host). Empty writes LegacyHost.
 	Host string
+	// Sharing says whether other servers write to the repository too.
+	Sharing Sharing
 }
 
 // backupHost is the --host a backup under m carries.
@@ -1036,12 +1038,19 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 // would surface "repository is already locked exclusively" and make the
 // latest-backup-times / restore listing read blank). Worst case is a marginally
 // stale listing, never corruption, and the writer is never blocked (#57).
+//
+// In a shared repository it lists this server's snapshots alone, see ownHosts.
 func SnapshotsArgs(repo string, m Mode) []string {
+	return snapshotsArgs(repo, m, m.ownHosts())
+}
+
+func snapshotsArgs(repo string, m Mode, hosts []string) []string {
 	args := repoFlag(repo, m)
 	args = append(args, "snapshots")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	args = append(args, hostFlags(hosts)...)
 	args = append(args, "--no-lock", "--json")
 	return args
 }
@@ -3000,7 +3009,11 @@ func (r Restic) RestoreSubtreeInclude(ctx context.Context, repo, snapshotID, sub
 
 // Snapshots lists snapshots in the repository and returns them as a slice.
 func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot, error) {
-	out, err := r.run(ctx, SnapshotsArgs(repo, m), m)
+	return r.snapshots(ctx, SnapshotsArgs(repo, m), m)
+}
+
+func (r Restic) snapshots(ctx context.Context, args []string, m Mode) ([]Snapshot, error) {
+	out, err := r.run(ctx, args, m)
 	if err != nil {
 		return nil, err
 	}
