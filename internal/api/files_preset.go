@@ -43,5 +43,6 @@ func (h *Handler) handleFileSetPreset(w http.ResponseWriter, _ *http.Request) {
 		"name":     name,
 		"path":     path,
 		"excludes": excludes,
+		"junk":     systemJunkPreset(),
 	}))
 }
