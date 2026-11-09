@@ -52,7 +52,7 @@ La scheda **Streaming**, che abbassa il limite di upload mentre Plex, Jellyfin o
 
 ## Verifica {#verify}
 
-- **Controlla i backup**: il risultato dell'ultimo `restic check` per sezione, con **Sblocca** e **Pota** sotto **Altro** in ogni riga. **Sblocca** rimuove un lock rimasto, e **Pota** applica a richiesta le regole di conservazione.
+- **Controlla i backup**: il risultato dell'ultimo `restic check` per sezione, con **Sblocca** e **Pota** sotto **Altro** in ogni riga. **Sblocca** rimuove un lock rimasto e lascia quello che viene ancora rinnovato, e **Pota** applica a richiesta le regole di conservazione.
 - **Controlli automatici**: la verifica di ripristino pianificata con il suo **Campione di dati (%)** e i suoi bersagli di prova, **Test di avvio**, che ripristina anche un container in una copia isolata e lo avvia, la **Prova DR off-site pianificata** e **Controlla la protezione dall'eliminazione**, la prova di manomissione pianificata. Vedi [Prove DR](offsite-recovery.md#dr-drills) e [Prova di manomissione](offsite-recovery.md#tamper-test).
 - **Anomalie**: rilevamento, sensibilità e quali riscontri inviano un messaggio. Vedi [Anomalie](anomalies.md).
 

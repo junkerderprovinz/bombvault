@@ -52,7 +52,7 @@ BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa
 
 ## Tarkista {#verify}
 
-- **Tarkista varmuuskopiot**: viimeisen `restic check` -ajon tulos osiota kohti, ja jokaisella rivillä **Avaa lukitus** ja **Karsi** kohdassa **Lisää**. **Avaa lukitus** poistaa vanhentuneen lukon, ja **Karsi** soveltaa säilytyssääntöjä pyydettäessä.
+- **Tarkista varmuuskopiot**: viimeisen `restic check` -ajon tulos osiota kohti, ja jokaisella rivillä **Avaa lukitus** ja **Karsi** kohdassa **Lisää**. **Avaa lukitus** poistaa vanhentuneen lukon mutta jättää yhä päivitettävän lukon paikalleen, ja **Karsi** soveltaa säilytyssääntöjä pyydettäessä.
 - **Automaattiset tarkistukset**: ajastettu palautustarkistus kohtineen **Datanäyte (%)** ja testikohteet, **Käynnistystesti**, joka palauttaa myös yhden kontin eristettyyn kopioon ja käynnistää sen, **Ajastettu etä-DR-harjoitus** ja **Tarkista poistosuoja**, ajastettu peukalointitesti. Katso [DR-harjoitukset](offsite-recovery.md#dr-drills) ja [Peukalointitesti](offsite-recovery.md#tamper-test).
 - **Poikkeamat**: tunnistus, herkkyys ja se, mitkä havainnot lähettävät viestin. Katso [Poikkeamat](anomalies.md).
 

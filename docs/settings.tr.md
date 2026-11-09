@@ -52,7 +52,7 @@ Plex, Jellyfin ya da Emby yayın yaparken yükleme sınırını düşüren **Yay
 
 ## Doğrulama {#verify}
 
-- **Yedekleri denetle**: bölüm başına son `restic check` sonucu, her satırda **Diğer** altında **Kilidi aç** ve **Buda** ile. **Kilidi aç** eski bir kilidi temizler, **Buda** saklama kurallarını istek üzerine uygular.
+- **Yedekleri denetle**: bölüm başına son `restic check` sonucu, her satırda **Diğer** altında **Kilidi aç** ve **Buda** ile. **Kilidi aç** eski bir kilidi temizler ve hâlâ yenilenen bir kilide dokunmaz, **Buda** saklama kurallarını istek üzerine uygular.
 - **Otomatik denetimler**: **Veri örneği (%)** ve test hedefleriyle zamanlanmış geri yükleme denetimi, bir konteyneri yalıtılmış bir kopyaya geri yükleyip başlatan **Başlatma testi**, **Zamanlanmış site dışı DR tatbikatı** ve zamanlanmış kurcalama testi olan **Silme korumasını denetle**. Bkz. [DR tatbikatları](offsite-recovery.md#dr-drills) ve [Kurcalama testi](offsite-recovery.md#tamper-test).
 - **Anormallikler**: algılama, duyarlılık ve hangi bulguların mesaj göndereceği. Bkz. [Anormallikler](anomalies.md).
 

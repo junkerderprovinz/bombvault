@@ -398,7 +398,7 @@ Kapatılmış örnekler ve uygulaması kapalı telefonlar kartlarını gri olara
 
 Başka bir BombVault'tan append-only kopyaları **alan** makinede, alınan depolar alıcı donanımda bağımsız, salt okunur izleme sağlar, böylece uzak uçtaki sessiz bir hata gözden kaçmaz. **Ayarlar, Örnekler** altında **Alıcı**'yı aç, sonra Örnekler sayfasında gönderen örneğin **Ayrıntılar**'ını aç ve alınan depoyu ekle (salt okunur, gönderen örneğin [eşleştirme grubu](#pairing) üzerinden aldığı restic parolasıyla açılır). Şunları elde edersin:
 
-- **Kaynağa göre bir envanter**, hangi konteynerlerin, VM'lerin ve klasör kümelerinin indiğini tam olarak görmen için.
+- **Kaynağa göre bir envanter**, hangi konteynerlerin, VM'lerin ve klasör kümelerinin indiğini tam olarak görmen için. Gönderenin kendine ait bir [host'u](#backup-host) olmadan önce aldığı yedekler de aynı kaynağa sayılır.
 - Kaynak başına **Son alınan**, her birinin ne kadar taze olduğunu bilmen için.
 - Alıcı donanımda çalışan **bağımsız bir `restic check`**, bütünlüğün yalnızca gönderende değil, verinin gerçekten durduğu yerde doğrulanması için.
 - **Bir ölü adam anahtarı:** bir kaynak senin ayarladığın bir pencere içinde göndermeyi bıraktığında bir uyarı. Günde bir kez, 09:15'te bakar. Denetim zamanlaması ne derse desin, depo hiç okunamadığında ve onu ekledikten sonra tam bir pencere boyunca hiçbir şey gelmediğinde de bir uyarı alırsın. Gönderenin ilk kopyasından önce eklediğin bir depo o zamana kadar sorun sayılmaz.
@@ -529,6 +529,10 @@ Bu, çalışan hiçbir BombVault olmadığında bile felaket kurtarmayı mümkü
 !!! warning "En yeni anlık görüntü her zaman geri yüklenecek olan değildir"
     restic 0.17'den beri `restic snapshots` her anlık görüntünün boyutunu gösterir. Veri kaybından sonra en yeni anlık görüntü boşaltılmış olan olabilir, bu yüzden öncekilerden çok daha küçük bir anlık görüntüyü geri yükleme. Fidye yazılımından sonra olağan boyutta şifrelenmiş olan olabilir. BombVault hâlâ çalışıyorsa önce **Anormallikler** sayfasına bak: son iyi yedeği adlandırır ve geri yükleme penceresi onu önceden seçer. Bir geri yükleme BombVault'un hiçbir anormallik verisine ihtiyaç duymaz ve saklama duraklaması yalnızca daha fazla anlık görüntü tutar.
 
+### Bir sunucunun yedeklerinin host'u {#backup-host}
+
+Her sunucu yedeklerini kendine ait bir restic host'u altında yazar: `bv-` ve yedek anahtarından hesaplanan on iki karakter, örneğin `bv-3f9a0c41d2e7`. Bir sunucunun kendi host'u olmadan önce alınan yedekler `bombvault` host'unu taşır. Kit bu sunucunun host'unu adlandırır ve komutları ikisini de `--host` ile verir, böylece `latest` başka bir sunucunun aynı depoya yazdığı bir yedeği asla seçmez. Başka bir sunucunun yedeklerini devralan bir sunucu o sunucunun host'u altında devam eder, çünkü host anahtardan gelir.
+
 ### Kiti mühürlemek {#sealing-the-kit}
 
 **Ayarlar, Sistem** altında **Dışa aktarmaları age ile şifrele**'yi açtıysan kit de onunla mühürlenir ve `bombvault-recovery-kit.md.age` olarak iner. İkili değil ASCII zırhlıdır, bu yüzden hâlâ düz metindir: bir parola yöneticisine yapıştırmak ya da yazdırmak eskisi gibi çalışır, içerik anahtarın olmadan okunamaz.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Bu, sabit `bombvault:restic-repo` dizesi üzerinde, onaltılık `APP_KEY`'in ham baytlarıyla anahtarlanmış HMAC-SHA256'dır ve 64 küçük harfli onaltılık karakter olarak basılır. Aynı değer kitte türetilmiş restic parolası olarak listelenir. Bu, kitin sen yokken bir yerde olduğu gün içindir. Başka bir sunucunun yedeklerini devralmış bir sunucuda, devralınan yedek anahtarını, yani o sunucunun eski APP_KEY'ini kullan.
 
+[Host](#backup-host) aynı anahtardan ve `bombvault:host` dizesinden gelir: `bv-` ve bu karakterlerin ilk on ikisi.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Alınan bir depo için GÖNDEREN örneğin anahtarını kullan"
     Buraya bir site dışı kopyayla gelen bir depo, onu gönderen makine tarafından **onun** anahtarıyla oluşturuldu. Alıcı makinenin anahtarından türetmek restic'in reddedeceği bir parola üretir, bu da tam olarak bozuk bir depo gibi görünür ve değildir. Alınan bir depoda `restic check`'in tekrar tekrar parola istemesinin olağan nedeni budur.
 
@@ -558,9 +568,11 @@ Kurtarma tanımları her deponun **içinde** durduğundan (`<repo>/def`, `<repo>
 Bir veritabanı dökümü, konteynerler deposunda `dbdump:<container>` etiketli, tek dosya olan `/dbdump/<container>.sql` dosyasını tutan kendi geri yükleme noktasıdır. BombVault bunları konteynerin **Yedekler** sekmesinde listeler, indirir ve içe aktarır. Aşağıda aynı adımlar, BombVault'un olmadığı gün için, yalnızca restic ile.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>`, sunucunun kurtarma kitinde yazan [host'udur](#backup-host).
 
 Her dökümdeki `dbversion:` ve `dbname:` etiketleri hangi sunucu sürümünden geldiğini ve hangi veritabanlarını tuttuğunu söyler. Eksiksiz bir dosya `-- PostgreSQL database cluster dump complete` ya da `-- Dump completed` ile biter.
 

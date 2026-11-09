@@ -52,7 +52,7 @@ Die Karte **Streaming**, die das Upload-Limit senkt, während Plex, Jellyfin ode
 
 ## Prüfung {#verify}
 
-- **Sicherungen prüfen**: das Ergebnis des letzten `restic check` pro Bereich, mit **Entsperren** und **Aufräumen** unter **Mehr** in jeder Zeile. **Entsperren** hebt eine veraltete Sperre auf, und **Aufräumen** wendet die Aufbewahrungsregeln auf Abruf an.
+- **Sicherungen prüfen**: das Ergebnis des letzten `restic check` pro Bereich, mit **Entsperren** und **Aufräumen** unter **Mehr** in jeder Zeile. **Entsperren** hebt eine veraltete Sperre auf, lässt aber eine stehen, die noch aufgefrischt wird, und **Aufräumen** wendet die Aufbewahrungsregeln auf Abruf an.
 - **Automatische Prüfungen**: die geplante Wiederherstellungsprüfung mit ihrer **Datenstichprobe (%)** und den Testzielen, **Start-Test**, der auch einen Container in eine isolierte Kopie wiederherstellt und startet, der **Geplante Off-site-DR-Test** und **Löschschutz prüfen**, der geplante Manipulationstest. Siehe [DR-Tests](offsite-recovery.md#dr-drills) und [Manipulationstest](offsite-recovery.md#tamper-test).
 - **Anomalien**: Erkennung, Empfindlichkeit und welche Funde eine Nachricht schicken. Siehe [Anomalien](anomalies.md).
 

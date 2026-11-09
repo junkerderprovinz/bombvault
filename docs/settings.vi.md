@@ -52,7 +52,7 @@ Thẻ **Phát trực tuyến**, giảm giới hạn tải lên khi Plex, Jellyfi
 
 ## Xác minh {#verify}
 
-- **Kiểm tra bản sao lưu**: kết quả của `restic check` gần nhất theo từng phần, với **Mở khóa** và **Dọn bớt** dưới **Thêm** trong mỗi dòng. **Mở khóa** xóa một khóa cũ, còn **Dọn bớt** áp dụng quy tắc giữ lại theo yêu cầu.
+- **Kiểm tra bản sao lưu**: kết quả của `restic check` gần nhất theo từng phần, với **Mở khóa** và **Dọn bớt** dưới **Thêm** trong mỗi dòng. **Mở khóa** xóa một khóa cũ và để yên khóa vẫn đang được làm mới, còn **Dọn bớt** áp dụng quy tắc giữ lại theo yêu cầu.
 - **Kiểm tra tự động**: kiểm tra khôi phục theo lịch với **Mẫu dữ liệu (%)** và các đích thử, **Kiểm tra khởi động**, cũng khôi phục một container vào một bản sao cô lập và khởi động nó, **Diễn tập DR ngoài site theo lịch** và **Kiểm tra bảo vệ chống xóa**, phép thử phá hoại theo lịch. Xem [Diễn tập DR](offsite-recovery.md#dr-drills) và [Phép thử phá hoại](offsite-recovery.md#tamper-test).
 - **Bất thường**: phát hiện, độ nhạy và những phát hiện nào gửi tin nhắn. Xem [Bất thường](anomalies.md).
 

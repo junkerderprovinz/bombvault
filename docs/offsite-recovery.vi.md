@@ -398,7 +398,7 @@ Các phiên bản đã tắt và điện thoại đã đóng ứng dụng vẫn 
 
 Trên máy **nhận** các bản sao append-only từ một BombVault khác, các kho đã nhận cho bạn khả năng giám sát độc lập, chỉ đọc trên phần cứng nhận, nên một lỗi âm thầm ở đầu xa không bị bỏ sót. Bật **Bộ nhận** dưới **Cài đặt, Phiên bản**, rồi mở **Chi tiết** của phiên bản gửi trên trang Phiên bản và thêm kho đã nhận (chỉ đọc, mở bằng mật khẩu restic của phiên bản gửi, mà nó nhận qua [nhóm ghép nối](#pairing)). Bạn có:
 
-- **Bản kiểm kê theo nguồn**, để thấy chính xác container, VM và bộ thư mục nào đã đến.
+- **Bản kiểm kê theo nguồn**, để thấy chính xác container, VM và bộ thư mục nào đã đến. Các bản sao lưu mà phiên bản gửi tạo ra trước khi có [host riêng](#backup-host) được tính vào cùng nguồn đó.
 - **Nhận lần cuối** cho từng nguồn, để biết mỗi nguồn mới đến đâu.
 - **Một `restic check` độc lập** chạy trên phần cứng bên nhận, nên tính toàn vẹn được xác minh ngay nơi dữ liệu thực sự nằm, không chỉ trên bên gửi.
 - **Một công tắc người chết:** một cảnh báo khi một nguồn ngừng gửi trong một khoảng thời gian bạn đặt. Nó kiểm tra mỗi ngày một lần, lúc 09:15. Bạn cũng nhận một cảnh báo khi hoàn toàn không đọc được kho, bất kể lịch kiểm tra nói gì, và khi chưa có gì đến sau trọn một khoảng thời gian kể từ lúc bạn thêm nó. Một kho bạn thêm trước lần sao chép đầu tiên của bên gửi vẫn ổn cho đến lúc đó.
@@ -529,6 +529,10 @@ Không có mã thì không ai mở được bản đó, kể cả bên giữ kh�
 !!! warning "Snapshot mới nhất không phải lúc nào cũng là cái nên khôi phục"
     Từ restic 0.17, `restic snapshots` hiển thị dung lượng của mỗi snapshot. Sau khi mất dữ liệu, snapshot mới nhất có thể là snapshot đã bị làm trống, nên đừng khôi phục một snapshot nhỏ hơn nhiều so với các snapshot trước. Sau ransomware, nó có thể là snapshot đã bị mã hóa với dung lượng thông thường. Nếu BombVault vẫn chạy, hãy xem trang **Bất thường** của nó trước: nó nêu tên bản sao lưu tốt gần nhất, và cửa sổ khôi phục chọn sẵn bản đó. Một lần khôi phục không cần bất kỳ dữ liệu bất thường nào của BombVault, và việc tạm dừng lưu giữ chỉ giữ thêm snapshot.
 
+### Host của các bản sao lưu của một máy chủ {#backup-host}
+
+Mỗi máy chủ ghi các bản sao lưu của nó dưới một host restic riêng: `bv-` cộng với mười hai ký tự tính từ khóa của các bản sao lưu, chẳng hạn `bv-3f9a0c41d2e7`. Các bản sao lưu từ trước khi máy chủ có host riêng mang host `bombvault`. Bộ khôi phục ghi host của máy chủ này, và các lệnh trong đó truyền cả hai bằng `--host`, nên `latest` không bao giờ chọn một bản sao lưu mà máy chủ khác đã ghi vào cùng kho. Một máy chủ tiếp nhận bản sao lưu của máy khác sẽ tiếp tục dưới host của máy chủ đó, vì host đến từ khóa.
+
 ### Niêm phong bộ khôi phục {#sealing-the-kit}
 
 Nếu bạn đã bật **Mã hóa bản xuất bằng age** dưới **Cài đặt, Hệ thống**, bộ khôi phục cũng được niêm phong bằng nó và tải xuống dưới dạng `bombvault-recovery-kit.md.age`. Nó được bọc ASCII chứ không phải nhị phân, nên vẫn là văn bản thuần: dán vào trình quản lý mật khẩu hay in ra hoạt động y như trước, chỉ là nội dung không đọc được nếu thiếu khóa của bạn.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo' \
 
 Đó là HMAC-SHA256 trên chuỗi cố định `bombvault:restic-repo`, với khóa là các byte thô của `APP_KEY` thập lục phân, in ra dưới dạng 64 ký tự thập lục phân chữ thường. Cùng giá trị đó có trong bộ khôi phục, liệt kê là mật khẩu restic dẫn xuất. Đây là cho ngày bộ khôi phục không ở gần bạn. Trên một máy chủ đã tiếp nhận bản sao lưu của máy khác, hãy dùng khóa sao lưu được tiếp nhận, tức APP_KEY cũ của máy chủ đó.
 
+[Host](#backup-host) đến từ cùng khóa đó và chuỗi `bombvault:host`: `bv-` cộng với mười hai ký tự đầu tiên của kết quả.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Với kho đã nhận, hãy dùng khóa của bản chạy GỬI"
     Một kho đến đây qua bản sao off-site được tạo bởi máy gửi nó, với khóa **của nó**. Dẫn xuất từ khóa của máy nhận tạo ra một mật khẩu mà restic sẽ từ chối, và điều đó đọc giống hệt một kho bị hỏng nhưng không phải vậy. Đây là lý do thông thường khiến `restic check` trên kho đã nhận cứ hỏi mật khẩu hết lần này đến lần khác.
 
@@ -558,9 +568,11 @@ Vì các định nghĩa khôi phục nằm **bên trong** mỗi kho (`<repo>/def
 Một bản kết xuất cơ sở dữ liệu là một điểm khôi phục riêng trong kho containers, gắn thẻ `dbdump:<container>`, chứa một tệp duy nhất `/dbdump/<container>.sql`. BombVault liệt kê, tải xuống và nhập chúng trên tab **Bản sao lưu** của container. Dưới đây là các bước tương tự chỉ với restic, cho ngày BombVault không còn đó.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` là [host](#backup-host) của máy chủ, lấy từ bộ khôi phục.
 
 Các nhãn `dbversion:` và `dbname:` trên mỗi bản kết xuất cho biết nó đến từ phiên bản máy chủ nào và chứa những cơ sở dữ liệu nào. Một tệp trọn vẹn kết thúc bằng `-- PostgreSQL database cluster dump complete` hoặc `-- Dump completed`.
 

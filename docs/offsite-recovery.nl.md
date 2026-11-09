@@ -398,7 +398,7 @@ Instanties die zijn uitgeschakeld en telefoons met de app gesloten, houden hun k
 
 Op de machine die append-only-kopieën van een andere BombVault **ontvangt**, geven de ontvangen repository's je onafhankelijke, alleen-lezen bewaking op de ontvangende hardware, zodat een stil falen aan de andere kant niet onopgemerkt blijft. Schakel **Ontvanger** in onder **Instellingen, Instanties**, open dan de **Details** van de verzendende instantie op de pagina Instanties en voeg het ontvangen repository toe (alleen-lezen, geopend met het restic-wachtwoord van de verzendende instantie, dat het via de [koppelgroep](#pairing) krijgt). Je krijgt:
 
-- **Een inventaris per bron**, zodat je precies kunt zien welke containers, VM's en mappensets zijn aangekomen.
+- **Een inventaris per bron**, zodat je precies kunt zien welke containers, VM's en mappensets zijn aangekomen. Back-ups die de verzendende instantie maakte voordat ze een [eigen host](#backup-host) had, tellen mee voor dezelfde bron.
 - **Laatst ontvangen** per bron, zodat je weet hoe vers elke is.
 - **Een onafhankelijke `restic check`** op de ontvangende hardware, zodat de integriteit wordt geverifieerd waar de data echt staat, niet alleen bij de afzender.
 - **Een dodemansknop:** een waarschuwing als een bron binnen een venster dat je instelt, niets meer verstuurt. Hij kijkt één keer per dag, om 09:15. Je krijgt ook één waarschuwing als het repository helemaal niet te lezen is, wat de controleplanning ook zegt, en als er een vol venster nadat je het hebt toegevoegd nog niets is aangekomen. Een repository dat je toevoegt vóór de eerste kopie van de afzender, is tot dan in orde.
@@ -529,6 +529,10 @@ Dit is het onderdeel dat noodherstel mogelijk maakt, ook als er geen draaiende B
 !!! warning "De nieuwste snapshot is niet altijd degene om te herstellen"
     Sinds restic 0.17 toont `restic snapshots` de grootte van elke snapshot. Na dataverlies kan de nieuwste snapshot de lege zijn, dus herstel geen snapshot die veel kleiner is dan die ervoor. Na ransomware kan het de versleutelde zijn, op de gebruikelijke grootte. Draait BombVault nog, kijk dan eerst op zijn pagina **Anomalieën**: die noemt de laatste goede back-up, en het herstelvenster selecteert die vooraf. Een herstel heeft geen anomaliedata van BombVault nodig, en de bewaarpauze bewaart alleen méér snapshots.
 
+### De host van de back-ups van een server {#backup-host}
+
+Elke server schrijft zijn back-ups onder een eigen restic-host: `bv-` en twaalf tekens die uit de sleutel van de back-ups worden berekend, zoals `bv-3f9a0c41d2e7`. Back-ups van voordat een server er een had, dragen de host `bombvault`. De kit noemt de host van deze server, en haar opdrachten geven beide mee met `--host`, zodat `latest` nooit een back-up kiest die een andere server naar hetzelfde repository heeft geschreven. Een server die de back-ups van een andere overneemt, gaat verder onder de host van die server, omdat de host uit de sleutel komt.
+
 ### De kit verzegelen {#sealing-the-kit}
 
 Heb je **Exports versleutelen met age** ingeschakeld onder **Instellingen, Systeem**, dan wordt de kit er ook mee verzegeld en downloadt hij als `bombvault-recovery-kit.md.age`. Hij is ASCII-armored in plaats van binair, dus hij is nog steeds platte tekst: plakken in een wachtwoordmanager of afdrukken werkt precies zoals eerder, de inhoud is onleesbaar zonder je sleutel.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 Dat is HMAC-SHA256 over de vaste string `bombvault:restic-repo`, gesleuteld met de ruwe bytes van de hex-`APP_KEY`, afgedrukt als 64 hex-tekens in kleine letters. Dezelfde waarde staat in de kit, vermeld als het afgeleide restic-wachtwoord. Dit is voor de dag dat de kit ergens ligt waar jij niet bent. Gebruik op een server die de back-ups van een andere heeft overgenomen de overgenomen back-upsleutel, de oude APP_KEY van die server.
 
+De [host](#backup-host) komt uit dezelfde sleutel en de string `bombvault:host`: `bv-` en de eerste twaalf van die tekens.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Gebruik voor een ontvangen repository de sleutel van de VERZENDENDE instantie"
     Een repository dat hier via een off-site-kopie aankwam, is gemaakt door de machine die het verstuurde, met **haar** sleutel. Afleiden uit de sleutel van de ontvangende machine geeft een wachtwoord dat restic afwijst, wat er precies uitziet als een corrupt repository en dat niet is. Dit is de gebruikelijke reden dat `restic check` op een ontvangen repository steeds weer om een wachtwoord vraagt.
 
@@ -558,9 +568,11 @@ Omdat de hersteldefinities **in** elk repository staan (`<repo>/def`, `<repo>/vm
 Een databasedump is een eigen herstelpunt in het containerrepository, getagd `dbdump:<container>`, met het ene bestand `/dbdump/<container>.sql`. BombVault toont, downloadt en importeert ze op het tabblad **Back-ups** van de container. Hieronder staan dezelfde stappen met alleen restic, voor de dag dat BombVault er niet is.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` is de [host](#backup-host) van de server uit de herstelkit.
 
 De tags `dbversion:` en `dbname:` op elke dump zeggen van welke serverversie hij komt en welke databases hij bevat. Een compleet bestand eindigt met `-- PostgreSQL database cluster dump complete` of `-- Dump completed`.
 

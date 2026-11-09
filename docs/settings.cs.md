@@ -52,7 +52,7 @@ Karta **Streamování**, která snižuje limit nahrávání, zatímco streamuje 
 
 ## Ověření {#verify}
 
-- **Zkontrolovat zálohy**: výsledek posledního `restic check` pro každou sekci, s **Odemknout** a **Vyčistit** pod **Více** v každém řádku. **Odemknout** uvolní zastaralý zámek a **Vyčistit** použije pravidla uchovávání na požádání.
+- **Zkontrolovat zálohy**: výsledek posledního `restic check` pro každou sekci, s **Odemknout** a **Vyčistit** pod **Více** v každém řádku. **Odemknout** uvolní zastaralý zámek, ale ponechá ten, který se stále obnovuje, a **Vyčistit** použije pravidla uchovávání na požádání.
 - **Automatické kontroly**: plánovaná kontrola obnovy s **Vzorek dat (%)** a testovanými cíli, **Test spuštění**, který také obnoví jeden kontejner do izolované kopie a spustí ho, **Naplánované cvičení DR mimo lokalitu** a **Kontrola ochrany proti smazání**, plánovaný tamper test. Viz [Cvičení DR](offsite-recovery.md#dr-drills) a [Tamper test](offsite-recovery.md#tamper-test).
 - **Anomálie**: rozpoznávání, citlivost a které nálezy pošlou zprávu. Viz [Anomálie](anomalies.md).
 

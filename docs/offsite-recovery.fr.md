@@ -398,7 +398,7 @@ Les instances éteintes et les téléphones dont l'application est fermée garde
 
 Sur la machine qui **reçoit** des copies en ajout seul d'un autre BombVault, les dépôts reçus vous donnent une surveillance indépendante en lecture seule sur le matériel récepteur, si bien qu'une panne silencieuse à l'autre bout ne passe pas inaperçue. Activez **Récepteur** sous **Paramètres, Instances**, puis ouvrez les **Détails** de l'instance émettrice sur la page Instances et ajoutez le dépôt reçu (en lecture seule, ouvert avec le mot de passe restic de l'instance émettrice, qu'il reçoit via le [groupe d'appairage](#pairing)). Vous obtenez :
 
-- **Un inventaire par source**, pour voir exactement quels conteneurs, VMs et ensembles de dossiers sont arrivés.
+- **Un inventaire par source**, pour voir exactement quels conteneurs, VMs et ensembles de dossiers sont arrivés. Les sauvegardes que l'instance émettrice a faites avant d'avoir son [propre hôte](#backup-host) comptent dans la même source.
 - **Dernière réception** par source, pour savoir à quel point chacune est fraîche.
 - **Un `restic check` indépendant** exécuté sur le matériel récepteur, si bien que l'intégrité est vérifiée là où les données se trouvent réellement, pas seulement chez l'émetteur.
 - **Un interrupteur d'homme mort :** une alerte quand une source cesse d'envoyer dans une fenêtre que vous réglez. Il regarde une fois par jour, à 09:15. Vous recevez aussi une alerte quand le dépôt ne peut pas être lu du tout, quel que soit le planning des contrôles, et quand rien n'est arrivé une fenêtre entière après que vous l'avez ajouté. Un dépôt que vous ajoutez avant la première copie de l'émetteur est en règle jusque-là.
@@ -529,6 +529,10 @@ C'est l'élément qui rend la reprise après sinistre possible même quand aucun
 !!! warning "L'instantané le plus récent n'est pas toujours celui à restaurer"
     Depuis restic 0.17, `restic snapshots` montre la taille de chaque instantané. Après une perte de données, le plus récent peut être celui qui a été vidé, ne restaurez donc pas un instantané bien plus petit que ceux d'avant. Après un rançongiciel, ce peut être celui qui est chiffré, à la taille habituelle. Si BombVault tourne encore, regardez d'abord sa page **Anomalies** : elle nomme la dernière bonne sauvegarde, et la fenêtre de restauration la présélectionne. Une restauration n'a besoin d'aucune donnée d'anomalie de BombVault, et la pause de rétention ne fait que garder plus d'instantanés.
 
+### L'hôte des sauvegardes d'un serveur {#backup-host}
+
+Chaque serveur écrit ses sauvegardes sous son propre hôte restic : `bv-` suivi de douze caractères calculés à partir de la clé des sauvegardes, par exemple `bv-3f9a0c41d2e7`. Les sauvegardes faites avant qu'un serveur ait le sien portent l'hôte `bombvault`. Le kit indique l'hôte de ce serveur, et ses commandes passent les deux avec `--host`, pour que `latest` ne choisisse jamais une sauvegarde qu'un autre serveur a écrite dans le même dépôt. Un serveur qui reprend les sauvegardes d'un autre continue sous l'hôte de ce serveur, car l'hôte vient de la clé.
+
 ### Sceller le kit {#sealing-the-kit}
 
 Si vous avez activé **Chiffrer les exports avec age** sous **Paramètres, Système**, le kit est aussi scellé avec lui et se télécharge sous le nom `bombvault-recovery-kit.md.age`. Il est armé en ASCII plutôt que binaire, c'est donc encore du texte simple : le coller dans un gestionnaire de mots de passe ou l'imprimer fonctionne exactement comme avant, le contenu est illisible sans votre clé.
@@ -548,6 +552,12 @@ printf 'bombvault:restic-repo'   | openssl dgst -sha256 -mac HMAC -macopt hexkey
 
 C'est un HMAC-SHA256 de la chaîne fixe `bombvault:restic-repo`, avec pour clé les octets bruts de l'`APP_KEY` hexadécimale, affiché en 64 caractères hexadécimaux en minuscules. La même valeur figure dans le kit, listée comme mot de passe restic dérivé. C'est pour le jour où le kit est là où vous n'êtes pas. Sur un serveur qui a repris les sauvegardes d'un autre, utilisez la clé de sauvegarde reprise, qui est l'ancienne APP_KEY de ce serveur.
 
+L'[hôte](#backup-host) vient de la même clé et de la chaîne `bombvault:host` : `bv-` suivi des douze premiers de ces caractères.
+
+```sh
+echo "bv-$(printf 'bombvault:host' | openssl dgst -sha256 -mac HMAC -macopt hexkey:$APP_KEY -r | cut -c1-12)"
+```
+
 !!! warning "Pour un dépôt reçu, utilisez la clé de l'instance ÉMETTRICE"
     Un dépôt arrivé ici par une copie hors site a été créé par la machine qui l'a envoyé, avec **sa** clé. Dériver à partir de la clé de la machine réceptrice produit un mot de passe que restic rejettera, ce qui ressemble exactement à un dépôt corrompu et n'en est pas un. C'est la raison habituelle pour laquelle `restic check` sur un dépôt reçu demande un mot de passe encore et encore.
 
@@ -558,9 +568,11 @@ Comme les définitions de récupération vivent **dans** chaque dépôt (`<repo>
 Un dump de base de données est un point de restauration à part dans le dépôt des conteneurs, étiqueté `dbdump:<container>`, contenant le fichier unique `/dbdump/<container>.sql`. BombVault les liste, les télécharge et les importe sur l'onglet **Sauvegardes** du conteneur. Voici les mêmes étapes avec restic seul, pour le jour où BombVault n'est pas là.
 
 ```sh
-restic -r <repo> snapshots --tag dbdump:<container>
-restic -r <repo> dump --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
+restic -r <repo> snapshots --host <host> --host bombvault --tag dbdump:<container>
+restic -r <repo> dump --host <host> --host bombvault --tag dbdump:<container> latest /dbdump/<container>.sql > <container>.sql
 ```
+
+`<host>` est l'[hôte](#backup-host) du serveur indiqué dans le kit de récupération.
 
 Les étiquettes `dbversion:` et `dbname:` de chaque dump disent de quelle version de serveur il vient et quelles bases il contient. Un fichier complet se termine par `-- PostgreSQL database cluster dump complete` ou `-- Dump completed`.
 

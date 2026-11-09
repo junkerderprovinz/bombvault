@@ -52,7 +52,7 @@ O cartão **Streaming**, que baixa o limite de envio enquanto o Plex, o Jellyfin
 
 ## Verificação {#verify}
 
-- **Verificar os backups**: o resultado do último `restic check` por secção, com **Desbloquear** e **Podar** em **Mais** em cada linha. **Desbloquear** limpa um bloqueio antigo, e **Podar** aplica as regras de retenção a pedido.
+- **Verificar os backups**: o resultado do último `restic check` por secção, com **Desbloquear** e **Podar** em **Mais** em cada linha. **Desbloquear** limpa um bloqueio antigo e deixa ficar um que ainda está a ser renovado, e **Podar** aplica as regras de retenção a pedido.
 - **Verificações automáticas**: a verificação de restauro agendada com a sua **Amostra de dados (%)** e alvos de teste, o **Teste de arranque**, que também restaura um container numa cópia isolada e o arranca, o **Teste DR externo agendado** e **Verificar proteção contra eliminação**, o teste de adulteração agendado. Vê [Testes DR](offsite-recovery.md#dr-drills) e [Teste de adulteração](offsite-recovery.md#tamper-test).
 - **Anomalias**: a deteção, a sensibilidade e que achados enviam uma mensagem. Vê [Anomalias](anomalies.md).
 
