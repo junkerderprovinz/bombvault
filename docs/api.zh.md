@@ -81,7 +81,7 @@ BombVault 可以通过 MQTT 发现，作为一台设备出现在 Home Assistant 
 
 | 实体 | 显示什么 |
 |---|---|
-| 状态 | `ok`、`warning`、`failed` 或 `off`，取开启的领域里最差的那个。等待首次备份的领域，只有在那次备份到期后才计入，而且只有处于最新状态的领域才会让状态变为 `ok` |
+| 状态 | `ok`、`warning`、`overdue`、`failed` 或 `off`，取开启的领域里最差的那个。等待首次备份的领域，只有在那次备份到期后才计入，而且只有处于最新状态的领域才会让状态变为 `ok`。`overdue` 与概览中一致，表示某个领域的最近一次备份已超过两个间隔 |
 | 正在运行的作业 | 现在在运行什么，或 `idle` |
 | 未处理的异常 | 有多少异常未处理 |
 | 下一次计划备份 | 下一次计划备份何时开始 |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-一个在状态变为 `failed` 时通知你手机的自动化：
+一个在状态变为 `failed` 或 `overdue` 时通知你手机的自动化：
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

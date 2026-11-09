@@ -81,7 +81,7 @@ BombVault ปรากฏใน Home Assistant เป็นอุปกรณ์
 
 | เอนทิตี | แสดงอะไร |
 |---|---|
-| Status | `ok`, `warning`, `failed` หรือ `off` ตามโดเมนที่เปิดอยู่ที่แย่ที่สุด โดเมนที่รอการสำรองครั้งแรกจะนับก็ต่อเมื่อถึงกำหนดการสำรองนั้นแล้ว และมีเพียงโดเมนที่เป็นปัจจุบันเท่านั้นที่ทำให้สถานะเป็น `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` หรือ `off` ตามโดเมนที่เปิดอยู่ที่แย่ที่สุด โดเมนที่รอการสำรองครั้งแรกจะนับก็ต่อเมื่อถึงกำหนดการสำรองนั้นแล้ว และมีเพียงโดเมนที่เป็นปัจจุบันเท่านั้นที่ทำให้สถานะเป็น `ok` `overdue` หมายถึงข้อมูลสำรองล่าสุดของโดเมนเก่ากว่าสองรอบเวลา เหมือนในภาพรวม |
 | Running job | อะไรกำลังรันอยู่ หรือ `idle` |
 | Open anomalies | มีความผิดปกติเปิดอยู่กี่รายการ |
 | Next scheduled backup | การสำรองตามกำหนดครั้งถัดไปเริ่มเมื่อไร |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-ระบบอัตโนมัติที่แจ้งโทรศัพท์ของคุณเมื่อสถานะเปลี่ยนเป็น `failed`
+ระบบอัตโนมัติที่แจ้งโทรศัพท์ของคุณเมื่อสถานะเปลี่ยนเป็น `failed` หรือ `overdue`
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

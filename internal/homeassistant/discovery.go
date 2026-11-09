@@ -95,7 +95,7 @@ func (t Topics) entities(dev Device, domains []string, buttons bool) []entity {
 	out := []entity{
 		sensor("status", "Status", "{{ value_json.status }}", map[string]any{
 			"device_class": "enum",
-			"options":      []string{"ok", "warning", "failed", "off"},
+			"options":      []string{"ok", "warning", "overdue", "failed", "off"},
 			"icon":         "mdi:shield-check",
 		}),
 		sensor("running", "Running job", "{{ value_json.running }}", map[string]any{"icon": "mdi:progress-clock"}),

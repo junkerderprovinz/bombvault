@@ -81,7 +81,7 @@ BombVault може з'явитися в Home Assistant як пристрій з�
 
 | Сутність | Що показує |
 |---|---|
-| Status | `ok`, `warning`, `failed` або `off`, найгірше з увімкнених розділів. Розділ, що чекає на першу резервну копію, враховується лише після її строку, і статус `ok` дає лише актуальний розділ |
+| Status | `ok`, `warning`, `overdue`, `failed` або `off`, найгірше з увімкнених розділів. Розділ, що чекає на першу резервну копію, враховується лише після її строку, і статус `ok` дає лише актуальний розділ. `overdue` означає, як і в огляді, що остання копія розділу старша за два інтервали |
 | Running job | Що виконується зараз, або `idle` |
 | Open anomalies | Скільки аномалій відкрито |
 | Next scheduled backup | Коли почнеться наступна планова копія |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Автоматизація, яка повідомляє на телефон, коли стан стає `failed`:
+Автоматизація, яка повідомляє на телефон, коли стан стає `failed` або `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

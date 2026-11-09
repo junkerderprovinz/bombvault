@@ -3,6 +3,7 @@ package homeassistant
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -413,4 +414,19 @@ func TestPressesAreLimitedPerMinute(t *testing.T) {
 	clockMu.Unlock()
 	r.broker.press(topics.CommandFilter(), topics.Command("containers"), "PRESS")
 	expectStart(t, r, "containers")
+}
+
+func TestTheStatusSensorOffersEveryStateTheBridgeSends(t *testing.T) {
+	payload := testConfig.topics().Discovery(Device{Name: "BombVault"}, nil, false)["homeassistant/sensor/bombvault_a1b2c3d4/status/config"]
+	var cfg struct {
+		Options []string `json:"options"`
+	}
+	if err := json.Unmarshal(payload, &cfg); err != nil {
+		t.Fatalf("status discovery %q: %v", payload, err)
+	}
+	for _, state := range []string{"ok", "warning", "overdue", "failed", "off"} {
+		if !slices.Contains(cfg.Options, state) {
+			t.Errorf("options %v lack %q, which Home Assistant would then reject", cfg.Options, state)
+		}
+	}
 }

@@ -81,7 +81,7 @@ Laitteen nimi on BombVault tai BombVault, jonka perässä on instanssin nimi sul
 
 | Entiteetti | Mitä se näyttää |
 |---|---|
-| Status | `ok`, `warning`, `failed` tai `off`, päällä olevista osioista huonoin. Ensimmäistä varmuuskopiotaan odottava osio lasketaan mukaan vasta, kun se on ollut ajoitettu, ja vain ajan tasalla oleva osio tekee tilaksi `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` tai `off`, päällä olevista osioista huonoin. Ensimmäistä varmuuskopiotaan odottava osio lasketaan mukaan vasta, kun se on ollut ajoitettu, ja vain ajan tasalla oleva osio tekee tilaksi `ok`. `overdue` tarkoittaa yleiskatsauksen tapaan, että osion viimeisin varmuuskopio on yli kaksi väliä vanha |
 | Running job | Mikä on nyt käynnissä, tai `idle` |
 | Open anomalies | Montako poikkeamaa on avoinna |
 | Next scheduled backup | Milloin seuraava ajastettu kopio alkaa |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Automaatio, joka ilmoittaa puhelimeesi, kun tila muuttuu arvoon `failed`:
+Automaatio, joka ilmoittaa puhelimeesi, kun tila muuttuu arvoon `failed` tai `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

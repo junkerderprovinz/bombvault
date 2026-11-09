@@ -81,7 +81,7 @@ Zařízení se jmenuje BombVault, případně BombVault s názvem instance v zá
 
 | Entita | Co ukazuje |
 |---|---|
-| Status | `ok`, `warning`, `failed` nebo `off`, nejhorší ze zapnutých sekcí. Sekce čekající na první zálohu se počítá až po termínu této zálohy a stav `ok` dává jen sekce s aktuální zálohou |
+| Status | `ok`, `warning`, `overdue`, `failed` nebo `off`, nejhorší ze zapnutých sekcí. Sekce čekající na první zálohu se počítá až po termínu této zálohy a stav `ok` dává jen sekce s aktuální zálohou. `overdue` znamená, stejně jako v přehledu, že poslední záloha sekce je starší než dva intervaly |
 | Running job | Co právě běží, nebo `idle` |
 | Open anomalies | Kolik anomálií je otevřených |
 | Next scheduled backup | Kdy začne další plánovaná záloha |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Automatizace, která dá vědět do telefonu, když se stav změní na `failed`:
+Automatizace, která dá vědět do telefonu, když se stav změní na `failed` nebo `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

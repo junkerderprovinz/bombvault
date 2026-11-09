@@ -221,7 +221,40 @@ func TestHomeAssistantStaysNeutralUntilAFirstBackupWasDue(t *testing.T) {
 	if _, err := f.db.Exec(`UPDATE targets SET created_at = created_at - ?`, 2*oneDay); err != nil {
 		t.Fatal(err)
 	}
-	if got := status(); got != "failed" {
-		t.Errorf("status = %q past the first run, want failed", got)
+	if got := status(); got != "overdue" {
+		t.Errorf("status = %q past the first run, want overdue", got)
+	}
+}
+
+func TestHomeAssistantNamesTheSameLatenessAsTheOverview(t *testing.T) {
+	f := newPlacementFixture(t)
+	dailyContainers(t, f)
+	nginx := scheduledContainer(t, f, "nginx")
+	if _, err := f.st.MutateSettings(func(s *store.Settings) error {
+		s.VMsEnabled, s.FlashEnabled, s.ConfigEnabled, s.FilesEnabled, s.ZFSEnabled = false, false, false, false, false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().Unix()
+	for _, tc := range []struct {
+		age       int64
+		overview  string
+		assistant string
+	}{
+		{age: 3 * oneDay, overview: "overdue", assistant: "overdue"},
+		{age: oneDay + oneDay/2, overview: "warn", assistant: "warning"},
+	} {
+		f.backupRun(nginx.ID, now-tc.age)
+		if got := statusFor(t, f, "containers").Status; got != tc.overview {
+			t.Fatalf("overview status = %q %d hours after the backup, want %q", got, tc.age/3600, tc.overview)
+		}
+		st, err := f.h.haState(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if st.Status != tc.assistant {
+			t.Errorf("Home Assistant status = %q while the overview reads %q, want %q", st.Status, tc.overview, tc.assistant)
+		}
 	}
 }
