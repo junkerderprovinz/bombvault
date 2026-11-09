@@ -36,6 +36,16 @@ paths = [
   # Frontend tests. The match there is a test DESCRIPTION containing the word
   # "secret", not a value at all.
   '''web/src/.*\.test\.tsx?$''',
+  # Settings files of Duplicati and Duplicacy the import tests read. Their
+  # credentials are made up, and some are shaped like the encrypted values
+  # Duplicacy Web writes.
+  '''internal/jobimport/testdata/.*''',
+]
+
+[[allowlists]]
+description = "Duplicati's name for the B2 key option, which the import reads"
+regexes = [
+  '''b2-applicationkey''',
 ]
 
 [[allowlists]]
