@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -249,5 +250,55 @@ func TestAServerAwayFromTheFolderCannotClaimTheSharedRepository(t *testing.T) {
 	nas.svc.clearProofKeys(ctx)
 	if n := proofKeys(ring); n != 0 {
 		t.Errorf("%d keys of the checks are left after nas's upkeep", n)
+	}
+}
+
+// cubeKeepsTowersLogin gives cube what nas's kit gives the server that takes
+// it over: tower's join with its login, and that login in the server's file.
+func cubeKeepsTowersLogin(t *testing.T, nas, tower, cube *instance) store.SharedJoin {
+	t.Helper()
+	j := joinOf(t, nas, store.SharedJoinIn, tower)
+	if err := cube.st.SaveSharedJoin(store.SharedJoin{Direction: store.SharedJoinIn, MemberID: tower.id(t), MemberName: j.MemberName, Host: j.Host, State: store.SharedJoinJoined, User: j.User}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := cube.svc.addHtpasswdUser("shared", j.User); err != nil {
+		t.Fatal(err)
+	}
+	return j
+}
+
+func TestAMemberLeavesThroughTheServerThatTookItsSharedRepositoryOver(t *testing.T) {
+	nas, tower, cube := movedToCube(t, map[string]string{sharedNewAt: "5f3c0a1e"})
+	j := cubeKeepsTowersLogin(t, nas, tower, cube)
+	ctx := context.Background()
+	cube.svc.tellSharedHolders(ctx)
+
+	if _, ok, _ := tower.st.GetSharedJoin(store.SharedJoinOut, nas.id(t)); ok {
+		t.Error("tower's join is still with nas")
+	}
+	if m := membershipWith(t, tower, cube); m.OwnerName != "cube" || m.State != store.SharedJoinJoined {
+		t.Errorf("tower's card names %s (%s), want cube", m.OwnerName, m.State)
+	}
+
+	if err := tower.svc.LeaveSharedRepo(ctx, cube.id(t)); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, ok, _ := cube.st.GetSharedJoin(store.SharedJoinIn, tower.id(t)); ok {
+		t.Error("cube still counts tower in")
+	}
+	if slices.Contains(htpasswdUsers(t, cube), j.User) {
+		t.Error("tower's login is still on cube's server")
+	}
+	for _, k := range cube.svc.engine.(*identifiedEngine).ring.hosts() {
+		if strings.HasPrefix(k, j.Host+"/") {
+			t.Errorf("tower's key %s is still in the repository", k)
+		}
+	}
+	if left := joinOf(t, nas, store.SharedJoinIn, tower); left.State != store.SharedJoinJoined {
+		t.Errorf("nas heard of the leave: its join with tower is %s", left.State)
+	}
+	if !slices.Contains(htpasswdUsers(t, nas), j.User) {
+		t.Error("nas took tower's login away")
 	}
 }

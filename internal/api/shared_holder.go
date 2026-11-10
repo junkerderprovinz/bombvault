@@ -221,23 +221,20 @@ func (s *Service) takeSharedHolder(ctx context.Context, holder string, in peerSh
 		}
 		log.Printf("api: shared repository: %s holds %s now, so this server stops keeping it", name, scrubRepoLocation(sr.Repo)) //nolint:gosec // G706: the name is the member's own, the location scrubbed
 	}
-	if at != "" {
-		// The copy targets and the join move with it and keep their login and
-		// every other setting. Joins change under sharedMu.
-		s.sharedMu.Lock()
-		err := s.store.MoveSharedRepo(sr.ID, at)
-		s.sharedMu.Unlock()
-		if err != nil {
-			return peerSharedHolderAnswer{}, err
-		}
-		log.Printf("api: shared repository: %s holds %s now, and this server copies there at %s", s.memberName(holder), scrubRepoLocation(sr.Repo), scrubRepoLocation(at)) //nolint:gosec // G706: the name is the member's own, the locations scrubbed
-		sr.Repo = at
-	}
-	s.sharedMoves.Delete(sr.ID)
-	sr.Owner = holder
-	if _, err := s.store.PutSharedRepo(sr); err != nil {
+	// The join goes over to the holder, so leaving and asking reach it, and
+	// the copy targets move with the repository, keeping their login and every
+	// other setting. Joins change under sharedMu.
+	name := s.memberName(holder)
+	s.sharedMu.Lock()
+	err = s.store.HandOverSharedRepo(sr.ID, holder, name, at)
+	s.sharedMu.Unlock()
+	if err != nil {
 		return peerSharedHolderAnswer{}, err
 	}
+	if at != "" {
+		log.Printf("api: shared repository: %s holds %s now, and this server copies there at %s", name, scrubRepoLocation(sr.Repo), scrubRepoLocation(at)) //nolint:gosec // G706: the name is the member's own, the locations scrubbed
+	}
+	s.sharedMoves.Delete(sr.ID)
 	return peerSharedHolderAnswer{Taken: true}, nil
 }
 

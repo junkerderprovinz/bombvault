@@ -1,6 +1,7 @@
 package store
 
 import (
+	"cmp"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -110,11 +111,13 @@ func (r *Repo) ListSharedRepos() ([]SharedRepo, error) {
 	return r.sharedRepos(`SELECT id, repo, owner, created_at FROM shared_repos ORDER BY created_at, id`)
 }
 
-// MoveSharedRepo puts the shared repository id at the location to, together
-// with every copy target and join that reached it at the old one, so nothing
-// is left behind there.
-func (r *Repo) MoveSharedRepo(id, to string) error {
-	if strings.TrimSpace(to) == "" {
+// HandOverSharedRepo makes owner, called name, the holder of the shared
+// repository id, at the location to unless that is empty. The join this
+// server made there goes over to owner, and every copy target and join that
+// reached the repository at its old location moves along, so nothing points
+// at the old holder or address any more.
+func (r *Repo) HandOverSharedRepo(id, owner, name, to string) error {
+	if owner == "" {
 		return ErrIncompleteSharedRepo
 	}
 	err := r.inTx(func(tx *sql.Tx) error {
@@ -122,17 +125,24 @@ func (r *Repo) MoveSharedRepo(id, to string) error {
 		if err := tx.QueryRow(`SELECT repo FROM shared_repos WHERE id = ?`, id).Scan(&from); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(`UPDATE shared_repos SET repo = ? WHERE id = ?`, to, id); err != nil {
+		at := cmp.Or(strings.TrimSpace(to), from)
+		if _, err := tx.Exec(`UPDATE shared_repos SET repo = ?, owner = ? WHERE id = ?`, at, owner, id); err != nil {
 			return err
 		}
-		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE repo = ?`, to, from); err != nil {
+		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE repo = ?`, at, from); err != nil {
 			return err
 		}
-		_, err := tx.Exec(`UPDATE shared_repo_joins SET repo = ? WHERE repo = ?`, to, from)
+		if _, err := tx.Exec(`UPDATE shared_repo_joins SET repo = ? WHERE repo = ?`, at, from); err != nil {
+			return err
+		}
+		// A join this server had with owner before gives way to the one that
+		// reaches the repository.
+		_, err := tx.Exec(`UPDATE OR REPLACE shared_repo_joins SET member_id = ?, member_name = ? WHERE direction = ? AND repo = ?`,
+			owner, name, SharedJoinOut, at)
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("MoveSharedRepo: %w", err)
+		return fmt.Errorf("HandOverSharedRepo: %w", err)
 	}
 	return nil
 }

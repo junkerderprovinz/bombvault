@@ -67,7 +67,7 @@ func stayedWithNas(t *testing.T, nas, tower *instance) {
 }
 
 func TestAMemberFollowsTheNewHolderToItsNewAddress(t *testing.T) {
-	nas, tower, cube := movedToCube(t, map[string]string{sharedNewAt: "5f3c0a1e"})
+	_, tower, cube := movedToCube(t, map[string]string{sharedNewAt: "5f3c0a1e"})
 	before := targetsAt(t, tower, sharedOldAt)
 	if len(before) == 0 {
 		t.Fatal("tower has no targets at the shared repository")
@@ -105,14 +105,14 @@ func TestAMemberFollowsTheNewHolderToItsNewAddress(t *testing.T) {
 			t.Errorf("target %s is %+v after the move, want the settings of %+v", a.ID, a, want)
 		}
 	}
-	if got := joinOf(t, tower, store.SharedJoinOut, nas).Repo; got != sharedNewAt {
+	if got := joinOf(t, tower, store.SharedJoinOut, cube).Repo; got != sharedNewAt {
 		t.Errorf("tower's join is at %s, want the new address", got)
 	}
 	// The next copy goes where the target points, and so does every read.
 	if repo, _, err := tower.svc.sharedReach(sr); err != nil || repo != sharedNewAt {
 		t.Errorf("tower reaches the repository at %s (%v), want the new address", repo, err)
 	}
-	if m := membershipWith(t, tower, nas); m.Repo != sharedNewAt || m.Move != nil {
+	if m := membershipWith(t, tower, cube); m.Repo != sharedNewAt || m.Move != nil {
 		t.Errorf("tower's card shows %s with %+v, want the new address and nothing held back", m.Repo, m.Move)
 	}
 	if left, err := cube.st.SharedHolderNotices(); err != nil || len(left) != 0 {
@@ -156,13 +156,13 @@ func TestAnUnreachableNewAddressIsTriedAgainLater(t *testing.T) {
 	if got := ownerAt(t, tower, sharedNewAt).Owner; got != cube.id(t) {
 		t.Errorf("tower names %s as the holder once the address answers, want cube", got)
 	}
-	if m := membershipWith(t, tower, nas); m.Move != nil {
+	if m := membershipWith(t, tower, cube); m.Move != nil {
 		t.Errorf("tower's card still says %+v after it followed", m.Move)
 	}
 }
 
 func TestAMemberAtTheAddressTheHolderNamesChangesOnlyTheHolder(t *testing.T) {
-	nas, tower, cube := movedToCube(t, map[string]string{sharedOldAt: "5f3c0a1e"})
+	_, tower, cube := movedToCube(t, map[string]string{sharedOldAt: "5f3c0a1e"})
 	if err := cube.st.SetReceiverServerHost("127.0.0.1"); err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestAMemberAtTheAddressTheHolderNamesChangesOnlyTheHolder(t *testing.T) {
 	if after := targetsAt(t, tower, sharedOldAt); len(after) != len(before) {
 		t.Errorf("%d targets at the address, want %d", len(after), len(before))
 	}
-	if got := joinOf(t, tower, store.SharedJoinOut, nas).Repo; got != sharedOldAt {
+	if got := joinOf(t, tower, store.SharedJoinOut, cube).Repo; got != sharedOldAt {
 		t.Errorf("tower's join is at %s, want the same address", got)
 	}
 }
