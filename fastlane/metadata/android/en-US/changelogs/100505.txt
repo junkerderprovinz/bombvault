@@ -1,0 +1,1 @@
+BombVault 10.5.5 lets several servers back up into one shared repository, so files that sit on more than one server are stored only once. The server that holds it prunes for everyone, the others restore from it too, and the recovery kit can hand it to a new server.
