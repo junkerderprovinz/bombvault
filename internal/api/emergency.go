@@ -630,6 +630,11 @@ func (s *Service) restoreReplacedSignIns() error {
 	for _, id := range before.Added.SignIns {
 		s.removeCredSet(id)
 	}
+	for _, id := range before.Added.SharedRepos {
+		if err := s.store.DeleteSharedRepo(id); err != nil {
+			return err
+		}
+	}
 	return s.store.ClearReplacedSignIns()
 }
 
@@ -806,14 +811,25 @@ func (s *Service) AttachEmergencyPlaces(ctx context.Context, id string) error {
 	if err := s.keepSignInsForUndo(); err != nil {
 		return err
 	}
-	var added []string
+	var added, shared []string
 	for _, p := range sess.places {
-		if p.Domain == "" || !restic.IsRemoteRepo(p.Location) {
-			continue
-		}
 		ref := ""
 		if in := sess.signInFor(p.Location); in != nil {
 			ref = in.id
+		}
+		if p.Kind == kitShared {
+			recorded, made, err := s.attachSharedPlace(p, ref)
+			if err != nil {
+				return err
+			}
+			if recorded != "" {
+				shared = append(shared, recorded)
+			}
+			added = append(added, made...)
+			continue
+		}
+		if p.Domain == "" || !restic.IsRemoteRepo(p.Location) {
+			continue
 		}
 		if p.Kind == kitLocal && p.Domain != "config" {
 			if err := s.attachOwnFolder(p, ref); err != nil {
@@ -829,7 +845,7 @@ func (s *Service) AttachEmergencyPlaces(ctx context.Context, id string) error {
 			added = append(added, made)
 		}
 	}
-	return s.store.NoteAddedInEmergency(store.AddedInEmergency{Targets: added})
+	return s.store.NoteAddedInEmergency(store.AddedInEmergency{Targets: added, SharedRepos: shared})
 }
 
 // attachOffsiteTarget makes sure a section has a target at the place and says
@@ -840,11 +856,18 @@ func (s *Service) attachOffsiteTarget(p emergencyPlace, ref string) (string, err
 		return "", err
 	}
 	if at := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return sameRepoLocation(t.Repo, p.Location) }); at >= 0 {
-		if ref == "" || targets[at].CredsRef != "" {
+		t := targets[at]
+		signIn := ref != "" && t.CredsRef == ""
+		// Only the server that holds a shared repository forgets there.
+		appendOnly := p.Kind == kitShared && !t.Immutable
+		if !signIn && !appendOnly {
 			return "", nil
 		}
-		targets[at].CredsRef = ref
-		_, err := s.store.UpsertOffsiteTarget(targets[at])
+		if signIn {
+			t.CredsRef = ref
+		}
+		t.Immutable = t.Immutable || appendOnly
+		_, err := s.store.UpsertOffsiteTarget(t)
 		return "", err
 	}
 	name, err := s.freeTargetName(cmp.Or(p.Name, locationName(p.Location)), "")
@@ -857,6 +880,7 @@ func (s *Service) attachOffsiteTarget(p emergencyPlace, ref string) (string, err
 	}
 	made, err := s.store.UpsertOffsiteTarget(store.OffsiteTarget{
 		Domain: p.Domain, Name: name, Repo: p.Location, CredsRef: ref, Enabled: true, SortOrder: order,
+		Immutable: p.Kind == kitShared,
 	})
 	return made.ID, err
 }

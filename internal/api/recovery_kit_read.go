@@ -14,6 +14,7 @@ import (
 	"filippo.io/age/armor"
 
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 var (
@@ -62,6 +63,7 @@ const (
 	kitOffsite     = "offsite"
 	kitNamed       = "named"
 	kitDestination = "destination"
+	kitShared      = "shared"
 )
 
 // kitLocation is one repository a recovery kit names.
@@ -77,6 +79,12 @@ type kitLocation struct {
 	// wrote the kit, the form POST /api/foreign/open takes one in. A remote
 	// location has none.
 	Folder string `json:"folder,omitempty"`
+	// Owner, Sections and Others describe a shared repository: the group id
+	// of the server that holds it, the sections this server copies there and
+	// the other servers that write to it.
+	Owner    string               `json:"-"`
+	Sections []string             `json:"sections,omitempty"`
+	Others   []store.SharedMember `json:"-"`
 }
 
 // recoveryKit is what a recovery kit says. The keys stay on the server.
@@ -235,6 +243,12 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 					in.creds.set(m[1], m[2])
 				}
 			}
+		case kitSharedSection:
+			if m := kitLineRe.FindStringSubmatch(line); m != nil {
+				kit.Locations = append(kit.Locations, kitLocation{Kind: kitShared, Name: m[1], Location: m[2]})
+			} else if m := kitSharedFieldRe.FindStringSubmatch(line); m != nil && len(kit.Locations) > 0 && kit.Locations[len(kit.Locations)-1].Kind == kitShared {
+				kit.Locations[len(kit.Locations)-1].readSharedKitField(m[1], m[2])
+			}
 		case "Destinations":
 			if m := kitLineRe.FindStringSubmatch(line); m != nil {
 				destination = m[1]
@@ -243,6 +257,9 @@ func readRecoveryKit(text string) (recoveryKit, error) {
 			}
 		}
 	}
+	// A shared repository without the server that holds it cannot be told
+	// apart from one this server writes to alone.
+	kit.Locations = slices.DeleteFunc(kit.Locations, func(loc kitLocation) bool { return loc.Kind == kitShared && loc.Owner == "" })
 	kit.appKey = secrets[kitBackupKey]
 	// With encryption on the kit prints the key and the password restic takes,
 	// which is derived from it. A kit typed off a printout is caught by the pair.

@@ -20782,6 +20782,8 @@ func (s *Service) RecoveryKit() (string, error) {
 		w("\n")
 	}
 
+	s.sharedKitSection(w, settings, key)
+
 	// BombVault's own settings backup (the "config" self-backup domain). This repo is
 	// the single bootstrap seed a rebuilt box needs: restore it FIRST to bring
 	// BombVault's own configuration back, then the data domains above follow. It uses
