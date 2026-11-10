@@ -357,8 +357,9 @@ func (s *Service) measureShared(ctx context.Context, sr store.SharedRepo, member
 var errSharedUpkeepBusy = errors.New("the upkeep of the shared repositories is running already")
 
 // RunSharedUpkeep runs what is due in the upkeep of every shared repository
-// this server holds. The scheduler calls it every minute; a pass that is
-// still running, such as a long prune, lets the tick go by.
+// this server holds, and takes back the one-time keys nobody used in time.
+// The scheduler calls it every minute; a pass that is still running, such as
+// a long prune, lets the tick go by.
 func (s *Service) RunSharedUpkeep(ctx context.Context) error {
 	return s.runSharedUpkeep(ctx, s.groupMembers(), time.Now())
 }
@@ -375,6 +376,9 @@ func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, no
 	var errs []error
 	for _, sr := range owned {
 		errs = append(errs, s.keepSharedRepo(ctx, sr, members, now, false))
+	}
+	if len(owned) > 0 {
+		errs = append(errs, s.expireSharedJoins(ctx, now))
 	}
 	return errors.Join(errs...)
 }

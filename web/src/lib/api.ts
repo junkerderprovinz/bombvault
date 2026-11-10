@@ -6675,6 +6675,8 @@ export interface SharedJoinAsk {
   host: string;
   state: "asked" | "allowed";
   askedAt: number;
+  /** When an allowed join loses its one-time key and login, in Unix seconds. */
+  expiresAt?: number;
 }
 
 /** The shared repository this instance holds for its group, beside its
@@ -6698,7 +6700,7 @@ export interface SharedServer {
   joins: SharedJoinAsk[];
 }
 
-export type SharedMembershipState = "asked" | "allowed" | "refused" | "joined" | "removed";
+export type SharedMembershipState = "asked" | "allowed" | "refused" | "expired" | "joined" | "removed";
 
 /** A shared repository of another member this instance copies into or asked to join. */
 export interface SharedMembership {

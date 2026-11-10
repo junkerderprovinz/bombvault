@@ -116,6 +116,14 @@ describe("SharedMembershipsCard", () => {
     expect(screen.queryByRole("button", { name: en["shared.member.leave"] })).toBeNull();
   });
 
+  it("says a join expired and that this server may ask again", async () => {
+    memberships = [membership({ state: "expired", repo: undefined, together: [] })];
+    await renderCard();
+    expect(screen.getByText(en["shared.member.expired"])).toBeTruthy();
+    expect(screen.getByText(named("shared.member.expiredNote", "tower"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["shared.member.leave"] })).toBeNull();
+  });
+
   it("leaves only after a question, and then shows the repository as left", async () => {
     memberships = [membership()];
     await renderCard();

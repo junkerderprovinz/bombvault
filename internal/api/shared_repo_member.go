@@ -97,7 +97,7 @@ func (s *Service) finishSharedJoin(ctx context.Context, ownerID string) error {
 	if err != nil {
 		return err
 	}
-	if !ok || j.State == store.SharedJoinJoined || j.State == store.SharedJoinRemoved {
+	if !ok || j.State == store.SharedJoinJoined || j.State == store.SharedJoinRemoved || j.State == store.SharedJoinExpired {
 		return nil
 	}
 	if j.Repo == "" {
@@ -265,13 +265,13 @@ func (s *Service) LeaveSharedRepo(ctx context.Context, ownerID string) error {
 	if err := s.callMember(ctx, ownerID, http.MethodPost, "/api/group/peer/shared-repo/leave", peerSharedWord{Host: j.Host, peerProof: proof}, nil); err != nil {
 		return err
 	}
-	return s.leftSharedRepo(j)
+	return s.leftSharedRepo(j, store.SharedJoinRemoved)
 }
 
-// leftSharedRepo notes that this server is out of the shared repository. The
-// repository stays recorded with this server's part as a member's, so nothing
-// here ever clears its locks or forgets there.
-func (s *Service) leftSharedRepo(j store.SharedJoin) error {
+// leftSharedRepo notes that this server is out of the shared repository, as
+// state says. The repository stays recorded with this server's part as a
+// member's, so nothing here ever clears its locks or forgets there.
+func (s *Service) leftSharedRepo(j store.SharedJoin, state string) error {
 	if j.Repo != "" {
 		targets, err := s.store.ListOffsiteTargets()
 		if err != nil {
@@ -296,7 +296,7 @@ func (s *Service) leftSharedRepo(j store.SharedJoin) error {
 			}
 		}
 	}
-	j.State, j.LoginEnc, j.OnceEnc, j.DecidedAt = store.SharedJoinRemoved, nil, nil, time.Now().Unix()
+	j.State, j.LoginEnc, j.OnceEnc, j.DecidedAt = state, nil, nil, time.Now().Unix()
 	return s.store.SaveSharedJoin(j)
 }
 
@@ -346,8 +346,8 @@ func (s *Service) takeSharedAnswer(ownerID, state string) error {
 	case store.SharedJoinRefused:
 		j.State, j.DecidedAt = state, time.Now().Unix()
 		return s.store.SaveSharedJoin(j)
-	case store.SharedJoinRemoved:
-		return s.leftSharedRepo(j)
+	case store.SharedJoinRemoved, store.SharedJoinExpired:
+		return s.leftSharedRepo(j, state)
 	}
 	return fmt.Errorf("unknown answer %q", state)
 }
@@ -390,7 +390,7 @@ func (s *Service) refreshSharedJoin(ownerID string) {
 	if err != nil || ans.Server == nil || ans.State == "" {
 		return
 	}
-	if ans.State == store.SharedJoinAllowed || ans.State == store.SharedJoinRefused {
+	if ans.State == store.SharedJoinAllowed || ans.State == store.SharedJoinRefused || ans.State == store.SharedJoinExpired {
 		if err := s.takeSharedAnswer(ownerID, ans.State); err != nil {
 			log.Printf("shared repository: %v", err)
 		}

@@ -165,6 +165,12 @@ describe("SharedRepoCard", () => {
     expect(screen.getByRole("button", { name: en["shared.tellAgain"] })).toBeTruthy();
   });
 
+  it("says when the one-time key of an allowed member that has not joined yet expires", async () => {
+    initial = { ...withMembers, joins: [{ ...withMembers.joins[0], state: "allowed", expiresAt: 1_900_000_000 }] };
+    await renderCard();
+    expect(screen.getByText(/one-time key expires/)).toBeTruthy();
+  });
+
   it("declines an ask and says so when the member could not be told", async () => {
     initial = withMembers;
     told = false;

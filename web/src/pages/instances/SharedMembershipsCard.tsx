@@ -18,6 +18,7 @@ const STATE: Record<SharedMembershipState, { label: TranslationKey; tone: BadgeT
   asked: { label: "shared.member.asked", tone: "warn", note: "shared.member.askedNote" },
   allowed: { label: "shared.member.allowed", tone: "neutral", note: "shared.member.allowedNote" },
   refused: { label: "shared.member.refused", tone: "neutral", note: "shared.member.refusedNote" },
+  expired: { label: "shared.member.expired", tone: "neutral", note: "shared.member.expiredNote" },
   joined: { label: "shared.member.joined", tone: "ok" },
   removed: { label: "shared.member.removed", tone: "neutral", note: "shared.member.removedNote" },
 };

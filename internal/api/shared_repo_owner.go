@@ -118,6 +118,8 @@ type sharedJoinView struct {
 	Host     string `json:"host"`
 	State    string `json:"state"`
 	AskedAt  int64  `json:"askedAt"`
+	// ExpiresAt is when an allowed join loses its one-time key and login.
+	ExpiresAt int64 `json:"expiresAt,omitempty"`
 }
 
 // sharedContainerSpec is the receiver's recipe under the shared server's name
@@ -372,7 +374,11 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	}
 	for _, j := range joins {
 		if j.State == store.SharedJoinAsked || j.State == store.SharedJoinAllowed {
-			v.Joins = append(v.Joins, sharedJoinView{MemberID: j.MemberID, Name: j.MemberName, Host: j.Host, State: j.State, AskedAt: j.CreatedAt})
+			jv := sharedJoinView{MemberID: j.MemberID, Name: j.MemberName, Host: j.Host, State: j.State, AskedAt: j.CreatedAt}
+			if j.State == store.SharedJoinAllowed {
+				jv.ExpiresAt = time.Unix(j.DecidedAt, 0).Add(sharedOnceFor).Unix()
+			}
+			v.Joins = append(v.Joins, jv)
 		}
 	}
 	return v, nil
@@ -463,7 +469,7 @@ func (s *Service) sharedHostTaken(repo, memberID, host string) (bool, error) {
 		return false, err
 	}
 	return slices.ContainsFunc(joins, func(j store.SharedJoin) bool {
-		return j.Host == host && j.MemberID != memberID && j.State != store.SharedJoinRefused
+		return j.Host == host && j.MemberID != memberID && j.State != store.SharedJoinRefused && j.State != store.SharedJoinExpired
 	}), nil
 }
 
@@ -531,6 +537,45 @@ func (s *Service) letIn(ctx context.Context, j *store.SharedJoin) error {
 	}
 	j.State, j.User, j.LoginEnc, j.OnceEnc, j.OnceKey, j.DecidedAt = store.SharedJoinAllowed, user, loginEnc, onceEnc, keys[i].ID, time.Now().Unix()
 	return s.store.SaveSharedJoin(*j)
+}
+
+// sharedOnceFor is how long a member may take to add its own key once let
+// in. One that is up finishes within minutes of hearing the answer, and one
+// that was switched off has a night and a day. The one-time key opens every
+// backup in the repository, so it does not wait any longer than that.
+const sharedOnceFor = 24 * time.Hour
+
+// expireSharedJoins takes the one-time key and the login back from every
+// member that was let in at least sharedOnceFor before now and never added a
+// key of its own, and tells it that its join expired. It may ask again.
+func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
+	s.sharedMu.Lock()
+	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
+	var expired []string
+	var errs []error
+	for _, j := range joins {
+		if err != nil || j.State != store.SharedJoinAllowed || now.Sub(time.Unix(j.DecidedAt, 0)) < sharedOnceFor {
+			continue
+		}
+		if err := s.takeOut(ctx, j); err != nil {
+			errs = append(errs, fmt.Errorf("take back what %s was let in with: %w", j.MemberName, err))
+			continue
+		}
+		j.State, j.User, j.LoginEnc, j.OnceEnc, j.OnceKey, j.DecidedAt = store.SharedJoinExpired, "", nil, nil, "", now.Unix()
+		if err := s.store.SaveSharedJoin(j); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		expired = append(expired, j.MemberID)
+	}
+	s.sharedMu.Unlock()
+	if err != nil {
+		return err
+	}
+	for _, id := range expired {
+		s.tellSharedAnswer(ctx, id, store.SharedJoinExpired)
+	}
+	return errors.Join(errs...)
 }
 
 // freeSharedUser is a login for the member called name that no other login of
@@ -754,7 +799,7 @@ func (s *Service) sharedOfferFor(ctx context.Context, asker string, in peerShare
 	if err != nil {
 		return ans, err
 	}
-	if in.Join && (!found || j.State == store.SharedJoinRefused) {
+	if in.Join && (!found || j.State == store.SharedJoinRefused || j.State == store.SharedJoinExpired) {
 		host := strings.TrimSpace(in.Host)
 		if !sharedHostRe.MatchString(host) {
 			return ans, errSharedHostForm

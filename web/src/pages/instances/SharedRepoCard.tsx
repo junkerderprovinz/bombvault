@@ -16,7 +16,7 @@ import {
   type SharedServer,
 } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { relativeTime } from "../../lib/reltime";
+import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { Badge } from "../../components/Badge";
@@ -177,6 +177,11 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
                   {" · "}
                   {relativeTime(t, ask.askedAt)}
                 </span>
+                {ask.expiresAt ? (
+                  <span className="text-xs text-carbon-textMuted wrap-anywhere">
+                    {named("shared.joinExpires", ask.name).replace("{time}", () => formatTs(ask.expiresAt!))}
+                  </span>
+                ) : null}
               </div>
               <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
                 {ask.state === "asked" ? (
