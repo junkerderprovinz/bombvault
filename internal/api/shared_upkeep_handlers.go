@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -38,7 +37,8 @@ func (t *upkeepTurn) running() bool { return t.busy.Load() }
 
 // startSharedUpkeep forgets, prunes, checks and measures the shared
 // repository id in the background, as a person asked. A prune can run for
-// hours, so the answer comes at once and the page follows the pass.
+// hours, so the answer comes at once and the page follows the pass. A
+// shutdown ends it, and restic leaves the repository as a cut-off prune does.
 func (s *Service) startSharedUpkeep(id string, members sharedMembers) error {
 	if !s.sharedUpkeep.take() {
 		return errSharedUpkeepBusy
@@ -50,7 +50,8 @@ func (s *Service) startSharedUpkeep(id string, members sharedMembers) error {
 	}
 	go func() {
 		defer s.sharedUpkeep.done()
-		if err := s.keepSharedRepo(context.Background(), sr, members, time.Now(), true); err != nil {
+		defer s.recoverOperation("upkeep of a shared repository", nil, nil)
+		if err := s.keepSharedRepo(s.StopContext(), sr, members, time.Now(), true); err != nil {
 			log.Printf("api: shared repository: the upkeep asked for failed: %v", err)
 		}
 	}()

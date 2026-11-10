@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -154,5 +155,38 @@ func TestRunningTheUpkeepNowAnswersAtOnceAndPrunesInTheBackground(t *testing.T) 
 	}
 	if err := s.runSharedUpkeep(context.Background(), &fakeMembers{}, time.Now()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// stallingPruneEngine prunes until its context ends, as a prune of hours
+// would look to a shutdown.
+type stallingPruneEngine struct {
+	*upkeepEngine
+	entered chan struct{}
+}
+
+func (e stallingPruneEngine) Prune(ctx context.Context, _ string, _ restic.Mode) error {
+	close(e.entered)
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+func TestAnUpkeepStartedByHandEndsWithTheService(t *testing.T) {
+	eng := stallingPruneEngine{upkeepEngine: &upkeepEngine{}, entered: make(chan struct{})}
+	s := upkeepService(t, eng.upkeepEngine)
+	s.engine = eng
+	sr := holdSharedRepo(t, s, tower)
+
+	if err := s.startSharedUpkeep(sr.ID, &fakeMembers{}); err != nil {
+		t.Fatal(err)
+	}
+	<-eng.entered
+	s.BeginShutdown()
+	deadline := time.Now().Add(10 * time.Second)
+	for s.sharedUpkeep.running() && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if s.sharedUpkeep.running() {
+		t.Fatal("the prune went on after the service began to shut down")
 	}
 }
