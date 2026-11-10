@@ -66,6 +66,11 @@ func (s *Service) JoinSharedRepo(ctx context.Context, ownerID string) (string, e
 	s.sharedMu.Lock()
 	j, _, err := s.store.GetSharedJoin(store.SharedJoinOut, ownerID)
 	if err == nil {
+		// A server that was out asks from scratch: its key there is gone, so
+		// the join has to add a new one.
+		if j.State == store.SharedJoinRemoved || j.State == store.SharedJoinExpired {
+			j.Repo, j.User = "", ""
+		}
 		j.Direction, j.MemberID, j.MemberName, j.Host = store.SharedJoinOut, ownerID, owner.Name, s.resticHost()
 		if j.State != store.SharedJoinJoined || ans.State != store.SharedJoinJoined {
 			j.State = ans.State

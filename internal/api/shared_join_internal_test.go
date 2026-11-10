@@ -453,3 +453,18 @@ func TestAMemberTakesOnlyAPlainFolderAsTheSharedRepository(t *testing.T) {
 		t.Errorf("an address with a path gave %q, want a refusal", got)
 	}
 }
+
+func TestAMemberTakenOutCanJoinAgainWithANewKey(t *testing.T) {
+	nas, tower, ring := sharedPair(t)
+	setUpShared(t, nas)
+	joined(t, nas, tower)
+	if _, err := nas.svc.RemoveSharedMember(context.Background(), tower.id(t)); err != nil {
+		t.Fatal(err)
+	}
+	waitForJoin(t, tower, store.SharedJoinOut, nas, store.SharedJoinRemoved)
+
+	joined(t, nas, tower)
+	if !ring.opens(tower.svc.backupPassword()) {
+		t.Fatal("the member's own password does not open the repository again")
+	}
+}
