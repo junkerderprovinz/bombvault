@@ -301,7 +301,8 @@ func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, m
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
 func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, loc string, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, loc: loc, mode: mode, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
+	shared := mode.Sharing != restic.SharingNone
+	c := sourceCopy{src: src, loc: loc, mode: mode, whole: !shared && !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
 	snaps, err := s.listSnapshots(ctx, loc, mode)
 	if err != nil {
 		if c.whole {
@@ -324,6 +325,9 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 	}
 	if !src.Own {
 		snaps = ofDomain(snaps, domain)
+	}
+	if shared {
+		snaps = underHost(snaps, mode.Host)
 	}
 	c.answers = len(snaps) > 0
 	switch {
@@ -566,7 +570,7 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // only that domain's names are aged.
 func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
 	op := targetAgingPolicy(target)
-	if !op.Any() {
+	if !op.Any() || mode.Sharing == restic.SharingMember {
 		return false
 	}
 	var snaps []restic.Snapshot
