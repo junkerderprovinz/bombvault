@@ -132,7 +132,7 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
         <>
           <p className="text-sm text-carbon-textSub">{t("shared.intro")}</p>
           <CardFoot>
-            <Button label={t("shared.setUp")} labelKey="shared.setUp" tone="accent" onClick={() => setFormOpen(true)} />
+            <Button label={t("shared.setUp")} labelKey="shared.setUp" tone="accent" onClick={() => setFormOpen(true)} className="glim-btn-wrap" />
           </CardFoot>
         </>
       )}
