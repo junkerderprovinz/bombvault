@@ -318,6 +318,8 @@ Alcuni posti non possono proprio rifiutare un'eliminazione, per esempio un'unit�
 
 La via più rapida a una copia append-only è un BombVault associato con un [server ricevente](#receiving-server): gestisce il rest-server per te, in modalità append-only.
 
+In un [repository condiviso](#shared-repository) questo vale per i membri e non per il server che lo ospita. Quel server raggiunge la cartella direttamente e lì dimentica i backup e pota.
+
 !!! note "Un'eliminazione riuscita sotto `/locks/` è prevista"
     Append-only non significa che nulla possa mai essere rimosso. restic deve prendere e rilasciare i propri lock, quindi `/locks/` resta per scelta scrivibile ed eliminabile. Gli snapshot e i dati che stanno dietro di essi, che è ciò che il ransomware prenderebbe di mira, non si possono rimuovere. Se sondi tu stesso il lato remoto, un'eliminazione che riesce sotto `/locks/` è il comportamento corretto e non un buco nella protezione.
 
@@ -391,6 +393,8 @@ Attivare un ruolo invia una richiesta, e nulla parte finché qualcuno sull'altra
 
 **Dettagli** su una scheda apre il resto: i repository ricevuti e le sorgenti di prelievo di quel membro, le offerte di archiviazione, il monitoraggio, **Rimuovi** e **Dimentica la chiave**.
 
+Sotto le schede, la scheda **Repository condiviso** su una macchina con un server ricevente e la scheda **Repository condivisi** su un membro riguardano il [repository condiviso](#shared-repository).
+
 Un membro può offrire la propria archiviazione off-site a un altro membro attraverso il gruppo. L'altro amministratore vede l'offerta nei **Dettagli** del membro e la accetta o la rifiuta. Accettare crea delle credenziali salvate e una normale destinazione, dopo gli stessi controlli di una destinazione che digiti tu. La destinazione arriva con la protezione dall'eliminazione attiva, perché la ricetta mostrata dall'offerta è un rest-server append-only, quindi **Per quanto tempo conservare** lì non si applica. Ogni offerta ha un login e una cartella propri, quindi offrire di nuovo una sezione, allo stesso membro o a un altro, lascia in pace le copie del primo partner: aggiungi la nuova riga a `.htpasswd` e tieni il server in funzione. In questo modo viaggiano solo i dettagli di connessione, mai i dati di backup. **Controlla ora** chiede a un membro di verificare il repository di una sezione. Nulla nella pagina può avviare un backup, un ripristino o eliminare qualcosa su un'altra macchina.
 
 Le istanze spente e i telefoni con l'app chiusa mantengono la loro scheda come **Inattiva**, in grigio, con l'indicazione di quando sono stati visti l'ultima volta, e restano attenuati nella rete finché non li **Rimuovi**. Subito dopo l'avvio di questo server, una scheda simile dice **Controllo in corso** finché il gruppo non è tornato. **Rimuovi** funziona su una scheda simile qualunque parte sia attiva, e termina anche le richieste aperte del membro, i suoi slot di ricezione ZFS inattivi e le sue richieste di chiave in attesa. Anche la scheda **Istanze** nella pagina di associazione elenca questi membri come **Inattiva**.
@@ -425,6 +429,91 @@ La macchina ricevente può anche gestire il rest-server su cui copiano gli altri
 Le istanze del tuo gruppo trovano poi il server tra i fornitori sotto **Dal tuo gruppo**, col nome della macchina ricevente, e il ruolo **Ricevitore** lo propone come scelta sicura. Ogni istanza riceve un accesso proprio la prima volta che usa il server, e scrive solo nella propria cartella lì. Con **Ricevitore** attivo in **Impostazioni, Istanze**, **Server ricevente** sulla scheda di questa istanza riapre il server. La sua finestra elenca gli accessi sotto **Partner con accesso**, e **Revoca accesso** ne toglie uno. Ciò che quell'istanza ha già copiato resta nella cartella. La configurazione crea anche un **Accesso fuori dal gruppo**, la cui password la finestra mostra una volta sola.
 
 Un'istanza che raggiunge la macchina ricevente solo tramite il relay non può usare il server, perché il relay non trasporta backup. Aggiungi prima l'indirizzo della macchina ricevente nella pagina di associazione. Quando BombVault gira su un indirizzo IP proprio (su br0, per esempio), compila **Indirizzo per i partner**, perché il server ascolta sull'indirizzo dell'host.
+
+Una macchina ricevente può anche ospitare un [repository condiviso](#shared-repository) per il gruppo.
+
+## Repository condiviso {#shared-repository}
+
+Più server di un gruppo possono copiare insieme in un unico repository restic. I dati che hanno in comune, come lo stesso set di cartelle o gli stessi appdata, vi vengono salvati una volta sola, così insieme occupano meno spazio che con un repository ciascuno.
+
+Un server del gruppo ospita il repository: è il server ospitante, e l'unico che lì dimentica i vecchi backup e pota. Gli altri sono membri: raggiungono il repository tramite un secondo rest-server in modalità append-only e possono solo aggiungere. Ogni server scrive sotto un [host proprio](#backup-host), così i backup restano separati anche quando due server hanno un elemento con lo stesso nome.
+
+Cosa serve:
+
+- un [gruppo di associazione](#pairing),
+- **Crittografa i backup** attivo, sul server ospitante e su ogni membro, perché ogni server riceve una chiave restic propria,
+- un [server ricevente](#receiving-server) sul server ospitante, raggiungibile dai membri. Quando BombVault gira su un indirizzo IP proprio, compila prima **Indirizzo per i partner** nella finestra del server ricevente.
+
+Un server ospita al massimo un repository condiviso.
+
+### Configurarlo {#shared-set-up}
+
+Quando il server ricevente è in funzione, la pagina **Istanze** della sua macchina ha una scheda **Repository condiviso** sotto le istanze. Premi **Configura repository condiviso**, scegli una **Cartella per il repository condiviso** su una condivisione con molto spazio, lascia la **Porta** a 8001 a meno che la usi un altro container, e premi **Configura e avvia**. BombVault allora:
+
+1. rifiuta se esiste già un container chiamato `rest-server-shared` o se un altro container tiene la porta,
+2. crea il repository in una cartella `shared` al suo interno, con la password di questo server,
+3. avvia `restic/rest-server` come `rest-server-shared`, in modalità append-only con un file di accesso nella cartella,
+4. su Unraid scrive il suo template sulla chiavetta flash, così il container resta modificabile nella scheda Docker,
+5. esegue la prova di manomissione su di esso. **Verifica di nuovo** sulla scheda la ripete.
+
+La scheda elenca i **Membri**, ciascuno con le sue chiavi e il suo ultimo backup, le richieste di ingresso, e **Rimuovi** per ogni membro.
+
+### Entrare {#shared-join}
+
+Sul server che vuole entrare, apri **Aggiungi destinazione**. Sotto **Dal tuo gruppo** il server ospitante compare una seconda volta, come **Repository condiviso su** seguito dal suo nome. Sceglierlo invia una richiesta al server ospitante, dove compare nella scheda **Repository condiviso** con **Consenti** e **Rifiuta**.
+
+Dopo **Consenti** il server ospitante consegna tramite il gruppo una chiave monouso e un accesso al suo secondo rest-server. Con essa il membro aggiunge una chiave restic propria, e poi il server ospitante rimuove la chiave monouso. Un membro che non ha finito entro un giorno perde di nuovo la chiave monouso e l'accesso, e può chiedere un'altra volta. Quando il server ospitante non è riuscito a raggiungere il membro con la sua risposta, la scheda offre **Avvisa di nuovo**.
+
+Il server ospitante respinge un server finché questo non scrive ancora sotto un host proprio, il che significa che usa una versione più vecchia, e quando un altro membro scrive già sotto lo stesso host. Due server condividono un host quando condividono una `APP_KEY`.
+
+Una volta che il membro è dentro, sotto **Destinazioni** compare una destinazione chiamata **Shared with** seguito dal nome del server ospitante, con tutte le sezioni disattivate. Attiva nella pagina della destinazione le sezioni che devono copiare lì. La destinazione ha la protezione dall'eliminazione e nessuna regola di conservazione propria, perché lì dimentica solo il server ospitante. Ci vanno solo i backup sotto l'host proprio del membro, così i backup più vecchi sotto l'host `bombvault` restano dove sono.
+
+Il server ospitante può copiarci anche i propri backup: **Copia dentro anche i backup di questo server** sulla sua scheda aggiunge la destinazione anche lì. Per il server ospitante quella copia sta sui suoi stessi dischi e niente gli impedisce di eliminare lì, quindi non è una copia off-site.
+
+### Chi fa pulizia, e quando {#shared-upkeep}
+
+Solo il server ospitante dimentica e pota. Le sue impostazioni si trovano nella parte **Repository condiviso** della finestra **Server ricevente**, che si apre dalla scheda del server ospitante stesso nella pagina Istanze:
+
+- **Finestra di pulizia** stabilisce quando gira la potatura, ogni giorno o ogni settimana. Finché non la cambi inizia la domenica alle 03:00, e **Durata della finestra in ore** è 6.
+- **Spazio inutilizzato che una potatura può lasciare, in %** è 5 finché non lo cambi. Un valore più alto ricompatta meno, così la potatura finisce prima.
+- **Dati riletti dopo una potatura, in %** è 5 finché non lo cambi. Dopo ogni potatura il server ospitante controlla il repository e rilegge questa parte dei dati.
+- **Per quanto tempo conservare** segue le regole off-site del server ospitante per ogni sezione, e **Imposta una regola propria** dà al repository condiviso la sua. I backup di ogni server invecchiano per conto proprio.
+- **Fai pulizia ora** dimentica, pota e controlla subito, dopo aver avvisato i membri.
+
+Fuori dalla finestra il server ospitante dimentica una volta al giorno, e lo spazio torna con la potatura successiva. Prima di una potatura avvisa i membri, e questi non copiano nulla nel repository finché la finestra non si chiude. Un membro che sta ancora copiando ha fino a mezz'ora per finire, altrimenti la potatura passa alla finestra successiva. Una copia che cade nella finestra aspetta, compare come rimandata nel registro attività e sulla scheda del membro, e il passaggio successivo recupera.
+
+Quando il server ospitante ha un dubbio, conserva di più. Un elemento che un membro trattiene per un'[anomalia](anomalies.md) conserva tutti i suoi backup, un membro che non sa dire cosa trattiene conserva quella volta tutti i suoi backup, e i backup sotto un host con cui non scrive nessun server del gruppo non vengono mai dimenticati. La finestra mostra anche lo spazio: quanto contiene il repository, quanto servirebbe ai server separatamente e quanto si risparmia. I numeri arrivano con ogni pulizia.
+
+### Cosa vedono i membri {#shared-members}
+
+Su un membro, la pagina Istanze ha una scheda **Repository condivisi** con ogni repository condiviso in cui il server copia o a cui ha chiesto di entrare, e a che punto è la sua richiesta: **In attesa di un sì**, **Ingresso in corso**, **Membro**, **Rifiutato**, **Scaduto** o **Non membro**. Per un repository di cui fa parte, la scheda mostra **Chi pota**, **Prossima pulizia**, **Insieme a** per gli altri membri, **Ultima copia qui**, e quanto spazio il repository occupa e fa risparmiare.
+
+### Uscire {#shared-leave}
+
+**Esci** sulla scheda del membro fa uscire il server: il server ospitante rimuove la sua chiave e il suo accesso, e la sua destinazione lì viene disattivata. **Rimuovi** sulla scheda del server ospitante fa uscire un membro dall'altra parte. In entrambi i casi i backup del server restano nel repository e invecchiano secondo le regole del server ospitante. Sul server ospitante compaiono sotto **Server usciti**, dove **Dimentica i backup** li dimentica tutti dopo che hai digitato il nome del server. La finestra di pulizia successiva restituisce lo spazio.
+
+### I backup degli altri server {#shared-restore}
+
+Ogni server trova i propri backup nel repository condiviso nella scheda **Backup** dei suoi elementi, come ogni altra copia. I backup degli altri membri sono nella pagina Ripristino sotto [Altri server](restore.md#other-servers).
+
+### Dopo un'emergenza {#shared-emergency}
+
+Il [kit di ripristino](#recovery-kit) ha un capitolo **Shared repositories**. Indica ogni repository condiviso con il suo server ospitante, le sezioni che copiano lì, gli altri membri con i loro host, e un comando `restic snapshots` con l'host di questo server. Il kit del server ospitante indica anche porta, cartella e accesso del suo rest-server.
+
+Nella Procedura guidata di emergenza il repository compare tra i luoghi come **Repository condiviso presso** seguito dal nome del server ospitante. Una nuova installazione che adotta la chiave di un membro scrive sotto lo stesso host, perché l'host deriva dalla chiave. Ritrova la sua destinazione nel repository condiviso e lì elenca e ripristina solo i propri backup.
+
+Una nuova installazione che adotta la chiave del server ospitante ospita il repository al suo posto. Lo fa invecchiare e ci fa pulizia come prima, e riavvia il rest-server sulla stessa cartella. Associala di nuovo al gruppo, configura il suo server ricevente sotto **Istanze**, e reimposta le regole nella finestra del server ricevente, perché non sono nel kit. Appena il gruppo raggiunge i membri, il nuovo server ospitante li avvisa da sé. Ogni membro prima controlla: aggiunge al repository una chiave di prova che solo un server con accesso alla cartella del repository può rimuovere, e segue il nuovo server ospitante quando quella chiave è sparita. Se il nuovo server ospitante risponde a un altro indirizzo, ogni membro fa lì questo controllo con la propria chiave e il proprio accesso, si assicura di trovare lo stesso repository, e solo allora sposta le sue destinazioni sul nuovo indirizzo. Fino ad allora continua a copiare sul vecchio indirizzo, e la sua scheda dice perché. Il server ospitante rimuove alla pulizia successiva le chiavi rimaste da questi controlli.
+
+Se il vecchio server ospitante è ancora in funzione, la sua scheda dice che ora il repository lo ospita l'altro server. **Riprendi** lo rende di nuovo il server ospitante, per quando un kit è stato adottato per errore su un secondo server.
+
+### Limiti {#shared-limits}
+
+- **Ogni chiave legge tutto.** Tutte le chiavi di un repository restic aprono la stessa chiave master, quindi ogni membro può leggere i backup degli altri. Le definizioni di container e VM restano sigillate con la chiave propria di ogni server, quindi i container e le VM di un altro server tornano solo come file. Un server che ha avuto accesso anche una volta potrebbe aver letto la chiave master, quindi rimuoverlo non lo tiene fuori per sempre. Solo un nuovo repository lo fa.
+- **Il server ospitante può eliminare.** Nessun membro può eliminare nulla lì, ma il server ospitante raggiunge la cartella direttamente e dimentica e pota i backup di ogni membro. Un errore o una presa di controllo sul server ospitante li colpisce tutti.
+- **Un danno raggiunge ogni server.** Un pack rotto manca a ogni server i cui backup lo usano, quindi un repository condiviso non sostituisce una seconda copia.
+- **Solo su un server ricevente.** S3, SFTP e gli altri luoghi non possono limitare un membro all'aggiunta, quindi BombVault offre un repository condiviso solo su un server ricevente.
+- **Solo come destinazione di copia.** La cartella propria di una sezione non può stare in un repository condiviso, perché ogni potatura bloccherebbe i backup di tutti i server.
+- **La cronologia più vecchia resta dov'è.** Entrano solo i backup sotto l'host proprio di ogni server, e nulla viene spostato da altri repository.
 
 ## Esempio: associare due server Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ La **Procedura guidata di emergenza** riporta in vita un server che non c'è pi�
 2. **Impostazioni.** **Ripristina le impostazioni** ripristina le impostazioni di BombVault stesso dall'auto-backup più recente: destinazioni, credenziali, pianificazioni e regole. BombVault si riavvia per applicarle, tramite il socket Docker, così il database delle impostazioni in uso non viene mai sovrascritto mentre è aperto, e la procedura guidata prosegue da sola dopo. L'accesso di questo server resta: continui ad accedere con la password che usi ora. I segreti che il vecchio server aveva salvato e che non si possono adottare sono elencati, così puoi inserirli di nuovo. Il ripristino termina ogni sessione e rimuove le passkey, quindi impostale di nuovo dopo.
 3. **Selezione.** BombVault scorre i tuoi backup ed elenca i container, le VM, i set di cartelle e i dataset ZFS che trova. Lo snapshot più recente è preselezionato ovunque. Ciò che questo server ha ancora parte disattivato, perché un ripristino lo sostituirebbe. I set di cartelle non sanno più da dove venivano dopo una ricostruzione, quindi vanno in una cartella che scegli.
 4. **Ripristino.** Tutto ciò che è selezionato torna in un colpo solo, lasciato fermo se vuoi avviare tu ogni container e VM, il che è più sicuro dopo una perdita totale. Poi scarica un nuovo kit di ripristino: quello vecchio appartiene all'installazione precedente.
+
+Un repository condiviso del kit compare tra i luoghi come **Repository condiviso presso** seguito dal nome del server che lo ospita, e la procedura vi elenca solo i backup di questo server. Vedi [Dopo un'emergenza](#shared-emergency).
 
 ![La Procedura guidata di emergenza al primo passaggio, con i tre modi per entrare.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![La Procedura guidata di emergenza al primo passaggio, con i tre modi per entrare.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Senza il codice nessuno può aprire la copia, nemmeno il custode. Se il codice v
 
 ### L'host dei backup di un server {#backup-host}
 
-Ogni server scrive i suoi backup sotto un host restic proprio: `bv-` e dodici caratteri ricavati dalla chiave dei backup, come `bv-3f9a0c41d2e7`. I backup di quando un server non ne aveva ancora uno portano l'host `bombvault`. Il kit indica l'host di questo server, e i suoi comandi li passano entrambi con `--host`, così `latest` non sceglie mai un backup che un altro server ha scritto nello stesso repository. Un server che adotta i backup di un altro prosegue sotto l'host di quel server, perché l'host deriva dalla chiave.
+Ogni server scrive i suoi backup sotto un host restic proprio: `bv-` e dodici caratteri ricavati dalla chiave dei backup, come `bv-3f9a0c41d2e7`. I backup di quando un server non ne aveva ancora uno portano l'host `bombvault`. Il kit indica l'host di questo server, e i suoi comandi li passano entrambi con `--host`, così `latest` non sceglie mai un backup che un altro server ha scritto nello stesso repository. Un server che adotta i backup di un altro prosegue sotto l'host di quel server, perché l'host deriva dalla chiave. Per ogni [repository condiviso](#shared-repository) in cui il server copia o che ospita, il capitolo **Shared repositories** del kit indica gli altri server presenti con i loro host.
 
 ### Sigillare il kit {#sealing-the-kit}
 

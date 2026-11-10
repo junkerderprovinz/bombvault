@@ -318,6 +318,8 @@ Noen steder kan ikke nekte en sletting i det hele tatt, en skystasjon som OneDri
 
 Den raskeste veien til en append-only-kopi er en paret BombVault med en [mottaksserver](#receiving-server): den kjører rest-serveren for deg, i append-only-modus.
 
+I et [felles repositorium](#shared-repository) gjelder dette for medlemmene og ikke for serveren som eier det. Den serveren når mappen direkte og glemmer og beskjærer der.
+
 !!! note "En vellykket sletting under `/locks/` er forventet"
     Append-only betyr ikke at ingenting noensinne kan fjernes. restic må ta og slippe sine egne låser, så `/locks/` kan med vilje skrives til og slettes. Øyeblikksbilder og dataene bak dem, som er det løsepengevirus ville gå etter, kan ikke fjernes. Hvis du selv tester den andre siden, er en sletting som lykkes under `/locks/` riktig oppførsel og ikke et hull i beskyttelsen.
 
@@ -391,6 +393,8 @@ Hvert kort viser beskyttelsesstatusen til medlemmet og rollene som fliser. En ro
 
 **Detaljer** på et kort åpner resten: de mottatte repositoryene og henting-kildene til det medlemmet, lagringstilbud, overvåking, **Fjern** og **Glem nøkkelen**.
 
+Under kortene hører kortet **Felles repositorium** på en boks med mottaksserver og kortet **Felles repositorier** på et medlem til det [felles repositoriet](#shared-repository).
+
 Et medlem kan tilby sin egen off-site-lagring til et annet medlem over gruppen. Den andre administratoren ser tilbudet i **Detaljer** til medlemmet og godtar eller avslår det. Å godta oppretter en lagret pålogging og et vanlig mål, etter de samme kontrollene som for et mål du skriver inn. Målet kommer med beskyttelse mot sletting slått på, fordi oppskriften tilbudet viser, er en rest-server i append-only-modus, så **Hvor lenge det beholdes** gjelder ikke der. Hvert tilbud har sin egen pålogging og sin egen mappe, så å tilby et område på nytt, til samme medlem eller et annet, lar kopiene til den første partneren være i fred: legg den nye linjen til i `.htpasswd` og la serveren fortsette å kjøre. Bare tilkoblingsdetaljer går denne veien, aldri sikkerhetskopidata. **Sjekk nå** ber et medlem verifisere repositoryet til ett område. Ingenting på siden kan starte en sikkerhetskopi, gjenoppretting eller sletting på en annen boks.
 
 Instanser som er slått av og telefoner med appen lukket, beholder kortet sitt som **Inaktiv**, i grått, med når de sist ble sett, og står dempet i nettet til du **Fjern**er dem. Rett etter at denne serveren starter, sier et slikt kort **Sjekker** til gruppen er tilbake. **Fjern** virker på et slikt kort uansett hvilke deler som er slått på, og den avslutter også de åpne forespørslene til medlemmet, de ledige ZFS-mottaksplassene og de ventende nøkkelforespørslene. Kortet **Instanser** på parings-siden lister disse medlemmene som **Inaktiv** også.
@@ -425,6 +429,91 @@ Mottaksboksen kan også kjøre rest-serveren de andre kopierer til. Den settes o
 Instansene i gruppen din finner så serveren blant leverandørene under **Fra gruppen din**, oppkalt etter mottaksboksen, og rollen **Mottaker** tilbyr den som det trygge valget. Hver instans får en egen pålogging første gang den bruker serveren, og skriver bare inn i sin egen mappe der. Med **Mottaker** slått på under **Innstillinger, Instanser** åpner **Mottaksserver** på kortet til denne instansen serveren igjen. Vinduet lister påloggingene under **Partnere med pålogging**, og **Trekk tilbake pålogging** tar en bort. Det den instansen allerede har kopiert, blir i mappen. Oppsettet oppretter også én **Pålogging utenfor gruppen**, hvis passord vinduet viser én gang.
 
 En instans som bare når mottaksboksen gjennom relayet, kan ikke bruke serveren, fordi relayet ikke bærer sikkerhetskopier. Legg først til adressen til mottaksboksen på parings-siden. Når BombVault kjører på en egen IP-adresse (på br0, for eksempel), fyll ut **Adresse for partnere**, fordi serveren lytter på adressen til verten.
+
+En mottaksboks kan også ha et [felles repositorium](#shared-repository) for gruppen.
+
+## Felles repositorium {#shared-repository}
+
+Flere servere i en gruppe kan kopiere til ett restic-repositorium sammen. Data de har felles, for eksempel det samme mappesettet eller de samme appdataene, lagres der bare én gang, så til sammen trenger de mindre plass enn med ett repositorium hver.
+
+Én server i gruppen eier repositoriet. Den er den eneste som glemmer gamle sikkerhetskopier og beskjærer der. De andre er medlemmer: de når repositoriet gjennom en ekstra rest-server i append-only-modus og kan bare legge til. Hver server skriver under en [egen vert](#backup-host), så sikkerhetskopiene holdes adskilt, også der to servere har et element med samme navn.
+
+Dette trengs:
+
+- en [paringsgruppe](#pairing),
+- **Krypter sikkerhetskopier** slått på, hos eieren og hos hvert medlem, fordi hver server får sin egen restic-nøkkel,
+- en [mottaksserver](#receiving-server) hos eieren som medlemmene kan nå. Når BombVault kjører på en egen IP-adresse, fyll først ut **Adresse for partnere** i vinduet til mottaksserveren.
+
+En server eier høyst ett felles repositorium.
+
+### Sette det opp {#shared-set-up}
+
+Når mottaksserveren kjører, har siden **Instanser** på boksen et kort **Felles repositorium** under instansene. Trykk **Sett opp felles repositorium**, velg en **Mappe for det felles repositoriet** på en deling med god plass, la **Port** stå på 8001 med mindre en annen container bruker den, og trykk **Sett opp og start**. BombVault da:
+
+1. nekter hvis en container som heter `rest-server-shared` allerede finnes eller en annen container har porten,
+2. oppretter repositoriet i en mappe `shared` inni den, med passordet til denne serveren,
+3. starter `restic/rest-server` som `rest-server-shared`, i append-only-modus med en påloggingsfil i mappen,
+4. skriver på Unraid malen sin til flash-stasjonen, så containeren kan redigeres i Docker-fanen,
+5. kjører tamper-testen mot den. **Sjekk på nytt** på kortet kjører den en gang til.
+
+Kortet lister **Medlemmer**, hvert med nøklene sine og sin siste sikkerhetskopi, forespørslene om å bli med og **Fjern** for hvert medlem.
+
+### Bli med {#shared-join}
+
+På serveren som vil bli med, åpner du **Legg til mål**. Under **Fra gruppen din** dukker eieren opp en gang til, som **Felles repositorium på** og navnet sitt. Velger du det, går en forespørsel til eieren. Der står den på kortet **Felles repositorium** med **Tillat** og **Avslå**.
+
+Etter **Tillat** deler eieren ut en engangsnøkkel og en pålogging til sin ekstra rest-server gjennom gruppen. Med dem legger medlemmet til en egen restic-nøkkel, og deretter fjerner eieren engangsnøkkelen. Et medlem som ikke er ferdig innen et døgn, mister engangsnøkkelen og påloggingen igjen og kan spørre en gang til. Når eieren ikke nådde medlemmet med svaret sitt, tilbyr kortet **Si fra igjen**.
+
+Eieren avviser en server så lenge den ennå ikke skriver under en egen vert, som betyr at den kjører en eldre utgivelse, og når et annet medlem allerede skriver under samme vert. To servere deler en vert når de deler en `APP_KEY`.
+
+Når medlemmet er med, dukker et mål som heter **Shared with** og navnet på eieren opp under **Mål**, med alle områder slått av. Slå på områdene som skal kopiere dit, på siden til målet. Målet har beskyttelse mot sletting og ingen egne oppbevaringsregler, fordi bare eieren glemmer der. Bare sikkerhetskopier under medlemmets egen vert havner der, så eldre sikkerhetskopier under verten `bombvault` blir der de er.
+
+Eieren kan også kopiere sine egne sikkerhetskopier inn: **Kopier også denne serverens sikkerhetskopier inn** på kortet legger til målet hos eieren også. For eieren ligger den kopien på egne disker, og ingenting hindrer den i å slette der. Det er altså ingen kopi utenfor huset.
+
+### Hvem rydder opp, og når {#shared-upkeep}
+
+Bare eieren glemmer og beskjærer. Innstillingene står i delen **Felles repositorium** i vinduet **Mottaksserver**, som du åpner fra eierens eget kort på siden Instanser:
+
+- **Ryddevindu** bestemmer når beskjæringen kjører, daglig eller ukentlig. Til du endrer det, starter det søndager kl. 03:00, og **Vinduets lengde i timer** er 6.
+- **Ubrukt plass en beskjæring kan la stå igjen, i %** er 5 med mindre du endrer det. En høyere verdi pakker om mindre, så beskjæringen blir ferdig fortere.
+- **Data som leses tilbake etter en beskjæring, i %** er 5 med mindre du endrer det. Etter hver beskjæring sjekker eieren repositoriet og leser denne andelen av dataene tilbake.
+- **Hvor lenge det beholdes** følger eierens off-site-regler for hvert område, og **Lag en egen regel** gir det felles repositoriet en egen. Sikkerhetskopiene til hver server eldes hver for seg.
+- **Rydd opp nå** glemmer, beskjærer og sjekker med en gang, etter at medlemmene har fått beskjed.
+
+Utenfor vinduet glemmer eieren én gang om dagen, og plassen kommer tilbake med neste beskjæring. Før en beskjæring gir eieren medlemmene beskjed, og de kopierer ingenting til repositoriet før vinduet lukkes. Et medlem som fortsatt kopierer, får opptil en halvtime på å bli ferdig, ellers flyttes beskjæringen til neste vindu. En kopi som faller inn i vinduet, venter og vises som utsatt i aktivitetsloggen og på kortet til medlemmet. Neste runde tar den igjen.
+
+Der eieren er usikker, beholder den mer. Et element som et medlem holder fast på på grunn av et [avvik](anomalies.md), beholder alle sikkerhetskopiene sine. Et medlem som ikke kan si hva det holder fast på, beholder alle sikkerhetskopiene sine den gangen. Sikkerhetskopier under en vert som ingen server i gruppen skriver under, glemmes aldri. Vinduet viser også plassen: hva repositoriet tar, hva serverne ville trengt hver for seg, og hva det sparer. Tallene kommer med hver opprydding.
+
+### Hva medlemmer ser {#shared-members}
+
+På et medlem har siden Instanser et kort **Felles repositorier**. Det viser hvert felles repositorium serveren kopierer til eller har bedt om å bli med i, og hvordan forespørselen står: **Venter på et ja**, **Blir med**, **Med**, **Avslått**, **Utløpt** eller **Ikke medlem**. For et repositorium den er med i, viser kortet **Hvem som beskjærer**, **Neste opprydding**, **Sammen med** for de andre medlemmene, **Siste kopi hit**, og hvor mye plass repositoriet tar og sparer.
+
+### Gå ut {#shared-leave}
+
+**Forlat** på kortet til medlemmet tar serveren ut: eieren fjerner nøkkelen og påloggingen, og målet der slås av. **Fjern** på eierens kort tar et medlem ut fra den andre siden. Uansett blir serverens sikkerhetskopier liggende i repositoriet og eldes etter eierens regler. Hos eieren står de under **Servere som har gått ut**, der **Glem sikkerhetskopiene** glemmer alle sammen når du skriver inn navnet på serveren. Neste ryddevindu gir plassen tilbake.
+
+### Sikkerhetskopiene til andre servere {#shared-restore}
+
+Hver server finner sine egne sikkerhetskopier i det felles repositoriet på fanen **Sikkerhetskopier** for elementene sine, som enhver annen kopi. Sikkerhetskopiene til de andre medlemmene ligger på siden Gjenoppretting under [Andre servere](restore.md#other-servers).
+
+### Etter en nødsituasjon {#shared-emergency}
+
+[Gjenopprettingssettet](#recovery-kit) har et kapittel **Shared repositories**. Det nevner hvert felles repositorium med eieren, områdene som kopierer dit, de andre medlemmene med vertene sine og en `restic snapshots`-kommando med verten til denne serveren. Eierens sett nevner også port, mappe og pålogging for rest-serveren.
+
+I nødveiviseren vises repositoriet blant stedene som **Felles repositorium hos** og navnet på eieren. En ny installasjon som overtar nøkkelen til et medlem, skriver under samme vert, fordi verten kommer fra nøkkelen. Den får målet sitt i det felles repositoriet tilbake og lister og gjenoppretter bare sine egne sikkerhetskopier der.
+
+En ny installasjon som overtar nøkkelen til eieren, blir eier av repositoriet i stedet. Den lar sikkerhetskopiene eldes og rydder opp som før, og starter rest-serveren igjen på samme mappe. Par den med gruppen igjen, sett opp mottaksserveren under **Instanser**, og sett reglene i vinduet til mottaksserveren på nytt, fordi de ikke står i settet. Så snart gruppen når medlemmene, sier den nye eieren fra til dem selv. Hvert medlem sjekker først: det legger til en prøvenøkkel i repositoriet som bare en server med tilgang til mappen til repositoriet kan fjerne, og følger den nye eieren når den nøkkelen er borte. Svarer den nye eieren på en annen adresse, gjør hvert medlem denne sjekken der med sin egen nøkkel og pålogging, forsikrer seg om at det finner det samme repositoriet, og flytter først da målene sine til den nye adressen. Til da fortsetter det å kopiere til den gamle adressen, og kortet sier hvorfor. Nøkler som er igjen etter slike sjekker, fjerner eieren ved neste opprydding.
+
+Kjører den gamle eieren fortsatt, sier kortet at den andre serveren eier repositoriet nå. **Hent tilbake** gjør den til eier igjen, for når et sett ved en feil er tatt over på en ekstra server.
+
+### Begrensninger {#shared-limits}
+
+- **Hver nøkkel leser alt.** Alle nøklene i et restic-repositorium åpner den samme hovednøkkelen, så hvert medlem kan lese sikkerhetskopiene til de andre. Container- og VM-definisjoner forblir forseglet med hver servers egen nøkkel, så containerne og VM-ene til en annen server kommer bare tilbake som filer. En server som en gang hadde tilgang, kan ha lest hovednøkkelen, så å fjerne den stenger den ikke ute for godt. Det gjør bare et nytt repositorium.
+- **Eieren kan slette.** Ingen medlemmer kan slette noe der, men eieren når mappen direkte og glemmer og beskjærer sikkerhetskopiene til alle medlemmene. En feil eller en overtakelse hos eieren rammer dem alle.
+- **Skade rammer alle servere.** En ødelagt pakke mangler for hver server som har sikkerhetskopier som bruker den, så et felles repositorium erstatter ikke en ekstra kopi.
+- **Bare på en mottaksserver.** S3, SFTP og andre steder kan ikke begrense et medlem til å legge til, så BombVault tilbyr bare et felles repositorium på en mottaksserver.
+- **Bare som kopimål.** Et områdes egen mappe kan ikke ligge i et felles repositorium, fordi hver beskjæring ville holdt igjen sikkerhetskopiene til alle servere.
+- **Eldre historikk blir der den er.** Bare sikkerhetskopier under hver servers egen vert kommer inn, og ingenting flyttes over fra andre repositorier.
 
 ## Eksempel: pare to Unraid-bokser {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ En rest-server du kjører for hånd, virker også: legg den til med **Legg til m
 2. **Innstillinger.** **Hent tilbake innstillinger** gjenoppretter BombVaults egne innstillinger fra den nyeste auto-sikkerhetskopien: mål, pålogginger, tidsplaner og regler. BombVault starter på nytt for å bruke dem, gjennom Docker-socketen, så den levende innstillingsdatabasen aldri skrives over under et åpent håndtak, og veiviseren fortsetter av seg selv etterpå. Påloggingen til denne serveren blir: du logger fortsatt inn med passordet du bruker nå. Hemmeligheter den gamle serveren hadde lagret og som ikke kan overtas, listes, så du kan skrive dem inn igjen. Gjenopprettingen avslutter alle økter og fjerner passnøklene, så sett dem opp igjen etterpå.
 3. **Utvalg.** BombVault går gjennom sikkerhetskopiene dine og lister containerne, VM-ene, mappesettene og ZFS-datasettene den finner. Det nyeste øyeblikksbildet er forhåndsvalgt overalt. Det denne serveren fortsatt har, starter avslått, fordi en gjenoppretting ville erstattet det. Mappesett vet ikke lenger hvor de kom fra etter en ombygging, så de går til en mappe du velger.
 4. **Gjenoppretting.** Alt som er valgt, kommer tilbake på én gang, og blir stående stoppet hvis du vil starte hver container og VM selv, noe som er tryggest etter et totalt tap. Last etterpå ned et nytt gjenopprettingssett: det gamle hører til den forrige installasjonen.
+
+Et felles repositorium fra settet vises blant stedene som **Felles repositorium hos** og navnet på serveren som eier det, og veiviseren lister bare denne serverens egne sikkerhetskopier der. Se [Etter en nødsituasjon](#shared-emergency).
 
 ![Nødveiviser på det første trinnet, med de tre veiene inn.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Nødveiviser på det første trinnet, med de tre veiene inn.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Dette er delen som gjør katastrofegjenoppretting mulig selv når ingen BombVaul
 
 ### Verten til en servers sikkerhetskopier {#backup-host}
 
-Hver server skriver sikkerhetskopiene sine under en egen restic-vert: `bv-` og tolv tegn utledet fra nøkkelen til sikkerhetskopiene, for eksempel `bv-3f9a0c41d2e7`. Sikkerhetskopier fra før en server hadde en, har verten `bombvault`. Settet oppgir verten til denne serveren, og kommandoene i det gir begge med `--host`, så `latest` aldri velger en sikkerhetskopi som en annen server har skrevet til samme repository. En server som overtar sikkerhetskopiene til en annen, fortsetter under verten til den serveren, fordi verten kommer fra nøkkelen.
+Hver server skriver sikkerhetskopiene sine under en egen restic-vert: `bv-` og tolv tegn utledet fra nøkkelen til sikkerhetskopiene, for eksempel `bv-3f9a0c41d2e7`. Sikkerhetskopier fra før en server hadde en, har verten `bombvault`. Settet oppgir verten til denne serveren, og kommandoene i det gir begge med `--host`, så `latest` aldri velger en sikkerhetskopi som en annen server har skrevet til samme repository. En server som overtar sikkerhetskopiene til en annen, fortsetter under verten til den serveren, fordi verten kommer fra nøkkelen. For hvert [felles repositorium](#shared-repository) serveren kopierer til eller eier, nevner kapittelet **Shared repositories** i settet de andre serverne der med vertene deres.
 
 ### Forsegle settet {#sealing-the-kit}
 

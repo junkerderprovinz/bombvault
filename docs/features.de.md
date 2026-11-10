@@ -74,6 +74,7 @@ Ein kurzer Katalog dessen, was BombVault kann. Jede Zeile verlinkt auf die Seite
 - **Kopplung mit zwölf Wörtern**, Ende-zu-Ende-verschlüsselt, direkt oder über ein Relay. [Instanzen koppeln](offsite-recovery.md#pairing)
 - **Die Seite Instanzen** mit der Gruppe als Netz und den Rollen **Empfänger**, **Abholer**, **ZFS-Server** und **Schlüsselhüter**. [Instanzen und Rollen](offsite-recovery.md#roles)
 - **Ein Empfangsserver**, für dich eingerichtet, im Append-only-Modus. [Empfangsserver](offsite-recovery.md#receiving-server)
+- **Ein gemeinsames Repository**, in das mehrere Server kopieren, damit das, was sie gemeinsam haben, nur einmal gespeichert wird. Aufräumen darf nur der Server, dem es gehört. [Gemeinsames Repository](offsite-recovery.md#shared-repository)
 
 ## KI-Assistenten (MCP) {#mcp}
 

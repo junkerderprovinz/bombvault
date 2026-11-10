@@ -30,11 +30,14 @@ import { ReceiverServerWindow } from "./instances/ReceiverServerWindow";
 import { RemoveInstanceButton } from "./instances/RemoveInstanceButton";
 import { useRoleSwitch } from "./instances/RoleDialogs";
 import { depositStateLabel, RoleTiles } from "./instances/RoleTile";
+import { SharedMembershipsCard } from "./instances/SharedMembershipsCard";
+import { SharedRepoCard } from "./instances/SharedRepoCard";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
 import { buildInstances, protectionFigures, ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
+import { useSharedRepo } from "./instances/useSharedRepo";
 
 /** The figures under an instance's name. Only this server knows its open
  *  anomalies; a scorecard from another instance does not carry them. */
@@ -122,13 +125,15 @@ function SelfCard({
       actions={
         <>
           {receiverServer && (
-            <Button
-              label={t("receiver.server.title")}
-              labelKey="receiver.server.title"
-              glyph={<IconReceiver />}
-              tone="neutral"
-              onClick={onOpenServer}
-            />
+            <span data-new-way="receiver-server" className="flex">
+              <Button
+                label={t("receiver.server.title")}
+                labelKey="receiver.server.title"
+                glyph={<IconReceiver />}
+                tone="neutral"
+                onClick={onOpenServer}
+              />
+            </span>
           )}
           {onOpenDeposits && (
             <Button
@@ -344,6 +349,7 @@ export function Instances() {
   // With all three modules off the page is only the way into pairing, and
   // the home of the ZFS servers if there are any.
   const grouped = modules !== null && (modules.fleet || modules.receiver || modules.pull);
+  const shared = useSharedRepo(grouped && !state.loading);
   const shown = grouped ? instances : [];
   const servers = shown.filter((i) => !i.app);
   const phones = shown.filter((i) => i.app);
@@ -375,6 +381,13 @@ export function Instances() {
   const { deposits } = state;
   const hasDeposits = deposits.codeSince !== "" || deposits.sent.length + deposits.kept.length + deposits.releases.length > 0;
   const hasUnplaced = unplaced.received.length + unplaced.pulls.length + unplaced.offers.length > 0;
+  const below = grouped && !state.loading;
+  const ownsShared = below && state.receiverServer && (shared.loaded || shared.error !== null);
+  const inShared = below && shared.memberships.length > 0;
+  // The hue goes on from the last card of the grid.
+  const hueAfterGrid = 1 + servers.length + zfsCards + phones.length;
+  const memberHue = hueAfterGrid + (ownsShared ? 1 : 0);
+  const unplacedHue = memberHue + (inShared ? 1 : 0);
 
   const peerCard = (inst: Instance, index: number) =>
     modules && (
@@ -443,10 +456,9 @@ export function Instances() {
         </div>
       )}
 
-      {/* The hue goes on from the last card of the grid. */}
-      {grouped && !state.loading && hasUnplaced && (
-        <UnplacedCard unplaced={unplaced} state={state} hueIndex={1 + servers.length + zfsCards + phones.length} />
-      )}
+      {ownsShared && <SharedRepoCard shared={shared} hueIndex={hueAfterGrid} />}
+      {inShared && <SharedMembershipsCard shared={shared} hueIndex={memberHue} />}
+      {below && hasUnplaced && <UnplacedCard unplaced={unplaced} state={state} hueIndex={unplacedHue} />}
 
       {opened && modules && (
         <PeerDetails

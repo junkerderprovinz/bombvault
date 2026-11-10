@@ -74,6 +74,7 @@ Un scurt catalog cu ce face BombVault. Fiecare rând trimite la pagina care îl 
 - **Împerechere prin douăsprezece cuvinte**, criptată cap la cap, direct sau printr-un relay. [Împerecherea instanțelor](offsite-recovery.md#pairing)
 - **Pagina Instanțe** cu grupul ca rețea și rolurile **Receptor**, **Preluator**, **Server ZFS** și **Păstrător de cheie**. [Instanțe și roluri](offsite-recovery.md#roles)
 - **Un server receptor** configurat pentru tine, în modul append-only. [Server receptor](offsite-recovery.md#receiving-server)
+- **Un depozit comun** în care copiază mai multe servere, așa că ce au în comun e păstrat o singură dată. Doar serverul care îl deține face curățarea. [Depozit comun](offsite-recovery.md#shared-repository)
 
 ## Asistenți IA (MCP) {#mcp}
 

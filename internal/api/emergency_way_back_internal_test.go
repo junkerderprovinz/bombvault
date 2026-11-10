@@ -393,8 +393,10 @@ func (e metadataOnlyEngine) RestoreSubtreeTo(ctx context.Context, repo, id, subt
 
 func TestAContainerBesideTheOriginalSurvivesAShareThatRefusesTheOwnership(t *testing.T) {
 	r := newRestoreRig(t)
-	tg, snap := r.seedPlex(t)
+	// Swapped before the seed backup, whose size sample goes on reading the
+	// engine in the background.
 	r.svc.engine = metadataOnlyEngine{r.svc.engine}
+	tg, snap := r.seedPlex(t)
 	if started, err := r.svc.StartRestore(context.Background(), "plex", snap, "local", RestoreOptions{Beside: true}); err != nil || !started {
 		t.Fatalf("StartRestore: started=%v err=%v", started, err)
 	}

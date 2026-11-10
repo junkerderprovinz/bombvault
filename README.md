@@ -188,45 +188,47 @@ It runs as one Docker container on Unraid, TrueNAS Scale or a plain Docker host 
 
 <p><a id="5-how-it-compares" href="#5-how-it-compares"><picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/5-how-it-compares-dark.svg"><img src=".github/assets/sections/5-how-it-compares.svg" alt="5. How it compares" width="100%"></picture></a></p>
 
-On Unraid, backups usually run through [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or through a general engine such as [Duplicati](https://duplicati.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
+On Unraid, backups usually run through [**Appdata.Backup**](https://github.com/Commifreak/unraid-appdata.backup), a CA plugin that archives appdata folders, or through a general engine such as [Duplicati](https://duplicati.com), [Duplicacy](https://duplicacy.com), [Kopia](https://kopia.io) or [BorgBackup](https://borgbackup.readthedocs.io). They save files well, but a restore gives you files back, not a running container or VM.
 
 The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by [@ruaan-deysel](https://github.com/ruaan-deysel), a native Unraid plugin built on the same idea: it recreates containers and re-defines VMs on restore, and it has a good deal of what BombVault has, down to changed-block VM backups and Home Assistant. BombVault is ahead on getting data back: restic reads its backups without BombVault, the off-site copy can be append-only, and restores are tested for real, up to starting a restored container in isolation. Worth a look.
 
-| | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Kopia | BorgBackup |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ |
-| Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ |
-| VM backups read only changed blocks | ✅ qcow2 | ✅ qcow2 | ❌ | ❌ | ❌ | ❌ |
-| Database dumps for recognised database containers | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
-| Installed Unraid plugins | ✅ one by one from the flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ |
-| ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
-| Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ |
-| Client-side encryption | ✅ on by default | ✅ opt-in | ❌ | ✅ | ✅ | ✅ |
-| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup, own recover tool | ✅ tar | ⚠️ Python script | ✅ kopia | ✅ borg |
-| Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Scheduled backup waits until the app is idle | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
-| Start test: a restored container is started in isolation and checked | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Off-site upload slows down while a media server streams | ✅ | ✅ any outside traffic | ❌ | ❌ | ❌ | ❌ |
-| Several off-site targets, each with its own credentials | ✅ | ⚠️ one per job | ❌ | ✅ | ⚠️ CLI sync | ⚠️ via Borgmatic |
-| Each item chooses which off-site targets get a copy | ✅ | ⚠️ a second job per target | ❌ | ⚠️ a job per destination | ❌ | ⚠️ via Borgmatic |
-| Each item chooses local only, local and off-site, or off-site only | ✅ | ⚠️ by the jobs it is in | ❌ | ⚠️ a job per destination | ❌ | ⚠️ via Borgmatic |
-| Shows how many sites hold each item and whether 3-2-1 is met | ✅ | ⚠️ for the whole server, not per item | ❌ | ❌ | ❌ | ❌ |
-| Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
-| Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
-| Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
-| Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ |
-| AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ❌ | ❌ |
-| Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented | ❌ |
-| Home Assistant integration | ✅ over MQTT | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ⚠️ third party |
-| Announces itself on the network (mDNS) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ Windows experimental |
-| Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ |
-| In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template |
-| Android app | ✅ APK, F-Droid, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2019 | ✅ since 2015 |
+| | **BombVault** | Vault (plugin) | Appdata.Backup (CA) | Duplicati | Duplicacy | Kopia | BorgBackup |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Restore brings a container back whole (image, env, ports, labels) | ✅ | ✅ | ⚠️ files and XML | ❌ | ❌ | ❌ | ❌ |
+| Restore re-defines a VM, not only its disks | ✅ | ✅ | ⚠️ XML only | ❌ | ❌ | ❌ | ❌ |
+| VM backups read only changed blocks | ✅ qcow2 | ✅ qcow2 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Database dumps for recognised database containers | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Installed Unraid plugins | ✅ one by one from the flash backup | ✅ | ⚠️ in flash backup | ❌ | ❌ | ❌ | ❌ |
+| ZFS datasets as a source | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ via action scripts | ⚠️ via Borgmatic |
+| Deduplication | ✅ | ✅ opt-in | ❌ | ✅ fixed blocks | ✅ | ✅ | ✅ |
+| Deduplication across several servers | ✅ shared repository | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ [possible, not recommended](https://borgbackup.readthedocs.io/en/stable/faq.html#can-i-backup-from-multiple-servers-into-a-single-repository) |
+| Client-side encryption | ✅ on by default | ✅ opt-in | ❌ | ✅ | ✅ opt-in | ✅ | ✅ |
+| Backups readable with a standard open-source CLI | ✅ restic | ⚠️ not with dedup, own recover tool | ✅ tar | ⚠️ Python script | ⚠️ duplicacy, own licence | ✅ kopia | ✅ borg |
+| Append-only or immutable off-site copy | ✅ | ❌ | ❌ | ✅ | ⚠️ a key without delete rights, [no Object Lock](https://forum.duplicacy.com/t/is-s3-object-lock-supported/6367) | ✅ | ✅ |
+| Scheduled backup waits until the app is idle | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Scheduled test restores, not only a checksum read | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ via Borgmatic |
+| Start test: a restored container is started in isolation and checked | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Off-site upload slows down while a media server streams | ✅ | ✅ any outside traffic | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Several off-site targets, each with its own credentials | ✅ | ⚠️ one per job | ❌ | ✅ | ✅ | ⚠️ CLI sync | ⚠️ via Borgmatic |
+| Each item chooses which off-site targets get a copy | ✅ | ⚠️ a second job per target | ❌ | ⚠️ a job per destination | ⚠️ a backup or copy job per storage | ❌ | ⚠️ via Borgmatic |
+| Each item chooses local only, local and off-site, or off-site only | ✅ | ⚠️ by the jobs it is in | ❌ | ⚠️ a job per destination | ⚠️ a job per storage | ❌ | ⚠️ via Borgmatic |
+| Shows how many sites hold each item and whether 3-2-1 is met | ✅ | ⚠️ for the whole server, not per item | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
+| Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ no restore cancel in the web UI | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
+| Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ⚠️ email, HTTP, Web Edition only | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
+| Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ | ❌ |
+| AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ❌ | ❌ |
+| Documented HTTP API for scripts, with its own tokens | ✅ | ✅ | ❌ | ⚠️ undocumented | ⚠️ undocumented, Web Edition | ⚠️ undocumented | ❌ |
+| Home Assistant integration | ✅ over MQTT | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ⚠️ third party | ⚠️ third party |
+| Announces itself on the network (mDNS) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Takes over backups or jobs from other tools | ✅ Appdata.Backup, Duplicati, Duplicacy | ⚠️ Appdata.Backup only | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ⚠️ Windows experimental |
+| Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ | ✅ |
+| In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template | ✅ community template |
+| Android app | ✅ APK, F-Droid, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2016 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, and every Vault cell on 20 October 2026.
+✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, every Vault cell on 20 October 2026, and the Duplicacy column and the rows for deduplication across servers and for taking over backups from other tools on 10 November 2026. Duplicacy's command line is free for personal use, and its Web Edition needs a licence to make backups.
 
 <br>
 

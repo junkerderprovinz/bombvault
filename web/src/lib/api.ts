@@ -6013,11 +6013,14 @@ export function foreignOpen(
 export interface RecoveryKitLocation {
   /** The section it belongs to. A named repository has none. */
   domain?: string;
-  kind: "local" | "offsite" | "named" | "destination";
-  /** What a named repository or a destination was called. */
+  kind: "local" | "offsite" | "named" | "destination" | "shared";
+  /** What a named repository or a destination was called, and the server
+   *  that holds a shared repository. */
   name?: string;
   location: string;
   folder?: string;
+  /** The server that wrote the kit held this shared repository. */
+  held?: boolean;
 }
 
 /** What an uploaded recovery kit says. Its key stays on the server. `hasKey`
@@ -6542,6 +6545,31 @@ export function openPulledCopy(id: string): Promise<ForeignOpenResponse> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/open`, { method: "POST", body: "{}" });
 }
 
+/** Another server's part of a shared repository: the host its backups carry
+ *  there, how many entries it has and when the newest backup was written.
+ *  `name` is missing for a host no member this server knows writes under,
+ *  and `error` says why the repository could not be read. */
+export interface SharedOtherServer {
+  repo: string;
+  host: string;
+  name?: string;
+  entries: number;
+  newest?: number;
+  error?: string;
+}
+
+/** GET /api/shared-repo/others: the other servers whose backups lie in the
+ *  shared repositories this server takes part in. */
+export function listSharedOthers(): Promise<OkEnvelope & { servers?: SharedOtherServer[] }> {
+  return fetchJSON("/api/shared-repo/others");
+}
+
+/** POST /api/shared-repo/others/open: opens the backups host wrote into the
+ *  shared repository as a read-only session under this server's own key. */
+export function openSharedOther(repo: string, host: string): Promise<ForeignOpenResponse> {
+  return fetchJSON("/api/shared-repo/others/open", { method: "POST", body: JSON.stringify({ repo, host }) });
+}
+
 export function runPullSource(id: string): Promise<OkEnvelope & { snapshots?: number }> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/run`, { method: "POST" });
 }
@@ -6680,6 +6708,233 @@ export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { se
 }
 
 export const RECEIVER_TEMPLATE_URL = "/api/receiver/server/template";
+
+/** A server that copies into a shared repository. */
+export interface SharedMember {
+  memberId: string;
+  name: string;
+  /** The restic host its snapshots carry. */
+  host: string;
+  /** Its keys in the repository, on the owner only. */
+  keys?: string[];
+  /** Unix seconds, on the owner only. */
+  lastSnapshotAt?: number;
+  /** The owner itself, which copies its own backups in. */
+  self?: boolean;
+}
+
+/** A member's ask to join, open or allowed until the member added its own key. */
+export interface SharedJoinAsk {
+  memberId: string;
+  name: string;
+  host: string;
+  state: "asked" | "allowed";
+  askedAt: number;
+  /** When an allowed join loses its one-time key and login, in Unix seconds. */
+  expiresAt?: number;
+}
+
+/** The shared repository this instance holds for its group, beside its
+ *  receiving server. Only this instance prunes it. */
+export interface SharedServer {
+  containerName: string;
+  folder: string;
+  hostPath: string;
+  port: number;
+  user: string;
+  repo: string;
+  /** Where members reach the repository, empty while needsHost. */
+  url: string;
+  needsHost: boolean;
+  createdAt: number;
+  present: boolean;
+  check: "" | "protected" | "unprotected" | "inconclusive";
+  checkDetail: string;
+  checkedAt: number;
+  members: SharedMember[];
+  joins: SharedJoinAsk[];
+  /** This instance copies its own backups in as well. */
+  copiesIn: boolean;
+  /** Names the repository in the routes of its upkeep. */
+  id: string;
+  /** The servers that left, whose backups are still there. */
+  former: SharedFormer[];
+}
+
+/** A server that left a shared repository, with what it left there as far
+ *  as restic answered. */
+export interface SharedFormer {
+  host: string;
+  name: string;
+  leftAt: number;
+  snapshots: number;
+  forgetError?: string;
+  /** Its backups are being forgotten right now. */
+  forgetting: boolean;
+}
+
+export type SharedMembershipState = "asked" | "allowed" | "refused" | "expired" | "joined" | "removed";
+
+/** A shared repository of another member this instance copies into or asked to join. */
+export interface SharedMembership {
+  ownerId: string;
+  ownerName: string;
+  state: SharedMembershipState;
+  repo?: string;
+  askedAt: number;
+  joinedAt?: number;
+  /** The other members, without this instance. */
+  together: SharedMember[];
+  /** When the last copy there that went through began, and when a later one
+   *  began that waited while the owner tidied up, in Unix seconds. */
+  lastCopyAt?: number;
+  deferredAt?: number;
+  /** What the owner last measured, and when it said it tidies up next. */
+  space?: SharedSpace;
+  nextWindow?: number;
+  /** A new address the server that took the repository over named, which
+   *  this instance has not followed yet, and why. */
+  move?: SharedMove;
+}
+
+export interface SharedMove {
+  holder: string;
+  /** The new address without the login, empty when none was usable. */
+  repo: string;
+  reason: string;
+  at: number;
+}
+
+/** A member's shared repository as the destination wizard offers it. */
+export interface SharedOffer extends GroupReceiver {
+  /** How far this instance got with joining it. */
+  state?: SharedMembershipState;
+}
+
+/** This server's part as a holder in a shared repository: the server that
+ *  said it took the repository over, and the servers that have still to hear
+ *  that this one holds it. */
+export interface SharedHolding {
+  repo: string;
+  takenBy?: string;
+  takenAt?: number;
+  stillToTell?: string[];
+  /** Keys of checks of other servers left in a repository this server holds. */
+  proofKeys?: number;
+}
+
+export function getSharedRepo(): Promise<
+  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[]; holdings?: SharedHolding[] }
+> {
+  return fetchJSON("/api/shared-repo");
+}
+
+/** POST /api/shared-repos/{id}/take-back: holds the shared repository again
+ *  after another server said it took it over, and tells the others. */
+export function takeBackSharedRepo(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/take-back`, { method: "POST" });
+}
+
+export function setUpSharedRepo(input: { folder: string; port: number }): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function checkSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo/check", { method: "POST" });
+}
+
+/** told says whether the member heard the answer now; one that did not hears
+ *  it when it asks next. */
+export function decideSharedJoin(
+  memberId: string,
+  decision: "allow" | "refuse"
+): Promise<OkEnvelope & { server?: SharedServer; told?: boolean }> {
+  return fetchJSON(`/api/shared-repo/joins/${encodeURIComponent(memberId)}/${decision}`, { method: "POST" });
+}
+
+/** Takes the member's key and login away. Its snapshots stay. */
+export function removeSharedMember(memberId: string): Promise<OkEnvelope & { server?: SharedServer; told?: boolean }> {
+  return fetchJSON(`/api/shared-repo/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
+}
+
+/** Lets this instance copy its own backups into the shared repository it
+ *  holds, from the folder and without a login. */
+export function copyIntoOwnSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo/own-copies", { method: "POST" });
+}
+
+/** Starts forgetting every backup a server that left has in the shared
+ *  repository. name is its name as the person typed it. */
+export function forgetSharedFormer(id: string, host: string, name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/former/${encodeURIComponent(host)}/forget`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function listSharedOffers(): Promise<OkEnvelope & { offers?: SharedOffer[] }> {
+  return fetchJSON("/api/shared-repo/offers");
+}
+
+/** Asks the owner to let this instance in. An owner that allowed it already
+ *  answers "joined". */
+export function joinSharedRepo(ownerId: string): Promise<OkEnvelope & { state?: SharedMembershipState }> {
+  return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/join`, { method: "POST" });
+}
+
+export function leaveSharedRepo(ownerId: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/leave`, { method: "POST" });
+}
+
+/** The rules the owner of a shared repository keeps it by. Until keepSet,
+ *  each section ages by the owner's own off-site rules. */
+export interface SharedUpkeepRules {
+  keep: RetentionKeep;
+  keepSet: boolean;
+  pruneCadence: string;
+  pruneHours: number;
+  maxUnused: number;
+  checkSubset: number;
+}
+
+/** What a shared repository holds and what each server's backups use of it. */
+export interface SharedSpace {
+  at: number;
+  total: number;
+  hosts: { host: string; name: string; bytes: number }[];
+  /** When the owner's next prune window opens, as it last said. */
+  nextWindow?: number;
+}
+
+/** A shared repository this server is in, with its upkeep. A member sees the
+ *  space alone; the owner sees its rules and last passes as well. */
+export interface SharedUpkeep {
+  id: string;
+  location: string;
+  role: "owner" | "member";
+  members: { host: string; name: string }[];
+  rules?: SharedUpkeepRules;
+  forget?: { at: number; forgotten: number; skipped?: string[]; unknown?: string[]; error?: string };
+  prune?: { at: number; seconds: number; postponed?: string[]; error?: string; checked: boolean; checkError?: string };
+  space?: SharedSpace;
+  /** When the next tidy-up window opens, in Unix seconds. */
+  nextWindow?: number;
+  running: boolean;
+}
+
+export function getSharedUpkeep(): Promise<OkEnvelope & { repos?: SharedUpkeep[] }> {
+  return fetchJSON("/api/shared-repos/upkeep");
+}
+
+export function setSharedUpkeepRules(id: string, rules: SharedUpkeepRules): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/upkeep`, { method: "PUT", body: JSON.stringify(rules) });
+}
+
+/** Starts a tidy-up of the shared repository at once. It runs on in the
+ *  background, and the listing says while it does. */
+export function runSharedUpkeep(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/upkeep/run`, { method: "POST" });
+}
 
 // Pairing group API. Instances that share a twelve-word phrase form a group;
 // members on one network talk directly, the others over a relay, and every

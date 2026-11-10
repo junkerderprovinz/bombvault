@@ -318,6 +318,8 @@ Sommige plekken kunnen een verwijdering helemaal niet weigeren, een cloudschijf 
 
 De snelste weg naar een append-only-kopie is een gekoppelde BombVault met een [ontvangende server](#receiving-server): die draait de rest-server voor je, in append-only-modus.
 
+In een [gedeelde repository](#shared-repository) geldt dit voor de leden en niet voor de server die er eigenaar van is. Die server komt rechtstreeks bij de map en vergeet en schoont daar op.
+
 !!! note "Een geslaagde verwijdering onder `/locks/` is te verwachten"
     Append-only betekent niet dat er nooit iets kan worden verwijderd. restic moet zijn eigen locks nemen en loslaten, dus `/locks/` blijft per ontwerp beschrijfbaar en verwijderbaar. Snapshots en de data erachter, wat ransomware zou aanvallen, kunnen niet worden verwijderd. Test je zelf de andere kant, dan is een verwijdering die onder `/locks/` slaagt juist gedrag en geen gat in de bescherming.
 
@@ -391,6 +393,8 @@ Een rol inschakelen stuurt een verzoek, en niets start tot iemand op de andere i
 
 **Details** op een kaart opent de rest: de ontvangen repository's en ophaalbronnen van dat lid, opslagaanbiedingen, bewaking, **Verwijderen** en **Sleutel vergeten**.
 
+Onder de kaarten horen de kaart **Gedeelde repository** op een machine met een ontvangserver en de kaart **Gedeelde repository's** op een lid bij de [gedeelde repository](#shared-repository).
+
 Een lid kan zijn eigen off-site-opslag via de groep aan een ander lid aanbieden. De andere beheerder ziet het aanbod in de **Details** van het lid en accepteert of wijst het af. Accepteren maakt opgeslagen inloggegevens en een gewone bestemming aan, na dezelfde controles als bij een bestemming die je intypt. De bestemming komt met bescherming tegen verwijderen ingeschakeld, omdat het recept dat het aanbod toont een append-only rest-server is, dus **Hoe lang bewaren** geldt daar niet. Elk aanbod heeft een eigen login en een eigen map. Bied je een onderdeel opnieuw aan, aan hetzelfde lid of een ander, dan blijven de kopieën van de eerste partner dus met rust: voeg de nieuwe regel toe aan `.htpasswd` en laat de server draaien. Alleen verbindingsgegevens reizen zo, nooit back-updata. **Nu controleren** vraagt een lid het repository van één onderdeel te controleren. Niets op de pagina kan een back-up of herstel starten of iets verwijderen op een andere machine.
 
 Instanties die zijn uitgeschakeld en telefoons met de app gesloten, houden hun kaart als **Inactief**, in grijs, met wanneer ze voor het laatst zijn gezien, en staan gedimd in het net tot je ze **Verwijderen**. Direct nadat deze server start, zegt zo'n kaart **Controleren** tot de groep weer terug is. **Verwijderen** werkt op zo'n kaart ongeacht welke delen aanstaan, en beëindigt ook de openstaande verzoeken van het lid, zijn ongebruikte ZFS-ontvangstplekken en zijn wachtende sleutelverzoeken. De kaart **Instanties** op de koppelpagina toont deze leden ook als **Inactief**.
@@ -425,6 +429,91 @@ De ontvangende machine kan ook de rest-server draaien waarnaar de anderen kopië
 De instanties in je groep vinden de server dan onder de aanbieders bij **Uit je groep**, genoemd naar de ontvangende machine, en de rol **Ontvanger** biedt hem aan als de veilige keuze. Elke instantie krijgt de eerste keer dat ze de server gebruikt een eigen login en schrijft daar alleen in haar eigen map. Met **Ontvanger** ingeschakeld onder **Instellingen, Instanties** opent **Ontvangserver** op de kaart van deze instantie de server opnieuw. Zijn venster toont de logins onder **Partners met een login**, en **Login intrekken** neemt er een weg. Wat die instantie al kopieerde, blijft in de map. De installatie maakt ook één **Login buiten de groep** aan, waarvan het venster het wachtwoord één keer toont.
 
 Een instantie die de ontvangende machine alleen via de relay bereikt, kan de server niet gebruiken, omdat de relay geen back-ups draagt. Voeg eerst het adres van de ontvangende machine toe op de koppelpagina. Draait BombVault op een eigen IP-adres (bijvoorbeeld op br0), vul dan **Adres voor partners (optioneel)** in, omdat de server op het adres van de host luistert.
+
+Een ontvangende machine kan ook een [gedeelde repository](#shared-repository) voor de groep bijhouden.
+
+## Gedeelde repository {#shared-repository}
+
+Meerdere servers van een groep kunnen samen naar één restic-repository kopiëren. Gegevens die ze gemeen hebben, zoals dezelfde mappenset of dezelfde appdata, staan daar maar één keer, dus samen hebben ze minder ruimte nodig dan met elk een eigen repository.
+
+Eén server van de groep is de eigenaar van de repository. Alleen hij vergeet daar oude back-ups en schoont op. De anderen zijn leden: ze bereiken de repository via een tweede rest-server in append-only-modus en kunnen alleen toevoegen. Elke server schrijft onder een [eigen host](#backup-host), zodat de back-ups gescheiden blijven, ook waar twee servers een item met dezelfde naam hebben.
+
+Wat er nodig is:
+
+- een [koppelgroep](#pairing),
+- **Back-ups versleutelen** ingeschakeld, op de eigenaar en op elk lid, omdat elke server een eigen restic-sleutel krijgt,
+- een [ontvangende server](#receiving-server) op de eigenaar die de leden kunnen bereiken. Draait BombVault op een eigen IP-adres, vul dan eerst **Adres voor partners** in het venster van de ontvangserver in.
+
+Een server is eigenaar van hoogstens één gedeelde repository.
+
+### Instellen {#shared-set-up}
+
+Zodra de ontvangserver draait, heeft de pagina **Instanties** van zijn machine onder de instanties een kaart **Gedeelde repository**. Druk op **Gedeelde repository instellen**, kies een **Map voor de gedeelde repository** op een share met veel ruimte, laat de **Poort** op 8001 tenzij een andere container hem gebruikt, en druk op **Instellen en starten**. BombVault dan:
+
+1. weigert als er al een container met de naam `rest-server-shared` bestaat of een andere container de poort bezet,
+2. maakt de repository aan in een map `shared` daarin, met het wachtwoord van deze server,
+3. start `restic/rest-server` als `rest-server-shared`, in append-only-modus met een loginbestand in de map,
+4. schrijft op Unraid zijn template naar de flash, zodat de container bewerkbaar blijft in het Docker-tabblad,
+5. voert de sabotagetest ertegen uit. **Opnieuw controleren** op de kaart voert hem nog eens uit.
+
+De kaart toont de **Leden**, elk met zijn sleutels en zijn laatste back-up, de verzoeken om mee te doen, en **Verwijderen** voor elk lid.
+
+### Meedoen {#shared-join}
+
+Open op de server die wil meedoen **Bestemming toevoegen**. Onder **Uit je groep** verschijnt de eigenaar een tweede keer, als **Gedeelde repository op** en zijn naam. Kies je hem, dan gaat er een verzoek naar de eigenaar. Daar staat het op de kaart **Gedeelde repository** met **Toestaan** en **Afwijzen**.
+
+Na **Toestaan** geeft de eigenaar via de groep een eenmalige sleutel en een login op zijn tweede rest-server. Het lid voegt daarmee een eigen restic-sleutel toe, en daarna verwijdert de eigenaar de eenmalige sleutel. Een lid dat niet binnen een dag klaar is, verliest de eenmalige sleutel en de login weer en kan opnieuw vragen. Kon de eigenaar het lid niet bereiken met zijn antwoord, dan biedt de kaart **Nog eens laten weten** aan.
+
+De eigenaar weigert een server zolang die nog niet onder een eigen host schrijft, wat betekent dat hij een oudere release draait, en ook wanneer een ander lid al onder dezelfde host schrijft. Twee servers delen een host als ze een `APP_KEY` delen.
+
+Zodra het lid erbij is, verschijnt onder **Bestemmingen** een bestemming met de naam **Shared with** en de naam van de eigenaar, met elk onderdeel uitgeschakeld. Schakel op de pagina van de bestemming de onderdelen in die daarheen moeten kopiëren. De bestemming heeft bescherming tegen verwijderen en geen eigen bewaarregels, omdat alleen de eigenaar daar vergeet. Alleen back-ups onder de eigen host van het lid gaan erheen, dus oudere back-ups onder de host `bombvault` blijven waar ze zijn.
+
+De eigenaar kan ook zijn eigen back-ups erin kopiëren: **Ook de back-ups van deze server erin kopiëren** op zijn kaart voegt de bestemming ook bij hem toe. Voor de eigenaar staat die kopie op zijn eigen schijven, en niets houdt hem tegen om daar te verwijderen. Het is dus geen kopie buiten de deur.
+
+### Wie opruimt, en wanneer {#shared-upkeep}
+
+Alleen de eigenaar vergeet en schoont op. Zijn instellingen staan in het deel **Gedeelde repository** van het venster **Ontvangserver**, dat je opent vanaf de eigen kaart van de eigenaar op de pagina Instanties:
+
+- **Opruimvenster** bepaalt wanneer de opschoning loopt, dagelijks of wekelijks. Tot je het verandert, begint het op zondag om 03:00, en **Lengte van het venster in uren** is 6.
+- **Ongebruikte ruimte die een opschoning mag laten staan, in %** is 5 tenzij je het verandert. Een hogere waarde herverpakt minder, dus de opschoning is sneller klaar.
+- **Teruggelezen gegevens na een opschoning, in %** is 5 tenzij je het verandert. Na elke opschoning controleert de eigenaar de repository en leest dit deel van de gegevens terug.
+- **Hoe lang bewaren** volgt per onderdeel de off-site-regels van de eigenaar, en **Een eigen regel instellen** geeft de gedeelde repository een eigen regel. De back-ups van elke server verouderen los van elkaar.
+- **Nu opruimen** vergeet, schoont op en controleert meteen, nadat de leden het te horen hebben gekregen.
+
+Buiten het venster vergeet de eigenaar één keer per dag, en de ruimte komt terug met de volgende opschoning. Voor een opschoning laat hij het de leden weten, en die kopiëren niets naar de repository tot het venster sluit. Een lid dat nog aan het kopiëren is, krijgt tot een half uur om af te ronden, anders schuift de opschoning door naar het volgende venster. Een kopie die in het venster valt, wacht en staat als uitgesteld in het activiteitenlogboek en op de kaart van het lid. De volgende ronde haalt hem in.
+
+Waar de eigenaar twijfelt, bewaart hij meer. Een item dat een lid vasthoudt vanwege een [anomalie](anomalies.md), houdt al zijn back-ups. Een lid dat niet kan zeggen wat het vasthoudt, houdt die keer al zijn back-ups. Back-ups onder een host waaronder geen server van de groep schrijft, worden nooit vergeten. Het venster toont ook de ruimte: wat de repository inneemt, wat de servers apart nodig zouden hebben en wat dat bespaart. De getallen komen bij elke opruimbeurt.
+
+### Wat leden zien {#shared-members}
+
+Op een lid heeft de pagina Instanties een kaart **Gedeelde repository's**. Die toont elke gedeelde repository waar de server naartoe kopieert of waarvoor hij vroeg om mee te doen, en hoe zijn verzoek ervoor staat: **Wacht op een ja**, **Wordt lid**, **Doet mee**, **Afgewezen**, **Verlopen** of **Geen lid**. Voor een repository waarin hij meedoet, toont de kaart **Wie opschoont**, **Volgende opruimbeurt**, **Samen met** voor de andere leden, **Laatst hierheen gekopieerd** en hoeveel ruimte de repository inneemt en bespaart.
+
+### Verlaten {#shared-leave}
+
+**Verlaten** op de kaart van het lid haalt de server eruit: de eigenaar verwijdert zijn sleutel en login, en zijn bestemming daar wordt uitgeschakeld. **Verwijderen** op de kaart van de eigenaar haalt een lid er van de andere kant uit. In beide gevallen blijven de back-ups van de server in de repository en verouderen ze volgens de regels van de eigenaar. Bij de eigenaar staan ze onder **Vertrokken servers**, waar **Back-ups vergeten** ze allemaal vergeet zodra je de naam van de server intypt. Het volgende opruimvenster geeft de ruimte terug.
+
+### De back-ups van andere servers {#shared-restore}
+
+Elke server vindt zijn eigen back-ups in de gedeelde repository op het tabblad **Back-ups** van zijn items, net als elke andere kopie. De back-ups van de andere leden staan op de pagina Herstel onder [Andere servers](restore.md#other-servers).
+
+### Na een noodgeval {#shared-emergency}
+
+De [herstelkit](#recovery-kit) heeft een hoofdstuk **Shared repositories**. Dat noemt elke gedeelde repository met zijn eigenaar, de onderdelen die erheen kopiëren, de andere leden met hun hosts, en een opdracht `restic snapshots` met de host van deze server. De kit van de eigenaar noemt ook de poort, de map en de login van zijn rest-server.
+
+In de Noodassistent staat de repository tussen de plaatsen als **Gedeelde repository bij** en de naam van de eigenaar. Een nieuwe installatie die de sleutel van een lid overneemt, schrijft onder dezelfde host, omdat de host uit de sleutel komt. Ze krijgt haar bestemming in de gedeelde repository terug en toont en herstelt daar alleen haar eigen back-ups.
+
+Een nieuwe installatie die de sleutel van de eigenaar overneemt, wordt in zijn plaats eigenaar van de repository. Ze laat de back-ups verouderen en ruimt op zoals voorheen, en start de rest-server opnieuw op dezelfde map. Koppel haar opnieuw met de groep, stel onder **Instanties** haar ontvangserver in en stel de regels in het venster van de ontvangserver opnieuw in, omdat ze niet in de kit staan. Zodra de groep de leden bereikt, laat de nieuwe eigenaar het hun zelf weten. Elk lid controleert eerst: het voegt een wegwerpsleutel aan de repository toe die alleen een server bij de map van de repository kan verwijderen, en volgt de nieuwe eigenaar zodra die sleutel weg is. Antwoordt de nieuwe eigenaar op een ander adres, dan doet elk lid deze controle daar met zijn eigen sleutel en login. Het gaat na of het daar dezelfde repository vindt en zet pas dan zijn bestemmingen om naar het nieuwe adres. Tot dan kopieert het verder naar het oude adres, en zijn kaart zegt waarom. Sleutels die van zulke controles over zijn, verwijdert de eigenaar bij zijn volgende opruimbeurt.
+
+Draait de oude eigenaar nog, dan zegt zijn kaart dat de andere server nu de eigenaar van de repository is. **Terughalen** maakt hem weer eigenaar, voor als een kit per ongeluk op een tweede server is overgenomen.
+
+### Grenzen {#shared-limits}
+
+- **Elke sleutel leest alles.** Alle sleutels van een restic-repository openen dezelfde hoofdsleutel, dus elk lid kan de back-ups van de anderen lezen. Container- en VM-definities blijven verzegeld met de eigen sleutel van elke server, dus de containers en VM's van een andere server komen alleen als bestanden terug. Een server die ooit toegang had, kan de hoofdsleutel gelezen hebben, dus verwijderen sluit hem niet voorgoed buiten. Alleen een nieuwe repository doet dat.
+- **De eigenaar kan verwijderen.** Geen lid kan daar iets verwijderen, maar de eigenaar komt rechtstreeks bij de map en vergeet en schoont de back-ups van elk lid op. Een fout of een overname bij de eigenaar raakt ze allemaal.
+- **Schade raakt elke server.** Een kapotte pack ontbreekt voor elke server waarvan de back-ups hem gebruiken, dus een gedeelde repository vervangt geen tweede kopie.
+- **Alleen op een ontvangserver.** S3, SFTP en andere plaatsen kunnen een lid niet beperken tot toevoegen, dus BombVault biedt een gedeelde repository alleen aan op een ontvangserver.
+- **Alleen als kopieerdoel.** De eigen map van een onderdeel kan niet in een gedeelde repository liggen, omdat elke opschoning de back-ups van alle servers zou ophouden.
+- **Oudere geschiedenis blijft waar ze is.** Alleen back-ups onder de eigen host van elke server gaan erin, en er wordt niets uit andere repository's overgezet.
 
 ## Voorbeeld: twee Unraid-machines koppelen {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ De **Noodassistent** brengt een server terug die weg is of opnieuw is ingesteld.
 2. **Instellingen.** **Instellingen terughalen** herstelt de eigen instellingen van BombVault uit de nieuwste zelf-back-up: bestemmingen, inloggegevens, planningen en regels. BombVault herstart om ze toe te passen, via de Docker-socket, zodat de live instellingendatabase nooit onder een open handle wordt overschreven, en de assistent gaat daarna vanzelf verder. De login van deze server blijft: je blijft je aanmelden met het wachtwoord dat je nu gebruikt. Geheimen die de oude server had opgeslagen en die niet kunnen worden overgenomen, worden getoond, zodat je ze opnieuw kunt invoeren. Het herstel beëindigt elke sessie en verwijdert de passkeys, dus stel ze daarna opnieuw in.
 3. **Selectie.** BombVault zoekt door je back-ups en toont de containers, VM's, mappensets en ZFS-datasets die het vindt. De nieuwste snapshot is overal vooraf gekozen. Wat deze server nog heeft, begint uitgeschakeld, omdat een herstel het zou vervangen. Mappensets weten na een herinstallatie niet meer waar ze vandaan kwamen, dus ze gaan naar een map die je kiest.
 4. **Herstel.** Alles wat is gekozen komt in één keer terug, gestopt gelaten als je elke container en VM zelf wilt starten, wat het veiligst is na een totaal verlies. Download daarna een nieuwe herstelkit: de oude hoort bij de vorige installatie.
+
+Een gedeelde repository uit de kit staat tussen de plaatsen als **Gedeelde repository bij** en de naam van de server die er eigenaar van is, en de assistent toont daar alleen de eigen back-ups van deze server. Zie [Na een noodgeval](#shared-emergency).
 
 ![De Noodassistent bij zijn eerste stap, met de drie ingangen.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![De Noodassistent bij zijn eerste stap, met de drie ingangen.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Dit is het onderdeel dat noodherstel mogelijk maakt, ook als er geen draaiende B
 
 ### De host van de back-ups van een server {#backup-host}
 
-Elke server schrijft zijn back-ups onder een eigen restic-host: `bv-` en twaalf tekens die uit de sleutel van de back-ups worden berekend, zoals `bv-3f9a0c41d2e7`. Back-ups van voordat een server er een had, dragen de host `bombvault`. De kit noemt de host van deze server, en haar opdrachten geven beide mee met `--host`, zodat `latest` nooit een back-up kiest die een andere server naar hetzelfde repository heeft geschreven. Een server die de back-ups van een andere overneemt, gaat verder onder de host van die server, omdat de host uit de sleutel komt.
+Elke server schrijft zijn back-ups onder een eigen restic-host: `bv-` en twaalf tekens die uit de sleutel van de back-ups worden berekend, zoals `bv-3f9a0c41d2e7`. Back-ups van voordat een server er een had, dragen de host `bombvault`. De kit noemt de host van deze server, en haar opdrachten geven beide mee met `--host`, zodat `latest` nooit een back-up kiest die een andere server naar hetzelfde repository heeft geschreven. Een server die de back-ups van een andere overneemt, gaat verder onder de host van die server, omdat de host uit de sleutel komt. Voor elke [gedeelde repository](#shared-repository) waar de server naartoe kopieert of waarvan hij eigenaar is, noemt het hoofdstuk **Shared repositories** van de kit de andere servers daar met hun hosts.
 
 ### De kit verzegelen {#sealing-the-kit}
 

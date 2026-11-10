@@ -318,6 +318,8 @@ Some places cannot refuse a delete at all, a cloud drive such as OneDrive for ex
 
 The fastest way to an append-only copy is a paired BombVault with a [receiving server](#receiving-server): it runs the rest-server for you, in append-only mode.
 
+In a [shared repository](#shared-repository) this holds for the members and not for the server that holds it. That server reaches the folder directly and forgets and prunes there.
+
 !!! note "A successful delete under `/locks/` is expected"
     Append-only does not mean nothing can ever be removed. restic has to take and release its own locks, so `/locks/` stays writable and deletable by design. Snapshots and the data behind them, which is what ransomware would go after, cannot be removed. If you probe the far side yourself, a delete that succeeds under `/locks/` is correct behaviour and not a hole in the protection.
 
@@ -391,6 +393,8 @@ Switching a role on sends a request, and nothing starts until someone on the oth
 
 **Details** on a card opens the rest: the received repositories and pull sources of that member, storage offers, monitoring, **Remove** and **Forget key**.
 
+Below the cards, the **Shared repository** card on a box with a receiving server and the **Shared repositories** card on a member belong to the [shared repository](#shared-repository).
+
 A member can offer its own off-site storage to another member over the group. The other admin sees the offer in the member's **Details** and accepts or declines it. Accepting creates a saved sign-in and an ordinary storage location, after the same checks as a location you type in. The location comes with delete protection switched on, since the recipe the offer shows is an append-only rest-server, so **How long to keep** does not apply there. Every offer has a login and a folder of its own, so offering a section again, to the same member or another one, leaves the first partner's copies alone: add the new line to `.htpasswd` and keep the server running. Only connection details travel this way, never backup data. **Check now** asks a member to verify one section's repository. Nothing on the page can start a backup, restore or delete anything on another box.
 
 Instances that are shut down and phones with the app closed keep their card as **Inactive**, in grey, with when they were last seen, and stand dimmed in the net until you **Remove** them. Right after this server starts, such a card says **Checking** until the group is back. **Remove** works on such a card whichever parts are switched on, and it also ends the member's open requests, its idle ZFS receive slots and its waiting key requests. The **Instances** card on the pairing page lists these members as **Inactive** too.
@@ -425,6 +429,91 @@ The receiving box can also run the rest-server the others copy to. It is set up 
 The instances in your group then find the server among the providers under **From your group**, named after the receiving box, and the **Receiver** role offers it as the safe choice. Each instance gets a login of its own the first time it uses the server, and writes only into its own folder there. With **Receiver** switched on under **Settings, Instances**, **Receiving server** on this instance's card opens the server again. Its window lists the logins under **Partners with a login**, and **Revoke login** takes one away. What that instance already copied stays in the folder. Setup also creates one **Login outside the group**, whose password the window shows once.
 
 An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address on the pairing page first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
+
+A receiving box can also hold a [shared repository](#shared-repository) for the group.
+
+## Shared repository {#shared-repository}
+
+Several servers of a group can copy into one restic repository together. Data they have in common, such as the same folder set or the same appdata, is stored there only once, so together they need less room than with a repository each.
+
+One server of the group holds the repository. It is the only one that forgets old backups and prunes there. The others are members: they reach the repository through a second rest-server in append-only mode and can only add to it. Each server writes under a [host of its own](#backup-host), so the backups stay apart even where two servers have an entry of the same name.
+
+What it needs:
+
+- a [pairing group](#pairing),
+- **Encrypt backups** switched on, on the holder and on every member, because each server gets a restic key of its own,
+- a [receiving server](#receiving-server) on the holder that the members can reach. When BombVault runs on an IP address of its own, fill in **Address for partners** in the receiving server's window first.
+
+A server holds at most one shared repository.
+
+### Setting it up {#shared-set-up}
+
+Once the receiving server runs, the **Instances** page of its box has a **Shared repository** card below the instances. Press **Set up shared repository**, pick a **Folder for the shared repository** on a share with plenty of room, keep the **Port** at 8001 unless another container uses it, and press **Set up and start**. BombVault then:
+
+1. refuses if a container called `rest-server-shared` already exists or another container holds the port,
+2. creates the repository in a folder `shared` inside it, with this server's password,
+3. starts `restic/rest-server` as `rest-server-shared`, in append-only mode with a login file in the folder,
+4. on Unraid writes its template to the flash drive, so the container stays editable in the Docker tab,
+5. runs the tamper test against it. **Check again** on the card runs it once more.
+
+The card lists the **Members**, each with its keys and its last backup, the asks to join, and **Remove** for each member.
+
+### Joining {#shared-join}
+
+On the server that wants to join, open **Add storage location**. Under **From your group** the holder shows up a second time, as **Shared repository on** and its name. Picking it sends an ask to the holder, where it stands on the **Shared repository** card with **Allow** and **Decline**.
+
+After **Allow** the holder hands out a one-time key and a login on its second rest-server over the group. The member adds a restic key of its own with it, and the holder then removes the one-time key. A member that has not finished within a day loses the one-time key and the login again and can ask once more. When the holder could not reach the member with its answer, the card offers **Tell it again**.
+
+The holder turns a server away while it still writes no host of its own, which means it runs an older release, and when another member already writes under the same host. Two servers share a host when they share an `APP_KEY`.
+
+Once the member is in, a storage location called **Shared with** and the holder's name appears under **Storage locations**, with every section switched off. Switch on the sections that should copy there on the location's page. The location has delete protection and no keep rules of its own, because only the holder forgets there. Only backups under the member's own host go there, so older backups under the host `bombvault` stay where they are.
+
+The holder can copy its own backups in as well: **Copy this server's backups in too** on its card adds the location there too. For the holder that copy lies on its own disks and nothing keeps it from deleting there, so it is no copy away from home.
+
+### Who tidies up, and when {#shared-upkeep}
+
+Only the holder forgets and prunes. Its settings are in the **Shared repository** part of the **Receiving server** window, which opens from the holder's own card on the Instances page:
+
+- **Tidy-up window** sets when the prune runs, daily or weekly. It starts on Sundays at 03:00 until you change it, and **Window length in hours** is 6.
+- **Unused space a prune may leave, in %** is 5 unless you change it. A higher value repacks less, so the prune finishes sooner.
+- **Data read back after a prune, in %** is 5 unless you change it. After every prune the holder checks the repository and reads this share of the data back.
+- **How long to keep** follows the holder's off-site rules for each section, and **Set a rule of its own** gives the shared repository its own. The backups of each server age on their own.
+- **Tidy up now** forgets, prunes and checks right away, after telling the members.
+
+Outside the window the holder forgets once a day, and the space comes back with the next prune. Before a prune it tells the members, and they copy nothing into the repository until the window closes. A member that is still copying gets up to half an hour to finish, otherwise the prune moves to the next window. A copy that falls into the window waits, shows as deferred in the activity log and on the member's card, and the next pass catches up.
+
+Where the holder is unsure, it keeps more. An entry that a member holds on to because of an [anomaly](anomalies.md) keeps all its backups, a member that cannot say what it holds on to keeps all its backups that time, and backups under a host that no server of the group writes are never forgotten. The window also shows the space: what the repository holds, what the servers would need apart, and what that saves. The numbers come with each tidy-up.
+
+### What members see {#shared-members}
+
+On a member, the Instances page has a **Shared repositories** card with each shared repository the server copies into or asked to join, and where its ask stands: **Waiting for a yes**, **Joining**, **Joined**, **Turned down**, **Expired** or **Not a member**. For a repository it is in, the card shows **Who prunes**, **Next tidy-up**, **Together with** for the other members, **Last copy here**, and how much space the repository holds and saves.
+
+### Leaving {#shared-leave}
+
+**Leave** on the member's card takes the server out: the holder removes its key and login, and its storage location there is switched off. **Remove** on the holder's card takes a member out from the other side. Either way the server's backups stay in the repository and age by the holder's rules. On the holder they stand under **Servers that left**, where **Forget backups** forgets all of them once you type the server's name. The next tidy-up window gives the space back.
+
+### The backups of other servers {#shared-restore}
+
+Each server finds its own backups in the shared repository on the **Backups** tab of its entries, like any other copy. The backups of the other members are on the Restore page under [Other servers](restore.md#other-servers).
+
+### After an emergency {#shared-emergency}
+
+The [recovery kit](#recovery-kit) has a chapter **Shared repositories**. It names each shared repository with its holder, the sections that copy there, the other members with their hosts, and a `restic snapshots` command with this server's host. The holder's kit also names the port, folder and login of its rest-server.
+
+In the Emergency wizard the repository shows among the places as **Shared repository at** and the holder's name. A new install that takes a member's key over writes under the same host, because the host comes from the key. It gets its storage location in the shared repository back and lists and restores only its own backups there.
+
+A new install that takes the holder's key over holds the repository in its place. It ages and tidies it up as before and starts the rest-server again on the same folder. Pair it with the group again, set up its receiving server under **Instances**, and set the rules in the receiving server's window again, because they are not in the kit. Once the group reaches the members, the new holder tells them itself. Each member checks first: it adds a throwaway key to the repository that only a server at the repository's folder can remove, and follows the new holder once that key is gone. If the new holder answers at another address, each member runs this check there with its own key and login, makes sure it finds the same repository, and only then moves its storage locations to the new address. Until then it keeps copying to the old address, and its card says why. The holder removes keys left over from such checks at its next tidy-up.
+
+If the old holder still runs, its card says that the other server holds the repository now. **Take it back** makes it the holder again, for when a kit was taken over on a second server by mistake.
+
+### Limits {#shared-limits}
+
+- **Every key reads everything.** All keys of a restic repository open the same master key, so every member can read the backups of the others. Container and VM definitions stay sealed with each server's own key, so another server's containers and VMs come back as files only. A server that once had access could have read the master key, so removing it does not shut it out for good. Only a new repository does.
+- **The holder can delete.** No member can delete anything there, but the holder reaches the folder directly and forgets and prunes the backups of every member. A mistake or a takeover on the holder reaches them all.
+- **Damage reaches every server.** A broken pack is missing for every server whose backups use it, so a shared repository does not replace a second copy.
+- **Only on a receiving server.** S3, SFTP and other places cannot keep a member to adding, so BombVault offers a shared repository only on a receiving server.
+- **Only as a copy target.** A section's own folder cannot lie in a shared repository, because every prune would hold up the backups of all servers.
+- **Older history stays put.** Only backups under each server's own host go in, and nothing is moved over from other repositories.
 
 ## Example: pairing two Unraid boxes {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ The **Emergency wizard** brings back a server that is gone or was set up again. 
 2. **Settings.** **Bring back settings** restores BombVault's own settings from the newest self-backup: storage locations, sign-ins, schedules and rules. BombVault restarts to apply them, through the Docker socket, so the live settings database is never overwritten under an open handle, and the wizard carries on by itself afterwards. This server's login stays: you keep signing in with the password you use now. Secrets the old server had stored that cannot be taken over are listed, so you can enter them again. The restore ends every session and removes the passkeys, so set them up again afterwards.
 3. **Selection.** BombVault looks through your backups and lists the containers, VMs, folder sets and ZFS datasets it finds. The newest snapshot is preselected everywhere. What this server still has starts switched off, because a restore would replace it. Folder sets no longer know where they came from after a rebuild, so they go into a folder you choose.
 4. **Restore.** Everything selected comes back in one go, left stopped if you want to start each container and VM yourself, which is safest after a total loss. Afterwards download a new recovery kit: the old one belongs to the previous install.
+
+A shared repository from the kit shows among the places as **Shared repository at** and the name of the server that holds it, and the wizard lists only this server's own backups there. See [After an emergency](#shared-emergency).
 
 ![The Emergency wizard at its first step, with the three ways in.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![The Emergency wizard at its first step, with the three ways in.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ This is the piece that makes disaster recovery possible even when there is no ru
 
 ### The host of a server's backups {#backup-host}
 
-Each server writes its backups under a restic host of its own: `bv-` and twelve characters worked out from the key of the backups, such as `bv-3f9a0c41d2e7`. Backups from before a server had one carry the host `bombvault`. The kit names this server's host, and its commands pass both with `--host`, so `latest` never picks a backup another server wrote to the same repository. A server that takes over another one's backups goes on under that server's host, because the host comes from the key.
+Each server writes its backups under a restic host of its own: `bv-` and twelve characters worked out from the key of the backups, such as `bv-3f9a0c41d2e7`. Backups from before a server had one carry the host `bombvault`. The kit names this server's host, and its commands pass both with `--host`, so `latest` never picks a backup another server wrote to the same repository. A server that takes over another one's backups goes on under that server's host, because the host comes from the key. For each [shared repository](#shared-repository) the server copies into or holds, the kit's chapter **Shared repositories** names the other servers there with their hosts.
 
 ### Sealing the kit {#sealing-the-kit}
 

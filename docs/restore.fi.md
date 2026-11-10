@@ -14,6 +14,7 @@ Jokainen palautus alkaa **Palautus**-sivulta: valitse osio, hae haluamasi ja val
 - **Käynnissä nyt** näyttää palautuksen sen ajan, kun se on käynnissä, myös sen jälkeen kun suljit sen ikkunan.
 - **Hätätilanne** käynnistää Hätäohjatun toiminnon palvelimelle, joka on poissa tai pystytettiin uudelleen, katso [Hätäohjattu toiminto](offsite-recovery.md#emergency).
 - **Muut lähteet** sisältää kohdat **Vanhasta varmuuskopiokansiosta**, toisen BombVaultin varmuuskopioille, **Tuo Appdata.Backup-liitännäisestä** ja **Tehtävät Duplicatista tai Duplicacysta**.
+- **Muut palvelimet** listaa jaetun arkiston muut palvelimet, kun tämä palvelin on siinä mukana, katso [Muut palvelimet](#other-servers).
 
 ![Palautus-sivu puhelimella.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Palautus-sivu puhelimella.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Haku kestää hetken, koska restic käy läpi jokaisen varmuuskopion. **Pysäyt�
 - Etäpaikat, kuten S3, B2 tai SFTP, jätetään pois, ellet kytke päälle valintaa **Hae myös etäpaikoista**. Silloin niistä luetaan vain ne varmuuskopiot, joita mikään paikka täällä ei sisällä, yleensä vanhemmat, jotka pidempi säilytys pitää etänä. Ensimmäinen haku tällaisesta paikasta voi kestää kauan, ja jotkin palveluntarjoajat laskuttavat ladattavasta datasta.
 - Paikka, jota ei voitu avata, näyttää **ei voitu lukea**, ja sen vieressä oleva (i) kertoo syyn. Muista paikoista haetaan silti.
 
-Virtuaalikoneet tallennetaan kokonaisina levyinä, joten haku ei käy läpi niiden sisällä olevia tiedostoja. Myöskään itsevarmuuskopiota ja kohdan **Muut lähteet** toisen BombVaultin varmuuskopioita haku ei käy läpi. Haku listaa ensimmäiset 200 tiedostoa, joten lyhyt nimi kuten `log` voi tarvita lisää kirjaimia.
+Virtuaalikoneet tallennetaan kokonaisina levyinä, joten haku ei käy läpi niiden sisällä olevia tiedostoja. Myöskään itsevarmuuskopiota, kohdan **Muut lähteet** toisen BombVaultin varmuuskopioita ja kohdan **Muut palvelimet** palvelimien varmuuskopioita haku ei käy läpi. Haku listaa ensimmäiset 200 tiedostoa, joten lyhyt nimi kuten `log` voi tarvita lisää kirjaimia.
 
 ## Mitä palautuu, lajeittain {#kinds}
 
@@ -134,6 +135,10 @@ Tietokanta, jolla on vain tietokantavedoksia eikä tiedostovarmuuskopiota ja jon
     - **Duplicacysta**: valitse Duplicacy Webin kansio, jossa on `duplicacy.json`, tai kansio, jonka varmuuskopioit Duplicacyn komentoriviltä ja jossa on `.duplicacy`. Avaimet, jotka komentorivi on tallentanut tiedostoon `.duplicacy/preferences`, tulevat mukana. Duplicacy Web säilyttää tunnuksensa salattuina, joten ikkuna kysyy ne.
 
     Mitään ei luoda ennen kuin olet nähnyt esikatselun. Jokaisesta lähdekansiosta tulee kansiojoukko, johon tulevat kansio siitä paikasta tällä palvelimella, josta se löytyi, poissulut, jotka voitiin kääntää, ja aikataulu. Jos vanha työkalu toimi omassa kontissaan eikä jotain kansiota löytynyt, valitset sen itse. Varmuuskopiot menevät uuteen kohteeseen, kansioon `bombvault` vanhan kohteen sisällä, kun vanha kohde on paikallinen kansio, S3, SFTP, rclone-remote tai Backblaze B2 S3-osoitteensa kautta. Tiedostosta saadut tunnukset tallennetaan muiden tunnustesi joukkoon, ja ne, jotka tiedostosta puuttuvat, kysytään sinulta. Kunkin tehtävän alla olevat huomautukset kertovat, mikä ei tullut mukaan, esimerkiksi sisällytyssäännöt, säännölliset lausekkeet, kuinka kauan varmuuskopioita säilytettiin ja vanha salaussalasana, jota BombVault ei tarvitse.
+
+## Muut palvelimet {#other-servers}
+
+[Jaetussa arkistossa](offsite-recovery.md#shared-repository) jokainen avain avaa kaikkien palvelimien varmuuskopiot, joten Palautus-sivu listaa muut jäsenet kohdassa **Muut palvelimet**, kunkin nimen, isännän, merkintöjen määrän ja sen, milloin sen uusin varmuuskopio ajettiin. Isäntä, joka ei kuulu millekään tämän palvelimen tuntemalle palvelimelle, näkyy muodossa **Palvelin, jota tämä palvelin ei tunne**. Napsautus avaa näkymän, jonka otsikossa on **Palvelimen**, palvelimen nimi ja **varmuuskopiot**, vain luku ja ilman mitään syötettävää. Kansiojoukot ja ZFS-tietojoukot menevät valitsemaasi kansioon. Kontit ja VM:t palaavat tavallisina tiedostoina kansioon, koska toinen palvelin sinetöi niiden määritykset omalla avaimellaan. Tämän palvelimen omat varmuuskopiot jaetussa arkistossa ovat kunkin merkinnän **Varmuuskopiot**-välilehdellä.
 
 ## Palautuksen jälkeen {#after}
 

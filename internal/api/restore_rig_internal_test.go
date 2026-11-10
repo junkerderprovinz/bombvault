@@ -378,6 +378,9 @@ func newRestoreRig(t *testing.T) *restoreRig {
 	if err := st.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
+	// Tests swap the engine after a seed backup, so the seed must not leave a
+	// size sample reading it.
+	FreshSizeSamples(t, st, "containers", "vms", "files")
 	r := &restoreRig{
 		st:       st,
 		docker:   &rigDocker{containers: map[string]model.Inspect{}, images: map[string]bool{}},

@@ -442,6 +442,33 @@ describe("the ways in", () => {
     expect(await screen.findByText(en["emergency.place.missingDo"].replace("{folder}", "old/vms"))).toBeTruthy();
   });
 
+  it("say what is left to do when the kit is of the server that held a shared repository", async () => {
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = {
+        ...emergencyOnServer,
+        session: session({ places: [{ kind: "shared", name: "Atlas", held: true, location: "/mnt/user/bv-shared/shared", folder: "bv-shared/shared", state: "readable" }] }),
+      };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    expect(await screen.findByText(en["emergency.heldShared"].replace("{name}", "Atlas"))).toBeTruthy();
+  });
+
+  it("say nothing of holding a shared repository the old server only copied into", async () => {
+    readEmergencyKit.mockImplementationOnce(() => {
+      emergencyOnServer = {
+        ...emergencyOnServer,
+        session: session({ places: [{ kind: "shared", name: "Atlas", location: "rest:http://atlas:8001/shared", state: "readable" }] }),
+      };
+      return answer();
+    });
+    await open();
+    await upload("kit");
+    expect(await screen.findByText(en["emergency.placeShared"].replace("{name}", "Atlas"))).toBeTruthy();
+    expect(screen.queryByText(en["emergency.heldShared"].replace("{name}", "Atlas"))).toBeNull();
+  });
+
   it("ask for the age identity only once the server calls the kit sealed, and keep it nowhere", async () => {
     await open();
     await press(way("emergency.way.kit"));

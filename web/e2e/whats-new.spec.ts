@@ -5,15 +5,16 @@
 // without a version, so the update is staged: the server says it is the
 // release, and the browser remembers the one before. After it: the way into
 // the restore window, the dots of an entry's page, a change whose page has
-// nothing to show for it, and the dots on a row of the overview and on the
-// move of a storage location.
+// nothing to show for it, the dots on a row of the overview and on the move
+// of a storage location, the way into the form that adds a folder, and the
+// field only some storage locations have.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { EVERY_KIND, MOBILE_PROJECTS, NOW, stageEntries } from "./entries";
 import { openOverview, stageOverview } from "./overview";
-import { STORAGE_BOX, stageStorage } from "./storage";
+import { LOCATIONS, STORAGE_BOX, stageStorage } from "./storage";
 import { blockServerLook } from "./serverLook";
 
 // Set to a folder to keep pictures of the dots.
@@ -28,6 +29,8 @@ const TILES_NEWS = "Restore is one page for everything.";
 const WHERE_NEWS = "One window asks what to restore and where to.";
 const KEEP_NEWS = "Retention is Short, Balanced, Long or your own values.";
 const DEFAULTS_NEWS = "An entry follows the default schedule and storage location";
+const JUNK_NEWS = "A new folder set leaves out system junk";
+const CONNECTIONS_NEWS = "Simultaneous connections on the page";
 
 function entry(lastBackup: number) {
   return {
@@ -281,6 +284,11 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const phone = MOBILE_PROJECTS.has(testInfo.project.name);
   await stageEntries(page, EVERY_KIND);
   await stageUpdate(page);
+  // Another server's backups in a shared repository draw the card of the other servers.
+  await page.route(
+    (url) => url.pathname === "/api/shared-repo/others",
+    (route) => route.fulfill({ json: { ok: true, servers: [{ repo: "r1", host: "bv-ba9876543210", name: "Cube", entries: 2 }] } }),
+  );
   await openUpdated(page, "/dashboard");
 
   const restore = phone
@@ -289,7 +297,7 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const fromNavigation = page.locator(`[data-new-dot="way"][aria-label*="${TILES_NEWS}"][aria-label*="${WHERE_NEWS}"]`);
   await expectOn(fromNavigation, restore);
   // One change to a line.
-  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(9);
+  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(10);
   await fromNavigation.hover();
   await picture(page, `way-bubble-${testInfo.project.name}`);
 
@@ -326,6 +334,8 @@ test("the dots lead from the navigation over a backup's button into the restore 
   await picture(page, `restore-emergency-${testInfo.project.name}`);
   await marked(page, "restore-fetched").scrollIntoViewIfNeeded();
   await expectOn(dotOf(page, "restore-fetched"), marked(page, "restore-fetched"));
+  await marked(page, "restore-other-servers").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "restore-other-servers"), marked(page, "restore-other-servers"));
 });
 
 test("a container's page carries its dots, and the tab leads to the one on its settings", async ({ page }, testInfo) => {
@@ -418,4 +428,68 @@ test("a storage location's row leads to its page, where the move of a section ca
   await marked(page, "location-move").scrollIntoViewIfNeeded();
   await expectOn(dotOf(page, "location-move"), marked(page, "location-move"));
   await picture(page, "location-move");
+});
+
+test("Add leads over the choice of a folder into the folder form, where the system junk carries a dot", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "the path runs once at desktop width and on both phones");
+  await stageEntries(page, EVERY_KIND);
+  await stageUpdate(page);
+  await page.route("**/api/files/sets/preset", (route) =>
+    route.fulfill({
+      json: {
+        ok: true,
+        offered: false,
+        name: "",
+        path: "",
+        excludes: [],
+        junk: { app: "systemJunk", entries: [{ line: ".DS_Store", kind: "macMetadata", optional: false }] },
+      },
+    }),
+  );
+  await openUpdated(page, "/backups");
+
+  const toForm = wayTo(page, JUNK_NEWS);
+  await expectOn(toForm, page.locator('[data-new-way="add-entry"]'));
+  await toForm.click();
+  const win = page.getByRole("dialog");
+  await expectOn(toForm, win.locator('[data-new-way="add-folder"]'));
+  await picture(page, `add-choice-${testInfo.project.name}`);
+
+  await toForm.click();
+  const junk = win.locator('[data-new="files-junk"]');
+  await junk.scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "files-junk"), junk);
+  await expect(toForm).toHaveCount(0);
+  await picture(page, `add-folder-junk-${testInfo.project.name}`);
+});
+
+test("only the row of a location with the setting leads to Simultaneous connections, which carries a dot on its page", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-1280", "what decides it is the same at every width");
+  await stage(page);
+  await stageStorage(page, 1280, "en");
+  // The staged locations carry no connections, so here the Storage Box gets
+  // the setting and stays the only one with it.
+  const box = { ...STORAGE_BOX, connections: 0 };
+  await page.route(
+    (url) => url.pathname === "/api/storage/locations",
+    (route) => route.fulfill({ json: { ok: true, locations: LOCATIONS.map((l) => (l.id === box.id ? box : l)) } }),
+  );
+  await page.route(
+    (url) => decodeURIComponent(url.pathname) === `/api/storage/locations/${box.id}`,
+    (route) => route.fulfill({ json: { ok: true, location: box } }),
+  );
+  await openUpdated(page, "/storage");
+
+  const rows = page.locator('[data-new-way~="network"]');
+  await expect(rows).toHaveCount(1);
+  await expect(rows).toContainText(box.name);
+  const fromRow = wayTo(page, CONNECTIONS_NEWS);
+  await expectOn(fromRow, rows);
+  await fromRow.click();
+  await expect(page).toHaveURL(/\/storage\/destination(:|%3A)box$/);
+
+  const field = marked(page, "location-connections");
+  await field.scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "location-connections"), field);
+  await picture(page, "location-connections");
 });

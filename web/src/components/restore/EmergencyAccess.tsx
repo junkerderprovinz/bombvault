@@ -351,6 +351,14 @@ export function EmergencyAccess({
           )}
         </Section>
 
+        {session.places
+          .filter((place) => place.kind === "shared" && place.held)
+          .map((place) => (
+            <Note key={place.location} tone="neutral">
+              {t("emergency.heldShared").replace("{name}", () => place.name ?? "")}
+            </Note>
+          ))}
+
         {!inUse && session.refusal === "adopt-own-backups" && (
           <Note tone="warn">
             <span className="flex flex-wrap items-center gap-3">

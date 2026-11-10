@@ -18,9 +18,11 @@ export function LocationRow({ location, note }: { location: StorageLocation; not
   const navigate = useNavigate();
   const route = locationRoute(location.id);
   const folder = location.object === "path";
+  // Only a backend that opens several connections at once has the setting.
+  const network = location.connections !== undefined;
   return (
     <li
-      data-new-way={folder ? "location folder" : "location"}
+      data-new-way={folder ? "location folder" : network ? "location network" : "location"}
       className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-carbon-hover"
     >
       <LocationMark location={location} />

@@ -28,6 +28,13 @@ const (
 	ProofReceiverLogin = "receiver-login"
 	ProofRelease       = "release"
 	ProofZFSReceive    = "zfs-receive"
+	// ProofSharedJoin is a member's ask to join a shared repository, and
+	// ProofSharedJoined its word that it added its own key. ProofSharedLeave
+	// is a member leaving it, and ProofSharedAnswer the owner's answer.
+	ProofSharedJoin   = "shared-join"
+	ProofSharedJoined = "shared-joined"
+	ProofSharedLeave  = "shared-leave"
+	ProofSharedAnswer = "shared-answer"
 	// ProofLeave is a member's word that it leaves the group, and
 	// ProofNotMember a former member's word that it is in the group no more.
 	ProofLeave     = "leave"

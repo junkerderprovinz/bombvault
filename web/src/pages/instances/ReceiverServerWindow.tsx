@@ -27,6 +27,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "./InstanceWindow";
+import { SharedUpkeepSection } from "./SharedUpkeepSection";
 import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
@@ -40,7 +41,8 @@ interface Fresh {
   template: "written" | "download" | "none";
 }
 
-function checkBadge(server: ReceiverServer, t: T) {
+/** What the last append-only check of a rest-server this box runs found. */
+export function checkBadge(server: Pick<ReceiverServer, "check">, t: T) {
   switch (server.check) {
     case "protected":
       return <Badge tone="ok">{t("receiver.server.protected")}</Badge>;
@@ -292,6 +294,8 @@ export function ReceiverServerWindow({
               </Rows>
             )}
           </div>
+
+          <SharedUpkeepSection t={t} />
 
           {fresh && (
             <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">

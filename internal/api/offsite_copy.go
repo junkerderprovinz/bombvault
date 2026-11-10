@@ -168,6 +168,7 @@ type copyOutcome struct {
 	destIsASource bool
 	landed        []restic.Snapshot // source snapshots this pass put at the target
 	uncertain     bool              // a whole copy went ahead without knowing what it sent; landed does not cover it
+	deferred      bool              // the owner of the shared repository there prunes it, so nothing was tried
 }
 
 // sourceCopy is one source planned for one target.
@@ -189,6 +190,13 @@ type sourceCopy struct {
 func (s *Service) copySources(ctx context.Context, settings store.Settings, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit,
 	sources []domainRepoRef, dst []restic.Snapshot, dstErr error, startedAt int64, lastCopy *offsiteLastCopy) copyOutcome {
 	var out copyOutcome
+	release, ok := s.beginSharedCopy(target.Repo)
+	if !ok {
+		log.Printf("api: offsite %s: the owner of %s prunes it right now, so this copy waits for the next pass", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+		out.deferred = true
+		return out
+	}
+	defer release()
 	if v.filtered && dstErr != nil {
 		out.errs = append(out.errs, fmt.Errorf("listing %s: %w", placementTargetName(target), dstErr))
 		return out
@@ -301,7 +309,8 @@ func (s *Service) copyWhatWasLeftOut(ctx context.Context, domain, dest string, m
 // planSource lists one source and decides what it sends to the target. held is
 // what the target holds plus what earlier sources of this pass send it.
 func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mode, v targetVisit, src domainRepoRef, loc string, held []restic.Snapshot, heldKnown bool) (sourceCopy, error) {
-	c := sourceCopy{src: src, loc: loc, mode: mode, whole: !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
+	shared := mode.Sharing != restic.SharingNone
+	c := sourceCopy{src: src, loc: loc, mode: mode, whole: !shared && !v.filtered && !src.CountOnly && (src.Own || len(domainTagPrefixes(domain)) == 0)}
 	snaps, err := s.listSnapshots(ctx, loc, mode)
 	if err != nil {
 		if c.whole {
@@ -324,6 +333,9 @@ func (s *Service) planSource(ctx context.Context, domain string, mode restic.Mod
 	}
 	if !src.Own {
 		snaps = ofDomain(snaps, domain)
+	}
+	if shared {
+		snaps = underHost(snaps, mode.Host)
 	}
 	c.answers = len(snaps) > 0
 	switch {
@@ -566,7 +578,9 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // only that domain's names are aged.
 func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
 	op := targetAgingPolicy(target)
-	if !op.Any() {
+	// A shared repository ages in its owner's upkeep, by rules that cover
+	// every member.
+	if !op.Any() || mode.Sharing != restic.SharingNone {
 		return false
 	}
 	var snaps []restic.Snapshot

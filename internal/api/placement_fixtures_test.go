@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"database/sql"
@@ -654,7 +655,17 @@ func (e *placementEngine) Snapshots(_ context.Context, repo string, mode restic.
 	if err != nil {
 		return nil, err
 	}
+	// restic lists a shared repository under this server's host alone.
+	if mode.Sharing != restic.SharingNone {
+		host := cmp.Or(mode.Host, restic.LegacyHost)
+		snaps = slices.DeleteFunc(snaps, func(sn restic.Snapshot) bool { return sn.Hostname != host })
+	}
 	return snaps, nil
+}
+
+func (e *placementEngine) SnapshotsOfEveryHost(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error) {
+	mode.Sharing = restic.SharingNone
+	return e.Snapshots(ctx, repo, mode)
 }
 
 // Copy puts a copy with a new id and the source's identity at the destination

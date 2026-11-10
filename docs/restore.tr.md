@@ -14,6 +14,7 @@ Her geri yükleme **Geri yükleme** sayfasında başlar: bir bölüm seç, geri 
 - **Şu an çalışıyor**, bir geri yüklemeyi, penceresini kapattıktan sonra da, çalışırken gösterir.
 - **Acil durum**, kaybolmuş ya da yeniden kurulmuş bir sunucu için Acil durum sihirbazını başlatır, bkz. [Acil durum sihirbazı](offsite-recovery.md#emergency).
 - **Diğer kaynaklar**, başka bir BombVault'un yedekleri için **Eski bir yedek klasöründen**, **Appdata.Backup eklentisinden içe aktar** ve **Duplicati ya da Duplicacy işleri**'ni barındırır.
+- **Diğer sunucular**, bu sunucunun içinde olduğu bir ortak deponun diğer sunucularını listeler, bkz. [Diğer sunucular](#other-servers).
 
 ![Telefonda Geri yükleme sayfası.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Telefonda Geri yükleme sayfası.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Arama biraz sürer, çünkü restic her yedeği tek tek dolaşır. **Durdur** on
 - S3, B2 ya da SFTP gibi site dışı yerler, **Site dışı yerlerde de ara**'yı açmadıkça dışarıda kalır. O zaman orada yalnızca buradaki hiçbir yerde olmayan yedekler okunur, genellikle daha uzun bir saklamanın site dışında tuttuğu eski yedekler. Böyle bir yerdeki ilk arama uzun sürebilir ve bazı sağlayıcılar indirilen veri için ücret alır.
 - Açılamayan bir yerde **okunamadı** yazar, yanındaki (i) nedenini söyler. Diğer yerler yine de aranır.
 
-Sanal makineler bütün diskler olarak kaydedilir, bu yüzden içlerindeki dosyalar aranmaz. Öz yedek ve **Diğer kaynaklar** altındaki başka bir BombVault'un yedekleri de aranmaz. Bir arama ilk 200 dosyayı listeler, bu yüzden `log` gibi kısa bir ad daha fazla harf gerektirebilir.
+Sanal makineler bütün diskler olarak kaydedilir, bu yüzden içlerindeki dosyalar aranmaz. Öz yedek, **Diğer kaynaklar** altındaki başka bir BombVault'un yedekleri ve **Diğer sunucular** altındaki sunucuların yedekleri de aranmaz. Bir arama ilk 200 dosyayı listeler, bu yüzden `log` gibi kısa bir ad daha fazla harf gerektirebilir.
 
 ## Türe göre neler geri gelir {#kinds}
 
@@ -134,6 +135,10 @@ Yalnızca veritabanı dökümleri olan, dosya yedeği olmayan ve konteyneri ile 
     - **Duplicacy'den**: `duplicacy.json` dosyasını içeren Duplicacy Web klasörünü ya da Duplicacy komut satırıyla yedeklediğin ve `.duplicacy` içeren bir klasörü seç. Komut satırının `.duplicacy/preferences` içine kaydettiği anahtarlar da gelir. Duplicacy Web oturum açma bilgilerini şifreli saklar, bu yüzden pencere onları sorar.
 
     Önizlemeyi görmeden hiçbir şey oluşturulmaz. Her kaynak klasör, bu sunucuda bulunduğu klasörle, aktarılabilen hariç tutmalarla ve zamanlamayla bir klasör kümesi olur. Eski araç kendi konteynerinde çalıştıysa ve bir klasör bulunamadıysa, onu sen seçersin. Eski hedef yerel bir klasör, S3, SFTP, bir rclone remote'u ya da S3 adresiyle Backblaze B2 ise, yedekler yeni bir hedefe, eski hedefin içindeki `bombvault` klasörüne gider. Dosyadaki oturum açma bilgileri diğer oturum açma bilgilerinle birlikte kaydedilir, dosyada olmayanlar ise pencerede sorulur. Her işin altındaki notlar neyin aktarılmadığını söyler, örneğin dahil etme kuralları, düzenli ifadeler, yedeklerin ne kadar süre saklandığı ve BombVault'un ihtiyaç duymadığı eski şifreleme parolası.
+
+## Diğer sunucular {#other-servers}
+
+Bir [ortak depoda](offsite-recovery.md#shared-repository) her anahtar bütün sunucuların yedeklerini açar, bu yüzden Geri yükleme sayfası diğer üyeleri **Diğer sunucular** altında listeler: her birini adıyla, host'uyla, kaç ögesi olduğuyla ve en yeni yedeğinin ne zaman çalıştığıyla. Bu sunucunun tanıdığı hiçbir sunucuya ait olmayan bir host **Bu sunucunun tanımadığı bir sunucu** olarak görünür. Bir tıklama, başlığında sunucunun adı ve ardından **sunucusunun yedekleri** yazan salt okunur bir pencere açar, hiçbir şey girmen gerekmez. Klasör kümeleri ve ZFS veri kümeleri seçtiğin bir klasöre gider. Konteynerler ve VM'ler bir klasöre düz dosyalar olarak geri gelir, çünkü diğer sunucu tanımlarını kendi anahtarıyla mühürler. Bu sunucunun ortak depodaki kendi yedekleri her ögenin **Yedekler** sekmesindedir.
 
 ## Bir geri yüklemeden sonra {#after}
 

@@ -83,7 +83,8 @@ func snapshotFileNames(repo string) (string, error) {
 
 // repoAccessKey tells the credentials a listing was made with apart without
 // keeping them, so a changed password asks restic again rather than serving a
-// listing the new one might not open.
+// listing the new one might not open. The host and the part in a shared
+// repository go in too, since they decide which snapshots a listing holds.
 func repoAccessKey(mode restic.Mode) string {
 	h := sha256.New()
 	if mode.Encrypted {
@@ -94,5 +95,7 @@ func repoAccessKey(mode restic.Mode) string {
 		h.Write([]byte{0})
 		h.Write([]byte(e))
 	}
+	h.Write([]byte{2, byte(mode.Sharing)})
+	h.Write([]byte(mode.Host))
 	return hex.EncodeToString(h.Sum(nil))
 }

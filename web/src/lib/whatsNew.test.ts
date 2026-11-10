@@ -113,6 +113,14 @@ describe("what is new", () => {
     }
   });
 
+  it("leads the system junk over Add and the choice of a folder into the folder form", () => {
+    expect(PLACED.find((change) => change.id === "files-junk")?.way).toEqual(["/backups", "add-entry", "add-folder"]);
+  });
+
+  it("leads Simultaneous connections only over the rows of locations that have the setting", () => {
+    expect(PLACED.find((change) => change.id === "location-connections")?.way).toEqual(["/settings", "/settings/storage", "/storage", "network"]);
+  });
+
   it("leads Replicate now to a ZFS entry with a replica", () => {
     expect(PLACED.find((change) => change.id === "zfs-replicate-now")?.way).toEqual(["/backups", "zfs-replica"]);
   });

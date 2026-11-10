@@ -152,8 +152,15 @@ type Mode struct {
 	// the same files, and without it restic would read every file again.
 	IgnoreInode bool
 	// Host is the restic host a backup is written with, this server's own
-	// (restickey.Host). Empty writes LegacyHost.
+	// (restickey.Host). Empty writes LegacyHost. In a shared repository it is
+	// also the one host a listing or a keep policy there selects, so the owner
+	// ages a member's snapshots under a mode carrying that member's host.
 	Host string
+	// Sharing says whether other servers write to the repository too.
+	Sharing Sharing
+	// MaxUnused is the share of unused space in percent a prune may leave
+	// behind instead of repacking it. Zero leaves restic's own limit.
+	MaxUnused int
 }
 
 // backupHost is the --host a backup under m carries.
@@ -434,6 +441,9 @@ type Restic struct {
 	// high-latency backend (e.g. Backblaze B2) from re-downloading the whole
 	// destination index on every run (issue #95).
 	CacheDir string
+	// Processes, when set, counts every restic this Restic runs, so they can be
+	// ended together.
+	Processes *Processes
 }
 
 // bin returns the binary to invoke, defaulting to "restic".
@@ -989,10 +999,11 @@ func RestoreAllArgs(repo, snapshotID, target string, m Mode, excludes ...string)
 // integrity check on a received / append-only repo) the check is lock-free
 // (--no-lock) so it never writes a lock into the received repo; otherwise it
 // carries --retry-lock so the off-site DR check waits out a transient lock.
+// A member of a shared repository checks it without a lock as well.
 func CheckArgs(repo string, m Mode) []string {
 	args := repoFlag(repo, m)
-	if m.NoLock {
-		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	if m.checkWithoutLock() {
+		args = append(args, "--no-lock")
 	} else {
 		args = append(args, retryLockFlags()...)
 	}
@@ -1018,8 +1029,8 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 		subsetPercent = 100
 	}
 	args := repoFlag(repo, m)
-	if m.NoLock {
-		args = append(args, "--no-lock") // read-only receiver check must not lock the repo
+	if m.checkWithoutLock() {
+		args = append(args, "--no-lock")
 	} else {
 		args = append(args, retryLockFlags()...)
 	}
@@ -1036,12 +1047,19 @@ func CheckDataArgs(repo string, subsetPercent int, m Mode) []string {
 // would surface "repository is already locked exclusively" and make the
 // latest-backup-times / restore listing read blank). Worst case is a marginally
 // stale listing, never corruption, and the writer is never blocked (#57).
+//
+// In a shared repository it lists this server's snapshots alone, see ownHosts.
 func SnapshotsArgs(repo string, m Mode) []string {
+	return snapshotsArgs(repo, m, m.ownHosts())
+}
+
+func snapshotsArgs(repo string, m Mode, hosts []string) []string {
 	args := repoFlag(repo, m)
 	args = append(args, "snapshots")
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	args = append(args, hostFlags(hosts)...)
 	args = append(args, "--no-lock", "--json")
 	return args
 }
@@ -1063,14 +1081,19 @@ func SnapshotArgs(repo, snapshotID string, m Mode) []string {
 // restic's --mode value: "raw-data" reports the physical (deduplicated +
 // compressed) repository size and blob count; "restore-size" reports the
 // logical size and file count of the restored data. The mode is a fixed
-// caller-chosen literal, never user input.
+// caller-chosen literal, never user input. In a shared repository it counts
+// the snapshots of the mode's host alone, see ownHosts.
 func StatsArgs(repo, mode string, m Mode) []string {
+	return statsArgs(repo, mode, m, m.ownHosts())
+}
+
+func statsArgs(repo, mode string, m Mode, hosts []string) []string {
 	args := repoFlag(repo, m)
 	args = append(args, "stats", "--no-lock", "--json", "--mode", mode)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	return args
+	return append(args, hostFlags(hosts)...)
 }
 
 // StatsRestoreSizeArgs returns the argv for `restic stats --mode restore-size
@@ -1308,7 +1331,8 @@ func keepFlags(p RetentionPolicy) []string {
 // receiving snapshots is never emptied by restic's keep-*. Several tags are a
 // renamed entry's old and new names. restic matches a snapshot carrying any of
 // several --tag flags, whereas a comma inside one --tag would require all of
-// them and match nothing.
+// them and match nothing. In a shared repository the group is also narrowed to
+// the mode's host, so two servers' snapshots of one entry age apart.
 //
 // prune controls --prune: per-item passes over the same repo forget without
 // prune and reclaim space once at the end (prune is the expensive part).
@@ -1328,6 +1352,7 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 		for _, t := range tags {
 			args = append(args, "--tag", t)
 		}
+		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		// Repo-wide pass: group by paths only, not restic's default host+paths,
@@ -1376,6 +1401,7 @@ func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) [
 		}
 	}
 	if selected {
+		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		args = append(args, "--group-by", "paths")
@@ -1411,7 +1437,7 @@ func PruneArgs(repo string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	return args
+	return append(args, maxUnusedFlags(m.MaxUnused)...)
 }
 
 // CacheCleanupArgs returns the argv slice for `restic cache --cleanup`, which
@@ -1533,8 +1559,8 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 	if err := checkRepoArgs(args); err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	env := r.authEnv(m)
 	if m.Root != "" {
 		// The working directory is resolved inside the new root, where the
@@ -1845,8 +1871,8 @@ func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, o
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	err := streamLines(cmd, args, func(line []byte) {
 		line = bytes.TrimSpace(line)
@@ -2765,8 +2791,8 @@ func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m M
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	// A client disconnect / user cancel of the download cancels ctx and kills the
 	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
@@ -2788,8 +2814,8 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 	if err := checkRepoArgs(args); err != nil {
 		return Summary{}, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	start := time.Now()
 	out, err := runWithStdin(cmd, args, rd)
@@ -2843,8 +2869,8 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 	if err := checkRepoArgs(args); err != nil {
 		return Summary{}, nil, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; the command is this binary with validated flags
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	// restic emits periodic --json status only to a TTY or with this set, and
 	// the stall guard needs those lines to see a dump that stopped moving.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
@@ -2894,8 +2920,8 @@ func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated by caller against the repo, path is an internal value
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	return ctxCancelErr(ctx, args, runToWriter(cmd, args, w))
 }
@@ -2942,8 +2968,8 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	env := r.authEnv(m)
 	// authEnv has already put the DESTINATION's password in RESTIC_PASSWORD.
 	// This is the source's, and it is a different secret whenever the source is
@@ -3000,7 +3026,11 @@ func (r Restic) RestoreSubtreeInclude(ctx context.Context, repo, snapshotID, sub
 
 // Snapshots lists snapshots in the repository and returns them as a slice.
 func (r Restic) Snapshots(ctx context.Context, repo string, m Mode) ([]Snapshot, error) {
-	out, err := r.run(ctx, SnapshotsArgs(repo, m), m)
+	return r.snapshots(ctx, SnapshotsArgs(repo, m), m)
+}
+
+func (r Restic) snapshots(ctx context.Context, args []string, m Mode) ([]Snapshot, error) {
+	out, err := r.run(ctx, args, m)
 	if err != nil {
 		return nil, err
 	}
@@ -3051,7 +3081,11 @@ func parseSnapshotParent(out []byte) (string, error) {
 // restic stats --json emits a single JSON object, so it is parsed in one shot
 // (the buffered run, like Snapshots — not the streaming progress path).
 func (r Restic) Stats(ctx context.Context, repo, mode string, m Mode) (StatsResult, error) {
-	out, err := r.run(ctx, StatsArgs(repo, mode, m), m)
+	return r.stats(ctx, StatsArgs(repo, mode, m), m)
+}
+
+func (r Restic) stats(ctx context.Context, args []string, m Mode) (StatsResult, error) {
+	out, err := r.run(ctx, args, m)
 	if err != nil {
 		return StatsResult{}, err
 	}
@@ -3144,6 +3178,9 @@ func (r Restic) RestoreInclude(ctx context.Context, repo, snapshotID, includePat
 // Forget removes the given snapshots from the repo, optionally pruning the freed
 // data. A nil/empty ID list is a no-op (nothing to forget).
 func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, m Mode) error {
+	if err := m.refuseMemberPrune(); err != nil {
+		return err
+	}
 	if len(snapshotIDs) == 0 {
 		return nil
 	}
@@ -3176,6 +3213,9 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	if !p.Any() {
 		return nil
 	}
+	if err := errors.Join(m.refuseMemberPrune(), m.refuseRepoWide(tags)); err != nil {
+		return err
+	}
 	return r.runCounted(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
 }
 
@@ -3192,6 +3232,9 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 	if !p.Any() {
 		return nil, nil
 	}
+	if err := m.refuseRepoWide(tags); err != nil {
+		return nil, err
+	}
 	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tags...), m)
 	if err != nil {
 		return nil, err
@@ -3204,12 +3247,16 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 // BombVault on this host left behind (see orphanLock). A lock that is still
 // refreshed stays, because another install may write to the same repository.
 // removeAll reports such a lock with ErrLockHeld instead of passing over it.
+// In a shared repository only the owner removes locks, and only by age.
 func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode) error {
 	return r.clearLocks(ctx, repo, removeAll, m, processStart, time.Now())
 }
 
 // Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
 func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
+	if err := m.refuseMemberPrune(); err != nil {
+		return err
+	}
 	return r.runCounted(ctx, PruneArgs(repo, m), m)
 }
 
@@ -3226,8 +3273,8 @@ func (r Restic) runCounted(ctx context.Context, args []string, m Mode) error {
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	// restic prints its counters on a pipe only when told how often to.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=1")
 	_, err := scanLines(cmd, args, func(line []byte) {

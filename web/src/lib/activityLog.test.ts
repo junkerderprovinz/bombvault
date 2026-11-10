@@ -121,6 +121,18 @@ describe("buildLogLines", () => {
     expect(run(null)).toContain("activityLog.lineOffsiteSuccess");
   });
 
+  it("says an off-site copy waited for the owner of a shared repository instead of calling it current", () => {
+    const [line] = buildLogLines(
+      [makeRun({ kind: "offsite", targetId: "containers", target: "", domain: "", status: "deferred", copied: 0 })],
+      {},
+      [],
+      resolveName,
+      2_000_000,
+    );
+    expect(line.text).toBe("activityLog.lineOffsiteDeferred domain=activityLog.domainContainers");
+    expect(line.warn).toBe(true);
+  });
+
   it("keeps earlier backups of an item while it is backed up again", () => {
     const yesterday = makeRun({ id: "r-old", finishedAt: 900 });
     const running = makeRun({ id: "r-now", status: "running", startedAt: 5_000, finishedAt: null });

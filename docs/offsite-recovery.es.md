@@ -318,6 +318,8 @@ Algunos lugares no pueden rechazar un borrado en absoluto, por ejemplo una unida
 
 La forma más rápida de conseguir una copia append-only es un BombVault emparejado con un [servidor receptor](#receiving-server): ejecuta el rest-server por ti, en modo append-only.
 
+En un [repositorio compartido](#shared-repository) esto vale para los miembros y no para el servidor que lo aloja. Ese servidor llega a la carpeta directamente y allí descarta copias y poda.
+
 !!! note "Un borrado correcto bajo `/locks/` es lo esperado"
     Append-only no significa que nunca se pueda quitar nada. restic tiene que tomar y liberar sus propios bloqueos, así que `/locks/` sigue siendo escribible y borrable por diseño. Las instantáneas y los datos que hay detrás, que es lo que perseguiría el ransomware, no se pueden quitar. Si pruebas tú mismo el otro lado, un borrado que tiene éxito bajo `/locks/` es el comportamiento correcto y no un agujero en la protección.
 
@@ -391,6 +393,8 @@ Activar un rol envía una solicitud, y no empieza nada hasta que alguien de la o
 
 **Detalles** en una tarjeta abre el resto: los repositorios recibidos y las fuentes de recogida de ese miembro, ofertas de almacenamiento, supervisión, **Eliminar** y **Olvidar la clave**.
 
+Debajo de las tarjetas, la tarjeta **Repositorio compartido** en un equipo con servidor receptor y la tarjeta **Repositorios compartidos** en un miembro pertenecen al [repositorio compartido](#shared-repository).
+
 Un miembro puede ofrecer su propio almacenamiento externo a otro miembro por el grupo. El otro administrador ve la oferta en los **Detalles** del miembro y la acepta o la rechaza. Aceptar crea unas credenciales guardadas y un destino normal, tras las mismas comprobaciones que un destino que escribes tú. El destino llega con la protección contra borrado activada, porque la receta que muestra la oferta es un rest-server append-only, así que **Cuánto tiempo conservar** no se aplica ahí. Cada oferta tiene sus propios datos de acceso y su propia carpeta, así que ofrecer una sección de nuevo, al mismo miembro o a otro, deja en paz las copias del primer socio: añade la nueva línea a `.htpasswd` y mantén el servidor en marcha. Por este camino viajan solo los datos de conexión, nunca datos de copias. **Comprobar ahora** pide a un miembro que verifique el repositorio de una sección. Nada en la página puede iniciar una copia, una restauración ni borrar nada en otro equipo.
 
 Las instancias apagadas y los teléfonos con la app cerrada conservan su tarjeta como **Inactiva**, en gris, con cuándo se vieron por última vez, y aparecen atenuadas en la red hasta que las **Eliminas**. Justo después de arrancar este servidor, una tarjeta así dice **Comprobando** hasta que el grupo vuelve. **Eliminar** funciona en una tarjeta así tenga las partes que tenga activadas, y además termina las solicitudes abiertas del miembro, sus ranuras de recepción ZFS inactivas y sus solicitudes de clave en espera. La tarjeta **Instancias** de la página de emparejamiento también lista estos miembros como **Inactiva**.
@@ -425,6 +429,91 @@ El equipo receptor también puede ejecutar el rest-server al que copian los dem�
 Las instancias de tu grupo encuentran entonces el servidor entre los proveedores en **De tu grupo**, con el nombre del equipo receptor, y el rol **Receptor** lo ofrece como la opción segura. Cada instancia recibe un acceso propio la primera vez que usa el servidor, y escribe solo en su propia carpeta allí. Con **Receptor** activado en **Ajustes, Instancias**, **Servidor receptor** en la tarjeta de esta instancia vuelve a abrir el servidor. Su ventana lista los accesos en **Socios con acceso**, y **Revocar acceso** quita uno. Lo que esa instancia ya copió se queda en la carpeta. La configuración también crea un **Acceso fuera del grupo**, cuya contraseña la ventana muestra una vez.
 
 Una instancia que llega al equipo receptor solo a través del repetidor no puede usar el servidor, porque el repetidor no transporta copias. Añade antes la dirección del equipo receptor en la página de emparejamiento. Cuando BombVault se ejecuta en una dirección IP propia (en br0, por ejemplo), rellena **Dirección para socios**, porque el servidor escucha en la dirección del host.
+
+Un equipo receptor también puede alojar un [repositorio compartido](#shared-repository) para el grupo.
+
+## Repositorio compartido {#shared-repository}
+
+Varios servidores de un grupo pueden copiar juntos en un mismo repositorio de restic. Los datos que tienen en común, como el mismo conjunto de carpetas o los mismos appdata, se guardan allí una sola vez, así que juntos necesitan menos espacio que con un repositorio cada uno.
+
+Un servidor del grupo aloja el repositorio: es el anfitrión, y el único que descarta allí las copias antiguas y poda. Los demás son miembros: llegan al repositorio a través de un segundo rest-server en modo append-only y solo pueden añadir. Cada servidor escribe bajo un [host propio](#backup-host), así que las copias quedan separadas aunque dos servidores tengan un elemento con el mismo nombre.
+
+Qué necesita:
+
+- un [grupo de emparejamiento](#pairing),
+- **Cifrar las copias** activado, en el anfitrión y en cada miembro, porque cada servidor recibe una clave de restic propia,
+- un [servidor receptor](#receiving-server) en el anfitrión al que puedan llegar los miembros. Cuando BombVault se ejecuta en una dirección IP propia, rellena antes **Dirección para los socios** en la ventana del servidor receptor.
+
+Un servidor aloja como mucho un repositorio compartido.
+
+### Configurarlo {#shared-set-up}
+
+En cuanto el servidor receptor está en marcha, la página **Instancias** de su equipo tiene una tarjeta **Repositorio compartido** debajo de las instancias. Pulsa **Configurar repositorio compartido**, elige una **Carpeta para el repositorio compartido** en un recurso compartido con mucho espacio, deja el **Puerto** en 8001 salvo que lo use otro contenedor y pulsa **Configurar y arrancar**. BombVault entonces:
+
+1. se niega si ya existe un contenedor llamado `rest-server-shared` o si otro contenedor tiene el puerto,
+2. crea el repositorio en una carpeta `shared` dentro de ella, con la contraseña de este servidor,
+3. inicia `restic/rest-server` como `rest-server-shared`, en modo append-only con un archivo de acceso en la carpeta,
+4. en Unraid escribe su plantilla en la unidad flash, para que el contenedor siga siendo editable en la pestaña Docker,
+5. ejecuta la prueba de manipulación contra él. **Comprobar de nuevo** en la tarjeta la repite.
+
+La tarjeta lista los **Miembros**, cada uno con sus claves y su última copia, las peticiones para unirse y **Quitar** para cada miembro.
+
+### Unirse {#shared-join}
+
+En el servidor que quiere unirse, abre **Añadir destino**. En **De tu grupo** el anfitrión aparece una segunda vez, como **Repositorio compartido en** y su nombre. Elegirlo envía una petición al anfitrión, donde aparece en la tarjeta **Repositorio compartido** con **Permitir** y **Rechazar**.
+
+Tras **Permitir**, el anfitrión entrega por el grupo una clave de un solo uso y un acceso a su segundo rest-server. Con ella el miembro añade una clave de restic propia, y después el anfitrión quita la clave de un solo uso. Un miembro que no ha terminado en un día vuelve a perder la clave de un solo uso y el acceso, y puede pedirlo otra vez. Cuando el anfitrión no pudo hacer llegar su respuesta al miembro, la tarjeta ofrece **Avisar de nuevo**.
+
+El anfitrión rechaza un servidor mientras este todavía no escriba bajo un host propio, lo que significa que ejecuta una versión anterior, y cuando otro miembro ya escribe bajo el mismo host. Dos servidores comparten host cuando comparten una `APP_KEY`.
+
+En cuanto el miembro está dentro, aparece en **Destinos** un destino llamado **Shared with** y el nombre del anfitrión, con todas las secciones desactivadas. Activa en la página del destino las secciones que deben copiar allí. El destino tiene protección contra borrado y ninguna regla de conservación propia, porque allí solo descarta copias el anfitrión. Solo van allí las copias bajo el host propio del miembro, así que las copias antiguas bajo el host `bombvault` se quedan donde están.
+
+El anfitrión también puede copiar allí sus propias copias: **Guardar aquí también las copias de este servidor** en su tarjeta añade el destino también en él. Para el anfitrión esa copia está en sus propios discos y nada le impide borrar allí, así que no es una copia externa.
+
+### Quién limpia, y cuándo {#shared-upkeep}
+
+Solo el anfitrión descarta y poda. Sus ajustes están en la parte **Repositorio compartido** de la ventana **Servidor receptor**, que se abre desde la tarjeta del propio anfitrión en la página Instancias:
+
+- **Franja de limpieza** fija cuándo se ejecuta la poda, a diario o cada semana. Mientras no la cambies, empieza los domingos a las 03:00, y **Duración de la franja en horas** es 6.
+- **Espacio sin usar que puede dejar una poda, en %** es 5 salvo que lo cambies. Un valor más alto reempaqueta menos, así que la poda termina antes.
+- **Datos que se vuelven a leer tras una poda, en %** es 5 salvo que lo cambies. Tras cada poda el anfitrión comprueba el repositorio y vuelve a leer esa parte de los datos.
+- **Cuánto tiempo conservar** sigue las reglas externas del anfitrión para cada sección, y **Poner una regla propia** le da al repositorio compartido la suya. Las copias de cada servidor envejecen por su cuenta.
+- **Limpiar ahora** descarta, poda y comprueba en el momento, después de avisar a los miembros.
+
+Fuera de la franja el anfitrión descarta una vez al día, y el espacio vuelve con la siguiente poda. Antes de una poda avisa a los miembros, y estos no copian nada en el repositorio hasta que se cierra la franja. Un miembro que todavía está copiando tiene hasta media hora para terminar, si no la poda pasa a la siguiente franja. Una copia que cae dentro de la franja espera, aparece como aplazada en el registro de actividad y en la tarjeta del miembro, y la siguiente pasada se pone al día.
+
+Cuando el anfitrión tiene dudas, conserva más. Un elemento que un miembro retiene por una [anomalía](anomalies.md) conserva todas sus copias, un miembro que no puede decir qué retiene conserva esa vez todas sus copias, y las copias bajo un host con el que no escribe ningún servidor del grupo nunca se descartan. La ventana también muestra el espacio: lo que ocupa el repositorio, lo que necesitarían los servidores por separado y lo que se ahorra. Las cifras llegan con cada limpieza.
+
+### Qué ven los miembros {#shared-members}
+
+En un miembro, la página Instancias tiene una tarjeta **Repositorios compartidos** con cada repositorio compartido en el que copia el servidor o al que ha pedido unirse, y en qué punto está su petición: **Esperando un sí**, **Uniéndose**, **Dentro**, **Rechazado**, **Caducado** o **No es miembro**. Para un repositorio del que forma parte, la tarjeta muestra **Quién poda**, **Próxima limpieza**, **Junto con** para los demás miembros, **Última copia aquí**, y cuánto espacio ocupa y ahorra el repositorio.
+
+### Salir {#shared-leave}
+
+**Salir** en la tarjeta del miembro saca al servidor: el anfitrión quita su clave y su acceso, y su destino allí se desactiva. **Quitar** en la tarjeta del anfitrión saca a un miembro desde el otro lado. En ambos casos las copias del servidor se quedan en el repositorio y envejecen según las reglas del anfitrión. En el anfitrión aparecen en **Servidores que se fueron**, donde **Descartar copias** las descarta todas cuando escribes el nombre del servidor. La siguiente franja de limpieza devuelve el espacio.
+
+### Las copias de otros servidores {#shared-restore}
+
+Cada servidor encuentra sus propias copias del repositorio compartido en la pestaña **Copias de seguridad** de sus elementos, como cualquier otra copia. Las copias de los demás miembros están en la página Restauración, en [Otros servidores](restore.md#other-servers).
+
+### Tras una emergencia {#shared-emergency}
+
+El [kit de recuperación](#recovery-kit) tiene un capítulo **Shared repositories**. Nombra cada repositorio compartido con su anfitrión, las secciones que copian allí, los demás miembros con sus hosts y un comando `restic snapshots` con el host de este servidor. El kit del anfitrión nombra además el puerto, la carpeta y el acceso de su rest-server.
+
+En el Asistente de emergencia el repositorio aparece entre los lugares como **Repositorio compartido en** y el nombre del anfitrión. Una instalación nueva que adopta la clave de un miembro escribe bajo el mismo host, porque el host sale de la clave. Recupera su destino en el repositorio compartido y allí solo lista y restaura sus propias copias.
+
+Una instalación nueva que adopta la clave del anfitrión aloja el repositorio en su lugar. Lo hace envejecer y lo limpia como antes, y vuelve a iniciar el rest-server sobre la misma carpeta. Vuelve a emparejarla con el grupo, configura su servidor receptor en **Instancias** y pon de nuevo las reglas en la ventana del servidor receptor, porque no están en el kit. En cuanto el grupo llega a los miembros, el nuevo anfitrión se lo dice él mismo. Cada miembro comprueba primero: añade al repositorio una clave de prueba que solo puede quitar un servidor con acceso a la carpeta del repositorio, y sigue al nuevo anfitrión en cuanto esa clave ha desaparecido. Si el nuevo anfitrión responde en otra dirección, cada miembro hace allí esta comprobación con su propia clave y su propio acceso, se asegura de que encuentra el mismo repositorio y solo entonces pasa sus destinos a la nueva dirección. Hasta entonces sigue copiando a la dirección antigua, y su tarjeta dice por qué. El anfitrión quita en su siguiente limpieza las claves que hayan quedado de esas comprobaciones.
+
+Si el anfitrión antiguo sigue en marcha, su tarjeta dice que ahora el repositorio lo aloja el otro servidor. **Recuperarlo** lo vuelve a hacer anfitrión, para cuando se adoptó un kit por error en un segundo servidor.
+
+### Límites {#shared-limits}
+
+- **Cada clave lo lee todo.** Todas las claves de un repositorio de restic abren la misma clave maestra, así que cada miembro puede leer las copias de los demás. Las definiciones de contenedores y VMs siguen selladas con la clave propia de cada servidor, así que los contenedores y VMs de otro servidor vuelven solo como archivos. Un servidor que tuvo acceso alguna vez pudo leer la clave maestra, así que quitarlo no lo deja fuera para siempre. Solo un repositorio nuevo lo consigue.
+- **El anfitrión puede borrar.** Ningún miembro puede borrar nada allí, pero el anfitrión llega a la carpeta directamente y descarta y poda las copias de todos los miembros. Un error o una toma de control en el anfitrión les afecta a todos.
+- **Un daño alcanza a todos los servidores.** Un pack roto les falta a todos los servidores cuyas copias lo usan, así que un repositorio compartido no sustituye a una segunda copia.
+- **Solo en un servidor receptor.** S3, SFTP y otros lugares no pueden limitar a un miembro a añadir, así que BombVault solo ofrece un repositorio compartido en un servidor receptor.
+- **Solo como destino de copia.** La carpeta propia de una sección no puede estar en un repositorio compartido, porque cada poda frenaría las copias de todos los servidores.
+- **El historial anterior se queda donde está.** Solo entran las copias bajo el host propio de cada servidor, y no se traslada nada desde otros repositorios.
 
 ## Ejemplo: emparejar dos equipos Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ El **Asistente de emergencia** recupera un servidor que ha desaparecido o se vol
 2. **Ajustes.** **Recuperar ajustes** restaura los ajustes propios de BombVault desde la autocopia más reciente: destinos, credenciales, calendarios y reglas. BombVault se reinicia para aplicarlos, a través del socket de Docker, de modo que la base de datos de ajustes en uso nunca se sobrescribe con un descriptor abierto, y el asistente continúa por sí solo después. El inicio de sesión de este servidor se conserva: sigues iniciando sesión con la contraseña que usas ahora. Los secretos que el servidor antiguo tenía guardados y que no se pueden adoptar se listan, para que puedas introducirlos de nuevo. La restauración termina todas las sesiones y elimina las claves de acceso, así que vuelve a configurarlas después.
 3. **Selección.** BombVault examina tus copias y lista los contenedores, VMs, conjuntos de carpetas y conjuntos de datos ZFS que encuentra. La instantánea más reciente viene preseleccionada en todas partes. Lo que este servidor aún tiene empieza desactivado, porque una restauración lo reemplazaría. Los conjuntos de carpetas ya no saben de dónde venían tras una reconstrucción, así que van a una carpeta que eliges.
 4. **Restauración.** Todo lo seleccionado vuelve de una vez, dejado detenido si quieres iniciar tú cada contenedor y VM, lo más seguro tras una pérdida total. Después descarga un kit de recuperación nuevo: el antiguo pertenece a la instalación anterior.
+
+Un repositorio compartido del kit aparece entre los lugares como **Repositorio compartido en** y el nombre del servidor que lo aloja, y el asistente solo lista allí las copias propias de este servidor. Consulta [Tras una emergencia](#shared-emergency).
 
 ![El Asistente de emergencia en su primer paso, con las tres formas de entrar.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![El Asistente de emergencia en su primer paso, con las tres formas de entrar.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Esta es la pieza que hace posible la recuperación ante desastres incluso cuando
 
 ### El host de las copias de un servidor {#backup-host}
 
-Cada servidor escribe sus copias bajo un host de restic propio: `bv-` y doce caracteres calculados a partir de la clave de las copias, como `bv-3f9a0c41d2e7`. Las copias de antes de que un servidor tuviera uno llevan el host `bombvault`. El kit nombra el host de este servidor, y sus comandos pasan ambos con `--host`, así que `latest` nunca elige una copia que otro servidor escribió en el mismo repositorio. Un servidor que adopta las copias de otro sigue bajo el host de ese servidor, porque el host sale de la clave.
+Cada servidor escribe sus copias bajo un host de restic propio: `bv-` y doce caracteres calculados a partir de la clave de las copias, como `bv-3f9a0c41d2e7`. Las copias de antes de que un servidor tuviera uno llevan el host `bombvault`. El kit nombra el host de este servidor, y sus comandos pasan ambos con `--host`, así que `latest` nunca elige una copia que otro servidor escribió en el mismo repositorio. Un servidor que adopta las copias de otro sigue bajo el host de ese servidor, porque el host sale de la clave. Para cada [repositorio compartido](#shared-repository) en el que copia o que aloja el servidor, el capítulo **Shared repositories** del kit nombra a los demás servidores de allí con sus hosts.
 
 ### Sellar el kit {#sealing-the-kit}
 

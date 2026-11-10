@@ -74,6 +74,7 @@ BombVault 功能的简短目录。每一行都链接到讲解它的页面。
 - **用十二个单词配对**，端到端加密，直接连接或通过中继。[配对实例](offsite-recovery.md#pairing)
 - **实例页面**，把组画成一张网，带**接收端**、**拉取端**、**ZFS 服务器**和**密钥保管端**这几个角色。[实例和角色](offsite-recovery.md#roles)
 - 为你**设置好的接收服务器**，处于 append-only 模式。[接收服务器](offsite-recovery.md#receiving-server)
+- 多台服务器一起复制进去的**共享仓库**，它们共有的内容只存一份。只有保存它的服务器会清理。[共享仓库](offsite-recovery.md#shared-repository)
 
 ## AI 助手 (MCP) {#mcp}
 

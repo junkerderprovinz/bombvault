@@ -74,6 +74,7 @@ Một danh mục ngắn về những gì BombVault làm. Mỗi dòng liên kết
 - **Ghép nối bằng mười hai từ**, mã hóa đầu cuối, trực tiếp hoặc qua relay. [Ghép nối các phiên bản](offsite-recovery.md#pairing)
 - **Trang Phiên bản** với nhóm hiển thị như một mạng và các vai trò **Bộ nhận**, **Bên kéo**, **Máy chủ ZFS** và **Bên giữ khóa**. [Phiên bản và vai trò](offsite-recovery.md#roles)
 - **Một máy chủ nhận** được thiết lập sẵn cho bạn, ở chế độ append-only. [Máy chủ nhận](offsite-recovery.md#receiving-server)
+- **Một kho chung** mà nhiều máy chủ cùng sao chép vào, nên phần chúng có chung chỉ được lưu một lần. Chỉ máy chủ giữ kho mới dọn bớt. [Kho chung](offsite-recovery.md#shared-repository)
 
 ## Trợ lý AI (MCP) {#mcp}
 

@@ -74,6 +74,7 @@ Lyhyt luettelo siitä, mitä BombVault tekee. Jokainen rivi linkittää sivulle,
 - **Pariliitos kahdellatoista sanalla**, päästä päähän salattu, suoraan tai releen kautta. [Ilmentymien pariliitos](offsite-recovery.md#pairing)
 - **Ilmentymät-sivu**, jolla ryhmä näkyy verkkona, ja roolit **Vastaanotin**, **Noutaja**, **ZFS-palvelin** ja **Säilyttäjä**. [Ilmentymät ja roolit](offsite-recovery.md#roles)
 - **Vastaanottava palvelin** valmiiksi asetettuna, append-only-tilassa. [Vastaanottava palvelin](offsite-recovery.md#receiving-server)
+- **Jaettu arkisto**, johon useampi palvelin kopioi, joten niiden yhteinen data tallennetaan vain kerran. Vain arkiston omistava palvelin karsii. [Jaettu arkisto](offsite-recovery.md#shared-repository)
 
 ## Tekoälyavustajat (MCP) {#mcp}
 

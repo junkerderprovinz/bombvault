@@ -74,6 +74,7 @@ Stručný katalog toho, co BombVault umí. Každý řádek odkazuje na stránku,
 - **Párování dvanácti slovy**, šifrované od konce ke konci, přímo nebo přes relay. [Párování instancí](offsite-recovery.md#pairing)
 - **Stránka Instance** se skupinou jako sítí a rolemi **Přijímač**, **Stahovač**, **Server ZFS** a **Strážce klíče**. [Instance a role](offsite-recovery.md#roles)
 - **Přijímací server** nastavený za tebe, v režimu append-only. [Přijímací server](offsite-recovery.md#receiving-server)
+- **Sdílený repozitář**, do kterého kopíruje několik serverů, takže to, co mají společné, se uloží jen jednou. Čistí ho jen server, který je jeho vlastníkem. [Sdílený repozitář](offsite-recovery.md#shared-repository)
 
 ## Asistenti AI (MCP) {#mcp}
 

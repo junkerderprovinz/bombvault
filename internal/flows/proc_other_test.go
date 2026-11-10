@@ -10,3 +10,5 @@ import (
 func ownGroup(*exec.Cmd) {}
 
 func endGroup(*os.Process) {}
+
+func endStragglers(string, *os.Process) []string { return nil }

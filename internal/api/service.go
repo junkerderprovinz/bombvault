@@ -142,6 +142,9 @@ type ResticEngine interface {
 	// links. The export of a stored backup writes it into an archive file.
 	DumpTar(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	// SnapshotsOfEveryHost lists a shared repository across the snapshots of
+	// every server in it, for its owner's upkeep.
+	SnapshotsOfEveryHost(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	// SnapshotsMeta lists the same snapshots with the counters restic stores on
 	// them. It is separate from Snapshots so the listings the SPA receives keep
 	// the keys they have.
@@ -223,6 +226,9 @@ type ResticEngine interface {
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
 	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
+	// StatsOfEveryHost measures a shared repository as a whole, where Stats
+	// counts the snapshots of the mode's host alone.
+	StatsOfEveryHost(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
 	// StatsRestoreSize returns the logical restore size and file count of one
 	// snapshot (`restic stats --mode restore-size`). Restores use it to check free
 	// space before they write.
@@ -293,9 +299,31 @@ type Service struct {
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
+	// sharedCopies keeps copies to shared repositories out of their owners'
+	// prunes, and sharedUpkeep lets one upkeep of them run at a time.
+	sharedCopies sharedCopies
+	sharedUpkeep upkeepTurn
 	// roleSendMu lets one call about this instance's own role requests go
 	// out at a time, so a withdrawal cannot overtake the ask it takes back.
 	roleSendMu sync.Mutex
+	// sharedMu keeps a join, its completion and a member's removal in a shared
+	// repository from running into each other.
+	sharedMu sync.Mutex
+	// sharedRefreshedAt is when this instance last asked the owners about its
+	// unfinished joins, in Unix nanoseconds.
+	sharedRefreshedAt atomic.Int64
+	// sharedHolderToldAt is when this instance last told the others of a
+	// shared repository it holds now.
+	sharedHolderToldAt atomic.Int64
+	// holderChecks holds, per shared repository and server that said it holds
+	// the repository now, the key that server has to remove first.
+	holderChecks sync.Map
+	// sharedMoves holds, per shared repository, the new address a holder
+	// named that this server did not follow, as a sharedMoveView.
+	sharedMoves sync.Map
+	// sharedProofsClearedAt is when this instance last removed keys of checks
+	// that were left in the shared repositories it holds.
+	sharedProofsClearedAt atomic.Int64
 	// roleRefreshedAt is when this instance last asked its members where its
 	// own role requests stand, in Unix nanoseconds.
 	roleRefreshedAt atomic.Int64
@@ -2401,6 +2429,7 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // provider's default.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
 	mode := s.withRowBackend(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
+	mode.Sharing = s.sharingAt(target.Repo)
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
@@ -4172,7 +4201,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			drillPeriod:       drillPeriod,
 		}
 		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
-			in.copyFailed = run.FinishedAt != 0 && !run.OK
+			in.copyFailed = run.FinishedAt != 0 && !run.OK && !run.Deferred
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		riskAccepted := s.deleteRiskAccepted(d.name, settings)
@@ -4879,12 +4908,18 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// nothing new says so. A copy that could not tell leaves it unknown.
 	var sent int
 	known := true
+	// waits are the targets whose copy waited for the owner of a shared
+	// repository. The pass then copied what it could, but is not current.
+	var waits []error
 	defer func() {
 		if activityRunID == "" {
 			return
 		}
-		status := "failed"
-		if ok {
+		status, why := "failed", err
+		switch {
+		case ok && len(waits) > 0:
+			status, why = backup.StatusDeferred, errors.Join(waits...)
+		case ok:
 			status = "success"
 		}
 		if ok && known {
@@ -4892,7 +4927,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				log.Printf("api: offsite %s: could not note what the run copied: %v", domain, cErr) //nolint:gosec // G706: domain is a fixed literal
 			}
 		}
-		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
+		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(why)); fErr != nil {
 			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -5039,6 +5074,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			known = false
 		}
 		sent += max(n, 0)
+		if errors.Is(cerr, errCopyDeferred) {
+			waits = append(waits, cerr)
+			continue
+		}
 		if cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
@@ -5106,6 +5145,12 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		if runID == 0 {
 			return
 		}
+		if errors.Is(err, errCopyDeferred) {
+			if dErr := s.store.DeferOffsiteRun(runID, truncateRunErr(err)); dErr != nil {
+				log.Printf("api: offsite %s: could not finish the deferred replication run: %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+			return
+		}
 		// Marked before the row turns green, so no reader sees a success that
 		// counts for the currency and is none.
 		if agingOnly {
@@ -5148,6 +5193,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	}
 	visit.unreachable = len(unreachableSkips(skipped)) > 0
 	out := s.copySources(ctx, settings, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
+	if out.deferred {
+		err = fmt.Errorf("%s: %w", placementTargetName(target), errCopyDeferred)
+		return 0, err
+	}
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	sent = len(out.landed)
 	if out.uncertain {
@@ -20729,6 +20778,8 @@ func (s *Service) RecoveryKit() (string, error) {
 		}
 		w("\n")
 	}
+
+	s.sharedKitSection(w, settings, key)
 
 	// BombVault's own settings backup (the "config" self-backup domain). This repo is
 	// the single bootstrap seed a rebuilt box needs: restore it FIRST to bring

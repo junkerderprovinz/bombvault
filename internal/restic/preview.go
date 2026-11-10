@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -108,8 +107,8 @@ func (r Restic) runRestore(ctx context.Context, args []string, target string, m 
 func (r Restic) unwrittenFiles(ctx context.Context, args []string, target string, m Mode) (int, error) {
 	at := slices.Index(args, "restore") + 1
 	dry := slices.Insert(slices.Clone(args), at, "--dry-run", "--no-lock", "--verbose=2")
-	cmd := exec.CommandContext(ctx, r.bin(), dry...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, dry...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	unwritten := 0
 	err := streamLines(cmd, dry, func(line []byte) {
@@ -137,8 +136,8 @@ func (r Restic) preview(ctx context.Context, repo string, st PreviewStep, m Mode
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	// restic names a deleted item by its path on disk, and reports what a
 	// deleted directory holds just before the directory itself, deepest first.

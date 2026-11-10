@@ -318,6 +318,8 @@ Manche Orte können ein Löschen gar nicht verweigern, ein Cloud-Laufwerk wie On
 
 Der schnellste Weg zu einer Append-only-Kopie ist ein gekoppeltes BombVault mit einem [Empfangsserver](#receiving-server): Es betreibt den rest-server für dich, im Append-only-Modus.
 
+In einem [gemeinsamen Repository](#shared-repository) gilt das für die Mitglieder, aber nicht für den Server, dem es gehört. Dieser Server erreicht den Ordner direkt, vergisst dort Sicherungen und räumt auf.
+
 !!! note "Ein erfolgreiches Löschen unter `/locks/` ist zu erwarten"
     Append-only heißt nicht, dass nie etwas entfernt werden kann. restic muss seine eigenen Sperren nehmen und freigeben, daher bleibt `/locks/` absichtlich beschreibbar und löschbar. Snapshots und die Daten dahinter, worauf Ransomware es abgesehen hätte, lassen sich nicht entfernen. Wenn du die Gegenseite selbst prüfst, ist ein Löschen, das unter `/locks/` gelingt, korrektes Verhalten und keine Lücke im Schutz.
 
@@ -391,6 +393,8 @@ Das Einschalten einer Rolle sendet eine Anfrage, und nichts startet, bis jemand 
 
 **Details** auf einer Karte öffnet den Rest: die empfangenen Repositories und Pull-Quellen dieses Mitglieds, Speicherangebote, Überwachung, **Entfernen** und **Schlüssel vergessen**.
 
+Unter den Karten gehören die Karte **Gemeinsames Repository** auf einer Box mit Empfangsserver und die Karte **Gemeinsame Repositories** auf einem Mitglied zum [gemeinsamen Repository](#shared-repository).
+
 Ein Mitglied kann einem anderen Mitglied über die Gruppe seinen eigenen Off-site-Speicher anbieten. Der andere Admin sieht das Angebot in den **Details** des Mitglieds und nimmt es an oder lehnt es ab. Annehmen legt gespeicherte Zugangsdaten und einen gewöhnlichen Speicherort an, nach denselben Prüfungen wie bei einem Ort, den du eintippst. Der Speicherort kommt mit eingeschaltetem Löschschutz, denn das Rezept, das das Angebot zeigt, ist ein append-only rest-server, darum gilt **Wie lange aufheben** dort nicht. Jedes Angebot hat ein eigenes Login und einen eigenen Ordner. Bietest du einen Bereich erneut an, demselben oder einem anderen Mitglied, bleiben die Kopien des ersten Partners also unberührt: Füge die neue Zeile zu `.htpasswd` hinzu und lass den Server laufen. Auf diesem Weg reisen nur Verbindungsdaten, nie Sicherungsdaten. **Jetzt prüfen** bittet ein Mitglied, das Repository eines Bereichs zu prüfen. Nichts auf der Seite kann auf einer anderen Box eine Sicherung, Wiederherstellung oder ein Löschen starten.
 
 Instanzen, die heruntergefahren sind, und Handys mit geschlossener App behalten ihre Karte als **Inaktiv**, in Grau, mit dem Zeitpunkt, zu dem sie zuletzt gesehen wurden, und stehen gedimmt im Netz, bis du sie **Entfernen**. Direkt nach dem Start dieses Servers sagt so eine Karte **Wird geprüft**, bis die Gruppe wieder da ist. **Entfernen** funktioniert auf so einer Karte, egal welche Teile eingeschaltet sind, und beendet auch die offenen Anfragen des Mitglieds, seine ungenutzten ZFS-Empfangsslots und seine wartenden Schlüsselanfragen. Die Karte **Instanzen** auf der Kopplungsseite listet diese Mitglieder ebenfalls als **Inaktiv** auf.
@@ -425,6 +429,91 @@ Die empfangende Box kann auch den rest-server betreiben, auf den die anderen kop
 Die Instanzen deiner Gruppe finden den Server dann unter den Anbietern bei **Aus deiner Gruppe**, benannt nach der empfangenden Box, und die Rolle **Empfänger** bietet ihn als sichere Wahl an. Jede Instanz bekommt beim ersten Nutzen des Servers einen eigenen Login und schreibt dort nur in ihren eigenen Ordner. Bei eingeschaltetem **Empfänger** unter **Einstellungen, Instanzen** öffnet **Empfangsserver** auf der Karte dieser Instanz den Server wieder. Sein Fenster listet die Logins unter **Partner mit Login** auf, und **Login entziehen** nimmt einen weg. Was diese Instanz schon kopiert hat, bleibt im Ordner. Die Einrichtung legt außerdem einen **Login außerhalb der Gruppe** an, dessen Passwort das Fenster einmal zeigt.
 
 Eine Instanz, die die empfangende Box nur über das Relay erreicht, kann den Server nicht nutzen, weil das Relay keine Sicherungen trägt. Füge zuerst die Adresse der empfangenden Box auf der Kopplungsseite hinzu. Läuft BombVault auf einer eigenen IP-Adresse (zum Beispiel auf br0), fülle **Adresse für Partner** aus, weil der Server auf der Adresse des Hosts lauscht.
+
+Eine empfangende Box kann außerdem ein [gemeinsames Repository](#shared-repository) für die Gruppe bereitstellen.
+
+## Gemeinsames Repository {#shared-repository}
+
+Mehrere Server einer Gruppe können zusammen in ein restic-Repository kopieren. Daten, die sie gemeinsam haben, etwa dasselbe Ordner-Set oder dieselben Appdata, liegen dort nur einmal. Zusammen brauchen sie also weniger Platz als mit je einem eigenen Repository.
+
+Ein Server der Gruppe ist der Besitzer des Repositorys. Nur er vergisst dort alte Sicherungen und räumt auf. Die anderen sind Mitglieder: Sie erreichen das Repository über einen zweiten rest-server im Append-only-Modus und können nur hinzufügen. Jeder Server schreibt unter einem [eigenen Host](#backup-host), so bleiben die Sicherungen getrennt, auch wenn zwei Server einen Eintrag mit demselben Namen haben.
+
+Was du dafür brauchst:
+
+- eine [Koppelgruppe](#pairing),
+- **Sicherungen verschlüsseln**, eingeschaltet beim Besitzer und bei jedem Mitglied, weil jeder Server einen eigenen restic-Schlüssel bekommt,
+- einen [Empfangsserver](#receiving-server) beim Besitzer, den die Mitglieder erreichen. Läuft BombVault auf einer eigenen IP-Adresse, trag zuerst im Fenster des Empfangsservers die **Adresse für Partner** ein.
+
+Ein Server ist Besitzer von höchstens einem gemeinsamen Repository.
+
+### Einrichten {#shared-set-up}
+
+Sobald der Empfangsserver läuft, hat die Seite **Instanzen** seiner Box unter den Instanzen eine Karte **Gemeinsames Repository**. Drück **Gemeinsames Repository einrichten**, wähl einen **Ordner für das gemeinsame Repository** auf einem Share mit viel Platz, lass den **Port** auf 8001, sofern ihn kein anderer Container nutzt, und drück **Einrichten und starten**. BombVault dann:
+
+1. lehnt ab, wenn schon ein Container namens `rest-server-shared` existiert oder ein anderer Container den Port hält,
+2. legt das Repository in einem Ordner `shared` darin an, mit dem Passwort dieses Servers,
+3. startet `restic/rest-server` als `rest-server-shared`, im Append-only-Modus mit einer Login-Datei im Ordner,
+4. schreibt auf Unraid sein Template auf den Flash, damit der Container im Docker-Tab bearbeitbar bleibt,
+5. führt den Manipulationstest dagegen aus. **Erneut prüfen** auf der Karte führt ihn noch einmal aus.
+
+Die Karte listet die **Mitglieder** auf, jedes mit seinen Schlüsseln und seiner letzten Sicherung, dazu die Beitrittsanfragen und **Entfernen** für jedes Mitglied.
+
+### Beitreten {#shared-join}
+
+Öffne auf dem Server, der beitreten will, **Speicherort hinzufügen**. Unter **Aus deiner Gruppe** erscheint der Besitzer ein zweites Mal, als **Gemeinsames Repository auf** und sein Name. Wählst du ihn, geht eine Anfrage an den Besitzer. Dort steht sie auf der Karte **Gemeinsames Repository** mit **Erlauben** und **Ablehnen**.
+
+Nach **Erlauben** gibt der Besitzer über die Gruppe einen Einmalschlüssel und einen Login für seinen zweiten rest-server heraus. Das Mitglied legt damit einen eigenen restic-Schlüssel an, danach entfernt der Besitzer den Einmalschlüssel. Ist ein Mitglied nicht innerhalb eines Tages fertig, verliert es Einmalschlüssel und Login wieder und kann erneut fragen. Konnte der Besitzer das Mitglied mit seiner Antwort nicht erreichen, bietet die Karte **Noch einmal sagen** an.
+
+Der Besitzer weist einen Server ab, solange dieser noch nicht unter einem eigenen Host schreibt, also ein älteres Release laufen hat, und wenn schon ein anderes Mitglied unter demselben Host schreibt. Zwei Server teilen sich einen Host, wenn sie sich einen `APP_KEY` teilen.
+
+Ist das Mitglied dabei, erscheint unter **Speicherorte** ein Speicherort namens **Shared with** mit dem Namen des Besitzers, alle Bereiche ausgeschaltet. Schalte auf der Seite des Ortes die Bereiche ein, die dorthin kopieren sollen. Der Ort hat Löschschutz und keine eigenen Aufbewahrungsregeln, weil dort nur der Besitzer vergisst. Dorthin gehen nur Sicherungen unter dem eigenen Host des Mitglieds, ältere Sicherungen unter dem Host `bombvault` bleiben also, wo sie sind.
+
+Der Besitzer kann auch seine eigenen Sicherungen hineinkopieren: **Eigene Sicherungen auch hineinkopieren** auf seiner Karte legt den Ort auch bei ihm an. Für den Besitzer liegt diese Kopie auf den eigenen Platten, und nichts hindert ihn, dort zu löschen. Sie ist also keine Kopie außer Haus.
+
+### Wer aufräumt, und wann {#shared-upkeep}
+
+Nur der Besitzer vergisst und räumt auf. Seine Einstellungen stehen im Teil **Gemeinsames Repository** des Fensters **Empfangsserver**, das du über die eigene Karte des Besitzers auf der Seite Instanzen öffnest:
+
+- **Aufräumfenster** legt fest, wann der Prune läuft, täglich oder wöchentlich. Solange du es nicht änderst, beginnt es sonntags um 03:00, und die **Fensterlänge in Stunden** ist 6.
+- **Ungenutzter Platz, den ein Prune lassen darf, in %** ist 5, solange du nichts änderst. Ein höherer Wert packt weniger um, der Prune ist also schneller fertig.
+- **Nach dem Prune zurückgelesene Daten, in %** ist 5, solange du nichts änderst. Nach jedem Prune prüft der Besitzer das Repository und liest diesen Anteil der Daten zurück.
+- **Wie lange aufheben** folgt für jeden Bereich den Off-site-Regeln des Besitzers, und **Eigene Regel festlegen** gibt dem gemeinsamen Repository eine eigene. Die Sicherungen jedes Servers altern für sich.
+- **Jetzt aufräumen** vergisst, räumt auf und prüft sofort, nachdem die Mitglieder Bescheid bekommen haben.
+
+Außerhalb des Fensters vergisst der Besitzer einmal am Tag, und der Platz kommt mit dem nächsten Prune zurück. Vor einem Prune sagt er den Mitgliedern Bescheid, und sie kopieren nichts in das Repository, bis sich das Fenster schließt. Ein Mitglied, das noch kopiert, hat bis zu einer halben Stunde, um fertig zu werden, sonst rückt der Prune ins nächste Fenster. Eine Kopie, die ins Fenster fällt, wartet und erscheint im Aktivitätsprotokoll und auf der Karte des Mitglieds als zurückgestellt. Der nächste Durchlauf holt sie nach.
+
+Wo der Besitzer unsicher ist, behält er mehr. Ein Eintrag, den ein Mitglied wegen einer [Anomalie](anomalies.md) festhält, behält alle seine Sicherungen. Ein Mitglied, das nicht sagen kann, was es festhält, behält dieses Mal alle seine Sicherungen. Sicherungen unter einem Host, unter dem kein Server der Gruppe schreibt, werden nie vergessen. Das Fenster zeigt auch den Platz: was das Repository belegt, was die Server getrennt bräuchten und was das spart. Die Zahlen kommen mit jedem Aufräumen.
+
+### Was Mitglieder sehen {#shared-members}
+
+Auf einem Mitglied hat die Seite Instanzen eine Karte **Gemeinsame Repositories**. Sie zeigt jedes gemeinsame Repository, in das der Server kopiert oder dem er beitreten wollte, und wie es um seine Anfrage steht: **Wartet auf ein Ja**, **Tritt bei**, **Dabei**, **Abgelehnt**, **Abgelaufen** oder **Kein Mitglied**. Für ein Repository, bei dem er dabei ist, zeigt die Karte **Wer aufräumt**, **Nächstes Aufräumen**, **Gemeinsam mit** für die anderen Mitglieder, **Letzte Kopie hierher** und wie viel Platz das Repository belegt und spart.
+
+### Austreten {#shared-leave}
+
+**Austreten** auf der Karte des Mitglieds nimmt den Server heraus: Der Besitzer entfernt seinen Schlüssel und Login, und sein Speicherort dort wird ausgeschaltet. **Entfernen** auf der Karte des Besitzers nimmt ein Mitglied von der anderen Seite heraus. In beiden Fällen bleiben die Sicherungen des Servers im Repository und altern nach den Regeln des Besitzers. Beim Besitzer stehen sie unter **Ausgetretene Server**. Dort vergisst **Sicherungen vergessen** alle, sobald du den Namen des Servers eintippst. Das nächste Aufräumfenster gibt den Platz frei.
+
+### Die Sicherungen anderer Server {#shared-restore}
+
+Jeder Server findet seine eigenen Sicherungen im gemeinsamen Repository auf dem Tab **Sicherungen** seiner Einträge, wie jede andere Kopie. Die Sicherungen der anderen Mitglieder liegen auf der Seite Wiederherstellung unter [Andere Server](restore.md#other-servers).
+
+### Nach einem Notfall {#shared-emergency}
+
+Das [Recovery-Kit](#recovery-kit) hat ein Kapitel **Shared repositories**. Es nennt jedes gemeinsame Repository mit seinem Besitzer, die Bereiche, die dorthin kopieren, die anderen Mitglieder mit ihren Hosts und einen Befehl `restic snapshots` mit dem Host dieses Servers. Das Kit des Besitzers nennt außerdem Port, Ordner und Login seines rest-servers.
+
+Im Notfall-Assistenten erscheint das Repository unter den Orten als **Gemeinsames Repository bei** und der Name des Besitzers. Eine Neuinstallation, die den Schlüssel eines Mitglieds übernimmt, schreibt unter demselben Host, weil der Host aus dem Schlüssel kommt. Sie bekommt ihren Speicherort im gemeinsamen Repository zurück und listet dort nur ihre eigenen Sicherungen auf und stellt nur diese wieder her.
+
+Eine Neuinstallation, die den Schlüssel des Besitzers übernimmt, wird an seiner Stelle Besitzer des Repositorys. Sie lässt die Sicherungen altern und räumt auf wie bisher und startet den rest-server wieder auf demselben Ordner. Kopple sie wieder mit der Gruppe, richte unter **Instanzen** ihren Empfangsserver ein und leg die Regeln im Fenster des Empfangsservers neu fest, weil sie nicht im Kit stehen. Sobald die Gruppe die Mitglieder erreicht, sagt ihnen der neue Besitzer selbst Bescheid. Jedes Mitglied prüft das zuerst: Es legt im Repository einen Wegwerfschlüssel an, den nur ein Server mit Zugriff auf den Ordner des Repositorys entfernen kann, und folgt dem neuen Besitzer, sobald dieser Schlüssel weg ist. Antwortet der neue Besitzer unter einer anderen Adresse, macht jedes Mitglied diese Prüfung dort mit dem eigenen Schlüssel und Login, vergewissert sich, dass es dasselbe Repository findet, und stellt erst dann seine Speicherorte auf die neue Adresse um. Bis dahin kopiert es weiter an die alte Adresse, und seine Karte sagt, warum. Schlüssel, die von solchen Prüfungen übrig sind, entfernt der Besitzer beim nächsten Aufräumen.
+
+Läuft der alte Besitzer noch, sagt seine Karte, dass jetzt der andere Server das Repository hält. **Zurückholen** macht ihn wieder zum Besitzer, für den Fall, dass ein Kit versehentlich auf einem zweiten Server übernommen wurde.
+
+### Grenzen {#shared-limits}
+
+- **Jeder Schlüssel liest alles.** Alle Schlüssel eines restic-Repositorys öffnen denselben Hauptschlüssel, jedes Mitglied kann also die Sicherungen der anderen lesen. Container- und VM-Definitionen bleiben mit dem eigenen Schlüssel jedes Servers versiegelt, die Container und VMs eines anderen Servers kommen also nur als Dateien zurück. Ein Server, der einmal Zugang hatte, könnte den Hauptschlüssel gelesen haben. Entfernen sperrt ihn also nicht für immer aus, das schafft nur ein neues Repository.
+- **Der Besitzer kann löschen.** Kein Mitglied kann dort etwas löschen, aber der Besitzer erreicht den Ordner direkt, vergisst die Sicherungen jedes Mitglieds und räumt sie auf. Ein Fehler oder eine Übernahme beim Besitzer trifft sie alle.
+- **Ein Schaden trifft jeden Server.** Ein kaputtes Pack fehlt jedem Server, dessen Sicherungen es nutzen. Ein gemeinsames Repository ersetzt also keine zweite Kopie.
+- **Nur auf einem Empfangsserver.** S3, SFTP und andere Orte können ein Mitglied nicht aufs Hinzufügen beschränken, darum bietet BombVault ein gemeinsames Repository nur auf einem Empfangsserver an.
+- **Nur als Kopierziel.** Der eigene Ordner eines Bereichs kann nicht in einem gemeinsamen Repository liegen, weil jeder Prune die Sicherungen aller Server aufhalten würde.
+- **Ältere Sicherungen bleiben, wo sie sind.** Nur Sicherungen unter dem eigenen Host jedes Servers kommen hinein, und aus anderen Repositories wird nichts herübergeholt.
 
 ## Beispiel: zwei Unraid-Boxen koppeln {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Der **Notfall-Assistent** holt einen Server zurück, der weg ist oder neu aufges
 2. **Einstellungen.** **Einstellungen zurückholen** stellt die eigenen Einstellungen von BombVault aus dem neuesten Selbstbackup wieder her: Speicherorte, Zugangsdaten, Zeitpläne und Regeln. BombVault startet sich dafür über den Docker-Socket neu, damit die laufende Einstellungsdatenbank nie unter einem offenen Handle überschrieben wird, und der Assistent macht danach von selbst weiter. Der Login dieses Servers bleibt: Du meldest dich weiter mit dem Passwort an, das du jetzt nutzt. Geheimnisse, die der alte Server gespeichert hatte und die sich nicht übernehmen lassen, werden aufgelistet, damit du sie neu eingeben kannst. Die Wiederherstellung beendet jede Sitzung und entfernt die Passkeys, richte sie danach also neu ein.
 3. **Auswahl.** BombVault durchsucht deine Sicherungen und listet die Container, VMs, Ordner-Sets und ZFS-Datasets auf, die es findet. Der neueste Snapshot ist überall vorgewählt. Was dieser Server noch hat, beginnt ausgeschaltet, weil eine Wiederherstellung es ersetzen würde. Ordner-Sets wissen nach einem Neuaufbau nicht mehr, woher sie kamen, daher gehen sie in einen Ordner, den du wählst.
 4. **Wiederherstellung.** Alles Gewählte kommt auf einmal zurück, auf Wunsch angehalten gelassen, wenn du jeden Container und jede VM selbst starten willst, was nach einem Totalverlust am sichersten ist. Lade danach ein neues Recovery-Kit herunter: Das alte gehört zur vorigen Installation.
+
+Ein gemeinsames Repository aus dem Kit erscheint unter den Orten als **Gemeinsames Repository bei** und der Name des Servers, dem es gehört. Der Assistent listet dort nur die eigenen Sicherungen dieses Servers auf. Siehe [Nach einem Notfall](#shared-emergency).
 
 ![Der Notfall-Assistent im ersten Schritt, mit den drei Wegen hinein.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Der Notfall-Assistent im ersten Schritt, mit den drei Wegen hinein.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Das ist das Stück, das Notfallwiederherstellung auch dann möglich macht, wenn 
 
 ### Der Host der Sicherungen eines Servers {#backup-host}
 
-Jeder Server schreibt seine Sicherungen unter einem eigenen restic-Host: `bv-` und zwölf Zeichen, die aus dem Schlüssel der Sicherungen berechnet werden, etwa `bv-3f9a0c41d2e7`. Sicherungen aus der Zeit, bevor ein Server einen eigenen hatte, tragen den Host `bombvault`. Das Kit nennt den Host dieses Servers, und seine Befehle geben beide mit `--host` an, damit `latest` nie eine Sicherung erwischt, die ein anderer Server in dasselbe Repository geschrieben hat. Ein Server, der die Sicherungen eines anderen übernimmt, macht unter dem Host jenes Servers weiter, weil der Host aus dem Schlüssel kommt.
+Jeder Server schreibt seine Sicherungen unter einem eigenen restic-Host: `bv-` und zwölf Zeichen, die aus dem Schlüssel der Sicherungen berechnet werden, etwa `bv-3f9a0c41d2e7`. Sicherungen aus der Zeit, bevor ein Server einen eigenen hatte, tragen den Host `bombvault`. Das Kit nennt den Host dieses Servers, und seine Befehle geben beide mit `--host` an, damit `latest` nie eine Sicherung erwischt, die ein anderer Server in dasselbe Repository geschrieben hat. Ein Server, der die Sicherungen eines anderen übernimmt, macht unter dem Host jenes Servers weiter, weil der Host aus dem Schlüssel kommt. Für jedes [gemeinsame Repository](#shared-repository), in das der Server kopiert oder dessen Besitzer er ist, nennt das Kapitel **Shared repositories** im Kit die anderen Server dort mit ihren Hosts.
 
 ### Das Kit versiegeln {#sealing-the-kit}
 

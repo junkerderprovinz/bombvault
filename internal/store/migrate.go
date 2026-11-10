@@ -3724,6 +3724,119 @@ WHERE last_check_ok = 0 AND (
 		sql:              `ALTER TABLE offsite_targets ADD COLUMN connections INTEGER NOT NULL DEFAULT 0;`,
 	},
 	{
+		version: sharedReposMigration,
+		name:    "shared_repos",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repos (
+  id         TEXT PRIMARY KEY,
+  repo       TEXT NOT NULL UNIQUE,
+  owner      TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS shared_repo_members (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  host           TEXT NOT NULL,
+  instance_id    TEXT NOT NULL,
+  name           TEXT NOT NULL DEFAULT '',
+  position       INTEGER NOT NULL,
+  PRIMARY KEY (shared_repo_id, host)
+);`,
+	},
+	{
+		version: sharedJoinsMigration,
+		name:    "shared_repo_joins",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_server (
+  id             INTEGER PRIMARY KEY CHECK (id = 1),
+  container_name TEXT NOT NULL,
+  folder         TEXT NOT NULL,
+  host_path      TEXT NOT NULL,
+  port           INTEGER NOT NULL,
+  user           TEXT NOT NULL,
+  password_enc   BLOB NOT NULL,
+  repo           TEXT NOT NULL,
+  created_at     INTEGER NOT NULL,
+  check_verdict  TEXT NOT NULL DEFAULT '',
+  check_detail   TEXT NOT NULL DEFAULT '',
+  checked_at     INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS shared_repo_joins (
+  direction   TEXT NOT NULL,
+  member_id   TEXT NOT NULL,
+  member_name TEXT NOT NULL DEFAULT '',
+  host        TEXT NOT NULL DEFAULT '',
+  state       TEXT NOT NULL,
+  repo        TEXT NOT NULL DEFAULT '',
+  user        TEXT NOT NULL DEFAULT '',
+  login_enc   BLOB NOT NULL,
+  once_enc    BLOB NOT NULL,
+  once_key    TEXT NOT NULL DEFAULT '',
+  created_at  INTEGER NOT NULL,
+  decided_at  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (direction, member_id)
+);`,
+	},
+	{
+		version: sharedUpkeepMigration,
+		name:    "shared_repo_upkeep",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_upkeep (
+  shared_repo_id TEXT PRIMARY KEY REFERENCES shared_repos(id) ON DELETE CASCADE,
+  keep_last      INTEGER NOT NULL DEFAULT 0,
+  keep_daily     INTEGER NOT NULL DEFAULT 0,
+  keep_weekly    INTEGER NOT NULL DEFAULT 0,
+  keep_monthly   INTEGER NOT NULL DEFAULT 0,
+  keep_yearly    INTEGER NOT NULL DEFAULT 0,
+  keep_set       INTEGER NOT NULL DEFAULT 0,
+  prune_cadence  TEXT    NOT NULL,
+  prune_hours    INTEGER NOT NULL,
+  max_unused     INTEGER NOT NULL,
+  check_subset   INTEGER NOT NULL,
+  pruned_window  INTEGER NOT NULL DEFAULT 0,
+  forget_report  TEXT    NOT NULL DEFAULT '',
+  prune_report   TEXT    NOT NULL DEFAULT '',
+  space_report   TEXT    NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS shared_repo_space (
+  owner TEXT PRIMARY KEY,
+  space TEXT NOT NULL
+);`,
+	},
+	{
+		version: sharedHolderMigration,
+		name:    "shared_repo_holder",
+		sql: `CREATE TABLE IF NOT EXISTS shared_holder_notices (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  instance_id    TEXT NOT NULL,
+  PRIMARY KEY (shared_repo_id, instance_id)
+);
+CREATE TABLE IF NOT EXISTS shared_repo_taken_over (
+  shared_repo_id TEXT PRIMARY KEY REFERENCES shared_repos(id) ON DELETE CASCADE,
+  by_instance    TEXT NOT NULL,
+  by_name        TEXT NOT NULL DEFAULT '',
+  at             INTEGER NOT NULL
+);`,
+	},
+	{
+		// A copy the owner of a shared repository held off while it pruned
+		// copied nothing, and its run says so instead of passing for a copy
+		// that found the target current.
+		version:          offsiteRunsDeferredMigration,
+		name:             "offsite_runs_deferred",
+		alreadySatisfied: columnPresent("offsite_runs", "deferred"),
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN deferred INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version: sharedFormerMigration,
+		name:    "shared_repo_former",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_former (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  host           TEXT NOT NULL,
+  instance_id    TEXT NOT NULL,
+  name           TEXT NOT NULL,
+  left_at        INTEGER NOT NULL,
+  forget_error   TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (shared_repo_id, host)
+);`,
+	},
+	{
 		// The notification settings turn into a list of channels at the next
 		// start. They are sealed with APP_KEY, so the API converts them and
 		// this table keeps the config it converted from.
@@ -4088,10 +4201,11 @@ const vmBlocksMigration = 220
 // network announcement.
 const apiMigrationBase = 230
 
-// misnumbered holds records that branch builds wrote under the numbers of the
-// placement migrations. Migrate forgets them, so the placement migrations run
-// there too; the guards of target_aliases, vm_uuid and
-// target_alias_prev_definition record those again under their own numbers.
+// misnumbered holds records that branch builds wrote under numbers another
+// migration holds. Migrate forgets them, so the owner of the number runs there
+// too; the guards of target_aliases, vm_uuid and target_alias_prev_definition
+// record those again under their own numbers, and notify_before_channels runs
+// again as an empty CREATE TABLE IF NOT EXISTS.
 var misnumbered = []struct {
 	version int
 	name    string
@@ -4100,6 +4214,7 @@ var misnumbered = []struct {
 	{110, "vm_uuid"},
 	{111, "target_alias_prev_definition"},
 	{109, "named_repo_already_offsite"},
+	{850, "notify_before_channels"},
 }
 
 // pairingMigration numbers pairing by phrase. It starts at 250, above the
@@ -4342,12 +4457,36 @@ const staleEstablishedMigration = 800
 // connectionsMigration numbers the connections a storage location allows.
 const connectionsMigration = 830
 
+// sharedReposMigration numbers the repositories several servers of a group
+// back up into.
+const sharedReposMigration = 840
+
+// sharedJoinsMigration numbers the server of a shared repository and the way
+// each member came into it.
+const sharedJoinsMigration = 850
+
+// sharedUpkeepMigration numbers how the owner keeps a shared repository and
+// what a member last heard about the space there.
+const sharedUpkeepMigration = 860
+
+// sharedHolderMigration numbers the servers that have still to hear of a new
+// holder of a shared repository, and who took one over from this server.
+const sharedHolderMigration = 870
+
+// offsiteRunsDeferredMigration numbers the mark of a copy that waited for the
+// owner of a shared repository.
+const offsiteRunsDeferredMigration = 880
+
+// sharedFormerMigration numbers the servers that left a shared repository and
+// whose snapshots are still there.
+const sharedFormerMigration = 890
+
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780
 
 // notifyChannelsMigration numbers the notification config kept from before
 // channels.
-const notifyChannelsMigration = 850
+const notifyChannelsMigration = 900
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

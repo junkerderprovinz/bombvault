@@ -747,6 +747,8 @@ type Scheduler struct {
 	receiverCheckNext func(time.Time) (time.Time, bool)
 	pullFn            func() error
 	pullNext          func(time.Time) (time.Time, bool)
+	sharedUpkeepFn    func() error
+	sharedUpkeepNext  func(time.Time) (time.Time, bool)
 	fleetFn           func() error
 	everythingFn      func() error
 	// offsiteInUse reports whether a domain has an off-site target to copy to;
@@ -835,7 +837,7 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "digest", ""
 	case "watchdog":
 		return "watchdog", ""
-	case "receiver", "receiver-check":
+	case "receiver", "receiver-check", "shared-upkeep":
 		return "receiver", ""
 	case "pull":
 		return "pull", ""
@@ -1656,6 +1658,21 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 				}
 				if err := s.pullFn(); err != nil {
 					log.Printf("schedule: pull job: %v", err)
+				}
+			},
+		})
+	}
+
+	// The upkeep of a shared repository is the receiving server's work, so
+	// the activity log names it with the receiver's jobs.
+	if s.sharedUpkeepFn != nil {
+		domains = append(domains, domainSpec{
+			cadence: SweepCadence,
+			name:    "shared-upkeep",
+			next:    s.sharedUpkeepNext,
+			fn: func() {
+				if err := s.sharedUpkeepFn(); err != nil {
+					log.Printf("schedule: shared upkeep job: %v", err)
 				}
 			},
 		})

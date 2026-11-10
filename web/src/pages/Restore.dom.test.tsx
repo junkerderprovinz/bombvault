@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
-import { listPullSources, openPulledCopy, type AnomalyView, type PullSourceView } from "../lib/api";
+import { listPullSources, listSharedOthers, openPulledCopy, openSharedOther, type AnomalyView, type PullSourceView } from "../lib/api";
 import { I18nProvider, countText, en } from "../lib/i18n";
 import type { ProgressMap } from "../lib/progress";
 import { RESTORE_NO_RUNTIME } from "../lib/runReason";
@@ -37,6 +37,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     getVMSSH: vi.fn(async () => ({ ok: false })),
     listPullSources: vi.fn(async () => ({ ok: true, sources: [] })),
     openPulledCopy: vi.fn(),
+    listSharedOthers: vi.fn(async () => ({ ok: true, servers: [] })),
+    openSharedOther: vi.fn(),
     restore: vi.fn(),
     restoreVM: vi.fn(),
     restoreFileSet: vi.fn(),
@@ -436,6 +438,52 @@ describe("the other sources", () => {
     expect(within(window).getByText("photos")).toBeTruthy();
     expect(window.textContent).toContain(en["recovery.foreignNoDefinition"].split("{name}")[1]);
     expect(within(window).queryByRole("button", { name: en["recovery.foreignConnect"] })).toBeNull();
+  });
+
+  it("name the other servers of a shared repository with their host and open one with no key to enter", async () => {
+    vi.mocked(listSharedOthers).mockResolvedValueOnce({
+      ok: true,
+      servers: [
+        { repo: "r1", host: "bv-ba9876543210", name: "Cube", entries: 2, newest: Math.floor(Date.now() / 1000) },
+        { repo: "r1", host: "bv-ffffffffffff", entries: 1 },
+      ],
+    });
+    vi.mocked(openSharedOther).mockResolvedValueOnce({
+      ok: true,
+      session: "s2",
+      inventory: { containers: [{ name: "plex", snapshots: [], noDefinition: true }], vms: [], fileSets: [{ name: "photos", snapshots: [] }], dbDumps: [], zfs: [] },
+    });
+    await renderPage();
+    const card = within(await screen.findByTestId("other-servers"));
+    expect(screen.getByRole("heading", { name: new RegExp(`^${en["restorePage.otherServers"]}`) })).toBeTruthy();
+    expect(card.getByRole("button", { name: new RegExp(en["restorePage.unknownServer"]) }).textContent).toContain("bv-ffffffffffff");
+    const cube = card.getByRole("button", { name: /^Cube/ });
+    expect(cube.textContent).toContain("bv-ba9876543210");
+    expect(cube.textContent).toContain(countText(en["restorePage.otherServerEntries"], "en", 2));
+
+    await press(cube);
+    const title = en["restorePage.otherServerTitle"].replace("{name}", "Cube");
+    const window = await screen.findByRole("dialog", { name: title });
+    expect(openSharedOther).toHaveBeenCalledWith("r1", "bv-ba9876543210");
+    expect(within(window).getByText(en["restorePage.otherServerIntro"].replaceAll("{name}", "Cube").replace("{host}", "bv-ba9876543210"))).toBeTruthy();
+    expect(within(window).getByText("photos")).toBeTruthy();
+    expect(within(window).queryByRole("button", { name: en["recovery.foreignConnect"] })).toBeNull();
+  });
+
+  it("say why a shared repository could not be read under the servers it holds", async () => {
+    vi.mocked(listSharedOthers).mockResolvedValueOnce({
+      ok: true,
+      servers: [{ repo: "r1", host: "bv-ba9876543210", name: "Cube", entries: 0, error: "connection refused" }],
+    });
+    await renderPage();
+    const cube = within(await screen.findByTestId("other-servers")).getByRole("button", { name: /^Cube/ });
+    expect(cube.textContent).toContain("connection refused");
+  });
+
+  it("leave the other servers out while no shared repository holds any", async () => {
+    await renderPage();
+    expect(screen.queryByTestId("other-servers")).toBeNull();
+    expect(listSharedOthers).toHaveBeenCalled();
   });
 
   it("do not offer another instance through the group, which the server cannot reach yet", async () => {

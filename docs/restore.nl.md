@@ -14,6 +14,7 @@ Elk herstel begint op de pagina **Herstel**: kies een onderdeel, zoek wat je ter
 - **Bezig** toont een herstel terwijl het loopt, ook nadat je zijn venster sloot.
 - **Noodgeval** start de Noodassistent voor een server die weg is of opnieuw is ingesteld, zie [Noodassistent](offsite-recovery.md#emergency).
 - **Andere bronnen** bevat **Uit een oude back-upmap**, voor de back-ups van een andere BombVault, **Importeren uit de Appdata.Backup-plug-in** en **Taken uit Duplicati of Duplicacy**.
+- **Andere servers** toont de andere servers van een gedeelde repository waar deze server bij hoort, zie [Andere servers](#other-servers).
 
 ![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![De pagina Herstel op een telefoon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Zoeken duurt even, omdat restic door elke back-up loopt. **Stoppen** beëindigt 
 - Off-site-bestemmingen zoals S3, B2 of SFTP blijven buiten de zoekopdracht, tenzij je **Ook off-site-bestemmingen doorzoeken** aanzet. Dan worden daar alleen de back-ups gelezen die geen bestemming hier heeft, meestal de oudere die een langere bewaartermijn off-site houdt. De eerste zoekopdracht op zo'n bestemming kan lang duren, en sommige aanbieders rekenen de gedownloade data aan.
 - Een bestemming die niet kon worden geopend, zegt **kon niet worden gelezen**, en de (i) ernaast vertelt waarom. De andere bestemmingen worden gewoon doorzocht.
 
-Virtuele machines worden als hele schijven opgeslagen, dus de bestanden erin worden niet doorzocht. De zelf-back-up en de back-ups van een andere BombVault onder **Andere bronnen** worden ook niet doorzocht. Een zoekopdracht toont de eerste 200 bestanden, dus bij een korte naam zoals `log` heb je misschien een paar letters meer nodig.
+Virtuele machines worden als hele schijven opgeslagen, dus de bestanden erin worden niet doorzocht. De zelf-back-up, de back-ups van een andere BombVault onder **Andere bronnen** en die van de servers onder **Andere servers** worden ook niet doorzocht. Een zoekopdracht toont de eerste 200 bestanden, dus bij een korte naam zoals `log` heb je misschien een paar letters meer nodig.
 
 ## Wat er terugkomt, per soort {#kinds}
 
@@ -134,6 +135,10 @@ Een database die alleen databasedumps heeft en geen back-up van bestanden, en wa
     - **Uit Duplicacy**: kies de map van Duplicacy Web waarin `duplicacy.json` staat, of een map die je met de opdrachtregel van Duplicacy back-upt en waarin `.duplicacy` staat. Sleutels die de opdrachtregel in `.duplicacy/preferences` heeft opgeslagen, gaan mee. Duplicacy Web bewaart zijn inloggegevens versleuteld, dus het venster vraagt je erom.
 
     Er wordt niets aangemaakt voordat je het voorbeeld hebt gezien. Elke bronmap wordt een mappenset, met de map op deze server waar hij is gevonden, de uitsluitingen die konden worden omgezet en de planning. Draaide de oude tool in een eigen container en is een map niet gevonden, dan kies je die zelf. De back-ups gaan naar een nieuwe bestemming, in een map `bombvault` binnen de oude bestemming, of dat nu een lokale map, S3, SFTP, een rclone-remote of Backblaze B2 via zijn S3-adres is. Inloggegevens uit het bestand worden bij je andere inloggegevens opgeslagen, en wat er in het bestand ontbreekt, wordt je gevraagd. Notities onder elke taak vertellen wat niet is meegekomen, zoals insluitregels, reguliere expressies, hoe lang back-ups werden bewaard en het oude versleutelingswachtwoord, dat BombVault niet nodig heeft.
+
+## Andere servers {#other-servers}
+
+In een [gedeelde repository](offsite-recovery.md#shared-repository) opent elke sleutel de back-ups van alle servers. Daarom toont de pagina Herstel de andere leden onder **Andere servers**, elk met zijn naam, zijn host, hoeveel items hij heeft en wanneer zijn nieuwste back-up liep. Een host die bij geen server hoort die deze kent, verschijnt als **Een server die deze niet kent**. Een klik opent **Back-ups van** en de naam van de server, alleen-lezen en zonder dat je iets hoeft in te voeren. Mappensets en ZFS-datasets gaan naar een map die je kiest. Containers en VM's komen terug als gewone bestanden in een map, omdat de andere server hun definities met zijn eigen sleutel verzegelt. De eigen back-ups van deze server in de gedeelde repository staan op het tabblad **Back-ups** van elk item.
 
 ## Na een herstel {#after}
 

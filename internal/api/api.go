@@ -630,6 +630,13 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/receiver/server", h.handleForgetReceiver)
 	mux.HandleFunc("DELETE /api/receiver/server/logins/{id}", h.handleRevokeReceiverLogin)
 	mux.HandleFunc("GET /api/receiver/server/template", h.handleReceiverTemplate)
+	h.mountSharedRepo(mux)
+	// The upkeep of the shared repositories this box is in: the owner's rules
+	// and passes, and what a member hears of them.
+	mux.HandleFunc("GET /api/shared-repos/upkeep", h.handleSharedUpkeep)
+	mux.HandleFunc("PUT /api/shared-repos/{id}/upkeep", h.handlePutSharedUpkeep)
+	mux.HandleFunc("POST /api/shared-repos/{id}/upkeep/run", h.handleRunSharedUpkeep)
+	mux.HandleFunc("POST /api/shared-repos/{id}/former/{host}/forget", h.handleForgetSharedFormer)
 
 	// Pull sources (#227): repositories belonging to OTHER instances that this
 	// box fetches snapshots out of. Session-protected like every other /api
@@ -645,6 +652,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/pull/sources/{id}/test", h.handleTestPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/run", h.handleRunPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/open", h.handleOpenPulledCopy)
+	mux.HandleFunc("GET /api/shared-repo/others", h.handleSharedOthers)
+	mux.HandleFunc("POST /api/shared-repo/others/open", h.handleOpenSharedOther)
+	mux.HandleFunc("POST /api/shared-repos/{id}/take-back", h.handleTakeBackSharedRepo)
 
 	// Fleet view (read-only): the members of this instance's pairing group,
 	// polled over the group for their protection status. Gated behind the

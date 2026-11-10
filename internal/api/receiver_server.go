@@ -250,7 +250,7 @@ func receiverContainerSpec(hostPath string, port int, unraid bool) model.Inspect
 func receiverTemplate(rs store.ReceiverServer) string {
 	note := "  BombVault set up this append-only rest-server and keeps its login in\n  " +
 		xmlCommentSafe(rs.HostPath+"/"+htpasswdName) + ".\n  Every field below is editable in the Docker tab."
-	return restServerTemplate(rs.ContainerName, rs.Port, rs.HostPath, note)
+	return restServerTemplate(rs.ContainerName, rs.Port, rs.HostPath, restServerOptions, note)
 }
 
 // checkReceiverInput normalises the form and returns the data folder as the

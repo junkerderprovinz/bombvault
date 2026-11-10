@@ -14,6 +14,7 @@ Toda a restauração começa na página **Restauração**: escolhe uma secção,
 - **A decorrer** mostra uma restauração enquanto corre, também depois de fechares a janela.
 - **Emergência** inicia o assistente de emergência para um servidor que desapareceu ou foi configurado de novo, vê [Assistente de emergência](offsite-recovery.md#emergency).
 - **Outras origens** guarda **De uma pasta de backups antiga**, para os backups de outro BombVault, **Importar do plugin Appdata.Backup** e **Tarefas do Duplicati ou do Duplicacy**.
+- **Outros servidores** lista os outros servidores de um repositório partilhado de que este servidor faz parte, vê [Outros servidores](#other-servers).
 
 ![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![A página Restauração num telemóvel.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ A pesquisa demora um pouco, porque o restic percorre todos os backups. **Parar**
 - Os destinos externos, como S3, B2 ou SFTP, ficam de fora, a não ser que ligues **Pesquisar também nos destinos externos**. Aí só são lidos os backups que nenhum destino aqui tem, normalmente os mais antigos que uma retenção mais longa mantém lá. A primeira pesquisa num destino destes pode demorar bastante, e alguns fornecedores cobram pelos dados que são transferidos.
 - Um destino que não foi possível abrir diz **não foi possível ler**, e o (i) ao lado explica porquê. Os outros destinos continuam a ser pesquisados.
 
-As máquinas virtuais são guardadas como discos inteiros, por isso os ficheiros dentro delas não são pesquisados. O auto-backup e os backups de outro BombVault em **Outras origens** também não são pesquisados. Uma pesquisa lista os primeiros 200 ficheiros, por isso um nome curto como `log` pode precisar de mais algumas letras.
+As máquinas virtuais são guardadas como discos inteiros, por isso os ficheiros dentro delas não são pesquisados. O auto-backup, os backups de outro BombVault em **Outras origens** e os dos servidores em **Outros servidores** também não são pesquisados. Uma pesquisa lista os primeiros 200 ficheiros, por isso um nome curto como `log` pode precisar de mais algumas letras.
 
 ## O que volta, por tipo {#kinds}
 
@@ -134,6 +135,10 @@ Uma base de dados que só tem despejos da base de dados e nenhum backup de fiche
     - **Do Duplicacy**: escolhe a pasta do Duplicacy Web que contém o `duplicacy.json`, ou uma pasta de que fazes backup pela linha de comandos do Duplicacy, que contém `.duplicacy`. As chaves que a linha de comandos guardou em `.duplicacy/preferences` vêm junto. O Duplicacy Web guarda as suas credenciais encriptadas, por isso a janela pede-tas.
 
     Nada é criado antes de veres a pré-visualização. Cada pasta de origem passa a ser um conjunto de pastas, com a pasta deste servidor onde foi encontrada, as exclusões que foi possível converter e o agendamento. Se a ferramenta antiga corria num container próprio e uma pasta não foi encontrada, és tu que a escolhes. Os backups vão para um novo destino, numa pasta `bombvault` dentro do destino antigo, seja ele uma pasta local, S3, SFTP, um remote do rclone ou o Backblaze B2 pelo seu endereço S3. As credenciais que vêm no ficheiro ficam guardadas com as tuas outras credenciais, e as que faltam são-te pedidas. As notas por baixo de cada tarefa dizem o que não veio junto, como as regras de inclusão, as expressões regulares, o tempo durante o qual os backups eram guardados e a palavra-passe de encriptação antiga, de que o BombVault não precisa.
+
+## Outros servidores {#other-servers}
+
+Num [repositório partilhado](offsite-recovery.md#shared-repository) cada chave abre os backups de todos os servidores, por isso a página Restauração lista os outros membros em **Outros servidores**, cada um com o seu nome, o seu host, quantas entradas tem e quando correu o seu backup mais recente. Um host que não pertence a nenhum servidor que este conheça aparece como **Um servidor que este não conhece**. Um clique abre **Backups de** e o nome do servidor, só de leitura e sem nada para introduzir. Os conjuntos de pastas e os conjuntos de dados ZFS vão para uma pasta que escolhes. Os containers e as VMs voltam como ficheiros simples numa pasta, porque o outro servidor sela as definições deles com a sua própria chave. Os backups deste servidor no repositório partilhado estão no separador **Backups** de cada entrada.
 
 ## Depois de uma restauração {#after}
 

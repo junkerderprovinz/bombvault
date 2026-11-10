@@ -74,6 +74,7 @@ Krótki katalog tego, co robi BombVault. Każda linia odsyła do strony, która 
 - **Parowanie dwunastoma słowami**, szyfrowane od końca do końca, bezpośrednio albo przez relay. [Parowanie instancji](offsite-recovery.md#pairing)
 - **Strona Instancje** z grupą jako siecią i rolami **Odbiornik**, **Pobierający**, **Serwer ZFS** i **Przechowawca klucza**. [Instancje i role](offsite-recovery.md#roles)
 - **Serwer odbiorczy** ustawiony za Ciebie, w trybie append-only. [Serwer odbiorczy](offsite-recovery.md#receiving-server)
+- **Wspólne repozytorium**, do którego kopiuje kilka serwerów, więc to, co mają wspólne, jest zapisane tylko raz. Przycina je tylko serwer, który jest jego właścicielem. [Wspólne repozytorium](offsite-recovery.md#shared-repository)
 
 ## Asystenci AI (MCP) {#mcp}
 

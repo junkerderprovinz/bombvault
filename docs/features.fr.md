@@ -74,6 +74,7 @@ Un court catalogue de ce que fait BombVault. Chaque ligne renvoie vers la page q
 - **Appairage par douze mots**, chiffré de bout en bout, directement ou via un relais. [Appairage des instances](offsite-recovery.md#pairing)
 - **La page Instances** avec le groupe sous forme de réseau et les rôles **Récepteur**, **Rapatrieur**, **Serveur ZFS** et **Gardien**. [Instances et rôles](offsite-recovery.md#roles)
 - **Un serveur récepteur** configuré pour vous, en mode ajout seul. [Serveur récepteur](offsite-recovery.md#receiving-server)
+- **Un dépôt partagé** dans lequel plusieurs serveurs copient, si bien que ce qu'ils ont en commun n'est stocké qu'une fois. Seul le serveur qui l'héberge l'élague. [Dépôt partagé](offsite-recovery.md#shared-repository)
 
 ## Assistants IA (MCP) {#mcp}
 

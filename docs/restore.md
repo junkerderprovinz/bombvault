@@ -14,6 +14,7 @@ Every restore starts on the **Restore** page: pick a section, search for what yo
 - **Running now** shows a restore while it runs, also after you closed its window.
 - **Emergency** starts the Emergency wizard for a server that is gone or was set up again, see [Emergency wizard](offsite-recovery.md#emergency).
 - **Other sources** holds **From an old backup folder**, for the backups of another BombVault, **Import from the Appdata.Backup plugin** and **Jobs from Duplicati or Duplicacy**.
+- **Other servers** lists the other servers of a shared repository this server is in, see [Other servers](#other-servers).
 
 ![The Restore page on a phone.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![The Restore page on a phone.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ The search takes a while, because restic walks through every backup. **Stop** en
 - Off-site places such as S3, B2 or SFTP are left out unless you switch on **Also search off-site places**. Then only the backups that no place here holds are read there, usually the older ones a longer retention keeps off-site. The first search at such a place can take long, and some providers charge for the data it downloads.
 - A place that could not be opened says **could not be read**, and the (i) beside it tells why. The other places are still searched.
 
-Virtual machines are saved as whole disks, so the files inside them are not searched. The self-backup and the backups of another BombVault under **Other sources** are not searched either. A search lists the first 200 files, so a short name such as `log` may need more letters.
+Virtual machines are saved as whole disks, so the files inside them are not searched. The self-backup, the backups of another BombVault under **Other sources** and those of the servers under **Other servers** are not searched either. A search lists the first 200 files, so a short name such as `log` may need more letters.
 
 ## What comes back, by kind {#kinds}
 
@@ -134,6 +135,10 @@ A database that has only database dumps and no files backup, and whose container
     - **From Duplicacy**: pick the Duplicacy Web folder that holds `duplicacy.json`, or a folder you back up with the Duplicacy command line, which holds `.duplicacy`. Keys the command line saved in `.duplicacy/preferences` come along. Duplicacy Web keeps its sign-ins encrypted, so the window asks for them.
 
     Nothing is created before you have seen the preview. Each source folder becomes a folder set, with the folder on this server it was found at, the exclusions that could be translated and the schedule. When the old tool ran in a container of its own and a folder was not found, you pick it. The backups go to a new storage location in a folder `bombvault` inside the old destination, for a local folder, S3, SFTP, an rclone remote, or Backblaze B2 by its S3 address. A sign-in from the file is saved with your other sign-ins, and one the file lacks is asked for. Notes under each job say what did not come along, such as include rules, regular expressions, how long backups were kept, and the old encryption password, which BombVault does not need.
+
+## Other servers {#other-servers}
+
+In a [shared repository](offsite-recovery.md#shared-repository) every key opens the backups of all servers, so the Restore page lists the other members under **Other servers**, each with its name, its host, how many entries it has and when its newest backup ran. A host that belongs to no server this one knows shows as **A server this one does not know**. A click opens **Backups of** and the server's name, read-only and with nothing to enter. Folder sets and ZFS datasets go into a folder you choose. Containers and VMs come back as plain files in a folder, because the other server seals their definitions with its own key. This server's own backups in the shared repository are on the **Backups** tab of each entry.
 
 ## After a restore {#after}
 

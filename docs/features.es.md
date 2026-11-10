@@ -74,6 +74,7 @@ Un breve catálogo de lo que hace BombVault. Cada línea enlaza con la página q
 - **Emparejamiento con doce palabras**, cifrado de extremo a extremo, directamente o a través de un repetidor. [Emparejar instancias](offsite-recovery.md#pairing)
 - **La página Instancias** con el grupo como una red y los roles **Receptor**, **Recolector**, **Servidor ZFS** y **Guardián de claves**. [Instancias y roles](offsite-recovery.md#roles)
 - **Un servidor receptor** configurado por ti, en modo append-only. [Servidor receptor](offsite-recovery.md#receiving-server)
+- **Un repositorio compartido** en el que copian varios servidores, para que lo que tienen en común se guarde una sola vez. Solo poda el servidor que lo aloja. [Repositorio compartido](offsite-recovery.md#shared-repository)
 
 ## Asistentes de IA (MCP) {#mcp}
 

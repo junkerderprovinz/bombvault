@@ -318,6 +318,8 @@ Některá místa mazání odmítnout neumějí vůbec, třeba cloudový disk jak
 
 Nejrychlejší cesta ke kopii append-only je spárovaný BombVault s [přijímacím serverem](#receiving-server): rest-server za tebe spustí v režimu append-only.
 
+Ve [sdíleném repozitáři](#shared-repository) to platí pro členy, ne pro jeho vlastníka. Vlastník dosáhne na složku přímo a zapomíná a čistí tam.
+
 !!! note "Úspěšné smazání pod `/locks/` se očekává"
     Append-only neznamená, že se nikdy nic nesmí odstranit. restic musí své zámky brát a uvolňovat, takže `/locks/` zůstává z principu zapisovatelné a mazatelné. Snapshoty a data za nimi, což je to, po čem by šel ransomware, odstranit nejde. Pokud druhou stranu zkoušíš sám, smazání, které uspěje pod `/locks/`, je správné chování a ne díra v ochraně.
 
@@ -391,6 +393,8 @@ Zapnutí role pošle žádost a nic nezačne, dokud někdo na druhé instanci ne
 
 **Podrobnosti** na kartě otevřou zbytek: přijaté repozitáře a zdroje stahování toho člena, nabídky úložiště, sledování, **Odebrat** a **Zapomenout klíč**.
 
+Pod kartami patří ke [sdílenému repozitáři](#shared-repository) karta **Sdílený repozitář** na krabici s přijímacím serverem a karta **Sdílené repozitáře** na členovi.
+
 Člen může druhému členovi přes skupinu nabídnout vlastní úložiště mimo lokalitu. Druhý správce vidí nabídku v **Podrobnostech** člena a přijme ji nebo odmítne. Přijetí vytvoří uložené přihlašovací údaje a obyčejný cíl, po stejných kontrolách jako u cíle, který zadáš sám. Cíl přijde se zapnutou ochranou proti smazání, protože recept, který nabídka ukazuje, je rest-server append-only, takže **Jak dlouho uchovávat** tam neplatí. Každá nabídka má vlastní přihlášení a vlastní složku, takže když sekci nabídneš znovu, stejnému členovi nebo jinému, kopie prvního partnera zůstanou nedotčené: přidej nový řádek do `.htpasswd` a nech server běžet. Takto putují jen údaje o připojení, nikdy data záloh. **Zkontrolovat nyní** požádá člena, aby ověřil repozitář jedné sekce. Nic na stránce nemůže spustit zálohu, obnovu ani smazání na jiné krabici.
 
 Instance, které jsou vypnuté, a telefony se zavřenou aplikací si ponechají kartu jako **Neaktivní**, šedě, s tím, kdy byly naposledy vidět, a stojí v síti ztlumeně, dokud je neodebereš pomocí **Odebrat**. Hned po startu tohoto serveru taková karta říká **Ověřuje se**, dokud se skupina nevrátí. **Odebrat** na takové kartě funguje, ať jsou zapnuté jakékoli části, a ukončí také otevřené žádosti člena, jeho nečinné sloty příjmu ZFS a čekající žádosti o klíč. Karta **Instance** na stránce párování tyto členy vypisuje také jako **Neaktivní**.
@@ -425,6 +429,91 @@ Přijímací krabice může také provozovat rest-server, na který ostatní kop
 Instance ve tvé skupině pak server najdou mezi poskytovateli pod **Z tvé skupiny**, pojmenovaný podle přijímací krabice, a role **Přijímač** ho nabídne jako bezpečnou volbu. Každá instance dostane při prvním použití serveru vlastní přihlášení a zapisuje jen do své vlastní složky tam. Se zapnutým **Přijímač** v **Nastavení, Instance** otevře **Přijímací server** na kartě této instance server znovu. Jeho okno vypisuje přihlášení pod **Partneři s přihlášením** a **Odvolat přihlášení** jedno odebere. Co ta instance už zkopírovala, ve složce zůstává. Nastavení také vytvoří jedno **Přihlášení mimo skupinu**, jehož heslo okno ukáže jednou.
 
 Instance, která dosáhne na přijímací krabici jen přes relay, server použít nemůže, protože relay nenese zálohy. Přidej nejdřív na stránce párování adresu přijímací krabice. Když BombVault běží na vlastní IP adrese (třeba na br0), vyplň **Adresa pro partnery**, protože server naslouchá na adrese hostitele.
+
+Přijímací krabice může pro skupinu držet i [sdílený repozitář](#shared-repository).
+
+## Sdílený repozitář {#shared-repository}
+
+Několik serverů jedné skupiny může kopírovat společně do jednoho repozitáře resticu. Data, která mají společná, třeba stejnou sadu složek nebo stejná appdata, se tam uloží jen jednou, takže dohromady potřebují méně místa, než kdyby měl každý svůj repozitář.
+
+Jeden server skupiny je vlastníkem repozitáře. Jen on tam zapomíná staré zálohy a čistí. Ostatní jsou členové: k repozitáři se dostanou přes druhý rest-server v režimu append-only a mohou do něj jen přidávat. Každý server zapisuje pod [vlastním hostem](#backup-host), takže zálohy zůstanou oddělené, i když mají dva servery položku stejného jména.
+
+Co je potřeba:
+
+- [skupina párování](#pairing),
+- zapnuté **Šifrovat zálohy**, na vlastníkovi i na každém členovi, protože každý server dostane vlastní klíč resticu,
+- [přijímací server](#receiving-server) na vlastníkovi, na který členové dosáhnou. Když BombVault běží na vlastní IP adrese, vyplň nejdřív **Adresa pro partnery** v okně přijímacího serveru.
+
+Server může být vlastníkem nanejvýš jednoho sdíleného repozitáře.
+
+### Nastavení {#shared-set-up}
+
+Jakmile přijímací server běží, má stránka **Instance** jeho krabice pod instancemi kartu **Sdílený repozitář**. Stiskni **Nastavit sdílený repozitář**, vyber **Složka pro sdílený repozitář** na sdílené složce s dostatkem místa, nech **Port** na 8001, pokud ho nepoužívá jiný kontejner, a stiskni **Nastavit a spustit**. BombVault pak:
+
+1. odmítne, pokud už existuje kontejner jménem `rest-server-shared` nebo port drží jiný kontejner,
+2. vytvoří repozitář ve složce `shared` uvnitř ní, s heslem tohoto serveru,
+3. spustí `restic/rest-server` jako `rest-server-shared`, v režimu append-only se souborem s přihlášeními ve složce,
+4. na Unraidu zapíše jeho šablonu na flashku, aby kontejner zůstal upravitelný v záložce Docker,
+5. spustí proti němu tamper test. **Zkontrolovat znovu** na kartě ho spustí ještě jednou.
+
+Karta vypisuje **Členové**, každého s jeho klíči a poslední zálohou, žádosti o připojení a u každého člena **Odebrat**.
+
+### Připojení {#shared-join}
+
+Na serveru, který se chce připojit, otevři **Přidat cíl**. Pod **Z tvé skupiny** se vlastník ukáže podruhé, jako **Sdílený repozitář na** a jeho jméno. Když ho vybereš, pošle se vlastníkovi žádost, která se u něj objeví na kartě **Sdílený repozitář** s **Povolit** a **Odmítnout**.
+
+Po **Povolit** vydá vlastník přes skupinu jednorázový klíč a přihlášení ke svému druhému rest-serveru. Člen jím přidá vlastní klíč resticu a vlastník pak jednorázový klíč odstraní. Člen, který to do jednoho dne nedokončí, jednorázový klíč i přihlášení zase ztratí a může požádat znovu. Když se vlastník se svou odpovědí ke členovi nedostal, nabídne karta **Oznámit znovu**.
+
+Vlastník server odmítne, dokud ještě nezapisuje pod vlastním hostem, což znamená, že běží na starším vydání, a také když už pod stejným hostem zapisuje jiný člen. Dva servery mají stejný host, když mají stejný `APP_KEY`.
+
+Jakmile je člen uvnitř, objeví se pod **Cíle** cíl s názvem **Shared with** a jménem vlastníka, se všemi sekcemi vypnutými. Sekce, které tam mají kopírovat, zapni na stránce cíle. Cíl má ochranu proti smazání a žádná vlastní pravidla uchovávání, protože zapomíná tam jen vlastník. Jdou tam jen zálohy pod vlastním hostem člena, takže starší zálohy pod hostem `bombvault` zůstanou, kde jsou.
+
+Vlastník může do repozitáře kopírovat i své vlastní zálohy: **Kopírovat sem i zálohy tohoto serveru** na jeho kartě přidá ten cíl i jemu. Pro vlastníka ta kopie leží na jeho vlastních discích a nic mu nebrání tam mazat, takže to není kopie mimo lokalitu.
+
+### Kdo uklízí a kdy {#shared-upkeep}
+
+Zapomíná a čistí jen vlastník. Jeho nastavení je v části **Sdílený repozitář** okna **Přijímací server**, které se otevře z vlastní karty vlastníka na stránce Instance:
+
+- **Okno pro úklid** určuje, kdy čištění běží, denně nebo týdně. Dokud ho nezměníš, začíná v neděli v 03:00 a **Délka okna v hodinách** je 6.
+- **Nevyužité místo, které smí čištění nechat, v %** je 5, dokud to nezměníš. Vyšší hodnota znamená méně přebalování, takže čištění skončí dřív.
+- **Data přečtená zpět po čištění, v %** je 5, dokud to nezměníš. Po každém čištění vlastník repozitář zkontroluje a tento podíl dat přečte zpět.
+- **Jak dlouho uchovávat** se u každé sekce řídí pravidly vlastníka pro kopie mimo lokalitu a **Nastavit vlastní pravidlo** dá sdílenému repozitáři vlastní. Zálohy každého serveru stárnou samostatně.
+- **Uklidit teď** hned zapomene, vyčistí a zkontroluje, jakmile dá vědět členům.
+
+Mimo okno vlastník zapomíná jednou denně a místo se vrátí s dalším čištěním. Před čištěním dá vědět členům a ti do repozitáře nic nekopírují, dokud se okno nezavře. Člen, který ještě kopíruje, dostane až půl hodiny na dokončení, jinak se čištění přesune do dalšího okna. Kopie, která padne do okna, počká, v protokolu aktivit a na kartě člena se ukáže jako odložená a další průchod ji dožene.
+
+Kde si vlastník není jistý, nechá víc. Položka, kterou člen drží kvůli [anomálii](anomalies.md), si nechá všechny své zálohy, člen, který neumí říct, co drží, si tentokrát nechá všechny své zálohy, a zálohy pod hostem, pod kterým nezapisuje žádný server skupiny, se nikdy nezapomenou. Okno ukazuje i místo: kolik repozitář zabírá, kolik by servery potřebovaly každý zvlášť a kolik se tím ušetří. Čísla přicházejí s každým úklidem.
+
+### Co vidí členové {#shared-members}
+
+Na členovi má stránka Instance kartu **Sdílené repozitáře** s každým sdíleným repozitářem, do kterého server kopíruje nebo o připojení k němuž požádal, a se stavem jeho žádosti: **Čeká na souhlas**, **Připojuje se**, **Připojeno**, **Odmítnuto**, **Vypršelo** nebo **Není členem**. U repozitáře, ve kterém je, ukazuje karta **Kdo čistí**, **Příští úklid**, **Společně s** pro ostatní členy, **Poslední kopie sem** a kolik místa repozitář zabírá a šetří.
+
+### Odchod {#shared-leave}
+
+**Odejít** na kartě člena server vyřadí: vlastník odstraní jeho klíč a přihlášení a jeho cíl tam se vypne. **Odebrat** na kartě vlastníka vyřadí člena z druhé strany. Tak či tak zálohy serveru zůstanou v repozitáři a stárnou podle pravidel vlastníka. U vlastníka stojí pod **Servery, které odešly**, kde je **Zapomenout zálohy** všechny zapomene, jakmile napíšeš jméno serveru. Místo vrátí další okno pro úklid.
+
+### Zálohy jiných serverů {#shared-restore}
+
+Každý server najde své vlastní zálohy ve sdíleném repozitáři na záložce **Zálohy** svých položek, jako kteroukoli jinou kopii. Zálohy ostatních členů jsou na stránce Obnova pod [Další servery](restore.md#other-servers).
+
+### Po havárii {#shared-emergency}
+
+[Sada pro obnovu](#recovery-kit) má kapitolu **Shared repositories**. Uvádí každý sdílený repozitář s jeho vlastníkem, sekce, které tam kopírují, ostatní členy s jejich hosty a příkaz `restic snapshots` s hostem tohoto serveru. Sada vlastníka uvádí navíc port, složku a přihlášení jeho rest-serveru.
+
+V Nouzovém průvodci se repozitář ukáže mezi místy jako **Sdílený repozitář na serveru** a jméno vlastníka. Nová instalace, která převezme klíč člena, zapisuje pod stejným hostem, protože host pochází z klíče. Dostane zpět svůj cíl ve sdíleném repozitáři a vypisuje a obnovuje tam jen své vlastní zálohy.
+
+Nová instalace, která převezme klíč vlastníka, se stane vlastníkem repozitáře místo něj. Nechává zálohy v něm stárnout a uklízí ho jako dřív a znovu spustí rest-server na stejné složce. Spáruj ji znovu se skupinou, nastav její přijímací server pod **Instance** a znovu nastav pravidla v okně přijímacího serveru, protože v sadě nejsou. Jakmile skupina dosáhne na členy, nový vlastník jim to oznámí sám. Každý člen to nejdřív ověří: přidá do repozitáře zkušební klíč, který může odstranit jen server u složky repozitáře, a nového vlastníka následuje, jakmile ten klíč zmizí. Pokud nový vlastník odpovídá na jiné adrese, každý člen tam tuto kontrolu provede se svým vlastním klíčem a přihlášením, ověří si, že najde stejný repozitář, a teprve pak přepne své cíle na novou adresu. Do té doby dál kopíruje na starou adresu a jeho karta ukazuje důvod. Klíče, které po takových kontrolách zůstanou, vlastník odstraní při dalším úklidu.
+
+Pokud starý vlastník ještě běží, jeho karta říká, že repozitář teď drží druhý server. **Vzít zpět** z něj udělá znovu vlastníka, pro případ, že byla sada omylem převzata na druhém serveru.
+
+### Omezení {#shared-limits}
+
+- **Každý klíč čte všechno.** Všechny klíče repozitáře resticu otevírají stejný hlavní klíč, takže každý člen může číst zálohy ostatních. Definice kontejnerů a VM zůstávají zapečetěné vlastním klíčem každého serveru, takže kontejnery a VM jiného serveru se vrátí jen jako soubory. Server, který kdysi měl přístup, mohl hlavní klíč přečíst, takže ho jeho odebrání natrvalo nevyřadí. To dokáže jen nový repozitář.
+- **Vlastník může mazat.** Žádný člen tam nemůže nic smazat, ale vlastník dosáhne na složku přímo a zapomíná a čistí zálohy všech členů. Chyba nebo převzetí na straně vlastníka zasáhne všechny.
+- **Poškození zasáhne každý server.** Poškozený pack chybí každému serveru, jehož zálohy ho používají, takže sdílený repozitář nenahrazuje druhou kopii.
+- **Jen na přijímacím serveru.** S3, SFTP a jiná místa nedokážou člena omezit jen na přidávání, takže BombVault nabízí sdílený repozitář jen na přijímacím serveru.
+- **Jen jako cíl kopie.** Vlastní složka sekce nemůže ležet ve sdíleném repozitáři, protože každé čištění by zdrželo zálohy všech serverů.
+- **Starší historie zůstává na místě.** Jdou tam jen zálohy pod vlastním hostem každého serveru a z jiných repozitářů se nic nepřesouvá.
 
 ## Příklad: spárování dvou krabic s Unraidem {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Funguje i rest-server, který provozuješ ručně: přidej ho přes **Přidat c�
 2. **Nastavení.** **Vrátit nastavení** obnoví vlastní nastavení BombVaultu z nejnovější autozálohy: cíle, přihlašovací údaje, plány a pravidla. BombVault se pro jejich použití restartuje, přes Docker socket, takže se živá databáze nastavení nikdy nepřepíše pod otevřeným handlem, a průvodce poté pokračuje sám. Přihlášení tohoto serveru zůstává: dál se přihlašuješ heslem, které používáš teď. Tajemství, která starý server uložený měl a nelze je převzít, jsou vypsána, abys je mohl zadat znovu. Obnova ukončí všechny relace a odstraní passkeys, takže je potom nastav znovu.
 3. **Výběr.** BombVault projde tvé zálohy a vypíše kontejnery, VM, sady složek a datové sady ZFS, které najde. Nejnovější snapshot je všude předvybraný. Co tento server ještě má, začíná vypnuté, protože by to obnova nahradila. Sady složek po opětovném sestavení už nevědí, odkud pocházely, takže jdou do složky, kterou vybereš.
 4. **Obnova.** Všechno vybrané se vrátí najednou, nechané zastavené, pokud chceš každý kontejner a VM spustit sám, což je po úplné ztrátě nejbezpečnější. Potom stáhni novou sadu pro obnovu: stará patří předchozí instalaci.
+
+Sdílený repozitář ze sady se mezi místy ukáže jako **Sdílený repozitář na serveru** a jméno serveru, který je jeho vlastníkem, a průvodce tam vypíše jen vlastní zálohy tohoto serveru. Viz [Po havárii](#shared-emergency).
 
 ![Nouzový průvodce v prvním kroku, se třemi cestami dovnitř.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Nouzový průvodce v prvním kroku, se třemi cestami dovnitř.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Tohle je kus, který umožňuje obnovu po havárii i tehdy, když žádný BombV
 
 ### Host záloh serveru {#backup-host}
 
-Každý server zapisuje své zálohy pod vlastním hostem resticu: `bv-` a dvanáct znaků vypočtených z klíče záloh, například `bv-3f9a0c41d2e7`. Zálohy z doby, kdy server ještě vlastní host neměl, nesou host `bombvault`. Sada uvádí host tohoto serveru a její příkazy předávají oba přes `--host`, takže `latest` nikdy nevybere zálohu, kterou do stejného repozitáře zapsal jiný server. Server, který převezme zálohy jiného, pokračuje pod hostem toho serveru, protože host pochází z klíče.
+Každý server zapisuje své zálohy pod vlastním hostem resticu: `bv-` a dvanáct znaků vypočtených z klíče záloh, například `bv-3f9a0c41d2e7`. Zálohy z doby, kdy server ještě vlastní host neměl, nesou host `bombvault`. Sada uvádí host tohoto serveru a její příkazy předávají oba přes `--host`, takže `latest` nikdy nevybere zálohu, kterou do stejného repozitáře zapsal jiný server. Server, který převezme zálohy jiného, pokračuje pod hostem toho serveru, protože host pochází z klíče. Pro každý [sdílený repozitář](#shared-repository), do kterého server kopíruje nebo jehož je vlastníkem, uvádí kapitola sady **Shared repositories** ostatní servery v něm s jejich hosty.
 
 ### Zapečetění sady {#sealing-the-kit}
 

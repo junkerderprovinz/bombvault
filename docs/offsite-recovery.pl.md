@@ -316,6 +316,8 @@ Niektóre miejsca w ogóle nie potrafią odmówić usunięcia, na przykład dysk
 
 Najszybszą drogą do kopii append-only jest sparowany BombVault z [serwerem odbiorczym](#receiving-server): sam uruchamia dla Ciebie rest-server w trybie append-only.
 
+We [wspólnym repozytorium](#shared-repository) dotyczy to członków, a nie jego właściciela. Właściciel ma bezpośredni dostęp do folderu i sam zapomina tam kopie oraz je przycina.
+
 !!! note "Udane usunięcie w `/locks/` jest oczekiwane"
     Append-only nie znaczy, że nic nigdy nie może zniknąć. restic musi zakładać i zwalniać własne blokady, więc `/locks/` pozostaje z założenia zapisywalne i usuwalne. Migawek i danych za nimi, czyli tego, za czym poszedłby ransomware, nie da się usunąć. Jeśli sam sondujesz drugą stronę, udane usunięcie w `/locks/` to poprawne zachowanie, a nie dziura w ochronie.
 
@@ -389,6 +391,8 @@ Włączenie roli wysyła prośbę, a nic nie startuje, dopóki ktoś na drugiej 
 
 **Szczegóły** na karcie otwierają resztę: odbierane repozytoria i źródła pobierania tego członka, oferty pamięci, monitorowanie, **Usuń** i **Zapomnij klucz**.
 
+Pod kartami są dwie karty [wspólnego repozytorium](#shared-repository): **Wspólne repozytorium** na maszynie z serwerem odbiorczym i **Wspólne repozytoria** na członku.
+
 Członek może zaoferować drugiemu przez grupę własną pamięć poza siedzibą. Drugi administrator widzi ofertę w **Szczegóły** członka i ją przyjmuje albo odrzuca. Przyjęcie tworzy zapisane dane logowania i zwykłe miejsce docelowe, po tych samych kontrolach co miejsce, które wpisujesz. Miejsce dostaje włączoną ochronę przed usunięciem, bo przepis, który pokazuje oferta, to rest-server append-only, więc **Jak długo przechowywać** tam nie obowiązuje. Każda oferta ma własne logowanie i własny folder, więc ponowne zaoferowanie sekcji, temu samemu członkowi albo innemu, nie rusza kopii pierwszego partnera: dopisz nową linię do `.htpasswd` i zostaw serwer uruchomiony. W ten sposób podróżują tylko dane połączenia, nigdy dane kopii. **Sprawdź teraz** prosi członka o weryfikację repozytorium jednej sekcji. Nic na stronie nie może uruchomić kopii, przywracania ani usunięcia na innej maszynie.
 
 Wyłączone instancje i telefony z zamkniętą aplikacją zachowują swoją kartę jako **Nieaktywne**, na szaro, z informacją, kiedy ostatnio je widziano, i stoją przyciemnione w sieci, dopóki ich nie **Usuń**. Zaraz po starcie tego serwera taka karta mówi **Sprawdzanie**, dopóki grupa nie wróci. **Usuń** działa na takiej karcie niezależnie od tego, które części są włączone, i kończy też otwarte prośby członka, jego bezczynne gniazda odbioru ZFS i oczekujące prośby o klucz. Karta **Instancje** na stronie parowania wymienia tych członków także jako **Nieaktywne**.
@@ -423,6 +427,91 @@ Maszyna odbierająca może też uruchamiać rest-server, do którego kopiują po
 Instancje Twojej grupy znajdują potem serwer wśród dostawców w **Z twojej grupy**, nazwany od maszyny odbierającej, a rola **Odbiornik** oferuje go jako bezpieczny wybór. Każda instancja dostaje własny login przy pierwszym użyciu serwera i zapisuje tylko do własnego folderu tam. Przy włączonym **Odbiornik** w **Ustawienia, Instancje**, **Serwer odbiorczy** na karcie tej instancji otwiera serwer ponownie. Jego okno wymienia loginy w **Partnerzy z loginem**, a **Odwołaj login** zabiera jeden. To, co ta instancja już skopiowała, zostaje w folderze. Konfiguracja tworzy też jeden **Login spoza grupy**, którego hasło okno pokazuje raz.
 
 Instancja, która dociera do maszyny odbierającej tylko przez relay, nie może używać serwera, bo relay nie niesie kopii. Najpierw dodaj adres maszyny odbierającej na stronie parowania. Gdy BombVault działa na własnym adresie IP (na przykład na br0), wypełnij **Adres dla partnerów**, bo serwer nasłuchuje na adresie hosta.
+
+Maszyna odbierająca może też prowadzić dla grupy [wspólne repozytorium](#shared-repository).
+
+## Wspólne repozytorium {#shared-repository}
+
+Kilka serwerów z jednej grupy może kopiować razem do jednego repozytorium restic. Dane, które mają wspólne, na przykład ten sam zestaw folderów albo te same appdata, są tam zapisane tylko raz, więc razem potrzebują mniej miejsca niż z osobnym repozytorium dla każdego.
+
+Jeden serwer grupy jest właścicielem repozytorium. Tylko on zapomina tam stare kopie i przycina. Pozostałe są członkami: docierają do repozytorium przez drugi rest-server w trybie append-only i mogą tylko dodawać. Każdy serwer zapisuje pod [własnym hostem](#backup-host), więc kopie pozostają rozdzielone, nawet gdy dwa serwery mają element o tej samej nazwie.
+
+Co jest potrzebne:
+
+- [grupa parowania](#pairing),
+- włączone **Szyfruj kopie zapasowe**, u właściciela i u każdego członka, bo każdy serwer dostaje własny klucz restic,
+- [serwer odbiorczy](#receiving-server) u właściciela, do którego członkowie mogą dotrzeć. Gdy BombVault działa na własnym adresie IP, najpierw wypełnij **Adres dla partnerów** w oknie serwera odbiorczego.
+
+Serwer może być właścicielem najwyżej jednego wspólnego repozytorium.
+
+### Konfiguracja {#shared-set-up}
+
+Gdy serwer odbiorczy działa, strona **Instancje** na jego maszynie ma pod instancjami kartę **Wspólne repozytorium**. Naciśnij **Skonfiguruj wspólne repozytorium**, wybierz **Folder na wspólne repozytorium** na udziale z dużą ilością miejsca, zostaw **Port** na 8001, chyba że używa go inny kontener, i naciśnij **Skonfiguruj i uruchom**. BombVault następnie:
+
+1. odmawia, jeśli kontener o nazwie `rest-server-shared` już istnieje albo port zajmuje inny kontener,
+2. tworzy repozytorium w folderze `shared` wewnątrz niego, z hasłem tego serwera,
+3. uruchamia `restic/rest-server` jako `rest-server-shared`, w trybie append-only, z plikiem logowania w folderze,
+4. na Unraid zapisuje jego szablon na dysku flash, żeby kontener pozostał edytowalny w zakładce Docker,
+5. uruchamia na nim test manipulacji. **Sprawdź ponownie** na karcie uruchamia go jeszcze raz.
+
+Karta wymienia **Członkowie**, każdego z jego kluczami i ostatnią kopią, prośby o dołączenie oraz **Usuń** przy każdym członku.
+
+### Dołączanie {#shared-join}
+
+Na serwerze, który chce dołączyć, otwórz **Dodaj miejsce docelowe**. W **Z twojej grupy** właściciel pojawia się drugi raz, jako **Wspólne repozytorium na** i jego nazwa. Wybranie go wysyła prośbę do właściciela, gdzie pojawia się ona na karcie **Wspólne repozytorium** z **Zezwól** i **Odrzuć**.
+
+Po **Zezwól** właściciel przekazuje przez grupę jednorazowy klucz i login do swojego drugiego rest-servera. Członek dodaje nim własny klucz restic, a właściciel usuwa potem jednorazowy klucz. Członek, który nie skończy w ciągu doby, traci jednorazowy klucz i login i może poprosić jeszcze raz. Gdy właściciel nie mógł dotrzeć do członka ze swoją odpowiedzią, karta oferuje **Powiadom ponownie**.
+
+Właściciel odrzuca serwer, dopóki ten nie zapisuje jeszcze pod własnym hostem, czyli działa na starszym wydaniu, a także wtedy, gdy pod tym samym hostem zapisuje już inny członek. Dwa serwery mają ten sam host, gdy mają ten sam `APP_KEY`.
+
+Gdy członek jest już w środku, w **Miejsca docelowe** pojawia się miejsce o nazwie **Shared with** i nazwie właściciela, z wyłączonymi wszystkimi sekcjami. Sekcje, które mają tam kopiować, włącz na stronie miejsca. Miejsce ma ochronę przed usunięciem i nie ma własnych reguł przechowywania, bo zapomina tam tylko właściciel. Trafiają tam tylko kopie pod własnym hostem członka, więc starsze kopie pod hostem `bombvault` zostają tam, gdzie są.
+
+Właściciel też może kopiować do repozytorium swoje kopie: **Kopiuj tu też kopie zapasowe tego serwera** na jego karcie dodaje to miejsce także u niego. Dla właściciela ta kopia leży na jego własnych dyskach i nic nie powstrzymuje go przed usuwaniem tam, więc nie jest to kopia poza siedzibą.
+
+### Kto robi porządki i kiedy {#shared-upkeep}
+
+Tylko właściciel zapomina i przycina. Jego ustawienia są w części **Wspólne repozytorium** okna **Serwer odbiorczy**, które otwiera się z własnej karty właściciela na stronie Instancje:
+
+- **Okno porządków** ustala, kiedy działa przycinanie, codziennie albo co tydzień. Dopóki go nie zmienisz, zaczyna się w niedziele o 03:00, a **Długość okna w godzinach** wynosi 6.
+- **Nieużywane miejsce, które może zostawić przycinanie, w %** wynosi 5, dopóki tego nie zmienisz. Wyższa wartość oznacza mniej przepakowywania, więc przycinanie kończy się szybciej.
+- **Dane odczytywane po przycinaniu, w %** wynosi 5, dopóki tego nie zmienisz. Po każdym przycinaniu właściciel sprawdza repozytorium i odczytuje z powrotem taką część danych.
+- **Jak długo przechowywać** idzie za regułami właściciela dla kopii poza siedzibą w każdej sekcji, a **Ustaw własną regułę** daje wspólnemu repozytorium własną. Kopie każdego serwera starzeją się osobno.
+- **Zrób porządki teraz** od razu zapomina, przycina i sprawdza, gdy tylko da znać członkom.
+
+Poza oknem właściciel zapomina raz dziennie, a miejsce wraca przy następnym przycinaniu. Przed przycinaniem daje znać członkom, a oni nic nie kopiują do repozytorium, dopóki okno się nie zamknie. Członek, który jeszcze kopiuje, dostaje do pół godziny na dokończenie, w przeciwnym razie przycinanie przesuwa się do następnego okna. Kopia, która wypada w oknie, czeka, jest pokazana jako odłożona w dzienniku aktywności i na karcie członka, a następny przebieg ją nadrabia.
+
+Gdy właściciel nie ma pewności, zachowuje więcej. Element, który członek zatrzymuje z powodu [anomalii](anomalies.md), zachowuje wszystkie swoje kopie, członek, który nie potrafi powiedzieć, co zatrzymuje, zachowuje tym razem wszystkie swoje kopie, a kopie pod hostem, pod którym nie zapisuje żaden serwer grupy, nigdy nie są zapominane. Okno pokazuje też miejsce: ile zajmuje repozytorium, ile serwery potrzebowałyby osobno i ile to oszczędza. Liczby przychodzą z każdymi porządkami.
+
+### Co widzą członkowie {#shared-members}
+
+Na członku strona Instancje ma kartę **Wspólne repozytoria** z każdym wspólnym repozytorium, do którego serwer kopiuje albo poprosił o dołączenie, i ze stanem jego prośby: **Czeka na zgodę**, **Dołącza**, **Dołączono**, **Odrzucono**, **Wygasło** albo **Nie jest członkiem**. Dla repozytorium, w którym jest, karta pokazuje **Kto przycina**, **Następne porządki**, **Razem z** dla pozostałych członków, **Ostatnia kopia tutaj** oraz ile miejsca repozytorium zajmuje i oszczędza.
+
+### Odejście {#shared-leave}
+
+**Opuść** na karcie członka wyprowadza serwer: właściciel usuwa jego klucz i login, a jego miejsce docelowe tam zostaje wyłączone. **Usuń** na karcie właściciela wyprowadza członka z drugiej strony. W obu przypadkach kopie serwera zostają w repozytorium i starzeją się według reguł właściciela. U właściciela stoją w **Serwery, które odeszły**, gdzie **Zapomnij kopie zapasowe** zapomina je wszystkie, gdy wpiszesz nazwę serwera. Następne okno porządków oddaje miejsce.
+
+### Kopie innych serwerów {#shared-restore}
+
+Każdy serwer znajduje własne kopie we wspólnym repozytorium na karcie **Kopie zapasowe** swoich elementów, jak każdą inną kopię. Kopie pozostałych członków są na stronie Przywracanie w [Inne serwery](restore.md#other-servers).
+
+### Po awarii {#shared-emergency}
+
+[Zestaw odzyskiwania](#recovery-kit) ma rozdział **Shared repositories**. Podaje każde wspólne repozytorium z jego właścicielem, sekcje, które tam kopiują, pozostałych członków z ich hostami i polecenie `restic snapshots` z hostem tego serwera. Zestaw właściciela podaje też port, folder i login jego rest-servera.
+
+W Kreatorze awaryjnym repozytorium pojawia się wśród miejsc jako **Wspólne repozytorium na serwerze** i nazwa właściciela. Nowa instalacja, która przejmuje klucz członka, zapisuje pod tym samym hostem, bo host pochodzi z klucza. Odzyskuje swoje miejsce docelowe we wspólnym repozytorium i wymienia oraz przywraca tam tylko własne kopie.
+
+Nowa instalacja, która przejmuje klucz właściciela, zostaje właścicielem repozytorium na jego miejscu. Pozwala kopiom się starzeć i robi porządki jak wcześniej, a rest-server uruchamia ponownie na tym samym folderze. Sparuj ją ponownie z grupą, skonfiguruj jej serwer odbiorczy w **Instancje** i ustaw ponownie reguły w oknie serwera odbiorczego, bo nie ma ich w zestawie. Gdy grupa dotrze do członków, nowy właściciel sam im to powie. Każdy członek najpierw to sprawdza: dodaje do repozytorium próbny klucz, który może usunąć tylko serwer przy folderze repozytorium, i idzie za nowym właścicielem, gdy ten klucz zniknie. Jeśli nowy właściciel odpowiada pod innym adresem, każdy członek robi tam to sprawdzenie własnym kluczem i loginem, upewnia się, że znajduje to samo repozytorium, i dopiero wtedy przestawia swoje miejsca docelowe na nowy adres. Do tego czasu dalej kopiuje na stary adres, a jego karta mówi, dlaczego. Klucze, które zostały po takich sprawdzeniach, właściciel usuwa przy następnych porządkach.
+
+Jeśli stary właściciel nadal działa, jego karta mówi, że repozytorium ma teraz inny serwer. **Odzyskaj** czyni go znowu właścicielem, na wypadek gdy zestaw został przez pomyłkę przejęty na drugim serwerze.
+
+### Ograniczenia {#shared-limits}
+
+- **Każdy klucz czyta wszystko.** Wszystkie klucze repozytorium restic otwierają ten sam klucz główny, więc każdy członek może czytać kopie pozostałych. Definicje kontenerów i maszyn wirtualnych zostają zapieczętowane własnym kluczem każdego serwera, więc kontenery i maszyny wirtualne innego serwera wracają tylko jako pliki. Serwer, który kiedyś miał dostęp, mógł odczytać klucz główny, więc usunięcie go nie odcina go na dobre. Robi to dopiero nowe repozytorium.
+- **Właściciel może usuwać.** Żaden członek nie może tam niczego usunąć, ale właściciel ma bezpośredni dostęp do folderu i zapomina oraz przycina kopie każdego członka. Błąd albo przejęcie po stronie właściciela dotyka wszystkich.
+- **Uszkodzenie dotyka każdego serwera.** Uszkodzonego packa brakuje każdemu serwerowi, którego kopie go używają, więc wspólne repozytorium nie zastępuje drugiej kopii.
+- **Tylko na serwerze odbiorczym.** S3, SFTP i inne miejsca nie potrafią ograniczyć członka do samego dodawania, więc BombVault oferuje wspólne repozytorium tylko na serwerze odbiorczym.
+- **Tylko jako cel kopii.** Własny folder sekcji nie może leżeć we wspólnym repozytorium, bo każde przycinanie wstrzymywałoby kopie wszystkich serwerów.
+- **Starsza historia zostaje na miejscu.** Trafiają tam tylko kopie pod własnym hostem każdego serwera i nic nie jest przenoszone z innych repozytoriów.
 
 ## Przykład: parowanie dwóch maszyn Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -468,6 +557,8 @@ Rest-server prowadzony ręcznie też działa: dodaj go przez **Dodaj miejsce doc
 2. **Ustawienia.** **Przywróć ustawienia** przywraca własne ustawienia BombVault z najnowszej autokopii: miejsca docelowe, dane logowania, harmonogramy i reguły. BombVault restartuje się, żeby je zastosować, przez gniazdo Docker, więc działająca baza ustawień nigdy nie jest nadpisywana pod otwartym uchwytem, a kreator potem sam idzie dalej. Logowanie tego serwera zostaje: nadal logujesz się hasłem, którego używasz teraz. Sekrety, które miał stary serwer i których nie da się przejąć, są wymienione, żebyś mógł wpisać je ponownie. Przywrócenie kończy każdą sesję i usuwa klucze dostępu, więc ustaw je potem od nowa.
 3. **Wybór.** BombVault przegląda Twoje kopie i wymienia znalezione kontenery, maszyny wirtualne, zestawy folderów i zbiory danych ZFS. Najnowsza migawka jest wszędzie zaznaczona z góry. To, co ten serwer nadal ma, zaczyna wyłączone, bo przywracanie by to zastąpiło. Zestawy folderów po odbudowie nie wiedzą już, skąd pochodzą, więc trafiają do wybranego przez Ciebie folderu.
 4. **Przywracanie.** Wszystko zaznaczone wraca naraz, zostawione zatrzymane, jeśli chcesz sam uruchamiać każdy kontener i maszynę, co jest najbezpieczniejsze po całkowitej utracie. Potem pobierz nowy zestaw odzyskiwania: stary należy do poprzedniej instalacji.
+
+Wspólne repozytorium z zestawu pojawia się wśród miejsc jako **Wspólne repozytorium na serwerze** i nazwa serwera, który jest jego właścicielem, a kreator wymienia tam tylko własne kopie tego serwera. Zobacz [Po awarii](#shared-emergency).
 
 ![Kreator awaryjny w pierwszym kroku, z trzema drogami wejścia.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Kreator awaryjny w pierwszym kroku, z trzema drogami wejścia.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -530,7 +621,7 @@ To element, który umożliwia odzyskiwanie po awarii nawet wtedy, gdy nie dział
 
 ### Host kopii serwera {#backup-host}
 
-Każdy serwer zapisuje swoje kopie pod własnym hostem restic: `bv-` i dwanaście znaków obliczonych z klucza kopii, na przykład `bv-3f9a0c41d2e7`. Kopie z czasów, zanim serwer miał własny host, mają host `bombvault`. Zestaw podaje host tego serwera, a jego polecenia przekazują oba przez `--host`, więc `latest` nigdy nie wybierze kopii, którą inny serwer zapisał do tego samego repozytorium. Serwer, który przejmuje kopie innego, działa dalej pod hostem tamtego serwera, bo host pochodzi z klucza.
+Każdy serwer zapisuje swoje kopie pod własnym hostem restic: `bv-` i dwanaście znaków obliczonych z klucza kopii, na przykład `bv-3f9a0c41d2e7`. Kopie z czasów, zanim serwer miał własny host, mają host `bombvault`. Zestaw podaje host tego serwera, a jego polecenia przekazują oba przez `--host`, więc `latest` nigdy nie wybierze kopii, którą inny serwer zapisał do tego samego repozytorium. Serwer, który przejmuje kopie innego, działa dalej pod hostem tamtego serwera, bo host pochodzi z klucza. Dla każdego [wspólnego repozytorium](#shared-repository), do którego serwer kopiuje albo którego jest właścicielem, rozdział zestawu **Shared repositories** podaje pozostałe serwery w nim razem z ich hostami.
 
 ### Pieczętowanie zestawu {#sealing-the-kit}
 

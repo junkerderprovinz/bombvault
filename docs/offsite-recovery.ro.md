@@ -318,6 +318,8 @@ Unele locuri nu pot refuza deloc o ștergere, de exemplu un disc în cloud precu
 
 Cea mai rapidă cale spre o copie append-only este un BombVault împerecheat cu un [server receptor](#receiving-server): el rulează rest-server-ul pentru tine, în mod append-only.
 
+Într-un [depozit comun](#shared-repository) acest lucru e valabil pentru membri, nu și pentru serverul care îl deține. Acel server ajunge direct la folder și acolo uită și curăță copii.
+
 !!! note "O ștergere reușită sub `/locks/` este de așteptat"
     Append-only nu înseamnă că nu se poate elimina niciodată nimic. restic trebuie să ia și să elibereze propriile lock-uri, așa că `/locks/` rămâne scriibil și ștergibil prin concepție. Instantaneele și datele din spatele lor, adică ținta ransomware-ului, nu pot fi eliminate. Dacă sondezi tu însuți partea îndepărtată, o ștergere reușită sub `/locks/` este comportament corect și nu o breșă în protecție.
 
@@ -391,6 +393,8 @@ Pornirea unui rol trimite o cerere, și nimic nu începe până când cineva de 
 
 **Detalii** pe un card deschide restul: depozitele primite și sursele de preluare ale acelui membru, ofertele de stocare, monitorizarea, **Elimină** și **Uită cheia**.
 
+Sub carduri, cardul **Depozit comun** pe o stație cu server receptor și cardul **Depozite comune** pe un membru țin de [depozitul comun](#shared-repository).
+
 Un membru își poate oferi propria stocare off-site altui membru prin grup. Celălalt administrator vede oferta în **Detalii** ale membrului și o acceptă sau o refuză. Acceptarea creează o autentificare salvată și o destinație obișnuită, după aceleași verificări ca o destinație pe care o introduci tu. Destinația vine cu protecția la ștergere pornită, pentru că rețeta pe care o arată oferta este un rest-server append-only, așa că **Cât timp se păstrează** nu se aplică acolo. Fiecare ofertă are o autentificare și un folder proprii, așa că oferirea din nou a unei secțiuni, aceluiași membru sau altuia, lasă în pace copiile primului partener: adaugă noul rând în `.htpasswd` și lasă serverul să ruleze. Pe această cale circulă doar datele de conexiune, niciodată date de backup. **Verifică acum** cere unui membru să verifice depozitul unei secțiuni. Nimic de pe pagină nu poate porni un backup, o restaurare sau șterge ceva pe altă stație.
 
 Instanțele oprite și telefoanele cu aplicația închisă își păstrează cardul ca **Inactivă**, în gri, cu momentul în care au fost văzute ultima dată, și stau estompate în rețea până când le elimini cu **Elimină**. Imediat după pornirea acestui server, un astfel de card arată **Se verifică** până când grupul revine. **Elimină** funcționează pe un astfel de card indiferent ce părți sunt pornite și încheie și cererile deschise ale membrului, locurile lui de recepție ZFS nefolosite și cererile lui de chei în așteptare. Cardul **Instanțe** de pe pagina de împerechere listează și el acești membri ca **Inactivă**.
@@ -425,6 +429,91 @@ Stația care primește poate rula și rest-server-ul spre care copiază ceilalț
 Instanțele din grupul tău găsesc apoi serverul printre furnizori la **Din grupul tău**, numit după stația care primește, iar rolul **Receptor** îl oferă ca alegerea sigură. Fiecare instanță primește o autentificare proprie prima dată când folosește serverul și scrie doar în propriul folder de acolo. Cu **Receptor** pornit la **Setări, Instanțe**, **Server receptor** pe cardul acestei instanțe redeschide serverul. Fereastra lui listează autentificările la **Parteneri cu autentificare**, iar **Revocă autentificarea** o scoate pe una. Ce a copiat deja acea instanță rămâne în folder. Configurarea creează și o **Autentificare din afara grupului**, a cărei parolă fereastra o arată o singură dată.
 
 O instanță care ajunge la stația receptoare doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă copii. Adaugă mai întâi adresa stației receptoare pe pagina de împerechere. Când BombVault rulează pe o adresă IP proprie (pe br0, de exemplu), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
+
+O stație receptoare poate deține și un [depozit comun](#shared-repository) pentru grup.
+
+## Depozit comun {#shared-repository}
+
+Mai multe servere dintr-un grup pot copia împreună într-un singur depozit restic. Datele pe care le au în comun, de exemplu același set de foldere sau aceleași appdata, sunt păstrate acolo o singură dată, așa că împreună au nevoie de mai puțin spațiu decât cu câte un depozit fiecare.
+
+Un server din grup deține depozitul: el este deținătorul și singurul care uită acolo copiile vechi și face curățarea. Celelalte sunt membri: ajung la depozit printr-un al doilea rest-server în mod append-only și pot doar adăuga. Fiecare server scrie sub o [gazdă proprie](#backup-host), așa că copiile rămân separate chiar și când două servere au un element cu același nume.
+
+Ce îți trebuie:
+
+- un [grup de împerechere](#pairing),
+- **Criptează copiile de rezervă** pornit, pe deținător și pe fiecare membru, pentru că fiecare server primește o cheie restic proprie,
+- un [server receptor](#receiving-server) pe deținător, la care membrii pot ajunge. Când BombVault rulează pe o adresă IP proprie, completează mai întâi **Adresă pentru parteneri** în fereastra serverului receptor.
+
+Un server deține cel mult un depozit comun.
+
+### Configurarea {#shared-set-up}
+
+După ce serverul receptor rulează, pagina **Instanțe** a stației lui are un card **Depozit comun** sub instanțe. Apasă **Configurează depozitul comun**, alege un **Folder pentru depozitul comun** pe o partajare cu mult spațiu, lasă **Port** la 8001 dacă nu îl folosește alt container și apasă **Configurează și pornește**. BombVault apoi:
+
+1. refuză dacă există deja un container numit `rest-server-shared` sau dacă alt container ține portul,
+2. creează depozitul într-un folder `shared` din el, cu parola acestui server,
+3. pornește `restic/rest-server` ca `rest-server-shared`, în mod append-only, cu un fișier de autentificare în folder,
+4. pe Unraid scrie șablonul lui pe unitatea flash, ca containerul să rămână editabil în fila Docker,
+5. rulează testul de manipulare împotriva lui. **Verifică din nou** pe card îl rulează încă o dată.
+
+Cardul arată la **Membri** fiecare membru cu cheile și ultima lui copie, apoi cererile de intrare și **Elimină** pentru fiecare membru.
+
+### Intrarea {#shared-join}
+
+Pe serverul care vrea să intre, deschide **Adaugă destinație**. La **Din grupul tău** deținătorul apare a doua oară, ca **Depozit comun pe** urmat de numele lui. Alegerea lui trimite o cerere deținătorului, unde apare pe cardul **Depozit comun** cu **Permite** și **Refuză**.
+
+După **Permite**, deținătorul trimite prin grup o cheie de unică folosință și o autentificare pe al doilea lui rest-server. Cu ea membrul își adaugă o cheie restic proprie, iar deținătorul șterge apoi cheia de unică folosință. Un membru care nu a terminat într-o zi pierde din nou cheia de unică folosință și autentificarea și poate cere încă o dată. Când deținătorul nu a putut ajunge la membru cu răspunsul lui, cardul oferă **Anunță din nou**.
+
+Deținătorul refuză un server cât timp acesta încă nu scrie sub o gazdă proprie, ceea ce înseamnă că rulează o versiune mai veche, și când alt membru scrie deja sub aceeași gazdă. Două servere au aceeași gazdă când au același `APP_KEY`.
+
+După ce membrul a intrat, la **Destinații** apare o destinație numită **Shared with** urmat de numele deținătorului, cu toate secțiunile oprite. Pornește pe pagina destinației secțiunile care trebuie să copieze acolo. Destinația are protecție la ștergere și nicio regulă de păstrare proprie, pentru că acolo uită doar deținătorul. Acolo ajung doar copiile de sub gazda proprie a membrului, așa că copiile mai vechi de sub gazda `bombvault` rămân unde sunt.
+
+Deținătorul își poate copia acolo și propriile copii: **Copiază și copiile de rezervă ale acestui server** pe cardul lui adaugă destinația și la el. Pentru deținător, copia stă pe propriile discuri și nimic nu îl oprește să șteargă acolo, deci nu e o copie în afara casei.
+
+### Cine face curățenie, și când {#shared-upkeep}
+
+Doar deținătorul uită și curăță. Setările lui sunt în partea **Depozit comun** a ferestrei **Server receptor**, care se deschide de pe cardul deținătorului pe pagina Instanțe:
+
+- **Fereastră de întreținere** stabilește când rulează curățarea, zilnic sau săptămânal. Până o schimbi, începe duminica la 03:00, iar **Durata ferestrei în ore** este 6.
+- **Spațiu nefolosit pe care îl poate lăsa o curățare, în %** este 5 dacă nu îl schimbi. O valoare mai mare reîmpachetează mai puțin, așa că curățarea se termină mai repede.
+- **Date recitite după o curățare, în %** este 5 dacă nu îl schimbi. După fiecare curățare, deținătorul verifică depozitul și recitește această parte din date.
+- **Cât timp se păstrează** urmează pentru fiecare secțiune regulile off-site ale deținătorului, iar **Setează o regulă proprie** îi dă depozitului comun o regulă a lui. Copiile fiecărui server îmbătrânesc separat.
+- **Fă întreținerea acum** uită, curăță și verifică imediat, după ce anunță membrii.
+
+În afara ferestrei, deținătorul uită o dată pe zi, iar spațiul revine la următoarea curățare. Înainte de o curățare anunță membrii, iar aceștia nu copiază nimic în depozit până se închide fereastra. Un membru care încă copiază are până la o jumătate de oră să termine, altfel curățarea trece la fereastra următoare. O copiere care cade în fereastră așteaptă, apare ca amânată în jurnalul de activitate și pe cardul membrului, iar trecerea următoare recuperează.
+
+Când deținătorul nu e sigur, păstrează mai mult. Un element pe care un membru îl reține din cauza unei [anomalii](anomalies.md) își păstrează toate copiile, un membru care nu poate spune ce reține își păstrează de data aceea toate copiile, iar copiile de sub o gazdă cu care nu scrie niciun server din grup nu sunt uitate niciodată. Fereastra arată și spațiul: cât ocupă depozitul, de cât ar avea nevoie serverele separat și cât se economisește. Cifrele vin cu fiecare întreținere.
+
+### Ce văd membrii {#shared-members}
+
+Pe un membru, pagina Instanțe are un card **Depozite comune** cu fiecare depozit comun în care copiază serverul sau în care a cerut să intre, și unde a ajuns cererea lui: **Așteaptă un da**, **Se alătură**, **Membru**, **Refuzat**, **Expirat** sau **Nu e membru**. Pentru un depozit din care face parte, cardul arată **Cine curăță**, **Următoarea întreținere**, **Împreună cu** pentru ceilalți membri, **Ultima copie aici** și cât spațiu ocupă și economisește depozitul.
+
+### Ieșirea {#shared-leave}
+
+**Ieși** pe cardul membrului scoate serverul: deținătorul îi șterge cheia și autentificarea, iar destinația lui de acolo este oprită. **Elimină** pe cardul deținătorului scoate un membru din cealaltă parte. În ambele cazuri, copiile serverului rămân în depozit și îmbătrânesc după regulile deținătorului. Pe deținător ele apar la **Servere care au ieșit**, unde **Uită copiile de rezervă** le uită pe toate după ce scrii numele serverului. Următoarea fereastră de întreținere eliberează spațiul.
+
+### Copiile altor servere {#shared-restore}
+
+Fiecare server își găsește propriile copii din depozitul comun în fila **Copii de rezervă** a elementelor lui, ca pe orice altă copie. Copiile celorlalți membri sunt pe pagina Restaurare, la [Alte servere](restore.md#other-servers).
+
+### După o urgență {#shared-emergency}
+
+[Kitul de recuperare](#recovery-kit) are un capitol **Shared repositories**. Numește fiecare depozit comun cu deținătorul lui, secțiunile care copiază acolo, pe ceilalți membri cu gazdele lor și o comandă `restic snapshots` cu gazda acestui server. Kitul deținătorului numește și portul, folderul și autentificarea rest-server-ului lui.
+
+În Asistentul de urgență, depozitul apare printre locuri ca **Depozit comun la** urmat de numele deținătorului. O instalare nouă care preia cheia unui membru scrie sub aceeași gazdă, pentru că gazda vine din cheie. Își recapătă destinația din depozitul comun și acolo listează și restaurează doar propriile copii.
+
+O instalare nouă care preia cheia deținătorului deține depozitul în locul lui. Îl îmbătrânește și face curățenie ca înainte și repornește rest-server-ul pe același folder. Împerechează-o din nou cu grupul, configurează-i serverul receptor la **Instanțe** și setează din nou regulile în fereastra serverului receptor, pentru că nu sunt în kit. Imediat ce grupul ajunge la membri, noul deținător îi anunță singur. Fiecare membru verifică mai întâi: adaugă în depozit o cheie de probă pe care doar un server cu acces la folderul depozitului o poate șterge, și îl urmează pe noul deținător după ce cheia a dispărut. Dacă noul deținător răspunde la altă adresă, fiecare membru face acolo această verificare cu propria cheie și autentificare, se asigură că găsește același depozit și abia apoi își mută destinațiile pe noua adresă. Până atunci continuă să copieze la vechea adresă, iar cardul lui spune de ce. Deținătorul șterge la următoarea întreținere cheile rămase de la astfel de verificări.
+
+Dacă vechiul deținător încă rulează, cardul lui spune că acum depozitul îl deține celălalt server. **Recuperează** îl face din nou deținător, pentru cazul în care un kit a fost preluat din greșeală pe un al doilea server.
+
+### Limite {#shared-limits}
+
+- **Fiecare cheie citește tot.** Toate cheile unui depozit restic deschid aceeași cheie principală, așa că fiecare membru poate citi copiile celorlalți. Definițiile containerelor și VM-urilor rămân sigilate cu cheia proprie a fiecărui server, așa că containerele și VM-urile altui server revin doar ca fișiere. Un server care a avut cândva acces putea citi cheia principală, așa că eliminarea lui nu îl exclude definitiv. Doar un depozit nou o face.
+- **Deținătorul poate șterge.** Niciun membru nu poate șterge nimic acolo, dar deținătorul ajunge direct la folder și uită și curăță copiile tuturor membrilor. O greșeală sau o preluare a controlului pe deținător îi atinge pe toți.
+- **O deteriorare atinge fiecare server.** Un pack stricat lipsește fiecărui server ale cărui copii îl folosesc, așa că un depozit comun nu înlocuiește o a doua copie.
+- **Doar pe un server receptor.** S3, SFTP și alte locuri nu pot limita un membru la adăugare, așa că BombVault oferă un depozit comun doar pe un server receptor.
+- **Doar ca țintă de copiere.** Folderul propriu al unei secțiuni nu poate sta într-un depozit comun, pentru că fiecare curățare ar ține în loc copiile tuturor serverelor.
+- **Istoricul mai vechi rămâne pe loc.** Intră doar copiile de sub gazda proprie a fiecărui server, și nu se mută nimic din alte depozite.
 
 ## Exemplu: împerecherea a două stații Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Un rest-server pe care îl rulezi manual funcționează și el: adaugă-l cu **A
 2. **Setări.** **Readu setările** restaurează propriile setări ale BombVault din cea mai nouă copie Auto-backup: destinații, credențiale, programări și reguli. BombVault repornește ca să le aplice, prin socketul Docker, deci baza de date activă de setări nu este niciodată suprascrisă sub un handle deschis, iar asistentul continuă singur după aceea. Autentificarea acestui server rămâne: continui să te autentifici cu parola pe care o folosești acum. Secretele stocate de vechiul server care nu pot fi preluate sunt listate, ca să le poți introduce din nou. Restaurarea încheie toate sesiunile și elimină cheile de acces, așa că configurează-le din nou după aceea.
 3. **Selecție.** BombVault caută prin copiile tale și listează containerele, VM-urile, seturile de foldere și seturile de date ZFS pe care le găsește. Cea mai nouă copie de rezervă este preselectată peste tot. Ce are încă acest server pornește oprit, pentru că o restaurare l-ar înlocui. Seturile de foldere nu mai știu de unde au venit după o reconstruire, așa că merg într-un folder ales de tine.
 4. **Restaurare.** Tot ce este selectat revine dintr-o dată, lăsat oprit dacă vrei să pornești tu fiecare container și VM, ceea ce este cel mai sigur după o pierdere totală. După aceea descarcă un kit de recuperare nou: cel vechi aparține instalării anterioare.
+
+Un depozit comun din kit apare printre locuri ca **Depozit comun la** urmat de numele serverului care îl deține, iar asistentul listează acolo doar copiile acestui server. Vezi [După o urgență](#shared-emergency).
 
 ![Asistentul de urgență la primul pas, cu cele trei căi de acces.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Asistentul de urgență la primul pas, cu cele trei căi de acces.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Aceasta este piesa care face posibilă recuperarea după dezastru chiar și cân
 
 ### Gazda copiilor unui server {#backup-host}
 
-Fiecare server își scrie copiile sub o gazdă restic proprie: `bv-` și douăsprezece caractere calculate din cheia copiilor, de exemplu `bv-3f9a0c41d2e7`. Copiile de dinainte ca un server să aibă una poartă gazda `bombvault`. Kitul numește gazda acestui server, iar comenzile din el le transmit pe amândouă cu `--host`, astfel încât `latest` să nu aleagă niciodată o copie scrisă de alt server în același depozit. Un server care preia copiile altuia continuă sub gazda acelui server, pentru că gazda vine din cheie.
+Fiecare server își scrie copiile sub o gazdă restic proprie: `bv-` și douăsprezece caractere calculate din cheia copiilor, de exemplu `bv-3f9a0c41d2e7`. Copiile de dinainte ca un server să aibă una poartă gazda `bombvault`. Kitul numește gazda acestui server, iar comenzile din el le transmit pe amândouă cu `--host`, astfel încât `latest` să nu aleagă niciodată o copie scrisă de alt server în același depozit. Un server care preia copiile altuia continuă sub gazda acelui server, pentru că gazda vine din cheie. Pentru fiecare [depozit comun](#shared-repository) în care serverul copiază sau pe care îl deține, capitolul **Shared repositories** din kit numește celelalte servere de acolo cu gazdele lor.
 
 ### Sigilarea kitului {#sealing-the-kit}
 

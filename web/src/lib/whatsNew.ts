@@ -61,12 +61,45 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.5.5",
+    changes: [
+      { id: "shared-repo", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepo" },
+      { id: "shared-repo-member", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepoMember" },
+      // The section sits in the receiving server's window, which the button
+      // on this server's own card opens.
+      {
+        id: "shared-upkeep",
+        page: "/instances",
+        where: ["instances.title"],
+        way: [...TO_INSTANCES, "receiver-server"],
+        text: "whatsNew.sharedUpkeep",
+      },
+      { id: "restore-other-servers", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreOtherServers" },
+      { id: "shared-member-space", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedMemberSpace" },
+      { id: "shared-repo-own", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedOwnCopies" },
+      // A copy waits, a join runs out of time and a server leaves only now
+      // and then, so what shows them has no element that is always there.
+      { id: "shared-copy-deferred", text: "whatsNew.sharedCopyDeferred" },
+      { id: "shared-join-expiry", text: "whatsNew.sharedJoinExpiry" },
+      { id: "shared-repo-former", text: "whatsNew.sharedFormer" },
+    ],
+  },
+  {
     version: "10.5.4",
     changes: [
       { id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" },
       { id: "restore-tool-import", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.toolImport" },
-      { id: "files-junk", text: "whatsNew.systemJunk" },
-      { id: "location-connections", text: "whatsNew.connections" },
+      // A new folder set meets the junk lines first, in the form that Add
+      // opens, and an existing set only behind a button on its Settings tab.
+      { id: "files-junk", page: "/backups", where: ["backups.title"], way: ["/backups", "add-entry", "add-folder"], text: "whatsNew.systemJunk" },
+      {
+        id: "location-connections",
+        page: LOCATION,
+        go: "/storage",
+        where: ["storage.title", "whatsNew.page.location"],
+        way: [...TO_STORAGE, "network"],
+        text: "whatsNew.connections",
+      },
     ],
   },
   {

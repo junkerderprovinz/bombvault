@@ -318,6 +318,8 @@ Nogle steder kan slet ikke afvise en sletning, for eksempel et cloud-drev som On
 
 Den hurtigste vej til en append-only-kopi er en parret BombVault med en [modtageserver](#receiving-server): den kører rest-serveren for dig, i append-only-tilstand.
 
+I et [delt arkiv](#shared-repository) gælder det for medlemmerne og ikke for den server, der ejer arkivet. Den server når mappen direkte og glemmer og beskærer dér.
+
 !!! note "En vellykket sletning under `/locks/` er forventet"
     Append-only betyder ikke, at intet længere kan slettes. restic skal tage og frigive sine egne låse, så `/locks/` forbliver bevidst skrivbar og sletbar. Sikkerhedskopier og dataene bag dem, altså præcis det ransomware ville gå efter, kan ikke fjernes. Tester du selv modparten, er en sletning der lykkes under `/locks/` korrekt adfærd og ikke et hul i beskyttelsen.
 
@@ -391,6 +393,8 @@ At slå en rolle til sender en anmodning, og intet starter, før nogen på den a
 
 **Detaljer** på et kort åbner resten: det medlems modtagne repositories og hentekilder, destinationstilbud, overvågning, **Fjern** og **Glem nøglen**.
 
+Under kortene hører kortet **Delt arkiv** på en boks med en modtageserver og kortet **Delte arkiver** på et medlem til det [delte arkiv](#shared-repository).
+
 Et medlem kan tilbyde sin egen off-site-lagring til et andet medlem over gruppen. Den anden administrator ser tilbuddet i medlemmets **Detaljer** og accepterer eller afviser det. Hvis tilbuddet accepteres, oprettes gemte adgangsoplysninger og en almindelig destination efter de samme tjek som en destination, du selv skriver ind. Destinationen kommer med beskyttelse mod sletning slået til, da opskriften, tilbuddet viser, er en append-only rest-server, så **Hvor længe der gemmes** gælder ikke dér. Hvert tilbud har sit eget login og sin egen mappe. Tilbyder du et område igen, til det samme medlem eller et andet, får den første partners kopier altså lov at være: tilføj den nye linje til `.htpasswd`, og lad serveren køre. Kun forbindelsesoplysninger rejser på den måde, aldrig sikkerhedskopidata. **Tjek nu** beder et medlem om at verificere ét områdes repository. Intet på siden kan starte en sikkerhedskopiering, en gendannelse eller en sletning på en anden boks.
 
 Instanser, der er lukket ned, og telefoner med appen lukket beholder deres kort som **Inaktiv**, i gråt, med hvornår de sidst blev set, og står dæmpet i nettet, indtil du fjerner dem med **Fjern**. Lige efter at denne server er startet, viser sådan et kort **Kontrollerer**, indtil gruppen er tilbage. **Fjern** virker på sådan et kort, uanset hvilke dele der er slået til, og afslutter også medlemmets åbne anmodninger, dets ubrugte ZFS-modtagepladser og dets ventende nøgleanmodninger. Kortet **Instanser** på parringssiden viser også disse medlemmer som **Inaktiv**.
@@ -425,6 +429,91 @@ Modtagerboksen kan også køre den rest-server, de andre kopierer til. Den sætt
 Instanserne i din gruppe finder så serveren blandt udbyderne under **Fra din gruppe**, opkaldt efter modtagerboksen, og rollen **Modtager** tilbyder den som det sikre valg. Hver instans får et eget login, første gang den bruger serveren, og skriver kun i sin egen mappe dér. Med **Modtager** slået til under **Indstillinger, Instanser** åbner **Modtageserver** på denne instans' kort serveren igen. Dens vindue oplister loginsene under **Partnere med login**, og **Træk login tilbage** fjerner ét. Det, den instans allerede har kopieret, bliver i mappen. Opsætningen opretter også ét **Login uden for gruppen**, hvis adgangskode vinduet viser én gang.
 
 En instans, der kun når modtagerboksen gennem relayet, kan ikke bruge serveren, fordi relayet ikke bærer sikkerhedskopier. Tilføj først modtagerboksens adresse på parringssiden. Når BombVault kører på en egen IP-adresse (for eksempel på br0), udfyld **Adresse for partnere**, fordi serveren lytter på værtens adresse.
+
+En modtagerboks kan også have et [delt arkiv](#shared-repository) for gruppen.
+
+## Delt arkiv {#shared-repository}
+
+Flere servere i en gruppe kan kopiere til ét restic-repository sammen. Data, de har til fælles, for eksempel det samme mappesæt eller de samme appdata, gemmes der kun én gang, så tilsammen bruger de mindre plads end med et repository hver.
+
+Én server i gruppen ejer arkivet. Det er den eneste, der glemmer gamle sikkerhedskopier og beskærer dér. De andre er medlemmer: de når arkivet gennem en ekstra rest-server i append-only-tilstand og kan kun tilføje. Hver server skriver under sin [egen host](#backup-host), så sikkerhedskopierne holdes adskilt, også hvor to servere har et element med samme navn.
+
+Det kræver:
+
+- en [parringsgruppe](#pairing),
+- **Kryptér sikkerhedskopier** slået til, på ejeren og på hvert medlem, fordi hver server får sin egen restic-nøgle,
+- en [modtageserver](#receiving-server) på ejeren, som medlemmerne kan nå. Når BombVault kører på en egen IP-adresse, så udfyld først **Adresse til partnere** i modtageserverens vindue.
+
+En server ejer højst ét delt arkiv.
+
+### Opsætning {#shared-set-up}
+
+Når modtageserveren kører, har siden **Instanser** på dens boks et kort **Delt arkiv** under instanserne. Tryk på **Opsæt delt arkiv**, vælg en **Mappe til det delte arkiv** på en share med god plads, behold **Port** på 8001, medmindre en anden container bruger den, og tryk på **Opsæt og start**. BombVault så:
+
+1. afviser, hvis der allerede findes en container med navnet `rest-server-shared`, eller en anden container holder porten,
+2. opretter arkivet i en mappe `shared` i den, med denne servers adgangskode,
+3. starter `restic/rest-server` som `rest-server-shared`, i append-only-tilstand med en loginfil i mappen,
+4. skriver på Unraid dens skabelon til flashdrevet, så containeren kan redigeres i fanen Docker,
+5. kører manipulationstesten mod den. **Tjek igen** på kortet kører den en gang til.
+
+Kortet viser **Medlemmer**, hver med sine nøgler og sin seneste sikkerhedskopi, anmodningerne om at komme med og **Fjern** for hvert medlem.
+
+### Komme med {#shared-join}
+
+På den server, der vil være med, åbner du **Tilføj destination**. Under **Fra din gruppe** vises ejeren en gang til, som **Delt arkiv hos** og dens navn. Vælger du det, går der en anmodning til ejeren. Dér står den på kortet **Delt arkiv** med **Tillad** og **Afvis**.
+
+Efter **Tillad** udleverer ejeren gennem gruppen en engangsnøgle og et login til sin ekstra rest-server. Med dem tilføjer medlemmet sin egen restic-nøgle, og derefter fjerner ejeren engangsnøglen. Et medlem, der ikke er færdigt inden for et døgn, mister engangsnøglen og loginet igen og kan spørge en gang til. Kunne ejeren ikke nå medlemmet med sit svar, tilbyder kortet **Sig det igen**.
+
+Ejeren afviser en server, så længe den endnu ikke skriver under sin egen host, hvilket betyder, at den kører en ældre udgivelse, og når et andet medlem allerede skriver under samme host. To servere deler en host, når de deler en `APP_KEY`.
+
+Når medlemmet er med, vises en destination ved navn **Shared with** og ejerens navn under **Destinationer**, med alle områder slået fra. Slå de områder til, der skal kopiere dertil, på destinationens side. Destinationen har beskyttelse mod sletning og ingen egne opbevaringsregler, fordi kun ejeren glemmer dér. Kun sikkerhedskopier under medlemmets egen host kommer derhen, så ældre sikkerhedskopier under hosten `bombvault` bliver, hvor de er.
+
+Ejeren kan også kopiere sine egne sikkerhedskopier ind: **Kopiér også denne servers sikkerhedskopier herind** på dens kort tilføjer destinationen hos ejeren også. For ejeren ligger den kopi på dens egne diske, og intet forhindrer den i at slette dér. Det er altså ikke en kopi ude af huset.
+
+### Hvem rydder op, og hvornår {#shared-upkeep}
+
+Kun ejeren glemmer og beskærer. Dens indstillinger står i delen **Delt arkiv** af vinduet **Modtageserver**, som du åbner fra ejerens eget kort på siden Instanser:
+
+- **Oprydningsvindue** bestemmer, hvornår prune kører, dagligt eller ugentligt. Indtil du ændrer det, starter det søndag kl. 03:00, og **Vinduets længde i timer** er 6.
+- **Ubrugt plads, som en prune må efterlade, i %** er 5, medmindre du ændrer det. En højere værdi pakker mindre om, så prune bliver hurtigere færdig.
+- **Data, der læses tilbage efter en prune, i %** er 5, medmindre du ændrer det. Efter hver prune tjekker ejeren arkivet og læser denne andel af dataene tilbage.
+- **Hvor længe der gemmes** følger ejerens off-site-regler for hvert område, og **Sæt en egen regel** giver det delte arkiv sin egen. Hver servers sikkerhedskopier ældes for sig.
+- **Ryd op nu** glemmer, beskærer og tjekker med det samme, efter at medlemmerne har fået besked.
+
+Uden for vinduet glemmer ejeren én gang om dagen, og pladsen kommer tilbage med næste prune. Før en prune giver ejeren medlemmerne besked, og de kopierer intet til arkivet, før vinduet lukker. Et medlem, der stadig kopierer, får op til en halv time til at blive færdigt, ellers flyttes prune til næste vindue. En kopi, der falder ind i vinduet, venter og vises som udskudt i aktivitetsloggen og på medlemmets kort. Næste gennemløb indhenter den.
+
+Hvor ejeren er i tvivl, beholder den mere. Et element, som et medlem holder fast i på grund af en [afvigelse](anomalies.md), beholder alle sine sikkerhedskopier. Et medlem, der ikke kan sige, hvad det holder fast i, beholder alle sine sikkerhedskopier den gang. Sikkerhedskopier under en host, som ingen server i gruppen skriver under, glemmes aldrig. Vinduet viser også pladsen: hvad arkivet fylder, hvad serverne ville bruge hver for sig, og hvad det sparer. Tallene kommer med hver oprydning.
+
+### Hvad medlemmer ser {#shared-members}
+
+På et medlem har siden Instanser et kort **Delte arkiver**. Det viser hvert delt arkiv, som serveren kopierer til eller har bedt om at komme med i, og hvordan anmodningen står: **Venter på et ja**, **Kommer med**, **Med**, **Afvist**, **Udløbet** eller **Ikke medlem**. For et arkiv, den er med i, viser kortet **Hvem beskærer**, **Næste oprydning**, **Sammen med** for de andre medlemmer, **Seneste kopi hertil**, og hvor meget plads arkivet fylder og sparer.
+
+### Forlade arkivet {#shared-leave}
+
+**Forlad** på medlemmets kort tager serveren ud: ejeren fjerner dens nøgle og login, og dens destination dér slås fra. **Fjern** på ejerens kort tager et medlem ud fra den anden side. I begge tilfælde bliver serverens sikkerhedskopier i arkivet og ældes efter ejerens regler. Hos ejeren står de under **Servere, der har forladt arkivet**, hvor **Glem sikkerhedskopier** glemmer dem alle, når du skriver serverens navn. Næste oprydningsvindue giver pladsen tilbage.
+
+### Andre serveres sikkerhedskopier {#shared-restore}
+
+Hver server finder sine egne sikkerhedskopier i det delte arkiv på fanen **Sikkerhedskopier** for sine elementer, ligesom enhver anden kopi. De andre medlemmers sikkerhedskopier ligger på siden Gendannelse under [Andre servere](restore.md#other-servers).
+
+### Efter en nødsituation {#shared-emergency}
+
+[Gendannelseskittet](#recovery-kit) har et kapitel **Shared repositories**. Det nævner hvert delt arkiv med dets ejer, de områder, der kopierer dertil, de andre medlemmer med deres hosts og en `restic snapshots`-kommando med denne servers host. Ejerens kit nævner også port, mappe og login for dens rest-server.
+
+I nødguiden vises arkivet blandt stederne som **Delt repository hos** og ejerens navn. En ny installation, der overtager et medlems nøgle, skriver under samme host, fordi hosten kommer fra nøglen. Den får sin destination i det delte arkiv tilbage og viser og gendanner kun sine egne sikkerhedskopier dér.
+
+En ny installation, der overtager ejerens nøgle, bliver ejer af arkivet i dens sted. Den lader sikkerhedskopierne ældes og rydder op som før og starter rest-serveren igen på samme mappe. Par den med gruppen igen, sæt dens modtageserver op under **Instanser**, og sæt reglerne i modtageserverens vindue igen, fordi de ikke står i kittet. Så snart gruppen når medlemmerne, giver den nye ejer dem selv besked. Hvert medlem tjekker først: det tilføjer en prøvenøgle til arkivet, som kun en server med adgang til arkivets mappe kan fjerne, og følger den nye ejer, når den nøgle er væk. Svarer den nye ejer på en anden adresse, kører hvert medlem dette tjek dér med sin egen nøgle og sit eget login, sikrer sig, at det finder samme arkiv, og flytter først derefter sine destinationer til den nye adresse. Indtil da kopierer det fortsat til den gamle adresse, og dets kort fortæller hvorfor. Nøgler, der er tilbage fra sådanne tjek, fjerner ejeren ved næste oprydning.
+
+Kører den gamle ejer stadig, siger dens kort, at den anden server ejer arkivet nu. **Tag det tilbage** gør den til ejer igen, til når et kit ved en fejl er blevet overtaget på en ekstra server.
+
+### Begrænsninger {#shared-limits}
+
+- **Hver nøgle læser alt.** Alle nøgler i et restic-repository åbner den samme hovednøgle, så hvert medlem kan læse de andres sikkerhedskopier. Container- og VM-definitioner forbliver forseglet med hver servers egen nøgle, så en anden servers containere og VM'er kommer kun tilbage som filer. En server, der engang havde adgang, kan have læst hovednøglen, så at fjerne den lukker den ikke ude for altid. Det gør kun et nyt arkiv.
+- **Ejeren kan slette.** Intet medlem kan slette noget dér, men ejeren når mappen direkte og glemmer og beskærer alle medlemmers sikkerhedskopier. En fejl eller en overtagelse hos ejeren rammer dem alle.
+- **Skader rammer alle servere.** En ødelagt pack mangler for hver server, hvis sikkerhedskopier bruger den, så et delt arkiv erstatter ikke en ekstra kopi.
+- **Kun på en modtageserver.** S3, SFTP og andre steder kan ikke begrænse et medlem til at tilføje, så BombVault tilbyder kun et delt arkiv på en modtageserver.
+- **Kun som kopimål.** Et områdes egen mappe kan ikke ligge i et delt arkiv, fordi hver prune ville holde alle serveres sikkerhedskopier tilbage.
+- **Ældre historik bliver, hvor den er.** Kun sikkerhedskopier under hver servers egen host kommer ind, og intet flyttes over fra andre repositories.
 
 ## Eksempel: parring af to Unraid-bokse {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ En rest-server, du kører i hånden, virker også: tilføj den med **Tilføj des
 2. **Indstillinger.** **Hent indstillinger tilbage** gendanner BombVaults egne indstillinger fra den nyeste auto-sikkerhedskopi: destinationer, adgangsoplysninger, tidsplaner og regler. BombVault genstarter for at anvende dem, gennem Docker-socket'en, så den levende indstillingsdatabase aldrig overskrives under et åbent håndtag, og guiden fortsætter af sig selv bagefter. Denne servers login bliver: du bliver ved med at logge ind med den adgangskode, du bruger nu. Hemmeligheder, den gamle server havde gemt, som ikke kan overtages, oplistes, så du kan indtaste dem igen. Gendannelsen afslutter alle sessioner og fjerner adgangsnøglerne, så sæt dem op igen bagefter.
 3. **Valg.** BombVault gennemgår dine sikkerhedskopier og oplister de containere, VM'er, mappesæt og ZFS-datasæt, den finder. Den nyeste sikkerhedskopi er forvalgt overalt. Det, denne server stadig har, starter slået fra, fordi en gendannelse ville erstatte det. Mappesæt ved ikke længere, hvor de kom fra efter en genopbygning, så de går i en mappe, du vælger.
 4. **Gendannelse.** Alt valgt kommer tilbage på én gang, efterladt stoppet, hvis du selv vil starte hver container og VM, hvilket er sikrest efter et totalt tab. Download bagefter et nyt gendannelseskit: det gamle hører til den forrige installation.
+
+Et delt arkiv fra kittet vises blandt stederne som **Delt repository hos** og navnet på den server, der ejer det, og guiden viser kun denne servers egne sikkerhedskopier dér. Se [Efter en nødsituation](#shared-emergency).
 
 ![Nødguiden ved sit første trin med de tre veje ind.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Nødguiden ved sit første trin med de tre veje ind.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -533,7 +624,7 @@ Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er n
 
 ### Hosten for en servers sikkerhedskopier {#backup-host}
 
-Hver server skriver sine sikkerhedskopier under sin egen restic-host: `bv-` og tolv tegn beregnet ud fra sikkerhedskopiernes nøgle, for eksempel `bv-3f9a0c41d2e7`. Sikkerhedskopier fra før en server fik sin egen host, har hosten `bombvault`. Kittet angiver denne servers host, og dets kommandoer giver begge med `--host`, så `latest` aldrig vælger en sikkerhedskopi, som en anden server har skrevet til samme repository. En server, der overtager en andens sikkerhedskopier, fortsætter under den servers host, fordi hosten kommer fra nøglen.
+Hver server skriver sine sikkerhedskopier under sin egen restic-host: `bv-` og tolv tegn beregnet ud fra sikkerhedskopiernes nøgle, for eksempel `bv-3f9a0c41d2e7`. Sikkerhedskopier fra før en server fik sin egen host, har hosten `bombvault`. Kittet angiver denne servers host, og dets kommandoer giver begge med `--host`, så `latest` aldrig vælger en sikkerhedskopi, som en anden server har skrevet til samme repository. En server, der overtager en andens sikkerhedskopier, fortsætter under den servers host, fordi hosten kommer fra nøglen. For hvert [delt arkiv](#shared-repository), som serveren kopierer til eller ejer, nævner kittets kapitel **Shared repositories** de andre servere dér med deres hosts.
 
 ### Forsegling af kittet {#sealing-the-kit}
 

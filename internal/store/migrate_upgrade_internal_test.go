@@ -659,10 +659,12 @@ func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
 	}
 
 	var zfsNames []string
+	unused := 0
 	for _, m := range migrations {
 		if m.version >= zfsMigrationBase && m.version < anomalyMigrationBase {
 			zfsNames = append(zfsNames, m.name)
 		}
+		unused = max(unused, m.version+1)
 	}
 	if len(zfsNames) != 12 {
 		t.Fatalf("found %d migrations from v%d to v%d, want the 12 of the ZFS domain", len(zfsNames), zfsMigrationBase, anomalyMigrationBase-1)
@@ -671,7 +673,7 @@ func TestZFSMigrationsAreSatisfiedWhenAlreadyApplied(t *testing.T) {
 		if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = ?`, name); err != nil {
 			t.Fatalf("forget %s: %v", name, err)
 		}
-		record(t, db, 900+i, name)
+		record(t, db, unused+i, name)
 	}
 	if _, err := db.Exec(`UPDATE settings SET zfs_path = 'user/tank/zfs', zfs_schedule = 'daily 03:00' WHERE id = 1`); err != nil {
 		t.Fatalf("configure the domain: %v", err)
