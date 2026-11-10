@@ -294,6 +294,12 @@ type Service struct {
 	// roleSendMu lets one call about this instance's own role requests go
 	// out at a time, so a withdrawal cannot overtake the ask it takes back.
 	roleSendMu sync.Mutex
+	// sharedMu keeps a join, its completion and a member's removal in a shared
+	// repository from running into each other.
+	sharedMu sync.Mutex
+	// sharedRefreshedAt is when this instance last asked the owners about its
+	// unfinished joins, in Unix nanoseconds.
+	sharedRefreshedAt atomic.Int64
 	// roleRefreshedAt is when this instance last asked its members where its
 	// own role requests stand, in Unix nanoseconds.
 	roleRefreshedAt atomic.Int64

@@ -627,6 +627,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/receiver/server", h.handleForgetReceiver)
 	mux.HandleFunc("DELETE /api/receiver/server/logins/{id}", h.handleRevokeReceiverLogin)
 	mux.HandleFunc("GET /api/receiver/server/template", h.handleReceiverTemplate)
+	h.mountSharedRepo(mux)
 
 	// Pull sources (#227): repositories belonging to OTHER instances that this
 	// box fetches snapshots out of. Session-protected like every other /api

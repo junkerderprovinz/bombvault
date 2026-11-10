@@ -150,14 +150,14 @@ func unraidTemplate(htpasswd, repoHint string) string {
 
   4) %s`, xmlCommentSafe(htpasswd), restServerDataDefault, restServerName, restServerName,
 		xmlCommentSafe(noteText(tlsGuidance)), xmlCommentSafe(noteText(repoHint)))
-	return restServerTemplate(restServerName, restServerPort, restServerDataDefault, note)
+	return restServerTemplate(restServerName, restServerPort, restServerDataDefault, restServerOptions, note)
 }
 
 // restServerTemplate renders an Unraid container template for an append-only
-// rest-server called name that publishes port and keeps its repositories in
-// dataPath on the host. note fills the leading comment and has to be safe
-// inside one.
-func restServerTemplate(name string, port int, dataPath, note string) string {
+// rest-server called name that publishes port, keeps its repositories in
+// dataPath on the host and starts with options. note fills the leading
+// comment and has to be safe inside one.
+func restServerTemplate(name string, port int, dataPath, options, note string) string {
 	// The XML declaration has to come before the comment.
 	return fmt.Sprintf(`<?xml version="1.0"?>
 <!--
@@ -179,7 +179,7 @@ func restServerTemplate(name string, port int, dataPath, note string) string {
   <Config Name="OPTIONS" Target="OPTIONS" Default="%s" Description="Leave --append-only in place: it is what makes this an immutable destination. Removing it turns the box back into an ordinary share." Type="Variable" Display="always" Required="true" Mask="false">%s</Config>
 </Container>
 `, note, xmlText(name), restServerImage, restServerIcon,
-		restServerContainerPort, restServerPort, port, restServerDataDefault, xmlText(dataPath), restServerOptions, restServerOptions)
+		restServerContainerPort, restServerPort, port, restServerDataDefault, xmlText(dataPath), options, options)
 }
 
 // xmlText escapes s for an XML element or attribute.
