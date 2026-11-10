@@ -531,7 +531,8 @@ func (s *Service) sharedSetupHere() (sharedSetup, error) {
 }
 
 // sharedHostTaken reports whether a server other than memberID writes into the
-// owner's shared repository under host, or this server does.
+// owner's shared repository under host, wrote there before it left, or this
+// server does.
 func (s *Service) sharedHostTaken(repo, memberID, host string) (bool, error) {
 	if host == s.resticHost() {
 		return true, nil
@@ -541,6 +542,13 @@ func (s *Service) sharedHostTaken(repo, memberID, host string) (bool, error) {
 		return false, err
 	}
 	if slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host && m.Instance != memberID }) {
+		return true, nil
+	}
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(former, func(f store.SharedFormer) bool { return f.Host == host && f.Instance != memberID }) {
 		return true, nil
 	}
 	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
@@ -744,7 +752,7 @@ func (s *Service) removeSharedMember(ctx context.Context, memberID string) error
 				if m.Instance != memberID {
 					continue
 				}
-				if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: m.Host, Name: m.Name, LeftAt: time.Now().Unix()}); err != nil {
+				if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: m.Host, Instance: m.Instance, Name: m.Name, LeftAt: time.Now().Unix()}); err != nil {
 					return err
 				}
 			}

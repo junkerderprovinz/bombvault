@@ -104,10 +104,14 @@ func (s *Service) startForgetFormer(id, host, typed string) error {
 }
 
 // formerMember is the former member of sr under host. A host a member writes
-// under again, or this server's own, is nobody's that left.
+// under again, or this server's own, is nobody's that left, and one that asks
+// to come back may copy there again any moment.
 func (s *Service) formerMember(sr store.SharedRepo, host string) (store.SharedFormer, error) {
 	if host == s.resticHost() || slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) {
 		return store.SharedFormer{}, errNoSuchFormer
+	}
+	if back, err := s.sharedHostComingBack(host); err != nil || back {
+		return store.SharedFormer{}, errors.Join(errNoSuchFormer, err)
 	}
 	former, err := s.store.ListSharedFormer(sr.ID)
 	if err != nil {
@@ -137,8 +141,11 @@ func (s *Service) forgetFormer(ctx context.Context, sr store.SharedRepo, f store
 	}
 }
 
+// forgetFormerSnapshots holds sharedMu throughout, so the server cannot come
+// back between the look at who it is and the forget.
 func (s *Service) forgetFormerSnapshots(ctx context.Context, repo, host string) error {
-	// The server may have come back while the forget waited for its turn.
+	s.sharedMu.Lock()
+	defer s.sharedMu.Unlock()
 	sr, ok, err := s.store.SharedRepoAt(repo)
 	if err != nil {
 		return err
@@ -239,6 +246,18 @@ func (s *Service) sharedUpkeepViews(now time.Time) ([]sharedUpkeepView, error) {
 		out = append(out, v)
 	}
 	return out, nil
+}
+
+// sharedHostComingBack reports whether the server writing under host asked to
+// join again or was let in and has not finished.
+func (s *Service) sharedHostComingBack(host string) (bool, error) {
+	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
+	if err != nil {
+		return false, err
+	}
+	return slices.ContainsFunc(joins, func(j store.SharedJoin) bool {
+		return j.Host == host && (j.State == store.SharedJoinAsked || j.State == store.SharedJoinAllowed)
+	}), nil
 }
 
 // sharedSpaceHeard is what the owner last told this server about its shared

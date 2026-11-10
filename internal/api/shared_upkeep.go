@@ -218,7 +218,10 @@ func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store
 	}
 	for _, f := range former {
 		own := byHost[f.Host]
-		if len(own) == 0 || slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == f.Host }) {
+		if len(own) == 0 {
+			continue
+		}
+		if _, err := s.formerMember(sr, f.Host); err != nil {
 			continue
 		}
 		gone, err := s.sharedForgets(ctx, dest, mode, settings, u, store.SharedMember{Host: f.Host, Name: f.Name}, own, nil)

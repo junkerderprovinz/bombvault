@@ -3814,6 +3814,7 @@ CREATE TABLE IF NOT EXISTS shared_repo_space (
 		sql: `CREATE TABLE IF NOT EXISTS shared_repo_former (
   shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
   host           TEXT NOT NULL,
+  instance_id    TEXT NOT NULL,
   name           TEXT NOT NULL,
   left_at        INTEGER NOT NULL,
   forget_error   TEXT NOT NULL DEFAULT '',

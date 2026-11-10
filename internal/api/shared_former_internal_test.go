@@ -70,7 +70,7 @@ func formerRepo(t *testing.T) (*Service, *upkeepEngine, store.SharedRepo) {
 	}}
 	s := upkeepService(t, eng)
 	sr := holdSharedRepo(t, s, cube)
-	if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: towerHost, Name: "Tower", LeftAt: 100}); err != nil {
+	if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: towerHost, Instance: "tower-id", Name: "Tower", LeftAt: 100}); err != nil {
 		t.Fatal(err)
 	}
 	return s, eng, sr
@@ -189,5 +189,29 @@ func TestTheBackupsOfAFormerMemberAgeByTheOwnersRules(t *testing.T) {
 	r := forgetPass(t, s, sr, &fakeMembers{unreachable: map[string]bool{towerHost: true}})
 	if got := eng.left(); !slices.Equal(got, []string{"t2"}) || len(r.Unknown) != 0 || r.Error != "" {
 		t.Fatalf("left %v, report %+v; want Tower's last backup kept and Tower not unknown", got, r)
+	}
+}
+
+func TestAHostAServerThatLeftWroteUnderStaysThatServers(t *testing.T) {
+	s, _, sr := formerRepo(t)
+	if taken, err := s.sharedHostTaken(sr.Repo, "cube-id", towerHost); err != nil || !taken {
+		t.Fatalf("taken %v, %v; want Tower's host taken for another server", taken, err)
+	}
+	if taken, err := s.sharedHostTaken(sr.Repo, "tower-id", towerHost); err != nil || taken {
+		t.Fatalf("taken %v, %v; want Tower free to come back under its own host", taken, err)
+	}
+}
+
+func TestWhatAServerThatAsksToComeBackLeftIsNotForgotten(t *testing.T) {
+	s, eng, sr := formerRepo(t)
+	if err := s.store.SaveSharedJoin(store.SharedJoin{Direction: store.SharedJoinIn, MemberID: "tower-id", MemberName: "Tower",
+		Host: towerHost, State: store.SharedJoinAsked}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.startForgetFormer(sr.ID, towerHost, "Tower"); !errors.Is(err, errNoSuchFormer) {
+		t.Fatalf("err = %v, want errNoSuchFormer", err)
+	}
+	if forgetPass(t, s, sr, &fakeMembers{}); len(eng.forgets) != 0 {
+		t.Fatalf("aged %v while Tower asks to come back", eng.forgets)
 	}
 }
