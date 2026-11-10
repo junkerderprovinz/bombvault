@@ -74,6 +74,7 @@ Een korte catalogus van wat BombVault doet. Elke regel linkt naar de pagina die 
 - **Koppelen met twaalf woorden**, end-to-end versleuteld, rechtstreeks of via een relay. [Instanties koppelen](offsite-recovery.md#pairing)
 - **De pagina Instanties** met de groep als net en de rollen **Ontvanger**, **Ophaler**, **ZFS-server** en **Sleutelbewaarder**. [Instanties en rollen](offsite-recovery.md#roles)
 - **Een ontvangende server** die voor je wordt ingesteld, in append-only-modus. [Ontvangserver](offsite-recovery.md#receiving-server)
+- **Een gedeelde repository** waar meerdere servers naartoe kopiëren, zodat wat ze gemeen hebben maar één keer wordt opgeslagen. Alleen de server die er eigenaar van is, schoont op. [Gedeelde repository](offsite-recovery.md#shared-repository)
 
 ## AI-assistenten (MCP) {#mcp}
 

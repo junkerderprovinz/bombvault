@@ -318,6 +318,8 @@ Alguns lugares não conseguem recusar uma eliminação de todo, um disco na nuve
 
 O caminho mais rápido para uma cópia append-only é um BombVault emparelhado com um [servidor recetor](#receiving-server): corre o rest-server por ti, em modo append-only.
 
+Num [repositório partilhado](#shared-repository) isto vale para os membros e não para o servidor que o mantém. Esse servidor chega à pasta diretamente e lá esquece e poda backups.
+
 !!! note "Uma eliminação bem-sucedida em `/locks/` é esperada"
     Append-only não significa que nada possa alguma vez ser removido. O restic tem de criar e libertar os seus próprios bloqueios, por isso `/locks/` continua gravável e eliminável por conceção. Os instantâneos e os dados por trás deles, que é o que o ransomware procuraria, não podem ser removidos. Se sondares tu o outro lado, uma eliminação que tem êxito em `/locks/` é o comportamento correto e não um buraco na proteção.
 
@@ -391,6 +393,8 @@ Ligar uma função envia um pedido, e nada começa até alguém na outra instân
 
 Os **Detalhes** num cartão abrem o resto: os repositórios recebidos e as origens de recolha desse membro, ofertas de armazenamento, monitorização, **Remover** e **Esquecer a chave**.
 
+Abaixo dos cartões, o cartão **Repositório partilhado** numa máquina com servidor recetor e o cartão **Repositórios partilhados** num membro pertencem ao [repositório partilhado](#shared-repository).
+
 Um membro pode oferecer o seu próprio armazenamento externo a outro membro pelo grupo. O outro administrador vê a oferta nos **Detalhes** do membro e aceita-a ou recusa-a. Aceitar cria umas credenciais guardadas e um destino normal, depois das mesmas verificações de um destino que escreves tu. O destino vem com a proteção contra eliminação ligada, já que a receita que a oferta mostra é um rest-server append-only, por isso **Durante quanto tempo guardar** não se aplica lá. Cada oferta tem credenciais e uma pasta próprias, por isso oferecer outra vez uma secção, ao mesmo membro ou a outro, deixa em paz as cópias do primeiro parceiro: junta a nova linha ao `.htpasswd` e mantém o servidor a correr. Só viajam assim os dados de ligação, nunca dados de backup. **Verificar agora** pede a um membro que verifique o repositório de uma secção. Nada na página pode iniciar um backup, uma restauração ou eliminar o que quer que seja noutra máquina.
 
 As instâncias que estão desligadas e os telemóveis com a aplicação fechada mantêm o seu cartão como **Inativa**, em cinzento, com quando foram vistos pela última vez, e ficam esbatidos na rede até os **Remover**es. Logo depois de este servidor arrancar, um cartão assim diz **A verificar** até o grupo voltar. **Remover** funciona num cartão destes sejam quais forem as partes ligadas, e termina também os pedidos em aberto do membro, os seus espaços de receção ZFS inativos e os seus pedidos de chave à espera. O cartão **Instâncias** na página de emparelhamento lista também esses membros como **Inativa**.
@@ -425,6 +429,91 @@ A máquina recetora pode também correr o rest-server para onde os outros copiam
 As instâncias do teu grupo encontram então o servidor entre os fornecedores em **Do teu grupo**, com o nome da máquina recetora, e a função **Recetor** oferece-o como a escolha segura. Cada instância recebe um início de sessão próprio na primeira vez que usa o servidor, e escreve só na sua própria pasta aí. Com o **Recetor** ligado em **Definições, Instâncias**, **Servidor recetor** no cartão desta instância abre o servidor outra vez. A sua janela lista os inícios de sessão em **Parceiros com início de sessão**, e **Revogar início de sessão** tira um. O que essa instância já copiou fica na pasta. A configuração cria também um **Início de sessão fora do grupo**, cuja palavra-passe a janela mostra uma só vez.
 
 Uma instância que só alcança a máquina recetora pelo relay não pode usar o servidor, porque o relay não transporta backups. Junta primeiro o endereço da máquina recetora na página de emparelhamento. Quando o BombVault corre num endereço IP próprio (em br0, por exemplo), preenche **Endereço para parceiros**, porque o servidor escuta no endereço do host.
+
+Uma máquina recetora pode também manter um [repositório partilhado](#shared-repository) para o grupo.
+
+## Repositório partilhado {#shared-repository}
+
+Vários servidores de um grupo podem copiar em conjunto para um só repositório restic. Os dados que têm em comum, como o mesmo conjunto de pastas ou os mesmos appdata, ficam lá guardados uma só vez, por isso juntos precisam de menos espaço do que com um repositório cada um.
+
+Um servidor do grupo mantém o repositório: é o anfitrião, e o único que lá esquece backups antigos e poda. Os outros são membros: chegam ao repositório por um segundo rest-server em modo append-only e só podem acrescentar. Cada servidor escreve sob um [host próprio](#backup-host), por isso os backups ficam separados mesmo quando dois servidores têm uma entrada com o mesmo nome.
+
+O que é preciso:
+
+- um [grupo de emparelhamento](#pairing),
+- **Encriptar backups** ligado, no anfitrião e em cada membro, porque cada servidor recebe uma chave restic própria,
+- um [servidor recetor](#receiving-server) no anfitrião ao qual os membros consigam chegar. Quando o BombVault corre num endereço IP próprio, preenche primeiro **Endereço para os parceiros** na janela do servidor recetor.
+
+Um servidor mantém no máximo um repositório partilhado.
+
+### Configurá-lo {#shared-set-up}
+
+Assim que o servidor recetor estiver a correr, a página **Instâncias** da sua máquina tem um cartão **Repositório partilhado** abaixo das instâncias. Carrega em **Configurar repositório partilhado**, escolhe uma **Pasta para o repositório partilhado** numa partilha com bastante espaço, deixa a **Porta** em 8001, a menos que outro container a use, e carrega em **Configurar e iniciar**. O BombVault então:
+
+1. recusa se já existir um container chamado `rest-server-shared` ou se outro container tiver a porta,
+2. cria o repositório numa pasta `shared` lá dentro, com a palavra-passe deste servidor,
+3. arranca o `restic/rest-server` como `rest-server-shared`, em modo append-only com um ficheiro de logins na pasta,
+4. no Unraid escreve o seu template na unidade flash, para o container continuar editável no separador Docker,
+5. corre o teste de adulteração contra ele. **Verificar de novo** no cartão corre-o outra vez.
+
+O cartão lista os **Membros**, cada um com as suas chaves e o seu último backup, os pedidos para entrar, e **Remover** para cada membro.
+
+### Entrar {#shared-join}
+
+No servidor que quer entrar, abre **Adicionar destino**. Em **Do teu grupo** o anfitrião aparece uma segunda vez, como **Repositório partilhado em** e o nome dele. Escolhê-lo envia um pedido ao anfitrião, onde fica no cartão **Repositório partilhado** com **Permitir** e **Recusar**.
+
+Depois de **Permitir**, o anfitrião entrega pelo grupo uma chave de uso único e um início de sessão no seu segundo rest-server. Com ela o membro adiciona uma chave restic própria, e o anfitrião remove depois a chave de uso único. Um membro que não terminou no prazo de um dia perde de novo a chave de uso único e o início de sessão, e pode pedir outra vez. Quando o anfitrião não conseguiu fazer chegar a resposta ao membro, o cartão oferece **Avisar de novo**.
+
+O anfitrião recusa um servidor enquanto este ainda não escreve sob um host próprio, o que quer dizer que corre uma versão mais antiga, e quando outro membro já escreve sob o mesmo host. Dois servidores partilham um host quando partilham uma `APP_KEY`.
+
+Assim que o membro está dentro, aparece em **Destinos** um destino chamado **Shared with** e o nome do anfitrião, com todas as secções desligadas. Liga na página do destino as secções que devem copiar para lá. O destino tem proteção contra eliminação e nenhuma regra de retenção própria, porque só o anfitrião esquece lá backups. Só vão para lá os backups sob o host próprio do membro, por isso os backups mais antigos sob o host `bombvault` ficam onde estão.
+
+O anfitrião também pode copiar para lá os seus próprios backups: **Copiar também os backups deste servidor** no seu cartão adiciona o destino também nele. Para o anfitrião essa cópia fica nos seus próprios discos e nada o impede de apagar lá, por isso não é uma cópia fora de casa.
+
+### Quem faz a manutenção, e quando {#shared-upkeep}
+
+Só o anfitrião esquece e poda. As definições dele estão na parte **Repositório partilhado** da janela **Servidor recetor**, que abre a partir do próprio cartão do anfitrião na página Instâncias:
+
+- **Janela de manutenção** define quando corre a poda, todos os dias ou todas as semanas. Enquanto não a mudares, começa aos domingos às 03:00, e **Duração da janela em horas** é 6.
+- **Espaço não usado que uma poda pode deixar, em %** é 5, a menos que o mudes. Um valor mais alto reempacota menos, por isso a poda acaba mais cedo.
+- **Dados relidos depois de uma poda, em %** é 5, a menos que o mudes. Depois de cada poda, o anfitrião verifica o repositório e relê esta parte dos dados.
+- **Durante quanto tempo guardar** segue as regras externas do anfitrião para cada secção, e **Definir uma regra própria** dá ao repositório partilhado a sua. Os backups de cada servidor envelhecem cada um por si.
+- **Fazer a manutenção agora** esquece, poda e verifica logo, depois de avisar os membros.
+
+Fora da janela, o anfitrião esquece uma vez por dia, e o espaço volta com a poda seguinte. Antes de uma poda avisa os membros, e estes não copiam nada para o repositório até a janela fechar. Um membro que ainda está a copiar tem até meia hora para acabar, senão a poda passa para a janela seguinte. Uma cópia que calhe na janela espera, aparece como adiada no registo de atividade e no cartão do membro, e a passagem seguinte põe tudo em dia.
+
+Na dúvida, o anfitrião guarda mais. Uma entrada que um membro retém por causa de uma [anomalia](anomalies.md) guarda todos os seus backups, um membro que não consegue dizer o que retém guarda dessa vez todos os seus backups, e os backups sob um host com que nenhum servidor do grupo escreve nunca são esquecidos. A janela mostra também o espaço: o que o repositório ocupa, o que os servidores precisariam em separado e quanto isso poupa. Os números chegam com cada manutenção.
+
+### O que os membros veem {#shared-members}
+
+Num membro, a página Instâncias tem um cartão **Repositórios partilhados** com cada repositório partilhado para onde o servidor copia ou onde pediu para entrar, e em que ponto está o pedido: **À espera de um sim**, **A entrar**, **Membro**, **Recusado**, **Expirado** ou **Não é membro**. Para um repositório de que faz parte, o cartão mostra **Quem poda**, **Próxima manutenção**, **Em conjunto com** para os outros membros, **Última cópia para aqui**, e quanto espaço o repositório ocupa e poupa.
+
+### Sair {#shared-leave}
+
+**Sair** no cartão do membro tira o servidor: o anfitrião remove a chave e o início de sessão dele, e o destino dele lá é desligado. **Remover** no cartão do anfitrião tira um membro do outro lado. Em qualquer dos casos, os backups do servidor ficam no repositório e envelhecem segundo as regras do anfitrião. No anfitrião aparecem em **Servidores que saíram**, onde **Esquecer os backups** os esquece todos depois de escreveres o nome do servidor. A janela de manutenção seguinte devolve o espaço.
+
+### Os backups de outros servidores {#shared-restore}
+
+Cada servidor encontra os seus próprios backups no repositório partilhado no separador **Backups** das suas entradas, como qualquer outra cópia. Os backups dos outros membros estão na página Restauração em [Outros servidores](restore.md#other-servers).
+
+### Depois de uma emergência {#shared-emergency}
+
+O [kit de recuperação](#recovery-kit) tem um capítulo **Shared repositories**. Indica cada repositório partilhado com o seu anfitrião, as secções que copiam para lá, os outros membros com os seus hosts, e um comando `restic snapshots` com o host deste servidor. O kit do anfitrião indica também a porta, a pasta e o início de sessão do seu rest-server.
+
+No assistente de emergência, o repositório aparece entre os locais como **Repositório partilhado em** e o nome do anfitrião. Uma instalação nova que adota a chave de um membro escreve sob o mesmo host, porque o host vem da chave. Recupera o seu destino no repositório partilhado e lá só lista e restaura os seus próprios backups.
+
+Uma instalação nova que adota a chave do anfitrião passa a manter o repositório no lugar dele. Envelhece-o e faz a manutenção como antes, e volta a arrancar o rest-server na mesma pasta. Emparelha-a outra vez com o grupo, configura o seu servidor recetor em **Instâncias** e volta a definir as regras na janela do servidor recetor, porque não estão no kit. Assim que o grupo chega aos membros, o novo anfitrião avisa-os ele próprio. Cada membro verifica primeiro: adiciona ao repositório uma chave de teste que só um servidor com acesso à pasta do repositório consegue remover, e segue o novo anfitrião assim que essa chave desaparece. O anfitrião remove na manutenção seguinte as chaves que sobraram destas verificações.
+
+Se o anfitrião antigo ainda corre, o seu cartão diz que agora é o outro servidor que mantém o repositório. **Recuperar** volta a fazê-lo anfitrião, para quando um kit foi adotado por engano num segundo servidor.
+
+### Limites {#shared-limits}
+
+- **Cada chave lê tudo.** Todas as chaves de um repositório restic abrem a mesma chave mestra, por isso cada membro consegue ler os backups dos outros. As definições de containers e VMs continuam seladas com a chave própria de cada servidor, por isso os containers e VMs de outro servidor voltam só como ficheiros. Um servidor que já teve acesso pode ter lido a chave mestra, por isso removê-lo não o deixa de fora de vez. Só um repositório novo o faz.
+- **O anfitrião pode apagar.** Nenhum membro pode apagar lá nada, mas o anfitrião chega à pasta diretamente e esquece e poda os backups de todos os membros. Um erro ou uma tomada de controlo no anfitrião chega a todos.
+- **Um dano chega a todos os servidores.** Um pack estragado falta a cada servidor cujos backups o usam, por isso um repositório partilhado não substitui uma segunda cópia.
+- **Só num servidor recetor.** S3, SFTP e outros locais não conseguem limitar um membro a acrescentar, por isso o BombVault só oferece um repositório partilhado num servidor recetor.
+- **Só como destino de cópia.** A pasta própria de uma secção não pode ficar num repositório partilhado, porque cada poda travaria os backups de todos os servidores.
+- **O histórico mais antigo fica onde está.** Só entram os backups sob o host próprio de cada servidor, e nada é movido de outros repositórios.
 
 ## Exemplo: emparelhar duas caixas Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ O **Assistente de emergência** traz de volta um servidor que desapareceu ou foi
 2. **Definições.** **Trazer de volta as definições** restaura as definições do próprio BombVault a partir do auto-backup mais recente: destinos, credenciais, agendamentos e regras. O BombVault reinicia-se para as aplicar, pelo socket Docker, para que a base de dados de definições em uso nunca seja sobrescrita com um acesso aberto, e o assistente continua sozinho depois. O início de sessão deste servidor fica: continuas a entrar com a palavra-passe que usas agora. Os segredos que o servidor antigo tinha guardados e que não podem ser adotados são listados, para os poderes introduzir outra vez. A restauração termina todas as sessões e remove as chaves de acesso, por isso configura-as de novo depois.
 3. **Seleção.** O BombVault percorre os teus backups e lista os containers, VMs, conjuntos de pastas e conjuntos de dados ZFS que encontra. O instantâneo mais recente vem pré-selecionado em todo o lado. O que este servidor ainda tem começa desligado, porque uma restauração substituí-lo-ia. Os conjuntos de pastas já não sabem de onde vieram depois de uma reconstrução, por isso vão para uma pasta que escolhes.
 4. **Restauração.** Tudo o que foi selecionado volta de uma só vez, deixado parado se quiseres arrancar tu cada container e VM, o que é o mais seguro depois de uma perda total. Depois descarrega um kit de recuperação novo: o antigo pertence à instalação anterior.
+
+Um repositório partilhado do kit aparece entre os locais como **Repositório partilhado em** e o nome do servidor que o mantém, e o assistente só lista lá os backups deste servidor. Vê [Depois de uma emergência](#shared-emergency).
 
 ![O assistente de emergência no primeiro passo, com as três formas de entrar.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![O assistente de emergência no primeiro passo, com as três formas de entrar.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Esta é a peça que torna possível a recuperação de desastres mesmo quando n�
 
 ### O host dos backups de um servidor {#backup-host}
 
-Cada servidor escreve os seus backups sob um host do restic próprio: `bv-` seguido de doze caracteres calculados a partir da chave dos backups, por exemplo `bv-3f9a0c41d2e7`. Os backups de antes de um servidor ter um host próprio têm o host `bombvault`. O kit indica o host deste servidor, e os comandos do kit passam os dois com `--host`, para que `latest` nunca escolha um backup que outro servidor escreveu no mesmo repositório. Um servidor que adota os backups de outro continua sob o host desse servidor, porque o host vem da chave.
+Cada servidor escreve os seus backups sob um host do restic próprio: `bv-` seguido de doze caracteres calculados a partir da chave dos backups, por exemplo `bv-3f9a0c41d2e7`. Os backups de antes de um servidor ter um host próprio têm o host `bombvault`. O kit indica o host deste servidor, e os comandos do kit passam os dois com `--host`, para que `latest` nunca escolha um backup que outro servidor escreveu no mesmo repositório. Um servidor que adota os backups de outro continua sob o host desse servidor, porque o host vem da chave. Para cada [repositório partilhado](#shared-repository) para onde o servidor copia ou que mantém, o capítulo **Shared repositories** do kit indica os outros servidores lá presentes com os seus hosts.
 
 ### Selar o kit {#sealing-the-kit}
 

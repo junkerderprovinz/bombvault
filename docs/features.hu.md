@@ -74,6 +74,7 @@ Rövid katalógus arról, mit tud a BombVault. Minden sor arra az oldalra mutat,
 - **Párosítás tizenkét szóval**, végponttól végpontig titkosítva, közvetlenül vagy relayen át. [Példányok párosítása](offsite-recovery.md#pairing)
 - **A Példányok oldal**, a csoporttal hálóként, és a **Fogadó**, **Lehívó**, **ZFS-kiszolgáló** és **Kulcsőrző** szerepekkel. [Példányok és szerepek](offsite-recovery.md#roles)
 - **Egy fogadó szerver** beállítva helyetted, append-only módban. [Fogadó szerver](offsite-recovery.md#receiving-server)
+- **Egy közös tároló**, amelybe több szerver másol, így ami közös bennük, az csak egyszer tárolódik. Csak a tulajdonos szerver nyes. [Közös tároló](offsite-recovery.md#shared-repository)
 
 ## MI-asszisztensek (MCP) {#mcp}
 

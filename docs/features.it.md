@@ -74,6 +74,7 @@ Un breve catalogo di ciò che BombVault sa fare. Ogni riga rimanda alla pagina c
 - **Associazione con dodici parole**, cifrata end-to-end, direttamente o tramite un relay. [Associare le istanze](offsite-recovery.md#pairing)
 - **La pagina Istanze** con il gruppo come una rete e i ruoli **Ricevitore**, **Prelevatore**, **Server ZFS** e **Custode della chiave**. [Istanze e ruoli](offsite-recovery.md#roles)
 - **Un server ricevente** configurato per te, in modalità append-only. [Server ricevente](offsite-recovery.md#receiving-server)
+- **Un repository condiviso** in cui copiano più server, così ciò che hanno in comune viene salvato una volta sola. Pota solo il server che lo ospita. [Repository condiviso](offsite-recovery.md#shared-repository)
 
 ## Assistenti IA (MCP) {#mcp}
 

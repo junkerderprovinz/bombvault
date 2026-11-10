@@ -14,6 +14,7 @@ Chaque restauration commence sur la page **Restauration** : choisissez une secti
 - **En cours** montre une restauration pendant qu'elle tourne, même après la fermeture de sa fenêtre.
 - **Urgence** lance l'assistant d'urgence pour un serveur qui a disparu ou qui a été reconfiguré, voir [Assistant d'urgence](offsite-recovery.md#emergency).
 - **Autres sources** contient **Depuis un ancien dossier de sauvegarde**, pour les sauvegardes d'un autre BombVault, **Importer depuis le plugin Appdata.Backup** et **Tâches de Duplicati ou Duplicacy**.
+- **Autres serveurs** liste les autres serveurs d'un dépôt partagé dont ce serveur fait partie, voir [Autres serveurs](#other-servers).
 
 ![La page Restauration sur un téléphone.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La page Restauration sur un téléphone.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ La recherche prend un moment, car restic parcourt chaque sauvegarde. **Arrêter*
 - Les endroits hors site comme S3, B2 ou SFTP sont laissés de côté, sauf si vous activez **Chercher aussi dans les endroits hors site**. Seules les sauvegardes qu'aucun endroit ici ne contient y sont alors lues, en général les plus anciennes qu'une rétention plus longue garde hors site. La première recherche à un tel endroit peut être longue, et certains fournisseurs facturent les données téléchargées.
 - Un endroit qui n'a pas pu être ouvert indique **lecture impossible**, et le (i) à côté dit pourquoi. Les autres endroits sont tout de même parcourus.
 
-Les machines virtuelles sont sauvegardées comme disques entiers, donc les fichiers qu'elles contiennent ne sont pas parcourus. L'auto-sauvegarde et les sauvegardes d'un autre BombVault sous **Autres sources** ne le sont pas non plus. Une recherche liste les 200 premiers fichiers, donc un nom court comme `log` peut demander quelques lettres de plus.
+Les machines virtuelles sont sauvegardées comme disques entiers, donc les fichiers qu'elles contiennent ne sont pas parcourus. L'auto-sauvegarde, les sauvegardes d'un autre BombVault sous **Autres sources** et celles des serveurs sous **Autres serveurs** ne le sont pas non plus. Une recherche liste les 200 premiers fichiers, donc un nom court comme `log` peut demander quelques lettres de plus.
 
 ## Ce qui revient, selon le type {#kinds}
 
@@ -134,6 +135,10 @@ Une base de données qui n'a que des dumps de base de données et aucune sauvega
     - **Depuis Duplicacy** : choisissez le dossier de Duplicacy Web qui contient `duplicacy.json`, ou un dossier que vous sauvegardez avec la ligne de commande de Duplicacy et qui contient `.duplicacy`. Les clés que la ligne de commande a enregistrées dans `.duplicacy/preferences` sont reprises. Duplicacy Web garde ses identifiants chiffrés, la fenêtre vous les demande donc.
 
     Rien n'est créé tant que vous n'avez pas vu l'aperçu. Chaque dossier source devient un ensemble de dossiers, avec le dossier de ce serveur où il a été trouvé, les exclusions qui ont pu être reprises et le planning. Si l'ancien outil tournait dans son propre conteneur et qu'un dossier est introuvable, c'est vous qui le choisissez. Les sauvegardes vont vers une nouvelle destination, dans un dossier `bombvault` à l'intérieur de l'ancienne destination, que celle-ci soit un dossier local, S3, SFTP, un remote rclone ou Backblaze B2 via son adresse S3. Les identifiants trouvés dans le fichier sont enregistrés avec vos autres identifiants, et ceux qui manquent vous sont demandés. Des notes sous chaque tâche indiquent ce qui n'a pas été repris, comme les règles d'inclusion, les expressions régulières, la durée de conservation des sauvegardes et l'ancien mot de passe de chiffrement, dont BombVault n'a pas besoin.
+
+## Autres serveurs {#other-servers}
+
+Dans un [dépôt partagé](offsite-recovery.md#shared-repository), chaque clé ouvre les sauvegardes de tous les serveurs, la page Restauration liste donc les autres membres sous **Autres serveurs**, chacun avec son nom, son hôte, son nombre d'éléments et le moment de sa sauvegarde la plus récente. Un hôte qui n'appartient à aucun serveur que celui-ci connaît apparaît comme **Un serveur que celui-ci ne connaît pas**. Un clic ouvre **Sauvegardes de** suivi du nom du serveur, en lecture seule et sans rien à saisir. Les ensembles de dossiers et les jeux de données ZFS vont dans un dossier de votre choix. Les conteneurs et les VMs reviennent comme simples fichiers dans un dossier, car l'autre serveur scelle leurs définitions avec sa propre clé. Les propres sauvegardes de ce serveur dans le dépôt partagé se trouvent dans l'onglet **Sauvegardes** de chaque élément.
 
 ## Après une restauration {#after}
 

@@ -14,6 +14,7 @@ Hver gjenoppretting starter på siden **Gjenoppretting**: velg et område, søk 
 - **Pågår nå** viser en gjenoppretting mens den kjører, også etter at du har lukket vinduet.
 - **Nød** starter nødveiviseren for en server som er borte eller satt opp på nytt, se [Nødveiviser](offsite-recovery.md#emergency).
 - **Andre kilder** har **Fra en gammel sikkerhetskopimappe**, for sikkerhetskopiene til en annen BombVault, **Importer fra Appdata.Backup-programtillegget** og **Jobber fra Duplicati eller Duplicacy**.
+- **Andre servere** lister de andre serverne i et felles repositorium som denne serveren er med i, se [Andre servere](#other-servers).
 
 ![Siden Gjenoppretting på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Siden Gjenoppretting på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Søket tar litt tid, fordi restic går gjennom hver sikkerhetskopi. **Stopp** av
 - Off-site-mål som S3, B2 eller SFTP holdes utenfor, med mindre du slår på **Søk også i off-site-mål**. Da leses bare sikkerhetskopiene som ingen mål her har, som regel de eldre som en lengre oppbevaring beholder off-site. Det første søket på et slikt mål kan ta lang tid, og noen leverandører tar betalt for dataene som lastes ned.
 - Et mål som ikke kunne åpnes, viser **kunne ikke leses**, og (i)-en ved siden av forteller hvorfor. De andre målene blir fortsatt gjennomsøkt.
 
-Virtuelle maskiner lagres som hele disker, så filene inni dem blir ikke gjennomsøkt. Auto-sikkerhetskopien og sikkerhetskopiene til en annen BombVault under **Andre kilder** blir heller ikke gjennomsøkt. Et søk lister de første 200 filene, så et kort navn som `log` kan trenge noen flere bokstaver.
+Virtuelle maskiner lagres som hele disker, så filene inni dem blir ikke gjennomsøkt. Auto-sikkerhetskopien, sikkerhetskopiene til en annen BombVault under **Andre kilder** og de til serverne under **Andre servere** blir heller ikke gjennomsøkt. Et søk lister de første 200 filene, så et kort navn som `log` kan trenge noen flere bokstaver.
 
 ## Hva som kommer tilbake, etter type {#kinds}
 
@@ -134,6 +135,10 @@ En database som bare har databasedumper og ingen filsikkerhetskopi, og der conta
     - **Fra Duplicacy**: velg Duplicacy Web-mappen som inneholder `duplicacy.json`, eller en mappe du sikkerhetskopierer med Duplicacys kommandolinje, som inneholder `.duplicacy`. Nøkler som kommandolinjen har lagret i `.duplicacy/preferences`, blir med. Duplicacy Web lagrer påloggingene sine kryptert, så vinduet ber deg om dem.
 
     Ingenting opprettes før du har sett forhåndsvisningen. Hver kildemappe blir et mappesett med mappen på denne serveren der den ble funnet, ekskluderingene som kunne oversettes, og tidsplanen. Hvis det gamle verktøyet kjørte i en egen container og en mappe ikke ble funnet, velger du den selv. Sikkerhetskopiene går til et nytt mål i en mappe `bombvault` inne i det gamle målet, når det er en lokal mappe, S3, SFTP, en rclone-remote eller Backblaze B2 via S3-adressen. En pålogging fra filen lagres sammen med de andre påloggingene dine, og en pålogging som mangler i filen, blir du spurt om. Merknader under hver jobb forteller hva som ikke ble med, for eksempel inkluderingsregler, regulære uttrykk, hvor lenge sikkerhetskopiene ble beholdt, og det gamle krypteringspassordet, som BombVault ikke trenger.
+
+## Andre servere {#other-servers}
+
+I et [felles repositorium](offsite-recovery.md#shared-repository) åpner hver nøkkel sikkerhetskopiene til alle serverne. Derfor lister siden Gjenoppretting de andre medlemmene under **Andre servere**, hver med navn, vert, hvor mange elementer den har og når den nyeste sikkerhetskopien kjørte. En vert som ikke hører til noen server denne kjenner, vises som **En server denne ikke kjenner**. Et klikk åpner **Sikkerhetskopier fra** og navnet på serveren, skrivebeskyttet og uten noe å skrive inn. Mappesett og ZFS-datasett havner i en mappe du velger. Containere og VM-er kommer tilbake som vanlige filer i en mappe, fordi den andre serveren forsegler definisjonene deres med sin egen nøkkel. Denne serverens egne sikkerhetskopier i det felles repositoriet ligger på fanen **Sikkerhetskopier** for hvert element.
 
 ## Etter en gjenoppretting {#after}
 

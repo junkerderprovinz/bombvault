@@ -74,6 +74,7 @@ BombVault가 하는 일을 짧게 모은 목록입니다. 각 줄은 그것을 �
 - 직접 또는 릴레이를 통한, 종단 간 암호화된 **열두 단어 페어링**. [인스턴스 페어링](offsite-recovery.md#pairing)
 - 그룹이 그물로 보이고 **수신기**, **가져오기 측**, **ZFS 서버**, **키 보관 측** 역할이 있는 **인스턴스 페이지**. [인스턴스와 역할](offsite-recovery.md#roles)
 - append-only 모드로 대신 설정해 주는 **수신 서버**. [수신 서버](offsite-recovery.md#receiving-server)
+- 여러 서버가 함께 복사해 넣어 공통 부분을 한 번만 저장하는 **공유 저장소**. 정리는 그 저장소를 보관하는 서버만 합니다. [공유 저장소](offsite-recovery.md#shared-repository)
 
 ## AI 어시스턴트 (MCP) {#mcp}
 

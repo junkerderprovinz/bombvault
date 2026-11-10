@@ -74,6 +74,7 @@ BombVault ができることの短い一覧です。各行から、その説明�
 - **12 個の単語によるペアリング**：エンドツーエンドで暗号化され、直接またはリレー経由。[インスタンスのペアリング](offsite-recovery.md#pairing)
 - **インスタンスのページ**：グループをネットワークとして表示し、ロールは**レシーバー**、**取得側**、**ZFS サーバー**、**鍵の保管側**。[インスタンスとロール](offsite-recovery.md#roles)
 - append-only モードで用意される**受信側サーバー**。[受信サーバー](offsite-recovery.md#receiving-server)
+- 複数のサーバーがコピーし、共通する部分を一度だけ保存する**共有リポジトリ**。プルーンするのは、それを保持するサーバーだけです。[共有リポジトリ](offsite-recovery.md#shared-repository)
 
 ## AI アシスタント（MCP） {#mcp}
 

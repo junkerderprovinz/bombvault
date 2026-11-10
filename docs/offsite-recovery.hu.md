@@ -318,6 +318,8 @@ Egyes helyek egyáltalán nem tudják megtagadni a törlést, például egy felh
 
 A leggyorsabb út egy append-only másolathoz egy párosított BombVault [fogadószerverrel](#receiving-server): ez helyetted futtatja a rest-servert, append-only módban.
 
+Egy [közös tárolóban](#shared-repository) ez a tagokra érvényes, a tároló tulajdonosára nem. A tulajdonos közvetlenül eléri a mappát, és ott elfelejt és nyes.
+
 !!! note "A `/locks/` alatti sikeres törlés várható"
     Az append-only nem azt jelenti, hogy soha semmit nem lehet eltávolítani. A restic-nek fel kell vennie és el kell engednie a saját zárait, ezért a `/locks/` szándékosan írható és törölhető marad. A pillanatképeket és a mögöttük lévő adatokat, amelyekre a zsarolóvírus menne, nem lehet eltávolítani. Ha magad próbálgatod a túloldalt, a `/locks/` alatti sikeres törlés helyes viselkedés, és nem lyuk a védelemben.
 
@@ -391,6 +393,8 @@ Egy szerep bekapcsolása kérést küld, és semmi sem indul el, amíg valaki a 
 
 Egy kártya **Részletek** gombja megnyitja a többit: a tag fogadott tárolóit és lehívási forrásait, a célajánlatokat, a felügyeletet, az **Eltávolítás** és a **Kulcs elfelejtése** gombot.
 
+A kártyák alatt a fogadószerverrel rendelkező gépen a **Közös tároló**, egy tagon pedig a **Közös tárolók** kártya tartozik a [közös tárolóhoz](#shared-repository).
+
 Egy tag felajánlhatja a saját telephelyen kívüli tárolóját egy másik tagnak a csoporton át. A másik adminisztrátor az ajánlatot a tag **Részletek** ablakában látja, és elfogadja vagy elutasítja. Az elfogadás mentett bejelentkezést és egy átlagos mentési célt hoz létre, ugyanazokkal az ellenőrzésekkel, mint egy általad beírt célnál. A cél bekapcsolt törlés elleni védelemmel érkezik, mert az ajánlatban látható recept egy append-only rest-server, így a **Meddig őrizze meg** ott nem érvényes. Minden ajánlatnak saját bejelentkezése és saját mappája van, így ha egy szakaszt újra felajánlasz, ugyanannak a tagnak vagy egy másiknak, az első partner másolatai érintetlenek maradnak: add hozzá az új sort a `.htpasswd` fájlhoz, és hagyd futni a szervert. Csak kapcsolati adatok utaznak így, mentési adatok soha. Az **Ellenőrzés most** megkér egy tagot, hogy ellenőrizze egy szakasz tárolóját. Az oldalon semmi nem tud mentést, visszaállítást vagy törlést indítani egy másik gépen.
 
 A leállított példányok és a bezárt alkalmazású telefonok **Inaktív** állapotban, szürkén megtartják a kártyájukat, azzal együtt, hogy mikor látták őket utoljára, és a hálóban halványítva állnak, amíg az **Eltávolítás** gombbal el nem távolítod őket. Közvetlenül ennek a szervernek az indulása után egy ilyen kártya **Ellenőrzés** állapotot mutat, amíg a csoport újra elérhető nem lesz. Az **Eltávolítás** egy ilyen kártyán attól függetlenül működik, hogy mely részek vannak bekapcsolva, és a tag nyitott kéréseit, kihasználatlan ZFS-fogadóhelyeit és várakozó kulcskéréseit is lezárja. A párosítási oldal **Példányok** kártyája ezeket a tagokat szintén **Inaktív** állapotban sorolja fel.
@@ -425,6 +429,91 @@ A fogadó gép azt a rest-servert is futtathatja, amelyre a többiek másolnak. 
 A csoportod példányai ezután a szolgáltatók között **A csoportodból** alatt találják meg a szervert, a fogadó gép nevén, és a **Fogadó** szerep ezt kínálja biztonságos választásként. Minden példány saját bejelentkezést kap, amikor először használja a szervert, és ott csak a saját mappájába ír. Ha a **Fogadó** be van kapcsolva a **Beállítások, Példányok** alatt, a **Fogadószerver** ennek a példánynak a kártyáján újra megnyitja a szervert. Az ablaka a **Bejelentkezéssel rendelkező partnerek** alatt felsorolja a bejelentkezéseket, a **Bejelentkezés visszavonása** pedig elvesz egyet. Amit az a példány már átmásolt, a mappában marad. A beállítás létrehoz egy **Bejelentkezés a csoporton kívülre** is, amelynek jelszavát az ablak egyszer mutatja meg.
 
 Az a példány, amely a fogadó gépet csak a relayn át éri el, nem használhatja a szervert, mert a relay nem szállít mentéseket. Előbb add hozzá a fogadó gép címét a párosítási oldalon. Ha a BombVault saját IP-címen fut (például br0-n), töltsd ki a **Cím a partnereknek** mezőt, mert a szerver a gazdagép címén hallgat.
+
+A fogadó gép a csoport számára egy [közös tárolót](#shared-repository) is tarthat.
+
+## Közös tároló {#shared-repository}
+
+Egy csoport több szervere közösen is másolhat egyetlen restic-tárolóba. Ami közös bennük, például ugyanaz a mappakészlet vagy ugyanaz az appdata, az ott csak egyszer tárolódik, így együtt kevesebb helyre van szükségük, mintha mindegyiknek saját tárolója lenne.
+
+A csoport egyik szervere a tároló tulajdonosa. Csak ő felejti el ott a régi mentéseket, és csak ő nyes. A többiek tagok: egy második, append-only módban futó rest-serveren át érik el a tárolót, és csak hozzáadni tudnak. Minden szerver [saját hoszt](#backup-host) alatt ír, így a mentések akkor is külön maradnak, ha két szervernek van azonos nevű eleme.
+
+Ami kell hozzá:
+
+- egy [párosítási csoport](#pairing),
+- bekapcsolt **Mentések titkosítása** a tulajdonoson és minden tagon, mert minden szerver saját restic-kulcsot kap,
+- egy [fogadószerver](#receiving-server) a tulajdonoson, amelyet a tagok elérnek. Ha a BombVault saját IP-címen fut, előbb töltsd ki a **Cím a partnereknek** mezőt a fogadószerver ablakában.
+
+Egy szerver legfeljebb egy közös tárolónak lehet a tulajdonosa.
+
+### Beállítás {#shared-set-up}
+
+Amint a fogadószerver fut, a gépén a **Példányok** oldalon a példányok alatt megjelenik a **Közös tároló** kártya. Nyomd meg a **Közös tároló beállítása** gombot, válassz egy **Mappa a közös tárolónak** helyet egy bőven elég hellyel rendelkező megosztáson, hagyd a **Port** értékét 8001-en, hacsak egy másik konténer nem használja, és nyomd meg a **Beállítás és indítás** gombot. A BombVault ezután:
+
+1. visszautasítja, ha már létezik `rest-server-shared` nevű konténer, vagy egy másik konténer foglalja a portot,
+2. létrehozza a tárolót egy benne lévő `shared` mappában, ennek a szervernek a jelszavával,
+3. elindítja a `restic/rest-server` képet `rest-server-shared` néven, append-only módban, a mappában lévő bejelentkezési fájllal,
+4. Unraidon kiírja a sablonját a flash-meghajtóra, hogy a konténer szerkeszthető maradjon a Docker lapon,
+5. lefuttatja ellene a manipulációs tesztet. A kártyán az **Újraellenőrzés** még egyszer lefuttatja.
+
+A kártya felsorolja a **Tagok** listáját, mindegyiket a kulcsaival és az utolsó mentésével, a csatlakozási kéréseket, és minden tagnál egy **Eltávolítás** gombot.
+
+### Csatlakozás {#shared-join}
+
+Azon a szerveren, amely csatlakozni szeretne, nyisd meg a **Cél hozzáadása** lehetőséget. **A csoportodból** alatt a tulajdonos másodszor is megjelenik, a nevével és a **közös tárolója** felirattal. Ha kiválasztod, kérés megy a tulajdonosnak, ahol a **Közös tároló** kártyán jelenik meg **Engedélyezés** és **Elutasítás** gombbal.
+
+Az **Engedélyezés** után a tulajdonos a csoporton át egy egyszer használható kulcsot és egy bejelentkezést ad a második rest-serveréhez. A tag ezzel hozzáadja a saját restic-kulcsát, a tulajdonos pedig utána eltávolítja az egyszer használható kulcsot. Ha egy tag egy napon belül nem végez, elveszíti az egyszer használható kulcsot és a bejelentkezést, és újra kérheti a csatlakozást. Ha a tulajdonos nem tudta eljuttatni a válaszát a taghoz, a kártya felkínálja a **Szólj neki újra** gombot.
+
+A tulajdonos elutasít egy szervert, amíg az még nem saját hoszt alatt ír, vagyis régebbi kiadáson fut, és akkor is, ha ugyanazon a hoszton már egy másik tag ír. Két szervernek akkor azonos a hosztja, ha azonos az `APP_KEY` kulcsuk.
+
+Amint a tag bekerült, a **Célok** alatt megjelenik egy **Shared with** és a tulajdonos nevét viselő cél, minden szakasz kikapcsolva. Kapcsold be a cél oldalán azokat a szakaszokat, amelyeknek oda kell másolniuk. A célon be van kapcsolva a törlés elleni védelem, és nincsenek saját megőrzési szabályai, mert ott csak a tulajdonos felejt el. Csak a tag saját hosztja alatti mentések kerülnek oda, így a `bombvault` hoszt alatti régebbi mentések ott maradnak, ahol vannak.
+
+A tulajdonos a saját mentéseit is bemásolhatja: a kártyáján a **Saját mentések bemásolása is** nála is hozzáadja a célt. A tulajdonos számára ez a másolat a saját lemezein van, és semmi sem akadályozza meg abban, hogy ott töröljön, így ez nem telephelyen kívüli másolat.
+
+### Ki rak rendet, és mikor {#shared-upkeep}
+
+Csak a tulajdonos felejt el és nyes. A beállításai a **Fogadószerver** ablak **Közös tároló** részében vannak, amely a tulajdonos saját kártyájáról nyílik a Példányok oldalon:
+
+- A **Rendrakási időablak** azt állítja be, mikor fut a nyesés, naponta vagy hetente. Amíg meg nem változtatod, vasárnaponként 03:00-kor kezdődik, és **Az ablak hossza órában** 6.
+- A **Kihasználatlan hely, amelyet egy nyesés meghagyhat, %-ban** értéke 5, amíg meg nem változtatod. Magasabb értéknél kevesebbet csomagol újra, így a nyesés hamarabb végez.
+- A **Nyesés után visszaolvasott adat, %-ban** értéke 5, amíg meg nem változtatod. Minden nyesés után a tulajdonos ellenőrzi a tárolót, és az adatoknak ezt a részét visszaolvassa.
+- A **Meddig őrizze meg** szakaszonként a tulajdonos telephelyen kívüli szabályait követi, a **Saját szabály megadása** pedig saját szabályt ad a közös tárolónak. Minden szerver mentései külön öregszenek.
+- A **Rendrakás most** azonnal elfelejt, nyes és ellenőriz, miután szólt a tagoknak.
+
+Az ablakon kívül a tulajdonos naponta egyszer felejt el, a hely pedig a következő nyeséssel szabadul fel. Nyesés előtt szól a tagoknak, és azok semmit sem másolnak a tárolóba, amíg az ablak be nem zárul. Egy tag, amely még másol, legfeljebb fél órát kap a befejezésre, különben a nyesés a következő ablakra csúszik. Az ablakba eső másolat vár, a tevékenységnaplóban és a tag kártyáján elhalasztottként jelenik meg, és a következő kör pótolja.
+
+Ahol a tulajdonos bizonytalan, ott többet tart meg. Az az elem, amelyet egy tag egy [anomália](anomalies.md) miatt megtart, az összes mentését megtartja, az a tag, amely nem tudja megmondani, mit tart meg, ezúttal az összes mentését megtartja, és azok a mentések, amelyek olyan hoszt alatt vannak, amely alatt a csoport egyik szervere sem ír, soha nem felejtődnek el. Az ablak a helyet is mutatja: mennyit foglal a tároló, mennyi kellene a szervereknek külön, és mennyit takarít ez meg. A számok minden rendrakással frissülnek.
+
+### Amit a tagok látnak {#shared-members}
+
+Egy tagon a Példányok oldalon van egy **Közös tárolók** kártya minden közös tárolóval, amelybe a szerver másol, vagy amelyhez csatlakozást kért, és azzal, hol tart a kérése: **Igenre vár**, **Csatlakozik**, **Tag**, **Elutasítva**, **Lejárt** vagy **Nem tag**. Annál a tárolónál, amelynek tagja, a kártya mutatja a **Ki nyesi**, a **Következő rendrakás**, a többi tagot az **Együtt ezekkel** alatt, az **Utolsó másolat ide** adatot, valamint azt, mennyi helyet foglal és takarít meg a tároló.
+
+### Kilépés {#shared-leave}
+
+A tag kártyáján a **Kilépés** kiveszi a szervert: a tulajdonos eltávolítja a kulcsát és a bejelentkezését, a célja pedig ott kikapcsol. A tulajdonos kártyáján az **Eltávolítás** a másik oldalról veszi ki a tagot. A szerver mentései mindkét esetben a tárolóban maradnak, és a tulajdonos szabályai szerint öregszenek. A tulajdonosnál a **Kilépett szerverek** alatt állnak, ahol a **Mentések elfelejtése** mindet elfelejti, miután beírtad a szerver nevét. A következő rendrakási ablak visszaadja a helyet.
+
+### Más szerverek mentései {#shared-restore}
+
+Minden szerver a saját mentéseit a közös tárolóban az elemei **Biztonsági mentések** lapján találja, mint bármely más másolatot. A többi tag mentései a Visszaállítás oldalon vannak, a [Más szerverek](restore.md#other-servers) alatt.
+
+### Vészhelyzet után {#shared-emergency}
+
+A [helyreállítási csomagban](#recovery-kit) van egy **Shared repositories** fejezet. Felsorol minden közös tárolót a tulajdonosával, az oda másoló szakaszokat, a többi tagot a hosztjukkal, és egy `restic snapshots` parancsot ennek a szervernek a hosztjával. A tulajdonos csomagja a rest-serverének portját, mappáját és bejelentkezését is megadja.
+
+A Vészvarázslóban a tároló a helyek között jelenik meg, **Közös tároló itt:** és a tulajdonos neve formában. Egy új telepítés, amely átveszi egy tag kulcsát, ugyanazon a hoszton ír, mert a hoszt a kulcsból származik. Visszakapja a célját a közös tárolóban, és ott csak a saját mentéseit sorolja fel és állítja vissza.
+
+Egy új telepítés, amely a tulajdonos kulcsát veszi át, a helyére lép a tároló tulajdonosaként. Ugyanúgy öregíti a mentéseket és rendet rak, mint korábban, és ugyanazon a mappán újraindítja a rest-servert. Párosítsd újra a csoporttal, állítsd be a fogadószerverét a **Példányok** alatt, és állítsd be újra a szabályokat a fogadószerver ablakában, mert ezek nincsenek a csomagban. Amint a csoport eléri a tagokat, az új tulajdonos maga szól nekik. Minden tag előbb ellenőriz: hozzáad a tárolóhoz egy próbakulcsot, amelyet csak a tároló mappájánál lévő szerver tud eltávolítani, és akkor követi az új tulajdonost, amikor ez a kulcs eltűnt. Az ilyen ellenőrzésekből megmaradt kulcsokat a tulajdonos a következő rendrakáskor eltávolítja.
+
+Ha a régi tulajdonos még fut, a kártyája jelzi, hogy most a másik szerver tartja a tárolót. A **Visszavétel** ismét tulajdonossá teszi, arra az esetre, ha egy csomagot tévedésből egy második szerveren vettek át.
+
+### Korlátok {#shared-limits}
+
+- **Minden kulcs mindent olvas.** Egy restic-tároló minden kulcsa ugyanazt a mesterkulcsot nyitja, így minden tag olvashatja a többiek mentéseit. A konténer- és VM-definíciók minden szerver saját kulcsával lezárva maradnak, így egy másik szerver konténerei és VM-jei csak fájlokként jönnek vissza. Egy szerver, amelynek egyszer volt hozzáférése, elolvashatta a mesterkulcsot, ezért az eltávolítása nem zárja ki végleg. Erre csak egy új tároló képes.
+- **A tulajdonos tud törölni.** Egyetlen tag sem törölhet ott semmit, de a tulajdonos közvetlenül eléri a mappát, és minden tag mentéseit elfelejti és nyesi. Egy hiba vagy egy átvétel a tulajdonosnál mindenkit érint.
+- **A sérülés minden szervert érint.** Egy sérült pack minden olyan szervernek hiányzik, amelynek a mentései használják, így a közös tároló nem helyettesít egy második másolatot.
+- **Csak fogadószerveren.** Az S3, az SFTP és más helyek nem tudják egy tagot a puszta hozzáadásra korlátozni, ezért a BombVault közös tárolót csak fogadószerveren kínál.
+- **Csak másolási célként.** Egy szakasz saját mappája nem lehet közös tárolóban, mert minden nyesés feltartaná az összes szerver mentéseit.
+- **A régebbi előzmények a helyükön maradnak.** Csak az egyes szerverek saját hosztja alatti mentések kerülnek be, és más tárolókból semmi sem költözik át.
 
 ## Példa: két Unraid-gép párosítása {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ A **Vészvarázsló** visszahoz egy elveszett vagy újra felállított szervert.
 2. **Beállítások.** A **Beállítások visszahozása** a BombVault saját beállításait állítja vissza a legfrissebb Önmentésből: mentési célokat, bejelentkezéseket, ütemezéseket és szabályokat. A BombVault újraindul, hogy alkalmazza őket, a Docker-socketen át, így az éles beállítási adatbázist soha nem írják felül nyitott kezelő alatt, és a varázsló ezután magától folytatja. Ennek a szervernek a bejelentkezése megmarad: a mostani jelszavaddal jelentkezel be tovább. A régi szerveren tárolt, át nem vehető titkok fel vannak sorolva, hogy újra megadhasd őket. A visszaállítás lezár minden munkamenetet, és eltávolítja a hozzáférési kulcsokat, ezért utána állítsd be őket újra.
 3. **Kijelölés.** A BombVault végignézi a mentéseidet, és felsorolja a talált konténereket, VM-eket, mappakészleteket és ZFS-adatkészleteket. A legfrissebb mentés mindenhol előre ki van jelölve. Ami ezen a szerveren még megvan, kikapcsolva indul, mert a visszaállítás lecserélné. A mappakészletek az újraépítés után már nem tudják, honnan jöttek, ezért egy általad választott mappába kerülnek.
 4. **Visszaállítás.** Minden kijelölt egyszerre visszajön, megállítva hagyva, ha minden konténert és VM-et magad akarsz elindítani, ami teljes elvesztés után a legbiztonságosabb. Utána tölts le egy új helyreállítási csomagot: a régi az előző telepítéshez tartozik.
+
+A csomagban szereplő közös tároló a helyek között **Közös tároló itt:** és a tulajdonos szerver neve formában jelenik meg, és a varázsló ott csak ennek a szervernek a saját mentéseit sorolja fel. Lásd: [Vészhelyzet után](#shared-emergency).
 
 ![A Vészvarázsló az első lépésénél, a három bejárattal.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![A Vészvarázsló az első lépésénél, a három bejárattal.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ A **Beállítások, Visszaállítás** alatti **Vészhelyzetre** kártyán a **H
 
 ### Egy szerver mentéseinek hosztja {#backup-host}
 
-Minden szerver saját restic-hoszt alatt írja a mentéseit: `bv-` és tizenkét karakter, amelyet a mentések kulcsából számítanak ki, például `bv-3f9a0c41d2e7`. Azoknak a mentéseknek, amelyek még azelőtt készültek, hogy a szervernek saját hosztja lett volna, `bombvault` a hosztjuk. A csomag megnevezi ennek a szervernek a hosztját, a parancsai pedig mindkettőt átadják a `--host` kapcsolóval, így a `latest` soha nem választ olyan mentést, amelyet egy másik szerver írt ugyanabba a tárolóba. Az a szerver, amely átveszi egy másik mentéseit, annak a szervernek a hosztja alatt folytatja, mert a hoszt a kulcsból származik.
+Minden szerver saját restic-hoszt alatt írja a mentéseit: `bv-` és tizenkét karakter, amelyet a mentések kulcsából számítanak ki, például `bv-3f9a0c41d2e7`. Azoknak a mentéseknek, amelyek még azelőtt készültek, hogy a szervernek saját hosztja lett volna, `bombvault` a hosztjuk. A csomag megnevezi ennek a szervernek a hosztját, a parancsai pedig mindkettőt átadják a `--host` kapcsolóval, így a `latest` soha nem választ olyan mentést, amelyet egy másik szerver írt ugyanabba a tárolóba. Az a szerver, amely átveszi egy másik mentéseit, annak a szervernek a hosztja alatt folytatja, mert a hoszt a kulcsból származik. Minden [közös tárolónál](#shared-repository), amelybe a szerver másol, vagy amelynek a tulajdonosa, a csomag **Shared repositories** fejezete felsorolja az ott lévő többi szervert a hosztjukkal.
 
 ### A csomag lezárása {#sealing-the-kit}
 

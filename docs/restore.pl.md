@@ -14,6 +14,7 @@ Każde przywracanie zaczyna się na stronie **Przywracanie**: wybierz sekcję, w
 - **W toku** pokazuje przywracanie, gdy trwa, także po zamknięciu jego okna.
 - **Awaria** uruchamia Kreator awaryjny dla serwera, którego już nie ma albo który postawiono od nowa, zobacz [Kreator awaryjny](offsite-recovery.md#emergency).
 - **Inne źródła** zawierają **Ze starego folderu z kopiami**, dla kopii innego BombVault, **Import z wtyczki Appdata.Backup** oraz **Zadania z Duplicati lub Duplicacy**.
+- **Inne serwery** wymieniają pozostałe serwery wspólnego repozytorium, w którym jest ten serwer, zobacz [Inne serwery](#other-servers).
 
 ![Strona Przywracanie w telefonie.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Strona Przywracanie w telefonie.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Wyszukiwanie chwilę trwa, bo restic przechodzi przez każdą kopię. **Zatrzyma
 - Miejsca docelowe poza siedzibą, takie jak S3, B2 czy SFTP, są pomijane, chyba że włączysz **Przeszukaj też miejsca docelowe poza siedzibą**. Wtedy czytane są tam tylko kopie, których nie ma żadne miejsce docelowe tutaj, zwykle starsze, które dłuższe przechowywanie trzyma poza siedzibą. Pierwsze wyszukiwanie w takim miejscu może długo trwać, a niektórzy dostawcy naliczają opłaty za pobrane dane.
 - Miejsce docelowe, którego nie udało się otworzyć, ma oznaczenie **nie udało się odczytać**, a (i) obok mówi dlaczego. Pozostałe miejsca docelowe są przeszukiwane dalej.
 
-Maszyny wirtualne są zapisywane jako całe dyski, więc pliki w nich nie są przeszukiwane. Autokopia i kopie innego BombVault w **Inne źródła** również nie są przeszukiwane. Wyszukiwanie wymienia pierwszych 200 plików, więc przy krótkiej nazwie, takiej jak `log`, może trzeba będzie dopisać kilka liter.
+Maszyny wirtualne są zapisywane jako całe dyski, więc pliki w nich nie są przeszukiwane. Autokopia, kopie innego BombVault w **Inne źródła** i kopie serwerów w **Inne serwery** również nie są przeszukiwane. Wyszukiwanie wymienia pierwszych 200 plików, więc przy krótkiej nazwie, takiej jak `log`, może trzeba będzie dopisać kilka liter.
 
 ## Co wraca, według rodzaju {#kinds}
 
@@ -134,6 +135,10 @@ Baza danych, która ma tylko zrzuty bazy, bez kopii plików, i której kontenera
     - **Z Duplicacy**: wybierz folder Duplicacy Web, w którym jest `duplicacy.json`, albo folder, którego kopię robisz z wiersza poleceń Duplicacy i w którym jest `.duplicacy`. Klucze zapisane przez wiersz poleceń w `.duplicacy/preferences` zostaną przeniesione. Duplicacy Web przechowuje swoje dane logowania w postaci zaszyfrowanej, więc okno o nie poprosi.
 
     Nic nie powstaje, dopóki nie zobaczysz podglądu. Każdy folder źródłowy staje się zestawem folderów z folderem na tym serwerze, w którym go znaleziono, z wykluczeniami, które dało się przełożyć, i z harmonogramem. Jeśli stare narzędzie działało we własnym kontenerze i jakiegoś folderu nie znaleziono, wybierasz go sam. Kopie trafiają do nowego miejsca docelowego w folderze `bombvault` wewnątrz starego miejsca docelowego, gdy jest nim folder lokalny, S3, SFTP, zdalny zasób rclone albo Backblaze B2 przez jego adres S3. Dane logowania z pliku są zapisywane razem z twoimi pozostałymi danymi logowania, a o te, których w pliku brakuje, okno zapyta. Notatki pod każdym zadaniem mówią, co nie zostało przeniesione, na przykład reguły dołączania, wyrażenia regularne, jak długo przechowywano kopie oraz stare hasło szyfrowania, którego BombVault nie potrzebuje.
+
+## Inne serwery {#other-servers}
+
+We [wspólnym repozytorium](offsite-recovery.md#shared-repository) każdy klucz otwiera kopie wszystkich serwerów, więc strona Przywracanie wymienia pozostałych członków w **Inne serwery**, każdego z jego nazwą, hostem, liczbą elementów i czasem jego najnowszej kopii. Host, który nie należy do żadnego serwera znanego temu serwerowi, jest pokazany jako **Serwer, którego ten nie zna**. Kliknięcie otwiera **Kopie zapasowe serwera** i nazwę serwera, tylko do odczytu i bez niczego do wpisywania. Zestawy folderów i zbiory danych ZFS trafiają do wybranego przez Ciebie folderu. Kontenery i maszyny wirtualne wracają jako zwykłe pliki w folderze, bo drugi serwer pieczętuje ich definicje własnym kluczem. Własne kopie tego serwera we wspólnym repozytorium są na karcie **Kopie zapasowe** każdego elementu.
 
 ## Po przywróceniu {#after}
 

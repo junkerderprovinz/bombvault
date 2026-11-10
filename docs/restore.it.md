@@ -14,6 +14,7 @@ Ogni ripristino parte dalla pagina **Ripristino**: scegli una sezione, cerca ci�
 - **In esecuzione** mostra un ripristino mentre gira, anche dopo che ne hai chiuso la finestra.
 - **Emergenza** avvia la Procedura guidata di emergenza per un server che non c'è più o è stato reinstallato, vedi [Procedura guidata di emergenza](offsite-recovery.md#emergency).
 - **Altre sorgenti** contiene **Da una vecchia cartella di backup**, per i backup di un altro BombVault, **Importa dal plugin Appdata.Backup** e **Job da Duplicati o Duplicacy**.
+- **Altri server** elenca gli altri server di un repository condiviso di cui fa parte questo server, vedi [Altri server](#other-servers).
 
 ![La pagina Ripristino su un telefono.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La pagina Ripristino su un telefono.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ La ricerca richiede un po' di tempo, perché restic percorre ogni backup. **Ferm
 - I posti off-site come S3, B2 o SFTP restano fuori, a meno che tu non attivi **Cerca anche nei posti off-site**. Allora lì vengono letti solo i backup che nessun posto qui contiene, di solito quelli più vecchi che una conservazione più lunga tiene off-site. La prima ricerca in un posto del genere può richiedere molto tempo, e alcuni fornitori fanno pagare i dati scaricati.
 - Un posto che non è stato possibile aprire indica **lettura non riuscita**, e la (i) accanto spiega il motivo. Gli altri posti vengono esaminati lo stesso.
 
-Le macchine virtuali vengono salvate come dischi interi, quindi i file al loro interno non vengono cercati. Nemmeno l'auto-backup e i backup di un altro BombVault in **Altre sorgenti** vengono cercati. Una ricerca elenca i primi 200 file, quindi un nome corto come `log` può richiedere qualche lettera in più.
+Le macchine virtuali vengono salvate come dischi interi, quindi i file al loro interno non vengono cercati. Nemmeno l'auto-backup, i backup di un altro BombVault in **Altre sorgenti** e quelli dei server in **Altri server** vengono cercati. Una ricerca elenca i primi 200 file, quindi un nome corto come `log` può richiedere qualche lettera in più.
 
 ## Cosa torna indietro, per tipo {#kinds}
 
@@ -134,6 +135,10 @@ Un database che ha solo dump del database e nessun backup dei file, e il cui con
     - **Da Duplicacy**: scegli la cartella di Duplicacy Web che contiene `duplicacy.json`, oppure una cartella di cui fai il backup con la riga di comando di Duplicacy, che contiene `.duplicacy`. Le chiavi che la riga di comando ha salvato in `.duplicacy/preferences` vengono importate. Duplicacy Web conserva le sue credenziali cifrate, quindi la finestra te le chiede.
 
     Non viene creato nulla prima che tu abbia visto l'anteprima. Ogni cartella di origine diventa un set di cartelle, con la cartella di questo server in cui è stata trovata, le esclusioni che è stato possibile convertire e la pianificazione. Se il vecchio strumento girava in un container tutto suo e una cartella non è stata trovata, la scegli tu. I backup vanno in una nuova destinazione, in una cartella `bombvault` dentro la vecchia destinazione, che sia una cartella locale, S3, SFTP, un remote rclone o Backblaze B2 tramite il suo indirizzo S3. Le credenziali presenti nel file vengono salvate insieme alle tue altre credenziali, e quelle che mancano ti vengono chieste. Le note sotto ogni job dicono cosa non è stato importato, come le regole di inclusione, le espressioni regolari, per quanto tempo venivano conservati i backup e la vecchia password di cifratura, che a BombVault non serve.
+
+## Altri server {#other-servers}
+
+In un [repository condiviso](offsite-recovery.md#shared-repository) ogni chiave apre i backup di tutti i server, quindi la pagina Ripristino elenca gli altri membri sotto **Altri server**, ciascuno con il suo nome, il suo host, quanti elementi ha e quando è stato fatto il suo backup più recente. Un host che non appartiene a nessun server conosciuto da questo compare come **Un server che questo non conosce**. Un clic apre **Backup di** seguito dal nome del server, in sola lettura e senza nulla da inserire. I set di cartelle e i dataset ZFS finiscono in una cartella a tua scelta. Container e VM tornano come semplici file in una cartella, perché l'altro server sigilla le loro definizioni con la propria chiave. I backup di questo server nel repository condiviso sono nella scheda **Backup** di ogni elemento.
 
 ## Dopo un ripristino {#after}
 

@@ -318,6 +318,8 @@ Vissa platser kan inte neka en radering alls, till exempel en molndisk som OneDr
 
 Det snabbaste sättet till en append-only-kopia är en parkopplad BombVault med en [mottagande server](#receiving-server): den kör rest-servern åt dig, i append-only-läge.
 
+I ett [gemensamt arkiv](#shared-repository) gäller det för medlemmarna men inte för servern som äger arkivet. Den servern når mappen direkt och glömmer och rensar där.
+
 !!! note "En lyckad radering under `/locks/` är väntad"
     Append-only betyder inte att inget någonsin kan tas bort. restic måste ta och släppa sina egna lås, så `/locks/` förblir skrivbar och raderbar med avsikt. Ögonblicksbilder och datan bakom dem, som är vad ransomware skulle gå efter, kan inte tas bort. Om du själv sonderar andra sidan är en radering som lyckas under `/locks/` rätt beteende och inte ett hål i skyddet.
 
@@ -391,6 +393,8 @@ Att slå på en roll skickar en begäran, och ingenting startar förrän någon 
 
 **Detaljer** på ett kort öppnar resten: den medlemmens mottagna repositorier och hämtningskällor, lagringserbjudanden, övervakning, **Ta bort** och **Glöm nyckeln**.
 
+Under korten hör kortet **Gemensamt arkiv** på en låda med en mottagande server och kortet **Gemensamma arkiv** på en medlem till det [gemensamma arkivet](#shared-repository).
+
 En medlem kan erbjuda sin egen off-site-lagring till en annan medlem via gruppen. Den andra administratören ser erbjudandet i medlemmens **Detaljer** och accepterar eller avvisar det. Att acceptera skapar en sparad inloggning och ett vanligt lagringsmål, efter samma kontroller som ett mål du skriver in. Målet kommer med skydd mot radering påslaget, eftersom receptet som erbjudandet visar är en rest-server i append-only-läge, så **Hur länge det bevaras** gäller inte där. Varje erbjudande har en egen inloggning och en egen mapp, så att erbjuda ett avsnitt igen, till samma medlem eller en annan, lämnar den första partnerns kopior i fred: lägg till den nya raden i `.htpasswd` och låt servern fortsätta köra. Bara anslutningsuppgifter reser så, aldrig säkerhetskopieringsdata. **Kontrollera nu** ber en medlem verifiera ett avsnitts repositorium. Inget på sidan kan starta en säkerhetskopiering, återställning eller radera något på en annan låda.
 
 Instanser som är avstängda och telefoner med appen stängd behåller sitt kort som **Inaktiv**, i grått, med när de senast sågs, och står dämpade i nätet tills du **Tar bort** dem. Direkt efter att den här servern startat säger ett sådant kort **Kontrollerar** tills gruppen är tillbaka. **Ta bort** fungerar på ett sådant kort vilka delar som än är påslagna, och det avslutar också medlemmens öppna begäranden, dess lediga ZFS-mottagarplatser och dess väntande nyckelbegäranden. Kortet **Instanser** på parkopplingssidan listar de här medlemmarna som **Inaktiv** också.
@@ -425,6 +429,91 @@ Den mottagande lådan kan också köra rest-servern som de andra kopierar till. 
 Instanserna i din grupp hittar sedan servern bland leverantörerna under **Från din grupp**, uppkallad efter den mottagande lådan, och rollen **Mottagare** erbjuder den som det säkra valet. Varje instans får en egen inloggning första gången den använder servern och skriver bara in i sin egen mapp där. Med **Mottagare** påslaget under **Inställningar, Instanser** öppnar **Mottagarserver** på den här instansens kort servern igen. Dess fönster listar inloggningarna under **Partner med inloggning**, och **Återkalla inloggning** tar bort en. Det den instansen redan kopierat blir kvar i mappen. Uppsättningen skapar också en **Inloggning utanför gruppen**, vars lösenord fönstret visar en gång.
 
 En instans som når den mottagande lådan bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till den mottagande lådans adress på parkopplingssidan. När BombVault körs på en egen IP-adress (till exempel på br0) fyller du i **Adress för partner**, eftersom servern lyssnar på värdens adress.
+
+En mottagande låda kan också ha ett [gemensamt arkiv](#shared-repository) för gruppen.
+
+## Gemensamt arkiv {#shared-repository}
+
+Flera servrar i en grupp kan kopiera till ett restic-repositorium tillsammans. Data som de har gemensamt, till exempel samma mappuppsättning eller samma appdata, lagras där bara en gång, så tillsammans behöver de mindre utrymme än med ett repositorium var.
+
+En server i gruppen äger arkivet. Den är den enda som glömmer gamla säkerhetskopior och rensar där. De andra är medlemmar: de når arkivet via en andra rest-server i append-only-läge och kan bara lägga till. Varje server skriver under en [egen host](#backup-host), så att säkerhetskopiorna hålls isär även där två servrar har en post med samma namn.
+
+Det här behövs:
+
+- en [parkopplingsgrupp](#pairing),
+- **Kryptera säkerhetskopior** påslaget, hos ägaren och hos varje medlem, eftersom varje server får en egen restic-nyckel,
+- en [mottagande server](#receiving-server) hos ägaren som medlemmarna kan nå. När BombVault körs på en egen IP-adress fyller du först i **Adress för partner** i den mottagande serverns fönster.
+
+En server äger högst ett gemensamt arkiv.
+
+### Ställa in det {#shared-set-up}
+
+När den mottagande servern körs har sidan **Instanser** på dess låda ett kort **Gemensamt arkiv** under instanserna. Tryck på **Ställ in gemensamt arkiv**, välj en **Mapp för det gemensamma arkivet** på en delad resurs med gott om utrymme, behåll **Port** på 8001 om inte en annan container använder den, och tryck på **Ställ in och starta**. BombVault gör då följande:
+
+1. nekar om en container som heter `rest-server-shared` redan finns eller en annan container håller porten,
+2. skapar arkivet i en mapp `shared` i den, med den här serverns lösenord,
+3. startar `restic/rest-server` som `rest-server-shared`, i append-only-läge med en inloggningsfil i mappen,
+4. skriver på Unraid dess mall till flashenheten, så att containern förblir redigerbar i Docker-fliken,
+5. kör manipuleringstestet mot den. **Kontrollera igen** på kortet kör det en gång till.
+
+Kortet listar **Medlemmar**, var och en med sina nycklar och sin senaste säkerhetskopia, förfrågningarna om att gå med och **Ta bort** för varje medlem.
+
+### Gå med {#shared-join}
+
+Öppna **Lägg till mål** på servern som vill gå med. Under **Från din grupp** visas ägaren en gång till, som **Gemensamt arkiv på** och dess namn. Väljer du det går en förfrågan till ägaren. Där står den på kortet **Gemensamt arkiv** med **Tillåt** och **Avvisa**.
+
+Efter **Tillåt** delar ägaren via gruppen ut en engångsnyckel och en inloggning till sin andra rest-server. Med dem lägger medlemmen till en egen restic-nyckel, och sedan tar ägaren bort engångsnyckeln. En medlem som inte är klar inom ett dygn förlorar engångsnyckeln och inloggningen igen och kan fråga en gång till. Om ägaren inte nådde medlemmen med sitt svar erbjuder kortet **Säg till igen**.
+
+Ägaren nekar en server så länge den ännu inte skriver under en egen host, vilket betyder att den kör en äldre version, och när en annan medlem redan skriver under samma host. Två servrar delar host när de delar en `APP_KEY`.
+
+När medlemmen är med dyker ett mål som heter **Shared with** och ägarens namn upp under **Mål**, med alla avsnitt avslagna. Slå på de avsnitt som ska kopiera dit på målets sida. Målet har skydd mot radering och inga egna behållregler, eftersom bara ägaren glömmer där. Bara säkerhetskopior under medlemmens egen host hamnar där, så äldre säkerhetskopior under hosten `bombvault` blir kvar där de är.
+
+Ägaren kan också kopiera in sina egna säkerhetskopior: **Kopiera in den här serverns säkerhetskopior också** på dess kort lägger till målet hos ägaren också. För ägaren ligger den kopian på dess egna diskar, och ingenting hindrar den från att radera där. Det är alltså ingen off-site-kopia.
+
+### Vem som städar, och när {#shared-upkeep}
+
+Bara ägaren glömmer och rensar. Dess inställningar finns i delen **Gemensamt arkiv** i fönstret **Mottagarserver**, som du öppnar från ägarens eget kort på sidan Instanser:
+
+- **Städfönster** bestämmer när rensningen körs, dagligen eller varje vecka. Tills du ändrar det börjar det på söndagar kl. 03:00, och **Fönstrets längd i timmar** är 6.
+- **Oanvänt utrymme som en rensning får lämna, i %** är 5 om du inte ändrar det. Ett högre värde packar om mindre, så rensningen blir klar fortare.
+- **Data som läses tillbaka efter en rensning, i %** är 5 om du inte ändrar det. Efter varje rensning kontrollerar ägaren arkivet och läser tillbaka den här andelen av datan.
+- **Hur länge det bevaras** följer ägarens off-site-regler för varje avsnitt, och **Ange en egen regel** ger det gemensamma arkivet en egen. Varje servers säkerhetskopior åldras för sig.
+- **Städa nu** glömmer, rensar och kontrollerar direkt, efter att medlemmarna har fått besked.
+
+Utanför fönstret glömmer ägaren en gång om dagen, och utrymmet kommer tillbaka med nästa rensning. Före en rensning meddelar ägaren medlemmarna, och de kopierar ingenting till arkivet förrän fönstret stängs. En medlem som fortfarande kopierar får upp till en halvtimme på sig att bli klar, annars flyttas rensningen till nästa fönster. En kopia som hamnar i fönstret väntar och visas som uppskjuten i aktivitetsloggen och på medlemmens kort. Nästa omgång tar igen den.
+
+Där ägaren är osäker behåller den mer. En post som en medlem håller kvar på grund av en [avvikelse](anomalies.md) behåller alla sina säkerhetskopior. En medlem som inte kan säga vad den håller kvar behåller alla sina säkerhetskopior den gången. Säkerhetskopior under en host som ingen server i gruppen skriver under glöms aldrig. Fönstret visar också utrymmet: vad arkivet tar upp, vad servrarna skulle behöva var för sig och vad det sparar. Siffrorna kommer med varje städning.
+
+### Vad medlemmar ser {#shared-members}
+
+På en medlem har sidan Instanser ett kort **Gemensamma arkiv**. Det visar varje gemensamt arkiv som servern kopierar till eller har bett om att få gå med i, och hur förfrågan står: **Väntar på ett ja**, **Går med**, **Med**, **Avböjd**, **Utgången** eller **Inte medlem**. För ett arkiv som den är med i visar kortet **Vem som rensar**, **Nästa städning**, **Tillsammans med** för de andra medlemmarna, **Senaste kopia hit** och hur mycket utrymme arkivet tar upp och sparar.
+
+### Lämna {#shared-leave}
+
+**Lämna** på medlemmens kort tar ut servern: ägaren tar bort dess nyckel och inloggning, och dess mål där slås av. **Ta bort** på ägarens kort tar ut en medlem från andra hållet. I båda fallen blir serverns säkerhetskopior kvar i arkivet och åldras enligt ägarens regler. Hos ägaren står de under **Servrar som har lämnat**, där **Glöm säkerhetskopior** glömmer alla när du skriver serverns namn. Nästa städfönster ger tillbaka utrymmet.
+
+### Andra servrars säkerhetskopior {#shared-restore}
+
+Varje server hittar sina egna säkerhetskopior i det gemensamma arkivet på fliken **Säkerhetskopior** för sina poster, precis som vilken annan kopia som helst. De andra medlemmarnas säkerhetskopior finns på sidan Återställning under [Andra servrar](restore.md#other-servers).
+
+### Efter en nödsituation {#shared-emergency}
+
+[Återställningskitet](#recovery-kit) har ett kapitel **Shared repositories**. Det nämner varje gemensamt arkiv med dess ägare, avsnitten som kopierar dit, de andra medlemmarna med deras hosts och ett `restic snapshots`-kommando med den här serverns host. Ägarens kit nämner också port, mapp och inloggning för dess rest-server.
+
+I Nödguiden visas arkivet bland platserna som **Gemensamt arkiv hos** och ägarens namn. En ny installation som tar över en medlems nyckel skriver under samma host, eftersom hosten kommer från nyckeln. Den får tillbaka sitt mål i det gemensamma arkivet och listar och återställer bara sina egna säkerhetskopior där.
+
+En ny installation som tar över ägarens nyckel blir ägare till arkivet i dess ställe. Den låter säkerhetskopiorna åldras och städar som förut och startar rest-servern igen på samma mapp. Parkoppla den med gruppen igen, ställ in dess mottagande server under **Instanser** och ställ in reglerna i den mottagande serverns fönster igen, eftersom de inte finns i kitet. Så snart gruppen når medlemmarna meddelar den nya ägaren dem själv. Varje medlem kontrollerar först: den lägger till en tillfällig provnyckel i arkivet som bara en server med åtkomst till arkivets mapp kan ta bort, och följer den nya ägaren när den nyckeln är borta. Nycklar som blivit kvar efter sådana kontroller tar ägaren bort vid nästa städning.
+
+Om den gamla ägaren fortfarande körs säger dess kort att den andra servern äger arkivet nu. **Ta tillbaka** gör den till ägare igen, för när ett kit av misstag har tagits över på en andra server.
+
+### Begränsningar {#shared-limits}
+
+- **Varje nyckel läser allt.** Alla nycklar i ett restic-repositorium öppnar samma huvudnyckel, så varje medlem kan läsa de andras säkerhetskopior. Container- och VM-definitioner förblir förseglade med varje servers egen nyckel, så en annan servers containrar och VM:ar kommer bara tillbaka som filer. En server som en gång hade åtkomst kan ha läst huvudnyckeln, så att ta bort den stänger inte ute den för gott. Det gör bara ett nytt arkiv.
+- **Ägaren kan radera.** Ingen medlem kan radera något där, men ägaren når mappen direkt och glömmer och rensar alla medlemmars säkerhetskopior. Ett misstag eller ett övertagande hos ägaren drabbar dem alla.
+- **Skador drabbar varje server.** Ett trasigt pack saknas för varje server vars säkerhetskopior använder det, så ett gemensamt arkiv ersätter inte en andra kopia.
+- **Bara på en mottagande server.** S3, SFTP och andra platser kan inte begränsa en medlem till att bara lägga till, så BombVault erbjuder ett gemensamt arkiv bara på en mottagande server.
+- **Bara som kopieringsmål.** Ett avsnitts egna mapp kan inte ligga i ett gemensamt arkiv, eftersom varje rensning skulle hålla upp alla servrars säkerhetskopior.
+- **Äldre historik blir kvar.** Bara säkerhetskopior under varje servers egen host kommer in, och ingenting flyttas över från andra repositorier.
 
 ## Exempel: parkoppla två Unraid-lådor {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ En rest-server som du kör för hand fungerar också: lägg till den med **Lägg
 2. **Inställningar.** **Återställ inställningar** återställer BombVaults egna inställningar från den nyaste auto-säkerhetskopian: lagringsmål, inloggningar, scheman och regler. BombVault startar om för att tillämpa dem, via Docker-socketen, så att den levande inställningsdatabasen aldrig skrivs över under ett öppet handtag, och guiden fortsätter av sig själv efteråt. Den här serverns inloggning blir kvar: du fortsätter logga in med lösenordet du använder nu. Hemligheter som den gamla servern hade lagrat och som inte går att ta över listas, så att du kan skriva in dem igen. Återställningen avslutar varje session och tar bort lösennycklarna, så sätt upp dem igen efteråt.
 3. **Urval.** BombVault går igenom dina säkerhetskopior och listar de containrar, VM:ar, mappuppsättningar och ZFS-datauppsättningar den hittar. Den nyaste ögonblicksbilden är förvald överallt. Det den här servern fortfarande har börjar avslaget, eftersom en återställning skulle ersätta det. Mappuppsättningar vet inte längre var de kom ifrån efter en återuppbyggnad, så de går in i en mapp du väljer.
 4. **Återställning.** Allt som är valt kommer tillbaka på en gång, lämnat stoppat om du vill starta varje container och VM själv, vilket är tryggast efter en total förlust. Ladda ner ett nytt återställningskit efteråt: det gamla hör till den förra installationen.
+
+Ett gemensamt arkiv från kitet visas bland platserna som **Gemensamt arkiv hos** och namnet på servern som äger det, och guiden listar bara den här serverns egna säkerhetskopior där. Se [Efter en nödsituation](#shared-emergency).
 
 ![Nödguiden vid sitt första steg, med de tre vägarna in.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Nödguiden vid sitt första steg, med de tre vägarna in.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Det här är biten som gör katastrofåterställning möjlig även när det inte
 
 ### Hosten för en servers säkerhetskopior {#backup-host}
 
-Varje server skriver sina säkerhetskopior under en egen restic-host: `bv-` och tolv tecken som räknas fram ur säkerhetskopiornas nyckel, till exempel `bv-3f9a0c41d2e7`. Säkerhetskopior från innan en server fick en egen host har hosten `bombvault`. Kitet anger den här serverns host, och dess kommandon skickar med båda via `--host`, så att `latest` aldrig väljer en säkerhetskopia som en annan server har skrivit till samma repositorium. En server som tar över en annans säkerhetskopior fortsätter under den serverns host, eftersom hosten kommer från nyckeln.
+Varje server skriver sina säkerhetskopior under en egen restic-host: `bv-` och tolv tecken som räknas fram ur säkerhetskopiornas nyckel, till exempel `bv-3f9a0c41d2e7`. Säkerhetskopior från innan en server fick en egen host har hosten `bombvault`. Kitet anger den här serverns host, och dess kommandon skickar med båda via `--host`, så att `latest` aldrig väljer en säkerhetskopia som en annan server har skrivit till samma repositorium. En server som tar över en annans säkerhetskopior fortsätter under den serverns host, eftersom hosten kommer från nyckeln. För varje [gemensamt arkiv](#shared-repository) som servern kopierar till eller äger nämner kitets kapitel **Shared repositories** de andra servrarna där med deras hosts.
 
 ### Försegla kitet {#sealing-the-kit}
 

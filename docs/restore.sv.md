@@ -14,6 +14,7 @@ Varje återställning börjar på sidan **Återställning**: välj ett avsnitt, 
 - **Körs nu** visar en återställning medan den pågår, även efter att du stängt dess fönster.
 - **Nödläge** startar Nödguiden för en server som är borta eller som har satts upp på nytt, se [Nödguide](offsite-recovery.md#emergency).
 - **Andra källor** innehåller **Från en gammal säkerhetskopiemapp**, för säkerhetskopiorna från en annan BombVault, **Importera från pluginet Appdata.Backup** och **Jobb från Duplicati eller Duplicacy**.
+- **Andra servrar** listar de andra servrarna i ett gemensamt arkiv som den här servern är med i, se [Andra servrar](#other-servers).
 
 ![Sidan Återställning på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Sidan Återställning på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Sökningen tar en stund, eftersom restic går igenom varje säkerhetskopia. **St
 - Externa platser som S3, B2 eller SFTP hoppas över, om du inte slår på **Sök även på externa platser**. Då läses där bara de säkerhetskopior som ingen plats här har, oftast de äldre som sparas längre externt. Den första sökningen på en sådan plats kan ta lång tid, och vissa leverantörer tar betalt för den data som laddas ner.
 - En plats som inte gick att öppna säger **kunde inte läsas**, och (i) bredvid förklarar varför. De andra platserna genomsöks ändå.
 
-Virtuella maskiner sparas som hela diskar, så filerna i dem genomsöks inte. Auto-säkerhetskopian och säkerhetskopiorna från en annan BombVault under **Andra källor** genomsöks inte heller. En sökning listar de första 200 filerna, så ett kort namn som `log` kan behöva fler bokstäver.
+Virtuella maskiner sparas som hela diskar, så filerna i dem genomsöks inte. Auto-säkerhetskopian, säkerhetskopiorna från en annan BombVault under **Andra källor** och de från servrarna under **Andra servrar** genomsöks inte heller. En sökning listar de första 200 filerna, så ett kort namn som `log` kan behöva fler bokstäver.
 
 ## Vad som kommer tillbaka, per typ {#kinds}
 
@@ -134,6 +135,10 @@ En databas som bara har databasdumpar och ingen filsäkerhetskopia, och vars con
     - **Från Duplicacy**: välj mappen för Duplicacy Web där `duplicacy.json` ligger, eller en mapp som du säkerhetskopierar med Duplicacys kommandorad och där `.duplicacy` ligger. Nycklar som kommandoraden har sparat i `.duplicacy/preferences` följer med. Duplicacy Web sparar sina inloggningar krypterade, så fönstret frågar efter dem.
 
     Inget skapas förrän du har sett förhandsvisningen. Varje källmapp blir en mappuppsättning, med mappen på den här servern där den hittades, de undantag som gick att översätta och schemat. Om det gamla verktyget körde i en egen container och en mapp inte hittades, väljer du den själv. Säkerhetskopiorna hamnar på ett nytt lagringsmål i en mapp `bombvault` inuti det gamla lagringsmålet, när det är en lokal mapp, S3, SFTP, en rclone-remote eller Backblaze B2 via dess S3-adress. En inloggning från filen sparas med dina andra inloggningar, och en som saknas i filen blir du tillfrågad om. Anteckningar under varje jobb visar vad som inte följde med, till exempel inkluderingsregler, reguljära uttryck, hur länge säkerhetskopiorna sparades och det gamla krypteringslösenordet, som BombVault inte behöver.
+
+## Andra servrar {#other-servers}
+
+I ett [gemensamt arkiv](offsite-recovery.md#shared-repository) öppnar varje nyckel alla servrars säkerhetskopior. Därför listar sidan Återställning de andra medlemmarna under **Andra servrar**, var och en med sitt namn, sin host, hur många poster den har och när dess senaste säkerhetskopia kördes. En host som inte hör till någon server som den här känner till visas som **En server som den här inte känner till**. Ett klick öppnar **Säkerhetskopior från** och serverns namn, skrivskyddat och utan något att skriva in. Mappuppsättningar och ZFS-dataset hamnar i en mapp som du väljer. Containrar och VM:ar kommer tillbaka som vanliga filer i en mapp, eftersom den andra servern förseglar deras definitioner med sin egen nyckel. Den här serverns egna säkerhetskopior i det gemensamma arkivet finns på fliken **Säkerhetskopior** för varje post.
 
 ## Efter en återställning {#after}
 

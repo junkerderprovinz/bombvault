@@ -74,6 +74,7 @@ A short catalogue of what BombVault does. Each line links to the page that expla
 - **Pairing by twelve words**, end-to-end encrypted, directly or through a relay. [Pairing instances](offsite-recovery.md#pairing)
 - **The Instances page** with the group as a net and the roles **Receiver**, **Fetcher**, **ZFS server** and **Key keeper**. [Instances and roles](offsite-recovery.md#roles)
 - **A receiving server** set up for you, in append-only mode. [Receiving server](offsite-recovery.md#receiving-server)
+- **A shared repository** that several servers copy into, so what they have in common is stored once. Only the server that holds it prunes. [Shared repository](offsite-recovery.md#shared-repository)
 
 ## AI assistants (MCP) {#mcp}
 

@@ -74,6 +74,7 @@ BombVault'un neler yaptığının kısa bir kataloğu. Her satır, onu açıklay
 - Doğrudan ya da bir röle üzerinden, uçtan uca şifreli, **on iki kelimeyle eşleştirme**. [Örnekleri eşleştirme](offsite-recovery.md#pairing)
 - Grubun bir ağ olarak göründüğü ve **Alıcı**, **Çeken**, **ZFS sunucusu** ve **Anahtar bekçisi** rollerinin olduğu **Örnekler sayfası**. [Örnekler ve roller](offsite-recovery.md#roles)
 - Senin için kurulan, append-only kipinde **bir alıcı sunucu**. [Alıcı sunucu](offsite-recovery.md#receiving-server)
+- Birkaç sunucunun içine kopyaladığı **bir ortak depo**, böylece ortak oldukları şeyler bir kez saklanır. Yalnızca onu tutan sunucu budar. [Ortak depo](offsite-recovery.md#shared-repository)
 
 ## Yapay zeka asistanları (MCP) {#mcp}
 

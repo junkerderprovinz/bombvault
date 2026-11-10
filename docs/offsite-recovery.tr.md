@@ -318,6 +318,8 @@ Bazı yerler silmeyi hiç reddedemez, örneğin OneDrive gibi bir bulut sürüc�
 
 Append-only bir kopyaya en hızlı yol, bir [alıcı sunucusu](#receiving-server) olan eşleşmiş bir BombVault'tur: rest-server'ı senin için append-only kipinde çalıştırır.
 
+Bir [ortak depoda](#shared-repository) bu üyeler için geçerlidir, depo sahibi için değil. Depo sahibi klasöre doğrudan ulaşır, oradaki yedekleri unutur ve depoyu budar.
+
 !!! note "`/locks/` altında başarılı bir silme beklenen bir şeydir"
     Append-only, hiçbir şeyin hiçbir zaman kaldırılamayacağı anlamına gelmez. restic kendi kilitlerini alıp bırakmak zorundadır, bu yüzden `/locks/` tasarım gereği yazılabilir ve silinebilir kalır. Fidye yazılımının peşine düşeceği anlık görüntüler ve arkasındaki veri kaldırılamaz. Karşı tarafı kendin yoklarsan `/locks/` altında başarılı bir silme doğru davranıştır, korumada bir delik değil.
 
@@ -391,6 +393,8 @@ Bir rolü açmak bir istek gönderir ve diğer örnekte biri **İzin ver**'e bas
 
 Bir karttaki **Ayrıntılar** gerisini açar: o üyenin alınan depoları ve çekme kaynakları, depolama teklifleri, izleme, **Kaldır** ve **Anahtarı unut**.
 
+Kartların altında, alıcı sunucusu olan makinede **Ortak depo** kartı, bir üyede de **Ortak depolar** kartı durur. İkisi de [ortak depoya](#shared-repository) aittir.
+
 Bir üye kendi site dışı depolamasını grup üzerinden başka bir üyeye sunabilir. Diğer yönetici teklifi üyenin **Ayrıntılar**'ında görür ve kabul eder ya da reddeder. Kabul etmek, yazdığın bir hedefle aynı denetimlerden sonra kayıtlı bir oturum açma bilgisi ve sıradan bir hedef oluşturur. Hedef silmeye karşı koruma açık olarak gelir, çünkü teklifin gösterdiği tarif salt ekleme yapan bir rest-server'dır, bu yüzden orada **Ne kadar saklanır** geçerli değildir. Her teklifin kendi oturum açması ve kendi klasörü vardır, bu yüzden bir bölümü aynı üyeye ya da başka birine yeniden sunmak ilk ortağın kopyalarına dokunmaz: `.htpasswd` dosyasına yeni satırı ekle ve sunucuyu çalışır bırak. Bu yolla yalnızca bağlantı ayrıntıları gider, yedek verisi asla. **Şimdi denetle**, bir üyeden bir bölümün deposunu doğrulamasını ister. Sayfadaki hiçbir şey başka bir makinede bir yedek, geri yükleme başlatamaz ya da bir şey silemez.
 
 Kapatılmış örnekler ve uygulaması kapalı telefonlar kartlarını gri olarak **Etkin değil** diye, en son ne zaman görüldükleriyle korurlar ve sen onları **Kaldır**'a kadar ağda soluk dururlar. Bu sunucu başlar başlamaz böyle bir kart grup dönene kadar **Denetleniyor** der. **Kaldır** hangi parçalar açık olursa olsun böyle bir kartta çalışır ve ayrıca üyenin açık isteklerini, boşta ZFS alma yuvalarını ve bekleyen anahtar isteklerini de sonlandırır. Eşleştirme sayfasındaki **Örnekler** kartı bu üyeleri de **Etkin değil** olarak listeler.
@@ -425,6 +429,91 @@ Alıcı makine diğerlerinin kopyaladığı rest-server'ı da çalıştırabilir
 Grubundaki örnekler sunucuyu o zaman sağlayıcılar arasında **Grubundan** altında alıcı makinenin adıyla bulur ve **Alıcı** rolü onu güvenli seçim olarak sunar. Her örnek sunucuyu ilk kullandığında kendi girişini alır ve orada yalnızca kendi klasörüne yazar. **Ayarlar, Örnekler** altında **Alıcı** açıkken, bu örneğin kartındaki **Alıcı sunucu** sunucuyu yeniden açar. Penceresi girişleri **Oturum bilgisi olan ortaklar** altında listeler ve **Girişi iptal et** birini alır. O örneğin zaten kopyaladıkları klasörde kalır. Kurulum ayrıca parolasını pencerenin bir kez gösterdiği bir **Grup dışı oturum bilgisi** oluşturur.
 
 Alıcı makineye yalnızca röle üzerinden ulaşan bir örnek sunucuyu kullanamaz, çünkü röle yedek taşımaz. Önce alıcı makinenin adresini eşleştirme sayfasına ekle. BombVault kendi IP adresinde (örneğin br0'da) çalışıyorsa **Ortaklar için adres**'i doldur, çünkü sunucu ana makinenin adresini dinler.
+
+Alıcı makine grup için bir [ortak depo](#shared-repository) da tutabilir.
+
+## Ortak depo {#shared-repository}
+
+Bir grubun birkaç sunucusu birlikte tek bir restic deposuna kopyalayabilir. Ortak oldukları veriler, örneğin aynı klasör kümesi ya da aynı appdata, orada yalnızca bir kez saklanır, bu yüzden hepsi birlikte her birinin kendi deposu olduğundan daha az yere ihtiyaç duyar.
+
+Grubun bir sunucusu depoyu tutar, bu sunucu depo sahibidir. Oradaki eski yedekleri unutan ve depoyu budayan yalnızca odur. Diğerleri üyedir: depoya append-only kipindeki ikinci bir rest-server üzerinden ulaşırlar ve yalnızca ekleyebilirler. Her sunucu [kendine ait bir host](#backup-host) altında yazar, bu yüzden iki sunucunun aynı adlı ögeleri olsa bile yedekler birbirinden ayrı kalır.
+
+Gerekenler:
+
+- bir [eşleştirme grubu](#pairing),
+- depo sahibinde ve her üyede açık **Yedekleri şifrele**, çünkü her sunucu kendine ait bir restic anahtarı alır,
+- depo sahibinde üyelerin ulaşabildiği bir [alıcı sunucu](#receiving-server). BombVault kendi IP adresinde çalışıyorsa önce alıcı sunucunun penceresinde **Ortaklar için adres**'i doldur.
+
+Bir sunucu en fazla bir ortak depo tutar.
+
+### Kurulum {#shared-set-up}
+
+Alıcı sunucu çalışınca, makinesinin **Örnekler** sayfasında örneklerin altında bir **Ortak depo** kartı belirir. **Ortak depoyu kur**'a bas, bol yeri olan bir paylaşımda **Ortak depo için klasör** seç, başka bir konteyner kullanmıyorsa **Port**'u 8001'de bırak ve **Kur ve başlat**'a bas. BombVault sonra:
+
+1. `rest-server-shared` adlı bir konteyner zaten varsa ya da portu başka bir konteyner tutuyorsa reddeder,
+2. depoyu seçilen klasörün içindeki `shared` klasöründe, bu sunucunun parolasıyla oluşturur,
+3. `restic/rest-server`'ı `rest-server-shared` olarak append-only kipinde ve klasörde bir giriş dosyasıyla başlatır,
+4. Unraid'de şablonunu flash sürücüye yazar, böylece konteyner Docker sekmesinde düzenlenebilir kalır,
+5. üzerinde kurcalama testini çalıştırır. Karttaki **Yeniden denetle** testi bir kez daha çalıştırır.
+
+Kart **Üyeler** altında her üyeyi anahtarları ve son yedeğiyle, katılma isteklerini ve her üye için **Kaldır**'ı listeler.
+
+### Katılma {#shared-join}
+
+Katılmak isteyen sunucuda **Hedef ekle**'yi aç. **Grubundan** altında depo sahibi ikinci kez görünür: adı ve ardından **üzerindeki ortak depo**. Onu seçmek depo sahibine bir istek gönderir ve istek orada **Ortak depo** kartında **İzin ver** ve **Reddet** ile durur.
+
+**İzin ver**'den sonra depo sahibi grup üzerinden tek kullanımlık bir anahtar ve ikinci rest-server'ında bir giriş verir. Üye bununla kendine ait bir restic anahtarı ekler, depo sahibi de ardından tek kullanımlık anahtarı kaldırır. Bir gün içinde bitirmeyen bir üye tek kullanımlık anahtarı ve girişi yeniden kaybeder ve bir kez daha isteyebilir. Depo sahibi yanıtını üyeye ulaştıramadıysa kart **Yeniden bildir**'i sunar.
+
+Depo sahibi, hâlâ kendine ait bir host altında yazmayan, yani daha eski bir sürümde çalışan bir sunucuyu ve başka bir üyenin zaten aynı host altında yazdığı bir sunucuyu geri çevirir. İki sunucu aynı `APP_KEY`'i paylaşıyorsa aynı host'u paylaşır.
+
+Üye katıldıktan sonra **Hedefler** altında **Shared with** ve depo sahibinin adını taşıyan bir hedef belirir, bütün bölümleri kapalı olarak. Oraya kopyalaması gereken bölümleri hedefin sayfasında aç. Hedefte silmeye karşı koruma vardır ve kendine ait saklama kuralları yoktur, çünkü orada yalnızca depo sahibi unutur. Oraya yalnızca üyenin kendi host'u altındaki yedekler gider, bu yüzden `bombvault` host'u altındaki eski yedekler oldukları yerde kalır.
+
+Depo sahibi kendi yedeklerini de içeri kopyalayabilir: kartındaki **Bu sunucunun yedeklerini de içeri kopyala** hedefi orada da ekler. Depo sahibi için bu kopya kendi disklerinde durur ve orada silmesini hiçbir şey engellemez, bu yüzden evden uzakta bir kopya sayılmaz.
+
+### Kim, ne zaman temizler {#shared-upkeep}
+
+Yalnızca depo sahibi unutur ve budar. Ayarları, depo sahibinin Örnekler sayfasındaki kendi kartından açılan **Alıcı sunucu** penceresinin **Ortak depo** bölümündedir:
+
+- **Temizlik aralığı** budamanın ne zaman çalışacağını belirler, günlük ya da haftalık. Sen değiştirene kadar pazar günleri 03:00'te başlar ve **Aralığın uzunluğu, saat** 6'dır.
+- **Budamanın bırakabileceği kullanılmayan alan, %** sen değiştirmedikçe 5'tir. Daha yüksek bir değer daha az yeniden paketler, böylece budama daha çabuk biter.
+- **Budamadan sonra geri okunan veri, %** sen değiştirmedikçe 5'tir. Her budamadan sonra depo sahibi depoyu denetler ve verinin bu payını geri okur.
+- **Ne kadar saklanır** her bölüm için depo sahibinin site dışı kurallarına uyar, **Kendi kuralını belirle** ise ortak depoya kendine ait bir kural verir. Her sunucunun yedekleri kendi başına eskir.
+- **Şimdi temizle** üyelere haber verdikten sonra hemen unutur, budar ve denetler.
+
+Aralığın dışında depo sahibi günde bir kez unutur, yer de bir sonraki budamayla geri gelir. Budamadan önce üyelere haber verir, onlar da aralık kapanana kadar depoya hiçbir şey kopyalamaz. Hâlâ kopyalayan bir üyeye bitirmesi için en fazla yarım saat tanınır, yoksa budama bir sonraki aralığa kayar. Aralığa denk gelen bir kopya bekler, etkinlik günlüğünde ve üyenin kartında ertelenmiş olarak görünür ve bir sonraki geçiş onu telafi eder.
+
+Depo sahibi emin olmadığında daha fazlasını saklar. Bir üyenin bir [anormallik](anomalies.md) yüzünden elinde tuttuğu bir öge bütün yedeklerini korur. Neyi elinde tuttuğunu söyleyemeyen bir üye o sefer bütün yedeklerini korur. Grubun hiçbir sunucusunun yazmadığı bir host altındaki yedekler asla unutulmaz. Pencere yeri de gösterir: deponun ne kadar tuttuğunu, sunucuların ayrı ayrı ne kadar yere ihtiyaç duyacağını ve bunun ne kadar tasarruf sağladığını. Sayılar her temizlikle gelir.
+
+### Üyelerin gördükleri {#shared-members}
+
+Bir üyede Örnekler sayfasında, sunucunun içine kopyaladığı ya da katılmak istediği her ortak depoyu ve isteğinin durumunu gösteren bir **Ortak depolar** kartı vardır: **Bir evet bekleniyor**, **Katılıyor**, **Katıldı**, **Geri çevrildi**, **Süresi doldu** ya da **Üye değil**. Üyesi olduğu bir depo için kart **Kim budar**, **Sonraki temizlik**, diğer üyelerle **Birlikte olanlar**, **Buraya son kopya** ile deponun ne kadar yer tuttuğunu ve ne kadar tasarruf sağladığını gösterir.
+
+### Ayrılma {#shared-leave}
+
+Üyenin kartındaki **Ayrıl** sunucuyu çıkarır: depo sahibi anahtarını ve girişini kaldırır, sunucunun oradaki hedefi de kapatılır. Depo sahibinin kartındaki **Kaldır** bir üyeyi diğer taraftan çıkarır. Her iki durumda da sunucunun yedekleri depoda kalır ve depo sahibinin kurallarına göre eskir. Depo sahibinde bunlar **Ayrılan sunucular** altında durur. Orada **Yedekleri unut**, sunucunun adını yazdığında hepsini unutur. Bir sonraki temizlik aralığı yeri geri verir.
+
+### Diğer sunucuların yedekleri {#shared-restore}
+
+Her sunucu ortak depodaki kendi yedeklerini, diğer kopyalar gibi, ögelerinin **Yedekler** sekmesinde bulur. Diğer üyelerin yedekleri Geri yükleme sayfasında [Diğer sunucular](restore.md#other-servers) altındadır.
+
+### Acil durumdan sonra {#shared-emergency}
+
+[Kurtarma kitinde](#recovery-kit) **Shared repositories** adlı bir bölüm vardır. Her ortak depoyu sahibiyle, oraya kopyalayan bölümleri, diğer üyeleri host'larıyla ve bu sunucunun host'uyla bir `restic snapshots` komutunu adlandırır. Depo sahibinin kiti ayrıca rest-server'ının portunu, klasörünü ve girişini adlandırır.
+
+Acil durum sihirbazında depo, yerler arasında depo sahibinin adı ve ardından **sunucusundaki ortak depo** olarak görünür. Bir üyenin anahtarını devralan yeni bir kurulum aynı host altında yazar, çünkü host anahtardan gelir. Ortak depodaki hedefini geri alır ve orada yalnızca kendi yedeklerini listeler ve geri yükler.
+
+Depo sahibinin anahtarını devralan yeni bir kurulum depoyu onun yerine tutar. Eskisi gibi eski yedekleri unutur, depoyu temizler ve rest-server'ı aynı klasörde yeniden başlatır. Onu grupla yeniden eşleştir, **Örnekler** altında alıcı sunucusunu kur ve kurallarını alıcı sunucunun penceresinde yeniden belirle, çünkü bunlar kitte yoktur. Grup üyelere ulaşır ulaşmaz yeni depo sahibi onlara bunu kendisi bildirir. Her üye önce denetler: depoya yalnızca deponun klasörüne erişen bir sunucunun kaldırabileceği tek kullanımlık bir anahtar ekler ve bu anahtar kaybolunca yeni depo sahibini izler. Depo sahibi bu tür denetimlerden kalan anahtarları bir sonraki temizlikte kaldırır.
+
+Eski depo sahibi hâlâ çalışıyorsa kartı depoyu artık diğer sunucunun tuttuğunu söyler. **Geri al** onu yeniden depo sahibi yapar, bir kit yanlışlıkla ikinci bir sunucuda devralındığında işe yarar.
+
+### Sınırlar {#shared-limits}
+
+- **Her anahtar her şeyi okur.** Bir restic deposunun bütün anahtarları aynı ana anahtarı açar, bu yüzden her üye diğerlerinin yedeklerini okuyabilir. Konteyner ve VM tanımları her sunucunun kendi anahtarıyla mühürlü kalır, bu yüzden başka bir sunucunun konteynerleri ve VM'leri yalnızca dosya olarak geri gelir. Bir zamanlar erişimi olan bir sunucu ana anahtarı okumuş olabilir, bu yüzden onu kaldırmak onu kalıcı olarak dışarıda bırakmaz. Bunu yalnızca yeni bir depo yapar.
+- **Depo sahibi silebilir.** Hiçbir üye orada bir şey silemez, ama depo sahibi klasöre doğrudan ulaşır ve her üyenin yedeklerini unutur ve budar. Depo sahibinde bir hata ya da ele geçirilme hepsini etkiler.
+- **Hasar her sunucuyu etkiler.** Bozuk bir paket, yedekleri onu kullanan her sunucu için eksik olur, bu yüzden bir ortak depo ikinci bir kopyanın yerini tutmaz.
+- **Yalnızca bir alıcı sunucuda.** S3, SFTP ve diğer yerler bir üyeyi yalnızca eklemeyle sınırlayamaz, bu yüzden BombVault ortak depoyu yalnızca bir alıcı sunucuda sunar.
+- **Yalnızca kopya hedefi olarak.** Bir bölümün kendi klasörü bir ortak depoda olamaz, çünkü her budama bütün sunucuların yedeklerini bekletirdi.
+- **Eski geçmiş yerinde kalır.** İçeri yalnızca her sunucunun kendi host'u altındaki yedekler girer ve diğer depolardan hiçbir şey taşınmaz.
 
 ## Örnek: iki Unraid makinesini eşleştirmek {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Elle çalıştırdığın bir rest-server da çalışır: onu **Hedef ekle** ile
 2. **Ayarlar.** **Ayarları geri getir**, BombVault'un kendi ayarlarını en yeni öz yedekten geri yükler: hedefler, oturum açma bilgileri, zamanlamalar ve kurallar. BombVault bunları uygulamak için Docker soketi üzerinden yeniden başlar, böylece canlı ayar veritabanının üzerine açık bir tutamaç varken asla yazılmaz ve sihirbaz sonra kendi kendine sürer. Bu sunucunun girişi kalır: şu an kullandığın parolayla oturum açmaya devam edersin. Eski sunucunun sakladığı ve devralınamayan gizli bilgiler listelenir, böylece onları yeniden girebilirsin. Geri yükleme her oturumu sonlandırır ve geçiş anahtarlarını kaldırır, bu yüzden sonra onları yeniden kur.
 3. **Seçim.** BombVault yedeklerine bakar ve bulduğu konteynerleri, VM'leri, klasör kümelerini ve ZFS veri kümelerini listeler. En yeni anlık görüntü her yerde önceden seçilidir. Bu sunucunun hâlâ sahip olduğu şey kapalı başlar, çünkü bir geri yükleme onun yerini alırdı. Klasör kümeleri yeniden kurulumdan sonra nereden geldiklerini bilmez, bu yüzden seçtiğin bir klasöre giderler.
 4. **Geri yükleme.** Seçilen her şey tek seferde geri gelir, her konteyneri ve VM'i kendin başlatmak istiyorsan durmuş halde, ki bu toplam bir kayıptan sonra en güvenlisidir. Sonra yeni bir kurtarma kiti indir: eskisi önceki kuruluma aittir.
+
+Kitteki bir ortak depo, yerler arasında onu tutan sunucunun adı ve ardından **sunucusundaki ortak depo** olarak görünür, sihirbaz da orada yalnızca bu sunucunun kendi yedeklerini listeler. Bkz. [Acil durumdan sonra](#shared-emergency).
 
 ![Acil durum sihirbazı ilk adımında, üç giriş yoluyla.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Acil durum sihirbazı ilk adımında, üç giriş yoluyla.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Bu, çalışan hiçbir BombVault olmadığında bile felaket kurtarmayı mümkü
 
 ### Bir sunucunun yedeklerinin host'u {#backup-host}
 
-Her sunucu yedeklerini kendine ait bir restic host'u altında yazar: `bv-` ve yedek anahtarından hesaplanan on iki karakter, örneğin `bv-3f9a0c41d2e7`. Bir sunucunun kendi host'u olmadan önce alınan yedekler `bombvault` host'unu taşır. Kit bu sunucunun host'unu adlandırır ve komutları ikisini de `--host` ile verir, böylece `latest` başka bir sunucunun aynı depoya yazdığı bir yedeği asla seçmez. Başka bir sunucunun yedeklerini devralan bir sunucu o sunucunun host'u altında devam eder, çünkü host anahtardan gelir.
+Her sunucu yedeklerini kendine ait bir restic host'u altında yazar: `bv-` ve yedek anahtarından hesaplanan on iki karakter, örneğin `bv-3f9a0c41d2e7`. Bir sunucunun kendi host'u olmadan önce alınan yedekler `bombvault` host'unu taşır. Kit bu sunucunun host'unu adlandırır ve komutları ikisini de `--host` ile verir, böylece `latest` başka bir sunucunun aynı depoya yazdığı bir yedeği asla seçmez. Başka bir sunucunun yedeklerini devralan bir sunucu o sunucunun host'u altında devam eder, çünkü host anahtardan gelir. Sunucunun içine kopyaladığı ya da tuttuğu her [ortak depo](#shared-repository) için kitin **Shared repositories** bölümü oradaki diğer sunucuları host'larıyla adlandırır.
 
 ### Kiti mühürlemek {#sealing-the-kit}
 

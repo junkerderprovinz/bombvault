@@ -14,6 +14,7 @@ Minden visszaállítás a **Visszaállítás** oldalon indul: válassz egy szaka
 - A **Most fut** egy visszaállítást mutat, amíg fut, akkor is, ha bezártad az ablakát.
 - A **Vészhelyzet** elindítja a Vészhelyzet varázslót egy olyan szerverhez, amely elveszett vagy újra lett felállítva, lásd: [Vészhelyzet varázsló](offsite-recovery.md#emergency).
 - A **Más források** tartalmazza a **Régi mentési mappából** lehetőséget egy másik BombVault mentéseihez, valamint az **Importálás az Appdata.Backup bővítményből** és a **Feladatok a Duplicatiból vagy a Duplicacyből** lehetőséget.
+- A **Más szerverek** annak a közös tárolónak a többi szerverét sorolja fel, amelynek ez a szerver tagja, lásd: [Más szerverek](#other-servers).
 
 ![A Visszaállítás oldal telefonon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![A Visszaállítás oldal telefonon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ A keresés eltart egy ideig, mert a restic végigjár minden mentést. A **Leál
 - A telephelyen kívüli helyek, például S3, B2 vagy SFTP, kimaradnak, hacsak be nem kapcsolod a **Keresés a telephelyen kívüli helyeken is** lehetőséget. Ekkor ott csak azokat a mentéseket olvassa be, amelyek egyik itteni helyen sincsenek meg, általában a régebbieket, amelyeket egy hosszabb megőrzés a telephelyen kívül tart. Az első keresés egy ilyen helyen sokáig tarthat, és egyes szolgáltatók díjat kérnek a letöltött adatokért.
 - Az a hely, amelyet nem sikerült megnyitni, a **nem sikerült beolvasni** feliratot mutatja, és a mellette lévő (i) elmondja, miért. A többi helyen ettől még keres.
 
-A virtuális gépek teljes lemezként mentődnek, ezért a bennük lévő fájlokban nem keres. Az önmentésben és a **Más források** alatti másik BombVault mentéseiben sem keres. Egy keresés az első 200 fájlt sorolja fel, így egy rövid névhez, például a `log`-hoz, több betű kellhet.
+A virtuális gépek teljes lemezként mentődnek, ezért a bennük lévő fájlokban nem keres. Az önmentésben, a **Más források** alatti másik BombVault mentéseiben és a **Más szerverek** alatti szerverek mentéseiben sem keres. Egy keresés az első 200 fájlt sorolja fel, így egy rövid névhez, például a `log`-hoz, több betű kellhet.
 
 ## Mi tér vissza, fajtánként {#kinds}
 
@@ -134,6 +135,10 @@ Az az adatbázis, amelynek csak adatbázis-mentései vannak, fájlmentése nincs
     - **Duplicacyből**: válaszd ki a Duplicacy Web mappáját, amelyben a `duplicacy.json` van, vagy egy mappát, amelyet a Duplicacy parancssorával mentesz, és amelyben a `.duplicacy` található. A kulcsok, amelyeket a parancssor a `.duplicacy/preferences` fájlba mentett, szintén átkerülnek. A Duplicacy Web titkosítva tárolja a bejelentkezéseit, ezért az ablak elkéri őket.
 
     Semmi sem jön létre, amíg meg nem nézted az előnézetet. Minden forrásmappából mappakészlet lesz, azzal a mappával ezen a szerveren, ahol a BombVault megtalálta, a kizárásokkal, amelyeket át lehetett venni, és az ütemezéssel. Ha a régi eszköz saját konténerben futott, és egy mappa nem került elő, azt te választod ki. Ha a régi cél helyi mappa, S3, SFTP, rclone-remote vagy az S3-címén elért Backblaze B2 volt, a mentések egy új célra kerülnek, a régi célon belüli `bombvault` mappába. A fájlban talált bejelentkezés a többi bejelentkezésed mellé kerül, azt pedig, amelyik hiányzik a fájlból, az ablak elkéri. Az egyes feladatok alatti megjegyzések elmondják, mi nem került át, például a belefoglalási szabályok, a reguláris kifejezések, az, hogy meddig őrizte meg a mentéseket a régi eszköz, és a régi titkosítási jelszó, amelyre a BombVaultnak nincs szüksége.
+
+## Más szerverek {#other-servers}
+
+Egy [közös tárolóban](offsite-recovery.md#shared-repository) minden kulcs az összes szerver mentéseit nyitja, ezért a Visszaállítás oldal a **Más szerverek** alatt felsorolja a többi tagot, mindegyiket a nevével, a hosztjával, az elemei számával és azzal, mikor futott a legújabb mentése. Az a hoszt, amely egyik olyan szerverhez sem tartozik, amelyet ez a szerver ismer, **Egy szerver, amelyet ez a szerver nem ismer** néven jelenik meg. Egy kattintás megnyitja a szerver mentéseit, a címben a szerver nevével és a **mentései** szóval, csak olvasásra és úgy, hogy semmit sem kell megadni. A mappakészletek és a ZFS-adatkészletek egy általad választott mappába kerülnek. A konténerek és a VM-ek egyszerű fájlokként jönnek vissza egy mappába, mert a másik szerver a saját kulcsával zárja le a definícióikat. Ennek a szervernek a saját mentései a közös tárolóban minden elem **Biztonsági mentések** lapján vannak.
 
 ## Egy visszaállítás után {#after}
 

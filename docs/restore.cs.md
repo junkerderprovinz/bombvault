@@ -14,6 +14,7 @@ Každá obnova začíná na stránce **Obnova**: vyber sekci, vyhledej, co chce�
 - **Právě běží** ukazuje obnovu, dokud běží, i poté, co jsi zavřel její okno.
 - **Nouze** spustí Nouzového průvodce pro server, který je pryč nebo byl nastaven znovu, viz [Nouzový průvodce](offsite-recovery.md#emergency).
 - **Další zdroje** drží **Ze staré složky se zálohami**, pro zálohy jiného BombVaultu, **Import z pluginu Appdata.Backup** a **Úlohy z Duplicati nebo Duplicacy**.
+- **Další servery** vypisují ostatní servery sdíleného repozitáře, ve kterém tento server je, viz [Další servery](#other-servers).
 
 ![Stránka Obnova v telefonu.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Stránka Obnova v telefonu.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Hledání chvíli trvá, protože restic prochází každou zálohu. **Zastavit*
 - Místa mimo lokalitu jako S3, B2 nebo SFTP se vynechají, dokud nezapneš **Hledat i na místech mimo lokalitu**. Pak se tam čtou jen zálohy, které nemá žádné místo tady, obvykle ty starší, které delší uchovávání drží mimo lokalitu. První hledání na takovém místě může trvat dlouho a někteří poskytovatelé si stažená data účtují.
 - Místo, které nešlo otevřít, říká **nešlo přečíst** a (i) vedle něj řekne proč. Ostatní místa se prohledají i tak.
 
-Virtuální stroje se ukládají jako celé disky, proto se soubory v nich neprohledávají. Neprohledává se ani autozáloha a zálohy jiného BombVaultu pod **Další zdroje**. Hledání vypíše prvních 200 souborů, takže krátký název jako `log` může potřebovat víc písmen.
+Virtuální stroje se ukládají jako celé disky, proto se soubory v nich neprohledávají. Neprohledává se ani autozáloha, zálohy jiného BombVaultu pod **Další zdroje** a zálohy serverů pod **Další servery**. Hledání vypíše prvních 200 souborů, takže krátký název jako `log` může potřebovat víc písmen.
 
 ## Co se vrací, podle druhu {#kinds}
 
@@ -134,6 +135,10 @@ Databáze, která má jen výpisy databáze a žádnou zálohu souborů a její�
     - **Z Duplicacy**: vyber složku Duplicacy Web, ve které je `duplicacy.json`, nebo složku, kterou zálohuješ z příkazové řádky Duplicacy a ve které je `.duplicacy`. Klíče, které příkazová řádka uložila do `.duplicacy/preferences`, se přenesou. Duplicacy Web ukládá své přihlašovací údaje šifrovaně, takže si o ně okno řekne.
 
     Nic se nevytvoří, dokud neuvidíš náhled. Z každé zdrojové složky vznikne sada složek se složkou na tomto serveru, kde byla nalezena, s vyloučeními, která šlo převést, a s plánem. Když starý nástroj běžel ve vlastním kontejneru a nějaká složka se nenašla, vybereš ji sám. Zálohy půjdou do nového cíle ve složce `bombvault` uvnitř starého cíle, a to pro místní složku, S3, SFTP, remote rclone nebo Backblaze B2 přes jeho adresu S3. Přihlašovací údaje ze souboru se uloží k tvým ostatním přihlašovacím údajům a o ty, které v souboru chybí, si okno řekne. Poznámky pod každou úlohou říkají, co se nepřeneslo, například pravidla zahrnutí, regulární výrazy, jak dlouho se zálohy uchovávaly, a staré šifrovací heslo, které BombVault nepotřebuje.
+
+## Další servery {#other-servers}
+
+Ve [sdíleném repozitáři](offsite-recovery.md#shared-repository) otevírá každý klíč zálohy všech serverů, takže stránka Obnova vypisuje ostatní členy pod **Další servery**, každého s jeho jménem, hostem, počtem položek a časem jeho nejnovější zálohy. Host, který nepatří žádnému serveru, jejž tento server zná, se ukáže jako **Server, který tento server nezná**. Kliknutí otevře **Zálohy serveru** a jméno serveru, jen pro čtení a bez zadávání čehokoli. Sady složek a datové sady ZFS jdou do složky, kterou vybereš. Kontejnery a VM se vrátí jako obyčejné soubory ve složce, protože druhý server jejich definice pečetí vlastním klíčem. Vlastní zálohy tohoto serveru ve sdíleném repozitáři jsou na záložce **Zálohy** každé položky.
 
 ## Po obnově {#after}
 

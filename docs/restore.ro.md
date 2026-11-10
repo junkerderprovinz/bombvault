@@ -14,6 +14,7 @@ Fiecare restaurare începe pe pagina **Restaurare**: alege o secțiune, caută c
 - **În desfășurare** arată o restaurare cât rulează, și după ce ai închis fereastra ei.
 - **Urgență** pornește asistentul de urgență pentru un server care a dispărut sau a fost configurat din nou, vezi [Asistentul de urgență](offsite-recovery.md#emergency).
 - **Alte surse** conține **Dintr-un folder vechi de copii**, pentru backupurile unui alt BombVault, **Import din pluginul Appdata.Backup** și **Sarcini din Duplicati sau Duplicacy**.
+- **Alte servere** listează celelalte servere ale unui depozit comun din care face parte acest server, vezi [Alte servere](#other-servers).
 
 ![Pagina Restaurare pe un telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Pagina Restaurare pe un telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Căutarea durează o vreme, pentru că restic trece prin fiecare backup. **Opre�
 - Destinațiile externe, precum S3, B2 sau SFTP, rămân pe dinafară, dacă nu activezi **Caută și în destinațiile externe**. Atunci acolo sunt citite doar backupurile pe care nu le are nicio destinație de aici, de obicei cele mai vechi, pe care o retenție mai lungă le păstrează în afara locului. Prima căutare într-o astfel de destinație poate dura mult, iar unii furnizori taxează datele descărcate.
 - O destinație care nu a putut fi deschisă arată **nu a putut fi citită**, iar (i) de lângă ea spune de ce. Celelalte destinații sunt căutate în continuare.
 
-Mașinile virtuale sunt salvate ca discuri întregi, așa că fișierele din ele nu sunt căutate. Nici auto-backupul și nici backupurile unui alt BombVault de la **Alte surse** nu sunt căutate. O căutare listează primele 200 de fișiere, așa că pentru un nume scurt precum `log` poate fi nevoie de câteva litere în plus.
+Mașinile virtuale sunt salvate ca discuri întregi, așa că fișierele din ele nu sunt căutate. Nici auto-backupul, nici backupurile unui alt BombVault de la **Alte surse** și nici cele ale serverelor de la **Alte servere** nu sunt căutate. O căutare listează primele 200 de fișiere, așa că pentru un nume scurt precum `log` poate fi nevoie de câteva litere în plus.
 
 ## Ce revine, pe tipuri {#kinds}
 
@@ -134,6 +135,10 @@ O bază de date care are doar dumpuri de baze de date și niciun backup de fiși
     - **Din Duplicacy**: alege folderul Duplicacy Web care conține `duplicacy.json` sau un folder căruia îi faci backup cu linia de comandă Duplicacy, care conține `.duplicacy`. Cheile pe care linia de comandă le-a salvat în `.duplicacy/preferences` vin și ele. Duplicacy Web își păstrează autentificările criptate, așa că fereastra ți le cere.
 
     Nu se creează nimic înainte să vezi previzualizarea. Fiecare folder sursă devine un set de foldere, cu folderul de pe acest server unde a fost găsit, excluderile care au putut fi preluate și programul. Dacă instrumentul vechi rula într-un container propriu și un folder nu a fost găsit, îl alegi tu. Backupurile merg într-o destinație nouă, într-un folder `bombvault` din vechea destinație, fie că e un folder local, S3, SFTP, un remote rclone sau Backblaze B2 prin adresa lui S3. O autentificare din fișier se salvează împreună cu celelalte autentificări ale tale, iar cea care lipsește din fișier ți se cere. Notele de sub fiecare sarcină spun ce nu a fost preluat, cum ar fi regulile de includere, expresiile regulate, cât timp erau păstrate backupurile și parola veche de criptare, de care BombVault nu are nevoie.
+
+## Alte servere {#other-servers}
+
+Într-un [depozit comun](offsite-recovery.md#shared-repository) fiecare cheie deschide copiile tuturor serverelor, așa că pagina Restaurare îi listează pe ceilalți membri la **Alte servere**, fiecare cu numele, gazda, câte elemente are și când a rulat cea mai nouă copie a lui. O gazdă care nu aparține niciunui server cunoscut de acesta apare ca **Un server pe care acesta nu îl cunoaște**. Un clic deschide **Copii de rezervă de la** urmat de numele serverului, doar în citire și fără nimic de introdus. Seturile de foldere și seturile de date ZFS ajung într-un folder ales de tine. Containerele și VM-urile revin ca fișiere simple într-un folder, pentru că celălalt server le sigilează definițiile cu propria cheie. Copiile proprii ale acestui server din depozitul comun sunt în fila **Copii de rezervă** a fiecărui element.
 
 ## După o restaurare {#after}
 

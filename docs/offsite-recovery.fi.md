@@ -318,6 +318,8 @@ Jotkin paikat eivät voi lainkaan kieltäytyä poistosta, esimerkiksi pilviasema
 
 Nopein tie append-only-kopioon on pariliitetty BombVault, jolla on [vastaanottopalvelin](#receiving-server): se ajaa rest-serverin puolestasi append-only-tilassa.
 
+[Jaetussa arkistossa](#shared-repository) tämä koskee jäseniä, ei arkiston omistajaa. Omistaja pääsee kansioon suoraan ja unohtaa ja karsii siellä.
+
 !!! note "Onnistunut poisto polussa `/locks/` on odotettua"
     Append-only ei tarkoita, ettei mitään voisi enää poistaa. resticin on otettava ja vapautettava omat lukkonsa, joten `/locks/` pysyy tarkoituksella kirjoitettavana ja poistettavana. Varmuuskopioita ja niiden takana olevaa dataa, eli juuri sitä mihin kiristysohjelma tähtäisi, ei voi poistaa. Jos koettelet vastapuolta itse, onnistunut poisto polussa `/locks/` on oikea toiminta eikä aukko suojauksessa.
 
@@ -391,6 +393,8 @@ Roolin kytkeminen päälle lähettää pyynnön, eikä mikään käynnisty, enne
 
 Kortin **Tiedot** avaa loput: jäsenen vastaanotetut repositoryt ja noutolähteet, kohdetarjoukset, valvonta, **Poista** ja **Unohda avain**.
 
+Korttien alla oleva **Jaettu arkisto** -kortti laatikossa, jolla on vastaanottopalvelin, ja **Jaetut arkistot** -kortti jäsenellä kuuluvat [jaettuun arkistoon](#shared-repository).
+
 Jäsen voi tarjota omaa etätallennustilaansa toiselle jäsenelle ryhmän kautta. Toinen ylläpitäjä näkee tarjouksen jäsenen kohdassa **Tiedot** ja hyväksyy tai hylkää sen. Hyväksyminen luo tallennetut tunnukset ja tavallisen kohteen samojen tarkistusten jälkeen kuin itse kirjoittamasi kohde. Kohteen poistosuoja on valmiiksi päällä, koska tarjouksen näyttämä ohje on append-only-tilainen rest-server, joten **Kuinka kauan säilytetään** ei koske sitä. Jokaisella tarjouksella on omat tunnuksensa ja oma kansionsa, joten osion tarjoaminen uudelleen samalle tai toiselle jäsenelle jättää ensimmäisen kumppanin kopiot rauhaan: lisää uusi rivi tiedostoon `.htpasswd` ja pidä palvelin käynnissä. Tätä kautta kulkevat vain yhteystiedot, ei koskaan varmuuskopiodataa. **Tarkista nyt** pyytää jäsentä tarkistamaan yhden osion repositoryn. Mikään sivulla ei voi käynnistää varmuuskopiota tai palautusta eikä poistaa mitään toisella laatikolla.
 
 Sammutetut instanssit ja puhelimet, joiden sovellus on suljettu, säilyttävät korttinsa tilassa **Ei aktiivinen**, harmaana ja tiedolla siitä, milloin ne nähtiin viimeksi, ja ne näkyvät verkossa himmennettyinä, kunnes poistat ne toiminnolla **Poista**. Heti tämän palvelimen käynnistyttyä tällainen kortti näyttää **Tarkistetaan**, kunnes ryhmä on taas tavoitettavissa. **Poista** toimii tällaisella kortilla riippumatta siitä, mitkä osat on kytketty päälle, ja se päättää myös jäsenen avoimet pyynnöt, sen käyttämättömät ZFS-vastaanottopaikat ja sen odottavat avainpyynnöt. Pariliitossivun **Ilmentymät**-kortti listaa nämä jäsenet myös tilassa **Ei aktiivinen**.
@@ -425,6 +429,91 @@ Vastaanottava laatikko voi myös ajaa rest-serverin, johon muut kopioivat. Se m�
 Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta kohdassa **Ryhmästäsi**, vastaanottavan laatikon nimellä, ja **Vastaanotin**-rooli tarjoaa sen turvallisena valintana. Jokainen instanssi saa oman tunnuksen, kun se ensimmäisen kerran käyttää palvelinta, ja kirjoittaa siellä vain omaan kansioonsa. Kun **Vastaanotin** on päällä kohdassa **Asetukset, Ilmentymät**, tämän instanssin kortti **Vastaanottopalvelin** avaa palvelimen uudelleen. Sen ikkuna listaa tunnukset kohdassa **Kumppanit, joilla on tunnus**, ja **Peruuta tunnus** poistaa yhden. Mitä kyseinen instanssi on jo kopioinut, jää kansioon. Käyttöönotto luo myös yhden **Tunnuksen ryhmän ulkopuolelle**, jonka salasanan ikkuna näyttää kerran.
 
 Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite pariliitossivulla ensin. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitteessa.
+
+Vastaanottava laatikko voi myös pitää ryhmälle [jaettua arkistoa](#shared-repository).
+
+## Jaettu arkisto {#shared-repository}
+
+Useampi ryhmän palvelin voi kopioida yhdessä yhteen restic-arkistoon. Niiden yhteinen data, kuten sama kansiojoukko tai sama appdata, tallennetaan sinne vain kerran, joten yhdessä ne tarvitsevat vähemmän tilaa kuin jos jokaisella olisi oma arkisto.
+
+Yksi ryhmän palvelimista on arkiston omistaja. Vain se unohtaa siellä vanhat varmuuskopiot ja karsii. Muut ovat jäseniä: ne pääsevät arkistoon toisen, append-only-tilassa toimivan rest-serverin kautta ja voivat vain lisätä. Jokainen palvelin kirjoittaa [omalla isännällään](#backup-host), joten varmuuskopiot pysyvät erillään silloinkin, kun kahdella palvelimella on samanniminen merkintä.
+
+Mitä tarvitaan:
+
+- [pariliitosryhmä](#pairing),
+- **Salaa varmuuskopiot** päällä omistajalla ja jokaisella jäsenellä, koska jokainen palvelin saa oman restic-avaimen,
+- omistajalla [vastaanottopalvelin](#receiving-server), jonka jäsenet tavoittavat. Kun BombVault toimii omalla IP-osoitteellaan, täytä ensin **Osoite kumppaneille** vastaanottopalvelimen ikkunassa.
+
+Palvelin voi omistaa enintään yhden jaetun arkiston.
+
+### Käyttöönotto {#shared-set-up}
+
+Kun vastaanottopalvelin on käynnissä, sen laatikon **Ilmentymät**-sivulla on instanssien alla **Jaettu arkisto** -kortti. Paina **Ota jaettu arkisto käyttöön**, valitse **Jaetun arkiston kansio** jaolta, jolla on runsaasti tilaa, pidä **Portti** arvossa 8001, ellei toinen kontti käytä sitä, ja paina **Ota käyttöön ja käynnistä**. BombVault sitten:
+
+1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server-shared` on jo olemassa tai toinen kontti pitää porttia,
+2. luo arkiston sen sisälle kansioon `shared` tämän palvelimen salasanalla,
+3. käynnistää `restic/rest-server`in nimellä `rest-server-shared` append-only-tilassa ja kansiossa olevalla kirjautumistiedostolla,
+4. kirjoittaa Unraidissa sen mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä,
+5. ajaa sille peukalointitestin. Kortin **Tarkista uudelleen** ajaa sen vielä kerran.
+
+Kortti listaa **Jäsenet**, kunkin avaimineen ja viimeisimpine varmuuskopioineen, liittymispyynnöt sekä jokaisen jäsenen kohdalla **Poista**.
+
+### Liittyminen {#shared-join}
+
+Avaa liittyä haluavalla palvelimella **Lisää kohde**. Kohdassa **Ryhmästäsi** omistaja näkyy toisen kerran, muodossa **Jaettu arkisto instanssissa** ja sen nimi. Sen valitseminen lähettää omistajalle pyynnön, joka näkyy siellä **Jaettu arkisto** -kortilla painikkeiden **Salli** ja **Hylkää** kanssa.
+
+Kun pyyntö on sallittu, omistaja antaa ryhmän kautta kertakäyttöisen avaimen ja tunnuksen toiseen rest-serveriinsä. Jäsen lisää sillä oman restic-avaimen, ja omistaja poistaa sen jälkeen kertakäyttöisen avaimen. Jäsen, joka ei ole valmis vuorokauden kuluessa, menettää kertakäyttöisen avaimen ja tunnuksen ja voi pyytää uudelleen. Kun omistaja ei tavoittanut jäsentä vastauksellaan, kortti tarjoaa **Kerro uudelleen**.
+
+Omistaja hylkää palvelimen, niin kauan kuin se ei vielä kirjoita omalla isännällään, mikä tarkoittaa, että se käyttää vanhempaa julkaisua, ja silloin, kun toinen jäsen kirjoittaa jo samalla isännällä. Kahdella palvelimella on sama isäntä, kun niillä on sama `APP_KEY`.
+
+Kun jäsen on mukana, kohtaan **Kohteet** ilmestyy kohde nimeltä **Shared with** ja omistajan nimi, kaikki osiot pois päältä. Kytke kohteen sivulla päälle osiot, joiden pitää kopioida sinne. Kohteella on poistosuoja eikä omia säilytyssääntöjä, koska siellä unohtaa vain omistaja. Sinne menevät vain jäsenen omalla isännällä tehdyt varmuuskopiot, joten vanhemmat varmuuskopiot isännällä `bombvault` jäävät paikoilleen.
+
+Omistaja voi kopioida myös omat varmuuskopionsa arkistoon: sen kortin **Kopioi myös tämän palvelimen varmuuskopiot** lisää kohteen myös sille. Omistajalle tämä kopio on sen omilla levyillä, eikä mikään estä sitä poistamasta siellä, joten se ei ole etäkopio.
+
+### Kuka siivoaa ja milloin {#shared-upkeep}
+
+Vain omistaja unohtaa ja karsii. Sen asetukset ovat **Vastaanottopalvelin**-ikkunan **Jaettu arkisto** -osassa, joka avautuu omistajan omasta kortista Ilmentymät-sivulla:
+
+- **Siivousikkuna** määrää, milloin karsinta ajetaan, päivittäin tai viikoittain. Kunnes muutat sitä, se alkaa sunnuntaisin klo 03:00, ja **Ikkunan pituus tunteina** on 6.
+- **Käyttämätön tila, jonka karsinta saa jättää, %** on 5, kunnes muutat sitä. Suurempi arvo pakkaa uudelleen vähemmän, joten karsinta valmistuu nopeammin.
+- **Karsinnan jälkeen takaisin luettu data, %** on 5, kunnes muutat sitä. Jokaisen karsinnan jälkeen omistaja tarkistaa arkiston ja lukee tämän osuuden datasta takaisin.
+- **Kuinka kauan säilytetään** seuraa kunkin osion kohdalla omistajan etäkopiosääntöjä, ja **Aseta oma sääntö** antaa jaetulle arkistolle oman. Kunkin palvelimen varmuuskopiot vanhenevat erikseen.
+- **Siivoa nyt** unohtaa, karsii ja tarkistaa heti, kun se on ilmoittanut jäsenille.
+
+Ikkunan ulkopuolella omistaja unohtaa kerran päivässä, ja tila vapautuu seuraavassa karsinnassa. Ennen karsintaa se ilmoittaa jäsenille, eivätkä ne kopioi arkistoon mitään ennen kuin ikkuna sulkeutuu. Jäsen, joka vielä kopioi, saa enintään puoli tuntia aikaa valmistua, muuten karsinta siirtyy seuraavaan ikkunaan. Ikkunaan osuva kopio odottaa, näkyy lykättynä toimintalokissa ja jäsenen kortilla, ja seuraava kierros ottaa sen kiinni.
+
+Kun omistaja on epävarma, se säilyttää enemmän. Merkintä, jota jäsen pitää [poikkeaman](anomalies.md) vuoksi, säilyttää kaikki varmuuskopionsa, jäsen, joka ei pysty kertomaan, mitä se pitää, säilyttää sillä kertaa kaikki varmuuskopionsa, ja varmuuskopioita isännällä, jolla mikään ryhmän palvelin ei kirjoita, ei unohdeta koskaan. Ikkuna näyttää myös tilan: paljonko arkisto vie, paljonko palvelimet tarvitsisivat erikseen ja paljonko sillä säästyy. Luvut päivittyvät jokaisen siivouksen yhteydessä.
+
+### Mitä jäsenet näkevät {#shared-members}
+
+Jäsenen Ilmentymät-sivulla on **Jaetut arkistot** -kortti, jossa on jokainen jaettu arkisto, johon palvelin kopioi tai johon se on pyytänyt liittyä, ja missä sen pyyntö on: **Odottaa hyväksyntää**, **Liittymässä**, **Mukana**, **Hylätty**, **Vanhentunut** tai **Ei jäsen**. Arkistosta, jossa se on mukana, kortti näyttää **Kuka karsii**, **Seuraava siivous**, muut jäsenet kohdassa **Mukana myös**, **Viimeisin kopio tänne** sekä paljonko tilaa arkisto vie ja säästää.
+
+### Eroaminen {#shared-leave}
+
+Jäsenen kortin **Eroa** vie palvelimen pois: omistaja poistaa sen avaimen ja tunnuksen, ja sen kohde siellä kytketään pois. Omistajan kortin **Poista** vie jäsenen pois toiselta puolelta. Kummassakin tapauksessa palvelimen varmuuskopiot jäävät arkistoon ja vanhenevat omistajan sääntöjen mukaan. Omistajalla ne näkyvät kohdassa **Lähteneet palvelimet**, jossa **Unohda varmuuskopiot** unohtaa ne kaikki, kun kirjoitat palvelimen nimen. Seuraava siivousikkuna vapauttaa tilan.
+
+### Muiden palvelimien varmuuskopiot {#shared-restore}
+
+Jokainen palvelin löytää omat varmuuskopionsa jaetusta arkistosta merkintöjensä **Varmuuskopiot**-välilehdeltä, kuten minkä tahansa muun kopion. Muiden jäsenten varmuuskopiot ovat Palautus-sivulla kohdassa [Muut palvelimet](restore.md#other-servers).
+
+### Hätätilanteen jälkeen {#shared-emergency}
+
+[Palautuspaketissa](#recovery-kit) on luku **Shared repositories**. Se nimeää jokaisen jaetun arkiston omistajineen, sinne kopioivat osiot, muut jäsenet isäntineen ja `restic snapshots` -komennon tämän palvelimen isännällä. Omistajan paketti nimeää lisäksi sen rest-serverin portin, kansion ja tunnuksen.
+
+Hätäohjatussa toiminnossa arkisto näkyy paikkojen joukossa muodossa **Jaettu arkisto palvelimella** ja omistajan nimi. Uusi asennus, joka ottaa jäsenen avaimen haltuunsa, kirjoittaa samalla isännällä, koska isäntä tulee avaimesta. Se saa kohteensa jaetussa arkistossa takaisin ja listaa ja palauttaa siellä vain omat varmuuskopionsa.
+
+Uusi asennus, joka ottaa omistajan avaimen haltuunsa, ryhtyy arkiston omistajaksi sen tilalle. Se vanhentaa ja siivoaa arkistoa kuten ennenkin ja käynnistää rest-serverin uudelleen samaan kansioon. Liitä se uudelleen ryhmään, ota sen vastaanottopalvelin käyttöön kohdassa **Ilmentymät** ja aseta säännöt uudelleen vastaanottopalvelimen ikkunassa, koska ne eivät ole paketissa. Kun ryhmä tavoittaa jäsenet, uusi omistaja kertoo niille itse. Jokainen jäsen tarkistaa ensin: se lisää arkistoon kokeiluavaimen, jonka vain arkiston kansion äärellä oleva palvelin voi poistaa, ja seuraa uutta omistajaa, kun avain on poistunut. Tällaisista tarkistuksista jääneet avaimet omistaja poistaa seuraavassa siivouksessa.
+
+Jos vanha omistaja on yhä käynnissä, sen kortti kertoo, että arkisto on nyt toisen palvelimen hallussa. **Ota takaisin** tekee siitä taas omistajan siltä varalta, että paketti otettiin vahingossa käyttöön toisella palvelimella.
+
+### Rajoitukset {#shared-limits}
+
+- **Jokainen avain lukee kaiken.** Restic-arkiston kaikki avaimet avaavat saman pääavaimen, joten jokainen jäsen voi lukea muiden varmuuskopiot. Konttien ja VM:ien määritykset pysyvät sinetöityinä kunkin palvelimen omalla avaimella, joten toisen palvelimen kontit ja VM:t palaavat vain tiedostoina. Palvelin, jolla on joskus ollut pääsy, on voinut lukea pääavaimen, joten sen poistaminen ei sulje sitä ulos lopullisesti. Sen tekee vain uusi arkisto.
+- **Omistaja voi poistaa.** Yksikään jäsen ei voi poistaa sieltä mitään, mutta omistaja pääsee kansioon suoraan ja unohtaa ja karsii jokaisen jäsenen varmuuskopioita. Virhe tai kaappaus omistajan päässä ulottuu kaikkiin.
+- **Vaurio ulottuu jokaiseen palvelimeen.** Rikkinäinen pack puuttuu jokaiselta palvelimelta, jonka varmuuskopiot käyttävät sitä, joten jaettu arkisto ei korvaa toista kopiota.
+- **Vain vastaanottopalvelimella.** S3, SFTP ja muut paikat eivät pysty rajaamaan jäsentä pelkkään lisäämiseen, joten BombVault tarjoaa jaettua arkistoa vain vastaanottopalvelimella.
+- **Vain kopioinnin kohteena.** Osion oma kansio ei voi olla jaetussa arkistossa, koska jokainen karsinta pysäyttäisi kaikkien palvelimien varmuuskopiot.
+- **Vanhempi historia jää paikoilleen.** Sinne menevät vain kunkin palvelimen omalla isännällä tehdyt varmuuskopiot, eikä mitään siirretä muista arkistoista.
 
 ## Esimerkki: kahden Unraid-koneen pariliitos {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Käsin ajettu rest-server toimii myös: lisää se kohdalla **Lisää kohde** re
 2. **Asetukset.** **Palauta asetukset** palauttaa BombVaultin omat asetukset uusimmasta Itsevarmuuskopiosta: kohteet, tunnistetiedot, aikataulut ja säännöt. BombVault käynnistyy uudelleen ottaakseen ne käyttöön Docker-soketin kautta, jotta käytössä olevaa asetustietokantaa ei koskaan ylikirjoiteta avoimen kahvan alla, ja ohjattu toiminto jatkuu itsestään sen jälkeen. Tämän palvelimen kirjautuminen säilyy: kirjaudut yhä nykyisellä salasanallasi. Salaisuudet, jotka vanha palvelin oli tallentanut ja joita ei voi ottaa haltuun, listataan, jotta voit syöttää ne uudelleen. Palautus päättää kaikki istunnot ja poistaa pääsyavaimet, joten ota ne sen jälkeen uudelleen käyttöön.
 3. **Valinta.** BombVault käy läpi varmuuskopiosi ja listaa löytämänsä kontit, VMs, kansiojoukot ja ZFS-tietojoukot. Uusin varmuuskopio on esivalittu kaikkialla. Se, mikä tällä palvelimella yhä on, alkaa pois päältä, koska palautus korvaisi sen. Kansiojoukot eivät enää tiedä, mistä ne tulivat uudelleenrakennuksen jälkeen, joten ne menevät valitsemaasi kansioon.
 4. **Palautus.** Kaikki valittu palaa kerralla, jätettynä pysäytetyksi, jos haluat käynnistää jokaisen kontin ja VM:n itse, mikä on turvallisinta täydellisen menetyksen jälkeen. Lataa sen jälkeen uusi palautuspaketti: vanha kuuluu edelliselle asennukselle.
+
+Paketin jaettu arkisto näkyy paikkojen joukossa muodossa **Jaettu arkisto palvelimella** ja sen omistavan palvelimen nimi, ja ohjattu toiminto listaa siellä vain tämän palvelimen omat varmuuskopiot. Katso [Hätätilanteen jälkeen](#shared-emergency).
 
 ![Hätäohjattu toiminto ensimmäisessä vaiheessaan, kolme tapaa sisään.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Hätäohjattu toiminto ensimmäisessä vaiheessaan, kolme tapaa sisään.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Tämä on se pala, joka tekee katastrofista toipumisen mahdolliseksi silloinkin 
 
 ### Palvelimen varmuuskopioiden isäntä {#backup-host}
 
-Jokainen palvelin kirjoittaa varmuuskopionsa omalla restic-isännällään: `bv-` ja kaksitoista merkkiä, jotka lasketaan varmuuskopioiden avaimesta, esimerkiksi `bv-3f9a0c41d2e7`. Varmuuskopioiden isäntä on `bombvault`, jos ne on tehty ennen kuin palvelimella oli oma isäntä. Paketti nimeää tämän palvelimen isännän, ja sen komennot antavat molemmat `--host`-valitsimella, joten `latest` ei koskaan valitse varmuuskopiota, jonka jokin toinen palvelin on kirjoittanut samaan repositoryyn. Palvelin, joka ottaa haltuunsa toisen varmuuskopiot, jatkaa sen palvelimen isännällä, koska isäntä tulee avaimesta.
+Jokainen palvelin kirjoittaa varmuuskopionsa omalla restic-isännällään: `bv-` ja kaksitoista merkkiä, jotka lasketaan varmuuskopioiden avaimesta, esimerkiksi `bv-3f9a0c41d2e7`. Varmuuskopioiden isäntä on `bombvault`, jos ne on tehty ennen kuin palvelimella oli oma isäntä. Paketti nimeää tämän palvelimen isännän, ja sen komennot antavat molemmat `--host`-valitsimella, joten `latest` ei koskaan valitse varmuuskopiota, jonka jokin toinen palvelin on kirjoittanut samaan repositoryyn. Palvelin, joka ottaa haltuunsa toisen varmuuskopiot, jatkaa sen palvelimen isännällä, koska isäntä tulee avaimesta. Jokaisesta [jaetusta arkistosta](#shared-repository), johon palvelin kopioi tai jonka se omistaa, paketin luku **Shared repositories** nimeää siellä olevat muut palvelimet isäntineen.
 
 ### Paketin sinetöinti {#sealing-the-kit}
 

@@ -318,6 +318,8 @@ Certains endroits ne peuvent pas du tout refuser une suppression, un lecteur clo
 
 Le moyen le plus rapide d'obtenir une copie en ajout seul est un BombVault appairé avec un [serveur récepteur](#receiving-server) : il lance le rest-server pour vous, en mode ajout seul.
 
+Dans un [dépôt partagé](#shared-repository), cela vaut pour les membres et pas pour le serveur qui l'héberge. Ce serveur accède directement au dossier et y oublie et élague les sauvegardes.
+
 !!! note "Une suppression réussie sous `/locks/` est normale"
     Ajout seul ne veut pas dire que rien ne peut jamais être retiré. restic doit prendre et relâcher ses propres verrous, `/locks/` reste donc inscriptible et supprimable par conception. Les instantanés et les données qui les sous-tendent, ce que viserait un rançongiciel, ne peuvent pas être supprimés. Si vous sondez vous-même l'autre côté, une suppression qui réussit sous `/locks/` est un comportement correct et non une faille dans la protection.
 
@@ -391,6 +393,8 @@ Activer un rôle envoie une demande, et rien ne démarre tant que quelqu'un sur 
 
 **Détails** sur une carte ouvre le reste : les dépôts reçus et les sources de rapatriement de ce membre, les offres de stockage, la surveillance, **Supprimer** et **Oublier la clé**.
 
+Sous les cartes, la carte **Dépôt partagé** sur une machine avec un serveur récepteur et la carte **Dépôts partagés** sur un membre concernent le [dépôt partagé](#shared-repository).
+
 Un membre peut offrir son propre stockage hors site à un autre membre via le groupe. L'autre administrateur voit l'offre dans les **Détails** du membre et l'accepte ou la refuse. L'accepter crée des identifiants enregistrés et une destination ordinaire, après les mêmes contrôles que pour une destination que vous saisissez. La destination arrive avec la protection contre la suppression activée, car la recette que montre l'offre est un rest-server en ajout seul, si bien que **Durée de conservation** ne s'y applique pas. Chaque offre a son propre identifiant de connexion et son propre dossier, si bien qu'offrir de nouveau une section, au même membre ou à un autre, laisse tranquilles les copies du premier partenaire : ajoutez la nouvelle ligne à `.htpasswd` et laissez le serveur tourner. Seuls des détails de connexion voyagent ainsi, jamais de données de sauvegarde. **Vérifier maintenant** demande à un membre de vérifier le dépôt d'une section. Rien sur la page ne peut lancer une sauvegarde, une restauration ni supprimer quoi que ce soit sur une autre machine.
 
 Les instances éteintes et les téléphones dont l'application est fermée gardent leur carte comme **Inactive**, en gris, avec le moment où ils ont été vus pour la dernière fois, et apparaissent estompés dans le réseau jusqu'à ce que vous les **Supprimiez**. Juste après le démarrage de ce serveur, une telle carte dit **Vérification** jusqu'à ce que le groupe soit revenu. **Supprimer** fonctionne sur une telle carte quels que soient les éléments activés, et met aussi fin aux demandes ouvertes du membre, à ses emplacements de réception ZFS inactifs et à ses demandes de clés en attente. La carte **Instances** de la page d'appairage liste aussi ces membres comme **Inactive**.
@@ -425,6 +429,91 @@ La machine réceptrice peut aussi lancer le rest-server vers lequel les autres c
 Les instances de votre groupe trouvent alors le serveur parmi les fournisseurs sous **Depuis votre groupe**, nommé d'après la machine réceptrice, et le rôle **Récepteur** le propose comme choix sûr. Chaque instance reçoit un identifiant à elle la première fois qu'elle utilise le serveur, et n'écrit que dans son propre dossier là-bas. Avec **Récepteur** activé sous **Paramètres, Instances**, **Serveur récepteur** sur la carte de cette instance rouvre le serveur. Sa fenêtre liste les identifiants sous **Partenaires avec identifiant**, et **Révoquer l'identifiant** en retire un. Ce que cette instance a déjà copié reste dans le dossier. La configuration crée aussi un **Identifiant hors du groupe**, dont la fenêtre montre le mot de passe une seule fois.
 
 Une instance qui ne joint la machine réceptrice que par le relais ne peut pas utiliser le serveur, car le relais ne porte aucune sauvegarde. Ajoutez d'abord l'adresse de la machine réceptrice sur la page d'appairage. Quand BombVault tourne sur une adresse IP à lui (sur br0, par exemple), renseignez **Adresse pour les partenaires**, car le serveur écoute sur l'adresse de l'hôte.
+
+Une machine réceptrice peut aussi héberger un [dépôt partagé](#shared-repository) pour le groupe.
+
+## Dépôt partagé {#shared-repository}
+
+Plusieurs serveurs d'un groupe peuvent copier ensemble dans un même dépôt restic. Les données qu'ils ont en commun, comme le même ensemble de dossiers ou les mêmes appdata, n'y sont stockées qu'une fois, si bien qu'ensemble ils ont besoin de moins de place qu'avec un dépôt chacun.
+
+Un serveur du groupe héberge le dépôt : c'est l'hébergeur, et le seul qui y oublie les anciennes sauvegardes et qui élague. Les autres sont membres : ils atteignent le dépôt via un second rest-server en mode ajout seul et ne peuvent qu'y ajouter. Chaque serveur écrit sous un [hôte qui lui est propre](#backup-host), si bien que les sauvegardes restent séparées même quand deux serveurs ont un élément du même nom.
+
+Ce qu'il faut :
+
+- un [groupe d'appairage](#pairing),
+- **Chiffrer les sauvegardes** activé, sur l'hébergeur et sur chaque membre, car chaque serveur reçoit sa propre clé restic,
+- un [serveur récepteur](#receiving-server) sur l'hébergeur, que les membres peuvent joindre. Quand BombVault tourne sur une adresse IP à lui, renseignez d'abord **Adresse pour les partenaires** dans la fenêtre du serveur récepteur.
+
+Un serveur héberge au plus un dépôt partagé.
+
+### Le mettre en place {#shared-set-up}
+
+Une fois le serveur récepteur en marche, la page **Instances** de sa machine a une carte **Dépôt partagé** sous les instances. Appuyez sur **Configurer le dépôt partagé**, choisissez un **Dossier du dépôt partagé** sur un partage avec beaucoup de place, gardez le **Port** à 8001 sauf si un autre conteneur l'utilise, et appuyez sur **Configurer et démarrer**. BombVault alors :
+
+1. refuse si un conteneur appelé `rest-server-shared` existe déjà ou si un autre conteneur tient le port,
+2. crée le dépôt dans un dossier `shared` à l'intérieur, avec le mot de passe de ce serveur,
+3. démarre `restic/rest-server` sous le nom `rest-server-shared`, en mode ajout seul avec un fichier de connexion dans le dossier,
+4. sur Unraid, écrit son modèle sur la clé flash, pour que le conteneur reste modifiable dans l'onglet Docker,
+5. exécute le test d'altération contre lui. **Vérifier à nouveau** sur la carte le relance.
+
+La carte liste les **Membres**, chacun avec ses clés et sa dernière sauvegarde, les demandes d'adhésion, et **Retirer** pour chaque membre.
+
+### Rejoindre {#shared-join}
+
+Sur le serveur qui veut rejoindre le dépôt, ouvrez **Ajouter une destination**. Sous **Depuis votre groupe**, l'hébergeur apparaît une seconde fois, comme **Dépôt partagé sur** suivi de son nom. Le choisir envoie une demande à l'hébergeur, où elle figure sur la carte **Dépôt partagé** avec **Autoriser** et **Refuser**.
+
+Après **Autoriser**, l'hébergeur remet via le groupe une clé à usage unique et un identifiant sur son second rest-server. Le membre ajoute avec elle sa propre clé restic, puis l'hébergeur retire la clé à usage unique. Un membre qui n'a pas terminé dans la journée perd de nouveau la clé à usage unique et l'identifiant, et peut redemander. Quand l'hébergeur n'a pas pu joindre le membre avec sa réponse, la carte propose **Le lui redire**.
+
+L'hébergeur refuse un serveur tant que celui-ci n'écrit pas encore sous son propre hôte, ce qui veut dire qu'il tourne sur une version plus ancienne, et quand un autre membre écrit déjà sous le même hôte. Deux serveurs partagent un hôte quand ils partagent une `APP_KEY`.
+
+Une fois le membre admis, une destination appelée **Shared with** suivi du nom de l'hébergeur apparaît sous **Destinations**, avec chaque section désactivée. Activez sur la page de la destination les sections qui doivent y copier. La destination a la protection contre la suppression et pas de règles de conservation à elle, car seul l'hébergeur y oublie des sauvegardes. Seules les sauvegardes sous le propre hôte du membre y vont, si bien que les sauvegardes plus anciennes sous l'hôte `bombvault` restent où elles sont.
+
+L'hébergeur peut aussi y copier ses propres sauvegardes : **Copier aussi les sauvegardes de ce serveur** sur sa carte y ajoute aussi la destination. Pour l'hébergeur, cette copie se trouve sur ses propres disques et rien ne l'empêche d'y supprimer, ce n'est donc pas une copie hors site.
+
+### Qui fait le ménage, et quand {#shared-upkeep}
+
+Seul l'hébergeur oublie et élague. Ses réglages se trouvent dans la partie **Dépôt partagé** de la fenêtre **Serveur récepteur**, qui s'ouvre depuis la propre carte de l'hébergeur sur la page Instances :
+
+- **Fenêtre de ménage** fixe le moment de l'élagage, chaque jour ou chaque semaine. Tant que vous ne la changez pas, elle commence le dimanche à 03:00, et **Durée de la fenêtre en heures** vaut 6.
+- **Espace inutilisé qu'un élagage peut laisser, en %** vaut 5 sauf si vous le changez. Une valeur plus haute reconditionne moins, si bien que l'élagage finit plus tôt.
+- **Données relues après un élagage, en %** vaut 5 sauf si vous le changez. Après chaque élagage, l'hébergeur vérifie le dépôt et relit cette part des données.
+- **Durée de conservation** suit les règles hors site de l'hébergeur pour chaque section, et **Définir une règle propre** donne au dépôt partagé la sienne. Les sauvegardes de chaque serveur vieillissent chacune de leur côté.
+- **Faire le ménage maintenant** oublie, élague et vérifie tout de suite, après avoir prévenu les membres.
+
+En dehors de la fenêtre, l'hébergeur oublie une fois par jour, et l'espace revient avec l'élagage suivant. Avant un élagage, il prévient les membres, et ceux-ci ne copient rien dans le dépôt jusqu'à la fermeture de la fenêtre. Un membre qui copie encore a jusqu'à une demi-heure pour finir, sinon l'élagage passe à la fenêtre suivante. Une copie qui tombe dans la fenêtre attend, apparaît comme reportée dans le journal d'activité et sur la carte du membre, et le passage suivant rattrape le retard.
+
+Quand l'hébergeur a un doute, il garde davantage. Un élément qu'un membre retient à cause d'une [anomalie](anomalies.md) garde toutes ses sauvegardes, un membre qui ne peut pas dire ce qu'il retient garde cette fois-là toutes ses sauvegardes, et les sauvegardes sous un hôte qu'aucun serveur du groupe n'utilise ne sont jamais oubliées. La fenêtre montre aussi l'espace : ce que contient le dépôt, ce dont les serveurs auraient besoin séparément, et ce que cela économise. Les chiffres arrivent avec chaque ménage.
+
+### Ce que voient les membres {#shared-members}
+
+Sur un membre, la page Instances a une carte **Dépôts partagés** avec chaque dépôt partagé dans lequel le serveur copie ou qu'il a demandé à rejoindre, et où en est sa demande : **En attente d'un oui**, **Adhésion en cours**, **Membre**, **Refusé**, **Expiré** ou **Plus membre**. Pour un dépôt dont il fait partie, la carte montre **Qui élague**, **Prochain ménage**, **Partagé avec** pour les autres membres, **Dernière copie ici**, et combien d'espace le dépôt occupe et économise.
+
+### Partir {#shared-leave}
+
+**Quitter** sur la carte du membre retire le serveur : l'hébergeur retire sa clé et son identifiant, et sa destination là-bas est désactivée. **Retirer** sur la carte de l'hébergeur retire un membre depuis l'autre côté. Dans les deux cas, les sauvegardes du serveur restent dans le dépôt et vieillissent selon les règles de l'hébergeur. Sur l'hébergeur, elles figurent sous **Serveurs partis**, où **Oublier les sauvegardes** les oublie toutes une fois que vous avez saisi le nom du serveur. La fenêtre de ménage suivante rend l'espace.
+
+### Les sauvegardes des autres serveurs {#shared-restore}
+
+Chaque serveur trouve ses propres sauvegardes du dépôt partagé dans l'onglet **Sauvegardes** de ses éléments, comme toute autre copie. Les sauvegardes des autres membres se trouvent sur la page Restauration sous [Autres serveurs](restore.md#other-servers).
+
+### Après une urgence {#shared-emergency}
+
+Le [kit de récupération](#recovery-kit) a un chapitre **Shared repositories**. Il nomme chaque dépôt partagé avec son hébergeur, les sections qui y copient, les autres membres avec leurs hôtes, et une commande `restic snapshots` avec l'hôte de ce serveur. Le kit de l'hébergeur nomme aussi le port, le dossier et l'identifiant de son rest-server.
+
+Dans l'assistant d'urgence, le dépôt apparaît parmi les endroits comme **Dépôt partagé sur** suivi du nom de l'hébergeur. Une nouvelle installation qui reprend la clé d'un membre écrit sous le même hôte, car l'hôte vient de la clé. Elle retrouve sa destination dans le dépôt partagé et n'y liste et n'y restaure que ses propres sauvegardes.
+
+Une nouvelle installation qui reprend la clé de l'hébergeur héberge le dépôt à sa place. Elle le fait vieillir et y fait le ménage comme avant, et redémarre le rest-server sur le même dossier. Appairez-la de nouveau avec le groupe, configurez son serveur récepteur sous **Instances**, et redéfinissez les règles dans la fenêtre du serveur récepteur, car elles ne sont pas dans le kit. Dès que le groupe joint les membres, le nouvel hébergeur les prévient lui-même. Chaque membre vérifie d'abord : il ajoute au dépôt une clé d'essai que seul un serveur ayant accès au dossier du dépôt peut retirer, et suit le nouvel hébergeur une fois cette clé disparue. L'hébergeur retire à son ménage suivant les clés restées de ces vérifications.
+
+Si l'ancien hébergeur tourne encore, sa carte dit que l'autre serveur héberge désormais le dépôt. **Reprendre** le refait hébergeur, pour le cas où un kit a été repris par erreur sur un second serveur.
+
+### Limites {#shared-limits}
+
+- **Chaque clé lit tout.** Toutes les clés d'un dépôt restic ouvrent la même clé maîtresse, si bien que chaque membre peut lire les sauvegardes des autres. Les définitions de conteneurs et de VMs restent scellées avec la propre clé de chaque serveur, si bien que les conteneurs et VMs d'un autre serveur ne reviennent que comme fichiers. Un serveur qui a eu accès un jour a pu lire la clé maîtresse, le retirer ne l'écarte donc pas pour de bon. Seul un nouveau dépôt le fait.
+- **L'hébergeur peut supprimer.** Aucun membre ne peut y supprimer quoi que ce soit, mais l'hébergeur accède directement au dossier et oublie et élague les sauvegardes de chaque membre. Une erreur ou une prise de contrôle sur l'hébergeur les touche tous.
+- **Un dommage touche chaque serveur.** Un pack cassé manque à chaque serveur dont les sauvegardes l'utilisent, un dépôt partagé ne remplace donc pas une seconde copie.
+- **Seulement sur un serveur récepteur.** S3, SFTP et les autres endroits ne peuvent pas limiter un membre à l'ajout, BombVault ne propose donc un dépôt partagé que sur un serveur récepteur.
+- **Seulement comme cible de copie.** Le dossier propre d'une section ne peut pas se trouver dans un dépôt partagé, car chaque élagage bloquerait les sauvegardes de tous les serveurs.
+- **L'historique plus ancien reste en place.** Seules les sauvegardes sous le propre hôte de chaque serveur y entrent, et rien n'est déplacé depuis d'autres dépôts.
 
 ## Exemple : appairer deux serveurs Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ L'**Assistant d'urgence** ramène un serveur qui a disparu ou qui a été reconf
 2. **Réglages.** **Restaurer les réglages** restaure les propres réglages de BombVault depuis l'auto-sauvegarde la plus récente : destinations, identifiants, plannings et règles. BombVault redémarre pour les appliquer, via le socket Docker, si bien que la base de réglages en service n'est jamais écrasée sous un descripteur ouvert, et l'assistant continue ensuite tout seul. La connexion de ce serveur reste : vous continuez à vous connecter avec le mot de passe que vous utilisez maintenant. Les secrets que l'ancien serveur avait stockés et qui ne peuvent pas être repris sont listés, pour que vous puissiez les saisir de nouveau. La restauration met fin à toutes les sessions et supprime les clés d'accès, configurez-les donc de nouveau ensuite.
 3. **Sélection.** BombVault parcourt vos sauvegardes et liste les conteneurs, VMs, ensembles de dossiers et jeux de données ZFS qu'il trouve. L'instantané le plus récent est présélectionné partout. Ce que ce serveur possède encore démarre désactivé, car une restauration le remplacerait. Les ensembles de dossiers ne savent plus d'où ils venaient après une reconstruction, ils vont donc dans un dossier que vous choisissez.
 4. **Restauration.** Tout ce qui est sélectionné revient d'un coup, laissé arrêté si vous voulez démarrer vous-même chaque conteneur et chaque VM, ce qui est le plus sûr après une perte totale. Téléchargez ensuite un nouveau kit de récupération : l'ancien appartient à l'installation précédente.
+
+Un dépôt partagé du kit apparaît parmi les endroits comme **Dépôt partagé sur** suivi du nom du serveur qui l'héberge, et l'assistant n'y liste que les propres sauvegardes de ce serveur. Voir [Après une urgence](#shared-emergency).
 
 ![L'assistant d'urgence à sa première étape, avec les trois façons d'entrer.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![L'assistant d'urgence à sa première étape, avec les trois façons d'entrer.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ C'est l'élément qui rend la reprise après sinistre possible même quand aucun
 
 ### L'hôte des sauvegardes d'un serveur {#backup-host}
 
-Chaque serveur écrit ses sauvegardes sous son propre hôte restic : `bv-` suivi de douze caractères calculés à partir de la clé des sauvegardes, par exemple `bv-3f9a0c41d2e7`. Les sauvegardes faites avant qu'un serveur ait le sien portent l'hôte `bombvault`. Le kit indique l'hôte de ce serveur, et ses commandes passent les deux avec `--host`, pour que `latest` ne choisisse jamais une sauvegarde qu'un autre serveur a écrite dans le même dépôt. Un serveur qui reprend les sauvegardes d'un autre continue sous l'hôte de ce serveur, car l'hôte vient de la clé.
+Chaque serveur écrit ses sauvegardes sous son propre hôte restic : `bv-` suivi de douze caractères calculés à partir de la clé des sauvegardes, par exemple `bv-3f9a0c41d2e7`. Les sauvegardes faites avant qu'un serveur ait le sien portent l'hôte `bombvault`. Le kit indique l'hôte de ce serveur, et ses commandes passent les deux avec `--host`, pour que `latest` ne choisisse jamais une sauvegarde qu'un autre serveur a écrite dans le même dépôt. Un serveur qui reprend les sauvegardes d'un autre continue sous l'hôte de ce serveur, car l'hôte vient de la clé. Pour chaque [dépôt partagé](#shared-repository) dans lequel le serveur copie ou qu'il héberge, le chapitre **Shared repositories** du kit nomme les autres serveurs qui s'y trouvent avec leurs hôtes.
 
 ### Sceller le kit {#sealing-the-kit}
 

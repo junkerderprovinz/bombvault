@@ -318,6 +318,8 @@ Một số nơi hoàn toàn không thể từ chối việc xóa, ví dụ một
 
 Cách nhanh nhất để có một bản sao append-only là một BombVault đã ghép nối với một [máy chủ nhận](#receiving-server): nó chạy rest-server cho bạn, ở chế độ append-only.
 
+Trong một [kho chung](#shared-repository), điều này đúng với các thành viên nhưng không đúng với máy chủ giữ kho. Máy chủ đó truy cập thư mục trực tiếp, và tự quên rồi dọn bớt ở đó.
+
 !!! note "Xóa thành công dưới `/locks/` là hành vi mong đợi"
     Append-only không có nghĩa là không còn xóa được gì nữa. restic phải tự tạo và giải phóng khóa của nó, nên `/locks/` cố ý vẫn ghi và xóa được. Các snapshot và dữ liệu phía sau chúng, tức đúng thứ mà mã độc tống tiền nhắm tới, không thể bị xóa. Nếu bạn tự kiểm tra phía xa, một thao tác xóa thành công dưới `/locks/` là hành vi đúng chứ không phải lỗ hổng bảo vệ.
 
@@ -391,6 +393,8 @@ Bật một vai trò gửi một yêu cầu, và không gì bắt đầu cho đ�
 
 **Chi tiết** trên một thẻ mở phần còn lại: kho đã nhận và nguồn kéo của thành viên đó, đề nghị lưu trữ, giám sát, **Xóa** và **Quên khóa**.
 
+Bên dưới các thẻ, thẻ **Kho chung** trên máy có máy chủ nhận và thẻ **Các kho chung** trên một thành viên thuộc về [kho chung](#shared-repository).
+
 Một thành viên có thể đưa ra bộ nhớ off-site của riêng nó cho một thành viên khác qua nhóm. Quản trị viên bên kia thấy lời đề nghị trong **Chi tiết** của thành viên và chấp nhận hoặc từ chối. Chấp nhận sẽ tạo một thông tin đăng nhập đã lưu và một đích sao lưu bình thường, sau cùng các kiểm tra như một đích bạn tự gõ vào. Đích sao lưu đến với bảo vệ chống xóa đã bật, vì công thức mà lời đề nghị hiển thị là một rest-server append-only, nên **Giữ trong bao lâu** không áp dụng ở đó. Mỗi lời đề nghị có thông tin đăng nhập và thư mục riêng, nên việc đề nghị lại một phần, cho cùng thành viên hay cho một thành viên khác, sẽ để yên các bản sao của đối tác đầu tiên: hãy thêm dòng mới vào `.htpasswd` và giữ máy chủ tiếp tục chạy. Chỉ thông tin kết nối đi theo cách này, không bao giờ là dữ liệu sao lưu. **Kiểm tra ngay** yêu cầu một thành viên xác minh kho của một phần. Không có gì trên trang này có thể bắt đầu sao lưu, khôi phục hay xóa bất cứ thứ gì trên một máy khác.
 
 Các phiên bản đã tắt và điện thoại đã đóng ứng dụng vẫn giữ thẻ của mình ở trạng thái **Không hoạt động**, màu xám, kèm thời điểm được thấy lần cuối, và hiện mờ trong mạng cho đến khi bạn **Xóa** chúng. Ngay sau khi máy chủ này khởi động, thẻ như vậy hiện **Đang kiểm tra** cho đến khi nhóm hoạt động trở lại. **Xóa** dùng được trên thẻ như vậy bất kể phần nào đang bật, và nó cũng kết thúc các yêu cầu đang mở của thành viên, các khe nhận ZFS đang rảnh và các yêu cầu khóa đang chờ của thành viên đó. Thẻ **Phiên bản** trên trang ghép nối cũng liệt kê những thành viên này là **Không hoạt động**.
@@ -425,6 +429,91 @@ Máy nhận cũng có thể chạy rest-server mà các máy khác sao chép t�
 Các phiên bản trong nhóm của bạn khi đó thấy máy chủ trong số các nhà cung cấp dưới **Từ nhóm của bạn**, đặt theo tên máy nhận, và vai trò **Bộ nhận** đưa nó ra như lựa chọn an toàn. Mỗi phiên bản nhận một đăng nhập riêng lần đầu dùng máy chủ, và chỉ ghi vào thư mục riêng của nó ở đó. Với **Bộ nhận** được bật dưới **Cài đặt, Phiên bản**, **Máy chủ nhận** trên thẻ của phiên bản này mở lại máy chủ. Cửa sổ của nó liệt kê các đăng nhập dưới **Đối tác có thông tin đăng nhập**, và **Thu hồi thông tin đăng nhập** lấy một cái đi. Những gì phiên bản đó đã sao chép vẫn nằm trong thư mục. Thiết lập cũng tạo một **Thông tin đăng nhập ngoài nhóm**, mà cửa sổ hiển thị mật khẩu một lần.
 
 Một phiên bản chỉ tới được máy nhận qua relay thì không dùng được máy chủ, vì relay không mang bản sao lưu. Hãy thêm địa chỉ của máy nhận trên trang ghép nối trước. Khi BombVault chạy trên một địa chỉ IP riêng (ví dụ trên br0), hãy điền **Địa chỉ cho đối tác (tùy chọn)**, vì máy chủ lắng nghe trên địa chỉ của host.
+
+Một máy nhận cũng có thể giữ một [kho chung](#shared-repository) cho cả nhóm.
+
+## Kho chung {#shared-repository}
+
+Nhiều máy chủ trong một nhóm có thể cùng sao chép vào một kho restic. Dữ liệu chúng có chung, chẳng hạn cùng một bộ thư mục hay cùng appdata, chỉ được lưu ở đó một lần, nên tính chung chúng cần ít chỗ hơn so với mỗi máy một kho riêng.
+
+Một máy chủ trong nhóm giữ kho, gọi là máy chủ giữ kho. Đó là máy duy nhất quên các bản sao lưu cũ và dọn bớt ở đó. Các máy còn lại là thành viên: chúng tới kho qua một rest-server thứ hai ở chế độ append-only và chỉ có thể thêm vào. Mỗi máy chủ ghi dưới một [host riêng](#backup-host), nên các bản sao lưu vẫn tách biệt kể cả khi hai máy chủ có một mục trùng tên.
+
+Những gì cần có:
+
+- một [nhóm ghép nối](#pairing),
+- **Mã hóa bản sao lưu** được bật trên máy chủ giữ kho và trên mọi thành viên, vì mỗi máy chủ nhận một khóa restic riêng,
+- một [máy chủ nhận](#receiving-server) trên máy chủ giữ kho mà các thành viên tới được. Khi BombVault chạy trên một địa chỉ IP riêng, hãy điền **Địa chỉ cho đối tác** trong cửa sổ của máy chủ nhận trước.
+
+Một máy chủ giữ nhiều nhất một kho chung.
+
+### Thiết lập {#shared-set-up}
+
+Khi máy chủ nhận đã chạy, trang **Phiên bản** của máy đó có một thẻ **Kho chung** bên dưới các phiên bản. Nhấn **Thiết lập kho chung**, chọn **Thư mục cho kho chung** trên một share còn nhiều chỗ, giữ **Cổng** ở 8001 trừ khi container khác đang dùng, rồi nhấn **Thiết lập và khởi động**. BombVault sau đó:
+
+1. từ chối nếu đã có container tên `rest-server-shared` hoặc container khác đang giữ cổng đó,
+2. tạo kho trong một thư mục `shared` bên trong, với mật khẩu của máy chủ này,
+3. khởi động `restic/rest-server` với tên `rest-server-shared`, ở chế độ append-only với một tệp đăng nhập trong thư mục,
+4. trên Unraid ghi mẫu của nó vào ổ flash, để container vẫn chỉnh sửa được trong tab Docker,
+5. chạy kiểm tra can thiệp lên nó. **Kiểm tra lại** trên thẻ sẽ chạy thêm một lần.
+
+Thẻ liệt kê các **Thành viên**, mỗi thành viên kèm khóa và bản sao lưu gần nhất, các yêu cầu tham gia, và **Gỡ** cho từng thành viên.
+
+### Tham gia {#shared-join}
+
+Trên máy chủ muốn tham gia, hãy mở **Thêm đích**. Dưới **Từ nhóm của bạn**, máy chủ giữ kho xuất hiện thêm một lần nữa, dưới dạng **Kho chung trên** và tên của nó. Chọn mục này sẽ gửi một yêu cầu tới máy chủ giữ kho, nơi yêu cầu hiện trên thẻ **Kho chung** cùng **Cho phép** và **Từ chối**.
+
+Sau khi **Cho phép**, máy chủ giữ kho gửi qua nhóm một khóa dùng một lần và thông tin đăng nhập vào rest-server thứ hai của nó. Thành viên dùng chúng để thêm một khóa restic riêng, rồi máy chủ giữ kho xóa khóa dùng một lần. Thành viên nào chưa xong trong vòng một ngày sẽ mất lại khóa dùng một lần và thông tin đăng nhập, và có thể xin thêm lần nữa. Khi máy chủ giữ kho không gửi được câu trả lời tới thành viên, thẻ sẽ có **Báo lại**.
+
+Máy chủ giữ kho từ chối một máy chủ chưa ghi dưới host riêng, nghĩa là máy đó đang chạy bản phát hành cũ hơn, và cả khi một thành viên khác đã ghi dưới cùng host đó. Hai máy chủ dùng chung một host khi chúng dùng chung một `APP_KEY`.
+
+Khi thành viên đã vào, một đích tên **Shared with** cộng tên của máy chủ giữ kho xuất hiện dưới **Đích sao lưu**, với mọi phần đều tắt. Hãy bật các phần nên sao chép tới đó trên trang của đích. Đích này có bảo vệ chống xóa và không có quy tắc giữ riêng, vì chỉ máy chủ giữ kho mới quên ở đó. Chỉ các bản sao lưu dưới host của chính thành viên mới tới đó, nên các bản sao lưu cũ hơn dưới host `bombvault` vẫn ở nguyên chỗ.
+
+Máy chủ giữ kho cũng có thể sao chép bản sao lưu của chính nó vào: **Sao chép cả bản sao lưu của máy chủ này vào** trên thẻ của nó sẽ thêm đích đó trên máy chủ giữ kho. Với máy chủ giữ kho, bản sao này nằm trên chính ổ đĩa của nó và không có gì ngăn nó xóa ở đó, nên đó không phải bản sao ngoài site.
+
+### Ai dọn dẹp, và khi nào {#shared-upkeep}
+
+Chỉ máy chủ giữ kho mới quên và dọn bớt. Các thiết lập của nó nằm trong phần **Kho lưu trữ dùng chung** của cửa sổ **Máy chủ nhận**, mở từ thẻ của chính máy chủ giữ kho trên trang Phiên bản:
+
+- **Khung giờ dọn dẹp** đặt lúc nào chạy dọn bớt, hằng ngày hoặc hằng tuần. Cho tới khi bạn đổi, nó bắt đầu lúc 03:00 Chủ nhật, và **Độ dài khung giờ, tính bằng giờ** là 6.
+- **Dung lượng chưa dùng mà một lần dọn bớt được để lại, tính bằng %** là 5 nếu bạn không đổi. Giá trị cao hơn thì đóng gói lại ít hơn, nên lần dọn bớt xong sớm hơn.
+- **Dữ liệu đọc lại sau khi dọn bớt, tính bằng %** là 5 nếu bạn không đổi. Sau mỗi lần dọn bớt, máy chủ giữ kho kiểm tra kho và đọc lại phần dữ liệu này.
+- **Giữ trong bao lâu** theo quy tắc ngoài site của máy chủ giữ kho cho từng phần, và **Đặt quy tắc riêng** cho kho chung một quy tắc của riêng nó. Bản sao lưu của mỗi máy chủ cũ đi riêng.
+- **Dọn dẹp ngay** quên, dọn bớt và kiểm tra ngay lập tức, sau khi báo cho các thành viên.
+
+Ngoài khung giờ, máy chủ giữ kho quên mỗi ngày một lần, và dung lượng được trả lại ở lần dọn bớt tiếp theo. Trước khi dọn bớt, nó báo cho các thành viên, và chúng không sao chép gì vào kho cho tới khi khung giờ kết thúc. Thành viên nào vẫn đang sao chép có tối đa nửa tiếng để xong, nếu không lần dọn bớt sẽ dời sang khung giờ sau. Một lần sao chép rơi vào khung giờ sẽ chờ, hiện là đã hoãn trong nhật ký hoạt động và trên thẻ của thành viên, và lượt sau sẽ bù lại.
+
+Khi không chắc, máy chủ giữ kho giữ lại nhiều hơn. Một mục mà thành viên giữ lại vì một [bất thường](anomalies.md) sẽ giữ tất cả bản sao lưu của nó, một thành viên không cho biết được mình đang giữ gì sẽ giữ tất cả bản sao lưu của nó lần đó, và các bản sao lưu dưới một host mà không máy chủ nào trong nhóm ghi vào thì không bao giờ bị quên. Cửa sổ cũng hiện dung lượng: kho đang chứa bao nhiêu, các máy chủ sẽ cần bao nhiêu nếu để riêng, và nhờ vậy tiết kiệm được bao nhiêu. Các con số có sau mỗi lần dọn dẹp.
+
+### Thành viên thấy gì {#shared-members}
+
+Trên một thành viên, trang Phiên bản có thẻ **Các kho chung** với từng kho chung mà máy chủ sao chép vào hoặc đã xin tham gia, và yêu cầu đó đang ở đâu: **Đang chờ đồng ý**, **Đang tham gia**, **Đã tham gia**, **Bị từ chối**, **Đã hết hạn** hoặc **Không còn là thành viên**. Với một kho mà nó đã tham gia, thẻ hiện **Ai dọn bớt**, **Lần dọn dẹp tới**, **Cùng với** cho các thành viên khác, **Lần sao chép gần nhất vào đây**, và kho đang chứa cũng như tiết kiệm được bao nhiêu dung lượng.
+
+### Rời đi {#shared-leave}
+
+**Rời đi** trên thẻ của thành viên đưa máy chủ ra: máy chủ giữ kho xóa khóa và thông tin đăng nhập của nó, và đích của nó ở đó bị tắt. **Gỡ** trên thẻ của máy chủ giữ kho đưa một thành viên ra từ phía bên kia. Dù cách nào, các bản sao lưu của máy chủ vẫn ở trong kho và cũ đi theo quy tắc của máy chủ giữ kho. Trên máy chủ giữ kho, chúng nằm dưới **Máy chủ đã rời đi**, nơi **Quên bản sao lưu** quên tất cả sau khi bạn gõ tên máy chủ. Khung giờ dọn dẹp tới sẽ trả lại dung lượng.
+
+### Bản sao lưu của các máy chủ khác {#shared-restore}
+
+Mỗi máy chủ tìm thấy bản sao lưu của chính nó trong kho chung ở tab **Bản sao lưu** của các mục, như mọi bản sao khác. Bản sao lưu của các thành viên khác nằm trên trang Khôi phục, dưới [Máy chủ khác](restore.md#other-servers).
+
+### Sau sự cố khẩn cấp {#shared-emergency}
+
+[Bộ khôi phục](#recovery-kit) có một chương **Shared repositories**. Chương này ghi từng kho chung cùng máy chủ giữ kho, các phần sao chép tới đó, các thành viên khác cùng host của họ, và một lệnh `restic snapshots` với host của máy chủ này. Bộ khôi phục của máy chủ giữ kho còn ghi cổng, thư mục và thông tin đăng nhập của rest-server của nó.
+
+Trong Trình hướng dẫn khẩn cấp, kho hiện trong số các nơi dưới dạng **Kho chung tại** và tên của máy chủ giữ kho. Một bản cài mới tiếp nhận khóa của một thành viên sẽ ghi dưới cùng host, vì host đến từ khóa. Nó lấy lại đích của mình trong kho chung và ở đó chỉ liệt kê và khôi phục bản sao lưu của chính nó.
+
+Một bản cài mới tiếp nhận khóa của máy chủ giữ kho sẽ thay nó giữ kho. Nó cho các bản cũ hết hạn và dọn dẹp kho như trước, và khởi động lại rest-server trên cùng thư mục. Hãy ghép nối nó với nhóm lần nữa, thiết lập máy chủ nhận của nó dưới **Phiên bản**, và đặt lại các quy tắc trong cửa sổ của máy chủ nhận, vì chúng không có trong bộ khôi phục. Khi nhóm tới được các thành viên, máy chủ giữ kho mới tự báo cho họ. Mỗi thành viên kiểm tra trước: nó thêm vào kho một khóa dùng tạm mà chỉ máy chủ đặt tại thư mục của kho mới xóa được, và theo máy chủ giữ kho mới khi khóa đó đã biến mất. Máy chủ giữ kho xóa các khóa còn sót từ những lần kiểm tra như vậy ở lần dọn dẹp tiếp theo.
+
+Nếu máy chủ giữ kho cũ vẫn đang chạy, thẻ của nó sẽ báo rằng giờ máy chủ kia giữ kho. **Lấy lại** đưa nó trở lại làm máy chủ giữ kho, cho trường hợp một bộ khôi phục bị tiếp nhận nhầm trên một máy chủ thứ hai.
+
+### Giới hạn {#shared-limits}
+
+- **Mọi khóa đều đọc được mọi thứ.** Mọi khóa của một kho restic đều mở cùng một khóa chính, nên mỗi thành viên đều đọc được bản sao lưu của các thành viên khác. Định nghĩa container và VM vẫn được niêm phong bằng khóa của từng máy chủ, nên container và VM của máy chủ khác chỉ quay lại dưới dạng tệp. Một máy chủ từng có quyền truy cập có thể đã đọc được khóa chính, nên gỡ nó ra không chặn được nó mãi mãi. Chỉ một kho mới làm được điều đó.
+- **Máy chủ giữ kho có thể xóa.** Không thành viên nào xóa được gì ở đó, nhưng máy chủ giữ kho truy cập thư mục trực tiếp, và quên rồi dọn bớt bản sao lưu của mọi thành viên. Một sai sót hay một vụ chiếm quyền trên máy chủ giữ kho sẽ ảnh hưởng tới tất cả.
+- **Hư hỏng ảnh hưởng tới mọi máy chủ.** Một gói bị hỏng sẽ thiếu với mọi máy chủ có bản sao lưu dùng đến nó, nên một kho chung không thay được bản sao thứ hai.
+- **Chỉ trên máy chủ nhận.** S3, SFTP và những nơi khác không thể giới hạn một thành viên ở việc chỉ thêm vào, nên BombVault chỉ cung cấp kho chung trên máy chủ nhận.
+- **Chỉ làm đích sao chép.** Thư mục riêng của một phần không thể nằm trong kho chung, vì mỗi lần dọn bớt sẽ làm các bản sao lưu của mọi máy chủ phải chờ.
+- **Lịch sử cũ ở nguyên chỗ.** Chỉ các bản sao lưu dưới host của chính từng máy chủ mới vào kho, và không có gì được chuyển sang từ các kho khác.
 
 ## Ví dụ: ghép nối hai máy Unraid {#worked-example-two-unraid-boxes-end-to-end}
 
@@ -470,6 +559,8 @@ Một rest-server bạn tự chạy cũng dùng được: thêm nó bằng **Th�
 2. **Cài đặt.** **Khôi phục cài đặt** khôi phục cài đặt riêng của BombVault từ Tự sao lưu mới nhất: đích sao lưu, thông tin đăng nhập, lịch trình và quy tắc. BombVault khởi động lại để áp dụng chúng, qua Docker socket, nên cơ sở dữ liệu cài đặt đang chạy không bao giờ bị ghi đè dưới một handle đang mở, và trình hướng dẫn tự tiếp tục sau đó. Đăng nhập của máy chủ này vẫn giữ: bạn tiếp tục đăng nhập bằng mật khẩu đang dùng. Những bí mật máy chủ cũ đã lưu mà không tiếp nhận được sẽ được liệt kê, để bạn nhập lại. Việc khôi phục kết thúc mọi phiên và gỡ các khóa truy cập, nên hãy thiết lập lại chúng sau đó.
 3. **Lựa chọn.** BombVault xem qua các bản sao lưu của bạn và liệt kê các container, VM, bộ thư mục và tập dữ liệu ZFS nó tìm thấy. Bản sao lưu mới nhất được chọn sẵn ở mọi nơi. Những gì máy chủ này còn có bắt đầu ở trạng thái tắt, vì một lần khôi phục sẽ thay thế chúng. Bộ thư mục sau khi dựng lại không còn biết chúng đến từ đâu, nên chúng đi vào một thư mục bạn chọn.
 4. **Khôi phục.** Mọi thứ đã chọn quay lại trong một lượt, để dừng nếu bạn muốn tự khởi động từng container và VM, điều an toàn nhất sau một mất mát hoàn toàn. Sau đó tải xuống một bộ khôi phục mới: bộ cũ thuộc về bản cài trước.
+
+Một kho chung trong bộ khôi phục hiện trong số các nơi dưới dạng **Kho chung tại** và tên của máy chủ giữ kho, và trình hướng dẫn chỉ liệt kê bản sao lưu của chính máy chủ này ở đó. Xem [Sau sự cố khẩn cấp](#shared-emergency).
 
 ![Trình hướng dẫn khẩn cấp ở bước đầu tiên, với ba cách vào.](assets/screenshots/offsite/emergency-dark.png#only-dark)
 ![Trình hướng dẫn khẩn cấp ở bước đầu tiên, với ba cách vào.](assets/screenshots/offsite/emergency-light.png#only-light)
@@ -532,7 +623,7 @@ Không có mã thì không ai mở được bản đó, kể cả bên giữ kh�
 
 ### Host của các bản sao lưu của một máy chủ {#backup-host}
 
-Mỗi máy chủ ghi các bản sao lưu của nó dưới một host restic riêng: `bv-` cộng với mười hai ký tự tính từ khóa của các bản sao lưu, chẳng hạn `bv-3f9a0c41d2e7`. Các bản sao lưu từ trước khi máy chủ có host riêng mang host `bombvault`. Bộ khôi phục ghi host của máy chủ này, và các lệnh trong đó truyền cả hai bằng `--host`, nên `latest` không bao giờ chọn một bản sao lưu mà máy chủ khác đã ghi vào cùng kho. Một máy chủ tiếp nhận bản sao lưu của máy khác sẽ tiếp tục dưới host của máy chủ đó, vì host đến từ khóa.
+Mỗi máy chủ ghi các bản sao lưu của nó dưới một host restic riêng: `bv-` cộng với mười hai ký tự tính từ khóa của các bản sao lưu, chẳng hạn `bv-3f9a0c41d2e7`. Các bản sao lưu từ trước khi máy chủ có host riêng mang host `bombvault`. Bộ khôi phục ghi host của máy chủ này, và các lệnh trong đó truyền cả hai bằng `--host`, nên `latest` không bao giờ chọn một bản sao lưu mà máy chủ khác đã ghi vào cùng kho. Một máy chủ tiếp nhận bản sao lưu của máy khác sẽ tiếp tục dưới host của máy chủ đó, vì host đến từ khóa. Với mỗi [kho chung](#shared-repository) mà máy chủ sao chép vào hoặc giữ, chương **Shared repositories** của bộ khôi phục ghi các máy chủ khác ở đó cùng host của chúng.
 
 ### Niêm phong bộ khôi phục {#sealing-the-kit}
 

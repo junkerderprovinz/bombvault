@@ -14,6 +14,7 @@ Hver gendannelse starter på siden **Gendannelse**: Vælg et område, søg efter
 - **Kører nu** viser en gendannelse, mens den kører, også efter at du har lukket dens vindue.
 - **Nødsituation** starter nødguiden for en server, der er væk eller blev sat op igen, se [Nødguide](offsite-recovery.md#emergency).
 - **Andre kilder** rummer **Fra en gammel sikkerhedskopimappe**, til en anden BombVaults sikkerhedskopier, **Importér fra Appdata.Backup-pluginnet** og **Job fra Duplicati eller Duplicacy**.
+- **Andre servere** viser de andre servere i et delt arkiv, som denne server er med i, se [Andre servere](#other-servers).
 
 ![Siden Gendannelse på en telefon.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Siden Gendannelse på en telefon.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Søgningen tager et stykke tid, fordi restic går gennem hver sikkerhedskopi. **
 - Eksterne steder som S3, B2 eller SFTP springes over, medmindre du slår **Søg også på eksterne steder** til. Så læses der kun de sikkerhedskopier, som intet sted her har, typisk de ældre, som en længere opbevaring beholder eksternt. Den første søgning på sådan et sted kan tage lang tid, og nogle udbydere tager betaling for de data, den henter.
 - Et sted, der ikke kunne åbnes, siger **kunne ikke læses**, og (i) ved siden af fortæller hvorfor. De andre steder gennemsøges alligevel.
 
-Virtuelle maskiner gemmes som hele diske, så filerne i dem gennemsøges ikke. Auto-sikkerhedskopien og sikkerhedskopierne fra en anden BombVault under **Andre kilder** gennemsøges heller ikke. En søgning viser de første 200 filer, så et kort navn som `log` kan have brug for flere bogstaver.
+Virtuelle maskiner gemmes som hele diske, så filerne i dem gennemsøges ikke. Auto-sikkerhedskopien, sikkerhedskopierne fra en anden BombVault under **Andre kilder** og dem fra serverne under **Andre servere** gennemsøges heller ikke. En søgning viser de første 200 filer, så et kort navn som `log` kan have brug for flere bogstaver.
 
 ## Hvad der kommer tilbage, efter slags {#kinds}
 
@@ -134,6 +135,10 @@ En database, der kun har databasedumps og ingen sikkerhedskopi af filer, og hvis
     - **Fra Duplicacy**: vælg den mappe til Duplicacy Web, der indeholder `duplicacy.json`, eller en mappe, du sikkerhedskopierer med Duplicacys kommandolinje, som indeholder `.duplicacy`. Nøgler, som kommandolinjen har gemt i `.duplicacy/preferences`, kommer med. Duplicacy Web gemmer sine adgangsoplysninger krypteret, så vinduet beder om dem.
 
     Der oprettes intet, før du har set forhåndsvisningen. Hver kildemappe bliver et mappesæt med den mappe på denne server, hvor den blev fundet, de udelukkelser, der kunne oversættes, og tidsplanen. Hvis det gamle værktøj kørte i sin egen container, og en mappe ikke blev fundet, vælger du den selv. Sikkerhedskopierne havner på en ny destination i en mappe `bombvault` inde i den gamle destination, når den er en lokal mappe, S3, SFTP, en rclone-remote eller Backblaze B2 via dens S3-adresse. Adgangsoplysninger fra filen gemmes sammen med dine andre adgangsoplysninger, og dem, filen mangler, bliver du spurgt om. Noter under hvert job fortæller, hvad der ikke kom med, for eksempel inkluderingsregler, regulære udtryk, hvor længe sikkerhedskopierne blev gemt, og den gamle krypteringsadgangskode, som BombVault ikke har brug for.
+
+## Andre servere {#other-servers}
+
+I et [delt arkiv](offsite-recovery.md#shared-repository) åbner hver nøgle alle serveres sikkerhedskopier. Derfor viser siden Gendannelse de andre medlemmer under **Andre servere**, hver med sit navn, sin host, hvor mange elementer den har, og hvornår dens nyeste sikkerhedskopi kørte. En host, der ikke hører til nogen server, som denne kender, vises som **En server, som denne ikke kender**. Et klik åbner **Sikkerhedskopier fra** og serverens navn, skrivebeskyttet og uden noget at indtaste. Mappesæt og ZFS-datasæt lægges i en mappe, du vælger. Containere og VM'er kommer tilbage som almindelige filer i en mappe, fordi den anden server forsegler deres definitioner med sin egen nøgle. Denne servers egne sikkerhedskopier i det delte arkiv ligger på fanen **Sikkerhedskopier** for hvert element.
 
 ## Efter en gendannelse {#after}
 

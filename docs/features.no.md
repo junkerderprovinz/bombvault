@@ -74,6 +74,7 @@ Et kort katalog over hva BombVault gjør. Hver linje lenker til siden som forkla
 - **Paring med tolv ord**, ende-til-ende-kryptert, direkte eller gjennom et relay. [Paring av instanser](offsite-recovery.md#pairing)
 - **Siden Instanser** med gruppen som et nett og rollene **Mottaker**, **Henter**, **ZFS-server** og **Nøkkelvokter**. [Instanser og roller](offsite-recovery.md#roles)
 - **En mottaksserver** som settes opp for deg, i append-only-modus. [Mottaksserver](offsite-recovery.md#receiving-server)
+- **Et felles repositorium** som flere servere kopierer til, så det de har felles, lagres bare én gang. Bare serveren som eier det, beskjærer. [Felles repositorium](offsite-recovery.md#shared-repository)
 
 ## AI-assistenter (MCP) {#mcp}
 

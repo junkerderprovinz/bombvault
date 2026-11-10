@@ -14,6 +14,7 @@ Toda restauración empieza en la página **Restauración**: elige una sección, 
 - **En curso** muestra una restauración mientras se ejecuta, también después de cerrar su ventana.
 - **Emergencia** inicia el Asistente de emergencia para un servidor que ha desaparecido o se volvió a configurar, consulta [Asistente de emergencia](offsite-recovery.md#emergency).
 - **Otras fuentes** contiene **De una carpeta de copias antigua**, para las copias de otro BombVault, **Importar desde el plugin Appdata.Backup** y **Tareas de Duplicati o Duplicacy**.
+- **Otros servidores** lista los otros servidores de un repositorio compartido del que forma parte este servidor, consulta [Otros servidores](#other-servers).
 
 ![La página Restauración en un teléfono.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![La página Restauración en un teléfono.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ La búsqueda tarda un rato, porque restic recorre cada copia. **Detener** la ter
 - Los lugares externos como S3, B2 o SFTP se dejan fuera salvo que actives **Buscar también en lugares externos**. Entonces allí solo se leen las copias que no tiene ningún lugar de aquí, normalmente las más antiguas que una retención más larga guarda fuera. La primera búsqueda en un lugar así puede tardar bastante, y algunos proveedores cobran los datos que descarga.
 - Un lugar que no se pudo abrir dice **no se pudo leer**, y la (i) a su lado explica por qué. En los demás lugares se busca igualmente.
 
-Las máquinas virtuales se guardan como discos completos, así que no se busca en los archivos que contienen. Tampoco se busca en la autocopia ni en las copias de otro BombVault en **Otras fuentes**. Una búsqueda lista los primeros 200 archivos, así que un nombre corto como `log` puede necesitar más letras.
+Las máquinas virtuales se guardan como discos completos, así que no se busca en los archivos que contienen. Tampoco se busca en la autocopia, en las copias de otro BombVault en **Otras fuentes** ni en las de los servidores en **Otros servidores**. Una búsqueda lista los primeros 200 archivos, así que un nombre corto como `log` puede necesitar más letras.
 
 ## Qué se recupera, según el tipo {#kinds}
 
@@ -134,6 +135,10 @@ Una base de datos que solo tiene volcados de base de datos y ninguna copia de ar
     - **Desde Duplicacy**: elige la carpeta de Duplicacy Web que contiene `duplicacy.json`, o una carpeta que copias con la línea de comandos de Duplicacy, que contiene `.duplicacy`. Las claves que la línea de comandos guardó en `.duplicacy/preferences` también se importan. Duplicacy Web guarda sus credenciales cifradas, así que la ventana te las pide.
 
     No se crea nada hasta que hayas revisado la vista previa. Cada carpeta de origen se convierte en un conjunto de carpetas, con la carpeta de este servidor donde se encontró, las exclusiones que se pudieron trasladar y el calendario. Si la herramienta antigua funcionaba en su propio contenedor y no se encontró una carpeta, la eliges tú. Las copias van a un destino nuevo, en una carpeta `bombvault` dentro del destino antiguo, ya sea una carpeta local, S3, SFTP, un remoto de rclone o Backblaze B2 con su dirección S3. Las credenciales que vienen en el archivo se guardan junto a tus otras credenciales, y las que faltan se te piden. Las notas bajo cada tarea dicen lo que no se ha trasladado, como las reglas de inclusión, las expresiones regulares, cuánto tiempo se guardaban las copias y la contraseña de cifrado antigua, que BombVault no necesita.
+
+## Otros servidores {#other-servers}
+
+En un [repositorio compartido](offsite-recovery.md#shared-repository) cada clave abre las copias de todos los servidores, así que la página Restauración lista a los demás miembros en **Otros servidores**, cada uno con su nombre, su host, cuántos elementos tiene y cuándo se hizo su copia más reciente. Un host que no pertenece a ningún servidor que este conozca aparece como **Un servidor que este no conoce**. Un clic abre **Copias de** y el nombre del servidor, en solo lectura y sin nada que introducir. Los conjuntos de carpetas y los conjuntos de datos ZFS van a una carpeta que elijas. Los contenedores y las VMs vuelven como archivos sueltos en una carpeta, porque el otro servidor sella sus definiciones con su propia clave. Las copias propias de este servidor en el repositorio compartido están en la pestaña **Copias de seguridad** de cada elemento.
 
 ## Después de una restauración {#after}
 

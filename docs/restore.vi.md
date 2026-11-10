@@ -14,6 +14,7 @@ Mọi lần khôi phục đều bắt đầu từ trang **Khôi phục**: chọn
 - **Đang chạy** hiện một lần khôi phục khi nó đang chạy, kể cả sau khi bạn đã đóng cửa sổ của nó.
 - **Khẩn cấp** khởi động trình hướng dẫn khẩn cấp cho một máy chủ đã mất hoặc được thiết lập lại, xem [Trình hướng dẫn khẩn cấp](offsite-recovery.md#emergency).
 - **Nguồn khác** chứa **Từ thư mục sao lưu cũ**, cho các bản sao lưu của một BombVault khác, **Nhập từ plugin Appdata.Backup** và **Tác vụ từ Duplicati hoặc Duplicacy**.
+- **Máy chủ khác** liệt kê các máy chủ khác của một kho chung mà máy chủ này tham gia, xem [Máy chủ khác](#other-servers).
 
 ![Trang Khôi phục trên điện thoại.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Trang Khôi phục trên điện thoại.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Việc tìm kiếm mất một lúc, vì restic đi qua từng bản sao lưu. *
 - Các nơi ngoài site như S3, B2 hay SFTP được bỏ qua, trừ khi bạn bật **Tìm cả ở các nơi ngoài site**. Khi đó ở đấy chỉ đọc những bản sao lưu mà không nơi nào ở đây có, thường là các bản cũ hơn được giữ lâu hơn ngoài site nhờ chính sách lưu giữ dài hơn. Lần tìm đầu tiên ở một nơi như vậy có thể mất lâu, và một số nhà cung cấp tính phí cho dữ liệu tải xuống.
 - Một nơi không mở được sẽ hiện **không đọc được**, và (i) bên cạnh cho biết lý do. Các nơi khác vẫn được tìm.
 
-Máy ảo được lưu dưới dạng nguyên ổ đĩa, nên các tệp bên trong không được tìm. Tự sao lưu và các bản sao lưu của một BombVault khác trong **Nguồn khác** cũng không được tìm. Một lần tìm liệt kê 200 tệp đầu tiên, nên một tên ngắn như `log` có thể cần thêm vài chữ.
+Máy ảo được lưu dưới dạng nguyên ổ đĩa, nên các tệp bên trong không được tìm. Tự sao lưu, các bản sao lưu của một BombVault khác trong **Nguồn khác** và của các máy chủ trong **Máy chủ khác** cũng không được tìm. Một lần tìm liệt kê 200 tệp đầu tiên, nên một tên ngắn như `log` có thể cần thêm vài chữ.
 
 ## Những gì trở lại, theo loại {#kinds}
 
@@ -134,6 +135,10 @@ Một cơ sở dữ liệu chỉ có bản kết xuất cơ sở dữ liệu mà
     - **Từ Duplicacy**: chọn thư mục Duplicacy Web chứa `duplicacy.json`, hoặc một thư mục bạn sao lưu bằng dòng lệnh Duplicacy, nơi có `.duplicacy`. Các khóa mà dòng lệnh đã lưu trong `.duplicacy/preferences` cũng được mang theo. Duplicacy Web lưu thông tin đăng nhập ở dạng mã hóa, nên cửa sổ sẽ hỏi bạn nhập lại.
 
     Chưa có gì được tạo trước khi bạn xem bản xem trước. Mỗi thư mục nguồn trở thành một bộ thư mục, cùng với thư mục được tìm thấy trên máy chủ này, các mục loại trừ chuyển được và lịch trình. Khi công cụ cũ chạy trong container riêng của nó và không tìm thấy một thư mục, bạn sẽ tự chọn thư mục đó. Các bản sao lưu đi vào một đích sao lưu mới, trong thư mục `bombvault` bên trong đích cũ, dành cho thư mục cục bộ, S3, SFTP, rclone remote hoặc Backblaze B2 qua địa chỉ S3 của nó. Thông tin đăng nhập có trong tệp được lưu cùng các thông tin đăng nhập khác của bạn, còn thông tin mà tệp không có thì cửa sổ sẽ hỏi bạn. Ghi chú dưới mỗi tác vụ cho biết những gì không được mang sang, chẳng hạn quy tắc bao gồm, biểu thức chính quy, thời gian giữ các bản sao lưu và mật khẩu mã hóa cũ, thứ mà BombVault không cần.
+
+## Máy chủ khác {#other-servers}
+
+Trong một [kho chung](offsite-recovery.md#shared-repository), mọi khóa đều mở được bản sao lưu của tất cả máy chủ, nên trang Khôi phục liệt kê các thành viên khác dưới **Máy chủ khác**, mỗi thành viên kèm tên, host, số mục và lúc bản sao lưu mới nhất của nó chạy. Một host không thuộc máy chủ nào mà máy chủ này biết sẽ hiện là **Một máy chủ mà máy chủ này không biết**. Một cú nhấp sẽ mở **Bản sao lưu của** và tên máy chủ, chỉ để đọc và không cần nhập gì. Bộ thư mục và tập dữ liệu ZFS được khôi phục vào một thư mục bạn chọn. Container và VM quay lại dưới dạng tệp thường trong một thư mục, vì máy chủ kia niêm phong định nghĩa của chúng bằng khóa riêng của nó. Bản sao lưu của chính máy chủ này trong kho chung nằm ở tab **Bản sao lưu** của từng mục.
 
 ## Sau khi khôi phục {#after}
 

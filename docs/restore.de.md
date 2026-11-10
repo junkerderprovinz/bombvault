@@ -14,6 +14,7 @@ Jede Wiederherstellung beginnt auf der Seite **Wiederherstellung**: Wähle einen
 - **Läuft gerade** zeigt eine Wiederherstellung, solange sie läuft, auch nachdem du ihr Fenster geschlossen hast.
 - **Notfall** startet den Notfall-Assistenten für einen Server, der weg ist oder neu aufgesetzt wurde, siehe [Notfall-Assistent](offsite-recovery.md#emergency).
 - **Andere Quellen** enthält **Aus einem alten Sicherungsordner** für die Sicherungen eines anderen BombVault, **Aus dem Appdata.Backup-Plugin übernehmen** und **Jobs aus Duplicati oder Duplicacy**.
+- **Andere Server** listet die anderen Server eines gemeinsamen Repositorys auf, zu dem dieser Server gehört, siehe [Andere Server](#other-servers).
 
 ![Die Seite Wiederherstellung auf einem Handy.](assets/screenshots/restore/page-phone-dark.png#only-dark)
 ![Die Seite Wiederherstellung auf einem Handy.](assets/screenshots/restore/page-phone-light.png#only-light)
@@ -85,7 +86,7 @@ Die Suche dauert eine Weile, weil restic jede Sicherung durchgeht. **Stoppen** b
 - Off-site-Speicherorte wie S3, B2 oder SFTP bleiben außen vor, außer du schaltest **Auch Off-site-Speicherorte durchsuchen** ein. Dann werden dort nur die Sicherungen gelesen, die kein Speicherort hier hat, meist die älteren, die eine längere Aufbewahrung off-site hält. Die erste Suche an so einem Speicherort kann lange dauern, und manche Anbieter verrechnen die Daten, die dabei geladen werden.
 - Ein Speicherort, der sich nicht öffnen ließ, zeigt **konnte nicht gelesen werden**, und das (i) daneben sagt, warum. Die anderen Speicherorte werden trotzdem durchsucht.
 
-Virtuelle Maschinen werden als ganze Festplatten gesichert, darum werden die Dateien darin nicht durchsucht. Das Selbstbackup und die Sicherungen eines anderen BombVault unter **Andere Quellen** werden ebenfalls nicht durchsucht. Eine Suche listet die ersten 200 Dateien, ein kurzer Name wie `log` braucht also vielleicht ein paar Buchstaben mehr.
+Virtuelle Maschinen werden als ganze Festplatten gesichert, darum werden die Dateien darin nicht durchsucht. Das Selbstbackup, die Sicherungen eines anderen BombVault unter **Andere Quellen** und die der Server unter **Andere Server** werden ebenfalls nicht durchsucht. Eine Suche listet die ersten 200 Dateien, ein kurzer Name wie `log` braucht also vielleicht ein paar Buchstaben mehr.
 
 ## Was zurückkommt, nach Art {#kinds}
 
@@ -134,6 +135,10 @@ Eine Datenbank, die nur Datenbank-Dumps und keine Dateisicherung hat und deren C
     - **Aus Duplicacy**: Wähle den Ordner von Duplicacy Web, in dem `duplicacy.json` liegt, oder einen Ordner, den du mit der Duplicacy-Kommandozeile sicherst und in dem `.duplicacy` liegt. Schlüssel, die die Kommandozeile in `.duplicacy/preferences` gespeichert hat, kommen mit. Duplicacy Web speichert seine Zugangsdaten verschlüsselt, deshalb fragt das Fenster danach.
 
     Angelegt wird nichts, bevor du die Vorschau gesehen hast. Jeder Quellordner wird zu einem Ordner-Set, mit dem Ordner auf diesem Server, an dem er gefunden wurde, den Ausschlüssen, die sich übertragen ließen, und dem Zeitplan. Lief das alte Werkzeug in einem eigenen Container und wurde ein Ordner nicht gefunden, wählst du ihn aus. Die Sicherungen gehen an einen neuen Speicherort in einem Ordner `bombvault` innerhalb des alten Ziels, für einen lokalen Ordner, S3, SFTP, ein rclone-Remote oder Backblaze B2 über seine S3-Adresse. Zugangsdaten aus der Datei werden bei deinen anderen Zugangsdaten gespeichert, und fehlende werden abgefragt. Hinweise unter jedem Job sagen, was nicht mitgekommen ist, etwa Einschlussregeln, reguläre Ausdrücke, wie lange Sicherungen aufbewahrt wurden, und das alte Verschlüsselungspasswort, das BombVault nicht braucht.
+
+## Andere Server {#other-servers}
+
+In einem [gemeinsamen Repository](offsite-recovery.md#shared-repository) öffnet jeder Schlüssel die Sicherungen aller Server. Darum listet die Seite Wiederherstellung die anderen Mitglieder unter **Andere Server** auf, jedes mit seinem Namen, seinem Host, der Zahl seiner Einträge und dem Zeitpunkt seiner neuesten Sicherung. Ein Host, der zu keinem Server gehört, den dieser kennt, erscheint als **Ein Server, den dieser nicht kennt**. Ein Klick öffnet **Sicherungen von** und den Namen des Servers, nur lesend und ohne dass du etwas eingeben musst. Ordner-Sets und ZFS-Datasets kommen in einen Ordner, den du wählst. Container und VMs kommen als einfache Dateien in einem Ordner zurück, weil der andere Server ihre Definitionen mit seinem eigenen Schlüssel versiegelt. Die eigenen Sicherungen dieses Servers im gemeinsamen Repository liegen auf dem Tab **Sicherungen** jedes Eintrags.
 
 ## Nach einer Wiederherstellung {#after}
 
