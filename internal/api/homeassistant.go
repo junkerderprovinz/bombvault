@@ -8,15 +8,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
+	"math"
 	"net/http"
 	"regexp"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/homeassistant"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/parleyport/kit/mqttha"
 )
 
 // Home Assistant finds BombVault through MQTT discovery, so the whole link is
@@ -33,18 +35,108 @@ var (
 	errMQTTPrefix = errors.New("the topic prefix takes letters, digits, dashes, underscores and slashes between them")
 )
 
-func (h *Handler) newHomeAssistantBridge() *homeassistant.Bridge {
-	return homeassistant.NewBridge(homeassistant.Source{
-		Device: h.haDevice,
-		State:  h.haState,
-		Start:  h.haStart,
-	})
+func (h *Handler) newHomeAssistantBridge() *mqttha.Bridge {
+	return mqttha.New(haSource{h}, slog.Default().With("part", "homeassistant"))
+}
+
+// haDomains are the backup domains in the order Home Assistant lists them.
+var haDomains = []string{"containers", "vms", "files", "zfs", "flash", "config"}
+
+var haDomainTitles = map[string]string{
+	"containers": "Containers",
+	"vms":        "VMs",
+	"files":      "Files",
+	"zfs":        "ZFS",
+	"flash":      "Flash",
+	"config":     "Config",
+}
+
+// haDomainState is what the sensors of one domain show.
+type haDomainState struct {
+	LastBackup time.Time
+	LastResult string
+	FreeBytes  *int64
+}
+
+// haReading is one reading of everything the sensors show. Domains holds the
+// switched-on domains only, and they are the ones that get entities.
+type haReading struct {
+	Status    string
+	Running   string
+	Anomalies int
+	NextRun   time.Time
+	Domains   map[string]haDomainState
+}
+
+// haSource is BombVault as the Home Assistant bridge reads and presses it.
+type haSource struct{ h *Handler }
+
+// Read describes the device. The objects keep the names, and so the
+// unique_ids, they had before the bridge moved to the kit.
+func (src haSource) Read(ctx context.Context) (mqttha.Reading, error) {
+	h := src.h
+	st, err := h.haState(ctx)
+	if err != nil {
+		return mqttha.Reading{}, err
+	}
+	buttons := false
+	if s, err := h.store.GetMQTTSettings(); err == nil {
+		buttons = s.Buttons
+	}
+	r := mqttha.Reading{
+		Device: h.haDevice(),
+		Entities: []mqttha.Entity{
+			{Kind: mqttha.Sensor, Key: "status", Name: "Status", Icon: "mdi:shield-check", Options: []string{"ok", "warning", "failed", "off"}},
+			{Kind: mqttha.Sensor, Key: "running", Name: "Running job", Icon: "mdi:progress-clock"},
+			{Kind: mqttha.Sensor, Key: "anomalies", Name: "Open anomalies", Icon: "mdi:alert-circle-outline", StateClass: "measurement"},
+			{Kind: mqttha.Sensor, Key: "next_run", Name: "Next scheduled backup", DeviceClass: "timestamp"},
+		},
+		Values: map[string]any{"status": st.Status, "running": st.Running, "anomalies": st.Anomalies, "next_run": st.NextRun},
+	}
+	for _, d := range haDomains {
+		ds, on := st.Domains[d]
+		if !on {
+			continue
+		}
+		title := haDomainTitles[d]
+		r.Entities = append(r.Entities,
+			mqttha.Entity{Kind: mqttha.Sensor, Key: d + "_last_backup", Name: title + " last backup", DeviceClass: "timestamp"},
+			mqttha.Entity{Kind: mqttha.Sensor, Key: d + "_last_result", Name: title + " last result", Icon: "mdi:check-circle-outline"},
+			mqttha.Entity{Kind: mqttha.Sensor, Key: d + "_free_space", Name: title + " repository free space", DeviceClass: "data_size", StateClass: "measurement", Unit: "GB",
+				Fields: map[string]any{"suggested_display_precision": 1}},
+		)
+		r.Values[d+"_last_backup"] = ds.LastBackup
+		if ds.LastResult != "" {
+			r.Values[d+"_last_result"] = ds.LastResult
+		}
+		// MQTT sensors ignore suggested_unit_of_measurement, so the value
+		// goes out in GB.
+		if ds.FreeBytes != nil {
+			r.Values[d+"_free_space"] = math.Round(float64(*ds.FreeBytes)/1e8) / 10
+		}
+		if buttons {
+			r.Entities = append(r.Entities, mqttha.Entity{Kind: mqttha.Button, Key: d + "_backup", Name: "Back up " + strings.ToLower(title), Icon: "mdi:backup-restore"})
+		}
+	}
+	return r, nil
+}
+
+// Press backs up the domain of a button.
+func (src haSource) Press(ctx context.Context, key string) error {
+	domain, ok := strings.CutSuffix(key, "_backup")
+	if !ok || haDomainTitles[domain] == "" {
+		return fmt.Errorf("no button %q", key)
+	}
+	if got := src.h.haStart(ctx, domain); got != "started" {
+		return errors.New(got)
+	}
+	return nil
 }
 
 // haConfig turns the stored settings into a bridge configuration. A password
 // the APP_KEY no longer opens is left out, and the broker's refusal says the
-// rest.
-func (h *Handler) haConfig(s store.MQTTSettings) homeassistant.Config {
+// rest. The id and the topic root are what BombVault announced under before.
+func (h *Handler) haConfig(s store.MQTTSettings) mqttha.Config {
 	var password string
 	if len(s.PasswordEnc) > 0 {
 		plain, err := secret.Decrypt(h.cfg.AppKey, s.PasswordEnc)
@@ -54,25 +146,26 @@ func (h *Handler) haConfig(s store.MQTTSettings) homeassistant.Config {
 			password = string(plain)
 		}
 	}
-	return homeassistant.Config{
-		Enabled:  s.Enabled,
-		Host:     strings.Trim(s.Host, "[]"),
-		Port:     s.Port,
-		Username: s.Username,
-		Password: password,
-		TLS:      s.TLS,
-		Prefix:   s.Prefix,
-		Buttons:  s.Buttons,
-		Node:     s.NodeID,
+	return mqttha.Config{
+		Enabled: s.Enabled,
+		Broker: mqttha.Broker{
+			Host:     strings.Trim(s.Host, "[]"),
+			Port:     s.Port,
+			Username: s.Username,
+			Password: password,
+			TLS:      s.TLS,
+		},
+		ID:    "bombvault_" + s.NodeID,
+		Topic: s.Prefix + "/" + s.NodeID,
 	}
 }
 
-func (h *Handler) haDevice() homeassistant.Device {
+func (h *Handler) haDevice() mqttha.Device {
 	name := "BombVault"
 	if s, err := h.store.GetSettings(); err == nil && s.InstanceName != "" {
 		name = "BombVault (" + scrubRepoLocation(s.InstanceName) + ")"
 	}
-	return homeassistant.Device{Name: name, Version: Version}
+	return mqttha.Device{Name: name, Manufacturer: "BombVault", Model: "BombVault", Version: Version}
 }
 
 // haState reads what the sensors show. The overall status is the worst of the
@@ -80,21 +173,21 @@ func (h *Handler) haDevice() homeassistant.Device {
 // warning for one that is late, ok for one that is current. One that is not
 // scheduled or still waits for its first run counts for nothing, as on the
 // overview, so with nothing backed up yet the status stays off.
-func (h *Handler) haState(ctx context.Context) (homeassistant.State, error) {
+func (h *Handler) haState(ctx context.Context) (haReading, error) {
 	settings, err := h.store.GetSettings()
 	if err != nil {
-		return homeassistant.State{}, err
+		return haReading{}, err
 	}
 	statuses, err := h.svc.domainStatusFrom(settings)
 	if err != nil {
-		return homeassistant.State{}, err
+		return haReading{}, err
 	}
-	st := homeassistant.State{Status: "off", Domains: map[string]homeassistant.DomainState{}}
+	st := haReading{Status: "off", Domains: map[string]haDomainState{}}
 	for _, d := range statuses {
 		if !d.Enabled {
 			continue
 		}
-		ds := homeassistant.DomainState{LastResult: h.lastBackupResult(d.Domain)}
+		ds := haDomainState{LastResult: h.lastBackupResult(d.Domain)}
 		if d.LastSuccess > 0 {
 			ds.LastBackup = time.Unix(d.LastSuccess, 0)
 		}
@@ -226,16 +319,16 @@ func (h *Handler) StopIntegrations() {
 }
 
 type homeAssistantView struct {
-	Enabled     bool                 `json:"enabled"`
-	Host        string               `json:"host"`
-	Port        int                  `json:"port"`
-	Username    string               `json:"username"`
-	PasswordSet bool                 `json:"passwordSet"`
-	TLS         bool                 `json:"tls"`
-	Prefix      string               `json:"prefix"`
-	Buttons     bool                 `json:"buttons"`
-	NodeID      string               `json:"nodeId"`
-	Status      homeassistant.Status `json:"status"`
+	Enabled     bool          `json:"enabled"`
+	Host        string        `json:"host"`
+	Port        int           `json:"port"`
+	Username    string        `json:"username"`
+	PasswordSet bool          `json:"passwordSet"`
+	TLS         bool          `json:"tls"`
+	Prefix      string        `json:"prefix"`
+	Buttons     bool          `json:"buttons"`
+	NodeID      string        `json:"nodeId"`
+	Status      mqttha.Status `json:"status"`
 }
 
 func (h *Handler) homeAssistantView(s store.MQTTSettings) homeAssistantView {

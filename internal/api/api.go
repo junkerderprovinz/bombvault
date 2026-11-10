@@ -10,11 +10,11 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
-	"github.com/junkerderprovinz/bombvault/internal/homeassistant"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/parleyport/kit/mqttha"
 )
 
 // Handler bundles the JSON API dependencies and builds the router.
@@ -98,7 +98,7 @@ type Handler struct {
 	mcp *mcpState
 
 	// ha is the MQTT link to Home Assistant, created by Router.
-	ha *homeassistant.Bridge
+	ha *mqttha.Bridge
 
 	// mdns is the running network announcement, if any.
 	mdns mdnsState
