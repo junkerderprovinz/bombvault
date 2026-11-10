@@ -421,21 +421,22 @@ func (s *Service) RunSharedUpkeep(ctx context.Context) error {
 }
 
 func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, now time.Time) error {
+	// Taking a login back needs no turn, so a long prune does not stretch
+	// the day a one-time key is good for.
+	expired := s.expireSharedJoins(ctx, now)
 	if !s.sharedUpkeep.take() {
-		return nil
+		return expired
 	}
 	defer s.sharedUpkeep.done()
 	owned, err := s.ownedSharedRepos()
 	if err != nil {
-		return err
+		return errors.Join(expired, err)
 	}
-	var errs []error
+	errs := []error{expired}
 	for _, sr := range owned {
 		errs = append(errs, s.keepSharedRepo(ctx, sr, members, now, false))
 	}
-	if len(owned) > 0 {
-		errs = append(errs, s.expireSharedJoins(ctx, now))
-	}
+	errs = append(errs, s.dropExpiredKeys(ctx))
 	return errors.Join(errs...)
 }
 

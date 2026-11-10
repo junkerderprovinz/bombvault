@@ -592,6 +592,13 @@ func (s *Service) letIn(ctx context.Context, j *store.SharedJoin) error {
 	} else if taken {
 		return errSharedHostTaken
 	}
+	// A key an expired join left behind goes before a new one comes.
+	if j.OnceKey != "" {
+		if err := s.takeKeys(ctx, sh, *j); err != nil {
+			return fmt.Errorf("remove the one-time key of the earlier join: %w", err)
+		}
+		j.OnceKey = ""
+	}
 	once, err := randomHex(32)
 	if err != nil {
 		return err
@@ -632,9 +639,11 @@ func (s *Service) letIn(ctx context.Context, j *store.SharedJoin) error {
 // backup in the repository, so it does not wait any longer than that.
 const sharedOnceFor = 24 * time.Hour
 
-// expireSharedJoins takes the one-time key and the login back from every
-// member that was let in at least sharedOnceFor before now and never added a
-// key of its own, and tells it that its join expired. It may ask again.
+// expireSharedJoins takes the login back from every member that was let in
+// at least sharedOnceFor before now and never added a key of its own, and
+// tells it that its join expired. It may ask again. Without the login the
+// one-time key reaches nothing, and dropExpiredKeys removes it once the
+// upkeep has its turn, since a prune holds the lock a key removal needs.
 func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
 	s.sharedMu.Lock()
 	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
@@ -644,11 +653,16 @@ func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
 		if err != nil || j.State != store.SharedJoinAllowed || now.Sub(time.Unix(j.DecidedAt, 0)) < sharedOnceFor {
 			continue
 		}
-		if err := s.takeOut(ctx, j); err != nil {
-			errs = append(errs, fmt.Errorf("take back what %s was let in with: %w", j.MemberName, err))
+		sh, err := s.sharedSetupHere()
+		if err != nil {
+			errs = append(errs, err)
+			break
+		}
+		if err := s.takeLogin(ctx, sh, j); err != nil {
+			errs = append(errs, fmt.Errorf("take back the login of %s: %w", j.MemberName, err))
 			continue
 		}
-		j.State, j.User, j.LoginEnc, j.OnceEnc, j.OnceKey, j.DecidedAt = store.SharedJoinExpired, "", nil, nil, "", now.Unix()
+		j.State, j.User, j.LoginEnc, j.OnceEnc, j.DecidedAt = store.SharedJoinExpired, "", nil, nil, now.Unix()
 		if err := s.store.SaveSharedJoin(j); err != nil {
 			errs = append(errs, err)
 			continue
@@ -661,6 +675,34 @@ func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
 	}
 	for _, id := range expired {
 		s.tellSharedAnswer(ctx, id, store.SharedJoinExpired)
+	}
+	return errors.Join(errs...)
+}
+
+// dropExpiredKeys removes the keys of the joins that expired, the one-time
+// key and any key the member added under its host before it ran out of time.
+func (s *Service) dropExpiredKeys(ctx context.Context) error {
+	s.sharedMu.Lock()
+	defer s.sharedMu.Unlock()
+	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, j := range joins {
+		if j.State != store.SharedJoinExpired || j.OnceKey == "" {
+			continue
+		}
+		sh, err := s.sharedSetupHere()
+		if err != nil {
+			return err
+		}
+		if err := s.takeKeys(ctx, sh, j); err != nil {
+			errs = append(errs, fmt.Errorf("remove the keys of %s: %w", j.MemberName, err))
+			continue
+		}
+		j.OnceKey = ""
+		errs = append(errs, s.store.SaveSharedJoin(j))
 	}
 	return errors.Join(errs...)
 }
@@ -765,13 +807,34 @@ func (s *Service) removeSharedMember(ctx context.Context, memberID string) error
 	return s.store.DeleteSharedJoin(store.SharedJoinIn, memberID)
 }
 
-// takeOut removes the keys under the join's host and its login. A key this
-// server opens the repository with stays, whatever host it names.
+// takeOut removes the join's login and the keys under its host. The login
+// goes first: a key the member adds meanwhile reaches nothing without it.
 func (s *Service) takeOut(ctx context.Context, j store.SharedJoin) error {
 	sh, err := s.sharedSetupHere()
 	if err != nil {
 		return err
 	}
+	if err := s.takeLogin(ctx, sh, j); err != nil {
+		return err
+	}
+	return s.takeKeys(ctx, sh, j)
+}
+
+// takeLogin removes the join's login from the shared server.
+func (s *Service) takeLogin(ctx context.Context, sh sharedSetup, j store.SharedJoin) error {
+	if j.User == "" {
+		return nil
+	}
+	if err := s.writeHtpasswd(sh.server.Folder, j.User, ""); err != nil {
+		return err
+	}
+	s.reloadContainer(ctx, sh.server.ContainerName)
+	return nil
+}
+
+// takeKeys removes the keys under the join's host and its one-time key. A key
+// this server opens the repository with stays, whatever host it names.
+func (s *Service) takeKeys(ctx context.Context, sh sharedSetup, j store.SharedJoin) error {
 	keys, err := sh.eng.Keys(ctx, sh.repo, sh.mode)
 	if err != nil {
 		return fmt.Errorf("read the keys: %w", err)
@@ -783,12 +846,6 @@ func (s *Service) takeOut(ctx context.Context, j store.SharedJoin) error {
 		if err := sh.eng.RemoveKey(ctx, sh.repo, sh.mode, k.ID); err != nil {
 			return fmt.Errorf("remove the key %s: %w", shortKeyID(k.ID), err)
 		}
-	}
-	if j.User != "" {
-		if err := s.writeHtpasswd(sh.server.Folder, j.User, ""); err != nil {
-			return err
-		}
-		s.reloadContainer(ctx, sh.server.ContainerName)
 	}
 	return nil
 }
@@ -904,7 +961,7 @@ func (s *Service) sharedOfferFor(ctx context.Context, asker string, in peerShare
 		} else if taken {
 			return ans, errSharedHostTaken
 		}
-		j = store.SharedJoin{Direction: store.SharedJoinIn, MemberID: asker, MemberName: clipRoleName(in.Name), Host: host, State: store.SharedJoinAsked}
+		j = store.SharedJoin{Direction: store.SharedJoinIn, MemberID: asker, MemberName: clipRoleName(in.Name), Host: host, State: store.SharedJoinAsked, OnceKey: j.OnceKey}
 		if err := s.store.SaveSharedJoin(j); err != nil {
 			return ans, err
 		}

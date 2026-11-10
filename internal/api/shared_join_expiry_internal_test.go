@@ -46,36 +46,60 @@ func allowedNeverJoined(t *testing.T) (nas, tower *instance, ring *keyring) {
 	return nas, tower, ring
 }
 
-func TestAOneTimeKeyNobodyUsedGoesWithItsLoginAfterADay(t *testing.T) {
-	nas, tower, ring := allowedNeverJoined(t)
+func TestAnUnusedJoinLosesItsLoginAfterADay(t *testing.T) {
+	nas, tower, _ := allowedNeverJoined(t)
 	in := joinOf(t, nas, store.SharedJoinIn, tower)
 	allowed := time.Unix(in.DecidedAt, 0)
 
 	if err := nas.svc.expireSharedJoins(context.Background(), allowed.Add(sharedOnceFor-time.Minute)); err != nil {
 		t.Fatal(err)
 	}
-	if joinOf(t, nas, store.SharedJoinIn, tower).State != store.SharedJoinAllowed || len(ring.hosts()) != 2 {
-		t.Fatal("the one-time key went before its day was over")
+	if joinOf(t, nas, store.SharedJoinIn, tower).State != store.SharedJoinAllowed || !slices.Contains(htpasswdUsers(t, nas), in.User) {
+		t.Fatal("the join expired before its day was over")
 	}
 
 	if err := nas.svc.expireSharedJoins(context.Background(), allowed.Add(sharedOnceFor)); err != nil {
 		t.Fatal(err)
 	}
-	if got := ring.hosts(); len(got) != 1 {
-		t.Fatalf("keys %v, want only the owner's", got)
-	}
 	if got := htpasswdUsers(t, nas); slices.Contains(got, in.User) {
 		t.Fatalf("logins %v still hold %s", got, in.User)
 	}
 	after := joinOf(t, nas, store.SharedJoinIn, tower)
-	if after.State != store.SharedJoinExpired || len(after.OnceEnc) != 0 || len(after.LoginEnc) != 0 || after.OnceKey != "" || after.User != "" {
-		t.Fatalf("the owner holds %+v, want an expired join without a key or a login", after)
+	if after.State != store.SharedJoinExpired || len(after.OnceEnc) != 0 || len(after.LoginEnc) != 0 || after.User != "" {
+		t.Fatalf("the owner holds %+v, want an expired join without a login", after)
 	}
 	waitForJoin(t, tower, store.SharedJoinOut, nas, store.SharedJoinExpired)
 }
 
+func TestAnUnusedJoinLosesItsLoginEvenWhileTheUpkeepPrunes(t *testing.T) {
+	nas, tower, ring := allowedNeverJoined(t)
+	in := joinOf(t, nas, store.SharedJoinIn, tower)
+	late := time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)
+
+	if !nas.svc.sharedUpkeep.take() {
+		t.Fatal("the upkeep is busy")
+	}
+	if err := nas.svc.runSharedUpkeep(context.Background(), &fakeMembers{}, late); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(htpasswdUsers(t, nas), in.User) || joinOf(t, nas, store.SharedJoinIn, tower).State != store.SharedJoinExpired {
+		t.Fatal("the login outlived its day while the upkeep was busy")
+	}
+	if got := ring.hosts(); len(got) != 2 {
+		t.Fatalf("keys %v, want the one-time key left for the upkeep's turn", got)
+	}
+	nas.svc.sharedUpkeep.done()
+
+	if err := nas.svc.runSharedUpkeep(context.Background(), &fakeMembers{}, late.Add(time.Minute)); err != nil {
+		t.Logf("upkeep: %v", err)
+	}
+	if got := ring.hosts(); len(got) != 1 || joinOf(t, nas, store.SharedJoinIn, tower).OnceKey != "" {
+		t.Fatalf("keys %v once the upkeep had its turn, want only the owner's", got)
+	}
+}
+
 func TestAMemberWhoseKeyExpiredCanAskAgain(t *testing.T) {
-	nas, tower, _ := allowedNeverJoined(t)
+	nas, tower, ring := allowedNeverJoined(t)
 	in := joinOf(t, nas, store.SharedJoinIn, tower)
 	if err := nas.svc.expireSharedJoins(context.Background(), time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)); err != nil {
 		t.Fatal(err)
@@ -87,6 +111,12 @@ func TestAMemberWhoseKeyExpiredCanAskAgain(t *testing.T) {
 	}
 	if joinOf(t, nas, store.SharedJoinIn, tower).State != store.SharedJoinAsked {
 		t.Fatal("the owner did not take the new ask")
+	}
+	if _, err := nas.svc.AllowSharedJoin(context.Background(), tower.id(t)); err != nil {
+		t.Fatal(err)
+	}
+	if got := ring.hosts(); len(got) != 2 {
+		t.Fatalf("keys %v, want the owner's and only the new one-time key", got)
 	}
 }
 
