@@ -91,6 +91,20 @@ func (w *wordsHolder) pairedSession(in *instance) string {
 	return value
 }
 
+// post sends target a peer call in the name of sender and decodes the answer.
+func (p *phone) post(target, sender, path string, body any) map[string]any {
+	p.t.Helper()
+	raw, err := json.Marshal(body)
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	status, res := p.ask(target, sender, path, raw)
+	out := map[string]any{}
+	_ = json.Unmarshal(res, &out)
+	out["_status"] = float64(status)
+	return out
+}
+
 // as runs fn with the instance's session replaced by another one.
 func (in *instance) as(session string, fn func()) {
 	own := in.session
@@ -104,24 +118,25 @@ const wordsHolderID = "0123456789abcdef0123456789abcdef"
 func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	groupOf(t, tower, attic)
+	phrase, relayURL := groupOf(t, tower, attic)
 	if code, _ := deposit(t, tower, attic)["recoveryCode"].(string); code == "" {
 		t.Fatal("no deposit")
 	}
 	towerID, atticID := tower.id(t), attic.id(t)
-	mallory := holdWords(t, wordsHolderID, "android", attic)
-	paired := mallory.pairedSession(attic)
+	mallory := joinPhone(t, relayURL, phrase, attic)
+	mallory.signIn(attic)
+	paired := mallory.session
 
-	inOwnersName := mallory.call(atticID, towerID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower", Renew: true})
+	inOwnersName := mallory.post(atticID, towerID, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower", Renew: true})
 	if inOwnersName["ok"] != false || len(releasesOn(t, attic)) != 0 {
 		t.Fatalf("a request in the owner's own id was taken: %v", inOwnersName)
 	}
 
 	// The words make a member of whoever holds them, with a key of its own.
 	seed := mallory.seed
-	signed := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli(), callPayload(towerID, "tower", "true"),
+	signed := signedAs(t, attic, seed, mallory.id, keydeposit.ProofRelease, time.Now().UnixMilli(), callPayload(towerID, "tower", "true"),
 		map[string]any{"ownerId": towerID, "name": "tower", "renew": true})
-	asked := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(signed))
+	asked := mallory.post(atticID, mallory.id, "/api/group/peer/deposit/release", json.RawMessage(signed))
 	if asked["state"] != store.ReleaseAsked {
 		t.Fatalf("the request: %v", asked)
 	}
@@ -141,9 +156,9 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 			t.Fatalf("the kit with the paired session: %d %v", code, out)
 		}
 	})
-	again := signedAs(t, attic, seed, wordsHolderID, keydeposit.ProofRelease, time.Now().UnixMilli()+1, callPayload(towerID, "tower", "false"),
+	again := signedAs(t, attic, seed, mallory.id, keydeposit.ProofRelease, time.Now().UnixMilli()+1, callPayload(towerID, "tower", "false"),
 		map[string]any{"ownerId": towerID, "name": "tower", "renew": false})
-	if got := mallory.call(atticID, wordsHolderID, http.MethodPost, "/api/group/peer/deposit/release", json.RawMessage(again)); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
+	if got := mallory.post(atticID, mallory.id, "/api/group/peer/deposit/release", json.RawMessage(again)); got["deposit"] != nil || got["state"] != store.ReleaseAsked {
 		t.Fatalf("the keeper handed something out: %v", got)
 	}
 

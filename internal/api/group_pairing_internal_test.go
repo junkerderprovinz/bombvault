@@ -181,19 +181,27 @@ func pairThroughRelay(t *testing.T, a, b *instance) {
 // each lists the other as waiting.
 func approveEachOther(t *testing.T, a, b *instance) {
 	t.Helper()
-	for _, pair := range [][2]*instance{{a, b}, {b, a}} {
-		here, there := pair[0], pair[1]
-		want := kitmember.ID(kitmember.KindInstance, there.memberKey(t))
-		deadline := time.Now().Add(10 * time.Second)
-		for !waitsOn(here, want) {
-			if time.Now().After(deadline) {
-				t.Fatalf("%s never listed %s as waiting: %+v", here.svc.selfDirectURL(), want, here.svc.pairing().Waiting())
-			}
-			time.Sleep(20 * time.Millisecond)
+	approveOn(t, a, b)
+	approveOn(t, b, a)
+}
+
+// approveOn lets there in on here once here lists it as waiting, unless
+// another instance passed the approval on already.
+func approveOn(t *testing.T, here, there *instance) {
+	t.Helper()
+	want := kitmember.ID(kitmember.KindInstance, there.memberKey(t))
+	deadline := time.Now().Add(10 * time.Second)
+	for !waitsOn(here, want) {
+		if isMember(here, there.id(t)) {
+			return
 		}
-		if code, out := here.do(t, http.MethodPost, "/api/group/members/"+want+"/approve", nil); code != http.StatusOK || out["ok"] != true {
-			t.Fatalf("approve: %d %v", code, out)
+		if time.Now().After(deadline) {
+			t.Fatalf("%s never listed %s as waiting: %+v", here.svc.selfDirectURL(), want, here.svc.pairing().Waiting())
 		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if code, out := here.do(t, http.MethodPost, "/api/group/members/"+want+"/approve", nil); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("approve: %d %v", code, out)
 	}
 }
 

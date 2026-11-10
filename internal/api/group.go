@@ -981,8 +981,9 @@ func (s *Service) tellMembersLeaving(ctx context.Context) {
 }
 
 // handlePeerLeave takes a member that leaves the group off this instance's
-// lists: its Fleet row goes. Its key stays approved, so it comes back as it
-// was when it joins again.
+// lists: its Fleet row goes, and the group keeps it out of the members until
+// its relay connection and announces are gone. Its key stays approved, so it
+// comes back as it was when it joins again.
 // POST /api/group/peer/leave
 func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
 	var proof peerProof
@@ -999,6 +1000,7 @@ func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
+	s.pairing().Forget(sender)
 	if err := s.store.DropMemberFleetPeers(sender); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

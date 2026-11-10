@@ -341,3 +341,37 @@ func phoneOn(t *testing.T, url string, id member.Identity) *relay.Client {
 	t.Cleanup(func() { _ = c.Close() })
 	return c
 }
+
+func TestAMemberThatSaidItLeftIsNotListedForAMoment(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.dir.keys[b.id] = b.key()
+	b.dir.keys[a.id] = a.key()
+	a.apply(url, formerOf(b))
+	b.apply(url, formerOf(a))
+	eventually(t, "a lists b", func() bool { return listed(a.m, b.id) })
+
+	a.m.Forget(b.id)
+	if listed(a.m, b.id) {
+		t.Fatal("a still lists b right after b said it left")
+	}
+}
+
+func TestApplyingTheSameSettingsAgainKeepsTheRelayConnection(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.dir.keys[b.id] = b.key()
+	b.dir.keys[a.id] = a.key()
+	a.apply(url, formerOf(b))
+	b.apply(url, formerOf(a))
+	eventually(t, "a lists b", func() bool { return listed(a.m, b.id) })
+
+	for range 5 {
+		b.apply(url, formerOf(a))
+		if !listed(a.m, b.id) {
+			t.Fatal("b dropped off a's list when its settings were applied again unchanged")
+		}
+	}
+}

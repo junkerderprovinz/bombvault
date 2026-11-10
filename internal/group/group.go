@@ -171,6 +171,10 @@ func SenderOf(ctx context.Context) (Sender, bool) {
 // in this group.
 var ErrNotMember = errors.New("group: no such member is reachable")
 
+// departGrace is how long a member that said it left stays off Members: long
+// enough for its relay connection and its last announce to go.
+const departGrace = time.Minute
+
 // learnEvery is how often a member that did not say its id is asked again,
 // such as one where this instance still waits for approval.
 const learnEvery = 5 * time.Second
@@ -188,6 +192,8 @@ type Manager struct {
 	asked   map[string]time.Time
 	// retrying is set while learnAll is due again.
 	retrying bool
+	// departed holds when a member said it left, by its BombVault id.
+	departed map[string]time.Time
 }
 
 // NewManager returns a Manager that answers members' calls with serve, which
@@ -195,10 +201,11 @@ type Manager struct {
 // with a secret.
 func NewManager(serve http.Handler, dir Directory) *Manager {
 	return &Manager{
-		serve: serve,
-		dir:   dir,
-		lan:   lan.New(lan.Config{Group: Multicast, Ports: Ports}),
-		asked: map[string]time.Time{},
+		serve:    serve,
+		dir:      dir,
+		lan:      lan.New(lan.Config{Group: Multicast, Ports: Ports}),
+		asked:    map[string]time.Time{},
+		departed: map[string]time.Time{},
 	}
 }
 
@@ -228,7 +235,11 @@ func (m *Manager) Apply(cfg Config) {
 	m.cfg = cfg
 	if old != nil && sameGroup(prev, cfg) {
 		m.mu.Unlock()
-		old.SetSelf(self)
+		// SetSelf dials the relay again, which members see as this
+		// instance leaving and coming back.
+		if prev.Name != cfg.Name || prev.DirectURL != cfg.DirectURL {
+			old.SetSelf(self)
+		}
 		return
 	}
 	m.g = nil
@@ -326,16 +337,40 @@ func (m *Manager) Members() []Member {
 	if g == nil {
 		return []Member{}
 	}
+	gone := m.departedNow()
 	out := []Member{}
 	for _, km := range g.Members() {
 		if km.State != kitgroup.StateApproved || !km.Online() {
 			continue
 		}
 		id, ok := m.known(km.ID, km.Kind, km.Key)
-		if !ok {
+		if !ok || gone[id] {
 			continue
 		}
 		out = append(out, Member{ID: id, Name: km.Name, Direct: km.Direct, Relay: km.Relay, Address: km.Address, Kind: kindOf(km.Kind)})
+	}
+	return out
+}
+
+// Forget keeps member id, by its BombVault id, off Members for departGrace.
+// It is for a member that said it left: its key stays approved, so it comes
+// back as it was when it joins again.
+func (m *Manager) Forget(id string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.departed[id] = time.Now()
+}
+
+func (m *Manager) departedNow() map[string]bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := map[string]bool{}
+	for id, at := range m.departed {
+		if time.Since(at) < departGrace {
+			out[id] = true
+		} else {
+			delete(m.departed, id)
+		}
 	}
 	return out
 }

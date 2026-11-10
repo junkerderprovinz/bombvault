@@ -374,6 +374,7 @@ func goneTower(t *testing.T) (attic, fresh *instance, towerID, towerKey, code st
 
 	fresh = newInstance(t, "fresh", strings.Repeat("c3", 32))
 	joinGroup(t, fresh, relayURL, phrase)
+	approveEachOther(t, fresh, attic)
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		if _, ok := fresh.svc.reachableMember(attic.id(t)); ok {

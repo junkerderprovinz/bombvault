@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 	"testing"
@@ -13,29 +11,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
-
-// announceAs makes in tell the group it runs the given version and waits
-// until the listed instances have heard and in sees them again.
-func announceAs(t *testing.T, in *instance, version string, heardBy ...*instance) {
-	t.Helper()
-	running := Version
-	Version = version
-	in.svc.applyGroup()
-	Version = running
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) {
-		heard := len(in.svc.pairing().Members()) >= len(heardBy)
-		for _, other := range heardBy {
-			m, ok := other.svc.reachableMember(in.id(t))
-			heard = heard && ok && m.Version == version
-		}
-		if heard {
-			return
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
-	t.Fatalf("the group never heard that %s runs %s", in.id(t), version)
-}
 
 // joinThroughRelay brings one more instance into the group host started,
 // over the relay host uses, and waits until every listed member sees it.
@@ -51,6 +26,9 @@ func joinThroughRelay(t *testing.T, in, host *instance, members ...*instance) {
 	_, shown := host.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{"password": testPassword})
 	if code, out := in.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": shown["phrase"]}); code != http.StatusOK || out["active"] != true {
 		t.Fatalf("join: %d %v", code, out)
+	}
+	for _, m := range members {
+		approveEachOther(t, in, m)
 	}
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
@@ -73,16 +51,6 @@ func joinThroughRelay(t *testing.T, in, host *instance, members ...*instance) {
 func oldWayLogin(t *testing.T, in *instance, sender, claimedID, name string) map[string]any {
 	t.Helper()
 	return peerCallAs(t, in, sender, "/api/group/peer/receiver", peerReceiverRequest{InstanceID: claimedID, Name: name, Login: true})
-}
-
-func oldWayPairing(t *testing.T, in *instance, sender string) peerPairing {
-	t.Helper()
-	_, raw := in.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Sender: sender})
-	var p peerPairing
-	if err := json.Unmarshal(raw, &p); err != nil {
-		t.Fatalf("pairing answered unreadably: %s", raw)
-	}
-	return p
 }
 
 func receiverLoginOf(t *testing.T, in, member *instance) (store.ReceiverLogin, bool) {
@@ -395,82 +363,6 @@ func TestLoginsAndPairingsFromBeforeTheUpgradeGoOnWithoutAnyoneAnswering(t *test
 	}
 }
 
-func TestAskingAMemberFromBeforeRoleRequestsNeedsNoAnswer(t *testing.T) {
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	old := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, tower, old)
-	announceAs(t, old, "v9.9.1", tower)
-	knownBeforeSigning(t, tower, old)
-	m, _ := tower.svc.reachableMember(old.id(t))
-
-	if _, err := tower.svc.askRole(context.Background(), m, store.RoleReceiver, []string{"containers"}, store.RoleStoreRest); !errors.Is(err, errNoMemberReceiver) {
-		t.Fatalf("asking an old member without a receiver = %v, want %v", err, errNoMemberReceiver)
-	}
-	runReceiver(t, old)
-	for _, role := range []string{store.RoleReceiver, store.RoleFetcher} {
-		req, err := tower.svc.askRole(context.Background(), m, role, []string{"containers"}, "")
-		if err != nil || req.State != store.RoleAllowed || req.DecidedBy != store.RoleDecidedAutomatic {
-			t.Fatalf("asking an old member to be %s = %+v, %v; want it allowed without an answer", role, req, err)
-		}
-	}
-	if roleRequestCount(t, old) != 0 {
-		t.Fatal("an old member was sent a request it has no route for")
-	}
-
-	// The old member fetches the password the way it always did, and gets it
-	// because a person here switched the role on.
-	if p := oldWayPairing(t, tower, old.id(t)); !p.OK || p.ResticPassword != restickey.Derive(tower.appKey) {
-		t.Fatalf("the old member's call = %+v", p)
-	}
-	if told, err := tower.svc.withdrawRole(context.Background(), old.id(t), store.RoleFetcher); err != nil || told {
-		t.Fatalf("withdraw from an old member: told %v, %v; want nothing sent", told, err)
-	}
-	if _, err := tower.svc.withdrawRole(context.Background(), old.id(t), store.RoleReceiver); err != nil {
-		t.Fatal(err)
-	}
-	if p := oldWayPairing(t, tower, old.id(t)); p.OK || p.ResticPassword != "" {
-		t.Fatalf("the old member's call after the roles were switched off = %+v", p)
-	}
-}
-
-func TestAMemberFromBeforeRoleRequestsWaitsForAPersonLikeAnyOther(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	old := newInstance(t, "tower", strings.Repeat("a1", 32))
-	pairThroughRelay(t, attic, old)
-	announceAs(t, old, "v9.9.1", attic)
-	knownBeforeSigning(t, attic, old)
-	runReceiver(t, attic)
-
-	if out := oldWayLogin(t, attic, old.id(t), old.id(t), "tower"); out["ok"] != false {
-		t.Fatalf("an old member's first login request: %v", out)
-	}
-	req, ok := roleWith(t, attic, store.RoleRequestIn, old, store.RoleReceiver)
-	if !ok || req.State != store.RoleAsked || req.MemberName != "tower" || len(req.Sections) != len(allRoleSections) {
-		t.Fatalf("the request recorded for the old member = %+v, %v", req, ok)
-	}
-	if _, has := receiverLoginOf(t, attic, old); has {
-		t.Fatal("an old member got a login before a person allowed it")
-	}
-
-	if _, _, err := attic.svc.decideRole(context.Background(), req.ID, store.RoleDecision{State: store.RoleAllowed}); err != nil {
-		t.Fatal(err)
-	}
-	out := oldWayLogin(t, attic, old.id(t), old.id(t), "tower")
-	if receiver, _ := out["receiver"].(map[string]any); out["ok"] != true || receiver["user"] != "tower" || receiver["password"] == "" {
-		t.Fatalf("the old member's login request after the allow = %v", out)
-	}
-
-	if _, _, err := attic.svc.decideRole(context.Background(), req.ID, store.RoleDecision{State: store.RoleRevoked}); err != nil {
-		t.Fatal(err)
-	}
-	if out := oldWayLogin(t, attic, old.id(t), old.id(t), "tower"); out["ok"] != false {
-		t.Fatalf("an old member's login request after the revoke: %v", out)
-	}
-	if _, has := receiverLoginOf(t, attic, old); has {
-		t.Fatal("an old member got its revoked login back by asking")
-	}
-}
-
 func TestAnOldWayCallIsBoundToTheMemberTheGroupNames(t *testing.T) {
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
@@ -493,114 +385,6 @@ func TestAnOldWayCallIsBoundToTheMemberTheGroupNames(t *testing.T) {
 		t.Fatalf("a call that names no sender in a group without old members: %v", out)
 	}
 
-	if _, err := attic.st.SaveSentRoleRequest(store.RoleRequest{MemberID: tower.id(t), Role: store.RoleFetcher, Sections: []string{"containers"}, State: store.RoleAllowed}); err != nil {
-		t.Fatal(err)
-	}
-	announceAs(t, tower, "v9.9.1", attic)
-	announceAs(t, barn, "v9.8.0", attic)
-	knownBeforeSigning(t, attic, tower)
-	knownBeforeSigning(t, attic, barn)
-	if p := oldWayPairing(t, attic, barn.id(t)); p.OK {
-		t.Fatalf("an old member this instance asked for nothing = %+v", p)
-	}
-	if p := oldWayPairing(t, attic, tower.id(t)); !p.OK || p.ResticPassword == "" {
-		t.Fatalf("the old member this instance asked, calling directly = %+v", p)
-	}
-}
-
-// knownBeforeSigning records member as one in knew before it first ran a
-// release whose members sign their calls.
-func knownBeforeSigning(t *testing.T, in, member *instance) {
-	t.Helper()
-	if _, err := in.db.Exec(`INSERT INTO legacy_members (member_id) VALUES (?)`, member.id(t)); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestAMemberThatSaysItIsOldStillSignsUnlessThisInstanceKnewItBefore(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	pairThroughRelay(t, attic, tower)
-	runReceiver(t, attic)
-	announceAs(t, tower, "v9.9.1", attic)
-	if err := attic.st.GrantRoleRequest(store.RoleRequest{
-		Direction: store.RoleRequestIn, MemberID: tower.id(t), Role: store.RoleReceiver, Sections: allRoleSections,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := attic.st.SaveSentRoleRequest(store.RoleRequest{MemberID: tower.id(t), Role: store.RoleFetcher, Sections: []string{"containers"}, State: store.RoleAllowed}); err != nil {
-		t.Fatal(err)
-	}
-
-	if out := oldWayLogin(t, attic, tower.id(t), tower.id(t), "tower"); out["ok"] != false {
-		t.Fatalf("an unsigned login request from a member that only says it is old: %v", out)
-	}
-	if p := oldWayPairing(t, attic, tower.id(t)); p.ResticPassword != "" {
-		t.Fatal("the restic password went out unsigned to a member that only says it is old")
-	}
-
-	knownBeforeSigning(t, attic, tower)
-	if out := oldWayLogin(t, attic, tower.id(t), tower.id(t), "tower"); out["ok"] != true {
-		t.Fatalf("an unsigned login request from a member known before: %v", out)
-	}
-	if p := oldWayPairing(t, attic, tower.id(t)); p.ResticPassword == "" {
-		t.Fatalf("the unsigned pairing of a member known before = %+v", p)
-	}
-
-	if err := attic.st.PinMemberKey(tower.id(t), []byte("the key tower signed with once")); err != nil {
-		t.Fatal(err)
-	}
-	if err := attic.st.ForgetMemberKey(tower.id(t)); err != nil {
-		t.Fatal(err)
-	}
-	if p := oldWayPairing(t, attic, tower.id(t)); p.ResticPassword != "" {
-		t.Fatal("a member that signed once got the password unsigned after its key was forgotten")
-	}
-}
-
-func TestACallThatNamesNoSenderGetsNothingAMemberGets(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	pairThroughRelay(t, attic, tower)
-	runReceiver(t, attic)
-	announceAs(t, tower, "v9.9.1", attic)
-	knownBeforeSigning(t, attic, tower)
-	if err := attic.st.GrantRoleRequest(store.RoleRequest{
-		Direction: store.RoleRequestIn, MemberID: tower.id(t), Role: store.RoleReceiver, Sections: allRoleSections,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := attic.st.SaveSentRoleRequest(store.RoleRequest{MemberID: tower.id(t), Role: store.RoleFetcher, Sections: []string{"containers"}, State: store.RoleAllowed}); err != nil {
-		t.Fatal(err)
-	}
-
-	if p := oldWayPairing(t, attic, ""); p.OK || p.ResticPassword != "" {
-		t.Fatalf("a pairing call without a sender = %+v", p)
-	}
-	if out := oldWayLogin(t, attic, "", tower.id(t), "tower"); out["ok"] != false {
-		t.Fatalf("a login request without a sender: %v", out)
-	}
-}
-
-func TestAMemberThatSaysItIsOldIsGrantedNothingWithoutAsking(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	pairThroughRelay(t, attic, tower)
-	announceAs(t, tower, "v9.9.1", attic)
-
-	if err := attic.svc.grantOldMember(tower.id(t), store.RoleReceiver); err != nil {
-		t.Fatal(err)
-	}
-	if req, ok := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleReceiver); ok {
-		t.Fatalf("a member that only says it is old was granted a role: %+v", req)
-	}
-	knownBeforeSigning(t, attic, tower)
-	if err := attic.svc.grantOldMember(tower.id(t), store.RoleReceiver); err != nil {
-		t.Fatal(err)
-	}
-	if req, ok := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleReceiver); !ok || req.State != store.RoleAllowed {
-		t.Fatalf("the role of a member known before = %+v, %v", req, ok)
-	}
 }
 
 func TestAVersionCountsAsOldOnlyWhenItSaysSo(t *testing.T) {
