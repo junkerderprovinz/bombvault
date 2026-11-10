@@ -543,6 +543,11 @@ func run() error {
 	scheduler.SetPullJob(func() error {
 		return svc.RunPulls(context.Background())
 	}, svc.NextPull)
+	// The upkeep of the shared repositories this server holds, a tick like the
+	// pull sweep: each repository carries its own prune window.
+	scheduler.SetSharedUpkeepJob(func() error {
+		return svc.RunSharedUpkeep(context.Background())
+	}, svc.NextSharedUpkeep)
 	// Fleet peer sweep: the daily poll of every enabled fleet peer's protection
 	// status (read-only, no notifications — each peer's own instance already
 	// alerts on its own overdue backups).

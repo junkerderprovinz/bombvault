@@ -348,3 +348,87 @@ func (s *Service) measureShared(ctx context.Context, sr store.SharedRepo, member
 	}
 	return space, nil
 }
+
+// errSharedUpkeepBusy answers a request to keep a shared repository while an
+// upkeep runs already.
+var errSharedUpkeepBusy = errors.New("the upkeep of the shared repositories is running already")
+
+// RunSharedUpkeep runs what is due in the upkeep of every shared repository
+// this server holds. The scheduler calls it every minute; a pass that is
+// still running, such as a long prune, lets the tick go by.
+func (s *Service) RunSharedUpkeep(ctx context.Context) error {
+	return s.runSharedUpkeep(ctx, s.groupMembers(), time.Now())
+}
+
+func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, now time.Time) error {
+	if !s.sharedUpkeepMu.TryLock() {
+		return nil
+	}
+	defer s.sharedUpkeepMu.Unlock()
+	owned, err := s.ownedSharedRepos()
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, sr := range owned {
+		errs = append(errs, s.keepSharedRepo(ctx, sr, members, now, false))
+	}
+	return errors.Join(errs...)
+}
+
+// runSharedUpkeepNow forgets, prunes, checks and measures the shared
+// repository id at once, as a person asked.
+func (s *Service) runSharedUpkeepNow(ctx context.Context, id string, members sharedMembers) error {
+	if !s.sharedUpkeepMu.TryLock() {
+		return errSharedUpkeepBusy
+	}
+	defer s.sharedUpkeepMu.Unlock()
+	owned, err := s.ownedSharedRepos()
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(owned, func(sr store.SharedRepo) bool { return sr.ID == id })
+	if i < 0 {
+		return errNotSharedOwner
+	}
+	return s.keepSharedRepo(ctx, owned[i], members, time.Now(), true)
+}
+
+// NextSharedUpkeep is when the next pass over a shared repository this server
+// holds is due: the daily forget or the next prune window, whichever comes
+// first.
+func (s *Service) NextSharedUpkeep(now time.Time) (time.Time, bool) {
+	owned, err := s.ownedSharedRepos()
+	if err != nil {
+		return time.Time{}, false
+	}
+	var soonest time.Time
+	for _, sr := range owned {
+		u, err := s.store.SharedUpkeepOf(sr.ID)
+		if err != nil {
+			continue
+		}
+		next := now
+		if u.Forget != nil {
+			next = time.Unix(u.Forget.At, 0).Add(sharedForgetEvery)
+		}
+		if cad, err := schedule.ParseCadence(u.PruneCadence); err == nil {
+			if w, ok := cad.NextDue(time.Time{}, now); ok && w.Before(next) {
+				next = w
+			}
+		}
+		if soonest.IsZero() || next.Before(soonest) {
+			soonest = next
+		}
+	}
+	return soonest, !soonest.IsZero()
+}
+
+// ownedSharedRepos lists the shared repositories this server holds.
+func (s *Service) ownedSharedRepos() ([]store.SharedRepo, error) {
+	all, err := s.store.ListSharedRepos()
+	if err != nil {
+		return nil, err
+	}
+	return slices.DeleteFunc(all, func(sr store.SharedRepo) bool { return !s.ownsSharedRepo(sr) }), nil
+}

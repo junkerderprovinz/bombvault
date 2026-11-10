@@ -501,3 +501,70 @@ func TestPruningNowOpensAWindowAtOnce(t *testing.T) {
 		t.Fatalf("%d prunes, want one", len(eng.prunes))
 	}
 }
+
+func TestTheScheduledUpkeepKeepsOnlyTheRepositoriesThisServerHolds(t *testing.T) {
+	eng := &sharedEngine{snaps: []restic.Snapshot{snapAt("t1", towerHost, "container:plex", 1), snapAt("t2", towerHost, "container:plex", 2)}}
+	s := upkeepService(t, eng)
+	holdSharedRepo(t, s, tower)
+	if _, err := s.store.PutSharedRepo(store.SharedRepo{Repo: "rest:http://nas:8001/shared", Owner: "nas-id", Members: []store.SharedMember{tower}}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.runSharedUpkeep(context.Background(), &fakeMembers{}, time.Date(2026, time.March, 11, 12, 0, 0, 0, time.Local)); err != nil {
+		t.Fatal(err)
+	}
+	if got := eng.left(); !slices.Equal(got, []string{"t2"}) || len(eng.previews) != 1 {
+		t.Fatalf("left %v after %d forget passes, want t2 after one", got, len(eng.previews))
+	}
+}
+
+func TestOneUpkeepOfTheSharedRepositoriesRunsAtATime(t *testing.T) {
+	pruning, done := make(chan struct{}), make(chan struct{})
+	eng := &sharedEngine{onPrune: func() {
+		close(pruning)
+		<-done
+	}}
+	s := upkeepService(t, eng)
+	sr := holdSharedRepo(t, s, tower)
+	ctx := context.Background()
+	first := make(chan error, 1)
+	go func() { first <- s.runSharedUpkeepNow(ctx, sr.ID, &fakeMembers{}) }()
+	<-pruning
+
+	if err := s.runSharedUpkeep(ctx, &fakeMembers{}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.runSharedUpkeepNow(ctx, sr.ID, &fakeMembers{}); !errors.Is(err, errSharedUpkeepBusy) {
+		t.Fatalf("err = %v, want errSharedUpkeepBusy", err)
+	}
+	close(done)
+	if err := <-first; err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.prunes) != 1 {
+		t.Fatalf("%d prunes, want one", len(eng.prunes))
+	}
+}
+
+func TestTheNextUpkeepIsTheSoonerOfTheDailyForgetAndTheNextWindow(t *testing.T) {
+	eng := &sharedEngine{}
+	s := upkeepService(t, eng)
+	sr := holdSharedRepo(t, s, tower)
+	if _, ok := upkeepService(t, &sharedEngine{}).NextSharedUpkeep(time.Now()); ok {
+		t.Fatal("a server that holds no shared repository has an upkeep to come")
+	}
+	// The 10th of March 2026 is a Tuesday, the window opens on Sunday the 15th.
+	now := time.Date(2026, time.March, 10, 12, 0, 0, 0, time.Local)
+	if err := s.store.NoteSharedForget(sr.ID, store.SharedForgetReport{At: now.Add(-2 * time.Hour).Unix()}); err != nil {
+		t.Fatal(err)
+	}
+	if next, ok := s.NextSharedUpkeep(now); !ok || !next.Equal(now.Add(22*time.Hour)) {
+		t.Fatalf("next %v, %v; want the forget a day after the last", next, ok)
+	}
+	if err := s.store.NoteSharedForget(sr.ID, store.SharedForgetReport{At: now.Add(5 * 24 * time.Hour).Unix()}); err != nil {
+		t.Fatal(err)
+	}
+	if next, ok := s.NextSharedUpkeep(now); !ok || !next.Equal(time.Date(2026, time.March, 15, 3, 0, 0, 0, time.Local)) {
+		t.Fatalf("next %v, %v; want Sunday's window", next, ok)
+	}
+}
