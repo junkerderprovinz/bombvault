@@ -38,11 +38,14 @@ import {
   getSettings,
   listItems,
   listPullSources,
+  listSharedOthers,
   openPulledCopy,
+  openSharedOther,
   type BackupItem,
   type EmergencyState,
   type ForeignInventory,
   type PullSourceView,
+  type SharedOtherServer,
 } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { hueVars } from "../lib/appearance";
@@ -371,6 +374,9 @@ export function Restore() {
   // What this server fetched from other instances, one way back per source.
   const [fetched, setFetched] = useState<PullSourceView[]>([]);
   const [fetchedOpen, setFetchedOpen] = useState<{ id: string; name: string; session: string; inventory: ForeignInventory } | null>(null);
+  // The other servers whose backups lie in a shared repository with this one's.
+  const [others, setOthers] = useState<SharedOtherServer[]>([]);
+  const [otherOpen, setOtherOpen] = useState<{ server: SharedOtherServer; session: string; inventory: ForeignInventory } | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
   const [many, setMany] = useState<BackupItem[] | null>(null);
@@ -412,7 +418,37 @@ export function Restore() {
         if (res.ok) setFetched((res.sources ?? []).filter((pull) => pull.snapshotsPulled > 0 || pull.lastPullOk === true));
       })
       .catch(() => undefined);
+    listSharedOthers()
+      .then((res) => {
+        if (res.ok) setOthers(res.servers ?? []);
+      })
+      .catch(() => undefined);
   }, []);
+
+  async function openOther(server: SharedOtherServer) {
+    const res = await openSharedOther(server.repo, server.host).catch((err: unknown) => ({
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      session: undefined,
+      inventory: undefined,
+    }));
+    if (!res.ok || !res.session || !res.inventory) {
+      push(res.error ?? t("settings.error"), "fail");
+      return null;
+    }
+    const opened = { server, session: res.session, inventory: res.inventory };
+    setOtherOpen(opened);
+    return opened;
+  }
+  const otherName = (server: SharedOtherServer) => server.name ?? t("restorePage.unknownServer");
+  const otherSub = (server: SharedOtherServer) =>
+    [
+      t("restorePage.otherServerHost").replace("{host}", () => server.host),
+      server.error ?? t("restorePage.otherServerEntries", server.entries),
+      server.newest && !server.error ? t("restorePage.otherServerNewest").replace("{when}", () => formatRecent(server.newest ?? 0, lang)) : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   async function openFetched(id: string, name: string) {
     const res = await openPulledCopy(id).catch((err: unknown) => ({
@@ -529,6 +565,21 @@ export function Restore() {
             session: fetchedOpen.session,
             inventory: fetchedOpen.inventory,
             reopen: () => openFetched(fetchedOpen.id, fetchedOpen.name),
+          }}
+        />
+      )}
+      {otherOpen && (
+        <OldFolderWindow
+          hostMountRoot={hostMountRoot}
+          onClose={() => setOtherOpen(null)}
+          opened={{
+            title: t("restorePage.otherServerTitle").replace("{name}", () => otherName(otherOpen.server)),
+            intro: t("restorePage.otherServerIntro")
+              .replaceAll("{name}", () => otherName(otherOpen.server))
+              .replace("{host}", () => otherOpen.server.host),
+            session: otherOpen.session,
+            inventory: otherOpen.inventory,
+            reopen: () => openOther(otherOpen.server),
           }}
         />
       )}
@@ -727,6 +778,24 @@ export function Restore() {
           </Rows>
         </Card>
       </div>
+
+      {others.length > 0 && (
+        <Card title={t("restorePage.otherServers")} hint={t("restorePage.otherServersHint")} hueIndex={nextHue()} newId="restore-other-servers">
+          <div data-testid="other-servers">
+            <Rows>
+              {others.map((server) => (
+                <Way
+                  key={`${server.repo}:${server.host}`}
+                  glyph={<IconFleet />}
+                  name={otherName(server)}
+                  sub={otherSub(server)}
+                  onOpen={() => void openOther(server)}
+                />
+              ))}
+            </Rows>
+          </div>
+        </Card>
+      )}
 
       <PageActions>
         <PageAction

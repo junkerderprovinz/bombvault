@@ -90,6 +90,12 @@ describe("placeName", () => {
     );
   });
 
+  it("names a shared repository by the server that holds it", () => {
+    expect(placeName(t, place({ kind: "shared", name: "Atlas", location: "rest:http://atlas:8001/shared" }))).toBe(
+      en["emergency.placeShared"].replace("{name}", "Atlas")
+    );
+  });
+
   it("falls back to the address of a place that was typed", () => {
     expect(placeName(t, place({ location: "backups/old" }))).toBe("backups/old");
   });

@@ -5988,8 +5988,9 @@ export function foreignOpen(
 export interface RecoveryKitLocation {
   /** The section it belongs to. A named repository has none. */
   domain?: string;
-  kind: "local" | "offsite" | "named" | "destination";
-  /** What a named repository or a destination was called. */
+  kind: "local" | "offsite" | "named" | "destination" | "shared";
+  /** What a named repository or a destination was called, and the server
+   *  that holds a shared repository. */
   name?: string;
   location: string;
   folder?: string;
@@ -6515,6 +6516,31 @@ export function testPullSource(id: string): Promise<OkEnvelope> {
  *  read-only session under this server's own key. */
 export function openPulledCopy(id: string): Promise<ForeignOpenResponse> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/open`, { method: "POST", body: "{}" });
+}
+
+/** Another server's part of a shared repository: the host its backups carry
+ *  there, how many entries it has and when the newest backup was written.
+ *  `name` is missing for a host no member this server knows writes under,
+ *  and `error` says why the repository could not be read. */
+export interface SharedOtherServer {
+  repo: string;
+  host: string;
+  name?: string;
+  entries: number;
+  newest?: number;
+  error?: string;
+}
+
+/** GET /api/shared-repo/others: the other servers whose backups lie in the
+ *  shared repositories this server takes part in. */
+export function listSharedOthers(): Promise<OkEnvelope & { servers?: SharedOtherServer[] }> {
+  return fetchJSON("/api/shared-repo/others");
+}
+
+/** POST /api/shared-repo/others/open: opens the backups host wrote into the
+ *  shared repository as a read-only session under this server's own key. */
+export function openSharedOther(repo: string, host: string): Promise<ForeignOpenResponse> {
+  return fetchJSON("/api/shared-repo/others/open", { method: "POST", body: JSON.stringify({ repo, host }) });
 }
 
 export function runPullSource(id: string): Promise<OkEnvelope & { snapshots?: number }> {

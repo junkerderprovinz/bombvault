@@ -281,6 +281,11 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const phone = MOBILE_PROJECTS.has(testInfo.project.name);
   await stageEntries(page, EVERY_KIND);
   await stageUpdate(page);
+  // Another server's backups in a shared repository draw the card of the other servers.
+  await page.route(
+    (url) => url.pathname === "/api/shared-repo/others",
+    (route) => route.fulfill({ json: { ok: true, servers: [{ repo: "r1", host: "bv-ba9876543210", name: "Cube", entries: 2 }] } }),
+  );
   await openUpdated(page, "/dashboard");
 
   const restore = phone
@@ -289,7 +294,7 @@ test("the dots lead from the navigation over a backup's button into the restore 
   const fromNavigation = page.locator(`[data-new-dot="way"][aria-label*="${TILES_NEWS}"][aria-label*="${WHERE_NEWS}"]`);
   await expectOn(fromNavigation, restore);
   // One change to a line.
-  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(9);
+  expect((await fromNavigation.getAttribute("aria-label"))!.split("\n")).toHaveLength(10);
   await fromNavigation.hover();
   await picture(page, `way-bubble-${testInfo.project.name}`);
 
@@ -326,6 +331,8 @@ test("the dots lead from the navigation over a backup's button into the restore 
   await picture(page, `restore-emergency-${testInfo.project.name}`);
   await marked(page, "restore-fetched").scrollIntoViewIfNeeded();
   await expectOn(dotOf(page, "restore-fetched"), marked(page, "restore-fetched"));
+  await marked(page, "restore-other-servers").scrollIntoViewIfNeeded();
+  await expectOn(dotOf(page, "restore-other-servers"), marked(page, "restore-other-servers"));
 });
 
 test("a container's page carries its dots, and the tab leads to the one on its settings", async ({ page }, testInfo) => {

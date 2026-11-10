@@ -1044,6 +1044,92 @@ for (const width of [320, 390]) {
   });
 }
 
+// Cube and a host nobody claims wrote into a shared repository this server
+// copies into. Cube's folder set opens under this server's key.
+async function stageOtherServers(page: Page): Promise<{ opened: string[] }> {
+  const asked = { opened: [] as string[] };
+  await page.route(
+    (url) => url.pathname === "/api/shared-repo/others",
+    (route) =>
+      route.fulfill({
+        json: {
+          ok: true,
+          servers: [
+            { repo: "r1", host: "bv-ba9876543210", name: "Cube", entries: 2, newest: NOW - 3 * HOUR },
+            { repo: "r1", host: "bv-ffffffffffff", entries: 1, newest: NOW - 2 * DAY },
+          ],
+        },
+      }),
+  );
+  await page.route(
+    (url) => url.pathname === "/api/shared-repo/others/open",
+    (route) => {
+      asked.opened.push(String(JSON.parse(route.request().postData() ?? "{}").host));
+      return route.fulfill({
+        json: {
+          ok: true,
+          session: "other-e2e",
+          inventory: {
+            containers: [{ name: "plex", snapshots: [{ id: "c1".repeat(32), time: new Date((NOW - 3 * HOUR) * 1000).toISOString(), tags: ["container:plex"], paths: ["/mnt/user/appdata/plex"] }], noDefinition: true }],
+            vms: [],
+            fileSets: [{ name: "Fotos", snapshots: [{ id: "c2".repeat(32), time: new Date((NOW - 3 * HOUR) * 1000).toISOString(), tags: ["fileset:Fotos"], paths: ["/mnt/user/fotos"] }] }],
+            dbDumps: [],
+            zfs: [],
+          },
+        },
+      });
+    },
+  );
+  await page.route(
+    (url) => url.pathname === "/api/foreign/close",
+    (route) => route.fulfill({ json: { ok: true } }),
+  );
+  return asked;
+}
+
+test("the other servers of a shared repository stand under their name and host and open with no key to enter", async ({ page }, testInfo) => {
+  test.skip(MOBILE_PROJECTS.has(testInfo.project.name), "the desktop layout");
+  await stage(page);
+  const asked = await stageOtherServers(page);
+  await openPage(page);
+
+  const card = page.getByTestId("other-servers");
+  await expect(page.getByRole("heading", { name: /^Andere Server/ })).toBeAttached();
+  await expect(card.getByRole("button", { name: /^Ein Server, den dieser nicht kennt/ })).toContainText("bv-ffffffffffff");
+  const cube = card.getByRole("button", { name: /^Cube/ });
+  await expect(cube).toContainText("Host bv-ba9876543210");
+  await expect(cube).toContainText("2 Einträge");
+
+  await cube.click();
+  const win = page.getByRole("dialog", { name: "Sicherungen von Cube" });
+  await expect(win.getByText(/unter dem Host bv-ba9876543210 in das gemeinsame Repository/)).toBeVisible();
+  await expect(win.getByText("Fotos").first()).toBeVisible();
+  await expect(win.getByRole("button", { name: "Verbinden" })).toHaveCount(0);
+  expect(asked.opened).toEqual(["bv-ba9876543210"]);
+});
+
+for (const width of [320, 390]) {
+  test(`the other servers @ ${width}px: the card and their window keep inside the edge`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout");
+    await stage(page);
+    await stageOtherServers(page);
+    await page.setViewportSize({ width, height: 800 });
+    await openPage(page);
+
+    const cube = page.getByTestId("other-servers").getByRole("button", { name: /^Cube/ });
+    await cube.scrollIntoViewIfNeeded();
+    await settle(page);
+    const onPage = await edges(page);
+    expect(onPage.docPan, "the document scrolls horizontally").toBeLessThanOrEqual(1);
+    expect(onPage.clipped, "the card clips the edge").toEqual([]);
+
+    await cube.click();
+    await expect(page.getByRole("dialog", { name: "Sicherungen von Cube" }).getByText("Fotos").first()).toBeVisible();
+    await settle(page);
+    expect((await edges(page)).clipped, "the window of Cube clips the edge").toEqual([]);
+  });
+}
+
 test("restore on a phone: the eye of a secret field is big enough to tap", async ({ page }, testInfo) => {
   test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the larger targets follow the coarse pointer");
   await stage(page);
