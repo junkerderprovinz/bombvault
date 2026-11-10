@@ -125,13 +125,15 @@ function SelfCard({
       actions={
         <>
           {receiverServer && (
-            <Button
-              label={t("receiver.server.title")}
-              labelKey="receiver.server.title"
-              glyph={<IconReceiver />}
-              tone="neutral"
-              onClick={onOpenServer}
-            />
+            <span data-new-way="receiver-server" className="flex">
+              <Button
+                label={t("receiver.server.title")}
+                labelKey="receiver.server.title"
+                glyph={<IconReceiver />}
+                tone="neutral"
+                onClick={onOpenServer}
+              />
+            </span>
           )}
           {onOpenDeposits && (
             <Button

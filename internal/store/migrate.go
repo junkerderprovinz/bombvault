@@ -3774,6 +3774,31 @@ CREATE TABLE IF NOT EXISTS shared_repo_joins (
   PRIMARY KEY (direction, member_id)
 );`,
 	},
+	{
+		version: sharedUpkeepMigration,
+		name:    "shared_repo_upkeep",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_upkeep (
+  shared_repo_id TEXT PRIMARY KEY REFERENCES shared_repos(id) ON DELETE CASCADE,
+  keep_last      INTEGER NOT NULL DEFAULT 0,
+  keep_daily     INTEGER NOT NULL DEFAULT 0,
+  keep_weekly    INTEGER NOT NULL DEFAULT 0,
+  keep_monthly   INTEGER NOT NULL DEFAULT 0,
+  keep_yearly    INTEGER NOT NULL DEFAULT 0,
+  keep_set       INTEGER NOT NULL DEFAULT 0,
+  prune_cadence  TEXT    NOT NULL,
+  prune_hours    INTEGER NOT NULL,
+  max_unused     INTEGER NOT NULL,
+  check_subset   INTEGER NOT NULL,
+  pruned_window  INTEGER NOT NULL DEFAULT 0,
+  forget_report  TEXT    NOT NULL DEFAULT '',
+  prune_report   TEXT    NOT NULL DEFAULT '',
+  space_report   TEXT    NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS shared_repo_space (
+  owner TEXT PRIMARY KEY,
+  space TEXT NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4388,6 +4413,10 @@ const sharedReposMigration = 840
 // sharedJoinsMigration numbers the server of a shared repository and the way
 // each member came into it.
 const sharedJoinsMigration = 850
+
+// sharedUpkeepMigration numbers how the owner keeps a shared repository and
+// what a member last heard about the space there.
+const sharedUpkeepMigration = 860
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780

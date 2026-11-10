@@ -27,6 +27,7 @@ import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "./InstanceWindow";
+import { SharedUpkeepSection } from "./SharedUpkeepSection";
 import { dateLocale } from "../../lib/dateLocale";
 
 type T = ReturnType<typeof useT>["t"];
@@ -293,6 +294,8 @@ export function ReceiverServerWindow({
               </Rows>
             )}
           </div>
+
+          <SharedUpkeepSection t={t} />
 
           {fresh && (
             <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">

@@ -260,8 +260,9 @@ type peerRoute struct {
 // answer and the withdrawal that go with it, a way into the shared
 // repository this instance holds, what runs here and how it looks
 // for the Android app, a session for a phone of the group and the pages it
-// opens away from home, the word that a member leaves the group, and the bare
-// hello a blind probe gets.
+// opens away from home, the word that a member leaves the group, what the
+// owner of a shared repository says about its upkeep, and the bare hello a
+// blind probe gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -292,6 +293,7 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/session", (*Service).handlePeerSession},
 		{"POST /api/group/peer/page", (*Service).handlePeerPage},
 		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
+		{"POST /api/group/peer/shared-upkeep", (*Service).handlePeerSharedUpkeep},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }

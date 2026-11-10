@@ -189,6 +189,12 @@ type sourceCopy struct {
 func (s *Service) copySources(ctx context.Context, settings store.Settings, domain, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit,
 	sources []domainRepoRef, dst []restic.Snapshot, dstErr error, startedAt int64, lastCopy *offsiteLastCopy) copyOutcome {
 	var out copyOutcome
+	release, ok := s.beginSharedCopy(target.Repo)
+	if !ok {
+		log.Printf("api: offsite %s: the owner of %s prunes it right now, so this copy waits for the next pass", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+		return out
+	}
+	defer release()
 	if v.filtered && dstErr != nil {
 		out.errs = append(out.errs, fmt.Errorf("listing %s: %w", placementTargetName(target), dstErr))
 		return out
@@ -570,7 +576,9 @@ func (c ownerContext) itemCopies(snaps []restic.Snapshot) []store.ItemCopies {
 // only that domain's names are aged.
 func (s *Service) ageTarget(ctx context.Context, domain, scope, dest string, mode restic.Mode, target store.OffsiteTarget, v targetVisit, held []restic.Snapshot, heldErr error, landed []restic.Snapshot) bool {
 	op := targetAgingPolicy(target)
-	if !op.Any() || mode.Sharing == restic.SharingMember {
+	// A shared repository ages in its owner's upkeep, by rules that cover
+	// every member.
+	if !op.Any() || mode.Sharing != restic.SharingNone {
 		return false
 	}
 	var snaps []restic.Snapshot

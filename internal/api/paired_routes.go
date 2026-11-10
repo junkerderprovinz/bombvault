@@ -136,6 +136,7 @@ var pairedRoutes = map[string]bool{
 	"GET /api/fleet/peers":              true,
 	"POST /api/fleet/peers/{id}/poll":   true,
 	"GET /api/offsite/group-receivers":  true,
+	"GET /api/shared-repos/upkeep":      true,
 	"GET /api/zfs/receive/requests":     true,
 	"GET /api/shared-repo/offers":       true,
 }

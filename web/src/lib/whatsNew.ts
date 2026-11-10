@@ -65,6 +65,15 @@ export const RELEASES: Release[] = [
     changes: [
       { id: "shared-repo", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepo" },
       { id: "shared-repo-member", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepoMember" },
+      // The section sits in the receiving server's window, which the button
+      // on this server's own card opens.
+      {
+        id: "shared-upkeep",
+        page: "/instances",
+        where: ["instances.title"],
+        way: [...TO_INSTANCES, "receiver-server"],
+        text: "whatsNew.sharedUpkeep",
+      },
     ],
   },
   {
