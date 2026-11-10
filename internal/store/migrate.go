@@ -4214,9 +4214,9 @@ const apiMigrationBase = 230
 
 // misnumbered holds records that branch builds wrote under numbers another
 // migration holds. Migrate forgets them, so the owner of the number runs there
-// too; the guards of target_aliases, vm_uuid and target_alias_prev_definition
+// too. The guards of target_aliases, vm_uuid and target_alias_prev_definition
 // record those again under their own numbers, and notify_before_channels runs
-// again as an empty CREATE TABLE IF NOT EXISTS.
+// again to no effect, since its table is there already.
 var misnumbered = []struct {
 	version int
 	name    string
