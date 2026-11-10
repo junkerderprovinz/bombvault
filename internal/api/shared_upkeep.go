@@ -168,7 +168,8 @@ func (s *Service) sharedAccess(sr store.SharedRepo) (string, restic.Mode, store.
 // a lock while the members go on copying, which does no harm: a snapshot that
 // lands in between can only make another old one expendable, and that one
 // goes next time. A host no member writes under is never aged, and neither is
-// a member that cannot say which of its entries it holds.
+// a member that cannot say which of its entries it holds. A server that left
+// can say nothing any more and ages by the rules alone, as its removal said.
 func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store.SharedUpkeep, members sharedMembers, now time.Time) store.SharedForgetReport {
 	report := store.SharedForgetReport{At: now.Unix()}
 	dest, mode, settings, err := s.sharedAccess(sr)
@@ -181,12 +182,18 @@ func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store
 		report.Error = scrubError(err)
 		return report
 	}
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		report.Error = err.Error()
+		return report
+	}
 	byHost := map[string][]restic.Snapshot{}
 	for _, sn := range snaps {
 		byHost[sn.Hostname] = append(byHost[sn.Hostname], sn)
 	}
 	for host := range byHost {
-		if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) {
+		if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) &&
+			!slices.ContainsFunc(former, func(f store.SharedFormer) bool { return f.Host == host }) {
 			report.Unknown = append(report.Unknown, host)
 		}
 	}
@@ -206,6 +213,15 @@ func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store
 			continue
 		}
 		gone, err := s.sharedForgets(ctx, dest, mode, settings, u, m, own, held)
+		ids = append(ids, gone...)
+		errs = append(errs, err)
+	}
+	for _, f := range former {
+		own := byHost[f.Host]
+		if len(own) == 0 || slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == f.Host }) {
+			continue
+		}
+		gone, err := s.sharedForgets(ctx, dest, mode, settings, u, store.SharedMember{Host: f.Host, Name: f.Name}, own, nil)
 		ids = append(ids, gone...)
 		errs = append(errs, err)
 	}

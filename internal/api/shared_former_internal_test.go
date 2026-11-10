@@ -177,3 +177,17 @@ func TestTheOwnersCardOffersToForgetAFormerMember(t *testing.T) {
 		t.Fatalf("a wrong name: %d %v", code, out)
 	}
 }
+
+func TestTheBackupsOfAFormerMemberAgeByTheOwnersRules(t *testing.T) {
+	eng := &upkeepEngine{snaps: []restic.Snapshot{snapAt("t1", towerHost, "container:plex", 1), snapAt("t2", towerHost, "container:plex", 2)}}
+	s := upkeepService(t, eng)
+	sr := holdSharedRepo(t, s)
+	if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: towerHost, Name: "Tower", LeftAt: 100}); err != nil {
+		t.Fatal(err)
+	}
+
+	r := forgetPass(t, s, sr, &fakeMembers{unreachable: map[string]bool{towerHost: true}})
+	if got := eng.left(); !slices.Equal(got, []string{"t2"}) || len(r.Unknown) != 0 || r.Error != "" {
+		t.Fatalf("left %v, report %+v; want Tower's last backup kept and Tower not unknown", got, r)
+	}
+}
