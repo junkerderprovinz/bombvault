@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -26,7 +27,7 @@ const kitSharedSection = "Shared repositories"
 var kitSharedFieldRe = regexp.MustCompile(`^  (owner|sections|other|server port|server folder|server login): (.+)$`)
 
 // kitOtherRe is another server of a shared repository as the kit names it.
-var kitOtherRe = regexp.MustCompile(`^(.+), host (\S+)(?:, group id (\S+))?$`)
+var kitOtherRe = regexp.MustCompile(`^(.+), host (\S+)(?:, group id (\S+))?(?:, login (\S+))?$`)
 
 // kitSharedServer is the rest-server the server that held a shared repository
 // ran for the others: its port, its data folder below the host data mount,
@@ -58,6 +59,16 @@ func (s *Service) sharedKitSection(w func(string, ...any), settings store.Settin
 	if err != nil {
 		log.Printf("api: recovery kit: the shared repositories this server joined could not be read: %v", err)
 	}
+	logins := map[string]string{}
+	if in, err := s.store.ListSharedJoins(store.SharedJoinIn); err != nil {
+		log.Printf("api: recovery kit: the members of the shared repository this server holds could not be read: %v", err)
+	} else {
+		for _, j := range in {
+			if j.State == store.SharedJoinJoined && j.User != "" {
+				logins[j.MemberID] = j.User
+			}
+		}
+	}
 	host := restickey.Host(key)
 	w("## " + kitSharedSection + "\n\n")
 	w("These restic repositories are shared with other BombVault servers of the group.\n")
@@ -87,7 +98,14 @@ func (s *Service) sharedKitSection(w func(string, ...any), settings store.Settin
 			w("  sections: %s\n", strings.Join(sections, ", "))
 		}
 		for _, m := range sr.Members {
-			if m.Host != host {
+			if m.Host == host {
+				continue
+			}
+			// The server that takes the kit over needs the login to take a
+			// member out again.
+			if login := logins[m.Instance]; owner && login != "" {
+				w("  other: %s, host %s, group id %s, login %s\n", m.Name, m.Host, m.Instance, login)
+			} else {
 				w("  other: %s, host %s, group id %s\n", m.Name, m.Host, m.Instance)
 			}
 		}
@@ -132,6 +150,12 @@ func (loc *kitLocation) readSharedKitField(field, value string) {
 	case "other":
 		if m := kitOtherRe.FindStringSubmatch(value); m != nil {
 			loc.Others = append(loc.Others, store.SharedMember{Name: m[1], Host: m[2], Instance: m[3]})
+			if m[4] != "" {
+				if loc.Logins == nil {
+					loc.Logins = map[string]string{}
+				}
+				loc.Logins[m[2]] = m[4]
+			}
 		}
 	case "server port":
 		if port, err := strconv.Atoi(value); err == nil && port > 0 && port < 65536 {
@@ -185,6 +209,9 @@ func (s *Service) attachSharedPlace(ctx context.Context, p emergencyPlace, ref s
 		}
 		recorded = sr.ID
 		if p.Held {
+			if err := s.keepSharedJoins(members, p.Logins); err != nil {
+				return recorded, nil, err
+			}
 			if err := s.store.QueueSharedHolderNotices(sr.ID, sharedHolderAudience(p.Owner, members, g.InstanceID)); err != nil {
 				return recorded, nil, err
 			}
@@ -213,6 +240,24 @@ func (s *Service) attachSharedPlace(ctx context.Context, p emergencyPlace, ref s
 		}
 	}
 	return recorded, made, nil
+}
+
+// keepSharedJoins records the members the kit names a login for as joined,
+// so that this server can take them out again as their holder.
+func (s *Service) keepSharedJoins(members []store.SharedMember, logins map[string]string) error {
+	s.sharedMu.Lock()
+	defer s.sharedMu.Unlock()
+	for _, m := range members {
+		user := logins[m.Host]
+		if user == "" || m.Instance == "" {
+			continue
+		}
+		j := store.SharedJoin{Direction: store.SharedJoinIn, MemberID: m.Instance, MemberName: m.Name, Host: m.Host, State: store.SharedJoinJoined, User: user, DecidedAt: time.Now().Unix()}
+		if err := s.store.SaveSharedJoin(j); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // takeBackSharedServer brings back the rest-server the other servers reach a
