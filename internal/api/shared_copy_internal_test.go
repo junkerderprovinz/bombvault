@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -75,5 +76,47 @@ func TestAMemberNeverAgesASharedRepository(t *testing.T) {
 	}
 	if slices.Contains(f.eng.prunes, sharedAt) {
 		t.Fatalf("prunes = %v, want none at the shared repository", f.eng.prunes)
+	}
+}
+
+// With restic itself: a copy into a shared repository leaves the snapshots
+// under the legacy host in this server's own repository.
+func TestRealCopyIntoASharedRepositoryCarriesOnlyThisServersHost(t *testing.T) {
+	f := newResticFixture(t)
+	ctx := context.Background()
+	f.write("plex", map[string]string{"a.txt": "a"})
+	own := f.backup("containers", "plex", "container:plex")
+	repo, mode := f.repoOf("containers")
+	legacy := mode
+	legacy.Host = restic.LegacyHost
+	src := filepath.Join(filepath.FromSlash(f.root), "src", "plex")
+	if _, err := f.svc.engine.BackupDir(ctx, repo, src, []string{"container:plex"}, legacy); err != nil {
+		t.Fatal(err)
+	}
+
+	target, err := f.st.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Shared", Repo: "backups/shared", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.st.PutSharedRepo(store.SharedRepo{Repo: target.Repo, Owner: "nas-id"}); err != nil {
+		t.Fatal(err)
+	}
+	dest, err := f.svc.resolveRepo(target.Repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.engine.Init(ctx, dest, mode); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.ReplicateOffsite(ctx, "containers"); err != nil {
+		t.Fatal(err)
+	}
+
+	copied, err := restic.Restic{Bin: "restic"}.SnapshotsOfEveryHost(ctx, dest, mode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(copied) != 1 || copied[0].Hostname != own.Hostname || copied[0].Original != own.ID {
+		t.Fatalf("the shared repository holds %+v, want a copy of %s under %s alone", copied, own.ID, own.Hostname)
 	}
 }
