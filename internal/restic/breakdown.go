@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"os/exec"
 )
 
 // LsNoLockArgs is LsArgs without a repository lock, for a read that runs
@@ -25,8 +24,8 @@ func (r Restic) LsStreamNoLock(ctx context.Context, repo, snapshotID string, m M
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	err := streamLines(cmd, args, func(line []byte) {
 		var e FileEntry
@@ -55,8 +54,8 @@ func (r Restic) DiffStream(ctx context.Context, repo, snap1, snap2 string, m Mod
 	if err := checkRepoArgs(args); err != nil {
 		return DiffResult{}, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	var total DiffResult
 	err := streamLines(cmd, args, func(line []byte) {

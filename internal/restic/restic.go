@@ -441,6 +441,9 @@ type Restic struct {
 	// high-latency backend (e.g. Backblaze B2) from re-downloading the whole
 	// destination index on every run (issue #95).
 	CacheDir string
+	// Processes, when set, counts every restic this Restic runs, so they can be
+	// ended together.
+	Processes *Processes
 }
 
 // bin returns the binary to invoke, defaulting to "restic".
@@ -1556,8 +1559,8 @@ func (r Restic) runIn(ctx context.Context, dir string, args []string, m Mode) ([
 	if err := checkRepoArgs(args); err != nil {
 		return nil, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	env := r.authEnv(m)
 	if m.Root != "" {
 		// The working directory is resolved inside the new root, where the
@@ -1868,8 +1871,8 @@ func (r Restic) LsStream(ctx context.Context, repo, snapshotID string, m Mode, o
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	err := streamLines(cmd, args, func(line []byte) {
 		line = bytes.TrimSpace(line)
@@ -2788,8 +2791,8 @@ func (r Restic) dumpArchive(ctx context.Context, args []string, w io.Writer, m M
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated against the repo by the caller
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	// A client disconnect / user cancel of the download cancels ctx and kills the
 	// child; re-wrap so DownloadFlashZip's errors.Is(err, context.Canceled) holds
@@ -2811,8 +2814,8 @@ func (r Restic) BackupStdin(ctx context.Context, repo string, rd io.Reader, path
 	if err := checkRepoArgs(args); err != nil {
 		return Summary{}, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; path/tags are internal values (a zvol dataset/snapshot identifier), never raw user input
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	start := time.Now()
 	out, err := runWithStdin(cmd, args, rd)
@@ -2866,8 +2869,8 @@ func (r Restic) BackupFromCommand(ctx context.Context, repo, stdinPath string, t
 	if err := checkRepoArgs(args); err != nil {
 		return Summary{}, nil, err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; the command is this binary with validated flags
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	// restic emits periodic --json status only to a TTY or with this set, and
 	// the stall guard needs those lines to see a dump that stopped moving.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=3")
@@ -2917,8 +2920,8 @@ func (r Restic) DumpRaw(ctx context.Context, repo, snapshotID, path string, w io
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; snapshot id validated by caller against the repo, path is an internal value
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	return ctxCancelErr(ctx, args, runToWriter(cmd, args, w))
 }
@@ -2965,8 +2968,8 @@ func (r Restic) Copy(ctx context.Context, destRepo, srcRepo string, snapshotIDs 
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv from typed builders; repos are operator-configured
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	env := r.authEnv(m)
 	// authEnv has already put the DESTINATION's password in RESTIC_PASSWORD.
 	// This is the source's, and it is a different secret whenever the source is
@@ -3270,8 +3273,8 @@ func (r Restic) runCounted(ctx context.Context, args []string, m Mode) error {
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package; no user input reaches here
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	// restic prints its counters on a pipe only when told how often to.
 	cmd.Env = append(r.authEnv(m), "RESTIC_PROGRESS_FPS=1")
 	_, err := scanLines(cmd, args, func(line []byte) {

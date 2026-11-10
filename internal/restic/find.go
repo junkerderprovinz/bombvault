@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -84,8 +83,8 @@ func (r Restic) Find(ctx context.Context, repo string, snapshotIDs []string, pat
 	if err := checkRepoArgs(args); err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, r.bin(), args...) //nolint:gosec // G204: argv is constructed by typed builders in this package and the pattern follows --
-	configureProcGroup(cmd)
+	ctx, cmd, done := r.command(ctx, args...)
+	defer done()
 	cmd.Env = r.authEnv(m)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

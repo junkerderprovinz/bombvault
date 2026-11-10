@@ -204,6 +204,10 @@ func roundItemErr(err error) error {
 	return err
 }
 
+// resticEndGrace bounds the wait for the restic runs still going when the
+// server stops. restic exits on SIGTERM at once, unless stuck in the kernel.
+const resticEndGrace = 10 * time.Second
+
 func run() error {
 	// Send the standard logger to stdout so all runtime logs share ONE stream
 	// with the ASCII banner (printed via fmt to stdout). Otherwise Docker/Unraid
@@ -304,7 +308,7 @@ func run() error {
 		log.Printf("main: could not create restic cache dir %s: %v (falling back to restic default)", resticCacheDir, mkErr)
 		resticCacheDir = ""
 	}
-	engine := &restic.Restic{Bin: "restic", RcloneConfig: filepath.Join(cfg.DataDir, "rclone.conf"), CacheDir: resticCacheDir}
+	engine := &restic.Restic{Bin: "restic", RcloneConfig: filepath.Join(cfg.DataDir, "rclone.conf"), CacheDir: resticCacheDir, Processes: &restic.Processes{}}
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
@@ -702,6 +706,11 @@ func run() error {
 		log.Printf("shutdown: signal received, stopping")
 		stop() // a second signal now kills, instead of waiting behind this
 		svc.BeginShutdown()
+		// A restic left running would outlive this process, and the end of
+		// the container kills it without a chance to drop its lock.
+		if !engine.Processes.End(resticEndGrace) {
+			log.Printf("shutdown: restic still running after %s, leaving it", resticEndGrace)
+		}
 		log.Printf("shutdown: done")
 	}
 	return runErr
