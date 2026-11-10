@@ -40,6 +40,9 @@ func newFirstBackupRig(t *testing.T) firstBackupRig {
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
+	// The tests read the engine's call lists right after a backup, which a
+	// size sample in the background would still be appending to.
+	api.FreshSizeSamples(t, st, "containers", "files")
 	markRepo(t, root+"/backups/containers")
 	markRepo(t, root+"/backups/files")
 	for _, src := range []string{"appdata/nginx", "docs"} {
