@@ -16,6 +16,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -5476,6 +5477,10 @@ type commandBackup struct {
 }
 
 type fakeResticEngine struct {
+	// mu guards Snapshots and Stats, the two calls a size sample makes. The
+	// service takes that sample in the background after a backup, so it runs
+	// alongside whatever the test does next.
+	mu sync.Mutex
 	// stageFrom gives a settings restore a database to stage, as a self-backup
 	// holds one.
 	stageFrom *store.Repo
@@ -5895,6 +5900,8 @@ func (f *fakeResticEngine) DumpTar(context.Context, string, string, string, io.W
 }
 
 func (f *fakeResticEngine) Snapshots(ctx context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	_, hasDeadline := ctx.Deadline()
 	f.snapshotsCtxDeadline = append(f.snapshotsCtxDeadline, hasDeadline)
 	f.snapshotsCalls++
@@ -6174,6 +6181,8 @@ func (f *fakeResticEngine) Copy(_ context.Context, destRepo, srcRepo string, sna
 }
 
 func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mode) (restic.StatsResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.statsCalls = append(f.statsCalls, mode)
 	if f.statsErr != nil {
 		return restic.StatsResult{}, f.statsErr

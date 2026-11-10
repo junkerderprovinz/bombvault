@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,10 +46,12 @@ func (c *countingEngine) count(repo, cmd string) error {
 	return nil
 }
 
+// at returns a copy, since the prune a delete leaves running goes on counting
+// into the live map after the delete has answered.
 func (c *countingEngine) at(repo string) map[string]int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.calls[repo]
+	return maps.Clone(c.calls[repo])
 }
 
 func (c *countingEngine) RepoOpens(ctx context.Context, repo string, m restic.Mode) bool {
