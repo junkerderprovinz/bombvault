@@ -125,7 +125,7 @@ func (r *Repo) LearnGroupDirectURL(url string) error {
 // the APP_KEY, empty before the group first saved.
 func (r *Repo) GroupKitState() ([]byte, error) {
 	var enc []byte
-	if err := r.db.QueryRow(`SELECT kit_state FROM group_state WHERE id = 1`).Scan(&enc); err != nil {
+	if err := r.db.QueryRow(`SELECT kit_state_enc FROM group_state WHERE id = 1`).Scan(&enc); err != nil {
 		return nil, fmt.Errorf("GroupKitState: %w", err)
 	}
 	return enc, nil
@@ -136,7 +136,7 @@ func (r *Repo) SetGroupKitState(enc []byte) error {
 	if enc == nil {
 		enc = []byte{}
 	}
-	if _, err := r.db.Exec(`UPDATE group_state SET kit_state = ? WHERE id = 1`, enc); err != nil {
+	if _, err := r.db.Exec(`UPDATE group_state SET kit_state_enc = ? WHERE id = 1`, enc); err != nil {
 		return fmt.Errorf("SetGroupKitState: %w", err)
 	}
 	return nil

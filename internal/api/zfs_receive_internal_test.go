@@ -108,6 +108,9 @@ func (r *receiveRig) request(t *testing.T) map[string]any {
 	t.Helper()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/zfs/receive/requests", nil)
+	// A signed-in request teaches the instance its address, and example.com,
+	// httptest's host, would move it away from where the rig serves it.
+	req.Host = "localhost"
 	req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: r.dst.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
 	r.dst.router.ServeHTTP(w, req)
 	var list []map[string]any
@@ -742,6 +745,9 @@ func TestARefusedRequestLeavesTheList(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/zfs/receive/requests", nil)
+	// A signed-in request teaches the instance its address, and example.com,
+	// httptest's host, would move it away from where the rig serves it.
+	req.Host = "localhost"
 	req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
 	in.router.ServeHTTP(w, req)
 	var list []zfsReceiveView

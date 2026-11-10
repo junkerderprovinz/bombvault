@@ -3854,8 +3854,8 @@ CREATE TABLE IF NOT EXISTS shared_repo_taken_over (
 		// its key, and nobody sets this instance's address by hand any more.
 		version:          groupKitMigration,
 		name:             "group_kit_state",
-		alreadySatisfied: columnPresent("group_state", "kit_state"),
-		sql: `ALTER TABLE group_state ADD COLUMN kit_state BLOB NOT NULL DEFAULT x'';
+		alreadySatisfied: columnPresent("group_state", "kit_state_enc"),
+		sql: `ALTER TABLE group_state ADD COLUMN kit_state_enc BLOB NOT NULL DEFAULT x'';
 CREATE INDEX IF NOT EXISTS member_keys_by_key ON member_keys (key);
 UPDATE group_state SET direct_url_manual = 0;`,
 	},

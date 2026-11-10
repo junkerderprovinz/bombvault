@@ -675,7 +675,8 @@ func TestDBDumpFailureNotifiesAfterTheBackup(t *testing.T) {
 			t.Fatalf("%d messages, want one", len(ssh.runs))
 		}
 		sent := strings.Join(ssh.runs[0], " ")
-		if !strings.Contains(sent, `Database dump of container "pg" failed: the database refused the login.`) {
+		// The Unraid channel takes quotes out, which Unraid's push agents break on.
+		if !strings.Contains(sent, `Database dump of container pg failed: the database refused the login.`) {
 			t.Errorf("message = %s", sent)
 		}
 		if !strings.Contains(sent, "The files backup of the container succeeded.") {
@@ -804,7 +805,7 @@ func TestAScheduledSummaryNamesABackupThatMissedFiles(t *testing.T) {
 		t.Fatalf("%d summaries with failures-only alerts, want one", len(ssh.runs))
 	}
 	sent := strings.Join(ssh.runs[0], " ")
-	if !strings.Contains(sent, `1 backup holds less than it should`) || !strings.Contains(sent, `files "Documents": `+store.NoteFilesUnreadable+`: locked.db`) || !strings.Contains(sent, "warning") {
+	if !strings.Contains(sent, `1 backup holds less than it should`) || !strings.Contains(sent, `files Documents: `+store.NoteFilesUnreadable+`: locked.db`) || !strings.Contains(sent, "warning") {
 		t.Errorf("summary = %s", sent)
 	}
 }
