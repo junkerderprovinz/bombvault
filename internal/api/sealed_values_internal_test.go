@@ -50,6 +50,8 @@ var sealSites = map[string]string{
 	"zfsReceiveAllow":        "zfs_receive_slots.token_enc",
 	"askZFSReceive":          "zfs_datasets.replica_peer_token_enc",
 	"SetDeferPolicy":         "defer_policies.api_key_enc",
+	"letIn":                  "shared_repo_joins.once_enc",
+	"addOwnSharedKey":        "shared_repo_joins.login_enc",
 }
 
 // sealingFunctions returns the functions of the module, tests left out, that
