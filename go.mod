@@ -10,7 +10,7 @@ require (
 	github.com/docker/go-connections v0.8.2
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-webauthn/webauthn v0.18.2
-	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261109190927-566ab90c3be7
+	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110180703-85563775f682
 	github.com/klauspost/compress v1.20.4
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/pkg/sftp v1.13.12

@@ -71,6 +71,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs
 github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/junkerderprovinz/parleyport/kit v0.0.0-20261109190927-566ab90c3be7 h1:IL1Pcvy0xDuEkJJLmt4Q/4q7GML/4tN37eSBunfVKqg=
 github.com/junkerderprovinz/parleyport/kit v0.0.0-20261109190927-566ab90c3be7/go.mod h1:HERYrtSlZoAGTQEnfT6qbifE2wTnVQd4Xqq65C+L81s=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110180703-85563775f682 h1:DbjkFIFX2+ir7ywQimt7fd5VusP3vDSDmwnMvfIgXR8=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110180703-85563775f682/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
 github.com/klauspost/compress v1.20.4 h1:dD0v/bvxtjCBqQu6sx1TNWkalEY5lNTIe+HY9w8TeNI=
 github.com/klauspost/compress v1.20.4/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
