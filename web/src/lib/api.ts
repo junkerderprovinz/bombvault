@@ -6955,6 +6955,20 @@ export interface GroupMember {
   kind?: string;
 }
 
+/** A device that asked to join the group, or an instance this one waits
+ *  for, by its id in the group. */
+export interface WaitingMember {
+  id: string;
+  name: string;
+  /** "android" for the app; absent for an instance. */
+  kind?: string;
+  /** Its key's fingerprint, to compare with what the device shows. */
+  fingerprint?: string;
+  online: boolean;
+  /** This instance waits for that one to let it in. */
+  there?: boolean;
+}
+
 /** A member of the group that is not in reach now, as it last said who it is. */
 export interface AwayMember {
   id: string;
@@ -7002,13 +7016,14 @@ export interface GroupState extends OkEnvelope {
   joinedAgo: number;
   /** Another member has shown up since this instance entered the group. */
   memberSeen: boolean;
+  /** The devices that wait for somebody here to let them in, and the
+   *  instances this one waits for. */
+  waiting: WaitingMember[];
+  /** This instance's key as another one shows it while it waits there. */
+  fingerprint?: string;
   /** This instance's own address on the local network, as announced to
-   *  members: learned from the browser, set by hand, or a last-resort LAN
-   *  guess. */
+   *  members: learned from the browser, or a last-resort LAN guess. */
   selfAddress: string;
-  /** selfAddress was set by hand and stops being replaced by a newly
-   *  learned one. */
-  selfAddressManual: boolean;
   /** The addresses this instance found for itself, read-only: its IPv4
    *  addresses on the local network (no loopback, no link-local, no
    *  container bridges), then its mDNS host name ("bombvault.local") while
@@ -7063,16 +7078,16 @@ export function setRelay(patch: { mode?: RelayMode; url?: string; serve?: boolea
   return fetchJSON("/api/group/relay", { method: "PUT", body: JSON.stringify(patch) });
 }
 
-/** PUT /api/group/address - set this instance's own direct address by hand,
- *  or clear the override with an empty url so it is learned again. */
-export function setDirectAddress(url: string): Promise<GroupState> {
-  return fetchJSON("/api/group/address", { method: "PUT", body: JSON.stringify({ url }) });
+/** POST /api/group/members/{id}/approve - let in a device that waits, by
+ *  its id in the group. */
+export function approveMember(id: string): Promise<GroupState> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(id)}/approve`, { method: "POST" });
 }
 
-/** POST /api/group/probe - try one address for a group member directly,
- *  for a subnet or a port the LAN sweep does not reach on its own. */
-export function probeAddress(url: string): Promise<GroupState> {
-  return fetchJSON("/api/group/probe", { method: "POST", body: JSON.stringify({ url }) });
+/** POST /api/group/members/{id}/refuse - turn away a device that waits, for
+ *  good. */
+export function refuseMember(id: string): Promise<GroupState> {
+  return fetchJSON(`/api/group/members/${encodeURIComponent(id)}/refuse`, { method: "POST" });
 }
 
 /** GET /api/group/members/{id}/repos - the locations a member offers. */

@@ -86,6 +86,8 @@ export interface LauncherState {
   group: {
     paired: boolean;
     connected: boolean;
+    /** An instance said that this phone waits for its approval there. */
+    waiting?: boolean;
     /** The instances found with words not yet taken over, while the person
      *  looks before adding them, and whether the relay they are looked for on
      *  answers. */

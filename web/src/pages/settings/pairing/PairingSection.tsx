@@ -9,7 +9,7 @@ import type { useT } from "../../../lib/i18n";
 import { GroupCard } from "./GroupCard";
 import { PairingSteps } from "./PairingSteps";
 import { PhraseCard, useJoinedAgo } from "./PhraseCard";
-import { RelayCard, SelfAddressField } from "./RelayCard";
+import { RelayCard } from "./RelayCard";
 import { pairStage } from "./pairStage";
 
 type T = ReturnType<typeof useT>["t"];
@@ -31,7 +31,7 @@ function GroupCards({
   onGroup: (g: GroupState) => void;
   onRefresh: () => void;
   zfs: boolean;
-  instanceCard: (address: ReactNode, hueIndex: number) => ReactNode;
+  instanceCard: (hueIndex: number) => ReactNode;
   t: T;
   nextHue: () => number;
 }) {
@@ -41,8 +41,8 @@ function GroupCards({
   return (
     <>
       <PhraseCard group={group} stage={stage} onCreatedHere={setCreatedHere} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
-      <GroupCard group={group} stage={stage} joinedAgo={joinedAgo} zfs={zfs} t={t} hueIndex={nextHue()} />
-      {instanceCard(<SelfAddressField group={group} onGroup={onGroup} t={t} />, nextHue())}
+      <GroupCard group={group} onGroup={onGroup} stage={stage} joinedAgo={joinedAgo} zfs={zfs} t={t} hueIndex={nextHue()} />
+      {instanceCard(nextHue())}
       <RelayCard group={group} stage={stage} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
     </>
   );
@@ -58,9 +58,8 @@ export function PairingSection({
   nextHue: () => number;
   /** The ZFS section is on, so the group can take a ZFS server over SSH. */
   zfs: boolean;
-  /** Draws the card that names this instance, around the field for its own
-   *  address. */
-  instanceCard: (address: ReactNode, hueIndex: number) => ReactNode;
+  /** Draws the card that names this instance. */
+  instanceCard: (hueIndex: number) => ReactNode;
 }) {
   const [group, setGroup] = useState<GroupState | null>(null);
   const [error, setError] = useState<string | null>(null);

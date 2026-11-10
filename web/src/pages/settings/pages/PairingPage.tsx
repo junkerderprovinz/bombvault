@@ -48,10 +48,8 @@ export function PairingPage() {
             t={t}
             nextHue={nextHue}
             zfs={settings.zfsEnabled}
-            instanceCard={(address, hueIndex) => (
-              <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={hueIndex}>
-                {address}
-              </FleetSettingsCard>
+            instanceCard={(hueIndex) => (
+              <FleetSettingsCard t={t} settings={settings} setSettings={setSettings} save={save} hueIndex={hueIndex} />
             )}
           />
         </div>

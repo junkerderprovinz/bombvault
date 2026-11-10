@@ -80,6 +80,21 @@ describe("Launcher", () => {
     expect(await screen.findByText("Address not known yet")).toBeTruthy();
   });
 
+  it("says the phone waits until an instance approves it", async () => {
+    const { bridge } = fakeBridge({ servers: [], found: [], group: { paired: true, connected: true, waiting: true }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    expect(await screen.findByText(/This phone waits for approval/)).toBeTruthy();
+  });
+
+  it("says nothing of approval once the phone is let in", async () => {
+    const { bridge } = fakeBridge({ servers: [], found: [], group: { paired: true, connected: true }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    expect(await screen.findByText("Paired")).toBeTruthy();
+    expect(screen.queryByTestId("awaiting-approval")).toBeNull();
+  });
+
   it("pairs with typed words and says why words were refused", async () => {
     const { bridge, sent } = fakeBridge({ servers: [], found: [], group: alone, camera: false, app, pairError: { reason: "checksum" } });
     render(<Launcher bridge={bridge} />);

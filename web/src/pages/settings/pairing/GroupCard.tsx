@@ -1,17 +1,17 @@
 // GroupCard lists who is in the group: this instance with where it stands,
 // every paired instance and phone with how it is reached or when it was last
-// there, and the ZFS servers without BombVault, which join over SSH from the
-// same list.
+// there, the devices that wait to be let in, and the ZFS servers without
+// BombVault, which join over SSH from the same list.
 import { useState, type ReactNode } from "react";
 import { Card } from "../shared";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { Rows, SettingRow } from "../../../components/storage/rows";
-import { IconLink } from "../../../components/glyphs";
+import { IconConfirm, IconLink, IconReject } from "../../../components/glyphs";
 import { IconFleet, IconZFS } from "../../../components/navGlyphs";
 import { AddReplicaServerDialog } from "../../../components/zfs/replica/AddReplicaServerDialog";
 import { useReplicaServers } from "../../../components/zfs/replica/replicaStore";
-import type { AwayMember, GroupMember, GroupState } from "../../../lib/api";
+import { approveMember, refuseMember, type AwayMember, type GroupMember, type GroupState, type WaitingMember } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
 import { PHONE_PATH } from "../../instances/InstanceCard";
@@ -82,6 +82,80 @@ function AwayRow({ m, settling, t }: { m: AwayMember; settling: boolean; t: T })
   );
 }
 
+/** Waiting lists the devices that entered the twelve words and wait for
+ *  somebody here to let them in, each with its key to compare with what it
+ *  shows, and says when this instance waits on another one. */
+function Waiting({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const waiting = group.waiting ?? [];
+  const asks = waiting.filter((w) => !w.there);
+  const there = waiting.filter((w) => w.there);
+  if (asks.length === 0 && there.length === 0) return null;
+
+  async function decide(w: WaitingMember, approve: boolean) {
+    setBusy(w.id);
+    try {
+      const res = await (approve ? approveMember(w.id) : refuseMember(w.id));
+      if (res.ok) {
+        onGroup(res);
+        setError(null);
+      } else {
+        setError(res.error ?? t("pairing.loadError"));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("pairing.loadError"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const ownKey = group.fingerprint ? t("pairing.ownKey").replace("{fingerprint}", () => group.fingerprint ?? "") : "";
+  return (
+    <div data-testid="waiting" className="flex flex-col gap-2 border-t border-carbon-border/60 pt-3">
+      {asks.length > 0 && (
+        <>
+          <SettingRow label={t("pairing.pendingTitle")} hint={t("pairing.pendingTip")} />
+          <Rows as="ul">
+            {asks.map((w) => (
+              <SettingRow
+                key={w.id}
+                as="li"
+                label={w.name || w.id}
+                note={w.fingerprint ? t("pairing.fingerprint").replace("{fingerprint}", () => w.fingerprint ?? "") : undefined}
+                glyph={<span className="text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{memberGlyph(w.kind)}</span>}
+              >
+                <Button
+                  label={t("pairing.refuse")}
+                  labelKey="pairing.refuse"
+                  glyph={<IconReject />}
+                  tone="neutral"
+                  onClick={() => void decide(w, false)}
+                  disabled={busy !== null}
+                />
+                <Button
+                  label={t("pairing.approve")}
+                  labelKey="pairing.approve"
+                  glyph={<IconConfirm />}
+                  tone="accent"
+                  onClick={() => void decide(w, true)}
+                  disabled={busy !== null}
+                  busy={busy === w.id}
+                />
+              </SettingRow>
+            ))}
+          </Rows>
+        </>
+      )}
+      {there.length > 0 && <p className="text-sm text-carbon-textSub">{t("pairing.awaiting")}</p>}
+      {ownKey && (
+        <SettingRow label={ownKey} hint={t("pairing.ownKeyTip")} />
+      )}
+      {error && <p className="text-caption text-statusFail">{error}</p>}
+    </div>
+  );
+}
+
 function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
   return (
     <div className="flex items-center gap-3 border-t border-carbon-border/60 pt-3 text-carbon-textSub">
@@ -98,6 +172,7 @@ function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
 
 export function GroupCard({
   group,
+  onGroup,
   stage,
   joinedAgo,
   zfs,
@@ -105,6 +180,7 @@ export function GroupCard({
   hueIndex,
 }: {
   group: GroupState;
+  onGroup: (g: GroupState) => void;
   stage: PairStage;
   joinedAgo: number;
   /** The ZFS section is on, so a ZFS server can be connected. */
@@ -141,6 +217,7 @@ export function GroupCard({
             ))}
           </Rows>
         </div>
+        <Waiting group={group} onGroup={onGroup} t={t} />
         {stage === "new" ? (
           <WaitRow text={t("pairing.waitNext")} />
         ) : stage !== "paired" && stage !== "unpaired" ? (

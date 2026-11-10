@@ -166,6 +166,11 @@ export function PairPage({
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-carbon-text">{t("launcher.paired")}</span>
             <Badge tone={group.connected ? "ok" : "warn"}>{group.connected ? t("launcher.relayConnected") : t("launcher.relayOffline")}</Badge>
           </div>
+          {group.waiting && (
+            <p data-testid="awaiting-approval" className="px-1 text-sm text-carbon-textSub">
+              {t("launcher.awaitingApproval")}
+            </p>
+          )}
           <Button
             label={t("pairing.leave")}
             labelKey="pairing.leave"

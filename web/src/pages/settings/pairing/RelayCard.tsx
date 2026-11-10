@@ -12,7 +12,7 @@ import { Selector } from "../../../components/Selector";
 import { SettingRow } from "../../../components/storage/rows";
 import { IconEye, IconRetry } from "../../../components/glyphs";
 import { IconClose } from "../../../components/navGlyphs";
-import { setDirectAddress, setRelay, type GroupState, type RelayMode } from "../../../lib/api";
+import { setRelay, type GroupState, type RelayMode } from "../../../lib/api";
 import type { TranslationKey, useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { tLtr } from "../../../lib/ltrFragments";
@@ -46,85 +46,6 @@ function hostOf(url: string): string {
   } catch {
     return url;
   }
-}
-
-/** SelfAddressField is the row of addresses this instance is known under:
- *  the ones it found by itself, which nobody can edit, and below them the one
- *  members are told, prefilled from the browser, corrected by hand when it is
- *  wrong and saved on its own. */
-export function SelfAddressField({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupState) => void; t: T }) {
-  const [value, setValue] = useState(group.selfAddress);
-  const [error, setError] = useState<string | null>(null);
-  const editing = useRef(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const found = group.ownAddresses ?? [];
-
-  useEffect(() => {
-    if (!editing.current) setValue(group.selfAddress);
-  }, [group.selfAddress]);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  async function save(v: string) {
-    try {
-      const res = await setDirectAddress(v);
-      if (res.ok) {
-        onGroup(res);
-        setError(null);
-      } else {
-        setError(res.error ?? t("relay.selfAddressError"));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("relay.selfAddressError"));
-    }
-  }
-
-  function type(v: string) {
-    editing.current = true;
-    setValue(v);
-    setError(null);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      void save(v).then(() => {
-        editing.current = false;
-      });
-    }, 800);
-  }
-
-  return (
-    <SettingRow label={t("pairing.knownAddresses")} hint={t("relay.selfAddressTip")} htmlFor="self-address">
-      <div className="flex w-[18rem] max-w-full flex-col gap-2">
-        {found.length > 0 && (
-          <div className="flex flex-col gap-1 px-3">
-            <ul data-testid="own-addresses" aria-label={t("pairing.foundAddresses")} className="flex flex-col gap-0.5">
-              {found.map((address) => (
-                <li key={address} className="text-sm text-carbon-text wrap-anywhere">
-                  <bdi dir="ltr" className="font-mono">
-                    {address}
-                  </bdi>
-                </li>
-              ))}
-            </ul>
-            <span className="glim-eyebrow">{t("pairing.foundAddresses")}</span>
-          </div>
-        )}
-        <input
-          id="self-address"
-          data-testid="self-address-input"
-          type="url"
-          value={value}
-          onChange={(e) => type(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          placeholder="https://192.168.1.20:3443"
-          dir="ltr"
-          className="rounded-control bg-carbon-surface2 text-carbon-text text-sm font-mono px-3 py-1.5 text-start glim-field-focus"
-        />
-        {error && <p className="text-caption text-statusFail">{error}</p>}
-      </div>
-    </SettingRow>
-  );
 }
 
 function Fact({ glyph, text }: { glyph: ReactNode; text: ReactNode }) {

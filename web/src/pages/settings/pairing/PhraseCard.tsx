@@ -9,13 +9,12 @@ import { Card, useOpenPasswordField } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { RevealInput } from "../../../components/RevealInput";
-import { IconEye, IconInfo, IconRetry, IconSearch, IconSignOut } from "../../../components/glyphs";
+import { IconEye, IconInfo, IconRetry, IconSignOut } from "../../../components/glyphs";
 import { IconCheck, IconClose, IconCopy, IconPencil } from "../../../components/navGlyphs";
 import {
   createPhrase,
   joinGroup,
   leaveGroup,
-  probeAddress,
   showPhrase,
   type GroupState,
   type PhraseRefusal,
@@ -128,54 +127,6 @@ function RelayDownLine({ group, onRefresh, t }: { group: GroupState; onRefresh: 
         </InstanceWindow>
       )}
     </section>
-  );
-}
-
-/** CantFindIt is the fallback for when the LAN sweep finds nobody: a person
- *  types the other instance's address by hand, for a subnet or a port the
- *  sweep does not try on its own. */
-function CantFindIt({ onProbe, busy, t, shake }: { onProbe: (url: string) => void; busy: boolean; t: T; shake: number }) {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState("");
-  return (
-    <div>
-      <Button label={t("pairing.cantFindTitle")} labelKey="pairing.cantFindTitle" tone="neutral" glyph={<IconSearch />} onClick={() => setOpen(true)} />
-      {open && (
-        <InstanceWindow
-          title={t("pairing.cantFindTitle")}
-          hint={t("pairing.cantFindBody")}
-          onClose={() => setOpen(false)}
-          footer={
-            <>
-              <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={() => setOpen(false)} />
-              <Button
-                key={`cant-find-${shake}`}
-                label={t("pairing.cantFindSearch")}
-                labelKey="pairing.cantFindSearch"
-                tone="accent"
-                onClick={() => onProbe(value)}
-                disabled={busy || value.trim() === ""}
-                busy={busy}
-              />
-            </>
-          }
-        >
-          <SettingRow label={t("pairing.cantFindLabel")} htmlFor="pairing-cant-find">
-            <input
-              id="pairing-cant-find"
-              type="url"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="https://192.168.2.20:3443"
-              dir="ltr"
-              className="w-72 max-w-full rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus"
-            />
-          </SettingRow>
-        </InstanceWindow>
-      )}
-    </div>
   );
 }
 
@@ -337,19 +288,6 @@ export function PhraseCard({
         onGroup(res);
       } else {
         refuse(res.error);
-      }
-    });
-
-  /** probe tries one address a person typed under "Can't find it?" for a
-   *  member, the same way the LAN sweep tries an address on its own. */
-  const probe = (url: string) =>
-    run(async () => {
-      const res = await probeAddress(url);
-      if (res.ok) {
-        onGroup(res);
-        push(t("pairing.cantFindFound"), "success");
-      } else {
-        refuse(res.error ?? t("pairing.cantFindError"));
       }
     });
 
@@ -572,7 +510,6 @@ export function PhraseCard({
         {relayHint}
       </>
     );
-    if (noRelay) foot = <CantFindIt onProbe={probe} busy={busy} t={t} shake={shake} />;
   } else {
     body = (
       <>

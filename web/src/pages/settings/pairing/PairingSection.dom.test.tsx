@@ -24,9 +24,7 @@ const relayCalls: Array<Record<string, unknown>> = [];
 const joined: string[] = [];
 let joinAnswer: Record<string, unknown> = {};
 let left = 0;
-const selfAddressCalls: string[] = [];
-const probeCalls: string[] = [];
-let probeAnswer: Record<string, unknown> | null = null;
+const decisions: string[] = [];
 
 // The BIP39 test vector: twelve listed words that check out.
 const PHRASE = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -51,8 +49,8 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     },
     joinedAgo: 300,
     memberSeen: true,
+    waiting: [],
     selfAddress: "https://192.168.1.20:3443",
-    selfAddressManual: false,
     ...over,
   };
 }
@@ -91,14 +89,14 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       group = outside();
       return Promise.resolve(group);
     },
-    setDirectAddress: (url: string) => {
-      selfAddressCalls.push(url);
-      group = { ...group, selfAddress: url, selfAddressManual: url !== "" };
+    approveMember: (id: string) => {
+      decisions.push("approve " + id);
+      group = { ...group, waiting: group.waiting.filter((w) => w.id !== id) };
       return Promise.resolve(group);
     },
-    probeAddress: (url: string) => {
-      probeCalls.push(url);
-      if (probeAnswer) return Promise.resolve(probeAnswer);
+    refuseMember: (id: string) => {
+      decisions.push("refuse " + id);
+      group = { ...group, waiting: group.waiting.filter((w) => w.id !== id) };
       return Promise.resolve(group);
     },
   };
@@ -115,7 +113,7 @@ function Tab() {
       t={t}
       nextHue={() => hue++}
       zfs={zfs}
-      instanceCard={(address) => <div data-testid="instance-card">{address}</div>}
+      instanceCard={() => <div data-testid="instance-card" />}
     />
   );
 }
@@ -174,9 +172,7 @@ beforeEach(() => {
   joined.length = 0;
   joinAnswer = {};
   left = 0;
-  selfAddressCalls.length = 0;
-  probeCalls.length = 0;
-  probeAnswer = null;
+  decisions.length = 0;
   localStorage.clear();
 });
 
@@ -512,31 +508,6 @@ describe("after a minute alone", () => {
     expect(screen.getByText(en["pairing.otherNetTitle"])).not.toBeNull();
   });
 
-  it("offers Can't find it? only without a relay, and searches an address on demand", async () => {
-    group = alone();
-    await renderTab();
-    expect(screen.queryByText(en["pairing.cantFindTitle"])).toBeNull();
-    cleanup();
-
-    group = alone({ relay: noRelay() });
-    await renderTab();
-    expect(screen.queryByLabelText(en["pairing.cantFindLabel"])).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: en["pairing.cantFindTitle"] }));
-    const window = within(screen.getByRole("dialog", { name: en["pairing.cantFindTitle"] }));
-    expect(window.getByLabelText(en["pairing.cantFindBody"])).toBeTruthy();
-    const field = window.getByLabelText(en["pairing.cantFindLabel"]) as HTMLInputElement;
-    const search = window.getByRole("button", { name: en["pairing.cantFindSearch"] }) as HTMLButtonElement;
-    expect(search.disabled).toBe(true);
-
-    fireEvent.change(field, { target: { value: "https://192.168.2.20:3443" } });
-    expect(search.disabled).toBe(false);
-    await act(async () => {
-      fireEvent.click(search);
-    });
-    expect(probeCalls).toEqual(["https://192.168.2.20:3443"]);
-  });
-
   it("says in one line that the relay is down and opens what to check", async () => {
     group = alone({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();
@@ -547,6 +518,52 @@ describe("after a minute alone", () => {
     const window = within(screen.getByRole("dialog", { name: en["pairing.relayCheckOpen"] }));
     expect(window.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
     expect(window.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
+  });
+});
+
+describe("pairing by the phrase alone", () => {
+  it("has nowhere to type the address of an instance, this one's own included", async () => {
+    for (const g of [alone({ relay: noRelay() }), makeGroup(), outside()]) {
+      group = g;
+      await renderTab();
+      expect(document.querySelector('input[type="url"]:not(#relay-address)')).toBeNull();
+      cleanup();
+    }
+  });
+});
+
+describe("devices that wait", () => {
+  const phone = "phone-" + "ab".repeat(32);
+
+  it("lists a device that asks to join with its key, and lets it in or turns it away", async () => {
+    group = makeGroup({
+      waiting: [
+        { id: phone, name: "Pixel", kind: "android", fingerprint: "1a2b 3c4d 5e6f 7a8b", online: true },
+        { id: "c".repeat(40), name: "barn", fingerprint: "0000 1111 2222 3333", online: false },
+      ],
+      fingerprint: "9f8e 7d6c 5b4a 3928",
+    });
+    await renderTab();
+    const list = within(screen.getByTestId("waiting"));
+    expect(list.getByText(en["pairing.pendingTitle"])).toBeTruthy();
+    expect(list.getByText(en["pairing.fingerprint"].replace("{fingerprint}", "1a2b 3c4d 5e6f 7a8b"))).toBeTruthy();
+    expect(list.getByText(en["pairing.ownKey"].replace("{fingerprint}", "9f8e 7d6c 5b4a 3928"))).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(list.getAllByRole("button", { name: en["pairing.approve"] })[0]);
+    });
+    await act(async () => {
+      fireEvent.click(within(screen.getByTestId("waiting")).getByRole("button", { name: en["pairing.refuse"] }));
+    });
+    expect(decisions).toEqual(["approve " + phone, "refuse " + "c".repeat(40)]);
+    expect(screen.queryByTestId("waiting")).toBeNull();
+  });
+
+  it("says when this instance waits on another one, with nothing to press", async () => {
+    group = makeGroup({ waiting: [{ id: "d".repeat(40), name: "attic", online: true, there: true }], fingerprint: "9f8e 7d6c 5b4a 3928" });
+    await renderTab();
+    const list = within(screen.getByTestId("waiting"));
+    expect(list.getByText(en["pairing.awaiting"])).toBeTruthy();
+    expect(list.queryByRole("button", { name: en["pairing.approve"] })).toBeNull();
   });
 });
 
@@ -768,39 +785,6 @@ describe("relay card", () => {
     });
     expect(relayCalls).toContainEqual({ url: "relay.example.org" });
     expect(screen.queryByRole("button", { name: en["settings.save"] })).toBeNull();
-  });
-
-  it("prefills this instance's own address and saves a change after a pause", async () => {
-    await renderTab();
-    const input = screen.getByTestId("self-address-input") as HTMLInputElement;
-    expect(input.value).toBe("https://192.168.1.20:3443");
-    vi.useFakeTimers();
-    fireEvent.change(input, { target: { value: "https://192.168.1.55:3443" } });
-    expect(selfAddressCalls).toEqual([]);
-    await act(async () => {
-      vi.advanceTimersByTime(900);
-    });
-    expect(selfAddressCalls).toEqual(["https://192.168.1.55:3443"]);
-  });
-
-  it("heads the field with Known addresses, and lists nothing above it while the server reports no address of its own", async () => {
-    await renderTab();
-    const input = screen.getByLabelText(new RegExp("^" + en["pairing.knownAddresses"])) as HTMLInputElement;
-    expect(input).toBe(screen.getByTestId("self-address-input"));
-    expect(screen.queryByTestId("own-addresses")).toBeNull();
-    expect(screen.queryByText(en["pairing.foundAddresses"])).toBeNull();
-  });
-
-  it("lists the addresses the instance found by itself above the field, as lines nobody can edit", async () => {
-    group = makeGroup({ ownAddresses: ["192.168.1.20", "10.8.0.3", "tower.local"] });
-    await renderTab();
-    const list = screen.getByTestId("own-addresses");
-    expect([...list.children].map((li) => li.textContent)).toEqual(["192.168.1.20", "10.8.0.3", "tower.local"]);
-    expect(list.querySelector("input, button, [contenteditable]")).toBeNull();
-    expect(screen.getByText(en["pairing.foundAddresses"])).toBeTruthy();
-    const input = screen.getByTestId("self-address-input");
-    expect(list.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect((input as HTMLInputElement).value).toBe("https://192.168.1.20:3443");
   });
 
   it("warns that an address without TLS carries the relay key in plain text", async () => {

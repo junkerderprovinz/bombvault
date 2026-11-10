@@ -414,7 +414,6 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
         { key: "pairing.wordsLabel" },
         { key: "pairing.enterLabel" },
         { key: "pairing.enterLabelOther" },
-        { key: "pairing.cantFindLabel" },
       ],
     },
     {
@@ -424,7 +423,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
     {
       title: "settings.fleet",
-      rows: [{ key: "settings.instanceName", hint: "settings.fleetHint" },{ key: "pairing.knownAddresses", hint: "relay.selfAddressTip" }],
+      rows: [{ key: "settings.instanceName", hint: "settings.fleetHint" }],
     },
     {
       title: "relay.title",

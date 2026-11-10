@@ -72,8 +72,8 @@ export function group(): GroupState {
     relay: { mode: "off", url: "", projectUrl: "", connected: false, serve: false, serveClients: 0 },
     joinedAgo: 0,
     memberSeen: true,
+    waiting: [],
     selfAddress: "",
-    selfAddressManual: false,
   };
 }
 
