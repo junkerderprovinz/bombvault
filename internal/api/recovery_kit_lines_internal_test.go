@@ -41,7 +41,7 @@ func TestAMeshOfferWhoseRepositorySpansLinesIsRefused(t *testing.T) {
 		"user":       {FromName: "attic", SuggestedDomain: "files", Repo: "rest:https://box:8000/files", RESTUser: "bv\nx", RESTPassword: "x"},
 	} {
 		counter++
-		_, answer := f.svc.servePeer(context.Background(), signedOfferCall(t, f.svc, seed, member, offer, counter))
+		_, answer := f.svc.callPeer(context.Background(), signedOfferCall(t, f.svc, seed, member, offer, counter))
 		var out struct {
 			OK bool `json:"ok"`
 		}

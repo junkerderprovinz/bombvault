@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -78,7 +77,7 @@ func oldWayLogin(t *testing.T, in *instance, sender, claimedID, name string) map
 
 func oldWayPairing(t *testing.T, in *instance, sender string) peerPairing {
 	t.Helper()
-	_, raw := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Sender: sender})
+	_, raw := in.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Sender: sender})
 	var p peerPairing
 	if err := json.Unmarshal(raw, &p); err != nil {
 		t.Fatalf("pairing answered unreadably: %s", raw)

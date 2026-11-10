@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"slices"
@@ -18,15 +19,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/discovery"
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/mdns"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
-	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
+	"github.com/junkerderprovinz/parleyport/kit/lan"
+	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/phrase"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // relayConnectPath is where an instance serving a relay answers, on the
@@ -35,14 +38,31 @@ const relayConnectPath = "/relay/connect"
 
 func (s *Service) buildGroup() {
 	s.groupOnce.Do(func() {
-		s.groupMgr = group.NewManager(s.servePeer)
-		s.groupMgr.Stranger = s.strangerProof
-		s.relaySrv = relay.NewServer()
+		s.groupMgr = group.NewManager(http.HandlerFunc(s.servePeer), s.store)
+		s.relaySrv = relay.New()
 		s.relaySrv.Admit = func(key string) bool { return s.relayServe.Load() && s.groupMgr.AdmitsRelayKey(key) }
 		// Behind a trusted reverse proxy the relay counts failed handshakes
 		// per client, as the login throttle does, not per proxy.
-		s.relaySrv.ClientAddr = func(r *http.Request) string { return clientKeyBehind(s.cfg.TrustedProxies, r) }
+		proxies := trustedPrefixes(s.cfg.TrustedProxies)
+		s.relaySrv.TrustedProxies = func() []netip.Prefix { return proxies }
 	})
+}
+
+// trustedPrefixes is nets as the relay takes them.
+func trustedPrefixes(nets []net.IPNet) []netip.Prefix {
+	out := make([]netip.Prefix, 0, len(nets))
+	for _, n := range nets {
+		addr, ok := netip.AddrFromSlice(n.IP)
+		if !ok {
+			continue
+		}
+		bits, _ := n.Mask.Size()
+		if addr.Is4In6() && bits >= 96 {
+			bits -= 96
+		}
+		out = append(out, netip.PrefixFrom(addr.Unmap(), bits))
+	}
+	return out
 }
 
 // pairing returns the Manager of this instance's pairing group.
@@ -60,11 +80,9 @@ func (s *Service) relayServer() *relay.Server {
 // StartGroup applies the stored group and starts listening for members on the
 // local network. It runs once at boot.
 func (s *Service) StartGroup() {
-	s.applyGroup()
-	s.noteMemberAddresses()
 	s.pairing().Start()
+	s.applyGroup()
 	go s.renewDepositsLoop()
-	go s.absentMembersLoop()
 	go s.locateReceiver()
 	go s.settleAllEarlierPulls(context.Background())
 }
@@ -81,7 +99,7 @@ func (s *Service) groupSecret(g store.GroupState) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the stored pairing secret could not be opened: %w", err)
 	}
-	if len(plain) != seedphrase.SecretLen {
+	if len(plain) != phrase.SecretLen {
 		return nil, errors.New("the stored pairing secret has the wrong length")
 	}
 	return plain, nil
@@ -119,17 +137,89 @@ func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 		// Logged, because the instance looks paired while reaching nobody.
 		log.Printf("group: %v; pairing is off until the phrase is entered again", err)
 	}
+	var seed []byte
+	if sec != nil {
+		if seed, err = s.depositSeed(); err != nil {
+			log.Printf("group: the member key: %v", err)
+			sec = nil
+		}
+	}
 	s.pairing().Apply(group.Config{
-		Secret:         sec,
-		InstanceID:     g.InstanceID,
-		Name:           instanceDisplayName(settings),
-		Version:        Version,
-		DirectURL:      s.directURL(g),
-		Mode:           group.Mode(g.RelayMode),
-		RelayURL:       g.RelayURL,
-		FormerPeerAuth: s.formerPeerAuth(),
+		Secret:     sec,
+		Seed:       seed,
+		InstanceID: g.InstanceID,
+		Name:       instanceDisplayName(settings),
+		DirectURL:  s.directURL(g),
+		Mode:       group.Mode(g.RelayMode),
+		RelayURL:   g.RelayURL,
+		Store:      kitStore{s},
+		Former:     s.formerRoster,
+		OnRemoved:  s.removedFromGroup,
 	})
 	return g, true
+}
+
+// kitStore keeps the group's state as the kit writes it, sealed under the
+// APP_KEY.
+type kitStore struct{ s *Service }
+
+func (k kitStore) Load() ([]byte, error) {
+	enc, err := k.s.store.GroupKitState()
+	if err != nil || len(enc) == 0 {
+		return nil, err
+	}
+	return secret.Decrypt(k.s.cfg.AppKey, enc)
+}
+
+func (k kitStore) Save(raw []byte) error {
+	enc, err := secret.Encrypt(k.s.cfg.AppKey, raw)
+	if err != nil {
+		return err
+	}
+	return k.s.store.SetGroupKitState(enc)
+}
+
+// formerRoster is every member whose key this instance pinned before the
+// group ran on the kit, approved as it was: such a member had proven it holds
+// the phrase, and its key is what it signs with now.
+func (s *Service) formerRoster() (kitgroup.Roster, error) {
+	pinned, err := s.store.MemberKeys()
+	if err != nil {
+		return kitgroup.Roster{}, err
+	}
+	peers, err := s.store.ListFleetPeers()
+	if err != nil {
+		return kitgroup.Roster{}, err
+	}
+	var r kitgroup.Roster
+	for id, key := range pinned {
+		kind, name := kitmember.KindInstance, ""
+		var seen time.Time
+		for _, p := range peers {
+			if p.MemberID != id {
+				continue
+			}
+			name, seen = p.Name, time.Unix(lastSeen(p), 0)
+			if p.Kind != "" {
+				kind = kitmember.KindMobile
+			}
+		}
+		kid := kitmember.ID(kind, key)
+		if kid == "" {
+			continue
+		}
+		r.Members = append(r.Members, kitgroup.Member{ID: kid, Kind: kind, Key: key, State: kitgroup.StateApproved, Name: name, LastSeen: seen})
+	}
+	return r, nil
+}
+
+// removedFromGroup leaves the group after another instance took this one out
+// of it.
+func (s *Service) removedFromGroup() {
+	log.Print("group: another instance took this one out of the group")
+	if err := s.leaveGroup(); err != nil {
+		log.Printf("group: leave: %v", err)
+	}
 }
 
 // instanceDisplayName is the name other members show this instance under.
@@ -150,7 +240,7 @@ func (s *Service) directURL(g store.GroupState) string {
 	if addr := strings.TrimSpace(g.DirectURL); addr != "" {
 		return addr
 	}
-	ip := discovery.LocalIPv4()
+	ip := lan.LocalIPv4()
 	if ip == "" {
 		return ""
 	}
@@ -161,8 +251,8 @@ func (s *Service) directURL(g store.GroupState) string {
 }
 
 // learnDirectURL takes the scheme, host and port a browser used to reach
-// this instance and stores it as the instance's own direct address, unless a
-// person has set one by hand. localhost, a loopback or a link-local address
+// this instance and stores it as the instance's own direct address.
+// localhost, a loopback or a link-local address
 // is ignored: none of those mean anything to another instance on the
 // network, and storing one would silence the real address underneath it. A
 // new address goes into the announce at once, or members on the network keep
@@ -173,7 +263,7 @@ func (s *Service) learnDirectURL(r *http.Request) {
 		return
 	}
 	g, err := s.store.GetGroupState()
-	if err != nil || g.DirectURLManual || g.DirectURL == addr {
+	if err != nil || g.DirectURL == addr {
 		return
 	}
 	if err := s.store.LearnGroupDirectURL(addr); err != nil {
@@ -226,23 +316,8 @@ func isLocalHost(host string) bool {
 // servePeer answers one call from a group member. Only the routes in
 // peerRoutes exist here, so nothing else on this instance is reachable from
 // the group however the main router grows.
-func (s *Service) servePeer(ctx context.Context, call relay.ProxyCall) (status int, body []byte) {
-	req, err := http.NewRequestWithContext(context.WithValue(ctx, peerSenderKey{}, call.Sender), call.Method, call.Path, bytes.NewReader(call.Body))
-	if err != nil {
-		return http.StatusBadRequest, nil
-	}
-	req.Header.Set("Content-Type", "application/json")
-	rec := &peerRecorder{header: http.Header{}, status: http.StatusOK}
-	// The relay client runs this on its own goroutine, where no net/http
-	// server would recover a panicking handler.
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("group: handler panicked serving %s %s: %v", call.Method, call.Path, r)
-			status, body = http.StatusInternalServerError, nil
-		}
-	}()
-	s.peerMux().ServeHTTP(rec, req)
-	return rec.status, rec.body.Bytes()
+func (s *Service) servePeer(w http.ResponseWriter, r *http.Request) {
+	s.peerMux().ServeHTTP(w, r)
 }
 
 // peerRoute is one call a group member may make.
@@ -311,16 +386,6 @@ func (s *Service) peerMux() http.Handler {
 	return s.peerMuxHandler
 }
 
-type peerRecorder struct {
-	header http.Header
-	status int
-	body   bytes.Buffer
-}
-
-func (r *peerRecorder) Header() http.Header         { return r.header }
-func (r *peerRecorder) Write(b []byte) (int, error) { return r.body.Write(b) }
-func (r *peerRecorder) WriteHeader(status int)      { r.status = status }
-
 // The errors callMember returns. Whatever a member or a relay says about a
 // failure stays in this instance's log: their text and status codes are not
 // this instance's to show, and a member could otherwise learn through the
@@ -344,11 +409,7 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 		body = b
 	}
 	status, raw, err := s.pairing().Call(ctx, memberID, method, path, body)
-	if errors.Is(err, group.ErrNotMember) {
-		return errMemberGone
-	}
-	if left, ok := errors.AsType[*group.LeftError](err); ok {
-		s.dropFormerMember(left)
+	if errors.Is(err, group.ErrNotMember) || errors.Is(err, kitgroup.ErrRemoved) || errors.Is(err, kitgroup.ErrStranger) {
 		return errMemberGone
 	}
 	if err != nil {
@@ -370,111 +431,7 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 	if out != nil && json.Unmarshal(raw, out) != nil {
 		return errMemberUnreadable
 	}
-	s.harvestDirectURL(memberID, raw)
 	return nil
-}
-
-// harvestDirectURL notes memberID's self-reported direct address, when its
-// answer carries one, as a hint for Call to try before falling back to the
-// relay. Every peer route that answers over the relay ends up feeding this,
-// since the field is the same on all of them; a member that never sends one
-// leaves nothing to note.
-func (s *Service) harvestDirectURL(memberID string, raw []byte) {
-	var hint struct {
-		DirectURL string `json:"directUrl"`
-	}
-	if json.Unmarshal(raw, &hint) == nil && hint.DirectURL != "" {
-		s.pairing().NoteAddress(memberID, hint.DirectURL)
-		if err := s.store.SetFleetPeerMemberURL(memberID, hint.DirectURL); err != nil {
-			log.Printf("group: keep the address of member %q: %v", memberID, err)
-		}
-	}
-}
-
-// noteMemberAddresses hands the group the direct address each member last
-// gave, which it would otherwise only learn again from the member. A member
-// that left the group while this instance was down can then still be asked,
-// and say so.
-func (s *Service) noteMemberAddresses() {
-	peers, err := s.store.ListFleetPeers()
-	if err != nil {
-		log.Printf("group: %v", err)
-		return
-	}
-	for _, p := range peers {
-		if p.MemberID != "" && p.MemberURL != "" {
-			s.pairing().NoteAddress(p.MemberID, p.MemberURL)
-		}
-	}
-}
-
-// formerPeerAuth opens the key of the group this instance last left, nil for
-// none.
-func (s *Service) formerPeerAuth() []byte {
-	enc, err := s.store.FormerPeerAuth()
-	if err != nil || len(enc) == 0 {
-		return nil
-	}
-	key, err := secret.Decrypt(s.cfg.AppKey, enc)
-	if err != nil {
-		log.Printf("group: open the key of the group this instance left: %v", err)
-		return nil
-	}
-	return key
-}
-
-// strangerProof is this instance's signed word, to a caller from a group it
-// is not in, that it is no member of that group. The group asks for it only
-// outside a group or for a call signed with the key of the one left. An
-// instance that still keeps a group's phrase but cannot open it, after an
-// APP_KEY change for example, has not left and says nothing.
-func (s *Service) strangerProof(caller, challenge string) []byte {
-	g, err := s.store.GetGroupState()
-	if err != nil {
-		return nil
-	}
-	if len(g.SecretEnc) > 0 {
-		if sec, err := s.groupSecret(g); err != nil || sec == nil {
-			return nil
-		}
-	}
-	signer, err := s.nextDepositSigner()
-	if err != nil {
-		log.Printf("group: sign an answer to %q: %v", caller, err)
-		return nil
-	}
-	b, err := json.Marshal(signer.prove(keydeposit.ProofNotMember, caller, []byte(challenge), nil))
-	if err != nil {
-		return nil
-	}
-	return b
-}
-
-// dropFormerMember takes a member off this instance's lists, as its leave
-// would have, once its answer proves under the key pinned for it that it is
-// in this group no more. Without a pinned key the answer proves nothing:
-// anybody at the address could have sent it.
-func (s *Service) dropFormerMember(left *group.LeftError) {
-	var p peerProof
-	if json.Unmarshal(left.Statement, &p) != nil {
-		return
-	}
-	key, found, err := s.store.MemberKey(left.MemberID)
-	if err != nil || !found || !bytes.Equal(key, p.Key) {
-		return
-	}
-	g, err := s.store.GetGroupState()
-	if err != nil {
-		return
-	}
-	claim := keydeposit.Claim{Action: keydeposit.ProofNotMember, OwnerID: left.MemberID, KeeperID: g.InstanceID, Counter: p.Counter, Deposit: []byte(left.Challenge)}
-	if !keydeposit.Proven(key, p.Proof, claim) || s.store.AdvanceMemberCounter(left.MemberID, p.Counter) != nil {
-		return
-	}
-	s.pairing().Forget(left.MemberID)
-	if err := s.store.DropMemberFleetPeers(left.MemberID); err != nil {
-		log.Printf("group: drop the row of former member %q: %v", left.MemberID, err)
-	}
 }
 
 // handlePeerStatus is the protection summary a member's Fleet page shows.
@@ -512,10 +469,8 @@ func (s *Service) selfDirectURL() string {
 	return s.directURL(g)
 }
 
-// handlePeerHello answers a probe that does not yet know which member, if
-// any, it is calling: the LAN sweep and a manually entered address both use
-// it. It carries nothing a probe is not owed once it has proven group
-// membership by reaching this route at all.
+// handlePeerHello says which id this instance goes by, to a member that does
+// not know it yet, and where its pages are, for a phone at home.
 // GET /api/group/peer/hello
 func (s *Service) handlePeerHello(w http.ResponseWriter, _ *http.Request) {
 	settings, err := s.store.GetSettings()
@@ -696,13 +651,16 @@ type groupView struct {
 	// forms by them, on the server's clock rather than the browser's.
 	JoinedAgo  int64 `json:"joinedAgo"`
 	MemberSeen bool  `json:"memberSeen"`
+	// Waiting are the members that wait for a person here to let them in,
+	// and the ones this instance waits for there.
+	Waiting []group.Waiting `json:"waiting"`
+	// Fingerprint is this instance's key as another instance shows it while
+	// this one waits there, empty outside a group.
+	Fingerprint string `json:"fingerprint,omitempty"`
 	// SelfAddress is this instance's own address on the local network, as
-	// announced to other members: learned from a browser, set by hand, or,
-	// failing both, this host's own LAN address.
+	// announced to other members: learned from a browser or, failing that,
+	// this host's own LAN address.
 	SelfAddress string `json:"selfAddress"`
-	// SelfAddressManual is true once a person has set SelfAddress by hand,
-	// so a newly learned address stops replacing it until it is cleared.
-	SelfAddressManual bool `json:"selfAddressManual"`
 	// OwnAddresses are the addresses this instance found for itself: its
 	// IPv4 addresses on the local network, then the host name it announces
 	// over mDNS while it does.
@@ -747,13 +705,15 @@ func (h *Handler) groupViewNow() (groupView, error) {
 	if !g.JoinedAt.IsZero() {
 		joinedAgo = max(int64(now.Sub(g.JoinedAt).Seconds()), 0)
 	}
-	// Cheap to call on every load: NeedsSweep decides whether there is
-	// anything to look for, and this is also what makes joining with a
-	// phrase kick off a sweep at once, since that join answers with this
-	// same view.
-	h.svc.pairing().MaybeSweep()
+	fingerprint := ""
+	if h.svc.pairing().Active() {
+		if seed, err := h.svc.depositSeed(); err == nil {
+			fingerprint = kitmember.Fingerprint(keydeposit.OwnerKey(seed))
+		}
+	}
 	return groupView{
 		OK:          true,
+		Fingerprint: fingerprint,
 		Active:      h.svc.pairing().Active(),
 		InstanceID:  g.InstanceID,
 		Name:        instanceDisplayName(settings),
@@ -761,6 +721,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		Members:     members,
 		Away:        away,
 		Settling:    settling,
+		Waiting:     h.svc.pairing().Waiting(),
 		Relay: relayView{
 			Mode:         g.RelayMode,
 			URL:          g.RelayURL,
@@ -769,11 +730,10 @@ func (h *Handler) groupViewNow() (groupView, error) {
 			Serve:        g.RelayServe,
 			ServeClients: clients,
 		},
-		JoinedAgo:         joinedAgo,
-		MemberSeen:        !g.MemberSeenAt.IsZero(),
-		SelfAddress:       h.svc.directURL(g),
-		SelfAddressManual: g.DirectURLManual,
-		OwnAddresses:      h.ownAddresses(),
+		JoinedAgo:    joinedAgo,
+		MemberSeen:   !g.MemberSeenAt.IsZero(),
+		SelfAddress:  h.svc.directURL(g),
+		OwnAddresses: h.ownAddresses(),
 	}, nil
 }
 
@@ -817,7 +777,7 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "groupExists", "error": "this instance is already paired; leave the group first to start a new one"})
 		return
 	}
-	sec, phrase, err := seedphrase.New()
+	sec, words, err := phrase.New()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -831,7 +791,7 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": phrase, "group": v}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": words, "group": v}))
 }
 
 func (h *Handler) storeGroupSecret(sec []byte) error {
@@ -887,12 +847,12 @@ func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "this instance is not paired"})
 		return
 	}
-	phrase, err := seedphrase.Encode(sec)
+	words, err := phrase.Encode(sec)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": phrase}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": words}))
 }
 
 // handleGroupJoin joins the group a phrase belongs to, leaving any group this
@@ -906,13 +866,13 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	sec, err := seedphrase.Decode(body.Phrase)
+	sec, err := phrase.Decode(body.Phrase)
 	if err != nil {
-		var de *seedphrase.DecodeError
+		var de *phrase.DecodeError
 		if errors.As(err, &de) {
 			writeJSON(w, http.StatusOK, map[string]any{
 				"ok":       false,
-				"error":    strings.TrimPrefix(de.Error(), "seedphrase: "),
+				"error":    strings.TrimPrefix(de.Error(), "phrase: "),
 				"reason":   de.Reason,
 				"word":     de.Word,
 				"position": de.Position,
@@ -965,49 +925,49 @@ func (h *Handler) inAnotherGroup(sec []byte) bool {
 // Fleet rows go.
 func (h *Handler) switchGroup(ctx context.Context, sec []byte) error {
 	h.svc.tellMembersLeaving(ctx)
-	if err := h.keepFormerGroup(); err != nil {
+	if err := h.svc.forgetGroup(); err != nil {
 		return err
 	}
-	if err := h.storeGroupSecret(sec); err != nil {
-		return err
-	}
-	if err := h.store.ForgetMemberKeys(); err != nil {
-		return err
-	}
-	return h.store.DropMemberFleetPeers("")
+	return h.storeGroupSecret(sec)
 }
 
-// keepFormerGroup keeps the key of the group this instance is leaving, since
-// a member out of reach misses the leave and asks again later.
-func (h *Handler) keepFormerGroup() error {
-	g, err := h.store.GetGroupState()
-	if err != nil {
+// leaveGroup leaves the group without telling anybody.
+func (s *Service) leaveGroup() error {
+	if err := s.forgetGroup(); err != nil {
 		return err
 	}
-	cur, err := h.svc.groupSecret(g)
-	if err != nil || cur == nil {
-		return nil
-	}
-	enc, err := secret.Encrypt(h.cfg.AppKey, group.PeerAuthKey(cur))
-	if err != nil {
+	if err := s.store.SetGroupSecret(nil, time.Now()); err != nil {
 		return err
 	}
-	return h.store.SetFormerPeerAuth(enc)
+	s.applyGroup()
+	return nil
+}
+
+// forgetGroup drops what this instance keeps of its group's members.
+func (s *Service) forgetGroup() error {
+	if err := s.store.ForgetMemberKeys(); err != nil {
+		return err
+	}
+	if err := s.store.SetGroupKitState(nil); err != nil {
+		return err
+	}
+	return s.store.DropMemberFleetPeers("")
 }
 
 // leaveNoticeTimeout bounds telling the members about a leave, so a member out
 // of reach holds the page up only briefly.
 const leaveNoticeTimeout = 5 * time.Second
 
-// tellMembersLeaving lets every instance and phone in reach know that this one
-// leaves the group, so each takes it off its list at once. An instance that
-// does not hear asks again later and is told then; a phone too old to take
-// the word keeps the server until a person removes it.
+// tellMembersLeaving lets every instance in reach know that this one leaves
+// the group, so each takes it off its list at once.
 func (s *Service) tellMembersLeaving(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, leaveNoticeTimeout)
 	defer cancel()
 	var wg sync.WaitGroup
 	for _, m := range s.pairing().Members() {
+		if m.Kind != "" {
+			continue
+		}
 		proof, err := s.signCall(keydeposit.ProofLeave, m.ID, nil)
 		if err != nil {
 			log.Printf("group: sign the leave for member %q: %v", m.ID, err)
@@ -1021,9 +981,8 @@ func (s *Service) tellMembersLeaving(ctx context.Context) {
 }
 
 // handlePeerLeave takes a member that leaves the group off this instance's
-// lists: its Fleet row goes, and the group keeps it out of the members until
-// its relay connection and announces are gone. Anybody in the group can name
-// any member, so the call has to carry the member's own signature.
+// lists: its Fleet row goes. Its key stays approved, so it comes back as it
+// was when it joins again.
 // POST /api/group/peer/leave
 func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
 	var proof peerProof
@@ -1040,7 +999,6 @@ func (s *Service) handlePeerLeave(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
-	s.pairing().Forget(sender)
 	if err := s.store.DropMemberFleetPeers(sender); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -1103,92 +1061,14 @@ func normalizeRelayURL(raw string) (string, string) {
 	if !strings.Contains(v, "://") {
 		v = "https://" + v
 	}
-	if _, err := relay.ConnectURL(v); err != nil {
+	u, err := url.Parse(v)
+	if err != nil || u.Host == "" || !slices.Contains([]string{"http", "https", "ws", "wss"}, u.Scheme) {
 		return "", "this is not a relay address; use wss://, https:// or a host name"
 	}
-	u, err := url.Parse(v)
-	if err != nil || u.User != nil {
+	if u.User != nil {
 		return "", "a relay address carries no user name or password"
 	}
 	return v, ""
-}
-
-// handleGroupAddress sets or clears this instance's own direct address by
-// hand: a reverse proxy hostname, a port a browser never sees, or any other
-// case a learned address gets wrong. An empty url clears the override, so
-// the next signed-in request is learned again. PUT /api/group/address
-func (h *Handler) handleGroupAddress(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		URL string `json:"url"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	v := strings.TrimSpace(body.URL)
-	if v == "" {
-		if err := h.store.SetGroupDirectURL("", false); err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-		h.svc.applyGroup()
-		h.writeGroupView(w)
-		return
-	}
-	addr, msg := normalizeDirectURL(v)
-	if msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
-		return
-	}
-	if err := h.store.SetGroupDirectURL(addr, true); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	h.svc.applyGroup()
-	h.writeGroupView(w)
-}
-
-// normalizeDirectURL trims a pasted address and requires the scheme a member
-// actually dials: http or https, never ws, since this is where the direct
-// call transport connects, not the relay.
-func normalizeDirectURL(raw string) (string, string) {
-	v := strings.TrimRight(strings.TrimSpace(raw), "/")
-	if !strings.Contains(v, "://") {
-		v = "https://" + v
-	}
-	u, err := url.Parse(v)
-	if err != nil || u.Host == "" {
-		return "", "this is not an address; use http:// or https://"
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", "an instance address needs http:// or https://"
-	}
-	if u.User != nil {
-		return "", "an address carries no user name or password"
-	}
-	return v, ""
-}
-
-// handleGroupProbe makes one blind, signed call to an address a person typed
-// under "Can't find it?", for a subnet or a port the LAN sweep does not try
-// on its own. A successful answer is recorded exactly as the sweep records
-// one. POST /api/group/probe
-func (h *Handler) handleGroupProbe(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		URL string `json:"url"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	addr, msg := normalizeDirectURL(body.URL)
-	if msg != "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": msg})
-		return
-	}
-	if _, err := h.svc.pairing().Probe(r.Context(), addr); err != nil {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "nothing at that address answered as a member of this group"})
-		return
-	}
-	h.writeGroupView(w)
 }
 
 // handleRelayConnect is the relay socket while this instance serves one. It
@@ -1208,6 +1088,26 @@ func (h *Handler) handleRelayConnect(w http.ResponseWriter, r *http.Request) {
 // members hold. POST /api/group/call
 func (h *Handler) handleGroupCall(w http.ResponseWriter, r *http.Request) {
 	h.svc.pairing().ServeDirect(w, r)
+}
+
+// handleApproveMember lets in a member that waits for approval, under its id
+// in the group. POST /api/group/members/{id}/approve
+func (h *Handler) handleApproveMember(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.pairing().Approve(r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.writeGroupView(w)
+}
+
+// handleRefuseMember turns away a member that waits for approval, for good:
+// its key stays shut out. POST /api/group/members/{id}/refuse
+func (h *Handler) handleRefuseMember(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.pairing().Remove(r.PathValue("id")); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.writeGroupView(w)
 }
 
 // handleMemberRepos lists the repository locations a member offers, for the

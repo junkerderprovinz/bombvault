@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -109,138 +108,22 @@ func TestOnlyASignedInRequestTeachesTheDirectAddress(t *testing.T) {
 	}
 }
 
-// A manually set address must survive further requests; that is the whole
-// point of the manual flag.
-func TestLearningAnAddressNeverOverwritesAManualOne(t *testing.T) {
-	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	if err := in.st.SetGroupDirectURL("https://vault.example.org", true); err != nil {
-		t.Fatal(err)
-	}
-	r := httptest.NewRequest(http.MethodGet, "/api/group", nil)
-	r.Host = "192.168.1.20:3443"
-	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: request cookie, never set by a server
-	in.router.ServeHTTP(httptest.NewRecorder(), r)
-
-	g, err := in.st.GetGroupState()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if g.DirectURL != "https://vault.example.org" {
-		t.Fatalf("DirectURL = %q, want the manual address kept", g.DirectURL)
-	}
-}
-
-func TestHandleGroupAddressSetsAndClearsTheManualOverride(t *testing.T) {
-	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
-
-	code, out := in.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": "https://vault.example.org"})
-	if code != http.StatusOK || out["ok"] != true || out["selfAddress"] != "https://vault.example.org" || out["selfAddressManual"] != true {
-		t.Fatalf("set address: %d %v", code, out)
-	}
-
-	code, out = in.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": "https://user:pass@vault.example.org"})
-	if code != http.StatusOK || out["ok"] == true {
-		t.Fatalf("an address with credentials was accepted: %d %v", code, out)
-	}
-
-	code, out = in.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": ""})
-	if code != http.StatusOK || out["ok"] != true || out["selfAddressManual"] != false {
-		t.Fatalf("clear address: %d %v", code, out)
-	}
-}
-
-// The probe is what "Can't find it?" runs: a signed call to one address a
-// person typed, recorded as a member exactly as the LAN sweep would.
-func TestHandleGroupProbeFindsAndRecordsAMember(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-
-	bSrv := httptest.NewTLSServer(b.router)
-	t.Cleanup(bSrv.Close)
-
-	code, out := a.do(t, http.MethodPost, "/api/group/phrase", nil)
-	phrase, _ := out["phrase"].(string)
-	if code != http.StatusOK || len(strings.Fields(phrase)) != 12 {
-		t.Fatalf("create phrase: %d %v", code, out)
-	}
-	if code, out := b.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": phrase}); code != http.StatusOK || out["active"] != true {
-		t.Fatalf("join: %d %v", code, out)
-	}
-
-	code, out = a.do(t, http.MethodPost, "/api/group/probe", map[string]any{"url": bSrv.URL})
-	if code != http.StatusOK || out["ok"] != true {
-		t.Fatalf("probe: %d %v", code, out)
-	}
-	members, _ := out["members"].([]any)
-	if len(members) != 1 {
-		t.Fatalf("members after the probe = %v, want one", out["members"])
-	}
-	m, _ := members[0].(map[string]any)
-	if m["id"] != b.id(t) || m["direct"] != true {
-		t.Fatalf("member = %v, want b found directly", m)
-	}
-}
-
-// A probe of an instance that answers but belongs to a different group must
-// not add anything: the signed call is refused before it ever identifies
-// itself.
-func TestHandleGroupProbeOfANonMemberFails(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	stranger := newInstance(t, "stranger", strings.Repeat("c3", 32))
-	strangerSrv := httptest.NewTLSServer(stranger.router)
-	t.Cleanup(strangerSrv.Close)
-
-	if code, out := a.do(t, http.MethodPost, "/api/group/phrase", nil); code != http.StatusOK || out["ok"] != true {
-		t.Fatalf("create phrase on a: %d %v", code, out)
-	}
-	if code, out := stranger.do(t, http.MethodPost, "/api/group/phrase", nil); code != http.StatusOK || out["ok"] != true {
-		t.Fatalf("create phrase on stranger: %d %v", code, out)
-	}
-
-	code, out := a.do(t, http.MethodPost, "/api/group/probe", map[string]any{"url": strangerSrv.URL})
-	if code != http.StatusOK || out["ok"] == true {
-		t.Fatalf("probing a member of a different group succeeded: %d %v", code, out)
-	}
-	if members := a.svc.pairing().Members(); len(members) != 0 {
-		t.Fatalf("members after a failed probe = %+v, want none", members)
-	}
-}
-
-// A member's answer to a poll already carries its direct address (fleet.go's
-// fleetStatusResponse.DirectURL); callMember harvests it, and the next call
-// to that member uses it instead of the relay.
-func TestFleetPollExchangesDirectAddressesOverTheRelay(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-
-	bSrv := httptest.NewTLSServer(b.router)
-	t.Cleanup(bSrv.Close)
-	if err := b.st.SetGroupDirectURL(bSrv.URL, true); err != nil {
-		t.Fatal(err)
-	}
-
-	pairThroughRelay(t, a, b)
-
-	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-
-	// The poll's answer noted b's address; a second call now finds it
-	// directly and confirms it.
-	var status struct {
-		OK bool `json:"ok"`
-	}
-	if err := a.svc.callMember(context.Background(), b.id(t), http.MethodGet, "/api/group/peer/status", nil, &status); err != nil {
-		t.Fatalf("second call to b: %v", err)
-	}
-
-	found := false
-	for _, m := range a.svc.pairing().Members() {
-		if m.ID == b.id(t) {
-			found = m.Direct
+// Pairing goes by the phrase alone: there is nowhere to type the address of
+// an instance, this one's own included.
+func TestPairingTakesNoTypedAddresses(t *testing.T) {
+	in := newInstance(t, "attic", strings.Repeat("b2", 32))
+	in.do(t, http.MethodPost, "/api/group/phrase", nil)
+	for _, route := range []struct{ method, path string }{
+		{http.MethodPut, "/api/group/address"},
+		{http.MethodPost, "/api/group/probe"},
+	} {
+		code, out := in.do(t, route.method, route.path, map[string]any{"url": "https://192.168.1.20:3443"})
+		if code == http.StatusOK && out["ok"] == true {
+			t.Errorf("%s %s took an address: %v", route.method, route.path, out)
 		}
 	}
-	if !found {
-		t.Fatalf("members after the exchange = %+v, want b reachable directly", a.svc.pairing().Members())
+	_, view := in.do(t, http.MethodGet, "/api/group", nil)
+	if _, ok := view["selfAddressManual"]; ok {
+		t.Fatalf("the group view still offers an address set by hand: %v", view)
 	}
 }

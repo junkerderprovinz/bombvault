@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -33,7 +32,7 @@ func TestARoleAnswerAndThePasswordNeedTheKeyOfTheMemberNamed(t *testing.T) {
 		t.Fatal(err)
 	}
 	call := func(method, path string, body []byte) string {
-		_, out := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: method, Path: path, Body: body, Sender: member})
+		_, out := in.svc.callPeer(context.Background(), peerCall{Method: method, Path: path, Body: body, Sender: member})
 		return string(out)
 	}
 	password := restickey.Derive(in.appKey)

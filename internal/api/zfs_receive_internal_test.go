@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -68,7 +67,7 @@ func newReceiveRig(t *testing.T) *receiveRig {
 	servedCertificate.Store(&r.srv.TLS.Certificates[0])
 	t.Cleanup(func() { servedCertificate.Store(served) })
 	r.dst.svc.cfg.HTTPOnly = false
-	if err := r.dst.st.SetGroupDirectURL(r.srv.URL, true); err != nil {
+	if err := r.dst.st.LearnGroupDirectURL(r.srv.URL); err != nil {
 		t.Fatal(err)
 	}
 	pairThroughRelay(t, r.src, r.dst)
@@ -396,7 +395,7 @@ func TestASourceSendsNothingToAReceiverOnPlainHTTP(t *testing.T) {
 	r := newReceiveRig(t)
 	r.allowed(t, [5]int{0, 7, 3, 0, 0})
 	plain := "http://" + strings.TrimPrefix(r.srv.URL, "https://")
-	if err := r.dst.st.SetGroupDirectURL(plain, true); err != nil {
+	if err := r.dst.st.LearnGroupDirectURL(plain); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := r.src.svc.zfsReplicaPeerEnd(context.Background(), r.item(t)); zfsrepl.Code(err) != "peer-insecure" {
@@ -481,7 +480,7 @@ func askReceive(t *testing.T, in *instance, req peerZFSReceiveRequest) (int, []b
 		Proof: keydeposit.Prove(seed[:], keydeposit.Claim{Action: keydeposit.ProofZFSReceive, OwnerID: req.InstanceID, KeeperID: in.id(t), Counter: counter, Deposit: req.signed()}),
 	}
 	body, _ := json.Marshal(req)
-	return in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: req.InstanceID})
+	return in.svc.callPeer(context.Background(), peerCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: req.InstanceID})
 }
 
 // askSlot records a request of instance peer, named tower, for dataset
@@ -692,7 +691,7 @@ func TestASlotGoesOnlyToTheMemberThatSignsForIt(t *testing.T) {
 		Members: []string{item.Dataset}, Keep: item.Replica.Keep}
 	body, _ := json.Marshal(ask)
 	for name, sender := range map[string]string{"another member": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", "no sender": "", "the source unsigned": r.src.id(t)} {
-		_, raw := r.dst.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: sender})
+		_, raw := r.dst.svc.callPeer(context.Background(), peerCall{Method: http.MethodPost, Path: "/api/group/peer/zfs-receive", Body: body, Sender: sender})
 		if strings.Contains(string(raw), `"token"`) {
 			t.Errorf("%s asking in the source's name got the slot: %s", name, raw)
 		}

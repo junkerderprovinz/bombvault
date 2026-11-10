@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -26,7 +25,7 @@ func peerCallWith(t *testing.T, in *instance, method, sender, path string, body 
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, answer := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: method, Path: path, Body: raw, Sender: sender})
+	_, answer := in.svc.callPeer(context.Background(), peerCall{Method: method, Path: path, Body: raw, Sender: sender})
 	out := map[string]any{}
 	_ = json.Unmarshal(answer, &out)
 	return out
@@ -49,10 +48,10 @@ func plantedDeposit(t *testing.T, ownerID, keeperID string, counter int64) (peer
 func TestAMemberCanNeitherReplaceNorTakeBackAnotherInstallsDeposit(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
+	groupOf(t, tower, attic)
 	code, _ := deposit(t, tower, attic)["recoveryCode"].(string)
 	towerID, atticID := tower.id(t), attic.id(t)
-	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "", attic)
+	mallory := holdWords(t, wordsHolderID, "", attic)
 	before, _ := kept(t, attic, tower)
 	far := before.Counter + 1_000_000
 
@@ -93,10 +92,10 @@ func TestAMemberCanNeitherReplaceNorTakeBackAnotherInstallsDeposit(t *testing.T)
 func TestAnIdThatIsNoMemberReachesNoDepositRoute(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
+	groupOf(t, tower, attic)
 	deposit(t, tower, attic)
 	towerID, atticID := tower.id(t), attic.id(t)
-	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "", attic)
+	mallory := holdWords(t, wordsHolderID, "", attic)
 
 	for i := range 12 {
 		id := fmt.Sprintf("%032x", i+1)
@@ -301,9 +300,9 @@ func TestNoDepositIsMadeOrRenewedUnderALockedBackupKey(t *testing.T) {
 func TestACounterMadeUpHighDoesNotKeepTheOwnersDepositOut(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
+	groupOf(t, tower, attic)
 	towerID, atticID := tower.id(t), attic.id(t)
-	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "", attic)
+	mallory := holdWords(t, wordsHolderID, "", attic)
 
 	farOff, _ := plantedDeposit(t, towerID, atticID, math.MaxInt64)
 	if out := mallory.call(atticID, towerID, http.MethodPut, "/api/group/peer/deposit", farOff); out["ok"] != false {

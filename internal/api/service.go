@@ -47,7 +47,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/remotes"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -58,6 +57,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/template"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // containerDefinition is the recreate recipe persisted at backup time so that

@@ -10,7 +10,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -21,7 +20,7 @@ func TestAMemberReadsWhatRunsHereOverTheGroup(t *testing.T) {
 	h.progress = progress.NewStore()
 	h.progress.Publish(progress.Event{Key: "container:nextcloud", Phase: "backup", Percent: 40, Active: true})
 
-	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/activity"})
+	status, body := h.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/activity"})
 	if status != http.StatusOK {
 		t.Fatalf("status %d: %s", status, body)
 	}
@@ -41,7 +40,7 @@ func TestAMemberReadsTheLookStoredHere(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/display-prefs"})
+	status, body := h.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/display-prefs"})
 	if status != http.StatusOK {
 		t.Fatalf("status %d: %s", status, body)
 	}
@@ -72,7 +71,7 @@ func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
 	seed := pinPhoneKey(t, h, "phone")
 
 	ask := func(sender, id string) (int, peerSessionResponse) {
-		status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{
+		status, body := h.svc.callPeer(context.Background(), peerCall{
 			Method: http.MethodPost,
 			Path:   "/api/group/peer/session",
 			Body:   sessionAsk(t, h, seed, id),
@@ -108,7 +107,7 @@ func TestAPhoneNeedsNoSessionWhereThereIsNoPassword(t *testing.T) {
 		t.Fatal(err)
 	}
 	seed := pinPhoneKey(t, h, "phone")
-	status, body := h.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: sessionAsk(t, h, seed, "phone"), Sender: "phone"})
+	status, body := h.svc.callPeer(context.Background(), peerCall{Method: http.MethodPost, Path: "/api/group/peer/session", Body: sessionAsk(t, h, seed, "phone"), Sender: "phone"})
 	if status != http.StatusOK || !strings.Contains(string(body), `"needed":false`) {
 		t.Fatalf("status %d: %s", status, body)
 	}

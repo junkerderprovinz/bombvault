@@ -520,7 +520,7 @@ func answerPeerReceiver(t *testing.T, f *receiverFixture, req peerReceiverReques
 	}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodPost, "/api/group/peer/receiver", strings.NewReader(string(body)))
-	f.svc.handlePeerReceiver(w, r.WithContext(context.WithValue(r.Context(), peerSenderKey{}, req.InstanceID)))
+	f.svc.handlePeerReceiver(w, r.WithContext(group.WithSender(r.Context(), group.Sender{ID: req.InstanceID})))
 	return w
 }
 
@@ -642,7 +642,7 @@ func TestTheReceiverNamesTheHostItsCheckFound(t *testing.T) {
 		t.Fatal(err)
 	}
 	b.svc.docker = &receiverDocker{live: map[string]bool{"rest-server": true}}
-	if err := b.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
+	if err := b.st.LearnGroupDirectURL("https://bv.example.com"); err != nil {
 		t.Fatal(err)
 	}
 	r, err := a.svc.askReceiver(context.Background(), b.id(t), false)
@@ -676,7 +676,7 @@ func TestABombVaultWithAnAddressOfItsOwnAsksForTheReceiversHost(t *testing.T) {
 	for driver, host := range map[string]string{"macvlan": "", "ipvlan": "", "bridge": "192.168.1.60"} {
 		f := newReceiverFixture(t)
 		f.svc.docker = &networkedDocker{driver: driver}
-		if err := f.st.SetGroupDirectURL("https://192.168.1.60:3443", true); err != nil {
+		if err := f.st.LearnGroupDirectURL("https://192.168.1.60:3443"); err != nil {
 			t.Fatal(err)
 		}
 		if got := f.svc.receiverHost(context.Background(), rs); got != host {
@@ -699,40 +699,24 @@ func TestTheReceiverCheckTriesTheHostItFoundBeforeTheOneABrowserUsed(t *testing.
 		{"https://[fd7a:115c:a1e0::1]:3443", []string{"192.168.1.10"}},
 	}
 	for _, c := range cases {
-		if err := f.st.SetGroupDirectURL(c.url, false); err != nil {
+		if err := f.st.LearnGroupDirectURL(c.url); err != nil {
 			t.Fatal(err)
 		}
 		if got, locate := f.svc.receiverProbeHosts(context.Background(), rs); !locate || !slices.Equal(got, c.want) {
 			t.Errorf("answering at %s: hosts %v (locate %v), want %v", c.url, got, locate, c.want)
 		}
 	}
-	if err := f.st.SetGroupDirectURL("https://vault.lan:3443", true); err != nil {
-		t.Fatal(err)
-	}
-	if got, locate := f.svc.receiverProbeHosts(context.Background(), rs); locate || !slices.Equal(got, []string{"vault.lan"}) {
-		t.Errorf("an address set by hand: hosts %v (locate %v), want it alone", got, locate)
-	}
 }
 
 func TestAnAddressABrowserUsedIsNoReceiverAddressUntilACheckReachesIt(t *testing.T) {
 	f := newReceiverFixture(t)
 	rs := store.ReceiverServer{Port: 8000}
-	cases := []struct {
-		url    string
-		manual bool
-		host   string
-	}{
-		{"https://bv.example.com", false, ""},
-		{"https://192.168.1.20:3443", false, ""},
-		{"https://100.101.102.103:3443", false, ""},
-		{"https://vault.lan:3443", true, "vault.lan"},
-	}
-	for _, c := range cases {
-		if err := f.st.SetGroupDirectURL(c.url, c.manual); err != nil {
+	for _, url := range []string{"https://bv.example.com", "https://192.168.1.20:3443", "https://100.101.102.103:3443", "https://vault.lan:3443"} {
+		if err := f.st.LearnGroupDirectURL(url); err != nil {
 			t.Fatal(err)
 		}
-		if got := f.svc.receiverHost(context.Background(), rs); got != c.host {
-			t.Errorf("%s (set by hand %v): host %q, want %q", c.url, c.manual, got, c.host)
+		if got := f.svc.receiverHost(context.Background(), rs); got != "" {
+			t.Errorf("%s: host %q, want none", url, got)
 		}
 	}
 
@@ -771,7 +755,7 @@ func TestAReceiverIsOfferedOnlyWhereItsCheckReachedIt(t *testing.T) {
 	}
 	hostAfterCheck := func(directURL string) string {
 		t.Helper()
-		if err := f.st.SetGroupDirectURL(directURL, false); err != nil {
+		if err := f.st.LearnGroupDirectURL(directURL); err != nil {
 			t.Fatal(err)
 		}
 		rs, _, _ := f.st.GetReceiverServer()
@@ -801,7 +785,7 @@ func TestAReceiverWithoutAnAddressHandsOutNoLogin(t *testing.T) {
 	if err := f.st.SaveReceiverServer(rs); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
+	if err := f.st.LearnGroupDirectURL("https://bv.example.com"); err != nil {
 		t.Fatal(err)
 	}
 	grant := store.RoleRequest{Direction: store.RoleRequestIn, MemberID: "m-attic", Role: store.RoleReceiver, Sections: allRoleSections}
@@ -838,7 +822,7 @@ func TestAnAddressSetForTheReceiverLaterIsWhatMembersGet(t *testing.T) {
 		t.Fatal(err)
 	}
 	f.docker.live = map[string]bool{"rest-server": true}
-	if err := f.st.SetGroupDirectURL("https://bv.example.com", false); err != nil {
+	if err := f.st.LearnGroupDirectURL("https://bv.example.com"); err != nil {
 		t.Fatal(err)
 	}
 

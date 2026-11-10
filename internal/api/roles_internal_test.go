@@ -6,14 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -87,7 +84,7 @@ func peerCallAs(t *testing.T, in *instance, sender, path string, body any) map[s
 	if err != nil {
 		t.Fatal(err)
 	}
-	status, answer := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodPost, Path: path, Body: raw, Sender: sender})
+	status, answer := in.svc.callPeer(context.Background(), peerCall{Method: http.MethodPost, Path: path, Body: raw, Sender: sender})
 	var out map[string]any
 	if err := json.Unmarshal(answer, &out); err != nil {
 		t.Fatalf("%s answered %d unreadably: %s", path, status, answer)
@@ -362,58 +359,5 @@ func TestARoleCallIsBoundToTheSenderTheChannelNames(t *testing.T) {
 	}
 	if out := peerCallAs(t, attic, tower, "/api/group/peer/roles/answer", map[string]any{"role": store.RoleFetcher, "state": store.RoleAsked}); out["ok"] != false {
 		t.Errorf("an answer that is no answer = %v, want it refused", out)
-	}
-}
-
-func TestAnInstanceOutsideTheGroupReachesNoRoleRoute(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	stranger := newInstance(t, "stranger", strings.Repeat("c3", 32))
-	srv := httptest.NewTLSServer(attic.router)
-	t.Cleanup(srv.Close)
-	for _, in := range []*instance{attic, stranger} {
-		if code, out := in.do(t, http.MethodPost, "/api/group/phrase", nil); code != http.StatusOK || out["ok"] != true {
-			t.Fatalf("create phrase: %d %v", code, out)
-		}
-	}
-	stranger.svc.pairing().NoteAddress(attic.id(t), srv.URL)
-
-	ask := peerRoleAsk{Name: "stranger", Role: store.RoleFetcher, Sections: []string{"containers"}, Renew: true}
-	err := stranger.svc.callMember(context.Background(), attic.id(t), http.MethodPost, "/api/group/peer/roles/ask", ask, nil)
-	if !errors.Is(err, errMemberSilent) {
-		t.Fatalf("a call signed with another group's key = %v, want %v", err, errMemberSilent)
-	}
-	if roleRequestCount(t, attic) != 0 {
-		t.Fatal("an instance outside the group left a request behind")
-	}
-}
-
-func TestADirectCallCarriesItsSenderFromTheSignedHeader(t *testing.T) {
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	srv := httptest.NewTLSServer(attic.router)
-	t.Cleanup(srv.Close)
-	_, out := tower.do(t, http.MethodPost, "/api/group/phrase", nil)
-	if code, joined := attic.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": out["phrase"]}); code != http.StatusOK || joined["active"] != true {
-		t.Fatalf("join: %d %v", code, joined)
-	}
-	tower.svc.pairing().NoteAddress(attic.id(t), srv.URL)
-
-	seed, err := tower.svc.depositSeed()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := attic.st.PinMemberKey(tower.id(t), keydeposit.OwnerKey(seed)); err != nil {
-		t.Fatal(err)
-	}
-	ask := peerRoleAsk{Name: "tower", Role: store.RoleFetcher, Sections: []string{"containers"}, Renew: true}
-	if ask.peerProof, err = tower.svc.signCall(keydeposit.ProofRoleAsk, attic.id(t), ask.signed()); err != nil {
-		t.Fatal(err)
-	}
-	var ans peerRoleState
-	if err := tower.svc.callMember(context.Background(), attic.id(t), http.MethodPost, "/api/group/peer/roles/ask", ask, &ans); err != nil {
-		t.Fatal(err)
-	}
-	if req, ok := roleWith(t, attic, store.RoleRequestIn, tower, store.RoleFetcher); !ok || ans.State != store.RoleAsked {
-		t.Fatalf("request after a direct call = %+v, %v; answer %+v", req, ok, ans)
 	}
 }

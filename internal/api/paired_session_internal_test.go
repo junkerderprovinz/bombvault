@@ -11,75 +11,44 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
-	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // wordsHolder is somebody who has the twelve words and nothing else: no
-// BombVault, no APP_KEY and no password of any instance.
+// BombVault, no APP_KEY and no password of any instance. The group pinned its
+// key, so its calls reach an instance as its own; a call in another's name is
+// handed over as if the group vouched for it, which no member can make it do.
 type wordsHolder struct {
-	t      *testing.T
-	id     string
-	seed   []byte
-	client *relay.Client
+	t    *testing.T
+	id   string
+	kind string
+	seed []byte
+	on   map[string]*instance
 }
 
-// holdWords connects to the group's relay with keys made from the words and
-// announces itself under kind, the way a phone does. It names a signing key
-// of its own to an instance that asks.
-func holdWords(t *testing.T, relayURL, phrase, id, kind string, seenBy ...*instance) *wordsHolder {
+// holdWords makes the holder a member of kind under id on every instance of
+// seenBy, the way the group lists one that proved it holds the words.
+func holdWords(t *testing.T, id, kind string, seenBy ...*instance) *wordsHolder {
 	t.Helper()
-	sec, err := seedphrase.Decode(phrase)
-	if err != nil {
-		t.Fatal(err)
-	}
 	seed, err := keydeposit.NewOwnerSeed()
 	if err != nil {
 		t.Fatal(err)
 	}
-	serve := func(_ context.Context, call relay.ProxyCall) (int, []byte) {
-		if call.Method != http.MethodGet || call.Path != "/api/group/peer/key" {
-			return http.StatusNotFound, nil
-		}
-		proof := keydeposit.Prove(seed, keydeposit.Claim{Action: keydeposit.ProofKey, OwnerID: id, KeeperID: call.Sender})
-		b, _ := json.Marshal(peerKeyAnswer{OK: true, Key: keydeposit.OwnerKey(seed), Proof: proof})
-		return http.StatusOK, b
-	}
-	c, err := relay.NewClient(relay.ClientOptions{
-		URL: relayURL, Key: relay.DeriveKey(sec), FrameKey: relay.DeriveFrameKey(sec), InstanceID: id,
-		Identity: relay.Identity{Name: "tower", Version: Version, Kind: kind},
-		Serve:    serve,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	c.Start()
-	t.Cleanup(func() { _ = c.Close() })
-	deadline := time.Now().Add(10 * time.Second)
+	w := &wordsHolder{t: t, id: id, kind: kind, seed: seed, on: map[string]*instance{}}
 	for _, in := range seenBy {
-		for !isMember(in, id) {
-			if time.Now().After(deadline) {
-				t.Fatal("an instance never saw the holder of the words")
-			}
-			time.Sleep(20 * time.Millisecond)
+		w.on[in.id(t)] = in
+		if err := in.st.PinMemberKey(id, keydeposit.OwnerKey(seed)); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := in.st.CreateFleetPeer(store.FleetPeer{MemberID: id, Name: "tower", Kind: kind, Enabled: true}); err != nil {
+			t.Fatal(err)
 		}
 	}
-	return &wordsHolder{t: t, id: id, seed: seed, client: c}
+	return w
 }
 
-func isMember(in *instance, id string) bool {
-	for _, m := range in.svc.pairing().Members() {
-		if m.ID == id {
-			return true
-		}
-	}
-	return false
-}
-
-// call sends target a peer call that names sender as where it came from,
-// which the holder of the words is free to choose.
+// call sends target a peer call that names sender as where it came from.
 func (w *wordsHolder) call(target, sender, method, path string, body any) map[string]any {
 	w.t.Helper()
 	var raw []byte
@@ -90,20 +59,19 @@ func (w *wordsHolder) call(target, sender, method, path string, body any) map[st
 		}
 		raw = b
 	}
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		res, err := w.client.Call(context.Background(), target, relay.ProxyCall{Method: method, Path: path, Body: raw, Sender: sender})
-		if err == nil {
-			out := map[string]any{}
-			_ = json.Unmarshal(res.Body, &out)
-			out["_status"] = float64(res.Status)
-			return out
-		}
-		if time.Now().After(deadline) {
-			w.t.Fatalf("%s %s: %v", method, path, err)
-		}
-		time.Sleep(50 * time.Millisecond)
+	in := w.on[target]
+	if in == nil {
+		w.t.Fatalf("the holder is no member on %s", target)
 	}
+	kind := ""
+	if sender == w.id {
+		kind = w.kind
+	}
+	status, res := in.svc.callPeer(context.Background(), peerCall{Method: method, Path: path, Body: raw, Sender: sender, Kind: kind, Key: keydeposit.OwnerKey(w.seed)})
+	out := map[string]any{}
+	_ = json.Unmarshal(res, &out)
+	out["_status"] = float64(status)
+	return out
 }
 
 // pairedSession is the session an instance gives the holder of the words for
@@ -136,12 +104,12 @@ const wordsHolderID = "0123456789abcdef0123456789abcdef"
 func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
+	groupOf(t, tower, attic)
 	if code, _ := deposit(t, tower, attic)["recoveryCode"].(string); code == "" {
 		t.Fatal("no deposit")
 	}
 	towerID, atticID := tower.id(t), attic.id(t)
-	mallory := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic)
+	mallory := holdWords(t, wordsHolderID, "android", attic)
 	paired := mallory.pairedSession(attic)
 
 	inOwnersName := mallory.call(atticID, towerID, http.MethodPost, "/api/group/peer/deposit/release", peerReleaseAsk{OwnerID: towerID, Name: "tower", Renew: true})
@@ -187,8 +155,8 @@ func TestTheTwelveWordsAloneNeitherAllowAReleaseNorReachTheKit(t *testing.T) {
 func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
-	paired := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic).pairedSession(attic)
+	groupOf(t, tower, attic)
+	paired := holdWords(t, wordsHolderID, "android", attic).pairedSession(attic)
 	if !secret.PairedSessionToken(paired) {
 		t.Fatal("the session of a phone is not marked as one")
 	}
@@ -240,8 +208,8 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 func TestAPhoneTakenOffTheInstancesPageLosesItsSessionAtTheOwnAddress(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
-	paired := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic).pairedSession(attic)
+	groupOf(t, tower, attic)
+	paired := holdWords(t, wordsHolderID, "android", attic).pairedSession(attic)
 	status := func() int {
 		var code int
 		attic.as(paired, func() { code, _ = attic.do(t, http.MethodGet, "/api/status", nil) })
@@ -357,8 +325,8 @@ func TestASessionTheResetEndedCannotSwitchPairingPhonesOn(t *testing.T) {
 func TestAResetKeepsPhonesOutUntilAPersonLetsThemPairAgain(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
-	phone := holdWords(t, relayURL, phrase, wordsHolderID, "android", attic)
+	groupOf(t, tower, attic)
+	phone := holdWords(t, wordsHolderID, "android", attic)
 	phone.pairedSession(attic)
 
 	hash, err := secret.HashPassword(attic.appKey, "a new password")
@@ -386,4 +354,13 @@ func TestAResetKeepsPhonesOutUntilAPersonLetsThemPairAgain(t *testing.T) {
 		t.Fatalf("switching pairing phones on: %v", out)
 	}
 	phone.pairedSession(attic)
+}
+
+func isMember(in *instance, id string) bool {
+	for _, m := range in.svc.pairing().Members() {
+		if m.ID == id {
+			return true
+		}
+	}
+	return false
 }

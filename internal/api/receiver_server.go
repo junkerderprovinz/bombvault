@@ -441,24 +441,15 @@ func (s *Service) receiverHost(ctx context.Context, rs store.ReceiverServer) str
 	return rs.ReachedHost
 }
 
-// setReceiverHost is the receiver's address when a person decided on it: the
-// one set for the receiver, or the one this instance's own address was set to
-// by hand. On macvlan or ipvlan BombVault has an address of its own, and the
-// rest-server, whose port the Docker host publishes, is not at it, so there
-// the answer is empty unless the receiver has an address set.
+// setReceiverHost is the receiver's address when a person set one for it. On
+// macvlan or ipvlan BombVault has an address of its own, and the rest-server,
+// whose port the Docker host publishes, is not at it, so there the answer is
+// empty unless the receiver has an address set.
 func (s *Service) setReceiverHost(ctx context.Context, rs store.ReceiverServer) (host string, set bool) {
 	if rs.Host != "" {
 		return rs.Host, true
 	}
-	if s.hasOwnAddress(ctx) {
-		return "", true
-	}
-	g, err := s.store.GetGroupState()
-	if err != nil {
-		return "", true
-	}
-	host = urlHost(g.DirectURL)
-	return host, g.DirectURLManual && host != ""
+	return "", s.hasOwnAddress(ctx)
 }
 
 // hasOwnAddress reports whether BombVault's container is on a macvlan or

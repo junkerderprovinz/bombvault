@@ -50,14 +50,11 @@ func predatesRoleRequests(version string) bool {
 	return semver.IsValid(version) && semver.Build(version) == "" && semver.Compare(semver.MajorMinor(version), roleRequestsSince) < 0
 }
 
-type peerSenderKey struct{}
-
-// peerSender is the instance id of the member a peer call came from as the
-// group channel carried it, sealed into the call or signed in its header. It
-// is empty for a call through a relay from a member older than role requests.
+// peerSender is the id of the member a peer call came from, as the group
+// vouches for it with the member's key.
 func peerSender(r *http.Request) string {
-	id, _ := r.Context().Value(peerSenderKey{}).(string)
-	return id
+	s, _ := group.SenderOf(r.Context())
+	return s.ID
 }
 
 // roleAsker names the member behind a call to the request routes, which only

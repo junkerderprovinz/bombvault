@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,12 +20,12 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
-	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // passwordEngine opens a repository only with one restic password and
@@ -152,7 +151,7 @@ func (in *instance) id(t *testing.T) string {
 // group on a and joins b with the phrase a shows, the way a person would.
 func pairThroughRelay(t *testing.T, a, b *instance) {
 	t.Helper()
-	rs := httptest.NewServer(relay.NewServer())
+	rs := httptest.NewServer(relay.New())
 	t.Cleanup(rs.Close)
 	for _, in := range []*instance{a, b} {
 		if code, out := in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL}); code != http.StatusOK || out["ok"] != true {
@@ -167,6 +166,7 @@ func pairThroughRelay(t *testing.T, a, b *instance) {
 	if code, out := b.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": phrase}); code != http.StatusOK || out["active"] != true {
 		t.Fatalf("join: %d %v", code, out)
 	}
+	approveEachOther(t, a, b)
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		if len(a.svc.pairing().Members()) == 1 && len(b.svc.pairing().Members()) == 1 {
@@ -175,6 +175,45 @@ func pairThroughRelay(t *testing.T, a, b *instance) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	t.Fatalf("the two instances never saw each other: a=%+v b=%+v", a.svc.pairing().Members(), b.svc.pairing().Members())
+}
+
+// approveEachOther lets a and b in on each other, as their owner would once
+// each lists the other as waiting.
+func approveEachOther(t *testing.T, a, b *instance) {
+	t.Helper()
+	for _, pair := range [][2]*instance{{a, b}, {b, a}} {
+		here, there := pair[0], pair[1]
+		want := kitmember.ID(kitmember.KindInstance, there.memberKey(t))
+		deadline := time.Now().Add(10 * time.Second)
+		for !waitsOn(here, want) {
+			if time.Now().After(deadline) {
+				t.Fatalf("%s never listed %s as waiting: %+v", here.svc.selfDirectURL(), want, here.svc.pairing().Waiting())
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		if code, out := here.do(t, http.MethodPost, "/api/group/members/"+want+"/approve", nil); code != http.StatusOK || out["ok"] != true {
+			t.Fatalf("approve: %d %v", code, out)
+		}
+	}
+}
+
+func waitsOn(in *instance, id string) bool {
+	for _, w := range in.svc.pairing().Waiting() {
+		if w.ID == id && !w.There {
+			return true
+		}
+	}
+	return false
+}
+
+// memberKey is the public key in signs its calls with.
+func (in *instance) memberKey(t *testing.T) []byte {
+	t.Helper()
+	seed, err := in.svc.depositSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return keydeposit.OwnerKey(seed)
 }
 
 func TestTwoInstancesPairedByPhraseSeeEachOtherThroughTheRelay(t *testing.T) {
@@ -309,7 +348,7 @@ func TestPairingAnswerOnTheWireCarriesNoAppKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	signed := signedAs(t, in, seed, fetcher, keydeposit.ProofPairing, time.Now().UnixMilli(), nil, map[string]any{})
-	status, body := in.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Body: signed, Sender: fetcher})
+	status, body := in.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/pairing", Body: signed, Sender: fetcher})
 	if status != http.StatusOK {
 		t.Fatalf("pairing answered %d: %s", status, body)
 	}
@@ -332,7 +371,7 @@ func TestPairingAnswerOnTheWireCarriesNoAppKey(t *testing.T) {
 // not the settings, not a secret, not the phrase.
 func TestAMemberCannotReachSettingsOrSecrets(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	for _, call := range []relay.ProxyCall{
+	for _, call := range []peerCall{
 		{Method: http.MethodGet, Path: "/api/settings"},
 		{Method: http.MethodPut, Path: "/api/settings", Body: []byte(`{}`)},
 		{Method: http.MethodGet, Path: "/api/settings/export?credentials=true"},
@@ -349,16 +388,16 @@ func TestAMemberCannotReachSettingsOrSecrets(t *testing.T) {
 		{Method: http.MethodPost, Path: "/api/group/peer/check/../../../settings"},
 		{Method: http.MethodGet, Path: "/api/group/peer/status/extra"},
 	} {
-		status, body := in.svc.servePeer(context.Background(), call)
+		status, body := in.svc.callPeer(context.Background(), call)
 		if status < 300 || status == http.StatusInternalServerError || bytes.Contains(body, []byte(`"ok":true`)) {
 			t.Errorf("%s %s answered a member with %d: %s", call.Method, call.Path, status, body)
 		}
 	}
-	for _, call := range []relay.ProxyCall{
+	for _, call := range []peerCall{
 		{Method: http.MethodGet, Path: "/api/group/peer/status"},
 		{Method: http.MethodGet, Path: "/api/group/peer/pairing"},
 	} {
-		if status, body := in.svc.servePeer(context.Background(), call); status != http.StatusOK {
+		if status, body := in.svc.callPeer(context.Background(), call); status != http.StatusOK {
 			t.Errorf("%s %s is a peer route but answered %d: %s", call.Method, call.Path, status, body)
 		}
 	}
@@ -506,7 +545,7 @@ func TestTheRelaySocketExistsOnlyWhileServing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !in.svc.relayServer().Admit(relay.DeriveKey(sec)) || in.svc.relayServer().Admit(relay.DeriveKey([]byte("fedcba9876543210"))) {
+	if !in.svc.relayServer().Admit(group.Domain.GroupKey(sec)) || in.svc.relayServer().Admit(group.Domain.GroupKey([]byte("fedcba9876543210"))) {
 		t.Fatal("the served relay does not admit exactly this group's key")
 	}
 }
@@ -630,16 +669,9 @@ func TestAnOldFleetRowIsTakenOverByTheMemberWithItsName(t *testing.T) {
 	}
 }
 
-func TestTheLargestMeshOfferFitsADirectCall(t *testing.T) {
-	call := relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: bytes.Repeat([]byte("x"), meshOfferBodyMax)}
-	id, _ := relay.NewRequestID()
-	sealed, err := relay.SealCall(relay.DeriveFrameKey([]byte("0123456789abcdef")), id, strings.Repeat("f", 32), call)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wire, _ := json.Marshal(relay.ProxyRequest{RequestID: id, Target: strings.Repeat("f", 32), Sealed: sealed})
-	if len(wire) > group.MaxCallBytes {
-		t.Fatalf("an offer at the %d byte cap is %d bytes on the wire, over the %d a member takes directly", meshOfferBodyMax, len(wire), group.MaxCallBytes)
+func TestTheLargestMeshOfferFitsACall(t *testing.T) {
+	if meshOfferBodyMax > group.MaxCallBytes {
+		t.Fatalf("an offer may be %d bytes, over the %d a call to a member carries", meshOfferBodyMax, group.MaxCallBytes)
 	}
 }
 
@@ -662,8 +694,9 @@ func dialServedRelay(t *testing.T, in *instance, url string) *websocket.Conn {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = ws.CloseNow() })
-	ident, _ := relay.SealIdentity(relay.DeriveFrameKey(sec), "member", relay.Identity{Name: "member"})
-	hello, _ := relay.Encode(relay.TypeHello, relay.Hello{Key: relay.DeriveKey(sec), Announce: relay.Announce{InstanceID: "member", Sealed: ident}})
+	const id = "0123456789abcdef0123456789abcdef01234567"
+	ident, _ := relay.SealIdentity(group.Domain.FrameKey(sec), id, relay.Identity{Name: "member"})
+	hello, _ := relay.Encode(relay.TypeHello, relay.Hello{Key: group.Domain.GroupKey(sec), Announce: relay.Announce{InstanceID: id, Sealed: ident}})
 	if err := ws.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
 	}
@@ -697,76 +730,6 @@ func TestTheServedRelayDropsItsConnectionsWhenTheSwitchGoesOffOrTheGroupIsLeft(t
 	dialServedRelay(t, in, srv.URL)
 	in.do(t, http.MethodDelete, "/api/group", nil)
 	waitForRelayClients(t, in, 0)
-}
-
-// hostileRelay is a relay that introduces a member called evil and answers
-// every call to it with text of its own choosing, as a relay operator could.
-func hostileRelay(t *testing.T, sec []byte, text string) *httptest.Server {
-	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := websocket.Accept(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer func() { _ = c.CloseNow() }()
-		ctx := r.Context()
-		if _, _, err := c.Read(ctx); err != nil {
-			return
-		}
-		ident, _ := relay.SealIdentity(relay.DeriveFrameKey(sec), "evil", relay.Identity{Name: "evil"})
-		announce, _ := relay.Encode(relay.TypeAnnounce, relay.Announce{InstanceID: "evil", Sealed: ident})
-		if c.Write(ctx, websocket.MessageText, announce) != nil {
-			return
-		}
-		for {
-			_, frame, err := c.Read(ctx)
-			if err != nil {
-				return
-			}
-			var req relay.ProxyRequest
-			if env, _ := relay.Decode(frame); env.Type != relay.TypeProxyRequest || env.Into(&req) != nil {
-				continue
-			}
-			answer, _ := relay.Encode(relay.TypeProxyResponse, relay.ProxyResponse{RequestID: req.RequestID, Error: text})
-			_ = c.Write(ctx, websocket.MessageText, answer)
-		}
-	}))
-	t.Cleanup(srv.Close)
-	return srv
-}
-
-func TestWhatARelaySaysAboutAFailureNeverReachesThePage(t *testing.T) {
-	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	_, created := in.do(t, http.MethodPost, "/api/group/phrase", nil)
-	sec, err := seedphrase.Decode(fmt.Sprint(created["phrase"]))
-	if err != nil {
-		t.Fatal(err)
-	}
-	const text = "HTTP 418 from http://10.0.0.7:8080/admin"
-	rs := hostileRelay(t, sec, text)
-	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL})
-	deadline := time.Now().Add(10 * time.Second)
-	for len(in.svc.pairing().Members()) == 0 && time.Now().Before(deadline) {
-		time.Sleep(20 * time.Millisecond)
-	}
-
-	err = in.svc.callMember(context.Background(), "evil", http.MethodGet, "/api/group/peer/status", nil, nil)
-	if !errors.Is(err, errMemberSilent) {
-		t.Fatalf("call through the relay = %v, want %v", err, errMemberSilent)
-	}
-	if err := in.svc.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	peers, err := in.st.ListFleetPeers()
-	if err != nil || len(peers) != 1 {
-		t.Fatalf("fleet peers = %+v, %v", peers, err)
-	}
-	if got := peers[0].LastPollError; got != errMemberSilent.Error() {
-		t.Fatalf("the Fleet page would show %q, want %q", got, errMemberSilent)
-	}
-	if err := in.svc.callMember(context.Background(), "nobody", http.MethodGet, "/api/group/peer/status", nil, nil); !errors.Is(err, errMemberGone) {
-		t.Fatalf("call to an instance outside the group = %v, want %v", err, errMemberGone)
-	}
 }
 
 func TestAMembersRefusalReachesThePageAsAFixedMessage(t *testing.T) {
@@ -917,230 +880,14 @@ func TestOnlyTheMemberItselfCanSayThatItLeaves(t *testing.T) {
 	}
 }
 
-func TestAMemberKnownOnlyByItsAddressKeepsTheNameItsRowHas(t *testing.T) {
+func TestAnInstanceThatCannotOpenItsPhraseLeavesTheGroupAlone(t *testing.T) {
 	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	b := newInstance(t, "attic", strings.Repeat("b2", 32))
 	pairThroughRelay(t, a, b)
-	const barn = "0123456789abcdef0123456789abcdef"
-	if _, err := a.st.CreateFleetPeer(store.FleetPeer{MemberID: barn, Name: "barn", Enabled: true}); err != nil {
-		t.Fatal(err)
-	}
-	a.svc.pairing().ConfirmAddress(barn, "https://192.0.2.7:3443", "", "")
-	peers, err := a.svc.syncFleetPeers()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, p := range peers {
-		if p.MemberID == barn && p.Name != "barn" {
-			t.Fatalf("the row of a member listed without a name = %+v, want its name kept", p)
-		}
-	}
-}
-
-// b leaves while a is down, so a never hears it. a, started again, still
-// knows where b took direct calls and asks there; b's answer in its own name
-// takes it off a's list.
-func TestAMemberThatLeftWhileTheOtherWasDownIsDroppedOnceItSaysSo(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	bDirect := httptest.NewTLSServer(b.router)
-	t.Cleanup(bDirect.Close)
-	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
-		t.Fatalf("set b's address: %d %v", code, out)
-	}
-	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	rows, err := a.st.ListFleetPeers()
-	if err != nil || len(rows) != 1 || rows[0].MemberURL != bDirect.URL {
-		t.Fatalf("a's rows after a poll = %+v, %v; want b with its address", rows, err)
-	}
-
-	a.svc.StopGroup()
-	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
-		t.Fatalf("leave: %d", code)
-	}
-	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
-	t.Cleanup(restarted.StopGroup)
-	restarted.applyGroup()
-	restarted.noteMemberAddresses()
-	if err := restarted.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
-		t.Fatalf("a's rows once b said it left = %+v, %v; want none", rows, err)
-	}
-}
-
-func TestAWordThatAMemberLeftCountsOnlyUnderItsOwnKey(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	if _, found, err := a.st.MemberKey(b.id(t)); err != nil || !found {
-		t.Fatalf("a poll left b's key unpinned: %v", err)
-	}
-	const challenge = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	signedBy := func(seed []byte, over string) []byte {
-		p := depositSigner{id: b.id(t), seed: seed, counter: time.Now().UnixMilli()}.prove(keydeposit.ProofNotMember, a.id(t), []byte(over), nil)
-		raw, err := json.Marshal(p)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return raw
-	}
-	bSeed, err := b.svc.depositSeed()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for name, statement := range map[string][]byte{
-		"another key":       signedBy(bytes.Repeat([]byte{7}, 32), challenge),
-		"another challenge": signedBy(bSeed, strings.Repeat("f", 64)),
-	} {
-		a.svc.dropFormerMember(&group.LeftError{MemberID: b.id(t), Challenge: challenge, Statement: statement})
-		if rows, _ := a.st.ListFleetPeers(); len(rows) != 1 {
-			t.Fatalf("a word signed with %s dropped b's row", name)
-		}
-	}
-	a.svc.dropFormerMember(&group.LeftError{MemberID: b.id(t), Challenge: challenge, Statement: signedBy(bSeed, challenge)})
-	if rows, _ := a.st.ListFleetPeers(); len(rows) != 0 {
-		t.Fatalf("b's own word over the challenge left its row: %+v", rows)
-	}
-}
-
-func TestAnInstanceThatCannotOpenItsPhraseDoesNotSayItLeft(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	const challenge = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	b.svc.cfg.AppKey = strings.Repeat("c3", 32)
 	b.svc.applyGroup()
 	if b.svc.pairing().Active() {
 		t.Fatal("b still runs the group with a phrase it cannot open")
-	}
-	if word := b.svc.strangerProof(a.id(t), challenge); word != nil {
-		t.Fatalf("b, still holding the group's phrase, said it left: %s", word)
-	}
-
-	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
-		t.Fatalf("leave: %d", code)
-	}
-	if word := b.svc.strangerProof(a.id(t), challenge); word == nil {
-		t.Fatal("b, out of the group, gave no word")
-	}
-}
-
-// a finds b on the network, never polls it, and is down while b leaves. a,
-// started again, asks b by itself and drops its row once b says it left.
-func TestAMemberThatLeftWhileTheOtherWasDownIsDroppedWithoutAPoll(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	bDirect := httptest.NewTLSServer(b.router)
-	t.Cleanup(bDirect.Close)
-	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
-		t.Fatalf("set b's address: %d %v", code, out)
-	}
-	if _, err := a.svc.pairing().Probe(context.Background(), bDirect.URL); err != nil {
-		t.Fatal(err)
-	}
-	// The key b's word is checked against, pinned the first time b signs a
-	// call or a page asks for its scorecard.
-	if _, err := a.svc.memberKey(context.Background(), b.id(t)); err != nil {
-		t.Fatal(err)
-	}
-	if code, _ := a.do(t, http.MethodGet, "/api/fleet/peers", nil); code != http.StatusOK {
-		t.Fatalf("list: %d", code)
-	}
-	rows, err := a.st.ListFleetPeers()
-	if err != nil || len(rows) != 1 || rows[0].MemberURL != bDirect.URL {
-		t.Fatalf("a's rows once it found b = %+v, %v; want b with the address it answered on", rows, err)
-	}
-
-	a.svc.StopGroup()
-	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
-		t.Fatalf("leave: %d", code)
-	}
-	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
-	t.Cleanup(restarted.StopGroup)
-	restarted.applyGroup()
-	restarted.noteMemberAddresses()
-	restarted.askAbsentMembers(context.Background())
-	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
-		t.Fatalf("a's rows once b said it left = %+v, %v; want none", rows, err)
-	}
-}
-
-// The same, with b entering another group's phrase while a is down.
-func TestAMemberThatSwitchedGroupsWhileTheOtherWasDownIsDropped(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	c := newInstance(t, "barn", strings.Repeat("c3", 32))
-	pairThroughRelay(t, a, b)
-	bDirect := httptest.NewTLSServer(b.router)
-	t.Cleanup(bDirect.Close)
-	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
-		t.Fatalf("set b's address: %d %v", code, out)
-	}
-	if _, err := a.svc.pairing().Probe(context.Background(), bDirect.URL); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := a.svc.memberKey(context.Background(), b.id(t)); err != nil {
-		t.Fatal(err)
-	}
-	if code, _ := a.do(t, http.MethodGet, "/api/fleet/peers", nil); code != http.StatusOK {
-		t.Fatalf("list: %d", code)
-	}
-	_, created := c.do(t, http.MethodPost, "/api/group/phrase", nil)
-	phrase, _ := created["phrase"].(string)
-
-	a.svc.StopGroup()
-	if code, out := b.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": phrase}); code != http.StatusOK || out["ok"] != true {
-		t.Fatalf("join: %d %v", code, out)
-	}
-	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
-	t.Cleanup(restarted.StopGroup)
-	restarted.applyGroup()
-	restarted.noteMemberAddresses()
-	restarted.askAbsentMembers(context.Background())
-	if rows, err := a.st.ListFleetPeers(); err != nil || len(rows) != 0 {
-		t.Fatalf("a's rows once b, now in another group, said it left = %+v, %v; want none", rows, err)
-	}
-}
-
-func TestPollingAMemberThatLeftSaysItsRowIsGone(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	bDirect := httptest.NewTLSServer(b.router)
-	t.Cleanup(bDirect.Close)
-	if code, out := b.do(t, http.MethodPut, "/api/group/address", map[string]any{"url": bDirect.URL}); code != http.StatusOK || out["active"] != true {
-		t.Fatalf("set b's address: %d %v", code, out)
-	}
-	if err := a.svc.RunFleetPolls(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-	rows, err := a.st.ListFleetPeers()
-	if err != nil || len(rows) != 1 || rows[0].LastPollOK.Bool != true {
-		t.Fatalf("a's rows after a poll = %+v, %v; want b polled", rows, err)
-	}
-
-	a.svc.StopGroup()
-	if code, _ := b.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK {
-		t.Fatalf("leave: %d", code)
-	}
-	restarted := NewService(a.svc.cfg, a.st, nil, nil, a.engine)
-	t.Cleanup(restarted.StopGroup)
-	restarted.applyGroup()
-	restarted.noteMemberAddresses()
-	a.h = NewHandler(a.svc.cfg, a.st, nil, restarted, nil, nil)
-	a.router = a.h.Router()
-	_, out := a.do(t, http.MethodPost, "/api/fleet/peers/"+rows[0].ID+"/poll", nil)
-	if out["ok"] != false || out["peer"] != nil || out["code"] != "memberLeft" {
-		t.Fatalf("the poll of a member that left answered %v", out)
 	}
 }

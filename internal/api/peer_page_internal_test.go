@@ -15,31 +15,32 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
-	"github.com/junkerderprovinz/bombvault/internal/seedphrase"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/phrase"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
-// phone is a paired phone in these tests: the group's words, a signing key
-// of its own and the session an instance gave it.
+// phone is a paired phone in these tests: the group's words, a member key of
+// its own and the session an instance gave it.
 type phone struct {
 	t       *testing.T
 	id      string
 	seed    []byte
 	client  *relay.Client
 	session string
-	// heard gets every call an instance makes to the phone other than the
-	// question for its key.
-	heard chan relay.ProxyCall
+	// on are the instances the phone was let in on, by their id.
+	on map[string]*instance
 }
 
-// joinPhone connects a phone with the words and its own key, which it names
-// to an instance that asks, the way the app does.
-func joinPhone(t *testing.T, relayURL, phrase, id string, seenBy ...*instance) *phone {
+// joinPhone connects a phone with the words and its own key the way the app
+// does, and lets it in on every instance of seenBy.
+func joinPhone(t *testing.T, relayURL, words string, seenBy ...*instance) *phone {
 	t.Helper()
-	sec, err := seedphrase.Decode(phrase)
+	sec, err := phrase.Decode(words)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,49 +48,64 @@ func joinPhone(t *testing.T, relayURL, phrase, id string, seenBy ...*instance) *
 	if err != nil {
 		t.Fatal(err)
 	}
-	heard := make(chan relay.ProxyCall, 16)
-	serve := func(_ context.Context, call relay.ProxyCall) (int, []byte) {
-		if call.Method != http.MethodGet || call.Path != "/api/group/peer/key" {
-			select {
-			case heard <- call:
-			default:
-			}
-			return http.StatusNotFound, nil
-		}
-		proof := keydeposit.Prove(seed, keydeposit.Claim{Action: keydeposit.ProofKey, OwnerID: id, KeeperID: call.Sender})
-		b, _ := json.Marshal(peerKeyAnswer{OK: true, Key: keydeposit.OwnerKey(seed), Proof: proof})
-		return http.StatusOK, b
+	ident, err := kitmember.FromSeed(kitmember.KindMobile, seed)
+	if err != nil {
+		t.Fatal(err)
 	}
 	c, err := relay.NewClient(relay.ClientOptions{
-		URL: relayURL, Key: relay.DeriveKey(sec), FrameKey: relay.DeriveFrameKey(sec), InstanceID: id,
-		Identity: relay.Identity{Name: "pixel", Version: Version, Kind: "android"}, Serve: serve,
+		URL: relayURL, Key: group.Domain.GroupKey(sec), FrameKey: group.Domain.FrameKey(sec), Signing: group.Domain.Signing(),
+		Self:     relay.Announce{InstanceID: ident.ID(), Name: "pixel", Deployment: string(kitmember.KindMobile), Client: true, Member: ident.ID()},
+		Identity: &ident,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	c.Start()
 	t.Cleanup(func() { _ = c.Close() })
-	deadline := time.Now().Add(10 * time.Second)
+	p := &phone{t: t, id: group.PhoneID(ident.Public()), seed: seed, client: c, on: map[string]*instance{}}
 	for _, in := range seenBy {
-		for !isMember(in, id) {
+		p.on[in.id(t)] = in
+		target := kitmember.ID(kitmember.KindInstance, in.memberKey(t))
+		deadline := time.Now().Add(10 * time.Second)
+		for !waitsOn(in, ident.ID()) {
+			if time.Now().After(deadline) {
+				t.Fatal("an instance never listed the phone as waiting")
+			}
+			_, _, _ = c.Proxy(context.Background(), target, http.MethodGet, group.ProbePath, nil)
+			time.Sleep(50 * time.Millisecond)
+		}
+		if code, out := in.do(t, http.MethodPost, "/api/group/members/"+ident.ID()+"/approve", nil); code != http.StatusOK || out["ok"] != true {
+			t.Fatalf("approve the phone: %d %v", code, out)
+		}
+		for !isMember(in, p.id) {
 			if time.Now().After(deadline) {
 				t.Fatal("an instance never saw the phone")
 			}
 			time.Sleep(20 * time.Millisecond)
 		}
 	}
-	return &phone{t: t, id: id, seed: seed, client: c, heard: heard}
+	return p
 }
 
 // ask sends target one peer call in the name of sender and returns its status
-// and body.
+// and body. A call in the phone's own name goes over the relay; one in
+// another's name is handed to the instance as if the group vouched for it,
+// which no member can make it do.
 func (p *phone) ask(target, sender, path string, body []byte) (int, []byte) {
 	p.t.Helper()
+	in := p.on[target]
+	if in == nil {
+		p.t.Fatalf("the phone was never let in on %s", target)
+	}
+	if sender != p.id {
+		return in.svc.callPeer(context.Background(), peerCall{Method: http.MethodPost, Path: path, Body: body, Sender: sender, Kind: group.KindPhone})
+	}
+	to := kitmember.ID(kitmember.KindInstance, in.memberKey(p.t))
 	deadline := time.Now().Add(10 * time.Second)
 	for {
-		res, err := p.client.Call(context.Background(), target, relay.ProxyCall{Method: http.MethodPost, Path: path, Body: body, Sender: sender})
+		out, status, err := p.client.Proxy(context.Background(), to, http.MethodPost, path, body)
 		if err == nil {
-			return res.Status, res.Body
+			return status, out
 		}
 		if time.Now().After(deadline) {
 			p.t.Fatalf("%s: %v", path, err)
@@ -215,7 +231,7 @@ func pagesOverRelay(t *testing.T, spa fstest.MapFS) (tower, attic *instance, ph 
 	attic = newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL = groupOf(t, tower, attic)
 	attic.svc.ServePhonePages(NewServer(config.Config{HTTPOnly: true}, spa, attic.router).Handler())
-	ph = joinPhone(t, relayURL, phrase, wordsHolderID, attic)
+	ph = joinPhone(t, relayURL, phrase, attic)
 	ph.signIn(attic)
 	return tower, attic, ph, relayURL, phrase
 }

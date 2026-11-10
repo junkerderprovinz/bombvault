@@ -29,7 +29,7 @@ func TestAMemberCannotOfferAHostThatReadsAsAnOption(t *testing.T) {
 	const member = "0123456789abcdef0123456789abcdef"
 	call := signedOfferCall(t, h.svc, pinnedSeed(t, st, member), member, meshOfferRequest{FromName: "tower-a", Repo: optionLikeLocation, RESTUser: "bv", RESTPassword: "invented"}, time.Now().UnixMilli())
 
-	status, out := h.svc.servePeer(context.Background(), call)
+	status, out := h.svc.callPeer(context.Background(), call)
 
 	if status != http.StatusOK || !strings.Contains(string(out), "start with a dash") {
 		t.Errorf("offer answered %d %s, want the location refused", status, out)

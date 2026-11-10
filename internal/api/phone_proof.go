@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // A phone of the group signs what it asks with an Ed25519 key of its own,

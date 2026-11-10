@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -216,45 +215,33 @@ func TestRemovingAnAwayInstanceEndsItsSlotsAndAsksThatLetNothingIn(t *testing.T)
 }
 
 func TestAnInstanceThatComesBackIsListedOnce(t *testing.T) {
-	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
-	b := newInstance(t, "attic", strings.Repeat("b2", 32))
-	pairThroughRelay(t, a, b)
-	const barn = "0123456789abcdef0123456789abcdef"
-	if _, err := a.st.CreateFleetPeer(store.FleetPeer{MemberID: barn, Name: "barn", Enabled: true, LastSeen: 1}); err != nil {
-		t.Fatal(err)
-	}
+	a, b := pairAndClose(t)
+	barn := b.id(t)
 	if _, away, _, err := a.svc.groupRoster(time.Now()); err != nil || len(away) != 1 || away[0].ID != barn {
-		t.Fatalf("away before barn is back = %+v, %v; want barn", away, err)
+		t.Fatalf("away before b is back = %+v, %v; want b", away, err)
+	}
+	before, err := a.st.ListFleetPeers()
+	if err != nil || len(before) != 1 {
+		t.Fatalf("rows = %+v, %v", before, err)
 	}
 
-	a.svc.pairing().ConfirmAddress(barn, "https://192.0.2.7:3443", "barn", "")
+	back := NewService(b.svc.cfg, b.st, nil, nil, b.engine)
+	t.Cleanup(back.StopGroup)
+	back.applyGroup()
+	deadline := time.Now().Add(10 * time.Second)
+	for len(a.svc.pairing().Members()) == 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
 	members, away, _, err := a.svc.groupRoster(time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(away) != 0 {
-		t.Fatalf("away once barn is back = %+v, want none", away)
-	}
-	listed := 0
-	for _, m := range members {
-		if m.ID == barn {
-			listed++
-		}
+	if len(away) != 0 || len(members) != 1 || members[0].ID != barn {
+		t.Fatalf("once b is back: members %+v, away %+v; want b in reach", members, away)
 	}
 	rows, err := a.st.ListFleetPeers()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, p := range rows {
-		if p.MemberID == barn {
-			listed++
-			if p.LastSeen <= 1 {
-				t.Fatalf("barn's row = %+v, want it seen again", p)
-			}
-		}
-	}
-	if listed != 2 {
-		t.Fatalf("barn is listed %d times over members and rows, want once in each", listed)
+	if err != nil || len(rows) != 1 || rows[0].MemberID != barn || rows[0].LastSeen < before[0].LastSeen {
+		t.Fatalf("rows once b is back = %+v, %v; want b's one row, seen again", rows, err)
 	}
 }
 
@@ -277,7 +264,7 @@ func TestOnlyAMemberThatWasInReachIsRemembered(t *testing.T) {
 
 func TestAMemberAsksForTheGroupAndHearsWhoIsAway(t *testing.T) {
 	a, b := pairAndClose(t)
-	status, body := a.svc.servePeer(context.Background(), relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/members", Sender: strings.Repeat("c3", 16)})
+	status, body := a.svc.callPeer(context.Background(), peerCall{Method: http.MethodGet, Path: "/api/group/peer/members", Sender: strings.Repeat("c3", 16)})
 	if status != http.StatusOK {
 		t.Fatalf("members call: %d %s", status, body)
 	}

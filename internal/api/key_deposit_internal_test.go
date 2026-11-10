@@ -17,16 +17,16 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // groupOf pairs the first instance with every other through one in-process
 // relay and returns the phrase, so that another instance can join later.
 func groupOf(t *testing.T, first *instance, others ...*instance) (phrase, relayURL string) {
 	t.Helper()
-	rs := httptest.NewServer(relay.NewServer())
+	rs := httptest.NewServer(relay.New())
 	t.Cleanup(rs.Close)
 	useRelay(t, rs.URL, first)
 	code, out := first.do(t, http.MethodPost, "/api/group/phrase", nil)
@@ -56,9 +56,15 @@ func joinGroup(t *testing.T, in *instance, relayURL, phrase string) {
 	}
 }
 
-// seeEachOther waits until every instance has every other one in reach.
+// seeEachOther lets every instance in on every other one and waits until each
+// has all the others in reach.
 func seeEachOther(t *testing.T, all ...*instance) {
 	t.Helper()
+	for i, a := range all {
+		for _, b := range all[i+1:] {
+			approveEachOther(t, a, b)
+		}
+	}
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		ready := true

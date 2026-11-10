@@ -258,8 +258,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("DELETE /api/group/members/{id}", h.handleRemoveMember)
 	mux.HandleFunc("DELETE /api/group/members/{id}/key", h.handleForgetMemberKey)
 	mux.HandleFunc("PUT /api/group/relay", h.handleGroupRelay)
-	mux.HandleFunc("PUT /api/group/address", h.handleGroupAddress)
-	mux.HandleFunc("POST /api/group/probe", h.handleGroupProbe)
+	mux.HandleFunc("POST /api/group/members/{id}/approve", h.handleApproveMember)
+	mux.HandleFunc("POST /api/group/members/{id}/refuse", h.handleRefuseMember)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
 	h.registerRoleRoutes(mux)
 

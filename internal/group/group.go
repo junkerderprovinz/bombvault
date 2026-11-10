@@ -1,48 +1,51 @@
 // Package group connects the BombVault instances that share one pairing
-// phrase. Members on the same network talk directly; members elsewhere talk
-// through a relay. Either way every call and answer is sealed under a key
-// derived from the phrase, so neither a relay nor anything on the network in
-// between can read or forge them.
+// phrase, and the phones paired with them, through the parleyport kit.
+//
+// The kit addresses every member by an id made from its member key. BombVault
+// keeps the ids its members had before, in its tables and in what they sign,
+// so this package translates: a member's key is pinned under its BombVault id
+// in the Directory, and a key pinned nowhere yet is asked for its id once.
 package group
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
-	"sort"
-	"strconv"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 
-	"github.com/junkerderprovinz/bombvault/internal/discovery"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
+	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
+	"github.com/junkerderprovinz/parleyport/kit/keys"
+	"github.com/junkerderprovinz/parleyport/kit/lan"
+	"github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
-// peerAuthDomain separates the key that signs direct calls and discovery
-// announces from the relay and frame keys.
-const peerAuthDomain = "bombvault/peer-auth/v1"
+// Domain is what every key of a BombVault group is derived under.
+const Domain keys.Domain = "bombvault"
 
-// PeerAuthKey returns the HMAC key that signs direct calls and discovery
-// announces between members.
-func PeerAuthKey(secret []byte) []byte {
-	h := sha256.New()
-	h.Write([]byte(peerAuthDomain))
-	h.Write(secret)
-	return h.Sum(nil)
-}
+// Multicast is where BombVault instances on one network announce themselves.
+var Multicast = netip.MustParseAddrPort("239.255.77.51:8751")
+
+// Ports are where BombVault answers direct calls unless told otherwise, HTTPS
+// and plain HTTP.
+var Ports = []int{3443, 3000}
+
+// DirectPath is the route a member answers direct calls on.
+const DirectPath = kitgroup.DirectPath
+
+// MaxCallBytes caps what one call to a member carries.
+const MaxCallBytes = kitgroup.MaxCallBytes
+
+// maxAnswerBytes caps a direct answer, which can carry a whole scorecard.
+const maxAnswerBytes = 8 << 20
 
 // Mode is which relay an instance uses for members it cannot reach directly.
 type Mode string
@@ -59,1142 +62,515 @@ func ValidMode(m Mode) bool {
 	return m == ModeProject || m == ModeOwn || m == ModeOff
 }
 
+// KindPhone is what a phone of the group goes by in BombVault.
+const KindPhone = "android"
+
+// PhoneID is the id a phone that joined on the kit goes by in BombVault: the
+// start of its key's hash, short enough for every place an id goes, and one
+// the phone works out the same way.
+func PhoneID(key []byte) string {
+	sum := sha256.Sum256(key)
+	return hex.EncodeToString(sum[:16])
+}
+
+// ProbePath is where a member says which id it goes by in BombVault.
+const ProbePath = "/api/group/peer/hello"
+
+// Hello is what a member answers at ProbePath.
+type Hello struct {
+	OK         bool   `json:"ok"`
+	InstanceID string `json:"instanceId"`
+	Name       string `json:"name"`
+	Version    string `json:"version"`
+	// DirectURL is where the instance's pages are, for a phone at home.
+	DirectURL string `json:"directUrl,omitempty"`
+}
+
+// Directory keeps each member's key under the id BombVault knows it by.
+type Directory interface {
+	MemberByKey(key []byte) (id string, found bool, err error)
+	MemberKey(id string) (key []byte, found bool, err error)
+	PinMemberKey(id string, key []byte) error
+}
+
 // Config is what the Manager runs on. A nil Secret means this instance is in
 // no group.
 type Config struct {
-	Secret     []byte
+	Secret []byte
+	// Seed is the seed of this instance's member key, the key it signs its
+	// calls with.
+	Seed []byte
+	// InstanceID is the id this instance goes by in BombVault.
 	InstanceID string
 	Name       string
-	Version    string
-	// DirectURL is where this instance answers direct calls on the local
-	// network, or empty when it cannot tell.
+	// DirectURL is where this instance answers, as a browser reached it.
 	DirectURL string
 	Mode      Mode
 	// RelayURL is the own relay's address, used in ModeOwn only.
 	RelayURL string
-	// FormerPeerAuth is the peer-auth key of the group this instance last
-	// left. A direct call signed with it can only come from a member of that
-	// group, which is told that this instance is not in it.
-	FormerPeerAuth []byte
+	Store    kitgroup.Store
+	// Former is what this instance knew of its group before the kit kept it,
+	// taken in once, the first time the group opens with an empty Store.
+	Former func() (kitgroup.Roster, error)
+	// OnRemoved runs when another instance took this one out of the group.
+	OnRemoved func()
 }
 
-// Member is another instance in the group that is reachable now.
+// Member is another member of the group that is reachable now, under the id
+// BombVault knows it by.
 type Member struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
-	// Direct is true when the member announced itself on this network or
-	// answered at its address, and no call there has failed since.
+	// Direct is true when the member is reachable on this network.
 	Direct bool `json:"direct"`
 	// Relay is true when the member is connected to the same relay.
 	Relay bool `json:"relay"`
-	// Address is where the member takes direct calls, as it announced it on
-	// this network or passed it over the relay; empty when none is known.
+	// Address is where the member's pages are, when it said.
 	Address string `json:"address"`
-	// Kind is what the member said it is over the relay, empty for an instance.
+	// Kind is KindPhone for a phone, empty for an instance.
 	Kind string `json:"kind,omitempty"`
+}
+
+// Waiting is a member that asked to join and waits for a person here, or one
+// this instance waits for there.
+type Waiting struct {
+	// ID is the member's id in the group, the one Approve and Remove take.
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind,omitempty"`
+	// Fingerprint is how its key reads to compare by eye.
+	Fingerprint string `json:"fingerprint,omitempty"`
+	Online      bool   `json:"online"`
+	// There means this instance waits for its approval on that member.
+	There bool `json:"there,omitempty"`
+}
+
+// Sender is the member a call into this instance came from.
+type Sender struct {
+	ID   string
+	Kind string
+	// Key is the member key the call is signed with.
+	Key []byte
+}
+
+type senderKey struct{}
+
+// WithSender returns ctx carrying s as the sender of a call.
+func WithSender(ctx context.Context, s Sender) context.Context {
+	return context.WithValue(ctx, senderKey{}, s)
+}
+
+// SenderOf returns the member a call came from.
+func SenderOf(ctx context.Context) (Sender, bool) {
+	s, ok := ctx.Value(senderKey{}).(Sender)
+	return s, ok
 }
 
 // ErrNotMember is returned for a call to an instance that is not reachable
 // in this group.
 var ErrNotMember = errors.New("group: no such member is reachable")
 
-// LeftError is the answer of a member that says, in its own name, that it is
-// not in this group any more. Statement is its signed word over Challenge,
-// for whoever holds the member's key to check.
-type LeftError struct {
-	MemberID  string
-	Challenge string
-	Statement []byte
-}
+// learnEvery is how often a member that did not say its id is asked again,
+// such as one where this instance still waits for approval.
+const learnEvery = 5 * time.Second
 
-func (e *LeftError) Error() string {
-	return "group: " + e.MemberID + " answered that it is not in this group"
-}
-
-// directPath is the route a member answers direct calls on.
-const directPath = "/api/group/call"
-
-const (
-	headerPeer      = "X-Bombvault-Peer"
-	headerTarget    = "X-Bombvault-Target"
-	headerTime      = "X-Bombvault-Time"
-	headerSignature = "X-Bombvault-Signature"
-	// MaxCallBytes caps a direct call as it arrives, before anything in it
-	// is checked. A mesh offer, the largest call a member makes, stays far
-	// below it.
-	MaxCallBytes = 1 << 20
-	// maxAnswerBytes caps a direct answer, which can carry a whole scorecard.
-	maxAnswerBytes = 8 << 20
-	// maxDirectCalls is how many direct calls are served at once.
-	maxDirectCalls = 16
-)
-
-// ProbeTarget stands in for a member id on a call whose sender does not yet
-// know who, if anyone, will answer: the LAN sweep and a manually entered
-// address both dial a host with nothing but the group secret to go on. It
-// can never equal a real instance id, which the migration mints as random
-// hex.
-const ProbeTarget = "*"
-
-// ProbePath is the only route a call addressed to ProbeTarget may reach.
-// ServeDirect refuses every other path under that target, so a blind probe
-// cannot be turned into a call against a route meant for a known member.
-const ProbePath = "/api/group/peer/hello"
-
-// Hello is what a member answers a probe with: enough to add it as a known
-// member without running any other route first.
-type Hello struct {
-	OK         bool   `json:"ok"`
-	InstanceID string `json:"instanceId"`
-	Name       string `json:"name"`
-	Version    string `json:"version"`
-	// DirectURL is where the answering instance itself takes direct calls,
-	// when it knows one; empty leaves the dialled address as the only one on
-	// record.
-	DirectURL string `json:"directUrl,omitempty"`
-}
-
-type keys struct {
-	relayKey string
-	frameKey []byte
-	peerAuth []byte
-}
-
-func deriveKeys(secret []byte) *keys {
-	return &keys{
-		relayKey: relay.DeriveKey(secret),
-		frameKey: relay.DeriveFrameKey(secret),
-		peerAuth: PeerAuthKey(secret),
-	}
-}
-
-// sameKeys reports whether a and b belong to the same group, both nil (no
-// group) counting as the same.
-func sameKeys(a, b *keys) bool {
-	if a == nil || b == nil {
-		return a == b
-	}
-	return hmac.Equal(a.peerAuth, b.peerAuth)
-}
-
-// remoteAddr is one member's known direct address: where it was last seen
-// answering, and whether that was a real answer (confirmed) or only a
-// hint passed along by a relay call (noted). Members shows Direct only for
-// a confirmed one, and Call only dials a stored address at all.
-type remoteAddr struct {
-	url       string
-	name      string
-	version   string
-	confirmed time.Time // zero: never confirmed
-	noted     time.Time
-}
-
-// addrTTL is how long a confirmed direct address keeps counting as Direct.
-// It matches roughly how long a stale discovery peer lingers, so both routes
-// to "reachable directly" age out on a similar clock once something stops
-// answering.
-const addrTTL = 5 * time.Minute
-
-// directRetry is how long Call leaves a direct address alone after a call to
-// it failed, as long as the relay reaches the member instead. Without it every
-// call to a member behind a dead address waits out the dial timeout before
-// the relay gets its turn. The refresh keeps probing the address meanwhile and
-// puts it back to use as soon as it answers.
-const directRetry = addrTTL
-
-// departGrace is how long a member that said it left stays out of Members:
-// long enough for its relay connection to close and its last multicast
-// announce to age out, either of which would otherwise list it again.
-const departGrace = time.Minute
-
-// Manager keeps this instance's side of the group running: the discovery
-// announce, the relay connection and the direct transport.
+// Manager keeps this instance's side of the group running.
 type Manager struct {
-	// Stranger, when set, signs what this instance answers, while it is in no
-	// group, a direct call addressed to it: its word, in its own name, that it
-	// is no member, covering the caller and the call's signature so it cannot
-	// be played back to anybody else. Set it before Start.
-	Stranger func(caller, challenge string) []byte
+	serve http.Handler
+	dir   Directory
+	lan   *lan.Service
 
-	serve   relay.Handler
-	replay  *relay.ReplayGuard
-	disc    *discovery.Service
-	hc      *http.Client
-	limiter *relay.Limiter
-	// slots holds one token per direct call being served.
-	slots chan struct{}
-
-	mu     sync.Mutex
-	cfg    Config
-	keys   *keys
-	client *relay.Client
-	// setup is what client was made with.
-	setup relaySetup
-
-	addrMu sync.Mutex
-	addrs  map[string]*remoteAddr
-	// failed holds when a call to a direct address last failed, by address.
-	failed map[string]time.Time
-	// departed holds when a member said it left, by id.
-	departed map[string]time.Time
-
-	sweepMu   sync.Mutex
-	lastSweep time.Time
-
-	stop     chan struct{}
-	stopOnce sync.Once
+	applyMu sync.Mutex
+	mu      sync.Mutex
+	cfg     Config
+	g       *kitgroup.Group
+	asked   map[string]time.Time
+	// retrying is set while learnAll is due again.
+	retrying bool
 }
 
-// NewManager returns a Manager that answers members' calls with serve. It is
-// in no group until Apply is called with a secret.
-func NewManager(serve relay.Handler) *Manager {
+// NewManager returns a Manager that answers members' calls with serve, which
+// finds each caller through SenderOf. It is in no group until Apply is called
+// with a secret.
+func NewManager(serve http.Handler, dir Directory) *Manager {
 	return &Manager{
-		serve:    serve,
-		replay:   relay.NewReplayGuard(),
-		disc:     discovery.New(),
-		limiter:  relay.NewLimiter(),
-		slots:    make(chan struct{}, maxDirectCalls),
-		addrs:    map[string]*remoteAddr{},
-		failed:   map[string]time.Time{},
-		departed: map[string]time.Time{},
-		stop:     make(chan struct{}),
-		hc: &http.Client{
-			Timeout: relay.CallTimeout,
-			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-			// Instances serve self-signed certificates, so there is nothing
-			// to verify against. Calls and answers are sealed under the frame
-			// key and signed with the peer-auth key, so the channel does not
-			// rely on TLS for either secrecy or authenticity.
-			Transport: &http.Transport{
-				DialContext:         (&net.Dialer{Timeout: directDialTimeout}).DialContext,
-				TLSHandshakeTimeout: directDialTimeout,
-				TLSClientConfig:     &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // G402: see the comment above
-			},
-		},
+		serve: serve,
+		dir:   dir,
+		lan:   lan.New(lan.Config{Group: Multicast, Ports: Ports}),
+		asked: map[string]time.Time{},
 	}
 }
 
-// directDialTimeout bounds connecting to a member's direct address, and
-// separately the TLS handshake after it. A LAN connects in milliseconds and a
-// slow WAN link in a few hundred, so five seconds still covers one lost SYN
-// (sent again after one second on Linux, three on Windows) and a slow name
-// lookup, while an address that drops packets fails well inside a call.
-const directDialTimeout = 5 * time.Second
+// Start begins listening for members on the local network.
+func (m *Manager) Start() { m.lan.Start() }
 
-// directContext bounds the direct attempts of one call. A member that is on
-// the relay as well keeps half of the call's time for the relay, so an
-// address that accepts and then never answers cannot use up the fallback;
-// half of the usual 15 seconds is still far more than a direct answer takes
-// over a slow link. A member with no relay route gets the whole call.
-func directContext(ctx context.Context, relayed bool) (context.Context, context.CancelFunc) {
-	budget := relay.CallTimeout
-	if deadline, ok := ctx.Deadline(); ok {
-		budget = min(budget, time.Until(deadline))
-	}
-	if relayed {
-		budget /= 2
-	}
-	return context.WithTimeout(ctx, budget)
-}
-
-// Start begins listening for members on the local network and keeps the
-// members found by address in reach.
-func (m *Manager) Start() {
-	m.disc.Start()
-	go m.keepAlive()
-}
-
-// Close stops the relay connection, the discovery service and the refresh.
+// Close leaves the group and the network.
 func (m *Manager) Close() {
-	m.stopOnce.Do(func() { close(m.stop) })
 	m.mu.Lock()
-	c := m.client
-	m.client = nil
+	g := m.g
+	m.g = nil
 	m.mu.Unlock()
-	if c != nil {
-		_ = c.Close()
+	if g != nil {
+		_ = g.Close()
 	}
-	_ = m.disc.Close()
+	_ = m.lan.Close()
 }
 
-// Apply switches the Manager to cfg: it rebuilds the relay connection and the
-// discovery announce, and closes whatever the old configuration had open.
+// Apply switches the Manager to cfg. A change the relay and the keys do not
+// see, a new name or address, keeps the group open.
 func (m *Manager) Apply(cfg Config) {
-	cfg.Name = clipName(cfg.Name)
-	var k *keys
-	if len(cfg.Secret) > 0 {
-		k = deriveKeys(cfg.Secret)
-	}
-
-	var setup relaySetup
-	if k != nil {
-		if url := relayURLFor(cfg); url != "" {
-			setup = relaySetup{url: url, key: k.relayKey, instanceID: cfg.InstanceID, name: cfg.Name, version: cfg.Version}
-		}
-	}
-
+	m.applyMu.Lock()
+	defer m.applyMu.Unlock()
+	self := kitgroup.Self{Name: cfg.Name, Deployment: "container", Address: cfg.DirectURL, DirectURL: cfg.DirectURL}
 	m.mu.Lock()
-	prev, prevKeys := m.client, m.keys
-	// A change the relay does not see, such as this instance's own direct
-	// address, keeps the connection: a new one would take this instance off
-	// every member's list until it is back.
-	next := prev
-	if prev == nil || setup != m.setup {
-		next = m.newRelayClient(setup, k)
-	}
-	m.cfg, m.keys, m.client, m.setup = cfg, k, next, setup
-	m.mu.Unlock()
-	if !sameKeys(prevKeys, k) {
-		// A different group, or none, makes every address this instance
-		// learned for the old one meaningless, and a sweep due under the old
-		// group must not carry over and skip the new one's first sweep.
-		m.addrMu.Lock()
-		m.addrs = map[string]*remoteAddr{}
-		m.failed = map[string]time.Time{}
-		m.departed = map[string]time.Time{}
-		m.addrMu.Unlock()
-		m.sweepMu.Lock()
-		m.lastSweep = time.Time{}
-		m.sweepMu.Unlock()
-	}
-	if prev != nil && prev != next {
-		_ = prev.Close()
-	}
-	if next != nil && next != prev {
-		next.Start()
-	}
-
-	if k == nil {
-		m.disc.SetAccept(nil)
-		m.disc.SetSelf(discovery.Peer{}, nil)
+	prev, old := m.cfg, m.g
+	m.cfg = cfg
+	if old != nil && sameGroup(prev, cfg) {
+		m.mu.Unlock()
+		old.SetSelf(self)
 		return
 	}
-	self := discovery.Peer{ID: cfg.InstanceID, Name: cfg.Name, Version: cfg.Version, URL: cfg.DirectURL}
-	m.disc.SetSelf(self, func(p discovery.Peer) string { return announceTag(k.peerAuth, p) })
-	m.disc.SetAccept(func(p discovery.Peer) bool {
-		if d := time.Since(time.Unix(p.Sent, 0)); d > relay.ClockSkew || d < -relay.ClockSkew {
-			return false
-		}
-		return hmac.Equal([]byte(p.Tag), []byte(announceTag(k.peerAuth, p)))
-	})
-}
-
-// relaySetup is everything a relay connection is made with that can change.
-type relaySetup struct {
-	url, key, instanceID, name, version string
-}
-
-// newRelayClient returns a relay client for setup, or nil for none.
-func (m *Manager) newRelayClient(setup relaySetup, k *keys) *relay.Client {
-	if setup.url == "" {
-		return nil
+	m.g = nil
+	m.mu.Unlock()
+	// Close waits for the calls the group serves, which take m.mu.
+	if old != nil {
+		_ = old.Close()
 	}
-	c, err := relay.NewClient(relay.ClientOptions{
-		URL:        setup.url,
-		Key:        setup.key,
-		FrameKey:   k.frameKey,
-		InstanceID: setup.instanceID,
-		Identity:   relay.Identity{Name: setup.name, Version: setup.version},
-		Serve:      m.serve,
-		Replay:     m.replay,
-	})
+	if len(cfg.Secret) == 0 {
+		return
+	}
+	if g := m.open(cfg, self); g != nil {
+		m.mu.Lock()
+		m.g = g
+		m.mu.Unlock()
+	}
+}
+
+func (m *Manager) open(cfg Config, self kitgroup.Self) *kitgroup.Group {
+	id, err := member.FromSeed(member.KindInstance, cfg.Seed)
 	if err != nil {
-		log.Printf("group: relay not started: %v", err)
+		log.Printf("group: the member key does not open: %v", err)
 		return nil
 	}
-	return c
+	stored, err := cfg.Store.Load()
+	if err != nil {
+		log.Printf("group: %v", err)
+		return nil
+	}
+	g, err := kitgroup.Open(kitgroup.Config{
+		Domain:         Domain,
+		Secret:         cfg.Secret,
+		Identity:       id,
+		Self:           self,
+		Relay:          kitgroup.RelayMode(cfg.Mode),
+		RelayURL:       strings.TrimSpace(cfg.RelayURL),
+		LAN:            m.lan,
+		Store:          cfg.Store,
+		Kinds:          []member.Kind{member.KindMobile},
+		Ports:          Ports,
+		MaxAnswerBytes: maxAnswerBytes,
+		OnRemoved:      cfg.OnRemoved,
+		OnChange:       func() { go m.learnAll() },
+	}, http.HandlerFunc(m.serveMember))
+	if err != nil {
+		log.Printf("group: %v", err)
+		return nil
+	}
+	if len(stored) == 0 && cfg.Former != nil {
+		former, err := cfg.Former()
+		if err == nil {
+			err = g.Import(former)
+		}
+		if err != nil {
+			log.Printf("group: take over the members known before: %v", err)
+		}
+	}
+	return g
 }
 
-// maxNameBytes keeps the name an instance goes by inside what a discovery
-// announce and a relay hello may carry.
-const maxNameBytes = 200
-
-func clipName(name string) string {
-	if len(name) <= maxNameBytes {
-		return name
-	}
-	cut := maxNameBytes
-	for cut > 0 && !utf8.RuneStart(name[cut]) {
-		cut--
-	}
-	return name[:cut]
+// sameGroup reports whether a and b open the same group the same way.
+func sameGroup(a, b Config) bool {
+	return hmac.Equal(a.Secret, b.Secret) && hmac.Equal(a.Seed, b.Seed) && a.Mode == b.Mode &&
+		strings.TrimSpace(a.RelayURL) == strings.TrimSpace(b.RelayURL) && a.InstanceID == b.InstanceID
 }
 
-// relayURLFor is the address the relay client dials, or empty for none.
-func relayURLFor(cfg Config) string {
-	switch cfg.Mode {
-	case ModeOff:
-		return ""
-	case ModeOwn:
-		return strings.TrimSpace(cfg.RelayURL)
-	default:
-		return relay.DefaultURL
-	}
-}
-
-// announceTag signs everything a discovery announce claims, its time
-// included, so a device on the network can neither point members at an
-// address of its choosing nor keep a departed member listed by playing its
-// announces back.
-func announceTag(peerAuth []byte, p discovery.Peer) string {
-	mac := hmac.New(sha256.New, peerAuth)
-	mac.Write([]byte("announce\x00" + p.ID + "\x00" + p.URL + "\x00" + p.Name + "\x00" + p.Version + "\x00" + strconv.FormatInt(p.Sent, 10)))
-	return hex.EncodeToString(mac.Sum(nil))
+func (m *Manager) group() (*kitgroup.Group, Config) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.g, m.cfg
 }
 
 // Active reports whether this instance is in a group.
 func (m *Manager) Active() bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.keys != nil
+	g, _ := m.group()
+	return g != nil
 }
 
 // RelayConnected reports whether the relay socket is up.
 func (m *Manager) RelayConnected() bool {
-	m.mu.Lock()
-	c := m.client
-	m.mu.Unlock()
-	return c != nil && c.Connected()
+	g, _ := m.group()
+	return g != nil && g.RelayConnected()
 }
 
-// AdmitsRelayKey reports whether key is this group's relay key, which is the
-// only key a relay served by this instance lets in.
+// AdmitsRelayKey reports whether key is this group's relay key, the only key a
+// relay served by this instance lets in.
 func (m *Manager) AdmitsRelayKey(key string) bool {
-	m.mu.Lock()
-	k := m.keys
-	m.mu.Unlock()
-	return k != nil && hmac.Equal([]byte(key), []byte(k.relayKey))
+	g, cfg := m.group()
+	return g != nil && hmac.Equal([]byte(key), []byte(Domain.GroupKey(cfg.Secret)))
 }
 
-// Members lists the members reachable now, sorted by name. A member shows as
-// Direct when multicast placed it on this network or a direct call to it,
-// found by the address exchange or the LAN sweep, has answered recently, and
-// no call to that address has failed since.
+// Members lists the approved members reachable now, sorted by name.
 func (m *Manager) Members() []Member {
-	m.mu.Lock()
-	c, active := m.client, m.keys != nil
-	m.mu.Unlock()
-	if !active {
+	g, _ := m.group()
+	if g == nil {
 		return []Member{}
 	}
-	byID := map[string]*Member{}
-	for _, p := range m.disc.Peers() {
-		byID[p.ID] = &Member{ID: p.ID, Name: p.Name, Version: p.Version, Direct: !m.directDown(p.URL), Address: p.URL}
-	}
-	if c != nil {
-		for _, s := range c.Siblings() {
-			if mem, ok := byID[s.InstanceID]; ok {
-				mem.Relay, mem.Kind = true, s.Kind
-				continue
-			}
-			byID[s.InstanceID] = &Member{ID: s.InstanceID, Name: s.Name, Version: s.Version, Kind: s.Kind, Relay: true, Direct: m.confirmedDirect(s.InstanceID)}
-		}
-	}
-	// A member with no relay and no multicast, only a sweep or a manually
-	// probed address, would otherwise never appear: this is the only route
-	// that tells the pairing card about it at all.
-	for id, a := range m.confirmedAddresses() {
-		if _, ok := byID[id]; ok {
+	out := []Member{}
+	for _, km := range g.Members() {
+		if km.State != kitgroup.StateApproved || !km.Online() {
 			continue
 		}
-		byID[id] = &Member{ID: id, Name: a.name, Version: a.version, Direct: !m.directDown(a.url), Address: a.url}
-	}
-	gone := m.departedNow()
-	out := make([]Member, 0, len(byID))
-	for id, mem := range byID {
-		if gone[id] {
+		id, ok := m.known(km.ID, km.Kind, km.Key)
+		if !ok {
 			continue
 		}
-		if mem.Address == "" {
-			mem.Address, _ = m.knownAddress(id)
-		}
-		out = append(out, *mem)
+		out = append(out, Member{ID: id, Name: km.Name, Direct: km.Direct, Relay: km.Relay, Address: km.Address, Kind: kindOf(km.Kind)})
 	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].Name != out[j].Name {
-			return out[i].Name < out[j].Name
-		}
-		return out[i].ID < out[j].ID
-	})
 	return out
 }
 
-// Forget drops every address on record for memberID and keeps it out of
-// Members for departGrace. It is for a member that said it left the group.
-func (m *Manager) Forget(memberID string) {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	if a := m.addrs[memberID]; a != nil {
-		delete(m.failed, a.url)
+// Waiting lists the members that wait for approval here, and the ones this
+// instance waits for there.
+func (m *Manager) Waiting() []Waiting {
+	g, _ := m.group()
+	out := []Waiting{}
+	if g == nil {
+		return out
 	}
-	delete(m.addrs, memberID)
-	m.departed[memberID] = time.Now()
-}
-
-// departedNow lists the members that left within departGrace and drops the
-// older ones.
-func (m *Manager) departedNow() map[string]bool {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	out := map[string]bool{}
-	for id, at := range m.departed {
-		if time.Since(at) < departGrace {
-			out[id] = true
-		} else {
-			delete(m.departed, id)
+	for _, km := range g.Members() {
+		w := Waiting{ID: km.ID, Name: km.Name, Kind: kindOf(km.Kind), Online: km.Online()}
+		if len(km.Key) > 0 {
+			w.Fingerprint = member.Fingerprint(km.Key)
+		}
+		switch {
+		case km.State == kitgroup.StatePending:
+			out = append(out, w)
+		case km.State == kitgroup.StateApproved && km.Awaiting:
+			w.There = true
+			out = append(out, w)
 		}
 	}
 	return out
 }
 
-// NoteAddress records url as a hint for where memberID might answer direct
-// calls, without treating it as reachable yet: only a call that actually
-// answers there, through ConfirmAddress, counts as Direct. It is what the
-// address exchange over the relay feeds, since a member's say-so about its
-// own address is not proof it works.
-func (m *Manager) NoteAddress(memberID, url string) {
-	memberID, url = strings.TrimSpace(memberID), strings.TrimSpace(url)
-	if memberID == "" || url == "" || memberID == m.selfID() {
-		return
+// Approve lets in the member that waits under id.
+func (m *Manager) Approve(id string) error {
+	g, _ := m.group()
+	if g == nil {
+		return ErrNotMember
 	}
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	a := m.addrs[memberID]
-	if a == nil {
-		a = &remoteAddr{}
-		m.addrs[memberID] = a
+	if err := g.Approve(id); err != nil {
+		return err
 	}
-	if a.url != url {
-		a.url, a.confirmed = url, time.Time{}
-	}
-	a.noted = time.Now()
+	go m.learnAll()
+	return nil
 }
 
-// ConfirmAddress records that memberID answered a direct call at url just
-// now. name and version, when not empty, replace what is on record; an empty
-// one leaves what is already known alone, so a probe's bare identification
-// never blanks a name learned elsewhere.
-func (m *Manager) ConfirmAddress(memberID, url, name, version string) {
-	memberID, url = strings.TrimSpace(memberID), strings.TrimSpace(url)
-	if memberID == "" || url == "" || memberID == m.selfID() {
-		return
+// Remove takes a member out of the group on every instance in reach, under
+// its id here or its id in the group. Its key stays shut out.
+func (m *Manager) Remove(id string) error {
+	g, _ := m.group()
+	if g == nil {
+		return ErrNotMember
 	}
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	a := m.addrs[memberID]
-	if a == nil {
-		a = &remoteAddr{}
-		m.addrs[memberID] = a
-	}
-	a.url = url
-	if name != "" {
-		a.name = name
-	}
-	if version != "" {
-		a.version = version
-	}
-	a.confirmed = time.Now()
-	a.noted = a.confirmed
-}
-
-func (m *Manager) selfID() string {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.cfg.InstanceID
-}
-
-// knownAddress is any address on record for memberID, confirmed or only
-// noted, for Call to try before giving up on a direct route.
-func (m *Manager) knownAddress(memberID string) (string, bool) {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	a := m.addrs[memberID]
-	if a == nil || a.url == "" {
-		return "", false
-	}
-	return a.url, true
-}
-
-// directFailed records that a call to url got no answer. A call whose
-// caller gave up says nothing about the address and is not recorded.
-func (m *Manager) directFailed(ctx context.Context, url string) {
-	if ctx.Err() != nil {
-		return
-	}
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	m.failed[url] = time.Now()
-}
-
-func (m *Manager) directAnswered(url string) {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	delete(m.failed, url)
-}
-
-// directDown reports whether a call to url failed within directRetry.
-func (m *Manager) directDown(url string) bool {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	at, ok := m.failed[url]
-	return ok && time.Since(at) < directRetry
-}
-
-// stillDown restarts directRetry for url when it is down already, so an
-// address the refresh finds dead stays out of the way of calls.
-func (m *Manager) stillDown(url string) {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	if _, ok := m.failed[url]; ok {
-		m.failed[url] = time.Now()
-	}
-}
-
-// confirmedDirect reports whether memberID answered at its address within
-// addrTTL and no call there has failed since.
-func (m *Manager) confirmedDirect(memberID string) bool {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	a := m.addrs[memberID]
-	if a == nil || a.confirmed.IsZero() || time.Since(a.confirmed) >= addrTTL {
-		return false
-	}
-	at, failed := m.failed[a.url]
-	return !failed || time.Since(at) >= directRetry
-}
-
-// confirmedAddresses snapshots every member address that answered within
-// addrTTL.
-func (m *Manager) confirmedAddresses() map[string]remoteAddr {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	out := map[string]remoteAddr{}
-	now := time.Now()
-	for id, a := range m.addrs {
-		if !a.confirmed.IsZero() && now.Sub(a.confirmed) < addrTTL {
-			out[id] = *a
+	for _, km := range g.Members() {
+		if km.ID == id {
+			return g.Remove(id)
 		}
 	}
-	return out
+	key, found, err := m.dir.MemberKey(id)
+	if err != nil || !found {
+		return errors.Join(err, ErrNotMember)
+	}
+	for _, kind := range []member.Kind{member.KindInstance, member.KindMobile} {
+		if kid := member.ID(kind, key); kid != "" && m.listed(g, kid) {
+			return g.Remove(kid)
+		}
+	}
+	return ErrNotMember
 }
 
-// Call asks one member and returns its answer. A member found by multicast on
-// this network is asked directly first; a member reachable only through an
-// address the exchange or the sweep found is asked directly next; if neither
-// answers and the member is on the relay too, the relay carries the call
-// instead. A direct address that failed recently is skipped while the relay
-// reaches the member. An error means no answer came.
-//
-// The routes are tried one after another rather than raced, since a call can
-// change something on the member and must not arrive twice.
-func (m *Manager) Call(ctx context.Context, memberID, method, path string, body []byte) (int, []byte, error) {
-	m.mu.Lock()
-	k, c, self := m.keys, m.client, m.cfg.InstanceID
-	m.mu.Unlock()
-	if k == nil {
-		return 0, nil, ErrNotMember
-	}
-	call := relay.ProxyCall{Method: method, Path: path, Body: body, Sender: self}
-	var sib relay.Sibling
-	relayed := false
-	if c != nil {
-		for _, s := range c.Siblings() {
-			if s.InstanceID == memberID {
-				sib, relayed = s, true
-				break
-			}
-		}
-	}
-	dctx, cancel := directContext(ctx, relayed)
-	defer cancel()
-	skip := func(url string) bool { return relayed && m.directDown(url) }
-
-	var directErr error
-	tried := map[string]bool{}
-	for _, p := range m.disc.Peers() {
-		if p.ID != memberID {
-			continue
-		}
-		tried[p.URL] = true
-		if skip(p.URL) {
-			continue
-		}
-		res, err := m.callDirect(dctx, k, self, p, call)
-		if err == nil {
-			m.ConfirmAddress(memberID, p.URL, p.Name, p.Version)
-			return res.Status, res.Body, nil
-		}
-		m.directFailed(ctx, p.URL)
-		directErr = err
-	}
-	if addr, ok := m.knownAddress(memberID); ok && !tried[addr] && !skip(addr) {
-		res, err := m.callDirect(dctx, k, self, discovery.Peer{ID: memberID, URL: addr}, call)
-		if err == nil {
-			m.ConfirmAddress(memberID, addr, sib.Name, sib.Version)
-			return res.Status, res.Body, nil
-		}
-		m.directFailed(ctx, addr)
-		directErr = err
-	}
-	if c != nil {
-		for _, s := range c.Siblings() {
-			if s.InstanceID == memberID {
-				res, err := c.Call(ctx, memberID, call)
-				if err != nil {
-					return 0, nil, err
-				}
-				return res.Status, res.Body, nil
-			}
-		}
-	}
-	if directErr != nil {
-		return 0, nil, directErr
-	}
-	return 0, nil, ErrNotMember
-}
-
-// Probe makes one blind, signed call to addr and reports whether a group
-// member answered, without knowing beforehand who, if anyone, is there. It
-// is what the LAN sweep and a manually entered address both use, and it
-// records a successful answer the same way a normal direct call does.
-func (m *Manager) Probe(ctx context.Context, addr string) (Hello, error) {
-	m.mu.Lock()
-	k, self, own := m.keys, m.cfg.InstanceID, m.cfg.DirectURL
-	m.mu.Unlock()
-	if k == nil {
-		return Hello{}, ErrNotMember
-	}
-	intro, err := json.Marshal(probeIntro{DirectURL: own})
-	if err != nil {
-		return Hello{}, err
-	}
-	call := relay.ProxyCall{Method: http.MethodGet, Path: ProbePath, Body: intro, Sender: self}
-	res, err := m.callDirect(ctx, k, self, discovery.Peer{ID: ProbeTarget, URL: addr, Name: addr}, call)
-	if err != nil {
-		return Hello{}, err
-	}
-	var h Hello
-	if err := json.Unmarshal(res.Body, &h); err != nil || !h.OK || h.InstanceID == "" {
-		return Hello{}, fmt.Errorf("group: %s answered a probe unreadably", addr)
-	}
-	confirmedAt := addr
-	if strings.TrimSpace(h.DirectURL) != "" {
-		confirmedAt = h.DirectURL
-	}
-	m.ConfirmAddress(h.InstanceID, confirmedAt, h.Name, h.Version)
-	return h, nil
-}
-
-// probeIntro is what a probe tells the member it reaches: where the prober
-// itself takes direct calls, so the pair knows each other after one probe
-// instead of waiting for the other side's own sweep.
-type probeIntro struct {
-	DirectURL string `json:"directUrl,omitempty"`
-}
-
-// probeBack answers a probe's introduction by probing the prober at the
-// address it named. Only a member not yet confirmed is probed back, so two
-// instances stop after one round instead of probing each other forever.
-func (m *Manager) probeBack(sender string, body []byte) {
-	var in probeIntro
-	if json.Unmarshal(body, &in) != nil {
-		return
-	}
-	u, err := url.Parse(strings.TrimSpace(in.DirectURL))
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || m.confirmedDirect(sender) {
-		return
-	}
-	m.NoteAddress(sender, u.String())
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*sweepTimeout)
-		defer cancel()
-		_, _ = m.Probe(ctx, u.String())
-	}()
-}
-
-// The LAN sweep's bounds: sweepConcurrency limits how many probes run at
-// once, sweepTimeout how long each may take, sweepBudget the whole sweep,
-// and sweepMinInterval how often one may start at all.
-const (
-	sweepConcurrency = 32
-	sweepTimeout     = 1500 * time.Millisecond
-	sweepBudget      = 45 * time.Second
-	sweepMinInterval = 3 * time.Minute
-)
-
-// refreshEvery is how often the Manager asks its known members again, well
-// inside addrTTL. Without it a member reached only by address, with no relay
-// and no multicast between the two, drops out of the group after addrTTL and
-// comes back only once somebody opens a page that triggers a sweep.
-const refreshEvery = addrTTL / 2
-
-func (m *Manager) keepAlive() {
-	t := time.NewTicker(refreshEvery)
-	defer t.Stop()
-	for {
-		select {
-		case <-m.stop:
-			return
-		case <-t.C:
-			m.refresh(context.Background())
-		}
-	}
-}
-
-// refresh probes every member address on record, which confirms the ones that
-// still answer and puts a failed one back to use, and then starts a sweep if
-// one is due.
-func (m *Manager) refresh(ctx context.Context) {
-	m.mu.Lock()
-	active := m.keys != nil
-	m.mu.Unlock()
-	if !active {
-		return
-	}
-	for _, url := range m.knownURLs() {
-		cctx, cancel := context.WithTimeout(ctx, sweepTimeout)
-		if _, err := m.Probe(cctx, url); err != nil {
-			m.stillDown(url)
-		}
-		cancel()
-	}
-	m.MaybeSweep()
-}
-
-func (m *Manager) knownURLs() []string {
-	m.addrMu.Lock()
-	defer m.addrMu.Unlock()
-	out := make([]string, 0, len(m.addrs))
-	for _, a := range m.addrs {
-		if a.url != "" {
-			out = append(out, a.url)
-		}
-	}
-	return out
-}
-
-// NeedsSweep reports whether the LAN sweep should run: this instance is in a
-// group, and either nobody has been found by any route yet, or the relay
-// knows of a sibling this instance has no direct address for.
-func (m *Manager) NeedsSweep() bool {
-	m.mu.Lock()
-	active, c := m.keys != nil, m.client
-	m.mu.Unlock()
-	if !active {
-		return false
-	}
-	disc := m.disc.Peers()
-	confirmed := m.confirmedAddresses()
-	if len(disc) == 0 && len(confirmed) == 0 {
-		return true
-	}
-	if c == nil {
-		return false
-	}
-	known := make(map[string]bool, len(disc)+len(confirmed))
-	for _, p := range disc {
-		known[p.ID] = true
-	}
-	for id := range confirmed {
-		known[id] = true
-	}
-	for _, s := range c.Siblings() {
-		if !known[s.InstanceID] {
+func (m *Manager) listed(g *kitgroup.Group, id string) bool {
+	for _, km := range g.Members() {
+		if km.ID == id {
 			return true
 		}
 	}
 	return false
 }
 
-// MaybeSweep starts a LAN sweep in the background when one is due, and
-// returns at once either way. It is cheap enough to call on every group
-// page load: NeedsSweep decides whether there is anything to look for, and
-// the timestamp below throttles how often a sweep actually runs.
-func (m *Manager) MaybeSweep() {
-	if !m.NeedsSweep() {
-		return
+// Call asks member id, under the id BombVault knows it by, and returns its
+// answer. An error means no answer came from that member.
+func (m *Manager) Call(ctx context.Context, id, method, path string, body []byte) (int, []byte, error) {
+	g, _ := m.group()
+	if g == nil {
+		return 0, nil, ErrNotMember
 	}
-	m.sweepMu.Lock()
-	if !m.lastSweep.IsZero() && time.Since(m.lastSweep) < sweepMinInterval {
-		m.sweepMu.Unlock()
-		return
+	key, found, err := m.dir.MemberKey(id)
+	if err != nil {
+		return 0, nil, err
 	}
-	m.lastSweep = time.Now()
-	m.sweepMu.Unlock()
-	go m.sweepOnce(context.Background())
+	target := id
+	if found {
+		target = member.ID(member.KindInstance, key)
+	}
+	if !relay.ValidInstanceID(target) {
+		return 0, nil, ErrNotMember
+	}
+	status, out, err := g.Call(ctx, target, method, path, body)
+	if errors.Is(err, kitgroup.ErrUnreachable) || errors.Is(err, kitgroup.ErrNoSuchMember) {
+		return 0, nil, ErrNotMember
+	}
+	return status, out, err
 }
 
-func (m *Manager) sweepOnce(ctx context.Context) {
-	m.mu.Lock()
-	own := m.cfg.DirectURL
-	m.mu.Unlock()
-	ctx, cancel := context.WithTimeout(ctx, sweepBudget)
-	defer cancel()
-	m.sweepWith(ctx, subnetCandidates(own))
-}
-
-// sweepWith probes every candidate address with bounded concurrency. It
-// takes the candidate list as a parameter, rather than computing it itself,
-// so a test can hand it a short list that includes a fake address instead of
-// a real /24.
-func (m *Manager) sweepWith(ctx context.Context, candidates []string) {
-	if len(candidates) == 0 {
+// ServeDirect answers a member's direct call, or like an instance without
+// the feature outside a group.
+func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
+	g, _ := m.group()
+	if g == nil {
+		http.NotFound(w, r)
 		return
 	}
-	sem := make(chan struct{}, sweepConcurrency)
-	var wg sync.WaitGroup
-	for _, addr := range candidates {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(addr string) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			cctx, cancel := context.WithTimeout(ctx, sweepTimeout)
-			defer cancel()
-			_, _ = m.Probe(cctx, addr)
-		}(addr)
-	}
-	wg.Wait()
+	g.DirectHandler().ServeHTTP(w, r)
 }
 
-// subnetCandidates lists own's port and port 3443 on every other host of
-// own's /24, or nil when own is not a private IPv4 address. Scanning a
-// public network, or one this instance only reaches through a reverse proxy,
-// is exactly what the sweep must never do, so an address that does not
-// clearly name this instance's own LAN interface yields no candidates at
-// all rather than a guess.
-func subnetCandidates(own string) []string {
-	u, err := url.Parse(own)
-	if err != nil || u.Hostname() == "" {
-		return nil
+// serveMember hands a member's call to the app with the member's BombVault
+// id. A member nobody here knows yet is asked for it first, and only told
+// this instance's own at ProbePath until it says.
+func (m *Manager) serveMember(w http.ResponseWriter, r *http.Request) {
+	c, ok := kitgroup.CallerOf(r.Context())
+	if !ok {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
 	}
-	ip := net.ParseIP(u.Hostname()).To4()
-	if ip == nil || !discovery.PrivateIPv4(ip) {
-		return nil
+	id, known := m.known(c.ID, c.Kind, c.Key)
+	if !known && r.URL.Path == ProbePath {
+		// Saying who this instance is cannot wait for the caller to say the
+		// same, which is what the caller asks this for.
+		m.serve.ServeHTTP(w, r)
+		return
 	}
-	scheme := u.Scheme
-	if scheme == "" {
-		scheme = "https"
+	if !known {
+		id, known = m.learn(r.Context(), c.ID, c.Key)
 	}
-	ports := []string{"3443"}
-	if p := u.Port(); p != "" && p != "3443" {
-		ports = append(ports, p)
+	if !known {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write(relay.RefusalBody("memberUnknown", "this instance could not learn which instance is calling; it asks again shortly"))
+		return
 	}
-	base := ip.Mask(net.CIDRMask(24, 32))
-	self := ip[3]
-	ownPort := u.Port()
-	if ownPort == "" {
-		ownPort = "443"
-		if scheme == "http" {
-			ownPort = "80"
+	m.serve.ServeHTTP(w, r.WithContext(WithSender(r.Context(), Sender{ID: id, Kind: kindOf(c.Kind), Key: c.Key})))
+}
+
+// known returns the BombVault id of the member with key: the one key is
+// pinned under, else for a phone its PhoneID, which key is pinned under from
+// then on.
+func (m *Manager) known(kitID string, kind member.Kind, key []byte) (string, bool) {
+	if len(key) == 0 {
+		return "", false
+	}
+	id, found, err := m.dir.MemberByKey(key)
+	if err != nil {
+		log.Printf("group: %v", err)
+		return "", false
+	}
+	if found {
+		return id, true
+	}
+	if kind == member.KindMobile {
+		id := PhoneID(key)
+		if err := m.dir.PinMemberKey(id, key); err != nil {
+			log.Printf("group: pin the key of phone %s: %v", kitID, err)
+			return "", false
 		}
+		return id, true
 	}
-	out := make([]string, 0, 254*len(ports))
-	for host := 1; host <= 254; host++ {
-		addr := net.IPv4(base[0], base[1], base[2], byte(host)).String()
-		for _, port := range ports {
-			// A second instance on this same machine publishes another port.
-			if byte(host) == self && port == ownPort {
-				continue
-			}
-			out = append(out, scheme+"://"+addr+":"+port)
+	return "", false
+}
+
+// learnAll asks every approved instance whose key is pinned nowhere which id
+// it goes by, and again later while one has not said.
+func (m *Manager) learnAll() {
+	g, _ := m.group()
+	if g == nil {
+		return
+	}
+	open := false
+	for _, km := range g.Members() {
+		if km.Kind != member.KindInstance || km.State != kitgroup.StateApproved || !km.Online() {
+			continue
 		}
+		if _, ok := m.known(km.ID, km.Kind, km.Key); ok {
+			continue
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		if _, ok := m.learn(ctx, km.ID, km.Key); !ok {
+			open = true
+		}
+		cancel()
 	}
-	return out
-}
-
-func (m *Manager) callDirect(ctx context.Context, k *keys, self string, p discovery.Peer, call relay.ProxyCall) (relay.ProxyResult, error) {
-	id, err := relay.NewRequestID()
-	if err != nil {
-		return relay.ProxyResult{}, err
-	}
-	sealed, err := relay.SealCall(k.frameKey, id, p.ID, call)
-	if err != nil {
-		return relay.ProxyResult{}, err
-	}
-	payload, err := json.Marshal(relay.ProxyRequest{RequestID: id, Target: p.ID, Sealed: sealed})
-	if err != nil {
-		return relay.ProxyResult{}, err
-	}
-	ctx, cancel := context.WithTimeout(ctx, relay.CallTimeout)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(p.URL, "/")+directPath, bytes.NewReader(payload))
-	if err != nil {
-		return relay.ProxyResult{}, err
-	}
-	now := strconv.FormatInt(time.Now().Unix(), 10)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(headerPeer, self)
-	req.Header.Set(headerTarget, p.ID)
-	req.Header.Set(headerTime, now)
-	req.Header.Set(headerSignature, directSignature(k.peerAuth, self, now, payload))
-
-	resp, err := m.hc.Do(req)
-	if err != nil {
-		return relay.ProxyResult{}, fmt.Errorf("group: %s is not reachable directly: %w", p.Name, err)
-	}
-	defer resp.Body.Close() //nolint:errcheck // nothing to do about a failed close of a read body
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxAnswerBytes))
-	if err != nil {
-		return relay.ProxyResult{}, err
-	}
-	if resp.StatusCode == http.StatusGone && p.ID != ProbeTarget {
-		return relay.ProxyResult{}, &LeftError{MemberID: p.ID, Challenge: req.Header.Get(headerSignature), Statement: raw}
-	}
-	if resp.StatusCode != http.StatusOK {
-		return relay.ProxyResult{}, fmt.Errorf("group: %s refused the direct call with HTTP %d", p.Name, resp.StatusCode)
-	}
-	var out relay.ProxyResponse
-	if err := json.Unmarshal(raw, &out); err != nil || out.RequestID != id {
-		return relay.ProxyResult{}, fmt.Errorf("group: %s answered unreadably", p.Name)
-	}
-	res, err := relay.OpenResult(k.frameKey, id, out.Sealed)
-	if err == nil {
-		m.directAnswered(p.URL)
-	}
-	return res, err
-}
-
-// answerAsStranger answers a call that names this instance, while it is in no
-// group, with the Stranger statement, so a former member can drop it from its
-// lists. An instance in another group answers only a call signed with the key
-// of the group it left: any other call it cannot tell apart from one of its
-// own members' that was tampered with on the way, and its word would let
-// whoever tampered remove a real member.
-func (m *Manager) answerAsStranger(w http.ResponseWriter, r *http.Request, self string) bool {
-	sender, sig := r.Header.Get(headerPeer), r.Header.Get(headerSignature)
-	if m.Stranger == nil || self == "" || r.Header.Get(headerTarget) != self || sender == "" || len(sender) > maxSenderBytes || len(sig) != 2*sha256.Size {
-		return false
-	}
-	proof := m.Stranger(sender, sig)
-	if proof == nil {
-		return false
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusGone)
-	_, _ = w.Write(proof)
-	return true
-}
-
-func (m *Manager) formerPeerAuth() []byte {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if len(m.cfg.FormerPeerAuth) == 0 || (m.keys != nil && hmac.Equal(m.cfg.FormerPeerAuth, m.keys.peerAuth)) {
-		return nil
+	if open && !m.retrying && m.g == g {
+		m.retrying = true
+		time.AfterFunc(learnEvery, func() {
+			m.mu.Lock()
+			m.retrying = false
+			m.mu.Unlock()
+			m.learnAll()
+		})
 	}
-	return m.cfg.FormerPeerAuth
 }
 
-// maxSenderBytes bounds the caller id a Stranger statement signs. Instance ids
-// are 32 hex digits.
-const maxSenderBytes = 128
-
-// directSignature binds a direct call's sender, time and exact body to the
-// peer-auth key.
-func directSignature(peerAuth []byte, sender, unix string, body []byte) string {
-	sum := sha256.Sum256(body)
-	mac := hmac.New(sha256.New, peerAuth)
-	mac.Write([]byte("direct\x00" + sender + "\x00" + unix + "\x00" + hex.EncodeToString(sum[:])))
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
-// ServeDirect answers a member's direct call. Outside a group it answers like
-// an instance without the feature. A call that is unsigned, stale, replayed,
-// addressed to another instance or does not open is refused without saying
-// which, since the reason would only help a guesser. Repeated bad signatures
-// from one address are throttled the way the relay throttles a failed
-// handshake, so a sweep from a non-member cannot be turned into a flood.
-func (m *Manager) ServeDirect(w http.ResponseWriter, r *http.Request) {
+// learn asks instance kitID, whose answers key signs, which id it goes by in
+// BombVault, and pins key under it. An id pinned for another key, or this
+// instance's own, is not taken.
+func (m *Manager) learn(ctx context.Context, kitID string, key []byte) (string, bool) {
+	g, cfg := m.group()
+	if g == nil || len(key) == 0 || member.ID(member.KindInstance, key) != kitID {
+		return "", false
+	}
 	m.mu.Lock()
-	k, self := m.keys, m.cfg.InstanceID
+	if at, ok := m.asked[kitID]; ok && time.Since(at) < learnEvery {
+		m.mu.Unlock()
+		return "", false
+	}
+	m.asked[kitID] = time.Now()
 	m.mu.Unlock()
-	addr := relay.RequestAddr(r)
-	if k == nil {
-		if m.limiter.Blocked(addr) {
-			http.NotFound(w, r)
-			return
-		}
-		// Signing an answer costs a write, so every call counts against the
-		// caller's address the way a bad signature does.
-		m.limiter.Fail(addr)
-		if !m.answerAsStranger(w, r, self) {
-			http.NotFound(w, r)
-		}
-		return
+
+	status, body, err := g.Call(ctx, kitID, http.MethodGet, ProbePath, nil)
+	if err != nil || status != http.StatusOK {
+		return "", false
 	}
-	if m.limiter.Blocked(addr) {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+	var h Hello
+	if json.Unmarshal(body, &h) != nil || !h.OK || h.InstanceID == "" || len(h.InstanceID) > 64 || h.InstanceID == cfg.InstanceID {
+		return "", false
 	}
-	// The route is public, so whatever a stranger can send without the key
-	// is checked before the body is read. target may also be ProbeTarget: a
-	// blind probe cannot yet name the instance it is calling.
-	sender, target, unix := r.Header.Get(headerPeer), r.Header.Get(headerTarget), r.Header.Get(headerTime)
-	sent, err := strconv.ParseInt(unix, 10, 64)
-	if err != nil || sender == "" || (target != self && target != ProbeTarget) || r.ContentLength > MaxCallBytes {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+	if err := m.dir.PinMemberKey(h.InstanceID, key); err != nil {
+		log.Printf("group: instance %s names the id %s, which another key is pinned for: %v", kitID, h.InstanceID, err)
+		return "", false
 	}
-	if d := time.Since(time.Unix(sent, 0)); d > relay.ClockSkew || d < -relay.ClockSkew {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
+	m.mu.Lock()
+	delete(m.asked, kitID)
+	m.mu.Unlock()
+	return h.InstanceID, true
+}
+
+func kindOf(k member.Kind) string {
+	if k == member.KindMobile {
+		return KindPhone
 	}
-	select {
-	case m.slots <- struct{}{}:
-		defer func() { <-m.slots }()
-	default:
-		http.Error(w, "busy", http.StatusServiceUnavailable)
-		return
-	}
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxCallBytes))
-	if err != nil {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	sig := []byte(r.Header.Get(headerSignature))
-	if !hmac.Equal(sig, []byte(directSignature(k.peerAuth, sender, unix, body))) {
-		m.limiter.Fail(addr)
-		if former := m.formerPeerAuth(); former != nil && target == self &&
-			hmac.Equal(sig, []byte(directSignature(former, sender, unix, body))) && m.answerAsStranger(w, r, self) {
-			return
-		}
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	m.limiter.Succeed(addr)
-	var req relay.ProxyRequest
-	if json.Unmarshal(body, &req) != nil || req.RequestID == "" || req.Target != target {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	call, err := relay.OpenCall(k.frameKey, req.RequestID, target, req.Sealed)
-	if err != nil || !m.replay.Admit(call) {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	// The handler learns who called from the signed header, so a sealed
-	// sender has to agree with it.
-	if call.Sender != "" && call.Sender != sender {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-	call.Sender = sender
-	if target == ProbeTarget {
-		if call.Path != ProbePath {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
-		}
-		m.probeBack(sender, call.Body)
-	}
-	status, out := m.serve(r.Context(), call)
-	sealed, err := relay.SealResult(k.frameKey, req.RequestID, relay.ProxyResult{Status: status, Body: out})
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(relay.ProxyResponse{RequestID: req.RequestID, Sealed: sealed})
+	return ""
 }

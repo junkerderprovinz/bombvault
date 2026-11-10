@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -66,7 +68,7 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "no instance named"})
 		return
 	}
-	if peerSender(r) != body.InstanceID {
+	if peerSender(r) != body.InstanceID && !s.phoneNamesItself(r, body.InstanceID, body.Key) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "a session is only given to the member that asks for it"})
 		return
 	}
@@ -78,6 +80,24 @@ func (s *Service) handlePeerSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, s.peerSession(body.InstanceID))
+}
+
+// phoneNamesItself takes the id a phone of the group names for itself, when
+// its key was pinned under no id before the group ran on the kit: such a
+// phone still signs as the id it had, and the key the call came with is the
+// one it signs with.
+func (s *Service) phoneNamesItself(r *http.Request, id string, key []byte) bool {
+	sender, ok := group.SenderOf(r.Context())
+	if !ok || sender.Kind != group.KindPhone || sender.ID != group.PhoneID(sender.Key) || !bytes.Equal(sender.Key, key) || len(id) > 64 {
+		return false
+	}
+	if _, found, err := s.store.MemberKey(id); err != nil || found {
+		return false
+	}
+	if err := s.store.PinMemberKey(id, key); err != nil {
+		return false
+	}
+	return s.store.ForgetMemberKey(sender.ID) == nil
 }
 
 // admitPhone reports whether id is a phone the Instances page lists and lets

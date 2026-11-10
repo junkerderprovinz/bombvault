@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -348,7 +347,7 @@ func TestAMemberFinishesTheCheckAfterTheHolderStoppedWaiting(t *testing.T) {
 	answered := make(chan struct{})
 	go func() {
 		defer close(answered)
-		tower.svc.servePeer(ctx, relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/shared-holder", Body: body, Sender: cube.id(t)})
+		tower.svc.callPeer(ctx, peerCall{Method: http.MethodPost, Path: "/api/group/peer/shared-holder", Body: body, Sender: cube.id(t)})
 	}()
 	<-slow.started
 	cancel()

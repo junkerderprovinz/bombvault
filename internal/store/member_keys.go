@@ -29,6 +29,38 @@ func (r *Repo) MemberKey(memberID string) (key []byte, found bool, err error) {
 	return key, true, nil
 }
 
+// MemberByKey returns the member key is pinned for, found false when it is
+// pinned for none.
+func (r *Repo) MemberByKey(key []byte) (memberID string, found bool, err error) {
+	err = r.db.QueryRow(`SELECT member_id FROM member_keys WHERE key = ? ORDER BY pinned_at, member_id LIMIT 1`, key).Scan(&memberID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("MemberByKey: %w", err)
+	}
+	return memberID, true, nil
+}
+
+// MemberKeys returns every pinned key by member.
+func (r *Repo) MemberKeys() (map[string][]byte, error) {
+	rows, err := r.db.Query(`SELECT member_id, key FROM member_keys`)
+	if err != nil {
+		return nil, fmt.Errorf("MemberKeys: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // a read-only cursor
+	out := map[string][]byte{}
+	for rows.Next() {
+		var id string
+		var key []byte
+		if err := rows.Scan(&id, &key); err != nil {
+			return nil, fmt.Errorf("MemberKeys: %w", err)
+		}
+		out[id] = key
+	}
+	return out, rows.Err()
+}
+
 // LegacyMember reports whether a member may call unsigned: this install knew
 // it before it first ran a release whose members sign, and it has not signed
 // a call here since.

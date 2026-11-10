@@ -103,7 +103,7 @@ func TestGroupStateDirectURLStartsEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.DirectURL != "" || g.DirectURLManual {
+	if g.DirectURL != "" {
 		t.Fatalf("group state after migration = %+v, want no direct address yet", g)
 	}
 }

@@ -3,1283 +3,341 @@ package group
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
-	"slices"
-	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
-	"unicode/utf8"
 
-	"github.com/coder/websocket"
-	"github.com/junkerderprovinz/bombvault/internal/discovery"
-	"github.com/junkerderprovinz/bombvault/internal/relay"
+	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
+	"github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
-var testSecret = []byte("0123456789abcdef")
+var secret = []byte("0123456789abcdef")
 
-func TestPeerAuthKeyIsItsOwnDomain(t *testing.T) {
-	pa := PeerAuthKey(testSecret)
-	if hex.EncodeToString(pa) == relay.DeriveKey(testSecret) || bytes.Equal(pa, relay.DeriveFrameKey(testSecret)) {
-		t.Fatal("the peer-auth key equals another key derived from the same secret")
-	}
-	kl := sha256.Sum256(append([]byte("knightloader/peer-auth/v1"), testSecret...))
-	if bytes.Equal(pa, kl[:]) {
-		t.Fatal("the peer-auth key matches the one KnightLoader would derive")
-	}
-	want := sha256.Sum256(append([]byte("bombvault/peer-auth/v1"), testSecret...))
-	if !bytes.Equal(pa, want[:]) {
-		t.Fatalf("PeerAuthKey = %x, want %x; a changed derivation breaks every existing group", pa, want)
-	}
+// memDir is a Directory in memory.
+type memDir struct {
+	mu   sync.Mutex
+	keys map[string][]byte
 }
 
-// echo answers every call with its own method and path, so a test can see
-// which call arrived.
-func echo(_ context.Context, call relay.ProxyCall) (int, []byte) {
-	return http.StatusOK, []byte(call.Method + " " + call.Path + " " + string(call.Body))
+func (d *memDir) MemberByKey(key []byte) (string, bool, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for id, k := range d.keys {
+		if bytes.Equal(k, key) {
+			return id, true, nil
+		}
+	}
+	return "", false, nil
 }
 
-// member runs one Manager behind a TLS test server and returns it with the
-// announce it would send.
-func member(t *testing.T, id, name string, secret []byte, serve relay.Handler) (*Manager, discovery.Peer) {
+func (d *memDir) MemberKey(id string) ([]byte, bool, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	k, ok := d.keys[id]
+	return k, ok, nil
+}
+
+func (d *memDir) PinMemberKey(id string, key []byte) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if k, ok := d.keys[id]; ok && !bytes.Equal(k, key) {
+		return errors.New("another key")
+	}
+	d.keys[id] = key
+	return nil
+}
+
+type memStore struct {
+	mu  sync.Mutex
+	raw []byte
+}
+
+func (s *memStore) Load() ([]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return bytes.Clone(s.raw), nil
+}
+
+func (s *memStore) Save(b []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.raw = bytes.Clone(b)
+	return nil
+}
+
+// node is one BombVault in a test: its id, member key, directory and group.
+type node struct {
+	id      string
+	seed    []byte
+	dir     *memDir
+	store   *memStore
+	m       *Manager
+	removed chan struct{}
+}
+
+func newNode(t *testing.T, id string, seedByte byte) *node {
 	t.Helper()
-	m := NewManager(serve)
+	n := &node{id: id, seed: bytes.Repeat([]byte{seedByte}, 32), dir: &memDir{keys: map[string][]byte{}}, store: &memStore{}, removed: make(chan struct{}, 1)}
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, m.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(m.Close)
-	m.Apply(Config{Secret: secret, InstanceID: id, Name: name, Version: "9.9.9", DirectURL: srv.URL, Mode: ModeOff})
-	p := discovery.Peer{ID: id, Name: name, Version: "9.9.9", URL: srv.URL, Sent: time.Now().Unix()}
-	if secret != nil {
-		p.Tag = announceTag(PeerAuthKey(secret), p)
-	}
-	return m, p
+	mux.HandleFunc("GET "+ProbePath, func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(Hello{OK: true, InstanceID: n.id, Name: n.id})
+	})
+	mux.HandleFunc("GET /who", func(w http.ResponseWriter, r *http.Request) {
+		s, _ := SenderOf(r.Context())
+		_ = json.NewEncoder(w).Encode(s)
+	})
+	n.m = NewManager(mux, n.dir)
+	t.Cleanup(n.m.Close)
+	return n
 }
 
-func TestMembersOnOneNetworkCallEachOtherDirectly(t *testing.T) {
-	a, pa := member(t, "id-a", "Cellar", testSecret, echo)
-	b, pb := member(t, "id-b", "Attic", testSecret, echo)
-	a.disc.Observe(pb)
-	b.disc.Observe(pa)
-
-	got := a.Members()
-	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct || got[0].Relay || got[0].Version != "9.9.9" {
-		t.Fatalf("A's members = %+v, want B reachable directly", got)
-	}
-	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
-		t.Fatalf("Call = %d %q %v, want B's echo", status, body, err)
-	}
+func (n *node) key() []byte {
+	id, _ := member.FromSeed(member.KindInstance, n.seed)
+	return id.Public()
 }
 
-func TestMembersCarryTheAddressTheyAnswerOn(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	a.disc.Observe(pb)
-	a.ConfirmAddress("id-c", "https://192.168.1.10:3443", "Garage", "9.9.9")
-
-	got := map[string]string{}
-	for _, m := range a.Members() {
-		got[m.ID] = m.Address
-	}
-	want := map[string]string{"id-b": pb.URL, "id-c": "https://192.168.1.10:3443"}
-	if len(got) != len(want) || got["id-b"] != want["id-b"] || got["id-c"] != want["id-c"] {
-		t.Fatalf("member addresses = %v, want %v", got, want)
-	}
+func (n *node) apply(relayURL string, former func() (kitgroup.Roster, error)) {
+	n.m.Apply(Config{
+		Secret: secret, Seed: n.seed, InstanceID: n.id, Name: n.id, Mode: ModeOwn, RelayURL: relayURL,
+		Store: n.store, Former: former, OnRemoved: func() { n.removed <- struct{}{} },
+	})
 }
 
-func TestAnnounceFromAnotherGroupIsNotAMember(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, stranger := member(t, "id-x", "Stranger", []byte("fedcba9876543210"), echo)
-	a.disc.Observe(stranger)
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members = %+v, want nobody from another group", got)
-	}
-}
-
-func TestAnAnnounceOlderThanTheSkewIsIgnored(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	pb.Sent = time.Now().Add(-10 * time.Minute).Unix()
-	pb.Tag = announceTag(PeerAuthKey(testSecret), pb)
-	a.disc.Observe(pb)
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members = %+v, want an announce from ten minutes ago ignored", got)
-	}
-
-	_, fresh := member(t, "id-c", "Garage", testSecret, echo)
-	fresh.Sent++
-	a.disc.Observe(fresh)
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members = %+v, want an announce whose time was changed after signing ignored", got)
-	}
-}
-
-func TestAnnounceWithARewrittenAddressIsIgnored(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	pb.URL = "https://192.0.2.66:3443"
-	a.disc.Observe(pb)
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members = %+v, want an announce with a forged address ignored", got)
-	}
-}
-
-// signedPost sends a direct call the way callDirect does, with the parts a
-// test wants to spoil.
-func signedPost(t *testing.T, url string, peerAuth []byte, sender string, sent time.Time, req relay.ProxyRequest) int {
+func startRelay(t *testing.T) string {
 	t.Helper()
-	resp, err := NewManager(echo).hc.Do(directRequest(url, peerAuth, sender, sent, req))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_ = resp.Body.Close()
-	return resp.StatusCode
+	srv := httptest.NewServer(relay.New())
+	t.Cleanup(srv.Close)
+	return srv.URL
 }
 
-func directRequest(url string, peerAuth []byte, sender string, sent time.Time, req relay.ProxyRequest) *http.Request {
-	payload, _ := json.Marshal(req)
-	unix := strconv.FormatInt(sent.Unix(), 10)
-	r, _ := http.NewRequest(http.MethodPost, url+directPath, bytes.NewReader(payload))
-	r.Header.Set(headerPeer, sender)
-	r.Header.Set(headerTarget, req.Target)
-	r.Header.Set(headerTime, unix)
-	r.Header.Set(headerSignature, directSignature(peerAuth, sender, unix, payload))
-	return r
-}
-
-func sealedFor(t *testing.T, target string) relay.ProxyRequest {
+func eventually(t *testing.T, what string, ok func() bool) {
 	t.Helper()
-	return sealedCall(t, target, relay.ProxyCall{Method: "GET", Path: "/api/group/peer/status"})
-}
-
-func sealedCall(t *testing.T, target string, call relay.ProxyCall) relay.ProxyRequest {
-	t.Helper()
-	id, _ := relay.NewRequestID()
-	sealed, err := relay.SealCall(relay.DeriveFrameKey(testSecret), id, target, call)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return relay.ProxyRequest{RequestID: id, Target: target, Sealed: sealed}
-}
-
-// countingBody reports how much of a request body the server read.
-type countingBody struct {
-	r    io.Reader
-	read atomic.Int64
-}
-
-func (c *countingBody) Read(p []byte) (int, error) {
-	n, err := c.r.Read(p)
-	c.read.Add(int64(n))
-	return n, err
-}
-
-func (c *countingBody) Close() error { return nil }
-
-func TestAStaleOrMisaddressedDirectCallIsRefusedBeforeItsBodyIsRead(t *testing.T) {
-	b := NewManager(echo)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-	good := PeerAuthKey(testSecret)
-	for name, r := range map[string]*http.Request{
-		"stale":        directRequest("", good, "id-a", time.Now().Add(-10*time.Minute), sealedFor(t, "id-b")),
-		"misaddressed": directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-c")),
-	} {
-		body := &countingBody{r: io.MultiReader(r.Body, bytes.NewReader(make([]byte, 4<<20)))}
-		r.Body, r.ContentLength = body, -1
-		w := httptest.NewRecorder()
-		b.ServeDirect(w, r)
-		if w.Code != http.StatusForbidden || body.read.Load() != 0 {
-			t.Errorf("a %s call got HTTP %d after %d bytes were read, want 403 before any", name, w.Code, body.read.Load())
-		}
-	}
-}
-
-func TestADirectCallOverTheSizeLimitIsRefused(t *testing.T) {
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	big := sealedCall(t, "id-b", relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/mesh-offer", Body: bytes.Repeat([]byte("x"), MaxCallBytes)})
-	if code := signedPost(t, pb.URL, PeerAuthKey(testSecret), "id-a", time.Now(), big); code != http.StatusForbidden {
-		t.Fatalf("a signed call over the limit got HTTP %d, want 403", code)
-	}
-}
-
-func TestDirectCallsBeyondTheCapAreTurnedAway(t *testing.T) {
-	release := make(chan struct{})
-	var serving atomic.Int32
-	b := NewManager(func(context.Context, relay.ProxyCall) (int, []byte) {
-		serving.Add(1)
-		<-release
-		return http.StatusOK, nil
-	})
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-	good := PeerAuthKey(testSecret)
-	var wg sync.WaitGroup
-	defer func() {
-		close(release)
-		wg.Wait()
-	}()
-	for range maxDirectCalls {
-		wg.Go(func() {
-			b.ServeDirect(httptest.NewRecorder(), directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b")))
-		})
-	}
-	deadline := time.Now().Add(10 * time.Second)
-	for serving.Load() < maxDirectCalls && time.Now().Before(deadline) {
-		time.Sleep(5 * time.Millisecond)
-	}
-
-	extra := make(chan int, 1)
-	wg.Go(func() {
-		w := httptest.NewRecorder()
-		b.ServeDirect(w, directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b")))
-		extra <- w.Code
-	})
-	select {
-	case code := <-extra:
-		if code != http.StatusServiceUnavailable {
-			t.Fatalf("the call past the cap got HTTP %d, want 503", code)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("the call past the cap waited for a slot instead of being turned away")
-	}
-}
-
-func TestDirectCallIsRefusedUnlessSignedFreshAndNew(t *testing.T) {
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	good := PeerAuthKey(testSecret)
-
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), sealedFor(t, "id-b")); code != http.StatusOK {
-		t.Fatalf("a correct call got HTTP %d, so the refusals below prove nothing", code)
-	}
-	if code := signedPost(t, pb.URL, PeerAuthKey([]byte("fedcba9876543210")), "id-a", time.Now(), sealedFor(t, "id-b")); code != http.StatusForbidden {
-		t.Errorf("a call signed with another group's key got HTTP %d, want 403", code)
-	}
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now().Add(-10*time.Minute), sealedFor(t, "id-b")); code != http.StatusForbidden {
-		t.Errorf("a stale call got HTTP %d, want 403", code)
-	}
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), sealedFor(t, "id-c")); code != http.StatusForbidden {
-		t.Errorf("a call for another instance got HTTP %d, want 403", code)
-	}
-	replayed := sealedFor(t, "id-b")
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), replayed); code != http.StatusOK {
-		t.Fatalf("first sending got HTTP %d", code)
-	}
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), replayed); code != http.StatusForbidden {
-		t.Errorf("a replayed call got HTTP %d, want 403", code)
-	}
-}
-
-func TestACallTellsTheHandlerWhoSentIt(t *testing.T) {
-	var got atomic.Value
-	sender := func(_ context.Context, call relay.ProxyCall) (int, []byte) {
-		got.Store(call.Sender)
-		return http.StatusOK, nil
-	}
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, sender)
-	a.disc.Observe(pb)
-	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err != nil {
-		t.Fatal(err)
-	}
-	if got.Load() != "id-a" {
-		t.Fatalf("the handler saw sender %q, want id-a", got.Load())
-	}
-
-	good := PeerAuthKey(testSecret)
-	if code := signedPost(t, pb.URL, good, "id-old", time.Now(), sealedFor(t, "id-b")); code != http.StatusOK || got.Load() != "id-old" {
-		t.Fatalf("a call sealed without a sender got HTTP %d and sender %q, want the signed header's", code, got.Load())
-	}
-	forged := sealedCall(t, "id-b", relay.ProxyCall{Method: "GET", Path: "/api/group/peer/status", Sender: "id-c"})
-	if code := signedPost(t, pb.URL, good, "id-a", time.Now(), forged); code != http.StatusForbidden {
-		t.Fatalf("a call sealed in another member's name got HTTP %d, want 403", code)
-	}
-}
-
-func TestOutsideAGroupTheDirectRouteDoesNotExist(t *testing.T) {
-	_, pb := member(t, "id-b", "Attic", nil, echo)
-	if code := signedPost(t, pb.URL, PeerAuthKey(testSecret), "id-a", time.Now(), sealedFor(t, "id-b")); code != http.StatusNotFound {
-		t.Fatalf("got HTTP %d, want 404 from an instance in no group", code)
-	}
-}
-
-func TestMembersOnDifferentNetworksCallThroughTheRelay(t *testing.T) {
-	srv := relay.NewServer()
-	rs := httptest.NewServer(srv)
-	t.Cleanup(rs.Close)
-
-	a := NewManager(echo)
-	b := NewManager(echo)
-	t.Cleanup(a.Close)
-	t.Cleanup(b.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Name: "Cellar", Mode: ModeOwn, RelayURL: rs.URL})
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Version: "9.9.9", Mode: ModeOwn, RelayURL: rs.URL})
-
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && len(a.Members()) == 0 {
-		time.Sleep(20 * time.Millisecond)
-	}
-	got := a.Members()
-	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Relay || got[0].Direct || got[0].Name != "Attic" {
-		t.Fatalf("A's members = %+v, want B through the relay", got)
-	}
-	status, body, err := a.Call(context.Background(), "id-b", http.MethodPost, "/api/group/peer/check", []byte("x"))
-	if err != nil || status != http.StatusOK || string(body) != "POST /api/group/peer/check x" {
-		t.Fatalf("Call = %d %q %v", status, body, err)
-	}
-	if !a.AdmitsRelayKey(relay.DeriveKey(testSecret)) || a.AdmitsRelayKey(relay.DeriveKey([]byte("fedcba9876543210"))) {
-		t.Fatal("AdmitsRelayKey does not admit exactly this group's key")
-	}
-}
-
-// A relay operator holds every frame it carried. One it sends on to the
-// member's direct address instead must meet the same record of ids.
-func TestACallRunOverTheRelayIsRefusedWhenSentAgainDirectly(t *testing.T) {
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-	b := NewManager(echo)
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	direct := httptest.NewTLSServer(mux)
-	t.Cleanup(direct.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", DirectURL: direct.URL, Mode: ModeOwn, RelayURL: rs.URL})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	ws, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(rs.URL, "http")+"/relay/connect", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = ws.CloseNow() })
-	frameKey := relay.DeriveFrameKey(testSecret)
-	ident, _ := relay.SealIdentity(frameKey, "id-a", relay.Identity{Name: "Cellar"})
-	write := func(typ string, data any) {
-		frame, _ := relay.Encode(typ, data)
-		if err := ws.Write(ctx, websocket.MessageText, frame); err != nil {
-			t.Fatal(err)
-		}
-	}
-	read := func(typ string) relay.Envelope {
-		for {
-			_, frame, err := ws.Read(ctx)
-			if err != nil {
-				t.Fatalf("waiting for %s: %v", typ, err)
-			}
-			if env, _ := relay.Decode(frame); env.Type == typ {
-				return env
-			}
-		}
-	}
-	write(relay.TypeHello, relay.Hello{Key: relay.DeriveKey(testSecret), Announce: relay.Announce{InstanceID: "id-a", Sealed: ident}})
-	read(relay.TypeAnnounce)
-
-	req := sealedFor(t, "id-b")
-	write(relay.TypeProxyRequest, req)
-	var resp relay.ProxyResponse
-	if err := read(relay.TypeProxyResponse).Into(&resp); err != nil || resp.RequestID != req.RequestID || len(resp.Sealed) == 0 {
-		t.Fatalf("the call over the relay got %+v, %v", resp, err)
-	}
-	if code := signedPost(t, direct.URL, PeerAuthKey(testSecret), "id-a", time.Now(), req); code != http.StatusForbidden {
-		t.Fatalf("the same call sent directly got HTTP %d, want 403", code)
-	}
-}
-
-func TestLeavingTheGroupForgetsEveryMember(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	a.disc.Observe(pb)
-	a.Apply(Config{InstanceID: "id-a"})
-	if a.Active() || len(a.Members()) != 0 {
-		t.Fatal("an instance that left still reports a group")
-	}
-	if _, _, err := a.Call(context.Background(), "id-b", "GET", "/api/group/peer/status", nil); err == nil {
-		t.Fatal("an instance that left could still call a member")
-	}
-}
-
-func TestAnInstanceWithAVeryLongNameStillReachesTheRelay(t *testing.T) {
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-	a, b := NewManager(echo), NewManager(echo)
-	t.Cleanup(a.Close)
-	t.Cleanup(b.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Name: strings.Repeat("é", 5000), Mode: ModeOwn, RelayURL: rs.URL})
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
-
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && len(b.Members()) == 0 {
-		time.Sleep(20 * time.Millisecond)
-	}
-	got := b.Members()
-	if len(got) != 1 || len(got[0].Name) == 0 || len(got[0].Name) > maxNameBytes || !utf8.ValidString(got[0].Name) {
-		t.Fatalf("B's members = %+v, want A under its name clipped to whole characters", got)
-	}
-}
-
-// helloServe answers only ProbePath, the way a real instance's peer/hello
-// route does, so a probe test does not need the api package's handler.
-func helloServe(id, name, version string) relay.Handler {
-	return func(_ context.Context, call relay.ProxyCall) (int, []byte) {
-		if call.Path != ProbePath {
-			return http.StatusNotFound, nil
-		}
-		b, _ := json.Marshal(Hello{OK: true, InstanceID: id, Name: name, Version: version})
-		return http.StatusOK, b
-	}
-}
-
-func TestProbeConfirmsAGroupMemberAtAnUnknownAddress(t *testing.T) {
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-
-	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-
-	h, err := a.Probe(context.Background(), srv.URL)
-	if err != nil || h.InstanceID != "id-b" || h.Name != "Attic" {
-		t.Fatalf("Probe = %+v, %v", h, err)
-	}
-	got := a.Members()
-	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct || got[0].Name != "Attic" {
-		t.Fatalf("members after a successful probe = %+v, want b listed and direct", got)
-	}
-}
-
-// A member found only by its address, with no relay and no multicast, would
-// drop out once its confirmation ages past addrTTL; the refresh asks it again
-// before that, with nobody opening a page.
-func TestRefreshKeepsAMemberFoundByAddressInTheGroup(t *testing.T) {
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-
-	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-
-	if _, err := a.Probe(context.Background(), srv.URL); err != nil {
-		t.Fatal(err)
-	}
-	age := func() {
-		a.addrMu.Lock()
-		a.addrs["id-b"].confirmed = time.Now().Add(-addrTTL - time.Second)
-		a.addrMu.Unlock()
-	}
-
-	age()
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members with an aged address = %+v, want nobody before a refresh", got)
-	}
-	a.refresh(context.Background())
-	if got := a.Members(); len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct {
-		t.Fatalf("members after a refresh = %+v, want b listed and direct again", got)
-	}
-	if refreshEvery >= addrTTL {
-		t.Fatalf("refreshEvery %v must come round before addrTTL %v runs out", refreshEvery, addrTTL)
-	}
-}
-
-// The member a probe reaches learns the prober from the same exchange, so the
-// two know each other without waiting for the other side's own sweep.
-func TestAProbedMemberProbesBackAndKnowsTheProber(t *testing.T) {
-	serveOn := func(m *Manager) *httptest.Server {
-		mux := http.NewServeMux()
-		mux.HandleFunc("POST "+directPath, m.ServeDirect)
-		srv := httptest.NewTLSServer(mux)
-		t.Cleanup(srv.Close)
-		return srv
-	}
-	a := NewManager(helloServe("id-a", "Cellar", "9.9.9"))
-	t.Cleanup(a.Close)
-	srvA := serveOn(a)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Name: "Cellar", Mode: ModeOff, DirectURL: srvA.URL})
-
-	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
-	t.Cleanup(b.Close)
-	srvB := serveOn(b)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOff, DirectURL: srvB.URL})
-
-	if _, err := a.Probe(context.Background(), srvB.URL); err != nil {
-		t.Fatalf("Probe: %v", err)
-	}
-	deadline := time.Now().Add(5 * time.Second)
-	for !b.confirmedDirect("id-a") {
-		if time.Now().After(deadline) {
-			t.Fatalf("B's members after A probed it = %+v, want A confirmed direct", b.Members())
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
-}
-
-// A probe against a host running BombVault for a different group must find
-// nothing: the signature is checked with this group's key, not the
-// stranger's.
-func TestProbeOfANonMemberFindsNothing(t *testing.T) {
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-
-	stranger := NewManager(helloServe("id-x", "Stranger", "1.0.0"))
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, stranger.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(stranger.Close)
-	stranger.Apply(Config{Secret: []byte("fedcba9876543210"), InstanceID: "id-x", Mode: ModeOff})
-
-	if _, err := a.Probe(context.Background(), srv.URL); err == nil {
-		t.Fatal("a probe of an instance in another group was not refused")
-	}
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members after a failed probe = %+v, want none", got)
-	}
-}
-
-// A call sealed for ProbeTarget must reach the hello route and nothing else,
-// so a blind probe cannot be turned into a call against a route meant for a
-// known member.
-func TestOnlyTheHelloRouteAcceptsAProbeTargetedCall(t *testing.T) {
-	b := NewManager(echo)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-	good := PeerAuthKey(testSecret)
-
-	other := sealedCall(t, ProbeTarget, relay.ProxyCall{Method: http.MethodGet, Path: "/api/group/peer/status"})
-	w := httptest.NewRecorder()
-	r := directRequest("", good, "id-a", time.Now(), other)
-	b.ServeDirect(w, r)
-	if w.Code != http.StatusForbidden {
-		t.Fatalf("a probe-targeted call to a non-hello path got HTTP %d, want 403", w.Code)
-	}
-
-	hello := sealedCall(t, ProbeTarget, relay.ProxyCall{Method: http.MethodGet, Path: ProbePath})
-	w2 := httptest.NewRecorder()
-	r2 := directRequest("", good, "id-a", time.Now(), hello)
-	b.ServeDirect(w2, r2)
-	if w2.Code != http.StatusOK {
-		t.Fatalf("a probe-targeted call to the hello path got HTTP %d, want 200", w2.Code)
-	}
-}
-
-func TestSubnetCandidatesOnlyForAPrivateIPv4OwnAddress(t *testing.T) {
-	for _, own := range []string{"", "not a url", "https://8.8.8.8:3443", "https://bombvault.example.org:3443", "https://203.0.113.5:3443"} {
-		if got := subnetCandidates(own); got != nil {
-			t.Errorf("subnetCandidates(%q) = %d candidates, want none for a non-private address", own, len(got))
-		}
-	}
-
-	got := subnetCandidates("https://192.168.1.5:3443")
-	if len(got) != 253 {
-		t.Fatalf("subnetCandidates on the default port = %d candidates, want 253 (every other host of the /24, one port)", len(got))
-	}
-	for _, addr := range got {
-		if strings.Contains(addr, "192.168.1.5:") {
-			t.Fatalf("subnetCandidates included this instance's own address: %v", got)
-		}
-		if !strings.HasPrefix(addr, "https://192.168.1.") {
-			t.Fatalf("subnetCandidates left its own /24: %q", addr)
-		}
-	}
-
-	got2 := subnetCandidates("http://10.0.5.9:8080")
-	if len(got2) != 253*2+1 {
-		t.Fatalf("subnetCandidates on a non-default port = %d candidates, want 253*2+1 (own port and 3443, plus 3443 on this machine)", len(got2))
-	}
-	if !slices.Contains(got2, "http://10.0.5.9:3443") || slices.Contains(got2, "http://10.0.5.9:8080") {
-		t.Fatalf("subnetCandidates must try a second instance on this machine's other port and never itself: %v", got2)
-	}
-	sawOwnPort, saw3443 := false, false
-	for _, addr := range got2 {
-		if strings.HasSuffix(addr, ":8080") {
-			sawOwnPort = true
-		}
-		if strings.HasSuffix(addr, ":3443") {
-			saw3443 = true
-		}
-		if !strings.HasPrefix(addr, "http://10.0.5.") {
-			t.Fatalf("subnetCandidates left its own /24: %q", addr)
-		}
-	}
-	if !sawOwnPort || !saw3443 {
-		t.Fatalf("subnetCandidates did not probe both its own port and 3443: %v", got2[:4])
-	}
-}
-
-func TestSweepFindsAMemberAmongUnreachableDecoys(t *testing.T) {
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-
-	b := NewManager(helloServe("id-b", "Attic", "9.9.9"))
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-
-	// The unreachable addresses stand in for the rest of a /24 a real sweep
-	// would probe; sweepWith takes the candidate list as a parameter exactly
-	// so a test can substitute a short one with a real member mixed in,
-	// rather than dialling an actual subnet.
-	candidates := []string{"https://127.0.0.1:1", "https://127.0.0.1:2", srv.URL, "https://127.0.0.1:4"}
-	a.sweepWith(context.Background(), candidates)
-
-	got := a.Members()
-	if len(got) != 1 || got[0].ID != "id-b" || !got[0].Direct {
-		t.Fatalf("members after a sweep of mixed candidates = %+v, want only b, found directly", got)
-	}
-}
-
-// The sweep must never run more than sweepConcurrency probes at once, so a
-// misconfigured or hostile /24 cannot turn it into a flood.
-func TestSweepConcurrencyIsBounded(t *testing.T) {
-	var cur, peak atomic.Int32
-	release := make(chan struct{})
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, _ *http.Request) {
-		n := cur.Add(1)
-		for {
-			p := peak.Load()
-			if n <= p || peak.CompareAndSwap(p, n) {
-				break
-			}
-		}
-		<-release
-		cur.Add(-1)
-		w.WriteHeader(http.StatusForbidden)
-	})
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-
-	candidates := make([]string, sweepConcurrency*3)
-	for i := range candidates {
-		candidates[i] = srv.URL
-	}
-	done := make(chan struct{})
-	go func() {
-		a.sweepWith(context.Background(), candidates)
-		close(done)
-	}()
-	deadline := time.Now().Add(5 * time.Second)
-	for cur.Load() < sweepConcurrency && time.Now().Before(deadline) {
-		time.Sleep(5 * time.Millisecond)
-	}
-	if cur.Load() != sweepConcurrency {
-		t.Fatalf("only %d probes were in flight, want exactly %d before any is released", cur.Load(), sweepConcurrency)
-	}
-	close(release)
-	<-done
-	if got := peak.Load(); got > sweepConcurrency {
-		t.Fatalf("peak concurrent probes = %d, want at most %d", got, sweepConcurrency)
-	}
-}
-
-func TestNeedsSweepOutsideAGroupIsFalse(t *testing.T) {
-	m := NewManager(echo)
-	t.Cleanup(m.Close)
-	if m.NeedsSweep() {
-		t.Fatal("an instance in no group must never need a sweep")
-	}
-}
-
-func TestNeedsSweepIsTrueUntilSomethingIsFoundDirectly(t *testing.T) {
-	m := NewManager(echo)
-	t.Cleanup(m.Close)
-	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-	if !m.NeedsSweep() {
-		t.Fatal("a group with nobody found by any route yet must need a sweep")
-	}
-	m.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
-	if m.NeedsSweep() {
-		t.Fatal("a confirmed direct address should stop the sweep from being needed")
-	}
-}
-
-// A relay sibling this instance has no direct address for still needs a
-// sweep, even though another member is already reachable directly: the
-// point is to upgrade every member to a direct route, not just the first.
-func TestNeedsSweepIsTrueForARelaySiblingWithNoDirectAddress(t *testing.T) {
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-	a := NewManager(echo)
-	b := NewManager(echo)
-	c := NewManager(echo)
-	t.Cleanup(a.Close)
-	t.Cleanup(b.Close)
-	t.Cleanup(c.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
-	c.Apply(Config{Secret: testSecret, InstanceID: "id-c", Name: "Garage", Mode: ModeOwn, RelayURL: rs.URL})
-
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && len(a.Members()) < 2 {
-		time.Sleep(20 * time.Millisecond)
-	}
-	if len(a.Members()) != 2 {
-		t.Fatalf("a never saw both siblings over the relay: %+v", a.Members())
-	}
-	// b is confirmed directly, c is relay-only: a sweep is still needed for c.
-	a.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
-	if !a.NeedsSweep() {
-		t.Fatal("a relay sibling with no known direct address should still need a sweep")
-	}
-	a.ConfirmAddress("id-c", "https://192.168.1.10:3443", "Garage", "9.9.9")
-	if a.NeedsSweep() {
-		t.Fatal("once every member has a confirmed direct address, no sweep should be needed")
-	}
-}
-
-func TestMaybeSweepIsThrottled(t *testing.T) {
-	m := NewManager(echo)
-	t.Cleanup(m.Close)
-	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", DirectURL: "https://198.51.100.5:3443", Mode: ModeOff})
-
-	m.sweepMu.Lock()
-	m.lastSweep = time.Now()
-	m.sweepMu.Unlock()
-
-	// A sweep is due (nobody found yet) but the last one was just now, so
-	// MaybeSweep must not touch the timestamp again this soon.
-	m.MaybeSweep()
-	m.sweepMu.Lock()
-	last := m.lastSweep
-	m.sweepMu.Unlock()
-	if time.Since(last) > time.Second {
-		t.Fatal("MaybeSweep started a new sweep before sweepMinInterval had passed")
-	}
-}
-
-// Joining or creating a group must be able to sweep at once: with no prior
-// sweep on record, MaybeSweep does not wait out sweepMinInterval.
-func TestMaybeSweepRunsImmediatelyWithNoPriorSweep(t *testing.T) {
-	m := NewManager(echo)
-	t.Cleanup(m.Close)
-	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", DirectURL: "https://198.51.100.5:3443", Mode: ModeOff})
-
-	m.MaybeSweep()
-	m.sweepMu.Lock()
-	started := !m.lastSweep.IsZero()
-	m.sweepMu.Unlock()
-	if !started {
-		t.Fatal("MaybeSweep did not start a sweep for a group that just joined")
-	}
-}
-
-// Leaving and joining a different group must not let a sweep due under the
-// old one skip the new one's first sweep, and must forget the old
-// addresses: neither means anything once the secret has changed.
-func TestApplyResetsAddressesAndTheSweepClockOnANewGroup(t *testing.T) {
-	m := NewManager(echo)
-	t.Cleanup(m.Close)
-	m.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-	m.ConfirmAddress("id-b", "https://192.168.1.9:3443", "Attic", "9.9.9")
-	m.sweepMu.Lock()
-	m.lastSweep = time.Now()
-	m.sweepMu.Unlock()
-
-	m.Apply(Config{Secret: []byte("fedcba9876543210"), InstanceID: "id-a", Mode: ModeOff})
-	if got := m.Members(); len(got) != 0 {
-		t.Fatalf("members after joining a different group = %+v, want the old ones forgotten", got)
-	}
-	m.sweepMu.Lock()
-	zero := m.lastSweep.IsZero()
-	m.sweepMu.Unlock()
-	if !zero {
-		t.Fatal("the sweep clock was not reset on a new group")
-	}
-}
-
-func TestCallTriesAStoredAddressBeforeFallingBackToTheRelay(t *testing.T) {
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
-
-	b := NewManager(echo)
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	direct := httptest.NewTLSServer(mux)
-	t.Cleanup(direct.Close)
-	t.Cleanup(b.Close)
-	// b never joins the relay a uses, so a's only possible route to it is
-	// the address noted below.
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-
-	a.NoteAddress("id-b", direct.URL)
-	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
-		t.Fatalf("Call via a noted address = %d %q %v", status, body, err)
-	}
-}
-
-func TestCallFallsBackToTheRelayWhenTheStoredAddressDoesNotAnswer(t *testing.T) {
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-	a := NewManager(echo)
-	b := NewManager(echo)
-	t.Cleanup(a.Close)
-	t.Cleanup(b.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
-
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && len(a.Members()) == 0 {
-		time.Sleep(20 * time.Millisecond)
-	}
-	a.NoteAddress("id-b", "https://127.0.0.1:1")
-	status, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if err != nil || status != http.StatusOK {
-		t.Fatalf("Call did not fall back to the relay once the stored address failed: %d %v", status, err)
-	}
-}
-
-// A flood of bad signatures from one source must not keep being checked
-// forever: it earns that address a block, which holds even against a
-// correctly signed call, and leaves an unrelated address alone.
-func TestServeDirectBlocksAnAddressAfterRepeatedBadSignatures(t *testing.T) {
-	b := NewManager(echo)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Mode: ModeOff})
-	bad := PeerAuthKey([]byte("fedcba9876543210"))
-	good := PeerAuthKey(testSecret)
-
-	for i := 0; i < 15; i++ {
-		r := directRequest("", bad, "id-a", time.Now(), sealedFor(t, "id-b"))
-		r.RemoteAddr = "203.0.113.9:1"
-		b.ServeDirect(httptest.NewRecorder(), r)
-	}
-
-	r := directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b"))
-	r.RemoteAddr = "203.0.113.9:2"
-	w := httptest.NewRecorder()
-	b.ServeDirect(w, r)
-	if w.Code != http.StatusForbidden {
-		t.Fatalf("a correctly signed call from a blocked address got HTTP %d, want 403", w.Code)
-	}
-
-	r2 := directRequest("", good, "id-a", time.Now(), sealedFor(t, "id-b"))
-	r2.RemoteAddr = "198.51.100.5:1"
-	w2 := httptest.NewRecorder()
-	b.ServeDirect(w2, r2)
-	if w2.Code != http.StatusOK {
-		t.Fatalf("a correctly signed call from an unrelated address got HTTP %d, want 200", w2.Code)
-	}
-}
-
-// relayPair joins a and b to one relay and waits until a sees b there.
-func relayPair(t *testing.T, serveB relay.Handler) (a, b *Manager) {
-	t.Helper()
-	rs := httptest.NewServer(relay.NewServer())
-	t.Cleanup(rs.Close)
-	a = NewManager(echo)
-	b = NewManager(serveB)
-	t.Cleanup(a.Close)
-	t.Cleanup(b.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOwn, RelayURL: rs.URL})
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOwn, RelayURL: rs.URL})
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && len(a.Members()) == 0 {
-		time.Sleep(20 * time.Millisecond)
-	}
-	if len(a.Members()) == 0 {
-		t.Fatal("b never showed up on the relay")
-	}
-	return a, b
-}
-
-// silentListener accepts connections and never answers on them, the way a
-// hung instance or a half-open port forward behaves.
-func silentListener(t *testing.T) string {
-	t.Helper()
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var held []net.Conn
-	var mu sync.Mutex
-	go func() {
-		for {
-			c, err := ln.Accept()
-			if err != nil {
-				return
-			}
-			mu.Lock()
-			held = append(held, c)
-			mu.Unlock()
-		}
-	}()
-	t.Cleanup(func() {
-		_ = ln.Close()
-		mu.Lock()
-		defer mu.Unlock()
-		for _, c := range held {
-			_ = c.Close()
-		}
-	})
-	return "https://" + ln.Addr().String()
-}
-
-func TestCallReachesTheRelayInTimeWhenTheDirectAddressNeverAnswers(t *testing.T) {
-	for name, addr := range map[string]func(*testing.T) string{
-		"accepts and stays silent": silentListener,
-		"unroutable":               func(*testing.T) string { return "https://10.255.255.1:3443" },
-	} {
-		t.Run(name, func(t *testing.T) {
-			a, _ := relayPair(t, echo)
-			a.NoteAddress("id-b", addr(t))
-			ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-			defer cancel()
-			start := time.Now()
-			status, body, err := a.Call(ctx, "id-b", http.MethodGet, "/api/group/peer/status", nil)
-			if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
-				t.Fatalf("Call = %d %q %v after %v, want the relay's answer within the deadline", status, body, err, time.Since(start))
-			}
-		})
-	}
-}
-
-func TestASlowDirectAnswerStillArrivesDirectly(t *testing.T) {
-	a, b := relayPair(t, echo)
-	var direct atomic.Int32
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(2 * time.Second)
-		direct.Add(1)
-		b.ServeDirect(w, r)
-	})
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	a.NoteAddress("id-b", srv.URL)
-
-	status, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if err != nil || status != http.StatusOK || direct.Load() != 1 {
-		t.Fatalf("Call = %d %v with %d direct answers, want the slow direct answer", status, err, direct.Load())
-	}
-}
-
-func TestADirectAddressThatDropsPacketsFailsFastWithoutARelay(t *testing.T) {
-	a := NewManager(echo)
-	t.Cleanup(a.Close)
-	a.Apply(Config{Secret: testSecret, InstanceID: "id-a", Mode: ModeOff})
-	a.NoteAddress("id-b", "https://10.255.255.1:3443")
-	start := time.Now()
-	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err == nil {
-		t.Fatal("Call reached an unroutable address")
-	}
-	if took := time.Since(start); took > directDialTimeout+2*time.Second {
-		t.Fatalf("Call took %v to give up on an unroutable address, want about %v", took, directDialTimeout)
-	}
-}
-
-// switchListener hands connections to the server while it answers and
-// otherwise holds them without a word, the way a firewall that starts
-// dropping packets looks from the caller's side once TLS is involved.
-type switchListener struct {
-	net.Listener
-	silent atomic.Bool
-	mu     sync.Mutex
-	held   []net.Conn
-}
-
-func (l *switchListener) Accept() (net.Conn, error) {
-	for {
-		c, err := l.Listener.Accept()
-		if err != nil || !l.silent.Load() {
-			return c, err
-		}
-		l.mu.Lock()
-		l.held = append(l.held, c)
-		l.mu.Unlock()
-	}
-}
-
-func (l *switchListener) Close() error {
-	l.mu.Lock()
-	for _, c := range l.held {
-		_ = c.Close()
-	}
-	l.mu.Unlock()
-	return l.Listener.Close()
-}
-
-func TestADirectAddressThatStoppedAnsweringCostsOnlyTheFirstCall(t *testing.T) {
-	a, b := relayPair(t, echo)
-	var direct atomic.Int32
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, func(w http.ResponseWriter, r *http.Request) {
-		direct.Add(1)
-		b.ServeDirect(w, r)
-	})
-	srv := httptest.NewUnstartedServer(mux)
-	ln := &switchListener{Listener: srv.Listener}
-	ln.silent.Store(true)
-	srv.Listener = ln
-	srv.StartTLS()
-	t.Cleanup(srv.Close)
-	a.NoteAddress("id-b", srv.URL)
-
-	call := func() time.Duration {
-		t.Helper()
-		ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
-		defer cancel()
-		start := time.Now()
-		status, _, err := a.Call(ctx, "id-b", http.MethodGet, "/api/group/peer/status", nil)
-		if err != nil || status != http.StatusOK {
-			t.Fatalf("Call = %d %v, want an answer", status, err)
-		}
-		return time.Since(start)
-	}
-	t.Logf("first call over a silent address: %v", call())
-	for i := range 3 {
-		if took := call(); took > time.Second {
-			t.Fatalf("call %d after the direct address failed took %v, want the relay at once", i+2, took)
-		} else {
-			t.Logf("call %d: %v", i+2, took)
-		}
-	}
-	if n := direct.Load(); n != 0 {
-		t.Fatalf("%d calls reached the silent address's handler", n)
-	}
-
-	ln.silent.Store(false)
-	a.refresh(context.Background())
-	direct.Store(0)
-	call()
-	if direct.Load() == 0 {
-		t.Fatal("the address answers again, but the next call still went through the relay")
-	}
-}
-
-// Without a relay the address is the only route, so one that failed a call
-// is still tried on the next.
-func TestWithoutARelayAFailedAddressIsTriedAgainOnTheNextCall(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	a.NoteAddress("id-b", pb.URL)
-	a.directFailed(context.Background(), pb.URL)
-
-	status, body, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if err != nil || status != http.StatusOK || string(body) != "GET /api/group/peer/status " {
-		t.Fatalf("Call = %d %q %v, want the address that failed before", status, body, err)
-	}
-}
-
-func TestAMemberThatSaidItLeftStaysOutOfTheListUntilItsRoutesAgeOut(t *testing.T) {
-	a, _ := relayPair(t, echo)
-	_, pc := member(t, "id-c", "Barn", testSecret, echo)
-	a.disc.Observe(pc)
-	a.ConfirmAddress("id-b", "https://192.0.2.1:3443", "Attic", "9.9.9")
-
-	a.Forget("id-b")
-	a.Forget("id-c")
-	if got := a.Members(); len(got) != 0 {
-		t.Fatalf("members right after both said they left = %+v, want nobody", got)
-	}
-	if _, ok := a.knownAddress("id-b"); ok {
-		t.Fatal("the address of a member that left is still on record")
-	}
-
-	a.addrMu.Lock()
-	a.departed["id-b"] = time.Now().Add(-departGrace)
-	a.addrMu.Unlock()
-	if got := a.Members(); len(got) != 1 || got[0].ID != "id-b" || !got[0].Relay {
-		t.Fatalf("members once the grace ran out = %+v, want b back through the relay", got)
-	}
-}
-
-func TestAMemberCalledAtItsAddressKeepsTheNameTheRelayGaveIt(t *testing.T) {
-	a, b := relayPair(t, echo)
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	a.NoteAddress("id-b", srv.URL)
-	if _, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err != nil {
-		t.Fatal(err)
-	}
-
-	b.Apply(Config{Secret: testSecret, InstanceID: "id-b", Name: "Attic", Mode: ModeOff})
-	onRelay := func() bool {
-		got := a.Members()
-		return len(got) > 0 && got[0].Relay
-	}
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) && onRelay() {
-		time.Sleep(20 * time.Millisecond)
-	}
-	got := a.Members()
-	if len(got) != 1 || got[0].Relay || got[0].Name != "Attic" {
-		t.Fatalf("members once b is off the relay = %+v, want b by its address under its name", got)
-	}
-}
-
-func TestAnInstanceInNoGroupSaysSoInItsOwnName(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	b := NewManager(echo)
-	var mu sync.Mutex
-	var caller, challenge string
-	b.Stranger = func(c, ch string) []byte {
-		mu.Lock()
-		defer mu.Unlock()
-		caller, challenge = c, ch
-		return []byte(`{"signed":true}`)
-	}
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{InstanceID: "id-b"})
-	a.NoteAddress("id-b", srv.URL)
-
-	_, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	left, ok := errors.AsType[*LeftError](err)
-	if !ok || left.MemberID != "id-b" || string(left.Statement) != `{"signed":true}` {
-		t.Fatalf("Call = %v, want b's signed word that it left", err)
-	}
-	mu.Lock()
-	gotCaller, gotChallenge := caller, challenge
-	mu.Unlock()
-	if gotCaller != "id-a" || gotChallenge == "" || gotChallenge != left.Challenge {
-		t.Fatalf("b signed for caller %q over %q, want id-a over the call's signature %q", gotCaller, gotChallenge, left.Challenge)
-	}
-
-	b.Apply(Config{Secret: []byte("another group 01"), InstanceID: "id-b", Mode: ModeOff})
-	_, _, err = a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if _, ok := errors.AsType[*LeftError](err); ok || err == nil {
-		t.Fatalf("Call to b in another group = %v, want a plain refusal", err)
-	}
-}
-
-func TestAnInstanceInAnotherGroupTellsAMemberOfTheGroupItLeft(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	b := NewManager(echo)
-	b.Stranger = func(string, string) []byte { return []byte(`{"signed":true}`) }
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	t.Cleanup(b.Close)
-	b.Apply(Config{Secret: []byte("another group 01"), InstanceID: "id-b", Mode: ModeOff, FormerPeerAuth: PeerAuthKey(testSecret)})
-	a.NoteAddress("id-b", srv.URL)
-
-	_, _, err := a.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil)
-	if left, ok := errors.AsType[*LeftError](err); !ok || string(left.Statement) != `{"signed":true}` {
-		t.Fatalf("Call from the group b left = %v, want b's signed word that it left", err)
-	}
-
-	c, _ := member(t, "id-c", "Barn", []byte("a third group 01"), echo)
-	c.NoteAddress("id-b", srv.URL)
-	if _, _, err := c.Call(context.Background(), "id-b", http.MethodGet, "/api/group/peer/status", nil); err == nil {
-		t.Fatal("a call under an unknown key was answered")
-	} else if _, ok := errors.AsType[*LeftError](err); ok {
-		t.Fatalf("a call under an unknown key got b's word that it left: %v", err)
-	}
-}
-
-func TestAMemberThatChangesItsOwnAddressStaysListedOnTheRelay(t *testing.T) {
-	a, b := relayPair(t, echo)
-	b.mu.Lock()
-	cfg := b.cfg
-	b.mu.Unlock()
-	cfg.DirectURL = "https://192.0.2.9:3443"
-	b.Apply(cfg)
-	if !b.RelayConnected() {
-		t.Fatal("b dropped its relay connection to change its own address")
-	}
-	for deadline := time.Now().Add(500 * time.Millisecond); time.Now().Before(deadline); {
-		if got := a.Members(); len(got) != 1 || !got[0].Relay {
-			t.Fatalf("a's members while b changes its address = %+v, want b on the relay throughout", got)
-		}
-	}
-}
-
-func TestARenamedMemberShowsUpUnderItsNewNameOnTheRelay(t *testing.T) {
-	a, b := relayPair(t, echo)
-	b.mu.Lock()
-	cfg := b.cfg
-	b.mu.Unlock()
-	cfg.Name = "Loft"
-	b.Apply(cfg)
-	deadline := time.Now().Add(10 * time.Second)
+	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
-		if got := a.Members(); len(got) == 1 && got[0].Name == "Loft" {
+		if ok() {
 			return
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(25 * time.Millisecond)
 	}
-	t.Fatalf("a's members after b's rename = %+v, want b as Loft", a.Members())
+	t.Fatalf("never: %s", what)
 }
 
-func directOf(t *testing.T, m *Manager, id string) bool {
-	t.Helper()
+func listed(m *Manager, id string) bool {
 	for _, mem := range m.Members() {
 		if mem.ID == id {
-			return mem.Direct
+			return true
 		}
 	}
-	t.Fatalf("%s is not among the members %+v", id, m.Members())
 	return false
 }
 
-func TestAMemberWhoseDirectAddressJustFailedIsNotShownAsDirect(t *testing.T) {
-	a, b := relayPair(t, echo)
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST "+directPath, b.ServeDirect)
-	srv := httptest.NewTLSServer(mux)
-	t.Cleanup(srv.Close)
-	a.ConfirmAddress("id-b", srv.URL, "Attic", "")
-	if !directOf(t, a, "id-b") {
-		t.Fatal("a member that answered at its address is not shown as direct")
+func whoCalls(t *testing.T, from *node, to string) Sender {
+	t.Helper()
+	status, body, err := from.m.Call(context.Background(), to, http.MethodGet, "/who", nil)
+	if err != nil || status != http.StatusOK {
+		t.Fatalf("call to %s: %d %s %v", to, status, body, err)
 	}
-	a.directFailed(context.Background(), srv.URL)
-	if directOf(t, a, "id-b") {
-		t.Fatal("a member whose address just failed is still shown as direct")
+	var s Sender
+	if err := json.Unmarshal(body, &s); err != nil {
+		t.Fatal(err)
 	}
-	a.refresh(context.Background())
-	if !directOf(t, a, "id-b") {
-		t.Fatal("the address answers again, but the member is not shown as direct")
+	return s
+}
+
+// formerOf is the roster an instance that pinned these keys before takes in.
+func formerOf(nodes ...*node) func() (kitgroup.Roster, error) {
+	return func() (kitgroup.Roster, error) {
+		var r kitgroup.Roster
+		for _, n := range nodes {
+			k := n.key()
+			r.Members = append(r.Members, kitgroup.Member{ID: member.ID(member.KindInstance, k), Kind: member.KindInstance, Key: k, State: kitgroup.StateApproved, Name: n.id})
+		}
+		return r, nil
 	}
 }
 
-func TestAMemberOnThisNetworkWhoseAddressJustFailedIsNotShownAsDirect(t *testing.T) {
-	a, _ := member(t, "id-a", "Cellar", testSecret, echo)
-	_, pb := member(t, "id-b", "Attic", testSecret, echo)
-	a.disc.Observe(pb)
-	if !directOf(t, a, "id-b") {
-		t.Fatal("a member announced on this network is not shown as direct")
+func TestMembersKnownBeforeKeepTheirIdsAndNeedNoApproval(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.dir.keys[b.id] = b.key()
+	b.dir.keys[a.id] = a.key()
+	a.apply(url, formerOf(b))
+	b.apply(url, formerOf(a))
+
+	eventually(t, "both list each other under their ids", func() bool { return listed(a.m, b.id) && listed(b.m, a.id) })
+	if s := whoCalls(t, a, b.id); s.ID != a.id || s.Kind != "" {
+		t.Fatalf("b saw the call come from %+v, want a's own id", s)
 	}
-	a.directFailed(context.Background(), pb.URL)
-	if directOf(t, a, "id-b") {
-		t.Fatal("a member whose announced address just failed is still shown as direct")
+	if w := a.m.Waiting(); len(w) != 0 {
+		t.Fatalf("waiting = %+v, want nobody", w)
 	}
+}
+
+func TestANewInstanceWaitsAndIsKnownByItsIdOnceApproved(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.apply(url, nil)
+	b.apply(url, nil)
+
+	kitB := member.ID(member.KindInstance, b.key())
+	kitA := member.ID(member.KindInstance, a.key())
+	waits := func(n *node, id string) bool {
+		for _, w := range n.m.Waiting() {
+			if w.ID == id && !w.There && w.Fingerprint != "" {
+				return true
+			}
+		}
+		return false
+	}
+	eventually(t, "each waits on the other", func() bool { return waits(a, kitB) && waits(b, kitA) })
+	if listed(a.m, kitB) || listed(a.m, b.id) {
+		t.Fatal("a lists b before anybody approved it")
+	}
+	if err := a.m.Approve(kitB); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.m.Approve(kitA); err != nil {
+		t.Fatal(err)
+	}
+	eventually(t, "both list each other under their ids", func() bool { return listed(a.m, b.id) && listed(b.m, a.id) })
+	if k, ok, _ := a.dir.MemberKey(b.id); !ok || !bytes.Equal(k, b.key()) {
+		t.Fatal("a did not pin b's key under b's id")
+	}
+	if s := whoCalls(t, b, a.id); s.ID != b.id {
+		t.Fatalf("a saw the call come from %+v", s)
+	}
+}
+
+func TestAnIdPinnedForAnotherKeyIsNotTaken(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.dir.keys[b.id] = bytes.Repeat([]byte{9}, 32)
+	a.apply(url, nil)
+	b.apply(url, nil)
+	kitB := member.ID(member.KindInstance, b.key())
+	kitA := member.ID(member.KindInstance, a.key())
+	eventually(t, "b waits on a", func() bool { return len(a.m.Waiting()) > 0 && len(b.m.Waiting()) > 0 })
+	if err := a.m.Approve(kitB); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.m.Approve(kitA); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(time.Second)
+	if listed(a.m, b.id) || listed(a.m, kitB) {
+		t.Fatalf("a lists b under an id pinned for another key: %+v", a.m.Members())
+	}
+}
+
+func TestAPhoneKeepsTheIdItsKeyWasPinnedUnder(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	phone, _ := member.FromSeed(member.KindMobile, bytes.Repeat([]byte{5}, 32))
+	const old = "cccccccccccccccccccccccccccccccc"
+	a.dir.keys[old] = phone.Public()
+	a.apply(url, func() (kitgroup.Roster, error) {
+		return kitgroup.Roster{Members: []kitgroup.Member{{ID: phone.ID(), Kind: member.KindMobile, Key: phone.Public(), State: kitgroup.StateApproved}}}, nil
+	})
+
+	c := phoneOn(t, url, phone)
+	eventually(t, "a lists the phone under its old id", func() bool {
+		for _, m := range a.m.Members() {
+			if m.ID == old && m.Kind == KindPhone {
+				return true
+			}
+		}
+		return false
+	})
+	eventually(t, "the phone sees a", func() bool { return len(c.Siblings()) > 0 })
+	out, status, err := c.Proxy(context.Background(), member.ID(member.KindInstance, a.key()), http.MethodGet, "/who", nil)
+	var s Sender
+	if err != nil || status != http.StatusOK || json.Unmarshal(out, &s) != nil || s.ID != old || s.Kind != KindPhone {
+		t.Fatalf("phone call: %d %s %v, sender %+v", status, out, err, s)
+	}
+}
+
+func TestANewPhoneWaitsAndGoesByTheIdItsKeyMakes(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	a.apply(url, nil)
+	phone, _ := member.NewIdentity(member.KindMobile)
+	c := phoneOn(t, url, phone)
+	target := member.ID(member.KindInstance, a.key())
+	eventually(t, "the phone sees a", func() bool { return len(c.Siblings()) > 0 })
+	_, status, _ := c.Proxy(context.Background(), target, http.MethodGet, "/who", nil)
+	if status != http.StatusForbidden {
+		t.Fatalf("a new phone got %d, want it to wait", status)
+	}
+	if err := a.m.Approve(phone.ID()); err != nil {
+		t.Fatal(err)
+	}
+	out, status, err := c.Proxy(context.Background(), target, http.MethodGet, "/who", nil)
+	var s Sender
+	if err != nil || status != http.StatusOK || json.Unmarshal(out, &s) != nil || s.ID != PhoneID(phone.Public()) || len(s.ID) != 32 {
+		t.Fatalf("approved phone: %d %s %v %+v", status, out, err, s)
+	}
+}
+
+func TestARemovedInstanceLeavesTheGroup(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.dir.keys[b.id] = b.key()
+	b.dir.keys[a.id] = a.key()
+	a.apply(url, formerOf(b))
+	b.apply(url, formerOf(a))
+	eventually(t, "both list each other", func() bool { return listed(a.m, b.id) && listed(b.m, a.id) })
+
+	if err := a.m.Remove(b.id); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-b.removed:
+	case <-time.After(15 * time.Second):
+		t.Fatal("b never heard it was taken out")
+	}
+	if _, _, err := a.m.Call(context.Background(), b.id, http.MethodGet, "/who", nil); err == nil {
+		t.Fatal("a still reaches b after taking it out")
+	}
+}
+
+func TestOutsideAGroupNothingIsListedOrReached(t *testing.T) {
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	if a.m.Active() || len(a.m.Members()) != 0 || len(a.m.Waiting()) != 0 {
+		t.Fatal("a fresh manager looks paired")
+	}
+	if _, _, err := a.m.Call(context.Background(), "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", http.MethodGet, "/who", nil); !errors.Is(err, ErrNotMember) {
+		t.Fatalf("call = %v", err)
+	}
+	w := httptest.NewRecorder()
+	a.m.ServeDirect(w, httptest.NewRequest(http.MethodPost, DirectPath, strings.NewReader("{}")))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("direct call outside a group = %d", w.Code)
+	}
+}
+
+// phoneOn connects a phone with identity id to the relay at url the way the
+// Android app does.
+func phoneOn(t *testing.T, url string, id member.Identity) *relay.Client {
+	t.Helper()
+	c, err := relay.NewClient(relay.ClientOptions{
+		URL: url, Key: Domain.GroupKey(secret), FrameKey: Domain.FrameKey(secret), Signing: Domain.Signing(),
+		Self:     relay.Announce{InstanceID: id.ID(), Name: "phone", Deployment: string(member.KindMobile), Client: true, Member: id.ID()},
+		Identity: &id,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Start()
+	t.Cleanup(func() { _ = c.Close() })
+	return c
 }

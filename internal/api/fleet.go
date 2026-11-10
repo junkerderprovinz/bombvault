@@ -253,55 +253,7 @@ func (s *Service) RunFleetPolls(ctx context.Context) error {
 	return nil
 }
 
-// A member that left the group while this instance was down never tells it,
-// and one that is out of reach is not asked by anything else until the daily
-// Fleet sweep. absentCheckDelay gives the relay and the network time to bring
-// back the members still in the group before the first check after a start.
-const (
-	absentCheckDelay   = 30 * time.Second
-	absentCheckEvery   = 5 * time.Minute
-	absentCheckTimeout = 10 * time.Second
-)
-
-func (s *Service) absentMembersLoop() {
-	ctx := s.StopContext()
-	wait := absentCheckDelay
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(wait):
-		}
-		s.askAbsentMembers(ctx)
-		wait = absentCheckEvery
-	}
-}
-
-// askAbsentMembers asks every member that has a row and an address but is not
-// in reach now, and drops the row of one that answers it left the group.
-// Nothing else of the answer is recorded; polls do that.
-func (s *Service) askAbsentMembers(ctx context.Context) {
-	if !s.pairing().Active() {
-		return
-	}
-	rows, err := s.store.ListFleetPeers()
-	if err != nil {
-		log.Printf("group: %v", err)
-		return
-	}
-	present := map[string]bool{}
-	for _, m := range s.pairing().Members() {
-		present[m.ID] = true
-	}
-	for _, p := range rows {
-		if p.MemberID == "" || p.Kind != "" || p.MemberURL == "" || present[p.MemberID] {
-			continue
-		}
-		cctx, cancel := context.WithTimeout(ctx, absentCheckTimeout)
-		_, _, err := s.pairing().Call(cctx, p.MemberID, http.MethodGet, group.ProbePath, nil)
-		cancel()
-		if left, ok := errors.AsType[*group.LeftError](err); ok {
-			s.dropFormerMember(left)
-		}
-	}
-}
+// absentCheckDelay gives the relay and the network time to bring back the
+// members still in the group after a start, before one out of reach counts as
+// away rather than as not back yet.
+const absentCheckDelay = 30 * time.Second

@@ -28,29 +28,25 @@ type GroupState struct {
 	// MemberSeenAt is when another member first showed up after JoinedAt,
 	// zero until one has.
 	MemberSeenAt time.Time
-	// DirectURL is this instance's own address on the local network: where
-	// members should send it direct calls. It starts out learned from the
-	// browser's request (scheme, host and port) the first time someone signs
-	// in, and DirectURLManual is set once a person edits it by hand, after
-	// which learning a new one from the browser stops overwriting it.
-	DirectURL       string
-	DirectURLManual bool
+	// DirectURL is this instance's own address as a signed-in browser
+	// reached it (scheme, host and port), where members on the network call
+	// it and phones open its pages.
+	DirectURL string
 }
 
 // GetGroupState reads the single group row.
 func (r *Repo) GetGroupState() (GroupState, error) {
 	var g GroupState
-	var serve, manual int
+	var serve int
 	var joined, seen int64
-	err := r.db.QueryRow(`SELECT instance_id, secret_enc, relay_mode, relay_url, relay_serve, joined_at, member_seen_at, direct_url, direct_url_manual FROM group_state WHERE id = 1`).
-		Scan(&g.InstanceID, &g.SecretEnc, &g.RelayMode, &g.RelayURL, &serve, &joined, &seen, &g.DirectURL, &manual)
+	err := r.db.QueryRow(`SELECT instance_id, secret_enc, relay_mode, relay_url, relay_serve, joined_at, member_seen_at, direct_url FROM group_state WHERE id = 1`).
+		Scan(&g.InstanceID, &g.SecretEnc, &g.RelayMode, &g.RelayURL, &serve, &joined, &seen, &g.DirectURL)
 	if err != nil {
 		return GroupState{}, fmt.Errorf("GetGroupState: %w", err)
 	}
 	g.RelayServe = serve != 0
 	g.JoinedAt = unixOrZero(joined)
 	g.MemberSeenAt = unixOrZero(seen)
-	g.DirectURLManual = manual != 0
 	return g, nil
 }
 
@@ -116,25 +112,32 @@ func (r *Repo) SetGroupRelay(mode, url string, serve bool) error {
 	return nil
 }
 
-// SetGroupDirectURL stores this instance's own direct address. manual marks
-// it as set by a person rather than learned from a request, which stops
-// LearnGroupDirectURL from replacing it.
-func (r *Repo) SetGroupDirectURL(url string, manual bool) error {
-	if _, err := r.db.Exec(`UPDATE group_state SET direct_url = ?, direct_url_manual = ? WHERE id = 1`,
-		url, boolInt(manual)); err != nil {
-		return fmt.Errorf("SetGroupDirectURL: %w", err)
+// LearnGroupDirectURL stores url as this instance's own direct address, as
+// a signed-in browser reached it.
+func (r *Repo) LearnGroupDirectURL(url string) error {
+	if _, err := r.db.Exec(`UPDATE group_state SET direct_url = ? WHERE id = 1 AND direct_url != ?`, url, url); err != nil {
+		return fmt.Errorf("LearnGroupDirectURL: %w", err)
 	}
 	return nil
 }
 
-// LearnGroupDirectURL stores url as this instance's own direct address, the
-// way SetGroupDirectURL does, but only while nobody has set one by hand: a
-// person's own edit is never quietly replaced by what the next request's
-// Host header happens to say.
-func (r *Repo) LearnGroupDirectURL(url string) error {
-	if _, err := r.db.Exec(`UPDATE group_state SET direct_url = ? WHERE id = 1 AND direct_url_manual = 0 AND direct_url != ?`,
-		url, url); err != nil {
-		return fmt.Errorf("LearnGroupDirectURL: %w", err)
+// GroupKitState returns the group's state as the kit keeps it, sealed under
+// the APP_KEY, empty before the group first saved.
+func (r *Repo) GroupKitState() ([]byte, error) {
+	var enc []byte
+	if err := r.db.QueryRow(`SELECT kit_state FROM group_state WHERE id = 1`).Scan(&enc); err != nil {
+		return nil, fmt.Errorf("GroupKitState: %w", err)
+	}
+	return enc, nil
+}
+
+// SetGroupKitState keeps what GroupKitState returns; nil clears it.
+func (r *Repo) SetGroupKitState(enc []byte) error {
+	if enc == nil {
+		enc = []byte{}
+	}
+	if _, err := r.db.Exec(`UPDATE group_state SET kit_state = ? WHERE id = 1`, enc); err != nil {
+		return fmt.Errorf("SetGroupKitState: %w", err)
 	}
 	return nil
 }

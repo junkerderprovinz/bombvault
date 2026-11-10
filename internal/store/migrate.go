@@ -3848,6 +3848,17 @@ CREATE TABLE IF NOT EXISTS shared_repo_taken_over (
   converted_at INTEGER NOT NULL
 );`,
 	},
+	{
+		// The group runs on the parleyport kit, which keeps who is approved
+		// and who was removed in one sealed blob. A member is found there by
+		// its key, and nobody sets this instance's address by hand any more.
+		version:          groupKitMigration,
+		name:             "group_kit_state",
+		alreadySatisfied: columnPresent("group_state", "kit_state"),
+		sql: `ALTER TABLE group_state ADD COLUMN kit_state BLOB NOT NULL DEFAULT x'';
+CREATE INDEX IF NOT EXISTS member_keys_by_key ON member_keys (key);
+UPDATE group_state SET direct_url_manual = 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4487,6 +4498,9 @@ const sectionPlansMigration = 780
 // notifyChannelsMigration numbers the notification config kept from before
 // channels.
 const notifyChannelsMigration = 900
+
+// groupKitMigration numbers the group's move onto the parleyport kit.
+const groupKitMigration = 910
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -28,7 +28,7 @@ func TestAPhoneThatLeavesTheGroupIsTakenOffTheInstancesPage(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	ph := joinPhone(t, relayURL, phrase, wordsHolderID, attic)
+	ph := joinPhone(t, relayURL, phrase, attic)
 	if !listsMember(t, attic, ph.id) {
 		t.Fatal("the phone has no row before it left")
 	}
@@ -60,7 +60,7 @@ func TestAPhoneCannotBeTakenOffInItsNameWithoutItsKey(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL := groupOf(t, tower, attic)
-	ph := joinPhone(t, relayURL, phrase, wordsHolderID, attic)
+	ph := joinPhone(t, relayURL, phrase, attic)
 	if !listsMember(t, attic, ph.id) {
 		t.Fatal("the phone has no row")
 	}
@@ -77,33 +77,5 @@ func TestAPhoneCannotBeTakenOffInItsNameWithoutItsKey(t *testing.T) {
 	}
 	if !listsMember(t, attic, ph.id) {
 		t.Fatal("a leave signed with another key took the phone off")
-	}
-}
-
-func TestAnInstanceThatLeavesTellsThePhonesOfTheGroup(t *testing.T) {
-	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	phrase, relayURL := groupOf(t, tower, attic)
-	ph := joinPhone(t, relayURL, phrase, wordsHolderID, attic)
-	atticID, atticKey := attic.id(t), keydeposit.OwnerKey(depositSeedOf(t, attic))
-
-	if code, out := attic.do(t, http.MethodDelete, "/api/group", nil); code != http.StatusOK || out["active"] != false {
-		t.Fatalf("leave: %d %v", code, out)
-	}
-	select {
-	case call := <-ph.heard:
-		if call.Method != http.MethodPost || call.Path != "/api/group/peer/leave" || call.Sender != atticID {
-			t.Fatalf("the phone heard %s %s from %q", call.Method, call.Path, call.Sender)
-		}
-		var p peerProof
-		if err := json.Unmarshal(call.Body, &p); err != nil {
-			t.Fatal(err)
-		}
-		claim := keydeposit.Claim{Action: keydeposit.ProofLeave, OwnerID: atticID, KeeperID: ph.id, Counter: p.Counter}
-		if !keydeposit.Proven(atticKey, p.Proof, claim) {
-			t.Fatal("the word the phone got is not signed with the key of the instance that left")
-		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("the phone was not told that the instance left")
 	}
 }
