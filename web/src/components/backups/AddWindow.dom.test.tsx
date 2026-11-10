@@ -110,6 +110,16 @@ describe("the choice", () => {
     expect((choice(/^One folder/) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("leads to what is new in the folder form over the folder, while folders are switched on", async () => {
+    const leads = () => choice(/^One folder/).closest('[data-new-way~="add-folder"]') !== null;
+    await open("choose");
+    expect(leads()).toBe(true);
+
+    cleanup();
+    await open("choose", { files: false, zfs: true });
+    expect(leads()).toBe(false);
+  });
+
   it("leaves through Cancel", async () => {
     await open("choose");
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));

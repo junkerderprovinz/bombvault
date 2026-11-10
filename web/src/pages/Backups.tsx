@@ -360,6 +360,8 @@ export function Backups() {
   ];
 
   const addWith = addStart(tile, enabled);
+  // The ZFS tile's button opens the dataset form, which offers no folder.
+  const addsFolder = !!enabled.files && (addWith === "files" || addWith === "choose");
   const busyTitle = running.active ? t(busyPhraseKey(running.phase, running.stage)) : undefined;
   const menuItem = rowMenu && shown.find((item) => itemId(item) === rowMenu.id);
   const menu = menuItem && rowMenuActions(menuItem);
@@ -551,12 +553,14 @@ export function Backups() {
             </span>
           )}
           {addWith && (
-            <PageAction
-              primary
-              label={t(tile === "files" ? "backups.addFolder" : tile === "zfs" ? "backups.addDataset" : "folders.add")}
-              glyph={<IconAdd />}
-              onClick={() => setAdding(addWith)}
-            />
+            <span data-new-way={addsFolder ? "add-entry" : undefined} className="flex">
+              <PageAction
+                primary
+                label={t(tile === "files" ? "backups.addFolder" : tile === "zfs" ? "backups.addDataset" : "folders.add")}
+                glyph={<IconAdd />}
+                onClick={() => setAdding(addWith)}
+              />
+            </span>
           )}
         </PageActions>
       )}

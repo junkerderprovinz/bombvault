@@ -192,14 +192,16 @@ export function ConnectionCard({ edit, onChange, hueIndex }: { edit: LocationEdi
 
         {location.connections !== undefined && can("connections") && (
           <SettingRow label={t("storage.connections")} hint={t("storage.connectionsHint").replace("{max}", String(MAX_CONNECTIONS))}>
-            <CountSetting
-              label={t("storage.connections")}
-              value={location.connections}
-              max={MAX_CONNECTIONS}
-              placeholder="5"
-              disabled={busy}
-              onCommit={(connections) => void save({ connections })}
-            />
+            <span data-new="location-connections" className="flex">
+              <CountSetting
+                label={t("storage.connections")}
+                value={location.connections}
+                max={MAX_CONNECTIONS}
+                placeholder="5"
+                disabled={busy}
+                onCommit={(connections) => void save({ connections })}
+              />
+            </span>
           </SettingRow>
         )}
 
