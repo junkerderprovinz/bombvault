@@ -221,6 +221,13 @@ func (s *Service) takeUpSharedRepo(repo, ownerID, ownerName string, ans peerShar
 	if err != nil {
 		return err
 	}
+	return s.takeUpSharedTargets(repo, name, ref, true)
+}
+
+// takeUpSharedTargets gives every section a copy target at the shared
+// repository at repo, switched off for a new one, signing in with the sign-in
+// set ref. A target there already keeps its switch and takes the sign-in.
+func (s *Service) takeUpSharedTargets(repo, name, ref string, immutable bool) error {
 	targets, err := s.store.ListOffsiteTargets()
 	if err != nil {
 		return err
@@ -228,14 +235,14 @@ func (s *Service) takeUpSharedRepo(repo, ownerID, ownerName string, ans peerShar
 	for _, domain := range offsiteConfigDomains {
 		if i := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain && t.Repo == repo }); i >= 0 {
 			t := targets[i]
-			t.CredsRef, t.Immutable = ref, true
+			t.CredsRef, t.Immutable = ref, immutable
 			if _, err := s.store.UpsertOffsiteTarget(t); err != nil {
 				return err
 			}
 			continue
 		}
 		if _, err := s.store.CreateOffsiteTarget(store.OffsiteTarget{
-			Domain: domain, Name: name, Repo: repo, CredsRef: ref, Immutable: true, Enabled: false,
+			Domain: domain, Name: name, Repo: repo, CredsRef: ref, Immutable: immutable, Enabled: false,
 		}); err != nil {
 			return err
 		}

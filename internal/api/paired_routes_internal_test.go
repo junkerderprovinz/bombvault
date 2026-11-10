@@ -315,6 +315,7 @@ var pairedRefused = []string{
 	"POST /api/shared-repo/joins/{id}/refuse",
 	"POST /api/shared-repo/offers/{id}/join",
 	"POST /api/shared-repo/offers/{id}/leave",
+	"POST /api/shared-repo/own-copies",
 	"DELETE /api/zfs/replica/servers/{id}",
 	"GET /api/fleet/mesh-offers",
 	"GET /api/pull/sources",

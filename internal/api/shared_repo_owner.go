@@ -97,6 +97,8 @@ type sharedServerView struct {
 	// here has not answered yet.
 	Members []sharedMemberView `json:"members"`
 	Joins   []sharedJoinView   `json:"joins"`
+	// CopiesIn says this server copies its own backups in as well.
+	CopiesIn bool `json:"copiesIn"`
 }
 
 // sharedMemberView is one server in a shared repository.
@@ -109,6 +111,8 @@ type sharedMemberView struct {
 	// alone fills them in.
 	Keys           []string `json:"keys,omitempty"`
 	LastSnapshotAt int64    `json:"lastSnapshotAt,omitempty"`
+	// Self is the owner itself, which copies its own backups in.
+	Self bool `json:"self,omitempty"`
 }
 
 // sharedJoinView is an ask to join as the owner's card lists it.
@@ -359,8 +363,10 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 		return sharedServerView{}, err
 	}
 	keys, latest := s.sharedRepoFacts(ctx, ss)
+	self := s.resticHost()
 	for _, m := range sr.Members {
-		mv := sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host, LastSnapshotAt: latest[m.Host]}
+		mv := sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host, LastSnapshotAt: latest[m.Host], Self: m.Host == self}
+		v.CopiesIn = v.CopiesIn || mv.Self
 		for _, k := range keys {
 			if k.HostName == m.Host {
 				mv.Keys = append(mv.Keys, shortKeyID(k.ID))
@@ -382,6 +388,52 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 		}
 	}
 	return v, nil
+}
+
+// CopyIntoOwnSharedRepo lets this server copy its own backups into the
+// shared repository it holds, so it saves space there as well. It counts
+// itself among the members, which its upkeep then ages like any other, and
+// takes the folder up as a copy target for every section, switched off until
+// a person picks the sections. It reaches the folder directly, so it needs no
+// login, and nothing there keeps it from deleting: for this server it is no
+// copy away from home.
+func (s *Service) CopyIntoOwnSharedRepo(ctx context.Context) (sharedServerView, error) {
+	s.sharedMu.Lock()
+	err := s.copyIntoOwnSharedRepo()
+	s.sharedMu.Unlock()
+	if err != nil {
+		return sharedServerView{}, err
+	}
+	return s.sharedServerView(ctx)
+}
+
+func (s *Service) copyIntoOwnSharedRepo() error {
+	ss, ok, err := s.store.GetSharedRepoServer()
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errNoSharedRepo
+	}
+	sr, ok, err := s.store.SharedRepoAt(ss.Repo)
+	if err != nil {
+		return err
+	}
+	if !ok || !s.ownsSharedRepo(sr) {
+		return errNotSharedOwner
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	host := s.resticHost()
+	if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) {
+		sr.Members = append(sr.Members, store.SharedMember{Host: host, Instance: sr.Owner, Name: instanceDisplayName(settings)})
+		if _, err := s.store.PutSharedRepo(sr); err != nil {
+			return err
+		}
+	}
+	return s.takeUpSharedTargets(ss.Repo, "Shared repository", "", false)
 }
 
 // sharedFactsWait bounds what the owner's card waits for restic.

@@ -4,9 +4,11 @@
 // member can add snapshots there and delete none.
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   checkSharedRepo,
+  copyIntoOwnSharedRepo,
   decideSharedJoin,
   getReceiverServer,
   removeSharedMember,
@@ -23,6 +25,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { FolderBrowser } from "../../components/FolderBrowser";
 import { IconConfirm, IconLink } from "../../components/glyphs";
+import { IconTabStorage } from "../../components/navGlyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
 import { Rows, SettingRow } from "../../components/storage/rows";
@@ -53,6 +56,7 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
   const [formOpen, setFormOpen] = useState(false);
   const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState("");
+  const navigate = useNavigate();
   const { server, error } = shared;
 
   async function runCheck() {
@@ -97,6 +101,22 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
       named(decision === "allow" ? "shared.allowed" : "shared.refused", ask.name),
       ask.name,
     );
+
+  async function copyIn() {
+    setBusy("own");
+    try {
+      const r = await copyIntoOwnSharedRepo();
+      if (!r.ok || !r.server) {
+        push(r.error ?? t("settings.error"), "fail");
+        return;
+      }
+      shared.setServer(r.server);
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setBusy("");
+    }
+  }
 
   async function remove(m: SharedMember) {
     if (!(await confirm(named("shared.removeAsk", m.name), { confirmKey: "shared.remove" }))) return;
@@ -233,17 +253,46 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
                     label={m.name}
                     note={<bdi dir="ltr">{memberNote(m, t)}</bdi>}
                   >
-                    <Button
-                      label={t("shared.remove")}
-                      labelKey="shared.remove"
-                      tone="neutral"
-                      onClick={() => void remove(m)}
-                      disabled={busy !== ""}
-                      busy={busy === `${m.memberId}:remove`}
-                    />
+                    {m.self ? (
+                      <span className="text-xs text-carbon-textMuted">{t("shared.own.self")}</span>
+                    ) : (
+                      <Button
+                        label={t("shared.remove")}
+                        labelKey="shared.remove"
+                        tone="neutral"
+                        onClick={() => void remove(m)}
+                        disabled={busy !== ""}
+                        busy={busy === `${m.memberId}:remove`}
+                      />
+                    )}
                   </SettingRow>
                 ))}
               </Rows>
+            )}
+          </div>
+
+          <div data-new="shared-repo-own" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card bg-carbon-background p-3">
+            <p className="min-w-0 flex-[1_1_16rem] text-sm text-carbon-text">
+              {t(server.copiesIn ? "shared.own.on" : "shared.own.offer")}
+            </p>
+            {server.copiesIn ? (
+              <Button
+                label={t("shared.member.openStorage")}
+                labelKey="shared.member.openStorage"
+                glyph={<IconTabStorage />}
+                tone="neutral"
+                onClick={() => navigate("/storage")}
+              />
+            ) : (
+              <Button
+                label={t("shared.own.start")}
+                labelKey="shared.own.start"
+                hint={t("shared.own.tip")}
+                tone="accent"
+                onClick={() => void copyIn()}
+                disabled={busy !== ""}
+                busy={busy === "own"}
+              />
             )}
           </div>
         </>

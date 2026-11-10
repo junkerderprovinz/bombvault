@@ -5,6 +5,7 @@
 // how far removing goes.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { SharedServer } from "../../lib/api";
@@ -25,6 +26,7 @@ const server: SharedServer = {
   checkedAt: 0,
   members: [],
   joins: [],
+  copiesIn: false,
 };
 
 const withMembers: SharedServer = {
@@ -42,6 +44,7 @@ const sent: { folder: string; port: number }[] = [];
 const decided: [string, string][] = [];
 const removed: string[] = [];
 let checks = 0;
+let copiedIn = 0;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -62,6 +65,11 @@ vi.mock("../../lib/api", async (importOriginal) => {
       const joins = decision === "allow" ? withMembers.joins.map((j) => ({ ...j, state: "allowed" as const })) : [];
       return Promise.resolve({ ok: true, server: { ...withMembers, joins }, told });
     },
+    copyIntoOwnSharedRepo: () => {
+      copiedIn++;
+      const self = { memberId: "m-self", name: "vault-box", host: "bv-self", self: true };
+      return Promise.resolve({ ok: true, server: { ...server, copiesIn: true, members: [self] } });
+    },
     removeSharedMember: (memberId: string) => {
       removed.push(memberId);
       return Promise.resolve({ ok: true, server: { ...withMembers, members: withMembers.members.filter((m) => m.memberId !== memberId) }, told });
@@ -80,11 +88,13 @@ function Owned() {
 async function renderCard() {
   await act(async () => {
     render(
-      <I18nProvider>
-        <ToastProvider>
-          <Owned />
-        </ToastProvider>
-      </I18nProvider>,
+      <MemoryRouter>
+        <I18nProvider>
+          <ToastProvider>
+            <Owned />
+          </ToastProvider>
+        </I18nProvider>
+      </MemoryRouter>,
     );
   });
 }
@@ -99,6 +109,7 @@ afterEach(() => {
   decided.length = 0;
   removed.length = 0;
   checks = 0;
+  copiedIn = 0;
 });
 
 describe("SharedRepoCard", () => {
@@ -202,6 +213,20 @@ describe("SharedRepoCard", () => {
     expect(removed).toEqual(["m-attic"]);
     expect(screen.queryByText("attic")).toBeNull();
     expect(screen.getByText("barn")).toBeTruthy();
+  });
+
+  it("lets this server copy its own backups in and then points to Storage locations", async () => {
+    initial = server;
+    await renderCard();
+    expect(screen.getByText(en["shared.own.offer"])).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["shared.own.start"] }));
+    });
+    expect(copiedIn).toBe(1);
+    expect(screen.getByText(en["shared.own.on"])).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["shared.member.openStorage"] })).toBeTruthy();
+    expect(screen.getByText(en["shared.own.self"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["shared.remove"] })).toBeNull();
   });
 
   it("keeps a member when the question is cancelled", async () => {

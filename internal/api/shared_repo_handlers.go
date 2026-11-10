@@ -15,6 +15,7 @@ func (h *Handler) mountSharedRepo(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/shared-repo/joins/{id}/allow", h.handleAllowSharedJoin)
 	mux.HandleFunc("POST /api/shared-repo/joins/{id}/refuse", h.handleRefuseSharedJoin)
 	mux.HandleFunc("DELETE /api/shared-repo/members/{id}", h.handleRemoveSharedMember)
+	mux.HandleFunc("POST /api/shared-repo/own-copies", h.handleCopyIntoOwnSharedRepo)
 	mux.HandleFunc("GET /api/shared-repo/offers", h.handleListSharedOffers)
 	mux.HandleFunc("POST /api/shared-repo/offers/{id}/join", h.handleJoinSharedRepo)
 	mux.HandleFunc("POST /api/shared-repo/offers/{id}/leave", h.handleLeaveSharedRepo)
@@ -104,6 +105,18 @@ func (h *Handler) handleRefuseSharedJoin(w http.ResponseWriter, r *http.Request)
 func (h *Handler) handleRemoveSharedMember(w http.ResponseWriter, r *http.Request) {
 	told, err := h.svc.RemoveSharedMember(r.Context(), r.PathValue("id"))
 	h.answerShared(w, r, told, err)
+}
+
+// handleCopyIntoOwnSharedRepo lets this instance copy its own backups into
+// the shared repository it holds.
+// POST /api/shared-repo/own-copies
+func (h *Handler) handleCopyIntoOwnSharedRepo(w http.ResponseWriter, r *http.Request) {
+	v, err := h.svc.CopyIntoOwnSharedRepo(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"server": v}))
 }
 
 // handleListSharedOffers lists the shared repositories the group's members

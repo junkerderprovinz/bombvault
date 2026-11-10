@@ -6666,6 +6666,8 @@ export interface SharedMember {
   keys?: string[];
   /** Unix seconds, on the owner only. */
   lastSnapshotAt?: number;
+  /** The owner itself, which copies its own backups in. */
+  self?: boolean;
 }
 
 /** A member's ask to join, open or allowed until the member added its own key. */
@@ -6698,6 +6700,8 @@ export interface SharedServer {
   checkedAt: number;
   members: SharedMember[];
   joins: SharedJoinAsk[];
+  /** This instance copies its own backups in as well. */
+  copiesIn: boolean;
 }
 
 export type SharedMembershipState = "asked" | "allowed" | "refused" | "expired" | "joined" | "removed";
@@ -6753,6 +6757,12 @@ export function decideSharedJoin(
 /** Takes the member's key and login away. Its snapshots stay. */
 export function removeSharedMember(memberId: string): Promise<OkEnvelope & { server?: SharedServer; told?: boolean }> {
   return fetchJSON(`/api/shared-repo/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
+}
+
+/** Lets this instance copy its own backups into the shared repository it
+ *  holds, from the folder and without a login. */
+export function copyIntoOwnSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo/own-copies", { method: "POST" });
 }
 
 export function listSharedOffers(): Promise<OkEnvelope & { offers?: SharedOffer[] }> {
