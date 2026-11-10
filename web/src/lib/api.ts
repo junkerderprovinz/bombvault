@@ -6758,6 +6758,7 @@ export function joinSharedRepo(ownerId: string): Promise<OkEnvelope & { state?: 
 
 export function leaveSharedRepo(ownerId: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/leave`, { method: "POST" });
+}
 
 /** The rules the owner of a shared repository keeps it by. Until keepSet,
  *  each section ages by the owner's own off-site rules. */
