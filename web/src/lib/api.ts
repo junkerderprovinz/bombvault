@@ -6702,6 +6702,22 @@ export interface SharedServer {
   joins: SharedJoinAsk[];
   /** This instance copies its own backups in as well. */
   copiesIn: boolean;
+  /** Names the repository in the routes of its upkeep. */
+  id: string;
+  /** The servers that left, whose backups are still there. */
+  former: SharedFormer[];
+}
+
+/** A server that left a shared repository, with what it left there as far
+ *  as restic answered. */
+export interface SharedFormer {
+  host: string;
+  name: string;
+  leftAt: number;
+  snapshots: number;
+  forgetError?: string;
+  /** Its backups are being forgotten right now. */
+  forgetting: boolean;
 }
 
 export type SharedMembershipState = "asked" | "allowed" | "refused" | "expired" | "joined" | "removed";
@@ -6763,6 +6779,15 @@ export function removeSharedMember(memberId: string): Promise<OkEnvelope & { ser
  *  holds, from the folder and without a login. */
 export function copyIntoOwnSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
   return fetchJSON("/api/shared-repo/own-copies", { method: "POST" });
+}
+
+/** Starts forgetting every backup a server that left has in the shared
+ *  repository. name is its name as the person typed it. */
+export function forgetSharedFormer(id: string, host: string, name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/former/${encodeURIComponent(host)}/forget`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
 }
 
 export function listSharedOffers(): Promise<OkEnvelope & { offers?: SharedOffer[] }> {

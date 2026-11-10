@@ -27,6 +27,8 @@ const server: SharedServer = {
   members: [],
   joins: [],
   copiesIn: false,
+  id: "sr-1",
+  former: [],
 };
 
 const withMembers: SharedServer = {
@@ -45,6 +47,7 @@ const decided: [string, string][] = [];
 const removed: string[] = [];
 let checks = 0;
 let copiedIn = 0;
+const forgotten: [string, string, string][] = [];
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -64,6 +67,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
       decided.push([memberId, decision]);
       const joins = decision === "allow" ? withMembers.joins.map((j) => ({ ...j, state: "allowed" as const })) : [];
       return Promise.resolve({ ok: true, server: { ...withMembers, joins }, told });
+    },
+    forgetSharedFormer: (id: string, host: string, name: string) => {
+      forgotten.push([id, host, name]);
+      return Promise.resolve({ ok: true });
     },
     copyIntoOwnSharedRepo: () => {
       copiedIn++;
@@ -110,6 +117,7 @@ afterEach(() => {
   removed.length = 0;
   checks = 0;
   copiedIn = 0;
+  forgotten.length = 0;
 });
 
 describe("SharedRepoCard", () => {
@@ -227,6 +235,31 @@ describe("SharedRepoCard", () => {
     expect(screen.getByRole("button", { name: en["shared.member.openStorage"] })).toBeTruthy();
     expect(screen.getByText(en["shared.own.self"])).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["shared.remove"] })).toBeNull();
+  });
+
+  it("forgets what a server that left still has there only once its name is typed", async () => {
+    initial = { ...server, former: [{ host: "bv-attic", name: "attic", leftAt: Math.floor(Date.now() / 1000) - 3600, snapshots: 12, forgetting: false }] };
+    await renderCard();
+    expect(screen.getByText(en["shared.former"])).toBeTruthy();
+    expect(screen.getByText(/bv-attic · 12 backups/)).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["shared.former.forget"] }));
+    });
+    const go = screen.getAllByRole("button", { name: en["shared.former.forget"] }).at(-1)!;
+    expect((go as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText(en["offsiteRemoval.typeName"].replace("{name}", "attic")), { target: { value: "attic" } });
+    await act(async () => {
+      fireEvent.click(go);
+    });
+    expect(forgotten).toEqual([["sr-1", "bv-attic", "attic"]]);
+    expect(await screen.findByText(named("shared.former.started", "attic"))).toBeTruthy();
+  });
+
+  it("says why forgetting what a server left failed", async () => {
+    initial = { ...server, former: [{ host: "bv-attic", name: "attic", leftAt: 1, snapshots: 3, forgetting: false, forgetError: "disk full" }] };
+    await renderCard();
+    expect(screen.getByText(/disk full/)).toBeTruthy();
   });
 
   it("keeps a member when the question is cancelled", async () => {

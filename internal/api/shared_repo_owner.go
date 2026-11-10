@@ -99,6 +99,21 @@ type sharedServerView struct {
 	Joins   []sharedJoinView   `json:"joins"`
 	// CopiesIn says this server copies its own backups in as well.
 	CopiesIn bool `json:"copiesIn"`
+	// ID names the repository in the routes of its upkeep.
+	ID string `json:"id"`
+	// Former are the servers that left, whose backups are still there.
+	Former []sharedFormerView `json:"former"`
+}
+
+// sharedFormerView is a server that left, as the owner's card lists it.
+// Snapshots is how many it left there, as far as restic answered.
+type sharedFormerView struct {
+	Host        string `json:"host"`
+	Name        string `json:"name"`
+	LeftAt      int64  `json:"leftAt"`
+	Snapshots   int    `json:"snapshots"`
+	ForgetError string `json:"forgetError,omitempty"`
+	Forgetting  bool   `json:"forgetting"`
 }
 
 // sharedMemberView is one server in a shared repository.
@@ -352,7 +367,7 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	v := sharedServerView{
 		ContainerName: ss.ContainerName, Folder: ss.Folder, HostPath: ss.HostPath, Port: ss.Port, User: ss.User, Repo: ss.Repo,
 		CreatedAt: ss.CreatedAt, Present: live != "" || err != nil, Check: ss.Check, CheckDetail: ss.CheckDetail, CheckedAt: ss.CheckedAt,
-		Members: []sharedMemberView{}, Joins: []sharedJoinView{},
+		Members: []sharedMemberView{}, Joins: []sharedJoinView{}, Former: []sharedFormerView{},
 	}
 	if a := s.sharedAddress(ctx, ss); a.Host != "" {
 		v.URL = restBase(a.Host, ss.Port) + "/" + sharedRepoFolder
@@ -362,7 +377,16 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	if err != nil {
 		return sharedServerView{}, err
 	}
-	keys, latest := s.sharedRepoFacts(ctx, ss)
+	v.ID = sr.ID
+	keys, latest, counts := s.sharedRepoFacts(ctx, ss)
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		return sharedServerView{}, err
+	}
+	for _, f := range former {
+		v.Former = append(v.Former, sharedFormerView{Host: f.Host, Name: f.Name, LeftAt: f.LeftAt, Snapshots: counts[f.Host],
+			ForgetError: f.ForgetError, Forgetting: s.sharedUpkeep.forgets(f.Host)})
+	}
 	self := s.resticHost()
 	for _, m := range sr.Members {
 		mv := sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host, LastSnapshotAt: latest[m.Host], Self: m.Host == self}
@@ -439,15 +463,17 @@ func (s *Service) copyIntoOwnSharedRepo() error {
 // sharedFactsWait bounds what the owner's card waits for restic.
 const sharedFactsWait = 15 * time.Second
 
-func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer) ([]restic.Key, map[string]int64) {
-	latest := map[string]int64{}
+// sharedRepoFacts reads the keys of the shared repository, and the newest
+// snapshot and the number of snapshots under each host.
+func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer) ([]restic.Key, map[string]int64, map[string]int) {
+	latest, counts := map[string]int64{}, map[string]int{}
 	eng, err := s.sharedEngine()
 	if err != nil {
-		return nil, latest
+		return nil, latest, counts
 	}
 	repo, err := s.resolveRepo(ss.Repo)
 	if err != nil {
-		return nil, latest
+		return nil, latest, counts
 	}
 	ctx, cancel := context.WithTimeout(ctx, sharedFactsWait)
 	defer cancel()
@@ -461,11 +487,12 @@ func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer
 		log.Printf("shared repository: list its snapshots: %v", scrubError(err))
 	}
 	for _, sn := range snaps {
+		counts[sn.Hostname]++
 		if t := parseSnapshotTime(sn.Time); !t.IsZero() && t.Unix() > latest[sn.Hostname] {
 			latest[sn.Hostname] = t.Unix()
 		}
 	}
-	return keys, latest
+	return keys, latest, counts
 }
 
 func shortKeyID(id string) string {
@@ -713,6 +740,14 @@ func (s *Service) removeSharedMember(ctx context.Context, memberID string) error
 			return err
 		}
 		if found {
+			for _, m := range sr.Members {
+				if m.Instance != memberID {
+					continue
+				}
+				if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: m.Host, Name: m.Name, LeftAt: time.Now().Unix()}); err != nil {
+					return err
+				}
+			}
 			sr.Members = slices.DeleteFunc(sr.Members, func(m store.SharedMember) bool { return m.Instance == memberID })
 			if _, err := s.store.PutSharedRepo(sr); err != nil {
 				return err
@@ -959,6 +994,9 @@ func (s *Service) countIn(ctx context.Context, memberID, host string) error {
 	sr.Members = slices.DeleteFunc(sr.Members, func(m store.SharedMember) bool { return m.Instance == memberID })
 	sr.Members = append(sr.Members, store.SharedMember{Host: j.Host, Instance: memberID, Name: j.MemberName})
 	if _, err := s.store.PutSharedRepo(sr); err != nil {
+		return err
+	}
+	if err := s.store.DropSharedFormer(sr.ID, j.Host); err != nil {
 		return err
 	}
 	j.State, j.OnceEnc, j.OnceKey = store.SharedJoinJoined, nil, ""

@@ -3808,6 +3808,18 @@ CREATE TABLE IF NOT EXISTS shared_repo_space (
 		alreadySatisfied: columnPresent("offsite_runs", "deferred"),
 		sql:              `ALTER TABLE offsite_runs ADD COLUMN deferred INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		version: sharedFormerMigration,
+		name:    "shared_repo_former",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_former (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  host           TEXT NOT NULL,
+  name           TEXT NOT NULL,
+  left_at        INTEGER NOT NULL,
+  forget_error   TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (shared_repo_id, host)
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4430,6 +4442,10 @@ const sharedUpkeepMigration = 860
 // offsiteRunsDeferredMigration numbers the mark of a copy that waited for the
 // owner of a shared repository.
 const offsiteRunsDeferredMigration = 880
+
+// sharedFormerMigration numbers the servers that left a shared repository and
+// whose snapshots are still there.
+const sharedFormerMigration = 890
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780

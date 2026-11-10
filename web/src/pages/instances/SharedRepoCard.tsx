@@ -10,9 +10,11 @@ import {
   checkSharedRepo,
   copyIntoOwnSharedRepo,
   decideSharedJoin,
+  forgetSharedFormer,
   getReceiverServer,
   removeSharedMember,
   setUpSharedRepo,
+  type SharedFormer,
   type SharedJoinAsk,
   type SharedMember,
   type SharedServer,
@@ -21,6 +23,7 @@ import { useT, type TranslationKey } from "../../lib/i18n";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
+import { useOwnLogin } from "../../lib/useOwnLogin";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { FolderBrowser } from "../../components/FolderBrowser";
@@ -36,6 +39,9 @@ import type { SharedRepoState } from "./useSharedRepo";
 
 type T = ReturnType<typeof useT>["t"];
 
+/** While a server's backups are being forgotten, the card asks again this often. */
+const FORGETTING_POLL_MS = 5000;
+
 const INPUT = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 function memberNote(m: SharedMember, t: T): string {
@@ -49,6 +55,16 @@ function memberNote(m: SharedMember, t: T): string {
     .join(" · ");
 }
 
+function formerNote(f: SharedFormer, t: T): string {
+  return [
+    f.host,
+    f.snapshots > 0 && t("shared.former.backups", f.snapshots),
+    t("shared.former.left").replace("{time}", () => relativeTime(t, f.leftAt)),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; hueIndex: number }) {
   const { t } = useT();
   const { push } = useToast();
@@ -57,7 +73,15 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
   const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState("");
   const navigate = useNavigate();
-  const { server, error } = shared;
+  const ownLogin = useOwnLogin();
+  const { server, error, reload } = shared;
+
+  const forgetting = server?.former.some((f) => f.forgetting) ?? false;
+  useEffect(() => {
+    if (!forgetting) return;
+    const id = setInterval(() => void reload(), FORGETTING_POLL_MS);
+    return () => clearInterval(id);
+  }, [forgetting, reload]);
 
   async function runCheck() {
     setChecking(true);
@@ -111,6 +135,32 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
         return;
       }
       shared.setServer(r.server);
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function forget(id: string, f: SharedFormer) {
+    const yes = await confirm(named("shared.former.ask", f.name), {
+      confirmLabel: t("shared.former.forget"),
+      confirmLabelKey: "shared.former.forget",
+      confirmTone: "neutral",
+      requireText: f.name,
+      requirePrompt: named("offsiteRemoval.typeName", f.name),
+    });
+    if (!yes) return;
+    setBusy(`${f.host}:forget`);
+    try {
+      const r = await forgetSharedFormer(id, f.host, f.name);
+      if (ownLogin.handled(r)) return;
+      if (!r.ok) {
+        push(r.error ?? t("settings.error"), "fail");
+        return;
+      }
+      push(named("shared.former.started", f.name), "success");
+      await reload();
     } catch (e) {
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
     } finally {
@@ -271,6 +321,41 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
             )}
           </div>
 
+          {server.former.length > 0 && (
+            <div data-new="shared-repo-former" className="flex flex-col gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
+                {t("shared.former")}
+                <InfoBubble tip={t("shared.formerTip")} />
+              </span>
+              <Rows as="ul">
+                {server.former.map((f) => (
+                  <SettingRow
+                    key={f.host}
+                    as="li"
+                    label={f.name}
+                    note={
+                      <>
+                        <bdi dir="ltr">{formerNote(f, t)}</bdi>
+                        {f.forgetError && (
+                          <span className="text-statusFail">{t("shared.former.failed").replace("{error}", () => f.forgetError ?? "")}</span>
+                        )}
+                      </>
+                    }
+                  >
+                    <Button
+                      label={t("shared.former.forget")}
+                      labelKey="shared.former.forget"
+                      tone="neutral"
+                      onClick={() => void forget(server.id, f)}
+                      disabled={busy !== "" || f.forgetting}
+                      busy={f.forgetting || busy === `${f.host}:forget`}
+                    />
+                  </SettingRow>
+                ))}
+              </Rows>
+            </div>
+          )}
+
           <div data-new="shared-repo-own" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card bg-carbon-background p-3">
             <p className="min-w-0 flex-[1_1_16rem] text-sm text-carbon-text">
               {t(server.copiesIn ? "shared.own.on" : "shared.own.offer")}
@@ -299,6 +384,7 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
       )}
 
       {confirmDialog}
+      {ownLogin.dialog}
       {formOpen && (
         <SharedRepoDialog
           t={t}
