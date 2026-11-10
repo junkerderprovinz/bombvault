@@ -5297,6 +5297,8 @@ const ar: Partial<Translations> = {
   "shared.member.lastCopy": "آخر نسخة إلى هنا",
   "shared.member.noCopy": "لا شيء بعد",
   "shared.member.copyWaited": "انتظرت النسخة التي تلتها بينما كان {name} ينظّف المستودع. سيستدركها التشغيل التالي.",
+  "shared.member.moveHeld": "تولّى {name} هذا المستودع ويحدّد له عنوانًا جديدًا. يواصل هذا الخادم النسخ إلى العنوان القديم حتى يجتاز العنوان الجديد الفحص.",
+  "shared.member.moveAddress": "العنوان الجديد",
   "shared.member.leave": "مغادرة",
   "shared.member.leaveAsk": "مغادرة المستودع المشترك على {name}؟ يتوقف هذا الخادم عن النسخ إلى هناك. تبقى نسخه الاحتياطية وتتقادم وفق قواعد {name}.",
   "shared.member.left": "غادر هذا الخادم المستودع المشترك على {name}.",

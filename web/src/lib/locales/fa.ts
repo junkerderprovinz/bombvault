@@ -5306,6 +5306,8 @@ const fa: Partial<Translations> = {
   "shared.member.lastCopy": "آخرین کپی به اینجا",
   "shared.member.noCopy": "هنوز هیچ",
   "shared.member.copyWaited": "کپی بعدی منتظر ماند، چون {name} داشت پاک‌سازی می‌کرد. اجرای بعدی جبرانش می‌کند.",
+  "shared.member.moveHeld": "{name} این مخزن را در اختیار گرفته و نشانی جدیدی برایش داده است. این سرور همچنان در نشانی قدیمی کپی می‌کند تا نشانی جدید بررسی را با موفقیت بگذراند.",
+  "shared.member.moveAddress": "نشانی جدید",
   "shared.member.leave": "خروج",
   "shared.member.leaveAsk": "از مخزن مشترک روی {name} خارج می‌شوی؟ این سرور دیگر آنجا کپی نمی‌کند. پشتیبان‌هایش می‌مانند و طبق قانون‌های {name} کهنه می‌شوند.",
   "shared.member.left": "این سرور از مخزن مشترک روی {name} خارج شد.",

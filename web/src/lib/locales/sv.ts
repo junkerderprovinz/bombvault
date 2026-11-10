@@ -5295,6 +5295,8 @@ const sv: Partial<Translations> = {
   "shared.member.lastCopy": "Senaste kopia hit",
   "shared.member.noCopy": "Ingen än",
   "shared.member.copyWaited": "Kopian efter den väntade medan {name} städade. Nästa körning tar igen den.",
+  "shared.member.moveHeld": "{name} har tagit över det här arkivet och anger en ny adress för det. Den här servern fortsätter kopiera till den gamla adressen tills den nya har klarat sin kontroll.",
+  "shared.member.moveAddress": "Ny adress",
   "shared.member.leave": "Lämna",
   "shared.member.leaveAsk": "Lämna det gemensamma arkivet på {name}? Den här servern slutar kopiera dit. Dess säkerhetskopior finns kvar och åldras enligt reglerna hos {name}.",
   "shared.member.left": "Den här servern har lämnat det gemensamma arkivet på {name}.",

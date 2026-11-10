@@ -101,6 +101,12 @@ func (s *Service) sharedOthersIn(ctx context.Context, sr store.SharedRepo, own s
 // target is one a recovery kit named after the server that held it was set
 // up anew.
 func (s *Service) sharedReach(sr store.SharedRepo) (string, restic.Mode, error) {
+	return s.sharedReachAt(sr, "")
+}
+
+// sharedReachAt is sharedReach for a member that reads sr at the location at
+// instead, with the login of its copies there. An empty at is sharedReach.
+func (s *Service) sharedReachAt(sr store.SharedRepo, at string) (string, restic.Mode, error) {
 	if s.ownsSharedRepo(sr) {
 		dest, mode, _, err := s.sharedAccess(sr)
 		return dest, mode, err
@@ -114,7 +120,7 @@ func (s *Service) sharedReach(sr store.SharedRepo) (string, restic.Mode, error) 
 		return "", restic.Mode{}, err
 	}
 	if i := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return sameRepoLocation(t.Repo, sr.Repo) }); i >= 0 {
-		repo, err := s.resolveRepo(targets[i].Repo)
+		repo, err := s.resolveRepo(cmp.Or(at, targets[i].Repo))
 		if err != nil {
 			return "", restic.Mode{}, err
 		}

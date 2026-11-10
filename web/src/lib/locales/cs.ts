@@ -5294,6 +5294,8 @@ const cs: Partial<Translations> = {
   "shared.member.lastCopy": "Poslední kopie sem",
   "shared.member.noCopy": "Zatím žádná",
   "shared.member.copyWaited": "Kopie po ní počkala, protože instance {name} zrovna uklízela. Další běh to dožene.",
+  "shared.member.moveHeld": "Instance {name} převzala tento repozitář a uvádí pro něj novou adresu. Tento server dál kopíruje na starou adresu, dokud nová neprojde kontrolou.",
+  "shared.member.moveAddress": "Nová adresa",
   "shared.member.leave": "Odejít",
   "shared.member.leaveAsk": "Odejít ze sdíleného repozitáře na instanci {name}? Tento server tam přestane kopírovat. Jeho zálohy zůstanou a stárnou podle pravidel instance {name}.",
   "shared.member.left": "Tento server odešel ze sdíleného repozitáře na instanci {name}.",

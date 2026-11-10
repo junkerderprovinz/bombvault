@@ -5306,6 +5306,8 @@ const hr: Partial<Translations> = {
   "shared.member.lastCopy": "Posljednja kopija ovamo",
   "shared.member.noCopy": "Još nijedna",
   "shared.member.copyWaited": "Kopija nakon nje pričekala je dok je instanca {name} pospremala. Sljedeći prolaz će to nadoknaditi.",
+  "shared.member.moveHeld": "Instanca {name} preuzela je ovaj repozitorij i za njega navodi novu adresu. Ovaj poslužitelj i dalje kopira na staru adresu dok nova ne prođe provjeru.",
+  "shared.member.moveAddress": "Nova adresa",
   "shared.member.leave": "Napusti",
   "shared.member.leaveAsk": "Napustiti zajednički repozitorij na instanci {name}? Ovaj poslužitelj prestaje kopirati onamo. Njegove sigurnosne kopije ostaju i stare prema pravilima instance {name}.",
   "shared.member.left": "Ovaj poslužitelj napustio je zajednički repozitorij na instanci {name}.",

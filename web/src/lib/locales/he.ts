@@ -5296,6 +5296,8 @@ const he: Partial<Translations> = {
   "shared.member.lastCopy": "העתקה אחרונה לכאן",
   "shared.member.noCopy": "עדיין אין",
   "shared.member.copyWaited": "ההעתקה שאחריה המתינה בזמן ש-{name} ניקה. הריצה הבאה תשלים את החסר.",
+  "shared.member.moveHeld": "{name} קיבל לידיו את המאגר הזה ומסר עבורו כתובת חדשה. השרת הזה ממשיך להעתיק לכתובת הישנה עד שהכתובת החדשה תעבור את הבדיקה שלה.",
+  "shared.member.moveAddress": "כתובת חדשה",
   "shared.member.leave": "עזיבה",
   "shared.member.leaveAsk": "לעזוב את המאגר המשותף ב-{name}? השרת הזה יפסיק להעתיק לשם. הגיבויים שלו נשארים ומתיישנים לפי הכללים של {name}.",
   "shared.member.left": "השרת הזה עזב את המאגר המשותף ב-{name}.",

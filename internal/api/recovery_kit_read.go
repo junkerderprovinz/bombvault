@@ -89,6 +89,8 @@ type kitLocation struct {
 	// Server is the rest-server it ran for the others.
 	Held   bool            `json:"held,omitempty"`
 	Server kitSharedServer `json:"-"`
+	// Logins are the logins the others sign in to that server with, by host.
+	Logins map[string]string `json:"-"`
 }
 
 // recoveryKit is what a recovery kit says. The keys stay on the server.

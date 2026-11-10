@@ -6767,6 +6767,17 @@ export interface SharedMembership {
   /** What the owner last measured, and when it said it tidies up next. */
   space?: SharedSpace;
   nextWindow?: number;
+  /** A new address the server that took the repository over named, which
+   *  this instance has not followed yet, and why. */
+  move?: SharedMove;
+}
+
+export interface SharedMove {
+  holder: string;
+  /** The new address without the login, empty when none was usable. */
+  repo: string;
+  reason: string;
+  at: number;
 }
 
 /** A member's shared repository as the destination wizard offers it. */

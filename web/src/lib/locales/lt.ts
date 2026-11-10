@@ -5305,6 +5305,8 @@ const lt: Partial<Translations> = {
   "shared.member.lastCopy": "Paskutinė kopija čia",
   "shared.member.noCopy": "Dar nėra",
   "shared.member.copyWaited": "Po jos buvusi kopija laukė, kol egzempliorius {name} tvarkė saugyklą. Kitas paleidimas viską pasivys.",
+  "shared.member.moveHeld": "Egzempliorius {name} perėmė šią saugyklą ir nurodo jai naują adresą. Šis serveris toliau kopijuoja į senąjį adresą, kol naujasis praeis patikrinimą.",
+  "shared.member.moveAddress": "Naujas adresas",
   "shared.member.leave": "Išeiti",
   "shared.member.leaveAsk": "Išeiti iš bendros saugyklos egzemplioriuje {name}? Šis serveris nustos ten kopijuoti. Jo atsarginės kopijos lieka ir sensta pagal egzemplioriaus {name} taisykles.",
   "shared.member.left": "Šis serveris išėjo iš bendros saugyklos egzemplioriuje {name}.",

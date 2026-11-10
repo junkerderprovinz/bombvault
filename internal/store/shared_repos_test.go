@@ -120,3 +120,93 @@ func TestTheServerNamedAsOwnerHoldsASharedRepository(t *testing.T) {
 		t.Errorf("on another server: %v, want SharingMember", got)
 	}
 }
+
+func TestASharedRepositoryHandedOverMovesWithTheTargetsAndJoinsThatReachIt(t *testing.T) {
+	r := sharedRepoStore(t)
+	const from, to = "rest:http://nas:8001/shared", "rest:http://cube:8001/shared"
+	sr, err := r.PutSharedRepo(store.SharedRepo{Repo: from, Owner: "nas-id",
+		Members: []store.SharedMember{{Host: "bv-0123456789ab", Instance: "tower-id", Name: "Tower"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	there, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Shared with nas", Repo: from, CredsRef: "set-1", Immutable: true, Enabled: true, Compression: "max"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	elsewhere, err := r.CreateOffsiteTarget(store.OffsiteTarget{Domain: "containers", Name: "Cloud", Repo: "s3:s3.example.com/bucket"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, j := range []store.SharedJoin{
+		{Direction: store.SharedJoinOut, MemberID: "nas-id", State: store.SharedJoinJoined, Repo: from},
+		{Direction: store.SharedJoinOut, MemberID: "attic-id", State: store.SharedJoinJoined, Repo: "rest:http://attic:8001/shared"},
+	} {
+		if err := r.SaveSharedJoin(j); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := r.HandOverSharedRepo(sr.ID, "cube-id", "Cube", to); err != nil {
+		t.Fatal(err)
+	}
+
+	got, ok, err := r.SharedRepoAt(to)
+	if err != nil || !ok || got.ID != sr.ID || got.Owner != "cube-id" || len(got.Members) != 1 {
+		t.Fatalf("at the new location: %+v, %v, %v; want the same repository held by cube with its members", got, ok, err)
+	}
+	if _, ok, _ := r.SharedRepoAt(from); ok {
+		t.Error("the repository is still at the old location")
+	}
+	targets, err := r.ListOffsiteTargets()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tg := range targets {
+		switch tg.ID {
+		case there.ID:
+			if tg.Repo != to || tg.CredsRef != "set-1" || !tg.Immutable || !tg.Enabled || tg.Compression != "max" || tg.Name != "Shared with nas" {
+				t.Errorf("the shared target is %+v, want it at %s with its settings", tg, to)
+			}
+		case elsewhere.ID:
+			if tg.Repo != elsewhere.Repo {
+				t.Errorf("a target elsewhere moved to %s", tg.Repo)
+			}
+		}
+	}
+	if j, ok, _ := r.GetSharedJoin(store.SharedJoinOut, "cube-id"); !ok || j.Repo != to || j.MemberName != "Cube" || j.State != store.SharedJoinJoined {
+		t.Errorf("the join is %+v, want it with cube at %s", j, to)
+	}
+	if _, ok, _ := r.GetSharedJoin(store.SharedJoinOut, "nas-id"); ok {
+		t.Error("the join is still with nas")
+	}
+	if j, _, _ := r.GetSharedJoin(store.SharedJoinOut, "attic-id"); j.Repo != "rest:http://attic:8001/shared" {
+		t.Errorf("another join moved to %s", j.Repo)
+	}
+}
+
+func TestASharedRepositoryHandedOverInPlaceTakesItsJoinAlong(t *testing.T) {
+	r := sharedRepoStore(t)
+	const at = "rest:http://nas:8001/shared"
+	sr, err := r.PutSharedRepo(store.SharedRepo{Repo: at, Owner: "nas-id"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SaveSharedJoin(store.SharedJoin{Direction: store.SharedJoinOut, MemberID: "nas-id", MemberName: "Nas", Host: "bv-0123456789ab", State: store.SharedJoinJoined, Repo: at, User: "tower", LoginEnc: []byte("sealed")}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := r.HandOverSharedRepo(sr.ID, "cube-id", "Cube", ""); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, ok, _ := r.SharedRepoAt(at); !ok || got.Owner != "cube-id" {
+		t.Errorf("the repository is %+v, want it held by cube where it was", got)
+	}
+	j, ok, err := r.GetSharedJoin(store.SharedJoinOut, "cube-id")
+	if err != nil || !ok || j.Repo != at || j.User != "tower" || string(j.LoginEnc) != "sealed" || j.Host != "bv-0123456789ab" {
+		t.Errorf("the join is %+v (%v, %v), want it with cube and its login kept", j, ok, err)
+	}
+	if _, ok, _ := r.GetSharedJoin(store.SharedJoinOut, "nas-id"); ok {
+		t.Error("the join is still with nas")
+	}
+}

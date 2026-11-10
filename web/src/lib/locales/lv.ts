@@ -5305,6 +5305,8 @@ const lv: Partial<Translations> = {
   "shared.member.lastCopy": "Pēdējā kopija šeit",
   "shared.member.noCopy": "Vēl nav",
   "shared.member.copyWaited": "Kopija pēc tās gaidīja, kamēr instance {name} sakopa repozitoriju. Nākamā palaišana to izdarīs.",
+  "shared.member.moveHeld": "Instance {name} pārņēma šo repozitoriju un norāda tam jaunu adresi. Šis serveris turpina kopēt uz veco adresi, līdz jaunā izturēs pārbaudi.",
+  "shared.member.moveAddress": "Jaunā adrese",
   "shared.member.leave": "Izstāties",
   "shared.member.leaveAsk": "Izstāties no kopīgā repozitorija instancē {name}? Šis serveris pārstās tur kopēt. Tā rezerves kopijas paliek un noveco pēc instances {name} noteikumiem.",
   "shared.member.left": "Šis serveris izstājās no kopīgā repozitorija instancē {name}.",

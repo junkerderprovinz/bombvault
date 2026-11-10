@@ -5296,6 +5296,8 @@ const fi: Partial<Translations> = {
   "shared.member.lastCopy": "Viimeisin kopio tänne",
   "shared.member.noCopy": "Ei vielä yhtään",
   "shared.member.copyWaited": "Sitä seuraava kopio odotti, koska {name} siivosi juuri. Seuraava ajo hoitaa sen.",
+  "shared.member.moveHeld": "{name} on ottanut tämän arkiston haltuunsa ja antaa sille uuden osoitteen. Tämä palvelin kopioi edelleen vanhaan osoitteeseen, kunnes uusi läpäisee tarkistuksensa.",
+  "shared.member.moveAddress": "Uusi osoite",
   "shared.member.leave": "Eroa",
   "shared.member.leaveAsk": "Erotaanko jaetusta arkistosta instanssissa {name}? Tämä palvelin lopettaa kopioinnin sinne. Sen varmuuskopiot jäävät ja vanhenevat instanssin {name} sääntöjen mukaan.",
   "shared.member.left": "Tämä palvelin erosi jaetusta arkistosta instanssissa {name}.",

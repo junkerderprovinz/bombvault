@@ -5295,6 +5295,8 @@ const tr: Partial<Translations> = {
   "shared.member.lastCopy": "Buraya son kopya",
   "shared.member.noCopy": "Henüz yok",
   "shared.member.copyWaited": "Ondan sonraki kopya, {name} örneği temizlik yaparken bekledi. Sonraki çalıştırma eksiği tamamlar.",
+  "shared.member.moveHeld": "{name} sunucusu bu depoyu devraldı ve onun için yeni bir adres bildiriyor. Bu sunucu, yeni adres denetimden geçene kadar eski adrese kopyalamayı sürdürür.",
+  "shared.member.moveAddress": "Yeni adres",
   "shared.member.leave": "Ayrıl",
   "shared.member.leaveAsk": "{name} örneğindeki ortak depodan ayrılınsın mı? Bu sunucu oraya kopyalamayı bırakır. Yedekleri kalır ve {name} örneğinin kurallarına göre eskir.",
   "shared.member.left": "Bu sunucu {name} örneğindeki ortak depodan ayrıldı.",

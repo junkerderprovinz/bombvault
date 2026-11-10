@@ -5286,6 +5286,8 @@ const ja: Partial<Translations> = {
   "shared.member.lastCopy": "ここへの最後のコピー",
   "shared.member.noCopy": "まだありません",
   "shared.member.copyWaited": "その次のコピーは、{name} が片付け中だったため待機しました。次回の実行で遅れを取り戻します。",
+  "shared.member.moveHeld": "{name} がこのリポジトリを引き継ぎ、新しいアドレスを知らせてきました。新しいアドレスが検査に通るまで、このサーバーは古いアドレスへのコピーを続けます。",
+  "shared.member.moveAddress": "新しいアドレス",
   "shared.member.leave": "脱退",
   "shared.member.leaveAsk": "{name} の共有リポジトリから脱退しますか？このサーバーはそこへのコピーをやめます。バックアップは残り、{name} のルールに従って期限切れになっていきます。",
   "shared.member.left": "このサーバーは {name} の共有リポジトリから脱退しました。",

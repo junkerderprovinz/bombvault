@@ -5289,6 +5289,8 @@ const sl: Partial<Translations> = {
   "shared.member.lastCopy": "Zadnja kopija sem",
   "shared.member.noCopy": "Še nobene",
   "shared.member.copyWaited": "Kopija za njo je počakala, ker je na instanci {name} potekalo pospravljanje. Naslednji zagon jo nadoknadi.",
+  "shared.member.moveHeld": "Strežnik {name} je prevzel ta repozitorij in zanj navaja nov naslov. Ta strežnik še naprej kopira na stari naslov, dokler novi ne prestane preverjanja.",
+  "shared.member.moveAddress": "Nov naslov",
   "shared.member.leave": "Izstopi",
   "shared.member.leaveAsk": "Izstopiti iz skupnega repozitorija na instanci {name}? Ta strežnik tja ne bo več kopiral. Njegove varnostne kopije ostanejo in se starajo po pravilih instance {name}.",
   "shared.member.left": "Ta strežnik je izstopil iz skupnega repozitorija na instanci {name}.",

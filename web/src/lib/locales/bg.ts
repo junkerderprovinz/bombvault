@@ -5306,6 +5306,8 @@ const bg: Partial<Translations> = {
   "shared.member.lastCopy": "Последно копие тук",
   "shared.member.noCopy": "Още няма",
   "shared.member.copyWaited": "Копието след него изчака, докато {name} почистваше. Следващото изпълнение ще го навакса.",
+  "shared.member.moveHeld": "{name} пое това хранилище и дава нов адрес за него. Този сървър продължава да копира на стария адрес, докато новият не мине проверката.",
+  "shared.member.moveAddress": "Нов адрес",
   "shared.member.leave": "Напусни",
   "shared.member.leaveAsk": "Да напуснеш ли общото хранилище на {name}? Този сървър спира да копира там. Архивите му остават и остаряват по правилата на {name}.",
   "shared.member.left": "Този сървър напусна общото хранилище на {name}.",

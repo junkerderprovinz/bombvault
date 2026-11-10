@@ -5296,6 +5296,8 @@ const fr: Partial<Translations> = {
   "shared.member.lastCopy": "Dernière copie ici",
   "shared.member.noCopy": "Aucune pour l'instant",
   "shared.member.copyWaited": "La copie suivante a attendu pendant que {name} faisait le ménage. Le prochain passage rattrape le retard.",
+  "shared.member.moveHeld": "{name} a repris ce dépôt et lui donne une nouvelle adresse. Ce serveur continue de copier vers l'ancienne adresse jusqu'à ce que la nouvelle passe sa vérification.",
+  "shared.member.moveAddress": "Nouvelle adresse",
   "shared.member.leave": "Quitter",
   "shared.member.leaveAsk": "Quitter le dépôt partagé sur {name} ? Ce serveur arrête d'y copier. Ses sauvegardes restent et vieillissent selon les règles de {name}.",
   "shared.member.left": "Ce serveur a quitté le dépôt partagé sur {name}.",

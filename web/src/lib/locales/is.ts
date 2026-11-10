@@ -5305,6 +5305,8 @@ const is: Partial<Translations> = {
   "shared.member.lastCopy": "Síðasta afrit hingað",
   "shared.member.noCopy": "Ekkert enn",
   "shared.member.copyWaited": "Afritið þar á eftir beið meðan tilvikið {name} var að taka til. Næsta umferð bætir það upp.",
+  "shared.member.moveHeld": "Tilvikið {name} hefur tekið við þessu geymslusafni og gefur upp nýtt heimilisfang fyrir það. Þessi þjónn heldur áfram að afrita á gamla heimilisfangið þar til það nýja stenst athugun.",
+  "shared.member.moveAddress": "Nýtt heimilisfang",
   "shared.member.leave": "Hætta",
   "shared.member.leaveAsk": "Hætta í sameiginlega geymslusafninu hjá tilvikinu {name}? Þessi þjónn hættir að afrita þangað. Afrit hans haldast og renna út eftir reglum tilviksins {name}.",
   "shared.member.left": "Þessi þjónn hætti í sameiginlega geymslusafninu hjá tilvikinu {name}.",

@@ -5306,6 +5306,8 @@ const hi: Partial<Translations> = {
   "shared.member.lastCopy": "यहाँ आख़िरी कॉपी",
   "shared.member.noCopy": "अभी कोई नहीं",
   "shared.member.copyWaited": "उसके बाद वाली कॉपी रुकी रही, क्योंकि {name} सफ़ाई कर रहा था। अगले दौर में यह पूरी हो जाएगी।",
+  "shared.member.moveHeld": "{name} ने यह रिपॉज़िटरी अपने हाथ में ले ली है और इसके लिए एक नया पता बता रहा है। जब तक नया पता अपनी जाँच पास नहीं कर लेता, यह सर्वर पुराने पते पर ही कॉपी करता रहेगा।",
+  "shared.member.moveAddress": "नया पता",
   "shared.member.leave": "छोड़ें",
   "shared.member.leaveAsk": "क्या {name} पर साझा रिपॉज़िटरी छोड़नी है? यह सर्वर वहाँ कॉपी करना बंद कर देगा। इसके बैकअप बने रहते हैं और {name} के नियमों के अनुसार पुराने होते हैं।",
   "shared.member.left": "इस सर्वर ने {name} पर साझा रिपॉज़िटरी छोड़ दी।",

@@ -5305,6 +5305,8 @@ const id: Partial<Translations> = {
   "shared.member.lastCopy": "Salinan terakhir ke sini",
   "shared.member.noCopy": "Belum ada",
   "shared.member.copyWaited": "Salinan sesudahnya menunggu selagi {name} merapikan. Putaran berikutnya akan menyusul.",
+  "shared.member.moveHeld": "{name} telah mengambil alih repositori ini dan memberikan alamat baru untuknya. Server ini tetap menyalin ke alamat lama sampai alamat baru lolos pemeriksaan.",
+  "shared.member.moveAddress": "Alamat baru",
   "shared.member.leave": "Keluar",
   "shared.member.leaveAsk": "Keluar dari repositori bersama di {name}? Server ini berhenti menyalin ke sana. Cadangannya tetap ada dan kedaluwarsa menurut aturan {name}.",
   "shared.member.left": "Server ini telah keluar dari repositori bersama di {name}.",

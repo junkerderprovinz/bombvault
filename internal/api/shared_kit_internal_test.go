@@ -250,3 +250,30 @@ func TestAKitOfAMemberLeavesTheSharedServerAlone(t *testing.T) {
 		t.Fatalf("a member's kit set up a shared server: %v, %+v", ok, docker.created)
 	}
 }
+
+func TestATakeOverKnowsTheLoginsOfTheMembers(t *testing.T) {
+	old := encryptedFixture(t)
+	old.svc.cfg.AppKey = oldKey
+	old.svc.forgetBackupKey()
+	ownerOfShared(t, old)
+	if err := old.st.SaveSharedJoin(store.SharedJoin{Direction: store.SharedJoinIn, MemberID: tower.Instance, MemberName: tower.Name, Host: tower.Host, State: store.SharedJoinJoined, User: "tower"}); err != nil {
+		t.Fatal(err)
+	}
+	text, err := old.svc.RecoveryKit()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f := newPlacementFixture(t)
+	f.svc.cfg.HostMountRoot = old.root
+	f.svc.docker = &receiverDocker{}
+	takeOverKit(t, f, text)
+
+	j, ok, err := f.st.GetSharedJoin(store.SharedJoinIn, tower.Instance)
+	if err != nil || !ok || j.User != "tower" || j.Host != tower.Host || j.MemberName != tower.Name || j.State != store.SharedJoinJoined {
+		t.Fatalf("tower's join on the new holder is %+v (%v, %v), want it joined with its login", j, ok, err)
+	}
+	if _, ok, _ := f.st.GetSharedJoin(store.SharedJoinIn, cube.Instance); ok {
+		t.Error("the new holder made up a join for cube, whose login the kit does not name")
+	}
+}
