@@ -6746,10 +6746,26 @@ export interface SharedOffer extends GroupReceiver {
   state?: SharedMembershipState;
 }
 
+/** This server's part as a holder in a shared repository: the server that
+ *  said it took the repository over, and the servers that have still to hear
+ *  that this one holds it. */
+export interface SharedHolding {
+  repo: string;
+  takenBy?: string;
+  takenAt?: number;
+  stillToTell?: string[];
+}
+
 export function getSharedRepo(): Promise<
-  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[] }
+  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[]; holdings?: SharedHolding[] }
 > {
   return fetchJSON("/api/shared-repo");
+}
+
+/** POST /api/shared-repos/{id}/take-back: holds the shared repository again
+ *  after another server said it took it over, and tells the others. */
+export function takeBackSharedRepo(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/take-back`, { method: "POST" });
 }
 
 export function setUpSharedRepo(input: { folder: string; port: number }): Promise<OkEnvelope & { server?: SharedServer }> {

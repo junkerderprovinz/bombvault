@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { SharedServer } from "../../lib/api";
+import type { SharedHolding, SharedServer } from "../../lib/api";
 
 const server: SharedServer = {
   containerName: "rest-server-shared",
@@ -37,6 +37,8 @@ const withMembers: SharedServer = {
 };
 
 let initial: SharedServer | null = null;
+let holdings: SharedHolding[] = [];
+const takenBack: string[] = [];
 let told = true;
 const sent: { folder: string; port: number }[] = [];
 const decided: [string, string][] = [];
@@ -47,7 +49,12 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    getSharedRepo: () => Promise.resolve({ ok: true, server: initial, defaultPort: 8001, memberships: [] }),
+    getSharedRepo: () => Promise.resolve({ ok: true, server: initial, defaultPort: 8001, memberships: [], holdings }),
+    takeBackSharedRepo: (id: string) => {
+      takenBack.push(id);
+      holdings = [];
+      return Promise.resolve({ ok: true });
+    },
     getReceiverServer: () => Promise.resolve({ ok: true, server: null, hostMountRoot: "/host/user" }),
     setUpSharedRepo: (input: { folder: string; port: number }) => {
       sent.push(input);
@@ -94,6 +101,8 @@ const named = (key: keyof typeof en, name: string) => en[key].replaceAll("{name}
 afterEach(() => {
   cleanup();
   initial = null;
+  holdings = [];
+  takenBack.length = 0;
   told = true;
   sent.length = 0;
   decided.length = 0;
@@ -209,5 +218,32 @@ describe("SharedRepoCard", () => {
     });
     expect(removed).toEqual([]);
     expect(screen.getByText("attic")).toBeTruthy();
+  });
+
+  it("says plainly that another server took the repository over and takes it back after a question", async () => {
+    initial = server;
+    holdings = [{ repo: "sr1", takenBy: "cube", takenAt: Math.floor(Date.now() / 1000) - 60 }];
+    await renderCard();
+    expect(screen.getByText(named("shared.takenOver", "cube"))).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["shared.takeBack"] }));
+    });
+    expect(takenBack).toEqual([]);
+    expect(screen.getByText(named("shared.takeBackAsk", "cube"))).toBeTruthy();
+    const buttons = screen.getAllByRole("button", { name: en["shared.takeBack"] });
+    await act(async () => {
+      fireEvent.click(buttons[buttons.length - 1]);
+    });
+    expect(takenBack).toEqual(["sr1"]);
+    expect(screen.queryByText(named("shared.takenOver", "cube"))).toBeNull();
+  });
+
+  it("names the servers that have still to hear it holds the repository", async () => {
+    initial = server;
+    holdings = [{ repo: "sr1", stillToTell: ["tower", "attic"] }];
+    await renderCard();
+    expect(screen.getByText(en["shared.stillToTell"].replace("{names}", "tower, attic"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["shared.takeBack"] })).toBeNull();
   });
 });

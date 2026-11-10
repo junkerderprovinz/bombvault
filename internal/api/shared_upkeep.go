@@ -360,6 +360,7 @@ var errSharedUpkeepBusy = errors.New("the upkeep of the shared repositories is r
 // this server holds. The scheduler calls it every minute; a pass that is
 // still running, such as a long prune, lets the tick go by.
 func (s *Service) RunSharedUpkeep(ctx context.Context) error {
+	s.tellSharedHoldersSoon()
 	return s.runSharedUpkeep(ctx, s.groupMembers(), time.Now())
 }
 

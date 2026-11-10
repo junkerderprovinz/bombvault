@@ -362,6 +362,7 @@ var pairedRefused = []string{
 	"PUT /api/receiver/repos/{id}",
 	"PUT /api/receiver/server/host",
 	"PUT /api/shared-repos/{id}/upkeep",
+	"POST /api/shared-repos/{id}/take-back",
 	"POST /api/shared-repos/{id}/upkeep/run",
 	"PUT /api/zfs/receive/{slot}/members/{member}",
 	// Storage locations, their connections and sign-ins, and where entries are placed.

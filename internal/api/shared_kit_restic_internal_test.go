@@ -88,6 +88,15 @@ func TestAServerThatHeldASharedRepositoryKeepsItAgainAfterATakeOverWithRestic(t 
 	if err != nil || !ok || !f.svc.ownsSharedRepo(sr) {
 		t.Fatalf("the new server does not hold the shared repository: %+v, %v, %v", sr, ok, err)
 	}
+	// Both read the same id, which is how the members know the new holder's word
+	// is about their repository.
+	oldID, err := old.svc.sharedRepoID(ctx, ownerAt(t, &instance{st: old.st, svc: old.svc}, "backups/shared"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if newID, err := f.svc.sharedRepoID(ctx, sr); err != nil || newID != oldID || len(newID) != 64 {
+		t.Fatalf("the new holder reads the id %q (%v), the old one %q", newID, err, oldID)
+	}
 	// The rules of the shared repository are not in the kit, so the person sets them again.
 	if err := f.st.PutSharedUpkeepRules(store.SharedUpkeep{RepoID: sr.ID, KeepSet: true, Keep: store.RetentionKeep{KeepLast: 1},
 		PruneCadence: "weekly sun 03:00", PruneHours: 6, CheckSubset: 100}); err != nil {

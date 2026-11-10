@@ -3,6 +3,7 @@ package restic
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -75,4 +76,27 @@ func (r Restic) Keys(ctx context.Context, repo string, m Mode) ([]Key, error) {
 func (r Restic) RemoveKey(ctx context.Context, repo string, m Mode, id string) error {
 	_, err := r.run(ctx, KeyRemoveArgs(repo, m, id), m)
 	return err
+}
+
+// RepoID returns the id restic gave the repository when it was created, the
+// same for every key that opens it.
+func (r Restic) RepoID(ctx context.Context, repo string, m Mode) (string, error) {
+	out, err := r.run(ctx, CatConfigArgs(repo, m), m)
+	if err != nil {
+		return "", err
+	}
+	return repoIDOf(out)
+}
+
+func repoIDOf(out []byte) (string, error) {
+	var config struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(out, &config); err != nil {
+		return "", fmt.Errorf("read the repository config: %w", err)
+	}
+	if config.ID == "" {
+		return "", errors.New("the repository config names no id")
+	}
+	return config.ID, nil
 }

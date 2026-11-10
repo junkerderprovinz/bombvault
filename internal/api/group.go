@@ -294,6 +294,7 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/page", (*Service).handlePeerPage},
 		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
 		{"POST /api/group/peer/shared-upkeep", (*Service).handlePeerSharedUpkeep},
+		{"POST /api/group/peer/shared-holder", (*Service).handlePeerSharedHolder},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }

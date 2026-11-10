@@ -11,6 +11,8 @@ import {
   getReceiverServer,
   removeSharedMember,
   setUpSharedRepo,
+  takeBackSharedRepo,
+  type SharedHolding,
   type SharedJoinAsk,
   type SharedMember,
   type SharedServer,
@@ -98,6 +100,25 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
       ask.name,
     );
 
+  async function takeBack(h: SharedHolding) {
+    const by = h.takenBy ?? "";
+    if (!(await confirm(named("shared.takeBackAsk", by), { confirmKey: "shared.takeBack" }))) return;
+    setBusy(`${h.repo}:back`);
+    try {
+      const r = await takeBackSharedRepo(h.repo);
+      if (!r.ok) {
+        push(r.error ?? t("settings.error"), "fail");
+        return;
+      }
+      push(t("shared.takenBack"), "success");
+      await shared.reload();
+    } catch (e) {
+      push(e instanceof Error ? e.message : t("settings.error"), "fail");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function remove(m: SharedMember) {
     if (!(await confirm(named("shared.removeAsk", m.name), { confirmKey: "shared.remove" }))) return;
     await change(`${m.memberId}:remove`, () => removeSharedMember(m.memberId), named("shared.removed", m.name), m.name);
@@ -141,6 +162,29 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
               className="ms-auto"
             />
           </div>
+          {shared.holdings.map((h) => (
+            <div key={h.repo} className="flex flex-col gap-2">
+              {h.takenBy && (
+                <div className="flex flex-wrap items-center gap-3 rounded-card bg-statusWarnBg p-3 text-sm text-statusWarn">
+                  <span className="min-w-0 flex-[1_1_14rem] wrap-anywhere">{named("shared.takenOver", h.takenBy)}</span>
+                  <Button
+                    label={t("shared.takeBack")}
+                    labelKey="shared.takeBack"
+                    tone="neutral"
+                    onClick={() => void takeBack(h)}
+                    disabled={busy !== ""}
+                    busy={busy === `${h.repo}:back`}
+                    className="ms-auto"
+                  />
+                </div>
+              )}
+              {h.stillToTell && h.stillToTell.length > 0 && (
+                <p className="text-xs text-carbon-textSub wrap-anywhere">
+                  {t("shared.stillToTell").replace("{names}", () => (h.stillToTell ?? []).join(", "))}
+                </p>
+              )}
+            </div>
+          ))}
           {server.check !== "protected" && server.checkDetail && (
             <p className="text-xs text-carbon-textSub wrap-break-word">{server.checkDetail}</p>
           )}

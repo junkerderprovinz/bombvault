@@ -185,6 +185,9 @@ func (s *Service) attachSharedPlace(ctx context.Context, p emergencyPlace, ref s
 		}
 		recorded = sr.ID
 		if p.Held {
+			if err := s.store.QueueSharedHolderNotices(sr.ID, sharedHolderAudience(p.Owner, members, g.InstanceID)); err != nil {
+				return recorded, nil, err
+			}
 			if err := s.takeBackSharedServer(ctx, repo, p.Server); err != nil {
 				log.Printf("api: emergency: the server of the shared repository did not come back, so set the repository up again on the Instances page: %v", err)
 			}
@@ -264,4 +267,20 @@ func (s *Service) startSharedServer(ctx context.Context, ss store.SharedRepoServ
 		}
 	}
 	return nil
+}
+
+// sharedHolderAudience is who has to hear that the server self holds a shared
+// repository now: the server that held it until then and every member.
+func sharedHolderAudience(previous string, members []store.SharedMember, self string) []string {
+	var out []string
+	add := func(in string) {
+		if in != "" && in != self && !slices.Contains(out, in) {
+			out = append(out, in)
+		}
+	}
+	add(previous)
+	for _, m := range members {
+		add(m.Instance)
+	}
+	return out
 }

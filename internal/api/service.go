@@ -310,6 +310,9 @@ type Service struct {
 	// sharedRefreshedAt is when this instance last asked the owners about its
 	// unfinished joins, in Unix nanoseconds.
 	sharedRefreshedAt atomic.Int64
+	// sharedHolderToldAt is when this instance last told the others of a
+	// shared repository it holds now.
+	sharedHolderToldAt atomic.Int64
 	// roleRefreshedAt is when this instance last asked its members where its
 	// own role requests stand, in Unix nanoseconds.
 	roleRefreshedAt atomic.Int64

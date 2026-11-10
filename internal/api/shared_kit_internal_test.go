@@ -184,6 +184,27 @@ func TestAServerThatHeldASharedRepositoryHoldsItAgainAfterATakeOver(t *testing.T
 	if err != nil || !slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Repo == ownedShared && t.Immutable }) {
 		t.Fatalf("the folder sets copy to %+v, %v", targets, err)
 	}
+	// The old server and the members hear of the new holder from it.
+	og, err := old.st.GetGroupState()
+	if err != nil {
+		t.Fatal(err)
+	}
+	notices, err := f.st.SharedHolderNotices()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var told []string
+	for _, n := range notices {
+		if n.RepoID == sr.ID {
+			told = append(told, n.Instance)
+		}
+	}
+	slices.Sort(told)
+	want := []string{tower.Instance, cube.Instance, og.InstanceID}
+	slices.Sort(want)
+	if !slices.Equal(told, want) {
+		t.Errorf("still to tell %v, want %v", told, want)
+	}
 }
 
 func TestATakeOverKeepsTheSharedServerThatStillRuns(t *testing.T) {

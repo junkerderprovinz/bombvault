@@ -3799,6 +3799,21 @@ CREATE TABLE IF NOT EXISTS shared_repo_space (
   space TEXT NOT NULL
 );`,
 	},
+	{
+		version: sharedHolderMigration,
+		name:    "shared_repo_holder",
+		sql: `CREATE TABLE IF NOT EXISTS shared_holder_notices (
+  shared_repo_id TEXT NOT NULL REFERENCES shared_repos(id) ON DELETE CASCADE,
+  instance_id    TEXT NOT NULL,
+  PRIMARY KEY (shared_repo_id, instance_id)
+);
+CREATE TABLE IF NOT EXISTS shared_repo_taken_over (
+  shared_repo_id TEXT PRIMARY KEY REFERENCES shared_repos(id) ON DELETE CASCADE,
+  by_instance    TEXT NOT NULL,
+  by_name        TEXT NOT NULL DEFAULT '',
+  at             INTEGER NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4417,6 +4432,10 @@ const sharedJoinsMigration = 850
 // sharedUpkeepMigration numbers how the owner keeps a shared repository and
 // what a member last heard about the space there.
 const sharedUpkeepMigration = 860
+
+// sharedHolderMigration numbers the servers that have still to hear of a new
+// holder of a shared repository, and who took one over from this server.
+const sharedHolderMigration = 870
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780
