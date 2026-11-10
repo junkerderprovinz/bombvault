@@ -4958,6 +4958,7 @@ const lv: Partial<Translations> = {
   "emergency.place.readable": "nolasāms",
   "emergency.place.missing": "nav atrasts",
   "emergency.placeShared": "Kopīgs repozitorijs serverī {name}",
+  "emergency.heldShared": "Šo kopīgo repozitoriju glabāja {name}, un tagad tā vietā to glabā šis serveris. Tāpat kā iepriekš tas retina vecās kopijas un sakopj repozitoriju, un tā rest-server atkal darbojas tajā pašā mapē. Jums atlikuši daži soļi: atkal sapārojiet šo serveri ar grupu un sadaļā Instances iestatiet tā uztvērējserveri. Pēc tam ļaujiet katram no pārējiem serveriem vēlreiz pievienoties kopīgajam repozitorijam, jo tie joprojām uzskata, ka to glabā vecā instalācija. Līdz tam to rezerves kopijas tur paliek, kādas ir. Kopīgā repozitorija noteikumi nebija atkopšanas komplektā, tāpēc iestatiet tos no jauna uztvērējservera logā.",
   "emergency.place.missingDo": "BombVault meklēja {folder} zem šī servera datu piesaistes un tur neatrada repozitoriju. Piesaistiet koplietojumu vai disku šajā vietā un pēc tam vēlreiz parādiet atslēgu.",
   "emergency.place.missingOutside": "Šī mape atradās ārpus vecā servera datu piesaistes, tāpēc BombVault nezina, kur to šeit meklēt.",
   "emergency.place.wrong-key": "cita atslēga",

@@ -4939,6 +4939,7 @@ const zh: Partial<Translations> = {
   "emergency.place.readable": "可读取",
   "emergency.place.missing": "未找到",
   "emergency.placeShared": "{name} 上的共享仓库",
+  "emergency.heldShared": "{name} 原本保存着这个共享仓库，现在由这台服务器接替它保存。它会像以前一样让旧备份逐步过期并整理仓库，它的 rest-server 也重新使用同一个文件夹。还剩几步需要你来做：把这台服务器重新与组配对，并在“实例”中设置它的接收服务器。然后让其他每台服务器再加入一次共享仓库，因为它们仍认为仓库由旧安装保存。在此之前，它们在那里的备份保持原样。共享仓库的规则不在恢复工具包里，所以请在接收服务器的窗口中重新设置。",
   "emergency.place.missingDo": "BombVault 在这台服务器的数据挂载下查找了 {folder}，没有发现仓库。请把共享或磁盘挂载到该位置，然后再次出示密钥。",
   "emergency.place.missingOutside": "这个文件夹位于旧服务器的数据挂载之外，所以 BombVault 不知道该到哪里去找它。",
   "emergency.place.wrong-key": "密钥不符",

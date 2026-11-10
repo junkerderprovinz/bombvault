@@ -4948,6 +4948,7 @@ const no: Partial<Translations> = {
   "emergency.place.readable": "lesbar",
   "emergency.place.missing": "ikke funnet",
   "emergency.placeShared": "Felles repositorium hos {name}",
+  "emergency.heldShared": "{name} hadde dette felles repositoriet, og nå har denne serveren det i stedet. Den tynner ut gamle sikkerhetskopier og rydder opp som før, og rest-serveren dens kjører igjen mot den samme mappen. Du har noen steg igjen: par denne serveren med gruppen på nytt, og sett opp mottaksserveren dens under Instanser. La deretter hver av de andre serverne bli med i det felles repositoriet en gang til, siden de fortsatt tror at den gamle installasjonen har det. Fram til da blir sikkerhetskopiene deres der stående som de er. Reglene for det felles repositoriet var ikke med i gjenopprettingssettet, så still dem inn på nytt i vinduet til mottaksserveren.",
   "emergency.place.missingDo": "BombVault lette etter {folder} under datamonteringen til denne serveren og fant ikke noe repository der. Monter delingen eller disken på det stedet, og vis deretter nøkkelen på nytt.",
   "emergency.place.missingOutside": "Denne mappen lå utenfor datamonteringen til den gamle serveren, så BombVault vet ikke hvor den skal lete etter den her.",
   "emergency.place.wrong-key": "annen nøkkel",

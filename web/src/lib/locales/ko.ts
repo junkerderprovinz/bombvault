@@ -4939,6 +4939,7 @@ const ko: Partial<Translations> = {
   "emergency.place.readable": "읽기 가능",
   "emergency.place.missing": "찾을 수 없음",
   "emergency.placeShared": "{name}의 공유 저장소",
+  "emergency.heldShared": "이 공유 저장소는 {name}에서 보관하던 것으로, 이제 이 서버가 그 자리를 대신해 보관합니다. 이전처럼 오래된 백업을 솎아 내고 정리하며, 이 서버의 rest-server도 같은 폴더에서 다시 실행됩니다. 남은 단계가 몇 가지 있습니다. 이 서버를 그룹과 다시 페어링하고 인스턴스에서 수신 서버를 설정하세요. 그런 다음 다른 서버들이 각각 공유 저장소에 다시 참여하도록 해 주세요. 다른 서버들은 아직 이전 설치를 보관하는 쪽으로 알고 있기 때문입니다. 그때까지 그곳에 있는 백업은 그대로 유지됩니다. 공유 저장소의 규칙은 복구 키트에 들어 있지 않았으니 수신 서버 창에서 다시 설정하세요.",
   "emergency.place.missingDo": "BombVault가 이 서버의 데이터 마운트 아래에서 {folder} 경로를 찾았지만 저장소가 없었습니다. 공유 폴더나 디스크를 그 위치에 마운트한 다음 키를 다시 보여 주세요.",
   "emergency.place.missingOutside": "이 폴더는 이전 서버의 데이터 마운트 밖에 있었으므로, BombVault는 여기서 어디를 찾아야 할지 모릅니다.",
   "emergency.place.wrong-key": "다른 키",

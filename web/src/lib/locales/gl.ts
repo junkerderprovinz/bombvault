@@ -4958,6 +4958,7 @@ const gl: Partial<Translations> = {
   "emergency.place.readable": "lexible",
   "emergency.place.missing": "non atopado",
   "emergency.placeShared": "Repositorio compartido en {name}",
+  "emergency.heldShared": "{name} gardaba este repositorio compartido, e agora gárdao este servidor no seu lugar. Retira as copias antigas e fai limpeza coma antes, e o seu rest-server volve funcionar sobre o mesmo cartafol. Quédanche uns poucos pasos: emparella de novo este servidor co grupo e configura o seu servidor receptor en Instancias. Despois deixa que cada un dos outros servidores se una outra vez ao repositorio compartido, porque aínda coñecen a instalación antiga como a que o garda. Ata entón, as súas copias alí quedan como están. As regras do repositorio compartido non estaban no kit de recuperación, así que volve configuralas na xanela do servidor receptor.",
   "emergency.place.missingDo": "BombVault buscou {folder} baixo o montaxe de datos deste servidor e non atopou ningún repositorio. Monta o recurso compartido ou o disco nese lugar e despois amosa a chave de novo.",
   "emergency.place.missingOutside": "Este cartafol estaba fóra do montaxe de datos do servidor antigo, así que BombVault non sabe onde buscalo aquí.",
   "emergency.place.wrong-key": "outra chave",

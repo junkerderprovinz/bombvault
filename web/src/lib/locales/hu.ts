@@ -4949,6 +4949,7 @@ const hu: Partial<Translations> = {
   "emergency.place.readable": "olvasható",
   "emergency.place.missing": "nem található",
   "emergency.placeShared": "Közös tároló itt: {name}",
+  "emergency.heldShared": "{name} tartotta ezt a közös tárolót, és most ez a szerver tartja helyette. Ugyanúgy ritkítja és rendet rak benne, mint korábban, és újra fut rajta a rest-server ugyanazon a mappán. Néhány lépés még rád vár: párosítsd újra ezt a szervert a csoporttal, és a Példányok alatt állítsd be a fogadószerverét. Ezután engedd, hogy a többi szerver mindegyike még egyszer csatlakozzon a közös tárolóhoz, mert még mindig a régi telepítést ismerik a tároló gazdájaként. Addig az ottani mentéseik változatlanok maradnak. A közös tároló szabályai nem voltak benne a helyreállítási csomagban, ezért állítsd be őket újra a fogadószerver ablakában.",
   "emergency.place.missingDo": "A BombVault megkereste a(z) {folder} mappát ennek a szervernek az adatcsatolása alatt, de nem talált ott tárolót. Csatold a megosztást vagy a lemezt arra a helyre, majd mutasd meg újra a kulcsot.",
   "emergency.place.missingOutside": "Ez a mappa a régi szerver adatcsatolásán kívül volt, ezért a BombVault nem tudja, hol keresse itt.",
   "emergency.place.wrong-key": "másik kulcs",

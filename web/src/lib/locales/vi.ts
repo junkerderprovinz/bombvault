@@ -4939,6 +4939,7 @@ const vi: Partial<Translations> = {
   "emergency.place.readable": "đọc được",
   "emergency.place.missing": "không tìm thấy",
   "emergency.placeShared": "Kho chung tại {name}",
+  "emergency.heldShared": "{name} từng giữ kho chung này, và giờ máy chủ này giữ nó thay. Như trước, nó loại bỏ dần các bản cũ và dọn dẹp kho, còn rest-server của nó lại dùng đúng thư mục cũ. Bạn còn vài bước nữa: ghép nối lại máy chủ này với nhóm và thiết lập máy chủ nhận của nó trong Phiên bản. Sau đó cho từng máy chủ khác tham gia kho chung thêm một lần nữa, vì chúng vẫn coi lần cài cũ là nơi giữ kho. Trước khi làm vậy, các bản sao lưu của chúng ở đó vẫn giữ nguyên. Các quy tắc của kho chung không có trong bộ khôi phục, nên hãy đặt lại chúng trong cửa sổ của máy chủ nhận.",
   "emergency.place.missingDo": "BombVault đã tìm {folder} bên dưới điểm gắn kết dữ liệu của máy chủ này và không thấy kho nào ở đó. Hãy gắn thư mục chia sẻ hoặc ổ đĩa vào đúng chỗ đó, rồi đưa khóa ra lần nữa.",
   "emergency.place.missingOutside": "Thư mục này nằm ngoài điểm gắn kết dữ liệu của máy chủ cũ, nên BombVault không biết phải tìm nó ở đâu trên máy này.",
   "emergency.place.wrong-key": "khóa khác",

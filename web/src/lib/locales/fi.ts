@@ -4948,6 +4948,7 @@ const fi: Partial<Translations> = {
   "emergency.place.readable": "luettavissa",
   "emergency.place.missing": "ei löytynyt",
   "emergency.placeShared": "Jaettu arkisto palvelimella {name}",
+  "emergency.heldShared": "{name} ylläpiti tätä jaettua arkistoa, ja nyt tämä palvelin ylläpitää sitä sen tilalla. Se harventaa ja siivoaa sitä kuten ennenkin, ja sen rest-server toimii taas samassa kansiossa. Sinulle jää vielä muutama vaihe: pariuta tämä palvelin uudelleen ryhmän kanssa ja määritä sen vastaanottopalvelin kohdassa Ilmentymät. Anna sitten jokaisen muun palvelimen liittyä jaettuun arkistoon vielä kerran, koska ne tuntevat yhä vanhan asennuksen arkiston ylläpitäjänä. Siihen asti niiden varmuuskopiot pysyvät siellä ennallaan. Jaetun arkiston säännöt eivät olleet palautuspaketissa, joten aseta ne uudelleen vastaanottopalvelimen ikkunassa.",
   "emergency.place.missingDo": "BombVault etsi kansiota {folder} tämän palvelimen datan liitoskohdan alta eikä löytänyt sieltä repositorya. Liitä jako tai levy siihen kohtaan ja näytä avain sitten uudelleen.",
   "emergency.place.missingOutside": "Tämä kansio oli vanhan palvelimen datan liitoskohdan ulkopuolella, joten BombVault ei tiedä, mistä sitä pitäisi täältä etsiä.",
   "emergency.place.wrong-key": "eri avain",

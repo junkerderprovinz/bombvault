@@ -4958,6 +4958,7 @@ const ms: Partial<Translations> = {
   "emergency.place.readable": "boleh dibaca",
   "emergency.place.missing": "tidak ditemui",
   "emergency.placeShared": "Repositori bersama di {name}",
+  "emergency.heldShared": "Repositori bersama ini dahulu dipegang oleh {name}, dan kini pelayan ini mengambil alih tempatnya. Seperti dahulu, ia mengurangkan sandaran lama dan menyelenggara repositori itu, dan rest-server miliknya berjalan semula pada folder yang sama. Ada beberapa langkah lagi untuk anda: gandingkan pelayan ini dengan kumpulan sekali lagi dan sediakan pelayan penerimanya di bawah Instans. Kemudian biarkan setiap pelayan lain menyertai repositori bersama sekali lagi, kerana mereka masih menganggap pemasangan lama sebagai pemegangnya. Sehingga itu, sandaran mereka di sana kekal seperti sedia ada. Peraturan repositori bersama tiada dalam kit pemulihan, jadi tetapkan semula peraturan itu dalam tetingkap pelayan penerima.",
   "emergency.place.missingDo": "BombVault mencari {folder} di bawah mount data pelayan ini dan tidak menemui repositori di sana. Mount kongsian atau cakera di tempat itu, kemudian tunjukkan kunci sekali lagi.",
   "emergency.place.missingOutside": "Folder ini berada di luar mount data pelayan lama, jadi BombVault tidak tahu di mana hendak mencarinya di sini.",
   "emergency.place.wrong-key": "kunci lain",

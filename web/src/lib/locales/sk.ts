@@ -4958,6 +4958,7 @@ const sk: Partial<Translations> = {
   "emergency.place.readable": "čitateľné",
   "emergency.place.missing": "nenájdené",
   "emergency.placeShared": "Spoločný repozitár na serveri {name}",
+  "emergency.heldShared": "Server {name} spravoval tento spoločný repozitár a teraz ho namiesto neho spravuje tento server. Ako predtým ho prerieďuje a upratuje a jeho rest-server znova používa ten istý priečinok. Zostáva ti pár krokov: znova spáruj tento server so skupinou a v časti Inštancie nastav jeho prijímací server. Potom ešte raz pripoj každý z ostatných serverov k spoločnému repozitáru, pretože za jeho správcu stále považujú starú inštaláciu. Dovtedy ich zálohy v ňom zostanú tak, ako sú. Pravidlá spoločného repozitára neboli v súprave na obnovenie, preto ich znova nastav v okne prijímacieho servera.",
   "emergency.place.missingDo": "BombVault hľadal {folder} pod dátovým pripojením tohto servera a nenašiel tam žiadny repozitár. Pripoj zdieľanie alebo disk na toto miesto a ukáž kľúč znova.",
   "emergency.place.missingOutside": "Tento priečinok ležal mimo dátového pripojenia starého servera, preto BombVault nevie, kde ho tu hľadať.",
   "emergency.place.wrong-key": "iný kľúč",

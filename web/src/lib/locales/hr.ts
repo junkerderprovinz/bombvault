@@ -4958,6 +4958,7 @@ const hr: Partial<Translations> = {
   "emergency.place.readable": "čitljivo",
   "emergency.place.missing": "nije pronađeno",
   "emergency.placeShared": "Zajednički repozitorij na {name}",
+  "emergency.heldShared": "{name} je držao ovaj zajednički repozitorij, a sada ga umjesto njega drži ovaj poslužitelj. Prorjeđuje ga i posprema kao i prije, a njegov rest-server ponovno radi na istoj mapi. Ostalo vam je još nekoliko koraka: ponovno uparite ovaj poslužitelj s grupom i pod Instance postavite njegov prijamni poslužitelj. Zatim pustite svaki od ostalih poslužitelja da se još jednom pridruži zajedničkom repozitoriju, jer staru instalaciju još uvijek smatraju onom koja ga drži. Do tada njihove sigurnosne kopije ondje ostaju kakve jesu. Pravila zajedničkog repozitorija nisu bila u kompletu za oporavak, pa ih ponovno postavite u prozoru prijamnog poslužitelja.",
   "emergency.place.missingDo": "BombVault je potražio {folder} pod montiranjem podataka ovog poslužitelja i ondje nije našao repozitorij. Montirajte dijeljeni resurs ili disk na to mjesto, pa ponovno pokažite ključ.",
   "emergency.place.missingOutside": "Ta se mapa nalazila izvan montiranja podataka starog poslužitelja pa BombVault ovdje ne zna gdje bi je tražio.",
   "emergency.place.wrong-key": "drugi ključ",

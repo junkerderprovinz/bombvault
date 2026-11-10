@@ -4948,6 +4948,7 @@ const tr: Partial<Translations> = {
   "emergency.place.readable": "okunabilir",
   "emergency.place.missing": "bulunamadı",
   "emergency.placeShared": "{name} sunucusundaki ortak depo",
+  "emergency.heldShared": "{name} sunucusu bu ortak depoyu tutuyordu, artık onun yerine bu sunucu tutuyor. Daha önce olduğu gibi eski yedekleri ayıklar ve depoda temizlik yapar, rest-server'ı da yine aynı klasörü kullanır. Senin için birkaç adım kaldı: bu sunucuyu grupla yeniden eşleştir ve Örnekler bölümünde alıcı sunucusunu kur. Ardından diğer sunucuların her birinin ortak depoya bir kez daha katılmasını sağla, çünkü onlar depoyu hâlâ eski kurulumun tuttuğunu sanıyor. O zamana kadar oradaki yedekleri olduğu gibi kalır. Ortak deponun kuralları kurtarma kitinde yoktu, bu yüzden onları alıcı sunucunun penceresinde yeniden ayarla.",
   "emergency.place.missingDo": "BombVault bu sunucunun veri bağlama noktasının altında {folder} klasörünü aradı ve orada bir depo bulamadı. Paylaşımı ya da diski o yere bağla, sonra anahtarı yeniden göster.",
   "emergency.place.missingOutside": "Bu klasör eski sunucunun veri bağlama noktasının dışındaydı, bu yüzden BombVault onu burada nerede arayacağını bilmiyor.",
   "emergency.place.wrong-key": "başka anahtar",

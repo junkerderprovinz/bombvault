@@ -4948,6 +4948,7 @@ const it: Partial<Translations> = {
   "emergency.place.readable": "leggibile",
   "emergency.place.missing": "non trovata",
   "emergency.placeShared": "Repository condiviso presso {name}",
+  "emergency.heldShared": "{name} ospitava questo repository condiviso, e ora lo ospita questo server al suo posto. Lo sfoltisce e ci fa pulizia come prima, e il suo rest-server gira di nuovo sulla stessa cartella. Ti restano alcuni passaggi: associa di nuovo questo server al gruppo e configura il suo server ricevente in Istanze. Poi fai entrare ancora una volta nel repository condiviso ciascuno degli altri server, perché riconoscono ancora la vecchia installazione come quella che lo ospita. Fino ad allora i loro backup lì restano come sono. Le regole del repository condiviso non erano nel kit di ripristino, quindi impostale di nuovo nella finestra del server ricevente.",
   "emergency.place.missingDo": "BombVault ha cercato {folder} sotto il mount dei dati di questo server e non ha trovato nessun repository. Monta la condivisione o il disco in quel punto, poi mostra di nuovo la chiave.",
   "emergency.place.missingOutside": "Questa cartella si trovava fuori dal mount dei dati del vecchio server, quindi BombVault non sa dove cercarla qui.",
   "emergency.place.wrong-key": "altra chiave",

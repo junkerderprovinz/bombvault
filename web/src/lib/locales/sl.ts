@@ -4942,6 +4942,7 @@ const sl: Partial<Translations> = {
   "emergency.place.readable": "berljivo",
   "emergency.place.missing": "ni najdeno",
   "emergency.placeShared": "Skupni repozitorij na strežniku {name}",
+  "emergency.heldShared": "Strežnik {name} je hranil ta skupni repozitorij, zdaj pa ga namesto njega hrani ta strežnik. Kot prej ga redči in pospravlja, njegov rest-server pa spet uporablja isto mapo. Ostane ti še nekaj korakov: ta strežnik znova seznani s skupino in pod Primerki nastavi njegov sprejemni strežnik. Nato vsak od drugih strežnikov še enkrat pridruži skupnemu repozitoriju, ker še vedno mislijo, da ga hrani stara namestitev. Do takrat njihove varnostne kopije v njem ostanejo, kakršne so. Pravil skupnega repozitorija ni bilo v obnovitvenem kompletu, zato jih znova nastavi v oknu sprejemnega strežnika.",
   "emergency.place.missingDo": "BombVault je iskal {folder} pod podatkovnim priklopom tega strežnika in tam ni našel repozitorija. Priklopi mrežno mapo ali disk na to mesto in znova pokaži ključ.",
   "emergency.place.missingOutside": "Ta mapa je ležala zunaj podatkovnega priklopa starega strežnika, zato BombVault ne ve, kje bi jo tu iskal.",
   "emergency.place.wrong-key": "drug ključ",

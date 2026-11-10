@@ -4958,6 +4958,7 @@ const ca: Partial<Translations> = {
   "emergency.place.readable": "llegible",
   "emergency.place.missing": "no trobada",
   "emergency.placeShared": "Repositori compartit a {name}",
+  "emergency.heldShared": "{name} tenia aquest repositori compartit, i ara el té aquest servidor al seu lloc. Com abans, deixa envellir les còpies i el neteja, i el seu rest-server torna a funcionar sobre la mateixa carpeta. Et queden uns quants passos: torna a aparellar aquest servidor amb el grup i configura el seu servidor receptor a Instàncies. Després fes que cadascun dels altres servidors torni a unir-se al repositori compartit, perquè encara tenen la instal·lació antiga com a propietària. Fins aleshores, les seves còpies d'allà es queden com estan. Les regles del repositori compartit no eren al kit de recuperació, així que torna-les a definir a la finestra del servidor receptor.",
   "emergency.place.missingDo": "BombVault ha buscat {folder} sota el punt de muntatge de dades d'aquest servidor i no hi ha trobat cap repositori. Munta la compartició o el disc en aquest lloc i torna a mostrar la clau.",
   "emergency.place.missingOutside": "Aquesta carpeta era fora del punt de muntatge de dades del servidor antic, per això BombVault no sap on buscar-la aquí.",
   "emergency.place.wrong-key": "una altra clau",

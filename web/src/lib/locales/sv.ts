@@ -4948,6 +4948,7 @@ const sv: Partial<Translations> = {
   "emergency.place.readable": "läsbar",
   "emergency.place.missing": "hittades inte",
   "emergency.placeShared": "Gemensamt arkiv hos {name}",
+  "emergency.heldShared": "{name} höll det här gemensamma arkivet, och nu håller den här servern det i stället. Den gallrar och städar det som förut, och dess rest-server använder åter samma mapp. Några steg återstår för dig: parkoppla den här servern med gruppen igen och ställ in dess mottagarserver under Instanser. Låt sedan var och en av de andra servrarna gå med i det gemensamma arkivet en gång till, eftersom de fortfarande tror att den gamla installationen håller det. Till dess ligger deras säkerhetskopior kvar där som de är. Det gemensamma arkivets regler fanns inte i återställningskitet, så ställ in dem igen i mottagarserverns fönster.",
   "emergency.place.missingDo": "BombVault letade efter {folder} under den här serverns datamontering och hittade inget arkiv där. Montera resursen eller disken på den platsen och visa sedan nyckeln igen.",
   "emergency.place.missingOutside": "Mappen låg utanför den gamla serverns datamontering, så BombVault vet inte var den ska leta efter den här.",
   "emergency.place.wrong-key": "annan nyckel",

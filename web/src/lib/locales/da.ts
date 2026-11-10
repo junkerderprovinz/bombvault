@@ -4948,6 +4948,7 @@ const da: Partial<Translations> = {
   "emergency.place.readable": "læsbar",
   "emergency.place.missing": "ikke fundet",
   "emergency.placeShared": "Delt repository hos {name}",
+  "emergency.heldShared": "{name} havde dette delte repository, og nu har denne server det i dens sted. Den lader sikkerhedskopierne ældes og rydder op som før, og dens rest-server kører igen på den samme mappe. Der er et par trin tilbage til dig: par denne server med gruppen igen, og sæt dens modtageserver op under Instanser. Lad derefter hver af de andre servere komme med i det delte repository igen, for de kender stadig den gamle installation som ejer. Indtil da bliver deres sikkerhedskopier dér, som de er. Reglerne for det delte repository var ikke med i gendannelseskittet, så sæt dem op igen i vinduet for modtageserveren.",
   "emergency.place.missingDo": "BombVault ledte efter {folder} under denne servers datamount og fandt ikke noget repository dér. Mount delingen eller disken på det sted, og vis så nøglen igen.",
   "emergency.place.missingOutside": "Mappen lå uden for den gamle servers datamount, så BombVault ved ikke, hvor den skal lede efter den her.",
   "emergency.place.wrong-key": "anden nøgle",

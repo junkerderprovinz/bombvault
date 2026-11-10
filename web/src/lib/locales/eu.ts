@@ -4958,6 +4958,7 @@ const eu: Partial<Translations> = {
   "emergency.place.readable": "irakurgarria",
   "emergency.place.missing": "ez da aurkitu",
   "emergency.placeShared": "Biltegi partekatua {name}-n",
+  "emergency.heldShared": "{name} instantziak gordetzen zuen biltegi partekatu hau, eta orain zerbitzari honek gordetzen du haren ordez. Lehen bezala, babeskopiak zahartzen uzten ditu eta biltegia garbitzen du, eta bere rest-server berriro dabil karpeta berean. Urrats batzuk geratzen zaizkizu: parekatu zerbitzari hau berriro taldearekin eta konfiguratu bere hartzaile-zerbitzaria Instantziak atalean. Ondoren, beste zerbitzari bakoitzetik eskatu berriro biltegi partekatuan sartzea, oraindik instalazio zaharra baitute haren jabetzat. Ordura arte, haien babeskopiak bertan dauden bezala geratzen dira. Biltegi partekatuaren arauak ez zeuden berreskuratze-kitean, beraz ezarri itzazu berriro hartzaile-zerbitzariaren leihoan.",
   "emergency.place.missingDo": "BombVault-ek {folder} bilatu du zerbitzari honen datu-muntaketaren azpian eta ez du biltegirik aurkitu. Muntatu partekatzea edo diskoa toki horretan eta erakutsi gakoa berriro.",
   "emergency.place.missingOutside": "Karpeta hau zerbitzari zaharraren datu-muntaketatik kanpo zegoen, beraz BombVault-ek ez daki hemen non bilatu.",
   "emergency.place.wrong-key": "beste gako bat",

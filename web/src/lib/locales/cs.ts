@@ -4946,6 +4946,7 @@ const cs: Partial<Translations> = {
   "emergency.place.readable": "čitelný",
   "emergency.place.missing": "nenalezeno",
   "emergency.placeShared": "Sdílený repozitář na serveru {name}",
+  "emergency.heldShared": "Server {name} držel tento sdílený repozitář a teď ho na jeho místě drží tento server. Jako dřív nechává zálohy stárnout a uklízí ho a jeho rest-server zase běží nad stejnou složkou. Zbývá ti pár kroků: znovu spáruj tento server se skupinou a v části Instance nastav jeho přijímací server. Pak nech každý z ostatních serverů znovu požádat o připojení ke sdílenému repozitáři, protože jako jeho vlastníka pořád znají starou instalaci. Do té doby tam jejich zálohy zůstanou, jak jsou. Pravidla sdíleného repozitáře v sadě pro obnovu nebyla, proto je znovu nastav v okně přijímacího serveru.",
   "emergency.place.missingDo": "BombVault hledal {folder} pod datovým připojením tohoto serveru a nenašel tam žádný repozitář. Připoj sdílenou složku nebo disk na toto místo a pak klíč ukaž znovu.",
   "emergency.place.missingOutside": "Tato složka ležela mimo datové připojení starého serveru, takže BombVault neví, kde ji tady hledat.",
   "emergency.place.wrong-key": "jiný klíč",

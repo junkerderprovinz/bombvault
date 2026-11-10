@@ -4958,6 +4958,7 @@ const is: Partial<Translations> = {
   "emergency.place.readable": "læsilegt",
   "emergency.place.missing": "fannst ekki",
   "emergency.placeShared": "Sameiginlegt geymslusafn hjá {name}",
+  "emergency.heldShared": "{name} hýsti þetta sameiginlega geymslusafn, og nú hýsir þessi þjónn það í hans stað. Hann grisjar það og tekur til í því eins og áður, og rest-server hans keyrir aftur á sömu möppu. Nokkur skref eru eftir hjá þér: paraðu þennan þjón aftur við hópinn og settu upp móttökuþjón hans undir Tilvik. Leyfðu svo hverjum hinna þjónanna að fá aðild að sameiginlega geymslusafninu á ný, því þeir halda enn að gamla uppsetningin hýsi það. Þangað til haldast afrit þeirra þar óbreytt. Reglur sameiginlega geymslusafnsins voru ekki í endurheimtarpakkanum, svo stilltu þær aftur í glugga móttökuþjónsins.",
   "emergency.place.missingDo": "BombVault leitaði að {folder} undir gagnatengipunkti þessa þjóns og fann ekkert safn þar. Tengdu sameignina eða diskinn á þann stað og sýndu svo lykilinn aftur.",
   "emergency.place.missingOutside": "Þessi mappa var utan gagnatengipunkts gamla þjónsins, svo BombVault veit ekki hvar á að leita að henni hér.",
   "emergency.place.wrong-key": "annar lykill",

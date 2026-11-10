@@ -4948,6 +4948,7 @@ const fr: Partial<Translations> = {
   "emergency.place.readable": "lisible",
   "emergency.place.missing": "introuvable",
   "emergency.placeShared": "Dépôt partagé sur {name}",
+  "emergency.heldShared": "{name} hébergeait ce dépôt partagé, et c'est désormais ce serveur qui l'héberge à sa place. Il en retire les anciennes sauvegardes et y fait le ménage comme avant, et son rest-server tourne de nouveau sur le même dossier. Il vous reste quelques étapes : appairez de nouveau ce serveur avec le groupe et configurez son serveur récepteur sous Instances. Ensuite, laissez chacun des autres serveurs rejoindre une nouvelle fois le dépôt partagé, car ils connaissent encore l'ancienne installation comme hébergeur. D'ici là, leurs sauvegardes y restent telles quelles. Les règles du dépôt partagé ne figuraient pas dans le kit de récupération, définissez-les donc à nouveau dans la fenêtre du serveur récepteur.",
   "emergency.place.missingDo": "BombVault a cherché {folder} sous le montage de données de ce serveur et n'y a trouvé aucun dépôt. Montez le partage ou le disque à cet endroit, puis montrez à nouveau la clé.",
   "emergency.place.missingOutside": "Ce dossier se trouvait en dehors du montage de données de l'ancien serveur, BombVault ne sait donc pas où le chercher ici.",
   "emergency.place.wrong-key": "autre clé",

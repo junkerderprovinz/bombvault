@@ -4958,6 +4958,7 @@ const et: Partial<Translations> = {
   "emergency.place.readable": "loetav",
   "emergency.place.missing": "ei leitud",
   "emergency.placeShared": "Jagatud hoidla serveris {name}",
+  "emergency.heldShared": "Server {name} hoidis seda jagatud hoidlat ja nüüd hoiab seda tema asemel see server. See laseb varundustel vananeda ja korrastab hoidlat nagu varem ning selle rest-server töötab jälle samas kaustas. Sul on veel paar sammu teha: seo see server uuesti grupiga ja seadista jaotises Eksemplarid selle vastuvõtuserver. Seejärel lase igal teisel serveril jagatud hoidlaga uuesti liituda, sest need tunnevad selle omanikuna veel vana paigaldust. Seni jäävad nende sealsed varundused nii, nagu need on. Jagatud hoidla reegleid taastekomplektis ei olnud, seega määra need vastuvõtuserveri aknas uuesti.",
   "emergency.place.missingDo": "BombVault otsis selle serveri andmete haakepunkti alt kausta {folder} ega leidnud sealt hoidlat. Haagi jagatud kaust või ketas sellesse kohta ja näita siis võtit uuesti.",
   "emergency.place.missingOutside": "See kaust asus vana serveri andmete haakepunktist väljaspool, mistõttu BombVault ei tea, kust seda siit otsida.",
   "emergency.place.wrong-key": "teine võti",

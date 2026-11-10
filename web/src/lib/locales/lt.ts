@@ -4958,6 +4958,7 @@ const lt: Partial<Translations> = {
   "emergency.place.readable": "skaitoma",
   "emergency.place.missing": "nerasta",
   "emergency.placeShared": "Bendra saugykla serveryje {name}",
+  "emergency.heldShared": "Šią bendrą saugyklą laikė {name}, o dabar vietoj jo ją laiko šis serveris. Kaip ir anksčiau, jis retina senas kopijas ir tvarko saugyklą, o jo rest-server vėl veikia tame pačiame aplanke. Tau liko keli žingsniai: vėl susiek šį serverį su grupe ir skiltyje Egzemplioriai nustatyk jo priėmimo serverį. Tada leisk kiekvienam kitam serveriui dar kartą prisijungti prie bendros saugyklos, nes jie vis dar mano, kad ją laiko senasis diegimas. Iki tol jų atsarginės kopijos ten lieka tokios, kokios yra. Bendros saugyklos taisyklių atkūrimo rinkinyje nebuvo, todėl nustatyk jas iš naujo priėmimo serverio lange.",
   "emergency.place.missingDo": "BombVault ieškojo {folder} po šio serverio duomenų prijungimu ir ten nerado saugyklos. Prijunk bendrinamą aplanką ar diską toje vietoje ir tada dar kartą parodyk raktą.",
   "emergency.place.missingOutside": "Šis aplankas buvo už senojo serverio duomenų prijungimo ribų, todėl BombVault nežino, kur jo čia ieškoti.",
   "emergency.place.wrong-key": "kitas raktas",

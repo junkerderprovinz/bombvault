@@ -4948,6 +4948,7 @@ const pt: Partial<Translations> = {
   "emergency.place.readable": "legível",
   "emergency.place.missing": "não encontrado",
   "emergency.placeShared": "Repositório partilhado em {name}",
+  "emergency.heldShared": "{name} mantinha este repositório partilhado, e agora é este servidor que o mantém no lugar dele. Como antes, desbasta as cópias antigas e faz a manutenção, e o rest-server dele volta a correr na mesma pasta. Faltam-te alguns passos: emparelha de novo este servidor com o grupo e configura o servidor recetor dele em Instâncias. Depois deixa cada um dos outros servidores entrar outra vez no repositório partilhado, porque ainda julgam que é a instalação antiga que o mantém. Até lá, os backups deles ficam lá tal como estão. As regras do repositório partilhado não estavam no kit de recuperação, por isso volta a defini-las na janela do servidor recetor.",
   "emergency.place.missingDo": "O BombVault procurou {folder} sob o mount de dados deste servidor e não encontrou lá nenhum repositório. Monta a partilha ou o disco nesse sítio e mostra a chave outra vez.",
   "emergency.place.missingOutside": "Esta pasta estava fora do mount de dados do servidor antigo, por isso o BombVault não sabe onde a procurar aqui.",
   "emergency.place.wrong-key": "outra chave",

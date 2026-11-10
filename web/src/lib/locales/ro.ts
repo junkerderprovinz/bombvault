@@ -4949,6 +4949,7 @@ const ro: Partial<Translations> = {
   "emergency.place.readable": "lizibil",
   "emergency.place.missing": "negăsit",
   "emergency.placeShared": "Depozit comun la {name}",
+  "emergency.heldShared": "{name} găzduia acest depozit comun, iar acum îl găzduiește acest server în locul lui. Ca înainte, rărește copiile vechi și face curățenie, iar rest-server-ul lui rulează din nou pe același folder. Ți-au mai rămas câțiva pași: împerechează din nou acest server cu grupul și configurează-i serverul receptor la Instanțe. Apoi lasă fiecare dintre celelalte servere să intre din nou în depozitul comun, pentru că încă cred că instalarea veche îl găzduiește. Până atunci, copiile lor de rezervă de acolo rămân așa cum sunt. Regulile depozitului comun nu erau în kitul de recuperare, așa că setează-le din nou în fereastra serverului receptor.",
   "emergency.place.missingDo": "BombVault a căutat {folder} sub montarea de date a acestui server și nu a găsit acolo niciun depozit. Montează partajarea sau discul în acel loc, apoi arată cheia din nou.",
   "emergency.place.missingOutside": "Acest folder se afla în afara montării de date a vechiului server, așa că BombVault nu știe unde să-l caute aici.",
   "emergency.place.wrong-key": "altă cheie",

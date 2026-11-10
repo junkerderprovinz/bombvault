@@ -4958,6 +4958,7 @@ const id: Partial<Translations> = {
   "emergency.place.readable": "terbaca",
   "emergency.place.missing": "tidak ditemukan",
   "emergency.placeShared": "Repositori bersama di {name}",
+  "emergency.heldShared": "{name} menyimpan repositori bersama ini, dan kini server ini yang menyimpannya sebagai gantinya. Server ini membuang cadangan lama dan merapikannya seperti sebelumnya, dan rest-server miliknya kembali berjalan di folder yang sama. Masih ada beberapa langkah untuk Anda: pasangkan server ini lagi dengan grup dan siapkan server penerimanya di Instansi. Lalu biarkan setiap server lain bergabung sekali lagi ke repositori bersama, karena mereka masih mengenal instalasi lama sebagai penyimpannya. Sampai saat itu, cadangan mereka di sana tetap seperti apa adanya. Aturan repositori bersama tidak ada di kit pemulihan, jadi atur lagi di jendela server penerima.",
   "emergency.place.missingDo": "BombVault mencari {folder} di bawah mount data server ini dan tidak menemukan repositori di sana. Pasang share atau disk di tempat itu, lalu tunjukkan kuncinya lagi.",
   "emergency.place.missingOutside": "Folder ini berada di luar mount data server lama, jadi BombVault tidak tahu ke mana harus mencarinya di sini.",
   "emergency.place.wrong-key": "kunci lain",

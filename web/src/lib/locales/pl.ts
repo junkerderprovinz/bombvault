@@ -4945,6 +4945,7 @@ const pl: Partial<Translations> = {
   "emergency.place.readable": "czytelne",
   "emergency.place.missing": "nie znaleziono",
   "emergency.placeShared": "Wspólne repozytorium na serwerze {name}",
+  "emergency.heldShared": "To wspólne repozytorium prowadził serwer {name}, a teraz w jego miejsce prowadzi je ten serwer. Jak wcześniej przerzedza stare kopie i robi porządki, a jego rest-server znów korzysta z tego samego folderu. Zostało ci kilka kroków: sparuj ten serwer ponownie z grupą i w sekcji Instancje skonfiguruj jego serwer odbiorczy. Potem pozwól każdemu z pozostałych serwerów jeszcze raz dołączyć do wspólnego repozytorium, bo wciąż uważają, że prowadzi je stara instalacja. Do tego czasu ich kopie zostają tam bez zmian. Reguł wspólnego repozytorium nie było w zestawie odzyskiwania, więc ustaw je ponownie w oknie serwera odbiorczego.",
   "emergency.place.missingDo": "BombVault szukał folderu {folder} pod punktem montowania danych tego serwera i nie znalazł tam repozytorium. Zamontuj udział lub dysk w tym miejscu, a potem pokaż klucz jeszcze raz.",
   "emergency.place.missingOutside": "Ten folder znajdował się poza punktem montowania danych starego serwera, więc BombVault nie wie, gdzie go tutaj szukać.",
   "emergency.place.wrong-key": "inny klucz",

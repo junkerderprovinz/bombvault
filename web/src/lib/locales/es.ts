@@ -4946,6 +4946,7 @@ const es: Partial<Translations> = {
   "emergency.place.readable": "legible",
   "emergency.place.missing": "no encontrado",
   "emergency.placeShared": "Repositorio compartido en {name}",
+  "emergency.heldShared": "{name} tenía este repositorio compartido, y ahora lo tiene este servidor en su lugar. Como antes, deja envejecer las copias y lo poda, y su rest-server vuelve a funcionar sobre la misma carpeta. Te quedan algunos pasos: vuelve a emparejar este servidor con el grupo y configura su servidor receptor en Instancias. Después haz que cada uno de los demás servidores vuelva a unirse al repositorio compartido, porque todavía tienen la instalación antigua como su dueña. Hasta entonces, sus copias allí se quedan como están. Las reglas del repositorio compartido no estaban en el kit de recuperación, así que vuelve a configurarlas en la ventana del servidor receptor.",
   "emergency.place.missingDo": "BombVault buscó {folder} bajo el montaje de datos de este servidor y no encontró ningún repositorio. Monta el recurso compartido o el disco en ese lugar y vuelve a mostrar la clave.",
   "emergency.place.missingOutside": "Esta carpeta estaba fuera del montaje de datos del servidor antiguo, así que BombVault no sabe dónde buscarla aquí.",
   "emergency.place.wrong-key": "otra clave",

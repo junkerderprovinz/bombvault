@@ -4947,6 +4947,7 @@ const nl: Partial<Translations> = {
   "emergency.place.readable": "leesbaar",
   "emergency.place.missing": "niet gevonden",
   "emergency.placeShared": "Gedeelde repository bij {name}",
+  "emergency.heldShared": "{name} beheerde deze gedeelde repository, en nu beheert deze server hem in zijn plaats. Hij dunt oude back-ups uit en ruimt op zoals voorheen, en zijn rest-server draait weer met dezelfde map. Er blijven een paar stappen voor je over: koppel deze server opnieuw aan de groep en stel onder Instanties zijn ontvangserver in. Laat daarna elk van de andere servers nog een keer bij de gedeelde repository aansluiten, want zij kennen de oude installatie nog als beheerder. Tot dan blijven hun back-ups daar zoals ze zijn. De regels van de gedeelde repository stonden niet in de herstelkit, dus stel ze in het venster van de ontvangserver opnieuw in.",
   "emergency.place.missingDo": "BombVault zocht onder de gegevensmount van deze server naar {folder} en vond daar geen repository. Koppel de share of schijf op die plek en toon de sleutel dan opnieuw.",
   "emergency.place.missingOutside": "Deze map stond buiten de gegevensmount van de oude server, dus BombVault weet niet waar hij ze hier moet zoeken.",
   "emergency.place.wrong-key": "andere sleutel",
