@@ -178,6 +178,9 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
                   />
                 </div>
               )}
+              {(h.proofKeys ?? 0) > 0 && (
+                <p className="text-xs text-carbon-textSub wrap-anywhere">{t("shared.proofKeys", h.proofKeys ?? 0)}</p>
+              )}
               {h.stillToTell && h.stillToTell.length > 0 && (
                 <p className="text-xs text-carbon-textSub wrap-anywhere">
                   {t("shared.stillToTell").replace("{names}", () => (h.stillToTell ?? []).join(", "))}

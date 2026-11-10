@@ -313,6 +313,12 @@ type Service struct {
 	// sharedHolderToldAt is when this instance last told the others of a
 	// shared repository it holds now.
 	sharedHolderToldAt atomic.Int64
+	// holderChecks holds, per shared repository and server that said it holds
+	// the repository now, the key that server has to remove first.
+	holderChecks sync.Map
+	// sharedProofsClearedAt is when this instance last removed keys of checks
+	// that were left in the shared repositories it holds.
+	sharedProofsClearedAt atomic.Int64
 	// roleRefreshedAt is when this instance last asked its members where its
 	// own role requests stand, in Unix nanoseconds.
 	roleRefreshedAt atomic.Int64

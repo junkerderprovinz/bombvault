@@ -5,7 +5,7 @@
 // how far removing goes.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { I18nProvider, en } from "../../lib/i18n";
+import { I18nProvider, countText, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { SharedHolding, SharedServer } from "../../lib/api";
 
@@ -245,5 +245,12 @@ describe("SharedRepoCard", () => {
     await renderCard();
     expect(screen.getByText(en["shared.stillToTell"].replace("{names}", "tower, attic"))).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["shared.takeBack"] })).toBeNull();
+  });
+
+  it("says how many keys of checks of other servers its upkeep still has to remove", async () => {
+    initial = server;
+    holdings = [{ repo: "sr1", proofKeys: 2 }];
+    await renderCard();
+    expect(screen.getByText(countText(en["shared.proofKeys"], "en", 2))).toBeTruthy();
   });
 });

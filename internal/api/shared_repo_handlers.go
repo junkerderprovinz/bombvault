@@ -40,7 +40,7 @@ func (h *Handler) handleGetSharedRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	answer["memberships"] = memberships
-	holdings, err := h.svc.sharedHoldings()
+	holdings, err := h.svc.sharedHoldings(r.Context())
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return

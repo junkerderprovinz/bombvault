@@ -6754,6 +6754,8 @@ export interface SharedHolding {
   takenBy?: string;
   takenAt?: number;
   stillToTell?: string[];
+  /** Keys of checks of other servers left in a repository this server holds. */
+  proofKeys?: number;
 }
 
 export function getSharedRepo(): Promise<
