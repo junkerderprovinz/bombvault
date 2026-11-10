@@ -140,6 +140,9 @@ type ResticEngine interface {
 	// links. The export of a stored backup writes it into an archive file.
 	DumpTar(ctx context.Context, repo, snapshotID, subfolder string, w io.Writer, mode restic.Mode) error
 	Snapshots(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
+	// SnapshotsOfEveryHost lists a shared repository across the snapshots of
+	// every server in it, for its owner's upkeep.
+	SnapshotsOfEveryHost(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error)
 	// SnapshotsMeta lists the same snapshots with the counters restic stores on
 	// them. It is separate from Snapshots so the listings the SPA receives keep
 	// the keys they have.
@@ -221,6 +224,9 @@ type ResticEngine interface {
 	// the physical/deduplicated size + blob count; "restore-size" for the logical
 	// size + file count). Used to sample the repo-size trend.
 	Stats(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
+	// StatsOfEveryHost measures a shared repository as a whole, where Stats
+	// counts the snapshots of the mode's host alone.
+	StatsOfEveryHost(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error)
 	// StatsRestoreSize returns the logical restore size and file count of one
 	// snapshot (`restic stats --mode restore-size`). Restores use it to check free
 	// space before they write.

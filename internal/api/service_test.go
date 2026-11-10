@@ -5928,6 +5928,10 @@ func (f *fakeResticEngine) Snapshots(ctx context.Context, repo string, m restic.
 	return f.snaps, nil
 }
 
+func (f *fakeResticEngine) SnapshotsOfEveryHost(ctx context.Context, repo string, m restic.Mode) ([]restic.Snapshot, error) {
+	return f.Snapshots(ctx, repo, m)
+}
+
 func (f *fakeResticEngine) Forget(_ context.Context, repo string, snapshotIDs []string, prune bool, m restic.Mode) error {
 	f.forgotten = append(f.forgotten, snapshotIDs...)
 	f.forgotRepos = append(f.forgotRepos, repo)
@@ -6182,6 +6186,10 @@ func (f *fakeResticEngine) Stats(_ context.Context, _, mode string, _ restic.Mod
 		return restic.StatsResult{TotalSize: raw, BlobCount: 10}, nil
 	}
 	return restic.StatsResult{TotalSize: 5000, FileCount: 50}, nil
+}
+
+func (f *fakeResticEngine) StatsOfEveryHost(ctx context.Context, repo, mode string, m restic.Mode) (restic.StatsResult, error) {
+	return f.Stats(ctx, repo, mode, m)
 }
 
 func (f *fakeResticEngine) RestorePreview(ctx context.Context, _ string, step restic.PreviewStep, _ restic.Mode, onItem func(restic.PreviewItem)) error {
