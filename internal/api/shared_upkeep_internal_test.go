@@ -33,6 +33,8 @@ type sharedEngine struct {
 	byHost    map[string]int64
 	onPrune   func()
 	pruneErr  error
+	measured  int
+	statsErr  error
 	callOrder []string
 }
 
@@ -106,7 +108,10 @@ func (e *sharedEngine) Stats(_ context.Context, _, _ string, m restic.Mode) (res
 }
 
 func (e *sharedEngine) StatsOfEveryHost(context.Context, string, string, restic.Mode) (restic.StatsResult, error) {
-	return restic.StatsResult{TotalSize: e.whole}, nil
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.measured++
+	return restic.StatsResult{TotalSize: e.whole}, e.statsErr
 }
 
 func (e *sharedEngine) left() []string {
@@ -566,5 +571,22 @@ func TestTheNextUpkeepIsTheSoonerOfTheDailyForgetAndTheNextWindow(t *testing.T) 
 	}
 	if next, ok := s.NextSharedUpkeep(now); !ok || !next.Equal(time.Date(2026, time.March, 15, 3, 0, 0, 0, time.Local)) {
 		t.Fatalf("next %v, %v; want Sunday's window", next, ok)
+	}
+}
+
+// Measuring reads every tree of the repository, so a tick that has nothing
+// else to do leaves it to the daily forget, even while there are no numbers.
+func TestANewSharedRepositoryIsMeasuredWithItsForgetAndNotOnEveryTick(t *testing.T) {
+	eng := &sharedEngine{statsErr: errors.New("the repository is busy")}
+	s := upkeepService(t, eng)
+	sr := holdSharedRepo(t, s, tower)
+	ctx := context.Background()
+	now := time.Date(2026, time.March, 11, 12, 0, 0, 0, time.Local)
+
+	for _, later := range []time.Duration{0, time.Minute, 2 * time.Minute} {
+		_ = s.keepSharedRepo(ctx, sr, &fakeMembers{}, now.Add(later), false)
+	}
+	if eng.measured != 1 {
+		t.Fatalf("measured %d times, want once with the first forget", eng.measured)
 	}
 }

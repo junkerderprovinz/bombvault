@@ -62,13 +62,16 @@ func (s *Service) keepSharedRepo(ctx context.Context, sr store.SharedRepo, membe
 	if pruneNow {
 		window, prune = now, true
 	}
-	if prune || u.Forget == nil || now.Sub(time.Unix(u.Forget.At, 0)) >= sharedForgetEvery {
+	forget := prune || u.Forget == nil || now.Sub(time.Unix(u.Forget.At, 0)) >= sharedForgetEvery
+	if forget {
 		if err := s.store.NoteSharedForget(sr.ID, s.forgetShared(ctx, sr, u, members, now)); err != nil {
 			return err
 		}
 	}
 	if !prune {
-		if u.Space == nil {
+		// A new repository is measured with its first forget rather than a
+		// week later in its first window.
+		if forget && u.Space == nil {
 			_, err = s.measureShared(ctx, sr, members, now)
 		}
 		return err
