@@ -81,10 +81,43 @@ func (s *Service) keepSharedRepo(ctx context.Context, sr store.SharedRepo, membe
 		return err
 	}
 	if report.Error != "" || len(report.Postponed) > 0 {
+		s.tellSharedWindow(ctx, sr, members, now)
 		return nil
 	}
 	_, err = s.measureShared(ctx, sr, members, time.Now())
 	return err
+}
+
+// nextSharedWindow is when the next prune window of u opens after now, 0 when
+// none does.
+func nextSharedWindow(u store.SharedUpkeep, now time.Time) int64 {
+	cad, err := schedule.ParseCadence(u.PruneCadence)
+	if err != nil {
+		return 0
+	}
+	next, ok := cad.NextDue(time.Time{}, now)
+	if !ok {
+		return 0
+	}
+	return next.Unix()
+}
+
+// tellSharedWindow hands the members the last numbers of sr with the next
+// window after now, for a pass that measured nothing and for new rules.
+func (s *Service) tellSharedWindow(ctx context.Context, sr store.SharedRepo, members sharedMembers, now time.Time) {
+	u, err := s.store.SharedUpkeepOf(sr.ID)
+	if err != nil {
+		log.Printf("api: shared repository: could not read its upkeep, so the members do not hear the next window: %v", err)
+		return
+	}
+	space := store.SharedSpace{Hosts: []store.SharedHostSpace{}}
+	if u.Space != nil {
+		space = *u.Space
+	}
+	space.NextWindow = nextSharedWindow(u, now)
+	for _, m := range sr.Members {
+		members.tellSpace(ctx, m, space)
+	}
 }
 
 func sharedHours(u store.SharedUpkeep) time.Duration {
@@ -333,7 +366,11 @@ func (s *Service) measureShared(ctx context.Context, sr store.SharedRepo, member
 	if err != nil {
 		return store.SharedSpace{}, fmt.Errorf("measure the shared repository: %w", err)
 	}
-	space := store.SharedSpace{At: now.Unix(), Total: whole.TotalSize, Hosts: []store.SharedHostSpace{}}
+	u, err := s.store.SharedUpkeepOf(sr.ID)
+	if err != nil {
+		return store.SharedSpace{}, err
+	}
+	space := store.SharedSpace{At: now.Unix(), Total: whole.TotalSize, Hosts: []store.SharedHostSpace{}, NextWindow: nextSharedWindow(u, now)}
 	for _, m := range sr.Members {
 		hostMode := mode
 		hostMode.Host = m.Host

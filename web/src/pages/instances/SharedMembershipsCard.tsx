@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { leaveSharedRepo, type SharedMembership, type SharedMembershipState } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { relativeTime } from "../../lib/reltime";
+import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { Badge, type BadgeTone } from "../../components/Badge";
@@ -12,6 +12,7 @@ import { IconSignOut } from "../../components/glyphs";
 import { IconTabStorage } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card } from "../settings/shared";
+import { SpaceLine } from "./SharedUpkeepSection";
 import type { SharedRepoState } from "./useSharedRepo";
 
 const STATE: Record<SharedMembershipState, { label: TranslationKey; tone: BadgeTone; note?: TranslationKey }> = {
@@ -83,6 +84,7 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
                 />
               </div>
             )}
+            {m.state === "joined" && <SpaceLine t={t} space={m.space} />}
             <Rows>
               {m.repo && (
                 <SettingRow label={t("receiver.server.address")}>
@@ -94,6 +96,13 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
               <SettingRow label={t("shared.member.prunes")}>
                 <span className="text-sm text-carbon-text text-end">{named("shared.member.prunesValue", m.ownerName)}</span>
               </SettingRow>
+              {m.state === "joined" && (
+                <SettingRow label={t("shared.member.window")} hint={named("shared.member.windowTip", m.ownerName)}>
+                  <span className="text-sm text-carbon-text text-end">
+                    {m.nextWindow ? formatTs(m.nextWindow) : t("shared.member.windowUnknown")}
+                  </span>
+                </SettingRow>
+              )}
               {m.state === "joined" && (
                 <SettingRow
                   label={t("shared.member.lastCopy")}

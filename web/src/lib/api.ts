@@ -6716,6 +6716,9 @@ export interface SharedMembership {
    *  began that waited while the owner tidied up, in Unix seconds. */
   lastCopyAt?: number;
   deferredAt?: number;
+  /** What the owner last measured, and when it said it tidies up next. */
+  space?: SharedSpace;
+  nextWindow?: number;
 }
 
 /** A member's shared repository as the destination wizard offers it. */
@@ -6782,6 +6785,8 @@ export interface SharedSpace {
   at: number;
   total: number;
   hosts: { host: string; name: string; bytes: number }[];
+  /** When the owner's next prune window opens, as it last said. */
+  nextWindow?: number;
 }
 
 /** A shared repository this server is in, with its upkeep. A member sees the

@@ -189,7 +189,7 @@ function OwnedRepo({
 
 /** The space line: what the repository holds, what the servers apart would
  *  need, and what each server's backups use. */
-function SpaceLine({ t, space }: { t: T; space?: SharedSpace }) {
+export function SpaceLine({ t, space }: { t: T; space?: SharedSpace }) {
   if (!space) return <p className="text-xs text-carbon-textMuted">{t("sharedUpkeep.notMeasured")}</p>;
   const apart = space.hosts.reduce((sum, h) => sum + h.bytes, 0);
   return (

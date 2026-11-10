@@ -153,6 +153,27 @@ describe("SharedMembershipsCard", () => {
     expect(within(card).getByText(named("shared.member.copyWaited", "tower"))).toBeTruthy();
   });
 
+  it("shows what the owner measured and when it tidies up next", async () => {
+    memberships = [
+      membership({
+        space: { at: 300, total: 1200, hosts: [{ host: "bv-attic", name: "attic", bytes: 1000 }, { host: "bv-me", name: "me", bytes: 900 }] },
+        nextWindow: 1_900_000_000,
+      }),
+    ];
+    await renderCard();
+    const card = screen.getByRole("region", { name: "tower" });
+    expect(within(card).getByText(/^Holds 1\.2 KB\./)).toBeTruthy();
+    expect(within(card).getByText(en["shared.member.window"])).toBeTruthy();
+    expect(within(card).queryByText(en["shared.member.windowUnknown"])).toBeNull();
+  });
+
+  it("says the owner has not measured nor named its window yet", async () => {
+    memberships = [membership()];
+    await renderCard();
+    expect(screen.getByText(en["sharedUpkeep.notMeasured"])).toBeTruthy();
+    expect(screen.getByText(en["shared.member.windowUnknown"])).toBeTruthy();
+  });
+
   it("says no copy went through yet", async () => {
     memberships = [membership()];
     await renderCard();

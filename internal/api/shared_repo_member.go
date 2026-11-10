@@ -412,6 +412,10 @@ type sharedMembershipView struct {
 	// DeferredAt when a later one began that waited for the owner's prune.
 	LastCopyAt int64 `json:"lastCopyAt,omitempty"`
 	DeferredAt int64 `json:"deferredAt,omitempty"`
+	// Space is what the owner last measured, NextWindow when it said its
+	// next prune window opens.
+	Space      *store.SharedSpace `json:"space,omitempty"`
+	NextWindow int64              `json:"nextWindow,omitempty"`
 }
 
 func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
@@ -428,6 +432,9 @@ func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 		v := sharedMembershipView{OwnerID: j.MemberID, OwnerName: j.MemberName, State: j.State, Repo: scrubRepoLocation(j.Repo), AskedAt: j.CreatedAt, Together: []sharedMemberView{}}
 		if j.State == store.SharedJoinJoined {
 			v.JoinedAt = j.DecidedAt
+			if v.Space, v.NextWindow, err = s.sharedSpaceHeard(j.MemberID); err != nil {
+				return nil, err
+			}
 		}
 		if m, ok := s.reachableMember(j.MemberID); ok && m.Name != "" {
 			v.OwnerName = m.Name

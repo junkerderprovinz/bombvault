@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -110,12 +111,8 @@ func (s *Service) sharedUpkeepViews(now time.Time) ([]sharedUpkeepView, error) {
 			v.Members = append(v.Members, sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host})
 		}
 		if !s.ownsSharedRepo(sr) {
-			space, ok, err := s.store.SharedSpaceFrom(sr.Owner)
-			if err != nil {
+			if v.Space, v.NextWindow, err = s.sharedSpaceHeard(sr.Owner); err != nil {
 				return nil, err
-			}
-			if ok {
-				v.Space = &space
 			}
 			out = append(out, v)
 			continue
@@ -127,15 +124,33 @@ func (s *Service) sharedUpkeepViews(now time.Time) ([]sharedUpkeepView, error) {
 		v.Role = "owner"
 		v.Rules = &sharedRulesView{Keep: u.Keep, KeepSet: u.KeepSet, PruneCadence: u.PruneCadence, PruneHours: u.PruneHours, MaxUnused: u.MaxUnused, CheckSubset: u.CheckSubset}
 		v.Forget, v.Prune, v.Space = u.Forget, u.Prune, u.Space
-		if cad, err := schedule.ParseCadence(u.PruneCadence); err == nil {
-			if next, ok := cad.NextDue(time.Time{}, now); ok {
-				v.NextWindow = next.Unix()
-			}
-		}
+		v.NextWindow = nextSharedWindow(u, now)
 		v.Running = s.sharedUpkeep.running()
 		out = append(out, v)
 	}
 	return out, nil
+}
+
+// sharedSpaceHeard is what the owner last told this server about its shared
+// repository: the numbers once it measured them, and its next window.
+func (s *Service) sharedSpaceHeard(owner string) (*store.SharedSpace, int64, error) {
+	space, ok, err := s.store.SharedSpaceFrom(owner)
+	if err != nil || !ok {
+		return nil, 0, err
+	}
+	if space.At == 0 {
+		return nil, space.NextWindow, nil
+	}
+	return &space, space.NextWindow, nil
+}
+
+// tellSharedWindowLater tells the members of sr the window new rules open
+// next. Some of them answer slowly over the relay, so the person saving the
+// rules does not wait for it.
+func (s *Service) tellSharedWindowLater(sr store.SharedRepo) {
+	ctx, cancel := context.WithTimeout(s.StopContext(), time.Minute)
+	defer cancel()
+	s.tellSharedWindow(ctx, sr, s.groupMembers(), time.Now())
 }
 
 // checkSharedRules says what is wrong with rules a person sent, if anything.
@@ -187,6 +202,7 @@ func (h *Handler) handlePutSharedUpkeep(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	go h.svc.tellSharedWindowLater(sr)
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 

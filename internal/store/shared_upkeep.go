@@ -64,6 +64,9 @@ type SharedSpace struct {
 	At    int64             `json:"at"`
 	Total int64             `json:"total"`
 	Hosts []SharedHostSpace `json:"hosts"`
+	// NextWindow is when the owner's next prune window opens, as it said when
+	// it last told the numbers or changed its rules.
+	NextWindow int64 `json:"nextWindow,omitempty"`
 }
 
 // SharedHostSpace is the data the snapshots of one member use.
