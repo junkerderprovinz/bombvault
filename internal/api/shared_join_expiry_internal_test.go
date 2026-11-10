@@ -142,3 +142,43 @@ func TestTheOwnersCardSaysWhenAnUnusedOneTimeKeyExpires(t *testing.T) {
 		t.Fatalf("expires at %d, want %d", v.Joins[0].ExpiresAt, want)
 	}
 }
+
+// copiedKeyringEngine is the owner's engine with snapshots in the shared
+// repository.
+type copiedKeyringEngine struct {
+	*keyringEngine
+	snaps []restic.Snapshot
+}
+
+func (e copiedKeyringEngine) SnapshotsOfEveryHost(context.Context, string, restic.Mode) ([]restic.Snapshot, error) {
+	return e.snaps, nil
+}
+
+func TestAMemberThatCopiedBeforeItsJoinExpiredIsKeptAsAServerThatLeft(t *testing.T) {
+	nas, tower, _ := allowedNeverJoined(t)
+	host := tower.svc.resticHost()
+	nas.svc.engine = copiedKeyringEngine{nas.svc.engine.(*keyringEngine), []restic.Snapshot{snapAt("t1", host, "container:plex", 1)}}
+	in := joinOf(t, nas, store.SharedJoinIn, tower)
+
+	if err := nas.svc.expireSharedJoins(context.Background(), time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)); err != nil {
+		t.Fatal(err)
+	}
+	former := formerOf(t, nas)
+	if len(former) != 1 || former[0].Host != host || former[0].Instance != tower.id(t) || former[0].Name != "tower" {
+		t.Fatalf("former %+v, want tower with the host it copied under", former)
+	}
+	if taken, err := nas.svc.sharedHostTaken("shared/shared", "cube-id", host); err != nil || !taken {
+		t.Fatalf("taken %v, %v; want tower's host kept from another server", taken, err)
+	}
+}
+
+func TestAMemberThatNeverCopiedIsNotKeptWhenItsJoinExpires(t *testing.T) {
+	nas, tower, _ := allowedNeverJoined(t)
+	in := joinOf(t, nas, store.SharedJoinIn, tower)
+	if err := nas.svc.expireSharedJoins(context.Background(), time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)); err != nil {
+		t.Fatal(err)
+	}
+	if former := formerOf(t, nas); len(former) != 0 {
+		t.Fatalf("former %+v, want none", former)
+	}
+}

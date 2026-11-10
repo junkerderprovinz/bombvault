@@ -658,6 +658,10 @@ func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
 			errs = append(errs, err)
 			break
 		}
+		if err := s.keepExpiredAsFormer(ctx, sh, j, now); err != nil {
+			errs = append(errs, err)
+			continue
+		}
 		if err := s.takeLogin(ctx, sh, j); err != nil {
 			errs = append(errs, fmt.Errorf("take back the login of %s: %w", j.MemberName, err))
 			continue
@@ -677,6 +681,25 @@ func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
 		s.tellSharedAnswer(ctx, id, store.SharedJoinExpired)
 	}
 	return errors.Join(errs...)
+}
+
+// keepExpiredAsFormer keeps a member whose join expires as a server that left
+// once it copied anything, so its host stays its own and what it copied waits
+// for a person to forget it instead of lying there as nobody's. A listing that
+// fails leaves the join for the next tick.
+func (s *Service) keepExpiredAsFormer(ctx context.Context, sh sharedSetup, j store.SharedJoin, now time.Time) error {
+	snaps, err := sh.eng.SnapshotsOfEveryHost(ctx, sh.repo, sh.mode)
+	if err != nil {
+		return fmt.Errorf("list what %s copied: %w", j.MemberName, err)
+	}
+	if !slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return sn.Hostname == j.Host }) {
+		return nil
+	}
+	sr, ok, err := s.store.SharedRepoAt(sh.server.Repo)
+	if err != nil || !ok {
+		return err
+	}
+	return s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: j.Host, Instance: j.MemberID, Name: j.MemberName, LeftAt: now.Unix()})
 }
 
 // dropExpiredKeys removes the keys of the joins that expired, the one-time
