@@ -192,7 +192,7 @@ func approveOn(t *testing.T, here, there *instance) {
 	want := kitmember.ID(kitmember.KindInstance, there.memberKey(t))
 	deadline := time.Now().Add(10 * time.Second)
 	for !waitsOn(here, want) {
-		if isMember(here, there.id(t)) {
+		if isMember(here, there.id(t)) || waitedOnThere(here, want) {
 			return
 		}
 		if time.Now().After(deadline) {
@@ -203,6 +203,17 @@ func approveOn(t *testing.T, here, there *instance) {
 	if code, out := here.do(t, http.MethodPost, "/api/group/members/"+want+"/approve", nil); code != http.StatusOK || out["ok"] != true {
 		t.Fatalf("approve: %d %v", code, out)
 	}
+}
+
+// waitedOnThere reports whether in let id in already and waits for id to let
+// it in as well.
+func waitedOnThere(in *instance, id string) bool {
+	for _, w := range in.svc.pairing().Waiting() {
+		if w.ID == id && w.There {
+			return true
+		}
+	}
+	return false
 }
 
 func waitsOn(in *instance, id string) bool {

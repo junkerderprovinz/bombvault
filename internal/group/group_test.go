@@ -375,3 +375,30 @@ func TestApplyingTheSameSettingsAgainKeepsTheRelayConnection(t *testing.T) {
 		}
 	}
 }
+
+func TestTwoNewInstancesKnowEachOtherSoonAfterBothApproved(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	b := newNode(t, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 2)
+	a.apply(url, nil)
+	b.apply(url, nil)
+	kitA, kitB := member.ID(member.KindInstance, a.key()), member.ID(member.KindInstance, b.key())
+	eventually(t, "each waits on the other", func() bool { return len(a.m.Waiting()) > 0 && len(b.m.Waiting()) > 0 })
+	if err := a.m.Approve(kitB); err != nil {
+		t.Fatal(err)
+	}
+	// Long enough for a's asking to have slowed down.
+	time.Sleep(8 * time.Second)
+	if err := b.m.Approve(kitA); err != nil {
+		t.Fatal(err)
+	}
+	approved := time.Now()
+	eventually(t, "both list each other", func() bool {
+		// A page that lists the group makes b call a.
+		_, _, _ = b.m.Call(context.Background(), a.id, http.MethodGet, "/who", nil)
+		return listed(a.m, b.id) && listed(b.m, a.id)
+	})
+	if took := time.Since(approved); took > 3*time.Second {
+		t.Fatalf("the two knew each other %v after the second approval", took)
+	}
+}

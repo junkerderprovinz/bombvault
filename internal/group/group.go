@@ -175,9 +175,20 @@ var ErrNotMember = errors.New("group: no such member is reachable")
 // enough for its relay connection and its last announce to go.
 const departGrace = time.Minute
 
-// learnEvery is how often a member that did not say its id is asked again,
-// such as one where this instance still waits for approval.
-const learnEvery = 5 * time.Second
+// A member that did not say its id, such as one where this instance still
+// waits for approval, is asked again after learnFirst, then after twice as
+// long each time, up to learnMost.
+const (
+	learnFirst = time.Second
+	learnMost  = time.Minute
+)
+
+// asking is when a member was last asked for its id and how long it is left
+// alone after that.
+type asking struct {
+	at   time.Time
+	wait time.Duration
+}
 
 // Manager keeps this instance's side of the group running.
 type Manager struct {
@@ -189,7 +200,7 @@ type Manager struct {
 	mu      sync.Mutex
 	cfg     Config
 	g       *kitgroup.Group
-	asked   map[string]time.Time
+	asked   map[string]asking
 	// retrying is set while learnAll is due again.
 	retrying bool
 	// departed holds when a member said it left, by its BombVault id.
@@ -204,7 +215,7 @@ func NewManager(serve http.Handler, dir Directory) *Manager {
 		serve:    serve,
 		dir:      dir,
 		lan:      lan.New(lan.Config{Group: Multicast, Ports: Ports}),
-		asked:    map[string]time.Time{},
+		asked:    map[string]asking{},
 		departed: map[string]time.Time{},
 	}
 }
@@ -498,7 +509,9 @@ func (m *Manager) serveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !known {
-		id, known = m.learn(r.Context(), c.ID, c.Key)
+		// A member that calls has most likely let this instance in there, so
+		// it is asked now rather than when its turn comes.
+		id, known = m.learn(r.Context(), c.ID, c.Key, true)
 	}
 	if !known {
 		w.Header().Set("Content-Type", "application/json")
@@ -551,7 +564,7 @@ func (m *Manager) learnAll() {
 			continue
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		if _, ok := m.learn(ctx, km.ID, km.Key); !ok {
+		if _, ok := m.learn(ctx, km.ID, km.Key, false); !ok {
 			open = true
 		}
 		cancel()
@@ -560,7 +573,7 @@ func (m *Manager) learnAll() {
 	defer m.mu.Unlock()
 	if open && !m.retrying && m.g == g {
 		m.retrying = true
-		time.AfterFunc(learnEvery, func() {
+		time.AfterFunc(learnFirst, func() {
 			m.mu.Lock()
 			m.retrying = false
 			m.mu.Unlock()
@@ -571,18 +584,24 @@ func (m *Manager) learnAll() {
 
 // learn asks instance kitID, whose answers key signs, which id it goes by in
 // BombVault, and pins key under it. An id pinned for another key, or this
-// instance's own, is not taken.
-func (m *Manager) learn(ctx context.Context, kitID string, key []byte) (string, bool) {
+// instance's own, is not taken. Unless now is set, a member that did not say
+// is left alone for longer each time.
+func (m *Manager) learn(ctx context.Context, kitID string, key []byte, now bool) (string, bool) {
 	g, cfg := m.group()
 	if g == nil || len(key) == 0 || member.ID(member.KindInstance, key) != kitID {
 		return "", false
 	}
 	m.mu.Lock()
-	if at, ok := m.asked[kitID]; ok && time.Since(at) < learnEvery {
+	last, ok := m.asked[kitID]
+	wait := last.wait
+	if now {
+		wait = learnFirst
+	}
+	if ok && time.Since(last.at) < wait {
 		m.mu.Unlock()
 		return "", false
 	}
-	m.asked[kitID] = time.Now()
+	m.asked[kitID] = asking{at: time.Now(), wait: min(max(2*last.wait, learnFirst), learnMost)}
 	m.mu.Unlock()
 
 	status, body, err := g.Call(ctx, kitID, http.MethodGet, ProbePath, nil)

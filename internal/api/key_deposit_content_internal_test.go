@@ -146,6 +146,8 @@ func TestANewerDepositWithAnotherMemberIsNamed(t *testing.T) {
 	tower.svc.StopGroup()
 	fresh := newInstance(t, "fresh", strings.Repeat("c3", 32))
 	joinGroup(t, fresh, relayURL, phrase)
+	approveEachOther(t, fresh, attic)
+	approveEachOther(t, fresh, barn)
 	deadline := time.Now().Add(10 * time.Second)
 	for len(fresh.svc.pairing().Members()) < 2 || !isMember(attic, fresh.id(t)) || !isMember(barn, fresh.id(t)) {
 		if time.Now().After(deadline) {
