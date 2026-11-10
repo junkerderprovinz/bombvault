@@ -74,7 +74,7 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarko
 
 ## Koppeling {#pairing}
 
-**Koppeling** met **Frase genereren** of **Frase invoeren**, de stapkaarten, de naam van deze instantie en **Bekende adressen**, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, de leden van de groep, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Zie [Instanties koppelen](offsite-recovery.md#pairing) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
+**Koppeling** met **Frase genereren** of **Frase invoeren**, de stapkaarten, de naam van deze instantie, de apparaten die op **Goedkeuren** wachten, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, de leden van de groep, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Zie [Instanties koppelen](offsite-recovery.md#pairing) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
 
 ## Integraties {#integrations}
 

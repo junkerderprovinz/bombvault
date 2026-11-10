@@ -74,7 +74,7 @@ Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gere
 
 ## Eşleştirme {#pairing}
 
-**İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**, adım kartları, bu örneğin adı ve **Bilinen adresler**, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı, grubun üyeleri ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu**. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
+**İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**, adım kartları, bu örneğin adı, **Onayla** bekleyen cihazlar, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı, grubun üyeleri ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu**. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
 
 ## Entegrasyonlar {#integrations}
 

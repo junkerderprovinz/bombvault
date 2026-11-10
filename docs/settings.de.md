@@ -74,7 +74,7 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterl
 
 ## Kopplung {#pairing}
 
-**Kopplung** mit **Phrase generieren** oder **Phrase eingeben**, den Schrittkarten, dem Namen dieser Instanz und den **Bekannten Adressen**, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, die Mitglieder der Gruppe, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Siehe [Instanzen koppeln](offsite-recovery.md#pairing) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
+**Kopplung** mit **Phrase generieren** oder **Phrase eingeben**, den Schrittkarten, dem Namen dieser Instanz, den Geräten, die auf **Freigeben** warten, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, die Mitglieder der Gruppe, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Siehe [Instanzen koppeln](offsite-recovery.md#pairing) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
 
 ## Anbindungen {#integrations}
 

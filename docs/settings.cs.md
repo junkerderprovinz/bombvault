@@ -74,7 +74,7 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a u
 
 ## Párování {#pairing}
 
-**Párování** s **Vygenerovat frázi** nebo **Zadat frázi**, karty kroků, jméno této instance a **Známé adresy**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí**, členové skupiny a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Viz [Párování instancí](offsite-recovery.md#pairing) a [Push na server ZFS](zfs-datasets.md#replica-push).
+**Párování** s **Vygenerovat frázi** nebo **Zadat frázi**, karty kroků, jméno této instance, zařízení čekající na **Schválit**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí**, členové skupiny a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Viz [Párování instancí](offsite-recovery.md#pairing) a [Push na server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrace {#integrations}
 

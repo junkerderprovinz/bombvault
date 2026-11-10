@@ -74,7 +74,7 @@ Néhány dologhoz belépési jelszó kell, például a helyreállítási csomagh
 
 ## Párosítás {#pairing}
 
-A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** lehetőséggel, a lépéskártyák, ennek a példánynak a neve és az **Ismert címek**, a **Relay** kártya a négy formájával és a **Mit lát a relay** résszel, a csoport tagjai, valamint a **ZFS-kiszolgáló BombVault nélkül** egy SSH-n át elért replikacélhoz. Lásd: [Példányok párosítása](offsite-recovery.md#pairing) és [Küldés egy ZFS-kiszolgálóra](zfs-datasets.md#replica-push).
+A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** lehetőséggel, a lépéskártyák, ennek a példánynak a neve, a **Jóváhagyás** gombra váró eszközök, a **Relay** kártya a négy formájával és a **Mit lát a relay** résszel, a csoport tagjai, valamint a **ZFS-kiszolgáló BombVault nélkül** egy SSH-n át elért replikacélhoz. Lásd: [Példányok párosítása](offsite-recovery.md#pairing) és [Küldés egy ZFS-kiszolgálóra](zfs-datasets.md#replica-push).
 
 ## Integrációk {#integrations}
 

@@ -74,7 +74,7 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy.
 
 ## Parowanie {#pairing}
 
-**Parowanie** z **Wygeneruj frazę** albo **Wpisz frazę**, karty kroków, nazwa tej instancji i **Znane adresy**, karta **Relay** z jej czterema formami i **Co widzi Relay**, członkowie grupy oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Zobacz [Parowanie instancji](offsite-recovery.md#pairing) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
+**Parowanie** z **Wygeneruj frazę** albo **Wpisz frazę**, karty kroków, nazwa tej instancji, urządzenia czekające na **Zatwierdź**, karta **Relay** z jej czterema formami i **Co widzi Relay**, członkowie grupy oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Zobacz [Parowanie instancji](offsite-recovery.md#pairing) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
 
 ## Integracje {#integrations}
 

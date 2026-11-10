@@ -74,7 +74,7 @@ Several things need a login password, such as the recovery kit and key deposits.
 
 ## Pairing {#pairing}
 
-**Pairing** with **Generate phrase** or **Enter phrase**, the step cards, this instance's name and **Known addresses**, the **Relay** card with its four forms and **What the relay sees**, the members of the group, and **ZFS server without BombVault** for a replica target over SSH. See [Pairing instances](offsite-recovery.md#pairing) and [Push to a ZFS server](zfs-datasets.md#replica-push).
+**Pairing** with **Generate phrase** or **Enter phrase**, the step cards, this instance's name, the devices that wait for **Approve**, the **Relay** card with its four forms and **What the relay sees**, the members of the group, and **ZFS server without BombVault** for a replica target over SSH. See [Pairing instances](offsite-recovery.md#pairing) and [Push to a ZFS server](zfs-datasets.md#replica-push).
 
 ## Integrations {#integrations}
 

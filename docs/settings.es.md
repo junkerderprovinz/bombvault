@@ -74,7 +74,7 @@ Varias cosas requieren una contraseña de acceso, como el kit de recuperación y
 
 ## Emparejamiento {#pairing}
 
-**Emparejamiento** con **Generar frase** o **Introducir frase**, las tarjetas de pasos, el nombre de esta instancia y **Direcciones conocidas**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, los miembros del grupo, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Consulta [Emparejar instancias](offsite-recovery.md#pairing) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
+**Emparejamiento** con **Generar frase** o **Introducir frase**, las tarjetas de pasos, el nombre de esta instancia, los dispositivos que esperan **Aprobar**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, los miembros del grupo, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Consulta [Emparejar instancias](offsite-recovery.md#pairing) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integraciones {#integrations}
 

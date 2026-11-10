@@ -74,7 +74,7 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 ## Ghép nối {#pairing}
 
-**Ghép nối** với **Tạo cụm từ** hoặc **Nhập cụm từ**, các thẻ từng bước, tên của phiên bản này và **Địa chỉ đã biết**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, các thành viên của nhóm, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
+**Ghép nối** với **Tạo cụm từ** hoặc **Nhập cụm từ**, các thẻ từng bước, tên của phiên bản này, các thiết bị đang chờ **Duyệt**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, các thành viên của nhóm, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
 
 ## Tích hợp {#integrations}
 

@@ -74,7 +74,7 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tal
 
 ## Pariliitos {#pairing}
 
-**Pariliitos** kohdilla **Luo lause** tai **Syötä lause**, vaihekortit, tämän ilmentymän nimi ja **Tunnetut osoitteet**, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, ryhmän jäsenet sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
+**Pariliitos** kohdilla **Luo lause** tai **Syötä lause**, vaihekortit, tämän ilmentymän nimi, laitteet, jotka odottavat **Hyväksy**-painallusta, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, ryhmän jäsenet sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
 
 ## Integraatiot {#integrations}
 

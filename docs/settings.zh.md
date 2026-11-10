@@ -74,7 +74,7 @@ BombVault 把外观保存在服务器上。第一次来的浏览器会接管它�
 
 ## 配对 {#pairing}
 
-带**生成口令**或**输入口令**的**配对**、各步骤卡片、本实例的名称和**已知地址**、带四种形式和**中继能看到什么**的**中继**卡片、组的成员，以及用于通过 SSH 作为副本目标的**没有 BombVault 的 ZFS 服务器**。参见[配对实例](offsite-recovery.md#pairing)和[推送到 ZFS 服务器](zfs-datasets.md#replica-push)。
+带**生成口令**或**输入口令**的**配对**、各步骤卡片、本实例的名称、等待**批准**的设备、带四种形式和**中继能看到什么**的**中继**卡片、组的成员，以及用于通过 SSH 作为副本目标的**没有 BombVault 的 ZFS 服务器**。参见[配对实例](offsite-recovery.md#pairing)和[推送到 ZFS 服务器](zfs-datasets.md#replica-push)。
 
 ## 集成 {#integrations}
 

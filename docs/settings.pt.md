@@ -74,7 +74,7 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 ## Emparelhamento {#pairing}
 
-**Emparelhamento** com **Gerar frase** ou **Introduzir frase**, os cartões de passos, o nome desta instância e **Endereços conhecidos**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, os membros do grupo, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Vê [Emparelhar instâncias](offsite-recovery.md#pairing) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
+**Emparelhamento** com **Gerar frase** ou **Introduzir frase**, os cartões de passos, o nome desta instância, os dispositivos à espera de **Aprovar**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, os membros do grupo, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Vê [Emparelhar instâncias](offsite-recovery.md#pairing) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integrações {#integrations}
 

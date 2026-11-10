@@ -74,7 +74,7 @@ Diverse cose richiedono una password di accesso, come il kit di ripristino e i d
 
 ## Associazione {#pairing}
 
-**Associazione** con **Genera frase** o **Inserisci frase**, le schede dei passaggi, il nome di questa istanza e **Indirizzi noti**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, i membri del gruppo e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Vedi [Associare le istanze](offsite-recovery.md#pairing) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
+**Associazione** con **Genera frase** o **Inserisci frase**, le schede dei passaggi, il nome di questa istanza, i dispositivi in attesa di **Approva**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, i membri del gruppo e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Vedi [Associare le istanze](offsite-recovery.md#pairing) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrazioni {#integrations}
 

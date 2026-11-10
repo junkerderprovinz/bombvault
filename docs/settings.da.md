@@ -74,7 +74,7 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgl
 
 ## Parring {#pairing}
 
-**Parring** med **Generer sætning** eller **Indtast sætning**, trinkortene, denne instans' navn og **Kendte adresser**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, gruppens medlemmer og **ZFS-server uden BombVault** til et replikamål over SSH. Se [Parring af instanser](offsite-recovery.md#pairing) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
+**Parring** med **Generer sætning** eller **Indtast sætning**, trinkortene, denne instans' navn, de enheder, der venter på **Godkend**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, gruppens medlemmer og **ZFS-server uden BombVault** til et replikamål over SSH. Se [Parring af instanser](offsite-recovery.md#pairing) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrationer {#integrations}
 

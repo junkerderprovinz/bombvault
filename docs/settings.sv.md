@@ -74,7 +74,7 @@ Flera saker kräver ett inloggningslösenord, till exempel återställningskitet
 
 ## Parkoppling {#pairing}
 
-**Parkoppling** med **Skapa fras** eller **Ange fras**, stegkorten, den här instansens namn och **Kända adresser**, kortet **Relä** med sina fyra former och **Vad reläet ser**, gruppens medlemmar, och **ZFS-server utan BombVault** för ett replikamål över SSH. Se [Parkoppla instanser](offsite-recovery.md#pairing) och [Skicka till en ZFS-server](zfs-datasets.md#replica-push).
+**Parkoppling** med **Skapa fras** eller **Ange fras**, stegkorten, den här instansens namn, enheterna som väntar på **Godkänn**, kortet **Relä** med sina fyra former och **Vad reläet ser**, gruppens medlemmar, och **ZFS-server utan BombVault** för ett replikamål över SSH. Se [Parkoppla instanser](offsite-recovery.md#pairing) och [Skicka till en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrationer {#integrations}
 

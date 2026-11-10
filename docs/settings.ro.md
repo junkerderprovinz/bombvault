@@ -74,7 +74,7 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și
 
 ## Împerechere {#pairing}
 
-**Împerechere** cu **Generează frază** sau **Introdu frază**, cardurile cu pași, numele acestei instanțe și **Adrese cunoscute**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, membrii grupului și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
+**Împerechere** cu **Generează frază** sau **Introdu frază**, cardurile cu pași, numele acestei instanțe, dispozitivele care așteaptă **Aprobă**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, membrii grupului și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrări {#integrations}
 

@@ -74,7 +74,7 @@ Plex, Jellyfin, Emby가 스트리밍하는 동안 업로드 제한을 낮추는 
 
 ## 페어링 {#pairing}
 
-**문구 생성** 또는 **문구 입력**이 있는 **페어링**, 단계 카드, 이 인스턴스의 이름과 **알려진 주소**, 네 가지 형태와 **릴레이가 보는 것**이 있는 **릴레이** 카드, 그룹의 구성원, 그리고 SSH로 복제 대상을 쓰는 **BombVault 없는 ZFS 서버**입니다. [인스턴스 페어링](offsite-recovery.md#pairing)과 [ZFS 서버로 푸시](zfs-datasets.md#replica-push)를 참고하세요.
+**문구 생성** 또는 **문구 입력**이 있는 **페어링**, 단계 카드, 이 인스턴스의 이름, **승인**을 기다리는 기기, 네 가지 형태와 **릴레이가 보는 것**이 있는 **릴레이** 카드, 그룹의 구성원, 그리고 SSH로 복제 대상을 쓰는 **BombVault 없는 ZFS 서버**입니다. [인스턴스 페어링](offsite-recovery.md#pairing)과 [ZFS 서버로 푸시](zfs-datasets.md#replica-push)를 참고하세요.
 
 ## 연동 {#integrations}
 

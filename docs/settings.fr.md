@@ -74,7 +74,7 @@ Plusieurs choses demandent un mot de passe de connexion, comme le kit de récup�
 
 ## Appairage {#pairing}
 
-**Appairage** avec **Générer une phrase** ou **Saisir une phrase**, les cartes d'étapes, le nom de cette instance et les **Adresses connues**, la carte **Relais** avec ses quatre formes et **Ce que voit le relais**, les membres du groupe, et **Serveur ZFS sans BombVault** pour une cible de réplique via SSH. Voir [Appairage des instances](offsite-recovery.md#pairing) et [Envoyer vers un serveur ZFS](zfs-datasets.md#replica-push).
+**Appairage** avec **Générer une phrase** ou **Saisir une phrase**, les cartes d'étapes, le nom de cette instance, les appareils qui attendent **Approuver**, la carte **Relais** avec ses quatre formes et **Ce que voit le relais**, les membres du groupe, et **Serveur ZFS sans BombVault** pour une cible de réplique via SSH. Voir [Appairage des instances](offsite-recovery.md#pairing) et [Envoyer vers un serveur ZFS](zfs-datasets.md#replica-push).
 
 ## Intégrations {#integrations}
 

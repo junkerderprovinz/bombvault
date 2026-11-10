@@ -74,7 +74,7 @@ Flere ting krever et innloggingspassord, som gjenopprettingssettet og nøkkeldep
 
 ## Paring {#pairing}
 
-**Paring** med **Generer frase** eller **Angi frase**, trinnkortene, navnet på denne instansen og **Kjente adresser**, kortet **Relay** med sine fire former og **Hva relayet ser**, medlemmene i gruppen, og **ZFS-server uten BombVault** for et replikamål over SSH. Se [Paring av instanser](offsite-recovery.md#pairing) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
+**Paring** med **Generer frase** eller **Angi frase**, trinnkortene, navnet på denne instansen, enhetene som venter på **Godkjenn**, kortet **Relay** med sine fire former og **Hva relayet ser**, medlemmene i gruppen, og **ZFS-server uten BombVault** for et replikamål over SSH. Se [Paring av instanser](offsite-recovery.md#pairing) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrasjoner {#integrations}
 
