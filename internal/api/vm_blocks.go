@@ -84,7 +84,7 @@ type vmBlockPlan struct {
 // libvirt backup API and prepares that path.
 func (s *Service) planBlockBackup(ctx context.Context, name string, domain virshcli.DomainInfo, diskPaths []string, zvols int) vmBlockPlan {
 	bb, okVirsh := s.virsh.(virshcli.BlockBackups)
-	_, okEngine := s.engine.(vmBlockEngine)
+	_, okEngine := engineAs[vmBlockEngine](s.engine)
 	fwd, okFwd := s.ssh.(unixForwarder)
 	switch {
 	case !okVirsh || !okEngine:
@@ -527,7 +527,8 @@ func (r *vmBlockRestic) Manifest(ctx context.Context, repo, snapshotID string) (
 }
 
 func (r *vmBlockRestic) Nodes(ctx context.Context, repo, snapshotID, dir string) ([]backup.BlockNode, error) {
-	nodes, err := r.engine.(vmBlockEngine).LsTimes(ctx, repo, snapshotID, dir, r.mode)
+	b, _ := engineAs[vmBlockEngine](r.engine)
+	nodes, err := b.LsTimes(ctx, repo, snapshotID, dir, r.mode)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +544,8 @@ func (r *vmBlockRestic) Nodes(ctx context.Context, repo, snapshotID, dir string)
 func (r *vmBlockRestic) BackupDir(ctx context.Context, repo, dir, parent string, tags []string) (backup.BlockBackup, error) {
 	var sum restic.Summary
 	err := r.healed(ctx, repo, func() (err error) {
-		sum, err = r.engine.(vmBlockEngine).BackupDirFrom(ctx, repo, dir, parent, withTags(tags, r.extraTags), r.mode)
+		b, _ := engineAs[vmBlockEngine](r.engine)
+		sum, err = b.BackupDirFrom(ctx, repo, dir, parent, withTags(tags, r.extraTags), r.mode)
 		return err
 	})
 	if err != nil {

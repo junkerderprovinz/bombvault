@@ -33,3 +33,27 @@ func TestTheKeysAndTheIDOfARepositoryReachThroughTheOwnDataGuard(t *testing.T) {
 		t.Error("the id of a repository cannot be read")
 	}
 }
+
+// blockEngine is an engine with the changed-block methods of restic.Restic.
+type blockEngine struct {
+	ResticEngine
+}
+
+func (blockEngine) BackupDirFrom(context.Context, string, string, string, []string, restic.Mode) (restic.Summary, error) {
+	return restic.Summary{}, nil
+}
+
+func (blockEngine) LsTimes(context.Context, string, string, string, restic.Mode) ([]restic.NodeTime, error) {
+	return nil, nil
+}
+
+func TestTheChangedBlockMethodsReachThroughTheOwnDataGuard(t *testing.T) {
+	s := NewService(config.Config{AppKey: oldKey}, nil, nil, nil, blockEngine{})
+	t.Cleanup(s.stopForeignJanitor)
+	if _, ok := engineAs[vmBlockEngine](s.engine); !ok {
+		t.Error("a VM cannot be read block by block behind the guard")
+	}
+	if _, ok := engineAs[sharedEngine](s.engine); ok {
+		t.Error("an engine without keys hands out keys behind the guard")
+	}
+}
