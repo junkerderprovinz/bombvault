@@ -63,7 +63,7 @@ type sharedEngine interface {
 }
 
 func (s *Service) sharedEngine() (sharedEngine, error) {
-	e, ok := s.engine.(sharedEngine)
+	e, ok := engineAs[sharedEngine](s.engine)
 	if !ok {
 		return nil, errors.New("this build of restic cannot hand out keys")
 	}

@@ -49,7 +49,7 @@ type peerSharedHolderAnswer struct {
 
 // sharedRepoID reads the id of sr the way this server reaches it.
 func (s *Service) sharedRepoID(ctx context.Context, sr store.SharedRepo) (string, error) {
-	ider, ok := s.engine.(repoIdentifier)
+	ider, ok := engineAs[repoIdentifier](s.engine)
 	if !ok {
 		return "", errors.New("this build of restic cannot read a repository's id")
 	}

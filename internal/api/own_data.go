@@ -208,3 +208,20 @@ func dataAliases(r io.Reader, data, host string, dirs func(string) []string) []s
 	}
 	return out
 }
+
+// engineAs finds the capability T on eng, or below the own-data guard on the
+// engine it guards. The guard passes on only the methods of ResticEngine, and
+// what a shared repository needs beyond them writes no files.
+func engineAs[T any](eng ResticEngine) (T, bool) {
+	if t, ok := eng.(T); ok {
+		return t, true
+	}
+	if g, ok := eng.(interface{ guarded() ResticEngine }); ok {
+		t, ok := g.guarded().(T)
+		return t, ok
+	}
+	var zero T
+	return zero, false
+}
+
+func (g ownDataGuard) guarded() ResticEngine { return g.ResticEngine }
