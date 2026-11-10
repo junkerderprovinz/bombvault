@@ -33,6 +33,10 @@ const sharedProofUser = "bombvault-holder-check"
 // upkeep removes it, so that a check still running keeps its key.
 var sharedProofKeyAge = time.Hour
 
+// sharedHolderWork bounds what a member does on a holder's word. It ends
+// before the holder says it again.
+const sharedHolderWork = 2 * time.Minute
+
 // sharedCheckTTL is how long a check stays open. It ends well before the
 // upkeep may remove its key.
 const sharedCheckTTL = 30 * time.Minute
@@ -127,7 +131,12 @@ func (s *Service) handlePeerSharedHolder(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusForbidden, failEnvelope(err))
 		return
 	}
-	ans, err := s.takeSharedHolder(r.Context(), holder, in)
+	// Over a slow link restic needs longer than the holder waits for a direct
+	// answer. The check or the handover this call starts is still there when
+	// the holder asks again, so it runs to the end on its own.
+	ctx, cancel := context.WithTimeout(s.StopContext(), sharedHolderWork)
+	defer cancel()
+	ans, err := s.takeSharedHolder(ctx, holder, in)
 	switch {
 	case errors.Is(err, errSharedRepoIDUnread):
 		ans = peerSharedHolderAnswer{Later: true, Error: err.Error()}

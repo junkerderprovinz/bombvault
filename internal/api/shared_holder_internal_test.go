@@ -2,12 +2,17 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
+	"github.com/junkerderprovinz/bombvault/internal/relay"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -300,5 +305,69 @@ func TestAMemberLeavesThroughTheServerThatTookItsSharedRepositoryOver(t *testing
 	}
 	if !slices.Contains(htpasswdUsers(t, nas), j.User) {
 		t.Error("nas took tower's login away")
+	}
+}
+
+// slowKeyEngine adds a key only once release is closed, as restic does over a
+// slow link, and gives up when its context ends.
+type slowKeyEngine struct {
+	*identifiedEngine
+	once    sync.Once
+	started chan struct{}
+	release chan struct{}
+}
+
+func (e *slowKeyEngine) AddKey(ctx context.Context, repo string, m restic.Mode, password, host, user string) error {
+	e.once.Do(func() { close(e.started) })
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-e.release:
+	}
+	return e.identifiedEngine.AddKey(ctx, repo, m, password, host, user)
+}
+
+func TestAMemberFinishesTheCheckAfterTheHolderStoppedWaiting(t *testing.T) {
+	nas, tower, cube, _, ring := heldByCube(t, "5f3c0a1e", true)
+	towerRepo := joinOf(t, tower, store.SharedJoinOut, nas).Repo
+	slow := &slowKeyEngine{identifiedEngine: tower.svc.engine.(*identifiedEngine), started: make(chan struct{}), release: make(chan struct{})}
+	tower.svc.engine = slow
+	word := peerSharedHolder{RepoID: "5f3c0a1e"}
+	var err error
+	if word.peerProof, err = cube.svc.signCall(keydeposit.ProofSharedHolder, tower.id(t), word.signed()); err != nil {
+		t.Fatal(err)
+	}
+	body, err := json.Marshal(word)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// The call comes straight from cube, whose connection closes when it
+	// stops waiting.
+	ctx, cancel := context.WithCancel(context.Background())
+	answered := make(chan struct{})
+	go func() {
+		defer close(answered)
+		tower.svc.servePeer(ctx, relay.ProxyCall{Method: http.MethodPost, Path: "/api/group/peer/shared-holder", Body: body, Sender: cube.id(t)})
+	}()
+	<-slow.started
+	cancel()
+	select {
+	case <-answered:
+	case <-time.After(200 * time.Millisecond):
+	}
+	close(slow.release)
+	<-answered
+	if n := proofKeys(ring); n != 1 {
+		t.Fatalf("%d keys of checks after cube stopped waiting, want the one tower added", n)
+	}
+
+	cube.svc.tellSharedHolders(context.Background())
+
+	if got := ownerAt(t, tower, towerRepo).Owner; got != cube.id(t) {
+		t.Errorf("tower names %s as the holder, want cube", got)
+	}
+	if n := proofKeys(ring); n != 0 {
+		t.Errorf("%d keys of checks are left in the repository", n)
 	}
 }
