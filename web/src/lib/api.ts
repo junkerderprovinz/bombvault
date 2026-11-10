@@ -5994,6 +5994,8 @@ export interface RecoveryKitLocation {
   name?: string;
   location: string;
   folder?: string;
+  /** The server that wrote the kit held this shared repository. */
+  held?: boolean;
 }
 
 /** What an uploaded recovery kit says. Its key stays on the server. `hasKey`

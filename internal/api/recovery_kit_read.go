@@ -85,6 +85,10 @@ type kitLocation struct {
 	Owner    string               `json:"-"`
 	Sections []string             `json:"sections,omitempty"`
 	Others   []store.SharedMember `json:"-"`
+	// Held says the server that wrote the kit held the shared repository, and
+	// Server is the rest-server it ran for the others.
+	Held   bool            `json:"held,omitempty"`
+	Server kitSharedServer `json:"-"`
 }
 
 // recoveryKit is what a recovery kit says. The keys stay on the server.

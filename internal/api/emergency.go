@@ -818,7 +818,7 @@ func (s *Service) AttachEmergencyPlaces(ctx context.Context, id string) error {
 			ref = in.id
 		}
 		if p.Kind == kitShared {
-			recorded, made, err := s.attachSharedPlace(p, ref)
+			recorded, made, err := s.attachSharedPlace(ctx, p, ref)
 			if err != nil {
 				return err
 			}
