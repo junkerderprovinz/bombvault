@@ -297,6 +297,10 @@ type Service struct {
 	// receiverMu keeps two partners asking for a login at once from
 	// rewriting the receiver's htpasswd file over each other.
 	receiverMu sync.Mutex
+	// sharedCopies keeps copies to shared repositories out of their owners'
+	// prunes, and sharedUpkeepMu lets one upkeep of them run at a time.
+	sharedCopies   sharedCopies
+	sharedUpkeepMu sync.Mutex
 	// roleSendMu lets one call about this instance's own role requests go
 	// out at a time, so a withdrawal cannot overtake the ask it takes back.
 	roleSendMu sync.Mutex
