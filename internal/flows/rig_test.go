@@ -102,6 +102,8 @@ type bombvault struct {
 	flash string
 	base  string
 	proc  *exec.Cmd
+	// bin is the binary proc runs.
+	bin string
 	// exited closes when proc has ended, with exitErr set.
 	exited  chan struct{}
 	exitErr error
@@ -206,7 +208,7 @@ func (b *bombvault) start(bin string) {
 	if err := cmd.Start(); err != nil {
 		b.t.Fatalf("start %s: %v", bin, err)
 	}
-	b.proc, b.exited = cmd, make(chan struct{})
+	b.proc, b.bin, b.exited = cmd, bin, make(chan struct{})
 	go func() {
 		b.exitErr = cmd.Wait()
 		close(b.exited)
@@ -249,6 +251,14 @@ func (b *bombvault) stop() {
 		_ = b.proc.Process.Kill()
 		<-b.exited
 		b.t.Errorf("the server did not stop within 30 seconds of being asked")
+	}
+	stragglers := endStragglers(b.root, b.proc.Process)
+	// The releases an update starts from leave restic running as well, and
+	// only this tree is held to it.
+	if b.bin == currentBinary {
+		for _, cmd := range stragglers {
+			b.t.Errorf("the server stopped and left %s running", cmd)
+		}
 	}
 	endGroup(b.proc.Process)
 	b.proc = nil
