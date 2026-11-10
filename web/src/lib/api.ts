@@ -6656,6 +6656,54 @@ export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { se
 
 export const RECEIVER_TEMPLATE_URL = "/api/receiver/server/template";
 
+/** The rules the owner of a shared repository keeps it by. Until keepSet,
+ *  each section ages by the owner's own off-site rules. */
+export interface SharedUpkeepRules {
+  keep: RetentionKeep;
+  keepSet: boolean;
+  pruneCadence: string;
+  pruneHours: number;
+  maxUnused: number;
+  checkSubset: number;
+}
+
+/** What a shared repository holds and what each server's backups use of it. */
+export interface SharedSpace {
+  at: number;
+  total: number;
+  hosts: { host: string; name: string; bytes: number }[];
+}
+
+/** A shared repository this server is in, with its upkeep. A member sees the
+ *  space alone; the owner sees its rules and last passes as well. */
+export interface SharedUpkeep {
+  id: string;
+  location: string;
+  role: "owner" | "member";
+  members: { host: string; name: string }[];
+  rules?: SharedUpkeepRules;
+  forget?: { at: number; forgotten: number; skipped?: string[]; unknown?: string[]; error?: string };
+  prune?: { at: number; seconds: number; postponed?: string[]; error?: string; checked: boolean; checkError?: string };
+  space?: SharedSpace;
+  /** When the next tidy-up window opens, in Unix seconds. */
+  nextWindow?: number;
+  running: boolean;
+}
+
+export function getSharedUpkeep(): Promise<OkEnvelope & { repos?: SharedUpkeep[] }> {
+  return fetchJSON("/api/shared-repos/upkeep");
+}
+
+export function setSharedUpkeepRules(id: string, rules: SharedUpkeepRules): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/upkeep`, { method: "PUT", body: JSON.stringify(rules) });
+}
+
+/** Starts a tidy-up of the shared repository at once. It runs on in the
+ *  background, and the listing says while it does. */
+export function runSharedUpkeep(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/upkeep/run`, { method: "POST" });
+}
+
 // Pairing group API. Instances that share a twelve-word phrase form a group;
 // members on one network talk directly, the others over a relay, and every
 // call between them is sealed under a key derived from the phrase.

@@ -61,6 +61,20 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.0",
+    changes: [
+      // The section sits in the receiving server's window, which the button
+      // on this server's own card opens.
+      {
+        id: "shared-upkeep",
+        page: "/instances",
+        where: ["instances.title"],
+        way: [...TO_INSTANCES, "receiver-server"],
+        text: "whatsNew.sharedUpkeep",
+      },
+    ],
+  },
+  {
     version: "10.5.4",
     changes: [
       { id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" },
