@@ -5249,6 +5249,7 @@ const ro: Partial<Translations> = {
   "shared.takeBackAsk": "Un singur server ar trebui să găzduiască depozitul comun. Recuperează-l doar dacă {name} nu ar trebui să-l găzduiască, de exemplu pentru că kitul de recuperare a fost preluat din greșeală pe un al doilea server. Acest server anunță apoi {name} și membrii.",
   "shared.takenBack": "Acest server găzduiește din nou depozitul comun și le dă de știre celorlalte.",
   "shared.stillToTell": "Încă nu știu că acum acest server găzduiește depozitul: {names}. Află imediat ce grupul ajunge la ele.",
+  "shared.proofKeys": "one={n} cheie de la verificarea altui server se află încă în depozit. Acest server o șterge la următoarea întreținere.|few={n} chei de la verificările altor servere se află încă în depozit. Acest server le șterge la următoarea întreținere.|other={n} de chei de la verificările altor servere se află încă în depozit. Acest server le șterge la următoarea întreținere.",
   "shared.removed": "{name} nu mai face parte din depozitul comun.",
   "shared.member.title": "Depozite comune",
   "shared.member.hint": "Depozite pe care le găzduiesc alte instanțe din grupul tău și în care copiază acest server sau în care a cerut să intre.",

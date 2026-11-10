@@ -5258,6 +5258,7 @@ const gl: Partial<Translations> = {
   "shared.takeBackAsk": "Só un servidor debería gardar o repositorio compartido. Recupérao só se {name} non debe gardalo, por exemplo porque alguén asumiu por erro o seu kit de recuperación nun segundo servidor. Despois este servidor avisa a {name} e aos membros.",
   "shared.takenBack": "Este servidor garda de novo o repositorio compartido e avisa aos demais.",
   "shared.stillToTell": "Aínda non saben que este servidor garda agora o repositorio: {names}. Saberano en canto o grupo chegue a eles.",
+  "shared.proofKeys": "one=No repositorio aínda queda {n} chave da comprobación doutro servidor. Este servidor eliminaraa a próxima vez que faga limpeza.|other=No repositorio aínda quedan {n} chaves de comprobacións doutros servidores. Este servidor eliminaraas a próxima vez que faga limpeza.",
   "shared.removed": "{name} xa non está no repositorio compartido.",
   "shared.member.title": "Repositorios compartidos",
   "shared.member.hint": "Repositorios que teñen outras instancias do teu grupo e nos que copia este servidor, ou aos que pediu unirse.",

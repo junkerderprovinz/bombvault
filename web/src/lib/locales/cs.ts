@@ -5246,6 +5246,7 @@ const cs: Partial<Translations> = {
   "shared.takeBackAsk": "Sdílený repozitář by měl držet jen jeden server. Vezmi si ho zpět jen tehdy, když ho server {name} držet nemá, třeba proto, že jeho sadu pro obnovu omylem převzal druhý server. Tento server to pak oznámí serveru {name} i členům.",
   "shared.takenBack": "Tento server zase drží sdílený repozitář a dává o tom vědět ostatním.",
   "shared.stillToTell": "Ještě nevědí, že repozitář teď drží tento server: {names}. Dozvědí se to, jakmile je skupina zastihne.",
+  "shared.proofKeys": "one=V repozitáři je ještě {n} klíč z kontroly jiného serveru. Tento server ho odstraní, až bude příště uklízet.|few=V repozitáři jsou ještě {n} klíče z kontrol jiných serverů. Tento server je odstraní, až bude příště uklízet.|many=V repozitáři je ještě {n} klíče z kontrol jiných serverů. Tento server je odstraní, až bude příště uklízet.|other=V repozitáři je ještě {n} klíčů z kontrol jiných serverů. Tento server je odstraní, až bude příště uklízet.",
   "shared.removed": "Instance {name} už ve sdíleném repozitáři není.",
   "shared.member.title": "Sdílené repozitáře",
   "shared.member.hint": "Repozitáře jiných instancí tvé skupiny, do kterých tento server kopíruje nebo o připojení k nimž požádal.",

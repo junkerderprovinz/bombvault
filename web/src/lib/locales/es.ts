@@ -5246,6 +5246,7 @@ const es: Partial<Translations> = {
   "shared.takeBackAsk": "Solo un servidor debería tener el repositorio compartido. Recupéralo solo si {name} no debe tenerlo, por ejemplo porque su kit de recuperación se adoptó por error en un segundo servidor. Después este servidor se lo dice a {name} y a los miembros.",
   "shared.takenBack": "Este servidor vuelve a tener el repositorio compartido y se lo hace saber a los demás.",
   "shared.stillToTell": "Aún no saben que ahora este servidor tiene el repositorio: {names}. Se enterarán en cuanto el grupo llegue a ellos.",
+  "shared.proofKeys": "one=En el repositorio aún queda {n} clave de la comprobación de otro servidor. Este servidor la eliminará la próxima vez que haga limpieza.|many=En el repositorio aún quedan {n} de claves de comprobaciones de otros servidores. Este servidor las eliminará la próxima vez que haga limpieza.|other=En el repositorio aún quedan {n} claves de comprobaciones de otros servidores. Este servidor las eliminará la próxima vez que haga limpieza.",
   "shared.removed": "{name} ya no está en el repositorio compartido.",
   "shared.member.title": "Repositorios compartidos",
   "shared.member.hint": "Repositorios de otras instancias de tu grupo en los que copia este servidor o a los que ha pedido unirse.",

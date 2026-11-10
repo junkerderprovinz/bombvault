@@ -5245,6 +5245,7 @@ const pl: Partial<Translations> = {
   "shared.takeBackAsk": "Wspólne repozytorium powinien prowadzić tylko jeden serwer. Odzyskaj je tylko wtedy, gdy serwer {name} nie powinien go prowadzić, na przykład dlatego, że zestaw odzyskiwania został przez pomyłkę przejęty na drugim serwerze. Ten serwer da wtedy znać serwerowi {name} i członkom.",
   "shared.takenBack": "Ten serwer znów prowadzi wspólne repozytorium i daje znać pozostałym.",
   "shared.stillToTell": "Jeszcze nie wiedzą, że teraz to ten serwer prowadzi repozytorium: {names}. Dowiedzą się, gdy tylko grupa do nich dotrze.",
+  "shared.proofKeys": "one={n} klucz pozostały po sprawdzeniu innego serwera wciąż jest w repozytorium. Ten serwer usunie go przy najbliższych porządkach.|few={n} klucze pozostałe po sprawdzeniu innych serwerów wciąż są w repozytorium. Ten serwer usunie je przy najbliższych porządkach.|many={n} kluczy pozostałych po sprawdzeniu innych serwerów wciąż jest w repozytorium. Ten serwer usunie je przy najbliższych porządkach.|other={n} klucza pozostałego po sprawdzeniu innych serwerów wciąż jest w repozytorium. Ten serwer usunie je przy najbliższych porządkach.",
   "shared.removed": "{name} nie należy już do wspólnego repozytorium.",
   "shared.member.title": "Wspólne repozytoria",
   "shared.member.hint": "Repozytoria, które prowadzą inne instancje twojej grupy i do których ten serwer kopiuje albo poprosił o dołączenie.",

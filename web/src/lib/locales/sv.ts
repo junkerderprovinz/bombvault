@@ -5247,6 +5247,7 @@ const sv: Partial<Translations> = {
   "shared.takeBackAsk": "Bara en server bör hålla det gemensamma arkivet. Ta bara tillbaka det om {name} inte ska hålla det, till exempel för att dess återställningskit av misstag togs över på en andra server. Den här servern säger sedan till {name} och medlemmarna.",
   "shared.takenBack": "Den här servern håller det gemensamma arkivet igen och säger till de andra.",
   "shared.stillToTell": "Har ännu inte fått veta att den här servern håller arkivet nu: {names}. De får veta det så snart gruppen når dem.",
+  "shared.proofKeys": "one={n} nyckel från en kontroll av en annan server finns kvar i arkivet. Den här servern tar bort den nästa gång den städar.|other={n} nycklar från kontroller av andra servrar finns kvar i arkivet. Den här servern tar bort dem nästa gång den städar.",
   "shared.removed": "{name} är inte längre med i det gemensamma arkivet.",
   "shared.member.title": "Gemensamma arkiv",
   "shared.member.hint": "Arkiv som andra instanser i din grupp har och som den här servern kopierar till eller har bett om att få gå med i.",

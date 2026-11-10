@@ -5248,6 +5248,7 @@ const no: Partial<Translations> = {
   "shared.takeBackAsk": "Bare én server bør ha det felles repositoriet. Hent det tilbake bare hvis {name} ikke skal ha det, for eksempel fordi gjenopprettingssettet ved en feil ble tatt over på en annen server. Denne serveren sier da fra til {name} og medlemmene.",
   "shared.takenBack": "Denne serveren har det felles repositoriet igjen og sier fra til de andre.",
   "shared.stillToTell": "Har ennå ikke fått vite at denne serveren har repositoriet nå: {names}. De får beskjed så snart gruppen når dem.",
+  "shared.proofKeys": "one={n} nøkkel fra en kontroll av en annen server ligger fortsatt i repositoriet. Denne serveren fjerner den neste gang den rydder opp.|other={n} nøkler fra kontroller av andre servere ligger fortsatt i repositoriet. Denne serveren fjerner dem neste gang den rydder opp.",
   "shared.removed": "{name} er ikke lenger med i det felles repositoriet.",
   "shared.member.title": "Felles repositorier",
   "shared.member.hint": "Repositorier som andre instanser i gruppen din har, og som denne serveren kopierer til eller har bedt om å bli med i.",

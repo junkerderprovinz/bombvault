@@ -5238,6 +5238,7 @@ const ko: Partial<Translations> = {
   "shared.takeBackAsk": "공유 저장소는 한 서버만 보관해야 합니다. {name}에서 보관하면 안 되는 경우에만 되찾으세요. 예를 들어 복구 키트를 실수로 두 번째 서버에서 이어받은 경우입니다. 되찾으면 이 서버가 {name}과(와) 구성원에게 알립니다.",
   "shared.takenBack": "이 서버가 다시 공유 저장소를 보관하며, 다른 서버에도 알립니다.",
   "shared.stillToTell": "이 서버가 이제 저장소를 보관한다는 소식을 아직 듣지 못한 서버: {names}. 그룹을 통해 연결되는 대로 알립니다.",
+  "shared.proofKeys": "다른 서버를 확인할 때 생긴 키 {n}개가 아직 저장소에 남아 있습니다. 이 서버가 다음에 정리할 때 삭제합니다.",
   "shared.removed": "{name}이(가) 공유 저장소에서 빠졌습니다.",
   "shared.member.title": "참여 중인 공유 저장소",
   "shared.member.hint": "그룹의 다른 인스턴스가 운영하는 저장소 중 이 서버가 복사하거나 참여를 요청한 저장소입니다.",

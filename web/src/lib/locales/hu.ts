@@ -5248,6 +5248,7 @@ const hu: Partial<Translations> = {
   "shared.takeBackAsk": "Csak egy szervernek kellene tartania a közös tárolót. Csak akkor vedd vissza, ha a(z) {name} szervernek nem kellene tartania, például mert a helyreállítási csomagját tévedésből egy második szerveren vették át. Ez a szerver ezután szól a(z) {name} szervernek és a tagoknak.",
   "shared.takenBack": "Ez a szerver ismét tartja a közös tárolót, és szól a többieknek.",
   "shared.stillToTell": "Még nem hallották, hogy most ez a szerver tartja a tárolót: {names}. Megtudják, amint a csoport eléri őket.",
+  "shared.proofKeys": "one=A tárolóban még ott van {n} kulcs egy másik szerver ellenőrzéséből. Ez a szerver a következő rendrakáskor eltávolítja.|other=A tárolóban még ott van {n} kulcs más szerverek ellenőrzéseiből. Ez a szerver a következő rendrakáskor eltávolítja őket.",
   "shared.removed": "A(z) {name} már nincs a közös tárolóban.",
   "shared.member.title": "Közös tárolók",
   "shared.member.hint": "A csoportod más példányainak tárolói, amelyekbe ez a szerver másol, vagy amelyekhez csatlakozást kért.",

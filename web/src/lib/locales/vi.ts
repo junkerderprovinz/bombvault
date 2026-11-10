@@ -5238,6 +5238,7 @@ const vi: Partial<Translations> = {
   "shared.takeBackAsk": "Chỉ nên có một máy chủ giữ kho chung. Chỉ lấy lại nếu {name} không nên giữ kho, chẳng hạn vì bộ khôi phục của nó bị nhận nhầm trên một máy chủ thứ hai. Sau đó máy chủ này sẽ báo cho {name} và các thành viên.",
   "shared.takenBack": "Máy chủ này lại giữ kho chung và đang báo cho các máy chủ khác.",
   "shared.stillToTell": "Chưa biết giờ máy chủ này giữ kho: {names}. Chúng sẽ được báo ngay khi nhóm liên lạc được.",
+  "shared.proofKeys": "Kho vẫn còn {n} khóa sót lại từ việc kiểm tra máy chủ khác. Máy chủ này sẽ xóa chúng ở lần dọn dẹp tới.",
   "shared.removed": "{name} không còn trong kho chung.",
   "shared.member.title": "Các kho chung",
   "shared.member.hint": "Những kho do các phiên bản khác trong nhóm của bạn giữ, mà máy chủ này sao chép vào hoặc đã xin tham gia.",

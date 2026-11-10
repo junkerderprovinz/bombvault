@@ -5258,6 +5258,7 @@ const ms: Partial<Translations> = {
   "shared.takeBackAsk": "Hanya satu pelayan patut memegang repositori bersama. Ambil semula hanya jika {name} tidak patut memegangnya, contohnya kerana kit pemulihan diambil alih pada pelayan kedua secara tidak sengaja. Pelayan ini kemudian akan memberitahu {name} dan para ahli.",
   "shared.takenBack": "Pelayan ini memegang repositori bersama semula dan memberitahu yang lain.",
   "shared.stillToTell": "Belum tahu bahawa pelayan ini kini memegang repositori itu: {names}. Mereka akan diberitahu sebaik sahaja kumpulan dapat menghubungi mereka.",
+  "shared.proofKeys": "{n} kunci yang tinggal daripada semakan pelayan lain masih ada dalam repositori. Pelayan ini akan membuangnya pada penyelenggaraan seterusnya.",
   "shared.removed": "{name} sudah keluar dari repositori bersama.",
   "shared.member.title": "Repositori bersama",
   "shared.member.hint": "Repositori yang dipegang oleh instans lain dalam kumpulan anda dan disalin oleh pelayan ini, atau yang diminta untuk disertai.",

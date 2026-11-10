@@ -5257,6 +5257,7 @@ const lt: Partial<Translations> = {
   "shared.takeBackAsk": "Bendrą saugyklą turėtų laikyti tik vienas serveris. Susigrąžink ją tik tada, jei {name} neturėtų jos laikyti, pavyzdžiui, jei atkūrimo rinkinys per klaidą buvo perimtas antrame serveryje. Tada šis serveris praneš egzemplioriui {name} ir nariams.",
   "shared.takenBack": "Šis serveris vėl laiko bendrą saugyklą ir praneša apie tai kitiems.",
   "shared.stillToTell": "Dar negirdėjo, kad dabar saugyklą laiko šis serveris: {names}. Jiems bus pranešta, kai tik grupė juos pasieks.",
+  "shared.proofKeys": "one={n} raktas, likęs po kito serverio patikros, dar yra saugykloje. Šis serveris jį pašalins, kai kitą kartą tvarkys saugyklą.|few={n} raktai, likę po kitų serverių patikrų, dar yra saugykloje. Šis serveris juos pašalins, kai kitą kartą tvarkys saugyklą.|other={n} raktų, likusių po kitų serverių patikrų, dar yra saugykloje. Šis serveris juos pašalins, kai kitą kartą tvarkys saugyklą.",
   "shared.removed": "Egzemplioriaus {name} nebėra bendroje saugykloje.",
   "shared.member.title": "Bendros saugyklos",
   "shared.member.hint": "Kitų tavo grupės egzempliorių saugyklos, į kurias šis serveris kopijuoja arba prie kurių paprašė prisijungti.",

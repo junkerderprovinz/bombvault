@@ -5257,6 +5257,7 @@ const is: Partial<Translations> = {
   "shared.takeBackAsk": "Aðeins einn þjónn ætti að hýsa sameiginlega geymslusafnið. Taktu það aðeins til baka ef {name} á ekki að hýsa það, til dæmis af því að endurheimtarpakki hans var tekinn yfir á öðrum þjóni fyrir mistök. Þessi þjónn lætur þá {name} og meðlimina vita.",
   "shared.takenBack": "Þessi þjónn hýsir sameiginlega geymslusafnið aftur og lætur hina vita.",
   "shared.stillToTell": "Eiga eftir að frétta að þessi þjónn hýsi nú geymslusafnið: {names}. Þeir fá að vita það um leið og hópurinn nær til þeirra.",
+  "shared.proofKeys": "one={n} lykill frá athugun á öðrum þjóni er enn í geymslusafninu. Þessi þjónn fjarlægir hann næst þegar hann tekur til.|other={n} lyklar frá athugunum á öðrum þjónum eru enn í geymslusafninu. Þessi þjónn fjarlægir þá næst þegar hann tekur til.",
   "shared.removed": "Tilvikið {name} er ekki lengur í sameiginlega geymslusafninu.",
   "shared.member.title": "Sameiginleg geymslusöfn",
   "shared.member.hint": "Geymslusöfn sem önnur tilvik í hópnum þínum halda og þessi þjónn afritar í, eða hefur beðið um aðild að.",

@@ -5258,6 +5258,7 @@ const sk: Partial<Translations> = {
   "shared.takeBackAsk": "Spoločný repozitár by mal spravovať len jeden server. Vezmi si ho späť, len ak ho {name} spravovať nemá, napríklad preto, že jeho súpravu na obnovenie omylom prevzal druhý server. Tento server potom dá vedieť serveru {name} aj členom.",
   "shared.takenBack": "Tento server znova spravuje spoločný repozitár a dá vedieť ostatným.",
   "shared.stillToTell": "Ešte nevedia, že repozitár teraz spravuje tento server: {names}. Dozvedia sa to, len čo sa k nim skupina dostane.",
+  "shared.proofKeys": "one={n} kľúč z kontroly iného servera je ešte v repozitári. Tento server ho odstráni pri najbližšom upratovaní.|few={n} kľúče z kontrol iných serverov sú ešte v repozitári. Tento server ich odstráni pri najbližšom upratovaní.|many={n} kľúča z kontrol iných serverov je ešte v repozitári. Tento server ich odstráni pri najbližšom upratovaní.|other={n} kľúčov z kontrol iných serverov je ešte v repozitári. Tento server ich odstráni pri najbližšom upratovaní.",
   "shared.removed": "{name} už nie je v spoločnom repozitári.",
   "shared.member.title": "Spoločné repozitáre",
   "shared.member.hint": "Repozitáre iných inštancií tvojej skupiny, do ktorých tento server kopíruje alebo o pripojenie ku ktorým požiadal.",

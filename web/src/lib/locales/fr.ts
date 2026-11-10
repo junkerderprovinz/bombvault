@@ -5248,6 +5248,7 @@ const fr: Partial<Translations> = {
   "shared.takeBackAsk": "Un seul serveur devrait héberger le dépôt partagé. Ne le reprenez que si {name} ne doit pas l'héberger, par exemple parce que son kit de récupération a été repris par erreur sur un second serveur. Ce serveur prévient ensuite {name} et les membres.",
   "shared.takenBack": "Ce serveur héberge de nouveau le dépôt partagé et prévient les autres.",
   "shared.stillToTell": "Ne savent pas encore que ce serveur héberge désormais le dépôt : {names}. Ils seront prévenus dès que le groupe les joindra.",
+  "shared.proofKeys": "one=Il reste {n} clé dans le dépôt, issue de la vérification d'un autre serveur. Ce serveur la supprimera la prochaine fois qu'il fera le ménage.|many=Il reste {n} clés dans le dépôt, issues de vérifications d'autres serveurs. Ce serveur les supprimera la prochaine fois qu'il fera le ménage.|other=Il reste {n} clés dans le dépôt, issues de vérifications d'autres serveurs. Ce serveur les supprimera la prochaine fois qu'il fera le ménage.",
   "shared.removed": "{name} ne fait plus partie du dépôt partagé.",
   "shared.member.title": "Dépôts partagés",
   "shared.member.hint": "Les dépôts que d'autres instances de votre groupe hébergent et dans lesquels ce serveur copie, ou qu'il a demandé à rejoindre.",

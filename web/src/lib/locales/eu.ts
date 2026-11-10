@@ -5258,6 +5258,7 @@ const eu: Partial<Translations> = {
   "shared.takeBackAsk": "Zerbitzari bakar batek gorde beharko luke biltegi partekatua. Hartu atzera soilik {name} instantziak gorde behar ez badu, adibidez bere berreskuratze-kita nahi gabe bigarren zerbitzari batean bereganatu zelako. Ondoren zerbitzari honek {name} instantziari eta kideei jakinaraziko die.",
   "shared.takenBack": "Zerbitzari honek berriro gordetzen du biltegi partekatua, eta besteei jakinarazten die.",
   "shared.stillToTell": "Oraindik ez dakite zerbitzari honek gordetzen duela orain biltegia: {names}. Taldea haietara iristen denean jakingo dute.",
+  "shared.proofKeys": "one=Beste zerbitzari baten egiaztapeneko gako {n} dago oraindik biltegian. Zerbitzari honek hurrengo aldiz garbitzen duenean kenduko du.|other=Beste zerbitzari batzuen egiaztapenetako {n} gako daude oraindik biltegian. Zerbitzari honek hurrengo aldiz garbitzen duenean kenduko ditu.",
   "shared.removed": "{name} ez dago jada biltegi partekatuan.",
   "shared.member.title": "Biltegi partekatuak",
   "shared.member.hint": "Zure taldeko beste instantzia batzuek dituzten biltegiak, zerbitzari honek bertan kopiatzen duenak edo sartzeko eskatu duenak.",

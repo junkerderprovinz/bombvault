@@ -5248,6 +5248,7 @@ const fi: Partial<Translations> = {
   "shared.takeBackAsk": "Vain yhden palvelimen pitäisi ylläpitää jaettua arkistoa. Ota se takaisin vain, jos {name} ei ole oikea ylläpitäjä, esimerkiksi koska sen palautuspaketti otettiin vahingossa haltuun toisella palvelimella. Tämä palvelin ilmoittaa sitten asiasta palvelimelle {name} ja jäsenille.",
   "shared.takenBack": "Tämä palvelin ylläpitää taas jaettua arkistoa ja ilmoittaa siitä muille.",
   "shared.stillToTell": "Eivät ole vielä kuulleet, että tämä palvelin ylläpitää nyt arkistoa: {names}. Ne saavat tiedon heti, kun ryhmä tavoittaa ne.",
+  "shared.proofKeys": "one=Arkistossa on vielä {n} avain toisen palvelimen tarkistuksesta. Tämä palvelin poistaa sen, kun se seuraavan kerran siivoaa.|other=Arkistossa on vielä {n} avainta muiden palvelinten tarkistuksista. Tämä palvelin poistaa ne, kun se seuraavan kerran siivoaa.",
   "shared.removed": "{name} ei ole enää jaetussa arkistossa.",
   "shared.member.title": "Jaetut arkistot",
   "shared.member.hint": "Ryhmäsi muiden instanssien arkistot, joihin tämä palvelin kopioi tai joihin se on pyytänyt liittyä.",

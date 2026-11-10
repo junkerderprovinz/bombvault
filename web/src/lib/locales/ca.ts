@@ -5258,6 +5258,7 @@ const ca: Partial<Translations> = {
   "shared.takeBackAsk": "Només un servidor hauria de tenir el repositori compartit. Recupera'l només si {name} no l'ha de tenir, per exemple perquè el seu kit de recuperació es va adoptar per error en un segon servidor. Aleshores aquest servidor ho diu a {name} i als membres.",
   "shared.takenBack": "Aquest servidor torna a tenir el repositori compartit i ho fa saber als altres.",
   "shared.stillToTell": "Encara no saben que ara aquest servidor té el repositori: {names}. Ho sabran tan bon punt el grup hi arribi.",
+  "shared.proofKeys": "one=Al repositori encara queda {n} clau d'una comprovació d'un altre servidor. Aquest servidor la suprimirà la propera vegada que en faci el manteniment.|many=Al repositori encara queden {n} de claus de comprovacions d'altres servidors. Aquest servidor les suprimirà la propera vegada que en faci el manteniment.|other=Al repositori encara queden {n} claus de comprovacions d'altres servidors. Aquest servidor les suprimirà la propera vegada que en faci el manteniment.",
   "shared.removed": "{name} ja no és al repositori compartit.",
   "shared.member.title": "Repositoris compartits",
   "shared.member.hint": "Repositoris d'altres instàncies del teu grup on copia aquest servidor o als quals ha demanat unir-se.",

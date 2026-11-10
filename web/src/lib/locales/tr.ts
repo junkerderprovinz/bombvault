@@ -5247,6 +5247,7 @@ const tr: Partial<Translations> = {
   "shared.takeBackAsk": "Ortak depoyu yalnızca bir sunucu tutmalı. Depoyu yalnızca {name} onu tutmamalıysa geri al, örneğin kurtarma kiti yanlışlıkla ikinci bir sunucuda devralındıysa. Bu sunucu ardından {name} sunucusuna ve üyelere haber verir.",
   "shared.takenBack": "Bu sunucu ortak depoyu yeniden tutuyor ve diğerlerine haber veriyor.",
   "shared.stillToTell": "Depoyu artık bu sunucunun tuttuğunu henüz duymayanlar: {names}. Grup onlara ulaşır ulaşmaz haber alacaklar.",
+  "shared.proofKeys": "one=Başka bir sunucunun denetiminden kalan {n} anahtar hâlâ depoda. Bu sunucu onu bir sonraki temizlikte kaldırır.|other=Başka sunucuların denetiminden kalan {n} anahtar hâlâ depoda. Bu sunucu onları bir sonraki temizlikte kaldırır.",
   "shared.removed": "{name} örneği artık ortak depoda değil.",
   "shared.member.title": "Ortak depolar",
   "shared.member.hint": "Grubundaki diğer örneklerin tuttuğu ve bu sunucunun kopyaladığı ya da katılmak istediği depolar.",

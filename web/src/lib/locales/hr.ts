@@ -5258,6 +5258,7 @@ const hr: Partial<Translations> = {
   "shared.takeBackAsk": "Zajednički repozitorij trebao bi držati samo jedan poslužitelj. Preuzmite ga natrag samo ako ga {name} ne bi trebao držati, na primjer zato što je njegov komplet za oporavak greškom preuzet na drugom poslužitelju. Ovaj poslužitelj zatim to javlja poslužitelju {name} i članovima.",
   "shared.takenBack": "Ovaj poslužitelj ponovno drži zajednički repozitorij i javlja to ostalima.",
   "shared.stillToTell": "Još nisu čuli da ovaj poslužitelj sada drži repozitorij: {names}. Saznat će čim ih grupa dosegne.",
+  "shared.proofKeys": "one=U repozitoriju je još {n} ključ preostao od provjere drugog poslužitelja. Ovaj poslužitelj uklonit će ga kad sljedeći put bude pospremao.|few=U repozitoriju su još {n} ključa preostala od provjera drugih poslužitelja. Ovaj poslužitelj uklonit će ih kad sljedeći put bude pospremao.|other=U repozitoriju je još {n} ključeva preostalo od provjera drugih poslužitelja. Ovaj poslužitelj uklonit će ih kad sljedeći put bude pospremao.",
   "shared.removed": "Instanca {name} više nije u zajedničkom repozitoriju.",
   "shared.member.title": "Zajednički repozitoriji",
   "shared.member.hint": "Repozitoriji koje drže druge instance vaše skupine, a u koje ovaj poslužitelj kopira ili je zatražio pristup.",

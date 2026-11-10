@@ -5257,6 +5257,7 @@ const lv: Partial<Translations> = {
   "shared.takeBackAsk": "Kopīgo repozitoriju vajadzētu glabāt tikai vienam serverim. Atgūstiet to tikai tad, ja instancei {name} to nevajadzētu glabāt, piemēram, ja atkopšanas komplekts kļūdas pēc tika pārņemts otrā serverī. Tad šis serveris paziņos instancei {name} un dalībniekiem.",
   "shared.takenBack": "Šis serveris atkal glabā kopīgo repozitoriju un paziņo par to pārējiem.",
   "shared.stillToTell": "Vēl nav dzirdējuši, ka tagad repozitoriju glabā šis serveris: {names}. Tiem tiks paziņots, tiklīdz grupa tos sasniegs.",
+  "shared.proofKeys": "zero={n} atslēgu no citu serveru pārbaudēm vēl ir repozitorijā. Šis serveris tās noņems nākamajā sakopšanā.|one={n} atslēga no cita servera pārbaudes vēl ir repozitorijā. Šis serveris to noņems nākamajā sakopšanā.|other={n} atslēgas no citu serveru pārbaudēm vēl ir repozitorijā. Šis serveris tās noņems nākamajā sakopšanā.",
   "shared.removed": "Instance {name} vairs nav kopīgajā repozitorijā.",
   "shared.member.title": "Kopīgie repozitoriji",
   "shared.member.hint": "Citu jūsu grupas instanču repozitoriji, kuros šis serveris kopē vai kuriem tas lūdza pievienoties.",

@@ -5238,6 +5238,7 @@ const zh: Partial<Translations> = {
   "shared.takeBackAsk": "共享仓库只应由一台服务器保存。只有在 {name} 不该保存它时才收回，例如它的恢复工具包被误在第二台服务器上接管。之后这台服务器会通知 {name} 和各成员。",
   "shared.takenBack": "这台服务器重新保存共享仓库，并会通知其他服务器。",
   "shared.stillToTell": "尚未得知现在由这台服务器保存仓库：{names}。组一联系上它们，就会通知它们。",
+  "shared.proofKeys": "仓库里还有 {n} 个检查其他服务器时留下的密钥。这台服务器下次整理时会把它们删除。",
   "shared.removed": "{name} 已不在共享仓库中。",
   "shared.member.title": "加入的共享仓库",
   "shared.member.hint": "组内其他实例持有的仓库，这台服务器正复制到其中，或已申请加入。",

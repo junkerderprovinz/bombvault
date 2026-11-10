@@ -5241,6 +5241,7 @@ const sl: Partial<Translations> = {
   "shared.takeBackAsk": "Skupni repozitorij naj hrani samo en strežnik. Vzemi ga nazaj samo, če ga {name} ne bi smel hraniti, na primer ker je bil njegov obnovitveni komplet pomotoma prevzet na drugem strežniku. Ta strežnik nato obvesti strežnik {name} in člane.",
   "shared.takenBack": "Ta strežnik spet hrani skupni repozitorij in o tem obvesti druge.",
   "shared.stillToTell": "Še ne vedo, da zdaj repozitorij hrani ta strežnik: {names}. Izvedeli bodo, takoj ko jih skupina doseže.",
+  "shared.proofKeys": "one={n} ključ iz preverjanja drugega strežnika je še v repozitoriju. Ta strežnik ga bo odstranil ob naslednjem pospravljanju.|two={n} ključa iz preverjanj drugih strežnikov sta še v repozitoriju. Ta strežnik ju bo odstranil ob naslednjem pospravljanju.|few={n} ključi iz preverjanj drugih strežnikov so še v repozitoriju. Ta strežnik jih bo odstranil ob naslednjem pospravljanju.|other={n} ključev iz preverjanj drugih strežnikov je še v repozitoriju. Ta strežnik jih bo odstranil ob naslednjem pospravljanju.",
   "shared.removed": "Instanca {name} ni več v skupnem repozitoriju.",
   "shared.member.title": "Skupni repozitoriji",
   "shared.member.hint": "Repozitoriji drugih instanc tvoje skupine, v katere ta strežnik kopira ali za pridružitev h katerim je prosil.",

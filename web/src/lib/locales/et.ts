@@ -5258,6 +5258,7 @@ const et: Partial<Translations> = {
   "shared.takeBackAsk": "Ühist hoidlat peaks hoidma ainult üks server. Võta see tagasi ainult siis, kui server {name} ei peaks seda hoidma, näiteks seetõttu, et selle taastekomplekt võeti kogemata üle teises serveris. Seejärel annab see server serverile {name} ja liikmetele teada.",
   "shared.takenBack": "See server hoiab ühist hoidlat jälle ja annab teistele teada.",
   "shared.stillToTell": "Pole veel kuulnud, et see server hoiab nüüd hoidlat: {names}. Need saavad teada niipea, kui grupp nendeni jõuab.",
+  "shared.proofKeys": "one=Hoidlas on veel {n} võti teise serveri kontrollist. See server eemaldab selle järgmisel korrastamisel.|other=Hoidlas on veel {n} võtit teiste serverite kontrollidest. See server eemaldab need järgmisel korrastamisel.",
   "shared.removed": "Eksemplar {name} ei ole enam ühises hoidlas.",
   "shared.member.title": "Ühised hoidlad",
   "shared.member.hint": "Sinu grupi teiste eksemplaride hoidlad, kuhu see server kopeerib või millega see palus liituda.",

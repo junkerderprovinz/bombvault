@@ -5257,6 +5257,7 @@ const id: Partial<Translations> = {
   "shared.takeBackAsk": "Sebaiknya hanya satu server yang menyimpan repositori bersama. Ambil kembali hanya jika {name} tidak seharusnya menyimpannya, misalnya karena kit pemulihannya keliru diambil alih di server kedua. Setelah itu server ini memberi tahu {name} dan para anggota.",
   "shared.takenBack": "Server ini kembali menyimpan repositori bersama dan memberi tahu yang lain.",
   "shared.stillToTell": "Belum tahu bahwa server ini kini menyimpan repositori: {names}. Mereka diberi tahu begitu grup menjangkau mereka.",
+  "shared.proofKeys": "Masih ada {n} kunci dari pemeriksaan server lain di repositori. Server ini akan menghapusnya saat merapikan berikutnya.",
   "shared.removed": "{name} sudah keluar dari repositori bersama.",
   "shared.member.title": "Repositori bersama",
   "shared.member.hint": "Repositori milik instance lain di grup Anda yang menjadi tempat server ini menyalin, atau yang diminta untuk diikuti.",

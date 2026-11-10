@@ -5248,6 +5248,7 @@ const pt: Partial<Translations> = {
   "shared.takeBackAsk": "Só um servidor deve manter o repositório partilhado. Recupera-o só se {name} não o dever manter, por exemplo porque o kit de recuperação foi assumido por engano num segundo servidor. Este servidor avisa então {name} e os membros.",
   "shared.takenBack": "Este servidor volta a manter o repositório partilhado e avisa os outros.",
   "shared.stillToTell": "Ainda não sabem que agora é este servidor que mantém o repositório: {names}. Ficam a saber assim que o grupo chegar até eles.",
+  "shared.proofKeys": "one={n} chave de uma verificação de outro servidor ainda está no repositório. Este servidor remove-a na próxima manutenção.|many={n} de chaves de verificações de outros servidores ainda estão no repositório. Este servidor remove-as na próxima manutenção.|other={n} chaves de verificações de outros servidores ainda estão no repositório. Este servidor remove-as na próxima manutenção.",
   "shared.removed": "{name} já não faz parte do repositório partilhado.",
   "shared.member.title": "Repositórios partilhados",
   "shared.member.hint": "Repositórios que outras instâncias do teu grupo mantêm e para onde este servidor copia, ou onde pediu para entrar.",

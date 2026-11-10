@@ -5247,6 +5247,7 @@ const nl: Partial<Translations> = {
   "shared.takeBackAsk": "Er hoort maar één server de gedeelde repository te beheren. Haal hem alleen terug als {name} hem niet hoort te beheren, bijvoorbeeld omdat de herstelkit per ongeluk op een tweede server is overgenomen. Deze server laat het dan aan {name} en de leden weten.",
   "shared.takenBack": "Deze server beheert de gedeelde repository weer en laat het de anderen weten.",
   "shared.stillToTell": "Nog niet op de hoogte dat deze server de repository nu beheert: {names}. Ze horen het zodra de groep ze bereikt.",
+  "shared.proofKeys": "one={n} sleutel van een controle van een andere server staat nog in de repository. Deze server verwijdert hem de volgende keer dat hij opruimt.|other={n} sleutels van controles van andere servers staan nog in de repository. Deze server verwijdert ze de volgende keer dat hij opruimt.",
   "shared.removed": "{name} zit niet meer in de gedeelde repository.",
   "shared.member.title": "Gedeelde repository's",
   "shared.member.hint": "Repository's die andere instanties van je groep bijhouden en waar deze server naartoe kopieert, of waarvoor hij heeft gevraagd om mee te doen.",

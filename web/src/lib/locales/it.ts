@@ -5247,6 +5247,7 @@ const it: Partial<Translations> = {
   "shared.takeBackAsk": "Il repository condiviso dovrebbe essere ospitato da un solo server. Riprendilo solo se {name} non deve ospitarlo, per esempio perché il suo kit di ripristino è stato preso in carico per errore su un secondo server. Poi questo server avvisa {name} e i membri.",
   "shared.takenBack": "Questo server ospita di nuovo il repository condiviso e lo fa sapere agli altri.",
   "shared.stillToTell": "Non sanno ancora che ora è questo server a ospitare il repository: {names}. Lo sapranno appena il gruppo li raggiunge.",
+  "shared.proofKeys": "one=Nel repository c'è ancora {n} chiave rimasta dal controllo di un altro server. Questo server la rimuoverà la prossima volta che fa pulizia.|many=Nel repository ci sono ancora {n} di chiavi rimaste dai controlli di altri server. Questo server le rimuoverà la prossima volta che fa pulizia.|other=Nel repository ci sono ancora {n} chiavi rimaste dai controlli di altri server. Questo server le rimuoverà la prossima volta che fa pulizia.",
   "shared.removed": "{name} non fa più parte del repository condiviso.",
   "shared.member.title": "Repository condivisi",
   "shared.member.hint": "Repository che altre istanze del tuo gruppo gestiscono e in cui questo server copia, o a cui ha chiesto di unirsi.",

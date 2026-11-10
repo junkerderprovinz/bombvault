@@ -5248,6 +5248,7 @@ const da: Partial<Translations> = {
   "shared.takeBackAsk": "Kun én server bør have det delte arkiv. Tag det kun tilbage, hvis {name} ikke skal have det, for eksempel fordi dens gendannelseskit ved en fejl blev overtaget på en anden server. Denne server giver så {name} og medlemmerne besked.",
   "shared.takenBack": "Denne server har det delte arkiv igen og giver de andre besked.",
   "shared.stillToTell": "Har endnu ikke hørt, at denne server har arkivet nu: {names}. De får besked, så snart gruppen når dem.",
+  "shared.proofKeys": "one={n} nøgle fra en kontrol af en anden server ligger stadig i arkivet. Denne server fjerner den, næste gang den rydder op.|other={n} nøgler fra kontroller af andre servere ligger stadig i arkivet. Denne server fjerner dem, næste gang den rydder op.",
   "shared.removed": "{name} er ikke længere med i det delte arkiv.",
   "shared.member.title": "Delte arkiver",
   "shared.member.hint": "Arkiver, som andre instanser i din gruppe har, og som denne server kopierer til eller har bedt om at komme med i.",
