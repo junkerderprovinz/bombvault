@@ -3741,6 +3741,39 @@ CREATE TABLE IF NOT EXISTS shared_repo_members (
   PRIMARY KEY (shared_repo_id, host)
 );`,
 	},
+	{
+		version: sharedJoinsMigration,
+		name:    "shared_repo_joins",
+		sql: `CREATE TABLE IF NOT EXISTS shared_repo_server (
+  id             INTEGER PRIMARY KEY CHECK (id = 1),
+  container_name TEXT NOT NULL,
+  folder         TEXT NOT NULL,
+  host_path      TEXT NOT NULL,
+  port           INTEGER NOT NULL,
+  user           TEXT NOT NULL,
+  password_enc   BLOB NOT NULL,
+  repo           TEXT NOT NULL,
+  created_at     INTEGER NOT NULL,
+  check_verdict  TEXT NOT NULL DEFAULT '',
+  check_detail   TEXT NOT NULL DEFAULT '',
+  checked_at     INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS shared_repo_joins (
+  direction   TEXT NOT NULL,
+  member_id   TEXT NOT NULL,
+  member_name TEXT NOT NULL DEFAULT '',
+  host        TEXT NOT NULL DEFAULT '',
+  state       TEXT NOT NULL,
+  repo        TEXT NOT NULL DEFAULT '',
+  user        TEXT NOT NULL DEFAULT '',
+  login_enc   BLOB NOT NULL,
+  once_enc    BLOB NOT NULL,
+  once_key    TEXT NOT NULL DEFAULT '',
+  created_at  INTEGER NOT NULL,
+  decided_at  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (direction, member_id)
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4351,6 +4384,10 @@ const connectionsMigration = 830
 // sharedReposMigration numbers the repositories several servers of a group
 // back up into.
 const sharedReposMigration = 840
+
+// sharedJoinsMigration numbers the server of a shared repository and the way
+// each member came into it.
+const sharedJoinsMigration = 850
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780
