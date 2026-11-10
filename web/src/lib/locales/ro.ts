@@ -5297,6 +5297,8 @@ const ro: Partial<Translations> = {
   "shared.member.lastCopy": "Ultima copie aici",
   "shared.member.noCopy": "Încă niciuna",
   "shared.member.copyWaited": "Copia de după a așteptat cât timp {name} făcea întreținerea. Următoarea rulare o recuperează.",
+  "shared.member.moveHeld": "{name} a preluat acest depozit și indică o adresă nouă pentru el. Acest server copiază în continuare la adresa veche până când cea nouă trece verificarea.",
+  "shared.member.moveAddress": "Adresă nouă",
   "shared.member.leave": "Ieși",
   "shared.member.leaveAsk": "Ieși din depozitul comun de pe {name}? Acest server nu mai copiază acolo. Copiile lui de rezervă rămân și îmbătrânesc după regulile instanței {name}.",
   "shared.member.left": "Acest server a ieșit din depozitul comun de pe {name}.",

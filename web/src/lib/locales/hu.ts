@@ -5296,6 +5296,8 @@ const hu: Partial<Translations> = {
   "shared.member.lastCopy": "Utolsó másolat ide",
   "shared.member.noCopy": "Még nincs",
   "shared.member.copyWaited": "Az utána következő másolat várt, amíg a(z) {name} rendet rakott. A következő futás bepótolja.",
+  "shared.member.moveHeld": "A(z) {name} átvette ezt a tárolót, és új címet ad meg hozzá. Ez a szerver addig a régi címre másol, amíg az új át nem megy az ellenőrzésen.",
+  "shared.member.moveAddress": "Új cím",
   "shared.member.leave": "Kilépés",
   "shared.member.leaveAsk": "Kilépsz a(z) {name} közös tárolójából? Ez a szerver nem másol oda többé. A mentései megmaradnak, és a(z) {name} szabályai szerint járnak le.",
   "shared.member.left": "Ez a szerver kilépett a(z) {name} közös tárolójából.",

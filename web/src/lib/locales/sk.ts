@@ -5306,6 +5306,8 @@ const sk: Partial<Translations> = {
   "shared.member.lastCopy": "Posledná kópia sem",
   "shared.member.noCopy": "Zatiaľ žiadna",
   "shared.member.copyWaited": "Kópia po nej počkala, kým sa na {name} upratovalo. Ďalší beh ju dobehne.",
+  "shared.member.moveHeld": "Server {name} prevzal tento repozitár a uvádza preň novú adresu. Tento server ďalej kopíruje na starú adresu, kým nová neprejde kontrolou.",
+  "shared.member.moveAddress": "Nová adresa",
   "shared.member.leave": "Odísť",
   "shared.member.leaveAsk": "Odísť zo spoločného repozitára na {name}? Tento server tam prestane kopírovať. Jeho zálohy zostanú a starnú podľa pravidiel inštancie {name}.",
   "shared.member.left": "Tento server odišiel zo spoločného repozitára na {name}.",

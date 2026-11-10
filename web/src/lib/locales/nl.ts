@@ -5295,6 +5295,8 @@ const nl: Partial<Translations> = {
   "shared.member.lastCopy": "Laatst hierheen gekopieerd",
   "shared.member.noCopy": "Nog niet",
   "shared.member.copyWaited": "De kopie daarna wachtte terwijl {name} aan het opruimen was. De volgende ronde haalt hem in.",
+  "shared.member.moveHeld": "{name} heeft deze repository overgenomen en geeft er een nieuw adres voor op. Deze server blijft naar het oude adres kopiëren tot het nieuwe zijn controle doorstaat.",
+  "shared.member.moveAddress": "Nieuw adres",
   "shared.member.leave": "Verlaten",
   "shared.member.leaveAsk": "De gedeelde repository op {name} verlaten? Deze server kopieert er dan niet meer naartoe. Zijn back-ups blijven en verouderen volgens de regels van {name}.",
   "shared.member.left": "Deze server heeft de gedeelde repository op {name} verlaten.",

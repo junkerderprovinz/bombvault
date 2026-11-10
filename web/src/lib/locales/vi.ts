@@ -5286,6 +5286,8 @@ const vi: Partial<Translations> = {
   "shared.member.lastCopy": "Lần sao chép gần nhất vào đây",
   "shared.member.noCopy": "Chưa có",
   "shared.member.copyWaited": "Lần sao chép sau đó đã chờ trong lúc {name} dọn dẹp. Lần chạy sau sẽ bù lại.",
+  "shared.member.moveHeld": "{name} đã nhận kho chung này và báo một địa chỉ mới cho kho. Máy chủ này vẫn sao chép vào địa chỉ cũ cho đến khi địa chỉ mới qua được bước kiểm tra.",
+  "shared.member.moveAddress": "Địa chỉ mới",
   "shared.member.leave": "Rời đi",
   "shared.member.leaveAsk": "Rời kho chung trên {name}? Máy chủ này sẽ ngừng sao chép vào đó. Các bản sao lưu của nó vẫn còn và được lưu giữ theo quy tắc của {name}.",
   "shared.member.left": "Máy chủ này đã rời kho chung trên {name}.",

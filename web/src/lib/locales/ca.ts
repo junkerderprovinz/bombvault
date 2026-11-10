@@ -5306,6 +5306,8 @@ const ca: Partial<Translations> = {
   "shared.member.lastCopy": "Darrera còpia aquí",
   "shared.member.noCopy": "Encara cap",
   "shared.member.copyWaited": "La còpia següent ha esperat mentre {name} feia el manteniment. La propera execució la posarà al dia.",
+  "shared.member.moveHeld": "{name} s'ha fet càrrec d'aquest repositori i n'indica una adreça nova. Aquest servidor continua copiant a l'adreça antiga fins que la nova passi la comprovació.",
+  "shared.member.moveAddress": "Adreça nova",
   "shared.member.leave": "Surt",
   "shared.member.leaveAsk": "Vols sortir del repositori compartit de {name}? Aquest servidor deixa de copiar-hi. Les seves còpies es queden i envelleixen segons les regles de {name}.",
   "shared.member.left": "Aquest servidor ha sortit del repositori compartit de {name}.",

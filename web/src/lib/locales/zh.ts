@@ -5286,6 +5286,8 @@ const zh: Partial<Translations> = {
   "shared.member.lastCopy": "最近一次复制到这里",
   "shared.member.noCopy": "还没有",
   "shared.member.copyWaited": "之后那次复制在 {name} 整理时等待了。下一轮会补上。",
+  "shared.member.moveHeld": "{name} 已接管这个共享仓库，并为它给出了新地址。在新地址通过检查之前，这台服务器会继续复制到旧地址。",
+  "shared.member.moveAddress": "新地址",
   "shared.member.leave": "退出",
   "shared.member.leaveAsk": "要退出 {name} 上的共享仓库吗？这台服务器将不再复制到那里。它的备份会保留，并按 {name} 的规则逐步过期。",
   "shared.member.left": "这台服务器已退出 {name} 上的共享仓库。",

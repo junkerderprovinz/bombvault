@@ -5295,6 +5295,8 @@ const it: Partial<Translations> = {
   "shared.member.lastCopy": "Ultima copia qui",
   "shared.member.noCopy": "Ancora nessuna",
   "shared.member.copyWaited": "La copia successiva ha aspettato mentre {name} faceva pulizia. Il prossimo giro la recupera.",
+  "shared.member.moveHeld": "{name} ha preso in carico questo repository e gli assegna un nuovo indirizzo. Questo server continua a copiare verso il vecchio indirizzo finché il nuovo non supera la verifica.",
+  "shared.member.moveAddress": "Nuovo indirizzo",
   "shared.member.leave": "Esci",
   "shared.member.leaveAsk": "Uscire dal repository condiviso su {name}? Questo server smette di copiarci. I suoi backup restano e invecchiano secondo le regole di {name}.",
   "shared.member.left": "Questo server è uscito dal repository condiviso su {name}.",

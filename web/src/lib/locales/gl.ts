@@ -5306,6 +5306,8 @@ const gl: Partial<Translations> = {
   "shared.member.lastCopy": "Última copia aquí",
   "shared.member.noCopy": "Aínda ningunha",
   "shared.member.copyWaited": "A copia seguinte agardou mentres {name} facía limpeza. A próxima pasada ponse ao día.",
+  "shared.member.moveHeld": "{name} fíxose cargo deste repositorio e dálle un novo enderezo. Este servidor segue copiando no enderezo antigo ata que o novo supere a súa comprobación.",
+  "shared.member.moveAddress": "Novo enderezo",
   "shared.member.leave": "Saír",
   "shared.member.leaveAsk": "Saír do repositorio compartido en {name}? Este servidor deixa de copiar alí. As súas copias quedan e envellecen segundo as regras de {name}.",
   "shared.member.left": "Este servidor saíu do repositorio compartido en {name}.",

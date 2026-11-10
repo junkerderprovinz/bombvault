@@ -72,6 +72,12 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
               <Badge tone={state.tone}>{t(state.label)}</Badge>
             </div>
             {state.note && <p className="text-xs text-carbon-textSub">{named(state.note, m.ownerName)}</p>}
+            {m.move && (
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-statusWarn">{named("shared.member.moveHeld", m.move.holder)}</p>
+                <p className="text-xs text-carbon-textSub wrap-break-word">{m.move.reason}</p>
+              </div>
+            )}
             {m.state === "joined" && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="min-w-0 flex-[1_1_16rem] text-sm text-carbon-text">{t("shared.member.switchOn")}</p>
@@ -94,6 +100,13 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
                 <SettingRow label={t("receiver.server.address")}>
                   <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
                     {m.repo}
+                  </bdi>
+                </SettingRow>
+              )}
+              {m.move?.repo && (
+                <SettingRow label={t("shared.member.moveAddress")}>
+                  <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
+                    {m.move.repo}
                   </bdi>
                 </SettingRow>
               )}

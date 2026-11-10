@@ -5296,6 +5296,8 @@ const no: Partial<Translations> = {
   "shared.member.lastCopy": "Siste kopi hit",
   "shared.member.noCopy": "Ingen ennå",
   "shared.member.copyWaited": "Kopien etter den ventet mens {name} ryddet opp. Neste runde tar den igjen.",
+  "shared.member.moveHeld": "{name} har tatt over dette repositoriet og oppgir en ny adresse for det. Denne serveren fortsetter å kopiere til den gamle adressen til den nye har bestått kontrollen.",
+  "shared.member.moveAddress": "Ny adresse",
   "shared.member.leave": "Forlat",
   "shared.member.leaveAsk": "Forlate det felles repositoriet på {name}? Denne serveren slutter å kopiere dit. Sikkerhetskopiene blir liggende og eldes etter reglene til {name}.",
   "shared.member.left": "Denne serveren har forlatt det felles repositoriet på {name}.",

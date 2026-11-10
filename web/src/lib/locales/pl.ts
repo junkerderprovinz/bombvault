@@ -5293,6 +5293,8 @@ const pl: Partial<Translations> = {
   "shared.member.lastCopy": "Ostatnia kopia tutaj",
   "shared.member.noCopy": "Jeszcze żadnej",
   "shared.member.copyWaited": "Kolejna kopia czekała na koniec porządków na {name}. Następny przebieg ją nadrobi.",
+  "shared.member.moveHeld": "Serwer {name} przejął to repozytorium i podaje dla niego nowy adres. Ten serwer dalej kopiuje na stary adres, dopóki nowy nie przejdzie sprawdzenia.",
+  "shared.member.moveAddress": "Nowy adres",
   "shared.member.leave": "Opuść",
   "shared.member.leaveAsk": "Opuścić wspólne repozytorium na {name}? Ten serwer przestanie tam kopiować. Jego kopie zapasowe zostają i starzeją się według zasad {name}.",
   "shared.member.left": "Ten serwer opuścił wspólne repozytorium na {name}.",

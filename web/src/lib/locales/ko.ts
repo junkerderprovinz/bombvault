@@ -5286,6 +5286,8 @@ const ko: Partial<Translations> = {
   "shared.member.lastCopy": "여기로 마지막 복사",
   "shared.member.noCopy": "아직 없음",
   "shared.member.copyWaited": "그다음 복사는 {name}이(가) 정리하는 동안 기다렸습니다. 다음 실행 때 밀린 만큼 복사합니다.",
+  "shared.member.moveHeld": "{name}에서 이 저장소를 이어받고 새 주소를 알려 왔습니다. 새 주소가 검사를 통과할 때까지 이 서버는 이전 주소로 계속 복사합니다.",
+  "shared.member.moveAddress": "새 주소",
   "shared.member.leave": "나가기",
   "shared.member.leaveAsk": "{name}의 공유 저장소에서 나갈까요? 이 서버는 더 이상 그곳으로 복사하지 않습니다. 백업은 남아 있다가 {name}의 규칙에 따라 만료됩니다.",
   "shared.member.left": "이 서버가 {name}의 공유 저장소에서 나갔습니다.",

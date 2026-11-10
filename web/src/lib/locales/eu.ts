@@ -5306,6 +5306,8 @@ const eu: Partial<Translations> = {
   "shared.member.lastCopy": "Hemengo azken kopia",
   "shared.member.noCopy": "Oraindik bat ere ez",
   "shared.member.copyWaited": "Hurrengo kopia zain egon da {name} instantzia garbitzen ari zen bitartean. Hurrengo exekuzioan egingo da.",
+  "shared.member.moveHeld": "{name} instantziak biltegi hau bereganatu du eta helbide berri bat eman dio. Zerbitzari honek helbide zaharrera kopiatzen jarraitzen du, berriak egiaztapena gainditu arte.",
+  "shared.member.moveAddress": "Helbide berria",
   "shared.member.leave": "Irten",
   "shared.member.leaveAsk": "{name} instantziako biltegi partekatutik irten? Zerbitzari honek hara kopiatzeari utziko dio. Bere babeskopiak geratu egiten dira eta {name} instantziaren arauen arabera zahartzen dira.",
   "shared.member.left": "Zerbitzari hau {name} instantziako biltegi partekatutik irten da.",

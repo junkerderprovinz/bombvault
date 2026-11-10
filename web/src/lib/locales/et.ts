@@ -5306,6 +5306,8 @@ const et: Partial<Translations> = {
   "shared.member.lastCopy": "Viimane koopia siia",
   "shared.member.noCopy": "Veel pole",
   "shared.member.copyWaited": "Järgmine koopia ootas, kuni eksemplar {name} korrastas. Järgmine käivitus teeb selle järele.",
+  "shared.member.moveHeld": "Eksemplar {name} võttis selle hoidla üle ja annab sellele uue aadressi. See server jätkab kopeerimist vanale aadressile, kuni uus läbib kontrolli.",
+  "shared.member.moveAddress": "Uus aadress",
   "shared.member.leave": "Lahku",
   "shared.member.leaveAsk": "Kas lahkuda ühisest hoidlast eksemplaril {name}? See server lõpetab sinna kopeerimise. Selle varundused jäävad alles ja vananevad eksemplari {name} reeglite järgi.",
   "shared.member.left": "See server lahkus ühisest hoidlast eksemplaril {name}.",

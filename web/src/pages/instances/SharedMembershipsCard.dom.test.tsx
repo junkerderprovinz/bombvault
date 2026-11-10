@@ -174,11 +174,33 @@ describe("SharedMembershipsCard", () => {
     expect(screen.getByText(en["shared.member.windowUnknown"])).toBeTruthy();
   });
 
+  it("says the new holder named an address this server has not followed, and why", async () => {
+    memberships = [
+      membership({
+        move: { holder: "cube", repo: "rest:http://192.168.1.30:8001/shared", reason: "the repository at the new address is another one", at: 3 },
+      }),
+    ];
+    await renderCard();
+    const card = screen.getByRole("region", { name: "tower" });
+    expect(within(card).getByText(named("shared.member.moveHeld", "cube"))).toBeTruthy();
+    expect(within(card).getByText(en["shared.member.moveAddress"])).toBeTruthy();
+    expect(within(card).getByText("rest:http://192.168.1.30:8001/shared")).toBeTruthy();
+    expect(within(card).getByText("the repository at the new address is another one")).toBeTruthy();
+  });
+
+  it("names no new address while the holder named none it could use", async () => {
+    memberships = [membership({ move: { holder: "cube", repo: "", reason: "no usable address", at: 3 } })];
+    await renderCard();
+    expect(screen.getByText(named("shared.member.moveHeld", "cube"))).toBeTruthy();
+    expect(screen.queryByText(en["shared.member.moveAddress"])).toBeNull();
+  });
+
   it("says no copy went through yet", async () => {
     memberships = [membership()];
     await renderCard();
     expect(screen.getByText(en["shared.member.noCopy"])).toBeTruthy();
     expect(screen.queryByText(named("shared.member.copyWaited", "tower"))).toBeNull();
+    expect(screen.queryByText(named("shared.member.moveHeld", "tower"))).toBeNull();
   });
 
   it("stays in when the question is cancelled", async () => {
