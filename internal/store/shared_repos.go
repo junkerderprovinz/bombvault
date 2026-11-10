@@ -110,6 +110,33 @@ func (r *Repo) ListSharedRepos() ([]SharedRepo, error) {
 	return r.sharedRepos(`SELECT id, repo, owner, created_at FROM shared_repos ORDER BY created_at, id`)
 }
 
+// MoveSharedRepo puts the shared repository id at the location to, together
+// with every copy target and join that reached it at the old one, so nothing
+// is left behind there.
+func (r *Repo) MoveSharedRepo(id, to string) error {
+	if strings.TrimSpace(to) == "" {
+		return ErrIncompleteSharedRepo
+	}
+	err := r.inTx(func(tx *sql.Tx) error {
+		var from string
+		if err := tx.QueryRow(`SELECT repo FROM shared_repos WHERE id = ?`, id).Scan(&from); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE shared_repos SET repo = ? WHERE id = ?`, to, id); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(`UPDATE offsite_targets SET repo = ? WHERE repo = ?`, to, from); err != nil {
+			return err
+		}
+		_, err := tx.Exec(`UPDATE shared_repo_joins SET repo = ? WHERE repo = ?`, to, from)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("MoveSharedRepo: %w", err)
+	}
+	return nil
+}
+
 // DeleteSharedRepo forgets the shared repository id and its members. It
 // leaves the repository itself alone.
 func (r *Repo) DeleteSharedRepo(id string) error {
