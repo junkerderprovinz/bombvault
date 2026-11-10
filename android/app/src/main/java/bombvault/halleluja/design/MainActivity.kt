@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
             found = it
             pushState()
         }
-        pairing = Pairing(this, servers, onMemberLeft = { member -> runOnUiThread { pages.forget(member) } }) { runOnUiThread(::pushState) }
+        pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
         pages = RelayPages(
             pairing,
             servers,
@@ -678,9 +678,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun group(): JSONObject {
-        val g = JSONObject().put("paired", pairing.paired).put("connected", pairing.connected)
+        val g = JSONObject().put("paired", pairing.paired).put("connected", pairing.connected).put("waiting", pairing.waiting)
         pairing.joining?.let { members ->
-            val list = JSONArray(members.map { JSONObject().put("id", it.id).put("name", it.name).put("version", it.version) })
+            val list = JSONArray(members.map { JSONObject().put("id", it.id).put("name", it.name).put("version", "") })
             g.put("joining", JSONObject().put("members", list).put("connected", pairing.joiningConnected))
         }
         return g
