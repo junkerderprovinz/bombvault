@@ -5988,11 +5988,14 @@ export function foreignOpen(
 export interface RecoveryKitLocation {
   /** The section it belongs to. A named repository has none. */
   domain?: string;
-  kind: "local" | "offsite" | "named" | "destination";
-  /** What a named repository or a destination was called. */
+  kind: "local" | "offsite" | "named" | "destination" | "shared";
+  /** What a named repository or a destination was called, and the server
+   *  that holds a shared repository. */
   name?: string;
   location: string;
   folder?: string;
+  /** The server that wrote the kit held this shared repository. */
+  held?: boolean;
 }
 
 /** What an uploaded recovery kit says. Its key stays on the server. `hasKey`
@@ -6517,6 +6520,31 @@ export function openPulledCopy(id: string): Promise<ForeignOpenResponse> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/open`, { method: "POST", body: "{}" });
 }
 
+/** Another server's part of a shared repository: the host its backups carry
+ *  there, how many entries it has and when the newest backup was written.
+ *  `name` is missing for a host no member this server knows writes under,
+ *  and `error` says why the repository could not be read. */
+export interface SharedOtherServer {
+  repo: string;
+  host: string;
+  name?: string;
+  entries: number;
+  newest?: number;
+  error?: string;
+}
+
+/** GET /api/shared-repo/others: the other servers whose backups lie in the
+ *  shared repositories this server takes part in. */
+export function listSharedOthers(): Promise<OkEnvelope & { servers?: SharedOtherServer[] }> {
+  return fetchJSON("/api/shared-repo/others");
+}
+
+/** POST /api/shared-repo/others/open: opens the backups host wrote into the
+ *  shared repository as a read-only session under this server's own key. */
+export function openSharedOther(repo: string, host: string): Promise<ForeignOpenResponse> {
+  return fetchJSON("/api/shared-repo/others/open", { method: "POST", body: JSON.stringify({ repo, host }) });
+}
+
 export function runPullSource(id: string): Promise<OkEnvelope & { snapshots?: number }> {
   return fetchJSON(`/api/pull/sources/${encodeURIComponent(id)}/run`, { method: "POST" });
 }
@@ -6718,10 +6746,28 @@ export interface SharedOffer extends GroupReceiver {
   state?: SharedMembershipState;
 }
 
+/** This server's part as a holder in a shared repository: the server that
+ *  said it took the repository over, and the servers that have still to hear
+ *  that this one holds it. */
+export interface SharedHolding {
+  repo: string;
+  takenBy?: string;
+  takenAt?: number;
+  stillToTell?: string[];
+  /** Keys of checks of other servers left in a repository this server holds. */
+  proofKeys?: number;
+}
+
 export function getSharedRepo(): Promise<
-  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[] }
+  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[]; holdings?: SharedHolding[] }
 > {
   return fetchJSON("/api/shared-repo");
+}
+
+/** POST /api/shared-repos/{id}/take-back: holds the shared repository again
+ *  after another server said it took it over, and tells the others. */
+export function takeBackSharedRepo(id: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/take-back`, { method: "POST" });
 }
 
 export function setUpSharedRepo(input: { folder: string; port: number }): Promise<OkEnvelope & { server?: SharedServer }> {
@@ -6758,6 +6804,7 @@ export function joinSharedRepo(ownerId: string): Promise<OkEnvelope & { state?: 
 
 export function leaveSharedRepo(ownerId: string): Promise<OkEnvelope> {
   return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/leave`, { method: "POST" });
+}
 
 /** The rules the owner of a shared repository keeps it by. Until keepSet,
  *  each section ages by the owner's own off-site rules. */

@@ -648,6 +648,9 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/pull/sources/{id}/test", h.handleTestPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/run", h.handleRunPullSource)
 	mux.HandleFunc("POST /api/pull/sources/{id}/open", h.handleOpenPulledCopy)
+	mux.HandleFunc("GET /api/shared-repo/others", h.handleSharedOthers)
+	mux.HandleFunc("POST /api/shared-repo/others/open", h.handleOpenSharedOther)
+	mux.HandleFunc("POST /api/shared-repos/{id}/take-back", h.handleTakeBackSharedRepo)
 
 	// Fleet view (read-only): the members of this instance's pairing group,
 	// polled over the group for their protection status. Gated behind the

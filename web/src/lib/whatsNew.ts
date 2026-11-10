@@ -74,6 +74,7 @@ export const RELEASES: Release[] = [
         way: [...TO_INSTANCES, "receiver-server"],
         text: "whatsNew.sharedUpkeep",
       },
+      { id: "restore-other-servers", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreOtherServers" },
     ],
   },
   {

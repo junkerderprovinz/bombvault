@@ -132,6 +132,9 @@ type ReplacedSignIns struct {
 type AddedInEmergency struct {
 	SignIns []string `json:"signIns,omitempty"`
 	Targets []string `json:"targets,omitempty"`
+	// SharedRepos are the shared repositories a recovery kit named, recorded
+	// so that this server reads only its own backups there.
+	SharedRepos []string `json:"sharedRepos,omitempty"`
 }
 
 func sealedOrNull(stored string) (any, error) {
@@ -197,6 +200,7 @@ func (r *Repo) NoteAddedInEmergency(more AddedInEmergency) error {
 	}
 	before.Added.SignIns = append(before.Added.SignIns, more.SignIns...)
 	before.Added.Targets = append(before.Added.Targets, more.Targets...)
+	before.Added.SharedRepos = append(before.Added.SharedRepos, more.SharedRepos...)
 	blob, err := json.Marshal(before.Added)
 	if err != nil {
 		return fmt.Errorf("NoteAddedInEmergency: %w", err)

@@ -131,6 +131,7 @@ export function placeAdvice(t: T, place: EmergencyPlace): string | undefined {
 export function placeName(t: T, place: EmergencyPlace): string {
   const label = place.domain ? (DOMAIN_LABEL as Record<string, TranslationKey | undefined>)[place.domain] : undefined;
   const section = label ? t(label) : "";
+  if (place.kind === "shared") return t("emergency.placeShared").replace("{name}", () => place.name ?? "");
   if (place.kind === "named" || place.kind === "destination") return [place.name, section].filter(Boolean).join(" · ");
   if (!section) return place.location;
   return `${section} · ${t(place.kind === "offsite" ? "source.offsite" : "source.local")}`;
