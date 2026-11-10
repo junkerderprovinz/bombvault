@@ -97,6 +97,23 @@ type sharedServerView struct {
 	// here has not answered yet.
 	Members []sharedMemberView `json:"members"`
 	Joins   []sharedJoinView   `json:"joins"`
+	// CopiesIn says this server copies its own backups in as well.
+	CopiesIn bool `json:"copiesIn"`
+	// ID names the repository in the routes of its upkeep.
+	ID string `json:"id"`
+	// Former are the servers that left, whose backups are still there.
+	Former []sharedFormerView `json:"former"`
+}
+
+// sharedFormerView is a server that left, as the owner's card lists it.
+// Snapshots is how many it left there, as far as restic answered.
+type sharedFormerView struct {
+	Host        string `json:"host"`
+	Name        string `json:"name"`
+	LeftAt      int64  `json:"leftAt"`
+	Snapshots   int    `json:"snapshots"`
+	ForgetError string `json:"forgetError,omitempty"`
+	Forgetting  bool   `json:"forgetting"`
 }
 
 // sharedMemberView is one server in a shared repository.
@@ -109,6 +126,8 @@ type sharedMemberView struct {
 	// alone fills them in.
 	Keys           []string `json:"keys,omitempty"`
 	LastSnapshotAt int64    `json:"lastSnapshotAt,omitempty"`
+	// Self is the owner itself, which copies its own backups in.
+	Self bool `json:"self,omitempty"`
 }
 
 // sharedJoinView is an ask to join as the owner's card lists it.
@@ -118,6 +137,8 @@ type sharedJoinView struct {
 	Host     string `json:"host"`
 	State    string `json:"state"`
 	AskedAt  int64  `json:"askedAt"`
+	// ExpiresAt is when an allowed join loses its one-time key and login.
+	ExpiresAt int64 `json:"expiresAt,omitempty"`
 }
 
 // sharedContainerSpec is the receiver's recipe under the shared server's name
@@ -346,7 +367,7 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	v := sharedServerView{
 		ContainerName: ss.ContainerName, Folder: ss.Folder, HostPath: ss.HostPath, Port: ss.Port, User: ss.User, Repo: ss.Repo,
 		CreatedAt: ss.CreatedAt, Present: live != "" || err != nil, Check: ss.Check, CheckDetail: ss.CheckDetail, CheckedAt: ss.CheckedAt,
-		Members: []sharedMemberView{}, Joins: []sharedJoinView{},
+		Members: []sharedMemberView{}, Joins: []sharedJoinView{}, Former: []sharedFormerView{},
 	}
 	if a := s.sharedAddress(ctx, ss); a.Host != "" {
 		v.URL = restBase(a.Host, ss.Port) + "/" + sharedRepoFolder
@@ -356,9 +377,20 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	if err != nil {
 		return sharedServerView{}, err
 	}
-	keys, latest := s.sharedRepoFacts(ctx, ss)
+	v.ID = sr.ID
+	keys, latest, counts := s.sharedRepoFacts(ctx, ss)
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		return sharedServerView{}, err
+	}
+	for _, f := range former {
+		v.Former = append(v.Former, sharedFormerView{Host: f.Host, Name: f.Name, LeftAt: f.LeftAt, Snapshots: counts[f.Host],
+			ForgetError: f.ForgetError, Forgetting: s.sharedUpkeep.forgets(f.Host)})
+	}
+	self := s.resticHost()
 	for _, m := range sr.Members {
-		mv := sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host, LastSnapshotAt: latest[m.Host]}
+		mv := sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host, LastSnapshotAt: latest[m.Host], Self: m.Host == self}
+		v.CopiesIn = v.CopiesIn || mv.Self
 		for _, k := range keys {
 			if k.HostName == m.Host {
 				mv.Keys = append(mv.Keys, shortKeyID(k.ID))
@@ -372,24 +404,76 @@ func (s *Service) sharedServerView(ctx context.Context) (sharedServerView, error
 	}
 	for _, j := range joins {
 		if j.State == store.SharedJoinAsked || j.State == store.SharedJoinAllowed {
-			v.Joins = append(v.Joins, sharedJoinView{MemberID: j.MemberID, Name: j.MemberName, Host: j.Host, State: j.State, AskedAt: j.CreatedAt})
+			jv := sharedJoinView{MemberID: j.MemberID, Name: j.MemberName, Host: j.Host, State: j.State, AskedAt: j.CreatedAt}
+			if j.State == store.SharedJoinAllowed {
+				jv.ExpiresAt = time.Unix(j.DecidedAt, 0).Add(sharedOnceFor).Unix()
+			}
+			v.Joins = append(v.Joins, jv)
 		}
 	}
 	return v, nil
 }
 
+// CopyIntoOwnSharedRepo lets this server copy its own backups into the
+// shared repository it holds, so it saves space there as well. It counts
+// itself among the members, which its upkeep then ages like any other, and
+// takes the folder up as a copy target for every section, switched off until
+// a person picks the sections. It reaches the folder directly, so it needs no
+// login, and nothing there keeps it from deleting: for this server it is no
+// copy away from home.
+func (s *Service) CopyIntoOwnSharedRepo(ctx context.Context) (sharedServerView, error) {
+	s.sharedMu.Lock()
+	err := s.copyIntoOwnSharedRepo()
+	s.sharedMu.Unlock()
+	if err != nil {
+		return sharedServerView{}, err
+	}
+	return s.sharedServerView(ctx)
+}
+
+func (s *Service) copyIntoOwnSharedRepo() error {
+	ss, ok, err := s.store.GetSharedRepoServer()
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errNoSharedRepo
+	}
+	sr, ok, err := s.store.SharedRepoAt(ss.Repo)
+	if err != nil {
+		return err
+	}
+	if !ok || !s.ownsSharedRepo(sr) {
+		return errNotSharedOwner
+	}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return err
+	}
+	host := s.resticHost()
+	if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) {
+		sr.Members = append(sr.Members, store.SharedMember{Host: host, Instance: sr.Owner, Name: instanceDisplayName(settings)})
+		if _, err := s.store.PutSharedRepo(sr); err != nil {
+			return err
+		}
+	}
+	return s.takeUpSharedTargets(ss.Repo, "Shared repository", "", false)
+}
+
 // sharedFactsWait bounds what the owner's card waits for restic.
 const sharedFactsWait = 15 * time.Second
 
-func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer) ([]restic.Key, map[string]int64) {
-	latest := map[string]int64{}
+// sharedRepoFacts reads the keys of the shared repository, and the newest
+// snapshot and the number of snapshots under each host.
+func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer) ([]restic.Key, map[string]int64, map[string]int) {
+	latest, counts := map[string]int64{}, map[string]int{}
 	eng, err := s.sharedEngine()
 	if err != nil {
-		return nil, latest
+		return nil, latest, counts
 	}
 	repo, err := s.resolveRepo(ss.Repo)
 	if err != nil {
-		return nil, latest
+		return nil, latest, counts
 	}
 	ctx, cancel := context.WithTimeout(ctx, sharedFactsWait)
 	defer cancel()
@@ -403,11 +487,12 @@ func (s *Service) sharedRepoFacts(ctx context.Context, ss store.SharedRepoServer
 		log.Printf("shared repository: list its snapshots: %v", scrubError(err))
 	}
 	for _, sn := range snaps {
+		counts[sn.Hostname]++
 		if t := parseSnapshotTime(sn.Time); !t.IsZero() && t.Unix() > latest[sn.Hostname] {
 			latest[sn.Hostname] = t.Unix()
 		}
 	}
-	return keys, latest
+	return keys, latest, counts
 }
 
 func shortKeyID(id string) string {
@@ -446,7 +531,8 @@ func (s *Service) sharedSetupHere() (sharedSetup, error) {
 }
 
 // sharedHostTaken reports whether a server other than memberID writes into the
-// owner's shared repository under host, or this server does.
+// owner's shared repository under host, wrote there before it left, or this
+// server does.
 func (s *Service) sharedHostTaken(repo, memberID, host string) (bool, error) {
 	if host == s.resticHost() {
 		return true, nil
@@ -458,12 +544,19 @@ func (s *Service) sharedHostTaken(repo, memberID, host string) (bool, error) {
 	if slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host && m.Instance != memberID }) {
 		return true, nil
 	}
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		return false, err
+	}
+	if slices.ContainsFunc(former, func(f store.SharedFormer) bool { return f.Host == host && f.Instance != memberID }) {
+		return true, nil
+	}
 	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
 	if err != nil {
 		return false, err
 	}
 	return slices.ContainsFunc(joins, func(j store.SharedJoin) bool {
-		return j.Host == host && j.MemberID != memberID && j.State != store.SharedJoinRefused
+		return j.Host == host && j.MemberID != memberID && j.State != store.SharedJoinRefused && j.State != store.SharedJoinExpired
 	}), nil
 }
 
@@ -499,6 +592,13 @@ func (s *Service) letIn(ctx context.Context, j *store.SharedJoin) error {
 	} else if taken {
 		return errSharedHostTaken
 	}
+	// A key an expired join left behind goes before a new one comes.
+	if j.OnceKey != "" {
+		if err := s.takeKeys(ctx, sh, *j); err != nil {
+			return fmt.Errorf("remove the one-time key of the earlier join: %w", err)
+		}
+		j.OnceKey = ""
+	}
 	once, err := randomHex(32)
 	if err != nil {
 		return err
@@ -531,6 +631,103 @@ func (s *Service) letIn(ctx context.Context, j *store.SharedJoin) error {
 	}
 	j.State, j.User, j.LoginEnc, j.OnceEnc, j.OnceKey, j.DecidedAt = store.SharedJoinAllowed, user, loginEnc, onceEnc, keys[i].ID, time.Now().Unix()
 	return s.store.SaveSharedJoin(*j)
+}
+
+// sharedOnceFor is how long a member may take to add its own key once let
+// in. One that is up finishes within minutes of hearing the answer, and one
+// that was switched off has a night and a day. The one-time key opens every
+// backup in the repository, so it does not wait any longer than that.
+const sharedOnceFor = 24 * time.Hour
+
+// expireSharedJoins takes the login back from every member that was let in
+// at least sharedOnceFor before now and never added a key of its own, and
+// tells it that its join expired. It may ask again. Without the login the
+// one-time key reaches nothing, and dropExpiredKeys removes it once the
+// upkeep has its turn, since a prune holds the lock a key removal needs.
+func (s *Service) expireSharedJoins(ctx context.Context, now time.Time) error {
+	s.sharedMu.Lock()
+	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
+	var expired []string
+	var errs []error
+	for _, j := range joins {
+		if err != nil || j.State != store.SharedJoinAllowed || now.Sub(time.Unix(j.DecidedAt, 0)) < sharedOnceFor {
+			continue
+		}
+		sh, err := s.sharedSetupHere()
+		if err != nil {
+			errs = append(errs, err)
+			break
+		}
+		if err := s.keepExpiredAsFormer(ctx, sh, j, now); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if err := s.takeLogin(ctx, sh, j); err != nil {
+			errs = append(errs, fmt.Errorf("take back the login of %s: %w", j.MemberName, err))
+			continue
+		}
+		j.State, j.User, j.LoginEnc, j.OnceEnc, j.DecidedAt = store.SharedJoinExpired, "", nil, nil, now.Unix()
+		if err := s.store.SaveSharedJoin(j); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		expired = append(expired, j.MemberID)
+	}
+	s.sharedMu.Unlock()
+	if err != nil {
+		return err
+	}
+	for _, id := range expired {
+		s.tellSharedAnswer(ctx, id, store.SharedJoinExpired)
+	}
+	return errors.Join(errs...)
+}
+
+// keepExpiredAsFormer keeps a member whose join expires as a server that left
+// once it copied anything, so its host stays its own and what it copied waits
+// for a person to forget it instead of lying there as nobody's. A listing that
+// fails leaves the join for the next tick.
+func (s *Service) keepExpiredAsFormer(ctx context.Context, sh sharedSetup, j store.SharedJoin, now time.Time) error {
+	snaps, err := sh.eng.SnapshotsOfEveryHost(ctx, sh.repo, sh.mode)
+	if err != nil {
+		return fmt.Errorf("list what %s copied: %w", j.MemberName, err)
+	}
+	if !slices.ContainsFunc(snaps, func(sn restic.Snapshot) bool { return sn.Hostname == j.Host }) {
+		return nil
+	}
+	sr, ok, err := s.store.SharedRepoAt(sh.server.Repo)
+	if err != nil || !ok {
+		return err
+	}
+	return s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: j.Host, Instance: j.MemberID, Name: j.MemberName, LeftAt: now.Unix()})
+}
+
+// dropExpiredKeys removes the keys of the joins that expired, the one-time
+// key and any key the member added under its host before it ran out of time.
+func (s *Service) dropExpiredKeys(ctx context.Context) error {
+	s.sharedMu.Lock()
+	defer s.sharedMu.Unlock()
+	joins, err := s.store.ListSharedJoins(store.SharedJoinIn)
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, j := range joins {
+		if j.State != store.SharedJoinExpired || j.OnceKey == "" {
+			continue
+		}
+		sh, err := s.sharedSetupHere()
+		if err != nil {
+			return err
+		}
+		if err := s.takeKeys(ctx, sh, j); err != nil {
+			errs = append(errs, fmt.Errorf("remove the keys of %s: %w", j.MemberName, err))
+			continue
+		}
+		j.OnceKey = ""
+		errs = append(errs, s.store.SaveSharedJoin(j))
+	}
+	return errors.Join(errs...)
 }
 
 // freeSharedUser is a login for the member called name that no other login of
@@ -616,6 +813,14 @@ func (s *Service) removeSharedMember(ctx context.Context, memberID string) error
 			return err
 		}
 		if found {
+			for _, m := range sr.Members {
+				if m.Instance != memberID {
+					continue
+				}
+				if err := s.store.NoteSharedFormer(sr.ID, store.SharedFormer{Host: m.Host, Instance: m.Instance, Name: m.Name, LeftAt: time.Now().Unix()}); err != nil {
+					return err
+				}
+			}
 			sr.Members = slices.DeleteFunc(sr.Members, func(m store.SharedMember) bool { return m.Instance == memberID })
 			if _, err := s.store.PutSharedRepo(sr); err != nil {
 				return err
@@ -625,13 +830,34 @@ func (s *Service) removeSharedMember(ctx context.Context, memberID string) error
 	return s.store.DeleteSharedJoin(store.SharedJoinIn, memberID)
 }
 
-// takeOut removes the keys under the join's host and its login. A key this
-// server opens the repository with stays, whatever host it names.
+// takeOut removes the join's login and the keys under its host. The login
+// goes first: a key the member adds meanwhile reaches nothing without it.
 func (s *Service) takeOut(ctx context.Context, j store.SharedJoin) error {
 	sh, err := s.sharedSetupHere()
 	if err != nil {
 		return err
 	}
+	if err := s.takeLogin(ctx, sh, j); err != nil {
+		return err
+	}
+	return s.takeKeys(ctx, sh, j)
+}
+
+// takeLogin removes the join's login from the shared server.
+func (s *Service) takeLogin(ctx context.Context, sh sharedSetup, j store.SharedJoin) error {
+	if j.User == "" {
+		return nil
+	}
+	if err := s.writeHtpasswd(sh.server.Folder, j.User, ""); err != nil {
+		return err
+	}
+	s.reloadContainer(ctx, sh.server.ContainerName)
+	return nil
+}
+
+// takeKeys removes the keys under the join's host and its one-time key. A key
+// this server opens the repository with stays, whatever host it names.
+func (s *Service) takeKeys(ctx context.Context, sh sharedSetup, j store.SharedJoin) error {
 	keys, err := sh.eng.Keys(ctx, sh.repo, sh.mode)
 	if err != nil {
 		return fmt.Errorf("read the keys: %w", err)
@@ -643,12 +869,6 @@ func (s *Service) takeOut(ctx context.Context, j store.SharedJoin) error {
 		if err := sh.eng.RemoveKey(ctx, sh.repo, sh.mode, k.ID); err != nil {
 			return fmt.Errorf("remove the key %s: %w", shortKeyID(k.ID), err)
 		}
-	}
-	if j.User != "" {
-		if err := s.writeHtpasswd(sh.server.Folder, j.User, ""); err != nil {
-			return err
-		}
-		s.reloadContainer(ctx, sh.server.ContainerName)
 	}
 	return nil
 }
@@ -754,7 +974,7 @@ func (s *Service) sharedOfferFor(ctx context.Context, asker string, in peerShare
 	if err != nil {
 		return ans, err
 	}
-	if in.Join && (!found || j.State == store.SharedJoinRefused) {
+	if in.Join && (!found || j.State == store.SharedJoinRefused || j.State == store.SharedJoinExpired) {
 		host := strings.TrimSpace(in.Host)
 		if !sharedHostRe.MatchString(host) {
 			return ans, errSharedHostForm
@@ -764,7 +984,7 @@ func (s *Service) sharedOfferFor(ctx context.Context, asker string, in peerShare
 		} else if taken {
 			return ans, errSharedHostTaken
 		}
-		j = store.SharedJoin{Direction: store.SharedJoinIn, MemberID: asker, MemberName: clipRoleName(in.Name), Host: host, State: store.SharedJoinAsked}
+		j = store.SharedJoin{Direction: store.SharedJoinIn, MemberID: asker, MemberName: clipRoleName(in.Name), Host: host, State: store.SharedJoinAsked, OnceKey: j.OnceKey}
 		if err := s.store.SaveSharedJoin(j); err != nil {
 			return ans, err
 		}
@@ -862,6 +1082,9 @@ func (s *Service) countIn(ctx context.Context, memberID, host string) error {
 	sr.Members = slices.DeleteFunc(sr.Members, func(m store.SharedMember) bool { return m.Instance == memberID })
 	sr.Members = append(sr.Members, store.SharedMember{Host: j.Host, Instance: memberID, Name: j.MemberName})
 	if _, err := s.store.PutSharedRepo(sr); err != nil {
+		return err
+	}
+	if err := s.store.DropSharedFormer(sr.ID, j.Host); err != nil {
 		return err
 	}
 	j.State, j.OnceEnc, j.OnceKey = store.SharedJoinJoined, nil, ""

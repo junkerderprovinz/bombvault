@@ -6694,6 +6694,8 @@ export interface SharedMember {
   keys?: string[];
   /** Unix seconds, on the owner only. */
   lastSnapshotAt?: number;
+  /** The owner itself, which copies its own backups in. */
+  self?: boolean;
 }
 
 /** A member's ask to join, open or allowed until the member added its own key. */
@@ -6703,6 +6705,8 @@ export interface SharedJoinAsk {
   host: string;
   state: "asked" | "allowed";
   askedAt: number;
+  /** When an allowed join loses its one-time key and login, in Unix seconds. */
+  expiresAt?: number;
 }
 
 /** The shared repository this instance holds for its group, beside its
@@ -6724,9 +6728,27 @@ export interface SharedServer {
   checkedAt: number;
   members: SharedMember[];
   joins: SharedJoinAsk[];
+  /** This instance copies its own backups in as well. */
+  copiesIn: boolean;
+  /** Names the repository in the routes of its upkeep. */
+  id: string;
+  /** The servers that left, whose backups are still there. */
+  former: SharedFormer[];
 }
 
-export type SharedMembershipState = "asked" | "allowed" | "refused" | "joined" | "removed";
+/** A server that left a shared repository, with what it left there as far
+ *  as restic answered. */
+export interface SharedFormer {
+  host: string;
+  name: string;
+  leftAt: number;
+  snapshots: number;
+  forgetError?: string;
+  /** Its backups are being forgotten right now. */
+  forgetting: boolean;
+}
+
+export type SharedMembershipState = "asked" | "allowed" | "refused" | "expired" | "joined" | "removed";
 
 /** A shared repository of another member this instance copies into or asked to join. */
 export interface SharedMembership {
@@ -6738,6 +6760,13 @@ export interface SharedMembership {
   joinedAt?: number;
   /** The other members, without this instance. */
   together: SharedMember[];
+  /** When the last copy there that went through began, and when a later one
+   *  began that waited while the owner tidied up, in Unix seconds. */
+  lastCopyAt?: number;
+  deferredAt?: number;
+  /** What the owner last measured, and when it said it tidies up next. */
+  space?: SharedSpace;
+  nextWindow?: number;
 }
 
 /** A member's shared repository as the destination wizard offers it. */
@@ -6792,6 +6821,21 @@ export function removeSharedMember(memberId: string): Promise<OkEnvelope & { ser
   return fetchJSON(`/api/shared-repo/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
 }
 
+/** Lets this instance copy its own backups into the shared repository it
+ *  holds, from the folder and without a login. */
+export function copyIntoOwnSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo/own-copies", { method: "POST" });
+}
+
+/** Starts forgetting every backup a server that left has in the shared
+ *  repository. name is its name as the person typed it. */
+export function forgetSharedFormer(id: string, host: string, name: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repos/${encodeURIComponent(id)}/former/${encodeURIComponent(host)}/forget`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
 export function listSharedOffers(): Promise<OkEnvelope & { offers?: SharedOffer[] }> {
   return fetchJSON("/api/shared-repo/offers");
 }
@@ -6822,6 +6866,8 @@ export interface SharedSpace {
   at: number;
   total: number;
   hosts: { host: string; name: string; bytes: number }[];
+  /** When the owner's next prune window opens, as it last said. */
+  nextWindow?: number;
 }
 
 /** A shared repository this server is in, with its upkeep. A member sees the

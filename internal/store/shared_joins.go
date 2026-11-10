@@ -89,12 +89,14 @@ const (
 
 // The states of a join. A join waits as asked until a person on the owner
 // answers. Allowed hands the member a one-time key, and joined says the member
-// added its own and the one-time key is gone. Removed is a member that left or
-// was taken out.
+// added its own and the one-time key is gone. Expired is an allowed join the
+// member did not finish in time, and removed a member that left or was taken
+// out.
 const (
 	SharedJoinAsked   = "asked"
 	SharedJoinAllowed = "allowed"
 	SharedJoinRefused = "refused"
+	SharedJoinExpired = "expired"
 	SharedJoinJoined  = "joined"
 	SharedJoinRemoved = "removed"
 )

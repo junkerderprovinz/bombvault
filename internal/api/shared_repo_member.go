@@ -66,6 +66,11 @@ func (s *Service) JoinSharedRepo(ctx context.Context, ownerID string) (string, e
 	s.sharedMu.Lock()
 	j, _, err := s.store.GetSharedJoin(store.SharedJoinOut, ownerID)
 	if err == nil {
+		// A server that was out asks from scratch: its key there is gone, so
+		// the join has to add a new one.
+		if j.State == store.SharedJoinRemoved || j.State == store.SharedJoinExpired {
+			j.Repo, j.User = "", ""
+		}
 		j.Direction, j.MemberID, j.MemberName, j.Host = store.SharedJoinOut, ownerID, owner.Name, s.resticHost()
 		if j.State != store.SharedJoinJoined || ans.State != store.SharedJoinJoined {
 			j.State = ans.State
@@ -97,7 +102,7 @@ func (s *Service) finishSharedJoin(ctx context.Context, ownerID string) error {
 	if err != nil {
 		return err
 	}
-	if !ok || j.State == store.SharedJoinJoined || j.State == store.SharedJoinRemoved {
+	if !ok || j.State == store.SharedJoinJoined || j.State == store.SharedJoinRemoved || j.State == store.SharedJoinExpired {
 		return nil
 	}
 	if j.Repo == "" {
@@ -221,6 +226,13 @@ func (s *Service) takeUpSharedRepo(repo, ownerID, ownerName string, ans peerShar
 	if err != nil {
 		return err
 	}
+	return s.takeUpSharedTargets(repo, name, ref, true)
+}
+
+// takeUpSharedTargets gives every section a copy target at the shared
+// repository at repo, switched off for a new one, signing in with the sign-in
+// set ref. A target there already keeps its switch and takes the sign-in.
+func (s *Service) takeUpSharedTargets(repo, name, ref string, immutable bool) error {
 	targets, err := s.store.ListOffsiteTargets()
 	if err != nil {
 		return err
@@ -228,14 +240,14 @@ func (s *Service) takeUpSharedRepo(repo, ownerID, ownerName string, ans peerShar
 	for _, domain := range offsiteConfigDomains {
 		if i := slices.IndexFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain && t.Repo == repo }); i >= 0 {
 			t := targets[i]
-			t.CredsRef, t.Immutable = ref, true
+			t.CredsRef, t.Immutable = ref, immutable
 			if _, err := s.store.UpsertOffsiteTarget(t); err != nil {
 				return err
 			}
 			continue
 		}
 		if _, err := s.store.CreateOffsiteTarget(store.OffsiteTarget{
-			Domain: domain, Name: name, Repo: repo, CredsRef: ref, Immutable: true, Enabled: false,
+			Domain: domain, Name: name, Repo: repo, CredsRef: ref, Immutable: immutable, Enabled: false,
 		}); err != nil {
 			return err
 		}
@@ -265,13 +277,13 @@ func (s *Service) LeaveSharedRepo(ctx context.Context, ownerID string) error {
 	if err := s.callMember(ctx, ownerID, http.MethodPost, "/api/group/peer/shared-repo/leave", peerSharedWord{Host: j.Host, peerProof: proof}, nil); err != nil {
 		return err
 	}
-	return s.leftSharedRepo(j)
+	return s.leftSharedRepo(j, store.SharedJoinRemoved)
 }
 
-// leftSharedRepo notes that this server is out of the shared repository. The
-// repository stays recorded with this server's part as a member's, so nothing
-// here ever clears its locks or forgets there.
-func (s *Service) leftSharedRepo(j store.SharedJoin) error {
+// leftSharedRepo notes that this server is out of the shared repository, as
+// state says. The repository stays recorded with this server's part as a
+// member's, so nothing here ever clears its locks or forgets there.
+func (s *Service) leftSharedRepo(j store.SharedJoin, state string) error {
 	if j.Repo != "" {
 		targets, err := s.store.ListOffsiteTargets()
 		if err != nil {
@@ -296,7 +308,7 @@ func (s *Service) leftSharedRepo(j store.SharedJoin) error {
 			}
 		}
 	}
-	j.State, j.LoginEnc, j.OnceEnc, j.DecidedAt = store.SharedJoinRemoved, nil, nil, time.Now().Unix()
+	j.State, j.LoginEnc, j.OnceEnc, j.DecidedAt = state, nil, nil, time.Now().Unix()
 	return s.store.SaveSharedJoin(j)
 }
 
@@ -346,8 +358,8 @@ func (s *Service) takeSharedAnswer(ownerID, state string) error {
 	case store.SharedJoinRefused:
 		j.State, j.DecidedAt = state, time.Now().Unix()
 		return s.store.SaveSharedJoin(j)
-	case store.SharedJoinRemoved:
-		return s.leftSharedRepo(j)
+	case store.SharedJoinRemoved, store.SharedJoinExpired:
+		return s.leftSharedRepo(j, state)
 	}
 	return fmt.Errorf("unknown answer %q", state)
 }
@@ -390,7 +402,7 @@ func (s *Service) refreshSharedJoin(ownerID string) {
 	if err != nil || ans.Server == nil || ans.State == "" {
 		return
 	}
-	if ans.State == store.SharedJoinAllowed || ans.State == store.SharedJoinRefused {
+	if ans.State == store.SharedJoinAllowed || ans.State == store.SharedJoinRefused || ans.State == store.SharedJoinExpired {
 		if err := s.takeSharedAnswer(ownerID, ans.State); err != nil {
 			log.Printf("shared repository: %v", err)
 		}
@@ -408,10 +420,22 @@ type sharedMembershipView struct {
 	AskedAt  int64              `json:"askedAt"`
 	JoinedAt int64              `json:"joinedAt,omitempty"`
 	Together []sharedMemberView `json:"together"`
+	// LastCopyAt is when the last copy there that went through began, and
+	// DeferredAt when a later one began that waited for the owner's prune.
+	LastCopyAt int64 `json:"lastCopyAt,omitempty"`
+	DeferredAt int64 `json:"deferredAt,omitempty"`
+	// Space is what the owner last measured, NextWindow when it said its
+	// next prune window opens.
+	Space      *store.SharedSpace `json:"space,omitempty"`
+	NextWindow int64              `json:"nextWindow,omitempty"`
 }
 
 func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 	joins, err := s.store.ListSharedJoins(store.SharedJoinOut)
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.store.ListOffsiteTargets()
 	if err != nil {
 		return nil, err
 	}
@@ -420,6 +444,9 @@ func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 		v := sharedMembershipView{OwnerID: j.MemberID, OwnerName: j.MemberName, State: j.State, Repo: scrubRepoLocation(j.Repo), AskedAt: j.CreatedAt, Together: []sharedMemberView{}}
 		if j.State == store.SharedJoinJoined {
 			v.JoinedAt = j.DecidedAt
+			if v.Space, v.NextWindow, err = s.sharedSpaceHeard(j.MemberID); err != nil {
+				return nil, err
+			}
 		}
 		if m, ok := s.reachableMember(j.MemberID); ok && m.Name != "" {
 			v.OwnerName = m.Name
@@ -431,6 +458,15 @@ func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 						v.Together = append(v.Together, sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host})
 					}
 				}
+			}
+			var ids []string
+			for _, t := range targets {
+				if t.Repo == j.Repo {
+					ids = append(ids, t.ID)
+				}
+			}
+			if v.LastCopyAt, v.DeferredAt, err = s.store.CopiesToTargets(ids); err != nil {
+				return nil, err
 			}
 		}
 		out = append(out, v)

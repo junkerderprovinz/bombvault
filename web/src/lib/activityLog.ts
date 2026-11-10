@@ -469,6 +469,9 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     if (run.status === "success" && run.copied === 0) {
       return { status: "offsite", text: resolveName("activityLog.lineOffsiteNothing", { domain: domainText }) };
     }
+    if (run.status === "deferred") {
+      return { status: "info", text: resolveName("activityLog.lineOffsiteDeferred", { domain: domainText }) };
+    }
     return run.status === "success"
       ? { status: "offsite", text: resolveName("activityLog.lineOffsiteSuccess", { domain: domainText, duration }) }
       : run.status === "failed"

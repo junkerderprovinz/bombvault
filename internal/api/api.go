@@ -633,6 +633,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/shared-repos/upkeep", h.handleSharedUpkeep)
 	mux.HandleFunc("PUT /api/shared-repos/{id}/upkeep", h.handlePutSharedUpkeep)
 	mux.HandleFunc("POST /api/shared-repos/{id}/upkeep/run", h.handleRunSharedUpkeep)
+	mux.HandleFunc("POST /api/shared-repos/{id}/former/{host}/forget", h.handleForgetSharedFormer)
 
 	// Pull sources (#227): repositories belonging to OTHER instances that this
 	// box fetches snapshots out of. Session-protected like every other /api

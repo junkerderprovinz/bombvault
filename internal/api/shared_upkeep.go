@@ -81,10 +81,43 @@ func (s *Service) keepSharedRepo(ctx context.Context, sr store.SharedRepo, membe
 		return err
 	}
 	if report.Error != "" || len(report.Postponed) > 0 {
+		s.tellSharedWindow(ctx, sr, members, now)
 		return nil
 	}
 	_, err = s.measureShared(ctx, sr, members, time.Now())
 	return err
+}
+
+// nextSharedWindow is when the next prune window of u opens after now, 0 when
+// none does.
+func nextSharedWindow(u store.SharedUpkeep, now time.Time) int64 {
+	cad, err := schedule.ParseCadence(u.PruneCadence)
+	if err != nil {
+		return 0
+	}
+	next, ok := cad.NextDue(time.Time{}, now)
+	if !ok {
+		return 0
+	}
+	return next.Unix()
+}
+
+// tellSharedWindow hands the members the last numbers of sr with the next
+// window after now, for a pass that measured nothing and for new rules.
+func (s *Service) tellSharedWindow(ctx context.Context, sr store.SharedRepo, members sharedMembers, now time.Time) {
+	u, err := s.store.SharedUpkeepOf(sr.ID)
+	if err != nil {
+		log.Printf("api: shared repository: could not read its upkeep, so the members do not hear the next window: %v", err)
+		return
+	}
+	space := store.SharedSpace{Hosts: []store.SharedHostSpace{}}
+	if u.Space != nil {
+		space = *u.Space
+	}
+	space.NextWindow = nextSharedWindow(u, now)
+	for _, m := range sr.Members {
+		members.tellSpace(ctx, m, space)
+	}
 }
 
 func sharedHours(u store.SharedUpkeep) time.Duration {
@@ -135,7 +168,8 @@ func (s *Service) sharedAccess(sr store.SharedRepo) (string, restic.Mode, store.
 // a lock while the members go on copying, which does no harm: a snapshot that
 // lands in between can only make another old one expendable, and that one
 // goes next time. A host no member writes under is never aged, and neither is
-// a member that cannot say which of its entries it holds.
+// a member that cannot say which of its entries it holds. A server that left
+// can say nothing any more and ages by the rules alone, as its removal said.
 func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store.SharedUpkeep, members sharedMembers, now time.Time) store.SharedForgetReport {
 	report := store.SharedForgetReport{At: now.Unix()}
 	dest, mode, settings, err := s.sharedAccess(sr)
@@ -148,12 +182,18 @@ func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store
 		report.Error = scrubError(err)
 		return report
 	}
+	former, err := s.store.ListSharedFormer(sr.ID)
+	if err != nil {
+		report.Error = err.Error()
+		return report
+	}
 	byHost := map[string][]restic.Snapshot{}
 	for _, sn := range snaps {
 		byHost[sn.Hostname] = append(byHost[sn.Hostname], sn)
 	}
 	for host := range byHost {
-		if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) {
+		if !slices.ContainsFunc(sr.Members, func(m store.SharedMember) bool { return m.Host == host }) &&
+			!slices.ContainsFunc(former, func(f store.SharedFormer) bool { return f.Host == host }) {
 			report.Unknown = append(report.Unknown, host)
 		}
 	}
@@ -173,6 +213,18 @@ func (s *Service) forgetShared(ctx context.Context, sr store.SharedRepo, u store
 			continue
 		}
 		gone, err := s.sharedForgets(ctx, dest, mode, settings, u, m, own, held)
+		ids = append(ids, gone...)
+		errs = append(errs, err)
+	}
+	for _, f := range former {
+		own := byHost[f.Host]
+		if len(own) == 0 {
+			continue
+		}
+		if _, err := s.formerMember(sr, f.Host); err != nil {
+			continue
+		}
+		gone, err := s.sharedForgets(ctx, dest, mode, settings, u, store.SharedMember{Host: f.Host, Name: f.Name}, own, nil)
 		ids = append(ids, gone...)
 		errs = append(errs, err)
 	}
@@ -333,7 +385,11 @@ func (s *Service) measureShared(ctx context.Context, sr store.SharedRepo, member
 	if err != nil {
 		return store.SharedSpace{}, fmt.Errorf("measure the shared repository: %w", err)
 	}
-	space := store.SharedSpace{At: now.Unix(), Total: whole.TotalSize, Hosts: []store.SharedHostSpace{}}
+	u, err := s.store.SharedUpkeepOf(sr.ID)
+	if err != nil {
+		return store.SharedSpace{}, err
+	}
+	space := store.SharedSpace{At: now.Unix(), Total: whole.TotalSize, Hosts: []store.SharedHostSpace{}, NextWindow: nextSharedWindow(u, now)}
 	for _, m := range sr.Members {
 		hostMode := mode
 		hostMode.Host = m.Host
@@ -357,8 +413,9 @@ func (s *Service) measureShared(ctx context.Context, sr store.SharedRepo, member
 var errSharedUpkeepBusy = errors.New("the upkeep of the shared repositories is running already")
 
 // RunSharedUpkeep runs what is due in the upkeep of every shared repository
-// this server holds. The scheduler calls it every minute; a pass that is
-// still running, such as a long prune, lets the tick go by.
+// this server holds, and takes back the one-time keys nobody used in time.
+// The scheduler calls it every minute; a pass that is still running, such as
+// a long prune, lets the tick go by.
 func (s *Service) RunSharedUpkeep(ctx context.Context) error {
 	s.tellSharedHoldersSoon()
 	s.clearProofKeysSoon(ctx)
@@ -366,18 +423,22 @@ func (s *Service) RunSharedUpkeep(ctx context.Context) error {
 }
 
 func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, now time.Time) error {
+	// Taking a login back needs no turn, so a long prune does not stretch
+	// the day a one-time key is good for.
+	expired := s.expireSharedJoins(ctx, now)
 	if !s.sharedUpkeep.take() {
-		return nil
+		return expired
 	}
 	defer s.sharedUpkeep.done()
 	owned, err := s.ownedSharedRepos()
 	if err != nil {
-		return err
+		return errors.Join(expired, err)
 	}
-	var errs []error
+	errs := []error{expired}
 	for _, sr := range owned {
 		errs = append(errs, s.keepSharedRepo(ctx, sr, members, now, false))
 	}
+	errs = append(errs, s.dropExpiredKeys(ctx))
 	return errors.Join(errs...)
 }
 

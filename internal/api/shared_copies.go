@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -64,6 +65,10 @@ func (c *sharedCopies) lift(owner string) {
 	defer c.mu.Unlock()
 	delete(c.quiet, owner)
 }
+
+// errCopyDeferred is a copy to a shared repository that waits because its
+// owner prunes there. It is not a failure, and not a copy either.
+var errCopyDeferred = errors.New("its owner is tidying it up, so this copy waits for the next pass")
 
 // beginSharedCopy starts a copy to the off-site target at repo, or reports
 // that the owner of the shared repository there prunes it. A repository no

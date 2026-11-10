@@ -4235,7 +4235,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			drillPeriod:       drillPeriod,
 		}
 		if run, found, rErr := s.store.LatestOffsiteRun(d.name); rErr == nil && found {
-			in.copyFailed = run.FinishedAt != 0 && !run.OK
+			in.copyFailed = run.FinishedAt != 0 && !run.OK && !run.Deferred
 		}
 		in.paused, in.byTarget, in.targets = s.placementCurrency(settings, d.name)
 		riskAccepted := s.deleteRiskAccepted(d.name, settings)
@@ -4942,12 +4942,18 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 	// nothing new says so. A copy that could not tell leaves it unknown.
 	var sent int
 	known := true
+	// waits are the targets whose copy waited for the owner of a shared
+	// repository. The pass then copied what it could, but is not current.
+	var waits []error
 	defer func() {
 		if activityRunID == "" {
 			return
 		}
-		status := "failed"
-		if ok {
+		status, why := "failed", err
+		switch {
+		case ok && len(waits) > 0:
+			status, why = backup.StatusDeferred, errors.Join(waits...)
+		case ok:
 			status = "success"
 		}
 		if ok && known {
@@ -4955,7 +4961,7 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 				log.Printf("api: offsite %s: could not note what the run copied: %v", domain, cErr) //nolint:gosec // G706: domain is a fixed literal
 			}
 		}
-		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(err)); fErr != nil {
+		if fErr := s.store.FinishRun(activityRunID, status, "", 0, truncateRunErr(why)); fErr != nil {
 			log.Printf("api: offsite %s: could not finish activity run: %v", domain, fErr) //nolint:gosec // G706: domain is a fixed literal
 		}
 	}()
@@ -5102,6 +5108,10 @@ func (s *Service) copyToOffsite(ctx context.Context, domain string, settings sto
 			known = false
 		}
 		sent += max(n, 0)
+		if errors.Is(cerr, errCopyDeferred) {
+			waits = append(waits, cerr)
+			continue
+		}
 		if cerr != nil {
 			log.Printf("api: offsite %s: copy to a destination failed (continuing): %v", domain, cerr) //nolint:gosec // G706: domain is a fixed literal
 			errs = append(errs, cerr)
@@ -5169,6 +5179,12 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 		if runID == 0 {
 			return
 		}
+		if errors.Is(err, errCopyDeferred) {
+			if dErr := s.store.DeferOffsiteRun(runID, truncateRunErr(err)); dErr != nil {
+				log.Printf("api: offsite %s: could not finish the deferred replication run: %v", domain, dErr) //nolint:gosec // G706: domain is a fixed literal
+			}
+			return
+		}
 		// Marked before the row turns green, so no reader sees a success that
 		// counts for the currency and is none.
 		if agingOnly {
@@ -5211,6 +5227,10 @@ func (s *Service) copyToOffsiteTarget(ctx context.Context, domain string, settin
 	}
 	visit.unreachable = len(unreachableSkips(skipped)) > 0
 	out := s.copySources(ctx, settings, domain, dest, mode, target, visit, localRepos, dstSnaps, dstErr, startedAt, lastCopy)
+	if out.deferred {
+		err = fmt.Errorf("%s: %w", placementTargetName(target), errCopyDeferred)
+		return 0, err
+	}
 	copied, accounted, destIsASource := out.copied, out.accounted, out.destIsASource
 	sent = len(out.landed)
 	if out.uncertain {

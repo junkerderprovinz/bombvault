@@ -317,6 +317,7 @@ var pairedRefused = []string{
 	"POST /api/shared-repo/offers/{id}/join",
 	"POST /api/shared-repo/offers/{id}/leave",
 	"POST /api/shared-repo/others/open",
+	"POST /api/shared-repo/own-copies",
 	"DELETE /api/zfs/replica/servers/{id}",
 	"GET /api/fleet/mesh-offers",
 	"GET /api/pull/sources",
@@ -364,6 +365,7 @@ var pairedRefused = []string{
 	"PUT /api/shared-repos/{id}/upkeep",
 	"POST /api/shared-repos/{id}/take-back",
 	"POST /api/shared-repos/{id}/upkeep/run",
+	"POST /api/shared-repos/{id}/former/{host}/forget",
 	"PUT /api/zfs/receive/{slot}/members/{member}",
 	// Storage locations, their connections and sign-ins, and where entries are placed.
 	"DELETE /api/cloud/creds-sets/note",

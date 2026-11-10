@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { leaveSharedRepo, type SharedMembership, type SharedMembershipState } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { Badge, type BadgeTone } from "../../components/Badge";
@@ -11,12 +12,14 @@ import { IconSignOut } from "../../components/glyphs";
 import { IconTabStorage } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { Card } from "../settings/shared";
+import { SpaceLine } from "./SharedUpkeepSection";
 import type { SharedRepoState } from "./useSharedRepo";
 
 const STATE: Record<SharedMembershipState, { label: TranslationKey; tone: BadgeTone; note?: TranslationKey }> = {
   asked: { label: "shared.member.asked", tone: "warn", note: "shared.member.askedNote" },
   allowed: { label: "shared.member.allowed", tone: "neutral", note: "shared.member.allowedNote" },
   refused: { label: "shared.member.refused", tone: "neutral", note: "shared.member.refusedNote" },
+  expired: { label: "shared.member.expired", tone: "neutral", note: "shared.member.expiredNote" },
   joined: { label: "shared.member.joined", tone: "ok" },
   removed: { label: "shared.member.removed", tone: "neutral", note: "shared.member.removedNote" },
 };
@@ -81,6 +84,11 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
                 />
               </div>
             )}
+            {m.state === "joined" && (
+              <div data-new="shared-member-space">
+                <SpaceLine t={t} space={m.space} />
+              </div>
+            )}
             <Rows>
               {m.repo && (
                 <SettingRow label={t("receiver.server.address")}>
@@ -92,6 +100,23 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
               <SettingRow label={t("shared.member.prunes")}>
                 <span className="text-sm text-carbon-text text-end">{named("shared.member.prunesValue", m.ownerName)}</span>
               </SettingRow>
+              {m.state === "joined" && (
+                <SettingRow label={t("shared.member.window")} hint={named("shared.member.windowTip", m.ownerName)}>
+                  <span className="text-sm text-carbon-text text-end">
+                    {m.nextWindow ? formatTs(m.nextWindow) : t("shared.member.windowUnknown")}
+                  </span>
+                </SettingRow>
+              )}
+              {m.state === "joined" && (
+                <SettingRow
+                  label={t("shared.member.lastCopy")}
+                  note={m.deferredAt ? <span className="text-statusWarn">{named("shared.member.copyWaited", m.ownerName)}</span> : undefined}
+                >
+                  <span className="text-sm text-carbon-text text-end">
+                    {m.lastCopyAt ? relativeTime(t, m.lastCopyAt) : t("shared.member.noCopy")}
+                  </span>
+                </SettingRow>
+              )}
               <SettingRow label={t("shared.member.together")}>
                 <span className="text-sm text-carbon-text text-end wrap-anywhere">
                   {m.together.length > 0 ? m.together.map((o) => o.name).join(", ") : t("shared.member.alone")}

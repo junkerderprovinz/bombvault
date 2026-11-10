@@ -75,6 +75,13 @@ export const RELEASES: Release[] = [
         text: "whatsNew.sharedUpkeep",
       },
       { id: "restore-other-servers", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.restoreOtherServers" },
+      { id: "shared-member-space", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedMemberSpace" },
+      { id: "shared-repo-own", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedOwnCopies" },
+      // A copy waits, a join runs out of time and a server leaves only now
+      // and then, so what shows them has no element that is always there.
+      { id: "shared-copy-deferred", text: "whatsNew.sharedCopyDeferred" },
+      { id: "shared-join-expiry", text: "whatsNew.sharedJoinExpiry" },
+      { id: "shared-repo-former", text: "whatsNew.sharedFormer" },
     ],
   },
   {

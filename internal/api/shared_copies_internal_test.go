@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -183,7 +184,7 @@ func copyOnce(t *testing.T, s *Service, target store.OffsiteTarget) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.copyToOffsiteTarget(context.Background(), "containers", settings, target, []domainRepoRef{ownRef("/local")}, nil, false, time.Now().Unix(), nil, targetVisit{}); err != nil {
+	if _, err := s.copyToOffsiteTarget(context.Background(), "containers", settings, target, []domainRepoRef{ownRef("/local")}, nil, false, time.Now().Unix(), nil, targetVisit{}); err != nil && !errors.Is(err, errCopyDeferred) {
 		t.Fatalf("a copy the owner holds off is no failure: %v", err)
 	}
 }
