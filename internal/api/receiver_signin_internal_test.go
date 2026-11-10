@@ -197,6 +197,14 @@ func startRestServer(t *testing.T, bin string, logins ...string) (string, func()
 	if err := os.WriteFile(filepath.Join(data, htpasswdName), []byte(lines.String()), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	return runRestServer(t, bin, data, "--private-repos")
+}
+
+// runRestServer runs the real rest-server, append-only, on the data folder
+// with the login file there and the options given, and returns its host and
+// port.
+func runRestServer(t *testing.T, bin, data string, options ...string) (string, func()) {
+	t.Helper()
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -205,7 +213,8 @@ func startRestServer(t *testing.T, bin string, logins ...string) (string, func()
 	if err := l.Close(); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(bin, "--path", data, "--listen", host, "--append-only", "--private-repos", "--htpasswd-file", filepath.Join(data, htpasswdName)) //nolint:gosec // G204: a test's own binary and address
+	args := append([]string{"--path", data, "--listen", host, "--append-only", "--htpasswd-file", filepath.Join(data, htpasswdName)}, options...)
+	cmd := exec.Command(bin, args...) //nolint:gosec // G204: a test's own binary and address
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

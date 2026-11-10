@@ -316,6 +316,9 @@ type Service struct {
 	// holderChecks holds, per shared repository and server that said it holds
 	// the repository now, the key that server has to remove first.
 	holderChecks sync.Map
+	// sharedMoves holds, per shared repository, the new address a holder
+	// named that this server did not follow, as a sharedMoveView.
+	sharedMoves sync.Map
 	// sharedProofsClearedAt is when this instance last removed keys of checks
 	// that were left in the shared repositories it holds.
 	sharedProofsClearedAt atomic.Int64

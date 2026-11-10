@@ -13,14 +13,40 @@ import (
 
 // identifiedEngine is an instance's engine in a test with the id of the
 // repository its keyring stands for. appendOnly reaches the repository
-// through its append-only server, which removes no key.
+// through its append-only server, which removes no key. at, when set, is the
+// id read at each location this engine reaches; nothing answers anywhere else.
 type identifiedEngine struct {
 	*keyringEngine
 	id         string
 	appendOnly bool
+	at         map[string]string
+}
+
+func (e *identifiedEngine) reach(repo string) error {
+	if _, ok := e.at[repo]; e.at != nil && !ok {
+		return errors.New("Fatal: unable to open config file: Stat: Head \"" + repo + "/config\": dial tcp: connect: connection refused")
+	}
+	return nil
+}
+
+func (e *identifiedEngine) AddKey(ctx context.Context, repo string, m restic.Mode, password, host, user string) error {
+	if err := e.reach(repo); err != nil {
+		return err
+	}
+	return e.keyringEngine.AddKey(ctx, repo, m, password, host, user)
+}
+
+func (e *identifiedEngine) Keys(ctx context.Context, repo string, m restic.Mode) ([]restic.Key, error) {
+	if err := e.reach(repo); err != nil {
+		return nil, err
+	}
+	return e.keyringEngine.Keys(ctx, repo, m)
 }
 
 func (e *identifiedEngine) RemoveKey(ctx context.Context, repo string, m restic.Mode, id string) error {
+	if err := e.reach(repo); err != nil {
+		return err
+	}
 	if e.appendOnly {
 		return errors.New("Fatal: unexpected HTTP response (403): 403 Forbidden")
 	}
@@ -38,11 +64,17 @@ func proofKeys(ring *keyring) int {
 	return n
 }
 
-func (e *identifiedEngine) RepoID(_ context.Context, _ string, m restic.Mode) (string, error) {
+func (e *identifiedEngine) RepoID(_ context.Context, repo string, m restic.Mode) (string, error) {
+	if err := e.reach(repo); err != nil {
+		return "", err
+	}
 	e.ring.mu.Lock()
 	defer e.ring.mu.Unlock()
 	if !e.ring.opens(m.Password) {
 		return "", errors.New("Fatal: wrong password or no key found")
+	}
+	if e.at != nil {
+		return e.at[repo], nil
 	}
 	return e.id, nil
 }
@@ -184,11 +216,11 @@ func TestAServerAwayFromTheFolderCannotClaimTheSharedRepository(t *testing.T) {
 
 	// cube answers the check without having removed anything.
 	for _, to := range []*instance{nas, tower} {
-		first, err := cube.svc.announceHolder(ctx, to.id(t), "5f3c0a1e", "")
+		first, err := cube.svc.announceHolder(ctx, to.id(t), peerSharedHolder{RepoID: "5f3c0a1e"})
 		if err != nil || first.Challenge == "" {
 			t.Fatalf("no check from %s: %+v, %v", to.id(t), first, err)
 		}
-		if ans, err := cube.svc.announceHolder(ctx, to.id(t), "5f3c0a1e", first.Challenge); err != nil || ans.Taken {
+		if ans, err := cube.svc.announceHolder(ctx, to.id(t), peerSharedHolder{RepoID: "5f3c0a1e", Removed: first.Challenge}); err != nil || ans.Taken {
 			t.Errorf("%s took a check whose key is still there: %+v, %v", to.id(t), ans, err)
 		}
 	}

@@ -9,9 +9,11 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -137,14 +139,7 @@ func (s *Service) addOwnSharedKey(ctx context.Context, ownerID string, j *store.
 		j.State = ans.State
 		return s.store.SaveSharedJoin(*j)
 	}
-	at := groupReceiverFor(owner, *ans.Server)
-	switch {
-	case at.NeedsHost:
-		return errReceiverNeedsHost
-	case at.NeedsAddress:
-		return errReceiverNeedsAddress
-	}
-	repo, err := sharedRepoLocation(at, ans.Path)
+	repo, err := sharedServerLocation(owner, *ans.Server, ans.Path)
 	if err != nil {
 		return err
 	}
@@ -177,6 +172,20 @@ func (s *Service) addOwnSharedKey(ctx context.Context, ownerID string, j *store.
 	return s.store.SaveSharedJoin(*j)
 }
 
+// sharedServerLocation is where restic reaches the shared repository in the
+// folder of the server m named, placed the way groupReceiverFor places a
+// receiver.
+func sharedServerLocation(m group.Member, server peerReceiver, folder string) (string, error) {
+	at := groupReceiverFor(m, server)
+	switch {
+	case at.NeedsHost:
+		return "", errReceiverNeedsHost
+	case at.NeedsAddress:
+		return "", errReceiverNeedsAddress
+	}
+	return sharedRepoLocation(at, folder)
+}
+
 // sharedFolderRe is a folder name the owner may give its shared repository.
 var sharedFolderRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,62}$`)
 
@@ -185,7 +194,7 @@ var sharedFolderRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,62}$`)
 // plain name, since this server hands its own password to whatever is there.
 func sharedRepoLocation(at groupReceiverView, folder string) (string, error) {
 	u, err := url.Parse(at.URL)
-	if err != nil || u.Scheme != "http" || !receiverHostRe.MatchString(u.Hostname()) || u.Port() == "" || (u.Path != "" && u.Path != "/") || u.User != nil || u.RawQuery != "" {
+	if err != nil || u.Scheme != "http" || !receiverHostRe.MatchString(u.Hostname()) || !usablePort(u.Port()) || (u.Path != "" && u.Path != "/") || u.User != nil || u.RawQuery != "" {
 		return "", errors.New("the owner named no usable address for its shared repository")
 	}
 	if !sharedFolderRe.MatchString(folder) || slices.Contains(restReservedFolders, folder) {
@@ -193,6 +202,12 @@ func sharedRepoLocation(at groupReceiverView, folder string) (string, error) {
 	}
 	repo := "rest:http://" + u.Host + "/" + folder
 	return repo, restic.CheckLocation(repo)
+}
+
+// usablePort reports whether port names a TCP port a server can listen on.
+func usablePort(port string) bool {
+	n, err := strconv.Atoi(port)
+	return err == nil && n > 0 && n < 65536
 }
 
 // takeUpSharedRepo records the shared repository with its members and gives
@@ -428,6 +443,18 @@ type sharedMembershipView struct {
 	// next prune window opens.
 	Space      *store.SharedSpace `json:"space,omitempty"`
 	NextWindow int64              `json:"nextWindow,omitempty"`
+	// Move is a new address the holder named that this server did not
+	// follow yet.
+	Move *sharedMoveView `json:"move,omitempty"`
+}
+
+// sharedMoveView is the new address a holder named for a shared repository,
+// without the login, and why this server still copies to the old one.
+type sharedMoveView struct {
+	Holder string `json:"holder"`
+	Repo   string `json:"repo"`
+	Reason string `json:"reason"`
+	At     int64  `json:"at"`
 }
 
 func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
@@ -453,6 +480,10 @@ func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 		}
 		if j.Repo != "" {
 			if sr, ok, err := s.store.SharedRepoAt(j.Repo); err == nil && ok {
+				if mv, ok := s.sharedMoves.Load(sr.ID); ok {
+					move := mv.(sharedMoveView)
+					v.Move = &move
+				}
 				for _, m := range sr.Members {
 					if m.Host != j.Host {
 						v.Together = append(v.Together, sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host})

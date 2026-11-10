@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -9,8 +10,10 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"strconv"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -57,14 +60,24 @@ type repoIdentifier interface {
 // peerSharedHolder is a server's word that it holds the shared repository
 // with RepoID now. Every key opens the repository's config, so a server that
 // reads the same id with its own key knows the word is about its repository.
-// Removed is the key of the check the server removed at the folder.
+// Removed is the key of the check the server removed at the folder. Server
+// and Path say where members reach the repository now, as the offer of a join
+// does, nil from a server that knows no address it can hand out.
 type peerSharedHolder struct {
-	RepoID  string `json:"repoId"`
-	Removed string `json:"removed,omitempty"`
+	RepoID  string        `json:"repoId"`
+	Removed string        `json:"removed,omitempty"`
+	Server  *peerReceiver `json:"server,omitempty"`
+	Path    string        `json:"path,omitempty"`
 	peerProof
 }
 
-func (c peerSharedHolder) signed() []byte { return callPayload(c.RepoID, c.Removed) }
+func (c peerSharedHolder) signed() []byte {
+	parts := []string{c.RepoID, c.Removed}
+	if c.Server != nil {
+		parts = append(parts, c.Server.Host, strconv.FormatBool(c.Server.HostFromGroup), strconv.Itoa(c.Server.Port), strconv.FormatBool(c.Server.NeedsHost), c.Path)
+	}
+	return callPayload(parts...)
+}
 
 // peerSharedHolderAnswer says whether the word was taken. Challenge is the key
 // the server has to remove first. Later asks to be told again, when the
@@ -79,11 +92,16 @@ type peerSharedHolderAnswer struct {
 
 // sharedRepoID reads the id of sr the way this server reaches it.
 func (s *Service) sharedRepoID(ctx context.Context, sr store.SharedRepo) (string, error) {
+	return s.sharedRepoIDAt(ctx, sr, "")
+}
+
+// sharedRepoIDAt reads the id of sr where sharedReachAt reaches it.
+func (s *Service) sharedRepoIDAt(ctx context.Context, sr store.SharedRepo, at string) (string, error) {
 	ider, ok := engineAs[repoIdentifier](s.engine)
 	if !ok {
 		return "", errors.New("this build of restic cannot read a repository's id")
 	}
-	repo, mode, err := s.sharedReach(sr)
+	repo, mode, err := s.sharedReachAt(sr, at)
 	if err != nil {
 		return "", err
 	}
@@ -124,14 +142,36 @@ func (s *Service) handlePeerSharedHolder(w http.ResponseWriter, r *http.Request)
 // this server reads as in.RepoID, once holder removed the key of a check that
 // only a server at the repository's folder can remove. A server that held it
 // until then stops keeping it and remembers who took it over, so a person can
-// take it back.
+// take it back. A member reads the id and runs the check at the address the
+// holder names, with its own key and login, and copies there from then on.
 func (s *Service) takeSharedHolder(ctx context.Context, holder string, in peerSharedHolder) (peerSharedHolderAnswer, error) {
-	sr, err := s.sharedRepoWithID(ctx, holder, in.RepoID)
+	moved, err := s.announcedLocation(holder, in)
+	if err != nil {
+		// Without a usable address only a server that reaches the repository
+		// at a folder of its own can still take the word.
+		if held := s.followableRepos(holder); len(held) > 0 {
+			for _, sr := range held {
+				s.holdBackMove(sr, holder, "", err.Error())
+			}
+			return peerSharedHolderAnswer{Later: true, Error: err.Error()}, nil
+		}
+	}
+	sr, at, err := s.sharedRepoWithID(ctx, holder, in.RepoID, moved)
 	if err != nil {
 		return peerSharedHolderAnswer{}, err
 	}
 	if sr.Owner == holder {
 		return peerSharedHolderAnswer{Taken: true}, nil
+	}
+	repo, mode, err := s.sharedReachAt(sr, at)
+	if err != nil {
+		return peerSharedHolderAnswer{}, err
+	}
+	later := func(err error) (peerSharedHolderAnswer, error) {
+		if at != "" {
+			s.holdBackMove(sr, holder, at, "the new address did not answer: "+scrubError(err))
+		}
+		return peerSharedHolderAnswer{Later: true, Error: scrubError(err)}, nil
 	}
 	check := sr.ID + "\x00" + holder
 	var pending holderCheck
@@ -142,13 +182,13 @@ func (s *Service) takeSharedHolder(ctx context.Context, holder string, in peerSh
 	// a key that is gone was removed by whoever was asked to.
 	if pending.key != "" && time.Since(pending.at) >= sharedCheckTTL {
 		s.holderChecks.Delete(check)
-		s.dropProofKey(ctx, sr, pending.key)
+		s.dropProofKey(ctx, repo, mode, pending.key)
 		pending = holderCheck{}
 	}
 	if pending.key == "" {
-		key, err := s.addProofKey(ctx, sr)
+		key, err := s.addProofKey(ctx, repo, mode)
 		if err != nil {
-			return peerSharedHolderAnswer{Later: true, Error: scrubError(err)}, nil
+			return later(err)
 		}
 		s.holderChecks.Store(check, holderCheck{key: key, at: time.Now()})
 		return peerSharedHolderAnswer{Challenge: key}, nil
@@ -158,28 +198,42 @@ func (s *Service) takeSharedHolder(ctx context.Context, holder string, in peerSh
 	if in.Removed != pending.key {
 		return peerSharedHolderAnswer{Challenge: pending.key}, nil
 	}
-	still, err := s.hasKey(ctx, sr, pending.key)
+	still, err := s.hasKey(ctx, repo, mode, pending.key)
 	if err != nil {
-		return peerSharedHolderAnswer{Later: true, Error: scrubError(err)}, nil
+		return later(err)
 	}
 	if still {
-		if s.dropProofKey(ctx, sr, pending.key) {
+		if s.dropProofKey(ctx, repo, mode, pending.key) {
 			s.holderChecks.Delete(check)
 		}
-		log.Printf("api: shared repository: %s says it holds %s, but the key of the check is still there, so nothing changes", holder, scrubRepoLocation(sr.Repo)) //nolint:gosec // G706: an instance id the group channel checked, the location scrubbed
-		return peerSharedHolderAnswer{Error: "the key of the check is still there, so only a server at the repository's folder holds it"}, nil
+		const why = "the key of the check is still there, so only a server at the repository's folder holds it"
+		if at != "" {
+			s.holdBackMove(sr, holder, at, why)
+		}
+		log.Printf("api: shared repository: %s says it holds %s, but the key of the check is still there, so nothing changes", holder, scrubRepoLocation(repo)) //nolint:gosec // G706: an instance id the group channel checked, the location scrubbed
+		return peerSharedHolderAnswer{Error: why}, nil
 	}
 	s.holderChecks.Delete(check)
 	if s.ownsSharedRepo(sr) {
-		name := holder
-		if m, ok := s.reachableMember(holder); ok && m.Name != "" {
-			name = m.Name
-		}
+		name := s.memberName(holder)
 		if err := s.store.NoteSharedTakenOver(store.SharedTakenOver{RepoID: sr.ID, By: holder, Name: name, At: time.Now().Unix()}); err != nil {
 			return peerSharedHolderAnswer{}, err
 		}
 		log.Printf("api: shared repository: %s holds %s now, so this server stops keeping it", name, scrubRepoLocation(sr.Repo)) //nolint:gosec // G706: the name is the member's own, the location scrubbed
 	}
+	if at != "" {
+		// The copy targets and the join move with it and keep their login and
+		// every other setting. Joins change under sharedMu.
+		s.sharedMu.Lock()
+		err := s.store.MoveSharedRepo(sr.ID, at)
+		s.sharedMu.Unlock()
+		if err != nil {
+			return peerSharedHolderAnswer{}, err
+		}
+		log.Printf("api: shared repository: %s holds %s now, and this server copies there at %s", s.memberName(holder), scrubRepoLocation(sr.Repo), scrubRepoLocation(at)) //nolint:gosec // G706: the name is the member's own, the locations scrubbed
+		sr.Repo = at
+	}
+	s.sharedMoves.Delete(sr.ID)
 	sr.Owner = holder
 	if _, err := s.store.PutSharedRepo(sr); err != nil {
 		return peerSharedHolderAnswer{}, err
@@ -187,40 +241,103 @@ func (s *Service) takeSharedHolder(ctx context.Context, holder string, in peerSh
 	return peerSharedHolderAnswer{Taken: true}, nil
 }
 
-// sharedRepoWithID finds the shared repository whose id this server reads as
-// id, other than one holder holds already.
-func (s *Service) sharedRepoWithID(ctx context.Context, holder, id string) (store.SharedRepo, error) {
+// announcedLocation is where in says members reach the shared repository
+// now, by the rules of a join, and empty when it names no address.
+func (s *Service) announcedLocation(holder string, in peerSharedHolder) (string, error) {
+	if in.Server == nil {
+		return "", nil
+	}
+	m, ok := s.reachableMember(holder)
+	if !ok {
+		m = group.Member{ID: holder}
+	}
+	return sharedServerLocation(m, *in.Server, in.Path)
+}
+
+// followableRepos are the shared repositories this server copies into over
+// the network that holder does not hold yet, the ones a new address of
+// holder's can be about.
+func (s *Service) followableRepos(holder string) []store.SharedRepo {
 	all, err := s.store.ListSharedRepos()
 	if err != nil {
-		return store.SharedRepo{}, err
+		return nil
+	}
+	return slices.DeleteFunc(all, func(sr store.SharedRepo) bool { return !s.followable(sr, holder) })
+}
+
+func (s *Service) followable(sr store.SharedRepo, holder string) bool {
+	return sr.Owner != holder && restic.IsRemoteRepo(sr.Repo) && !s.ownsSharedRepo(sr)
+}
+
+// holdBackMove notes why this server still copies to sr where it did after
+// holder named the address at for it, empty for one it could not use. The
+// membership's card shows it until a word of a holder goes through.
+func (s *Service) holdBackMove(sr store.SharedRepo, holder, at, reason string) {
+	name := s.memberName(holder)
+	log.Printf("api: shared repository: %s holds %s now at another address, but this server stays where it is: %s", name, scrubRepoLocation(sr.Repo), reason) //nolint:gosec // G706: the name is the member's own, the location and the reason scrubbed
+	s.sharedMoves.Store(sr.ID, sharedMoveView{Holder: name, Repo: scrubRepoLocation(at), Reason: reason, At: time.Now().Unix()})
+}
+
+// memberName is what the group calls the instance id, or the id itself.
+func (s *Service) memberName(id string) string {
+	if m, ok := s.reachableMember(id); ok && m.Name != "" {
+		return m.Name
+	}
+	return id
+}
+
+// sharedRepoWithID finds the shared repository whose id this server reads as
+// id, other than one holder holds already. A member reads it at moved, the
+// address holder named, and gets that back as where to run the check; empty
+// means the repository stays where it is.
+func (s *Service) sharedRepoWithID(ctx context.Context, holder, id, moved string) (store.SharedRepo, string, error) {
+	all, err := s.store.ListSharedRepos()
+	if err != nil {
+		return store.SharedRepo{}, "", err
 	}
 	unread := false
+	type heldBack struct {
+		sr     store.SharedRepo
+		reason string
+	}
+	var held []heldBack
 	for _, sr := range all {
-		got, err := s.sharedRepoID(ctx, sr)
+		at := ""
+		if moved != "" && s.followable(sr, holder) && !sameRepoLocation(moved, sr.Repo) {
+			at = moved
+		}
+		got, err := s.sharedRepoIDAt(ctx, sr, at)
 		if err != nil {
-			log.Printf("api: shared repository: could not read the id of %s: %v", scrubRepoLocation(sr.Repo), scrubError(err)) //nolint:gosec // G706: the location and the error are scrubbed
+			log.Printf("api: shared repository: could not read the id of %s: %v", scrubRepoLocation(cmp.Or(at, sr.Repo)), scrubError(err)) //nolint:gosec // G706: the location and the error are scrubbed
 			unread = true
+			if at != "" {
+				held = append(held, heldBack{sr, "the new address did not answer: " + scrubError(err)})
+			}
 			continue
 		}
 		if got == id {
-			return sr, nil
+			return sr, at, nil
+		}
+		if at != "" {
+			held = append(held, heldBack{sr, "the repository at the new address is another one"})
 		}
 	}
+	// A word about one repository says nothing about the others, so the notes
+	// wait until none of them matched.
+	for _, h := range held {
+		s.holdBackMove(h.sr, holder, moved, h.reason)
+	}
 	if unread {
-		return store.SharedRepo{}, errSharedRepoIDUnread
+		return store.SharedRepo{}, "", errSharedRepoIDUnread
 	}
 	log.Printf("api: shared repository: %s says it holds a repository with an id none of this server's has, so nothing changes", holder) //nolint:gosec // G706: an instance id the group channel checked
-	return store.SharedRepo{}, errNoSharedRepoWithID
+	return store.SharedRepo{}, "", errNoSharedRepoWithID
 }
 
-// addProofKey adds a key with a password nobody keeps to sr, the way this
-// server reaches it, and returns its id.
-func (s *Service) addProofKey(ctx context.Context, sr store.SharedRepo) (string, error) {
+// addProofKey adds a key with a password nobody keeps to the repository at
+// repo, and returns its id.
+func (s *Service) addProofKey(ctx context.Context, repo string, mode restic.Mode) (string, error) {
 	eng, err := s.sharedEngine()
-	if err != nil {
-		return "", err
-	}
-	repo, mode, err := s.sharedReach(sr)
 	if err != nil {
 		return "", err
 	}
@@ -243,13 +360,9 @@ func (s *Service) addProofKey(ctx context.Context, sr store.SharedRepo) (string,
 	return "", errors.New("restic did not name the key it added")
 }
 
-// hasKey reports whether the key id is in sr.
-func (s *Service) hasKey(ctx context.Context, sr store.SharedRepo, id string) (bool, error) {
+// hasKey reports whether the key id is in the repository at repo.
+func (s *Service) hasKey(ctx context.Context, repo string, mode restic.Mode, id string) (bool, error) {
 	eng, err := s.sharedEngine()
-	if err != nil {
-		return false, err
-	}
-	repo, mode, err := s.sharedReach(sr)
 	if err != nil {
 		return false, err
 	}
@@ -263,17 +376,13 @@ func (s *Service) hasKey(ctx context.Context, sr store.SharedRepo, id string) (b
 // dropProofKey removes the key of a check this server made, which works only
 // at the repository's folder. Elsewhere the key stays until the holder's
 // upkeep removes it. It reports whether the key is gone.
-func (s *Service) dropProofKey(ctx context.Context, sr store.SharedRepo, id string) bool {
+func (s *Service) dropProofKey(ctx context.Context, repo string, mode restic.Mode, id string) bool {
 	eng, err := s.sharedEngine()
-	if err != nil {
-		return false
-	}
-	repo, mode, err := s.sharedReach(sr)
 	if err == nil {
 		err = eng.RemoveKey(ctx, repo, mode, id)
 	}
 	if err != nil {
-		log.Printf("api: shared repository: the key %s of a check stays in %s until the holder's upkeep removes it: %v", id, scrubRepoLocation(sr.Repo), scrubError(err)) //nolint:gosec // G706: a key id restic named, the location and the error scrubbed
+		log.Printf("api: shared repository: the key %s of a check stays in %s until the holder's upkeep removes it: %v", id, scrubRepoLocation(repo), scrubError(err)) //nolint:gosec // G706: a key id restic named, the location and the error scrubbed
 		return false
 	}
 	return true
@@ -374,22 +483,27 @@ func (s *Service) tellSharedHolders(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	ids := map[string]string{}
+	words := map[string]peerSharedHolder{}
 	for _, n := range notices {
 		i := slices.IndexFunc(all, func(sr store.SharedRepo) bool { return sr.ID == n.RepoID })
 		if i < 0 || !s.ownsSharedRepo(all[i]) {
 			s.dropSharedHolderNotice(n)
 			continue
 		}
-		id, ok := ids[n.RepoID]
+		word, ok := words[n.RepoID]
 		if !ok {
-			if id, err = s.sharedRepoID(ctx, all[i]); err != nil {
+			id, err := s.sharedRepoID(ctx, all[i])
+			if err != nil {
 				log.Printf("api: shared repository: could not read the id of %s, so the others hear of this server later: %v", scrubRepoLocation(all[i].Repo), scrubError(err)) //nolint:gosec // G706: the location and the error are scrubbed
 				continue
 			}
-			ids[n.RepoID] = id
+			word = peerSharedHolder{RepoID: id}
+			if word.Server = s.sharedHolderAddress(ctx, all[i]); word.Server != nil {
+				word.Path = sharedRepoFolder
+			}
+			words[n.RepoID] = word
 		}
-		ans, err := s.tellSharedHolder(ctx, all[i], n.Instance, id)
+		ans, err := s.tellSharedHolder(ctx, all[i], n.Instance, word)
 		switch {
 		case err != nil || ans.Later:
 			continue
@@ -400,11 +514,26 @@ func (s *Service) tellSharedHolders(ctx context.Context) {
 	}
 }
 
-// tellSharedHolder tells instance that this server holds sr, whose id it
-// reads as id, and removes the key of the check instance answers with at the
-// folder before it says so again.
-func (s *Service) tellSharedHolder(ctx context.Context, sr store.SharedRepo, instance, id string) (peerSharedHolderAnswer, error) {
-	ans, err := s.announceHolder(ctx, instance, id, "")
+// sharedHolderAddress is where members reach sr, which this server holds, as
+// the offer of a join names it, nil while this server knows no address it can
+// hand out.
+func (s *Service) sharedHolderAddress(ctx context.Context, sr store.SharedRepo) *peerReceiver {
+	ss, ok, err := s.store.GetSharedRepoServer()
+	if err != nil || !ok || !sameRepoLocation(ss.Repo, sr.Repo) {
+		return nil
+	}
+	addr := s.sharedAddress(ctx, ss)
+	if addr.NeedsHost {
+		return nil
+	}
+	return &addr
+}
+
+// tellSharedHolder tells instance that this server holds sr, in word, and
+// removes the key of the check instance answers with at the folder before it
+// says so again.
+func (s *Service) tellSharedHolder(ctx context.Context, sr store.SharedRepo, instance string, word peerSharedHolder) (peerSharedHolderAnswer, error) {
+	ans, err := s.announceHolder(ctx, instance, word)
 	if err != nil || ans.Challenge == "" {
 		return ans, err
 	}
@@ -412,11 +541,11 @@ func (s *Service) tellSharedHolder(ctx context.Context, sr store.SharedRepo, ins
 		log.Printf("api: shared repository: could not remove the key of the check %s asked for, so it hears of this server later: %v", instance, scrubError(err)) //nolint:gosec // G706: an instance id from the store, the error scrubbed
 		return peerSharedHolderAnswer{Later: true}, nil
 	}
-	return s.announceHolder(ctx, instance, id, ans.Challenge)
+	word.Removed = ans.Challenge
+	return s.announceHolder(ctx, instance, word)
 }
 
-func (s *Service) announceHolder(ctx context.Context, instance, id, removed string) (peerSharedHolderAnswer, error) {
-	in := peerSharedHolder{RepoID: id, Removed: removed}
+func (s *Service) announceHolder(ctx context.Context, instance string, in peerSharedHolder) (peerSharedHolderAnswer, error) {
 	var err error
 	if in.peerProof, err = s.signCall(keydeposit.ProofSharedHolder, instance, in.signed()); err != nil {
 		return peerSharedHolderAnswer{}, err
