@@ -88,9 +88,13 @@ func (s *Service) sharedKitSection(w func(string, ...any), settings store.Settin
 		}
 		w("- %s: %s\n", name, loc)
 		w("  owner: %s\n", sr.Owner)
+		// Joining gives every section a target there, switched off until it
+		// copies.
 		var sections []string
 		for _, domain := range offsiteConfigDomains {
-			if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool { return t.Domain == domain && sameRepoLocation(t.Repo, sr.Repo) }) {
+			if slices.ContainsFunc(targets, func(t store.OffsiteTarget) bool {
+				return t.Enabled && t.Domain == domain && sameRepoLocation(t.Repo, sr.Repo)
+			}) {
 				sections = append(sections, domain)
 			}
 		}

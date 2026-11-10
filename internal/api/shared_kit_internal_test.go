@@ -207,6 +207,54 @@ func TestAServerThatHeldASharedRepositoryHoldsItAgainAfterATakeOver(t *testing.T
 	}
 }
 
+func TestATakeOverCopiesOnlyTheSectionsThatCopiedToTheSharedRepository(t *testing.T) {
+	tests := []struct {
+		name  string
+		join  func(*testing.T, *placementFixture) store.SharedRepo
+		repo  string
+		taken string
+	}{
+		{name: "holder", join: ownerOfShared, repo: ownedShared, taken: "files"},
+		{name: "member", join: memberOfAtlas, repo: atlasShared, taken: "containers,files"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			old := encryptedFixture(t)
+			old.svc.cfg.AppKey = oldKey
+			old.svc.forgetBackupKey()
+			tt.join(t, old)
+			if _, err := old.st.UpsertOffsiteTarget(store.OffsiteTarget{Domain: "vms", Name: "Shared", Repo: tt.repo, Immutable: true}); err != nil {
+				t.Fatal(err)
+			}
+			text, err := old.svc.RecoveryKit()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			f := newPlacementFixture(t)
+			f.svc.cfg.HostMountRoot = old.root
+			f.svc.docker = &receiverDocker{}
+			f.eng.opens[atlasShared] = true
+			takeOverKit(t, f, text)
+
+			targets, err := f.st.ListOffsiteTargets()
+			if err != nil {
+				t.Fatal(err)
+			}
+			var taken []string
+			for _, target := range targets {
+				if target.Repo == tt.repo {
+					taken = append(taken, target.Domain)
+				}
+			}
+			slices.Sort(taken)
+			if got := strings.Join(taken, ","); got != tt.taken {
+				t.Errorf("the take-over copies %s to the shared repository, want %s", got, tt.taken)
+			}
+		})
+	}
+}
+
 func TestATakeOverKeepsTheSharedServerThatStillRuns(t *testing.T) {
 	old := encryptedFixture(t)
 	old.svc.cfg.AppKey = oldKey
