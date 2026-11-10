@@ -158,6 +158,9 @@ type Mode struct {
 	Host string
 	// Sharing says whether other servers write to the repository too.
 	Sharing Sharing
+	// MaxUnused is the share of unused space in percent a prune may leave
+	// behind instead of repacking it. Zero leaves restic's own limit.
+	MaxUnused int
 }
 
 // backupHost is the --host a backup under m carries.
@@ -1075,14 +1078,19 @@ func SnapshotArgs(repo, snapshotID string, m Mode) []string {
 // restic's --mode value: "raw-data" reports the physical (deduplicated +
 // compressed) repository size and blob count; "restore-size" reports the
 // logical size and file count of the restored data. The mode is a fixed
-// caller-chosen literal, never user input.
+// caller-chosen literal, never user input. In a shared repository it counts
+// the snapshots of the mode's host alone, see ownHosts.
 func StatsArgs(repo, mode string, m Mode) []string {
+	return statsArgs(repo, mode, m, m.ownHosts())
+}
+
+func statsArgs(repo, mode string, m Mode, hosts []string) []string {
 	args := repoFlag(repo, m)
 	args = append(args, "stats", "--no-lock", "--json", "--mode", mode)
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	return args
+	return append(args, hostFlags(hosts)...)
 }
 
 // StatsRestoreSizeArgs returns the argv for `restic stats --mode restore-size
@@ -1426,7 +1434,7 @@ func PruneArgs(repo string, m Mode) []string {
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
-	return args
+	return append(args, maxUnusedFlags(m.MaxUnused)...)
 }
 
 // CacheCleanupArgs returns the argv slice for `restic cache --cleanup`, which
@@ -3070,7 +3078,11 @@ func parseSnapshotParent(out []byte) (string, error) {
 // restic stats --json emits a single JSON object, so it is parsed in one shot
 // (the buffered run, like Snapshots — not the streaming progress path).
 func (r Restic) Stats(ctx context.Context, repo, mode string, m Mode) (StatsResult, error) {
-	out, err := r.run(ctx, StatsArgs(repo, mode, m), m)
+	return r.stats(ctx, StatsArgs(repo, mode, m), m)
+}
+
+func (r Restic) stats(ctx context.Context, args []string, m Mode) (StatsResult, error) {
+	out, err := r.run(ctx, args, m)
 	if err != nil {
 		return StatsResult{}, err
 	}
@@ -3163,6 +3175,9 @@ func (r Restic) RestoreInclude(ctx context.Context, repo, snapshotID, includePat
 // Forget removes the given snapshots from the repo, optionally pruning the freed
 // data. A nil/empty ID list is a no-op (nothing to forget).
 func (r Restic) Forget(ctx context.Context, repo string, snapshotIDs []string, prune bool, m Mode) error {
+	if err := m.refuseMemberPrune(); err != nil {
+		return err
+	}
 	if len(snapshotIDs) == 0 {
 		return nil
 	}
@@ -3195,7 +3210,7 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	if !p.Any() {
 		return nil
 	}
-	if err := m.refuseRepoWide(tags); err != nil {
+	if err := errors.Join(m.refuseMemberPrune(), m.refuseRepoWide(tags)); err != nil {
 		return err
 	}
 	return r.runCounted(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
@@ -3236,6 +3251,9 @@ func (r Restic) Unlock(ctx context.Context, repo string, removeAll bool, m Mode)
 
 // Prune reclaims repository space freed by forgotten snapshots (`restic prune`).
 func (r Restic) Prune(ctx context.Context, repo string, m Mode) error {
+	if err := m.refuseMemberPrune(); err != nil {
+		return err
+	}
 	return r.runCounted(ctx, PruneArgs(repo, m), m)
 }
 
