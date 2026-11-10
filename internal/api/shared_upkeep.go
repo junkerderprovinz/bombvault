@@ -361,10 +361,10 @@ func (s *Service) RunSharedUpkeep(ctx context.Context) error {
 }
 
 func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, now time.Time) error {
-	if !s.sharedUpkeepMu.TryLock() {
+	if !s.sharedUpkeep.take() {
 		return nil
 	}
-	defer s.sharedUpkeepMu.Unlock()
+	defer s.sharedUpkeep.done()
 	owned, err := s.ownedSharedRepos()
 	if err != nil {
 		return err
@@ -379,19 +379,15 @@ func (s *Service) runSharedUpkeep(ctx context.Context, members sharedMembers, no
 // runSharedUpkeepNow forgets, prunes, checks and measures the shared
 // repository id at once, as a person asked.
 func (s *Service) runSharedUpkeepNow(ctx context.Context, id string, members sharedMembers) error {
-	if !s.sharedUpkeepMu.TryLock() {
+	if !s.sharedUpkeep.take() {
 		return errSharedUpkeepBusy
 	}
-	defer s.sharedUpkeepMu.Unlock()
-	owned, err := s.ownedSharedRepos()
+	defer s.sharedUpkeep.done()
+	sr, err := s.ownedSharedRepo(id)
 	if err != nil {
 		return err
 	}
-	i := slices.IndexFunc(owned, func(sr store.SharedRepo) bool { return sr.ID == id })
-	if i < 0 {
-		return errNotSharedOwner
-	}
-	return s.keepSharedRepo(ctx, owned[i], members, time.Now(), true)
+	return s.keepSharedRepo(ctx, sr, members, time.Now(), true)
 }
 
 // NextSharedUpkeep is when the next pass over a shared repository this server
