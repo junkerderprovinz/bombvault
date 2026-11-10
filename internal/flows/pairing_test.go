@@ -52,6 +52,8 @@ func newPairedInstances(t *testing.T) *pairedInstances {
 	p.tower.call("PUT", "/api/group/relay", map[string]any{"mode": "own", "url": p.tower.base, "serve": true}, nil)
 	p.vault.call("POST", "/api/group/join", map[string]any{"phrase": phrase.Phrase}, nil)
 	p.vault.call("PUT", "/api/group/relay", map[string]any{"mode": "own", "url": p.tower.base, "serve": false}, nil)
+	p.letIn(p.tower)
+	p.letIn(p.vault)
 	p.towerID = p.memberOf(p.vault)
 	p.vaultID = p.memberOf(p.tower)
 
@@ -67,6 +69,35 @@ func newPairedInstances(t *testing.T) *pairedInstances {
 		t.Fatal(err)
 	}
 	return p
+}
+
+// letIn approves the other install on b once it waits there, the way its
+// owner would on the pairing page.
+func (*pairedInstances) letIn(b *bombvault) {
+	b.t.Helper()
+	for range 60 {
+		var group struct {
+			Members []struct {
+				ID string `json:"id"`
+			} `json:"members"`
+			Waiting []struct {
+				ID    string `json:"id"`
+				There bool   `json:"there"`
+			} `json:"waiting"`
+		}
+		b.call("GET", "/api/group", nil, &group)
+		if len(group.Members) > 0 {
+			return
+		}
+		for _, w := range group.Waiting {
+			if !w.There {
+				b.call("POST", "/api/group/members/"+w.ID+"/approve", nil, nil)
+				return
+			}
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	b.t.Fatal("the other install never asked to be let in")
 }
 
 // memberOf waits for b to see the other install in its group.

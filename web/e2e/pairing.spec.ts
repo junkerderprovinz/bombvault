@@ -69,7 +69,7 @@ function view(f: Instance) {
     joinedAgo: f.active ? f.joinedAgo : 0,
     memberSeen: f.memberSeen,
     selfAddress: "https://tower-linz.familie-hofer.example.at:3443",
-    selfAddressManual: false,
+    waiting: [],
     ownAddresses: ["192.168.178.20", "10.20.30.41", "tower-linz-keller-serverschrank-2.local"],
   };
 }
@@ -231,14 +231,8 @@ for (const width of [1280, 390]) {
     const zfsRow = page.getByTestId("zfs-row");
     await expect(zfsRow).toContainText("ZFS-Server ohne BombVault");
     await expect(zfsRow).toContainText("Backup-NAS im Keller");
-    // What the instance found out about itself stands above the address a
-    // person can correct, as lines and no fields.
-    const found = page.getByTestId("own-addresses");
-    await expect(found.getByRole("listitem")).toHaveText(["192.168.178.20", "10.20.30.41", "tower-linz-keller-serverschrank-2.local"]);
-    await expect(found.locator("input")).toHaveCount(0);
-    const known = page.getByLabel(/^Bekannte Adressen/);
-    await expect(known).toHaveValue("https://tower-linz.familie-hofer.example.at:3443");
-    expect((await found.boundingBox())!.y).toBeLessThan((await known.boundingBox())!.y);
+    // Pairing goes by the phrase alone, so nothing here takes an address.
+    await expect(page.locator('input[type="url"]:not(#relay-address)')).toHaveCount(0);
     // The group as a network stands on the Instances page and not here.
     await expect(page.getByTestId("net-picture")).toHaveCount(0);
     await expectFits(page);

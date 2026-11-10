@@ -491,7 +491,7 @@ async function stageGroup(page: Page): Promise<void> {
           joinedAgo: 120,
           memberSeen: true,
           selfAddress: "",
-          selfAddressManual: false,
+          waiting: [],
         },
       }),
   );

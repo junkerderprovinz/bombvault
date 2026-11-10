@@ -927,7 +927,7 @@ const GROUP = {
   name: "tower",
   passwordSet: true,
   selfAddress: "https://tower.home.arpa:3443",
-  selfAddressManual: false,
+  waiting: [],
   ownAddresses: ["192.168.1.10", "tower.home.arpa"],
   members: [
     { id: GROUP_ID.nas, name: "Offsite NAS", version: "v10.4.2", direct: true, relay: true, address: "https://offsite-nas.home.arpa:3443" },
