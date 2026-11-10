@@ -6710,6 +6710,10 @@ export interface SharedMembership {
   joinedAt?: number;
   /** The other members, without this instance. */
   together: SharedMember[];
+  /** When the last copy there that went through began, and when a later one
+   *  began that waited while the owner tidied up, in Unix seconds. */
+  lastCopyAt?: number;
+  deferredAt?: number;
 }
 
 /** A member's shared repository as the destination wizard offers it. */

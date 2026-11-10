@@ -105,6 +105,9 @@ type OffsiteRun struct {
 	FinishedAt int64  `json:"finishedAt"` // unix seconds; 0 while running
 	OK         bool   `json:"ok"`
 	Error      string `json:"error"` // scrubbed; empty on success
+	// Deferred is a copy that waited for the owner of a shared repository
+	// to finish its prune. It copied nothing and failed at nothing.
+	Deferred bool `json:"deferred,omitempty"`
 }
 
 // RecordOffsiteRun records the start of an off-site replication run and returns
@@ -162,6 +165,21 @@ func (r *Repo) FinishOffsiteRun(id int64, ok bool, errText string) error {
 	return nil
 }
 
+// DeferOffsiteRun finishes a replication run that copied nothing because the
+// owner of the shared repository it goes to was pruning there. Such a run
+// counts neither as a copy that kept the target current nor as a failure.
+func (r *Repo) DeferOffsiteRun(id int64, reason string) error {
+	_, err := r.db.Exec(`
+		UPDATE offsite_runs SET finished_at = ?, ok = 0, deferred = 1, error = ?
+		WHERE rowid = ?`,
+		time.Now().Unix(), reason, id,
+	)
+	if err != nil {
+		return fmt.Errorf("DeferOffsiteRun: %w", err)
+	}
+	return nil
+}
+
 // ReasonCopyRulesUnreadable is the error of a run that copied nothing because the
 // placement rules could not be read. It says nothing about the target.
 const ReasonCopyRulesUnreadable = "copy rules could not be read"
@@ -190,7 +208,7 @@ func (r *Repo) MarkOffsiteRunAgingOnly(domain, targetID string, startedAt int64)
 // domain, running or not, or false when none exists.
 func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	row := r.db.QueryRow(`
-		SELECT domain, started_at, finished_at, ok, error
+		SELECT domain, started_at, finished_at, ok, error, deferred
 		FROM offsite_runs
 		WHERE domain = ?
 		ORDER BY started_at DESC, rowid DESC
@@ -198,7 +216,7 @@ func (r *Repo) LatestOffsiteRun(domain string) (OffsiteRun, bool, error) {
 	var run OffsiteRun
 	var finished sql.NullInt64
 	var ok int
-	err := row.Scan(&run.Domain, &run.StartedAt, &finished, &ok, &run.Error)
+	err := row.Scan(&run.Domain, &run.StartedAt, &finished, &ok, &run.Error, &run.Deferred)
 	if errors.Is(err, sql.ErrNoRows) {
 		return OffsiteRun{}, false, nil
 	}
@@ -262,10 +280,37 @@ func (r *Repo) LatestSuccessfulOffsiteRunForTarget(domain, targetID string) (Off
 	return run, true, nil
 }
 
+// CopiesToTargets is when the last copy to any of the targets that kept it
+// current began, and when the newest copy since then that waited began, 0 for
+// none of either.
+func (r *Repo) CopiesToTargets(targetIDs []string) (copied, deferred int64, err error) {
+	if len(targetIDs) == 0 {
+		return 0, 0, nil
+	}
+	args := make([]any, 0, 2*len(targetIDs))
+	for range 2 {
+		for _, id := range targetIDs {
+			args = append(args, id)
+		}
+	}
+	in := `(?` + strings.Repeat(", ?", len(targetIDs)-1) + `)`
+	var c, d sql.NullInt64
+	//nolint:gosec // G202: only "?" placeholders are concatenated; the ids travel as parameters.
+	err = r.db.QueryRow(`
+		SELECT ok.at, (SELECT MAX(started_at) FROM offsite_runs
+		                WHERE deferred = 1 AND offsite_target_id IN `+in+` AND started_at > COALESCE(ok.at, 0))
+		  FROM (SELECT MAX(started_at) AS at FROM offsite_runs
+		         WHERE ok = 1 AND aging_only = 0 AND offsite_target_id IN `+in+`) ok`, args...).Scan(&c, &d)
+	if err != nil {
+		return 0, 0, fmt.Errorf("CopiesToTargets: %w", err)
+	}
+	return c.Int64, d.Int64, nil
+}
+
 // FirstOffsiteFailureAfter returns when the earliest finished, failed run to the
 // target began after since and after its last successful run, or 0 when there is
 // none. A run that failed because the copy rules could not be read says nothing
-// about the target and is left out.
+// about the target and is left out, and so is a deferred one.
 func (r *Repo) FirstOffsiteFailureAfter(targetID string, since int64) (int64, error) {
 	return r.firstOffsiteFailureAfter(targetID, since, "")
 }
@@ -299,7 +344,7 @@ func (r *Repo) firstOffsiteFailureAfter(targetID string, since int64, also strin
 		 WHERE offsite_target_id = ? AND started_at > ?
 		   AND started_at > (SELECT COALESCE(MAX(started_at), 0) FROM offsite_runs
 		                      WHERE offsite_target_id = ? AND finished_at IS NOT NULL AND ok = 1)
-		   AND finished_at IS NOT NULL AND ok = 0 AND error <> ?`+also,
+		   AND finished_at IS NOT NULL AND ok = 0 AND deferred = 0 AND error <> ?`+also,
 		targetID, since, targetID, ReasonCopyRulesUnreadable).Scan(&at)
 	if err != nil {
 		return 0, fmt.Errorf("FirstOffsiteFailureAfter: %w", err)

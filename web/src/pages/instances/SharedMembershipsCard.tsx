@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { leaveSharedRepo, type SharedMembership, type SharedMembershipState } from "../../lib/api";
 import { useT, type TranslationKey } from "../../lib/i18n";
+import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { Badge, type BadgeTone } from "../../components/Badge";
@@ -92,6 +93,16 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
               <SettingRow label={t("shared.member.prunes")}>
                 <span className="text-sm text-carbon-text text-end">{named("shared.member.prunesValue", m.ownerName)}</span>
               </SettingRow>
+              {m.state === "joined" && (
+                <SettingRow
+                  label={t("shared.member.lastCopy")}
+                  note={m.deferredAt ? <span className="text-statusWarn">{named("shared.member.copyWaited", m.ownerName)}</span> : undefined}
+                >
+                  <span className="text-sm text-carbon-text text-end">
+                    {m.lastCopyAt ? relativeTime(t, m.lastCopyAt) : t("shared.member.noCopy")}
+                  </span>
+                </SettingRow>
+              )}
               <SettingRow label={t("shared.member.together")}>
                 <span className="text-sm text-carbon-text text-end wrap-anywhere">
                   {m.together.length > 0 ? m.together.map((o) => o.name).join(", ") : t("shared.member.alone")}

@@ -168,6 +168,7 @@ type copyOutcome struct {
 	destIsASource bool
 	landed        []restic.Snapshot // source snapshots this pass put at the target
 	uncertain     bool              // a whole copy went ahead without knowing what it sent; landed does not cover it
+	deferred      bool              // the owner of the shared repository there prunes it, so nothing was tried
 }
 
 // sourceCopy is one source planned for one target.
@@ -192,6 +193,7 @@ func (s *Service) copySources(ctx context.Context, settings store.Settings, doma
 	release, ok := s.beginSharedCopy(target.Repo)
 	if !ok {
 		log.Printf("api: offsite %s: the owner of %s prunes it right now, so this copy waits for the next pass", domain, placementTargetName(target)) //nolint:gosec // G706: domain is a fixed literal, the name is the row's own
+		out.deferred = true
 		return out
 	}
 	defer release()

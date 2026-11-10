@@ -3799,6 +3799,15 @@ CREATE TABLE IF NOT EXISTS shared_repo_space (
   space TEXT NOT NULL
 );`,
 	},
+	{
+		// A copy the owner of a shared repository held off while it pruned
+		// copied nothing, and its run says so instead of passing for a copy
+		// that found the target current.
+		version:          offsiteRunsDeferredMigration,
+		name:             "offsite_runs_deferred",
+		alreadySatisfied: columnPresent("offsite_runs", "deferred"),
+		sql:              `ALTER TABLE offsite_runs ADD COLUMN deferred INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4417,6 +4426,10 @@ const sharedJoinsMigration = 850
 // sharedUpkeepMigration numbers how the owner keeps a shared repository and
 // what a member last heard about the space there.
 const sharedUpkeepMigration = 860
+
+// offsiteRunsDeferredMigration numbers the mark of a copy that waited for the
+// owner of a shared repository.
+const offsiteRunsDeferredMigration = 880
 
 // sectionPlansMigration numbers the record of when a section's plan last changed.
 const sectionPlansMigration = 780

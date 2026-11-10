@@ -136,6 +136,22 @@ describe("SharedMembershipsCard", () => {
     expect(screen.queryByRole("button", { name: en["shared.member.leave"] })).toBeNull();
   });
 
+  it("says when the last copy went through and that a later one waited for the owner", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    memberships = [membership({ lastCopyAt: now - 7200, deferredAt: now - 60 })];
+    await renderCard();
+    const card = screen.getByRole("region", { name: "tower" });
+    expect(within(card).getByText(en["shared.member.lastCopy"])).toBeTruthy();
+    expect(within(card).getByText(named("shared.member.copyWaited", "tower"))).toBeTruthy();
+  });
+
+  it("says no copy went through yet", async () => {
+    memberships = [membership()];
+    await renderCard();
+    expect(screen.getByText(en["shared.member.noCopy"])).toBeTruthy();
+    expect(screen.queryByText(named("shared.member.copyWaited", "tower"))).toBeNull();
+  });
+
   it("stays in when the question is cancelled", async () => {
     memberships = [membership()];
     await renderCard();

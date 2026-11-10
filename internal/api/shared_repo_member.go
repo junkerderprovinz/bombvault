@@ -408,10 +408,18 @@ type sharedMembershipView struct {
 	AskedAt  int64              `json:"askedAt"`
 	JoinedAt int64              `json:"joinedAt,omitempty"`
 	Together []sharedMemberView `json:"together"`
+	// LastCopyAt is when the last copy there that went through began, and
+	// DeferredAt when a later one began that waited for the owner's prune.
+	LastCopyAt int64 `json:"lastCopyAt,omitempty"`
+	DeferredAt int64 `json:"deferredAt,omitempty"`
 }
 
 func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 	joins, err := s.store.ListSharedJoins(store.SharedJoinOut)
+	if err != nil {
+		return nil, err
+	}
+	targets, err := s.store.ListOffsiteTargets()
 	if err != nil {
 		return nil, err
 	}
@@ -431,6 +439,15 @@ func (s *Service) sharedMemberships() ([]sharedMembershipView, error) {
 						v.Together = append(v.Together, sharedMemberView{MemberID: m.Instance, Name: m.Name, Host: m.Host})
 					}
 				}
+			}
+			var ids []string
+			for _, t := range targets {
+				if t.Repo == j.Repo {
+					ids = append(ids, t.ID)
+				}
+			}
+			if v.LastCopyAt, v.DeferredAt, err = s.store.CopiesToTargets(ids); err != nil {
+				return nil, err
 			}
 		}
 		out = append(out, v)
