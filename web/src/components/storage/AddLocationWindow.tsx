@@ -319,6 +319,7 @@ export function AddLocationWindow({
             picked={draft.fromMember}
             matches={matches}
             onPick={(r) => void draft.pickFromGroup(r).then((filled) => filled && go(2))}
+            onAsked={onClose}
           />
           {tiles.length > 0 && (
             <div data-new="provider-logos" className="flex flex-col gap-6">

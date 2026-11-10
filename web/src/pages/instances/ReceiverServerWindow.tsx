@@ -40,7 +40,8 @@ interface Fresh {
   template: "written" | "download" | "none";
 }
 
-function checkBadge(server: ReceiverServer, t: T) {
+/** What the last append-only check of a rest-server this box runs found. */
+export function checkBadge(server: Pick<ReceiverServer, "check">, t: T) {
   switch (server.check) {
     case "protected":
       return <Badge tone="ok">{t("receiver.server.protected")}</Badge>;

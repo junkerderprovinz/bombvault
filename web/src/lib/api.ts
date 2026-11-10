@@ -6656,6 +6656,110 @@ export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { se
 
 export const RECEIVER_TEMPLATE_URL = "/api/receiver/server/template";
 
+/** A server that copies into a shared repository. */
+export interface SharedMember {
+  memberId: string;
+  name: string;
+  /** The restic host its snapshots carry. */
+  host: string;
+  /** Its keys in the repository, on the owner only. */
+  keys?: string[];
+  /** Unix seconds, on the owner only. */
+  lastSnapshotAt?: number;
+}
+
+/** A member's ask to join, open or allowed until the member added its own key. */
+export interface SharedJoinAsk {
+  memberId: string;
+  name: string;
+  host: string;
+  state: "asked" | "allowed";
+  askedAt: number;
+}
+
+/** The shared repository this instance holds for its group, beside its
+ *  receiving server. Only this instance prunes it. */
+export interface SharedServer {
+  containerName: string;
+  folder: string;
+  hostPath: string;
+  port: number;
+  user: string;
+  repo: string;
+  /** Where members reach the repository, empty while needsHost. */
+  url: string;
+  needsHost: boolean;
+  createdAt: number;
+  present: boolean;
+  check: "" | "protected" | "unprotected" | "inconclusive";
+  checkDetail: string;
+  checkedAt: number;
+  members: SharedMember[];
+  joins: SharedJoinAsk[];
+}
+
+export type SharedMembershipState = "asked" | "allowed" | "refused" | "joined" | "removed";
+
+/** A shared repository of another member this instance copies into or asked to join. */
+export interface SharedMembership {
+  ownerId: string;
+  ownerName: string;
+  state: SharedMembershipState;
+  repo?: string;
+  askedAt: number;
+  joinedAt?: number;
+  /** The other members, without this instance. */
+  together: SharedMember[];
+}
+
+/** A member's shared repository as the destination wizard offers it. */
+export interface SharedOffer extends GroupReceiver {
+  /** How far this instance got with joining it. */
+  state?: SharedMembershipState;
+}
+
+export function getSharedRepo(): Promise<
+  OkEnvelope & { server?: SharedServer | null; defaultPort?: number; memberships?: SharedMembership[] }
+> {
+  return fetchJSON("/api/shared-repo");
+}
+
+export function setUpSharedRepo(input: { folder: string; port: number }): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function checkSharedRepo(): Promise<OkEnvelope & { server?: SharedServer }> {
+  return fetchJSON("/api/shared-repo/check", { method: "POST" });
+}
+
+/** told says whether the member heard the answer now; one that did not hears
+ *  it when it asks next. */
+export function decideSharedJoin(
+  memberId: string,
+  decision: "allow" | "refuse"
+): Promise<OkEnvelope & { server?: SharedServer; told?: boolean }> {
+  return fetchJSON(`/api/shared-repo/joins/${encodeURIComponent(memberId)}/${decision}`, { method: "POST" });
+}
+
+/** Takes the member's key and login away. Its snapshots stay. */
+export function removeSharedMember(memberId: string): Promise<OkEnvelope & { server?: SharedServer; told?: boolean }> {
+  return fetchJSON(`/api/shared-repo/members/${encodeURIComponent(memberId)}`, { method: "DELETE" });
+}
+
+export function listSharedOffers(): Promise<OkEnvelope & { offers?: SharedOffer[] }> {
+  return fetchJSON("/api/shared-repo/offers");
+}
+
+/** Asks the owner to let this instance in. An owner that allowed it already
+ *  answers "joined". */
+export function joinSharedRepo(ownerId: string): Promise<OkEnvelope & { state?: SharedMembershipState }> {
+  return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/join`, { method: "POST" });
+}
+
+export function leaveSharedRepo(ownerId: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/shared-repo/offers/${encodeURIComponent(ownerId)}/leave`, { method: "POST" });
+}
+
 // Pairing group API. Instances that share a twelve-word phrase form a group;
 // members on one network talk directly, the others over a relay, and every
 // call between them is sealed under a key derived from the phrase.

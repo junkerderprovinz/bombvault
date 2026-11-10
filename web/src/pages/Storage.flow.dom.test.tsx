@@ -38,6 +38,8 @@ vi.mock("../lib/api", async (importOriginal) => ({
   getProviders: vi.fn(),
   listGroupReceivers: vi.fn(),
   groupReceiverLogin: vi.fn(),
+  listSharedOffers: vi.fn(),
+  joinSharedRepo: vi.fn(),
   checkDraft: vi.fn(),
   createDestination: vi.fn(),
   getRclone: vi.fn(),
@@ -166,6 +168,7 @@ beforeEach(() => {
   vi.mocked(api.listFileSets).mockResolvedValue({ ok: true, fileSets: [] });
   getProviders.mockResolvedValue({ ok: true, providers: PROVIDERS, backends: {} });
   listGroupReceivers.mockResolvedValue({ ok: true, receivers: [] });
+  vi.mocked(api.listSharedOffers).mockResolvedValue({ ok: true, offers: [] });
   getRclone.mockResolvedValue({ ok: true, remotes: [] });
   checkDraft.mockResolvedValue({ ok: true, reachable: true, initialized: false });
   createDestination.mockResolvedValue({ ok: true, destination: { id: "new", name: "Rest server" } as never });
@@ -580,6 +583,21 @@ describe("adding a storage location", () => {
 
     expect(await within(window).findByDisplayValue("https://tower-2.local:8000/cellar")).toBeTruthy();
     expect(within(window).getByText("Sign in to Rest server")).toBeTruthy();
+  });
+
+  it("asks to join a shared repository a paired instance holds and closes, since the location follows the owner's yes", async () => {
+    vi.mocked(api.listSharedOffers).mockResolvedValue({
+      ok: true,
+      offers: [{ memberId: "m-tower", name: "tower-2", url: "https://tower-2.local:8001/shared", needsAddress: false }],
+    });
+    vi.mocked(api.joinSharedRepo).mockResolvedValue({ ok: true, state: "asked" });
+    const window = await open();
+
+    await click(within(window).getByRole("button", { name: /^Shared repository on tower-2/ }));
+
+    expect(api.joinSharedRepo).toHaveBeenCalledWith("m-tower");
+    expect(screen.queryByRole("dialog", { name: "Add storage location" })).toBeNull();
+    expect(createDestination).not.toHaveBeenCalled();
   });
 
   it("says a paired instance known only by a browser's name has to set its receiving server's address", async () => {

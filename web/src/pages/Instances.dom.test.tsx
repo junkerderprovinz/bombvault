@@ -28,6 +28,7 @@ import type {
   ReceivedRepoStatus,
   RoleRequest,
   SelfRoles,
+  SharedMembership,
   ZFSReceiveRequest,
   ZFSReplica,
   ZFSReplicaPatch,
@@ -81,6 +82,7 @@ let roleTold: boolean;
 let locationsOff: { id: string; name: string }[];
 let destinations: Destination[];
 let groupReceivers: GroupReceiver[];
+let memberships: SharedMembership[];
 const switchedOff: string[] = [];
 const CODE = "K7QF2-M9XRT-4HPLD-W3NVC";
 const SINCE = new Date(2026, 2, 9, 12).toISOString();
@@ -192,6 +194,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         ok: true,
         server: serverRuns ? { logins: [], check: "protected", present: true, checkedAt: 0, url: "", user: "", hostPath: "" } : null,
       }),
+    getSharedRepo: () => answer("getSharedRepo", { ok: true, server: null, defaultPort: 8001, memberships }),
     listDestinations: () => Promise.resolve({ ok: true, destinations }),
     listGroupReceivers: () => Promise.resolve({ ok: true, receivers: groupReceivers }),
     listZFSDatasets: () => answer("listZFSDatasets", { ok: true, datasets: [{ id: "z1", dataset: "tank/appdata" }] }),
@@ -292,6 +295,7 @@ beforeEach(() => {
   locationsOff = [];
   destinations = [];
   groupReceivers = [];
+  memberships = [];
   switchedOff.length = 0;
   keeperAsked.length = 0;
   keeperWithdrawn.length = 0;
@@ -538,6 +542,26 @@ describe("this server's own card", () => {
     await click(within(opened).getByRole("button", { name: en["common.done"] }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(called("getReceiverServer")).toBe(before + 2);
+  });
+
+  it("offers a shared repository under the grid only while this server runs a receiving server", async () => {
+    await renderPage();
+    expect(screen.queryByText(en["shared.title"])).toBeNull();
+    cleanup();
+    serverRuns = true;
+    await renderPage();
+    expect(screen.getByText(en["shared.title"])).toBeTruthy();
+    expect(screen.getByRole("button", { name: en["shared.setUp"] })).toBeTruthy();
+  });
+
+  it("lists the shared repositories this server copies into", async () => {
+    await renderPage();
+    expect(screen.queryByText(en["shared.member.title"])).toBeNull();
+    cleanup();
+    memberships = [{ ownerId: "m1", ownerName: "DXP480T", state: "asked", askedAt: 1, together: [] }];
+    await renderPage();
+    expect(screen.getByText(en["shared.member.title"])).toBeTruthy();
+    expect(screen.getByText(en["shared.member.asked"])).toBeTruthy();
   });
 });
 
