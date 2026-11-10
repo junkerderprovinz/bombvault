@@ -322,7 +322,7 @@ export function SharedRepoCard({ shared, hueIndex }: { shared: SharedRepoState; 
           </div>
 
           {server.former.length > 0 && (
-            <div data-new="shared-repo-former" className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
                 {t("shared.former")}
                 <InfoBubble tip={t("shared.formerTip")} />

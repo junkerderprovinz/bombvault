@@ -959,6 +959,11 @@ export const en = {
   "whatsNew.systemJunk": "A new folder set leaves out system junk such as .DS_Store, Thumbs.db and @eaDir, and you can switch off any line before you create it. An existing set keeps its excludes and offers the same lines under Exclude system junk.",
   "whatsNew.connections": "Simultaneous connections on the page of an S3, B2, rest-server, SFTP or rclone storage location sets how many connections restic opens at once. More can speed up a distant or slow line.",
   "whatsNew.sharedUpkeep": "The window of the receiving server shows the shared repository it holds: how much space it saves, when it tidies up and how long it keeps each server's backups. Before a prune it tells the other servers, which hold their copies back until it is done.",
+  "whatsNew.sharedCopyDeferred": "A copy to a shared repository that waits while its owner tidies up shows as deferred, in the activity log and on the card of that repository, and the off-site copy counts as old as it really is.",
+  "whatsNew.sharedMemberSpace": "The card of a shared repository this server copies into shows how much space it holds and saves, and when its owner tidies up next.",
+  "whatsNew.sharedJoinExpiry": "A server you let into a shared repository has a day to finish joining. After that its one-time key and login are taken back, and it can ask again.",
+  "whatsNew.sharedOwnCopies": "The server that holds a shared repository can copy its own backups in as well and save space too.",
+  "whatsNew.sharedFormer": "The owner of a shared repository can forget the backups a server left there after it went, once you type that server's name. The next tidy-up window frees the space.",
   "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
@@ -6498,6 +6503,11 @@ export const de: Translations = {
   "whatsNew.systemJunk": "Ein neues Ordner-Set lässt Systemmüll wie .DS_Store, Thumbs.db und @eaDir weg, und vor dem Anlegen kannst du jede Zeile abschalten. Ein bestehendes Set behält seine Ausschlüsse und bietet dieselben Zeilen unter „Systemmüll ausschließen“ an.",
   "whatsNew.connections": "„Gleichzeitige Verbindungen“ auf der Seite eines S3-, B2-, rest-server-, SFTP- oder rclone-Speicherorts legt fest, wie viele Verbindungen restic auf einmal öffnet. Mehr können eine lange oder langsame Leitung schneller machen.",
   "whatsNew.sharedUpkeep": "Das Fenster des Empfangsservers zeigt das gemeinsame Repository, das er hält: wie viel Platz es spart, wann er aufräumt und wie lange er die Sicherungen jedes Servers aufhebt. Vor einem Prune sagt er den anderen Servern Bescheid, die ihre Kopien dann zurückhalten, bis er fertig ist.",
+  "whatsNew.sharedCopyDeferred": "Eine Kopie in ein gemeinsames Repository, die wartet, während sein Eigentümer aufräumt, erscheint als zurückgestellt, im Aktivitätsprotokoll und auf der Karte des Repositorys. Die Off-site-Kopie gilt dann so alt, wie sie wirklich ist.",
+  "whatsNew.sharedMemberSpace": "Die Karte eines gemeinsamen Repositorys, in das dieser Server kopiert, zeigt, wie viel Platz es belegt und spart und wann sein Eigentümer das nächste Mal aufräumt.",
+  "whatsNew.sharedJoinExpiry": "Ein Server, den du in ein gemeinsames Repository hereinlässt, hat einen Tag Zeit für den Beitritt. Danach werden sein Einmalschlüssel und sein Login zurückgenommen, und er kann noch einmal fragen.",
+  "whatsNew.sharedOwnCopies": "Der Server, der ein gemeinsames Repository hält, kann seine eigenen Sicherungen auch hineinkopieren und so ebenfalls Platz sparen.",
+  "whatsNew.sharedFormer": "Der Eigentümer eines gemeinsamen Repositorys kann die Sicherungen vergessen, die ein ausgetretener Server dort gelassen hat, sobald du dessen Namen eintippst. Das nächste Aufräumfenster gibt den Platz frei.",
   "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)

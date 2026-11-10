@@ -84,7 +84,11 @@ export function SharedMembershipsCard({ shared, hueIndex }: { shared: SharedRepo
                 />
               </div>
             )}
-            {m.state === "joined" && <SpaceLine t={t} space={m.space} />}
+            {m.state === "joined" && (
+              <div data-new="shared-member-space">
+                <SpaceLine t={t} space={m.space} />
+              </div>
+            )}
             <Rows>
               {m.repo && (
                 <SettingRow label={t("receiver.server.address")}>
