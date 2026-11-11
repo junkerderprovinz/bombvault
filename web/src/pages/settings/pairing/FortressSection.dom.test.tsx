@@ -231,7 +231,7 @@ describe("FortressSection", () => {
     expect(calls).toEqual(["change hunter2"]);
     expect(button("words").textContent).toContain("wrong");
     expect(screen.getByText("Still on the old phrase: Cellar. Enter the new one there once.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     fireEvent.click(button("open-leave"));
     await act(async () => fireEvent.click(button("leave")));
