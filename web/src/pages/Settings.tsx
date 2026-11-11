@@ -49,8 +49,8 @@ export function SettingsPage() {
     pageDir.current = ids.indexOf(page) > ids.indexOf(shownPage.current) ? 1 : -1;
     shownPage.current = page;
   }
-  // Only a page named in the address counts: /settings alone renders the
-  // fallback for a moment before its redirect, and must not overwrite it.
+  // Only a page named in the address counts: /settings alone is on its way to
+  // the page seen last and must not overwrite it.
   useEffect(() => {
     if (isSettingsPage(param)) writeLastPage(param);
   }, [param]);
@@ -107,6 +107,11 @@ export function SettingsPage() {
     document.getElementById("bv-main")?.scrollTo?.({ top: 0 });
   }, [location, hash, settingsLoaded, page]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The address names its page before the settings arrive: a redirect that
+  // waited for them would fire after a tap that already left Settings, and
+  // replace the page that tap opened.
+  if (redirect) return <Navigate to={`/settings/${redirect}`} replace />;
+
   if (loadError) {
     return (
       <div className={`${PAGE_SHELL_RESPONSIVE} flex flex-col items-start gap-2`}>
@@ -134,7 +139,6 @@ export function SettingsPage() {
       ref={setFrame}
       className={`flex min-w-0 flex-1 ${railForm === "strip" ? "flex-col gap-4" : "gap-3 md:gap-10"}`}
     >
-      {redirect && <Navigate to={`/settings/${redirect}`} replace />}
       <SettingsRail
         items={pages.map((p) => ({ id: p.id, label: t(p.label), icon: p.icon, to: `/settings/${p.id}` }))}
         active={page}

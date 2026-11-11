@@ -37,6 +37,7 @@ function Where() {
 }
 
 async function open() {
+  window.history.replaceState(null, "", "/welcome");
   render(
     inApp(
       <>
@@ -211,5 +212,19 @@ describe("an install the welcome page is not for", () => {
     await open();
     expect(where()).toBe("/welcome");
     expect(screen.getByRole("heading", { level: 1, name: en["welcome.title"] })).toBeTruthy();
+  });
+});
+
+describe("a tap that leaves before the entries arrive", () => {
+  it("keeps the page the tap opened", async () => {
+    let answer = (_: ReturnType<typeof item>[]) => {};
+    server.items = new Promise((resolve) => (answer = resolve));
+    await open();
+
+    // The tap's page is in the address, and the router has not drawn it yet.
+    window.history.pushState(null, "", "/restore");
+    await act(async () => answer([found("gitea"), item()]));
+
+    expect(where()).toBe("/welcome");
   });
 });

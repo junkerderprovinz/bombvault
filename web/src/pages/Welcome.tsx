@@ -1,11 +1,12 @@
 // The page a new install opens on: what BombVault has found on this server
 // and the three steps to the first backup.
 import type { CSSProperties } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "../components/Button";
 import { IconForward, IconSearch } from "../components/glyphs";
 import { IconRecovery } from "../components/navGlyphs";
+import { LateRedirect } from "../components/LateRedirect";
 import { PageTitle } from "../components/PageTitle";
 import { StepMark } from "../components/StepMark";
 import type { BackupItem } from "../lib/api";
@@ -106,7 +107,7 @@ export function Welcome() {
   // browser saw in use goes there at once, so the overview's own reads do not
   // wait for the entries, which are slow to read on a host with many
   // containers.
-  if (!fresh) return items.loaded || items.failed || seenInUse() ? <Navigate to="/dashboard" replace /> : null;
+  if (!fresh) return items.loaded || items.failed || seenInUse() ? <LateRedirect to="/dashboard" /> : null;
 
   return (
     <div className={PAGE_SHELL}>

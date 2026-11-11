@@ -42,12 +42,17 @@ function baseSettings(over: Partial<Settings> = {}): Settings {
 }
 
 
+// A reply that never comes keeps the page waiting for its settings.
+const reply = vi.hoisted(() => ({ pending: false }));
+
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
     getSettings: () =>
-      Promise.resolve({ ok: true, settings: baseSettings(), hostMountRoot: "/host/user", platform: "unraid" }),
+      reply.pending
+        ? new Promise(() => {})
+        : Promise.resolve({ ok: true, settings: baseSettings(), hostMountRoot: "/host/user", platform: "unraid" }),
     putSettings: () => Promise.resolve({ ok: true }),
     getAuth: () => Promise.resolve({ enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
@@ -111,6 +116,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  reply.pending = false;
   localStorage.removeItem("bv-lang");
   localStorage.removeItem("bombvault.settingsPage");
 });
@@ -125,4 +131,11 @@ it("reopens the page seen last when Settings is opened without a page", async ()
 it("opens General when no page was seen yet", async () => {
   await renderAt("/settings");
   expect(screen.getByTestId("where").textContent).toBe("/settings/general");
+});
+
+it("names the page in the address before the settings have loaded", async () => {
+  reply.pending = true;
+  localStorage.setItem("bombvault.settingsPage", "notifications");
+  await renderAt("/settings");
+  expect(screen.getByTestId("where").textContent).toBe("/settings/notifications");
 });

@@ -180,8 +180,14 @@ test("a dot leads from the navigation over the settings tile to the change, and 
   await expect(dot).toHaveAttribute("aria-label", VERSION_NEWS);
   await expect(fromTile).toHaveCount(0);
 
-  // The Version card's button counts what is left and opens the list.
+  // The Version card's button counts what is left and opens the list. Until
+  // the server's answer is in, the bundled releases stand in, and they stop at
+  // the staged release while the harness server, built without a version,
+  // names every later one too. So the count waits for a card per named release.
+  const answer = page.waitForResponse((res) => res.url().includes("/api/release-notes/versions"));
   await openList(page);
+  const { versions } = (await (await answer).json()) as { versions: string[] };
+  await expect(list(page).locator("[data-release]")).toHaveCount(versions.length);
   const total = await page.locator("[data-change]").count();
   const all = await unseen(page);
   await expect(markAll(page, all)).toBeVisible();
