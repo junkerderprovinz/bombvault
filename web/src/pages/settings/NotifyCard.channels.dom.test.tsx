@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
@@ -253,8 +253,6 @@ describe("a Healthchecks channel", () => {
 });
 
 async function waitChannel(id: string): Promise<HTMLElement> {
-  await screen.findAllByRole("switch");
-  const el = channel(id);
-  expect(el, `channel ${id}`).toBeTruthy();
-  return el;
+  await waitFor(() => expect(channel(id), `channel ${id}`).toBeTruthy());
+  return channel(id);
 }
