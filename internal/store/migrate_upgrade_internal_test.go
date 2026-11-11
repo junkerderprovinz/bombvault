@@ -96,6 +96,15 @@ func bootForTodaysCode(t *testing.T, db *sql.DB, maxVersion int) {
 		if m.version <= maxVersion || !strings.HasPrefix(m.sql, "ALTER TABLE") || strings.Count(m.sql, ";") > 1 {
 			continue
 		}
+		// A table a later migration creates gets its columns when Migrate
+		// runs that migration and this one in order.
+		var tables int
+		if err := db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = ?`, strings.Fields(m.sql)[2]).Scan(&tables); err != nil {
+			t.Fatal(err)
+		}
+		if tables == 0 {
+			continue
+		}
 		if _, err := db.Exec(m.sql); err != nil {
 			t.Fatalf("add the column of v%d: %v", m.version, err)
 		}
