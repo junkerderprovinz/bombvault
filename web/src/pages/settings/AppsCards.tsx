@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { IconGithub, IconLink } from "../../components/glyphs";
-import { IconLive } from "../../components/navGlyphs";
 import { QRCode } from "../../components/QRCode";
 import { BrandMark, ReadmeButton } from "../../components/ReadmeButton";
 import { getHealth } from "../../lib/api";
@@ -47,7 +46,7 @@ export function apkRelease(version: string | null | undefined): string | null {
 }
 
 const PARLEYPORT_REPO = "https://github.com/junkerderprovinz/parleyport";
-const WIDGET_REPO = "https://github.com/junkerderprovinz/bombvault-widget";
+const TOLLROLL_REPO = "https://github.com/junkerderprovinz/tollroll";
 // Community Apps gives a listing its address only once it is in the feed, and
 // the search finds it under either name before and after.
 const CA_SEARCH = "https://ca.unraid.net/apps?q=";
@@ -275,32 +274,17 @@ export function ParleyPortCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"
 }
 
 export function WidgetAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
-  const navigate = useNavigate();
   return (
-    <Card
-      title={t("apps.widget.title")}
-      hint={t("apps.widget.cardHint")}
-      hueIndex={hueIndex}
-      foot={
-        <Button
-          label={t("apps.widget.toSettings")}
-          labelKey="apps.widget.toSettings"
-          glyph={<IconLive />}
-          tone="neutral"
-          hueIndex={hueIndex}
-          onClick={() => navigate("/settings/integrations")}
-        />
-      }
-    >
+    <Card title={t("apps.widget.title")} hint={t("apps.widget.cardHint")} hueIndex={hueIndex}>
       <div className="flex flex-wrap gap-3">
         <ReadmeButton
           tile="glim-tile-unraid"
-          parts={[{ name: "Unraid", sub: t("apps.unraidSub"), href: CA_SEARCH + "bombvault%20widget" }]}
+          parts={[{ name: "Unraid", sub: t("apps.unraidSub"), href: CA_SEARCH + "tollroll" }]}
           mark={<BrandMark svg={UNRAID_SVG} />}
         />
         <ReadmeButton
           tile="glim-tile-github"
-          parts={[{ name: "GitHub", sub: t("apps.repoSub"), onClick: () => open(WIDGET_REPO) }]}
+          parts={[{ name: "GitHub", sub: t("apps.repoSub"), onClick: () => open(TOLLROLL_REPO) }]}
           mark={<IconGithub />}
           markClass="glim-github-mark"
         />

@@ -507,13 +507,6 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/vm/ssh", h.handleVMSSHInfo)
 	mux.HandleFunc("POST /api/vm/ssh/test", h.handleVMSSHTest)
 
-	// Companion Unraid dashboard-tile plugin (install/remove over host SSH).
-	// Session-protected like every other /api route — these MODIFY the host, so
-	// they must never join the authGate public allowlist.
-	mux.HandleFunc("GET /api/dashboard-plugin", h.handleDashboardPluginStatus)
-	mux.HandleFunc("POST /api/dashboard-plugin/install", h.handleDashboardPluginInstall)
-	mux.HandleFunc("POST /api/dashboard-plugin/remove", h.handleDashboardPluginRemove)
-
 	// "Backup Everything" (a 6th, independent pseudo-domain manual trigger that
 	// runs containers/vms/flash/files/config in sequence, see
 	// internal/api/everything.go). Response shape mirrors POST

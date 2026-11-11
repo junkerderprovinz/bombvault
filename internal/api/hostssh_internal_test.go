@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -8,12 +9,22 @@ import (
 	"testing"
 )
 
+// answerOf reads a handler's JSON answer.
+func answerOf(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
+	t.Helper()
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode response %q: %v", rec.Body.String(), err)
+	}
+	return body
+}
+
 func hostSSHTestResult(t *testing.T, ssh HostSSH) map[string]any {
 	t.Helper()
 	h := &Handler{svc: &Service{ssh: ssh}}
 	rec := httptest.NewRecorder()
 	h.handleVMSSHTest(rec, httptest.NewRequest(http.MethodPost, "/api/vm/ssh/test", nil))
-	return dashDecode(t, rec)
+	return answerOf(t, rec)
 }
 
 // ZFS and Unraid notifications need only the SSH link, so a host without

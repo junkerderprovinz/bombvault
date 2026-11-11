@@ -1,22 +1,18 @@
 // @vitest-environment jsdom
-// The widget card on the Integrations page: the token, the plugin for the
-// Unraid dashboard and how to set it up, each as a row of its own.
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+// The widget card on the Integrations page: the token, the tile for the
+// Unraid dashboard and how to set the widget up.
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider, en, useT } from "../../lib/i18n";
 
 const generateWidgetToken = vi.fn();
-const getDashboardPlugin = vi.fn();
-const installDashboardPlugin = vi.fn();
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
     generateWidgetToken: () => generateWidgetToken(),
-    getDashboardPlugin: () => getDashboardPlugin(),
-    installDashboardPlugin: () => installDashboardPlugin(),
   };
 });
 
@@ -43,11 +39,6 @@ async function renderCard(tokenSet = false) {
 
 const row = (label: string) => document.querySelector<HTMLElement>(`[data-search-row="${label}"]`)!;
 
-beforeEach(() => {
-  getDashboardPlugin.mockResolvedValue({ ok: true, sshConfigured: true, installed: false });
-  installDashboardPlugin.mockResolvedValue({ ok: true });
-});
-
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -71,28 +62,16 @@ describe("the widget token", () => {
   });
 });
 
-describe("the Unraid dashboard plugin", () => {
-  it("asks before it installs the plugin", async () => {
+describe("the Unraid dashboard", () => {
+  it("leads to TollRoll and installs nothing itself", async () => {
     await renderCard();
-    const plugin = row(en["settings.dashTile"]);
-    await waitFor(() => within(plugin).getByText(en["settings.dashTileNotInstalled"]));
-    fireEvent.click(within(plugin).getByRole("button", { name: en["settings.dashTileInstall"] }));
-    const ask = await screen.findByRole("dialog");
-    expect(ask.textContent).toContain(en["settings.dashTileConfirm"]);
-    fireEvent.click(within(ask).getByRole("button", { name: en["settings.dashTileInstall"] }));
-    await waitFor(() => expect(installDashboardPlugin).toHaveBeenCalledTimes(1));
-  });
-
-  it("gives the address to install it by hand without the host SSH connection", async () => {
-    getDashboardPlugin.mockResolvedValue({ ok: true, sshConfigured: false });
-    await renderCard();
-    expect(await screen.findByText(en["settings.dashTileNoSshShort"])).toBeTruthy();
-    expect(screen.getByText(/bombvaultwidget\.plg$/)).toBeTruthy();
+    const tile = row(en["settings.dashTile"]);
+    expect(within(tile).getByText(en["settings.dashTileHint"])).toBeTruthy();
+    expect(within(tile).queryByRole("button")).toBeNull();
   });
 
   it("names how to set the widget up", async () => {
     await renderCard();
     expect(screen.getByText(en["settings.widgetStep1"])).toBeTruthy();
-    expect(screen.getByRole("link", { name: en["settings.tab.apps"] }).getAttribute("href")).toBe("/settings/apps");
   });
 });

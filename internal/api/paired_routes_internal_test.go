@@ -444,7 +444,6 @@ var pairedRefused = []string{
 	// Settings, notifications, integrations, discovery and the settings backup.
 	"DELETE /api/anomalies/items/{targetId}/expectations/{family}",
 	"GET /api/config/snapshots",
-	"GET /api/dashboard-plugin",
 	"GET /api/homeassistant",
 	"GET /api/mdns",
 	"GET /api/notify",
@@ -454,8 +453,6 @@ var pairedRefused = []string{
 	"GET /api/vm/ssh",
 	"POST /api/anomalies/expected",
 	"POST /api/config/restore",
-	"POST /api/dashboard-plugin/install",
-	"POST /api/dashboard-plugin/remove",
 	"POST /api/discover",
 	"POST /api/files/discover",
 	"POST /api/import/appdata-backup",

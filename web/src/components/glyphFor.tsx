@@ -173,7 +173,7 @@ const RULES: Rule[] = [
   // site, never reached by pattern.
   [/\.mail|contact|writeToUs/i, () => <IconMail />],
 
-  // Above the places rule, which settings.dashTileInstall would otherwise match.
+  // Above the places rule, which a settings key that installs would otherwise match.
   [/install/i, () => <IconInstall />],
   [/\.log$/i, () => <IconLog />],
 

@@ -186,26 +186,6 @@ func TestTestNotifyUnraidChannelSkippedOnNonUnraidPlatform(t *testing.T) {
 	}
 }
 
-// The dashboard plugin is managed with Unraid's plugin CLI, so on another
-// platform install and remove refuse before opening SSH.
-func TestDashboardPluginInstallRemoveSkipOnNonUnraidPlatform(t *testing.T) {
-	for _, ep := range []struct {
-		name string
-		call func(*Service) (string, error)
-	}{
-		{"install", func(s *Service) (string, error) { return s.InstallDashboardPlugin(context.Background()) }},
-		{"remove", func(s *Service) (string, error) { return s.RemoveDashboardPlugin(context.Background()) }},
-	} {
-		t.Run(ep.name, func(t *testing.T) {
-			s := &Service{ssh: failIfCalledSSH{t}}
-			s.SetPlatform(platform.Generic{})
-			if _, err := ep.call(s); err == nil {
-				t.Fatalf("%s must fail (not attempted) on a non-Unraid platform", ep.name)
-			}
-		})
-	}
-}
-
 // Detect recognises Unraid only by the dockerMan marker under /host/boot, so an
 // Unraid host without that mount runs with Unraid notifications on, SSH
 // configured and a Generic platform. The gate stays closed there, but logs the
@@ -305,34 +285,6 @@ func TestTestNotifyPlatformMismatchErrorIsActionable(t *testing.T) {
 		if !strings.Contains(msg, want) {
 			t.Fatalf("TestNotify platform-mismatch error missing %q, got: %s", want, msg)
 		}
-	}
-}
-
-// The plugin refusal names the platform and the /host/boot fix as well. "Only
-// available on Unraid hosts" would read as a limitation to an operator who is
-// on Unraid.
-func TestDashboardPluginPlatformMismatchErrorIsActionable(t *testing.T) {
-	for _, ep := range []struct {
-		name string
-		call func(*Service) (string, error)
-	}{
-		{"install", func(s *Service) (string, error) { return s.InstallDashboardPlugin(context.Background()) }},
-		{"remove", func(s *Service) (string, error) { return s.RemoveDashboardPlugin(context.Background()) }},
-	} {
-		t.Run(ep.name, func(t *testing.T) {
-			s := &Service{ssh: failIfCalledSSH{t}}
-			s.SetPlatform(platform.Generic{})
-			_, err := ep.call(s)
-			if err == nil {
-				t.Fatal("expected an error")
-			}
-			msg := err.Error()
-			for _, want := range []string{`"generic"`, "/host/boot", "dashboard plugin"} {
-				if !strings.Contains(msg, want) {
-					t.Fatalf("%s platform-mismatch error missing %q, got: %s", ep.name, want, msg)
-				}
-			}
-		})
 	}
 }
 

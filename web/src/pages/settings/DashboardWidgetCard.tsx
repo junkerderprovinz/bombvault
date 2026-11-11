@@ -1,187 +1,16 @@
-import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { Note } from "../../components/entry/Note";
 import { IconTipButton } from "../../components/IconTipButton";
-import { IconCopy, IconTrash } from "../../components/navGlyphs";
+import { IconCopy } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
-import { disableWidgetToken, generateWidgetToken, getDashboardPlugin, installDashboardPlugin, removeDashboardPlugin } from "../../lib/api";
+import { disableWidgetToken, generateWidgetToken } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
-import { useConfirm } from "../../lib/useConfirm";
 import { useToast } from "../../lib/toast";
-import { PageSentence } from "./SidebarTile";
 import { Card, SubCard } from "./shared";
-import { type CSSProperties, useEffect, useState } from "react";
-
-const DASH_PLUGIN_PLG_URL =
-  "https://raw.githubusercontent.com/junkerderprovinz/bombvault-widget/main/plugin/bombvaultwidget.plg";
+import { type CSSProperties, useState } from "react";
 
 type T = ReturnType<typeof useT>["t"];
-
-type DashPluginStatus =
-  | { kind: "loading" }
-  | { kind: "noSsh" }
-  | { kind: "absent" }
-  | { kind: "installed"; version: string }
-  // The status check itself failed; install and remove failures go to runErr.
-  | { kind: "error"; message: string };
-
-/** useDashPlugin is the state of the Unraid dashboard plugin and the calls
- *  that install and remove it. */
-function useDashPlugin(t: T) {
-  const { push } = useToast();
-  // Whether the tile is installed is a lasting fact, so it is shown inline
-  // rather than in a toast.
-  const [status, setStatus] = useState<DashPluginStatus>({ kind: "loading" });
-  const [busy, setBusy] = useState<"idle" | "install" | "remove">("idle");
-  // A failed install or remove is kept apart from status: an "error" status
-  // would replace the controls in the same render, so the button the shake
-  // targets would never paint.
-  const [runErr, setRunErr] = useState<{ message: string; output?: string } | null>(null);
-  const [shake, setShake] = useState<Record<string, number>>({});
-
-  function refresh() {
-    getDashboardPlugin()
-      .then((r) => {
-        if (!r.ok) {
-          setStatus({ kind: "error", message: r.error ?? t("settings.error") });
-        } else if (!r.sshConfigured) {
-          setStatus({ kind: "noSsh" });
-        } else if (r.installed) {
-          setStatus({ kind: "installed", version: r.version ?? "" });
-        } else {
-          setStatus({ kind: "absent" });
-        }
-      })
-      .catch((err) => {
-        setStatus({ kind: "error", message: err instanceof Error ? err.message : t("settings.error") });
-      });
-  }
-
-  // The status is checked once, when the card mounts.
-  useEffect(refresh, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function run(op: "install" | "remove") {
-    setBusy(op);
-    setRunErr(null);
-    try {
-      const r = await (op === "install" ? installDashboardPlugin() : removeDashboardPlugin());
-      if (r.ok) {
-        push(op === "install" ? t("settings.dashTileInstallOk") : t("settings.dashTileRemoveOk"), "success");
-        refresh();
-      } else {
-        const message = r.error ?? t("settings.error");
-        setRunErr({ message, output: r.output });
-        push(message, "fail");
-        setShake((sh) => ({ ...sh, [op]: (sh[op] ?? 0) + 1 }));
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t("settings.error");
-      setRunErr({ message });
-      push(message, "fail");
-      setShake((sh) => ({ ...sh, [op]: (sh[op] ?? 0) + 1 }));
-    } finally {
-      setBusy("idle");
-    }
-  }
-
-  async function copyUrl() {
-    if (await copyText(DASH_PLUGIN_PLG_URL)) push(t("common.copied"), "success");
-    else push(t("vm.ssh.copyFailed"), "fail");
-  }
-
-  function retry() {
-    setStatus({ kind: "loading" });
-    refresh();
-  }
-
-  return { status, busy, runErr, shake, run, copyUrl, retry };
-}
-
-function RunOutput({ output }: { output?: string }) {
-  if (!output) return null;
-  return (
-    <pre className="overflow-x-auto whitespace-pre-wrap rounded-control bg-carbon-background p-2 text-caption leading-snug text-carbon-text">
-      {output}
-    </pre>
-  );
-}
-
-function PluginUrl({ t, onCopy }: { t: T; onCopy: () => void }) {
-  return (
-    <div className="flex items-start gap-2 max-md:flex-col">
-      <code dir="ltr" className="flex-1 break-all rounded-control bg-carbon-surface2 p-2 text-start text-xs text-carbon-text">
-        {DASH_PLUGIN_PLG_URL}
-      </code>
-      <Button label={t("common.copy")} labelKey="common.copy" glyph={<IconCopy />} onClick={onCopy} />
-    </div>
-  );
-}
-
-/** DashTileRow is the plugin as one row of the widget card. */
-function DashTileRow({ t }: { t: T }) {
-  const { status, busy, runErr, shake, run, copyUrl, retry } = useDashPlugin(t);
-  const { confirm, confirmDialog } = useConfirm();
-
-  async function install() {
-    if (await confirm(t("settings.dashTileConfirm"), { confirmKey: "settings.dashTileInstall" })) void run("install");
-  }
-
-  const note =
-    status.kind === "installed"
-      ? status.version
-        ? t("settings.dashTileInstalled").replace("{version}", status.version)
-        : t("settings.dashTileInstalledNoV")
-      : status.kind === "absent"
-        ? t("settings.dashTileNotInstalled")
-        : status.kind === "error"
-          ? status.message
-          : undefined;
-
-  return (
-    <>
-      <SettingRow label={t("settings.dashTile")} hint={t("settings.dashTileHint")} note={note}>
-        {status.kind === "loading" && <Badge tone="neutral" size="small">{t("settings.dashTileChecking")}</Badge>}
-        {status.kind === "noSsh" && <Badge tone="neutral" size="small">{t("settings.dashTileNoSshShort")}</Badge>}
-        {status.kind === "absent" && (
-          <Button
-            key={shake.install || 0}
-            label={t("settings.dashTileInstall")}
-            labelKey="settings.dashTileInstall"
-            onClick={() => void install()}
-            disabled={busy !== "idle"}
-            busy={busy === "install"}
-            title={busy === "install" ? t("settings.dashTileInstalling") : undefined}
-            className={shake.install ? "glim-shake" : ""}
-          />
-        )}
-        {status.kind === "installed" && (
-          <Button
-            key={shake.remove || 0}
-            label={t("settings.dashTileRemove")}
-            labelKey="settings.dashTileRemove"
-            glyph={<IconTrash />}
-            onClick={() => void run("remove")}
-            disabled={busy !== "idle"}
-            busy={busy === "remove"}
-            title={busy === "remove" ? t("settings.dashTileRemoving") : undefined}
-            className={shake.remove ? "glim-shake" : ""}
-          />
-        )}
-        {status.kind === "error" && <Button label={t("whatsnew.retry")} labelKey="whatsnew.retry" onClick={retry} />}
-      </SettingRow>
-      {status.kind === "noSsh" && (
-        <div className="flex flex-col gap-2 py-3">
-          <Note>{t("settings.dashTileNoSsh")}</Note>
-          <PluginUrl t={t} onCopy={() => void copyUrl()} />
-        </div>
-      )}
-      <RunOutput output={runErr?.output} />
-      {confirmDialog}
-    </>
-  );
-}
 
 export function DashboardWidgetCard({
   t,
@@ -312,7 +141,7 @@ export function DashboardWidgetCard({
             />
           </div>
         )}
-        <DashTileRow t={t} />
+        <SettingRow label={t("settings.dashTile")} note={t("settings.dashTileHint")} />
       </Rows>
       <SubCard title={t("settings.widgetSetup")}>
         <ol className="flex list-decimal flex-col gap-1.5 ps-5 text-sm text-carbon-text">
@@ -320,10 +149,6 @@ export function DashboardWidgetCard({
           <li>{t("settings.widgetStep2")}</li>
           <li>{t("settings.widgetStep3")}</li>
         </ol>
-        <div className="mt-2 flex flex-col gap-1">
-          <p className="text-xs text-carbon-textMuted">{t("settings.widgetMissing")}</p>
-          <PageSentence text="settings.widgetCa" page="settings.tab.apps" to="/settings/apps" />
-        </div>
       </SubCard>
     </Card>
   );

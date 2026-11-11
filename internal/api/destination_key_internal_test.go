@@ -63,7 +63,7 @@ func postKeyInstall(t *testing.T, svc *Service, req keyInstallRequest) map[strin
 	r.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	(&Handler{svc: svc}).handleInstallDraftKey(rec, r)
-	return dashDecode(t, rec)
+	return answerOf(t, rec)
 }
 
 func TestKeyInstallOnAStorageBoxUsesPort23AndTheStorageBoxCommand(t *testing.T) {
