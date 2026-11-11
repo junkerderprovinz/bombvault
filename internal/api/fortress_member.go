@@ -231,10 +231,17 @@ func (s *Service) JoinFortress(words string) error {
 	defer clear(sec)
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
+	return s.joinFortress(sec)
+}
+
+// joinFortress joins the fortress of sec with door held. It signs with the
+// key the pairing group knows this instance by, so the pairing can move
+// into the fortress without anybody approving it again.
+func (s *Service) joinFortress(sec []byte) error {
 	if s.fortressNow() != nil {
 		return errInFortress
 	}
-	id, err := kitmember.NewIdentity(kitmember.KindInstance)
+	own, err := s.depositSeed()
 	if err != nil {
 		return err
 	}
@@ -242,7 +249,7 @@ func (s *Service) JoinFortress(words string) error {
 	if err != nil {
 		return err
 	}
-	seed, err := s.sealFortress(id.Seed())
+	seed, err := s.sealFortress(own)
 	if err != nil {
 		return err
 	}

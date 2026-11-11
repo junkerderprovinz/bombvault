@@ -229,3 +229,17 @@ func TestAMemberThatTookBombVaultOutEndsTheMembership(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 }
+
+// The pairing moves into the fortress under the key the group approved, so
+// the fortress signs with that key too.
+func TestTheFortressSignsWithTheKeyThePairingKnows(t *testing.T) {
+	svc, _ := joinedSvc(t)
+	want, err := svc.depositSeed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, _ := svc.store.FortressMembership()
+	if seed, err := secret.Decrypt(svc.cfg.AppKey, m.SeedEnc); err != nil || !bytes.Equal(seed, want) {
+		t.Fatalf("the fortress key is %x, %v; want the group's", seed, err)
+	}
+}
