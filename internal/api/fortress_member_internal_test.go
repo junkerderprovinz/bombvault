@@ -18,12 +18,18 @@ func TestWithoutAMembershipBombVaultIsInNoFortress(t *testing.T) {
 	}
 }
 
-func TestAMembershipInTheDataDirectoryOpensTheFortress(t *testing.T) {
-	svc, _ := newFortressSvc(t)
+// joinFromConsole writes the membership `fortress join -dir` writes.
+func joinFromConsole(t *testing.T, svc *Service) {
+	t.Helper()
 	secret := bytes.Repeat([]byte{7}, 16)
 	if err := fortress.Join(svc.fortressDir(), secret, fortress.Membership{App: "bombvault", Device: "tower", Relay: "off"}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestAMembershipInTheDataDirectoryOpensTheFortress(t *testing.T) {
+	svc, _ := newFortressSvc(t)
+	joinFromConsole(t, svc)
 	if err := svc.OpenFortress(nil); err != nil {
 		t.Fatal(err)
 	}

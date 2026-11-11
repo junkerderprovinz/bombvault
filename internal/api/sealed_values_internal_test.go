@@ -52,6 +52,7 @@ var sealSites = map[string]string{
 	"SetDeferPolicy":         "defer_policies.api_key_enc",
 	"letIn":                  "shared_repo_joins.once_enc",
 	"addOwnSharedKey":        "shared_repo_joins.login_enc",
+	"sealFortress":           "fortress_membership.secret_enc",
 }
 
 // sealingFunctions returns the functions of the module, tests left out, that
