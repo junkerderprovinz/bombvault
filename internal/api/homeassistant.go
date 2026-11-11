@@ -115,7 +115,8 @@ func (src haSource) Read(ctx context.Context) (mqttha.Reading, error) {
 			r.Values[d+"_free_space"] = math.Round(float64(*ds.FreeBytes)/1e8) / 10
 		}
 		if buttons {
-			r.Entities = append(r.Entities, mqttha.Entity{Kind: mqttha.Button, Key: d + "_backup", Name: "Back up " + strings.ToLower(title), Icon: "mdi:backup-restore"})
+			r.Entities = append(r.Entities, mqttha.Entity{Kind: mqttha.Button, Key: d + "_backup", Name: "Back up " + strings.ToLower(title), Icon: "mdi:backup-restore",
+				Command: "backup/" + d})
 		}
 	}
 	return r, nil

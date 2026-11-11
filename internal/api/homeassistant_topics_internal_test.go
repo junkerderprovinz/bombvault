@@ -6,6 +6,7 @@ import (
 	"net"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,6 +96,7 @@ func TestHomeAssistantKeepsTheTopicsAndIdsItHad(t *testing.T) {
 	for _, pk := range srv.Topics.Messages("homeassistant/#") {
 		var c struct {
 			UniqueID     string `json:"unique_id"`
+			CommandTopic string `json:"command_topic"`
 			StateTopic   string `json:"state_topic"`
 			Availability string `json:"availability_topic"`
 			Device       struct {
@@ -108,6 +110,9 @@ func TestHomeAssistantKeepsTheTopicsAndIdsItHad(t *testing.T) {
 		object := pk.TopicName[len("homeassistant/sensor/bombvault_a1b2c3d4/") : len(pk.TopicName)-len("/config")]
 		if pk.TopicName[len("homeassistant/"):len("homeassistant/button")] == "button" {
 			object = pk.TopicName[len("homeassistant/button/bombvault_a1b2c3d4/") : len(pk.TopicName)-len("/config")]
+			if want := "bombvault/a1b2c3d4/backup/" + strings.TrimSuffix(object, "_backup"); c.CommandTopic != want {
+				t.Errorf("%s is pressed on %q, want %q", pk.TopicName, c.CommandTopic, want)
+			}
 		} else if c.StateTopic != "bombvault/a1b2c3d4/state" {
 			t.Errorf("%s reads its state from %q", pk.TopicName, c.StateTopic)
 		}
