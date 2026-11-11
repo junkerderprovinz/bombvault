@@ -185,8 +185,15 @@ func (h *Handler) handleFortressShow(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleFortressChange gives the fortress a new phrase and answers with it
-// and the devices that still hold the old one. POST /api/fortress/phrase
+// and the devices that still hold the old one. The answer shows the phrase,
+// so it asks for the password as showing it does. POST /api/fortress/phrase
 func (h *Handler) handleFortressChange(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Password string `json:"password"`
+	}
+	if !decodeBody(w, r, &body) || !h.passwordAgain(w, r, body.Password) {
+		return
+	}
 	words, left, err := h.svc.ChangeFortressPhrase(r.Context())
 	if err != nil {
 		writeFortressError(w, err)

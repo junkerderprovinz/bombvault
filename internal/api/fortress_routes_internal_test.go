@@ -84,7 +84,7 @@ func TestChangingTheFortressPhraseAnswersWithTheNewWords(t *testing.T) {
 	in := fortressInstance(t)
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
-	_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", nil)
+	_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{"password": testPassword})
 	changed, _ := out["phrase"].(string)
 	if out["ok"] != true || len(strings.Fields(changed)) != 12 || changed == words {
 		t.Fatalf("change = %v", out)
@@ -146,5 +146,35 @@ func TestTheFortressFollowsTheRelayOfTheGroup(t *testing.T) {
 	}
 	if now := in.svc.fortressNow(); now == nil || now == before {
 		t.Fatal("the fortress did not open again on the group's relay")
+	}
+}
+
+// A new phrase opens the fortress like the old one, so it reaches the browser
+// only for the password, as showing the phrase does.
+func TestChangingTheFortressPhraseNeedsThePassword(t *testing.T) {
+	in := fortressInstance(t)
+	words, _ := newPhrase(t)
+	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
+	for _, body := range []any{nil, map[string]any{}, map[string]any{"password": "wrong"}} {
+		_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", body)
+		if out["ok"] == true || out["phrase"] != nil {
+			t.Fatalf("a change with %v = %v", body, out)
+		}
+	}
+	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": testPassword}); shown["phrase"] != words {
+		t.Fatalf("a refused change still changed the phrase: %v", shown)
+	}
+}
+
+func TestWithoutALoginPasswordThePhraseChangesWithoutOne(t *testing.T) {
+	in := fortressInstance(t)
+	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	in.session = ""
+	words, _ := newPhrase(t)
+	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
+	if _, out := in.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{}); out["ok"] != true || out["phrase"] == words {
+		t.Fatalf("change without a login password = %v", out)
 	}
 }
