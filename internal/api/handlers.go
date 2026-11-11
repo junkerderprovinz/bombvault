@@ -2590,6 +2590,9 @@ type settingsView struct {
 	// predates the switch would otherwise turn a safety feature off without a
 	// word.
 	DBDumpsEnabled *bool `json:"dbDumpsEnabled"`
+	// AppImportEnabled lets a person give an app its own backup back. A pointer
+	// like DBDumpsEnabled: a body or a file without it keeps the stored value.
+	AppImportEnabled *bool `json:"appImportEnabled"`
 	// Anomaly detection over the backup history: the switch, the preset every
 	// item follows, the severity from which a finding is pushed, and the pause
 	// on deleting old backups after a loss of data. The two switches are
@@ -2738,6 +2741,7 @@ func toView(s store.Settings) settingsView {
 		FleetEnabled:                s.FleetEnabled,
 		PullEnabled:                 s.PullEnabled,
 		DBDumpsEnabled:              &s.DBDumpsEnabled,
+		AppImportEnabled:            &s.AppImportEnabled,
 		AnomalyEnabled:              &s.AnomalyEnabled,
 		AnomalySensitivity:          s.AnomalySensitivity,
 		AnomalyNotifyMin:            s.AnomalyNotifyMin,
@@ -3402,6 +3406,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		// on a save of an unrelated card.
 		if v.DBDumpsEnabled != nil {
 			cur.DBDumpsEnabled = *v.DBDumpsEnabled
+		}
+		if v.AppImportEnabled != nil {
+			cur.AppImportEnabled = *v.AppImportEnabled
 		}
 		anomalyChanged = applyAnomalySettings(cur, v)
 		nameChanged = cur.InstanceName != strings.TrimSpace(v.InstanceName)

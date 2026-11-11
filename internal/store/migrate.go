@@ -3891,6 +3891,14 @@ INSERT OR IGNORE INTO fortress_membership (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("fortress_membership", "pairing_enc"),
 		sql:              `ALTER TABLE fortress_membership ADD COLUMN pairing_enc BLOB NOT NULL DEFAULT x'';`,
 	},
+	{
+		// Giving an app its own backup back replaces what the app holds, so a
+		// person switches it on first.
+		version:          appImportMigration,
+		name:             "settings_app_import_enabled",
+		alreadySatisfied: columnPresent("settings", "app_import_enabled"),
+		sql:              `ALTER TABLE settings ADD COLUMN app_import_enabled INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4542,6 +4550,9 @@ const fortressMembershipMigration = 940
 
 // fortressPairingMigration numbers the store of the pairing in the fortress.
 const fortressPairingMigration = 941
+
+// appImportMigration numbers the switch that lets backups go back to the apps.
+const appImportMigration = 950
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

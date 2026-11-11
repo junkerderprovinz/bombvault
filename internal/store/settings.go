@@ -299,6 +299,9 @@ type Settings struct {
 	// StartTestEnabled adds a start test of one container to every scheduled
 	// restore check: restored into an isolated copy, started and checked.
 	StartTestEnabled bool
+	// AppImportEnabled lets a person give the own backup of an app back to the
+	// app in the fortress, which replaces what the app holds. Off by default.
+	AppImportEnabled bool
 }
 
 // settingsQuerier is satisfied by both *sql.DB and *sql.Tx, so a read inside a
@@ -347,7 +350,8 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		       retention_keep_yearly, offsite_retention_keep_yearly,
 		       repo_compression, start_test_enabled, retention_overrides,
 		       offsite_retention_overrides,
-		       restore_folder_per_section, restore_folder_overrides
+		       restore_folder_per_section, restore_folder_overrides,
+		       app_import_enabled
 		FROM settings WHERE id = 1`)
 
 	var s Settings
@@ -357,7 +361,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	var catchUpMissed, watchdogEnabled, exportEncryptEnabled, receiverEnabled int
 	var restartHealthWait, reconcileUnraidUpdateStatus, updateContainersAfterBackup, containerSnapshots int
 	var fleetEnabled, pullEnabled, dbDumpsEnabled, totpEnabled int
-	var anomalyEnabled, anomalyRetentionHold, startTestEnabled, restorePerSection int
+	var anomalyEnabled, anomalyRetentionHold, startTestEnabled, restorePerSection, appImportEnabled int
 	err := row.Scan(
 		&encEnabled, &contEnabled, &vmsEnabled, &flashEnabled, &configEnabled, &filesEnabled, &zfsEnabled,
 		&s.ContainersPath, &s.VMsPath, &s.FlashPath, &s.ConfigPath, &s.FilesPath, &s.ZFSPath, &s.RestoreFolder,
@@ -394,6 +398,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 		&s.RetentionOverrides,
 		&s.OffsiteRetentionOverrides,
 		&restorePerSection, &s.RestoreFolderOverrides,
+		&appImportEnabled,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Settings{}, fmt.Errorf("settings row missing: run Migrate first")
@@ -437,6 +442,7 @@ func getSettings(q settingsQuerier) (Settings, error) {
 	s.AnomalyEnabled = anomalyEnabled != 0
 	s.AnomalyRetentionHold = anomalyRetentionHold != 0
 	s.StartTestEnabled = startTestEnabled != 0
+	s.AppImportEnabled = appImportEnabled != 0
 	return s, nil
 }
 
@@ -610,7 +616,8 @@ func updateSettings(tx *sql.Tx, s Settings) error {
 		  retention_overrides          = ?,
 		  offsite_retention_overrides  = ?,
 		  restore_folder_per_section   = ?,
-		  restore_folder_overrides     = ?
+		  restore_folder_overrides     = ?,
+		  app_import_enabled           = ?
 		WHERE id = 1`,
 		boolInt(s.EncryptionEnabled),
 		boolInt(s.ContainersEnabled),
@@ -669,6 +676,7 @@ func updateSettings(tx *sql.Tx, s Settings) error {
 		s.OffsiteRetentionOverrides,
 		boolInt(s.RestoreFolderPerSection),
 		s.RestoreFolderOverrides,
+		boolInt(s.AppImportEnabled),
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateSettings: %w", err)

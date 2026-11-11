@@ -65,6 +65,43 @@ func TestDBDumpColumnsMigrateOverExistingColumns(t *testing.T) {
 	}
 }
 
+func TestGivingBackupsBackToAppsStartsOff(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	var on int
+	if err := db.QueryRow(`SELECT app_import_enabled FROM settings WHERE id = 1`).Scan(&on); err != nil {
+		t.Fatalf("read the column: %v", err)
+	}
+	if on != 0 {
+		t.Fatalf("app_import_enabled = %d, want off", on)
+	}
+	if s, err := store.New(db).GetSettings(); err != nil || s.AppImportEnabled {
+		t.Fatalf("settings = %v with %v, want the switch off", s.AppImportEnabled, err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'settings_app_import_enabled'`); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate over the existing column: %v", err)
+	}
+}
+
+func TestTheSwitchForGivingBackupsBackIsKept(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	if _, err := st.MutateSettings(func(s *store.Settings) error { s.AppImportEnabled = true; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if s, err := st.GetSettings(); err != nil || !s.AppImportEnabled {
+		t.Fatalf("settings = %v with %v, want the switch on", s.AppImportEnabled, err)
+	}
+}
+
 func TestMigrateAddsZFSSettingsColumnsWithDefaults(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {
