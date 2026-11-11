@@ -109,6 +109,10 @@ export function ActivityLog({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoFollow, setAutoFollow] = useState(true);
+  // What the last scroll said, without waiting for a render: the effect of a
+  // render that put a new line on screen can run after the reader scrolled
+  // up, and on the state it saw it would pull them back down.
+  const following = useRef(true);
 
   // Finished runs are polled; live progress arrives through useProgress().
   useEffect(() => {
@@ -208,7 +212,7 @@ export function ActivityLog({
 
   // Stay at the bottom as lines arrive, until the user scrolls up.
   useEffect(() => {
-    if (!autoFollow) return;
+    if (!following.current) return;
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
@@ -218,12 +222,14 @@ export function ActivityLog({
     const el = scrollRef.current;
     if (!el) return;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_THRESHOLD_PX;
+    following.current = atBottom;
     setAutoFollow(atBottom);
   };
 
   const jumpToLatest = () => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
+    following.current = true;
     setAutoFollow(true);
   };
 
