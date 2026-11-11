@@ -41,6 +41,9 @@ var Multicast = netip.MustParseAddrPort("239.255.77.51:8751")
 // and plain HTTP.
 var Ports = []int{3443, 3000}
 
+// Kinds are the members a group takes besides instances: the phone app.
+var Kinds = []member.Kind{member.KindMobile}
+
 // DirectPath is the route a member answers direct calls on.
 const DirectPath = kitgroup.DirectPath
 
@@ -211,7 +214,6 @@ type Manager struct {
 	// long as members of it have not followed.
 	followed    *kitgroup.Group
 	followedKey string
-	stopLearn   chan struct{}
 	// met holds the members seen in the pairing since the group moved, by
 	// their kit ids. The roster the pairing took over carries when each was
 	// last seen on the old phrase, which says nothing about the move.
@@ -309,7 +311,7 @@ func (m *Manager) open(cfg Config, self kitgroup.Self) *kitgroup.Group {
 		RelayURL:       strings.TrimSpace(cfg.RelayURL),
 		LAN:            m.lan,
 		Store:          cfg.Store,
-		Kinds:          []member.Kind{member.KindMobile},
+		Kinds:          Kinds,
 		Ports:          Ports,
 		MaxAnswerBytes: MaxAnswerBytes,
 		OnRemoved:      cfg.OnRemoved,
@@ -360,35 +362,17 @@ func (m *Manager) LAN() *lan.Service { return m.lan }
 // goes back to the group's own.
 func (m *Manager) Follow(g *kitgroup.Group, relayKey string) {
 	m.mu.Lock()
-	if m.stopLearn != nil {
-		close(m.stopLearn)
-		m.stopLearn = nil
-	}
 	m.followed, m.followedKey = g, relayKey
 	m.met = map[string]bool{}
-	if g != nil {
-		// The fortress opens the pairing without telling of changes, so the
-		// ids of new members are asked for on a timer.
-		stop := make(chan struct{})
-		m.stopLearn = stop
-		go func() {
-			t := time.NewTicker(learnFirst)
-			defer t.Stop()
-			for {
-				select {
-				case <-stop:
-					return
-				case <-t.C:
-					m.learnAll()
-				}
-			}
-		}()
-	}
 	m.mu.Unlock()
 	if g != nil {
 		go m.learnAll()
 	}
 }
+
+// Changed is the pairing's OnChange: the members that turned up are asked
+// who they are.
+func (m *Manager) Changed() { go m.learnAll() }
 
 // Following reports whether the group moved into a fortress.
 func (m *Manager) Following() bool {
