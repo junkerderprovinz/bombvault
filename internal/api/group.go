@@ -1089,10 +1089,14 @@ func (h *Handler) handleRelayConnect(w http.ResponseWriter, r *http.Request) {
 	h.svc.relayServer().ServeHTTP(w, r)
 }
 
-// handleGroupCall answers a member's direct call on the local network. It is
-// public like the relay socket: the call is signed and sealed with keys only
-// members hold. POST /api/group/call
+// handleGroupCall answers a member's direct call on the local network, of the
+// group or of the fortress. It is public like the relay socket: the call is
+// signed and sealed with keys only members hold. POST /api/group/call
 func (h *Handler) handleGroupCall(w http.ResponseWriter, r *http.Request) {
+	if f := h.svc.fortressNow(); f != nil && r.Header.Get(fortressPeerHeader) != "" {
+		f.DirectHandler().ServeHTTP(w, r)
+		return
+	}
 	h.svc.pairing().ServeDirect(w, r)
 }
 

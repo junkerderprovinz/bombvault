@@ -306,6 +306,9 @@ type Service struct {
 	// roleSendMu lets one call about this instance's own role requests go
 	// out at a time, so a withdrawal cannot overtake the ask it takes back.
 	roleSendMu sync.Mutex
+
+	// house holds this install's place in a fortress while it is in one.
+	house fortressPlace
 	// sharedMu keeps a join, its completion and a member's removal in a shared
 	// repository from running into each other.
 	sharedMu sync.Mutex

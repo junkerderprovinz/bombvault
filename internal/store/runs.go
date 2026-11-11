@@ -821,6 +821,38 @@ func (r *Repo) LastSuccessfulZFSBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulZFSBackup")
 }
 
+// backupTargetsOf is the SQL that picks the run targets of a domain.
+var backupTargetsOf = map[string]string{
+	"containers": `target_id IN (SELECT id FROM targets)`,
+	"vms":        `target_id IN (SELECT id FROM vms)`,
+	"files":      `target_id IN (SELECT id FROM file_sets)`,
+	"zfs":        `target_id IN (SELECT id FROM zfs_datasets)`,
+	"flash":      `target_id = '` + FlashTargetID + `'`,
+	"config":     `target_id = '` + ConfigTargetID + `'`,
+	"everything": `target_id = '` + EverythingTargetID + `'`,
+}
+
+// LastSuccessfulBackupRun returns the newest successful backup run of domain,
+// one of BombVault's domains or "everything", and whether there is one.
+func (r *Repo) LastSuccessfulBackupRun(domain string) (Run, bool, error) {
+	targets, ok := backupTargetsOf[domain]
+	if !ok {
+		return Run{}, false, fmt.Errorf("LastSuccessfulBackupRun %s: %w", domain, ErrUnknownDomain)
+	}
+	row := r.db.QueryRow(`SELECT `+runCols+` FROM runs
+		WHERE kind = 'backup' AND status = 'success' AND finished_at IS NOT NULL AND `+targets+sanePastStamp+`
+		ORDER BY finished_at DESC
+		LIMIT 1`, saneStampCutoff()) //nolint:gosec // G202: targets comes from backupTargetsOf, never from the caller
+	run, err := scanRun(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Run{}, false, nil
+	}
+	if err != nil {
+		return Run{}, false, fmt.Errorf("LastSuccessfulBackupRun: %w", err)
+	}
+	return run, true, nil
+}
+
 // FlashTargetID is the reserved runs.target_id for the singleton flash domain
 // (the Unraid USB). Flash has no per-item table, so its runs carry this fixed
 // id, which cannot collide with the hex ids of other targets.

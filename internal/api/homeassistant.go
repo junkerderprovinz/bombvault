@@ -291,10 +291,14 @@ func (h *Handler) haStart(ctx context.Context, domain string) string {
 	return "started"
 }
 
-// StartIntegrations connects to the Home Assistant broker and starts the
-// network announcement, each when it is switched on. The announcement probes
+// StartIntegrations opens the fortress this install is a member of, connects
+// to the Home Assistant broker and starts the network announcement, each when
+// it is switched on. The announcement probes
 // its names for a second or so, which the boot does not wait for.
 func (h *Handler) StartIntegrations() {
+	if err := h.svc.OpenFortress(fortressSource{h}); err != nil {
+		log.Printf("fortress: %v", err)
+	}
 	if on, err := h.store.MDNSEnabled(); err != nil {
 		log.Printf("mdns: read the switch: %v", err)
 	} else if on {
@@ -312,9 +316,10 @@ func (h *Handler) StartIntegrations() {
 	}
 }
 
-// StopIntegrations marks BombVault unavailable in Home Assistant, sends the
-// mDNS goodbye and disconnects both.
+// StopIntegrations closes the fortress, marks BombVault unavailable in Home
+// Assistant, sends the mDNS goodbye and disconnects both.
 func (h *Handler) StopIntegrations() {
+	h.svc.CloseFortress()
 	h.ha.Close()
 	h.stopMDNS()
 }
