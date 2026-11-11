@@ -3882,6 +3882,15 @@ UPDATE group_state SET direct_url_manual = 0;`,
 );
 INSERT OR IGNORE INTO fortress_membership (id) VALUES (1);`,
 	},
+	{
+		// The group's pairing moves into the fortress with a store of its
+		// own, so the group keeps its state on the old phrase for the
+		// members that have not followed yet.
+		version:          fortressPairingMigration,
+		name:             "fortress_pairing",
+		alreadySatisfied: columnPresent("fortress_membership", "pairing_enc"),
+		sql:              `ALTER TABLE fortress_membership ADD COLUMN pairing_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4530,6 +4539,9 @@ const legacyMembersGoneMigration = 920
 
 // fortressMembershipMigration numbers this install's membership of a fortress.
 const fortressMembershipMigration = 940
+
+// fortressPairingMigration numbers the store of the pairing in the fortress.
+const fortressPairingMigration = 941
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

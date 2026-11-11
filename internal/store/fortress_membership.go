@@ -12,6 +12,9 @@ type FortressMembership struct {
 	PreviousEnc []byte
 	SeedEnc     []byte
 	StateEnc    []byte
+	// PairingEnc is what the kit keeps of the group's pairing once it moved
+	// into the fortress.
+	PairingEnc []byte
 	// Device is the name the other members know this server by, empty for
 	// the one BombVault finds itself. It stays when the install leaves.
 	Device string
@@ -23,8 +26,8 @@ func (m FortressMembership) Joined() bool { return len(m.SecretEnc) > 0 }
 // FortressMembership reads the single membership row.
 func (r *Repo) FortressMembership() (FortressMembership, error) {
 	var m FortressMembership
-	err := r.db.QueryRow(`SELECT secret_enc, previous_enc, seed_enc, state_enc, device FROM fortress_membership WHERE id = 1`).
-		Scan(&m.SecretEnc, &m.PreviousEnc, &m.SeedEnc, &m.StateEnc, &m.Device)
+	err := r.db.QueryRow(`SELECT secret_enc, previous_enc, seed_enc, state_enc, pairing_enc, device FROM fortress_membership WHERE id = 1`).
+		Scan(&m.SecretEnc, &m.PreviousEnc, &m.SeedEnc, &m.StateEnc, &m.PairingEnc, &m.Device)
 	if err != nil {
 		return FortressMembership{}, fmt.Errorf("FortressMembership: %w", err)
 	}
@@ -34,7 +37,7 @@ func (r *Repo) FortressMembership() (FortressMembership, error) {
 // JoinFortress keeps a new membership with its sealed secret and member key.
 // Whatever the kit kept of an earlier one goes.
 func (r *Repo) JoinFortress(secretEnc, seedEnc []byte) error {
-	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = ?, previous_enc = x'', seed_enc = ?, state_enc = x'' WHERE id = 1`, secretEnc, seedEnc); err != nil {
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = ?, previous_enc = x'', seed_enc = ?, state_enc = x'', pairing_enc = x'' WHERE id = 1`, secretEnc, seedEnc); err != nil {
 		return fmt.Errorf("JoinFortress: %w", err)
 	}
 	return nil
@@ -59,6 +62,18 @@ func (r *Repo) SetFortressState(enc []byte) error {
 	return nil
 }
 
+// SetFortressPairing keeps what the kit writes about the pairing in the
+// fortress.
+func (r *Repo) SetFortressPairing(enc []byte) error {
+	if enc == nil {
+		enc = []byte{}
+	}
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET pairing_enc = ? WHERE id = 1`, enc); err != nil {
+		return fmt.Errorf("SetFortressPairing: %w", err)
+	}
+	return nil
+}
+
 // SetFortressDevice names this server for the other members; "" goes back to
 // the name BombVault finds itself.
 func (r *Repo) SetFortressDevice(device string) error {
@@ -70,7 +85,7 @@ func (r *Repo) SetFortressDevice(device string) error {
 
 // LeaveFortress forgets the membership and keeps the name of the server.
 func (r *Repo) LeaveFortress() error {
-	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = x'', previous_enc = x'', seed_enc = x'', state_enc = x'' WHERE id = 1`); err != nil {
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = x'', previous_enc = x'', seed_enc = x'', state_enc = x'', pairing_enc = x'' WHERE id = 1`); err != nil {
 		return fmt.Errorf("LeaveFortress: %w", err)
 	}
 	return nil

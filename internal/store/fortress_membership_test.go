@@ -70,3 +70,38 @@ func TestJoiningAgainStartsWithoutTheFormerState(t *testing.T) {
 		t.Fatalf("joined again: %+v", m)
 	}
 }
+
+func TestThePairingInTheFortressIsKeptApartFromTheGroup(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("secret"), []byte("seed")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetGroupKitState([]byte("old group")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressPairing([]byte("pairing")); err != nil {
+		t.Fatal(err)
+	}
+	m, _ := r.FortressMembership()
+	if string(m.PairingEnc) != "pairing" {
+		t.Fatalf("pairing %q", m.PairingEnc)
+	}
+	if got, _ := r.GroupKitState(); string(got) != "old group" {
+		t.Fatalf("the group keeps %q", got)
+	}
+	if err := r.JoinFortress([]byte("other"), []byte("seed")); err != nil {
+		t.Fatal(err)
+	}
+	if m, _ := r.FortressMembership(); len(m.PairingEnc) != 0 {
+		t.Fatalf("joining again keeps the pairing %q", m.PairingEnc)
+	}
+	if err := r.SetFortressPairing([]byte("pairing")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.LeaveFortress(); err != nil {
+		t.Fatal(err)
+	}
+	if m, _ := r.FortressMembership(); len(m.PairingEnc) != 0 {
+		t.Fatalf("leaving keeps the pairing %q", m.PairingEnc)
+	}
+}
