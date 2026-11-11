@@ -50,7 +50,7 @@ interface ErrorGroup {
   domains: string[]; // unique singular domains present in the group
   latest: number; // newest startedAt across the group (unix seconds)
   count: number; // number of failed runs in the group
-  via: "" | "mcp" | "api" | "mqtt"; // what started every member, "" for the schedule and the web interface
+  via: "" | "mcp" | "api" | "mqtt" | "fortress"; // what started every member, "" for the schedule and the web interface
   viaLabels: string[]; // the MCP keys or API tokens behind the members, without the purged ones
 }
 
