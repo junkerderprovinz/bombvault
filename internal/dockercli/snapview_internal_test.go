@@ -4,16 +4,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
 )
 
 func TestSnapViewSeesWhatThisContainerSeesWithTheSnapshotsOnTop(t *testing.T) {
 	self := container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{
-			ID: "abc123", Image: "sha256:img",
-			HostConfig: &container.HostConfig{Tmpfs: map[string]string{"/run": ""}},
-		},
+		ID: "abc123", Image: "sha256:img",
+		HostConfig: &container.HostConfig{Tmpfs: map[string]string{"/run": ""}},
 		Mounts: []container.MountPoint{
 			{Type: mount.TypeBind, Source: "/mnt", Destination: "/host/user", RW: true, Propagation: mount.PropagationRSlave},
 			{Type: mount.TypeBind, Source: "/mnt/user/appdata/bombvault", Destination: "/config", RW: true},

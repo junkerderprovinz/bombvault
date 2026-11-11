@@ -9,8 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // engine is a Docker daemon with a few containers in memory, enough for the
@@ -30,7 +30,7 @@ func newEngine(t *testing.T, cs ...*container.InspectResponse) (*engine, *Client
 	}
 	srv := httptest.NewServer(http.HandlerFunc(e.serve))
 	t.Cleanup(srv.Close)
-	api, err := client.NewClientWithOpts(client.WithHost("tcp://"+strings.TrimPrefix(srv.URL, "http://")), client.WithVersion("1.47"))
+	api, err := client.New(client.WithHost("tcp://"+strings.TrimPrefix(srv.URL, "http://")), client.WithAPIVersion("1.47"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,8 +39,8 @@ func newEngine(t *testing.T, cs ...*container.InspectResponse) (*engine, *Client
 
 func running(id, name string, hc container.HostConfig) *container.InspectResponse {
 	return &container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{ID: id, Name: "/" + name, Image: "sha256:img", State: &container.State{Running: true}, HostConfig: &hc},
-		Config:            &container.Config{Image: name},
+		ID: id, Name: "/" + name, Image: "sha256:img", State: &container.State{Running: true}, HostConfig: &hc,
+		Config: &container.Config{Image: name},
 	}
 }
 
@@ -92,8 +92,8 @@ func (e *engine) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		id := "new-" + name + strings.Repeat("0", 60)
 		e.containers[id] = &container.InspectResponse{
-			ContainerJSONBase: &container.ContainerJSONBase{ID: id, Name: "/" + name, State: &container.State{}, HostConfig: req.HostConfig},
-			Config:            req.Config,
+			ID: id, Name: "/" + name, State: &container.State{}, HostConfig: req.HostConfig,
+			Config: req.Config,
 		}
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(container.CreateResponse{ID: id})

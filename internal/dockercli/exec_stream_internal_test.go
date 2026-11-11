@@ -3,6 +3,7 @@ package dockercli
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -13,20 +14,23 @@ import (
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
 
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 )
 
 // execFrames builds the multiplexed output the daemon sends on an exec attach,
-// one frame per chunk.
+// one frame per chunk: the stream, three zero bytes, the big-endian length and
+// the chunk.
 func execFrames(stream stdcopy.StdType, payload []byte, chunk int) []byte {
-	var out bytes.Buffer
-	w := stdcopy.NewStdWriter(&out, stream)
+	var out []byte
 	for at := 0; at < len(payload); at += chunk {
-		_, _ = w.Write(payload[at:min(at+chunk, len(payload))])
+		part := payload[at:min(at+chunk, len(payload))]
+		out = append(out, byte(stream), 0, 0, 0)
+		out = binary.BigEndian.AppendUint32(out, uint32(len(part))) //nolint:gosec // G115: a test chunk is kilobytes
+		out = append(out, part...)
 	}
-	return out.Bytes()
+	return out
 }
 
 // A dump is megabytes, not the kilobytes a hook's failure reason needs, so this

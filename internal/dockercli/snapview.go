@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/mount"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/client"
 )
 
 // SnapViewLabel marks the containers that show a ZFS snapshot at the paths a
@@ -56,15 +56,15 @@ func (c *Client) StartSnapView(ctx context.Context, name, instance string, binds
 	if ref == "" {
 		return errors.New("dockercli: snapshot view: this process does not run in a container")
 	}
-	self, err := c.api.ContainerInspect(ctx, ref)
+	self, err := c.inspect(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("dockercli: snapshot view: inspect this container: %w", err)
 	}
 	cfg, hostCfg := snapViewConfig(self, name, instance, binds)
-	if _, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, name); err != nil {
+	if _, err := c.api.ContainerCreate(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: name}); err != nil {
 		return fmt.Errorf("dockercli: create snapshot view: %w", err)
 	}
-	if err := c.api.ContainerStart(ctx, name, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, name, client.ContainerStartOptions{}); err != nil {
 		rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
 		defer cancel()
 		_ = c.RemoveSnapView(rctx, name)
@@ -130,7 +130,7 @@ func snapViewConfig(self container.InspectResponse, name, instance string, binds
 // RemoveSnapView removes a view. One that is already gone counts as removed;
 // a container that is not a view is refused.
 func (c *Client) RemoveSnapView(ctx context.Context, name string) error {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		if isNoSuchContainer(err) {
 			return nil
@@ -140,7 +140,7 @@ func (c *Client) RemoveSnapView(ctx context.Context, name string) error {
 	if resp.Config == nil || resp.Config.Labels[SnapViewLabel] != "1" || !strings.HasPrefix(normalizeName(resp.Name), SnapViewPrefix) {
 		return fmt.Errorf("dockercli: container %q: %w", name, errNotSnapView)
 	}
-	err = c.api.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true, RemoveVolumes: true})
+	_, err = c.api.ContainerRemove(ctx, resp.ID, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
 	if err != nil && !isNoSuchContainer(err) {
 		return fmt.Errorf("dockercli: remove snapshot view: %w", err)
 	}
@@ -149,16 +149,16 @@ func (c *Client) RemoveSnapView(ctx context.Context, name string) error {
 
 // SnapViewLeftovers names the views this instance left behind.
 func (c *Client) SnapViewLeftovers(ctx context.Context, instance string) ([]string, error) {
-	f := filters.NewArgs(filters.Arg("label", SnapViewLabel+"=1"))
+	f := client.Filters{}.Add("label", SnapViewLabel+"=1")
 	if instance != "" {
 		f.Add("label", SnapViewInstanceLabel+"="+instance)
 	}
-	cs, err := c.api.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
+	list, err := c.api.ContainerList(ctx, client.ContainerListOptions{All: true, Filters: f})
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: list snapshot views: %w", err)
 	}
 	var out []string
-	for _, s := range cs {
+	for _, s := range list.Items {
 		if len(s.Names) > 0 && strings.HasPrefix(normalizeName(s.Names[0]), SnapViewPrefix) {
 			out = append(out, normalizeName(s.Names[0]))
 		}

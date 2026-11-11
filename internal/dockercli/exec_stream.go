@@ -8,9 +8,8 @@ import (
 	"io"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/client"
 
 	"github.com/junkerderprovinz/bombvault/internal/dbdump"
 )
@@ -21,7 +20,7 @@ var _ dbdump.Execer = (*Client)(nil)
 // arrives and returns the process's real exit code. Nothing is buffered: the
 // stdout of a dump is the backup stream itself.
 func (c *Client) ExecStream(ctx context.Context, name string, cmd []string, stdout, stderr io.Writer) (int, error) {
-	id, att, err := c.startExec(ctx, name, container.ExecOptions{
+	id, att, err := c.startExec(ctx, name, client.ExecCreateOptions{
 		Cmd:          cmd,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -47,7 +46,7 @@ func (c *Client) ExecQuick(ctx context.Context, name string, cmd []string) error
 // stdout together with the real exit code. The rest of the output is read and
 // discarded so the command can finish.
 func (c *Client) ExecOutput(ctx context.Context, name string, cmd []string, max int) (string, int, error) {
-	id, att, err := c.startExec(ctx, name, container.ExecOptions{
+	id, att, err := c.startExec(ctx, name, client.ExecCreateOptions{
 		Cmd:          cmd,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -68,7 +67,7 @@ func (c *Client) ExecOutput(ctx context.Context, name string, cmd []string, max 
 // ExecStdin runs cmd with stdin attached, keeps the last tailMax bytes of its
 // stderr for the caller's error report and returns the real exit code.
 func (c *Client) ExecStdin(ctx context.Context, name string, cmd []string, stdin io.Reader, tailMax int) (string, int, error) {
-	id, att, err := c.startExec(ctx, name, container.ExecOptions{
+	id, att, err := c.startExec(ctx, name, client.ExecCreateOptions{
 		Cmd:          cmd,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -86,21 +85,21 @@ func (c *Client) ExecStdin(ctx context.Context, name string, cmd []string, stdin
 	return tail.String(), code, err
 }
 
-func (c *Client) startExec(ctx context.Context, name string, opts container.ExecOptions) (string, types.HijackedResponse, error) {
-	created, err := c.api.ContainerExecCreate(ctx, name, opts)
+func (c *Client) startExec(ctx context.Context, name string, opts client.ExecCreateOptions) (string, client.HijackedResponse, error) {
+	created, err := c.api.ExecCreate(ctx, name, opts)
 	if err != nil {
-		return "", types.HijackedResponse{}, fmt.Errorf("dockercli: exec create: %w", mapExecCreateErr(err))
+		return "", client.HijackedResponse{}, fmt.Errorf("dockercli: exec create: %w", mapExecCreateErr(err))
 	}
-	att, err := c.api.ContainerExecAttach(ctx, created.ID, container.ExecAttachOptions{})
+	att, err := c.api.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
 	if err != nil {
-		return "", types.HijackedResponse{}, fmt.Errorf("dockercli: exec attach: %w", err)
+		return "", client.HijackedResponse{}, fmt.Errorf("dockercli: exec attach: %w", err)
 	}
-	return created.ID, att, nil
+	return created.ID, att.HijackedResponse, nil
 }
 
 func (c *Client) execExit(ctx context.Context, id string) (int, error) {
 	code, err := waitExecExit(ctx, func(ctx context.Context) (bool, int, error) {
-		insp, err := c.api.ContainerExecInspect(ctx, id)
+		insp, err := c.api.ExecInspect(ctx, id, client.ExecInspectOptions{})
 		return insp.Running, insp.ExitCode, err
 	}, execExitPoll, execExitWait)
 	if err != nil {
@@ -194,7 +193,7 @@ type execConn interface {
 	Close()
 }
 
-type hijackedAttach struct{ resp *types.HijackedResponse }
+type hijackedAttach struct{ resp *client.HijackedResponse }
 
 func (h hijackedAttach) Read(p []byte) (int, error)  { return h.resp.Reader.Read(p) }
 func (h hijackedAttach) Write(p []byte) (int, error) { return h.resp.Conn.Write(p) }

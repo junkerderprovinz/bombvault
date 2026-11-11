@@ -3,8 +3,8 @@ package dockercli
 import (
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
 )
 
 // TestNeedsVolumeMountpoint checks that only a named volume mount without a
