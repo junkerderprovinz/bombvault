@@ -18,6 +18,14 @@ import { applyStoredMotionIntensity } from "./lib/motion";
 import { applyStoredDisco } from "./lib/disco";
 import { applyStoredLabelModes } from "./lib/controls";
 import { ADOPTED_EVENT, sync as syncDisplayPrefs } from "./lib/displayPrefs";
+import { setStoragePrefix } from "@glimstone/core";
+import { setGlyphResolver } from "@glimstone/react/glyphs";
+import { glyphFor } from "./components/glyphFor";
+
+// GlimStone's own components read the choices BombVault keeps under bv- and
+// pick their glyphs from BombVault's set.
+setStoragePrefix("bv");
+setGlyphResolver(glyphFor);
 
 // Apply stored preferences before the first paint, so the defaults never flash.
 applyStoredTheme();
