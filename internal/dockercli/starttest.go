@@ -142,12 +142,12 @@ func (c *Client) StartIsolated(ctx context.Context, spec IsolatedSpec) error {
 		return fmt.Errorf("dockercli: create isolated copy: %w", err)
 	}
 	create := client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: spec.Name}
-	_, err = c.api.ContainerCreate(ctx, create)
+	_, err = c.createContainer(ctx, create)
 	if err != nil && isNotFoundErr(err) && cfg.Image != "" {
 		if pErr := c.Pull(ctx, cfg.Image); pErr != nil {
 			return fmt.Errorf("dockercli: the image %s is not on this host and could not be pulled: %w", cfg.Image, pErr)
 		}
-		_, err = c.api.ContainerCreate(ctx, create)
+		_, err = c.createContainer(ctx, create)
 	}
 	if err != nil {
 		return fmt.Errorf("dockercli: create isolated copy: %w", err)
@@ -347,7 +347,7 @@ func (c *Client) RunProber(ctx context.Context, spec ProberSpec) (int, error) {
 		Cmd:        spec.Cmd,
 		Labels:     startTestLabels(spec.Instance),
 	}
-	if _, err := c.api.ContainerCreate(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: spec.Name}); err != nil {
+	if _, err := c.createContainer(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: spec.Name}); err != nil {
 		return -1, fmt.Errorf("dockercli: create prober: %w", err)
 	}
 	defer func() {

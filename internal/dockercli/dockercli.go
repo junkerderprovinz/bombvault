@@ -30,6 +30,7 @@ import (
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/registry"
 	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/traffic"
@@ -655,7 +656,7 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 		return fmt.Errorf("dockercli: create: %w", err)
 	}
 	name := normalizeName(in.Name)
-	resp, err := c.api.ContainerCreate(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, NetworkingConfig: netCfg, Name: name})
+	resp, err := c.createContainer(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, NetworkingConfig: netCfg, Name: name})
 	if err != nil {
 		return fmt.Errorf("dockercli: create: %w", missingRuntime(err))
 	}
@@ -684,6 +685,41 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 		return fmt.Errorf("dockercli: create-start: %w", missingRuntime(err))
 	}
 	return nil
+}
+
+// createContainer refuses what a daemon before API 1.44 would drop without a
+// word: a MAC set per network, which a DHCP reservation is tied to, and a
+// recursive read-only bind. Only such a create asks the daemon its version
+// first.
+func (c *Client) createContainer(ctx context.Context, opts client.ContainerCreateOptions) (client.ContainerCreateResult, error) {
+	if feature := api144Feature(opts); feature != "" {
+		if _, err := c.api.Ping(ctx, client.PingOptions{NegotiateAPIVersion: true}); err != nil {
+			return client.ContainerCreateResult{}, err
+		}
+		if v := c.api.ClientVersion(); versions.LessThan(v, "1.44") {
+			return client.ContainerCreateResult{}, fmt.Errorf("%q requires API version 1.44, but the Docker daemon API version is %s", feature, v)
+		}
+	}
+	return c.api.ContainerCreate(ctx, opts)
+}
+
+// api144Feature names what opts asks of API 1.44, "" when it asks nothing.
+func api144Feature(opts client.ContainerCreateOptions) string {
+	if opts.NetworkingConfig != nil {
+		for _, ep := range opts.NetworkingConfig.EndpointsConfig {
+			if ep != nil && len(ep.MacAddress) > 0 {
+				return "specify mac-address per network"
+			}
+		}
+	}
+	if opts.HostConfig != nil {
+		for _, m := range opts.HostConfig.Mounts {
+			if m.BindOptions != nil && m.BindOptions.ReadOnlyForceRecursive {
+				return "bind-recursive=readonly"
+			}
+		}
+	}
+	return ""
 }
 
 // InspectName returns the live container's normalized name, or "" if no such

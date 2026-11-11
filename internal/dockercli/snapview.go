@@ -61,7 +61,7 @@ func (c *Client) StartSnapView(ctx context.Context, name, instance string, binds
 		return fmt.Errorf("dockercli: snapshot view: inspect this container: %w", err)
 	}
 	cfg, hostCfg := snapViewConfig(self, name, instance, binds)
-	if _, err := c.api.ContainerCreate(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: name}); err != nil {
+	if _, err := c.createContainer(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: name}); err != nil {
 		return fmt.Errorf("dockercli: create snapshot view: %w", err)
 	}
 	if _, err := c.api.ContainerStart(ctx, name, client.ContainerStartOptions{}); err != nil {
