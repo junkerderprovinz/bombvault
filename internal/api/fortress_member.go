@@ -85,7 +85,7 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 		{Name: actionBackupRequest, Run: s.backupRequest},
 		{Name: actionSnapshotsBrowse, Run: s.browseSnapshots},
 	}
-	for _, use := range []string{fortress.ExportAction, actionUpdatesManaged} {
+	for _, use := range []string{fortress.ExportAction, fortress.ImportAction, actionUpdatesManaged} {
 		if !slices.Contains(cfg.Uses, use) {
 			cfg.Uses = append(cfg.Uses, use)
 		}

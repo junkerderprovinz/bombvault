@@ -83,27 +83,40 @@ func (s *Service) forgetAppExportSeries(ctx context.Context, repo string, settin
 	}
 }
 
+// memberLister is the part of a fortress that tells its members and where
+// each runs.
+type memberLister interface {
+	Members() []fortress.Member
+	Status(ctx context.Context, id, lang string) (status.Report, error)
+}
+
 // appExporter is the part of a fortress that hands over the backups of the
 // apps in it.
 type appExporter interface {
-	Members() []fortress.Member
-	Status(ctx context.Context, id, lang string) (status.Report, error)
+	memberLister
 	Export(ctx context.Context, id string) (io.ReadCloser, error)
 }
 
-// exportingMember finds the member that runs in container id and offers a
-// backup of its own. Only one on this network can hand it over.
-func exportingMember(ctx context.Context, ex appExporter, id string) (fortress.Member, bool) {
-	for _, m := range ex.Members() {
-		if !m.Direct || !slices.Contains(m.Actions, fortress.ExportAction) {
+// memberOffering finds the member that runs in container id and offers
+// action, whether it is on this network or not.
+func memberOffering(ctx context.Context, ml memberLister, id, action string) (fortress.Member, bool) {
+	for _, m := range ml.Members() {
+		if !slices.Contains(m.Actions, action) {
 			continue
 		}
-		rep, err := ex.Status(ctx, m.ID, "en")
+		rep, err := ml.Status(ctx, m.ID, "en")
 		if err == nil && sameContainer(rep.Instance.Container, id) {
 			return m, true
 		}
 	}
 	return fortress.Member{}, false
+}
+
+// exportingMember finds the member that runs in container id and offers a
+// backup of its own. Only one on this network can hand it over.
+func exportingMember(ctx context.Context, ex appExporter, id string) (fortress.Member, bool) {
+	m, ok := memberOffering(ctx, ex, id, fortress.ExportAction)
+	return m, ok && m.Direct
 }
 
 // sameContainer compares a container id as an app reads it, often the short

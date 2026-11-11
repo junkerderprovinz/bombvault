@@ -14,6 +14,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 var errNotAnAppExport = errors.New("not the own backup of an app in this container")
@@ -89,17 +90,52 @@ func (f *firstBytes) Write(p []byte) (int, error) {
 	return f.dst.Write(p)
 }
 
+// storedAppExport is one own backup of an app where it lies.
+type storedAppExport struct {
+	snap restic.Snapshot
+	app  timelineAppExport
+	path string
+	repo string
+	mode restic.Mode
+}
+
+// appExportFor picks one of the app backups of container name at source and
+// refuses a snapshot that is none of them.
+func (s *Service) appExportFor(ctx context.Context, settings store.Settings, name, source, snapshotID string) (storedAppExport, error) {
+	if !backup.ValidSnapshotID(snapshotID) {
+		return storedAppExport{}, backup.ErrInvalidSnapshotID
+	}
+	if !validItemSource(source) {
+		return storedAppExport{}, errInvalidItemSource
+	}
+	repo, err := s.containerRepoForName(settings, name, source)
+	if err != nil {
+		return storedAppExport{}, err
+	}
+	mode := s.repoModeFor(settings, "containers", source, repo)
+	// Owned by the entry's rule, so a backup under a former name comes too and
+	// another machine's under that name does not.
+	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.containerAppExportIdentity(name))
+	if err != nil {
+		return storedAppExport{}, err
+	}
+	i := slices.IndexFunc(snaps, func(sn restic.Snapshot) bool { return sn.ID == snapshotID })
+	if i < 0 {
+		return storedAppExport{}, fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
+	}
+	app, takenAs, ok := appExportOf(snaps[i])
+	path := appExportPath(takenAs, app.App)
+	if !ok || !slices.Contains(snaps[i].Paths, path) {
+		return storedAppExport{}, fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
+	}
+	return storedAppExport{snap: snaps[i], app: app, path: path, repo: repo, mode: mode}, nil
+}
+
 // DownloadAppExport streams the own backup an app in container name handed
 // over to w, age-sealed when export encryption is on. onStart gets the file
 // with the first byte, so the handler can name the attachment. check runs the
 // refusals and streams nothing.
 func (s *Service) DownloadAppExport(ctx context.Context, name, source, snapshotID string, check bool, onStart func(appExportFile), w io.Writer) error {
-	if !backup.ValidSnapshotID(snapshotID) {
-		return backup.ErrInvalidSnapshotID
-	}
-	if !validItemSource(source) {
-		return errInvalidItemSource
-	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return fmt.Errorf("read settings: %w", err)
@@ -109,31 +145,13 @@ func (s *Service) DownloadAppExport(ctx context.Context, name, source, snapshotI
 	if err != nil {
 		return err
 	}
-	repo, err := s.containerRepoForName(settings, name, source)
-	if err != nil {
+	ae, err := s.appExportFor(ctx, settings, name, source, snapshotID)
+	if err != nil || check {
 		return err
-	}
-	mode := s.repoModeFor(settings, "containers", source, repo)
-	// Owned by the entry's rule, so a backup under a former name comes too and
-	// another machine's under that name does not.
-	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.containerAppExportIdentity(name))
-	if err != nil {
-		return err
-	}
-	i := slices.IndexFunc(snaps, func(sn restic.Snapshot) bool { return sn.ID == snapshotID })
-	if i < 0 {
-		return fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
-	}
-	app, takenAs, ok := appExportOf(snaps[i])
-	path := appExportPath(takenAs, app.App)
-	if !ok || !slices.Contains(snaps[i].Paths, path) {
-		return fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
-	}
-	if check {
-		return nil
 	}
 
-	f := appExportFile{app: app.App, id: snapshotID, time: snaps[i].Time, sealed: sealed}
+	repo, mode, app, path := ae.repo, ae.mode, ae.app, ae.path
+	f := appExportFile{app: app.App, id: snapshotID, time: ae.snap.Time, sealed: sealed}
 	dst := w
 	var ageW *sealOnFirstWrite
 	if sealed {
