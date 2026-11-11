@@ -12,6 +12,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 const knightLoaderContainer = "4f3a9c21b7e05d6a8c1f2e3d4b5a69788f7e6d5c4b3a29180f1e2d3c4b5a6978"
@@ -29,7 +30,7 @@ func newFakeExporter() *fakeExporter {
 	return &fakeExporter{
 		members: []fortress.Member{
 			{ID: "t1", App: fortress.App{ID: "towertorch"}, Direct: true},
-			{ID: "k1", App: fortress.App{ID: "knightloader"}, Direct: true, Actions: []string{"backup.export"}},
+			{ID: "k1", App: fortress.App{ID: "knightloader", Name: "KnightLoader"}, Direct: true, Actions: []string{"backup.export"}},
 		},
 		reported: map[string]string{"t1": "", "k1": knightLoaderContainer[:12]},
 	}
@@ -69,14 +70,53 @@ func TestTheAppInAContainerHandsItsOwnBackupOverBeforeTheBackup(t *testing.T) {
 	svc.engine = eng
 	ex := newFakeExporter()
 
-	if err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
-		t.Fatal(err)
+	stored, err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true})
+	if err != nil || !stored {
+		t.Fatalf("stored %v with %v", stored, err)
 	}
 	if !slices.Equal(ex.exported, []string{"k1"}) {
 		t.Fatalf("fetched from %v, want k1", ex.exported)
 	}
-	if eng.repo != "/backups/containers" || eng.body != "the app's own backup" || !slices.Contains(eng.tags, "appexport:knightloader") {
+	if eng.repo != "/backups/containers" || eng.body != "the app's own backup" || eng.path != "/appexport/knightloader/knightloader" {
 		t.Fatalf("stored %+v", eng)
+	}
+	if want := []string{"appexport:knightloader", "app:knightloader", "appname:KnightLoader"}; !slices.Equal(eng.tags, want) {
+		t.Fatalf("tags = %v, want %v", eng.tags, want)
+	}
+}
+
+func TestTheOwnBackupOfAnAppNamesTheContainersFormerNames(t *testing.T) {
+	svc, _ := newFortressSvc(t)
+	eng := &stdinEngine{}
+	svc.engine = eng
+	tg, err := svc.store.UpsertTarget(store.Target{ContainerName: "knightloader"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.store.AddAliasAt("container", "kl", tg.ID, 1_758_000_000); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.storeAppExportFrom(context.Background(), newFakeExporter(), "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(eng.tags, "formerly:kl") {
+		t.Fatalf("tags = %v, want the former name kl", eng.tags)
+	}
+}
+
+func TestAnAppNameThatWouldSplitIntoTagsIsLeftOut(t *testing.T) {
+	svc, _ := newFortressSvc(t)
+	eng := &stdinEngine{}
+	svc.engine = eng
+	ex := newFakeExporter()
+	ex.members[1].App.Name = "Knight,Loader"
+
+	if _, err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"appexport:knightloader", "app:knightloader"}; !slices.Equal(eng.tags, want) {
+		t.Fatalf("tags = %v, want %v", eng.tags, want)
 	}
 }
 
@@ -86,7 +126,7 @@ func TestAnAppExportStaysOutOfAnUnencryptedRepository(t *testing.T) {
 	svc.engine = eng
 	ex := newFakeExporter()
 
-	err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{})
+	_, err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{})
 	if !errors.Is(err, errExportUnencrypted) {
 		t.Fatalf("got %v, want the unencrypted refusal", err)
 	}
@@ -101,11 +141,11 @@ func TestAContainerNoMemberRunsInBacksUpAsBefore(t *testing.T) {
 	svc.engine = eng
 	ex := newFakeExporter()
 
-	if err := svc.storeAppExportFrom(context.Background(), ex, "plex", strings.Repeat("9", 64), "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
-		t.Fatal(err)
+	if stored, err := svc.storeAppExportFrom(context.Background(), ex, "plex", strings.Repeat("9", 64), "/backups/containers", restic.Mode{Encrypted: true}); err != nil || stored {
+		t.Fatalf("stored %v with %v", stored, err)
 	}
 	ex.members[1].Direct = false
-	if err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
+	if _, err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
 		t.Fatal(err)
 	}
 	if len(ex.exported) != 0 || eng.repo != "" {
@@ -120,7 +160,7 @@ func TestAFailedExportIsSaidAndStoresNothing(t *testing.T) {
 	ex := newFakeExporter()
 	ex.fail = &fortress.Refusal{Status: 503, Code: "busy"}
 
-	if err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err == nil {
+	if _, err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err == nil {
 		t.Fatal("a refused export read as stored")
 	}
 	if eng.repo != "" {

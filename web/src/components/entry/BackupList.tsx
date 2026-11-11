@@ -12,9 +12,13 @@ import { IconCompare, IconExport } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconAdd, IconCloud, IconLocal, IconRestore, IconTrash } from "../navGlyphs";
 import { Rows } from "../storage/rows";
+import { AppBackupDownload } from "./AppBackupDownload";
 import { usePlaceLabel, type TimelineState } from "./BackupPlaces";
 
 const WEEK_MS = 7 * 86_400_000;
+
+const MARK_CLASSES =
+  "inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-textSub [&_svg]:h-3 [&_svg]:w-3";
 
 /** Which backup a click asks for, and from which place when it was a click
  *  on that place's mark. */
@@ -45,6 +49,12 @@ function RowMenu({
   const deletable = row.places.some((m) => places.find((p) => p.place === m.place)?.appendOnly === false);
 
   const actions: MenuAction[] = [];
+  // An app's own backup is a file for the app, with nothing to compare, tag
+  // or export.
+  if (row.appExport) {
+    if (deletable) actions.push({ id: "delete", label: t("common.delete"), glyph: <IconTrash />, onSelect: () => onAct("delete") });
+    return actions.length > 0 ? <MoreMenu label={formatRecent(rowTime(row), lang)} actions={actions} /> : null;
+  }
   if (comparable(rows, mark.place).length > 1) {
     actions.push({ id: "compare", label: t("entry.row.compare"), glyph: <IconCompare />, onSelect: () => onAct("compare") });
   }
@@ -65,6 +75,7 @@ function RowMenu({
 }
 
 function Row({
+  name,
   row,
   timeline,
   run,
@@ -73,6 +84,7 @@ function Row({
   onOpen,
   onAct,
 }: {
+  name: string;
   row: TimelineRow;
   timeline: TimelineState;
   run: Run | undefined;
@@ -89,6 +101,7 @@ function Row({
   const marks = [...row.places].sort((a, b) => orderOf(a.place) - orderOf(b.place));
   const allRead = places.every((p) => p.state === "read");
   const size = row.size ?? run?.sourceBytes;
+  const app = row.appExport;
 
   function openAt(e: MouseEvent, place: string) {
     e.stopPropagation();
@@ -99,15 +112,23 @@ function Row({
     <li
       id={rowElementId(row.key)}
       data-testid="entry-backup"
-      onClick={() => onOpen({ key: row.key })}
-      className={`group flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 ${
-        marked ? "bg-accentSoft" : "hover:bg-carbon-hover"
-      }`}
+      onClick={app ? undefined : () => onOpen({ key: row.key })}
+      className={`group flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 ${
+        app ? "" : "cursor-pointer"
+      } ${marked ? "bg-accentSoft" : "hover:bg-carbon-hover"}`}
     >
       <span className="flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-2">
         <span className="text-sm font-semibold tabular-nums text-carbon-text first-letter:uppercase">
           {formatRecent(rowTime(row), lang)}
         </span>
+        {app && (
+          <span className="inline-flex items-center gap-1">
+            <Badge tone="active" size="small">
+              {t("entry.list.appBackup").replace("{app}", () => app.name)}
+            </Badge>
+            <InfoBubble tip={t("entry.list.appBackupHint").replaceAll("{app}", () => app.name)} />
+          </span>
+        )}
         {flagged && (
           <Badge tone="warn" size="small">
             {t("anomaly.snapshotFlagged")}
@@ -127,16 +148,23 @@ function Row({
       <span className="flex flex-wrap items-center gap-1.5">
         {marks.map((mark) => (
           <span key={mark.place} className="inline-flex items-center gap-1">
-            <button
-              type="button"
-              aria-label={t("entry.list.restoreFrom").replace("{place}", () => labelOf(mark.place))}
-              onClick={(e) => openAt(e, mark.place)}
-              className="inline-flex items-center gap-1.5 rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text [&_svg]:h-3 [&_svg]:w-3"
-            >
-              {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
-              {labelOf(mark.place)}
-              {mark.incomplete && ` · ${t("timeline.incomplete")}`}
-            </button>
+            {app ? (
+              <span className={`${MARK_CLASSES} cursor-default`}>
+                {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
+                {labelOf(mark.place)}
+              </span>
+            ) : (
+              <button
+                type="button"
+                aria-label={t("entry.list.restoreFrom").replace("{place}", () => labelOf(mark.place))}
+                onClick={(e) => openAt(e, mark.place)}
+                className={`${MARK_CLASSES} hover:bg-carbon-surface3 hover:text-carbon-text`}
+              >
+                {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
+                {labelOf(mark.place)}
+                {mark.incomplete && ` · ${t("timeline.incomplete")}`}
+              </button>
+            )}
             {mark.incomplete && (
               <span onClick={(e) => e.stopPropagation()} className="flex">
                 <InfoBubble tip={t("timeline.incompleteHint")} />
@@ -157,15 +185,19 @@ function Row({
         onClick={(e) => e.stopPropagation()}
       >
         <RowMenu row={row} timeline={timeline} onAct={(action) => onAct(row, action)} />
-        {/* A phone opens the backup with a tap on its row. */}
-        <span className="max-md:hidden">
-          <Button
-            label={t("snapshots.restore")}
-            labelKey="snapshots.restore"
-            glyph={<IconRestore />}
-            onClick={() => onOpen({ key: row.key })}
-          />
-        </span>
+        {app ? (
+          <AppBackupDownload name={name} row={row} places={places} />
+        ) : (
+          // A phone opens the backup with a tap on its row.
+          <span className="max-md:hidden">
+            <Button
+              label={t("snapshots.restore")}
+              labelKey="snapshots.restore"
+              glyph={<IconRestore />}
+              onClick={() => onOpen({ key: row.key })}
+            />
+          </span>
+        )}
       </span>
     </li>
   );
@@ -183,9 +215,11 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 /**
  * BackupList is every backup of the entry, the newest first and split at one
  * week. A row opens its backup. The mark of a place opens it at that place,
- * and the menu holds what else can be done with it.
+ * and the menu holds what else can be done with it. The own backup of the app
+ * in a container stands among them and is downloaded instead.
  */
 export function BackupList({
+  name,
   timeline,
   runs,
   isFlagged,
@@ -194,6 +228,8 @@ export function BackupList({
   onOpen,
   onAct,
 }: {
+  /** The container an app's own backup is downloaded from. */
+  name: string;
   timeline: TimelineState;
   runs: Run[];
   /** Whether an open finding was raised on the backup. */
@@ -206,7 +242,8 @@ export function BackupList({
   onAct: (row: TimelineRow, action: RowAction) => void;
 }) {
   const { t } = useT();
-  const { rows, places, reading, loadPlace } = timeline;
+  const { places, reading, loadPlace } = timeline;
+  const rows = [...timeline.rows, ...timeline.appExports].sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
 
   useEffect(() => {
     // jsdom has no scrollIntoView.
@@ -222,6 +259,7 @@ export function BackupList({
     return (
       <Row
         key={row.key}
+        name={name}
         row={row}
         timeline={timeline}
         run={run}

@@ -68,7 +68,7 @@ func (s *Service) ownerContextByName(domain string) (ownerContext, error) {
 func (c ownerContext) identityOf(tag string) []string {
 	switch c.domain {
 	case "containers":
-		for _, prefix := range []string{"container:", "stack:", dbDumpIdentityPrefix} {
+		for _, prefix := range []string{"container:", "stack:", dbDumpIdentityPrefix, appExportTagPrefix} {
 			if name, ok := strings.CutPrefix(tag, prefix); ok && name != "" {
 				return []string{itemTag(tag)}
 			}
@@ -100,11 +100,14 @@ func (c ownerContext) identityOf(tag string) []string {
 	return nil
 }
 
-// itemTag is the identity tag of the item a tag names: a database dump
-// belongs to its container, so it follows that container's placement.
+// itemTag is the identity tag of the item a tag names: a database dump and the
+// own backup of an app belong to their container, so they follow that
+// container's placement.
 func itemTag(tag string) string {
-	if name, ok := strings.CutPrefix(tag, dbDumpIdentityPrefix); ok && name != "" {
-		return "container:" + name
+	for _, prefix := range []string{dbDumpIdentityPrefix, appExportTagPrefix} {
+		if name, ok := strings.CutPrefix(tag, prefix); ok && name != "" {
+			return "container:" + name
+		}
 	}
 	return tag
 }

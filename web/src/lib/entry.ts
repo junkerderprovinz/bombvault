@@ -228,6 +228,9 @@ const OWN_TAG_PREFIXES = [
   "import:",
   "blocks-partial:",
   "bv:",
+  "appexport:",
+  "app:",
+  "appname:",
 ];
 const IMPORTED_TAG = "imported";
 const OWN_TAGS = new Set([IMPORTED_TAG, "blocks", "live", "p1", "p2"]);

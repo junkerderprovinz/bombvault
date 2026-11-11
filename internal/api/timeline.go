@@ -51,6 +51,15 @@ type timelineRow struct {
 	// compression. It is absent where neither a run nor the snapshot recorded it.
 	Size   *int64         `json:"size,omitempty"`
 	Places []timelineMark `json:"places"`
+	// AppExport names the app whose own backup the row is, which the app takes
+	// back rather than a restore of the container.
+	AppExport *timelineAppExport `json:"appExport,omitempty"`
+}
+
+// timelineAppExport is the app that handed over a row's backup.
+type timelineAppExport struct {
+	App  string `json:"app"`
+	Name string `json:"name"`
 }
 
 type timeline struct {
@@ -196,6 +205,12 @@ func isDump(snap restic.Snapshot) bool {
 	return slices.ContainsFunc(snap.Tags, func(tag string) bool { return strings.HasPrefix(tag, dbDumpIdentityPrefix) })
 }
 
+// isAppExport reports whether snap is the own backup of an app, which goes
+// back to the app rather than through a restore of the container.
+func isAppExport(snap restic.Snapshot) bool {
+	return slices.ContainsFunc(snap.Tags, func(tag string) bool { return strings.HasPrefix(tag, appExportTagPrefix) })
+}
+
 // incomplete reports whether a place misses a disk snapshot a restore of the
 // run would look up there. Without a vmrun tag there is no group to look them
 // up in, and a backup of a VM with zvol disks always sets one.
@@ -310,6 +325,48 @@ func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]r
 	return s.ownedAmong(it, all)
 }
 
+// appExportOf reads the app whose own backup snap is and the name the
+// container had when it was taken.
+func appExportOf(snap restic.Snapshot) (app timelineAppExport, container string, ok bool) {
+	for _, tag := range snap.Tags {
+		if v, found := strings.CutPrefix(tag, appExportTagPrefix); found {
+			container = v
+		}
+		if v, found := strings.CutPrefix(tag, appTagPrefix); found {
+			app.App = v
+		}
+		if v, found := strings.CutPrefix(tag, appNameTagPrefix); found {
+			app.Name = v
+		}
+	}
+	app.Name = cmp.Or(app.Name, app.App)
+	return app, container, container != "" && app.App != ""
+}
+
+// appExportRowsAt makes a row of every own backup of an app among one place's
+// snapshots.
+func appExportRowsAt(place string, own []restic.Snapshot) []timelineRow {
+	rows := []timelineRow{}
+	index := map[string]int{}
+	for _, snap := range newestFirst(own) {
+		app, _, ok := appExportOf(snap)
+		if !ok {
+			continue
+		}
+		key := restic.Identity(snap)
+		if i, ok := index[key]; ok {
+			rows[i].Places[0].SnapshotIDs = append(rows[i].Places[0].SnapshotIDs, snap.ID)
+			continue
+		}
+		index[key] = len(rows)
+		rows = append(rows, timelineRow{
+			Key: key, Time: snap.Time, Size: recordedSize([]restic.Snapshot{snap}), AppExport: &app,
+			Places: []timelineMark{{Place: place, SnapshotIDs: []string{snap.ID}, Tags: append([]string{}, snap.Tags...)}},
+		})
+	}
+	return rows
+}
+
 // ownedAmong keeps the snapshots of one listing that the item owns.
 func (s *Service) ownedAmong(it timelineItem, all []restic.Snapshot) ([]restic.Snapshot, error) {
 	if it.zfsRoot != "" {
@@ -347,7 +404,11 @@ func (s *Service) readPlace(ctx context.Context, it timelineItem, p placeRef) (t
 		return p.timelinePlace, []timelineRow{}
 	}
 	p.State = "read"
-	return p.timelinePlace, rowsAt(it, p.Place, own)
+	rows := rowsAt(it, p.Place, own)
+	if apps := appExportRowsAt(p.Place, own); len(apps) > 0 {
+		rows = mergeRows([][]timelineRow{rows, apps})
+	}
+	return p.timelinePlace, rows
 }
 
 // readNow is readPlace for a place Timeline reads at once. A remote one, the
@@ -371,7 +432,7 @@ func rowsAt(it timelineItem, place string, own []restic.Snapshot) []timelineRow 
 	rows := []timelineRow{}
 	index := map[string]int{}
 	for _, snap := range newestFirst(own) {
-		if it.isDisk(snap) || isDump(snap) {
+		if it.isDisk(snap) || isDump(snap) || isAppExport(snap) {
 			continue
 		}
 		key := restic.Identity(snap)

@@ -475,6 +475,7 @@ var pairedRefused = []string{
 	"PUT /api/settings/idle",
 	"PUT /api/settings/streaming",
 	// Downloads and exports of what is backed up, and the diagnostics bundle.
+	"GET /api/containers/{name}/appexports/{id}/download",
 	"GET /api/containers/{name}/dbdumps/{id}/download",
 	"GET /api/diagnostics",
 	"GET /api/flash/download",

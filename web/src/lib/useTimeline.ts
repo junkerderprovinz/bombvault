@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTimeline, getTimelinePlace, type TimelineDomain, type TimelinePlace, type TimelineRow } from "./api";
 import { mergePlaceRows } from "./timeline";
 
@@ -89,5 +89,10 @@ export function useTimeline(domain: TimelineDomain, key: string, open: boolean) 
 
   const reload = useCallback(() => setTick((n) => n + 1), []);
 
-  return { places, rows, loading, error, reading, loadPlace, reload };
+  // An app's own backup goes back to the app, so a restore, a compare or a
+  // count of the backups never picks it.
+  const backups = useMemo(() => rows.filter((row) => !row.appExport), [rows]);
+  const appExports = useMemo(() => rows.filter((row) => row.appExport), [rows]);
+
+  return { places, rows: backups, appExports, loading, error, reading, loadPlace, reload };
 }

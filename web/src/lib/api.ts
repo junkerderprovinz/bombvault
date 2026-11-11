@@ -2000,7 +2000,7 @@ export function listDbDumps(
  */
 export function dbDumpDownloadURL(name: string, id: string, source?: string, gz?: boolean): string {
   const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
-  return `${path}${srcParam(source)}${gz ? (source ? "&" : "?") + "gz=1" : ""}`;
+  return withQuery(path, source, gz ? "gz=1" : "");
 }
 
 /**
@@ -2009,7 +2009,37 @@ export function dbDumpDownloadURL(name: string, id: string, source?: string, gz?
  */
 export function checkDbDumpDownload(name: string, id: string, source?: string): Promise<OkEnvelope> {
   const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
-  return fetchJSON(`${path}${srcParam(source)}${source ? "&" : "?"}check=1`);
+  return fetchJSON(withQuery(path, source, "check=1"));
+}
+
+/** withQuery adds the source and the other parameters to path. The item's own
+ *  location adds no source, so the first parameter may be any of them. */
+function withQuery(path: string, source: string | undefined, ...params: string[]): string {
+  const query = [srcParam(source).slice(1), ...params].filter(Boolean).join("&");
+  return query ? `${path}?${query}` : path;
+}
+
+function appExportPath(name: string, id: string): string {
+  return `/api/containers/${encodeURIComponent(name)}/appexports/${encodeURIComponent(id)}/download`;
+}
+
+/**
+ * GET /api/containers/{name}/appexports/{id}/download streams the own backup an
+ * app in the container handed over, as a plain link like a dump.
+ */
+export function appExportDownloadURL(name: string, id: string, source?: string): string {
+  return withQuery(appExportPath(name, id), source);
+}
+
+/** The same endpoint with check=1. It also answers the refusal of a server
+ *  without a login password or of a paired phone, which the download is not
+ *  for. */
+export function checkAppExportDownload(
+  name: string,
+  id: string,
+  source?: string
+): Promise<OkEnvelope & { code?: string }> {
+  return fetchKeyJSON(withQuery(appExportPath(name, id), source, "check=1"));
 }
 
 /**
@@ -3926,6 +3956,9 @@ export interface TimelineRow {
    *  no place read holds every disk or dataset. */
   size?: number;
   places: TimelineMark[];
+  /** The app whose own backup the row is. It goes back to the app as a file
+   *  rather than through a restore of the container. */
+  appExport?: { app: string; name: string };
 }
 
 export interface PlaceDelete {

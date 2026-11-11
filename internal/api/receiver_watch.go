@@ -93,9 +93,10 @@ func (s *Service) receiverSnapshots(ctx context.Context, rr store.ReceivedRepo) 
 // receiverDeadManSourcesOf groups snapshots into the sources the sweep watches:
 // one per host and item tag, with its newest snapshot time.
 //
-// A database dump is not one of them. Its series stops whenever the toggle, the
-// global switch or a stopped database says so, and the container's own item
-// already answers the question the sweep asks: has this box stopped sending?
+// A database dump is not one of them, and neither is the own backup of an app.
+// Their series stop whenever the toggle, the global switch, a stopped database
+// or an app that is gone says so, and the container's own item already answers
+// the question the sweep asks: has this box stopped sending?
 func receiverDeadManSourcesOf(snaps []restic.Snapshot) []receiverDeadManSource {
 	type agg struct {
 		host, item string
@@ -105,7 +106,7 @@ func receiverDeadManSourcesOf(snaps []restic.Snapshot) []receiverDeadManSource {
 	groups := map[string]*agg{}
 	for _, snap := range snaps {
 		item := receiverItemTag(snap)
-		if strings.HasPrefix(item, dbDumpIdentityPrefix) {
+		if strings.HasPrefix(item, dbDumpIdentityPrefix) || strings.HasPrefix(item, appExportTagPrefix) {
 			continue
 		}
 		key := snap.Hostname + "\x00" + item

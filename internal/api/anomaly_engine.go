@@ -1124,7 +1124,8 @@ func (s *Service) heldIdentityTags() (heldIdentityTags, error) {
 func (s *Service) itemIdentityTags(ref anomalyItemRef) []string {
 	switch ref.Domain {
 	case anomalyDomainContainer:
-		return s.containerIdentity(ref.Name).listTags()
+		// A finding that holds the container holds the apps' own backups too.
+		return append(s.containerIdentity(ref.Name).listTags(), s.containerAppExportIdentity(ref.Name).listTags()...)
 	case anomalyDomainVM:
 		return s.vmIdentity(ref.Name).listTags()
 	case "files":

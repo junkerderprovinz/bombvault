@@ -49,6 +49,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     getZFSReplica: vi.fn(),
     checkRestore: vi.fn(),
     flashDownloadURL: vi.fn(),
+    checkAppExportDownload: vi.fn(),
+    appExportDownloadURL: vi.fn(),
   };
 });
 
@@ -73,6 +75,8 @@ const listDbDumps = vi.mocked(api.listDbDumps);
 const zfsHostDatasets = vi.mocked(api.zfsHostDatasets);
 const checkRestore = vi.mocked(api.checkRestore);
 const flashDownloadURL = vi.mocked(api.flashDownloadURL);
+const checkAppExportDownload = vi.mocked(api.checkAppExportDownload);
+const appExportDownloadURL = vi.mocked(api.appExportDownloadURL);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -147,6 +151,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   checkRestore.mockResolvedValue({ ok: false } as never);
   flashDownloadURL.mockReturnValue("#");
+  appExportDownloadURL.mockReturnValue("#");
 });
 
 afterEach(() => {
@@ -220,6 +225,58 @@ describe("the storage locations", () => {
     const places = within(card(en["storage.title"]));
     expect(places.getByText(en["entry.places.unreadable"])).toBeTruthy();
     expect(places.getByRole("button", { name: en["restoreCheck.recheck"] })).toBeTruthy();
+  });
+});
+
+describe("the own backup of the app in a container", () => {
+  const APP_BACKUP = "e1e1e1e1aa00bb11";
+
+  // The app hands its backup over just before the container's newest backup.
+  function withAppBackup() {
+    const tl = timelineOf(RUNS);
+    const newest = Date.parse(tl.rows[0].time);
+    tl.rows.splice(1, 0, {
+      key: APP_BACKUP,
+      time: new Date(newest - 60_000).toISOString(),
+      places: [{ place: "local", snapshotIds: [APP_BACKUP], tags: ["appexport:immich", "app:knightloader"] }],
+      appExport: { app: "knightloader", name: "KnightLoader" },
+    });
+    getTimeline.mockResolvedValue(tl);
+  }
+  const appRow = () => rows().find((row) => row.textContent?.includes("KnightLoader backup"))!;
+
+  it("stands in the list under the app's name and offers a download in place of a restore", async () => {
+    withAppBackup();
+    await renderPage("/backups/container/immich");
+    expect(rows()).toHaveLength(6);
+    expect(within(appRow()).getByRole("button", { name: en["entry.list.download"] })).toBeTruthy();
+    expect(within(appRow()).queryByRole("button", { name: en["snapshots.restore"] })).toBeNull();
+    await press(appRow());
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("stays out of what the storage locations count", async () => {
+    withAppBackup();
+    await renderPage("/backups/container/immich");
+    expect(within(card(en["storage.title"])).getByText("5 backups")).toBeTruthy();
+  });
+
+  it("downloads once the server agrees", async () => {
+    withAppBackup();
+    checkAppExportDownload.mockResolvedValue({ ok: true });
+    await renderPage("/backups/container/immich");
+    await press(within(appRow()).getByRole("button", { name: en["entry.list.download"] }));
+    await waitFor(() => expect(appExportDownloadURL).toHaveBeenCalledWith("immich", APP_BACKUP, "local"));
+    expect(checkAppExportDownload).toHaveBeenCalledWith("immich", APP_BACKUP, "local");
+  });
+
+  it("starts no download the server refuses", async () => {
+    withAppBackup();
+    checkAppExportDownload.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password" });
+    await renderPage("/backups/container/immich");
+    await press(within(appRow()).getByRole("button", { name: en["entry.list.download"] }));
+    await waitFor(() => expect(checkAppExportDownload).toHaveBeenCalled());
+    expect(appExportDownloadURL).not.toHaveBeenCalled();
   });
 });
 

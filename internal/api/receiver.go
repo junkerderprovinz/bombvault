@@ -394,8 +394,9 @@ func (s *Service) receiverCheck(ctx context.Context, rr store.ReceivedRepo, read
 }
 
 // receiverItemTag returns the first recognized BombVault item tag of a
-// snapshot: container:, vm:, fileset:, dbdump: or zfs: with a name, or flash or
-// config. Snapshots without one return "untagged" so they still show up.
+// snapshot: container:, vm:, fileset:, dbdump:, appexport: or zfs: with a
+// name, or flash or config. Snapshots without one return "untagged" so they
+// still show up.
 func receiverItemTag(snap restic.Snapshot) string {
 	for _, tag := range snap.Tags {
 		switch {
@@ -403,6 +404,7 @@ func receiverItemTag(snap restic.Snapshot) string {
 			strings.HasPrefix(tag, "vm:") && len(tag) > len("vm:"),
 			strings.HasPrefix(tag, "fileset:") && len(tag) > len("fileset:"),
 			strings.HasPrefix(tag, dbDumpIdentityPrefix) && len(tag) > len(dbDumpIdentityPrefix),
+			strings.HasPrefix(tag, appExportTagPrefix) && len(tag) > len(appExportTagPrefix),
 			strings.HasPrefix(tag, "zfs:") && len(tag) > len("zfs:"):
 			return tag
 		case tag == "flash", tag == "config":
