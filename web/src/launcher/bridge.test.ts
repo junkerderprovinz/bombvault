@@ -1,25 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bridgeOver, displayAddress, networkReason, normalizeAddress, type Port } from "./bridge";
-
-describe("normalizeAddress", () => {
-  it("gives a bare host https, as BombVault serves by default", () => {
-    expect(normalizeAddress("192.168.1.10:3443")).toBe("https://192.168.1.10:3443/");
-  });
-
-  it("keeps a scheme someone typed", () => {
-    expect(normalizeAddress("http://tower.lan:3080")).toBe("http://tower.lan:3080/");
-  });
-
-  it("keeps a path for a server behind a reverse proxy", () => {
-    expect(normalizeAddress(" https://home.example/bombvault ")).toBe("https://home.example/bombvault");
-  });
-
-  it("refuses what the app cannot open", () => {
-    expect(normalizeAddress("")).toBeNull();
-    expect(normalizeAddress("ftp://tower.lan")).toBeNull();
-    expect(normalizeAddress("https://")).toBeNull();
-  });
-});
+import { bridgeOver, displayAddress, networkReason, type Port } from "./bridge";
 
 describe("displayAddress", () => {
   it("drops https and the trailing slash but keeps http, which matters", () => {

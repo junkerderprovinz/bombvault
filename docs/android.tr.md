@@ -38,17 +38,15 @@ Bir sunucu açıkken genel bakışının en üstünde, önünde bir geri okuyla 
 
 ## Eşleşmiş bir telefonda oturum açma {#sign-in}
 
-Grubunla eşleşmiş bir telefon, sunucularının her birini zaten oturum açmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu bunu yalnızca telefon olan bir üyeye verir. Adresiyle eklenen bir sunucu, tarayıcıda olduğu gibi parola ister.
+Grubunla eşleşmiş bir telefon, sunucularının her birini zaten oturum açmış olarak açar. Bir sayfayı yüklemeden önce o sunucudan grup üzerinden bir oturum ister ve sunucu bunu yalnızca telefon olan bir üyeye verir.
 
 Eşleşmiş bir telefon parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiği sabit bir listeye ulaşır: genel bakış, çalıştırmalar ve etkinlik günlüğü, bakılacak, başlatılacak ve geri yüklenecek yedekler, okunacak anormallikler ve bakılacak Örnekler sayfası, üyelerinin alınan depoları ve çekme kaynakları olmadan. Hedefler ve komutlar adresleri ve gizli bilgileri kaldırılmış olarak gelir. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Bir klasöre geri yükleme, **Ayarlar, Geri yükleme** altında ayarlanan geri yükleme klasörünün içinde yeni bir klasöre gider ve pencere başka bir klasör sunmaz. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme sunucunun kendisinde oturum açmaya bağlı kalır, geri kalan her şey o oturum açmaya ihtiyaç duyduğunu yanıtlar. Röle üzerinden aynı liste geçerlidir, parolasız bir sunucuda da.
 
 Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır, orada yeniden açana kadar.
 
-## Grup dışındaki sunucular {#other-servers}
+## Sertifikalar {#certificates}
 
-- **Sunucu ekle**, BombVault'u tarayıcıda açtığın adresi alır, örneğin `192.168.1.10:3443`. Başında `http://` ya da `https://` yoksa uygulama https kullanır.
-- Yerel ağda kendini duyuran sunucular **Bu ağda** altında listelenir ve tek dokunuşla açılır. Bunu **Ayarlar, Entegrasyonlar** altındaki **Hizmetler** kartında **Ağda bul** açık olduğu sürece yaparlar. Başka bir ağdaki ya da VPN arkasındaki bir sunucu orada görünmez.
-- Kendi kendine imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu sonradan farklı bir tane gösterirse uygulama seni uyarır ve yalnızca yeni sertifikaya güvendikten sonra açar.
+Kendi kendine imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. Sunucu sonradan farklı bir tane gösterirse uygulama seni uyarır ve yalnızca yeni sertifikaya güvendikten sonra açar.
 
 ## Örnekler sayfasında telefon {#instances}
 

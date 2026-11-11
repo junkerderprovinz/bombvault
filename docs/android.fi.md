@@ -38,17 +38,15 @@ Kun palvelin on auki, sen yleiskatsauksen yläreunassa näkyy palvelimen nimi ja
 
 ## Kirjautuneena pariliitetyllä puhelimella {#sign-in}
 
-Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin. Osoitteella lisätty palvelin kysyy salasanaa kuten selaimessa.
+Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirjautuneena. Ennen sivun lataamista se pyytää ryhmän kautta palvelimelta istunnon, ja palvelin antaa sellaisen vain jäsenelle, joka on puhelin.
 
 Pariliitetty puhelin ei saa kaikkea, minkä salasana antaa. Sen istunto yltää kiinteään luetteloon siitä, mitä sovellus näyttää: yleiskatsaus, ajot ja toimintaloki, katseltavat varmuuskopiot, käynnistys ja palautus, luettavat poikkeamat ja katseltava Ilmentymät-sivu, ilman jäsenten vastaanotettuja repositoryja ja noutolähteitä. Kohteet ja komennot tulevat sille ilman osoitteitaan ja salaisuuksiaan. Palautus, joka korvaa alkuperäisen, varmuuskopioi ensin nykytilan. Palautus kansioon menee uuteen kansioon kohdassa **Asetukset, Palautus** asetetun palautuskansion sisälle, eikä ikkuna tarjoa muuta kansiota. Avaimet, palautuspaketti, avaintalletukset, asetukset ja varmuuskopioiden poistaminen vaativat kirjautumisen itse palvelimella, ja kaikki muu vastaa tarvitsevansa sen kirjautumisen. Releen kautta pätee sama luettelo, myös palvelimella, jolla ei ole salasanaa.
 
 Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** **Android-sovellus**-kortissa kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois ja kirjaa jokaisen puhelimen ulos, kunnes kytket sen siellä takaisin päälle.
 
-## Ryhmän ulkopuoliset palvelimet {#other-servers}
+## Varmenteet {#certificates}
 
-- **Lisää palvelin** ottaa osoitteen, jolla avaat BombVaultin selaimessa, kuten `192.168.1.10:3443`. Jos alussa ei ole `http://` tai `https://`, sovellus käyttää https:ää.
-- Lähiverkossa itsestään ilmoittavat palvelimet näkyvät kohdassa **Tässä verkossa** ja avautuvat yhdellä napautuksella. Ne ilmoittavat itsestään niin kauan kuin **Löydä verkosta** on päällä **Palvelut**-kortissa kohdassa **Asetukset, Integraatiot**. Toisessa verkossa tai VPN:n takana oleva palvelin ei näy siellä.
-- Itse allekirjoitettuun varmenteeseen luotetaan kerran sen SHA-256-sormenjäljen perusteella. Jos palvelin myöhemmin näyttää eri varmenteen, sovellus varoittaa sinua ja avaa sen vasta, kun luotat uuteen varmenteeseen.
+Itse allekirjoitettuun varmenteeseen luotetaan kerran sen SHA-256-sormenjäljen perusteella. Jos palvelin myöhemmin näyttää eri varmenteen, sovellus varoittaa sinua ja avaa sen vasta, kun luotat uuteen varmenteeseen.
 
 ## Puhelin Ilmentymät-sivulla {#instances}
 

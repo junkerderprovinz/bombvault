@@ -38,17 +38,15 @@ Quand un serveur est ouvert, le haut de son aperçu affiche le nom du serveur, p
 
 ## Connecté d'office sur un téléphone appairé {#sign-in}
 
-Un téléphone appairé à votre groupe ouvre chacun de ses serveurs avec la session déjà ouverte. Avant de charger une page, il demande une session à ce serveur via le groupe, et un serveur n'en accorde qu'à un membre qui est un téléphone. Un serveur ajouté par son adresse demande le mot de passe, comme dans un navigateur.
+Un téléphone appairé à votre groupe ouvre chacun de ses serveurs avec la session déjà ouverte. Avant de charger une page, il demande une session à ce serveur via le groupe, et un serveur n'en accorde qu'à un membre qui est un téléphone.
 
 Un téléphone appairé n'obtient pas tout ce qu'un mot de passe donne. Sa session atteint une liste fixe de ce que montre l'application : l'aperçu, les exécutions et le journal d'activité, les sauvegardes à consulter, à lancer et à restaurer, les anomalies à lire et la page Instances à consulter, sans les dépôts reçus ni les sources de rapatriement de ses membres. Les destinations et les commandes lui parviennent sans leurs adresses ni leurs secrets. Une restauration qui remplace l'original sauvegarde d'abord l'état actuel. Une restauration dans un dossier va dans un nouveau dossier à l'intérieur du dossier de restauration défini sous **Paramètres, Restauration**, et la fenêtre n'en propose aucun autre. Les clés, le kit de récupération, les copies déposées, les paramètres et la suppression de sauvegardes restent liés à une connexion sur le serveur lui-même, et tout le reste répond qu'il faut cette connexion. Via le relais, la même liste s'applique, aussi sur un serveur sans mot de passe.
 
 Le réglage correspondant est **Les téléphones peuvent s'appairer avec les douze mots du groupe**, sur la carte **App Android** sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive et déconnecte tous les téléphones, jusqu'à ce que vous le réactiviez là.
 
-## Serveurs hors d'un groupe {#other-servers}
+## Certificats {#certificates}
 
-- **Ajouter un serveur** prend l'adresse avec laquelle vous ouvrez BombVault dans un navigateur, par exemple `192.168.1.10:3443`. Sans `http://` ou `https://` devant, l'application utilise https.
-- Les serveurs qui s'annoncent sur le réseau local apparaissent sous **Sur ce réseau** et s'ouvrent d'un toucher. Ils le font tant que **Trouver sur le réseau** est activé dans la carte **Services** sous **Paramètres, Intégrations**. Un serveur sur un autre réseau ou derrière un VPN n'y apparaît pas.
-- Un certificat auto-signé est approuvé une fois, par son empreinte SHA-256. Si le serveur en présente plus tard un autre, l'application vous avertit et ne l'ouvre qu'après que vous avez approuvé le nouveau certificat.
+Un certificat auto-signé est approuvé une fois, par son empreinte SHA-256. Si le serveur en présente plus tard un autre, l'application vous avertit et ne l'ouvre qu'après que vous avez approuvé le nouveau certificat.
 
 ## Le téléphone sur la page Instances {#instances}
 

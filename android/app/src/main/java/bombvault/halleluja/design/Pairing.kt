@@ -123,15 +123,16 @@ class Pairing(
     }
 
     /**
-     * Leaves the group. The relay stays open a moment longer, so the
-     * instances in reach hear it and take the phone off their Instances page.
+     * Leaves the group, and its servers with it. The relay stays open a moment
+     * longer, so the instances in reach hear it and take the phone off their
+     * Instances page.
      */
     fun leave() {
         val r = relay
         relay = null
         stop()
         prefs.edit().remove(SECRET).remove(RELAY).apply()
-        servers.forgetMembers()
+        servers.removeAll()
         servers.forgetMemberKeys()
         onChange()
         if (r != null) {

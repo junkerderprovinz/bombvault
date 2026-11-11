@@ -36,9 +36,55 @@ const server = { id: "s1", name: "Tower", url: "https://192.168.1.10:3443/" };
 
 describe("Launcher", () => {
   it("offers to add a server when there is none", async () => {
-    const { bridge } = fakeBridge({ servers: [], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
-    expect(await screen.findByText(/No servers yet/)).toBeTruthy();
+    expect(await screen.findByText("No servers yet. Pair the app with your group, and its servers show up here.")).toBeTruthy();
+  });
+
+  it("has no way to add or change a server by its address", async () => {
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    await screen.findByText("Tower");
+    expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Add server/ }));
+    await screen.findByRole("button", { name: /Scan QR code/ });
+    expect(screen.queryByText("On this network")).toBeNull();
+    expect(screen.queryByRole("button", { name: /Add server/ })).toBeNull();
+    expect(screen.queryByLabelText("Address")).toBeNull();
+  });
+
+  it("names the servers saved by address once and scans the phrase from there", async () => {
+    const { bridge, sent } = fakeBridge({ servers: [], addressGone: ["Tower", "Offsite"], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Pair again with the phrase")).toBeTruthy();
+    expect(screen.getByText(/saved by address: Tower, Offsite\./)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Scan the phrase" }));
+    expect(sent).toContainEqual({ op: "dismissAddressGone" });
+    expect(await screen.findByRole("button", { name: /Allow access/ })).toBeTruthy();
+  });
+
+  it("puts the notice away for good with Later", async () => {
+    const { bridge, sent } = fakeBridge({ servers: [], addressGone: ["Tower"], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Later" }));
+    expect(sent).toContainEqual({ op: "dismissAddressGone" });
+    expect(screen.queryByText("Pair again with the phrase")).toBeNull();
+  });
+
+  it("says before leaving that the servers go with the group", async () => {
+    const { bridge, sent } = fakeBridge({ servers: [], group: { paired: true, connected: true }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
+    fireEvent.click(await screen.findByRole("button", { name: /Leave group/ }));
+    expect(await screen.findByText("Leave the group? The app forgets its servers until you pair it again.")).toBeTruthy();
+    expect(sent).not.toContainEqual({ op: "leave" });
+  });
+
+  it("says nothing of addresses while none were let go", async () => {
+    const { bridge } = fakeBridge({ servers: [], group: alone, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    await screen.findByText(/No servers yet/);
+    expect(screen.queryByText("Pair again with the phrase")).toBeNull();
   });
 
   it("shows what runs on a server above its card", async () => {
@@ -49,46 +95,46 @@ describe("Launcher", () => {
       progress: [{ key: "container:nextcloud", phase: "backup", percent: 42, active: true, startedAt: now }],
       next: [],
     });
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, { s1: { status: 200, body } });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app }, { s1: { status: 200, body } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText(/nextcloud .*42%/)).toBeTruthy();
     expect(screen.getByText("Connected")).toBeTruthy();
   });
 
   it("asks for a sign-in when the server refuses the session", async () => {
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, { s1: { status: 401, body: "" } });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app }, { s1: { status: 401, body: "" } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Sign-in needed")).toBeTruthy();
   });
 
   it("sends the person to the certificate when the server shows another one", async () => {
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, { s1: { status: -1, body: "Trust anchor not found" } });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app }, { s1: { status: -1, body: "Trust anchor not found" } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Check certificate")).toBeTruthy();
   });
 
   it("opens a server with a tap on its card", async () => {
-    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByText("Tower"));
     expect(sent).toContainEqual({ op: "open", id: "s1" });
   });
 
   it("names a group member whose address is not known yet", async () => {
-    const { bridge } = fakeBridge({ servers: [{ id: "m1", name: "Parents", url: "", member: true }], found: [], group: { paired: true, connected: true }, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [{ id: "m1", name: "Parents", url: "", member: true }], group: { paired: true, connected: true }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Address not known yet")).toBeTruthy();
   });
 
   it("says the phone waits until an instance approves it", async () => {
-    const { bridge } = fakeBridge({ servers: [], found: [], group: { paired: true, connected: true, waiting: true }, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [], group: { paired: true, connected: true, waiting: true }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText(/This phone waits for approval/)).toBeTruthy();
   });
 
   it("says nothing of approval once the phone is let in", async () => {
-    const { bridge } = fakeBridge({ servers: [], found: [], group: { paired: true, connected: true }, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [], group: { paired: true, connected: true }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText("Paired")).toBeTruthy();
@@ -96,7 +142,7 @@ describe("Launcher", () => {
   });
 
   it("pairs with typed words and says why words were refused", async () => {
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: alone, camera: false, app, pairError: { reason: "checksum" } });
+    const { bridge, sent } = fakeBridge({ servers: [], group: alone, camera: false, app, pairError: { reason: "checksum" } });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText(/don't fit together/)).toBeTruthy();
@@ -112,7 +158,7 @@ describe("Launcher", () => {
       { id: "a", name: "Tower", version: "v9.7.0" },
       { id: "b", name: "Offsite", version: "v9.7.0" },
     ];
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText("Offsite")).toBeTruthy();
@@ -122,7 +168,7 @@ describe("Launcher", () => {
 
   it("shows only what the words found and the step that takes it over", async () => {
     const members = [{ id: "a", name: "Tower", version: "v9.7.0" }];
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [], group: { paired: false, connected: true, joining: { members, connected: true } }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByRole("button", { name: /Add this instance/ })).toBeTruthy();
@@ -133,7 +179,7 @@ describe("Launcher", () => {
   });
 
   it("asks for the camera before the scanner shows anything", async () => {
-    const { bridge, sent } = fakeBridge({ servers: [], found: [], group: alone, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     fireEvent.click(await screen.findByRole("button", { name: /Scan QR code/ }));
@@ -143,7 +189,7 @@ describe("Launcher", () => {
 
   it("shows the fingerprint before a certificate is trusted", async () => {
     const fingerprint = "AB:CD:EF";
-    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "untrusted", fingerprint } });
+    const { bridge, sent } = fakeBridge({ servers: [server], group: alone, camera: false, app, problem: { id: "s1", kind: "untrusted", fingerprint } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText(fingerprint)).toBeTruthy();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: /Trust and open/ })));
@@ -152,7 +198,7 @@ describe("Launcher", () => {
 
   it("asks before it trusts a new key a server answered with over the relay", async () => {
     const fingerprint = "12:34:56";
-    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "keyChanged", fingerprint } });
+    const { bridge, sent } = fakeBridge({ servers: [server], group: alone, camera: false, app, problem: { id: "s1", kind: "keyChanged", fingerprint } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Server key changed")).toBeTruthy();
     expect(screen.getByText(fingerprint)).toBeTruthy();
@@ -163,18 +209,18 @@ describe("Launcher", () => {
 
   it("says when neither the address nor the relay reached a server", async () => {
     const away = { id: "s2", name: "Attic", url: "", member: true };
-    const { bridge } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", relay: true } });
+    const { bridge } = fakeBridge({ servers: [server, away], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", relay: true } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Neither its address nor the relay answers.")).toBeTruthy();
 
-    const { bridge: again } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app, problem: { id: "s2", kind: "unreachable", relay: true } });
+    const { bridge: again } = fakeBridge({ servers: [server, away], group: alone, camera: false, app, problem: { id: "s2", kind: "unreachable", relay: true } });
     render(<Launcher bridge={again} />);
     expect(await screen.findByText("The relay can't reach it right now.")).toBeTruthy();
   });
 
   it("says what a network error means and keeps the raw one in an info bubble", async () => {
     const detail = "net::ERR_CONNECTION_TIMED_OUT";
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", detail } });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app, problem: { id: "s1", kind: "unreachable", detail } });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("It didn't answer in time.")).toBeTruthy();
     expect(screen.queryByText(detail)).toBeNull();
@@ -182,7 +228,7 @@ describe("Launcher", () => {
   });
 
   it("renames the phone from the settings behind the gear", async () => {
-    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     const field = screen.getByRole("textbox", { name: "Device name" });
@@ -193,7 +239,7 @@ describe("Launcher", () => {
   });
 
   it("removes every server only after asking", async () => {
-    const { bridge, sent } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge, sent } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     fireEvent.click(screen.getByRole("button", { name: /Remove all servers/ }));
@@ -208,7 +254,7 @@ describe("Launcher", () => {
 
   it("looks like the first server until a look is set here", async () => {
     const look = { status: 200, body: JSON.stringify({ ok: true, prefs: { "bv-accent": "#ff7eb6", "bv-lang": "fr" }, stored: true }) };
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app }, {}, look);
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app }, {}, look);
     render(<Launcher bridge={bridge} />);
     await screen.findByText("Tower");
     await act(async () => undefined);
@@ -222,7 +268,7 @@ describe("Launcher", () => {
   });
 
   it("offers Dark, Light and System for the theme, and starts on System", async () => {
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
 
@@ -233,7 +279,7 @@ describe("Launcher", () => {
 
   it("goes back to the device's theme when System is picked after a choice", async () => {
     localStorage.setItem("bv-theme", "light");
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     const theme = screen.getByRole("radiogroup", { name: "Theme" });
@@ -253,7 +299,7 @@ describe("Launcher", () => {
     });
     const other = { id: "s2", name: "Attic", url: "https://192.168.1.11:3443/" };
     const { bridge } = fakeBridge(
-      { servers: [server, other], found: [], group: alone, camera: false, app },
+      { servers: [server, other], group: alone, camera: false, app },
       { s1: answer("container:nextcloud", 42), s2: answer("container:immich", 17) }
     );
     render(<Launcher bridge={bridge} />);
@@ -267,7 +313,7 @@ describe("Launcher", () => {
 
   it("tells servers with the same name apart by their address", async () => {
     const twin = { id: "s2", name: server.name, url: "https://192.168.1.11:3443/" };
-    const { bridge } = fakeBridge({ servers: [server, twin], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server, twin], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click(await screen.findByRole("button", { name: "Activity Log" }));
     expect(await screen.findByRole("tab", { name: "192.168.1.11:3443" })).toBeTruthy();
@@ -275,7 +321,7 @@ describe("Launcher", () => {
   });
   it("keeps looking for a while before it says nothing turned up", async () => {
     let push: (s: LauncherState) => void = () => undefined;
-    const start: LauncherState = { servers: [], found: [], group: alone, camera: false, app };
+    const start: LauncherState = { servers: [], group: alone, camera: false, app };
     const bridge: Bridge = {
       ...fakeBridge(start).bridge,
       listen(onState) {
@@ -299,7 +345,7 @@ describe("Launcher", () => {
     localStorage.setItem("bv-look-until", String(Date.now() + 20_000));
     window.history.replaceState({ view: "pairing" }, "");
     const group = { paired: false, connected: false, joining: { members: [], connected: false } };
-    const { bridge } = fakeBridge({ servers: [], found: [], group, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [], group, camera: false, app });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Looking for other instances")).toBeTruthy();
     expect(screen.queryByText(/No instance of this group/)).toBeNull();
@@ -308,7 +354,7 @@ describe("Launcher", () => {
 
   it("names the relay when the group it was given shows nobody", async () => {
     const group = { paired: false, connected: false, joining: { members: [], connected: false } };
-    const { bridge } = fakeBridge({ servers: [], found: [], group, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [], group, camera: false, app });
     render(<Launcher bridge={bridge} />);
     fireEvent.click((await screen.findAllByRole("button", { name: /Add server/ }))[0]);
     expect(await screen.findByText(/set to No relay/)).toBeTruthy();
@@ -317,7 +363,7 @@ describe("Launcher", () => {
 
   it("opens on the page the history holds, as after Android rebuilt the screen", async () => {
     window.history.replaceState({ view: "settings" }, "");
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByRole("heading", { name: "Settings" })).toBeTruthy();
   });
@@ -325,7 +371,7 @@ describe("Launcher", () => {
   it("calls a group member that does not answer inactive, with when the group last had it, and not red", async () => {
     const seen = Math.floor(Date.now() / 1000) - 3 * 3600;
     const member = { id: "m1", name: "Parents", url: "", member: true, seen };
-    const { bridge } = fakeBridge({ servers: [member], found: [], group: { paired: true, connected: true }, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [member], group: { paired: true, connected: true }, camera: false, app });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Inactive")).toBeTruthy();
     expect(screen.getByText("Last seen 3 hours ago")).toBeTruthy();
@@ -333,14 +379,14 @@ describe("Launcher", () => {
   });
 
   it("still calls a server added by hand that does not answer not connected", async () => {
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Not connected")).toBeTruthy();
     expect(screen.queryByText("Inactive")).toBeNull();
   });
 
   it("says a server is being checked until its first answer", async () => {
-    const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     bridge.activity = () => new Promise<Fetched>(() => undefined);
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Checking")).toBeTruthy();
@@ -350,7 +396,7 @@ describe("Launcher", () => {
   it("shows a server that answered while another one is still being asked", async () => {
     const away = { id: "s2", name: "Attic", url: "https://192.168.1.11:3443/" };
     const ok = { status: 200, body: JSON.stringify({ ok: true, runs: [], progress: [], next: [] }) };
-    const { bridge } = fakeBridge({ servers: [server, away], found: [], group: alone, camera: false, app });
+    const { bridge } = fakeBridge({ servers: [server, away], group: alone, camera: false, app });
     bridge.activity = (id) => (id === "s1" ? Promise.resolve(ok) : new Promise<Fetched>(() => undefined));
     render(<Launcher bridge={bridge} />);
     expect(await screen.findByText("Connected")).toBeTruthy();
@@ -358,7 +404,7 @@ describe("Launcher", () => {
 
   it("shows what the servers said a moment ago while they are asked again", async () => {
     const ok = { status: 200, body: JSON.stringify({ ok: true, runs: [], progress: [], next: [] }) };
-    const state = { servers: [server], found: [], group: alone, camera: false, app };
+    const state = { servers: [server], group: alone, camera: false, app };
     const first = render(<Launcher bridge={fakeBridge(state, { s1: ok }).bridge} />);
     await screen.findByText("Connected");
     first.unmount();
@@ -374,7 +420,7 @@ describe("Launcher", () => {
     Object.defineProperty(document, "visibilityState", { configurable: true, get: () => visibility });
     try {
       let asked = 0;
-      const { bridge } = fakeBridge({ servers: [server], found: [], group: alone, camera: false, app });
+      const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
       bridge.activity = () => {
         asked += 1;
         return Promise.resolve({ status: 200, body: "{}" });

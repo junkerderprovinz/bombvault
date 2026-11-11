@@ -38,17 +38,15 @@ Bei einem geöffneten Server zeigt der Kopf seiner Übersicht den Namen des Serv
 
 ## Auf einem gekoppelten Handy angemeldet {#sign-in}
 
-Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server schon angemeldet. Bevor es eine Seite lädt, fragt es diesen Server über die Gruppe nach einer Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist. Ein Server, der über seine Adresse hinzugefügt wurde, fragt wie in einem Browser nach dem Passwort.
+Ein mit deiner Gruppe gekoppeltes Handy öffnet jeden ihrer Server schon angemeldet. Bevor es eine Seite lädt, fragt es diesen Server über die Gruppe nach einer Sitzung, und ein Server gibt eine nur an ein Mitglied heraus, das ein Handy ist.
 
 Ein gekoppeltes Handy bekommt nicht alles, was ein Passwort bekommt. Seine Sitzung reicht an eine feste Liste dessen, was die App zeigt: die Übersicht, die Läufe und das Aktivitätsprotokoll, die Sicherungen zum Ansehen, Starten und Wiederherstellen, die Anomalien zum Lesen und die Seite Instanzen zum Ansehen, ohne die empfangenen Repositories und Pull-Quellen ihrer Mitglieder. Speicherorte und Befehle kommen ohne ihre Adressen und Geheimnisse zurück. Eine Wiederherstellung, die das Original ersetzt, sichert vorher den heutigen Zustand. Eine Wiederherstellung in einen Ordner landet in einem neuen Ordner innerhalb des Ordners für Wiederherstellungen, der unter **Einstellungen, Wiederherstellung** eingestellt ist, und das Fenster bietet keinen anderen an. Schlüssel, das Recovery-Kit, Schlüsselhinterlegungen, Einstellungen und das Löschen von Sicherungen bleiben einer Anmeldung am Server selbst vorbehalten, und alles andere antwortet, dass es diese Anmeldung braucht. Über das Relay gilt dieselbe Liste, auch auf einem Server ohne Passwort.
 
 Der Schalter dafür ist **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** in der Karte **Android-App** unter **Einstellungen, Sicherheit**. Ein Passwort-Reset schaltet ihn aus und meldet jedes Handy ab, bis du ihn dort wieder einschaltest.
 
-## Server außerhalb einer Gruppe {#other-servers}
+## Zertifikate {#certificates}
 
-- **Server hinzufügen** nimmt die Adresse, mit der du BombVault im Browser öffnest, etwa `192.168.1.10:3443`. Ohne `http://` oder `https://` davor nutzt die App https.
-- Server, die sich im lokalen Netz melden, stehen unter **In diesem Netz** und öffnen sich mit einem Tipp. Das tun sie, solange **Im Netzwerk finden** in der Karte **Dienste** unter **Einstellungen, Anbindungen** eingeschaltet ist. Ein Server in einem anderen Netz oder hinter einem VPN taucht dort nicht auf.
-- Ein selbstsigniertes Zertifikat wird einmal über seinen SHA-256-Fingerabdruck als vertrauenswürdig eingestuft. Zeigt der Server später ein anderes, warnt dich die App und öffnet ihn erst, nachdem du dem neuen Zertifikat vertraust.
+Ein selbstsigniertes Zertifikat wird einmal über seinen SHA-256-Fingerabdruck als vertrauenswürdig eingestuft. Zeigt der Server später ein anderes, warnt dich die App und öffnet ihn erst, nachdem du dem neuen Zertifikat vertraust.
 
 ## Das Handy auf der Seite Instanzen {#instances}
 

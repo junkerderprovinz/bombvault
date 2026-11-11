@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { IconLink, IconSearch } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconAdd, IconClose, IconCopy } from "../components/navGlyphs";
-import { hueVars } from "../lib/appearance";
 import type { useT } from "../lib/i18n";
 import { PHRASE_WORDS, checkPhrase } from "../lib/phraseWords";
 import { useConfirm } from "../lib/useConfirm";
 import { shownVersion } from "../pages/settings/AboutCard";
 import { WordSlots } from "../pages/settings/pairing/WordSlots";
-import { displayAddress, type FoundServer, type LauncherState, type PairError } from "./bridge";
+import type { LauncherState, PairError } from "./bridge";
 import { PageTop } from "./PageTop";
 import { QRScanner } from "./QRScanner";
 
@@ -53,30 +52,27 @@ function pairErrorText(t: T, e: PairError): string {
 /**
  * PairPage joins the app to a BombVault group: twelve words, pasted, typed or
  * scanned, and every instance of the group turns up to be taken over at once.
- * Below it, a server outside a group is added from the network or by address.
  */
 export function PairPage({
   t,
   group,
   pairError,
-  found,
   camera,
+  scan = false,
   onJoin,
   onAdopt,
   onCancel,
   onLeave,
   onPaste,
   onAskCamera,
-  onPickFound,
-  onByAddress,
   onBack,
 }: {
   t: T;
   group: LauncherState["group"];
   pairError?: PairError;
-  /** Servers announced on the network and not in the list yet. */
-  found: FoundServer[];
   camera: boolean;
+  /** Opens with the scanner up. */
+  scan?: boolean;
   onJoin: (words: string) => void;
   onAdopt: () => void;
   /** Drops the group being looked at and goes back to the words. */
@@ -84,8 +80,6 @@ export function PairPage({
   onLeave: () => void;
   onPaste: () => Promise<string>;
   onAskCamera: () => void;
-  onPickFound: (f: FoundServer) => void;
-  onByAddress: () => void;
   onBack: () => void;
 }) {
   const fieldId = useId();
@@ -98,7 +92,7 @@ export function PairPage({
     if (left > 0) lookTimer.current = window.setTimeout(() => setLooking(false), left);
     return () => window.clearTimeout(lookTimer.current);
   }, []);
-  const [scanning, setScanning] = useState(false);
+  const [scanning, setScanning] = useState(scan);
   const [shake, setShake] = useState(0);
   const { confirm, confirmDialog } = useConfirm();
   const { words, unknown, complete } = checkPhrase(text);
@@ -298,35 +292,7 @@ export function PairPage({
               className="glim-btn-key w-full"
             />
           </div>
-
         </>
-      )}
-
-      {!joining && (
-        <section className="mt-4 flex flex-col gap-1.5">
-          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-carbon-textMuted">
-            {t("launcher.found")}
-            <InfoBubble tip={t("launcher.foundHint")} />
-          </h2>
-          {found.map((f, i) => (
-            <button
-              key={f.url}
-              type="button"
-              onClick={() => onPickFound(f)}
-              style={hueVars(i) as CSSProperties}
-              className="flex min-w-0 items-center gap-3 rounded-card bg-carbon-surface p-3.5 text-start glim-hue glim-field-focus"
-            >
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-sm font-semibold text-carbon-text">{f.name}</span>
-                <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-                  {`${displayAddress(f.url)} · ${shownVersion(f.version)}`}
-                </span>
-              </span>
-            </button>
-          ))}
-          <p className="text-xs text-carbon-textMuted">{found.length === 0 ? t("launcher.searching") : t("launcher.foundLead")}</p>
-          <Button label={t("launcher.add")} labelKey="launcher.add" tone="neutral" onClick={onByAddress} className="glim-btn-key w-full" />
-        </section>
       )}
 
       {scanning && (

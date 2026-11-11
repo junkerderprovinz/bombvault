@@ -38,17 +38,15 @@ Is een server open, dan staat bovenaan zijn overzicht zijn naam, met een pijl te
 
 ## Aangemeld op een gekoppelde telefoon {#sign-in}
 
-Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is. Een server die je via zijn adres hebt toegevoegd, vraagt net als in een browser om het wachtwoord.
+Een telefoon die met je groep is gekoppeld, opent elke server van die groep al aangemeld. Voordat hij een pagina laadt, vraagt hij die server via de groep om een sessie, en een server geeft er alleen een aan een lid dat een telefoon is.
 
 Een gekoppelde telefoon krijgt niet alles wat een wachtwoord geeft. Zijn sessie bereikt een vaste lijst van wat de app toont: het overzicht, de runs en het activiteitenlogboek, de back-ups om te bekijken, te starten en te herstellen, de anomalieën om te lezen en de pagina Instanties om te bekijken, zonder de ontvangen repository's en ophaalbronnen van de leden. Bestemmingen en commando's komen terug zonder hun adressen en geheimen. Een herstel dat het origineel vervangt, maakt eerst een back-up van de huidige staat. Een herstel naar een map gaat naar een nieuwe map binnen de herstelmap die onder **Instellingen, Herstel** is ingesteld, en het venster biedt geen andere aan. Sleutels, de herstelkit, bewaarkopieën van de sleutel, instellingen en het verwijderen van back-ups blijven bij een aanmelding op de server zelf, en al het andere antwoordt dat het die aanmelding nodig heeft. Via de relay geldt dezelfde lijst, ook op een server zonder wachtwoord.
 
 De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van de groep** in de kaart **Android-app** onder **Instellingen, Beveiliging**. Een wachtwoordreset zet hem uit en meldt alle telefoons af, totdat je hem daar weer aanzet.
 
-## Servers buiten een groep {#other-servers}
+## Certificaten {#certificates}
 
-- **Server toevoegen** neemt het adres waarmee je BombVault in een browser opent, zoals `192.168.1.10:3443`. Zonder `http://` of `https://` ervoor gebruikt de app https.
-- Servers die zich op het lokale netwerk bekendmaken, staan onder **In dit netwerk** en openen met één tik. Dat doen ze zolang **Vinden op het netwerk** is ingeschakeld in de kaart **Diensten** onder **Instellingen, Integraties**. Een server in een ander netwerk of achter een VPN verschijnt daar niet.
-- Een zelfondertekend certificaat wordt één keer vertrouwd op basis van de SHA-256-vingerafdruk. Toont de server later een ander certificaat, dan waarschuwt de app je en opent hij de server pas nadat je het nieuwe certificaat vertrouwt.
+Een zelfondertekend certificaat wordt één keer vertrouwd op basis van de SHA-256-vingerafdruk. Toont de server later een ander certificaat, dan waarschuwt de app je en opent hij de server pas nadat je het nieuwe certificaat vertrouwt.
 
 ## De telefoon op de Instanties-pagina {#instances}
 

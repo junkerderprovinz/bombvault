@@ -38,16 +38,14 @@ Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera, a przed
 
 ## Logowanie na sparowanym telefonie {#sign-in}
 
-Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem. Serwer dodany po adresie pyta o hasło, tak jak w przeglądarce.
+Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem.
 Sparowany telefon nie dostaje wszystkiego, co daje hasło. Jego sesja sięga do stałej listy tego, co pokazuje aplikacja: przeglądu, uruchomień i dziennika aktywności, kopii zapasowych do podejrzenia, uruchomienia i przywrócenia, anomalii do przeczytania oraz strony Instancje do podejrzenia, bez odbieranych repozytoriów i źródeł pobierania jej członków. Miejsca docelowe i polecenia wracają bez adresów i sekretów. Przywrócenie, które zastępuje oryginał, najpierw tworzy kopię zapasową bieżącego stanu. Przywrócenie do folderu trafia do nowego folderu wewnątrz folderu przywracania ustawionego w **Ustawienia, Przywracanie**, a okno nie oferuje innego. Klucze, zestaw odzyskiwania, depozyty kluczy, ustawienia i usuwanie kopii zapasowych zostają przy logowaniu na samym serwerze, a wszystko inne odpowiada, że potrzebuje tego logowania. Przez przekaźnik obowiązuje ta sama lista, także na serwerze bez hasła.
 
 Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma słowami grupy** w karcie **Aplikacja na Androida** w **Ustawienia, Bezpieczeństwo**. Zresetowanie hasła wyłącza go i wylogowuje wszystkie telefony, dopóki nie włączysz go tam z powrotem.
 
-## Serwery spoza grupy {#other-servers}
+## Certyfikaty {#certificates}
 
-- **Dodaj serwer** przyjmuje adres, pod którym otwierasz BombVault w przeglądarce, na przykład `192.168.1.10:3443`. Bez `http://` lub `https://` na początku aplikacja używa https.
-- Serwery, które ogłaszają się w sieci lokalnej, są wymienione w sekcji **W tej sieci** i otwierają się jednym stuknięciem. Ogłaszają się, dopóki w karcie **Usługi** w **Ustawienia, Integracje** włączone jest **Znajdź w sieci**. Serwer w innej sieci albo za VPN się tam nie pojawi.
-- Certyfikatowi samopodpisanemu ufa się raz, na podstawie jego odcisku SHA-256. Gdy serwer później pokaże inny, aplikacja Cię ostrzeże i otworzy go dopiero wtedy, gdy zaufasz nowemu certyfikatowi.
+Certyfikatowi samopodpisanemu ufa się raz, na podstawie jego odcisku SHA-256. Gdy serwer później pokaże inny, aplikacja Cię ostrzeże i otworzy go dopiero wtedy, gdy zaufasz nowemu certyfikatowi.
 
 ## Telefon na stronie Instancje {#instances}
 

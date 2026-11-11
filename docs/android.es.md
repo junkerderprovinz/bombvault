@@ -38,17 +38,15 @@ Con un servidor abierto, la parte superior de su resumen muestra el nombre del s
 
 ## Con sesión iniciada en un teléfono emparejado {#sign-in}
 
-Un teléfono emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide a ese servidor una sesión a través del grupo, y un servidor solo la entrega a un miembro que sea un teléfono. Un servidor añadido por su dirección pide la contraseña, como en un navegador.
+Un teléfono emparejado con tu grupo abre cada uno de sus servidores con la sesión ya iniciada. Antes de cargar una página, pide a ese servidor una sesión a través del grupo, y un servidor solo la entrega a un miembro que sea un teléfono.
 
 Un teléfono emparejado no recibe todo lo que da una contraseña. Su sesión llega a una lista fija de lo que muestra la app: el resumen, las ejecuciones y el registro de actividad, las copias para consultar, iniciar y restaurar, las anomalías para leer y la página Instancias para consultar, sin los repositorios recibidos ni las fuentes de recogida de sus miembros. Los destinos y los comandos se devuelven sin sus direcciones ni secretos. Una restauración que reemplaza el original copia antes el estado actual. Una restauración en una carpeta va a una carpeta nueva dentro de la carpeta de restauración fijada en **Ajustes, Restauración**, y la ventana no ofrece ninguna otra. Las claves, el kit de recuperación, los depósitos de claves, los ajustes y el borrado de copias requieren iniciar sesión en el propio servidor, y todo lo demás responde que necesita ese inicio de sesión. Por el repetidor se aplica la misma lista, también en un servidor sin contraseña.
 
 El interruptor para esto es **Los teléfonos pueden emparejarse con las doce palabras del grupo** en la tarjeta **App de Android** de **Ajustes, Seguridad**. Un restablecimiento de contraseña lo desactiva y cierra la sesión de todos los teléfonos, hasta que lo vuelvas a activar ahí.
 
-## Servidores fuera de un grupo {#other-servers}
+## Certificados {#certificates}
 
-- **Añadir servidor** acepta la dirección con la que abres BombVault en un navegador, como `192.168.1.10:3443`. Sin `http://` ni `https://` delante, la app usa https.
-- Los servidores que se anuncian en la red local aparecen en **En esta red** y se abren con un toque. Lo hacen mientras **Encontrar en la red** esté activado en la tarjeta **Servicios** de **Ajustes, Integraciones**. Un servidor de otra red o detrás de una VPN no aparece ahí.
-- Un certificado autofirmado se acepta una vez por su huella SHA-256. Cuando el servidor muestra más tarde otro distinto, la app te avisa y solo lo abre después de que confíes en el certificado nuevo.
+Un certificado autofirmado se acepta una vez por su huella SHA-256. Cuando el servidor muestra más tarde otro distinto, la app te avisa y solo lo abre después de que confíes en el certificado nuevo.
 
 ## El teléfono en la página Instancias {#instances}
 

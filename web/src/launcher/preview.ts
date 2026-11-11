@@ -1,16 +1,11 @@
 import { bridgeOver, type Bridge, type LauncherState, type Port, type Request } from "./bridge";
 
 // A stand-in for the app, so `npm run dev` can show the launcher in a desktop
-// browser. It keeps the list in localStorage, pretends to find two servers,
-// pairs with any twelve words and answers the activity question with a
-// running backup on the first server.
+// browser. It keeps the list in localStorage, names a server once that was
+// saved by address, pairs with any twelve words and answers the activity
+// question with a running backup on the first server.
 
 const KEY = "bv-launcher-preview";
-
-const FOUND = [
-  { name: "Home NAS", url: "https://192.168.1.20:3443/", version: "9.7.0" },
-  { name: "Offsite", url: "http://10.8.0.2:3080/", version: "9.6.0" },
-];
 
 const MEMBERS = [
   { id: "m1", name: "Home NAS", version: "v9.7.0" },
@@ -27,7 +22,7 @@ export function previewBridge(): Bridge {
   const trusted = new Set<string>();
   let state: LauncherState = {
     servers: load(),
-    found: [],
+    addressGone: ["Office NAS"],
     group: { paired: false, connected: false },
     camera: true,
     app: { version: "0.0.3", versionCode: 3, android: "36", model: "Pixel 8", deviceName: "" },
@@ -43,24 +38,10 @@ export function previewBridge(): Bridge {
     post({ op: "state", ...state });
   }
 
-  setTimeout(() => emit({ found: FOUND }), 1200);
-
   function handle(req: Request) {
     switch (req.op) {
       case "state":
         emit({});
-        return;
-      case "save": {
-        const id = req.server.id ?? crypto.randomUUID();
-        const servers = state.servers.some((s) => s.id === id)
-          ? state.servers.map((s) => (s.id === id ? { ...s, ...req.server, id } : s))
-          : [...state.servers, { ...req.server, id }];
-        emit({ servers });
-        if (req.open) handle({ op: "open", id });
-        return;
-      }
-      case "remove":
-        emit({ servers: state.servers.filter((s) => s.id !== req.id), problem: undefined });
         return;
       case "open": {
         const server = state.servers.find((s) => s.id === req.id);
@@ -80,6 +61,9 @@ export function previewBridge(): Bridge {
         return;
       case "dismiss":
         emit({ problem: undefined });
+        return;
+      case "dismissAddressGone":
+        emit({ addressGone: undefined });
         return;
       case "join": {
         const count = req.code.trim().split(/\s+/).filter(Boolean).length;
@@ -119,7 +103,7 @@ export function previewBridge(): Bridge {
         emit({ servers: [], group: { paired: false, connected: false } });
         return;
       case "leave":
-        emit({ servers: state.servers.filter((s) => s.url !== "").map((s) => ({ ...s, member: false })), group: { paired: false, connected: false } });
+        emit({ servers: [], group: { paired: false, connected: false } });
         return;
       case "activity": {
         const server = state.servers.find((s) => s.id === req.id);

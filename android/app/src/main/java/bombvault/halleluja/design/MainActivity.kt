@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private lateinit var web: WebView
     private lateinit var servers: Servers
-    private lateinit var discovery: Discovery
     private lateinit var loader: WebViewAssetLoader
     private lateinit var pages: RelayPages
 
@@ -70,7 +69,6 @@ class MainActivity : ComponentActivity() {
 
     /** The server on screen or on its way, null while the launcher is. */
     private val current: Server? get() = screen.current
-    private var found: List<Found> = emptyList()
 
     /** Why the last server did not open, shown once by the launcher. */
     private var problem: JSONObject? = null
@@ -122,10 +120,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         servers = Servers(this)
-        discovery = Discovery(this) {
-            found = it
-            pushState()
-        }
+        servers.letGoOfAddresses()
         pairing = Pairing(this, servers) { runOnUiThread(::pushState) }
         pages = RelayPages(
             pairing,
@@ -171,7 +166,7 @@ class MainActivity : ComponentActivity() {
             override fun handleOnBackPressed() {
                 when {
                     // Back while another server is on its way stays with the page on screen.
-                    screen.cancel() -> if (current == null) discovery.start()
+                    screen.cancel() -> Unit
                     web.canGoBack() -> web.goBack()
                     current != null -> showLauncher()
                     else -> finish()
@@ -293,12 +288,10 @@ class MainActivity : ComponentActivity() {
         // and the palette changed with the wallpaper.
         pushState()
         tellDevice()
-        if (current == null) discovery.start()
     }
 
     override fun onPause() {
         super.onPause()
-        discovery.stop()
         CookieManager.getInstance().flush()
     }
 
@@ -324,7 +317,6 @@ class MainActivity : ComponentActivity() {
         screen.launcher()
         forgetHistory = true
         web.loadUrl(LAUNCHER_URL)
-        discovery.start()
     }
 
     /**
@@ -333,7 +325,6 @@ class MainActivity : ComponentActivity() {
      * address wins: it is faster and reaches the sign-in and the downloads.
      */
     private fun open(server: Server) {
-        discovery.stop()
         screen.open(server)
         problem = null
         lifecycleScope.launch {
@@ -412,15 +403,6 @@ class MainActivity : ComponentActivity() {
             "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
             "device" -> launcher?.postMessage(deviceMessage())
             "oled" -> applyOled(msg.optBoolean("on"))
-            "save" -> {
-                val s = msg.getJSONObject("server")
-                val saved = servers.save(s.optString("id").ifEmpty { null }, s.getString("name"), s.getString("url"))
-                if (msg.optBoolean("open")) open(saved) else pushState()
-            }
-            "remove" -> {
-                servers.remove(msg.getString("id"))
-                pushState()
-            }
             "open" -> servers.get(msg.getString("id"))?.takeIf { it.opens }?.let(::open)
             "trust" -> {
                 servers.trust(msg.getString("id"), msg.getString("fingerprint"))
@@ -441,6 +423,10 @@ class MainActivity : ComponentActivity() {
             "dismiss" -> {
                 problem = null
                 changedKey = null
+                pushState()
+            }
+            "dismissAddressGone" -> {
+                servers.dismissAddressGone()
                 pushState()
             }
             "activity", "look" -> {
@@ -468,7 +454,10 @@ class MainActivity : ComponentActivity() {
                 pushState()
             }
             "join" -> join(msg.getString("code"))
-            "adopt" -> pairing.adopt()
+            "adopt" -> {
+                servers.dismissAddressGone()
+                pairing.adopt()
+            }
             "cancelJoin" -> {
                 pairing.cancelJoin()
                 pushState()
@@ -501,10 +490,7 @@ class MainActivity : ComponentActivity() {
         val state = JSONObject()
             .put("op", "state")
             .put("servers", JSONArray(servers.all().map { it.toJson() }))
-            .put(
-                "found",
-                JSONArray(found.map { JSONObject().put("name", it.name).put("url", it.url).put("version", it.version) }),
-            )
+            .put("addressGone", JSONArray(servers.addressGone()))
             .put("group", group())
             .put("camera", cameraAllowed())
             .put("app", appInfo())
@@ -620,10 +606,7 @@ class MainActivity : ComponentActivity() {
             if (url.startsWith(LAUNCHER_ORIGIN)) {
                 pages.shown = null
                 serverPage = null
-                if (current != null) {
-                    screen.launcher()
-                    discovery.start()
-                }
+                if (current != null) screen.launcher()
             } else if (screen.shows(servers.forOrigin(originOf(url)))) {
                 pages.shown = relayMember(Uri.parse(url).host)
             }

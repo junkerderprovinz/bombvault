@@ -6,7 +6,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { BottomSheet } from "../components/mobile/BottomSheet";
 import { MobileSectionLabel } from "../components/mobile/MobileSectionLabel";
 import { Selector } from "../components/Selector";
-import { IconAdd, IconClose, IconGear, IconPencil } from "../components/navGlyphs";
+import { IconAdd, IconClose, IconGear } from "../components/navGlyphs";
 import { buildLogLines, domainLabel, type LogLine, type ResolveName } from "../lib/activityLog";
 import type { Run, ScheduleNext } from "../lib/api";
 import { reachOf, serverBadge, type Reach } from "../lib/appServers";
@@ -14,12 +14,9 @@ import { hueVars } from "../lib/appearance";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { parseProgressFrame, progressEntry, type ProgressMap } from "../lib/progress";
 import { formatClockTime, relativeTime } from "../lib/reltime";
-import { useConfirm } from "../lib/useConfirm";
 import {
   displayAddress,
   networkReason,
-  normalizeAddress,
-  origin,
   type Bridge,
   type LauncherState,
   type NetworkReason,
@@ -80,12 +77,14 @@ function viewIn(state: unknown): View {
 
 const viewInHistory = () => viewIn(window.history.state);
 
-/** Launcher lists the servers the app knows, with what is running on them
- *  above the list. A tap opens one; the pencil edits it; the plus adds one. */
+/** Launcher lists the servers of the group the app is paired with, with what
+ *  is running on them above the list. A tap opens one; the plus pairs. */
 export function Launcher({ bridge }: { bridge: Bridge }) {
   const { t } = useT();
   const [state, setState] = useState<LauncherState | null>(null);
-  const [editing, setEditing] = useState<Server | "new" | null>(null);
+  // Put away here at once; the app forgets the names when it hears of it.
+  const [noticed, setNoticed] = useState(false);
+  const [scanFirst, setScanFirst] = useState(false);
   // The app loads the launcher anew on the way back from a server, and what
   // the servers said a moment ago shows until they answer again.
   const [seen] = useState(lastSeen);
@@ -119,7 +118,10 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
     shown.current = next;
     setView(next);
   };
-  const openPairing = () => show("pairing");
+  const openPairing = (scan = false) => {
+    setScanFirst(scan);
+    show("pairing");
+  };
   const back = () => window.history.back();
   const pairing = view === "pairing";
   const askCamera = useCallback(() => bridge.send({ op: "camera" }), [bridge]);
@@ -197,32 +199,20 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   const logged = lines.filter((l) => listed.has(l.serverId));
   const problem = state.problem;
   const certProblem = problem && problem.kind !== "unreachable" ? problem : undefined;
-  const saved = new Set(state.servers.map((s) => origin(s.url)));
-  const found = state.found.filter((f) => !saved.has(origin(f.url)));
+  const gone = noticed ? [] : (state.addressGone ?? []);
+  const putAway = () => {
+    setNoticed(true);
+    bridge.send({ op: "dismissAddressGone" });
+  };
 
-  const sheets = (
-    <>
-      <ServerSheet
-        t={t}
-        editing={editing}
-        onClose={() => setEditing(null)}
-        onSave={(server, open) => {
-          bridge.send({ op: "save", server, open });
-          setEditing(null);
-        }}
-        onRemove={(id) => {
-          bridge.send({ op: "remove", id });
-          setEditing(null);
-        }}
-      />
-      <TrustSheet
-        t={t}
-        problem={certProblem}
-        server={state.servers.find((s) => s.id === certProblem?.id)}
-        onTrust={(p) => bridge.send({ op: p.kind === "keyChanged" ? "trustKey" : "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
-        onCancel={() => bridge.send({ op: "dismiss" })}
-      />
-    </>
+  const trustSheet = (
+    <TrustSheet
+      t={t}
+      problem={certProblem}
+      server={state.servers.find((s) => s.id === certProblem?.id)}
+      onTrust={(p) => bridge.send({ op: p.kind === "keyChanged" ? "trustKey" : "trust", id: p.id, fingerprint: p.fingerprint ?? "" })}
+      onCancel={() => bridge.send({ op: "dismiss" })}
+    />
   );
 
   if (pairing) {
@@ -232,19 +222,17 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
           t={t}
           group={state.group}
           pairError={state.pairError}
-          found={found}
           camera={state.camera}
+          scan={scanFirst}
           onJoin={(code) => bridge.send({ op: "join", code })}
           onAdopt={() => bridge.send({ op: "adopt" })}
           onCancel={() => bridge.send({ op: "cancelJoin" })}
           onLeave={() => bridge.send({ op: "leave" })}
           onPaste={() => bridge.paste()}
           onAskCamera={askCamera}
-          onPickFound={(f) => bridge.send({ op: "save", server: { name: f.name, url: f.url }, open: true })}
-          onByAddress={() => setEditing("new")}
           onBack={back}
         />
-        {sheets}
+        {trustSheet}
       </>
     );
   }
@@ -275,7 +263,7 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
       <header className="flex items-center gap-3">
         <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-10 w-10" />
         <h1 className="min-w-0 flex-1 truncate text-xl font-bold text-carbon-text">BombVault</h1>
-        <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={openPairing}>
+        <Badge as="button" shape="square" size="icon" tone="active" tip={t("launcher.add")} onClick={() => openPairing()}>
           <IconAdd />
         </Badge>
         <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("settings.title")} onClick={() => show("settings")}>
@@ -283,11 +271,23 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
         </Badge>
       </header>
 
+      {gone.length > 0 && (
+        <AddressGone
+          t={t}
+          names={gone}
+          onScan={() => {
+            putAway();
+            openPairing(true);
+          }}
+          onLater={putAway}
+        />
+      )}
+
       {state.servers.length === 0 ? (
         <div className="mt-6 flex flex-col items-center gap-4 rounded-card bg-carbon-surface px-6 py-8 text-center">
           <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className="block h-12 w-12 opacity-50" />
           <p className="text-sm text-carbon-textMuted">{t("launcher.empty")}</p>
-          <Button label={t("launcher.add")} labelKey="launcher.add" tone="accent" onClick={openPairing} />
+          <Button label={t("launcher.add")} labelKey="launcher.add" tone="accent" onClick={() => openPairing()} />
         </div>
       ) : (
         <>
@@ -302,14 +302,13 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
                 reach={reach[s.id]}
                 trouble={problem?.id === s.id && problem.kind === "unreachable" ? unreachable(t, s, problem) : undefined}
                 onOpen={() => bridge.send({ op: "open", id: s.id })}
-                onEdit={() => setEditing(s)}
               />
             ))}
           </div>
         </>
       )}
 
-      {sheets}
+      {trustSheet}
     </main>
   );
 }
@@ -482,7 +481,6 @@ function ServerCard({
   reach,
   trouble,
   onOpen,
-  onEdit,
 }: {
   t: T;
   server: Server;
@@ -492,36 +490,25 @@ function ServerCard({
   /** What went wrong the last time this server was opened. */
   trouble?: Trouble;
   onOpen: () => void;
-  onEdit: () => void;
 }) {
   const badge = serverBadge(reach, server.member ?? false);
   const away = reach === "offline" && server.member && (server.seen ?? 0) > 0;
   return (
     <div style={hueVars(index) as CSSProperties} className="rounded-card bg-carbon-surface glim-hue glim-content-fade">
-      <div className="flex items-center gap-1 pe-2">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="flex min-h-[3.75rem] min-w-0 flex-1 items-center gap-3 rounded-card p-4 text-start"
-        >
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
-            <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-              {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
-            </span>
-            {away && (
-              <span className="text-xs text-carbon-textMuted">
-                {t("instances.lastSeen").replace("{time}", () => relativeTime(t, server.seen ?? 0))}
-              </span>
-            )}
+      <button type="button" onClick={onOpen} className="flex min-h-[3.75rem] w-full min-w-0 items-center gap-3 rounded-card p-4 text-start">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
+          <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
+            {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
           </span>
-          <Badge tone={badge.tone}>{t(badge.key)}</Badge>
-        </button>
-        {/* A glyph alone: on a phone the name needs the width a label would take. */}
-        <Badge as="button" shape="square" size="icon" tone="neutral" tip={t("common.edit")} onClick={onEdit}>
-          <IconPencil />
-        </Badge>
-      </div>
+          {away && (
+            <span className="text-xs text-carbon-textMuted">
+              {t("instances.lastSeen").replace("{time}", () => relativeTime(t, server.seen ?? 0))}
+            </span>
+          )}
+        </span>
+        <Badge tone={badge.tone}>{t(badge.key)}</Badge>
+      </button>
       {/* Below the row rather than in it, so the info bubble is not part of
           the button that opens the server. */}
       {trouble && (
@@ -534,131 +521,18 @@ function ServerCard({
   );
 }
 
-function ServerSheet({
-  t,
-  editing,
-  onClose,
-  onSave,
-  onRemove,
-}: {
-  t: T;
-  editing: Server | "new" | null;
-  onClose: () => void;
-  onSave: (server: { id?: string; name: string; url: string }, open: boolean) => void;
-  onRemove: (id: string) => void;
-}) {
-  const nameId = useId();
-  const urlId = useId();
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [invalid, setInvalid] = useState(false);
-  const { confirm, confirmDialog } = useConfirm();
-  const existing = editing !== null && editing !== "new" ? editing : null;
-
-  useEffect(() => {
-    if (editing === null) return;
-    setName(existing?.name ?? "");
-    setAddress(existing ? displayAddress(existing.url) : "");
-    setInvalid(false);
-  }, [editing, existing]);
-
-  function save() {
-    const url = normalizeAddress(address);
-    if (url === null) {
-      setInvalid(true);
-      return;
-    }
-    onSave({ id: existing?.id, name: name.trim() || new URL(url).host, url }, false);
-  }
-
-  async function remove() {
-    if (!existing) return;
-    const ok = await confirm(t("launcher.removeConfirm").replace("{name}", existing.name), {
-      confirmKey: "launcher.remove",
-    });
-    if (ok) onRemove(existing.id);
-  }
-
-  const field = "w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-2 glim-field-focus";
-
+/** AddressGone names the servers that were saved by address, once, and
+ *  offers the scanner that brings the group back. */
+function AddressGone({ t, names, onScan, onLater }: { t: T; names: string[]; onScan: () => void; onLater: () => void }) {
   return (
-    <>
-      <BottomSheet
-        open={editing !== null}
-        onClose={onClose}
-        title={existing ? t("launcher.editTitle") : t("launcher.add")}
-        footer={
-          <div className="flex flex-col gap-3 py-3">
-            {/* A server from the group comes back while the app is in it. */}
-            {existing && !existing.member && (
-              <Button
-                label={t("launcher.remove")}
-                labelKey="launcher.remove"
-                tone="neutral"
-                onClick={() => void remove()}
-                className="glim-btn-key w-full"
-              />
-            )}
-            <Button
-              label={t("launcher.save")}
-              labelKey="launcher.save"
-              tone="accent"
-              disabled={address.trim() === ""}
-              onClick={save}
-              className="glim-btn-key w-full"
-            />
-          </div>
-        }
-      >
-        <div className="flex flex-col gap-5 px-4 py-3">
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              save();
-            }}
-          >
-            {/* bv-convention-exception: setting-row-beside-label: the address sheet is part of the launcher start screen; its fields keep the label above them */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={urlId} className="flex items-center gap-2 text-xs font-medium text-carbon-textSub">
-                {t("launcher.address")}
-                <InfoBubble tip={t("launcher.addressHint")} />
-              </label>
-              <input
-                id={urlId}
-                dir="ltr"
-                value={address}
-                onChange={(e) => {
-                  setAddress(e.target.value);
-                  setInvalid(false);
-                }}
-                inputMode="url"
-                autoCapitalize="off"
-                autoCorrect="off"
-                spellCheck={false}
-                placeholder="192.168.1.10:3443"
-                className={`${field} font-mono`}
-              />
-              {invalid && (
-                <p className="text-xs text-statusFail" role="alert">
-                  {t("launcher.addressInvalid")}
-                </p>
-              )}
-            </div>
-            {/* bv-convention-exception: setting-row-beside-label: the address sheet is part of the launcher start screen; its fields keep the label above them */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={nameId} className="text-xs font-medium text-carbon-textSub">
-                {t("launcher.name")}
-              </label>
-              <input id={nameId} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("launcher.namePlaceholder")} className={field} />
-            </div>
-            {/* Enter in either field saves. */}
-            <button type="submit" hidden />
-          </form>
-        </div>
-      </BottomSheet>
-      {confirmDialog}
-    </>
+    <section className="flex flex-col gap-3 rounded-card bg-carbon-surface p-4">
+      <h2 className="text-sm font-semibold text-carbon-text">{t("launcher.addressGoneTitle")}</h2>
+      <p className="text-sm leading-relaxed text-carbon-textSub">{t("launcher.addressGoneBody").replace("{names}", () => names.join(", "))}</p>
+      <div className="flex flex-col gap-3">
+        <Button label={t("launcher.addressGoneScan")} labelKey="launcher.addressGoneScan" tone="accent" onClick={onScan} className="glim-btn-key w-full" />
+        <Button label={t("launcher.addressGoneLater")} labelKey="launcher.addressGoneLater" tone="neutral" onClick={onLater} className="glim-btn-key w-full" />
+      </div>
+    </section>
   );
 }
 

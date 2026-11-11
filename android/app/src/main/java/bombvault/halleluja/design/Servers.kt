@@ -37,6 +37,15 @@ fun originOf(url: String): String {
     return "${u.scheme}://${u.host}$port"
 }
 
+/**
+ * Splits [list] into the servers the app keeps and the names of those saved
+ * by address alone, which only a pairing brings back.
+ */
+fun withoutAddressOnly(list: List<Server>): Pair<List<Server>, List<String>> {
+    val (kept, gone) = list.partition { it.member != null }
+    return kept to gone.map { it.name }
+}
+
 /** The server list, kept in the app's own preferences. */
 class Servers(context: Context) {
     private val prefs = context.getSharedPreferences("servers", Context.MODE_PRIVATE)
@@ -66,56 +75,42 @@ class Servers(context: Context) {
 
     fun forMember(member: String): Server? = all().firstOrNull { it.member == member }
 
-    /** Saves [name] and [url] under [id], or as a new server, and returns it. */
-    @Synchronized
-    fun save(id: String?, name: String, url: String): Server {
-        val list = all()
-        val old = list.firstOrNull { it.id == id }
-        // Another address is another certificate, so the trust does not move with it.
-        val pin = old?.pin?.takeIf { old.origin == originOf(url) }
-        val server = Server(old?.id ?: UUID.randomUUID().toString(), name, url, pin, old?.member, old?.seen ?: 0)
-        write(if (old == null) list + server else list.map { if (it.id == server.id) server else it })
-        return server
-    }
-
     /**
-     * Puts group member [member] in the list, last in reach at [seen]. A
-     * server already there under that member or that address keeps its name
-     * and address, which the person may have changed; one with no address
-     * yet takes [url].
+     * Puts group member [member] in the list, last in reach at [seen], under
+     * the name and address the group knows it by. An empty [url] keeps the
+     * address already there.
      */
     @Synchronized
     fun adopt(member: String, name: String, url: String, seen: Long) {
         val list = all()
         val known = list.firstOrNull { it.member == member }
-            ?: list.firstOrNull { url.isNotEmpty() && it.url.isNotEmpty() && it.origin == originOf(url) }
-        val next = when {
-            known == null -> list + Server(UUID.randomUUID().toString(), name, url, null, member, seen)
-            else -> list.map {
-                if (it.id == known.id) it.copy(member = member, url = it.url.ifEmpty { url }, seen = maxOf(it.seen, seen)) else it
-            }
+        if (known == null) {
+            write(list + Server(UUID.randomUUID().toString(), name, url, null, member, seen))
+            return
         }
-        write(next)
+        val next = url.ifEmpty { known.url }
+        // Another address is another certificate, so the trust does not move with it.
+        val pin = known.pin?.takeIf { known.origin == originOf(next) }
+        val updated = known.copy(name = name.ifEmpty { known.name }, url = next, pin = pin, seen = maxOf(known.seen, seen))
+        write(list.map { if (it.id == known.id) updated else it })
     }
 
-    /** Leaving the group keeps the servers as ones added by hand. */
+    /** Drops the servers saved by address alone and keeps their names for [addressGone]. */
     @Synchronized
-    fun forgetMembers() = write(all().filter { it.url.isNotEmpty() }.map { it.copy(member = null) })
-
-    /**
-     * A member that left the group stays as a server added by hand when it
-     * has an address of its own, and goes otherwise.
-     */
-    @Synchronized
-    fun forgetMember(member: String) {
-        write(all().mapNotNull { if (it.member != member) it else if (it.url.isEmpty()) null else it.copy(member = null) })
-        val keys = JSONObject(prefs.getString(KEYS, "{}")!!)
-        keys.remove(member)
-        prefs.edit().putString(KEYS, keys.toString()).apply()
+    fun letGoOfAddresses() {
+        val (kept, gone) = withoutAddressOnly(all())
+        if (gone.isEmpty()) return
+        write(kept)
+        prefs.edit().putString(GONE, JSONArray(addressGone() + gone).toString()).apply()
     }
 
-    @Synchronized
-    fun remove(id: String) = write(all().filter { it.id != id })
+    /** The names of the servers [letGoOfAddresses] dropped, until [dismissAddressGone]. */
+    fun addressGone(): List<String> {
+        val names = JSONArray(prefs.getString(GONE, "[]"))
+        return (0 until names.length()).map { names.getString(it) }
+    }
+
+    fun dismissAddressGone() = prefs.edit().remove(GONE).apply()
 
     @Synchronized
     fun removeAll() = write(emptyList())
@@ -147,5 +142,6 @@ class Servers(context: Context) {
     companion object {
         private const val KEY = "list"
         private const val KEYS = "memberKeys"
+        private const val GONE = "addressGone"
     }
 }

@@ -38,17 +38,15 @@ Con un server aperto, in cima alla sua panoramica compare il nome del server, pr
 
 ## Accesso su un telefono associato {#sign-in}
 
-Un telefono associato al tuo gruppo apre ciascuno dei suoi server già con l'accesso effettuato. Prima di caricare una pagina chiede a quel server, attraverso il gruppo, una sessione, e un server la consegna solo a un membro che è un telefono. Un server aggiunto con il suo indirizzo chiede la password, come in un browser.
+Un telefono associato al tuo gruppo apre ciascuno dei suoi server già con l'accesso effettuato. Prima di caricare una pagina chiede a quel server, attraverso il gruppo, una sessione, e un server la consegna solo a un membro che è un telefono.
 
 Un telefono associato non ottiene tutto ciò che ottiene una password. La sua sessione raggiunge un elenco fisso di ciò che l'app mostra: la panoramica, le esecuzioni e il registro attività, i backup da consultare, avvio e ripristino, le anomalie da leggere e la pagina Istanze da consultare, senza i repository ricevuti e le sorgenti di prelievo dei suoi membri. Destinazioni e comandi tornano senza indirizzi e segreti. Un ripristino che sostituisce l'originale esegue prima il backup dello stato attuale. Un ripristino in una cartella finisce in una nuova cartella dentro la cartella di ripristino impostata in **Impostazioni, Ripristino**, e la finestra non ne offre altre. Chiavi, kit di ripristino, depositi della chiave, impostazioni ed eliminazione dei backup restano legati a un accesso sul server stesso, e tutto il resto risponde che serve quell'accesso. Tramite il relay vale lo stesso elenco, anche su un server senza password.
 
 L'interruttore per questo è **I telefoni possono associarsi con le dodici parole del gruppo** nella scheda **App Android** in **Impostazioni, Sicurezza**. Un reset della password lo disattiva e fa uscire ogni telefono, finché non lo riattivi lì.
 
-## Server fuori da un gruppo {#other-servers}
+## Certificati {#certificates}
 
-- **Aggiungi server** accetta l'indirizzo con cui apri BombVault in un browser, per esempio `192.168.1.10:3443`. Senza `http://` o `https://` davanti, l'app usa https.
-- I server che si annunciano nella rete locale sono elencati sotto **In questa rete** e si aprono con un tocco. Lo fanno finché **Trova in rete** è attivo nella scheda **Servizi** in **Impostazioni, Integrazioni**. Un server in un'altra rete o dietro una VPN non compare lì.
-- Un certificato autofirmato viene considerato attendibile una volta, tramite la sua impronta SHA-256. Quando in seguito il server ne mostra uno diverso, l'app ti avvisa e lo apre solo dopo che ti fidi del nuovo certificato.
+Un certificato autofirmato viene considerato attendibile una volta, tramite la sua impronta SHA-256. Quando in seguito il server ne mostra uno diverso, l'app ti avvisa e lo apre solo dopo che ti fidi del nuovo certificato.
 
 ## Il telefono nella pagina Istanze {#instances}
 

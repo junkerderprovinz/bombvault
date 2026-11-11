@@ -14,12 +14,6 @@ export interface Server {
   seen?: number;
 }
 
-export interface FoundServer {
-  name: string;
-  url: string;
-  version: string;
-}
-
 export type ProblemKind = "untrusted" | "changed" | "unreachable" | "keyChanged";
 
 /** Why the last attempt to open a server came back to the launcher. */
@@ -81,7 +75,9 @@ export interface AppInfo {
 
 export interface LauncherState {
   servers: Server[];
-  found: FoundServer[];
+  /** The names of the servers saved by address alone, which the app let go
+   *  and names once until a pairing brings them back. */
+  addressGone?: string[];
   /** Whether the app is in a BombVault group, and connected to its relay. */
   group: {
     paired: boolean;
@@ -111,17 +107,15 @@ export interface Fetched {
 
 export type Request =
   | { op: "state" }
-  | { op: "save"; server: { id?: string; name: string; url: string }; open?: boolean }
-  | { op: "remove"; id: string }
   | { op: "open"; id: string }
   | { op: "trust"; id: string; fingerprint: string }
   | { op: "trustKey"; id: string; fingerprint: string }
   | { op: "dismiss" }
+  | { op: "dismissAddressGone" }
   | { op: "activity"; ticket: number; id: string }
   | { op: "look"; ticket: number; id: string }
   | { op: "deviceName"; name: string }
   | { op: "removeAll" }
-  | { op: "scan" }
   | { op: "join"; code: string }
   | { op: "adopt" }
   | { op: "cancelJoin" }
@@ -202,25 +196,6 @@ export function bridgeOver(port: Port): Bridge {
 export function appBridge(): Bridge | null {
   const port = (window as unknown as { bombvaultApp?: Port }).bombvaultApp;
   return port ? bridgeOver(port) : null;
-}
-
-/**
- * normalizeAddress turns what someone typed into the URL the app opens, or
- * null when it cannot be one. A bare host gets https, since that is how
- * BombVault serves by default.
- */
-export function normalizeAddress(input: string): string | null {
-  const raw = input.trim();
-  if (raw === "") return null;
-  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
-  let u: URL;
-  try {
-    u = new URL(withScheme);
-  } catch {
-    return null;
-  }
-  if ((u.protocol !== "https:" && u.protocol !== "http:") || u.hostname === "") return null;
-  return u.origin + u.pathname;
 }
 
 /** The address as the list shows it, the way it would be typed. */
