@@ -413,12 +413,8 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 		body = b
 	}
 	status, raw, err := s.pairing().Call(ctx, memberID, method, path, body)
-	if errors.Is(err, group.ErrNotMember) || errors.Is(err, kitgroup.ErrRemoved) || errors.Is(err, kitgroup.ErrStranger) {
-		return errMemberGone
-	}
 	if err != nil {
-		log.Printf("group: %s %s to member %q: %v", method, path, memberID, err)
-		return errMemberSilent
+		return unanswered(method, path, memberID, err)
 	}
 	var env struct {
 		OK    bool   `json:"ok"`
@@ -436,6 +432,21 @@ func (s *Service) callMember(ctx context.Context, memberID, method, path string,
 		return errMemberUnreadable
 	}
 	return nil
+}
+
+// unanswered is what callMember says about a call that got no answer from
+// the member's group, err being why.
+func unanswered(method, path, memberID string, err error) error {
+	if errors.Is(err, group.ErrNotMember) || errors.Is(err, kitgroup.ErrRemoved) || errors.Is(err, kitgroup.ErrStranger) {
+		return errMemberGone
+	}
+	log.Printf("group: %s %s to member %q: %v", method, path, memberID, err)
+	// A guard in front of the member's group turned the call away, so the
+	// member is there and its log says why.
+	if turned := (*kitgroup.StatusError)(nil); errors.As(err, &turned) {
+		return errMemberRefused
+	}
+	return errMemberSilent
 }
 
 // handlePeerStatus is the protection summary a member's Fleet page shows.

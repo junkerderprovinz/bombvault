@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
 	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
@@ -908,5 +910,22 @@ func TestAnInstanceThatCannotOpenItsPhraseLeavesTheGroupAlone(t *testing.T) {
 	b.svc.applyGroup()
 	if b.svc.pairing().Active() {
 		t.Fatal("b still runs the group with a phrase it cannot open")
+	}
+}
+
+func TestACallTurnedAwayAtTheMembersDoorReadsAsARefusal(t *testing.T) {
+	for _, c := range []struct {
+		err  error
+		want error
+	}{
+		{group.ErrNotMember, errMemberGone},
+		{kitgroup.ErrRemoved, errMemberGone},
+		{fmt.Errorf("%w: refused with HTTP 403", kitgroup.ErrStranger), errMemberGone},
+		{&kitgroup.StatusError{Address: "https://attic:8443", Status: http.StatusTooManyRequests}, errMemberRefused},
+		{kitgroup.ErrUnreachable, errMemberSilent},
+	} {
+		if got := unanswered(http.MethodGet, "/api/group/peer/status", "m1", c.err); !errors.Is(got, c.want) {
+			t.Errorf("%v reads as %v, want %v", c.err, got, c.want)
+		}
 	}
 }
