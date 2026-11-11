@@ -145,6 +145,17 @@ async function stage(page: Page, f: Instance): Promise<void> {
   await page.addInitScript(() => window.localStorage.setItem("bv-lang", "de"));
 }
 
+// The settings search bar comes and goes with the direction the page scrolls
+// and moves the cards as it does. A radio is scrolled into view and left a
+// moment for that before it is pressed, so the press does not scroll again.
+async function pickRelay(page: Page, name: string): Promise<void> {
+  const radio = page.getByRole("radio", { name });
+  await radio.scrollIntoViewIfNeeded();
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  await settle(page);
+  await radio.click();
+}
+
 async function settle(page: Page): Promise<void> {
   await page.evaluate(() =>
     Promise.all(
@@ -275,19 +286,19 @@ for (const width of [1280, 390]) {
     await expect(page.getByRole("radio")).toHaveText(["Projekt-Relay", "Eigenes Relay", "BombVault-Instanz", "Kein Relay"]);
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /sprechen über das Relay/ })).toBeVisible();
-    await page.getByRole("radio", { name: "Eigenes Relay" }).click();
+    await pickRelay(page, "Eigenes Relay");
     await expect(page.locator("#relay-address")).toBeVisible();
     await expect(page.getByTestId("own-relay")).toContainText("ParleyPort");
     await expect(page.getByText("Selbst gehostet")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await page.getByRole("radio", { name: "BombVault-Instanz" }).click();
+    await pickRelay(page, "BombVault-Instanz");
     await expect(page.getByRole("img", { name: /ist selbst das Relay/ })).toBeVisible();
     await expect(page.getByRole("switch", { name: "Als Relay dienen" })).toBeVisible();
     await expect(page.locator("#relay-address")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await page.getByRole("radio", { name: "Kein Relay" }).click();
+    await pickRelay(page, "Kein Relay");
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
