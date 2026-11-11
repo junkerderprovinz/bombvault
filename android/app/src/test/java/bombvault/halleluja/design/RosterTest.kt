@@ -38,6 +38,15 @@ class RosterTest {
     }
 
     @Test
+    fun anInstanceLeftBehindByTheMoveIsListedAsSuchWithoutAnAddress() {
+        val moved = """
+            {"ok":true,"members":[],"away":[],
+             "behind":[{"id":"b1c2","name":"Barn"},{"id":"d3e4","name":"Old tablet","kind":"android"}]}
+        """.trimIndent()
+        assertEquals(listOf(Roster.Entry("b1c2", "Barn", "", 0, behind = true)), Roster.parse(moved))
+    }
+
+    @Test
     fun aRefusalOrSomethingUnreadableListsNobody() {
         assertEquals(emptyList<Roster.Entry>(), Roster.parse("""{"ok":false,"error":"no"}"""))
         assertEquals(emptyList<Roster.Entry>(), Roster.parse("not json"))

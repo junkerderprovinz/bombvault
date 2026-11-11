@@ -12,6 +12,8 @@ export interface Server {
   member?: boolean;
   /** Unix seconds of when the group last had it in reach, 0 when unknown. */
   seen?: number;
+  /** The member did not come along when the group moved into a fortress. */
+  behind?: boolean;
 }
 
 export type ProblemKind = "untrusted" | "changed" | "unreachable" | "keyChanged";

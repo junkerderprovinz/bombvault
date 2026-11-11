@@ -10,7 +10,8 @@ import java.util.UUID
  * A BombVault the app opens. [pin] is the SHA-256 of the certificate the
  * person trusted, for a server whose certificate Android cannot verify.
  * [member] is its instance id when the server came from the paired group,
- * and [seen] the Unix second the group last had it in reach, 0 when unknown.
+ * [seen] the Unix second the group last had it in reach, 0 when unknown, and
+ * [behind] says it did not come along when the group moved into a fortress.
  */
 data class Server(
     val id: String,
@@ -19,6 +20,7 @@ data class Server(
     val pin: String?,
     val member: String? = null,
     val seen: Long = 0,
+    val behind: Boolean = false,
 ) {
     val origin: String get() = originOf(url)
 
@@ -28,6 +30,7 @@ data class Server(
     /** The fields the launcher sees; the pin stays in the app. */
     fun toJson(): JSONObject =
         JSONObject().put("id", id).put("name", name).put("url", url).put("member", member != null).put("seen", seen)
+            .put("behind", behind)
 }
 
 /** The scheme, host and port of [url], the way the WebView reports an origin. */
@@ -62,6 +65,7 @@ class Servers(context: Context) {
                 o.optString("pin").ifEmpty { null },
                 o.optString("member").ifEmpty { null },
                 o.optLong("seen"),
+                o.optBoolean("behind"),
             )
         }
     }
@@ -77,21 +81,22 @@ class Servers(context: Context) {
 
     /**
      * Puts group member [member] in the list, last in reach at [seen], under
-     * the name and address the group knows it by. An empty [url] keeps the
+     * the name and address the group knows it by, and as left behind by the
+     * move into a fortress where [behind] says so. An empty [url] keeps the
      * address already there.
      */
     @Synchronized
-    fun adopt(member: String, name: String, url: String, seen: Long) {
+    fun adopt(member: String, name: String, url: String, seen: Long, behind: Boolean = false) {
         val list = all()
         val known = list.firstOrNull { it.member == member }
         if (known == null) {
-            write(list + Server(UUID.randomUUID().toString(), name, url, null, member, seen))
+            write(list + Server(UUID.randomUUID().toString(), name, url, null, member, seen, behind))
             return
         }
         val next = url.ifEmpty { known.url }
         // Another address is another certificate, so the trust does not move with it.
         val pin = known.pin?.takeIf { known.origin == originOf(next) }
-        val updated = known.copy(name = name.ifEmpty { known.name }, url = next, pin = pin, seen = maxOf(known.seen, seen))
+        val updated = known.copy(name = name.ifEmpty { known.name }, url = next, pin = pin, seen = maxOf(known.seen, seen), behind = behind)
         write(list.map { if (it.id == known.id) updated else it })
     }
 

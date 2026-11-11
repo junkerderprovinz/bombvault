@@ -4,21 +4,26 @@ import org.json.JSONObject
 
 /**
  * The group as one of its instances sees it, the lists the Instances page
- * shows: the instances in reach there and the ones away. The phone reaches
+ * shows: the instances in reach there, the ones away and the ones that did
+ * not come along when the group moved into a fortress. The phone reaches
  * only who is on the relay with it, so an instance that was shut down when
  * the phone joined, or that it never met, comes to its list this way.
  */
 object Roster {
     const val PATH = "/api/group/peer/members"
 
-    /** An instance of the group. [seen] is the Unix second it was last in reach, 0 while it is. */
-    data class Entry(val id: String, val name: String, val url: String, val seen: Long)
+    /**
+     * An instance of the group. [seen] is the Unix second it was last in
+     * reach, 0 while it is, and [behind] says it did not come along into the
+     * fortress, which leaves it without an address.
+     */
+    data class Entry(val id: String, val name: String, val url: String, val seen: Long, val behind: Boolean = false)
 
     /** The instances [body] lists, without phones and without anything that does not read. */
     fun parse(body: String): List<Entry> {
         val o = runCatching { JSONObject(body) }.getOrNull() ?: return emptyList()
         if (!o.optBoolean("ok")) return emptyList()
-        fun read(key: String, away: Boolean): List<Entry> {
+        fun read(key: String, away: Boolean, behind: Boolean = false): List<Entry> {
             val list = o.optJSONArray(key) ?: return emptyList()
             return (0 until list.length()).mapNotNull { i ->
                 val m = list.optJSONObject(i) ?: return@mapNotNull null
@@ -30,9 +35,10 @@ object Roster {
                     m.optString("name").ifEmpty { id },
                     if (address.isEmpty()) "" else address.trimEnd('/') + "/",
                     if (away) m.optLong("lastSeen") else 0,
+                    behind,
                 )
             }
         }
-        return read("members", away = false) + read("away", away = true)
+        return read("members", away = false) + read("away", away = true) + read("behind", away = false, behind = true)
     }
 }

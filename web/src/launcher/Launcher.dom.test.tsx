@@ -381,6 +381,15 @@ describe("Launcher", () => {
     expect(screen.queryByText("Not connected")).toBeNull();
   });
 
+  it("says a group member did not come along into the fortress instead of when it was last seen", async () => {
+    const seen = Math.floor(Date.now() / 1000) - 3 * 3600;
+    const member = { id: "m1", name: "Barn", url: "", member: true, seen, behind: true };
+    const { bridge } = fakeBridge({ servers: [member], group: { paired: true, connected: true }, camera: false, app });
+    render(<Launcher bridge={bridge} />);
+    expect(await screen.findByText("Didn't come along")).toBeTruthy();
+    expect(screen.queryByText("Last seen 3 hours ago")).toBeNull();
+  });
+
   it("still calls a server added by hand that does not answer not connected", async () => {
     const { bridge } = fakeBridge({ servers: [server], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);

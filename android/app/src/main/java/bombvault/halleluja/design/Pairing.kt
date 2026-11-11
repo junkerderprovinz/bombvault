@@ -451,7 +451,11 @@ class Pairing(
                     continue
                 }
                 val now = nowSeconds()
-                for (e in entries) servers.adopt(e.id, e.name, e.url, if (e.seen > 0) e.seen else now)
+                for (e in entries) {
+                    // One left behind is out of reach, so reading the roster does not count as seeing it.
+                    val seen = if (e.seen > 0 || e.behind) e.seen else now
+                    servers.adopt(e.id, e.name, e.url, seen, e.behind)
+                }
                 onChange()
                 return@launch
             }

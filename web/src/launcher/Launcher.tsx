@@ -492,7 +492,8 @@ function ServerCard({
   onOpen: () => void;
 }) {
   const badge = serverBadge(reach, server.member ?? false);
-  const away = reach === "offline" && server.member && (server.seen ?? 0) > 0;
+  const behind = server.member && server.behind;
+  const away = !behind && reach === "offline" && server.member && (server.seen ?? 0) > 0;
   return (
     <div style={hueVars(index) as CSSProperties} className="rounded-card bg-carbon-surface glim-hue glim-content-fade">
       <button type="button" onClick={onOpen} className="flex min-h-[3.75rem] w-full min-w-0 items-center gap-3 rounded-card p-4 text-start">
@@ -503,6 +504,7 @@ function ServerCard({
               {t("instances.lastSeen").replace("{time}", () => relativeTime(t, server.seen ?? 0))}
             </span>
           )}
+          {behind && <span className="text-xs text-carbon-textMuted">{t("pairing.behindTitle")}</span>}
         </span>
         <Badge tone={badge.tone}>{t(badge.key)}</Badge>
       </button>
