@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/fs"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -23,10 +24,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 )
-
-// fortressPeerHeader names the sender of a direct call of the fortress, which
-// arrives on the path the group's own calls use.
-const fortressPeerHeader = "X-Fortress-Peer"
 
 // fortressLAN finds the members on this network as well as through the relay.
 // The tests leave it off, so that none of them listens on the multicast group.
@@ -56,6 +53,10 @@ type fortressPlace struct {
 	// changing is set while this instance changes the phrase itself, when the
 	// keeper must not open the fortress again under it.
 	changing bool
+	// direct answers the direct calls of f and the groups beside it. It
+	// bounds the calls it reads for more than one group, so it is kept as
+	// long as those groups stay the same.
+	direct directRoute
 
 	// requests are the backups members asked for, by id, the oldest first in
 	// order.
@@ -465,6 +466,27 @@ func (k fortressKeeper) Keep(sec []byte) error {
 		go k.s.reopenFortress()
 	}
 	return nil
+}
+
+// directRoute is the direct handler of a fortress and the group on the old
+// phrase beside it.
+type directRoute struct {
+	f      *fortress.Fortress
+	former *group.Group
+	h      http.Handler
+}
+
+// fortressDirect answers the direct calls that reach f, of the fortress, of
+// its pairing and of the group on the old phrase, which all arrive at one
+// path.
+func (s *Service) fortressDirect(f *fortress.Fortress) http.Handler {
+	former := s.pairing().Former()
+	s.house.mu.Lock()
+	defer s.house.mu.Unlock()
+	if d := s.house.direct; d.h == nil || d.f != f || d.former != former {
+		s.house.direct = directRoute{f: f, former: former, h: f.DirectHandler(former)}
+	}
+	return s.house.direct.h
 }
 
 // fortressNow is the open fortress, or nil.

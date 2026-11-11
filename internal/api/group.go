@@ -156,6 +156,7 @@ func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 		Former:     s.formerRoster,
 		OnRemoved:  s.removedFromGroup,
 		Keeper:     moveKeeper{s},
+		Fortress:   s.fortressNow,
 	})
 	return g, true
 }
@@ -372,7 +373,7 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
 		{"POST /api/group/peer/shared-upkeep", (*Service).handlePeerSharedUpkeep},
 		{"POST /api/group/peer/shared-holder", (*Service).handlePeerSharedHolder},
-		{"GET " + movedPath, (*Service).handlePeerMoved},
+		{"GET /api/group/peer/moved", (*Service).handleOldMoved},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }
@@ -744,7 +745,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		JoinedAgo:    joinedAgo,
 		MemberSeen:   !g.MemberSeenAt.IsZero(),
 		Fortress:     h.svc.pairing().Following(),
-		OldPhrase:    append([]string{}, h.svc.pairing().Left()...),
+		OldPhrase:    h.svc.onOldPhrase(),
 		SelfAddress:  h.svc.directURL(g),
 		OwnAddresses: h.ownAddresses(),
 	}, nil
@@ -1116,8 +1117,8 @@ func (h *Handler) handleRelayConnect(w http.ResponseWriter, r *http.Request) {
 // group or of the fortress. It is public like the relay socket: the call is
 // signed and sealed with keys only members hold. POST /api/group/call
 func (h *Handler) handleGroupCall(w http.ResponseWriter, r *http.Request) {
-	if f := h.svc.fortressNow(); f != nil && r.Header.Get(fortressPeerHeader) != "" {
-		f.DirectHandler().ServeHTTP(w, r)
+	if f := h.svc.fortressNow(); f != nil {
+		h.svc.fortressDirect(f).ServeHTTP(w, r)
 		return
 	}
 	h.svc.pairing().ServeDirect(w, r)

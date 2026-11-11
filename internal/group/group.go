@@ -8,7 +8,6 @@
 package group
 
 import (
-	"cmp"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -18,7 +17,6 @@ import (
 	"log"
 	"net/http"
 	"net/netip"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -123,6 +121,10 @@ type Config struct {
 	// Keeper takes the fortress secret a member hands over as the group
 	// moves into a fortress; nil takes none.
 	Keeper fortress.Keeper
+	// Fortress is the fortress the group moved into, nil before. The phones
+	// of the group fetch the keys of its pairing over the group; nil hands
+	// out none.
+	Fortress func() *fortress.Fortress
 }
 
 // Member is another member of the group that is reachable now, under the id
@@ -214,11 +216,7 @@ type Manager struct {
 	// long as members of it have not followed.
 	followed    *kitgroup.Group
 	followedKey string
-	// met holds the members seen in the pairing since the group moved, by
-	// their kit ids. The roster the pairing took over carries when each was
-	// last seen on the old phrase, which says nothing about the move.
-	met   map[string]bool
-	asked map[string]asking
+	asked       map[string]asking
 	// retrying is set while learnAll is due again.
 	retrying bool
 	// departed holds when a member said it left, by its BombVault id.
@@ -302,6 +300,9 @@ func (m *Manager) open(cfg Config, self kitgroup.Self) *kitgroup.Group {
 	if cfg.Keeper != nil {
 		serve = fortress.Moving(serve, cfg.Keeper)
 	}
+	if cfg.Fortress != nil {
+		serve = fortress.Moved(serve, cfg.Fortress)
+	}
 	g, err := kitgroup.Open(kitgroup.Config{
 		Domain:         Domain,
 		Secret:         cfg.Secret,
@@ -363,7 +364,6 @@ func (m *Manager) LAN() *lan.Service { return m.lan }
 func (m *Manager) Follow(g *kitgroup.Group, relayKey string) {
 	m.mu.Lock()
 	m.followed, m.followedKey = g, relayKey
-	m.met = map[string]bool{}
 	m.mu.Unlock()
 	if g != nil {
 		go m.learnAll()
@@ -390,33 +390,6 @@ func (m *Manager) Former() *kitgroup.Group {
 		return nil
 	}
 	return m.g
-}
-
-// Left lists the approved members of the group on the old phrase that the
-// pairing in the fortress has not met yet, by name.
-func (m *Manager) Left() []string {
-	m.mu.Lock()
-	followed, former := m.followed, m.g
-	m.mu.Unlock()
-	if followed == nil || former == nil {
-		return nil
-	}
-	online := followed.Members()
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for _, km := range online {
-		if km.Online() {
-			m.met[km.ID] = true
-		}
-	}
-	var out []string
-	for _, km := range former.Members() {
-		if km.State == kitgroup.StateApproved && !m.met[km.ID] {
-			out = append(out, cmp.Or(km.Name, km.ID))
-		}
-	}
-	slices.Sort(out)
-	return out
 }
 
 // Active reports whether this instance is in a group.

@@ -2,10 +2,15 @@ package api
 
 import (
 	"bytes"
+	"cmp"
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
+	"maps"
 	"net/http"
+	"net/http/httptest"
+	"slices"
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
@@ -20,9 +25,9 @@ import (
 // are offered the fortress phrase.
 var followEvery = 15 * time.Second
 
-// movedPath is where a phone asks for the keys of the pairing the group
-// moved into the fortress with.
-const movedPath = "/api/group/peer/moved"
+// kitMovedPath is where fortress.Moved hands a phone the keys of the
+// pairing the group moved into the fortress with.
+const kitMovedPath = "/kit/fortress/v1/moved"
 
 // moveTimeout bounds one round of handing the fortress phrase over.
 const moveTimeout = 30 * time.Second
@@ -66,7 +71,7 @@ func (s *Service) followPairing(f *fortress.Fortress, sec []byte, gen int) {
 			s.house.mu.Lock()
 			current := s.house.gen == gen && s.house.f == f
 			s.house.mu.Unlock()
-			if !current || s.moveOn(sec) {
+			if !current || s.moveOn(f, sec) {
 				return
 			}
 			<-t.C
@@ -75,14 +80,14 @@ func (s *Service) followPairing(f *fortress.Fortress, sec []byte, gen int) {
 }
 
 // moveOn hands the fortress phrase to the instances of the old group that
-// are in reach and have not followed, and ends the old group once every
-// member did. It reports whether there is nobody left to wait for.
-func (s *Service) moveOn(sec []byte) bool {
+// are in reach and have not followed into f, and ends the old group once
+// every member did. It reports whether there is nobody left to wait for.
+func (s *Service) moveOn(f *fortress.Fortress, sec []byte) bool {
 	former := s.pairing().Former()
 	if former == nil {
 		return true
 	}
-	if len(s.pairing().Left()) == 0 {
+	if len(f.Left(former)) == 0 {
 		s.endFormerGroup()
 		return true
 	}
@@ -90,6 +95,21 @@ func (s *Service) moveOn(sec []byte) bool {
 	defer cancel()
 	fortress.Move(ctx, former, sec)
 	return false
+}
+
+// onOldPhrase names the members of the old group that have not followed
+// into the fortress yet.
+func (s *Service) onOldPhrase() []string {
+	out := []string{}
+	f, former := s.fortressNow(), s.pairing().Former()
+	if f == nil || former == nil {
+		return out
+	}
+	for _, m := range f.Left(former) {
+		out = append(out, cmp.Or(m.Name, m.ID))
+	}
+	slices.Sort(out)
+	return out
 }
 
 // endFormerGroup closes the group on the old phrase. Its members are all in
@@ -158,38 +178,22 @@ func (k moveKeeper) Keep(sec []byte) error {
 	return nil
 }
 
-// movedKeys are the keys of the pairing in the fortress, all a phone needs
-// to follow. A phone is never handed the fortress phrase, which opens every
-// app of the fortress.
-type movedKeys struct {
-	OK    bool   `json:"ok"`
-	Group string `json:"group"`
-	Frame []byte `json:"frame"`
-}
-
-// handlePeerMoved hands a paired phone the keys of the pairing once the
-// group moved into the fortress. It comes over the group on the old phrase,
-// sealed and signed like every answer there, and only to a member the group
-// let in. An instance follows with the phrase itself, by fortress.Move.
+// handleOldMoved hands a phone of an earlier release the keys of the pairing
+// in the fortress where it asks for them. Who gets them is the kit's to
+// decide, and such a phone takes them only with ok set.
 // GET /api/group/peer/moved
-func (s *Service) handlePeerMoved(w http.ResponseWriter, r *http.Request) {
-	if sender, ok := group.SenderOf(r.Context()); !ok || sender.Kind != group.KindPhone {
-		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "code": "phonesOnly"})
+func (s *Service) handleOldMoved(w http.ResponseWriter, r *http.Request) {
+	r = r.Clone(r.Context())
+	r.URL.Path = kitMovedPath
+	rec := httptest.NewRecorder()
+	fortress.Moved(http.NotFoundHandler(), s.fortressNow).ServeHTTP(rec, r)
+	var keys map[string]any
+	if rec.Code != http.StatusOK || json.Unmarshal(rec.Body.Bytes(), &keys) != nil {
+		maps.Copy(w.Header(), rec.Header())
+		w.WriteHeader(rec.Code)
+		_, _ = w.Write(rec.Body.Bytes())
 		return
 	}
-	if !s.pairing().Following() {
-		writeJSON(w, http.StatusNotFound, map[string]any{"ok": false, "code": "notMoved"})
-		return
-	}
-	m, err := s.store.FortressMembership()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	sec, err := secret.Decrypt(s.cfg.AppKey, m.SecretEnc)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, movedKeys{OK: true, Group: group.Domain.GroupKey(sec), Frame: group.Domain.FrameKey(sec)})
+	keys["ok"] = true
+	writeJSON(w, http.StatusOK, keys)
 }
