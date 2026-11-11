@@ -7001,6 +7001,15 @@ export interface AwayMember {
   lastSeen: number;
 }
 
+/** A device the pairing let in before the fortress that did not follow it
+ *  there. It carries no address, since the owner finds it by its name. */
+export interface LeftBehindMember {
+  id: string;
+  name: string;
+  /** "android" for a phone, absent for an instance. */
+  kind?: string;
+}
+
 export type RelayMode = "project" | "own" | "off";
 
 export interface RelayState {
@@ -7043,6 +7052,9 @@ export interface GroupState extends OkEnvelope {
   fortress?: boolean;
   /** The members that have not followed it there yet. */
   oldPhrase?: string[];
+  /** The devices that had not followed when the old phrase closed, 30 days
+   *  after the move at the latest. None of them is among the away ones. */
+  behind?: LeftBehindMember[];
   /** This instance's key as another one shows it while it waits there. */
   fingerprint?: string;
   /** The devices that hold the phrase but still run an older version, which

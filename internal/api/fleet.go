@@ -151,6 +151,9 @@ func (s *Service) groupRoster(now time.Time) (members []group.Member, away []awa
 	for _, m := range members {
 		present[m.ID] = true
 	}
+	for _, m := range s.behindMove() {
+		present[m.ID] = true
+	}
 	for _, p := range rows {
 		if p.MemberID == "" || present[p.MemberID] {
 			continue

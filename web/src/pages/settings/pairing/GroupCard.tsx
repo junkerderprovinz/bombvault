@@ -1,7 +1,8 @@
 // GroupCard lists who is in the group: this instance with where it stands,
 // every paired instance and phone with how it is reached or when it was last
-// there, the devices that wait to be let in, and the ZFS servers without
-// BombVault, which join over SSH from the same list.
+// there, the devices that wait to be let in or did not come along into the
+// fortress, and the ZFS servers without BombVault, which join over SSH from
+// the same list.
 import { useState, type ReactNode } from "react";
 import { Card } from "../shared";
 import { Badge } from "../../../components/Badge";
@@ -11,10 +12,19 @@ import { IconConfirm, IconLink, IconReject } from "../../../components/glyphs";
 import { IconFleet, IconZFS } from "../../../components/navGlyphs";
 import { AddReplicaServerDialog } from "../../../components/zfs/replica/AddReplicaServerDialog";
 import { useReplicaServers } from "../../../components/zfs/replica/replicaStore";
-import { approveMember, refuseMember, type AwayMember, type GroupMember, type GroupState, type WaitingMember } from "../../../lib/api";
+import {
+  approveMember,
+  refuseMember,
+  type AwayMember,
+  type GroupMember,
+  type GroupState,
+  type LeftBehindMember,
+  type WaitingMember,
+} from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
 import { PHONE_PATH } from "../../instances/InstanceCard";
+import { RemoveInstanceButton } from "../../instances/RemoveInstanceButton";
 import { STAGE_BADGE, clock, type PairStage } from "./pairStage";
 
 type T = ReturnType<typeof useT>["t"];
@@ -156,6 +166,33 @@ function Waiting({ group, onGroup, t }: { group: GroupState; onGroup: (g: GroupS
   );
 }
 
+/** Behind lists the devices that had not followed into the fortress when the
+ *  old phrase closed, by name and kind alone. Entering the fortress phrase on
+ *  one brings it along, and removing it here shuts its key out. */
+function Behind({ behind, onRefresh, t }: { behind: LeftBehindMember[]; onRefresh: () => void; t: T }) {
+  if (behind.length === 0) return null;
+  return (
+    <div data-testid="behind" className="flex flex-col gap-2 border-t border-carbon-border/60 pt-3">
+      <SettingRow label={t("pairing.behindTitle")} hint={t("pairing.behindTip")} />
+      <Rows as="ul">
+        {behind.map((m) => (
+          <SettingRow
+            key={m.id}
+            as="li"
+            label={m.name || m.id}
+            glyph={<span className="text-accentText [&>svg]:h-4.5 [&>svg]:w-4.5">{memberGlyph(m.kind)}</span>}
+          >
+            <span className="text-caption uppercase tracking-[.12em] text-carbon-textSub">
+              {t(m.kind === "android" ? "fleet.kindAndroid" : "pairing.kindInstance")}
+            </span>
+            <RemoveInstanceButton instance={{ memberId: m.id, name: m.name || m.id }} onRemoved={onRefresh} />
+          </SettingRow>
+        ))}
+      </Rows>
+    </div>
+  );
+}
+
 function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
   return (
     <div className="flex items-center gap-3 border-t border-carbon-border/60 pt-3 text-carbon-textSub">
@@ -173,6 +210,7 @@ function WaitRow({ text, seconds }: { text: string; seconds?: number }) {
 export function GroupCard({
   group,
   onGroup,
+  onRefresh,
   stage,
   joinedAgo,
   zfs,
@@ -181,6 +219,8 @@ export function GroupCard({
 }: {
   group: GroupState;
   onGroup: (g: GroupState) => void;
+  /** Reads the group again, after a device left behind was removed. */
+  onRefresh: () => void;
   stage: PairStage;
   joinedAgo: number;
   /** The ZFS section is on, so a ZFS server can be connected. */
@@ -218,6 +258,7 @@ export function GroupCard({
           </Rows>
         </div>
         <Waiting group={group} onGroup={onGroup} t={t} />
+        <Behind behind={group.behind ?? []} onRefresh={onRefresh} t={t} />
         {(group.older ?? []).length > 0 && (
           <p data-testid="older" className="border-t border-carbon-border/60 pt-3 text-sm text-statusWarn">
             {t("pairing.older").replace("{names}", () => (group.older ?? []).join(", "))}

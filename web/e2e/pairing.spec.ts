@@ -42,6 +42,9 @@ interface Instance {
   connected: boolean;
   /** Who a join with PHRASE finds in the group. */
   joinFinds: Member[];
+  /** The group moved into the fortress, and these did not come along. */
+  fortress?: boolean;
+  behind?: { id: string; name: string; kind?: string }[];
 }
 
 function instance(name: string, over: Partial<Instance> = {}): Instance {
@@ -71,6 +74,9 @@ function view(f: Instance) {
     selfAddress: "https://tower-linz.familie-hofer.example.at:3443",
     waiting: [],
     ownAddresses: ["192.168.178.20", "10.20.30.41", "tower-linz-keller-serverschrank-2.local"],
+    fortress: f.fortress ?? false,
+    oldPhrase: [],
+    behind: f.behind ?? [],
   };
 }
 
@@ -124,6 +130,12 @@ async function stage(page: Page, f: Instance): Promise<void> {
   await page.route("**/api/group", async (route) => {
     if (route.request().method() === "DELETE") Object.assign(f, { active: false, joinedAgo: 0, memberSeen: false, members: [] });
     await route.fulfill({ json: view(f) });
+  });
+  await page.route("**/api/group/members/*", async (route) => {
+    if (route.request().method() !== "DELETE") return route.fallback();
+    const id = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+    f.behind = (f.behind ?? []).filter((m) => m.id !== id);
+    await route.fulfill({ json: { ok: true } });
   });
   await page.route("**/api/group/phrase", async (route) => {
     Object.assign(f, { active: true, joinedAgo: 0, memberSeen: false, members: [] });
@@ -326,6 +338,50 @@ for (const width of [1280, 390]) {
     await expect(page.getByRole("textbox", { name: "Die zwölf Wörter deiner ersten Instanz" })).toBeVisible();
     await settle(page);
     await expectFits(page);
+  });
+}
+
+for (const width of [1280, 390]) {
+  test(`the devices that did not come along into the fortress @ ${width}px show by name and kind and fit in light and dark`, async ({ page }, testInfo) => {
+    const phone = MOBILE_PROJECTS.has(testInfo.project.name);
+    test.skip(phone !== (width === 390), width === 390 ? "phone width runs on the phone projects" : "desktop width runs on the desktop projects");
+    test.skip(!phone && testInfo.project.use.viewport!.width < width, "the 768px project cannot show 1280px");
+    const f = instance("Tower Linz", {
+      active: true,
+      members: [cellar],
+      memberSeen: true,
+      joinedAgo: 600,
+      fortress: true,
+      behind: [
+        { id: "barn", name: "Ferienhaus Altaussee Dachboden" },
+        { id: "tablet", name: "Altes Tablet", kind: "android" },
+      ],
+    });
+    await open(page, f, width);
+    const list = page.getByTestId("behind");
+    await expect(list.getByText("Nicht mitgekommen")).toBeVisible();
+    const rows = list.getByRole("listitem");
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0)).toContainText("Ferienhaus Altaussee Dachboden");
+    await expect(rows.nth(0)).toContainText("BombVault-Instanz");
+    await expect(rows.nth(1)).toContainText("Altes Tablet");
+    await expect(rows.nth(1)).toContainText("Android-App");
+    await expect(list).not.toContainText(/\d+\.\d+\.\d+\.\d+|:\d{2,5}/);
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await settle(page);
+      await expectFits(page);
+      const [ink, ground] = await rows.nth(0).evaluate((row) => {
+        const label = row.querySelector("svg")!.closest("span")!;
+        return [getComputedStyle(label).color, getComputedStyle(document.body).backgroundColor];
+      });
+      expect(ink, `the glyph has no colour of its own in ${scheme}`).not.toBe(ground);
+    }
+
+    await rows.nth(0).getByRole("button", { name: "Entfernen" }).click();
+    await rows.nth(0).getByRole("button", { name: /Entfernen bestätigen/ }).click();
+    await expect(list.getByRole("listitem")).toHaveCount(1);
+    await expect(list).toContainText("Altes Tablet");
   });
 }
 

@@ -81,13 +81,17 @@ func (s *Service) followPairing(f *fortress.Fortress, sec []byte, gen int) {
 
 // moveOn hands the fortress phrase to the instances of the old group that
 // are in reach and have not followed into f, and ends the old group once
-// every member did. It reports whether there is nobody left to wait for.
+// every member did or 30 days passed, which the kit decides. It reports
+// whether there is nobody left to wait for.
 func (s *Service) moveOn(f *fortress.Fortress, sec []byte) bool {
 	former := s.pairing().Former()
 	if former == nil {
 		return true
 	}
-	if len(f.Left(former)) == 0 {
+	if f.Settle(former) {
+		if n := len(f.Behind()); n > 0 {
+			log.Printf("fortress: the group on the old phrase closed with %d devices that never followed", n)
+		}
 		s.endFormerGroup()
 		return true
 	}
@@ -112,8 +116,18 @@ func (s *Service) onOldPhrase() []string {
 	return out
 }
 
-// endFormerGroup closes the group on the old phrase. Its members are all in
-// the fortress, and nobody is let in with its phrase.
+// behindMove lists the devices the group on the old phrase let in that had
+// not followed into the fortress when it closed.
+func (s *Service) behindMove() []group.LeftBehind {
+	f := s.fortressNow()
+	if f == nil {
+		return []group.LeftBehind{}
+	}
+	return s.pairing().Behind(f.Behind())
+}
+
+// endFormerGroup closes the group on the old phrase. Its members followed
+// into the fortress or are left behind, and nobody is let in with its phrase.
 func (s *Service) endFormerGroup() {
 	if err := s.store.SetGroupSecret(nil, time.Now()); err != nil {
 		log.Printf("group: end the group on the old phrase: %v", err)

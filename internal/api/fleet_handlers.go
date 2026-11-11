@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -156,11 +157,19 @@ func (h *Handler) handleDeleteFleetPeer(w http.ResponseWriter, r *http.Request) 
 // handleRemoveMember drops a member's row, its pinned key and the role
 // requests of one that is away, as DELETE /api/fleet/peers/{id} does, for a
 // card whose page holds no row. A member that is away stays off the lists
-// until it is in reach again, and a phone then comes back switched off.
+// until it is in reach again, and a phone then comes back switched off. A
+// device left behind by the move into the fortress is taken out of the
+// pairing as well, which would let it follow later under its key.
 // DELETE /api/group/members/{id}
 func (h *Handler) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	err := h.svc.forgetMemberRoles(r.Context(), id)
+	var err error
+	if slices.ContainsFunc(h.svc.behindMove(), func(m group.LeftBehind) bool { return m.ID == id }) {
+		err = h.svc.pairing().Remove(id)
+	}
+	if err == nil {
+		err = h.svc.forgetMemberRoles(r.Context(), id)
+	}
 	var rows []store.FleetPeer
 	if err == nil {
 		rows, err = h.store.ListFleetPeers()

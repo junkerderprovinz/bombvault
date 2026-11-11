@@ -46,7 +46,7 @@ function GroupCards({
       ) : (
         <PhraseCard group={group} stage={stage} onCreatedHere={setCreatedHere} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
       )}
-      <GroupCard group={group} onGroup={onGroup} stage={stage} joinedAgo={joinedAgo} zfs={zfs} t={t} hueIndex={nextHue()} />
+      <GroupCard group={group} onGroup={onGroup} onRefresh={onRefresh} stage={stage} joinedAgo={joinedAgo} zfs={zfs} t={t} hueIndex={nextHue()} />
       {instanceCard(nextHue())}
       <RelayCard group={group} stage={stage} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
     </>

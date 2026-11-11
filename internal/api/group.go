@@ -504,6 +504,9 @@ type peerMembersAnswer struct {
 	Members  []group.Member `json:"members"`
 	Away     []awayMember   `json:"away"`
 	Settling bool           `json:"settling"`
+	// Behind are the devices left behind when the group on the old phrase
+	// closed, which none of the other lists carries.
+	Behind []group.LeftBehind `json:"behind"`
 }
 
 // handlePeerMembers answers with the members in reach here and the ones that
@@ -515,7 +518,7 @@ func (s *Service) handlePeerMembers(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, peerMembersAnswer{OK: true, Members: members, Away: away, Settling: settling})
+	writeJSON(w, http.StatusOK, peerMembersAnswer{OK: true, Members: members, Away: away, Settling: settling, Behind: s.behindMove()})
 }
 
 // peerPairing is what a member hands out so another member can watch or pull
@@ -665,6 +668,10 @@ type groupView struct {
 	// phrase, and OldPhrase names the members that have not followed yet.
 	Fortress  bool     `json:"fortress"`
 	OldPhrase []string `json:"oldPhrase"`
+	// Behind are the devices that had not followed when the group on the
+	// old phrase closed, 30 days after the move at the latest. They are not
+	// among the ones Away lists.
+	Behind []group.LeftBehind `json:"behind"`
 	// Fingerprint is this instance's key as another instance shows it while
 	// this one waits there, empty outside a group.
 	Fingerprint string `json:"fingerprint,omitempty"`
@@ -746,6 +753,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		MemberSeen:   !g.MemberSeenAt.IsZero(),
 		Fortress:     h.svc.pairing().Following(),
 		OldPhrase:    h.svc.onOldPhrase(),
+		Behind:       h.svc.behindMove(),
 		SelfAddress:  h.svc.directURL(g),
 		OwnAddresses: h.ownAddresses(),
 	}, nil

@@ -27,6 +27,7 @@ const joined: string[] = [];
 let joinAnswer: Record<string, unknown> = {};
 let left = 0;
 const decisions: string[] = [];
+const removed: string[] = [];
 
 // The BIP39 test vector: twelve listed words that check out.
 const PHRASE = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -98,6 +99,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       decisions.push("approve " + id);
       group = { ...group, waiting: group.waiting.filter((w) => w.id !== id) };
       return Promise.resolve(group);
+    },
+    removeMember: (id: string) => {
+      removed.push(id);
+      group = { ...group, behind: (group.behind ?? []).filter((m) => m.id !== id) };
+      return Promise.resolve({ ok: true });
     },
     refuseMember: (id: string) => {
       decisions.push("refuse " + id);
@@ -179,6 +185,7 @@ beforeEach(() => {
   joinAnswer = {};
   left = 0;
   decisions.length = 0;
+  removed.length = 0;
   localStorage.clear();
 });
 
@@ -883,6 +890,44 @@ describe("a group that moved into the fortress", () => {
     expect(screen.getByText(en["pairing.oldPhrase"].replace("{names}", "attic and pixel"))).toBeTruthy();
     expect(screen.queryByRole("button", { name: en["pairing.show"] })).toBeNull();
     expect(document.querySelector("[data-stage]")).toBeNull();
+  });
+
+  it("lists the devices that did not come along by name and kind, without an address, and takes one out on the second click", async () => {
+    group = makeGroup({
+      fortress: true,
+      away: [{ id: "m2", name: "garage", address: "https://192.168.1.22:3443", lastSeen: 1 }],
+      behind: [
+        { id: "m3", name: "barn" },
+        { id: "p1", name: "Pixel 8", kind: "android" },
+      ],
+    });
+    await renderTab();
+    const list = screen.getByTestId("behind");
+    expect(within(list).getByText(en["pairing.behindTitle"])).toBeTruthy();
+    expect(within(list).getByLabelText(en["pairing.behindTip"])).toBeTruthy();
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      `barn${en["pairing.kindInstance"]}${en["fleet.remove"]}`,
+      `Pixel 8${en["fleet.kindAndroid"]}${en["fleet.remove"]}`,
+    ]);
+    for (const row of rows) expect(row.querySelector("svg")).toBeTruthy();
+    expect(list.textContent).not.toMatch(/192\.168|:3443/);
+
+    await act(async () => {
+      fireEvent.click(within(rows[0]).getByRole("button", { name: en["fleet.remove"] }));
+    });
+    expect(removed).toEqual([]);
+    await act(async () => {
+      fireEvent.click(within(rows[0]).getByRole("button", { name: en["fleet.confirmRemove"] }));
+    });
+    expect(removed).toEqual(["m3"]);
+    expect(within(screen.getByTestId("behind")).getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("shows no list of devices left behind while nobody is", async () => {
+    group = makeGroup({ fortress: true, behind: [] });
+    await renderTab();
+    expect(screen.queryByTestId("behind")).toBeNull();
   });
 
   it("says nothing about the old phrase once everybody followed", async () => {

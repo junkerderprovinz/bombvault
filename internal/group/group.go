@@ -446,6 +446,39 @@ func (m *Manager) Members() []Member {
 	return out
 }
 
+// LeftBehind is a device the group let in before it moved into a fortress
+// that had not followed when the group on the old phrase closed. It goes by
+// its BombVault id where one is known, and carries no address: the owner
+// finds the device by its name.
+type LeftBehind struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Kind string `json:"kind,omitempty"`
+}
+
+// Behind names ms, the members a fortress lists as left behind, the way the
+// pairing the Manager follows knows them.
+func (m *Manager) Behind(ms []kitgroup.Member) []LeftBehind {
+	out := []LeftBehind{}
+	if len(ms) == 0 {
+		return out
+	}
+	keys := map[string][]byte{}
+	if g, _ := m.group(); g != nil {
+		for _, km := range g.Members() {
+			keys[km.ID] = km.Key
+		}
+	}
+	for _, km := range ms {
+		id, ok := m.known(km.ID, km.Kind, keys[km.ID])
+		if !ok {
+			id = km.ID
+		}
+		out = append(out, LeftBehind{ID: id, Name: km.Name, Kind: kindOf(km.Kind)})
+	}
+	return out
+}
+
 // Forget keeps member id, by its BombVault id, off Members for departGrace.
 // It is for a member that said it left: its key stays approved, so it comes
 // back as it was when it joins again.

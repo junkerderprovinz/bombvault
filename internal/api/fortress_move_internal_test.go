@@ -403,3 +403,95 @@ func TestAPhraseChangeNamesAnInstanceOfThePairingTheFortressHasNotMet(t *testing
 		t.Fatalf("left on the old phrase = %v, want the instance still on its way in", out["left"])
 	}
 }
+
+// backdateOldGroup opens in's group again with the move of its members to
+// another phrase begun the span ago in the past.
+func backdateOldGroup(t *testing.T, in *instance, ago time.Duration) {
+	t.Helper()
+	in.svc.pairing().Apply(group.Config{})
+	held := kitStore{in.svc}
+	raw, err := held.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc["retired"], err = json.Marshal(time.Now().Add(-ago)); err != nil {
+		t.Fatal(err)
+	}
+	if raw, err = json.Marshal(doc); err != nil {
+		t.Fatal(err)
+	}
+	if err := held.Save(raw); err != nil {
+		t.Fatal(err)
+	}
+	in.svc.applyGroup()
+}
+
+func listIn(t *testing.T, out map[string]any, key string) []map[string]any {
+	t.Helper()
+	list, ok := out[key].([]any)
+	if !ok {
+		t.Fatalf("no %s list in %v", key, out)
+	}
+	ms := []map[string]any{}
+	for _, m := range list {
+		ms = append(ms, m.(map[string]any))
+	}
+	return ms
+}
+
+func TestTheOldGroupClosesAfterThirtyDaysAndNamesWhoStayedBehind(t *testing.T) {
+	a, b := pairedForAMove(t)
+	a.do(t, http.MethodGet, "/api/group", nil)
+	bID := b.id(t)
+	b.svc.pairing().Close()
+	backdateOldGroup(t, a, 30*24*time.Hour+time.Minute)
+	words, _ := newPhrase(t)
+	if _, out := a.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words}); out["ok"] != true {
+		t.Fatalf("join = %v", out)
+	}
+	waitLong(t, "the old group to close", func() bool {
+		g, err := a.st.GetGroupState()
+		return err == nil && len(g.SecretEnc) == 0 && a.svc.pairing().Former() == nil
+	})
+
+	_, out := a.do(t, http.MethodGet, "/api/group", nil)
+	behind := listIn(t, out, "behind")
+	if len(behind) != 1 || behind[0]["id"] != bID || behind[0]["name"] != "attic" {
+		t.Fatalf("behind = %v, want attic", behind)
+	}
+	for field := range behind[0] {
+		if field != "id" && field != "name" && field != "kind" {
+			t.Errorf("a device left behind carries %q", field)
+		}
+	}
+	for _, m := range listIn(t, out, "away") {
+		if m["id"] == bID {
+			t.Error("the instance left behind is listed as away as well")
+		}
+	}
+	if names := oldPhrase(t, a); len(names) != 0 {
+		t.Errorf("still on the old phrase: %v", names)
+	}
+
+	_, changed := a.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{"password": testPassword})
+	if left, _ := changed["left"].([]any); changed["ok"] != true || len(left) != 0 {
+		t.Fatalf("change = %v, want nobody on the old phrase, since attic is listed behind", changed)
+	}
+
+	if _, out := a.do(t, http.MethodDelete, "/api/group/members/"+bID, nil); out["ok"] != true {
+		t.Fatalf("remove = %v", out)
+	}
+	_, out = a.do(t, http.MethodGet, "/api/group", nil)
+	if behind := listIn(t, out, "behind"); len(behind) != 0 {
+		t.Errorf("behind after the removal = %v", behind)
+	}
+	for _, m := range listIn(t, out, "away") {
+		if m["id"] == bID {
+			t.Error("the instance taken out is listed as away")
+		}
+	}
+}
