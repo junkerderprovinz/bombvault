@@ -262,6 +262,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/group/members/{id}/refuse", h.handleRefuseMember)
 	mux.HandleFunc("GET /api/group/members/{id}/repos", h.handleMemberRepos)
 	h.registerRoleRoutes(mux)
+	h.registerFortressMembership(mux)
 
 	// Protected endpoints.
 	mux.HandleFunc("GET /api/containers", h.handleListContainers)

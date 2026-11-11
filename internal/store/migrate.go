@@ -3866,6 +3866,22 @@ UPDATE group_state SET direct_url_manual = 0;`,
 		name:    "legacy_members_gone",
 		sql:     `DROP TABLE IF EXISTS legacy_members;`,
 	},
+	{
+		// BombVault joins a fortress with its phrase and keeps the secret,
+		// so that it can show the phrase again and take a new one. Everything
+		// but the name of the server is sealed under the APP_KEY.
+		version: fortressMembershipMigration,
+		name:    "fortress_membership",
+		sql: `CREATE TABLE IF NOT EXISTS fortress_membership (
+  id           INTEGER PRIMARY KEY CHECK (id = 1),
+  secret_enc   BLOB NOT NULL DEFAULT x'',
+  previous_enc BLOB NOT NULL DEFAULT x'',
+  seed_enc     BLOB NOT NULL DEFAULT x'',
+  state_enc    BLOB NOT NULL DEFAULT x'',
+  device       TEXT NOT NULL DEFAULT ''
+);
+INSERT OR IGNORE INTO fortress_membership (id) VALUES (1);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4511,6 +4527,9 @@ const groupKitMigration = 910
 
 // legacyMembersGoneMigration numbers the end of members that call unsigned.
 const legacyMembersGoneMigration = 920
+
+// fortressMembershipMigration numbers this install's membership of a fortress.
+const fortressMembershipMigration = 940
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

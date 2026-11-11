@@ -7088,6 +7088,77 @@ export function setRelay(patch: { mode?: RelayMode; url?: string; serve?: boolea
   return fetchJSON("/api/group/relay", { method: "PUT", body: JSON.stringify(patch) });
 }
 
+/** Another instance of the fortress that said which app it runs. */
+export interface FortressMember {
+  id: string;
+  app: string;
+  name: string;
+  version: string;
+  device: string;
+  deployment: string;
+  kind: string;
+  online: boolean;
+  /** Reached through the relay alone. */
+  relay: boolean;
+  /** Unix seconds, absent while it was never seen. */
+  lastSeen?: number;
+}
+
+/** Whether the app `from` may run `action` at the app `to`. */
+export interface FortressPermissionState {
+  from: string;
+  to: string;
+  action: string;
+  on: boolean;
+}
+
+/** GET /api/fortress. It never carries the phrase. */
+export interface FortressState extends OkEnvelope {
+  joined: boolean;
+  /** BombVault keeps the phrase to show and change it, which a membership
+   *  from the console does not. */
+  phrase: boolean;
+  device: string;
+  defaultDevice: string;
+  passwordSet: boolean;
+  members: FortressMember[];
+  permissions: FortressPermissionState[];
+}
+
+export function getFortress(): Promise<FortressState> {
+  return fetchJSON("/api/fortress");
+}
+
+/** POST /api/fortress/join - join the fortress of a phrase. */
+export function joinFortress(phrase: string): Promise<FortressState & PhraseRefusal> {
+  return fetchJSON("/api/fortress/join", { method: "POST", body: JSON.stringify({ phrase }) });
+}
+
+/** POST /api/fortress/phrase/show - the phrase again, for the login password. */
+export function showFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string }> {
+  return fetchJSON("/api/fortress/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
+}
+
+/** POST /api/fortress/phrase - a new phrase for the login password, and the
+ *  devices that still hold the old one. */
+export function changeFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string; left?: string[] }> {
+  return fetchJSON("/api/fortress/phrase", { method: "POST", body: JSON.stringify({ password }) });
+}
+
+/** PUT /api/fortress/device - name this server for the other members; "" takes the one it finds. */
+export function setFortressDevice(device: string): Promise<FortressState> {
+  return fetchJSON("/api/fortress/device", { method: "PUT", body: JSON.stringify({ device }) });
+}
+
+export function setFortressPermission(p: FortressPermissionState): Promise<OkEnvelope> {
+  return fetchJSON("/api/fortress/permissions", { method: "PUT", body: JSON.stringify(p) });
+}
+
+/** DELETE /api/fortress - leave the fortress. */
+export function leaveFortress(): Promise<FortressState> {
+  return fetchJSON("/api/fortress", { method: "DELETE" });
+}
+
 /** POST /api/group/members/{id}/approve - let in a device that waits, by
  *  its id in the group. */
 export function approveMember(id: string): Promise<GroupState> {

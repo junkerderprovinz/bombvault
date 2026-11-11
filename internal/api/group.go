@@ -822,20 +822,8 @@ func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Password string `json:"password"`
 	}
-	if !decodeBody(w, r, &body) {
+	if !decodeBody(w, r, &body) || !h.passwordAgain(w, r, body.Password) {
 		return
-	}
-	if hash, _, on := h.authEnabled(); on {
-		key := h.loginClientKey(r)
-		if h.loginThrottled(key) {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-			return
-		}
-		if !verifyPassword(h.cfg.AppKey, body.Password, hash) {
-			h.recordLoginFail(key)
-			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "passwordWrong", "error": "the password is needed to show the phrase again"})
-			return
-		}
 	}
 	g, err := h.store.GetGroupState()
 	if err != nil {
@@ -857,6 +845,28 @@ func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": words}))
+}
+
+// passwordAgain checks the login password entered again before a phrase
+// shows, and answers the request itself when it does not match. Without a
+// login password there is nothing to ask for. Wrong passwords count against
+// the same throttle as the login.
+func (h *Handler) passwordAgain(w http.ResponseWriter, r *http.Request, password string) bool {
+	hash, _, on := h.authEnabled()
+	if !on {
+		return true
+	}
+	key := h.loginClientKey(r)
+	if h.loginThrottled(key) {
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
+		return false
+	}
+	if !verifyPassword(h.cfg.AppKey, password, hash) {
+		h.recordLoginFail(key)
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "passwordWrong", "error": "the password is needed to show the phrase again"})
+		return false
+	}
+	return true
 }
 
 // handleGroupJoin joins the group a phrase belongs to, leaving any group this
@@ -1052,6 +1062,10 @@ func (h *Handler) handleGroupRelay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.svc.applyGroup()
+	// The fortress reaches its members through the same relay.
+	if h.svc.fortressNow() != nil {
+		h.svc.reopenFortress()
+	}
 	h.writeGroupView(w)
 }
 

@@ -24,6 +24,7 @@ func TestMain(m *testing.M) {
 	// mount; TestRestoreFoldersOffStorageAreRefused checks the real rule.
 	folderOnStorage = func(*Service, string) bool { return true }
 	bucketRegion = func(string, string) string { return "" }
+	fortressLAN = false
 	store.ReuseMigrations()
 	os.Exit(m.Run())
 }

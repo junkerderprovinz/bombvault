@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,7 +17,12 @@ import (
 func newFortressSvc(t *testing.T) (*Service, *store.Repo) {
 	t.Helper()
 	st := newTestStore(t)
-	return NewService(config.Config{DataDir: t.TempDir()}, st, nil, nil, nil), st
+	// The fortress takes the group's relay, and a test must not dial the
+	// project's.
+	if err := st.SetGroupRelay("off", "", false); err != nil {
+		t.Fatal(err)
+	}
+	return NewService(config.Config{DataDir: t.TempDir(), AppKey: strings.Repeat("c3", 32)}, st, nil, nil, nil), st
 }
 
 var fireSquire = fortress.Caller{ID: "f1", App: "firesquire", Device: "tower"}
