@@ -44,7 +44,7 @@ func TestBombVaultOffersItsActionsAndFetchesBackups(t *testing.T) {
 	for _, a := range cfg.Actions {
 		names = append(names, a.Name)
 	}
-	if !slices.Contains(names, "backup.last") {
+	if !slices.Equal(names, []string{"backup.last", "backup.request", "snapshots.browse"}) {
 		t.Fatalf("actions %v", names)
 	}
 	if cfg.App.ID != "bombvault" || cfg.Self.Deployment != "container" {

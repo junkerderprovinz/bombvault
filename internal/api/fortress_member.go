@@ -55,6 +55,7 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 	cfg.Actions = []fortress.Action{
 		{Name: actionBackupLast, Run: s.backupLast},
 		{Name: actionBackupRequest, Run: s.backupRequest},
+		{Name: actionSnapshotsBrowse, Run: s.browseSnapshots},
 	}
 	if !slices.Contains(cfg.Uses, fortress.ExportAction) {
 		cfg.Uses = append(cfg.Uses, fortress.ExportAction)
