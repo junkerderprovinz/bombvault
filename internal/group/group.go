@@ -206,6 +206,10 @@ type Manager struct {
 	serve http.Handler
 	dir   Directory
 	lan   *lan.Service
+	// pairLAN is where the pairing in a fortress announces this instance.
+	// A lan.Service announces one group, and the group on the old phrase
+	// stays open beside the pairing until every member followed.
+	pairLAN *lan.Service
 
 	applyMu sync.Mutex
 	mu      sync.Mutex
@@ -231,13 +235,17 @@ func NewManager(serve http.Handler, dir Directory) *Manager {
 		serve:    serve,
 		dir:      dir,
 		lan:      lan.New(lan.Config{Group: Multicast, Ports: Ports}),
+		pairLAN:  lan.New(lan.Config{Group: Multicast, Ports: Ports}),
 		asked:    map[string]asking{},
 		departed: map[string]time.Time{},
 	}
 }
 
 // Start begins listening for members on the local network.
-func (m *Manager) Start() { m.lan.Start() }
+func (m *Manager) Start() {
+	m.lan.Start()
+	m.pairLAN.Start()
+}
 
 // Close leaves the group and the network.
 func (m *Manager) Close() {
@@ -249,6 +257,7 @@ func (m *Manager) Close() {
 		_ = g.Close()
 	}
 	_ = m.lan.Close()
+	_ = m.pairLAN.Close()
 }
 
 // Apply switches the Manager to cfg. A change the relay and the keys do not
@@ -354,8 +363,9 @@ func (m *Manager) group() (*kitgroup.Group, Config) {
 // Handler answers the calls of the members of a pairing the Manager follows.
 func (m *Manager) Handler() http.Handler { return http.HandlerFunc(m.serveMember) }
 
-// LAN is where the group's members announce themselves.
-func (m *Manager) LAN() *lan.Service { return m.lan }
+// LAN is where the members of the pairing in a fortress announce themselves,
+// apart from the group's own.
+func (m *Manager) LAN() *lan.Service { return m.pairLAN }
 
 // Follow makes g, the pairing of the fortress the group moved into, the group
 // members are reached in, known on the relay by relayKey. The group's own

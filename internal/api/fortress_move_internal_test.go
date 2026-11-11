@@ -285,6 +285,34 @@ func TestAMemberStillOnTheOldPhraseReachesTheInstanceDirectly(t *testing.T) {
 	}
 }
 
+func TestThePairingStaysOnTheNetworkOnceTheOldGroupEnds(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	t.Cleanup(a.svc.CloseFortress)
+	a.do(t, http.MethodPost, "/api/group/phrase", nil)
+	words, sec := newPhrase(t)
+	if _, out := a.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words}); out["ok"] != true {
+		t.Fatalf("join = %v", out)
+	}
+	waitLong(t, "the old group to end with nobody left on it", func() bool {
+		g, err := a.st.GetGroupState()
+		return err == nil && len(g.SecretEnc) == 0 && a.svc.pairing().Following() && a.svc.pairing().Former() == nil
+	})
+
+	nearby := a.svc.pairing().LAN()
+	self := kitmember.ID(kitmember.KindInstance, a.memberKey(t))
+	nearby.Observe(lan.Peer{ID: self, Name: "cellar", URL: "http://192.168.1.2:3000", Deployment: "container"})
+	for _, p := range nearby.Strangers() {
+		if p.ID == self {
+			t.Fatal("the pairing does not announce this instance on the network")
+		}
+	}
+	other := kitmember.ID(kitmember.KindInstance, bytes.Repeat([]byte{7}, 32))
+	nearby.Observe(announcedUnder(sec, lan.Peer{ID: other, Name: "attic", URL: "http://192.168.1.3:3000", Deployment: "container"}))
+	if m := nearby.Members(); len(m) != 1 || m[0].ID != other {
+		t.Fatalf("the pairing does not take a member's announce on the network: %+v", m)
+	}
+}
+
 // announcedUnder tags p the way a member of the group on sec announces
 // itself on the network.
 func announcedUnder(sec []byte, p lan.Peer) lan.Peer {
