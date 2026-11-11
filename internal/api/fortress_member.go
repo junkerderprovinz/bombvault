@@ -3,6 +3,7 @@ package api
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"io/fs"
@@ -331,9 +332,33 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []string, e
 		return "", nil, err
 	}
 	left := []string{}
+	noted := map[string]bool{}
+	note := func(id, name string) {
+		if slices.Contains(took, id) || noted[id] {
+			return
+		}
+		noted[id] = true
+		if !slices.Contains(left, name) {
+			left = append(left, name)
+		}
+	}
 	for _, m := range f.Members() {
-		if m.Kind == kitmember.KindInstance && !slices.Contains(took, m.ID) && !slices.Contains(left, m.Device) {
-			left = append(left, m.Device)
+		if m.Kind == kitmember.KindInstance {
+			note(m.ID, m.Device)
+		}
+	}
+	// Every instance the pairing let in counts, whether or not the fortress
+	// met it: one still moving in may have taken the phrase from before
+	// without arriving. Those left behind are listed apart.
+	behind := map[string]bool{}
+	for _, m := range f.Behind() {
+		behind[m.ID] = true
+	}
+	if p := f.Pairing(); p != nil {
+		for _, m := range p.Members() {
+			if m.Kind == kitmember.KindInstance && m.State == group.StateApproved && !behind[m.ID] {
+				note(m.ID, cmp.Or(m.Name, m.ID))
+			}
 		}
 	}
 	slices.Sort(left)

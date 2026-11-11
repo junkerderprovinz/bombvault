@@ -387,3 +387,19 @@ func TestTheFortressPageNamesTheInstancesThePairingTakesAlong(t *testing.T) {
 		t.Fatalf("pairedWith = %v, want attic", out["pairedWith"])
 	}
 }
+
+func TestAPhraseChangeNamesAnInstanceOfThePairingTheFortressHasNotMet(t *testing.T) {
+	a, b := pairedForAMove(t)
+	b.svc.pairing().Close()
+	words, _ := newPhrase(t)
+	if _, out := a.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words}); out["ok"] != true {
+		t.Fatalf("join = %v", out)
+	}
+	_, out := a.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{"password": testPassword})
+	if out["ok"] != true {
+		t.Fatalf("change = %v", out)
+	}
+	if left, _ := out["left"].([]any); len(left) != 1 || left[0] != "attic" {
+		t.Fatalf("left on the old phrase = %v, want the instance still on its way in", out["left"])
+	}
+}
