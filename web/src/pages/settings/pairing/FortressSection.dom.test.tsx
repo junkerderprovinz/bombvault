@@ -4,7 +4,7 @@
 // name saves itself after a pause, and the phrase changes and BombVault leaves
 // from the Fortress card.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { I18nProvider, en } from "../../../lib/i18n";
 import type { FortressState } from "../../../lib/api";
 import { FortressSection } from "./FortressSection";
@@ -100,7 +100,13 @@ describe("FortressSection", () => {
     joinAnswer = { ok: false, reason: "unknown_word", word: "recieve", position: 7 };
     renderSection();
     fireEvent.click(await screen.findByRole("button", { name: "Join a fortress" }));
-    fireEvent.change(document.querySelector('[data-word="0"]')!, { target: { value: PHRASE } });
+    // The window draws its word fields a moment after it opens.
+    const first = await waitFor(() => {
+      const field = document.querySelector('[data-word="0"]');
+      expect(field).toBeTruthy();
+      return field!;
+    });
+    fireEvent.change(first, { target: { value: PHRASE } });
     await act(async () => fireEvent.click(button("join")));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toBe(en["pairing.errUnknownWord"].replace("{position}", "7").replace("{word}", "recieve"));
