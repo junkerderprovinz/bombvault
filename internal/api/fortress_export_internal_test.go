@@ -29,7 +29,7 @@ func newFakeExporter() *fakeExporter {
 	return &fakeExporter{
 		members: []fortress.Member{
 			{ID: "t1", App: fortress.App{ID: "towertorch"}, Direct: true},
-			{ID: "k1", App: fortress.App{ID: "knightloader"}, Direct: true, Actions: []string{"backup.export"}},
+			{ID: "k1", App: fortress.App{ID: "knightloader", Name: "KnightLoader"}, Direct: true, Actions: []string{"backup.export"}},
 		},
 		reported: map[string]string{"t1": "", "k1": knightLoaderContainer[:12]},
 	}
@@ -75,8 +75,26 @@ func TestTheAppInAContainerHandsItsOwnBackupOverBeforeTheBackup(t *testing.T) {
 	if !slices.Equal(ex.exported, []string{"k1"}) {
 		t.Fatalf("fetched from %v, want k1", ex.exported)
 	}
-	if eng.repo != "/backups/containers" || eng.body != "the app's own backup" || !slices.Contains(eng.tags, "appexport:knightloader") {
+	if eng.repo != "/backups/containers" || eng.body != "the app's own backup" || eng.path != "/appexport/knightloader/knightloader" {
 		t.Fatalf("stored %+v", eng)
+	}
+	if want := []string{"appexport:knightloader", "app:knightloader", "appname:KnightLoader"}; !slices.Equal(eng.tags, want) {
+		t.Fatalf("tags = %v, want %v", eng.tags, want)
+	}
+}
+
+func TestAnAppNameThatWouldSplitIntoTagsIsLeftOut(t *testing.T) {
+	svc, _ := newFortressSvc(t)
+	eng := &stdinEngine{}
+	svc.engine = eng
+	ex := newFakeExporter()
+	ex.members[1].App.Name = "Knight,Loader"
+
+	if err := svc.storeAppExportFrom(context.Background(), ex, "knightloader", knightLoaderContainer, "/backups/containers", restic.Mode{Encrypted: true}); err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"appexport:knightloader", "app:knightloader"}; !slices.Equal(eng.tags, want) {
+		t.Fatalf("tags = %v, want %v", eng.tags, want)
 	}
 }
 

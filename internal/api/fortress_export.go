@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/status"
@@ -23,6 +24,22 @@ const appExportWait = 10 * time.Minute
 // errExportUnencrypted keeps an app's own backup, which can hold its secrets
 // in the clear, out of a repository without a password.
 var errExportUnencrypted = errors.New("the repository is not encrypted, so the app's own backup stays out of it")
+
+// The tags an app's own backup is stored under: the container it came from,
+// the app's id and, where it fits in a tag, the name the app goes by.
+const (
+	appExportTagPrefix = "appexport:"
+	appTagPrefix       = "app:"
+	appNameTagPrefix   = "appname:"
+)
+
+func appExportPath(name, app string) string { return "/appexport/" + name + "/" + app }
+
+// tagSafe reports whether text survives as one restic tag, which restic
+// splits at a comma.
+func tagSafe(text string) bool {
+	return text != "" && len(text) <= 64 && !strings.ContainsFunc(text, func(r rune) bool { return r == ',' || unicode.IsControl(r) })
+}
 
 // appExporter is the part of a fortress that hands over the backups of the
 // apps in it.
@@ -82,8 +99,11 @@ func (s *Service) storeAppExportFrom(ctx context.Context, ex appExporter, name, 
 		return fmt.Errorf("fetch it from %s: %w", m.App.ID, err)
 	}
 	defer func() { _ = rd.Close() }()
-	tags := []string{"appexport:" + name, "app:" + m.App.ID}
-	if _, err := s.engine.BackupStdin(ctx, repo, rd, "/appexport/"+name+"/"+m.App.ID, tags, mode); err != nil {
+	tags := []string{appExportTagPrefix + name, appTagPrefix + m.App.ID}
+	if tagSafe(m.App.Name) {
+		tags = append(tags, appNameTagPrefix+m.App.Name)
+	}
+	if _, err := s.engine.BackupStdin(ctx, repo, rd, appExportPath(name, m.App.ID), tags, mode); err != nil {
 		return fmt.Errorf("store it: %w", err)
 	}
 	log.Printf("fortress: stored the own backup of %s from %s", m.App.ID, name) //nolint:gosec // G706: names from the fortress and Docker, %s on a log line

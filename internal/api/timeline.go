@@ -51,6 +51,15 @@ type timelineRow struct {
 	// compression. It is absent where neither a run nor the snapshot recorded it.
 	Size   *int64         `json:"size,omitempty"`
 	Places []timelineMark `json:"places"`
+	// AppExport names the app whose own backup the row is, which the app takes
+	// back rather than a restore of the container.
+	AppExport *timelineAppExport `json:"appExport,omitempty"`
+}
+
+// timelineAppExport is the app that handed over a row's backup.
+type timelineAppExport struct {
+	App  string `json:"app"`
+	Name string `json:"name"`
 }
 
 type timeline struct {
@@ -298,16 +307,74 @@ func (s *Service) timelineRefs(domain, key string) (timelineItem, []placeRef, er
 	return it, append(refs, s.earlierPlaces(settings, it)...), nil
 }
 
-// ownedAt lists one place and keeps the snapshots the item owns there.
-func (s *Service) ownedAt(ctx context.Context, it timelineItem, p placeRef) ([]restic.Snapshot, error) {
+// heldAt lists one place and keeps the snapshots the item owns there, and
+// apart from them the own backups the apps in a container handed over.
+func (s *Service) heldAt(ctx context.Context, it timelineItem, p placeRef) (own, exports []restic.Snapshot, err error) {
 	if p.openErr != nil {
-		return nil, p.openErr
+		return nil, nil, p.openErr
 	}
 	all, err := s.listRepo(ctx, p.repo, p.mode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return s.ownedAmong(it, all)
+	own, err = s.ownedAmong(it, all)
+	return own, it.appExportsAmong(all), err
+}
+
+// appExportsAmong keeps the own backups the apps in the container handed over.
+// They carry no container tag, so no rule of ownership reaches them.
+func (it timelineItem) appExportsAmong(all []restic.Snapshot) []restic.Snapshot {
+	name, ok := strings.CutPrefix(it.identity, "container:")
+	if it.domain != "containers" || !ok {
+		return nil
+	}
+	var out []restic.Snapshot
+	for _, snap := range all {
+		if _, ok := appExportOf(snap, name); ok {
+			out = append(out, snap)
+		}
+	}
+	return out
+}
+
+// appExportOf reads the app whose own backup snap is, if it is one of the
+// container name.
+func appExportOf(snap restic.Snapshot, name string) (timelineAppExport, bool) {
+	var a timelineAppExport
+	if !slices.Contains(snap.Tags, appExportTagPrefix+name) {
+		return a, false
+	}
+	for _, tag := range snap.Tags {
+		if v, ok := strings.CutPrefix(tag, appTagPrefix); ok {
+			a.App = v
+		}
+		if v, ok := strings.CutPrefix(tag, appNameTagPrefix); ok {
+			a.Name = v
+		}
+	}
+	a.Name = cmp.Or(a.Name, a.App)
+	return a, a.App != ""
+}
+
+// appExportRowsAt makes a row of every app backup at one place.
+func appExportRowsAt(it timelineItem, place string, exports []restic.Snapshot) []timelineRow {
+	name := strings.TrimPrefix(it.identity, "container:")
+	rows := []timelineRow{}
+	index := map[string]int{}
+	for _, snap := range newestFirst(exports) {
+		key := restic.Identity(snap)
+		if i, ok := index[key]; ok {
+			rows[i].Places[0].SnapshotIDs = append(rows[i].Places[0].SnapshotIDs, snap.ID)
+			continue
+		}
+		app, _ := appExportOf(snap, name)
+		index[key] = len(rows)
+		rows = append(rows, timelineRow{
+			Key: key, Time: snap.Time, Size: recordedSize([]restic.Snapshot{snap}), AppExport: &app,
+			Places: []timelineMark{{Place: place, SnapshotIDs: []string{snap.ID}, Tags: append([]string{}, snap.Tags...)}},
+		})
+	}
+	return rows
 }
 
 // ownedAmong keeps the snapshots of one listing that the item owns.
@@ -341,13 +408,17 @@ func (s *Service) ownedAmong(it timelineItem, all []restic.Snapshot) ([]restic.S
 // readPlace lists one place into rows. A place that cannot be listed comes back
 // unreadable, with the reason and no rows.
 func (s *Service) readPlace(ctx context.Context, it timelineItem, p placeRef) (timelinePlace, []timelineRow) {
-	own, err := s.ownedAt(ctx, it, p)
+	own, exports, err := s.heldAt(ctx, it, p)
 	if err != nil {
 		p.State, p.Error = "unreadable", scrubError(err)
 		return p.timelinePlace, []timelineRow{}
 	}
 	p.State = "read"
-	return p.timelinePlace, rowsAt(it, p.Place, own)
+	rows := rowsAt(it, p.Place, own)
+	if len(exports) > 0 {
+		rows = mergeRows([][]timelineRow{rows, appExportRowsAt(it, p.Place, exports)})
+	}
+	return p.timelinePlace, rows
 }
 
 // readNow is readPlace for a place Timeline reads at once. A remote one, the
@@ -754,8 +825,8 @@ func (s *Service) timelineDeletePreview(ctx context.Context, domain, key, rowKey
 	}
 	del, others := []placeDelete{}, []otherPlace{}
 	for _, p := range refs {
-		own, err := s.ownedAt(ctx, it, p)
-		ids := it.rowIDs(own, rowKey)
+		own, exports, err := s.heldAt(ctx, it, p)
+		ids := it.rowIDs(slices.Concat(own, exports), rowKey)
 		other := otherPlace{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf}
 		switch {
 		case err != nil:
@@ -812,11 +883,11 @@ func (s *Service) timelineDelete(ctx context.Context, domain, key, rowKey string
 			skipped = append(skipped, otherPlace{Place: p.Place, Label: p.Label, DirectOf: p.DirectOf, State: "append-only"})
 			continue
 		}
-		own, err := s.ownedAt(ctx, it, p)
+		own, exports, err := s.heldAt(ctx, it, p)
 		if err != nil {
 			return deleted, skipped, err
 		}
-		held, ids := slices.Sorted(slices.Values(it.rowIDs(own, rowKey))), slices.Sorted(slices.Values(d.SnapshotIDs))
+		held, ids := slices.Sorted(slices.Values(it.rowIDs(slices.Concat(own, exports), rowKey))), slices.Sorted(slices.Values(d.SnapshotIDs))
 		if !slices.Equal(held, ids) {
 			return deleted, skipped, errPlacementStale
 		}

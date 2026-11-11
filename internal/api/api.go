@@ -293,6 +293,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/containers/{name}/dbdumps/{id}/save", h.handleSaveDBDumpTo)
 	mux.HandleFunc("POST /api/containers/{name}/dbdumps/{id}/import", h.handleImportDBDump)
 	mux.HandleFunc("DELETE /api/containers/{name}/dbimport-kept/{stamp}", h.handleRemoveKeptDataDir)
+	mux.HandleFunc("GET /api/containers/{name}/appexports/{id}/download", h.handleDownloadAppExport)
 	mux.HandleFunc("GET /api/containers/{name}/diff", h.handleDiff)
 	mux.HandleFunc("POST /api/containers/{name}/tag", h.handleTagSnapshot)
 	mux.HandleFunc("DELETE /api/containers/{name}/backups", h.handleDeleteBackups)
