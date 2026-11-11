@@ -3070,6 +3070,7 @@ const tr: Partial<Translations> = {
   "pairing.approve": "Onayla",
   "pairing.refuse": "Reddet",
   "pairing.awaiting": "Bu örnek, gruptaki diğer örneklerin onayını bekliyor. Onlardan birinde Ayarlar, Eşleştirme altında onayla.",
+  "pairing.older": "Eski bir sürümde oldukları için bunlar gruba ulaşamıyor: {names}. Tüm örnekleri ve telefon uygulamasını birlikte güncelle, birbirlerini yeniden bulsunlar.",
   "pairing.ownKey": "Bu örneğin anahtarı: {fingerprint}",
   "pairing.ownKeyTip": "Bu örnek başka bir örnekte onay beklerken o örnek onu bu anahtarla gösterir. Yalnızca iki anahtar aynıysa onayla.",
   "pairing.viaRelay": "Röle üzerinden",

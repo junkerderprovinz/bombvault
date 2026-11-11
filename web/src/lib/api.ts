@@ -7021,6 +7021,9 @@ export interface GroupState extends OkEnvelope {
   waiting: WaitingMember[];
   /** This instance's key as another one shows it while it waits there. */
   fingerprint?: string;
+  /** The devices that hold the phrase but still run an older version, which
+   *  no member reaches until they are updated. */
+  older?: string[];
   /** This instance's own address on the local network, as announced to
    *  members: learned from the browser, or a last-resort LAN guess. */
   selfAddress: string;

@@ -3070,6 +3070,7 @@ const fi: Partial<Translations> = {
   "pairing.approve": "Hyväksy",
   "pairing.refuse": "Hylkää",
   "pairing.awaiting": "Tämä instanssi odottaa hyväksyntää ryhmän muilta. Hyväksy se jossakin niistä kohdassa Asetukset, Pariliitos.",
+  "pairing.older": "Vanhemmalla versiolla nämä eivät tavoita ryhmää: {names}. Päivitä kaikki ilmentymät ja puhelinsovellus yhdessä, niin ne löytävät toisensa taas.",
   "pairing.ownKey": "Tämän instanssin avain: {fingerprint}",
   "pairing.ownKeyTip": "Kun tämä instanssi odottaa hyväksyntää toisessa, toinen näyttää sen tällä avaimella. Hyväksy se vain, jos avaimet ovat samat.",
   "pairing.viaRelay": "Releen kautta",

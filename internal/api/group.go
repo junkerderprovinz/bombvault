@@ -654,6 +654,9 @@ type groupView struct {
 	// Waiting are the members that wait for a person here to let them in,
 	// and the ones this instance waits for there.
 	Waiting []group.Waiting `json:"waiting"`
+	// Older names the devices that hold the phrase but still run a version
+	// from before the group ran on the kit, which no member reaches.
+	Older []string `json:"older"`
 	// Fingerprint is this instance's key as another instance shows it while
 	// this one waits there, empty outside a group.
 	Fingerprint string `json:"fingerprint,omitempty"`
@@ -722,6 +725,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		Away:        away,
 		Settling:    settling,
 		Waiting:     h.svc.pairing().Waiting(),
+		Older:       h.svc.pairing().Older(),
 		Relay: relayView{
 			Mode:         g.RelayMode,
 			URL:          g.RelayURL,

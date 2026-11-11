@@ -3067,6 +3067,7 @@ const pl: Partial<Translations> = {
   "pairing.approve": "Zatwierdź",
   "pairing.refuse": "Odrzuć",
   "pairing.awaiting": "Ta instancja czeka na zatwierdzenie przez pozostałe instancje w grupie. Zatwierdź ją na jednej z nich w Ustawieniach, Parowanie.",
+  "pairing.older": "Ze starszą wersją te nie docierają do grupy: {names}. Zaktualizuj wszystkie instancje i aplikację na telefonie jednocześnie, a znów się odnajdą.",
   "pairing.ownKey": "Klucz tej instancji: {fingerprint}",
   "pairing.ownKeyTip": "Gdy ta instancja czeka na zatwierdzenie na innej, tamta pokazuje ją z tym kluczem. Zatwierdź ją tylko wtedy, gdy oba klucze się zgadzają.",
   "pairing.viaRelay": "Przez relay",

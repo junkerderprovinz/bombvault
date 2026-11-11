@@ -3070,6 +3070,7 @@ const sv: Partial<Translations> = {
   "pairing.approve": "Godkänn",
   "pairing.refuse": "Neka",
   "pairing.awaiting": "Den här instansen väntar på godkännande från de andra i gruppen. Godkänn den på en av dem under Inställningar, Parkoppling.",
+  "pairing.older": "Med en äldre version når de här inte gruppen: {names}. Uppdatera alla instanser och telefonappen samtidigt, så hittar de varandra igen.",
   "pairing.ownKey": "Den här instansens nyckel: {fingerprint}",
   "pairing.ownKeyTip": "När den här instansen väntar på godkännande på en annan visar den andra den med den här nyckeln. Godkänn den bara om nycklarna stämmer överens.",
   "pairing.viaRelay": "Via relä",

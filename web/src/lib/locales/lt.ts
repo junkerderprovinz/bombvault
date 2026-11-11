@@ -1940,6 +1940,7 @@ const lt: Partial<Translations> = {
   "pairing.approve": "Patvirtinti",
   "pairing.refuse": "Atmesti",
   "pairing.awaiting": "Šis egzempliorius laukia kitų grupės egzempliorių patvirtinimo. Patvirtink jį viename iš jų skiltyje Nustatymai, Susiejimas.",
+  "pairing.older": "Su senesne versija šie nepasiekia grupės: {names}. Atnaujink visus egzempliorius ir telefono programėlę kartu, ir jie vėl ras vienas kitą.",
   "pairing.ownKey": "Šio egzemplioriaus raktas: {fingerprint}",
   "pairing.ownKeyTip": "Kai šis egzempliorius laukia patvirtinimo kitame, tas jį rodo su šiuo raktu. Patvirtink jį tik tada, jei abu raktai sutampa.",
   "pairing.viaRelay": "Per relay",

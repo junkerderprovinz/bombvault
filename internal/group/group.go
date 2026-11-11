@@ -386,6 +386,16 @@ func (m *Manager) departedNow() map[string]bool {
 	return out
 }
 
+// Older lists the names of the devices on the relay that hold the phrase but
+// still run a BombVault or an app from before the group ran on the kit.
+func (m *Manager) Older() []string {
+	g, _ := m.group()
+	if g == nil {
+		return nil
+	}
+	return g.Older()
+}
+
 // Waiting lists the members that wait for approval here, and the ones this
 // instance waits for there.
 func (m *Manager) Waiting() []Waiting {

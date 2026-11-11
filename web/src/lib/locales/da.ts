@@ -3070,6 +3070,7 @@ const da: Partial<Translations> = {
   "pairing.approve": "Godkend",
   "pairing.refuse": "Afvis",
   "pairing.awaiting": "Denne instans venter på godkendelse fra de andre i gruppen. Godkend den på en af dem under Indstillinger, Parring.",
+  "pairing.older": "Med en ældre version når disse ikke gruppen: {names}. Opdater alle dine instanser og telefonappen samtidig, så finder de hinanden igen.",
   "pairing.ownKey": "Nøgle til denne instans: {fingerprint}",
   "pairing.ownKeyTip": "Når denne instans venter på godkendelse på en anden, viser den anden den med denne nøgle. Godkend den kun, hvis de to nøgler er ens.",
   "pairing.viaRelay": "Via videresender",

@@ -1940,6 +1940,7 @@ const et: Partial<Translations> = {
   "pairing.approve": "Kinnita",
   "pairing.refuse": "Keeldu",
   "pairing.awaiting": "See eksemplar ootab grupi teiste kinnitust. Kinnita see ühes neist jaotises Seaded, Sidumine.",
+  "pairing.older": "Vanema versiooniga need gruppi ei jõua: {names}. Uuenda kõik eksemplarid ja telefonirakendus korraga, siis leiavad nad üksteist jälle üles.",
   "pairing.ownKey": "Selle eksemplari võti: {fingerprint}",
   "pairing.ownKeyTip": "Kui see eksemplar ootab teises kinnitust, näitab teine seda selle võtmega. Kinnita see ainult siis, kui mõlemad võtmed on samad.",
   "pairing.viaRelay": "Edastaja kaudu",

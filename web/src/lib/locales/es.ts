@@ -3068,6 +3068,7 @@ const es: Partial<Translations> = {
   "pairing.approve": "Aprobar",
   "pairing.refuse": "Rechazar",
   "pairing.awaiting": "Esta instancia espera la aprobación de las demás del grupo. Apruébala en una de ellas en Ajustes, Emparejamiento.",
+  "pairing.older": "Con una versión anterior, estos no llegan al grupo: {names}. Actualiza todas tus instancias y la app del teléfono a la vez y volverán a encontrarse.",
   "pairing.ownKey": "Clave de esta instancia: {fingerprint}",
   "pairing.ownKeyTip": "Cuando esta instancia espera aprobación en otra, esa otra la muestra con esta clave. Apruébala solo si las dos claves coinciden.",
   "pairing.viaRelay": "Vía repetidor",

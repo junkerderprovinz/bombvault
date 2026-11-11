@@ -9,7 +9,7 @@ require (
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-connections v0.8.2
 	github.com/go-webauthn/webauthn v0.18.2
-	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111001442-c894744c53ae
+	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111002855-a12f1f979f61
 	github.com/klauspost/compress v1.20.4
 	github.com/mochi-mqtt/server/v2 v2.7.9
 	github.com/modelcontextprotocol/go-sdk v1.8.0

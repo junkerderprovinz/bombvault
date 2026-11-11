@@ -3061,6 +3061,7 @@ const ja: Partial<Translations> = {
   "pairing.approve": "承認",
   "pairing.refuse": "拒否",
   "pairing.awaiting": "このインスタンスはグループのほかのインスタンスからの承認を待っています。そのうちの 1 つで「設定」の「ペアリング」から承認してください。",
+  "pairing.older": "古いバージョンのため、次のものはグループにつながりません: {names}。すべてのインスタンスとスマホアプリを一緒に更新すると、また互いに見つかります。",
   "pairing.ownKey": "このインスタンスの鍵: {fingerprint}",
   "pairing.ownKeyTip": "このインスタンスが別のインスタンスで承認を待っているとき、そちらではこの鍵で表示されます。2 つの鍵が一致する場合にだけ承認してください。",
   "pairing.viaRelay": "リレー経由",

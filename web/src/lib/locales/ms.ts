@@ -1940,6 +1940,7 @@ const ms: Partial<Translations> = {
   "pairing.approve": "Luluskan",
   "pairing.refuse": "Tolak",
   "pairing.awaiting": "Instans ini menunggu kelulusan daripada instans lain dalam kumpulan. Luluskannya pada salah satu daripadanya di Tetapan, Gandingan.",
+  "pairing.older": "Dengan versi lama, ini tidak dapat mencapai kumpulan: {names}. Kemas kini semua instans dan aplikasi telefon bersama-sama, dan ia akan bertemu semula.",
   "pairing.ownKey": "Kunci instans ini: {fingerprint}",
   "pairing.ownKeyTip": "Apabila instans ini menunggu kelulusan pada instans lain, instans itu memaparkannya dengan kunci ini. Luluskannya hanya jika kedua-dua kunci sepadan.",
   "pairing.viaRelay": "Melalui relay",

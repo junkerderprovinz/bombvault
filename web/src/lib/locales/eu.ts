@@ -1940,6 +1940,7 @@ const eu: Partial<Translations> = {
   "pairing.approve": "Onartu",
   "pairing.refuse": "Ukatu",
   "pairing.awaiting": "Instantzia hau taldeko besteen onarpenaren zain dago. Onartu horietako batean, Ezarpenak, Parekatzea atalean.",
+  "pairing.older": "Bertsio zaharrago batekin, hauek ez dira taldera iristen: {names}. Eguneratu instantzia guztiak eta telefonoko aplikazioa batera, eta elkar aurkituko dute berriro.",
   "pairing.ownKey": "Instantzia honen gakoa: {fingerprint}",
   "pairing.ownKeyTip": "Instantzia hau beste batean onarpenaren zain dagoenean, besteak gako honekin erakusten du. Onartu bi gakoak berdinak badira bakarrik.",
   "pairing.viaRelay": "Bitartekariaren bidez",

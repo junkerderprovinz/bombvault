@@ -3061,6 +3061,7 @@ const ko: Partial<Translations> = {
   "pairing.approve": "승인",
   "pairing.refuse": "거부",
   "pairing.awaiting": "이 인스턴스는 그룹의 다른 인스턴스들의 승인을 기다리고 있습니다. 그중 하나의 설정, 페어링에서 승인하세요.",
+  "pairing.older": "이전 버전이라 다음 항목은 그룹에 연결되지 않습니다: {names}. 모든 인스턴스와 휴대폰 앱을 함께 업데이트하면 다시 서로를 찾습니다.",
   "pairing.ownKey": "이 인스턴스의 키: {fingerprint}",
   "pairing.ownKeyTip": "이 인스턴스가 다른 인스턴스에서 승인을 기다리면 그쪽에 이 키로 표시됩니다. 두 키가 같을 때만 승인하세요.",
   "pairing.viaRelay": "릴레이 경유",

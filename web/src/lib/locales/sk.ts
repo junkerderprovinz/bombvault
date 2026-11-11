@@ -1940,6 +1940,7 @@ const sk: Partial<Translations> = {
   "pairing.approve": "Schváliť",
   "pairing.refuse": "Odmietnuť",
   "pairing.awaiting": "Táto inštancia čaká na schválenie od ostatných v skupine. Schváľ ju na jednej z nich v Nastaveniach, Párovanie.",
+  "pairing.older": "So staršou verziou sa tieto do skupiny nedostanú: {names}. Aktualizuj všetky inštancie a aplikáciu v telefóne naraz a znova sa nájdu.",
   "pairing.ownKey": "Kľúč tejto inštancie: {fingerprint}",
   "pairing.ownKeyTip": "Keď táto inštancia čaká na schválenie na inej, tá ju zobrazuje s týmto kľúčom. Schváľ ju, len ak sa oba kľúče zhodujú.",
   "pairing.viaRelay": "Cez relay",

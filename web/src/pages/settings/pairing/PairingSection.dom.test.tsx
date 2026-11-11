@@ -521,6 +521,20 @@ describe("after a minute alone", () => {
   });
 });
 
+describe("devices on an older version", () => {
+  it("names them and asks to update everything together", async () => {
+    group = makeGroup({ older: ["attic", "Pixel"] });
+    await renderTab();
+    const note = screen.getByTestId("older");
+    expect(note.textContent).toBe(en["pairing.older"].replace("{names}", "attic, Pixel"));
+  });
+
+  it("says nothing while every device is up to date", async () => {
+    await renderTab();
+    expect(screen.queryByTestId("older")).toBeNull();
+  });
+});
+
 describe("pairing by the phrase alone", () => {
   it("has nowhere to type the address of an instance, this one's own included", async () => {
     for (const g of [alone({ relay: noRelay() }), makeGroup(), outside()]) {

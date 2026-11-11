@@ -1940,6 +1940,7 @@ const is: Partial<Translations> = {
   "pairing.approve": "Samþykkja",
   "pairing.refuse": "Hafna",
   "pairing.awaiting": "Þetta tilvik bíður samþykkis hinna í hópnum. Samþykktu það á einu þeirra undir Stillingar, Pörun.",
+  "pairing.older": "Á eldri útgáfu ná þessi ekki til hópsins: {names}. Uppfærðu öll tilvik og símaforritið saman, þá finna þau hvert annað aftur.",
   "pairing.ownKey": "Lykill þessa tilviks: {fingerprint}",
   "pairing.ownKeyTip": "Þegar þetta tilvik bíður samþykkis á öðru sýnir hitt það með þessum lykli. Samþykktu það aðeins ef lyklarnir tveir eru eins.",
   "pairing.viaRelay": "Um relay",

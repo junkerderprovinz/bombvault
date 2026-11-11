@@ -3070,6 +3070,7 @@ const it: Partial<Translations> = {
   "pairing.approve": "Approva",
   "pairing.refuse": "Rifiuta",
   "pairing.awaiting": "Questa istanza attende l'approvazione delle altre del gruppo. Approvala su una di loro in Impostazioni, Associazione.",
+  "pairing.older": "Con una versione precedente, questi non raggiungono il gruppo: {names}. Aggiorna insieme tutte le istanze e l'app del telefono e si ritroveranno.",
   "pairing.ownKey": "Chiave di questa istanza: {fingerprint}",
   "pairing.ownKeyTip": "Quando questa istanza attende l'approvazione su un'altra, quest'ultima la mostra con questa chiave. Approvala solo se le due chiavi coincidono.",
   "pairing.viaRelay": "Tramite relay",

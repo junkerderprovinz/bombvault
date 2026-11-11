@@ -3069,6 +3069,7 @@ const nl: Partial<Translations> = {
   "pairing.approve": "Goedkeuren",
   "pairing.refuse": "Weigeren",
   "pairing.awaiting": "Deze instantie wacht op goedkeuring door de andere van de groep. Keur haar op een ervan goed onder Instellingen, Koppeling.",
+  "pairing.older": "Met een oudere versie bereiken deze de groep niet: {names}. Werk al je instanties en de telefoonapp tegelijk bij, dan vinden ze elkaar weer.",
   "pairing.ownKey": "Sleutel van deze instantie: {fingerprint}",
   "pairing.ownKeyTip": "Als deze instantie op een andere wacht op goedkeuring, toont die andere haar met deze sleutel. Keur haar alleen goed als beide sleutels gelijk zijn.",
   "pairing.viaRelay": "Via relay",

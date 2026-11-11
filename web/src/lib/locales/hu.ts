@@ -3071,6 +3071,7 @@ const hu: Partial<Translations> = {
   "pairing.approve": "Jóváhagyás",
   "pairing.refuse": "Elutasítás",
   "pairing.awaiting": "Ez a példány a csoport többi tagjának jóváhagyására vár. Hagyd jóvá valamelyiken a Beállítások, Párosítás alatt.",
+  "pairing.older": "Régebbi verzióval ezek nem érik el a csoportot: {names}. Frissítsd az összes példányt és a telefonos appot együtt, és újra megtalálják egymást.",
   "pairing.ownKey": "Ennek a példánynak a kulcsa: {fingerprint}",
   "pairing.ownKeyTip": "Ha ez a példány egy másikon jóváhagyásra vár, a másik ezzel a kulccsal mutatja. Csak akkor hagyd jóvá, ha a két kulcs egyezik.",
   "pairing.viaRelay": "Relayen keresztül",

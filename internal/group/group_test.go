@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coder/websocket"
 	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/member"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
@@ -401,4 +402,38 @@ func TestTwoNewInstancesKnowEachOtherSoonAfterBothApproved(t *testing.T) {
 	if took := time.Since(approved); took > 3*time.Second {
 		t.Fatalf("the two knew each other %v after the second approval", took)
 	}
+}
+
+func TestADeviceOnAnOlderVersionIsNamed(t *testing.T) {
+	url := startRelay(t)
+	a := newNode(t, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 1)
+	a.apply(url, nil)
+	eventually(t, "a on the relay", a.m.RelayConnected)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conn, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(url, "http")+"/relay/connect", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.CloseNow() }()
+	if _, _, err := conn.Read(ctx); err != nil {
+		t.Fatal(err)
+	}
+	const old = "cccccccccccccccccccccccccccccccc"
+	sealed, err := relay.SealIdentity(Domain.FrameKey(secret), old, relay.Identity{Name: "attic"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hello, err := relay.Encode(relay.TypeHello, relay.Hello{Key: Domain.GroupKey(secret), Announce: relay.Announce{InstanceID: old, Sealed: sealed}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
+		t.Fatal(err)
+	}
+	eventually(t, "a names the device on the older version", func() bool {
+		o := a.m.Older()
+		return len(o) == 1 && o[0] == "attic"
+	})
 }

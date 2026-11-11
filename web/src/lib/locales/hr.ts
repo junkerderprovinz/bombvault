@@ -1940,6 +1940,7 @@ const hr: Partial<Translations> = {
   "pairing.approve": "Odobri",
   "pairing.refuse": "Odbij",
   "pairing.awaiting": "Ova instanca čeka odobrenje ostalih u skupini. Odobri je na jednoj od njih u Postavkama, Uparivanje.",
+  "pairing.older": "Sa starijom verzijom ovi ne dosežu grupu: {names}. Ažurirajte sve instance i aplikaciju na telefonu zajedno i ponovno će se pronaći.",
   "pairing.ownKey": "Ključ ove instance: {fingerprint}",
   "pairing.ownKeyTip": "Kad ova instanca čeka odobrenje na drugoj, ta je prikazuje s ovim ključem. Odobri je samo ako se oba ključa podudaraju.",
   "pairing.viaRelay": "Preko releja",

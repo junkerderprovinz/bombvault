@@ -3070,6 +3070,7 @@ const pt: Partial<Translations> = {
   "pairing.approve": "Aprovar",
   "pairing.refuse": "Recusar",
   "pairing.awaiting": "Esta instância está à espera da aprovação das outras do grupo. Aprova-a numa delas em Definições, Emparelhamento.",
+  "pairing.older": "Numa versão mais antiga, estes não chegam ao grupo: {names}. Atualiza todas as instâncias e a app do telemóvel ao mesmo tempo e voltam a encontrar-se.",
   "pairing.ownKey": "Chave desta instância: {fingerprint}",
   "pairing.ownKeyTip": "Quando esta instância aguarda aprovação noutra, essa mostra-a com esta chave. Aprova-a apenas se as duas chaves coincidirem.",
   "pairing.viaRelay": "Via relay",

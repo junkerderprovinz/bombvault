@@ -3068,6 +3068,7 @@ const cs: Partial<Translations> = {
   "pairing.approve": "Schválit",
   "pairing.refuse": "Odmítnout",
   "pairing.awaiting": "Tato instance čeká na schválení od ostatních ve skupině. Schval ji na jedné z nich v Nastavení, Párování.",
+  "pairing.older": "Se starší verzí se tyto do skupiny nedostanou: {names}. Aktualizuj všechny instance a aplikaci v telefonu najednou a zase se najdou.",
   "pairing.ownKey": "Klíč této instance: {fingerprint}",
   "pairing.ownKeyTip": "Když tato instance čeká na schválení na jiné, ta ji zobrazuje s tímto klíčem. Schval ji, jen pokud se oba klíče shodují.",
   "pairing.viaRelay": "Přes přeposílač",

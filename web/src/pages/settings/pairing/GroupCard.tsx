@@ -218,6 +218,11 @@ export function GroupCard({
           </Rows>
         </div>
         <Waiting group={group} onGroup={onGroup} t={t} />
+        {(group.older ?? []).length > 0 && (
+          <p data-testid="older" className="border-t border-carbon-border/60 pt-3 text-sm text-statusWarn">
+            {t("pairing.older").replace("{names}", () => (group.older ?? []).join(", "))}
+          </p>
+        )}
         {stage === "new" ? (
           <WaitRow text={t("pairing.waitNext")} />
         ) : stage !== "paired" && stage !== "unpaired" ? (

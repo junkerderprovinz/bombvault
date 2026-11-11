@@ -3061,6 +3061,7 @@ const vi: Partial<Translations> = {
   "pairing.approve": "Duyệt",
   "pairing.refuse": "Từ chối",
   "pairing.awaiting": "Phiên bản này đang chờ các phiên bản khác trong nhóm duyệt. Hãy duyệt nó trên một trong số đó tại Cài đặt, Ghép nối.",
+  "pairing.older": "Do dùng phiên bản cũ, những thiết bị này không vào được nhóm: {names}. Hãy cập nhật tất cả phiên bản và ứng dụng điện thoại cùng lúc để chúng tìm lại nhau.",
   "pairing.ownKey": "Khóa của phiên bản này: {fingerprint}",
   "pairing.ownKeyTip": "Khi phiên bản này chờ duyệt trên một phiên bản khác, phiên bản đó hiển thị nó với khóa này. Chỉ duyệt khi hai khóa trùng nhau.",
   "pairing.viaRelay": "Qua relay",

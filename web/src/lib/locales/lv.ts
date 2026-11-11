@@ -1940,6 +1940,7 @@ const lv: Partial<Translations> = {
   "pairing.approve": "Apstiprināt",
   "pairing.refuse": "Noraidīt",
   "pairing.awaiting": "Šī instance gaida apstiprinājumu no pārējām grupas instancēm. Apstiprini to kādā no tām sadaļā Iestatījumi, Pārošana.",
+  "pairing.older": "Ar vecāku versiju šie nesasniedz grupu: {names}. Atjauniniet visas instances un tālruņa lietotni kopā, un tās atkal atradīs cita citu.",
   "pairing.ownKey": "Šīs instances atslēga: {fingerprint}",
   "pairing.ownKeyTip": "Kad šī instance gaida apstiprinājumu citā instancē, tā to rāda ar šo atslēgu. Apstiprini to tikai tad, ja abas atslēgas sakrīt.",
   "pairing.viaRelay": "Caur relay",

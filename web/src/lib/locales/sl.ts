@@ -1934,6 +1934,7 @@ const sl: Partial<Translations> = {
   "pairing.approve": "Odobri",
   "pairing.refuse": "Zavrni",
   "pairing.awaiting": "Ta instanca čaka na odobritev ostalih v skupini. Odobri jo na eni od njih v Nastavitvah, Seznanjanje.",
+  "pairing.older": "S starejšo različico ti ne dosežejo skupine: {names}. Posodobi vse primerke in aplikacijo na telefonu hkrati, pa se bodo spet našli.",
   "pairing.ownKey": "Ključ te instance: {fingerprint}",
   "pairing.ownKeyTip": "Ko ta instanca čaka na odobritev na drugi, jo ta prikaže s tem ključem. Odobri jo samo, če se ključa ujemata.",
   "pairing.viaRelay": "Prek relaya",

@@ -1940,6 +1940,7 @@ const gl: Partial<Translations> = {
   "pairing.approve": "Aprobar",
   "pairing.refuse": "Rexeitar",
   "pairing.awaiting": "Esta instancia agarda a aprobación das outras do grupo. Apróbaa nunha delas en Configuración, Emparellamento.",
+  "pairing.older": "Cunha versión anterior, estes non chegan ao grupo: {names}. Actualiza todas as instancias e a app do teléfono á vez e volverán atoparse.",
   "pairing.ownKey": "Chave desta instancia: {fingerprint}",
   "pairing.ownKeyTip": "Cando esta instancia agarda aprobación noutra, esa outra móstraa con esta chave. Apróbaa só se as dúas chaves coinciden.",
   "pairing.viaRelay": "Vía relé",

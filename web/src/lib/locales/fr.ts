@@ -3070,6 +3070,7 @@ const fr: Partial<Translations> = {
   "pairing.approve": "Approuver",
   "pairing.refuse": "Refuser",
   "pairing.awaiting": "Cette instance attend l'approbation des autres instances du groupe. Approuvez-la sur l'une d'elles dans Paramètres, Appairage.",
+  "pairing.older": "Sur une version plus ancienne, ceux-ci n'atteignent pas le groupe : {names}. Mettez à jour toutes vos instances et l'app du téléphone en même temps, et ils se retrouveront.",
   "pairing.ownKey": "Clé de cette instance : {fingerprint}",
   "pairing.ownKeyTip": "Quand cette instance attend une approbation sur une autre, celle-ci l'affiche avec cette clé. Ne l'approuvez que si les deux clés sont identiques.",
   "pairing.viaRelay": "Via le relais",

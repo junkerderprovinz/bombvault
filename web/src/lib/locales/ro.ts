@@ -3071,6 +3071,7 @@ const ro: Partial<Translations> = {
   "pairing.approve": "Aprobă",
   "pairing.refuse": "Refuză",
   "pairing.awaiting": "Această instanță așteaptă aprobarea celorlalte din grup. Aprob-o pe una dintre ele în Setări, Împerechere.",
+  "pairing.older": "Pe o versiune mai veche, acestea nu ajung la grup: {names}. Actualizează toate instanțele și aplicația de telefon împreună și se vor regăsi.",
   "pairing.ownKey": "Cheia acestei instanțe: {fingerprint}",
   "pairing.ownKeyTip": "Când această instanță așteaptă aprobarea pe alta, cealaltă o afișează cu această cheie. Aprob-o doar dacă cele două chei se potrivesc.",
   "pairing.viaRelay": "Prin relay",

@@ -3061,6 +3061,7 @@ const zh: Partial<Translations> = {
   "pairing.approve": "批准",
   "pairing.refuse": "拒绝",
   "pairing.awaiting": "此实例正在等待组内其他实例批准。请在其中一个实例的“设置”的“配对”中批准它。",
+  "pairing.older": "以下设备运行的是旧版本，无法连到群组：{names}。请同时更新所有实例和手机应用，它们就会重新找到彼此。",
   "pairing.ownKey": "此实例的密钥：{fingerprint}",
   "pairing.ownKeyTip": "当此实例在另一个实例上等待批准时，那个实例会用这个密钥显示它。只有两个密钥一致时才批准。",
   "pairing.viaRelay": "经中继",

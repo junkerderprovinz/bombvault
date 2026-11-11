@@ -1940,6 +1940,7 @@ const id: Partial<Translations> = {
   "pairing.approve": "Setujui",
   "pairing.refuse": "Tolak",
   "pairing.awaiting": "Instance ini menunggu persetujuan dari instance lain dalam grup. Setujui di salah satunya di Pengaturan, Pemasangan.",
+  "pairing.older": "Dengan versi lama, ini tidak bisa menjangkau grup: {names}. Perbarui semua instance dan aplikasi ponsel bersamaan, lalu mereka akan saling menemukan lagi.",
   "pairing.ownKey": "Kunci instance ini: {fingerprint}",
   "pairing.ownKeyTip": "Saat instance ini menunggu persetujuan di instance lain, instance itu menampilkannya dengan kunci ini. Setujui hanya jika kedua kunci sama.",
   "pairing.viaRelay": "Melalui relay",

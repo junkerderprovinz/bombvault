@@ -1940,6 +1940,7 @@ const ca: Partial<Translations> = {
   "pairing.approve": "Aprova",
   "pairing.refuse": "Rebutja",
   "pairing.awaiting": "Aquesta instància espera l'aprovació de les altres del grup. Aprova-la en una d'elles a Configuració, Aparellament.",
+  "pairing.older": "Amb una versió anterior, aquests no arriben al grup: {names}. Actualitza totes les instàncies i l'app del telèfon alhora i es tornaran a trobar.",
   "pairing.ownKey": "Clau d'aquesta instància: {fingerprint}",
   "pairing.ownKeyTip": "Quan aquesta instància espera aprovació en una altra, l'altra la mostra amb aquesta clau. Aprova-la només si les dues claus coincideixen.",
   "pairing.viaRelay": "Via repetidor",

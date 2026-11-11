@@ -77,6 +77,8 @@ github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110212926-88ba24df583f h1
 github.com/junkerderprovinz/parleyport/kit v0.0.0-20261110212926-88ba24df583f/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
 github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111001442-c894744c53ae h1:XDInkAthAPEmRaIMwPDdYbH54Y7Fa0b8mXGLU9D0QZY=
 github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111001442-c894744c53ae/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111002855-a12f1f979f61 h1:pMa62SOsmG+t5tSYz0lFrc+9RrjXzqNUYD8i/Jxyu4M=
+github.com/junkerderprovinz/parleyport/kit v0.0.0-20261111002855-a12f1f979f61/go.mod h1:/GHVd/HB+Br/336IHKuQBYSc4UGG3NXAfowh1q/DYx8=
 github.com/klauspost/compress v1.20.4 h1:dD0v/bvxtjCBqQu6sx1TNWkalEY5lNTIe+HY9w8TeNI=
 github.com/klauspost/compress v1.20.4/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
