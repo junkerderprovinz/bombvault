@@ -4027,6 +4027,1172 @@ body {
   .glim-select-indicator { transition: rotate var(--motion-control-dur) ease; }
 }
 
+/* GlimStone's fortress (@glimstone/react's Fortress and FortressPairing) and
+   what its own components draw inside it: the card, badge, window, switch,
+   field row, password field and selector. They come from its tokens.css and
+   are scoped to its own class names, so BombVault's controls stay as they are.
+   The windows take the scrim layout only around a GlimStone window. */
+@layer components {
+  :root {
+    --seg-pinned-h: 2.35rem;
+  }
+  .glim-modal-backdrop:has(> .glim-window) {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .glim-modal-card.glim-window {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 85dvh;
+    border-radius: var(--radius-card);
+    background-color: var(--carbon-surface);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  }
+  .glim-info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    color: var(--carbon-text-muted);
+    opacity: .8;
+    cursor: help;
+  }
+  .glim-info-icon svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+  }
+  .glim-info-icon:hover {
+    opacity: 1;
+  }
+  .glim-info-icon:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .glim-modal-foot > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg),
+  .glim-modal-foot > .glim-tip-wrap > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
+    min-width: var(--btn-w-xs);
+  }
+  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn {
+    height: auto;
+    min-height: var(--btn-h);
+    padding-block: 0.375rem;
+  }
+  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn-key {
+    min-height: var(--btn-h-key);
+  }
+  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn > .glim-btn-label {
+    white-space: normal;
+    text-wrap: balance;
+    text-align: center;
+  }
+  :where(.glim-badge, .glim-toggle-track, .glim-sel-seg, .glim-input, .glim-secret-eye) {
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+    background-color: transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
+  .glim-info-icon--on-accent {
+    color: inherit;
+    opacity: 1;
+  }
+  .glim-info-icon:focus {
+    opacity: 1;
+  }
+  .glim-modal-body {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+  }
+  .glim-modal-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+  }
+  .glim-modal-foot > .glim-tip-wrap {
+    flex: none;
+  }
+  .glim-btn--accent {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .glim-btn--neutral {
+    background-color: var(--carbon-surface3);
+    color: var(--carbon-text);
+  }
+  .glim-btn--subtle {
+    background-color: var(--carbon-surface2);
+    color: var(--carbon-text);
+  }
+  .glim-btn--ok {
+    background-color: var(--status-ok-solid);
+    color: var(--carbon-bg);
+  }
+  .glim-btn--danger {
+    background-color: var(--status-fail-solid);
+    color: var(--carbon-bg);
+  }
+  .glim-btn--warn {
+    background-color: var(--status-warn-solid);
+    color: var(--carbon-bg);
+  }
+  @media (hover: hover) {
+    .glim-btn--accent:hover {
+      background-color: var(--accent-hover);
+    }
+  }
+  @media (hover: hover) {
+    .glim-btn--neutral:hover {
+      background-color: var(--carbon-hover-raised);
+    }
+  }
+  @media (hover: hover) {
+    .glim-btn--subtle:hover {
+      background-color: var(--carbon-surface3);
+    }
+  }
+  @media (hover: hover) {
+    .glim-btn--ok:hover {
+      background-color: var(--status-ok-hover);
+    }
+  }
+  @media (hover: hover) {
+    .glim-btn--danger:hover {
+      background-color: var(--status-fail-hover);
+    }
+  }
+  @media (hover: hover) {
+    .glim-btn--warn:hover {
+      background-color: var(--status-warn-hover);
+    }
+  }
+  .glim-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .glim-toggle-label {
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+    color: var(--carbon-text);
+  }
+  .glim-toggle-track {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    width: 2.25rem;
+    height: 1.25rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--toggle-off);
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glim-toggle-track[aria-checked="true"] {
+    background-color: var(--accent);
+  }
+  .glim-toggle-track:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .glim-toggle-track:disabled {
+    opacity: 0.5;
+  }
+  .glim-toggle-track[aria-disabled="true"] {
+    background-color: color-mix(in srgb, var(--toggle-off) 50%, transparent);
+  }
+  .glim-toggle-track[aria-disabled="true"][aria-checked="true"] {
+    background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  @media (hover: none) {
+    .glim-field-row-controls:has(> .glim-toggle-refusal) {
+      flex-wrap: wrap;
+    }
+  }
+  .glim-toggle-thumb {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--carbon-bg);
+    translate: 3px 0;
+    transition: translate 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glim-toggle-track[aria-checked="true"] .glim-toggle-thumb {
+    translate: 18px 0;
+  }
+  .glim-toggle-thumb:dir(rtl) {
+    translate: -3px 0;
+  }
+  .glim-toggle-track[aria-checked="true"] .glim-toggle-thumb:dir(rtl) {
+    translate: -18px 0;
+  }
+  .glim-badge {
+    display: inline-flex;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    height: var(--badge-h);
+    min-height: 0;
+    padding-inline: var(--badge-px);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-meta);
+    font-weight: 500;
+    line-height: 1;
+  }
+  .glim-badge--small {
+    --badge-h: 18px;
+    --badge-px: 0.375rem;
+  }
+  .glim-badge--medium {
+    --badge-h: 1.25rem;
+    --badge-px: 0.5rem;
+  }
+  .glim-badge--large {
+    --badge-h: 1.5rem;
+    --badge-px: 0.625rem;
+  }
+  .glim-badge--icon {
+    --badge-h: 2rem;
+    --badge-px: 0.5rem;
+  }
+  .glim-badge--heading {
+    --badge-h: 22px;
+    --badge-px: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .glim-badge--wrap {
+    height: auto;
+    min-height: var(--badge-h);
+    padding-block: 0.125rem;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+  }
+  .glim-badge--icon-only {
+    padding-inline: 0;
+    aspect-ratio: 1;
+  }
+  .glim-badge--ok {
+    background-color: var(--status-ok-bg);
+    color: var(--status-ok-text);
+  }
+  .glim-badge--fail {
+    background-color: var(--status-fail-bg);
+    color: var(--status-fail-text);
+  }
+  .glim-badge--warn {
+    background-color: var(--status-warn-bg-strong);
+    color: var(--status-warn-text);
+  }
+  .glim-badge--active {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+  }
+  .glim-badge--neutral {
+    background-color: var(--carbon-surface2);
+    color: var(--carbon-text-sub);
+  }
+  .glim-badge--solid {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .glim-badge--muted {
+    color: var(--carbon-text-muted);
+  }
+  .glim-badge--notch {
+    box-shadow: var(--elevation);
+  }
+  .glim-badge--notch-placed {
+    position: absolute;
+    top: 0;
+    z-index: 10;
+    translate: 0 -50%;
+  }
+  .glim-badge--inset-4 {
+    inset-inline-start: 1rem;
+  }
+  .glim-badge--inset-5 {
+    inset-inline-start: 1.25rem;
+  }
+  .glim-badge--inset-6 {
+    inset-inline-start: 1.5rem;
+  }
+  .glim-badge-action {
+    appearance: none;
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glim-badge-action:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  @media (hover: hover) {
+    .glim-badge-action.glim-badge--ok:hover {
+      background-color: color-mix(in srgb, var(--status-ok-bg), var(--status-ok-text) 12%);
+    }
+  }
+  @media (hover: hover) {
+    .glim-badge-action.glim-badge--fail:hover {
+      background-color: color-mix(in srgb, var(--status-fail-bg), var(--status-fail-text) 12%);
+    }
+  }
+  @media (hover: hover) {
+    .glim-badge-action.glim-badge--warn:hover {
+      background-color: color-mix(in srgb, var(--status-warn-bg-strong), var(--status-warn-text) 12%);
+    }
+  }
+  @media (hover: hover) {
+    .glim-badge-action.glim-badge--active:hover {
+      background-color: color-mix(in srgb, var(--accent-soft), var(--accent) 12%);
+    }
+  }
+  @media (hover: hover) {
+    .glim-badge-action.glim-badge--solid:hover {
+      background-color: var(--accent-hover);
+    }
+  }
+  .glim-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-card);
+    background-color: var(--carbon-surface);
+  }
+  .glim-panel--nested {
+    padding: 1.25rem 0 0;
+    border-radius: 0;
+    background-color: transparent;
+  }
+  .glim-panel-heading {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .glim-spinner {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 9999px;
+    animation: glim-spin 1s linear infinite;
+  }
+  .glim-mark {
+    flex-shrink: 0;
+  }
+  .glim-tip-wrap {
+    display: inline-flex;
+  }
+  .glim-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .glim-sel {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    width: 100%;
+    contain: inline-size;
+  }
+  .glim-sel--inline {
+    max-width: 100%;
+  }
+  .glim-sel--well {
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--carbon-surface3);
+  }
+  .glim-sel--chip {
+    gap: 0.25rem;
+  }
+  .glim-sel--listed {
+    padding: 0;
+    background-color: transparent;
+  }
+  .glim-sel--listed > :not(.glim-sel-list) {
+    display: none;
+  }
+  .glim-sel-list {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .glim-sel-seg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: var(--radius-pill);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+  .glim-sel-seg:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .glim-sel--well .glim-sel-seg {
+    color: var(--carbon-text-sub);
+  }
+  .glim-sel--well .glim-sel-seg:not(.glim-active):not(:disabled):hover {
+    background-color: var(--carbon-hover);
+    color: var(--carbon-text);
+  }
+  .glim-sel--chip .glim-sel-seg {
+    background-color: var(--carbon-surface2);
+    color: var(--carbon-text-sub);
+  }
+  .glim-sel--chip .glim-sel-seg:not(.glim-active):not(:disabled):hover {
+    background-color: var(--carbon-surface3);
+    color: var(--carbon-text);
+  }
+  .glim-sel .glim-sel-seg.glim-active {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .glim-sel .glim-tip-wrap > .glim-sel-seg {
+    flex: 1 1 auto;
+  }
+  .glim-sel-seg--sm {
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: var(--text-meta);
+    line-height: 1rem;
+  }
+  .glim-sel-seg--md {
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-size: var(--text-meta);
+    line-height: 1rem;
+  }
+  .glim-sel-seg--lg {
+    gap: 0.5rem;
+    min-height: var(--nav-row-h);
+    padding: 0 0.75rem;
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+  }
+  .glim-sel-seg--btn {
+    min-height: var(--btn-h);
+    padding-block: 0;
+  }
+  .glim-sel-seg--pinned {
+    min-height: var(--seg-pinned-h);
+    padding-block: 0;
+  }
+  .glim-sel-seg--square {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+  }
+  .glim-sel-seg--center {
+    text-align: center;
+  }
+  .glim-sel-seg.glim-reactive {
+    gap: 0;
+  }
+  .glim-sel-seg > svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+  .glim-sel-seg--lg > svg,
+  .glim-sel-seg--btn > svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .glim-sel-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  @media (pointer: coarse) {
+    .glim-sel--chip .glim-sel-seg {
+      min-height: var(--btn-h);
+    }
+  }
+  @media (pointer: coarse) {
+    .glim-sel--well .glim-sel-seg:not(.glim-sel-seg--square) {
+      min-height: var(--btn-h-key);
+    }
+  }
+  .glim-sel-seg.glim-hue-icon:not(.glim-active) > svg {
+    color: var(--accent-glyph);
+  }
+  .glim-window {
+    max-width: 40rem;
+  }
+  .glim-window--wide {
+    max-width: 58rem;
+  }
+  .glim-window--full {
+    max-width: 80rem;
+    height: calc(100dvh - 2rem);
+    max-height: none;
+  }
+  .glim-window-title {
+    margin: 0;
+  }
+  .glim-window-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1.75rem;
+  }
+  .glim-window-start {
+    flex: 1 1 0;
+    min-width: min(4rem, 100%);
+    overflow-wrap: anywhere;
+    font-size: var(--text-meta);
+    color: var(--carbon-text-muted);
+  }
+  .glim-pill {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 1.35rem;
+    padding-inline: 0.55rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--pill-ground, var(--carbon-surface2));
+    font-size: var(--text-meta);
+    color: var(--carbon-text-sub);
+    white-space: nowrap;
+  }
+  .glim-pill--state {
+    background-color: var(--pill-state, var(--carbon-surface3));
+    color: var(--carbon-text);
+  }
+  .glim-pill--ok {
+    background-color: color-mix(in srgb, var(--pill-ground, var(--carbon-surface2)), var(--status-ok-solid) 30%);
+    color: var(--carbon-text);
+  }
+  .glim-pill--warn {
+    background-color: color-mix(in srgb, var(--pill-ground, var(--carbon-surface2)), var(--status-warn-solid) 35%);
+    color: var(--carbon-text);
+  }
+  .glim-pill--fail {
+    background-color: color-mix(in srgb, var(--pill-ground, var(--carbon-surface2)), var(--status-fail-solid) 35%);
+    color: var(--carbon-text);
+  }
+  .glim-input {
+    width: 100%;
+    min-width: 0;
+    height: var(--btn-h);
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-control);
+    background-color: var(--carbon-surface2);
+    color: var(--carbon-text);
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+  }
+  .glim-input:focus,
+  .glim-well .glim-input {
+    background-color: var(--carbon-surface3);
+  }
+  .glim-well .glim-input:focus {
+    background-color: var(--carbon-hover-raised);
+  }
+  .glim-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .glim-input::placeholder {
+    color: var(--carbon-text-muted);
+  }
+  .glim-input--mono {
+    font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: var(--text-subline);
+    text-overflow: ellipsis;
+  }
+  .glim-input--area {
+    display: block;
+    height: auto;
+    min-height: calc(var(--btn-h) * 2);
+    padding-block: 0.4rem;
+    resize: vertical;
+  }
+  .glim-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem 0.75rem;
+    min-height: var(--btn-h);
+  }
+  .glim-field-row-name {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    margin-inline-end: auto;
+  }
+  .glim-field-row-label small {
+    font-size: var(--text-meta);
+    color: var(--carbon-text-muted);
+  }
+  .glim-field-row > :not(.glim-field-row-name) {
+    max-width: 100%;
+  }
+  .glim-field-row-group {
+    display: grid;
+    grid-template-columns: repeat(var(--field-columns, 1), max-content minmax(0, 1fr));
+    gap: 0.5rem 1.5rem;
+  }
+  .glim-field-row-group > .glim-field-row {
+    display: grid;
+    grid-column: span 2;
+    grid-template-columns: subgrid;
+    column-gap: 0.75rem;
+  }
+  .glim-field-row-group > .glim-field-row--wide {
+    grid-column: 1 / -1;
+  }
+  .glim-field-row--wide > .glim-field-row-controls {
+    grid-column: 2 / -1;
+  }
+  .glim-field-row-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem 0.75rem;
+    min-width: 0;
+  }
+  @media (max-width: 600px) {
+    .glim-field-row-group {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-field-row-group > .glim-field-row {
+      display: flex;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-field-row-controls {
+      flex: 1 1 13rem;
+    }
+  }
+  .glim-secret {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .glim-secret > .glim-input {
+    padding-inline-end: 2.4rem;
+  }
+  .glim-secret > .glim-input::-ms-reveal {
+    display: none;
+  }
+  .glim-secret-eye {
+    position: absolute;
+    inset-inline-end: 0.35rem;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: var(--radius-control);
+    color: var(--carbon-text-muted);
+    cursor: pointer;
+  }
+  .glim-secret-eye:hover {
+    color: var(--carbon-text);
+  }
+  .glim-secret-eye > svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+  .glim-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* GlimStone fills a whole tab with it. Here it is one section of a
+     settings page, so it is as tall as what it holds. */
+  .glim-fortress {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .glim-fortress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 32rem), 1fr));
+    gap: 1rem;
+  }
+  /* Without instance cards of BombVault's own the grid stays empty, and an
+     empty one would still take a gap. */
+  .glim-fortress-grid:empty {
+    display: none;
+  }
+  .glim-instance {
+    --instance-mark: 5.5rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .glim-instance-top {
+    display: flex;
+    align-items: flex-start;
+  }
+  .glim-instance-top:last-child {
+    flex: 1;
+  }
+  .glim-instance-mark {
+    flex: none;
+    width: var(--instance-mark);
+    height: var(--instance-mark);
+    margin-block: 1rem 0.875rem;
+    margin-inline-start: 1rem;
+    object-fit: contain;
+  }
+  .glim-instance-main {
+    flex: 1;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.125rem 0.875rem;
+  }
+  .glim-instance-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.375rem 0.625rem;
+  }
+  .glim-instance-title {
+    margin: 0;
+    font-size: var(--text-title);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .glim-instance-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-inline-start: auto;
+  }
+  .glim-instance-facts {
+    margin: 0;
+    color: var(--carbon-text-muted);
+    font-size: var(--text-meta);
+    overflow-wrap: anywhere;
+  }
+  .glim-instance-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin: 0.375rem 0 0;
+  }
+  .glim-instance-figures > div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .glim-instance-figures dt {
+    color: var(--carbon-text-muted);
+    font-size: var(--text-meta);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .glim-instance-figures dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .glim-instance-body {
+    padding: 0 1rem 0.75rem;
+  }
+  .glim-instance-acts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding: 0.5rem 0 0;
+  }
+  .glim-instance > .glim-instance-acts {
+    padding: 0 1rem 0.875rem;
+  }
+  .glim-instance-note {
+    margin-inline-end: auto;
+    color: var(--carbon-text-sub);
+    font-size: var(--text-subline);
+  }
+  .glim-instance-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .glim-instance-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--radius-control);
+    background-color: var(--carbon-surface2);
+  }
+  .glim-instance-device {
+    display: grid;
+    place-items: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: var(--radius-control);
+    background-color: var(--carbon-surface3);
+    color: var(--carbon-text-sub);
+  }
+  .glim-instance-device svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+  .glim-instance-row:hover .glim-instance-device {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .glim-instance-row-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .glim-instance-row-name {
+    font-size: var(--text-subline);
+    font-weight: 600;
+  }
+  .glim-instance-row-sub {
+    color: var(--carbon-text-muted);
+    font-size: var(--text-meta);
+  }
+  .glim-instance--out {
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.75rem 1.5rem;
+    border: 1.5px dashed var(--carbon-border);
+    background-color: transparent;
+    box-shadow: none;
+    text-align: center;
+  }
+  .glim-instance--out .glim-instance-title {
+    font-size: var(--text-body);
+  }
+  .glim-instance-hint {
+    margin: 0;
+    color: var(--carbon-text-sub);
+    font-size: var(--text-subline);
+  }
+  .glim-instance-found {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.25rem 0 0;
+    color: var(--carbon-text-sub);
+    font-size: var(--text-subline);
+  }
+  .glim-instance-found img {
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+  }
+  .glim-fortress-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1.125rem;
+  }
+  .glim-fortress-switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+  .glim-fortress-switch-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+  }
+  .glim-fortress-sub {
+    color: var(--carbon-text-sub);
+    font-size: var(--text-subline);
+  }
+  .glim-permissions {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .glim-permission {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--radius-control);
+  }
+  .glim-permission:hover {
+    background-color: var(--carbon-hover);
+  }
+  .glim-permission-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .glim-permission-pair img {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+  }
+  .glim-permission-arrow {
+    width: 0.7rem;
+    height: 0.7rem;
+    rotate: -90deg;
+    color: var(--carbon-text-muted);
+  }
+  [dir="rtl"] .glim-permission-arrow {
+    rotate: 90deg;
+  }
+  .glim-permission-to {
+    display: inline-flex;
+  }
+  .glim-permission-to > * + * {
+    margin-inline-start: -0.55rem;
+  }
+  .glim-permission-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+  .glim-permission-title {
+    font-weight: 600;
+  }
+  .glim-permission:not(.glim-permission--on) .glim-permission-title {
+    color: var(--carbon-text-sub);
+  }
+  .glim-fortress-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.625rem;
+    margin-top: auto;
+    padding: 1rem 0 0.25rem;
+    pointer-events: none;
+  }
+  .glim-fortress-actions > * {
+    pointer-events: auto;
+    box-shadow: var(--elevation);
+  }
+  .glim-phrase-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+  .glim-phrase-field {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .glim-phrase-number {
+    flex: none;
+    width: 1.3rem;
+    color: var(--carbon-text-muted);
+    font-size: var(--text-meta);
+    text-align: end;
+  }
+  .glim-phrase-words {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .glim-phrase-words li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-control);
+    background-color: var(--carbon-surface2);
+    font-weight: 500;
+  }
+  .glim-phrase-show {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 8rem;
+    gap: 0.4rem 1rem;
+  }
+  .glim-phrase-show > .glim-phrase-words {
+    grid-auto-rows: 1fr;
+  }
+  .glim-phrase-qr {
+    width: 8rem;
+    height: 8rem;
+    border-radius: var(--radius-control);
+  }
+  .glim-phrase-scan {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--carbon-text-sub);
+    font-size: var(--text-meta);
+    text-align: end;
+  }
+  @media (max-width: 640px) {
+    .glim-phrase-show {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 640px) {
+    .glim-phrase-qr {
+      justify-self: end;
+    }
+  }
+  .glim-fortress-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .glim-fortress-text p {
+    margin: 0;
+  }
+  .glim-fortress-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    color: var(--carbon-text-sub);
+    font-size: var(--text-subline);
+  }
+  .glim-fortress-note svg {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.2rem;
+    color: var(--accent-glyph);
+  }
+  .glim-fortress-error {
+    margin: 0;
+    color: var(--status-fail-text);
+    font-size: var(--text-subline);
+  }
+  .glim-fortress-result {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .glim-fortress-result-mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--status-ok-bg);
+    color: var(--status-ok-text);
+  }
+  .glim-fortress-result-title {
+    margin: 0 0 0.25rem;
+    font-size: var(--text-title);
+    font-weight: 600;
+  }
+  @media (max-width: 600px) {
+    .glim-instance {
+      --instance-mark: 3.75rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-instance-mark {
+      margin-block: 0.875rem 0.75rem;
+      margin-inline-start: 0.875rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-instance-main {
+      padding: 0.875rem 0.875rem 0.75rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-fortress-switch {
+      padding: 0.75rem 0.875rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-permission {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.5rem 0.75rem;
+      padding-inline: 0.5rem;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-permission-pair {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-phrase-fields,
+    .glim-phrase-words {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 600px) {
+    .glim-fortress-actions {
+      padding: 0.75rem 0;
+      background-color: var(--carbon-bg);
+      pointer-events: auto;
+    }
+  }
+}
+/* Outside the layer, as in GlimStone: a field shows its focus with its fill
+   and caret, and the base ring would win otherwise. */
+.glim-input:focus-visible { outline: none; }
+
 /* Pictures of a storage location: its fill level as a vessel, what a
    retention rule keeps, a copy on its way and the delete lock. They draw in the
    theme's own tokens and take the hue of the card they sit in. --pic is a

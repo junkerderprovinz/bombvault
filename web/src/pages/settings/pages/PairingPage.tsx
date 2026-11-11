@@ -5,6 +5,7 @@ import { useT } from "../../../lib/i18n";
 import { emergencyPath } from "../../../lib/restorePlan";
 import { Card, hueCounter } from "../shared";
 import { FleetSettingsCard } from "../FleetSettingsCard";
+import { FortressSection } from "../pairing/FortressSection";
 import { PairingSection } from "../pairing/PairingSection";
 import { useSettings } from "../settingsStore";
 
@@ -54,6 +55,10 @@ export function PairingPage() {
           />
         </div>
       )}
+
+      {/* Every app joins the fortress, so it does not wait for a section
+          that pairs over the group. */}
+      <FortressSection nextHue={nextHue} />
     </>
   );
 }
