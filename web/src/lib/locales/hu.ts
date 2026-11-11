@@ -241,6 +241,7 @@ const hu: Partial<Translations> = {
   "run.kindRestore": "Visszaállítás",
   "run.kindUpdate": "Frissítés",
   "update.afterBackup": "Frissítés egy sikeres biztonsági mentés után",
+  "update.byShipLog": "Ezen a szerveren fut a ShipLog, és frissíti a konténereidet, miután előbb mentést kér a BombVaulttól. A BombVault rábízza a frissítéseket.",
   "update.afterBackupHint": "Lehúzza a képet, és újra létrehozza ezt a konténert közvetlenül egy sikeres biztonsági mentés után, így mindig van előbb friss visszaállítási pont. A mentés időpontjában fut (a mentések egymás után futnak), nem egy rögzített időpontban. Ha rögzített ütemterv szerinti, verzióalapú frissítést szeretnél, nézd meg a ShipLogot.",
   "update.followsSchedule": "A Beállítások › Ütemezés alatt megadott szerint",
   "update.ownChoice": "Saját választás",

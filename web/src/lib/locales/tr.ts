@@ -241,6 +241,7 @@ const tr: Partial<Translations> = {
   "run.kindRestore": "Geri Yükleme",
   "run.kindUpdate": "Güncelleme",
   "update.afterBackup": "Başarılı bir yedeklemeden sonra güncelle",
+  "update.byShipLog": "Bu sunucuda ShipLog çalışıyor ve önce BombVault'tan bir yedek isteyip kapsayıcılarını güncelliyor. BombVault güncellemeleri ona bırakıyor.",
   "update.afterBackupHint": "İmajı çeker ve bu konteyneri başarılı bir yedeklemeden hemen sonra yeniden oluşturur, böylece her zaman önce taze bir geri yükleme noktan olur. Yedekleme zamanında çalışır (yedeklemeler birbiri ardına çalışır), sabit bir saatte değil. Sabit bir zamanlamaya göre, sürüme dayalı güncellemeler için ShipLog'a bak.",
   "update.followsSchedule": "Ayarlar › Zamanlama altında belirlendiği gibi",
   "update.ownChoice": "Kendi seçimi",

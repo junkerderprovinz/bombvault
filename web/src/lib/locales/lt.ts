@@ -310,6 +310,7 @@ const lt: Partial<Translations> = {
   "run.kindKeyRefuse": "Išdavimas atmestas",
   "run.kindKeyRelease": "Depozitas išduotas",
   "update.afterBackup": "Atnaujinti po sėkmingos atsarginės kopijos",
+  "update.byShipLog": "Šiame serveryje veikia ShipLog ir atnaujina tavo konteinerius, prieš tai paprašęs BombVault atsarginės kopijos. BombVault palieka atnaujinimus jam.",
   "update.afterBackupHint": "Ištraukia atvaizdą ir iš naujo sukuria šį konteinerį iškart po sėkmingos atsarginės kopijos, todėl visada pirmiausia turėsi šviežią atkūrimo tašką. Vykdoma kopijavimo metu (kopijos vykdomos viena po kitos), o ne fiksuotu laiku. Atnaujinimams pagal fiksuotą tvarkaraštį, pagal versiją, žr. ShipLog.",
   "update.followsSchedule": "Kaip nustatyta skiltyje Nustatymai › Tvarkaraštis",
   "update.ownChoice": "Savas pasirinkimas",

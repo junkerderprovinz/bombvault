@@ -7297,7 +7297,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// down. Only for a running, opted-in container; otherwise nil, so the
 	// dependents restart right after the backup.
 	var updateStep func() func() []string
-	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
+	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) && !s.shipLogUpdates() {
 		updateStep = func() func() []string { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
 	}
 

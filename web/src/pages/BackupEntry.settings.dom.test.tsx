@@ -367,6 +367,16 @@ describe("a container's switches", () => {
     expect(update.queryByRole("button", { name: en["update.useDefault"] })).toBeNull();
   });
 
+  it("leave the update to ShipLog when it runs on this server", async () => {
+    serveEntries(mocks, { containers: [containerView({ updateAfterBackup: true, updatesByShipLog: true })] });
+    await renderSettings("container/immich");
+    const container = within(await waitFor(() => card(en["entry.settings.container"])));
+    const toggle = container.getByRole("switch", { name: en["update.afterBackup"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(toggle.hasAttribute("disabled") || toggle.getAttribute("aria-disabled") === "true").toBe(true);
+    expect(container.getByText(en["update.byShipLog"])).toBeTruthy();
+  });
+
   it("read a container on ZFS from a snapshot until it chooses otherwise", async () => {
     serveEntries(mocks, { containers: [containerView({ zfsSnapshot: true, zfsSnapshotOwn: false })] });
     await renderSettings("container/immich");

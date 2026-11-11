@@ -240,6 +240,7 @@ const no: Partial<Translations> = {
   "run.kindRestore": "Gjenoppretting",
   "run.kindUpdate": "Oppdatering",
   "update.afterBackup": "Oppdater etter en vellykket sikkerhetskopi",
+  "update.byShipLog": "ShipLog kjører på denne serveren og oppdaterer containerne dine etter først å ha bedt BombVault om en sikkerhetskopi. BombVault overlater oppdateringene til ShipLog.",
   "update.afterBackupHint": "Henter imaget og gjenskaper denne containeren rett etter en vellykket sikkerhetskopiering, så du alltid har et ferskt gjenopprettingspunkt først. Den kjører på tidspunktet for sikkerhetskopieringen (sikkerhetskopier kjøres en etter en), ikke på et fast klokkeslett. For oppdateringer på en fast tidsplan, versjonsstyrt, se ShipLog.",
   "update.followsSchedule": "Som angitt under Innstillinger › Tidsplan",
   "update.ownChoice": "Eget valg",

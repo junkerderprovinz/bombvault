@@ -241,6 +241,7 @@ const cs: Partial<Translations> = {
   "run.kindRestore": "Obnova",
   "run.kindUpdate": "Aktualizace",
   "update.afterBackup": "Aktualizovat po úspěšné záloze",
+  "update.byShipLog": "Na tomto serveru běží ShipLog a aktualizuje tvé kontejnery, nejdřív si ale u BombVault vyžádá zálohu. BombVault mu aktualizace přenechává.",
   "update.afterBackupHint": "Stáhne image a znovu vytvoří tento kontejner hned po úspěšné záloze, takže máš vždy nejdřív čerstvý bod obnovení. Spouští se v čase zálohy (zálohy běží jedna po druhé), ne v pevně stanovený čas. Pro aktualizace podle pevného harmonogramu, podle verze, viz ShipLog.",
   "update.followsSchedule": "Podle nastavení v Nastavení › Plán",
   "update.ownChoice": "Vlastní volba",

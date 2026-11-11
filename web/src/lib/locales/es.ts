@@ -241,6 +241,7 @@ const es: Partial<Translations> = {
   "run.kindRestore": "Restauración",
   "run.kindUpdate": "Actualización",
   "update.afterBackup": "Actualizar tras una copia de seguridad correcta",
+  "update.byShipLog": "ShipLog se ejecuta en este servidor y actualiza tus contenedores después de pedir primero una copia de seguridad a BombVault. BombVault le deja las actualizaciones.",
   "update.afterBackupHint": "Descarga la imagen y recrea este contenedor justo después de una copia de seguridad correcta, para que siempre tengas primero un punto de restauración reciente. Se ejecuta a la hora de la copia de seguridad (las copias se ejecutan una tras otra), no a una hora fija. Para actualizaciones en un horario fijo, según la versión, consulta ShipLog.",
   "update.followsSchedule": "Según lo definido en Ajustes › Calendario",
   "update.ownChoice": "Elección propia",

@@ -241,6 +241,7 @@ const pl: Partial<Translations> = {
   "run.kindRestore": "Przywracanie",
   "run.kindUpdate": "Aktualizacja",
   "update.afterBackup": "Aktualizuj po udanej kopii zapasowej",
+  "update.byShipLog": "Na tym serwerze działa ShipLog i aktualizuje twoje kontenery, najpierw prosząc BombVault o kopię zapasową. BombVault zostawia mu aktualizacje.",
   "update.afterBackupHint": "Pobiera obraz i odtwarza ten kontener zaraz po udanej kopii zapasowej, więc zawsze masz najpierw świeży punkt przywracania. Działa o czasie kopii zapasowej (kopie zapasowe wykonywane są jedna po drugiej), a nie o stałej porze. Aby aktualizować według stałego harmonogramu, według wersji, zobacz ShipLog.",
   "update.followsSchedule": "Zgodnie z ustawieniem w Ustawienia › Harmonogram",
   "update.ownChoice": "Własny wybór",

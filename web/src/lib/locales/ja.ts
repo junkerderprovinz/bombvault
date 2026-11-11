@@ -241,6 +241,7 @@ const ja: Partial<Translations> = {
   "run.kindRestore": "復元",
   "run.kindUpdate": "更新",
   "update.afterBackup": "バックアップ成功後に更新",
+  "update.byShipLog": "このサーバーでは ShipLog が動いていて、先に BombVault にバックアップを頼んでからコンテナを更新します。BombVault は更新を ShipLog に任せます。",
   "update.afterBackupHint": "バックアップが成功した直後にイメージを取得してこのコンテナを再作成するため、常に先に新しい復元ポイントが確保されます。実行タイミングはバックアップの時刻に依存し（バックアップは順番に実行されます）、固定の時刻ではありません。バージョンに応じて固定スケジュールで更新したい場合は、ShipLog をご覧ください。",
   "update.followsSchedule": "設定 › スケジュールの指定どおり",
   "update.ownChoice": "個別の選択",

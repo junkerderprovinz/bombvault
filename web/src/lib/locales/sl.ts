@@ -310,6 +310,7 @@ const sl: Partial<Translations> = {
   "run.kindKeyRefuse": "Izdaja zavrnjena",
   "run.kindKeyRelease": "Depozit ključa izdan",
   "update.afterBackup": "Posodobi po uspešni varnostni kopiji",
+  "update.byShipLog": "Na tem strežniku teče ShipLog in posodablja tvoje vsebnike, potem ko BombVault najprej zaprosi za varnostno kopijo. BombVault mu prepusti posodobitve.",
   "update.afterBackupHint": "Takoj po uspešni varnostni kopiji povleci sliko in ponovno ustvari ta vsebnik, tako da vedno najprej dobiš svežo točko za obnovitev. Zgodi se ob času varnostnega kopiranja (varnostne kopije tečejo ena za drugo), ne ob fiksni uri. Za posodobitve po lastnem urniku, vezane na različico, glej ShipLog.",
   "update.followsSchedule": "Kot je nastavljeno v razdelku Nastavitve › Urnik",
   "update.ownChoice": "Lastna izbira",

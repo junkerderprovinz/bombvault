@@ -241,6 +241,7 @@ const vi: Partial<Translations> = {
   "run.kindRestore": "Khôi phục",
   "run.kindUpdate": "Cập nhật",
   "update.afterBackup": "Cập nhật sau khi sao lưu thành công",
+  "update.byShipLog": "ShipLog chạy trên máy chủ này và cập nhật các container của bạn sau khi xin BombVault một bản sao lưu trước. BombVault để việc cập nhật cho ShipLog.",
   "update.afterBackupHint": "Kéo image và tạo lại container này ngay sau khi sao lưu thành công, nên bạn luôn có sẵn một điểm khôi phục mới trước. Nó chạy vào thời điểm sao lưu (các bản sao lưu chạy lần lượt), không phải vào một giờ cố định. Để cập nhật theo lịch cố định, dựa trên phiên bản, hãy xem ShipLog.",
   "update.followsSchedule": "Theo thiết lập trong Cài đặt › Lịch trình",
   "update.ownChoice": "Lựa chọn riêng",

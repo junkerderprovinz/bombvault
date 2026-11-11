@@ -241,6 +241,7 @@ const zh: Partial<Translations> = {
   "run.kindRestore": "还原",
   "run.kindUpdate": "更新",
   "update.afterBackup": "备份成功后更新",
+  "update.byShipLog": "这台服务器上运行着 ShipLog，它会先请 BombVault 做一次备份，再更新你的容器。BombVault 把更新交给它。",
   "update.afterBackupHint": "在备份成功后立即拉取镜像并重建此容器，因此你总是先有一个新的恢复点。它在备份的时间运行（备份是依次运行的），而不是固定的时钟时间。如果需要按固定计划、按版本进行更新，请查看 ShipLog。",
   "update.followsSchedule": "与“设置 › 计划”中的设定一致",
   "update.ownChoice": "自行选择",

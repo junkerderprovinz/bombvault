@@ -241,6 +241,7 @@ const he: Partial<Translations> = {
   "run.kindRestore": "שחזור",
   "run.kindUpdate": "עדכון",
   "update.afterBackup": "עדכון לאחר גיבוי מוצלח",
+  "update.byShipLog": "ShipLog פועל בשרת הזה ומעדכן את הקונטיינרים שלכם, אחרי שהוא מבקש קודם גיבוי מ-BombVault. BombVault משאיר לו את העדכונים.",
   "update.afterBackupHint": "מושך את הדימוי ובונה מחדש את הקונטיינר מיד לאחר גיבוי מוצלח, כך שתמיד קיימת קודם נקודת שחזור טרייה. הוא פועל בזמן הגיבוי (הגיבויים פועלים בזה אחר זה), לא בשעה קבועה. לעדכונים בלוח זמנים קבוע, לפי גרסה, יש את ShipLog.",
   "update.followsSchedule": "כפי שהוגדר בהגדרות › לוח זמנים",
   "update.ownChoice": "בחירה אישית",

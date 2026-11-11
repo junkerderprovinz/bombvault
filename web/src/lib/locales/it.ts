@@ -241,6 +241,7 @@ const it: Partial<Translations> = {
   "run.kindRestore": "Ripristino",
   "run.kindUpdate": "Aggiornamento",
   "update.afterBackup": "Aggiorna dopo un backup riuscito",
+  "update.byShipLog": "ShipLog gira su questo server e aggiorna i tuoi container dopo aver chiesto prima un backup a BombVault. BombVault gli lascia gli aggiornamenti.",
   "update.afterBackupHint": "Scarica l'immagine e ricrea questo container subito dopo un backup riuscito, così hai sempre prima un punto di ripristino fresco. Viene eseguito all'orario del backup (i backup vengono eseguiti uno dopo l'altro), non a un orario fisso. Per aggiornamenti secondo una pianificazione fissa, basati sulla versione, vedi ShipLog.",
   "update.followsSchedule": "Come impostato in Impostazioni › Calendario",
   "update.ownChoice": "Scelta propria",

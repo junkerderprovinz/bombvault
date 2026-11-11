@@ -241,6 +241,7 @@ const sv: Partial<Translations> = {
   "run.kindRestore": "Återställning",
   "run.kindUpdate": "Uppdatering",
   "update.afterBackup": "Uppdatera efter en lyckad säkerhetskopiering",
+  "update.byShipLog": "ShipLog körs på den här servern och uppdaterar dina containrar efter att först ha bett BombVault om en säkerhetskopia. BombVault lämnar uppdateringarna åt ShipLog.",
   "update.afterBackupHint": "Hämtar imagen och återskapar den här containern direkt efter en lyckad säkerhetskopiering, så du alltid har en färsk återställningspunkt först. Den körs vid tidpunkten för säkerhetskopieringen (säkerhetskopior körs en efter en), inte vid en fast klockslag. För uppdateringar enligt ett fast schema, versionsstyrt, se ShipLog.",
   "update.followsSchedule": "Som inställt under Inställningar › Schema",
   "update.ownChoice": "Eget val",

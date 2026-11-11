@@ -240,6 +240,7 @@ const ro: Partial<Translations> = {
   "run.kindRestore": "Restaurare",
   "run.kindUpdate": "Actualizare",
   "update.afterBackup": "Actualizează după o copie de rezervă reușită",
+  "update.byShipLog": "Pe acest server rulează ShipLog și îți actualizează containerele după ce cere mai întâi o copie de rezervă de la BombVault. BombVault îi lasă actualizările.",
   "update.afterBackupHint": "Descarcă imaginea și recreează acest container imediat după o copie de rezervă reușită, ca să ai mereu mai întâi un punct de restaurare proaspăt. Rulează la ora copiei de rezervă (copiile de rezervă rulează una după alta), nu la o oră fixă. Pentru actualizări după un program fix, în funcție de versiune, vezi ShipLog.",
   "update.followsSchedule": "Așa cum este setat în Setări › Programare",
   "update.ownChoice": "Alegere proprie",

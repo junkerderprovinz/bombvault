@@ -241,6 +241,7 @@ const nl: Partial<Translations> = {
   "run.kindRestore": "Herstel",
   "run.kindUpdate": "Update",
   "update.afterBackup": "Bijwerken na een geslaagde back-up",
+  "update.byShipLog": "Op deze server draait ShipLog en die werkt je containers bij, nadat hij BombVault eerst om een back-up heeft gevraagd. BombVault laat de updates aan ShipLog over.",
   "update.afterBackupHint": "Haalt de image op en maakt deze container direct na een geslaagde back-up opnieuw aan, zodat je altijd eerst een vers herstelpunt hebt. Dit gebeurt op het moment van de back-up (back-ups lopen na elkaar), niet op een vast tijdstip. Voor updates volgens een vast schema, per versie, zie ShipLog.",
   "update.followsSchedule": "Zoals ingesteld onder Instellingen › Planning",
   "update.ownChoice": "Eigen keuze",

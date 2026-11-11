@@ -310,6 +310,7 @@ const ca: Partial<Translations> = {
   "run.kindKeyRefuse": "Lliurament rebutjat",
   "run.kindKeyRelease": "Dipòsit lliurat",
   "update.afterBackup": "Actualitza després d'una còpia correcta",
+  "update.byShipLog": "ShipLog s'executa en aquest servidor i actualitza els teus contenidors després de demanar primer una còpia de seguretat a BombVault. BombVault li deixa les actualitzacions.",
   "update.afterBackupHint": "Descarrega la imatge i recrea aquest contenidor just després d'una còpia correcta, així sempre tens primer un punt de restauració recent. S'executa a l'hora de la còpia (les còpies van una darrere l'altra), no a una hora fixa. Per a actualitzacions en un horari fix segons versió, consulta ShipLog.",
   "update.followsSchedule": "Tal com està definit a Configuració › Horari",
   "update.ownChoice": "Elecció pròpia",

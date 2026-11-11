@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io/fs"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/lan"
@@ -24,6 +26,17 @@ type fortressPlace struct {
 	mu  sync.Mutex
 	f   *fortress.Fortress
 	lan *lan.Service
+	// device is the server the membership names this instance after.
+	device string
+
+	// requests are the backups members asked for, by id, the oldest first in
+	// order.
+	requests map[string]*houseRequest
+	order    []string
+	// start begins a container backup, StartBackup outside tests, and retry
+	// is how long a request waits before it tries again.
+	start func(ctx context.Context, name string) (bool, error)
+	retry time.Duration
 }
 
 // fortressDir holds the membership `fortress join -dir` wrote, and the state
@@ -41,6 +54,7 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 	cfg.Status = src
 	cfg.Actions = []fortress.Action{
 		{Name: actionBackupLast, Run: s.backupLast},
+		{Name: actionBackupRequest, Run: s.backupRequest},
 	}
 	if !slices.Contains(cfg.Uses, fortress.ExportAction) {
 		cfg.Uses = append(cfg.Uses, fortress.ExportAction)
@@ -71,7 +85,7 @@ func (s *Service) OpenFortress(src status.Source) error {
 		return err
 	}
 	s.house.mu.Lock()
-	s.house.f, s.house.lan = f, cfg.LAN
+	s.house.f, s.house.lan, s.house.device = f, cfg.LAN, cfg.Self.Name
 	s.house.mu.Unlock()
 	return nil
 }

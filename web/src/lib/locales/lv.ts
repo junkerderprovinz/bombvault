@@ -310,6 +310,7 @@ const lv: Partial<Translations> = {
   "run.kindKeyRefuse": "Izsniegšana noraidīta",
   "run.kindKeyRelease": "Depozīts izsniegts",
   "update.afterBackup": "Atjaunināt pēc sekmīgas rezerves kopijas",
+  "update.byShipLog": "Šajā serverī darbojas ShipLog un atjaunina jūsu konteinerus, vispirms palūdzis BombVault rezerves kopiju. BombVault atstāj atjauninājumus tam.",
   "update.afterBackupHint": "Ievelk attēlu un izveido šo konteineru no jauna uzreiz pēc veiksmīgas rezerves kopijas, lai jums vienmēr vispirms būtu svaigs atjaunošanas punkts. Darbojas rezerves kopēšanas laikā (rezerves kopijas notiek cita pēc citas), nevis fiksētā pulksteņa laikā. Atjauninājumiem pēc fiksēta, versijas atkarīga grafika skatiet ShipLog.",
   "update.followsSchedule": "Kā iestatīts sadaļā Iestatījumi › Grafiks",
   "update.ownChoice": "Paša izvēle",

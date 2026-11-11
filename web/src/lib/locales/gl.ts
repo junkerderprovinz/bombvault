@@ -310,6 +310,7 @@ const gl: Partial<Translations> = {
   "run.kindKeyRefuse": "Entrega rexeitada",
   "run.kindKeyRelease": "Depósito entregado",
   "update.afterBackup": "Actualizar despois dunha copia correcta",
+  "update.byShipLog": "ShipLog execútase neste servidor e actualiza os teus contedores despois de pedirlle primeiro unha copia de seguridade a BombVault. BombVault déixalle as actualizacións.",
   "update.afterBackupHint": "Descarga a imaxe e recrea este contedor xusto despois dunha copia correcta, así sempre tes primeiro un punto de restauración recente. Execútase á hora da copia (as copias van unha tras outra), non a unha hora fixa. Para actualizacións nun horario fixo segundo versión, consulta ShipLog.",
   "update.followsSchedule": "Segundo o definido en Configuración › Horario",
   "update.ownChoice": "Escolla propia",

@@ -23,6 +23,7 @@ export function UpdateAfterBackupRow({
   lastUpdateCheck,
   lastUpdateResult,
   databaseWarn,
+  byShipLog = false,
   t,
 }: {
   name: string;
@@ -36,6 +37,8 @@ export function UpdateAfterBackupRow({
   /** What an update means for a recognised database, whose major version it
    *  can move; null for any other container. */
   databaseWarn: TranslationKey | null;
+  /** ShipLog on this server updates the container, so the switch rests. */
+  byShipLog?: boolean;
   t: T;
 }) {
   const [enabled, setEnabled] = useState(initial);
@@ -90,11 +93,16 @@ export function UpdateAfterBackupRow({
         // "orphan image", which reads as the wreckage of a failed update
         // (issue #193). The hint says so where the toggle gets switched on.
         hint={`${t("update.afterBackupHint")} ${t("update.afterBackupOrphans")}${databaseWarn ? ` ${t(databaseWarn)}` : ""}`}
-        checked={enabled}
+        checked={enabled && !byShipLog}
         onChange={(next) => void handle(next)}
-        disabled={busy}
+        disabled={busy || byShipLog}
         shakeNonce={shake}
       />
+      {byShipLog && (
+        <p data-testid="updates-by-shiplog" className="text-sm text-carbon-textSub text-end">
+          {t("update.byShipLog")}
+        </p>
+      )}
       <p className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs text-carbon-textMuted">
         {own ? t("update.ownChoice") : t("update.followsSchedule")}
         {own && (

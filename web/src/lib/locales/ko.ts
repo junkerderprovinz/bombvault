@@ -241,6 +241,7 @@ const ko: Partial<Translations> = {
   "run.kindRestore": "복원",
   "run.kindUpdate": "업데이트",
   "update.afterBackup": "백업에 성공한 후 업데이트",
+  "update.byShipLog": "이 서버에서 ShipLog가 실행 중이며, 먼저 BombVault에 백업을 요청한 뒤 컨테이너를 업데이트합니다. BombVault는 업데이트를 ShipLog에 맡깁니다.",
   "update.afterBackupHint": "백업이 성공한 직후에 이미지를 가져와 이 컨테이너를 다시 만들므로 항상 먼저 최신 복원 지점이 확보됩니다. 백업 시각에 실행되며(백업은 차례로 실행됩니다), 고정된 시각에 실행되는 것은 아닙니다. 버전 기준의 고정 일정 업데이트를 원하시면 ShipLog를 확인하세요.",
   "update.followsSchedule": "설정 › 일정에서 지정한 대로",
   "update.ownChoice": "직접 선택",

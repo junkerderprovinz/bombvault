@@ -310,6 +310,7 @@ const eu: Partial<Translations> = {
   "run.kindKeyRefuse": "Ematea ukatua",
   "run.kindKeyRelease": "Gordailua emana",
   "update.afterBackup": "Eguneratu babeskopia arrakastatsu bat egin ondoren",
+  "update.byShipLog": "ShipLog zerbitzari honetan dabil eta zure edukiontziak eguneratzen ditu, lehenik BombVault-i babeskopia bat eskatu ondoren. BombVault-ek eguneratzeak berari uzten dizkio.",
   "update.afterBackupHint": "Irudia deskargatu eta edukiontzi hau berriz sortzen du babeskopia arrakastatsu baten ondoren berehala, horrela beti izango duzu lehenik berrezarpen-puntu freskoa. Babeskopiaren orduan exekutatzen da (babeskopiak bata bestearen atzetik doaz), ez ordu finko batean. Bertsioaren araberako ordutegi finkoko eguneraketetarako, ikusi ShipLog.",
   "update.followsSchedule": "Ezarpenak › Egutegia atalean ezarritakoaren arabera",
   "update.ownChoice": "Aukera propioa",

@@ -310,6 +310,7 @@ const is: Partial<Translations> = {
   "run.kindKeyRefuse": "Afhendingu hafnað",
   "run.kindKeyRelease": "Lykilpakki afhentur",
   "update.afterBackup": "Uppfæra eftir árangursríka afritun",
+  "update.byShipLog": "ShipLog keyrir á þessum netþjóni og uppfærir gámana þína eftir að hafa fyrst beðið BombVault um afrit. BombVault lætur ShipLog um uppfærslurnar.",
   "update.afterBackupHint": "Sækir ímyndina og endurgerir þennan gám strax eftir árangursríka afritun, svo þú hefur alltaf ferskan endurheimtarpunkt fyrst. Keyrir á tíma afritunar (afrit keyra hvert á eftir öðru), ekki á föstum klukkutíma. Fyrir uppfærslur á föstu tímaáætlunarkerfi, útgáfustýrðar, sjá ShipLog.",
   "update.followsSchedule": "Eins og stillt er undir Stillingar › Tímaáætlun",
   "update.ownChoice": "Eigið val",

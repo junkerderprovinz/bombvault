@@ -241,6 +241,7 @@ const fi: Partial<Translations> = {
   "run.kindRestore": "Palautus",
   "run.kindUpdate": "Päivitys",
   "update.afterBackup": "Päivitä onnistuneen varmuuskopioinnin jälkeen",
+  "update.byShipLog": "Tällä palvelimella toimii ShipLog, joka päivittää kontit pyydettyään ensin BombVaultilta varmuuskopion. BombVault jättää päivitykset sille.",
   "update.afterBackupHint": "Hakee imagen ja luo tämän kontin uudelleen heti onnistuneen varmuuskopioinnin jälkeen, joten sinulla on aina ensin tuore palautuspiste. Se ajetaan varmuuskopioinnin ajankohtana (varmuuskopiot ajetaan peräkkäin), ei kiinteänä kellonaikana. Jos haluat päivitykset kiinteän aikataulun mukaan, versioperusteisesti, katso ShipLog.",
   "update.followsSchedule": "Kuten kohdassa Asetukset › Aikataulu on määritetty",
   "update.ownChoice": "Oma valinta",

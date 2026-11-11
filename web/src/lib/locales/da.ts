@@ -241,6 +241,7 @@ const da: Partial<Translations> = {
   "run.kindRestore": "Gendannelse",
   "run.kindUpdate": "Opdatering",
   "update.afterBackup": "Opdater efter en vellykket sikkerhedskopiering",
+  "update.byShipLog": "ShipLog kører på denne server og opdaterer dine containere, efter først at have bedt BombVault om en sikkerhedskopi. BombVault overlader opdateringerne til ShipLog.",
   "update.afterBackupHint": "Henter imaget og genskaber denne container lige efter en vellykket sikkerhedskopiering, så du altid har et frisk gendannelsespunkt først. Den kører på tidspunktet for sikkerhedskopieringen (sikkerhedskopier kører en ad gangen), ikke på et fast klokkeslæt. For opdateringer efter en fast tidsplan, versionsstyret, se ShipLog.",
   "update.followsSchedule": "Som angivet under Indstillinger › Tidsplan",
   "update.ownChoice": "Eget valg",

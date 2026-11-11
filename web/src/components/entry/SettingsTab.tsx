@@ -295,6 +295,7 @@ function ContainerCards({
             lastUpdateCheck={container.lastUpdateCheck}
             lastUpdateResult={container.lastUpdateResult}
             databaseWarn={updateWarnKey(container)}
+            byShipLog={container.updatesByShipLog ?? false}
             t={t}
           />
           <ZFSSnapshotRow

@@ -27,9 +27,14 @@ func act(t *testing.T, run func(context.Context, fortress.Caller, []byte) ([]byt
 	if err != nil {
 		t.Fatalf("%s: %v", body, err)
 	}
+	return decodeAnswer(t, out)
+}
+
+func decodeAnswer(t *testing.T, out []byte) map[string]any {
+	t.Helper()
 	var answer map[string]any
 	if err := json.Unmarshal(out, &answer); err != nil {
-		t.Fatalf("%s answered %s: %v", body, out, err)
+		t.Fatalf("answered %s: %v", out, err)
 	}
 	return answer
 }

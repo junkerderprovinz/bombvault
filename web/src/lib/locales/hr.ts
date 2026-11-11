@@ -310,6 +310,7 @@ const hr: Partial<Translations> = {
   "run.kindKeyRefuse": "Izdavanje odbijeno",
   "run.kindKeyRelease": "Polog ključa izdan",
   "update.afterBackup": "Ažuriraj nakon uspješne sigurnosne kopije",
+  "update.byShipLog": "Na ovom poslužitelju radi ShipLog i ažurira vaše spremnike nakon što od BombVaulta najprije zatraži sigurnosnu kopiju. BombVault mu prepušta ažuriranja.",
   "update.afterBackupHint": "Povlači sliku i ponovno stvara ovaj kontejner odmah nakon uspješne sigurnosne kopije, tako da uvijek prvo imate svježu točku vraćanja. Izvršava se u vrijeme sigurnosne kopije (sigurnosne kopije se izvršavaju jedna za drugom), ne u fiksno vrijeme. Za ažuriranja prema fiksnom rasporedu, prema verziji, pogledajte ShipLog.",
   "update.followsSchedule": "Kako je postavljeno pod Postavke › Raspored",
   "update.ownChoice": "Vlastiti odabir",

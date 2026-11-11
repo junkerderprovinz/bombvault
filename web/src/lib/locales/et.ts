@@ -310,6 +310,7 @@ const et: Partial<Translations> = {
   "run.kindKeyRefuse": "Väljaandmine tagasi lükatud",
   "run.kindKeyRelease": "Hoiustus välja antud",
   "update.afterBackup": "Uuenda pärast õnnestunud varundust",
+  "update.byShipLog": "Selles serveris töötab ShipLog ja uuendab sinu konteinereid, olles enne BombVaultilt varukoopia küsinud. BombVault jätab uuendused talle.",
   "update.afterBackupHint": "Tõmbab tõmmise ja loob selle konteineri kohe pärast õnnestunud varundust uuesti, nii on sul alati enne olemas värske taastamispunkt. Töötab varunduse ajal (varundused käivad üksteise järel), mitte kindlal kellaajal. Kindla, versioonipõhise ajakavaga uuenduste jaoks vaata ShipLog.",
   "update.followsSchedule": "Nagu on määratud jaotises Seaded › Ajakava",
   "update.ownChoice": "Oma valik",

@@ -117,6 +117,8 @@ export function useSettingsStore() {
   const [platformKind, setPlatformKind] = useState<string>("unraid");
   // Whether PLATFORM chose platformKind, from "platformSet" next to it.
   const [platformSet, setPlatformSet] = useState(false);
+  // ShipLog on this server updates the containers, from "updatesByShipLog".
+  const [updatesByShipLog, setUpdatesByShipLog] = useState(false);
   // Which read failed: the first one, or the one after an import.
   const [loadError, setLoadError] = useState<"load" | "import" | null>(null);
 
@@ -184,6 +186,7 @@ export function useSettingsStore() {
           if (res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
           if (res.platform) setPlatformKind(res.platform);
           setPlatformSet(res.platformSet === true);
+          setUpdatesByShipLog(res.updatesByShipLog === true);
         } else {
           setLoadError("load");
         }
@@ -545,6 +548,7 @@ export function useSettingsStore() {
       if (fresh.hostMountRoot) setHostMountRoot(fresh.hostMountRoot);
       if (fresh.platform) setPlatformKind(fresh.platform);
       setPlatformSet(fresh.platformSet === true);
+      setUpdatesByShipLog(fresh.updatesByShipLog === true);
     } else {
       setLoadError("import");
     }
@@ -626,6 +630,7 @@ export function useSettingsStore() {
     hostMountRoot,
     platformKind,
     platformSet,
+    updatesByShipLog,
     confirmDialog,
     allTargets,
     authEnabled,

@@ -310,6 +310,7 @@ const ms: Partial<Translations> = {
   "run.kindKeyRefuse": "Pengeluaran ditolak",
   "run.kindKeyRelease": "Deposit dikeluarkan",
   "update.afterBackup": "Kemas kini selepas sandaran yang berjaya",
+  "update.byShipLog": "ShipLog berjalan pada pelayan ini dan mengemas kini bekas anda selepas meminta sandaran daripada BombVault terlebih dahulu. BombVault menyerahkan kemas kini kepadanya.",
   "update.afterBackupHint": "Menarik imej dan mencipta semula bekas ini sejurus selepas sandaran berjaya, jadi anda sentiasa mempunyai titik pemulihan terkini dahulu. Berjalan pada masa sandaran (sandaran berjalan satu demi satu), bukan pada waktu tetap. Untuk kemas kini pada jadual tetap, mengikut versi, lihat ShipLog.",
   "update.followsSchedule": "Seperti yang ditetapkan di Tetapan › Jadual",
   "update.ownChoice": "Pilihan sendiri",

@@ -310,6 +310,7 @@ const sk: Partial<Translations> = {
   "run.kindKeyRefuse": "Vydanie odmietnuté",
   "run.kindKeyRelease": "Úschova kľúča vydaná",
   "update.afterBackup": "Aktualizovať po úspešnej zálohe",
+  "update.byShipLog": "Na tomto serveri beží ShipLog a aktualizuje tvoje kontajnery, najprv si však od BombVault vyžiada zálohu. BombVault mu aktualizácie prenecháva.",
   "update.afterBackupHint": "Stiahne obraz a znova vytvorí tento kontajner hneď po úspešnej zálohe, takže vždy máš najprv čerstvý bod obnovenia. Beží v čase zálohovania (zálohy bežia jedna za druhou), nie o pevnom čase. Aktualizácie podľa pevného plánu, viazané na verziu, nájdeš v ShipLog.",
   "update.followsSchedule": "Podľa nastavenia v časti Nastavenia › Plán",
   "update.ownChoice": "Vlastná voľba",

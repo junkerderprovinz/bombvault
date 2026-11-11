@@ -310,6 +310,7 @@ const id: Partial<Translations> = {
   "run.kindKeyRefuse": "Pemberian ditolak",
   "run.kindKeyRelease": "Titipan kunci diberikan",
   "update.afterBackup": "Perbarui setelah pencadangan yang berhasil",
+  "update.byShipLog": "ShipLog berjalan di server ini dan memperbarui kontainer Anda setelah lebih dulu meminta cadangan dari BombVault. BombVault menyerahkan pembaruan kepadanya.",
   "update.afterBackupHint": "Menarik image dan membuat ulang container ini tepat setelah pencadangan berhasil, sehingga Anda selalu punya titik pemulihan yang segar terlebih dahulu. Berjalan pada waktu pencadangan (pencadangan berjalan satu per satu), bukan pada jam tetap. Untuk pembaruan pada jadwal tetap, berbasis versi, lihat ShipLog.",
   "update.followsSchedule": "Sesuai pengaturan di Pengaturan › Jadwal",
   "update.ownChoice": "Pilihan sendiri",
