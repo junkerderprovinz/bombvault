@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
+	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
 
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -35,10 +36,16 @@ func (s *Service) withPairing(cfg fortress.Config, g store.GroupState) (fortress
 		return cfg, err
 	}
 	cfg.Pairing = &fortress.Pairing{
-		LAN:      s.pairing().LAN(),
-		Store:    pairingStore{s},
-		Serve:    s.pairing().Handler(),
-		Previous: old,
+		Group: kitgroup.Config{
+			LAN:            s.pairing().LAN(),
+			Store:          pairingStore{s},
+			Previous:       old,
+			Kinds:          group.Kinds,
+			Ports:          group.Ports,
+			MaxAnswerBytes: group.MaxAnswerBytes,
+			OnChange:       s.pairing().Changed,
+		},
+		Serve: s.pairing().Handler(),
 	}
 	cfg.MaxAnswerBytes = group.MaxAnswerBytes
 	return cfg, nil
