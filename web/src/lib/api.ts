@@ -7162,15 +7162,10 @@ export interface MemberRoles {
   memberId: string;
   name: string;
   reachable: boolean;
-  /** False for a member from before role requests: asking it takes effect at
-   *  once, since nobody there can answer. */
-  answers: boolean;
-  /** False for a member too old to keep a key deposit, and for one out of
-   *  reach. The server always sends it. */
+  /** False for a member out of reach. The server always sends it. */
   canKeep?: boolean;
-  /** Whether the member can keep this instance's deposit, telling a member
-   *  that is too old from one that is out of reach, whose version is unknown. */
-  keep: "yes" | "too-old" | "unreachable";
+  /** Whether the member can keep this instance's deposit. */
+  keep: "yes" | "unreachable";
   /** What the member does for this instance. */
   byMember: RoleSide;
   /** What this instance does for the member. */

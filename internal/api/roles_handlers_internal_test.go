@@ -45,7 +45,7 @@ func TestARoleGoesFromRequestToRevokeThroughTheSessionRoutes(t *testing.T) {
 			ask := "/api/group/members/" + attic.id(t) + "/roles/" + role
 
 			if entry, self := memberRoles(t, tower, attic); roleIn(entry, "byMember", role) != nil || entry["asks"] != float64(0) ||
-				entry["reachable"] != true || entry["answers"] != true || len(self[role].([]any)) != 0 {
+				entry["reachable"] != true || entry["canKeep"] != true || len(self[role].([]any)) != 0 {
 				t.Fatalf("before anyone asked: %v, self %v", entry, self)
 			}
 

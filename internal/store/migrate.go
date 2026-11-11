@@ -3859,6 +3859,13 @@ CREATE TABLE IF NOT EXISTS shared_repo_taken_over (
 CREATE INDEX IF NOT EXISTS member_keys_by_key ON member_keys (key);
 UPDATE group_state SET direct_url_manual = 0;`,
 	},
+	{
+		// Every member of a group on the kit signs its calls, so the list of
+		// members that may call unsigned goes.
+		version: legacyMembersGoneMigration,
+		name:    "legacy_members_gone",
+		sql:     `DROP TABLE IF EXISTS legacy_members;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4501,6 +4508,9 @@ const notifyChannelsMigration = 900
 
 // groupKitMigration numbers the group's move onto the parleyport kit.
 const groupKitMigration = 910
+
+// legacyMembersGoneMigration numbers the end of members that call unsigned.
+const legacyMembersGoneMigration = 920
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

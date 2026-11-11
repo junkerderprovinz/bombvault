@@ -964,7 +964,6 @@ const ROLES = [
     memberId: GROUP_ID.nas,
     name: "Offsite NAS",
     reachable: true,
-    answers: true,
     canKeep: true,
     keep: "yes",
     byMember: {
@@ -980,7 +979,6 @@ const ROLES = [
     memberId: GROUP_ID.office,
     name: "office",
     reachable: true,
-    answers: true,
     canKeep: true,
     keep: "yes",
     byMember: { ...NO_ROLES, fetcher: roleRequest("rr2", "asked", ["files"]) },

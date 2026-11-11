@@ -873,19 +873,16 @@ func (s *Service) handlePeerReceiver(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, failEnvelope(errReceiverNeedsHost))
 			return
 		}
-		caller, ok := s.peerCaller(r)
-		if !ok || caller.ID != in.InstanceID {
+		caller, ok := s.roleAsker(r)
+		if !ok || caller != in.InstanceID {
 			writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the asking instance is not the one the group names for this call"})
 			return
 		}
-		if err := s.verifyCaller(r.Context(), caller, keydeposit.ProofReceiverLogin, signed, in.peerProof); err != nil {
+		if err := s.verifyMember(r.Context(), caller, keydeposit.ProofReceiverLogin, signed, in.peerProof); err != nil {
 			writeJSON(w, http.StatusForbidden, failEnvelope(err))
 			return
 		}
-		offer.User, offer.Password, err = s.receiverLoginFor(r.Context(), rs, caller.ID, in.Name)
-		if errors.Is(err, errPeerNotAllowed) {
-			s.noteOldReceiverAsk(caller, in.Name)
-		}
+		offer.User, offer.Password, err = s.receiverLoginFor(r.Context(), rs, caller, in.Name)
 		if err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return

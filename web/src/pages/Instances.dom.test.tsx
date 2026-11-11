@@ -773,17 +773,6 @@ describe("the key keeper tile", () => {
     expect(tile("m1", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.state.changed"]);
   });
 
-  it("tells an instance that could not be asked apart from one that is too old", async () => {
-    roles = [
-      memberRoles({ name: "DXP480T", canKeep: false, keep: "too-old" }),
-      memberRoles({ memberId: "m2", name: "barn", canKeep: false, reachable: false, keep: "unreachable" }),
-    ];
-    await renderPage();
-    expect(tile("m1", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.tile.tooOld"]);
-    expect(tile("m2", "keeper").textContent).toBe(en["instances.role.keeper"] + en["keeper.tile.unreachable"]);
-    expect(tile("m2", "keeper").getAttribute("data-state")).toBe("off");
-  });
-
   it("asks for a sign-in at this instance when the phone app's session may not make a deposit", async () => {
     keeperRefusal = "own-login-needed";
     await renderPage();
@@ -858,17 +847,6 @@ describe("the key keeper tile", () => {
     expect(tile("m1", "keeper").getAttribute("data-state")).toBe("on");
   });
 
-  it("tells an instance that is too old to update first, and sends nothing", async () => {
-    roles = [memberRoles({ name: "DXP480T", canKeep: false, keep: "too-old" })];
-    await renderPage();
-    expect(tile("m1", "keeper").getAttribute("data-state")).toBe("off");
-    await click(tile("m1", "keeper"));
-    expect(dialog().textContent).toContain("DXP480T runs a version that cannot keep a key deposit. Update it first.");
-    expect(within(dialog()).queryByRole("button", { name: en["keeper.make"] })).toBeNull();
-    await click(within(dialog()).getByRole("button", { name: en["common.close"] }));
-    expect(keeperAsked).toEqual([]);
-  });
-
   it("says why a deposit was refused, and stays open", async () => {
     keeperRefusal = "member-silent";
     await renderPage();
@@ -933,62 +911,6 @@ describe("the key keeper tile", () => {
     roles = [keeps("held")];
     await renderPage();
     expect(screen.getByTestId("net-picture").querySelectorAll(".glim-net-wide [data-lane]")).toHaveLength(0);
-  });
-});
-
-describe("an instance from before role requests", () => {
-  beforeEach(() => {
-    roles = [memberRoles({ name: "DXP480T", answers: false })];
-    askAnswer = { state: "allowed", decidedBy: "automatic" };
-  });
-
-  it("is told apart in the dialog: the role is active at once, and the button says so", async () => {
-    await renderPage();
-    await click(tile("m1", "receiver"));
-    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
-    expect(dialog.textContent).toContain("DXP480T runs an older BombVault that cannot answer a request.");
-    expect(dialog.textContent).not.toContain("gets a request");
-    expect(within(dialog).queryByRole("button", { name: en["instances.role.send"] })).toBeNull();
-    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
-    expect(asked).toHaveLength(1);
-    expect(screen.getByText("DXP480T is your Receiver now, but no storage location copies there yet.")).toBeTruthy();
-    expect(tile("m1", "receiver").getAttribute("data-state")).toBe("on");
-  });
-
-  it("says it is the Receiver now without more when a storage location copies there", async () => {
-    destinations = [destination({ id: "d1", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
-    await renderPage();
-    await click(tile("m1", "receiver"));
-    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
-    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
-    expect(screen.getByText("DXP480T is your Receiver now.")).toBeTruthy();
-  });
-
-  it("shows the storage location as off after the Receiver was switched off and on again", async () => {
-    groupReceivers = [{ memberId: "m1", name: "DXP480T", url: "http://192.168.1.21:8000", needsAddress: false }];
-    destinations = [destination({ id: "d1", name: "attic", repo: "rest:http://192.168.1.21:8000/cellar-login", enabled: true })];
-    roles = [memberRoles({ name: "DXP480T", answers: false, byMember: roleSide({ receiver: allowed() }) })];
-    await renderPage();
-    await click(tile("m1", "receiver"));
-    await click(within(question()).getByRole("button", { name: en["instances.role.switchOff"] }));
-    expect(switchedOff).toEqual(["d1"]);
-    await click(tile("m1", "receiver"));
-    const dialog = screen.getByRole("dialog", { name: "DXP480T as Receiver" });
-    await click(within(dialog).getByRole("button", { name: en["instances.role.switchOn"] }));
-    expect(screen.getByText("DXP480T is your Receiver now, but no storage location copies there yet.")).toBeTruthy();
-    expect(tile("m1", "receiver").textContent).toContain("Storage location attic is switched off");
-  });
-
-  it("cannot take ZFS replicas, which the dialog explains instead of asking", async () => {
-    flags.zfsEnabled = true;
-    await renderPage();
-    await click(tile("m1", "zfs"));
-    const dialog = screen.getByRole("dialog", { name: "DXP480T as ZFS server" });
-    expect(dialog.textContent).toContain("Update it to BombVault 10");
-    expect(within(dialog).queryByRole("switch")).toBeNull();
-    expect(within(dialog).queryByRole("button", { name: en["instances.role.send"] })).toBeNull();
-    await click(within(dialog).getByRole("button", { name: en["common.close"] }));
-    expect(patched).toEqual([]);
   });
 });
 

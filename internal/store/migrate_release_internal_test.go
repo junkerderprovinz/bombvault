@@ -5,28 +5,21 @@ import (
 	"testing"
 )
 
-func TestAMemberThatPinnedAKeyIsNoLegacyMember(t *testing.T) {
+func TestTheListOfMembersAllowedToCallUnsignedGoes(t *testing.T) {
 	db := OpenMem(t)
-	migrateThrough(t, db, legacyMembersMigration-1)
-	if _, err := db.Exec(`INSERT INTO fleet_peers (id, member_id) VALUES ('p1', 'signs'), ('p2', 'old')`); err != nil {
+	migrateThrough(t, db, legacyMembersMigration+1)
+	if _, err := db.Exec(`INSERT INTO legacy_members (member_id) VALUES ('old')`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(`INSERT INTO member_keys (member_id, key, pinned_at) VALUES ('signs', x'01', 1)`); err != nil {
-		t.Fatal(err)
-	}
-	migrateThrough(t, db, legacyMembersMigration)
 	if err := Migrate(db); err != nil {
 		t.Fatal(err)
 	}
 	if err := Migrate(db); err != nil {
 		t.Fatalf("a second start: %v", err)
 	}
-	r := New(db)
-	if legacy, err := r.LegacyMember("signs"); err != nil || legacy {
-		t.Errorf("the member with a pinned key is legacy=%v (%v)", legacy, err)
-	}
-	if legacy, err := r.LegacyMember("old"); err != nil || !legacy {
-		t.Errorf("the member without a key is legacy=%v (%v)", legacy, err)
+	var n int
+	if err := db.QueryRow(`SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'legacy_members'`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("legacy_members is still there: %d, %v", n, err)
 	}
 }
 

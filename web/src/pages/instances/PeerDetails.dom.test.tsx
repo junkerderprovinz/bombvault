@@ -391,11 +391,6 @@ describe("what the instance does for this server", () => {
     expect(row("keeper").textContent).toContain("The deposit was deleted on attic. attic takes a new one only when you ask again.");
   });
 
-  it("says that an instance too old to keep a deposit has to be updated first", async () => {
-    await open({ roles: [memberRoles({ canKeep: false, keep: "too-old" })] });
-    expect(row("keeper").textContent).toContain("attic runs a version that cannot keep a key deposit. Update it first.");
-  });
-
   it("makes a deposit from the keeper's switch, and takes it back the same way", async () => {
     await open();
     await click(within(row("keeper")).getByRole("switch"));

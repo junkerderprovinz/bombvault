@@ -31,7 +31,7 @@ import { RemoveInstanceButton } from "./RemoveInstanceButton";
 import { useRoleSwitch } from "./RoleDialogs";
 import { RoleRequests } from "./RoleRequests";
 import { ROLES, ROLE_STATE_KEY } from "./RoleTile";
-import { ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
+import { ROLE_KINDS, unreachableToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState, Modules } from "./useInstances";
 
 function RoleRow({
@@ -204,7 +204,6 @@ export function PeerDetails({
    *  what to do when it is not current. */
   function keeperLine(keeper: KeeperRole | null | undefined): ReactNode {
     if (!keeper) {
-      if (tooOldToKeep(instance)) return named("keeper.tooOld");
       return unreachableToKeep(instance) ? named("keeper.unreachable") : t(ROLE_STATE_KEY.off);
     }
     const help = depositHelp(keeper.state);

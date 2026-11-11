@@ -340,7 +340,7 @@ type offeredDeposit struct {
 }
 
 // OfferedDeposits asks every member in reach which deposits it keeps. silent
-// names the members that did not answer, older ones among them.
+// names the members that did not answer.
 func (s *Service) OfferedDeposits(ctx context.Context) (offered []offeredDeposit, silent []string) {
 	offered, silent = []offeredDeposit{}, []string{}
 	for _, m := range s.pairing().Members() {
@@ -348,7 +348,7 @@ func (s *Service) OfferedDeposits(ctx context.Context) (offered []offeredDeposit
 			continue
 		}
 		var list peerDepositList
-		if predatesRoleRequests(m.Version) || s.callMember(ctx, m.ID, http.MethodGet, "/api/group/peer/deposits", nil, &list) != nil {
+		if s.callMember(ctx, m.ID, http.MethodGet, "/api/group/peer/deposits", nil, &list) != nil {
 			silent = append(silent, m.Name)
 			continue
 		}

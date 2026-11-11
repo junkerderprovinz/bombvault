@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { Button } from "../../components/Button";
 import { KindGlyph } from "../../components/backups/kinds";
-import { IconPlay, IconSave, IconUpload } from "../../components/glyphs";
+import { IconSave, IconUpload } from "../../components/glyphs";
 import { Selector } from "../../components/Selector";
 import { SettingRow } from "../../components/storage/rows";
 import { useReplicaServers } from "../../components/zfs/replica/replicaStore";
@@ -60,7 +60,6 @@ export function RoleAskDialog({
   const { push } = useToast();
   const sent = instance.roles?.byMember[role];
   const editing = sent?.state === "asked" || sent?.state === "allowed";
-  const answers = instance.roles?.answers ?? true;
   // A receiver takes ordinary backups. ZFS data reaches another instance as a
   // replica, so it starts unpicked.
   const [picked, setPicked] = useState<RoleSection[]>(() =>
@@ -71,8 +70,7 @@ export function RoleAskDialog({
   const [error, setError] = useState<string | null>(null);
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => instance.name);
   const title = named("instances.role.asTitle").replace("{role}", t(ROLES[role].label));
-  // An instance too old to answer has its receiving server and nothing else.
-  const picksStore = role === "receiver" && answers;
+  const picksStore = role === "receiver";
 
   async function send() {
     if (picked.length === 0) return setError(t("instances.role.needSection"));
@@ -103,14 +101,12 @@ export function RoleAskDialog({
 
   const sendButton: { key: TranslationKey; glyph: ReactNode } = editing
     ? { key: "settings.save", glyph: <IconSave /> }
-    : answers
-      ? { key: "instances.role.send", glyph: <IconUpload /> }
-      : { key: "instances.role.switchOn", glyph: <IconPlay /> };
+    : { key: "instances.role.send", glyph: <IconUpload /> };
   return (
     <RoleDialog
       title={title}
       hint={t(ROLES[role].tip)}
-      lead={named(answers ? "instances.role.askLead" : "instances.role.oldLead")}
+      lead={named("instances.role.askLead")}
       onClose={onClose}
       footer={
         <>
@@ -201,7 +197,6 @@ export function ZFSRoleDialog({
     return (mine.length > 0 ? mine : replicas).map((r) => r.itemId);
   });
   const [busy, setBusy] = useState(false);
-  const answers = instance.roles?.answers ?? true;
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => instance.name);
 
   function elsewhere(target: ZFSReplicaTarget): string | undefined {
@@ -231,12 +226,12 @@ export function ZFSRoleDialog({
     }
   }
 
-  const usable = answers && replicas.length > 0;
+  const usable = replicas.length > 0;
   return (
     <RoleDialog
       title={named("instances.role.asTitle").replace("{role}", t(ROLES.zfs.label))}
       hint={t(ROLES.zfs.tip)}
-      lead={!answers ? named("instances.role.oldZfs") : replicas.length === 0 ? t("instances.role.zfsNone") : named("instances.role.askLeadZfs")}
+      lead={replicas.length === 0 ? t("instances.role.zfsNone") : named("instances.role.askLeadZfs")}
       onClose={onClose}
       footer={
         usable ? (

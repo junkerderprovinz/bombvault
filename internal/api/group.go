@@ -542,15 +542,15 @@ type pairableRepo struct {
 // asked the member to keep or to fetch, and adds the restic password once the
 // member has allowed that request. GET /api/group/peer/pairing
 func (s *Service) handlePeerPairing(w http.ResponseWriter, r *http.Request) {
-	// A member older than role requests sends no body.
+	// A call without a body carries no proof and is refused below.
 	var proof peerProof
 	if err := json.NewDecoder(io.LimitReader(r.Body, peerRoleBodyMax)).Decode(&proof); err != nil && !errors.Is(err, io.EOF) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "malformed pairing request"})
 		return
 	}
-	caller, ok := s.peerCaller(r)
+	caller, ok := s.roleAsker(r)
 	if ok {
-		if err := s.verifyCaller(r.Context(), caller, keydeposit.ProofPairing, nil, proof); err != nil {
+		if err := s.verifyMember(r.Context(), caller, keydeposit.ProofPairing, nil, proof); err != nil {
 			writeJSON(w, http.StatusForbidden, failEnvelope(err))
 			return
 		}
@@ -558,7 +558,7 @@ func (s *Service) handlePeerPairing(w http.ResponseWriter, r *http.Request) {
 	var grant pairingGrant
 	if ok {
 		var err error
-		if grant, err = s.pairingGrantFor(caller.ID); err != nil {
+		if grant, err = s.pairingGrantFor(caller); err != nil {
 			writeJSON(w, http.StatusOK, failEnvelope(err))
 			return
 		}
@@ -1164,9 +1164,6 @@ func (s *Service) pairedPassword(ctx context.Context, memberID, role string) ([]
 	}
 	if !resticPasswordRe.MatchString(p.ResticPassword) {
 		return nil, nil, errors.New("the other instance sent no usable restic password")
-	}
-	if err := s.grantOldMember(memberID, role); err != nil {
-		return nil, nil, err
 	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(p.ResticPassword))
 	return enc, p.Repos, err

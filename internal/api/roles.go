@@ -14,8 +14,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/mod/semver"
-
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -29,11 +27,6 @@ const peerRoleBodyMax = 4 << 10
 // roleNameMax is how much of an instance's name a request keeps.
 const roleNameMax = 200
 
-// roleRequestsSince is the first release line whose instances ask for and
-// answer role requests. An older member hands out a receiver login and its
-// restic password to whoever asks.
-const roleRequestsSince = "v10.0"
-
 // allRoleSections are the backup domains a role can cover, sorted the way
 // every stored request keeps them.
 var allRoleSections = []string{"config", "containers", "files", "flash", "vms", "zfs"}
@@ -41,14 +34,6 @@ var allRoleSections = []string{"config", "containers", "files", "flash", "vms", 
 var errRoleNeedsReceiver = errors.New("set up a receiver first: it is where the other instance's copies go")
 
 var errRoleNeedsPull = errors.New("switch on Pull under Settings, Instances first: with it off this instance never fetches anything")
-
-// predatesRoleRequests reports whether a member said it runs a release from
-// before role requests. An unstamped build counts as current, and so does a
-// build between releases: it carries the last release's number with its branch
-// appended, which says nothing about what the build can do.
-func predatesRoleRequests(version string) bool {
-	return semver.IsValid(version) && semver.Build(version) == "" && semver.Compare(semver.MajorMinor(version), roleRequestsSince) < 0
-}
 
 // peerSender is the id of the member a peer call came from, as the group
 // vouches for it with the member's key.
@@ -270,32 +255,16 @@ func (s *Service) reachableMember(memberID string) (group.Member, bool) {
 }
 
 // askRole asks a member to take a role for this instance, as a person here
-// wants it, and records what the member answered. A member older than role
-// requests cannot be asked: its receiver hands a login to whoever asks, and
-// it fetches whatever it is given the password for, so the request counts as
-// allowed the moment it is made here.
+// wants it, and records what the member answered.
 func (s *Service) askRole(ctx context.Context, m group.Member, role string, sections []string, where string) (store.RoleRequest, error) {
 	s.roleSendMu.Lock()
 	defer s.roleSendMu.Unlock()
 	sent := store.RoleRequest{MemberID: m.ID, MemberName: m.Name, Role: role, Sections: sections, Store: where}
-	if predatesRoleRequests(m.Version) {
-		if role == store.RoleReceiver {
-			offer, err := s.askReceiver(ctx, m.ID, false)
-			if err != nil {
-				return store.RoleRequest{}, err
-			}
-			if offer == nil {
-				return store.RoleRequest{}, errNoMemberReceiver
-			}
-		}
-		sent.State, sent.DecidedBy = store.RoleAllowed, store.RoleDecidedAutomatic
-	} else {
-		state, err := s.sendRoleAsk(ctx, sent, true)
-		if err != nil {
-			return store.RoleRequest{}, err
-		}
-		sent.State = state
+	state, err := s.sendRoleAsk(ctx, sent, true)
+	if err != nil {
+		return store.RoleRequest{}, err
 	}
+	sent.State = state
 	saved, err := s.store.SaveSentRoleRequest(sent)
 	if err != nil {
 		return store.RoleRequest{}, err
@@ -352,27 +321,23 @@ func (s *Service) withdrawRole(ctx context.Context, memberID, role string) (bool
 }
 
 // tellRoleWithdrawn tells the member that the request for role is withdrawn
-// and forgets the note once it heard. The caller holds roleSendMu. A member
-// older than role requests holds no request to take back.
+// and forgets the note once it heard. The caller holds roleSendMu.
 func (s *Service) tellRoleWithdrawn(ctx context.Context, memberID, role string) bool {
-	m, ok := s.reachableMember(memberID)
-	if !ok {
+	if _, ok := s.reachableMember(memberID); !ok {
 		return false
 	}
-	if !predatesRoleRequests(m.Version) {
-		proof, err := s.signCall(keydeposit.ProofRoleWithdraw, memberID, callPayload(role))
-		if err != nil {
-			log.Printf("roles: sign the withdrawal of the %s role for %q: %v", role, memberID, err) //nolint:gosec // G706: a role from a fixed set and an instance id from the store
-			return false
-		}
-		if s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role, peerProof: proof}, nil) != nil {
-			return false
-		}
+	proof, err := s.signCall(keydeposit.ProofRoleWithdraw, memberID, callPayload(role))
+	if err != nil {
+		log.Printf("roles: sign the withdrawal of the %s role for %q: %v", role, memberID, err) //nolint:gosec // G706: a role from a fixed set and an instance id from the store
+		return false
+	}
+	if s.callMember(ctx, memberID, http.MethodPost, "/api/group/peer/roles/withdraw", peerRoleNote{Role: role, peerProof: proof}, nil) != nil {
+		return false
 	}
 	if err := s.store.ForgetRoleWithdrawal(memberID, role); err != nil {
 		log.Printf("roles: %v", err)
 	}
-	return !predatesRoleRequests(m.Version)
+	return true
 }
 
 // retellRoleWithdrawals tells every member in reach again about a withdrawal
@@ -452,8 +417,7 @@ func (s *Service) forgetMemberRoles(ctx context.Context, memberID string) error 
 // answered, and reports whether it heard. A member that did not hear learns
 // the answer the next time it asks.
 func (s *Service) tellRoleAnswer(ctx context.Context, req store.RoleRequest) bool {
-	m, ok := s.reachableMember(req.MemberID)
-	if !ok || predatesRoleRequests(m.Version) {
+	if _, ok := s.reachableMember(req.MemberID); !ok {
 		return false
 	}
 	proof, err := s.signCall(keydeposit.ProofRoleAnswer, req.MemberID, callPayload(req.Role, req.State))
@@ -522,8 +486,7 @@ func (s *Service) refreshSentRoles(ctx context.Context) {
 }
 
 func (s *Service) refreshSentRole(ctx context.Context, memberID, role string) {
-	m, ok := s.reachableMember(memberID)
-	if !ok || predatesRoleRequests(m.Version) {
+	if _, ok := s.reachableMember(memberID); !ok {
 		return
 	}
 	s.roleSendMu.Lock()

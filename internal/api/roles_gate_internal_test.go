@@ -324,14 +324,11 @@ func TestLoginsAndPairingsFromBeforeTheUpgradeGoOnWithoutAnyoneAnswering(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := attic.db.Exec(`DELETE FROM schema_migrations WHERE name IN ('role_requests_from_pairings', 'legacy_members'); DROP TABLE legacy_members`); err != nil {
+	if _, err := attic.db.Exec(`DELETE FROM schema_migrations WHERE name = 'role_requests_from_pairings'`); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.Migrate(attic.db); err != nil {
 		t.Fatal(err)
-	}
-	if legacy, err := attic.st.LegacyMember(tower.id(t)); err != nil || !legacy {
-		t.Fatalf("a member with a login from before the upgrade may call unsigned: %v, %v", legacy, err)
 	}
 
 	for _, role := range []string{store.RoleReceiver, store.RoleFetcher} {
@@ -385,15 +382,4 @@ func TestAnOldWayCallIsBoundToTheMemberTheGroupNames(t *testing.T) {
 		t.Fatalf("a call that names no sender in a group without old members: %v", out)
 	}
 
-}
-
-func TestAVersionCountsAsOldOnlyWhenItSaysSo(t *testing.T) {
-	for version, old := range map[string]bool{
-		"v9.9.1": true, "v9.10.0": true, "v1.2.3": true,
-		"v10.0.0": false, "v10.0.0-rc.1": false, "v11.4.0": false, "dev": false, "": false, "9.9.1": false, "v9.9.1+main.4c0c987": false,
-	} {
-		if got := predatesRoleRequests(version); got != old {
-			t.Errorf("predatesRoleRequests(%q) = %v, want %v", version, got, old)
-		}
-	}
 }

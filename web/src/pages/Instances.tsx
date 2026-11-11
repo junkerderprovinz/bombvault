@@ -34,7 +34,7 @@ import { SharedMembershipsCard } from "./instances/SharedMembershipsCard";
 import { SharedRepoCard } from "./instances/SharedRepoCard";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
-import { buildInstances, protectionFigures, ROLE_KINDS, tooOldToKeep, unreachableToKeep, withoutScheme, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
+import { buildInstances, protectionFigures, ROLE_KINDS, unreachableToKeep, withoutScheme, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
 import { useSharedRepo } from "./instances/useSharedRepo";
@@ -190,7 +190,7 @@ function PeerCard({
   // A deposit that is not current says so in place of the tile's own word,
   // and so does an instance that cannot take one.
   const deposit = instance.roles?.byMember.keeper?.state;
-  const cannotKeep = tooOldToKeep(instance) ? t("keeper.tile.tooOld") : unreachableToKeep(instance) ? t("keeper.tile.unreachable") : undefined;
+  const cannotKeep = unreachableToKeep(instance) ? t("keeper.tile.unreachable") : undefined;
   const keeperDetail = deposit ? (deposit !== "held" ? depositStateLabel(t, deposit) : undefined) : cannotKeep;
   // An allowed Receiver copies nothing until a destination that is on points
   // at it.

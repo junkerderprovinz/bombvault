@@ -13,7 +13,7 @@ import { useOwnLogin } from "../../lib/useOwnLogin";
 import { ToggleRow } from "../settings/shared";
 import { RoleDialog } from "./RoleDialog";
 import { ROLES } from "./RoleTile";
-import { tooOldToKeep, type Instance } from "./instancesModel";
+import type { Instance } from "./instancesModel";
 
 /** RecoveryCodeDialog shows a recovery code the server just made. The server
  *  keeps no copy and cannot show it again, so the window stays until the
@@ -87,7 +87,6 @@ export function KeeperDialog({
   const ownLogin = useOwnLogin();
   const named = (key: TranslationKey) => t(key).replaceAll("{peer}", () => instance.name);
   const title = named("instances.role.asTitle").replace("{role}", t(ROLES.keeper.label));
-  const tooOld = tooOldToKeep(instance);
 
   async function deposit() {
     setError(null);
@@ -112,18 +111,6 @@ export function KeeperDialog({
   }
 
   if (code) return <RecoveryCodeDialog code={code} onDone={onDone} />;
-
-  if (tooOld) {
-    return (
-      <RoleDialog
-        title={title}
-        hint={t(ROLES.keeper.tip)}
-        lead={named("keeper.tooOld")}
-        onClose={onClose}
-        footer={<Button label={t("common.close")} labelKey="common.close" tone="accent" onClick={onClose} />}
-      />
-    );
-  }
 
   return (
     <RoleDialog

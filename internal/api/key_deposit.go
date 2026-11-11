@@ -345,9 +345,6 @@ func (s *Service) MakeDeposit(ctx context.Context, memberID string) (state, code
 	if !ok {
 		return "", "", errMemberGone
 	}
-	if predatesRoleRequests(m.Version) {
-		return "", "", errKeeperTooOld
-	}
 	if can, err := s.canKeepDeposits(ctx, memberID); err != nil {
 		return "", "", err
 	} else if !can {

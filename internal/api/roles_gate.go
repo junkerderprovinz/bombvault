@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"log"
-	"net/http"
 	"slices"
 
 	"github.com/junkerderprovinz/bombvault/internal/group"
@@ -23,38 +21,6 @@ var errMemberNotAsked = errors.New("that instance has not asked this one to keep
 var errPasswordHeld = errors.New("that instance has not released its restic password to this one: it first has to ask this instance to be its Receiver or Fetcher")
 
 var errPasswordLocked = errors.New("that instance allows this, but cannot read its restic password right now: its backup key is locked there. Unlock it on that instance's Restore page under Emergency, then try again")
-
-// peerCaller names the member behind a call to a route older than role
-// requests. A call that does not name its sender is refused: an old member's
-// call through a relay names none, and nothing tells it from anyone else's.
-func (s *Service) peerCaller(r *http.Request) (group.Member, bool) {
-	sender, ok := s.roleAsker(r)
-	if !ok {
-		return group.Member{}, false
-	}
-	for _, m := range s.pairing().Members() {
-		if m.ID == sender {
-			return m, true
-		}
-	}
-	return group.Member{ID: sender}, true
-}
-
-// noteOldReceiverAsk records a request for a member that asked for a receiver
-// login the way instances did before role requests, so a person here finds it
-// and can allow it. The member cannot say which sections it will send.
-func (s *Service) noteOldReceiverAsk(caller group.Member, name string) {
-	if old, err := s.legacyMember(caller); err != nil || !old {
-		return
-	}
-	_, err := s.store.AskRoleRequest(store.RoleRequest{
-		MemberID: caller.ID, MemberName: clipRoleName(name), Role: store.RoleReceiver,
-		Sections: allRoleSections, Store: store.RoleStoreRest,
-	}, true)
-	if err != nil {
-		log.Printf("roles: record the receiver request of %q: %v", caller.ID, err) //nolint:gosec // G706: an instance id the group channel carried
-	}
-}
 
 // pairingGrant is what this instance hands a member that asks how to open
 // its repositories: the sections it may learn the locations of, and whether
@@ -104,21 +70,6 @@ func (s *Service) retellRoleAnswer(ctx context.Context, memberID, role string) {
 	if err == nil && ok && req.State == store.RoleAllowed {
 		s.tellRoleAnswer(ctx, req)
 	}
-}
-
-// grantOldMember records that this instance takes a role for a member older
-// than role requests, which gave its password without being asked for leave.
-func (s *Service) grantOldMember(memberID, role string) error {
-	m, ok := s.reachableMember(memberID)
-	if !ok {
-		return nil
-	}
-	if old, err := s.legacyMember(m); err != nil || !old {
-		return err
-	}
-	return s.store.GrantRoleRequest(store.RoleRequest{
-		Direction: store.RoleRequestIn, MemberID: m.ID, MemberName: m.Name, Role: role, Sections: allRoleSections,
-	})
 }
 
 // ensureReceiverRole makes sure a member has allowed this instance to send

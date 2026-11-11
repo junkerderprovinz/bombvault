@@ -106,7 +106,6 @@ async function stage(page: Page, f: Instance): Promise<void> {
           memberId: m.id,
           name: m.name,
           reachable: true,
-          answers: true,
           // The first member keeps this instance's copies, so the picture has an arrow.
           byMember: {
             receiver: i === 0 ? { id: "rr1", state: "allowed", sections: ["containers"], store: "rest", askedAt: "", decidedAt: "", decidedBy: "person" } : null,

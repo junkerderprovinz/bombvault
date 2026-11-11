@@ -127,7 +127,6 @@ export function memberRoles(over: Partial<MemberRoles> = {}): MemberRoles {
     memberId: "m1",
     name: "attic",
     reachable: true,
-    answers: true,
     canKeep: true,
     keep: "yes",
     byMember: roleSide(),

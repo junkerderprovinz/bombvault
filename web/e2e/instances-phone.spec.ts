@@ -318,13 +318,12 @@ const roleRequest = (id: string, state: string, sections: string[]) => ({
 const NO_ROLES = { receiver: null, fetcher: null, zfs: null, keeper: null };
 
 // The first member holds every state a tile and a row can show. The second
-// runs a release from before role requests, too old to keep a key deposit.
+// does nothing for this instance yet.
 const ROLES = [
   {
     memberId: MEMBER,
     name: MEMBER_NAME,
     reachable: true,
-    answers: true,
     canKeep: true,
     keep: "yes",
     byMember: {
@@ -347,7 +346,7 @@ const ROLES = [
     },
     asks: 3,
   },
-  { memberId: "member-2", name: "Büro Linz", reachable: true, answers: false, canKeep: false, keep: "too-old", byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
+  { memberId: "member-2", name: "Büro Linz", reachable: true, canKeep: true, keep: "yes", byMember: NO_ROLES, forMember: NO_ROLES, asks: 0 },
 ];
 
 const SELF_ROLES = {
@@ -743,19 +742,7 @@ for (const width of [320, 360]) {
   test(`the key keeper's dialogs @ ${width}px fit the screen`, async ({ page }, testInfo) => {
     test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "mobile-only: the phone rhythm lives below 48rem");
     await openPage(page, width);
-    // An instance too old to keep a deposit says so in place of the dialog.
-    await card(page, "member-2").locator('button[data-role="keeper"]').click();
-    const old = page.getByRole("dialog", { name: "Büro Linz als Schlüsselhüter" });
-    await expect(old).toContainText("Aktualisiere Büro Linz zuerst.");
-    await expectDialogFits(page, "Büro Linz als Schlüsselhüter");
-    await old.getByRole("button", { name: "Schließen" }).click();
-
-    // Once it is current, the dialog says what the deposit is and what the
-    // day it is used takes.
-    await page.route("**/api/group/roles", (route) =>
-      route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true, canKeep: true, keep: "yes" }], self: SELF_ROLES } }),
-    );
-    await page.reload();
+    // The dialog says what the deposit is and what the day it is used takes.
     await card(page, "member-2").locator('button[data-role="keeper"]').click();
     const dialog = page.getByRole("dialog", { name: "Büro Linz als Schlüsselhüter" });
     await expect(dialog.getByTestId("keeper-needs").locator("li")).toHaveCount(3);
@@ -901,11 +888,6 @@ test("a Receiver is asked where it keeps the copies", async ({ page }, testInfo)
     await route.fulfill({ json: { ok: true, request: roleRequest("rr8", "asked", ["containers"]) } });
   });
   await openPage(page, testInfo.project.use.viewport!.width);
-  // The second member answers requests here, so it is asked like a current one.
-  await page.route("**/api/group/roles", (route) =>
-    route.fulfill({ json: { ok: true, members: [ROLES[0], { ...ROLES[1], answers: true }], self: SELF_ROLES } }),
-  );
-  await page.reload();
   await expect(card(page, "member-2")).toBeVisible();
   await card(page, "member-2").locator('button[data-role="receiver"]').click();
   const dialog = page.getByRole("dialog", { name: "Büro Linz als Empfänger" });
@@ -1054,7 +1036,7 @@ test("the net picture on the desktop shows the group with an arrow per role", as
   expect(await beside(wide)).toBe(true);
 });
 
-test("a role is asked for from its tile, and an older instance takes it at once", async ({ page }, testInfo) => {
+test("a role is asked for from its tile, and one allowed at once says so", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-1280", "the flow runs once, on the desktop");
   const sent: { url: string; body: unknown }[] = [];
   await page.route("**/api/group/members/*/roles/*", async (route) => {
@@ -1064,9 +1046,9 @@ test("a role is asked for from its tile, and an older instance takes it at once"
   await openPage(page, testInfo.project.use.viewport!.width);
   await card(page, "member-2").locator('button[data-role="receiver"]').click();
   const dialog = page.getByRole("dialog", { name: "Büro Linz als Empfänger" });
-  await expect(dialog).toContainText("läuft ein älteres BombVault");
+  await expect(dialog).toContainText("Büro Linz bekommt eine Anfrage.");
   await expectDialogFits(page, "Büro Linz als Empfänger", { desktop: true });
-  await dialog.getByRole("button", { name: "Einschalten" }).click();
+  await dialog.getByRole("button", { name: "Anfrage senden" }).click();
   await expect(dialog).toHaveCount(0);
   expect(sent).toHaveLength(1);
   expect(sent[0].url).toBe("/api/group/members/member-2/roles/receiver");
