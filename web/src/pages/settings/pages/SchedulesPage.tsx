@@ -122,7 +122,6 @@ export function SchedulesPage() {
     autoSaveField,
     mergedFieldBusy,
     mergedFieldShake,
-    updatesByShipLog,
   } = useSettings();
   const [items, setItems] = useState<BackupItem[]>([]);
   const [members, setMembers] = useState<EntryKind | null>(null);
@@ -352,17 +351,12 @@ export function SchedulesPage() {
           <ToggleRow
             label={t("settings.updateEveryContainer")}
             hint={t("settings.updateEveryContainerHint")}
-            checked={settings.updateContainersAfterBackup && !updatesByShipLog}
+            checked={settings.updateContainersAfterBackup}
             onChange={(v) => void autoSaveField("updateContainersAfterBackup", v, ignoreSaveState, ignoreSaveError)}
-            disabled={mergedFieldBusy.updateContainersAfterBackup || updatesByShipLog}
+            disabled={mergedFieldBusy.updateContainersAfterBackup}
             shakeNonce={mergedFieldShake.updateContainersAfterBackup}
             pulseNonce={fieldPulse.updateContainersAfterBackup}
           />
-          {updatesByShipLog && (
-            <p data-testid="updates-by-shiplog" className="text-sm text-carbon-textSub">
-              {t("update.byShipLog")}
-            </p>
-          )}
           <ToggleRow
             label={t("settings.pruneImageAfterUpdate")}
             hint={t("settings.pruneImageAfterUpdateHint")}

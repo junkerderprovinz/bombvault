@@ -313,12 +313,12 @@ export function Launcher({ bridge }: { bridge: Bridge }) {
   );
 }
 
-/** shownNames tells servers that share a name apart by their address. */
+/** shownNames tells servers that share a name apart by their place in the list. */
 function shownNames(servers: Server[]): Record<string, string> {
   return Object.fromEntries(
     servers.map((s) => {
-      const twin = s.url && servers.some((o) => o.id !== s.id && o.name === s.name);
-      return [s.id, twin ? new URL(s.url).host : s.name];
+      const twins = servers.filter((o) => o.name === s.name);
+      return [s.id, twins.length > 1 ? `${s.name} (${twins.indexOf(s) + 1})` : s.name];
     })
   );
 }
@@ -498,9 +498,6 @@ function ServerCard({
       <button type="button" onClick={onOpen} className="flex min-h-[3.75rem] w-full min-w-0 items-center gap-3 rounded-card p-4 text-start">
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate text-sm font-semibold text-carbon-text">{server.name}</span>
-          <span dir="ltr" className="truncate text-start font-mono text-xs text-carbon-textMuted">
-            {server.url ? displayAddress(server.url) : t("launcher.viaGroup")}
-          </span>
           {away && (
             <span className="text-xs text-carbon-textMuted">
               {t("instances.lastSeen").replace("{time}", () => relativeTime(t, server.seen ?? 0))}

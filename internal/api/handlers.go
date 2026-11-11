@@ -630,8 +630,8 @@ type containerView struct {
 	// rather than the switch for every container.
 	UpdateAfterBackup    bool `json:"updateAfterBackup"`
 	UpdateAfterBackupOwn bool `json:"updateAfterBackupOwn"`
-	// UpdatesByShipLog says ShipLog updates the containers on this server
-	// instead.
+	// UpdatesByShipLog says ShipLog on this server updates the container
+	// itself.
 	UpdatesByShipLog bool `json:"updatesByShipLog,omitempty"`
 	// ZFSSnapshot is whether the container may be read from a ZFS snapshot,
 	// and ZFSSnapshotOwn whether that is its own choice rather than the
@@ -831,10 +831,10 @@ func (h *Handler) containerViews(r *http.Request, infos []dockercli.ContainerInf
 	views := make([]containerView, 0, len(infos)+len(targets))
 	viewIndex := make(map[string]int, len(infos)) // live rows only, for the rename-suggestion backfill below
 	hasOwnBackup := make(map[string]bool, len(infos))
-	byShipLog := h.svc.shipLogUpdates()
+	byShipLog := h.svc.shipLogContainers(r.Context())
 	for _, c := range infos {
 		v := containerView{
-			UpdatesByShipLog: byShipLog,
+			UpdatesByShipLog: byShipLog[strings.ToLower(c.Name)],
 			Name:             c.Name,
 			Image:            c.Image,
 			State:            c.State,
@@ -2833,12 +2833,9 @@ func (h *Handler) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 		"platform":       string(h.svc.platformFn().Kind()),
 		// platformSet says the PLATFORM override chose the platform, so the
 		// page does not suggest the /boot mount that fixes a misdetected Unraid.
-		"platformSet": h.cfg.PlatformOverride != "",
-		// updatesByShipLog says ShipLog updates the containers on this server,
-		// so the switch for BombVault's own update after a backup rests.
-		"updatesByShipLog": h.svc.shipLogUpdates(),
-		"scheduleZone":     map[string]any{"name": zone, "offsetSeconds": offset},
-		"revision":         settingsRevision(s),
+		"platformSet":  h.cfg.PlatformOverride != "",
+		"scheduleZone": map[string]any{"name": zone, "offsetSeconds": offset},
+		"revision":     settingsRevision(s),
 	})
 }
 

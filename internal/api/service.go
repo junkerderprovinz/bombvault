@@ -7300,8 +7300,14 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// down. Only for a running, opted-in container; otherwise nil, so the
 	// dependents restart right after the backup.
 	var updateStep func() func() []string
-	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) && !s.shipLogUpdates() {
-		updateStep = func() func() []string { return s.checkUpdateAfterBackup(ctx, name, in, tg.ID) }
+	if tg.UpdatesAfterBackup(settings.UpdateContainersAfterBackup) && in.Running && !isBeforeRestore(ctx) {
+		updateStep = func() func() []string {
+			if s.shipLogContainers(ctx)[strings.ToLower(name)] {
+				log.Printf("update: ShipLog updates %s itself, so BombVault leaves it alone", name) //nolint:gosec // G706: a container name from Docker, %s on a log line
+				return nil
+			}
+			return s.checkUpdateAfterBackup(ctx, name, in, tg.ID)
+		}
 	}
 
 	// A container on ZFS is held down only for a snapshot of its data. Without

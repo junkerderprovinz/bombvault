@@ -31,7 +31,7 @@ import { RemoveInstanceButton } from "./RemoveInstanceButton";
 import { useRoleSwitch } from "./RoleDialogs";
 import { RoleRequests } from "./RoleRequests";
 import { ROLES, ROLE_STATE_KEY } from "./RoleTile";
-import { ROLE_KINDS, unreachableToKeep, withoutScheme, type Instance, type RoleKind, type RoleState } from "./instancesModel";
+import { ROLE_KINDS, unreachableToKeep, type Instance, type RoleKind, type RoleState } from "./instancesModel";
 import type { InstancesState, Modules } from "./useInstances";
 
 function RoleRow({
@@ -228,7 +228,6 @@ export function PeerDetails({
       facts={
         <Facts
           items={[
-            instance.address && <bdi dir="ltr">{withoutScheme(instance.address)}</bdi>,
             peer?.lastPollVersion,
             peer && peer.lastPollAt > 0 && t("fleet.lastPolled").replace("{time}", relativeTime(t, peer.lastPollAt)),
           ]}

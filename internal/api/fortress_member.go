@@ -57,8 +57,10 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 		{Name: actionBackupRequest, Run: s.backupRequest},
 		{Name: actionSnapshotsBrowse, Run: s.browseSnapshots},
 	}
-	if !slices.Contains(cfg.Uses, fortress.ExportAction) {
-		cfg.Uses = append(cfg.Uses, fortress.ExportAction)
+	for _, use := range []string{fortress.ExportAction, actionUpdatesManaged} {
+		if !slices.Contains(cfg.Uses, use) {
+			cfg.Uses = append(cfg.Uses, use)
+		}
 	}
 	cfg.OnRemoved = s.leftFortress
 	return cfg

@@ -120,10 +120,11 @@ describe("Launcher", () => {
     expect(sent).toContainEqual({ op: "open", id: "s1" });
   });
 
-  it("names a group member whose address is not known yet", async () => {
+  it("lists a group member by its name alone", async () => {
     const { bridge } = fakeBridge({ servers: [{ id: "m1", name: "Parents", url: "", member: true }], group: { paired: true, connected: true }, camera: false, app });
     render(<Launcher bridge={bridge} />);
-    expect(await screen.findByText("Address not known yet")).toBeTruthy();
+    const card = (await screen.findByText("Parents")).closest("button")!;
+    expect(card.textContent).not.toMatch(/address/i);
   });
 
   it("says the phone waits until an instance approves it", async () => {
@@ -311,13 +312,15 @@ describe("Launcher", () => {
     expect(screen.getByText(/nextcloud .*42%/)).toBeTruthy();
   });
 
-  it("tells servers with the same name apart by their address", async () => {
+  it("tells servers with the same name apart without naming an address", async () => {
     const twin = { id: "s2", name: server.name, url: "https://192.168.1.11:3443/" };
     const { bridge } = fakeBridge({ servers: [server, twin], group: alone, camera: false, app });
     render(<Launcher bridge={bridge} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Activity Log" }));
-    expect(await screen.findByRole("tab", { name: "192.168.1.11:3443" })).toBeTruthy();
-    expect(screen.getByRole("tab", { name: new URL(server.url).host })).toBeTruthy();
+    expect(await screen.findAllByText("Tower")).toHaveLength(2);
+    expect(screen.queryByText(/192\.168\.1\./)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Activity Log" }));
+    expect(await screen.findByRole("tab", { name: "Tower (2)" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Tower (1)" })).toBeTruthy();
   });
   it("keeps looking for a while before it says nothing turned up", async () => {
     let push: (s: LauncherState) => void = () => undefined;

@@ -386,13 +386,10 @@ describe("the instances grid", () => {
     expect(hue(unplaced)).toBe("var(--rb-4)");
   });
 
-  it("shows where each instance is reached, without the scheme", async () => {
+  it("names no address on any instance", async () => {
     peers = [peer({}), peer({ id: "p2", memberId: "gone", name: "attic" })];
     await renderPage();
-    expect(card("self").textContent).toContain("192.168.1.20:3443");
-    expect(card("self").textContent).not.toContain("https://");
-    expect(card("m1").textContent).toContain("192.168.1.21:3443");
-    expect(card("gone").textContent).not.toContain("192.168.1.");
+    for (const id of ["self", "m1", "gone"]) expect(card(id).textContent).not.toMatch(/192\.168\.1\.|https?:\/\//);
   });
 
   it("says for each member whether it is connected, without naming the route", async () => {

@@ -34,7 +34,7 @@ import { SharedMembershipsCard } from "./instances/SharedMembershipsCard";
 import { SharedRepoCard } from "./instances/SharedRepoCard";
 import { UnplacedCard } from "./instances/UnplacedCard";
 import { ZFSServerCards } from "./instances/ZFSServerCards";
-import { buildInstances, protectionFigures, ROLE_KINDS, unreachableToKeep, withoutScheme, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
+import { buildInstances, protectionFigures, ROLE_KINDS, unreachableToKeep, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
 import { useSharedRepo } from "./instances/useSharedRepo";
@@ -119,7 +119,7 @@ function SelfCard({
       name={self.name}
       eyebrow={t("instances.thisInstance")}
       facts={
-        <Facts items={[self.address && <bdi dir="ltr">{withoutScheme(self.address)}</bdi>, self.version]} />
+        <Facts items={[self.version]} />
       }
       figures={<ProtectionFigures domains={self.domains} anomalies={anomalies} />}
       actions={
@@ -242,7 +242,6 @@ function PeerCard({
       facts={
         <Facts
           items={[
-            address && <bdi dir="ltr">{withoutScheme(address)}</bdi>,
             // api.Version already starts with "v".
             peer?.lastPollVersion,
             away && instance.lastSeen > 0 && t("instances.lastSeen").replace("{time}", () => relativeTime(t, instance.lastSeen)),

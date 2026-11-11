@@ -454,8 +454,6 @@ export interface GetSettingsResponse {
   platform: string;
   /** True when the PLATFORM override chose the platform instead of detection. */
   platformSet?: boolean;
-  /** ShipLog on this server updates the containers, with a backup first. */
-  updatesByShipLog?: boolean;
   /** The clock the server reads every schedule on, and its offset from UTC. */
   scheduleZone?: ScheduleZone;
   /** Names this state of the settings for putSettings. */

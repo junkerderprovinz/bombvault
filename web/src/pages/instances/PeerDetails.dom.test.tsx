@@ -277,9 +277,10 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the head of the window", () => {
-  it("names the instance with where it is reached, its version and its last poll", async () => {
+  it("names the instance with its version and its last poll, and no address", async () => {
     const win = await open();
-    expect(win.textContent).toContain("192.168.1.21:3443 · v9.9.1 · Last polled 2 minutes ago");
+    expect(win.textContent).toContain("v9.9.1 · Last polled 2 minutes ago");
+    expect(win.textContent).not.toContain("192.168.1.21");
   });
 
   it("closes on Done", async () => {
