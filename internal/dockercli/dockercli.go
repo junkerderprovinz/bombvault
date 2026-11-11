@@ -12,6 +12,8 @@ import (
 	"io"
 	"log"
 	"maps"
+	"net"
+	"net/netip"
 	"os"
 	"reflect"
 	"regexp"
@@ -20,15 +22,15 @@ import (
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/blkiodev"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/pkg/authconfig"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	"github.com/moby/moby/api/types/blkiodev"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/api/types/registry"
+	"github.com/moby/moby/client"
+	"github.com/moby/moby/client/pkg/versions"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/traffic"
@@ -43,39 +45,30 @@ type Client struct {
 // compile-time interface check.
 var _ Docker = (*Client)(nil)
 
-// New constructs a Client with API-version negotiation (so it works across
-// Unraid Docker versions), connected to the Docker daemon.
+// New constructs a Client connected to the Docker daemon. The SDK negotiates
+// the API version on the first request, so it works across Unraid Docker
+// versions; DOCKER_API_VERSION pins one instead.
 //
 // DOCKER_HOST is honored when set (rootless Docker, Podman); otherwise it
 // defaults to the standard /var/run/docker.sock, matching every prior
 // BombVault release.
 func New() (*Client, error) {
-	api, err := client.NewClientWithOpts(dockerClientOpts()...)
+	api, err := client.New(dockerClientOpts()...)
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: new client: %w", err)
 	}
 	return &Client{api: api}, nil
 }
 
-// dockerClientOpts builds the SDK options New() connects with. It is split out
-// from New so the DOCKER_HOST precedence can be asserted directly: client.Opt
-// values are unexported closures with no way to inspect "was WithHost applied"
-// after the fact, other than executing them against a real *client.Client and
-// reading back its DaemonHost(), which this helper's own test does.
-//
-// client.FromEnv already applies DOCKER_HOST (via WithHostFromEnv) when it is
-// set. The unconditional client.WithHost("unix:///var/run/docker.sock") that
-// used to follow it therefore silently clobbered any operator-set DOCKER_HOST —
-// making rootless Docker ($XDG_RUNTIME_DIR/docker.sock) and Podman
-// (/run/podman/podman.sock) unreachable. The fallback host is now only added
-// when DOCKER_HOST is unset, so FromEnv's choice wins whenever the operator set
-// one, and the Unraid default (unset DOCKER_HOST) is unchanged.
+// dockerClientOpts builds the SDK options New connects with. The socket is
+// added only when DOCKER_HOST is unset, since a WithHost after FromEnv would
+// override the host rootless Docker and Podman are reached through.
 func dockerClientOpts() []client.Opt {
 	opts := []client.Opt{client.FromEnv}
 	if os.Getenv(client.EnvOverrideHost) == "" {
 		opts = append(opts, client.WithHost("unix:///var/run/docker.sock"))
 	}
-	return append(opts, client.WithAPIVersionNegotiation())
+	return opts
 }
 
 // Close releases the underlying SDK client.
@@ -83,12 +76,12 @@ func (c *Client) Close() error { return c.api.Close() }
 
 // List returns all containers (running and stopped).
 func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
-	summaries, err := c.api.ContainerList(ctx, container.ListOptions{All: true})
+	list, err := c.api.ContainerList(ctx, client.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: list: %w", err)
 	}
-	out := make([]ContainerInfo, 0, len(summaries))
-	for _, s := range summaries {
+	out := make([]ContainerInfo, 0, len(list.Items))
+	for _, s := range list.Items {
 		out = append(out, mapContainerSummary(s))
 	}
 	return out, nil
@@ -100,23 +93,17 @@ func (c *Client) List(ctx context.Context) ([]ContainerInfo, error) {
 // active published ports there; a stopped container reports neither, so it
 // never produces a false conflict (it holds no live resource).
 func (c *Client) Allocations(ctx context.Context) ([]model.Allocation, error) {
-	summaries, err := c.api.ContainerList(ctx, container.ListOptions{All: true})
+	list, err := c.api.ContainerList(ctx, client.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: allocations: %w", err)
 	}
-	out := make([]model.Allocation, 0, len(summaries))
-	for _, s := range summaries {
+	out := make([]model.Allocation, 0, len(list.Items))
+	for _, s := range list.Items {
 		name := ""
 		if len(s.Names) > 0 {
 			name = normalizeName(s.Names[0])
 		}
-		ip := ""
-		for _, net := range s.NetworkSettings.Networks {
-			if net != nil && net.IPAddress != "" {
-				ip = net.IPAddress
-				break
-			}
-		}
+		ip := firstIP(s.NetworkSettings)
 		var ports []string
 		seen := map[string]bool{}
 		for _, p := range s.Ports {
@@ -140,12 +127,12 @@ func (c *Client) Allocations(ctx context.Context) ([]model.Allocation, error) {
 
 // Networks returns the names of the networks on this host, sorted.
 func (c *Client) Networks(ctx context.Context) ([]string, error) {
-	list, err := c.api.NetworkList(ctx, network.ListOptions{})
+	list, err := c.api.NetworkList(ctx, client.NetworkListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: list networks: %w", err)
 	}
-	names := make([]string, 0, len(list))
-	for _, n := range list {
+	names := make([]string, 0, len(list.Items))
+	for _, n := range list.Items {
 		names = append(names, n.Name)
 	}
 	slices.Sort(names)
@@ -160,16 +147,22 @@ type NetworkDrivers interface {
 
 // NetworkDriver returns the driver of the network name, "bridge" for example.
 func (c *Client) NetworkDriver(ctx context.Context, name string) (string, error) {
-	n, err := c.api.NetworkInspect(ctx, name, network.InspectOptions{})
+	n, err := c.api.NetworkInspect(ctx, name, client.NetworkInspectOptions{})
 	if err != nil {
 		return "", fmt.Errorf("dockercli: inspect network: %w", err)
 	}
-	return n.Driver, nil
+	return n.Network.Driver, nil
+}
+
+// inspect is ContainerInspect with the answer alone.
+func (c *Client) inspect(ctx context.Context, ref string) (container.InspectResponse, error) {
+	res, err := c.api.ContainerInspect(ctx, ref, client.ContainerInspectOptions{})
+	return res.Container, err
 }
 
 // Inspect returns the captured inspect subset for a container by name or ID.
 func (c *Client) Inspect(ctx context.Context, name string) (model.Inspect, error) {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		return model.Inspect{}, fmt.Errorf("dockercli: inspect: %w", err)
 	}
@@ -220,8 +213,8 @@ func (c *Client) namespaceByName(ctx context.Context, mode string) string {
 	if !ok || ref == "" {
 		return mode
 	}
-	resp, err := c.api.ContainerInspect(ctx, ref)
-	if err != nil || resp.ContainerJSONBase == nil || resp.Name == "" {
+	resp, err := c.inspect(ctx, ref)
+	if err != nil || resp.Name == "" {
 		return mode
 	}
 	return "container:" + normalizeName(resp.Name)
@@ -265,14 +258,14 @@ func (c *Client) fillVolumeMountSources(ctx context.Context, name string, mounts
 // caller can treat "gone" and "never existed" the same way without special-
 // casing an error type.
 func (c *Client) VolumeInspect(ctx context.Context, name string) (string, error) {
-	vol, err := c.api.VolumeInspect(ctx, name)
+	res, err := c.api.VolumeInspect(ctx, name, client.VolumeInspectOptions{})
 	if err != nil {
 		if cerrdefs.IsNotFound(err) {
 			return "", nil
 		}
 		return "", fmt.Errorf("dockercli: volume inspect: %w", err)
 	}
-	return vol.Mountpoint, nil
+	return res.Volume.Mountpoint, nil
 }
 
 // Stop stops a container, sending SIGKILL after timeout if it has not exited.
@@ -286,7 +279,7 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 	if secs == 0 && timeout > 0 {
 		secs = 1
 	}
-	if resp, err := c.api.ContainerInspect(ctx, name); err == nil {
+	if resp, err := c.inspect(ctx, name); err == nil {
 		if !answersFor(name, resp) {
 			return fmt.Errorf("dockercli: stop: %w", noSuchContainer{name})
 		}
@@ -294,7 +287,7 @@ func (c *Client) Stop(ctx context.Context, name string, timeout time.Duration) e
 			secs = stopGrace(secs, resp.Config.StopTimeout)
 		}
 	}
-	if err := c.api.ContainerStop(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
+	if _, err := c.api.ContainerStop(ctx, name, client.ContainerStopOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: stop: %w", err)
 	}
 	return nil
@@ -316,7 +309,7 @@ func (c *Client) Start(ctx context.Context, name string) error {
 	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
 		return fmt.Errorf("dockercli: start: %w", err)
 	}
-	if err := c.api.ContainerStart(ctx, name, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, name, client.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: start: %w", err)
 	}
 	return nil
@@ -332,7 +325,7 @@ func (c *Client) Restart(ctx context.Context, name string, timeout time.Duration
 	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
 		return fmt.Errorf("dockercli: restart %q: %w", name, err)
 	}
-	if err := c.api.ContainerRestart(ctx, name, container.StopOptions{Timeout: &secs}); err != nil {
+	if _, err := c.api.ContainerRestart(ctx, name, client.ContainerRestartOptions{Timeout: &secs}); err != nil {
 		return fmt.Errorf("dockercli: restart %q: %w", name, err)
 	}
 	return nil
@@ -347,7 +340,7 @@ func (c *Client) WaitRunning(ctx context.Context, name string, timeout time.Dura
 	deadline := time.Now().Add(timeout)
 	const poll = 200 * time.Millisecond
 	for {
-		resp, err := c.api.ContainerInspect(ctx, name)
+		resp, err := c.inspect(ctx, name)
 		if err == nil && resp.State != nil && resp.State.Running {
 			return nil
 		}
@@ -372,7 +365,7 @@ func (c *Client) WaitRunning(ctx context.Context, name string, timeout time.Dura
 // depend on it. A container with no healthcheck reports HasHealthcheck=false, so
 // the caller falls back to Running plus a short grace.
 func (c *Client) Health(ctx context.Context, name string) (model.Health, error) {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		return model.Health{}, fmt.Errorf("dockercli: health: %w", err)
 	}
@@ -415,7 +408,7 @@ func (e *ExitError) Output() string { return e.Reason }
 // surface a short failure reason; it is demuxed via stdcopy and drained so the
 // exec completes before we read the exit code.
 func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
-	created, err := c.api.ContainerExecCreate(ctx, name, container.ExecOptions{
+	created, err := c.api.ExecCreate(ctx, name, client.ExecCreateOptions{
 		Cmd:          cmd,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -423,7 +416,7 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 	if err != nil {
 		return fmt.Errorf("dockercli: exec create: %w", err)
 	}
-	att, err := c.api.ContainerExecAttach(ctx, created.ID, container.ExecAttachOptions{})
+	att, err := c.api.ExecAttach(ctx, created.ID, client.ExecAttachOptions{})
 	if err != nil {
 		return fmt.Errorf("dockercli: exec attach: %w", err)
 	}
@@ -433,12 +426,9 @@ func (c *Client) Exec(ctx context.Context, name string, cmd []string) error {
 		return fmt.Errorf("dockercli: exec: %w", err)
 	}
 
-	exitCode, err := waitExecExit(ctx, func(ctx context.Context) (bool, int, error) {
-		insp, err := c.api.ContainerExecInspect(ctx, created.ID)
-		return insp.Running, insp.ExitCode, err
-	}, execExitPoll, execExitWait)
+	exitCode, err := c.execExit(ctx, created.ID)
 	if err != nil {
-		return fmt.Errorf("dockercli: exec inspect: %w", err)
+		return err
 	}
 	if exitCode != 0 {
 		reason := strings.TrimSpace(errBuf.String())
@@ -519,7 +509,7 @@ func waitExecExit(ctx context.Context, inspect func(context.Context) (running bo
 // the second sample docker stats waits a second for. A stopped container comes
 // back with Running false.
 func (c *Client) Stats(ctx context.Context, name string) (traffic.Sample, error) {
-	resp, err := c.api.ContainerStatsOneShot(ctx, name)
+	resp, err := c.api.ContainerStats(ctx, name, client.ContainerStatsOptions{})
 	if err != nil {
 		return traffic.Sample{}, fmt.Errorf("dockercli: stats %s: %w", name, err)
 	}
@@ -550,7 +540,7 @@ func (c *Client) Remove(ctx context.Context, name string) error {
 	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
 		return nil // already gone, like the answer below
 	}
-	if err := c.api.ContainerRemove(ctx, name, container.RemoveOptions{}); err != nil {
+	if _, err := c.api.ContainerRemove(ctx, name, client.ContainerRemoveOptions{}); err != nil {
 		if isNoSuchContainer(err) {
 			return nil // already gone — a restore/recreate can proceed
 		}
@@ -565,7 +555,7 @@ func (c *Client) Signal(ctx context.Context, name, signal string) error {
 	if err := c.refuseIDPrefixMatch(ctx, name); err != nil {
 		return fmt.Errorf("dockercli: signal: %w", err)
 	}
-	if err := c.api.ContainerKill(ctx, name, signal); err != nil {
+	if _, err := c.api.ContainerKill(ctx, name, client.ContainerKillOptions{Signal: signal}); err != nil {
 		return fmt.Errorf("dockercli: signal: %w", err)
 	}
 	return nil
@@ -581,7 +571,7 @@ func (c *Client) Pull(ctx context.Context, img string) error {
 // is the base64url JSON blob the Docker Engine API expects (EncodeRegistryAuth),
 // "" pulls anonymously exactly like Pull.
 func (c *Client) PullWithAuth(ctx context.Context, img, registryAuth string) error {
-	rc, err := c.api.ImagePull(ctx, img, image.PullOptions{RegistryAuth: registryAuth})
+	rc, err := c.api.ImagePull(ctx, img, client.ImagePullOptions{RegistryAuth: registryAuth})
 	if err != nil {
 		return fmt.Errorf("dockercli: pull: %w", err)
 	}
@@ -594,11 +584,11 @@ func (c *Client) PullWithAuth(ctx context.Context, img, registryAuth string) err
 }
 
 // EncodeRegistryAuth renders a registry credential into the base64url JSON blob
-// the Docker Engine API expects in image.PullOptions.RegistryAuth (the
+// the Docker Engine API expects in client.ImagePullOptions.RegistryAuth (the
 // X-Registry-Auth header). serverAddress is the registry host the credential is
 // for (e.g. "ghcr.io"). Kept here so the wire format stays a dockercli concern.
 func EncodeRegistryAuth(username, password, serverAddress string) (string, error) {
-	enc, err := registry.EncodeAuthConfig(registry.AuthConfig{
+	enc, err := authconfig.Encode(registry.AuthConfig{
 		Username:      username,
 		Password:      password,
 		ServerAddress: serverAddress,
@@ -626,7 +616,7 @@ func (c *Client) ImageID(ctx context.Context, ref string) (string, error) {
 
 // ImageTag points the reference ref at the local image id, as docker tag does.
 func (c *Client) ImageTag(ctx context.Context, id, ref string) error {
-	if err := c.api.ImageTag(ctx, id, ref); err != nil {
+	if _, err := c.api.ImageTag(ctx, client.ImageTagOptions{Source: id, Target: ref}); err != nil {
 		return fmt.Errorf("dockercli: image tag: %w", err)
 	}
 	return nil
@@ -640,7 +630,7 @@ func (c *Client) ImageRemove(ctx context.Context, id string) error {
 	if id == "" {
 		return nil
 	}
-	if _, err := c.api.ImageRemove(ctx, id, image.RemoveOptions{Force: false, PruneChildren: false}); err != nil {
+	if _, err := c.api.ImageRemove(ctx, id, client.ImageRemoveOptions{Force: false, PruneChildren: false}); err != nil {
 		if cerrdefs.IsNotFound(err) {
 			return nil
 		}
@@ -657,10 +647,16 @@ func (c *Client) ImageRemove(ctx context.Context, id string) error {
 // headroom over the original. A host that lacks the container's runtime or
 // GPU driver answers with a model.MissingRuntimeError.
 func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start bool) error {
-	cfg, hostCfg := buildCreateConfig(in)
+	cfg, hostCfg, err := buildCreateConfig(in)
+	if err != nil {
+		return fmt.Errorf("dockercli: create: %w", err)
+	}
+	netCfg, err := buildNetworkingConfig(in)
+	if err != nil {
+		return fmt.Errorf("dockercli: create: %w", err)
+	}
 	name := normalizeName(in.Name)
-	netCfg := buildNetworkingConfig(in)
-	resp, err := c.api.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
+	resp, err := c.createContainer(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, NetworkingConfig: netCfg, Name: name})
 	if err != nil {
 		return fmt.Errorf("dockercli: create: %w", missingRuntime(err))
 	}
@@ -671,7 +667,11 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 		if n.Name == "" || n.Name == in.Network.Name {
 			continue
 		}
-		if cErr := c.api.NetworkConnect(ctx, n.Name, resp.ID, endpointSettings(n)); cErr != nil {
+		ep, cErr := endpointSettings(n)
+		if cErr == nil {
+			_, cErr = c.api.NetworkConnect(ctx, n.Name, client.NetworkConnectOptions{Container: resp.ID, EndpointConfig: ep})
+		}
+		if cErr != nil {
 			log.Printf("dockercli: restore %q: reconnect network %q failed (continuing): %v", name, n.Name, cErr)
 		}
 	}
@@ -681,16 +681,51 @@ func (c *Client) CreateAndStart(ctx context.Context, in model.Inspect, start boo
 	if !start {
 		return nil
 	}
-	if err := c.api.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, resp.ID, client.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: create-start: %w", missingRuntime(err))
 	}
 	return nil
 }
 
+// createContainer refuses what a daemon before API 1.44 would drop without a
+// word: a MAC set per network, which a DHCP reservation is tied to, and a
+// recursive read-only bind. Only such a create asks the daemon its version
+// first.
+func (c *Client) createContainer(ctx context.Context, opts client.ContainerCreateOptions) (client.ContainerCreateResult, error) {
+	if feature := api144Feature(opts); feature != "" {
+		if _, err := c.api.Ping(ctx, client.PingOptions{NegotiateAPIVersion: true}); err != nil {
+			return client.ContainerCreateResult{}, err
+		}
+		if v := c.api.ClientVersion(); versions.LessThan(v, "1.44") {
+			return client.ContainerCreateResult{}, fmt.Errorf("%q requires API version 1.44, but the Docker daemon API version is %s", feature, v)
+		}
+	}
+	return c.api.ContainerCreate(ctx, opts)
+}
+
+// api144Feature names what opts asks of API 1.44, "" when it asks nothing.
+func api144Feature(opts client.ContainerCreateOptions) string {
+	if opts.NetworkingConfig != nil {
+		for _, ep := range opts.NetworkingConfig.EndpointsConfig {
+			if ep != nil && len(ep.MacAddress) > 0 {
+				return "specify mac-address per network"
+			}
+		}
+	}
+	if opts.HostConfig != nil {
+		for _, m := range opts.HostConfig.Mounts {
+			if m.BindOptions != nil && m.BindOptions.ReadOnlyForceRecursive {
+				return "bind-recursive=readonly"
+			}
+		}
+	}
+	return ""
+}
+
 // InspectName returns the live container's normalized name, or "" if no such
 // container exists. Any other inspect error is propagated.
 func (c *Client) InspectName(ctx context.Context, name string) (string, error) {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		if isNoSuchContainer(err) {
 			return "", nil
@@ -712,9 +747,6 @@ const shortIDLen = 12
 // that container would be backed up, stopped or removed in its place. A real id
 // reference is never as short as such a name.
 func answersFor(ref string, resp container.InspectResponse) bool {
-	if resp.ContainerJSONBase == nil {
-		return false
-	}
 	return normalizeName(resp.Name) == normalizeName(ref) || (len(ref) >= shortIDLen && strings.HasPrefix(resp.ID, ref))
 }
 
@@ -727,7 +759,7 @@ func (e noSuchContainer) Error() string { return "no such container: " + e.name 
 // refuseIDPrefixMatch fails with noSuchContainer when name only reaches a
 // container through its id. Any other answer is left to the call that follows.
 func (c *Client) refuseIDPrefixMatch(ctx context.Context, name string) error {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err == nil && !answersFor(name, resp) {
 		return noSuchContainer{name}
 	}
@@ -741,7 +773,7 @@ func (c *Client) Self(ctx context.Context) (string, error) {
 	if ref == "" {
 		return "", nil
 	}
-	resp, err := c.api.ContainerInspect(ctx, ref)
+	resp, err := c.inspect(ctx, ref)
 	if err != nil {
 		if isNoSuchContainer(err) {
 			return "", nil
@@ -797,13 +829,7 @@ func mapContainerSummary(s container.Summary) ContainerInfo {
 	if len(s.Names) > 0 {
 		name = normalizeName(s.Names[0])
 	}
-	ip := ""
-	for _, net := range s.NetworkSettings.Networks {
-		if net != nil && net.IPAddress != "" {
-			ip = net.IPAddress
-			break
-		}
-	}
+	ip := firstIP(s.NetworkSettings)
 	mounts := make([]MountPoint, 0, len(s.Mounts))
 	for _, m := range s.Mounts {
 		if m.Type == mount.TypeBind && m.Source != "" && m.Destination != "" {
@@ -830,19 +856,41 @@ func mapContainerSummary(s container.Summary) ContainerInfo {
 	}
 }
 
+// firstIP is the first address a list summary reports for the container, ""
+// when it has none.
+func firstIP(ns *container.NetworkSettingsSummary) string {
+	for _, n := range ns.Networks {
+		if n != nil && n.IPAddress.IsValid() {
+			return n.IPAddress.String()
+		}
+	}
+	return ""
+}
+
+// addrString renders addr the way the daemon writes it, "" when it is unset.
+func addrString(addr netip.Addr) string {
+	if !addr.IsValid() {
+		return ""
+	}
+	return addr.String()
+}
+
+// parseAddr reads an address back, "" as unset.
+func parseAddr(s string) (netip.Addr, error) {
+	if s == "" {
+		return netip.Addr{}, nil
+	}
+	return netip.ParseAddr(s)
+}
+
 // mapInspect converts the SDK inspect response into our captured subset.
 func mapInspect(resp container.InspectResponse) model.Inspect {
-	out := model.Inspect{}
-	if resp.ContainerJSONBase != nil {
-		out.ID = resp.ID
-		out.Name = resp.Name
-		out.Image = resp.Image
-		if resp.State != nil {
-			out.Running = resp.State.Running
-		}
-		if resp.HostConfig != nil {
-			out.HostConfig = mapHostConfig(resp.HostConfig)
-		}
+	out := model.Inspect{ID: resp.ID, Name: resp.Name, Image: resp.Image}
+	if resp.State != nil {
+		out.Running = resp.State.Running
+	}
+	if resp.HostConfig != nil {
+		out.HostConfig = mapHostConfig(resp.HostConfig)
 	}
 	if resp.Config != nil {
 		out.Config = model.Config{
@@ -887,13 +935,11 @@ func ownHostname(resp container.InspectResponse) (string, string) {
 		return "", ""
 	}
 	host := resp.Config.Hostname
-	if base := resp.ContainerJSONBase; base != nil {
-		if hc := base.HostConfig; hc != nil && (strings.HasPrefix(string(hc.NetworkMode), "container:") || hc.NetworkMode == "host" || hc.UTSMode == "host") {
-			return "", ""
-		}
-		if len(base.ID) >= 12 && host == base.ID[:12] {
-			host = ""
-		}
+	if hc := resp.HostConfig; hc != nil && (strings.HasPrefix(string(hc.NetworkMode), "container:") || hc.NetworkMode == "host" || hc.UTSMode == "host") {
+		return "", ""
+	}
+	if len(resp.ID) >= 12 && host == resp.ID[:12] {
+		host = ""
 	}
 	return host, resp.Config.Domainname
 }
@@ -962,11 +1008,7 @@ func mapAllNetworks(resp container.InspectResponse) []model.NetworkEndpoint {
 		if e == nil {
 			continue
 		}
-		ep := model.NetworkEndpoint{Name: name, MACAddress: e.MacAddress, Aliases: e.Aliases}
-		if e.IPAMConfig != nil {
-			ep.IPv4Address = e.IPAMConfig.IPv4Address
-		}
-		out = append(out, ep)
+		out = append(out, endpointOf(name, e))
 	}
 	return out
 }
@@ -996,11 +1038,17 @@ func mapPrimaryNetwork(resp container.InspectResponse) model.NetworkEndpoint {
 	if ep == nil {
 		return model.NetworkEndpoint{}
 	}
-	out := model.NetworkEndpoint{Name: name, MACAddress: ep.MacAddress, Aliases: ep.Aliases}
-	if ep.IPAMConfig != nil {
-		out.IPv4Address = ep.IPAMConfig.IPv4Address
+	return endpointOf(name, ep)
+}
+
+// endpointOf captures what a recreate needs of an attachment: the requested
+// static IPv4, the MAC and the aliases.
+func endpointOf(name string, e *network.EndpointSettings) model.NetworkEndpoint {
+	ep := model.NetworkEndpoint{Name: name, MACAddress: e.MacAddress.String(), Aliases: e.Aliases}
+	if e.IPAMConfig != nil {
+		ep.IPv4Address = addrString(e.IPAMConfig.IPv4Address)
 	}
-	return out
+	return ep
 }
 
 // mapHostConfig maps the SDK HostConfig into our preserved subset.
@@ -1041,7 +1089,6 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		OomScoreAdj:       hc.OomScoreAdj,
 		ShmSize:           hc.ShmSize,
 		Init:              hc.Init,
-		DNS:               hc.DNS,
 		DNSSearch:         hc.DNSSearch,
 		DNSOptions:        hc.DNSOptions,
 		UTSMode:           string(hc.UTSMode),
@@ -1050,6 +1097,9 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		StorageOpt:        hc.StorageOpt,
 		BlkioWeight:       hc.BlkioWeight,
 		Runtime:           hc.Runtime,
+	}
+	for _, a := range hc.DNS {
+		out.DNS = append(out.DNS, addrString(a))
 	}
 	for _, r := range hc.DeviceRequests {
 		out.DeviceRequests = append(out.DeviceRequests, model.DeviceRequest{
@@ -1081,9 +1131,9 @@ func mapHostConfig(hc *container.HostConfig) model.HostConfig {
 		for port, bindings := range hc.PortBindings {
 			pb := make([]model.PortBinding, 0, len(bindings))
 			for _, b := range bindings {
-				pb = append(pb, model.PortBinding{HostIP: b.HostIP, HostPort: b.HostPort})
+				pb = append(pb, model.PortBinding{HostIP: addrString(b.HostIP), HostPort: b.HostPort})
 			}
-			out.PortBindings[string(port)] = pb
+			out.PortBindings[port.String()] = pb
 		}
 	}
 	for _, d := range hc.Devices {
@@ -1165,8 +1215,9 @@ func throttlesFrom(in []model.ThrottleDevice) []*blkiodev.ThrottleDevice {
 }
 
 // buildCreateConfig builds the SDK create config/hostconfig from our captured
-// inspect, preserving the security-relevant fields (SEC parity).
-func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConfig) {
+// inspect, preserving the security-relevant fields (SEC parity). It fails on
+// an address or port the SDK cannot carry, which the daemon would refuse.
+func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConfig, error) {
 	cfg := &container.Config{
 		Image:       in.Config.Image,
 		Env:         in.Config.Env,
@@ -1212,7 +1263,6 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		OomScoreAdj:  hc.OomScoreAdj,
 		ShmSize:      hc.ShmSize,
 		Init:         hc.Init,
-		DNS:          hc.DNS,
 		DNSSearch:    hc.DNSSearch,
 		DNSOptions:   hc.DNSOptions,
 		UTSMode:      container.UTSMode(hc.UTSMode),
@@ -1223,6 +1273,13 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 	}
 	if hc.LogConfig != nil {
 		hostCfg.LogConfig = container.LogConfig{Type: hc.LogConfig.Type, Config: hc.LogConfig.Config}
+	}
+	for _, d := range hc.DNS {
+		a, err := netip.ParseAddr(d)
+		if err != nil {
+			return nil, nil, fmt.Errorf("dns server: %w", err)
+		}
+		hostCfg.DNS = append(hostCfg.DNS, a)
 	}
 	// The limits are promoted from the embedded Resources struct, so they are
 	// set by assignment (a struct literal can't address promoted fields).
@@ -1259,13 +1316,21 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 		hostCfg.Mounts = append(hostCfg.Mounts, mountOf(m))
 	}
 	if len(hc.PortBindings) > 0 {
-		hostCfg.PortBindings = make(nat.PortMap, len(hc.PortBindings))
+		hostCfg.PortBindings = make(network.PortMap, len(hc.PortBindings))
 		for port, bindings := range hc.PortBindings {
-			nb := make([]nat.PortBinding, 0, len(bindings))
-			for _, b := range bindings {
-				nb = append(nb, nat.PortBinding{HostIP: b.HostIP, HostPort: b.HostPort})
+			p, err := network.ParsePort(port)
+			if err != nil {
+				return nil, nil, err
 			}
-			hostCfg.PortBindings[nat.Port(port)] = nb
+			nb := make([]network.PortBinding, 0, len(bindings))
+			for _, b := range bindings {
+				ip, err := parseAddr(b.HostIP)
+				if err != nil {
+					return nil, nil, fmt.Errorf("port %s: host ip: %w", port, err)
+				}
+				nb = append(nb, network.PortBinding{HostIP: ip, HostPort: b.HostPort})
+			}
+			hostCfg.PortBindings[p] = nb
 		}
 	}
 	for _, d := range hc.Devices {
@@ -1275,37 +1340,46 @@ func buildCreateConfig(in model.Inspect) (*container.Config, *container.HostConf
 			CgroupPermissions: d.CgroupPermissions,
 		})
 	}
-	return cfg, hostCfg
+	return cfg, hostCfg, nil
 }
 
 // buildNetworkingConfig recreates the primary network attachment with its
-// original static IP/MAC/aliases so the container comes back with the SAME IP
-// (e.g. an Unraid br0.x static IP) instead of a freshly-assigned one. Returns
-// nil when no static IPv4 was set (DHCP/bridge), letting docker assign normally.
-func buildNetworkingConfig(in model.Inspect) *network.NetworkingConfig {
+// static IP, MAC and aliases, so a container on an Unraid br0.x network comes
+// back with the address it had. It is nil when there is neither an IP nor a
+// MAC to keep, and Docker attaches the container as usual.
+func buildNetworkingConfig(in model.Inspect) (*network.NetworkingConfig, error) {
 	n := in.Network
-	// Recreate the endpoint when there is anything worth preserving — a static IP
-	// OR a pinned MAC. (Previously a pinned-MAC/DHCP-IP container lost its MAC
-	// because the config was only built when an IPv4 was set.)
 	if n.Name == "" || (n.IPv4Address == "" && n.MACAddress == "") {
-		return nil
+		return nil, nil
+	}
+	ep, err := endpointSettings(n)
+	if err != nil {
+		return nil, err
 	}
 	return &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{n.Name: endpointSettings(n)},
-	}
+		EndpointsConfig: map[string]*network.EndpointSettings{n.Name: ep},
+	}, nil
 }
 
 // endpointSettings builds the SDK endpoint settings for a captured attachment,
 // preserving the static IP (if any), MAC (if any) and aliases.
-func endpointSettings(n model.NetworkEndpoint) *network.EndpointSettings {
+func endpointSettings(n model.NetworkEndpoint) (*network.EndpointSettings, error) {
 	ep := &network.EndpointSettings{Aliases: n.Aliases}
 	if n.IPv4Address != "" {
-		ep.IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: n.IPv4Address}
+		ip, err := netip.ParseAddr(n.IPv4Address)
+		if err != nil {
+			return nil, fmt.Errorf("network %s: %w", n.Name, err)
+		}
+		ep.IPAMConfig = &network.EndpointIPAMConfig{IPv4Address: ip}
 	}
 	if n.MACAddress != "" {
-		ep.MacAddress = n.MACAddress
+		mac, err := net.ParseMAC(n.MACAddress)
+		if err != nil {
+			return nil, fmt.Errorf("network %s: %w", n.Name, err)
+		}
+		ep.MacAddress = network.HardwareAddr(mac)
 	}
-	return ep
+	return ep, nil
 }
 
 // Docker's refusals of a runtime it does not know (the second from daemons

@@ -10,11 +10,10 @@ import (
 	"time"
 
 	cerrdefs "github.com/containerd/errdefs"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
@@ -101,7 +100,7 @@ func (c *Client) CreateTestNetwork(ctx context.Context, name, instance string) e
 	if !strings.HasPrefix(name, StartTestPrefix) {
 		return fmt.Errorf("dockercli: test network %q: %w", name, errNotStartTest)
 	}
-	_, err := c.api.NetworkCreate(ctx, name, network.CreateOptions{
+	_, err := c.api.NetworkCreate(ctx, name, client.NetworkCreateOptions{
 		Driver:   "bridge",
 		Internal: true,
 		Labels:   startTestLabels(instance),
@@ -115,17 +114,18 @@ func (c *Client) CreateTestNetwork(ctx context.Context, name, instance string) e
 // RemoveTestNetwork removes a network a start test created. One that is gone
 // already is fine.
 func (c *Client) RemoveTestNetwork(ctx context.Context, name string) error {
-	n, err := c.api.NetworkInspect(ctx, name, network.InspectOptions{})
+	res, err := c.api.NetworkInspect(ctx, name, client.NetworkInspectOptions{})
 	if err != nil {
 		if isNotFoundErr(err) {
 			return nil
 		}
 		return fmt.Errorf("dockercli: inspect test network: %w", err)
 	}
+	n := res.Network
 	if n.Labels[StartTestLabel] != "1" || !strings.HasPrefix(n.Name, StartTestPrefix) {
 		return fmt.Errorf("dockercli: network %q: %w", name, errNotStartTest)
 	}
-	if err := c.api.NetworkRemove(ctx, n.ID); err != nil && !isNotFoundErr(err) {
+	if _, err := c.api.NetworkRemove(ctx, n.ID, client.NetworkRemoveOptions{}); err != nil && !isNotFoundErr(err) {
 		return fmt.Errorf("dockercli: remove test network: %w", err)
 	}
 	return nil
@@ -137,18 +137,22 @@ func (c *Client) StartIsolated(ctx context.Context, spec IsolatedSpec) error {
 	if !strings.HasPrefix(spec.Name, StartTestPrefix) || !strings.HasPrefix(spec.Network, StartTestPrefix) {
 		return fmt.Errorf("dockercli: isolated copy %q: %w", spec.Name, errNotStartTest)
 	}
-	cfg, hostCfg := isolatedConfig(spec)
-	_, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, spec.Name)
+	cfg, hostCfg, err := isolatedConfig(spec)
+	if err != nil {
+		return fmt.Errorf("dockercli: create isolated copy: %w", err)
+	}
+	create := client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: spec.Name}
+	_, err = c.createContainer(ctx, create)
 	if err != nil && isNotFoundErr(err) && cfg.Image != "" {
 		if pErr := c.Pull(ctx, cfg.Image); pErr != nil {
 			return fmt.Errorf("dockercli: the image %s is not on this host and could not be pulled: %w", cfg.Image, pErr)
 		}
-		_, err = c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, spec.Name)
+		_, err = c.createContainer(ctx, create)
 	}
 	if err != nil {
 		return fmt.Errorf("dockercli: create isolated copy: %w", err)
 	}
-	if err := c.api.ContainerStart(ctx, spec.Name, container.StartOptions{}); err != nil {
+	if _, err := c.api.ContainerStart(ctx, spec.Name, client.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("dockercli: start isolated copy: %w", err)
 	}
 	return nil
@@ -159,8 +163,11 @@ func (c *Client) StartIsolated(ctx context.Context, spec IsolatedSpec) error {
 // no published ports, no other network, no host namespaces or devices, no
 // restart, and fixed limits. The caller checks the recipe before, and this
 // holds even if it did not.
-func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig) {
-	cfg, hostCfg := buildCreateConfig(spec.From)
+func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig, error) {
+	cfg, hostCfg, err := buildCreateConfig(spec.From)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// None of the original's labels: Compose would count the copy as a member
 	// of the project, Unraid as a managed app, and a reverse proxy or an
@@ -172,10 +179,10 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	maps.Copy(labels, startTestLabels(spec.Instance))
 	cfg.Labels = labels
 
-	if len(spec.From.HostConfig.PortBindings) > 0 {
-		cfg.ExposedPorts = nat.PortSet{}
-		for port := range spec.From.HostConfig.PortBindings {
-			cfg.ExposedPorts[nat.Port(port)] = struct{}{}
+	if len(hostCfg.PortBindings) > 0 {
+		cfg.ExposedPorts = network.PortSet{}
+		for port := range hostCfg.PortBindings {
+			cfg.ExposedPorts[port] = struct{}{}
 		}
 	}
 
@@ -232,7 +239,7 @@ func isolatedConfig(spec IsolatedSpec) (*container.Config, *container.HostConfig
 	// The original's log driver would ship the copy's output to wherever the
 	// original's goes.
 	hostCfg.LogConfig = container.LogConfig{}
-	return cfg, hostCfg
+	return cfg, hostCfg, nil
 }
 
 // restrictingSecurityOpts keeps only no-new-privileges, the one security
@@ -278,7 +285,7 @@ func GrantedPrivileges(in model.Inspect) []string {
 
 // IsolatedState reads the state of a start test's copy.
 func (c *Client) IsolatedState(ctx context.Context, name string) (IsolatedState, error) {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		return IsolatedState{}, fmt.Errorf("dockercli: inspect isolated copy: %w", err)
 	}
@@ -293,7 +300,7 @@ func (c *Client) IsolatedState(ctx context.Context, name string) (IsolatedState,
 	}
 	if resp.Config != nil {
 		for port := range resp.Config.ExposedPorts {
-			st.ExposedPorts = append(st.ExposedPorts, string(port))
+			st.ExposedPorts = append(st.ExposedPorts, port.String())
 		}
 	}
 	return st, nil
@@ -302,7 +309,7 @@ func (c *Client) IsolatedState(ctx context.Context, name string) (IsolatedState,
 // RemoveTestContainer removes a container a start test created, with its
 // anonymous volumes. One that is gone already is fine.
 func (c *Client) RemoveTestContainer(ctx context.Context, name string) error {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		if isNoSuchContainer(err) {
 			return nil
@@ -312,7 +319,7 @@ func (c *Client) RemoveTestContainer(ctx context.Context, name string) error {
 	if resp.Config == nil || resp.Config.Labels[StartTestLabel] != "1" || !strings.HasPrefix(normalizeName(resp.Name), StartTestPrefix) {
 		return fmt.Errorf("dockercli: container %q: %w", name, errNotStartTest)
 	}
-	err = c.api.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true, RemoveVolumes: true})
+	_, err = c.api.ContainerRemove(ctx, resp.ID, client.ContainerRemoveOptions{Force: true, RemoveVolumes: true})
 	if err != nil && !isNoSuchContainer(err) {
 		return fmt.Errorf("dockercli: remove test container: %w", err)
 	}
@@ -340,7 +347,7 @@ func (c *Client) RunProber(ctx context.Context, spec ProberSpec) (int, error) {
 		Cmd:        spec.Cmd,
 		Labels:     startTestLabels(spec.Instance),
 	}
-	if _, err := c.api.ContainerCreate(ctx, cfg, hostCfg, nil, nil, spec.Name); err != nil {
+	if _, err := c.createContainer(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: hostCfg, Name: spec.Name}); err != nil {
 		return -1, fmt.Errorf("dockercli: create prober: %w", err)
 	}
 	defer func() {
@@ -350,14 +357,14 @@ func (c *Client) RunProber(ctx context.Context, spec ProberSpec) (int, error) {
 	}()
 	wctx, cancel := context.WithTimeout(ctx, spec.Timeout)
 	defer cancel()
-	waitC, errC := c.api.ContainerWait(wctx, spec.Name, container.WaitConditionNextExit)
-	if err := c.api.ContainerStart(ctx, spec.Name, container.StartOptions{}); err != nil {
+	wait := c.api.ContainerWait(wctx, spec.Name, client.ContainerWaitOptions{Condition: container.WaitConditionNextExit})
+	if _, err := c.api.ContainerStart(ctx, spec.Name, client.ContainerStartOptions{}); err != nil {
 		return -1, fmt.Errorf("dockercli: start prober: %w", err)
 	}
 	select {
-	case res := <-waitC:
+	case res := <-wait.Result:
 		return int(res.StatusCode), nil
-	case err := <-errC:
+	case err := <-wait.Error:
 		return -1, fmt.Errorf("dockercli: wait for prober: %w", err)
 	}
 }
@@ -375,13 +382,13 @@ func startTestLabels(instance string) map[string]string {
 // this instance left behind, and those of builds that did not label their
 // instance once nobody can be using them any more.
 func (c *Client) StartTestLeftovers(ctx context.Context, instance string) ([]string, []string, error) {
-	f := filters.NewArgs(filters.Arg("label", StartTestLabel+"=1"))
-	cs, err := c.api.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
+	f := client.Filters{}.Add("label", StartTestLabel+"=1")
+	cs, err := c.api.ContainerList(ctx, client.ContainerListOptions{All: true, Filters: f})
 	if err != nil {
 		return nil, nil, fmt.Errorf("dockercli: list test containers: %w", err)
 	}
 	var containers []testContainer
-	for _, s := range cs {
+	for _, s := range cs.Items {
 		if len(s.Names) == 0 {
 			continue
 		}
@@ -389,22 +396,22 @@ func (c *Client) StartTestLeftovers(ctx context.Context, instance string) ([]str
 			name: normalizeName(s.Names[0]), labels: s.Labels, running: s.State == "running", created: time.Unix(s.Created, 0),
 		})
 	}
-	ns, err := c.api.NetworkList(ctx, network.ListOptions{Filters: f})
+	ns, err := c.api.NetworkList(ctx, client.NetworkListOptions{Filters: f})
 	if err != nil {
 		cNames, _ := pickStartTestLeftovers(containers, nil, instance, time.Now())
 		return cNames, nil, fmt.Errorf("dockercli: list test networks: %w", err)
 	}
 	var networks []testNetwork
-	for _, n := range ns {
+	for _, n := range ns.Items {
 		tn := testNetwork{name: n.Name, labels: n.Labels}
 		if n.Labels[StartTestInstanceLabel] == "" {
 			// The listing leaves out who is attached, and an unlabelled network
 			// stays while anything is.
-			full, iErr := c.api.NetworkInspect(ctx, n.ID, network.InspectOptions{})
+			full, iErr := c.api.NetworkInspect(ctx, n.ID, client.NetworkInspectOptions{})
 			if iErr != nil {
 				continue
 			}
-			tn.attached = len(full.Containers)
+			tn.attached = len(full.Network.Containers)
 		}
 		networks = append(networks, tn)
 	}

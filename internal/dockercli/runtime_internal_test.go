@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
@@ -27,8 +27,8 @@ func gpuHostConfig() *container.HostConfig {
 
 func TestRestoreKeepsTheRuntimeAndGPURequest(t *testing.T) {
 	hc := restoredHostConfig(t, container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/plex", HostConfig: gpuHostConfig()},
-		Config:            &container.Config{Image: "plexinc/pms-docker"},
+		Name: "/plex", HostConfig: gpuHostConfig(),
+		Config: &container.Config{Image: "plexinc/pms-docker"},
 	})
 	if hc.Runtime != "nvidia" || len(hc.DeviceRequests) != 1 {
 		t.Fatalf("runtime = %q, devices = %+v", hc.Runtime, hc.DeviceRequests)
@@ -41,10 +41,10 @@ func TestRestoreKeepsTheRuntimeAndGPURequest(t *testing.T) {
 
 func TestIsolatedConfigAsksForNoGPUOrRuntime(t *testing.T) {
 	from := mapInspect(container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/plex", HostConfig: gpuHostConfig()},
-		Config:            &container.Config{Image: "plexinc/pms-docker"},
+		Name: "/plex", HostConfig: gpuHostConfig(),
+		Config: &container.Config{Image: "plexinc/pms-docker"},
 	})
-	_, hc := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "plex-1", Network: StartTestPrefix + "net-1", From: from, NanoCPUs: 1, MemoryBytes: 1, PidsLimit: 1})
+	_, hc := isolatedConfigOf(t, IsolatedSpec{Name: StartTestPrefix + "plex-1", Network: StartTestPrefix + "net-1", From: from, NanoCPUs: 1, MemoryBytes: 1, PidsLimit: 1})
 	if hc.Runtime != "" || len(hc.DeviceRequests) != 0 {
 		t.Fatalf("runtime = %q, devices = %+v, want the daemon's default and no GPU", hc.Runtime, hc.DeviceRequests)
 	}
@@ -80,7 +80,7 @@ func fakeDaemon(t *testing.T, createStatus int, createMsg string, startStatus in
 		}
 	}))
 	t.Cleanup(srv.Close)
-	api, err := client.NewClientWithOpts(client.WithHost("tcp://"+strings.TrimPrefix(srv.URL, "http://")), client.WithVersion("1.47"))
+	api, err := client.New(client.WithHost("tcp://"+strings.TrimPrefix(srv.URL, "http://")), client.WithAPIVersion("1.47"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,12 +1,26 @@
 package dockercli
 
 import (
+	"net/netip"
 	"slices"
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
+
+// isolatedConfigOf is isolatedConfig for a recipe that must build.
+func isolatedConfigOf(t *testing.T, spec IsolatedSpec) (*container.Config, *container.HostConfig) {
+	t.Helper()
+	cfg, hc, err := isolatedConfig(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cfg, hc
+}
 
 func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 	from := model.Inspect{
@@ -49,12 +63,12 @@ func TestIsolatedConfigTakesAwayEveryWayOut(t *testing.T) {
 		Labels:      map[string]string{"bombvault.starttest.of": "nextcloud"},
 		Instance:    "aaaa",
 	}
-	cfg, hc := isolatedConfig(spec)
+	cfg, hc := isolatedConfigOf(t, spec)
 
 	if len(hc.PortBindings) != 0 || hc.PublishAllPorts {
 		t.Fatalf("no port may be published: %+v", hc.PortBindings)
 	}
-	if _, ok := cfg.ExposedPorts["443/tcp"]; !ok {
+	if _, ok := cfg.ExposedPorts[network.MustParsePort("443/tcp")]; !ok {
 		t.Fatal("the recipe's port stays exposed inside the network, for the port check")
 	}
 	if string(hc.NetworkMode) != spec.Network {
@@ -140,14 +154,14 @@ func TestIsolatedConfigLeavesOutTheOriginalsLongFormVolumes(t *testing.T) {
 		{Type: "volume", Source: "nextcloud_db", Target: "/var/lib/mysql"},
 		{Type: "tmpfs", Target: "/tmp"},
 	}}}
-	_, hc := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "nextcloud-1", Network: StartTestPrefix + "net-1", From: from})
+	_, hc := isolatedConfigOf(t, IsolatedSpec{Name: StartTestPrefix + "nextcloud-1", Network: StartTestPrefix + "net-1", From: from})
 	if len(hc.Mounts) != 1 || hc.Mounts[0].Target != "/tmp" {
 		t.Fatalf("mounts = %+v, want only the tmpfs", hc.Mounts)
 	}
 }
 
 func TestIsolatedConfigNamesTheInstance(t *testing.T) {
-	cfg, _ := isolatedConfig(IsolatedSpec{Name: StartTestPrefix + "aaaa-x-1", Network: StartTestPrefix + "aaaa-net-1", Instance: "aaaa"})
+	cfg, _ := isolatedConfigOf(t, IsolatedSpec{Name: StartTestPrefix + "aaaa-x-1", Network: StartTestPrefix + "aaaa-net-1", Instance: "aaaa"})
 	if cfg.Labels[StartTestInstanceLabel] != "aaaa" {
 		t.Fatalf("labels = %v", cfg.Labels)
 	}
@@ -169,7 +183,7 @@ func TestIsolatedConfigReplacesTheOriginalsLimits(t *testing.T) {
 		},
 	}
 	spec := IsolatedSpec{Name: StartTestPrefix + "plex-1", Network: StartTestPrefix + "net-1", From: from, NanoCPUs: 1_000_000_000, MemoryBytes: 2 << 30, PidsLimit: 512}
-	_, hc := isolatedConfig(spec)
+	_, hc := isolatedConfigOf(t, spec)
 
 	if hc.Memory != spec.MemoryBytes || hc.MemoryReservation != 0 {
 		t.Fatalf("memory = %d, reservation = %d", hc.Memory, hc.MemoryReservation)
@@ -204,7 +218,7 @@ func TestIsolatedConfigLeavesOutLinksNamespacesAndIOLimits(t *testing.T) {
 		},
 	}
 	spec := IsolatedSpec{Name: StartTestPrefix + "wordpress-1", Network: StartTestPrefix + "net-1", From: from, NanoCPUs: 1_000_000_000, MemoryBytes: 2 << 30, PidsLimit: 512}
-	_, hc := isolatedConfig(spec)
+	_, hc := isolatedConfigOf(t, spec)
 
 	if len(hc.Links) != 0 || hc.UTSMode != "" || hc.CgroupnsMode != "" || len(hc.StorageOpt) != 0 {
 		t.Fatalf("links = %v, uts = %q, cgroupns = %q, storage = %v", hc.Links, hc.UTSMode, hc.CgroupnsMode, hc.StorageOpt)
@@ -212,7 +226,7 @@ func TestIsolatedConfigLeavesOutLinksNamespacesAndIOLimits(t *testing.T) {
 	if hc.BlkioWeight != 0 || len(hc.BlkioWeightDevice) != 0 || len(hc.BlkioDeviceReadBps) != 0 {
 		t.Fatalf("io limits = %d %v %v", hc.BlkioWeight, hc.BlkioWeightDevice, hc.BlkioDeviceReadBps)
 	}
-	if !slices.Equal(hc.DNS, from.HostConfig.DNS) {
+	if !slices.Equal(hc.DNS, []netip.Addr{netip.MustParseAddr("192.168.20.2")}) {
 		t.Fatalf("dns = %v, want the recipe's", hc.DNS)
 	}
 }
@@ -220,7 +234,7 @@ func TestIsolatedConfigLeavesOutLinksNamespacesAndIOLimits(t *testing.T) {
 func TestIsolatedConfigLeavesOutVolumesFromAnotherContainer(t *testing.T) {
 	var from model.Inspect
 	from.HostConfig.VolumesFrom = []string{"vfsrc"}
-	_, hc := isolatedConfig(IsolatedSpec{From: from, Network: "none"})
+	_, hc := isolatedConfigOf(t, IsolatedSpec{From: from, Network: "none"})
 	if len(hc.VolumesFrom) != 0 {
 		t.Fatalf("a start test must not reach the other container's data: %v", hc.VolumesFrom)
 	}

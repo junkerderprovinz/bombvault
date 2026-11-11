@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 // rejoinStopTimeout is the grace a container sharing a namespace gets when it
@@ -17,14 +17,14 @@ const rejoinStopTimeout = 30 * time.Second
 // ContainerID returns the ID of the container named name, or "" when no
 // container has exactly that name. Docker would also match an ID prefix.
 func (c *Client) ContainerID(ctx context.Context, name string) (string, error) {
-	resp, err := c.api.ContainerInspect(ctx, name)
+	resp, err := c.inspect(ctx, name)
 	if err != nil {
 		if isNoSuchContainer(err) {
 			return "", nil
 		}
 		return "", fmt.Errorf("dockercli: inspect %q: %w", name, err)
 	}
-	if resp.ContainerJSONBase == nil || normalizeName(resp.Name) != normalizeName(name) {
+	if normalizeName(resp.Name) != normalizeName(name) {
 		return "", nil
 	}
 	return resp.ID, nil
@@ -40,20 +40,20 @@ func (c *Client) RejoinNamespace(ctx context.Context, oldID, parent string) ([]s
 	if oldID == "" {
 		return nil, nil
 	}
-	summaries, err := c.api.ContainerList(ctx, container.ListOptions{All: true})
+	list, err := c.api.ContainerList(ctx, client.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, fmt.Errorf("dockercli: list containers: %w", err)
 	}
 	parentRunning := false
-	if p, err := c.api.ContainerInspect(ctx, parent); err == nil && p.State != nil {
+	if p, err := c.inspect(ctx, parent); err == nil && p.State != nil {
 		parentRunning = p.State.Running
 	}
 	old := "container:" + oldID
 	var failed []string
 	var errs []error
-	for _, s := range summaries {
-		resp, err := c.api.ContainerInspect(ctx, s.ID)
-		if err != nil || resp.ContainerJSONBase == nil || resp.HostConfig == nil {
+	for _, s := range list.Items {
+		resp, err := c.inspect(ctx, s.ID)
+		if err != nil || resp.HostConfig == nil {
 			continue
 		}
 		hc := resp.HostConfig
@@ -90,11 +90,11 @@ func (c *Client) rejoin(ctx context.Context, id, name, old, joined string, paren
 		}
 	}
 	aside := name + "-" + shortID(id)
-	if err := c.api.ContainerRename(ctx, id, aside); err != nil {
+	if _, err := c.api.ContainerRename(ctx, id, client.ContainerRenameOptions{NewName: aside}); err != nil {
 		return fmt.Errorf("dockercli: rename aside: %w", err)
 	}
 	if err := c.CreateAndStart(ctx, in, false); err != nil {
-		if rErr := c.api.ContainerRename(ctx, id, name); rErr != nil {
+		if _, rErr := c.api.ContainerRename(ctx, id, client.ContainerRenameOptions{NewName: name}); rErr != nil {
 			return errors.Join(err, fmt.Errorf("dockercli: it stays as %s: %w", aside, rErr))
 		}
 		return err

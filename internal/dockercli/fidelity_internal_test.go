@@ -3,14 +3,15 @@ package dockercli
 import (
 	"encoding/json"
 	"maps"
+	"net/netip"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/docker/docker/api/types/blkiodev"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
+	"github.com/moby/moby/api/types/blkiodev"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
 
 	"github.com/junkerderprovinz/bombvault/internal/model"
 )
@@ -42,7 +43,7 @@ func TestHostConfigRoundTripPreservesIsolationFields(t *testing.T) {
 		t.Fatalf("isolation/resource fields not captured: %+v", m)
 	}
 
-	_, hc := buildCreateConfig(model.Inspect{HostConfig: m})
+	_, hc := createConfig(t, model.Inspect{HostConfig: m})
 	if string(hc.PidMode) != "host" || string(hc.IpcMode) != "host" || string(hc.UsernsMode) != "host" {
 		t.Fatalf("namespace modes not reproduced on recreate: %+v", hc)
 	}
@@ -64,12 +65,15 @@ func TestNetworkingConfigPreservesMACWithoutStaticIP(t *testing.T) {
 		MACAddress: "02:42:ac:11:00:02",
 		Aliases:    []string{"plex"},
 	}}
-	cfg := buildNetworkingConfig(in)
+	cfg, err := buildNetworkingConfig(in)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if cfg == nil {
 		t.Fatal("networking config dropped despite a pinned MAC")
 	}
 	ep := cfg.EndpointsConfig["br0.20"]
-	if ep == nil || ep.MacAddress != "02:42:ac:11:00:02" {
+	if ep == nil || ep.MacAddress.String() != "02:42:ac:11:00:02" {
 		t.Fatalf("MAC not preserved: %+v", ep)
 	}
 }
@@ -77,7 +81,7 @@ func TestNetworkingConfigPreservesMACWithoutStaticIP(t *testing.T) {
 // TestNetworkingConfigNilWhenNothingToPreserve keeps the default-network case a
 // no-op: no static IP and no MAC => let Docker attach normally.
 func TestNetworkingConfigNilWhenNothingToPreserve(t *testing.T) {
-	if buildNetworkingConfig(model.Inspect{Network: model.NetworkEndpoint{Name: "bridge"}}) != nil {
+	if cfg, err := buildNetworkingConfig(model.Inspect{Network: model.NetworkEndpoint{Name: "bridge"}}); cfg != nil || err != nil {
 		t.Fatal("expected nil networking config when there is no static IP or MAC")
 	}
 }
@@ -111,7 +115,7 @@ func TestContainerSummaryMappingCarriesMountsAndLabels(t *testing.T) {
 			},
 			NetworkSettings: &container.NetworkSettingsSummary{
 				Networks: map[string]*network.EndpointSettings{
-					"bridge": {IPAddress: "172.17.0.2"},
+					"bridge": {IPAddress: netip.MustParseAddr("172.17.0.2")},
 				},
 			},
 		}
@@ -211,27 +215,27 @@ func TestContainerSummaryMappingCarriesMountsAndLabels(t *testing.T) {
 
 func TestRecreateKeepsTheContainersOwnHealthcheck(t *testing.T) {
 	resp := container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{ID: "abc", Name: "/db"},
+		ID: "abc", Name: "/db",
 		Config: &container.Config{
 			Image:       "postgres:16",
 			Healthcheck: &container.HealthConfig{Test: []string{"CMD-SHELL", "pg_isready"}, Retries: 5},
 		},
 	}
 	in := mapInspect(resp)
-	cfg, _ := buildCreateConfig(in)
+	cfg, _ := createConfig(t, in)
 	if cfg.Healthcheck == nil || cfg.Healthcheck.Test[1] != "pg_isready" || cfg.Healthcheck.Retries != 5 {
 		t.Fatalf("healthcheck = %+v", cfg.Healthcheck)
 	}
 
 	resp.Config.Healthcheck = nil
-	if cfg, _ := buildCreateConfig(mapInspect(resp)); cfg.Healthcheck != nil {
+	if cfg, _ := createConfig(t, mapInspect(resp)); cfg.Healthcheck != nil {
 		t.Fatal("without a healthcheck of its own, the image's applies")
 	}
 }
 
 func TestInspectKeepsTheVolumeName(t *testing.T) {
 	resp := container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{ID: "abc", Name: "/jellyfin"},
+		ID: "abc", Name: "/jellyfin",
 		Mounts: []container.MountPoint{
 			{Type: mount.TypeVolume, Name: "jellyfin_cache", Source: "/var/lib/docker/volumes/jellyfin_cache/_data", Destination: "/cache"},
 			{Type: mount.TypeBind, Source: "/mnt/user/appdata/jellyfin", Destination: "/config"},
@@ -247,6 +251,16 @@ func TestInspectKeepsTheVolumeName(t *testing.T) {
 	}
 }
 
+// createConfig is buildCreateConfig for a recipe that must build.
+func createConfig(t *testing.T, in model.Inspect) (*container.Config, *container.HostConfig) {
+	t.Helper()
+	cfg, hc, err := buildCreateConfig(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cfg, hc
+}
+
 // restoredHostConfig takes inspect data the way a backup stores it and a
 // restore reads it back: through the definition's JSON.
 func restoredHostConfig(t *testing.T, resp container.InspectResponse) *container.HostConfig {
@@ -259,7 +273,7 @@ func restoredHostConfig(t *testing.T, resp container.InspectResponse) *container
 	if err := json.Unmarshal(raw, &in); err != nil {
 		t.Fatal(err)
 	}
-	_, hc := buildCreateConfig(in)
+	_, hc := createConfig(t, in)
 	return hc
 }
 
@@ -282,8 +296,8 @@ func TestRestoreKeepsResourceLimitsAndLogDriver(t *testing.T) {
 	src.PidsLimit = &pids
 	src.OomKillDisable = &noOOMKill
 	hc := restoredHostConfig(t, container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/tiny", HostConfig: src},
-		Config:            &container.Config{Image: "alpine"},
+		Name: "/tiny", HostConfig: src,
+		Config: &container.Config{Image: "alpine"},
 	})
 
 	if hc.Memory != 16<<20 || hc.MemoryReservation != 8<<20 || hc.MemorySwap != 32<<20 {
@@ -311,7 +325,7 @@ func TestRestoreKeepsResourceLimitsAndLogDriver(t *testing.T) {
 
 func TestRestoreKeepsDNSNamespacesLinksAndIOLimits(t *testing.T) {
 	src := &container.HostConfig{
-		DNS:          []string{"192.168.20.2"},
+		DNS:          []netip.Addr{netip.MustParseAddr("192.168.20.2")},
 		DNSSearch:    []string{"lan"},
 		DNSOptions:   []string{"ndots:1"},
 		UTSMode:      "host",
@@ -326,8 +340,8 @@ func TestRestoreKeepsDNSNamespacesLinksAndIOLimits(t *testing.T) {
 	src.BlkioDeviceReadIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 100}}
 	src.BlkioDeviceWriteIOps = []*blkiodev.ThrottleDevice{{Path: "/dev/sda", Rate: 50}}
 	hc := restoredHostConfig(t, container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
-		Config:            &container.Config{Image: "alpine"},
+		Name: "/app", HostConfig: src,
+		Config: &container.Config{Image: "alpine"},
 	})
 
 	if !slices.Equal(hc.DNS, src.DNS) || !slices.Equal(hc.DNSSearch, src.DNSSearch) || !slices.Equal(hc.DNSOptions, src.DNSOptions) {
@@ -353,8 +367,8 @@ func TestRestoreKeepsDNSNamespacesLinksAndIOLimits(t *testing.T) {
 func TestRestoreKeepsLogOptions(t *testing.T) {
 	src := &container.HostConfig{LogConfig: container.LogConfig{Type: "json-file", Config: map[string]string{"max-size": "50m", "max-file": "1"}}}
 	hc := restoredHostConfig(t, container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
-		Config:            &container.Config{Image: "alpine"},
+		Name: "/app", HostConfig: src,
+		Config: &container.Config{Image: "alpine"},
 	})
 	if hc.LogConfig.Type != "json-file" || hc.LogConfig.Config["max-size"] != "50m" || hc.LogConfig.Config["max-file"] != "1" {
 		t.Fatalf("log config = %+v", hc.LogConfig)
@@ -375,8 +389,8 @@ func TestRestoreKeepsMountsMadeWithMount(t *testing.T) {
 		},
 	}
 	hc := restoredHostConfig(t, container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{Name: "/app", HostConfig: src},
-		Config:            &container.Config{Image: "alpine"},
+		Name: "/app", HostConfig: src,
+		Config: &container.Config{Image: "alpine"},
 	})
 	if !slices.Equal(hc.Binds, []string{"/mnt/user/appdata/app/logs:/logs"}) {
 		t.Fatalf("binds = %q, want the -v bind alone", hc.Binds)
@@ -411,7 +425,7 @@ func TestRecreateKeepsEntrypointHostnameStopSettingsAndLongFormVolumes(t *testin
 		{Type: mount.TypeTmpfs, Target: "/tmp", TmpfsOptions: &mount.TmpfsOptions{SizeBytes: 64 << 20, Mode: 0o1777}},
 	}}
 	resp := container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{ID: strings.Repeat("c", 64), Name: "/nextcloud-cron", HostConfig: src},
+		ID: strings.Repeat("c", 64), Name: "/nextcloud-cron", HostConfig: src,
 		Config: &container.Config{
 			Image: "nextcloud:29", Entrypoint: []string{"/cron.sh"}, Hostname: "cloud", Domainname: "lan",
 			WorkingDir: "/var/www/html", StopSignal: "SIGINT", StopTimeout: &stopAfter, Tty: true, OpenStdin: true,
@@ -425,7 +439,7 @@ func TestRecreateKeepsEntrypointHostnameStopSettingsAndLongFormVolumes(t *testin
 	if err := json.Unmarshal(raw, &in); err != nil {
 		t.Fatal(err)
 	}
-	cfg, hc := buildCreateConfig(in)
+	cfg, hc := createConfig(t, in)
 
 	if !slices.Equal(cfg.Entrypoint, []string{"/cron.sh"}) || cfg.Cmd != nil {
 		t.Fatalf("entrypoint = %v, cmd = %v", cfg.Entrypoint, cfg.Cmd)
@@ -458,20 +472,20 @@ func TestRecreateLeavesOutTheHostnameDockerChose(t *testing.T) {
 	id := strings.Repeat("d", 64)
 	cases := map[string]container.InspectResponse{
 		"short ID": {
-			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "bridge"}},
-			Config:            &container.Config{Hostname: id[:12]},
+			ID: id, HostConfig: &container.HostConfig{NetworkMode: "bridge"},
+			Config: &container.Config{Hostname: id[:12]},
 		},
 		"host network": {
-			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "host"}},
-			Config:            &container.Config{Hostname: "Tower"},
+			ID: id, HostConfig: &container.HostConfig{NetworkMode: "host"},
+			Config: &container.Config{Hostname: "Tower"},
 		},
 		"shared network": {
-			ContainerJSONBase: &container.ContainerJSONBase{ID: id, HostConfig: &container.HostConfig{NetworkMode: "container:gluetun"}},
-			Config:            &container.Config{Hostname: "gluetun", Domainname: "vpn"},
+			ID: id, HostConfig: &container.HostConfig{NetworkMode: "container:gluetun"},
+			Config: &container.Config{Hostname: "gluetun", Domainname: "vpn"},
 		},
 	}
 	for name, resp := range cases {
-		if cfg, _ := buildCreateConfig(mapInspect(resp)); cfg.Hostname != "" || cfg.Domainname != "" {
+		if cfg, _ := createConfig(t, mapInspect(resp)); cfg.Hostname != "" || cfg.Domainname != "" {
 			t.Errorf("%s: hostname = %q, domain = %q, want Docker to choose", name, cfg.Hostname, cfg.Domainname)
 		}
 	}
@@ -513,7 +527,7 @@ func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {
 	if err := json.Unmarshal([]byte(old), &in); err != nil {
 		t.Fatal(err)
 	}
-	_, hc := buildCreateConfig(in)
+	_, hc := createConfig(t, in)
 	if hc.Memory != 0 || hc.MemorySwap != 0 || hc.NanoCPUs != 0 || hc.CPUShares != 0 || hc.ShmSize != 0 {
 		t.Fatalf("limits = %+v, want none", hc.Resources)
 	}
@@ -530,11 +544,9 @@ func TestRestoreFromAnOlderDefinitionLeavesLimitsUnset(t *testing.T) {
 
 func TestRecreateKeepsVolumesFrom(t *testing.T) {
 	in := mapInspect(container.InspectResponse{
-		ContainerJSONBase: &container.ContainerJSONBase{
-			HostConfig: &container.HostConfig{VolumesFrom: []string{"vfsrc", "other:ro"}},
-		},
+		HostConfig: &container.HostConfig{VolumesFrom: []string{"vfsrc", "other:ro"}},
 	})
-	_, hc := buildCreateConfig(in)
+	_, hc := createConfig(t, in)
 	if !slices.Equal(hc.VolumesFrom, []string{"vfsrc", "other:ro"}) {
 		t.Fatalf("VolumesFrom = %v", hc.VolumesFrom)
 	}
