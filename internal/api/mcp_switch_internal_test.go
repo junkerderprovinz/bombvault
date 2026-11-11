@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -25,6 +26,7 @@ func TestMain(m *testing.M) {
 	folderOnStorage = func(*Service, string) bool { return true }
 	bucketRegion = func(string, string) string { return "" }
 	fortressLAN = false
+	followEvery = 200 * time.Millisecond
 	store.ReuseMigrations()
 	os.Exit(m.Run())
 }

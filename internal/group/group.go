@@ -8,6 +8,7 @@
 package group
 
 import (
+	"cmp"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -17,10 +18,12 @@ import (
 	"log"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/keys"
 	"github.com/junkerderprovinz/parleyport/kit/lan"
@@ -44,8 +47,8 @@ const DirectPath = kitgroup.DirectPath
 // MaxCallBytes caps what one call to a member carries.
 const MaxCallBytes = kitgroup.MaxCallBytes
 
-// maxAnswerBytes caps a direct answer, which can carry a whole scorecard.
-const maxAnswerBytes = 8 << 20
+// MaxAnswerBytes caps a direct answer, which can carry a whole scorecard.
+const MaxAnswerBytes = 8 << 20
 
 // Mode is which relay an instance uses for members it cannot reach directly.
 type Mode string
@@ -114,6 +117,9 @@ type Config struct {
 	Former func() (kitgroup.Roster, error)
 	// OnRemoved runs when another instance took this one out of the group.
 	OnRemoved func()
+	// Keeper takes the fortress secret a member hands over as the group
+	// moves into a fortress; nil takes none.
+	Keeper fortress.Keeper
 }
 
 // Member is another member of the group that is reachable now, under the id
@@ -200,7 +206,17 @@ type Manager struct {
 	mu      sync.Mutex
 	cfg     Config
 	g       *kitgroup.Group
-	asked   map[string]asking
+	// followed is the pairing of the fortress once the group moved there,
+	// under the relay key it is known by. g stays open on the old phrase as
+	// long as members of it have not followed.
+	followed    *kitgroup.Group
+	followedKey string
+	stopLearn   chan struct{}
+	// met holds the members seen in the pairing since the group moved, by
+	// their kit ids. The roster the pairing took over carries when each was
+	// last seen on the old phrase, which says nothing about the move.
+	met   map[string]bool
+	asked map[string]asking
 	// retrying is set while learnAll is due again.
 	retrying bool
 	// departed holds when a member said it left, by its BombVault id.
@@ -280,6 +296,10 @@ func (m *Manager) open(cfg Config, self kitgroup.Self) *kitgroup.Group {
 		log.Printf("group: %v", err)
 		return nil
 	}
+	serve := http.Handler(http.HandlerFunc(m.serveMember))
+	if cfg.Keeper != nil {
+		serve = fortress.Moving(serve, cfg.Keeper)
+	}
 	g, err := kitgroup.Open(kitgroup.Config{
 		Domain:         Domain,
 		Secret:         cfg.Secret,
@@ -291,10 +311,10 @@ func (m *Manager) open(cfg Config, self kitgroup.Self) *kitgroup.Group {
 		Store:          cfg.Store,
 		Kinds:          []member.Kind{member.KindMobile},
 		Ports:          Ports,
-		MaxAnswerBytes: maxAnswerBytes,
+		MaxAnswerBytes: MaxAnswerBytes,
 		OnRemoved:      cfg.OnRemoved,
 		OnChange:       func() { go m.learnAll() },
-	}, http.HandlerFunc(m.serveMember))
+	}, serve)
 	if err != nil {
 		log.Printf("group: %v", err)
 		return nil
@@ -317,10 +337,102 @@ func sameGroup(a, b Config) bool {
 		strings.TrimSpace(a.RelayURL) == strings.TrimSpace(b.RelayURL) && a.InstanceID == b.InstanceID
 }
 
+// group is the group members are reached in: the pairing of the fortress
+// once the group moved there, else its own.
 func (m *Manager) group() (*kitgroup.Group, Config) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.followed != nil {
+		return m.followed, m.cfg
+	}
 	return m.g, m.cfg
+}
+
+// Handler answers the calls of the members of a pairing the Manager follows.
+func (m *Manager) Handler() http.Handler { return http.HandlerFunc(m.serveMember) }
+
+// LAN is where the group's members announce themselves.
+func (m *Manager) LAN() *lan.Service { return m.lan }
+
+// Follow makes g, the pairing of the fortress the group moved into, the group
+// members are reached in, known on the relay by relayKey. The group's own
+// stays open on the old phrase for the members that have not followed. nil
+// goes back to the group's own.
+func (m *Manager) Follow(g *kitgroup.Group, relayKey string) {
+	m.mu.Lock()
+	if m.stopLearn != nil {
+		close(m.stopLearn)
+		m.stopLearn = nil
+	}
+	m.followed, m.followedKey = g, relayKey
+	m.met = map[string]bool{}
+	if g != nil {
+		// The fortress opens the pairing without telling of changes, so the
+		// ids of new members are asked for on a timer.
+		stop := make(chan struct{})
+		m.stopLearn = stop
+		go func() {
+			t := time.NewTicker(learnFirst)
+			defer t.Stop()
+			for {
+				select {
+				case <-stop:
+					return
+				case <-t.C:
+					m.learnAll()
+				}
+			}
+		}()
+	}
+	m.mu.Unlock()
+	if g != nil {
+		go m.learnAll()
+	}
+}
+
+// Following reports whether the group moved into a fortress.
+func (m *Manager) Following() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.followed != nil
+}
+
+// Former is the group on the old phrase while the Manager follows a pairing
+// in a fortress, nil otherwise or once it closed.
+func (m *Manager) Former() *kitgroup.Group {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.followed == nil {
+		return nil
+	}
+	return m.g
+}
+
+// Left lists the approved members of the group on the old phrase that the
+// pairing in the fortress has not met yet, by name.
+func (m *Manager) Left() []string {
+	m.mu.Lock()
+	followed, former := m.followed, m.g
+	m.mu.Unlock()
+	if followed == nil || former == nil {
+		return nil
+	}
+	online := followed.Members()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, km := range online {
+		if km.Online() {
+			m.met[km.ID] = true
+		}
+	}
+	var out []string
+	for _, km := range former.Members() {
+		if km.State == kitgroup.StateApproved && !m.met[km.ID] {
+			out = append(out, cmp.Or(km.Name, km.ID))
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 // Active reports whether this instance is in a group.
@@ -338,8 +450,12 @@ func (m *Manager) RelayConnected() bool {
 // AdmitsRelayKey reports whether key is this group's relay key, the only key a
 // relay served by this instance lets in.
 func (m *Manager) AdmitsRelayKey(key string) bool {
-	g, cfg := m.group()
-	return g != nil && hmac.Equal([]byte(key), []byte(Domain.GroupKey(cfg.Secret)))
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.followed != nil && hmac.Equal([]byte(key), []byte(m.followedKey)) {
+		return true
+	}
+	return m.g != nil && hmac.Equal([]byte(key), []byte(Domain.GroupKey(m.cfg.Secret)))
 }
 
 // Members lists the approved members reachable now, sorted by name.
@@ -440,21 +556,34 @@ func (m *Manager) Remove(id string) error {
 	if g == nil {
 		return ErrNotMember
 	}
-	for _, km := range g.Members() {
-		if km.ID == id {
-			return g.Remove(id)
-		}
+	kid := m.kitID(g, id)
+	if kid == "" {
+		return ErrNotMember
+	}
+	err := g.Remove(kid)
+	// A member that has not followed into the fortress is still let in on
+	// the old phrase.
+	if former := m.Former(); err == nil && former != nil && m.listed(former, kid) {
+		err = former.Remove(kid)
+	}
+	return err
+}
+
+// kitID is the id in g of the member id names, its id there or here.
+func (m *Manager) kitID(g *kitgroup.Group, id string) string {
+	if m.listed(g, id) {
+		return id
 	}
 	key, found, err := m.dir.MemberKey(id)
 	if err != nil || !found {
-		return errors.Join(err, ErrNotMember)
+		return ""
 	}
 	for _, kind := range []member.Kind{member.KindInstance, member.KindMobile} {
 		if kid := member.ID(kind, key); kid != "" && m.listed(g, kid) {
-			return g.Remove(kid)
+			return kid
 		}
 	}
-	return ErrNotMember
+	return ""
 }
 
 func (m *Manager) listed(g *kitgroup.Group, id string) bool {
@@ -581,7 +710,11 @@ func (m *Manager) learnAll() {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if open && !m.retrying && m.g == g {
+	active := m.g
+	if m.followed != nil {
+		active = m.followed
+	}
+	if open && !m.retrying && active == g {
 		m.retrying = true
 		time.AfterFunc(learnFirst, func() {
 			m.mu.Lock()

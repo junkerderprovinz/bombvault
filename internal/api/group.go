@@ -155,6 +155,7 @@ func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 		Store:      kitStore{s},
 		Former:     s.formerRoster,
 		OnRemoved:  s.removedFromGroup,
+		Keeper:     moveKeeper{s},
 	})
 	return g, true
 }
@@ -336,8 +337,9 @@ type peerRoute struct {
 // repository this instance holds, what runs here and how it looks
 // for the Android app, a session for a phone of the group and the pages it
 // opens away from home, the word that a member leaves the group, what the
-// owner of a shared repository says about its upkeep, and the bare hello a
-// blind probe gets.
+// owner of a shared repository says about its upkeep, the keys a phone
+// follows the group into a fortress with, and the bare hello a blind probe
+// gets.
 // Settings, secrets and the phrase are not among them; a member holds the key
 // to every backup already, so a session for its phone adds no reach the group
 // did not have. A function rather than a variable, since the session route
@@ -370,6 +372,7 @@ func peerRoutes() []peerRoute {
 		{"POST /api/group/peer/leave", (*Service).handlePeerLeave},
 		{"POST /api/group/peer/shared-upkeep", (*Service).handlePeerSharedUpkeep},
 		{"POST /api/group/peer/shared-holder", (*Service).handlePeerSharedHolder},
+		{"GET " + movedPath, (*Service).handlePeerMoved},
 		{"GET " + group.ProbePath, (*Service).handlePeerHello},
 	}
 }
@@ -657,6 +660,10 @@ type groupView struct {
 	// Older names the devices that hold the phrase but still run a version
 	// from before the group ran on the kit, which no member reaches.
 	Older []string `json:"older"`
+	// Fortress says the group moved into the fortress and runs on its
+	// phrase, and OldPhrase names the members that have not followed yet.
+	Fortress  bool     `json:"fortress"`
+	OldPhrase []string `json:"oldPhrase"`
 	// Fingerprint is this instance's key as another instance shows it while
 	// this one waits there, empty outside a group.
 	Fingerprint string `json:"fingerprint,omitempty"`
@@ -736,6 +743,8 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		},
 		JoinedAgo:    joinedAgo,
 		MemberSeen:   !g.MemberSeenAt.IsZero(),
+		Fortress:     h.svc.pairing().Following(),
+		OldPhrase:    append([]string{}, h.svc.pairing().Left()...),
 		SelfAddress:  h.svc.directURL(g),
 		OwnAddresses: h.ownAddresses(),
 	}, nil

@@ -48,7 +48,7 @@ func sealedKind(c store.SealedColumn) string {
 	case "group_state.secret_enc":
 		return sealedGroup
 	case "backup_key.key_enc", "fortress_membership.secret_enc", "fortress_membership.previous_enc",
-		"fortress_membership.seed_enc", "fortress_membership.state_enc":
+		"fortress_membership.seed_enc", "fortress_membership.state_enc", "fortress_membership.pairing_enc":
 		return sealedOther
 	}
 	return sealedPeers

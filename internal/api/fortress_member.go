@@ -131,6 +131,7 @@ func (s *Service) openFortress() error {
 	s.house.mu.Lock()
 	s.house.f, s.house.lan, s.house.device = f, cfg.LAN, cfg.Self.Name
 	s.house.mu.Unlock()
+	s.followPairing(f, cfg.Secret, gen)
 	return nil
 }
 
@@ -185,7 +186,8 @@ func (s *Service) fortressMembership() (fortress.Config, bool, error) {
 	if fortressLAN {
 		cfg.LAN = lan.New(lan.Config{Group: fortress.Multicast})
 	}
-	return cfg, true, nil
+	cfg, err = s.withPairing(cfg, g)
+	return cfg, err == nil, err
 }
 
 // CloseFortress closes the fortress for this run and keeps the membership
@@ -202,6 +204,7 @@ func (s *Service) closeFortress() {
 	s.house.f, s.house.lan = nil, nil
 	s.house.mu.Unlock()
 	if f != nil {
+		s.pairing().Follow(nil, "")
 		if err := f.Close(); err != nil {
 			log.Printf("fortress: close: %v", err)
 		}

@@ -33,7 +33,9 @@ type phone struct {
 	client  *relay.Client
 	session string
 	// on are the instances the phone was let in on, by their id.
-	on map[string]*instance
+	on       map[string]*instance
+	ident    kitmember.Identity
+	relayURL string
 }
 
 // joinPhone connects a phone with the words and its own key the way the app
@@ -62,7 +64,7 @@ func joinPhone(t *testing.T, relayURL, words string, seenBy ...*instance) *phone
 	}
 	c.Start()
 	t.Cleanup(func() { _ = c.Close() })
-	p := &phone{t: t, id: group.PhoneID(ident.Public()), seed: seed, client: c, on: map[string]*instance{}}
+	p := &phone{t: t, id: group.PhoneID(ident.Public()), seed: seed, client: c, on: map[string]*instance{}, ident: ident, relayURL: relayURL}
 	for _, in := range seenBy {
 		p.on[in.id(t)] = in
 		target := kitmember.ID(kitmember.KindInstance, in.memberKey(t))

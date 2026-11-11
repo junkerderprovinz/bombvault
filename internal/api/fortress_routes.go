@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -38,6 +39,10 @@ type fortressView struct {
 	PasswordSet   bool                     `json:"passwordSet"`
 	Members       []fortressMemberView     `json:"members"`
 	Permissions   []fortressPermissionView `json:"permissions"`
+	// PairedWith names the devices of the group this instance is paired
+	// with, which move into the fortress on joining and leave it with this
+	// instance.
+	PairedWith []string `json:"pairedWith"`
 }
 
 // fortressMemberView is another instance of the fortress that said which app
@@ -83,7 +88,12 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		PasswordSet:   settings.AuthPasswordHash != "",
 		Members:       []fortressMemberView{},
 		Permissions:   []fortressPermissionView{},
+		PairedWith:    []string{},
 	}
+	for _, pm := range h.svc.pairing().Members() {
+		v.PairedWith = append(v.PairedWith, pm.Name)
+	}
+	slices.Sort(v.PairedWith)
 	f := h.svc.fortressNow()
 	v.Joined = f != nil || m.Joined()
 	if f == nil {
