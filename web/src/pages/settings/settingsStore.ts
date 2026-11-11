@@ -146,7 +146,8 @@ export function useSettingsStore() {
     | "receiverEnabled"
     | "pullEnabled"
     | "fleetEnabled"
-    | "dbDumpsEnabled";
+    | "dbDumpsEnabled"
+    | "appImportEnabled";
   const [domainToggleBusy, setDomainToggleBusy] = useState<Partial<Record<DomainToggleKey, boolean>>>({});
   const [domainToggleShake, setDomainToggleShake] = useState<Partial<Record<DomainToggleKey, number>>>({});
 

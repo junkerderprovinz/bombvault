@@ -87,6 +87,32 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("the switch for giving backups back to the apps", () => {
+  it("stands beside the server's name in the fortress and saves when pressed", async () => {
+    view = joined();
+    const flipped: boolean[] = [];
+    render(
+      <I18nProvider>
+        <FortressSection nextHue={hueCounter()} giveBack={{ on: false, onChange: (v) => flipped.push(v) }} />
+      </I18nProvider>,
+    );
+    const toggle = await screen.findByRole("switch", { name: en["appImport.toggle"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(toggle);
+    expect(flipped).toEqual([true]);
+  });
+
+  it("waits until BombVault is in a fortress", async () => {
+    render(
+      <I18nProvider>
+        <FortressSection nextHue={hueCounter()} giveBack={{ on: false, onChange: () => {} }} />
+      </I18nProvider>,
+    );
+    await screen.findByText("Not in a fortress yet");
+    expect(screen.queryByRole("switch", { name: en["appImport.toggle"] })).toBeNull();
+  });
+});
+
 describe("FortressSection", () => {
   it("joins with the twelve words pasted into the first field", async () => {
     renderSection();

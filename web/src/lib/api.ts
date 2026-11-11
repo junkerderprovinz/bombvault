@@ -227,6 +227,9 @@ export interface Settings {
   /** Dumping recognised database containers before their backup, for every
    *  container at once. A container can still be switched off on its card. */
   dbDumpsEnabled: boolean;
+  /** Giving an app in the fortress its own backup back, which replaces what
+   *  the app holds. */
+  appImportEnabled: boolean;
   /** Anomaly detection over the backup history, the preset every item follows
    *  unless it carries its own, the severity from which a finding is pushed,
    *  and whether a finding that means data was lost pauses the deletion of old
@@ -2040,6 +2043,16 @@ export function checkAppExportDownload(
   source?: string
 ): Promise<OkEnvelope & { code?: string }> {
   return fetchKeyJSON(withQuery(appExportPath(name, id), source, "check=1"));
+}
+
+/**
+ * POST /api/containers/{name}/appexports/{id}/import gives the app in the
+ * container its own backup back. A refusal carries the code the page words it
+ * by, the login's refusals among them.
+ */
+export function importAppExport(name: string, id: string, source?: string): Promise<OkEnvelope & { code?: string }> {
+  const path = `/api/containers/${encodeURIComponent(name)}/appexports/${encodeURIComponent(id)}/import`;
+  return fetchKeyJSON(withQuery(path, source), { method: "POST", body: "{}" });
 }
 
 /**

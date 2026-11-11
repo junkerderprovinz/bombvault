@@ -51,6 +51,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     flashDownloadURL: vi.fn(),
     checkAppExportDownload: vi.fn(),
     appExportDownloadURL: vi.fn(),
+    importAppExport: vi.fn(),
   };
 });
 
@@ -77,6 +78,7 @@ const checkRestore = vi.mocked(api.checkRestore);
 const flashDownloadURL = vi.mocked(api.flashDownloadURL);
 const checkAppExportDownload = vi.mocked(api.checkAppExportDownload);
 const appExportDownloadURL = vi.mocked(api.appExportDownloadURL);
+const importAppExport = vi.mocked(api.importAppExport);
 
 const { BackupEntryPage } = await import("./BackupEntry");
 
@@ -277,6 +279,46 @@ describe("the own backup of the app in a container", () => {
     await press(within(appRow()).getByRole("button", { name: en["entry.list.download"] }));
     await waitFor(() => expect(checkAppExportDownload).toHaveBeenCalled());
     expect(appExportDownloadURL).not.toHaveBeenCalled();
+  });
+
+  const giveBackLabel = en["appImport.action"].replace("{app}", "KnightLoader");
+  async function openGiveBack() {
+    await press(within(appRow()).getByRole("button", { name: en["nav.more"] }));
+    await press(screen.getByRole("menuitem", { name: giveBackLabel }));
+    return screen.getByRole("dialog", { name: en["appImport.title"].replace("{app}", "KnightLoader") });
+  }
+
+  it("offers no way back to the app while the switch is off", async () => {
+    withAppBackup();
+    await renderPage("/backups/container/immich");
+    expect(within(appRow()).queryByRole("button", { name: giveBackLabel })).toBeNull();
+    expect(within(appRow()).queryByRole("button", { name: en["nav.more"] })).toBeNull();
+  });
+
+  it("gives the app its backup back once asked and confirmed", async () => {
+    serveEntries(mocks, { runs: RUNS, settings: { appImportEnabled: true } });
+    withAppBackup();
+    importAppExport.mockResolvedValue({ ok: true });
+    await renderPage("/backups/container/immich");
+    const window = await openGiveBack();
+    expect(window.textContent).toContain("back up immich first");
+    expect(importAppExport).not.toHaveBeenCalled();
+    await press(within(window).getByRole("button", { name: en["appImport.confirm"] }));
+    await waitFor(() => expect(importAppExport).toHaveBeenCalledWith("immich", APP_BACKUP, "local"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("says in plain words why the app did not take it", async () => {
+    serveEntries(mocks, { runs: RUNS, settings: { appImportEnabled: true } });
+    withAppBackup();
+    importAppExport.mockResolvedValue({ ok: false, code: "busy", error: "knightloader refused the backup: busy" });
+    await renderPage("/backups/container/immich");
+    const window = await openGiveBack();
+    await press(within(window).getByRole("button", { name: en["appImport.confirm"] }));
+    expect(await within(window).findByRole("alert")).toHaveProperty(
+      "textContent",
+      en["appImport.busy"].replace("{app}", "KnightLoader")
+    );
   });
 });
 

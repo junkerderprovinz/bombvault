@@ -21,7 +21,7 @@ import { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
 import { useToast } from "../../../lib/toast";
 import { Rows, SettingRow } from "../../../components/storage/rows";
-import { Card } from "../shared";
+import { Card, ToggleRow } from "../shared";
 import { fortressApps, fortressPermissions, permissionOf } from "./fortressModel";
 import { refusalText } from "./PhraseCard";
 
@@ -36,7 +36,17 @@ const APP = { id: "bombvault", name: "BombVault" };
 // the same glyphs: a new phrase is a key rotated.
 const LABEL_KEYS = { join: "pairing.join", leave: "pairing.leave", showPhrase: "pairing.show", changePhrase: "api.rotate" };
 
-export function FortressSection({ nextHue }: { nextHue: () => number }) {
+/** GiveBack is the switch that lets the apps in the fortress take their own
+ *  backups back, with what saving it needs. */
+export interface GiveBack {
+  on: boolean;
+  onChange: (on: boolean) => void;
+  busy?: boolean;
+  shakeNonce?: number;
+  pulseNonce?: number;
+}
+
+export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; giveBack?: GiveBack }) {
   const { t, lang } = useT();
   const { push } = useToast();
   const [view, setView] = useState<FortressState | null>(null);
@@ -132,7 +142,7 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
       />
       {view.joined && (
         <>
-          <DeviceCard view={view} onView={setView} hueIndex={nextHue()} />
+          <DeviceCard view={view} onView={setView} giveBack={giveBack} hueIndex={nextHue()} />
           <FortressPairing
             text={{ ...text, pairing: t("fortress.title") }}
             lang={lang}
@@ -232,8 +242,19 @@ function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (ans
   );
 }
 
-/** DeviceCard holds the name the other members know this server by. */
-function DeviceCard({ view, onView, hueIndex }: { view: FortressState; onView: (v: FortressState) => void; hueIndex: number }) {
+/** DeviceCard holds the name the other members know this server by, and
+ *  whether the apps among them may take their own backups back. */
+function DeviceCard({
+  view,
+  onView,
+  giveBack,
+  hueIndex,
+}: {
+  view: FortressState;
+  onView: (v: FortressState) => void;
+  giveBack?: GiveBack;
+  hueIndex: number;
+}) {
   const { t } = useT();
   const { push } = useToast();
   // What is being typed, null while the field shows the saved name.
@@ -281,6 +302,17 @@ function DeviceCard({ view, onView, hueIndex }: { view: FortressState; onView: (
           />
         </SettingRow>
       </Rows>
+      {giveBack && (
+        <ToggleRow
+          label={t("appImport.toggle")}
+          hint={t("appImport.toggleHint")}
+          checked={giveBack.on}
+          onChange={giveBack.onChange}
+          disabled={giveBack.busy}
+          shakeNonce={giveBack.shakeNonce}
+          pulseNonce={giveBack.pulseNonce}
+        />
+      )}
       {!view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
     </Card>
   );

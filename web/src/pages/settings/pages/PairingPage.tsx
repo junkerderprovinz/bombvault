@@ -11,7 +11,7 @@ import { useSettings } from "../settingsStore";
 
 export function PairingPage() {
   const { t } = useT();
-  const { settings, setSettings, save } = useSettings();
+  const { settings, setSettings, save, toggleDomainEnabled, domainToggleBusy, domainToggleShake, fieldPulse } = useSettings();
 
   // The emergency window sends a new install here to join the group that
   // keeps its key, before any of the sections that use a group is on.
@@ -58,7 +58,16 @@ export function PairingPage() {
 
       {/* Every app joins the fortress, so it does not wait for a section
           that pairs over the group. */}
-      <FortressSection nextHue={nextHue} />
+      <FortressSection
+        nextHue={nextHue}
+        giveBack={{
+          on: settings.appImportEnabled,
+          onChange: (on) => void toggleDomainEnabled("appImportEnabled", on),
+          busy: domainToggleBusy.appImportEnabled,
+          shakeNonce: domainToggleShake.appImportEnabled,
+          pulseNonce: fieldPulse.appImportEnabled,
+        }}
+      />
     </>
   );
 }
