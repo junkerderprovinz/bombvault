@@ -49,6 +49,9 @@ class Pairing(
     private val prefs = context.getSharedPreferences("group", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val asked = ConcurrentHashMap.newKeySet<String>()
+
+    // The instances asked on this connection whether the group moved into a fortress.
+    private val askedMoved = ConcurrentHashMap.newKeySet<String>()
     private var relay: Relay? = null
 
     // A page asks for its bundles in parallel, each in parts; the relay takes
@@ -77,7 +80,7 @@ class Pairing(
     private var previewSecret: ByteArray? = null
     private var previewUrl = PROJECT_RELAY
 
-    val paired: Boolean get() = prefs.contains(SECRET)
+    val paired: Boolean get() = prefs.contains(SECRET) || prefs.contains(KEYS)
     val connected: Boolean get() = relay?.connected == true
 
     /** The instances of the group being looked at, or null when none is. */
@@ -100,14 +103,14 @@ class Pairing(
         cancelJoin()
         previewSecret = secret
         previewUrl = lines.getOrNull(1) ?: PROJECT_RELAY
-        preview = open(secret, previewUrl)
+        preview = open(GroupKeys(secret), previewUrl)
         return null
     }
 
     /** Joins the group being looked at and takes its instances over. */
     fun adopt() {
         val secret = previewSecret ?: return
-        prefs.edit().putString(SECRET, wrap(secret)).putString(RELAY, previewUrl).apply()
+        prefs.edit().putString(SECRET, wrap(secret)).remove(KEYS).putString(RELAY, previewUrl).apply()
         stop()
         relay = preview
         preview = null
@@ -131,7 +134,7 @@ class Pairing(
         val r = relay
         relay = null
         stop()
-        prefs.edit().remove(SECRET).remove(RELAY).apply()
+        prefs.edit().remove(SECRET).remove(KEYS).remove(RELAY).apply()
         servers.removeAll()
         servers.forgetMemberKeys()
         onChange()
@@ -160,7 +163,13 @@ class Pairing(
 
     fun start() {
         if (relay != null || !paired) return
-        relay = open(unwrap(prefs.getString(SECRET, null) ?: return), prefs.getString(RELAY, PROJECT_RELAY)!!)
+        relay = open(groupKeys() ?: return, prefs.getString(RELAY, PROJECT_RELAY)!!)
+    }
+
+    /** The keys of the group: those it handed over on moving into a fortress, else the ones its words give. */
+    private fun groupKeys(): GroupKeys? {
+        prefs.getString(KEYS, null)?.let { return Moved.load(String(unwrap(it))) }
+        return prefs.getString(SECRET, null)?.let { GroupKeys(unwrap(it)) }
     }
 
     fun stop() {
@@ -168,16 +177,17 @@ class Pairing(
         relay = null
         rosterRead = false
         asked.clear()
+        askedMoved.clear()
         sessions.clear()
         waitingOn.clear()
     }
 
-    private fun open(secret: ByteArray, url: String): Relay {
+    private fun open(keys: GroupKeys, url: String): Relay {
         val key = MemberKey(signSeed())
         // A phone that joined before keeps the id the instances know it by.
         if (!prefs.contains(ID)) prefs.edit().putString(ID, key.phoneId).apply()
         lateinit var r: Relay
-        r = Relay(url, GroupKeys(secret), key, deviceName.ifEmpty { phoneName }) {
+        r = Relay(url, keys, key, deviceName.ifEmpty { phoneName }) {
             if (r === relay) adoptMembers()
             onChange()
         }
@@ -393,9 +403,31 @@ class Pairing(
                 val url = o?.optString("directUrl").orEmpty()
                 servers.adopt(member, s.name, if (url.isEmpty()) "" else url.trimEnd('/') + "/", nowSeconds())
                 onChange()
+                follow(r, member, s.id)
             }
         }
         readRoster(r)
+    }
+
+    /**
+     * Asks [member], at [target] on the relay, whether the group moved into a
+     * fortress, and follows it there with the keys it hands over. They are
+     * taken only from an instance whose key the phone pinned, so holding the
+     * old words is not enough to send the phone elsewhere.
+     */
+    private fun follow(r: Relay, member: String, target: String) {
+        if (!prefs.contains(SECRET) || !askedMoved.add(target)) return
+        val pinned = servers.memberKey(member) ?: return
+        if (MemberKey.instanceId(pinned) != target) return
+        scope.launch {
+            val reply = runCatching { r.call(target, "GET", Moved.PATH) }.getOrNull() ?: return@launch
+            if (reply.status != 200 || r !== relay) return@launch
+            val keys = Moved.parse(String(reply.body)) ?: return@launch
+            prefs.edit().putString(KEYS, wrap(Moved.store(keys).toByteArray())).remove(SECRET).apply()
+            stop()
+            start()
+            onChange()
+        }
     }
 
     /**
@@ -471,6 +503,10 @@ class Pairing(
 
     companion object {
         private const val SECRET = "secret"
+
+        // The keys of the pairing the group moved into a fortress with,
+        // sealed like the secret they take the place of.
+        private const val KEYS = "keys"
         private const val RELAY = "relay"
         private const val ID = "id"
         private const val KEY_ALIAS = "group"

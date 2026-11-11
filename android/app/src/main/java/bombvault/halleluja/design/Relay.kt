@@ -31,17 +31,22 @@ import javax.crypto.spec.SecretKeySpec
 /** The project relay every BombVault instance dials unless its owner picks another. */
 const val PROJECT_RELAY = "wss://parleyport.halleluja.design/relay/connect"
 
-/** The keys a group secret gives, derived the way the parleyport kit derives them. */
-class GroupKeys(secret: ByteArray) {
-    val relayKey: String = hash("bombvault/relay/group-key/v1", secret).joinToString("") { "%02x".format(it) }
-    val frameKey: ByteArray = hash("bombvault/relay/frame-key/v1", secret)
+/**
+ * The keys the phone reaches its group with: derived from the group's secret
+ * the way the parleyport kit derives them, or handed over as they are once
+ * the group moved into a fortress, whose phrase the phone never holds.
+ */
+class GroupKeys(val relayKey: String, val frameKey: ByteArray) {
+    constructor(secret: ByteArray) : this(MemberKey.hex(hash("bombvault/relay/group-key/v1", secret)), hash("bombvault/relay/frame-key/v1", secret))
 
-    private fun hash(domain: String, secret: ByteArray): ByteArray =
-        MessageDigest.getInstance("SHA-256").run {
-            update(domain.toByteArray())
-            update(secret)
-            digest()
-        }
+    private companion object {
+        fun hash(domain: String, secret: ByteArray): ByteArray =
+            MessageDigest.getInstance("SHA-256").run {
+                update(domain.toByteArray())
+                update(secret)
+                digest()
+            }
+    }
 }
 
 /**
