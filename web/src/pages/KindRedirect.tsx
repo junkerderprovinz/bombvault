@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { LateRedirect } from "../components/LateRedirect";
 import { PageTitle } from "../components/PageTitle";
 import { listItems } from "../lib/api";
 import { legacyLookupName, legacyRedirect, type EntryKind } from "../lib/backupEntry";
@@ -36,7 +37,7 @@ export function KindRedirect({ kind }: { kind: EntryKind }) {
   }, [kind, name]);
 
   if (name === "") return <Navigate to={legacyRedirect(kind, search)} replace />;
-  if (keys) return <Navigate to={legacyRedirect(kind, search, (wanted) => keys.get(wanted))} replace />;
+  if (keys) return <LateRedirect to={legacyRedirect(kind, search, (wanted) => keys.get(wanted))} />;
   return (
     <div className={PAGE_SHELL}>
       <PageTitle>{t("backups.title")}</PageTitle>

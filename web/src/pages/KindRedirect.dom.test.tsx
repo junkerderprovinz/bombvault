@@ -28,6 +28,7 @@ function Landed() {
 }
 
 async function follow(link: string) {
+  window.history.replaceState(null, "", link);
   await act(async () => {
     render(
       <I18nProvider>
@@ -128,6 +129,20 @@ describe("a link whose entry cannot be found", () => {
     listItems.mockReturnValue(new Promise(() => {}));
     await follow("/files?item=Photos");
     expect(screen.getByText(en["dashboard.checking"])).toBeTruthy();
+    expect(screen.queryByTestId("landed")).toBeNull();
+  });
+});
+
+describe("a tap that leaves before the list arrives", () => {
+  it("keeps the page the tap opened", async () => {
+    let answer = (_: Awaited<ReturnType<typeof listItems>>) => {};
+    listItems.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    await follow("/files?item=Photos");
+
+    // The tap's page is in the address, and the router has not drawn it yet.
+    window.history.pushState(null, "", "/restore");
+    await act(async () => answer({ ok: true, items: [PHOTOS, TANK], unlisted: [] }));
+
     expect(screen.queryByTestId("landed")).toBeNull();
   });
 });

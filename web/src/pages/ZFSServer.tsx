@@ -1,7 +1,8 @@
 // ZFSServer is the page of one ZFS server without BombVault, opened from its
 // card in the instances grid.
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
+import { LateRedirect } from "../components/LateRedirect";
 import { PageTitle } from "../components/PageTitle";
 import { ReplicaServerPage } from "../components/zfs/replica/ReplicaServerPage";
 import { useReplicaServers } from "../components/zfs/replica/replicaStore";
@@ -16,7 +17,7 @@ export function ZFSServer() {
   const { servers, loaded } = useReplicaServers();
 
   // An address that names no server, such as a removed one, leads back to the grid.
-  if (loaded && !servers.some((s) => s.id === id)) return <Navigate to="/instances" replace />;
+  if (loaded && !servers.some((s) => s.id === id)) return <LateRedirect to="/instances" />;
 
   return (
     <div className={PAGE_SHELL}>

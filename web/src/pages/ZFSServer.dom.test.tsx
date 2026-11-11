@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // A ZFS server's page has an address of its own under Instances. An address
 // that names no server leads back to the grid.
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
@@ -9,11 +9,13 @@ import { group, server } from "../components/zfs/replica/replica.testsupport";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
+const servers = vi.hoisted(() => ({ list: () => Promise.resolve<unknown[]>([]) }));
+
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
-    listZFSReplicaServers: () => Promise.resolve([server()]),
+    listZFSReplicaServers: () => servers.list(),
     listZFSDatasets: () => Promise.resolve({ ok: true, datasets: [] }),
     getGroup: () => Promise.resolve(group()),
   };
@@ -27,6 +29,7 @@ function Where() {
 }
 
 async function openAt(path: string) {
+  window.history.replaceState(null, "", path);
   await act(async () => {
     render(
       <I18nProvider>
@@ -42,6 +45,10 @@ async function openAt(path: string) {
     );
   });
 }
+
+beforeEach(() => {
+  servers.list = () => Promise.resolve([server()]);
+});
 
 afterEach(cleanup);
 
@@ -64,5 +71,19 @@ describe("a ZFS server's page", () => {
   it("leads to the grid for an address that names no server", async () => {
     await openAt("/instances/zfs/gone");
     expect(screen.getByTestId("where").textContent).toBe("/instances");
+  });
+});
+
+describe("a tap that leaves before the servers arrive", () => {
+  it("keeps the page the tap opened", async () => {
+    let answer = (_: unknown[]) => {};
+    servers.list = () => new Promise((resolve) => (answer = resolve));
+    await openAt("/instances/zfs/gone");
+
+    // The tap's page is in the address, and the router has not drawn it yet.
+    window.history.pushState(null, "", "/restore");
+    await act(async () => answer([server()]));
+
+    expect(screen.queryByTestId("where")).toBeNull();
   });
 });

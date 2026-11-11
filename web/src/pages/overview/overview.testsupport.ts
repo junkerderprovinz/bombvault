@@ -173,11 +173,12 @@ export function failedCopy(over: Partial<StorageLocationSection> = {}): StorageL
   };
 }
 
-type Answer<T> = T | "refused" | "pending";
+type Answer<T> = T | "refused" | "pending" | Promise<T>;
 
 /**
  * What the staged server holds. A test sets the fields it cares about before
- * it renders; "refused" answers with ok false and "pending" never answers.
+ * it renders; "refused" answers with ok false, "pending" never answers and a
+ * promise answers once the test settles it.
  */
 export const server = {
   domains: [] as Answer<DomainStatus[]>,
@@ -223,6 +224,7 @@ export function resetServer(): void {
 function answer<T, R extends object>(value: Answer<T>, wrap: (v: T) => R): Promise<R | { ok: false }> {
   if (value === "pending") return new Promise(() => {});
   if (value === "refused") return Promise.resolve({ ok: false });
+  if (value instanceof Promise) return value.then(wrap);
   return Promise.resolve(wrap(value));
 }
 
