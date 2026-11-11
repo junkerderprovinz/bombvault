@@ -7230,6 +7230,9 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
+	if in.Running {
+		s.storeAppExport(ctx, name, in.ID, repo, mode)
+	}
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
