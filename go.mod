@@ -2,6 +2,8 @@ module github.com/junkerderprovinz/bombvault
 
 go 1.26.0
 
+toolchain go1.27.4
+
 require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
