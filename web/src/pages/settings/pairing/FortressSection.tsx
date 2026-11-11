@@ -126,6 +126,7 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
         onRemove={() => Promise.resolve({ error: text.failed })}
         onShowPhrase={view.phrase ? onShowPhrase : undefined}
         phrasePassword={view.passwordSet}
+        pairedWith={view.pairedWith}
         labelKeys={LABEL_KEYS}
         hueStart={hueStart}
       />
@@ -138,6 +139,7 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
             app={APP}
             onLeave={onLeave}
             onChangePhrase={view.phrase ? onChangePhrase : undefined}
+            pairedWith={view.pairedWith}
             labelKeys={LABEL_KEYS}
             hueIndex={nextHue()}
           />

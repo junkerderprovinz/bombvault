@@ -873,3 +873,22 @@ describe("phrase card without a login password", () => {
     expect(screen.queryByTestId("no-password")).toBeNull();
   });
 });
+
+describe("a group that moved into the fortress", () => {
+  it("says it runs on the fortress phrase, names who has not followed and offers no phrase of its own", async () => {
+    group = makeGroup({ fortress: true, oldPhrase: ["attic", "pixel"] });
+    await renderTab();
+    expect(screen.getByText(en["pairing.movedTitle"])).toBeTruthy();
+    expect(screen.getByText(en["pairing.moved"])).toBeTruthy();
+    expect(screen.getByText(en["pairing.oldPhrase"].replace("{names}", "attic and pixel"))).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["pairing.show"] })).toBeNull();
+    expect(document.querySelector("[data-stage]")).toBeNull();
+  });
+
+  it("says nothing about the old phrase once everybody followed", async () => {
+    group = makeGroup({ fortress: true, oldPhrase: [] });
+    await renderTab();
+    expect(screen.getByText(en["pairing.moved"])).toBeTruthy();
+    expect(screen.queryByText(/old phrase/)).toBeNull();
+  });
+});

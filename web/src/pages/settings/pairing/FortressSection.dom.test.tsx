@@ -19,7 +19,7 @@ const calls: string[] = [];
 const toasts: string[] = [];
 
 function state(over: Partial<FortressState> = {}): FortressState {
-  return { ok: true, joined: false, phrase: false, device: "Tower", defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], ...over };
+  return { ok: true, joined: false, phrase: false, device: "Tower", defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
 }
 const joined = (over: Partial<FortressState> = {}) => state({ joined: true, phrase: true, ...over });
 
@@ -65,6 +65,10 @@ function renderSection() {
 }
 
 const button = (hook: string) => document.querySelector<HTMLButtonElement>(`[data-fortress="${hook}"]`)!;
+const findButtonOut = async (hook: string) => {
+  await screen.findByText("Not in a fortress yet");
+  return button(hook);
+};
 const findButton = async (hook: string) => {
   await screen.findByText(en["fortress.title"]);
   return button(hook);
@@ -140,6 +144,13 @@ describe("FortressSection", () => {
     expect(calls).toEqual(["device cellar"]);
     expect(toasts).toEqual([en["settings.saved"]]);
     expect(field.value).toBe("cellar");
+  });
+
+  it("says that the pairing with the other instances comes along into the fortress", async () => {
+    view = state({ pairedWith: ["attic"] });
+    renderSection();
+    fireEvent.click(await findButtonOut("open-join"));
+    expect(screen.getByText("BombVault is already paired with attic. Joining moves that pairing into the fortress, so there is nothing to pair again.")).toBeTruthy();
   });
 
   it("says where the phrase comes from in words that fit this page", async () => {

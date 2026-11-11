@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { getGroup, type GroupState } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { GroupCard } from "./GroupCard";
+import { MovedCard } from "./MovedCard";
 import { PairingSteps } from "./PairingSteps";
 import { PhraseCard, useJoinedAgo } from "./PhraseCard";
 import { RelayCard } from "./RelayCard";
@@ -40,7 +41,11 @@ function GroupCards({
   const stage = pairStage(group, joinedAgo, createdHere);
   return (
     <>
-      <PhraseCard group={group} stage={stage} onCreatedHere={setCreatedHere} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
+      {group.fortress ? (
+        <MovedCard group={group} hueIndex={nextHue()} />
+      ) : (
+        <PhraseCard group={group} stage={stage} onCreatedHere={setCreatedHere} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
+      )}
       <GroupCard group={group} onGroup={onGroup} stage={stage} joinedAgo={joinedAgo} zfs={zfs} t={t} hueIndex={nextHue()} />
       {instanceCard(nextHue())}
       <RelayCard group={group} stage={stage} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />

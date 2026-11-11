@@ -7026,6 +7026,10 @@ export interface GroupState extends OkEnvelope {
   /** The devices that wait for somebody here to let them in, and the
    *  instances this one waits for. */
   waiting: WaitingMember[];
+  /** The group moved into the fortress and runs on its phrase. */
+  fortress?: boolean;
+  /** The members that have not followed it there yet. */
+  oldPhrase?: string[];
   /** This instance's key as another one shows it while it waits there. */
   fingerprint?: string;
   /** The devices that hold the phrase but still run an older version, which
@@ -7123,6 +7127,9 @@ export interface FortressState extends OkEnvelope {
   passwordSet: boolean;
   members: FortressMember[];
   permissions: FortressPermissionState[];
+  /** The devices of the group this instance is paired with, which come
+   *  along on joining and part with it on leaving. */
+  pairedWith: string[];
 }
 
 export function getFortress(): Promise<FortressState> {
