@@ -200,7 +200,10 @@ describe("the tags of a backup", () => {
   });
 
   it("tells a person's tags from the ones BombVault writes itself", () => {
-    const own = ["container:plex", "vmrun:7", "bvrun:9", "dbdump:plex", "zfs:tank/a", "bv:direct", "p1", "blocks", "imported"];
+    const own = [
+      ...["container:plex", "vmrun:7", "bvrun:9", "dbdump:plex", "zfs:tank/a", "bv:direct", "p1", "blocks", "imported"],
+      ...["appexport:knightloader", "app:knightloader", "appname:KnightLoader"],
+    ];
     expect(own.filter(isOwnTag)).toEqual(own);
     expect(personTags([...own, "before-upgrade", "keep"])).toEqual(["before-upgrade", "keep"]);
   });

@@ -11978,12 +11978,14 @@ func vmrunGroupSnapshot(group []restic.Snapshot, tag string) (restic.Snapshot, b
 
 // reservedTagPrefixes are the prefixes BombVault writes itself. A hand-written
 // tag carrying one would put the snapshot into an item's retention series, into
-// a database dump listing, or into the rename history that decides whose
-// snapshots a name holds, which is why "add tag" refuses them.
+// a database dump listing, among the own backups of an app, or into the rename
+// history that decides whose snapshots a name holds, which is why "add tag"
+// refuses them.
 var reservedTagPrefixes = []string{
 	"container:", "vm:", "fileset:", "stack:", "vmrun:", "formerly:",
 	dbDumpIdentityPrefix, "dbengine:", "dbimage:", "dbversion:", "dbname:", "bvrun:", "zfs:",
 	appdataImportTagPrefix, "blocks-partial:", "bv:",
+	appExportTagPrefix, appTagPrefix, appNameTagPrefix,
 }
 
 // reservedTags are the whole tags BombVault reads a meaning from: retention

@@ -90,6 +90,14 @@ func TestTheOwnBackupOfTheAppInAContainerIsInItsTimeline(t *testing.T) {
 	markOf(t, tl.Rows, "e1e1e1e1", "local")
 }
 
+func TestTheTagsOfAnAppBackupAreNotSetByHand(t *testing.T) {
+	for _, tag := range []string{"appexport:knightloader", "app:knightloader", "appname:KnightLoader"} {
+		if _, err := sanitizeTags([]string{tag}); err == nil {
+			t.Errorf("%s was taken as a tag of a person", tag)
+		}
+	}
+}
+
 func TestTheOwnBackupOfAnAppIsDeletedLikeABackup(t *testing.T) {
 	f, _ := appExportFixture(t)
 	ctx := context.Background()
