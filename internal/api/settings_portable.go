@@ -1646,6 +1646,9 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	if v.DBDumpsEnabled != nil {
 		out.DBDumpsEnabled = *v.DBDumpsEnabled
 	}
+	if v.AppImportEnabled != nil {
+		out.AppImportEnabled = *v.AppImportEnabled
+	}
 	// Same contract as the dump switch, and the same reason: a file written
 	// before this version carries none of the four, and reading that as "off"
 	// would take detection and the data-loss pause with it.

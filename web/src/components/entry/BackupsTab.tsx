@@ -22,6 +22,7 @@ import { BackupPlaces, type TimelineState } from "./BackupPlaces";
 import { CompareWindow } from "./CompareWindow";
 import { DeleteBackupWindow } from "./DeleteBackupWindow";
 import { ExportWindow } from "./ExportWindow";
+import { GiveBackWindow } from "./GiveBackWindow";
 import { TagWindow } from "./TagWindow";
 
 type View = "backups" | "dumps";
@@ -184,6 +185,7 @@ export function BackupsTab({
             ))}
           <BackupList
             name={container?.name ?? name}
+            giveBack={container !== null && settings.appImportEnabled === true}
             timeline={timeline}
             runs={runs}
             isFlagged={(row, run) => snapshotIds(row).some((id) => flagged.has(id)) || (run !== undefined && isFlagged(run))}
@@ -250,6 +252,9 @@ export function BackupsTab({
       )}
       {actingRow && acting?.action === "export" && (
         <ExportWindow entry={entry} name={name} row={actingRow} timeline={timeline} onClose={done} />
+      )}
+      {actingRow && acting?.action === "giveBack" && container && (
+        <GiveBackWindow name={container.name} row={actingRow} timeline={timeline} onClose={done} />
       )}
       {actingRow && acting?.action === "delete" && (
         <DeleteBackupWindow entry={entry} name={name} row={actingRow} timeline={timeline} onClose={done} />

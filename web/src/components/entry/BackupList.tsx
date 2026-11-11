@@ -28,7 +28,7 @@ export interface OpenBackup {
 }
 
 /** What the menu of a backup can do with it. */
-export type RowAction = "compare" | "tag" | "export" | "delete";
+export type RowAction = "compare" | "tag" | "export" | "delete" | "giveBack";
 
 export function rowElementId(key: string): string {
   return `entry-backup-${key}`;
@@ -37,10 +37,12 @@ export function rowElementId(key: string): string {
 function RowMenu({
   row,
   timeline,
+  giveBack,
   onAct,
 }: {
   row: TimelineRow;
   timeline: TimelineState;
+  giveBack: boolean;
   onAct: (action: RowAction) => void;
 }) {
   const { t, lang } = useT();
@@ -50,8 +52,12 @@ function RowMenu({
 
   const actions: MenuAction[] = [];
   // An app's own backup is a file for the app, with nothing to compare, tag
-  // or export.
+  // or export. It goes back to the app once the settings let it.
   if (row.appExport) {
+    if (giveBack) {
+      const label = t("appImport.action").replace("{app}", () => row.appExport?.name ?? "");
+      actions.push({ id: "giveBack", label, glyph: <IconRestore />, onSelect: () => onAct("giveBack") });
+    }
     if (deletable) actions.push({ id: "delete", label: t("common.delete"), glyph: <IconTrash />, onSelect: () => onAct("delete") });
     return actions.length > 0 ? <MoreMenu label={formatRecent(rowTime(row), lang)} actions={actions} /> : null;
   }
@@ -78,6 +84,7 @@ function Row({
   name,
   row,
   timeline,
+  giveBack,
   run,
   flagged,
   marked,
@@ -87,6 +94,7 @@ function Row({
   name: string;
   row: TimelineRow;
   timeline: TimelineState;
+  giveBack: boolean;
   run: Run | undefined;
   flagged: boolean;
   /** The row a bar of the history or a restore link points at. */
@@ -184,7 +192,7 @@ function Row({
         className="flex items-center gap-1.5 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100 pointer-fine:has-[[aria-expanded=true]]:opacity-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <RowMenu row={row} timeline={timeline} onAct={(action) => onAct(row, action)} />
+        <RowMenu row={row} timeline={timeline} giveBack={giveBack} onAct={(action) => onAct(row, action)} />
         {app ? (
           <AppBackupDownload name={name} row={row} places={places} />
         ) : (
@@ -220,6 +228,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
  */
 export function BackupList({
   name,
+  giveBack,
   timeline,
   runs,
   isFlagged,
@@ -230,6 +239,8 @@ export function BackupList({
 }: {
   /** The container an app's own backup is downloaded from. */
   name: string;
+  /** Whether an app's own backup may go back to the app. */
+  giveBack: boolean;
   timeline: TimelineState;
   runs: Run[];
   /** Whether an open finding was raised on the backup. */
@@ -260,6 +271,7 @@ export function BackupList({
       <Row
         key={row.key}
         name={name}
+        giveBack={giveBack}
         row={row}
         timeline={timeline}
         run={run}
