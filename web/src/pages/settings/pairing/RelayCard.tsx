@@ -85,6 +85,11 @@ export function RelayCard({
   const [seesOpen, setSeesOpen] = useState(false);
   const editing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Two quick picks send two saves, and their answers can come back in either
+  // order. Only the newest one speaks for the card, and while a save is out a
+  // reload of the group cannot take the pick back.
+  const lastSave = useRef(0);
+  const saving = useRef(0);
 
   // The page reloads the group every few seconds; that must not undo what is
   // being typed or picked right now.
@@ -92,15 +97,18 @@ export function RelayCard({
     if (!editing.current) setUrl(group.relay.url);
   }, [group.relay.url]);
   useEffect(() => {
-    setMode(group.relay.mode);
+    if (saving.current === 0) setMode(group.relay.mode);
   }, [group.relay.mode]);
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
   async function save(patch: { mode?: RelayMode; url?: string; serve?: boolean }): Promise<boolean> {
+    const n = ++lastSave.current;
+    saving.current++;
     try {
       const res = await setRelay(patch);
+      if (n !== lastSave.current) return res.ok;
       if (res.ok) {
         onGroup(res);
         return true;
@@ -108,7 +116,9 @@ export function RelayCard({
       if (patch.url !== undefined) setUrlError(res.error ?? t("relay.saveError"));
       else push(res.error ?? t("relay.saveError"), "fail");
     } catch (err) {
-      push(err instanceof Error ? err.message : t("relay.saveError"), "fail");
+      if (n === lastSave.current) push(err instanceof Error ? err.message : t("relay.saveError"), "fail");
+    } finally {
+      saving.current--;
     }
     return false;
   }

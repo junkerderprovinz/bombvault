@@ -21,6 +21,8 @@ let zfs: boolean;
 let roles: MemberRoles[];
 let servers: ZFSReplicaServer[];
 const relayCalls: Array<Record<string, unknown>> = [];
+// While set, a relay save waits here for the test to answer it.
+let heldRelay: Array<() => void> | null = null;
 const joined: string[] = [];
 let joinAnswer: Record<string, unknown> = {};
 let left = 0;
@@ -69,8 +71,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     getZFSReplicaKey: () => Promise.resolve({ publicKey: "ssh-ed25519 AAAA bombvault" }),
     setRelay: (patch: { mode?: RelayMode; url?: string; serve?: boolean }) => {
       relayCalls.push(patch);
-      group = { ...group, relay: { ...group.relay, ...patch } };
-      return Promise.resolve(group);
+      const answer = { ...group, relay: { ...group.relay, ...patch } };
+      group = answer;
+      if (!heldRelay) return Promise.resolve(answer);
+      const held = heldRelay;
+      return new Promise((resolve) => held.push(() => resolve(answer)));
     },
     createPhrase: () => {
       group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 });
@@ -169,6 +174,7 @@ beforeEach(() => {
   roles = [];
   servers = [];
   relayCalls.length = 0;
+  heldRelay = null;
   joined.length = 0;
   joinAnswer = {};
   left = 0;
@@ -723,6 +729,25 @@ describe("relay card", () => {
       fireEvent.click(document.activeElement!);
     });
     expect(relayCalls).toEqual([{ mode: "own" }]);
+  });
+
+  it("keeps the last pick when the answer to an earlier one comes later", async () => {
+    await renderTab();
+    const held: Array<() => void> = [];
+    heldRelay = held;
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.own"] }));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: en["relay.off"] }));
+    });
+    expect(held).toHaveLength(2);
+    await act(async () => {
+      held[1]();
+      held[0]();
+    });
+    expect(screen.getByRole("radio", { name: en["relay.off"] }).getAttribute("aria-checked")).toBe("true");
+    expect(document.getElementById("relay-address")).toBeNull();
   });
 
   it("shows the address field and where to get a relay for an own relay", async () => {
