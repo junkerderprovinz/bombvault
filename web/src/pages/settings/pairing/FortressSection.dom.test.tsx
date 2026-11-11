@@ -36,8 +36,9 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     },
     showFortressPhrase: (password: string) =>
       Promise.resolve(password === "hunter2" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong", error: "wrong" }),
-    changeFortressPhrase: () => {
-      calls.push("change");
+    changeFortressPhrase: (password: string) => {
+      calls.push(`change ${password}`);
+      if (view.passwordSet && password !== "hunter2") return Promise.resolve({ ok: false, code: "passwordWrong", error: "wrong" });
       return Promise.resolve({ ok: true, phrase: NEW_PHRASE, left: ["Cellar"] });
     },
     setFortressDevice: (device: string) => {
@@ -64,6 +65,10 @@ function renderSection() {
 }
 
 const button = (hook: string) => document.querySelector<HTMLButtonElement>(`[data-fortress="${hook}"]`)!;
+const findButton = async (hook: string) => {
+  await screen.findByText(en["fortress.title"]);
+  return button(hook);
+};
 
 beforeEach(() => {
   localStorage.setItem("bv-lang", "en");
@@ -131,20 +136,63 @@ describe("FortressSection", () => {
     expect(field.value).toBe("cellar");
   });
 
-  it("changes the phrase and leaves from the Fortress card", async () => {
+  it("says where the phrase comes from in words that fit this page", async () => {
+    renderSection();
+    expect(await screen.findByText(en["fortress.outHint"].replace("{app}", "BombVault"))).toBeTruthy();
+    fireEvent.click(button("open-join"));
+    expect(screen.getByText(en["fortress.phraseWhere"])).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/under Instances|instances of BombVault show up here/);
+  });
+
+  it("asks for the password before the phrase changes, and a wrong one changes nothing", async () => {
+    view = joined();
+    renderSection();
+    fireEvent.click(await findButton("open-change"));
+    await act(async () => fireEvent.click(button("change")));
+    expect(calls).toEqual([]);
+    const field = screen.getByLabelText("Password of BombVault");
+    fireEvent.change(field, { target: { value: "wrong" } });
+    await act(async () => fireEvent.click(button("change-unlock")));
+    expect(calls).toEqual(["change wrong"]);
+    expect((await screen.findByRole("alert")).textContent).toBe("That password is not right.");
+    expect(document.querySelector('[data-fortress="words"]')).toBeNull();
+  });
+
+  it("keeps the phrase when the password window closes", async () => {
+    view = joined();
+    renderSection();
+    fireEvent.click(await findButton("open-change"));
+    await act(async () => fireEvent.click(button("change")));
+    await act(async () => fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" }));
+    expect(calls).toEqual([]);
+    expect((await screen.findByRole("alert")).textContent).toBe(en["fortress.changeKept"]);
+  });
+
+  it("changes the phrase without asking where BombVault has no password", async () => {
+    view = joined({ passwordSet: false });
+    renderSection();
+    fireEvent.click(await findButton("open-change"));
+    await act(async () => fireEvent.click(button("change")));
+    expect(calls).toEqual(["change "]);
+    expect(button("words").textContent).toContain("wrong");
+  });
+
+  it("changes the phrase for the password and leaves from the Fortress card", async () => {
     view = joined();
     renderSection();
     expect(await screen.findByText(en["fortress.title"])).toBeTruthy();
     fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
-    expect(calls).toEqual(["change"]);
+    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
+    await act(async () => fireEvent.click(button("change-unlock")));
+    expect(calls).toEqual(["change hunter2"]);
     expect(button("words").textContent).toContain("wrong");
     expect(screen.getByText("Still on the old phrase: Cellar. Enter the new one there once.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
     fireEvent.click(button("open-leave"));
     await act(async () => fireEvent.click(button("leave")));
-    expect(calls).toEqual(["change", "leave"]);
+    expect(calls).toEqual(["change hunter2", "leave"]);
     expect(await screen.findByText("Not in a fortress yet")).toBeTruthy();
   });
 

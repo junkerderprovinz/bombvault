@@ -7108,9 +7108,10 @@ export function showFortressPhrase(password: string): Promise<OkEnvelope & { phr
   return fetchJSON("/api/fortress/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
 }
 
-/** POST /api/fortress/phrase - a new phrase, and the devices that still hold the old one. */
-export function changeFortressPhrase(): Promise<OkEnvelope & { phrase?: string; left?: string[] }> {
-  return fetchJSON("/api/fortress/phrase", { method: "POST" });
+/** POST /api/fortress/phrase - a new phrase for the login password, and the
+ *  devices that still hold the old one. */
+export function changeFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string; left?: string[] }> {
+  return fetchJSON("/api/fortress/phrase", { method: "POST", body: JSON.stringify({ password }) });
 }
 
 /** PUT /api/fortress/device - name this server for the other members; "" takes the one it finds. */

@@ -3,8 +3,10 @@
 // password and the other apps with their permissions, then the name of this
 // server and the card where the phrase changes and BombVault leaves.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fill, fortressText, type ChangeAnswer, type FortressAnswer, type PhraseAnswer } from "@glimstone/core";
+import { fill, fortressText, type ChangeAnswer, type FortressAnswer, type FortressText, type PhraseAnswer } from "@glimstone/core";
 import { Fortress, FortressPairing } from "@glimstone/react/Fortress";
+import { PasswordField } from "@glimstone/react/PasswordField";
+import { Window } from "@glimstone/react/Window";
 import {
   changeFortressPhrase,
   getFortress,
@@ -39,12 +41,15 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
   const { push } = useToast();
   const [view, setView] = useState<FortressState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // The group's own card on this page has an Enter phrase as well, so the
-  // fortress's says what it joins.
+  // GlimStone words the fortress for an Instances tab. On this page the
+  // group's card has an Enter phrase too, so the fortress's says what it
+  // joins, and the hints do not send anybody to Instances.
   const text = useMemo(() => {
     const own = fortressText(lang);
-    return { ...own, enterPhrase: own.joinTitle };
-  }, [lang]);
+    return { ...own, enterPhrase: own.joinTitle, outHint: t("fortress.outHint"), phraseWhere: t("fortress.phraseWhere") };
+  }, [lang, t]);
+  // The step that waits for the password before a new phrase is made.
+  const [asking, setAsking] = useState<((answer: ChangeAnswer) => void) | null>(null);
 
   const load = useCallback(() => {
     getFortress()
@@ -84,12 +89,15 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
     if (r.ok && r.phrase) return { words: r.phrase.split(" ") };
     return { error: r.code === "passwordWrong" ? text.passwordWrong : (r.error ?? text.failed) };
   };
-  const onChangePhrase = async (): Promise<ChangeAnswer> => {
-    const r = await changeFortressPhrase();
-    if (!r.ok || !r.phrase) return { error: r.error ?? text.failed };
-    load();
-    return { words: r.phrase.split(" "), left: r.left ?? [] };
-  };
+  // The answer shows the new words, so they come only for the password, as
+  // showing the phrase does. GlimStone's change window waits meanwhile.
+  const onChangePhrase = (): Promise<ChangeAnswer> =>
+    view.passwordSet
+      ? new Promise((resolve) => setAsking(() => resolve))
+      : changePhrase(text, "").then((answer) => {
+          if (answer.words) load();
+          return answer;
+        });
   const onLeave = async (): Promise<FortressAnswer> => {
     const r = await leaveFortress();
     if (!r.ok) return { error: r.error ?? text.failed };
@@ -133,9 +141,92 @@ export function FortressSection({ nextHue }: { nextHue: () => number }) {
             labelKeys={LABEL_KEYS}
             hueIndex={nextHue()}
           />
+          {asking && (
+            <ChangePassword
+              text={text}
+              onAnswer={(answer) => {
+                setAsking(null);
+                if (answer.words) load();
+                asking(answer);
+              }}
+            />
+          )}
         </>
       )}
     </div>
+  );
+}
+
+/** changePhrase asks the server for a new phrase and words its answer for GlimStone's flow. */
+async function changePhrase(text: FortressText, password: string): Promise<ChangeAnswer & { wrong?: boolean }> {
+  const r = await changeFortressPhrase(password);
+  if (r.code === "passwordWrong") return { wrong: true, error: text.passwordWrong };
+  if (!r.ok || !r.phrase) return { error: r.error ?? text.failed };
+  return { words: r.phrase.split(" "), left: r.left ?? [] };
+}
+
+/** ChangePassword asks for the login password in front of a phrase change.
+ *  A wrong one keeps it open, and closing it keeps the phrase. */
+function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (answer: ChangeAnswer) => void }) {
+  const { t } = useT();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = async () => {
+    if (busy || password === "") return;
+    setBusy(true);
+    const answer = await changePhrase(text, password).catch(() => ({ error: text.failed, wrong: false }));
+    setBusy(false);
+    if (answer.wrong) {
+      setError(answer.error ?? text.passwordWrong);
+      return;
+    }
+    onAnswer(answer);
+  };
+
+  return (
+    <Window
+      title={text.phraseTitle}
+      text={{ cancel: text.cancel, close: text.close }}
+      onClose={() => onAnswer({ error: t("fortress.changeKept") })}
+      actions={[
+        {
+          label: text.changeConfirm,
+          labelKey: "api.rotate",
+          primary: true,
+          disabled: busy || password === "",
+          attrs: { "data-fortress": "change-unlock" },
+          onClick: () => {
+            void send();
+            return false;
+          },
+        },
+      ]}
+    >
+      <form
+        className="glim-fortress-text"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send();
+        }}
+      >
+        <p>{fill(text.phrasePassword, { app: APP.name })}</p>
+        <PasswordField
+          aria-label={fill(text.password, { app: APP.name })}
+          placeholder={fill(text.password, { app: APP.name })}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          text={{ show: text.showPassword, hide: text.hidePassword }}
+          autoFocus
+        />
+        {error && (
+          <p className="glim-fortress-error" role="alert">
+            {error}
+          </p>
+        )}
+      </form>
+    </Window>
   );
 }
 
