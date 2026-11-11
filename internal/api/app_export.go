@@ -114,7 +114,9 @@ func (s *Service) DownloadAppExport(ctx context.Context, name, source, snapshotI
 		return err
 	}
 	mode := s.repoModeFor(settings, "containers", source, repo)
-	snaps, err := s.snapshotsForTag(ctx, repo, mode, appExportTagPrefix+name)
+	// Owned by the entry's rule, so a backup under a former name comes too and
+	// another machine's under that name does not.
+	snaps, err := s.snapshotsOwnedBy(ctx, repo, mode, s.containerAppExportIdentity(name))
 	if err != nil {
 		return err
 	}
@@ -122,8 +124,8 @@ func (s *Service) DownloadAppExport(ctx context.Context, name, source, snapshotI
 	if i < 0 {
 		return fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
 	}
-	app, ok := appExportOf(snaps[i], name)
-	path := appExportPath(name, app.App)
+	app, takenAs, ok := appExportOf(snaps[i])
+	path := appExportPath(takenAs, app.App)
 	if !ok || !slices.Contains(snaps[i].Paths, path) {
 		return fmt.Errorf("snapshot %s is %w", shortID(snapshotID), errNotAnAppExport)
 	}

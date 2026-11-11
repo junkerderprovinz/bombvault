@@ -2696,9 +2696,10 @@ func (s *Service) listDestination(ctx context.Context, dest string, mode restic.
 
 // identityTags returns the distinct item-identity tags present in snaps:
 // container:<name>, vm:<name>, fileset:<name>, stack:<name>, dbdump:<name>,
-// zfs:<dataset>, and the fixed flash/config tags. Profile/marker tags (p1, p2,
-// live) are not identities, and neither are the tags describing a dump
-// (engine, image, version, database names, the run it belongs to).
+// appexport:<name>, zfs:<dataset>, and the fixed flash/config tags.
+// Profile/marker tags (p1, p2, live) are not identities, and neither are the
+// tags describing a dump (engine, image, version, database names, the run it
+// belongs to) or an app's own backup (the app and its name).
 func identityTags(snaps []restic.Snapshot) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -2707,7 +2708,8 @@ func identityTags(snaps []restic.Snapshot) []string {
 			isIdentity := t == "flash" || t == "config" ||
 				strings.HasPrefix(t, "container:") || strings.HasPrefix(t, "vm:") ||
 				strings.HasPrefix(t, "fileset:") || strings.HasPrefix(t, "stack:") ||
-				strings.HasPrefix(t, dbDumpIdentityPrefix) || strings.HasPrefix(t, "zfs:")
+				strings.HasPrefix(t, dbDumpIdentityPrefix) || strings.HasPrefix(t, appExportTagPrefix) ||
+				strings.HasPrefix(t, "zfs:")
 			if isIdentity && !seen[t] {
 				seen[t] = true
 				out = append(out, t)
@@ -2722,7 +2724,8 @@ func identityDomain(tag string) string {
 	switch {
 	case tag == "flash", tag == "config":
 		return tag
-	case strings.HasPrefix(tag, "container:"), strings.HasPrefix(tag, dbDumpIdentityPrefix), strings.HasPrefix(tag, "stack:"):
+	case strings.HasPrefix(tag, "container:"), strings.HasPrefix(tag, dbDumpIdentityPrefix),
+		strings.HasPrefix(tag, appExportTagPrefix), strings.HasPrefix(tag, "stack:"):
 		return "containers"
 	case strings.HasPrefix(tag, "vm:"):
 		return "vms"
@@ -2883,12 +2886,14 @@ func (s *Service) aliasFoldDomains() []aliasFoldDomain {
 			v.liveNames[t.Name] = true
 		}
 	}
-	// The dumps carry the container's name under their own prefix, so the same
-	// rows answer for them; they fold as a series of their own because that is
-	// how they are forgotten.
+	// The dumps and the apps' own backups carry the container's name under
+	// their own prefix, so the same rows answer for them; each folds as a series
+	// of its own because that is how they are forgotten.
 	d := c
 	d.prefix = dbDumpIdentityPrefix
-	return []aliasFoldDomain{c, v, d}
+	a := c
+	a.prefix = appExportTagPrefix
+	return []aliasFoldDomain{c, v, d, a}
 }
 
 // foldTag is foldAliasedIdentityTags's decision for one tag: the group it
@@ -7230,9 +7235,7 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
-	if in.Running {
-		s.storeAppExport(ctx, name, in.ID, repo, mode)
-	}
+	appExported := in.Running && s.storeAppExport(ctx, name, in.ID, repo, mode)
 
 	// Persist the recreate recipe (self-contained: inspect + template + backup
 	// paths) so restore works even after the container has been deleted.
@@ -7460,6 +7463,10 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 	// the container's pass below reclaims both at once.
 	if dumpPlan != nil {
 		s.forgetDBDumpSeries(ctx, repo, settings, mode, name, tg.ID)
+	}
+	// So are the apps' own backups, whenever this backup added one.
+	if appExported {
+		s.forgetAppExportSeries(ctx, repo, settings, mode, name, tg.ID)
 	}
 	// A renamed container's "keep last N" counts across the rename, as long as
 	// no other machine has used the old name since.
@@ -10217,13 +10224,14 @@ func (s *Service) domainReposInUse(settings store.Settings, domain string) ([]do
 }
 
 // domainTagPrefixes are the identity-tag prefixes a domain's snapshots carry.
-// Containers have two: the volume backup and the database dump, which is a
-// snapshot of its own in the same repository. Empty for flash and config, which
-// have no per-item repositories and therefore cannot share one.
+// Containers have three: the volume backup, the database dump and the own
+// backup of the app in it, each a snapshot of its own in the same repository.
+// Empty for flash and config, which have no per-item repositories and
+// therefore cannot share one.
 func domainTagPrefixes(domain string) []string {
 	switch domain {
 	case "containers":
-		return []string{"container:", dbDumpIdentityPrefix}
+		return []string{"container:", dbDumpIdentityPrefix, appExportTagPrefix}
 	case "vms":
 		return []string{"vm:"}
 	case "files":
@@ -12034,8 +12042,8 @@ func sanitizeTags(in []string) ([]string, error) {
 	return out, nil
 }
 
-// DeleteBackups removes every backup of a container, its volume backups and
-// its database dumps alike. From the local source it also forgets the
+// DeleteBackups removes every backup of a container, its volume backups, its
+// database dumps and the own backups of its apps alike. From the local source it also forgets the
 // container's entry; from an off-site source it deletes at that target only and
 // the entry stays.
 //
@@ -12085,7 +12093,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		// for the flag to protect? Both identities count, or a container that
 		// exists only as dumps takes the lock and runs a forget that is refused
 		// anyway.
-		snaps, sErr := s.containerSnapshotsOf(ctx, name, "", s.containerIdentity(name), s.containerDumpIdentity(name))
+		snaps, sErr := s.containerSnapshotsOf(ctx, name, "", s.containerIdentity(name), s.containerDumpIdentity(name), s.containerAppExportIdentity(name))
 		if sErr != nil {
 			return sErr
 		}
@@ -12101,7 +12109,8 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 	defer unlock()
 	id := s.containerIdentity(name)
 	dumps := s.containerDumpIdentity(name)
-	if err := refuseDeleteWithPartialIdentity(name, id, dumps); err != nil {
+	apps := s.containerAppExportIdentity(name)
+	if err := refuseDeleteWithPartialIdentity(name, id, dumps, apps); err != nil {
 		return err
 	}
 	// The entry's former names keep its copy rule unless a container installed
@@ -12114,7 +12123,7 @@ func (s *Service) DeleteBackups(ctx context.Context, name, source string) error 
 		s.unlockStale(ctx, repo, mode)
 	}
 
-	snaps, err := s.containerSnapshotsOf(ctx, name, "", id, dumps)
+	snaps, err := s.containerSnapshotsOf(ctx, name, "", id, dumps, apps)
 	if err != nil {
 		return err
 	}
@@ -12990,8 +12999,7 @@ func aliasDomain(domain string) (settingsDomain, prefix, kind string) {
 }
 
 // entryTagPrefixes are the identity-tag prefixes an entry's snapshots carry in
-// the alias domain. A container has two: its files backups and its database
-// dumps.
+// the alias domain, as domainTagPrefixes names them.
 func entryTagPrefixes(domain string) []string {
 	settingsDomain, _, _ := aliasDomain(domain)
 	return domainTagPrefixes(settingsDomain)
