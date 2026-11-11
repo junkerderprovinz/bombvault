@@ -541,8 +541,8 @@ export interface Run {
   domain: string;
   /** What asked for the run: "" for the web interface and the scheduler,
    *  "mcp" for an assistant, "api" for an API token, "mqtt" for a Home
-   *  Assistant button. */
-  startedVia?: "" | "mcp" | "api" | "mqtt";
+   *  Assistant button, "fortress" for another app of the fortress. */
+  startedVia?: "" | "mcp" | "api" | "mqtt" | "fortress";
   startedViaKey?: string;
   /** The operator's name for the MCP key or API token behind the run, "" once
    *  it is purged from the list. */

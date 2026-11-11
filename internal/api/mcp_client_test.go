@@ -48,7 +48,7 @@ func TestMCPModernEraWithOfficialClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("tools/list: %v", err)
 	}
-	if want := len(mcpReadTools) + len(mcpStartTools); len(tools.Tools) != want {
+	if want := len(mcpReadTools) + len(mcpStartTools) + len(mcpFortressTools); len(tools.Tools) != want {
 		t.Fatalf("the client sees %d tools, want %d", len(tools.Tools), want)
 	}
 	if tools.CacheScope != "private" {

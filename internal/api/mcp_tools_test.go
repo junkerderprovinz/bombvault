@@ -37,6 +37,14 @@ var mcpStartTools = []string{
 	"cancel_backup",
 }
 
+// mcpFortressTools read the other apps of the fortress BombVault is in, and
+// answer no_fortress while it is in none.
+var mcpFortressTools = []string{
+	"fortress_members",
+	"fortress_status",
+	"fortress_log",
+}
+
 // The era Claude Code and mcp-remote negotiate. A client that speaks it must
 // reach the tool list without sending anything newer.
 func TestMCPLegacyEraHandshake(t *testing.T) {
@@ -85,7 +93,7 @@ func TestMCPLegacyEraHandshake(t *testing.T) {
 func TestMCPToolAllowlist(t *testing.T) {
 	h, _, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
 
-	want := append(append([]string(nil), mcpReadTools...), mcpStartTools...)
+	want := slices.Concat(mcpReadTools, mcpStartTools, mcpFortressTools)
 	sort.Strings(want)
 	if got := mcpToolNames(t, mcpListTools(t, h, key)); !reflect.DeepEqual(got, want) {
 		t.Fatalf("tools = %v, want %v", got, want)
@@ -142,7 +150,8 @@ func TestMCPToolAnnotationsAndSchemas(t *testing.T) {
 			"readOnlyHint":    !starts,
 			"destructiveHint": false,
 			"idempotentHint":  !starts || name == "cancel_backup",
-			"openWorldHint":   starts || name == "list_restore_points" || name == "get_size_breakdown" || name == "search_files",
+			"openWorldHint": starts || slices.Contains(mcpFortressTools, name) ||
+				name == "list_restore_points" || name == "get_size_breakdown" || name == "search_files",
 		} {
 			if ann[hint] != want {
 				t.Fatalf("%s %s = %v, want %v", name, hint, ann[hint], want)
@@ -249,5 +258,14 @@ func TestMCPToolSeesCallerFromGate(t *testing.T) {
 	caller, _ = mcpCallTool(t, h, readOnly, "get_health", "").Structured["key"].(map[string]any)
 	if caller["label"] != "Desktop" || caller["canStartBackups"] != false {
 		t.Fatalf("a read-only key reports %v", caller)
+	}
+}
+
+func TestMCPFortressToolsSayWhenBombVaultIsInNoFortress(t *testing.T) {
+	h, _, _, key := newMCPToolRouter(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	for _, tool := range mcpFortressTools {
+		if code := mcpCallTool(t, h, key, tool, `{}`).code(t); code != "no_fortress" {
+			t.Fatalf("%s outside a fortress: %q, want no_fortress", tool, code)
+		}
 	}
 }

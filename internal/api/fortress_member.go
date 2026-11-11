@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
+	"github.com/junkerderprovinz/parleyport/kit/fortressmcp"
 	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/lan"
 	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
@@ -50,6 +51,7 @@ type fortressPlace struct {
 	// device is the server the membership names this instance after.
 	device string
 	src    status.Source
+	offers []fortress.Action
 	// gen counts the fortresses opened, so that a removal arriving late does
 	// not end a membership opened after it.
 	gen int
@@ -72,8 +74,9 @@ type fortressPlace struct {
 func (s *Service) fortressDir() string { return filepath.Join(s.cfg.DataDir, "fortress") }
 
 // fortressConfig fills in what BombVault is and does in the fortress a
-// membership describes.
-func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortress.Config {
+// membership describes. offers are actions the web side brings, such as the
+// MCP tools.
+func (s *Service) fortressConfig(cfg fortress.Config, src status.Source, offers ...fortress.Action) fortress.Config {
 	cfg.App = fortress.App{ID: "bombvault", Name: "BombVault", Version: Version}
 	cfg.Self.Deployment = "container"
 	if addr := s.selfDirectURL(); addr != "" {
@@ -85,7 +88,8 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 		{Name: actionBackupRequest, Run: s.backupRequest},
 		{Name: actionSnapshotsBrowse, Run: s.browseSnapshots},
 	}
-	for _, use := range []string{fortress.ExportAction, fortress.ImportAction, actionUpdatesManaged} {
+	cfg.Actions = append(cfg.Actions, offers...)
+	for _, use := range []string{fortress.ExportAction, fortress.ImportAction, actionUpdatesManaged, fortressmcp.ActAction} {
 		if !slices.Contains(cfg.Uses, use) {
 			cfg.Uses = append(cfg.Uses, use)
 		}
@@ -94,12 +98,12 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 }
 
 // OpenFortress opens the fortress this install has a membership of, and does
-// nothing without one.
-func (s *Service) OpenFortress(src status.Source) error {
+// nothing without one. offers join BombVault's own actions.
+func (s *Service) OpenFortress(src status.Source, offers ...fortress.Action) error {
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
 	s.house.mu.Lock()
-	s.house.src = src
+	s.house.src, s.house.offers = src, offers
 	s.house.mu.Unlock()
 	return s.openFortress()
 }
@@ -112,11 +116,11 @@ func (s *Service) openFortress() error {
 		return err
 	}
 	s.house.mu.Lock()
-	src := s.house.src
+	src, offers := s.house.src, s.house.offers
 	s.house.gen++
 	gen := s.house.gen
 	s.house.mu.Unlock()
-	cfg = s.fortressConfig(cfg, src)
+	cfg = s.fortressConfig(cfg, src, offers...)
 	cfg.OnRemoved = func() { s.removedFrom(gen) }
 	if cfg.LAN != nil {
 		cfg.LAN.Start()

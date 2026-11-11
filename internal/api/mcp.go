@@ -66,7 +66,7 @@ var mcpResticTimeout = time.Minute
 // the Home Assistant buttons call the same tools under a caller of their own.
 type mcpCaller struct {
 	// Via is the run origin the caller's backups are recorded under: "mcp",
-	// "api" or "mqtt". Empty reads as "mcp".
+	// "api", "mqtt" or "fortress". Empty reads as "mcp".
 	Via   string
 	KeyID string
 	// Label is the operator's name for the key. get_health shows it to the
@@ -93,6 +93,9 @@ const (
 	viaMCP  = "mcp"
 	viaAPI  = "api"
 	viaMQTT = "mqtt"
+	// viaFortress is another app of the fortress calling through
+	// fortressTools.
+	viaFortress = "fortress"
 )
 
 func (c mcpCaller) via() string {

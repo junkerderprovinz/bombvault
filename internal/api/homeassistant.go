@@ -296,7 +296,7 @@ func (h *Handler) haStart(ctx context.Context, domain string) string {
 // it is switched on. The announcement probes
 // its names for a second or so, which the boot does not wait for.
 func (h *Handler) StartIntegrations() {
-	if err := h.svc.OpenFortress(fortressSource{h}); err != nil {
+	if err := h.svc.OpenFortress(fortressSource{h}, h.fortressToolsAction()); err != nil {
 		log.Printf("fortress: %v", err)
 	}
 	if on, err := h.store.MDNSEnabled(); err != nil {

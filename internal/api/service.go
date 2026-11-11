@@ -21133,8 +21133,11 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 // needs is that the backup came from neither the schedule nor the web
 // interface.
 func (s *Service) originSentence(o RunOrigin) string {
-	if o.Via == viaMQTT {
+	switch o.Via {
+	case viaMQTT:
 		return "Started from Home Assistant."
+	case viaFortress:
+		return "Started by another app in the fortress."
 	}
 	channel, noun := "MCP", "key"
 	if o.Via == viaAPI {
