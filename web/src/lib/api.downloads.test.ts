@@ -2,7 +2,7 @@
 // same route with check=1. Both have to reach the route for every source,
 // the item's own location included, which carries no source parameter.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { checkDbDumpDownload, dbDumpDownloadURL } from "./api";
+import { appExportDownloadURL, checkAppExportDownload, checkDbDumpDownload, dbDumpDownloadURL } from "./api";
 
 const fetchMock = vi.fn();
 
@@ -30,5 +30,21 @@ describe("the download of a database dump", () => {
   ])("from %s asks the route first", async (source, want) => {
     await checkDbDumpDownload("pg", "a1a1a1a1", source);
     expect(asked()).toBe(want);
+  });
+});
+
+describe("the download of an app's own backup", () => {
+  it("links to the route", () => {
+    expect(appExportDownloadURL("kl", "e1e1e1e1", "local")).toBe("/api/containers/kl/appexports/e1e1e1e1/download");
+    expect(appExportDownloadURL("kl", "e1e1e1e1", "offsite:t1")).toBe(
+      "/api/containers/kl/appexports/e1e1e1e1/download?source=offsite%3At1"
+    );
+  });
+
+  it("asks the route first and hands back a refusal over the login", async () => {
+    const refused = { ok: false, error: "set a login password first", code: "password-not-set" };
+    fetchMock.mockResolvedValue({ ok: false, status: 403, statusText: "Forbidden", json: () => Promise.resolve(refused) });
+    expect(await checkAppExportDownload("kl", "e1e1e1e1", "local")).toEqual(refused);
+    expect(asked()).toBe("/api/containers/kl/appexports/e1e1e1e1/download?check=1");
   });
 });

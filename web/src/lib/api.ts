@@ -2021,6 +2021,29 @@ function withQuery(path: string, source: string | undefined, ...params: string[]
   return query ? `${path}?${query}` : path;
 }
 
+function appExportPath(name: string, id: string): string {
+  return `/api/containers/${encodeURIComponent(name)}/appexports/${encodeURIComponent(id)}/download`;
+}
+
+/**
+ * GET /api/containers/{name}/appexports/{id}/download streams the own backup an
+ * app in the container handed over, as a plain link like a dump.
+ */
+export function appExportDownloadURL(name: string, id: string, source?: string): string {
+  return withQuery(appExportPath(name, id), source);
+}
+
+/** The same endpoint with check=1. It also answers the refusal of a server
+ *  without a login password or of a paired phone, which the download is not
+ *  for. */
+export function checkAppExportDownload(
+  name: string,
+  id: string,
+  source?: string
+): Promise<OkEnvelope & { code?: string }> {
+  return fetchKeyJSON(withQuery(appExportPath(name, id), source, "check=1"));
+}
+
 /**
  * POST /api/containers/{name}/dbdumps/{id}/save writes a dump as a file into a
  * folder on the server. ASYNC, like the other restore-to jobs: the ack carries
@@ -3935,6 +3958,9 @@ export interface TimelineRow {
    *  no place read holds every disk or dataset. */
   size?: number;
   places: TimelineMark[];
+  /** The app whose own backup the row is. It goes back to the app as a file
+   *  rather than through a restore of the container. */
+  appExport?: { app: string; name: string };
 }
 
 export interface PlaceDelete {

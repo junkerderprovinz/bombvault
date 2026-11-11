@@ -92,15 +92,16 @@ export function BackupsTab({
     return () => clearTimeout(timer);
   }, [located]);
 
-  const { rows, places, loading, error } = timeline;
+  const { rows, appExports, places, loading, error } = timeline;
   const pending = places.filter((p) => p.state !== "read");
   const newestBackup = runs.find((run) => run.kind === "backup" && run.status === "success");
   // When the newest backup kept the definition only, the list can say so
   // before an off-site location has been read.
   const keptDefinition = container !== null && newestBackup !== undefined && definitionOnly(newestBackup);
-  const empty = !loading && error === null && rows.length === 0 && (pending.length === 0 || keptDefinition);
+  const empty =
+    !loading && error === null && rows.length + appExports.length === 0 && (pending.length === 0 || keptDefinition);
   const openedRow = opened ? rows.find((row) => rowHolds(row, opened.key)) : undefined;
-  const actingRow = acting ? rows.find((row) => row.key === acting.key) : undefined;
+  const actingRow = acting ? [...rows, ...appExports].find((row) => row.key === acting.key) : undefined;
   const wanted = request.dump ? "" : request.snapshot;
   const requestedRow = wanted ? rows.find((row) => rowHolds(row, wanted)) : undefined;
   const done = () => setActing(null);
@@ -182,6 +183,7 @@ export function BackupsTab({
               </p>
             ))}
           <BackupList
+            name={container?.name ?? name}
             timeline={timeline}
             runs={runs}
             isFlagged={(row, run) => snapshotIds(row).some((id) => flagged.has(id)) || (run !== undefined && isFlagged(run))}
