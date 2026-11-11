@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"testing"
+	"time"
 )
 
 func TestANewDatabaseIsInNoFortress(t *testing.T) {
@@ -34,11 +35,12 @@ func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingKeepsOnlyTheName(t *testing.
 		t.Fatalf("joined: %+v", m)
 	}
 
-	if err := r.SetFortressSecret([]byte("new secret"), []byte("sealed secret")); err != nil {
+	changed := time.Unix(1_800_000_000, 0)
+	if err := r.SetFortressSecret([]byte("new secret"), []byte("sealed secret"), changed); err != nil {
 		t.Fatal(err)
 	}
 	m, _ = r.FortressMembership()
-	if string(m.SecretEnc) != "new secret" || string(m.PreviousEnc) != "sealed secret" || string(m.SeedEnc) != "sealed seed" {
+	if string(m.SecretEnc) != "new secret" || string(m.PreviousEnc) != "sealed secret" || string(m.SeedEnc) != "sealed seed" || !m.Changed.Equal(changed) {
 		t.Fatalf("after a new phrase: %+v", m)
 	}
 
@@ -46,7 +48,7 @@ func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingKeepsOnlyTheName(t *testing.
 		t.Fatal(err)
 	}
 	m, _ = r.FortressMembership()
-	if m.Joined() || len(m.SecretEnc)+len(m.PreviousEnc)+len(m.SeedEnc)+len(m.StateEnc) != 0 || m.Device != "tower" {
+	if m.Joined() || len(m.SecretEnc)+len(m.PreviousEnc)+len(m.SeedEnc)+len(m.StateEnc) != 0 || !m.Changed.IsZero() || m.Device != "tower" {
 		t.Fatalf("after leaving: %+v", m)
 	}
 }
@@ -59,14 +61,14 @@ func TestJoiningAgainStartsWithoutTheFormerState(t *testing.T) {
 	if err := r.SetFortressState([]byte("state a")); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.SetFortressSecret([]byte("b"), []byte("a")); err != nil {
+	if err := r.SetFortressSecret([]byte("b"), []byte("a"), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.JoinFortress([]byte("c"), []byte("seed c")); err != nil {
 		t.Fatal(err)
 	}
 	m, _ := r.FortressMembership()
-	if string(m.SecretEnc) != "c" || string(m.SeedEnc) != "seed c" || len(m.PreviousEnc) != 0 || len(m.StateEnc) != 0 {
+	if string(m.SecretEnc) != "c" || string(m.SeedEnc) != "seed c" || len(m.PreviousEnc) != 0 || !m.Changed.IsZero() || len(m.StateEnc) != 0 {
 		t.Fatalf("joined again: %+v", m)
 	}
 }
@@ -103,5 +105,22 @@ func TestThePairingInTheFortressIsKeptApartFromTheGroup(t *testing.T) {
 	}
 	if m, _ := r.FortressMembership(); len(m.PairingEnc) != 0 {
 		t.Fatalf("leaving keeps the pairing %q", m.PairingEnc)
+	}
+}
+
+func TestForgettingTheOldPhraseKeepsTheNewOne(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("a"), []byte("seed")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressSecret([]byte("b"), []byte("a"), time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ForgetFortressPrevious(); err != nil {
+		t.Fatal(err)
+	}
+	m, _ := r.FortressMembership()
+	if string(m.SecretEnc) != "b" || string(m.SeedEnc) != "seed" || len(m.PreviousEnc) != 0 || !m.Changed.IsZero() {
+		t.Fatalf("after forgetting the old phrase: %+v", m)
 	}
 }

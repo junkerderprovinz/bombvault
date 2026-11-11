@@ -54,6 +54,9 @@ type fortressPlace struct {
 	// changing is set while this instance changes the phrase itself, when the
 	// keeper must not open the fortress again under it.
 	changing bool
+	// forget opens the fortress again once the secret of the phrase before
+	// the last change is due to go.
+	forget *time.Timer
 	// direct answers the direct calls of f and the groups beside it. It
 	// bounds the calls it reads for more than one group, so it is kept as
 	// long as those groups stay the same.
@@ -130,12 +133,26 @@ func (s *Service) openFortress() error {
 		}
 		return err
 	}
+	var forget *time.Timer
+	if len(cfg.Previous) > 0 {
+		m, err := s.store.FortressMembership()
+		if err != nil {
+			log.Printf("fortress: read when the phrase changed: %v", err)
+		} else {
+			forget = time.AfterFunc(time.Until(m.Changed.Add(previousKept)), s.reopenFortress)
+		}
+	}
 	s.house.mu.Lock()
-	s.house.f, s.house.lan, s.house.device = f, cfg.LAN, cfg.Self.Name
+	s.house.f, s.house.lan, s.house.device, s.house.forget = f, cfg.LAN, cfg.Self.Name, forget
 	s.house.mu.Unlock()
 	s.followPairing(f, cfg.Secret, gen)
 	return nil
 }
+
+// previousKept is how long the fortress is given the secret of the phrase
+// before a change. The kit answers on that phrase meanwhile, so that the
+// members that hold only keys, such as the Unraid plugins, fetch the new ones.
+const previousKept = 30 * 24 * time.Hour
 
 // fortressMembership is the Config of the membership this install keeps,
 // and false for none.
@@ -164,7 +181,13 @@ func (s *Service) fortressMembership() (fortress.Config, bool, error) {
 		return fortress.Config{}, false, err
 	}
 	var previous []byte
-	if len(m.PreviousEnc) > 0 {
+	switch {
+	case len(m.PreviousEnc) == 0:
+	case time.Since(m.Changed) >= previousKept:
+		if err := s.store.ForgetFortressPrevious(); err != nil {
+			return fortress.Config{}, false, err
+		}
+	default:
 		if previous, err = secret.Decrypt(s.cfg.AppKey, m.PreviousEnc); err != nil {
 			return fortress.Config{}, false, err
 		}
@@ -203,7 +226,10 @@ func (s *Service) CloseFortress() {
 func (s *Service) closeFortress() {
 	s.house.mu.Lock()
 	f, l := s.house.f, s.house.lan
-	s.house.f, s.house.lan = nil, nil
+	if s.house.forget != nil {
+		s.house.forget.Stop()
+	}
+	s.house.f, s.house.lan, s.house.forget = nil, nil, nil
 	s.house.mu.Unlock()
 	if f != nil {
 		s.pairing().Follow(nil, "")
@@ -481,7 +507,7 @@ func (k fortressKeeper) Keep(sec []byte) error {
 	if err != nil {
 		return err
 	}
-	if err := k.s.store.SetFortressSecret(sealed, m.SecretEnc); err != nil {
+	if err := k.s.store.SetFortressSecret(sealed, m.SecretEnc, time.Now()); err != nil {
 		return err
 	}
 	k.s.house.mu.Lock()

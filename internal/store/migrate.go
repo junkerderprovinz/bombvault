@@ -3892,6 +3892,14 @@ INSERT OR IGNORE INTO fortress_membership (id) VALUES (1);`,
 		sql:              `ALTER TABLE fortress_membership ADD COLUMN pairing_enc BLOB NOT NULL DEFAULT x'';`,
 	},
 	{
+		// The secret of the phrase before a change is kept for a while after
+		// it, so the change is dated.
+		version:          fortressChangedMigration,
+		name:             "fortress_changed_at",
+		alreadySatisfied: columnPresent("fortress_membership", "changed_at"),
+		sql:              `ALTER TABLE fortress_membership ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
 		// Giving an app its own backup back replaces what the app holds, so a
 		// person switches it on first.
 		version:          appImportMigration,
@@ -4550,6 +4558,9 @@ const fortressMembershipMigration = 940
 
 // fortressPairingMigration numbers the store of the pairing in the fortress.
 const fortressPairingMigration = 941
+
+// fortressChangedMigration numbers when the fortress phrase last changed.
+const fortressChangedMigration = 942
 
 // appImportMigration numbers the switch that lets backups go back to the apps.
 const appImportMigration = 950
