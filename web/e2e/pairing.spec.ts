@@ -1,9 +1,9 @@
 // The Pairing page, in German because its labels run longest. The layout test
-// checks that the step cards with their scene, the phrase card, the list of
-// instances and the relay card in its four forms fit at 1280px and 390px. The
-// flow tests stand in two instances with two pages and
-// a faked group API each, since a harness database is in no group: one where
-// both generate a phrase and are told after a minute how to merge
+// checks that the step cards with their scene, the card of the phrase, the
+// member cards and the relay card in its four forms fit at 1280px and 390px.
+// The flow tests stand in two instances with two pages and a faked group and
+// fortress API each, since a harness database is in no group: one where both
+// generate a phrase and are told after a minute how to merge
 // (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
 // the second enters the phrase and pairs with the first one's words.
 import { expect, test, type Page } from "@playwright/test";
@@ -127,6 +127,12 @@ async function stage(page: Page, f: Instance): Promise<void> {
   );
   await page.route("**/api/zfs/replica/servers", (route) => route.fulfill({ json: [ZFS_SERVER] }));
   await page.route("**/api/zfs/replica/key", (route) => route.fulfill({ json: { publicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBombVaultReplicaKeyForTheHarness bombvault-replica" } }));
+  await page.route("**/api/fortress", async (route) => {
+    if (route.request().method() === "DELETE") Object.assign(f, { active: false, joinedAgo: 0, memberSeen: false, members: [] });
+    await route.fulfill({
+      json: { ok: true, joined: f.active, phrase: f.active, defaultDevice: "Tower Linz", passwordSet: true, members: [], permissions: [], pairedWith: [] },
+    });
+  });
   await page.route("**/api/group", async (route) => {
     if (route.request().method() === "DELETE") Object.assign(f, { active: false, joinedAgo: 0, memberSeen: false, members: [] });
     await route.fulfill({ json: view(f) });
@@ -223,6 +229,7 @@ async function open(page: Page, f: Instance, width = 1280): Promise<void> {
 }
 
 const phraseCard = (page: Page) => page.locator("[data-stage]");
+const memberCard = (page: Page, name: string) => page.getByTestId("members").locator("[data-instance]").filter({ hasText: name });
 const pairState = (page: Page) => page.getByTestId("pair-state");
 const generate = (page: Page) => page.getByRole("button", { name: /Phrase generieren/ });
 const enter = (page: Page) => page.getByRole("button", { name: /Phrase eingeben/ });
@@ -244,14 +251,20 @@ for (const width of [1280, 390]) {
     const list = page.getByTestId("members");
     await expect(list.getByText("Schwiegereltern Tower Gmunden Keller")).toBeVisible();
     await expect(pairState(page)).toHaveText("Gekoppelt");
-    // A member says in plain words that it is paired and how it is reached.
-    await expect(list.getByRole("listitem").filter({ hasText: "Büro Linz" })).toContainText("Gekoppelt · Direkt");
-    await expect(list.getByRole("listitem").filter({ hasText: "Schwiegereltern" })).toContainText("Gekoppelt · Über Relay");
-    // Another group's phrase can be entered without leaving this one first.
-    await expect(enter(page)).toBeVisible();
-    // The list ends with the way in for a ZFS server that runs no BombVault.
+    // A member card says in plain words that it is connected and how it is reached.
+    await expect(memberCard(page, "Büro Linz")).toContainText("Verbunden");
+    await expect(memberCard(page, "Büro Linz")).toContainText("Direkt");
+    await expect(memberCard(page, "Schwiegereltern")).toContainText("Über Relay");
+    // One card holds the phrase: this instance's name, Show phrase, Change and Leave.
+    const fortress = page.locator('[data-glim="FortressPairing"]');
+    await expect(fortress.getByRole("textbox", { name: "Instanzname" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Phrase zeigen" })).toHaveCount(1);
+    await expect(fortress.locator('[data-fortress="open-change"]')).toBeVisible();
+    await expect(fortress.locator('[data-fortress="open-leave"]')).toBeVisible();
+    await expect(enter(page)).toHaveCount(0);
+    // The ZFS servers that run no BombVault come after the members.
     const zfsRow = page.getByTestId("zfs-row");
-    await expect(zfsRow).toContainText("ZFS-Server ohne BombVault");
+    await expect(page.locator(".glim-notch-card").filter({ has: zfsRow })).toContainText("ZFS-Server ohne BombVault");
     await expect(zfsRow).toContainText("Backup-NAS im Keller");
     // Pairing goes by the phrase alone, so nothing here takes an address.
     await expect(page.locator('input[type="url"]:not(#relay-address)')).toHaveCount(0);
@@ -359,9 +372,9 @@ for (const width of [1280, 390]) {
     });
     await open(page, f, width);
     const list = page.getByTestId("behind");
-    await expect(list.getByText("Nicht mitgekommen")).toBeVisible();
-    const rows = list.getByRole("listitem");
+    const rows = list.locator("[data-instance]");
     await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0)).toContainText("Nicht mitgekommen");
     await expect(rows.nth(0)).toContainText("Ferienhaus Altaussee Dachboden");
     await expect(rows.nth(0)).toContainText("BombVault-Instanz");
     await expect(rows.nth(1)).toContainText("Altes Tablet");
@@ -371,16 +384,13 @@ for (const width of [1280, 390]) {
       await page.emulateMedia({ colorScheme: scheme });
       await settle(page);
       await expectFits(page);
-      const [ink, ground] = await rows.nth(0).evaluate((row) => {
-        const label = row.querySelector("svg")!.closest("span")!;
-        return [getComputedStyle(label).color, getComputedStyle(document.body).backgroundColor];
-      });
-      expect(ink, `the glyph has no colour of its own in ${scheme}`).not.toBe(ground);
+      const [card, ground] = await rows.nth(0).evaluate((row) => [getComputedStyle(row).backgroundColor, getComputedStyle(document.body).backgroundColor]);
+      expect(card, `the card has no surface of its own in ${scheme}`).not.toBe(ground);
     }
 
     await rows.nth(0).getByRole("button", { name: "Entfernen" }).click();
     await rows.nth(0).getByRole("button", { name: /Entfernen bestätigen/ }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(1);
+    await expect(rows).toHaveCount(1);
     await expect(list).toContainText("Altes Tablet");
   });
 }

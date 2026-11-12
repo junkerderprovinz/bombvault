@@ -402,29 +402,20 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   ],
 
   pairing: [
-    { title: "pairing.title", rows: [], body: ["settings.pairingNeedsDomain"] },
     { title: "pairing.step1Title", rows: [], body: ["pairing.step1Body"] },
     { title: "pairing.stepOtherTitle", rows: [], body: ["pairing.step2Body"] },
     { title: "pairing.step3Title", rows: [], body: ["pairing.step3Body"] },
     {
       title: "pairing.phraseTitle",
       hint: "pairing.phraseTip",
-      rows: [
-        { key: "pairing.passwordLabel" },
-        { key: "pairing.wordsLabel" },
-        { key: "pairing.enterLabel" },
-        { key: "pairing.enterLabelOther" },
-      ],
+      rows: [{ key: "pairing.wordsLabel" }, { key: "pairing.enterLabel" }, { key: "pairing.enterLabelOther" }],
     },
     {
-      title: "instances.title",
-      hint: "pairing.group.hint",
-      rows: [{ key: "pairing.group.zfsTitle", hint: "pairing.group.zfsTip" }],
+      title: "fortress.title",
+      rows: [{ key: "settings.instanceName", hint: "pairing.nameHint" }],
     },
-    {
-      title: "settings.fleet",
-      rows: [{ key: "settings.instanceName", hint: "settings.fleetHint" }],
-    },
+    { title: "pairing.pendingTitle", hint: "pairing.pendingTip", rows: [] },
+    { title: "pairing.group.zfsTitle", hint: "pairing.group.zfsTip", rows: [] },
     {
       title: "relay.title",
       hint: "relay.hint",

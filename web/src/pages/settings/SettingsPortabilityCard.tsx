@@ -68,7 +68,7 @@ export function SettingsPortabilityCard({
   // fehlschlägt soll der Toggle/Button kurz zittern. Systemweit!!"): a failed
   // action shows its message via a TOAST, never as permanent page text, and
   // the button that triggered it replays `.glim-shake` once — the exact same
-  // migration IntegrityCard/FleetSettingsCard/DashboardWidgetCard already
+  // migration IntegrityCard/DashboardWidgetCard already
   // made elsewhere in this file (their own comments: "the persistent ✗
   // {error} banner... is now a toast"). Replaces the old permanent
   // exportError/importError paragraphs below each button. Export/Choose-

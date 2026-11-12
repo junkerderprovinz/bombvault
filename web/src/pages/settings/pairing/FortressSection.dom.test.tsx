@@ -1,200 +1,192 @@
 // @vitest-environment jsdom
-// The fortress on the Pairing page: outside one, the twelve words join it;
-// inside, the phrase shows behind the password with its QR code, the server's
-// name saves itself after a pause, and the phrase changes and BombVault leaves
-// from the Fortress card.
+// The fortress on the Pairing page: its card at the top shows the one phrase
+// behind the password with its QR code, changes it and leaves; below, the
+// other apps stand in the cards of the Instances tab, with their logos, and
+// giving backups back sits under the permission it goes with.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { storeShowOthers } from "@glimstone/core";
+import jsQR from "jsqr";
 import { I18nProvider, en } from "../../../lib/i18n";
-import type { FortressState } from "../../../lib/api";
-import { FortressSection } from "./FortressSection";
-import { hueCounter } from "../shared";
+import type { FortressMember, FortressState, GroupState } from "../../../lib/api";
+import { fortressApps } from "./fortressModel";
+import { FortressBlock, OtherApps, type GiveBack } from "./FortressSection";
 
 const PHRASE = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 const NEW_PHRASE = "zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong";
+const LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=";
 
 let view: FortressState;
-let joinAnswer: Record<string, unknown> | null;
 const calls: string[] = [];
-const toasts: string[] = [];
+let changed = 0;
 
 function state(over: Partial<FortressState> = {}): FortressState {
-  return { ok: true, joined: false, phrase: false, device: "Tower", defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
+  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
 }
-const joined = (over: Partial<FortressState> = {}) => state({ joined: true, phrase: true, ...over });
+
+function group(over: Partial<GroupState> = {}): GroupState {
+  return {
+    ok: true,
+    active: true,
+    instanceId: "self",
+    name: "cellar",
+    passwordSet: true,
+    members: [],
+    away: [],
+    settling: false,
+    relay: { mode: "project", url: "", projectUrl: "wss://parleyport.halleluja.design/relay/connect", connected: true, serve: false, serveClients: 0 },
+    joinedAgo: 300,
+    memberSeen: true,
+    waiting: [],
+    selfAddress: "",
+    ownAddresses: [],
+    ...over,
+  };
+}
+
+const member = (over: Partial<FortressMember>): FortressMember => ({
+  id: "k1",
+  app: "knightloader",
+  name: "KnightLoader",
+  version: "2.1.0",
+  device: "Bottich",
+  deployment: "container",
+  kind: "instance",
+  online: true,
+  relay: false,
+  ...over,
+});
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
   return {
     ...actual,
-    getFortress: () => Promise.resolve(view),
-    joinFortress: (phrase: string) => {
-      calls.push(`join ${phrase}`);
-      if (joinAnswer) return Promise.resolve(joinAnswer);
-      view = joined();
-      return Promise.resolve(view);
-    },
     showFortressPhrase: (password: string) =>
       Promise.resolve(password === "hunter2" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong", error: "wrong" }),
+    showPhrase: (password: string) => {
+      calls.push("group show");
+      return Promise.resolve(password === "hunter2" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" });
+    },
     changeFortressPhrase: (password: string) => {
       calls.push(`change ${password}`);
       if (view.passwordSet && password !== "hunter2") return Promise.resolve({ ok: false, code: "passwordWrong", error: "wrong" });
       return Promise.resolve({ ok: true, phrase: NEW_PHRASE, left: ["Cellar"] });
     },
-    setFortressDevice: (device: string) => {
-      calls.push(`device ${device}`);
-      view = { ...view, device: device || view.defaultDevice };
-      return Promise.resolve(view);
-    },
     leaveFortress: () => {
       calls.push("leave");
-      view = state();
-      return Promise.resolve(view);
+      return Promise.resolve(state({ joined: false, phrase: false }));
+    },
+    setFortressPermission: (p: { action: string; on: boolean }) => {
+      calls.push(`permission ${p.action} ${p.on}`);
+      return Promise.resolve({ ok: true });
     },
   };
 });
 
-vi.mock("../../../lib/toast", () => ({ useToast: () => ({ push: (m: string) => toasts.push(m) }) }));
+vi.mock("../../../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
 
-function renderSection() {
+function renderBlock(g: GroupState = group()) {
   return render(
     <I18nProvider>
-      <FortressSection nextHue={hueCounter()} />
+      <FortressBlock view={view} group={g} onChanged={() => changed++} hueIndex={3}>
+        <p data-testid="own-row">name</p>
+      </FortressBlock>
+    </I18nProvider>,
+  );
+}
+
+function renderApps(giveBack?: GiveBack) {
+  return render(
+    <I18nProvider>
+      <OtherApps view={view} apps={fortressApps(view.members, String)} group={group()} giveBack={giveBack} hueStart={4} onChanged={() => changed++} />
     </I18nProvider>,
   );
 }
 
 const button = (hook: string) => document.querySelector<HTMLButtonElement>(`[data-fortress="${hook}"]`)!;
-const findButtonOut = async (hook: string) => {
-  await screen.findByText("Not in a fortress yet");
-  return button(hook);
-};
-const findButton = async (hook: string) => {
-  await screen.findByText(en["fortress.title"]);
-  return button(hook);
-};
+
+async function showWith(password: string) {
+  await act(async () => fireEvent.click(button("show")));
+  fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: password } });
+  await act(async () => fireEvent.click(button("unlock")));
+}
 
 beforeEach(() => {
   localStorage.setItem("bv-lang", "en");
+  storeShowOthers(true);
   view = state();
-  joinAnswer = null;
   calls.length = 0;
-  toasts.length = 0;
+  changed = 0;
 });
 
 afterEach(() => {
   cleanup();
-  vi.useRealTimers();
+  localStorage.clear();
 });
 
-describe("the switch for giving backups back to the apps", () => {
-  it("stands beside the server's name in the fortress and saves when pressed", async () => {
-    view = joined();
-    const flipped: boolean[] = [];
-    render(
-      <I18nProvider>
-        <FortressSection nextHue={hueCounter()} giveBack={{ on: false, onChange: (v) => flipped.push(v) }} />
-      </I18nProvider>,
-    );
-    const toggle = await screen.findByRole("switch", { name: en["appImport.toggle"] });
-    expect(toggle.getAttribute("aria-checked")).toBe("false");
-    fireEvent.click(toggle);
-    expect(flipped).toEqual([true]);
-  });
-
-  it("waits until BombVault is in a fortress", async () => {
-    render(
-      <I18nProvider>
-        <FortressSection nextHue={hueCounter()} giveBack={{ on: false, onChange: () => {} }} />
-      </I18nProvider>,
-    );
-    await screen.findByText("Not in a fortress yet");
-    expect(screen.queryByRole("switch", { name: en["appImport.toggle"] })).toBeNull();
-  });
-});
-
-describe("FortressSection", () => {
-  it("joins with the twelve words pasted into the first field", async () => {
-    renderSection();
-    expect(await screen.findByText("Not in a fortress yet")).toBeTruthy();
-    fireEvent.click(button("open-join"));
-    const first = document.querySelector<HTMLInputElement>('[data-word="0"]')!;
-    fireEvent.change(first, { target: { value: PHRASE } });
-    expect(document.querySelectorAll<HTMLInputElement>("[data-word]")[11].value).toBe("about");
-    await act(async () => fireEvent.click(button("join")));
-    expect(calls).toEqual([`join ${PHRASE}`]);
-    expect(await screen.findByText("BombVault is in the fortress now")).toBeTruthy();
-  });
-
-  it("names a mistyped word and keeps the window open", async () => {
-    joinAnswer = { ok: false, reason: "unknown_word", word: "recieve", position: 7 };
-    renderSection();
-    fireEvent.click(await screen.findByRole("button", { name: "Join a fortress" }));
-    // The window draws its word fields a moment after it opens.
-    const first = await waitFor(() => {
-      const field = document.querySelector('[data-word="0"]');
-      expect(field).toBeTruthy();
-      return field!;
-    });
-    fireEvent.change(first, { target: { value: PHRASE } });
-    await act(async () => fireEvent.click(button("join")));
-    const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toBe(en["pairing.errUnknownWord"].replace("{position}", "7").replace("{word}", "recieve"));
+describe("the card of the phrase", () => {
+  it("holds the page's own rows above Show phrase and Change in one row, and Leave", () => {
+    renderBlock();
+    const card = document.querySelector('[data-glim="FortressPairing"]')!;
+    expect(card.querySelector('[data-testid="own-row"]')).toBeTruthy();
+    const rows = card.querySelectorAll(".glim-field-row");
+    expect([...rows[0].querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Show phrase", "Change"]);
+    expect(rows[1].querySelector('[data-fortress="open-leave"]')).toBeTruthy();
   });
 
   it("shows the phrase with its QR code only after the password", async () => {
-    view = joined();
-    renderSection();
-    const show = await screen.findByRole("button", { name: "Show phrase" });
-    await act(async () => fireEvent.click(show));
-    const field = screen.getByLabelText("Password of BombVault");
-    fireEvent.change(field, { target: { value: "wrong" } });
-    await act(async () => fireEvent.click(button("unlock")));
+    renderBlock();
+    await showWith("wrong");
     expect((await screen.findByRole("alert")).textContent).toBe("That password is not right.");
-    fireEvent.change(field, { target: { value: "hunter2" } });
+    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
     await act(async () => fireEvent.click(button("unlock")));
     expect(button("words").querySelectorAll("li")).toHaveLength(12);
     expect(document.querySelector('[data-fortress="qr"]')).toBeTruthy();
+    expect(screen.getByText(en["pairing.qrCaption"])).toBeTruthy();
   });
 
-  it("saves the server's name after a pause in typing", async () => {
-    view = joined();
-    renderSection();
-    const field = (await screen.findByLabelText(en["fortress.deviceName"])) as HTMLInputElement;
-    vi.useFakeTimers();
-    fireEvent.change(field, { target: { value: "cella" } });
-    fireEvent.change(field, { target: { value: "cellar" } });
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
-    expect(calls).toEqual(["device cellar"]);
-    expect(toasts).toEqual([en["settings.saved"]]);
-    expect(field.value).toBe("cellar");
+  it("puts an own relay's address into the code under the words", async () => {
+    renderBlock(group({ relay: { ...group().relay, mode: "own", url: "wss://relay.example/relay/connect" } }));
+    await showWith("hunter2");
+    const svg = document.querySelector<SVGSVGElement>('[data-fortress="qr"]')!;
+    const path = svg.querySelector("path")!.getAttribute("d")!;
+    const side = Number(svg.getAttribute("viewBox")!.split(" ")[2]) - 8;
+    const scale = 4;
+    const size = (side + 8) * scale;
+    const pixels = new Uint8ClampedArray(size * size * 4).fill(255);
+    for (const [, x, y, w] of path.matchAll(/M(\d+) (\d+)h(\d+)/g)) {
+      for (let px = Number(x); px < Number(x) + Number(w); px++) {
+        for (let dy = 0; dy < scale; dy++) {
+          for (let dx = 0; dx < scale; dx++) {
+            const at = ((Number(y) + 4) * scale + dy) * size + (px + 4) * scale + dx;
+            pixels.fill(0, at * 4, at * 4 + 3);
+          }
+        }
+      }
+    }
+    expect(jsQR(pixels, size, size)?.data).toBe(`${PHRASE}\nwss://relay.example/relay/connect`);
   });
 
-  it("says that the pairing with the other instances comes along into the fortress", async () => {
-    view = state({ pairedWith: ["attic"] });
-    renderSection();
-    fireEvent.click(await findButtonOut("open-join"));
-    expect(screen.getByText("BombVault is already paired with attic. Joining moves that pairing into the fortress, so there is nothing to pair again.")).toBeTruthy();
+  it("says a phone needs a relay beside the code when none is in use", async () => {
+    renderBlock(group({ relay: { ...group().relay, mode: "off", connected: false } }));
+    await showWith("hunter2");
+    expect(screen.getByText(en["pairing.phoneNeedsRelay"])).toBeTruthy();
   });
 
-  it("says where the phrase comes from in words that fit this page", async () => {
-    renderSection();
-    expect(await screen.findByText(en["fortress.outHint"].replace("{app}", "BombVault"))).toBeTruthy();
-    fireEvent.click(button("open-join"));
-    expect(screen.getByText(en["fortress.phraseWhere"])).toBeTruthy();
-    expect(document.body.textContent).not.toMatch(/under Instances|instances of BombVault show up here/);
+  it("shows the group's phrase where the fortress was never opened on it", async () => {
+    view = state({ joined: false, phrase: false });
+    renderBlock();
+    await showWith("hunter2");
+    expect(calls).toEqual(["group show"]);
+    expect(button("open-change")).toBeNull();
   });
 
   it("asks for the password before the phrase changes, and a wrong one changes nothing", async () => {
-    view = joined();
-    renderSection();
-    fireEvent.click(await findButton("open-change"));
+    renderBlock();
+    fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
     expect(calls).toEqual([]);
-    const field = screen.getByLabelText("Password of BombVault");
-    fireEvent.change(field, { target: { value: "wrong" } });
+    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "wrong" } });
     await act(async () => fireEvent.click(button("change-unlock")));
     expect(calls).toEqual(["change wrong"]);
     expect((await screen.findByRole("alert")).textContent).toBe("That password is not right.");
@@ -202,9 +194,8 @@ describe("FortressSection", () => {
   });
 
   it("keeps the phrase when the password window closes", async () => {
-    view = joined();
-    renderSection();
-    fireEvent.click(await findButton("open-change"));
+    renderBlock();
+    fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
     await act(async () => fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" }));
     expect(calls).toEqual([]);
@@ -212,24 +203,22 @@ describe("FortressSection", () => {
   });
 
   it("changes the phrase without asking where BombVault has no password", async () => {
-    view = joined({ passwordSet: false });
-    renderSection();
-    fireEvent.click(await findButton("open-change"));
+    view = state({ passwordSet: false });
+    renderBlock();
+    fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
     expect(calls).toEqual(["change "]);
     expect(button("words").textContent).toContain("wrong");
+    expect(changed).toBe(1);
   });
 
-  it("changes the phrase for the password and leaves from the Fortress card", async () => {
-    view = joined();
-    renderSection();
-    expect(await screen.findByText(en["fortress.title"])).toBeTruthy();
+  it("changes the phrase for the password, names who missed it, and leaves", async () => {
+    renderBlock();
     fireEvent.click(button("open-change"));
     expect(screen.getByText(en["fortress.changeAway"])).toBeTruthy();
     await act(async () => fireEvent.click(button("change")));
     fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
     await act(async () => fireEvent.click(button("change-unlock")));
-    expect(calls).toEqual(["change hunter2"]);
     expect(button("words").textContent).toContain("wrong");
     expect(screen.getByText(en["fortress.changedLeft"].replace("{devices}", "Cellar"))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -237,15 +226,51 @@ describe("FortressSection", () => {
     fireEvent.click(button("open-leave"));
     await act(async () => fireEvent.click(button("leave")));
     expect(calls).toEqual(["change hunter2", "leave"]);
-    expect(await screen.findByText("Not in a fortress yet")).toBeTruthy();
+    expect(changed).toBe(2);
   });
 
-  it("offers neither showing nor changing a phrase BombVault does not keep", async () => {
-    view = joined({ phrase: false });
-    renderSection();
-    expect(await screen.findByText(en["fortress.noPhraseKept"])).toBeTruthy();
-    expect(document.querySelector('[data-fortress="show"]')).toBeNull();
-    expect(document.querySelector('[data-fortress="open-change"]')).toBeNull();
+  it("offers neither showing nor changing a phrase BombVault does not keep", () => {
+    view = state({ phrase: false });
+    renderBlock(group({ active: false }));
+    expect(screen.getByText(en["fortress.noPhraseKept"])).toBeTruthy();
+    expect(button("show")).toBeNull();
+    expect(button("open-change")).toBeNull();
     expect(button("open-leave")).toBeTruthy();
+  });
+});
+
+describe("the other apps", () => {
+  it("stand in the cards of the Instances tab with their logos, and the corner holds no second Show phrase", () => {
+    view = state({
+      members: [member({ logo: LOGO }), member({ id: "t1", app: "tollroll", name: "TollRoll", deployment: "plugin", online: false })],
+    });
+    renderApps();
+    const knight = document.querySelector('[data-instance="app-knightloader"]')!;
+    expect(knight.querySelector("img")?.getAttribute("src")).toBe(LOGO);
+    expect(knight.textContent).toContain("Connected");
+    const toll = document.querySelector('[data-instance="app-tollroll"]')!;
+    expect(toll.querySelector("img")).toBeNull();
+    expect(toll.querySelector("svg")).toBeTruthy();
+    expect(toll.textContent).toContain("Not reachable");
+    expect(document.querySelector("[data-fortress-app]")).toBeNull();
+    expect(document.querySelector(".glim-fortress-actions")).toBeNull();
+    expect(button("show")).toBeNull();
+  });
+
+  it("word giving an app its own backup back, with the switch for it under that permission alone", () => {
+    view = state({
+      members: [member({}), member({ id: "s1", app: "shiplog", name: "ShipLog" })],
+      permissions: [
+        { from: "bombvault", to: "knightloader", action: "backup.import", on: true },
+        { from: "bombvault", to: "shiplog", action: "backup.import", on: true },
+      ],
+    });
+    const flipped: boolean[] = [];
+    renderApps({ on: false, onChange: (on) => flipped.push(on) });
+    expect(screen.getAllByText(en["fortress.action.backupImport"])).toHaveLength(2);
+    const toggles = screen.getAllByRole("switch", { name: en["appImport.toggle"] });
+    expect(toggles).toHaveLength(1);
+    fireEvent.click(toggles[0]);
+    expect(flipped).toEqual([true]);
   });
 });

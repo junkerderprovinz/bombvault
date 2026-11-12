@@ -1,35 +1,38 @@
-// FortressSection is BombVault's place in the fortress, on the Pairing page:
-// GlimStone's fortress with the twelve words to join, the phrase behind the
-// password and the other apps with their permissions, then the name of this
-// server and the card where the phrase changes and BombVault leaves.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fill, fortressText, type ChangeAnswer, type FortressAnswer, type FortressText, type PhraseAnswer } from "@glimstone/core";
+// The fortress on the Pairing page, in GlimStone's parts: FortressBlock holds
+// the one phrase at the top of the page, with its change and the way out,
+// and OtherApps shows the other apps of the fortress in the cards of the
+// Instances tab, with their permissions.
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  appCardView,
+  fill,
+  fortressText,
+  type ChangeAnswer,
+  type FortressAnswer,
+  type FortressApp,
+  type FortressPermission,
+  type FortressText,
+  type PhraseAnswer,
+} from "@glimstone/core";
 import { Fortress, FortressPairing } from "@glimstone/react/Fortress";
 import { PasswordField } from "@glimstone/react/PasswordField";
 import { Window } from "@glimstone/react/Window";
+import { Badge } from "../../../components/Badge";
+import { IconTabApps } from "../../../components/navGlyphs";
 import {
   changeFortressPhrase,
-  getFortress,
-  joinFortress,
   leaveFortress,
-  setFortressDevice,
   setFortressPermission,
   showFortressPhrase,
+  showPhrase,
   type FortressState,
+  type GroupState,
 } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
-import { relativeTime } from "../../../lib/reltime";
 import { useToast } from "../../../lib/toast";
-import { Rows, SettingRow } from "../../../components/storage/rows";
-import { Card, ToggleRow } from "../shared";
-import { fortressApps, fortressPermissions, permissionOf } from "./fortressModel";
-import { refusalText } from "./PhraseCard";
-
-// Members come and go with the relay and the network, which nothing pushes
-// here, so the page asks again as the group's cards do.
-const REFRESH_MS = 10_000;
-// The name saves itself after a pause in typing, as the instance name does.
-const SAVE_AFTER_MS = 800;
+import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
+import { ToggleRow } from "../shared";
+import { fortressPermissions, permissionOf } from "./fortressModel";
 
 const APP = { id: "bombvault", name: "BombVault" };
 // The words BombVault's own buttons use for the same acts, so that they wear
@@ -46,67 +49,53 @@ export interface GiveBack {
   pulseNonce?: number;
 }
 
-export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; giveBack?: GiveBack }) {
+/** useFortressText is GlimStone's words for the fortress with BombVault's own
+ *  where this page says more: the phrase also pairs phones, whose app needs
+ *  a relay, and members away follow a new phrase for 30 days. */
+function useFortressText(relayOff: boolean): FortressText {
   const { t, lang } = useT();
-  const { push } = useToast();
-  const [view, setView] = useState<FortressState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  // GlimStone words the fortress for an Instances tab. On this page the
-  // group's card has an Enter phrase too, so the fortress's says what it
-  // joins, and the hints do not send anybody to Instances. GlimStone's change
-  // texts tell members out of reach that they need the new phrase, but the
-  // kit lets them follow on the old one for 30 days.
-  const text = useMemo(() => {
+  return useMemo(() => {
     const own = fortressText(lang);
     return {
       ...own,
-      enterPhrase: own.joinTitle,
-      outHint: t("fortress.outHint"),
-      phraseWhere: t("fortress.phraseWhere"),
+      pairing: t("fortress.title"),
       changePhraseAbout: t("fortress.changePhraseAbout"),
       changeBody: t("fortress.changeBody"),
       changeAway: t("fortress.changeAway"),
       changedLeft: t("fortress.changedLeft"),
+      scanHint: t(relayOff ? "pairing.phoneNeedsRelay" : "pairing.qrCaption"),
     };
-  }, [lang, t]);
+  }, [lang, t, relayOff]);
+}
+
+/** FortressBlock is the one place of the phrase once this instance is on
+ *  one: rows of the page's own first, then the phrase with its change, and
+ *  leaving, which takes the instance out of its group and the fortress
+ *  together. */
+export function FortressBlock({
+  view,
+  group,
+  onChanged,
+  hueIndex,
+  children,
+}: {
+  view: FortressState;
+  group: GroupState;
+  /** Reads the group and the fortress again after a new phrase or a leave. */
+  onChanged: () => void;
+  hueIndex: number;
+  children?: ReactNode;
+}) {
+  const { t, lang } = useT();
+  const text = useFortressText(group.relay.mode === "off");
   // The step that waits for the password before a new phrase is made.
   const [asking, setAsking] = useState<((answer: ChangeAnswer) => void) | null>(null);
+  // An own relay rides along on a second line of the code, since the app has
+  // no other way to learn its address.
+  const phraseQr = group.relay.mode === "own" ? (words: string[]) => `${words.join(" ")}\n${group.relay.url}` : undefined;
 
-  const load = useCallback(() => {
-    getFortress()
-      .then((v) => {
-        if (v.ok) {
-          setView(v);
-          setError(null);
-        } else {
-          setError(v.error ?? text.failed);
-        }
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : text.failed));
-  }, [text]);
-
-  useEffect(() => {
-    load();
-    const id = setInterval(load, REFRESH_MS);
-    return () => clearInterval(id);
-  }, [load]);
-
-  if (!view) return error ? <p className="text-sm text-statusFail wrap-break-word">{error}</p> : null;
-
-  const apps = fortressApps(view.members, (unix) => relativeTime(t, unix));
-  const hueStart = nextHue();
-  if (view.joined) for (let i = 0; i <= apps.length; i++) nextHue();
-
-  const onJoin = async (words: string[]): Promise<FortressAnswer> => {
-    const r = await joinFortress(words.join(" "));
-    if (r.ok) {
-      setView(r);
-      return { ok: true };
-    }
-    return { error: r.code === "inFortress" ? t("fortress.inFortress") : refusalText(t, r) };
-  };
   const onShowPhrase = async (password?: string): Promise<PhraseAnswer> => {
-    const r = await showFortressPhrase(password ?? "");
+    const r = await (view.phrase ? showFortressPhrase(password ?? "") : showPhrase(password ?? ""));
     if (r.ok && r.phrase) return { words: r.phrase.split(" ") };
     return { error: r.code === "passwordWrong" ? text.passwordWrong : (r.error ?? text.failed) };
   };
@@ -116,65 +105,43 @@ export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; 
     view.passwordSet
       ? new Promise((resolve) => setAsking(() => resolve))
       : changePhrase(text, "").then((answer) => {
-          if (answer.words) load();
+          if (answer.words) onChanged();
           return answer;
         });
   const onLeave = async (): Promise<FortressAnswer> => {
     const r = await leaveFortress();
     if (!r.ok) return { error: r.error ?? text.failed };
-    setView(r);
-    return { ok: true };
-  };
-  const onPermission = async (id: string, on: boolean): Promise<FortressAnswer> => {
-    const r = await setFortressPermission(permissionOf(id, on));
-    if (!r.ok) return { error: r.error ?? text.failed };
-    load();
+    onChanged();
     return { ok: true };
   };
 
   return (
-    <div id="fortress" data-new="fortress-join" className="flex scroll-mt-6 flex-col gap-10">
-      <Fortress
+    <div id="fortress" data-new="fortress-join" className="scroll-mt-6">
+      <FortressPairing
         text={text}
         lang={lang}
         app={APP}
-        joined={view.joined}
-        apps={apps}
-        permissions={fortressPermissions(view.permissions, view.members, t)}
-        onPermission={onPermission}
-        notify={(message, severity) => push(message, severity)}
-        onJoin={onJoin}
-        onRemove={() => Promise.resolve({ error: text.failed })}
-        onShowPhrase={view.phrase ? onShowPhrase : undefined}
+        onShowPhrase={view.phrase || (group.active && !view.joined) ? onShowPhrase : undefined}
         phrasePassword={view.passwordSet}
+        phraseQr={phraseQr}
+        onChangePhrase={view.phrase ? onChangePhrase : undefined}
+        onLeave={onLeave}
         pairedWith={view.pairedWith}
         labelKeys={LABEL_KEYS}
-        hueStart={hueStart}
-      />
-      {view.joined && (
-        <>
-          <DeviceCard view={view} onView={setView} giveBack={giveBack} hueIndex={nextHue()} />
-          <FortressPairing
-            text={{ ...text, pairing: t("fortress.title") }}
-            lang={lang}
-            app={APP}
-            onLeave={onLeave}
-            onChangePhrase={view.phrase ? onChangePhrase : undefined}
-            pairedWith={view.pairedWith}
-            labelKeys={LABEL_KEYS}
-            hueIndex={nextHue()}
-          />
-          {asking && (
-            <ChangePassword
-              text={text}
-              onAnswer={(answer) => {
-                setAsking(null);
-                if (answer.words) load();
-                asking(answer);
-              }}
-            />
-          )}
-        </>
+        hueIndex={hueIndex}
+      >
+        {children}
+        {view.joined && !view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
+      </FortressPairing>
+      {asking && (
+        <ChangePassword
+          text={text}
+          onAnswer={(answer) => {
+            setAsking(null);
+            if (answer.words) onChanged();
+            asking(answer);
+          }}
+        />
       )}
     </div>
   );
@@ -253,78 +220,120 @@ function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (ans
   );
 }
 
-/** DeviceCard holds the name the other members know this server by, and
- *  whether the apps among them may take their own backups back. */
-function DeviceCard({
+/** AppCard is another app of the fortress in the card the Instances tab draws
+ *  for an instance: its logo, its state and where it runs. */
+function AppCard({ app, text, hueIndex }: { app: FortressApp; text: FortressText; hueIndex: number }) {
+  const { lang } = useT();
+  const view = appCardView(app, text, lang);
+  const presence = (p: string) => (p === "connected" ? text.connected : p === "checking" ? text.checking : text.away);
+  return (
+    <InstanceCard
+      cardKey={`app-${app.id}`}
+      name={app.name}
+      eyebrow={view.eyebrow || undefined}
+      mark={
+        app.logo ? (
+          <LogoMark src={app.logo} />
+        ) : (
+          <GlyphMark>
+            <IconTabApps />
+          </GlyphMark>
+        )
+      }
+      badges={
+        <>
+          {view.needs && (
+            <Badge tone="warn" size="large">
+              {view.needs}
+            </Badge>
+          )}
+          {view.relay && <Badge size="large">{text.viaRelay}</Badge>}
+          <Badge tone={view.presence === "connected" ? "ok" : "neutral"} size="large">
+            {presence(view.presence)}
+          </Badge>
+        </>
+      }
+      facts={<Facts items={view.facts} />}
+      actions={view.note && <span className="text-xs text-carbon-textMuted">{view.note}</span>}
+      index={hueIndex}
+    >
+      {view.rows.length > 0 && (
+        <ul className="flex flex-col gap-2" data-app-rows>
+          {view.rows.map(({ instance, sub }) => (
+            <li key={instance.id} className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2">
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-sm font-medium text-carbon-text wrap-anywhere">{instance.device}</span>
+                <span className="glim-num text-xs text-carbon-textMuted">{sub}</span>
+              </span>
+              <Badge tone={instance.presence === "connected" ? "ok" : "neutral"}>{presence(instance.presence)}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </InstanceCard>
+  );
+}
+
+/** OtherApps is the rest of the fortress: the switch that shows the other
+ *  apps, their cards and the permissions, with giving backups back under the
+ *  permission it goes with. */
+export function OtherApps({
   view,
-  onView,
+  apps,
+  group,
   giveBack,
-  hueIndex,
+  hueStart,
+  onChanged,
 }: {
   view: FortressState;
-  onView: (v: FortressState) => void;
+  apps: FortressApp[];
+  group: GroupState;
   giveBack?: GiveBack;
-  hueIndex: number;
+  hueStart: number;
+  onChanged: () => void;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
-  // What is being typed, null while the field shows the saved name.
-  const [draft, setDraft] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => clearTimeout(timer.current ?? undefined), []);
+  const text = useFortressText(group.relay.mode === "off");
+  const permissions = fortressPermissions(view.permissions, view.members, t);
+  const giveBackAt = permissions.find((p) => p.from === APP.id && p.id.endsWith(" backup.import"))?.id;
 
-  const save = (name: string) => {
-    setFortressDevice(name)
-      .then((r) => {
-        if (r.ok) {
-          onView(r);
-          setDraft((d) => (d === name ? null : d));
-          push(t("settings.saved"), "success");
-        } else {
-          push(r.code === "deviceName" ? t("fortress.deviceTooLong") : (r.error ?? t("settings.error")), "fail");
-        }
-      })
-      .catch((err) => push(err instanceof Error ? err.message : t("settings.error"), "fail"));
+  const onPermission = async (id: string, on: boolean): Promise<FortressAnswer> => {
+    const r = await setFortressPermission(permissionOf(id, on));
+    if (!r.ok) return { error: r.error ?? text.failed };
+    onChanged();
+    return { ok: true };
   };
 
   return (
-    <Card title={t("fortress.deviceTitle")} hueIndex={hueIndex}>
-      <Rows>
-        <SettingRow
-          label={t("fortress.deviceName")}
-          hint={fill(t("fortress.deviceHint"), { name: view.defaultDevice })}
-          htmlFor="fortress-device"
-        >
-          <input
-            id="fortress-device"
-            type="text"
-            value={draft ?? view.device}
-            maxLength={64}
-            onChange={(e) => {
-              const v = e.target.value;
-              setDraft(v);
-              clearTimeout(timer.current ?? undefined);
-              timer.current = setTimeout(() => save(v), SAVE_AFTER_MS);
-            }}
-            spellCheck={false}
-            autoComplete="off"
-            placeholder={view.defaultDevice}
-            className="w-[18rem] max-w-full rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+    <Fortress
+      text={text}
+      lang={lang}
+      app={APP}
+      joined
+      apps={apps}
+      permissions={permissions}
+      onPermission={onPermission}
+      notify={(message, severity) => push(message, severity)}
+      onJoin={() => Promise.resolve({ error: text.failed })}
+      onRemove={() => Promise.resolve({ error: text.failed })}
+      renderApp={(app, hueIndex) => <AppCard app={app} text={text} hueIndex={hueIndex} />}
+      permissionExtra={(p: FortressPermission) =>
+        giveBack &&
+        p.id === giveBackAt && (
+          <ToggleRow
+            label={t("appImport.toggle")}
+            hint={t("appImport.toggleHint")}
+            checked={giveBack.on}
+            onChange={giveBack.onChange}
+            disabled={giveBack.busy}
+            shakeNonce={giveBack.shakeNonce}
+            pulseNonce={giveBack.pulseNonce}
           />
-        </SettingRow>
-      </Rows>
-      {giveBack && (
-        <ToggleRow
-          label={t("appImport.toggle")}
-          hint={t("appImport.toggleHint")}
-          checked={giveBack.on}
-          onChange={giveBack.onChange}
-          disabled={giveBack.busy}
-          shakeNonce={giveBack.shakeNonce}
-          pulseNonce={giveBack.pulseNonce}
-        />
-      )}
-      {!view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
-    </Card>
+        )
+      }
+      labelKeys={LABEL_KEYS}
+      hueStart={hueStart}
+    />
   );
 }

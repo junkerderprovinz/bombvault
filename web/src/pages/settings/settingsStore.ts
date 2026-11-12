@@ -565,7 +565,7 @@ export function useSettingsStore() {
   // silently lose an edit made within 800ms of navigating away. scheduleField
   // and debouncedSave capture their values explicitly, and a setState after
   // unmount is a no-op, so flushing is safe. The card-level debounce maps
-  // (FlashZipExportCard, FleetSettingsCard, CloudCard, NotifyCard) also
+  // (FlashZipExportCard, NameRow, CloudCard, NotifyCard) also
   // complete their pending writes on unmount.
   //
   // The cleanup closes over the flushDebounces it had at mount. That reads

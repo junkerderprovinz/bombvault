@@ -24,6 +24,12 @@ describe("glyphFor", () => {
     expect(glyphFor("integrity.unlock")).not.toEqual(glyphFor("signIns.add"));
   });
 
+  it("shows the phrase with an eye and leaves the group with the way out, not with a link", () => {
+    expect(glyphFor("pairing.show")).toEqual(glyphFor("vm.showFiles"));
+    expect(glyphFor("pairing.leave")).toEqual(glyphFor("auth.signOut"));
+    expect(glyphFor("pairing.show")).not.toEqual(glyphFor("pairing.join"));
+  });
+
   it("gives every Got it the check of an agreement", () => {
     expect(glyphFor("common.gotIt")).toEqual(glyphFor("common.confirm"));
   });

@@ -1,29 +1,21 @@
-// PhraseCard is where an instance joins a group. Outside one it offers two
+// PhraseCard is the one place of the phrase. Outside a group it offers two
 // tiles: generate a phrase, or enter one that already exists, each opening a
-// window. Inside one it holds the way back to the words and out of the group,
-// and when nobody has come after a minute it offers the two ways on, in the
-// same two windows. Who is in the group stands in the card below it.
+// window. On a phrase it is the fortress's card, which shows and changes the
+// phrase and leaves, with this instance's name above, and while nobody has
+// come it says what to do next. The phrase is the group's and the fortress's
+// at once, so other apps join with the same words.
 import { useEffect, useState, type ReactNode } from "react";
-import { SettingRow } from "../../../components/storage/rows";
 import { Card, useOpenPasswordField } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
-import { RevealInput } from "../../../components/RevealInput";
-import { IconEye, IconInfo, IconRetry, IconSignOut } from "../../../components/glyphs";
-import { IconCheck, IconClose, IconCopy, IconPencil } from "../../../components/navGlyphs";
-import {
-  createPhrase,
-  joinGroup,
-  leaveGroup,
-  showPhrase,
-  type GroupState,
-  type PhraseRefusal,
-} from "../../../lib/api";
+import { IconInfo, IconRetry } from "../../../components/glyphs";
+import { IconCheck, IconClose, IconCopy } from "../../../components/navGlyphs";
+import { createPhrase, joinGroup, leaveGroup, type FortressState, type GroupState, type PhraseRefusal } from "../../../lib/api";
 import { copyText } from "../../../lib/clipboard";
 import type { useT } from "../../../lib/i18n";
-import { useReveal } from "../../../lib/useReveal";
 import { useToast } from "../../../lib/toast";
 import { InstanceWindow } from "../../instances/InstanceWindow";
+import { FortressBlock } from "./FortressSection";
 import { PairingWindow } from "./PairingWindow";
 import { usePhraseEntry } from "./PhraseInput";
 import { WordSlots } from "./WordSlots";
@@ -181,7 +173,9 @@ function CloseButton({ onClose, t }: { onClose: () => void; t: T }) {
 
 export function PhraseCard({
   group,
+  view,
   stage,
+  nameRow,
   onCreatedHere,
   onGroup,
   onRefresh,
@@ -189,28 +183,29 @@ export function PhraseCard({
   hueIndex,
 }: {
   group: GroupState;
+  view: FortressState;
+  /** Where this instance stands. With other apps in the fortress it counts as paired. */
   stage: PairStage;
+  /** The row that names this instance, at the top of the card on a phrase. */
+  nameRow: ReactNode;
   /** Tells the page whether the group this instance is in was made here. */
   onCreatedHere: (created: boolean) => void;
   onGroup: (g: GroupState) => void;
-  /** Asks the server for the group again, for "Check again". */
+  /** Asks the server for the group and the fortress again. */
   onRefresh: () => void;
   t: T;
-  hueIndex?: number;
+  hueIndex: number;
 }) {
   const { push } = useToast();
   const openPasswordField = useOpenPasswordField();
+  // The words of a phrase made here, which show once without the password.
   const [phrase, setPhrase] = useState<string | null>(null);
-  // The window over the card: the words to read out, the field for the words
+  // The window over the card: the words just made, the field for the words
   // of a first instance, or the field for another group's words.
   const [shown, setShown] = useState<"words" | "enter" | "join" | null>(null);
-  const [password, setPassword] = useState("");
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const [copies, setCopies] = useState(0);
-  const reveal = useReveal();
-  const shakeCls = shake ? "glim-shake" : "";
 
   async function run(action: () => Promise<void>) {
     setBusy(true);
@@ -232,7 +227,6 @@ export function PhraseCard({
   function forget() {
     setPhrase(null);
     onCreatedHere(false);
-    setConfirmLeave(false);
     setCopies(0);
   }
 
@@ -257,6 +251,7 @@ export function PhraseCard({
       forget();
       setShown(null);
       onGroup(res);
+      onRefresh();
       push(t("pairing.joined"), "success");
       return null;
     } catch (err) {
@@ -265,17 +260,6 @@ export function PhraseCard({
       setBusy(false);
     }
   }
-
-  const show = () =>
-    run(async () => {
-      const res = await showPhrase(password);
-      if (res.ok && res.phrase) {
-        setPhrase(res.phrase);
-        setPassword("");
-      } else {
-        refuse(res.code === "passwordWrong" ? t("pairing.passwordWrong") : res.error);
-      }
-    });
 
   /** leave takes this instance out of its group, then runs then to set up
    *  what the card shows next. */
@@ -286,6 +270,7 @@ export function PhraseCard({
         forget();
         then();
         onGroup(res);
+        onRefresh();
       } else {
         refuse(res.error);
       }
@@ -318,54 +303,8 @@ export function PhraseCard({
     </section>
   );
 
-  const passwordPrompt = (
-    <SettingRow label={t("pairing.passwordLabel")} htmlFor="pairing-password">
-      <RevealInput
-        {...reveal}
-        id="pairing-password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && password !== "") void show();
-        }}
-        autoComplete="current-password"
-        wrapperClassName="w-72 max-w-full"
-        className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-      />
-    </SettingRow>
-  );
-
-  const openWords = () => {
-    setShown("words");
-    // Without a password there is nothing to enter before the words show.
-    if (!phrase && !group.passwordSet) void show();
-  };
-
-  const closeShown = () => {
-    setShown(null);
-    setPassword("");
-  };
-
-  const leaveButton = confirmLeave ? (
-    <Button
-      key={`leave-${shake}`}
-      label={t("pairing.confirmLeave")}
-      labelKey="pairing.confirmLeave"
-      glyph={<IconSignOut />}
-      tone="neutral"
-      onClick={() => void leave(() => {})}
-      disabled={busy}
-      busy={busy}
-      className={shakeCls}
-    />
-  ) : (
-    <Button label={t("pairing.leave")} labelKey="pairing.leave" glyph={<IconSignOut />} tone="neutral" onClick={() => setConfirmLeave(true)} />
-  );
-
-  const enterTip = t("pairing.enterTip").replace(
-    "{path}",
-    [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "),
-  );
+  const enterTip = t("pairing.enterTip").replace("{path}", [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "));
+  const closeShown = () => setShown(null);
 
   const relayHint = (stage === "alone" || stage === "gone") && group.relay.mode !== "off" && !group.relay.connected && (
     <RelayDownLine group={group} onRefresh={onRefresh} t={t} />
@@ -393,25 +332,11 @@ export function PhraseCard({
         footer={
           <>
             <CloseButton onClose={closeShown} t={t} />
-            {phrase ? (
-              copyButton
-            ) : (
-              <Button
-                key={`show-${shake}`}
-                label={t("pairing.show")}
-                labelKey="pairing.show"
-                glyph={<IconEye />}
-                tone="accent"
-                onClick={() => void show()}
-                disabled={busy || password === ""}
-                busy={busy}
-                className={shakeCls}
-              />
-            )}
+            {copyButton}
           </>
         }
       >
-        {phrase ? (
+        {phrase && (
           <div className="flex flex-col gap-2">
             <WordSlots
               words={phrase.split(/\s+/)}
@@ -426,8 +351,6 @@ export function PhraseCard({
               <p className="text-center text-xs text-carbon-textMuted sm:text-end">{t("pairing.qrCaption")}</p>
             )}
           </div>
-        ) : (
-          passwordPrompt
         )}
       </PairingWindow>
     ) : shown === "enter" ? (
@@ -458,121 +381,75 @@ export function PhraseCard({
       />
     ) : null;
 
-  let body: ReactNode;
-  let foot: ReactNode = null;
-  if (stage === "unpaired") {
-    body = (
-      <>
-        {noPasswordNote}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Choice
-            key={`create-${shake}`}
-            glyph={<PhraseGlyph kind="create" size={22} />}
-            title={t("pairing.create")}
-            sub={t("pairing.createSub")}
-            disabled={busy}
-            shaking={shake > 0}
-            onClick={() => void create()}
-          />
-          <Choice
-            glyph={<PhraseGlyph kind="enter" size={22} />}
-            title={t("pairing.enter")}
-            sub={t("pairing.enterSub")}
-            onClick={() => setShown("enter")}
-          />
+  if (stage === "unpaired" && !view.joined) {
+    return (
+      <Card title={t("pairing.phraseTitle")} hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`} hueIndex={hueIndex}>
+        <div className="flex flex-col gap-4.5" data-stage={stage}>
+          {noPasswordNote}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Choice
+              key={`create-${shake}`}
+              glyph={<PhraseGlyph kind="create" size={22} />}
+              title={t("pairing.create")}
+              sub={t("pairing.createSub")}
+              disabled={busy}
+              shaking={shake > 0}
+              onClick={() => void create()}
+            />
+            <Choice glyph={<PhraseGlyph kind="enter" size={22} />} title={t("pairing.enter")} sub={t("pairing.enterSub")} onClick={() => setShown("enter")} />
+          </div>
         </div>
-      </>
-    );
-  } else if (stage === "alone") {
-    body = (
-      <>
-        <p className="text-sm text-carbon-textSub">{t("pairing.aloneLead")}</p>
-        {noPasswordNote}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Choice
-            glyph={<IconEye />}
-            title={t("pairing.notYetTitle")}
-            sub={t("pairing.notYetBody")}
-            onClick={openWords}
-          />
-          <Choice
-            glyph={<PhraseGlyph kind="enter" size={22} />}
-            title={t("pairing.twoTitle")}
-            sub={t("pairing.twoBody")}
-            onClick={() => setShown("join")}
-          />
-        </div>
-        {noRelay && (
-          <p className="text-sm text-carbon-textSub">
-            <strong className="font-semibold text-carbon-text">{t("pairing.otherNetTitle")}</strong> {t("pairing.otherNetBody")}
-          </p>
-        )}
-        {relayHint}
-      </>
-    );
-  } else {
-    body = (
-      <>
-        {noPasswordNote}
-        {relayHint}
-        {stage === "new" && (
-          <>
-            <div className="flex flex-wrap items-center justify-end gap-2 text-subline text-carbon-textMuted">
-              {t("pairing.notFirst")}
-              <Button
-                label={t("pairing.notFirstButton")}
-                labelKey="pairing.notFirstButton"
-                glyph={<PhraseGlyph kind="enter" />}
-                tone="neutral"
-                onClick={() => void leave(() => setShown("enter"))}
-                disabled={busy}
-              />
-            </div>
-            <NextStep t={t} />
-          </>
-        )}
-        {stage !== "new" && (
-          <p className="text-sm text-carbon-textSub">{t(stage === "paired" ? "pairing.pairedHint" : "pairing.searchingHint")}</p>
-        )}
-      </>
-    );
-    foot = (
-      <>
-        {stage === "paired" && (
-          <Button
-            label={t("pairing.notFirstButton")}
-            labelKey="pairing.notFirstButton"
-            glyph={<IconPencil />}
-            tone="neutral"
-            onClick={() => setShown("enter")}
-            disabled={busy}
-          />
-        )}
-        <Button
-          label={t("pairing.show")}
-          labelKey="pairing.show"
-          glyph={<IconEye />}
-          tone="neutral"
-          onClick={openWords}
-          disabled={busy}
-        />
-        {leaveButton}
-      </>
+        {windows}
+      </Card>
     );
   }
 
   return (
-    <Card
-      title={t("pairing.phraseTitle")}
-      hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`}
-      hueIndex={hueIndex}
-      foot={foot}
-    >
-      <div className="flex flex-col gap-4.5" data-stage={stage}>
-        {body}
-      </div>
+    <>
+      <FortressBlock view={view} group={group} onChanged={onRefresh} hueIndex={hueIndex}>
+        {nameRow}
+        <div className="flex flex-col gap-4.5" data-stage={stage}>
+          {noPasswordNote}
+          {stage === "alone" && (
+            <>
+              <p className="text-sm text-carbon-textSub">
+                {t("pairing.aloneLead")} {t("pairing.notYetBody")}
+              </p>
+              <Choice
+                glyph={<PhraseGlyph kind="enter" size={22} />}
+                title={t("pairing.twoTitle")}
+                sub={t("pairing.twoBody")}
+                onClick={() => setShown("join")}
+              />
+              {noRelay && (
+                <p className="text-sm text-carbon-textSub">
+                  <strong className="font-semibold text-carbon-text">{t("pairing.otherNetTitle")}</strong> {t("pairing.otherNetBody")}
+                </p>
+              )}
+            </>
+          )}
+          {relayHint}
+          {stage === "new" && (
+            <>
+              <div className="flex flex-wrap items-center justify-end gap-2 text-subline text-carbon-textMuted">
+                {t("pairing.notFirst")}
+                <Button
+                  label={t("pairing.notFirstButton")}
+                  labelKey="pairing.notFirstButton"
+                  glyph={<PhraseGlyph kind="enter" />}
+                  tone="neutral"
+                  onClick={() => void leave(() => setShown("enter"))}
+                  disabled={busy}
+                />
+              </div>
+              <NextStep t={t} />
+            </>
+          )}
+          {stage === "searching" && <p className="text-sm text-carbon-textSub">{t("pairing.searchingHint")}</p>}
+        </div>
+      </FortressBlock>
       {windows}
-    </Card>
+    </>
   );
 }
 

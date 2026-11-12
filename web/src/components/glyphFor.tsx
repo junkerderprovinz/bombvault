@@ -119,6 +119,10 @@ const RULES: Rule[] = [
   // connects first and previews after, gets the link. Dropping one is the
   // broken link.
   [/unlink/i, () => <IconUnlink />],
+  // Showing the phrase and leaving the group sit in the pairing settings and
+  // pair nothing.
+  [/pairing\.show$/i, () => <IconEye />],
+  [/pairing\.leave$/i, () => <IconSignOut />],
   [/connect|pair|link|reconnect/i, () => <IconLink />],
 
   // Probing and inspection. A test message is sent, not checked.

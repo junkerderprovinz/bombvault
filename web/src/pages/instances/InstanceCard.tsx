@@ -11,6 +11,12 @@ export function InstanceMark() {
   return <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className={`block object-contain ${MARK_BOX}`} />;
 }
 
+/** LogoMark is another app's logo in the same place, from the data URI its
+ *  status carries. An image runs nothing that might hide in the SVG. */
+export function LogoMark({ src }: { src: string }) {
+  return <img src={src} alt="" aria-hidden="true" draggable={false} className={`block object-contain ${MARK_BOX}`} />;
+}
+
 /** LogoImage is the same logo inside a picture, in user units. */
 export function LogoImage({ x, y, size }: { x: number; y: number; size: number }) {
   return <image href="/logo.svg" x={x.toFixed(1)} y={y.toFixed(1)} width={size} height={size} className="glim-logo-image" />;

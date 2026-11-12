@@ -7131,6 +7131,8 @@ export interface FortressMember {
   relay: boolean;
   /** Unix seconds, absent while it was never seen. */
   lastSeen?: number;
+  /** The app's mark as a data URI, once its status was read. Shown only as an image. */
+  logo?: string;
 }
 
 /** Whether the app `from` may run `action` at the app `to`. */
@@ -7147,7 +7149,7 @@ export interface FortressState extends OkEnvelope {
   /** BombVault keeps the phrase to show and change it, which a membership
    *  from the console does not. */
   phrase: boolean;
-  device: string;
+  /** The name this instance goes by without one of its own. */
   defaultDevice: string;
   passwordSet: boolean;
   members: FortressMember[];
@@ -7177,16 +7179,11 @@ export function changeFortressPhrase(password: string): Promise<OkEnvelope & { p
   return fetchJSON("/api/fortress/phrase", { method: "POST", body: JSON.stringify({ password }) });
 }
 
-/** PUT /api/fortress/device - name this server for the other members; "" takes the one it finds. */
-export function setFortressDevice(device: string): Promise<FortressState> {
-  return fetchJSON("/api/fortress/device", { method: "PUT", body: JSON.stringify({ device }) });
-}
-
 export function setFortressPermission(p: FortressPermissionState): Promise<OkEnvelope> {
   return fetchJSON("/api/fortress/permissions", { method: "PUT", body: JSON.stringify(p) });
 }
 
-/** DELETE /api/fortress - leave the fortress. */
+/** DELETE /api/fortress - leave the fortress, and the group on the same phrase with it. */
 export function leaveFortress(): Promise<FortressState> {
   return fetchJSON("/api/fortress", { method: "DELETE" });
 }

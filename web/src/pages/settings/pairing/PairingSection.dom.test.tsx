@@ -1,22 +1,26 @@
 // @vitest-environment jsdom
 // The Pairing page of Settings: three numbered step cards that play one
-// scene, the phrase card, the list of who is in the group, the card that
-// names this instance, and the relay card with its four routes. The phrase
+// scene, the one card of the phrase, the devices that wait, the members as
+// the cards of the Instances tab, the other apps of the fortress, the relay
+// card with its four routes and the ZFS servers. Outside a group the phrase
 // card offers two tiles, generate or enter a phrase, each opening a window;
-// the entry window checks typed words against the word list as they arrive,
-// and after a minute alone the card offers the same two windows as the way
-// out.
+// the entry window checks typed words against the word list as they arrive.
+// On a phrase the card is the fortress's, with the name of this instance,
+// Show phrase, Change and Leave, and after a minute alone it offers to enter
+// the other instance's words instead.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import { I18nProvider, countText, en, useT } from "../../../lib/i18n";
-import type { GroupState, MemberRoles, RelayMode, ZFSReplicaServer } from "../../../lib/api";
+import type { FortressState, GroupState, MemberRoles, RelayMode, ZFSReplicaServer } from "../../../lib/api";
 import { server } from "../../../components/zfs/replica/replica.testsupport";
 import { memberRoles, roleRequest, roleSide } from "../../instances/instances.testsupport";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
 import { LOGIN_PASSWORD_FIELD } from "../shared";
+import { storeShowOthers } from "@glimstone/core";
 
 let group: GroupState;
+let fortress: FortressState;
 let zfs: boolean;
 let roles: MemberRoles[];
 let servers: ZFSReplicaServer[];
@@ -58,6 +62,11 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
   };
 }
 
+function fortressOf(over: Partial<FortressState> = {}): FortressState {
+  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
+}
+const noFortress = () => fortressOf({ joined: false, phrase: false });
+
 const alone = (over: Partial<GroupState> = {}) => makeGroup({ members: [], memberSeen: false, joinedAgo: 90, ...over });
 const outside = (over: Partial<GroupState> = {}) => makeGroup({ active: false, members: [], memberSeen: false, joinedAgo: 0, ...over });
 const noRelay = () => ({ ...makeGroup().relay, mode: "off" as RelayMode, connected: false });
@@ -67,6 +76,15 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getGroup: () => Promise.resolve(group),
+    getFortress: () => Promise.resolve(fortress),
+    showFortressPhrase: (password: string) =>
+      Promise.resolve(!fortress.passwordSet || password === "secret" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" }),
+    leaveFortress: () => {
+      left++;
+      group = outside();
+      fortress = noFortress();
+      return Promise.resolve(fortress);
+    },
     listRoles: () => Promise.resolve({ ok: true, members: roles, self: { receiver: [], fetcher: [], zfs: [] } }),
     listZFSReplicaServers: () => Promise.resolve(servers),
     getZFSReplicaKey: () => Promise.resolve({ publicKey: "ssh-ed25519 AAAA bombvault" }),
@@ -80,6 +98,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     },
     createPhrase: () => {
       group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 });
+      fortress = fortressOf({ passwordSet: group.passwordSet });
       return Promise.resolve({ ok: true, phrase: PHRASE, group });
     },
     showPhrase: (password: string) =>
@@ -88,11 +107,14 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       ),
     joinGroup: (phrase: string) => {
       joined.push(phrase);
-      return Promise.resolve(joinAnswer.ok === false ? joinAnswer : (group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 })));
+      if (joinAnswer.ok === false) return Promise.resolve(joinAnswer);
+      fortress = fortressOf();
+      return Promise.resolve((group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 })));
     },
     leaveGroup: () => {
       left++;
       group = outside();
+      fortress = noFortress();
       return Promise.resolve(group);
     },
     approveMember: (id: string) => {
@@ -124,7 +146,8 @@ function Tab() {
       t={t}
       nextHue={() => hue++}
       zfs={zfs}
-      instanceCard={() => <div data-testid="instance-card" />}
+      nameRow={(name) => <div data-testid="name-row">{name}</div>}
+      giveBack={{ on: false, onChange: () => {} }}
     />
   );
 }
@@ -151,14 +174,14 @@ async function renderTab() {
 }
 
 function phraseCard(): HTMLElement {
-  return document.querySelector("[data-stage]")!.closest(".glim-notch-card") as HTMLElement;
+  return document.querySelector("[data-stage]")!.closest('[data-glim="FortressPairing"], .glim-notch-card') as HTMLElement;
 }
 
 function stage(): string | null {
   return document.querySelector("[data-stage]")?.getAttribute("data-stage") ?? null;
 }
 
-function tile(key: "pairing.create" | "pairing.enter" | "pairing.notYetTitle" | "pairing.twoTitle"): HTMLButtonElement {
+function tile(key: "pairing.create" | "pairing.enter" | "pairing.twoTitle"): HTMLButtonElement {
   return screen.getByRole("button", { name: new RegExp(en[key].replace(/[?]/g, "\\?")) }) as HTMLButtonElement;
 }
 
@@ -176,6 +199,7 @@ function pairButton(): HTMLButtonElement {
 
 beforeEach(() => {
   group = makeGroup();
+  fortress = fortressOf();
   zfs = false;
   roles = [];
   servers = [];
@@ -240,6 +264,7 @@ describe("step cards", () => {
 describe("the tiles outside a group", () => {
   it("offers generate and enter as tiles and opens no window before either is pressed", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     expect(tile("pairing.create").disabled).toBe(false);
     expect(tile("pairing.enter").disabled).toBe(false);
@@ -248,6 +273,7 @@ describe("the tiles outside a group", () => {
 
   it("opens a window on Enter phrase and keeps Pair off until twelve listed words are there", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     const field = within(dialog()).getByLabelText(en["pairing.enterLabel"]);
@@ -261,6 +287,7 @@ describe("the tiles outside a group", () => {
 
   it("names an unknown word with its place before anything is sent", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     const words = PHRASE.split(" ");
@@ -275,6 +302,7 @@ describe("the tiles outside a group", () => {
 
   it("takes a numbered list pasted with line breaks, sends the bare words and closes the window", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     const numbered = PHRASE.split(" ")
@@ -292,6 +320,8 @@ describe("the tiles outside a group", () => {
   it("fills the field from the clipboard with Paste", async () => {
     stubClipboard(() => Promise.resolve(PHRASE));
     group = outside();
+    fortress = noFortress();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     await act(async () => {
@@ -304,6 +334,8 @@ describe("the tiles outside a group", () => {
   it("says how to paste by hand when the browser keeps the clipboard", async () => {
     stubClipboard(() => Promise.reject(new Error("denied")));
     group = outside();
+    fortress = noFortress();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     await act(async () => {
@@ -314,6 +346,7 @@ describe("the tiles outside a group", () => {
 
   it("says the words do not fit together when the server finds the checksum wrong", async () => {
     group = outside();
+    fortress = noFortress();
     joinAnswer = { ok: false, reason: "checksum" };
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
@@ -326,6 +359,7 @@ describe("the tiles outside a group", () => {
 
   it("closes the window with Escape", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     fireEvent.click(tile("pairing.enter"));
     fireEvent.keyDown(document, { key: "Escape" });
@@ -334,6 +368,7 @@ describe("the tiles outside a group", () => {
 
   it("shows the words in a window, then the next step and a new-group badge", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     await act(async () => {
       fireEvent.click(tile("pairing.create"));
@@ -349,6 +384,7 @@ describe("the tiles outside a group", () => {
 
   it("leaves the empty group and opens the entry window when the phrase already exists elsewhere", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     await act(async () => {
       fireEvent.click(tile("pairing.create"));
@@ -378,7 +414,7 @@ describe("the badge and the members", () => {
     await renderTab();
     expect(stage()).toBe("searching");
     expect(screen.getByText(en["pairing.stateSearching"])).not.toBeNull();
-    expect(screen.getByText("0:12")).not.toBeNull();
+    expect(screen.getByTestId("wait-row").textContent).toBe(`${en["pairing.waitPhrase"]}0:12`);
     expect(within(screen.getByTestId("members")).queryByText(en["pairing.paired"])).toBeNull();
   });
 
@@ -394,7 +430,7 @@ describe("the badge and the members", () => {
     expect(screen.getByText(en["pairing.stateAlone"])).not.toBeNull();
   });
 
-  it("lists this instance first, then each member with how it is reached", async () => {
+  it("draws this instance first, then each member with how it is reached, as the Instances tab does", async () => {
     group = makeGroup({
       members: [
         { id: "m1", name: "attic", version: "v9.2.0", direct: false, relay: true, address: "" },
@@ -403,35 +439,27 @@ describe("the badge and the members", () => {
     });
     await renderTab();
     expect(screen.getByTestId("pair-state").textContent).toBe(en["pairing.paired"]);
-    const rows = within(screen.getByTestId("members")).getAllByRole("listitem");
-    expect(rows.map((r) => r.textContent)).toEqual([
-      `cellar${en["instances.thisInstance"]}${en["pairing.paired"]}`,
-      `attic${en["pairing.paired"]} · ${en["pairing.viaRelay"]}`,
-      `garage${en["pairing.paired"]} · ${en["pairing.direct"]}`,
-    ]);
+    const cards = [...screen.getByTestId("members").querySelectorAll<HTMLElement>("[data-instance]")];
+    expect(cards.map((c) => c.dataset.instance)).toEqual(["self", "m1", "m2"]);
+    expect(cards[0].textContent).toContain(en["instances.thisInstance"]);
+    expect(cards[1].textContent).toContain(en["instances.connected"]);
+    expect(cards[1].textContent).toContain(en["pairing.viaRelay"]);
+    expect(cards[2].textContent).toContain(en["pairing.direct"]);
+    for (const card of cards) expect(card.querySelector('img[src="/logo.svg"]')).toBeTruthy();
   });
 
-  it("takes another group's phrase while paired, and leaves this group only once the words are sent", async () => {
+  it("offers no second way to words once paired, since the card holds the one phrase", async () => {
     await renderTab();
-    fireEvent.click(within(phraseCard()).getByRole("button", { name: en["pairing.notFirstButton"] }));
-    const field = within(dialog()).getByLabelText(en["pairing.enterLabel"]);
-    expect(left).toBe(0);
-    expect(joined).toEqual([]);
-    fireEvent.change(field, { target: { value: PHRASE } });
-    await act(async () => {
-      fireEvent.click(pairButton());
-    });
-    expect(left).toBe(0);
-    expect(joined).toEqual([PHRASE]);
+    expect(within(phraseCard()).queryByRole("button", { name: en["pairing.notFirstButton"] })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Show phrase" })).toHaveLength(1);
   });
 
-  it("keeps the members out of the phrase card, which says what the words are for", async () => {
+  it("keeps the members out of the phrase card and puts this instance's name at its top", async () => {
     await renderTab();
     expect(within(phraseCard()).queryByText("attic")).toBeNull();
-    expect(within(phraseCard()).getByText(en["pairing.pairedHint"])).not.toBeNull();
-    expect(
-      within(phraseCard()).getByLabelText(`${en["pairing.phraseTip"]} ${en["pairing.lead"]} ${en["pairing.keyNote"]}`),
-    ).not.toBeNull();
+    expect(within(phraseCard()).getByTestId("name-row").textContent).toBe("Tower");
+    expect(phraseCard().querySelector('[data-fortress="open-change"]')).toBeTruthy();
+    expect(phraseCard().querySelector('[data-fortress="open-leave"]')).toBeTruthy();
   });
 
   it("marks a phone that runs the app", async () => {
@@ -439,8 +467,8 @@ describe("the badge and the members", () => {
       members: [{ id: "m3", name: "Pixel 8", version: "", direct: false, relay: true, address: "", kind: "android" }],
     });
     await renderTab();
-    const row = within(screen.getByTestId("members")).getAllByRole("listitem")[1];
-    expect(row.textContent).toBe(`Pixel 8${en["fleet.kindAndroid"]}${en["pairing.paired"]} · ${en["pairing.viaRelay"]}`);
+    const card = screen.getByTestId("members").querySelector('[data-instance="m3"]')!;
+    expect(card.textContent).toContain(en["fleet.kindAndroid"]);
   });
 
   it("keeps a server that is shut down and a phone with the app closed as inactive, with when each was last seen", async () => {
@@ -452,47 +480,46 @@ describe("the badge and the members", () => {
       ],
     });
     await renderTab();
-    const rows = within(screen.getByTestId("members")).getAllByRole("listitem");
-    expect(rows).toHaveLength(4);
+    const cards = [...screen.getByTestId("members").querySelectorAll<HTMLElement>("[data-instance]")];
+    expect(cards).toHaveLength(4);
     const ago = (key: "time.hoursAgo" | "time.daysAgo", n: number) => en["instances.lastSeen"].replace("{time}", countText(en[key], "en", n));
-    expect(rows[2].textContent).toContain("garage");
-    expect(rows[2].textContent).toContain(ago("time.hoursAgo", 2));
-    expect(rows[3].textContent).toContain(en["fleet.kindAndroid"]);
-    expect(rows[3].textContent).toContain(ago("time.daysAgo", 1));
-    for (const row of rows.slice(2)) {
-      const badge = within(row).getByText(en["instances.inactive"]);
+    expect(cards[2].textContent).toContain("garage");
+    expect(cards[2].textContent).toContain(ago("time.hoursAgo", 2));
+    expect(cards[3].textContent).toContain(en["fleet.kindAndroid"]);
+    expect(cards[3].textContent).toContain(ago("time.daysAgo", 1));
+    for (const card of cards.slice(2)) {
+      const badge = within(card).getByText(en["instances.inactive"]);
       expect(badge.closest('[data-new="pairing-inactive"]')).toBeTruthy();
-      expect(row.textContent).not.toContain(en["pairing.paired"]);
+      expect(card.textContent).not.toContain(en["instances.connected"]);
     }
   });
 
   it("says a member that is away is being checked while the group is still coming back", async () => {
     group = makeGroup({ settling: true, away: [{ id: "m2", name: "garage", address: "", lastSeen: 1 }] });
     await renderTab();
-    const row = within(screen.getByTestId("members")).getAllByRole("listitem")[2];
-    expect(row.textContent).toContain(en["instances.checking"]);
-    expect(row.textContent).not.toContain(en["instances.inactive"]);
+    const card = screen.getByTestId("members").querySelector('[data-instance="m2"]')!;
+    expect(card.textContent).toContain(en["instances.checking"]);
+    expect(card.textContent).not.toContain(en["instances.inactive"]);
   });
 
   it("shows the words again only after the password in a window", async () => {
     await renderTab();
-    fireEvent.click(screen.getByRole("button", { name: en["pairing.show"] }));
-    const win = dialog();
-    expect(within(win).queryAllByRole("listitem")).toEqual([]);
-    fireEvent.change(within(win).getByLabelText(en["pairing.passwordLabel"]), { target: { value: "secret" } });
     await act(async () => {
-      fireEvent.click(within(win).getByRole("button", { name: en["pairing.show"] }));
+      fireEvent.click(screen.getByRole("button", { name: "Show phrase" }));
     });
-    expect(within(dialog()).getAllByRole("listitem")).toHaveLength(12);
+    fireEvent.change(within(dialog()).getByLabelText("Password of BombVault"), { target: { value: "secret" } });
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('[data-fortress="unlock"]')!);
+    });
+    expect(document.querySelectorAll('[data-fortress="words"] li')).toHaveLength(12);
   });
 });
 
 describe("after a minute alone", () => {
-  it("offers the two ways out as tiles, with no hint panel", async () => {
+  it("says to enter the words over there, or to take the other instance's words", async () => {
     group = alone();
     await renderTab();
-    expect(screen.getByText(en["pairing.aloneLead"])).not.toBeNull();
-    expect(tile("pairing.notYetTitle")).not.toBeNull();
+    expect(screen.getByText(`${en["pairing.aloneLead"]} ${en["pairing.notYetBody"]}`)).not.toBeNull();
     expect(tile("pairing.twoTitle")).not.toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -572,7 +599,7 @@ describe("devices that wait", () => {
     });
     await renderTab();
     const list = within(screen.getByTestId("waiting"));
-    expect(list.getByText(en["pairing.pendingTitle"])).toBeTruthy();
+    expect(screen.getByText(en["pairing.pendingTitle"])).toBeTruthy();
     expect(list.getByText(en["pairing.fingerprint"].replace("{fingerprint}", "1a2b 3c4d 5e6f 7a8b"))).toBeTruthy();
     expect(list.getByText(en["pairing.ownKey"].replace("{fingerprint}", "9f8e 7d6c 5b4a 3928"))).toBeTruthy();
     await act(async () => {
@@ -606,13 +633,14 @@ describe("the word list", () => {
 });
 
 describe("the instances card", () => {
-  it("offers a ZFS server without BombVault as its last row and connects one over SSH", async () => {
+  it("offers a ZFS server without BombVault after the members and connects one over SSH", async () => {
     zfs = true;
     await renderTab();
     const row = screen.getByTestId("zfs-row");
-    expect(row.textContent).toContain(en["pairing.group.zfsTitle"]);
+    const card = row.closest(".glim-notch-card") as HTMLElement;
+    expect(card.textContent).toContain(en["pairing.group.zfsTitle"]);
     expect(row.textContent).toContain(en["pairing.group.zfsNone"]);
-    expect(within(row).getByLabelText(en["pairing.group.zfsTip"])).not.toBeNull();
+    expect(within(card).getByLabelText(en["pairing.group.zfsTip"])).not.toBeNull();
     expect(screen.getByTestId("members").compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await act(async () => {
       fireEvent.click(within(row).getByRole("button", { name: en["pairing.group.zfsConnect"] }));
@@ -633,21 +661,23 @@ describe("the instances card", () => {
     expect(screen.queryByTestId("zfs-row")).toBeNull();
   });
 
-  it("lists the group without drawing it, since the Instances page draws the network", async () => {
+  it("draws the members without the network picture, which the Instances page shows", async () => {
     zfs = true;
     servers = [server()];
     roles = [memberRoles({ byMember: roleSide({ receiver: roleRequest({ state: "allowed" }) }) })];
     await renderTab();
-    expect(within(screen.getByTestId("members")).getAllByRole("listitem").length).toBeGreaterThan(1);
+    expect(screen.getByTestId("members").querySelectorAll("[data-instance]").length).toBeGreaterThan(1);
     expect(screen.queryByTestId("net-picture")).toBeNull();
   });
 
-  it("is only the list while this instance is alone", async () => {
+  it("draws no members outside a group, only the tiles to make or enter a phrase", async () => {
     group = outside();
+    fortress = noFortress();
     await renderTab();
     expect(screen.queryByTestId("net-picture")).toBeNull();
-    expect(within(screen.getByTestId("members")).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.queryByTestId("members")).toBeNull();
     expect(screen.queryByTestId("pair-state")).toBeNull();
+    expect(tile("pairing.create")).not.toBeNull();
   });
 });
 
@@ -849,6 +879,7 @@ describe("relay card", () => {
 describe("phrase card without a login password", () => {
   it("warns plainly, leads to the password field on the Security page and still pairs", async () => {
     group = outside({ passwordSet: false });
+    fortress = noFortress();
     await renderTab();
     const note = screen.getByTestId("no-password");
     expect(note.textContent).toContain(en["pairing.noPasswordTitle"]);
@@ -867,12 +898,13 @@ describe("phrase card without a login password", () => {
 
   it("shows the words without asking for a password there is none of", async () => {
     group = makeGroup({ passwordSet: false });
+    fortress = fortressOf({ passwordSet: false });
     await renderTab();
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["pairing.show"] }));
+      fireEvent.click(screen.getByRole("button", { name: "Show phrase" }));
     });
-    expect(within(dialog()).queryByLabelText(en["pairing.passwordLabel"])).toBeNull();
-    expect(within(dialog()).getAllByRole("listitem")).toHaveLength(12);
+    expect(screen.queryByLabelText("Password of BombVault")).toBeNull();
+    expect(document.querySelectorAll('[data-fortress="words"] li')).toHaveLength(12);
   });
 
   it("keeps the warning out of the way once a password is set", async () => {
@@ -882,17 +914,15 @@ describe("phrase card without a login password", () => {
 });
 
 describe("a group that moved into the fortress", () => {
-  it("says it runs on the fortress phrase, names who has not followed and offers no phrase of its own", async () => {
+  it("names who has not followed under the members and keeps the one card of the phrase", async () => {
     group = makeGroup({ fortress: true, oldPhrase: ["attic", "pixel"] });
     await renderTab();
-    expect(screen.getByText(en["pairing.movedTitle"])).toBeTruthy();
-    expect(screen.getByText(en["pairing.moved"])).toBeTruthy();
     expect(screen.getByText(en["pairing.oldPhrase"].replace("{names}", "attic and pixel"))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: en["pairing.show"] })).toBeNull();
-    expect(document.querySelector("[data-stage]")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Show phrase" })).toHaveLength(1);
+    expect(stage()).toBe("paired");
   });
 
-  it("lists the devices that did not come along by name and kind, without an address, and takes one out on the second click", async () => {
+  it("draws the devices that did not come along by name and kind, without an address, and takes one out on the second click", async () => {
     group = makeGroup({
       fortress: true,
       away: [{ id: "m2", name: "garage", address: "https://192.168.1.22:3443", lastSeen: 1 }],
@@ -903,25 +933,23 @@ describe("a group that moved into the fortress", () => {
     });
     await renderTab();
     const list = screen.getByTestId("behind");
-    expect(within(list).getByText(en["pairing.behindTitle"])).toBeTruthy();
-    expect(within(list).getByLabelText(en["pairing.behindTip"])).toBeTruthy();
-    const rows = within(list).getAllByRole("listitem");
-    expect(rows.map((r) => r.textContent)).toEqual([
-      `barn${en["pairing.kindInstance"]}${en["fleet.remove"]}`,
-      `Pixel 8${en["fleet.kindAndroid"]}${en["fleet.remove"]}`,
-    ]);
-    for (const row of rows) expect(row.querySelector("svg")).toBeTruthy();
+    const cards = [...list.querySelectorAll<HTMLElement>("[data-instance]")];
+    expect(cards.map((c) => c.dataset.instance)).toEqual(["m3", "p1"]);
+    expect(cards[0].textContent).toContain(en["pairing.behindTitle"]);
+    expect(cards[0].textContent).toContain(en["pairing.kindInstance"]);
+    expect(cards[1].textContent).toContain(en["fleet.kindAndroid"]);
+    expect(within(cards[0]).getByLabelText(en["pairing.behindTip"])).toBeTruthy();
     expect(list.textContent).not.toMatch(/192\.168|:3443/);
 
     await act(async () => {
-      fireEvent.click(within(rows[0]).getByRole("button", { name: en["fleet.remove"] }));
+      fireEvent.click(within(cards[0]).getByRole("button", { name: en["fleet.remove"] }));
     });
     expect(removed).toEqual([]);
     await act(async () => {
-      fireEvent.click(within(rows[0]).getByRole("button", { name: en["fleet.confirmRemove"] }));
+      fireEvent.click(within(cards[0]).getByRole("button", { name: en["fleet.confirmRemove"] }));
     });
     expect(removed).toEqual(["m3"]);
-    expect(within(screen.getByTestId("behind")).getAllByRole("listitem")).toHaveLength(1);
+    expect(screen.getByTestId("behind").querySelectorAll("[data-instance]")).toHaveLength(1);
   });
 
   it("shows no list of devices left behind while nobody is", async () => {
@@ -933,7 +961,46 @@ describe("a group that moved into the fortress", () => {
   it("says nothing about the old phrase once everybody followed", async () => {
     group = makeGroup({ fortress: true, oldPhrase: [] });
     await renderTab();
-    expect(screen.getByText(en["pairing.moved"])).toBeTruthy();
+    expect(screen.getByTestId("members")).toBeTruthy();
     expect(screen.queryByText(/old phrase/)).toBeNull();
+  });
+});
+
+describe("one phrase for everything", () => {
+  const knight = { id: "k1", app: "knightloader", name: "KnightLoader", version: "2.1.0", device: "Bottich", deployment: "container", kind: "instance", online: true, relay: false };
+
+  it("shows the phrase in one place once other apps are in the fortress, and draws them under the members", async () => {
+    storeShowOthers(true);
+    fortress = fortressOf({ members: [knight] });
+    await renderTab();
+    expect(screen.getAllByRole("button", { name: "Show phrase" })).toHaveLength(1);
+    expect(document.querySelector('[data-instance="app-knightloader"]')).toBeTruthy();
+    expect(screen.getByTestId("members").compareDocumentPosition(document.querySelector('[data-instance="app-knightloader"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("has no line that waits for an instance while other apps are in the fortress", async () => {
+    group = alone({ joinedAgo: 12 });
+    fortress = fortressOf({ members: [knight] });
+    await renderTab();
+    expect(screen.queryByTestId("wait-row")).toBeNull();
+    expect(screen.queryByText(en["pairing.searchingHint"])).toBeNull();
+    expect(stage()).toBe("paired");
+  });
+
+  it("says outside a fortress that it waits for an instance with this phrase", async () => {
+    group = alone({ joinedAgo: 12 });
+    await renderTab();
+    expect(screen.getByTestId("wait-row").textContent).toContain(en["pairing.waitPhrase"]);
+    expect(en["pairing.waitPhrase"]).toMatch(/this phrase/);
+  });
+
+  it("leaves the group and the fortress together from the card", async () => {
+    await renderTab();
+    fireEvent.click(document.querySelector<HTMLButtonElement>('[data-fortress="open-leave"]')!);
+    await act(async () => {
+      fireEvent.click(document.querySelector<HTMLButtonElement>('[data-fortress="leave"]')!);
+    });
+    expect(left).toBe(1);
+    expect(await screen.findByRole("button", { name: new RegExp(en["pairing.create"]) })).toBeTruthy();
   });
 });

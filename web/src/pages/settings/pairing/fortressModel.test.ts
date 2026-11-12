@@ -38,6 +38,20 @@ describe("fortressApps", () => {
   });
 });
 
+describe("fortressApps logos", () => {
+  it("gives each app the logo the first of its instances published", () => {
+    const [app] = fortressApps(
+      [member({}), member({ id: "m2", device: "Cellar", logo: "data:image/svg+xml;base64,PHN2Zy8+" }), member({ id: "m3", logo: "data:image/svg+xml;base64,b3RoZXI=" })],
+      String,
+    );
+    expect(app.logo).toBe("data:image/svg+xml;base64,PHN2Zy8+");
+  });
+
+  it("leaves an app that published none without one", () => {
+    expect(fortressApps([member({})], String)[0].logo).toBeUndefined();
+  });
+});
+
 describe("fortressPermissions", () => {
   const members = [member({}), member({ id: "m2", app: "firesquire", name: "FireSquire" })];
 
@@ -54,6 +68,11 @@ describe("fortressPermissions", () => {
       { id: "towertorch bombvault backup.request", from: "towertorch", to: ["bombvault"], on: true, title: en["fortress.action.backupRequest"], detail: "TowerTorch at BombVault" },
       { id: "bombvault firesquire backup.export", from: "bombvault", to: ["firesquire"], on: false, title: en["fortress.action.backupExport"], detail: "BombVault at FireSquire" },
     ]);
+  });
+
+  it("words giving an app its own backup back", () => {
+    const [p] = fortressPermissions([{ from: "bombvault", to: "towertorch", action: "backup.import", on: true }], members, t);
+    expect(p.title).toBe(en["fortress.action.backupImport"]);
   });
 
   it("shows an action it has no words for by its name", () => {
