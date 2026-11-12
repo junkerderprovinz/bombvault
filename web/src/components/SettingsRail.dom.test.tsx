@@ -121,3 +121,15 @@ it("walks a strip with the left and right arrows and brings the focused tile int
     delete (HTMLElement.prototype as Partial<HTMLElement>).scrollBy;
   }
 });
+
+it("keeps a column's tiles at the row's height however tall the rail stands", () => {
+  render(
+    <MemoryRouter initialEntries={["/settings/look"]}>
+      <SettingsRail items={ITEMS} active="look" label="Settings pages" form="column" onReorder={() => {}} />
+    </MemoryRouter>
+  );
+  for (const tile of screen.getAllByRole("link")) {
+    expect(tile.className.split(" ")).not.toContain("grow");
+    expect(tile.className).toContain("min-h-(--nav-row-h)");
+  }
+});

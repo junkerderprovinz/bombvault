@@ -284,8 +284,8 @@ function RailTile({ item, hue, on, tabStop, strip, glyphs, reactive, showIcon, l
   const shape = strip
     ? `shrink-0 flex-row justify-center whitespace-nowrap ${glyphs ? "w-(--nav-row-h)" : reactive ? "px-3" : "gap-2 px-4"}`
     : stacked
-      ? `w-full grow basis-0 flex-col justify-center gap-0.5 px-2 ${reactive ? "min-h-12 py-1" : "min-h-10 py-1.5"}`
-      : "w-full grow basis-0 min-h-10 flex-row gap-3 px-3";
+      ? `w-full flex-col justify-center gap-0.5 px-2 ${reactive ? "min-h-12 py-1" : "min-h-(--nav-row-h) py-1.5"}`
+      : "w-full min-h-(--nav-row-h) flex-row gap-3 px-3 py-1";
   const name = glyphs
     ? "sr-only"
     : reactive
@@ -294,9 +294,8 @@ function RailTile({ item, hue, on, tabStop, strip, glyphs, reactive, showIcon, l
         : "glim-rail-caption text-xs"
       : strip
         ? undefined
-        : // Two lines at 20px fill the 40px floor without cutting a
-          // descender; the clip reaches further for the marks Arabic and
-          // Devanagari set outside the line.
+        : // The clip reaches past two lines at 20px for the marks Arabic
+          // and Devanagari set outside the line.
           "line-clamp-2 overflow-clip [overflow-clip-margin:3px] break-words text-balance leading-5";
   const reveals = strip && reactive && !glyphs;
   return (
@@ -330,8 +329,8 @@ function RailTile({ item, hue, on, tabStop, strip, glyphs, reactive, showIcon, l
         ]
           .filter(Boolean)
           .join(" ")}
-        // A column's tiles share its height, so the row token's fixed height
-        // gives way to the flex share. A strip's keep the token.
+        // A column's tile grows past the row token's height when its name
+        // takes two lines. A strip's keep the token.
         style={
           {
             ...hueVars(hue),
