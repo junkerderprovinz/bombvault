@@ -61,7 +61,7 @@ export interface GiveBack {
 }
 
 /** Others is the switch that shows the other apps of the fortress on this
- *  device, which stands at the top of the fortress's card. */
+ *  device, which stands last in the fortress's card. */
 export interface Others {
   apps: FortressApp[];
   on: boolean;
@@ -140,12 +140,14 @@ export function FortressBlock({
         pairedWith={view.pairedWith}
         labelKeys={LABEL_KEYS}
         hueIndex={hueIndex}
+        after={
+          others && (
+            <FieldRow label={text.showOthers} hint={`${text.about} ${othersLine(text, lang, others.apps)}`}>
+              <Toggle label={text.showOthers} hideLabel checked={others.on} onChange={others.onChange} />
+            </FieldRow>
+          )
+        }
       >
-        {others && (
-          <FieldRow label={text.showOthers} hint={`${text.about} ${othersLine(text, lang, others.apps)}`}>
-            <Toggle label={text.showOthers} hideLabel checked={others.on} onChange={others.onChange} />
-          </FieldRow>
-        )}
         {children}
         {view.joined && !view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
       </FortressPairing>

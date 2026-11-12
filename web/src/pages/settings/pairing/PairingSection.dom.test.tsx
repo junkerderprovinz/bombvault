@@ -1005,14 +1005,14 @@ describe("one phrase for everything", () => {
     expect(screen.getByTestId("members").compareDocumentPosition(document.querySelector('[data-instance="app-knightloader"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("puts the switch for the other apps at the top of the fortress's card, and the fortress keeps none of its own", async () => {
+  it("puts the switch for the other apps last in the fortress's card, and the fortress keeps none of its own", async () => {
     storeShowOthers(false);
     fortress = fortressOf({ members: [knight] });
     await renderTab();
     expect(document.querySelector('[data-fortress="others"]')).toBeNull();
     const card = phraseCard();
     const others = within(card).getByRole("switch", { name: "Show the other apps of the fortress" });
-    expect(within(card).getByTestId("name-row").compareDocumentPosition(others) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(card.querySelector('[data-fortress="open-leave"]')!.compareDocumentPosition(others) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(document.querySelector('[data-instance="app-knightloader"]')).toBeNull();
     await act(async () => fireEvent.click(others));
     expect(document.querySelector('[data-instance="app-knightloader"]')).toBeTruthy();
