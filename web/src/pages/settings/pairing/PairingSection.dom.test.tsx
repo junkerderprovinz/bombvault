@@ -918,6 +918,22 @@ describe("phrase card without a login password", () => {
     expect(document.querySelectorAll('[data-fortress="words"] li')).toHaveLength(12);
   });
 
+  it("stands between the three steps and the fortress's card, and stays away on this device once closed", async () => {
+    group = makeGroup({ passwordSet: false });
+    await renderTab();
+    const note = screen.getByTestId("no-password");
+    expect(phraseCard().contains(note)).toBe(false);
+    expect(note.compareDocumentPosition(phraseCard()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.querySelector("[data-step-frame]")!.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(within(note).getByRole("button", { name: en["common.close"] }));
+    });
+    expect(screen.queryByTestId("no-password")).toBeNull();
+    cleanup();
+    await renderTab();
+    expect(screen.queryByTestId("no-password")).toBeNull();
+  });
+
   it("keeps the warning out of the way once a password is set", async () => {
     await renderTab();
     expect(screen.queryByTestId("no-password")).toBeNull();

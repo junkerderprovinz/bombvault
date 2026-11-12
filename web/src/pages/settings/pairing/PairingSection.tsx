@@ -6,15 +6,19 @@
 // which are set up once.
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { storedShowOthers, storeShowOthers } from "@glimstone/core";
+import { Button } from "../../../components/Button";
+import { IconClose } from "../../../components/navGlyphs";
 import { getFortress, getGroup, type FortressState, type GroupState } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
+import { useOpenPasswordField } from "../shared";
 import { fortressApps } from "./fortressModel";
 import { OtherApps, type GiveBack } from "./FortressSection";
 import { MemberCards, WaitingCard, ZfsCard } from "./Members";
 import { PairingSteps } from "./PairingSteps";
 import { PhraseCard, useJoinedAgo } from "./PhraseCard";
 import { RelayCard } from "./RelayCard";
+import { PhraseGlyph } from "./pairingArt";
 import { pairStage } from "./pairStage";
 
 type T = ReturnType<typeof useT>["t"];
@@ -22,6 +26,49 @@ type T = ReturnType<typeof useT>["t"];
 // How often the page asks again who is reachable. Members come and go with the
 // relay connection and the local network, which nothing pushes here.
 const REFRESH_MS = 10_000;
+
+// Where a closed warning about the missing password is remembered, on this device.
+const NO_PASSWORD_CLOSED = "bv-no-password-closed";
+
+function noPasswordClosed(): boolean {
+  try {
+    return localStorage.getItem(NO_PASSWORD_CLOSED) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** NoPasswordNote warns that pairing without a login password hands the words,
+ *  and with them every member's backups, to whoever opens the page. It stands
+ *  until a password is set or it is closed on this device. */
+function NoPasswordNote({ group, t }: { group: GroupState; t: T }) {
+  const openPasswordField = useOpenPasswordField();
+  const [closed, setClosed] = useState(noPasswordClosed);
+  if (group.passwordSet || closed) return null;
+  const close = () => {
+    try {
+      localStorage.setItem(NO_PASSWORD_CLOSED, "1");
+    } catch {
+      // A browser that keeps nothing shows it again next time.
+    }
+    setClosed(true);
+  };
+  return (
+    <section className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-card bg-statusWarnBgSoft p-4" data-testid="no-password">
+      <span className="shrink-0 text-statusWarn">
+        <PhraseGlyph kind="warn" size={22} />
+      </span>
+      <div className="min-w-0 flex-[1_1_18rem]">
+        <p className="text-title font-semibold text-carbon-text">{t("pairing.noPasswordTitle")}</p>
+        <p className="mt-0.5 text-sm leading-relaxed text-carbon-text">{t("pairing.noPasswordHint")}</p>
+      </div>
+      <span className="flex items-center gap-2">
+        <Button label={t("auth.setPassword")} labelKey="auth.setPassword" tone="accent" onClick={openPasswordField} />
+        <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} glyphOnly tone="subtle" onClick={close} />
+      </span>
+    </section>
+  );
+}
 
 /** take reserves n rainbow positions in a row, for the fortress's switch, its
  *  cards and its permissions, and returns the first. */
@@ -140,6 +187,7 @@ export function PairingSection({
   return (
     <>
       <PairingSteps t={t} hues={hues} />
+      {group && <NoPasswordNote group={group} t={t} />}
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
       {group && view && (
         <Cards

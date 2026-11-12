@@ -5,7 +5,7 @@
 // come it says what to do next. The phrase is the group's and the fortress's
 // at once, so other apps join with the same words.
 import { useEffect, useState, type ReactNode } from "react";
-import { Card, useOpenPasswordField } from "../shared";
+import { Card } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { IconInfo, IconRetry } from "../../../components/glyphs";
@@ -199,7 +199,6 @@ export function PhraseCard({
   others?: Others;
 }) {
   const { push } = useToast();
-  const openPasswordField = useOpenPasswordField();
   // The words of a phrase made here, which show once without the password.
   const [phrase, setPhrase] = useState<string | null>(null);
   // The window over the card: the words just made, the field for the words
@@ -284,27 +283,6 @@ export function PhraseCard({
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
-  // Pairing works without a login password, but then whoever opens this page
-  // holds the words and, through the group, every member's restic password.
-  // The warning stays until a password is set.
-  const noPasswordNote = !group.passwordSet && (
-    <section className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-control bg-statusWarnBgSoft p-4" data-testid="no-password">
-      <span className="shrink-0 text-statusWarn">
-        <PhraseGlyph kind="warn" size={22} />
-      </span>
-      <div className="min-w-0 flex-[1_1_18rem]">
-        <p className="text-title font-semibold text-carbon-text">{t("pairing.noPasswordTitle")}</p>
-        <p className="mt-0.5 text-sm leading-relaxed text-carbon-text">{t("pairing.noPasswordHint")}</p>
-      </div>
-      <Button
-        label={t("auth.setPassword")}
-        labelKey="auth.setPassword"
-        tone="accent"
-        onClick={openPasswordField}
-      />
-    </section>
-  );
-
   const enterTip = t("pairing.enterTip").replace("{path}", [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "));
   const closeShown = () => setShown(null);
 
@@ -387,7 +365,6 @@ export function PhraseCard({
     return (
       <Card title={t("pairing.phraseTitle")} hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`} hueIndex={hueIndex}>
         <div className="flex flex-col gap-4.5" data-stage={stage}>
-          {noPasswordNote}
           <RemovedHere view={view} />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Choice
@@ -412,7 +389,6 @@ export function PhraseCard({
       <FortressBlock view={view} group={group} onChanged={onRefresh} hueIndex={hueIndex} others={others}>
         {nameRow}
         <div className="flex flex-col gap-4.5" data-stage={stage}>
-          {noPasswordNote}
           <RemovedHere view={view} />
           {stage === "alone" && (
             <>
