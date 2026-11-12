@@ -10,7 +10,7 @@ import { useSettings } from "../settingsStore";
 
 export function PairingPage() {
   const { t } = useT();
-  const { settings, setSettings, save, toggleDomainEnabled, domainToggleBusy, domainToggleShake, fieldPulse } = useSettings();
+  const { settings, setSettings, save, toggleDomainEnabled } = useSettings();
 
   // The emergency window sends a new install here to join the group that
   // keeps its key.
@@ -41,9 +41,6 @@ export function PairingPage() {
         giveBack={{
           on: settings.appImportEnabled,
           onChange: (on) => void toggleDomainEnabled("appImportEnabled", on),
-          busy: domainToggleBusy.appImportEnabled,
-          shakeNonce: domainToggleShake.appImportEnabled,
-          pulseNonce: fieldPulse.appImportEnabled,
         }}
       />
     </div>

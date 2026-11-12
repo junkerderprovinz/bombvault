@@ -269,7 +269,29 @@ describe("the other apps", () => {
     expect(foot.textContent).toBe("RemoveOpens only on Bottich");
   });
 
-  it("word giving an app its own backup back, with the switch for it under that permission alone", () => {
+  it("give an app its own backup back with one switch, which also lets backups go back at all", async () => {
+    view = state({
+      members: [member({}), member({ id: "s1", app: "shiplog", name: "ShipLog" })],
+      permissions: [
+        { from: "bombvault", to: "knightloader", action: "backup.import", on: true },
+        { from: "bombvault", to: "shiplog", action: "backup.import", on: false },
+      ],
+    });
+    const flipped: boolean[] = [];
+    renderApps({ on: false, onChange: (on) => flipped.push(on) });
+    expect(screen.queryByRole("switch", { name: en["appImport.toggle"] })).toBeNull();
+    expect(screen.getAllByText(en["appImport.toggleHint"])).toHaveLength(1);
+    const toggles = screen.getAllByRole("switch").filter((s) => s.closest("[data-permission]"));
+    expect(toggles.map((s) => s.getAttribute("aria-checked"))).toEqual(["false", "false"]);
+    await act(async () => fireEvent.click(toggles[0]));
+    expect(calls).toEqual([]);
+    expect(flipped).toEqual([true]);
+    await act(async () => fireEvent.click(toggles[1]));
+    expect(calls).toEqual(["permission backup.import true"]);
+    expect(flipped).toEqual([true, true]);
+  });
+
+  it("keep backups going back while another app still may take its own", async () => {
     view = state({
       members: [member({}), member({ id: "s1", app: "shiplog", name: "ShipLog" })],
       permissions: [
@@ -278,12 +300,11 @@ describe("the other apps", () => {
       ],
     });
     const flipped: boolean[] = [];
-    renderApps({ on: false, onChange: (on) => flipped.push(on) });
-    expect(screen.getAllByText(en["fortress.action.backupImport"])).toHaveLength(2);
-    const toggles = screen.getAllByRole("switch", { name: en["appImport.toggle"] });
-    expect(toggles).toHaveLength(1);
-    fireEvent.click(toggles[0]);
-    expect(flipped).toEqual([true]);
+    renderApps({ on: true, onChange: (on) => flipped.push(on) });
+    const toggles = screen.getAllByRole("switch").filter((s) => s.closest("[data-permission]"));
+    await act(async () => fireEvent.click(toggles[0]));
+    expect(calls).toEqual(["permission backup.import false"]);
+    expect(flipped).toEqual([]);
   });
 });
 

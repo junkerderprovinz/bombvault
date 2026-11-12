@@ -36,7 +36,6 @@ import {
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
-import { ToggleRow } from "../shared";
 import { fortressPermissions, permissionOf } from "./fortressModel";
 
 const APP = { id: "bombvault", name: "BombVault" };
@@ -51,14 +50,11 @@ const LABEL_KEYS = {
   later: "fortress.dismiss",
 };
 
-/** GiveBack is the switch that lets the apps in the fortress take their own
- *  backups back, with what saving it needs. */
+/** GiveBack is the setting that lets the apps in the fortress take their own
+ *  backups back at all. */
 export interface GiveBack {
   on: boolean;
   onChange: (on: boolean) => void;
-  busy?: boolean;
-  shakeNonce?: number;
-  pulseNonce?: number;
 }
 
 /** useFortressText is GlimStone's words for the fortress with BombVault's own
@@ -350,8 +346,9 @@ function AppCard({
 }
 
 /** OtherApps is the rest of the fortress: the switch that shows the other
- *  apps, their cards with Remove, and the permissions, with giving backups
- *  back under the permission it goes with. */
+ *  apps, their cards with Remove, and the permissions. Giving an app its own
+ *  backup back needs the permission and the setting that lets backups go back
+ *  at all, so its one switch turns both. */
 export function OtherApps({
   view,
   apps,
@@ -371,12 +368,23 @@ export function OtherApps({
   const { push } = useToast();
   const text = useFortressText(group.relay.mode === "off");
   const [onChangePhrase, passwordWindow] = usePhraseChange(view, text, onChanged);
-  const permissions = fortressPermissions(view.permissions, view.members, t);
-  const giveBackAt = permissions.find((p) => p.from === APP.id && p.id.endsWith(" backup.import"))?.id;
+  const all = fortressPermissions(view.permissions, view.members, t);
+  const givesBack = (p: FortressPermission | undefined) => !!giveBack && !!p && p.from === APP.id && p.id.endsWith(" backup.import");
+  const permissions = all.map((p) => (givesBack(p) ? { ...p, on: p.on && !!giveBack?.on } : p));
+  const giveBackAt = all.find(givesBack)?.id;
 
   const onPermission = async (id: string, on: boolean): Promise<FortressAnswer> => {
-    const r = await setFortressPermission(permissionOf(id, on));
-    if (!r.ok) return { error: r.error ?? text.failed };
+    const p = all.find((q) => q.id === id);
+    // A give-back switch shown off over a permission that is on lacks only the setting.
+    if (!givesBack(p) || p?.on !== on) {
+      const r = await setFortressPermission(permissionOf(id, on));
+      if (!r.ok) return { error: r.error ?? text.failed };
+    }
+    if (giveBack && givesBack(p)) {
+      // The setting stays on while another app may still take its backup back.
+      const othersOn = all.some((q) => q.id !== id && givesBack(q) && q.on);
+      if (on ? !giveBack.on : giveBack.on && !othersOn) giveBack.onChange(on);
+    }
     onChanged();
     return { ok: true };
   };
@@ -404,18 +412,7 @@ export function OtherApps({
         removed={view.removed.map((r) => fill(text.memberOn, { app: r.name, device: r.device }))}
         renderApp={(app, hueIndex, remove) => <AppCard app={app} text={text} hueIndex={hueIndex} remove={remove} />}
         permissionExtra={(p: FortressPermission) =>
-          giveBack &&
-          p.id === giveBackAt && (
-            <ToggleRow
-              label={t("appImport.toggle")}
-              hint={t("appImport.toggleHint")}
-              checked={giveBack.on}
-              onChange={giveBack.onChange}
-              disabled={giveBack.busy}
-              shakeNonce={giveBack.shakeNonce}
-              pulseNonce={giveBack.pulseNonce}
-            />
-          )
+          p.id === giveBackAt && <p className="text-xs text-carbon-textMuted">{t("appImport.toggleHint")}</p>
         }
         labelKeys={LABEL_KEYS}
         hueStart={hueStart}
