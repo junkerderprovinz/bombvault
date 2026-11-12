@@ -81,7 +81,7 @@ BombVault는 MQTT 디스커버리를 통해 Home Assistant에 기기로 나타�
 
 | 엔티티 | 보여 주는 것 |
 |---|---|
-| Status | `ok`, `warning`, `failed`, `off`. 켜져 있는 도메인 중 가장 나쁜 상태. 첫 백업을 기다리는 도메인은 그 백업의 예정 시점이 지나야 계산에 들어가고, 최신 상태인 도메인이 있어야만 상태가 `ok`가 됩니다 |
+| Status | `ok`, `warning`, `overdue`, `failed`, `off`. 켜져 있는 도메인 중 가장 나쁜 상태. 첫 백업을 기다리는 도메인은 그 백업의 예정 시점이 지나야 계산에 들어가고, 최신 상태인 도메인이 있어야만 상태가 `ok`가 됩니다. `overdue`는 개요와 같이 도메인의 마지막 백업이 간격의 두 배보다 오래되었다는 뜻입니다 |
 | Running job | 지금 실행 중인 것, 또는 `idle` |
 | Open anomalies | 열린 이상 징후의 수 |
 | Next scheduled backup | 다음 예정된 백업이 시작되는 시점 |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-상태가 `failed`가 되면 휴대폰에 알려 주는 자동화입니다.
+상태가 `failed` 또는 `overdue`가 되면 휴대폰에 알려 주는 자동화입니다.
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

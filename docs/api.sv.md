@@ -81,7 +81,7 @@ Enheten heter BombVault, eller BombVault med instansnamnet inom parentes, och ha
 
 | Entitet | Vad den visar |
 |---|---|
-| Status | `ok`, `warning`, `failed` eller `off`, det sämsta av de påslagna avsnitten. Ett avsnitt som väntar på sin första säkerhetskopia räknas först när den skulle ha körts, och bara ett aktuellt avsnitt ger statusen `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` eller `off`, det sämsta av de påslagna avsnitten. Ett avsnitt som väntar på sin första säkerhetskopia räknas först när den skulle ha körts, och bara ett aktuellt avsnitt ger statusen `ok`. `overdue` betyder, som i översikten, att ett avsnitts senaste säkerhetskopia är äldre än två intervall |
 | Running job | Vad som körs nu, eller `idle` |
 | Open anomalies | Hur många avvikelser som är öppna |
 | Next scheduled backup | När nästa schemalagda kopia startar |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-En automation som talar om för din telefon när statusen blir `failed`:
+En automation som talar om för din telefon när statusen blir `failed` eller `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

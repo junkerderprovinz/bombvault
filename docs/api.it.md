@@ -81,7 +81,7 @@ Il dispositivo si chiama BombVault, oppure BombVault con il nome dell'istanza tr
 
 | Entità | Cosa mostra |
 |---|---|
-| Status | `ok`, `warning`, `failed` oppure `off`, il peggiore tra i domini attivati. Un dominio in attesa del primo backup conta solo quando quel backup era previsto, e solo un dominio aggiornato rende lo stato `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` oppure `off`, il peggiore tra i domini attivati. Un dominio in attesa del primo backup conta solo quando quel backup era previsto, e solo un dominio aggiornato rende lo stato `ok`. `overdue` significa, come nella panoramica, che l'ultimo backup di un dominio è più vecchio di due intervalli |
 | Running job | Cosa gira ora, oppure `idle` |
 | Open anomalies | Quante anomalie sono aperte |
 | Next scheduled backup | Quando parte il prossimo backup pianificato |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Un'automazione che avvisa il telefono quando lo stato diventa `failed`:
+Un'automazione che avvisa il telefono quando lo stato diventa `failed` oppure `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

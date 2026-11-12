@@ -81,7 +81,7 @@ Az eszköz neve BombVault, vagy BombVault a példány nevével zárójelben, és
 
 | Entitás | Mit mutat |
 |---|---|
-| Status | `ok`, `warning`, `failed` vagy `off`, a bekapcsolt szakaszok közül a legrosszabb. Az első mentésére váró szakasz csak akkor számít, ha az a mentés már esedékes volt, és a státuszt csak egy friss mentésű szakasz teszi `ok` értékűvé |
+| Status | `ok`, `warning`, `overdue`, `failed` vagy `off`, a bekapcsolt szakaszok közül a legrosszabb. Az első mentésére váró szakasz csak akkor számít, ha az a mentés már esedékes volt, és a státuszt csak egy friss mentésű szakasz teszi `ok` értékűvé. Az `overdue` az áttekintéshez hasonlóan azt jelenti, hogy egy szakasz utolsó mentése két időköznél régebbi |
 | Running job | Mi fut éppen, vagy `idle` |
 | Open anomalies | Hány anomália nyitott |
 | Next scheduled backup | Mikor indul a következő ütemezett mentés |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Egy automatizálás, amely szól a telefonodnak, ha az állapot `failed` lesz:
+Egy automatizálás, amely szól a telefonodnak, ha az állapot `failed` vagy `overdue` lesz:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

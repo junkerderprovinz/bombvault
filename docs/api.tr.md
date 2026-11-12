@@ -81,7 +81,7 @@ Cihaz BombVault ya da örnek adı parantez içinde olan BombVault olarak adland�
 
 | Varlık | Ne gösterir |
 |---|---|
-| Status | `ok`, `warning`, `failed` ya da `off`, açık bölümlerin en kötüsü. İlk yedeğini bekleyen bir bölüm ancak o yedeğin zamanı geldiğinde sayılır ve durumu yalnızca güncel bir bölüm `ok` yapar |
+| Status | `ok`, `warning`, `overdue`, `failed` ya da `off`, açık bölümlerin en kötüsü. İlk yedeğini bekleyen bir bölüm ancak o yedeğin zamanı geldiğinde sayılır ve durumu yalnızca güncel bir bölüm `ok` yapar. `overdue`, genel bakıştaki gibi, bir bölümün son yedeğinin iki aralıktan eski olduğu anlamına gelir |
 | Running job | Şu an ne çalışıyor, ya da `idle` |
 | Open anomalies | Kaç anormallik açık |
 | Next scheduled backup | Sonraki zamanlanmış yedeğin ne zaman başlayacağı |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Durum `failed` olduğunda telefonuna haber veren bir otomasyon:
+Durum `failed` ya da `overdue` olduğunda telefonuna haber veren bir otomasyon:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

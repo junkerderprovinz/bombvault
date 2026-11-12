@@ -86,7 +86,7 @@ func (src haSource) Read(ctx context.Context) (mqttha.Reading, error) {
 	r := mqttha.Reading{
 		Device: h.haDevice(),
 		Entities: []mqttha.Entity{
-			{Kind: mqttha.Sensor, Key: "status", Name: "Status", Icon: "mdi:shield-check", Options: []string{"ok", "warning", "failed", "off"}},
+			{Kind: mqttha.Sensor, Key: "status", Name: "Status", Icon: "mdi:shield-check", Options: []string{"ok", "warning", "overdue", "failed", "off"}},
 			{Kind: mqttha.Sensor, Key: "running", Name: "Running job", Icon: "mdi:progress-clock"},
 			{Kind: mqttha.Sensor, Key: "anomalies", Name: "Open anomalies", Icon: "mdi:alert-circle-outline", StateClass: "measurement"},
 			{Kind: mqttha.Sensor, Key: "next_run", Name: "Next scheduled backup", DeviceClass: "timestamp"},
@@ -170,8 +170,8 @@ func (h *Handler) haDevice() mqttha.Device {
 }
 
 // haState reads what the sensors show. The overall status is the worst of the
-// switched-on domains: failed for an overdue domain or a failed last backup,
-// warning for one that is late, ok for one that is current. One that is not
+// switched-on domains: failed for a failed last backup, overdue and warning as
+// the overview names the lateness, ok for one that is current. One that is not
 // scheduled or still waits for its first run counts for nothing, as on the
 // overview, so with nothing backed up yet the status stays off.
 func (h *Handler) haState(ctx context.Context) (haReading, error) {
@@ -198,13 +198,15 @@ func (h *Handler) haState(ctx context.Context) (haReading, error) {
 			}
 		}
 		st.Domains[d.Domain] = ds
+		status := d.Status
 		switch {
-		case d.Status == "overdue" || ds.LastResult == "failed":
-			st.Status = "failed"
-		case d.Status == "warn" && st.Status != "failed":
-			st.Status = "warning"
-		case d.Status == "ok" && st.Status == "off":
-			st.Status = "ok"
+		case ds.LastResult == "failed":
+			status = "failed"
+		case status == "warn":
+			status = "warning"
+		}
+		if haSeverity[status] > haSeverity[st.Status] {
+			st.Status = status
 		}
 	}
 	st.Running = h.haRunning()
@@ -219,6 +221,10 @@ func (h *Handler) haState(ctx context.Context) (haReading, error) {
 	}
 	return st, nil
 }
+
+// haSeverity ranks the overall states. A domain status the sensor has no
+// state for, such as never, ranks with off.
+var haSeverity = map[string]int{"off": 0, "ok": 1, "warning": 2, "overdue": 3, "failed": 4}
 
 // lastBackupResult is how a domain's last round of backups ended, or "" before
 // the first one: "failed" when any entry's newest finished backup failed, as the

@@ -81,7 +81,7 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 
 | Οντότητα | Τι δείχνει |
 |---|---|
-| Status | `ok`, `warning`, `failed` ή `off`, το χειρότερο από τους τομείς που είναι ενεργοί. Ένας τομέας που περιμένει το πρώτο του αντίγραφο μετρά μόνο αφού έχει φτάσει η ώρα αυτού του αντιγράφου, και μόνο ένας ενημερωμένος τομέας κάνει την κατάσταση `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` ή `off`, το χειρότερο από τους τομείς που είναι ενεργοί. Ένας τομέας που περιμένει το πρώτο του αντίγραφο μετρά μόνο αφού έχει φτάσει η ώρα αυτού του αντιγράφου, και μόνο ένας ενημερωμένος τομέας κάνει την κατάσταση `ok`. Το `overdue` σημαίνει, όπως και στην επισκόπηση, ότι το τελευταίο αντίγραφο ενός τομέα είναι παλαιότερο από δύο διαστήματα |
 | Running job | Τι τρέχει τώρα, ή `idle` |
 | Open anomalies | Πόσες ανωμαλίες είναι ανοιχτές |
 | Next scheduled backup | Πότε ξεκινά το επόμενο προγραμματισμένο αντίγραφο |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Ένας αυτοματισμός που ειδοποιεί το κινητό σας όταν η κατάσταση γίνει `failed`:
+Ένας αυτοματισμός που ειδοποιεί το κινητό σας όταν η κατάσταση γίνει `failed` ή `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

@@ -81,7 +81,7 @@ Thiết bị có tên BombVault, hoặc BombVault kèm tên phiên bản chạy 
 
 | Thực thể | Hiển thị gì |
 |---|---|
-| Status | `ok`, `warning`, `failed` hoặc `off`, trạng thái tệ nhất trong các phần đang bật. Phần đang chờ bản sao lưu đầu tiên chỉ được tính sau khi đến hạn của bản đó, và trạng thái chỉ là `ok` khi có một phần còn mới |
+| Status | `ok`, `warning`, `overdue`, `failed` hoặc `off`, trạng thái tệ nhất trong các phần đang bật. Phần đang chờ bản sao lưu đầu tiên chỉ được tính sau khi đến hạn của bản đó, và trạng thái chỉ là `ok` khi có một phần còn mới. `overdue` nghĩa là, như ở trang tổng quan, bản sao lưu gần nhất của một phần đã cũ hơn hai chu kỳ |
 | Running job | Việc đang chạy, hoặc `idle` |
 | Open anomalies | Số bất thường còn mở |
 | Next scheduled backup | Khi nào bản sao lưu theo lịch tiếp theo bắt đầu |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Một automation báo cho điện thoại của bạn khi trạng thái chuyển sang `failed`:
+Một automation báo cho điện thoại của bạn khi trạng thái chuyển sang `failed` hoặc `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

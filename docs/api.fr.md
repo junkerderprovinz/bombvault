@@ -81,7 +81,7 @@ L'appareil s'appelle BombVault, ou BombVault avec le nom de l'instance entre par
 
 | Entité | Ce qu'elle affiche |
 |---|---|
-| Status | `ok`, `warning`, `failed` ou `off`, le pire parmi les sections activées. Une section qui attend sa première sauvegarde ne compte qu'une fois cette sauvegarde due, et seule une section à jour donne le statut `ok` |
+| Status | `ok`, `warning`, `overdue`, `failed` ou `off`, le pire parmi les sections activées. Une section qui attend sa première sauvegarde ne compte qu'une fois cette sauvegarde due, et seule une section à jour donne le statut `ok`. `overdue` signifie, comme dans la vue d'ensemble, que la dernière sauvegarde d'une section date de plus de deux intervalles |
 | Running job | Ce qui tourne maintenant, ou `idle` |
 | Open anomalies | Le nombre d'anomalies ouvertes |
 | Next scheduled backup | Quand démarre la prochaine sauvegarde planifiée |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-Une automatisation qui prévient votre téléphone quand l'état passe à `failed` :
+Une automatisation qui prévient votre téléphone quand l'état passe à `failed` ou `overdue` :
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

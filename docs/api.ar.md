@@ -81,7 +81,7 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 
 | الكيان | ما الذي يعرضه |
 |---|---|
-| Status | `ok` أو `warning` أو `failed` أو `off`، أسوأ الأقسام المفعّلة. القسم الذي ينتظر نسخته الأولى لا يُحسب إلا بعد أن يحين موعدها، ولا يجعل الحالة `ok` إلا قسم حديث |
+| Status | `ok` أو `warning` أو `overdue` أو `failed` أو `off`، أسوأ الأقسام المفعّلة. القسم الذي ينتظر نسخته الأولى لا يُحسب إلا بعد أن يحين موعدها، ولا يجعل الحالة `ok` إلا قسم حديث. تكون `overdue` حين يتجاوز عمر آخر نسخة احتياطية لقسم ما فترتين، كما في النظرة العامة |
 | Running job | ما الذي يعمل الآن، أو `idle` |
 | Open anomalies | كم حالة شاذة مفتوحة |
 | Next scheduled backup | متى تبدأ النسخة المجدولة التالية |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-أتمتة تخبر هاتفك حين تصير الحالة `failed`:
+أتمتة تخبر هاتفك حين تصير الحالة `failed` أو `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}

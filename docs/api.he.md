@@ -81,7 +81,7 @@ BombVault יכולה להופיע ב-Home Assistant כהתקן, דרך MQTT disc
 
 | ישות | מה היא מציגה |
 |---|---|
-| סטטוס | `ok`, ‏`warning`, ‏`failed` או `off`, הגרוע מבין התחומים המופעלים. תחום שממתין לגיבוי הראשון שלו נספר רק אחרי שהגיע מועד הגיבוי הזה, ורק תחום עדכני נותן את הסטטוס `ok` |
+| סטטוס | `ok`, ‏`warning`, ‏`overdue`, ‏`failed` או `off`, הגרוע מבין התחומים המופעלים. תחום שממתין לגיבוי הראשון שלו נספר רק אחרי שהגיע מועד הגיבוי הזה, ורק תחום עדכני נותן את הסטטוס `ok`. ‏`overdue` פירושו, כמו בסקירה, שהגיבוי האחרון של תחום ישן משני מרווחים |
 | עבודה רצה | מה רץ עכשיו, או `idle` |
 | חריגות פתוחות | כמה חריגות פתוחות |
 | הגיבוי המתוזמן הבא | מתי הגיבוי המתוזמן הבא מתחיל |
@@ -108,18 +108,20 @@ entities:
   - sensor.bombvault_next_scheduled_backup
 ```
 
-אוטומציה שמודיעה לטלפון שלך כשהסטטוס הופך ל-`failed`:
+אוטומציה שמודיעה לטלפון שלך כשהסטטוס הופך ל-`failed` או `overdue`:
 
 ```yaml
-alias: BombVault backup failed
+alias: BombVault needs you
 trigger:
   - platform: state
     entity_id: sensor.bombvault_status
-    to: failed
+    to:
+      - failed
+      - overdue
 action:
   - service: notify.mobile_app_my_phone
     data:
-      message: A BombVault backup failed. Open Needs you on the overview.
+      message: "BombVault status: {{ trigger.to_state.state }}. Open the overview."
 ```
 
 ## Prometheus {#metrics}
