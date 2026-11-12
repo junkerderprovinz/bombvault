@@ -8,6 +8,7 @@ import type { RelayMode } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { LogoImage } from "../../instances/InstanceCard";
 import type { RelayForm } from "./relayForm";
+import { withinBase } from "../../../lib/base";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -156,7 +157,7 @@ export function RouteDiagram({ form, t }: { form: RelayForm; t: T }) {
           <circle className="glim-scene-ring glim-relay-ring" r="30" />
         </At>
         <g className="glim-relay-hop">
-          <image href="/parleyport.svg" x="148" y="38" width="64" height="62" className="glim-logo-image" />
+          <image href={withinBase("/parleyport.svg")} x="148" y="38" width="64" height="62" className="glim-logo-image" />
         </g>
         <text className="glim-route-name" x="180" y="138" textAnchor="middle">
           {t("relay.containerName")}

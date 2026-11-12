@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { IconConfirm, IconEye, IconForward, IconWhatsNew } from "../../components/glyphs";
 import { IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
+import { withinBase } from "../../lib/base";
 import { useT } from "../../lib/i18n";
 import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
 import { markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
@@ -48,7 +49,7 @@ function useReleasesSince(from: string | null): string[] | null {
   useEffect(() => {
     if (!from) return;
     let active = true;
-    fetch(`/api/release-notes/versions?from=v${encodeURIComponent(from)}`, { headers: { Accept: "application/json" } })
+    fetch(withinBase(`/api/release-notes/versions?from=v${encodeURIComponent(from)}`), { headers: { Accept: "application/json" } })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((data: { ok?: boolean; versions?: string[] }) => {
         if (active && data.ok && Array.isArray(data.versions)) {

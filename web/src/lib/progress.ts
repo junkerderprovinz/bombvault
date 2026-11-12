@@ -14,6 +14,7 @@
 // keyed by the event's `key`.
 
 import { useEffect, useState } from "react";
+import { withinBase } from "./base";
 
 export type ProgressPhase = "backup" | "restore" | "replicate" | "maintenance";
 
@@ -321,7 +322,7 @@ let reopenTimer: ReturnType<typeof setTimeout> | null = null;
 
 function openSource(): void {
   if (source) return;
-  const es = new EventSource("/api/progress");
+  const es = new EventSource(withinBase("/api/progress"));
   source = es;
   es.onmessage = handleMessage;
   es.onopen = () => {

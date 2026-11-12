@@ -4,6 +4,7 @@ import { IconCopy } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { disableWidgetToken, generateWidgetToken } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
+import { withinBase } from "../../lib/base";
 import { copyText } from "../../lib/clipboard";
 import { useT } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
@@ -33,7 +34,7 @@ export function DashboardWidgetCard({
     setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
   }
 
-  const widgetUrl = token ? `${window.location.origin}/widget?token=${token}` : null;
+  const widgetUrl = token ? `${window.location.origin}${withinBase(`/widget?token=${token}`)}` : null;
 
   async function handleGenerate() {
     setBusy(true);

@@ -4,6 +4,8 @@
 // default theme. A cleared browser renders defaults for a moment and then picks
 // up the stored look.
 
+import { withinBase } from "./base";
+
 /** Every localStorage key that describes how the interface looks. The filters
  *  and the order of a list (bv-backups-view) belong to one page, and syncing
  *  them would move someone else's filter under your cursor. The
@@ -86,7 +88,7 @@ export function save(): void {
   // A tab whose storage was cleared underneath it has nothing worth sending.
   if (Object.keys(prefs).length === 0) return;
   const body = JSON.stringify(prefs);
-  void fetch("/api/display-prefs", {
+  void fetch(withinBase("/api/display-prefs"), {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body,
@@ -103,7 +105,7 @@ export function save(): void {
 export async function sync(): Promise<void> {
   let res: Response;
   try {
-    res = await fetch("/api/display-prefs");
+    res = await fetch(withinBase("/api/display-prefs"));
   } catch {
     return; // Offline: the cache stays the look.
   }

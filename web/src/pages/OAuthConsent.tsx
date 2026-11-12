@@ -7,6 +7,7 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { OTHER_CLIENT, clientById } from "../lib/mcpClients";
 import { ClientMark } from "./settings/McpClientMark";
 import { LoginPage } from "./Login";
+import { withinBase } from "../lib/base";
 
 /** The refusals of the consent endpoints, each with the sentence it gets here. */
 const REFUSAL: Record<string, TranslationKey> = {
@@ -137,7 +138,7 @@ export function OAuthConsent() {
         <div className="flex flex-col items-center gap-3 text-center">
           <span className="flex h-16 w-16 items-center justify-center">
             <img
-              src="/logo.svg"
+              src={withinBase("/logo.svg")}
               alt=""
               aria-hidden="true"
               draggable={false}

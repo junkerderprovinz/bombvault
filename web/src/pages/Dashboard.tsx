@@ -52,6 +52,7 @@ import { StorageCard } from "./overview/StorageCard";
 import { SummaryTier } from "./overview/SummaryTier";
 import { TargetsCard } from "./overview/TargetsCard";
 import { useTrialRestore } from "./overview/useTrialRestore";
+import { withinBase } from "../lib/base";
 
 // The activity log reads the schedule at this rate, and two readers of one
 // endpoint at different rates can show two answers.
@@ -454,7 +455,7 @@ export function Dashboard() {
   const markBox = app ? "h-(--btn-h-key) w-(--btn-h-key)" : "h-6 w-6";
   const logoMark = (
     <span className={`glim-logo-mark flex ${markBox} ${logoHold.markClass}`}>
-      <img ref={logoHold.markRef} src="/logo.svg" alt="" draggable={false} className={`glim-logo-img block ${markBox} object-contain`} />
+      <img ref={logoHold.markRef} src={withinBase("/logo.svg")} alt="" draggable={false} className={`glim-logo-img block ${markBox} object-contain`} />
     </span>
   );
 

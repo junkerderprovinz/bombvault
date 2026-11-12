@@ -44,6 +44,7 @@ export {
   IconFlash,
   IconConfig,
 } from "./navGlyphs";
+import { withinBase } from "../lib/base";
 
 interface SidebarProps {
   settings: Settings | null;
@@ -234,7 +235,7 @@ export function Sidebar({ settings, authEnabled }: SidebarProps) {
         <span className={`glim-logo-mark flex ${markBox} shrink-0 items-center justify-center ${hold.markClass}`}>
           <img
             ref={hold.markRef}
-            src="/logo.svg"
+            src={withinBase("/logo.svg")}
             alt="BombVault"
             draggable={false}
             className={`glim-logo-img ${markBox} object-contain shrink-0 block`}

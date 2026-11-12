@@ -224,3 +224,29 @@ func TestAssetsMissDoesNotFallBack(t *testing.T) {
 		t.Errorf("client route: status = %d, want the SPA index", w.Code)
 	}
 }
+
+// Behind a proxy that names its prefix, every address of the shell starts
+// there. A prefix that is no plain path leaves the shell at the root.
+func TestTheShellStandsUnderThePrefixAProxyNames(t *testing.T) {
+	spa := fstest.MapFS{"index.html": {Data: []byte(`<head><base href="/" /></head>`)}}
+	h := api.NewSPAHandler(spa, http.NewServeMux())
+	for prefix, want := range map[string]string{
+		"":                    `<base href="/" />`,
+		"/bombvault":          `<base href="/bombvault/" />`,
+		"/apps/bombvault/":    `<base href="/apps/bombvault/" />`,
+		"//elsewhere.example": `<base href="/" />`,
+		`/x"><script>`:        `<base href="/" />`,
+		"https://elsewhere/":  `<base href="/" />`,
+		"/a, /b":              `<base href="/" />`,
+	} {
+		r := httptest.NewRequest(http.MethodGet, "/settings/pairing", nil)
+		if prefix != "" {
+			r.Header.Set("X-Forwarded-Prefix", prefix)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if !strings.Contains(w.Body.String(), want) {
+			t.Errorf("prefix %q: %s, want %s", prefix, w.Body.String(), want)
+		}
+	}
+}

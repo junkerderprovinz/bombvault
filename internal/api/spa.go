@@ -1,8 +1,11 @@
 package api
 
 import (
+	"bytes"
+	"html"
 	"io/fs"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -54,7 +57,7 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 			}
 		}
 
-		serveIndex(w, spaFS)
+		serveIndex(w, r, spaFS)
 	})
 }
 
@@ -73,12 +76,39 @@ func setCacheHeaders(w http.ResponseWriter, path string) {
 	}
 }
 
-// serveIndex writes index.html from spaFS as the SPA entry point.
-func serveIndex(w http.ResponseWriter, spaFS fs.FS) {
+// indexBase is the base element index.html carries. Every address of the
+// shell is relative to it, so that serveIndex can move the whole interface
+// under a prefix.
+var indexBase = []byte(`<base href="/"`)
+
+// prefixPattern is a prefix BombVault can be served under: one path of plain
+// segments that ends in a slash.
+var prefixPattern = regexp.MustCompile(`^(/[A-Za-z0-9._~-]+)*/$`)
+
+// forwardedPrefix is the path a proxy in front or the fortress serves
+// BombVault under, as X-Forwarded-Prefix names it, and "/" without one or for
+// one that is no plain path.
+func forwardedPrefix(r *http.Request) string {
+	p := strings.TrimSpace(r.Header.Get("X-Forwarded-Prefix"))
+	if p != "" && !strings.HasSuffix(p, "/") {
+		p += "/"
+	}
+	if !prefixPattern.MatchString(p) {
+		return "/"
+	}
+	return p
+}
+
+// serveIndex writes index.html from spaFS as the SPA entry point, its base at
+// the prefix the request came under.
+func serveIndex(w http.ResponseWriter, r *http.Request, spaFS fs.FS) {
 	data, err := fs.ReadFile(spaFS, "index.html")
 	if err != nil {
 		http.Error(w, "SPA index not found", http.StatusInternalServerError)
 		return
+	}
+	if p := forwardedPrefix(r); p != "/" {
+		data = bytes.Replace(data, indexBase, []byte(`<base href="`+html.EscapeString(p)+`"`), 1)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// Client-side routes reach the shell here, not through the file server.

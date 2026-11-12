@@ -41,6 +41,7 @@ import { lossText, refusalText, selfBackupPlace, sessionKeyInUse, settingsOfPlac
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
 import { placementChanged } from "../../lib/placementEvents";
+import { withinBase } from "../../lib/base";
 import { anyActive, busyPhraseKey, useProgress } from "../../lib/progress";
 import { clearNotStarted, DOUBLE_CLICK_MS, holdRunLock, noteNotStarted } from "../../lib/restoreMany";
 import { EMERGENCY_STEPS, emergencyPath, restoreFolderFor, type EmergencyStep, type EmergencyWay } from "../../lib/restorePlan";
@@ -390,7 +391,7 @@ export function EmergencyWindow({
       }
       setConfigPhase("restarting");
       // The restored settings fill the next step, so the page comes back on it.
-      if (await waitForAppBack()) window.location.assign(emergencyPath("selection"));
+      if (await waitForAppBack()) window.location.assign(withinBase(emergencyPath("selection")));
       else setConfigPhase("reload");
     } catch (err) {
       fail(err instanceof Error ? err.message : t("settings.error"));

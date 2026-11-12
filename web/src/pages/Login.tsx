@@ -14,6 +14,7 @@ import { useT } from "../lib/i18n";
 import type { SignInText } from "../lib/signIn";
 import { Button } from "../components/Button";
 import { SignInCard } from "../components/SignInCard";
+import { withinBase } from "../lib/base";
 
 interface LoginPageProps {
   /** Called after a successful login so the parent can re-check auth state. */
@@ -74,7 +75,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <SignInCard
-      logo="/logo.svg"
+      logo={withinBase("/logo.svg")}
       appName={t("auth.loginTitle")}
       text={text}
       idPrefix="bv"

@@ -1,3 +1,4 @@
+import "./lib/storageShim";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@fontsource-variable/noto-sans";

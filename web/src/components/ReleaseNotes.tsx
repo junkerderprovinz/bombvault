@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { withinBase } from "../lib/base";
 import { useT } from "../lib/i18n";
 import { Button } from "./Button";
 
@@ -170,7 +171,7 @@ export function ReleaseNotes({ version }: { version: string | null }) {
       }
     }
 
-    fetch(`/api/release-notes?version=${encodeURIComponent(version)}`, {
+    fetch(withinBase(`/api/release-notes?version=${encodeURIComponent(version)}`), {
       headers: { Accept: "application/json" },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))

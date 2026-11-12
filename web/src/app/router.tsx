@@ -14,6 +14,7 @@ import { SettingsPage } from "../pages/Settings";
 import { Restore } from "../pages/Restore";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
+import { routerBase } from "../lib/base";
 import { ENTRY_KIND, ENTRY_KINDS, ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
@@ -30,7 +31,7 @@ export function AppRouter() {
     <I18nProvider>
       {/* Inside I18nProvider: the dismiss button's aria-label is translated. */}
       <ToastProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={routerBase()}>
           <Routes>
             {/* The page an OAuth client sends the operator to. It stands on its
                 own like the login screen, without the rail, and checks the

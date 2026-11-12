@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { hueVars } from "../../lib/appearance";
+import { withinBase } from "../../lib/base";
 
 /** The box every card's mark fills, the logo or a glyph, so the marks of a
  *  grid stand the same size. */
@@ -8,7 +9,7 @@ const MARK_BOX = "h-20 w-20 shrink-0 md:h-[104px] md:w-[104px]";
 
 /** InstanceMark is the BombVault logo on the start edge of a card, as in the sidebar. */
 export function InstanceMark() {
-  return <img src="/logo.svg" alt="" aria-hidden="true" draggable={false} className={`block object-contain ${MARK_BOX}`} />;
+  return <img src={withinBase("/logo.svg")} alt="" aria-hidden="true" draggable={false} className={`block object-contain ${MARK_BOX}`} />;
 }
 
 /** LogoMark is another app's logo in the same place, from the data URI its
@@ -19,7 +20,7 @@ export function LogoMark({ src }: { src: string }) {
 
 /** LogoImage is the same logo inside a picture, in user units. */
 export function LogoImage({ x, y, size }: { x: number; y: number; size: number }) {
-  return <image href="/logo.svg" x={x.toFixed(1)} y={y.toFixed(1)} width={size} height={size} className="glim-logo-image" />;
+  return <image href={withinBase("/logo.svg")} x={x.toFixed(1)} y={y.toFixed(1)} width={size} height={size} className="glim-logo-image" />;
 }
 
 /** The outline of a phone on a 16 unit grid, with its screen and button cut out. */

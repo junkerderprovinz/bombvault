@@ -2,12 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- Every address of the page is relative to this base. The server moves it
+         to the prefix a proxy in front or the fortress serves BombVault under,
+         from X-Forwarded-Prefix, so the same build runs at the root and below
+         a path. -->
+    <base href="/" />
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="apple-touch-icon" href="logo.png" />
     <!-- Lets Chrome and Edge install BombVault as an app. There is no service
          worker: one would cache the interface, and after an update people would
          keep seeing the old one. -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="manifest.json" />
     <!-- viewport-fit=cover extends the layout viewport into the device's own
          unsafe edges (notch, rounded corners, home indicator). Without it the
          system chrome insets the viewport and every env(safe-area-inset-*)
@@ -60,6 +65,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>

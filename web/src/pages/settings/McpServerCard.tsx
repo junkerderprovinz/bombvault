@@ -27,6 +27,7 @@ import {
   type OkEnvelope,
   explainedError,
 } from "../../lib/api";
+import { withinBase } from "../../lib/base";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { CLOUD_CLIENTS, KIND_LABEL, LOCAL_CLIENTS, OTHER_CLIENT, clientById, type McpClient } from "../../lib/mcpClients";
@@ -335,7 +336,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
 
   const snippetBase: Omit<McpSnippetInput, "key"> = {
     origin,
-    endpointPath: data?.endpointPath ?? "/mcp",
+    endpointPath: withinBase(data?.endpointPath ?? "/mcp"),
     selfSigned: ownCertificate,
   };
   const endpoint = mcpUrl(snippetBase);

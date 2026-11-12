@@ -1,3 +1,4 @@
+import { withinBase } from "./base";
 import { busySentence } from "./busySentence";
 import { translate } from "./i18n";
 import { ZFS_CODE_KEY, zfsCodeSentence } from "./zfsCodes";
@@ -944,7 +945,7 @@ async function send(path: string, options?: RequestInit): Promise<Response> {
   try {
     // The caller's headers go after the default, so passing one of its own
     // cannot drop the Content-Type the server refuses a body without.
-    return await fetch(path, {
+    return await fetch(withinBase(path), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -1058,7 +1059,7 @@ export async function waitForAppBack(opts?: {
   let sawDown = !requireDownFirst;
   while (Date.now() < deadline) {
     try {
-      const res = await fetch("/api/health", { cache: "no-store" });
+      const res = await fetch(withinBase("/api/health"), { cache: "no-store" });
       if (res.ok) {
         if (sawDown) return true;
         // Reachable but we never saw it go down yet — still the pre-restart
@@ -2003,7 +2004,7 @@ export function listDbDumps(
  */
 export function dbDumpDownloadURL(name: string, id: string, source?: string, gz?: boolean): string {
   const path = `/api/containers/${encodeURIComponent(name)}/dbdumps/${encodeURIComponent(id)}/download`;
-  return withQuery(path, source, gz ? "gz=1" : "");
+  return withinBase(withQuery(path, source, gz ? "gz=1" : ""));
 }
 
 /**
@@ -2031,7 +2032,7 @@ function appExportPath(name: string, id: string): string {
  * app in the container handed over, as a plain link like a dump.
  */
 export function appExportDownloadURL(name: string, id: string, source?: string): string {
-  return withQuery(appExportPath(name, id), source);
+  return withinBase(withQuery(appExportPath(name, id), source));
 }
 
 /** The same endpoint with check=1. It also answers the refusal of a server
@@ -2546,9 +2547,7 @@ export async function exportSettings(includeCredentials: boolean): Promise<strin
     };
   };
   try {
-    const res = await g.fetch(
-      `/api/settings/export?includeCredentials=${includeCredentials ? "true" : "false"}`
-    );
+    const res = await g.fetch(withinBase(`/api/settings/export?includeCredentials=${includeCredentials ? "true" : "false"}`));
     const disposition = res.headers.get("content-disposition") ?? "";
     // A failure answers a plain JSON envelope with no attachment header; only the
     // real file streams as an attachment.
@@ -2623,7 +2622,7 @@ export function disableWidgetToken(): Promise<OkEnvelope> {
  * contains the master APP_KEY + the derived restic password — store it offline.
  */
 export function recoveryKitUrl(): string {
-  return "/api/recovery-kit";
+  return withinBase("/api/recovery-kit");
 }
 
 /**
@@ -4776,7 +4775,7 @@ export function backupFlashNow(): Promise<BackupResponse> {
  * never touched, and a zip drops straight into the Unraid USB creator.
  */
 export function flashDownloadURL(snapshotId: string, source?: string): string {
-  return `/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`;
+  return withinBase(`/api/flash/download?snapshot=${encodeURIComponent(snapshotId)}${srcParam(source, "&")}`);
 }
 
 export interface FlashPlugin {
@@ -6324,7 +6323,7 @@ export async function foreignRestore(req: {
    *  recreating it, for an item the session has no definition of. */
   toFolder?: boolean;
 }): Promise<OkEnvelope & { started?: boolean }> {
-  const res = await fetch("/api/foreign/restore", {
+  const res = await fetch(withinBase("/api/foreign/restore"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
@@ -6727,7 +6726,7 @@ export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { se
   return fetchJSON(`/api/receiver/server/logins/${encodeURIComponent(memberId)}`, { method: "DELETE" });
 }
 
-export const RECEIVER_TEMPLATE_URL = "/api/receiver/server/template";
+export const RECEIVER_TEMPLATE_URL = withinBase("/api/receiver/server/template");
 
 /** A server that copies into a shared repository. */
 export interface SharedMember {
@@ -8082,7 +8081,7 @@ export async function downloadDiagnostics(): Promise<string | null> {
     };
   };
   try {
-    const res = await g.fetch("/api/diagnostics");
+    const res = await g.fetch(withinBase("/api/diagnostics"));
     const ct = res.headers.get("content-type") ?? "";
     if (!res.ok || ct.includes("application/json")) {
       try {
@@ -9256,7 +9255,7 @@ export interface McpKeySecretResponse extends OkEnvelope {
   item?: McpKeyView;
 }
 
-export const MCP_CERTIFICATE_URL = "/api/mcp/certificate";
+export const MCP_CERTIFICATE_URL = withinBase("/api/mcp/certificate");
 
 export function listMcpKeys(): Promise<McpKeysResponse> {
   // The server counts a key's calls today from this browser's midnight, which

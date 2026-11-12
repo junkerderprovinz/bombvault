@@ -21,6 +21,7 @@ import {
   type OkEnvelope,
   explainedError,
 } from "../../lib/api";
+import { withinBase } from "../../lib/base";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
@@ -118,7 +119,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const revoked = data?.revoked ?? [];
   const limit = data?.limit ?? 0;
   const canMint = data?.hostAllowsKeys !== false;
-  const address = `${window.location.origin}${data?.basePath ?? "/api/v1/"}`;
+  const address = `${window.location.origin}${withinBase(data?.basePath ?? "/api/v1/")}`;
 
   function refusal(res: OkEnvelope): string {
     const key = res.code ? CODE_MESSAGE[res.code] : undefined;
@@ -422,7 +423,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           <Button
             label={t("api.viewDescription")}
             labelKey="api.viewDescription"
-            onClick={() => window.open(data.openapiPath, "_blank", "noopener")}
+            onClick={() => window.open(withinBase(data.openapiPath), "_blank", "noopener")}
           />
         </SettingRow>
       )}

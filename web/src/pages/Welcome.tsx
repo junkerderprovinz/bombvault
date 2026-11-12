@@ -19,6 +19,7 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { PAGE_SHELL } from "../lib/pageShell";
 import { tallyEntries } from "../lib/protectionTally";
 import { useFirstSteps } from "../lib/useFirstSteps";
+import { withinBase } from "../lib/base";
 
 const TITLE: Record<FirstStep, TranslationKey> = {
   sections: "firstSteps.sections",
@@ -82,7 +83,7 @@ function FirstStart({ items }: { items: BackupItem[] }) {
 
   return (
     <div className="mx-auto mt-[6vh] flex w-full max-w-[64rem] flex-col items-center gap-[22px] pb-6 text-center">
-      <img src="/logo.svg" alt="" draggable={false} className="glim-welcome-logo block w-[120px]" />
+      <img src={withinBase("/logo.svg")} alt="" draggable={false} className="glim-welcome-logo block w-[120px]" />
       {/* The page title says the same to a screen reader. */}
       <p aria-hidden="true" className="text-status font-semibold leading-tight text-carbon-text">
         {t("welcome.title")}
