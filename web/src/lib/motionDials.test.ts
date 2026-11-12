@@ -112,5 +112,8 @@ describe("the motion dials", () => {
       expect(frames, part).toMatch(/100% \{[^}]*transform: none;/);
     }
     expect(keyframes("glim-welcome-item")).toMatch(/var\(--motion-scene-hop/);
+    // Firefox places a fill-box origin on a group elsewhere, so the door hangs on a point in the picture's units.
+    expect(CSS).toMatch(/\.glim-welcome-door \{ transform-origin: 88px 74px; \}/);
+    expect(CSS).not.toMatch(/\.glim-welcome-[a-z]+[^{]*\{[^}]*transform-box: fill-box/);
   });
 });

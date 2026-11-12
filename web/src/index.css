@@ -5525,15 +5525,19 @@ body {
   stroke-width: 1.5;
 }
 .glim-welcome-hole { rx: calc(var(--radius-control) * 2 / 3); fill: var(--carbon-bg); }
+/* Each part turns about a point named in the picture's own units, which every
+   browser places alike: the door on its hinge, the rest about its middle. */
 .glim-welcome-door,
 .glim-welcome-dial,
 .glim-welcome-seal,
 .glim-welcome-spark,
 .glim-welcome-item {
-  transform-box: fill-box;
-  transform-origin: center;
+  transform-box: view-box;
+  transform-origin: 120px 74px;
 }
-.glim-welcome-door { transform-origin: left center; }
+.glim-welcome-door { transform-origin: 88px 74px; }
+.glim-welcome-seal { transform-origin: 164px 30px; }
+.glim-welcome-spark { transform-origin: 196px 27px; }
 .glim-welcome-door-face {
   rx: calc(var(--radius-control) * 2 / 3);
   fill: var(--carbon-surface3);
