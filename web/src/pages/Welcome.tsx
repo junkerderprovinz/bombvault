@@ -81,7 +81,7 @@ function FirstStart({ items }: { items: BackupItem[] }) {
   };
 
   return (
-    <div className="glim-welcome-page mx-auto mt-[6vh] flex w-full max-w-[64rem] flex-col items-center gap-[22px] pb-6 text-center">
+    <div className="mx-auto mt-[6vh] flex w-full max-w-[64rem] flex-col items-center gap-[22px] pb-6 text-center">
       <img src="/logo.svg" alt="" draggable={false} className="glim-welcome-logo block w-[120px]" />
       {/* The page title says the same to a screen reader. */}
       <p aria-hidden="true" className="text-status font-semibold leading-tight text-carbon-text">

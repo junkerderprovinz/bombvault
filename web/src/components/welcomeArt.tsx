@@ -1,10 +1,10 @@
 // The pictures of the first steps, one per step card, playing one scene in
-// turn: the three kinds of thing to keep are switched on, the vault drops into
-// place and opens, the three fly across the cards into it, and the vault of
-// the last card shuts, is sealed and says so. Each is drawn as the frame it
-// rests on and set in motion by the stylesheet, so where motion is off the
-// areas stand on, the vault stands open in the second card and closed and
-// sealed in the third.
+// turn: each kind of thing to keep is switched on and flies off at once,
+// across the cards, into the vault of the second card, whose door opens for
+// them and shuts behind them, and the vault of the last card locks and says
+// so. Each is drawn as the frame it rests on and set in motion by the
+// stylesheet, so where motion is off the areas stand on and both vaults stand
+// closed, the last one with its badge.
 import type { CSSProperties, ReactNode } from "react";
 import { hueVars } from "../lib/appearance";
 import { IconCheck } from "./navGlyphs";
@@ -36,12 +36,12 @@ function Frame({ children }: { children: ReactNode }) {
   );
 }
 
-function Door({ className }: { className: string }) {
+function Door({ className, dial }: { className?: string; dial?: string }) {
   return (
     <g className={className}>
       <rect className="glim-welcome-door-face" x="88" y="40" width="64" height="68" rx="8" />
       <circle className="glim-welcome-dial-ring" cx="120" cy="74" r="16" />
-      <g className="glim-welcome-dial">
+      <g className={dial}>
         <path className="glim-welcome-dial-spokes" d="M120 58v32M104 74h32M108.7 62.7l22.6 22.6M131.3 62.7l-22.6 22.6" />
       </g>
       <circle className="glim-welcome-dial-hub" cx="120" cy="74" r="5" />
@@ -79,15 +79,13 @@ export function AreasPicture() {
   );
 }
 
-/** PlacePicture is the second step: the vault drops onto the floor and opens
- *  for what is to come. */
+/** PlacePicture is the second step: the vault stands ready and opens its
+ *  door when the parcels arrive. */
 export function PlacePicture() {
   return (
     <Frame>
-      <g className="glim-welcome-drop">
-        <Body />
-        <Door className="glim-welcome-door-open" />
-      </g>
+      <Body />
+      <Door className="glim-welcome-opening" />
     </Frame>
   );
 }
@@ -104,21 +102,21 @@ const CONFETTI = Array.from({ length: 16 }, (_, k) => {
   } as CSSProperties;
 });
 
-/** BackupPicture is the third step: the door shuts on what flew in, the dial
- *  turns home, and the seal pops with a badge that says it is backed up. */
+/** BackupPicture is the third step: the dial turns home to lock what flew in,
+ *  and the seal pops with a badge that says it is backed up. */
 export function BackupPicture({ done }: { done: string }) {
   return (
     <Frame>
       <Body />
-      <Door className="glim-welcome-door" />
+      <Door dial="glim-welcome-dial" />
       <circle className="glim-scene-ring glim-welcome-ring" cx="120" cy="18" r="16" />
       <g className="glim-welcome-seal">
         <g transform="translate(120 18)">
-          <rect className="glim-welcome-badge" x="-46" y="-13" width="92" height="26" rx="8" />
-          <g transform="translate(-35 -6) scale(.75)" className="glim-welcome-badge-ink">
+          <rect className="glim-step-badge-ground" x="-46" y="-13" width="92" height="26" rx="13" />
+          <g transform="translate(-35 -6) scale(.75)" className="glim-step-badge-ink">
             <IconCheck />
           </g>
-          <text className="glim-welcome-badge-text" x="7" y="4.5" textAnchor="middle">
+          <text className="glim-step-badge-text" x="7" y="4.5" textAnchor="middle">
             {done}
           </text>
         </g>

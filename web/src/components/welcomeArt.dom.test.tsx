@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The welcome page's pictures are drawn as the frames they rest on, so what a
 // test finds in the markup is what someone sees where motion is off: every
-// area switched on, the vault standing open, then closed and sealed.
+// area switched on, the vault standing closed, then locked with its badge.
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 
@@ -32,15 +32,15 @@ describe("the welcome page's pictures", () => {
     expect(tiles.map((g) => g.style.getPropertyValue("--turn"))).toEqual(["0", "1", "2"]);
   });
 
-  it("rest with the vault standing open in the second card", () => {
+  it("rest with the vault of the second card standing closed, its door ready to open", () => {
     const { container } = render(<PlacePicture />);
-    expect(container.querySelector(".glim-welcome-drop .glim-welcome-door-open")).not.toBeNull();
+    expect(container.querySelector(".glim-welcome-opening")).not.toBeNull();
     expect(container.querySelector(".glim-welcome-seal")).toBeNull();
   });
 
-  it("rest with the vault closed and sealed in the third, its badge saying so", () => {
+  it("rest with the vault of the third card locked, its badge saying so", () => {
     const { container } = render(<BackupPicture done="Backed up" />);
-    for (const part of [".glim-welcome-door", ".glim-welcome-dial", ".glim-welcome-seal", ".glim-welcome-ring"]) {
+    for (const part of [".glim-welcome-dial", ".glim-welcome-seal", ".glim-welcome-ring"]) {
       expect(container.querySelector(part), part).not.toBeNull();
     }
     expect(container.querySelector(".glim-welcome-seal")?.textContent).toBe("Backed up");
