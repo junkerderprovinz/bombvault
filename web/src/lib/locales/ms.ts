@@ -4675,6 +4675,8 @@ const ms: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub menghantar jawapan yang tidak dapat dibaca oleh BombVault. Cuba lagi nanti.",
   "tile.info.help": "Bantuan",
   "tile.info.helpHint": "Untuk laporan pepijat, muat turun fail ZIP dengan log dan tetapan contoh ini, tanpa kata laluan, kunci atau kelayakan. Lampirkan pada isu GitHub supaya orang dapat melihat apa yang berlaku pada pelayan anda.",
+  "tile.info.welcome": "Halaman alu-aluan",
+  "tile.info.welcomeHint": "Tiga langkah pertama, seperti yang ditunjukkan pemasangan baharu.",
   "tile.info.manual": "Manual",
   "tile.info.bugReport": "Laporan pepijat",
   "tile.info.download": "Muat turun",

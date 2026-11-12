@@ -4665,6 +4665,8 @@ const tr: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub, BombVault'un okuyamadığı bir yanıt gönderdi. Daha sonra yeniden dene.",
   "tile.info.help": "Yardım",
   "tile.info.helpHint": "Hata bildirimi için bu örneğin günlüklerini ve ayarlarını içeren, parola, anahtar ve kimlik bilgisi içermeyen bir ZIP dosyası indir. Sunucunda ne olduğu görülsün diye bunu bir GitHub issue'suna ekle.",
+  "tile.info.welcome": "Karşılama sayfası",
+  "tile.info.welcomeHint": "Yeni bir kurulumun gösterdiği ilk üç adım.",
   "tile.info.manual": "Kılavuz",
   "tile.info.bugReport": "Hata bildirimi",
   "tile.info.download": "İndir",

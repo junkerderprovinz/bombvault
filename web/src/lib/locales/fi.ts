@@ -4665,6 +4665,8 @@ const fi: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub lähetti vastauksen, jota BombVault ei osannut lukea. Yritä myöhemmin uudelleen.",
   "tile.info.help": "Ohje",
   "tile.info.helpHint": "Virheraporttia varten lataa ZIP-tiedosto, jossa on tämän ilmentymän lokit ja asetukset ilman salasanoja, avaimia ja tunnistetietoja. Liitä se GitHub-issueen, jotta nähdään, mitä palvelimellasi tapahtui.",
+  "tile.info.welcome": "Tervetulosivu",
+  "tile.info.welcomeHint": "Kolme ensimmäistä vaihetta, kuten uusi asennus ne näyttää.",
   "tile.info.manual": "Käyttöopas",
   "tile.info.bugReport": "Virheraportti",
   "tile.info.download": "Lataa",

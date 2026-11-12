@@ -4675,6 +4675,8 @@ const hi: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub ने ऐसा जवाब भेजा जिसे BombVault पढ़ नहीं सका। बाद में फिर कोशिश करें।",
   "tile.info.help": "मदद",
   "tile.info.helpHint": "बग रिपोर्ट के लिए इस इंस्टेंस के लॉग और सेटिंग्स वाली ZIP फ़ाइल डाउनलोड करें, जिसमें पासवर्ड, कुंजियाँ और क्रेडेंशियल नहीं होते। इसे GitHub issue के साथ जोड़ें, ताकि दिखे कि आपके सर्वर पर क्या हुआ।",
+  "tile.info.welcome": "स्वागत पृष्ठ",
+  "tile.info.welcomeHint": "पहले तीन कदम, जैसे नया इंस्टॉलेशन उन्हें दिखाता है।",
   "tile.info.manual": "मैनुअल",
   "tile.info.bugReport": "बग रिपोर्ट",
   "tile.info.download": "डाउनलोड",

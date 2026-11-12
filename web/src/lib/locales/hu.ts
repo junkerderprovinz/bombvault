@@ -4666,6 +4666,8 @@ const hu: Partial<Translations> = {
   "tile.info.refused.badResponse": "A GitHub olyan választ küldött, amelyet a BombVault nem tudott értelmezni. Próbáld újra később.",
   "tile.info.help": "Súgó",
   "tile.info.helpHint": "Hibajelentéshez tölts le egy ZIP-fájlt ennek a példánynak a naplóival és beállításaival, jelszavak, kulcsok és hitelesítő adatok nélkül. Csatold egy GitHub-issue-hoz, hogy lássák, mi történt a szervereden.",
+  "tile.info.welcome": "Üdvözlőoldal",
+  "tile.info.welcomeHint": "Az első három lépés, ahogy egy új telepítés mutatja.",
   "tile.info.manual": "Kézikönyv",
   "tile.info.bugReport": "Hibajelentés",
   "tile.info.download": "Letöltés",

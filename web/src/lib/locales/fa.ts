@@ -4675,6 +4675,8 @@ const fa: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub پاسخی فرستاد که BombVault نتوانست بخواند. بعداً دوباره امتحان کن.",
   "tile.info.help": "راهنما",
   "tile.info.helpHint": "برای گزارش خطا، یک فایل ZIP با لاگ‌ها و تنظیمات این نمونه دانلود کن، بدون رمز عبور، کلید و اطلاعات ورود. آن را به یک issue در GitHub پیوست کن تا دیگران ببینند روی سرورت چه شده.",
+  "tile.info.welcome": "صفحه خوش‌آمد",
+  "tile.info.welcomeHint": "سه گام نخست، همان‌طور که یک نصب تازه نشان می‌دهد.",
   "tile.info.manual": "راهنمای کاربر",
   "tile.info.bugReport": "گزارش خطا",
   "tile.info.download": "دانلود",

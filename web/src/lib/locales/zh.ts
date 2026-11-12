@@ -4656,6 +4656,8 @@ const zh: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub 返回了 BombVault 无法读取的响应。请稍后再试。",
   "tile.info.help": "帮助",
   "tile.info.helpHint": "要提交错误报告，请下载一个 ZIP 文件，其中包含此实例的日志和设置，不含密码、密钥或凭据。把它附到 GitHub 上的 issue 中，别人就能看到你的服务器上发生了什么。",
+  "tile.info.welcome": "欢迎页",
+  "tile.info.welcomeHint": "新安装时显示的前三个步骤。",
   "tile.info.manual": "手册",
   "tile.info.bugReport": "错误报告",
   "tile.info.download": "下载",

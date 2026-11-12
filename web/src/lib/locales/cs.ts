@@ -4663,6 +4663,8 @@ const cs: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub poslal odpověď, kterou BombVault nedokázal přečíst. Zkus to později.",
   "tile.info.help": "Nápověda",
   "tile.info.helpHint": "Pro hlášení chyby si stáhni soubor ZIP s logy a nastavením této instance, bez hesel, klíčů a přihlašovacích údajů. Přilož ho k issue na GitHubu, ať je vidět, co se na tvém serveru stalo.",
+  "tile.info.welcome": "Úvodní stránka",
+  "tile.info.welcomeHint": "Tři první kroky, jak je ukazuje nová instalace.",
   "tile.info.manual": "Příručka",
   "tile.info.bugReport": "Hlášení chyby",
   "tile.info.download": "Stáhnout",

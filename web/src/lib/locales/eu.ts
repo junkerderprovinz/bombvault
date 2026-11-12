@@ -4675,6 +4675,8 @@ const eu: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHubek BombVaultek irakurri ezin zuen erantzun bat bidali du. Saiatu berriro geroago.",
   "tile.info.help": "Laguntza",
   "tile.info.helpHint": "Akats-txosten bat egiteko, deskargatu instantzia honen erregistroak eta ezarpenak dituen ZIP fitxategi bat, pasahitz, gako eta kredentzialik gabe. Erantsi GitHub-eko issue bati, zure zerbitzarian zer gertatu den ikus dezaten.",
+  "tile.info.welcome": "Ongietorri orria",
+  "tile.info.welcomeHint": "Lehen hiru urratsak, instalazio berri batek erakusten dituen bezala.",
   "tile.info.manual": "Eskuliburua",
   "tile.info.bugReport": "Akats-txostena",
   "tile.info.download": "Deskargatu",

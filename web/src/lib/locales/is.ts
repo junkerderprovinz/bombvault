@@ -4675,6 +4675,8 @@ const is: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub sendi svar sem BombVault gat ekki lesið. Reyndu aftur síðar.",
   "tile.info.help": "Hjálp",
   "tile.info.helpHint": "Fyrir villuskýrslu skaltu sækja ZIP-skrá með annálum og stillingum þessa tilviks, án lykilorða, lykla og auðkenna. Hengdu hana við GitHub-issue svo fólk sjái hvað gerðist á netþjóninum þínum.",
+  "tile.info.welcome": "Upphafssíða",
+  "tile.info.welcomeHint": "Fyrstu þrjú skrefin, eins og ný uppsetning sýnir þau.",
   "tile.info.manual": "Handbók",
   "tile.info.bugReport": "Villuskýrsla",
   "tile.info.download": "Sækja",

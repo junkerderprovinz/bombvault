@@ -4666,6 +4666,8 @@ const ro: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub a trimis un răspuns pe care BombVault nu l-a putut citi. Încearcă din nou mai târziu.",
   "tile.info.help": "Ajutor",
   "tile.info.helpHint": "Pentru un raport de eroare, descarcă un fișier ZIP cu jurnalele și setările acestei instanțe, fără parole, chei sau credențiale. Atașează-l la un issue pe GitHub, ca să se vadă ce s-a întâmplat pe serverul tău.",
+  "tile.info.welcome": "Pagina de bun venit",
+  "tile.info.welcomeHint": "Primii trei pași, așa cum îi arată o instalare nouă.",
   "tile.info.manual": "Manual",
   "tile.info.bugReport": "Raport de eroare",
   "tile.info.download": "Descarcă",

@@ -4665,6 +4665,8 @@ const el: Partial<Translations> = {
   "tile.info.refused.badResponse": "Το GitHub έστειλε μια απάντηση που το BombVault δεν μπόρεσε να διαβάσει. Δοκιμάστε ξανά αργότερα.",
   "tile.info.help": "Βοήθεια",
   "tile.info.helpHint": "Για αναφορά σφάλματος, κατεβάστε ένα αρχείο ZIP με τα logs και τις ρυθμίσεις αυτού του στιγμιοτύπου, χωρίς κωδικούς, κλειδιά και διαπιστευτήρια. Επισυνάψτε το σε ένα issue στο GitHub, ώστε να φαίνεται τι έγινε στον διακομιστή σας.",
+  "tile.info.welcome": "Σελίδα καλωσορίσματος",
+  "tile.info.welcomeHint": "Τα τρία πρώτα βήματα, όπως τα δείχνει μια νέα εγκατάσταση.",
   "tile.info.manual": "Εγχειρίδιο",
   "tile.info.bugReport": "Αναφορά σφάλματος",
   "tile.info.download": "Λήψη",

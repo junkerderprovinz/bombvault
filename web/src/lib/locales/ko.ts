@@ -4656,6 +4656,8 @@ const ko: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub가 BombVault가 읽을 수 없는 응답을 보냈습니다. 나중에 다시 시도하세요.",
   "tile.info.help": "도움말",
   "tile.info.helpHint": "버그 신고를 위해 이 인스턴스의 로그와 설정이 담긴 ZIP 파일을 내려받으세요. 비밀번호, 키, 자격 증명은 들어 있지 않습니다. GitHub 이슈에 첨부하면 서버에서 무슨 일이 있었는지 확인할 수 있습니다.",
+  "tile.info.welcome": "환영 페이지",
+  "tile.info.welcomeHint": "새로 설치했을 때 보이는 처음 세 단계입니다.",
   "tile.info.manual": "설명서",
   "tile.info.bugReport": "버그 신고",
   "tile.info.download": "다운로드",

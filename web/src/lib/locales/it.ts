@@ -4665,6 +4665,8 @@ const it: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub ha inviato una risposta che BombVault non è riuscito a leggere. Riprova più tardi.",
   "tile.info.help": "Aiuto",
   "tile.info.helpHint": "Per una segnalazione di bug scarica un file ZIP con i log e le impostazioni di questa istanza, senza password, chiavi né credenziali. Allegalo a una issue su GitHub, così si vede cosa è successo sul tuo server.",
+  "tile.info.welcome": "Pagina di benvenuto",
+  "tile.info.welcomeHint": "I primi tre passi, come li mostra una nuova installazione.",
   "tile.info.manual": "Manuale",
   "tile.info.bugReport": "Segnala bug",
   "tile.info.download": "Scarica",

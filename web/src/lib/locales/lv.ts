@@ -4675,6 +4675,8 @@ const lv: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub atsūtīja atbildi, ko BombVault nevarēja nolasīt. Mēģiniet vēlāk vēlreiz.",
   "tile.info.help": "Palīdzība",
   "tile.info.helpHint": "Kļūdas ziņojumam lejupielādējiet ZIP failu ar šīs instances žurnāliem un iestatījumiem, bez parolēm, atslēgām un akreditācijas datiem. Pievienojiet to GitHub issue, lai redzētu, kas notika jūsu serverī.",
+  "tile.info.welcome": "Sveiciena lapa",
+  "tile.info.welcomeHint": "Pirmie trīs soļi, kā tos rāda jauna instalācija.",
   "tile.info.manual": "Rokasgrāmata",
   "tile.info.bugReport": "Kļūdas ziņojums",
   "tile.info.download": "Lejupielādēt",

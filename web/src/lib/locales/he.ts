@@ -4665,6 +4665,8 @@ const he: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub שלח תשובה ש-BombVault לא הצליח לקרוא. אפשר לנסות שוב מאוחר יותר.",
   "tile.info.help": "עזרה",
   "tile.info.helpHint": "לדיווח על באג, מורידים קובץ ZIP עם הלוגים וההגדרות של המופע הזה, בלי סיסמאות, מפתחות ופרטי גישה. מצרפים אותו ל-issue ב-GitHub כדי שאפשר יהיה לראות מה קרה בשרת.",
+  "tile.info.welcome": "דף פתיחה",
+  "tile.info.welcomeHint": "שלושת הצעדים הראשונים, כפי שהתקנה חדשה מציגה אותם.",
   "tile.info.manual": "מדריך",
   "tile.info.bugReport": "דיווח על באג",
   "tile.info.download": "הורדה",

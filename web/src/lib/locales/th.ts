@@ -4666,6 +4666,8 @@ const th: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub ตอบกลับมาด้วยข้อมูลที่ BombVault อ่านไม่ได้ ลองใหม่ภายหลัง",
   "tile.info.help": "ความช่วยเหลือ",
   "tile.info.helpHint": "หากต้องการรายงานข้อบกพร่อง ให้ดาวน์โหลดไฟล์ ZIP ที่มีบันทึกและการตั้งค่าของอินสแตนซ์นี้ โดยไม่มีรหัสผ่าน คีย์ หรือข้อมูลรับรอง แนบไปกับ issue บน GitHub เพื่อให้คนอื่นเห็นว่าเกิดอะไรขึ้นบนเซิร์ฟเวอร์ของคุณ",
+  "tile.info.welcome": "หน้าต้อนรับ",
+  "tile.info.welcomeHint": "สามขั้นตอนแรก ตามที่การติดตั้งใหม่แสดง",
   "tile.info.manual": "คู่มือ",
   "tile.info.bugReport": "รายงานบั๊ก",
   "tile.info.download": "ดาวน์โหลด",

@@ -4656,6 +4656,8 @@ const vi: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub gửi về một phản hồi mà BombVault không đọc được. Hãy thử lại sau.",
   "tile.info.help": "Trợ giúp",
   "tile.info.helpHint": "Để báo lỗi, hãy tải xuống một tệp ZIP chứa nhật ký và cài đặt của instance này, không có mật khẩu, khóa hay thông tin đăng nhập. Đính kèm nó vào một issue trên GitHub để mọi người thấy điều gì đã xảy ra trên máy chủ của bạn.",
+  "tile.info.welcome": "Trang chào mừng",
+  "tile.info.welcomeHint": "Ba bước đầu tiên, như một bản cài đặt mới hiển thị.",
   "tile.info.manual": "Hướng dẫn",
   "tile.info.bugReport": "Báo lỗi",
   "tile.info.download": "Tải xuống",

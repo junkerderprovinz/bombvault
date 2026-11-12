@@ -4664,6 +4664,8 @@ const nl: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub stuurde een antwoord dat BombVault niet kon lezen. Probeer het later opnieuw.",
   "tile.info.help": "Help",
   "tile.info.helpHint": "Download voor een bugrapport een ZIP-bestand met de logs en instellingen van deze instantie, zonder wachtwoorden, sleutels of inloggegevens. Voeg het toe aan een GitHub-issue, zodat anderen kunnen zien wat er op je server is gebeurd.",
+  "tile.info.welcome": "Welkomstpagina",
+  "tile.info.welcomeHint": "De drie eerste stappen, zoals een nieuwe installatie ze toont.",
   "tile.info.manual": "Handleiding",
   "tile.info.bugReport": "Bugrapport",
   "tile.info.download": "Downloaden",

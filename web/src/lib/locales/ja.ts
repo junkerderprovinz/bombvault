@@ -4656,6 +4656,8 @@ const ja: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub から BombVault が読み取れない応答が返されました。後でもう一度お試しください。",
   "tile.info.help": "ヘルプ",
   "tile.info.helpHint": "バグ報告用に、このインスタンスのログと設定をまとめた ZIP ファイルをダウンロードします。パスワード、鍵、認証情報は含まれません。GitHub の issue に添付すると、サーバーで何が起きたかを確認してもらえます。",
+  "tile.info.welcome": "ようこそページ",
+  "tile.info.welcomeHint": "新しいインストールで表示される最初の3つのステップです。",
   "tile.info.manual": "マニュアル",
   "tile.info.bugReport": "バグ報告",
   "tile.info.download": "ダウンロード",

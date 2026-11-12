@@ -4666,6 +4666,8 @@ const ar: Partial<Translations> = {
   "tile.info.refused.badResponse": "أرسل GitHub ردًّا تعذّرت قراءته على BombVault. يُرجى المحاولة مجددًا لاحقًا.",
   "tile.info.help": "مساعدة",
   "tile.info.helpHint": "لإرسال بلاغ عن خطأ، يُنزَّل ملف ZIP يضم سجلات هذا المثيل وإعداداته، دون كلمات مرور أو مفاتيح أو بيانات اعتماد. يُرفق ببلاغ على GitHub ليتبيّن ما حدث على الخادم.",
+  "tile.info.welcome": "صفحة الترحيب",
+  "tile.info.welcomeHint": "الخطوات الثلاث الأولى كما يعرضها تثبيت جديد.",
   "tile.info.manual": "الدليل",
   "tile.info.bugReport": "بلاغ خطأ",
   "tile.info.download": "تنزيل",

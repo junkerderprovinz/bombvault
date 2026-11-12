@@ -4675,6 +4675,8 @@ const lt: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub atsiuntė atsakymą, kurio BombVault nepavyko perskaityti. Bandyk vėliau.",
   "tile.info.help": "Pagalba",
   "tile.info.helpHint": "Pranešimui apie klaidą atsisiųsk ZIP failą su šio egzemplioriaus žurnalais ir nustatymais, be slaptažodžių, raktų ir prisijungimo duomenų. Pridėk jį prie GitHub issue, kad žmonės matytų, kas atsitiko tavo serveryje.",
+  "tile.info.welcome": "Pasveikinimo puslapis",
+  "tile.info.welcomeHint": "Pirmieji trys žingsniai, kaip juos rodo nauja įdiegtis.",
   "tile.info.manual": "Vadovas",
   "tile.info.bugReport": "Klaidos ataskaita",
   "tile.info.download": "Atsisiųsti",

@@ -4675,6 +4675,8 @@ const id: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub mengirim jawaban yang tidak bisa dibaca BombVault. Coba lagi nanti.",
   "tile.info.help": "Bantuan",
   "tile.info.helpHint": "Untuk laporan bug, unduh berkas ZIP berisi log dan pengaturan instansi ini, tanpa kata sandi, kunci, atau kredensial. Lampirkan ke issue GitHub agar orang bisa melihat apa yang terjadi di server Anda.",
+  "tile.info.welcome": "Halaman sambutan",
+  "tile.info.welcomeHint": "Tiga langkah pertama, seperti yang ditampilkan instalasi baru.",
   "tile.info.manual": "Panduan",
   "tile.info.bugReport": "Laporan bug",
   "tile.info.download": "Unduh",

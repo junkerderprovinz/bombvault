@@ -4662,6 +4662,8 @@ const uk: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub надіслав відповідь, яку BombVault не зміг прочитати. Спробуйте пізніше.",
   "tile.info.help": "Довідка",
   "tile.info.helpHint": "Для звіту про помилку завантажте ZIP-файл із журналами та налаштуваннями цього екземпляра, без паролів, ключів і облікових даних. Додайте його до issue на GitHub, щоб було видно, що сталося на вашому сервері.",
+  "tile.info.welcome": "Сторінка привітання",
+  "tile.info.welcomeHint": "Перші три кроки, як їх показує нова інсталяція.",
   "tile.info.manual": "Посібник",
   "tile.info.bugReport": "Звіт про помилку",
   "tile.info.download": "Завантажити",

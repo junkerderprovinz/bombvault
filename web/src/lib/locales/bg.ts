@@ -4675,6 +4675,8 @@ const bg: Partial<Translations> = {
   "tile.info.refused.badResponse": "GitHub изпрати отговор, който BombVault не можа да прочете. Опитай пак по-късно.",
   "tile.info.help": "Помощ",
   "tile.info.helpHint": "За сигнал за грешка изтегли ZIP файл с логовете и настройките на тази инстанция, без пароли, ключове и идентификационни данни. Прикачи го към issue в GitHub, за да се види какво се е случило на твоя сървър.",
+  "tile.info.welcome": "Страница за добре дошли",
+  "tile.info.welcomeHint": "Първите три стъпки, както ги показва нова инсталация.",
   "tile.info.manual": "Наръчник",
   "tile.info.bugReport": "Сигнал за грешка",
   "tile.info.download": "Изтегли",
