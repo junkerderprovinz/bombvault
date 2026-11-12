@@ -877,6 +877,7 @@ const lv: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog un TowerTorch var jautāt BombVault, kad pēdējā rezerves kopija izdevās, un pirms izmaiņām palūgt jaunu.",
   "whatsNew.pairingCard": "Cietoksnis ir lapas Pārošana augšā: vienā kartītē ir instances nosaukums, frāze un iziešana, un pārējās lietotnes seko kartītēs kā cilnē Instances.",
   "whatsNew.fortressRemove": "Katras citas lietotnes kartītē lapā Pārošana ir Noņemt, un uzreiz pēc tam BombVault piedāvā jaunu frāzi, jo vecā lietotni ielaistu atpakaļ.",
+  "whatsNew.fortressOpen": "Atvērt citas lietotnes kartītē parāda tās lapas gan mājās, gan ceļā, aiz tās pašas pieteikšanās. Spraudnis tā vietā parāda savu stāvokli un pēdējās žurnāla rindas.",
   "whatsNew.oled": "OLED zem Tēma dod OLED un AMOLED ekrāniem īsti melnu krāsu ikreiz, kad redzama tumšā tēma, arī tad, ja tā seko ierīcei. Katra ierīce atceras savu izvēli.",
 
   // Monitoring (Prometheus)

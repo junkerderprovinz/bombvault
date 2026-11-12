@@ -83,6 +83,8 @@ export const RELEASES: Release[] = [
       // Remove shows only on the card of another app, so its dot stands in
       // the list.
       { id: "fortress-remove", text: "whatsNew.fortressRemove" },
+      // Open shows only on the card of another app as well.
+      { id: "fortress-open", text: "whatsNew.fortressOpen" },
       { id: "app-backups", text: "whatsNew.appBackups" },
       { id: "app-give-back", text: "whatsNew.giveBack" },
       { id: "fortress-asks", text: "whatsNew.fortressAsks" },

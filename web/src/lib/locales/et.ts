@@ -877,6 +877,7 @@ const et: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog ja TowerTorch saavad BombVaultilt küsida, millal viimane varukoopia õnnestus, ja enne muudatust uue küsida.",
   "whatsNew.pairingCard": "Kindlus on lehe Sidumine ülaosas: ühel kaardil on eksemplari nimi, fraas ja lahkumine, ning teised rakendused tulevad järel kaartidel nagu vahekaardil Eksemplarid.",
   "whatsNew.fortressRemove": "Iga teise rakenduse kaardil lehel Sidumine on Eemalda, ja kohe pärast seda pakub BombVault uut fraasi, sest vana laseks rakenduse tagasi.",
+  "whatsNew.fortressOpen": "Ava teise rakenduse kaardil näitab selle oma lehti, kodus ja teel, selle enda sisselogimise taga. Plugin näitab selle asemel oma olekut ja logi viimaseid ridu.",
   "whatsNew.oled": "Teema all olev OLED annab OLED- ja AMOLED-ekraanidele päris musta alati, kui tume teema on näha, ka siis, kui see järgib seadet. Iga seade jätab oma valiku meelde.",
 
   // Monitoring (Prometheus)

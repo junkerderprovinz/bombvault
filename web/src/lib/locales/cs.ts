@@ -1230,6 +1230,7 @@ const cs: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog a TowerTorch se mohou BombVault zeptat, kdy se naposledy povedla záloha, a před změnou si vyžádat novou.",
   "whatsNew.pairingCard": "Pevnost je nahoře na stránce Párování: jedna karta nese název instance, frázi a odchod a ostatní aplikace následují v kartách jako na kartě Instance.",
   "whatsNew.fortressRemove": "Karta každé jiné aplikace na stránce Párování má Odebrat a hned potom vám BombVault nabídne novou frázi, protože stará by aplikaci pustila zpátky.",
+  "whatsNew.fortressOpen": "Otevřít na kartě jiné aplikace ukáže její vlastní stránky, doma i na cestách, za jejím vlastním přihlášením. Plugin místo toho ukáže svůj stav a poslední řádky logu.",
   "whatsNew.oled": "OLED pod Motivem dává obrazovkám OLED a AMOLED opravdovou černou, kdykoli je vidět tmavý motiv, i když se řídí zařízením. Každé zařízení si pamatuje vlastní volbu.",
 
   // Monitoring (Prometheus)

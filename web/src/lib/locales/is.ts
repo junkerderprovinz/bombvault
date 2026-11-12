@@ -877,6 +877,7 @@ const is: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch geta spurt BombVault hvenær síðasta afrit tókst og beðið um nýtt áður en þau breyta einhverju.",
   "whatsNew.pairingCard": "Vígið er efst á síðunni Pörun: eitt spjald geymir heiti tilviksins, setninguna og leiðina út, og hin forritin koma á eftir í spjöldum eins og á flipanum Tilvik.",
   "whatsNew.fortressRemove": "Spjald hvers annars forrits á síðunni Pörun er með Fjarlægja, og strax á eftir býður BombVault nýja setningu, því sú gamla hleypti forritinu aftur inn.",
+  "whatsNew.fortressOpen": "Opna á spjaldi annars forrits sýnir síður þess, heima og á ferðinni, á bak við þess eigin innskráningu. Viðbót sýnir í staðinn stöðu sína og síðustu línur í skránni.",
   "whatsNew.oled": "OLED undir Þema gefur OLED- og AMOLED-skjám alvöru svart í hvert sinn sem dökka þemað sést, líka þegar það fylgir tækinu. Hvert tæki geymir sitt eigið val.",
 
   // Monitoring (Prometheus)

@@ -877,6 +877,7 @@ const ms: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog dan TowerTorch boleh bertanya kepada BombVault bila sandaran terakhir berjaya, dan meminta sandaran baharu sebelum mengubah apa-apa.",
   "whatsNew.pairingCard": "Kubu berada di bahagian paling atas halaman Gandingan: satu kad memuatkan nama instans, frasa dan jalan keluar, dan apl lain menyusul dalam kad seperti dalam tab Instans.",
   "whatsNew.fortressRemove": "Kad setiap apl lain di halaman Gandingan ada Alih keluar, dan sejurus selepas itu BombVault menawarkan frasa baharu, kerana frasa lama akan membenarkan apl itu masuk semula.",
+  "whatsNew.fortressOpen": "Buka pada kad apl lain menunjukkan halamannya sendiri, di rumah atau di luar, di sebalik log masuk apl itu sendiri. Pemalam menunjukkan keadaan dan baris log terakhirnya sebagai ganti.",
   "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

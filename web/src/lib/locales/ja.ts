@@ -1215,6 +1215,7 @@ const ja: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire、ShipLog、TowerTorch は、最後のバックアップがいつ成功したかを BombVault に尋ね、何かを変える前に新しいバックアップを頼めます。",
   "whatsNew.pairingCard": "要塞はペアリングページのいちばん上にあります。1 枚のカードにインスタンス名、フレーズ、退出がまとまり、ほかのアプリはインスタンスタブと同じようなカードで続きます。",
   "whatsNew.fortressRemove": "ペアリングページのほかのアプリのカードには削除があり、その直後に BombVault が新しいフレーズを提案します。古いフレーズのままだと、そのアプリが戻ってこられるからです。",
+  "whatsNew.fortressOpen": "ほかのアプリのカードの「開く」で、そのアプリ自身のページが家でも外出先でも開きます。サインインはそのアプリ自身のものです。プラグインは代わりに状態とログの最新行を表示します。",
   "whatsNew.oled": "「テーマ」の下にある「OLED」は、ダークテーマが表示されているとき、デバイスに合わせている場合も含めて、OLED と AMOLED の画面を真っ黒にします。それぞれのデバイスが自分の選択を覚えます。",
 
   // Monitoring (Prometheus)

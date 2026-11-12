@@ -1215,6 +1215,7 @@ const ko: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog, TowerTorch는 마지막 백업이 언제 성공했는지 BombVault에 묻고, 무언가를 바꾸기 전에 새 백업을 요청할 수 있습니다.",
   "whatsNew.pairingCard": "요새가 페어링 페이지 맨 위에 있어요. 카드 하나에 인스턴스 이름, 문구, 나가기가 모여 있고, 다른 앱은 인스턴스 탭과 같은 카드로 이어져요.",
   "whatsNew.fortressRemove": "페어링 페이지의 다른 앱 카드마다 제거가 있고, 그 직후 BombVault가 새 문구를 권해요. 이전 문구로는 그 앱이 다시 들어올 수 있으니까요.",
+  "whatsNew.fortressOpen": "다른 앱 카드의 열기로 그 앱의 페이지를 집에서도 밖에서도 열 수 있어요. 로그인은 그 앱 자신의 것이에요. 플러그인은 대신 상태와 최근 로그 줄을 보여 줘요.",
   "whatsNew.oled": "테마 아래의 OLED는 어두운 테마가 보일 때마다, 기기를 따를 때도, OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 각 기기가 자신의 선택을 기억합니다.",
 
   // Monitoring (Prometheus)

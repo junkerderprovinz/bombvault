@@ -877,6 +877,7 @@ const id: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog, dan TowerTorch bisa menanyakan kepada BombVault kapan cadangan terakhir berhasil, dan meminta cadangan baru sebelum mengubah sesuatu.",
   "whatsNew.pairingCard": "Benteng ada di bagian paling atas halaman Pemasangan: satu kartu memuat nama instance, frasa, dan jalan keluar, lalu aplikasi lain menyusul dalam kartunya masing-masing.",
   "whatsNew.fortressRemove": "Kartu setiap aplikasi lain di halaman Pemasangan punya Hapus, dan tepat setelahnya BombVault menawarkan frasa baru, karena frasa lama akan membiarkan aplikasi itu masuk lagi.",
+  "whatsNew.fortressOpen": "Buka di kartu aplikasi lain menampilkan halamannya sendiri, di rumah maupun di jalan, di balik login aplikasi itu sendiri. Plugin menampilkan status dan baris log terakhirnya sebagai gantinya.",
   "whatsNew.oled": "OLED di bawah Tema memberi hitam pekat pada layar OLED dan AMOLED setiap kali tema gelap tampil, juga saat tema mengikuti perangkat. Setiap perangkat menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

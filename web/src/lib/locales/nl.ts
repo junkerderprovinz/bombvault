@@ -1220,6 +1220,7 @@ const nl: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog en TowerTorch kunnen BombVault vragen wanneer de laatste back-up lukte, en om een nieuwe vragen voordat ze iets veranderen.",
   "whatsNew.pairingCard": "De vesting staat bovenaan de pagina Koppeling: één kaart bevat de naam van de instantie, de frase en de weg naar buiten, en de andere apps volgen in kaarten zoals op het tabblad Instanties.",
   "whatsNew.fortressRemove": "De kaart van elke andere app op de pagina Koppeling heeft Verwijderen, en meteen daarna biedt BombVault een nieuwe frase aan, omdat de oude de app weer binnen zou laten.",
+  "whatsNew.fortressOpen": "Openen op de kaart van een andere app toont de eigen pagina's van die app, thuis en onderweg, achter haar eigen aanmelding. Een plug-in toont in plaats daarvan zijn status en de laatste regels van zijn log.",
   "whatsNew.oled": "OLED onder Thema geeft OLED- en AMOLED-schermen echt zwart zodra het donkere thema te zien is, ook als het thema het apparaat volgt. Elk apparaat onthoudt zijn eigen keuze.",
 
   // Monitoring (Prometheus)

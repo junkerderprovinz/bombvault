@@ -1223,6 +1223,7 @@ const vi: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog và TowerTorch có thể hỏi BombVault lần sao lưu gần nhất thành công khi nào, và yêu cầu một bản mới trước khi thay đổi điều gì.",
   "whatsNew.pairingCard": "Pháo đài nằm trên cùng trang Ghép nối: một thẻ chứa tên phiên bản, cụm từ và lối ra, còn các ứng dụng khác nằm tiếp theo trong các thẻ giống thẻ Phiên bản.",
   "whatsNew.fortressRemove": "Thẻ của mỗi ứng dụng khác trên trang Ghép nối có Xóa, và ngay sau đó BombVault đề xuất cụm từ mới, vì cụm từ cũ sẽ cho ứng dụng đó vào lại.",
+  "whatsNew.fortressOpen": "Mở trên thẻ của ứng dụng khác hiện các trang của chính ứng dụng đó, ở nhà hay khi ra ngoài, sau bước đăng nhập của nó. Một plugin thì hiện trạng thái và các dòng nhật ký mới nhất thay vào đó.",
   "whatsNew.oled": "OLED bên dưới Giao diện cho màn hình OLED và AMOLED màu đen tuyền mỗi khi giao diện tối hiển thị, kể cả khi giao diện theo thiết bị. Mỗi thiết bị nhớ lựa chọn riêng của mình.",
 
   // Monitoring (Prometheus)

@@ -1223,6 +1223,7 @@ const zh: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire、ShipLog 和 TowerTorch 可以询问 BombVault 上次备份何时成功，并在更改任何内容之前请求一次新的备份。",
   "whatsNew.pairingCard": "堡垒位于配对页面顶部：一张卡片包含实例名称、口令和退出，其他应用随后以与实例标签页相同的卡片显示。",
   "whatsNew.fortressRemove": "配对页面上每个其他应用的卡片都有移除，移除之后 BombVault 会马上建议换一个新口令，因为旧口令还会让该应用重新进入。",
+  "whatsNew.fortressOpen": "在另一个应用的卡片上点“打开”，就能看到它自己的页面，在家在外都行，前面是它自己的登录。插件则改为显示它的状态和最新的日志行。",
   "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)

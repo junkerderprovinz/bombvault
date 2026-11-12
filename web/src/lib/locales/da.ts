@@ -1232,6 +1232,7 @@ const da: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch kan spørge BombVault, hvornår den seneste sikkerhedskopi lykkedes, og bede om en ny, før de ændrer noget.",
   "whatsNew.pairingCard": "Fæstningen står øverst på siden Parring: ét kort har instansens navn, sætningen og vejen ud, og de andre apps følger i kort som dem på fanen Instanser.",
   "whatsNew.fortressRemove": "Hver anden apps kort på siden Parring har Fjern, og lige bagefter tilbyder BombVault en ny sætning, fordi den gamle ville lukke appen ind igen.",
+  "whatsNew.fortressOpen": "Åbn på en anden apps kort viser appens egne sider, hjemme og på farten, bag dens eget login. Et plugin viser i stedet sin tilstand og de seneste linjer i loggen.",
   "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)

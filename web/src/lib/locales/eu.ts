@@ -877,6 +877,7 @@ const eu: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog eta TowerTorch-ek BombVault-i galde diezaiokete azken babeskopia noiz atera zen ondo, eta berri bat eska dezakete zerbait aldatu aurretik.",
   "whatsNew.pairingCard": "Gotorlekua Parekatzea orriaren goialdean dago: txartel bakar batek instantziaren izena, esaldia eta irteera ditu, eta beste aplikazioak Instantziak fitxakoak bezalako txarteletan datoz ondoren.",
   "whatsNew.fortressRemove": "Parekatzea orrian beste aplikazio bakoitzaren txartelak Kendu du, eta berehala BombVault-ek esaldi berri bat eskaintzen du, zaharrak aplikazioa berriro sartzen utziko lukeelako.",
+  "whatsNew.fortressOpen": "Beste aplikazio baten txarteleko Ireki-k haren orriak erakusten ditu, etxean zein kanpoan, haren saio-hasieraren atzean. Plugin batek bere egoera eta erregistroko azken lerroak erakusten ditu horren ordez.",
   "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)

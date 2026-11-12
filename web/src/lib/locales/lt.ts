@@ -877,6 +877,7 @@ const lt: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog ir TowerTorch gali paklausti BombVault, kada paskutinė atsarginė kopija pavyko, ir paprašyti naujos prieš ką nors keisdamos.",
   "whatsNew.pairingCard": "Tvirtovė yra puslapio Susiejimas viršuje: vienoje kortelėje yra egzemplioriaus pavadinimas, frazė ir išėjimas, o kitos programos eina toliau kortelėse kaip skirtuke Egzemplioriai.",
   "whatsNew.fortressRemove": "Kiekvienos kitos programos kortelėje puslapyje Susiejimas yra Pašalinti, o iškart po to BombVault pasiūlo naują frazę, nes senoji vėl įleistų programą.",
+  "whatsNew.fortressOpen": "Atidaryti kitos programos kortelėje parodo jos pačios puslapius, namie ir kelyje, už jos pačios prisijungimo. Papildinys vietoj to parodo savo būseną ir paskutines žurnalo eilutes.",
   "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)

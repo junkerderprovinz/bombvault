@@ -973,6 +973,7 @@ export const en = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog and TowerTorch can ask BombVault when the last backup worked, and for a fresh one before they change something.",
   "whatsNew.pairingCard": "The fortress sits on top of the Pairing page. One card holds the instance's name, the phrase and the way out, and the other apps follow in cards like the ones on the Instances tab.",
   "whatsNew.fortressRemove": "Every other app's card on the Pairing page has Remove. Right after a removal, BombVault offers a new phrase, since the old one would let the app back in.",
+  "whatsNew.fortressOpen": "Open on another app's card shows that app's own pages, at home and on the road, behind its own sign-in. A plugin shows its state and latest log lines instead.",
   "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
@@ -6596,6 +6597,7 @@ export const de: Translations = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog und TowerTorch können BombVault fragen, wann die letzte Sicherung geklappt hat, und vor einer Änderung um eine frische bitten.",
   "whatsNew.pairingCard": "Die Festung steht oben auf der Seite Kopplung. Eine Karte trägt den Namen der Instanz, die Phrase und den Weg hinaus, und die anderen Apps folgen in Karten wie im Tab Instanzen.",
   "whatsNew.fortressRemove": "Jede andere App hat auf der Seite Kopplung ein Herausnehmen. Gleich danach bietet BombVault eine neue Phrase an, weil die alte die App sonst wieder hereinlässt.",
+  "whatsNew.fortressOpen": "Öffnen auf der Karte einer anderen App zeigt deren eigene Seiten, zu Hause wie unterwegs, hinter ihrer eigenen Anmeldung. Ein Plugin zeigt stattdessen seinen Zustand und die letzten Zeilen seines Logs.",
   "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)

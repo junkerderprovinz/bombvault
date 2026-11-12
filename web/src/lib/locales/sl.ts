@@ -877,6 +877,7 @@ const sl: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog in TowerTorch lahko BombVault vprašajo, kdaj je zadnja varnostna kopija uspela, in pred spremembo zahtevajo novo.",
   "whatsNew.pairingCard": "Trdnjava je na vrhu strani Seznanjanje: ena kartica ima ime instance, frazo in izhod, druge aplikacije pa sledijo vsaka v svoji kartici.",
   "whatsNew.fortressRemove": "Kartica vsake druge aplikacije na strani Seznanjanje ima Odstrani, takoj zatem pa BombVault ponudi novo frazo, ker bi stara aplikacijo spet spustila noter.",
+  "whatsNew.fortressOpen": "Odpri na kartici druge aplikacije pokaže njene strani, doma in na poti, za njeno lastno prijavo. Vtičnik namesto tega pokaže svoje stanje in zadnje vrstice dnevnika.",
   "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)

@@ -1224,6 +1224,7 @@ const it: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog e TowerTorch possono chiedere a BombVault quando è riuscito l'ultimo backup e chiederne uno nuovo prima di cambiare qualcosa.",
   "whatsNew.pairingCard": "La fortezza è in cima alla pagina Associazione, in un'unica scheda con il nome dell'istanza, la frase e l'uscita. Le altre app seguono come nella scheda Istanze.",
   "whatsNew.fortressRemove": "Ogni altra app ha Rimuovi nella sua scheda della pagina Associazione, e subito dopo BombVault propone una nuova frase, perché quella vecchia farebbe rientrare l'app.",
+  "whatsNew.fortressOpen": "Apri sulla scheda di un'altra app mostra le sue pagine, a casa e fuori, dietro il suo accesso. Un plugin mostra invece il suo stato e le ultime righe del suo registro.",
   "whatsNew.oled": "OLED, sotto Tema, dà un nero vero agli schermi OLED e AMOLED ogni volta che si vede il tema scuro, anche quando segue il dispositivo. Ogni dispositivo tiene la propria scelta.",
 
   // Monitoring (Prometheus)

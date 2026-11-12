@@ -1232,6 +1232,7 @@ const fi: Partial<Translations> = {
   "whatsNew.fortressAsks": "FireSquire, ShipLog ja TowerTorch voivat kysyä BombVaultilta, milloin viimeisin varmuuskopio onnistui, ja pyytää uuden ennen kuin muuttavat jotain.",
   "whatsNew.pairingCard": "Linnoitus on Pariliitos-sivun ylimpänä: yhdessä kortissa ovat instanssin nimi, lause ja lähteminen, ja muut sovellukset tulevat perässä kukin omassa kortissaan.",
   "whatsNew.fortressRemove": "Jokaisen muun sovelluksen kortissa Pariliitos-sivulla on Poista, ja heti sen jälkeen BombVault tarjoaa uutta lausetta, koska vanha päästäisi sovelluksen takaisin.",
+  "whatsNew.fortressOpen": "Avaa toisen sovelluksen kortilla näyttää sen omat sivut, kotona ja tien päällä, sen oman kirjautumisen takana. Liitännäinen näyttää sen sijaan tilansa ja lokinsa viimeiset rivit.",
   "whatsNew.oled": "Teeman alla oleva OLED antaa OLED- ja AMOLED-näytöille aidon mustan aina, kun tumma teema näkyy, myös kun se seuraa laitetta. Jokainen laite muistaa oman valintansa.",
 
   // Monitoring (Prometheus)
