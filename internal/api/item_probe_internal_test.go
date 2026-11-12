@@ -384,6 +384,9 @@ func movedProbeService(t *testing.T, listed ...restic.Snapshot) (*Service, store
 	t.Helper()
 	eng := &probeEngine{lsErr: errors.New(`restic ls: Fatal: no matching ID found for prefix "abcd1234"`), snaps: listed}
 	s, tg := newProbeService(t, eng)
+	// The folder moves after the backup, so the move is never stamped in an
+	// earlier second than the run.
+	recordBackup(t, s.store, tg.ID, "abcd1234")
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -392,7 +395,6 @@ func movedProbeService(t *testing.T, listed ...restic.Snapshot) (*Service, store
 	if err := s.store.UpdateSettings(settings); err != nil {
 		t.Fatal(err)
 	}
-	recordBackup(t, s.store, tg.ID, "abcd1234")
 	return s, tg
 }
 
