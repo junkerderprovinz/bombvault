@@ -15,7 +15,7 @@ import { copyText } from "../../../lib/clipboard";
 import type { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { InstanceWindow } from "../../instances/InstanceWindow";
-import { FortressBlock, RemovedHere } from "./FortressSection";
+import { FortressBlock, RemovedHere, type Others } from "./FortressSection";
 import { PairingWindow } from "./PairingWindow";
 import { usePhraseEntry } from "./PhraseInput";
 import { WordSlots } from "./WordSlots";
@@ -181,6 +181,7 @@ export function PhraseCard({
   onRefresh,
   t,
   hueIndex,
+  others,
 }: {
   group: GroupState;
   view: FortressState;
@@ -195,6 +196,7 @@ export function PhraseCard({
   onRefresh: () => void;
   t: T;
   hueIndex: number;
+  others?: Others;
 }) {
   const { push } = useToast();
   const openPasswordField = useOpenPasswordField();
@@ -407,7 +409,7 @@ export function PhraseCard({
 
   return (
     <>
-      <FortressBlock view={view} group={group} onChanged={onRefresh} hueIndex={hueIndex}>
+      <FortressBlock view={view} group={group} onChanged={onRefresh} hueIndex={hueIndex} others={others}>
         {nameRow}
         <div className="flex flex-col gap-4.5" data-stage={stage}>
           {noPasswordNote}

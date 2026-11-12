@@ -103,7 +103,7 @@ function renderBlock(g: GroupState = group()) {
 function renderApps(giveBack?: GiveBack) {
   return render(
     <I18nProvider>
-      <OtherApps view={view} apps={fortressApps(view.members, String)} group={group()} giveBack={giveBack} hueStart={4} onChanged={() => changed++} />
+      <OtherApps view={view} apps={fortressApps(view.members, String)} group={group()} giveBack={giveBack} showOthers hueStart={4} onChanged={() => changed++} />
     </I18nProvider>,
   );
 }

@@ -5,6 +5,7 @@
 // the other apps of the fortress, and last the relay and the ZFS servers,
 // which are set up once.
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { storedShowOthers, storeShowOthers } from "@glimstone/core";
 import { getFortress, getGroup, type FortressState, type GroupState } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
@@ -52,12 +53,24 @@ function Cards({
   nextHue: () => number;
 }) {
   const [createdHere, setCreatedHere] = useState(false);
+  const [showOthers, setShowOthers] = useState(storedShowOthers);
   const joinedAgo = useJoinedAgo(group);
   const apps = view.joined ? fortressApps(view.members, (unix) => relativeTime(t, unix)) : [];
   // With other apps in the fortress nobody waits for a first member, so the
   // card has nothing to suggest and no line counts the seconds.
   const found = pairStage(group, joinedAgo, createdHere);
   const stage = apps.length > 0 && (found === "new" || found === "searching" || found === "alone") ? "paired" : found;
+  const others =
+    apps.length > 0
+      ? {
+          apps,
+          on: showOthers,
+          onChange: (on: boolean) => {
+            storeShowOthers(on);
+            setShowOthers(on);
+          },
+        }
+      : undefined;
   return (
     <>
       <PhraseCard
@@ -70,12 +83,13 @@ function Cards({
         onRefresh={onRefresh}
         t={t}
         hueIndex={nextHue()}
+        others={others}
       />
       <WaitingCard group={group} onGroup={onGroup} t={t} hueIndex={nextHue()} />
       {(group.active || view.joined) && (
         <MemberCards group={group} stage={stage} joinedAgo={joinedAgo} waitFor={apps.length === 0} onRefresh={onRefresh} nextHue={nextHue} t={t} />
       )}
-      {apps.length > 0 && <OtherApps view={view} apps={apps} group={group} giveBack={giveBack} hueStart={take(nextHue, apps.length + 2)} onChanged={onRefresh} />}
+      {apps.length > 0 && <OtherApps view={view} apps={apps} group={group} giveBack={giveBack} showOthers={showOthers} hueStart={take(nextHue, apps.length + 2)} onChanged={onRefresh} />}
       <RelayCard group={group} stage={stage} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
       {zfs && <ZfsCard t={t} hueIndex={nextHue()} />}
     </>

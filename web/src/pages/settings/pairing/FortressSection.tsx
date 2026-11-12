@@ -8,6 +8,7 @@ import {
   fill,
   fortressText,
   memberName,
+  othersLine,
   type ChangeAnswer,
   type FortressAnswer,
   type FortressApp,
@@ -36,6 +37,7 @@ import {
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
+import { ToggleRow } from "../shared";
 import { fortressPermissions, permissionOf } from "./fortressModel";
 
 const APP = { id: "bombvault", name: "BombVault" };
@@ -53,6 +55,14 @@ const LABEL_KEYS = {
 /** GiveBack is the setting that lets the apps in the fortress take their own
  *  backups back at all. */
 export interface GiveBack {
+  on: boolean;
+  onChange: (on: boolean) => void;
+}
+
+/** Others is the switch that shows the other apps of the fortress on this
+ *  device, which stands at the top of the fortress's card. */
+export interface Others {
+  apps: FortressApp[];
   on: boolean;
   onChange: (on: boolean) => void;
 }
@@ -85,6 +95,7 @@ export function FortressBlock({
   group,
   onChanged,
   hueIndex,
+  others,
   children,
 }: {
   view: FortressState;
@@ -92,6 +103,7 @@ export function FortressBlock({
   /** Reads the group and the fortress again after a new phrase or a leave. */
   onChanged: () => void;
   hueIndex: number;
+  others?: Others;
   children?: ReactNode;
 }) {
   const { t, lang } = useT();
@@ -128,6 +140,14 @@ export function FortressBlock({
         labelKeys={LABEL_KEYS}
         hueIndex={hueIndex}
       >
+        {others && (
+          <ToggleRow
+            label={text.showOthers}
+            hint={`${text.about} ${othersLine(text, lang, others.apps)}`}
+            checked={others.on}
+            onChange={others.onChange}
+          />
+        )}
         {children}
         {view.joined && !view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
       </FortressPairing>
@@ -354,6 +374,7 @@ export function OtherApps({
   apps,
   group,
   giveBack,
+  showOthers,
   hueStart,
   onChanged,
 }: {
@@ -361,6 +382,8 @@ export function OtherApps({
   apps: FortressApp[];
   group: GroupState;
   giveBack?: GiveBack;
+  /** The switch for it stands in the fortress's card above. */
+  showOthers: boolean;
   hueStart: number;
   onChanged: () => void;
 }) {
@@ -403,6 +426,8 @@ export function OtherApps({
         app={APP}
         joined
         apps={apps}
+        showOthers={showOthers}
+        hideSwitch
         permissions={permissions}
         onPermission={onPermission}
         notify={(message, severity) => push(message, severity)}
