@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/Button";
-import { IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
+import { IconForward, IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
 import { IconClose, IconDiagnostics, IconSync } from "../../../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
@@ -120,6 +121,7 @@ function UpdateButton() {
 
 export function InfoPage() {
   const { t } = useT();
+  const navigate = useNavigate();
   const { push } = useToast();
   const [versions, setVersions] = useState<ComponentVersions | null>(null);
   const nextHue = hueCounter();
@@ -195,6 +197,18 @@ export function InfoPage() {
             markClass="glim-github-mark"
           />
         </div>
+        {/* The welcome page passes an install with a backup on to the
+            overview, so this is the way back to it on purpose. */}
+        <Rows>
+          <SettingRow label={t("tile.info.welcome")} hint={t("tile.info.welcomeHint")}>
+            <Button
+              label={t("instances.open")}
+              labelKey="instances.open"
+              glyph={<IconForward />}
+              onClick={() => navigate("/welcome?again")}
+            />
+          </SettingRow>
+        </Rows>
       </Card>
 
       <Card title={t("about.title")} hueIndex={nextHue()}>

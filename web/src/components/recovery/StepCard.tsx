@@ -1,9 +1,58 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Badge } from "../Badge";
 import { InfoBubble } from "../InfoBubble";
 import { hueVars } from "../../lib/appearance";
 
 export type StepState = "idle" | "ok" | "warn" | "bad";
+
+/** The grid three step cards stand in: one column on a phone, and on a wider
+ *  screen as many as keep every heading on one line, so a card that would cut
+ *  its title short moves to the next row instead. The number badges straddle
+ *  the top edge, so stacked cards keep more room between them than a card gap.
+ *  Pair it with the style useStepGrid hands out. */
+export const STEP_GRID =
+  "relative grid grid-cols-1 gap-10 md:grid-cols-[repeat(auto-fit,minmax(min(100%,max(var(--step-min),30%)),1fr))] md:gap-6 md:[&_h2>*]:whitespace-nowrap";
+
+/** Where an element lies inside an ancestor, by layout alone. A card that is
+ *  still sliding in would shift what its bounding box reports. */
+export function placeWithin(el: HTMLElement, root: HTMLElement): [number, number] {
+  let x = 0;
+  let y = 0;
+  for (let at: HTMLElement | null = el; at && at !== root; at = at.offsetParent as HTMLElement | null) {
+    x += at.offsetLeft;
+    y += at.offsetTop;
+  }
+  return [x, y];
+}
+
+/** How wide a card has to be for its heading to stay on one line: the badges
+ *  at their full width and the room StepCard leaves beside its heading. */
+export function stepWidth(root: HTMLElement): number {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const widths = Array.from(root.querySelectorAll<HTMLElement>("h2")).map((head) => {
+    const badges = Array.from(head.children as HTMLCollectionOf<HTMLElement>);
+    const gap = parseFloat(getComputedStyle(head).columnGap) || 0;
+    return badges.reduce((sum, badge) => sum + badge.scrollWidth, 0) + gap * (badges.length - 1);
+  });
+  return Math.ceil(Math.max(0, ...widths) + 3.25 * rem);
+}
+
+/** useStepGrid measures the width STEP_GRID needs, again when the words or
+ *  the font change. */
+export function useStepGrid<E extends HTMLElement>(words: string) {
+  const grid = useRef<E>(null);
+  const [stepMin, setStepMin] = useState(0);
+  useLayoutEffect(() => {
+    const root = grid.current!;
+    const measure = () => setStepMin(stepWidth(root));
+    measure();
+    void document.fonts?.ready.then(measure);
+    const watch = new ResizeObserver(measure);
+    watch.observe(root);
+    return () => watch.disconnect();
+  }, [words]);
+  return { grid, style: { "--step-min": `${stepMin}px` } as CSSProperties };
+}
 
 export function StepCard({
   n,

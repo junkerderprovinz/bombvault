@@ -102,4 +102,21 @@ describe("the motion dials", () => {
     expect(frames).toMatch(/var\(--motion-row-wiggle-tilt/);
     expect(frames).toMatch(/var\(--motion-row-wiggle-lift/);
   });
+
+  it("play the welcome page's scene through the scene dial, never at off, and start and end every loop on its resting frame", () => {
+    // The track only fades; every other part comes back to no transform.
+    const rests: Record<string, string> = { track: "opacity: 1" };
+    for (const part of ["logo", "switch", "track", "parcel", "opening", "dial", "seal", "ring", "confetti"]) {
+      const selector = `:root:not([data-motion="off"]) .glim-welcome-${part}`;
+      expect(ruleBody(selector, gate)).toContain(`glim-welcome-${part} var(--motion-scene-dur, 6s)`);
+      const frames = keyframes(`glim-welcome-${part}`);
+      const rest = rests[part] ?? "transform: none";
+      expect(frames, part).toMatch(new RegExp(`\\n\\s*0%[^{]*\\{[^}]*(${rest}|transform: translate)`));
+      expect(frames, part).toMatch(new RegExp(`100% \\{[^}]*${rest};`));
+    }
+    expect(keyframes("glim-welcome-parcel")).toMatch(/var\(--motion-scene-hop/);
+    // Firefox places a fill-box origin on a group elsewhere, so the door hangs on a point in the picture's units.
+    expect(CSS).toMatch(/\.glim-welcome-opening \{ transform-origin: 88px 74px; \}/);
+    expect(CSS).not.toMatch(/\.glim-welcome-[a-z]+[^{]*\{[^}]*transform-box: fill-box/);
+  });
 });

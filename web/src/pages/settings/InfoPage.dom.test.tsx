@@ -5,7 +5,7 @@
 // can be too; both refusals have to reach the person in words.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { IconSync } from "../../components/navGlyphs";
@@ -170,6 +170,26 @@ describe("the Version card", () => {
 
 describe("the Help card", () => {
   const help = () => within(card(en["tile.info.help"]));
+
+  it("opens the welcome page again, for an install that is long past it", async () => {
+    function Where() {
+      const at = useLocation();
+      return <output data-testid="where">{at.pathname + at.search}</output>;
+    }
+    await act(async () => {
+      render(
+        <I18nProvider>
+          <MemoryRouter>
+            <InfoPage />
+            <Where />
+          </MemoryRouter>
+        </I18nProvider>
+      );
+    });
+    const row = help().getByText(en["tile.info.welcome"]).closest("[data-search-row], div")!.parentElement!;
+    fireEvent.click(within(row).getByRole("button", { name: en["instances.open"] }));
+    expect(document.querySelector('[data-testid="where"]')?.textContent).toBe("/welcome?again");
+  });
 
   it("offers GitHub, Email, the manual and the bug report, in that order", async () => {
     await renderPage();

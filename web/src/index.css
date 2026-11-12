@@ -3623,6 +3623,42 @@ body {
   :root:not([data-motion="off"]) .glim-lock-ring {
     animation: glim-lock-ring var(--motion-scene-dur, 6s) linear infinite;
   }
+  /* The welcome page plays one scene over its three step cards in one pass
+     of the scene dial: each area switches on and its parcel flies off at
+     once, across the cards, into the vault of the second, whose door opens
+     for them and shuts behind them, then the last vault locks and is sealed
+     while the logo bobs. Each part rests on its last frame, so every loop
+     starts and ends there. */
+  :root:not([data-motion="off"]) .glim-welcome-logo {
+    animation: glim-welcome-logo var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-welcome-switch {
+    animation: glim-welcome-switch var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--turn, 0) * .06);
+  }
+  :root:not([data-motion="off"]) .glim-welcome-track {
+    animation: glim-welcome-track var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--turn, 0) * .06);
+  }
+  :root:not([data-motion="off"]) .glim-welcome-parcel {
+    animation: glim-welcome-parcel var(--motion-scene-dur, 6s) linear infinite;
+    animation-delay: calc(var(--motion-scene-dur, 6s) * var(--turn, 0) * .06);
+  }
+  :root:not([data-motion="off"]) .glim-welcome-opening {
+    animation: glim-welcome-opening var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-welcome-dial {
+    animation: glim-welcome-dial var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-welcome-seal {
+    animation: glim-welcome-seal var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-welcome-ring {
+    animation: glim-welcome-ring var(--motion-scene-dur, 6s) linear infinite;
+  }
+  :root:not([data-motion="off"]) .glim-welcome-confetti {
+    animation: glim-welcome-confetti var(--motion-scene-dur, 6s) linear infinite;
+  }
   :root:not([data-motion="off"]) .glim-lock-gone {
     animation: glim-lock-gone var(--motion-scene-dur, 6s) linear infinite;
   }
@@ -5477,6 +5513,96 @@ body {
   stroke: var(--carbon-surface);
   stroke-width: 1.5;
 }
+
+/* The welcome scene. Its vault is drawn in the surfaces of the theme, its
+   door, dial and seal in the page's hue, and each thing that hops in takes a
+   hue of its own, like the step it belongs to. */
+.glim-welcome-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.glim-welcome-floor {
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .35;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 2 6;
+}
+.glim-welcome-body {
+  rx: var(--radius-control);
+  fill: var(--carbon-surface2);
+  stroke: var(--carbon-text-muted);
+  stroke-opacity: .5;
+  stroke-width: 1.5;
+}
+.glim-welcome-hole { rx: calc(var(--radius-control) * 2 / 3); fill: var(--carbon-bg); }
+/* Each part turns about a point named in the picture's own units, which every
+   browser places alike: the door on its hinge, the rest about its middle. */
+.glim-welcome-opening,
+.glim-welcome-dial,
+.glim-welcome-seal,
+.glim-welcome-ring,
+.glim-welcome-confetti,
+.glim-welcome-switch {
+  transform-box: view-box;
+  transform-origin: 120px 74px;
+}
+.glim-welcome-seal,
+.glim-welcome-ring { transform-origin: 120px 18px; }
+.glim-welcome-confetti { transform-origin: 0 0; opacity: 0; }
+/* A parcel rests where it lands, in the vault of the second card, and the
+   page hands it where it starts. */
+.glim-welcome-parcel {
+  position: absolute;
+  top: var(--fly-to-y, 0px);
+  left: var(--fly-to-x, 0px);
+  z-index: 2;
+  width: var(--fly-size, 31px);
+  height: var(--fly-size, 31px);
+  margin: calc(var(--fly-size, 31px) / -2) 0 0 calc(var(--fly-size, 31px) / -2);
+  pointer-events: none;
+  opacity: 0;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / .35));
+}
+.glim-welcome-parcel > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.glim-welcome-opening { transform-origin: 88px 74px; }
+.glim-welcome-logo { transform-origin: 50% 100%; }
+.glim-welcome-tile {
+  rx: var(--radius-control);
+  fill: var(--carbon-surface2);
+  stroke: var(--pic);
+  stroke-width: 1.5;
+}
+.glim-welcome-track { rx: 7px; fill: var(--pic); }
+.glim-welcome-knob { fill: var(--carbon-surface); }
+.glim-welcome-door-face {
+  rx: calc(var(--radius-control) * 2 / 3);
+  fill: var(--carbon-surface3);
+  stroke: var(--pic);
+  stroke-width: 2;
+}
+.glim-welcome-dial-ring {
+  fill: none;
+  stroke: var(--pic);
+  stroke-width: 2.5;
+}
+.glim-welcome-dial-spokes {
+  stroke: var(--pic);
+  stroke-opacity: .6;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.glim-welcome-dial-hub { fill: var(--pic); }
+.glim-welcome-bolt { rx: 2px; fill: var(--carbon-text-muted); opacity: .6; }
+.glim-welcome-shape { rx: 2px; fill: var(--pic); }
+.glim-welcome-line {
+  fill: none;
+  stroke: var(--carbon-surface);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
 .glim-scene-pointer {
   fill: var(--carbon-text);
   stroke: var(--carbon-surface);
@@ -6040,6 +6166,61 @@ body {
   0%, 30%   { opacity: 0; transform: none; }
   30.1%     { opacity: .7; transform: none; }
   37%, 100% { opacity: 0; transform: scale(2.25); }
+}
+/* One loop of the welcome page, over --motion-scene-dur. A parcel rises
+   three times --motion-scene-hop on its way across the cards. */
+@keyframes glim-welcome-switch {
+  0%, 2%    { transform: none; }
+  3%, 8%    { transform: translateX(-12px); animation-timing-function: cubic-bezier(.3, 0, .4, 1.4); }
+  10%, 100% { transform: none; }
+}
+@keyframes glim-welcome-track {
+  0%, 2%    { opacity: 1; }
+  3%, 8%    { opacity: .3; }
+  10%, 100% { opacity: 1; }
+}
+@keyframes glim-welcome-parcel {
+  0%, 10%   { opacity: 0; transform: translate(calc(var(--fly-from-x, 0px) - var(--fly-to-x, 0px)), calc(var(--fly-from-y, 0px) - var(--fly-to-y, 0px))); }
+  11%       { opacity: 1; transform: translate(calc(var(--fly-from-x, 0px) - var(--fly-to-x, 0px)), calc(var(--fly-from-y, 0px) - var(--fly-to-y, 0px))); animation-timing-function: ease-out; }
+  20%       { opacity: 1; transform: translate(calc((var(--fly-from-x, 0px) - var(--fly-to-x, 0px)) / 2), calc((var(--fly-from-y, 0px) - var(--fly-to-y, 0px)) / 2 - var(--motion-scene-hop, 21px) * 3)); animation-timing-function: ease-in; }
+  29%       { opacity: 1; transform: scale(.5); }
+  31%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-welcome-opening {
+  0%, 20%   { transform: none; }
+  27%, 44%  { transform: scaleX(.14); animation-timing-function: cubic-bezier(.3, 0, .4, 1.3); }
+  50%, 100% { transform: none; }
+}
+@keyframes glim-welcome-dial {
+  0%        { transform: none; }
+  8%, 52%   { transform: rotate(-210deg); animation-timing-function: cubic-bezier(.3, 0, .4, 1.2); }
+  62%, 100% { transform: none; }
+}
+@keyframes glim-welcome-seal {
+  0%        { opacity: 1; transform: none; }
+  2%, 62%   { opacity: 0; transform: scale(.4); }
+  66%       { opacity: 1; transform: scale(1.12); }
+  69%, 100% { opacity: 1; transform: none; }
+}
+@keyframes glim-welcome-ring {
+  0%, 64%     { opacity: 0; transform: none; }
+  64.1%       { opacity: .7; transform: none; }
+  72%         { opacity: 0; transform: scale(2.2); }
+  72.1%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-welcome-confetti {
+  0%, 65%     { opacity: 0; transform: none; }
+  65.1%       { opacity: 1; }
+  69%         { transform: translate(var(--peak-x, 0px), var(--peak-y, 0px)) rotate(calc(var(--spin, 0deg) * .3)); }
+  75%         { opacity: 1; }
+  79%         { opacity: 0; transform: translate(var(--fall-x, 0px), var(--fall-y, 0px)) rotate(var(--spin, 0deg)); }
+  79.1%, 100% { opacity: 0; transform: none; }
+}
+@keyframes glim-welcome-logo {
+  0%, 66%   { transform: none; }
+  69%       { transform: translateY(calc(var(--motion-scene-hop, 21px) * -.4)) rotate(-3deg); }
+  72%       { transform: rotate(2deg); }
+  75%, 100% { transform: none; }
 }
 /* The pointer comes in, presses the pack and, where the lock refuses, backs
    off to where it rests. */
