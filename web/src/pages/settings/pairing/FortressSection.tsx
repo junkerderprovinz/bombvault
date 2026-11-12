@@ -17,11 +17,13 @@ import {
   type FortressText,
   type PhraseAnswer,
 } from "@glimstone/core";
+import { FieldRow } from "@glimstone/react/FieldRow";
 import { Fortress, FortressPairing } from "@glimstone/react/Fortress";
 import { PasswordField } from "@glimstone/react/PasswordField";
 import { Window } from "@glimstone/react/Window";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
+import { Toggle } from "../../../components/Toggle";
 import { IconEye } from "../../../components/glyphs";
 import { IconTabApps, IconTrash } from "../../../components/navGlyphs";
 import {
@@ -37,7 +39,6 @@ import {
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
-import { ToggleRow } from "../shared";
 import { fortressPermissions, permissionOf } from "./fortressModel";
 
 const APP = { id: "bombvault", name: "BombVault" };
@@ -141,12 +142,9 @@ export function FortressBlock({
         hueIndex={hueIndex}
       >
         {others && (
-          <ToggleRow
-            label={text.showOthers}
-            hint={`${text.about} ${othersLine(text, lang, others.apps)}`}
-            checked={others.on}
-            onChange={others.onChange}
-          />
+          <FieldRow label={text.showOthers} hint={`${text.about} ${othersLine(text, lang, others.apps)}`}>
+            <Toggle label={text.showOthers} hideLabel checked={others.on} onChange={others.onChange} />
+          </FieldRow>
         )}
         {children}
         {view.joined && !view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
