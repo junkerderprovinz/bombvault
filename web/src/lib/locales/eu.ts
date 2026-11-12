@@ -875,6 +875,8 @@ const eu: Partial<Translations> = {
   "whatsNew.appBackups": "Bere buruaren babeskopia egin dezakeen gotorlekuko aplikazio batek babeskopia hori BombVault-i ematen dio, eta honek aplikazioaren edukiontziarekin gordetzen du.",
   "whatsNew.giveBack": "Aplikazio batek bere buruaz egin zuen babeskopia berreskura dezake, bere edukiontziaren babeskopien zerrendatik.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog eta TowerTorch-ek BombVault-i galde diezaiokete azken babeskopia noiz atera zen ondo, eta berri bat eska dezakete zerbait aldatu aurretik.",
+  "whatsNew.pairingCard": "Gotorlekua Parekatzea orriaren goialdean dago: txartel bakar batek instantziaren izena, esaldia eta irteera ditu, eta beste aplikazioak Instantziak fitxakoak bezalako txarteletan datoz ondoren.",
+  "whatsNew.fortressRemove": "Parekatzea orrian beste aplikazio bakoitzaren txartelak Kendu du, eta berehala BombVault-ek esaldi berri bat eskaintzen du, zaharrak aplikazioa berriro sartzen utziko lukeelako.",
   "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)

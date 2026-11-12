@@ -364,7 +364,7 @@ export function PhraseCard({
   if (stage === "unpaired" && !view.joined) {
     return (
       <Card title={t("pairing.phraseTitle")} hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`} hueIndex={hueIndex}>
-        <div className="flex flex-col gap-4.5" data-stage={stage}>
+        <div className="flex flex-col gap-4.5" data-stage={stage} data-new="pairing-card">
           <RemovedHere view={view} />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Choice
@@ -388,7 +388,7 @@ export function PhraseCard({
     <>
       <FortressBlock view={view} group={group} onChanged={onRefresh} hueIndex={hueIndex} others={others}>
         {nameRow}
-        <div className="flex flex-col gap-4.5" data-stage={stage}>
+        <div className="flex flex-col gap-4.5" data-stage={stage} data-new="pairing-card">
           <RemovedHere view={view} />
           {stage === "alone" && (
             <>

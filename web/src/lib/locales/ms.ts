@@ -875,6 +875,8 @@ const ms: Partial<Translations> = {
   "whatsNew.appBackups": "Apl dalam kubu yang boleh membuat sandaran dirinya sendiri menyerahkan sandaran itu kepada BombVault, yang menyimpannya bersama bekas apl tersebut.",
   "whatsNew.giveBack": "Sebuah apl boleh mendapatkan semula sandaran yang dibuatnya untuk dirinya sendiri, daripada senarai sandaran bekasnya.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog dan TowerTorch boleh bertanya kepada BombVault bila sandaran terakhir berjaya, dan meminta sandaran baharu sebelum mengubah apa-apa.",
+  "whatsNew.pairingCard": "Kubu berada di bahagian paling atas halaman Gandingan: satu kad memuatkan nama instans, frasa dan jalan keluar, dan apl lain menyusul dalam kad seperti dalam tab Instans.",
+  "whatsNew.fortressRemove": "Kad setiap apl lain di halaman Gandingan ada Alih keluar, dan sejurus selepas itu BombVault menawarkan frasa baharu, kerana frasa lama akan membenarkan apl itu masuk semula.",
   "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

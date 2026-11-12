@@ -875,6 +875,8 @@ const et: Partial<Translations> = {
   "whatsNew.appBackups": "Kindluse rakendus, mis oskab endast varukoopia teha, annab selle varukoopia BombVaultile, mis hoiab seda rakenduse konteineri juures.",
   "whatsNew.giveBack": "Rakendus saab tagasi varukoopia, mille ta endast tegi, oma konteineri varukoopiate loendist.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog ja TowerTorch saavad BombVaultilt küsida, millal viimane varukoopia õnnestus, ja enne muudatust uue küsida.",
+  "whatsNew.pairingCard": "Kindlus on lehe Sidumine ülaosas: ühel kaardil on eksemplari nimi, fraas ja lahkumine, ning teised rakendused tulevad järel kaartidel nagu vahekaardil Eksemplarid.",
+  "whatsNew.fortressRemove": "Iga teise rakenduse kaardil lehel Sidumine on Eemalda, ja kohe pärast seda pakub BombVault uut fraasi, sest vana laseks rakenduse tagasi.",
   "whatsNew.oled": "Teema all olev OLED annab OLED- ja AMOLED-ekraanidele päris musta alati, kui tume teema on näha, ka siis, kui see järgib seadet. Iga seade jätab oma valiku meelde.",
 
   // Monitoring (Prometheus)

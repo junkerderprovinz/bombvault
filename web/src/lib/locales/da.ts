@@ -1230,6 +1230,8 @@ const da: Partial<Translations> = {
   "whatsNew.appBackups": "En app i fæstningen, der kan tage sikkerhedskopi af sig selv, giver den sikkerhedskopi til BombVault, som gemmer den sammen med appens container.",
   "whatsNew.giveBack": "En app kan få den sikkerhedskopi tilbage, den har lavet af sig selv, fra listen over dens containers sikkerhedskopier.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch kan spørge BombVault, hvornår den seneste sikkerhedskopi lykkedes, og bede om en ny, før de ændrer noget.",
+  "whatsNew.pairingCard": "Fæstningen står øverst på siden Parring: ét kort har instansens navn, sætningen og vejen ud, og de andre apps følger i kort som dem på fanen Instanser.",
+  "whatsNew.fortressRemove": "Hver anden apps kort på siden Parring har Fjern, og lige bagefter tilbyder BombVault en ny sætning, fordi den gamle ville lukke appen ind igen.",
   "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)

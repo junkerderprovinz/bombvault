@@ -875,6 +875,8 @@ const lv: Partial<Translations> = {
   "whatsNew.appBackups": "Cietokšņa lietotne, kas prot pati izveidot savu rezerves kopiju, nodod šo kopiju BombVault, kas to glabā kopā ar lietotnes konteineru.",
   "whatsNew.giveBack": "Lietotne var saņemt atpakaļ rezerves kopiju, ko tā izveidojusi pati par sevi, no sava konteinera rezerves kopiju saraksta.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog un TowerTorch var jautāt BombVault, kad pēdējā rezerves kopija izdevās, un pirms izmaiņām palūgt jaunu.",
+  "whatsNew.pairingCard": "Cietoksnis ir lapas Pārošana augšā: vienā kartītē ir instances nosaukums, frāze un iziešana, un pārējās lietotnes seko kartītēs kā cilnē Instances.",
+  "whatsNew.fortressRemove": "Katras citas lietotnes kartītē lapā Pārošana ir Noņemt, un uzreiz pēc tam BombVault piedāvā jaunu frāzi, jo vecā lietotni ielaistu atpakaļ.",
   "whatsNew.oled": "OLED zem Tēma dod OLED un AMOLED ekrāniem īsti melnu krāsu ikreiz, kad redzama tumšā tēma, arī tad, ja tā seko ierīcei. Katra ierīce atceras savu izvēli.",
 
   // Monitoring (Prometheus)

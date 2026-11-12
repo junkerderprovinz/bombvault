@@ -1221,6 +1221,8 @@ const zh: Partial<Translations> = {
   "whatsNew.appBackups": "堡垒中能自行备份的应用会把这份备份交给 BombVault，BombVault 会把它和应用的容器放在一起保存。",
   "whatsNew.giveBack": "应用可以从其容器的备份列表中取回它为自己做的备份。",
   "whatsNew.fortressAsks": "FireSquire、ShipLog 和 TowerTorch 可以询问 BombVault 上次备份何时成功，并在更改任何内容之前请求一次新的备份。",
+  "whatsNew.pairingCard": "堡垒位于配对页面顶部：一张卡片包含实例名称、口令和退出，其他应用随后以与实例标签页相同的卡片显示。",
+  "whatsNew.fortressRemove": "配对页面上每个其他应用的卡片都有移除，移除之后 BombVault 会马上建议换一个新口令，因为旧口令还会让该应用重新进入。",
   "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)

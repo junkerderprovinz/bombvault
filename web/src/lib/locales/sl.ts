@@ -875,6 +875,8 @@ const sl: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikacija v trdnjavi, ki zna sama narediti varnostno kopijo sebe, to kopijo preda BombVault, ki jo hrani ob vsebniku aplikacije.",
   "whatsNew.giveBack": "Aplikacija lahko dobi nazaj varnostno kopijo, ki jo je naredila sama sebi, s seznama varnostnih kopij svojega vsebnika.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog in TowerTorch lahko BombVault vprašajo, kdaj je zadnja varnostna kopija uspela, in pred spremembo zahtevajo novo.",
+  "whatsNew.pairingCard": "Trdnjava je na vrhu strani Seznanjanje: ena kartica ima ime instance, frazo in izhod, druge aplikacije pa sledijo vsaka v svoji kartici.",
+  "whatsNew.fortressRemove": "Kartica vsake druge aplikacije na strani Seznanjanje ima Odstrani, takoj zatem pa BombVault ponudi novo frazo, ker bi stara aplikacijo spet spustila noter.",
   "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)

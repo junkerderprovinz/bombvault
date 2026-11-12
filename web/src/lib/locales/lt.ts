@@ -875,6 +875,8 @@ const lt: Partial<Translations> = {
   "whatsNew.appBackups": "Tvirtovės programa, kuri moka pasidaryti savo atsarginę kopiją, perduoda ją BombVault, o šis ją saugo kartu su programos konteineriu.",
   "whatsNew.giveBack": "Programa gali atgauti atsarginę kopiją, kurią pasidarė pati, iš savo konteinerio atsarginių kopijų sąrašo.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog ir TowerTorch gali paklausti BombVault, kada paskutinė atsarginė kopija pavyko, ir paprašyti naujos prieš ką nors keisdamos.",
+  "whatsNew.pairingCard": "Tvirtovė yra puslapio Susiejimas viršuje: vienoje kortelėje yra egzemplioriaus pavadinimas, frazė ir išėjimas, o kitos programos eina toliau kortelėse kaip skirtuke Egzemplioriai.",
+  "whatsNew.fortressRemove": "Kiekvienos kitos programos kortelėje puslapyje Susiejimas yra Pašalinti, o iškart po to BombVault pasiūlo naują frazę, nes senoji vėl įleistų programą.",
   "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)

@@ -1222,6 +1222,8 @@ const fr: Partial<Translations> = {
   "whatsNew.appBackups": "Une app de la forteresse qui sait se sauvegarder elle-même remet cette sauvegarde à BombVault, qui la garde avec le conteneur de l'app.",
   "whatsNew.giveBack": "Une app peut récupérer la sauvegarde qu'elle a faite d'elle-même, depuis la liste des sauvegardes de son conteneur.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog et TowerTorch peuvent demander à BombVault quand la dernière sauvegarde a réussi, et en demander une nouvelle avant de changer quoi que ce soit.",
+  "whatsNew.pairingCard": "La forteresse est tout en haut de la page Appairage : une seule carte réunit le nom de l'instance, la phrase et la sortie, et les autres apps suivent dans des cartes comme celles de l'onglet Instances.",
+  "whatsNew.fortressRemove": "La carte de chaque autre app sur la page Appairage propose Retirer, et juste après BombVault vous propose une nouvelle phrase, car l'ancienne laisserait l'app revenir.",
   "whatsNew.oled": "OLED, sous Thème, donne un vrai noir aux écrans OLED et AMOLED dès que le thème sombre s'affiche, même quand il suit l'appareil. Chaque appareil garde son propre choix.",
 
   // Monitoring (Prometheus)

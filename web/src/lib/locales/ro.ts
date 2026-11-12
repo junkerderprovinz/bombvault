@@ -1220,6 +1220,8 @@ const ro: Partial<Translations> = {
   "whatsNew.appBackups": "O aplicație din fortăreață care își poate face singură o copie de rezervă predă această copie lui BombVault, care o păstrează lângă containerul aplicației.",
   "whatsNew.giveBack": "O aplicație își poate primi înapoi copia de rezervă pe care și-a făcut-o singură, din lista copiilor de rezervă ale containerului ei.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog și TowerTorch pot întreba BombVault când a reușit ultima copie de rezervă și pot cere una nouă înainte să schimbe ceva.",
+  "whatsNew.pairingCard": "Fortăreața stă în partea de sus a paginii Împerechere: un singur card are numele instanței, fraza și ieșirea, iar celelalte aplicații urmează în carduri ca cele din fila Instanțe.",
+  "whatsNew.fortressRemove": "Cardul fiecărei alte aplicații de pe pagina Împerechere are Elimină, iar imediat după aceea BombVault îți propune o frază nouă, pentru că cea veche ar lăsa aplicația să intre din nou.",
   "whatsNew.oled": "OLED, sub Temă, dă ecranelor OLED și AMOLED negru adevărat ori de câte ori se vede tema întunecată, și atunci când urmează dispozitivul. Fiecare dispozitiv își păstrează propria alegere.",
 
   // Monitoring (Prometheus)

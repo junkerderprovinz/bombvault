@@ -875,6 +875,8 @@ const sk: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikácia v pevnosti, ktorá vie zálohovať sama seba, odovzdá túto zálohu BombVault a ten ju uloží pri kontajneri aplikácie.",
   "whatsNew.giveBack": "Aplikácia môže dostať späť zálohu, ktorú urobila sama zo seba, zo zoznamu záloh svojho kontajnera.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog a TowerTorch sa môžu BombVault opýtať, kedy sa naposledy podarila záloha, a pred zmenou si vyžiadať novú.",
+  "whatsNew.pairingCard": "Pevnosť je hore na stránke Párovanie: jedna karta obsahuje názov inštancie, frázu a odchod a ostatné aplikácie nasledujú v kartách ako na karte Inštancie.",
+  "whatsNew.fortressRemove": "Karta každej inej aplikácie na stránke Párovanie má Odstrániť a hneď potom BombVault ponúkne novú frázu, lebo stará by aplikáciu pustila späť.",
   "whatsNew.oled": "OLED pod Motívom dáva obrazovkám OLED a AMOLED skutočnú čiernu vždy, keď je vidieť tmavý motív, aj keď sa riadi zariadením. Každé zariadenie si pamätá vlastnú voľbu.",
 
   // Monitoring (Prometheus)

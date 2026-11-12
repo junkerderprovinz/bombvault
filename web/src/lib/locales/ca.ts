@@ -875,6 +875,8 @@ const ca: Partial<Translations> = {
   "whatsNew.appBackups": "Una app de la fortalesa que es pot fer una còpia de seguretat a si mateixa lliura aquesta còpia a BombVault, que la guarda amb el contenidor de l'app.",
   "whatsNew.giveBack": "Una app pot recuperar la còpia de seguretat que va fer de si mateixa, des de la llista de còpies del seu contenidor.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog i TowerTorch poden preguntar a BombVault quan va funcionar l'última còpia de seguretat i demanar-ne una de nova abans de canviar res.",
+  "whatsNew.pairingCard": "La fortalesa és a dalt de tot de la pàgina Aparellament: una sola targeta té el nom de la instància, la frase i la sortida, i les altres apps venen després en targetes com les de la pestanya Instàncies.",
+  "whatsNew.fortressRemove": "La targeta de cada altra app a la pàgina Aparellament té Treu, i just després BombVault et proposa una frase nova, perquè l'antiga deixaria tornar a entrar l'app.",
   "whatsNew.oled": "OLED, a sota de Tema, dona negre de veritat a les pantalles OLED i AMOLED sempre que es veu el tema fosc, també quan segueix el dispositiu. Cada dispositiu guarda la seva pròpia elecció.",
 
   // Monitoring (Prometheus)

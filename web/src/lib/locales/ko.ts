@@ -1213,6 +1213,8 @@ const ko: Partial<Translations> = {
   "whatsNew.appBackups": "요새 안에서 자기 자신을 백업할 수 있는 앱은 그 백업을 BombVault에 넘기고, BombVault는 이를 앱의 컨테이너와 함께 보관합니다.",
   "whatsNew.giveBack": "앱은 자기 자신에 대해 만든 백업을 컨테이너의 백업 목록에서 돌려받을 수 있습니다.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog, TowerTorch는 마지막 백업이 언제 성공했는지 BombVault에 묻고, 무언가를 바꾸기 전에 새 백업을 요청할 수 있습니다.",
+  "whatsNew.pairingCard": "요새가 페어링 페이지 맨 위에 있어요. 카드 하나에 인스턴스 이름, 문구, 나가기가 모여 있고, 다른 앱은 인스턴스 탭과 같은 카드로 이어져요.",
+  "whatsNew.fortressRemove": "페어링 페이지의 다른 앱 카드마다 제거가 있고, 그 직후 BombVault가 새 문구를 권해요. 이전 문구로는 그 앱이 다시 들어올 수 있으니까요.",
   "whatsNew.oled": "테마 아래의 OLED는 어두운 테마가 보일 때마다, 기기를 따를 때도, OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 각 기기가 자신의 선택을 기억합니다.",
 
   // Monitoring (Prometheus)

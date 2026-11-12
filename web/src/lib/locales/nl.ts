@@ -1218,6 +1218,8 @@ const nl: Partial<Translations> = {
   "whatsNew.appBackups": "Een app in de vesting die een back-up van zichzelf kan maken, geeft die back-up aan BombVault, dat hem bij de container van de app bewaart.",
   "whatsNew.giveBack": "Een app kan de back-up die hij van zichzelf maakte terugkrijgen, uit de lijst met back-ups van zijn container.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog en TowerTorch kunnen BombVault vragen wanneer de laatste back-up lukte, en om een nieuwe vragen voordat ze iets veranderen.",
+  "whatsNew.pairingCard": "De vesting staat bovenaan de pagina Koppeling: één kaart bevat de naam van de instantie, de frase en de weg naar buiten, en de andere apps volgen in kaarten zoals op het tabblad Instanties.",
+  "whatsNew.fortressRemove": "De kaart van elke andere app op de pagina Koppeling heeft Verwijderen, en meteen daarna biedt BombVault een nieuwe frase aan, omdat de oude de app weer binnen zou laten.",
   "whatsNew.oled": "OLED onder Thema geeft OLED- en AMOLED-schermen echt zwart zodra het donkere thema te zien is, ook als het thema het apparaat volgt. Elk apparaat onthoudt zijn eigen keuze.",
 
   // Monitoring (Prometheus)

@@ -971,6 +971,8 @@ export const en = {
   "whatsNew.appBackups": "An app in the fortress that can back itself up hands that backup to BombVault, which keeps it with the app's container.",
   "whatsNew.giveBack": "An app can get back the backup it made of itself, from the list of its container's backups.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog and TowerTorch can ask BombVault when the last backup worked, and for a fresh one before they change something.",
+  "whatsNew.pairingCard": "The fortress sits on top of the Pairing page. One card holds the instance's name, the phrase and the way out, and the other apps follow in cards like the ones on the Instances tab.",
+  "whatsNew.fortressRemove": "Every other app's card on the Pairing page has Remove. Right after a removal, BombVault offers a new phrase, since the old one would let the app back in.",
   "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
@@ -6584,6 +6586,8 @@ export const de: Translations = {
   "whatsNew.appBackups": "Eine App in der Festung, die sich selbst sichern kann, übergibt diese Sicherung an BombVault, und BombVault bewahrt sie bei ihrem Container auf.",
   "whatsNew.giveBack": "Eine App bekommt die Sicherung, die sie von sich selbst gemacht hat, aus der Liste der Sicherungen ihres Containers zurück.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog und TowerTorch können BombVault fragen, wann die letzte Sicherung geklappt hat, und vor einer Änderung um eine frische bitten.",
+  "whatsNew.pairingCard": "Die Festung steht oben auf der Seite Kopplung. Eine Karte trägt den Namen der Instanz, die Phrase und den Weg hinaus, und die anderen Apps folgen in Karten wie im Tab Instanzen.",
+  "whatsNew.fortressRemove": "Jede andere App hat auf der Seite Kopplung ein Herausnehmen. Gleich danach bietet BombVault eine neue Phrase an, weil die alte die App sonst wieder hereinlässt.",
   "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)

@@ -1230,6 +1230,8 @@ const tr: Partial<Translations> = {
   "whatsNew.appBackups": "Kalede kendi yedeğini alabilen bir uygulama bu yedeği BombVault'a verir, BombVault da onu uygulamanın konteyneriyle birlikte saklar.",
   "whatsNew.giveBack": "Bir uygulama kendisi için aldığı yedeği, konteynerinin yedek listesinden geri alabilir.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog ve TowerTorch, son yedeğin ne zaman başarılı olduğunu BombVault'a sorabilir ve bir şeyi değiştirmeden önce yeni bir yedek isteyebilir.",
+  "whatsNew.pairingCard": "Kale, Eşleştirme sayfasının en üstünde: tek bir kartta örnek adı, ifade ve çıkış var, diğer uygulamalar da Örnekler sekmesindeki gibi kartlarla devam ediyor.",
+  "whatsNew.fortressRemove": "Eşleştirme sayfasında diğer her uygulamanın kartında Kaldır var ve hemen ardından BombVault yeni bir ifade öneriyor, çünkü eskisi uygulamayı yeniden içeri alırdı.",
   "whatsNew.oled": "Tema altındaki OLED, koyu tema her göründüğünde, cihazı izlediğinde de, OLED ve AMOLED ekranlara gerçek siyah verir. Her cihaz kendi seçimini saklar.",
 
   // Monitoring (Prometheus)

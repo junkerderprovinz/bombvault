@@ -1213,6 +1213,8 @@ const ja: Partial<Translations> = {
   "whatsNew.appBackups": "要塞の中で自分自身をバックアップできるアプリは、そのバックアップを BombVault に渡し、BombVault はアプリのコンテナーと一緒に保管します。",
   "whatsNew.giveBack": "アプリは、自分自身について作ったバックアップを、コンテナーのバックアップ一覧から受け取り直せます。",
   "whatsNew.fortressAsks": "FireSquire、ShipLog、TowerTorch は、最後のバックアップがいつ成功したかを BombVault に尋ね、何かを変える前に新しいバックアップを頼めます。",
+  "whatsNew.pairingCard": "要塞はペアリングページのいちばん上にあります。1 枚のカードにインスタンス名、フレーズ、退出がまとまり、ほかのアプリはインスタンスタブと同じようなカードで続きます。",
+  "whatsNew.fortressRemove": "ペアリングページのほかのアプリのカードには削除があり、その直後に BombVault が新しいフレーズを提案します。古いフレーズのままだと、そのアプリが戻ってこられるからです。",
   "whatsNew.oled": "「テーマ」の下にある「OLED」は、ダークテーマが表示されているとき、デバイスに合わせている場合も含めて、OLED と AMOLED の画面を真っ黒にします。それぞれのデバイスが自分の選択を覚えます。",
 
   // Monitoring (Prometheus)

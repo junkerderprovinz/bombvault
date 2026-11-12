@@ -875,6 +875,8 @@ const hr: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikacija u utvrdi koja može sama napraviti sigurnosnu kopiju sebe predaje tu kopiju BombVaultu, koji je čuva uz spremnik aplikacije.",
   "whatsNew.giveBack": "Aplikacija može vratiti sigurnosnu kopiju koju je napravila sama sebi, s popisa sigurnosnih kopija svog spremnika.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog i TowerTorch mogu pitati BombVault kada je zadnja sigurnosna kopija uspjela i zatražiti novu prije nego što nešto promijene.",
+  "whatsNew.pairingCard": "Utvrda je na vrhu stranice Uparivanje: jedna kartica sadrži naziv instance, frazu i izlaz, a ostale aplikacije slijede u karticama poput onih na kartici Instance.",
+  "whatsNew.fortressRemove": "Kartica svake druge aplikacije na stranici Uparivanje ima Ukloni, a odmah nakon toga BombVault nudi novu frazu jer bi stara pustila aplikaciju natrag.",
   "whatsNew.oled": "OLED ispod Teme daje pravu crnu OLED i AMOLED zaslonima kad god se prikazuje tamna tema, i kad prati uređaj. Svaki uređaj pamti vlastiti izbor.",
 
   // Monitoring (Prometheus)

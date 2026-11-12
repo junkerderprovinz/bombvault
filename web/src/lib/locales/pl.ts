@@ -1216,6 +1216,8 @@ const pl: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikacja w twierdzy, która potrafi sama zrobić swoją kopię zapasową, przekazuje ją BombVault, a ten przechowuje ją razem z kontenerem aplikacji.",
   "whatsNew.giveBack": "Aplikacja może odzyskać kopię zapasową, którą zrobiła sama sobie, z listy kopii zapasowych swojego kontenera.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog i TowerTorch mogą zapytać BombVault, kiedy ostatnia kopia zapasowa się udała, i poprosić o nową, zanim coś zmienią.",
+  "whatsNew.pairingCard": "Twierdza jest na samej górze strony Parowanie: jedna karta mieści nazwę instancji, frazę i wyjście, a pozostałe aplikacje są niżej w kartach jak w zakładce Instancje.",
+  "whatsNew.fortressRemove": "Karta każdej innej aplikacji na stronie Parowanie ma Usuń, a zaraz potem BombVault proponuje nową frazę, bo stara wpuściłaby aplikację z powrotem.",
   "whatsNew.oled": "OLED pod Motywem daje ekranom OLED i AMOLED prawdziwą czerń zawsze, gdy widać ciemny motyw, także gdy podąża on za urządzeniem. Każde urządzenie zapamiętuje własny wybór.",
 
   // Monitoring (Prometheus)

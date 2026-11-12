@@ -1228,6 +1228,8 @@ const cs: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikace v pevnosti, která umí zálohovat sama sebe, předá tuto zálohu BombVault a ten ji uloží u kontejneru aplikace.",
   "whatsNew.giveBack": "Aplikace může dostat zpět zálohu, kterou udělala sama ze sebe, ze seznamu záloh svého kontejneru.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog a TowerTorch se mohou BombVault zeptat, kdy se naposledy povedla záloha, a před změnou si vyžádat novou.",
+  "whatsNew.pairingCard": "Pevnost je nahoře na stránce Párování: jedna karta nese název instance, frázi a odchod a ostatní aplikace následují v kartách jako na kartě Instance.",
+  "whatsNew.fortressRemove": "Karta každé jiné aplikace na stránce Párování má Odebrat a hned potom vám BombVault nabídne novou frázi, protože stará by aplikaci pustila zpátky.",
   "whatsNew.oled": "OLED pod Motivem dává obrazovkám OLED a AMOLED opravdovou černou, kdykoli je vidět tmavý motiv, i když se řídí zařízením. Každé zařízení si pamatuje vlastní volbu.",
 
   // Monitoring (Prometheus)

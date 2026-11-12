@@ -875,6 +875,8 @@ const id: Partial<Translations> = {
   "whatsNew.appBackups": "Aplikasi di benteng yang bisa mencadangkan dirinya sendiri menyerahkan cadangan itu ke BombVault, yang menyimpannya bersama kontainer aplikasi tersebut.",
   "whatsNew.giveBack": "Sebuah aplikasi bisa mendapatkan kembali cadangan yang dibuatnya untuk dirinya sendiri, dari daftar cadangan kontainernya.",
   "whatsNew.fortressAsks": "FireSquire, ShipLog, dan TowerTorch bisa menanyakan kepada BombVault kapan cadangan terakhir berhasil, dan meminta cadangan baru sebelum mengubah sesuatu.",
+  "whatsNew.pairingCard": "Benteng ada di bagian paling atas halaman Pemasangan: satu kartu memuat nama instance, frasa, dan jalan keluar, lalu aplikasi lain menyusul dalam kartunya masing-masing.",
+  "whatsNew.fortressRemove": "Kartu setiap aplikasi lain di halaman Pemasangan punya Hapus, dan tepat setelahnya BombVault menawarkan frasa baru, karena frasa lama akan membiarkan aplikasi itu masuk lagi.",
   "whatsNew.oled": "OLED di bawah Tema memberi hitam pekat pada layar OLED dan AMOLED setiap kali tema gelap tampil, juga saat tema mengikuti perangkat. Setiap perangkat menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

@@ -73,6 +73,16 @@ export const RELEASES: Release[] = [
         way: ["/settings", "/settings/pairing"],
         text: "whatsNew.fortress",
       },
+      {
+        id: "pairing-card",
+        page: "/settings/pairing",
+        where: ["nav.settings", "pairing.title"],
+        way: ["/settings", "/settings/pairing"],
+        text: "whatsNew.pairingCard",
+      },
+      // Remove shows only on the card of another app, so its dot stands in
+      // the list.
+      { id: "fortress-remove", text: "whatsNew.fortressRemove" },
       { id: "app-backups", text: "whatsNew.appBackups" },
       { id: "app-give-back", text: "whatsNew.giveBack" },
       { id: "fortress-asks", text: "whatsNew.fortressAsks" },

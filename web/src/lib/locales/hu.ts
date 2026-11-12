@@ -1223,6 +1223,8 @@ const hu: Partial<Translations> = {
   "whatsNew.appBackups": "Az erőd olyan alkalmazása, amely saját magáról tud mentést készíteni, átadja ezt a mentést a BombVaultnak, amely az alkalmazás konténere mellett őrzi.",
   "whatsNew.giveBack": "Egy alkalmazás visszakaphatja a saját magáról készített mentést a konténere mentéseinek listájából.",
   "whatsNew.fortressAsks": "A FireSquire, a ShipLog és a TowerTorch megkérdezheti a BombVaultot, mikor sikerült az utolsó mentés, és új mentést kérhet, mielőtt bármit megváltoztat.",
+  "whatsNew.pairingCard": "Az erőd a Párosítás oldal tetején áll: egy kártyán van a példány neve, a jelmondat és a kilépés, a többi app pedig a Példányok fülhöz hasonló kártyákon következik.",
+  "whatsNew.fortressRemove": "A Párosítás oldalon minden más app kártyáján ott az Eltávolítás, és rögtön utána a BombVault új jelmondatot ajánl, mert a régivel az app visszajutna.",
   "whatsNew.oled": "A Téma alatti OLED valódi feketét ad az OLED és AMOLED kijelzőknek, valahányszor a sötét téma látszik, akkor is, ha az eszközt követi. Minden eszköz a saját választását jegyzi meg.",
 
   // Monitoring (Prometheus)
