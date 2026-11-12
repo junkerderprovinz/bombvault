@@ -262,6 +262,16 @@ describe("the card of the phrase", () => {
 });
 
 describe("the other apps", () => {
+  it("show both apps' logos beside each permission, BombVault's own among them", () => {
+    view = state({
+      members: [member({ logo: LOGO })],
+      permissions: [{ from: "bombvault", to: "knightloader", action: "backup.export", on: true }],
+    });
+    renderApps();
+    const row = document.querySelector('[data-permission="bombvault knightloader backup.export"]')!;
+    expect([...row.querySelectorAll("img")].map((img) => img.getAttribute("src"))).toEqual(["/logo.svg", LOGO]);
+  });
+
   it("stand in the cards of the Instances tab with their logos, and the corner holds no second Show phrase", () => {
     view = state({
       members: [member({ logo: LOGO }), member({ id: "t1", app: "tollroll", name: "TollRoll", deployment: "plugin", online: false })],

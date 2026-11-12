@@ -51,7 +51,8 @@ import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
 import { fortressPermissions, permissionOf } from "./fortressModel";
 
-const APP = { id: "bombvault", name: "BombVault" };
+// The logo lets the permissions show BombVault beside the app it works with.
+const APP = { id: "bombvault", name: "BombVault", logo: "/logo.svg" };
 // The words BombVault's own buttons use for the same acts, so that they wear
 // the same glyphs: a new phrase is a key rotated.
 const LABEL_KEYS = {

@@ -78,7 +78,7 @@ describe("fortressApps logos", () => {
 describe("fortressPermissions", () => {
   const members = [member({}), member({ id: "m2", app: "firesquire", name: "FireSquire" })];
 
-  it("words what an app may do at BombVault and what BombVault fetches, naming both apps", () => {
+  it("says in one sentence which app may do what at which", () => {
     const perms = fortressPermissions(
       [
         { from: "towertorch", to: "bombvault", action: "backup.request", on: true },
@@ -88,19 +88,35 @@ describe("fortressPermissions", () => {
       t,
     );
     expect(perms).toEqual([
-      { id: "towertorch bombvault backup.request", from: "towertorch", to: ["bombvault"], on: true, title: en["fortress.action.backupRequest"], detail: "TowerTorch at BombVault" },
-      { id: "bombvault firesquire backup.export", from: "bombvault", to: ["firesquire"], on: false, title: en["fortress.action.backupExport"], detail: "BombVault at FireSquire" },
+      { id: "towertorch bombvault backup.request", from: "towertorch", to: ["bombvault"], on: true, title: "TowerTorch may ask BombVault for a container backup" },
+      { id: "bombvault firesquire backup.export", from: "bombvault", to: ["firesquire"], on: false, title: "BombVault may fetch FireSquire's own backup" },
     ]);
   });
 
-  it("words giving an app its own backup back", () => {
-    const [p] = fortressPermissions([{ from: "bombvault", to: "towertorch", action: "backup.import", on: true }], members, t);
-    expect(p.title).toBe(en["fortress.action.backupImport"]);
+  it("says who opens whose pages, and who learns which containers another app updates", () => {
+    const perms = fortressPermissions(
+      [
+        { from: "knightloader", to: "bombvault", action: "ui.open", on: true },
+        { from: "bombvault", to: "shiplog", action: "updates.managed", on: true },
+      ],
+      [member({ app: "knightloader", name: "KnightLoader" }), member({ id: "m3", app: "shiplog", name: "ShipLog" })],
+      t,
+    );
+    expect(perms.map((p) => p.title)).toEqual(["KnightLoader may open BombVault's pages", "BombVault may ask ShipLog which containers it updates itself"]);
   });
 
   it("shows an action it has no words for by its name", () => {
     const [p] = fortressPermissions([{ from: "bombvault", to: "shiplog", action: "update.run", on: true }], members, t);
     expect(p).toMatchObject({ title: "update.run", detail: "BombVault at shiplog" });
+  });
+
+  it("leaves out what an app may do at itself while it runs in one place", () => {
+    const own = { from: "bombvault", to: "bombvault", action: "ui.open", on: true };
+    const kl = { from: "knightloader", to: "knightloader", action: "ui.open", on: true };
+    const one = [member({ app: "knightloader", name: "KnightLoader" })];
+    expect(fortressPermissions([own, kl], one, t)).toEqual([]);
+    const two = [...one, member({ id: "m4", app: "bombvault", name: "BombVault" }), member({ id: "m5", app: "knightloader", name: "KnightLoader" })];
+    expect(fortressPermissions([own, kl], two, t).map((p) => p.id)).toEqual(["bombvault bombvault ui.open", "knightloader knightloader ui.open"]);
   });
 
   it("reads a switch back from its id", () => {

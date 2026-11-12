@@ -15,6 +15,7 @@ const ACTION_TITLES: Record<string, TranslationKey> = {
   "backup.export": "fortress.action.backupExport",
   "backup.import": "fortress.action.backupImport",
   "ui.open": "fortress.action.uiOpen",
+  "updates.managed": "fortress.action.updatesManaged",
 };
 
 // Where a member says it runs: the server it names, else its device.
@@ -56,17 +57,21 @@ export function fortressPermissions(
   t: (key: TranslationKey) => string,
 ): FortressPermission[] {
   const name = (id: string) => (id === SELF ? "BombVault" : (members.find((m) => m.app === id)?.name ?? id));
-  return permissions.map((p) => {
-    const words = ACTION_TITLES[p.action];
-    return {
-      id: `${p.from} ${p.to} ${p.action}`,
-      from: p.from,
-      to: [p.to],
-      on: p.on,
-      title: words ? t(words) : p.action,
-      detail: fill(t("fortress.permissionPair"), { from: name(p.from), to: name(p.to) }),
-    };
-  });
+  // What an app may do at itself matters only between two of its instances.
+  const places = (app: string) => members.filter((m) => m.app === app).length + (app === SELF ? 1 : 0);
+  return permissions
+    .filter((p) => p.from !== p.to || places(p.from) > 1)
+    .map((p) => {
+      const words = ACTION_TITLES[p.action];
+      const names = { from: name(p.from), to: name(p.to) };
+      return {
+        id: `${p.from} ${p.to} ${p.action}`,
+        from: p.from,
+        to: [p.to],
+        on: p.on,
+        ...(words ? { title: fill(t(words), names) } : { title: p.action, detail: fill(t("fortress.permissionPair"), names) }),
+      };
+    });
 }
 
 /** The switch an id of fortressPermissions names. */
