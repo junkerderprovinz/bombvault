@@ -4235,7 +4235,10 @@ body {
     translate: 3px 0;
     transition: translate 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
+  /* On the accent the thumb takes the fill's ink, or the light ramp's pale
+     ground would vanish into a yellow or a green. */
   .glim-toggle-track[aria-checked="true"] .glim-toggle-thumb {
+    background-color: var(--accent-contrast);
     translate: 18px 0;
   }
   .glim-toggle-thumb:dir(rtl) {

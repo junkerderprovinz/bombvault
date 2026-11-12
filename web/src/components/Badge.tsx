@@ -36,6 +36,10 @@ export type BadgeSize = "small" | "medium" | "large" | "heading" | "icon";
 // to 1:1. The pill radius is a length, not `50%`, because a percentage radius
 // resolves per axis into an ellipse.
 export type BadgeShape = "pill" | "rounded" | "square" | "circle";
+// A form keeps its corners under every shape setting, where a shape follows
+// it: rounded a small radius, square none, pill and circle fully round, and
+// circle also icon-only around one glyph.
+export type BadgeForm = "rounded" | "square" | "pill" | "circle";
 
 // Horizontal offset for a heading notch whose static position is wrong (see
 // badgeClassName). Tailwind only generates classes it finds as literals in
@@ -90,6 +94,13 @@ const RADIUS_CLASSES: Record<BadgeShape, string> = {
   circle: "rounded-pill",
 };
 
+const FORM_CLASSES: Record<BadgeForm, string> = {
+  rounded: "rounded-[0.3125rem]",
+  square: "rounded-none",
+  pill: "rounded-full",
+  circle: "rounded-full",
+};
+
 // Padding is kept apart from height so the icon-only branch can replace it
 // instead of emitting two conflicting px-* utilities, whose order a component
 // cannot control. minHeight is the same floor as height, used by `wrap`.
@@ -107,6 +118,7 @@ interface BadgeStyleOptions {
   tone?: BadgeTone;
   size?: BadgeSize;
   shape?: BadgeShape;
+  form?: BadgeForm;
   wrap?: boolean;
   className?: string;
   /** Zero padding and a 1:1 aspect ratio. Badge sets it from `tip`, so a
@@ -120,6 +132,7 @@ function badgeClassName({
   tone = "neutral",
   size = "medium",
   shape = "rounded",
+  form,
   wrap,
   className,
   iconOnly,
@@ -127,7 +140,7 @@ function badgeClassName({
   insetStart,
 }: BadgeStyleOptions = {}): string {
   const { height, minHeight, text, padding } = SIZE_TOKENS[size];
-  const isIconOnly = shape === "circle" || iconOnly === true;
+  const isIconOnly = shape === "circle" || form === "circle" || iconOnly === true;
   const isHeadingNotch = tone === "heading" && size === "heading";
   // A notch shrinks to fit its card, which `break-word` stops at the longest
   // word, so a long one-word title would run past a narrow card.
@@ -175,7 +188,7 @@ function badgeClassName({
     sizing,
     text,
     isIconOnly ? "px-0 aspect-square" : padding,
-    isHeadingNotch ? "rounded-pill" : RADIUS_CLASSES[shape],
+    isHeadingNotch ? "rounded-pill" : form ? FORM_CLASSES[form] : RADIUS_CLASSES[shape],
     toneClasses,
     notchChrome,
     notchPositioning,
@@ -191,6 +204,8 @@ export interface BadgeProps {
   /** Square icon-only badges always use `"icon"`. */
   size?: BadgeSize;
   shape?: BadgeShape;
+  /** Fixed corners under every shape setting, where `shape` follows it. */
+  form?: BadgeForm;
   as?: "span" | "button" | "a";
   onClick?: () => void;
   disabled?: boolean;
@@ -226,6 +241,7 @@ export function Badge({
   tone = "neutral",
   size = "medium",
   shape = "rounded",
+  form,
   as = "span",
   onClick,
   disabled,
@@ -247,7 +263,7 @@ export function Badge({
   // index.css's card-wide reactive hover keys off `.glim-notch-hue`, so only
   // a notch may carry it.
   const isNotchHue = hueOn && size === "heading";
-  const shared = badgeClassName({ tone, size, shape, wrap, className, iconOnly: tip !== undefined, inFlow, insetStart });
+  const shared = badgeClassName({ tone, size, shape, form, wrap, className, iconOnly: tip !== undefined, inFlow, insetStart });
   const merged = hueOn ? `glim-hue ${isNotchHue ? "glim-notch-hue " : ""}${shared}` : shared;
   const hueStyle = hueOn ? (hueVars(hueIndex) as CSSProperties) : undefined;
   // The icon-only active badge is the solid accent, so it steps like a heading.

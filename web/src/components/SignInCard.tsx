@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type
 import {
   createSignInFlow,
   focusFirstField,
+  labelInside,
   resetBlocked,
   showRefusal,
   signInBlocked,
@@ -38,10 +39,18 @@ export interface SignInCardProps extends SignInHandlers {
   idPrefix: string;
 }
 
-export function SignInField({ label, htmlFor, hint, children }: { label: string; htmlFor: string; hint?: string; children: ReactNode }) {
+// A field on the sign-in card. Its label stands inside the field until the
+// first key, and above it when the field brings a placeholder or a hint.
+export function SignInField({ label, htmlFor, hint, hidden, children }: { label: string; htmlFor: string; hint?: string; hidden?: boolean; children: ReactNode }) {
+  const [inside, setInside] = useState(false);
+  const was = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    setInside(labelInside(document.getElementById(htmlFor) as HTMLInputElement | null, label, hint, was.current));
+    was.current = label;
+  }, [htmlFor, label, hint]);
   return (
-    <div className="glim-signin-field">
-      <label htmlFor={htmlFor} className="glim-signin-label">
+    <div className="glim-signin-field" hidden={hidden}>
+      <label htmlFor={htmlFor} className={inside ? "glim-sr-only" : "glim-signin-label"}>
         {label}
         {hint && <InfoBubble tip={hint} />}
       </label>
@@ -164,10 +173,7 @@ export function SignInCard({
           ) : (
             <form className="glim-signin-form" noValidate onSubmit={submit}>
               {/* Kept while a passkey asks for the code, so the password survives a step back. */}
-              <div className="glim-signin-field" hidden={s.viaPasskey}>
-                <label htmlFor={id("password")} className="glim-signin-label">
-                  {text.password}
-                </label>
+              <SignInField label={text.password} htmlFor={id("password")} hidden={s.viaPasskey}>
                 <RevealInput
                   {...revealPassword}
                   id={id("password")}
@@ -178,7 +184,7 @@ export function SignInCard({
                   wrapperClassName="w-full"
                   className={FIELD}
                 />
-              </div>
+              </SignInField>
               {s.needCode && (
                 <div className="glim-signin-field">
                   <label htmlFor={id("code")} className="glim-signin-label">

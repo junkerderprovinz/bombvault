@@ -15,6 +15,8 @@ export interface ReadmePart {
   sub?: string;
   href?: string;
   onClick?: () => void;
+  /** The accessible name of a segment whose one word reads right only beside the first part. */
+  label?: string;
 }
 
 export interface ReadmeButtonProps {
@@ -78,7 +80,7 @@ export function ReadmeButton({
     <div ref={ref} data-new={newId} className={unit.join(" ")}>
       {parts.map((part, i) => {
         const sub = soon ? soonLabel : part.sub;
-        const label = sub ? `${part.name} ${sub}` : part.name;
+        const label = part.label ?? (sub ? `${part.name} ${sub}` : part.name);
         const cls = `glim-readme-btn${i > 0 ? " glim-readme-btn-seg" : ""}${soon ? "" : " glim-brand-tile"}`;
         const face =
           i === 0 && art ? (

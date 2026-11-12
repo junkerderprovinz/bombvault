@@ -2,7 +2,7 @@
 // the element tree it returns, without a DOM.
 import { describe, expect, it } from "vitest";
 import { Badge } from "./Badge";
-import type { BadgeShape, BadgeSize, BadgeTone } from "./Badge";
+import type { BadgeForm, BadgeShape, BadgeSize, BadgeTone } from "./Badge";
 
 interface ElementNode {
   type?: unknown;
@@ -233,6 +233,25 @@ describe("Badge shape", () => {
     const el = root(Badge({ children: "!", shape: "circle", size: "icon" }));
     const cls = el.props!.className as string;
     expect(cls).toContain("h-8");
+    expect(cls).toContain("aspect-square");
+    expect(cls).toContain("px-0");
+  });
+});
+
+describe("Badge form", () => {
+  it.each<[BadgeForm, string]>([
+    ["rounded", "rounded-[0.3125rem]"],
+    ["square", "rounded-none"],
+    ["pill", "rounded-full"],
+    ["circle", "rounded-full"],
+  ])("form=%s keeps %s instead of the shape setting's radius", (form, radius) => {
+    const cls = (root(Badge({ children: "x", form })).props!.className as string).split(/\s+/);
+    expect(cls).toContain(radius);
+    expect(cls).not.toContain("rounded-pill");
+  });
+
+  it("circle form is icon-only, as the circle shape is", () => {
+    const cls = root(Badge({ children: "x", form: "circle" })).props!.className as string;
     expect(cls).toContain("aspect-square");
     expect(cls).toContain("px-0");
   });

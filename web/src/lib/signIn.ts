@@ -270,6 +270,18 @@ function shown(el: Element): boolean {
   return true;
 }
 
+/**
+ * Whether a sign-in field shows its label inside, as its placeholder until the
+ * first key. A field with a hint, or with a placeholder of its own, keeps its
+ * label above. `was` is the label set on an earlier call, so a changed language
+ * replaces the placeholder it put there.
+ */
+export function labelInside(field: { placeholder: string } | null, label: string, hint?: string, was?: string): boolean {
+  if (!field || hint || (field.placeholder && field.placeholder !== was)) return false;
+  field.placeholder = label;
+  return true;
+}
+
 const FIELDS = 'input:not([type="hidden"], :disabled), textarea:not(:disabled)';
 
 /**

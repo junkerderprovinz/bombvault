@@ -128,7 +128,7 @@ function ApkButton({ t, href }: { t: ReturnType<typeof useT>["t"]; href: string 
           desktop
             ? [
                 { name: "Android", sub: "APK", href },
-                { name: label, sub: "APK", onClick: () => setQr((open) => !open) },
+                { name: label, label: `${label} APK`, onClick: () => setQr((open) => !open) },
               ]
             : [{ name: "Android", sub: "APK", href }]
         }
