@@ -1,0 +1,10 @@
+{
+  "targets": [
+    {
+      "name": "web",
+      "mode": "port",
+      "version": "4.3.0",
+      "versionFile": "web/src/lib/glimstoneVersion.ts"
+    }
+  ]
+}

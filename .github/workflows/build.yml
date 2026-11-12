@@ -63,10 +63,16 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag" --jq .sha)" >> "$GITHUB_OUTPUT"
 
+  # Only a release tag has to carry the newest GlimStone. Main, branches and the
+  # weekly rebuild build what is already there.
+  glimstone:
+    if: github.ref_type == 'tag'
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@main
+
   # The build job waits for this, so an image that does not boot never reaches
   # the registry.
   smoke:
-    needs: release
+    needs: [release, glimstone]
     if: ${{ !failure() && !cancelled() }}
     name: Boot smoke test (amd64)
     runs-on: ubuntu-latest
