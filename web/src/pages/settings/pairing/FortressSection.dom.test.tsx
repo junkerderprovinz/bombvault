@@ -19,7 +19,7 @@ const calls: string[] = [];
 const toasts: string[] = [];
 
 function state(over: Partial<FortressState> = {}): FortressState {
-  return { ok: true, joined: false, phrase: false, device: "Tower", defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
+  return { ok: true, joined: false, phrase: false, device: "Tower", defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false, ...over };
 }
 const joined = (over: Partial<FortressState> = {}) => state({ joined: true, phrase: true, ...over });
 
@@ -49,6 +49,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     leaveFortress: () => {
       calls.push("leave");
       view = state();
+      return Promise.resolve(view);
+    },
+    removeFortressMember: (id: string) => {
+      calls.push(`remove ${id}`);
+      view = { ...view, members: [], removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] };
       return Promise.resolve(view);
     },
   };
@@ -247,5 +252,40 @@ describe("FortressSection", () => {
     expect(document.querySelector('[data-fortress="show"]')).toBeNull();
     expect(document.querySelector('[data-fortress="open-change"]')).toBeNull();
     expect(button("open-leave")).toBeTruthy();
+  });
+});
+
+describe("removing another app from the fortress", () => {
+  const FIRESQUIRE = { id: "fs1", app: "firesquire", name: "FireSquire", version: "1.3.0", device: "Tower", deployment: "plugin", kind: "instance", online: true, relay: false };
+
+  it("asks first, then offers the new phrase behind the password", async () => {
+    view = joined({ members: [FIRESQUIRE] });
+    renderSection();
+    fireEvent.click(await screen.findByRole("switch", { name: "Show the other apps of the fortress" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Remove" }));
+    expect(screen.getByRole("dialog", { name: "Remove FireSquire on Tower?" })).toBeTruthy();
+    expect(calls).toEqual([]);
+    await act(async () => fireEvent.click(button("remove")));
+    expect(calls).toEqual(["remove fs1"]);
+    expect(screen.getByRole("dialog", { name: "Change the phrase now?" })).toBeTruthy();
+    await act(async () => fireEvent.click(button("change")));
+    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
+    await act(async () => fireEvent.click(button("change-unlock")));
+    expect(calls).toEqual(["remove fs1", "change hunter2"]);
+    expect(button("words").textContent).toContain("wrong");
+  });
+
+  it("names who was removed until the phrase changes", async () => {
+    view = joined({ removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] });
+    renderSection();
+    await screen.findByText(en["fortress.title"]);
+    expect(button("removed").textContent).toContain("Removed: FireSquire on Tower. Change the phrase to close the way back in.");
+  });
+
+  it("says so where another app removed BombVault", async () => {
+    view = state({ removedHere: true });
+    renderSection();
+    expect(await screen.findByText("Removed from the fortress")).toBeTruthy();
+    expect(screen.queryByText("Not in a fortress yet")).toBeNull();
   });
 });

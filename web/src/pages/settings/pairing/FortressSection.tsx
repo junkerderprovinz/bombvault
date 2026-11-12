@@ -12,6 +12,7 @@ import {
   getFortress,
   joinFortress,
   leaveFortress,
+  removeFortressMember,
   setFortressDevice,
   setFortressPermission,
   showFortressPhrase,
@@ -34,7 +35,14 @@ const SAVE_AFTER_MS = 800;
 const APP = { id: "bombvault", name: "BombVault" };
 // The words BombVault's own buttons use for the same acts, so that they wear
 // the same glyphs: a new phrase is a key rotated.
-const LABEL_KEYS = { join: "pairing.join", leave: "pairing.leave", showPhrase: "pairing.show", changePhrase: "api.rotate" };
+const LABEL_KEYS = {
+  join: "pairing.join",
+  leave: "pairing.leave",
+  showPhrase: "pairing.show",
+  changePhrase: "api.rotate",
+  remove: "fortress.remove",
+  later: "fortress.dismiss",
+};
 
 /** GiveBack is the switch that lets the apps in the fortress take their own
  *  backups back, with what saving it needs. */
@@ -119,6 +127,12 @@ export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; 
           if (answer.words) load();
           return answer;
         });
+  const onRemove = async (id: string): Promise<FortressAnswer> => {
+    const r = await removeFortressMember(id);
+    if (!r.ok) return { error: r.error ?? text.failed };
+    setView(r);
+    return { ok: true };
+  };
   const onLeave = async (): Promise<FortressAnswer> => {
     const r = await leaveFortress();
     if (!r.ok) return { error: r.error ?? text.failed };
@@ -144,8 +158,11 @@ export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; 
         onPermission={onPermission}
         notify={(message, severity) => push(message, severity)}
         onJoin={onJoin}
-        onRemove={() => Promise.resolve({ error: text.failed })}
+        onRemove={onRemove}
         onShowPhrase={view.phrase ? onShowPhrase : undefined}
+        onChangePhrase={view.phrase ? onChangePhrase : undefined}
+        removed={view.removed.map((r) => fill(text.memberOn, { app: r.name, device: r.device }))}
+        removedHere={view.removedHere}
         phrasePassword={view.passwordSet}
         pairedWith={view.pairedWith}
         labelKeys={LABEL_KEYS}
