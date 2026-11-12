@@ -1,13 +1,18 @@
 // The pictures of the first steps, one per step card, playing one scene in
 // turn: the three kinds of thing to keep are switched on, the vault drops into
-// place, and they hop into it before the door shuts and a seal pops. Each is
-// drawn as the frame it rests on and set in motion by the stylesheet, so where
-// motion is off the areas stand on, the vault stands open in the second card
-// and closed and sealed in the third.
+// place and opens, the three fly across the cards into it, and the vault of
+// the last card shuts, is sealed and says so. Each is drawn as the frame it
+// rests on and set in motion by the stylesheet, so where motion is off the
+// areas stand on, the vault stands open in the second card and closed and
+// sealed in the third.
 import type { CSSProperties, ReactNode } from "react";
 import { hueVars } from "../lib/appearance";
+import { IconCheck } from "./navGlyphs";
 
-const VAULT = { x: 120, y: 74 };
+/** Where a kind's tile sits in the first picture and the vault's opening in
+ *  the second, in the pictures' own 240 by 140 units. */
+export const TILE_AT = [0, 1, 2].map((i) => [50 + i * 70, 56] as const);
+export const VAULT_AT = [120, 74] as const;
 
 /** The three kinds of thing BombVault keeps, drawn around their middle. */
 const KINDS: ReactNode[] = [
@@ -35,11 +40,11 @@ function Door({ className }: { className: string }) {
   return (
     <g className={className}>
       <rect className="glim-welcome-door-face" x="88" y="40" width="64" height="68" rx="8" />
+      <circle className="glim-welcome-dial-ring" cx="120" cy="74" r="16" />
       <g className="glim-welcome-dial">
-        <circle className="glim-welcome-dial-ring" cx="120" cy="74" r="16" />
         <path className="glim-welcome-dial-spokes" d="M120 58v32M104 74h32M108.7 62.7l22.6 22.6M131.3 62.7l-22.6 22.6" />
-        <circle className="glim-welcome-dial-hub" cx="120" cy="74" r="5" />
       </g>
+      <circle className="glim-welcome-dial-hub" cx="120" cy="74" r="5" />
       <rect className="glim-welcome-bolt" x="146" y="56" width="10" height="6" rx="2" />
       <rect className="glim-welcome-bolt" x="146" y="86" width="10" height="6" rx="2" />
     </g>
@@ -60,11 +65,11 @@ export function AreasPicture() {
   return (
     <Frame>
       {KINDS.map((kind, i) => {
-        const x = 50 + i * 70;
+        const [x, y] = TILE_AT[i]!;
         return (
           <g key={i} className="glim-hue glim-pic" style={{ ...hueVars(i), "--turn": i } as CSSProperties}>
-            <rect className="glim-welcome-tile" x={x - 24} y="34" width="48" height="44" rx="10" />
-            <g transform={`translate(${x} 56) scale(1.3)`}>{kind}</g>
+            <rect className="glim-welcome-tile" x={x - 24} y={y - 22} width="48" height="44" rx="10" />
+            <g transform={`translate(${x} ${y}) scale(1.3)`}>{kind}</g>
             <rect className="glim-welcome-track" x={x - 13} y="92" width="26" height="14" rx="7" />
             <circle className="glim-welcome-knob glim-welcome-switch" cx={x + 6} cy="99" r="4.5" />
           </g>
@@ -74,7 +79,8 @@ export function AreasPicture() {
   );
 }
 
-/** PlacePicture is the second step: the vault drops onto the floor, open. */
+/** PlacePicture is the second step: the vault drops onto the floor and opens
+ *  for what is to come. */
 export function PlacePicture() {
   return (
     <Frame>
@@ -86,35 +92,56 @@ export function PlacePicture() {
   );
 }
 
-function Item({ turn, x, y }: { turn: number; x: number; y: number }) {
-  const style = {
-    ...hueVars(turn),
-    "--from-x": `${x - VAULT.x}px`,
-    "--from-y": `${y - VAULT.y}px`,
-    "--turn": turn,
+/** Where the confetti of the last card flies, around the seal. */
+const CONFETTI = Array.from({ length: 16 }, (_, k) => {
+  const dx = ((k * 37) % 150) - 75;
+  return {
+    "--peak-x": `${dx / 2}px`,
+    "--peak-y": `${-18 - (k % 4) * 5}px`,
+    "--fall-x": `${dx}px`,
+    "--fall-y": `${24 + ((k * 53) % 60)}px`,
+    "--spin": `${k % 2 ? 360 : -360}deg`,
   } as CSSProperties;
-  return (
-    <g className="glim-hue glim-pic glim-welcome-item" style={style}>
-      <g transform={`translate(${VAULT.x} ${VAULT.y})`}>{KINDS[turn]}</g>
-    </g>
-  );
-}
+});
 
-/** BackupPicture is the third step: the kinds hop in, the door shuts, the
- *  dial turns home and the seal pops with the spark. */
-export function BackupPicture() {
+/** BackupPicture is the third step: the door shuts on what flew in, the dial
+ *  turns home, and the seal pops with a badge that says it is backed up. */
+export function BackupPicture({ done }: { done: string }) {
   return (
     <Frame>
       <Body />
-      <Item turn={0} x={30} y={104} />
-      <Item turn={1} x={44} y={70} />
-      <Item turn={2} x={30} y={38} />
       <Door className="glim-welcome-door" />
+      <circle className="glim-scene-ring glim-welcome-ring" cx="120" cy="18" r="16" />
       <g className="glim-welcome-seal">
-        <circle className="glim-scene-seal" cx="164" cy="30" r="12" />
-        <path className="glim-welcome-check" d="M158.5 30.5l3.8 3.8l7.2 -7.6" />
+        <g transform="translate(120 18)">
+          <rect className="glim-welcome-badge" x="-46" y="-13" width="92" height="26" rx="8" />
+          <g transform="translate(-35 -6) scale(.75)" className="glim-welcome-badge-ink">
+            <IconCheck />
+          </g>
+          <text className="glim-welcome-badge-text" x="7" y="4.5" textAnchor="middle">
+            {done}
+          </text>
+        </g>
       </g>
-      <path className="glim-welcome-spark" d="M196 18l2.4 6.6l6.6 2.4l-6.6 2.4l-2.4 6.6l-2.4 -6.6l-6.6 -2.4l6.6 -2.4z" />
+      <g transform="translate(120 18)">
+        {CONFETTI.map((flight, k) => (
+          <g key={k} className="glim-welcome-confetti" style={flight}>
+            <rect className={`glim-step-confetti-${k % 4}`} x="-2" y="-3.5" width="4" height="7" rx="1" />
+          </g>
+        ))}
+      </g>
     </Frame>
+  );
+}
+
+/** One thing on its way from its tile in the first card into the open vault
+ *  of the second. It lives above the cards, so it crosses their edges. */
+export function Parcel({ turn, style }: { turn: number; style: CSSProperties }) {
+  return (
+    <div className="glim-hue glim-pic glim-welcome-parcel" style={{ ...hueVars(turn), "--turn": turn, ...style } as CSSProperties} aria-hidden="true">
+      <svg viewBox="-12 -12 24 24">
+        {KINDS[turn]}
+      </svg>
+    </div>
   );
 }

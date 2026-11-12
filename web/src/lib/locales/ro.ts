@@ -4948,6 +4948,7 @@ const ro: Partial<Translations> = {
   "firstSteps.locationHint": "Unde ajung copiile de rezervă. Cel mai sigur este o a doua destinație în afara locului, de exemplu un Storage Box sau Backblaze B2.",
   "firstSteps.backup": "Prima copie de rezervă",
   "firstSteps.backupSub": "După aceea rulează singură în fiecare noapte",
+  "firstSteps.backedUp": "Cu copie",
   "firstSteps.found": "BombVault a găsit {list}.",
   "firstSteps.found.containers": "one={n} container|few={n} containere|other={n} de containere",
   "firstSteps.found.vms": "one={n} VM|few={n} VM-uri|other={n} de VM-uri",

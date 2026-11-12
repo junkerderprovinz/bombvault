@@ -4938,6 +4938,7 @@ const zh: Partial<Translations> = {
   "firstSteps.locationHint": "备份存放的位置。最安全的做法是在异地再设一个目标，例如 Storage Box 或 Backblaze B2。",
   "firstSteps.backup": "首次备份",
   "firstSteps.backupSub": "之后每晚自动运行",
+  "firstSteps.backedUp": "已备份",
   "firstSteps.found": "BombVault 找到了 {list}。",
   "firstSteps.found.containers": "{n} 个容器",
   "firstSteps.found.vms": "{n} 台虚拟机",

@@ -4957,6 +4957,7 @@ const lv: Partial<Translations> = {
   "firstSteps.locationHint": "Kurp iet rezerves kopijas. Drošākais ir otrs mērķis ārpus mājām, piemēram, Storage Box vai Backblaze B2.",
   "firstSteps.backup": "Pirmā rezerves kopija",
   "firstSteps.backupSub": "Pēc tam tā notiek pati katru nakti",
+  "firstSteps.backedUp": "Dublēti",
   "firstSteps.found": "BombVault atrada {list}.",
   "firstSteps.found.containers": "zero={n} konteineru|one={n} konteineru|other={n} konteinerus",
   "firstSteps.found.vms": "{n} VM",

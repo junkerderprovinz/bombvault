@@ -4957,6 +4957,7 @@ const ca: Partial<Translations> = {
   "firstSteps.locationHint": "On van les còpies de seguretat. El més segur és una segona destinació fora de casa, com una Storage Box o Backblaze B2.",
   "firstSteps.backup": "Primera còpia de seguretat",
   "firstSteps.backupSub": "Després s'executa sola cada nit",
+  "firstSteps.backedUp": "Amb còpia",
   "firstSteps.found": "BombVault ha trobat {list}.",
   "firstSteps.found.containers": "one={n} contenidor|other={n} contenidors",
   "firstSteps.found.vms": "{n} MV",

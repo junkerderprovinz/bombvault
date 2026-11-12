@@ -4957,6 +4957,7 @@ const ms: Partial<Translations> = {
   "firstSteps.locationHint": "Ke mana sandaran dihantar. Yang paling selamat ialah destinasi kedua di luar premis, seperti Storage Box atau Backblaze B2.",
   "firstSteps.backup": "Sandaran pertama",
   "firstSteps.backupSub": "Selepas itu ia berjalan sendiri setiap malam",
+  "firstSteps.backedUp": "Disandarkan",
   "firstSteps.found": "BombVault menjumpai {list}.",
   "firstSteps.found.containers": "{n} bekas",
   "firstSteps.found.vms": "{n} VM",

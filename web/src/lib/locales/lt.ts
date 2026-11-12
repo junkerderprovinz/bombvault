@@ -4957,6 +4957,7 @@ const lt: Partial<Translations> = {
   "firstSteps.locationHint": "Kur keliauja atsarginės kopijos. Saugiausia antra paskirties vieta ne namuose, pavyzdžiui, Storage Box ar Backblaze B2.",
   "firstSteps.backup": "Pirmoji atsarginė kopija",
   "firstSteps.backupSub": "Vėliau ji daroma pati kiekvieną naktį",
+  "firstSteps.backedUp": "Kopijuota",
   "firstSteps.found": "BombVault rado {list}.",
   "firstSteps.found.containers": "one={n} konteinerį|few={n} konteinerius|many={n} konteinerio|other={n} konteinerių",
   "firstSteps.found.vms": "{n} VM",

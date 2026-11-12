@@ -4957,6 +4957,7 @@ const et: Partial<Translations> = {
   "firstSteps.locationHint": "Kuhu varundused lähevad. Kõige turvalisem on teine sihtkoht kodust väljas, näiteks Storage Box või Backblaze B2.",
   "firstSteps.backup": "Esimene varundus",
   "firstSteps.backupSub": "Pärast seda käib see iga öö ise",
+  "firstSteps.backedUp": "Varundatud",
   "firstSteps.found": "BombVault leidis {list}.",
   "firstSteps.found.containers": "one={n} konteineri|other={n} konteinerit",
   "firstSteps.found.vms": "{n} VM-i",

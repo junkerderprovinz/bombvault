@@ -4957,6 +4957,7 @@ const gl: Partial<Translations> = {
   "firstSteps.locationHint": "A onde van as copias de seguridade. O máis seguro é un segundo destino fóra da casa, como unha Storage Box ou Backblaze B2.",
   "firstSteps.backup": "Primeira copia",
   "firstSteps.backupSub": "Despois execútase soa cada noite",
+  "firstSteps.backedUp": "Con copia",
   "firstSteps.found": "BombVault atopou {list}.",
   "firstSteps.found.containers": "one={n} contedor|other={n} contedores",
   "firstSteps.found.vms": "{n} MV",

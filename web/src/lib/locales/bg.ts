@@ -4957,6 +4957,7 @@ const bg: Partial<Translations> = {
   "firstSteps.locationHint": "Къде отиват архивите. Най-сигурна е втора дестинация извън дома, например Storage Box или Backblaze B2.",
   "firstSteps.backup": "Първо архивиране",
   "firstSteps.backupSub": "След това върви само всяка нощ",
+  "firstSteps.backedUp": "Архивирани",
   "firstSteps.found": "BombVault откри {list}.",
   "firstSteps.found.containers": "one={n} контейнер|other={n} контейнера",
   "firstSteps.found.vms": "{n} ВМ",

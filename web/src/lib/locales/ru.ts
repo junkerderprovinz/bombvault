@@ -4944,6 +4944,7 @@ const ru: Partial<Translations> = {
   "firstSteps.locationHint": "Куда попадают резервные копии. Надёжнее всего второе место назначения вне дома, например Storage Box или Backblaze B2.",
   "firstSteps.backup": "Первая резервная копия",
   "firstSteps.backupSub": "Дальше всё работает само каждую ночь",
+  "firstSteps.backedUp": "Есть копия",
   "firstSteps.found": "BombVault нашёл {list}.",
   "firstSteps.found.containers": "one={n} контейнер|few={n} контейнера|many={n} контейнеров|other={n} контейнера",
   "firstSteps.found.vms": "one={n} виртуальную машину|few={n} виртуальные машины|many={n} виртуальных машин|other={n} виртуальной машины",

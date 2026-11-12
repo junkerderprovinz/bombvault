@@ -4948,6 +4948,7 @@ const hu: Partial<Translations> = {
   "firstSteps.locationHint": "Hová kerülnek a mentések. A legbiztonságosabb egy második cél házon kívül, például egy Storage Box vagy a Backblaze B2.",
   "firstSteps.backup": "Első mentés",
   "firstSteps.backupSub": "Utána minden éjjel magától lefut",
+  "firstSteps.backedUp": "Mentve",
   "firstSteps.found": "A BombVault ezt találta: {list}.",
   "firstSteps.found.containers": "{n} konténer",
   "firstSteps.found.vms": "{n} VM",

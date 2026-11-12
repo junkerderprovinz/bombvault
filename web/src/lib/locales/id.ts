@@ -4957,6 +4957,7 @@ const id: Partial<Translations> = {
   "firstSteps.locationHint": "Ke mana cadangan disimpan. Yang paling aman adalah tujuan kedua di luar lokasi, seperti Storage Box atau Backblaze B2.",
   "firstSteps.backup": "Cadangan pertama",
   "firstSteps.backupSub": "Setelah itu berjalan sendiri setiap malam",
+  "firstSteps.backedUp": "Sudah dicadangkan",
   "firstSteps.found": "BombVault menemukan {list}.",
   "firstSteps.found.containers": "{n} container",
   "firstSteps.found.vms": "{n} VM",

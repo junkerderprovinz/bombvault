@@ -4947,6 +4947,7 @@ const el: Partial<Translations> = {
   "firstSteps.locationHint": "Πού πηγαίνουν τα αντίγραφα ασφαλείας. Ασφαλέστερος είναι ένας δεύτερος προορισμός εκτός χώρου σας, όπως ένα Storage Box ή το Backblaze B2.",
   "firstSteps.backup": "Πρώτο αντίγραφο ασφαλείας",
   "firstSteps.backupSub": "Μετά εκτελείται μόνο του κάθε βράδυ",
+  "firstSteps.backedUp": "Με αντίγραφο",
   "firstSteps.found": "Το BombVault βρήκε {list}.",
   "firstSteps.found.containers": "one={n} Container|other={n} Containers",
   "firstSteps.found.vms": "{n} VMs",

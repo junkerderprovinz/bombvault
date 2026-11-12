@@ -4957,6 +4957,7 @@ const is: Partial<Translations> = {
   "firstSteps.locationHint": "Hvert afritin fara. Öruggast er annar áfangastaður utan heimilisins, til dæmis Storage Box eða Backblaze B2.",
   "firstSteps.backup": "Fyrsta afritið",
   "firstSteps.backupSub": "Eftir það keyrir það sjálfkrafa á hverri nóttu",
+  "firstSteps.backedUp": "Afritað",
   "firstSteps.found": "BombVault fann {list}.",
   "firstSteps.found.containers": "one={n} gám|other={n} gáma",
   "firstSteps.found.vms": "one={n} sýndarvél|other={n} sýndarvélar",

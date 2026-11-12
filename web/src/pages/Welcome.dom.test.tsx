@@ -179,6 +179,8 @@ describe("the pictures of the welcome page", () => {
     for (const name of ["sections", "location", "backup"]) {
       expect(step(name).querySelector("[data-step-frame] svg"), name).not.toBeNull();
     }
+    expect(document.querySelectorAll(".glim-welcome-parcel")).toHaveLength(3);
+    expect(step("backup").textContent).toContain(en["firstSteps.backedUp"]);
   });
 });
 

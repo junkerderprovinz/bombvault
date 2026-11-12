@@ -4957,6 +4957,7 @@ const eu: Partial<Translations> = {
   "firstSteps.locationHint": "Babeskopiak nora doazen. Seguruena kanpoko bigarren helmuga bat da, adibidez Storage Box edo Backblaze B2.",
   "firstSteps.backup": "Lehen babeskopia",
   "firstSteps.backupSub": "Gero gauero bere kabuz exekutatzen da",
+  "firstSteps.backedUp": "Babestuta",
   "firstSteps.found": "BombVault-ek {list} aurkitu ditu.",
   "firstSteps.found.containers": "{n} edukiontzi",
   "firstSteps.found.vms": "{n} MB",

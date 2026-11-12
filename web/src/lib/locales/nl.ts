@@ -4946,6 +4946,7 @@ const nl: Partial<Translations> = {
   "firstSteps.locationHint": "Waar de back-ups naartoe gaan. Het veiligst is een tweede bestemming buiten de deur, zoals een Storage Box of Backblaze B2.",
   "firstSteps.backup": "Eerste back-up",
   "firstSteps.backupSub": "Daarna draait het elke nacht vanzelf",
+  "firstSteps.backedUp": "Met back-up",
   "firstSteps.found": "BombVault heeft {list} gevonden.",
   "firstSteps.found.containers": "one={n} container|other={n} containers",
   "firstSteps.found.vms": "one={n} VM|other={n} VM's",

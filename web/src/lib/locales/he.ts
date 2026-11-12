@@ -4947,6 +4947,7 @@ const he: Partial<Translations> = {
   "firstSteps.locationHint": "לאן הגיבויים הולכים. הכי בטוח יעד שני מחוץ לבית, כמו Storage Box או Backblaze B2.",
   "firstSteps.backup": "גיבוי ראשון",
   "firstSteps.backupSub": "אחרי זה הוא רץ מעצמו בכל לילה",
+  "firstSteps.backedUp": "עם גיבוי",
   "firstSteps.found": "BombVault מצא {list}.",
   "firstSteps.found.containers": "one=Container אחד|other={n} Containers",
   "firstSteps.found.vms": "one=VM אחד|other={n} VMs",

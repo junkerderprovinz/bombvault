@@ -4945,6 +4945,7 @@ const cs: Partial<Translations> = {
   "firstSteps.locationHint": "Kam se zálohy ukládají. Nejbezpečnější je druhý cíl mimo domov, například Storage Box nebo Backblaze B2.",
   "firstSteps.backup": "První záloha",
   "firstSteps.backupSub": "Potom už běží každou noc sama",
+  "firstSteps.backedUp": "Zálohováno",
   "firstSteps.found": "BombVault našel {list}.",
   "firstSteps.found.containers": "one={n} kontejner|few={n} kontejnery|many={n} kontejneru|other={n} kontejnerů",
   "firstSteps.found.vms": "{n} VMs",

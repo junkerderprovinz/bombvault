@@ -4957,6 +4957,7 @@ const hi: Partial<Translations> = {
   "firstSteps.locationHint": "बैकअप कहाँ जाते हैं। सबसे सुरक्षित है घर से बाहर एक दूसरा गंतव्य, जैसे Storage Box या Backblaze B2।",
   "firstSteps.backup": "पहला बैकअप",
   "firstSteps.backupSub": "इसके बाद यह हर रात अपने आप चलता है",
+  "firstSteps.backedUp": "बैकअप हुआ",
   "firstSteps.found": "BombVault को मिला: {list}।",
   "firstSteps.found.containers": "{n} कंटेनर",
   "firstSteps.found.vms": "{n} VM",

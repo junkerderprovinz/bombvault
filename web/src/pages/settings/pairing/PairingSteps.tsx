@@ -3,7 +3,7 @@
 // other, done. Their pictures play one scene, and one pointer walks through
 // all three.
 import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { STEP_GRID, StepCard, stepWidth } from "../../../components/recovery/StepCard";
+import { placeWithin, STEP_GRID, StepCard, stepWidth } from "../../../components/recovery/StepCard";
 import type { useT } from "../../../lib/i18n";
 import { StepPicture } from "./pairingArt";
 
@@ -30,18 +30,6 @@ const STOPS: Record<string, [card: number, x: number, y: number]> = {
   hold: [2, 120, 80],
   done: [2, 168, 30],
 };
-
-/** Where an element lies inside an ancestor, by layout alone. A card that is
- *  still sliding in would shift what its bounding box reports. */
-function placeWithin(el: HTMLElement, root: HTMLElement): [number, number] {
-  let x = 0;
-  let y = 0;
-  for (let at: HTMLElement | null = el; at && at !== root; at = at.offsetParent as HTMLElement | null) {
-    x += at.offsetLeft;
-    y += at.offsetTop;
-  }
-  return [x, y];
-}
 
 /** useSceneStops measures the pointer's stops in the grid's own pixels and
  *  hands them to the stylesheet, with the width a card needs for its heading

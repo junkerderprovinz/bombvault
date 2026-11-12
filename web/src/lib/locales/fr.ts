@@ -4947,6 +4947,7 @@ const fr: Partial<Translations> = {
   "firstSteps.locationHint": "Où vont les sauvegardes. Le plus sûr est une seconde destination hors site, comme une Storage Box ou Backblaze B2.",
   "firstSteps.backup": "Première sauvegarde",
   "firstSteps.backupSub": "Ensuite, elle s'exécute seule chaque nuit",
+  "firstSteps.backedUp": "Sauvegardé",
   "firstSteps.found": "BombVault a trouvé {list}.",
   "firstSteps.found.containers": "one={n} conteneur|other={n} conteneurs",
   "firstSteps.found.vms": "{n} VMs",

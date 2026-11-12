@@ -4948,6 +4948,7 @@ const ar: Partial<Translations> = {
   "firstSteps.locationHint": "إلى أين تذهب النسخ الاحتياطية. الأكثر أمانًا وجهة ثانية خارج الموقع، مثل Storage Box أو Backblaze B2.",
   "firstSteps.backup": "أول نسخة احتياطية",
   "firstSteps.backupSub": "بعد ذلك يعمل تلقائيًا كل ليلة",
+  "firstSteps.backedUp": "تم نسخه احتياطيًا",
   "firstSteps.found": "عثر BombVault على {list}.",
   "firstSteps.found.containers": "one=Container واحد|two=اثنين من Containers|few={n} Containers|many={n} Containers|other={n} Containers",
   "firstSteps.found.vms": "one=VM واحد|two=اثنين من VMs|few={n} VMs|many={n} VMs|other={n} VMs",

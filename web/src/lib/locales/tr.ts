@@ -4947,6 +4947,7 @@ const tr: Partial<Translations> = {
   "firstSteps.locationHint": "Yedeklerin gittiği yer. En güvenlisi evin dışında ikinci bir hedeftir, örneğin bir Storage Box ya da Backblaze B2.",
   "firstSteps.backup": "İlk yedekleme",
   "firstSteps.backupSub": "Sonrasında her gece kendiliğinden çalışır",
+  "firstSteps.backedUp": "Yedeklendi",
   "firstSteps.found": "BombVault {list} buldu.",
   "firstSteps.found.containers": "{n} konteyner",
   "firstSteps.found.vms": "{n} VM",

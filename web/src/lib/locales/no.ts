@@ -4947,6 +4947,7 @@ const no: Partial<Translations> = {
   "firstSteps.locationHint": "Hvor sikkerhetskopiene havner. Tryggest er et ekstra mål utenfor huset, for eksempel en Storage Box eller Backblaze B2.",
   "firstSteps.backup": "Første sikkerhetskopi",
   "firstSteps.backupSub": "Etter det kjører den av seg selv hver natt",
+  "firstSteps.backedUp": "Sikkerhetskopiert",
   "firstSteps.found": "BombVault fant {list}.",
   "firstSteps.found.containers": "one={n} kontainer|other={n} kontainere",
   "firstSteps.found.vms": "one={n} VM|other={n} VM-er",

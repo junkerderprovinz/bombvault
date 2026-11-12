@@ -4944,6 +4944,7 @@ const pl: Partial<Translations> = {
   "firstSteps.locationHint": "Dokąd trafiają kopie zapasowe. Najbezpieczniejsze jest drugie miejsce docelowe poza domem, na przykład Storage Box lub Backblaze B2.",
   "firstSteps.backup": "Pierwsza kopia zapasowa",
   "firstSteps.backupSub": "Potem uruchamia się sama każdej nocy",
+  "firstSteps.backedUp": "Z kopią",
   "firstSteps.found": "BombVault znalazł {list}.",
   "firstSteps.found.containers": "one={n} kontener|few={n} kontenery|many={n} kontenerów|other={n} kontenera",
   "firstSteps.found.vms": "one={n} maszynę wirtualną|few={n} maszyny wirtualne|many={n} maszyn wirtualnych|other={n} maszyny wirtualnej",

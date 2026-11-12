@@ -4957,6 +4957,7 @@ const hr: Partial<Translations> = {
   "firstSteps.locationHint": "Kamo idu sigurnosne kopije. Najsigurnije je drugo odredište izvan kuće, na primjer Storage Box ili Backblaze B2.",
   "firstSteps.backup": "Prva sigurnosna kopija",
   "firstSteps.backupSub": "Poslije se izvodi sama svake noći",
+  "firstSteps.backedUp": "Sigurnosno kopirano",
   "firstSteps.found": "BombVault je pronašao {list}.",
   "firstSteps.found.containers": "one={n} kontejner|few={n} kontejnera|other={n} kontejnera",
   "firstSteps.found.vms": "one={n} VM|few={n} VM-a|other={n} VM-ova",

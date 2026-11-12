@@ -4944,6 +4944,7 @@ const uk: Partial<Translations> = {
   "firstSteps.locationHint": "Куди потрапляють резервні копії. Найнадійніше мати друге місце призначення поза домом, наприклад Storage Box або Backblaze B2.",
   "firstSteps.backup": "Перша резервна копія",
   "firstSteps.backupSub": "Далі все працює саме щоночі",
+  "firstSteps.backedUp": "Є копія",
   "firstSteps.found": "BombVault знайшов {list}.",
   "firstSteps.found.containers": "one={n} контейнер|few={n} контейнери|many={n} контейнерів|other={n} контейнери",
   "firstSteps.found.vms": "one={n} віртуальну машину|few={n} віртуальні машини|many={n} віртуальних машин|other={n} віртуальної машини",

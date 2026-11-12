@@ -4948,6 +4948,7 @@ const th: Partial<Translations> = {
   "firstSteps.locationHint": "ปลายทางของข้อมูลสำรอง ที่ปลอดภัยที่สุดคือปลายทางที่สองนอกสถานที่ เช่น Storage Box หรือ Backblaze B2",
   "firstSteps.backup": "การสำรองข้อมูลครั้งแรก",
   "firstSteps.backupSub": "หลังจากนั้นจะทำงานเองทุกคืน",
+  "firstSteps.backedUp": "สำรองแล้ว",
   "firstSteps.found": "BombVault พบ {list}",
   "firstSteps.found.containers": "Containers {n} รายการ",
   "firstSteps.found.vms": "VMs {n} รายการ",

@@ -4938,6 +4938,7 @@ const ko: Partial<Translations> = {
   "firstSteps.locationHint": "백업이 저장되는 위치입니다. 가장 안전한 방법은 외부에 두 번째 대상을 두는 것이며, 예를 들어 Storage Box나 Backblaze B2가 있습니다.",
   "firstSteps.backup": "첫 백업",
   "firstSteps.backupSub": "이후에는 매일 밤 자동으로 실행됩니다",
+  "firstSteps.backedUp": "백업됨",
   "firstSteps.found": "BombVault가 찾은 항목: {list}",
   "firstSteps.found.containers": "컨테이너 {n}개",
   "firstSteps.found.vms": "가상 머신 {n}대",

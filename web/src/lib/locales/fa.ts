@@ -4957,6 +4957,7 @@ const fa: Partial<Translations> = {
   "firstSteps.locationHint": "پشتیبان‌ها کجا می‌روند. امن‌ترین حالت یک مقصد دوم بیرون از محل است، مثل Storage Box یا Backblaze B2.",
   "firstSteps.backup": "نخستین پشتیبان‌گیری",
   "firstSteps.backupSub": "پس از آن هر شب خودکار اجرا می‌شود",
+  "firstSteps.backedUp": "پشتیبان‌گیری‌شده",
   "firstSteps.found": "BombVault {list} را پیدا کرد.",
   "firstSteps.found.containers": "{n} کانتینر",
   "firstSteps.found.vms": "{n} ماشین مجازی",

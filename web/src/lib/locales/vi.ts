@@ -4938,6 +4938,7 @@ const vi: Partial<Translations> = {
   "firstSteps.locationHint": "Nơi lưu các bản sao lưu. An toàn nhất là một đích thứ hai ngoài nhà, chẳng hạn Storage Box hoặc Backblaze B2.",
   "firstSteps.backup": "Bản sao lưu đầu tiên",
   "firstSteps.backupSub": "Sau đó nó tự chạy mỗi đêm",
+  "firstSteps.backedUp": "Đã sao lưu",
   "firstSteps.found": "BombVault đã tìm thấy {list}.",
   "firstSteps.found.containers": "{n} Containers",
   "firstSteps.found.vms": "{n} VMs",

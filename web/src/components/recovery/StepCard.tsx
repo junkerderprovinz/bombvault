@@ -13,6 +13,18 @@ export type StepState = "idle" | "ok" | "warn" | "bad";
 export const STEP_GRID =
   "relative grid grid-cols-1 gap-10 md:grid-cols-[repeat(auto-fit,minmax(min(100%,max(var(--step-min),30%)),1fr))] md:gap-6 md:[&_h2>*]:whitespace-nowrap";
 
+/** Where an element lies inside an ancestor, by layout alone. A card that is
+ *  still sliding in would shift what its bounding box reports. */
+export function placeWithin(el: HTMLElement, root: HTMLElement): [number, number] {
+  let x = 0;
+  let y = 0;
+  for (let at: HTMLElement | null = el; at && at !== root; at = at.offsetParent as HTMLElement | null) {
+    x += at.offsetLeft;
+    y += at.offsetTop;
+  }
+  return [x, y];
+}
+
 /** How wide a card has to be for its heading to stay on one line: the badges
  *  at their full width and the room StepCard leaves beside its heading. */
 export function stepWidth(root: HTMLElement): number {

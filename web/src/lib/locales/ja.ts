@@ -4938,6 +4938,7 @@ const ja: Partial<Translations> = {
   "firstSteps.locationHint": "バックアップの保存先です。外部に 2 つ目の保存先を用意すると安全です。Storage Box や Backblaze B2 などが使えます。",
   "firstSteps.backup": "最初のバックアップ",
   "firstSteps.backupSub": "以降は毎晩自動で実行されます",
+  "firstSteps.backedUp": "バックアップ済み",
   "firstSteps.found": "BombVault は {list} を見つけました。",
   "firstSteps.found.containers": "{n} 個のコンテナ",
   "firstSteps.found.vms": "{n} 台の VM",

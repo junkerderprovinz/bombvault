@@ -4947,6 +4947,7 @@ const fi: Partial<Translations> = {
   "firstSteps.locationHint": "Minne varmuuskopiot menevät. Turvallisin on toinen kohde kodin ulkopuolella, kuten Storage Box tai Backblaze B2.",
   "firstSteps.backup": "Ensimmäinen varmuuskopio",
   "firstSteps.backupSub": "Sen jälkeen se ajetaan itsestään joka yö",
+  "firstSteps.backedUp": "Varmuuskopioitu",
   "firstSteps.found": "BombVault löysi {list}.",
   "firstSteps.found.containers": "one={n} kontin|other={n} konttia",
   "firstSteps.found.vms": "{n} VMs",
