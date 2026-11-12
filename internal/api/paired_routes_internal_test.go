@@ -301,6 +301,7 @@ var pairedRefused = []string{
 	// Joining and changing the group and the fortress, roles, receivers, pull sources and ZFS replication peers.
 	"DELETE /api/fleet/peers/{id}",
 	"DELETE /api/fortress",
+	"DELETE /api/fortress/members/{id}",
 	"GET /api/fortress",
 	"DELETE /api/group",
 	"DELETE /api/group/members/{id}",
