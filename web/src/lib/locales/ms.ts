@@ -1915,7 +1915,7 @@ const ms: Partial<Translations> = {
   "pairing.wordsLabel": "Dua belas perkataan itu",
   "pairing.show": "Tunjukkan frasa",
   "pairing.noPasswordTitle": "Kata laluan log masuk belum ditetapkan",
-  "pairing.noPasswordHint": "Sesiapa sahaja yang boleh membuka antara muka web ini dapat melihat dua belas perkataan itu dan, melalui kumpulan, mendapatkan kata laluan restic setiap instans dalam kumpulan itu, yang membuka sandarannya. Tetapkan kata laluan sebelum menggandingkan.",
+  "pairing.noPasswordHint": "Tanpa kata laluan, sesiapa yang membuka halaman ini melihat dua belas perkataan itu dan dengannya boleh masuk ke setiap sandaran dalam kumpulan.",
   "pairing.direct": "Terus",
   "pairing.pendingTitle": "Menunggu kelulusan",
   "pairing.pendingTip": "Instans ini telah memasukkan dua belas perkataan tetapi tidak boleh melihat atau memulakan apa-apa di sini sehingga anda meluluskannya. Luluskan hanya yang anda kenali, dan bandingkan kunci dengan kunci yang ditunjukkan oleh setiap satu di bawah Gandingan. Keputusan anda terpakai pada setiap instans dalam kumpulan.",

@@ -3035,7 +3035,7 @@ const ko: Partial<Translations> = {
   "pairing.wordsLabel": "12개의 단어",
   "pairing.show": "문구 표시",
   "pairing.noPasswordTitle": "로그인 비밀번호가 설정되어 있지 않습니다",
-  "pairing.noPasswordHint": "이 웹 화면을 열 수 있는 사람은 누구나 12개의 단어를 볼 수 있고, 그룹을 통해 그룹 내 모든 인스턴스의 restic 비밀번호를 얻어 백업에 접근할 수 있습니다. 페어링하기 전에 비밀번호를 설정하세요.",
+  "pairing.noPasswordHint": "비밀번호가 없으면 이 페이지를 여는 누구나 열두 단어를 보고 그것으로 그룹의 모든 백업에 접근할 수 있습니다.",
   "pairing.direct": "직접",
   "pairing.pendingTitle": "승인 대기 중",
   "pairing.pendingTip": "이 인스턴스들은 단어 12개를 입력했지만, 승인하기 전에는 여기서 아무것도 보거나 시작할 수 없습니다. 알아보는 인스턴스만 승인하고, 각 인스턴스가 페어링에 표시하는 키와 비교하세요. 결정은 그룹의 모든 인스턴스에 적용됩니다.",

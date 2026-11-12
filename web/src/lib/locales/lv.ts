@@ -1915,7 +1915,7 @@ const lv: Partial<Translations> = {
   "pairing.wordsLabel": "Divpadsmit vārdi",
   "pairing.show": "Rādīt frāzi",
   "pairing.noPasswordTitle": "Pieteikšanās parole nav iestatīta",
-  "pairing.noPasswordHint": "Ikviens, kas var atvērt šo tīmekļa saskarni, redz divpadsmit vārdus un caur grupu iegūst katras grupas instances restic paroli, kas atver to rezerves kopijas. Iestatiet paroli, pirms sapārojaties.",
+  "pairing.noPasswordHint": "Bez paroles ikviens, kas atver šo lapu, redz divpadsmit vārdus un ar tiem tiek pie visām grupas rezerves kopijām.",
   "pairing.direct": "Tieši",
   "pairing.pendingTitle": "Gaida apstiprinājumu",
   "pairing.pendingTip": "Šīs instances ievadīja divpadsmit vārdus, bet šeit neko neredz un nevar palaist, kamēr tu tās neapstiprini. Apstiprini tikai tās, kuras atpazīsti, un salīdzini atslēgu ar to, ko katra rāda sadaļā Pārošana. Tavs lēmums attiecas uz katru grupas instanci.",

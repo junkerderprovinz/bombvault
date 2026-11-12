@@ -3041,7 +3041,7 @@ const pl: Partial<Translations> = {
   "pairing.wordsLabel": "Dwanaście słów",
   "pairing.show": "Pokaż frazę",
   "pairing.noPasswordTitle": "Nie ustawiono hasła logowania",
-  "pairing.noPasswordHint": "Każdy, kto może otworzyć ten interfejs, widzi dwanaście słów i przez grupę uzyskuje hasło restic każdej instancji w grupie, co otwiera jej kopie zapasowe. Ustaw hasło, zanim sparujesz.",
+  "pairing.noPasswordHint": "Bez hasła każdy, kto otworzy tę stronę, zobaczy dwanaście słów i dostanie się nimi do każdej kopii zapasowej w grupie.",
   "pairing.direct": "Bezpośrednio",
   "pairing.pendingTitle": "Czeka na zatwierdzenie",
   "pairing.pendingTip": "Te instancje wpisały dwanaście słów, ale nic tu nie widzą i niczego nie uruchomią, dopóki ich nie zatwierdzisz. Zatwierdzaj tylko te, które rozpoznajesz, i porównaj klucz z tym, który każda pokazuje w Parowaniu. Twoja decyzja obowiązuje na każdej instancji w grupie.",

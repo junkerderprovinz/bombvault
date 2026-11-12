@@ -3045,7 +3045,7 @@ const hu: Partial<Translations> = {
   "pairing.wordsLabel": "A tizenkét szó",
   "pairing.show": "Jelmondat megjelenítése",
   "pairing.noPasswordTitle": "Nincs beállítva belépési jelszó",
-  "pairing.noPasswordHint": "Aki meg tudja nyitni ezt a webes felületet, látja a tizenkét szót, és a csoporton keresztül megszerzi a csoport minden példányának restic jelszavát, ami hozzáférést ad a biztonsági mentéseikhez. Állíts be egy jelszót, mielőtt párosítasz.",
+  "pairing.noPasswordHint": "Jelszó nélkül bárki, aki megnyitja ezt az oldalt, látja a tizenkét szót, és velük a csoport minden biztonsági mentéséhez hozzáfér.",
   "pairing.direct": "Közvetlen",
   "pairing.pendingTitle": "Jóváhagyásra vár",
   "pairing.pendingTip": "Ezek a példányok megadták a tizenkét szót, de amíg jóvá nem hagyod őket, itt semmit sem látnak és indítanak. Csak azokat hagyd jóvá, amelyeket felismersz, és hasonlítsd össze a kulcsot azzal, amelyet mindegyik a Párosítás alatt mutat. A döntésed a csoport minden példányán érvényes.",

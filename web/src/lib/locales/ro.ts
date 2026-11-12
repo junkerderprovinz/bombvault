@@ -3045,7 +3045,7 @@ const ro: Partial<Translations> = {
   "pairing.wordsLabel": "Cele douăsprezece cuvinte",
   "pairing.show": "Arată fraza",
   "pairing.noPasswordTitle": "Nu este setată nicio parolă de conectare",
-  "pairing.noPasswordHint": "Oricine poate deschide această interfață web vede cele douăsprezece cuvinte și obține, prin grup, parola restic a fiecărei instanțe din grup, ceea ce deschide copiile lor de rezervă. Setează o parolă înainte de împerechere.",
+  "pairing.noPasswordHint": "Fără parolă, oricine deschide această pagină vede cele douăsprezece cuvinte și ajunge cu ele la fiecare copie de rezervă din grup.",
   "pairing.direct": "Direct",
   "pairing.pendingTitle": "Așteaptă aprobarea",
   "pairing.pendingTip": "Aceste instanțe au introdus cele douăsprezece cuvinte, dar nu văd și nu pornesc nimic aici până nu le aprobi. Aprobă doar instanțele pe care le recunoști și compară cheia cu cea pe care fiecare o arată în Împerechere. Decizia ta se aplică pe fiecare instanță din grup.",

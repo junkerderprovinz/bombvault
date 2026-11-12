@@ -3044,7 +3044,7 @@ const tr: Partial<Translations> = {
   "pairing.wordsLabel": "On iki kelime",
   "pairing.show": "İfadeyi göster",
   "pairing.noPasswordTitle": "Giriş parolası belirlenmemiş",
-  "pairing.noPasswordHint": "Bu web arayüzünü açabilen herkes on iki kelimeyi görür ve grup üzerinden gruptaki her örneğin restic parolasını elde eder, bu da onların yedeklerini açar. Eşleştirmeden önce bir parola belirle.",
+  "pairing.noPasswordHint": "Parola olmadan bu sayfayı açan herkes on iki kelimeyi görür ve onlarla gruptaki her yedeğe ulaşır.",
   "pairing.direct": "Doğrudan",
   "pairing.pendingTitle": "Onay bekliyor",
   "pairing.pendingTip": "Bu örnekler on iki kelimeyi girdi ama sen onaylayana kadar burada hiçbir şey göremez ve başlatamaz. Yalnızca tanıdıklarını onayla ve anahtarı her birinin Eşleştirme altında gösterdiği anahtarla karşılaştır. Kararın gruptaki her örnekte geçerlidir.",

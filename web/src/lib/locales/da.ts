@@ -3044,7 +3044,7 @@ const da: Partial<Translations> = {
   "pairing.wordsLabel": "De tolv ord",
   "pairing.show": "Vis sætning",
   "pairing.noPasswordTitle": "Ingen login-adgangskode er sat",
-  "pairing.noPasswordHint": "Alle, der kan åbne denne brugerflade, ser de tolv ord og får via gruppen restic-adgangskoden til hver instans i gruppen, hvilket giver adgang til dens sikkerhedskopier. Sæt en adgangskode, før du parrer.",
+  "pairing.noPasswordHint": "Uden adgangskode ser alle, der åbner denne side, de tolv ord og kommer med dem ind i alle sikkerhedskopier i gruppen.",
   "pairing.direct": "Direkte",
   "pairing.pendingTitle": "Venter på godkendelse",
   "pairing.pendingTip": "Disse instanser har indtastet de tolv ord, men kan hverken se eller starte noget her, før du godkender dem. Godkend kun dem, du kender, og sammenlign nøglen med den, hver af dem viser under Parring. Din beslutning gælder på alle instanser i gruppen.",

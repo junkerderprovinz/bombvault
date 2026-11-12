@@ -1915,7 +1915,7 @@ const sk: Partial<Translations> = {
   "pairing.wordsLabel": "Dvanásť slov",
   "pairing.show": "Zobraziť frázu",
   "pairing.noPasswordTitle": "Prihlasovacie heslo nie je nastavené",
-  "pairing.noPasswordHint": "Ktokoľvek, kto dokáže otvoriť toto webové rozhranie, vidí dvanásť slov a cez skupinu získa heslo restic každej inštancie v skupine, čo otvára jej zálohy. Nastav heslo pred spárovaním.",
+  "pairing.noPasswordHint": "Bez hesla uvidí každý, kto otvorí túto stránku, dvanásť slov a s nimi sa dostane ku všetkým zálohám v skupine.",
   "pairing.direct": "Priamo",
   "pairing.pendingTitle": "Čaká na schválenie",
   "pairing.pendingTip": "Tieto inštancie zadali dvanásť slov, ale kým ich neschváliš, nič tu nevidia ani nespustia. Schváľ len tie, ktoré poznáš, a porovnaj kľúč s tým, ktorý každá zobrazuje v Párovaní. Tvoje rozhodnutie platí na každej inštancii v skupine.",

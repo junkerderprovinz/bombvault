@@ -1915,7 +1915,7 @@ const eu: Partial<Translations> = {
   "pairing.wordsLabel": "Hamabi hitzak",
   "pairing.show": "Erakutsi esaldia",
   "pairing.noPasswordTitle": "Ez dago sarbide pasahitzik ezarrita",
-  "pairing.noPasswordHint": "Web interfaze hau ireki dezakeen edonork hamabi hitzak ikusiko ditu, eta taldearen bidez taldeko instantzia bakoitzaren restic pasahitza lortuko du, horrek haien babeskopiak irekitzen dituelarik. Ezarri pasahitz bat parekatu aurretik.",
+  "pairing.noPasswordHint": "Pasahitzik gabe, orri hau irekitzen duen edonork hamabi hitzak ikusten ditu, eta haiekin taldeko babeskopia guztietara iristen da.",
   "pairing.direct": "Zuzenean",
   "pairing.pendingTitle": "Onarpenaren zain",
   "pairing.pendingTip": "Instantzia hauek hamabi hitzak sartu dituzte, baina hemen ezin dute ezer ikusi edo abiarazi zuk onartu arte. Onartu ezagutzen dituzunak bakarrik, eta konparatu gakoa bakoitzak Parekatzea atalean erakusten duenarekin. Zure erabakia taldeko instantzia guztietan da baliozkoa.",

@@ -3035,7 +3035,7 @@ const vi: Partial<Translations> = {
   "pairing.wordsLabel": "Mười hai từ",
   "pairing.show": "Hiện cụm từ",
   "pairing.noPasswordTitle": "Chưa đặt mật khẩu đăng nhập",
-  "pairing.noPasswordHint": "Bất kỳ ai mở được giao diện web này đều thấy được mười hai từ và, thông qua nhóm, lấy được mật khẩu restic của mọi phiên bản trong nhóm, điều này mở được bản sao lưu của chúng. Hãy đặt mật khẩu trước khi ghép nối.",
+  "pairing.noPasswordHint": "Không có mật khẩu, bất kỳ ai mở trang này cũng thấy mười hai từ và dùng chúng để vào mọi bản sao lưu trong nhóm.",
   "pairing.direct": "Trực tiếp",
   "pairing.pendingTitle": "Đang chờ duyệt",
   "pairing.pendingTip": "Các phiên bản này đã nhập mười hai từ nhưng không thấy và không khởi động được gì ở đây cho tới khi bạn duyệt. Chỉ duyệt những phiên bản bạn nhận ra, và so sánh khóa với khóa mà mỗi phiên bản hiển thị trong Ghép nối. Quyết định của bạn áp dụng trên mọi phiên bản trong nhóm.",

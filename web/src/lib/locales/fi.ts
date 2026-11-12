@@ -3044,7 +3044,7 @@ const fi: Partial<Translations> = {
   "pairing.wordsLabel": "Kaksitoista sanaa",
   "pairing.show": "Näytä lause",
   "pairing.noPasswordTitle": "Kirjautumissalasanaa ei ole asetettu",
-  "pairing.noPasswordHint": "Jokainen, joka pystyy avaamaan tämän käyttöliittymän, näkee kaksitoista sanaa ja saa ryhmän kautta jokaisen ryhmän instanssin restic-salasanan, mikä avaa niiden varmuuskopiot. Aseta salasana ennen pariutumista.",
+  "pairing.noPasswordHint": "Ilman salasanaa jokainen tämän sivun avaaja näkee kaksitoista sanaa ja pääsee niillä ryhmän jokaiseen varmuuskopioon.",
   "pairing.direct": "Suora",
   "pairing.pendingTitle": "Odottaa hyväksyntää",
   "pairing.pendingTip": "Nämä instanssit ovat syöttäneet kaksitoista sanaa, mutta ne eivät näe tai käynnistä täällä mitään ennen kuin hyväksyt ne. Hyväksy vain ne, jotka tunnistat, ja vertaa avainta siihen, jonka kukin näyttää kohdassa Pariliitos. Päätöksesi pätee ryhmän jokaisessa instanssissa.",

@@ -3044,7 +3044,7 @@ const fr: Partial<Translations> = {
   "pairing.wordsLabel": "Les douze mots",
   "pairing.show": "Afficher la phrase",
   "pairing.noPasswordTitle": "Aucun mot de passe de connexion n'est défini",
-  "pairing.noPasswordHint": "Quiconque peut ouvrir cette interface web voit les douze mots et obtient, via le groupe, le mot de passe restic de chaque instance du groupe, ce qui ouvre leurs sauvegardes. Définissez un mot de passe avant d'appairer.",
+  "pairing.noPasswordHint": "Sans mot de passe, toute personne qui ouvre cette page voit les douze mots et accède ainsi à toutes les sauvegardes du groupe.",
   "pairing.direct": "Directe",
   "pairing.pendingTitle": "En attente d'approbation",
   "pairing.pendingTip": "Ces instances ont saisi les douze mots, mais ne voient et ne lancent rien ici tant que vous ne les avez pas approuvées. N'approuvez que celles que vous reconnaissez, et comparez la clé avec celle que chacune affiche sous Appairage. Votre décision s'applique sur chaque instance du groupe.",

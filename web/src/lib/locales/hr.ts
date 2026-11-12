@@ -1915,7 +1915,7 @@ const hr: Partial<Translations> = {
   "pairing.wordsLabel": "Dvanaest riječi",
   "pairing.show": "Prikaži frazu",
   "pairing.noPasswordTitle": "Lozinka za prijavu nije postavljena",
-  "pairing.noPasswordHint": "Tko god može otvoriti ovo web sučelje, vidi dvanaest riječi i preko skupine dobiva restic lozinku svake instance u skupini, što otvara njihove sigurnosne kopije. Postavite lozinku prije uparivanja.",
+  "pairing.noPasswordHint": "Bez lozinke svatko tko otvori ovu stranicu vidi dvanaest riječi i s njima dolazi do svake sigurnosne kopije u grupi.",
   "pairing.direct": "Izravno",
   "pairing.pendingTitle": "Čeka odobrenje",
   "pairing.pendingTip": "Ove instance unijele su dvanaest riječi, ali ovdje ništa ne vide i ne pokreću dok ih ne odobriš. Odobri samo one koje prepoznaješ i usporedi ključ s onim koji svaka prikazuje pod Uparivanje. Tvoja odluka vrijedi na svakoj instanci skupine.",

@@ -3044,7 +3044,7 @@ const it: Partial<Translations> = {
   "pairing.wordsLabel": "Le dodici parole",
   "pairing.show": "Mostra frase",
   "pairing.noPasswordTitle": "Non è impostata alcuna password di accesso",
-  "pairing.noPasswordHint": "Chiunque possa aprire questa interfaccia web vede le dodici parole e ottiene, tramite il gruppo, la password restic di ogni istanza del gruppo, il che apre i loro backup. Imposta una password prima di associarti.",
+  "pairing.noPasswordHint": "Senza password, chiunque apra questa pagina vede le dodici parole e con esse arriva a tutti i backup del gruppo.",
   "pairing.direct": "Diretta",
   "pairing.pendingTitle": "In attesa di approvazione",
   "pairing.pendingTip": "Queste istanze hanno inserito le dodici parole, ma qui non vedono né avviano nulla finché non le approvi. Approva solo quelle che riconosci, e confronta la chiave con quella che ognuna mostra sotto Associazione. La tua decisione vale su ogni istanza del gruppo.",

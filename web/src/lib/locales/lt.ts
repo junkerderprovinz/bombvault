@@ -1915,7 +1915,7 @@ const lt: Partial<Translations> = {
   "pairing.wordsLabel": "Dvylika žodžių",
   "pairing.show": "Rodyti frazę",
   "pairing.noPasswordTitle": "Prisijungimo slaptažodis nenustatytas",
-  "pairing.noPasswordHint": "Kiekvienas, kas gali atverti šią saityno sąsają, mato dvylika žodžių ir per grupę gauna kiekvieno grupės egzemplioriaus restic slaptažodį, o tai atveria jų atsargines kopijas. Nustatyk slaptažodį prieš susiejimą.",
+  "pairing.noPasswordHint": "Be slaptažodžio kiekvienas, atvėręs šį puslapį, mato dvylika žodžių ir su jais pasiekia visas grupės atsargines kopijas.",
   "pairing.direct": "Tiesiogiai",
   "pairing.pendingTitle": "Laukia patvirtinimo",
   "pairing.pendingTip": "Šie egzemplioriai įvedė dvylika žodžių, bet čia nieko nemato ir negali paleisti, kol jų nepatvirtinsi. Patvirtink tik tuos, kuriuos atpažįsti, ir palygink raktą su tuo, kurį kiekvienas rodo skiltyje Susiejimas. Tavo sprendimas galioja kiekviename grupės egzemplioriuje.",

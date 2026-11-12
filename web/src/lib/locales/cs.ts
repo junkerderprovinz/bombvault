@@ -3042,7 +3042,7 @@ const cs: Partial<Translations> = {
   "pairing.wordsLabel": "Dvanáct slov",
   "pairing.show": "Zobrazit frázi",
   "pairing.noPasswordTitle": "Není nastavené přihlašovací heslo",
-  "pairing.noPasswordHint": "Kdokoli může otevřít toto webové rozhraní, uvidí dvanáct slov a přes skupinu získá heslo restic každé instance ve skupině, čímž získá přístup k jejím zálohám. Nastav heslo, než se spáruješ.",
+  "pairing.noPasswordHint": "Bez hesla uvidí každý, kdo otevře tuto stránku, dvanáct slov a s nimi se dostane ke všem zálohám ve skupině.",
   "pairing.direct": "Přímo",
   "pairing.pendingTitle": "Čeká na schválení",
   "pairing.pendingTip": "Tyto instance zadaly dvanáct slov, ale tady nic nevidí ani nespustí, dokud je neschválíš. Schval jen ty, které poznáváš, a porovnej klíč s tím, který každá ukazuje v Párování. Tvoje rozhodnutí platí na každé instanci skupiny.",

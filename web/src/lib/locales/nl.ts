@@ -3043,7 +3043,7 @@ const nl: Partial<Translations> = {
   "pairing.wordsLabel": "De twaalf woorden",
   "pairing.show": "Frase tonen",
   "pairing.noPasswordTitle": "Er is geen inlogwachtwoord ingesteld",
-  "pairing.noPasswordHint": "Iedereen die deze webinterface kan openen, ziet de twaalf woorden en krijgt via de groep het restic-wachtwoord van elke instantie in de groep, waarmee de back-ups toegankelijk worden. Stel een wachtwoord in voordat je koppelt.",
+  "pairing.noPasswordHint": "Zonder wachtwoord ziet iedereen die deze pagina opent de twaalf woorden en komt daarmee bij elke back-up in de groep.",
   "pairing.direct": "Rechtstreeks",
   "pairing.pendingTitle": "Wacht op goedkeuring",
   "pairing.pendingTip": "Deze instanties hebben de twaalf woorden ingevoerd, maar zien en starten hier niets tot je ze goedkeurt. Keur alleen de instanties goed die je herkent, en vergelijk de sleutel met die welke elk ervan onder Koppeling toont. Je beslissing geldt op elke instantie van de groep.",

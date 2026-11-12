@@ -3044,7 +3044,7 @@ const pt: Partial<Translations> = {
   "pairing.wordsLabel": "As doze palavras",
   "pairing.show": "Mostrar frase",
   "pairing.noPasswordTitle": "Não está definida nenhuma palavra-passe de início de sessão",
-  "pairing.noPasswordHint": "Quem conseguir abrir esta interface web vê as doze palavras e obtém, através do grupo, a palavra-passe restic de cada instância do grupo, o que abre os seus backups. Define uma palavra-passe antes de emparelhar.",
+  "pairing.noPasswordHint": "Sem palavra-passe, qualquer pessoa que abra esta página vê as doze palavras e com elas chega a todas as cópias de segurança do grupo.",
   "pairing.direct": "Direto",
   "pairing.pendingTitle": "À espera de aprovação",
   "pairing.pendingTip": "Estas instâncias introduziram as doze palavras, mas não veem nem iniciam nada aqui até as aprovares. Aprova só as que reconheces, e compara a chave com a que cada uma mostra em Emparelhamento. A tua decisão vale em todas as instâncias do grupo.",

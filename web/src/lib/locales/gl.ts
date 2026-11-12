@@ -1915,7 +1915,7 @@ const gl: Partial<Translations> = {
   "pairing.wordsLabel": "As doce palabras",
   "pairing.show": "Amosar frase",
   "pairing.noPasswordTitle": "Non hai contrasinal de acceso",
-  "pairing.noPasswordHint": "Calquera que poida abrir esta interface web ve as doce palabras e consegue, a través do grupo, o contrasinal restic de cada instancia do grupo, o que abre as súas copias de seguridade. Configura un contrasinal antes de emparellar.",
+  "pairing.noPasswordHint": "Sen contrasinal, calquera que abra esta páxina ve as doce palabras e con elas chega a todas as copias de seguranza do grupo.",
   "pairing.direct": "Directa",
   "pairing.pendingTitle": "Agardando aprobación",
   "pairing.pendingTip": "Estas instancias introduciron as doce palabras, pero aquí non ven nin inician nada ata que as aprobes. Aproba só as que recoñezas, e compara a chave coa que cada unha amosa en Emparellamento. A túa decisión vale en todas as instancias do grupo.",

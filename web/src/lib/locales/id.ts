@@ -1915,7 +1915,7 @@ const id: Partial<Translations> = {
   "pairing.wordsLabel": "Dua belas kata",
   "pairing.show": "Tampilkan frasa",
   "pairing.noPasswordTitle": "Kata sandi login belum diatur",
-  "pairing.noPasswordHint": "Siapa pun yang bisa membuka antarmuka web ini dapat melihat dua belas kata dan, melalui grup, mendapatkan kata sandi restic setiap instance dalam grup, yang membuka cadangannya. Atur kata sandi sebelum Anda memasangkan.",
+  "pairing.noPasswordHint": "Tanpa kata sandi, siapa pun yang membuka halaman ini melihat dua belas kata itu dan dengannya bisa masuk ke setiap cadangan dalam grup.",
   "pairing.direct": "Langsung",
   "pairing.pendingTitle": "Menunggu persetujuan",
   "pairing.pendingTip": "Instance ini sudah memasukkan dua belas kata, tetapi tidak bisa melihat atau menjalankan apa pun di sini sampai Anda menyetujuinya. Setujui hanya yang Anda kenali, dan bandingkan kuncinya dengan yang ditampilkan masing-masing di Pemasangan. Keputusan Anda berlaku di setiap instance dalam grup.",

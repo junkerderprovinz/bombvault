@@ -1915,7 +1915,7 @@ const ca: Partial<Translations> = {
   "pairing.wordsLabel": "Les dotze paraules",
   "pairing.show": "Mostra la frase",
   "pairing.noPasswordTitle": "No hi ha cap contrasenya d'accés",
-  "pairing.noPasswordHint": "Qui pugui obrir aquesta interfície web veu les dotze paraules i, a través del grup, obté la contrasenya de restic de cada instància del grup, cosa que obre les seves còpies de seguretat. Configura una contrasenya abans d'aparellar.",
+  "pairing.noPasswordHint": "Sense contrasenya, qualsevol que obri aquesta pàgina veu les dotze paraules i amb elles arriba a totes les còpies de seguretat del grup.",
   "pairing.direct": "Directa",
   "pairing.pendingTitle": "Pendent d'aprovació",
   "pairing.pendingTip": "Aquestes instàncies han introduït les dotze paraules, però aquí no veuen ni engeguen res fins que no les aprovis. Aprova només les que reconeguis, i compara la clau amb la que cadascuna mostra a Aparellament. La teva decisió val a totes les instàncies del grup.",

@@ -1915,7 +1915,7 @@ const is: Partial<Translations> = {
   "pairing.wordsLabel": "Orðin tólf",
   "pairing.show": "Sýna setningu",
   "pairing.noPasswordTitle": "Ekkert innskráningarlykilorð er sett",
-  "pairing.noPasswordHint": "Hver sem getur opnað þetta vefviðmót sér orðin tólf og fær, í gegnum hópinn, restic-lykilorð hvers tilviks í hópnum, sem opnar afrit þeirra. Settu lykilorð áður en þú parar.",
+  "pairing.noPasswordHint": "Án lykilorðs sér hver sem opnar þessa síðu orðin tólf og kemst með þeim í öll afrit hópsins.",
   "pairing.direct": "Beint",
   "pairing.pendingTitle": "Bíður samþykkis",
   "pairing.pendingTip": "Þessi tilvik slógu inn orðin tólf en geta hvorki séð né ræst neitt hér fyrr en þú samþykkir þau. Samþykktu aðeins þau sem þú þekkir, og berðu lykilinn saman við þann sem hvert þeirra sýnir undir Pörun. Ákvörðun þín gildir á hverju tilviki í hópnum.",

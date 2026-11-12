@@ -3042,7 +3042,7 @@ const es: Partial<Translations> = {
   "pairing.wordsLabel": "Las doce palabras",
   "pairing.show": "Mostrar frase",
   "pairing.noPasswordTitle": "No hay contraseña de acceso",
-  "pairing.noPasswordHint": "Quien pueda abrir esta interfaz web ve las doce palabras y consigue, a través del grupo, la contraseña de restic de cada instancia del grupo, lo cual abre sus copias de seguridad. Configura una contraseña antes de emparejar.",
+  "pairing.noPasswordHint": "Sin contraseña, cualquiera que abra esta página ve las doce palabras y con ellas llega a todas las copias de seguridad del grupo.",
   "pairing.direct": "Directa",
   "pairing.pendingTitle": "Esperando aprobación",
   "pairing.pendingTip": "Estas instancias introdujeron las doce palabras, pero no pueden ver ni iniciar nada aquí hasta que las apruebes. Aprueba solo las que reconozcas, y compara la clave con la que cada una muestra en Emparejamiento. Tu decisión vale en todas las instancias del grupo.",

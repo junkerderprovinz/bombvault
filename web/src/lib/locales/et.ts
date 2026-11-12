@@ -1915,7 +1915,7 @@ const et: Partial<Translations> = {
   "pairing.wordsLabel": "Kaksteist sõna",
   "pairing.show": "Näita fraasi",
   "pairing.noPasswordTitle": "Sisselogimisparooli ei ole määratud",
-  "pairing.noPasswordHint": "Igaüks, kes suudab selle veebiliidese avada, näeb kaksteist sõna ja saab grupi kaudu iga grupis oleva eksemplari restic parooli, mis avab nende varundused. Määra parool enne sidumist.",
+  "pairing.noPasswordHint": "Ilma paroolita näeb igaüks, kes selle lehe avab, kaheteistkümmet sõna ja pääseb nendega ligi kõigile grupi varukoopiatele.",
   "pairing.direct": "Otse",
   "pairing.pendingTitle": "Ootab kinnitust",
   "pairing.pendingTip": "Need eksemplarid sisestasid kaksteist sõna, kuid ei näe ega käivita siin midagi enne, kui sa need kinnitad. Kinnita ainult neid, mida tunned, ja võrdle võtit sellega, mida igaüks jaotises Sidumine näitab. Sinu otsus kehtib grupi igas eksemplaris.",

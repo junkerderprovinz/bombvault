@@ -3035,7 +3035,7 @@ const zh: Partial<Translations> = {
   "pairing.wordsLabel": "这十二个单词",
   "pairing.show": "显示口令",
   "pairing.noPasswordTitle": "没有设置登录密码",
-  "pairing.noPasswordHint": "任何能打开这个网页界面的人都能看到这十二个单词，并通过这个组获得组内每个实例的 restic 密码，从而能打开它们的备份。配对之前请先设置密码。",
+  "pairing.noPasswordHint": "没有密码时，任何打开此页面的人都能看到这十二个词，并借此进入组内的每一份备份。",
   "pairing.direct": "直连",
   "pairing.pendingTitle": "等待批准",
   "pairing.pendingTip": "这些实例已输入十二个单词，但在你批准之前，它们在这里什么也看不到，也无法启动任何任务。只批准你认识的实例，并将密钥与每个实例在“配对”中显示的密钥进行比对。你的决定适用于组内的每个实例。",

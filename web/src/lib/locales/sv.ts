@@ -3044,7 +3044,7 @@ const sv: Partial<Translations> = {
   "pairing.wordsLabel": "De tolv orden",
   "pairing.show": "Visa fras",
   "pairing.noPasswordTitle": "Inget inloggningslösenord är satt",
-  "pairing.noPasswordHint": "Den som kan öppna det här webbgränssnittet ser de tolv orden och får via gruppen restic-lösenordet för varje instans i gruppen, vilket ger tillgång till dess säkerhetskopior. Ange ett lösenord innan du parkopplar.",
+  "pairing.noPasswordHint": "Utan lösenord ser alla som öppnar den här sidan de tolv orden och kommer med dem åt varje säkerhetskopia i gruppen.",
   "pairing.direct": "Direkt",
   "pairing.pendingTitle": "Väntar på godkännande",
   "pairing.pendingTip": "De här instanserna har angett de tolv orden men kan inte se eller starta något här förrän du godkänner dem. Godkänn bara dem du känner igen, och jämför nyckeln med den som var och en visar under Parkoppling. Ditt beslut gäller på varje instans i gruppen.",

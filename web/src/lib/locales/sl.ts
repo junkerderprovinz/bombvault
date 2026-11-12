@@ -1909,7 +1909,7 @@ const sl: Partial<Translations> = {
   "pairing.wordsLabel": "Dvanajst besed",
   "pairing.show": "Pokaži frazo",
   "pairing.noPasswordTitle": "Geslo za prijavo ni nastavljeno",
-  "pairing.noPasswordHint": "Kdor koli lahko odpre ta spletni vmesnik, vidi dvanajst besed in prek skupine pridobi geslo restic vsake instance v skupini, kar odpre njene varnostne kopije. Nastavi geslo, preden se seznaniš.",
+  "pairing.noPasswordHint": "Brez gesla vsak, ki odpre to stran, vidi dvanajst besed in z njimi pride do vsake varnostne kopije v skupini.",
   "pairing.direct": "Neposredno",
   "pairing.pendingTitle": "Čaka na odobritev",
   "pairing.pendingTip": "Te instance so vnesle dvanajst besed, a tu ne vidijo in ne zaženejo ničesar, dokler jih ne odobriš. Odobri samo tiste, ki jih prepoznaš, in primerjaj ključ s tistim, ki ga vsaka prikazuje pod Seznanjanje. Tvoja odločitev velja na vsaki instanci v skupini.",
