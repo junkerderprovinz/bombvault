@@ -3,7 +3,7 @@
 // other, done. Their pictures play one scene, and one pointer walks through
 // all three.
 import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { StepCard } from "../../../components/recovery/StepCard";
+import { STEP_GRID, StepCard, stepWidth } from "../../../components/recovery/StepCard";
 import type { useT } from "../../../lib/i18n";
 import { StepPicture } from "./pairingArt";
 
@@ -41,18 +41,6 @@ function placeWithin(el: HTMLElement, root: HTMLElement): [number, number] {
     y += at.offsetTop;
   }
   return [x, y];
-}
-
-/** How wide a card has to be for its heading to stay on one line: the badges
- *  at their full width and the room StepCard leaves beside its heading. */
-function stepWidth(root: HTMLElement): number {
-  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  const widths = Array.from(root.querySelectorAll<HTMLElement>("h2")).map((head) => {
-    const badges = Array.from(head.children as HTMLCollectionOf<HTMLElement>);
-    const gap = parseFloat(getComputedStyle(head).columnGap) || 0;
-    return badges.reduce((sum, badge) => sum + badge.scrollWidth, 0) + gap * (badges.length - 1);
-  });
-  return Math.ceil(Math.max(0, ...widths) + 3.25 * rem);
 }
 
 /** useSceneStops measures the pointer's stops in the grid's own pixels and
@@ -105,15 +93,7 @@ export function PairingSteps({ t, hues }: { t: T; hues: [number, number, number]
   const { grid, stops, stepMin } = useSceneStops(steps.map((s) => s.title).join("\n"));
   return (
     <section aria-label={t("pairing.howTitle")} data-new="pairing-steps">
-      {/* The step cards' number badges straddle their top edge, so stacked
-          cards keep more room between them than a card gap. On a wider
-          screen a title keeps to one line, and a card that would cut it
-          short moves to the next row instead. */}
-      <div
-        ref={grid}
-        style={{ "--step-min": `${stepMin}px` } as CSSProperties}
-        className="relative grid grid-cols-1 gap-10 md:grid-cols-[repeat(auto-fit,minmax(min(100%,max(var(--step-min),30%)),1fr))] md:gap-6 md:[&_h2>*]:whitespace-nowrap"
-      >
+      <div ref={grid} style={{ "--step-min": `${stepMin}px` } as CSSProperties} className={STEP_GRID}>
         {steps.map((s, i) => (
           <StepCard key={i} n={i + 1} title={s.title} hueIndex={hues[i]}>
             {/* On a phone the picture moves beside the words, so three cards
