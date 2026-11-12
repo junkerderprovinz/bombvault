@@ -167,7 +167,8 @@ async function stage(page: Page, f: Instance): Promise<void> {
 // and moves the cards as it does. A radio is scrolled into view and left a
 // moment for that before it is pressed, so the press does not scroll again.
 async function pickRelay(page: Page, name: string): Promise<void> {
-  const radio = page.getByRole("radio", { name });
+  // The two main routes are radios, the others quiet links under them.
+  const radio = page.getByRole("radio", { name }).or(page.getByRole("button", { name, exact: true }));
   await radio.scrollIntoViewIfNeeded();
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await settle(page);
@@ -308,7 +309,7 @@ for (const width of [1280, 390]) {
     }
 
     // The relay in its four forms, each with its picture.
-    await expect(page.getByRole("radio")).toHaveText(["Projekt-Relay", "Eigenes Relay", "BombVault-Instanz", "Kein Relay"]);
+    await expect(page.getByRole("radio")).toHaveText(["Projekt-Relay (nichts einrichten)", "Eigenes Relay (auf deinem Server)"]);
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /sprechen über das Relay/ })).toBeVisible();
     await pickRelay(page, "Eigenes Relay");
@@ -317,13 +318,13 @@ for (const width of [1280, 390]) {
     await expect(page.getByText("Selbst gehostet")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await pickRelay(page, "BombVault-Instanz");
+    await pickRelay(page, "Diese BombVault als Relay nutzen");
     await expect(page.getByRole("img", { name: /ist selbst das Relay/ })).toBeVisible();
     await expect(page.getByRole("switch", { name: "Als Relay dienen" })).toBeVisible();
     await expect(page.locator("#relay-address")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await pickRelay(page, "Kein Relay");
+    await pickRelay(page, "Alles im Heimnetz lassen");
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
@@ -479,7 +480,7 @@ test("a relay address on a paired instance opens the page on the BombVault route
     url: "wss://bombvault.familie-hofer.example.at/relay/connect",
   });
   await open(page, f);
-  await expect(page.getByRole("radio", { name: "BombVault-Instanz" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("instance-relay")).toBeVisible();
   await expect(page.locator("#relay-address")).toHaveValue("wss://bombvault.familie-hofer.example.at/relay/connect");
   // A letter travels in the picture, at the pace the stylesheet sets.
   const letters = await page.evaluate(() =>

@@ -61,7 +61,7 @@ function Fact({ glyph, text }: { glyph: ReactNode; text: ReactNode }) {
 }
 
 const QUIET_LINK =
-  "text-xs text-carbon-textSub underline decoration-carbon-border underline-offset-[3px] hover:text-carbon-text hover:decoration-current";
+  "inline-flex min-h-6 items-center text-xs text-carbon-textSub underline decoration-carbon-border underline-offset-[3px] hover:text-carbon-text hover:decoration-current";
 
 const strong = (text: string) => <strong className="font-semibold text-carbon-text">{text} </strong>;
 
