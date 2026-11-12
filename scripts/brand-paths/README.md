@@ -21,11 +21,11 @@ Unraid, its `unraid.svg` with the gradient left out, since the button draws it
 in one ink. **Apache-2.0**, whose licence text is beside this file as
 `LICENSE-dashboard-icons.txt`. Copyright the Homarr Labs team and contributors.
 
-The widget mark is the BombVault Widget's own logo, from
-<https://github.com/junkerderprovinz/bombvault-widget>, one path per shape.
-
 ParleyPort's mark is its own logo, from
 <https://github.com/junkerderprovinz/parleyport>, one path per shape.
+
+TollRoll's mark is its own logo, from
+<https://github.com/junkerderprovinz/tollroll>, one path per shape.
 
 ## Trademarks
 

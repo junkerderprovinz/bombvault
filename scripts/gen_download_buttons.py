@@ -150,6 +150,8 @@ KINDS = {
     # logo's darker half, since a one-ink mark cannot carry its colours.
     "parleyport":       (COMPANIONS, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for apps that pair their instances"),
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
+    # The brown of TollRoll's ribbon, where white holds 7.5:1.
+    "tollroll":         (COMPANIONS, "tollroll", "#7f443a", "#ffffff", "TollRoll", "Unraid plugin", "Get TollRoll, the tile for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",), "flatpak": ("flatpak-arm",)}
@@ -177,7 +179,8 @@ PHONES = "Phone"
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
           "unraid.net", "mos-official.net", "github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
-          "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget")
+          "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget",
+          "github.com/junkerderprovinz/tollroll")
 
 # The sheen is a tilted white band, clipped to each button, that appears to
 # travel along the whole row, the same band as the donation row's. Its numbers
