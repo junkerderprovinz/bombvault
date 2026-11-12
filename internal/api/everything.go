@@ -440,7 +440,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 				continue // tried again on its own once its app is free
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: truncateRunErr(err)})
+			failures = append(failures, schedule.ItemFailure{Name: t.ContainerName, Reason: truncateRunErr(err), Err: err})
 			log.Printf("api: backup everything: containers: backup %q failed: %v", t.ContainerName, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -450,7 +450,7 @@ func (s *Service) everythingRunContainers(ctx context.Context, pass *everythingP
 	// the round backs each folder up once, before the prune that covers it.
 	if err := s.BackupStacksAfterBulk(ctx, names); err != nil {
 		failed++
-		failures = append(failures, schedule.ItemFailure{Name: "Compose stacks", Reason: truncateRunErr(err)})
+		failures = append(failures, schedule.ItemFailure{Name: "Compose stacks", Reason: truncateRunErr(err), Err: err})
 	}
 	// Pruning first leaves fewer snapshots to copy. Plain ctx, see
 	// everythingRunCtx.
@@ -489,7 +489,7 @@ func (s *Service) everythingRunVMs(ctx context.Context, pass *everythingPass, se
 				continue // a VM gone from the host is a skip and already logged; a cancel or a section with no place is no failure
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: v.Name, Reason: truncateRunErr(err)})
+			failures = append(failures, schedule.ItemFailure{Name: v.Name, Reason: truncateRunErr(err), Err: err})
 			log.Printf("api: backup everything: vms: backup %q failed: %v", v.Name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -531,7 +531,7 @@ func (s *Service) everythingRunFiles(ctx context.Context, pass *everythingPass, 
 				continue
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: fs.Name, Reason: truncateRunErr(err)})
+			failures = append(failures, schedule.ItemFailure{Name: fs.Name, Reason: truncateRunErr(err), Err: err})
 			log.Printf("api: backup everything: files: backup %q failed: %v", fs.Name, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -571,7 +571,7 @@ func (s *Service) everythingRunZFS(ctx context.Context, pass *everythingPass, se
 				continue
 			}
 			failed++
-			failures = append(failures, schedule.ItemFailure{Name: d.Dataset, Reason: truncateRunErr(err)})
+			failures = append(failures, schedule.ItemFailure{Name: d.Dataset, Reason: truncateRunErr(err), Err: err})
 			log.Printf("api: backup everything: zfs: backup %q failed: %v", d.Dataset, err) //nolint:gosec // G706: name is %q-quoted
 		}
 	}
@@ -636,7 +636,7 @@ func everythingDomainFault(domain string, err error) EverythingDomainResult {
 	return EverythingDomainResult{
 		Domain:   domain,
 		Failed:   1,
-		Failures: []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err)}},
+		Failures: []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err), Err: err}},
 	}
 }
 
@@ -646,7 +646,7 @@ func everythingSingletonFault(domain string, err error) EverythingDomainResult {
 		Domain:    domain,
 		Attempted: 1,
 		Failed:    1,
-		Failures:  []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err)}},
+		Failures:  []schedule.ItemFailure{{Name: domain, Reason: truncateRunErr(err), Err: err}},
 	}
 }
 

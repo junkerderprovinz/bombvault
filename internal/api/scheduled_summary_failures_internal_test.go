@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,14 +10,15 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // formatItemFailures writes one "- name: reason" line per failure with host
 // paths scrubbed, and caps a long list with a "+N more" line.
 func TestFormatItemFailuresEnumeratesAndCaps(t *testing.T) {
 	short := []schedule.ItemFailure{
-		{Name: "plex", Reason: "init repo: no space left on device"},
-		{Name: "sonarr", Reason: "open /mnt/user/backups/containers/config: input/output error"},
+		{Name: "plex", Reason: "init repo: no space left on device", Err: errors.New("init repo: no space left on device")},
+		{Name: "sonarr", Reason: "open /mnt/user/backups/containers/config: input/output error", Err: errors.New("open /mnt/user/backups/containers/config: input/output error")},
 	}
 	got := formatItemFailures(short)
 	if !strings.Contains(got, "- plex: init repo: no space left on device") {
@@ -34,7 +36,7 @@ func TestFormatItemFailuresEnumeratesAndCaps(t *testing.T) {
 
 	many := make([]schedule.ItemFailure, 0, maxListedFailures+5)
 	for i := 0; i < maxListedFailures+5; i++ {
-		many = append(many, schedule.ItemFailure{Name: "c" + string(rune('A'+i)), Reason: "restic repo error"})
+		many = append(many, schedule.ItemFailure{Name: "c" + string(rune('A'+i)), Reason: "restic repo error", Err: errors.New("restic repo error")})
 	}
 	got = formatItemFailures(many)
 	if lines := strings.Count(got, "\n") + 1; lines != maxListedFailures+1 {
@@ -65,8 +67,8 @@ func TestScheduledNotifyResultEnumeratesFailedContainers(t *testing.T) {
 	}
 
 	failures := []schedule.ItemFailure{
-		{Name: "plex", Reason: "init repo: no space left on device"},
-		{Name: "sonarr", Reason: "inspect container: cannot connect to the Docker daemon"},
+		{Name: "plex", Reason: "init repo: no space left on device", Err: errors.New("init repo: no space left on device")},
+		{Name: "sonarr", Reason: "inspect container: cannot connect to the Docker daemon", Err: errors.New("inspect container: cannot connect to the Docker daemon")},
 	}
 	s.ScheduledNotifyResult(context.Background(), "containers", 45, 2, failures)
 
@@ -104,5 +106,25 @@ func TestScheduledNotifyResultAllSuccessNoList(t *testing.T) {
 	}
 	if strings.Contains(body, "- ") {
 		t.Fatalf("an all-success run must not enumerate any failures, got: %s", body)
+	}
+}
+
+// A container whose chosen folders moved is refused with those folders named,
+// and the scheduled summary keeps them, since they are what has to be chosen
+// again.
+func TestScheduledSummaryNamesTheFoldersToChooseAgain(t *testing.T) {
+	const folder = "/mnt/user/appdata/joplin/data"
+	gone := &foldersGoneErr{`backup "joplin-app-1": the folders chosen for it are gone (` + folder + `) and it mounts other folders than at its last backup, so choose its backup folders again. Refusing an empty backup that would look successful`}
+
+	_, _, scheduled := schedule.RunContainersJob(
+		[]store.Target{{ContainerName: "joplin-app-1", IncludeInSchedule: true}},
+		func(string) error { return gone },
+	)
+	everything := []schedule.ItemFailure{{Name: "joplin-app-1", Reason: truncateRunErr(gone), Err: gone}}
+
+	for name, failures := range map[string][]schedule.ItemFailure{"scheduled": scheduled, "everything": everything} {
+		if got := formatItemFailures(failures); !strings.Contains(got, folder) {
+			t.Errorf("%s: the summary must name %s, got:\n%s", name, folder, got)
+		}
 	}
 }

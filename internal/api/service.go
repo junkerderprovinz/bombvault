@@ -21340,7 +21340,7 @@ func formatItemFailures(failures []schedule.ItemFailure) string {
 			lines = append(lines, fmt.Sprintf("+%d more", len(failures)-maxListedFailures))
 			break
 		}
-		lines = append(lines, fmt.Sprintf("- %s: %s", f.Name, scrubError(errors.New(f.Reason))))
+		lines = append(lines, fmt.Sprintf("- %s: %s", f.Name, scrubError(f.Err)))
 	}
 	return strings.Join(lines, "\n")
 }

@@ -47,6 +47,9 @@ type LastRunFunc func() (time.Time, error)
 type ItemFailure struct {
 	Name   string
 	Reason string
+	// Err is the error behind Reason. Its type decides which paths the summary
+	// may keep.
+	Err error
 }
 
 // Cadence is a parsed cadence string.
@@ -2220,7 +2223,7 @@ func RunContainersJob(targets []store.Target, backupFn BackupFunc) (attempted, f
 		}
 		if err != nil {
 			failed++
-			failures = append(failures, ItemFailure{Name: t.ContainerName, Reason: err.Error()})
+			failures = append(failures, ItemFailure{Name: t.ContainerName, Reason: err.Error(), Err: err})
 			log.Printf("schedule: containers job: backup %q failed: %v", t.ContainerName, err)
 		}
 	}
@@ -2236,7 +2239,7 @@ func RunVMsJob(vms []store.VMTarget, backupFn BackupFunc) (attempted, failed int
 		attempted++
 		if err := backupFn(v.Name); err != nil {
 			failed++
-			failures = append(failures, ItemFailure{Name: v.Name, Reason: err.Error()})
+			failures = append(failures, ItemFailure{Name: v.Name, Reason: err.Error(), Err: err})
 			log.Printf("schedule: vms job: backup %q failed: %v", v.Name, err)
 		}
 	}
@@ -2254,7 +2257,7 @@ func RunFilesJob(sets []store.FileSet, backupFn BackupFunc) (attempted, failed i
 		attempted++
 		if err := backupFn(fs.ID); err != nil {
 			failed++
-			failures = append(failures, ItemFailure{Name: fs.Name, Reason: err.Error()})
+			failures = append(failures, ItemFailure{Name: fs.Name, Reason: err.Error(), Err: err})
 			log.Printf("schedule: files job: backup %q failed: %v", fs.Name, err)
 		}
 	}
@@ -2271,7 +2274,7 @@ func RunZFSJob(ds []store.ZFSDataset, backupFn BackupFunc) (attempted, failed in
 		attempted++
 		if err := backupFn(d.ID); err != nil {
 			failed++
-			failures = append(failures, ItemFailure{Name: d.Dataset, Reason: err.Error()})
+			failures = append(failures, ItemFailure{Name: d.Dataset, Reason: err.Error(), Err: err})
 			log.Printf("schedule: zfs job: backup %q failed: %v", d.Dataset, err)
 		}
 	}
