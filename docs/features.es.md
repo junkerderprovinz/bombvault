@@ -83,7 +83,8 @@ Un servidor MCP integrado permite a un asistente leer el estado de las copias, l
 ## Apps y acompañantes {#apps}
 
 - **App de Android**: todos los servidores de tu grupo en tu teléfono. [App de Android](android.md)
-- **BombVault Widget**: un mosaico en el panel de Unraid. [Apps](settings.md#apps)
+- **La fortaleza**: BombVault se une a las demás apps de la familia. ShipLog y TowerTorch piden una copia de seguridad antes de cambiar un contenedor, FireSquire comprueba cuándo se hizo la última copia del flash, y las apps que saben hacer su propia copia se la entregan a BombVault. [La fortaleza](offsite-recovery.md#fortress)
+- **TollRoll**: un solo mosaico en el panel de Unraid para BombVault y las demás apps de tu fortaleza. [Apps](settings.md#apps)
 - **Registro de actividad incrustable** para paneles como Homepage o Heimdall. [Widget de panel](api.md#dashboard-widget)
 
 ## Otros {#other}

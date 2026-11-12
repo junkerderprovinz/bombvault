@@ -375,6 +375,18 @@ A szavak önmagukban senkit sem engednek be. Egy új példány vagy telefon addi
 
 Az egyetlen hely, amely még kézzel kér APP_KEY-t, a [Régi mentési mappából](#restore-from-another-bombvault-repo), arra az esetre, ha a másik példány eltűnt, és nem tud válaszolni egy csoportban.
 
+## Az erőd {#fortress}
+
+Az erőd egyetlen tizenkét szavas jelmondat alatt hozza össze a BombVaultot és a család többi alkalmazását, például a ShipLogot, a TowerTorchot, a FireSquire-t és a TollRollt. Bármelyik alkalmazás, amely már az erődben van, megmutathatja neked a jelmondatát. Nyisd meg a **Beállítások, Párosítás** oldalt, írd be a szavakat az **Erőd** alá, és a BombVault csatlakozik. A vele párosított példányok és telefonok új párosítás nélkül követik, és az az eszköz, amely távol volt, követi, amint visszatér. A régi párosítás nyitva marad, amíg minden eszköz át nem jött, legfeljebb 30 napig. Az az eszköz, amely ezután is hiányzik, megjelenik a Párosítás oldalon és az alkalmazásban, így beírhatod rajta az erőd jelmondatát, vagy eltávolíthatod.
+
+- **Szerver neve**: az a név, amelyen a többi alkalmazás megtalálja a BombVaultot ezen a szerveren. Ha üresen hagyod, a példány neve lesz.
+- **Engedélyek**: mindennek, amit egy alkalmazás egy másiknál tehet, saját kapcsolója van, például látni, mikor sikerült utoljára a mentés, konténer mentését kérni vagy átnézni a mentéseket. Kezdetben mind be van kapcsolva.
+- A **Jelmondat megjelenítése** a jelszavad megadása után egy QR-kód mellett mutatja a szavakat. A **Módosítás** új jelmondatot ad az erődnek, amely minden elérhető alkalmazáshoz és példányhoz eljut. A régi jelmondat még 30 napig működik, és a Párosítás oldal megnevez minden eszközt, amelyhez a módosítás nem jutott el. A **Kilépés** kiveszi a BombVaultot az erődből.
+
+**Mit csinál a többi alkalmazás.** A ShipLog mentést kér egy konténerről, mielőtt frissíti, és a BombVault a ShipLog saját konténereinek frissítését rábízza, így azoknál a **Frissítés egy sikeres biztonsági mentés után** kapcsoló kikapcsolva marad. A TowerTorch mentést kér egy karbantartási futás előtt, a FireSquire pedig megnézi, mikor készült utoljára mentés a flashről. Egy kérés vár, amíg egy másik mentés fut. A TollRoll a saját csempéjében mutatja a BombVaultot az Unraid vezérlőpultján. A többi alkalmazás a `GET /api/fortress/v1/status` és a `GET /api/fortress/v1/log` címen olvassa a BombVault állapotát, amelyet egy API-token vagy egy bejelentkezett böngésző is olvashat.
+
+**Egy alkalmazás saját mentése.** Mielőtt a BombVault elmenti egy olyan alkalmazás konténerét, amely saját magát is tudja menteni, lekéri az alkalmazás saját mentését, és a konténer tárolójában őrzi, de csak akkor, ha az a tároló titkosított. Az alkalmazás nevével és egy letöltéssel jelenik meg a konténer mentéseinek listájában, a konténer mentéseivel együtt öregszik, velük együtt kerül telephelyen kívülre, és velük együtt törlődik. Ha a **Mentések visszaadása az alkalmazásoknak** be van kapcsolva, a **Visszaadás ennek:** gomb újra átadja az alkalmazásnak, és ez lecseréli azt, ami most az alkalmazásban van. Ez a kapcsoló kikapcsolva marad, amíg be nem kapcsolod.
+
 ## Példányok és szerepek {#roles}
 
 A **Példányok** oldal (egy beállítási csempe, amelyet kitűzhetsz az oldalsávra) a csoportot hálóként mutatja, hogy ki mit csinál kinek, egy kártyával ehhez a példányhoz, és egyel minden más taghoz, az Android-telefonokhoz és a ZFS-kiszolgálókhoz. A jobb alul lévő **Párosítás** a párosítási oldalra vezet. Hogy mely részek vannak bekapcsolva, azt a **Beállítások, Példányok, Több szerver** alatt állítod: **Példányok**, **Fogadó** és **Lehívás**.

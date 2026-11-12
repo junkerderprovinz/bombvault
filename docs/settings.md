@@ -74,7 +74,7 @@ Several things need a login password, such as the recovery kit and key deposits.
 
 ## Pairing {#pairing}
 
-**Pairing** with **Generate phrase** or **Enter phrase**, the step cards, this instance's name, the devices that wait for **Approve**, the **Relay** card with its four forms and **What the relay sees**, the members of the group, and **ZFS server without BombVault** for a replica target over SSH. See [Pairing instances](offsite-recovery.md#pairing) and [Push to a ZFS server](zfs-datasets.md#replica-push).
+**Pairing** with **Generate phrase** or **Enter phrase**, the step cards, this instance's name, the devices that wait for **Approve**, the **Relay** card with its four forms and **What the relay sees**, the members of the group, and **ZFS server without BombVault** for a replica target over SSH. Below them **Fortress** joins BombVault to the other apps of the family with the fortress's twelve words, with a switch for every permission between the apps, **Give backups back to apps**, **Show phrase**, **Change** and **Leave**. See [Pairing instances](offsite-recovery.md#pairing), [The fortress](offsite-recovery.md#fortress) and [Push to a ZFS server](zfs-datasets.md#replica-push).
 
 ## Integrations {#integrations}
 
@@ -88,7 +88,7 @@ Several things need a login password, such as the recovery kit and key deposits.
 
 - **Android app**: the APK for the release your server runs with a QR code, and the F-Droid listing. See [Android app](android.md#install).
 - **ParleyPort**: the relay container with its Unraid template and the Docker command that starts it.
-- **BombVault Widget**: a tile on the Unraid Dashboard with BombVault's activity log and the next run. With a host SSH connection the card installs and removes the plugin itself. Without one it hands you the `.plg` address to install under **Plugins, Install Plugin**.
+- **TollRoll**: one tile on the Unraid Dashboard for BombVault and the other apps of your fortress. Install it from Community Applications and let it join the fortress. It reads the apps through the fortress and needs no token. See [The fortress](offsite-recovery.md#fortress).
 
 ## System {#system}
 

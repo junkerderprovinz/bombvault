@@ -74,7 +74,7 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgl
 
 ## Parring {#pairing}
 
-**Parring** med **Generer sætning** eller **Indtast sætning**, trinkortene, denne instans' navn, de enheder, der venter på **Godkend**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, gruppens medlemmer og **ZFS-server uden BombVault** til et replikamål over SSH. Se [Parring af instanser](offsite-recovery.md#pairing) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
+**Parring** med **Generer sætning** eller **Indtast sætning**, trinkortene, denne instans' navn, de enheder, der venter på **Godkend**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, gruppens medlemmer og **ZFS-server uden BombVault** til et replikamål over SSH. Under dem forbinder **Fæstning** BombVault med de andre apps i familien via fæstningens tolv ord, med en kontakt for hver tilladelse mellem apps, **Giv sikkerhedskopier tilbage til apps**, **Vis sætning**, **Skift** og **Forlad**. Se [Parring af instanser](offsite-recovery.md#pairing), [Fæstningen](offsite-recovery.md#fortress) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrationer {#integrations}
 
@@ -88,7 +88,7 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgl
 
 - **Android-app**: APK'en til den udgave, din server kører, med en QR-kode, og F-Droid-opslaget. Se [Android-app](android.md#install).
 - **ParleyPort**: relay-containeren med dens Unraid-skabelon og Docker-kommandoen, der starter den.
-- **BombVault Widget**: en flise på Unraid Dashboard med BombVaults aktivitetslog og den næste kørsel. Med en SSH-forbindelse til værten installerer og fjerner kortet selv pluginnet. Uden en giver det dig `.plg`-adressen til at installere under **Plugins, Install Plugin**.
+- **TollRoll**: én flise på Unraid Dashboard til BombVault og de andre apps i din fæstning. Installér den fra Community Applications, og lad den slutte sig til fæstningen. Den læser apps gennem fæstningen og har ikke brug for et token. Se [Fæstningen](offsite-recovery.md#fortress).
 
 ## System {#system}
 

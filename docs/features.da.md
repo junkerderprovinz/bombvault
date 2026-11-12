@@ -83,7 +83,8 @@ En indbygget MCP-server lader en assistent læse sikkerhedskopistatus, dækning,
 ## Apps og ledsagere {#apps}
 
 - **Android-app**: hver server i din gruppe på din telefon. [Android-app](android.md)
-- **BombVault Widget**: en flise på Unraid Dashboard. [Apps](settings.md#apps)
+- **Fæstningen**: BombVault slutter sig til de andre apps i familien. ShipLog og TowerTorch beder om en sikkerhedskopi, før de ændrer en container, FireSquire tjekker, hvornår flashdrevet sidst blev sikkerhedskopieret, og apps, der kan sikkerhedskopiere sig selv, giver den sikkerhedskopi til BombVault. [Fæstningen](offsite-recovery.md#fortress)
+- **TollRoll**: én flise på Unraid Dashboard til BombVault og de andre apps i din fæstning. [Apps](settings.md#apps)
 - **Indlejrbar aktivitetslog** til dashboards som Homepage eller Heimdall. [Dashboard-widget](api.md#dashboard-widget)
 
 ## Andet {#other}

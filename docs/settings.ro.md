@@ -74,7 +74,7 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și
 
 ## Împerechere {#pairing}
 
-**Împerechere** cu **Generează frază** sau **Introdu frază**, cardurile cu pași, numele acestei instanțe, dispozitivele care așteaptă **Aprobă**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, membrii grupului și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
+**Împerechere** cu **Generează frază** sau **Introdu frază**, cardurile cu pași, numele acestei instanțe, dispozitivele care așteaptă **Aprobă**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, membrii grupului și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Sub ele, **Fortăreață** alătură BombVault celorlalte aplicații ale familiei cu cele douăsprezece cuvinte ale fortăreței, cu câte un comutator pentru fiecare permisiune dintre aplicații, **Dă copiile de rezervă înapoi aplicațiilor**, **Arată fraza**, **Schimbă** și **Părăsește**. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing), [Fortăreața](offsite-recovery.md#fortress) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrări {#integrations}
 
@@ -88,7 +88,7 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și
 
 - **Aplicația Android**: APK-ul pentru versiunea pe care o rulează serverul tău, cu un cod QR, și lista F-Droid. Vezi [Aplicația Android](android.md#install).
 - **ParleyPort**: containerul relay cu șablonul lui Unraid și comanda Docker care îl pornește.
-- **BombVault Widget**: o placă pe Dashboardul Unraid cu jurnalul de activitate al BombVault și următoarea rulare. Cu o conexiune SSH la gazdă, cardul instalează și elimină singur pluginul. Fără ea îți dă adresa `.plg` de instalat la **Plugins, Install Plugin**.
+- **TollRoll**: o singură placă pe Dashboardul Unraid pentru BombVault și celelalte aplicații ale fortăreței tale. Instalează-l din Community Applications și lasă-l să intre în fortăreață. Citește aplicațiile prin fortăreață și nu are nevoie de token. Vezi [Fortăreața](offsite-recovery.md#fortress).
 
 ## Sistem {#system}
 

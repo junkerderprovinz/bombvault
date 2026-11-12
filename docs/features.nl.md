@@ -83,7 +83,8 @@ Een ingebouwde MCP-server laat een assistent de back-upstatus, de dekking, de ru
 ## Apps en aanvullingen {#apps}
 
 - **Android-app**: elke server van je groep op je telefoon. [Android-app](android.md)
-- **BombVault Widget**: een tegel op het Unraid-dashboard. [Apps](settings.md#apps)
+- **De vesting**: BombVault sluit zich aan bij de andere apps van de familie. ShipLog en TowerTorch vragen om een back-up voordat ze een container veranderen, FireSquire kijkt wanneer de flash voor het laatst een back-up kreeg, en apps die een back-up van zichzelf kunnen maken, geven die aan BombVault. [De vesting](offsite-recovery.md#fortress)
+- **TollRoll**: één tegel op het Unraid-dashboard voor BombVault en de andere apps van je vesting. [Apps](settings.md#apps)
 - **Insluitbaar activiteitenlogboek** voor dashboards zoals Homepage of Heimdall. [Dashboardwidget](api.md#dashboard-widget)
 
 ## Overig {#other}

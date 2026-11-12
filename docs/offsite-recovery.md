@@ -375,6 +375,18 @@ The words alone do not let anybody in. A new instance or phone waits on the **In
 
 The one place that still takes an APP_KEY by hand is [From an old backup folder](#restore-from-another-bombvault-repo), for the case where the other instance is gone and cannot answer in a group.
 
+## The fortress {#fortress}
+
+A fortress brings BombVault together with the other apps of the family, such as ShipLog, TowerTorch, FireSquire and TollRoll, under one phrase of twelve words. Any app that is already in the fortress can show you its phrase. Open **Settings, Pairing** and enter the words under **Fortress**, and BombVault joins. The instances and phones it is paired with come along without a new pairing, and one that was away follows once it is back. The old pairing stays open until every device has followed, for 30 days at most. A device still missing after that is named on the Pairing page and in the app, so you can enter the fortress phrase on it or remove it.
+
+- **Server name**: the name the other apps find BombVault on this server by. Left empty, it is the instance's name.
+- **Permissions**: everything one app may do at another has its own switch, such as seeing when the last backup worked, asking for a container backup or looking through the backups. They all start switched on.
+- **Show phrase** shows the words beside a QR code once you enter your password. **Change** gives the fortress a new phrase, which reaches every app and instance in reach. The old phrase keeps working for 30 days, and the Pairing page names any device the change missed. **Leave** takes BombVault out of the fortress.
+
+**What the other apps do.** ShipLog asks for a backup of a container before it updates it, and BombVault leaves the update of ShipLog's own containers to it, so their **Update after a successful backup** switch stays off. TowerTorch asks for a backup before a maintenance run, and FireSquire checks when the flash was last backed up. A request waits while another backup runs. TollRoll shows BombVault in its tile on the Unraid Dashboard. The other apps read BombVault's state at `GET /api/fortress/v1/status` and `GET /api/fortress/v1/log`, which an API token or a signed-in browser can read as well.
+
+**An app's own backup.** Before BombVault backs up the container of an app that can back itself up, it fetches that app's own backup and keeps it in the container's repository, but only when that repository is encrypted. It shows in the container's list of backups with the app's name and a download, ages with the container's backups, goes off-site with them and is deleted with them. With **Give backups back to apps** switched on, **Give back to** hands it to the app again, which replaces what the app holds now. That switch is off until you turn it on.
+
 ## Instances and roles {#roles}
 
 The **Instances** page (a settings tile that can be pinned to the sidebar) shows the group as a net of who does what for whom, a card for this instance and a card for every other member, the Android phones and the ZFS servers. **Pairing** at the bottom right leads to the pairing page. Which parts are on is set under **Settings, Instances, Multiple servers**: **Instances**, **Receiver** and **Pull**.

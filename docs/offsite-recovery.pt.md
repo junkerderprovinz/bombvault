@@ -375,6 +375,18 @@ As palavras sozinhas não deixam entrar ninguém. Uma nova instância ou um novo
 
 O único sítio que ainda aceita uma APP_KEY à mão é [De uma pasta de backups antiga](#restore-from-another-bombvault-repo), para o caso de a outra instância ter desaparecido e não poder responder num grupo.
 
+## A fortaleza {#fortress}
+
+Uma fortaleza junta o BombVault às outras apps da família, como o ShipLog, o TowerTorch, o FireSquire e o TollRoll, sob uma só frase de doze palavras. Qualquer app que já esteja na fortaleza te pode mostrar a frase. Abre **Definições, Emparelhamento**, escreve as palavras em **Fortaleza**, e o BombVault entra. As instâncias e os telemóveis com que está emparelhado vêm com ele sem novo emparelhamento, e um que esteja ausente segue-o assim que voltar. O emparelhamento antigo fica aberto até todos os dispositivos terem seguido, no máximo 30 dias. Um dispositivo que ainda falte depois disso aparece na página Emparelhamento e na app, para poderes introduzir nele a frase da fortaleza ou removê-lo.
+
+- **Nome do servidor**: o nome pelo qual as outras apps encontram o BombVault neste servidor. Se ficar vazio, é o nome da instância.
+- **Permissões**: tudo o que uma app pode fazer noutra tem o seu próprio interruptor, como ver quando o último backup funcionou, pedir um backup de um container ou percorrer os backups. Começam todos ligados.
+- **Mostrar frase** mostra as palavras ao lado de um código QR depois de introduzires a tua palavra-passe. **Alterar** dá à fortaleza uma frase nova, que chega a todas as apps e instâncias ao alcance. A frase antiga continua a funcionar durante 30 dias, e a página Emparelhamento indica qualquer dispositivo que a mudança não alcançou. **Sair** tira o BombVault da fortaleza.
+
+**O que fazem as outras apps.** O ShipLog pede um backup de um container antes de o atualizar, e o BombVault deixa ao ShipLog a atualização dos containers de que ele trata, por isso o interruptor **Atualizar após um backup bem-sucedido** desses containers fica desligado. O TowerTorch pede um backup antes de uma manutenção, e o FireSquire verifica quando foi feito o último backup da flash. Um pedido espera enquanto corre outro backup. O TollRoll mostra o BombVault no seu mosaico no painel do Unraid. As outras apps leem o estado do BombVault em `GET /api/fortress/v1/status` e `GET /api/fortress/v1/log`, que um token da API ou um navegador com sessão iniciada também podem ler.
+
+**O backup próprio de uma app.** Antes de o BombVault fazer backup do container de uma app que sabe fazer backup de si própria, vai buscar o backup próprio dessa app e guarda-o no repositório do container, mas só quando esse repositório é encriptado. Aparece na lista de backups do container com o nome da app e uma transferência, envelhece com os backups do container, vai com eles para os destinos externos e é apagado com eles. Com **Devolver backups às apps** ligado, **Devolver ao** entrega-o de novo à app, o que substitui o que a app tem agora. Esse interruptor fica desligado até o ligares.
+
 ## Instâncias e funções {#roles}
 
 A página **Instâncias** (um mosaico de definições que pode ser fixado na barra lateral) mostra o grupo como uma rede de quem faz o quê por quem, um cartão para esta instância e um cartão para cada outro membro, os telemóveis Android e os servidores ZFS. **Emparelhamento**, em baixo à direita, leva à página de emparelhamento. Que partes estão ligadas define-se em **Definições, Instâncias, Vários servidores**: **Instâncias**, **Recetor** e **Recolha**.

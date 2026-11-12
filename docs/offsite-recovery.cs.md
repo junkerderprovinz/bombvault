@@ -375,6 +375,18 @@ Samotná slova nikoho dovnitř nepustí. Nová instance nebo telefon čeká v ka
 
 Jediné místo, které ještě bere APP_KEY ručně, je [Ze staré složky se zálohami](#restore-from-another-bombvault-repo), pro případ, že druhá instance zmizela a ve skupině odpovědět nemůže.
 
+## Pevnost {#fortress}
+
+Pevnost spojuje BombVault s ostatními aplikacemi z rodiny, třeba ShipLog, TowerTorch, FireSquire a TollRoll, pod jednou frází z dvanácti slov. Každá aplikace, která už v pevnosti je, ti svou frázi ukáže. Otevři **Nastavení, Párování**, zadej slova pod **Pevnost** a BombVault se připojí. Instance a telefony, se kterými je spárovaný, přijdou s ním bez nového párování, a ta, která zrovna nebyla dostupná, se přidá, jakmile se vrátí. Staré párování zůstane otevřené, dokud nepřejde každé zařízení, nejdéle 30 dní. Zařízení, které potom pořád chybí, se ukáže na stránce párování a v aplikaci, takže na něm můžeš zadat frázi pevnosti, nebo ho odebrat.
+
+- **Název serveru**: jméno, pod kterým ostatní aplikace najdou BombVault na tomto serveru. Když zůstane prázdné, použije se jméno instance.
+- **Oprávnění**: všechno, co smí jedna aplikace dělat u jiné, má vlastní přepínač, například zjistit, kdy naposledy vyšla záloha, vyžádat zálohu kontejneru nebo procházet zálohy. Na začátku jsou všechny zapnuté.
+- **Zobrazit frázi** ukáže slova vedle QR kódu, jakmile zadáš heslo. **Změnit** dá pevnosti novou frázi, která dojde ke každé dosažitelné aplikaci a instanci. Stará fráze funguje ještě 30 dní a stránka párování vyjmenuje každé zařízení, ke kterému změna nedošla. **Opustit** vyvede BombVault z pevnosti.
+
+**Co dělají ostatní aplikace.** ShipLog si před aktualizací kontejneru vyžádá jeho zálohu a BombVault mu aktualizaci kontejnerů, které ShipLog spravuje, přenechá, takže jejich přepínač **Aktualizovat po úspěšné záloze** zůstává vypnutý. TowerTorch si vyžádá zálohu před údržbou a FireSquire kontroluje, kdy se naposledy zálohovala flashka. Požadavek počká, dokud běží jiná záloha. TollRoll ukazuje BombVault ve své dlaždici na dashboardu Unraidu. Ostatní aplikace čtou stav BombVaultu na `GET /api/fortress/v1/status` a `GET /api/fortress/v1/log`, a to umí přečíst i API token nebo přihlášený prohlížeč.
+
+**Vlastní záloha aplikace.** Než BombVault zazálohuje kontejner aplikace, která se umí zálohovat sama, stáhne si její vlastní zálohu a uloží ji do repozitáře kontejneru, ale jen když je ten repozitář šifrovaný. Objeví se v seznamu záloh kontejneru se jménem aplikace a odkazem ke stažení, stárne se zálohami kontejneru, putuje s nimi mimo lokalitu a smaže se spolu s nimi. Když je zapnuté **Vracet zálohy aplikacím**, **Vrátit do** ji předá aplikaci zpátky, a tím nahradí to, co aplikace má teď. Ten přepínač je vypnutý, dokud ho nezapneš.
+
 ## Instance a role {#roles}
 
 Stránka **Instance** (dlaždice nastavení, kterou lze připnout do postranního panelu) ukazuje skupinu jako síť, kdo co pro koho dělá, kartu této instance a kartu každého dalšího člena, telefony s Androidem a servery ZFS. **Párování** vpravo dole vede na stránku párování. Které části jsou zapnuté, se nastavuje v **Nastavení, Instance, Více serverů**: **Instance**, **Přijímač** a **Stažení**.

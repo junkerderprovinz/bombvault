@@ -83,7 +83,8 @@ Ein eingebauter MCP-Server lässt einen Assistenten Sicherungsstatus, Abdeckung,
 ## Apps und Begleiter {#apps}
 
 - **Android-App**: jeder Server deiner Gruppe auf dem Handy. [Android-App](android.md)
-- **BombVault Widget**: eine Kachel im Unraid-Dashboard. [Apps](settings.md#apps)
+- **Die Festung**: BombVault schließt sich den anderen Apps der Familie an. ShipLog und TowerTorch fragen nach einer Sicherung, bevor sie einen Container ändern, FireSquire prüft, wann der Flash zuletzt gesichert wurde, und Apps, die sich selbst sichern können, geben diese Sicherung an BombVault. [Die Festung](offsite-recovery.md#fortress)
+- **TollRoll**: eine Kachel im Unraid-Dashboard für BombVault und die anderen Apps deiner Festung. [Apps](settings.md#apps)
 - **Einbettbares Aktivitätsprotokoll** für Dashboards wie Homepage oder Heimdall. [Dashboard-Widget](api.md#dashboard-widget)
 
 ## Weiteres {#other}

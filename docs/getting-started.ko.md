@@ -45,7 +45,7 @@ Unraid와 다른 점:
 - **플래시 섹션이 없습니다.** 담거나 되살릴 부팅 USB가 없으므로 플래시 섹션은 여기서 할 일이 없습니다. 대신 Host Data가 호스트의 `/etc`까지 닿으면 백업 페이지의 **추가**가 **시스템 구성**을 폴더 제안으로 보여 줍니다. 저장 전에 살펴보고 손질하는 `/etc` 폴더 세트의 시작 묶음입니다.
 - **Unraid 자체 알림이 없습니다.** BombVault 자신의 알림 채널(웹훅, 오프사이트 실패 경고 등)은 평소대로 동작합니다. 빠지는 것은 Unraid 고유 알림 시스템으로 보내는 것뿐이며, 여기에는 그런 시스템이 없기 때문입니다.
 - **VM 백업은 선택 사항이며 SSH로 닿는 별도의 libvirtd 호스트가 필요합니다.** compose 파일의 주석 처리된 블록을 보세요. 일반 Docker 호스트 자체에는 VM 관리자가 들어 있지 않습니다.
-- **대시보드 위젯이 없습니다.** BombVault Widget은 Unraid 플러그인이므로 그 단계도 건너뜁니다.
+- **대시보드 타일이 없습니다.** TollRoll은 Unraid 플러그인이므로 그 단계도 건너뜁니다.
 - **컨테이너 데이터 찾기.** Unraid의 `appdata` 규칙이 없으므로, 컨테이너의 데이터 폴더는 `DATA_ROOT_SEGMENTS`의 구간, Docker 이름 있는 볼륨, Compose 프로젝트의 작업 디렉터리, `bombvault.data` 레이블로 찾습니다([백업 원본 자동 판별](configuration.md#backup-source-detection) 참고). 이름 있는 볼륨과 `/etc` 프리셋은 Host Data 마운트 안의 경로에만 닿으므로, Host Data는 Docker의 데이터 루트까지 포함하는 공통 상위 디렉터리로 지정하세요.
 - **`PLATFORM`.** `generic` 또는 `truenas`로 설정합니다. 설정하지 않으면 BombVault는 플래시 마운트에 있는 Unraid 고유 표식으로 Unraid를 알아보고 그 밖의 경우는 모두 일반 호스트로 취급하며, Unraid 전용 단계는 시도했다 실패하는 대신 건너뜁니다.
 

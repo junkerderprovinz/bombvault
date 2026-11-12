@@ -74,7 +74,7 @@ BombVault 把外观保存在服务器上。第一次来的浏览器会接管它�
 
 ## 配对 {#pairing}
 
-带**生成口令**或**输入口令**的**配对**、各步骤卡片、本实例的名称、等待**批准**的设备、带四种形式和**中继能看到什么**的**中继**卡片、组的成员，以及用于通过 SSH 作为副本目标的**没有 BombVault 的 ZFS 服务器**。参见[配对实例](offsite-recovery.md#pairing)和[推送到 ZFS 服务器](zfs-datasets.md#replica-push)。
+带**生成口令**或**输入口令**的**配对**、各步骤卡片、本实例的名称、等待**批准**的设备、带四种形式和**中继能看到什么**的**中继**卡片、组的成员，以及用于通过 SSH 作为副本目标的**没有 BombVault 的 ZFS 服务器**。下面的**堡垒**用堡垒的十二个单词把 BombVault 加入同一家族的其他应用，应用之间的每项许可都有一个开关，还有**把备份还给应用**、**显示口令**、**更改**和**退出**。参见[配对实例](offsite-recovery.md#pairing)、[堡垒](offsite-recovery.md#fortress)和[推送到 ZFS 服务器](zfs-datasets.md#replica-push)。
 
 ## 集成 {#integrations}
 
@@ -88,7 +88,7 @@ BombVault 把外观保存在服务器上。第一次来的浏览器会接管它�
 
 - **Android 应用**：你的服务器所运行版本的 APK，带二维码，以及 F-Droid 的列表。参见 [Android 应用](android.md#install)。
 - **ParleyPort**：中继容器，带它的 Unraid 模板和启动它的 Docker 命令。
-- **BombVault Widget**：Unraid 仪表盘上的一个磁贴，显示 BombVault 的活动日志和下一次运行。有主机 SSH 连接时，这张卡片会自己安装和移除插件。没有的话，它会给你 `.plg` 地址，在 **Plugins, Install Plugin** 下安装。
+- **TollRoll**：Unraid 仪表盘上的一个磁贴，同时显示 BombVault 和你堡垒里的其他应用。从 Community Applications 安装它，然后让它加入堡垒。它通过堡垒读取各个应用，不需要令牌。参见[堡垒](offsite-recovery.md#fortress)。
 
 ## 系统 {#system}
 

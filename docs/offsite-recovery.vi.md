@@ -375,6 +375,18 @@ Chỉ các từ thôi thì không cho ai vào được. Một phiên bản hoặ
 
 Nơi duy nhất vẫn nhận APP_KEY nhập tay là [Từ thư mục sao lưu cũ](#restore-from-another-bombvault-repo), cho trường hợp phiên bản kia đã mất và không thể trả lời trong một nhóm.
 
+## Pháo đài {#fortress}
+
+Một pháo đài gom BombVault cùng các ứng dụng khác trong gia đình, như ShipLog, TowerTorch, FireSquire và TollRoll, dưới một cụm từ gồm mười hai từ. Ứng dụng nào đã ở trong pháo đài cũng có thể cho bạn xem cụm từ đó. Mở **Cài đặt, Ghép nối** rồi nhập các từ dưới **Pháo đài**, thế là BombVault gia nhập. Các phiên bản và điện thoại đã ghép nối với nó sẽ đi theo mà không cần ghép nối lại, còn thiết bị nào đang vắng mặt thì theo sau ngay khi quay lại. Lần ghép nối cũ vẫn mở cho đến khi mọi thiết bị đã theo sang, tối đa 30 ngày. Thiết bị nào sau đó vẫn còn thiếu sẽ được nêu tên trên trang Ghép nối và trong ứng dụng, để bạn nhập cụm từ của pháo đài trên thiết bị đó hoặc gỡ nó đi.
+
+- **Tên máy chủ**: tên mà các ứng dụng khác dùng để tìm BombVault trên máy chủ này. Nếu để trống, đó là tên của phiên bản.
+- **Quyền**: mọi việc một ứng dụng được làm ở ứng dụng khác đều có công tắc riêng, chẳng hạn xem lần sao lưu gần nhất thành công khi nào, yêu cầu sao lưu một container hay xem qua các bản sao lưu. Tất cả đều bật sẵn từ đầu.
+- **Hiện cụm từ** hiện các từ bên cạnh một mã QR sau khi bạn nhập mật khẩu. **Đổi** cho pháo đài một cụm từ mới, cụm từ này đến được mọi ứng dụng và phiên bản trong tầm với. Cụm từ cũ vẫn dùng được thêm 30 ngày, và trang Ghép nối nêu tên mọi thiết bị mà lần đổi chưa tới được. **Rời đi** đưa BombVault ra khỏi pháo đài.
+
+**Các ứng dụng khác làm gì.** ShipLog xin một bản sao lưu của container trước khi cập nhật nó, và BombVault để ShipLog tự lo việc cập nhật các container mà ShipLog quản lý, nên công tắc **Cập nhật sau khi sao lưu thành công** của những container đó vẫn tắt. TowerTorch xin một bản sao lưu trước một lần bảo trì, còn FireSquire kiểm tra lần cuối flash được sao lưu là khi nào. Một yêu cầu sẽ chờ trong lúc một lần sao lưu khác đang chạy. TollRoll hiện BombVault trong ô của nó trên Dashboard của Unraid. Các ứng dụng khác đọc trạng thái của BombVault tại `GET /api/fortress/v1/status` và `GET /api/fortress/v1/log`, và một mã thông báo API hay một trình duyệt đã đăng nhập cũng đọc được những địa chỉ này.
+
+**Bản sao lưu riêng của một ứng dụng.** Trước khi BombVault sao lưu container của một ứng dụng tự sao lưu được, nó lấy bản sao lưu riêng của ứng dụng đó và giữ trong kho của container, nhưng chỉ khi kho đó được mã hóa. Bản này hiện trong danh sách bản sao lưu của container với tên ứng dụng và một nút tải xuống, cũ đi cùng các bản sao lưu của container, cùng chúng đi off-site và bị xóa cùng chúng. Khi bật **Trả bản sao lưu về cho ứng dụng**, **Trả về cho** giao nó lại cho ứng dụng, thay thế những gì ứng dụng đang có. Công tắc đó tắt cho đến khi bạn bật lên.
+
 ## Phiên bản và vai trò {#roles}
 
 Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hiển thị nhóm như một mạng lưới ai làm gì cho ai, một thẻ cho phiên bản này và một thẻ cho mọi thành viên khác, điện thoại Android và máy chủ ZFS. **Ghép nối** ở dưới cùng bên phải dẫn tới trang ghép nối. Phần nào bật được đặt dưới **Cài đặt, Phiên bản, Nhiều máy chủ**: **Phiên bản**, **Bộ nhận** và **Kéo về**.

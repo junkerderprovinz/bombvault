@@ -74,7 +74,7 @@ Diverse cose richiedono una password di accesso, come il kit di ripristino e i d
 
 ## Associazione {#pairing}
 
-**Associazione** con **Genera frase** o **Inserisci frase**, le schede dei passaggi, il nome di questa istanza, i dispositivi in attesa di **Approva**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, i membri del gruppo e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Vedi [Associare le istanze](offsite-recovery.md#pairing) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
+**Associazione** con **Genera frase** o **Inserisci frase**, le schede dei passaggi, il nome di questa istanza, i dispositivi in attesa di **Approva**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, i membri del gruppo e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Sotto di essi, **Fortezza** unisce BombVault alle altre app della famiglia con le dodici parole della fortezza, con un interruttore per ogni permesso tra le app, **Restituisci i backup alle app**, **Mostra la frase**, **Cambia** e **Lascia**. Vedi [Associare le istanze](offsite-recovery.md#pairing), [La fortezza](offsite-recovery.md#fortress) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrazioni {#integrations}
 
@@ -88,7 +88,7 @@ Diverse cose richiedono una password di accesso, come il kit di ripristino e i d
 
 - **App Android**: l'APK per la release che gira sul tuo server con un codice QR, e la scheda su F-Droid. Vedi [App Android](android.md#install).
 - **ParleyPort**: il container relay con il suo template Unraid e il comando Docker che lo avvia.
-- **BombVault Widget**: un riquadro nella Dashboard di Unraid con il registro attività di BombVault e la prossima esecuzione. Con una connessione SSH all'host la scheda installa e rimuove il plugin da sola. Senza, ti dà l'indirizzo `.plg` da installare in **Plugins, Install Plugin**.
+- **TollRoll**: un solo riquadro nella Dashboard di Unraid per BombVault e le altre app della tua fortezza. Installalo da Community Applications e fallo entrare nella fortezza. Legge le app attraverso la fortezza e non ha bisogno di token. Vedi [La fortezza](offsite-recovery.md#fortress).
 
 ## Sistema {#system}
 

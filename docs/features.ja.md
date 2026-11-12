@@ -83,7 +83,8 @@ BombVault ができることの短い一覧です。各行から、その説明�
 ## アプリと関連ツール {#apps}
 
 - **Android アプリ**：グループ内のすべてのサーバーをスマートフォンで。[Android アプリ](android.md)
-- **BombVault Widget**：Unraid ダッシュボードのタイル。[アプリ](settings.md#apps)
+- **要塞**：BombVault がファミリーのほかのアプリに加わります。ShipLog と TowerTorch はコンテナを変更する前にバックアップを頼み、FireSquire はフラッシュの最後のバックアップがいつだったかを確かめ、自分でバックアップできるアプリはそのバックアップを BombVault に渡します。[要塞](offsite-recovery.md#fortress)
+- **TollRoll**：BombVault と要塞のほかのアプリをまとめた、Unraid ダッシュボードのひとつのタイル。[アプリ](settings.md#apps)
 - Homepage や Heimdall などのダッシュボード向けの**埋め込めるアクティビティログ**。[ダッシュボードウィジェット](api.md#dashboard-widget)
 
 ## その他 {#other}

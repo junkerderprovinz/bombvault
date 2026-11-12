@@ -74,7 +74,7 @@ Plex, Jellyfin, Emby가 스트리밍하는 동안 업로드 제한을 낮추는 
 
 ## 페어링 {#pairing}
 
-**문구 생성** 또는 **문구 입력**이 있는 **페어링**, 단계 카드, 이 인스턴스의 이름, **승인**을 기다리는 기기, 네 가지 형태와 **릴레이가 보는 것**이 있는 **릴레이** 카드, 그룹의 구성원, 그리고 SSH로 복제 대상을 쓰는 **BombVault 없는 ZFS 서버**입니다. [인스턴스 페어링](offsite-recovery.md#pairing)과 [ZFS 서버로 푸시](zfs-datasets.md#replica-push)를 참고하세요.
+**문구 생성** 또는 **문구 입력**이 있는 **페어링**, 단계 카드, 이 인스턴스의 이름, **승인**을 기다리는 기기, 네 가지 형태와 **릴레이가 보는 것**이 있는 **릴레이** 카드, 그룹의 구성원, 그리고 SSH로 복제 대상을 쓰는 **BombVault 없는 ZFS 서버**입니다. 그 아래의 **요새**는 요새의 12개 단어로 BombVault를 패밀리의 다른 앱과 이어 주며, 앱 사이의 권한마다 스위치, **앱에 백업 되돌려주기**, **문구 보기**, **변경**, **나가기**가 있습니다. [인스턴스 페어링](offsite-recovery.md#pairing), [요새](offsite-recovery.md#fortress), [ZFS 서버로 푸시](zfs-datasets.md#replica-push)를 참고하세요.
 
 ## 연동 {#integrations}
 
@@ -88,7 +88,7 @@ Plex, Jellyfin, Emby가 스트리밍하는 동안 업로드 제한을 낮추는 
 
 - **Android 앱**: 서버가 실행 중인 릴리스의 APK와 QR 코드, 그리고 F-Droid 목록. [Android 앱](android.md#install)을 참고하세요.
 - **ParleyPort**: Unraid 템플릿과 이를 시작하는 Docker 명령이 있는 릴레이 컨테이너.
-- **BombVault Widget**: BombVault의 활동 로그와 다음 실행을 보여 주는 Unraid 대시보드의 타일입니다. 호스트 SSH 연결이 있으면 카드가 플러그인을 직접 설치하고 제거합니다. 없으면 **Plugins, Install Plugin**에서 설치할 수 있도록 `.plg` 주소를 알려 줍니다.
+- **TollRoll**: BombVault와 요새의 다른 앱을 한데 모은 Unraid 대시보드의 타일 하나입니다. Community Applications에서 설치하고 요새에 참여하게 하세요. 요새를 통해 앱을 읽으므로 토큰이 필요 없습니다. [요새](offsite-recovery.md#fortress)를 참고하세요.
 
 ## 시스템 {#system}
 

@@ -74,7 +74,7 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a u
 
 ## Párování {#pairing}
 
-**Párování** s **Vygenerovat frázi** nebo **Zadat frázi**, karty kroků, jméno této instance, zařízení čekající na **Schválit**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí**, členové skupiny a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Viz [Párování instancí](offsite-recovery.md#pairing) a [Push na server ZFS](zfs-datasets.md#replica-push).
+**Párování** s **Vygenerovat frázi** nebo **Zadat frázi**, karty kroků, jméno této instance, zařízení čekající na **Schválit**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí**, členové skupiny a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Pod nimi **Pevnost** spojí BombVault s ostatními aplikacemi z rodiny pomocí dvanácti slov pevnosti, s přepínačem pro každé oprávnění mezi aplikacemi, **Vracet zálohy aplikacím**, **Zobrazit frázi**, **Změnit** a **Opustit**. Viz [Párování instancí](offsite-recovery.md#pairing), [Pevnost](offsite-recovery.md#fortress) a [Push na server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrace {#integrations}
 
@@ -88,7 +88,7 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a u
 
 - **Aplikace pro Android**: APK pro vydání, se kterým tvůj server běží, s QR kódem, a záznam v F-Droidu. Viz [Aplikace pro Android](android.md#install).
 - **ParleyPort**: kontejner přeposílače s jeho šablonou pro Unraid a příkazem Dockeru, který ho spustí.
-- **BombVault Widget**: dlaždice na dashboardu Unraidu s protokolem aktivity BombVaultu a dalším během. S připojením SSH k hostiteli karta plugin sama nainstaluje a odebere. Bez něj ti podá adresu `.plg` k instalaci pod **Plugins, Install Plugin**.
+- **TollRoll**: jedna dlaždice na dashboardu Unraidu pro BombVault a ostatní aplikace tvé pevnosti. Nainstaluj ho z Community Applications a nech ho vstoupit do pevnosti. Aplikace čte přes pevnost a nepotřebuje žádný token. Viz [Pevnost](offsite-recovery.md#fortress).
 
 ## Systém {#system}
 

@@ -375,6 +375,18 @@ Las palabras por sí solas no dejan entrar a nadie. Una instancia o un teléfono
 
 El único sitio que aún acepta una APP_KEY a mano es [De una carpeta de copias antigua](#restore-from-another-bombvault-repo), para el caso en que la otra instancia ha desaparecido y no puede responder en un grupo.
 
+## La fortaleza {#fortress}
+
+Una fortaleza reúne a BombVault con las demás apps de la familia, como ShipLog, TowerTorch, FireSquire y TollRoll, bajo una sola frase de doce palabras. Cualquier app que ya esté en la fortaleza puede mostrarte su frase. Abre **Ajustes, Emparejamiento** e introduce las palabras en **Fortaleza**, y BombVault se une. Las instancias y los teléfonos con los que está emparejado vienen con él sin un nuevo emparejamiento, y el que no estaba lo sigue en cuanto vuelve. El emparejamiento antiguo sigue abierto hasta que todos los dispositivos lo hayan seguido, 30 días como máximo. Un dispositivo que aún falte después aparece en la página de emparejamiento y en la app, para que puedas introducir en él la frase de la fortaleza o quitarlo.
+
+- **Nombre del servidor**: el nombre con el que las demás apps encuentran BombVault en este servidor. Si lo dejas vacío, es el nombre de la instancia.
+- **Permisos**: todo lo que una app puede hacer en otra tiene su propio interruptor, como ver cuándo funcionó la última copia de seguridad, pedir una copia de seguridad de un contenedor o revisar las copias de seguridad. Todos empiezan activados.
+- **Mostrar frase** muestra las palabras junto a un código QR en cuanto introduces tu contraseña. **Cambiar** da a la fortaleza una frase nueva, que llega a todas las apps e instancias al alcance. La frase antigua sigue funcionando 30 días, y la página de emparejamiento nombra cualquier dispositivo al que no le llegó el cambio. **Salir** saca a BombVault de la fortaleza.
+
+**Qué hacen las demás apps.** ShipLog pide una copia de seguridad de un contenedor antes de actualizarlo, y BombVault le deja la actualización de los contenedores que lleva ShipLog, así que su interruptor **Actualizar tras una copia de seguridad correcta** se queda desactivado. TowerTorch pide una copia antes de una tarea de mantenimiento, y FireSquire comprueba cuándo se hizo la última copia del flash. Una petición espera mientras se ejecuta otra copia. TollRoll muestra BombVault en su mosaico del panel de Unraid. Las demás apps leen el estado de BombVault en `GET /api/fortress/v1/status` y `GET /api/fortress/v1/log`, que también pueden leer un token de API o un navegador con la sesión iniciada.
+
+**La copia propia de una app.** Antes de copiar el contenedor de una app que sabe hacer su propia copia, BombVault recoge esa copia propia y la guarda en el repositorio del contenedor, pero solo si ese repositorio está cifrado. Aparece en la lista de copias del contenedor con el nombre de la app y una descarga, envejece con las copias del contenedor, pasa con ellas a las copias externas y se borra con ellas. Con **Devolver copias a las apps** activado, **Devolver a** se la entrega de nuevo a la app, y eso sustituye lo que la app tiene ahora. Ese interruptor está desactivado hasta que lo activas.
+
 ## Instancias y roles {#roles}
 
 La página **Instancias** (un mosaico de ajustes que se puede anclar a la barra lateral) muestra el grupo como una red de quién hace qué por quién, una tarjeta para esta instancia y una tarjeta para cada otro miembro, los teléfonos Android y los servidores ZFS. **Emparejamiento**, abajo a la derecha, lleva a la página de emparejamiento. Qué partes están activadas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.

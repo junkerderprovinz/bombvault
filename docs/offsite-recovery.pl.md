@@ -60,6 +60,8 @@ Usługi S3 działają przez własny backend S3 restic, dzięki czemu mogą obowi
 
 Zapisanie miejsca docelowego, które już przechowuje kopie kontenerów, maszyn wirtualnych lub folderów, na przykład takiego, które usunąłeś i dodajesz ponownie, dodaje je do tych sekcji jako niezaznaczoną kopię. Nic nie jest tam kopiowane, dopóki go nie zaznaczysz, ale **Przywróć** od razu oferuje stare kopie.
 
+Folder na tym serwerze wszędzie nazywa się **Lokalne**: na stronach miejsc docelowych, w przepływie, przy elemencie i w Przywracaniu. Gdy na tym serwerze jest kilka folderów, każdy ma własną nazwę. Miejsce docelowe, które zakłada pole poza siedzibą danej sekcji, dostaje nazwę od swojego miejsca, czyli ostatniego folderu adresu albo, gdy go brak, od serwera, a gdy inne miejsce nosi już tę nazwę, dostaje numer. Każde miejsce można przemianować w polu **Nazwa** na jego karcie **Połączenie**, także folder w koszyku, który dzieli kilka sekcji, i kopię opisaną w polu poza siedzibą sekcji, a nazwa, którą nadasz, zostaje. Gdy dwa miejsca o tej samej nazwie stoją obok siebie, każde pokazuje swój serwer lub folder.
+
 ### Strona miejsca docelowego {#location-page}
 
 Każde miejsce docelowe ma własną stronę. Pokazuje tylko te karty, które go dotyczą, w tej kolejności:
@@ -372,6 +374,18 @@ Same słowa nikogo nie wpuszczają. Nowa instancja lub telefon czeka w karcie **
 **Elementy sprzed parowania.** Instancje dodane tokenem floty oraz odbierane repozytoria i źródła pobierania ustawione z APP_KEY drugiej instancji zostają po aktualizacji i są oznaczone **Sparuj ponownie**. Nadal działają: przy pierwszym starcie BombVault zastępuje każdy zapisany APP_KEY wyprowadzonym z niego hasłem restic. Sparuj obie instancje, potem edytuj element i wybierz jego instancję. Do tego czasu takie elementy stoją w karcie **Bez instancji** na stronie Instancje.
 
 Jedyne miejsce, które nadal przyjmuje APP_KEY ręcznie, to [Ze starego folderu z kopiami](#restore-from-another-bombvault-repo), na wypadek gdy drugiej instancji już nie ma i nie może odpowiedzieć w grupie.
+
+## Twierdza {#fortress}
+
+Twierdza łączy BombVault z pozostałymi aplikacjami z rodziny, takimi jak ShipLog, TowerTorch, FireSquire i TollRoll, pod jedną frazą z dwunastu słów. Każda aplikacja, która już jest w twierdzy, może pokazać ci jej frazę. Otwórz **Ustawienia, Parowanie** i wpisz słowa w sekcji **Twierdza**, a BombVault dołączy. Instancje i telefony, z którymi jest sparowany, przechodzą razem z nim bez nowego parowania, a urządzenie, którego nie było, dołącza, gdy tylko wróci. Stare parowanie zostaje otwarte, dopóki wszystkie urządzenia nie przejdą, najwyżej przez 30 dni. Urządzenie, którego nadal brakuje po tym czasie, jest wymienione na stronie Parowanie i w aplikacji, więc możesz wpisać na nim frazę twierdzy albo je usunąć.
+
+- **Nazwa serwera**: nazwa, po której inne aplikacje znajdują BombVault na tym serwerze. Gdy pole jest puste, jest to nazwa instancji.
+- **Uprawnienia**: wszystko, co jedna aplikacja może robić w drugiej, ma własny przełącznik, na przykład sprawdzanie, kiedy ostatnia kopia zapasowa się udała, proszenie o kopię zapasową kontenera albo przeglądanie kopii zapasowych. Na początku wszystkie są włączone.
+- **Pokaż frazę** pokazuje słowa obok kodu QR, gdy wpiszesz swoje hasło. **Zmień** daje twierdzy nową frazę, która trafia do każdej aplikacji i instancji w zasięgu. Stara fraza działa jeszcze przez 30 dni, a strona Parowanie wymienia każde urządzenie, do którego zmiana nie dotarła. **Opuść** wyprowadza BombVault z twierdzy.
+
+**Co robią inne aplikacje.** ShipLog prosi o kopię zapasową kontenera, zanim go zaktualizuje, a BombVault zostawia ShipLogowi aktualizację jego własnych kontenerów, więc ich przełącznik **Aktualizuj po udanej kopii zapasowej** pozostaje wyłączony. TowerTorch prosi o kopię zapasową przed przebiegiem konserwacji, a FireSquire sprawdza, kiedy ostatnio skopiowano dysk flash. Prośba czeka, dopóki trwa inna kopia. TollRoll pokazuje BombVault na swoim kafelku na Pulpicie Unraid. Inne aplikacje odczytują stan BombVault pod `GET /api/fortress/v1/status` i `GET /api/fortress/v1/log`, które może odczytać także token API albo zalogowana przeglądarka.
+
+**Własna kopia aplikacji.** Zanim BombVault skopiuje kontener aplikacji, która potrafi sama zrobić swoją kopię, pobiera jej własną kopię i trzyma ją w repozytorium kontenera, ale tylko wtedy, gdy to repozytorium jest zaszyfrowane. Pojawia się na liście kopii zapasowych kontenera z nazwą aplikacji i pobieraniem, starzeje się razem z kopiami kontenera, trafia z nimi poza siedzibę i jest z nimi usuwana. Gdy **Oddawaj kopie zapasowe aplikacjom** jest włączone, **Oddaj do** przekazuje ją z powrotem aplikacji, co zastępuje to, co aplikacja ma teraz. Ten przełącznik jest wyłączony, dopóki go nie włączysz.
 
 ## Instancje i role {#roles}
 

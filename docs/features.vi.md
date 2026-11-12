@@ -83,7 +83,8 @@ Một máy chủ MCP tích hợp sẵn cho phép trợ lý đọc trạng thái 
 ## Ứng dụng và công cụ đi kèm {#apps}
 
 - **Ứng dụng Android**: mọi máy chủ trong nhóm của bạn trên điện thoại. [Ứng dụng Android](android.md)
-- **BombVault Widget**: một ô trên Dashboard của Unraid. [Ứng dụng](settings.md#apps)
+- **Pháo đài**: BombVault gia nhập cùng các ứng dụng khác trong gia đình. ShipLog và TowerTorch xin một bản sao lưu trước khi thay đổi một container, FireSquire kiểm tra lần cuối flash được sao lưu là khi nào, còn các ứng dụng tự sao lưu được thì giao bản sao lưu đó cho BombVault. [Pháo đài](offsite-recovery.md#fortress)
+- **TollRoll**: một ô duy nhất trên Dashboard của Unraid cho BombVault và các ứng dụng khác trong pháo đài của bạn. [Ứng dụng](settings.md#apps)
 - **Nhật ký hoạt động nhúng được** cho các bảng điều khiển như Homepage hoặc Heimdall. [Widget bảng điều khiển](api.md#dashboard-widget)
 
 ## Khác {#other}

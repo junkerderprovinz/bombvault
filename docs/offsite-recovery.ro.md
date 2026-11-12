@@ -375,6 +375,18 @@ Cuvintele singure nu lasă pe nimeni să intre. O instanță nouă sau un telefo
 
 Singurul loc care mai primește un APP_KEY introdus manual este [Dintr-un folder vechi de copii](#restore-from-another-bombvault-repo), pentru cazul în care cealaltă instanță a dispărut și nu poate răspunde într-un grup.
 
+## Fortăreața {#fortress}
+
+O fortăreață aduce BombVault laolaltă cu celelalte aplicații ale familiei, precum ShipLog, TowerTorch, FireSquire și TollRoll, sub o singură frază de douăsprezece cuvinte. Orice aplicație care e deja în fortăreață îți poate arăta fraza. Deschide **Setări, Împerechere**, introdu cuvintele la **Fortăreață**, iar BombVault intră. Instanțele și telefoanele cu care e împerecheat vin și ele fără o nouă împerechere, iar unul care lipsea urmează imediat ce revine. Vechea împerechere rămâne deschisă până când toate dispozitivele au urmat, cel mult 30 de zile. Un dispozitiv care încă lipsește după aceea apare pe pagina Împerechere și în aplicație, ca să poți introduce pe el fraza fortăreței sau să-l elimini.
+
+- **Numele serverului**: numele după care celelalte aplicații găsesc BombVault pe acest server. Dacă rămâne gol, este numele instanței.
+- **Permisiuni**: tot ce poate face o aplicație la alta are propriul comutator, de pildă să vadă când a reușit ultima copie de rezervă, să ceară copia de rezervă a unui container sau să răsfoiască copiile de rezervă. Toate pornesc activate.
+- **Arată fraza** arată cuvintele lângă un cod QR după ce îți introduci parola. **Schimbă** îi dă fortăreței o frază nouă, care ajunge la toate aplicațiile și instanțele accesibile. Fraza veche mai funcționează 30 de zile, iar pagina Împerechere numește orice dispozitiv pe care schimbarea nu l-a atins. **Părăsește** scoate BombVault din fortăreață.
+
+**Ce fac celelalte aplicații.** ShipLog cere o copie de rezervă a unui container înainte să-l actualizeze, iar BombVault îi lasă lui ShipLog actualizarea containerelor de care se ocupă, așa că pentru ele comutatorul **Actualizează după o copie de rezervă reușită** rămâne oprit. TowerTorch cere o copie de rezervă înaintea unei rulări de întreținere, iar FireSquire verifică când a primit stickul flash ultima copie de rezervă. O cerere așteaptă cât timp rulează altă copie de rezervă. TollRoll arată BombVault în placa sa de pe Dashboardul Unraid. Celelalte aplicații citesc starea BombVault la `GET /api/fortress/v1/status` și `GET /api/fortress/v1/log`, pe care le pot citi și un token API sau un browser conectat.
+
+**Copia de rezervă proprie a unei aplicații.** Înainte ca BombVault să facă copia de rezervă a containerului unei aplicații care își poate face singură copia de rezervă, preia copia proprie a acelei aplicații și o păstrează în depozitul containerului, dar numai când acel depozit este criptat. Apare în lista de copii a containerului cu numele aplicației și o descărcare, îmbătrânește odată cu copiile containerului, pleacă off-site cu ele și se șterge cu ele. Cu **Dă copiile de rezervă înapoi aplicațiilor** activat, **Dă înapoi lui** i-o predă din nou aplicației, ceea ce înlocuiește ce are aplicația acum. Comutatorul rămâne oprit până îl pornești tu.
+
 ## Instanțe și roluri {#roles}
 
 Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android și serverele ZFS. **Împerechere**, jos în dreapta, duce la pagina de împerechere. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.

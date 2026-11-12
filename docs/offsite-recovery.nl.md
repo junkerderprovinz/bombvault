@@ -375,6 +375,18 @@ De woorden alleen laten niemand binnen. Een nieuwe instantie of telefoon wacht i
 
 De enige plek die nog met de hand een APP_KEY neemt, is [Uit een oude back-upmap](#restore-from-another-bombvault-repo), voor het geval de andere instantie weg is en in een groep niet kan antwoorden.
 
+## De vesting {#fortress}
+
+Een vesting brengt BombVault samen met de andere apps van de familie, zoals ShipLog, TowerTorch, FireSquire en TollRoll, onder één frase van twaalf woorden. Elke app die al in de vesting zit, kan je haar frase tonen. Open **Instellingen, Koppeling** en vul de woorden in onder **Vesting**, dan sluit BombVault zich aan. De instanties en telefoons waarmee het gekoppeld is, gaan mee zonder nieuwe koppeling, en een apparaat dat weg was, volgt zodra het terug is. De oude koppeling blijft open tot elk apparaat gevolgd is, hooguit 30 dagen. Een apparaat dat daarna nog ontbreekt, wordt genoemd op de pagina Koppeling en in de app, zodat je er de frase van de vesting kunt invullen of het kunt verwijderen.
+
+- **Servernaam**: de naam waaronder de andere apps BombVault op deze server vinden. Laat je hem leeg, dan is het de naam van de instantie.
+- **Toestemmingen**: alles wat de ene app bij de andere mag doen, heeft een eigen schakelaar, zoals zien wanneer de laatste back-up gelukt is, om een back-up van een container vragen of de back-ups doorbladeren. Ze staan in het begin allemaal aan.
+- **Frase tonen** toont de woorden naast een QR-code zodra je je wachtwoord invult. **Wijzigen** geeft de vesting een nieuwe frase, die bij elke app en instantie binnen bereik aankomt. De oude frase blijft 30 dagen werken, en de pagina Koppeling noemt elk apparaat dat de wijziging gemist heeft. **Verlaten** haalt BombVault uit de vesting.
+
+**Wat de andere apps doen.** ShipLog vraagt om een back-up van een container voordat het hem bijwerkt, en BombVault laat het bijwerken van de containers van ShipLog aan ShipLog over, dus hun schakelaar **Bijwerken na een geslaagde back-up** blijft uit. TowerTorch vraagt om een back-up voor een onderhoudsronde, en FireSquire kijkt wanneer de flash voor het laatst een back-up kreeg. Een verzoek wacht zolang er een andere back-up loopt. TollRoll toont BombVault in zijn tegel op het Unraid-dashboard. De andere apps lezen de status van BombVault via `GET /api/fortress/v1/status` en `GET /api/fortress/v1/log`, die een API-token of een aangemelde browser ook kan lezen.
+
+**De eigen back-up van een app.** Voordat BombVault de container back-upt van een app die zelf een back-up kan maken, haalt het de eigen back-up van die app op en bewaart die in de repository van de container, maar alleen als die repository versleuteld is. Hij staat in de lijst met back-ups van de container met de naam van de app en een download, veroudert samen met de back-ups van de container, gaat met ze mee off-site en wordt met ze verwijderd. Met **Back-ups teruggeven aan apps** aan geeft **Teruggeven aan** hem weer aan de app, en dat vervangt wat de app nu heeft. Die schakelaar staat uit tot je hem aanzet.
+
 ## Instanties en rollen {#roles}
 
 De pagina **Instanties** (een instellingentegel die aan de zijbalk kan worden vastgezet) toont de groep als een net van wie wat voor wie doet, een kaart voor deze instantie en een kaart voor elk ander lid, de Android-telefoons en de ZFS-servers. **Koppeling** rechtsonder leidt naar de koppelpagina. Welke delen aanstaan, stel je in onder **Instellingen, Instanties, Meerdere servers**: **Instanties**, **Ontvanger** en **Ophalen**.

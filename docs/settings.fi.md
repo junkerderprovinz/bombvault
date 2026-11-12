@@ -74,7 +74,7 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tal
 
 ## Pariliitos {#pairing}
 
-**Pariliitos** kohdilla **Luo lause** tai **Syötä lause**, vaihekortit, tämän ilmentymän nimi, laitteet, jotka odottavat **Hyväksy**-painallusta, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, ryhmän jäsenet sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
+**Pariliitos** kohdilla **Luo lause** tai **Syötä lause**, vaihekortit, tämän ilmentymän nimi, laitteet, jotka odottavat **Hyväksy**-painallusta, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, ryhmän jäsenet sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Niiden alla **Linnoitus** liittää BombVaultin perheen muihin sovelluksiin linnoituksen kahdellatoista sanalla, ja siinä on kytkin jokaiselle sovellusten väliselle luvalle sekä **Palauta varmuuskopiot sovelluksille**, **Näytä lause**, **Vaihda** ja **Poistu**. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing), [Linnoitus](offsite-recovery.md#fortress) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
 
 ## Integraatiot {#integrations}
 
@@ -88,7 +88,7 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tal
 
 - **Android-sovellus**: palvelimesi ajaman version APK QR-koodilla ja F-Droid-listaus. Katso [Android-sovellus](android.md#install).
 - **ParleyPort**: relekontti Unraid-malleineen ja Docker-komento, joka sen käynnistää.
-- **BombVault Widget**: ruutu Unraidin kojelaudalla BombVaultin toimintalokilla ja seuraavalla ajolla. Isännän SSH-yhteydellä kortti asentaa ja poistaa liitännäisen itse. Ilman sitä se antaa `.plg`-osoitteen asennettavaksi kohdassa **Plugins, Install Plugin**.
+- **TollRoll**: yksi ruutu Unraidin kojelaudalla BombVaultille ja linnoituksesi muille sovelluksille. Asenna se Community Applicationsista ja anna sen liittyä linnoitukseen. Se lukee sovelluksia linnoituksen kautta eikä tarvitse tokenia. Katso [Linnoitus](offsite-recovery.md#fortress).
 
 ## Järjestelmä {#system}
 

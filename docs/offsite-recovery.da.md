@@ -375,6 +375,18 @@ Ordene alene lukker ingen ind. En ny instans eller telefon venter i kortet **Ins
 
 Det eneste sted, der stadig tager en APP_KEY i hånden, er [Fra en gammel sikkerhedskopimappe](#restore-from-another-bombvault-repo), til det tilfælde, at den anden instans er væk og ikke kan svare i en gruppe.
 
+## Fæstningen {#fortress}
+
+En fæstning samler BombVault og de andre apps i familien, såsom ShipLog, TowerTorch, FireSquire og TollRoll, under én sætning på tolv ord. Enhver app, der allerede er i fæstningen, kan vise dig sin sætning. Åbn **Indstillinger, Parring**, og indtast ordene under **Fæstning**, så slutter BombVault sig til. De instanser og telefoner, den er parret med, kommer med uden en ny parring, og en, der var væk, følger efter, så snart den er tilbage. Den gamle parring står åben, indtil hver enhed er fulgt med, dog højst i 30 dage. En enhed, der stadig mangler derefter, nævnes på parringssiden og i appen, så du kan indtaste fæstningens sætning på den eller fjerne den.
+
+- **Servernavn**: det navn, de andre apps finder BombVault på denne server under. Står det tomt, er det instansens navn.
+- **Tilladelser**: alt, hvad én app må gøre hos en anden, har sin egen kontakt, for eksempel se, hvornår den seneste sikkerhedskopi lykkedes, bede om en sikkerhedskopi af en container eller kigge sikkerhedskopierne igennem. De er alle slået til fra start.
+- **Vis sætning** viser ordene ved siden af en QR-kode, når du har indtastet din adgangskode. **Skift** giver fæstningen en ny sætning, som når ud til hver app og instans inden for rækkevidde. Den gamle sætning virker i 30 dage endnu, og parringssiden nævner hver enhed, ændringen ikke nåede. **Forlad** tager BombVault ud af fæstningen.
+
+**Hvad de andre apps gør.** ShipLog beder om en sikkerhedskopi af en container, før den opdaterer den, og BombVault overlader opdateringen af de containere, ShipLog passer, til ShipLog, så deres kontakt **Opdater efter en vellykket sikkerhedskopiering** forbliver slået fra. TowerTorch beder om en sikkerhedskopi før en vedligeholdelseskørsel, og FireSquire tjekker, hvornår flashdrevet sidst blev sikkerhedskopieret. En anmodning venter, mens en anden sikkerhedskopiering kører. TollRoll viser BombVault i sin flise på Unraid Dashboard. De andre apps læser BombVaults tilstand på `GET /api/fortress/v1/status` og `GET /api/fortress/v1/log`, som et API-token eller en browser, der er logget ind, også kan læse.
+
+**En apps egen sikkerhedskopi.** Før BombVault sikkerhedskopierer containeren for en app, der kan sikkerhedskopiere sig selv, henter den appens egen sikkerhedskopi og gemmer den i containerens repository, men kun når det repository er krypteret. Den vises i containerens liste over sikkerhedskopier med appens navn og en download, ældes sammen med containerens sikkerhedskopier, kommer med i off-site-kopierne og slettes sammen med dem. Med **Giv sikkerhedskopier tilbage til apps** slået til giver **Giv tilbage til** den til appen igen, hvilket erstatter det, appen har nu. Den kontakt er slået fra, indtil du slår den til.
+
 ## Instanser og roller {#roles}
 
 Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) viser gruppen som et net af, hvem der gør hvad for hvem, et kort for denne instans og et kort for hvert andet medlem, Android-telefonerne og ZFS-serverne. **Parring** nederst til højre fører til parringssiden. Hvilke dele der er slået til, sættes under **Indstillinger, Instanser, Flere servere**: **Instanser**, **Modtager** og **Hentning**.
@@ -580,7 +592,6 @@ Serveren TOWER døde sammen med sine diske. Den havde 23 containere og 2 VM'er o
 9. **Afslut.** Start dine databaser først, så de apps der bruger dem. Åbn **Indstillinger, Gendannelse**, og download et nyt gendannelseskit, fordi det gamle hører til den forrige installation. Se efter under **Kræver opmærksomhed** på oversigten, og kør **Sikkerhedskopiér alt nu**, når alt virker.
 
 Mangler auto-sikkerhedskopien også, åbner trinnet på **Spring over: jeg har ingen auto-sikkerhedskopi** og siger det. Destinationerne kommer så kun fra kittet, du sætter tidsplaner og regler op igen, og off-site-kopier venter, til du overtager deres sikkerhedskopier som denne servers egne, se [Efter en genopbygning](#after-a-rebuild). **Valg** viser stadig, hvad off-site-kopierne rummer. Mappesæt går til en mappe, du vælger. Containere og VM'er kommer tilbage som almindelige filer i en mappe under **Kun filerne kan komme tilbage**, fordi deres definitioner ligger ved siden af det lokale repository og i auto-sikkerhedskopien, og en off-site-kopi rummer ingen af delene.
-
 
 !!! tip "Planlagt migrering versus katastrofe"
     Nødguiden gendanner BombVaults egne indstillinger fra en sikkerhedskopi. Til en *planlagt* flytning til en ny boks kan du i stedet føre din konfiguration direkte over med kortet **Eksportér / importér indstillinger** (en bærbar JSON-fil). Se [Konfiguration](configuration.md#portable-settings-export-and-import).

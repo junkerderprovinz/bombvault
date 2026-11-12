@@ -74,7 +74,7 @@ Plusieurs choses demandent un mot de passe de connexion, comme le kit de récup�
 
 ## Appairage {#pairing}
 
-**Appairage** avec **Générer une phrase** ou **Saisir une phrase**, les cartes d'étapes, le nom de cette instance, les appareils qui attendent **Approuver**, la carte **Relais** avec ses quatre formes et **Ce que voit le relais**, les membres du groupe, et **Serveur ZFS sans BombVault** pour une cible de réplique via SSH. Voir [Appairage des instances](offsite-recovery.md#pairing) et [Envoyer vers un serveur ZFS](zfs-datasets.md#replica-push).
+**Appairage** avec **Générer une phrase** ou **Saisir une phrase**, les cartes d'étapes, le nom de cette instance, les appareils qui attendent **Approuver**, la carte **Relais** avec ses quatre formes et **Ce que voit le relais**, les membres du groupe, et **Serveur ZFS sans BombVault** pour une cible de réplique via SSH. En dessous, **Forteresse** relie BombVault aux autres applications de la famille grâce aux douze mots de la forteresse, avec un interrupteur pour chaque autorisation entre les applications, **Rendre les sauvegardes aux applications**, **Afficher la phrase**, **Changer** et **Quitter**. Voir [Appairage des instances](offsite-recovery.md#pairing), [La forteresse](offsite-recovery.md#fortress) et [Envoyer vers un serveur ZFS](zfs-datasets.md#replica-push).
 
 ## Intégrations {#integrations}
 
@@ -88,7 +88,7 @@ Plusieurs choses demandent un mot de passe de connexion, comme le kit de récup�
 
 - **Application Android** : l'APK de la version que votre serveur exécute avec un code QR, et la fiche F-Droid. Voir [Application Android](android.md#install).
 - **ParleyPort** : le conteneur de relais avec son modèle Unraid et la commande Docker qui le démarre.
-- **BombVault Widget** : une tuile sur le tableau de bord d'Unraid avec le journal d'activité de BombVault et la prochaine exécution. Avec une connexion SSH vers l'hôte, la carte installe et supprime le plugin elle-même. Sans elle, elle vous donne l'adresse du `.plg` à installer sous **Plugins, Install Plugin**.
+- **TollRoll** : une seule tuile sur le tableau de bord d'Unraid pour BombVault et les autres applications de votre forteresse. Installez-le depuis Community Applications et laissez-le rejoindre la forteresse. Il lit les applications à travers la forteresse et n'a besoin d'aucun jeton. Voir [La forteresse](offsite-recovery.md#fortress).
 
 ## Système {#system}
 

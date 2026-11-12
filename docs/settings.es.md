@@ -74,7 +74,7 @@ Varias cosas requieren una contraseña de acceso, como el kit de recuperación y
 
 ## Emparejamiento {#pairing}
 
-**Emparejamiento** con **Generar frase** o **Introducir frase**, las tarjetas de pasos, el nombre de esta instancia, los dispositivos que esperan **Aprobar**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, los miembros del grupo, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Consulta [Emparejar instancias](offsite-recovery.md#pairing) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
+**Emparejamiento** con **Generar frase** o **Introducir frase**, las tarjetas de pasos, el nombre de esta instancia, los dispositivos que esperan **Aprobar**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, los miembros del grupo, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Debajo, **Fortaleza** une BombVault a las demás apps de la familia con las doce palabras de la fortaleza, con un interruptor para cada permiso entre las apps, **Devolver copias a las apps**, **Mostrar frase**, **Cambiar** y **Salir**. Consulta [Emparejar instancias](offsite-recovery.md#pairing), [La fortaleza](offsite-recovery.md#fortress) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integraciones {#integrations}
 
@@ -88,7 +88,7 @@ Varias cosas requieren una contraseña de acceso, como el kit de recuperación y
 
 - **App de Android**: el APK de la versión que ejecuta tu servidor con un código QR, y la ficha de F-Droid. Consulta [App de Android](android.md#install).
 - **ParleyPort**: el contenedor repetidor con su plantilla de Unraid y el comando de Docker que lo inicia.
-- **BombVault Widget**: un mosaico en el panel de Unraid con el registro de actividad de BombVault y la próxima ejecución. Con una conexión SSH al host la tarjeta instala y quita el plugin por sí misma. Sin ella te da la dirección `.plg` para instalar en **Plugins, Install Plugin**.
+- **TollRoll**: un solo mosaico en el panel de Unraid para BombVault y las demás apps de tu fortaleza. Instálalo desde Community Applications y deja que se una a la fortaleza. Lee las apps a través de la fortaleza y no necesita ningún token. Consulta [La fortaleza](offsite-recovery.md#fortress).
 
 ## Sistema {#system}
 

@@ -375,6 +375,18 @@ Kelimeler tek başına kimseyi içeri almaz. Yeni bir örnek ya da telefon, grup
 
 Hâlâ elle bir APP_KEY alan tek yer, diğer örneğin gittiği ve bir grupta yanıt veremediği durum için [Eski bir yedek klasöründen](#restore-from-another-bombvault-repo)'dir.
 
+## Kale {#fortress}
+
+Bir kale, BombVault'u ShipLog, TowerTorch, FireSquire ve TollRoll gibi ailenin diğer uygulamalarıyla on iki kelimelik tek bir ifade altında bir araya getirir. Kalede zaten olan her uygulama sana ifadeyi gösterebilir. **Ayarlar, Eşleştirme**'yi aç ve kelimeleri **Kale** altına gir, BombVault katılır. Eşleştirildiği örnekler ve telefonlar yeni bir eşleştirme olmadan onunla birlikte gelir, o sırada uzakta olan biri de döner dönmez ardından gelir. Eski eşleştirme her cihaz gelene kadar açık kalır, ama en fazla 30 gün. Bundan sonra hâlâ eksik olan bir cihaz Eşleştirme sayfasında ve uygulamada adıyla gösterilir, böylece kale ifadesini o cihazda girebilir ya da onu kaldırabilirsin.
+
+- **Sunucu adı**: diğer uygulamaların bu sunucudaki BombVault'u bulduğu ad. Boş bırakılırsa bu örneğin adı olur.
+- **İzinler**: bir uygulamanın diğerinde yapabileceği her şeyin kendi anahtarı vardır, örneğin son yedeklemenin ne zaman başarılı olduğunu görmek, bir konteynerin yedeğini istemek ya da yedeklere göz atmak. Hepsi açık olarak başlar.
+- **İfadeyi göster**, parolanı girdiğinde kelimeleri bir QR kodun yanında gösterir. **Değiştir** kaleye yeni bir ifade verir ve bu ifade erişilebilen her uygulamaya ve örneğe ulaşır. Eski ifade 30 gün daha çalışır ve Eşleştirme sayfası değişikliğin ulaşamadığı her cihazı adıyla gösterir. **Ayrıl**, BombVault'u kaleden çıkarır.
+
+**Diğer uygulamalar ne yapar.** ShipLog bir konteyneri güncellemeden önce onun yedeğini ister, BombVault da ShipLog'un baktığı konteynerlerin güncellemesini ona bırakır, bu yüzden bu konteynerlerin **Başarılı bir yedeklemeden sonra güncelle** anahtarı kapalı kalır. TowerTorch bir bakım çalışmasından önce yedek ister, FireSquire de flash'ın en son ne zaman yedeklendiğini denetler. Bir istek, başka bir yedekleme sürerken bekler. TollRoll, BombVault'u Unraid Panosundaki kutucuğunda gösterir. Diğer uygulamalar BombVault'un durumunu `GET /api/fortress/v1/status` ve `GET /api/fortress/v1/log` adreslerinden okur, bunları bir API belirteci ya da oturum açmış bir tarayıcı da okuyabilir.
+
+**Bir uygulamanın kendi yedeği.** BombVault, kendini yedekleyebilen bir uygulamanın konteynerini yedeklemeden önce o uygulamanın kendi yedeğini alır ve konteynerin deposunda saklar, ama yalnızca o depo şifreliyse. Bu yedek, konteynerin yedek listesinde uygulamanın adı ve bir indirme bağlantısıyla görünür, konteynerin yedekleriyle birlikte eskir, onlarla birlikte site dışına gider ve onlarla birlikte silinir. **Yedekleri uygulamalara geri ver** açıkken **… uygulamasına geri ver** onu uygulamaya yeniden verir ve bu, uygulamanın şu an tuttuğunun yerine geçer. Bu anahtar sen açana kadar kapalıdır.
+
 ## Örnekler ve roller {#roles}
 
 **Örnekler** sayfası (kenar çubuğuna sabitlenebilen bir ayar kutucuğu) grubu kimin kimin için ne yaptığının bir ağı olarak, bu örnek için bir kart ve her diğer üye, Android telefonları ve ZFS sunucuları için bir kartla gösterir. Sağ alttaki **Eşleştirme** eşleştirme sayfasına götürür. Hangi parçaların açık olduğu **Ayarlar, Örnekler, Birden çok sunucu** altında ayarlanır: **Örnekler**, **Alıcı** ve **Çekme**.

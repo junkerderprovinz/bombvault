@@ -83,7 +83,8 @@ Un server MCP încorporat lasă un asistent să citească starea backupurilor, a
 ## Aplicații și însoțitori {#apps}
 
 - **Aplicația Android**: fiecare server al grupului tău pe telefon. [Aplicația Android](android.md)
-- **BombVault Widget**: o placă pe Dashboardul Unraid. [Aplicații](settings.md#apps)
+- **Fortăreața**: BombVault se alătură celorlalte aplicații ale familiei. ShipLog și TowerTorch cer o copie de rezervă înainte să schimbe un container, FireSquire verifică când a primit stickul flash ultima copie de rezervă, iar aplicațiile care își pot face singure copia de rezervă i-o predau lui BombVault. [Fortăreața](offsite-recovery.md#fortress)
+- **TollRoll**: o singură placă pe Dashboardul Unraid pentru BombVault și celelalte aplicații ale fortăreței tale. [Aplicații](settings.md#apps)
 - **Jurnal de activitate încorporabil** pentru dashboarduri precum Homepage sau Heimdall. [Widget pentru dashboard](api.md#dashboard-widget)
 
 ## Altele {#other}

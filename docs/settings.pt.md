@@ -74,7 +74,7 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 ## Emparelhamento {#pairing}
 
-**Emparelhamento** com **Gerar frase** ou **Introduzir frase**, os cartões de passos, o nome desta instância, os dispositivos à espera de **Aprovar**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, os membros do grupo, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Vê [Emparelhar instâncias](offsite-recovery.md#pairing) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
+**Emparelhamento** com **Gerar frase** ou **Introduzir frase**, os cartões de passos, o nome desta instância, os dispositivos à espera de **Aprovar**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, os membros do grupo, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Por baixo, **Fortaleza** junta o BombVault às outras apps da família com as doze palavras da fortaleza, com um interruptor para cada permissão entre as apps, **Devolver backups às apps**, **Mostrar frase**, **Alterar** e **Sair**. Vê [Emparelhar instâncias](offsite-recovery.md#pairing), [A fortaleza](offsite-recovery.md#fortress) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integrações {#integrations}
 
@@ -88,7 +88,7 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 - **App para Android**: o APK da versão que o teu servidor corre, com um código QR, e a entrada no F-Droid. Vê [Aplicação Android](android.md#install).
 - **ParleyPort**: o container de relay com o seu template Unraid e o comando Docker que o inicia.
-- **BombVault Widget**: um mosaico no painel do Unraid com o registo de atividade do BombVault e a próxima execução. Com uma ligação SSH ao host, o cartão instala e remove o plugin sozinho. Sem ela, dá-te o endereço do `.plg` para instalares em **Plugins, Install Plugin**.
+- **TollRoll**: um único mosaico no painel do Unraid para o BombVault e as outras apps da tua fortaleza. Instala-o a partir das Community Applications e deixa-o entrar na fortaleza. Lê as apps através da fortaleza e não precisa de token. Vê [A fortaleza](offsite-recovery.md#fortress).
 
 ## Sistema {#system}
 

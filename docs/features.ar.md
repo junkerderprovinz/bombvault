@@ -83,7 +83,8 @@
 ## التطبيقات والمرافقات {#apps}
 
 - **تطبيق Android**: كل خادم في مجموعتك على هاتفك. [تطبيق Android](android.md)
-- **BombVault Widget**: بلاطة على لوحة Unraid. [التطبيقات](settings.md#apps)
+- **الحصن**: ينضم BombVault إلى بقية تطبيقات العائلة. يطلب ShipLog وTowerTorch نسخة احتياطية قبل أن يغيّرا حاوية، ويتحقق FireSquire من آخر مرة نُسخ فيها الفلاش احتياطيًا، والتطبيقات التي تستطيع نسخ نفسها احتياطيًا تسلّم تلك النسخة إلى BombVault. [الحصن](offsite-recovery.md#fortress)
+- **TollRoll**: بلاطة واحدة على لوحة Unraid لـ BombVault وبقية تطبيقات حصنك. [التطبيقات](settings.md#apps)
 - **سجل نشاط قابل للتضمين** للوحات مثل Homepage أو Heimdall. [ودجة لوحة التحكم](api.md#dashboard-widget)
 
 ## أخرى {#other}

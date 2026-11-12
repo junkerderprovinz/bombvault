@@ -74,7 +74,7 @@ Plex、Jellyfin、Emby のストリーミング中にアップロード制限を
 
 ## ペアリング {#pairing}
 
-**フレーズを作成**または**フレーズを入力**を持つ**ペアリング**、手順のカード、このインスタンスの名前、**承認**を待つデバイス、4 つの形式と**リレーに見えるもの**を持つ**リレー**カード、グループのメンバー、そして SSH 経由のレプリカ宛先用の **BombVault のない ZFS サーバー**。[インスタンスのペアリング](offsite-recovery.md#pairing)と[ZFS サーバーへのプッシュ](zfs-datasets.md#replica-push)を参照してください。
+**フレーズを作成**または**フレーズを入力**を持つ**ペアリング**、手順のカード、このインスタンスの名前、**承認**を待つデバイス、4 つの形式と**リレーに見えるもの**を持つ**リレー**カード、グループのメンバー、そして SSH 経由のレプリカ宛先用の **BombVault のない ZFS サーバー**。その下の**要塞**では、要塞の 12 語で BombVault をファミリーのほかのアプリとつなぎます。アプリ間の許可ごとのスイッチ、**バックアップをアプリに戻す**、**フレーズを表示**、**変更**、**退出**があります。[インスタンスのペアリング](offsite-recovery.md#pairing)、[要塞](offsite-recovery.md#fortress)、[ZFS サーバーへのプッシュ](zfs-datasets.md#replica-push)を参照してください。
 
 ## 連携 {#integrations}
 
@@ -88,7 +88,7 @@ Plex、Jellyfin、Emby のストリーミング中にアップロード制限を
 
 - **Android アプリ**：サーバーが動かしているリリースの APK と QR コード、そして F-Droid の掲載ページ。[Android アプリ](android.md#install)を参照してください。
 - **ParleyPort**：リレーのコンテナ。Unraid テンプレートと、起動する Docker コマンドがあります。
-- **BombVault Widget**：Unraid ダッシュボードのタイルで、BombVault のアクティビティログと次回の実行を表示します。ホスト SSH 接続があれば、カードがプラグインのインストールと削除を自分で行います。なければ、**Plugins、Install Plugin** でインストールするための `.plg` のアドレスが渡されます。
+- **TollRoll**：BombVault と要塞のほかのアプリをまとめた、Unraid ダッシュボードのひとつのタイルです。Community Applications からインストールし、要塞に参加させてください。要塞を通してアプリの情報を読むので、トークンは要りません。[要塞](offsite-recovery.md#fortress)を参照してください。
 
 ## システム {#system}
 

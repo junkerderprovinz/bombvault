@@ -74,7 +74,7 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterl
 
 ## Kopplung {#pairing}
 
-**Kopplung** mit **Phrase generieren** oder **Phrase eingeben**, den Schrittkarten, dem Namen dieser Instanz, den Geräten, die auf **Freigeben** warten, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, die Mitglieder der Gruppe, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Siehe [Instanzen koppeln](offsite-recovery.md#pairing) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
+**Kopplung** mit **Phrase generieren** oder **Phrase eingeben**, den Schrittkarten, dem Namen dieser Instanz, den Geräten, die auf **Freigeben** warten, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, die Mitglieder der Gruppe, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Darunter bringt **Festung** BombVault mit den zwölf Wörtern der Festung zu den anderen Apps der Familie. Dort gibt es einen Schalter für jede Erlaubnis zwischen den Apps, dazu **Sicherungen an Apps zurückgeben**, **Phrase zeigen**, **Ändern** und **Verlassen**. Siehe [Instanzen koppeln](offsite-recovery.md#pairing), [Die Festung](offsite-recovery.md#fortress) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
 
 ## Anbindungen {#integrations}
 
@@ -88,7 +88,7 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterl
 
 - **Android-App**: die APK für die Version, die dein Server betreibt, mit einem QR-Code, und der F-Droid-Eintrag. Siehe [Android-App](android.md#install).
 - **ParleyPort**: der Relay-Container mit seinem Unraid-Template und dem Docker-Befehl, der ihn startet.
-- **BombVault Widget**: eine Kachel im Unraid-Dashboard mit dem Aktivitätsprotokoll von BombVault und dem nächsten Lauf. Mit einer Host-SSH-Verbindung installiert und entfernt die Karte das Plugin selbst. Ohne sie gibt sie dir die `.plg`-Adresse zum Installieren unter **Plugins, Install Plugin**.
+- **TollRoll**: eine Kachel im Unraid-Dashboard für BombVault und die anderen Apps deiner Festung. Installiere es aus den Community Applications und lass es der Festung beitreten. Es liest die Apps über die Festung und braucht kein Token. Siehe [Die Festung](offsite-recovery.md#fortress).
 
 ## System {#system}
 

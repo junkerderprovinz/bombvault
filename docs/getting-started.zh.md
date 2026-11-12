@@ -45,7 +45,7 @@
 - **没有闪存分区。** 这里没有可以采集或恢复的启动 U 盘，所以闪存分区无事可做。不过，当 Host Data 能到达主机的 `/etc` 时，备份页面上的**添加**会提供**系统配置**作为文件夹建议：一个以 `/etc` 为起点的文件夹集，你可以在保存前检查和修改。
 - **没有 Unraid 原生通知。** BombVault 自己的应用内通知渠道（Webhook、异地失败提醒等）照常工作。只有推送到 Unraid 原生通知系统这一步会跳过，因为这里没有这样的系统可推送。
 - **虚拟机备份是可选的，需要另一台可通过 SSH 访问的 libvirtd 主机。** 参见 compose 文件里被注释掉的那一段。通用 Docker 主机本身没有内置的虚拟机管理器。
-- **没有仪表盘小组件。** BombVault Widget 是 Unraid 插件，所以这一步同样跳过。
+- **没有仪表盘磁贴。** TollRoll 是 Unraid 插件，所以这一步同样跳过。
 - **查找容器的数据。** 没有 Unraid 的 `appdata` 约定时，容器的数据文件夹会根据 `DATA_ROOT_SEGMENTS` 中的片段、Docker 命名卷、Compose 项目的工作目录和 `bombvault.data` 标签来找（参见[备份源检测](configuration.md#backup-source-detection)）。命名卷和 `/etc` 预设只能到达 Host Data 挂载内的路径，所以请让 Host Data 指向一个同时包含 Docker 数据根目录的共同上级目录。
 - **`PLATFORM`。** 设为 `generic` 或 `truenas`。不设置时，BombVault 通过闪存挂载上自己的标记识别 Unraid，其他情况都按通用主机处理，只属于 Unraid 的步骤会直接跳过，而不是尝试后失败。
 

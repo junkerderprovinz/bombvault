@@ -83,7 +83,8 @@ Wbudowany serwer MCP pozwala asystentowi czytać stan kopii, pokrycie, historię
 ## Aplikacje i towarzysze {#apps}
 
 - **Aplikacja na Androida**: każdy serwer Twojej grupy w telefonie. [Aplikacja na Androida](android.md)
-- **BombVault Widget**: kafelek na Pulpicie Unraid. [Aplikacje](settings.md#apps)
+- **Twierdza**: BombVault dołącza do pozostałych aplikacji z rodziny. ShipLog i TowerTorch proszą o kopię zapasową, zanim zmienią kontener, FireSquire sprawdza, kiedy ostatnio skopiowano dysk flash, a aplikacje, które potrafią same zrobić swoją kopię, przekazują ją do BombVault. [Twierdza](offsite-recovery.md#fortress)
+- **TollRoll**: jeden kafelek na Pulpicie Unraid dla BombVault i pozostałych aplikacji Twojej twierdzy. [Aplikacje](settings.md#apps)
 - **Osadzany dziennik aktywności** dla pulpitów takich jak Homepage czy Heimdall. [Widżet pulpitu](api.md#dashboard-widget)
 
 ## Inne {#other}

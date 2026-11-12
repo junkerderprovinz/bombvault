@@ -83,7 +83,8 @@
 ## אפליקציות ושותפים {#apps}
 
 - **אפליקציית Android**: כל שרתי הקבוצה שלך בטלפון. [אפליקציית Android](android.md)
-- **BombVault Widget**: אריח בלוח המחוונים של Unraid. [אפליקציות](settings.md#apps)
+- **המבצר**: BombVault מצטרפת לשאר האפליקציות של המשפחה. ShipLog ו-TowerTorch מבקשות גיבוי לפני שהן משנות קונטיינר, FireSquire בודקת מתי גובה כונן ה-flash בפעם האחרונה, ואפליקציות שיודעות לגבות את עצמן מוסרות את הגיבוי הזה ל-BombVault. [המבצר](offsite-recovery.md#fortress)
+- **TollRoll**: אריח אחד בלוח המחוונים של Unraid עבור BombVault ושאר האפליקציות במבצר שלך. [אפליקציות](settings.md#apps)
 - **יומן פעילות להטמעה** ללוחות מחוונים כמו Homepage או Heimdall. [וידג'ט ללוח מחוונים](api.md#dashboard-widget)
 
 ## אחר {#other}

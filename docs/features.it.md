@@ -83,7 +83,8 @@ Un server MCP integrato permette a un assistente di leggere lo stato dei backup,
 ## App e companion {#apps}
 
 - **App Android**: tutti i server del tuo gruppo sul telefono. [App Android](android.md)
-- **BombVault Widget**: un riquadro nella Dashboard di Unraid. [App](settings.md#apps)
+- **La fortezza**: BombVault si unisce alle altre app della famiglia. ShipLog e TowerTorch chiedono un backup prima di cambiare un container, FireSquire controlla quando è stato fatto l'ultimo backup della flash, e le app che sanno fare il backup di sé stesse lo consegnano a BombVault. [La fortezza](offsite-recovery.md#fortress)
+- **TollRoll**: un solo riquadro nella Dashboard di Unraid per BombVault e le altre app della tua fortezza. [App](settings.md#apps)
 - **Registro attività incorporabile** per dashboard come Homepage o Heimdall. [Widget per dashboard](api.md#dashboard-widget)
 
 ## Altro {#other}

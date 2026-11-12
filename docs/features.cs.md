@@ -83,7 +83,8 @@ Vestavěný server MCP dovolí asistentovi číst stav záloh, pokrytí, histori
 ## Aplikace a doplňky {#apps}
 
 - **Aplikace pro Android**: všechny servery tvé skupiny v telefonu. [Aplikace pro Android](android.md)
-- **BombVault Widget**: dlaždice na dashboardu Unraidu. [Aplikace](settings.md#apps)
+- **Pevnost**: BombVault se připojí k ostatním aplikacím z rodiny. ShipLog a TowerTorch si vyžádají zálohu, než změní kontejner, FireSquire kontroluje, kdy se naposledy zálohovala flashka, a aplikace, které se umí zálohovat samy, předají tu zálohu BombVaultu. [Pevnost](offsite-recovery.md#fortress)
+- **TollRoll**: jedna dlaždice na dashboardu Unraidu pro BombVault a ostatní aplikace tvé pevnosti. [Aplikace](settings.md#apps)
 - **Vložitelný protokol aktivity** pro dashboardy jako Homepage nebo Heimdall. [Widget pro dashboard](api.md#dashboard-widget)
 
 ## Další {#other}

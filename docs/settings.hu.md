@@ -74,7 +74,7 @@ Néhány dologhoz belépési jelszó kell, például a helyreállítási csomagh
 
 ## Párosítás {#pairing}
 
-A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** lehetőséggel, a lépéskártyák, ennek a példánynak a neve, a **Jóváhagyás** gombra váró eszközök, a **Relay** kártya a négy formájával és a **Mit lát a relay** résszel, a csoport tagjai, valamint a **ZFS-kiszolgáló BombVault nélkül** egy SSH-n át elért replikacélhoz. Lásd: [Példányok párosítása](offsite-recovery.md#pairing) és [Küldés egy ZFS-kiszolgálóra](zfs-datasets.md#replica-push).
+A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** lehetőséggel, a lépéskártyák, ennek a példánynak a neve, a **Jóváhagyás** gombra váró eszközök, a **Relay** kártya a négy formájával és a **Mit lát a relay** résszel, a csoport tagjai, valamint a **ZFS-kiszolgáló BombVault nélkül** egy SSH-n át elért replikacélhoz. Alattuk az **Erőd** az erőd tizenkét szavával köti össze a BombVaultot a család többi alkalmazásával, az alkalmazások közötti minden engedélyhez saját kapcsolóval, valamint a **Mentések visszaadása az alkalmazásoknak**, a **Jelmondat megjelenítése**, a **Módosítás** és a **Kilépés** elemmel. Lásd: [Példányok párosítása](offsite-recovery.md#pairing), [Az erőd](offsite-recovery.md#fortress) és [Küldés egy ZFS-kiszolgálóra](zfs-datasets.md#replica-push).
 
 ## Integrációk {#integrations}
 
@@ -88,7 +88,7 @@ A **Párosítás** a **Jelmondat létrehozása** vagy a **Jelmondat megadása** 
 
 - **Android-alkalmazás**: a szervered kiadásához tartozó APK QR-kóddal, és az F-Droid-lista. Lásd: [Android-alkalmazás](android.md#install).
 - **ParleyPort**: a relay konténer az Unraid-sablonjával és az őt elindító Docker-paranccsal.
-- **BombVault Widget**: egy csempe az Unraid vezérlőpultján a BombVault tevékenységnaplójával és a következő futással. Gazdagép SSH-kapcsolattal a kártya maga telepíti és távolítja el a bővítményt. Anélkül megadja a `.plg` címet, amelyet a **Plugins, Install Plugin** alatt telepíthetsz.
+- **TollRoll**: egyetlen csempe az Unraid vezérlőpultján a BombVaultnak és az erődöd többi alkalmazásának. Telepítsd a Community Applications segítségével, és hagyd, hogy csatlakozzon az erődhöz. Az alkalmazásokat az erődön keresztül olvassa, és nincs szüksége tokenre. Lásd: [Az erőd](offsite-recovery.md#fortress).
 
 ## Rendszer {#system}
 

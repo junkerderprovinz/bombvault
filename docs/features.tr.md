@@ -83,7 +83,8 @@ Yerleşik bir MCP sunucusu, bir asistanın yedek durumunu, kapsamı, çalıştı
 ## Uygulamalar ve yardımcılar {#apps}
 
 - **Android uygulaması**: grubundaki her sunucu telefonunda. [Android uygulaması](android.md)
-- **BombVault Widget**: Unraid Panosunda bir kutucuk. [Uygulamalar](settings.md#apps)
+- **Kale**: BombVault ailenin diğer uygulamalarına katılır. ShipLog ve TowerTorch bir konteyneri değiştirmeden önce yedek ister, FireSquire flash'ın en son ne zaman yedeklendiğini denetler, kendini yedekleyebilen uygulamalar da o yedeği BombVault'a verir. [Kale](offsite-recovery.md#fortress)
+- **TollRoll**: Unraid Panosunda BombVault ve kalendeki diğer uygulamalar için tek bir kutucuk. [Uygulamalar](settings.md#apps)
 - Homepage ya da Heimdall gibi panolar için **gömülebilir etkinlik günlüğü**. [Panel widget'ı](api.md#dashboard-widget)
 
 ## Diğer {#other}

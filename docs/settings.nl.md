@@ -74,7 +74,7 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarko
 
 ## Koppeling {#pairing}
 
-**Koppeling** met **Frase genereren** of **Frase invoeren**, de stapkaarten, de naam van deze instantie, de apparaten die op **Goedkeuren** wachten, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, de leden van de groep, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Zie [Instanties koppelen](offsite-recovery.md#pairing) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
+**Koppeling** met **Frase genereren** of **Frase invoeren**, de stapkaarten, de naam van deze instantie, de apparaten die op **Goedkeuren** wachten, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, de leden van de groep, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Daaronder verbindt **Vesting** BombVault met de andere apps van de familie via de twaalf woorden van de vesting, met een schakelaar voor elke toestemming tussen de apps, **Back-ups teruggeven aan apps**, **Frase tonen**, **Wijzigen** en **Verlaten**. Zie [Instanties koppelen](offsite-recovery.md#pairing), [De vesting](offsite-recovery.md#fortress) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
 
 ## Integraties {#integrations}
 
@@ -88,7 +88,7 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarko
 
 - **Android-app**: de APK voor de release die je server draait met een QR-code, en de vermelding op F-Droid. Zie [Android-app](android.md#install).
 - **ParleyPort**: de relaycontainer met zijn Unraid-template en de Docker-opdracht die hem start.
-- **BombVault Widget**: een tegel op het Unraid-dashboard met het activiteitenlogboek van BombVault en de volgende run. Met een host-SSH-verbinding installeert en verwijdert de kaart de plug-in zelf. Zonder geeft hij je het `.plg`-adres om te installeren onder **Plugins, Install Plugin**.
+- **TollRoll**: één tegel op het Unraid-dashboard voor BombVault en de andere apps van je vesting. Installeer het via Community Applications en laat het bij de vesting aansluiten. Het leest de apps via de vesting en heeft geen token nodig. Zie [De vesting](offsite-recovery.md#fortress).
 
 ## Systeem {#system}
 

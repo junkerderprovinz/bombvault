@@ -74,7 +74,7 @@ Flera saker kräver ett inloggningslösenord, till exempel återställningskitet
 
 ## Parkoppling {#pairing}
 
-**Parkoppling** med **Skapa fras** eller **Ange fras**, stegkorten, den här instansens namn, enheterna som väntar på **Godkänn**, kortet **Relä** med sina fyra former och **Vad reläet ser**, gruppens medlemmar, och **ZFS-server utan BombVault** för ett replikamål över SSH. Se [Parkoppla instanser](offsite-recovery.md#pairing) och [Skicka till en ZFS-server](zfs-datasets.md#replica-push).
+**Parkoppling** med **Skapa fras** eller **Ange fras**, stegkorten, den här instansens namn, enheterna som väntar på **Godkänn**, kortet **Relä** med sina fyra former och **Vad reläet ser**, gruppens medlemmar, och **ZFS-server utan BombVault** för ett replikamål över SSH. Under dem ansluter **Fästning** BombVault till familjens andra appar med fästningens tolv ord, med en brytare för varje behörighet mellan apparna, **Ge tillbaka säkerhetskopior till appar**, **Visa fras**, **Byt** och **Lämna**. Se [Parkoppla instanser](offsite-recovery.md#pairing), [Fästningen](offsite-recovery.md#fortress) och [Skicka till en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrationer {#integrations}
 
@@ -88,7 +88,7 @@ Flera saker kräver ett inloggningslösenord, till exempel återställningskitet
 
 - **Android-app**: APK-filen för den version din server kör med en QR-kod, och F-Droid-listningen. Se [Android-appen](android.md#install).
 - **ParleyPort**: relä-containern med sin Unraid-mall och Docker-kommandot som startar den.
-- **BombVault Widget**: en bricka på Unraids Dashboard med BombVaults aktivitetslogg och nästa körning. Med en SSH-anslutning till värden installerar och tar kortet bort pluginet själv. Utan en sådan ger det dig `.plg`-adressen att installera under **Plugins, Install Plugin**.
+- **TollRoll**: en enda bricka på Unraids Dashboard för BombVault och de andra apparna i din fästning. Installera den från Community Applications och låt den gå med i fästningen. Den läser apparna genom fästningen och behöver inget token. Se [Fästningen](offsite-recovery.md#fortress).
 
 ## System {#system}
 

@@ -83,7 +83,8 @@ Un serveur MCP intégré permet à un assistant de lire l'état des sauvegardes,
 ## Applications et compagnons {#apps}
 
 - **Application Android** : tous les serveurs de votre groupe sur votre téléphone. [Application Android](android.md)
-- **BombVault Widget** : une tuile sur le tableau de bord d'Unraid. [Applications](settings.md#apps)
+- **La forteresse** : BombVault rejoint les autres applications de la famille. ShipLog et TowerTorch demandent une sauvegarde avant de modifier un conteneur, FireSquire vérifie quand la clé flash a été sauvegardée pour la dernière fois, et les applications capables de se sauvegarder elles-mêmes confient cette sauvegarde à BombVault. [La forteresse](offsite-recovery.md#fortress)
+- **TollRoll** : une seule tuile sur le tableau de bord d'Unraid pour BombVault et les autres applications de votre forteresse. [Applications](settings.md#apps)
 - **Journal d'activité intégrable** pour des tableaux de bord comme Homepage ou Heimdall. [Widget de tableau de bord](api.md#dashboard-widget)
 
 ## Divers {#other}

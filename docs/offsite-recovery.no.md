@@ -375,6 +375,18 @@ Ordene alene slipper ingen inn. En ny instans eller telefon venter i kortet **In
 
 Det eneste stedet som fortsatt tar en APP_KEY for hånd, er [Fra en gammel sikkerhetskopimappe](#restore-from-another-bombvault-repo), for tilfellet der den andre instansen er borte og ikke kan svare i en gruppe.
 
+## Festningen {#fortress}
+
+En festning samler BombVault og de andre appene i familien, som ShipLog, TowerTorch, FireSquire og TollRoll, under én frase på tolv ord. Alle apper som allerede er i festningen, kan vise deg frasen. Åpne **Innstillinger, Paring** og skriv inn ordene under **Festning**, så blir BombVault med. Instansene og telefonene den er paret med, følger med uten ny paring, og en enhet som var borte, følger etter når den er tilbake. Den gamle paringen står åpen til alle enheter har fulgt etter, i høyst 30 dager. En enhet som fortsatt mangler etter det, vises på siden Paring og i appen, så du kan skrive inn festningsfrasen på den eller fjerne den.
+
+- **Servernavn**: navnet de andre appene finner BombVault på denne serveren under. Står feltet tomt, brukes navnet på instansen.
+- **Tillatelser**: alt én app får gjøre hos en annen, har sin egen bryter, som å se når den siste sikkerhetskopien lyktes, be om en sikkerhetskopi av en container eller bla gjennom sikkerhetskopiene. Alle er slått på fra start.
+- **Vis frase** viser ordene ved siden av en QR-kode når du har skrevet inn passordet ditt. **Bytt** gir festningen en ny frase, som når alle apper og instanser innen rekkevidde. Den gamle frasen virker videre i 30 dager, og siden Paring nevner hver enhet som byttet ikke nådde. **Forlat** tar BombVault ut av festningen.
+
+**Hva de andre appene gjør.** ShipLog ber om en sikkerhetskopi av en container før den oppdaterer den, og BombVault overlater oppdateringen av ShipLogs egne containere til ShipLog, så bryteren **Oppdater etter en vellykket sikkerhetskopi** for dem forblir av. TowerTorch ber om en sikkerhetskopi før en vedlikeholdsrunde, og FireSquire sjekker når flash-disken sist ble sikkerhetskopiert. En forespørsel venter mens en annen sikkerhetskopi kjører. TollRoll viser BombVault i flisen sin på Unraid-dashbordet. De andre appene leser BombVaults tilstand på `GET /api/fortress/v1/status` og `GET /api/fortress/v1/log`, som et API-token eller en innlogget nettleser også kan lese.
+
+**En apps egen sikkerhetskopi.** Før BombVault sikkerhetskopierer containeren til en app som kan sikkerhetskopiere seg selv, henter den først appens egen sikkerhetskopi og legger den i containerens repository, men bare når det repositoryet er kryptert. Den vises i containerens liste over sikkerhetskopier med appens navn og en nedlasting, eldes sammen med containerens sikkerhetskopier, går off-site med dem og slettes med dem. Med **Gi sikkerhetskopier tilbake til apper** slått på gir **Gi tilbake til** den til appen igjen, og det erstatter det appen har nå. Den bryteren er av til du slår den på.
+
 ## Instanser og roller {#roles}
 
 Siden **Instanser** (en innstillingsflis som kan festes i sidefeltet) viser gruppen som et nett over hvem som gjør hva for hvem, et kort for denne instansen og et kort for hvert annet medlem, Android-telefonene og ZFS-serverne. **Paring** nede til høyre leder til parings-siden. Hvilke deler som er på, settes under **Innstillinger, Instanser, Flere servere**: **Instanser**, **Mottaker** og **Henting**.

@@ -375,6 +375,18 @@ Pelkät sanat eivät päästä ketään sisään. Uusi instanssi tai puhelin odo
 
 Ainoa paikka, joka yhä ottaa APP_KEY:n käsin, on [Vanhasta varmuuskopiokansiosta](#restore-from-another-bombvault-repo), tilanteeseen, jossa toinen instanssi on poissa eikä voi vastata ryhmässä.
 
+## Linnoitus {#fortress}
+
+Linnoitus kokoaa BombVaultin ja perheen muut sovellukset, kuten ShipLogin, TowerTorchin, FireSquiren ja TollRollin, saman kahdentoista sanan lauseen alle. Mikä tahansa linnoituksessa jo oleva sovellus voi näyttää sinulle lauseensa. Avaa **Asetukset, Pariliitos** ja syötä sanat kohtaan **Linnoitus**, niin BombVault liittyy. Instanssit ja puhelimet, joihin se on pariliitetty, tulevat mukaan ilman uutta pariliitosta, ja poissa ollut seuraa heti palattuaan. Vanha pariliitos pysyy auki, kunnes jokainen laite on seurannut, enintään 30 päivää. Laite, joka puuttuu vielä sen jälkeen, mainitaan pariliitossivulla ja sovelluksessa, joten voit syöttää linnoituksen lauseen siihen tai poistaa sen.
+
+- **Palvelimen nimi**: nimi, jolla muut sovellukset löytävät BombVaultin tältä palvelimelta. Jos kenttä jää tyhjäksi, käytetään instanssin nimeä.
+- **Luvat**: kaikella, mitä sovellus saa tehdä toisessa, on oma kytkimensä, esimerkiksi nähdä, milloin viimeisin varmuuskopio onnistui, pyytää kontin varmuuskopiota tai selata varmuuskopioita. Aluksi ne ovat kaikki päällä.
+- **Näytä lause** näyttää sanat QR-koodin vieressä, kun olet syöttänyt salasanasi. **Vaihda** antaa linnoitukselle uuden lauseen, joka välittyy jokaiseen tavoitettavissa olevaan sovellukseen ja instanssiin. Vanha lause toimii vielä 30 päivää, ja pariliitossivu mainitsee jokaisen laitteen, jolle muutos ei mennyt perille. **Poistu** vie BombVaultin pois linnoituksesta.
+
+**Mitä muut sovellukset tekevät.** ShipLog pyytää kontista varmuuskopion ennen kuin päivittää sen, ja BombVault jättää ShipLogin hoitamien konttien päivityksen ShipLogille, joten niiden kytkin **Päivitä onnistuneen varmuuskopioinnin jälkeen** pysyy pois päältä. TowerTorch pyytää varmuuskopion ennen huoltoajoa, ja FireSquire tarkistaa, milloin flash on viimeksi varmuuskopioitu. Pyyntö odottaa, kun toinen varmuuskopiointi on käynnissä. TollRoll näyttää BombVaultin ruudussaan Unraidin kojelaudalla. Muut sovellukset lukevat BombVaultin tilan osoitteista `GET /api/fortress/v1/status` ja `GET /api/fortress/v1/log`, joita myös API-token tai sisäänkirjautunut selain voi lukea.
+
+**Sovelluksen oma varmuuskopio.** Ennen kuin BombVault varmuuskopioi sellaisen sovelluksen kontin, joka osaa varmuuskopioida itsensä, se hakee sovelluksen oman varmuuskopion ja säilyttää sen kontin arkistossa, mutta vain jos arkisto on salattu. Se näkyy kontin varmuuskopioluettelossa sovelluksen nimellä ja latauslinkillä, vanhenee kontin varmuuskopioiden mukana, kulkee niiden kanssa etäkopioihin ja poistetaan niiden mukana. Kun **Palauta varmuuskopiot sovelluksille** on päällä, **Palauta sovellukselle** antaa sen takaisin sovellukselle, mikä korvaa sen, mitä sovelluksella nyt on. Kytkin on pois päältä, kunnes käännät sen päälle.
+
 ## Ilmentymät ja roolit {#roles}
 
 **Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille ja ZFS-palvelimille. **Pariliitos** oikeassa alakulmassa vie pariliitossivulle. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.

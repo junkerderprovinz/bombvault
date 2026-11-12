@@ -83,7 +83,8 @@ BombVault 功能的简短目录。每一行都链接到讲解它的页面。
 ## 应用和配套工具 {#apps}
 
 - **Android 应用**：你组里的每台服务器都在手机上。[Android 应用](android.md)
-- **BombVault Widget**：Unraid 仪表盘上的一个磁贴。[应用](settings.md#apps)
+- **堡垒**：BombVault 加入同一家族的其他应用。ShipLog 和 TowerTorch 在改动容器之前会先请求一次备份，FireSquire 会检查闪存上次备份是什么时候，能给自己做备份的应用会把这份备份交给 BombVault。[堡垒](offsite-recovery.md#fortress)
+- **TollRoll**：Unraid 仪表盘上的一个磁贴，同时显示 BombVault 和你堡垒里的其他应用。[应用](settings.md#apps)
 - 可嵌入的**活动日志**，用于 Homepage 或 Heimdall 这类仪表盘。[仪表盘小组件](api.md#dashboard-widget)
 
 ## 其他 {#other}

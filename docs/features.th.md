@@ -83,7 +83,8 @@
 ## แอปและตัวเสริม {#apps}
 
 - **แอป Android**: ทุกเซิร์ฟเวอร์ในกลุ่มของคุณบนโทรศัพท์ [แอป Android](android.md)
-- **BombVault Widget**: ไทล์บนแดชบอร์ด Unraid [แอป](settings.md#apps)
+- **ป้อมปราการ**: BombVault เข้าร่วมกับแอปอื่น ๆ ในครอบครัว ShipLog และ TowerTorch ขอให้สำรองข้อมูลก่อนเปลี่ยนคอนเทนเนอร์ FireSquire ตรวจว่าแฟลชถูกสำรองครั้งล่าสุดเมื่อใด และแอปที่สำรองข้อมูลตัวเองได้จะส่งข้อมูลสำรองนั้นให้ BombVault [ป้อมปราการ](offsite-recovery.md#fortress)
+- **TollRoll**: ไทล์เดียวบนแดชบอร์ด Unraid สำหรับ BombVault และแอปอื่น ๆ ในป้อมปราการของคุณ [แอป](settings.md#apps)
 - **บันทึกกิจกรรมแบบฝังได้** สำหรับแดชบอร์ดอย่าง Homepage หรือ Heimdall [วิดเจ็ตแดชบอร์ด](api.md#dashboard-widget)
 
 ## อื่น ๆ {#other}

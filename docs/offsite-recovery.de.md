@@ -375,6 +375,18 @@ Die Wörter allein lassen niemanden herein. Eine neue Instanz oder ein neues Han
 
 Die eine Stelle, die einen APP_KEY noch von Hand nimmt, ist [Aus einem alten Sicherungsordner](#restore-from-another-bombvault-repo), für den Fall, dass die andere Instanz weg ist und in einer Gruppe nicht antworten kann.
 
+## Die Festung {#fortress}
+
+Eine Festung bringt BombVault mit den anderen Apps der Familie zusammen, etwa ShipLog, TowerTorch, FireSquire und TollRoll, unter einer Phrase aus zwölf Wörtern. Jede App, die schon in der Festung ist, kann dir ihre Phrase zeigen. Öffne **Einstellungen, Kopplung** und gib die Wörter unter **Festung** ein, dann tritt BombVault bei. Die Instanzen und Handys, mit denen es gekoppelt ist, kommen ohne neue Kopplung mit, und eine, die gerade weg war, folgt, sobald sie wieder da ist. Die alte Kopplung bleibt offen, bis jedes Gerät gefolgt ist, höchstens 30 Tage lang. Ein Gerät, das danach noch fehlt, steht auf der Kopplungsseite und in der App, damit du dort die Phrase der Festung eingeben oder es entfernen kannst.
+
+- **Servername**: der Name, unter dem die anderen Apps BombVault auf diesem Server finden. Bleibt er leer, ist es der Name der Instanz.
+- **Erlaubnisse**: Alles, was eine App bei einer anderen tun darf, hat einen eigenen Schalter, etwa sehen, wann die letzte Sicherung geklappt hat, eine Container-Sicherung anfordern oder die Sicherungen durchsehen. Am Anfang sind alle eingeschaltet.
+- **Phrase zeigen** zeigt die Wörter neben einem QR-Code, sobald du dein Passwort eingibst. **Ändern** gibt der Festung eine neue Phrase, die jede erreichbare App und Instanz bekommt. Die alte Phrase funktioniert noch 30 Tage, und die Kopplungsseite nennt jedes Gerät, das die Änderung verpasst hat. **Verlassen** nimmt BombVault aus der Festung.
+
+**Was die anderen Apps tun.** ShipLog fragt nach einer Sicherung eines Containers, bevor es ihn aktualisiert, und BombVault überlässt ShipLog das Update der Container, die es betreut, deshalb bleibt dort der Schalter **Nach erfolgreicher Sicherung aktualisieren** aus. TowerTorch fragt vor einem Wartungslauf nach einer Sicherung, und FireSquire prüft, wann der Flash zuletzt gesichert wurde. Eine Anfrage wartet, solange eine andere Sicherung läuft. TollRoll zeigt BombVault in seiner Kachel im Unraid-Dashboard. Die anderen Apps lesen den Zustand von BombVault unter `GET /api/fortress/v1/status` und `GET /api/fortress/v1/log`, und das können auch ein API-Token oder ein angemeldeter Browser.
+
+**Die eigene Sicherung einer App.** Bevor BombVault den Container einer App sichert, die sich selbst sichern kann, holt es die eigene Sicherung dieser App und legt sie im Repository des Containers ab, aber nur, wenn dieses Repository verschlüsselt ist. Sie erscheint in der Sicherungsliste des Containers mit dem Namen der App und einem Download, altert mit den Sicherungen des Containers, geht mit ihnen in die Off-site-Kopien und wird mit ihnen gelöscht. Ist **Sicherungen an Apps zurückgeben** eingeschaltet, gibt **An … zurückgeben** sie der App wieder, und das ersetzt, was die App gerade hat. Dieser Schalter bleibt aus, bis du ihn einschaltest.
+
 ## Instanzen und Rollen {#roles}
 
 Die Seite **Instanzen** (eine Einstellungskachel, die an die Seitenleiste geheftet werden kann) zeigt die Gruppe als Netz, wer für wen was tut, eine Karte für diese Instanz und eine Karte für jedes andere Mitglied, die Android-Handys und die ZFS-Server. **Kopplung** unten rechts führt zur Kopplungsseite. Welche Teile an sind, wird unter **Einstellungen, Instanzen, Mehrere Server** festgelegt: **Instanzen**, **Empfänger** und **Holen**.

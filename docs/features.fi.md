@@ -83,7 +83,8 @@ Sisäänrakennettu MCP-palvelin antaa avustajan lukea varmuuskopioiden tilan, ka
 ## Sovellukset ja apuohjelmat {#apps}
 
 - **Android-sovellus**: kaikki ryhmäsi palvelimet puhelimessasi. [Android-sovellus](android.md)
-- **BombVault Widget**: ruutu Unraidin kojelaudalla. [Sovellukset](settings.md#apps)
+- **Linnoitus**: BombVault liittyy perheen muiden sovellusten joukkoon. ShipLog ja TowerTorch pyytävät varmuuskopion ennen kuin muuttavat konttia, FireSquire tarkistaa, milloin flash on viimeksi varmuuskopioitu, ja sovellukset, jotka osaavat varmuuskopioida itsensä, antavat sen varmuuskopion BombVaultille. [Linnoitus](offsite-recovery.md#fortress)
+- **TollRoll**: yksi ruutu Unraidin kojelaudalla BombVaultille ja linnoituksesi muille sovelluksille. [Sovellukset](settings.md#apps)
 - **Upotettava toimintoloki** kojelaudoille, kuten Homepage tai Heimdall. [Dashboard-widget](api.md#dashboard-widget)
 
 ## Muuta {#other}

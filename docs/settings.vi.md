@@ -74,7 +74,7 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 ## Ghép nối {#pairing}
 
-**Ghép nối** với **Tạo cụm từ** hoặc **Nhập cụm từ**, các thẻ từng bước, tên của phiên bản này, các thiết bị đang chờ **Duyệt**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, các thành viên của nhóm, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
+**Ghép nối** với **Tạo cụm từ** hoặc **Nhập cụm từ**, các thẻ từng bước, tên của phiên bản này, các thiết bị đang chờ **Duyệt**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, các thành viên của nhóm, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Bên dưới, **Pháo đài** đưa BombVault vào cùng các ứng dụng khác trong gia đình bằng mười hai từ của pháo đài, với một công tắc cho mỗi quyền giữa các ứng dụng, **Trả bản sao lưu về cho ứng dụng**, **Hiện cụm từ**, **Đổi** và **Rời đi**. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing), [Pháo đài](offsite-recovery.md#fortress) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
 
 ## Tích hợp {#integrations}
 
@@ -88,7 +88,7 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 - **Ứng dụng Android**: APK cho bản phát hành mà máy chủ của bạn đang chạy kèm mã QR, và mục trên F-Droid. Xem [Ứng dụng Android](android.md#install).
 - **ParleyPort**: container relay với mẫu Unraid của nó và lệnh Docker để khởi động nó.
-- **BombVault Widget**: một ô trên Dashboard của Unraid với nhật ký hoạt động của BombVault và lần chạy tiếp theo. Có kết nối SSH máy chủ thì thẻ tự cài và gỡ plugin. Không có thì nó đưa cho bạn địa chỉ `.plg` để cài dưới **Plugins, Install Plugin**.
+- **TollRoll**: một ô duy nhất trên Dashboard của Unraid cho BombVault và các ứng dụng khác trong pháo đài của bạn. Hãy cài nó từ Community Applications rồi cho nó vào pháo đài. Nó đọc các ứng dụng qua pháo đài và không cần mã thông báo. Xem [Pháo đài](offsite-recovery.md#fortress).
 
 ## Hệ thống {#system}
 

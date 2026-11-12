@@ -74,7 +74,7 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy.
 
 ## Parowanie {#pairing}
 
-**Parowanie** z **Wygeneruj frazę** albo **Wpisz frazę**, karty kroków, nazwa tej instancji, urządzenia czekające na **Zatwierdź**, karta **Relay** z jej czterema formami i **Co widzi Relay**, członkowie grupy oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Zobacz [Parowanie instancji](offsite-recovery.md#pairing) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
+**Parowanie** z **Wygeneruj frazę** albo **Wpisz frazę**, karty kroków, nazwa tej instancji, urządzenia czekające na **Zatwierdź**, karta **Relay** z jej czterema formami i **Co widzi Relay**, członkowie grupy oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Pod nimi **Twierdza** łączy BombVault z pozostałymi aplikacjami z rodziny za pomocą dwunastu słów twierdzy, z przełącznikiem dla każdego uprawnienia między aplikacjami, **Oddawaj kopie zapasowe aplikacjom**, **Pokaż frazę**, **Zmień** i **Opuść**. Zobacz [Parowanie instancji](offsite-recovery.md#pairing), [Twierdza](offsite-recovery.md#fortress) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
 
 ## Integracje {#integrations}
 
@@ -88,7 +88,7 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy.
 
 - **Aplikacja na Androida**: APK dla wydania, na którym działa Twój serwer, z kodem QR i wpisem F-Droid. Zobacz [Aplikacja na Androida](android.md#install).
 - **ParleyPort**: kontener relay z szablonem Unraid i poleceniem Docker, które go uruchamia.
-- **BombVault Widget**: kafelek na Pulpicie Unraid z dziennikiem aktywności BombVault i następnym przebiegiem. Przy połączeniu SSH z hostem karta sama instaluje i usuwa wtyczkę. Bez niego podaje adres `.plg` do zainstalowania w **Plugins, Install Plugin**.
+- **TollRoll**: jeden kafelek na Pulpicie Unraid dla BombVault i pozostałych aplikacji Twojej twierdzy. Zainstaluj go z Community Applications i pozwól mu dołączyć do twierdzy. Odczytuje aplikacje przez twierdzę i nie potrzebuje tokenu. Zobacz [Twierdza](offsite-recovery.md#fortress).
 
 ## System {#system}
 

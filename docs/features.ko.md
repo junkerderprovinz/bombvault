@@ -83,7 +83,8 @@ BombVault가 하는 일을 짧게 모은 목록입니다. 각 줄은 그것을 �
 ## 앱과 동반 도구 {#apps}
 
 - **Android 앱**: 그룹의 모든 서버를 휴대폰에서. [Android 앱](android.md)
-- **BombVault Widget**: Unraid 대시보드의 타일. [앱](settings.md#apps)
+- **요새**: BombVault가 패밀리의 다른 앱들과 함께합니다. ShipLog와 TowerTorch는 컨테이너를 바꾸기 전에 백업을 요청하고, FireSquire는 플래시가 마지막으로 백업된 때를 확인하며, 스스로 백업할 수 있는 앱은 그 백업을 BombVault에 넘겨줍니다. [요새](offsite-recovery.md#fortress)
+- **TollRoll**: BombVault와 요새의 다른 앱을 한데 모은 Unraid 대시보드의 타일 하나. [앱](settings.md#apps)
 - Homepage나 Heimdall 같은 대시보드를 위한 **삽입 가능한 활동 로그**. [대시보드 위젯](api.md#dashboard-widget)
 
 ## 기타 {#other}

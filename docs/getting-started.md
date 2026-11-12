@@ -45,7 +45,7 @@ What's different from Unraid:
 - **No Flash section.** There is no boot USB to capture or restore, so the Flash section has nothing to do here. Instead, when Host Data reaches the host's `/etc`, **Add** on the Backups page offers **System configuration** as a folder suggestion: a starting `/etc` folder set you review and edit before saving.
 - **No Unraid-native notifications.** BombVault's own in-app notification channels (webhook, off-site failure alerts, etc.) work as normal. Only the Unraid-specific push to its native notification system is skipped, since there is no such system to push to.
 - **VM backup is opt-in and needs a separate libvirtd host reachable over SSH.** See the commented-out block in the compose file. There is no VM manager built into a generic Docker host itself.
-- **No dashboard widget.** The BombVault Widget is an Unraid plugin, so that step is skipped as well.
+- **No dashboard tile.** TollRoll is an Unraid plugin, so that step is skipped as well.
 - **Finding a container's data.** Without Unraid's `appdata` convention, a container's data folder is found from the segments in `DATA_ROOT_SEGMENTS`, Docker named volumes, a Compose project's working directory and the `bombvault.data` label (see [Backup source detection](configuration.md#backup-source-detection)). Named volumes and the `/etc` preset only reach paths inside the Host Data mount, so point Host Data at a common ancestor that also covers Docker's data root.
 - **`PLATFORM`.** Set it to `generic` or `truenas`. Left unset, BombVault detects Unraid by its own marker on the flash mount and treats anything else as generic, and the Unraid-only steps are skipped instead of tried and failing.
 

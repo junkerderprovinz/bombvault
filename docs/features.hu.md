@@ -83,7 +83,8 @@ Egy beépített MCP-szerver lehetővé teszi, hogy egy asszisztens elolvassa a m
 ## Alkalmazások és társak {#apps}
 
 - **Android-alkalmazás**: a csoportod összes szervere a telefonodon. [Android-alkalmazás](android.md)
-- **BombVault Widget**: egy csempe az Unraid vezérlőpultján. [Alkalmazások](settings.md#apps)
+- **Az erőd**: a BombVault csatlakozik a család többi alkalmazásához. A ShipLog és a TowerTorch mentést kér, mielőtt megváltoztat egy konténert, a FireSquire megnézi, mikor készült utoljára mentés a flashről, azok az alkalmazások pedig, amelyek saját magukat is tudják menteni, átadják ezt a mentést a BombVaultnak. [Az erőd](offsite-recovery.md#fortress)
+- **TollRoll**: egyetlen csempe az Unraid vezérlőpultján a BombVaultnak és az erődöd többi alkalmazásának. [Alkalmazások](settings.md#apps)
 - **Beágyazható tevékenységnapló** irányítópultokhoz, például a Homepage-hez vagy a Heimdallhoz. [Irányítópult-widget](api.md#dashboard-widget)
 
 ## Egyéb {#other}

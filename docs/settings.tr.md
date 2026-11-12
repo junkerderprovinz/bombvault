@@ -74,7 +74,7 @@ Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gere
 
 ## Eşleştirme {#pairing}
 
-**İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**, adım kartları, bu örneğin adı, **Onayla** bekleyen cihazlar, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı, grubun üyeleri ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu**. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
+**İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**, adım kartları, bu örneğin adı, **Onayla** bekleyen cihazlar, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı, grubun üyeleri ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu**. Bunların altında **Kale**, kalenin on iki kelimesiyle BombVault'u ailenin diğer uygulamalarına katar. Orada uygulamalar arasındaki her izin için bir anahtar, **Yedekleri uygulamalara geri ver** anahtarı ve **İfadeyi göster**, **Değiştir** ile **Ayrıl** düğmeleri bulunur. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing), [Kale](offsite-recovery.md#fortress) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
 
 ## Entegrasyonlar {#integrations}
 
@@ -88,7 +88,7 @@ Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gere
 
 - **Android uygulaması**: sunucunun çalıştırdığı sürümün APK'sı, bir QR koduyla, ve F-Droid sayfası. Bkz. [Android uygulaması](android.md#install).
 - **ParleyPort**: Unraid şablonu ve onu başlatan Docker komutuyla röle konteyneri.
-- **BombVault Widget**: Unraid Panosunda BombVault'un etkinlik günlüğünü ve sonraki çalıştırmayı gösteren bir kutucuk. Ana makine SSH bağlantısı varsa kart eklentiyi kendisi kurar ve kaldırır. Yoksa **Plugins, Install Plugin** altında kurman için `.plg` adresini verir.
+- **TollRoll**: Unraid Panosunda BombVault ve kalendeki diğer uygulamalar için tek bir kutucuk. Onu Community Applications'tan kur ve kaleye katılmasına izin ver. Uygulamaları kale üzerinden okur ve belirteç gerektirmez. Bkz. [Kale](offsite-recovery.md#fortress).
 
 ## Sistem {#system}
 

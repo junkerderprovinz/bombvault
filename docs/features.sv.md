@@ -83,7 +83,8 @@ En inbyggd MCP-server låter en assistent läsa säkerhetskopieringsstatus, täc
 ## Appar och följeslagare {#apps}
 
 - **Android-app**: alla servrar i din grupp i telefonen. [Android-app](android.md)
-- **BombVault Widget**: en bricka på Unraids Dashboard. [Appar](settings.md#apps)
+- **Fästningen**: BombVault går med bland familjens andra appar. ShipLog och TowerTorch ber om en säkerhetskopia innan de ändrar en container, FireSquire kollar när flashen senast säkerhetskopierades, och appar som kan säkerhetskopiera sig själva lämnar den säkerhetskopian till BombVault. [Fästningen](offsite-recovery.md#fortress)
+- **TollRoll**: en enda bricka på Unraids Dashboard för BombVault och de andra apparna i din fästning. [Appar](settings.md#apps)
 - **Inbäddningsbar aktivitetslogg** för instrumentpaneler som Homepage eller Heimdall. [Dashboard-widget](api.md#dashboard-widget)
 
 ## Övrigt {#other}
