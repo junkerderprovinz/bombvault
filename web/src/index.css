@@ -4969,6 +4969,7 @@ body {
   }
   .glim-fortress-removed {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 0.75rem 0.625rem 1.125rem;
@@ -4978,8 +4979,11 @@ body {
     font-size: var(--text-subline);
   }
   .glim-fortress-removed > span {
-    flex: 1;
+    flex: 1 1 16rem;
     min-width: 0;
+  }
+  .glim-fortress-removed > .glim-btn {
+    margin-inline-start: auto;
   }
   .glim-fortress-removed > svg {
     flex: none;
@@ -5190,10 +5194,7 @@ body {
     .glim-fortress-switch {
       padding: 0.75rem 0.875rem;
     }
-    .glim-fortress-removed {
-      flex-wrap: wrap;
-      padding-inline-start: 0.875rem;
-    }
+    .glim-fortress-removed { padding-inline-start: 0.875rem; }
   }
   @media (max-width: 600px) {
     .glim-permission {
