@@ -23,6 +23,7 @@ func (h *Handler) registerFortressMembership(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/fortress/phrase", h.handleFortressChange)
 	mux.HandleFunc("PUT /api/fortress/device", h.handleFortressDevice)
 	mux.HandleFunc("PUT /api/fortress/permissions", h.handleFortressPermission)
+	mux.HandleFunc("DELETE /api/fortress/members/{id}", h.handleFortressRemove)
 	mux.HandleFunc("DELETE /api/fortress", h.handleFortressLeave)
 }
 
@@ -43,6 +44,11 @@ type fortressView struct {
 	// with, which move into the fortress on joining and leave it with this
 	// instance.
 	PairedWith []string `json:"pairedWith"`
+	// Removed are the members taken out here since the phrase last changed,
+	// which the phrase still lets back in.
+	Removed []fortressRemoved `json:"removed"`
+	// RemovedHere says another member took this instance out.
+	RemovedHere bool `json:"removedHere"`
 }
 
 // fortressMemberView is another instance of the fortress that said which app
@@ -90,6 +96,10 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		Permissions:   []fortressPermissionView{},
 		PairedWith:    []string{},
 	}
+	h.svc.house.mu.Lock()
+	v.Removed = append([]fortressRemoved{}, h.svc.house.removed...)
+	v.RemovedHere = h.svc.house.removedHere
+	h.svc.house.mu.Unlock()
 	for _, pm := range h.svc.pairing().Members() {
 		v.PairedWith = append(v.PairedWith, pm.Name)
 	}
@@ -137,6 +147,8 @@ func writeFortressError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "inFortress", "error": err.Error()})
 	case errors.Is(err, errNoFortress):
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "noFortress", "error": err.Error()})
+	case errors.Is(err, errNoMember):
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "noMember", "error": err.Error()})
 	default:
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	}
@@ -255,6 +267,17 @@ func (h *Handler) handleFortressPermission(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// handleFortressRemove takes another member out of the fortress. The phrase
+// still lets it back in, which the view says until the phrase changes.
+// DELETE /api/fortress/members/{id}
+func (h *Handler) handleFortressRemove(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.RemoveFortressMember(r.PathValue("id")); err != nil {
+		writeFortressError(w, err)
+		return
+	}
+	h.writeFortressView(w)
 }
 
 // handleFortressLeave takes BombVault out of its fortress.

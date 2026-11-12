@@ -57,6 +57,11 @@ type fortressPlace struct {
 	// forget opens the fortress again once the secret of the phrase before
 	// the last change is due to go.
 	forget *time.Timer
+	// removed are the members this instance took out since the phrase last
+	// changed, and removedHere says another member took this instance out.
+	// Both last until the next start.
+	removed     []fortressRemoved
+	removedHere bool
 	// direct answers the direct calls of f and the groups beside it. It
 	// bounds the calls it reads for more than one group, so it is kept as
 	// long as those groups stay the same.
@@ -287,6 +292,9 @@ func (s *Service) joinFortress(sec []byte) error {
 	if err := s.store.JoinFortress(sealed, seed); err != nil {
 		return err
 	}
+	s.house.mu.Lock()
+	s.house.removedHere = false
+	s.house.mu.Unlock()
 	if err := s.openFortress(); err != nil {
 		return errors.Join(err, s.store.LeaveFortress())
 	}
@@ -313,6 +321,7 @@ func (s *Service) LeaveFortress() error {
 // with door held.
 func (s *Service) forgetFortress() error {
 	s.closeFortress()
+	s.forgetRemoved()
 	return errors.Join(s.store.LeaveFortress(), os.RemoveAll(s.fortressDir()))
 }
 
@@ -334,6 +343,9 @@ func (s *Service) removedFrom(gen int) {
 		if err := s.forgetFortress(); err != nil {
 			log.Printf("fortress: forget the membership: %v", err)
 		}
+		s.house.mu.Lock()
+		s.house.removedHere = true
+		s.house.mu.Unlock()
 	}()
 }
 
@@ -510,6 +522,7 @@ func (k fortressKeeper) Keep(sec []byte) error {
 	if err := k.s.store.SetFortressSecret(sealed, m.SecretEnc, time.Now()); err != nil {
 		return err
 	}
+	k.s.forgetRemoved()
 	k.s.house.mu.Lock()
 	own := k.s.house.changing
 	k.s.house.mu.Unlock()
