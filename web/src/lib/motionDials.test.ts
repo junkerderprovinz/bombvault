@@ -102,4 +102,15 @@ describe("the motion dials", () => {
     expect(frames).toMatch(/var\(--motion-row-wiggle-tilt/);
     expect(frames).toMatch(/var\(--motion-row-wiggle-lift/);
   });
+
+  it("play the welcome scene through the scene dials, never at off, and start and end every loop on the closed vault", () => {
+    for (const part of ["item", "door", "dial", "seal", "spark"]) {
+      const selector = `:root:not([data-motion="off"]) .glim-welcome-${part}`;
+      expect(ruleBody(selector, gate)).toContain(`glim-welcome-${part} var(--motion-scene-dur, 6s)`);
+      const frames = keyframes(`glim-welcome-${part}`);
+      expect(frames, part).toMatch(/\n\s*0%[^{]*\{[^}]*transform: (none|translate)/);
+      expect(frames, part).toMatch(/100% \{[^}]*transform: none;/);
+    }
+    expect(keyframes("glim-welcome-item")).toMatch(/var\(--motion-scene-hop/);
+  });
 });
