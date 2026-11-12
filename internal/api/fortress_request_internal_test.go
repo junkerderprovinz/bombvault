@@ -10,6 +10,7 @@ import (
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -34,6 +35,7 @@ func newRequestRig(t *testing.T, start func(n int32) (bool, error)) *requestRig 
 		t.Fatal(err)
 	}
 	rig := &requestRig{svc: svc, st: st, target: tg}
+	svc.docker = namespaceDocker{live: map[string]model.Inspect{"nextcloud": {}}}
 	svc.house.retry = 10 * time.Millisecond
 	svc.house.start = func(_ context.Context, name string) (bool, error) {
 		if name != "nextcloud" {
@@ -154,5 +156,38 @@ func TestABackupRequestRefusesWhatItCannotDo(t *testing.T) {
 	}
 	if n := rig.starts.Load(); n != 0 {
 		t.Fatalf("a refused request started %d backups", n)
+	}
+}
+
+// A container BombVault has not backed up yet is still on the host, so a
+// request backs it up for the first time.
+func TestABackupRequestBacksUpAContainerWithoutBackupsYet(t *testing.T) {
+	svc, st := newFortressSvc(t)
+	svc.docker = namespaceDocker{live: map[string]model.Inspect{"jellyfin": {}}}
+	svc.house.retry = 10 * time.Millisecond
+	var started atomic.Value
+	svc.house.start = func(_ context.Context, name string) (bool, error) {
+		started.Store(name)
+		return true, nil
+	}
+	out, err := svc.backupRequest(context.Background(), shipLog, []byte(`{"container":"jellyfin","reason":"update"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, _ := decodeAnswer(t, out)["run"].(string)
+	rig := &requestRig{svc: svc, st: st}
+	rig.waitFor(t, run, "running")
+	if started.Load() != "jellyfin" {
+		t.Fatalf("started %v", started.Load())
+	}
+
+	tg, err := st.UpsertTarget(store.Target{ContainerName: "jellyfin", AppdataPaths: []string{"/data"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	rig.target = tg
+	rig.finish(t, "success", "9b1e44d0", "")
+	if got := rig.waitFor(t, run, "done"); got["snapshot"] != "9b1e44d0" {
+		t.Fatalf("the first backup of a container: %v", got)
 	}
 }

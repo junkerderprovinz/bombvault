@@ -65,11 +65,19 @@ func (s *Service) backupRequest(ctx context.Context, from fortress.Caller, body 
 	if in.Reason != "update" && in.Reason != "maintenance" {
 		return nil, refuse(http.StatusBadRequest, "unknown_reason")
 	}
-	tg, err := s.store.GetTargetByContainer(in.Container)
-	if errors.Is(err, sql.ErrNoRows) || in.Container == "" {
+	if in.Container == "" {
 		return nil, refuse(http.StatusNotFound, "unknown_container")
 	}
-	if err != nil {
+	tg, err := s.store.GetTargetByContainer(in.Container)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		// A container on the host that has no backup yet gets its first one,
+		// and its target with it.
+		if _, iErr := s.docker.Inspect(ctx, in.Container); iErr != nil {
+			return nil, refuse(http.StatusNotFound, "unknown_container")
+		}
+		tg = store.Target{ContainerName: in.Container}
+	case err != nil:
 		return nil, err
 	}
 	var raw [8]byte
@@ -146,6 +154,16 @@ func (s *Service) requestState(id string) ([]byte, error) {
 		answer.State, answer.Error = "failed", r.err
 	case r.started:
 		answer.State = "running"
+		if r.target == "" {
+			tg, err := s.store.GetTargetByContainer(r.name)
+			if errors.Is(err, sql.ErrNoRows) {
+				break
+			}
+			if err != nil {
+				return nil, err
+			}
+			r.target = tg.ID
+		}
 		runs, err := s.store.ListRunsFiltered(store.RunFilter{TargetIDs: []string{r.target}, Kinds: []string{"backup"}, Since: r.startedAt, Limit: requestsKept})
 		if err != nil {
 			return nil, err
