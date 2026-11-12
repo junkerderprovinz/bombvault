@@ -879,6 +879,8 @@ function knownSentence(status: number, code: string | undefined, busy?: Busy): s
       return translate("containers.batchAlreadyRunning");
     case "relay-refused":
       return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
+    case "opened-refused":
+      return translate("apiError.openedRefused");
     default:
       return undefined;
   }
@@ -7124,8 +7126,12 @@ export interface FortressMember {
   version: string;
   device: string;
   deployment: string;
+  /** The server it says it runs on, when it says. */
+  host?: string;
   kind: string;
   online: boolean;
+  /** It offers its pages to open through the fortress. */
+  opens: boolean;
   /** Reached through the relay alone. */
   relay: boolean;
   /** Unix seconds, absent while it was never seen. */
@@ -7197,6 +7203,31 @@ export function setFortressPermission(p: FortressPermissionState): Promise<OkEnv
 /** DELETE /api/fortress/members/{id} - take another member out of the fortress. */
 export function removeFortressMember(id: string): Promise<FortressState> {
   return fetchJSON(`/api/fortress/members/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** POST /api/fortress/open/{id} - open another member's pages in a tab of
+ *  their own. The answer carries the tab's path, or the code of why it did not
+ *  open: a code of the kit's, or a server without a login password or a
+ *  session that is not one somebody signed in for. */
+export function openFortressMember(id: string): Promise<OkEnvelope & { path?: string }> {
+  return fetchKeyJSON(`/api/fortress/open/${encodeURIComponent(id)}`, { method: "POST" });
+}
+
+/** What GET /api/fortress/members/{id}/status reads of a member without pages
+ *  of its own: its status in the page's language and the end of its log, the
+ *  newest line first. Times are Unix seconds. */
+export interface FortressMemberStatus extends OkEnvelope {
+  report?: {
+    state: string;
+    needsYou: { severity: string; text: string }[];
+    work: { title: string; progress?: number }[];
+    next: { title: string; at: number }[];
+  };
+  log?: { at: number; level: string; text: string }[];
+}
+
+export function fortressMemberStatus(id: string, lang: string): Promise<FortressMemberStatus> {
+  return fetchJSON(`/api/fortress/members/${encodeURIComponent(id)}/status?lang=${encodeURIComponent(lang)}`);
 }
 
 /** DELETE /api/fortress - leave the fortress, and the group on the same phrase with it. */

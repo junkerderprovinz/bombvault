@@ -213,6 +213,13 @@ describe("buildLogLines", () => {
     expect(line.text).toBe("keydeposit");
   });
 
+  it("says which member of the fortress opened the pages", () => {
+    const run = makeRun({ targetId: "fortress", kind: "opened", target: "", domain: "", subject: "KnightLoader · Bottich · 3f2a91c0" });
+    const [line] = buildLogLines([run], {}, [], resolveName, 2_000_000);
+    expect(line.text).toBe("activityLog.lineOpened name=KnightLoader · Bottich · 3f2a91c0");
+    expect(line.status).toBe("info");
+  });
+
   it("names the links a restore left out", () => {
     const run = makeRun({
       kind: "restore",

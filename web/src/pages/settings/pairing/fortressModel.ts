@@ -7,16 +7,26 @@ import type { TranslationKey } from "../../../lib/i18n";
 
 const SELF = "bombvault";
 
-/** The actions BombVault has words for: its own and the one it calls. */
+/** The actions BombVault has words for: its own and the ones it calls. */
 const ACTION_TITLES: Record<string, TranslationKey> = {
   "backup.last": "fortress.action.backupLast",
   "backup.request": "fortress.action.backupRequest",
   "snapshots.browse": "fortress.action.snapshotsBrowse",
   "backup.export": "fortress.action.backupExport",
   "backup.import": "fortress.action.backupImport",
+  "ui.open": "fortress.action.uiOpen",
 };
 
-export function fortressApps(members: FortressMember[], ago: (unix: number) => string): FortressApp[] {
+// Where a member says it runs: the server it names, else its device.
+const placeOf = (m: FortressMember) => `${m.app} ${(m.host || m.device).toLowerCase()}`;
+
+/** fortressApps puts each other app on one card. Every instance opens unless
+ *  `opens` is false, as on a paired phone, whose session opens nothing. Two
+ *  members that claim one app in one place are marked, since one of them may
+ *  copy the other's sign-in. */
+export function fortressApps(members: FortressMember[], ago: (unix: number) => string, opens = true): FortressApp[] {
+  const claims = new Map<string, number>();
+  for (const m of members) claims.set(placeOf(m), (claims.get(placeOf(m)) ?? 0) + 1);
   const apps = new Map<string, FortressApp>();
   for (const m of members) {
     if (m.app === SELF) continue;
@@ -31,6 +41,9 @@ export function fortressApps(members: FortressMember[], ago: (unix: number) => s
       presence: m.online ? "connected" : "away",
       relay: m.relay,
       lastSeen: !m.online && m.lastSeen ? ago(m.lastSeen) : undefined,
+      open: opens && m.kind === "instance" ? {} : undefined,
+      doubt: (claims.get(placeOf(m)) ?? 0) > 1 || undefined,
+      print: m.id.slice(-8),
     });
     apps.set(m.app, app);
   }

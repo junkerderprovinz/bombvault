@@ -8,17 +8,22 @@ import {
   fill,
   fortressText,
   memberName,
+  openRefusalText,
   othersLine,
   type ChangeAnswer,
   type FortressAnswer,
   type FortressApp,
   type FortressInstance,
+  type FortressLogLine,
   type FortressPermission,
+  type FortressStatusReport,
   type FortressText,
   type PhraseAnswer,
 } from "@glimstone/core";
 import { FieldRow } from "@glimstone/react/FieldRow";
 import { Fortress, FortressPairing } from "@glimstone/react/Fortress";
+import { FortressDoubtWindow } from "@glimstone/react/FortressAppCard";
+import { FortressStatusWindow } from "@glimstone/react/FortressStatusWindow";
 import { PasswordField } from "@glimstone/react/PasswordField";
 import { Window } from "@glimstone/react/Window";
 import { Badge } from "../../../components/Badge";
@@ -28,7 +33,10 @@ import { IconEye } from "../../../components/glyphs";
 import { IconTabApps, IconTrash } from "../../../components/navGlyphs";
 import {
   changeFortressPhrase,
+  failureOf,
+  fortressMemberStatus,
   leaveFortress,
+  openFortressMember,
   removeFortressMember,
   setFortressPermission,
   showFortressPhrase,
@@ -36,7 +44,9 @@ import {
   type FortressState,
   type GroupState,
 } from "../../../lib/api";
+import { withinBase } from "../../../lib/base";
 import { useT } from "../../../lib/i18n";
+import { formatTs } from "../../../lib/reltime";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
 import { fortressPermissions, permissionOf } from "./fortressModel";
@@ -270,22 +280,27 @@ function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (ans
 
 /** AppCard is another app of the fortress in the card the Instances tab draws
  *  for an instance: its logo, its state and where it runs, with Remove and
- *  Open along the foot as the Instances tab has them. Where it cannot open
- *  from here, the place of Open says where it does. */
+ *  Open along the foot as the Instances tab has them, and an Open on each row
+ *  where it runs in more than one place. An instance another member claims as
+ *  well asks before it opens. */
 function AppCard({
   app,
   text,
   hueIndex,
   remove,
+  onOpen,
 }: {
   app: FortressApp;
   text: FortressText;
   hueIndex: number;
   /** GlimStone's window that asks before an instance is removed. */
   remove?: (id: string, name: string) => void;
+  onOpen: (app: FortressApp, instance: FortressInstance) => void;
 }) {
   const { lang } = useT();
   const view = appCardView(app, text, lang);
+  const [asking, setAsking] = useState<FortressInstance | null>(null);
+  const open = (instance: FortressInstance) => (instance.doubt ? setAsking(instance) : onOpen(app, instance));
   const presence = (p: string) => (p === "connected" ? text.connected : p === "checking" ? text.checking : text.away);
   const removeButton = (instance: FortressInstance) =>
     remove &&
@@ -300,69 +315,144 @@ function AppCard({
       />
     );
   return (
-    <InstanceCard
-      cardKey={`app-${app.id}`}
-      name={app.name}
-      eyebrow={view.eyebrow || undefined}
-      mark={
-        app.logo ? (
-          <LogoMark src={app.logo} />
-        ) : (
-          <GlyphMark>
-            <IconTabApps />
-          </GlyphMark>
-        )
-      }
-      badges={
-        <>
-          {view.needs && (
-            <Badge tone="warn" size="large">
-              {view.needs}
-            </Badge>
-          )}
-          {view.relay && <Badge size="large">{text.viaRelay}</Badge>}
-          <Badge tone={view.presence === "connected" ? "ok" : "neutral"} size="large">
-            {presence(view.presence)}
-          </Badge>
-        </>
-      }
-      facts={<Facts items={view.facts} />}
-      actions={
-        <>
-          {view.rows.length === 0 && removeButton(view.main)}
-          {view.open ? (
-            <Button
-              label={view.open.label}
-              labelKey="instances.open"
-              glyph={<IconEye />}
-              tone="neutral"
-              onClick={() => window.open(view.open!.href, "_blank", "noopener")}
-            />
+    <>
+      <InstanceCard
+        cardKey={`app-${app.id}`}
+        name={app.name}
+        eyebrow={view.eyebrow || undefined}
+        mark={
+          app.logo ? (
+            <LogoMark src={app.logo} />
           ) : (
-            <span data-app-note className="inline-flex h-(--btn-h) items-center text-xs text-carbon-textMuted">
-              {view.note}
-            </span>
-          )}
-        </>
-      }
-      index={hueIndex}
-    >
-      {view.rows.length > 0 && (
-        <ul className="flex flex-col gap-2" data-app-rows>
-          {view.rows.map(({ instance, sub }) => (
-            <li key={instance.id} className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2">
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-medium text-carbon-text wrap-anywhere">{instance.device}</span>
-                <span className="glim-num text-xs text-carbon-textMuted">{sub}</span>
-              </span>
-              <Badge tone={instance.presence === "connected" ? "ok" : "neutral"}>{presence(instance.presence)}</Badge>
-              {removeButton(instance)}
-            </li>
-          ))}
-        </ul>
-      )}
-    </InstanceCard>
+            <GlyphMark>
+              <IconTabApps />
+            </GlyphMark>
+          )
+        }
+        badges={
+          <>
+            {view.doubt && (
+              <Badge tone="warn" size="large" title={view.doubt.tip}>
+                {view.doubt.label}
+              </Badge>
+            )}
+            {view.needs && (
+              <Badge tone="warn" size="large">
+                {view.needs}
+              </Badge>
+            )}
+            {view.relay && <Badge size="large">{text.viaRelay}</Badge>}
+            <Badge tone={view.presence === "connected" ? "ok" : "neutral"} size="large">
+              {presence(view.presence)}
+            </Badge>
+          </>
+        }
+        facts={<Facts items={view.facts} />}
+        actions={
+          <>
+            {view.rows.length === 0 && removeButton(view.main)}
+            {view.open && (
+              <Button label={view.open.label} labelKey="instances.open" glyph={<IconEye />} tone="neutral" onClick={() => open(view.main)} />
+            )}
+          </>
+        }
+        index={hueIndex}
+      >
+        {view.rows.length > 0 && (
+          <ul className="flex flex-col gap-2" data-app-rows>
+            {view.rows.map(({ instance, sub, open: opens }) => (
+              <li key={instance.id} className="flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2">
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium text-carbon-text wrap-anywhere">{instance.device}</span>
+                  <span className="glim-num text-xs text-carbon-textMuted">{sub}</span>
+                </span>
+                <Badge tone={instance.presence === "connected" ? "ok" : "neutral"}>{presence(instance.presence)}</Badge>
+                {opens && (
+                  <Button
+                    label={text.open}
+                    labelKey="instances.open"
+                    glyph={<IconEye />}
+                    tone="neutral"
+                    title={memberName(text, app, instance)}
+                    onClick={() => open(instance)}
+                  />
+                )}
+                {removeButton(instance)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </InstanceCard>
+      {asking && <FortressDoubtWindow app={app} instance={asking} text={text} onOpen={() => onOpen(app, asking)} onClose={() => setAsking(null)} />}
+    </>
   );
+}
+
+/** The status window of a member without pages of its own, while it loads
+ *  and once it answered. */
+interface StatusShown {
+  app: FortressApp;
+  instance: FortressInstance;
+  report?: FortressStatusReport;
+  log?: FortressLogLine[];
+  error?: string;
+}
+
+/** useOpenMember opens another member from its card: its own pages in a tab
+ *  of their own where it offers them, else its status and the end of its log
+ *  in a window, as for a plugin, whose pages live in Unraid. A refusal says
+ *  why in a toast. */
+function useOpenMember(view: FortressState, text: FortressText): [(app: FortressApp, instance: FortressInstance) => void, ReactNode] {
+  const { t, lang } = useT();
+  const { push } = useToast();
+  const [shown, setShown] = useState<StatusShown | null>(null);
+
+  const refusal = (code?: string) => {
+    if (code === "password-not-set") return t("fortress.openNeedsPassword");
+    if (code === "own-login-needed") return failureOf(403, code).message;
+    return openRefusalText(text, code ?? "unreachable");
+  };
+
+  const openPages = async (id: string) => {
+    const r = await openFortressMember(id).catch(() => null);
+    if (r?.ok && r.path) window.open(withinBase(r.path), "_blank", "noopener");
+    else push(refusal(r?.code), "fail");
+  };
+
+  const showStatus = async (app: FortressApp, instance: FortressInstance) => {
+    setShown({ app, instance });
+    const r = await fortressMemberStatus(instance.id, lang).catch(() => null);
+    const answer: StatusShown = { app, instance };
+    if (r?.ok && r.report) {
+      answer.report = { ...r.report, next: r.report.next.map((n) => ({ title: n.title, at: formatTs(n.at) })) };
+      answer.log = (r.log ?? []).map((l) => ({ at: formatTs(l.at), level: l.level, text: l.text }));
+    } else {
+      answer.error = refusal(r?.code);
+    }
+    setShown((current) => (current?.instance.id === instance.id ? answer : current));
+  };
+
+  const open = (app: FortressApp, instance: FortressInstance) => {
+    if (view.members.find((m) => m.id === instance.id)?.opens) void openPages(instance.id);
+    else void showStatus(app, instance);
+  };
+
+  return [
+    open,
+    shown && (
+      <FortressStatusWindow
+        app={shown.app}
+        instance={shown.instance}
+        report={shown.report}
+        log={shown.log}
+        loading={!shown.report && shown.error === undefined}
+        error={shown.error}
+        text={text}
+        lang={lang}
+        onClose={() => setShown(null)}
+      />
+    ),
+  ];
 }
 
 /** OtherApps is the rest of the fortress: the switch that shows the other
@@ -391,6 +481,7 @@ export function OtherApps({
   const { push } = useToast();
   const text = useFortressText(group.relay.mode === "off");
   const [onChangePhrase, passwordWindow] = usePhraseChange(view, text, onChanged);
+  const [onOpen, statusWindow] = useOpenMember(view, text);
   const all = fortressPermissions(view.permissions, view.members, t);
   const givesBack = (p: FortressPermission | undefined) => !!giveBack && !!p && p.from === APP.id && p.id.endsWith(" backup.import");
   const permissions = all.map((p) => (givesBack(p) ? { ...p, on: p.on && !!giveBack?.on } : p));
@@ -435,7 +526,7 @@ export function OtherApps({
         onRemove={onRemove}
         onChangePhrase={view.phrase ? onChangePhrase : undefined}
         removed={view.removed.map((r) => fill(text.memberOn, { app: r.name, device: r.device }))}
-        renderApp={(app, hueIndex, remove) => <AppCard app={app} text={text} hueIndex={hueIndex} remove={remove} />}
+        renderApp={(app, hueIndex, remove) => <AppCard app={app} text={text} hueIndex={hueIndex} remove={remove} onOpen={onOpen} />}
         permissionExtra={(p: FortressPermission) =>
           p.id === giveBackAt && <p className="text-xs text-carbon-textMuted">{t("appImport.toggleHint")}</p>
         }
@@ -443,6 +534,7 @@ export function OtherApps({
         hueStart={hueStart}
       />
       {passwordWindow}
+      {statusWindow}
     </>
   );
 }

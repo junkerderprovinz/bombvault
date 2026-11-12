@@ -4,8 +4,8 @@
 // other apps stand in the cards of the Instances tab, with their logos, and
 // giving backups back sits under the permission it goes with.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { storeShowOthers } from "@glimstone/core";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { fortressText, storeShowOthers } from "@glimstone/core";
 import jsQR from "jsqr";
 import { I18nProvider, en } from "../../../lib/i18n";
 import type { FortressMember, FortressState, GroupState } from "../../../lib/api";
@@ -18,6 +18,8 @@ const LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
 
 let view: FortressState;
 const calls: string[] = [];
+const toasts: string[] = [];
+let opened: { ok: boolean; path?: string; code?: string } = { ok: true, path: "/fortress/open/0123abcd" };
 let changed = 0;
 
 function state(over: Partial<FortressState> = {}): FortressState {
@@ -53,6 +55,7 @@ const member = (over: Partial<FortressMember>): FortressMember => ({
   deployment: "container",
   kind: "instance",
   online: true,
+  opens: true,
   relay: false,
   ...over,
 });
@@ -80,6 +83,18 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       calls.push(`permission ${p.action} ${p.on}`);
       return Promise.resolve({ ok: true });
     },
+    openFortressMember: (id: string) => {
+      calls.push(`open ${id}`);
+      return Promise.resolve(opened);
+    },
+    fortressMemberStatus: (id: string, lang: string) => {
+      calls.push(`status ${id} ${lang}`);
+      return Promise.resolve({
+        ok: true,
+        report: { state: "warning", needsYou: [{ severity: "warn", text: "2 updates waiting" }], work: [], next: [] },
+        log: [{ at: 1000, level: "info", text: "ShipLog updated plex" }],
+      });
+    },
     removeFortressMember: (id: string) => {
       calls.push(`remove ${id}`);
       view = { ...view, members: [], removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] };
@@ -88,7 +103,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   };
 });
 
-vi.mock("../../../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
+vi.mock("../../../lib/toast", () => ({ useToast: () => ({ push: (message: string) => toasts.push(message) }) }));
 
 function renderBlock(g: GroupState = group()) {
   return render(
@@ -122,6 +137,8 @@ beforeEach(() => {
   view = state();
   calls.length = 0;
   changed = 0;
+  toasts.length = 0;
+  opened = { ok: true, path: "/fortress/open/0123abcd" };
 });
 
 afterEach(() => {
@@ -262,11 +279,53 @@ describe("the other apps", () => {
     expect(button("show")).toBeNull();
   });
 
-  it("say where an app opens in the foot of its card, after Remove", () => {
-    view = state({ members: [member({})] });
+  it("open an app's own pages in a tab of their own, from anywhere", async () => {
+    view = state({ members: [member({ relay: true })] });
+    const tabs: unknown[][] = [];
+    const spy = vi.spyOn(window, "open").mockImplementation((...args: unknown[]) => {
+      tabs.push(args);
+      return null;
+    });
     renderApps();
-    const foot = document.querySelector('[data-instance="app-knightloader"] [data-app-note]')!.parentElement!;
-    expect(foot.textContent).toBe("RemoveOpens only on Bottich");
+    const foot = document.querySelector('[data-instance="app-knightloader"]')!;
+    await act(async () => fireEvent.click(within(foot).getByRole("button", { name: en["instances.open"] })));
+    expect(calls).toEqual(["open k1"]);
+    expect(tabs).toEqual([["/fortress/open/0123abcd", "_blank", "noopener"]]);
+    spy.mockRestore();
+  });
+
+  it("say why an app did not open", async () => {
+    view = state({ members: [member({})] });
+    opened = { ok: false, code: "ui_no_login" };
+    renderApps();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
+    expect(toasts).toEqual([fortressText("en").openRefused.ui_no_login]);
+    opened = { ok: false, code: "password-not-set" };
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
+    expect(toasts[1]).toBe(en["fortress.openNeedsPassword"]);
+  });
+
+  it("show the state of an app without pages of its own, such as a plugin", async () => {
+    view = state({ members: [member({ id: "s1", app: "shiplog", name: "ShipLog", deployment: "plugin", opens: false })] });
+    renderApps();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
+    expect(calls).toEqual(["status s1 en"]);
+    const status = document.querySelector('[data-glim="FortressStatusWindow"]')!;
+    expect(status.textContent).toContain("2 updates waiting");
+    expect(status.textContent).toContain("ShipLog updated plex");
+  });
+
+  it("ask before opening one of two members that claim the same app on the same server", async () => {
+    view = state({ members: [member({ host: "Bottich" }), member({ id: "k2", device: "Bottich", host: "Bottich" })] });
+    renderApps();
+    const card = document.querySelector('[data-instance="app-knightloader"]')!;
+    const [first] = within(card).getAllByRole("button", { name: en["instances.open"] });
+    await act(async () => fireEvent.click(first));
+    expect(calls).toEqual([]);
+    const ask = document.querySelector('[data-glim="FortressDoubtWindow"]')!;
+    expect(ask).toBeTruthy();
+    await act(async () => fireEvent.click(ask.querySelector('[data-fortress="open-anyway"]')!));
+    expect(calls).toEqual(["open k1"]);
   });
 
   it("give an app its own backup back with one switch, which also lets backups go back at all", async () => {

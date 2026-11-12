@@ -73,6 +73,8 @@ export function runKindLabel(t: T, kind: string): string {
       return t("run.kindKeyRefuse");
     case "keyrelease":
       return t("run.kindKeyRelease");
+    case "opened":
+      return t("run.kindOpened");
     default:
       return KEY_RUN_KIND[kind] ? t(KEY_RUN_KIND[kind]) : kind;
   }

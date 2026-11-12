@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { storedShowOthers, storeShowOthers } from "@glimstone/core";
 import { Button } from "../../../components/Button";
 import { IconClose } from "../../../components/navGlyphs";
-import { getFortress, getGroup, type FortressState, type GroupState } from "../../../lib/api";
+import { getFortress, getGroup, openedAsPairedPhone, type FortressState, type GroupState } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
 import { relativeTime } from "../../../lib/reltime";
 import { useOpenPasswordField } from "../shared";
@@ -102,7 +102,7 @@ function Cards({
   const [createdHere, setCreatedHere] = useState(false);
   const [showOthers, setShowOthers] = useState(storedShowOthers);
   const joinedAgo = useJoinedAgo(group);
-  const apps = view.joined ? fortressApps(view.members, (unix) => relativeTime(t, unix)) : [];
+  const apps = view.joined ? fortressApps(view.members, (unix) => relativeTime(t, unix), !openedAsPairedPhone()) : [];
   // With other apps in the fortress nobody waits for a first member, so the
   // card has nothing to suggest and no line counts the seconds.
   const found = pairStage(group, joinedAgo, createdHere);

@@ -14,6 +14,7 @@ const member = (over: Partial<FortressMember>): FortressMember => ({
   deployment: "plugin",
   kind: "instance",
   online: true,
+  opens: false,
   relay: false,
   ...over,
 });
@@ -31,10 +32,32 @@ describe("fortressApps", () => {
     );
     expect(apps.map((a) => a.id)).toEqual(["shiplog", "towertorch"]);
     expect(apps[1].instances).toEqual([
-      { id: "m1", device: "Tower", deviceKind: "server", form: "plugin", version: "1.4.2", presence: "connected", relay: false, lastSeen: undefined },
-      { id: "m2", device: "Cellar", deviceKind: "server", form: "plugin", version: "1.4.2", presence: "away", relay: false, lastSeen: "at 1000" },
+      { id: "m1", device: "Tower", deviceKind: "server", form: "plugin", version: "1.4.2", presence: "connected", relay: false, open: {}, print: "m1" },
+      { id: "m2", device: "Cellar", deviceKind: "server", form: "plugin", version: "1.4.2", presence: "away", relay: false, lastSeen: "at 1000", open: {}, print: "m2" },
     ]);
     expect(apps[0].instances[0]).toMatchObject({ deviceKind: "phone", relay: true });
+    expect(apps[0].instances[0].open).toBeUndefined();
+  });
+
+  it("opens nothing on a paired phone", () => {
+    const [app] = fortressApps([member({})], String, false);
+    expect(app.instances[0].open).toBeUndefined();
+  });
+
+  it("marks two members that claim one app on one server, and names them by the end of their ids", () => {
+    const apps = fortressApps(
+      [
+        member({ id: "aaaaaaaa11111111", host: "Tower" }),
+        member({ id: "bbbbbbbb22222222", device: "tower" }),
+        member({ id: "cccccccc33333333", device: "Cellar" }),
+      ],
+      String,
+    );
+    expect(apps[0].instances.map((i) => [i.print, i.doubt])).toEqual([
+      ["11111111", true],
+      ["22222222", true],
+      ["33333333", undefined],
+    ]);
   });
 });
 

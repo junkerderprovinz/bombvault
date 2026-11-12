@@ -13,7 +13,7 @@ import { dateLocale } from "./dateLocale";
 import { elapsedSince, formatClockTime, formatDuration } from "./reltime";
 import type { CountUnit } from "./progress";
 import type { TranslationKey } from "./i18n";
-import { KEY_TARGET_ID } from "./runDisplay";
+import { FORTRESS_TARGET_ID, KEY_TARGET_ID } from "./runDisplay";
 import { KEY_RUN_KIND } from "./runKind";
 import { humanBytes } from "./forecast";
 import { formatNumber } from "./numberFormat";
@@ -447,6 +447,12 @@ function finishedLineText(resolveName: ResolveName, run: Run, domain: LogDomain,
     return run.status === "failed"
       ? { status: "failed", text: resolveName("activityLog.lineKeyRefused", { what, error: reasonText(run.error, resolveName) }) }
       : { status: "success", text: what };
+  }
+
+  // Another member of the fortress opened this instance's pages. The subject
+  // names its app, its device and the end of its id.
+  if (run.targetId === FORTRESS_TARGET_ID && run.kind === "opened") {
+    return { status: "info", text: resolveName("activityLog.lineOpened", { name: run.subject ?? "" }) };
   }
 
   if (run.kind === "prune") {

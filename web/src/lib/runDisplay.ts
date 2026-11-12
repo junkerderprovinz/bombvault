@@ -27,6 +27,9 @@ import type { Run } from "./api";
 
 /** The target the server records every event about the backup key on. */
 export const KEY_TARGET_ID = "key";
+
+/** The target the server records what other members of the fortress did here on. */
+export const FORTRESS_TARGET_ID = "fortress";
 import type { useT } from "./i18n";
 // Type-only import; see the layering note in the header comment.
 import type { BadgeTone } from "../components/Badge";
@@ -89,6 +92,9 @@ export function runTargetText(t: ReturnType<typeof useT>["t"], run: Run): string
   // The server gives the reserved target of key events no name.
   if (run.targetId === KEY_TARGET_ID) {
     return t("run.targetKey");
+  }
+  if (run.targetId === FORTRESS_TARGET_ID) {
+    return t("fortress.title");
   }
   return run.target || `${run.targetId.slice(0, 12)}…`;
 }
