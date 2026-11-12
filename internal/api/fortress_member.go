@@ -399,6 +399,9 @@ func (s *Service) removedFrom(gen int) {
 		if err := s.forgetFortress(); err != nil {
 			log.Printf("fortress: forget the membership: %v", err)
 		}
+		if err := s.store.SetFortressRemovedHere(true); err != nil {
+			log.Printf("fortress: keep that another member took this instance out: %v", err)
+		}
 	}()
 }
 
@@ -567,6 +570,9 @@ func (k fortressKeeper) Keep(sec []byte) error {
 		return err
 	}
 	if err := k.s.store.SetFortressSecret(sealed, m.SecretEnc, time.Now()); err != nil {
+		return err
+	}
+	if err := k.s.store.SetFortressRemoved(nil); err != nil {
 		return err
 	}
 	k.s.house.mu.Lock()

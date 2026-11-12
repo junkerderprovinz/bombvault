@@ -15,7 +15,7 @@ import { copyText } from "../../../lib/clipboard";
 import type { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { InstanceWindow } from "../../instances/InstanceWindow";
-import { FortressBlock } from "./FortressSection";
+import { FortressBlock, RemovedHere } from "./FortressSection";
 import { PairingWindow } from "./PairingWindow";
 import { usePhraseEntry } from "./PhraseInput";
 import { WordSlots } from "./WordSlots";
@@ -386,6 +386,7 @@ export function PhraseCard({
       <Card title={t("pairing.phraseTitle")} hint={`${t("pairing.phraseTip")} ${t("pairing.lead")} ${t("pairing.keyNote")}`} hueIndex={hueIndex}>
         <div className="flex flex-col gap-4.5" data-stage={stage}>
           {noPasswordNote}
+          <RemovedHere view={view} />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Choice
               key={`create-${shake}`}
@@ -410,6 +411,7 @@ export function PhraseCard({
         {nameRow}
         <div className="flex flex-col gap-4.5" data-stage={stage}>
           {noPasswordNote}
+          <RemovedHere view={view} />
           {stage === "alone" && (
             <>
               <p className="text-sm text-carbon-textSub">

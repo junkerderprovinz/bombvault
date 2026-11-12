@@ -3900,6 +3900,15 @@ INSERT OR IGNORE INTO fortress_membership (id) VALUES (1);`,
 		sql:              `ALTER TABLE fortress_membership ADD COLUMN changed_at INTEGER NOT NULL DEFAULT 0;`,
 	},
 	{
+		// A removed member can come back with the phrase until it changes,
+		// and the page says so across a restart.
+		version:          fortressRemovedMigration,
+		name:             "fortress_removed",
+		alreadySatisfied: columnPresent("fortress_membership", "removed_here"),
+		sql: `ALTER TABLE fortress_membership ADD COLUMN removed_enc BLOB NOT NULL DEFAULT x'';
+ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
 		// Giving an app its own backup back replaces what the app holds, so a
 		// person switches it on first.
 		version:          appImportMigration,
@@ -4561,6 +4570,10 @@ const fortressPairingMigration = 941
 
 // fortressChangedMigration numbers when the fortress phrase last changed.
 const fortressChangedMigration = 942
+
+// fortressRemovedMigration numbers the members this install took out of the
+// fortress, and whether another member took it out.
+const fortressRemovedMigration = 943
 
 // appImportMigration numbers the switch that lets backups go back to the apps.
 const appImportMigration = 950

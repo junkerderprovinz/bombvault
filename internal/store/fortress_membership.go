@@ -20,6 +20,12 @@ type FortressMembership struct {
 	// PairingEnc is what the kit keeps of the group's pairing once it moved
 	// into the fortress.
 	PairingEnc []byte
+	// RemovedEnc lists the members the install took out since the phrase
+	// last changed, sealed like the rest.
+	RemovedEnc []byte
+	// RemovedHere says another member took the install out. It stays until
+	// the install joins again.
+	RemovedHere bool
 }
 
 // Joined reports whether the install is in a fortress.
@@ -29,8 +35,8 @@ func (m FortressMembership) Joined() bool { return len(m.SecretEnc) > 0 }
 func (r *Repo) FortressMembership() (FortressMembership, error) {
 	var m FortressMembership
 	var changed int64
-	err := r.db.QueryRow(`SELECT secret_enc, previous_enc, changed_at, seed_enc, state_enc, pairing_enc FROM fortress_membership WHERE id = 1`).
-		Scan(&m.SecretEnc, &m.PreviousEnc, &changed, &m.SeedEnc, &m.StateEnc, &m.PairingEnc)
+	err := r.db.QueryRow(`SELECT secret_enc, previous_enc, changed_at, seed_enc, state_enc, pairing_enc, removed_enc, removed_here FROM fortress_membership WHERE id = 1`).
+		Scan(&m.SecretEnc, &m.PreviousEnc, &changed, &m.SeedEnc, &m.StateEnc, &m.PairingEnc, &m.RemovedEnc, &m.RemovedHere)
 	if err != nil {
 		return FortressMembership{}, fmt.Errorf("FortressMembership: %w", err)
 	}
@@ -43,7 +49,7 @@ func (r *Repo) FortressMembership() (FortressMembership, error) {
 // JoinFortress keeps a new membership with its sealed secret and member key.
 // Whatever the kit kept of an earlier one goes.
 func (r *Repo) JoinFortress(secretEnc, seedEnc []byte) error {
-	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = ?, previous_enc = x'', changed_at = 0, seed_enc = ?, state_enc = x'', pairing_enc = x'' WHERE id = 1`, secretEnc, seedEnc); err != nil {
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = ?, previous_enc = x'', changed_at = 0, seed_enc = ?, state_enc = x'', pairing_enc = x'', removed_enc = x'', removed_here = 0 WHERE id = 1`, secretEnc, seedEnc); err != nil {
 		return fmt.Errorf("JoinFortress: %w", err)
 	}
 	return nil
@@ -89,9 +95,30 @@ func (r *Repo) SetFortressPairing(enc []byte) error {
 	return nil
 }
 
+// SetFortressRemoved keeps the sealed list of the members the install took
+// out since the phrase last changed.
+func (r *Repo) SetFortressRemoved(enc []byte) error {
+	if enc == nil {
+		enc = []byte{}
+	}
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET removed_enc = ? WHERE id = 1`, enc); err != nil {
+		return fmt.Errorf("SetFortressRemoved: %w", err)
+	}
+	return nil
+}
+
+// SetFortressRemovedHere keeps whether another member took the install out.
+func (r *Repo) SetFortressRemovedHere(on bool) error {
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET removed_here = ? WHERE id = 1`, on); err != nil {
+		return fmt.Errorf("SetFortressRemovedHere: %w", err)
+	}
+	return nil
+}
+
+
 // LeaveFortress forgets the membership.
 func (r *Repo) LeaveFortress() error {
-	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = x'', previous_enc = x'', changed_at = 0, seed_enc = x'', state_enc = x'', pairing_enc = x'' WHERE id = 1`); err != nil {
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = x'', previous_enc = x'', changed_at = 0, seed_enc = x'', state_enc = x'', pairing_enc = x'', removed_enc = x'' WHERE id = 1`); err != nil {
 		return fmt.Errorf("LeaveFortress: %w", err)
 	}
 	return nil

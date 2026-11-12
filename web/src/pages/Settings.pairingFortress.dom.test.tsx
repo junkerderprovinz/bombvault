@@ -16,7 +16,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getSettings: () => Promise.resolve({ ok: true, settings: {} as Settings, hostMountRoot: "/host/user", platform: "unraid" }),
     getAuth: () => Promise.resolve({ enabled: true, authed: true, totp: false, minPasswordLen: 12 }),
     getFortress: () =>
-      Promise.resolve({ ok: true, joined: false, phrase: false, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [] }),
+      Promise.resolve({ ok: true, joined: false, phrase: false, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false }),
     getGroup: () =>
       Promise.resolve({
         ok: true,

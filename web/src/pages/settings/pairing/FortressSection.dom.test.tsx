@@ -21,7 +21,7 @@ const calls: string[] = [];
 let changed = 0;
 
 function state(over: Partial<FortressState> = {}): FortressState {
-  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
+  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false, ...over };
 }
 
 function group(over: Partial<GroupState> = {}): GroupState {
@@ -79,6 +79,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     setFortressPermission: (p: { action: string; on: boolean }) => {
       calls.push(`permission ${p.action} ${p.on}`);
       return Promise.resolve({ ok: true });
+    },
+    removeFortressMember: (id: string) => {
+      calls.push(`remove ${id}`);
+      view = { ...view, members: [], removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] };
+      return Promise.resolve(view);
     },
   };
 });
@@ -257,6 +262,13 @@ describe("the other apps", () => {
     expect(button("show")).toBeNull();
   });
 
+  it("say where an app opens in the foot of its card, after Remove", () => {
+    view = state({ members: [member({})] });
+    renderApps();
+    const foot = document.querySelector('[data-instance="app-knightloader"] [data-app-note]')!.parentElement!;
+    expect(foot.textContent).toBe("RemoveOpens only on Bottich");
+  });
+
   it("word giving an app its own backup back, with the switch for it under that permission alone", () => {
     view = state({
       members: [member({}), member({ id: "s1", app: "shiplog", name: "ShipLog" })],
@@ -272,5 +284,30 @@ describe("the other apps", () => {
     expect(toggles).toHaveLength(1);
     fireEvent.click(toggles[0]);
     expect(flipped).toEqual([true]);
+  });
+});
+
+describe("removing another app from the fortress", () => {
+  it("asks first from the app's own card, then offers the new phrase behind the password", async () => {
+    view = state({ members: [member({ id: "fs1", app: "firesquire", name: "FireSquire", device: "Tower", deployment: "plugin" })] });
+    renderApps();
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    expect(screen.getByRole("dialog", { name: "Remove FireSquire on Tower?" })).toBeTruthy();
+    expect(calls).toEqual([]);
+    await act(async () => fireEvent.click(button("remove")));
+    expect(calls).toEqual(["remove fs1"]);
+    expect(changed).toBe(1);
+    expect(screen.getByRole("dialog", { name: "Change the phrase now?" })).toBeTruthy();
+    await act(async () => fireEvent.click(button("change")));
+    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
+    await act(async () => fireEvent.click(button("change-unlock")));
+    expect(calls).toEqual(["remove fs1", "change hunter2"]);
+    expect(button("words").textContent).toContain("wrong");
+  });
+
+  it("names who was removed until the phrase changes", () => {
+    view = state({ members: [member({})], removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] });
+    renderApps();
+    expect(button("removed").textContent).toContain("Removed: FireSquire on Tower. Change the phrase to close the way back in.");
   });
 });

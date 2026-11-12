@@ -7,9 +7,11 @@ import {
   appCardView,
   fill,
   fortressText,
+  memberName,
   type ChangeAnswer,
   type FortressAnswer,
   type FortressApp,
+  type FortressInstance,
   type FortressPermission,
   type FortressText,
   type PhraseAnswer,
@@ -18,10 +20,13 @@ import { Fortress, FortressPairing } from "@glimstone/react/Fortress";
 import { PasswordField } from "@glimstone/react/PasswordField";
 import { Window } from "@glimstone/react/Window";
 import { Badge } from "../../../components/Badge";
-import { IconTabApps } from "../../../components/navGlyphs";
+import { Button } from "../../../components/Button";
+import { IconEye } from "../../../components/glyphs";
+import { IconTabApps, IconTrash } from "../../../components/navGlyphs";
 import {
   changeFortressPhrase,
   leaveFortress,
+  removeFortressMember,
   setFortressPermission,
   showFortressPhrase,
   showPhrase,
@@ -37,7 +42,14 @@ import { fortressPermissions, permissionOf } from "./fortressModel";
 const APP = { id: "bombvault", name: "BombVault" };
 // The words BombVault's own buttons use for the same acts, so that they wear
 // the same glyphs: a new phrase is a key rotated.
-const LABEL_KEYS = { join: "pairing.join", leave: "pairing.leave", showPhrase: "pairing.show", changePhrase: "api.rotate" };
+const LABEL_KEYS = {
+  join: "pairing.join",
+  leave: "pairing.leave",
+  showPhrase: "pairing.show",
+  changePhrase: "api.rotate",
+  remove: "fortress.remove",
+  later: "fortress.dismiss",
+};
 
 /** GiveBack is the switch that lets the apps in the fortress take their own
  *  backups back, with what saving it needs. */
@@ -88,8 +100,7 @@ export function FortressBlock({
 }) {
   const { t, lang } = useT();
   const text = useFortressText(group.relay.mode === "off");
-  // The step that waits for the password before a new phrase is made.
-  const [asking, setAsking] = useState<((answer: ChangeAnswer) => void) | null>(null);
+  const [onChangePhrase, passwordWindow] = usePhraseChange(view, text, onChanged);
   // An own relay rides along on a second line of the code, since the app has
   // no other way to learn its address.
   const phraseQr = group.relay.mode === "own" ? (words: string[]) => `${words.join(" ")}\n${group.relay.url}` : undefined;
@@ -99,15 +110,6 @@ export function FortressBlock({
     if (r.ok && r.phrase) return { words: r.phrase.split(" ") };
     return { error: r.code === "passwordWrong" ? text.passwordWrong : (r.error ?? text.failed) };
   };
-  // The answer shows the new words, so they come only for the password, as
-  // showing the phrase does. GlimStone's change window waits meanwhile.
-  const onChangePhrase = (): Promise<ChangeAnswer> =>
-    view.passwordSet
-      ? new Promise((resolve) => setAsking(() => resolve))
-      : changePhrase(text, "").then((answer) => {
-          if (answer.words) onChanged();
-          return answer;
-        });
   const onLeave = async (): Promise<FortressAnswer> => {
     const r = await leaveFortress();
     if (!r.ok) return { error: r.error ?? text.failed };
@@ -133,17 +135,47 @@ export function FortressBlock({
         {children}
         {view.joined && !view.phrase && <p className="text-sm text-carbon-textSub">{t("fortress.noPhraseKept")}</p>}
       </FortressPairing>
-      {asking && (
-        <ChangePassword
-          text={text}
-          onAnswer={(answer) => {
-            setAsking(null);
-            if (answer.words) onChanged();
-            asking(answer);
-          }}
-        />
-      )}
+      {passwordWindow}
     </div>
+  );
+}
+
+/** usePhraseChange is the change of the phrase, which the phrase card offers
+ *  and the fortress again right after a removal. The answer shows the new
+ *  words, so they come only for the password, as showing the phrase does,
+ *  and GlimStone's change window waits for it meanwhile. */
+function usePhraseChange(view: FortressState, text: FortressText, onChanged: () => void): [() => Promise<ChangeAnswer>, ReactNode] {
+  const [asking, setAsking] = useState<((answer: ChangeAnswer) => void) | null>(null);
+  const onChangePhrase = (): Promise<ChangeAnswer> =>
+    view.passwordSet
+      ? new Promise((resolve) => setAsking(() => resolve))
+      : changePhrase(text, "").then((answer) => {
+          if (answer.words) onChanged();
+          return answer;
+        });
+  const passwordWindow = asking && (
+    <ChangePassword
+      text={text}
+      onAnswer={(answer) => {
+        setAsking(null);
+        if (answer.words) onChanged();
+        asking(answer);
+      }}
+    />
+  );
+  return [onChangePhrase, passwordWindow];
+}
+
+/** RemovedHere says another app took this instance out of the fortress,
+ *  from then until it joins again. */
+export function RemovedHere({ view }: { view: FortressState }) {
+  const { lang } = useT();
+  if (!view.removedHere || view.joined) return null;
+  const text = fortressText(lang);
+  return (
+    <p data-fortress="removed-here" className="text-sm text-carbon-textSub">
+      <strong className="font-semibold text-carbon-text">{text.removedHereTitle}.</strong> {fill(text.removedHereHint, { app: APP.name })}
+    </p>
   );
 }
 
@@ -221,11 +253,36 @@ function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (ans
 }
 
 /** AppCard is another app of the fortress in the card the Instances tab draws
- *  for an instance: its logo, its state and where it runs. */
-function AppCard({ app, text, hueIndex }: { app: FortressApp; text: FortressText; hueIndex: number }) {
+ *  for an instance: its logo, its state and where it runs, with Remove and
+ *  Open along the foot as the Instances tab has them. Where it cannot open
+ *  from here, the place of Open says where it does. */
+function AppCard({
+  app,
+  text,
+  hueIndex,
+  remove,
+}: {
+  app: FortressApp;
+  text: FortressText;
+  hueIndex: number;
+  /** GlimStone's window that asks before an instance is removed. */
+  remove?: (id: string, name: string) => void;
+}) {
   const { lang } = useT();
   const view = appCardView(app, text, lang);
   const presence = (p: string) => (p === "connected" ? text.connected : p === "checking" ? text.checking : text.away);
+  const removeButton = (instance: FortressInstance) =>
+    remove &&
+    !instance.self && (
+      <Button
+        label={text.remove}
+        labelKey="fortress.remove"
+        glyph={<IconTrash />}
+        tone="neutral"
+        title={memberName(text, app, instance)}
+        onClick={() => remove(instance.id, memberName(text, app, instance))}
+      />
+    );
   return (
     <InstanceCard
       cardKey={`app-${app.id}`}
@@ -254,7 +311,24 @@ function AppCard({ app, text, hueIndex }: { app: FortressApp; text: FortressText
         </>
       }
       facts={<Facts items={view.facts} />}
-      actions={view.note && <span className="text-xs text-carbon-textMuted">{view.note}</span>}
+      actions={
+        <>
+          {view.rows.length === 0 && removeButton(view.main)}
+          {view.open ? (
+            <Button
+              label={view.open.label}
+              labelKey="instances.open"
+              glyph={<IconEye />}
+              tone="neutral"
+              onClick={() => window.open(view.open!.href, "_blank", "noopener")}
+            />
+          ) : (
+            <span data-app-note className="inline-flex h-(--btn-h) items-center text-xs text-carbon-textMuted">
+              {view.note}
+            </span>
+          )}
+        </>
+      }
       index={hueIndex}
     >
       {view.rows.length > 0 && (
@@ -266,6 +340,7 @@ function AppCard({ app, text, hueIndex }: { app: FortressApp; text: FortressText
                 <span className="glim-num text-xs text-carbon-textMuted">{sub}</span>
               </span>
               <Badge tone={instance.presence === "connected" ? "ok" : "neutral"}>{presence(instance.presence)}</Badge>
+              {removeButton(instance)}
             </li>
           ))}
         </ul>
@@ -275,8 +350,8 @@ function AppCard({ app, text, hueIndex }: { app: FortressApp; text: FortressText
 }
 
 /** OtherApps is the rest of the fortress: the switch that shows the other
- *  apps, their cards and the permissions, with giving backups back under the
- *  permission it goes with. */
+ *  apps, their cards with Remove, and the permissions, with giving backups
+ *  back under the permission it goes with. */
 export function OtherApps({
   view,
   apps,
@@ -295,6 +370,7 @@ export function OtherApps({
   const { t, lang } = useT();
   const { push } = useToast();
   const text = useFortressText(group.relay.mode === "off");
+  const [onChangePhrase, passwordWindow] = usePhraseChange(view, text, onChanged);
   const permissions = fortressPermissions(view.permissions, view.members, t);
   const giveBackAt = permissions.find((p) => p.from === APP.id && p.id.endsWith(" backup.import"))?.id;
 
@@ -304,36 +380,47 @@ export function OtherApps({
     onChanged();
     return { ok: true };
   };
+  const onRemove = async (id: string): Promise<FortressAnswer> => {
+    const r = await removeFortressMember(id);
+    if (!r.ok) return { error: r.error ?? text.failed };
+    onChanged();
+    return { ok: true };
+  };
 
   return (
-    <Fortress
-      text={text}
-      lang={lang}
-      app={APP}
-      joined
-      apps={apps}
-      permissions={permissions}
-      onPermission={onPermission}
-      notify={(message, severity) => push(message, severity)}
-      onJoin={() => Promise.resolve({ error: text.failed })}
-      onRemove={() => Promise.resolve({ error: text.failed })}
-      renderApp={(app, hueIndex) => <AppCard app={app} text={text} hueIndex={hueIndex} />}
-      permissionExtra={(p: FortressPermission) =>
-        giveBack &&
-        p.id === giveBackAt && (
-          <ToggleRow
-            label={t("appImport.toggle")}
-            hint={t("appImport.toggleHint")}
-            checked={giveBack.on}
-            onChange={giveBack.onChange}
-            disabled={giveBack.busy}
-            shakeNonce={giveBack.shakeNonce}
-            pulseNonce={giveBack.pulseNonce}
-          />
-        )
-      }
-      labelKeys={LABEL_KEYS}
-      hueStart={hueStart}
-    />
+    <>
+      <Fortress
+        text={text}
+        lang={lang}
+        app={APP}
+        joined
+        apps={apps}
+        permissions={permissions}
+        onPermission={onPermission}
+        notify={(message, severity) => push(message, severity)}
+        onJoin={() => Promise.resolve({ error: text.failed })}
+        onRemove={onRemove}
+        onChangePhrase={view.phrase ? onChangePhrase : undefined}
+        removed={view.removed.map((r) => fill(text.memberOn, { app: r.name, device: r.device }))}
+        renderApp={(app, hueIndex, remove) => <AppCard app={app} text={text} hueIndex={hueIndex} remove={remove} />}
+        permissionExtra={(p: FortressPermission) =>
+          giveBack &&
+          p.id === giveBackAt && (
+            <ToggleRow
+              label={t("appImport.toggle")}
+              hint={t("appImport.toggleHint")}
+              checked={giveBack.on}
+              onChange={giveBack.onChange}
+              disabled={giveBack.busy}
+              shakeNonce={giveBack.shakeNonce}
+              pulseNonce={giveBack.pulseNonce}
+            />
+          )
+        }
+        labelKeys={LABEL_KEYS}
+        hueStart={hueStart}
+      />
+      {passwordWindow}
+    </>
   );
 }

@@ -7157,6 +7157,18 @@ export interface FortressState extends OkEnvelope {
   /** The devices of the group this instance is paired with, which come
    *  along on joining and part with it on leaving. */
   pairedWith: string[];
+  /** The members taken out here since the phrase last changed, which the
+   *  phrase still lets back in. */
+  removed: FortressRemoved[];
+  /** Another member took this instance out. */
+  removedHere: boolean;
+}
+
+/** A member taken out of the fortress, by its app and device. */
+export interface FortressRemoved {
+  app: string;
+  name: string;
+  device: string;
 }
 
 export function getFortress(): Promise<FortressState> {
@@ -7181,6 +7193,11 @@ export function changeFortressPhrase(password: string): Promise<OkEnvelope & { p
 
 export function setFortressPermission(p: FortressPermissionState): Promise<OkEnvelope> {
   return fetchJSON("/api/fortress/permissions", { method: "PUT", body: JSON.stringify(p) });
+}
+
+/** DELETE /api/fortress/members/{id} - take another member out of the fortress. */
+export function removeFortressMember(id: string): Promise<FortressState> {
+  return fetchJSON(`/api/fortress/members/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
 /** DELETE /api/fortress - leave the fortress, and the group on the same phrase with it. */

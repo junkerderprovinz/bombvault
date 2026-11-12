@@ -63,7 +63,7 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
 }
 
 function fortressOf(over: Partial<FortressState> = {}): FortressState {
-  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], ...over };
+  return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false, ...over };
 }
 const noFortress = () => fortressOf({ joined: false, phrase: false });
 
@@ -269,6 +269,17 @@ describe("the tiles outside a group", () => {
     expect(tile("pairing.create").disabled).toBe(false);
     expect(tile("pairing.enter").disabled).toBe(false);
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("say another app removed this instance, until it joins again", async () => {
+    group = outside();
+    fortress = fortressOf({ joined: false, phrase: false, removedHere: true });
+    await renderTab();
+    expect(phraseCard().textContent).toContain("Another app in the fortress removed BombVault. Enter the current phrase to come back in.");
+    fortress = noFortress();
+    cleanup();
+    await renderTab();
+    expect(phraseCard().textContent).not.toContain("removed BombVault");
   });
 
   it("opens a window on Enter phrase and keeps Pair off until twelve listed words are there", async () => {

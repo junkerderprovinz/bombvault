@@ -121,3 +121,31 @@ func TestForgettingTheOldPhraseKeepsTheNewOne(t *testing.T) {
 		t.Fatalf("after forgetting the old phrase: %+v", m)
 	}
 }
+
+func TestTheRemovedMembersStayUntilLeavingOrJoiningAgain(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("a"), []byte("seed a")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressRemoved([]byte("sealed list")); err != nil {
+		t.Fatal(err)
+	}
+	if m, _ := r.FortressMembership(); string(m.RemovedEnc) != "sealed list" {
+		t.Fatalf("removed = %q", m.RemovedEnc)
+	}
+	if err := r.LeaveFortress(); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressRemovedHere(true); err != nil {
+		t.Fatal(err)
+	}
+	if m, _ := r.FortressMembership(); len(m.RemovedEnc) != 0 || !m.RemovedHere {
+		t.Fatalf("after another member took the install out: %+v", m)
+	}
+	if err := r.JoinFortress([]byte("b"), []byte("seed b")); err != nil {
+		t.Fatal(err)
+	}
+	if m, _ := r.FortressMembership(); m.RemovedHere {
+		t.Fatal("joining again still says another member took the install out")
+	}
+}
