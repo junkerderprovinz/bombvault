@@ -1,8 +1,9 @@
-// RelayCard picks how this instance reaches members on other networks: the
-// project relay, an own relay, a paired BombVault that serves as one, or
-// none. Each route says in one sentence what it is and what it needs, beside
-// a picture of a message on its way. Every control saves on its own, as the
-// rest of the settings do.
+// RelayCard picks how this instance reaches members on other networks. It
+// says first what a relay is for and offers the project relay and an own one;
+// a paired BombVault that serves as one, and no relay at all, wait in quiet
+// links under them. Each route says in one sentence what it is and what it
+// needs, beside a picture of a message on its way. Every control saves on its
+// own, as the rest of the settings do.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Card, ToggleRow } from "../shared";
 import { Badge } from "../../../components/Badge";
@@ -24,7 +25,9 @@ import { relayForm, type RelayForm } from "./relayForm";
 
 type T = ReturnType<typeof useT>["t"];
 
-const FORMS: RelayForm[] = ["project", "own", "instance", "off"];
+// The two routes most people choose between. The others are links below them.
+const FORMS: RelayForm[] = ["project", "own"];
+const STEPS: TranslationKey[] = ["relay.stepPick", "relay.stepDone"];
 
 // An own relay without TLS still works on a LAN, but its relay key then
 // travels in the clear, so the card says so.
@@ -56,6 +59,9 @@ function Fact({ glyph, text }: { glyph: ReactNode; text: ReactNode }) {
     </p>
   );
 }
+
+const QUIET_LINK =
+  "text-xs text-carbon-textSub underline decoration-carbon-border underline-offset-[3px] hover:text-carbon-text hover:decoration-current";
 
 const strong = (text: string) => <strong className="font-semibold text-carbon-text">{text} </strong>;
 
@@ -201,6 +207,18 @@ export function RelayCard({
         />
       }
     >
+      <div data-testid="relay-steps" className="flex flex-col gap-2">
+        <p className="text-sm text-carbon-text">{t("relay.lead")}</p>
+        <ol className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-carbon-textSub">
+          {STEPS.map((key, i) => (
+            <li key={key} className="flex items-center gap-1.5">
+              <span className="glim-num grid h-5 w-5 place-items-center rounded-pill bg-accent text-dense font-semibold text-accentContrast">{i + 1}</span>
+              {t(key)}
+            </li>
+          ))}
+        </ol>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Selector
           items={FORMS.map((f) => ({ id: f, label: t(COPY[f].name), icon: <RouteGlyph kind={COPY[f].glyph} /> }))}
@@ -220,6 +238,18 @@ export function RelayCard({
           {state}
         </span>
       </div>
+      <div className="-mt-2 flex flex-wrap gap-x-5 gap-y-1">
+        {form !== "off" && (
+          <button type="button" data-relay-off className={QUIET_LINK} onClick={() => pick("off")}>
+            {t("relay.offLink")}
+          </button>
+        )}
+        {form !== "instance" && (
+          <button type="button" data-relay-instance className={QUIET_LINK} onClick={() => pick("instance")}>
+            {t("relay.instanceLink")}
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 items-start gap-x-10 gap-y-5 lg:grid-cols-2" data-form={form}>
         <div className="flex min-w-0 flex-col gap-3.5">
@@ -237,9 +267,18 @@ export function RelayCard({
             }
           />
           {form === "off" && (
-            <p data-testid="no-relay-phone" className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-              {t("pairing.phoneNeedsRelay")}
-            </p>
+            <div className="flex flex-wrap items-center gap-3 rounded-card bg-statusWarnBgSoft px-3 py-2.5">
+              <p data-testid="no-relay-phone" className="min-w-0 flex-[1_1_16rem] text-sm leading-relaxed text-carbon-text">
+                {t("relay.offNote")}
+              </p>
+              <Button
+                label={t("relay.backToProject")}
+                labelKey="relay.backToProject"
+                glyph={<RouteGlyph kind="project" />}
+                tone="neutral"
+                onClick={() => pick("project")}
+              />
+            </div>
           )}
           {form === "own" && (
             <div className="flex flex-col gap-3.5" data-testid="own-relay">
