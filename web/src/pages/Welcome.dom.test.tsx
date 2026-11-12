@@ -36,8 +36,8 @@ function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>;
 }
 
-async function open() {
-  window.history.replaceState(null, "", "/welcome");
+async function open(path = "/welcome") {
+  window.history.replaceState(null, "", path);
   render(
     inApp(
       <>
@@ -47,7 +47,7 @@ async function open() {
         </Routes>
         <Where />
       </>,
-      "/welcome"
+      path
     )
   );
   await act(async () => {});
@@ -171,7 +171,27 @@ describe("the two buttons of the welcome page", () => {
   });
 });
 
+describe("the pictures of the welcome page", () => {
+  it("keep the logo above the greeting and give every step card its part of the scene", async () => {
+    await open();
+
+    expect(document.querySelector('img[src="/logo.svg"]')?.classList.contains("glim-welcome-logo")).toBe(true);
+    for (const name of ["sections", "location", "backup"]) {
+      expect(step(name).querySelector("[data-step-frame] svg"), name).not.toBeNull();
+    }
+  });
+});
+
 describe("an install the welcome page is not for", () => {
+  it("still greets when Info opens the page on purpose", async () => {
+    server.items = [found("gitea"), item()];
+    rememberInUse(true);
+    await open("/welcome?again");
+
+    expect(where()).toBe("/welcome");
+    expect(screen.getByRole("heading", { level: 1, name: en["welcome.title"] })).toBeTruthy();
+  });
+
   it("goes on to the overview when an entry has a backup", async () => {
     server.items = [found("gitea"), item()];
     await open();

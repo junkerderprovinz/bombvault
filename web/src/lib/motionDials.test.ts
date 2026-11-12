@@ -103,13 +103,15 @@ describe("the motion dials", () => {
     expect(frames).toMatch(/var\(--motion-row-wiggle-lift/);
   });
 
-  it("play the welcome scene through the scene dials, never at off, and start and end every loop on the closed vault", () => {
-    for (const part of ["item", "door", "dial", "seal", "spark"]) {
+  it("play the welcome page's scene through the scene dials, never at off, and start and end every loop on its resting frame", () => {
+    for (const part of ["logo", "switch", "track", "drop", "item", "door", "dial", "seal", "spark"]) {
       const selector = `:root:not([data-motion="off"]) .glim-welcome-${part}`;
       expect(ruleBody(selector, gate)).toContain(`glim-welcome-${part} var(--motion-scene-dur, 6s)`);
       const frames = keyframes(`glim-welcome-${part}`);
-      expect(frames, part).toMatch(/\n\s*0%[^{]*\{[^}]*transform: (none|translate)/);
-      expect(frames, part).toMatch(/100% \{[^}]*transform: none;/);
+      // The track only fades; every other part moves and comes back to rest.
+      const rest = part === "track" ? "opacity: 1" : "transform: none";
+      expect(frames, part).toMatch(new RegExp(`\\n\\s*0%[^{]*\\{[^}]*(${rest}|transform: translate)`));
+      expect(frames, part).toMatch(new RegExp(`100% \\{[^}]*${rest};`));
     }
     expect(keyframes("glim-welcome-item")).toMatch(/var\(--motion-scene-hop/);
     // Firefox places a fill-box origin on a group elsewhere, so the door hangs on a point in the picture's units.
