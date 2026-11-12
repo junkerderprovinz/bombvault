@@ -96,10 +96,10 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		Permissions:   []fortressPermissionView{},
 		PairedWith:    []string{},
 	}
-	h.svc.house.mu.Lock()
-	v.Removed = append([]fortressRemoved{}, h.svc.house.removed...)
-	v.RemovedHere = h.svc.house.removedHere
-	h.svc.house.mu.Unlock()
+	v.RemovedHere = m.RemovedHere
+	if v.Removed, err = h.svc.fortressRemovedList(); err != nil {
+		return fortressView{}, err
+	}
 	for _, pm := range h.svc.pairing().Members() {
 		v.PairedWith = append(v.PairedWith, pm.Name)
 	}

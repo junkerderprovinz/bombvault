@@ -2,7 +2,10 @@ package api
 
 import (
 	"cmp"
+	"encoding/json"
 	"errors"
+
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 )
 
 // fortressRemoved is a member this instance took out of the fortress since
@@ -32,18 +35,38 @@ func (s *Service) RemoveFortressMember(id string) error {
 		if err := f.Remove(id); err != nil {
 			return err
 		}
-		s.house.mu.Lock()
-		s.house.removed = append(s.house.removed, fortressRemoved{App: m.App.ID, Name: cmp.Or(m.App.Name, m.App.ID), Device: m.Device})
-		s.house.mu.Unlock()
-		return nil
+		list, err := s.fortressRemovedList()
+		if err != nil {
+			return err
+		}
+		list = append(list, fortressRemoved{App: m.App.ID, Name: cmp.Or(m.App.Name, m.App.ID), Device: m.Device})
+		plain, err := json.Marshal(list)
+		if err != nil {
+			return err
+		}
+		sealed, err := s.sealFortress(plain)
+		if err != nil {
+			return err
+		}
+		return s.store.SetFortressRemoved(sealed)
 	}
 	return errNoMember
 }
 
-// forgetRemoved drops the members taken out so far, once the phrase that
-// would let them back in is gone.
-func (s *Service) forgetRemoved() {
-	s.house.mu.Lock()
-	s.house.removed = nil
-	s.house.mu.Unlock()
+// fortressRemovedList is the members this instance took out since the
+// phrase last changed.
+func (s *Service) fortressRemovedList() ([]fortressRemoved, error) {
+	m, err := s.store.FortressMembership()
+	if err != nil {
+		return nil, err
+	}
+	list := []fortressRemoved{}
+	if len(m.RemovedEnc) == 0 {
+		return list, nil
+	}
+	plain, err := secret.Decrypt(s.cfg.AppKey, m.RemovedEnc)
+	if err != nil {
+		return nil, err
+	}
+	return list, json.Unmarshal(plain, &list)
 }

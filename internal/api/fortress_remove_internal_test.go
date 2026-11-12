@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"testing"
+	"time"
 
 	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
 
@@ -23,30 +25,55 @@ func TestRemovingAMemberKeepsItsNameUntilThePhraseChanges(t *testing.T) {
 		}
 		return false
 	})
+	var bv string
+	for _, m := range p.f.Members() {
+		if m.App.ID == "bombvault" {
+			bv = m.ID
+		}
+	}
 	if err := svc.RemoveFortressMember(p.id); err != nil {
 		t.Fatal(err)
 	}
-	svc.house.mu.Lock()
-	removed := append([]fortressRemoved{}, svc.house.removed...)
-	svc.house.mu.Unlock()
-	if len(removed) != 1 || removed[0] != (fortressRemoved{App: "firesquire", Name: "firesquire", Device: "tower"}) {
-		t.Fatalf("removed = %+v", removed)
-	}
-	for _, m := range svc.fortressNow().Members() {
-		if m.ID == p.id {
-			t.Fatal("the removed plugin is still a member")
-		}
+	want := []fortressRemoved{{App: "firesquire", Name: "firesquire", Device: "tower"}}
+	if got := removedNow(t, svc); !slices.Equal(got, want) {
+		t.Fatalf("removed = %+v", got)
 	}
 
-	if _, _, err := svc.ChangeFortressPhrase(context.Background()); err != nil {
+	// The next start of BombVault still names it and still refuses it.
+	svc.CloseFortress()
+	next := NewService(svc.cfg, svc.store, nil, nil, nil)
+	if err := next.OpenFortress(nil); err != nil {
 		t.Fatal(err)
 	}
-	svc.house.mu.Lock()
-	left := len(svc.house.removed)
-	svc.house.mu.Unlock()
-	if left != 0 {
-		t.Fatalf("%d removed members still named after the phrase changed", left)
+	t.Cleanup(next.CloseFortress)
+	if got := removedNow(t, next); !slices.Equal(got, want) {
+		t.Fatalf("removed after a restart = %+v", got)
 	}
+	time.Sleep(3 * time.Second)
+	for _, m := range next.fortressNow().Members() {
+		if m.ID == p.id {
+			t.Fatal("the removed plugin is a member again after a restart")
+		}
+	}
+	if _, err := p.f.Status(context.Background(), bv, "en"); err == nil {
+		t.Fatal("BombVault answers the removed plugin after a restart")
+	}
+
+	if _, _, err := next.ChangeFortressPhrase(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := removedNow(t, next); len(got) != 0 {
+		t.Fatalf("still named after the phrase changed: %+v", got)
+	}
+}
+
+func removedNow(t *testing.T, svc *Service) []fortressRemoved {
+	t.Helper()
+	got, err := svc.fortressRemovedList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return got
 }
 
 func TestBombVaultCannotRemoveItselfOrAStranger(t *testing.T) {
@@ -98,6 +125,10 @@ func TestAnInstanceTakenOutSaysSoUntilItJoinsAgain(t *testing.T) {
 		_, view := in.do(t, http.MethodGet, "/api/fortress", nil)
 		return view["joined"] == false && view["removedHere"] == true
 	})
+	next := NewService(in.svc.cfg, in.svc.store, nil, nil, nil)
+	if m, err := next.store.FortressMembership(); err != nil || !m.RemovedHere {
+		t.Fatalf("the next start forgets that another member took BombVault out: %v", err)
+	}
 	if _, out := in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words}); out["joined"] != true || out["removedHere"] != false {
 		t.Fatalf("joining again = %v", out)
 	}
