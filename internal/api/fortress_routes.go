@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/phrase"
 )
@@ -17,6 +18,8 @@ func (h *Handler) registerFortressMembership(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/fortress/phrase", h.handleFortressChange)
 	mux.HandleFunc("PUT /api/fortress/permissions", h.handleFortressPermission)
 	mux.HandleFunc("DELETE /api/fortress/members/{id}", h.handleFortressRemove)
+	mux.HandleFunc("GET /api/fortress/members/{id}/status", h.handleFortressMemberStatus)
+	mux.HandleFunc("POST /api/fortress/open/{id}", h.handleFortressOpen)
 	mux.HandleFunc("DELETE /api/fortress", h.handleFortressLeave)
 }
 
@@ -53,8 +56,13 @@ type fortressMemberView struct {
 	Version    string `json:"version"`
 	Device     string `json:"device"`
 	Deployment string `json:"deployment"`
-	Kind       string `json:"kind"`
-	Online     bool   `json:"online"`
+	// Host is the server it says it runs on, which two members of one app
+	// should not share.
+	Host   string `json:"host,omitempty"`
+	Kind   string `json:"kind"`
+	Online bool   `json:"online"`
+	// Opens says it offers its pages to open through the fortress.
+	Opens bool `json:"opens"`
 	// Relay means it is reached through the relay alone.
 	Relay    bool  `json:"relay"`
 	LastSeen int64 `json:"lastSeen,omitempty"`
@@ -110,8 +118,9 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		}
 		mv := fortressMemberView{
 			ID: mb.ID, App: mb.App.ID, Name: mb.App.Name, Version: mb.App.Version,
-			Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
-			Online: mb.Online(), Relay: mb.Relay && !mb.Direct, Logo: h.svc.appLogo(f, mb),
+			Device: mb.Device, Deployment: mb.Deployment, Host: mb.Host, Kind: string(mb.Kind),
+			Online: mb.Online(), Opens: slices.Contains(mb.Actions, fortress.OpenAction),
+			Relay: mb.Relay && !mb.Direct, Logo: h.svc.appLogo(f, mb),
 		}
 		if !mb.LastSeen.IsZero() {
 			mv.LastSeen = mb.LastSeen.Unix()

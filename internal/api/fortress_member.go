@@ -96,11 +96,12 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 		{Name: actionBackupRequest, Run: s.backupRequest},
 		{Name: actionSnapshotsBrowse, Run: s.browseSnapshots},
 	}
-	for _, use := range []string{fortress.ExportAction, fortress.ImportAction, actionUpdatesManaged} {
+	for _, use := range []string{fortress.ExportAction, fortress.ImportAction, actionUpdatesManaged, fortress.OpenAction} {
 		if !slices.Contains(cfg.Uses, use) {
 			cfg.Uses = append(cfg.Uses, use)
 		}
 	}
+	cfg.UI = &fortress.UI{Handler: http.HandlerFunc(s.serveOpened), SignIn: s.asksSignIn, Opened: s.openedFrom}
 	return cfg
 }
 

@@ -695,7 +695,7 @@ func run() error {
 	// short, are tried again from here on.
 	svc.StartDeferrals()
 
-	server := api.NewServer(cfg, web.DistFS(), handler.Router())
+	server := api.NewServer(cfg, web.DistFS(), handler.Router(), handler.FortressTabs())
 	svc.ServePhonePages(server.Handler())
 	handler.StartIntegrations()
 	// An MCP listing of a repository that stopped answering holds its request

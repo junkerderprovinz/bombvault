@@ -250,6 +250,8 @@
       case "restore":
         return ok ? name + " restored: " + dur :
           failed ? name + " restore failed: " + r.error : other(name, r);
+      case "opened":
+        return "Opened from " + name + " through the fortress";
       case "update":
         return ok ? name + " updated: " + dur :
           failed ? name + " update failed: " + r.error : other(name, r);

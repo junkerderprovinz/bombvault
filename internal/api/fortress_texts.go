@@ -23,6 +23,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomaly at %s",
 		"next.offsite":   "Off-site copy: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Opened from %s through the fortress",
 
 		"section.containers": "Containers",
 		"section.vms":        "VMs",
@@ -63,6 +64,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalie bei %s",
 		"next.offsite":   "Off-site-Kopie: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Aus %s über die Festung geöffnet",
 
 		"section.containers": "Container",
 		"section.vms":        "VMs",
@@ -103,6 +105,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "حالة شاذة عند %s",
 		"next.offsite":   "نسخة خارج الموقع: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "فُتح من %s عبر الحصن",
 
 		"section.containers": "الحاويات",
 		"section.vms":        "VMs",
@@ -143,6 +146,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Аномалия при %s",
 		"next.offsite":   "Копие извън обекта: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Отворено от %s през крепостта",
 
 		"section.containers": "Контейнери",
 		"section.vms":        "ВМ",
@@ -183,6 +187,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalia a %s",
 		"next.offsite":   "Còpia externa: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Obert des de %s a través de la fortalesa",
 
 		"section.containers": "Contenidors",
 		"section.vms":        "MV",
@@ -223,6 +228,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomálie u %s",
 		"next.offsite":   "Kopie mimo lokalitu: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Otevřeno přes pevnost: %s",
 
 		"section.containers": "Kontejnery",
 		"section.vms":        "VMs",
@@ -263,6 +269,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Afvigelse ved %s",
 		"next.offsite":   "Off-site-kopi: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Åbnet fra %s gennem fæstningen",
 
 		"section.containers": "Containers",
 		"section.vms":        "VMs",
@@ -303,6 +310,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Ανωμαλία στο %s",
 		"next.offsite":   "Αντίγραφο εκτός τόπου: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Άνοιξε από %s μέσω του φρουρίου",
 
 		"section.containers": "Κοντέινερ",
 		"section.vms":        "VMs",
@@ -343,6 +351,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalía en %s",
 		"next.offsite":   "Copia externa: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Abierto desde %s a través de la fortaleza",
 
 		"section.containers": "Contenedores",
 		"section.vms":        "VMs",
@@ -383,6 +392,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Kõrvalekalle: %s",
 		"next.offsite":   "Väline koopia: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Avatud kindluse kaudu: %s",
 
 		"section.containers": "Konteinerid",
 		"section.vms":        "VM-id",
@@ -423,6 +433,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalia hemen: %s",
 		"next.offsite":   "Kanpoko kopia: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Gotorlekuaren bidez irekia: %s",
 
 		"section.containers": "Edukiontziak",
 		"section.vms":        "MB",
@@ -463,6 +474,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "ناهنجاری در %s",
 		"next.offsite":   "کپی خارج از محل: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "از %s از راه دژ باز شد",
 
 		"section.containers": "کانتینرها",
 		"section.vms":        "ماشین\u200cهای مجازی",
@@ -503,6 +515,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Poikkeama kohteessa %s",
 		"next.offsite":   "Etäkopio: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Avattu linnoituksen kautta: %s",
 
 		"section.containers": "Kontit",
 		"section.vms":        "VMs",
@@ -543,6 +556,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalie sur %s",
 		"next.offsite":   "Copie hors site : %s",
 		"log.run":        "%s %s : %s",
+		"log.opened":     "Ouvert depuis %s par la forteresse",
 
 		"section.containers": "Conteneurs",
 		"section.vms":        "VMs",
@@ -583,6 +597,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalía en %s",
 		"next.offsite":   "Copia externa: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Aberto desde %s a través da fortaleza",
 
 		"section.containers": "Contedores",
 		"section.vms":        "MV",
@@ -623,6 +638,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "חריגה ב-%s",
 		"next.offsite":   "עותק מחוץ לאתר: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "נפתח דרך המבצר מתוך %s",
 
 		"section.containers": "קונטיינרים",
 		"section.vms":        "VMs",
@@ -663,6 +679,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "%s पर विसंगति",
 		"next.offsite":   "ऑफ़-साइट कॉपी: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "%s से किले के ज़रिए खोला गया",
 
 		"section.containers": "कंटेनर",
 		"section.vms":        "VM",
@@ -703,6 +720,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalija kod %s",
 		"next.offsite":   "Kopija izvan lokacije: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Otvoreno kroz utvrdu: %s",
 
 		"section.containers": "Kontejneri",
 		"section.vms":        "VM-ovi",
@@ -743,6 +761,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomália itt: %s",
 		"next.offsite":   "Telephelyen kívüli másolat: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Megnyitva az erődön keresztül: %s",
 
 		"section.containers": "Konténerek",
 		"section.vms":        "VM-ek",
@@ -783,6 +802,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomali pada %s",
 		"next.offsite":   "Salinan off-site: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Dibuka dari %s melalui benteng",
 
 		"section.containers": "Container",
 		"section.vms":        "VM",
@@ -823,6 +843,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Frávik hjá %s",
 		"next.offsite":   "Fjarlægt afrit: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Opnað í gegnum vígið: %s",
 
 		"section.containers": "Gámar",
 		"section.vms":        "Sýndarvélar",
@@ -863,6 +884,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalia su %s",
 		"next.offsite":   "Copia off-site: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Aperto da %s attraverso la fortezza",
 
 		"section.containers": "Container",
 		"section.vms":        "VM",
@@ -903,6 +925,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "%s で異常",
 		"next.offsite":   "オフサイトコピー: %s",
 		"log.run":        "%s %s：%s",
+		"log.opened":     "%s から要塞経由で開かれました",
 
 		"section.containers": "コンテナ",
 		"section.vms":        "VM",
@@ -943,6 +966,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "%s에서 이상 징후",
 		"next.offsite":   "오프사이트 복사: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "%s에서 요새를 통해 열었습니다",
 
 		"section.containers": "컨테이너",
 		"section.vms":        "가상 머신",
@@ -983,6 +1007,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalija ties %s",
 		"next.offsite":   "Nuotolinė kopija: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Atidaryta per tvirtovę: %s",
 
 		"section.containers": "Konteineriai",
 		"section.vms":        "VM",
@@ -1023,6 +1048,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomālija pie %s",
 		"next.offsite":   "Attālinātā kopija: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Atvērts caur cietoksni: %s",
 
 		"section.containers": "Konteineri",
 		"section.vms":        "VM",
@@ -1063,6 +1089,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomali pada %s",
 		"next.offsite":   "Salinan luar tapak: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Dibuka dari %s melalui kubu",
 
 		"section.containers": "Bekas",
 		"section.vms":        "VM",
@@ -1103,6 +1130,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalie bij %s",
 		"next.offsite":   "Off-site-kopie: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Geopend vanuit %s via de vesting",
 
 		"section.containers": "Containers",
 		"section.vms":        "VM's",
@@ -1143,6 +1171,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Avvik ved %s",
 		"next.offsite":   "Off-site-kopi: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Åpnet fra %s gjennom festningen",
 
 		"section.containers": "Kontainere",
 		"section.vms":        "VM-er",
@@ -1183,6 +1212,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalia w %s",
 		"next.offsite":   "Kopia poza siedzibą: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Otwarto przez twierdzę: %s",
 
 		"section.containers": "Containers",
 		"section.vms":        "Maszyny wirtualne",
@@ -1223,6 +1253,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalia em %s",
 		"next.offsite":   "Cópia externa: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Aberto a partir de %s através da fortaleza",
 
 		"section.containers": "Containers",
 		"section.vms":        "VMs",
@@ -1263,6 +1294,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalie la %s",
 		"next.offsite":   "Copie externă: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Deschis din %s prin fortăreață",
 
 		"section.containers": "Containere",
 		"section.vms":        "VM-uri",
@@ -1303,6 +1335,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Аномалия: %s",
 		"next.offsite":   "Внешняя копия: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Открыто через крепость: %s",
 
 		"section.containers": "Контейнеры",
 		"section.vms":        "Виртуальные машины",
@@ -1343,6 +1376,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomália pri %s",
 		"next.offsite":   "Externá kópia: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Otvorené cez pevnosť: %s",
 
 		"section.containers": "Kontajnery",
 		"section.vms":        "VM",
@@ -1383,6 +1417,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Anomalija pri %s",
 		"next.offsite":   "Zunanja kopija: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Odprto prek trdnjave: %s",
 
 		"section.containers": "Vsebniki",
 		"section.vms":        "VM-ji",
@@ -1423,6 +1458,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Аномалија код %s",
 		"next.offsite":   "Спољна копија: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Отворено кроз тврђаву: %s",
 
 		"section.containers": "Контејнери",
 		"section.vms":        "ВМ-ови",
@@ -1463,6 +1499,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Avvikelse vid %s",
 		"next.offsite":   "Extern kopia: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Öppnad från %s genom fästningen",
 
 		"section.containers": "Containers",
 		"section.vms":        "VMs",
@@ -1503,6 +1540,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "ความผิดปกติที่ %s",
 		"next.offsite":   "สำเนานอกสถานที่: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "เปิดจาก %s ผ่านป้อมปราการ",
 
 		"section.containers": "คอนเทนเนอร์",
 		"section.vms":        "VMs",
@@ -1543,6 +1581,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "%s için anormallik",
 		"next.offsite":   "Site dışı kopya: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Kale üzerinden açıldı: %s",
 
 		"section.containers": "Konteynerler",
 		"section.vms":        "VM'ler",
@@ -1583,6 +1622,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Аномалія: %s",
 		"next.offsite":   "Зовнішня копія: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Відкрито через фортецю: %s",
 
 		"section.containers": "Контейнери",
 		"section.vms":        "Віртуальні машини",
@@ -1623,6 +1663,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "Bất thường tại %s",
 		"next.offsite":   "Bản sao ngoài site: %s",
 		"log.run":        "%s %s: %s",
+		"log.opened":     "Được mở từ %s qua pháo đài",
 
 		"section.containers": "Containers",
 		"section.vms":        "VMs",
@@ -1663,6 +1704,7 @@ var fortressCatalog = map[string]fortressTexts{
 		"anomaly.open":   "%s 出现异常",
 		"next.offsite":   "异地副本：%s",
 		"log.run":        "%s %s：%s",
+		"log.opened":     "通过堡垒从 %s 打开",
 
 		"section.containers": "容器",
 		"section.vms":        "虚拟机",

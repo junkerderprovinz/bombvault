@@ -232,7 +232,7 @@ func pagesOverRelay(t *testing.T, spa fstest.MapFS) (tower, attic *instance, ph 
 	tower = newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic = newInstance(t, "attic", strings.Repeat("b2", 32))
 	phrase, relayURL = groupOf(t, tower, attic)
-	attic.svc.ServePhonePages(NewServer(config.Config{HTTPOnly: true}, spa, attic.router).Handler())
+	attic.svc.ServePhonePages(NewServer(config.Config{HTTPOnly: true}, spa, attic.router, nil).Handler())
 	ph = joinPhone(t, relayURL, phrase, attic)
 	ph.signIn(attic)
 	return tower, attic, ph, relayURL, phrase
@@ -472,7 +472,7 @@ func TestADownloadDoesNotGoThroughTheRelay(t *testing.T) {
 		w.Header().Set("Content-Disposition", `attachment; filename="flash.zip"`)
 		_, _ = w.Write(bytes.Repeat([]byte("PK the archive "), 1000))
 	})
-	attic.svc.ServePhonePages(NewServer(config.Config{HTTPOnly: true}, shell, download).Handler())
+	attic.svc.ServePhonePages(NewServer(config.Config{HTTPOnly: true}, shell, download, nil).Handler())
 	answer, body := ph.open(attic, http.MethodGet, "/api/flash/download", nil)
 	if answer.Status != http.StatusForbidden || bytes.Contains(body, []byte("PK")) || decoded(t, body)["code"] != codeRelayRefused {
 		t.Fatalf("a download: %d %s", answer.Status, body)

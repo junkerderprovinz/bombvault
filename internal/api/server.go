@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/junkerderprovinz/parleyport/kit/fortress"
+
 	"github.com/junkerderprovinz/bombvault/internal/config"
 )
 
@@ -39,11 +41,23 @@ type Server struct {
 	BeforeShutdown func()
 }
 
-// NewServer returns a Server for the API router and the SPA in spaFS.
-// securityHeaders is the outermost wrapper, so the compression layer below it
-// cannot drop or reorder the security headers.
-func NewServer(cfg config.Config, spaFS fs.FS, apiRouter http.Handler) *Server {
-	return &Server{cfg: cfg, handler: securityHeaders(withCompression(NewSPAHandler(spaFS, apiRouter)))}
+// NewServer returns a Server for the API router and the SPA in spaFS, and for
+// the tabs of the members opened through the fortress unless tabs is nil.
+// securityHeaders wraps the rest, so the compression layer below it cannot
+// drop or reorder the security headers. The tabs stay outside: the kit sets
+// their headers, and the frame they show must not be refused.
+func NewServer(cfg config.Config, spaFS fs.FS, apiRouter, tabs http.Handler) *Server {
+	pages := securityHeaders(withCompression(NewSPAHandler(spaFS, apiRouter)))
+	if tabs == nil {
+		return &Server{cfg: cfg, handler: pages}
+	}
+	return &Server{cfg: cfg, handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, fortress.OpenPath) {
+			tabs.ServeHTTP(w, r)
+			return
+		}
+		pages.ServeHTTP(w, r)
+	})}
 }
 
 // Handler is what the server answers every request with.
@@ -67,6 +81,9 @@ func (s *Server) Handler() http.Handler { return s.handler }
 // a placeholder of its buttons in a blank frame of this page, which inherits
 // this policy, so the two logos on it need img-src. Nothing loads before
 // somebody opens its window.
+//
+// A page another member opened through the fortress is framed by the bar of
+// that member's tab, at the same address, so it may be framed there.
 func securityHeaders(next http.Handler) http.Handler {
 	const paypalHosts = "https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com"
 
@@ -80,8 +97,7 @@ func securityHeaders(next http.Handler) http.Handler {
 		"connect-src 'self' " + paypalHosts + "; " +
 		"frame-src " + paypalHosts + " https://buymeacoffee.com; " +
 		"object-src 'none'; " +
-		"base-uri 'self'; " +
-		"frame-ancestors 'none'"
+		"base-uri 'self'; "
 
 	// The widget is a single page with inline style and script that only
 	// fetches /api/widget/data.
@@ -98,11 +114,14 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-		if r.URL.Path == "/widget" {
+		switch {
+		case r.URL.Path == "/widget":
 			w.Header().Set("Content-Security-Policy", widgetCSP)
-		} else {
+		case openedPage(r):
+			w.Header().Set("Content-Security-Policy", csp+"frame-ancestors 'self'")
+		default:
 			w.Header().Set("X-Frame-Options", "DENY")
-			w.Header().Set("Content-Security-Policy", csp)
+			w.Header().Set("Content-Security-Policy", csp+"frame-ancestors 'none'")
 		}
 		next.ServeHTTP(w, r)
 	})

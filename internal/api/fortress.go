@@ -300,13 +300,17 @@ func (f fortressSource) Log(_ context.Context, q status.LogQuery) (status.LogPag
 			name = label
 		}
 		finished := *run.FinishedAt
-		page.Entries = append(page.Entries, status.LogEntry{
+		entry := status.LogEntry{
 			ID:    run.ID,
 			At:    time.Unix(finished, 0).UTC(),
 			Level: runLevel(run.Status),
 			Code:  "run." + logCodePart(run.Kind) + "." + logCodePart(run.Status),
 			Text:  tx.format("log.run", tx.kind(run.Kind), scrubRepoLocation(name), tx.runStatus(run.Status)),
-		})
+		}
+		if run.TargetID == store.FortressTargetID && run.Kind == runKindOpened {
+			entry.Code, entry.Text = "fortress.opened", tx.format("log.opened", run.Subject)
+		}
+		page.Entries = append(page.Entries, entry)
 		page.Next = strconv.FormatInt(finished, 10) + "." + run.ID
 	}
 	return page, nil

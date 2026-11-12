@@ -59,8 +59,8 @@ func TestBombVaultOffersItsActionsAndFetchesBackups(t *testing.T) {
 	if cfg.App.ID != "bombvault" || cfg.Self.Deployment != "container" {
 		t.Fatalf("app %+v, self %+v", cfg.App, cfg.Self)
 	}
-	if !slices.Equal(cfg.Uses, []string{"backup.export", "backup.import", "updates.managed"}) {
-		t.Fatalf("uses %v, want backup.export, backup.import and updates.managed once each", cfg.Uses)
+	if !slices.Equal(cfg.Uses, []string{"backup.export", "backup.import", "updates.managed", "ui.open"}) {
+		t.Fatalf("uses %v, want backup.export, backup.import, updates.managed and ui.open once each", cfg.Uses)
 	}
 }
 

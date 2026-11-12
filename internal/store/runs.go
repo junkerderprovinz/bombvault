@@ -870,6 +870,10 @@ func (r *Repo) LastSuccessfulFlashBackup() (time.Time, error) {
 	return scanLastBackupTime(row, "LastSuccessfulFlashBackup")
 }
 
+// FortressTargetID is the reserved runs.target_id of what other members of
+// the fortress did here, such as opening this instance's pages.
+const FortressTargetID = "fortress"
+
 // ConfigTargetID is the reserved runs.target_id for the singleton config
 // domain, the backup of BombVault's own /config.
 const ConfigTargetID = "config"
