@@ -5,23 +5,16 @@ import (
 	"net/http"
 	"slices"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/phrase"
 )
-
-// maxDeviceName bounds the server's name in the fortress, as the kit bounds
-// an app's.
-const maxDeviceName = 64
 
 func (h *Handler) registerFortressMembership(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/fortress", h.handleFortress)
 	mux.HandleFunc("POST /api/fortress/join", h.handleFortressJoin)
 	mux.HandleFunc("POST /api/fortress/phrase/show", h.handleFortressShow)
 	mux.HandleFunc("POST /api/fortress/phrase", h.handleFortressChange)
-	mux.HandleFunc("PUT /api/fortress/device", h.handleFortressDevice)
 	mux.HandleFunc("PUT /api/fortress/permissions", h.handleFortressPermission)
 	mux.HandleFunc("DELETE /api/fortress", h.handleFortressLeave)
 }
@@ -33,8 +26,8 @@ type fortressView struct {
 	Joined bool `json:"joined"`
 	// Phrase says whether BombVault keeps the phrase to show and change it,
 	// which a membership from the console does not.
-	Phrase        bool                     `json:"phrase"`
-	Device        string                   `json:"device"`
+	Phrase bool `json:"phrase"`
+	// DefaultDevice is the name this instance goes by without one of its own.
 	DefaultDevice string                   `json:"defaultDevice"`
 	PasswordSet   bool                     `json:"passwordSet"`
 	Members       []fortressMemberView     `json:"members"`
@@ -59,6 +52,9 @@ type fortressMemberView struct {
 	// Relay means it is reached through the relay alone.
 	Relay    bool  `json:"relay"`
 	LastSeen int64 `json:"lastSeen,omitempty"`
+	// Logo is the app's mark as its status publishes it, a data URI that the
+	// page shows only as an image.
+	Logo string `json:"logo,omitempty"`
 }
 
 // fortressPermissionView is whether one app may run an action at another.
@@ -83,8 +79,7 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 	v := fortressView{
 		OK:            true,
 		Phrase:        m.Joined(),
-		Device:        h.svc.fortressDevice(),
-		DefaultDevice: h.svc.defaultFortressDevice(),
+		DefaultDevice: h.svc.defaultPairName(),
 		PasswordSet:   settings.AuthPasswordHash != "",
 		Members:       []fortressMemberView{},
 		Permissions:   []fortressPermissionView{},
@@ -106,7 +101,7 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		mv := fortressMemberView{
 			ID: mb.ID, App: mb.App.ID, Name: mb.App.Name, Version: mb.App.Version,
 			Device: mb.Device, Deployment: mb.Deployment, Kind: string(mb.Kind),
-			Online: mb.Online(), Relay: mb.Relay && !mb.Direct,
+			Online: mb.Online(), Relay: mb.Relay && !mb.Direct, Logo: h.svc.appLogo(f, mb),
 		}
 		if !mb.LastSeen.IsZero() {
 			mv.LastSeen = mb.LastSeen.Unix()
@@ -212,27 +207,6 @@ func (h *Handler) handleFortressChange(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": words, "left": left}))
 }
 
-// handleFortressDevice names this server for the other members.
-// PUT /api/fortress/device
-func (h *Handler) handleFortressDevice(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Device string `json:"device"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	name := strings.TrimSpace(body.Device)
-	if utf8.RuneCountInString(name) > maxDeviceName || strings.IndexFunc(name, unicode.IsControl) >= 0 {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "deviceName", "error": "the name must be one line of at most 64 characters"})
-		return
-	}
-	if err := h.svc.SetFortressDevice(name); err != nil {
-		writeFortressError(w, err)
-		return
-	}
-	h.writeFortressView(w)
-}
-
 // handleFortressPermission switches whether one app may run an action at
 // another, here and at every member in reach. PUT /api/fortress/permissions
 func (h *Handler) handleFortressPermission(w http.ResponseWriter, r *http.Request) {
@@ -257,10 +231,14 @@ func (h *Handler) handleFortressPermission(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleFortressLeave takes BombVault out of its fortress.
-// DELETE /api/fortress
-func (h *Handler) handleFortressLeave(w http.ResponseWriter, _ *http.Request) {
-	if err := h.svc.LeaveFortress(); err != nil {
+// handleFortressLeave takes BombVault out of its fortress, and out of the
+// group on the same phrase. DELETE /api/fortress
+func (h *Handler) handleFortressLeave(w http.ResponseWriter, r *http.Request) {
+	if m, err := h.store.FortressMembership(); err == nil && !m.Joined() && h.svc.fortressNow() == nil && !h.svc.pairing().Active() {
+		writeFortressError(w, errNoFortress)
+		return
+	}
+	if err := h.leavePairing(r.Context()); err != nil {
 		writeFortressError(w, err)
 		return
 	}

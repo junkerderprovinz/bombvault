@@ -11,16 +11,13 @@ func TestANewDatabaseIsInNoFortress(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if m.Joined() || m.Device != "" || len(m.StateEnc) != 0 {
+	if m.Joined() || len(m.StateEnc) != 0 {
 		t.Fatalf("a new database keeps %+v", m)
 	}
 }
 
-func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingKeepsOnlyTheName(t *testing.T) {
+func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingForgetsThem(t *testing.T) {
 	r := kitRepo(t)
-	if err := r.SetFortressDevice("tower"); err != nil {
-		t.Fatal(err)
-	}
 	if err := r.JoinFortress([]byte("sealed secret"), []byte("sealed seed")); err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +28,7 @@ func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingKeepsOnlyTheName(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !m.Joined() || string(m.SecretEnc) != "sealed secret" || string(m.SeedEnc) != "sealed seed" || string(m.StateEnc) != "sealed state" || m.Device != "tower" {
+	if !m.Joined() || string(m.SecretEnc) != "sealed secret" || string(m.SeedEnc) != "sealed seed" || string(m.StateEnc) != "sealed state" {
 		t.Fatalf("joined: %+v", m)
 	}
 
@@ -48,7 +45,7 @@ func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingKeepsOnlyTheName(t *testing.
 		t.Fatal(err)
 	}
 	m, _ = r.FortressMembership()
-	if m.Joined() || len(m.SecretEnc)+len(m.PreviousEnc)+len(m.SeedEnc)+len(m.StateEnc) != 0 || !m.Changed.IsZero() || m.Device != "tower" {
+	if m.Joined() || len(m.SecretEnc)+len(m.PreviousEnc)+len(m.SeedEnc)+len(m.StateEnc) != 0 || !m.Changed.IsZero() {
 		t.Fatalf("after leaving: %+v", m)
 	}
 }

@@ -363,7 +363,6 @@ var pairedRefused = []string{
 	"POST /api/zfs/replica/servers/{id}/forget-host-key",
 	"POST /api/zfs/replica/servers/{id}/test",
 	"PUT /api/fleet/peers/{id}",
-	"PUT /api/fortress/device",
 	"PUT /api/fortress/permissions",
 	"PUT /api/group/members/{id}/roles/{role}",
 	"PUT /api/group/relay",

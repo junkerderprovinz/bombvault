@@ -3482,9 +3482,7 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if nameChanged {
-		// The group announces the name, so members see a rename without a
-		// restart.
-		h.svc.applyGroup()
+		h.svc.renamed()
 	}
 	// Dual-write: mirror the just-saved off-site config into each domain's PRIMARY
 	// offsite_targets row so the replication path (which now reads those rows) sees

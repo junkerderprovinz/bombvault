@@ -102,6 +102,7 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 	eng := &passwordEngine{}
 	svc := NewService(cfg, st, nil, nil, eng)
 	t.Cleanup(svc.StopGroup)
+	t.Cleanup(svc.CloseFortress)
 	h := NewHandler(cfg, st, nil, svc, nil, nil)
 	session := secret.NewSessionToken(appKey, hash, "", time.Hour)
 	return &instance{appKey: appKey, session: session, db: db, st: st, svc: svc, h: h, router: h.Router(), engine: eng}

@@ -62,6 +62,11 @@ type fortressPlace struct {
 	// long as those groups stay the same.
 	direct directRoute
 
+	// logos are the marks the apps publish in their status, by app and
+	// version, and logoAsked when each was last asked for.
+	logos     map[string]string
+	logoAsked map[string]time.Time
+
 	// requests are the backups members asked for, by id, the oldest first in
 	// order.
 	requests map[string]*houseRequest
@@ -106,7 +111,61 @@ func (s *Service) OpenFortress(src status.Source) error {
 	s.house.mu.Lock()
 	s.house.src = src
 	s.house.mu.Unlock()
-	return s.openFortress()
+	sec, err := s.groupSecretToAdopt()
+	if err != nil || sec == nil {
+		return errors.Join(err, s.openFortress())
+	}
+	return s.joinFortress(sec)
+}
+
+// AdoptGroupPhrase makes the group's phrase the fortress's as well, so that
+// another app given the same words finds BombVault there. It does nothing
+// while BombVault is in a fortress or in no group.
+func (s *Service) AdoptGroupPhrase() error {
+	s.house.door.Lock()
+	defer s.house.door.Unlock()
+	sec, err := s.groupSecretToAdopt()
+	if err != nil || sec == nil {
+		return err
+	}
+	return s.joinFortress(sec)
+}
+
+// groupSecretToAdopt is the secret of the group's phrase while BombVault is
+// in no fortress, and nil otherwise. A membership from the console counts as
+// a fortress.
+func (s *Service) groupSecretToAdopt() ([]byte, error) {
+	m, err := s.store.FortressMembership()
+	if err != nil || m.Joined() || s.fortressNow() != nil {
+		return nil, err
+	}
+	if _, err := fortress.Load(s.fortressDir()); !errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return nil, err
+	}
+	return s.groupSecret(g)
+}
+
+// onGroupsPhrase reports whether the fortress BombVault is in runs on the
+// group's own phrase, the fortress it adopted.
+func (s *Service) onGroupsPhrase() bool {
+	m, err := s.store.FortressMembership()
+	if err != nil || !m.Joined() {
+		return false
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return false
+	}
+	own, err := s.groupSecret(g)
+	if err != nil || own == nil {
+		return false
+	}
+	cur, err := secret.Decrypt(s.cfg.AppKey, m.SecretEnc)
+	return err == nil && bytes.Equal(cur, own)
 }
 
 // openFortress opens the membership kept in the database, or else the one
@@ -202,7 +261,7 @@ func (s *Service) fortressMembership() (fortress.Config, bool, error) {
 		Secret:   sec,
 		Previous: previous,
 		Identity: id,
-		Self:     group.Self{Name: s.fortressDevice()},
+		Self:     group.Self{Name: s.pairName()},
 		Relay:    group.RelayMode(g.RelayMode),
 		RelayURL: g.RelayURL,
 		Store:    fortressStore{s},
@@ -267,10 +326,16 @@ func (s *Service) JoinFortress(words string) error {
 
 // joinFortress joins the fortress of sec with door held. It signs with the
 // key the pairing group knows this instance by, so the pairing can move
-// into the fortress without anybody approving it again.
+// into the fortress without anybody approving it again. The fortress on the
+// group's own phrase gives way to it, and the group moves along.
 func (s *Service) joinFortress(sec []byte) error {
 	if s.fortressNow() != nil {
-		return errInFortress
+		if !s.onGroupsPhrase() {
+			return errInFortress
+		}
+		if err := s.forgetFortress(); err != nil {
+			return err
+		}
 	}
 	own, err := s.depositSeed()
 	if err != nil {
@@ -396,42 +461,36 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []string, e
 	return words, left, err
 }
 
-// SetFortressDevice names this server for the other members, and an empty
-// name goes back to the one BombVault finds. An open fortress takes it at
-// once.
-func (s *Service) SetFortressDevice(name string) error {
-	if err := s.store.SetFortressDevice(strings.TrimSpace(name)); err != nil {
-		return err
+// renamed hands a new instance name to the group and to an open fortress,
+// so that the members see it without a restart.
+func (s *Service) renamed() {
+	s.applyGroup()
+	s.house.mu.Lock()
+	device := s.house.device
+	open := s.house.f != nil
+	s.house.mu.Unlock()
+	if open && device != s.pairName() {
+		s.reopenFortress()
 	}
-	m, err := s.store.FortressMembership()
-	if err != nil || !m.Joined() || s.fortressNow() == nil {
-		return err
-	}
-	s.reopenFortress()
-	return nil
 }
 
-// fortressDevice is the name the other members know this server by. ShipLog
-// and TowerTorch find BombVault on their own server by it, so it is the
-// server's name unless somebody gives another.
-func (s *Service) fortressDevice() string {
-	if m, err := s.store.FortressMembership(); err == nil && m.Device != "" {
-		return m.Device
+// pairName is the one name this instance goes by, in its group and in
+// the fortress: the instance's name, or else the server's. ShipLog and
+// TowerTorch find BombVault on their own server by it.
+func (s *Service) pairName() string {
+	if settings, err := s.store.GetSettings(); err == nil && strings.TrimSpace(settings.InstanceName) != "" {
+		return instanceDisplayName(settings)
 	}
-	return s.defaultFortressDevice()
+	return s.defaultPairName()
 }
 
-// defaultFortressDevice is the name of the Unraid server, or the name this
-// instance has in the pairing group elsewhere.
-func (s *Service) defaultFortressDevice() string {
+// defaultPairName is the name an instance without one of its own goes
+// by: the Unraid server's, or BombVault.
+func (s *Service) defaultPairName() string {
 	if name := unraidServerName(s.cfg.FlashDir); name != "" {
 		return name
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		return "BombVault"
-	}
-	return instanceDisplayName(settings)
+	return "BombVault"
 }
 
 // unraidServerName reads the server's name from config/ident.cfg on the
@@ -519,25 +578,63 @@ func (k fortressKeeper) Keep(sec []byte) error {
 	return nil
 }
 
-// directRoute is the direct handler of a fortress and the group on the old
+// directRoute is the direct handler of a fortress and the group on its own
 // phrase beside it.
 type directRoute struct {
-	f      *fortress.Fortress
-	former *group.Group
-	h      http.Handler
+	f   *fortress.Fortress
+	own *group.Group
+	h   http.Handler
 }
 
 // fortressDirect answers the direct calls that reach f, of the fortress, of
-// its pairing and of the group on the old phrase, which all arrive at one
-// path.
+// its pairing and of the group on its own phrase, which all arrive at one
+// path. That phrase is the fortress's or the one the group moves away from.
 func (s *Service) fortressDirect(f *fortress.Fortress) http.Handler {
-	former := s.pairing().Former()
+	own := s.pairing().Own()
 	s.house.mu.Lock()
 	defer s.house.mu.Unlock()
-	if d := s.house.direct; d.h == nil || d.f != f || d.former != former {
-		s.house.direct = directRoute{f: f, former: former, h: f.DirectHandler(former)}
+	if d := s.house.direct; d.h == nil || d.f != f || d.own != own {
+		s.house.direct = directRoute{f: f, own: own, h: f.DirectHandler(own)}
 	}
 	return s.house.direct.h
+}
+
+// logoAgain is how long an app that showed no logo is left alone before it
+// is asked again.
+const logoAgain = 10 * time.Minute
+
+// appLogo is the logo the app of m publishes in its status, once BombVault
+// has read it. Until then it asks m in the background, and a new version of
+// the app is asked again.
+func (s *Service) appLogo(f *fortress.Fortress, m fortress.Member) string {
+	key := m.App.ID + " " + m.App.Version
+	s.house.mu.Lock()
+	defer s.house.mu.Unlock()
+	if logo, ok := s.house.logos[key]; ok {
+		return logo
+	}
+	if !m.Online() || time.Since(s.house.logoAsked[key]) < logoAgain {
+		return ""
+	}
+	if s.house.logoAsked == nil {
+		s.house.logoAsked = map[string]time.Time{}
+	}
+	s.house.logoAsked[key] = time.Now()
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), moveTimeout)
+		defer cancel()
+		r, err := f.Status(ctx, m.ID, "en")
+		if err != nil || status.CheckIcon(r.App.Icon) != nil {
+			return
+		}
+		s.house.mu.Lock()
+		defer s.house.mu.Unlock()
+		if s.house.logos == nil {
+			s.house.logos = map[string]string{}
+		}
+		s.house.logos[key] = r.App.Icon
+	}()
+	return ""
 }
 
 // fortressNow is the open fortress, or nil.

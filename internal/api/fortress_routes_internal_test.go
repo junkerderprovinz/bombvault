@@ -17,10 +17,10 @@ func fortressInstance(t *testing.T) *instance {
 	return in
 }
 
-func TestOutsideAFortressThePageOffersToJoinUnderTheServersName(t *testing.T) {
+func TestOutsideAFortressThePageOffersToJoin(t *testing.T) {
 	in := fortressInstance(t)
 	code, out := in.do(t, http.MethodGet, "/api/fortress", nil)
-	if code != http.StatusOK || out["ok"] != true || out["joined"] != false || out["device"] != "attic" || out["defaultDevice"] != "attic" || out["passwordSet"] != true {
+	if code != http.StatusOK || out["ok"] != true || out["joined"] != false || out["defaultDevice"] != "BombVault" || out["passwordSet"] != true {
 		t.Fatalf("GET /api/fortress = %d %v", code, out)
 	}
 }
@@ -94,19 +94,6 @@ func TestChangingTheFortressPhraseAnswersWithTheNewWords(t *testing.T) {
 	}
 	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": testPassword}); shown["phrase"] != changed {
 		t.Fatalf("the phrase shown after the change = %v", shown)
-	}
-}
-
-func TestTheServerNameSavesAndAnEmptyOneGoesBackToTheFoundName(t *testing.T) {
-	in := fortressInstance(t)
-	if _, out := in.do(t, http.MethodPut, "/api/fortress/device", map[string]any{"device": "cellar"}); out["ok"] != true || out["device"] != "cellar" || out["defaultDevice"] != "attic" {
-		t.Fatalf("rename = %v", out)
-	}
-	if _, out := in.do(t, http.MethodPut, "/api/fortress/device", map[string]any{"device": "two\nlines"}); out["ok"] != false || out["code"] != "deviceName" {
-		t.Fatalf("a name on two lines = %v", out)
-	}
-	if _, out := in.do(t, http.MethodPut, "/api/fortress/device", map[string]any{"device": "  "}); out["device"] != "attic" {
-		t.Fatalf("cleared = %v", out)
 	}
 }
 

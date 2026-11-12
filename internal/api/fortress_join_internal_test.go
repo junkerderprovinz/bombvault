@@ -169,45 +169,15 @@ func TestANewPhraseFromAnotherMemberIsKeptAndOpened(t *testing.T) {
 	}
 }
 
-func TestTheServerIsNamedAfterUnraidUntilSomebodyNamesIt(t *testing.T) {
-	svc, _ := newFortressSvc(t)
-	svc.cfg.FlashDir = t.TempDir()
-	if got := svc.fortressDevice(); got != "BombVault" {
-		t.Fatalf("without a flash the server is %q", got)
-	}
-	if err := os.MkdirAll(filepath.Join(svc.cfg.FlashDir, "config"), 0o750); err != nil {
+// writeUnraidIdent names the Unraid server on the flash at dir.
+func writeUnraidIdent(t *testing.T, dir, name string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Join(dir, "config"), 0o750); err != nil {
 		t.Fatal(err)
 	}
-	ident := "NAME=\"Tower\"\nCOMMENT=\"Media server\"\n"
-	if err := os.WriteFile(filepath.Join(svc.cfg.FlashDir, "config", "ident.cfg"), []byte(ident), 0o600); err != nil {
+	ident := "NAME=\"" + name + "\"\nCOMMENT=\"Media server\"\n"
+	if err := os.WriteFile(filepath.Join(dir, "config", "ident.cfg"), []byte(ident), 0o600); err != nil {
 		t.Fatal(err)
-	}
-	if got := svc.fortressDevice(); got != "Tower" {
-		t.Fatalf("on Unraid the server is %q", got)
-	}
-
-	words, _ := newPhrase(t)
-	if err := svc.JoinFortress(words); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(svc.CloseFortress)
-	if err := svc.SetFortressDevice("  cellar "); err != nil {
-		t.Fatal(err)
-	}
-	if got := svc.fortressDevice(); got != "cellar" {
-		t.Fatalf("named, the server is %q", got)
-	}
-	svc.house.mu.Lock()
-	device := svc.house.device
-	svc.house.mu.Unlock()
-	if device != "cellar" {
-		t.Fatalf("the open fortress knows the server as %q", device)
-	}
-	if err := svc.SetFortressDevice(""); err != nil {
-		t.Fatal(err)
-	}
-	if got := svc.fortressDevice(); got != "Tower" {
-		t.Fatalf("cleared, the server is %q", got)
 	}
 }
 

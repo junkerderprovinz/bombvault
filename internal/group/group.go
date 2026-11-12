@@ -402,6 +402,14 @@ func (m *Manager) Former() *kitgroup.Group {
 	return m.g
 }
 
+// Own is the group on its own phrase, nil while it has none, whether or not
+// the Manager follows a pairing in a fortress.
+func (m *Manager) Own() *kitgroup.Group {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.g
+}
+
 // Active reports whether this instance is in a group.
 func (m *Manager) Active() bool {
 	g, _ := m.group()

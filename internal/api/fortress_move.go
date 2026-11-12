@@ -40,6 +40,11 @@ func (s *Service) withPairing(cfg fortress.Config, g store.GroupState) (fortress
 	if err != nil {
 		return cfg, err
 	}
+	// On the group's own phrase the group is the pairing, and a second one
+	// under the same keys would answer every call twice.
+	if old != nil && bytes.Equal(old, cfg.Secret) {
+		return cfg, nil
+	}
 	cfg.Pairing = &fortress.Pairing{
 		Group: kitgroup.Config{
 			LAN:            s.pairing().LAN(),
@@ -174,10 +179,13 @@ func (k moveKeeper) Keep(sec []byte) error {
 	}
 	if m.Joined() {
 		cur, err := secret.Decrypt(k.s.cfg.AppKey, m.SecretEnc)
-		if err != nil || !bytes.Equal(cur, sec) {
+		if err == nil && bytes.Equal(cur, sec) {
+			return nil
+		}
+		// The fortress on the group's own phrase follows the group.
+		if err != nil || !k.s.onGroupsPhrase() {
 			return errInFortress
 		}
-		return nil
 	}
 	// The member that hands it over waits for this answer, and joining
 	// calls members in turn.

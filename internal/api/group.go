@@ -127,11 +127,6 @@ func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 		log.Printf("group: %v", err)
 		return g, false
 	}
-	settings, err := s.store.GetSettings()
-	if err != nil {
-		log.Printf("group: %v", err)
-		return g, false
-	}
 	sec, err := s.groupSecret(g)
 	if err != nil {
 		// Logged, because the instance looks paired while reaching nobody.
@@ -148,7 +143,7 @@ func (s *Service) applyGroupConfig() (store.GroupState, bool) {
 		Secret:     sec,
 		Seed:       seed,
 		InstanceID: g.InstanceID,
-		Name:       instanceDisplayName(settings),
+		Name:       s.pairName(),
 		DirectURL:  s.directURL(g),
 		Mode:       group.Mode(g.RelayMode),
 		RelayURL:   g.RelayURL,
@@ -819,6 +814,10 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	if err := h.svc.AdoptGroupPhrase(); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
 	v, err := h.groupViewNow()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -926,12 +925,22 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	// Another group's phrase leaves this one first. Its members would
-	// otherwise stay away here for good, and keep this instance away there.
-	if h.inAnotherGroup(sec) {
-		err = h.switchGroup(r.Context(), sec)
-	} else {
+	// Other words leave the ones this instance is on first. Their members
+	// would otherwise stay away here for good, and keep this instance away
+	// there.
+	cur := h.svc.phraseSecret()
+	switch {
+	case cur != nil && bytes.Equal(cur, sec):
+	case cur != nil:
+		err = h.leavePairing(r.Context())
+		if err == nil {
+			err = h.storeGroupSecret(sec)
+		}
+	default:
 		err = h.storeGroupSecret(sec)
+	}
+	if err == nil {
+		err = h.svc.AdoptGroupPhrase()
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
@@ -945,33 +954,45 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 // pull sources stay, and pair again once this instance joins the group again.
 // DELETE /api/group
 func (h *Handler) handleGroupLeave(w http.ResponseWriter, r *http.Request) {
-	if err := h.switchGroup(r.Context(), nil); err != nil {
+	if err := h.leavePairing(r.Context()); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
 	h.writeGroupView(w)
 }
 
-// inAnotherGroup reports whether this instance is in a group other than the
-// one sec opens. A phrase this instance cannot open names no group to leave.
-func (h *Handler) inAnotherGroup(sec []byte) bool {
-	g, err := h.store.GetGroupState()
-	if err != nil {
-		return false
+// phraseSecret is the secret of the one phrase this instance is on: the
+// fortress's, or the group's outside one. A phrase this instance cannot
+// open is none.
+func (s *Service) phraseSecret() []byte {
+	if m, err := s.store.FortressMembership(); err == nil && m.Joined() {
+		if sec, err := secret.Decrypt(s.cfg.AppKey, m.SecretEnc); err == nil {
+			return sec
+		}
 	}
-	cur, err := h.svc.groupSecret(g)
-	return err == nil && cur != nil && !bytes.Equal(cur, sec)
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return nil
+	}
+	sec, err := s.groupSecret(g)
+	if err != nil {
+		return nil
+	}
+	return sec
 }
 
-// switchGroup leaves the group this instance is in for the one sec opens, or
-// for none when sec is nil: the members in reach hear it, and their keys and
-// Fleet rows go.
-func (h *Handler) switchGroup(ctx context.Context, sec []byte) error {
+// leavePairing takes this instance out of its group and its fortress
+// together, since both run on the one phrase: the members in reach hear it,
+// and their keys and Fleet rows go.
+func (h *Handler) leavePairing(ctx context.Context) error {
 	h.svc.tellMembersLeaving(ctx)
+	if err := h.svc.LeaveFortress(); err != nil && !errors.Is(err, errNoFortress) {
+		return err
+	}
 	if err := h.svc.forgetGroup(); err != nil {
 		return err
 	}
-	return h.storeGroupSecret(sec)
+	return h.storeGroupSecret(nil)
 }
 
 // leaveGroup leaves the group without telling anybody.
