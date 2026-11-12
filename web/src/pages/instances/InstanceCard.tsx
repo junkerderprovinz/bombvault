@@ -48,7 +48,9 @@ export function Figure({ value, label }: { value: ReactNode; label: string }) {
 /** InstanceCard is one tile of the instances grid: the mark beside the name
  *  with its badges, what kind it is, a line of facts and the figures, then
  *  what the instance does, and the actions along the foot. The grid gives
- *  cards side by side one height, so the actions sit on one line across a row. */
+ *  cards side by side one height, so the actions sit on one line across a row.
+ *  A card with nothing under its text keeps the actions beside the mark, so it
+ *  stays as tall as the mark. */
 export function InstanceCard({
   cardKey,
   name,
@@ -77,6 +79,8 @@ export function InstanceCard({
   /** The pointer is on this instance in the net picture. */
   hot?: boolean;
 }) {
+  const footBeside = !children && !figures;
+  const foot = (className: string) => actions && <div className={`flex flex-wrap items-center justify-end gap-2 ${className}`}>{actions}</div>;
   return (
     <div
       data-instance={cardKey}
@@ -94,7 +98,7 @@ export function InstanceCard({
         <div data-new="instances-card-logo" className="flex shrink-0 ps-4 py-5 md:py-7">
           {mark ?? <InstanceMark />}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-7">
+        <div data-instance-text className="flex min-w-0 flex-1 flex-col gap-4 p-5 md:p-7">
           <div className="flex flex-col gap-1">
             {/* The name is never cut short: the badges move under it when the
                 two do not fit one line. */}
@@ -106,14 +110,11 @@ export function InstanceCard({
             {facts && <p className="text-xs text-carbon-textMuted wrap-anywhere">{facts}</p>}
           </div>
           {figures && <div className="flex flex-wrap items-baseline gap-x-7 gap-y-3 empty:hidden">{figures}</div>}
+          {footBeside && foot("")}
         </div>
       </div>
       {children && <div className="@container flex flex-col gap-4 px-4 pb-4 md:px-5">{children}</div>}
-      {actions && (
-        <div className="mt-auto flex flex-wrap items-center justify-end gap-2 px-4 pb-4 md:px-5 md:pb-5">
-          {actions}
-        </div>
-      )}
+      {!footBeside && foot("mt-auto px-4 pb-4 md:px-5 md:pb-5")}
     </div>
   );
 }
