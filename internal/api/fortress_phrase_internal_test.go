@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -121,6 +122,11 @@ func TestAPluginFollowsAPhraseChangeForThirtyDays(t *testing.T) {
 	})
 	// The plugin runs now and then, and is away while the phrase changes.
 	p.close()
+	before := &plugin{dir: filepath.Join(t.TempDir(), "fortress")}
+	if err := os.CopyFS(before.dir, os.DirFS(p.dir)); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(before.close)
 	words, _, err := svc.ChangeFortressPhrase(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -152,19 +158,18 @@ func TestAPluginFollowsAPhraseChangeForThirtyDays(t *testing.T) {
 	waitLong(t, "the plugin to reach BombVault under the new phrase", p.reaches)
 	p.close()
 
-	late := joinPlugin(t, url, oldSecret)
-	late.open(t)
-	waitLong(t, "BombVault to answer on the old phrase", late.reaches)
-	late.close()
+	before.open(t)
+	waitLong(t, "BombVault to answer on the old phrase", before.reaches)
+	before.close()
 
 	backdateChange(t, svc, 30*24*time.Hour+time.Hour)
 	restartFortress(t, svc)
 	if keepsPrevious(t, svc) {
 		t.Fatal("the old secret is kept 30 days after the change")
 	}
-	late.open(t)
+	before.open(t)
 	time.Sleep(3 * time.Second)
-	if late.reaches() {
+	if before.reaches() {
 		t.Error("BombVault answers on the old phrase 30 days after the change")
 	}
 }
