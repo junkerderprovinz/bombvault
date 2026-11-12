@@ -1,6 +1,2 @@
 # Blank issues stay enabled: a report in the wrong shape beats no report.
 blank_issues_enabled: true
-contact_links:
-  - name: Question rather than a bug
-    url: https://github.com/junkerderprovinz/bombvault/discussions/new?category=q-a
-    about: Ask in the Q&A discussions, where the answer also helps the next person with the same question. A plain issue works too.

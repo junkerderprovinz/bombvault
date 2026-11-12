@@ -62,7 +62,7 @@ Replace `/srv/appdata` in both places with the host folder that holds your conta
 - [Documentation](https://junkerderprovinz.github.io/bombvault/): getting started, configuration, VM and ZFS backups over SSH, off-site copies and recovery
 - [Source and Android app](https://github.com/junkerderprovinz/bombvault)
 
-Questions? Ask in [Discussions](https://github.com/junkerderprovinz/bombvault/discussions/categories/q-a) or the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs and ideas go to [GitHub issues](https://github.com/junkerderprovinz/bombvault/issues).
+Questions? Check the [support thread](https://forums.unraid.net/topic/199509-support-junkerderprovinz-bombvault/). Bugs and ideas go to [GitHub issues](https://github.com/junkerderprovinz/bombvault/issues).
 
 BombVault is free, with no accounts, no telemetry and no ads. If it has earned a place on your server, a coffee helps keep it going.
 
