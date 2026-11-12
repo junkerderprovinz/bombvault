@@ -26,7 +26,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Only a published release has to carry the newest GlimStone.
+  glimstone:
+    if: github.event_name == 'release'
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@main
+
   apk:
+    needs: glimstone
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
