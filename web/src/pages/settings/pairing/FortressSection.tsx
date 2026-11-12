@@ -122,7 +122,7 @@ export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; 
   };
 
   return (
-    <div id="fortress" className="flex scroll-mt-6 flex-col gap-10">
+    <div id="fortress" data-new="fortress-join" className="flex scroll-mt-6 flex-col gap-10">
       <Fortress
         text={text}
         lang={lang}

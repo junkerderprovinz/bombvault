@@ -870,6 +870,10 @@ const et: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Server, mille ühisesse hoidlasse sisse lased, saab liitumise lõpetamiseks ühe päeva. Pärast seda võetakse selle ühekordne võti ja sisselogimine tagasi ning see võib uuesti küsida.",
   "whatsNew.sharedOwnCopies": "Server, mis ühist hoidlat hoiab, saab ka oma varundused sinna kopeerida ja samuti ruumi säästa.",
   "whatsNew.sharedFormer": "Ühise hoidla omanik saab eemaldada varundused, mille lahkunud server sinna jättis, kui oled selle serveri nime sisse kirjutanud. Järgmine korrastusaken vabastab ruumi.",
+  "whatsNew.fortress": "BombVault liitub lehel Sidumine kindlusega selle kaheteistkümne sõna abil. Seotud serverid ja telefonid tulevad kaasa ning kõigel, mida teised rakendused BombVaultis teha tohivad, on oma lüliti.",
+  "whatsNew.appBackups": "Kindluse rakendus, mis oskab endast varukoopia teha, annab selle varukoopia BombVaultile, mis hoiab seda rakenduse konteineri juures.",
+  "whatsNew.giveBack": "Rakendus saab tagasi varukoopia, mille ta endast tegi, oma konteineri varukoopiate loendist.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog ja TowerTorch saavad BombVaultilt küsida, millal viimane varukoopia õnnestus, ja enne muudatust uue küsida.",
   "whatsNew.oled": "Teema all olev OLED annab OLED- ja AMOLED-ekraanidele päris musta alati, kui tume teema on näha, ka siis, kui see järgib seadet. Iga seade jätab oma valiku meelde.",
 
   // Monitoring (Prometheus)

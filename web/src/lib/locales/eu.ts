@@ -870,6 +870,10 @@ const eu: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Biltegi partekatu batean onartzen duzun zerbitzari batek egun bat du sartzea amaitzeko. Ondoren, bere erabilera bakarreko gakoa eta saio-hasiera kentzen zaizkio, eta berriro eska dezake.",
   "whatsNew.sharedOwnCopies": "Biltegi partekatu bat duen zerbitzariak bere babeskopiak ere kopia ditzake bertara, eta horrela berak ere lekua aurreztu.",
   "whatsNew.sharedFormer": "Biltegi partekatu baten jabeak irten den zerbitzari batek han utzitako babeskopiak ahaztu ditzake, zerbitzari horren izena idazten duzunean. Hurrengo garbiketa-leihoak lekua askatzen du.",
+  "whatsNew.fortress": "BombVault gotorleku batera batzen da bere hamabi hitzekin, Parekatzea orrian. Parekatutako zerbitzariak eta telefonoak berarekin doaz, eta beste aplikazioek BombVault-en egin dezaketen gauza bakoitzak bere etengailua du.",
+  "whatsNew.appBackups": "Bere buruaren babeskopia egin dezakeen gotorlekuko aplikazio batek babeskopia hori BombVault-i ematen dio, eta honek aplikazioaren edukiontziarekin gordetzen du.",
+  "whatsNew.giveBack": "Aplikazio batek bere buruaz egin zuen babeskopia berreskura dezake, bere edukiontziaren babeskopien zerrendatik.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog eta TowerTorch-ek BombVault-i galde diezaiokete azken babeskopia noiz atera zen ondo, eta berri bat eska dezakete zerbait aldatu aurretik.",
   "whatsNew.oled": "Itxuraren azpiko OLED aukerak benetako beltza ematen die OLED eta AMOLED pantailei itxura iluna ikusten den bakoitzean, gailuari jarraitzen dionean ere. Gailu bakoitzak bere aukera gordetzen du.",
 
   // Monitoring (Prometheus)

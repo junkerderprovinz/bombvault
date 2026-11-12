@@ -870,6 +870,10 @@ const lt: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Serveris, kurį įsileidi į bendrą saugyklą, turi parą baigti jungtis. Po to jo vienkartinis raktas ir prisijungimas atšaukiami, ir jis gali paprašyti dar kartą.",
   "whatsNew.sharedOwnCopies": "Serveris, kuriame yra bendra saugykla, taip pat gali į ją kopijuoti savo atsargines kopijas ir sutaupyti vietos.",
   "whatsNew.sharedFormer": "Bendros saugyklos savininkas gali pašalinti atsargines kopijas, kurias ten paliko išėjęs serveris, kai įvedi to serverio pavadinimą. Kitas tvarkymo langas atlaisvins vietą.",
+  "whatsNew.fortress": "BombVault puslapyje Susiejimas prisijungia prie tvirtovės su jos dvylika žodžių. Susieti serveriai ir telefonai keliauja kartu, o viskas, ką kitos programos gali daryti BombVault, turi savo jungiklį.",
+  "whatsNew.appBackups": "Tvirtovės programa, kuri moka pasidaryti savo atsarginę kopiją, perduoda ją BombVault, o šis ją saugo kartu su programos konteineriu.",
+  "whatsNew.giveBack": "Programa gali atgauti atsarginę kopiją, kurią pasidarė pati, iš savo konteinerio atsarginių kopijų sąrašo.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog ir TowerTorch gali paklausti BombVault, kada paskutinė atsarginė kopija pavyko, ir paprašyti naujos prieš ką nors keisdamos.",
   "whatsNew.oled": "OLED po Tema suteikia OLED ir AMOLED ekranams tikrą juodą kaskart, kai rodoma tamsi tema, taip pat kai ji seka įrenginį. Kiekvienas įrenginys įsimena savo pasirinkimą.",
 
   // Monitoring (Prometheus)

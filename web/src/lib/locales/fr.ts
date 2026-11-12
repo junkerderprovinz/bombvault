@@ -1218,6 +1218,10 @@ const fr: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Un serveur que vous acceptez dans un dépôt partagé a une journée pour finir de le rejoindre. Passé ce délai, sa clé à usage unique et son identifiant lui sont retirés, et il peut redemander.",
   "whatsNew.sharedOwnCopies": "Le serveur qui héberge un dépôt partagé peut aussi y copier ses propres sauvegardes et gagner de la place lui aussi.",
   "whatsNew.sharedFormer": "Le propriétaire d'un dépôt partagé peut oublier les sauvegardes qu'un serveur parti y a laissées, une fois le nom de ce serveur saisi. La prochaine fenêtre de ménage libère la place.",
+  "whatsNew.fortress": "BombVault rejoint une forteresse avec ses douze mots sur la page Appairage. Les serveurs et téléphones appairés suivent, et chaque chose que les autres apps peuvent faire chez BombVault a son propre interrupteur.",
+  "whatsNew.appBackups": "Une app de la forteresse qui sait se sauvegarder elle-même remet cette sauvegarde à BombVault, qui la garde avec le conteneur de l'app.",
+  "whatsNew.giveBack": "Une app peut récupérer la sauvegarde qu'elle a faite d'elle-même, depuis la liste des sauvegardes de son conteneur.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog et TowerTorch peuvent demander à BombVault quand la dernière sauvegarde a réussi, et en demander une nouvelle avant de changer quoi que ce soit.",
   "whatsNew.oled": "OLED, sous Thème, donne un vrai noir aux écrans OLED et AMOLED dès que le thème sombre s'affiche, même quand il suit l'appareil. Chaque appareil garde son propre choix.",
 
   // Monitoring (Prometheus)

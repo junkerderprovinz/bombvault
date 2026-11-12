@@ -1212,6 +1212,10 @@ const pl: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Serwer, którego wpuszczasz do wspólnego repozytorium, ma dobę na dokończenie dołączania. Potem jego klucz jednorazowy i login tracą ważność, a serwer może poprosić jeszcze raz.",
   "whatsNew.sharedOwnCopies": "Serwer, który prowadzi wspólne repozytorium, może też kopiować do niego własne kopie zapasowe i również oszczędzać miejsce.",
   "whatsNew.sharedFormer": "Właściciel wspólnego repozytorium może zapomnieć kopie zapasowe, które zostawił tam serwer po odejściu, gdy wpiszesz nazwę tego serwera. Następne okno porządków zwolni miejsce.",
+  "whatsNew.fortress": "BombVault dołącza do twierdzy za pomocą jej dwunastu słów na stronie Parowanie. Sparowane serwery i telefony przechodzą razem z nim, a wszystko, co inne aplikacje mogą robić w BombVault, ma własny przełącznik.",
+  "whatsNew.appBackups": "Aplikacja w twierdzy, która potrafi sama zrobić swoją kopię zapasową, przekazuje ją BombVault, a ten przechowuje ją razem z kontenerem aplikacji.",
+  "whatsNew.giveBack": "Aplikacja może odzyskać kopię zapasową, którą zrobiła sama sobie, z listy kopii zapasowych swojego kontenera.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog i TowerTorch mogą zapytać BombVault, kiedy ostatnia kopia zapasowa się udała, i poprosić o nową, zanim coś zmienią.",
   "whatsNew.oled": "OLED pod Motywem daje ekranom OLED i AMOLED prawdziwą czerń zawsze, gdy widać ciemny motyw, także gdy podąża on za urządzeniem. Każde urządzenie zapamiętuje własny wybór.",
 
   // Monitoring (Prometheus)

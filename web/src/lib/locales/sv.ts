@@ -1226,6 +1226,10 @@ const sv: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "En server som du släpper in i ett gemensamt arkiv har ett dygn på sig att gå med helt. Efter det dras dess engångsnyckel och inloggning tillbaka, och den kan fråga igen.",
   "whatsNew.sharedOwnCopies": "Servern som har ett gemensamt arkiv kan också kopiera in sina egna säkerhetskopior och spara utrymme den med.",
   "whatsNew.sharedFormer": "Ägaren till ett gemensamt arkiv kan glömma säkerhetskopiorna som en server lämnade kvar där när den gick ur, så fort du skriver in den serverns namn. Nästa städfönster frigör utrymmet.",
+  "whatsNew.fortress": "BombVault går med i en fästning med dess tolv ord på sidan Parkoppling. De parkopplade servrarna och telefonerna följer med, och allt som de andra apparna får göra hos BombVault har en egen brytare.",
+  "whatsNew.appBackups": "En app i fästningen som kan säkerhetskopiera sig själv lämnar den säkerhetskopian till BombVault, som sparar den tillsammans med appens container.",
+  "whatsNew.giveBack": "En app kan få tillbaka säkerhetskopian den gjorde av sig själv, från listan över containerns säkerhetskopior.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog och TowerTorch kan fråga BombVault när den senaste säkerhetskopian lyckades och be om en ny innan de ändrar något.",
   "whatsNew.oled": "OLED under Tema ger OLED- och AMOLED-skärmar äkta svart varje gång det mörka temat visas, även när det följer enheten. Varje enhet minns sitt eget val.",
 
   // Monitoring (Prometheus)

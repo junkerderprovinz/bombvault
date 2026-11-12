@@ -870,6 +870,10 @@ const sl: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Strežnik, ki ga spustiš v skupni repozitorij, ima za pridružitev en dan časa. Potem se mu enkratni ključ in prijava odvzameta, za pridružitev pa lahko prosi znova.",
   "whatsNew.sharedOwnCopies": "Strežnik, ki hrani skupni repozitorij, lahko vanj kopira tudi svoje varnostne kopije in tudi sam prihrani prostor.",
   "whatsNew.sharedFormer": "Lastnik skupnega repozitorija lahko pozabi varnostne kopije, ki jih je tam po izstopu pustil strežnik, ko vpišeš ime tega strežnika. Prostor sprosti naslednje okno za pospravljanje.",
+  "whatsNew.fortress": "BombVault se na strani Seznanjanje pridruži trdnjavi z njenimi dvanajstimi besedami. Seznanjeni strežniki in telefoni gredo z njim, vse, kar smejo druge aplikacije početi v BombVault, pa ima svoje stikalo.",
+  "whatsNew.appBackups": "Aplikacija v trdnjavi, ki zna sama narediti varnostno kopijo sebe, to kopijo preda BombVault, ki jo hrani ob vsebniku aplikacije.",
+  "whatsNew.giveBack": "Aplikacija lahko dobi nazaj varnostno kopijo, ki jo je naredila sama sebi, s seznama varnostnih kopij svojega vsebnika.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog in TowerTorch lahko BombVault vprašajo, kdaj je zadnja varnostna kopija uspela, in pred spremembo zahtevajo novo.",
   "whatsNew.oled": "OLED pod Temo daje zaslonom OLED in AMOLED pravo črno vsakič, ko je prikazana temna tema, tudi ko sledi napravi. Vsaka naprava si zapomni svojo izbiro.",
 
   // Monitoring (Prometheus)

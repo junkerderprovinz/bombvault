@@ -1209,6 +1209,10 @@ const ja: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "共有リポジトリに受け入れたサーバーは、1 日以内に参加を終える必要があります。過ぎるとワンタイムキーとログインは取り消されますが、もう一度申し込めます。",
   "whatsNew.sharedOwnCopies": "共有リポジトリを持つサーバーも、自分のバックアップをそこへコピーして容量を節約できます。",
   "whatsNew.sharedFormer": "共有リポジトリの所有者は、脱退したサーバーが残したバックアップを、そのサーバー名を入力すると削除できます。容量は次の片付けの時間帯で空きます。",
+  "whatsNew.fortress": "BombVault はペアリングページで要塞の 12 語を使って要塞に参加します。ペアリング済みのサーバーとスマートフォンも一緒に移り、ほかのアプリが BombVault でできることにはそれぞれスイッチがあります。",
+  "whatsNew.appBackups": "要塞の中で自分自身をバックアップできるアプリは、そのバックアップを BombVault に渡し、BombVault はアプリのコンテナーと一緒に保管します。",
+  "whatsNew.giveBack": "アプリは、自分自身について作ったバックアップを、コンテナーのバックアップ一覧から受け取り直せます。",
+  "whatsNew.fortressAsks": "FireSquire、ShipLog、TowerTorch は、最後のバックアップがいつ成功したかを BombVault に尋ね、何かを変える前に新しいバックアップを頼めます。",
   "whatsNew.oled": "「テーマ」の下にある「OLED」は、ダークテーマが表示されているとき、デバイスに合わせている場合も含めて、OLED と AMOLED の画面を真っ黒にします。それぞれのデバイスが自分の選択を覚えます。",
 
   // Monitoring (Prometheus)

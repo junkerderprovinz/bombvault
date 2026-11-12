@@ -1216,6 +1216,10 @@ const ro: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Un server pe care îl primești într-un depozit comun are o zi ca să termine aderarea. După aceea, cheia de unică folosință și autentificarea îi sunt retrase, iar el poate cere din nou.",
   "whatsNew.sharedOwnCopies": "Serverul care găzduiește un depozit comun își poate copia și el propriile copii de rezervă în el și economisi spațiu.",
   "whatsNew.sharedFormer": "Proprietarul unui depozit comun poate uita copiile de rezervă lăsate acolo de un server care a ieșit, după ce scrii numele acelui server. Următoarea fereastră de întreținere eliberează spațiul.",
+  "whatsNew.fortress": "BombVault se alătură unei fortărețe cu cele douăsprezece cuvinte ale ei, pe pagina Împerechere. Serverele și telefoanele împerecheate vin cu el, iar tot ce pot face celelalte aplicații în BombVault are propriul comutator.",
+  "whatsNew.appBackups": "O aplicație din fortăreață care își poate face singură o copie de rezervă predă această copie lui BombVault, care o păstrează lângă containerul aplicației.",
+  "whatsNew.giveBack": "O aplicație își poate primi înapoi copia de rezervă pe care și-a făcut-o singură, din lista copiilor de rezervă ale containerului ei.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog și TowerTorch pot întreba BombVault când a reușit ultima copie de rezervă și pot cere una nouă înainte să schimbe ceva.",
   "whatsNew.oled": "OLED, sub Temă, dă ecranelor OLED și AMOLED negru adevărat ori de câte ori se vede tema întunecată, și atunci când urmează dispozitivul. Fiecare dispozitiv își păstrează propria alegere.",
 
   // Monitoring (Prometheus)

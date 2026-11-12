@@ -1215,6 +1215,10 @@ const no: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "En server du slipper inn i et felles repositorium, har et døgn på å bli ferdig med å bli med. Etter det trekkes engangsnøkkelen og påloggingen tilbake, og den kan spørre igjen.",
   "whatsNew.sharedOwnCopies": "Serveren som har et felles repositorium, kan også kopiere inn sine egne sikkerhetskopier og spare plass den også.",
   "whatsNew.sharedFormer": "Eieren av et felles repositorium kan glemme sikkerhetskopiene en server la igjen der etter at den gikk ut, når du har skrevet inn navnet på serveren. Neste ryddevindu frigjør plassen.",
+  "whatsNew.fortress": "BombVault blir med i en festning med dens tolv ord på siden Paring. De parede serverne og telefonene blir med, og alt de andre appene får gjøre hos BombVault, har sin egen bryter.",
+  "whatsNew.appBackups": "En app i festningen som kan ta sikkerhetskopi av seg selv, gir den sikkerhetskopien til BombVault, som tar vare på den sammen med appens container.",
+  "whatsNew.giveBack": "En app kan få tilbake sikkerhetskopien den tok av seg selv, fra listen over sikkerhetskopiene til containeren sin.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch kan spørre BombVault når den siste sikkerhetskopien lyktes, og be om en ny før de endrer noe.",
   "whatsNew.oled": "OLED under Tema gir OLED- og AMOLED-skjermer ekte svart hver gang det mørke temaet vises, også når det følger enheten. Hver enhet husker sitt eget valg.",
 
   // Monitoring (Prometheus)

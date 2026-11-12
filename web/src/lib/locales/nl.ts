@@ -1214,6 +1214,10 @@ const nl: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Een server die je toelaat tot een gedeelde repository, heeft een dag om het meedoen af te ronden. Daarna worden zijn eenmalige sleutel en login ingetrokken, en kan hij het opnieuw vragen.",
   "whatsNew.sharedOwnCopies": "De server die een gedeelde repository bijhoudt, kan er ook zijn eigen back-ups in kopiëren en zo ook ruimte besparen.",
   "whatsNew.sharedFormer": "De eigenaar van een gedeelde repository kan de back-ups vergeten die een vertrokken server daar heeft achtergelaten, zodra je de naam van die server intypt. Het volgende opruimvenster maakt de ruimte vrij.",
+  "whatsNew.fortress": "BombVault sluit zich op de pagina Koppeling aan bij een vesting met haar twaalf woorden. De gekoppelde servers en telefoons gaan mee, en alles wat de andere apps bij BombVault mogen doen heeft een eigen schakelaar.",
+  "whatsNew.appBackups": "Een app in de vesting die een back-up van zichzelf kan maken, geeft die back-up aan BombVault, dat hem bij de container van de app bewaart.",
+  "whatsNew.giveBack": "Een app kan de back-up die hij van zichzelf maakte terugkrijgen, uit de lijst met back-ups van zijn container.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog en TowerTorch kunnen BombVault vragen wanneer de laatste back-up lukte, en om een nieuwe vragen voordat ze iets veranderen.",
   "whatsNew.oled": "OLED onder Thema geeft OLED- en AMOLED-schermen echt zwart zodra het donkere thema te zien is, ook als het thema het apparaat volgt. Elk apparaat onthoudt zijn eigen keuze.",
 
   // Monitoring (Prometheus)

@@ -1219,6 +1219,10 @@ const hu: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Egy szervernek, amelyet beengedsz egy közös tárolóba, egy napja van a csatlakozás befejezésére. Utána elveszíti az egyszeri kulcsát és a bejelentkezését, de újra kérheti.",
   "whatsNew.sharedOwnCopies": "A közös tárolót tartó szerver a saját mentéseit is bemásolhatja, így ő is helyet takarít meg.",
   "whatsNew.sharedFormer": "Egy közös tároló tulajdonosa elfelejtheti azokat a mentéseket, amelyeket egy kilépett szerver ott hagyott, miután beírod annak a szervernek a nevét. A következő rendrakási időablak felszabadítja a helyet.",
+  "whatsNew.fortress": "A BombVault a Párosítás oldalon csatlakozik egy erődhöz annak tizenkét szavával. A párosított szerverek és telefonok vele jönnek, és mindennek, amit a többi alkalmazás a BombVaultban tehet, saját kapcsolója van.",
+  "whatsNew.appBackups": "Az erőd olyan alkalmazása, amely saját magáról tud mentést készíteni, átadja ezt a mentést a BombVaultnak, amely az alkalmazás konténere mellett őrzi.",
+  "whatsNew.giveBack": "Egy alkalmazás visszakaphatja a saját magáról készített mentést a konténere mentéseinek listájából.",
+  "whatsNew.fortressAsks": "A FireSquire, a ShipLog és a TowerTorch megkérdezheti a BombVaultot, mikor sikerült az utolsó mentés, és új mentést kérhet, mielőtt bármit megváltoztat.",
   "whatsNew.oled": "A Téma alatti OLED valódi feketét ad az OLED és AMOLED kijelzőknek, valahányszor a sötét téma látszik, akkor is, ha az eszközt követi. Minden eszköz a saját választását jegyzi meg.",
 
   // Monitoring (Prometheus)

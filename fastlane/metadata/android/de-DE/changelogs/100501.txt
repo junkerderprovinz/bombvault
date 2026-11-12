@@ -1,1 +1,0 @@
-BombVault 10.5.1 wendet eine geänderte Aufbewahrungsregel an einem Speicherort mit Jetzt anwenden sofort an, statt auf die nächste Sicherung zu warten. Sicherungen löschen und aufräumen geht ohne Login-Passwort, das Passwort bleibt optional.

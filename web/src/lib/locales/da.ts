@@ -1226,6 +1226,10 @@ const da: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "En server, du lukker ind i et delt arkiv, har et døgn til at komme helt med. Derefter trækkes dens engangsnøgle og login tilbage, og den kan spørge igen.",
   "whatsNew.sharedOwnCopies": "Serveren, der har et delt arkiv, kan også kopiere sine egne sikkerhedskopier ind og spare plads på samme måde.",
   "whatsNew.sharedFormer": "Ejeren af et delt arkiv kan glemme de sikkerhedskopier, en server har efterladt, efter at den er gået, når du har skrevet serverens navn. Det næste oprydningsvindue frigør pladsen.",
+  "whatsNew.fortress": "BombVault slutter sig til en fæstning med dens tolv ord på siden Parring. De parrede servere og telefoner kommer med, og alt, hvad de andre apps må gøre hos BombVault, har sin egen kontakt.",
+  "whatsNew.appBackups": "En app i fæstningen, der kan tage sikkerhedskopi af sig selv, giver den sikkerhedskopi til BombVault, som gemmer den sammen med appens container.",
+  "whatsNew.giveBack": "En app kan få den sikkerhedskopi tilbage, den har lavet af sig selv, fra listen over dens containers sikkerhedskopier.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch kan spørge BombVault, hvornår den seneste sikkerhedskopi lykkedes, og bede om en ny, før de ændrer noget.",
   "whatsNew.oled": "OLED under Tema giver OLED- og AMOLED-skærme ægte sort, når det mørke tema vises, også når det følger enheden. Hver enhed husker sit eget valg.",
 
   // Monitoring (Prometheus)

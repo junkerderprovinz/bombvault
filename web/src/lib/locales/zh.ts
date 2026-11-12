@@ -1217,6 +1217,10 @@ const zh: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "你让进共享仓库的服务器有一天时间完成加入。超过时间后，它的一次性密钥和登录信息会被收回，它可以再申请一次。",
   "whatsNew.sharedOwnCopies": "保存共享仓库的服务器也可以把自己的备份复制进去，同样节省空间。",
   "whatsNew.sharedFormer": "共享仓库的所有者可以丢弃已退出的服务器留下的备份，只需输入那台服务器的名称。下一个整理时间窗口会腾出空间。",
+  "whatsNew.fortress": "BombVault 在配对页面用堡垒的十二个词加入堡垒。已配对的服务器和手机会一起加入，其他应用在 BombVault 能做的每件事都有自己的开关。",
+  "whatsNew.appBackups": "堡垒中能自行备份的应用会把这份备份交给 BombVault，BombVault 会把它和应用的容器放在一起保存。",
+  "whatsNew.giveBack": "应用可以从其容器的备份列表中取回它为自己做的备份。",
+  "whatsNew.fortressAsks": "FireSquire、ShipLog 和 TowerTorch 可以询问 BombVault 上次备份何时成功，并在更改任何内容之前请求一次新的备份。",
   "whatsNew.oled": "主题下方的 OLED 会在深色主题显示时为 OLED 和 AMOLED 屏幕使用纯黑，跟随设备时也一样。每台设备记住自己的选择。",
 
   // Monitoring (Prometheus)

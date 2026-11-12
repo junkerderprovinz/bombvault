@@ -1,1 +1,0 @@
-BombVault 10.5.3 can delete an entry's backups at every place in one step, keeps copies to Proton Drive going after a failed upload, and keeps every selector on one row, turning it into a dropdown where it does not fit.

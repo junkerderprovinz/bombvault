@@ -61,8 +61,21 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
-    version: "10.5.5",
+    version: "10.6.0",
     changes: [
+      // The fortress shows on the Pairing page once it has loaded. The apps'
+      // own backups, giving one back and the asks of the other apps show only
+      // where an app takes part, so they stand in the list.
+      {
+        id: "fortress-join",
+        page: "/settings/pairing",
+        where: ["nav.settings", "pairing.title"],
+        way: ["/settings", "/settings/pairing"],
+        text: "whatsNew.fortress",
+      },
+      { id: "app-backups", text: "whatsNew.appBackups" },
+      { id: "app-give-back", text: "whatsNew.giveBack" },
+      { id: "fortress-asks", text: "whatsNew.fortressAsks" },
       { id: "shared-repo", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepo" },
       { id: "shared-repo-member", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.sharedRepoMember" },
       // The section sits in the receiving server's window, which the button
@@ -82,11 +95,6 @@ export const RELEASES: Release[] = [
       { id: "shared-copy-deferred", text: "whatsNew.sharedCopyDeferred" },
       { id: "shared-join-expiry", text: "whatsNew.sharedJoinExpiry" },
       { id: "shared-repo-former", text: "whatsNew.sharedFormer" },
-    ],
-  },
-  {
-    version: "10.5.4",
-    changes: [
       { id: "restore-file-search", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.fileSearch" },
       { id: "restore-tool-import", page: "/restore", where: ["nav.restore"], way: ["/restore"], text: "whatsNew.toolImport" },
       // A new folder set meets the junk lines first, in the form that Add
@@ -100,15 +108,7 @@ export const RELEASES: Release[] = [
         way: [...TO_STORAGE, "network"],
         text: "whatsNew.connections",
       },
-    ],
-  },
-  {
-    version: "10.5.3",
-    changes: [{ id: "delete-everywhere", text: "whatsNew.deleteEverywhere" }],
-  },
-  {
-    version: "10.5.2",
-    changes: [
+      { id: "delete-everywhere", text: "whatsNew.deleteEverywhere" },
       {
         id: "look-oled",
         page: "/settings/look",
@@ -119,11 +119,6 @@ export const RELEASES: Release[] = [
       // The wand shows only where the device has a colour, which most
       // browsers do not, so its dot stands in the list.
       { id: "accent-system", text: "whatsNew.systemAccent" },
-    ],
-  },
-  {
-    version: "10.5.1",
-    changes: [
       // Apply now shows only while the rule would remove backups, and the card
       // already carries the dot of location-keep, so this one stands on the
       // picture of the rule.

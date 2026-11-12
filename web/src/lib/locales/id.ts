@@ -870,6 +870,10 @@ const id: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Server yang Anda izinkan masuk ke repositori bersama punya waktu sehari untuk menyelesaikan proses bergabung. Setelah itu kunci sekali pakai dan login-nya ditarik kembali, dan ia bisa meminta lagi.",
   "whatsNew.sharedOwnCopies": "Server yang menyimpan repositori bersama juga bisa menyalin cadangannya sendiri ke dalamnya dan ikut menghemat ruang.",
   "whatsNew.sharedFormer": "Pemilik repositori bersama dapat melupakan cadangan yang ditinggalkan sebuah server setelah server itu keluar, begitu Anda mengetik nama server tersebut. Jendela waktu perapian berikutnya mengosongkan ruangnya.",
+  "whatsNew.fortress": "BombVault bergabung ke sebuah benteng dengan dua belas katanya di halaman Pemasangan. Server dan ponsel yang dipasangkan ikut serta, dan setiap hal yang boleh dilakukan aplikasi lain di BombVault punya sakelarnya sendiri.",
+  "whatsNew.appBackups": "Aplikasi di benteng yang bisa mencadangkan dirinya sendiri menyerahkan cadangan itu ke BombVault, yang menyimpannya bersama kontainer aplikasi tersebut.",
+  "whatsNew.giveBack": "Sebuah aplikasi bisa mendapatkan kembali cadangan yang dibuatnya untuk dirinya sendiri, dari daftar cadangan kontainernya.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog, dan TowerTorch bisa menanyakan kepada BombVault kapan cadangan terakhir berhasil, dan meminta cadangan baru sebelum mengubah sesuatu.",
   "whatsNew.oled": "OLED di bawah Tema memberi hitam pekat pada layar OLED dan AMOLED setiap kali tema gelap tampil, juga saat tema mengikuti perangkat. Setiap perangkat menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

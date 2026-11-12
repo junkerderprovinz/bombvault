@@ -1218,6 +1218,10 @@ const it: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Un server che fai entrare in un repository condiviso ha un giorno per finire di unirsi. Dopo, la sua chiave monouso e il suo accesso vengono ritirati, e può chiedere di nuovo.",
   "whatsNew.sharedOwnCopies": "Il server che ospita un repository condiviso può copiarci dentro anche i propri backup e risparmiare spazio a sua volta.",
   "whatsNew.sharedFormer": "Il proprietario di un repository condiviso può dimenticare i backup che un server ha lasciato dopo essere uscito, una volta digitato il nome di quel server. La prossima finestra di pulizia libera lo spazio.",
+  "whatsNew.fortress": "BombVault entra in una fortezza con le sue dodici parole nella pagina Associazione. I server e i telefoni associati lo seguono, e ogni cosa che le altre app possono fare in BombVault ha il suo interruttore.",
+  "whatsNew.appBackups": "Un'app della fortezza che sa fare il backup di sé stessa consegna quel backup a BombVault, che lo conserva con il container dell'app.",
+  "whatsNew.giveBack": "Un'app può riavere il backup che ha fatto di sé stessa, dall'elenco dei backup del suo container.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog e TowerTorch possono chiedere a BombVault quando è riuscito l'ultimo backup e chiederne uno nuovo prima di cambiare qualcosa.",
   "whatsNew.oled": "OLED, sotto Tema, dà un nero vero agli schermi OLED e AMOLED ogni volta che si vede il tema scuro, anche quando segue il dispositivo. Ogni dispositivo tiene la propria scelta.",
 
   // Monitoring (Prometheus)

@@ -966,6 +966,10 @@ export const en = {
   "whatsNew.sharedJoinExpiry": "A server you let into a shared repository has a day to finish joining. After that its one-time key and login are taken back, and it can ask again.",
   "whatsNew.sharedOwnCopies": "The server that holds a shared repository can copy its own backups in as well and save space too.",
   "whatsNew.sharedFormer": "The owner of a shared repository can forget the backups a server left there after it went, once you type that server's name. The next tidy-up window frees the space.",
+  "whatsNew.fortress": "BombVault joins a fortress with its twelve words on the Pairing page. The paired servers and phones come along, and everything the other apps may do at BombVault has its own switch.",
+  "whatsNew.appBackups": "An app in the fortress that can back itself up hands that backup to BombVault, which keeps it with the app's container.",
+  "whatsNew.giveBack": "An app can get back the backup it made of itself, from the list of its container's backups.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog and TowerTorch can ask BombVault when the last backup worked, and for a fresh one before they change something.",
   "whatsNew.oled": "OLED under Theme gives true black for OLED and AMOLED screens whenever the dark theme shows, also when it follows the device. Each device keeps its own choice.",
 
   // Monitoring (Prometheus)
@@ -6578,6 +6582,10 @@ export const de: Translations = {
   "whatsNew.sharedJoinExpiry": "Ein Server, den du in ein gemeinsames Repository hereinlässt, hat einen Tag Zeit für den Beitritt. Danach werden sein Einmalschlüssel und sein Login zurückgenommen, und er kann noch einmal fragen.",
   "whatsNew.sharedOwnCopies": "Der Server, der ein gemeinsames Repository hält, kann seine eigenen Sicherungen auch hineinkopieren und so ebenfalls Platz sparen.",
   "whatsNew.sharedFormer": "Der Eigentümer eines gemeinsamen Repositorys kann die Sicherungen vergessen, die ein ausgetretener Server dort gelassen hat, sobald du dessen Namen eintippst. Das nächste Aufräumfenster gibt den Platz frei.",
+  "whatsNew.fortress": "BombVault tritt auf der Seite Kopplung mit den zwölf Wörtern einer Festung bei. Die gekoppelten Server und Handys ziehen mit, und alles, was die anderen Apps bei BombVault tun dürfen, hat einen eigenen Schalter.",
+  "whatsNew.appBackups": "Eine App in der Festung, die sich selbst sichern kann, übergibt diese Sicherung an BombVault, und BombVault bewahrt sie bei ihrem Container auf.",
+  "whatsNew.giveBack": "Eine App bekommt die Sicherung, die sie von sich selbst gemacht hat, aus der Liste der Sicherungen ihres Containers zurück.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog und TowerTorch können BombVault fragen, wann die letzte Sicherung geklappt hat, und vor einer Änderung um eine frische bitten.",
   "whatsNew.oled": "OLED unter Design gibt OLED- und AMOLED-Bildschirmen echtes Schwarz, sobald das dunkle Design zu sehen ist, auch wenn es dem Gerät folgt. Jedes Gerät merkt sich seine eigene Wahl.",
 
   // Monitoring (Prometheus)

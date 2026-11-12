@@ -1,1 +1,0 @@
-BombVault 10.5.1 can apply a changed keep rule at a storage location right away with Apply now, instead of waiting for the next backup. Deleting and pruning backups works without a login password, which stays optional.

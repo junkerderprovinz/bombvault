@@ -870,6 +870,10 @@ const ms: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Pelayan yang anda benarkan masuk ke repositori bersama mempunyai sehari untuk selesai menyertai. Selepas itu, kunci sekali guna dan log masuknya ditarik balik, dan ia boleh meminta sekali lagi.",
   "whatsNew.sharedOwnCopies": "Pelayan yang memegang repositori bersama juga boleh menyalin sandarannya sendiri ke dalamnya dan turut menjimatkan ruang.",
   "whatsNew.sharedFormer": "Pemilik repositori bersama boleh melupakan sandaran yang ditinggalkan oleh pelayan yang telah keluar, sebaik sahaja anda menaip nama pelayan itu. Tetingkap penyelenggaraan seterusnya akan mengosongkan ruang itu.",
+  "whatsNew.fortress": "BombVault menyertai sebuah kubu dengan dua belas perkataannya di halaman Gandingan. Pelayan dan telefon yang digandingkan turut serta, dan setiap perkara yang boleh dilakukan apl lain di BombVault mempunyai suisnya sendiri.",
+  "whatsNew.appBackups": "Apl dalam kubu yang boleh membuat sandaran dirinya sendiri menyerahkan sandaran itu kepada BombVault, yang menyimpannya bersama bekas apl tersebut.",
+  "whatsNew.giveBack": "Sebuah apl boleh mendapatkan semula sandaran yang dibuatnya untuk dirinya sendiri, daripada senarai sandaran bekasnya.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog dan TowerTorch boleh bertanya kepada BombVault bila sandaran terakhir berjaya, dan meminta sandaran baharu sebelum mengubah apa-apa.",
   "whatsNew.oled": "OLED di bawah Tema memberi skrin OLED dan AMOLED hitam sebenar setiap kali tema gelap dipaparkan, termasuk apabila tema mengikut peranti. Setiap peranti menyimpan pilihannya sendiri.",
 
   // Monitoring (Prometheus)

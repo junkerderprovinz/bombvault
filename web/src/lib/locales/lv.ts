@@ -870,6 +870,10 @@ const lv: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Serverim, ko ielaižat kopīgajā repozitorijā, ir diena, lai pabeigtu pievienošanos. Pēc tam tā vienreizējā atslēga un pierakstīšanās tiek atsauktas, un tas var lūgt vēlreiz.",
   "whatsNew.sharedOwnCopies": "Serveris, kurā atrodas kopīgais repozitorijs, var tajā kopēt arī savas rezerves kopijas un tā arī ietaupīt vietu.",
   "whatsNew.sharedFormer": "Kopīgā repozitorija īpašnieks var noņemt rezerves kopijas, ko tur atstājis izstājies serveris, tiklīdz ievadāt šī servera nosaukumu. Nākamais sakopšanas logs atbrīvo vietu.",
+  "whatsNew.fortress": "BombVault lapā Pārošana pievienojas cietoksnim ar tā divpadsmit vārdiem. Sapārotie serveri un tālruņi nāk līdzi, un visam, ko citas lietotnes drīkst darīt BombVault, ir savs slēdzis.",
+  "whatsNew.appBackups": "Cietokšņa lietotne, kas prot pati izveidot savu rezerves kopiju, nodod šo kopiju BombVault, kas to glabā kopā ar lietotnes konteineru.",
+  "whatsNew.giveBack": "Lietotne var saņemt atpakaļ rezerves kopiju, ko tā izveidojusi pati par sevi, no sava konteinera rezerves kopiju saraksta.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog un TowerTorch var jautāt BombVault, kad pēdējā rezerves kopija izdevās, un pirms izmaiņām palūgt jaunu.",
   "whatsNew.oled": "OLED zem Tēma dod OLED un AMOLED ekrāniem īsti melnu krāsu ikreiz, kad redzama tumšā tēma, arī tad, ja tā seko ierīcei. Katra ierīce atceras savu izvēli.",
 
   // Monitoring (Prometheus)

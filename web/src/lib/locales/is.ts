@@ -870,6 +870,10 @@ const is: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Þjónn sem þú hleypir inn í sameiginlegt geymslusafn hefur sólarhring til að ljúka við að bætast við. Eftir það eru einnota lykillinn hans og innskráningin tekin aftur, og hann getur beðið á ný.",
   "whatsNew.sharedOwnCopies": "Þjónninn sem hýsir sameiginlegt geymslusafn getur líka sett sín eigin afrit þar inn og sparað þannig pláss.",
   "whatsNew.sharedFormer": "Eigandi sameiginlegs geymslusafns getur gleymt afritunum sem þjónn skildi eftir þegar hann hætti, um leið og þú slærð inn nafn þess þjóns. Næsti tiltektargluggi losar plássið.",
+  "whatsNew.fortress": "BombVault gengur í vígi með tólf orðum þess á síðunni Pörun. Paraðir þjónar og símar koma með, og allt sem hin forritin mega gera hjá BombVault hefur sinn eigin rofa.",
+  "whatsNew.appBackups": "Forrit í víginu sem getur tekið afrit af sjálfu sér afhendir BombVault það afrit, sem geymir það með gámi forritsins.",
+  "whatsNew.giveBack": "Forrit getur fengið aftur afritið sem það tók af sjálfu sér, úr lista yfir afrit gámsins síns.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog og TowerTorch geta spurt BombVault hvenær síðasta afrit tókst og beðið um nýtt áður en þau breyta einhverju.",
   "whatsNew.oled": "OLED undir Þema gefur OLED- og AMOLED-skjám alvöru svart í hvert sinn sem dökka þemað sést, líka þegar það fylgir tækinu. Hvert tæki geymir sitt eigið val.",
 
   // Monitoring (Prometheus)

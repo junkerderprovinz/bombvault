@@ -1217,6 +1217,10 @@ const vi: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Máy chủ bạn cho vào kho chung có một ngày để tham gia xong. Sau đó khóa dùng một lần và thông tin đăng nhập của nó bị thu hồi, và nó có thể xin lại.",
   "whatsNew.sharedOwnCopies": "Máy chủ giữ kho chung cũng có thể sao chép bản sao lưu của chính nó vào và tiết kiệm dung lượng như các máy khác.",
   "whatsNew.sharedFormer": "Chủ kho chung có thể quên các bản sao lưu mà một máy chủ đã rời đi để lại, khi bạn gõ tên máy chủ đó. Khung giờ dọn dẹp tới sẽ giải phóng dung lượng.",
+  "whatsNew.fortress": "BombVault tham gia một pháo đài bằng mười hai từ của nó trên trang Ghép nối. Các máy chủ và điện thoại đã ghép nối đi theo, và mỗi việc các ứng dụng khác được làm ở BombVault đều có công tắc riêng.",
+  "whatsNew.appBackups": "Ứng dụng trong pháo đài có thể tự sao lưu sẽ giao bản sao lưu đó cho BombVault, và BombVault giữ nó cùng container của ứng dụng.",
+  "whatsNew.giveBack": "Một ứng dụng có thể nhận lại bản sao lưu mà nó đã tự tạo, từ danh sách bản sao lưu của container.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog và TowerTorch có thể hỏi BombVault lần sao lưu gần nhất thành công khi nào, và yêu cầu một bản mới trước khi thay đổi điều gì.",
   "whatsNew.oled": "OLED bên dưới Giao diện cho màn hình OLED và AMOLED màu đen tuyền mỗi khi giao diện tối hiển thị, kể cả khi giao diện theo thiết bị. Mỗi thiết bị nhớ lựa chọn riêng của mình.",
 
   // Monitoring (Prometheus)

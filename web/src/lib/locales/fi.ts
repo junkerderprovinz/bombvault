@@ -1226,6 +1226,10 @@ const fi: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Palvelimella, jonka päästät jaettuun arkistoon, on vuorokausi aikaa saada liittyminen valmiiksi. Sen jälkeen sen kertakäyttöavain ja tunnus perutaan, ja se voi pyytää uudelleen.",
   "whatsNew.sharedOwnCopies": "Palvelin, jolla jaettu arkisto on, voi kopioida sinne myös omat varmuuskopionsa ja säästää näin tilaa sekin.",
   "whatsNew.sharedFormer": "Jaetun arkiston omistaja voi unohtaa varmuuskopiot, jotka lähtenyt palvelin jätti sinne. Vahvistukseksi kirjoitetaan sen palvelimen nimi. Seuraava siivousikkuna vapauttaa tilan.",
+  "whatsNew.fortress": "BombVault liittyy linnoitukseen sen kahdellatoista sanalla Pariliitos-sivulla. Pariliitetyt palvelimet ja puhelimet tulevat mukana, ja kaikella, mitä muut sovellukset saavat tehdä BombVaultissa, on oma kytkimensä.",
+  "whatsNew.appBackups": "Linnoituksen sovellus, joka osaa varmuuskopioida itsensä, antaa tämän varmuuskopion BombVaultille, joka säilyttää sen sovelluksen kontin luona.",
+  "whatsNew.giveBack": "Sovellus voi saada takaisin itsestään tekemänsä varmuuskopion kontin varmuuskopioiden luettelosta.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog ja TowerTorch voivat kysyä BombVaultilta, milloin viimeisin varmuuskopio onnistui, ja pyytää uuden ennen kuin muuttavat jotain.",
   "whatsNew.oled": "Teeman alla oleva OLED antaa OLED- ja AMOLED-näytöille aidon mustan aina, kun tumma teema näkyy, myös kun se seuraa laitetta. Jokainen laite muistaa oman valintansa.",
 
   // Monitoring (Prometheus)

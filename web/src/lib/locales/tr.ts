@@ -1226,6 +1226,10 @@ const tr: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Ortak depoya içeri aldığın bir sunucunun katılmayı bitirmek için bir günü var. Sonrasında tek kullanımlık anahtarı ve oturum bilgisi geri alınır, o da yeniden sorabilir.",
   "whatsNew.sharedOwnCopies": "Ortak depoyu tutan sunucu kendi yedeklerini de içeri kopyalayabilir ve böylece o da yer kazanır.",
   "whatsNew.sharedFormer": "Ortak deponun sahibi, ayrılan bir sunucunun orada bıraktığı yedekleri, o sunucunun adını yazdığın anda unutabilir. Bir sonraki temizlik aralığı yeri boşaltır.",
+  "whatsNew.fortress": "BombVault, Eşleştirme sayfasında bir kaleye on iki kelimesiyle katılır. Eşleştirilmiş sunucular ve telefonlar da onunla gelir, diğer uygulamaların BombVault'ta yapabileceği her şeyin kendi anahtarı vardır.",
+  "whatsNew.appBackups": "Kalede kendi yedeğini alabilen bir uygulama bu yedeği BombVault'a verir, BombVault da onu uygulamanın konteyneriyle birlikte saklar.",
+  "whatsNew.giveBack": "Bir uygulama kendisi için aldığı yedeği, konteynerinin yedek listesinden geri alabilir.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog ve TowerTorch, son yedeğin ne zaman başarılı olduğunu BombVault'a sorabilir ve bir şeyi değiştirmeden önce yeni bir yedek isteyebilir.",
   "whatsNew.oled": "Tema altındaki OLED, koyu tema her göründüğünde, cihazı izlediğinde de, OLED ve AMOLED ekranlara gerçek siyah verir. Her cihaz kendi seçimini saklar.",
 
   // Monitoring (Prometheus)

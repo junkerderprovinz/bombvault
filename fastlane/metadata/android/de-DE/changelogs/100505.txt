@@ -1,1 +1,0 @@
-BombVault 10.5.5 lässt mehrere Server in ein gemeinsames Repository sichern, sodass Dateien, die auf mehreren Servern liegen, nur einmal gespeichert werden. Der Server, der es hält, räumt für alle auf, die anderen stellen auch daraus wieder her, und das Notfallpaket kann es an einen neuen Server übergeben.

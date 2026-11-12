@@ -1209,6 +1209,10 @@ const ko: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "공유 저장소에 들여보낸 서버는 하루 안에 참여를 마쳐야 합니다. 그 뒤에는 일회용 키와 로그인이 회수되며, 서버는 다시 요청할 수 있습니다.",
   "whatsNew.sharedOwnCopies": "공유 저장소를 보관하는 서버도 자기 백업을 그곳에 복사해 공간을 아낄 수 있습니다.",
   "whatsNew.sharedFormer": "공유 저장소의 소유자는 나간 서버가 남긴 백업을 그 서버 이름을 입력해 삭제할 수 있습니다. 공간은 다음 정리 시간대에 비워집니다.",
+  "whatsNew.fortress": "BombVault는 페어링 페이지에서 요새의 12개 단어로 요새에 참여합니다. 페어링된 서버와 휴대폰도 함께 옮겨 오며, 다른 앱이 BombVault에서 할 수 있는 일마다 각자의 스위치가 있습니다.",
+  "whatsNew.appBackups": "요새 안에서 자기 자신을 백업할 수 있는 앱은 그 백업을 BombVault에 넘기고, BombVault는 이를 앱의 컨테이너와 함께 보관합니다.",
+  "whatsNew.giveBack": "앱은 자기 자신에 대해 만든 백업을 컨테이너의 백업 목록에서 돌려받을 수 있습니다.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog, TowerTorch는 마지막 백업이 언제 성공했는지 BombVault에 묻고, 무언가를 바꾸기 전에 새 백업을 요청할 수 있습니다.",
   "whatsNew.oled": "테마 아래의 OLED는 어두운 테마가 보일 때마다, 기기를 따를 때도, OLED와 AMOLED 화면에 진짜 검은색을 씁니다. 각 기기가 자신의 선택을 기억합니다.",
 
   // Monitoring (Prometheus)

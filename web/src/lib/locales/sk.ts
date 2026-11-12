@@ -870,6 +870,10 @@ const sk: Partial<Translations> = {
   "whatsNew.sharedJoinExpiry": "Server, ktorý pustíš do spoločného repozitára, má na pripojenie jeden deň. Potom sa mu jednorazový kľúč aj prihlásenie odoberú a môže požiadať znova.",
   "whatsNew.sharedOwnCopies": "Server, ktorý má spoločný repozitár u seba, doň môže kopírovať aj vlastné zálohy a tiež ušetriť miesto.",
   "whatsNew.sharedFormer": "Vlastník spoločného repozitára môže zabudnúť zálohy, ktoré tam po odchode nechal iný server, keď napíšeš názov toho servera. Miesto uvoľní ďalšie okno na upratovanie.",
+  "whatsNew.fortress": "BombVault sa na stránke Párovanie pripojí k pevnosti pomocou jej dvanástich slov. Spárované servery a telefóny idú s ním a všetko, čo ostatné aplikácie smú v BombVault robiť, má vlastný prepínač.",
+  "whatsNew.appBackups": "Aplikácia v pevnosti, ktorá vie zálohovať sama seba, odovzdá túto zálohu BombVault a ten ju uloží pri kontajneri aplikácie.",
+  "whatsNew.giveBack": "Aplikácia môže dostať späť zálohu, ktorú urobila sama zo seba, zo zoznamu záloh svojho kontajnera.",
+  "whatsNew.fortressAsks": "FireSquire, ShipLog a TowerTorch sa môžu BombVault opýtať, kedy sa naposledy podarila záloha, a pred zmenou si vyžiadať novú.",
   "whatsNew.oled": "OLED pod Motívom dáva obrazovkám OLED a AMOLED skutočnú čiernu vždy, keď je vidieť tmavý motív, aj keď sa riadi zariadením. Každé zariadenie si pamätá vlastnú voľbu.",
 
   // Monitoring (Prometheus)
