@@ -2,10 +2,13 @@ package api
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
+	"github.com/junkerderprovinz/parleyport/kit/status"
 )
 
 func TestWithoutAMembershipBombVaultIsInNoFortress(t *testing.T) {
@@ -58,5 +61,25 @@ func TestBombVaultOffersItsActionsAndFetchesBackups(t *testing.T) {
 	}
 	if !slices.Equal(cfg.Uses, []string{"backup.export", "backup.import", "updates.managed"}) {
 		t.Fatalf("uses %v, want backup.export, backup.import and updates.managed once each", cfg.Uses)
+	}
+}
+
+func TestBombVaultTellsTheFortressItsLogoAndServer(t *testing.T) {
+	t.Setenv("HOST_HOSTNAME", "Tower")
+	svc, _ := newFortressSvc(t)
+	cfg := svc.fortressConfig(fortress.Config{}, nil)
+	if err := status.CheckIcon(cfg.App.Icon); err != nil || cfg.Host != "Tower" {
+		t.Fatalf("icon %v, host %q, want the logo and Tower", err, cfg.Host)
+	}
+
+	svc.cfg.FlashDir = t.TempDir()
+	if err := os.MkdirAll(filepath.Join(svc.cfg.FlashDir, "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(svc.cfg.FlashDir, "config", "ident.cfg"), []byte("NAME=\"Cellar\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if cfg := svc.fortressConfig(fortress.Config{}, nil); cfg.Host != "Cellar" {
+		t.Fatalf("host %q, want the name on the flash", cfg.Host)
 	}
 }

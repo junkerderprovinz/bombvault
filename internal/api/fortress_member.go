@@ -84,7 +84,8 @@ func (s *Service) fortressDir() string { return filepath.Join(s.cfg.DataDir, "fo
 // fortressConfig fills in what BombVault is and does in the fortress a
 // membership describes.
 func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortress.Config {
-	cfg.App = fortress.App{ID: "bombvault", Name: "BombVault", Version: Version}
+	cfg.App = fortress.App{ID: "bombvault", Name: "BombVault", Version: Version, Icon: appIcon}
+	cfg.Host = s.serverName()
 	cfg.Self.Deployment = "container"
 	if addr := s.selfDirectURL(); addr != "" {
 		cfg.Self.Address, cfg.Self.DirectURL = addr, addr
@@ -478,8 +479,7 @@ func (s *Service) renamed() {
 }
 
 // pairName is the one name this instance goes by, in its group and in
-// the fortress: the instance's name, or else the server's. ShipLog and
-// TowerTorch find BombVault on their own server by it.
+// the fortress: the instance's name, or else the server's.
 func (s *Service) pairName() string {
 	if settings, err := s.store.GetSettings(); err == nil && strings.TrimSpace(settings.InstanceName) != "" {
 		return instanceDisplayName(settings)
@@ -490,10 +490,14 @@ func (s *Service) pairName() string {
 // defaultPairName is the name an instance without one of its own goes
 // by: the Unraid server's, or BombVault.
 func (s *Service) defaultPairName() string {
-	if name := unraidServerName(s.cfg.FlashDir); name != "" {
-		return name
-	}
-	return "BombVault"
+	return cmp.Or(s.serverName(), "BombVault")
+}
+
+// serverName is the Unraid server's name, from the flash or else from what
+// Unraid hands every container, and empty off Unraid. The apps of a fortress
+// on one server find each other by it, whatever each calls itself.
+func (s *Service) serverName() string {
+	return cmp.Or(unraidServerName(s.cfg.FlashDir), strings.TrimSpace(os.Getenv("HOST_HOSTNAME")))
 }
 
 // unraidServerName reads the server's name from config/ident.cfg on the
@@ -609,10 +613,13 @@ func (s *Service) fortressDirect(f *fortress.Fortress) http.Handler {
 // is asked again.
 const logoAgain = 10 * time.Minute
 
-// appLogo is the logo the app of m publishes in its status, once BombVault
-// has read it. Until then it asks m in the background, and a new version of
-// the app is asked again.
+// appLogo is the logo m names in the fortress, or else the one its app
+// publishes in its status, once BombVault has read it. Until then it asks m
+// in the background, and a new version of the app is asked again.
 func (s *Service) appLogo(f *fortress.Fortress, m fortress.Member) string {
+	if status.CheckIcon(m.App.Icon) == nil {
+		return m.App.Icon
+	}
 	key := m.App.ID + " " + m.App.Version
 	s.house.mu.Lock()
 	defer s.house.mu.Unlock()

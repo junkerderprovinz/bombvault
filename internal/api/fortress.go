@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,6 +24,15 @@ const fortressNeedsLimit = 50
 
 // fortressNextLimit is how many planned runs a report names.
 const fortressNextLimit = 20
+
+// logoSVG is BombVault's logo drawn small enough for the 16 KiB a status
+// report gives an icon.
+//
+//go:embed logo.svg
+var logoSVG []byte
+
+// appIcon is the logo the other apps of the fortress show for BombVault.
+var appIcon, _ = status.IconFromSVG(logoSVG)
 
 // registerFortress serves the status the other apps of a household read about
 // this one: how its backups stand, what needs the person, what runs and what
@@ -92,7 +102,7 @@ func (f fortressSource) Report(_ context.Context, lang string) (status.Report, e
 	}
 	now := time.Now()
 	rep := status.Report{
-		App:      status.App{ID: "bombvault", Name: "BombVault", Version: Version},
+		App:      status.App{ID: "bombvault", Name: "BombVault", Version: Version, Icon: appIcon},
 		Instance: status.Instance{ID: cmp.Or(s.instanceID(), "bombvault"), Name: cmp.Or(strings.TrimSpace(settings.InstanceName), "BombVault")},
 	}
 

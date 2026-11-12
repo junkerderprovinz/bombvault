@@ -69,8 +69,8 @@ func TestAFailedBackupNobodyResolvedNeedsYou(t *testing.T) {
 	if n := rep.NeedsYou[0]; n.ID != "run:run-flash" || n.Code != "backup.failed" || n.Text != "Sicherung von Unraid-Flash fehlgeschlagen" {
 		t.Errorf("need = %+v", n)
 	}
-	if rep.App.ID != "bombvault" || rep.App.Name != "BombVault" {
-		t.Errorf("app = %+v", rep.App)
+	if rep.App.ID != "bombvault" || rep.App.Name != "BombVault" || status.CheckIcon(rep.App.Icon) != nil {
+		t.Errorf("app = %.200v", rep.App)
 	}
 }
 

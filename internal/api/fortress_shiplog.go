@@ -22,17 +22,26 @@ type shipLogAsker interface {
 	Act(ctx context.Context, id, action string, body []byte) ([]byte, error)
 }
 
-// shipLogManaged asks ShipLog on device which containers it updates itself,
-// by their lower-case names. Its answer holds for the moment it is given, so
-// every update step asks again.
-func shipLogManaged(ctx context.Context, f shipLogAsker, device string) map[string]bool {
-	here := deviceHost(device)
-	managed := map[string]bool{}
-	if here == "" {
-		return managed
+// server is where this instance runs: the host every app there names alike,
+// and the device name it goes by.
+type server struct{ host, device string }
+
+// runs reports whether m runs on s. A member that names no host counts by
+// its device name.
+func (s server) runs(m fortress.Member) bool {
+	if m.Host != "" && s.host != "" {
+		return deviceHost(m.Host) == deviceHost(s.host)
 	}
+	return deviceHost(s.device) != "" && deviceHost(m.Device) == deviceHost(s.device)
+}
+
+// shipLogManaged asks ShipLog on this server which containers it updates
+// itself, by their lower-case names. Its answer holds for the moment it is
+// given, so every update step asks again.
+func shipLogManaged(ctx context.Context, f shipLogAsker, here server) map[string]bool {
+	managed := map[string]bool{}
 	for _, m := range f.Members() {
-		if m.App.ID != "shiplog" || deviceHost(m.Device) != here {
+		if m.App.ID != "shiplog" || !here.runs(m) {
 			continue
 		}
 		out, err := f.Act(ctx, m.ID, actionUpdatesManaged, []byte("{}"))
@@ -54,10 +63,10 @@ func shipLogManaged(ctx context.Context, f shipLogAsker, device string) map[stri
 	return managed
 }
 
-// shipLogUpdatesContainer reports whether ShipLog on device updates container
-// name, which it backs up through BombVault first.
-func shipLogUpdatesContainer(ctx context.Context, f shipLogAsker, device, name string) bool {
-	return shipLogManaged(ctx, f, device)[strings.ToLower(name)]
+// shipLogUpdatesContainer reports whether ShipLog on this server updates
+// container name, which it backs up through BombVault first.
+func shipLogUpdatesContainer(ctx context.Context, f shipLogAsker, here server, name string) bool {
+	return shipLogManaged(ctx, f, here)[strings.ToLower(name)]
 }
 
 // deviceHost is a device name the way ShipLog compares it: without case and
@@ -78,5 +87,5 @@ func (s *Service) shipLogContainers(ctx context.Context) map[string]bool {
 	}
 	ctx, cancel := context.WithTimeout(ctx, shipLogWait)
 	defer cancel()
-	return shipLogManaged(ctx, f, device)
+	return shipLogManaged(ctx, f, server{host: s.serverName(), device: device})
 }

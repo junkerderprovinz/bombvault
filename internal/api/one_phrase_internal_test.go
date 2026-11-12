@@ -216,3 +216,38 @@ func TestTheFortressShowsTheLogoAnAppPublishes(t *testing.T) {
 		return false
 	})
 }
+
+func TestTheFortressShowsTheLogoOfAnAppThatServesNoStatus(t *testing.T) {
+	rs := httptest.NewServer(relay.New())
+	t.Cleanup(rs.Close)
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL})
+	words := createGroupPhrase(t, in)
+	sec, err := phrase.Decode(words)
+	if err != nil {
+		t.Fatal(err)
+	}
+	icon, err := status.IconFromSVG([]byte(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8"/></svg>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := joinPlugin(t, rs.URL, sec)
+	cfg, err := fortress.Load(p.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.App = fortress.App{ID: "firesquire", Name: "firesquire", Icon: icon}
+	if p.f, err = fortress.Open(cfg); err != nil {
+		t.Fatal(err)
+	}
+	waitLong(t, "the logo the app names in the fortress", func() bool {
+		_, out := in.do(t, http.MethodGet, "/api/fortress", nil)
+		members, _ := out["members"].([]any)
+		for _, m := range members {
+			if mm, _ := m.(map[string]any); mm["app"] == "firesquire" && mm["logo"] == icon {
+				return true
+			}
+		}
+		return false
+	})
+}
