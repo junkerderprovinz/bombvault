@@ -81,6 +81,7 @@ const testMatch = [
   "selector-span.spec.ts",
   "selector-hue.spec.ts",
   "page-width.spec.ts",
+  "progress-bar.spec.ts",
   "narrow-window.spec.ts",
   "backups-list.spec.ts",
   "storage.spec.ts",

@@ -3319,9 +3319,9 @@ body {
 
   /* `overflow: hidden` keeps the band inside the fill, so it never runs past
      the progress the bar shows. "off" removes the band rather than slowing
-     it. */
-  .glim-meter .glim-progress-fill { position: relative; overflow: hidden; }
-  .glim-meter .glim-progress-fill::after {
+     it. GlimStone's own bar, .glim-progress, places its fill itself. */
+  .glim-meter:not(.glim-progress) .glim-progress-fill { position: relative; overflow: hidden; }
+  .glim-meter:not(.glim-progress) .glim-progress-fill::after {
     content: "";
     position: absolute;
     inset-block: 0;
@@ -3330,7 +3330,7 @@ body {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .38), transparent);
     animation: glim-sheen var(--motion-sheen-dur, 1500ms) linear infinite;
   }
-  :root[data-motion="off"] .glim-meter .glim-progress-fill::after { animation: none; opacity: 0; }
+  :root[data-motion="off"] .glim-meter:not(.glim-progress) .glim-progress-fill::after { animation: none; opacity: 0; }
 
   /* Gentle sway on hover, only while the logo is idle. */
   .glim-logo-btn:hover .glim-logo-idle { animation: glim-logo-sway 2.4s ease-in-out infinite; }
