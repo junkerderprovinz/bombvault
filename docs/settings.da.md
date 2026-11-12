@@ -74,7 +74,7 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgl
 
 ## Parring {#pairing}
 
-**Parring** med **Generer sætning** eller **Indtast sætning**, trinkortene, denne instans' navn, de enheder, der venter på **Godkend**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, gruppens medlemmer og **ZFS-server uden BombVault** til et replikamål over SSH. Under dem forbinder **Fæstning** BombVault med de andre apps i familien via fæstningens tolv ord, med en kontakt for hver tilladelse mellem apps, **Giv sikkerhedskopier tilbage til apps**, **Vis sætning**, **Skift** og **Forlad**. Se [Parring af instanser](offsite-recovery.md#pairing), [Fæstningen](offsite-recovery.md#fortress) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
+**Parring** med trinkortene og **Generer sætning** eller **Indtast sætning**. Når BombVault har en sætning, rummer kortet **Fæstning** denne instans' navn, **Vis sætning**, **Skift** og **Forlad**, og de samme ord bringer dine instanser, dine telefoner og familiens andre apps ind. Under det kommer de enheder, der venter på **Godkend**, medlemmerne som kortene fra siden Instanser, fæstningens andre apps med en kontakt for hver tilladelse mellem apps og **Giv sikkerhedskopier tilbage til apps**, kortet **Videresender** med sine fire former og **Hvad videresenderen ser**, og **ZFS-server uden BombVault** til et replikamål over SSH. Se [Parring af instanser](offsite-recovery.md#pairing), [Fæstningen](offsite-recovery.md#fortress) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrationer {#integrations}
 

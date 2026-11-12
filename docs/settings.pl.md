@@ -74,7 +74,7 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy.
 
 ## Parowanie {#pairing}
 
-**Parowanie** z **Wygeneruj frazę** albo **Wpisz frazę**, karty kroków, nazwa tej instancji, urządzenia czekające na **Zatwierdź**, karta **Relay** z jej czterema formami i **Co widzi Relay**, członkowie grupy oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Pod nimi **Twierdza** łączy BombVault z pozostałymi aplikacjami z rodziny za pomocą dwunastu słów twierdzy, z przełącznikiem dla każdego uprawnienia między aplikacjami, **Oddawaj kopie zapasowe aplikacjom**, **Pokaż frazę**, **Zmień** i **Opuść**. Zobacz [Parowanie instancji](offsite-recovery.md#pairing), [Twierdza](offsite-recovery.md#fortress) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
+**Parowanie** z kartami kroków i **Wygeneruj frazę** albo **Wpisz frazę**. Gdy BombVault ma już frazę, karta **Twierdza** zawiera nazwę tej instancji, **Pokaż frazę**, **Zmień** i **Opuść**, a te same słowa wprowadzają twoje instancje, twoje telefony i pozostałe aplikacje z rodziny. Pod nią są urządzenia czekające na **Zatwierdź**, członkowie jako karty ze strony Instancje, inne aplikacje twierdzy z przełącznikiem dla każdego uprawnienia między aplikacjami i **Oddawaj kopie zapasowe aplikacjom**, karta **Relay** z jej czterema formami i **Co widzi Relay** oraz **Serwer ZFS bez BombVault** jako cel repliki przez SSH. Zobacz [Parowanie instancji](offsite-recovery.md#pairing), [Twierdza](offsite-recovery.md#fortress) i [Wysyłanie na serwer ZFS](zfs-datasets.md#replica-push).
 
 ## Integracje {#integrations}
 

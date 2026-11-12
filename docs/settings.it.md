@@ -74,7 +74,7 @@ Diverse cose richiedono una password di accesso, come il kit di ripristino e i d
 
 ## Associazione {#pairing}
 
-**Associazione** con **Genera frase** o **Inserisci frase**, le schede dei passaggi, il nome di questa istanza, i dispositivi in attesa di **Approva**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, i membri del gruppo e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Sotto di essi, **Fortezza** unisce BombVault alle altre app della famiglia con le dodici parole della fortezza, con un interruttore per ogni permesso tra le app, **Restituisci i backup alle app**, **Mostra la frase**, **Cambia** e **Lascia**. Vedi [Associare le istanze](offsite-recovery.md#pairing), [La fortezza](offsite-recovery.md#fortress) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
+**Associazione** con le schede dei passaggi e **Genera frase** o **Inserisci frase**. Quando BombVault ha una frase, la scheda **Fortezza** contiene il nome di questa istanza, **Mostra la frase**, **Cambia** e **Lascia**, e le stesse parole fanno entrare le tue istanze, i tuoi telefoni e le altre app della famiglia. Sotto vengono i dispositivi in attesa di **Approva**, i membri nelle schede della pagina Istanze, le altre app della fortezza con un interruttore per ogni permesso tra le app e **Restituisci i backup alle app**, la scheda **Relay** con le sue quattro forme e **Cosa vede il relay**, e **Server ZFS senza BombVault** per una destinazione di replica via SSH. Vedi [Associare le istanze](offsite-recovery.md#pairing), [La fortezza](offsite-recovery.md#fortress) e [Invio a un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrazioni {#integrations}
 

@@ -74,7 +74,7 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a u
 
 ## Párování {#pairing}
 
-**Párování** s **Vygenerovat frázi** nebo **Zadat frázi**, karty kroků, jméno této instance, zařízení čekající na **Schválit**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí**, členové skupiny a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Pod nimi **Pevnost** spojí BombVault s ostatními aplikacemi z rodiny pomocí dvanácti slov pevnosti, s přepínačem pro každé oprávnění mezi aplikacemi, **Vracet zálohy aplikacím**, **Zobrazit frázi**, **Změnit** a **Opustit**. Viz [Párování instancí](offsite-recovery.md#pairing), [Pevnost](offsite-recovery.md#fortress) a [Push na server ZFS](zfs-datasets.md#replica-push).
+**Párování** s kartami kroků a **Vygenerovat frázi** nebo **Zadat frázi**. Jakmile má BombVault frázi, karta **Pevnost** obsahuje jméno této instance, **Zobrazit frázi**, **Změnit** a **Opustit**, a stejná slova přivedou tvoje instance, tvoje telefony i ostatní aplikace z rodiny. Pod ní jsou zařízení čekající na **Schválit**, členové jako karty ze stránky Instance, ostatní aplikace pevnosti s přepínačem pro každé oprávnění mezi aplikacemi a **Vracet zálohy aplikacím**, karta **Přeposílač** se svými čtyřmi podobami a **Co přeposílač vidí** a **Server ZFS bez BombVault** pro cíl repliky přes SSH. Viz [Párování instancí](offsite-recovery.md#pairing), [Pevnost](offsite-recovery.md#fortress) a [Push na server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrace {#integrations}
 

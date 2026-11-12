@@ -74,7 +74,7 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și
 
 ## Împerechere {#pairing}
 
-**Împerechere** cu **Generează frază** sau **Introdu frază**, cardurile cu pași, numele acestei instanțe, dispozitivele care așteaptă **Aprobă**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, membrii grupului și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Sub ele, **Fortăreață** alătură BombVault celorlalte aplicații ale familiei cu cele douăsprezece cuvinte ale fortăreței, cu câte un comutator pentru fiecare permisiune dintre aplicații, **Dă copiile de rezervă înapoi aplicațiilor**, **Arată fraza**, **Schimbă** și **Părăsește**. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing), [Fortăreața](offsite-recovery.md#fortress) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
+**Împerechere** cu cardurile cu pași și **Generează frază** sau **Introdu frază**. Odată ce BombVault are o frază, cardul **Fortăreață** cuprinde numele acestei instanțe, **Arată fraza**, **Schimbă** și **Părăsește**, iar aceleași cuvinte îți aduc înăuntru instanțele, telefoanele și celelalte aplicații ale familiei. Sub el vin dispozitivele care așteaptă **Aprobă**, membrii în cardurile de pe pagina Instanțe, celelalte aplicații din fortăreață cu câte un comutator pentru fiecare permisiune dintre aplicații și **Dă copiile de rezervă înapoi aplicațiilor**, cardul **Relay** cu cele patru forme ale lui și **Ce vede relay-ul**, și **Server ZFS fără BombVault** pentru o țintă de replică prin SSH. Vezi [Împerecherea instanțelor](offsite-recovery.md#pairing), [Fortăreața](offsite-recovery.md#fortress) și [Trimitere către un server ZFS](zfs-datasets.md#replica-push).
 
 ## Integrări {#integrations}
 

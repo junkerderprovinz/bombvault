@@ -74,7 +74,7 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarko
 
 ## Koppeling {#pairing}
 
-**Koppeling** met **Frase genereren** of **Frase invoeren**, de stapkaarten, de naam van deze instantie, de apparaten die op **Goedkeuren** wachten, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, de leden van de groep, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Daaronder verbindt **Vesting** BombVault met de andere apps van de familie via de twaalf woorden van de vesting, met een schakelaar voor elke toestemming tussen de apps, **Back-ups teruggeven aan apps**, **Frase tonen**, **Wijzigen** en **Verlaten**. Zie [Instanties koppelen](offsite-recovery.md#pairing), [De vesting](offsite-recovery.md#fortress) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
+**Koppeling** met de stapkaarten en **Frase genereren** of **Frase invoeren**. Zodra BombVault een frase heeft, bevat de kaart **Vesting** de naam van deze instantie, **Frase tonen**, **Wijzigen** en **Verlaten**, en dezelfde woorden halen je instanties, je telefoons en de andere apps van de familie binnen. Daaronder komen de apparaten die op **Goedkeuren** wachten, de leden als de kaarten van de pagina Instanties, de andere apps van de vesting met een schakelaar voor elke toestemming tussen de apps en **Back-ups teruggeven aan apps**, de kaart **Relay** met zijn vier vormen en **Wat de relay ziet**, en **ZFS-server zonder BombVault** voor een replicadoel via SSH. Zie [Instanties koppelen](offsite-recovery.md#pairing), [De vesting](offsite-recovery.md#fortress) en [Naar een ZFS-server pushen](zfs-datasets.md#replica-push).
 
 ## Integraties {#integrations}
 

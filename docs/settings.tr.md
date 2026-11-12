@@ -74,7 +74,7 @@ Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gere
 
 ## Eşleştirme {#pairing}
 
-**İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**, adım kartları, bu örneğin adı, **Onayla** bekleyen cihazlar, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı, grubun üyeleri ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu**. Bunların altında **Kale**, kalenin on iki kelimesiyle BombVault'u ailenin diğer uygulamalarına katar. Orada uygulamalar arasındaki her izin için bir anahtar, **Yedekleri uygulamalara geri ver** anahtarı ve **İfadeyi göster**, **Değiştir** ile **Ayrıl** düğmeleri bulunur. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing), [Kale](offsite-recovery.md#fortress) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
+Adım kartları ve **İfade oluştur** ya da **İfade gir** içeren **Eşleştirme**. BombVault bir ifadeye sahip olduğunda **Kale** kartı bu örneğin adını, **İfadeyi göster**, **Değiştir** ve **Ayrıl** düğmelerini barındırır, aynı kelimeler de örneklerini, telefonlarını ve ailenin diğer uygulamalarını içeri alır. Altında **Onayla** bekleyen cihazlar, Örnekler sayfasının kartları olarak üyeler, uygulamalar arasındaki her izin için bir anahtar ve **Yedekleri uygulamalara geri ver** anahtarıyla kalenin diğer uygulamaları, dört biçimi ve **Rölenin gördüğü** olan **Röle** kartı ve SSH üzerinden bir replika hedefi için **BombVault olmayan ZFS sunucusu** gelir. Bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing), [Kale](offsite-recovery.md#fortress) ve [ZFS sunucusuna gönderme](zfs-datasets.md#replica-push).
 
 ## Entegrasyonlar {#integrations}
 

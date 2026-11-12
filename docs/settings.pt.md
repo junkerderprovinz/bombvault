@@ -74,7 +74,7 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 ## Emparelhamento {#pairing}
 
-**Emparelhamento** com **Gerar frase** ou **Introduzir frase**, os cartões de passos, o nome desta instância, os dispositivos à espera de **Aprovar**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, os membros do grupo, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Por baixo, **Fortaleza** junta o BombVault às outras apps da família com as doze palavras da fortaleza, com um interruptor para cada permissão entre as apps, **Devolver backups às apps**, **Mostrar frase**, **Alterar** e **Sair**. Vê [Emparelhar instâncias](offsite-recovery.md#pairing), [A fortaleza](offsite-recovery.md#fortress) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
+**Emparelhamento** com os cartões de passos e **Gerar frase** ou **Introduzir frase**. Assim que o BombVault tem uma frase, o cartão **Fortaleza** reúne o nome desta instância, **Mostrar frase**, **Alterar** e **Sair**, e as mesmas palavras trazem as tuas instâncias, os teus telemóveis e as outras apps da família. Por baixo vêm os dispositivos à espera de **Aprovar**, os membros nos cartões da página Instâncias, as outras apps da fortaleza com um interruptor para cada permissão entre as apps e **Devolver backups às apps**, o cartão **Relay** com as suas quatro formas e **O que o relay vê**, e **Servidor ZFS sem BombVault** para um destino de réplica por SSH. Vê [Emparelhar instâncias](offsite-recovery.md#pairing), [A fortaleza](offsite-recovery.md#fortress) e [Enviar para um servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integrações {#integrations}
 

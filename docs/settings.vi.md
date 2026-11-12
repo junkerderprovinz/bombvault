@@ -74,7 +74,7 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 ## Ghép nối {#pairing}
 
-**Ghép nối** với **Tạo cụm từ** hoặc **Nhập cụm từ**, các thẻ từng bước, tên của phiên bản này, các thiết bị đang chờ **Duyệt**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, các thành viên của nhóm, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Bên dưới, **Pháo đài** đưa BombVault vào cùng các ứng dụng khác trong gia đình bằng mười hai từ của pháo đài, với một công tắc cho mỗi quyền giữa các ứng dụng, **Trả bản sao lưu về cho ứng dụng**, **Hiện cụm từ**, **Đổi** và **Rời đi**. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing), [Pháo đài](offsite-recovery.md#fortress) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
+**Ghép nối** với các thẻ từng bước và **Tạo cụm từ** hoặc **Nhập cụm từ**. Khi BombVault đã có cụm từ, thẻ **Pháo đài** chứa tên của phiên bản này, **Hiện cụm từ**, **Đổi** và **Rời đi**, và cùng những từ đó đưa các phiên bản, điện thoại của bạn và các ứng dụng khác trong gia đình vào. Bên dưới là các thiết bị đang chờ **Duyệt**, các thành viên dưới dạng các thẻ của trang Phiên bản, các ứng dụng khác trong pháo đài với một công tắc cho mỗi quyền giữa các ứng dụng và **Trả bản sao lưu về cho ứng dụng**, thẻ **Relay** với bốn dạng của nó và **Những gì relay thấy**, và **Máy chủ ZFS không có BombVault** cho đích bản sao qua SSH. Xem [Ghép nối các phiên bản](offsite-recovery.md#pairing), [Pháo đài](offsite-recovery.md#fortress) và [Đẩy tới máy chủ ZFS](zfs-datasets.md#replica-push).
 
 ## Tích hợp {#integrations}
 

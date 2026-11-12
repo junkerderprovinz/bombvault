@@ -74,7 +74,7 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tal
 
 ## Pariliitos {#pairing}
 
-**Pariliitos** kohdilla **Luo lause** tai **Syötä lause**, vaihekortit, tämän ilmentymän nimi, laitteet, jotka odottavat **Hyväksy**-painallusta, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, ryhmän jäsenet sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Niiden alla **Linnoitus** liittää BombVaultin perheen muihin sovelluksiin linnoituksen kahdellatoista sanalla, ja siinä on kytkin jokaiselle sovellusten väliselle luvalle sekä **Palauta varmuuskopiot sovelluksille**, **Näytä lause**, **Vaihda** ja **Poistu**. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing), [Linnoitus](offsite-recovery.md#fortress) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
+**Pariliitos** vaihekortteineen sekä **Luo lause** tai **Syötä lause**. Kun BombVaultilla on lause, **Linnoitus**-kortissa ovat tämän ilmentymän nimi, **Näytä lause**, **Vaihda** ja **Poistu**, ja samat sanat tuovat mukaan instanssisi, puhelimesi ja perheen muut sovellukset. Sen alla ovat laitteet, jotka odottavat **Hyväksy**-painallusta, jäsenet Ilmentymät-sivun kortteina, linnoituksen muut sovellukset, joissa on kytkin jokaiselle sovellusten väliselle luvalle ja **Palauta varmuuskopiot sovelluksille**, **Rele**-kortti neljine lomakkeineen ja **Mitä rele näkee**, sekä **ZFS-palvelin ilman BombVaultia** replikakohteelle SSH:n yli. Katso [Ilmentymien pariliitos](offsite-recovery.md#pairing), [Linnoitus](offsite-recovery.md#fortress) ja [Lähetys ZFS-palvelimelle](zfs-datasets.md#replica-push).
 
 ## Integraatiot {#integrations}
 

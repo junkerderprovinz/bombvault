@@ -74,7 +74,7 @@ Varias cosas requieren una contraseña de acceso, como el kit de recuperación y
 
 ## Emparejamiento {#pairing}
 
-**Emparejamiento** con **Generar frase** o **Introducir frase**, las tarjetas de pasos, el nombre de esta instancia, los dispositivos que esperan **Aprobar**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, los miembros del grupo, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Debajo, **Fortaleza** une BombVault a las demás apps de la familia con las doce palabras de la fortaleza, con un interruptor para cada permiso entre las apps, **Devolver copias a las apps**, **Mostrar frase**, **Cambiar** y **Salir**. Consulta [Emparejar instancias](offsite-recovery.md#pairing), [La fortaleza](offsite-recovery.md#fortress) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
+**Emparejamiento** con las tarjetas de pasos y **Generar frase** o **Introducir frase**. En cuanto BombVault tiene una frase, la tarjeta **Fortaleza** reúne el nombre de esta instancia, **Mostrar frase**, **Cambiar** y **Salir**, y las mismas palabras traen tus instancias, tus teléfonos y las demás apps de la familia. Debajo vienen los dispositivos que esperan **Aprobar**, los miembros en las tarjetas de la página Instancias, las demás apps de la fortaleza con un interruptor para cada permiso entre las apps y **Devolver copias a las apps**, la tarjeta **Repetidor** con sus cuatro formas y **Qué ve el repetidor**, y **Servidor ZFS sin BombVault** para un destino de réplica por SSH. Consulta [Emparejar instancias](offsite-recovery.md#pairing), [La fortaleza](offsite-recovery.md#fortress) y [Enviar a un servidor ZFS](zfs-datasets.md#replica-push).
 
 ## Integraciones {#integrations}
 

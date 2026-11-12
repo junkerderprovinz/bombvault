@@ -74,7 +74,7 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterl
 
 ## Kopplung {#pairing}
 
-**Kopplung** mit **Phrase generieren** oder **Phrase eingeben**, den Schrittkarten, dem Namen dieser Instanz, den Geräten, die auf **Freigeben** warten, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, die Mitglieder der Gruppe, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Darunter bringt **Festung** BombVault mit den zwölf Wörtern der Festung zu den anderen Apps der Familie. Dort gibt es einen Schalter für jede Erlaubnis zwischen den Apps, dazu **Sicherungen an Apps zurückgeben**, **Phrase zeigen**, **Ändern** und **Verlassen**. Siehe [Instanzen koppeln](offsite-recovery.md#pairing), [Die Festung](offsite-recovery.md#fortress) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
+**Kopplung** mit den Schrittkarten und **Phrase generieren** oder **Phrase eingeben**. Sobald BombVault eine Phrase hat, enthält die Karte **Festung** den Namen dieser Instanz, **Phrase zeigen**, **Ändern** und **Verlassen**, und dieselben Wörter holen deine Instanzen, deine Handys und die anderen Apps der Familie herein. Darunter kommen die Geräte, die auf **Freigeben** warten, die Mitglieder als die Karten der Seite Instanzen, die anderen Apps der Festung mit einem Schalter für jede Erlaubnis zwischen den Apps und **Sicherungen an Apps zurückgeben**, die Karte **Relay** mit ihren vier Formen und **Was das Relay sieht**, und **ZFS-Server ohne BombVault** für ein Replikziel über SSH. Siehe [Instanzen koppeln](offsite-recovery.md#pairing), [Die Festung](offsite-recovery.md#fortress) und [Auf einen ZFS-Server schieben](zfs-datasets.md#replica-push).
 
 ## Anbindungen {#integrations}
 

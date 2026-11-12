@@ -74,7 +74,7 @@ Flere ting krever et innloggingspassord, som gjenopprettingssettet og nøkkeldep
 
 ## Paring {#pairing}
 
-**Paring** med **Generer frase** eller **Angi frase**, trinnkortene, navnet på denne instansen, enhetene som venter på **Godkjenn**, kortet **Relay** med sine fire former og **Hva relayet ser**, medlemmene i gruppen, og **ZFS-server uten BombVault** for et replikamål over SSH. Under dem kobler **Festning** BombVault til de andre appene i familien med festningens tolv ord, med en bryter for hver tillatelse mellom appene, **Gi sikkerhetskopier tilbake til apper**, **Vis frase**, **Bytt** og **Forlat**. Se [Paring av instanser](offsite-recovery.md#pairing), [Festningen](offsite-recovery.md#fortress) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
+**Paring** med trinnkortene og **Generer frase** eller **Angi frase**. Når BombVault har en frase, rommer kortet **Festning** navnet på denne instansen, **Vis frase**, **Bytt** og **Forlat**, og de samme ordene tar inn instansene dine, telefonene dine og de andre appene i familien. Under det kommer enhetene som venter på **Godkjenn**, medlemmene som kortene fra siden Instanser, de andre appene i festningen med en bryter for hver tillatelse mellom appene og **Gi sikkerhetskopier tilbake til apper**, kortet **Relay** med sine fire former og **Hva relayet ser**, og **ZFS-server uten BombVault** for et replikamål over SSH. Se [Paring av instanser](offsite-recovery.md#pairing), [Festningen](offsite-recovery.md#fortress) og [Send til en ZFS-server](zfs-datasets.md#replica-push).
 
 ## Integrasjoner {#integrations}
 

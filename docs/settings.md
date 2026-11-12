@@ -74,7 +74,7 @@ Several things need a login password, such as the recovery kit and key deposits.
 
 ## Pairing {#pairing}
 
-**Pairing** with **Generate phrase** or **Enter phrase**, the step cards, this instance's name, the devices that wait for **Approve**, the **Relay** card with its four forms and **What the relay sees**, the members of the group, and **ZFS server without BombVault** for a replica target over SSH. Below them **Fortress** joins BombVault to the other apps of the family with the fortress's twelve words, with a switch for every permission between the apps, **Give backups back to apps**, **Show phrase**, **Change** and **Leave**. See [Pairing instances](offsite-recovery.md#pairing), [The fortress](offsite-recovery.md#fortress) and [Push to a ZFS server](zfs-datasets.md#replica-push).
+**Pairing** with the step cards and **Generate phrase** or **Enter phrase**. Once BombVault is on a phrase, the **Fortress** card holds this instance's name, **Show phrase**, **Change** and **Leave**, and the same words bring your instances, your phones and the other apps of the family in. Below it come the devices that wait for **Approve**, the members as the cards of the Instances page, the other apps of the fortress with a switch for every permission between the apps and **Give backups back to apps**, the **Relay** card with its four forms and **What the relay sees**, and **ZFS server without BombVault** for a replica target over SSH. See [Pairing instances](offsite-recovery.md#pairing), [The fortress](offsite-recovery.md#fortress) and [Push to a ZFS server](zfs-datasets.md#replica-push).
 
 ## Integrations {#integrations}
 
