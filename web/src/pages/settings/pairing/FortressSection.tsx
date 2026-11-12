@@ -53,10 +53,21 @@ export function FortressSection({ nextHue, giveBack }: { nextHue: () => number; 
   const [error, setError] = useState<string | null>(null);
   // GlimStone words the fortress for an Instances tab. On this page the
   // group's card has an Enter phrase too, so the fortress's says what it
-  // joins, and the hints do not send anybody to Instances.
+  // joins, and the hints do not send anybody to Instances. GlimStone's change
+  // texts tell members out of reach that they need the new phrase, but the
+  // kit lets them follow on the old one for 30 days.
   const text = useMemo(() => {
     const own = fortressText(lang);
-    return { ...own, enterPhrase: own.joinTitle, outHint: t("fortress.outHint"), phraseWhere: t("fortress.phraseWhere") };
+    return {
+      ...own,
+      enterPhrase: own.joinTitle,
+      outHint: t("fortress.outHint"),
+      phraseWhere: t("fortress.phraseWhere"),
+      changePhraseAbout: t("fortress.changePhraseAbout"),
+      changeBody: t("fortress.changeBody"),
+      changeAway: t("fortress.changeAway"),
+      changedLeft: t("fortress.changedLeft"),
+    };
   }, [lang, t]);
   // The step that waits for the password before a new phrase is made.
   const [asking, setAsking] = useState<((answer: ChangeAnswer) => void) | null>(null);

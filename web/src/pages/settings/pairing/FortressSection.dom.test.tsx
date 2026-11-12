@@ -225,12 +225,13 @@ describe("FortressSection", () => {
     renderSection();
     expect(await screen.findByText(en["fortress.title"])).toBeTruthy();
     fireEvent.click(button("open-change"));
+    expect(screen.getByText(en["fortress.changeAway"])).toBeTruthy();
     await act(async () => fireEvent.click(button("change")));
     fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
     await act(async () => fireEvent.click(button("change-unlock")));
     expect(calls).toEqual(["change hunter2"]);
     expect(button("words").textContent).toContain("wrong");
-    expect(screen.getByText("Still on the old phrase: Cellar. Enter the new one there once.")).toBeTruthy();
+    expect(screen.getByText(en["fortress.changedLeft"].replace("{devices}", "Cellar"))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     fireEvent.click(button("open-leave"));
