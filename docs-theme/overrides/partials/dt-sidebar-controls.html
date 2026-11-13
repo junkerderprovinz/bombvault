@@ -1,0 +1,33 @@
+{#
+  The rail's footer controls, after the apps' SidebarControls: a language
+  picker built from the alternates mkdocs-static-i18n hands Material, and a
+  dark/light row. theme.js wires both; a site with one language gets only
+  the theme row.
+#}
+{% set dt = config.extra.docs_theme or {} %}
+{% set alts = config.extra.alternate or [] %}
+<div class="dt-rail-controls" data-dt-flags="{{ 'on' if dt.flags else 'off' }}">
+  {% if alts | length > 1 %}
+    <div class="dt-lang-wrap">
+      <button type="button" class="dt-ctl-row" aria-haspopup="listbox" aria-expanded="false" data-dt-lang-toggle title="{{ lang.t('select.language') }}">
+        <span class="dt-ctl-mark" data-dt-current-mark aria-hidden="true"></span>
+        <span class="dt-ctl-label" data-dt-current-label>{{ alts[0].name }}</span>
+        <svg class="dt-ctl-caret" width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M5 12l5-5 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="dt-lang-menu" role="listbox" aria-label="{{ lang.t('select.language') }}" hidden>
+        {% for alt in alts %}
+          <a class="dt-lang-opt" role="option" href="{{ alt.link | url }}" hreflang="{{ alt.lang }}" data-dt-lang="{{ alt.lang }}" aria-selected="false">
+            <span class="dt-ctl-mark" aria-hidden="true"></span>
+            <span class="dt-ctl-label">{{ alt.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <button type="button" class="dt-ctl-row" data-dt-theme-toggle>
+    <span class="dt-ctl-mark dt-theme-icon" aria-hidden="true"></span>
+    <span class="dt-ctl-label" data-dt-theme-label></span>
+  </button>
+</div>

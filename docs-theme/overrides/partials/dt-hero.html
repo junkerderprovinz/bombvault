@@ -1,0 +1,37 @@
+{#
+  The landing hero in the store style: the logo pressed into a relief ground,
+  the name in Bree Serif and a claim whose second half carries the accent.
+  The relief is decoration, so it is hidden from screen readers. Button links
+  stay relative to the page, so on a translated home page they stay in that
+  language.
+#}
+{% set logo = config.theme.logo | url if config.theme.logo %}
+<section class="dt-hero md-grid" aria-label="{{ config.site_name }}">
+  <div class="dt-hero__card">
+    {% if logo %}
+      <img class="dt-hero__relief{% if dt.relief == 'silhouette' %} dt-hero__relief--silhouette{% endif %}" src="{{ logo }}" alt="" aria-hidden="true">
+    {% endif %}
+    <div class="dt-hero__text">
+      <p class="dt-hero__name">{{ config.site_name }}</p>
+      {% if hero.claim or hero.accent %}
+        <p class="dt-hero__claim">
+          {{- hero.claim -}}
+          {% if hero.accent %} <span class="dt-hero__accent">{{ hero.accent }}</span>{% endif %}
+        </p>
+      {% endif %}
+      {% if hero.text %}
+        <p class="dt-hero__sub">{{ hero.text }}</p>
+      {% endif %}
+      {% if hero.buttons %}
+        <div class="dt-hero__buttons">
+          {% for b in hero.buttons %}
+            <a class="dt-btn {{ 'dt-btn--primary' if b.primary else 'dt-btn--neutral' }}" href="{{ b.link }}">{{ b.text }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    {% if logo %}
+      <img class="dt-hero__logo" src="{{ logo }}" alt="">
+    {% endif %}
+  </div>
+</section>

@@ -12,13 +12,12 @@ copyright: Copyright (C) 2026 Junker der Provinz. Licensed AGPL-3.0.
 theme:
   name: material
   language: en
-  # overrides/main.html adds the language picker and theme toggle to the sidebar.
-  custom_dir: overrides
+  custom_dir: docs-theme/overrides
   logo: assets/logo.svg
   favicon: assets/favicon.png
   font:
-    text: IBM Plex Sans
-    code: IBM Plex Mono
+    text: Noto Sans
+    code: Noto Sans Mono
   palette:
     # Without media queries Material opens with the first palette, so the docs
     # start dark for everyone. The app itself follows the system theme.
@@ -37,6 +36,7 @@ theme:
   features:
     # No tabs: the sidebar shows the whole tree, and toc.integrate folds the
     # current page's sections into it.
+    - navigation.sections
     - navigation.top
     - navigation.footer
     # No navigation.instant: mkdocs-static-i18n does not support it, and the
@@ -51,10 +51,19 @@ extra_css:
   # Flag images for the language picker, since Windows shows flag emoji as
   # letter pairs.
   - stylesheets/flag-icons.min.css
-  - stylesheets/extra.css
 
-extra_javascript:
-  - javascripts/bv-sidebar-controls.js
+extra:
+  docs_theme:
+    accent: "#FCC419"
+    flags: true
+    hero:
+      claim: Drop a backup.
+      accent: Detonate a restore.
+      text: Backup and full disaster recovery for Unraid and other Docker hosts. Containers, VMs, folders, ZFS datasets and the flash drive, restored the way they were.
+      buttons:
+        - { text: Get started, link: getting-started/, primary: true }
+        - { text: Worked examples, link: guides/ }
+        - { text: Source code, link: "https://github.com/junkerderprovinz/bombvault" }
 
 # Every locale is built. A page without a translation (index.de.md next to
 # index.md) falls back to English.

@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 const REPO = join(SRC, "..", "..");
-const SHEETS = [join(SRC, "index.css"), join(SRC, "providerMarks.css"), join(REPO, "docs", "stylesheets", "extra.css")];
+const SHEETS = [join(SRC, "index.css"), join(SRC, "providerMarks.css"), join(REPO, "docs-theme", "overrides", "assets", "docs-theme", "theme.css")];
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
