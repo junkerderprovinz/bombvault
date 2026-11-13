@@ -572,6 +572,13 @@
   box-sizing: border-box;
 }
 
+/* Behind a strip's dropdown its segments go. The display above is unlayered
+   and would otherwise outrank the Selector's hiding utility. */
+[data-listed] > .glim-seg,
+[data-listed] > .glim-seg-btn {
+  display: none;
+}
+
 /* A glyph beside a button's words is as tall as the words, 14px. A larger one
    outweighs the label, and a row of buttons reads as a row of icons. A glyph
    alone in a square takes half the box instead (`.glim-btn-icon` below). */
