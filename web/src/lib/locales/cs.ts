@@ -3109,7 +3109,7 @@ const cs: Partial<Translations> = {
   "relay.noGroup": "Zatím žádná skupina",
   "relay.project": "Přeposílač projektu",
   "relay.own": "Vlastní přeposílač",
-  "relay.off": "Jen domácí síť",
+  "relay.off": "Domácí síť",
   "relay.projectSentence": "Projekt provozuje ParleyPort na {host} zdarma.",
   "relay.projectNeed": "Nic. Funguje bez nastavení.",
   "relay.projectSees": "Pro kterou instanci je zpráva určena, jak je velká a kdy dorazí.",

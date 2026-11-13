@@ -3112,7 +3112,7 @@ const ar: Partial<Translations> = {
   "relay.noGroup": "بلا مجموعة بعد",
   "relay.project": "مُرحِّل المشروع",
   "relay.own": "مُرحِّل خاص",
-  "relay.off": "الشبكة المنزلية فقط",
+  "relay.off": "الشبكة المنزلية",
   "relay.projectSentence": "يشغّل المشروع ParleyPort على {host} مجانًا.",
   "relay.projectNeed": "لا شيء. يعمل دون إعداد.",
   "relay.projectSees": "لأي مثيل الرسالة، وما حجمها، ومتى وصلت.",

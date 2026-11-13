@@ -3102,7 +3102,7 @@ const ja: Partial<Translations> = {
   "relay.noGroup": "まだグループなし",
   "relay.project": "プロジェクトのリレー",
   "relay.own": "自分のリレー",
-  "relay.off": "家のネットワークのみ",
+  "relay.off": "家のネットワーク",
   "relay.projectSentence": "プロジェクトが{host}で ParleyPort を無料で運用しています。",
   "relay.projectNeed": "何も必要ありません。設定なしで動作します。",
   "relay.projectSees": "メッセージがどのインスタンス宛か、サイズ、到着時刻です。",

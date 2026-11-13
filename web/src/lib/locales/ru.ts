@@ -3108,7 +3108,7 @@ const ru: Partial<Translations> = {
   "relay.noGroup": "Группы пока нет",
   "relay.project": "Relay проекта",
   "relay.own": "Собственный Relay",
-  "relay.off": "Только домашняя сеть",
+  "relay.off": "Домашняя сеть",
   "relay.projectSentence": "Проект бесплатно предоставляет ParleyPort по адресу {host}.",
   "relay.projectNeed": "Ничего. Он работает без настройки.",
   "relay.projectSees": "Для какого экземпляра предназначено сообщение, насколько оно велико и когда приходит.",

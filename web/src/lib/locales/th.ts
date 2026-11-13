@@ -3112,7 +3112,7 @@ const th: Partial<Translations> = {
   "relay.noGroup": "ยังไม่มีกลุ่ม",
   "relay.project": "รีเลย์ของโครงการ",
   "relay.own": "รีเลย์ของตัวเอง",
-  "relay.off": "เฉพาะเครือข่ายบ้าน",
+  "relay.off": "เครือข่ายบ้าน",
   "relay.projectSentence": "โครงการเปิด ParleyPort ไว้ที่ {host} ให้ใช้ฟรี",
   "relay.projectNeed": "ไม่ต้องทำอะไรเลย ใช้งานได้โดยไม่ต้องตั้งค่า",
   "relay.projectSees": "ข้อความนั้นมีปลายทางเป็นอินสแตนซ์ใด ขนาดเท่าไร และมาถึงเมื่อไร",

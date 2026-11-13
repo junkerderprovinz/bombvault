@@ -1976,7 +1976,7 @@ const sl: Partial<Translations> = {
   "relay.noGroup": "Še ni skupine",
   "relay.project": "Projektni relay",
   "relay.own": "Lastni relay",
-  "relay.off": "Samo domače omrežje",
+  "relay.off": "Domače omrežje",
   "relay.projectSentence": "Projekt brezplačno poganja ParleyPort na {host}.",
   "relay.projectNeed": "Nič. Deluje brez nastavitev.",
   "relay.projectSees": "Za katero instanco je sporočilo, kako veliko je in kdaj prispe.",

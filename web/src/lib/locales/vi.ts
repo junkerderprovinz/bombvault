@@ -3102,7 +3102,7 @@ const vi: Partial<Translations> = {
   "relay.noGroup": "Chưa có nhóm",
   "relay.project": "Relay của dự án",
   "relay.own": "Relay riêng",
-  "relay.off": "Chỉ mạng nhà",
+  "relay.off": "Mạng nhà",
   "relay.projectSentence": "Dự án vận hành ParleyPort tại {host}, hoàn toàn miễn phí.",
   "relay.projectNeed": "Không cần gì cả. Hoạt động mà không cần thiết lập.",
   "relay.projectSees": "Thông điệp dành cho phiên bản nào, kích thước bao nhiêu và đến lúc nào.",

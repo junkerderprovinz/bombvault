@@ -3111,7 +3111,7 @@ const el: Partial<Translations> = {
   "relay.noGroup": "Ακόμη χωρίς ομάδα",
   "relay.project": "Αναμεταδότης του έργου",
   "relay.own": "Δικός σας αναμεταδότης",
-  "relay.off": "Μόνο οικιακό δίκτυο",
+  "relay.off": "Οικιακό δίκτυο",
   "relay.projectSentence": "Το έργο λειτουργεί το ParleyPort στο {host}, δωρεάν.",
   "relay.projectNeed": "Τίποτα. Λειτουργεί χωρίς ρύθμιση.",
   "relay.projectSees": "Για ποια εγκατάσταση είναι ένα μήνυμα, πόσο μεγάλο είναι και πότε φτάνει.",

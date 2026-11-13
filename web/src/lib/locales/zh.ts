@@ -3102,7 +3102,7 @@ const zh: Partial<Translations> = {
   "relay.noGroup": "还没有组",
   "relay.project": "项目中继",
   "relay.own": "自建中继",
-  "relay.off": "仅家庭网络",
+  "relay.off": "家庭网络",
   "relay.projectSentence": "项目在 {host} 免费提供 ParleyPort。",
   "relay.projectNeed": "什么都不需要，无需任何设置即可使用。",
   "relay.projectSees": "一条消息是发给哪台实例的、有多大，以及什么时候到达。",

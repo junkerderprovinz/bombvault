@@ -1982,7 +1982,7 @@ const bg: Partial<Translations> = {
   "relay.noGroup": "Все още без група",
   "relay.project": "Препредавател на проекта",
   "relay.own": "Собствен препредавател",
-  "relay.off": "Само домашна мрежа",
+  "relay.off": "Домашна мрежа",
   "relay.projectSentence": "Проектът поддържа ParleyPort на {host}, безплатно.",
   "relay.projectNeed": "Нищо. Работи без настройка.",
   "relay.projectSees": "За коя инстанция е съобщението, колко голямо е и кога пристига.",

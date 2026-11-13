@@ -3108,7 +3108,7 @@ const uk: Partial<Translations> = {
   "relay.noGroup": "Ще немає групи",
   "relay.project": "Реле проєкту",
   "relay.own": "Власне реле",
-  "relay.off": "Лише домашня мережа",
+  "relay.off": "Домашня мережа",
   "relay.projectSentence": "Проєкт безкоштовно надає ParleyPort за адресою {host}.",
   "relay.projectNeed": "Нічого. Працює без налаштування.",
   "relay.projectSees": "Для якого екземпляра повідомлення, який у нього розмір і коли воно надходить.",

@@ -1982,7 +1982,7 @@ const is: Partial<Translations> = {
   "relay.noGroup": "Enn enginn hópur",
   "relay.project": "Verkefnis-relay",
   "relay.own": "Eigið relay",
-  "relay.off": "Aðeins heimanet",
+  "relay.off": "Heimanet",
   "relay.projectSentence": "Verkefnið keyrir ParleyPort á {host}, án endurgjalds.",
   "relay.projectNeed": "Ekkert. Það virkar án uppsetningar.",
   "relay.projectSees": "Fyrir hvaða tilvik skilaboð eru, hversu stór þau eru og hvenær þau berast.",

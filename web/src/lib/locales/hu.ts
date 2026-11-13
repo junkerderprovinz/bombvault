@@ -3112,7 +3112,7 @@ const hu: Partial<Translations> = {
   "relay.noGroup": "Még nincs csoport",
   "relay.project": "Projekt-relay",
   "relay.own": "Saját relay",
-  "relay.off": "Csak otthoni hálózat",
+  "relay.off": "Otthoni hálózat",
   "relay.projectSentence": "A projekt ingyenesen üzemelteti a ParleyPortot a(z) {host} címen.",
   "relay.projectNeed": "Semmi. Beállítás nélkül működik.",
   "relay.projectSees": "Hogy melyik példánynak szól egy üzenet, mekkora, és mikor érkezik.",

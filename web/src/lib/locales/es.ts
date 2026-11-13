@@ -3109,7 +3109,7 @@ const es: Partial<Translations> = {
   "relay.noGroup": "Todavía sin grupo",
   "relay.project": "Repetidor del proyecto",
   "relay.own": "Repetidor propio",
-  "relay.off": "Solo la red de casa",
+  "relay.off": "Red de casa",
   "relay.projectSentence": "El proyecto gestiona ParleyPort en {host}, de forma gratuita.",
   "relay.projectNeed": "Nada. Funciona sin configuración.",
   "relay.projectSees": "Para qué instancia es un mensaje, cuánto pesa y cuándo llega.",

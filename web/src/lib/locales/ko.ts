@@ -3102,7 +3102,7 @@ const ko: Partial<Translations> = {
   "relay.noGroup": "아직 그룹 없음",
   "relay.project": "프로젝트 릴레이",
   "relay.own": "자체 릴레이",
-  "relay.off": "집 네트워크만",
+  "relay.off": "집 네트워크",
   "relay.projectSentence": "프로젝트가 {host}에서 무료로 ParleyPort를 운영합니다.",
   "relay.projectNeed": "필요한 것이 없습니다. 별도 설정 없이 작동합니다.",
   "relay.projectSees": "메시지가 어느 인스턴스로 가는지, 크기가 얼마나 되는지, 언제 도착하는지입니다.",

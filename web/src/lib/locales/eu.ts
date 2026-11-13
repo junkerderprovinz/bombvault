@@ -1982,7 +1982,7 @@ const eu: Partial<Translations> = {
   "relay.noGroup": "Oraindik talderik ez",
   "relay.project": "Proiektuaren bitartekaria",
   "relay.own": "Norberaren bitartekaria",
-  "relay.off": "Etxeko sarea bakarrik",
+  "relay.off": "Etxeko sarea",
   "relay.projectSentence": "Proiektuak ParleyPort {host} helbidean darabil, doan.",
   "relay.projectNeed": "Ezer ez. Konfiguraziorik gabe funtzionatzen du.",
   "relay.projectSees": "Zein instantziarentzat den mezu bat, zein handia den eta noiz iristen den.",

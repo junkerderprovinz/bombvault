@@ -3111,7 +3111,7 @@ const fr: Partial<Translations> = {
   "relay.noGroup": "Pas encore de groupe",
   "relay.project": "Relais du projet",
   "relay.own": "Relais personnel",
-  "relay.off": "Réseau de la maison seulement",
+  "relay.off": "Réseau de la maison",
   "relay.projectSentence": "Le projet fait tourner ParleyPort à {host}, gratuitement.",
   "relay.projectNeed": "Rien. Cela fonctionne sans configuration.",
   "relay.projectSees": "À quelle instance un message est destiné, sa taille, et quand il arrive.",

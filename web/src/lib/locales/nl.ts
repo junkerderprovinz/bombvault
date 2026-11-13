@@ -3110,7 +3110,7 @@ const nl: Partial<Translations> = {
   "relay.noGroup": "Nog geen groep",
   "relay.project": "Projectrelay",
   "relay.own": "Eigen relay",
-  "relay.off": "Alleen thuisnetwerk",
+  "relay.off": "Thuisnetwerk",
   "relay.projectSentence": "Het project draait ParleyPort op {host}, gratis.",
   "relay.projectNeed": "Niets. Het werkt zonder instellen.",
   "relay.projectSees": "Voor welke instantie een bericht bedoeld is, hoe groot het is en wanneer het aankomt.",

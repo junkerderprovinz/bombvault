@@ -1982,7 +1982,7 @@ const hi: Partial<Translations> = {
   "relay.noGroup": "अभी तक कोई समूह नहीं",
   "relay.project": "प्रोजेक्ट रिले",
   "relay.own": "अपना रिले",
-  "relay.off": "सिर्फ़ घर का नेटवर्क",
+  "relay.off": "घर का नेटवर्क",
   "relay.projectSentence": "प्रोजेक्ट {host} पर ParleyPort मुफ़्त में चलाता है।",
   "relay.projectNeed": "कुछ नहीं। यह बिना सेटअप के काम करता है।",
   "relay.projectSees": "कोई संदेश किस इंस्टेंस के लिए है, वह कितना बड़ा है, और कब पहुँचता है।",

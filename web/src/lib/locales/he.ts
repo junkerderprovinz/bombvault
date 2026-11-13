@@ -3111,7 +3111,7 @@ const he: Partial<Translations> = {
   "relay.noGroup": "עדיין אין קבוצה",
   "relay.project": "ממסר הפרויקט",
   "relay.own": "ממסר עצמי",
-  "relay.off": "רשת ביתית בלבד",
+  "relay.off": "רשת ביתית",
   "relay.projectSentence": "הפרויקט מפעיל את ParleyPort בכתובת {host}, בחינם.",
   "relay.projectNeed": "כלום. הוא עובד בלי הגדרה.",
   "relay.projectSees": "לאיזה מופע הודעה מיועדת, מה הגודל שלה, ומתי היא מגיעה.",

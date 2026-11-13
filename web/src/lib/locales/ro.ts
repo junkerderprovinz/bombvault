@@ -3112,7 +3112,7 @@ const ro: Partial<Translations> = {
   "relay.noGroup": "Încă niciun grup",
   "relay.project": "Relay de proiect",
   "relay.own": "Relay propriu",
-  "relay.off": "Doar rețeaua de acasă",
+  "relay.off": "Rețeaua de acasă",
   "relay.projectSentence": "Proiectul rulează ParleyPort la {host}, gratuit.",
   "relay.projectNeed": "Nimic. Funcționează fără configurare.",
   "relay.projectSees": "Pentru ce instanță este un mesaj, cât de mare este și când ajunge.",

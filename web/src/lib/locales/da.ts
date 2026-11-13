@@ -3111,7 +3111,7 @@ const da: Partial<Translations> = {
   "relay.noGroup": "Ingen gruppe endnu",
   "relay.project": "Projektets videresender",
   "relay.own": "Egen videresender",
-  "relay.off": "Kun hjemmenetværk",
+  "relay.off": "Hjemmenetværk",
   "relay.projectSentence": "Projektet driver ParleyPort på {host} gratis.",
   "relay.projectNeed": "Intet. Det virker uden opsætning.",
   "relay.projectSees": "Hvilken instans en besked er til, hvor stor den er, og hvornår den ankommer.",

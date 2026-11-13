@@ -1982,7 +1982,7 @@ const lv: Partial<Translations> = {
   "relay.noGroup": "Vēl nav grupas",
   "relay.project": "Projekta relay",
   "relay.own": "Savs relay",
-  "relay.off": "Tikai mājas tīkls",
+  "relay.off": "Mājas tīkls",
   "relay.projectSentence": "Projekts bez maksas uztur ParleyPort adresē {host}.",
   "relay.projectNeed": "Nekas. Tas darbojas bez iestatīšanas.",
   "relay.projectSees": "Kurai instancei ziņojums paredzēts, cik liels tas ir un kad tas ienāk.",

@@ -1982,7 +1982,7 @@ const et: Partial<Translations> = {
   "relay.noGroup": "Veel grupita",
   "relay.project": "Projekti edastaja",
   "relay.own": "Oma edastaja",
-  "relay.off": "Ainult koduvõrk",
+  "relay.off": "Koduvõrk",
   "relay.projectSentence": "Projekt haldab ParleyPorti aadressil {host} tasuta.",
   "relay.projectNeed": "Mitte midagi. Töötab ilma seadistuseta.",
   "relay.projectSees": "Millisele eksemplarile sõnum on mõeldud, kui suur see on ja millal see jõuab kohale.",

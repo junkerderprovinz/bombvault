@@ -1982,7 +1982,7 @@ const id: Partial<Translations> = {
   "relay.noGroup": "Belum ada grup",
   "relay.project": "Relay proyek",
   "relay.own": "Relay sendiri",
-  "relay.off": "Hanya jaringan rumah",
+  "relay.off": "Jaringan rumah",
   "relay.projectSentence": "Proyek ini menjalankan ParleyPort di {host}, tanpa biaya.",
   "relay.projectNeed": "Tidak ada. Ini berfungsi tanpa pengaturan.",
   "relay.projectSees": "Untuk instance mana sebuah pesan ditujukan, seberapa besar, dan kapan tiba.",

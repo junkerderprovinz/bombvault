@@ -1982,7 +1982,7 @@ const fa: Partial<Translations> = {
   "relay.noGroup": "هنوز گروهی نیست",
   "relay.project": "رلهٔ پروژه",
   "relay.own": "رلهٔ شخصی",
-  "relay.off": "فقط شبکهٔ خانه",
+  "relay.off": "شبکهٔ خانه",
   "relay.projectSentence": "پروژه ParleyPort را روی {host} به‌صورت رایگان اجرا می‌کند.",
   "relay.projectNeed": "هیچ‌چیز. بدون تنظیم کار می‌کند.",
   "relay.projectSees": "پیام برای کدام نمونه است، چقدر بزرگ است و کی می‌رسد.",

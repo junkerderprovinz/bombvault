@@ -3111,7 +3111,7 @@ const fi: Partial<Translations> = {
   "relay.noGroup": "Ei vielä ryhmää",
   "relay.project": "Projektin rele",
   "relay.own": "Oma rele",
-  "relay.off": "Vain kotiverkko",
+  "relay.off": "Kotiverkko",
   "relay.projectSentence": "Projekti ylläpitää ParleyPortia osoitteessa {host}, maksutta.",
   "relay.projectNeed": "Ei mitään. Se toimii ilman asetuksia.",
   "relay.projectSees": "Kenelle viesti on tarkoitettu, kuinka suuri se on ja milloin se saapuu.",

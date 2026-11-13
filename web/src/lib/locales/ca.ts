@@ -1982,7 +1982,7 @@ const ca: Partial<Translations> = {
   "relay.noGroup": "Encara sense grup",
   "relay.project": "Repetidor del projecte",
   "relay.own": "Repetidor propi",
-  "relay.off": "Només la xarxa de casa",
+  "relay.off": "Xarxa de casa",
   "relay.projectSentence": "El projecte fa funcionar ParleyPort a {host}, gratuïtament.",
   "relay.projectNeed": "Res. Funciona sense configuració.",
   "relay.projectSees": "Per a quina instància és un missatge, quina mida té i quan arriba.",

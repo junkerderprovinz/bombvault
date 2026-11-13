@@ -3111,7 +3111,7 @@ const sv: Partial<Translations> = {
   "relay.noGroup": "Ingen grupp än",
   "relay.project": "Projektrelä",
   "relay.own": "Eget relä",
-  "relay.off": "Bara hemnätverket",
+  "relay.off": "Hemnätverk",
   "relay.projectSentence": "Projektet driver ParleyPort på {host}, kostnadsfritt.",
   "relay.projectNeed": "Inget. Det fungerar utan uppsättning.",
   "relay.projectSees": "Vilken instans ett meddelande är till, hur stort det är och när det kommer fram.",

@@ -1982,7 +1982,7 @@ const ms: Partial<Translations> = {
   "relay.noGroup": "Belum ada kumpulan",
   "relay.project": "Relay projek",
   "relay.own": "Relay sendiri",
-  "relay.off": "Rangkaian rumah sahaja",
+  "relay.off": "Rangkaian rumah",
   "relay.projectSentence": "Projek ini menjalankan ParleyPort di {host}, secara percuma.",
   "relay.projectNeed": "Tiada apa-apa. Ia berfungsi tanpa persediaan.",
   "relay.projectSees": "Untuk instans mana sesuatu mesej itu ditujukan, saiznya dan bila ia tiba.",
