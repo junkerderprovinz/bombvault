@@ -6,7 +6,7 @@
 // generate a phrase and are told after a minute how to merge
 // (https://github.com/junkerderprovinz/bombvault/issues/270), and one where
 // the second enters the phrase and pairs with the first one's words.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { blockServerLook } from "./serverLook";
 
 const MOBILE_PROJECTS = new Set(["mobile-iphone", "mobile-android"]);
@@ -166,13 +166,22 @@ async function stage(page: Page, f: Instance): Promise<void> {
 // The settings search bar comes and goes with the direction the page scrolls
 // and moves the cards as it does. A radio is scrolled into view and left a
 // moment for that before it is pressed, so the press does not scroll again.
+const RELAY_ROUTES = ["Projekt-Relay (nichts einrichten)", "Eigenes Relay (auf deinem Server)", "Nur Heimnetz"];
+
+/** The relay route picker: its radios, or on a phone the list they fold into. */
+function relayList(page: Page): Locator {
+  return page.locator("[data-listed]").filter({ hasText: "Projekt-Relay" }).getByRole("combobox");
+}
+
 async function pickRelay(page: Page, name: string): Promise<void> {
-  // The two main routes are radios, the others quiet links under them.
-  const radio = page.getByRole("radio", { name }).or(page.getByRole("button", { name, exact: true }));
-  await radio.scrollIntoViewIfNeeded();
+  const radio = page.getByRole("radio", { name });
+  const listed = await relayList(page).isVisible();
+  const target = listed ? relayList(page) : radio;
+  await target.scrollIntoViewIfNeeded();
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
   await settle(page);
-  await radio.click();
+  await target.click();
+  if (listed) await page.getByRole("option", { name }).click();
 }
 
 async function settle(page: Page): Promise<void> {
@@ -308,8 +317,12 @@ for (const width of [1280, 390]) {
       expect(new Set(tops).size).toBe(3);
     }
 
-    // The relay in its four forms, each with its picture.
-    await expect(page.getByRole("radio")).toHaveText(["Projekt-Relay (nichts einrichten)", "Eigenes Relay (auf deinem Server)"]);
+    // The relay in its three forms, each with its picture.
+    if (await relayList(page).isVisible()) {
+      await expect(relayList(page)).toContainText(RELAY_ROUTES[0]);
+    } else {
+      await expect(page.getByRole("radio")).toHaveText(RELAY_ROUTES);
+    }
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /sprechen über das Relay/ })).toBeVisible();
     await pickRelay(page, "Eigenes Relay");
@@ -318,13 +331,7 @@ for (const width of [1280, 390]) {
     await expect(page.getByText("Selbst gehostet")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await pickRelay(page, "Diese BombVault als Relay nutzen");
-    await expect(page.getByRole("img", { name: /ist selbst das Relay/ })).toBeVisible();
-    await expect(page.getByRole("switch", { name: "Als Relay dienen" })).toBeVisible();
-    await expect(page.locator("#relay-address")).toBeVisible();
-    await settle(page);
-    await expectFits(page);
-    await pickRelay(page, "Alles im Heimnetz lassen");
+    await pickRelay(page, "Nur Heimnetz");
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
