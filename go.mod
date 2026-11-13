@@ -9,7 +9,7 @@ require (
 	github.com/coder/websocket v1.8.15
 	github.com/containerd/errdefs v1.0.0
 	github.com/go-webauthn/webauthn v0.18.2
-	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261113175935-f3efff3820c1
+	github.com/junkerderprovinz/parleyport/kit v0.0.0-20261113183201-a9f315f87c05
 	github.com/klauspost/compress v1.20.4
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.2
