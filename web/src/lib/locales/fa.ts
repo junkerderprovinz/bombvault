@@ -1745,6 +1745,7 @@ const fa: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "گیرنده",
   "instances.title": "نمونه‌ها",
+  "instances.fortressApps": "برنامه‌های دیگر دژ",
   "instances.connected": "متصل",
   "instances.notConnected": "متصل نیست",
   "instances.inactive": "غیرفعال",

@@ -2874,6 +2874,7 @@ const el: Partial<Translations> = {
   "settings.fleetEnabledHint": "Παρακολουθήστε την κατάσταση προστασίας συνδεδεμένων εγκαταστάσεων BombVault (μόνο για ανάγνωση)",
   "receiver.title": "Δέκτης",
   "instances.title": "Στιγμιότυπα",
+  "instances.fortressApps": "Άλλες εφαρμογές του φρουρίου",
   "instances.connected": "Συνδεδεμένο",
   "instances.notConnected": "Μη συνδεδεμένο",
   "instances.inactive": "Ανενεργό",

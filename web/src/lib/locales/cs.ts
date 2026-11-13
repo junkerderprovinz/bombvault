@@ -2872,6 +2872,7 @@ const cs: Partial<Translations> = {
   "settings.fleetEnabledHint": "Sleduj stav ochrany propojených instancí BombVault (jen ke čtení)",
   "receiver.title": "Přijímač",
   "instances.title": "Instance",
+  "instances.fortressApps": "Další aplikace v pevnosti",
   "instances.connected": "Připojeno",
   "instances.notConnected": "Nepřipojeno",
   "instances.inactive": "Neaktivní",

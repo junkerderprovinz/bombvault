@@ -2874,6 +2874,7 @@ const fi: Partial<Translations> = {
   "settings.fleetEnabledHint": "Tarkkaile liitettyjen BombVault-instanssien suojaustilaa (vain luku)",
   "receiver.title": "Vastaanotin",
   "instances.title": "Ilmentymät",
+  "instances.fortressApps": "Linnoituksen muut sovellukset",
   "instances.connected": "Yhdistetty",
   "instances.notConnected": "Ei yhteyttä",
   "instances.inactive": "Ei aktiivinen",

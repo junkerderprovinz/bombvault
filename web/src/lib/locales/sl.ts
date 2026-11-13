@@ -1739,6 +1739,7 @@ const sl: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Sprejemnik",
   "instances.title": "Primerki",
+  "instances.fortressApps": "Druge aplikacije trdnjave",
   "instances.connected": "Povezano",
   "instances.notConnected": "Ni povezano",
   "instances.inactive": "Neaktivno",

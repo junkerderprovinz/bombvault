@@ -22,6 +22,7 @@ import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useLoudAnomalies } from "../lib/useAnomalies";
 import { ForgetKeyButton } from "./instances/ForgetKeyButton";
+import { FortressAppsSection } from "./settings/pairing/FortressSection";
 import { Facts, Figure, InstanceCard, InstanceMark } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
@@ -452,6 +453,7 @@ export function Instances() {
             {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
             {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
           </div>
+          <FortressAppsSection hueStart={hueAfterGrid} />
         </div>
       )}
 

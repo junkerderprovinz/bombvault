@@ -1745,6 +1745,7 @@ const et: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Vastuvõtja",
   "instances.title": "Eksemplarid",
+  "instances.fortressApps": "Kindluse teised rakendused",
   "instances.connected": "Ühendatud",
   "instances.notConnected": "Pole ühendatud",
   "instances.inactive": "Mitteaktiivne",

@@ -1745,6 +1745,7 @@ const eu: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Hartzailea",
   "instances.title": "Instantziak",
+  "instances.fortressApps": "Gotorlekuko beste aplikazioak",
   "instances.connected": "Konektatuta",
   "instances.notConnected": "Konektatu gabe",
   "instances.inactive": "Inaktibo",

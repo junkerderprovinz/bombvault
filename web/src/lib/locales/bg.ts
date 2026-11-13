@@ -1745,6 +1745,7 @@ const bg: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Приемник",
   "instances.title": "Инстанции",
+  "instances.fortressApps": "Други приложения в крепостта",
   "instances.connected": "Свързано",
   "instances.notConnected": "Не е свързано",
   "instances.inactive": "Неактивно",

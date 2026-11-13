@@ -2875,6 +2875,7 @@ const th: Partial<Translations> = {
   "settings.fleetEnabledHint": "ตรวจสอบสถานะการป้องกันของอินสแตนซ์ BombVault ที่เชื่อมต่อ (อ่านอย่างเดียว)",
   "receiver.title": "ตัวรับ",
   "instances.title": "อินสแตนซ์",
+  "instances.fortressApps": "แอปอื่นในป้อมปราการ",
   "instances.connected": "เชื่อมต่อแล้ว",
   "instances.notConnected": "ไม่ได้เชื่อมต่อ",
   "instances.inactive": "ไม่ได้ใช้งาน",

@@ -1745,6 +1745,7 @@ const sk: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Prijímač",
   "instances.title": "Inštancie",
+  "instances.fortressApps": "Ďalšie aplikácie v pevnosti",
   "instances.connected": "Pripojené",
   "instances.notConnected": "Nepripojené",
   "instances.inactive": "Neaktívne",

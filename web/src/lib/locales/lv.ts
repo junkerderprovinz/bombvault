@@ -1745,6 +1745,7 @@ const lv: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Uztvērējs",
   "instances.title": "Instances",
+  "instances.fortressApps": "Citas cietokšņa lietotnes",
   "instances.connected": "Savienots",
   "instances.notConnected": "Nav savienots",
   "instances.inactive": "Neaktīvs",

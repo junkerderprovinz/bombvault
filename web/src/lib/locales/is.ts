@@ -1745,6 +1745,7 @@ const is: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Móttakandi",
   "instances.title": "Tilvik",
+  "instances.fortressApps": "Önnur forrit vígisins",
   "instances.connected": "Tengt",
   "instances.notConnected": "Ekki tengt",
   "instances.inactive": "Óvirkt",

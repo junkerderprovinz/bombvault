@@ -2865,6 +2865,7 @@ const ja: Partial<Translations> = {
   "settings.fleetEnabledHint": "接続された BombVault インスタンスの保護状態を確認します（読み取り専用）",
   "receiver.title": "レシーバー",
   "instances.title": "インスタンス",
+  "instances.fortressApps": "要塞のほかのアプリ",
   "instances.connected": "接続済み",
   "instances.notConnected": "未接続",
   "instances.inactive": "非アクティブ",

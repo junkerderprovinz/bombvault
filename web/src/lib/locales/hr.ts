@@ -1745,6 +1745,7 @@ const hr: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Prijamnik",
   "instances.title": "Instance",
+  "instances.fortressApps": "Ostale aplikacije utvrde",
   "instances.connected": "Povezano",
   "instances.notConnected": "Nije povezano",
   "instances.inactive": "Neaktivno",

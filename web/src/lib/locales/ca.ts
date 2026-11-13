@@ -1745,6 +1745,7 @@ const ca: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Receptor",
   "instances.title": "Instàncies",
+  "instances.fortressApps": "Altres apps de la fortalesa",
   "instances.connected": "Connectada",
   "instances.notConnected": "No connectada",
   "instances.inactive": "Inactiva",

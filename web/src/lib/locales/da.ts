@@ -2874,6 +2874,7 @@ const da: Partial<Translations> = {
   "settings.fleetEnabledHint": "Overvåg beskyttelsesstatus for tilknyttede BombVault-instanser (skrivebeskyttet)",
   "receiver.title": "Modtager",
   "instances.title": "Instanser",
+  "instances.fortressApps": "Andre apps i fæstningen",
   "instances.connected": "Forbundet",
   "instances.notConnected": "Ikke forbundet",
   "instances.inactive": "Inaktiv",

@@ -2865,6 +2865,7 @@ const ko: Partial<Translations> = {
   "settings.fleetEnabledHint": "연결된 BombVault 인스턴스의 보호 상태를 확인합니다 (읽기 전용)",
   "receiver.title": "수신기",
   "instances.title": "인스턴스",
+  "instances.fortressApps": "요새의 다른 앱",
   "instances.connected": "연결됨",
   "instances.notConnected": "연결 안 됨",
   "instances.inactive": "비활성",

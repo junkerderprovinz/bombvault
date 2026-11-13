@@ -2011,6 +2011,7 @@ export const en = {
   // another BombVault pushes to)
   "receiver.title": "Receiver",
   "instances.title": "Instances",
+  "instances.fortressApps": "Other apps in the fortress",
   "instances.connected": "Connected",
   "instances.notConnected": "Not connected",
   "instances.inactive": "Inactive",
@@ -7474,6 +7475,7 @@ export const de: Translations = {
   // in das ein anderes BombVault schiebt)
   "receiver.title": "Empfänger",
   "instances.title": "Instanzen",
+  "instances.fortressApps": "Weitere Apps der Festung",
   "instances.connected": "Verbunden",
   "instances.notConnected": "Nicht verbunden",
   "instances.inactive": "Inaktiv",

@@ -20,6 +20,7 @@ import type {
   Deposits,
   Destination,
   FleetPeer,
+  FortressState,
   GroupMember,
   GroupReceiver,
   MemberRoles,
@@ -77,6 +78,7 @@ let itemReplica: ZFSReplica;
 let askAnswer: Partial<RoleRequest>;
 let depositList: Deposits;
 let keeperRefusal: DepositRefusal | "" | null;
+let fortress: Partial<FortressState>;
 let keeperTold: boolean;
 let roleTold: boolean;
 let locationsOff: { id: string; name: string }[];
@@ -116,6 +118,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     getGroup: () =>
       answer("getGroup", { ok: true, active: members.length > 0, name: "cellar", selfAddress: "https://192.168.1.20:3443", members, away, settling }),
     getHealth: () => Promise.resolve({ ok: true, version: "v9.2.1" }),
+    getFortress: () =>
+      Promise.resolve({ ok: true, joined: false, phrase: false, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false, ...fortress }),
     getStatus: () => Promise.resolve({ ok: true, domains: [] }),
     listFleetPeers: () => answer("listFleetPeers", peersOk ? { ok: true, peers } : { ok: false, error: "the list is locked" }),
     pollFleetPeer: (id: string) => {
@@ -270,6 +274,7 @@ const allowed = (over: Partial<RoleRequest> = {}) => roleRequest({ state: "allow
 beforeEach(() => {
   localStorage.clear();
   window.location.hash = "";
+  fortress = {};
   flags = { receiverEnabled: true, fleetEnabled: true, pullEnabled: true, zfsEnabled: false };
   peers = [peer({})];
   members = [M1];
@@ -454,6 +459,26 @@ describe("the instances grid", () => {
     await renderPage();
     expect(screen.getByText("the roles are locked")).toBeTruthy();
     expect(tiles(card("m1")).receiver).toBe(en["receiver.title"] + en["zfs.replica.servers.off"]);
+  });
+});
+
+describe("the other apps of the fortress", () => {
+  const knight = { id: "k1", app: "knightloader", name: "KnightLoader", version: "2.1.0", device: "Bottich", deployment: "container", kind: "instance", online: true, relay: true, opens: true };
+
+  it("stand below the instances in a group of their own, with their state and Open", async () => {
+    fortress = { joined: true, members: [knight] };
+    await renderPage();
+    const group = await screen.findByRole("region", { name: en["instances.fortressApps"] });
+    const card = within(group).getByText("KnightLoader").closest("[data-instance]")!;
+    expect(card.getAttribute("data-instance")).toBe("app-knightloader");
+    expect(card.textContent).toContain("Connected");
+    expect(within(card as HTMLElement).getByRole("button", { name: "Open" })).toBeTruthy();
+    expect(document.querySelector('[data-instance="self"]')!.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("leave the page as it was while BombVault is in no fortress", async () => {
+    await renderPage();
+    expect(screen.queryByRole("region", { name: en["instances.fortressApps"] })).toBeNull();
   });
 });
 

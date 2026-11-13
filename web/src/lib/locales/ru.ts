@@ -2871,6 +2871,7 @@ const ru: Partial<Translations> = {
   "settings.fleetEnabledHint": "Следите за статусом защиты подключённых экземпляров BombVault (только для чтения)",
   "receiver.title": "Приёмник",
   "instances.title": "Экземпляры",
+  "instances.fortressApps": "Другие приложения крепости",
   "instances.connected": "Подключён",
   "instances.notConnected": "Не подключён",
   "instances.inactive": "Неактивен",

@@ -2874,6 +2874,7 @@ const pt: Partial<Translations> = {
   "settings.fleetEnabledHint": "Monitoriza o estado de proteção de instâncias BombVault associadas (só leitura)",
   "receiver.title": "Recetor",
   "instances.title": "Instâncias",
+  "instances.fortressApps": "Outras apps da fortaleza",
   "instances.connected": "Ligada",
   "instances.notConnected": "Não ligada",
   "instances.inactive": "Inativa",

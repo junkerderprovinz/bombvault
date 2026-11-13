@@ -2873,6 +2873,7 @@ const nl: Partial<Translations> = {
   "settings.fleetEnabledHint": "Bewaak de beschermingsstatus van gekoppelde BombVault-instanties (alleen-lezen)",
   "receiver.title": "Ontvanger",
   "instances.title": "Instanties",
+  "instances.fortressApps": "Andere apps in de vesting",
   "instances.connected": "Verbonden",
   "instances.notConnected": "Niet verbonden",
   "instances.inactive": "Inactief",

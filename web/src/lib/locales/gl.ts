@@ -1745,6 +1745,7 @@ const gl: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Receptor",
   "instances.title": "Instancias",
+  "instances.fortressApps": "Outras apps da fortaleza",
   "instances.connected": "Conectada",
   "instances.notConnected": "Non conectada",
   "instances.inactive": "Inactiva",

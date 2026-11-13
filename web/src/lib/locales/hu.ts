@@ -2875,6 +2875,7 @@ const hu: Partial<Translations> = {
   "settings.fleetEnabledHint": "Kapcsolt BombVault-példányok védelmi állapotának megtekintése (csak olvasható)",
   "receiver.title": "Fogadó",
   "instances.title": "Példányok",
+  "instances.fortressApps": "Az erőd többi alkalmazása",
   "instances.connected": "Csatlakozva",
   "instances.notConnected": "Nincs csatlakozva",
   "instances.inactive": "Inaktív",

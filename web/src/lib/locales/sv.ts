@@ -2874,6 +2874,7 @@ const sv: Partial<Translations> = {
   "settings.fleetEnabledHint": "Övervaka skyddsstatus för anslutna BombVault-instanser (skrivskyddat)",
   "receiver.title": "Mottagare",
   "instances.title": "Instanser",
+  "instances.fortressApps": "Andra appar i fästningen",
   "instances.connected": "Ansluten",
   "instances.notConnected": "Inte ansluten",
   "instances.inactive": "Inaktiv",

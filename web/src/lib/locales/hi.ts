@@ -1745,6 +1745,7 @@ const hi: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "रिसीवर",
   "instances.title": "इंस्टेंस",
+  "instances.fortressApps": "किले के दूसरे ऐप्स",
   "instances.connected": "जुड़ा हुआ",
   "instances.notConnected": "जुड़ा नहीं",
   "instances.inactive": "निष्क्रिय",

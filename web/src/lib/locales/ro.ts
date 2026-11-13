@@ -2875,6 +2875,7 @@ const ro: Partial<Translations> = {
   "settings.fleetEnabledHint": "Monitorizează starea de protecție a instanțelor BombVault conectate (doar în citire)",
   "receiver.title": "Receptor",
   "instances.title": "Instanțe",
+  "instances.fortressApps": "Alte aplicații din fortăreață",
   "instances.connected": "Conectată",
   "instances.notConnected": "Neconectată",
   "instances.inactive": "Inactivă",

@@ -2,7 +2,7 @@
 // the one phrase at the top of the page, with its change and the way out,
 // and OtherApps shows the other apps of the fortress in the cards of the
 // Instances tab, with their permissions.
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   appCardView,
   fill,
@@ -35,6 +35,7 @@ import {
   changeFortressPhrase,
   failureOf,
   fortressMemberStatus,
+  getFortress,
   leaveFortress,
   openFortressMember,
   removeFortressMember,
@@ -46,10 +47,10 @@ import {
 } from "../../../lib/api";
 import { withinBase } from "../../../lib/base";
 import { useT } from "../../../lib/i18n";
-import { formatTs } from "../../../lib/reltime";
+import { formatTs, relativeTime } from "../../../lib/reltime";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
-import { fortressPermissions, permissionOf } from "./fortressModel";
+import { fortressApps, fortressPermissions, permissionOf } from "./fortressModel";
 
 // The logo lets the permissions show BombVault beside the app it works with.
 const APP = { id: "bombvault", name: "BombVault", logo: "/logo.svg" };
@@ -454,6 +455,44 @@ function useOpenMember(view: FortressState, text: FortressText): [(app: Fortress
       />
     ),
   ];
+}
+
+/** FortressAppsSection is the other apps of the fortress on the Instances
+ *  page, under BombVault's own instances, in the same cards and with Open. */
+export function FortressAppsSection({ hueStart }: { hueStart: number }) {
+  const [view, setView] = useState<FortressState | null>(null);
+  useEffect(() => {
+    let live = true;
+    getFortress()
+      .then((f) => {
+        if (live && f.ok) setView(f);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!view?.joined) return null;
+  return <FortressApps view={view} hueStart={hueStart} />;
+}
+
+function FortressApps({ view, hueStart }: { view: FortressState; hueStart: number }) {
+  const { t } = useT();
+  const text = useFortressText(false);
+  const [onOpen, statusWindow] = useOpenMember(view, text);
+  const apps = fortressApps(view.members, (unix) => relativeTime(t, unix));
+  if (apps.length === 0) return null;
+  return (
+    <section aria-label={t("instances.fortressApps")} className="flex flex-col gap-3">
+      <h2 className="text-sm font-semibold text-carbon-textSub">{t("instances.fortressApps")}</h2>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4">
+        {apps.map((app, i) => (
+          <AppCard key={app.id} app={app} text={text} hueIndex={hueStart + i} onOpen={onOpen} />
+        ))}
+      </div>
+      {statusWindow}
+    </section>
+  );
 }
 
 /** OtherApps is the rest of the fortress: the switch that shows the other

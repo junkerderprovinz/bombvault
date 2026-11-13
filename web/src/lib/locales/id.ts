@@ -1745,6 +1745,7 @@ const id: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Penerima",
   "instances.title": "Instansi",
+  "instances.fortressApps": "Aplikasi lain di benteng",
   "instances.connected": "Terhubung",
   "instances.notConnected": "Tidak terhubung",
   "instances.inactive": "Tidak aktif",

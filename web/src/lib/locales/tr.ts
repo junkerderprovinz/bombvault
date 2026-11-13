@@ -2874,6 +2874,7 @@ const tr: Partial<Translations> = {
   "settings.fleetEnabledHint": "Bağlı BombVault örneklerinin koruma durumunu izle (salt okunur)",
   "receiver.title": "Alıcı",
   "instances.title": "Örnekler",
+  "instances.fortressApps": "Kaledeki diğer uygulamalar",
   "instances.connected": "Bağlı",
   "instances.notConnected": "Bağlı değil",
   "instances.inactive": "Etkin değil",

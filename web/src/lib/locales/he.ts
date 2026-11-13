@@ -2874,6 +2874,7 @@ const he: Partial<Translations> = {
   "settings.fleetEnabledHint": "מעקב אחר מצב ההגנה של מופעי BombVault מקושרים (קריאה בלבד)",
   "receiver.title": "מקלט",
   "instances.title": "מופעים",
+  "instances.fortressApps": "אפליקציות נוספות במבצר",
   "instances.connected": "מחובר",
   "instances.notConnected": "לא מחובר",
   "instances.inactive": "לא פעיל",

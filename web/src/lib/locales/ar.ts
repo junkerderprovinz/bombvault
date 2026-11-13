@@ -2875,6 +2875,7 @@ const ar: Partial<Translations> = {
   "settings.fleetEnabledHint": "مراقبة حالة الحماية للنُسخ المتصلة من BombVault (للقراءة فقط)",
   "receiver.title": "المستقبِل",
   "instances.title": "المثيلات",
+  "instances.fortressApps": "تطبيقات أخرى في الحصن",
   "instances.connected": "متصل",
   "instances.notConnected": "غير متصل",
   "instances.inactive": "غير نشط",

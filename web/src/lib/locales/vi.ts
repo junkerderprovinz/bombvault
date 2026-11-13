@@ -2865,6 +2865,7 @@ const vi: Partial<Translations> = {
   "settings.fleetEnabledHint": "Theo dõi trạng thái bảo vệ của các phiên bản BombVault liên kết (chỉ đọc)",
   "receiver.title": "Bộ nhận",
   "instances.title": "Phiên bản",
+  "instances.fortressApps": "Các ứng dụng khác trong pháo đài",
   "instances.connected": "Đã kết nối",
   "instances.notConnected": "Chưa kết nối",
   "instances.inactive": "Không hoạt động",

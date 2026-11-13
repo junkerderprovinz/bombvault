@@ -2865,6 +2865,7 @@ const zh: Partial<Translations> = {
   "settings.fleetEnabledHint": "以只读方式查看其他 BombVault 实例的保护状态",
   "receiver.title": "接收端",
   "instances.title": "实例",
+  "instances.fortressApps": "堡垒中的其他应用",
   "instances.connected": "已连接",
   "instances.notConnected": "未连接",
   "instances.inactive": "不活跃",

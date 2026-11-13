@@ -1745,6 +1745,7 @@ const lt: Partial<Translations> = {
   // Receiver dashboard
   "receiver.title": "Imtuvas",
   "instances.title": "Egzemplioriai",
+  "instances.fortressApps": "Kitos tvirtovės programos",
   "instances.connected": "Prijungta",
   "instances.notConnected": "Neprijungta",
   "instances.inactive": "Neaktyvu",
