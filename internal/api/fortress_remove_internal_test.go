@@ -34,7 +34,7 @@ func TestRemovingAMemberKeepsItsNameUntilThePhraseChanges(t *testing.T) {
 	if err := svc.RemoveFortressMember(p.id); err != nil {
 		t.Fatal(err)
 	}
-	want := []fortressRemoved{{App: "firesquire", Name: "firesquire", Device: "tower"}}
+	want := []fortressRemoved{{App: "firesquire", Name: "FireSquire", Device: "tower"}}
 	if got := removedNow(t, svc); !slices.Equal(got, want) {
 		t.Fatalf("removed = %+v", got)
 	}
@@ -132,4 +132,23 @@ func TestAnInstanceTakenOutSaysSoUntilItJoinsAgain(t *testing.T) {
 	if _, out := in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words}); out["joined"] != true || out["removedHere"] != false {
 		t.Fatalf("joining again = %v", out)
 	}
+}
+
+func TestAPluginThatGaveOnlyItsAppIDGoesByTheAppsOwnSpelling(t *testing.T) {
+	svc, url, sec := fortressOnRelay(t)
+	p := joinPlugin(t, url, sec)
+	p.open(t)
+	h := &Handler{svc: svc, store: svc.store}
+	waitLong(t, "BombVault to show the plugin", func() bool {
+		v, err := h.fortressViewNow()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range v.Members {
+			if m.ID == p.id {
+				return m.Name == "FireSquire"
+			}
+		}
+		return false
+	})
 }

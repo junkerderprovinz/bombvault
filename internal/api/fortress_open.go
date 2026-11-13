@@ -191,7 +191,7 @@ func (s *Service) memberAppName(id string) string {
 	}
 	for _, m := range f.Members() {
 		if m.ID == id {
-			return m.App.Name
+			return appName(m.App)
 		}
 	}
 	return ""

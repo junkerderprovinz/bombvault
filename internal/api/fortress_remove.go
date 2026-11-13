@@ -1,7 +1,6 @@
 package api
 
 import (
-	"cmp"
 	"encoding/json"
 	"errors"
 
@@ -39,7 +38,7 @@ func (s *Service) RemoveFortressMember(id string) error {
 		if err != nil {
 			return err
 		}
-		list = append(list, fortressRemoved{App: m.App.ID, Name: cmp.Or(m.App.Name, m.App.ID), Device: m.Device})
+		list = append(list, fortressRemoved{App: m.App.ID, Name: appName(m.App), Device: m.Device})
 		plain, err := json.Marshal(list)
 		if err != nil {
 			return err

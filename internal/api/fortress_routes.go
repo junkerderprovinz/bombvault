@@ -117,7 +117,7 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 			continue
 		}
 		mv := fortressMemberView{
-			ID: mb.ID, App: mb.App.ID, Name: mb.App.Name, Version: mb.App.Version,
+			ID: mb.ID, App: mb.App.ID, Name: appName(mb.App), Version: mb.App.Version,
 			Device: mb.Device, Deployment: mb.Deployment, Host: mb.Host, Kind: string(mb.Kind),
 			Online: mb.Online(), Opens: slices.Contains(mb.Actions, fortress.OpenAction),
 			Relay: mb.Relay && !mb.Direct, Logo: h.svc.appLogo(f, mb),
