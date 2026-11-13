@@ -101,8 +101,8 @@ const ROUTE_ALT = {
 // Where the bubble about the relay sits, beside the relay's name, in the
 // picture's own units.
 const RELAY_NAME_AT: Partial<Record<RelayForm, { x: number; y: number }>> = {
-  project: { x: 222, y: 133 },
-  own: { x: 222, y: 133 },
+  project: { x: 229, y: 133 },
+  own: { x: 229, y: 133 },
   instance: { x: 92, y: 114 },
 };
 
