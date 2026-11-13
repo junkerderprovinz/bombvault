@@ -163,8 +163,16 @@ export function RelayCard({
       <Badge tone="warn" size="large">{t("instances.notConnected")}</Badge>
     );
 
+  // A route that should be up and is not offers another look right where its
+  // address is, or under the picture where there is no address to type.
+  const checkAgain = stage !== "unpaired" && form !== "off" && !connected && (
+    <div className="flex">
+      <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRetry />} tone="neutral" onClick={onRefresh} />
+    </div>
+  );
+
   const address = (placeholder: string) => (
-    <div className="flex flex-col gap-3">
+    <div data-relay-address className="flex flex-col gap-3">
       <SettingRow label={t("relay.addressLabel")} hint={t("relay.addressTip")} htmlFor="relay-address">
       <input
         id="relay-address"
@@ -184,10 +192,10 @@ export function RelayCard({
           {t("relay.plaintextWarning")}
         </p>
       )}
+      {checkAgain}
     </div>
   );
 
-  const [beforeHost, afterHost] = t("pairing.relayCheckProject").split("{host}");
 
   return (
     <Card
@@ -292,39 +300,13 @@ export function RelayCard({
               </>
             }
           />
-          {stage !== "unpaired" && form !== "off" && !connected && (
-            <section className="flex flex-col gap-2 rounded-control bg-carbon-surface2 p-3.5 text-sm text-carbon-textSub" data-testid="relay-check">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-carbon-textMuted">{t("pairing.relayCheckOpen")}</h3>
-              <p>
-                {t("pairing.relayCheckLead")} <InfoBubble tip={t("pairing.relayCheckTip")} />
-              </p>
-              <ul className="flex list-disc flex-col gap-1 ps-5">
-                <li>
-                  {form === "project" ? (
-                    <>
-                      {beforeHost}
-                      <span dir="ltr" className="font-mono text-subline text-carbon-text">
-                        {hostOf(relay.projectUrl)}
-                      </span>
-                      {afterHost}
-                    </>
-                  ) : (
-                    t("pairing.relayCheckOwn")
-                  )}
-                </li>
-                <li>{t("pairing.relayCheckFilter")}</li>
-              </ul>
-              <div className="flex justify-end">
-                <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRetry />} tone="neutral" onClick={onRefresh} />
-              </div>
-            </section>
-          )}
         </div>
         {/* The address goes under the picture of the route it fills in. */}
         <div className="flex min-w-0 flex-col gap-5">
           <RouteDiagram form={form} t={t} />
           {form === "own" && address("https://relay.example.org")}
           {form === "instance" && address("https://bombvault.example.org/relay/connect")}
+          {form === "project" && checkAgain}
         </div>
       </div>
 

@@ -847,16 +847,17 @@ describe("relay card", () => {
     expect(routePicture("relay.pic.instance")).not.toBeNull();
   });
 
-  it("says what to check while the relay is not connected", async () => {
+  it("offers Check again right under the relay's address while it is not connected, with no card of things to check", async () => {
     await renderTab();
-    expect(screen.queryByTestId("relay-check")).toBeNull();
+    expect(screen.queryByRole("button", { name: en["pairing.checkAgain"] })).toBeNull();
     cleanup();
-    group = makeGroup({ relay: { ...makeGroup().relay, connected: false } });
+    group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "https://relay.example.org", connected: false } });
     await renderTab();
-    const check = within(screen.getByTestId("relay-check"));
-    expect(check.getByText("parleyport.halleluja.design", { selector: "span" })).not.toBeNull();
-    expect(check.getByText(en["pairing.relayCheckFilter"])).not.toBeNull();
-    expect(check.getByRole("button", { name: en["pairing.checkAgain"] })).not.toBeNull();
+    const again = screen.getByRole("button", { name: en["pairing.checkAgain"] });
+    const field = document.getElementById("relay-address")!;
+    expect(field.compareDocumentPosition(again) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(field.parentElement!.closest("[data-relay-address]")!.contains(again)).toBe(true);
+    expect(screen.queryByText(en["pairing.relayCheckFilter"])).toBeNull();
   });
 
   it("saves a typed address after a pause, without a save button", async () => {

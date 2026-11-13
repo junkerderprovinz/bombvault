@@ -166,7 +166,7 @@ async function stage(page: Page, f: Instance): Promise<void> {
 // The settings search bar comes and goes with the direction the page scrolls
 // and moves the cards as it does. A radio is scrolled into view and left a
 // moment for that before it is pressed, so the press does not scroll again.
-const RELAY_ROUTES = ["Projekt-Relay", "Eigenes Relay", "Nur Heimnetz"];
+const RELAY_ROUTES = ["Projekt-Relay", "Eigenes Relay", "Heimnetz"];
 
 /** The relay route picker: its radios, or on a phone the list they fold into. */
 function relayList(page: Page): Locator {
@@ -331,7 +331,7 @@ for (const width of [1280, 390]) {
     await expect(page.getByText("Selbst gehostet")).toBeVisible();
     await settle(page);
     await expectFits(page);
-    await pickRelay(page, "Nur Heimnetz");
+    await pickRelay(page, "Heimnetz");
     await expect(page.locator("#relay-address")).toHaveCount(0);
     await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
@@ -347,7 +347,7 @@ for (const width of [1280, 390]) {
     await page.reload();
     await expect(phraseCard(page)).toHaveAttribute("data-stage", "alone");
     await expect(page.getByText("Relay nicht erreichbar", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("relay-check")).toContainText("parleyport.halleluja.design");
+    await expect(page.locator("[data-form]").getByRole("button", { name: "Erneut prüfen" })).toBeVisible();
     await settle(page);
     await expectFits(page);
 
