@@ -261,7 +261,6 @@ export function RelayCard({
                   </li>
                 ))}
               </ol>
-              {address("wss://relay.example.org")}
             </div>
           )}
           {form === "instance" && (
@@ -275,7 +274,6 @@ export function RelayCard({
                 />
                 {relay.serve && <p className="mt-1 text-xs text-carbon-textMuted">{t("relay.serveClients", relay.serveClients)}</p>}
               </div>
-              {address("wss://bombvault.example.org/relay/connect")}
               <Fact
                 glyph={<FactGlyph kind="shield" />}
                 text={
@@ -322,7 +320,12 @@ export function RelayCard({
             </section>
           )}
         </div>
-        <RouteDiagram form={form} t={t} />
+        {/* The address goes under the picture of the route it fills in. */}
+        <div className="flex min-w-0 flex-col gap-5">
+          <RouteDiagram form={form} t={t} />
+          {form === "own" && address("https://relay.example.org")}
+          {form === "instance" && address("https://bombvault.example.org/relay/connect")}
+        </div>
       </div>
 
       {seesOpen && (

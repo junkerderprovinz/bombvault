@@ -166,7 +166,7 @@ async function stage(page: Page, f: Instance): Promise<void> {
 // The settings search bar comes and goes with the direction the page scrolls
 // and moves the cards as it does. A radio is scrolled into view and left a
 // moment for that before it is pressed, so the press does not scroll again.
-const RELAY_ROUTES = ["Projekt-Relay (nichts einrichten)", "Eigenes Relay (auf deinem Server)", "Nur Heimnetz"];
+const RELAY_ROUTES = ["Projekt-Relay", "Eigenes Relay", "Nur Heimnetz"];
 
 /** The relay route picker: its radios, or on a phone the list they fold into. */
 function relayList(page: Page): Locator {

@@ -832,6 +832,10 @@ describe("relay card", () => {
       `3${en["relay.ownStep3"]}`,
     ]);
     expect(own.getByText(en["relay.containerName"], { selector: "strong" })).not.toBeNull();
+    const field = document.getElementById("relay-address") as HTMLInputElement;
+    expect(field.placeholder).toBe("https://relay.example.org");
+    expect(screen.getByTestId("own-relay").contains(field)).toBe(false);
+    expect(routePicture("relay.pic.relay")!.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(own.queryByRole("switch")).toBeNull();
     expect(document.getElementById("relay-address")).not.toBeNull();
     expect(screen.getByText(en["relay.pic.selfHosted"])).not.toBeNull();
