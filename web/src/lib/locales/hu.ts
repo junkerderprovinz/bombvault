@@ -3125,7 +3125,7 @@ const hu: Partial<Translations> = {
   "relay.notSeesLabel": "A relay ezt nem látja:",
   "relay.notConnected": "A relay nem érhető el",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Telepítsd a(z) {name} alkalmazást a Community Applicationsből, Unraidon kívül Docker-konténerként.",
+  "relay.ownStep1": "Telepítsd a(z) {name} alkalmazást a Community Applicationsből, vagy Unraidon kívül Docker-konténerként.",
   "relay.ownStep2": "Adj neki saját domaint HTTPS-sel: állítsd be a PARLEYPORT_DOMAIN értékét és irányítsd át a 443-as portot, vagy tegyél elé WebSocketset kezelő fordított proxyt.",
   "relay.ownStep3": "Írd be ide a címet minden példányon, például https://relay.example.org.",
   "apps.phone.title": "Android-alkalmazás",

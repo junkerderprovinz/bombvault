@@ -1989,7 +1989,7 @@ const sl: Partial<Translations> = {
   "relay.notSeesLabel": "Relay ne vidi:",
   "relay.notConnected": "Relay ni dosegljiv",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Namesti {name} iz Community Applications, zunaj Unraida kot vsebnik Docker.",
+  "relay.ownStep1": "Namesti {name} iz Community Applications ali zunaj Unraida kot vsebnik Docker.",
   "relay.ownStep2": "Daj mu lastno domeno s HTTPS: nastavi PARLEYPORT_DOMAIN in preusmeri vrata 443 ali predenj postavi povratni posrednik z WebSockets.",
   "relay.ownStep3": "Vpiši naslov tukaj na vsaki instanci, na primer https://relay.example.org.",
   "apps.phone.title": "Aplikacija za Android",

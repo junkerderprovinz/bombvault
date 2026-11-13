@@ -1995,7 +1995,7 @@ const lt: Partial<Translations> = {
   "relay.notSeesLabel": "Relay nemato:",
   "relay.notConnected": "Relay nepasiekiamas",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Įdiek {name} iš Community Applications, už Unraid ribų kaip Docker konteinerį.",
+  "relay.ownStep1": "Įdiek {name} iš Community Applications arba už Unraid ribų kaip Docker konteinerį.",
   "relay.ownStep2": "Duok jam savą domeną su HTTPS: nustatyk PARLEYPORT_DOMAIN ir peradresuok 443 prievadą arba pastatyk priekyje atvirkštinį tarpinį serverį su WebSockets.",
   "relay.ownStep3": "Įvesk adresą čia kiekviename egzemplioriuje, pavyzdžiui https://relay.example.org.",
   "apps.phone.title": "Android programėlė",

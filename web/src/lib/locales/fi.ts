@@ -3124,7 +3124,7 @@ const fi: Partial<Translations> = {
   "relay.notSeesLabel": "Rele ei näe:",
   "relay.notConnected": "Rele ei ole tavoitettavissa",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Asenna {name} Community Applicationsista, Unraidin ulkopuolella Docker-konttina.",
+  "relay.ownStep1": "Asenna {name} Community Applicationsista tai Unraidin ulkopuolella Docker-konttina.",
   "relay.ownStep2": "Anna sille oma verkkotunnus HTTPS:llä: aseta PARLEYPORT_DOMAIN ja ohjaa portti 443, tai laita eteen käänteinen välityspalvelin WebSocketeilla.",
   "relay.ownStep3": "Kirjoita osoite tähän jokaisessa instanssissa, esimerkiksi https://relay.example.org.",
   "apps.phone.title": "Android-sovellus",

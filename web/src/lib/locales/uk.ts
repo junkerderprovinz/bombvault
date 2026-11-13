@@ -3121,7 +3121,7 @@ const uk: Partial<Translations> = {
   "relay.notSeesLabel": "Реле не бачить:",
   "relay.notConnected": "Реле недоступне",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Установіть {name} з Community Applications, поза Unraid як Docker-контейнер.",
+  "relay.ownStep1": "Установіть {name} з Community Applications або поза Unraid як Docker-контейнер.",
   "relay.ownStep2": "Дайте йому власний домен з HTTPS: задайте PARLEYPORT_DOMAIN і переспрямуйте порт 443 або поставте перед ним зворотний проксі з WebSockets.",
   "relay.ownStep3": "Введіть адресу тут на кожному екземплярі, наприклад https://relay.example.org.",
   "apps.phone.title": "Застосунок для Android",

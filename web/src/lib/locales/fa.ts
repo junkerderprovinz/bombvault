@@ -1995,7 +1995,7 @@ const fa: Partial<Translations> = {
   "relay.notSeesLabel": "رله نمی‌بیند:",
   "relay.notConnected": "رله در دسترس نیست",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "{name} را از Community Applications نصب کن، بیرون از Unraid به‌صورت کانتینر Docker.",
+  "relay.ownStep1": "{name} را از Community Applications نصب کن، یا بیرون از Unraid به‌صورت کانتینر Docker.",
   "relay.ownStep2": "به آن دامنهٔ خودش با HTTPS بده: PARLEYPORT_DOMAIN را تنظیم کن و پورت 443 را هدایت کن، یا یک پراکسی معکوس با WebSockets جلویش بگذار.",
   "relay.ownStep3": "نشانی را اینجا روی هر نمونه وارد کن، مثلاً https://relay.example.org.",
   "apps.phone.title": "برنامهٔ Android",

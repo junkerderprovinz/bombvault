@@ -3124,7 +3124,7 @@ const sv: Partial<Translations> = {
   "relay.notSeesLabel": "Reläet ser inte:",
   "relay.notConnected": "Reläet går inte att nå",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Installera {name} från Community Applications, utanför Unraid som Docker-container.",
+  "relay.ownStep1": "Installera {name} från Community Applications eller utanför Unraid som Docker-container.",
   "relay.ownStep2": "Ge den en egen domän med HTTPS: sätt PARLEYPORT_DOMAIN och vidarebefordra port 443, eller sätt en omvänd proxy med WebSockets framför.",
   "relay.ownStep3": "Skriv in adressen här på varje instans, till exempel https://relay.example.org.",
   "apps.phone.title": "Android-app",

@@ -1995,7 +1995,7 @@ const et: Partial<Translations> = {
   "relay.notSeesLabel": "Edastaja ei näe:",
   "relay.notConnected": "Edastaja ei ole kättesaadav",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Paigalda {name} Community Applicationsist, väljaspool Unraidi Dockeri konteinerina.",
+  "relay.ownStep1": "Paigalda {name} Community Applicationsist või väljaspool Unraidi Dockeri konteinerina.",
   "relay.ownStep2": "Anna sellele oma domeen HTTPS-iga: määra PARLEYPORT_DOMAIN ja suuna port 443 või pane ette WebSocketsiga pöördpuhverserver.",
   "relay.ownStep3": "Sisesta aadress siia igas eksemplaris, näiteks https://relay.example.org.",
   "apps.phone.title": "Androidi rakendus",

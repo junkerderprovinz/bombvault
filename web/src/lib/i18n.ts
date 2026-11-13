@@ -7727,7 +7727,7 @@ export const de: Translations = {
   "relay.notSeesLabel": "Das Relay sieht nicht:",
   "relay.notConnected": "Relay nicht erreichbar",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Installiere {name} aus den Community Apps, außerhalb von Unraid als Docker-Container.",
+  "relay.ownStep1": "Installiere {name} aus den Community Apps oder außerhalb von Unraid als Docker-Container.",
   "relay.ownStep2": "Gib ihm eine eigene Domain mit HTTPS: PARLEYPORT_DOMAIN setzen und Port 443 weiterleiten oder einen Reverse Proxy mit Websockets davorschalten.",
   "relay.ownStep3": "Trag die Adresse hier auf jeder Instanz ein, etwa https://relay.example.org.",
   "apps.phone.title": "Android-App",

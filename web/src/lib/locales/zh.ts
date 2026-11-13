@@ -3115,7 +3115,7 @@ const zh: Partial<Translations> = {
   "relay.notSeesLabel": "中继看不到：",
   "relay.notConnected": "无法连接中继",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "从 Community Applications 安装 {name}，Unraid 之外用 Docker 容器。",
+  "relay.ownStep1": "从 Community Applications 安装 {name}，或在 Unraid 之外作为 Docker 容器运行。",
   "relay.ownStep2": "给它一个带 HTTPS 的专用域名：设置 PARLEYPORT_DOMAIN 并转发 443 端口，或在前面放一个支持 WebSockets 的反向代理。",
   "relay.ownStep3": "在每个实例上把地址填在这里，例如 https://relay.example.org。",
   "apps.phone.title": "Android 应用",

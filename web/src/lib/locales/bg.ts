@@ -1995,7 +1995,7 @@ const bg: Partial<Translations> = {
   "relay.notSeesLabel": "Препредавателят не вижда:",
   "relay.notConnected": "Препредавателят не е достъпен",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Инсталирай {name} от Community Applications, извън Unraid като Docker контейнер.",
+  "relay.ownStep1": "Инсталирай {name} от Community Applications или извън Unraid като Docker контейнер.",
   "relay.ownStep2": "Дай му собствен домейн с HTTPS: задай PARLEYPORT_DOMAIN и пренасочи порт 443 или сложи reverse proxy с WebSockets пред него.",
   "relay.ownStep3": "Въведи адреса тук на всяка инстанция, например https://relay.example.org.",
   "apps.phone.title": "Android приложение",

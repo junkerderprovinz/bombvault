@@ -3124,7 +3124,7 @@ const tr: Partial<Translations> = {
   "relay.notSeesLabel": "Rölenin görmediği:",
   "relay.notConnected": "Röleye ulaşılamıyor",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "{name} uygulamasını Community Applications'tan kur, Unraid dışında Docker konteyneri olarak.",
+  "relay.ownStep1": "{name} uygulamasını Community Applications'tan ya da Unraid dışında Docker konteyneri olarak kur.",
   "relay.ownStep2": "Ona HTTPS'li kendi alan adını ver: PARLEYPORT_DOMAIN ayarla ve 443 bağlantı noktasını yönlendir ya da önüne WebSockets destekli bir ters vekil koy.",
   "relay.ownStep3": "Adresi her örnekte buraya yaz, örneğin https://relay.example.org.",
   "apps.phone.title": "Android uygulaması",

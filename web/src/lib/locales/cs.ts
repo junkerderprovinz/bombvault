@@ -3122,7 +3122,7 @@ const cs: Partial<Translations> = {
   "relay.notSeesLabel": "Přeposílač nevidí:",
   "relay.notConnected": "Přeposílač nedostupný",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Nainstaluj {name} z Community Applications, mimo Unraid jako kontejner Docker.",
+  "relay.ownStep1": "Nainstaluj {name} z Community Applications, nebo mimo Unraid jako kontejner Docker.",
   "relay.ownStep2": "Dej mu vlastní doménu s HTTPS: nastav PARLEYPORT_DOMAIN a přesměruj port 443, nebo před něj dej reverse proxy s WebSockets.",
   "relay.ownStep3": "Zadej adresu tady na každé instanci, třeba https://relay.example.org.",
   "apps.phone.title": "Aplikace pro Android",

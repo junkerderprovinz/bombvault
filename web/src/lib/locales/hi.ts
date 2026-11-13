@@ -1995,7 +1995,7 @@ const hi: Partial<Translations> = {
   "relay.notSeesLabel": "रिले नहीं देखता:",
   "relay.notConnected": "रिले तक नहीं पहुँचा जा सका",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "{name} को Community Applications से इंस्टॉल करें, Unraid के बाहर Docker कंटेनर के रूप में।",
+  "relay.ownStep1": "{name} को Community Applications से इंस्टॉल करें, या Unraid के बाहर Docker कंटेनर के रूप में।",
   "relay.ownStep2": "उसे HTTPS के साथ अपना डोमेन दें: PARLEYPORT_DOMAIN सेट करें और पोर्ट 443 फ़ॉरवर्ड करें, या आगे WebSockets वाला रिवर्स प्रॉक्सी लगाएँ।",
   "relay.ownStep3": "हर इंस्टेंस पर यहाँ पता डालें, जैसे https://relay.example.org।",
   "apps.phone.title": "Android ऐप",

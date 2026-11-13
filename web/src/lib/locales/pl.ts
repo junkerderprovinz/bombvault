@@ -3121,7 +3121,7 @@ const pl: Partial<Translations> = {
   "relay.notSeesLabel": "Relay nie widzi:",
   "relay.notConnected": "Relay nieosiągalny",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Zainstaluj {name} z Community Applications, poza Unraid jako kontener Docker.",
+  "relay.ownStep1": "Zainstaluj {name} z Community Applications albo poza Unraid jako kontener Docker.",
   "relay.ownStep2": "Daj mu własną domenę z HTTPS: ustaw PARLEYPORT_DOMAIN i przekieruj port 443 albo postaw przed nim reverse proxy z WebSockets.",
   "relay.ownStep3": "Wpisz adres tutaj na każdej instancji, na przykład https://relay.example.org.",
   "apps.phone.title": "Aplikacja na Androida",

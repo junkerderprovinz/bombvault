@@ -3123,7 +3123,7 @@ const nl: Partial<Translations> = {
   "relay.notSeesLabel": "De relay ziet niet:",
   "relay.notConnected": "Relay niet bereikbaar",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "Installeer {name} uit Community Applications, buiten Unraid als Docker-container.",
+  "relay.ownStep1": "Installeer {name} uit Community Applications, of buiten Unraid als Docker-container.",
   "relay.ownStep2": "Geef het een eigen domein met HTTPS: zet PARLEYPORT_DOMAIN en stuur poort 443 door, of zet er een reverse proxy met WebSockets voor.",
   "relay.ownStep3": "Vul het adres hier in op elke instantie, bijvoorbeeld https://relay.example.org.",
   "apps.phone.title": "Android-app",

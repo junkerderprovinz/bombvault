@@ -3115,7 +3115,7 @@ const ja: Partial<Translations> = {
   "relay.notSeesLabel": "リレーが見ないもの:",
   "relay.notConnected": "リレーに到達できません",
   "relay.containerName": "ParleyPort",
-  "relay.ownStep1": "{name} を Community Applications からインストールします。Unraid 以外では Docker コンテナーとして。",
+  "relay.ownStep1": "{name} を Community Applications からインストールするか、Unraid 以外では Docker コンテナーとして動かします。",
   "relay.ownStep2": "HTTPS 付きの専用ドメインを用意します。PARLEYPORT_DOMAIN を設定してポート 443 を転送するか、WebSockets 対応のリバースプロキシを前に置きます。",
   "relay.ownStep3": "各インスタンスでここにアドレスを入力します。例: https://relay.example.org。",
   "apps.phone.title": "Android アプリ",
