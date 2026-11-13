@@ -78,7 +78,7 @@ describe("fortressApps logos", () => {
 describe("fortressPermissions", () => {
   const members = [member({}), member({ id: "m2", app: "firesquire", name: "FireSquire" })];
 
-  it("says in one sentence which app may do what at which", () => {
+  it("names the app acted on first, then where it happens", () => {
     const perms = fortressPermissions(
       [
         { from: "towertorch", to: "bombvault", action: "backup.request", on: true },
@@ -88,8 +88,8 @@ describe("fortressPermissions", () => {
       t,
     );
     expect(perms).toEqual([
-      { id: "towertorch bombvault backup.request", from: "towertorch", to: ["bombvault"], on: true, title: "TowerTorch may ask BombVault for a container backup" },
-      { id: "bombvault firesquire backup.export", from: "bombvault", to: ["firesquire"], on: false, title: "BombVault may fetch FireSquire's own backup" },
+      { id: "towertorch bombvault backup.request", from: "towertorch", to: ["bombvault"], on: true, title: "Ask BombVault for a container backup from TowerTorch" },
+      { id: "bombvault firesquire backup.export", from: "bombvault", to: ["firesquire"], on: false, title: "Fetch FireSquire's own backup into BombVault" },
     ]);
   });
 
@@ -102,7 +102,7 @@ describe("fortressPermissions", () => {
       [member({ app: "knightloader", name: "KnightLoader" }), member({ id: "m3", app: "shiplog", name: "ShipLog" })],
       t,
     );
-    expect(perms.map((p) => p.title)).toEqual(["KnightLoader may open BombVault's pages", "BombVault may ask ShipLog which containers it updates itself"]);
+    expect(perms.map((p) => p.title)).toEqual(["Open BombVault in KnightLoader", "Ask ShipLog in BombVault which containers it updates itself"]);
   });
 
   it("shows an action it has no words for by its name", () => {
