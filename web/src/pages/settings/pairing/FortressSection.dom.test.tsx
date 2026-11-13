@@ -262,6 +262,31 @@ describe("the card of the phrase", () => {
 });
 
 describe("the other apps", () => {
+  it("offer no filter while every permission names BombVault, since it would leave nothing out", () => {
+    view = state({
+      members: [member({})],
+      permissions: [{ from: "bombvault", to: "knightloader", action: "backup.export", on: true }],
+    });
+    renderApps();
+    expect(screen.queryByRole("radio", { name: /With BombVault/ })).toBeNull();
+  });
+
+  it("filter the permissions to the ones BombVault gives or takes", async () => {
+    view = state({
+      members: [member({}), member({ id: "s1", app: "shiplog", name: "ShipLog" })],
+      permissions: [
+        { from: "bombvault", to: "knightloader", action: "backup.export", on: true },
+        { from: "shiplog", to: "knightloader", action: "ui.open", on: true },
+      ],
+    });
+    renderApps();
+    expect(document.querySelectorAll("[data-permission]")).toHaveLength(2);
+    await act(async () => fireEvent.click(screen.getByRole("radio", { name: /With BombVault/ })));
+    expect([...document.querySelectorAll("[data-permission]")].map((row) => row.getAttribute("data-permission"))).toEqual([
+      "bombvault knightloader backup.export",
+    ]);
+  });
+
   it("show both apps' logos beside each permission, BombVault's own among them", () => {
     view = state({
       members: [member({ logo: LOGO })],
