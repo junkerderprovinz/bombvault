@@ -41,7 +41,7 @@ type fortressView struct {
 	// instance.
 	PairedWith []string `json:"pairedWith"`
 	// Removed are the members taken out here since the phrase last changed,
-	// which the phrase still lets back in.
+	// while the fortress takes no new member.
 	Removed []fortressRemoved `json:"removed"`
 	// RemovedHere says another member took this instance out.
 	RemovedHere bool `json:"removedHere"`
@@ -151,6 +151,10 @@ func writeFortressError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "inFortress", "error": err.Error()})
 	case errors.Is(err, errNoFortress):
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "noFortress", "error": err.Error()})
+	case errors.Is(err, errShutOut):
+		// The page has words of its own for the kit's code, which an error
+		// would take the place of.
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": group.ClosedUntilNewPhrase})
 	case errors.Is(err, errNoMember):
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "noMember", "error": err.Error()})
 	default:
@@ -252,8 +256,8 @@ func (h *Handler) handleFortressPermission(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
-// handleFortressRemove takes another member out of the fortress. The phrase
-// still lets it back in, which the view says until the phrase changes.
+// handleFortressRemove takes another member out of the fortress, which then
+// takes no new member until the phrase changes, as the view says meanwhile.
 // DELETE /api/fortress/members/{id}
 func (h *Handler) handleFortressRemove(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.RemoveFortressMember(r.PathValue("id")); err != nil {

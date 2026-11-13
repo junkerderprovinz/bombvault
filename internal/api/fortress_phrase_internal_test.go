@@ -24,8 +24,15 @@ type plugin struct {
 
 func joinPlugin(t *testing.T, url string, sec []byte) *plugin {
 	t.Helper()
+	return joinApp(t, url, sec, "firesquire", "tower")
+}
+
+// joinApp joins app on device to the fortress of sec on the relay at url,
+// holding only the keys as a plugin does.
+func joinApp(t *testing.T, url string, sec []byte, app, device string) *plugin {
+	t.Helper()
 	p := &plugin{dir: filepath.Join(t.TempDir(), "fortress")}
-	if err := fortress.Join(p.dir, sec, fortress.Membership{App: "firesquire", Device: "tower", Relay: url}); err != nil {
+	if err := fortress.Join(p.dir, sec, fortress.Membership{App: app, Device: device, Relay: url}); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(p.close)

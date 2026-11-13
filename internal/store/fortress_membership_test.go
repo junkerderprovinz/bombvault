@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 )
@@ -47,6 +48,51 @@ func TestJoiningKeepsTheSealedSecretAndKeyAndLeavingForgetsThem(t *testing.T) {
 	m, _ = r.FortressMembership()
 	if m.Joined() || len(m.SecretEnc)+len(m.PreviousEnc)+len(m.SeedEnc)+len(m.StateEnc) != 0 || !m.Changed.IsZero() {
 		t.Fatalf("after leaving: %+v", m)
+	}
+}
+
+func TestARestoredMembershipIsTheOneReadBefore(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("a"), []byte("seed a")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressSecret([]byte("b"), []byte("a"), time.Unix(1_800_000_000, 0)); err != nil {
+		t.Fatal(err)
+	}
+	for _, set := range []func([]byte) error{r.SetFortressState, r.SetFortressPairing, r.SetFortressRemoved} {
+		if err := set([]byte("kept")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	before, err := r.FortressMembership()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := r.JoinFortress([]byte("c"), []byte("seed c")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.RestoreFortress(before); err != nil {
+		t.Fatal(err)
+	}
+	if after, _ := r.FortressMembership(); !reflect.DeepEqual(after, before) {
+		t.Fatalf("restored %+v, want %+v", after, before)
+	}
+
+	if err := r.LeaveFortress(); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetFortressRemovedHere(true); err != nil {
+		t.Fatal(err)
+	}
+	out, _ := r.FortressMembership()
+	if err := r.JoinFortress([]byte("d"), []byte("seed d")); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.RestoreFortress(out); err != nil {
+		t.Fatal(err)
+	}
+	if after, _ := r.FortressMembership(); after.Joined() || !after.RemovedHere {
+		t.Fatalf("restoring no membership left %+v", after)
 	}
 }
 

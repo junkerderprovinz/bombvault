@@ -115,6 +115,24 @@ func (r *Repo) SetFortressRemovedHere(on bool) error {
 	return nil
 }
 
+// RestoreFortress writes back a membership read earlier, as it was then.
+func (r *Repo) RestoreFortress(m FortressMembership) error {
+	var changed int64
+	if !m.Changed.IsZero() {
+		changed = m.Changed.Unix()
+	}
+	blob := func(b []byte) []byte {
+		if b == nil {
+			return []byte{}
+		}
+		return b
+	}
+	if _, err := r.db.Exec(`UPDATE fortress_membership SET secret_enc = ?, previous_enc = ?, changed_at = ?, seed_enc = ?, state_enc = ?, pairing_enc = ?, removed_enc = ?, removed_here = ? WHERE id = 1`,
+		blob(m.SecretEnc), blob(m.PreviousEnc), changed, blob(m.SeedEnc), blob(m.StateEnc), blob(m.PairingEnc), blob(m.RemovedEnc), m.RemovedHere); err != nil {
+		return fmt.Errorf("RestoreFortress: %w", err)
+	}
+	return nil
+}
 
 // LeaveFortress forgets the membership.
 func (r *Repo) LeaveFortress() error {

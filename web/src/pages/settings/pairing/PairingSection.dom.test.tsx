@@ -17,7 +17,7 @@ import { server } from "../../../components/zfs/replica/replica.testsupport";
 import { memberRoles, roleRequest, roleSide } from "../../instances/instances.testsupport";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
 import { LOGIN_PASSWORD_FIELD } from "../shared";
-import { storeShowOthers } from "@glimstone/core";
+import { fortressText, storeShowOthers } from "@glimstone/core";
 
 let group: GroupState;
 let fortress: FortressState;
@@ -366,6 +366,19 @@ describe("the tiles outside a group", () => {
       fireEvent.click(pairButton());
     });
     expect(within(dialog()).getByRole("alert").textContent).toBe(en["pairing.errChecksum"]);
+  });
+
+  it("says the fortress takes no new app when a member was removed there", async () => {
+    group = outside();
+    fortress = noFortress();
+    joinAnswer = { ok: false, code: "closedUntilNewPhrase" };
+    await renderTab();
+    fireEvent.click(tile("pairing.enter"));
+    fireEvent.change(within(dialog()).getByLabelText(en["pairing.enterLabel"]), { target: { value: PHRASE } });
+    await act(async () => {
+      fireEvent.click(pairButton());
+    });
+    expect(within(dialog()).getByRole("alert").textContent).toBe(fortressText("en").joinLocked);
   });
 
   it("closes the window with Escape", async () => {

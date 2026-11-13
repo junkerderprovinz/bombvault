@@ -193,7 +193,7 @@ func (k moveKeeper) Keep(sec []byte) error {
 	go func() {
 		k.s.house.door.Lock()
 		defer k.s.house.door.Unlock()
-		if err := k.s.joinFortress(sec); err != nil && !errors.Is(err, errInFortress) {
+		if err := k.s.joinFortress(sec, false); err != nil && !errors.Is(err, errInFortress) {
 			log.Printf("fortress: follow the group into the fortress: %v", err)
 		}
 	}()

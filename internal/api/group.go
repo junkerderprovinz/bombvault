@@ -816,7 +816,7 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	if err := h.svc.AdoptGroupPhrase(); err != nil {
+	if err := h.svc.AdoptGroupPhrase(false); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
@@ -942,7 +942,13 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 		err = h.storeGroupSecret(sec)
 	}
 	if err == nil {
-		err = h.svc.AdoptGroupPhrase()
+		err = h.svc.AdoptGroupPhrase(true)
+	}
+	if errors.Is(err, errShutOut) {
+		// The fortress's members turned this instance away, so it keeps no
+		// part of their words.
+		writeFortressError(w, errors.Join(err, h.svc.leaveGroup()))
+		return
 	}
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))

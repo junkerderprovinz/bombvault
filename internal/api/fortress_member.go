@@ -33,6 +33,17 @@ var fortressLAN = true
 var (
 	errInFortress = errors.New("BombVault is in a fortress already")
 	errNoFortress = errors.New("BombVault is in no fortress")
+	// errShutOut is a join the members turned away because one of them was
+	// taken out and the phrase has not changed since.
+	errShutOut = errors.New("the fortress takes no new member until its phrase changes")
+)
+
+// joinWait bounds how long a join waits to hear from the members whether
+// they take BombVault, and joinSettle how long the relay has to list them
+// once BombVault reaches it.
+var (
+	joinWait   = 5 * time.Second
+	joinSettle = 1500 * time.Millisecond
 )
 
 // fortressPlace is this install's membership of a fortress, open while
@@ -117,20 +128,22 @@ func (s *Service) OpenFortress(src status.Source) error {
 	if err != nil || sec == nil {
 		return errors.Join(err, s.openFortress())
 	}
-	return s.joinFortress(sec)
+	return s.joinFortress(sec, false)
 }
 
 // AdoptGroupPhrase makes the group's phrase the fortress's as well, so that
 // another app given the same words finds BombVault there. It does nothing
-// while BombVault is in a fortress or in no group.
-func (s *Service) AdoptGroupPhrase() error {
+// while BombVault is in a fortress or in no group. Words entered here may
+// belong to a fortress that takes nobody new, so with entered the members
+// can turn BombVault away, which errShutOut reports.
+func (s *Service) AdoptGroupPhrase(entered bool) error {
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
 	sec, err := s.groupSecretToAdopt()
 	if err != nil || sec == nil {
 		return err
 	}
-	return s.joinFortress(sec)
+	return s.joinFortress(sec, entered)
 }
 
 // groupSecretToAdopt is the secret of the group's phrase while BombVault is
@@ -171,11 +184,22 @@ func (s *Service) onGroupsPhrase() bool {
 }
 
 // openFortress opens the membership kept in the database, or else the one
-// written by the console, with door held.
+// written by the console, with door held, and the pairing follows into it.
 func (s *Service) openFortress() error {
+	f, cfg, gen, err := s.startFortress()
+	if err != nil || f == nil {
+		return err
+	}
+	s.followPairing(f, cfg.Secret, gen)
+	return nil
+}
+
+// startFortress opens the membership the way openFortress does, without the
+// pairing, and returns nil for none.
+func (s *Service) startFortress() (*fortress.Fortress, fortress.Config, int, error) {
 	cfg, ok, err := s.fortressMembership()
 	if err != nil || !ok {
-		return err
+		return nil, cfg, 0, err
 	}
 	s.house.mu.Lock()
 	src := s.house.src
@@ -192,7 +216,7 @@ func (s *Service) openFortress() error {
 		if cfg.LAN != nil {
 			_ = cfg.LAN.Close()
 		}
-		return err
+		return nil, cfg, 0, err
 	}
 	var forget *time.Timer
 	if len(cfg.Previous) > 0 {
@@ -206,8 +230,50 @@ func (s *Service) openFortress() error {
 	s.house.mu.Lock()
 	s.house.f, s.house.lan, s.house.device, s.house.forget = f, cfg.LAN, cfg.Self.Name, forget
 	s.house.mu.Unlock()
-	s.followPairing(f, cfg.Secret, gen)
-	return nil
+	return f, cfg, gen, nil
+}
+
+// turnedAway waits until the members of f take this instance or turn it
+// away because one of them was taken out and the phrase has not changed
+// since. A fortress where nobody answers within joinWait takes it, and so
+// does one it has no way to reach anybody in.
+func turnedAway(f *fortress.Fortress, relayed, onLAN bool) bool {
+	if !relayed && !onLAN {
+		return false
+	}
+	deadline := time.Now().Add(joinWait)
+	tick := time.NewTicker(50 * time.Millisecond)
+	defer tick.Stop()
+	var connected time.Time
+	for {
+		if f.ShutOut() {
+			return true
+		}
+		now := time.Now()
+		if relayed && connected.IsZero() && f.RelayConnected() {
+			connected = now
+		}
+		online := false
+		for _, m := range f.Members() {
+			if m.Kind != kitmember.KindInstance || !m.Online() {
+				continue
+			}
+			// A member tells what it runs only to one it takes.
+			if m.State == group.StateApproved && m.App.ID != "" {
+				return false
+			}
+			online = true
+		}
+		// On the network another member may still turn up after the relay
+		// listed nobody.
+		if !online && !onLAN && !connected.IsZero() && now.Sub(connected) >= joinSettle {
+			return false
+		}
+		if now.After(deadline) {
+			return false
+		}
+		<-tick.C
+	}
 }
 
 // previousKept is how long the fortress is given the secret of the phrase
@@ -335,14 +401,21 @@ func (s *Service) JoinFortress(words string) error {
 	defer clear(sec)
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
-	return s.joinFortress(sec)
+	return s.joinFortress(sec, true)
 }
 
 // joinFortress joins the fortress of sec with door held. It signs with the
 // key the pairing group knows this instance by, so the pairing can move
 // into the fortress without anybody approving it again. The fortress on the
-// group's own phrase gives way to it, and the group moves along.
-func (s *Service) joinFortress(sec []byte) error {
+// group's own phrase gives way to it, and the group moves along. With wait
+// the pairing moves only once the members did not turn this instance away,
+// and a join they turn away leaves everything as it was before.
+func (s *Service) joinFortress(sec []byte, wait bool) error {
+	before, err := s.store.FortressMembership()
+	if err != nil {
+		return err
+	}
+	replaced := false
 	if s.fortressNow() != nil {
 		if !s.onGroupsPhrase() {
 			return errInFortress
@@ -350,6 +423,7 @@ func (s *Service) joinFortress(sec []byte) error {
 		if err := s.forgetFortress(); err != nil {
 			return err
 		}
+		replaced = true
 	}
 	own, err := s.depositSeed()
 	if err != nil {
@@ -366,9 +440,19 @@ func (s *Service) joinFortress(sec []byte) error {
 	if err := s.store.JoinFortress(sealed, seed); err != nil {
 		return err
 	}
-	if err := s.openFortress(); err != nil {
+	f, cfg, gen, err := s.startFortress()
+	if err != nil {
 		return errors.Join(err, s.store.LeaveFortress())
 	}
+	if wait && turnedAway(f, cfg.Relay != group.RelayOff, cfg.LAN != nil) {
+		s.closeFortress()
+		undo := s.store.RestoreFortress(before)
+		if undo == nil && replaced {
+			undo = s.openFortress()
+		}
+		return errors.Join(errShutOut, undo)
+	}
+	s.followPairing(f, cfg.Secret, gen)
 	return nil
 }
 

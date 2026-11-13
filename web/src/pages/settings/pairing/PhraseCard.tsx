@@ -5,6 +5,7 @@
 // come it says what to do next. The phrase is the group's and the fortress's
 // at once, so other apps join with the same words.
 import { useEffect, useState, type ReactNode } from "react";
+import { fortressText } from "@glimstone/core";
 import { Card } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -12,7 +13,7 @@ import { IconInfo, IconRetry } from "../../../components/glyphs";
 import { IconCheck, IconClose, IconCopy } from "../../../components/navGlyphs";
 import { createPhrase, joinGroup, leaveGroup, type FortressState, type GroupState, type PhraseRefusal } from "../../../lib/api";
 import { copyText } from "../../../lib/clipboard";
-import type { useT } from "../../../lib/i18n";
+import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { InstanceWindow } from "../../instances/InstanceWindow";
 import { FortressBlock, RemovedHere, type Others } from "./FortressSection";
@@ -25,8 +26,10 @@ import type { PairStage } from "./pairStage";
 type T = ReturnType<typeof useT>["t"];
 
 /** refusalText says what is wrong with a phrase the server turned down, in
- *  the reader's language. */
-export function refusalText(t: T, r: PhraseRefusal): string {
+ *  the reader's language. A fortress that turned the words away has its
+ *  sentence in GlimStone's text. */
+export function refusalText(t: T, lang: string, r: PhraseRefusal): string {
+  if (r.code === "closedUntilNewPhrase") return fortressText(lang).joinLocked;
   switch (r.reason) {
     case "word_count":
       return t("pairing.errWordCount").replace("{count}", String(r.count ?? 0));
@@ -199,6 +202,7 @@ export function PhraseCard({
   others?: Others;
 }) {
   const { push } = useToast();
+  const { lang } = useT();
   // The words of a phrase made here, which show once without the password.
   const [phrase, setPhrase] = useState<string | null>(null);
   // The window over the card: the words just made, the field for the words
@@ -248,7 +252,7 @@ export function PhraseCard({
     setBusy(true);
     try {
       const res = await joinGroup(words);
-      if (!res.ok) return refusalText(t, res);
+      if (!res.ok) return refusalText(t, lang, res);
       forget();
       setShown(null);
       onGroup(res);

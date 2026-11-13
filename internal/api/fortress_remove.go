@@ -8,7 +8,7 @@ import (
 )
 
 // fortressRemoved is a member this instance took out of the fortress since
-// the phrase last changed. Until it changes, the phrase lets it back in.
+// the phrase last changed. Until it changes, the fortress takes no new member.
 type fortressRemoved struct {
 	App    string `json:"app"`
 	Name   string `json:"name"`
