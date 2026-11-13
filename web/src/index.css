@@ -4800,11 +4800,11 @@ body {
     flex-direction: column;
     gap: 2.5rem;
   }
-  /* The columns of the Instances tab, so an app's card is as wide as an
-     instance's. */
+  /* The columns of the pairing page's instance cards, two side by side on a
+     desktop. */
   .glim-fortress-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 36rem), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
     gap: 1rem;
   }
   /* Without instance cards of BombVault's own the grid stays empty, and an

@@ -157,7 +157,7 @@ export function MemberCards({
   const moving = group.oldPhrase ?? [];
   return (
     <section data-testid="members" aria-label={t("instances.title")} className="flex flex-col gap-4">
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] gap-4">
         <InstanceCard
           cardKey="self"
           name={group.name}

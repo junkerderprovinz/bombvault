@@ -133,10 +133,15 @@ function Cards({
         others={others}
       />
       <WaitingCard group={group} onGroup={onGroup} t={t} hueIndex={nextHue()} />
-      {(group.active || view.joined) && (
-        <MemberCards group={group} stage={stage} joinedAgo={joinedAgo} waitFor={apps.length === 0} onRefresh={onRefresh} nextHue={nextHue} t={t} />
-      )}
-      {apps.length > 0 && <OtherApps view={view} apps={apps} group={group} giveBack={giveBack} showOthers={showOthers} hueStart={take(nextHue, apps.length + 2)} onChanged={onRefresh} />}
+      {/* The instances and the other apps' cards keep the gap of one grid between them. */}
+      <div className="flex flex-col gap-4 empty:hidden">
+        {(group.active || view.joined) && (
+          <MemberCards group={group} stage={stage} joinedAgo={joinedAgo} waitFor={apps.length === 0} onRefresh={onRefresh} nextHue={nextHue} t={t} />
+        )}
+        {apps.length > 0 && (
+          <OtherApps view={view} apps={apps} group={group} giveBack={giveBack} showOthers={showOthers} hueStart={take(nextHue, apps.length + 2)} onChanged={onRefresh} />
+        )}
+      </div>
       <RelayCard group={group} stage={stage} onGroup={onGroup} onRefresh={onRefresh} t={t} hueIndex={nextHue()} />
       {zfs && <ZfsCard t={t} hueIndex={nextHue()} />}
     </>
