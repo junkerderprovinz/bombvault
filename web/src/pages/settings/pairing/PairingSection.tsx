@@ -133,8 +133,8 @@ function Cards({
         others={others}
       />
       <WaitingCard group={group} onGroup={onGroup} t={t} hueIndex={nextHue()} />
-      {/* The instances and the other apps' cards keep the gap of one grid between them. */}
-      <div className="flex flex-col gap-4 empty:hidden">
+      {/* The instances and the other apps' cards fill one grid row by row. */}
+      <div className="glim-pairing-cards">
         {(group.active || view.joined) && (
           <MemberCards group={group} stage={stage} joinedAgo={joinedAgo} waitFor={apps.length === 0} onRefresh={onRefresh} nextHue={nextHue} t={t} />
         )}

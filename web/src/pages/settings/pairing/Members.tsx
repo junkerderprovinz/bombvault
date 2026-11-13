@@ -156,8 +156,8 @@ export function MemberCards({
   const behind = group.behind ?? [];
   const moving = group.oldPhrase ?? [];
   return (
-    <section data-testid="members" aria-label={t("instances.title")} className="flex flex-col gap-4">
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] gap-4">
+    <section data-testid="members" aria-label={t("instances.title")} className="glim-pairing-members flex flex-col gap-4">
+      <div className="glim-pairing-grid grid grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))] gap-4">
         <InstanceCard
           cardKey="self"
           name={group.name}

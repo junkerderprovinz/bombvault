@@ -7094,3 +7094,29 @@ body {
   84%         { opacity: 0; transform: scale(3); }
   84.1%, 100% { opacity: 0; transform: none; }
 }
+
+/* The pairing page's instance cards and the other apps' cards fill one grid,
+   so a row is full before the next starts. Their sections only group them for
+   the code. Notes between them and the permissions take a whole row. */
+.glim-pairing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+  gap: 1rem;
+}
+.glim-pairing-cards:empty {
+  display: none;
+}
+.glim-pairing-cards .glim-pairing-members,
+.glim-pairing-cards .glim-pairing-grid,
+.glim-pairing-cards .glim-fortress,
+.glim-pairing-cards .glim-fortress-grid {
+  display: contents;
+}
+.glim-pairing-cards .glim-pairing-members > :not(.glim-pairing-grid),
+.glim-pairing-cards .glim-fortress > :not(.glim-fortress-grid) {
+  grid-column: 1 / -1;
+}
+.glim-pairing-cards .glim-fortress > [data-glim="FortressPermissions"] {
+  margin-top: 1.5rem;
+}
+
