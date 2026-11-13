@@ -6,7 +6,7 @@ holding them together with the donation buttons, and every button row in
 README.md.
 
 The buttons come in the same five groups, in this order: the server (the
-Unraid template, the container, the source and the manual), the desktop apps,
+Unraid template, the container and the source), the desktop apps,
 the phone apps, the browser extensions and the house's companion apps. What a
 repository does not ship is left out. Each group opens with its title, a band
 across the column with the group's icon and word, and fills a row of four
@@ -15,10 +15,15 @@ places before it starts the next. The bands are drawn by
 this file writes, so run that one after this. A blank line stands between two
 groups, so the gap between groups is about twice the gap between rows.
 
+The documentation button belongs to no group. It stands alone and centred
+under the intro, between its own markers, which the first run puts in above the
+table of contents.
+
 A button carries one line, its name, as the apps' buttons do at rest. Only a
 listing still to come adds a second line saying so.
-Windows on ARM and the portable build are segments of the Windows button, and
-the ARM builds of Linux and the Flatpak segments of theirs.
+An ARM build is a segment of the button it belongs to, and so is the macOS
+zip. A portable build gets its own button, like the Flatpak, because its ARM
+build needs a segment too.
 
 Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
@@ -111,21 +116,24 @@ KINDS = {
     "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Slate, since GitHub's black vanishes in the dark theme.
     "source":           (0, "zip", "#4d5562", "#ffffff", "Source code", "zip archive", "Download the source archive"),
-    # "Docs" rather than "Documentation": 13 characters at font-size 82 need
-    # more than the 542 units left of the right edge. The yellow is the coffee
-    # button's #fd0, and white on yellow fails contrast, so the ink is dark.
-    "docs":             (0, "book", "#fd0", "#0d0c23", "Docs", "online manual", "Read the documentation"),
+    # No group, see DOCS_PX. The yellow is the coffee button's #fd0, and white
+    # on yellow fails contrast, so the ink is dark.
+    "docs":             (None, "book", "#fd0", "#0d0c23", "Documentation", "online manual", "Read the documentation"),
     "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
     "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM", "Download for Windows on ARM"),
-    "windows-portable": (1, None, *WINDOWS, "Windows", "Portable", "Download the portable Windows app"),
+    "windows-portable": (1, "windows", *WINDOWS, "Portable", "x64", "Download the portable Windows app"),
+    "windows-portable-arm": (1, None, *WINDOWS, "Portable", "ARM", "Download the portable Windows app for ARM"),
     "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
     # Space grey, since black vanishes against GitHub's dark theme.
     "macos":            (1, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
+    "macos-zip":        (1, None, "#6e6e73", "#ffffff", "macOS", "Zip", "Download the macOS app as a zip"),
     # For apps that ship Intel and Apple silicon as two files.
     "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Intel, ARM", "Download for macOS on Intel or Apple silicon"),
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
     "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM", "Download for Linux on ARM"),
+    "linux-portable":   (1, "linux", "#fcc624", "#1b1b1b", "Portable", "x64", "Download the portable Linux app"),
+    "linux-portable-arm": (1, None, "#fcc624", "#1b1b1b", "Portable", "ARM", "Download the portable Linux app for ARM"),
     # Flatpak's own blue, where white holds 3.3:1, about as much as on Unraid's orange.
     "flatpak":          (1, "flatpak", "#4a90d9", "#ffffff", "Flatpak", "x64", "Download the Flatpak"),
     "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM", "Download the Flatpak for ARM"),
@@ -152,7 +160,10 @@ KINDS = {
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
-SEGMENTS = {"windows": ("windows-arm", "windows-portable"), "linux": ("linux-arm",), "flatpak": ("flatpak-arm",)}
+SEGMENTS = {
+    "windows": ("windows-arm",), "windows-portable": ("windows-portable-arm",), "macos": ("macos-zip",),
+    "linux": ("linux-arm",), "linux-portable": ("linux-portable-arm",), "flatpak": ("flatpak-arm",),
+}
 # A store listing that does not exist yet is drawn without a link, with "Soon"
 # under its name, or nobody could tell why the button leads nowhere.
 SOON = {
@@ -199,9 +210,14 @@ SEGMENT_PX = 87.0
 # 767px and fit GitHub's 830px column; a fifth button (852px) would wrap and
 # leave one alone below the rest.
 PLACES = 4.5
+# "Documentation" takes about 600 units at font-size 82, more than the 542 a
+# button leaves after TEXT_X. Standing alone, its button can be wider instead,
+# with room on the right for a face wider than Segoe UI.
+DOCS_PX = 192.0
 
 SCALE = W / RENDER_PX              # canvas units per screen pixel
 SEGMENT_W = SEGMENT_PX * SCALE
+DOCS_W = DOCS_PX * SCALE
 DIVIDER_W = 1.5 * SCALE
 SHEEN_W = BAND_PX * SCALE
 # skewX shifts every point by tan(16 degrees) times its y, so clearing the edge
@@ -296,6 +312,11 @@ GIVE_CLOSE = "<!-- /give-buttons -->"
 APP_OPEN = "<!-- app-buttons: written by scripts/gen_download_buttons.py -->"
 APP_CLOSE = "<!-- /app-buttons -->"
 APP_ROW = 2
+DOCS_OPEN = "<!-- docs-button: written by scripts/gen_download_buttons.py -->"
+DOCS_CLOSE = "<!-- /docs-button -->"
+# The heading every README's table of contents starts with. The intro and its
+# notices end above it.
+CONTENTS = '<p><a id="table-of-contents"'
 
 
 class Part:
@@ -340,7 +361,7 @@ def rows():
             raise SystemExit("%s needs the %s button to join" % (present[0], base))
     out = [[], [], [], [], []]
     for kind, spec in KINDS.items():
-        if kind not in config.BUTTONS or kind in joined:
+        if kind not in config.BUTTONS or kind in joined or spec[0] is None:
             continue
         href = config.BUTTONS[kind]
         segments = [s for s in SEGMENTS.get(kind, ()) if s in config.BUTTONS]
@@ -537,7 +558,30 @@ def read_readme():
         raise SystemExit("README.md needs exactly one %s ... %s" % (ROW_OPEN, ROW_CLOSE))
     if not blocks(text, GIVE_OPEN, GIVE_CLOSE):
         raise SystemExit("README.md has no %s ... %s" % (GIVE_OPEN, GIVE_CLOSE))
+    docs = len(blocks(text, DOCS_OPEN, DOCS_CLOSE))
+    if docs > 1:
+        raise SystemExit("README.md has more than one %s" % DOCS_OPEN)
+    if not docs and "docs" in config.BUTTONS:
+        text = place_docs(text)
     return text
+
+
+def place_docs(text):
+    """The text with an empty docs-button block right after the intro.
+
+    It goes above the <br> spacers before the table of contents, so they stay
+    between the button and the contents.
+    """
+    toc = text.find(CONTENTS)
+    if toc < 0:
+        raise SystemExit("README.md has no table of contents to put the docs button above; add %s ... %s by hand"
+                         % (DOCS_OPEN, DOCS_CLOSE))
+    nl = "\r\n" if text[:toc].endswith("\r\n") else "\n"
+    head = text[:toc].rstrip()
+    while head.endswith("<br>"):
+        head = head[:-len("<br>")].rstrip()
+    at = len(head)
+    return text[:at] + nl + nl + DOCS_OPEN + nl + DOCS_CLOSE + text[at:]
 
 
 def row(items, nl, url):
@@ -563,14 +607,14 @@ def row(items, nl, url):
     return nl.join(lines) + nl
 
 
-def write_readme(text, downloads, groups, apps, donations, url):
+def write_readme(text, downloads, groups, apps, docs, donations, url):
     """Replace every marked block, each taking the line ending of its own marker.
 
     Both width and height are set, because the image's own proportions are the
     whole sprite's, not the button's.
     """
     blocks_out = ((ROW_OPEN, ROW_CLOSE, downloads, groups), (APP_OPEN, APP_CLOSE, apps, [APP_ROW] * len(apps)),
-                  (GIVE_OPEN, GIVE_CLOSE, donations, [0]))
+                  (DOCS_OPEN, DOCS_CLOSE, docs, [0] * len(docs)), (GIVE_OPEN, GIVE_CLOSE, donations, [0]))
     for opener, closer, table, group in blocks_out:
         for start, end in reversed(blocks(text, opener, closer)):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
@@ -618,10 +662,10 @@ def layout(items, gap):
 
 
 # One band works down the page, row by row in the order the README shows them:
-# the download rows and the donation row, whichever stands higher first. Within
-# a row each part starts when the band reaches its left edge, and each row where
-# a further button of the row above would have started. Computed, so moving a
-# row or a button cannot break the hand-off.
+# the docs button, the download rows and the donation row, whichever stands
+# higher first. Within a row each part starts when the band reaches its left
+# edge, and each row where a further button of the row above would have
+# started. Computed, so moving a row or a button cannot break the hand-off.
 #
 # The house loop is seven seconds, with the donation row at 3.8 s and a rest of
 # 1.12 s after it. A page whose rows need longer keeps that rest and stretches
@@ -640,9 +684,12 @@ def main():
     # A title is no button, so the shine skips it.
     downloads = [layout([] if items[0][0].title else items, GAP_PX) for items in table]
     donation = layout([[SimpleNamespace(px=GIVE_RENDER_PX)] for _ in GIVE], GAP_PX)
-    order = downloads + [donation]
-    if readme.find(GIVE_OPEN) < readme.find(ROW_OPEN):
-        order = [donation] + downloads
+    docs = []
+    if "docs" in config.BUTTONS:
+        docs = [layout([[Part("docs", config.BUTTONS["docs"], DOCS_W, "all")]], GAP_PX)]
+    places = sorted(((readme.find(DOCS_OPEN), docs), (readme.find(ROW_OPEN), downloads),
+                     (readme.find(GIVE_OPEN), [donation])), key=lambda p: p[0])
+    order = [placed for _at, section in places for placed in section]
     starts, at = {}, 0.0
     for placed, travel in order:
         for part, x in placed:
@@ -650,7 +697,7 @@ def main():
         at += travel / SPEED
     cycle = round(max(HOUSE_CYCLE, at + REST), 3)
 
-    parts = [part for placed, _ in downloads for part, _x in placed]
+    parts = [part for placed, _ in docs + downloads for part, _x in placed]
     svgs = [button(part, starts[id(part)], cycle) for part in parts]
     gives = [(retime(svg, starts[id(part)], cycle), width, height)
              for (part, _x), (svg, width, height) in zip(donation[0], gives)]
@@ -673,6 +720,7 @@ def main():
             print("removed", os.path.normpath(old))
 
     place = iter(xs)
+    docs_out = [[[(p.href, p.alt, next(place), p.width, H, p.px)] for p, _x in placed] for placed, _ in docs]
     table_out = [items[0][0] if items[0][0].title else [[(p.href, p.alt, next(place), p.width, H, p.px) for p in item] for item in items]
                  for items in table]
     titles = [items[0][0] for items in table if items[0][0].title]
@@ -687,7 +735,7 @@ def main():
     # new offsets shows the wrong buttons, so its address changes with it.
     url = "%s?v=%s" % (SPRITE_URL, hashlib.sha256(whole.encode("utf-8")).hexdigest()[:12])
     groups = [items[0][0].group for items in table]
-    write_readme(readme, table_out, groups, apps, donations, url)
+    write_readme(readme, table_out, groups, apps, docs_out, donations, url)
 
 
 if __name__ == "__main__":
