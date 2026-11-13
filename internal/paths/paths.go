@@ -156,5 +156,10 @@ func EnsureEmptyDir(dir string) error {
 // EmptyOrMissing reports whether nothing is at dir, or an empty directory.
 func EmptyOrMissing(dir string) bool {
 	entries, err := os.ReadDir(dir)
-	return errors.Is(err, fs.ErrNotExist) || (err == nil && len(entries) == 0)
+	if err == nil {
+		return len(entries) == 0
+	}
+	// Windows fails to read a file as a directory with the error of a missing path.
+	_, err = os.Stat(dir)
+	return errors.Is(err, fs.ErrNotExist)
 }
