@@ -32,6 +32,12 @@ const DEFAULTS_NEWS = "An entry follows the default schedule and storage locatio
 const JUNK_NEWS = "A new folder set leaves out system junk";
 const CONNECTIONS_NEWS = "Simultaneous connections on the page";
 
+// The settings handler can still wait on the real server when a test ends,
+// and the closing context disposes the answer it is about to read.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 function entry(lastBackup: number) {
   return {
     kind: "flash",
