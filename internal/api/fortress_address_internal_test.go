@@ -3,13 +3,16 @@ package api
 import (
 	"bytes"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
+	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/lan"
+	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
 )
 
 // listenOnTestNetwork points the fortress's announces at a group of the
@@ -69,3 +72,56 @@ func TestAnAddressLearnedWhileInAFortressGoesOutAtOnce(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 	}
 }
+
+func TestBombVaultThatLeavesIsGoneFromTheOtherMembers(t *testing.T) {
+	listenOnTestNetwork(t)
+	secret := bytes.Repeat([]byte{7}, 16)
+	ident, err := kitmember.NewIdentity(kitmember.KindInstance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+	l := lan.New(lan.Config{Group: fortress.Multicast})
+	l.Start()
+	t.Cleanup(func() { _ = l.Close() })
+	other, err := fortress.Open(fortress.Config{
+		App: fortress.App{ID: "shiplog", Name: "ShipLog", Version: "3.8.0"}, Secret: secret, Identity: ident,
+		Self:  group.Self{Name: "tower", Deployment: "plugin", DirectURL: srv.URL},
+		Relay: group.RelayOff, LAN: l, Store: &memFortressStore{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = other.Close() })
+	mux.Handle(group.DirectPath, other.DirectHandler())
+
+	svc, _ := newFortressSvc(t)
+	if err := fortress.Join(svc.fortressDir(), secret, fortress.Membership{App: "bombvault", Device: "tower", Relay: "off", LAN: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.OpenFortress(nil); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(svc.CloseFortress)
+	deadline := time.Now().Add(20 * time.Second)
+	for len(other.Members()) == 0 || len(svc.fortressNow().Members()) == 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("BombVault and the other member never met")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	if err := svc.LeaveFortress(); err != nil {
+		t.Fatal(err)
+	}
+	if got := other.Members(); len(got) != 0 {
+		t.Errorf("the other member still lists %+v after BombVault left", got)
+	}
+}
+
+type memFortressStore struct{ raw []byte }
+
+func (m *memFortressStore) Load() ([]byte, error) { return m.raw, nil }
+func (m *memFortressStore) Save(raw []byte) error { m.raw = raw; return nil }

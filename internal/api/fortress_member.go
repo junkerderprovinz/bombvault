@@ -373,8 +373,8 @@ func (s *Service) joinFortress(sec []byte) error {
 }
 
 // LeaveFortress takes BombVault out of its fortress and forgets the
-// membership. The other members keep it as away until somebody removes it,
-// and the phrase brings it back.
+// membership. The members in reach drop it at once, the others when they hear
+// it from them, and the phrase brings it back.
 func (s *Service) LeaveFortress() error {
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
@@ -382,8 +382,12 @@ func (s *Service) LeaveFortress() error {
 	if err != nil {
 		return err
 	}
-	if s.fortressNow() == nil && !m.Joined() {
+	f := s.fortressNow()
+	if f == nil && !m.Joined() {
 		return errNoFortress
+	}
+	if f != nil {
+		f.Leave()
 	}
 	return s.forgetFortress()
 }
