@@ -98,12 +98,12 @@ const ROUTE_ALT = {
   off: "relay.pic.direct",
 } as const;
 
-// Where the bubble about the relay sits, beside the relay's name, in the
-// picture's own units.
+// Where the bubble about the relay starts, right after the relay's name, in
+// the picture's own units: x is the end of the name, y its middle.
 const RELAY_NAME_AT: Partial<Record<RelayForm, { x: number; y: number }>> = {
-  project: { x: 229, y: 133 },
-  own: { x: 229, y: 133 },
-  instance: { x: 92, y: 114 },
+  project: { x: 211, y: 133 },
+  own: { x: 211, y: 133 },
+  instance: { x: 83, y: 114 },
 };
 
 /** RouteDiagram shows how a message travels on one relay route. A letter
@@ -192,7 +192,7 @@ export function RouteDiagram({ form, t, tip }: { form: RelayForm; t: T; tip?: st
       </svg>
       {tip && at && (
         <span
-          className="absolute flex -translate-x-1/2 -translate-y-1/2"
+          className="absolute flex -translate-y-1/2"
           style={{ left: `${(at.x / 360) * 100}%`, top: `${(at.y / 166) * 100}%` }}
         >
           <InfoBubble tip={tip} />
