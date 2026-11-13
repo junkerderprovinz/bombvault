@@ -336,11 +336,8 @@ for (const width of [1280, 390]) {
     await expect(page.getByRole("img", { name: /ohne Relay nicht erreichbar/ })).toBeVisible();
     await settle(page);
     await expectFits(page);
-    // What the relay sees opens in a window.
-    await page.getByRole("button", { name: "Was das Relay sieht" }).click();
-    await expect(page.getByRole("dialog", { name: "Was das Relay sieht" })).toContainText("nichts verlässt dein Netzwerk");
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).toHaveCount(0);
+    // At home there is no relay, so no bubble about what it sees.
+    await expect(page.locator(".glim-route[data-form] [role=img][aria-label^='Das Relay sieht']")).toHaveCount(0);
 
     // Alone, with the relay down: both hints and the paste field fit.
     Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });

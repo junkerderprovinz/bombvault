@@ -12,13 +12,11 @@ import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
 import { Selector } from "../../../components/Selector";
 import { SettingRow } from "../../../components/storage/rows";
-import { IconEye, IconRetry } from "../../../components/glyphs";
-import { IconClose } from "../../../components/navGlyphs";
+import { IconRetry } from "../../../components/glyphs";
 import { setRelay, type GroupState, type RelayMode } from "../../../lib/api";
 import type { TranslationKey, useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { tLtr } from "../../../lib/ltrFragments";
-import { PairingWindow } from "./PairingWindow";
 import { FactGlyph, RouteDiagram, RouteGlyph } from "./pairingArt";
 import { emphasize } from "./PairingSteps";
 import type { PairStage } from "./pairStage";
@@ -85,7 +83,6 @@ export function RelayCard({
   // Which of the two own routes was picked here. The server stores one mode
   // for both, so without a pick the address decides.
   const [picked, setPicked] = useState<"own" | "instance" | null>(null);
-  const [seesOpen, setSeesOpen] = useState(false);
   const editing = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Two quick picks send two saves, and their answers can come back in either
@@ -149,6 +146,11 @@ export function RelayCard({
   }
 
   const copy = COPY[form];
+  // What the relay sees and what it does not, for the bubble beside its name.
+  const sees =
+    form === "off"
+      ? undefined
+      : [t("relay.seesLabel"), t(copy.sees), t("relay.notSeesLabel"), t("relay.notSeesContent"), t("relay.notSeesBackups")].join(" ");
   const connected = group.active && form !== "off" && relay.connected;
   // The relay key comes from the twelve words, so the relay is only dialled
   // inside a group; before that there is nothing to be connected.
@@ -166,7 +168,7 @@ export function RelayCard({
   // A route that should be up and is not offers another look right where its
   // address is, or under the picture where there is no address to type.
   const checkAgain = stage !== "unpaired" && form !== "off" && !connected && (
-    <div className="flex">
+    <div className="flex justify-end">
       <Button label={t("pairing.checkAgain")} labelKey="pairing.checkAgain" glyph={<IconRetry />} tone="neutral" onClick={onRefresh} />
     </div>
   );
@@ -202,15 +204,6 @@ export function RelayCard({
       title={t("relay.title")}
       hint={t("relay.hint")}
       hueIndex={hueIndex}
-      foot={
-        <Button
-          label={t("relay.sees.title")}
-          labelKey="relay.sees.title"
-          glyph={<IconEye />}
-          tone="neutral"
-          onClick={() => setSeesOpen(true)}
-        />
-      }
     >
       <p data-testid="relay-steps" className="text-sm text-carbon-text">
         {t("relay.lead")}
@@ -303,42 +296,13 @@ export function RelayCard({
         </div>
         {/* The address goes under the picture of the route it fills in. */}
         <div className="flex min-w-0 flex-col gap-5">
-          <RouteDiagram form={form} t={t} />
+          <RouteDiagram form={form} t={t} tip={sees} />
           {form === "own" && address("https://relay.example.org")}
           {form === "instance" && address("https://bombvault.example.org/relay/connect")}
           {form === "project" && checkAgain}
         </div>
       </div>
 
-      {seesOpen && (
-        <PairingWindow
-          title={t("relay.sees.title")}
-          hueIndex={hueIndex}
-          onClose={() => setSeesOpen(false)}
-          footer={
-            <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={() => setSeesOpen(false)} />
-          }
-        >
-          <Fact
-            glyph={<FactGlyph kind="sees" />}
-            text={
-              <>
-                {strong(t("relay.seesLabel"))}
-                {t(copy.sees)}
-              </>
-            }
-          />
-          {form !== "off" && (
-            <>
-              <Fact glyph={<FactGlyph kind="hidden" />} text={strong(t("relay.notSeesLabel"))} />
-              <ul className="flex list-disc flex-col gap-1 ps-9 text-sm text-carbon-textSub">
-                <li>{t("relay.notSeesContent")}</li>
-                <li>{t("relay.notSeesBackups")}</li>
-              </ul>
-            </>
-          )}
-        </PairingWindow>
-      )}
     </Card>
   );
 }

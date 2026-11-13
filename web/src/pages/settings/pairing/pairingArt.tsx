@@ -3,6 +3,7 @@
 // stylesheet, so it stands still wherever motion is off. They draw with the
 // theme's own tokens and take the hue of the card they sit in.
 import { useId, type CSSProperties, type ReactNode } from "react";
+import { InfoBubble } from "../../../components/InfoBubble";
 import { IconCheck, IconCopy } from "../../../components/navGlyphs";
 import type { RelayMode } from "../../../lib/api";
 import type { useT } from "../../../lib/i18n";
@@ -97,10 +98,19 @@ const ROUTE_ALT = {
   off: "relay.pic.direct",
 } as const;
 
+// Where the bubble about the relay sits, beside the relay's name, in the
+// picture's own units.
+const RELAY_NAME_AT: Partial<Record<RelayForm, { x: number; y: number }>> = {
+  project: { x: 222, y: 133 },
+  own: { x: 222, y: 133 },
+  instance: { x: 92, y: 114 },
+};
+
 /** RouteDiagram shows how a message travels on one relay route. A letter
  *  moves at one speed whatever the length of its way, and there and back play
- *  one after the other. */
-export function RouteDiagram({ form, t }: { form: RelayForm; t: T }) {
+ *  one after the other. `tip` says what the relay sees, in a bubble beside its
+ *  name. */
+export function RouteDiagram({ form, t, tip }: { form: RelayForm; t: T; tip?: string }) {
   const here = t("relay.diagramYourNetwork");
   const there = t("relay.diagramOtherNetwork");
   let body: ReactNode;
@@ -174,11 +184,20 @@ export function RouteDiagram({ form, t }: { form: RelayForm; t: T }) {
       </>
     );
   }
+  const at = RELAY_NAME_AT[form];
   return (
-    <div className="glim-pic glim-scene glim-route" data-form={form}>
+    <div className="glim-pic glim-scene glim-route relative" data-form={form}>
       <svg viewBox="0 0 360 166" role="img" aria-label={t(ROUTE_ALT[form])}>
         {body}
       </svg>
+      {tip && at && (
+        <span
+          className="absolute flex -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${(at.x / 360) * 100}%`, top: `${(at.y / 166) * 100}%` }}
+        >
+          <InfoBubble tip={tip} />
+        </span>
+      )}
     </div>
   );
 }

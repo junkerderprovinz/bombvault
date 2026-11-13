@@ -696,6 +696,12 @@ function routePicture(key: "relay.pic.relay" | "relay.pic.instance" | "relay.pic
   return screen.queryByRole("img", { name: en[key] });
 }
 
+/** The bubble beside the relay's name in the route picture. */
+function relayBubble(): HTMLElement | undefined {
+  const picture = within(document.querySelector<HTMLElement>(".glim-route[data-form]")!);
+  return picture.queryAllByRole("img").find((el) => el.getAttribute("aria-label")?.startsWith(en["relay.seesLabel"]));
+}
+
 describe("relay card", () => {
   it("says first what a relay is for, in one line", async () => {
     await renderTab();
@@ -743,24 +749,16 @@ describe("relay card", () => {
     expect(screen.getByText(en["relay.e2e"], { exact: false })).not.toBeNull();
   });
 
-  it("opens what the relay sees in a window", async () => {
+  it("says what the relay sees in a bubble beside the relay's name in the picture", async () => {
     await renderTab();
-    expect(screen.queryByText(en["relay.projectSees"])).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: en["relay.sees.title"] }));
-    const win = dialog();
-    expect(within(win).getByText(en["relay.projectSees"])).not.toBeNull();
-    expect(within(win).getByText(en["relay.notSeesContent"])).not.toBeNull();
-    expect(within(win).getByText(en["relay.notSeesBackups"])).not.toBeNull();
-    fireEvent.click(within(win).getByRole("button", { name: en["common.close"] }));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    const tip = relayBubble()!.getAttribute("aria-label")!;
+    for (const key of ["relay.projectSees", "relay.notSeesContent", "relay.notSeesBackups"] as const) expect(tip).toContain(en[key]);
   });
 
-  it("says that nothing leaves the network where there is no relay to see anything", async () => {
+  it("has no bubble about the relay where there is none", async () => {
     group = makeGroup({ relay: noRelay() });
     await renderTab();
-    fireEvent.click(screen.getByRole("button", { name: en["relay.sees.title"] }));
-    expect(within(dialog()).getByText(en["relay.offSees"])).not.toBeNull();
-    expect(within(dialog()).queryByText(en["relay.notSeesContent"])).toBeNull();
+    expect(relayBubble()).toBeUndefined();
   });
 
   it("offers three routes, the home network only among them, and starts on the stored one", async () => {
