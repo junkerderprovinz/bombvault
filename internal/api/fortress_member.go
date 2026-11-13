@@ -276,6 +276,18 @@ func (s *Service) fortressMembership() (fortress.Config, bool, error) {
 	return cfg, err == nil, err
 }
 
+// announceInFortress hands the open fortress addr as this instance's
+// address, which the members would otherwise learn only at the next open.
+func (s *Service) announceInFortress(addr string) {
+	s.house.mu.Lock()
+	f, device := s.house.f, s.house.device
+	s.house.mu.Unlock()
+	if f == nil || addr == "" {
+		return
+	}
+	f.SetSelf(group.Self{Name: device, Deployment: "container", Address: addr, DirectURL: addr})
+}
+
 // CloseFortress closes the fortress for this run and keeps the membership
 // for the next.
 func (s *Service) CloseFortress() {

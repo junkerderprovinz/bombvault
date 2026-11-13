@@ -267,7 +267,9 @@ func (s *Service) learnDirectURL(r *http.Request) {
 		log.Printf("group: learn this instance's direct address: %v", err)
 		return
 	}
-	s.applyGroupConfig()
+	if g, ok := s.applyGroupConfig(); ok {
+		s.announceInFortress(s.directURL(g))
+	}
 }
 
 // directAddressFromRequest rebuilds scheme://host from a request the way
