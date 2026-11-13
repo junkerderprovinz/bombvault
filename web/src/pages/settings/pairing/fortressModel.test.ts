@@ -39,6 +39,11 @@ describe("fortressApps", () => {
     expect(apps[0].instances[0].open).toBeUndefined();
   });
 
+  it("shows a phone app as an Android app and its version with a single v", () => {
+    const [app] = fortressApps([member({ app: "arrowloop", name: "ArrowLoop", deployment: "phone", version: "v2.6.9-12-gabc" })], String);
+    expect(app.instances[0]).toMatchObject({ form: "android", version: "2.6.9-12-gabc" });
+  });
+
   it("opens nothing on a paired phone", () => {
     const [app] = fortressApps([member({})], String, false);
     expect(app.instances[0].open).toBeUndefined();

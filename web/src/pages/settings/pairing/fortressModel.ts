@@ -18,6 +18,11 @@ const ACTION_TITLES: Record<string, TranslationKey> = {
   "updates.managed": "fortress.action.updatesManaged",
 };
 
+// GlimStone calls a phone app an Android app, and writes the v of a version
+// itself.
+const formOf = (m: FortressMember) => (m.deployment === "phone" ? "android" : m.deployment || undefined);
+const versionOf = (m: FortressMember) => m.version.replace(/^v/i, "") || undefined;
+
 // Where a member says it runs: the server it names, else its device.
 const placeOf = (m: FortressMember) => `${m.app} ${(m.host || m.device).toLowerCase()}`;
 
@@ -37,8 +42,8 @@ export function fortressApps(members: FortressMember[], ago: (unix: number) => s
       id: m.id,
       device: m.device,
       deviceKind: m.kind === "mobile" ? "phone" : "server",
-      form: m.deployment || undefined,
-      version: m.version || undefined,
+      form: formOf(m),
+      version: versionOf(m),
       presence: m.online ? "connected" : "away",
       relay: m.relay,
       lastSeen: !m.online && m.lastSeen ? ago(m.lastSeen) : undefined,
