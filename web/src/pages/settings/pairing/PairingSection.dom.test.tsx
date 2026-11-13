@@ -275,7 +275,7 @@ describe("the tiles outside a group", () => {
     group = outside();
     fortress = fortressOf({ joined: false, phrase: false, removedHere: true });
     await renderTab();
-    expect(phraseCard().textContent).toContain("Another app in the fortress removed BombVault. Enter the current phrase to come back in.");
+    expect(phraseCard().textContent).toContain("Another app in the fortress removed BombVault. Once the phrase has changed, the new one gets you back in.");
     fortress = noFortress();
     cleanup();
     await renderTab();

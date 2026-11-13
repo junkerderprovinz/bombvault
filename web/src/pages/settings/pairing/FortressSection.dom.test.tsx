@@ -423,6 +423,6 @@ describe("removing another app from the fortress", () => {
   it("names who was removed until the phrase changes", () => {
     view = state({ members: [member({})], removed: [{ app: "firesquire", name: "FireSquire", device: "Tower" }] });
     renderApps();
-    expect(button("removed").textContent).toContain("Removed: FireSquire on Tower. Change the phrase to close the way back in.");
+    expect(button("removed").textContent).toContain("Removed: FireSquire on Tower. No new app can join until you change the phrase.");
   });
 });
