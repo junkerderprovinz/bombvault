@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -75,6 +76,9 @@ func TestThisServerListsOnlyItsOwnBackupsInASharedRepositoryWithRestic(t *testin
 }
 
 func TestAnotherServersFolderSetComesBackFromASharedRepositoryWithRestic(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("restic's path filters and <id>:<path> selector cannot carry a Windows drive letter")
+	}
 	f, sr, _, _ := memberWithRestic(t, strings.Repeat("a", 64))
 
 	var servers []sharedOtherServer
