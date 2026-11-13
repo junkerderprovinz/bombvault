@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -95,7 +94,7 @@ func (r *requestRig) finish(t *testing.T, status, snapshot, errMsg string) {
 	r.running = ""
 }
 
-func TestABackupRequestAnswersARunThatEndsWithItsSnapshot(t *testing.T) {
+func TestABackupRequestAnswersARunThatEndsWithItsSnapshotAndNoAddress(t *testing.T) {
 	rig := newRequestRig(t, func(int32) (bool, error) { return true, nil })
 	run, _ := rig.ask(t, `{"container":"nextcloud","reason":"update"}`)["run"].(string)
 	if run == "" {
@@ -109,7 +108,7 @@ func TestABackupRequestAnswersARunThatEndsWithItsSnapshot(t *testing.T) {
 	}
 	rig.finish(t, "success", "4f3a9c21", "")
 	got := rig.waitFor(t, run, "done")
-	if got["id"] != run || got["snapshot"] != "4f3a9c21" || !strings.HasSuffix(got["link"].(string), "/backups/container/nextcloud") {
+	if _, link := got["link"]; got["id"] != run || got["snapshot"] != "4f3a9c21" || link {
 		t.Fatalf("a finished request: %v", got)
 	}
 }

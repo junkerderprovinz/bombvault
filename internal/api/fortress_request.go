@@ -9,7 +9,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
@@ -44,7 +43,6 @@ type backupRequestAnswer struct {
 	ID       string `json:"id"`
 	State    string `json:"state"`
 	Snapshot string `json:"snapshot,omitempty"`
-	Link     string `json:"link,omitempty"`
 	Error    string `json:"error,omitempty"`
 }
 
@@ -174,7 +172,6 @@ func (s *Service) requestState(id string) ([]byte, error) {
 			switch run.Status {
 			case "success":
 				answer.State, answer.Snapshot = "done", run.SnapshotID
-				answer.Link = strings.TrimSuffix(s.selfDirectURL(), "/") + "/backups/container/" + r.name
 			case "failed", "cancelled":
 				answer.State, answer.Error = run.Status, run.Error
 			}
