@@ -610,16 +610,43 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []fortressL
 	if err != nil {
 		return "", nil, err
 	}
+	members, behind := f.Members(), f.Behind()
+	var paired []group.Member
+	if p := f.Pairing(); p != nil {
+		paired = p.Members()
+	}
+	left := leftOnOldPhrase(took, members, paired, behind)
+	s.closeFortress()
+	if err := s.openFortress(); err != nil {
+		return "", nil, err
+	}
+	words, err := s.fortressPhrase()
+	return words, left, err
+}
+
+// leftOnOldPhrase lists the instances of the fortress and the pairing that
+// did not take the new phrase, but for those left behind, which are listed
+// apart. The fortress may list a member before it learned its name and app,
+// so what the pairing knows of it fills the gaps.
+func leftOnOldPhrase(took []string, members []fortress.Member, paired, behind []group.Member) []fortressLeft {
 	left := []fortressLeft{}
-	noted := map[string]bool{}
+	at := map[string]int{}
 	note := func(id string, l fortressLeft) {
-		if slices.Contains(took, id) || noted[id] {
+		if slices.Contains(took, id) {
 			return
 		}
-		noted[id] = true
-		left = append(left, l)
+		i, ok := at[id]
+		if !ok {
+			at[id] = len(left)
+			left = append(left, l)
+			return
+		}
+		if left[i].App == "" {
+			left[i].App, left[i].Name = l.App, l.Name
+		}
+		left[i].Device = cmp.Or(left[i].Device, l.Device)
 	}
-	for _, m := range f.Members() {
+	for _, m := range members {
 		if m.Kind == kitmember.KindInstance {
 			l := fortressLeft{Device: m.Device}
 			if m.App.ID != "" {
@@ -630,27 +657,20 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []fortressL
 	}
 	// Every instance the pairing let in counts, whether or not the fortress
 	// met it: one still moving in may have taken the phrase from before
-	// without arriving. Those left behind are listed apart.
-	behind := map[string]bool{}
-	for _, m := range f.Behind() {
-		behind[m.ID] = true
+	// without arriving.
+	gone := map[string]bool{}
+	for _, m := range behind {
+		gone[m.ID] = true
 	}
-	if p := f.Pairing(); p != nil {
-		for _, m := range p.Members() {
-			if m.Kind == kitmember.KindInstance && m.State == group.StateApproved && !behind[m.ID] {
-				note(m.ID, fortressLeft{App: "bombvault", Name: "BombVault", Device: cmp.Or(m.Name, m.ID)})
-			}
+	for _, m := range paired {
+		if m.Kind == kitmember.KindInstance && m.State == group.StateApproved && !gone[m.ID] {
+			note(m.ID, fortressLeft{App: "bombvault", Name: "BombVault", Device: cmp.Or(m.Name, m.ID)})
 		}
 	}
 	slices.SortFunc(left, func(a, b fortressLeft) int {
 		return cmp.Or(cmp.Compare(a.Device, b.Device), cmp.Compare(a.Name, b.Name))
 	})
-	s.closeFortress()
-	if err := s.openFortress(); err != nil {
-		return "", nil, err
-	}
-	words, err := s.fortressPhrase()
-	return words, left, err
+	return left
 }
 
 // renamed hands a new instance name to the group and to an open fortress,

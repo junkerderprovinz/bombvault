@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
+	"github.com/junkerderprovinz/parleyport/kit/group"
+	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
@@ -190,5 +192,19 @@ func TestAnInstanceLeftOnTheOldPhraseAsksForTheNewWordsAndTakesThem(t *testing.T
 	})
 	if _, view := a.do(t, http.MethodGet, "/api/fortress", nil); view["phraseChanged"] != false {
 		t.Fatalf("the view still asks for the new words: %v", view)
+	}
+}
+
+// The fortress lists a member as soon as it hears from it, before it learns
+// the member's name and app, while the pairing already knows it by name.
+func TestAPairedInstanceTheFortressHasNotNamedYetIsLeftUnderItsName(t *testing.T) {
+	const id = "instance-cellar"
+	left := leftOnOldPhrase(nil,
+		[]fortress.Member{{ID: id, Kind: kitmember.KindInstance, State: group.StateApproved}},
+		[]group.Member{{ID: id, Kind: kitmember.KindInstance, Name: "cellar", State: group.StateApproved}},
+		nil)
+	want := []fortressLeft{{App: "bombvault", Name: "BombVault", Device: "cellar"}}
+	if !slices.Equal(left, want) {
+		t.Errorf("the change left %+v on the old phrase, want %+v", left, want)
 	}
 }
