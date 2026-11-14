@@ -91,11 +91,13 @@ func statsTestService(t *testing.T, eng ResticEngine) (*Service, *store.Repo) {
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return &Service{
+	svc := &Service{
 		cfg:    config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir},
 		store:  st,
 		engine: eng,
-	}, st
+	}
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 // The throttle reads the newest repo_stats row, which is written only when a

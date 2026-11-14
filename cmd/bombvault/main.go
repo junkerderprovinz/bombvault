@@ -711,7 +711,11 @@ func run() error {
 		svc.BeginShutdown()
 		// A restic left running would outlive this process, and the end of
 		// the container kills it without a chance to drop its lock.
-		if !engine.Processes.End(resticEndGrace) {
+		if engine.Processes.End(resticEndGrace) {
+			// The samples write to the store as their restic runs return,
+			// and the store closes once run does.
+			svc.WaitForSamples()
+		} else {
 			log.Printf("shutdown: restic still running after %s, leaving it", resticEndGrace)
 		}
 		log.Printf("shutdown: done")
