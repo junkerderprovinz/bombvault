@@ -344,7 +344,8 @@ for (const width of [1280, 390]) {
     Object.assign(f, { members: [], memberSeen: false, joinedAgo: 90, mode: "project", connected: false });
     await page.reload();
     await expect(phraseCard(page)).toHaveAttribute("data-stage", "alone");
-    await expect(page.getByText("Relay nicht erreichbar", { exact: true })).toBeVisible();
+    await expect(phraseCard(page).getByText("Relay nicht erreichbar", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("relay-state")).toHaveText("Relay nicht erreichbar");
     await expect(page.locator("[data-form]").getByRole("button", { name: "Erneut prüfen" })).toBeVisible();
     await settle(page);
     await expectFits(page);
