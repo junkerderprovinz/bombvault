@@ -31,6 +31,13 @@ type FortressMembership struct {
 // Joined reports whether the install is in a fortress.
 func (m FortressMembership) Joined() bool { return len(m.SecretEnc) > 0 }
 
+// SeenBeforeChange reports whether a member last seen at seen was out of
+// reach when the phrase last changed, so it may still hold the old one.
+// Changed is kept to the second, so the whole of that second counts.
+func (m FortressMembership) SeenBeforeChange(seen time.Time) bool {
+	return len(m.PreviousEnc) > 0 && seen.Unix() <= m.Changed.Unix()
+}
+
 // FortressMembership reads the single membership row.
 func (r *Repo) FortressMembership() (FortressMembership, error) {
 	var m FortressMembership

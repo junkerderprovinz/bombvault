@@ -139,7 +139,7 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		}
 		if !mb.LastSeen.IsZero() {
 			mv.LastSeen = mb.LastSeen.Unix()
-			mv.OldPhrase = !mv.Online && len(m.PreviousEnc) > 0 && mb.LastSeen.Before(m.Changed)
+			mv.OldPhrase = !mv.Online && m.SeenBeforeChange(mb.LastSeen)
 		}
 		v.Members = append(v.Members, mv)
 	}
