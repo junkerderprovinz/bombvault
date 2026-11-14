@@ -39,6 +39,7 @@ function group(over: Partial<GroupState> = {}): GroupState {
     relay: { mode: "project", url: "", projectUrl: "wss://parleyport.halleluja.design/relay/connect", connected: true, fortress: false, serve: false, serveClients: 0 },
     joinedAgo: 300,
     memberSeen: true,
+    createdHere: false,
     waiting: [],
     selfAddress: "",
     ownAddresses: [],

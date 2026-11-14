@@ -11,19 +11,14 @@ export const ALONE_AFTER_S = 60;
 /** "gone" is a group whose members were there once and are unreachable now. */
 export type PairStage = "unpaired" | "new" | "searching" | "alone" | "gone" | "paired";
 
-/** pairStage reads the stage from the group, the seconds since this instance
- *  entered it and whether this page created it. Only a member found now
- *  counts as paired. */
-export function pairStage(
-  g: Pick<GroupState, "active" | "members" | "memberSeen">,
-  joinedAgo: number,
-  createdHere: boolean,
-): PairStage {
+/** pairStage reads the stage from the group and the seconds since this
+ *  instance entered it. Only a member found now counts as paired. */
+export function pairStage(g: Pick<GroupState, "active" | "members" | "memberSeen" | "createdHere">, joinedAgo: number): PairStage {
   if (!g.active) return "unpaired";
   if (g.members.length > 0) return "paired";
   if (g.memberSeen) return "gone";
   if (joinedAgo >= ALONE_AFTER_S) return "alone";
-  return createdHere ? "new" : "searching";
+  return g.createdHere ? "new" : "searching";
 }
 
 /** The badge each stage shows once there is a group. */

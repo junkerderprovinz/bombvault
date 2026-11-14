@@ -30,6 +30,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         relay: { mode: "project", url: "", projectUrl: "wss://parleyport.halleluja.design/relay/connect", connected: false, fortress: false, serve: false, serveClients: 0 },
         joinedAgo: 0,
         memberSeen: false,
+        createdHere: false,
         waiting: [],
         selfAddress: "",
         ownAddresses: [],

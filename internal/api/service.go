@@ -688,7 +688,11 @@ type Service struct {
 	relayServe atomic.Bool
 	// groupApplied is when applyGroup last rebuilt the connections to the
 	// group, in Unix nanoseconds.
-	groupApplied   atomic.Int64
+	groupApplied atomic.Int64
+	// madeHere is the sealed secret of the group whose phrase this instance
+	// made. The page asks only in a group's first minute, so it need not
+	// outlive the run.
+	madeHere       atomic.Pointer[[]byte]
 	fleetSyncMu    sync.Mutex
 	peerMuxOnce    sync.Once
 	peerMuxHandler http.Handler

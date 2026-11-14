@@ -7048,6 +7048,8 @@ export interface GroupState extends OkEnvelope {
   joinedAgo: number;
   /** Another member has shown up since this instance entered the group. */
   memberSeen: boolean;
+  /** The group's phrase was made here rather than entered. */
+  createdHere: boolean;
   /** The devices that wait for somebody here to let them in, and the
    *  instances this one waits for. */
   waiting: WaitingMember[];

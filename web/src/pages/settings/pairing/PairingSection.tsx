@@ -99,13 +99,12 @@ function Cards({
   t: T;
   nextHue: () => number;
 }) {
-  const [createdHere, setCreatedHere] = useState(false);
   const [showOthers, setShowOthers] = useState(storedShowOthers);
   const joinedAgo = useJoinedAgo(group);
   const apps = view.joined ? fortressApps(view.members, (unix) => relativeTime(t, unix), !openedAsPairedPhone()) : [];
   // With other apps in the fortress nobody waits for a first member, so the
   // card has nothing to suggest and no line counts the seconds.
-  const found = pairStage(group, joinedAgo, createdHere);
+  const found = pairStage(group, joinedAgo);
   const stage = apps.length > 0 && (found === "new" || found === "searching" || found === "alone") ? "paired" : found;
   const others =
     apps.length > 0
@@ -125,7 +124,6 @@ function Cards({
         view={view}
         stage={stage}
         nameRow={nameRow(view.defaultDevice)}
-        onCreatedHere={setCreatedHere}
         onGroup={onGroup}
         onRefresh={onRefresh}
         t={t}

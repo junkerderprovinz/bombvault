@@ -946,6 +946,7 @@ const GROUP = {
   },
   joinedAgo: 40 * DAY,
   memberSeen: true,
+  createdHere: false,
 };
 
 const roleRequest = (id: string, state: string, sections: string[]) => ({

@@ -36,6 +36,7 @@ interface Instance {
   active: boolean;
   joinedAgo: number;
   memberSeen: boolean;
+  createdHere: boolean;
   members: Member[];
   mode: string;
   url: string;
@@ -48,7 +49,7 @@ interface Instance {
 }
 
 function instance(name: string, over: Partial<Instance> = {}): Instance {
-  return { name, active: false, joinedAgo: 0, memberSeen: false, members: [], mode: "project", url: "", connected: true, joinFinds: [], ...over };
+  return { name, active: false, joinedAgo: 0, memberSeen: false, createdHere: false, members: [], mode: "project", url: "", connected: true, joinFinds: [], ...over };
 }
 
 function view(f: Instance) {
@@ -72,6 +73,7 @@ function view(f: Instance) {
     },
     joinedAgo: f.active ? f.joinedAgo : 0,
     memberSeen: f.memberSeen,
+    createdHere: f.active && f.createdHere,
     selfAddress: "https://tower-linz.familie-hofer.example.at:3443",
     waiting: [],
     ownAddresses: ["192.168.178.20", "10.20.30.41", "tower-linz-keller-serverschrank-2.local"],
@@ -145,13 +147,13 @@ async function stage(page: Page, f: Instance): Promise<void> {
     await route.fulfill({ json: { ok: true } });
   });
   await page.route("**/api/group/phrase", async (route) => {
-    Object.assign(f, { active: true, joinedAgo: 0, memberSeen: false, members: [] });
+    Object.assign(f, { active: true, joinedAgo: 0, memberSeen: false, createdHere: true, members: [] });
     await route.fulfill({ json: { ok: true, phrase: PHRASE, group: view(f) } });
   });
   await page.route("**/api/group/join", async (route) => {
     const { phrase } = route.request().postDataJSON() as { phrase: string };
     if (phrase !== PHRASE) return route.fulfill({ json: { ok: false, reason: "checksum" } });
-    Object.assign(f, { active: true, joinedAgo: 0, members: f.joinFinds, memberSeen: f.joinFinds.length > 0 });
+    Object.assign(f, { active: true, joinedAgo: 0, members: f.joinFinds, memberSeen: f.joinFinds.length > 0, createdHere: false });
     await route.fulfill({ json: view(f) });
   });
   await page.route("**/api/group/relay", async (route) => {

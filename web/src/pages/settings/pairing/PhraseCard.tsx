@@ -179,7 +179,6 @@ export function PhraseCard({
   view,
   stage,
   nameRow,
-  onCreatedHere,
   onGroup,
   onRefresh,
   t,
@@ -192,8 +191,6 @@ export function PhraseCard({
   stage: PairStage;
   /** The row that names this instance, at the top of the card on a phrase. */
   nameRow: ReactNode;
-  /** Tells the page whether the group this instance is in was made here. */
-  onCreatedHere: (created: boolean) => void;
   onGroup: (g: GroupState) => void;
   /** Asks the server for the group and the fortress again. */
   onRefresh: () => void;
@@ -231,7 +228,6 @@ export function PhraseCard({
 
   function forget() {
     setPhrase(null);
-    onCreatedHere(false);
     setCopies(0);
   }
 
@@ -240,7 +236,6 @@ export function PhraseCard({
       const res = await createPhrase();
       if (res.ok && res.phrase) {
         setPhrase(res.phrase);
-        onCreatedHere(true);
         if (res.group) onGroup(res.group);
         setShown("words");
       } else {

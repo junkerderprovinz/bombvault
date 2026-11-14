@@ -692,6 +692,8 @@ type groupView struct {
 	// forms by them, on the server's clock rather than the browser's.
 	JoinedAgo  int64 `json:"joinedAgo"`
 	MemberSeen bool  `json:"memberSeen"`
+	// CreatedHere says the group's phrase was made here rather than entered.
+	CreatedHere bool `json:"createdHere"`
 	// Waiting are the members that wait for a person here to let them in,
 	// and the ones this instance waits for there.
 	Waiting []group.Waiting `json:"waiting"`
@@ -794,6 +796,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		},
 		JoinedAgo:    joinedAgo,
 		MemberSeen:   !g.MemberSeenAt.IsZero(),
+		CreatedHere:  h.svc.madeHereNow(g),
 		Fortress:     h.svc.pairing().Following(),
 		OldPhrase:    h.svc.onOldPhrase(),
 		Behind:       h.svc.behindMove(),
@@ -851,6 +854,12 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
+	g, err := h.store.GetGroupState()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	h.svc.madeHere.Store(&g.SecretEnc)
 	if err := h.svc.AdoptGroupPhrase(false); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
@@ -883,6 +892,12 @@ func (h *Handler) keepGroupSecret(sec []byte) error {
 		enc = sealed
 	}
 	return h.store.SetGroupSecret(enc, time.Now())
+}
+
+// madeHereNow reports whether g runs on the phrase this instance made.
+func (s *Service) madeHereNow(g store.GroupState) bool {
+	made := s.madeHere.Load()
+	return made != nil && bytes.Equal(*made, g.SecretEnc)
 }
 
 // handleGroupShow shows the phrase again. With a login password set it has to

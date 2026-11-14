@@ -57,6 +57,7 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
     },
     joinedAgo: 300,
     memberSeen: true,
+    createdHere: false,
     waiting: [],
     selfAddress: "https://192.168.1.20:3443",
     ...over,
@@ -98,7 +99,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       return new Promise((resolve) => held.push(() => resolve(answer)));
     },
     createPhrase: () => {
-      group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0 });
+      group = makeGroup({ members: [], memberSeen: false, joinedAgo: 0, createdHere: true });
       fortress = fortressOf({ passwordSet: group.passwordSet });
       return Promise.resolve({ ok: true, phrase: PHRASE, group });
     },
@@ -426,12 +427,19 @@ describe("the tiles outside a group", () => {
 
 describe("the badge and the members", () => {
   it("says paired only once another member is found", () => {
-    expect(pairStage(outside(), 0, false)).toBe("unpaired");
-    expect(pairStage(makeGroup(), 5, true)).toBe("paired");
-    expect(pairStage(alone({ joinedAgo: 5 }), 5, true)).toBe("new");
-    expect(pairStage(alone({ joinedAgo: 5 }), 5, false)).toBe("searching");
-    expect(pairStage(alone(), 60, true)).toBe("alone");
-    expect(pairStage(alone({ memberSeen: true }), 600, false)).toBe("gone");
+    expect(pairStage(outside(), 0)).toBe("unpaired");
+    expect(pairStage(makeGroup({ createdHere: true }), 5)).toBe("paired");
+    expect(pairStage(alone({ joinedAgo: 5, createdHere: true }), 5)).toBe("new");
+    expect(pairStage(alone({ joinedAgo: 5 }), 5)).toBe("searching");
+    expect(pairStage(alone({ createdHere: true }), 60)).toBe("alone");
+    expect(pairStage(alone({ memberSeen: true }), 600)).toBe("gone");
+  });
+
+  it("keeps a phrase made here as made here when the page loads again", async () => {
+    group = alone({ joinedAgo: 12, createdHere: true });
+    await renderTab();
+    expect(stage()).toBe("new");
+    expect(screen.queryByText(en["pairing.searchingHint"])).toBeNull();
   });
 
   it("reads Searching with a running timer in the first minute after joining", async () => {

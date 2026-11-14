@@ -57,6 +57,27 @@ func TestTheGroupsPhraseIsTheFortressPhraseToo(t *testing.T) {
 	}
 }
 
+func TestTheGroupSaysWhetherItsPhraseWasMadeHere(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	t.Cleanup(a.svc.CloseFortress)
+	a.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "off"})
+	words := createGroupPhrase(t, a)
+	if _, view := a.do(t, http.MethodGet, "/api/group", nil); view["createdHere"] != true {
+		t.Fatalf("the group of a phrase made here = %v", view)
+	}
+
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	t.Cleanup(b.svc.CloseFortress)
+	b.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "off"})
+	if _, out := b.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": words}); out["ok"] != true || out["createdHere"] != false {
+		t.Fatalf("the group of entered words = %v", out)
+	}
+	a.do(t, http.MethodDelete, "/api/group", nil)
+	if _, view := a.do(t, http.MethodGet, "/api/group", nil); view["createdHere"] != false {
+		t.Fatalf("the group view after leaving = %v", view)
+	}
+}
+
 func TestAnotherAppGivenTheGroupsWordsMeetsBombVault(t *testing.T) {
 	rs := httptest.NewServer(relay.New())
 	t.Cleanup(rs.Close)
