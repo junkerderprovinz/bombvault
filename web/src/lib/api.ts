@@ -7020,6 +7020,8 @@ export interface RelayState {
   /** The project relay's address, for the page to show. */
   projectUrl: string;
   connected: boolean;
+  /** The fortress dials the relay, so `connected` is its link and not the pairing's. */
+  fortress: boolean;
   /** This instance serves a relay under /relay/connect. */
   serve: boolean;
   /** How many instances use this one as their relay right now. */

@@ -52,6 +52,7 @@ function makeGroup(over: Partial<GroupState> = {}): GroupState {
       projectUrl: "wss://parleyport.halleluja.design/relay/connect",
       connected: true,
       serve: false,
+      fortress: false,
       serveClients: 0,
     },
     joinedAgo: 300,
@@ -740,11 +741,28 @@ describe("relay card", () => {
     cleanup();
     group = makeGroup({ relay: { ...makeGroup().relay, connected: false } });
     await renderTab();
-    expect(screen.getByTestId("relay-state").textContent).toBe(en["instances.notConnected"]);
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.notConnected"]);
     cleanup();
     group = makeGroup({ relay: noRelay() });
     await renderTab();
     expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.off"]);
+  });
+
+  it("says plainly that an own relay it cannot reach is not reachable", async () => {
+    group = makeGroup({ relay: { ...makeGroup().relay, mode: "own", url: "wss://relay.invalid/relay/connect", connected: false } });
+    await renderTab();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.notConnected"]);
+    expect(screen.getByRole("button", { name: en["pairing.checkAgain"] })).not.toBeNull();
+  });
+
+  it("shows the fortress's relay link when only the fortress dials the relay", async () => {
+    group = outside({ relay: { ...makeGroup().relay, fortress: true, connected: true } });
+    await renderTab();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["instances.connected"]);
+    cleanup();
+    group = outside({ relay: { ...makeGroup().relay, fortress: true, connected: false } });
+    await renderTab();
+    expect(screen.getByTestId("relay-state").textContent).toBe(en["relay.notConnected"]);
   });
 
   it("says No group yet before there is a phrase to connect with", async () => {

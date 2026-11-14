@@ -941,6 +941,7 @@ const GROUP = {
     projectUrl: "wss://parleyport.halleluja.design/relay/connect",
     connected: true,
     serve: false,
+    fortress: false,
     serveClients: 0,
   },
   joinedAgo: 40 * DAY,

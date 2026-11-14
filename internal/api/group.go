@@ -698,7 +698,10 @@ type relayView struct {
 	URL        string `json:"url"`
 	ProjectURL string `json:"projectUrl"`
 	Connected  bool   `json:"connected"`
-	Serve      bool   `json:"serve"`
+	// Fortress says the fortress dials the relay, so Connected is its link
+	// and not the pairing's.
+	Fortress bool `json:"fortress"`
+	Serve    bool `json:"serve"`
 	// ServeClients is how many instances use this one as their relay now.
 	ServeClients int `json:"serveClients"`
 }
@@ -737,6 +740,11 @@ func (h *Handler) groupViewNow() (groupView, error) {
 			fingerprint = kitmember.Fingerprint(keydeposit.OwnerKey(seed))
 		}
 	}
+	connected := h.svc.pairing().RelayConnected()
+	f := h.svc.fortressNow()
+	if f != nil {
+		connected = f.RelayConnected()
+	}
 	return groupView{
 		OK:          true,
 		Fingerprint: fingerprint,
@@ -753,7 +761,8 @@ func (h *Handler) groupViewNow() (groupView, error) {
 			Mode:         g.RelayMode,
 			URL:          g.RelayURL,
 			ProjectURL:   relay.DefaultURL,
-			Connected:    h.svc.pairing().RelayConnected(),
+			Connected:    connected,
+			Fortress:     f != nil,
 			Serve:        g.RelayServe,
 			ServeClients: clients,
 		},

@@ -69,7 +69,7 @@ export function group(): GroupState {
     name: "tower",
     passwordSet: true,
     members: [{ id: "peer-1", name: "tower-2", version: "9.9.1", direct: true, relay: false, address: "" }],
-    relay: { mode: "off", url: "", projectUrl: "", connected: false, serve: false, serveClients: 0 },
+    relay: { mode: "off", url: "", projectUrl: "", connected: false, fortress: false, serve: false, serveClients: 0 },
     joinedAgo: 0,
     memberSeen: true,
     waiting: [],

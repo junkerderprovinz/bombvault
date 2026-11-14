@@ -67,6 +67,7 @@ function view(f: Instance) {
       projectUrl: "wss://parleyport.halleluja.design/relay/connect",
       connected: f.active && f.connected,
       serve: false,
+      fortress: false,
       serveClients: 0,
     },
     joinedAgo: f.active ? f.joinedAgo : 0,

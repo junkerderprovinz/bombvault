@@ -27,7 +27,7 @@ vi.mock("../lib/api", async (importOriginal) => {
         members: [],
         away: [],
         settling: false,
-        relay: { mode: "project", url: "", projectUrl: "wss://parleyport.halleluja.design/relay/connect", connected: false, serve: false, serveClients: 0 },
+        relay: { mode: "project", url: "", projectUrl: "wss://parleyport.halleluja.design/relay/connect", connected: false, fortress: false, serve: false, serveClients: 0 },
         joinedAgo: 0,
         memberSeen: false,
         waiting: [],

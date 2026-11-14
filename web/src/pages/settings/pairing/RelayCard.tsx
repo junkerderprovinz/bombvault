@@ -151,18 +151,19 @@ export function RelayCard({
     form === "off"
       ? undefined
       : [t("relay.seesLabel"), t(copy.sees), t("relay.notSeesLabel"), t("relay.notSeesContent"), t("relay.notSeesBackups")].join(" ");
-  const connected = group.active && form !== "off" && relay.connected;
   // The relay key comes from the twelve words, so the relay is only dialled
-  // inside a group; before that there is nothing to be connected.
+  // inside a group or a fortress; before that there is nothing to be connected.
+  const dialled = group.active || relay.fortress;
+  const connected = dialled && form !== "off" && relay.connected;
   const state =
     form === "off" ? (
       <Badge tone="neutral" size="large">{t("relay.off")}</Badge>
-    ) : !group.active ? (
+    ) : !dialled ? (
       <Badge tone="neutral" size="large">{t("relay.noGroup")}</Badge>
     ) : relay.connected ? (
       <Badge tone="ok" size="large">{t("instances.connected")}</Badge>
     ) : (
-      <Badge tone="warn" size="large">{t("instances.notConnected")}</Badge>
+      <Badge tone="warn" size="large">{t("relay.notConnected")}</Badge>
     );
 
   // A route that should be up and is not offers another look right where its
