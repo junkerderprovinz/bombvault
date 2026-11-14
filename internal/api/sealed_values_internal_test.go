@@ -34,7 +34,7 @@ var sealSites = map[string]string{
 	"takeOverStagedSettings": keptOutside,
 	"finishTakeover":         "backup_key.key_enc",
 	"AdoptEmergencyKey":      "backup_key.key_enc",
-	"storeGroupSecret":       "group_state.secret_enc",
+	"keepGroupSecret":        "group_state.secret_enc",
 	"Save":                   "group_state.kit_state_enc",
 	"pairedPassword":         "received_repos.restic_password_enc",
 	"ConvertLegacyAppKeys":   "pull_sources.restic_password_enc",

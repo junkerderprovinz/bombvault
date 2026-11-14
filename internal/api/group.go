@@ -838,6 +838,16 @@ func (h *Handler) handleGroupCreate(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h *Handler) storeGroupSecret(sec []byte) error {
+	if err := h.keepGroupSecret(sec); err != nil {
+		return err
+	}
+	h.svc.applyGroup()
+	return nil
+}
+
+// keepGroupSecret stores sec as the group's secret without opening the
+// group on it.
+func (h *Handler) keepGroupSecret(sec []byte) error {
 	var enc []byte
 	if sec != nil {
 		sealed, err := secret.Encrypt(h.cfg.AppKey, sec)
@@ -846,11 +856,7 @@ func (h *Handler) storeGroupSecret(sec []byte) error {
 		}
 		enc = sealed
 	}
-	if err := h.store.SetGroupSecret(enc, time.Now()); err != nil {
-		return err
-	}
-	h.svc.applyGroup()
-	return nil
+	return h.store.SetGroupSecret(enc, time.Now())
 }
 
 // handleGroupShow shows the phrase again. With a login password set it has to
@@ -945,10 +951,10 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	case cur != nil:
 		err = h.leavePairing(r.Context())
 		if err == nil {
-			err = h.storeGroupSecret(sec)
+			err = h.keepGroupSecret(sec)
 		}
 	default:
-		err = h.storeGroupSecret(sec)
+		err = h.keepGroupSecret(sec)
 	}
 	if err == nil {
 		err = h.svc.AdoptGroupPhrase(true)
@@ -959,6 +965,9 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 		writeFortressError(w, errors.Join(err, h.svc.leaveGroup()))
 		return
 	}
+	// The group asks the members to approve this instance, so it opens only
+	// once the fortress took it.
+	h.svc.applyGroup()
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
