@@ -11,16 +11,15 @@
 // Every page is rendered at twice the size and scaled down in a second page,
 // which keeps the text sharp through the phone's tilt.
 //
-// `node android/store/render.mjs readme` builds the README's pictures instead:
+// `node android/store/render.mjs readme` builds the README's picture instead:
 // .github/assets/screenshots/android.png at 1920x1000, as wide as the other
-// screenshots, and the call for Android testers, testers.png at 1920x640,
-// with the two steps as QR codes.
+// screenshots.
 //
 // `node android/store/render.mjs docs [folder]` writes the start screen for
 // the documentation, plain at 390x844 in the dark and the light theme, to
 // docs/assets/screenshots/android or the folder given.
 //
-// Deps (global): playwright-core with its Chromium installed, qrcode-generator.
+// Deps (global): playwright-core with its Chromium installed.
 // Run: (cd web && npm run build && npm run build:launcher) && go build ./cmd/bombvault && node android/store/render.mjs [readme]
 
 import { execSync, spawn } from "node:child_process";
@@ -35,7 +34,6 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const globalRoot = execSync("npm root -g").toString().trim();
 const { chromium } = require(`${globalRoot}/playwright-core`);
-const qrcode = require(`${globalRoot}/qrcode-generator`);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = dirname(dirname(here));
@@ -647,57 +645,6 @@ ${phone(middle, { x: 1060, y: 150, sw: 380, lift: middle.lift })}
 </body></html>`;
 }
 
-const TESTER_GROUP = "https://groups.google.com/g/arrowloop-testers";
-const TEST_PAGE = "https://play.google.com/apps/testing/bombvault.halleluja.design";
-
-/** `url` as a QR code, one SVG unit per module. */
-function qrSvg(url) {
-  const qr = qrcode(0, "M");
-  qr.addData(url);
-  qr.make();
-  const n = qr.getModuleCount();
-  let d = "";
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) d += `M${x} ${y}h1v1h-1z`;
-  return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path d="${d}" fill="#141414"/></svg>`;
-}
-
-/**
- * The README's call for Android testers, in English like the README, with the
- * two steps as QR codes so a reader on a desktop can scan them with the phone.
- */
-function testersShot(back, front) {
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${STYLE}
-body { width: 1920px; height: 640px; }
-.copy { position: absolute; left: 96px; top: 0; bottom: 0; width: 1100px; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
-.head { display: flex; align-items: center; gap: 22px; }
-.head img { width: 64px; }
-.label { padding: 8px 18px; border-radius: 8px; background: #FCC419; color: #141414; font: 700 22px/1 Lato, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
-h1 { font-size: 84px; line-height: 1.05; }
-.sub { font-size: 30px; line-height: 1.35; }
-.steps { display: flex; gap: 44px; margin-top: 10px; }
-.step { display: flex; align-items: center; gap: 22px; }
-.qr { width: 196px; height: 196px; padding: 14px; border-radius: 16px; background: #fff;
-  box-shadow: 0 0 0 6px rgba(252,196,25,.22), 0 18px 40px rgba(0,0,0,.5); }
-.qr svg { display: block; width: 100%; height: 100%; }
-.what { display: flex; flex-direction: column; gap: 10px; color: #f4f4f4; font: 700 28px/1.2 Lato, sans-serif; }
-.what b { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #FCC419; color: #141414; font-size: 26px; }
-.what small { color: #9d9481; font: 400 22px/1.3 Lato, sans-serif; }
-</style></head><body>
-${backdrop("40%", "58%", "-30%")}
-<div class="copy">
-  <div class="head"><img src="${vault}"><span class="label">Google Play closed test</span></div>
-  <h1>Android testers <em>wanted</em></h1>
-  <p class="sub">Keep BombVault installed for 14 days and help it go public.</p>
-  <div class="steps">
-    <div class="step"><div class="qr">${qrSvg(TESTER_GROUP)}</div><div class="what"><b>1</b>Join the group<small>with your phone's<br>Google account</small></div></div>
-    <div class="step"><div class="qr">${qrSvg(TEST_PAGE)}</div><div class="what"><b>2</b>Become a tester<small>then install it<br>from Google Play</small></div></div>
-  </div>
-</div>
-${phone(back, { x: 1290, y: 92, sw: 250 })}
-${phone(front, { x: 1530, y: 58, sw: 282 })}
-</body></html>`;
-}
-
 /** Play masks the icon itself, so the tile goes in square and without its rounded corners. */
 function storeIcon() {
   const square = iconSvg.replace(/ rx="68" ry="68"/, "").replace(/(<path class="cls-2" d=")[^"]*"/, '$1M500,0H1000V1000H500Z"');
@@ -729,8 +676,6 @@ async function readme(browser, urls) {
   const [list, activity, pairing] = [await shot("list"), await shot("activity"), await shot("pairing")];
   await render(browser, androidShot(activity, list, pairing, text), 1920, 1000, join(out, "android.png"));
   console.log("wrote .github/assets/screenshots/android.png");
-  await render(browser, testersShot(list, activity), 1920, 640, join(out, "testers.png"));
-  console.log("wrote .github/assets/screenshots/testers.png");
 }
 
 /**
