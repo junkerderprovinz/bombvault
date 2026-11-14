@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{#
+  Shared documentation theme. Everything app-specific comes from mkdocs.yml:
+  site_name, theme.logo, nav and extra.docs_theme (see docs-theme/README.md).
+#}
+{% block fonts %}
+  {{ super() }}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bree+Serif&display=swap">
+{% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ 'assets/docs-theme/theme.css' | url }}">
+{% endblock %}
+
+{% block extrahead %}
+  {% set dt = config.extra.docs_theme or {} %}
+  {% if dt.accent or dt.accent_contrast %}
+    <style>:root{
+      {%- if dt.accent %}--dt-accent:{{ dt.accent }};{% endif -%}
+      {%- if dt.accent_contrast %}--dt-accent-contrast:{{ dt.accent_contrast }};{% endif -%}
+    }</style>
+  {% endif %}
+{% endblock %}
+
+{% block hero %}
+  {% set dt = config.extra.docs_theme or {} %}
+  {#- The home page of every language gets the hero; its front matter can
+      translate the texts under the same keys. -#}
+  {% set home = page and page.is_index and page.url.count("/") <= 1 %}
+  {% if home and (dt.hero or page.meta.hero) %}
+    {% set hero = dict(dt.hero or {}, **(page.meta.hero or {})) %}
+    {% include "partials/dt-hero.html" %}
+  {% endif %}
+{% endblock %}
+
+{#
+  Material's site_nav block with one addition: the theme and language
+  controls pinned to the bottom of the rail, as in the apps.
+#}
+{% block site_nav %}
+  {% if nav %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "navigation" in page.meta.hide %}
+    {% endif %}
+    <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" {{ hidden }}>
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          {% include "partials/nav.html" %}
+          {% include "partials/dt-sidebar-controls.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+  {% if "toc.integrate" not in features %}
+    {% if page.meta and page.meta.hide %}
+      {% set hidden = "hidden" if "toc" in page.meta.hide %}
+    {% endif %}
+    <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" {{ hidden }}>
+      <div class="md-sidebar__scrollwrap">
+        <div class="md-sidebar__inner">
+          {% include "partials/toc.html" %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ 'assets/docs-theme/theme.js' | url }}"></script>
+{% endblock %}

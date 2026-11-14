@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "docs-theme/**"
       - "mkdocs.yml"
       - "docs-requirements.txt"
       - ".github/workflows/docs.yml"

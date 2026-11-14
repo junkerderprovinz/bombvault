@@ -1,6 +1,15 @@
-# BombVault
+---
+hero:
+  claim: Ein Backup einwerfen.
+  accent: Eine Wiederherstellung zünden.
+  text: Sicherung und vollständige Wiederherstellung für Unraid und andere Docker-Hosts. Container, VMs, Ordner, ZFS-Datasets und der Flash-Stick kommen so zurück, wie sie waren.
+  buttons:
+    - { text: Erste Schritte, link: getting-started/, primary: true }
+    - { text: Praxisbeispiele, link: guides/ }
+    - { text: Quellcode, link: "https://github.com/junkerderprovinz/bombvault" }
+---
 
-**Deine Unraid-Daten, sicher im Tresor verwahrt. Ein Backup einwerfen. Eine Wiederherstellung zünden.**
+# BombVault
 
 ![Die Übersicht: der Statuskopf, was dich braucht, der Schutz jedes Bereichs, die Speicherorte und der Verlauf.](assets/screenshots/overview/home-dark.png#only-dark)
 ![Die Übersicht: der Statuskopf, was dich braucht, der Schutz jedes Bereichs, die Speicherorte und der Verlauf.](assets/screenshots/overview/home-light.png#only-light)

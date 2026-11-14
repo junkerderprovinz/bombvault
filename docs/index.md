@@ -1,7 +1,5 @@
 # BombVault
 
-**Your Unraid data, sealed in a vault. Drop a backup. Detonate a restore.**
-
 ![The overview: the status head, what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/overview/home-dark.png#only-dark)
 ![The overview: the status head, what needs you, the protection of each section, the storage locations and the history.](assets/screenshots/overview/home-light.png#only-light)
 
