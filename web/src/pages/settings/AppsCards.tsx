@@ -20,6 +20,7 @@ import { Card } from "./shared";
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const APK = "bombvault-android.apk";
 const FDROID = "https://f-droid.org/packages/bombvault.halleluja.design/";
+const PLAY = "https://play.google.com/store/apps/details?id=bombvault.halleluja.design";
 // The first release whose assets carry the APK.
 const FIRST_APK: [number, number, number] = [9, 7, 0];
 
@@ -57,10 +58,10 @@ function open(url: string) {
 }
 
 /**
- * PhoneAppCard offers the Android app. F-Droid lists it and Google Play does
- * not yet, so Play stands as coming. The APK is the running release's own, and
- * its version stands in the card's corner; a server that is no release gets
- * the latest APK and no number, since it cannot know which one that is.
+ * PhoneAppCard offers the Android app from Google Play, F-Droid and as an
+ * APK. The APK is the running release's own, and its version stands in the
+ * card's corner; a server that is no release gets the latest APK and no
+ * number, since it cannot know which one that is.
  */
 export function PhoneAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"]; hueIndex?: number }) {
   const [release, setRelease] = useState<string | null>(null);
@@ -93,7 +94,12 @@ export function PhoneAppCard({ t, hueIndex }: { t: ReturnType<typeof useT>["t"];
         </a>
       )}
       <div className="glim-readme-btn-rows">
-        <ReadmeButton tile="glim-tile-play" parts={[{ name: "Google Play" }]} mark={<BrandMark svg={PLAY_SVG} />} soonLabel={soon} />
+        <ReadmeButton
+          tile="glim-tile-play"
+          parts={[{ name: "Google Play", href: PLAY }]}
+          mark={<BrandMark svg={PLAY_SVG} />}
+          soonLabel={soon}
+        />
         <ReadmeButton
           tile="glim-tile-fdroid"
           parts={[{ name: "F-Droid", href: FDROID }]}
