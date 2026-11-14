@@ -60,7 +60,9 @@ func twoRepoDomain(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Re
 	if _, err := st.WritePlacement(store.ItemRef{Domain: "containers", Key: "plex"}, &store.HomeWrite{Repo: named.ID, Choice: store.RepoChosen}, nil, nil); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st, own, cold
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st, own, cold
 }
 
 // errWrongKey is restic's message for a wrong key, which the Recovery wizard

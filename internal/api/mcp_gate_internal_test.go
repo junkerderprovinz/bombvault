@@ -30,6 +30,7 @@ func newMCPGateHandler(t *testing.T) (*Handler, http.Handler, *store.Repo, *sql.
 	h.cfg.DataDir = dir
 	h.cfg.HostMountRoot = dir
 	h.svc = NewService(h.cfg, repo, nil, nil, nil)
+	t.Cleanup(h.svc.WaitForSamples)
 	return h, h.Router(), repo, db
 }
 

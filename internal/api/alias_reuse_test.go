@@ -69,6 +69,7 @@ func TestSnapshotsOfAReusedNameLeaveTheAliasOwnersHistory(t *testing.T) {
 			{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
 		}}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 
 		b, err := svc.Snapshots(context.Background(), "radarr-movies", "")
 		if err != nil {
@@ -115,6 +116,7 @@ func TestSnapshotsVMOfAReusedNameLeaveTheAliasOwnersHistory(t *testing.T) {
 		{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"vm:win11", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.SnapshotsVM(context.Background(), "windows-11", "")
 	if err != nil {
@@ -142,6 +144,7 @@ func TestDeleteBackupsOfAReusedNameSparesTheAliasOwnersHistory(t *testing.T) {
 		{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackups(context.Background(), "radarr-movies", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
@@ -177,6 +180,7 @@ func TestDeleteBackupsVMOfAReusedNameSparesTheAliasOwnersHistory(t *testing.T) {
 		{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"vm:win11", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "windows-11", ""); err != nil {
 		t.Fatalf("DeleteBackupsVM: %v", err)
@@ -217,6 +221,7 @@ func TestSnapshotsTwoAliasesEachClaimOnlyBeforeItsOwnLink(t *testing.T) {
 		{ID: "cur", Time: "2024-10-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
 	if err != nil {
@@ -258,7 +263,9 @@ func retentionBackupService(t *testing.T, name string, snaps []restic.Snapshot, 
 		Mounts:  []model.Mount{{Type: "bind", Source: appdata, Destination: "/config"}},
 	}}
 	eng := &fakeResticEngine{snaps: snaps}
-	return api.NewService(cfg, st, d, fakeVirsh{}, eng), eng, repo
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, eng, repo
 }
 
 // With two aliases, one alias that has a post-link snapshot is left out of
@@ -404,6 +411,7 @@ func pruneGroups(t *testing.T, domain string, snaps []restic.Snapshot, setup fun
 	setup(st)
 	eng := &fakeResticEngine{snaps: snaps}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.PruneDomain(context.Background(), domain, ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
 	}
@@ -541,6 +549,7 @@ func TestPruneDomainForgetsNothingWhenTheListingFails(t *testing.T) {
 	repo := establishLocalRepo(t, dir, s.ContainersPath)
 	eng := &fakeResticEngine{snapsErrFor: map[string]error{repo: errors.New("repository unreadable")}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("a prune whose listing failed must report it")
@@ -589,7 +598,9 @@ func unlinkService(t *testing.T, snaps []restic.Snapshot, offsite []restic.Snaps
 	}
 	eng := &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{repo: snaps, unlinkOffsiteRepo: offsite}}
 	d := &fakeServiceDocker{listOut: nil}
-	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st, eng, repo
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st, eng, repo
 }
 
 // Unlinking moves the entry back onto the old tag, which carries no time

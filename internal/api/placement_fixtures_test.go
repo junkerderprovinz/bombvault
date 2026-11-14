@@ -85,8 +85,10 @@ func newPlacementFixture(t *testing.T) *placementFixture {
 	dock := &placementDocker{installed: map[string]bool{}}
 	virsh := &placementVirsh{}
 	svc := NewService(cfg, st, dock, virsh, eng)
-	// A delete leaves its prune running, which writes into dir and the store.
+	// A delete leaves its prune running and a pass its size sample, which
+	// write into dir and the store.
 	t.Cleanup(svc.deletePrunes.Wait)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	f := &placementFixture{
 		t: t, svc: svc, h: NewHandler(cfg, st, dock, svc, sched, spike.DefaultProbes()),

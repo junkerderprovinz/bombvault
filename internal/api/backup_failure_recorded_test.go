@@ -72,6 +72,7 @@ func TestBackupRecordsFailedRunOnPreflightFault(t *testing.T) {
 			d := &fakeServiceDocker{inspectErr: tc.inspectErr}
 			eng := &fakeResticEngine{initErr: tc.initErr}
 			svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+			t.Cleanup(svc.WaitForSamples)
 
 			tg, err := st.UpsertTarget(store.Target{ContainerName: "Nexterm", IncludeInSchedule: true})
 			if err != nil {
@@ -142,6 +143,7 @@ func TestBackupSuccessRecordsSingleRun(t *testing.T) {
 
 	d := &fakeServiceDocker{} // Inspect succeeds → stateless container
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "stateless", IncludeInSchedule: true})
 	if err != nil {

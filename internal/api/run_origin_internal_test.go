@@ -14,6 +14,7 @@ import (
 func TestStartRunStampsOriginAndGroupFromContext(t *testing.T) {
 	st := newTestStore(t)
 	s := &Service{store: st}
+	t.Cleanup(s.WaitForSamples)
 
 	ctx := WithRunGroup(WithRunOrigin(context.Background(), RunOrigin{Via: "mcp", KeyID: "k1"}), "g1")
 	id, err := s.startRun(ctx, "t1", "backup")

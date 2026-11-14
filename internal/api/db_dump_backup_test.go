@@ -53,7 +53,9 @@ func newDumpBackupFixture(t *testing.T, image string) *dumpBackupFixture {
 		Mounts: []model.Mount{{Type: "bind", Source: "/mnt/user/appdata/pg", Destination: "/var/lib/postgresql/data"}},
 	}}
 	eng := &fakeResticEngine{}
-	return &dumpBackupFixture{st: st, doc: doc, eng: eng, svc: api.NewService(cfg, st, doc, fakeVirsh{}, eng)}
+	service := api.NewService(cfg, st, doc, fakeVirsh{}, eng)
+	t.Cleanup(service.WaitForSamples)
+	return &dumpBackupFixture{st: st, doc: doc, eng: eng, svc: service}
 }
 
 // runsOfKind returns the recorded runs of one kind for the only target.

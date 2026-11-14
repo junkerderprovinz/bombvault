@@ -98,7 +98,9 @@ func sharingService(t *testing.T, d *sharingDocker) (*api.Service, *store.Repo) 
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{}), st
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 func lastBackupRun(t *testing.T, st *store.Repo, name string) *store.Run {

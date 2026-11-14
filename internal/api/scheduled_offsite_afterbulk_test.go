@@ -71,6 +71,7 @@ func TestScheduledFilesRunReplicatesOffsite(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/app", Image: "app:latest", Running: true}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// The scheduled files job suppresses each set's inline off-site copy so the
 	// after-bulk hook replicates the batch once at the end.

@@ -33,6 +33,7 @@ func TestBackupVMRecordsTheVMsOwnAutostartSetting(t *testing.T) {
 		}
 		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir(), HostSourceRoot: "/mnt"}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 		if _, err := svc.BackupVM(context.Background(), "plainvm"); err != nil {
 			t.Fatalf("BackupVM: %v", err)
 		}

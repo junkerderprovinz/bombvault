@@ -69,6 +69,7 @@ func zfsRunFixture(t *testing.T, tree []zfs.ListEntry) (*Service, *store.Repo, *
 		},
 		repoMu: map[string]*sync.Mutex{"zfs": {}, "containers": {}},
 	}
+	t.Cleanup(s.WaitForSamples)
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatalf("read settings: %v", err)

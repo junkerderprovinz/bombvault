@@ -123,6 +123,7 @@ func vmZvolTestService(t *testing.T, domainXML string, ssh *zvolTPMSSH) (*api.Se
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, zvolTPMVirsh{domainXML: domainXML}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if ssh != nil {
 		svc.SetHostSSH(ssh)
 	}

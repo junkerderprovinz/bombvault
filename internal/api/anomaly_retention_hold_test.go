@@ -78,7 +78,9 @@ func holdService(t *testing.T, eng *fakeResticEngine, names ...string) (*api.Ser
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, holdDocker(names...), fakeVirsh{}, eng), st, db
+	svc := api.NewService(cfg, st, holdDocker(names...), fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st, db
 }
 
 // seedSteadySeries writes n daily backups of one size, the newest a day back,
@@ -364,6 +366,7 @@ func heldRepo(t *testing.T, eng *fakeResticEngine) (*api.Service, *store.Repo, h
 
 	d := &fakeServiceDocker{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes())
 	return svc, st, h.Router()

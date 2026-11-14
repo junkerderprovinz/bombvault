@@ -62,6 +62,7 @@ func newFirstBackupRig(t *testing.T) firstBackupRig {
 	}
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root}
 	rig.svc = api.NewService(cfg, st, rig.dock, fakeVirsh{}, rig.eng)
+	t.Cleanup(rig.svc.WaitForSamples)
 	return rig
 }
 
@@ -184,6 +185,7 @@ func TestASkippedBackupLeavesTheVMOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, notInstalledVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.BackupVM(context.Background(), "win11"); !errors.Is(err, backup.ErrVMNotInstalled) {
 		t.Fatalf("BackupVM = %v, want ErrVMNotInstalled", err)

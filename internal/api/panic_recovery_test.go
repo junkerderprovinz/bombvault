@@ -41,6 +41,7 @@ func panicRecoveryTestService(t *testing.T) (*api.Service, *store.Repo, *fakeRes
 	eng := &fakeResticEngine{}
 	prog := progress.NewStore()
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetProgress(prog)
 	return svc, st, eng
 }
@@ -246,6 +247,7 @@ func TestStartRestoreStackMemberPanicRecordsFailedRunAndContinues(t *testing.T) 
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	seedStackTarget(t, st, mountRoot, "web", "app", "web", "")
 	seedStackTarget(t, st, mountRoot, "worker", "app", "worker", "")
 
@@ -315,6 +317,7 @@ func TestStartRestoreConfigPanicRecordsFailedRunAndReleasesGuard(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, restorePanic: true, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	started, auto, err := svc.StartRestoreConfig(context.Background(), "", "local")
 	if err == nil || !strings.Contains(err.Error(), "recovered panic") {

@@ -52,6 +52,7 @@ func plexBackup(t *testing.T) (*api.Service, *store.Repo, *fakeServiceDocker) {
 		Mounts: []model.Mount{{Type: "bind", Source: appdata, Destination: "/config"}},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := st.UpsertTarget(store.Target{ContainerName: "plex", IncludeInSchedule: true}); err != nil {
 		t.Fatal(err)
 	}

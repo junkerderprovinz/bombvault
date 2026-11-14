@@ -61,7 +61,9 @@ func stackFixture(t *testing.T, workingDir string, eng api.ResticEngine) (*api.S
 			"com.docker.compose.project.working_dir": workingDir,
 		}},
 	}}
-	return api.NewService(cfg, st, d, fakeVirsh{}, eng), st
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 func TestABackupOfASetThatDoesNotExistIsRefused(t *testing.T) {
@@ -157,6 +159,7 @@ func TestAFolderMissingInsideHostDataIsNotCalledOutside(t *testing.T) {
 	dir := t.TempDir()
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: filepath.ToSlash(dir), HostSourceRoot: "/mnt"}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.Backup(context.Background(), "app"); err != nil {
 		t.Fatalf("Backup: %v", err)
 	}

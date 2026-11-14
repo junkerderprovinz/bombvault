@@ -103,6 +103,7 @@ func newVMTakeoverNamed(t *testing.T, oldName, newName string, snaps ...restic.S
 	}
 	f.eng = &fakeResticEngine{snapsByRepo: map[string][]restic.Snapshot{f.repo: snaps}}
 	f.svc = api.NewService(f.cfg, f.st, &fakeServiceDocker{}, f.virsh, f.eng)
+	t.Cleanup(f.svc.WaitForSamples)
 	return f
 }
 
