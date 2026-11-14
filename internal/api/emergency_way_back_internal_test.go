@@ -473,7 +473,7 @@ func TestARemoteOwnFolderMirrorsNoDefinition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Chdir(t.TempDir())
+	chdir(t, t.TempDir())
 	if err := f.svc.writeDefToStorage(settings, "nextcloud", settings.ContainersPath, []byte(`{}`), nil); err != nil {
 		t.Fatal(err)
 	}
