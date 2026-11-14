@@ -970,17 +970,22 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	}
 	// Other words leave the ones this instance is on first. Their members
 	// would otherwise stay away here for good, and keep this instance away
-	// there.
+	// there. They hear of the leave at once, so the fortress of the new words
+	// is asked first whether it takes this instance at all.
 	cur := h.svc.phraseSecret()
+	kept := false
 	switch {
 	case cur != nil && bytes.Equal(cur, sec):
 	case cur != nil:
-		err = h.leavePairing(r.Context())
+		err = h.svc.fortressTakes(sec)
 		if err == nil {
-			err = h.keepGroupSecret(sec)
+			err = h.leavePairing(r.Context())
+		}
+		if err == nil {
+			err, kept = h.keepGroupSecret(sec), true
 		}
 	default:
-		err = h.keepGroupSecret(sec)
+		err, kept = h.keepGroupSecret(sec), true
 	}
 	if err == nil {
 		err = h.svc.AdoptGroupPhrase(true)
@@ -988,7 +993,10 @@ func (h *Handler) handleGroupJoin(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, errShutOut) {
 		// The fortress's members turned this instance away, so it keeps no
 		// part of their words.
-		writeFortressError(w, errors.Join(err, h.svc.leaveGroup()))
+		if kept {
+			err = errors.Join(err, h.svc.leaveGroup())
+		}
+		writeFortressError(w, err)
 		return
 	}
 	// The group asks the members to approve this instance, so it opens only

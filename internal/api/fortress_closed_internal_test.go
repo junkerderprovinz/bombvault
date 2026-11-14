@@ -128,6 +128,49 @@ func TestEnteringTheWordsOfAClosedFortressKeepsNothingOfThem(t *testing.T) {
 	}
 }
 
+func TestEnteringTheWordsOfAClosedFortressKeepsTheGroupAndFortressThisInstanceHad(t *testing.T) {
+	url, words := closedFortress(t)
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	t.Cleanup(in.svc.CloseFortress)
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": url})
+	own := createGroupPhrase(t, in)
+	waitLong(t, "the fortress to reach its relay", func() bool { return in.svc.fortressNow().RelayConnected() })
+	before, err := in.st.FortressMembership()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, out := in.do(t, http.MethodPost, "/api/group/join", map[string]any{"phrase": words})
+	if out["ok"] != false || out["code"] != kitgroup.ClosedUntilNewPhrase {
+		t.Fatalf("entering the words after a removal = %v", out)
+	}
+	sec, err := phrase.Decode(own)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(groupSecretOf(t, in), sec) {
+		t.Fatal("the group lost its own words")
+	}
+	if !in.svc.pairing().Active() || in.svc.pairing().Following() {
+		t.Fatal("the group is not on its own words any more")
+	}
+	if in.svc.fortressNow() == nil || !in.svc.onGroupsPhrase() {
+		t.Fatal("the fortress on the group's phrase did not come back")
+	}
+	after, _ := in.st.FortressMembership()
+	if !bytes.Equal(after.SeedEnc, before.SeedEnc) {
+		t.Fatal("the fortress came back under another key")
+	}
+	waitLong(t, "the fortress to reach its relay again", func() bool {
+		_, view := in.do(t, http.MethodGet, "/api/group", nil)
+		relay, _ := view["relay"].(map[string]any)
+		return view["active"] == true && relay["connected"] == true
+	})
+	if _, view := in.do(t, http.MethodGet, "/api/fortress", nil); view["joined"] != true {
+		t.Fatalf("fortress view after the refused words = %v", view)
+	}
+}
+
 func TestWordsTheFortressTurnsAwayLeaveNoRequestAtItsBombVaults(t *testing.T) {
 	rs := httptest.NewServer(relay.New())
 	t.Cleanup(rs.Close)

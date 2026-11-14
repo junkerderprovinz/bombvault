@@ -282,6 +282,63 @@ func turnedAway(f *fortress.Fortress, relayed, onLAN bool) bool {
 	}
 }
 
+// fortressTakes asks the fortress of sec whether its members take this
+// instance, from a fortress opened beside the group and fortress it is in,
+// which stay as they are. It returns errShutOut when they turn it away.
+func (s *Service) fortressTakes(sec []byte) error {
+	seed, err := s.depositSeed()
+	if err != nil {
+		return err
+	}
+	id, err := kitmember.FromSeed(kitmember.KindInstance, seed)
+	if err != nil {
+		return err
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return err
+	}
+	s.house.mu.Lock()
+	src := s.house.src
+	s.house.mu.Unlock()
+	cfg := s.fortressConfig(fortress.Config{
+		Secret:   sec,
+		Identity: id,
+		Self:     group.Self{Name: s.pairName()},
+		Relay:    group.RelayMode(g.RelayMode),
+		RelayURL: g.RelayURL,
+		Store:    &askingStore{},
+	}, src)
+	if fortressLAN {
+		cfg.LAN = lan.New(lan.Config{Group: fortress.Multicast})
+		cfg.LAN.Start()
+		defer func() { _ = cfg.LAN.Close() }()
+	}
+	f, err := fortress.Open(cfg)
+	if err != nil {
+		return err
+	}
+	away := turnedAway(f, cfg.Relay != group.RelayOff, cfg.LAN != nil)
+	if err := f.Close(); err != nil {
+		log.Printf("fortress: close after asking: %v", err)
+	}
+	if away {
+		return errShutOut
+	}
+	return nil
+}
+
+// askingStore keeps what the kit writes while fortressTakes asks, and drops
+// it after. The kit serializes the calls.
+type askingStore struct{ raw []byte }
+
+func (a *askingStore) Load() ([]byte, error) { return a.raw, nil }
+
+func (a *askingStore) Save(raw []byte) error {
+	a.raw = bytes.Clone(raw)
+	return nil
+}
+
 // previousKept is how long the fortress is given the secret of the phrase
 // before a change. The kit answers on that phrase meanwhile, so that the
 // members that hold only keys, such as the Unraid plugins, fetch the new ones.
