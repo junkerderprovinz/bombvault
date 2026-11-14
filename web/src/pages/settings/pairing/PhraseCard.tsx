@@ -5,7 +5,7 @@
 // come it says what to do next. The phrase is the group's and the fortress's
 // at once, so other apps join with the same words.
 import { useEffect, useState, type ReactNode } from "react";
-import { fortressText } from "@glimstone/core";
+import { fill, fortressText } from "@glimstone/core";
 import { Card } from "../shared";
 import { Button } from "../../../components/Button";
 import { InfoBubble } from "../../../components/InfoBubble";
@@ -203,8 +203,9 @@ export function PhraseCard({
   // The words of a phrase made here, which show once without the password.
   const [phrase, setPhrase] = useState<string | null>(null);
   // The window over the card: the words just made, the field for the words
-  // of a first instance, or the field for another group's words.
-  const [shown, setShown] = useState<"words" | "enter" | "join" | null>(null);
+  // of a first instance, for another group's words, or for the fortress's
+  // new words.
+  const [shown, setShown] = useState<"words" | "enter" | "join" | "moved" | null>(null);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
   const [copies, setCopies] = useState(0);
@@ -282,6 +283,7 @@ export function PhraseCard({
     else push(t("vm.ssh.copyFailed"), "fail");
   }
 
+  const ftext = fortressText(lang);
   const enterTip = t("pairing.enterTip").replace("{path}", [t("settings.title"), t("pairing.title"), t("pairing.show")].join(", "));
   const closeShown = () => setShown(null);
 
@@ -345,6 +347,19 @@ export function PhraseCard({
         onClose={closeShown}
         t={t}
       />
+    ) : shown === "moved" ? (
+      <JoinWindow
+        id="pairing-phrase-moved"
+        title={ftext.enterPhrase}
+        hint={ftext.phraseWhere}
+        label={t("pairing.enterLabelOther")}
+        tip={enterTip}
+        busy={busy}
+        hueIndex={hueIndex}
+        onPair={join}
+        onClose={closeShown}
+        t={t}
+      />
     ) : shown === "join" ? (
       <JoinWindow
         id="pairing-phrase-other"
@@ -389,6 +404,24 @@ export function PhraseCard({
         {nameRow}
         <div className="flex flex-col gap-4.5" data-stage={stage} data-new="pairing-card">
           <RemovedHere view={view} />
+          {view.phraseChanged && (
+            <section data-fortress="moved" role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-statusWarnBgSoft px-3 py-2.5 text-sm">
+              <span className="text-statusWarn">
+                <PhraseGlyph kind="warn" size={18} />
+              </span>
+              <p className="min-w-0 flex-[1_1_16rem] text-carbon-text">
+                <strong className="font-semibold">{ftext.changedTitle}.</strong> {fill(ftext.phraseMoved, { app: "BombVault" })}
+              </p>
+              <Button
+                label={ftext.enterPhrase}
+                labelKey="pairing.enter"
+                glyph={<PhraseGlyph kind="enter" />}
+                tone="accent"
+                onClick={() => setShown("moved")}
+                disabled={busy}
+              />
+            </section>
+          )}
           {stage === "alone" && (
             <>
               <p className="text-sm text-carbon-textSub">

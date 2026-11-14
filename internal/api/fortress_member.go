@@ -582,10 +582,18 @@ func (s *Service) removedFrom(gen int) {
 	}()
 }
 
+// fortressLeft is a member still on the phrase before a change, by its app
+// where the fortress knows it and its device.
+type fortressLeft struct {
+	App    string `json:"app,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Device string `json:"device"`
+}
+
 // ChangeFortressPhrase gives the fortress a new phrase and opens it on that.
-// It returns the new words and the devices that were out of reach, which
-// still hold the old ones.
-func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []string, error) {
+// It returns the new words and the members that were out of reach, which
+// still hold the old ones, one entry each.
+func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []fortressLeft, error) {
 	s.house.door.Lock()
 	defer s.house.door.Unlock()
 	f := s.fortressNow()
@@ -602,20 +610,22 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []string, e
 	if err != nil {
 		return "", nil, err
 	}
-	left := []string{}
+	left := []fortressLeft{}
 	noted := map[string]bool{}
-	note := func(id, name string) {
+	note := func(id string, l fortressLeft) {
 		if slices.Contains(took, id) || noted[id] {
 			return
 		}
 		noted[id] = true
-		if !slices.Contains(left, name) {
-			left = append(left, name)
-		}
+		left = append(left, l)
 	}
 	for _, m := range f.Members() {
 		if m.Kind == kitmember.KindInstance {
-			note(m.ID, m.Device)
+			l := fortressLeft{Device: m.Device}
+			if m.App.ID != "" {
+				l.App, l.Name = m.App.ID, appName(m.App)
+			}
+			note(m.ID, l)
 		}
 	}
 	// Every instance the pairing let in counts, whether or not the fortress
@@ -628,11 +638,13 @@ func (s *Service) ChangeFortressPhrase(ctx context.Context) (string, []string, e
 	if p := f.Pairing(); p != nil {
 		for _, m := range p.Members() {
 			if m.Kind == kitmember.KindInstance && m.State == group.StateApproved && !behind[m.ID] {
-				note(m.ID, cmp.Or(m.Name, m.ID))
+				note(m.ID, fortressLeft{App: "bombvault", Name: "BombVault", Device: cmp.Or(m.Name, m.ID)})
 			}
 		}
 	}
-	slices.Sort(left)
+	slices.SortFunc(left, func(a, b fortressLeft) int {
+		return cmp.Or(cmp.Compare(a.Device, b.Device), cmp.Compare(a.Name, b.Name))
+	})
 	s.closeFortress()
 	if err := s.openFortress(); err != nil {
 		return "", nil, err

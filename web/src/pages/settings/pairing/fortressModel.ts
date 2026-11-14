@@ -7,6 +7,10 @@ import type { TranslationKey } from "../../../lib/i18n";
 
 const SELF = "bombvault";
 
+// The cards of members whose app the fortress has not heard yet, one each,
+// named after their device.
+const UNHEARD = "member:";
+
 /** The actions BombVault has words for: its own and the ones it calls. */
 const ACTION_TITLES: Record<string, TranslationKey> = {
   "backup.last": "fortress.action.backupLast",
@@ -26,17 +30,29 @@ const versionOf = (m: FortressMember) => m.version.replace(/^v/i, "") || undefin
 // Where a member says it runs: the server it names, else its device.
 const placeOf = (m: FortressMember) => `${m.app} ${(m.host || m.device).toLowerCase()}`;
 
+/** unheard says the card stands for a member whose app is unknown here,
+ *  which nothing can open or name beyond its device. */
+export const unheard = (app: FortressApp) => app.id.startsWith(UNHEARD);
+
+/** onOldPhrase names the members still on the phrase before a change, by
+ *  `named` where their app is known and by their device otherwise. */
+export function onOldPhrase(members: FortressMember[], named: (app: string, device: string) => string): string[] {
+  return members.filter((m) => m.oldPhrase && m.app !== SELF).map((m) => (m.app ? named(m.name || m.app, m.device) : m.device));
+}
+
 /** fortressApps puts each other app on one card. Every instance opens unless
  *  `opens` is false, as on a paired phone, whose session opens nothing. Two
  *  members that claim one app in one place are marked, since one of them may
- *  copy the other's sign-in. */
+ *  copy the other's sign-in. A member whose app is unknown gets a card of its
+ *  own under its device's name, and opens nothing. */
 export function fortressApps(members: FortressMember[], ago: (unix: number) => string, opens = true): FortressApp[] {
   const claims = new Map<string, number>();
   for (const m of members) claims.set(placeOf(m), (claims.get(placeOf(m)) ?? 0) + 1);
   const apps = new Map<string, FortressApp>();
   for (const m of members) {
     if (m.app === SELF) continue;
-    const app = apps.get(m.app) ?? { id: m.app, name: m.name || m.app, instances: [] };
+    const id = m.app || UNHEARD + m.id;
+    const app = apps.get(id) ?? { id, name: m.app ? m.name || m.app : m.device, instances: [] };
     app.logo ??= m.logo;
     app.instances.push({
       id: m.id,
@@ -47,11 +63,11 @@ export function fortressApps(members: FortressMember[], ago: (unix: number) => s
       presence: m.online ? "connected" : "away",
       relay: m.relay,
       lastSeen: !m.online && m.lastSeen ? ago(m.lastSeen) : undefined,
-      open: opens && m.kind === "instance" ? {} : undefined,
-      doubt: (claims.get(placeOf(m)) ?? 0) > 1 || undefined,
+      open: opens && m.app && m.kind === "instance" ? {} : undefined,
+      doubt: (!!m.app && (claims.get(placeOf(m)) ?? 0) > 1) || undefined,
       print: m.id.slice(-8),
     });
-    apps.set(m.app, app);
+    apps.set(id, app);
   }
   return [...apps.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

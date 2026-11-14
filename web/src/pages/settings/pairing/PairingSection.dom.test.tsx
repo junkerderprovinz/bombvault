@@ -548,6 +548,32 @@ describe("the badge and the members", () => {
   });
 });
 
+describe("after the fortress moved to a new phrase without this instance", () => {
+  const text = fortressText("en");
+
+  it("says so on the card and takes the new words through Enter phrase", async () => {
+    fortress = fortressOf({ phraseChanged: true });
+    await renderTab();
+    const note = phraseCard().querySelector('[data-fortress="moved"]') as HTMLElement;
+    expect(note.textContent).toContain(text.changedTitle);
+    expect(note.textContent).toContain(text.phraseMoved.replace("{app}", "BombVault"));
+    fireEvent.click(within(note).getByRole("button", { name: text.enterPhrase }));
+    expect(within(dialog()).getByLabelText(text.phraseWhere)).not.toBeNull();
+    fireEvent.change(within(dialog()).getByLabelText(en["pairing.enterLabelOther"]), { target: { value: PHRASE } });
+    await act(async () => {
+      fireEvent.click(pairButton());
+    });
+    expect(joined).toEqual([PHRASE]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.querySelector('[data-fortress="moved"]')).toBeNull();
+  });
+
+  it("says nothing of a new phrase while the instance is on the current one", async () => {
+    await renderTab();
+    expect(document.querySelector('[data-fortress="moved"]')).toBeNull();
+  });
+});
+
 describe("after a minute alone", () => {
   it("says to enter the words over there, or to take the other instance's words", async () => {
     group = alone();

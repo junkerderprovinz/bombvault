@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FortressMember } from "../../../lib/api";
 import { en } from "../../../lib/i18n";
-import { fortressApps, fortressPermissions, permissionOf } from "./fortressModel";
+import { fortressApps, fortressPermissions, onOldPhrase, permissionOf, unheard } from "./fortressModel";
 
 const t = (key: keyof typeof en) => en[key];
 
@@ -44,6 +44,20 @@ describe("fortressApps", () => {
     expect(app.instances[0]).toMatchObject({ form: "android", version: "2.6.9-12-gabc" });
   });
 
+  it("gives each member whose app is unknown a card of its own under its device, which opens nothing", () => {
+    const apps = fortressApps(
+      [member({ id: "m5", app: "", name: "", version: "", online: false }), member({ id: "m6", app: "", name: "", version: "", online: false })],
+      String,
+    );
+    expect(apps.map((a) => [a.name, unheard(a)])).toEqual([
+      ["Tower", true],
+      ["Tower", true],
+    ]);
+    expect(apps[0].instances[0]).toMatchObject({ device: "Tower", presence: "away" });
+    expect(apps[0].instances[0].open).toBeUndefined();
+    expect(apps[0].instances[0].doubt).toBeUndefined();
+  });
+
   it("opens nothing on a paired phone", () => {
     const [app] = fortressApps([member({})], String, false);
     expect(app.instances[0].open).toBeUndefined();
@@ -63,6 +77,21 @@ describe("fortressApps", () => {
       ["22222222", true],
       ["33333333", undefined],
     ]);
+  });
+});
+
+describe("onOldPhrase", () => {
+  it("names each member still on the old phrase once, by its app where it is known", () => {
+    const names = onOldPhrase(
+      [
+        member({ oldPhrase: true }),
+        member({ id: "m2", app: "firesquire", name: "FireSquire", oldPhrase: true }),
+        member({ id: "m3", app: "", name: "", oldPhrase: true }),
+        member({ id: "m4", app: "shiplog", name: "ShipLog" }),
+      ],
+      (app, device) => `${app} on ${device}`,
+    );
+    expect(names).toEqual(["TowerTorch on Tower", "FireSquire on Tower", "Tower"]);
   });
 });
 

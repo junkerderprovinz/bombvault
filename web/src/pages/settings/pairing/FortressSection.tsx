@@ -7,6 +7,7 @@ import {
   appCardView,
   fill,
   fortressText,
+  listOf,
   memberName,
   openRefusalText,
   othersLine,
@@ -50,7 +51,7 @@ import { useT } from "../../../lib/i18n";
 import { formatTs, relativeTime } from "../../../lib/reltime";
 import { useToast } from "../../../lib/toast";
 import { Facts, GlyphMark, InstanceCard, LogoMark } from "../../instances/InstanceCard";
-import { fortressApps, fortressPermissions, permissionOf } from "./fortressModel";
+import { fortressApps, fortressPermissions, onOldPhrase, permissionOf, unheard } from "./fortressModel";
 
 // The logo lets the permissions show BombVault beside the app it works with.
 const APP = { id: "bombvault", name: "BombVault", logo: "/logo.svg" };
@@ -212,7 +213,8 @@ async function changePhrase(text: FortressText, password: string): Promise<Chang
   const r = await changeFortressPhrase(password);
   if (r.code === "passwordWrong") return { wrong: true, error: text.passwordWrong };
   if (!r.ok || !r.phrase) return { error: r.error ?? text.failed };
-  return { words: r.phrase.split(" "), left: r.left ?? [] };
+  const left = (r.left ?? []).map((l) => (l.name ? fill(text.memberOn, { app: l.name, device: l.device }) : l.device));
+  return { words: r.phrase.split(" "), left };
 }
 
 /** ChangePassword asks for the login password in front of a phrase change.
@@ -306,7 +308,8 @@ function AppCard({
   const presence = (p: string) => (p === "connected" ? text.connected : p === "checking" ? text.checking : text.away);
   const removeButton = (instance: FortressInstance) =>
     remove &&
-    !instance.self && (
+    !instance.self &&
+    !unheard(app) && (
       <Button
         label={text.remove}
         labelKey="fortress.remove"
@@ -526,6 +529,7 @@ export function OtherApps({
   const givesBack = (p: FortressPermission | undefined) => !!giveBack && !!p && p.from === APP.id && p.id.endsWith(" backup.import");
   const permissions = all.map((p) => (givesBack(p) ? { ...p, on: p.on && !!giveBack?.on } : p));
   const giveBackAt = all.find(givesBack)?.id;
+  const left = onOldPhrase(view.members, (app, device) => fill(text.memberOn, { app, device }));
 
   const onPermission = async (id: string, on: boolean): Promise<FortressAnswer> => {
     const p = all.find((q) => q.id === id);
@@ -573,6 +577,11 @@ export function OtherApps({
         labelKeys={LABEL_KEYS}
         hueStart={hueStart}
       />
+      {showOthers && left.length > 0 && (
+        <p data-fortress="old-phrase" className="col-span-full text-sm text-carbon-textSub">
+          {t("pairing.oldPhrase").replace("{names}", () => listOf(lang, left))}
+        </p>
+      )}
       {passwordWindow}
       {statusWindow}
     </>

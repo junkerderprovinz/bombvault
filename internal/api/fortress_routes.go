@@ -45,10 +45,13 @@ type fortressView struct {
 	Removed []fortressRemoved `json:"removed"`
 	// RemovedHere says another member took this instance out.
 	RemovedHere bool `json:"removedHere"`
+	// PhraseChanged says a member told this instance that the fortress left
+	// its phrase without handing it the new one, so the page asks for it.
+	PhraseChanged bool `json:"phraseChanged"`
 }
 
-// fortressMemberView is another instance of the fortress that said which app
-// it runs.
+// fortressMemberView is another instance of the fortress. App is empty for
+// one BombVault knows only from the other members.
 type fortressMemberView struct {
 	ID         string `json:"id"`
 	App        string `json:"app"`
@@ -66,6 +69,9 @@ type fortressMemberView struct {
 	// Relay means it is reached through the relay alone.
 	Relay    bool  `json:"relay"`
 	LastSeen int64 `json:"lastSeen,omitempty"`
+	// OldPhrase says it was last seen before the phrase changed, so it still
+	// holds the old one.
+	OldPhrase bool `json:"oldPhrase,omitempty"`
 	// Logo is the app's mark as its status publishes it, a data URI that the
 	// page shows only as an image.
 	Logo string `json:"logo,omitempty"`
@@ -112,8 +118,17 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 	if f == nil {
 		return v, nil
 	}
+	v.PhraseChanged = f.PhraseChanged()
+	// The pairing's instances are BombVault's own, which the page shows apart
+	// even before the fortress heard their app.
+	paired := map[string]bool{}
+	if p := f.Pairing(); p != nil {
+		for _, pm := range p.Members() {
+			paired[pm.ID] = true
+		}
+	}
 	for _, mb := range f.Members() {
-		if mb.State != group.StateApproved || mb.App.ID == "" {
+		if mb.State != group.StateApproved || mb.App.ID == "" && paired[mb.ID] {
 			continue
 		}
 		mv := fortressMemberView{
@@ -124,6 +139,7 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 		}
 		if !mb.LastSeen.IsZero() {
 			mv.LastSeen = mb.LastSeen.Unix()
+			mv.OldPhrase = !mv.Online && len(m.PreviousEnc) > 0 && mb.LastSeen.Before(m.Changed)
 		}
 		v.Members = append(v.Members, mv)
 	}

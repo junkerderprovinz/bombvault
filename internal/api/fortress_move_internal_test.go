@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -399,7 +400,8 @@ func TestAPhraseChangeNamesAnInstanceOfThePairingTheFortressHasNotMet(t *testing
 	if out["ok"] != true {
 		t.Fatalf("change = %v", out)
 	}
-	if left, _ := out["left"].([]any); len(left) != 1 || left[0] != "attic" {
+	left, _ := out["left"].([]any)
+	if len(left) != 1 || !reflect.DeepEqual(left[0], map[string]any{"app": "bombvault", "name": "BombVault", "device": "attic"}) {
 		t.Fatalf("left on the old phrase = %v, want the instance still on its way in", out["left"])
 	}
 }

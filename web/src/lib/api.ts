@@ -7122,7 +7122,8 @@ export function setRelay(patch: { mode?: RelayMode; url?: string; serve?: boolea
   return fetchJSON("/api/group/relay", { method: "PUT", body: JSON.stringify(patch) });
 }
 
-/** Another instance of the fortress that said which app it runs. */
+/** Another instance of the fortress. `app` is empty for one this instance
+ *  knows only from the other members. */
 export interface FortressMember {
   id: string;
   app: string;
@@ -7140,6 +7141,8 @@ export interface FortressMember {
   relay: boolean;
   /** Unix seconds, absent while it was never seen. */
   lastSeen?: number;
+  /** It was last seen before the phrase changed, so it still holds the old one. */
+  oldPhrase?: boolean;
   /** The app's mark as a data URI, once its status was read. Shown only as an image. */
   logo?: string;
 }
@@ -7171,6 +7174,17 @@ export interface FortressState extends OkEnvelope {
   removed: FortressRemoved[];
   /** Another member took this instance out. */
   removedHere: boolean;
+  /** A member said the fortress moved on to a new phrase, which this
+   *  instance needs entered to follow. */
+  phraseChanged: boolean;
+}
+
+/** A member still on the phrase before a change, by its app where the
+ *  fortress knows it, and its device. */
+export interface FortressLeft {
+  app?: string;
+  name?: string;
+  device: string;
 }
 
 /** A member taken out of the fortress, by its app and device. */
@@ -7196,7 +7210,7 @@ export function showFortressPhrase(password: string): Promise<OkEnvelope & { phr
 
 /** POST /api/fortress/phrase - a new phrase for the login password, and the
  *  devices that still hold the old one. */
-export function changeFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string; left?: string[] }> {
+export function changeFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string; left?: FortressLeft[] }> {
   return fetchJSON("/api/fortress/phrase", { method: "POST", body: JSON.stringify({ password }) });
 }
 

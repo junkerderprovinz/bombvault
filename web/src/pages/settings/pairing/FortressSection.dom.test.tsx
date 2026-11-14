@@ -5,7 +5,7 @@
 // giving backups back sits under the permission it goes with.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { fortressText, storeShowOthers } from "@glimstone/core";
+import { fortressText, listOf, storeShowOthers } from "@glimstone/core";
 import jsQR from "jsqr";
 import { I18nProvider, en } from "../../../lib/i18n";
 import type { FortressMember, FortressState, GroupState } from "../../../lib/api";
@@ -74,7 +74,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     changeFortressPhrase: (password: string) => {
       calls.push(`change ${password}`);
       if (view.passwordSet && password !== "hunter2") return Promise.resolve({ ok: false, code: "passwordWrong", error: "wrong" });
-      return Promise.resolve({ ok: true, phrase: NEW_PHRASE, left: ["Cellar"] });
+      return Promise.resolve({
+        ok: true,
+        phrase: NEW_PHRASE,
+        left: [{ app: "firesquire", name: "FireSquire", device: "Tower" }, { app: "shiplog", name: "ShipLog", device: "Tower" }, { device: "Cellar" }],
+      });
     },
     leaveFortress: () => {
       calls.push("leave");
@@ -235,7 +239,7 @@ describe("the card of the phrase", () => {
     expect(changed).toBe(1);
   });
 
-  it("changes the phrase for the password, names who missed it, and leaves", async () => {
+  it("changes the phrase for the password, names each member that missed it, and leaves", async () => {
     renderBlock();
     fireEvent.click(button("open-change"));
     expect(screen.getByText(en["fortress.changeAway"])).toBeTruthy();
@@ -243,7 +247,8 @@ describe("the card of the phrase", () => {
     fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
     await act(async () => fireEvent.click(button("change-unlock")));
     expect(button("words").textContent).toContain("wrong");
-    expect(screen.getByText(en["fortress.changedLeft"].replace("{devices}", "Cellar"))).toBeTruthy();
+    const missed = listOf("en", ["FireSquire on Tower", "ShipLog on Tower", "Cellar"]);
+    expect(screen.getByText(en["fortress.changedLeft"].replace("{devices}", missed))).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     fireEvent.click(button("open-leave"));
@@ -313,6 +318,28 @@ describe("the other apps", () => {
     expect(document.querySelector("[data-fortress-app]")).toBeNull();
     expect(document.querySelector(".glim-fortress-actions")).toBeNull();
     expect(button("show")).toBeNull();
+  });
+
+  it("show a member whose app is unknown by its device, away, with nothing to open or remove", () => {
+    view = state({ members: [member({ id: "u1", app: "", name: "", version: "", device: "Attic", deployment: "plugin", online: false })] });
+    renderApps();
+    const card = document.querySelector('[data-instance="app-member:u1"]')!;
+    expect(card.textContent).toContain("Attic");
+    expect(card.textContent).toContain("Not reachable");
+    expect(within(card as HTMLElement).queryAllByRole("button")).toEqual([]);
+  });
+
+  it("name the members still on the old phrase, one each", () => {
+    view = state({
+      members: [
+        member({ id: "f1", app: "firesquire", name: "FireSquire", device: "Tower", online: false, oldPhrase: true }),
+        member({ id: "s1", app: "shiplog", name: "ShipLog", device: "Tower", online: false, oldPhrase: true }),
+        member({ id: "u1", app: "", name: "", device: "Attic", online: false, oldPhrase: true }),
+      ],
+    });
+    renderApps();
+    const names = listOf("en", ["FireSquire on Tower", "ShipLog on Tower", "Attic"]);
+    expect(button("old-phrase").textContent).toBe(en["pairing.oldPhrase"].replace("{names}", names));
   });
 
   it("open an app's own pages in a tab of their own, from anywhere", async () => {
