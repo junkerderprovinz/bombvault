@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/parleyport/kit/group"
 	"github.com/junkerderprovinz/parleyport/kit/lan"
 	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 // listenOnTestNetwork points the fortress's announces at a group of the
@@ -125,3 +128,73 @@ type memFortressStore struct{ raw []byte }
 
 func (m *memFortressStore) Load() ([]byte, error) { return m.raw, nil }
 func (m *memFortressStore) Save(raw []byte) error { m.raw = raw; return nil }
+
+// countingRelay is a relay of the test's own that counts the connections
+// made to it.
+func countingRelay(t *testing.T) (url string, dials func() int) {
+	t.Helper()
+	var n atomic.Int32
+	rs := httptest.NewUnstartedServer(relay.New())
+	rs.Config.ConnState = func(_ net.Conn, s http.ConnState) {
+		if s == http.StateHijacked {
+			n.Add(1)
+		}
+	}
+	rs.Start()
+	t.Cleanup(rs.Close)
+	return rs.URL, func() int { return int(n.Load()) }
+}
+
+func learnHost(svc *Service, host string) {
+	r := httptest.NewRequest("GET", "/api/status", nil)
+	r.Host = host
+	svc.learnDirectURL(r)
+}
+
+func TestTwoHostsInUseKeepTheFirstDirectAddressAndTheRelayLink(t *testing.T) {
+	url, dials := countingRelay(t)
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	if err := in.st.SetGroupRelay("own", url, false); err != nil {
+		t.Fatal(err)
+	}
+	learnHost(in.svc, "bombvault.example.org")
+	words, _ := newPhrase(t)
+	if err := in.svc.JoinFortress(words); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(in.svc.CloseFortress)
+	waitLong(t, "the fortress to reach its relay", func() bool { return in.svc.fortressNow().RelayConnected() })
+	time.Sleep(500 * time.Millisecond)
+	before := dials()
+
+	for range 5 {
+		learnHost(in.svc, "bombvault.example.org")
+		learnHost(in.svc, "192.168.77.9:13080")
+	}
+
+	if got := in.svc.selfDirectURL(); got != "http://bombvault.example.org" {
+		t.Errorf("direct address = %q, want the one in use first", got)
+	}
+	time.Sleep(3 * time.Second)
+	if got := dials() - before; got != 0 {
+		t.Errorf("the fortress dialled its relay %d more times, want it to keep the link", got)
+	}
+}
+
+func TestAnotherHostTakesOverOnceTheStoredOneWentUnused(t *testing.T) {
+	was := directSettle
+	directSettle = 100 * time.Millisecond
+	t.Cleanup(func() { directSettle = was })
+	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
+
+	learnHost(in.svc, "bombvault.example.org")
+	learnHost(in.svc, "192.168.77.9:13080")
+	if got := in.svc.selfDirectURL(); got != "http://bombvault.example.org" {
+		t.Fatalf("direct address = %q, want the one still in use", got)
+	}
+	time.Sleep(2 * directSettle)
+	learnHost(in.svc, "192.168.77.9:13080")
+	if got := in.svc.selfDirectURL(); got != "http://192.168.77.9:13080" {
+		t.Errorf("direct address = %q, want the host in use now", got)
+	}
+}

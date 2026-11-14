@@ -309,6 +309,9 @@ type Service struct {
 
 	// house holds this install's place in a fortress while it is in one.
 	house fortressPlace
+	// directUse keeps the learned direct address from trading places with
+	// another host that reaches this instance too.
+	directUse directUse
 	// sharedMu keeps a join, its completion and a member's removal in a shared
 	// repository from running into each other.
 	sharedMu sync.Mutex

@@ -247,20 +247,46 @@ func (s *Service) directURL(g store.GroupState) string {
 	return "https://" + ip + ":" + strconv.Itoa(s.cfg.HTTPSPort)
 }
 
+// directSettle is how long the stored direct address has to go unused by a
+// signed-in browser before one on another host replaces it. A proxy hostname
+// and the plain address can both be in use at once, and each swap between
+// them drops the fortress's relay link.
+var directSettle = 10 * time.Minute
+
+// directUse is when a signed-in browser last reached this instance under its
+// stored direct address. It is kept in memory only, so after a restart the
+// first host seen may take over once.
+type directUse struct {
+	mu sync.Mutex
+	at time.Time
+}
+
+// takes reports whether addr, the host a browser used just now, replaces
+// stored as this instance's direct address.
+func (d *directUse) takes(stored, addr string, now time.Time) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if addr != stored && stored != "" && now.Sub(d.at) < directSettle {
+		return false
+	}
+	d.at = now
+	return addr != stored
+}
+
 // learnDirectURL takes the scheme, host and port a browser used to reach
-// this instance and stores it as the instance's own direct address.
-// localhost, a loopback or a link-local address
-// is ignored: none of those mean anything to another instance on the
-// network, and storing one would silence the real address underneath it. A
-// new address goes into the announce at once, or members on the network keep
-// the old one.
+// this instance and stores it as the instance's own direct address, unless
+// the stored one is still in use (see directSettle). localhost, a loopback
+// or a link-local address is ignored: none of those mean anything to
+// another instance on the network, and storing one would silence the real
+// address underneath it. A new address goes into the announce at once, or
+// members on the network keep the old one.
 func (s *Service) learnDirectURL(r *http.Request) {
 	addr := directAddressFromRequest(s.cfg.HTTPOnly, r)
 	if addr == "" {
 		return
 	}
 	g, err := s.store.GetGroupState()
-	if err != nil || g.DirectURL == addr {
+	if err != nil || !s.directUse.takes(g.DirectURL, addr, time.Now()) {
 		return
 	}
 	if err := s.store.LearnGroupDirectURL(addr); err != nil {
