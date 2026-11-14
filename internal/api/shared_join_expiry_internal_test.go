@@ -46,6 +46,24 @@ func allowedNeverJoined(t *testing.T) (nas, tower *instance, ring *keyring) {
 	return nas, tower, ring
 }
 
+// pruneWindowAwayFrom opens the owner's prune window half a day away from at,
+// since the owner's engine here cannot prune.
+func pruneWindowAwayFrom(t *testing.T, nas *instance, at time.Time) {
+	t.Helper()
+	owned, err := nas.svc.ownedSharedRepos()
+	if err != nil || len(owned) != 1 {
+		t.Fatalf("owned %v, %v; want the one shared repository", owned, err)
+	}
+	u, err := nas.st.SharedUpkeepOf(owned[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	u.PruneCadence = "daily " + at.Add(12*time.Hour).Format("15:04")
+	if err := nas.st.PutSharedUpkeepRules(u); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAnUnusedJoinLosesItsLoginAfterADay(t *testing.T) {
 	nas, tower, _ := allowedNeverJoined(t)
 	in := joinOf(t, nas, store.SharedJoinIn, tower)
@@ -75,6 +93,7 @@ func TestAnUnusedJoinLosesItsLoginEvenWhileTheUpkeepPrunes(t *testing.T) {
 	nas, tower, ring := allowedNeverJoined(t)
 	in := joinOf(t, nas, store.SharedJoinIn, tower)
 	late := time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)
+	pruneWindowAwayFrom(t, nas, late)
 
 	if !nas.svc.sharedUpkeep.take() {
 		t.Fatal("the upkeep is busy")
@@ -123,7 +142,9 @@ func TestAMemberWhoseKeyExpiredCanAskAgain(t *testing.T) {
 func TestTheUpkeepTakesBackAOneTimeKeyNobodyUsed(t *testing.T) {
 	nas, tower, ring := allowedNeverJoined(t)
 	in := joinOf(t, nas, store.SharedJoinIn, tower)
-	if err := nas.svc.runSharedUpkeep(context.Background(), &fakeMembers{}, time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)); err != nil {
+	late := time.Unix(in.DecidedAt, 0).Add(sharedOnceFor)
+	pruneWindowAwayFrom(t, nas, late)
+	if err := nas.svc.runSharedUpkeep(context.Background(), &fakeMembers{}, late); err != nil {
 		t.Logf("upkeep: %v", err)
 	}
 	if got := ring.hosts(); len(got) != 1 || joinOf(t, nas, store.SharedJoinIn, tower).State != store.SharedJoinExpired {
