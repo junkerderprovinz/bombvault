@@ -186,7 +186,7 @@ func (s *Service) onGroupsPhrase() bool {
 // openFortress opens the membership kept in the database, or else the one
 // written by the console, with door held, and the pairing follows into it.
 func (s *Service) openFortress() error {
-	f, cfg, gen, err := s.startFortress()
+	f, cfg, gen, err := s.startFortress(true)
 	if err != nil || f == nil {
 		return err
 	}
@@ -194,12 +194,17 @@ func (s *Service) openFortress() error {
 	return nil
 }
 
-// startFortress opens the membership the way openFortress does, without the
-// pairing, and returns nil for none.
-func (s *Service) startFortress() (*fortress.Fortress, fortress.Config, int, error) {
+// startFortress opens the membership the way openFortress does, without
+// following the pairing, and returns nil for none. Without paired the
+// pairing stays closed, and cfg still holds it.
+func (s *Service) startFortress(paired bool) (*fortress.Fortress, fortress.Config, int, error) {
 	cfg, ok, err := s.fortressMembership()
 	if err != nil || !ok {
 		return nil, cfg, 0, err
+	}
+	pairing := cfg.Pairing
+	if !paired {
+		cfg.Pairing = nil
 	}
 	s.house.mu.Lock()
 	src := s.house.src
@@ -212,6 +217,7 @@ func (s *Service) startFortress() (*fortress.Fortress, fortress.Config, int, err
 		cfg.LAN.Start()
 	}
 	f, err := fortress.Open(cfg)
+	cfg.Pairing = pairing
 	if err != nil {
 		if cfg.LAN != nil {
 			_ = cfg.LAN.Close()
@@ -440,11 +446,15 @@ func (s *Service) joinFortress(sec []byte, wait bool) error {
 	if err := s.store.JoinFortress(sealed, seed); err != nil {
 		return err
 	}
-	f, cfg, gen, err := s.startFortress()
+	f, cfg, gen, err := s.startFortress(!wait)
 	if err != nil {
 		return errors.Join(err, s.store.LeaveFortress())
 	}
-	if wait && turnedAway(f, cfg.Relay != group.RelayOff, cfg.LAN != nil) {
+	if !wait {
+		s.followPairing(f, cfg.Secret, gen)
+		return nil
+	}
+	if turnedAway(f, cfg.Relay != group.RelayOff, cfg.LAN != nil) {
 		s.closeFortress()
 		undo := s.store.RestoreFortress(before)
 		if undo == nil && replaced {
@@ -452,7 +462,15 @@ func (s *Service) joinFortress(sec []byte, wait bool) error {
 		}
 		return errors.Join(errShutOut, undo)
 	}
-	s.followPairing(f, cfg.Secret, gen)
+	// The pairing asks the app's members to approve this instance, so it
+	// opens only once the fortress took it.
+	if cfg.Pairing == nil {
+		return nil
+	}
+	s.closeFortress()
+	if err := s.openFortress(); err != nil {
+		return errors.Join(err, s.store.LeaveFortress())
+	}
 	return nil
 }
 

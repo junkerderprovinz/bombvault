@@ -158,3 +158,34 @@ func TestWordsTheFortressTurnsAwayLeaveNoRequestAtItsBombVaults(t *testing.T) {
 		}
 	}
 }
+
+func TestAFortressPhraseTheFortressTurnsAwayLeavesNoRequestAtItsBombVaults(t *testing.T) {
+	rs := httptest.NewServer(relay.New())
+	t.Cleanup(rs.Close)
+	a := newInstance(t, "attic", strings.Repeat("a1", 32))
+	t.Cleanup(a.svc.CloseFortress)
+	a.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL})
+	words := createGroupPhrase(t, a)
+	sec, err := phrase.Decode(words)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := joinPlugin(t, rs.URL, sec)
+	p.open(t)
+	waitLong(t, "the other app to meet BombVault", p.reaches)
+	if err := a.svc.fortressNow().Remove(p.id); err != nil {
+		t.Fatal(err)
+	}
+	p.close()
+
+	in := newInstance(t, "cellar", strings.Repeat("c3", 32))
+	t.Cleanup(in.svc.CloseFortress)
+	in.do(t, http.MethodPut, "/api/group/relay", map[string]any{"mode": "own", "url": rs.URL})
+	createGroupPhrase(t, in)
+	joinClosed(t, in, words)
+	for deadline := time.Now().Add(2 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
+		if w := a.svc.pairing().Waiting(); len(w) != 0 {
+			t.Fatalf("the instance turned away still waits for approval: %+v", w)
+		}
+	}
+}
