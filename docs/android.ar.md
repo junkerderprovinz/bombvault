@@ -9,7 +9,7 @@
 
 - **الإعدادات، التطبيقات:** تقدّم بطاقة تطبيق Android ملف APK للإصدار الذي يشغّله خادمك، مع رمز QR لمسحه من الهاتف، وتربط بصفحة F-Droid.
 - **APK:** لكل إصدار `bombvault-android.apk` في صفحة الإصدار، و[هذا الرابط](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) ينزّل دائمًا أحدث إصدار. يحتاج إلى Android 10 أو أحدث، ويسأل Android مرة واحدة هل يجوز للتطبيق الذي تفتح به الملف تثبيت التطبيقات.
-- **Google Play:** التطبيق في اختبار مغلق إلى أن يصبح عامًا. لا يدرج Google Play تطبيقًا من حساب مطوّر جديد إلا بعد أن يبقيه 12 مختبِرًا على الأقل مثبّتًا 14 يومًا. للمساعدة انضم إلى [مجموعة المختبِرين](https://groups.google.com/g/arrowloop-testers)، وافتح [صفحة الاختبار](https://play.google.com/apps/testing/bombvault.halleluja.design)، واضغط **Become a tester** وثبّت BombVault من Google Play.
+- **Google Play:** [BombVault على Google Play](https://play.google.com/store/apps/details?id=bombvault.halleluja.design). يُوقَّع بالمفتاح نفسه الذي يُوقَّع به ملف APK، لذا يُثبَّت أيٌّ منهما فوق الآخر.
 - **F-Droid:** [BombVault على F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/). يبني F-Droid التطبيق من المصدر ويوقّعه بمفتاحه الخاص، لذا يصله إصدار جديد بعد أيام قليلة. للتبديل بين تطبيق F-Droid وملف APK، أزل الآخر أولًا.
 
 اقرن التطبيق بخوادم بالإصدار 9.7.0 أو أحدث. يمكن لخادم بإصدار أقدم أن يكون في المجموعة نفسها، لكنه يعرض الهاتف كمثيل عادي، ولا يقرأ التطبيق نشاط ذلك الخادم إلا بعد تسجيل الدخول.

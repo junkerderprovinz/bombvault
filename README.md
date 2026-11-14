@@ -34,20 +34,9 @@ saying ransomware is welcome to knock.
 
 <br>
 
-<p align="center">
-  <a href="https://play.google.com/apps/testing/bombvault.halleluja.design"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/screenshots/testers.png" alt="Android testers wanted: join the Google Play closed test" width="100%"></a>
-</p>
-
-> [!IMPORTANT]
-> **Android testers wanted.** Google Play only lists an app from a new developer account after at least 12 testers have kept it installed for 14 days. If you have an Android phone:
->
-> 1. Open the [tester group](https://groups.google.com/g/arrowloop-testers), sign in with the Google account your phone uses and click **Join group**.
-> 2. Open the [test page](https://play.google.com/apps/testing/bombvault.halleluja.design) and tap **Become a tester**.
-> 3. Install BombVault from Google Play and keep it for 14 days. Using it for real helps most, and anything that goes wrong is welcome as an [issue](https://github.com/junkerderprovinz/bombvault/issues).
-
 <!-- docs-button: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(0,0,1010.28,245.3))" alt="Read the documentation" width="192" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/bombvault/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(0,0,1010.28,245.3))" alt="Read the documentation" width="192" height="46.618"></a>
 </p>
 <!-- /docs-button -->
 
@@ -73,33 +62,33 @@ saying ransomware is welcome to knock.
   <picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/group-server-dark.svg"><img src=".github/assets/sections/group-server.svg" alt="Server" width="100%"></picture>
 </p>
 <p align="center">
-  <a href="https://ca.unraid.net/apps/bombvault-06cz2zq1itlcy2"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(1035,0,841.9,245.3))" alt="Install from Unraid&#x27;s Community Applications" width="160" height="46.618"></a>
+  <a href="https://ca.unraid.net/apps/bombvault-06cz2zq1itlcy2"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(1035,0,841.9,245.3))" alt="Install from Unraid&#x27;s Community Applications" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://mos-official.net/apps.html?search=BombVault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(1901,0,841.9,245.3))" alt="Install from the MOS Hub" width="160" height="46.618"></a>
+  <a href="https://mos-official.net/apps.html?search=BombVault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(1901,0,841.9,245.3))" alt="Install from the MOS Hub" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/zimaos-apps#bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(2767,0,841.9,245.3))" alt="Install from the ZimaOS and CasaOS store" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/zimaos-apps#bombvault"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(2767,0,841.9,245.3))" alt="Install from the ZimaOS and CasaOS store" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(3633,0,841.9,245.3))" alt="Download the docker-compose file" width="160" height="46.618"></a>
+  <a href="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(3633,0,841.9,245.3))" alt="Download the docker-compose file" width="160" height="46.618"></a>
 </p>
 <br>
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/group-android-dark.svg"><img src=".github/assets/sections/group-android.svg" alt="Android" width="100%"></picture>
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(4499,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
+  <a href="https://play.google.com/store/apps/details?id=bombvault.halleluja.design"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(4499,0,841.9,245.3))" alt="Get it on Google Play" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://f-droid.org/packages/bombvault.halleluja.design/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(5365,0,841.9,245.3))" alt="Get it on F-Droid" width="160" height="46.618"></a>
+  <a href="https://f-droid.org/packages/bombvault.halleluja.design/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(5365,0,841.9,245.3))" alt="Get it on F-Droid" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(6231,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(6231,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
 </p>
 <br>
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset=".github/assets/sections/group-works-with-dark.svg"><img src=".github/assets/sections/group-works-with.svg" alt="Works with" width="100%"></picture>
 </p>
 <p align="center">
-  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(7097,0,841.9,245.3))" alt="Get ParleyPort, the relay for apps that pair their instances" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/parleyport"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(7097,0,841.9,245.3))" alt="Get ParleyPort, the relay for apps that pair their instances" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(7963,0,841.9,245.3))" alt="Get the BombVault Widget for the Unraid dashboard" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault-widget"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(7963,0,841.9,245.3))" alt="Get the BombVault Widget for the Unraid dashboard" width="160" height="46.618"></a>
 </p>
 <!-- /download-buttons -->
 
@@ -119,11 +108,11 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 
 <!-- give-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(8829,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
+  <a href="https://buymeacoffee.com/junkerderprovinz"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(8829,0,841.9,245.3))" alt="Buy me a coffee" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(9695,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(9695,0,841.9,245.3))" alt="PayPal" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(10561,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
+  <a href="https://junkerderprovinz.github.io/junkerderprovinz/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(10561,0,841.9,245.3))" alt="Donate with crypto" width="160" height="46.618"></a>
 </p>
 <!-- /give-buttons -->
 
@@ -228,7 +217,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Backs up desktops and laptops | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ⚠️ Windows experimental |
 | Runs outside Unraid | ✅ | ⚠️ replica only | ❌ | ✅ | ✅ | ✅ | ✅ |
 | In Unraid Community Applications | ✅ | ✅ | ✅ | ✅ community template | ✅ community template | ✅ community template | ✅ community template |
-| Android app | ✅ APK, F-Droid, Google Play in closed test | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Android app | ✅ APK, F-Droid, Google Play | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2016 | ✅ since 2019 | ✅ since 2015 |
 
 ✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, every Vault cell on 20 October 2026, and the Duplicacy column and the rows for deduplication across servers and for taking over backups from other tools on 10 November 2026. Duplicacy's command line is free for personal use, and its Web Edition needs a licence to make backups.
@@ -250,15 +239,15 @@ On any other Docker host or on TrueNAS Scale, take [`deploy/docker-compose.gener
 
 <!-- app-buttons: written by scripts/gen_download_buttons.py -->
 <p align="center">
-  <img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(4499,0,841.9,245.3))" alt="On Google Play soon" width="160" height="46.618">
+  <a href="https://play.google.com/store/apps/details?id=bombvault.halleluja.design"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(4499,0,841.9,245.3))" alt="Get it on Google Play" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://f-droid.org/packages/bombvault.halleluja.design/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(5365,0,841.9,245.3))" alt="Get it on F-Droid" width="160" height="46.618"></a>
+  <a href="https://f-droid.org/packages/bombvault.halleluja.design/"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(5365,0,841.9,245.3))" alt="Get it on F-Droid" width="160" height="46.618"></a>
   &nbsp;
-  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=09e4b19002df#svgView(viewBox(6231,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
+  <a href="https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk"><img src="https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/.github/assets/download-buttons/buttons.svg?v=04db38c1ec53#svgView(viewBox(6231,0,841.9,245.3))" alt="Download the Android app" width="160" height="46.618"></a>
 </p>
 <!-- /app-buttons -->
 
-Every release has the app as `bombvault-android.apk`. On any server, open **Settings, Pairing**, choose **Show phrase** and scan the QR code with the app. It joins through the group's relay, adds every server of your group and shows what runs on all of them. Each server opens already signed in, at home at its own address and from any other network through the relay, where the server signs every answer. A paired phone reaches what the app shows; keys, settings and deleting backups still need the password at the server itself. It is on [F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/), and Google Play has it in a closed test for now. The [Android app](https://junkerderprovinz.github.io/bombvault/android/) page has the details, and the [privacy policy](android/PRIVACY.md) lists what the app stores and sends.
+Every release has the app as `bombvault-android.apk`. On any server, open **Settings, Pairing**, choose **Show phrase** and scan the QR code with the app. It joins through the group's relay, adds every server of your group and shows what runs on all of them. Each server opens already signed in, at home at its own address and from any other network through the relay, where the server signs every answer. A paired phone reaches what the app shows; keys, settings and deleting backups still need the password at the server itself. It is on [F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/) and [Google Play](https://play.google.com/store/apps/details?id=bombvault.halleluja.design). The [Android app](https://junkerderprovinz.github.io/bombvault/android/) page has the details, and the [privacy policy](android/PRIVACY.md) lists what the app stores and sends.
 
 <br>
 

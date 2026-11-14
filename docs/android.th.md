@@ -9,7 +9,7 @@
 
 - **การตั้งค่า, แอป:** การ์ดแอป Android มี APK ของรุ่นที่เซิร์ฟเวอร์ของคุณรันอยู่ พร้อมคิวอาร์โค้ดให้สแกนจากโทรศัพท์ และลิงก์ไปยังรายการบน F-Droid
 - **APK:** ทุกรุ่นมี `bombvault-android.apk` ในหน้ารุ่นของมัน และ [ลิงก์นี้](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk) ดาวน์โหลดรุ่นล่าสุดเสมอ ต้องใช้ Android 10 ขึ้นไป และ Android จะถามหนึ่งครั้งว่าแอปที่คุณใช้เปิดไฟล์ติดตั้งแอปได้หรือไม่
-- **Google Play:** แอปอยู่ในการทดสอบแบบปิดจนกว่าจะเปิดสาธารณะได้ Google Play จะแสดงแอปจากบัญชีนักพัฒนาใหม่ก็ต่อเมื่อมีผู้ทดสอบอย่างน้อย 12 คนติดตั้งไว้ครบ 14 วัน ถ้าอยากช่วย ให้เข้าร่วม [กลุ่มผู้ทดสอบ](https://groups.google.com/g/arrowloop-testers) เปิด [หน้าทดสอบ](https://play.google.com/apps/testing/bombvault.halleluja.design) แตะ **Become a tester** แล้วติดตั้ง BombVault จาก Google Play
+- **Google Play:** [BombVault บน Google Play](https://play.google.com/store/apps/details?id=bombvault.halleluja.design) แอปลงนามด้วยกุญแจเดียวกับ APK จึงติดตั้งทับกันได้ทั้งสองทาง
 - **F-Droid:** [BombVault บน F-Droid](https://f-droid.org/packages/bombvault.halleluja.design/) F-Droid สร้างแอปจากซอร์สและเซ็นด้วยคีย์ของตัวเอง รุ่นใหม่จึงไปถึงที่นั่นหลังจากนั้นสองสามวัน ถ้าจะสลับระหว่างแอป F-Droid กับ APK ให้ถอนการติดตั้งอีกตัวก่อน
 
 จับคู่แอปกับเซิร์ฟเวอร์รุ่น 9.7.0 ขึ้นไป เซิร์ฟเวอร์รุ่นเก่ากว่าอยู่ในกลุ่มเดียวกันได้ แต่จะแสดงโทรศัพท์เป็นอินสแตนซ์ธรรมดา และแอปอ่านกิจกรรมของเซิร์ฟเวอร์นั้นได้หลังลงชื่อเข้าใช้เท่านั้น
