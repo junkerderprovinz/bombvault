@@ -15,9 +15,7 @@ BUTTONS = {
     # carries the pull command and every tag.
     "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
-    # Google Play has no public listing yet, so its button is drawn without a
-    # link. The README's call for testers leads to the closed test meanwhile.
-    "google-play": None,
+    "google-play": "https://play.google.com/store/apps/details?id=bombvault.halleluja.design",
     "f-droid": "https://f-droid.org/packages/bombvault.halleluja.design/",
     "apk": "https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk",
     "parleyport": "https://github.com/junkerderprovinz/parleyport",

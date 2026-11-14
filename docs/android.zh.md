@@ -9,7 +9,7 @@ Android 应用把你组里的每台 BombVault 服务器都带到手机上。它�
 
 - **设置、应用：** Android 应用的卡片提供你的服务器所运行版本的 APK，带一个可以用手机扫描的二维码，并链接到 F-Droid 的页面。
 - **APK：** 每个版本的发布页面上都有 `bombvault-android.apk`，[这个链接](https://github.com/junkerderprovinz/bombvault/releases/latest/download/bombvault-android.apk)总是下载最新的构建。需要 Android 10 或更高版本，Android 会询问一次，你用来打开这个文件的应用是否可以安装应用。
-- **Google Play：** 应用目前处于封闭测试，要等到可以公开为止。新开发者账号的应用，需要至少 12 位测试者连续安装 14 天，Google Play 才会上架。想帮忙的话，请加入[测试者群组](https://groups.google.com/g/arrowloop-testers)，打开[测试页面](https://play.google.com/apps/testing/bombvault.halleluja.design)，点击 **Become a tester**，然后从 Google Play 安装 BombVault。
+- **Google Play：** [Google Play 上的 BombVault](https://play.google.com/store/apps/details?id=bombvault.halleluja.design)。它与 APK 使用同一密钥签名，两者可以互相覆盖安装。
 - **F-Droid：** [F-Droid 上的 BombVault](https://f-droid.org/packages/bombvault.halleluja.design/)。F-Droid 从源码构建应用，并用自己的密钥签名，所以新版本会晚几天到达。要在 F-Droid 应用和 APK 之间切换，请先卸载另一个。
 
 请与 9.7.0 或更高版本的服务器配对。旧版本的服务器可以在同一个组里，但它会把手机显示为普通实例，应用也只有在登录之后才能读取那台服务器的活动。
