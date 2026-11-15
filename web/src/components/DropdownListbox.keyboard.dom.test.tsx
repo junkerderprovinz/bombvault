@@ -83,6 +83,16 @@ describe("DropdownListbox keyboard access", () => {
     expect(document.activeElement).toBe(option("a"));
   });
 
+  it("jumps to the next option that starts with a typed letter", async () => {
+    await open("b");
+    const panel = screen.getByRole("listbox");
+
+    fireEvent.keyDown(panel, { key: "c" });
+    expect(document.activeElement).toBe(option("c"));
+    fireEvent.keyDown(panel, { key: "A" });
+    expect(document.activeElement).toBe(option("a"));
+  });
+
   it("gives focus back to the trigger when it closes from inside", async () => {
     await open("b");
     const trigger = screen.getByRole("button", { name: "open" });

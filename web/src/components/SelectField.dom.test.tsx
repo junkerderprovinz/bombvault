@@ -84,6 +84,26 @@ it("picks by typing the start of a label while closed", async () => {
   expect(screen.getByTestId("value").textContent).toBe("containers");
 });
 
+it("opens the list on the last choosable option with End while closed, and picks nothing yet", async () => {
+  render(<Harness />);
+  await settle();
+  trigger().focus();
+  await settle(() => fireEvent.keyDown(trigger(), { key: "End" }));
+  expect(trigger().getAttribute("aria-expanded")).toBe("true");
+  expect(screen.getByRole("option", { name: "Folders" }).hasAttribute("data-highlighted")).toBe(true);
+  expect(screen.getByTestId("value").textContent).toBe("all");
+});
+
+it("opens the list on the first option with Home while closed", async () => {
+  render(<Harness start="files" />);
+  await settle();
+  trigger().focus();
+  await settle(() => fireEvent.keyDown(trigger(), { key: "Home" }));
+  expect(trigger().getAttribute("aria-expanded")).toBe("true");
+  expect(screen.getByRole("option", { name: "All domains" }).hasAttribute("data-highlighted")).toBe(true);
+  expect(screen.getByTestId("value").textContent).toBe("files");
+});
+
 it("gives the focus back to the trigger when Escape closes the list", async () => {
   render(<Harness />);
   await settle();

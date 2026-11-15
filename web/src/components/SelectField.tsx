@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, type ReactNode, type Ref } from "react";
+import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import * as select from "@zag-js/select";
 import { normalizeProps, Portal, useMachine } from "@zag-js/react";
+import { endOption } from "@glimstone/core";
 import { IconCheck } from "./navGlyphs";
 import { mergeRefs } from "../lib/mergeRefs";
 import { usePortalHue } from "../lib/portalHue";
@@ -113,11 +114,21 @@ export function SelectField<T extends string>({
   }, []);
 
   const current = options.find((o) => o.value === value);
+  // Home and End on a closed trigger open the list there; a native select
+  // would pick that option at once, out of sight.
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const to = api.open ? undefined : endOption(options, e.key);
+    if (to === undefined) return triggerProps.onKeyDown?.(e);
+    e.preventDefault();
+    api.setOpen(true);
+    api.setHighlightValue(to);
+  };
 
   return (
     <>
       <button
         {...triggerProps}
+        onKeyDown={onKeyDown}
         ref={mergeRefs(ref, triggerRef)}
         // The field has no visible label of its own, so the name is set here
         // rather than through Zag's label part, and the list is named only

@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { focusByLetter, isTypeahead } from "@glimstone/core";
 import { computeBubblePosition, triggerMoved } from "../lib/bubblePosition";
 import { usePortalHue } from "../lib/portalHue";
 
@@ -181,9 +182,13 @@ export function DropdownListbox({
     };
   }, [open, triggerRef]);
 
-  // Arrow keys, Home and End are handled here so every listbox behaves the
-  // same. Enter and Space are left to the option buttons.
+  // Arrow keys, Home, End and a typed letter are handled here so every
+  // listbox behaves the same. Enter and Space are left to the option buttons.
   function onPanelKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (isTypeahead(e.nativeEvent)) {
+      if (focusByLetter(options(), e.key)) e.preventDefault();
+      return;
+    }
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
     const opts = options();
     if (opts.length === 0) return;
