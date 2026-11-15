@@ -2,6 +2,7 @@
 // report, and the versions. The Info page spreads the parts over three cards;
 // the Android app shows them in one.
 import { useEffect, useState } from "react";
+import { GLIMSTONE_RELEASE_URL } from "@glimstone/core";
 import { CoffeeDialog } from "../../components/CoffeeDialog";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconBitcoin, IconPayPal } from "../../components/donateMarks";
@@ -13,9 +14,8 @@ import { COFFEE_BUTTON_SVG } from "../../lib/appMarks";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
 
-export { GLIMSTONE_VERSION };
+export { GLIMSTONE_RELEASE_URL, GLIMSTONE_VERSION };
 export const REPO = "https://github.com/junkerderprovinz/bombvault";
-export const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
 /** The BombVault forum on the workshop's Discord server. */
 const DISCORD = "https://discord.gg/RSdmzWtN25";
 
@@ -42,9 +42,8 @@ export function releaseUrl(repo: string, version: string): string {
   return tag ? `${repo}/releases/tag/${encodeURIComponent(tag)}` : "";
 }
 
-/** A `Label 1.2.3` pair where only the number links to the release page. */
-function VersionLink({ label, version, repo }: { label: string; version: string; repo: string }) {
-  const href = releaseUrl(repo, version);
+/** A `Label 1.2.3` pair where only the number links to a release page. */
+function VersionLink({ label, version, href }: { label: string; version: string; href: string }) {
   if (!href) {
     return (
       <span className="text-carbon-textMuted">
@@ -168,9 +167,10 @@ export function AboutContent({ app }: { app?: { version: string; paypal: () => v
         <ReportButtons />
       </div>
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        {version && <VersionLink label={t("about.version")} version={version} repo={REPO} />}
+        {version && <VersionLink label={t("about.version")} version={version} href={releaseUrl(REPO, version)} />}
         {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
-        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
+        {/* A GlimStone patch tag folds into the next minor and goes, the newest release stays. */}
+        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} href={GLIMSTONE_RELEASE_URL} />
       </p>
       {app && (
         <a href={app.privacy.href} target="_blank" rel="noopener noreferrer" className="self-start text-xs text-accentText no-underline">

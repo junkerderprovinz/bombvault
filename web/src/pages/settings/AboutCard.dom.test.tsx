@@ -8,6 +8,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
+import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { AboutContent } from "./AboutCard";
 
 // The card fetches the running version on mount; without it the footer is
@@ -166,4 +167,11 @@ it("reports through GitHub and Discord and offers no mail", () => {
   expect(en["about.report"]).not.toMatch(/e-?mail/i);
   expect(screen.queryByRole("button", { name: /e-?mail/i })).toBeNull();
   expect(document.querySelector('a[href^="mailto:"], .glim-tile-house')).toBeNull();
+});
+
+it("links GlimStone's number to its newest release", () => {
+  renderCard();
+  expect(screen.getByRole("link", { name: GLIMSTONE_VERSION }).getAttribute("href")).toBe(
+    "https://github.com/junkerderprovinz/glimstone/releases/latest",
+  );
 });

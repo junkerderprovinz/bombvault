@@ -74,15 +74,16 @@ describe("the Version card", () => {
     expect(within(card(en["about.version"])).getByText(en["tile.info.versionUnknown"])).toBeTruthy();
   });
 
-  it("links BombVault and GlimStone to their release pages and the bundled tools to nothing", async () => {
+  it("links BombVault to its release, GlimStone to its newest one and the bundled tools to nothing", async () => {
     await renderPage();
     const links = within(card(en["about.version"]))
       .getAllByRole("link")
       .map((a) => a.getAttribute("href"));
     expect(links).toEqual([
       "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.0.0",
-      `https://github.com/junkerderprovinz/glimstone/releases/tag/v${GLIMSTONE_VERSION}`,
+      "https://github.com/junkerderprovinz/glimstone/releases/latest",
     ]);
+    expect(within(card(en["about.version"])).getByRole("link", { name: GLIMSTONE_VERSION })).toBeTruthy();
   });
 
   it("shows a tagged version without its v and still links the tag", async () => {

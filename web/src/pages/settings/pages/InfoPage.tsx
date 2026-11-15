@@ -17,7 +17,7 @@ import { MANUAL_SVG } from "../../../lib/appMarks";
 import { groupStage } from "../../../lib/controls";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
-import { AboutGive, GLIMSTONE_REPO, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl, shownVersion } from "../AboutCard";
+import { AboutGive, GLIMSTONE_RELEASE_URL, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl, shownVersion } from "../AboutCard";
 import { Card, hueCounter } from "../shared";
 import { WhatsNewButton } from "../WhatsNew";
 
@@ -30,10 +30,9 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "bad-response": "tile.info.refused.badResponse",
 };
 
-/** A version number that opens its release page. A build without a tag has
+/** A version number that opens a release page. A build without a tag has
  *  none and shows the number alone. */
-function Version({ version, repo }: { version: string; repo?: string }) {
-  const href = repo ? releaseUrl(repo, version) : "";
+function Version({ version, href = "" }: { version: string; href?: string }) {
   const number = "text-sm tabular-nums";
   if (!href) return <span className={`${number} text-carbon-textSub`}>{shownVersion(version)}</span>;
   return (
@@ -151,10 +150,11 @@ export function InfoPage() {
       <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()}>
         <Rows>
           <SettingRow label="BombVault">
-            {versions?.bombvault ? <Version version={versions.bombvault} repo={REPO} /> : unknown}
+            {versions?.bombvault ? <Version version={versions.bombvault} href={releaseUrl(REPO, versions.bombvault)} /> : unknown}
           </SettingRow>
           <SettingRow label="GlimStone" hint={t("tile.info.glimstoneHint")}>
-            <Version version={GLIMSTONE_VERSION} repo={GLIMSTONE_REPO} />
+            {/* A GlimStone patch tag folds into the next minor and goes, the newest release stays. */}
+            <Version version={GLIMSTONE_VERSION} href={GLIMSTONE_RELEASE_URL} />
           </SettingRow>
           <SettingRow label="restic" hint={t("tile.info.resticHint")}>
             {tool(versions?.restic)}
