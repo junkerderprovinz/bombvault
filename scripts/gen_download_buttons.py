@@ -15,9 +15,10 @@ places before it starts the next. The bands are drawn by
 this file writes, so run that one after this. A blank line stands between two
 groups, so the gap between groups is about twice the gap between rows.
 
-The documentation button belongs to no group. It stands alone and centred
-under the intro, between its own markers, which the first run puts in above the
-table of contents.
+The documentation button belongs to no group, and neither does the live
+preview. They stand centred under the intro, side by side when a repository
+has both, between their own markers, which the first run puts in above the
+table of contents. A repository with only these two needs no download rows.
 
 A button carries one line, its name, as the apps' buttons do at rest. Only a
 listing still to come adds a second line saying so.
@@ -37,8 +38,8 @@ scripts/brand-paths/. The companions carry their own
 logos. Every mark is drawn in the button's one ink.
 Each is a trademark of its owner, used unmodified and only to name the platform
 a button downloads for, with no claim of endorsement by or affiliation with its
-owner. The ZIP and the book are Font Awesome's file-zipper and book, nobody's
-mark.
+owner. The ZIP, the book and the eye are Font Awesome's file-zipper, book and
+eye, nobody's mark.
 
 Run from anywhere:  uv run --no-project --python 3.12 python scripts/gen_download_buttons.py
 Writes .github/assets/download-buttons/*.svg, which are committed, and the
@@ -119,6 +120,9 @@ KINDS = {
     # No group, see DOCS_PX. The yellow is the coffee button's #fd0, and white
     # on yellow fails contrast, so the ink is dark.
     "docs":             (None, "book", "#fd0", "#0d0c23", "Documentation", "online manual", "Read the documentation"),
+    # Beside the docs button, as wide. A violet no other button uses, so it
+    # stands apart from the yellow, and white holds 6.5:1 on it.
+    "preview":          (None, "eye", "#6f42c1", "#ffffff", "Live preview", "live site", "Try it live"),
     "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
     "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM", "Download for Windows on ARM"),
     "windows-portable": (1, "windows", *WINDOWS, "Portable", "x64", "Download the portable Windows app"),
@@ -215,8 +219,11 @@ SEGMENT_PX = 87.0
 PLACES = 4.5
 # "Documentation" takes about 600 units at font-size 82, more than the 542 a
 # button leaves after TEXT_X. Standing alone, its button can be wider instead,
-# with room on the right for a face wider than Segoe UI.
+# with room on the right for a face wider than Segoe UI. The live preview
+# beside it takes the same width, so the pair reads as one row.
 DOCS_PX = 192.0
+# The buttons outside the groups, left to right, all DOCS_PX wide.
+STANDALONE = ("docs", "preview")
 
 SCALE = W / RENDER_PX              # canvas units per screen pixel
 SEGMENT_W = SEGMENT_PX * SCALE
@@ -557,14 +564,16 @@ def read_readme():
     """README.md, read after the donation buttons are fetched so an edit saved
     meanwhile survives, and checked before any file is written."""
     text = io.open(README, encoding="utf-8", newline="").read()
-    if len(blocks(text, ROW_OPEN, ROW_CLOSE)) != 1:
+    grouped = any(KINDS[kind][0] is not None for kind in config.BUTTONS)
+    download_rows = len(blocks(text, ROW_OPEN, ROW_CLOSE))
+    if download_rows > 1 or (grouped and download_rows != 1):
         raise SystemExit("README.md needs exactly one %s ... %s" % (ROW_OPEN, ROW_CLOSE))
     if not blocks(text, GIVE_OPEN, GIVE_CLOSE):
         raise SystemExit("README.md has no %s ... %s" % (GIVE_OPEN, GIVE_CLOSE))
     docs = len(blocks(text, DOCS_OPEN, DOCS_CLOSE))
     if docs > 1:
         raise SystemExit("README.md has more than one %s" % DOCS_OPEN)
-    if not docs and "docs" in config.BUTTONS:
+    if not docs and any(kind in config.BUTTONS for kind in STANDALONE):
         text = place_docs(text)
     return text
 
@@ -627,8 +636,8 @@ def write_readme(text, downloads, groups, apps, docs, donations, url):
                            for i, items in enumerate(table))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
-    print("README.md  download rows of %s, donation rows of %d"
-          % ("+".join(str(sum(len(item) for item in r)) for r in downloads if not isinstance(r, Title)), len(GIVE)))
+    sizes = "+".join(str(sum(len(item) for item in r)) for r in downloads if not isinstance(r, Title))
+    print("README.md  %sdonation rows of %d" % ("download rows of %s, " % sizes if sizes else "", len(GIVE)))
 
 
 ANIMATION = re.compile(r"animation: pass (\d+(?:\.\d+)?)s linear (\d+(?:\.\d+)?)s infinite backwards;")
@@ -665,7 +674,7 @@ def layout(items, gap):
 
 
 # One band works down the page, row by row in the order the README shows them:
-# the docs button, the download rows and the donation row, whichever stands
+# the docs row, the download rows and the donation row, whichever stands
 # higher first. Within a row each part starts when the band reaches its left
 # edge, and each row where a further button of the row above would have
 # started. Computed, so moving a row or a button cannot break the hand-off.
@@ -687,9 +696,8 @@ def main():
     # A title is no button, so the shine skips it.
     downloads = [layout([] if items[0][0].title else items, GAP_PX) for items in table]
     donation = layout([[SimpleNamespace(px=GIVE_RENDER_PX)] for _ in GIVE], GAP_PX)
-    docs = []
-    if "docs" in config.BUTTONS:
-        docs = [layout([[Part("docs", config.BUTTONS["docs"], DOCS_W, "all")]], GAP_PX)]
+    alone = [[Part(kind, config.BUTTONS[kind], DOCS_W, "all")] for kind in STANDALONE if kind in config.BUTTONS]
+    docs = [layout(alone, GAP_PX)] if alone else []
     places = sorted(((readme.find(DOCS_OPEN), docs), (readme.find(ROW_OPEN), downloads),
                      (readme.find(GIVE_OPEN), [donation])), key=lambda p: p[0])
     order = [placed for _at, section in places for placed in section]
@@ -727,9 +735,10 @@ def main():
     table_out = [items[0][0] if items[0][0].title else [[(p.href, p.alt, next(place), p.width, H, p.px) for p in item] for item in items]
                  for items in table]
     titles = [items[0][0] for items in table if items[0][0].title]
-    io.open(GROUPS, "w", encoding="utf-8", newline="\n").write(
-        json.dumps([{"id": t.id, "word": t.word, "icon": t.icon} for t in titles], indent=2) + "\n")
-    print("wrote", os.path.normpath(GROUPS), len(titles), "titles")
+    if titles:
+        io.open(GROUPS, "w", encoding="utf-8", newline="\n").write(
+            json.dumps([{"id": t.id, "word": t.word, "icon": t.icon} for t in titles], indent=2) + "\n")
+        print("wrote", os.path.normpath(GROUPS), len(titles), "titles")
     # The app's own section has its heading, so its rows come without the title.
     apps = [out for items, out in zip(table, table_out) if items[0][0].group == APP_ROW and not items[0][0].title]
     donations = [[[(href, alt, xs[len(parts) + i], gives[i][1], gives[i][2], GIVE_RENDER_PX)]
