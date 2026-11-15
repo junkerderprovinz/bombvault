@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { focusByLetter, isTypeahead } from "@glimstone/core";
 import { pointerWasLastInput } from "../../lib/useTipBubble";
 
 export interface MenuAction {
@@ -106,7 +107,9 @@ export function ActionMenu({
     setByPointer(false);
     const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
     const at = items.indexOf(document.activeElement as HTMLElement);
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (isTypeahead(e.nativeEvent)) {
+      if (focusByLetter(items, e.key)) e.preventDefault();
+    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       const step = e.key === "ArrowDown" ? 1 : -1;
       items[(at + step + items.length) % items.length]?.focus();

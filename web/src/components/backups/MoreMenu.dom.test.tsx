@@ -52,6 +52,20 @@ describe("MoreMenu", () => {
     expect(document.querySelector('[data-new="menu"]')).not.toBeNull();
   });
 
+  it("jumps to the next row that starts with a typed letter", () => {
+    const named = (label: string): MenuAction => ({ id: label, label, glyph: <i />, onSelect: vi.fn() });
+    renderMenu([named("Rename"), named("Delete"), named("Download")]);
+    fireEvent.click(more()!);
+    const menu = screen.getByRole("menu");
+
+    fireEvent.keyDown(menu, { key: "d" });
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Delete" }));
+    fireEvent.keyDown(menu, { key: "d" });
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Download" }));
+    fireEvent.keyDown(menu, { key: "R" });
+    expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: "Rename" }));
+  });
+
   it("holds the first row unlit when the pointer opened the menu, until a key is pressed", () => {
     renderMenu([action("one"), action("two")]);
     fireEvent.pointerDown(more()!);
