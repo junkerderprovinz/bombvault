@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ACCENT_PRESETS } from "./accent";
-import { MIN_TEXT_CONTRAST, accentInks, contrastOn, contrastRatio } from "./contrast";
+import { MIN_TEXT_CONTRAST, accentHovers, accentInks, contrastOn, contrastRatio } from "./contrast";
 
 // The colours a picker or a device can hand the engine that the presets never
 // come near: the two ends, the grey in the middle, and two saturated hues.
@@ -59,5 +59,39 @@ describe("accent text", () => {
 
   it("sets nothing for a value that is not a colour", () => {
     expect(accentInks("system")).toEqual({ light: undefined, dark: undefined });
+  });
+});
+
+// The hover as index.css mixes it: 85% of the fill, the rest the text colour.
+function hoverMix(hex: string, text: string): string {
+  const parts = (h: string) => {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const f = parts(hex);
+  const t = parts(text);
+  return "#" + f.map((v, i) => Math.round(v + (t[i] - v) * 0.15).toString(16).padStart(2, "0")).join("");
+}
+
+describe("the hover of an accent fill", () => {
+  it("needs nothing set for any preset", () => {
+    for (const hex of DEFAULT_ACCENT_PRESETS) expect(accentHovers(hex)).toEqual({ light: undefined, dark: undefined });
+  });
+
+  it.each(Object.entries(HARD))("keeps the fill's ink at 4.5:1 under the pointer on both themes for %s", (_name, hex) => {
+    const ink = contrastOn(hex);
+    const hovers = accentHovers(hex);
+    expect(contrastRatio(ink, hovers.light ?? hoverMix(hex, "#161616"))).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(ink, hovers.dark ?? hoverMix(hex, "#f4f4f4"))).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  });
+
+  it("steps a mid-grey away from its dark ink on the light theme instead of toward it", () => {
+    const light = accentHovers(HARD.midGrey).light;
+    expect(light).toBeDefined();
+    expect(contrastRatio(light!, "#ffffff")).toBeLessThan(contrastRatio(HARD.midGrey, "#ffffff"));
+  });
+
+  it("sets nothing for a value that is not a colour", () => {
+    expect(accentHovers("system")).toEqual({ light: undefined, dark: undefined });
   });
 });

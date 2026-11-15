@@ -113,3 +113,29 @@ export function accentInks(hex: string): { light: string | undefined; dark: stri
     dark: ratio(accent, rgb(DARK_GROUND)) >= MIN_TEXT_CONTRAST ? undefined : pushed(accent, rgb(WHITE), rgb(DARK_GROUND)),
   };
 }
+
+// --carbon-text of each theme in index.css, which a filled control's hover
+// moves toward, and the share of it in that hover's color-mix().
+const LIGHT_TEXT = "#161616";
+const DARK_TEXT = "#F4F4F4";
+const HOVER_STEP = 0.15;
+
+/**
+ * The hover of an accent fill on each theme, where index.css's step toward the
+ * text colour would take the fill's ink under 4.5:1. That happens on the
+ * mid-tones, where the ink only just clears the fill: a grey such as #777777
+ * carries a dark ink, and on the light theme its hover darkens toward it. The
+ * hover then takes the same step away from the ink, which only adds contrast.
+ * Undefined means the stylesheet's step holds, as it does for every preset.
+ */
+export function accentHovers(hex: string): { light: string | undefined; dark: string | undefined } {
+  if (!validHex(hex)) return { light: undefined, dark: undefined };
+  const fill = rgb(hex);
+  const ink = rgb(contrastOn(hex));
+  const away = luminance(...ink) > luminance(...fill) ? rgb(BLACK) : rgb(WHITE);
+  const hover = (text: string) => {
+    const toward = mix(fill, rgb(text), HOVER_STEP).map(Math.round) as Rgb;
+    return ratio(ink, toward) >= MIN_TEXT_CONTRAST ? undefined : hexOf(mix(fill, away, HOVER_STEP));
+  };
+  return { light: hover(LIGHT_TEXT), dark: hover(DARK_TEXT) };
+}

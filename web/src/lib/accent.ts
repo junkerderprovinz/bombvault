@@ -1,4 +1,4 @@
-import { accentInks, contrastOn } from "./contrast";
+import { accentHovers, accentInks, contrastOn } from "./contrast";
 import { save as saveDisplayPrefs } from "./displayPrefs";
 
 export { contrastOn };
@@ -6,7 +6,8 @@ export { contrastOn };
 // The accent colour lives in localStorage and is applied as --accent,
 // --accent-contrast (the ink that reads best on the accent) and --accent-soft
 // (a 14% alpha tint). Where index.css's own accent text would fall short of
-// 4.5:1 on a theme, --accent-ink-light or --accent-ink-dark carries the ink.
+// 4.5:1 on a theme, --accent-ink-light or --accent-ink-dark carries the ink,
+// and --accent-hover-light or --accent-hover-dark a hover its ink reads on.
 //
 // The device can lend its own colour instead: Material You in the Android
 // app, AccentColor in Firefox and Safari. Choosing it stores the word system
@@ -90,6 +91,10 @@ export function applyAccent(hex: string): void {
   for (const [theme, ink] of Object.entries(accentInks(hex))) {
     if (ink) root.setProperty(`--accent-ink-${theme}`, ink);
     else root.removeProperty(`--accent-ink-${theme}`);
+  }
+  for (const [theme, hover] of Object.entries(accentHovers(hex))) {
+    if (hover) root.setProperty(`--accent-hover-${theme}`, hover);
+    else root.removeProperty(`--accent-hover-${theme}`);
   }
 }
 

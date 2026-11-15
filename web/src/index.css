@@ -998,6 +998,9 @@
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
   --brand-discord: #949cf7;
+
+  /* Unset, and so falling back to the mix, unless lib/accent.ts wrote one. */
+  --accent-hover-picked: var(--accent-hover-dark);
   /* Docker's blue, Android's green and Unraid's gradient are GlimStone's
      values on both grounds, so the light themes inherit them. */
   --brand-android:     #32de84;
@@ -1172,6 +1175,7 @@
   --brand-paypal:  #003087;
   --brand-github:  #181717;
   --brand-discord: #5865f2;
+  --accent-hover-picked: var(--accent-hover-light);
   color-scheme: light;
 
   /* Carbon's light values, as in GlimStone's reference/tokens.css. */
@@ -1400,10 +1404,11 @@
    21): the fill mixed toward the theme's text colour, lighter on dark and
    darker on light, the way the ramp moves. Opacity would let the card show
    through. Declared wherever a theme is set, so --carbon-text is that
-   theme's. */
+   theme's. A picked accent whose ink would not read on that step brings a
+   hover of its own from lib/accent.ts. */
 :root,
 [data-theme] {
-  --accent-hover:      color-mix(in srgb, var(--accent) 85%, var(--carbon-text));
+  --accent-hover:      var(--accent-hover-picked, color-mix(in srgb, var(--accent) 85%, var(--carbon-text)));
   --status-ok-hover:   color-mix(in srgb, var(--status-ok-solid) 85%, var(--carbon-text));
   --status-fail-hover: color-mix(in srgb, var(--status-fail-solid) 85%, var(--carbon-text));
   --status-warn-hover: color-mix(in srgb, var(--status-warn-solid) 85%, var(--carbon-text));
