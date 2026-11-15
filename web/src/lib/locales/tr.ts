@@ -41,10 +41,9 @@ const tr: Partial<Translations> = {
   "about.paypalThanks": "Teşekkürler, bağışın ulaştı.",
   "about.paypalFailed": "PayPal'a şu anda ulaşılamıyor. Daha sonra tekrar dene ya da başka bir bağış yolu seç.",
   "about.version": "Sürüm",
-  "about.report": "Sorun, istek ya da öneri mi var? Gönül rahatlığıyla GitHub üzerinde konu aç ya da e-posta gönder.",
+  "about.report": "Sorun, istek ya da öneri mi var? Gönül rahatlığıyla GitHub üzerinde konu aç ya da Discord'a uğra.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Geri bildirim",
-  "about.mail": "E-posta",
+  "about.discord": "Discord",
   "nav.config": "Öz yedek",
 
   // Dashboard

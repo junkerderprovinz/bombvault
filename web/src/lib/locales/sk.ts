@@ -43,10 +43,9 @@ const sk: Partial<Translations> = {
   "about.paypalThanks": "Vďaka, tvoj dar dorazil.",
   "about.paypalFailed": "PayPal je teraz nedostupný. Skús to neskôr alebo vyber iný spôsob, ako prispieť.",
   "about.version": "Verzia",
-  "about.report": "Problémy, želania alebo návrhy? Pokojne založ issue na GitHube, alebo pošli e-mail.",
+  "about.report": "Problémy, želania alebo návrhy? Pokojne založ issue na GitHube, alebo napíš na Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Spätná väzba",
-  "about.mail": "E-mail",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Bod obnovenia",

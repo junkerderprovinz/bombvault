@@ -5,8 +5,6 @@
 // the document and not presence. The content must also never name a contact
 // route it has no button for. The Android app shows it as one card; the Info
 // page spreads the same parts over three.
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
@@ -92,7 +90,7 @@ it("gives and reports with README buttons that light up in their brand's colour"
     [en["about.paypal"], "glim-tile-paypal"],
     [en["about.crypto"], "glim-tile-bitcoin"],
     [en["about.repo"], "glim-tile-github"],
-    [en["about.mail"], "glim-tile-house"],
+    [en["about.discord"], "glim-tile-discord"],
   ];
   for (const [name, tile] of tiles) {
     const button = screen.getByRole("button", { name: new RegExp(name, "i") });
@@ -101,22 +99,10 @@ it("gives and reports with README buttons that light up in their brand's colour"
   }
 });
 
-it("wears Buy Me a Coffee's own artwork and an envelope that opens under the pointer", () => {
+it("wears Buy Me a Coffee's own artwork", () => {
   renderCard();
   const coffee = screen.getByRole("button", { name: new RegExp(en["about.coffeeButton"], "i") });
   expect(coffee.querySelector(".glim-readme-btn-art svg")).not.toBeNull();
-
-  const mail = screen.getByRole("button", { name: new RegExp(en["about.mail"], "i") });
-  const rest = mail.querySelector("svg.glim-mark-rest");
-  const open = mail.querySelector("svg.glim-mark-hover");
-  // Each envelope sits in the box cropped to its own ink, so the two read the
-  // same size.
-  const glyphs: { name: string; viewBox: string }[] = JSON.parse(
-    readFileSync(join(__dirname, "..", "..", "..", "..", "scripts", "glyphs.json"), "utf8"),
-  );
-  const box = (name: string) => glyphs.find((g) => g.name === name)?.viewBox;
-  expect(rest?.getAttribute("viewBox")).toBe(box("IconMail"));
-  expect(open?.getAttribute("viewBox")).toBe(box("IconMailOpen"));
 });
 
 it("puts every way to give under the sentence that asks, and none of them elsewhere", () => {
@@ -171,6 +157,13 @@ it("names no route without a control, and offers no control the sentence does no
   const has = (label: string) =>
     Boolean(screen.queryByRole("button", { name: new RegExp(label, "i") }));
 
-  expect(has(en["about.mail"])).toBe(/e-?mail/i.test(sentence));
   expect(has(en["about.repo"])).toBe(/github/i.test(sentence));
+  expect(has(en["about.discord"])).toBe(/discord/i.test(sentence));
+});
+
+it("reports through GitHub and Discord and offers no mail", () => {
+  renderCard();
+  expect(en["about.report"]).not.toMatch(/e-?mail/i);
+  expect(screen.queryByRole("button", { name: /e-?mail/i })).toBeNull();
+  expect(document.querySelector('a[href^="mailto:"], .glim-tile-house')).toBeNull();
 });

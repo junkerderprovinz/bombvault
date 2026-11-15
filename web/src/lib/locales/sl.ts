@@ -43,10 +43,9 @@ const sl: Partial<Translations> = {
   "about.paypalThanks": "Hvala, tvoj prispevek je prispel.",
   "about.paypalFailed": "PayPal trenutno ni dosegljiv. Poskusi pozneje ali izberi drug način podpore.",
   "about.version": "Različica",
-  "about.report": "Težave, želje ali predlogi? Kar odpri težavo na GitHubu ali pošlji e-pošto.",
+  "about.report": "Težave, želje ali predlogi? Kar odpri težavo na GitHubu ali se oglasi na Discordu.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Povratna informacija",
-  "about.mail": "E-pošta",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Obnovitvena točka",

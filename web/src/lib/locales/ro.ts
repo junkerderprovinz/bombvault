@@ -41,10 +41,9 @@ const ro: Partial<Translations> = {
   "about.paypalThanks": "Mulțumesc, donația ta a ajuns.",
   "about.paypalFailed": "PayPal nu poate fi accesat acum. Încearcă mai târziu sau alege alt mod de a dona.",
   "about.version": "Versiune",
-  "about.report": "Probleme, dorințe sau sugestii? Deschide liniștit o problemă pe GitHub sau trimite un e-mail.",
+  "about.report": "Probleme, dorințe sau sugestii? Deschide liniștit o problemă pe GitHub sau scrie pe Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Feedback",
-  "about.mail": "E-mail",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Punct de restaurare",

@@ -53,7 +53,7 @@ describe("glyphFor", () => {
 });
 
 describe("glyphFor on the About card", () => {
-  it("gives the mail button a symbol", () => {
+  it("gives a mail key a symbol", () => {
     expect(glyphFor("about.mail")).toBeDefined();
   });
 
@@ -71,6 +71,11 @@ describe("glyphFor on the About card", () => {
     // do with GitHub.
     expect(glyphFor("about.repo")).toBeUndefined();
     expect(glyphFor("offsite.repoUrl")).toBeUndefined();
+  });
+
+  it("gives the Discord button no glyph", () => {
+    // It wears Discord's own mark, passed at its one call site.
+    expect(glyphFor("about.discord")).toBeUndefined();
   });
 
   it("does not let the mail rule swallow unrelated keys", () => {

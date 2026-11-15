@@ -41,10 +41,9 @@ const fi: Partial<Translations> = {
   "about.paypalThanks": "Kiitos, lahjoituksesi meni perille.",
   "about.paypalFailed": "PayPaliin ei juuri nyt saada yhteyttä. Yritä myöhemmin uudelleen tai valitse toinen tapa lahjoittaa.",
   "about.version": "Versio",
-  "about.report": "Ongelmia, toiveita tai ehdotuksia? Avaa vapaasti issue GitHubissa tai lähetä sähköpostia.",
+  "about.report": "Ongelmia, toiveita tai ehdotuksia? Avaa vapaasti issue GitHubissa tai kirjoita Discordissa.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Palautetta",
-  "about.mail": "Sähköposti",
+  "about.discord": "Discord",
   "nav.config": "Itsevarmuuskopio",
 
   // Dashboard

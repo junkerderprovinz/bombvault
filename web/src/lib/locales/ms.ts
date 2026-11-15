@@ -43,10 +43,9 @@ const ms: Partial<Translations> = {
   "about.paypalThanks": "Terima kasih, derma anda telah diterima.",
   "about.paypalFailed": "PayPal tidak dapat dicapai sekarang. Cuba lagi nanti atau pilih cara lain untuk menderma.",
   "about.version": "Versi",
-  "about.report": "Masalah, kehendak atau cadangan? Jangan segan membuka isu di GitHub, atau hantar e-mel.",
+  "about.report": "Masalah, kehendak atau cadangan? Jangan segan membuka isu di GitHub, atau singgah di Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Maklum balas",
-  "about.mail": "E-mel",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Titik pemulihan",

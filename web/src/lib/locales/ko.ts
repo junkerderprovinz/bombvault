@@ -41,10 +41,9 @@ const ko: Partial<Translations> = {
   "about.paypalThanks": "감사합니다. 후원이 도착했습니다.",
   "about.paypalFailed": "지금은 PayPal에 연결할 수 없습니다. 나중에 다시 시도하거나 다른 방법을 고르세요.",
   "about.version": "버전",
-  "about.report": "문제, 바라는 점, 개선 아이디어가 있나요? 편하게 GitHub에 이슈를 남기거나 메일을 보내 주세요.",
+  "about.report": "문제, 바라는 점, 개선 아이디어가 있나요? 편하게 GitHub에 이슈를 남기거나 Discord에 들러 주세요.",
   "about.repo": "GitHub",
-  "about.mailSubject": "의견",
-  "about.mail": "메일",
+  "about.discord": "Discord",
   "nav.config": "셀프 백업",
 
   // Dashboard

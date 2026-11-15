@@ -43,10 +43,9 @@ const bg: Partial<Translations> = {
   "about.paypalThanks": "Благодаря, дарението ти пристигна.",
   "about.paypalFailed": "PayPal в момента не е достъпен. Опитай по-късно или избери друг начин да дариш.",
   "about.version": "Версия",
-  "about.report": "Проблеми, желания или предложения? Отвори спокойно задача в GitHub или прати имейл.",
+  "about.report": "Проблеми, желания или предложения? Отвори спокойно задача в GitHub или пиши в Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Обратна връзка",
-  "about.mail": "Имейл",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Точка за възстановяване",

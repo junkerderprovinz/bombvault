@@ -43,10 +43,9 @@ const ca: Partial<Translations> = {
   "about.paypalThanks": "Gràcies, el teu donatiu ha arribat.",
   "about.paypalFailed": "Ara mateix no es pot accedir a PayPal. Torna-ho a provar més tard o tria una altra manera de fer un donatiu.",
   "about.version": "Versió",
-  "about.report": "Problemes, desitjos o suggeriments? Obre tranquil·lament una incidència a GitHub, o envia un correu.",
+  "about.report": "Problemes, desitjos o suggeriments? Obre tranquil·lament una incidència a GitHub, o passa per Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Comentaris",
-  "about.mail": "Correu",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Punt de recuperació",

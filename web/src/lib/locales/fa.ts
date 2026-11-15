@@ -43,10 +43,9 @@ const fa: Partial<Translations> = {
   "about.paypalThanks": "ممنون، کمکت رسید.",
   "about.paypalFailed": "الان به PayPal دسترسی نیست. بعداً دوباره امتحان کن یا راه دیگری برای کمک انتخاب کن.",
   "about.version": "نسخه",
-  "about.report": "مشکل، خواسته یا پیشنهادی داری؟ با خیال راحت در GitHub مسئله‌ای باز کن یا ایمیل بفرست.",
+  "about.report": "مشکل، خواسته یا پیشنهادی داری؟ با خیال راحت در GitHub مسئله‌ای باز کن یا در Discord بنویس.",
   "about.repo": "GitHub",
-  "about.mailSubject": "بازخورد",
-  "about.mail": "ایمیل",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "نقطه بازیابی",

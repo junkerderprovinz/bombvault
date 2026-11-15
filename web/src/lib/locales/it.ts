@@ -41,10 +41,9 @@ const it: Partial<Translations> = {
   "about.paypalThanks": "Grazie, la tua donazione è arrivata.",
   "about.paypalFailed": "Al momento PayPal non è raggiungibile. Riprova più tardi o scegli un altro modo per donare.",
   "about.version": "Versione",
-  "about.report": "Problemi, desideri o suggerimenti? Apri pure una segnalazione su GitHub, oppure scrivi una e-mail.",
+  "about.report": "Problemi, desideri o suggerimenti? Apri pure una segnalazione su GitHub, oppure passa su Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Riscontro",
-  "about.mail": "Email",
+  "about.discord": "Discord",
   "nav.config": "Auto-backup",
 
   // Dashboard

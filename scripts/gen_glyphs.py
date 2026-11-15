@@ -98,6 +98,7 @@ ACTION = [
     # put a company's logo on settings that have nothing to do with it.
     "IconCoffee",
     "IconGithub",
+    "IconDiscord",
 ]
 
 NAV = [
@@ -190,6 +191,7 @@ NO_LICENCE = ("Drawn", "KnightLoader's drawing", "reCAPTCHA's mark")
 TRADEMARKS = {
     "IconContainers": "Docker",
     "IconGithub": "GitHub",
+    "IconDiscord": "Discord",
     "IconCoffee": "Buy Me a Coffee",
     "IconCaptcha": "reCAPTCHA",
 }

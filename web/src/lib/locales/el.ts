@@ -41,10 +41,9 @@ const el: Partial<Translations> = {
   "about.paypalThanks": "Ευχαριστώ, η δωρεά σας έφτασε.",
   "about.paypalFailed": "Το PayPal δεν είναι διαθέσιμο αυτή τη στιγμή. Δοκιμάστε αργότερα ή διαλέξτε άλλο τρόπο να στηρίξετε.",
   "about.version": "Έκδοση",
-  "about.report": "Προβλήματα, επιθυμίες ή προτάσεις; Ανοίξτε ελεύθερα ένα ζήτημα στο GitHub ή στείλτε ένα email.",
+  "about.report": "Προβλήματα, επιθυμίες ή προτάσεις; Ανοίξτε ελεύθερα ένα ζήτημα στο GitHub ή γράψτε στο Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Σχόλια",
-  "about.mail": "Email",
+  "about.discord": "Discord",
   "nav.config": "Αυτο-αντίγραφο",
 
   // Dashboard

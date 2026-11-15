@@ -5,19 +5,19 @@ import { useEffect, useState } from "react";
 import { CoffeeDialog } from "../../components/CoffeeDialog";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconBitcoin, IconPayPal } from "../../components/donateMarks";
-import { IconGithub } from "../../components/glyphs";
+import { IconDiscord, IconGithub } from "../../components/glyphs";
 import { PaypalDialog } from "../../components/PaypalDialog";
 import { BrandMark, ReadmeButton } from "../../components/ReadmeButton";
 import { getHealth } from "../../lib/api";
-import { COFFEE_BUTTON_SVG, MAIL_SVG } from "../../lib/appMarks";
+import { COFFEE_BUTTON_SVG } from "../../lib/appMarks";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
 
 export { GLIMSTONE_VERSION };
 export const REPO = "https://github.com/junkerderprovinz/bombvault";
 export const GLIMSTONE_REPO = "https://github.com/junkerderprovinz/glimstone";
-/** Shared by every tool of the workshop; the mail subject names the product. */
-const MAIL = "hello@halleluja.design";
+/** The BombVault forum on the workshop's Discord server. */
+const DISCORD = "https://discord.gg/RSdmzWtN25";
 
 /**
  * releaseTag returns the git tag for a running version such as
@@ -117,7 +117,7 @@ export function AboutGive({ paypal }: { paypal?: () => void }) {
   );
 }
 
-/** ReportButtons are the two routes the report sentence names. */
+/** ReportButtons are the routes the report sentence names. */
 export function ReportButtons() {
   const { t } = useT();
   return (
@@ -128,23 +128,11 @@ export function ReportButtons() {
         mark={<IconGithub />}
         markClass="glim-github-mark"
       />
-      {/* Subject only: a prefilled body reads as a form to fill in. The
-          product name in the subject lets one inbox serve every tool. */}
       <ReadmeButton
-        tile="glim-tile-house"
-        parts={[
-          {
-            name: t("about.mail"),
-            onClick: () =>
-              window.open(
-                `mailto:${MAIL}?subject=${encodeURIComponent(`BombVault ${t("about.mailSubject")}`)}`,
-                "_blank",
-                "noopener,noreferrer"
-              ),
-          },
-        ]}
-        mark={<BrandMark svg={MAIL_SVG} />}
-        markClass="glim-house-mark"
+        tile="glim-tile-discord"
+        parts={[{ name: t("about.discord"), onClick: () => window.open(DISCORD, "_blank", "noopener,noreferrer") }]}
+        mark={<IconDiscord />}
+        markClass="glim-discord-mark"
       />
     </>
   );

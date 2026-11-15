@@ -43,10 +43,9 @@ const et: Partial<Translations> = {
   "about.paypalThanks": "Aitäh, sinu annetus jõudis kohale.",
   "about.paypalFailed": "PayPal pole praegu kättesaadav. Proovi hiljem uuesti või vali mõni muu viis annetada.",
   "about.version": "Versioon",
-  "about.report": "Probleeme, soove või ettepanekuid? Ava julgelt GitHubis teema või saada e-kiri.",
+  "about.report": "Probleeme, soove või ettepanekuid? Ava julgelt GitHubis teema või kirjuta Discordis.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Tagasiside",
-  "about.mail": "E-kiri",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Taastepunkt",

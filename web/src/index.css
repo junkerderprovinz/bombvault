@@ -989,15 +989,14 @@
      dark theme's #525252 PayPal's #003087 and GitHub's #181717 fail just as
      badly. So the warm brands deepen on light and the dark ones lighten on
      dark. Measured: 5.7, 3.3, 3.1 and 7.7 to one on dark, 3.2, 3.2, 8.7 and
-     11.9 on light.
-
-     The mail button has no brand colour: it reaches the workshop, not a third
-     party, so it follows the colour engine. */
+     11.9 on light. Discord's blurple, lightened for dark, reads 3.1 on dark
+     and 3.0 on light. */
   --brand-coffee:  #ffdd00;
   --brand-docs:    #ffdd00;
   --brand-bitcoin: #f7931a;
   --brand-paypal:  #4fb5f0;
   --brand-github:  #ffffff;
+  --brand-discord: #949cf7;
   /* Docker's blue, Android's green and Unraid's gradient are GlimStone's
      values on both grounds, so the light themes inherit them. */
   --brand-android:     #32de84;
@@ -1167,6 +1166,7 @@
   --brand-bitcoin: #a85d00;
   --brand-paypal:  #003087;
   --brand-github:  #181717;
+  --brand-discord: #5865f2;
   color-scheme: light;
 
   /* Carbon's light values, as in GlimStone's reference/tokens.css. */
@@ -1955,6 +1955,7 @@ body {
 .glim-paypal-mark { color: var(--brand-paypal); }
 .glim-bitcoin-mark { color: var(--brand-bitcoin); }
 .glim-github-mark { color: var(--brand-github); }
+.glim-discord-mark { color: var(--brand-discord); }
 .glim-android-mark { color: var(--brand-android); }
 .glim-docker-mark { color: var(--brand-docker); }
 .glim-house-mark { color: var(--accent-glyph); }
@@ -2003,6 +2004,7 @@ body {
 /* The brands' tile colours: the true colour and the ink that holds on it, white
    wherever white reaches 2:1 and near-black below that. */
 .glim-tile-github { --tile: #181717; --tile-ink: #ffffff; } /* 17.9:1 */
+.glim-tile-discord { --tile: #5865f2; --tile-ink: #ffffff; } /* 4.6:1 */
 .glim-tile-paypal { --tile: #003087; --tile-ink: #ffffff; } /* 13.4:1 */
 .glim-tile-bitcoin { --tile: #f7931a; --tile-ink: #161616; } /* 7.9:1 */
 .glim-tile-android { --tile: #32de84; --tile-ink: #161616; } /* 10.3:1 */

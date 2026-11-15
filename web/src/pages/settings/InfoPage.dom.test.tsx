@@ -191,15 +191,28 @@ describe("the Help card", () => {
     expect(document.querySelector('[data-testid="where"]')?.textContent).toBe("/welcome?again");
   });
 
-  it("offers GitHub, Email, the manual and the bug report, in that order", async () => {
+  it("offers GitHub, Discord, the manual and the bug report, in that order, and no mail", async () => {
     await renderPage();
     const names = help()
       .getAllByRole("button")
       .map((b) => b.getAttribute("aria-label") ?? b.textContent ?? "");
     const at = (word: string) => names.findIndex((n) => n.includes(word));
-    const order = [en["about.repo"], en["about.mail"], en["tile.info.manual"], en["tile.info.bugReport"]].map(at);
+    const order = [en["about.repo"], en["about.discord"], en["tile.info.manual"], en["tile.info.bugReport"]].map(at);
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(names.some((n) => /e-?mail/i.test(n))).toBe(false);
+    expect(help().getByText(en["about.report"]).textContent).not.toMatch(/e-?mail/i);
+  });
+
+  it("names Discord in its sentence and opens the server's invite in the browser", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    await renderPage();
+    expect(help().getByText(en["about.report"]).textContent).toMatch(/Discord/);
+    const discord = help().getByRole("button", { name: new RegExp(en["about.discord"]) });
+    expect(discord.closest(".glim-readme-btn-unit")?.className).toContain("glim-tile-discord");
+    expect(discord.querySelector(".glim-discord-mark svg")).not.toBeNull();
+    fireEvent.click(discord);
+    expect(open).toHaveBeenCalledWith("https://discord.gg/RSdmzWtN25", "_blank", "noopener,noreferrer");
   });
 
   it("opens the documentation in the browser from the manual button, which says Open", async () => {

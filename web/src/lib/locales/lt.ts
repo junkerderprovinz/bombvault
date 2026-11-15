@@ -43,10 +43,9 @@ const lt: Partial<Translations> = {
   "about.paypalThanks": "Ačiū, tavo parama gauta.",
   "about.paypalFailed": "PayPal šiuo metu nepasiekiamas. Bandyk vėliau arba pasirink kitą būdą paremti.",
   "about.version": "Versija",
-  "about.report": "Problemos, pageidavimai ar pasiūlymai? Drąsiai sukurk problemą GitHub arba parašyk el. laišką.",
+  "about.report": "Problemos, pageidavimai ar pasiūlymai? Drąsiai sukurk problemą GitHub arba užsuk į Discord.",
   "about.repo": "GitHub",
-  "about.mailSubject": "Atsiliepimas",
-  "about.mail": "El. paštas",
+  "about.discord": "Discord",
 
   // Dashboard
   "dashboard.summaryHealth": "Atkūrimo taškas",

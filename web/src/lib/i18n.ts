@@ -98,10 +98,9 @@ export const en = {
   "about.paypalLoading": "Loading PayPal…",
   "about.paypalThanks": "Thank you, your donation went through.",
   "about.paypalFailed": "PayPal cannot be reached right now. Try again later or pick another way to give.",
-  "about.report": "Problems, wishes or suggestions? You're welcome to open an issue on GitHub, or send an email.",
+  "about.report": "Problems, wishes or suggestions? You're welcome to open an issue on GitHub, or come say hi on Discord.",
   "about.repo": "GitHub",
-  "about.mail": "Email",
-  "about.mailSubject": "Feedback",
+  "about.discord": "Discord",
   "about.version": "Version",
 
   // Dashboard
@@ -5757,10 +5756,9 @@ export const de: Translations = {
   "about.paypalLoading": "PayPal wird geladen…",
   "about.paypalThanks": "Danke, deine Spende ist angekommen.",
   "about.paypalFailed": "PayPal ist gerade nicht erreichbar. Versuch es später noch einmal oder nimm einen anderen Weg.",
-  "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Mach gern ein Issue auf GitHub auf, oder schick eine E-Mail.",
+  "about.report": "Probleme, Wünsche oder Verbesserungsvorschläge? Mach gern ein Issue auf GitHub auf, oder schau auf Discord vorbei.",
   "about.repo": "GitHub",
-  "about.mail": "E-Mail",
-  "about.mailSubject": "Rückmeldung",
+  "about.discord": "Discord",
   "about.version": "Version",
 
 
