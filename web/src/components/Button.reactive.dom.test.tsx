@@ -53,11 +53,16 @@ it("still has its accessible name, like every other mode", () => {
   expect(screen.getByRole("button", { name: "Off-site-DR-Prüfung starten" })).toBeTruthy();
 });
 
-it("takes no width stage, so the button itself can grow as the words arrive", () => {
+it("keeps the width stage of the modes that show words, so they open inside it and nothing moves", () => {
+  const stage = () => [...screen.getByRole("button").classList].find((c) => /^glim-btn-(xs|sm|md|lg)$/.test(c));
+  setLabelMode("buttons", "textGlyph");
+  renderButton();
+  const shown = stage();
+  cleanup();
   setLabelMode("buttons", "reactive");
   renderButton();
-  const el = screen.getByRole("button");
-  expect([...el.classList].find((c) => /^glim-btn-(xs|sm|md|lg)$/.test(c))).toBeUndefined();
+  expect(shown).toBeDefined();
+  expect(stage()).toBe(shown);
 });
 
 it("carries its label's length so the reveal is neither clipped nor sluggish", () => {

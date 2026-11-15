@@ -135,7 +135,7 @@ export function Button({
   /** Forces a width stage instead of deriving one from the label, for two
    *  buttons that must match but live in different components. Pass
    *  `groupStage([labelA, labelB])` to both so they agree in every language.
-   *  Ignored in glyph and reactive mode, which take no stage. */
+   *  Ignored in glyph mode, which takes no stage. */
   stage?: WidthStage;
   /** Shows the text in every mode. Only for a label that is content rather
    *  than an action, such as a directory row in the folder browser, where a
@@ -177,19 +177,17 @@ export function Button({
   const showGlyph = effective !== "text" && hasGlyph;
   const slotted = !!hint && showText && !chip;
 
-  // The stage comes from the label in the current language, not from what is
-  // rendered, so switching between text and text-with-glyph never reflows.
-  // Glyph and reactive buttons take no stage: they hug the glyph, and a
-  // reactive one grows as its words arrive.
+  // Every mode that shows words takes its stage from the label in the current
+  // language, reactive included, so its words open inside a box that was
+  // always their size and the row never moves under the pointer. In glyph mode
+  // a button hugs its glyph.
   const stage = chip
     ? "glim-btn-chip"
     : effective === "glyph"
       ? iconOnly
         ? "glim-btn-icon"
         : ""
-      : reactive
-        ? ""
-        : STAGE_CLASS[stageOverride ?? widthStage(label)];
+      : STAGE_CLASS[stageOverride ?? widthStage(label)];
 
   // A hint with no room inside the button goes into its bubble, after the
   // title it adds to.

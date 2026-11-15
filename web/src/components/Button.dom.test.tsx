@@ -40,15 +40,10 @@ it("keeps the same width stage in the two modes that show text", () => {
   expect(stages[0]).toBe("glim-btn-lg");
 });
 
-it("takes no stage at all in the two modes that hide text", () => {
-  for (const mode of ["glyph", "reactive"] as const) {
-    cleanup();
-    setLabelMode("buttons", mode);
-    renderButton("Off-site-DR-Prüfung starten");
-    // No floor means the button is as wide as its glyph, and in reactive mode
-    // it can grow out of that as the words arrive.
-    expect(stageClass()).toBe("");
-  }
+it("takes no stage in glyph mode, so the button is as wide as its glyph", () => {
+  setLabelMode("buttons", "glyph");
+  renderButton("Off-site-DR-Prüfung starten");
+  expect(stageClass()).toBe("");
 });
 
 it("still has an accessible name in glyph mode", () => {
