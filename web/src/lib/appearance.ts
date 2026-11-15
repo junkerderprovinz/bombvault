@@ -11,6 +11,7 @@
 
 import { contrastOn, parseHex } from "./accent";
 import { save as saveDisplayPrefs } from "./displayPrefs";
+import { inkCss } from "./oklab";
 
 /**
  * RAINBOW is the default palette: a full turn of the wheel, tuned to the
@@ -185,11 +186,11 @@ export function hueVars(i: number): Record<string, string> {
     // 14% eight rows of eight hues stop being a list and start being a
     // colour chart.
     "--item-hue-wash": `color-mix(in srgb, ${hue} 7%, transparent)`,
-    // The focus ring follows the position too. A gold ring around a teal tab
-    // is the one place the single accent leaks back into the plural mode,
-    // and it is the most visible one, because it only ever appears on the
-    // element the keyboard is standing on.
-    "--item-hue-ring": `color-mix(in srgb, ${hue} 55%, transparent)`,
+    // The hue on the ink's steps, for a line-drawn glyph and for the focus
+    // ring. A gold ring around a teal tab is the one place the single accent
+    // would leak back into the plural mode, and the most visible one.
+    "--item-hue-glyph": inkCss(hue),
+    "--item-hue-ring": "var(--item-hue-glyph)",
   };
 }
 
@@ -211,7 +212,7 @@ export function takePageHue(el: HTMLElement): void {
   }
   const i = Array.prototype.indexOf.call(document.querySelectorAll(TINTED), el);
   const n = ((i % RAINBOW.length) + RAINBOW.length) % RAINBOW.length;
-  el.style.setProperty("--btn-tint", `color-mix(in srgb, var(--rb-${n}) var(--ink-mix), black)`);
+  el.style.setProperty("--btn-tint", inkCss(`var(--rb-${n})`));
 }
 
 /**

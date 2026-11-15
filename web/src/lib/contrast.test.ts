@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ACCENT_PRESETS } from "./accent";
 import { MIN_TEXT_CONTRAST, accentHovers, accentInks, contrastOn, contrastRatio } from "./contrast";
+import { darkenTo, INK_LIGHTNESS, lightenTo, srgbOf } from "./oklab";
 
 // The colours a picker or a device can hand the engine that the presets never
 // come near: the two ends, the grey in the middle, and two saturated hues.
@@ -12,11 +13,11 @@ const HARD = {
   yellow: "#FFFF00",
 };
 
-// The light ink as index.css mixes it: 45% of the accent, the rest black.
-function lightMix(hex: string): string {
-  const n = parseInt(hex.slice(1), 16);
-  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * 0.45));
-  return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
+// --accent-soft over a ground: 14% of the accent.
+function wash(ground: string, accent: string): string {
+  const channels = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const a = channels(accent);
+  return "#" + channels(ground).map((v, i) => Math.round(v + (a[i] - v) * 0.14).toString(16).padStart(2, "0")).join("");
 }
 
 describe("the ink on a fill", () => {
@@ -43,8 +44,8 @@ describe("accent text", () => {
 
   it.each(Object.entries(HARD))("reaches 4.5:1 on both themes for %s", (_name, hex) => {
     const inks = accentInks(hex);
-    const light = inks.light ?? lightMix(hex);
-    const dark = inks.dark ?? hex;
+    const light = inks.light ?? darkenTo(hex, INK_LIGHTNESS.light);
+    const dark = inks.dark ?? lightenTo(hex, INK_LIGHTNESS.dark);
     expect(contrastRatio(light, "#e8e8e8")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(light, "#ffffff")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(dark, "#262626")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
@@ -52,9 +53,20 @@ describe("accent text", () => {
     expect(contrastRatio(dark, "#161616")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 
-  it("moves an accent only as far as it has to", () => {
-    const dark = accentInks(HARD.blue).dark!;
-    expect(contrastRatio(dark, "#262626")).toBeLessThan(MIN_TEXT_CONTRAST + 0.2);
+  it.each(Object.entries(HARD))("reads at 4.5:1 on its own wash on both themes for %s", (_name, hex) => {
+    const inks = accentInks(hex);
+    expect(contrastRatio(inks.light ?? darkenTo(hex, INK_LIGHTNESS.light), wash("#ffffff", hex))).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(inks.dark ?? lightenTo(hex, INK_LIGHTNESS.dark), wash("#262626", hex))).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  });
+
+  it("needs nothing set for any colour across the picker", () => {
+    // Twelve hues at four chromas on four lightness steps.
+    const sweep = [0.45, 0.6, 0.75, 0.9].flatMap((l) =>
+      [0.02, 0.08, 0.2, 0.3].flatMap((c) =>
+        Array.from({ length: 12 }, (_, i) => srgbOf([l, c * Math.cos((i * Math.PI) / 6), c * Math.sin((i * Math.PI) / 6)])),
+      ),
+    );
+    expect(sweep.filter((hex) => accentInks(hex).light || accentInks(hex).dark)).toEqual([]);
   });
 
   it("sets nothing for a value that is not a colour", () => {

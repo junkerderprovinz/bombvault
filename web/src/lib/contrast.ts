@@ -5,19 +5,22 @@
 /** The ratio body text needs, and the floor of every ink computed here. */
 export const MIN_TEXT_CONTRAST = 4.5;
 
+import { darkenTo, INK_LIGHTNESS, lightenTo } from "./oklab";
+
 // Carbon's own ink: on a yellow accent a brown-tinted black reads as a smudge.
 const DARK_INK = "#161616";
 const WHITE = "#FFFFFF";
 const BLACK = "#000000";
 
 // Where accent text has the least room on each ramp: surface2 on light, which
-// the 45% of --ink-mix was measured on, and the card on dark. OLED's surfaces
-// are darker than dark's, so the dark ink holds there as well.
+// the light step was measured on, and the card on dark. OLED's surfaces are
+// darker than dark's, so the dark ink holds there as well. The text also stands
+// on the accent's own wash, --accent-soft, over a card.
 const LIGHT_GROUND = "#e8e8e8";
+const LIGHT_CARD = "#FFFFFF";
 const DARK_GROUND = "#262626";
-
-// --ink-mix of the light theme in index.css.
-const LIGHT_INK_MIX = 0.45;
+// The share of the accent in --accent-soft, which applyAccent writes.
+const SOFT_SHARE = 0.14;
 
 type Rgb = [number, number, number];
 
@@ -63,12 +66,15 @@ export function contrastRatio(a: string, b: string): number {
 }
 
 /**
- * `from` moved toward `to` just far enough to reach the minimum against
- * `ground`. The ratio only grows on the way, as long as `to` lies on the far
- * side of `from` from the ground, so halving finds the least amount.
+ * `from` moved toward `to` just far enough to reach the minimum against every
+ * ground. The ratios only grow on the way, as long as `to` lies on the far side
+ * of `from` from the grounds, so halving finds the least amount.
  */
-function pushed(from: Rgb, to: Rgb, ground: Rgb): string {
-  const reaches = (t: number) => ratio(mix(from, to, t).map(Math.round) as Rgb, ground) >= MIN_TEXT_CONTRAST;
+function pushed(from: Rgb, to: Rgb, ...grounds: Rgb[]): string {
+  const reaches = (t: number) => {
+    const c = mix(from, to, t).map(Math.round) as Rgb;
+    return grounds.every((g) => ratio(c, g) >= MIN_TEXT_CONTRAST);
+  };
   let lo = 0;
   let hi = 1;
   for (let i = 0; i < 16; i++) {
@@ -96,21 +102,25 @@ export function contrastOn(hex: string): string {
 }
 
 /**
- * The accent as text on each theme, where index.css's own mix falls short of
- * 4.5:1. Undefined for a theme means the mix holds and nothing needs setting,
- * which is the case for every preset.
+ * The accent as text on each theme, where index.css's own OKLab step falls
+ * short of 4.5:1 on the theme's grounds or on the accent's own wash. Undefined
+ * for a theme means the step holds and nothing needs setting, which is the case
+ * for every preset.
  *
- * The light ink starts from the stylesheet's mix toward black and goes on
- * toward black. The dark ink starts from the accent itself and goes toward
- * white.
+ * Each starts from the stylesheet's step (oklab.ts) and, should that fall
+ * short, goes on in sRGB: the light ink toward black, the dark ink toward white.
  */
 export function accentInks(hex: string): { light: string | undefined; dark: string | undefined } {
   if (!validHex(hex)) return { light: undefined, dark: undefined };
   const accent = rgb(hex);
-  const light = mix(accent, rgb(BLACK), 1 - LIGHT_INK_MIX).map(Math.round) as Rgb;
+  const light = rgb(darkenTo(hex, INK_LIGHTNESS.light));
+  const dark = rgb(lightenTo(hex, INK_LIGHTNESS.dark));
+  const lightGrounds = [rgb(LIGHT_GROUND), mix(rgb(LIGHT_CARD), accent, SOFT_SHARE).map(Math.round) as Rgb];
+  const darkGrounds = [rgb(DARK_GROUND), mix(rgb(DARK_GROUND), accent, SOFT_SHARE).map(Math.round) as Rgb];
+  const reads = (ink: Rgb, grounds: Rgb[]) => grounds.every((g) => ratio(ink, g) >= MIN_TEXT_CONTRAST);
   return {
-    light: ratio(light, rgb(LIGHT_GROUND)) >= MIN_TEXT_CONTRAST ? undefined : pushed(light, rgb(BLACK), rgb(LIGHT_GROUND)),
-    dark: ratio(accent, rgb(DARK_GROUND)) >= MIN_TEXT_CONTRAST ? undefined : pushed(accent, rgb(WHITE), rgb(DARK_GROUND)),
+    light: reads(light, lightGrounds) ? undefined : pushed(light, rgb(BLACK), ...lightGrounds),
+    dark: reads(dark, darkGrounds) ? undefined : pushed(dark, rgb(WHITE), ...darkGrounds),
   };
 }
 

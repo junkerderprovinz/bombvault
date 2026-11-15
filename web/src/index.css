@@ -1056,45 +1056,47 @@
   --accent-soft:      rgba(252, 196, 25, 0.14);
 
   /* --accent-text is accent-coloured text and graphics on an ordinary surface:
-     Badge's "active" tone, "running" text, the Sparkline stroke, spinners. In
-     this theme it is the accent itself, which measures 7.18 to 11.24:1 on the
-     dark surfaces and at least 5.30:1 under --accent-soft.
+     Badge's "active" tone, "running" text, the Sparkline stroke, spinners, and
+     the focus ring.
 
      It is not --accent-contrast, which is the black or white ink on top of a
      solid --accent fill (lib/accent.ts's contrastOn(), paired with
      `bg-accent`). --accent-text sits on neutral or accent-soft surfaces and
      never on `bg-accent`.
 
-     --ink-mix is how far the accent is mixed toward black to become ink. The
-     themes only set this number, so the rainbow block needs no light-theme
-     twin. 100% of a colour mixed with black is the colour itself. An accent
-     the mix leaves under 4.5:1, which a picked or a device's colour can be,
-     gets its ink from lib/accent.ts as --accent-ink-dark or
-     --accent-ink-light. No preset needs one. */
-  --ink-mix:          100%;
-  --accent-text:      var(--accent-ink-dark, color-mix(in srgb, var(--accent) var(--ink-mix), black));
+     The ink keeps the accent's hue and moves its lightness in OKLab onto a
+     fixed step, up to --ink-l-dark on this theme and down to --ink-l-light on
+     light (lib/oklab.ts), so every preset reads at nearly the same contrast.
+     Here the presets measure 6.19 to 9.40:1 on a card. An accent the step
+     leaves under 4.5:1, which a picked or a device's colour can be, gets its
+     ink from lib/accent.ts as --accent-ink-dark or --accent-ink-light. No
+     preset needs one. */
+  --ink-l-light:      0.5;
+  --ink-l-dark:       0.74;
+  --accent-text:      var(--accent-ink-dark, oklab(from var(--accent) max(l, var(--ink-l-dark)) calc(a * min(1, (1 - var(--ink-l-dark)) / (1 - l))) calc(b * min(1, (1 - var(--ink-l-dark)) / (1 - l)))));
 
   /* One elevation, one hairline, one focus ring. Elevation and hairline are
-     GlimStone's; the ring derives from the accent. */
+     GlimStone's. The ring is the accent's ink, opaque, so it follows a picked
+     accent and reaches 3:1 on the page, the rail, a card, a well and a row's
+     hover (lib/focusRing.test.ts). */
   --elevation: 0 1px 2px rgba(0, 0, 0, .40), 0 18px 40px -24px rgba(0, 0, 0, .85);
   --hairline: inset 0 1px 0 rgba(255, 255, 255, .045);
   /* The ground behind a floating window, and the blur that takes the page's
      detail away beneath it. */
   --glim-scrim: rgba(0, 0, 0, .72);
   --glim-scrim-blur: 6px;
-  --focus-ring: rgba(252, 196, 25, .55);
+  --focus-ring: var(--accent-text);
 
   /* A copy of --focus-ring under its own name, for the rainbow block's
      fallback. `var(--item-hue-ring, var(--focus-ring))` inside a --focus-ring
      declaration refers to itself, and a custom property has no previous value
      to fall back to, so the cycle computes to invalid instead of this ring. */
-  --focus-ring-flat: rgba(252, 196, 25, .55);
+  --focus-ring-flat: var(--accent-text);
 
   /* The inset hairline around a focused form field, which is what meets SC
-     1.4.11; the fill step is secondary. --focus-ring's .55 alpha was tuned
-     against cards and the page and reaches only 2.58:1 and 2.37:1 on a
-     field's focused fill. At .8 the same amber composites to about 3.71:1 on
-     --carbon-surface3 and 3.35:1 on --field-focus-well. */
+     1.4.11; the fill step is secondary. This amber at .8 composites to about
+     3.71:1 on --carbon-surface3 and 3.35:1 on --field-focus-well, the fills a
+     focused field stands on. */
   --field-focus-ring: rgba(252, 196, 25, .8);
 
   /* The focused fill of a field inside a surface2 well (see
@@ -1213,31 +1215,26 @@
 
   /* --accent-text cannot be the accent here: #FCC419 measures 1.61:1 on
      white, 1.46:1 on #f4f4f4 and 1.50:1 on Badge's accent-soft card, and this
-     token also paints text, so it needs 4.5:1. It is the accent mixed toward
-     black, so it follows a custom accent and stays in the hue of the wash
-     behind it.
+     token also paints text, so it needs 4.5:1. It is the accent darkened in
+     OKLab onto --ink-l-light, so it follows a custom accent and keeps the hue
+     of the wash behind it.
 
-     45% is measured: GlimStone's 55% leaves Sunflower at 4.49:1 on a card and
-     3.74:1 on surface2. At 45% the worst of the eight presets measures 5.13:1
-     on surface2, 6.15:1 on a card and 6.77:1 on white. */
-  --ink-mix: 45%;
-  --accent-text: var(--accent-ink-light, color-mix(in srgb, var(--accent) var(--ink-mix), black));
+     The step is measured on surface2, where BombVault puts accent text too:
+     GlimStone's 0.52 leaves the presets at 4.27:1 there. At 0.50 the worst of
+     the eight measures 4.69:1 on surface2 and 5.75:1 on white. */
+  --accent-text: var(--accent-ink-light, oklab(from var(--accent) min(l, var(--ink-l-light)) calc(a * min(1, var(--ink-l-light) / l)) calc(b * min(1, var(--ink-l-light) / l))));
 
   /* Anything painting the flat --accent as text or a thin graphic misses the
      contrast minimums on these surfaces and should use the accentText
      utilities. Solid `bg-accent` fills are fine: they pair with
      --accent-contrast. */
 
-  /* The dark ring composites to about 1.3:1 on white, under SC 1.4.11's 3:1.
-     This is Carbon yellow-60, in the accent's hue family, at .85: about 3.75:1 on #ffffff and 3.48:1 on the #f4f4f4 page. */
-  --focus-ring: rgba(142, 106, 0, .85);
+  /* The ring is this theme's ink, as in the dark block. */
+  --focus-ring: var(--accent-text);
+  --focus-ring-flat: var(--accent-text);
 
-  /* A copy of --focus-ring, as in the dark block. */
-  --focus-ring-flat: rgba(142, 106, 0, .85);
-
-  /* --focus-ring reaches only 2.70:1 on --carbon-surface3 and has no alpha left
-     to spend, so the field ring is the same amber, opaque: 3.27:1 on
-     --carbon-surface3 and 3.14:1 on --field-focus-well. */
+  /* The field ring is Carbon yellow-60, opaque: 3.27:1 on --carbon-surface3
+     and 3.14:1 on --field-focus-well. */
   --field-focus-ring: rgba(142, 106, 0, 1);
 
   /* A modest step off --carbon-surface3 that keeps --carbon-text at 11.38:1
@@ -1333,13 +1330,12 @@
        from [data-theme="light"]. The ok, fail, warn and neutral status tones
        are not restated and fall through to their dark values here. */
     --glim-scrim: rgba(0, 0, 0, .62);
-    --focus-ring: rgba(142, 106, 0, .85);
-    --focus-ring-flat: rgba(142, 106, 0, .85);
+    --focus-ring: var(--accent-text);
+    --focus-ring-flat: var(--accent-text);
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
     --field-placeholder: #525252;
-    --ink-mix: 45%;
-    --accent-text: var(--accent-ink-light, color-mix(in srgb, var(--accent) var(--ink-mix), black));
+    --accent-text: var(--accent-ink-light, oklab(from var(--accent) min(l, var(--ink-l-light)) calc(a * min(1, var(--ink-l-light) / l)) calc(b * min(1, var(--ink-l-light) / l))));
     --status-offsite-text: #0043ce;
     --keep-band-daily: #0f62fe;
     --keep-band-weekly: #007d79;
@@ -1826,10 +1822,10 @@ body {
   --accent-soft: var(--item-hue-soft);
   /* Restated rather than inherited: a custom property containing var() is
      computed where it is declared, so the --accent-text from :root arrives
-     already mixed from :root's accent. Without this, hued fills would take the
-     position's colour while ink kept the single accent. --ink-mix is
-     inherited, so there is no light-theme twin. */
-  --accent-text: color-mix(in srgb, var(--item-hue) var(--ink-mix), black);
+     already derived from :root's accent. Without this, hued fills would take
+     the position's colour while ink kept the single accent. hueVars() writes
+     the position's ink for both themes, so there is no light-theme twin. */
+  --accent-text: var(--item-hue-glyph);
   --accent-glyph: var(--accent-text);
   /* Read against this element's own --accent, so a filled control steps from
      its hue, and in reactive mode from whatever the state rule below sets. */
@@ -1852,35 +1848,6 @@ body {
 
   /* A field in a hued row gets the same ring as the buttons beside it. */
   --field-focus-ring: var(--item-hue-ring, var(--focus-ring-flat));
-}
-
-/* The hue ring on the light theme. hueVars() sets --item-hue-ring inline to
-   the position's colour at 55% alpha without knowing the theme, and over a
-   hued row's wash that measures 1.25 to 1.76:1 on light, under SC 1.4.11's
-   3:1. An inline property
-   cannot be overridden, so this redefines --focus-ring instead: the
-   position's hue mixed toward this theme's ink, darker and opaque, as the flat
-   ring does. Measured on the Settings tabs: red 5.25:1, blue 6.27:1 and purple
-   5.18:1 against the panel.
-
-   The two attribute selectors are compounded because data-theme and
-   data-rainbow both sit on <html>; with a space between them nothing would
-   match. */
-[data-theme="light"][data-rainbow] .glim-hue {
-  --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
-  --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
-  /* Fields match the buttons here too. */
-  --field-focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
-}
-
-/* The same for a system light theme with no data-theme attribute, since
-   :root:not([data-theme]) inherits nothing from [data-theme="light"]. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme])[data-rainbow] .glim-hue {
-    --item-hue-ring-light: color-mix(in srgb, var(--item-hue) 55%, var(--carbon-text));
-    --focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
-    --field-focus-ring: var(--item-hue-ring-light, var(--focus-ring-flat));
-  }
 }
 
 /* An item's glyph shows its colour at all times, except in reactive mode,
@@ -5378,12 +5345,12 @@ body {
    retention rule keeps, a copy on its way and the delete lock. They draw in the
    theme's own tokens and take the hue of the card they sit in. --pic is a
    fill, so it stops halfway between the accent and the ink the accent turns
-   into as text: the accent itself on dark, a shade that holds on white on
-   light. It is mixed here, so a card whose accent rests muted in reactive mode
-   mutes its picture too. Corners come from the shape engine: the rx attribute
-   on a shape is only what a browser without the CSS property draws. */
+   into as text. It is mixed here, so a card whose accent rests muted in
+   reactive mode mutes its picture too. Corners come from the shape engine:
+   the rx attribute on a shape is only what a browser without the CSS property
+   draws. */
 .glim-pic {
-  --pic: color-mix(in srgb, var(--accent) calc((var(--ink-mix) + 100%) / 2), black);
+  --pic: color-mix(in srgb, var(--accent), var(--accent-text));
 }
 
 .glim-vessel-shape { rx: min(calc(var(--radius-control) / 2), 6px); }

@@ -1,6 +1,7 @@
 // The pure half of appearance.ts: rainbowColorAt's position and rotation
 // math, hueVars and isValidPalette. The DOM half is in appearance.dom.test.tsx.
 import { describe, expect, it } from "vitest";
+import { inkCss } from "./oklab";
 import { RAINBOW, hueVars, isValidPalette, rainbowColorAt } from "./appearance";
 
 describe("RAINBOW", () => {
@@ -74,7 +75,8 @@ describe("hueVars", () => {
     expect(vars["--item-hue-ink"]).toBe("var(--rb-ink-5)");
     expect(vars["--item-hue-soft"]).toBe("color-mix(in srgb, var(--rb-5) 14%, transparent)");
     expect(vars["--item-hue-wash"]).toBe("color-mix(in srgb, var(--rb-5) 7%, transparent)");
-    expect(vars["--item-hue-ring"]).toBe("color-mix(in srgb, var(--rb-5) 55%, transparent)");
+    expect(vars["--item-hue-glyph"]).toBe(inkCss("var(--rb-5)"));
+    expect(vars["--item-hue-ring"]).toBe("var(--item-hue-glyph)");
   });
 
   it("wraps a position past either end of the palette, as rainbowColorAt does", () => {

@@ -3,6 +3,7 @@
 // colour of its place among the page's buttons, not the one of the card it
 // stands in.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { inkCss } from "./oklab";
 import { RAINBOW_OFF, applyRainbow, watchPageHue } from "./appearance";
 
 let stop: () => void = () => {};
@@ -30,14 +31,14 @@ describe("watchPageHue", () => {
     applyRainbow({ ...RAINBOW_OFF, on: true }, { animate: false });
     hover(document.getElementById("b")!);
     document.getElementById("c")!.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
-    expect(tint("b")).toBe("color-mix(in srgb, var(--rb-1) var(--ink-mix), black)");
-    expect(tint("c")).toBe("color-mix(in srgb, var(--rb-2) var(--ink-mix), black)");
+    expect(tint("b")).toBe(inkCss("var(--rb-1)"));
+    expect(tint("c")).toBe(inkCss("var(--rb-2)"));
   });
 
   it("answers for the button when the pointer lands on its glyph", () => {
     applyRainbow({ ...RAINBOW_OFF, on: true }, { animate: false });
     hover(document.querySelector("#a .glim-btn-glyph")!);
-    expect(tint("a")).toBe("color-mix(in srgb, var(--rb-0) var(--ink-mix), black)");
+    expect(tint("a")).toBe(inkCss("var(--rb-0)"));
   });
 
   it("leaves a button with its own palette position alone", () => {

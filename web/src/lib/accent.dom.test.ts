@@ -82,12 +82,12 @@ describe("setAccentPresets", () => {
 describe("accent text on a colour the presets never come near", () => {
   const root = document.documentElement.style;
 
-  it("carries an ink of its own for the theme the mix falls short on", () => {
-    applyAccent("#FAFAFA");
-    expect(root.getPropertyValue("--accent-ink-light")).toMatch(/^#[0-9A-F]{6}$/);
-    expect(root.getPropertyValue("--accent-ink-dark")).toBe("");
-    applyAccent("#0000FF");
-    expect(root.getPropertyValue("--accent-ink-dark")).toMatch(/^#[0-9A-F]{6}$/);
+  it("leaves the ink to the stylesheet's OKLab step, which reads on them too", () => {
+    for (const hex of ["#FAFAFA", "#0000FF", "#FFFF00", "#777777"]) {
+      applyAccent(hex);
+      expect(root.getPropertyValue("--accent-ink-light"), hex).toBe("");
+      expect(root.getPropertyValue("--accent-ink-dark"), hex).toBe("");
+    }
   });
 
   it("gives a mid-tone accent a hover of its own and drops it again for a preset", () => {
@@ -98,7 +98,7 @@ describe("accent text on a colour the presets never come near", () => {
     expect(root.getPropertyValue("--accent-hover-light")).toBe("");
   });
 
-  it("lets the stylesheet's mix stand again for a preset", () => {
+  it("lets the stylesheet's step stand for a preset", () => {
     applyAccent("#0000FF");
     applyAccent(DEFAULT_ACCENT);
     expect(root.getPropertyValue("--accent-ink-light")).toBe("");
