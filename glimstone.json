@@ -9,7 +9,7 @@
     {
       "name": "web packages",
       "mode": "npm",
-      "version": "4.4.1",
+      "version": "4.5.2",
       "package": "web/package.json"
     }
   ]
