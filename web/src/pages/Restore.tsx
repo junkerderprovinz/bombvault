@@ -664,7 +664,7 @@ export function Restore() {
                           setQuery("");
                         }
                       }}
-                      className="min-w-0 flex-1 bg-transparent text-base text-carbon-text outline-none placeholder:text-carbon-textMuted"
+                      className="min-w-0 flex-1 bg-transparent text-base text-carbon-text outline-none placeholder:text-fieldPlaceholder"
                     />
                   </label>
                   {!selection.selecting && joinable.length > 1 && (

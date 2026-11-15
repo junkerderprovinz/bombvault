@@ -35,7 +35,7 @@ export function PickerSearch({ value, onChange, label }: PickerSearchProps) {
           e.stopPropagation();
           onChange("");
         }}
-        className="h-full min-w-0 flex-1 bg-transparent text-sm text-carbon-text outline-none placeholder:text-carbon-textMuted [&::-webkit-search-cancel-button]:hidden"
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-carbon-text outline-none placeholder:text-fieldPlaceholder [&::-webkit-search-cancel-button]:hidden"
       />
     </label>
   );

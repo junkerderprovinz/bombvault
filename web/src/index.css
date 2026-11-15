@@ -29,6 +29,7 @@
   --color-accentGlyph: var(--accent-glyph);
   /* The hover step of a filled accent or status control (rule 21). */
   --color-accentHover: var(--accent-hover);
+  --color-fieldPlaceholder: var(--field-placeholder);
   --color-statusOkHover: var(--status-ok-hover);
   --color-statusFailHover: var(--status-fail-hover);
   --color-statusWarnHover: var(--status-warn-hover);
@@ -1095,12 +1096,16 @@
 
   /* The focused fill of a field inside a surface2 well (see
      .glim-field-focus-well): a modest step off --carbon-surface3 that keeps
-     --carbon-text at 6.27:1 and a textMuted placeholder at 2.08:1, close to
-     their unfocused 7.10:1 and 2.35:1. A brighter #8e8e8e would drop body text
+     --carbon-text at 6.27:1 and the placeholder at 4.04:1, close to their
+     unfocused 7.10:1 and 4.57:1. A brighter #8e8e8e would drop body text
      to 2.98:1. --field-focus-ring is composited against this fill and reaches
      3.35:1 here but only 1.77:1 on #8e8e8e, so re-measure it before changing
      this value. */
   --field-focus-well: #5a5a5a;
+
+  /* A field's placeholder takes the sub step, 4.5:1 or more on every field
+     fill. Muted text reads only 2.35:1 on surface3. */
+  --field-placeholder: #c6c6c6;
 
   /* Status colours: Carbon's dark support tones. The light block swaps in the
      light counterparts. */
@@ -1232,11 +1237,12 @@
   --field-focus-ring: rgba(142, 106, 0, 1);
 
   /* A modest step off --carbon-surface3 that keeps --carbon-text at 11.38:1
-     and a textMuted placeholder at 3.16:1 (unfocused: 11.85:1 and 3.29:1). A
+     and the placeholder at 4.92:1 (unfocused: 11.85:1 and 5.12:1). A
      darker #787878 would drop body text to 4.10:1. --field-focus-ring reaches
      3.14:1 on this fill but only 1.13:1 on #787878, so re-measure it before
      changing this value. */
   --field-focus-well: #cdcdcd;
+  --field-placeholder: #525252;
 
   /* Elevation and hairline from the reference. */
   --elevation: 0 1px 2px rgba(0, 0, 0, .06), 0 16px 36px -26px rgba(0, 0, 0, .35);
@@ -1327,6 +1333,7 @@
     --focus-ring-flat: rgba(142, 106, 0, .85);
     --field-focus-ring: rgba(142, 106, 0, 1);
     --field-focus-well: #cdcdcd;
+    --field-placeholder: #525252;
     --ink-mix: 45%;
     --accent-text: var(--accent-ink-light, color-mix(in srgb, var(--accent) var(--ink-mix), black));
     --status-offsite-text: #0043ce;
@@ -4016,7 +4023,7 @@ body {
   font: inherit;
   outline: none;
 }
-.glim-combobox-input::placeholder { color: var(--carbon-text-muted); }
+.glim-combobox-input::placeholder { color: var(--field-placeholder); }
 .glim-combobox-toggle {
   display: inline-flex;
   padding: 0.375rem;
@@ -4677,7 +4684,7 @@ body {
     cursor: not-allowed;
   }
   .glim-input::placeholder {
-    color: var(--carbon-text-muted);
+    color: var(--field-placeholder);
   }
   .glim-input--mono {
     font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;

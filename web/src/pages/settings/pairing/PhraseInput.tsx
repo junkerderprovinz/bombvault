@@ -105,7 +105,7 @@ export function usePhraseEntry({ id, label, tip, bare = false, busy, onPair, t }
         aria-label={bare ? label : undefined}
         aria-invalid={problem ? true : undefined}
         placeholder={t("pairing.enterPlaceholder")}
-        className="min-h-16 resize-y rounded-control bg-carbon-surface2 px-3 py-2.5 font-mono text-subline leading-normal text-carbon-text placeholder:font-sans placeholder:text-carbon-textMuted glim-field-focus"
+        className="min-h-16 resize-y rounded-control bg-carbon-surface2 px-3 py-2.5 font-mono text-subline leading-normal text-carbon-text placeholder:font-sans placeholder:text-fieldPlaceholder glim-field-focus"
       />
       <WordSlots words={words} unknown={unknown} />
       <p role="alert" className="text-subline text-statusFail empty:hidden">

@@ -243,7 +243,7 @@ export function SettingsSearch({ pages }: { pages: SettingsPageDef[] }) {
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           onKeyDown={onKeyDown}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm text-carbon-text outline-none placeholder:text-carbon-textMuted [&::-webkit-search-cancel-button]:hidden"
+          className="h-full min-w-0 flex-1 bg-transparent text-sm text-carbon-text outline-none placeholder:text-fieldPlaceholder [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <Badge

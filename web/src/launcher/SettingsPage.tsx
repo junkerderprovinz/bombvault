@@ -325,7 +325,7 @@ export function SettingsPage({
           placeholder={app.model}
           autoCorrect="off"
           enterKeyHint="done"
-          className="my-1 w-full rounded-control bg-carbon-surface2 px-3.5 py-3 text-sm text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
+          className="my-1 w-full rounded-control bg-carbon-surface2 px-3.5 py-3 text-sm text-carbon-text placeholder:text-fieldPlaceholder glim-field-focus"
         />
       </Section>
 

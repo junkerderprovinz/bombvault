@@ -242,7 +242,7 @@ export function ActivityLog({
           onChange={(e) => setFilterText(e.target.value)}
           placeholder={t("activityLog.filterPlaceholder")}
           aria-label={t("activityLog.filterPlaceholder")}
-          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
+          className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-fieldPlaceholder glim-field-focus"
         />
         <SelectField
           value={filterDomain}

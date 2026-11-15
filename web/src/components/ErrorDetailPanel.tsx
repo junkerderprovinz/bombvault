@@ -200,7 +200,7 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("errorPanel.filterPlaceholder")}
             aria-label={t("errorPanel.filterPlaceholder")}
-            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-carbon-textMuted glim-field-focus"
+            className="flex-1 min-w-[10rem] rounded-control bg-carbon-surface2 px-2 py-1 text-xs text-carbon-text placeholder:text-fieldPlaceholder glim-field-focus"
           />
           <SelectField
             value={filterDomain}
