@@ -43,7 +43,7 @@ const is: Partial<Translations> = {
   "about.paypalThanks": "Takk, framlagið þitt barst.",
   "about.paypalFailed": "Ekki næst í PayPal eins og er. Reyndu aftur síðar eða veldu aðra leið til að gefa.",
   "about.version": "Útgáfa",
-  "about.report": "Vandamál, óskir eða ábendingar? Þér er velkomið að opna mál á GitHub, eða skrifa á Discord.",
+  "about.report": "Vandamál, óskir eða tillögur? Þér er velkomið að opna mál á GitHub eða kíkja við og heilsa á Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

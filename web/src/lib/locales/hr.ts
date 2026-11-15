@@ -43,7 +43,7 @@ const hr: Partial<Translations> = {
   "about.paypalThanks": "Hvala, vaša donacija je stigla.",
   "about.paypalFailed": "PayPal trenutačno nije dostupan. Pokušajte kasnije ili odaberite drugi način doniranja.",
   "about.version": "Verzija",
-  "about.report": "Problemi, želje ili prijedlozi? Slobodno otvorite problem na GitHubu ili se javite na Discordu.",
+  "about.report": "Problemi, želje ili prijedlozi? Slobodno otvori issue na GitHubu ili svrati pozdraviti na Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

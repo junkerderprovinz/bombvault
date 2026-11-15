@@ -41,7 +41,7 @@ const hu: Partial<Translations> = {
   "about.paypalThanks": "Köszönöm, az adományod megérkezett.",
   "about.paypalFailed": "A PayPal most nem érhető el. Próbáld újra később, vagy válassz más módot a támogatásra.",
   "about.version": "Verzió",
-  "about.report": "Probléma, kívánság vagy javaslat? Nyugodtan nyiss egy hibajegyet a GitHubon, vagy szólj a Discordon.",
+  "about.report": "Problémád, kívánságod vagy ötleted van? Nyiss nyugodtan egy issue-t a GitHubon, vagy ugorj be köszönni a Discordon.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "Önmentés",

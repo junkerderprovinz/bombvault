@@ -43,7 +43,7 @@ const lv: Partial<Translations> = {
   "about.paypalThanks": "Paldies, jūsu ziedojums ir saņemts.",
   "about.paypalFailed": "PayPal pašlaik nav sasniedzams. Mēģiniet vēlāk vai izvēlieties citu veidu, kā atbalstīt.",
   "about.version": "Versija",
-  "about.report": "Problēmas, vēlmes vai ieteikumi? Droši atveriet problēmu GitHub vai rakstiet Discord.",
+  "about.report": "Problēmas, vēlmes vai ieteikumi? Droši atver issue GitHub vai iegriezies sasveicināties Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

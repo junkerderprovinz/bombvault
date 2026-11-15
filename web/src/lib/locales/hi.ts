@@ -43,7 +43,7 @@ const hi: Partial<Translations> = {
   "about.paypalThanks": "धन्यवाद, आपका दान पहुँच गया।",
   "about.paypalFailed": "PayPal अभी उपलब्ध नहीं है। बाद में फिर कोशिश करें या दान का कोई और तरीका चुनें।",
   "about.version": "संस्करण",
-  "about.report": "समस्याएँ, इच्छाएँ या सुझाव? बेझिझक GitHub पर issue खोलें या Discord पर लिखें।",
+  "about.report": "कोई समस्या, इच्छा या सुझाव? GitHub पर बेझिझक issue खोलें, या Discord पर आकर हैलो कहें।",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

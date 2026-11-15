@@ -41,7 +41,7 @@ const tr: Partial<Translations> = {
   "about.paypalThanks": "Teşekkürler, bağışın ulaştı.",
   "about.paypalFailed": "PayPal'a şu anda ulaşılamıyor. Daha sonra tekrar dene ya da başka bir bağış yolu seç.",
   "about.version": "Sürüm",
-  "about.report": "Sorun, istek ya da öneri mi var? Gönül rahatlığıyla GitHub üzerinde konu aç ya da Discord'a uğra.",
+  "about.report": "Sorun, dilek ya da öneri mi var? GitHub'da bir issue açabilir ya da Discord'a uğrayıp merhaba diyebilirsin.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "Öz yedek",

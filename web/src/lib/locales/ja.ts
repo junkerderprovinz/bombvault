@@ -41,7 +41,7 @@ const ja: Partial<Translations> = {
   "about.paypalThanks": "ありがとうございます。寄付が届きました。",
   "about.paypalFailed": "現在 PayPal に接続できません。後でもう一度試すか、別の方法を選んでください。",
   "about.version": "バージョン",
-  "about.report": "問題、要望、改善案はありますか。遠慮なく GitHub で issue を立てるか、Discord で声をかけてください。",
+  "about.report": "不具合、要望、提案はありますか？GitHub で issue を開くか、Discord に気軽に遊びに来てください。",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "セルフバックアップ",

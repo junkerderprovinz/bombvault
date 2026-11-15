@@ -41,7 +41,7 @@ const no: Partial<Translations> = {
   "about.paypalThanks": "Takk, donasjonen din har kommet fram.",
   "about.paypalFailed": "PayPal kan ikke nås akkurat nå. Prøv igjen senere, eller velg en annen måte å gi på.",
   "about.version": "Versjon",
-  "about.report": "Problemer, ønsker eller forslag? Du er velkommen til å opprette en sak på GitHub, eller stikke innom på Discord.",
+  "about.report": "Problemer, ønsker eller forslag? Du må gjerne åpne en sak på GitHub eller stikke innom og si hei på Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

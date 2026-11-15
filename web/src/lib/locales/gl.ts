@@ -43,7 +43,7 @@ const gl: Partial<Translations> = {
   "about.paypalThanks": "Grazas, a túa doazón chegou.",
   "about.paypalFailed": "Agora mesmo non se pode acceder a PayPal. Téntao máis tarde ou escolle outra forma de doar.",
   "about.version": "Versión",
-  "about.report": "Problemas, desexos ou suxestións? Abre sen problema unha incidencia en GitHub, ou pasa por Discord.",
+  "about.report": "Problemas, desexos ou suxestións? Abre unha incidencia en GitHub cando queiras, ou pasa a saudar por Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

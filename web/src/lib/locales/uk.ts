@@ -41,7 +41,7 @@ const uk: Partial<Translations> = {
   "about.paypalThanks": "Дякую, ваш внесок надійшов.",
   "about.paypalFailed": "PayPal зараз недоступний. Спробуйте пізніше або оберіть інший спосіб підтримати.",
   "about.version": "Версія",
-  "about.report": "Проблеми, побажання чи пропозиції? Сміливо створюй задачу на GitHub або заглянь у Discord.",
+  "about.report": "Проблеми, побажання чи ідеї? Сміливо відкривайте issue на GitHub або заходьте привітатися в Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "Автобекап",

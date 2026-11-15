@@ -43,7 +43,7 @@ const ca: Partial<Translations> = {
   "about.paypalThanks": "Gràcies, el teu donatiu ha arribat.",
   "about.paypalFailed": "Ara mateix no es pot accedir a PayPal. Torna-ho a provar més tard o tria una altra manera de fer un donatiu.",
   "about.version": "Versió",
-  "about.report": "Problemes, desitjos o suggeriments? Obre tranquil·lament una incidència a GitHub, o passa per Discord.",
+  "about.report": "Problemes, desitjos o suggeriments? Obre una incidència a GitHub quan vulguis, o passa a saludar per Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

@@ -43,7 +43,7 @@ const eu: Partial<Translations> = {
   "about.paypalThanks": "Eskerrik asko, zure dohaintza iritsi da.",
   "about.paypalFailed": "Une honetan ezin da PayPal-era iritsi. Saiatu berriro geroago edo aukeratu emateko beste modu bat.",
   "about.version": "Bertsioa",
-  "about.report": "Arazoak, nahiak edo iradokizunak? Lasai ireki gai bat GitHuben, edo idatzi Discorden.",
+  "about.report": "Arazoak, nahiak edo iradokizunak? Ireki issue bat GitHuben nahi duzunean, edo pasa zaitez Discordera kaixo esatera.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

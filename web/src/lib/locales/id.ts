@@ -43,7 +43,7 @@ const id: Partial<Translations> = {
   "about.paypalThanks": "Terima kasih, donasi Anda sudah diterima.",
   "about.paypalFailed": "PayPal tidak dapat dijangkau saat ini. Coba lagi nanti atau pilih cara lain untuk berdonasi.",
   "about.version": "Versi",
-  "about.report": "Masalah, keinginan, atau saran? Jangan ragu membuka isu di GitHub, atau mampir ke Discord.",
+  "about.report": "Ada masalah, keinginan, atau saran? Silakan buka issue di GitHub, atau mampir menyapa di Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

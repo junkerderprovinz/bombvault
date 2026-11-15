@@ -41,7 +41,7 @@ const zh: Partial<Translations> = {
   "about.paypalThanks": "谢谢，你的捐赠已收到。",
   "about.paypalFailed": "目前无法连接 PayPal。请稍后再试，或选择其他捐赠方式。",
   "about.version": "版本",
-  "about.report": "有问题、需求或改进建议？欢迎在 GitHub 上开一个 issue，或者来 Discord 聊聊。",
+  "about.report": "遇到问题、有愿望或建议？欢迎在 GitHub 上提 issue，或者来 Discord 打个招呼。",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "自我备份",

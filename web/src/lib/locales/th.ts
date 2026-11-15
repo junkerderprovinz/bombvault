@@ -41,7 +41,7 @@ const th: Partial<Translations> = {
   "about.paypalThanks": "ขอบคุณ เงินบริจาคของคุณมาถึงแล้ว",
   "about.paypalFailed": "ขณะนี้เชื่อมต่อ PayPal ไม่ได้ ลองใหม่ภายหลังหรือเลือกวิธีอื่นในการสนับสนุน",
   "about.version": "รุ่น",
-  "about.report": "มีปัญหา ความต้องการ หรือข้อเสนอแนะไหม เชิญเปิด issue บน GitHub หรือแวะมาที่ Discord ได้เลย",
+  "about.report": "มีปัญหา ความต้องการ หรือข้อเสนอแนะไหม เปิด issue บน GitHub หรือแวะมาทักทายกันบน Discord ได้เลย",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "สำรองข้อมูลตัวเอง",

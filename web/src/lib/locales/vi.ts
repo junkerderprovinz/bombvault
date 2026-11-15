@@ -41,7 +41,7 @@ const vi: Partial<Translations> = {
   "about.paypalThanks": "Cảm ơn bạn, khoản ủng hộ đã đến nơi.",
   "about.paypalFailed": "Hiện không kết nối được với PayPal. Hãy thử lại sau hoặc chọn một cách ủng hộ khác.",
   "about.version": "Phiên bản",
-  "about.report": "Vấn đề, mong muốn hay góp ý? Bạn cứ mở một issue trên GitHub, hoặc ghé Discord.",
+  "about.report": "Gặp sự cố, có mong muốn hay góp ý? Cứ thoải mái mở một issue trên GitHub hoặc ghé Discord chào một tiếng nhé.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
   "nav.config": "Tự sao lưu",

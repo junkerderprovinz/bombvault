@@ -41,7 +41,7 @@ const nl: Partial<Translations> = {
   "about.paypalThanks": "Bedankt, je donatie is aangekomen.",
   "about.paypalFailed": "PayPal is nu niet bereikbaar. Probeer het later opnieuw of kies een andere manier om te geven.",
   "about.version": "Versie",
-  "about.report": "Problemen, wensen of suggesties? Open gerust een issue op GitHub, of kom langs op Discord.",
+  "about.report": "Problemen, wensen of ideeën? Open gerust een issue op GitHub, of kom even hallo zeggen op Discord.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 

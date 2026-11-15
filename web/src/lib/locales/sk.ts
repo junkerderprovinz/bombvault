@@ -43,7 +43,7 @@ const sk: Partial<Translations> = {
   "about.paypalThanks": "Vďaka, tvoj dar dorazil.",
   "about.paypalFailed": "PayPal je teraz nedostupný. Skús to neskôr alebo vyber iný spôsob, ako prispieť.",
   "about.version": "Verzia",
-  "about.report": "Problémy, želania alebo návrhy? Pokojne založ issue na GitHube, alebo napíš na Discord.",
+  "about.report": "Problémy, želania alebo nápady? Pokojne založ issue na GitHube, alebo sa zastav pozdraviť na Discorde.",
   "about.repo": "GitHub",
   "about.discord": "Discord",
 
