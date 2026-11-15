@@ -155,7 +155,7 @@ for (const theme of ["dark", "light"] as const) {
   test(`the Help card's four marks share one box, one size and one place, ${theme}`, async ({ page }) => {
     const card = await openHelp(page, theme);
     const four = await placed(card);
-    expect(four.map((b) => b.name)).toEqual(["GitHub", "Email", "Manual", "Bug report"]);
+    expect(four.map((b) => b.name)).toEqual(["GitHub", "Discord", "Manual", "Bug report"]);
 
     const [first, ...rest] = four;
     for (const b of rest) {
@@ -176,7 +176,7 @@ test("the manual's book is closed at rest and open on the focus, in the same pla
   const rest = (await placed(card))[2];
   expect(rest.viewBox).toBe(CLOSED_BOOK);
 
-  await card.getByRole("button", { name: /Email/ }).focus();
+  await card.getByRole("button", { name: /Discord/ }).focus();
   await page.keyboard.press("Tab");
   await expect(manual).toBeFocused();
   const lit = (await placed(card))[2];
