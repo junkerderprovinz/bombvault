@@ -87,7 +87,7 @@ export function MemberField({
                 <button
                   type="button"
                   onClick={() => onPickLocation(r.location)}
-                  className="w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start hover:bg-hoverFilled glim-field-focus"
+                  className="w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start hover:bg-hover glim-field-focus"
                 >
                   <span className="block text-caption text-carbon-textSub">{r.name || r.domain}</span>
                   <span dir="ltr" className="block font-mono text-xs text-carbon-text break-all">

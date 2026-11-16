@@ -187,7 +187,7 @@ export function StackWindow({
                   role="radio"
                   aria-checked={on}
                   onClick={() => choose({ project: s.project })}
-                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hoverFilled ${
+                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
                     on ? "ring-accent" : "ring-transparent"
                   }`}
                 >

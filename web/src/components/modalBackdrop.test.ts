@@ -7,7 +7,7 @@ import { expect, it } from "vitest";
  * Every modal backdrop takes its fade and darkness from `.glim-modal-backdrop`.
  * One that forgets the class opens over an undimmed page, and nothing at its
  * call site looks wrong. A backdrop is a div with `fixed inset-0 z-50`, found
- * in string and template literals rather than lines, as in hoverRamp.test.ts.
+ * in string and template literals rather than lines.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));

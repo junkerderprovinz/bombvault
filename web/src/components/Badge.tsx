@@ -82,7 +82,7 @@ const HOVER_CLASSES: Record<BadgeTone, string> = {
   fail: "hover:bg-[color-mix(in_srgb,var(--status-fail-bg),var(--status-fail-text)_12%)]",
   warn: "hover:bg-[color-mix(in_srgb,var(--status-warn-bg-strong),var(--status-warn-text)_12%)]",
   active: "hover:bg-[color-mix(in_srgb,var(--accent-soft),var(--accent)_12%)]",
-  neutral: "glim-btn-subtle hover:bg-hoverFilled",
+  neutral: "glim-btn-subtle hover:bg-hover",
   heading: "hover:bg-accentHover",
   muted: "glim-btn-bare hover:text-carbon-text",
 };

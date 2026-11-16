@@ -419,7 +419,7 @@ function SeverityTiles({
             onClick={() => onChoose(severity)}
             style={hueVars(i) as CSSProperties}
             className={`glim-hue${severity ? "" : " glim-hue-icon"}${
-              on ? " glim-active bg-accent text-accentContrast" : " bg-carbon-surface2 text-carbon-text hover:bg-hoverFilled"
+              on ? " glim-active bg-accent text-accentContrast" : " bg-carbon-surface2 text-carbon-text hover:bg-hover"
             } grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 rounded-card px-3 py-2 text-start`}
           >
             <span className={`row-span-2 [&>svg]:h-[22px] [&>svg]:w-[22px] ${on ? "" : glyph}`}>

@@ -24,7 +24,7 @@ export function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className={`${base} cursor-pointer text-start hover:bg-hoverFilled motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)`}
+        className={`${base} cursor-pointer text-start hover:bg-hover motion-safe:transition-colors focus:outline-solid focus:outline-2 focus:outline-(--focus-ring)`}
       >
         {inner}
       </button>

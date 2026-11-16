@@ -33,12 +33,9 @@
   --color-statusOkHover: var(--status-ok-hover);
   --color-statusFailHover: var(--status-fail-hover);
   --color-statusWarnHover: var(--status-warn-hover);
-  /* The accent's hover tints (rule 21): hover:bg-hover for a row or anything
-     else with no fill, hover:bg-hoverFilled for something filled with surface2,
-     hover:bg-hoverRaised for something filled with surface3. */
+  /* The accent's hover (rule 21): hover:bg-hover on anything the pointer can
+     reach, a button, a row, a menu entry or a tile. */
   --color-hover: var(--hover);
-  --color-hoverFilled: var(--hover-filled);
-  --color-hoverRaised: var(--hover-raised);
 
   /* Status colours that flip with the theme. The plain token is text, Bg and
      Border are chip surfaces, Solid is for dots, bars and other graphics. */
@@ -323,17 +320,13 @@
   cursor: not-allowed;
 }
 
-/* Rule 40: a button takes the accent when it is reached for. On a grey button
-   the step up the ramp alone is a few units and reads as nothing happening, so
-   a surface-filled button mixes 22% of the tint into its hovered ground and
-   turns its glyph to the tint. Its words keep the text colour, which the accent
-   on a tinted ground would not be legible against. A bare glyph button has no
-   ground to tint, so only its glyph turns. --btn-tint reads --accent-glyph, and
-   under rainbow takePageHue() in lib/appearance.ts sets it inline to the
-   button's own position on the page. On the dark ramp a pale tint lifts the
-   ground toward the label, which on #6f6f6f already stands near 4.5:1, so
-   there the ground keeps the tint's hue and stops at the lightness
-   --hover-raised has on that ramp. The pointer half sits behind
+/* Rule 40: a button takes the accent when it is reached for. A surface-filled
+   button hovers to --hover, the colour a row, a menu entry and a tile take under
+   the pointer, and turns its glyph to the tint. Its words keep the text colour,
+   which the accent on a lit ground would not be legible against. A bare glyph
+   button has no ground to light, so only its glyph turns. --btn-tint reads
+   --accent-glyph, and under rainbow takePageHue() in lib/appearance.ts sets it
+   inline to the button's own position on the page. The pointer half sits behind
    (hover: hover), as Tailwind's hover: does, so a tap on a phone leaves no tint
    behind. */
 .glim-btn-neutral,
@@ -341,14 +334,8 @@
 .glim-btn-bare {
   --btn-tint: var(--accent-glyph);
 }
-.glim-btn-subtle {
-  --btn-tinted: color-mix(in srgb, var(--carbon-surface3), var(--btn-tint) 22%);
-}
-.glim-btn-neutral {
-  --btn-tinted: color-mix(in srgb, var(--carbon-hover-raised), var(--btn-tint) 22%);
-}
 :is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):focus-visible {
-  background-color: light-dark(var(--btn-tinted), oklab(from var(--btn-tinted) min(l, 0.535) a b));
+  background-color: var(--hover);
 }
 :is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):focus-visible > .glim-btn-glyph,
 .glim-btn-bare:not(:disabled):focus-visible {
@@ -359,7 +346,7 @@
 }
 @media (hover: hover) {
   :is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):hover {
-    background-color: light-dark(var(--btn-tinted), oklab(from var(--btn-tinted) min(l, 0.535) a b));
+    background-color: var(--hover);
   }
   :is(.glim-btn-neutral, .glim-btn-subtle):not(:disabled):hover > .glim-btn-glyph,
   .glim-btn-bare:not(:disabled):hover {
@@ -1048,7 +1035,6 @@
      lighter than the card, with its chips and switch one step above that. */
   --glim-tile-bg:           var(--carbon-surface2);
   --glim-tile-raised:       var(--carbon-surface3);
-  --glim-tile-raised-hover: var(--hover-raised);
   --glim-tile-switch-off:   var(--carbon-hover-raised);
   --glim-tile-well:         var(--carbon-bg);
 
@@ -1211,7 +1197,6 @@
   /* A faint grey tile on the white card; see the dark block. */
   --glim-tile-bg:           var(--carbon-bg);
   --glim-tile-raised:       var(--carbon-surface2);
-  --glim-tile-raised-hover: var(--hover-filled);
   --glim-tile-switch-off:   #8d8d8d;
   --glim-tile-well:         var(--carbon-surface);
 
@@ -1330,7 +1315,6 @@
     --sidebar-text:     #393939;
     --glim-tile-bg:           var(--carbon-bg);
     --glim-tile-raised:       var(--carbon-surface2);
-    --glim-tile-raised-hover: var(--hover-filled);
     --glim-tile-switch-off:   #8d8d8d;
     --glim-tile-well:         var(--carbon-surface);
     --toggle-off:             #8d8d8d;
@@ -1426,37 +1410,29 @@
 }
 
 /* The ground of whatever the pointer is over, in the accent's hue (GlimStone
-   rule 21). Each tint keeps the OKLab lightness of the grey step it replaces,
-   so text reads on it as it did on the grey and it never lands on the ground
-   it lifts from: --hover on --carbon-hover, for an element with no fill of its
-   own, --hover-filled on surface3, for one filled with surface2, and
-   --hover-raised on --carbon-hover-raised, for one filled with surface3. On the
-   dark themes the two upper ones sit 0.007 below their step, where a saturated
-   green would otherwise take the step's text under 4.5:1. A grey accent leaves
-   the grey step. Declared again inside a rainbow position, so the hover takes
-   the position's hue there. */
+   rule 21). A button, a row, a menu entry and a tile all take this one colour,
+   so two things lit side by side never differ. It keeps the OKLab lightness of
+   surface3, which lifts a row off the card and a quiet button off surface2
+   while the text and the secondary text on it keep 4.5:1. On the dark themes it
+   sits 0.007 below surface3, where a saturated green would otherwise take the
+   secondary text under 4.5:1. A grey accent leaves surface3's grey. Declared
+   again inside a rainbow position, so the hover takes the position's hue there. */
 :root,
 [data-theme],
 [data-rainbow] .glim-hue {
   --hover-chroma: 0.3;
-  --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.329 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-  --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-  --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.535 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
 }
 
-/* OLED moves the steps one Carbon step down, and the tints with them. */
+/* OLED moves surface3 one Carbon step down, and the hover with it. */
 [data-theme="dark"][data-oled],
 [data-theme="dark"][data-oled][data-rainbow] .glim-hue {
-  --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.256 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-  --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-  --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
 }
 @media (prefers-color-scheme: dark) {
   :root[data-oled]:not([data-theme]),
   :root[data-oled]:not([data-theme])[data-rainbow] .glim-hue {
-    --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.256 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-    --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
-    --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+    --hover: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
   }
 }
 
@@ -1883,8 +1859,6 @@ body {
   --color-accentGlyph: var(--accent-glyph);
   --color-accentHover: var(--accent-hover);
   --color-hover: var(--hover);
-  --color-hoverFilled: var(--hover-filled);
-  --color-hoverRaised: var(--hover-raised);
   /* The focus ring belongs to the position and is drawn around the element
      that owns the colour; the base :focus-visible rule reads it. Reactive mode
      does not reset it, because the ring only paints under focus, when the
@@ -2366,7 +2340,7 @@ body {
   --mark-ground: var(--glim-tile-bg);
 }
 .glim-tile .glim-tile-raise { background-color: var(--glim-tile-raised); }
-.glim-tile button.glim-tile-raise:hover:not(:disabled) { background-color: var(--glim-tile-raised-hover); }
+.glim-tile button.glim-tile-raise:hover:not(:disabled) { background-color: var(--hover); }
 .glim-tile [role="switch"][aria-checked="false"] { background-color: var(--glim-tile-switch-off); }
 .glim-tile .glim-tile-well { background-color: var(--glim-tile-well); }
 
@@ -4236,12 +4210,12 @@ body {
   }
   @media (hover: hover) {
     .glim-btn--neutral:hover {
-      background-color: var(--hover-raised);
+      background-color: var(--hover);
     }
   }
   @media (hover: hover) {
     .glim-btn--subtle:hover {
-      background-color: var(--hover-filled);
+      background-color: var(--hover);
     }
   }
   @media (hover: hover) {
@@ -4551,7 +4525,7 @@ body {
     color: var(--carbon-text-sub);
   }
   .glim-sel--chip .glim-sel-seg:not(.glim-active):not(:disabled):hover {
-    background-color: var(--hover-filled);
+    background-color: var(--hover);
     color: var(--carbon-text);
   }
   .glim-sel .glim-sel-seg.glim-active {

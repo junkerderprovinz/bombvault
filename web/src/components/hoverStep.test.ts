@@ -1,6 +1,6 @@
 // A filled control answers the pointer by a colour step (rule 21): the accent
-// and status fills read --accent-hover and --status-*-hover, a surface steps up
-// its ramp (hoverRamp.test.ts). Opacity would let the card show through and
+// and status fills read --accent-hover and --status-*-hover, a surface takes
+// --hover (hoverTint.test.ts). Opacity would let the card show through and
 // brightness() moves light and dark themes the same way, so neither may come
 // back as a hover.
 //

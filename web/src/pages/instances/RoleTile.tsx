@@ -104,7 +104,7 @@ export function RoleTile({
         onClick={onToggle}
         {...tooltip.handlers}
         className={`${cls} glim-field-focus transition-colors ${
-          state === "off" ? "hover:bg-hoverRaised" : "hover:bg-accentHover"
+          state === "off" ? "hover:bg-hover" : "hover:bg-accentHover"
         }`}
         style={style}
       >

@@ -252,7 +252,7 @@ export function WhereOption({
         next.focus();
         next.click();
       }}
-      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hoverFilled ${
+      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
         on ? "ring-accent" : "ring-transparent"
       }`}
     >

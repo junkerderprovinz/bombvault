@@ -25,7 +25,6 @@ describe("the tile tokens", () => {
     expect(dark).toEqual([
       "--glim-tile-bg",
       "--glim-tile-raised",
-      "--glim-tile-raised-hover",
       "--glim-tile-switch-off",
       "--glim-tile-well",
     ]);

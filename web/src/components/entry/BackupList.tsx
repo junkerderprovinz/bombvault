@@ -166,7 +166,7 @@ function Row({
                 type="button"
                 aria-label={t("entry.list.restoreFrom").replace("{place}", () => labelOf(mark.place))}
                 onClick={(e) => openAt(e, mark.place)}
-                className={`${MARK_CLASSES} hover:bg-hoverFilled hover:text-carbon-text`}
+                className={`${MARK_CLASSES} hover:bg-hover hover:text-carbon-text`}
               >
                 {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
                 {labelOf(mark.place)}

@@ -46,12 +46,13 @@ export type ButtonVariant = "default" | "chip" | "icon";
 // ok, danger and warn put carbon-background ink on the solid status tokens: in
 // both themes the solid status values sit at the opposite lightness to the
 // background, so one ink reads on both. The filled tones hover by a colour
-// step toward the theme's text (rule 21), and the surface tones also take the
-// accent's tint (rule 40, `.glim-btn-neutral` in index.css).
+// step toward the theme's text, and the surface tones take the hover a row
+// takes, with the glyph in the accent's tint (rules 21 and 40,
+// `.glim-btn-neutral` in index.css).
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:bg-accentHover",
-  neutral: "glim-btn-neutral bg-carbon-surface3 text-carbon-text hover:bg-hoverRaised",
-  subtle: "glim-btn-subtle bg-carbon-surface2 text-carbon-text hover:bg-hoverFilled",
+  neutral: "glim-btn-neutral bg-carbon-surface3 text-carbon-text hover:bg-hover",
+  subtle: "glim-btn-subtle bg-carbon-surface2 text-carbon-text hover:bg-hover",
   ok: "bg-statusOkSolid text-carbon-background hover:bg-statusOkHover",
   danger: "bg-statusFailSolid text-carbon-background hover:bg-statusFailHover",
   warn: "bg-statusWarnSolid text-carbon-background hover:bg-statusWarnHover",

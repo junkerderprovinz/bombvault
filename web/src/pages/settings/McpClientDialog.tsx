@@ -381,7 +381,7 @@ export function McpClientDialog({
                         type="button"
                         aria-pressed={on}
                         onClick={() => setPicked({ id: k.id, since: k.lastUsedAt })}
-                        className={`flex w-full items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-2 text-start [--mark-ground:var(--carbon-surface2)] hover:bg-hoverFilled hover:[--mark-ground:var(--hover-filled)] focus-visible:outline-2 focus-visible:outline-(--focus-ring) ${
+                        className={`flex w-full items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-2 text-start [--mark-ground:var(--carbon-surface2)] hover:bg-hover hover:[--mark-ground:var(--hover)] focus-visible:outline-2 focus-visible:outline-(--focus-ring) ${
                           on ? "shadow-[inset_0_0_0_1.5px_var(--accent-text)]" : ""
                         }`}
                       >

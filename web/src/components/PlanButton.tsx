@@ -47,7 +47,7 @@ export function PlanButton({
           <SelectArrow />
         </>
       }
-      triggerClassName="glim-btn min-w-0 max-w-full gap-2 bg-carbon-surface2 px-3 text-carbon-text hover:bg-hoverFilled"
+      triggerClassName="glim-btn min-w-0 max-w-full gap-2 bg-carbon-surface2 px-3 text-carbon-text hover:bg-hover"
       panelClassName="p-4 max-w-[min(94vw,36rem)]"
     >
       <CadenceBuilder label={label} value={value} onChange={onChange} modes={modes} hueIndex={hueIndex} />

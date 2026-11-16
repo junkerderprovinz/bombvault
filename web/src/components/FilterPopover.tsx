@@ -69,7 +69,7 @@ export function FilterPopover({
         trigger={trigger}
         /* Same trigger recipe as the desktop branch below; the 44px touch
            floor is TapPopover's. */
-        triggerClassName="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-hoverFilled transition-colors"
+        triggerClassName="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-hover transition-colors"
         panelClassName="flex flex-col gap-4 p-4 min-w-[16rem] max-w-[min(90vw,26rem)]"
       >
         {children}
@@ -86,7 +86,7 @@ export function FilterPopover({
         aria-haspopup="dialog"
         /* Only the surface and its hover are local, so a popover trigger does
            not read as one of the page's actions. */
-        className="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-hoverFilled transition-colors"
+        className="glim-btn bg-carbon-surface2 font-medium text-carbon-text hover:bg-hover transition-colors"
       >
         {trigger}
       </button>

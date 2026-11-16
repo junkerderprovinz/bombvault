@@ -40,7 +40,7 @@ function Choice({
       type="button"
       disabled={disabled}
       onClick={onChoose}
-      className="flex items-start gap-3 rounded-control bg-carbon-surface2 p-4 text-start transition-colors hover:bg-hoverFilled disabled:opacity-55 disabled:hover:bg-carbon-surface2"
+      className="flex items-start gap-3 rounded-control bg-carbon-surface2 p-4 text-start transition-colors hover:bg-hover disabled:opacity-55 disabled:hover:bg-carbon-surface2"
     >
       <span className="flex h-11 w-11 flex-none items-center justify-center rounded-control bg-accent text-accentContrast [&_svg]:h-[22px] [&_svg]:w-[22px]">
         <KindGlyph kind={kind} />

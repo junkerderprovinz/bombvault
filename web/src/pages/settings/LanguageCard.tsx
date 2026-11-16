@@ -15,7 +15,7 @@ export function LanguagePicker({ t }: { t: ReturnType<typeof useT>["t"] }) {
       onChange={setLanguage}
       options={languages.map((l) => ({ value: l.code, label: l.label, glyph: <Flag code={l.flag} /> }))}
       label={t("language.label")}
-      className="h-[var(--btn-h)] w-48 rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text hover:bg-hoverFilled transition-colors"
+      className="h-[var(--btn-h)] w-48 rounded-control bg-carbon-surface2 px-3 text-sm text-carbon-text hover:bg-hover transition-colors"
     />
   );
 }
