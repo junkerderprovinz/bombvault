@@ -91,16 +91,21 @@ for (const theme of ["dark", "light"] as const) {
       }
     }
 
-    // Under the pointer an idle segment takes the plain hover, not a colour.
+    // Under the pointer an idle segment lights in the hover a row or a button
+    // takes at the same place on the page.
     const idle = page.locator("#bv-main [data-hue] [data-sel-id]:not(.glim-active)").first();
     const before = await idle.evaluate((el) => getComputedStyle(el.closest("[data-hue]")!).getPropertyValue("--item-hue"));
     await idle.hover();
-    await expect
-      .poll(() => idle.evaluate((el) => getComputedStyle(el).backgroundColor))
-      .toBe(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--carbon-hover").trim()).then((hex) => {
-        const n = parseInt(hex.slice(1), 16);
-        return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
-      }));
+    const hover = await idle.evaluate((el) => {
+      const probe = document.createElement("span");
+      probe.style.backgroundColor = "var(--hover)";
+      el.parentElement!.append(probe);
+      const colour = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return colour;
+    });
+    expect(hover).not.toBe(TRANSPARENT);
+    await expect.poll(() => idle.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(hover);
     expect(before).not.toBe("");
 
     // The focus ring is the selector's colour, not the single accent's.
