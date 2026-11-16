@@ -10,23 +10,30 @@ import { MIN_TEXT_CONTRAST, contrastRatio } from "../lib/contrast";
 import { oklabOf, srgbOf } from "../lib/oklab";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
-const CSS = readFileSync(join(SRC, "index.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const stylesheet = (path: string) => readFileSync(path, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
 
 // A selector starts after the last at-rule statement before it, such as @import.
-const rules = [...CSS.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector, body]) => ({ selector: selector.split(";").pop()!.trim(), body }));
+const rulesOf = (css: string) =>
+  [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selector, body]) => ({ selector: selector.split(";").pop()!.trim(), body }));
+const rules = rulesOf(stylesheet(join(SRC, "index.css")));
+// BombVault ports GlimStone's stylesheet instead of loading it, so the port is
+// held to the release it names.
+const gsRules = rulesOf(stylesheet(join(SRC, "..", "node_modules", "@glimstone", "core", "tokens.css")));
 
 /** The custom properties of the first rule whose selector is exactly `selector`. */
-function block(selector: string): Record<string, string> {
-  const rule = rules.find((r) => r.selector === selector);
+function block(selector: string, from = rules): Record<string, string> {
+  const rule = from.find((r) => r.selector === selector);
   expect(rule, `no rule ${selector}`).toBeTruthy();
   return Object.fromEntries([...rule!.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]));
 }
 
-const tint = (l: number) => `oklab(from var(--accent) ${l} calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma)))`;
-const both = (light: number, dark: number) => `light-dark(${tint(light)}, ${tint(dark)})`;
+const GS_HOVER = block(":root,\n[data-theme],\n[data-rainbow] .glim-hue", gsRules);
+const GS_OLED_HOVER = block("[data-oled],\n[data-oled][data-rainbow] .glim-hue", gsRules)["--hover"];
+const lightness = (hover: string) => [...hover.matchAll(/oklab\(from var\(--accent\) ([\d.]+) /g)].map((m) => Number(m[1]));
 
 // GlimStone's lightness for the hover: light, dark and OLED.
-const STEP = [0.861, 0.432, 0.338] as const;
+const STEP = [...lightness(GS_HOVER["--hover"]), lightness(GS_OLED_HOVER)[1]];
+const CHROMA = Number(GS_HOVER["--hover-chroma"]);
 
 // What the colour picker can hand in, GlimStone's sweep: twelve hues at low,
 // mid and high chroma on four lightness steps, and a run of greys.
@@ -40,8 +47,10 @@ const SWEEP = [
 describe("the hover", () => {
   it("is GlimStone's one colour, declared again inside a rainbow position", () => {
     const own = block(":root,\n[data-theme],\n[data-rainbow] .glim-hue");
-    expect(own["--hover-chroma"]).toBe("0.3");
-    expect(own["--hover"]).toBe(both(STEP[0], STEP[1]));
+    expect(own["--hover-chroma"]).toBe(GS_HOVER["--hover-chroma"]);
+    expect(own["--hover"]).toBe(GS_HOVER["--hover"]);
+    expect(STEP).toHaveLength(3);
+    expect(STEP.every((l) => l > 0 && l < 1) && CHROMA > 0).toBe(true);
     expect(Object.keys(own).filter((k) => k.startsWith("--hover"))).toEqual(["--hover-chroma", "--hover"]);
   });
 
@@ -50,7 +59,7 @@ describe("the hover", () => {
       '[data-theme="dark"][data-oled],\n[data-theme="dark"][data-oled][data-rainbow] .glim-hue',
       ':root[data-oled]:not([data-theme]),\n  :root[data-oled]:not([data-theme])[data-rainbow] .glim-hue',
     ]) {
-      expect(block(selector)).toEqual({ "--hover": both(STEP[0], STEP[2]) });
+      expect(block(selector)).toEqual({ "--hover": GS_OLED_HOVER });
     }
   });
 
@@ -72,7 +81,7 @@ describe("the hover", () => {
     for (const accent of [...DEFAULT_ACCENT_PRESETS, ...SWEEP]) {
       const [, a, b] = oklabOf(accent);
       for (const { name, side, text, sub } of themes) {
-        const ground = srgbOf([STEP[side], a * 0.3, b * 0.3]);
+        const ground = srgbOf([STEP[side], a * CHROMA, b * CHROMA]);
         for (const ink of [text, sub]) {
           const r = contrastRatio(ink, ground);
           if (r < MIN_TEXT_CONTRAST) misses.push(`${accent} ${ink} on ${name}: ${r.toFixed(2)}`);
