@@ -1216,9 +1216,9 @@
      OKLab onto --ink-l-light, so it follows a custom accent and keeps the hue
      of the wash behind it.
 
-     The step is measured on surface2, where BombVault puts accent text too:
-     GlimStone's 0.52 leaves the presets at 4.27:1 there. At 0.50 the worst of
-     the eight measures 4.69:1 on surface2 and 5.75:1 on white. */
+     GlimStone sets the step on surface2, the darkest ground accent text stands
+     on: the worst of the eight presets measures 4.69:1 there and 5.75:1 on
+     white. */
   --accent-text: var(--accent-ink-light, oklab(from var(--accent) min(l, var(--ink-l-light)) calc(a * min(1, var(--ink-l-light) / l)) calc(b * min(1, var(--ink-l-light) / l))));
 
   /* Anything painting the flat --accent as text or a thin graphic misses the

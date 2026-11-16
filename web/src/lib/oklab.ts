@@ -9,14 +9,9 @@
 
 export type Oklab = [number, number, number];
 
-/**
- * The lightness steps of the ink, declared in index.css as --ink-l-light and
- * --ink-l-dark: the light theme's ink sits at this lightness or below, the dark
- * theme's at this one or above. GlimStone's light step is 0.52, measured on a
- * card. BombVault puts accent text on surface2 as well, where 0.52 leaves the
- * presets at 4.27:1 and 0.50 at 4.69:1.
- */
-export const INK_LIGHTNESS = { light: 0.5, dark: 0.74 } as const;
+// GlimStone's lightness steps of the ink, which index.css declares as
+// --ink-l-light and --ink-l-dark.
+export { INK_LIGHTNESS } from "@glimstone/core/oklab";
 
 const linear = (v: number) => {
   const s = v / 255;
