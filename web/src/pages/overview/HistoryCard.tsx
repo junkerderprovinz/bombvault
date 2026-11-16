@@ -88,7 +88,7 @@ function RunRow({
           .replace("{end}", formatClockTime(run.finishedAt, false))} · ${formatDuration(run.finishedAt - run.startedAt)}`;
   const result = RESULT[run.status];
   return (
-    <li className="relative flex items-center gap-3 rounded-control border-t border-carbon-border px-1.5 py-2.5 first:border-t-0 hover:bg-carbon-hover">
+    <li className="relative flex items-center gap-3 rounded-control border-t border-carbon-border px-1.5 py-2.5 first:border-t-0 hover:bg-hover">
       <span aria-hidden="true" className={`h-2 w-2 flex-none rounded-full ${DOT[run.status] ?? "bg-carbon-surface3"}`} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">

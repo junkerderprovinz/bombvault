@@ -141,7 +141,7 @@ export function MoveWindow({
                   aria-label={candidate.name}
                   disabled={busy}
                   onClick={() => pick(candidate)}
-                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-carbon-surface3 ${picked ? "ring-2 ring-accent" : ""}`}
+                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-hoverFilled ${picked ? "ring-2 ring-accent" : ""}`}
                 >
                   <RadioMark on={picked} />
                   <LocationMark location={candidate} />

@@ -145,7 +145,7 @@ export function ActionMenu({
             onClose();
             action.onSelect();
           }}
-          className={`flex items-center gap-2.5 rounded-control px-3 py-2 text-start text-sm text-carbon-text hover:bg-carbon-hover ${byPointer ? "" : "focus-visible:bg-carbon-hover"} pointer-coarse:min-h-11`}
+          className={`flex items-center gap-2.5 rounded-control px-3 py-2 text-start text-sm text-carbon-text hover:bg-hover ${byPointer ? "" : "focus-visible:bg-hover"} pointer-coarse:min-h-11`}
         >
           <span className="flex flex-none text-accentText">{action.glyph}</span>
           {action.label}

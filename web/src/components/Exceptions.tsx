@@ -91,7 +91,7 @@ export function Exceptions({
               setOpen(false);
               onAdd(section.id);
             }}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-start text-sm text-carbon-textSub transition-colors hover:bg-carbon-hover hover:text-carbon-text"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-start text-sm text-carbon-textSub transition-colors hover:bg-hover hover:text-carbon-text"
           >
             <span className="inline-flex shrink-0 text-accentText">{section.glyph}</span>
             <span className="truncate">{section.label}</span>

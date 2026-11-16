@@ -155,7 +155,7 @@ export function FolderAddForm({
                     disabled={has}
                     aria-pressed={on}
                     onClick={() => choose(folder)}
-                    className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-control px-1.5 py-1.5 text-start hover:bg-carbon-hover disabled:opacity-55 disabled:hover:bg-transparent ${
+                    className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-control px-1.5 py-1.5 text-start hover:bg-hover disabled:opacity-55 disabled:hover:bg-transparent ${
                       on ? "bg-accentSoft" : ""
                     }`}
                   >

@@ -80,7 +80,7 @@ function SortButton({ sort, onChange, t }: { sort: ListSort; onChange: (next: Li
                 setOpen(false);
               }}
               className={`flex w-full items-center px-3 py-2 text-start text-sm transition-colors ${
-                on ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                on ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-hover hover:text-carbon-text"
               }`}
             >
               {t(s.label)}

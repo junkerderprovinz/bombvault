@@ -167,6 +167,11 @@ describe("the entries", () => {
     expect(tile(en["nav.containers"]).textContent).toBe(en["nav.containers"] + countText(en["restorePage.tileCount"], "en", 2));
   });
 
+  it("light their glyph tile with the accent under the pointer", async () => {
+    await renderPage();
+    expect(entry("immich").querySelector(".glim-row-glyph")).toBeTruthy();
+  });
+
   it("cannot be picked while they have no backup", async () => {
     await renderPage();
     expect(entry("gitea").disabled).toBe(true);

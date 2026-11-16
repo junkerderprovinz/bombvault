@@ -128,7 +128,7 @@ export function BackupRail({
               data-testid="rail-row"
               onClick={() => onChoose(i)}
               className={`group relative flex cursor-pointer flex-wrap items-center gap-x-3.5 gap-y-2 rounded-control py-3 pe-3.5 ps-10 before:absolute before:bottom-0 before:start-[17px] before:top-0 before:w-0.5 first:before:top-1/2 last:before:bottom-1/2 ${line} ${
-                on ? "bg-accentSoft" : "hover:bg-carbon-surface2"
+                on ? "bg-accentSoft" : "hover:bg-hover"
               }`}
             >
               <span

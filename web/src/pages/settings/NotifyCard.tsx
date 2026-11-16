@@ -301,7 +301,7 @@ export function NotifyCard({
                 setAdding(false);
                 addChannel(kind);
               }}
-              className="flex w-full items-center px-3 py-2 text-start text-sm text-carbon-textSub transition-colors hover:bg-carbon-hover hover:text-carbon-text"
+              className="flex w-full items-center px-3 py-2 text-start text-sm text-carbon-textSub transition-colors hover:bg-hover hover:text-carbon-text"
             >
               <span className="truncate">{t(KIND_LABEL[kind])}</span>
             </button>

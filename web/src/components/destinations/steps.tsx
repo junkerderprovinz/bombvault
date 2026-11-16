@@ -562,7 +562,7 @@ export function FolderBody({ draft }: { draft: DestinationDraftState }) {
               key={f}
               type="button"
               onClick={() => void draft.loadFolders([...dir, f])}
-              className="flex items-center gap-2 rounded-control px-2 py-1.5 text-start text-sm text-carbon-text hover:bg-carbon-surface2"
+              className="flex items-center gap-2 rounded-control px-2 py-1.5 text-start text-sm text-carbon-text hover:bg-hover"
             >
               <span className="text-carbon-textMuted"><IconFolder /></span>
               {f}

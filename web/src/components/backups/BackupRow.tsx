@@ -363,7 +363,7 @@ export function BackupRow({
       className={`group glim-hue relative cursor-pointer rounded-control pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none] ${ROW} ${
         picked
           ? "bg-accentSoft"
-          : "hover:bg-carbon-hover"
+          : "hover:bg-hover"
       }${dim ? " opacity-55" : ""}`}
     >
       <span

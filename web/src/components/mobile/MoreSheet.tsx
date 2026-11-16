@@ -81,7 +81,7 @@ export interface MoreSheetProps {
 // One row (destination or sign-out alike): 52px minimum height
 // (min-h-[3.25rem], the iOS list cell measure); comfortably over the 44px
 // touch floor; the padding never carries the floor, the min-height does.
-const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 text-body hover:bg-carbon-hover";
+const rowBase = "flex min-h-[3.25rem] items-center gap-3 rounded-control px-3 text-body hover:bg-hover";
 
 export function MoreSheet({ open, onClose, settings, authEnabled, relayed = false, scrollMainToTop, hueOffset = 0 }: MoreSheetProps) {
   const { t } = useT();

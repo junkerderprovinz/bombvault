@@ -123,7 +123,7 @@ function Row({
       onClick={app ? undefined : () => onOpen({ key: row.key })}
       className={`group flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-control px-3 py-2.5 ${
         app ? "" : "cursor-pointer"
-      } ${marked ? "bg-accentSoft" : "hover:bg-carbon-hover"}`}
+      } ${marked ? "bg-accentSoft" : "hover:bg-hover"}`}
     >
       <span className="flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-2">
         <span className="text-sm font-semibold tabular-nums text-carbon-text first-letter:uppercase">
@@ -166,7 +166,7 @@ function Row({
                 type="button"
                 aria-label={t("entry.list.restoreFrom").replace("{place}", () => labelOf(mark.place))}
                 onClick={(e) => openAt(e, mark.place)}
-                className={`${MARK_CLASSES} hover:bg-carbon-surface3 hover:text-carbon-text`}
+                className={`${MARK_CLASSES} hover:bg-hoverFilled hover:text-carbon-text`}
               >
                 {places.find((p) => p.place === mark.place)?.remote ? <IconCloud /> : <IconLocal />}
                 {labelOf(mark.place)}

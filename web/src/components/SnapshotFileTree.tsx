@@ -93,7 +93,7 @@ function TreeRow({
   return (
     <div>
       <div
-        className="flex items-center gap-1 py-0.5 text-xs rounded-control hover:bg-carbon-hover"
+        className="flex items-center gap-1 py-0.5 text-xs rounded-control hover:bg-hover"
         // The logical property indents from the reading edge, so the hierarchy
         // stays visible in RTL.
         style={{ paddingInlineStart: depth * 14 }}

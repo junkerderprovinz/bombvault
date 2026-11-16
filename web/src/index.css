@@ -33,6 +33,12 @@
   --color-statusOkHover: var(--status-ok-hover);
   --color-statusFailHover: var(--status-fail-hover);
   --color-statusWarnHover: var(--status-warn-hover);
+  /* The accent's hover tints (rule 21): hover:bg-hover for a row or anything
+     else with no fill, hover:bg-hoverFilled for something filled with surface2,
+     hover:bg-hoverRaised for something filled with surface3. */
+  --color-hover: var(--hover);
+  --color-hoverFilled: var(--hover-filled);
+  --color-hoverRaised: var(--hover-raised);
 
   /* Status colours that flip with the theme. The plain token is text, Bg and
      Border are chip surfaces, Solid is for dots, bars and other graphics. */
@@ -267,7 +273,8 @@
   }
 }
 
-/* The glyph tile of a list row (components/backups/BackupRow.tsx). It takes
+/* The glyph tile of a list row (components/backups/BackupRow.tsx), or of the
+   button that fills a row (pages/Restore.tsx). It takes
    the row's ink, which rainbow turns into the row's hue, and fills with the
    accent while the row is hovered, holds the focus or is picked. Reactive
    mode rests the glyph like every other item glyph. */
@@ -279,11 +286,13 @@
     transition: background-color var(--motion-control-dur, 150ms) ease, color var(--motion-control-dur, 150ms) ease;
   }
 }
-.glim-hue:is(:hover, :focus-within, [data-picked]) > .glim-row-glyph {
+.glim-hue:is(:hover, :focus-within, [data-picked]) > .glim-row-glyph,
+.glim-hue:is(:hover, :focus-within, [data-picked]) > button:not(:disabled) > .glim-row-glyph {
   background-color: var(--accent);
   color: var(--accent-contrast);
 }
-[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within, [data-picked]) > .glim-row-glyph {
+[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within, [data-picked]) > .glim-row-glyph,
+[data-rainbow="reactive"] .glim-hue:not(:hover, :focus-within, [data-picked]) > button > .glim-row-glyph {
   color: var(--carbon-text-muted);
 }
 
@@ -398,7 +407,7 @@
     color: var(--accent-contrast);
   }
   @media (hover: hover) {
-    .glim-checkbox:not(:disabled):hover { background-color: var(--carbon-hover); }
+    .glim-checkbox:not(:disabled):hover { background-color: var(--hover); }
   }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -1036,7 +1045,7 @@
      lighter than the card, with its chips and switch one step above that. */
   --glim-tile-bg:           var(--carbon-surface2);
   --glim-tile-raised:       var(--carbon-surface3);
-  --glim-tile-raised-hover: var(--carbon-hover-raised);
+  --glim-tile-raised-hover: var(--hover-raised);
   --glim-tile-switch-off:   var(--carbon-hover-raised);
   --glim-tile-well:         var(--carbon-bg);
 
@@ -1199,7 +1208,7 @@
   /* A faint grey tile on the white card; see the dark block. */
   --glim-tile-bg:           var(--carbon-bg);
   --glim-tile-raised:       var(--carbon-surface2);
-  --glim-tile-raised-hover: var(--carbon-surface3);
+  --glim-tile-raised-hover: var(--hover-filled);
   --glim-tile-switch-off:   #8d8d8d;
   --glim-tile-well:         var(--carbon-surface);
 
@@ -1318,7 +1327,7 @@
     --sidebar-text:     #393939;
     --glim-tile-bg:           var(--carbon-bg);
     --glim-tile-raised:       var(--carbon-surface2);
-    --glim-tile-raised-hover: var(--carbon-surface3);
+    --glim-tile-raised-hover: var(--hover-filled);
     --glim-tile-switch-off:   #8d8d8d;
     --glim-tile-well:         var(--carbon-surface);
     --toggle-off:             #8d8d8d;
@@ -1411,6 +1420,41 @@
   /* A line-drawn glyph in the accent. Rainbow never colours text, so a hued
      subtree redefines this and leaves --accent-text on the single accent. */
   --accent-glyph:      var(--accent-text);
+}
+
+/* The ground of whatever the pointer is over, in the accent's hue (GlimStone
+   rule 21). Each tint keeps the OKLab lightness of the grey step it replaces,
+   so text reads on it as it did on the grey and it never lands on the ground
+   it lifts from: --hover on --carbon-hover, for an element with no fill of its
+   own, --hover-filled on surface3, for one filled with surface2, and
+   --hover-raised on --carbon-hover-raised, for one filled with surface3. On the
+   dark themes the two upper ones sit 0.007 below their step, where a saturated
+   green would otherwise take the step's text under 4.5:1. A grey accent leaves
+   the grey step. Declared again inside a rainbow position, so the hover takes
+   the position's hue there. */
+:root,
+[data-theme],
+[data-rainbow] .glim-hue {
+  --hover-chroma: 0.3;
+  --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.329 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.535 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+}
+
+/* OLED moves the steps one Carbon step down, and the tints with them. */
+[data-theme="dark"][data-oled],
+[data-theme="dark"][data-oled][data-rainbow] .glim-hue {
+  --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.256 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-oled]:not([data-theme]),
+  :root[data-oled]:not([data-theme])[data-rainbow] .glim-hue {
+    --hover: light-dark(oklab(from var(--accent) 0.907 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.256 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+    --hover-filled: light-dark(oklab(from var(--accent) 0.861 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.338 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+    --hover-raised: light-dark(oklab(from var(--accent) 0.827 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))), oklab(from var(--accent) 0.432 calc(a * var(--hover-chroma)) calc(b * var(--hover-chroma))));
+  }
 }
 
 /* The house font is Noto Sans, shipped with the app for Latin, Cyrillic,
@@ -1576,7 +1620,7 @@ body {
   text-align: center;
 }
 .glim-time-option:hover {
-  background-color: var(--carbon-hover);
+  background-color: var(--hover);
   color: var(--carbon-text);
 }
 .glim-time-option[aria-selected="true"] {
@@ -1835,6 +1879,9 @@ body {
   --color-accentSoft: var(--item-hue-soft);
   --color-accentGlyph: var(--accent-glyph);
   --color-accentHover: var(--accent-hover);
+  --color-hover: var(--hover);
+  --color-hoverFilled: var(--hover-filled);
+  --color-hoverRaised: var(--hover-raised);
   /* The focus ring belongs to the position and is drawn around the element
      that owns the colour; the base :focus-visible rule reads it. Reactive mode
      does not reset it, because the ring only paints under focus, when the
@@ -3979,7 +4026,7 @@ body {
   cursor: pointer;
 }
 .glim-combobox-control { padding-inline-end: 0.25rem; cursor: text; }
-.glim-select-trigger:hover { background: var(--carbon-hover); }
+.glim-select-trigger:hover { background: var(--hover); }
 .glim-select-trigger:focus-visible,
 .glim-combobox-control:focus-within {
   outline: 2px solid var(--focus-ring);
@@ -4005,7 +4052,7 @@ body {
   color: var(--carbon-text-sub);
   cursor: pointer;
 }
-.glim-combobox-toggle:hover { background: var(--carbon-hover); }
+.glim-combobox-toggle:hover { background: var(--hover); }
 .glim-select-indicator {
   display: inline-flex;
   color: var(--carbon-text-sub);
@@ -4036,7 +4083,7 @@ body {
   font-size: var(--text-body);
   cursor: pointer;
 }
-.glim-select-item[data-highlighted] { background: var(--carbon-hover); }
+.glim-select-item[data-highlighted] { background: var(--hover); }
 .glim-select-item[data-state="checked"] { font-weight: 600; }
 .glim-select-item[data-disabled] { color: var(--carbon-text-muted); cursor: default; }
 .glim-select-check { display: inline-flex; color: var(--accent-ink); }
@@ -4186,12 +4233,12 @@ body {
   }
   @media (hover: hover) {
     .glim-btn--neutral:hover {
-      background-color: var(--carbon-hover-raised);
+      background-color: var(--hover-raised);
     }
   }
   @media (hover: hover) {
     .glim-btn--subtle:hover {
-      background-color: var(--carbon-surface3);
+      background-color: var(--hover-filled);
     }
   }
   @media (hover: hover) {
@@ -4493,7 +4540,7 @@ body {
     color: var(--carbon-text-sub);
   }
   .glim-sel--well .glim-sel-seg:not(.glim-active):not(:disabled):hover {
-    background-color: var(--carbon-hover);
+    background-color: var(--hover);
     color: var(--carbon-text);
   }
   .glim-sel--chip .glim-sel-seg {
@@ -4501,7 +4548,7 @@ body {
     color: var(--carbon-text-sub);
   }
   .glim-sel--chip .glim-sel-seg:not(.glim-active):not(:disabled):hover {
-    background-color: var(--carbon-surface3);
+    background-color: var(--hover-filled);
     color: var(--carbon-text);
   }
   .glim-sel .glim-sel-seg.glim-active {
@@ -4759,7 +4806,7 @@ body {
     cursor: pointer;
   }
   .glim-secret-eye:hover {
-    color: var(--carbon-text);
+    color: var(--accent-glyph);
   }
   .glim-secret-eye > svg {
     width: 0.95rem;
@@ -5034,7 +5081,7 @@ body {
     border-radius: var(--radius-control);
   }
   .glim-permission:hover {
-    background-color: var(--carbon-hover);
+    background-color: var(--hover);
   }
   .glim-permission-pair {
     display: inline-flex;
@@ -6123,7 +6170,7 @@ body {
 }
 .glim-week-legend:hover,
 .glim-week-legend:focus-visible {
-  background: var(--carbon-hover);
+  background: var(--hover);
   outline: none;
 }
 .glim-week-legend i {

@@ -71,7 +71,7 @@ function SectionRow({ section, t, lang, onOpen }: { section: Section; t: T; lang
     <li
       data-testid="protection-row"
       data-domain={status.domain}
-      className={`relative rounded-control border-t border-carbon-border px-1.5 py-3 first:border-t-0 hover:bg-carbon-hover ${COLUMNS}`}
+      className={`relative rounded-control border-t border-carbon-border px-1.5 py-3 first:border-t-0 hover:bg-hover ${COLUMNS}`}
     >
       <span aria-hidden="true" data-tone={section.tone} className={`h-2 w-2 rounded-full ${TONE_DOT[section.tone]}`} />
       <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-carbon-text">

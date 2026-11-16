@@ -50,8 +50,8 @@ export type ButtonVariant = "default" | "chip" | "icon";
 // accent's tint (rule 40, `.glim-btn-neutral` in index.css).
 const TONE_CLASS: Record<ButtonTone, string> = {
   accent: "bg-accent text-accentContrast hover:bg-accentHover",
-  neutral: "glim-btn-neutral bg-carbon-surface3 text-carbon-text hover:bg-carbon-hoverRaised",
-  subtle: "glim-btn-subtle bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3",
+  neutral: "glim-btn-neutral bg-carbon-surface3 text-carbon-text hover:bg-hoverRaised",
+  subtle: "glim-btn-subtle bg-carbon-surface2 text-carbon-text hover:bg-hoverFilled",
   ok: "bg-statusOkSolid text-carbon-background hover:bg-statusOkHover",
   danger: "bg-statusFailSolid text-carbon-background hover:bg-statusFailHover",
   warn: "bg-statusWarnSolid text-carbon-background hover:bg-statusWarnHover",

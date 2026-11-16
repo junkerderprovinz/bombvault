@@ -56,7 +56,7 @@ function LocationRow({ location, t }: { location: StorageLocation; t: T }) {
   return (
     <li
       data-testid="target-row"
-      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control border-t border-carbon-border px-2 py-3 first:border-t-0 hover:bg-carbon-hover"
+      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control border-t border-carbon-border px-2 py-3 first:border-t-0 hover:bg-hover"
     >
       <LocationMark location={location} />
       <div className="flex min-w-0 flex-1 basis-40 flex-col gap-0.5">

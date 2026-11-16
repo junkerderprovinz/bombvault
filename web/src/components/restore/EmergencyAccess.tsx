@@ -74,7 +74,7 @@ function WayCard({
       role="radio"
       aria-checked={on}
       onClick={onPick}
-      className={`flex items-start gap-3 rounded-card bg-carbon-surface2 p-4 text-start ring-2 ring-inset transition-colors hover:bg-carbon-surface3 ${
+      className={`flex items-start gap-3 rounded-card bg-carbon-surface2 p-4 text-start ring-2 ring-inset transition-colors hover:bg-hoverFilled ${
         on ? "ring-accent" : "ring-transparent"
       } ${wide ? "sm:col-span-2" : ""}`}
     >

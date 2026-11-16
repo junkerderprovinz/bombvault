@@ -65,7 +65,7 @@ export function KindTile({
       style={hueVars(hue) as CSSProperties}
       className={`glim-hue glim-hue-icon grid min-w-max flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 rounded-card px-3 py-2 text-start transition-colors max-[860px]:min-w-0 ${
         chip ? "max-[600px]:flex max-[600px]:flex-none max-[600px]:gap-x-1.5 max-[600px]:rounded-pill max-[600px]:py-1.5" : ""
-      } ${on ? "glim-active bg-accent text-accentContrast" : "bg-carbon-surface2 text-carbon-text hover:bg-carbon-surface3"}`}
+      } ${on ? "glim-active bg-accent text-accentContrast" : "bg-carbon-surface2 text-carbon-text hover:bg-hoverFilled"}`}
     >
       <span className={`row-span-2 flex [&_svg]:h-[22px] [&_svg]:w-[22px] ${chip ? "max-[600px]:[&_svg]:h-4 max-[600px]:[&_svg]:w-4" : ""}`}>
         {glyph}

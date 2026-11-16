@@ -38,7 +38,7 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
             onClick={() => setPickerOpen((v) => !v)}
-            className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-surface3 transition-colors text-start"
+            className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-hoverFilled transition-colors text-start"
           >
             <span className="min-w-0 flex-1 truncate">{t("streaming.pick")}</span>
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true" className={`shrink-0 transition-transform ${pickerOpen ? "rotate-90" : "rtl:rotate-180"}`}>
@@ -63,7 +63,7 @@ function StreamingFields({ t, state }: { t: ReturnType<typeof useT>["t"]; state:
                     aria-selected={checked}
                     onClick={() => void toggleServer(c.name)}
                     className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors ${
-                      checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                      checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-hover hover:text-carbon-text"
                     }`}
                   >
                     <SelectDot checked={checked} />

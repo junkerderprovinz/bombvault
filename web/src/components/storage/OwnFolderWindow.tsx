@@ -322,7 +322,7 @@ export function OwnFolderWindow({
                     aria-label={choice.name}
                     disabled={busy}
                     onClick={() => setTo(choice.id)}
-                    className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-carbon-surface3 ${on ? "ring-2 ring-accent" : ""}`}
+                    className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-hoverFilled ${on ? "ring-2 ring-accent" : ""}`}
                   >
                     <RadioMark on={on} />
                     <LocationMark location={choice} />
@@ -351,7 +351,7 @@ export function OwnFolderWindow({
                 aria-label={t("own.other")}
                 disabled={busy}
                 onClick={() => setTo(OTHER)}
-                className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-carbon-surface3 ${to === OTHER ? "ring-2 ring-accent" : ""}`}
+                className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-hoverFilled ${to === OTHER ? "ring-2 ring-accent" : ""}`}
               >
                 <RadioMark on={to === OTHER} />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">

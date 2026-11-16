@@ -109,6 +109,7 @@ function EntryPick({
   return (
     <li
       style={hueVars(kindHue(item.kind)) as CSSProperties}
+      data-picked={lit || undefined}
       className="glim-hue relative min-w-0 pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]"
     >
       <button
@@ -126,13 +127,11 @@ function EntryPick({
         }}
         {...(joins ? press.handlers : {})}
         className={`flex w-full items-center gap-3 rounded-control p-2 text-start transition-colors disabled:opacity-55 ${
-          lit ? "bg-accentSoft" : "enabled:hover:bg-carbon-surface2"
+          lit ? "bg-accentSoft" : "enabled:hover:bg-hover"
         }${selecting && out ? " pe-9" : ""}`}
       >
         <span
-          className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
-            lit ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-accentText"
-          }`}
+          className="glim-row-glyph flex h-9 w-9 flex-none items-center justify-center rounded-control bg-carbon-surface2 [&_svg]:h-[18px] [&_svg]:w-[18px]"
         >
           {chosen ? <IconCheck /> : <KindGlyph kind={item.kind} />}
         </span>
@@ -336,11 +335,11 @@ function Way({
       type="button"
       onClick={onOpen}
       data-new={newId}
-      className="group flex w-full items-center gap-3.5 rounded-control px-1.5 py-3 text-start transition-colors hover:bg-carbon-surface2"
+      className="group flex w-full items-center gap-3.5 rounded-control px-1.5 py-3 text-start transition-colors hover:bg-hover"
     >
       <span
         className={`flex h-9 w-9 flex-none items-center justify-center rounded-control [&_svg]:h-[18px] [&_svg]:w-[18px] ${
-          warn ? "bg-statusWarnBg text-statusWarn" : "bg-carbon-surface2 text-accentText group-hover:bg-carbon-surface3"
+          warn ? "bg-statusWarnBg text-statusWarn" : "bg-carbon-surface2 text-accentText group-hover:bg-accent group-hover:text-accentContrast"
         }`}
       >
         {glyph}

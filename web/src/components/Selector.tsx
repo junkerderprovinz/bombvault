@@ -667,8 +667,8 @@ export function Selector(props: SelectorProps) {
               // text-carbon-textSub on surface3 at 4.57:1 in dark mode, just
               // above WCAG AA. A deeper groove needs a lighter text token.
               well
-              ? "bg-transparent text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
-              : "bg-carbon-surface2 text-carbon-textSub hover:bg-carbon-surface3 hover:text-carbon-text",
+              ? "bg-transparent text-carbon-textSub hover:bg-hover hover:text-carbon-text"
+              : "bg-carbon-surface2 text-carbon-textSub hover:bg-hoverFilled hover:text-carbon-text",
           // No gap while a reactive segment is closed: the collapsed label is
           // still a flex item, so the gap would push the glyph off centre. The
           // label brings its own margin when it opens.

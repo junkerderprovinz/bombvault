@@ -115,7 +115,7 @@ function FoundRow({
                     ...(file.dataset ? { dataset: file.dataset } : {}),
                   })
                 }
-                className="flex w-full flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control px-2 py-1.5 text-start transition-colors hover:bg-carbon-surface2 glim-field-focus"
+                className="flex w-full flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control px-2 py-1.5 text-start transition-colors hover:bg-hover glim-field-focus"
               >
                 <span className="text-sm text-carbon-text">{formatRecent(unix(v.time), lang)}</span>
                 <span className="text-sm tabular-nums text-carbon-textSub">{file.type === "dir" ? "" : humanBytes(v.size)}</span>

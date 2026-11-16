@@ -23,7 +23,7 @@ export function LocationRow({ location, note }: { location: StorageLocation; not
   return (
     <li
       data-new-way={folder ? "location folder" : network ? "location network" : "location"}
-      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-carbon-hover"
+      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-hover"
     >
       <LocationMark location={location} />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">

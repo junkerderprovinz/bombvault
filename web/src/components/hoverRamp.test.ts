@@ -4,10 +4,10 @@ import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 /**
- * Hover moves up the surface ramp. `--carbon-hover` (#353535) is the hover fill
- * for an element with no fill of its own; on a surface2 element (#393939) it
- * dims under the pointer. A surface2 element hovers to `--carbon-surface3`, and
- * a surface3 element to `--carbon-hover-raised`.
+ * Hover moves up the surface ramp in the accent's hue. `--hover` keeps the
+ * lightness of #353535 and is the hover for an element with no fill of its own;
+ * on a surface2 element (#393939) it dims under the pointer. A surface2 element
+ * hovers to `--hover-filled`, and a surface3 element to `--hover-raised`.
  *
  * It reads each string literal rather than each line, because a variant table
  * puts a fill-less ghost variant on the line next to a filled one. A class
@@ -19,14 +19,14 @@ const src = join(here, '..')
 
 /** Each resting fill, and the hover it may take. */
 const RAMP = [
-  { filled: 'bg-carbon-surface2', hover: 'hover:bg-carbon-surface3' },
-  { filled: 'bg-carbon-surface3', hover: 'hover:bg-carbon-hoverRaised' },
+  { filled: 'bg-carbon-surface2', hover: 'hover:bg-hoverFilled' },
+  { filled: 'bg-carbon-surface3', hover: 'hover:bg-hoverRaised' },
 ]
 /**
  * The hover for an element with no fill, wrong on anything filled. Anchored,
- * because `hover:bg-carbon-hoverRaised` contains `hover:bg-carbon-hover`.
+ * because `hover:bg-hoverRaised` contains `hover:bg-hover`.
  */
-const WRONG = /hover:bg-carbon-hover(?![A-Za-z-])/
+const WRONG = /hover:bg-hover(?![A-Za-z-])/
 
 function sourceFiles(dir: string): string[] {
   const found: string[] = []

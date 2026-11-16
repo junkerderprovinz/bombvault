@@ -49,7 +49,7 @@ function Ring({ item, t, onOpen }: { item: AnomalyItem; t: TranslateAnomaly; onO
         aria-describedby={tooltip.describedBy}
         {...tooltip.handlers}
         onClick={onOpen}
-        className={`flex min-h-11 min-w-0 flex-1 flex-col items-center gap-1.5 rounded-control px-1 pb-2 pt-2.5 hover:bg-carbon-hover ${
+        className={`flex min-h-11 min-w-0 flex-1 flex-col items-center gap-1.5 rounded-control px-1 pb-2 pt-2.5 hover:bg-hover ${
           item.scheduled ? "text-carbon-text" : "text-carbon-textMuted"
         }`}
       >

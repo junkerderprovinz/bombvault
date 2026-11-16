@@ -70,7 +70,7 @@ const navActive =
 // once the rail sits on the right; `rtl:` negates it. The `!` wins over the base
 // rule whatever order Tailwind emits them in.
 const navInactive =
-  "text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
+  "text-(--sidebar-text) hover:bg-hover hover:text-carbon-text motion-safe:hover:translate-x-0.5 motion-safe:hover:rtl:-translate-x-0.5!";
 
 // railVars places a row in the rail: its rainbow hue, and its turn and first
 // direction in the shock that runs down the rail when the logo goes off.

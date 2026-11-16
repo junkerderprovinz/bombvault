@@ -38,7 +38,7 @@ function DiffersWindow({ domain, entries, onClose }: { domain: PlacementDomain; 
         {entries.map((entry) => {
           const uses = options && places(placeNames(t, entry.view, options));
           return (
-            <li key={entry.item.key} className="relative -mx-2 flex items-center gap-3 rounded-control px-2 py-3 hover:bg-carbon-hover">
+            <li key={entry.item.key} className="relative -mx-2 flex items-center gap-3 rounded-control px-2 py-3 hover:bg-hover">
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 {/* Stretched over the row, and in place of the window's own
                     entry, so Back from the entry returns to the page. */}

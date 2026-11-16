@@ -325,7 +325,7 @@ function RailTile({ item, hue, on, tabStop, strip, glyphs, reactive, showIcon, l
           reveals ? "glim-reactive" : "",
           on
             ? "glim-active bg-accent text-accentContrast"
-            : "bg-carbon-sidebar text-(--sidebar-text) hover:bg-carbon-hover hover:text-carbon-text",
+            : "bg-carbon-sidebar text-(--sidebar-text) hover:bg-hover hover:text-carbon-text",
           look,
         ]
           .filter(Boolean)

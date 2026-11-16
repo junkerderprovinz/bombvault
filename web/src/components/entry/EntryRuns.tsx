@@ -65,7 +65,7 @@ export function EntryRuns({
               type="button"
               data-testid="entry-run"
               onClick={() => setOpenId(run.id)}
-              className="flex min-w-0 flex-1 items-center gap-3 rounded-control px-1.5 py-1.5 text-start text-sm hover:bg-carbon-hover pointer-coarse:min-h-11"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-control px-1.5 py-1.5 text-start text-sm hover:bg-hover pointer-coarse:min-h-11"
             >
               <span className={`h-2 w-2 flex-none rounded-full ${statusDotClass(run.status)}`} />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">

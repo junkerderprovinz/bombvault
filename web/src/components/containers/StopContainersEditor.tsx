@@ -112,7 +112,7 @@ export function StopContainersEditor({
           aria-haspopup="listbox"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen((v) => !v)}
-          className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-carbon-surface3 transition-colors text-start"
+          className="flex items-center gap-2 w-64 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-xs text-carbon-text hover:bg-hoverFilled transition-colors text-start"
         >
           <span className="min-w-0 flex-1 truncate">{t("stophook.title")}</span>
           <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`shrink-0 transition-transform ${pickerOpen ? "rotate-90" : "rtl:rotate-180"}`}>
@@ -146,7 +146,7 @@ export function StopContainersEditor({
                   onClick={() => void toggle(c.name)}
                   disabled={!!rowBusy[c.name]}
                   className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start transition-colors disabled:opacity-60 ${
-                    checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text"
+                    checked ? "bg-carbon-surface3 text-carbon-text" : "text-carbon-textSub hover:bg-hover hover:text-carbon-text"
                   }${rowShake[c.name] ? " glim-shake" : ""}`}
                 >
                   <SelectDot checked={checked} />
@@ -164,7 +164,7 @@ export function StopContainersEditor({
                 aria-selected
                 onClick={() => void toggle(n)}
                 disabled={!!rowBusy[n]}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-carbon-hover hover:text-carbon-text transition-colors disabled:opacity-60 ${rowShake[n] ? "glim-shake" : ""}`}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs text-start text-carbon-textSub hover:bg-hover hover:text-carbon-text transition-colors disabled:opacity-60 ${rowShake[n] ? "glim-shake" : ""}`}
               >
                 <SelectDot checked />
                 <span dir="ltr" className="min-w-0 flex-1 truncate font-mono text-start">{n}</span>

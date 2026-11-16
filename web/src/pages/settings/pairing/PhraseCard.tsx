@@ -488,7 +488,7 @@ function Choice({
       data-choice
       disabled={disabled}
       onClick={onClick}
-      className={`group grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3.5 rounded-control bg-carbon-surface2 p-4 text-start transition-colors enabled:hover:bg-carbon-surface3 disabled:cursor-not-allowed disabled:opacity-45 glim-field-focus ${
+      className={`group grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3.5 rounded-control bg-carbon-surface2 p-4 text-start transition-colors enabled:hover:bg-hoverFilled disabled:cursor-not-allowed disabled:opacity-45 glim-field-focus ${
         shaking ? "glim-shake" : ""
       }`}
     >

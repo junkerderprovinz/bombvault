@@ -63,7 +63,7 @@ function Day({
         aria-describedby={tip.describedBy}
         {...tip.handlers}
         onClick={() => onLocate(day.runs[0])}
-        className="flex h-full items-end rounded-control hover:bg-carbon-hover"
+        className="flex h-full items-end rounded-control hover:bg-hover"
       >
         {bar}
       </button>
