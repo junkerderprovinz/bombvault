@@ -6,8 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ACCENT_PRESETS } from "../lib/accent";
-import { MIN_TEXT_CONTRAST, contrastRatio } from "../lib/contrast";
-import { oklabOf, srgbOf } from "../lib/oklab";
+import { MIN_TEXT_CONTRAST, accentInks, contrastRatio } from "../lib/contrast";
+import { INK_LIGHTNESS, darkenTo, lightenTo, oklabOf, srgbOf } from "../lib/oklab";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CSS = readFileSync(join(SRC, "index.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
@@ -80,9 +80,10 @@ describe("the hover tints", () => {
   });
 });
 
-// A ground that comes from the accent, a rainbow position, a brand tile or a
-// state hue. A raised tile's hover is a theme token set to a tint below.
-const LIT = /var\(--(hover|hover-filled|hover-raised|accent[\w-]*|btn-tint|item-hue[\w-]*|tile|status-[\w-]+|glim-tile-raised-hover)\)/;
+// A ground that comes from the accent, a button's tint, a rainbow position, a
+// brand tile or a state hue. A raised tile's hover is a theme token set to a
+// tint below.
+const LIT = /var\(--(hover|hover-filled|hover-raised|accent[\w-]*|btn-tint(?:ed)?|item-hue[\w-]*|tile|status-[\w-]+|glim-tile-raised-hover)\)/;
 const SYSTEM = /^(Highlight|HighlightText|ButtonFace|ButtonText|Canvas|CanvasText|LinkText|GrayText|SelectedItem)$/;
 // A chip's dismiss control takes the pill's own ink, accent or neutral.
 const OWN_INK = new Set([".glim-btn-chip:hover:not(:disabled)"]);
@@ -138,5 +139,60 @@ describe("every hover", () => {
   it("fills a row's glyph tile with the accent when the tile stands in the row's button", () => {
     const lit = rules.find((r) => r.selector.includes(".glim-hue:is(:hover, :focus-within, [data-picked]) > button:not(:disabled) > .glim-row-glyph"));
     expect(lit?.body).toMatch(/background-color:\s*var\(--accent\)/);
+  });
+});
+
+// What the colour picker can hand in, GlimStone's sweep: twelve hues at low,
+// mid and high chroma on four lightness steps, and a run of greys.
+const SWEEP = [
+  ...[0.45, 0.6, 0.75, 0.9].flatMap((l) =>
+    [0.02, 0.08, 0.2].flatMap((c) => Array.from({ length: 12 }, (_, i) => srgbOf([l, c * Math.cos((i * Math.PI) / 6), c * Math.sin((i * Math.PI) / 6)]))),
+  ),
+  ...["#222222", "#555555", "#6B6B6B", "#777777", "#7B7B7B", "#888888", "#999999", "#BBBBBB", "#DDDDDD"],
+];
+
+/** `share` of `b` in `a`, as color-mix() in srgb mixes two opaque colours. */
+function mixHex(a: string, b: string, share: number): string {
+  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + 2 * i, 3 + 2 * i), 16);
+  return "#" + [0, 1, 2].map((i) => Math.round(ch(a, i) * (1 - share) + ch(b, i) * share).toString(16).padStart(2, "0")).join("");
+}
+
+describe("a tinted button under the pointer", () => {
+  const TONES = { neutral: "--carbon-hover-raised", subtle: "--carbon-surface3" } as const;
+  const tinted = (tone: string) => rules.find((r) => r.selector === `.glim-btn-${tone}`)?.body.match(/--btn-tinted:\s*([^;]+);/)?.[1].trim();
+  const grounds = rules.filter((r) => /^:is\(\.glim-btn-neutral, \.glim-btn-subtle\):not\(:disabled\):(hover|focus-visible)$/.test(r.selector));
+
+  it("mixes 22% of the tint into the step each tone hovers to", () => {
+    for (const [tone, step] of Object.entries(TONES)) expect(tinted(tone)).toBe(`color-mix(in srgb, var(${step}), var(--btn-tint) 22%)`);
+  });
+
+  it("takes the same ground under the pointer and the keyboard", () => {
+    expect(grounds).toHaveLength(2);
+    for (const { body } of grounds) expect(body).toMatch(/background-color:\s*light-dark\(var\(--btn-tinted\), oklab\(from var\(--btn-tinted\) min\(l, [\d.]+\) a b\)\);/);
+  });
+
+  it("keeps its label at 4.5:1 for every picked accent in every theme", () => {
+    // The lightness a tinted ground stops at on a dark theme, if it stops at all.
+    const ceiling = Number(grounds[0]?.body.match(/min\(l, ([\d.]+)\)/)?.[1] ?? Infinity);
+    const themes = [
+      { name: "light", dark: false, text: "#161616", steps: { neutral: "#c6c6c6", subtle: "#d1d1d1" } },
+      { name: "dark", dark: true, text: "#f4f4f4", steps: { neutral: "#6f6f6f", subtle: "#525252" } },
+      { name: "OLED", dark: true, text: "#f4f4f4", steps: { neutral: "#525252", subtle: "#393939" } },
+    ];
+    const misses: string[] = [];
+    for (const accent of [...DEFAULT_ACCENT_PRESETS, ...SWEEP]) {
+      const inks = accentInks(accent);
+      for (const { name, dark, text, steps } of themes) {
+        const glyph = dark ? (inks.dark ?? lightenTo(accent, INK_LIGHTNESS.dark)) : (inks.light ?? darkenTo(accent, INK_LIGHTNESS.light));
+        for (const [tone, step] of Object.entries(steps)) {
+          const mixed = mixHex(step, glyph, 0.22);
+          const [l, a, b] = oklabOf(mixed);
+          const ground = dark && l > ceiling ? srgbOf([ceiling, a, b]) : mixed;
+          const r = contrastRatio(text, ground);
+          if (r < MIN_TEXT_CONTRAST) misses.push(`${accent} ${tone} on ${name}: ${ground} ${r.toFixed(2)}`);
+        }
+      }
+    }
+    expect(misses).toEqual([]);
   });
 });
