@@ -173,6 +173,14 @@ describe("ProtectionWindow", () => {
     expect(window.getByText(en["overview.check.lockAccepted"])).toBeTruthy();
   });
 
+  it("calls a section kept on the premises by choice protected here, with the off-site check grey", () => {
+    const window = renderWindow(domain({ offsiteConfigured: false, noOffsiteByChoice: true }));
+
+    expect(window.getByText(en["ransomware.protByChoice"])).toBeTruthy();
+    expect(window.getByText(en["overview.check.offsiteByChoice"])).toBeTruthy();
+    expect(window.queryByText(en["overview.check.offsiteNone"])).toBeNull();
+  });
+
   it("leads to the off-site settings from a missing off-site copy", () => {
     const window = renderWindow(domain({ offsiteConfigured: false }));
 

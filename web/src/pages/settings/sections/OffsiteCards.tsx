@@ -14,7 +14,8 @@ import { offQualifier } from "../../../lib/placement";
 import { DOMAIN_LABEL } from "../../../lib/storageLocations";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
-import type { Settings } from "../../../lib/api";
+import { Toggle } from "../../../components/Toggle";
+import type { OffsiteTarget, Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
 import { placementErrorText } from "../../../lib/placementCodes";
 import { useToast } from "../../../lib/toast";
@@ -30,6 +31,15 @@ type T = ReturnType<typeof useT>["t"];
 // Self-backup ("config") is listed with the other sections: the backend gives
 // it its own off-site repository and targets like any other.
 const DOMAINS: OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
+
+// By the server's rule a section copies to its switched-on targets, or to its
+// off-site field while it has no target at all.
+function copiesOffsite(settings: Settings, targets: OffsiteTarget[]): boolean {
+  return DOMAINS.some((domain) => {
+    const own = targets.filter((x) => x.domain === domain);
+    return own.length > 0 ? own.some((x) => x.enabled) : !!settings[`${domain}Offsite`];
+  });
+}
 
 function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
   const { lang } = useT();
@@ -156,7 +166,7 @@ function CopyRow({
  *  share. */
 export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const { t } = useT();
-  const { settings, setSettings, savedBaseline, allTargets, save, debouncedSave } = useSettings();
+  const { settings, setSettings, savedBaseline, allTargets, save, debouncedSave, autoSaveToggle, fieldBusy, fieldShake } = useSettings();
 
   const [, setOffsiteSaveState] = useState<SaveState>("idle");
   const [, setOffsiteSaveError] = useState<string | null>(null);
@@ -168,6 +178,8 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
 
   const [, setLimSaveState] = useState<SaveState>("idle");
   const [, setLimSaveError] = useState<string | null>(null);
+  const [, setChoiceSaveState] = useState<SaveState>("idle");
+  const [, setChoiceSaveError] = useState<string | null>(null);
 
   const hue = nextHue();
   const titleOf = (domain: OffsiteDomain) => t("offsite.copyDomainTitle").replace("{domain}", t(DOMAIN_LABEL[domain]));
@@ -249,6 +261,21 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
                 onSetup={() => setWizard(domain)}
               />
             ))}
+            {/* The server ignores the choice once a section copies off-site,
+                so the switch goes with it. */}
+            {!copiesOffsite(settings, allTargets) && (
+              <SettingRow label={t("offsite.byChoice")} hint={t("offsite.byChoiceHint")}>
+                <Toggle
+                  key={fieldShake.noOffsiteByChoice}
+                  hideLabel
+                  label={t("offsite.byChoice")}
+                  checked={settings.noOffsiteByChoice}
+                  onChange={(v) => void autoSaveToggle("noOffsiteByChoice", v, setChoiceSaveState, setChoiceSaveError)}
+                  disabled={fieldBusy.noOffsiteByChoice}
+                  className={fieldShake.noOffsiteByChoice ? "glim-shake" : ""}
+                />
+              </SettingRow>
+            )}
           </Rows>
         </Card>
         {details && windowFor(details)}
