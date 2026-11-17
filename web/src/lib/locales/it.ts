@@ -701,7 +701,7 @@ const it: Partial<Translations> = {
   "signIns.windowHint": "Una modifica vale per ogni destinazione che usa queste credenziali. «Prova» accede a ciascuna con quello che hai scritto, senza salvare.",
   "offsite.copies.title": "Copie off-site",
   "offsite.byChoice": "Nessuna copia off-site",
-  "offsite.byChoiceHint": "Attivalo quando i tuoi backup non devono lasciare la sede. La panoramica mostra allora la copia off-site mancante in grigio invece che in rosso, e il colore di ogni sezione segue gli altri suoi controlli, così un backup fallito o in ritardo si nota sempre. Appena una sezione copia off-site, valgono di nuovo i controlli soliti e questo interruttore sparisce.",
+  "offsite.byChoiceHint": "Attivalo quando i tuoi backup non dovrebbero lasciare la sede. La panoramica mostra allora la copia off-site mancante in grigio invece che in rosso, e il colore di ogni sezione segue gli altri suoi controlli, così un backup fallito o in ritardo si nota sempre. Appena una sezione copia off-site, valgono di nuovo i controlli soliti e questo interruttore sparisce.",
   "rclone.paste": "Incolla una configurazione",
   "whatsNew.signInMakeDefault": "Una stella indica le credenziali predefinite, quelle usate ovunque non ne sia scelta nessuna. «Imposta come predefinite» passa la stella ad altre.",
   "whatsNew.signInEdit": "«Modifica» apre le credenziali in una finestra, dove «Prova» le verifica su ogni destinazione che le usa prima di salvare.",

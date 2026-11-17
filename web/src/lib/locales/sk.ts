@@ -936,7 +936,7 @@ const sk: Partial<Translations> = {
   "signIns.windowHint": "Zmena platí pre každý cieľ, ktorý tieto prihlasovacie údaje používa. „Otestovať“ sa do každého z nich prihlási so zadanými hodnotami, bez uloženia.",
   "offsite.copies.title": "Externé kópie",
   "offsite.byChoice": "Žiadne externé kópie",
-  "offsite.byChoiceHint": "Zapnite to, keď zálohy nesmú opustiť priestory. Prehľad potom ukazuje chýbajúcu externú kópiu sivou namiesto červenej a farba každej sekcie sa riadi jej ostatnými kontrolami, takže neúspešnú alebo meškajúcu zálohu je stále vidieť. Hneď ako niektorá sekcia kopíruje externe, opäť platia obvyklé kontroly a tento prepínač zmizne.",
+  "offsite.byChoiceHint": "Zapnite to, keď zálohy nemajú opustiť priestory. Prehľad potom ukazuje chýbajúcu externú kópiu sivou namiesto červenej a farba každej sekcie sa riadi jej ostatnými kontrolami, takže neúspešnú alebo meškajúcu zálohu je stále vidieť. Hneď ako niektorá sekcia kopíruje externe, opäť platia obvyklé kontroly a tento prepínač zmizne.",
   "rclone.paste": "Vložiť konfiguráciu",
   "whatsNew.signInMakeDefault": "Hviezdička označuje predvolené prihlasovacie údaje, ktoré platia všade, kde nie sú vybrané žiadne. „Nastaviť ako predvolené“ ju odovzdá iným.",
   "whatsNew.signInEdit": "„Upraviť“ otvorí prihlasovacie údaje v okne, kde ich „Otestovať“ pred uložením vyskúša pri každom cieli, ktorý ich používa.",

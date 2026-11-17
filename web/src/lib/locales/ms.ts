@@ -936,7 +936,7 @@ const ms: Partial<Translations> = {
   "signIns.windowHint": "Perubahan terpakai pada setiap destinasi yang menggunakan log masuk ini. “Uji” log masuk ke setiap satunya dengan nilai yang anda taip, tanpa menyimpan.",
   "offsite.copies.title": "Salinan luar tapak",
   "offsite.byChoice": "Tiada salinan luar tapak",
-  "offsite.byChoiceHint": "Hidupkan ini apabila sandaran anda tidak boleh meninggalkan premis. Gambaran keseluruhan kemudian menunjukkan salinan luar tapak yang tiada dalam warna kelabu, bukan merah, dan warna setiap bahagian mengikut semakan lainnya, jadi sandaran yang gagal atau lewat masih jelas kelihatan. Sebaik sahaja mana-mana bahagian menyalin ke luar tapak, semakan biasa terpakai semula dan suis ini hilang.",
+  "offsite.byChoiceHint": "Hidupkan ini apabila sandaran anda tidak sepatutnya meninggalkan premis. Gambaran keseluruhan kemudian menunjukkan salinan luar tapak yang tiada dalam warna kelabu, bukan merah, dan warna setiap bahagian mengikut semakan lainnya, jadi sandaran yang gagal atau lewat masih jelas kelihatan. Sebaik sahaja mana-mana bahagian menyalin ke luar tapak, semakan biasa terpakai semula dan suis ini hilang.",
   "rclone.paste": "Tampal konfigurasi",
   "whatsNew.signInMakeDefault": "Bintang menandakan log masuk lalai, yang digunakan di mana-mana sahaja yang tiada pilihan. “Jadikan lalai” memindahkan bintang kepada log masuk lain.",
   "whatsNew.signInEdit": "“Edit” membuka log masuk dalam tetingkap, tempat “Uji” mencubanya pada setiap destinasi yang menggunakannya sebelum anda menyimpan.",

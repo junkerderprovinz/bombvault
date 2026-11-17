@@ -701,7 +701,7 @@ const fr: Partial<Translations> = {
   "signIns.windowHint": "Une modification s'applique à chaque destination qui utilise ces identifiants. « Tester » se connecte à chacune avec ce qui a été saisi, sans enregistrer.",
   "offsite.copies.title": "Copies hors site",
   "offsite.byChoice": "Pas de copies hors site",
-  "offsite.byChoiceHint": "Activez-le quand vos sauvegardes ne doivent pas quitter les lieux. L'aperçu affiche alors la copie hors site manquante en gris plutôt qu'en rouge, et la couleur de chaque section suit ses autres vérifications, si bien qu'une sauvegarde échouée ou en retard se voit toujours. Dès qu'une section copie hors site, les vérifications habituelles s'appliquent de nouveau et cet interrupteur disparaît.",
+  "offsite.byChoiceHint": "Activez-le quand vos sauvegardes ne devraient pas quitter les lieux. L'aperçu affiche alors la copie hors site manquante en gris plutôt qu'en rouge, et la couleur de chaque section suit ses autres vérifications, si bien qu'une sauvegarde échouée ou en retard se voit toujours. Dès qu'une section copie hors site, les vérifications habituelles s'appliquent de nouveau et cet interrupteur disparaît.",
   "rclone.paste": "Coller une configuration",
   "whatsNew.signInMakeDefault": "Une étoile marque l'identifiant par défaut, celui qui sert partout où aucun n'est choisi. « Définir par défaut » donne l'étoile à un autre.",
   "whatsNew.signInEdit": "« Modifier » ouvre des identifiants dans une fenêtre, où « Tester » les essaie sur chaque destination qui les utilise avant l'enregistrement.",

@@ -701,7 +701,7 @@ const tr: Partial<Translations> = {
   "signIns.windowHint": "Bir değişiklik bu oturum açma bilgisini kullanan her hedef için geçerlidir. “Test et”, yazdığın değerlerle her birine oturum açar ve kaydetmez.",
   "offsite.copies.title": "Site dışı kopyalar",
   "offsite.byChoice": "Site dışı kopya yok",
-  "offsite.byChoiceHint": "Yedeklerin tesisten çıkmaması gerekiyorsa bunu açın. Genel bakış bu durumda eksik site dışı kopyayı kırmızı yerine gri gösterir ve her bölümün rengi diğer denetimlerine göre belirlenir, böylece başarısız ya da gecikmiş bir yedek yine göze çarpar. Herhangi bir bölüm site dışına kopyaladığı anda olağan denetimler yeniden geçerli olur ve bu anahtar kaybolur.",
+  "offsite.byChoiceHint": "Yedeklerin tesisten çıkmasını istemiyorsanız bunu açın. Genel bakış bu durumda eksik site dışı kopyayı kırmızı yerine gri gösterir ve her bölümün rengi diğer denetimlerine göre belirlenir, böylece başarısız ya da gecikmiş bir yedek yine göze çarpar. Herhangi bir bölüm site dışına kopyaladığı anda olağan denetimler yeniden geçerli olur ve bu anahtar kaybolur.",
   "rclone.paste": "Yapılandırma yapıştır",
   "whatsNew.signInMakeDefault": "Bir yıldız, hiçbirinin seçilmediği her yerde kullanılan varsayılan oturum açma bilgisini gösterir. “Varsayılan yap” yıldızı başka birine verir.",
   "whatsNew.signInEdit": "“Düzenle” oturum açma bilgisini bir pencerede açar; orada “Test et” kaydetmeden önce onu kullanan her hedefte dener.",

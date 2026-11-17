@@ -936,7 +936,7 @@ const id: Partial<Translations> = {
   "signIns.windowHint": "Perubahan berlaku untuk setiap tujuan yang memakai login ini. “Uji” masuk ke masing-masing dengan nilai yang Anda ketik, tanpa menyimpan.",
   "offsite.copies.title": "Salinan off-site",
   "offsite.byChoice": "Tanpa salinan off-site",
-  "offsite.byChoiceHint": "Aktifkan ini jika cadanganmu tidak boleh keluar dari lokasi. Ringkasan lalu menampilkan salinan off-site yang tidak ada dengan warna abu-abu, bukan merah, dan warna setiap bagian mengikuti pemeriksaan lainnya, jadi cadangan yang gagal atau terlambat tetap terlihat. Begitu ada bagian yang menyalin ke off-site, pemeriksaan biasa berlaku lagi dan sakelar ini menghilang.",
+  "offsite.byChoiceHint": "Aktifkan ini jika cadanganmu tidak seharusnya keluar dari lokasi. Ringkasan lalu menampilkan salinan off-site yang tidak ada dengan warna abu-abu, bukan merah, dan warna setiap bagian mengikuti pemeriksaan lainnya, jadi cadangan yang gagal atau terlambat tetap terlihat. Begitu ada bagian yang menyalin ke off-site, pemeriksaan biasa berlaku lagi dan sakelar ini menghilang.",
   "rclone.paste": "Tempel konfigurasi",
   "whatsNew.signInMakeDefault": "Bintang menandai login bawaan, yang dipakai di mana pun tidak ada yang dipilih. “Jadikan bawaan” memindahkan bintang ke login lain.",
   "whatsNew.signInEdit": "“Edit” membuka login di jendela, tempat “Uji” mencobanya di setiap tujuan yang memakainya sebelum Anda menyimpan.",

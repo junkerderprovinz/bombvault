@@ -936,7 +936,7 @@ const lv: Partial<Translations> = {
   "signIns.windowHint": "Izmaiņas attiecas uz katru mērķi, kas izmanto šo pieteikšanos. “Pārbaudīt” piesakās katrā no tiem ar ievadītajām vērtībām, nesaglabājot.",
   "offsite.copies.title": "Attālinātās kopijas",
   "offsite.byChoice": "Bez attālajām kopijām",
-  "offsite.byChoiceHint": "Ieslēdziet to, ja rezerves kopijas nedrīkst pamest telpas. Pārskats tad trūkstošo attālo kopiju rāda pelēku, nevis sarkanu, un katras sadaļas krāsa atbilst tās pārējām pārbaudēm, tāpēc neizdevusies vai kavēta rezerves kopija joprojām ir pamanāma. Tiklīdz kāda sadaļa kopē uz attālu vietu, atkal ir spēkā parastās pārbaudes un šis slēdzis pazūd.",
+  "offsite.byChoiceHint": "Ieslēdziet to, ja rezerves kopijām nevajadzētu pamest telpas. Pārskats tad trūkstošo attālo kopiju rāda pelēku, nevis sarkanu, un katras sadaļas krāsa atbilst tās pārējām pārbaudēm, tāpēc neizdevusies vai kavēta rezerves kopija joprojām ir pamanāma. Tiklīdz kāda sadaļa kopē uz attālu vietu, atkal ir spēkā parastās pārbaudes un šis slēdzis pazūd.",
   "rclone.paste": "Ielīmēt konfigurāciju",
   "whatsNew.signInMakeDefault": "Zvaigzne apzīmē noklusējuma pieteikšanos, ko izmanto visur, kur nekas nav izvēlēts. “Iestatīt kā noklusējumu” nodod zvaigzni citai.",
   "whatsNew.signInEdit": "“Rediģēt” atver pieteikšanos logā, kur “Pārbaudīt” pirms saglabāšanas to izmēģina katrā mērķī, kas to izmanto.",

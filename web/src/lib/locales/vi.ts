@@ -696,7 +696,7 @@ const vi: Partial<Translations> = {
   "signIns.windowHint": "Thay đổi áp dụng cho mọi đích dùng thông tin đăng nhập này. “Kiểm tra” đăng nhập vào từng đích bằng giá trị bạn đã nhập, mà không lưu.",
   "offsite.copies.title": "Bản sao ngoài site",
   "offsite.byChoice": "Không có bản sao ngoài site",
-  "offsite.byChoiceHint": "Bật mục này khi bản sao lưu của bạn không được rời khỏi cơ sở. Khi đó phần tổng quan hiển thị bản sao ngoài site còn thiếu bằng màu xám thay vì màu đỏ, và màu của mỗi phần theo các kiểm tra còn lại của nó, nên bản sao lưu thất bại hoặc bị trễ vẫn nổi bật. Ngay khi có phần sao chép ra ngoài site, các kiểm tra thông thường lại áp dụng và công tắc này biến mất.",
+  "offsite.byChoiceHint": "Bật mục này khi bản sao lưu của bạn không nên rời khỏi cơ sở. Khi đó phần tổng quan hiển thị bản sao ngoài site còn thiếu bằng màu xám thay vì màu đỏ, và màu của mỗi phần theo các kiểm tra còn lại của nó, nên bản sao lưu thất bại hoặc bị trễ vẫn nổi bật. Ngay khi có phần sao chép ra ngoài site, các kiểm tra thông thường lại áp dụng và công tắc này biến mất.",
   "rclone.paste": "Dán cấu hình",
   "whatsNew.signInMakeDefault": "Ngôi sao đánh dấu thông tin đăng nhập mặc định, được dùng ở mọi nơi chưa chọn thông tin nào. “Đặt làm mặc định” chuyển ngôi sao sang thông tin khác.",
   "whatsNew.signInEdit": "“Chỉnh sửa” mở thông tin đăng nhập trong một cửa sổ, nơi “Kiểm tra” thử nó trên mọi đích đang dùng trước khi bạn lưu.",

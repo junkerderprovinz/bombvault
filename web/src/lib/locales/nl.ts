@@ -697,7 +697,7 @@ const nl: Partial<Translations> = {
   "signIns.windowHint": "Een wijziging geldt voor elke bestemming die deze inloggegevens gebruikt. „Testen” logt bij elk ervan in met wat je hebt getypt, zonder op te slaan.",
   "offsite.copies.title": "Offsite-kopieën",
   "offsite.byChoice": "Geen off-site-kopieën",
-  "offsite.byChoiceHint": "Zet dit aan als je back-ups het pand niet mogen verlaten. Het overzicht toont de ontbrekende off-site-kopie dan grijs in plaats van rood, en de kleur van elke sectie volgt de andere controles, zodat een mislukte of te late back-up nog steeds opvalt. Zodra een sectie off-site kopieert, gelden de gewone controles weer en verdwijnt deze schakelaar.",
+  "offsite.byChoiceHint": "Zet dit aan als je back-ups het pand beter niet verlaten. Het overzicht toont de ontbrekende off-site-kopie dan grijs in plaats van rood, en de kleur van elke sectie volgt de andere controles, zodat een mislukte of te late back-up nog steeds opvalt. Zodra een sectie off-site kopieert, gelden de gewone controles weer en verdwijnt deze schakelaar.",
   "rclone.paste": "Configuratie plakken",
   "whatsNew.signInMakeDefault": "Een ster markeert de standaard-inloggegevens, die overal gelden waar er geen gekozen zijn. „Als standaard” geeft de ster aan andere.",
   "whatsNew.signInEdit": "„Bewerken” opent inloggegevens in een venster, waar „Testen” ze vóór het opslaan probeert bij elke bestemming die ze gebruikt.",

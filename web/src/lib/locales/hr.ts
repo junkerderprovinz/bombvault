@@ -936,7 +936,7 @@ const hr: Partial<Translations> = {
   "signIns.windowHint": "Promjena vrijedi za svako odredište koje koristi ove vjerodajnice. „Testiraj” se upisanim vrijednostima prijavljuje na svako od njih, bez spremanja.",
   "offsite.copies.title": "Kopije izvan lokacije",
   "offsite.byChoice": "Bez kopija izvan lokacije",
-  "offsite.byChoiceHint": "Uključite ovo kad sigurnosne kopije ne smiju napustiti prostor. Pregled tada prikazuje kopiju izvan lokacije koja nedostaje sivo umjesto crveno, a boja svakog odjeljka slijedi njegove ostale provjere, pa se neuspjela ili zakašnjela sigurnosna kopija i dalje vidi. Čim neki odjeljak kopira izvan lokacije, ponovno vrijede uobičajene provjere i ovaj prekidač nestaje.",
+  "offsite.byChoiceHint": "Uključite ovo kad sigurnosne kopije ne bi trebale napustiti prostor. Pregled tada prikazuje kopiju izvan lokacije koja nedostaje sivo umjesto crveno, a boja svakog odjeljka slijedi njegove ostale provjere, pa se neuspjela ili zakašnjela sigurnosna kopija i dalje vidi. Čim neki odjeljak kopira izvan lokacije, ponovno vrijede uobičajene provjere i ovaj prekidač nestaje.",
   "rclone.paste": "Zalijepi konfiguraciju",
   "whatsNew.signInMakeDefault": "Zvjezdica označava zadane vjerodajnice, one koje vrijede svugdje gdje nijedne nisu odabrane. „Postavi kao zadane” daje zvjezdicu drugima.",
   "whatsNew.signInEdit": "„Uredi” otvara vjerodajnice u prozoru, gdje ih „Testiraj” prije spremanja isprobava na svakom odredištu koje ih koristi.",

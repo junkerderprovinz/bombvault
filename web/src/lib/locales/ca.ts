@@ -936,7 +936,7 @@ const ca: Partial<Translations> = {
   "signIns.windowHint": "Un canvi s'aplica a totes les destinacions que fan servir aquestes credencials. «Prova» hi inicia sessió amb el que has escrit, sense desar.",
   "offsite.copies.title": "Còpies externes",
   "offsite.byChoice": "Sense còpies externes",
-  "offsite.byChoiceHint": "Activa-ho quan les còpies no puguin sortir de les instal·lacions. Llavors la vista general mostra la còpia externa que falta en gris en lloc de vermell, i el color de cada secció segueix les altres comprovacions, de manera que una còpia fallida o endarrerida continua destacant. Quan una secció copia a una ubicació externa, tornen a valer les comprovacions habituals i aquest interruptor desapareix.",
+  "offsite.byChoiceHint": "Activa-ho quan les còpies no hagin de sortir de les instal·lacions. Llavors la vista general mostra la còpia externa que falta en gris en lloc de vermell, i el color de cada secció segueix les altres comprovacions, de manera que una còpia fallida o endarrerida continua destacant. Quan una secció copia a una ubicació externa, tornen a valer les comprovacions habituals i aquest interruptor desapareix.",
   "rclone.paste": "Enganxa una configuració",
   "whatsNew.signInMakeDefault": "Una estrella marca les credencials per defecte, les que s'usen on no se n'ha triat cap. «Fes-les per defecte» passa l'estrella a unes altres.",
   "whatsNew.signInEdit": "«Edita» obre unes credencials en una finestra, on «Prova» les comprova a cada destinació que les fa servir abans de desar.",

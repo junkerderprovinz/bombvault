@@ -936,7 +936,7 @@ const lt: Partial<Translations> = {
   "signIns.windowHint": "Pakeitimas galioja kiekvienai paskirties vietai, kuri naudoja šį prisijungimą. „Tikrinti“ prisijungia prie kiekvienos su įvestomis reikšmėmis, neišsaugodamas.",
   "offsite.copies.title": "Nuotolinės kopijos",
   "offsite.byChoice": "Be nuotolinių kopijų",
-  "offsite.byChoiceHint": "Įjunkite, kai atsarginės kopijos negali palikti patalpų. Tada apžvalga trūkstamą nuotolinę kopiją rodo pilkai, o ne raudonai, o kiekvieno skyriaus spalva priklauso nuo kitų jo patikrų, todėl nepavykusi ar vėluojanti kopija vis tiek matyti. Kai tik kuris nors skyrius kopijuoja į nuotolinę vietą, vėl galioja įprastos patikros ir šis jungiklis dingsta.",
+  "offsite.byChoiceHint": "Įjunkite, kai atsarginės kopijos neturėtų palikti patalpų. Tada apžvalga trūkstamą nuotolinę kopiją rodo pilkai, o ne raudonai, o kiekvieno skyriaus spalva priklauso nuo kitų jo patikrų, todėl nepavykusi ar vėluojanti kopija vis tiek matyti. Kai tik kuris nors skyrius kopijuoja į nuotolinę vietą, vėl galioja įprastos patikros ir šis jungiklis dingsta.",
   "rclone.paste": "Įklijuoti konfigūraciją",
   "whatsNew.signInMakeDefault": "Žvaigždutė žymi numatytąjį prisijungimą, naudojamą visur, kur nieko nepasirinkta. „Nustatyti numatytuoju“ perduoda žvaigždutę kitam.",
   "whatsNew.signInEdit": "„Redaguoti“ atveria prisijungimą lange, kur „Tikrinti“ prieš išsaugant jį išbando kiekvienoje jį naudojančioje paskirties vietoje.",

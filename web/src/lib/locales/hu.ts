@@ -701,7 +701,7 @@ const hu: Partial<Translations> = {
   "signIns.windowHint": "A módosítás minden célra érvényes, amely ezt a bejelentkezést használja. A „Teszt” a beírt értékekkel mindegyikbe bejelentkezik, mentés nélkül.",
   "offsite.copies.title": "Telephelyen kívüli másolatok",
   "offsite.byChoice": "Nincsenek telephelyen kívüli másolatok",
-  "offsite.byChoiceHint": "Kapcsold be, ha a mentéseid nem hagyhatják el a helyszínt. Az áttekintés ekkor a hiányzó telephelyen kívüli másolatot piros helyett szürkén mutatja, és minden szakasz színe a többi ellenőrzését követi, így a sikertelen vagy késő mentés továbbra is feltűnik. Amint egy szakasz telephelyen kívülre másol, ismét a szokásos ellenőrzések érvényesek, és ez a kapcsoló eltűnik.",
+  "offsite.byChoiceHint": "Kapcsold be, ha a mentéseidnek nem kellene elhagyniuk a helyszínt. Az áttekintés ekkor a hiányzó telephelyen kívüli másolatot piros helyett szürkén mutatja, és minden szakasz színe a többi ellenőrzését követi, így a sikertelen vagy késő mentés továbbra is feltűnik. Amint egy szakasz telephelyen kívülre másol, ismét a szokásos ellenőrzések érvényesek, és ez a kapcsoló eltűnik.",
   "rclone.paste": "Konfiguráció beillesztése",
   "whatsNew.signInMakeDefault": "Csillag jelöli az alapértelmezett bejelentkezést, amelyet mindenhol használ a program, ahol nincs kiválasztva másik. A „Legyen alapértelmezett” egy másiknak adja a csillagot.",
   "whatsNew.signInEdit": "A „Szerkesztés” ablakban nyitja meg a bejelentkezést, ahol a „Teszt” mentés előtt kipróbálja minden célnál, amely használja.",

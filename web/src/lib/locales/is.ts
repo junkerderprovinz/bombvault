@@ -936,7 +936,7 @@ const is: Partial<Translations> = {
   "signIns.windowHint": "Breyting gildir fyrir alla áfangastaði sem nota þessa innskráningu. „Prófa“ skráir sig inn á hvern þeirra með því sem þú slóst inn, án þess að vista.",
   "offsite.copies.title": "Fjarlæg afrit",
   "offsite.byChoice": "Engin fjarafrit",
-  "offsite.byChoiceHint": "Kveiktu á þessu þegar afritin mega ekki fara af staðnum. Yfirlitið sýnir þá fjarafritið sem vantar grátt í stað rauðs, og litur hvers hluta fylgir öðrum athugunum hans, svo misheppnað eða seint afrit sker sig enn úr. Um leið og einhver hluti afritar annað, gilda venjulegu athuganirnar aftur og þessi rofi hverfur.",
+  "offsite.byChoiceHint": "Kveiktu á þessu þegar afritin eiga ekki að fara af staðnum. Yfirlitið sýnir þá fjarafritið sem vantar grátt í stað rauðs, og litur hvers hluta fylgir öðrum athugunum hans, svo misheppnað eða seint afrit sker sig enn úr. Um leið og einhver hluti afritar annað, gilda venjulegu athuganirnar aftur og þessi rofi hverfur.",
   "rclone.paste": "Líma inn stillingar",
   "whatsNew.signInMakeDefault": "Stjarna merkir sjálfgefnu innskráninguna, þá sem er notuð alls staðar þar sem engin er valin. „Gera sjálfgefna“ færir stjörnuna á aðra.",
   "whatsNew.signInEdit": "„Breyta“ opnar innskráningu í glugga, þar sem „Prófa“ reynir hana á hverjum áfangastað sem notar hana áður en þú vistar.",

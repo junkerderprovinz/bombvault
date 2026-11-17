@@ -699,7 +699,7 @@ const cs: Partial<Translations> = {
   "signIns.windowHint": "Změna platí pro každý cíl, který tyto přihlašovací údaje používá. „Otestovat“ se ke každému z nich přihlásí se zadanými hodnotami, aniž by cokoli uložil.",
   "offsite.copies.title": "Kopie mimo lokalitu",
   "offsite.byChoice": "Žádné kopie mimo lokalitu",
-  "offsite.byChoiceHint": "Zapněte, když zálohy nesmí opustit místo. Přehled pak ukazuje chybějící kopii mimo lokalitu šedě místo červeně a barva každé sekce se řídí jejími ostatními kontrolami, takže neúspěšná nebo opožděná záloha je pořád vidět. Jakmile některá sekce kopíruje mimo lokalitu, platí znovu obvyklé kontroly a tento přepínač zmizí.",
+  "offsite.byChoiceHint": "Zapněte, když zálohy nemají opustit místo. Přehled pak ukazuje chybějící kopii mimo lokalitu šedě místo červeně a barva každé sekce se řídí jejími ostatními kontrolami, takže neúspěšná nebo opožděná záloha je pořád vidět. Jakmile některá sekce kopíruje mimo lokalitu, platí znovu obvyklé kontroly a tento přepínač zmizí.",
   "rclone.paste": "Vložit konfiguraci",
   "whatsNew.signInMakeDefault": "Hvězdička označuje výchozí přihlašovací údaje, které platí všude, kde žádné vybrané nejsou. „Nastavit jako výchozí“ ji předá jiným.",
   "whatsNew.signInEdit": "„Upravit“ otevře přihlašovací údaje v okně, kde je „Otestovat“ před uložením vyzkouší u každého cíle, který je používá.",

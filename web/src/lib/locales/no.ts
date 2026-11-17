@@ -698,7 +698,7 @@ const no: Partial<Translations> = {
   "signIns.windowHint": "En endring gjelder alle mål som bruker denne påloggingen. «Test» logger på hvert av dem med det du har skrevet, uten å lagre.",
   "offsite.copies.title": "Eksterne kopier",
   "offsite.byChoice": "Ingen off-site-kopier",
-  "offsite.byChoiceHint": "Slå dette på når sikkerhetskopiene ikke får forlate stedet. Oversikten viser da den manglende off-site-kopien i grått i stedet for rødt, og fargen på hver del følger de andre kontrollene, så en mislykket eller forsinket sikkerhetskopi fortsatt synes. Så snart en del kopierer off-site, gjelder de vanlige kontrollene igjen, og denne bryteren forsvinner.",
+  "offsite.byChoiceHint": "Slå dette på når sikkerhetskopiene ikke skal forlate stedet. Oversikten viser da den manglende off-site-kopien i grått i stedet for rødt, og fargen på hver del følger de andre kontrollene, så en mislykket eller forsinket sikkerhetskopi fortsatt synes. Så snart en del kopierer off-site, gjelder de vanlige kontrollene igjen, og denne bryteren forsvinner.",
   "rclone.paste": "Lim inn en konfigurasjon",
   "whatsNew.signInMakeDefault": "En stjerne markerer standardpåloggingen, den som brukes overalt der ingen er valgt. «Gjør til standard» gir stjernen til en annen.",
   "whatsNew.signInEdit": "«Rediger» åpner en pålogging i et vindu, der «Test» prøver den på hvert mål som bruker den før du lagrer.",

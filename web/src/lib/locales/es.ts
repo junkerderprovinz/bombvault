@@ -701,7 +701,7 @@ const es: Partial<Translations> = {
   "signIns.windowHint": "Un cambio se aplica a todos los destinos que usan estas credenciales. «Probar» inicia sesión en cada uno con lo que has escrito, sin guardar.",
   "offsite.copies.title": "Copias externas",
   "offsite.byChoice": "Sin copias externas",
-  "offsite.byChoiceHint": "Actívalo cuando tus copias no puedan salir de las instalaciones. La vista general muestra entonces la copia externa que falta en gris en lugar de rojo, y el color de cada sección sigue sus demás comprobaciones, así que una copia fallida o atrasada sigue destacando. En cuanto una sección copia a una ubicación externa, vuelven a valer las comprobaciones de siempre y este interruptor desaparece.",
+  "offsite.byChoiceHint": "Actívalo cuando tus copias no deban salir de las instalaciones. La vista general muestra entonces la copia externa que falta en gris en lugar de rojo, y el color de cada sección sigue sus demás comprobaciones, así que una copia fallida o atrasada sigue destacando. En cuanto una sección copia a una ubicación externa, vuelven a valer las comprobaciones de siempre y este interruptor desaparece.",
   "rclone.paste": "Pegar una configuración",
   "whatsNew.signInMakeDefault": "Una estrella marca las credenciales predeterminadas, las que se usan donde no se elige ninguna. «Usar como predeterminadas» pasa la estrella a otras.",
   "whatsNew.signInEdit": "«Editar» abre unas credenciales en una ventana, donde «Probar» las comprueba en cada destino que las usa antes de guardar.",

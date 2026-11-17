@@ -698,7 +698,7 @@ const pt: Partial<Translations> = {
   "signIns.windowHint": "Uma alteração aplica-se a todos os destinos que usam estas credenciais. «Testar» entra em cada um com o que foi escrito, sem guardar.",
   "offsite.copies.title": "Cópias externas",
   "offsite.byChoice": "Sem cópias externas",
-  "offsite.byChoiceHint": "Liga isto quando as tuas cópias não podem sair das instalações. A vista geral mostra então a cópia externa em falta a cinzento em vez de vermelho, e a cor de cada secção segue as restantes verificações, por isso um backup falhado ou em atraso continua a destacar-se. Assim que uma secção copia para fora, voltam a valer as verificações habituais e este interruptor desaparece.",
+  "offsite.byChoiceHint": "Liga isto quando as tuas cópias não devem sair das instalações. A vista geral mostra então a cópia externa em falta a cinzento em vez de vermelho, e a cor de cada secção segue as restantes verificações, por isso um backup falhado ou em atraso continua a destacar-se. Assim que uma secção copia para fora, voltam a valer as verificações habituais e este interruptor desaparece.",
   "rclone.paste": "Colar uma configuração",
   "whatsNew.signInMakeDefault": "Uma estrela marca as credenciais padrão, as que se usam onde nenhumas estão escolhidas. «Tornar padrão» passa a estrela para outras.",
   "whatsNew.signInEdit": "«Editar» abre umas credenciais numa janela, onde «Testar» as experimenta em cada destino que as usa antes de guardar.",

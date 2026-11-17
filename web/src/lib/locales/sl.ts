@@ -936,7 +936,7 @@ const sl: Partial<Translations> = {
   "signIns.windowHint": "Sprememba velja za vsak cilj, ki uporablja te poverilnice. »Preizkusi« se z vpisanimi vrednostmi prijavi v vsakega od njih, ne da bi shranil.",
   "offsite.copies.title": "Zunanje kopije",
   "offsite.byChoice": "Brez zunanjih kopij",
-  "offsite.byChoiceHint": "Vklopite to, ko varnostne kopije ne smejo zapustiti prostorov. Pregled takrat manjkajočo zunanjo kopijo prikaže sivo namesto rdeče, barva vsakega razdelka pa sledi njegovim drugim preverjanjem, zato neuspela ali zamujena varnostna kopija še vedno izstopa. Takoj ko kateri koli razdelek kopira na zunanjo lokacijo, spet veljajo običajna preverjanja in to stikalo izgine.",
+  "offsite.byChoiceHint": "Vklopite to, ko varnostne kopije ne bi smele zapustiti prostorov. Pregled takrat manjkajočo zunanjo kopijo prikaže sivo namesto rdeče, barva vsakega razdelka pa sledi njegovim drugim preverjanjem, zato neuspela ali zamujena varnostna kopija še vedno izstopa. Takoj ko kateri koli razdelek kopira na zunanjo lokacijo, spet veljajo običajna preverjanja in to stikalo izgine.",
   "rclone.paste": "Prilepi nastavitve",
   "whatsNew.signInMakeDefault": "Zvezdica označuje privzete poverilnice, ki veljajo povsod, kjer niso izbrane nobene. »Nastavi kot privzete« preda zvezdico drugim.",
   "whatsNew.signInEdit": "»Uredi« odpre poverilnice v oknu, kjer jih »Preizkusi« pred shranjevanjem preskusi na vsakem cilju, ki jih uporablja.",

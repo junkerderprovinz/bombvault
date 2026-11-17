@@ -936,7 +936,7 @@ const et: Partial<Translations> = {
   "signIns.windowHint": "Muudatus kehtib igale sihtkohale, mis seda sisselogimist kasutab. „Testi“ logib sisestatud väärtustega igasse neist sisse, ilma salvestamata.",
   "offsite.copies.title": "Välised koopiad",
   "offsite.byChoice": "Väliseid koopiaid pole",
-  "offsite.byChoiceHint": "Lülita see sisse, kui varukoopiad ei tohi kohapealt lahkuda. Ülevaade näitab siis puuduvat välist koopiat punase asemel hallina ja iga jaotise värv järgib selle teisi kontrolle, nii et ebaõnnestunud või hilinev varundus paistab ikka silma. Kui mõni jaotis kopeerib välisesse kohta, kehtivad jälle tavalised kontrollid ja see lüliti kaob.",
+  "offsite.byChoiceHint": "Lülita see sisse, kui varukoopiad ei peaks kohapealt lahkuma. Ülevaade näitab siis puuduvat välist koopiat punase asemel hallina ja iga jaotise värv järgib selle teisi kontrolle, nii et ebaõnnestunud või hilinev varundus paistab ikka silma. Kui mõni jaotis kopeerib välisesse kohta, kehtivad jälle tavalised kontrollid ja see lüliti kaob.",
   "rclone.paste": "Kleebi seadistus",
   "whatsNew.signInMakeDefault": "Täht märgib vaikimisi sisselogimist, mida kasutatakse kõikjal, kus ühtegi pole valitud. „Määra vaikimisi“ annab tähe teisele.",
   "whatsNew.signInEdit": "„Muuda“ avab sisselogimise aknas, kus „Testi“ proovib seda enne salvestamist igas sihtkohas, mis seda kasutab.",

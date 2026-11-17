@@ -701,7 +701,7 @@ const fi: Partial<Translations> = {
   "signIns.windowHint": "Muutos koskee jokaista kohdetta, joka käyttää näitä tunnuksia. ”Testaa” kirjautuu kuhunkin niistä kirjoittamillasi arvoilla tallentamatta.",
   "offsite.copies.title": "Etäkopiot",
   "offsite.byChoice": "Ei etäkopioita",
-  "offsite.byChoiceHint": "Kytke tämä päälle, kun varmuuskopiot eivät saa poistua tiloista. Yleiskatsaus näyttää silloin puuttuvan etäkopion harmaana punaisen sijaan, ja jokaisen osion väri seuraa sen muita tarkistuksia, joten epäonnistunut tai myöhässä oleva varmuuskopio erottuu yhä. Kun jokin osio kopioi etäsijaintiin, tavalliset tarkistukset ovat taas voimassa ja tämä kytkin katoaa.",
+  "offsite.byChoiceHint": "Kytke tämä päälle, kun varmuuskopioiden ei pitäisi poistua tiloista. Yleiskatsaus näyttää silloin puuttuvan etäkopion harmaana punaisen sijaan, ja jokaisen osion väri seuraa sen muita tarkistuksia, joten epäonnistunut tai myöhässä oleva varmuuskopio erottuu yhä. Kun jokin osio kopioi etäsijaintiin, tavalliset tarkistukset ovat taas voimassa ja tämä kytkin katoaa.",
   "rclone.paste": "Liitä määritys",
   "whatsNew.signInMakeDefault": "Tähti merkitsee oletustunnukset, joita käytetään kaikkialla, missä mitään ei ole valittu. ”Aseta oletukseksi” siirtää tähden toisille.",
   "whatsNew.signInEdit": "”Muokkaa” avaa tunnukset ikkunaan, jossa ”Testaa” kokeilee niitä jokaisessa niitä käyttävässä kohteessa ennen tallennusta.",

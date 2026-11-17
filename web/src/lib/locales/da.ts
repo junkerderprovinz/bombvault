@@ -701,7 +701,7 @@ const da: Partial<Translations> = {
   "signIns.windowHint": "En ændring gælder for alle destinationer, der bruger disse adgangsoplysninger. »Test« logger ind på hver af dem med det, du har skrevet, uden at gemme.",
   "offsite.copies.title": "Eksterne kopier",
   "offsite.byChoice": "Ingen off-site-kopier",
-  "offsite.byChoiceHint": "Slå det til, når dine sikkerhedskopier ikke må forlade stedet. Oversigten viser så den manglende off-site-kopi i gråt i stedet for rødt, og hvert afsnits farve følger de øvrige kontroller, så en mislykket eller forsinket sikkerhedskopi stadig springer i øjnene. Så snart et afsnit kopierer off-site, gælder de sædvanlige kontroller igen, og denne kontakt forsvinder.",
+  "offsite.byChoiceHint": "Slå det til, når dine sikkerhedskopier ikke skal forlade stedet. Oversigten viser så den manglende off-site-kopi i gråt i stedet for rødt, og hvert afsnits farve følger de øvrige kontroller, så en mislykket eller forsinket sikkerhedskopi stadig springer i øjnene. Så snart et afsnit kopierer off-site, gælder de sædvanlige kontroller igen, og denne kontakt forsvinder.",
   "rclone.paste": "Indsæt en konfiguration",
   "whatsNew.signInMakeDefault": "En stjerne markerer standard-adgangsoplysningerne, som bruges overalt, hvor ingen er valgt. »Gør til standard« giver stjernen videre.",
   "whatsNew.signInEdit": "»Rediger« åbner adgangsoplysninger i et vindue, hvor »Test« prøver dem på hver destination, der bruger dem, før du gemmer.",

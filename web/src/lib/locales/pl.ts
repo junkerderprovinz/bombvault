@@ -695,7 +695,7 @@ const pl: Partial<Translations> = {
   "signIns.windowHint": "Zmiana dotyczy każdego miejsca docelowego, które używa tych danych logowania. „Testuj” loguje się do każdego z nich wpisanymi wartościami, bez zapisywania.",
   "offsite.copies.title": "Kopie poza siedzibą",
   "offsite.byChoice": "Bez kopii poza siedzibą",
-  "offsite.byChoiceHint": "Włącz to, gdy kopie zapasowe nie mogą opuścić siedziby. Przegląd pokazuje wtedy brakującą kopię poza siedzibą na szaro zamiast na czerwono, a kolor każdej sekcji wynika z jej pozostałych kontroli, więc nieudana lub opóźniona kopia nadal rzuca się w oczy. Gdy tylko któraś sekcja kopiuje poza siedzibę, znów obowiązują zwykłe kontrole, a ten przełącznik znika.",
+  "offsite.byChoiceHint": "Włącz to, gdy kopie zapasowe nie powinny opuszczać siedziby. Przegląd pokazuje wtedy brakującą kopię poza siedzibą na szaro zamiast na czerwono, a kolor każdej sekcji wynika z jej pozostałych kontroli, więc nieudana lub opóźniona kopia nadal rzuca się w oczy. Gdy tylko któraś sekcja kopiuje poza siedzibę, znów obowiązują zwykłe kontrole, a ten przełącznik znika.",
   "rclone.paste": "Wklej konfigurację",
   "whatsNew.signInMakeDefault": "Gwiazdka oznacza domyślne dane logowania, używane wszędzie tam, gdzie nie wybrano żadnych. „Ustaw jako domyślne” przekazuje gwiazdkę innym.",
   "whatsNew.signInEdit": "„Edytuj” otwiera dane logowania w oknie, gdzie „Testuj” przed zapisaniem sprawdza je w każdym miejscu docelowym, które ich używa.",

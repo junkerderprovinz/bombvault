@@ -698,7 +698,7 @@ const ro: Partial<Translations> = {
   "signIns.windowHint": "O modificare se aplică fiecărei destinații care folosește această autentificare. „Testează” se conectează la fiecare cu ce ai scris, fără să salveze.",
   "offsite.copies.title": "Copii externe",
   "offsite.byChoice": "Fără copii externe",
-  "offsite.byChoiceHint": "Pornește asta când copiile tale nu au voie să părăsească sediul. Prezentarea generală arată atunci copia externă care lipsește cu gri în loc de roșu, iar culoarea fiecărei secțiuni urmează celelalte verificări ale ei, așa că un backup eșuat sau întârziat tot iese în evidență. De îndată ce o secțiune copiază extern, se aplică din nou verificările obișnuite și acest comutator dispare.",
+  "offsite.byChoiceHint": "Pornește asta când copiile tale nu ar trebui să părăsească sediul. Prezentarea generală arată atunci copia externă care lipsește cu gri în loc de roșu, iar culoarea fiecărei secțiuni urmează celelalte verificări ale ei, așa că un backup eșuat sau întârziat tot iese în evidență. De îndată ce o secțiune copiază extern, se aplică din nou verificările obișnuite și acest comutator dispare.",
   "rclone.paste": "Lipește o configurație",
   "whatsNew.signInMakeDefault": "O stea marchează autentificarea implicită, cea folosită peste tot unde nu e aleasă niciuna. „Fă-o implicită” dă steaua alteia.",
   "whatsNew.signInEdit": "„Editează” deschide o autentificare într-o fereastră, unde „Testează” o încearcă la fiecare destinație care o folosește înainte să salvezi.",

@@ -701,7 +701,7 @@ const sv: Partial<Translations> = {
   "signIns.windowHint": "En ändring gäller alla mål som använder den här inloggningen. ”Testa” loggar in på vart och ett med det du har skrivit, utan att spara.",
   "offsite.copies.title": "Externa kopior",
   "offsite.byChoice": "Inga externa kopior",
-  "offsite.byChoiceHint": "Slå på det här när dina säkerhetskopior inte får lämna lokalerna. Översikten visar då den saknade externa kopian i grått i stället för rött, och varje avsnitts färg följer dess övriga kontroller, så en misslyckad eller försenad säkerhetskopia syns fortfarande. Så fort ett avsnitt kopierar externt gäller de vanliga kontrollerna igen och den här brytaren försvinner.",
+  "offsite.byChoiceHint": "Slå på det här när dina säkerhetskopior inte ska lämna lokalerna. Översikten visar då den saknade externa kopian i grått i stället för rött, och varje avsnitts färg följer dess övriga kontroller, så en misslyckad eller försenad säkerhetskopia syns fortfarande. Så fort ett avsnitt kopierar externt gäller de vanliga kontrollerna igen och den här brytaren försvinner.",
   "rclone.paste": "Klistra in en konfiguration",
   "whatsNew.signInMakeDefault": "En stjärna markerar standardinloggningen, den som används överallt där ingen är vald. ”Gör till standard” ger stjärnan till en annan.",
   "whatsNew.signInEdit": "”Redigera” öppnar en inloggning i ett fönster, där ”Testa” provar den på varje mål som använder den innan du sparar.",
