@@ -40,11 +40,11 @@ Every switched-on section has a row with four checks:
 | Check | It goes green when | Other words you may see |
 |---|---|---|
 | **Local** | the last backup is current | no backup yet, no schedule, last run failed, backup overdue, not every entry is protected, backup due soon |
-| **Off-site** | the last copy off the premises is current | no off-site copy, none by choice, copy running, copy overdue, waits for your decision, no copy yet, replica failed |
+| **Off-site** | the last copy off the premises is current | no off-site copy, none because data stays on the premises, copy running, copy overdue, waits for your decision, no copy yet, replica failed |
 | **Delete protection** | a tamper test proved that the far side refuses deletes | none, none and risk accepted, not proven yet, test failed, not proven because its check is off |
 | **Trial restore** | a restore from the off-site copy passed | never run, running, failed, overdue, manual only, not possible for this section |
 
-A section is green only on verified facts. A copy on this server does not count as off-site, and a location you marked **Accept without delete protection** shows a grey ring instead of an amber dot, so the section's colour follows its other checks. **No off-site copy, by choice** does the same for the off-site check: it turns grey, and a section whose backups are current reads **Protected here, no off-site by choice**.
+A section is green only on verified facts. A copy on this server does not count as off-site, and a location you marked **Accept without delete protection** shows a grey ring instead of an amber dot, so the section's colour follows its other checks. **Data stays on the premises** does the same for the off-site check: it turns grey, and a section whose backups are current reads **Protected here, data stays on the premises**.
 
 A scheduled section says **No backup yet** and stays neutral until its first run was due, counted from when its plan was last set. After that it reads **Overdue** and alerts once. **Overdue** goes by the entry that fell furthest behind its own plan, so a neighbour that runs does not hide one that stopped. An entry whose container is gone or that no schedule reaches does not count. An entry on a weekly plan of its own is not held to the section's daily plan. A section with nothing to back up, because no schedule reaches any of its entries, says **Not scheduled** and is never overdue.
 

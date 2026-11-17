@@ -45,7 +45,7 @@ A short catalogue of what BombVault does. Each line links to the page that expla
 - **Own folders** on this server or in a storage location. [A section's own folder](offsite-recovery.md#own-folder)
 - **3-2-1 as a flow** where every line is a switch, and **placement per entry**. [Placement per entry](offsite-recovery.md#placement)
 - **Off-site copies** to several locations per section, with bandwidth limits, compression, cold storage classes and a slowdown while Plex streams. [Off-site copies](offsite-recovery.md#off-site-copies)
-- **No off-site copy, by choice** for data that may not leave the premises. [Off-site copies](offsite-recovery.md#off-site-copies)
+- **Data stays on the premises** for backups that may not leave the building. [Off-site copies](offsite-recovery.md#off-site-copies)
 - **Direct repositories**, listed under **Backs up straight here**. [Direct repositories](offsite-recovery.md#direct-repositories)
 - **Retention as a timeline**: **Short**, **Balanced**, **Long** or **Custom values** per location, with rules per section. [How long to keep](offsite-recovery.md#keep)
 - **Move a section's history**, and **Remove storage location** with or without its backups. [Moving and removing](offsite-recovery.md#move-remove)

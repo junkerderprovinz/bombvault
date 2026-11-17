@@ -67,7 +67,7 @@ async function show(over: Partial<Settings> = {}, allTargets: OffsiteTarget[] = 
 
 const choice = () => screen.queryByRole("switch", { name: en["offsite.byChoice"] });
 
-describe("the switch for no off-site copy by choice", () => {
+describe("the switch that keeps the data on the premises", () => {
   beforeEach(() => localStorage.setItem("bv-lang", "en"));
   afterEach(() => {
     cleanup();
