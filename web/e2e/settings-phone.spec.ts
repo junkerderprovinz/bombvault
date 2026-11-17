@@ -344,6 +344,7 @@ const PAGES = [
   ["integrity", "Prüfung"],
   ["security", "Sicherheit"],
   ["instances", "Instanzen"],
+  ["snapshots", "Snapshots"],
   ["pairing", "Kopplung"],
   ["integrations", "Anbindungen"],
   ["apps", "Apps"],

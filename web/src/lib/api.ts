@@ -9652,3 +9652,8 @@ export function runHostSnapshotPlan(
 ): Promise<OkEnvelope & { result?: { code: string; created?: string; removed: string[]; detail?: string } }> {
   return postHostSnap(`plans/${encodeURIComponent(id)}/run`, {});
 }
+
+/** GET /api/host-snapshots/plans, the schedules without a read of the host. */
+export function listHostSnapshotPlans(): Promise<OkEnvelope & { plans?: HostSnapPlan[] }> {
+  return fetchJSON("/api/host-snapshots/plans");
+}

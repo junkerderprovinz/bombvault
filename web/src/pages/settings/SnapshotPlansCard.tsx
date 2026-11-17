@@ -12,6 +12,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import {
   addHostSnapshotPlan,
   deleteHostSnapshotPlan,
+  listHostSnapshotPlans,
   listHostSnapshots,
   runHostSnapshotPlan,
   updateHostSnapshotPlan,
@@ -43,25 +44,35 @@ function input(p: HostSnapPlan): HostSnapPlanInput {
   };
 }
 
-/** usePlans holds the plans as the server last answered and the sources a new
- *  plan can take snapshots of. */
-export function usePlans() {
+/** usePlans holds the plans as the server last answered. */
+function usePlans() {
   const [plans, setPlans] = useState<HostSnapPlan[] | null>(null);
-  const [sources, setSources] = useState<HostSnapSource[]>([]);
   useEffect(() => {
     let live = true;
-    listHostSnapshots()
-      .then((res) => {
-        if (!live || !res.ok) return;
-        setPlans(res.plans ?? []);
-        setSources(res.sources ?? []);
-      })
+    listHostSnapshotPlans()
+      .then((res) => live && setPlans(res.ok ? (res.plans ?? []) : []))
       .catch(() => live && setPlans([]));
     return () => {
       live = false;
     };
   }, []);
-  return { plans, setPlans, sources };
+  return { plans, setPlans };
+}
+
+/** useSources reads the host for what a new plan can take snapshots of, only
+ *  once the window that asks for it opens, since a read reaches every pool. */
+function useSources(): HostSnapSource[] | null {
+  const [sources, setSources] = useState<HostSnapSource[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    listHostSnapshots()
+      .then((res) => live && setSources(res.ok ? (res.sources ?? []) : []))
+      .catch(() => live && setSources([]));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return sources;
 }
 
 function lastRunLine(p: HostSnapPlan, t: ReturnType<typeof useT>["t"]): string {
@@ -178,24 +189,24 @@ function PlanRow({
 }
 
 function AddPlanWindow({
-  sources,
   onAdded,
   onClose,
 }: {
-  sources: HostSnapSource[];
   onAdded: (p: HostSnapPlan) => void;
   onClose: () => void;
 }) {
   const { t } = useT();
   const ownLogin = useOwnLogin();
+  const sources = useSources();
   const options = useMemo(
     () =>
-      sources
+      (sources ?? [])
         .filter((s) => s.canCreate)
         .map((s) => ({ value: sourceKey(s.kind, s.fs, s.source), label: `${t(KIND_LABEL[s.kind])}: ${sourceLabel(s.kind, s.fs, s.source, t)}`, src: s })),
     [sources, t]
   );
-  const [picked, setPicked] = useState(options[0]?.value ?? "");
+  const [chosen, setPicked] = useState("");
+  const picked = chosen || (options[0]?.value ?? "");
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const src = options.find((o) => o.value === picked)?.src;
@@ -246,7 +257,7 @@ function AddPlanWindow({
         </>
       }
     >
-      {options.length === 0 ? (
+      {sources === null ? null : options.length === 0 ? (
         <Note>{t("hostSnap.plans.noSources")}</Note>
       ) : (
         <SettingRow label={t("hostSnap.create.source")}>
@@ -270,7 +281,7 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const ownLogin = useOwnLogin();
-  const { plans, setPlans, sources } = usePlans();
+  const { plans, setPlans } = usePlans();
   const [adding, setAdding] = useState(false);
 
   async function remove(p: HostSnapPlan) {
@@ -306,7 +317,6 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
       </div>
       {adding && (
         <AddPlanWindow
-          sources={sources}
           onClose={() => setAdding(false)}
           onAdded={(p) => {
             setAdding(false);

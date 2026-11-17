@@ -347,3 +347,8 @@ func (s *Service) StartHostSnapshotPlans(ctx context.Context) {
 		}
 	}()
 }
+
+// HostSnapshotPlans lists the plans without reaching the host.
+func (s *Service) HostSnapshotPlans() ([]store.HostSnapshotPlan, error) {
+	return s.store.ListHostSnapshotPlans()
+}

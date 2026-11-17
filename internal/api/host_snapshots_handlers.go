@@ -17,6 +17,7 @@ func (h *Handler) registerHostSnapshotRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/host-snapshots/delete", h.handleDeleteHostSnapshots)
 	mux.HandleFunc("POST /api/host-snapshots/where", h.handleWhereHostSnapshot)
 	mux.HandleFunc("POST /api/host-snapshots/free", h.handleFreeHostSnapshot)
+	mux.HandleFunc("GET /api/host-snapshots/plans", h.handleListHostSnapshotPlans)
 	mux.HandleFunc("POST /api/host-snapshots/plans", h.handleAddHostSnapshotPlan)
 	mux.HandleFunc("PUT /api/host-snapshots/plans/{id}", h.handleUpdateHostSnapshotPlan)
 	mux.HandleFunc("DELETE /api/host-snapshots/plans/{id}", h.handleDeleteHostSnapshotPlan)
@@ -247,4 +248,15 @@ func (h *Handler) handleRunHostSnapshotPlan(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"result": res}))
+}
+
+// handleListHostSnapshotPlans lists the plans alone, which the settings page
+// reads without a survey of the host. GET /api/host-snapshots/plans
+func (h *Handler) handleListHostSnapshotPlans(w http.ResponseWriter, _ *http.Request) {
+	plans, err := h.svc.HostSnapshotPlans()
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"plans": plans}))
 }
