@@ -16,7 +16,7 @@ import (
 type localShell struct{ path string }
 
 func (l localShell) RunCapture(ctx context.Context, args ...string) (string, string, error) {
-	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...) //nolint:gosec // G204: the test runs its own scripts
 	cmd.Env = append(os.Environ(), "PATH="+l.path)
 	var out, errb strings.Builder
 	cmd.Stdout, cmd.Stderr = &out, &errb
