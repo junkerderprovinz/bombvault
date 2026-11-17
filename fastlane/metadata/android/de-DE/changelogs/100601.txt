@@ -1,0 +1,1 @@
+BombVault 10.6.1 lässt unter dem Zeiger alles in deiner Akzentfarbe leuchten, den Fokusrahmen gleich mit, und Akzenttext ist auf jedem Untergrund gut lesbar. Fragen gehen jetzt an GitHub oder Discord, das alte Postfach darf endlich die Füße hochlegen.
