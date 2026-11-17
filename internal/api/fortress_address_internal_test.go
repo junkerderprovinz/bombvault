@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -108,8 +109,15 @@ func TestBombVaultThatLeavesIsGoneFromTheOtherMembers(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(svc.CloseFortress)
+	// An announce lists a member before its key is pinned, and a leave goes
+	// only to the members BombVault reaches and counts only where its key is
+	// pinned, so being listed is not enough.
+	met := func() bool {
+		return slices.ContainsFunc(other.Members(), func(m fortress.Member) bool { return m.State == group.StateApproved }) &&
+			slices.ContainsFunc(svc.fortressNow().Members(), func(m fortress.Member) bool { return m.State == group.StateApproved && m.Online() })
+	}
 	deadline := time.Now().Add(20 * time.Second)
-	for len(other.Members()) == 0 || len(svc.fortressNow().Members()) == 0 {
+	for !met() {
 		if time.Now().After(deadline) {
 			t.Fatal("BombVault and the other member never met")
 		}

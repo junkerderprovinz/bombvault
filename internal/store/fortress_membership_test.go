@@ -195,3 +195,40 @@ func TestTheRemovedMembersStayUntilLeavingOrJoiningAgain(t *testing.T) {
 		t.Fatal("joining again still says another member took the install out")
 	}
 }
+
+func TestAMemberSeenInTheSecondOfAPhraseChangeMayStillHoldTheOldPhrase(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("a"), []byte("seed")); err != nil {
+		t.Fatal(err)
+	}
+	change := time.Unix(1_800_000_000, 700_000_000)
+	if err := r.SetFortressSecret([]byte("b"), []byte("a"), change); err != nil {
+		t.Fatal(err)
+	}
+	m, err := r.FortressMembership()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, seen := range []time.Time{change.Add(-time.Hour), change.Add(-400 * time.Millisecond), change} {
+		if !m.SeenBeforeChange(seen) {
+			t.Errorf("a member last seen at %v is not counted as seen before the change at %v", seen, change)
+		}
+	}
+	if later := change.Add(time.Second); m.SeenBeforeChange(later) {
+		t.Errorf("a member seen at %v, after the change at %v, is counted as seen before it", later, change)
+	}
+}
+
+func TestNoMemberIsSeenBeforeAChangeThatNeverHappened(t *testing.T) {
+	r := kitRepo(t)
+	if err := r.JoinFortress([]byte("a"), []byte("seed")); err != nil {
+		t.Fatal(err)
+	}
+	m, err := r.FortressMembership()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m.SeenBeforeChange(time.Unix(1_800_000_000, 0)) {
+		t.Error("a member is counted as seen before a phrase change in a fortress whose phrase never changed")
+	}
+}
