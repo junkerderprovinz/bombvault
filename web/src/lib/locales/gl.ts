@@ -850,6 +850,7 @@ const gl: Partial<Translations> = {
   "whatsNew.restoreStacks": "As pilas de Compose restáuranse desde a súa propia tarxeta na páxina Restauración.",
   "whatsNew.entryOwnPlan": "Un contedor, unha MV, un cartafol ou un conxunto de datos ZFS pode executarse coa súa propia planificación. Axústala na lapela Configuración do elemento, sen activar antes ningún interruptor.",
   "whatsNew.deleteRisk": "Unha localización sen protección contra a eliminación pódese aceptar tal como é. A vista xeral deixa entón de avisar dela e segue dicindo que as copias de alí se poden eliminar.",
+  "whatsNew.noOffsite": "Se as túas copias non deben saír das instalacións, activa Sen copias externas. A vista xeral mostra entón a copia que falta en gris en vez de vermello, e unha copia fallida ou atrasada segue destacando.",
   "whatsNew.overviewMoveMode": "Mentres personalizas a vista xeral, as súas tarxetas balancéanse suavemente para amosar que as podes mover.",
   "whatsNew.labelGlyphs": "Etiquetas amosa un símbolo para cada opción, como Esquinas e Animación.",
   "whatsNew.copyDecision": "Cando BombVault atopa nun destino copias de seguranza dunha sección de antes desta base de datos, Precisa atención e a páxina do destino preguntan se queres Adoptalas como propias deste servidor ou Revisar antes as regras.",

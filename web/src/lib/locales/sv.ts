@@ -1207,6 +1207,7 @@ const sv: Partial<Translations> = {
   "whatsNew.restoreStacks": "Compose-stackar återställs från ett eget kort på sidan Återställning.",
   "whatsNew.entryOwnPlan": "En container, en VM, en mapp eller en ZFS-datauppsättning kan köra enligt ett eget schema. Du ställer in det på postens flik Inställningar, utan att först slå på någon brytare.",
   "whatsNew.deleteRisk": "En lagringsplats utan skydd mot radering kan accepteras som den är. Översikten slutar då varna för den och säger fortfarande att säkerhetskopiorna där kan raderas.",
+  "whatsNew.noOffsite": "Om dina säkerhetskopior inte ska lämna lokalerna slår du på Inga externa kopior. Översikten visar då den saknade kopian i grått i stället för rött, och en misslyckad eller försenad säkerhetskopia syns fortfarande.",
   "whatsNew.overviewMoveMode": "Medan du anpassar översikten gungar korten lätt för att visa att du kan flytta dem.",
   "whatsNew.labelGlyphs": "Etiketter visar en symbol för varje val, som Hörn och Animation.",
   "whatsNew.copyDecision": "När BombVault hittar säkerhetskopior av en sektion från tiden före den här databasen på ett mål frågar Behöver uppmärksamhet och målets sida om du vill Ta över dem som den här serverns egna eller Kontrollera reglerna först.",

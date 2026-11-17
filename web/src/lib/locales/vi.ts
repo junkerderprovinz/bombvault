@@ -1198,6 +1198,7 @@ const vi: Partial<Translations> = {
   "whatsNew.restoreStacks": "Các stack Compose được khôi phục từ thẻ riêng của chúng trên trang Khôi phục.",
   "whatsNew.entryOwnPlan": "Một container, VM, thư mục hoặc tập dữ liệu ZFS có thể chạy theo lịch trình riêng. Bạn đặt nó ở thẻ Cài đặt của mục đó, không cần bật công tắc nào trước.",
   "whatsNew.deleteRisk": "Một vị trí lưu trữ không có bảo vệ chống xóa giờ có thể được chấp nhận như hiện trạng. Phần tổng quan khi đó ngừng cảnh báo về nó và vẫn cho biết các bản sao lưu ở đó có thể bị xóa.",
+  "whatsNew.noOffsite": "Nếu bản sao lưu của bạn không nên rời khỏi cơ sở, hãy bật Không có bản sao ngoài site. Khi đó phần tổng quan hiển thị bản sao còn thiếu bằng màu xám thay vì màu đỏ, và bản sao lưu thất bại hoặc bị trễ vẫn nổi bật.",
   "whatsNew.overviewMoveMode": "Khi bạn tùy chỉnh Tổng quan, các thẻ của nó khẽ lắc lư để cho thấy bạn có thể di chuyển chúng.",
   "whatsNew.labelGlyphs": "Nhãn hiển thị một biểu tượng cho từng lựa chọn, giống như Góc và Hoạt ảnh.",
   "whatsNew.copyDecision": "Khi BombVault tìm thấy bản sao lưu của một phần từ trước cơ sở dữ liệu này ở một đích, Cần chú ý và trang của đích đó sẽ hỏi bạn muốn Nhận là bản sao lưu của máy chủ này hay Kiểm tra quy tắc trước.",

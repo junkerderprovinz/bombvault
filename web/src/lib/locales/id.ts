@@ -850,6 +850,7 @@ const id: Partial<Translations> = {
   "whatsNew.restoreStacks": "Stack Compose dipulihkan dari kartunya sendiri di halaman Pemulihan.",
   "whatsNew.entryOwnPlan": "Container, VM, folder, atau dataset ZFS bisa berjalan dengan jadwalnya sendiri. Anda mengaturnya di tab Pengaturan entri itu, tanpa perlu menyalakan sakelar apa pun lebih dulu.",
   "whatsNew.deleteRisk": "Lokasi penyimpanan tanpa perlindungan dari penghapusan bisa diterima apa adanya. Ringkasan lalu berhenti memperingatkannya dan tetap menyebutkan bahwa cadangan di sana bisa dihapus.",
+  "whatsNew.noOffsite": "Jika cadanganmu tidak seharusnya keluar dari lokasi, aktifkan Tanpa salinan off-site. Ringkasan lalu menampilkan salinan yang tidak ada dengan warna abu-abu, bukan merah, dan cadangan yang gagal atau terlambat tetap terlihat.",
   "whatsNew.overviewMoveMode": "Saat Anda menyesuaikan Ringkasan, kartunya bergoyang pelan untuk menunjukkan bahwa Anda dapat memindahkannya.",
   "whatsNew.labelGlyphs": "Label menampilkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
   "whatsNew.copyDecision": "Saat BombVault menemukan cadangan sebuah bagian dari sebelum basis data ini di sebuah tujuan, Perlu perhatian dan halaman tujuan itu bertanya: Ambil sebagai milik server ini atau Periksa aturan dulu.",

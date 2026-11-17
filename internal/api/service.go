@@ -3942,7 +3942,7 @@ func protectionLevel(now int64, in protInputs) string {
 		return "" // disabled domains carry no protection posture
 	}
 	if !in.offsiteConfigured && !in.noOffsiteByChoice {
-		return "red" // enabled but no off-site copy — unprotected by design
+		return "red" // enabled with no off-site copy and no choice to keep it here
 	}
 	if in.offsiteImmutable {
 		tamperStale := in.tamperPeriod > 0 && now-in.lastTamperAt > in.tamperPeriod*2

@@ -1215,6 +1215,7 @@ const es: Partial<Translations> = {
   "whatsNew.restoreStacks": "Los stacks de Compose se restauran desde su propia tarjeta en la página Restauración.",
   "whatsNew.entryOwnPlan": "Un contenedor, una VM, una carpeta o un conjunto de datos ZFS puede ejecutarse con un calendario propio. Lo ajustas en la pestaña Ajustes del elemento, sin activar antes ningún interruptor.",
   "whatsNew.deleteRisk": "Una ubicación sin protección contra borrado se puede aceptar tal como es. La vista general deja de avisar por ella y sigue indicando que las copias de allí se pueden borrar.",
+  "whatsNew.noOffsite": "Si tus copias no deben salir de las instalaciones, activa Sin copias externas. La vista general muestra entonces la copia que falta en gris en lugar de rojo, y una copia fallida o atrasada sigue destacando.",
   "whatsNew.overviewMoveMode": "Mientras personalizas el resumen, sus tarjetas se balancean suavemente para mostrar que puedes moverlas.",
   "whatsNew.labelGlyphs": "Etiquetas muestra un símbolo para cada opción, como Esquinas y Animación.",
   "whatsNew.copyDecision": "Cuando BombVault encuentra en un destino copias de seguridad de una sección de antes de esta base de datos, Necesita atención y la página del destino preguntan si quieres Adoptarlas como propias de este servidor o Revisar primero las reglas.",

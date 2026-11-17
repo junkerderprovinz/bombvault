@@ -1196,6 +1196,7 @@ const no: Partial<Translations> = {
   "whatsNew.restoreStacks": "Compose-stacker gjenopprettes fra sitt eget kort på siden Gjenoppretting.",
   "whatsNew.entryOwnPlan": "En container, en VM, en mappe eller et ZFS-datasett kan kjøre etter sin egen tidsplan. Du setter den på fanen Innstillinger for elementet, uten å slå på noen bryter først.",
   "whatsNew.deleteRisk": "Et lagringssted uten beskyttelse mot sletting kan godtas som det er. Oversikten slutter da å advare om det og sier fortsatt at sikkerhetskopiene der kan slettes.",
+  "whatsNew.noOffsite": "Hvis sikkerhetskopiene ikke skal forlate stedet, slår du på Ingen off-site-kopier. Oversikten viser da den manglende kopien i grått i stedet for rødt, og en mislykket eller forsinket sikkerhetskopi synes fortsatt.",
   "whatsNew.overviewMoveMode": "Mens du tilpasser oversikten, vugger kortene lett for å vise at du kan flytte dem.",
   "whatsNew.labelGlyphs": "Etiketter viser et symbol for hvert valg, som Hjørner og Animasjon.",
   "whatsNew.copyDecision": "Når BombVault finner sikkerhetskopier av en seksjon fra før denne databasen på et mål, spør Krever oppmerksomhet og målets side om du vil Overta dem som denne serverens egne eller Sjekk reglene først.",

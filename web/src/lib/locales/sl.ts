@@ -850,6 +850,7 @@ const sl: Partial<Translations> = {
   "whatsNew.restoreStacks": "Sklope Compose obnoviš z lastne kartice na strani Obnova.",
   "whatsNew.entryOwnPlan": "Vsebnik, VM, mapa ali nabor podatkov ZFS lahko teče po lastnem urniku. Nastaviš ga na zavihku Nastavitve vnosa in ti prej ni treba vklopiti nobenega stikala.",
   "whatsNew.deleteRisk": "Mesto shranjevanja brez zaščite pred brisanjem lahko sprejmeš takšno, kot je. Pregled potem ne opozarja več nanj in še naprej pove, da se kopije tam lahko izbrišejo.",
+  "whatsNew.noOffsite": "Če varnostne kopije ne bi smele zapustiti prostorov, vklopite Brez zunanjih kopij. Pregled takrat manjkajočo kopijo prikaže sivo namesto rdeče, neuspela ali zamujena varnostna kopija pa še vedno izstopa.",
   "whatsNew.overviewMoveMode": "Med prilagajanjem pregleda se njegove kartice rahlo zibljejo, da pokažejo, da jih lahko premikaš.",
   "whatsNew.labelGlyphs": "Oznake prikazujejo simbol za vsako izbiro, tako kot Oglišča in Animacija.",
   "whatsNew.copyDecision": "Ko BombVault na cilju najde varnostne kopije razdelka iz časa pred to bazo podatkov, Zahteva pozornost in stran cilja vprašata, ali želiš Prevzemi kot varnostne kopije tega strežnika ali Najprej preveri pravila.",

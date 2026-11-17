@@ -93,7 +93,7 @@ describe("the plans for off-site copies", () => {
     expect(copyPlans()).toHaveLength(0);
   });
 
-  it("stay while a section copies off-site, where the choice no longer counts", async () => {
+  it("stay while a section copies off-site, where the choice does not count", async () => {
     await show({ noOffsiteByChoice: true, filesOffsite: "rest:http://box:8000/files" });
     expect(copyPlans().length).toBeGreaterThan(0);
   });

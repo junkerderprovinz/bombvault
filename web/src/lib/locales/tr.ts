@@ -1207,6 +1207,7 @@ const tr: Partial<Translations> = {
   "whatsNew.restoreStacks": "Compose stack'leri, Geri yükleme sayfasındaki kendi kartlarından geri yüklenir.",
   "whatsNew.entryOwnPlan": "Bir konteyner, VM, klasör ya da ZFS veri kümesi kendi zamanlamasıyla çalışabilir. Bunu ögenin Ayarlar sekmesinde ayarlarsın, önce bir anahtarı açman gerekmez.",
   "whatsNew.deleteRisk": "Silmeye karşı koruması olmayan bir depolama konumu olduğu gibi kabul edilebilir. Genel bakış bundan sonra onun için uyarmaz ve oradaki yedeklerin silinebileceğini söylemeye devam eder.",
+  "whatsNew.noOffsite": "Yedeklerin tesisten çıkmasını istemiyorsanız Site dışı kopya yok seçeneğini açın. Genel bakış bu durumda eksik kopyayı kırmızı yerine gri gösterir ve başarısız ya da gecikmiş bir yedek yine göze çarpar.",
   "whatsNew.overviewMoveMode": "Genel bakışı özelleştirirken kartları hafifçe sallanarak onları taşıyabileceğinizi gösterir.",
   "whatsNew.labelGlyphs": "Etiketler, Köşeler ve Animasyon gibi her seçenek için bir simge gösterir.",
   "whatsNew.copyDecision": "BombVault bir hedefte bir bölümün bu veritabanından önceki yedeklerini bulduğunda, İlgi bekliyor ve hedefin sayfası Bu sunucunun kendi yedekleri olarak al mı yoksa Önce kuralları kontrol et mi istediğini sorar.",

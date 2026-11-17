@@ -1190,6 +1190,7 @@ const ko: Partial<Translations> = {
   "whatsNew.restoreStacks": "Compose 스택은 복원 페이지의 전용 카드에서 복원합니다.",
   "whatsNew.entryOwnPlan": "컨테이너, VM, 폴더, ZFS 데이터세트는 각각 고유 일정으로 실행할 수 있습니다. 항목의 설정 탭에서 바로 설정하며, 먼저 켜야 하는 스위치는 없습니다.",
   "whatsNew.deleteRisk": "삭제 방지가 없는 저장 위치를 있는 그대로 수락할 수 있습니다. 그러면 개요는 더 이상 경고하지 않고, 그곳의 백업이 삭제될 수 있다는 점은 계속 알려 줍니다.",
+  "whatsNew.noOffsite": "백업을 현장 밖으로 내보내지 않으려면 ‘오프사이트 복사본 없음’을 켜세요. 개요는 없는 복사본을 빨간색 대신 회색으로 표시하고, 실패하거나 지연된 백업은 여전히 눈에 띕니다.",
   "whatsNew.overviewMoveMode": "개요를 사용자 지정하는 동안 카드가 살짝 흔들려 옮길 수 있음을 알려 줍니다.",
   "whatsNew.labelGlyphs": "레이블은 모서리와 애니메이션처럼 선택지마다 기호를 표시합니다.",
   "whatsNew.copyDecision": "BombVault가 대상에서 이 데이터베이스 이전의 섹션 백업을 찾으면, 조치 필요와 대상 페이지에서 이 서버의 백업으로 넘겨받기와 먼저 규칙 확인 중 무엇을 할지 묻습니다.",

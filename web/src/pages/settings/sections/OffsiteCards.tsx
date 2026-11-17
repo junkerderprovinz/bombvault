@@ -261,7 +261,7 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
             {/* The server ignores the choice once a section copies off-site,
                 so the switch goes with it. */}
             {choosable && (
-              <SettingRow label={t("offsite.byChoice")} hint={t("offsite.byChoiceHint")}>
+              <SettingRow label={t("offsite.byChoice")} hint={t("offsite.byChoiceHint")} newId="settings-no-offsite">
                 <Toggle
                   key={fieldShake.noOffsiteByChoice}
                   hideLabel

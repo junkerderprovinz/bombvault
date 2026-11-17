@@ -1193,6 +1193,7 @@ const pl: Partial<Translations> = {
   "whatsNew.restoreStacks": "Stacki Compose przywracasz z osobnej karty na stronie Przywracanie.",
   "whatsNew.entryOwnPlan": "Kontener, maszyna wirtualna, folder lub zbiór danych ZFS może działać według własnego harmonogramu. Ustawiasz go na karcie Ustawienia elementu, bez włączania wcześniej żadnego przełącznika.",
   "whatsNew.deleteRisk": "Lokalizację bez ochrony przed usunięciem możesz zaakceptować taką, jaka jest. Przegląd przestaje wtedy przed nią ostrzegać i nadal mówi, że kopie tam można usunąć.",
+  "whatsNew.noOffsite": "Jeśli kopie zapasowe nie powinny opuszczać siedziby, włącz Bez kopii poza siedzibą. Przegląd pokazuje wtedy brakującą kopię na szaro zamiast na czerwono, a nieudana lub opóźniona kopia nadal rzuca się w oczy.",
   "whatsNew.overviewMoveMode": "Gdy dostosowujesz przegląd, jego karty lekko się kołyszą, pokazując, że możesz je przenosić.",
   "whatsNew.labelGlyphs": "Etykiety pokazują symbol dla każdej opcji, tak jak Narożniki i Animacja.",
   "whatsNew.copyDecision": "Gdy BombVault znajdzie w miejscu docelowym kopie zapasowe sekcji sprzed tej bazy danych, Wymaga uwagi i strona miejsca docelowego pytają, czy wybierasz Przejmij jako własne kopie tego serwera, czy Najpierw sprawdź reguły.",

@@ -850,6 +850,7 @@ const ca: Partial<Translations> = {
   "whatsNew.restoreStacks": "Les piles de Compose es restauren des d'una targeta pròpia a la pàgina Restauració.",
   "whatsNew.entryOwnPlan": "Un contenidor, una MV, una carpeta o un conjunt de dades ZFS pot executar-se amb una planificació pròpia. La defineixes a la pestanya Configuració de l'element, sense haver d'activar cap interruptor abans.",
   "whatsNew.deleteRisk": "Una ubicació sense protecció contra l'esborrat es pot acceptar tal com és. La vista general deixa d'avisar-ne i continua dient que les còpies d'allà es poden esborrar.",
+  "whatsNew.noOffsite": "Si les còpies no han de sortir de les instal·lacions, activa Sense còpies externes. Llavors la vista general mostra la còpia que falta en gris en lloc de vermell, i una còpia fallida o endarrerida continua destacant.",
   "whatsNew.overviewMoveMode": "Mentre personalitzes el resum, les targetes es balancegen suaument per mostrar que les pots moure.",
   "whatsNew.labelGlyphs": "Etiquetes mostra un símbol per a cada opció, com Cantonades i Animació.",
   "whatsNew.copyDecision": "Quan BombVault troba en una destinació còpies de seguretat d'una secció d'abans d'aquesta base de dades, Necessita atenció i la pàgina de la destinació pregunten si vols Adopta-les com a pròpies d'aquest servidor o Revisa primer les regles.",

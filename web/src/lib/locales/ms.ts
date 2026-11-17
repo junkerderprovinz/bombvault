@@ -850,6 +850,7 @@ const ms: Partial<Translations> = {
   "whatsNew.restoreStacks": "Stack Compose dipulihkan daripada kadnya sendiri di halaman Pemulihan.",
   "whatsNew.entryOwnPlan": "Bekas, VM, folder atau set data ZFS boleh berjalan mengikut jadual sendiri. Anda menetapkannya pada tab Tetapan entri itu, tanpa perlu menghidupkan sebarang suis dahulu.",
   "whatsNew.deleteRisk": "Lokasi storan tanpa perlindungan daripada pemadaman boleh diterima seadanya. Gambaran keseluruhan kemudian berhenti memberi amaran tentangnya dan masih menyatakan bahawa sandaran di sana boleh dipadamkan.",
+  "whatsNew.noOffsite": "Jika sandaran anda tidak sepatutnya meninggalkan premis, hidupkan Tiada salinan luar tapak. Gambaran keseluruhan kemudian menunjukkan salinan yang tiada dalam warna kelabu, bukan merah, dan sandaran yang gagal atau lewat masih jelas kelihatan.",
   "whatsNew.overviewMoveMode": "Semasa anda menyesuaikan Ikhtisar, kadnya bergoyang perlahan untuk menunjukkan bahawa anda boleh mengalihkannya.",
   "whatsNew.labelGlyphs": "Label memaparkan simbol untuk setiap pilihan, seperti Sudut dan Animasi.",
   "whatsNew.copyDecision": "Apabila BombVault menemui sandaran sesuatu bahagian dari sebelum pangkalan data ini di sesuatu destinasi, Perlukan perhatian dan halaman destinasi itu bertanya: Ambil sebagai milik pelayan ini atau Semak peraturan dahulu.",

@@ -850,6 +850,7 @@ const sk: Partial<Translations> = {
   "whatsNew.restoreStacks": "Zásobníky Compose obnovíš z vlastnej karty na stránke Obnova.",
   "whatsNew.entryOwnPlan": "Kontajner, VM, priečinok alebo dátová sada ZFS môže bežať podľa vlastného plánu. Nastavíš ho na karte Nastavenia položky a nemusíš predtým zapínať žiadny prepínač.",
   "whatsNew.deleteRisk": "Úložisko bez ochrany proti zmazaniu môžeš prijať také, aké je. Prehľad potom pred ním prestane varovať a naďalej uvádza, že zálohy tam sa dajú zmazať.",
+  "whatsNew.noOffsite": "Ak zálohy nemajú opustiť priestory, zapnite Žiadne externé kópie. Prehľad potom ukazuje chýbajúcu kópiu sivou namiesto červenej a neúspešnú alebo meškajúcu zálohu je stále vidieť.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
   "whatsNew.copyDecision": "Keď BombVault nájde v cieli zálohy sekcie spred tejto databázy, Vyžaduje pozornosť a stránka cieľa sa spýtajú, či ich chceš Prevziať ako vlastné zálohy tohto servera, alebo Najprv skontrolovať pravidlá.",

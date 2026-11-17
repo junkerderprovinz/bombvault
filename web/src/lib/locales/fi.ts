@@ -1207,6 +1207,7 @@ const fi: Partial<Translations> = {
   "whatsNew.restoreStacks": "Compose-stackit palautetaan omalta kortiltaan Palautus-sivulla.",
   "whatsNew.entryOwnPlan": "Kontti, VM, kansio tai ZFS-tietojoukko voi ajaa omalla aikataulullaan. Asetat sen merkinnän Asetukset-välilehdellä, eikä mitään kytkintä tarvitse ensin kytkeä päälle.",
   "whatsNew.deleteRisk": "Tallennuspaikan ilman poistosuojaa voi hyväksyä sellaisenaan. Yleiskatsaus lakkaa silloin varoittamasta siitä ja kertoo edelleen, että siellä olevat varmuuskopiot voi poistaa.",
+  "whatsNew.noOffsite": "Jos varmuuskopioiden ei pitäisi poistua tiloista, kytke päälle Ei etäkopioita. Yleiskatsaus näyttää silloin puuttuvan kopion harmaana punaisen sijaan, ja epäonnistunut tai myöhässä oleva varmuuskopio erottuu yhä.",
   "whatsNew.overviewMoveMode": "Kun mukautat yleiskatsausta, sen kortit keinuvat kevyesti merkiksi siitä, että voit siirtää niitä.",
   "whatsNew.labelGlyphs": "Nimikkeet näyttää jokaiselle valinnalle symbolin, kuten Kulmat ja Animaatio.",
   "whatsNew.copyDecision": "Kun BombVault löytää kohteesta osion varmuuskopioita ajalta ennen tätä tietokantaa, Vaatii huomiota ja kohteen sivu kysyvät, valitsetko Ota ne tämän palvelimen omiksi vai Tarkista ensin säännöt.",

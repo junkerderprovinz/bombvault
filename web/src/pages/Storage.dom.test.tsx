@@ -304,7 +304,7 @@ describe("streaming", () => {
     expect(screen.queryByText("Streaming")).toBeNull();
   });
 
-  it("shows the card once a section copies off-site, where the choice no longer counts", async () => {
+  it("shows the card once a section copies off-site, where the choice does not count", async () => {
     getSettings.mockResolvedValue(settingsAnswer({ noOffsiteByChoice: true, filesOffsite: "rest:http://box:8000/files" }));
     await renderPage();
 
