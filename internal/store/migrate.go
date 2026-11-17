@@ -3916,6 +3916,25 @@ ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT
 		alreadySatisfied: columnPresent("settings", "app_import_enabled"),
 		sql:              `ALTER TABLE settings ADD COLUMN app_import_enabled INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		version: hostSnapshotPlansMigration,
+		name:    "host_snapshot_plans",
+		sql: `CREATE TABLE host_snapshot_plans (
+	id          TEXT PRIMARY KEY,
+	kind        TEXT NOT NULL,
+	fs          TEXT NOT NULL DEFAULT '',
+	source      TEXT NOT NULL,
+	cadence     TEXT NOT NULL,
+	keep        INTEGER NOT NULL,
+	recursive   INTEGER NOT NULL DEFAULT 0,
+	skip_asleep INTEGER NOT NULL DEFAULT 1,
+	enabled     INTEGER NOT NULL DEFAULT 1,
+	created_at  INTEGER NOT NULL,
+	last_run_at INTEGER NOT NULL DEFAULT 0,
+	last_code   TEXT NOT NULL DEFAULT '',
+	last_detail TEXT NOT NULL DEFAULT ''
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4577,6 +4596,9 @@ const fortressRemovedMigration = 943
 
 // appImportMigration numbers the switch that lets backups go back to the apps.
 const appImportMigration = 950
+
+// hostSnapshotPlansMigration numbers the schedules of the server's own snapshots.
+const hostSnapshotPlansMigration = 970
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

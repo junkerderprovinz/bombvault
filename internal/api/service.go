@@ -283,6 +283,8 @@ type Service struct {
 	// zfsHostLast is the last host listing that worked, guarded by zfsHostMu.
 	zfsHostMu   sync.Mutex
 	zfsHostLast *zfsHostListing
+	// hostSnap reaches the snapshots the server itself keeps.
+	hostSnap hostSnaps
 	replica     zfsReplicaRuntime
 	// snapNames names the snapshots runs take, so no two runs pick the same
 	// one and no sweep removes one that is still being read.
