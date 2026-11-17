@@ -3919,7 +3919,7 @@ ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT
 	{
 		version: hostSnapshotPlansMigration,
 		name:    "host_snapshot_plans",
-		sql: `CREATE TABLE host_snapshot_plans (
+		sql: `CREATE TABLE IF NOT EXISTS host_snapshot_plans (
 	id          TEXT PRIMARY KEY,
 	kind        TEXT NOT NULL,
 	fs          TEXT NOT NULL DEFAULT '',

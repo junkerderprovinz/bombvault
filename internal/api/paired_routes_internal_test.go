@@ -298,6 +298,21 @@ var pairedRefused = []string{
 	"POST /api/group/deposits/releases/{id}",
 	"POST /api/recovery-kit/ack",
 	"POST /api/recovery-kit/read",
+	// The server's own snapshots: reading them reaches the host, and every
+	// action changes it.
+	"GET /api/host-snapshots",
+	"GET /api/host-snapshots/plans",
+	"POST /api/host-snapshots/create",
+	"POST /api/host-snapshots/rename",
+	"POST /api/host-snapshots/hold",
+	"POST /api/host-snapshots/estimate",
+	"POST /api/host-snapshots/delete",
+	"POST /api/host-snapshots/where",
+	"POST /api/host-snapshots/free",
+	"POST /api/host-snapshots/plans",
+	"PUT /api/host-snapshots/plans/{id}",
+	"DELETE /api/host-snapshots/plans/{id}",
+	"POST /api/host-snapshots/plans/{id}/run",
 	// Joining and changing the group and the fortress, roles, receivers, pull sources and ZFS replication peers.
 	"DELETE /api/fleet/peers/{id}",
 	"DELETE /api/fortress",
