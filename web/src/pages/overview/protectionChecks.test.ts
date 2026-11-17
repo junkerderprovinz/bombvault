@@ -212,7 +212,7 @@ describe("verdictOf", () => {
     expect(verdict({ ...accepted, status: "overdue" })).toBe("ransomware.protRed");
   });
 
-  it("says protected here, data stays on the premises, where that choice is all that is missing", () => {
+  it("says protected here with no off-site copies where that choice is all that is missing", () => {
     expect(verdict({ offsiteConfigured: false, noOffsiteByChoice: true })).toBe("ransomware.protByChoice");
   });
 

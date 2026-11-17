@@ -34,7 +34,7 @@ BombVault keeps the look on the server. A browser that comes for the first time 
 - **Storage locations per section**: the 3-2-1 flow, where every line is a switch, see [Defaults per section](offsite-recovery.md#placement-defaults).
 - **Repositories**: repositories made for single entries, see [Placement per entry](offsite-recovery.md#placement).
 - **How long to keep** points to the storage locations, where retention is set, and **Preview** shows **What the next run would remove**, per repository and per entry, before it happens. It changes nothing and locks nothing, so it answers even while a backup runs.
-- **Off-site copies**: one row per section with **Test connection**, **Replicate now** and **Set up** or **Edit**, and **Data stays on the premises** while no section copies off-site, see [Off-site copies](offsite-recovery.md#off-site-copies).
+- **Off-site copies**: one row per section with **Test connection**, **Replicate now** and **Set up** or **Edit**, and **No off-site copies** while no section copies off-site, see [Off-site copies](offsite-recovery.md#off-site-copies).
 - **Off-site bandwidth**: **Upload limit (KiB/s)** and **Download limit (KiB/s)** for every copy. 0 means unlimited.
 
 The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Emby stream, sits on the Storage locations page itself.
