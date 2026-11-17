@@ -228,7 +228,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     {
       title: "offsite.copies.title",
       hint: "settings.offsiteHint",
-      rows: OFFSITE_TARGET_ROWS,
+      rows: [...OFFSITE_TARGET_ROWS, { key: "offsite.byChoice", hint: "offsite.byChoiceHint" }],
       body: ["offsite.targets.hint", "offsite.targets.scheduleNote", "offsite.test", "offsite.replicateNow", "offsite.wizard.setup"],
     },
     {

@@ -45,6 +45,9 @@ function store(save: SettingsStore["save"]): SettingsStore {
     allTargets: [],
     save,
     debouncedSave: vi.fn(),
+    autoSaveToggle: vi.fn(),
+    fieldBusy: {},
+    fieldShake: {},
   } as unknown as SettingsStore;
 }
 

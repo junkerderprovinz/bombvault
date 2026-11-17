@@ -48,9 +48,10 @@ function protectionTone(level: string): "ok" | "fail" | "warn" | "neutral" {
 // names on its own row and the scorecard names under the section.
 const LOCK_GAPS = new Set<TranslationKey>(["overview.check.lockNone", "overview.check.lockCheckOff"]);
 
-function protectionLabelKey(level: string, lock: TranslationKey): TranslationKey {
-  switch (level) {
+function protectionLabelKey(d: DomainStatus, lock: TranslationKey): TranslationKey {
+  switch (d.protection) {
     case "green":
+      if (d.noOffsiteByChoice) return "ransomware.protByChoice";
       return lock === "overview.check.lockAccepted" ? "ransomware.protAccepted" : "fleet.protection.green";
     case "amber":
       return "fleet.protection.amber";
@@ -95,7 +96,7 @@ export function PeerScorecard({
               {d.protection === "amber" && LOCK_GAPS.has(lock) && <span className="text-xs text-statusWarn">{t(lock)}</span>}
             </span>
             <span className="ms-auto flex flex-wrap items-center justify-end gap-2">
-              <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d.protection, lock))}</Badge>
+              <Badge tone={protectionTone(d.protection)}>{t(protectionLabelKey(d, lock))}</Badge>
               {onCheck && d.domain !== "config" && (
                 <Button label={t("fleet.checkNow")} labelKey="fleet.checkNow" tone="neutral" onClick={() => onCheck(d.domain)} />
               )}

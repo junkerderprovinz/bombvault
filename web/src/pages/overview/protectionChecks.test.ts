@@ -72,6 +72,10 @@ describe("the off-site check", () => {
     expect(offsite({ offsiteConfigured: false })).toEqual({ tone: "fail", say: "overview.check.offsiteNone" });
   });
 
+  it("is neutral with a sentence of its own where the section stays on the premises by choice", () => {
+    expect(offsite({ offsiteConfigured: false, noOffsiteByChoice: true })).toEqual({ tone: "neutral", say: "overview.check.offsiteByChoice" });
+  });
+
   it("is green when every entry already lives off the premises", () => {
     expect(offsite({ offsiteConfigured: false, offPremisesCovered: true }).tone).toBe("ok");
   });
@@ -207,6 +211,18 @@ describe("verdictOf", () => {
   it("lets a worse check speak over an accepted gap", () => {
     expect(verdict({ ...accepted, status: "overdue" })).toBe("ransomware.protRed");
   });
+
+  it("says protected here with no off-site copies where that choice is all that is missing", () => {
+    expect(verdict({ offsiteConfigured: false, noOffsiteByChoice: true })).toBe("ransomware.protByChoice");
+  });
+
+  it("calls a section without an off-site copy at risk while nobody chose that", () => {
+    expect(verdict({ offsiteConfigured: false })).toBe("ransomware.protRed");
+  });
+
+  it("lets an overdue backup speak over the choice", () => {
+    expect(verdict({ offsiteConfigured: false, noOffsiteByChoice: true, status: "overdue" })).toBe("ransomware.protRed");
+  });
 });
 
 describe("worstTone", () => {
@@ -234,6 +250,14 @@ describe("sectionsOf", () => {
     expect(sectionsOf([domain(accepted)], [item()], {}, null)[0].tone).toBe("ok");
     expect(sectionsOf([domain({ ...accepted, status: "overdue" })], [item()], {}, null)[0].tone).toBe("fail");
     expect(sectionsOf([domain({ ...accepted, deleteRiskAccepted: false })], [item()], {}, null)[0].tone).toBe("warn");
+  });
+
+  it("lets the other checks decide a section kept on the premises by choice", () => {
+    const byChoice = { offsiteConfigured: false, noOffsiteByChoice: true };
+    expect(sectionsOf([domain(byChoice)], [item()], {}, null)[0].tone).toBe("ok");
+    expect(sectionsOf([domain({ ...byChoice, status: "overdue" })], [item()], {}, null)[0].tone).toBe("fail");
+    expect(sectionsOf([domain(byChoice)], [item({ lastRunStatus: "failed" })], {}, null)[0].tone).toBe("warn");
+    expect(sectionsOf([domain({ ...byChoice, noOffsiteByChoice: false })], [item()], {}, null)[0].tone).toBe("fail");
   });
 
   it("counts each section's own entries", () => {

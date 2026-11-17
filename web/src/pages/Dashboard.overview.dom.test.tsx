@@ -326,6 +326,25 @@ describe("the status head", () => {
     expect(head().getByText(en["overview.head.notes"])).toBeTruthy();
   });
 
+  it("says everything is backed up where the missing off-site copy is a choice", async () => {
+    server.domains = [domain({ offsiteConfigured: false, noOffsiteByChoice: true })];
+    server.items = [item()];
+    await renderPage();
+
+    expect(head().getByText(en["overview.head.allGood"])).toBeTruthy();
+    expect(head().queryByText(en["overview.head.notes"])).toBeNull();
+    expect(screen.getByTestId("status-head").querySelector("circle title")!.textContent).toContain(en["ransomware.protByChoice"]);
+  });
+
+  it("still names a backup that is overdue where the missing off-site copy is a choice", async () => {
+    server.domains = [domain({ offsiteConfigured: false, noOffsiteByChoice: true, status: "overdue" })];
+    server.items = [item()];
+    await renderPage();
+
+    expect(head().queryByText(en["overview.head.allGood"])).toBeNull();
+    expect(screen.getByTestId("status-head").querySelector("circle")!.getAttribute("data-tone")).toBe("fail");
+  });
+
   it("does not round an open note up to all good", async () => {
     server.domains = [domain()];
     server.items = [item()];

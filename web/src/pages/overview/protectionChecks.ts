@@ -75,7 +75,7 @@ function offsiteCheck(d: DomainStatus, copying: boolean): Verdict {
     if (replicas && d.replicaState === "failed") return ["warn", "overview.check.offsiteReplicaFailed", d.lastReplicationAt];
     if (d.offPremisesCovered) return ["ok", "overview.check.offsiteCurrent", d.lastReplicationAt];
     if (replicas && d.replicaState === "stale") return ["warn", "overview.check.offsiteReplicaOverdue"];
-    return ["fail", "overview.check.offsiteNone"];
+    return d.noOffsiteByChoice ? ["neutral", "overview.check.offsiteByChoice"] : ["fail", "overview.check.offsiteNone"];
   }
   if (copying) return ["run", "overview.check.offsiteRunning"];
   if (d.replicationState === "overdue") return ["warn", "overview.check.offsiteOverdue", d.lastReplicationAt];
@@ -134,10 +134,14 @@ const VERDICT: Record<CheckTone, TranslationKey> = {
   neutral: "overview.verdict.nothing",
 };
 
-/** What a section's verdict says. A healthy one that lacks only a delete
- *  protection the user accepted says so, rather than plain protected. */
+/** What a section's verdict says. A healthy one that lacks only an off-site
+ *  copy or a delete protection the user chose to do without says so, rather
+ *  than plain protected. */
 export function verdictOf(section: Pick<Section, "tone" | "checks">): TranslationKey {
-  if (section.tone === "ok" && section.checks.some((c) => c.say === "overview.check.lockAccepted")) return "ransomware.protAccepted";
+  if (section.tone === "ok") {
+    if (section.checks.some((c) => c.say === "overview.check.offsiteByChoice")) return "ransomware.protByChoice";
+    if (section.checks.some((c) => c.say === "overview.check.lockAccepted")) return "ransomware.protAccepted";
+  }
   return VERDICT[section.tone];
 }
 

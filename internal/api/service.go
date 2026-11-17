@@ -3505,6 +3505,9 @@ type DomainStatusEntry struct {
 	// protection goes to a storage location where the user accepted that. It
 	// changes how the dashboard words the gap, never what is protected.
 	DeleteRiskAccepted bool `json:"deleteRiskAccepted,omitempty"`
+	// NoOffsiteByChoice says the section has no copy off the premises because
+	// the user keeps every backup here and no section copies off-site.
+	NoOffsiteByChoice bool `json:"noOffsiteByChoice,omitempty"`
 	// ReplicaState is the ZFS replica line of the scorecard: "" with no item
 	// replicating, "ok", "stale" or "failed".
 	ReplicaState string `json:"replicaState,omitempty"`
@@ -3819,6 +3822,7 @@ type protInputs struct {
 	byTarget          bool             // copy rules decide per target; targets replaces the domain-wide pair above
 	targets           []targetCurrency // the enabled targets items are copied to
 	deleteGap         bool             // the off-site copy has no delete protection and nobody accepted that
+	noOffsiteByChoice bool             // there is no off-site copy, and the user chose that
 }
 
 // replicationState decides the off-site replication currency (""/never/overdue/ok)
@@ -3931,12 +3935,13 @@ func replicationRank(state string) int {
 //
 // The chip follows the dashboard's delete protection row: a copy the user
 // accepted without delete protection counts like one that has it, so the
-// remaining checks decide.
+// remaining checks decide. It follows the off-site row the same way: a domain
+// kept on the premises by choice is not red for the copy it lacks.
 func protectionLevel(now int64, in protInputs) string {
 	if !in.enabled {
 		return "" // disabled domains carry no protection posture
 	}
-	if !in.offsiteConfigured {
+	if !in.offsiteConfigured && !in.noOffsiteByChoice {
 		return "red" // enabled but no off-site copy — unprotected by design
 	}
 	if in.offsiteImmutable {
@@ -4110,6 +4115,12 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 		}
 	}
 
+	// The choice to keep every backup on the premises ends with the first
+	// section that copies off-site, which the settings page shows by hiding it.
+	byChoice := settings.NoOffsiteByChoice && !slices.ContainsFunc(domains, func(d statusDomain) bool {
+		return s.offsiteRepoFor(d.name, settings) != ""
+	})
+
 	out := make([]DomainStatusEntry, 0, len(domains))
 	for _, d := range domains {
 		lastUnix, lErr := s.lastDomainSuccess(d)
@@ -4238,6 +4249,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 				in.offsiteConfigured, in.lastReplicationAt, in.offsitePeriod = true, at, period
 			}
 		}
+		in.noOffsiteByChoice = byChoice && !in.offsiteConfigured
 		// protection (the chip) and checks (each row) are derived from the SAME
 		// protInputs. Tamper/Replication rows mirror the chip's red/amber branches
 		// exactly. The Drill row additionally honors the latest drill's OUTCOME (a
@@ -4300,6 +4312,7 @@ func (s *Service) domainStatusFrom(settings store.Settings) ([]DomainStatusEntry
 			TamperState:           checks.Tamper,
 			TamperOff:             in.tamperPeriod == 0,
 			DeleteRiskAccepted:    riskAccepted,
+			NoOffsiteByChoice:     in.noOffsiteByChoice,
 			ReplicationState:      checks.Replication,
 			DrillState:            checks.Drill,
 			EncryptionOn:          settings.EncryptionEnabled,
