@@ -22,18 +22,27 @@ afterEach(() => {
 
 describe("defaults", () => {
   it("pins Storage locations and leaves Instances out on a fresh install", () => {
-    expect(readNavPins(off)).toEqual({ storage: true, instances: false });
+    expect(readNavPins(off)).toEqual({ storage: true, instances: false, snapshots: false });
   });
 
   it.each(["receiverEnabled", "fleetEnabled", "pullEnabled"] as const)(
     "pins Instances for an install that has %s on",
     (module) => {
-      expect(readNavPins({ ...off, [module]: true })).toEqual({ storage: true, instances: true });
+      expect(readNavPins({ ...off, [module]: true })).toEqual({ storage: true, instances: true, snapshots: false });
     },
   );
 
+  it.each(["zfsEnabled", "vmsEnabled"] as const)("pins Snapshots for an install that has %s on", (section) => {
+    expect(readNavPins({ ...off, [section]: true })).toEqual({ storage: true, instances: false, snapshots: true });
+  });
+
+  it("keeps Snapshots away once someone unpins it", () => {
+    setNavPin("snapshots", false);
+    expect(readNavPins({ ...off, zfsEnabled: true }).snapshots).toBe(false);
+  });
+
   it("leaves Instances out until the settings are loaded", () => {
-    expect(readNavPins(null)).toEqual({ storage: true, instances: false });
+    expect(readNavPins(null)).toEqual({ storage: true, instances: false, snapshots: false });
   });
 
   it("stores nothing by reading", () => {
@@ -45,7 +54,7 @@ describe("defaults", () => {
   it("falls back to the defaults for a stored value it cannot read", () => {
     for (const stored of ["not json", "[true]", '"storage"', '{"storage":"no","instances":1}']) {
       localStorage.setItem(KEY, stored);
-      expect(readNavPins({ ...off, pullEnabled: true })).toEqual({ storage: true, instances: true });
+      expect(readNavPins({ ...off, pullEnabled: true })).toEqual({ storage: true, instances: true, snapshots: false });
     }
   });
 });
@@ -54,8 +63,8 @@ describe("changing a pin", () => {
   it("stores only the page that was changed", () => {
     setNavPin("storage", false);
     expect(JSON.parse(localStorage.getItem(KEY)!)).toEqual({ storage: false });
-    expect(readNavPins(off)).toEqual({ storage: false, instances: false });
-    expect(readNavPins({ ...off, receiverEnabled: true })).toEqual({ storage: false, instances: true });
+    expect(readNavPins(off)).toEqual({ storage: false, instances: false, snapshots: false });
+    expect(readNavPins({ ...off, receiverEnabled: true })).toEqual({ storage: false, instances: true, snapshots: false });
   });
 
   it("keeps an earlier choice when the other page changes", () => {
@@ -93,11 +102,11 @@ describe("Instances and its modules", () => {
 describe("useNavPins", () => {
   it("follows a change made in the same tab", () => {
     const { result } = renderHook(() => useNavPins(off));
-    expect(result.current).toEqual({ storage: true, instances: false });
+    expect(result.current).toEqual({ storage: true, instances: false, snapshots: false });
 
     act(() => setNavPin("instances", true));
 
-    expect(result.current).toEqual({ storage: true, instances: true });
+    expect(result.current).toEqual({ storage: true, instances: true, snapshots: false });
   });
 
   it("follows the settings while nothing is stored", () => {
@@ -115,12 +124,12 @@ describe("useNavPins", () => {
     const { result } = renderHook(() => useNavPins(off));
 
     localStorage.setItem(KEY, '{"storage":false,"instances":true}');
-    expect(result.current).toEqual({ storage: true, instances: false });
+    expect(result.current).toEqual({ storage: true, instances: false, snapshots: false });
     act(() => {
       window.dispatchEvent(new Event(ADOPTED_EVENT));
     });
 
-    expect(result.current).toEqual({ storage: false, instances: true });
+    expect(result.current).toEqual({ storage: false, instances: true, snapshots: false });
     expect(
       fetchMock.mock.calls.filter((c) => c[1]?.method === "PUT"),
       "an adopted value came from the server and is not sent back",
@@ -135,7 +144,7 @@ describe("useNavPins", () => {
       window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
     });
 
-    expect(result.current).toEqual({ storage: false, instances: false });
+    expect(result.current).toEqual({ storage: false, instances: false, snapshots: false });
   });
 
 });

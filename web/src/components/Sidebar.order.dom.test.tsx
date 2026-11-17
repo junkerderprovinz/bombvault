@@ -59,7 +59,7 @@ describe("the rail order", () => {
     expect(labels).toEqual([en["nav.overview"], en["backups.title"], en["nav.restore"], en["nav.settings"]]);
   });
 
-  it("shows no entry per backup type, whatever types are on", () => {
+  it("shows no entry per backup type, only Snapshots once ZFS or VMs reach the host", () => {
     const labels = railLabels({
       vmsEnabled: true,
       flashEnabled: true,
@@ -72,6 +72,7 @@ describe("the rail order", () => {
       en["backups.title"],
       en["nav.restore"],
       en["storage.title"],
+      en["hostSnap.title"],
       en["nav.settings"],
     ]);
   });

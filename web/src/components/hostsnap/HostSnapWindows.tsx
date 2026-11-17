@@ -19,6 +19,7 @@ import { Checkbox } from "../Checkbox";
 import { Note } from "../entry/Note";
 import { IconAdd, IconCheck, IconPencil, IconTrash } from "../Sidebar";
 import { SelectField } from "../SelectField";
+import { Rows, SettingRow } from "../storage/rows";
 
 const FIELD = "w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus";
 
@@ -104,24 +105,25 @@ export function CreateWindow({
         </>
       }
     >
-      <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-        {t("hostSnap.create.source")}
-        <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap />
-      </label>
-      <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-        {t("hostSnap.create.name")}
-        <input
-          type="text"
-          dir="ltr"
-          value={name}
-          spellCheck={false}
-          onChange={(e) => setName(e.target.value.trim())}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !busy) void take();
-          }}
-          className={FIELD}
-        />
-      </label>
+      <Rows>
+        <SettingRow label={t("hostSnap.create.source")}>
+          <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap />
+        </SettingRow>
+        <SettingRow label={t("hostSnap.create.name")} htmlFor="host-snap-name">
+          <input
+            id="host-snap-name"
+            type="text"
+            dir="ltr"
+            value={name}
+            spellCheck={false}
+            onChange={(e) => setName(e.target.value.trim())}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !busy) void take();
+            }}
+            className={FIELD}
+          />
+        </SettingRow>
+      </Rows>
       {!validName(name) && <Note tone="warn">{t("hostSnap.nameHint")}</Note>}
       {src?.kind === "zfs" && (
         <Checkbox checked={recursive} onChange={setRecursive} label={t("hostSnap.create.recursive")} />

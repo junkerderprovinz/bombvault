@@ -8,7 +8,7 @@ import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
 import { IconAdd, IconBackupNow, IconTrash } from "../../components/Sidebar";
-import { Rows } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
 import {
   addHostSnapshotPlan,
   deleteHostSnapshotPlan,
@@ -149,8 +149,7 @@ function PlanRow({
           if (cadence !== plan.cadence && cadence !== "off" && cadence !== "") void save({ ...plan, cadence });
         }}
       />
-      <label className="flex flex-wrap items-center gap-2 text-xs text-carbon-textSub">
-        {t("hostSnap.plans.keep")}
+      <SettingRow label={t("hostSnap.plans.keep")} narrow>
         <NumberField
           min={1}
           max={1000}
@@ -159,7 +158,7 @@ function PlanRow({
           onChange={(e) => changeKeep(Number(e.target.value))}
           className="w-20"
         />
-      </label>
+      </SettingRow>
       {plan.kind === "zfs" && (
         <Checkbox checked={plan.recursive} onChange={(v) => void save({ ...plan, recursive: v })} label={t("hostSnap.create.recursive")} />
       )}
@@ -250,10 +249,9 @@ function AddPlanWindow({
       {options.length === 0 ? (
         <Note>{t("hostSnap.plans.noSources")}</Note>
       ) : (
-        <label className="flex flex-col gap-1 text-xs text-carbon-textSub">
-          {t("hostSnap.create.source")}
+        <SettingRow label={t("hostSnap.create.source")}>
           <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap />
-        </label>
+        </SettingRow>
       )}
       <Note>{t("hostSnap.plans.addHint")}</Note>
       {refusal && (

@@ -39,7 +39,7 @@ import {
   wokenPools,
 } from "../lib/hostSnapshots";
 import { useT } from "../lib/i18n";
-import { PAGE_SHELL_RESPONSIVE } from "../lib/pageShell";
+import { PAGE_SHELL } from "../lib/pageShell";
 import { relativeTime } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 import { useConfirm } from "../lib/useConfirm";
@@ -246,9 +246,8 @@ export function Snapshots() {
   const stayed = stillAsleep(pools);
 
   return (
-    <div className={PAGE_SHELL_RESPONSIVE}>
+    <div className={PAGE_SHELL}>
       <PageTitle>{t("hostSnap.title")}</PageTitle>
-      <p className="text-sm text-carbon-textSub">{t("hostSnap.intro")}</p>
 
       {failed && <Note tone="fail">{t("hostSnap.code.failed")}</Note>}
       {states.noHost && (
@@ -296,13 +295,13 @@ export function Snapshots() {
         </Card>
       )}
 
-      {list && groups.length === 0 && !states.noHost && <Note>{t("hostSnap.empty")}</Note>}
+      {list && groups.length === 0 && !states.noHost && <Note hint={t("hostSnap.intro")}>{t("hostSnap.empty")}</Note>}
 
       {groups.map((g) => {
         const title = `${t(KIND_LABEL[g.kind])}: ${sourceLabel(g.kind, g.fs, g.source, t)}`;
         const canTake = sources.some((s) => sourceKey(s.kind, s.fs, s.source) === g.key && s.canCreate);
         return (
-          <Card key={g.key} title={title} hueIndex={nextHue()}>
+          <Card key={g.key} title={title} hint={t("hostSnap.intro")} hueIndex={nextHue()}>
             <Rows as="ul" label={title}>
               {g.snapshots.map((s) => (
                 <SnapshotRow

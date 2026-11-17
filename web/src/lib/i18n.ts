@@ -8813,7 +8813,7 @@ export const de: Translations = {
   "hostSnap.kind.vm": "VM",
   "hostSnap.topLevel": "oberste Ebene",
   "hostSnap.sourceGone": "Quelle nicht mehr da",
-  "hostSnap.noHost": "BombVault erreicht den Server noch nicht über SSH und sieht deshalb seine Snapshots nicht. Die Verbindung richtest du unter Einstellungen, Integrationen ein.",
+  "hostSnap.noHost": "BombVault erreicht den Server noch nicht über SSH und sieht deshalb seine Snapshots nicht. Die Verbindung richtest du unter Einstellungen, Anbindungen ein.",
   "hostSnap.noHostLink": "SSH einrichten",
   "hostSnap.failed": "{kind} ließ sich nicht lesen: {reason}",
   "hostSnap.empty": "Auf diesem Server gibt es noch keine Snapshots.",

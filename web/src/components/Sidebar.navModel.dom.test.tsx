@@ -71,7 +71,7 @@ describe("Sidebar renders exactly the navigation registry", () => {
   // hidden on both sides of the comparison, and every assertion would pass
   // without it.
   it("has a fixture that opens every gate", () => {
-    pin({ storage: true, instances: true });
+    pin({ storage: true, instances: true, snapshots: true });
     const hidden = destinations(DETECTION_ON, readNavPins(DETECTION_ON))
       .filter((d) => !d.sidebar)
       .map((d) => d.to);
@@ -79,8 +79,8 @@ describe("Sidebar renders exactly the navigation registry", () => {
   });
 
   it.each<[string, Settings | null, Partial<NavPins> | null]>([
-    ["every gate closed", DETECTION_OFF, { storage: false, instances: false }],
-    ["every gate open", DETECTION_ON, { storage: true, instances: true }],
+    ["every gate closed", DETECTION_OFF, { storage: false, instances: false, snapshots: false }],
+    ["every gate open", DETECTION_ON, { storage: true, instances: true, snapshots: true }],
     ["detection on, Instances pinned, storage locations unpinned", DETECTION_ON, { storage: false, instances: true }],
     ["the default pins of an install with a fleet", WITH_FLEET, null],
     ["settings that have not loaded", null, null],

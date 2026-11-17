@@ -14,7 +14,7 @@ import { PAGE_COMPONENTS } from "./pages";
 afterEach(() => localStorage.clear());
 
 describe("the settings tiles", () => {
-  it("stand in the order of the fourteen tiles", () => {
+  it("stand in the order of the fifteen tiles", () => {
     expect(SETTINGS_PAGES.map((p) => p.id)).toEqual([
       "general",
       "look",
@@ -25,6 +25,7 @@ describe("the settings tiles", () => {
       "integrity",
       "security",
       "instances",
+      "snapshots",
       "pairing",
       "integrations",
       "apps",
