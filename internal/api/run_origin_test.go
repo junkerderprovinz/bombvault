@@ -70,6 +70,7 @@ func TestContainerPreflightFailureRowCarriesOrigin(t *testing.T) {
 	// take over the run bookkeeping, so the row comes from recordPreflightFailure.
 	d := &fakeServiceDocker{inspectErr: errors.New("Cannot connect to the Docker daemon")}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "stateless", IncludeInSchedule: true})
 	if err != nil {
 		t.Fatal(err)
@@ -259,5 +260,6 @@ func fileSetOriginService(t *testing.T, path string, createSource bool) (*api.Se
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	return svc, st, set
 }

@@ -115,6 +115,7 @@ func everythingTestService(t *testing.T, eng api.ResticEngine) (svc *api.Service
 
 	docker = &fakeServiceDocker{}
 	svc = api.NewService(cfg, st, docker, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	var err error
 	tg, err = st.UpsertTarget(store.Target{

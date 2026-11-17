@@ -62,6 +62,8 @@ func newResticFixture(t *testing.T) *resticFixture {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, HostSourceRoot: "/mnt"}
 	dock := &placementDocker{installed: map[string]bool{}}
 	svc := NewService(cfg, st, dock, &placementVirsh{}, restic.Restic{Bin: "restic", CacheDir: filepath.Join(dir, "cache")})
+	// A pass leaves its size sample running, whose restic writes into dir.
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	return &resticFixture{
 		t: t, svc: svc, h: NewHandler(cfg, st, dock, svc, sched, spike.DefaultProbes()),

@@ -164,6 +164,7 @@ func sharedCopyService(t *testing.T, owner string) (*Service, *copyCountEngine, 
 	s := &Service{store: st, engine: eng, progress: progress.NewStore()}
 	s.cfg.HostMountRoot = t.TempDir()
 	s.cfg.AppKey = strings.Repeat("ab", 32)
+	t.Cleanup(s.WaitForSamples)
 	if owner == "" {
 		g, err := st.GetGroupState()
 		if err != nil {

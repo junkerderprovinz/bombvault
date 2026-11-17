@@ -104,6 +104,7 @@ func TestSnapshotsAliasClaimsOnlyPreLinkHistory(t *testing.T) {
 	// two machines apart, so Docker is not asked.
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr-movies", ID: "b2"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
 	if err != nil {
@@ -149,6 +150,7 @@ func TestSnapshotsVMAliasClaimsOnlyPreLinkHistory(t *testing.T) {
 		{ID: "c1", Time: "2024-01-01T00:00:00Z", Tags: []string{"vm:ubuntu", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.SnapshotsVM(context.Background(), "win11", "")
 	if err != nil {
@@ -184,6 +186,7 @@ func TestDeleteBackupsSparesPostLinkAliasSnapshot(t *testing.T) {
 		{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackups(context.Background(), "radarr", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
@@ -216,6 +219,7 @@ func TestDeleteBackupsVMSparesPostLinkAliasSnapshot(t *testing.T) {
 		{ID: "own1", Time: "2024-07-01T00:00:00Z", Tags: []string{"vm:win11", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err != nil {
 		t.Fatalf("DeleteBackupsVM: %v", err)
@@ -263,7 +267,9 @@ func containerRetentionService(t *testing.T, snaps []restic.Snapshot) (*api.Serv
 		Mounts:  []model.Mount{{Type: "bind", Source: appdata, Destination: "/config"}},
 	}}
 	eng := &fakeResticEngine{snaps: snaps}
-	return api.NewService(cfg, st, d, fakeVirsh{}, eng), eng, repo
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, eng, repo
 }
 
 // restic forget selects by tag and knows no time bound, so the alias tag may
@@ -380,6 +386,7 @@ func TestLatestContainerBackupTimesKeepsPostLinkSnapshotUnderOldName(t *testing.
 		{ID: "post1", Time: "2024-09-01T00:00:00Z", Tags: []string{"container:radarr-movies", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
@@ -419,6 +426,7 @@ func TestPruneDomainFoldsAliasOnlyWhileAllItsSnapshotsPredateLink(t *testing.T) 
 		}
 		eng := &fakeResticEngine{snaps: snaps}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 		if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 			t.Fatalf("PruneDomain: %v", err)
 		}
@@ -458,6 +466,7 @@ func TestDiscoverLinksAFoldedAliasAtItsRecordedTime(t *testing.T) {
 		{ID: "bbbb3333", Time: "2024-08-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
@@ -489,6 +498,7 @@ func TestDiscoverLinksARecordedFormerNameWithoutSnapshotsOfItsOwn(t *testing.T) 
 		{ID: "bbbb2222", Time: "2024-06-01T12:30:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 
 	if _, err := svc.Discover(context.Background(), false); err != nil {

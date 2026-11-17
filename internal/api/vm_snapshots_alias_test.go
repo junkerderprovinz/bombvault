@@ -46,6 +46,7 @@ func TestSnapshotsVMFollowsAlias(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.SnapshotsVM(context.Background(), "win11", "")
 	if err != nil {

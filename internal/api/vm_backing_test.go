@@ -68,7 +68,9 @@ func newChainRig(t *testing.T, xml string) *chainRig {
 	root := t.TempDir()
 	engine := &fakeResticEngine{}
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: root, HostSourceRoot: "/mnt"}
-	r := &chainRig{svc: api.NewService(cfg, st, &fakeServiceDocker{}, zvolTPMVirsh{domainXML: xml}, engine), engine: engine, root: root}
+	service := api.NewService(cfg, st, &fakeServiceDocker{}, zvolTPMVirsh{domainXML: xml}, engine)
+	t.Cleanup(service.WaitForSamples)
+	r := &chainRig{svc: service, engine: engine, root: root}
 	r.def = func() map[string]any {
 		t.Helper()
 		tg, err := st.GetVMTargetByName("lab")

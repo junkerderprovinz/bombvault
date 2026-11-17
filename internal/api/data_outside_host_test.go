@@ -55,6 +55,7 @@ func TestBackupNoteLeavesOutAnonymousVolumesAndExcludedFolders(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	note := func(excludes ...string) string {
 		t.Helper()
@@ -117,6 +118,7 @@ func TestContainerMountsListsTheVolumesBombVaultCannotReach(t *testing.T) {
 		},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	mounts, _, _, _, err := svc.ContainerMounts(context.Background(), "jellyfin")
 	if err != nil {

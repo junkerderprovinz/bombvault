@@ -58,6 +58,7 @@ func newContainerLinks(t *testing.T) *containerLinks {
 	f.docker = &fakeServiceDocker{inspect: model.Inspect{Image: "radarr:latest"}}
 	f.eng = &fakeResticEngine{}
 	f.svc = api.NewService(f.cfg, f.st, f.docker, fakeVirsh{}, f.eng)
+	t.Cleanup(f.svc.WaitForSamples)
 	return f
 }
 
@@ -125,6 +126,7 @@ func (f *containerLinks) afterConfigLoss(t *testing.T) (*api.Service, *store.Rep
 	st := newMemStore(t)
 	useContainerRepo(t, st)
 	svc := api.NewService(f.cfg, st, &fakeServiceDocker{}, fakeVirsh{}, f.eng)
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.Discover(context.Background(), false); err != nil {
 		t.Fatalf("Discover: %v", err)
 	}
@@ -642,6 +644,7 @@ func (f *vmTakeover) afterConfigLoss(t *testing.T) (*api.Service, *store.Repo) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(f.cfg, st, &fakeServiceDocker{}, fakeVirsh{}, f.eng)
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.DiscoverVMs(context.Background(), false); err != nil {
 		t.Fatalf("DiscoverVMs: %v", err)
 	}
@@ -772,6 +775,7 @@ func TestDiscoverVMsRebuildsALaterVMUnderARecordedFormerNameBesideTheLink(t *tes
 	}
 
 	rebuilt := api.NewService(f.cfg, st, &fakeServiceDocker{}, f.virsh, f.eng)
+	t.Cleanup(rebuilt.WaitForSamples)
 	before := vmState(t, st)
 	if err := rebuilt.UnlinkVMAlias(context.Background(), "windows-11"); err == nil {
 		t.Fatal("unlinking windows-11 must be refused while another VM's entry and backups sit under it")
@@ -800,6 +804,7 @@ func TestDiscoverVMsKeepsTheEntrysOwnDefinitionAfterAnotherVMRewroteTheOldNamesF
 	wantDefinition(t, a.PrevDefinition, f.oldDef)
 
 	rebuilt := api.NewService(f.cfg, st, &fakeServiceDocker{}, f.virsh, f.eng)
+	t.Cleanup(rebuilt.WaitForSamples)
 	before := vmState(t, st)
 	if err := rebuilt.UnlinkVMAlias(context.Background(), "windows-11"); err == nil || !strings.Contains(err.Error(), "rename that VM") {
 		t.Fatalf("UnlinkVMAlias = %v, want a refusal naming the other VM", err)

@@ -45,7 +45,9 @@ func appdataService(t *testing.T, eng *fakeResticEngine) (*api.Service, string, 
 		Name: "/vw", Image: "vaultwarden/server:latest", Running: true,
 		Mounts: []model.Mount{{Type: "bind", Source: appdata, Destination: "/data"}},
 	}}
-	return api.NewService(cfg, st, d, fakeVirsh{}, eng), root, appdata
+	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, root, appdata
 }
 
 // mountTable writes a mountinfo fixture listing the given mount points.

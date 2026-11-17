@@ -14,9 +14,24 @@ import (
 // newDataDir returns a relative data dir inside a fresh temp working directory.
 // RestoredSnapshotDir joins dataDir under the staging root, and on Windows an
 // absolute dataDir would put a "C:" mid-path that MkdirAll rejects.
+//
+// It goes back by path rather than through t.Chdir, which on Windows cannot
+// return to a working directory on a mapped network drive:
+// https://github.com/golang/go/issues/80130
 func newDataDir(t *testing.T) string {
 	t.Helper()
-	t.Chdir(t.TempDir())
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(wd); err != nil {
+			panic("back to " + wd + ": " + err.Error())
+		}
+	})
 	dataDir := "config"
 	if err := os.MkdirAll(dataDir, 0o700); err != nil {
 		t.Fatal(err)

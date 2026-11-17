@@ -42,6 +42,7 @@ func runGroupContainerBackupService(t *testing.T) (*api.Service, *store.Repo, st
 
 	d := &fakeServiceDocker{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	tg, err := st.UpsertTarget(store.Target{ContainerName: "stateless", IncludeInSchedule: true})
 	if err != nil {

@@ -44,6 +44,7 @@ func TestABackupRecordsTheShapeTheChangeNoticeComparesWith(t *testing.T) {
 	}
 	d := &fakeServiceDocker{inspect: backedUpInspect()}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.Backup(context.Background(), "app"); err != nil {
 		t.Fatal(err)
 	}
@@ -82,6 +83,7 @@ func TestAFailedBackupKeepsTheShapeOfTheLastGoodOne(t *testing.T) {
 	d := &fakeServiceDocker{inspect: backedUpInspect()}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.Backup(context.Background(), "app"); err != nil {
 		t.Fatal(err)
 	}

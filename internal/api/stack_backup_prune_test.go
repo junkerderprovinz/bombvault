@@ -44,6 +44,7 @@ func TestManualBackupOfAComposeMemberPrunesOnce(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.Backup(context.Background(), "immich-server"); err != nil {
 		t.Fatalf("backup: %v", err)

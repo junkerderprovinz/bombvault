@@ -55,6 +55,7 @@ func offsiteBatchTestService(t *testing.T) (*api.Service, *fakeResticEngine, *st
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/app", Image: "app:latest", Running: true}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	return svc, eng, st
 }
 

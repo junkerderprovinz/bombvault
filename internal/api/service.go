@@ -478,6 +478,9 @@ type Service struct {
 	// deletePrunes counts the prunes still running after a delete of backups
 	// has answered.
 	deletePrunes sync.WaitGroup
+	// samples counts the repository size samples and free-space readings still
+	// running in the background, which write to the store when they end.
+	samples sync.WaitGroup
 
 	// self-container detection (resolved once, cached): the name of BombVault's
 	// OWN container, so a backup never stops the process doing the backing up.
@@ -4551,19 +4554,36 @@ func (s *Service) RepoStats(domain, source string, limit int) ([]store.RepoStat,
 	return s.store.ListRepoStats(domain, source, limit)
 }
 
-// maybeCollectStats samples a domain's LOCAL repo size after a successful backup,
-// throttled to repoStatsMinInterval so frequent backups don't re-scan the repo
-// each time. It NEVER blocks or fails the backup: the work runs in a detached
-// goroutine (request values kept, cancellation dropped, with its own timeout)
-// and any error is only logged. Call this on each domain's success path.
+// maybeCollectStats samples a domain's local repo size after a successful
+// backup, throttled to repoStatsMinInterval so frequent backups do not re-scan
+// the repo each time. The sample runs in the background and its errors are only
+// logged, so it never holds up or fails the backup. Call this on each domain's
+// success path.
 func (s *Service) maybeCollectStats(ctx context.Context, domain string) {
 	if s.statsSampledRecently(domain, "local") {
 		return // sampled recently enough
 	}
-	// Detach from the request (keep its values) so the sampling survives the
-	// handler returning. Guarded inside, since the check above reads a row this
-	// work only writes at the end and cannot see a sample in progress.
-	go s.sampleInBackground(context.WithoutCancel(ctx), domain, "local")
+	// Guarded inside, since the check above reads a row this work only writes
+	// at the end and cannot see a sample in progress.
+	s.sampleLater(ctx, domain, "local")
+}
+
+// sampleLater starts one guarded sample that outlives the request it came
+// from, keeping its values. Only BombVault stopping ends it early, and
+// WaitForSamples waits for it.
+func (s *Service) sampleLater(ctx context.Context, domain, source string) {
+	held, release := s.outlastRequest(ctx)
+	s.samples.Go(func() {
+		defer release()
+		s.sampleInBackground(held, domain, source)
+	})
+}
+
+// WaitForSamples returns once every sample started in the background has
+// ended. They write to the store when they end, so the store has to stay open
+// until then. BeginShutdown ends them early.
+func (s *Service) WaitForSamples() {
+	s.samples.Wait()
 }
 
 // statsLocalTimeout and statsRemoteTimeout bound one background size sample,
@@ -4588,9 +4608,10 @@ func (s *Service) statsTimeout(domain, source string) time.Duration {
 }
 
 // sampleInBackground takes one guarded sample under its own bound, for callers
-// that start it in a goroutine and never wait for it. A sample that runs out of
-// time says nothing about the backups and nothing reads a missing sample as a
-// fault, so it is logged as what happens next; any other error is a failure.
+// that do not wait for it. A sample that runs out of time says nothing about
+// the backups and nothing reads a missing sample as a fault, so it is logged as
+// what happens next. One that BombVault stopping ends is not logged at all.
+// Any other error is a failure.
 func (s *Service) sampleInBackground(ctx context.Context, domain, source string) {
 	limit := s.statsTimeout(domain, source)
 	cctx, cancel := context.WithTimeout(ctx, limit)
@@ -4598,6 +4619,7 @@ func (s *Service) sampleInBackground(ctx context.Context, domain, source string)
 	err := s.collectStatsGuarded(cctx, domain, source)
 	switch {
 	case err == nil:
+	case ctx.Err() != nil:
 	case errors.Is(err, context.DeadlineExceeded):
 		log.Printf("api: stats: %s/%s: measuring the repository size took longer than %d minutes and was stopped; the next backup or off-site copy measures it again. Backups are not affected.", domain, source, int(limit.Minutes())) //nolint:gosec // G706: domain/source are fixed-whitelist values
 	default:
@@ -4652,7 +4674,7 @@ func (s *Service) CollectStatsAsync(domain, source string) {
 	// throttle above cannot fire at all while a repo has no sample yet
 	// (found=false), so without the guard every tab and every remount would
 	// start another fan-out.
-	go s.sampleInBackground(context.Background(), domain, source)
+	s.sampleLater(context.Background(), domain, source)
 }
 
 // domainEnabled reports whether domain is switched on in s.
@@ -4714,13 +4736,13 @@ func (s *Service) CollectStatsOnStartup() {
 	}
 	// One reading per volume before the first backup of the day, so a disk that
 	// is already filling has a trend to show rather than a single point.
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	s.samples.Go(func() {
+		ctx, cancel := context.WithTimeout(s.StopContext(), 5*time.Minute)
 		defer cancel()
 		for _, domain := range domains {
 			s.sampleVolumesFor(ctx, domain)
 		}
-	}()
+	})
 }
 
 const (

@@ -59,6 +59,7 @@ func newTestRouterSvcDir(t *testing.T, d *fakeServiceDocker, eng *fakeResticEngi
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"appdata"}} // config.Load's default; this helper builds Config by hand
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(
 		func(string) error { return nil },
 		st.ListTargets,
@@ -235,6 +236,7 @@ func TestListContainersMatchesAppdataUnderTheConfiguredDataRoot(t *testing.T) {
 		Mounts: []dockercli.MountPoint{{Source: "/mnt/user/config/radarr", Destination: "/config"}},
 	}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -502,6 +504,7 @@ func TestListContainersSuppressesRenameWhenLiveHasSnapshotHistory(t *testing.T) 
 		{ID: "aaaa1111", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:radarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -673,6 +676,7 @@ func TestSnapshots(t *testing.T) {
 		{ID: "cafebabe87654321", Time: "2026-06-09T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -867,6 +871,7 @@ func excludeCachesRouterHarness(t *testing.T) (http.Handler, *store.Repo) {
 		},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 	return h, st
@@ -1018,6 +1023,7 @@ func TestSettingsGetSaysWhetherPLATFORMChoseThePlatform(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), PlatformOverride: "generic"}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	set := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes()).Router()
 	if _, m := doJSON(t, set, http.MethodGet, "/api/settings", ""); m["platformSet"] != true {
@@ -2091,6 +2097,7 @@ func newSpikeRouter(t *testing.T, d *fakeServiceDocker) http.Handler {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	probes := []spike.Probe{
 		{Name: "stub", Fn: func(spike.Deps) (string, error) { return "ok", nil }},
@@ -2127,6 +2134,7 @@ func TestScheduleNext(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	if err := sched.Reload(store.Settings{ContainersEnabled: true, ContainersSchedule: "daily 03:00"}); err != nil {
 		t.Fatalf("Reload: %v", err)
@@ -2178,6 +2186,7 @@ func newBrowseRouter(t *testing.T, mountRoot string) http.Handler {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: mountRoot}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes())
 	return h.Router()
@@ -2333,6 +2342,7 @@ func newFilesTestRouter(t *testing.T, eng *fakeResticEngine) (http.Handler, *sto
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, &fakeServiceDocker{}, svc, sched, spike.DefaultProbes())
 	return h.Router(), st, svc, dir
@@ -4076,6 +4086,7 @@ func TestMountsExcluded(t *testing.T) {
 		},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -4208,6 +4219,7 @@ func TestEmptySelectionGuard(t *testing.T) {
 		mustSettings(t, st)
 		d := &fakeServiceDocker{}
 		svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 		sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 		h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 		return h, st, root
@@ -4481,6 +4493,7 @@ func dbFieldsRouterHarness(t *testing.T, d *fakeServiceDocker) (http.Handler, *s
 	}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	return api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router(), st
 }

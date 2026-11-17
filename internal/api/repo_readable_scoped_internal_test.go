@@ -191,7 +191,7 @@ func TestMakeRepoReadableScopesToChangedDirectories(t *testing.T) {
 	t.Run("without a data directory it walks everything and writes no stamp", func(t *testing.T) {
 		repo, _, dirA, _ := newRepo(t)
 		pack := write(t, dirA, "pack")
-		t.Chdir(t.TempDir())
+		chdir(t, t.TempDir())
 
 		makeRepoReadable(repo, "")
 

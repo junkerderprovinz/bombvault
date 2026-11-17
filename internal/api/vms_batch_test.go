@@ -64,6 +64,7 @@ func vmBatchService(t *testing.T, v virshcli.Virsh) (*api.Service, *fakeResticEn
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, eng)
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetHostSSH(&zvolTPMSSH{})
 	prog := progress.NewStore()
 	svc.SetProgress(prog)

@@ -135,6 +135,7 @@ func hookSvc(t *testing.T, eng *hookFakeEngine) (*Service, *store.Repo, string, 
 	svc.cfg.HostMountRoot = root
 	svc.cfg.AppKey = strings.Repeat("a", 64)
 	svc.cfg.DataDir = dir
+	t.Cleanup(svc.WaitForSamples)
 	return svc, st, own, cold
 }
 

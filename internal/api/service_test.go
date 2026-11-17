@@ -45,6 +45,7 @@ func TestServiceEnsureRepoIsIdempotent(t *testing.T) {
 
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	repo := filepath.Join(dir, "repo")
 	mode := restic.Mode{Encrypted: false}
@@ -75,7 +76,9 @@ func TestEnsureRepoReconcilesEncryptionMode(t *testing.T) {
 		dir := t.TempDir()
 		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 		st := newMemStore(t)
-		return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), filepath.Join(dir, "repo")
+		service := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(service.WaitForSamples)
+		return service, filepath.Join(dir, "repo")
 	}
 	enc := restic.Mode{Encrypted: true, Password: "pw"}
 	plain := restic.Mode{Encrypted: false}
@@ -145,6 +148,7 @@ func TestServiceModeEncryptionOn(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	mode := svc.ModeFor(s)
 	if !mode.Encrypted {
@@ -164,6 +168,7 @@ func TestServiceModeEncryptionOff(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	mode := svc.ModeFor(s)
 	if mode.Encrypted {
@@ -185,6 +190,7 @@ func TestDownloadFlashZip(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}, {ID: "cccc3333dddd4444"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	t.Run("latest resolves to newest and streams zip bytes", func(t *testing.T) {
 		var buf bytes.Buffer
@@ -234,6 +240,7 @@ func TestBackupFlashReplicatesOffsite(t *testing.T) {
 		}
 		eng := &fakeResticEngine{}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 		_, err := svc.BackupFlash(context.Background())
 		return eng, err
 	}
@@ -284,6 +291,7 @@ func TestBackupFileSet(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	sum, err := svc.BackupFileSet(context.Background(), set.ID)
 	if err != nil {
@@ -348,6 +356,7 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 		}
 		eng := &fakeResticEngine{}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 
 		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
 			t.Fatalf("BackupFileSet: %v", err)
@@ -382,6 +391,7 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 		}
 		eng := &fakeResticEngine{}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 
 		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
 			t.Fatalf("BackupFileSet: %v", err)
@@ -415,6 +425,7 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 		}
 		eng := &fakeResticEngine{}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 
 		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
 			t.Fatalf("BackupFileSet: %v", err)
@@ -467,6 +478,7 @@ func TestBackupFileSetSelectedPaths(t *testing.T) {
 		}
 		eng := &fakeResticEngine{}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
 
 		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
 			t.Fatalf("BackupFileSet: %v", err)
@@ -498,6 +510,7 @@ func TestBackupFileSetMissingSourceRecordsFailedRun(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	_, err = svc.BackupFileSet(context.Background(), set.ID)
 	if err == nil {
@@ -549,6 +562,7 @@ func TestBackupFileSetEmptySourceWithHistoryFailsRun(t *testing.T) {
 		{ID: "cafefeed12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{srcDir}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	_, err = svc.BackupFileSet(context.Background(), set.ID)
 	if err == nil {
@@ -595,6 +609,7 @@ func TestBackupFileSetEmptySourceFirstBackupAllowed(t *testing.T) {
 	}
 	eng := &fakeResticEngine{} // no pre-existing snapshots: first-ever backup
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
 		t.Fatalf("a first-ever backup of an empty folder must be allowed, got %v", err)
@@ -633,6 +648,7 @@ func TestBackupFileSetUnreadableSourceWithHistoryFailsRun(t *testing.T) {
 		{ID: "cafefeed12345678", Time: "2026-07-14T00:00:00Z", Tags: []string{"fileset:docs"}, Paths: []string{srcDir}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	readErr := errors.New("read docs: input/output error")
 	defer api.SetFileSetSourceWalk(func(string, fs.WalkDirFunc) error { return readErr })()
@@ -686,6 +702,7 @@ func TestBackupFileSetHistoryListingFailureCountsAsHistory(t *testing.T) {
 	eng := &fakeResticEngine{initWritesConfig: true}
 	eng.snapsErrFor = map[string]error{repo: errors.New("boom: repo unreadable")}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	_, err = svc.BackupFileSet(context.Background(), set.ID)
 	if err == nil {
@@ -733,6 +750,7 @@ func fileSetFilesRestoreService(t *testing.T, eng *fakeResticEngine) (*api.Servi
 		{ID: "bbbb2222", Tags: []string{"fileset:other"}}, // foreign set — must be refused
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	return svc, st, set.ID, root
 }
 
@@ -861,6 +879,7 @@ func TestSnapshotsFlashRemoteOffsiteLists(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	got, err := svc.SnapshotsFlash(context.Background(), "offsite")
 	if err != nil {
@@ -883,6 +902,7 @@ func TestContainerMountsNoPhantomAppdata(t *testing.T) {
 	// folder exists on disk.
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/stateless", Image: "x:latest"}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	mounts, custom, _, _, err := svc.ContainerMounts(context.Background(), "stateless")
 	if err != nil {
@@ -923,6 +943,7 @@ func TestOffsiteScheduleDecouplesFromBackup(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.BackupFlash(context.Background()); err != nil {
 		t.Fatal(err)
@@ -965,6 +986,7 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
 		t.Fatal(err)
 	}
@@ -979,6 +1001,7 @@ func TestReplicateOffsiteAppliesOffsiteRetention(t *testing.T) {
 	}
 	eng2 := &fakeResticEngine{}
 	svc2 := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng2)
+	t.Cleanup(svc2.WaitForSamples)
 	if err := svc2.ReplicateOffsite(context.Background(), "flash"); err != nil {
 		t.Fatal(err)
 	}
@@ -1006,6 +1029,7 @@ func TestReplicateOffsiteImmutableSkipsRetention(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.ReplicateOffsite(context.Background(), "flash"); err != nil {
 		t.Fatal(err)
@@ -1043,7 +1067,9 @@ func offsiteReplTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, 
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 // TestReplicateOffsiteRecordsRunOK pins that a successful replication persists an
@@ -1151,6 +1177,7 @@ func TestDomainStatusScorecard(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1206,6 +1233,7 @@ func TestDomainStatusScorecardDisabled(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1250,6 +1278,7 @@ func TestDomainStatusReplicationCurrencyUsesLastSuccess(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1310,6 +1339,7 @@ func TestDomainStatusCoupledReplicationOverdue(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1356,6 +1386,7 @@ func TestDomainStatusDrillCurrencyIgnoresDisabledDrills(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1406,6 +1437,7 @@ func TestDomainStatusOffsiteDrillOptOutNeutralNotRed(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1446,6 +1478,7 @@ func TestDomainStatusClaimsNoScheduledDRDrillForConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1484,6 +1517,7 @@ func TestDomainStatusCarriesDrillDetail(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1531,6 +1565,7 @@ func TestDomainStatusCarriesOffsiteSubsetDrill(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	statuses, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -1582,7 +1617,9 @@ func newImmutableOffsiteSvc(t *testing.T) (*api.Service, *fakeResticEngine) {
 		t.Fatal(err)
 	}
 	eng := &fakeResticEngine{}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), eng
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, eng
 }
 
 // TestDeleteSnapshotOffsiteImmutableRefused pins the delete refusal: deleting a
@@ -1633,6 +1670,7 @@ func TestDeleteSnapshotPrimaryImmutableRefused(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err := svc.DeleteSnapshot(context.Background(), "containers", "deadbeef12345678", "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
@@ -1720,6 +1758,7 @@ func TestDeleteBackupsVMPrimaryImmutableRefused(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"vm:win11"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err := svc.DeleteBackupsVM(context.Background(), "win11", "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
@@ -1769,6 +1808,7 @@ func TestDeleteBackupsPrimaryImmutableRefused(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"container:plex"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err := svc.DeleteBackups(context.Background(), "plex", "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
@@ -1820,6 +1860,7 @@ func TestDeleteBackupsFileSetPrimaryImmutableRefused(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222", Tags: []string{"fileset:docs"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.DeleteBackupsFileSet(context.Background(), set.ID, "")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {
@@ -1867,6 +1908,7 @@ func TestTestOffsiteNoRepoConfigured(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 	if err == nil || !strings.Contains(err.Error(), "no off-site repo") {
@@ -1892,6 +1934,7 @@ func TestTestOffsiteReachableInitialized(t *testing.T) {
 	no := false
 	eng := &fakeResticEngine{existingMode: &no} // repo opens in the unencrypted mode
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 	if err != nil {
@@ -1918,6 +1961,7 @@ func TestTestOffsiteUnreachableSurfacesReason(t *testing.T) {
 	}
 	eng := &fakeResticEngine{} // no existingMode, no config marker written -> opens in neither mode
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 	if reachable || initialized {
@@ -1947,6 +1991,7 @@ func TestTestOffsiteFreshRemoteRepoReportsUninitializedNotFailed(t *testing.T) {
 		repoOpensErr: errors.New("Fatal: repository does not exist: unable to open config file"),
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 	if err != nil {
@@ -1981,6 +2026,7 @@ func TestTestOffsiteServerOutOfReachIsNotReachable(t *testing.T) {
 			}
 			eng := &fakeResticEngine{repoOpensErr: errors.New(msg)}
 			svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+			t.Cleanup(svc.WaitForSamples)
 
 			reachable, initialized, err := svc.TestOffsite(context.Background(), "containers")
 			if reachable || initialized {
@@ -2031,6 +2077,7 @@ func TestDomainStatus(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	entries, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -2082,6 +2129,7 @@ func TestDomainStatusIncludesConfig(t *testing.T) {
 	}
 
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	entries, err := svc.DomainStatus()
 	if err != nil {
 		t.Fatalf("DomainStatus: %v", err)
@@ -2105,6 +2153,7 @@ func TestDomainStatusIncludesFiles(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), HostMountRoot: t.TempDir()}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	// Default settings: files disabled → the entry exists and reads "off".
 	entries, err := svc.DomainStatus()
@@ -2182,6 +2231,7 @@ func TestServiceBackupResolvesAppdataFromMounts(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	sum, err := svc.Backup(context.Background(), "plex")
 	if err != nil {
@@ -2243,6 +2293,7 @@ func TestServiceBackupStopsOnlyContainersOfThatExactName(t *testing.T) {
 		},
 	}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
 		t.Fatalf("backup: %v", err)
@@ -2276,6 +2327,7 @@ func TestServiceBackupNoAppdataDefinitionOnly(t *testing.T) {
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/bentopdf", Image: "bentopdf:latest", Running: true}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	sum, err := svc.Backup(context.Background(), "bentopdf")
 	if err != nil {
@@ -2325,6 +2377,7 @@ func backupTestService(t *testing.T) (*api.Service, *fakeServiceDocker, *fakeRes
 	eng := &fakeResticEngine{}
 	prog := progress.NewStore()
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetProgress(prog)
 	return svc, d, eng, prog
 }
@@ -2388,6 +2441,7 @@ func TestBackupCannotBeCancelledWhileItStartsTheContainerAgain(t *testing.T) {
 	}
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/plex", Image: "plex:latest", Running: true}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	var accepted []bool
 	d.onStart = func(string) { accepted = append(accepted, svc.CancelBackupRun("container:plex", "")) }
 
@@ -2527,6 +2581,7 @@ func TestServiceBackupRefusesEmptyWhenPriorDataVanishes(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// First backup captures data and records the path (so the target "expects data").
 	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
@@ -2569,6 +2624,7 @@ func TestServiceBackupFirstTimeEmptyIsDefinitionOnly(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	sum, err := svc.Backup(context.Background(), "newapp")
 	if err != nil {
@@ -2619,6 +2675,7 @@ func TestServiceContainerMountsAndSelection(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Default selection: appdata selected, media not, localtime unreachable.
@@ -2695,6 +2752,7 @@ func TestSetBackupPathsMixedSelectionRoundTrip(t *testing.T) {
 			st := newMemStore(t)
 			d := &fakeServiceDocker{}
 			svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+			t.Cleanup(svc.WaitForSamples)
 			sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 			h := api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router()
 
@@ -2774,6 +2832,7 @@ func TestSetBackupPathsLegacySourceKeepsPlan01Behavior(t *testing.T) {
 	}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 	hostPlex := "/mnt/user/appdata/plex"
 	stored := func() []string {
@@ -2855,6 +2914,7 @@ func TestBackupNarrowedSelectionUsesMaximalIncludes(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Narrow: the whole appdata mount kept, the transcoding branch deselected.
@@ -2930,6 +2990,7 @@ func TestBackupExcludeCachesUnion(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	backup := func(want bool, step string) {
@@ -3003,6 +3064,7 @@ func TestBackupSelectionExcludesMergeAfterUserPatterns(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Seed user excludes through the public setter BEFORE the backup
@@ -3059,6 +3121,7 @@ func TestBackupPathsExclusionsOnlyIsNotRefused(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Everything deselected: the stored list is non-empty (explicit) but holds
@@ -3096,6 +3159,7 @@ func TestContainerMountsFlagsMissingCustomPath(t *testing.T) {
 	}
 	d := &fakeServiceDocker{inspect: model.Inspect{Name: "/app", Image: "app:latest"}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Store both as explicit custom selections (host paths, both reachable; only
@@ -3168,6 +3232,7 @@ func TestServiceBackupTranslatesHostAppdataPath(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.Backup(context.Background(), "Pingvin-Share-X"); err != nil {
 		t.Fatalf("backup: %v", err)
@@ -3214,6 +3279,7 @@ func TestServiceSetIncludeFindOrCreate(t *testing.T) {
 		},
 	}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	// No target exists — SetInclude must find-or-create it.
 	if err := svc.SetInclude(context.Background(), "radarr", true); err != nil {
@@ -3252,6 +3318,7 @@ func TestServiceSetIncludeInspectFailFallback(t *testing.T) {
 
 	d := &fakeServiceDocker{inspectErr: errors.New("no such container")}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.SetInclude(context.Background(), "unknown", true); err != nil {
 		t.Fatalf("SetInclude must not fail when inspect errors: %v", err)
@@ -3288,6 +3355,7 @@ func TestServiceSetIncludeInspectFailFallbackExistingDir(t *testing.T) {
 
 	d := &fakeServiceDocker{inspectErr: errors.New("no such container")}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.SetInclude(context.Background(), "known", true); err != nil {
 		t.Fatalf("SetInclude: %v", err)
@@ -3319,6 +3387,7 @@ func TestServiceSetIncludeAll(t *testing.T) {
 		inspectErr: errors.New("no such container"),
 	}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.SetIncludeAll(context.Background(), true); err != nil {
 		t.Fatalf("SetIncludeAll(true): %v", err)
@@ -3364,6 +3433,7 @@ func TestServiceSetIncludeAllOrphans(t *testing.T) {
 		inspectErr: errors.New("no such container"),
 	}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.SetIncludeAll(context.Background(), true); err != nil {
 		t.Fatalf("SetIncludeAll(true): %v", err)
@@ -3404,6 +3474,7 @@ func TestForgetTargetRemovesContainerEntry(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if err := svc.ForgetTarget(context.Background(), "Nexterm"); err != nil {
 		t.Fatalf("ForgetTarget: %v", err)
 	}
@@ -3426,6 +3497,7 @@ func TestForgetTargetRefusesInstalledContainer(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr-movies"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if err := svc.ForgetTarget(context.Background(), "radarr-movies"); err == nil {
 		t.Fatal("ForgetTarget must refuse a container that is installed")
 	}
@@ -3455,6 +3527,7 @@ func TestServiceSetVMIncludeAll(t *testing.T) {
 		{Name: "ubuntu", State: "shut off"},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.SetVMIncludeAll(context.Background(), true); err != nil {
 		t.Fatalf("SetVMIncludeAll(true): %v", err)
@@ -3530,6 +3603,7 @@ func TestListVMsTrueNASDisplaysFriendlyName(t *testing.T) {
 		{Name: rawName, State: "running", FriendlyName: "debian"},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetPlatform(platform.TrueNAS{})
 
 	views, err := svc.ListVMs(context.Background())
@@ -3587,6 +3661,7 @@ func TestListVMsUnraidUnaffectedByFriendlyName(t *testing.T) {
 		{Name: rawName, State: "shut off", FriendlyName: "Windows"},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetPlatform(platform.Unraid{})
 
 	views, err := svc.ListVMs(context.Background())
@@ -3636,6 +3711,7 @@ func TestListVMsOrphanLibvirtNameEqualsName(t *testing.T) {
 	// No live domains at all — the target above is an orphan.
 	v := listVMsVirsh{vms: []virshcli.VMInfo{}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	svc.SetPlatform(platform.TrueNAS{})
 
 	views, err := svc.ListVMs(context.Background())
@@ -3684,6 +3760,7 @@ func TestListVMsSkipsVirshWhenDomainDisabled(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir(), HostMountRoot: t.TempDir()}
 	v := &countingVirsh{listErr: errors.New("ssh: could not resolve hostname")}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	// Disabled (default): no virsh call, no error.
 	s := mustSettings(t, st)
@@ -3741,6 +3818,7 @@ func TestServiceSnapshotsFilteredByContainer(t *testing.T) {
 		{ID: "dddd4444", Tags: nil}, // untagged → excluded
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	got, err := svc.Snapshots(context.Background(), "plex", "")
 	if err != nil {
@@ -3783,6 +3861,7 @@ func TestListSnapshotFilesScopedToContainer(t *testing.T) {
 		lsEntries: []restic.FileEntry{{}},
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// plex's own snapshot lists.
 	if files, err := svc.ListSnapshotFiles(context.Background(), "plex", "aaaa1111", ""); err != nil || len(files) != 1 {
@@ -3822,6 +3901,7 @@ func TestRestoreContainerToPath(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"container:sonarr"}}, // foreign — must be refused
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Bad snapshot id is rejected before any restic call.
@@ -3892,6 +3972,7 @@ func TestRestoreContainerFiles(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"container:sonarr"}}, // foreign — must be refused
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 	fileA := root + "/appdata/plex/a.conf"
 
@@ -3981,6 +4062,7 @@ func restoreTestService(t *testing.T, eng *fakeResticEngine) (*api.Service, *sto
 	}
 	eng.snaps = []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:plex"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	return svc, st, root
 }
 
@@ -4322,7 +4404,9 @@ func diffTagTestService(t *testing.T, eng *fakeResticEngine) *api.Service {
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc
 }
 
 // TestDiffSnapshots pins the snapshot-diff access control + happy path: a bad
@@ -4522,6 +4606,7 @@ func TestDeleteBackupsForgetsSnapshotsAndTarget(t *testing.T) {
 		{ID: "cccc3333", Tags: []string{"container:plex", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackups(context.Background(), "plex", ""); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
@@ -4569,6 +4654,7 @@ func TestDeleteBackupsVMForgetsOnlyThatVMAndPrunes(t *testing.T) {
 		{ID: "cccc3333", Tags: []string{"vm:win11", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err != nil {
 		t.Fatalf("DeleteBackupsVM: %v", err)
@@ -4599,6 +4685,7 @@ func TestForgetVMTargetRemovesEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if err := svc.ForgetVMTarget(context.Background(), "DietPi_template"); err != nil {
 		t.Fatalf("ForgetVMTarget: %v", err)
 	}
@@ -4622,6 +4709,7 @@ func TestForgetVMTargetRefusesDefinedVM(t *testing.T) {
 	}
 	v := listVMsVirsh{vms: []virshcli.VMInfo{{Name: "win11"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	if err := svc.ForgetVMTarget(context.Background(), "win11"); err == nil {
 		t.Fatal("ForgetVMTarget must refuse a VM that is defined on the host")
 	}
@@ -4648,6 +4736,7 @@ func TestDeleteBackupsVMMissingLocalRepoClearsEntry(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err != nil {
 		t.Fatalf("DeleteBackupsVM without a local repository: %v", err)
@@ -4690,6 +4779,7 @@ func TestDeleteBackupsVMUnmountedRepoKeepsEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.DeleteBackupsVM(context.Background(), "win11", "")
 	if !errors.Is(err, api.ErrBackupPathNotMounted) {
@@ -4718,6 +4808,7 @@ func TestDeleteBackupsVMMissingRepoRefusesDefinedVM(t *testing.T) {
 	}
 	v := listVMsVirsh{vms: []virshcli.VMInfo{{Name: "win11"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "win11", ""); err == nil {
 		t.Fatal("DeleteBackupsVM must refuse to drop the entry of a VM defined on the host")
@@ -4746,6 +4837,7 @@ func TestDeleteBackupsVMOffsiteKeepsTarget(t *testing.T) {
 		{ID: "aaaa1111", Tags: []string{"vm:win11", "p2"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackupsVM(context.Background(), "win11", "offsite"); err != nil {
 		t.Fatalf("DeleteBackupsVM offsite: %v", err)
@@ -4826,6 +4918,7 @@ func TestRestoreUsesStoredDefinitionWhenContainerDeleted(t *testing.T) {
 		Paths: []string{"/host/user/user/appdata/pingvin_share_x"},
 	}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// Use a valid 8-hex snapshot id to pass the orchestrator's regex guard.
 	restoreErr := svc.Restore(context.Background(), "Pingvin-Share-X", "deadbeef", true, "", false)
@@ -4902,6 +4995,7 @@ func TestDiscoverRebuildsTargetsFromStorage(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"container:ghost", "p1"}}, // no def file → skipped
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// dryRun=true first: a readability probe must report the same count WITHOUT
 	// writing any target (#44 — the Recovery readiness check must not resurrect
@@ -5037,6 +5131,7 @@ func TestDiscoverFoldsFormerNames(t *testing.T) {
 		{ID: "bbbb2222", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies") // the current name records the link
 	writeStoredDef(t, svc, repo, "radarr-movies")           // the old name has a definition too
 
@@ -5088,6 +5183,7 @@ func TestDiscoverRebuildsFormerNameStandaloneWhenCurrentCannotBeRebuilt(t *testi
 		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
 	// A dry run writes nothing, aliases included.
@@ -5161,6 +5257,7 @@ func TestDiscoverHalfMigratedFormerNameLeavesBothEntriesUntouched(t *testing.T) 
 		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
@@ -5232,6 +5329,7 @@ func TestDiscoverSharedFormerNameRebuiltOnceWhenNoOwnerCanBeRebuilt(t *testing.T
 		{ID: "cccc3333", Tags: []string{"container:radarr-legacy", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	// Only the shared former name has a stored definition.
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
@@ -5287,6 +5385,7 @@ func TestDiscoverSharedFormerNameFoldsOnlyWhenOneOwnerRebuilds(t *testing.T) {
 		{ID: "cccc3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr-legacy", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	// radarr-movies and radarr both have stored definitions; radarr-legacy does not.
 	writeStoredDef(t, svc, repo, "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
@@ -5341,6 +5440,7 @@ func TestDiscoverFoldsOrdinaryPreRenameHistory(t *testing.T) {
 		{ID: "bbbb3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr-movies")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
@@ -5393,6 +5493,7 @@ func TestDiscoverDoesNotFoldAFormerNameOnItsTagAlone(t *testing.T) {
 		{ID: "bbbb3333", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr-movies"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr")
 	writeStoredDef(t, svc, repo, "radarr-movies")
 
@@ -5447,6 +5548,7 @@ func TestDiscoverSkipsUnsafeFormerNameAlias(t *testing.T) {
 		{ID: "bbbb2222", Time: "2024-06-01T00:00:00Z", Tags: []string{"container:radarr", "p1", "formerly:radarr,bad"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	writeStoredDef(t, svc, repo, "radarr", "radarr,bad")
 
 	if _, err := svc.Discover(context.Background(), false); err != nil {
@@ -6267,7 +6369,9 @@ func initRepoSvcWithStore(t *testing.T, eng *fakeResticEngine) (*api.Service, *s
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 func TestUnlockDomainRemovesAllLocks(t *testing.T) {
@@ -6292,6 +6396,7 @@ func TestUnlockDomainNoRepoYet(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	if _, err := svc.UnlockDomain(context.Background(), "containers", ""); err == nil {
 		t.Fatal("expected a friendly error when the repo does not exist yet")
 	}
@@ -6462,7 +6567,9 @@ func drDrillService(t *testing.T, eng *fakeResticEngine, domain, offsite, drillT
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)
 	}
-	return api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng), st
+	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
+	return svc, st
 }
 
 // sandboxTarget extracts the restore target (the drill sandbox dir) from a fake
@@ -7307,6 +7414,7 @@ func TestPruneDomainAppliesRetentionWhenSet(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
@@ -7346,6 +7454,7 @@ func TestPruneDomainPerSourceRetention(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// Off-site prune → off-site policy is set → applies retention (ForgetPolicy).
 	if _, err := svc.PruneDomain(context.Background(), "containers", "offsite"); err != nil {
@@ -7468,6 +7577,7 @@ func TestBackupVMSkipsWhenDomainNotInstalled(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, notInstalledVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	_, err := svc.BackupVM(context.Background(), "DietPi_template")
 	if !errors.Is(err, backup.ErrVMNotInstalled) {
@@ -7511,6 +7621,7 @@ func TestDiscoverVMsRebuildsTargetFromStorage(t *testing.T) {
 
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"vm:Tailscale", "p2"}}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// dryRun=true first: the readability probe reports the count but must not
 	// recreate the VM target.
@@ -7651,6 +7762,7 @@ func TestCollectStatsNoRepoIsNoop(t *testing.T) {
 	}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
 		t.Fatalf("CollectStats on a missing repo must be a no-op, got %v", err)
@@ -7683,6 +7795,7 @@ func TestCollectStatsEmptyRepoIsNoop(t *testing.T) {
 	}
 	eng := &fakeResticEngine{} // no snapshots
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
 		t.Fatalf("CollectStats on an empty repo must be a no-op, got %v", err)
@@ -7712,6 +7825,7 @@ func TestCollectStatsRecordsSample(t *testing.T) {
 	}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111"}, {ID: "bbbb2222"}}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.CollectStats(context.Background(), "containers", "local"); err != nil {
 		t.Fatalf("CollectStats: %v", err)
@@ -7743,6 +7857,7 @@ func TestRecoveryKit(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -7780,6 +7895,7 @@ func TestRecoveryKit(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -7812,6 +7928,7 @@ func TestRecoveryKit(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -7834,6 +7951,7 @@ func TestRecoveryKit(t *testing.T) {
 		dir := t.TempDir()
 		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
 		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -7858,6 +7976,7 @@ func TestRecoveryKit(t *testing.T) {
 		dir := t.TempDir()
 		cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: dir, HostMountRoot: dir}
 		svc := api.NewService(cfg, newMemStore(t), &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -7889,6 +8008,7 @@ func TestRecoveryKitCredentials(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		creds := api.CloudCreds{
 			S3KeyID:      "AKIAEXAMPLEKEYID",
@@ -7942,6 +8062,7 @@ func TestRecoveryKitCredentials(t *testing.T) {
 		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
 		st := newMemStore(t)
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		if err := svc.SetCloudCreds(api.CloudCreds{S3KeyID: "ONLYKEY", S3Secret: "onlysecret"}); err != nil {
 			t.Fatalf("SetCloudCreds: %v", err)
@@ -7971,6 +8092,7 @@ func TestRecoveryKitCredentials(t *testing.T) {
 		cfg := config.Config{AppKey: appKey, DataDir: dir, HostMountRoot: dir}
 		st := newMemStore(t)
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+		t.Cleanup(svc.WaitForSamples)
 
 		kit, err := svc.RecoveryKit()
 		if err != nil {
@@ -8018,6 +8140,7 @@ func TestBackupConfigEndToEnd(t *testing.T) {
 
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	sum, err := svc.BackupConfig(context.Background())
 	if err != nil {
@@ -8074,6 +8197,7 @@ func TestRestoreConfigStagesAndWritesMarker(t *testing.T) {
 
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.RestoreConfig(context.Background(), "", "local"); err != nil {
 		t.Fatalf("RestoreConfig: %v", err)
@@ -8125,6 +8249,7 @@ func TestStartRestoreConfigSurvivesCancelledContext(t *testing.T) {
 
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111bbbb2222"}}, stageFrom: st}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // simulate the request already gone (tab closed / proxy timed out) before the restore even starts
@@ -8202,6 +8327,7 @@ func TestSnapshotsFollowAlias(t *testing.T) {
 		{ID: "cccc3333", Time: "2024-01-01T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	snaps, err := svc.Snapshots(context.Background(), "radarr", "")
 	if err != nil {
@@ -8255,6 +8381,7 @@ func TestLatestContainerBackupTimesFoldsAlias(t *testing.T) {
 		{ID: "cccc3333", Time: "2024-03-01T00:00:00Z", Tags: []string{"container:sonarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	times, _, err := svc.LatestContainerBackupTimes(context.Background())
 	if err != nil {
@@ -8302,6 +8429,7 @@ func TestLatestContainerBackupTimesDoesNotStealReusedAliasName(t *testing.T) {
 			t.Fatal(err)
 		}
 		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{snaps: snaps})
+		t.Cleanup(svc.WaitForSamples)
 		times, _, err := svc.LatestContainerBackupTimes(context.Background())
 		if err != nil {
 			t.Fatalf("LatestContainerBackupTimes: %v", err)
@@ -8367,6 +8495,7 @@ func TestPruneDomainFoldsRenamedContainerAliasIntoOneRetentionGroup(t *testing.T
 		{ID: "cccc3333", Tags: []string{"container:sonarr", "p1"}},                               // unrelated entry, must stay its own group
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
@@ -8423,6 +8552,7 @@ func TestPruneDomainDoesNotFoldAReusedAliasNameIntoTheOldEntry(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"container:radarr", "p1"}},     // B's own (live, reused name)
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.PruneDomain(context.Background(), "containers", ""); err != nil {
 		t.Fatalf("PruneDomain: %v", err)
@@ -8475,6 +8605,7 @@ func TestServiceBackupTagsIncludeAliasFormerNames(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.Backup(context.Background(), "radarr"); err != nil {
 		t.Fatalf("backup: %v", err)
@@ -8518,6 +8649,7 @@ func TestServiceBackupTagsUnchangedWithoutAlias(t *testing.T) {
 	}}
 	eng := &fakeResticEngine{}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if _, err := svc.Backup(context.Background(), "plex"); err != nil {
 		t.Fatalf("backup: %v", err)
@@ -8549,6 +8681,7 @@ func TestTakeOverContainer(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr", ID: "abc"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -8587,6 +8720,7 @@ func TestTakeOverContainerRefusesConfiguredEmptyRow(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
 	if err == nil {
@@ -8644,6 +8778,7 @@ func TestTakeOverContainerRefusesEntryWithBackups(t *testing.T) {
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr", ID: "abc"}}}
 	eng := &fakeResticEngine{snaps: []restic.Snapshot{{ID: "aaaa1111", Tags: []string{"container:radarr", "p1"}}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
 	if err == nil {
@@ -8698,6 +8833,7 @@ func TestTakeOverContainerRefusesForeignOrphanedSnapshot(t *testing.T) {
 	}}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
 	if err == nil {
@@ -8750,6 +8886,7 @@ func TestTakeOverContainerAllowsOwnFormerSnapshot(t *testing.T) {
 	}}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer must allow the round trip: %v", err)
@@ -8793,6 +8930,7 @@ func TestTakeOverContainerChainOntoFurtherName(t *testing.T) {
 	}}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "B"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	// Hop 1: A -> B (no container:B snapshot exists, so this is unaffected).
 	if err := svc.TakeOverContainer(context.Background(), "A", "B"); err != nil {
@@ -8856,6 +8994,7 @@ func TestTakeOverContainerChecksTheEntrysOwnRepositoryToo(t *testing.T) {
 	}}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err = svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr")
 	if err == nil {
@@ -8884,6 +9023,7 @@ func TestTakeOverContainerFailsClosedOnRepoResolutionError(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
 		t.Fatal("a repo-resolution error must refuse the takeover, not be treated as \"no backups\"")
@@ -8905,6 +9045,7 @@ func TestTakeOverContainerRefusesWhenNewNotInstalled(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
 		t.Fatal("a new name that is not installed must be refused")
@@ -8925,6 +9066,7 @@ func TestTakeOverContainerRefusesWhenOldInstalledAgain(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}, {Name: "radarr-movies"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
 		t.Fatal("an old name that is installed again must be refused")
@@ -8941,6 +9083,7 @@ func TestTakeOverContainerRefusesWhenOldHasNoEntry(t *testing.T) {
 	st := newMemStore(t)
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err == nil {
 		t.Fatal("an old name with no entry must be refused")
@@ -8955,6 +9098,7 @@ func TestTakeOverContainerRejectsInvalidNames(t *testing.T) {
 	st := newMemStore(t)
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr,movies", "radarr"); err == nil {
 		t.Fatal("a comma in the old name must be refused before it can reach an alias/restic tag")
@@ -8989,6 +9133,7 @@ func TestTakeOverContainerRewritesDefinitionAndStopLists(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9058,6 +9203,7 @@ func TestTakeOverContainerLocksBeforeReadingForForeignBackups(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}, {Name: "plex"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 	ctx := context.Background()
 
 	// Hold the "containers" domain lock with an in-flight (blocked) restore.
@@ -9097,6 +9243,7 @@ func TestUnlinkContainerAlias(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9123,6 +9270,7 @@ func TestUnlinkContainerAliasRefusesUnknownName(t *testing.T) {
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.UnlinkContainerAlias(context.Background(), "never-linked"); err == nil {
 		t.Fatal("a name that was never taken over must be refused")
@@ -9153,6 +9301,7 @@ func TestUnlinkContainerAliasRewritesDefinitionAndStopLists(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9207,6 +9356,7 @@ func TestTakeOverContainerMovesDRDrillTarget(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9237,6 +9387,7 @@ func TestTakeOverContainerLeavesUnrelatedDRDrillTargetAlone(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9262,6 +9413,7 @@ func TestUnlinkContainerAliasMovesDRDrillTargetBack(t *testing.T) {
 	}
 	d := &fakeServiceDocker{listOut: []dockercli.ContainerInfo{{Name: "radarr"}}}
 	svc := api.NewService(cfg, st, d, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.TakeOverContainer(context.Background(), "radarr-movies", "radarr"); err != nil {
 		t.Fatalf("TakeOverContainer: %v", err)
@@ -9436,6 +9588,7 @@ func TestDeleteBackupsForgetsDumps(t *testing.T) {
 		{ID: "cccc3333", Tags: []string{"container:sonarr", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	if err := svc.DeleteBackups(context.Background(), "pg", "local"); err != nil {
 		t.Fatalf("DeleteBackups: %v", err)
@@ -9469,6 +9622,7 @@ func TestDeleteBackupsDumpOnlyRefusedBeforeAnyLock(t *testing.T) {
 		{ID: "bbbb2222", Tags: []string{"dbdump:pg", "p1"}},
 	}}
 	svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+	t.Cleanup(svc.WaitForSamples)
 
 	err := svc.DeleteBackups(context.Background(), "pg", "local")
 	if err == nil || !strings.Contains(err.Error(), "append-only") {

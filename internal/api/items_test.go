@@ -29,6 +29,7 @@ func newItemsRouter(t *testing.T, d *fakeServiceDocker, v virshcli.Virsh) (http.
 	cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: dir, DataRootSegments: []string{"appdata"}}
 	st := newMemStore(t)
 	svc := api.NewService(cfg, st, d, v, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	return api.NewHandler(cfg, st, d, svc, sched, spike.DefaultProbes()).Router(), st, svc
 }
@@ -853,6 +854,7 @@ func TestSettingsNameTheHostsFolderBehindTheMount(t *testing.T) {
 	st := newMemStore(t)
 	docker := &fakeServiceDocker{}
 	svc := api.NewService(cfg, st, docker, fakeVirsh{}, &fakeResticEngine{})
+	t.Cleanup(svc.WaitForSamples)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargets)
 	h := api.NewHandler(cfg, st, docker, svc, sched, spike.DefaultProbes()).Router()
 

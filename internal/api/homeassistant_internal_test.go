@@ -112,6 +112,7 @@ func TestAHomeAssistantButtonStartsUnderTheSharedLimits(t *testing.T) {
 	if run == nil || run.StartedVia != "mqtt" || run.StartedViaKey != "" {
 		t.Fatalf("the run records %+v, want the mqtt origin without a key", run)
 	}
+	waitForFilesIdle(t, h)
 	if got := h.haStart(context.Background(), "files"); got != "cooldown" {
 		t.Fatalf("a second press right after answered %q, want cooldown", got)
 	}

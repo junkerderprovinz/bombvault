@@ -91,7 +91,7 @@ func settingsOfTheOldInstall(t *testing.T, key string) string {
 // with a drive letter cannot be, so the data folder becomes a relative one.
 func (f *placementFixture) stage(from string) string {
 	f.t.Helper()
-	f.t.Chdir(f.t.TempDir())
+	chdir(f.t, f.t.TempDir())
 	f.svc.cfg.DataDir = "data"
 	dir := selfrestore.RestoredSnapshotDir(f.svc.cfg.DataDir)
 	if err := os.MkdirAll(dir, 0o750); err != nil {
