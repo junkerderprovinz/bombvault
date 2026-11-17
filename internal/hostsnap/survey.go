@@ -412,15 +412,15 @@ func (h *Host) addZFSDetails(ctx context.Context, s *Survey) {
 // btrfsFS is one btrfs filesystem as the survey read it through the mount of
 // its top level.
 type btrfsFS struct {
-	esc, mount    string
-	device        string
-	top           bool
-	topUUID       string
-	subvols       map[string]btrfsSubvol // by uuid
-	snaps         []btrfsSubvol
-	readOnly      map[string]bool
-	qgroups       map[string][2]int64 // "0/<id>" -> referenced, exclusive
-	quotas        bool
+	esc, mount string
+	device     string
+	top        bool
+	topUUID    string
+	subvols    map[string]btrfsSubvol // by uuid
+	snaps      []btrfsSubvol
+	readOnly   map[string]bool
+	qgroups    map[string][2]int64 // "0/<id>" -> referenced, exclusive
+	quotas     bool
 }
 
 type btrfsSubvol struct {
@@ -494,7 +494,6 @@ func parseBtrfsLine(line string) (btrfsSubvol, bool) {
 	}
 	return sv, true
 }
-
 
 // systemSubvol reports whether a subvolume belongs to Docker's storage
 // driver, whose layers would bury everything else.

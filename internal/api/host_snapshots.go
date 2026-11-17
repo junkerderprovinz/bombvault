@@ -23,7 +23,7 @@ const (
 	hostSnapActionTimeout = 5 * time.Minute
 	// hostSnapTick is how often the plans are looked at. A cadence names
 	// minutes, so a finer tick would only find nothing due.
-	hostSnapTick = time.Minute
+	hostSnapTick    = time.Minute
 	hostSnapMaxKeep = 1000
 	hostSnapMaxRefs = 500
 )
@@ -66,8 +66,8 @@ func (s *Service) HostSnapshots(ctx context.Context, wake bool) (HostSnapshotVie
 	h, err := s.hostSnapHost()
 	if err != nil {
 		empty := hostsnap.Survey{
-			Kinds:   map[hostsnap.Kind]hostsnap.KindState{hostsnap.KindZFS: {Code: "ssh-missing"}, hostsnap.KindBtrfs: {Code: "ssh-missing"}, hostsnap.KindVM: {Code: "ssh-missing"}},
-			Pools:   []hostsnap.Pool{}, Sources: []hostsnap.Source{}, Snapshots: []hostsnap.Snapshot{},
+			Kinds: map[hostsnap.Kind]hostsnap.KindState{hostsnap.KindZFS: {Code: "ssh-missing"}, hostsnap.KindBtrfs: {Code: "ssh-missing"}, hostsnap.KindVM: {Code: "ssh-missing"}},
+			Pools: []hostsnap.Pool{}, Sources: []hostsnap.Source{}, Snapshots: []hostsnap.Snapshot{},
 		}
 		return HostSnapshotView{Survey: empty, Plans: plans}, nil
 	}

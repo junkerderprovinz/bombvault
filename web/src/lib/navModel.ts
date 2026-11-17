@@ -19,6 +19,7 @@ import { IconArchive } from "../components/glyphs";
 import {
   IconAnomalies,
   IconDashboard,
+  IconFileImage,
   IconFleet,
   IconGear,
   IconTabRecovery,
@@ -56,11 +57,12 @@ export function destinations(settings: Settings | null, pins: NavPins): NavDesti
     { to: "/anomalies", labelKey: "nav.anomalies", icon: IconAnomalies, count: "anomalies", sidebar: detection, footer: false, phone: detection, bar: false },
     { to: "/backups", labelKey: "backups.title", icon: IconArchive, sidebar: true, footer: false, phone: true, bar: true },
     { to: "/restore", labelKey: "nav.restore", icon: IconTabRecovery, sidebar: true, footer: false, phone: true, bar: true },
-    // The two Settings pages that can be pinned to the sidebar. A phone always
+    // The Settings pages that can be pinned to the sidebar. A phone always
     // lists the storage locations, which keeps its More sheet from ever
     // opening empty.
     { to: "/storage", labelKey: "storage.title", icon: IconTabStorage, sidebar: pins.storage, footer: false, phone: true, bar: false },
     { to: "/instances", labelKey: "instances.title", icon: IconFleet, sidebar: pins.instances, footer: false, phone: pins.instances, bar: false },
+    { to: "/snapshots", labelKey: "hostSnap.title", icon: IconFileImage, sidebar: pins.snapshots, footer: false, phone: pins.snapshots, bar: false },
     { to: "/settings", labelKey: "nav.settings", icon: IconGear, sidebar: true, footer: true, phone: true, bar: true },
   ];
 }

@@ -112,8 +112,3 @@ func managedByRuns(name string) bool {
 	o := Owner(name)
 	return o == "backup" || o == "replica"
 }
-
-// DefaultName is the name the create dialog offers.
-func DefaultName(now time.Time) string {
-	return "manual-" + now.UTC().Format(stampLayout)
-}

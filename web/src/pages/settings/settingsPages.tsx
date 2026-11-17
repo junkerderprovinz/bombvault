@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { TranslationKey } from "../../lib/i18n";
 import {
+  IconFileImage,
   IconFleet,
   IconLive,
   IconNotifications,
@@ -29,6 +30,7 @@ export type SettingsPageId =
   | "integrity"
   | "security"
   | "instances"
+  | "snapshots"
   | "pairing"
   | "integrations"
   | "apps"
@@ -52,6 +54,7 @@ export const SETTINGS_PAGES: SettingsPageDef[] = [
   { id: "integrity", label: "activityLog.typeVerify", icon: <IconTabIntegrity /> },
   { id: "security", label: "settings.tab.security", icon: <IconTabSecurity /> },
   { id: "instances", label: "instances.title", icon: <IconFleet /> },
+  { id: "snapshots", label: "hostSnap.title", icon: <IconFileImage /> },
   { id: "pairing", label: "pairing.title", icon: <IconLink /> },
   { id: "integrations", label: "settings.tab.integrations", icon: <IconLive /> },
   { id: "apps", label: "settings.tab.apps", icon: <IconTabApps /> },

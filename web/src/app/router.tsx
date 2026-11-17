@@ -11,6 +11,7 @@ import { ZFSServer } from "../pages/ZFSServer";
 import { StoragePage } from "../pages/Storage";
 import { StorageLocationPage } from "../pages/StorageLocation";
 import { SettingsPage } from "../pages/Settings";
+import { Snapshots } from "../pages/Snapshots";
 import { Restore } from "../pages/Restore";
 import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
@@ -58,6 +59,7 @@ export function AppRouter() {
               <Route path="/receiver" element={<Navigate to="/instances#receiver" replace />} />
               <Route path="/pull" element={<Navigate to="/instances" replace />} />
               <Route path="/fleet" element={<Navigate to="/instances" replace />} />
+              <Route path="/snapshots" element={<Snapshots />} />
               <Route path="/storage" element={<StoragePage />} />
               <Route path="/storage/:id" element={<StorageLocationPage />} />
               <Route path="/restore" element={<Restore />} />

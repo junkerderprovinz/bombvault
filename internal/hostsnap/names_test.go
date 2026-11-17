@@ -39,11 +39,11 @@ func TestAPlanRecognisesOnlyItsOwnSnapshots(t *testing.T) {
 
 func TestOwnerTellsTheSnapshotsOfRunsApart(t *testing.T) {
 	cases := map[string]string{
-		"bombvault-20261117120000":              "backup",
-		"bombvault-replica-20261117120000":      "replica",
-		"bombvault-prerestore-20261117120000":   "safety",
+		"bombvault-20261117120000":               "backup",
+		"bombvault-replica-20261117120000":       "replica",
+		"bombvault-prerestore-20261117120000":    "safety",
 		"bombvault-auto-1a2b3c4d-20261117120000": "plan",
-		"autosnap_2026-11-17_12:00:00_hourly":   "",
+		"autosnap_2026-11-17_12:00:00_hourly":    "",
 	}
 	for name, want := range cases {
 		if got := Owner(name); got != want {

@@ -285,7 +285,7 @@ type Service struct {
 	zfsHostLast *zfsHostListing
 	// hostSnap reaches the snapshots the server itself keeps.
 	hostSnap hostSnaps
-	replica     zfsReplicaRuntime
+	replica  zfsReplicaRuntime
 	// snapNames names the snapshots runs take, so no two runs pick the same
 	// one and no sweep removes one that is still being read.
 	snapNames snapNames

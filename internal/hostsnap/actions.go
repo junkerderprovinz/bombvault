@@ -391,7 +391,6 @@ func (h *Host) FreeAndDelete(ctx context.Context, ref Ref) ([]Mount, error) {
 	return mounts, result
 }
 
-// zfs runs one zfs command on the host.
 func (h *Host) zfs(ctx context.Context, args ...string) error {
 	_, err := h.zfsOut(ctx, args...)
 	return err

@@ -12,6 +12,7 @@ import { PairingPage } from "./PairingPage";
 import { RestorePage } from "./RestorePage";
 import { SchedulesPage } from "./SchedulesPage";
 import { SecurityPage } from "./SecurityPage";
+import { SnapshotsPage } from "./SnapshotsPage";
 import { StoragePage } from "./StoragePage";
 import { SystemPage } from "./SystemPage";
 
@@ -26,6 +27,7 @@ export const PAGE_COMPONENTS: Record<SettingsPageId, ComponentType> = {
   integrity: IntegrityPage,
   security: SecurityPage,
   instances: InstancesPage,
+  snapshots: SnapshotsPage,
   pairing: PairingPage,
   integrations: IntegrationsPage,
   apps: AppsPage,

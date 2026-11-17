@@ -7,13 +7,14 @@ import { ADOPTED_EVENT, save as saveDisplayPrefs } from "./displayPrefs";
 
 const KEY = "bombvault.navPins";
 
-const PINS = ["storage", "instances"] as const;
+const PINS = ["storage", "instances", "snapshots"] as const;
 
 export type NavPin = (typeof PINS)[number];
 
 export type NavPins = Record<NavPin, boolean>;
 
-type InstanceModules = Pick<Settings, "receiverEnabled" | "fleetEnabled" | "pullEnabled">;
+type InstanceModules = Pick<Settings, "receiverEnabled" | "fleetEnabled" | "pullEnabled"> &
+  Partial<Pick<Settings, "zfsEnabled" | "vmsEnabled">>;
 
 function readRaw(): string {
   try {
@@ -46,19 +47,30 @@ function instancesOn(settings: InstanceModules | null | undefined): boolean {
   return !!settings && (settings.receiverEnabled || settings.fleetEnabled || settings.pullEnabled);
 }
 
-function resolve(raw: string, modulesOn: boolean): NavPins {
+// The server's own snapshots matter where BombVault already reaches the host
+// for ZFS or VMs.
+function hostReached(settings: InstanceModules | null | undefined): boolean {
+  return !!settings && (!!settings.zfsEnabled || !!settings.vmsEnabled);
+}
+
+function resolve(raw: string, modulesOn: boolean, hostOn: boolean): NavPins {
   const chosen = parse(raw);
-  return { storage: chosen.storage ?? true, instances: chosen.instances ?? modulesOn };
+  return {
+    storage: chosen.storage ?? true,
+    instances: chosen.instances ?? modulesOn,
+    snapshots: chosen.snapshots ?? hostOn,
+  };
 }
 
 /**
  * readNavPins is the pins as the sidebar shows them. Storage locations is
  * pinned until someone unpins it. Instances follows the receiver, fleet and
  * pull modules until someone pins or unpins it, so switching a module on brings
- * the entry along and an unpinned entry stays away.
+ * the entry along and an unpinned entry stays away. Snapshots follows the ZFS
+ * and VM sections the same way.
  */
 export function readNavPins(settings: InstanceModules | null | undefined): NavPins {
-  return resolve(readRaw(), instancesOn(settings));
+  return resolve(readRaw(), instancesOn(settings), hostReached(settings));
 }
 
 const listeners = new Set<() => void>();
@@ -89,5 +101,6 @@ export function subscribeNavPins(listener: () => void): () => void {
 export function useNavPins(settings: InstanceModules | null | undefined): NavPins {
   const raw = useSyncExternalStore(subscribeNavPins, readRaw);
   const modulesOn = instancesOn(settings);
-  return useMemo(() => resolve(raw, modulesOn), [raw, modulesOn]);
+  const hostOn = hostReached(settings);
+  return useMemo(() => resolve(raw, modulesOn, hostOn), [raw, modulesOn, hostOn]);
 }
