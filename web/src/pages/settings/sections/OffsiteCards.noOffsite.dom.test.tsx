@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // The off-site settings offer one switch for an instance that keeps every
-// backup on the premises, and only while no section copies off-site.
+// backup on the premises, and only while no section copies off-site. While it
+// is on, the settings for copies that do not exist step aside.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -85,6 +86,23 @@ describe("the switch that keeps the data on the premises", () => {
   it("shows a choice that is on", async () => {
     await show({ noOffsiteByChoice: true });
     expect(choice()!.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("hides the section rows and the bandwidth limits while it is on, and stays itself", async () => {
+    await show({ noOffsiteByChoice: true });
+
+    expect(screen.queryAllByRole("button", { name: en["offsite.wizard.setup"] })).toHaveLength(0);
+    expect(screen.queryByText(en["settings.offsiteLimits"])).toBeNull();
+    expect(screen.queryByLabelText(en["settings.limitUpload"])).toBeNull();
+    expect(choice()!.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("shows the section rows and the bandwidth limits while it is off", async () => {
+    await show();
+
+    expect(screen.getAllByRole("button", { name: en["offsite.wizard.setup"] })).toHaveLength(6);
+    expect(screen.getByText(en["settings.offsiteLimits"])).toBeTruthy();
+    expect(choice()).not.toBeNull();
   });
 
   it("goes away once a section's off-site field holds a location", async () => {

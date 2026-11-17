@@ -15,8 +15,9 @@ import { DOMAIN_LABEL } from "../../../lib/storageLocations";
 import { Badge } from "../../../components/Badge";
 import { Button } from "../../../components/Button";
 import { Toggle } from "../../../components/Toggle";
-import type { OffsiteTarget, Settings } from "../../../lib/api";
+import type { Settings } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
+import { copiesOffsite } from "../../../lib/offsiteChoice";
 import { placementErrorText } from "../../../lib/placementCodes";
 import { useToast } from "../../../lib/toast";
 import { REPO_LOCAL_HINT_LTR_FRAGMENTS, withLtrIsolates } from "../../../lib/ltrFragments";
@@ -31,15 +32,6 @@ type T = ReturnType<typeof useT>["t"];
 // Self-backup ("config") is listed with the other sections: the backend gives
 // it its own off-site repository and targets like any other.
 const DOMAINS: OffsiteDomain[] = ["containers", "vms", "flash", "files", "zfs", "config"];
-
-// By the server's rule a section copies to its switched-on targets, or to its
-// off-site field while it has no target at all.
-function copiesOffsite(settings: Settings, targets: OffsiteTarget[]): boolean {
-  return DOMAINS.some((domain) => {
-    const own = targets.filter((x) => x.domain === domain);
-    return own.length > 0 ? own.some((x) => x.enabled) : !!settings[`${domain}Offsite`];
-  });
-}
 
 function ReplicateNowButton({ domain, t }: { domain: OffsiteDomain; t: T }) {
   const { lang } = useT();
@@ -182,6 +174,10 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
   const [, setChoiceSaveError] = useState<string | null>(null);
 
   const hue = nextHue();
+  const choosable = !copiesOffsite(settings, allTargets);
+  // While every backup stays here by choice, the rows and limits of copies
+  // that do not exist step aside. Turning the switch off brings them back.
+  const keptOff = choosable && settings.noOffsiteByChoice;
   const titleOf = (domain: OffsiteDomain) => t("offsite.copyDomainTitle").replace("{domain}", t(DOMAIN_LABEL[domain]));
   const primaryOf = (domain: OffsiteDomain) => allTargets.find((x) => x.domain === domain && x.sortOrder === 0);
 
@@ -249,21 +245,22 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
       <div id="offsite" className="flex scroll-mt-6 flex-col gap-6">
         <Card title={t("offsite.copies.title")} hint={t("settings.offsiteHint")} hueIndex={hue} newId="settings-offsite-copies">
           <Rows>
-            {DOMAINS.map((domain) => (
-              <CopyRow
-                key={domain}
-                domain={domain}
-                repo={settings[`${domain}Offsite`]}
-                target={primaryOf(domain)}
-                more={allTargets.filter((x) => x.domain === domain && x.sortOrder > 0 && x.enabled).length}
-                setupOpen={wizard === domain}
-                onOpen={() => setDetails(domain)}
-                onSetup={() => setWizard(domain)}
-              />
-            ))}
+            {!keptOff &&
+              DOMAINS.map((domain) => (
+                <CopyRow
+                  key={domain}
+                  domain={domain}
+                  repo={settings[`${domain}Offsite`]}
+                  target={primaryOf(domain)}
+                  more={allTargets.filter((x) => x.domain === domain && x.sortOrder > 0 && x.enabled).length}
+                  setupOpen={wizard === domain}
+                  onOpen={() => setDetails(domain)}
+                  onSetup={() => setWizard(domain)}
+                />
+              ))}
             {/* The server ignores the choice once a section copies off-site,
                 so the switch goes with it. */}
-            {!copiesOffsite(settings, allTargets) && (
+            {choosable && (
               <SettingRow label={t("offsite.byChoice")} hint={t("offsite.byChoiceHint")}>
                 <Toggle
                   key={fieldShake.noOffsiteByChoice}
@@ -298,29 +295,31 @@ export function OffsiteCards({ nextHue }: { nextHue: () => number }) {
         )}
       </div>
 
-      <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
-        <Rows>
-          {([
-            ["offsiteLimitUpload", "settings.limitUpload"],
-            ["offsiteLimitDownload", "settings.limitDownload"],
-          ] as const).map(([key, label]) => (
-            <SettingRow key={key} label={t(label)} htmlFor={`offsite-${key}`}>
-              <RateField
-                id={`offsite-${key}`}
-                wrapperClassName="w-28"
-                min={0}
-                value={settings[key]}
-                onChange={(e) => {
-                  const n = Math.max(0, parseInt(e.target.value, 10) || 0);
-                  setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
-                  debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setLimSaveState, setLimSaveError));
-                }}
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
-              />
-            </SettingRow>
-          ))}
-        </Rows>
-      </Card>
+      {!keptOff && (
+        <Card title={t("settings.offsiteLimits")} hint={t("settings.limitHint")} hueIndex={nextHue()}>
+          <Rows>
+            {([
+              ["offsiteLimitUpload", "settings.limitUpload"],
+              ["offsiteLimitDownload", "settings.limitDownload"],
+            ] as const).map(([key, label]) => (
+              <SettingRow key={key} label={t(label)} htmlFor={`offsite-${key}`}>
+                <RateField
+                  id={`offsite-${key}`}
+                  wrapperClassName="w-28"
+                  min={0}
+                  value={settings[key]}
+                  onChange={(e) => {
+                    const n = Math.max(0, parseInt(e.target.value, 10) || 0);
+                    setSettings((prev) => (prev ? { ...prev, [key]: n } : prev));
+                    debouncedSave(key, () => void save({ [key]: n } as Partial<Settings>, setLimSaveState, setLimSaveError));
+                  }}
+                  className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 w-full glim-field-focus"
+                />
+              </SettingRow>
+            ))}
+          </Rows>
+        </Card>
+      )}
     </>
   );
 }

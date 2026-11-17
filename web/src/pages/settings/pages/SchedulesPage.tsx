@@ -3,6 +3,7 @@ import { listItems, type BackupItem, type Settings } from "../../../lib/api";
 import { type EntryKind } from "../../../lib/backupEntry";
 import { hueVars } from "../../../lib/appearance";
 import { useT } from "../../../lib/i18n";
+import { offsiteKeptOff } from "../../../lib/offsiteChoice";
 import { formatList } from "../../../lib/placement";
 import { KIND_LABEL, KindGlyph } from "../../../components/backups/kinds";
 import { Button } from "../../../components/Button";
@@ -122,6 +123,7 @@ export function SchedulesPage() {
     autoSaveField,
     mergedFieldBusy,
     mergedFieldShake,
+    allTargets,
   } = useSettings();
   const [items, setItems] = useState<BackupItem[]>([]);
   const [members, setMembers] = useState<EntryKind | null>(null);
@@ -236,25 +238,27 @@ export function SchedulesPage() {
                 onAdd={(kind) => scheduleField(section(kind).schedule, NEW_SECTION_PLAN)}
                 onRemove={(kind) => scheduleField(section(kind).schedule, "off")}
               />
-              <SubCard title={t("schedules.offsite")}>
-                <Exceptions
-                  label={t("schedules.offsite")}
-                  taken={ownCopies.map(asException)}
-                  free={sections.filter((s) => !ownCopies.includes(s)).map(asException)}
-                  rule={t(ownCopies.length > 0 ? "schedules.offsiteRuleOthers" : "schedules.offsiteRuleAll")}
-                  control={(kind) => (
-                    <PlanButton
-                      label={`${t("schedules.offsite")}: ${label(kind as EntryKind)}`}
-                      value={settings[section(kind).offsite]}
-                      onChange={(v) => scheduleField(section(kind).offsite, v)}
-                      modes={EXACT_CADENCE_MODES}
-                      hueIndex={hue}
-                    />
-                  )}
-                  onAdd={(kind) => scheduleField(section(kind).offsite, NEW_COPY_PLAN)}
-                  onRemove={(kind) => scheduleField(section(kind).offsite, "")}
-                />
-              </SubCard>
+              {!offsiteKeptOff(settings, allTargets) && (
+                <SubCard title={t("schedules.offsite")}>
+                  <Exceptions
+                    label={t("schedules.offsite")}
+                    taken={ownCopies.map(asException)}
+                    free={sections.filter((s) => !ownCopies.includes(s)).map(asException)}
+                    rule={t(ownCopies.length > 0 ? "schedules.offsiteRuleOthers" : "schedules.offsiteRuleAll")}
+                    control={(kind) => (
+                      <PlanButton
+                        label={`${t("schedules.offsite")}: ${label(kind as EntryKind)}`}
+                        value={settings[section(kind).offsite]}
+                        onChange={(v) => scheduleField(section(kind).offsite, v)}
+                        modes={EXACT_CADENCE_MODES}
+                        hueIndex={hue}
+                      />
+                    )}
+                    onAdd={(kind) => scheduleField(section(kind).offsite, NEW_COPY_PLAN)}
+                    onRemove={(kind) => scheduleField(section(kind).offsite, "")}
+                  />
+                </SubCard>
+              )}
             </Card>
           );
         })()}
