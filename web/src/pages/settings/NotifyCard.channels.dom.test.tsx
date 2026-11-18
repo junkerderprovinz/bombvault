@@ -168,7 +168,7 @@ describe("the channel list", () => {
     show();
     await waitChannel("ntfy");
     fireEvent.click(screen.getByRole("button", { name: en["notify.add"] }));
-    fireEvent.click(await screen.findByRole("option", { name: en["notify.kindNtfy"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["notify.kindNtfy"] }));
     await pause(50);
     expect(saved.at(-1)?.channels[1]).toMatchObject({ id: "ntfy-2", kind: "ntfy", enabled: false });
   });
@@ -194,7 +194,7 @@ describe("the channel list", () => {
     show();
     expect(await screen.findByText(en["settings.notLoadedNoSave"])).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: en["notify.add"] }));
-    fireEvent.click(await screen.findByRole("option", { name: en["notify.kindNtfy"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["notify.kindNtfy"] }));
     await pause(50);
     expect(saved).toHaveLength(0);
   });

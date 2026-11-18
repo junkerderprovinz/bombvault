@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { PickerWindow, type PickerItem, type TileMark } from "@glimstone/react/PickerWindow";
+import { SERVICE_MARKS } from "@glimstone/core/serviceMarks";
 import { Button } from "../../components/Button";
-import { DropdownListbox } from "../../components/DropdownListbox";
 import { Exceptions } from "../../components/Exceptions";
 import { InfoBubble } from "../../components/InfoBubble";
 import { NumberField } from "../../components/NumberField";
@@ -10,6 +11,7 @@ import { Selector } from "../../components/Selector";
 import { TestButton, VerdictLine } from "../../components/TestButton";
 import { SettingRow } from "../../components/storage/rows";
 import { KIND_LABEL as SECTION_LABEL, KindGlyph } from "../../components/backups/kinds";
+import { IconLink, IconMail } from "../../components/glyphs";
 import { IconAdd, IconTrash } from "../../components/navGlyphs";
 import {
   REDACTED,
@@ -20,6 +22,7 @@ import {
   type NotifyConfig,
   type NotifyKind,
 } from "../../lib/api";
+import { UNRAID_SVG } from "../../lib/appMarks";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
@@ -224,7 +227,6 @@ export function NotifyCard({
   }
 
   const [adding, setAdding] = useState(false);
-  const addRef = useRef<HTMLButtonElement>(null);
 
   return (
     <>
@@ -258,14 +260,7 @@ export function NotifyCard({
         hint={t("notify.channelsHint")}
         hueIndex={channelsHueIndex}
         foot={
-          <Button
-            ref={addRef}
-            label={t("notify.add")}
-            labelKey="notify.add"
-            glyph={<IconAdd />}
-            ariaExpanded={adding}
-            onClick={() => setAdding((v) => !v)}
-          />
+          <Button label={t("notify.add")} labelKey="notify.add" glyph={<IconAdd />} onClick={() => setAdding(true)} />
         }
       >
         {cfg.channels.length === 0 ? (
@@ -290,26 +285,57 @@ export function NotifyCard({
             ))}
           </div>
         )}
-        <DropdownListbox open={adding} onClose={() => setAdding(false)} triggerRef={addRef} label={t("notify.add")}>
-          {KINDS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              role="option"
-              aria-selected={false}
-              onClick={() => {
-                setAdding(false);
-                addChannel(kind);
-              }}
-              className="flex w-full items-center px-3 py-2 text-start text-sm text-carbon-textSub transition-colors hover:bg-hover hover:text-carbon-text"
-            >
-              <span className="truncate">{t(KIND_LABEL[kind])}</span>
-            </button>
-          ))}
-        </DropdownListbox>
+        {adding && (
+          <PickerWindow
+            title={t("notify.add")}
+            hint={t("notify.channelsHint")}
+            items={channelItems(t)}
+            text={{
+              search: t("notify.search"),
+              none: t("notify.noMatch"),
+              clear: t("settings.search.clear"),
+              close: t("common.close"),
+              cancel: t("common.cancel"),
+              back: t("common.back"),
+            }}
+            onPick={(kind) => {
+              setAdding(false);
+              addChannel(kind as NotifyKind);
+            }}
+            onClose={() => setAdding(false)}
+          />
+        )}
       </Card>
     </>
   );
+}
+
+// Unraid's tile colours, as .glim-tile-unraid has them.
+const UNRAID_TILE: TileMark = { svg: UNRAID_SVG, tile: "#f15a2c", ink: "#ffffff" };
+
+function channelMark(kind: NotifyKind): TileMark | ReactNode {
+  switch (kind) {
+    case "unraid":
+      return UNRAID_TILE;
+    case "smtp":
+      return <IconMail />;
+    case "webhook":
+      return <IconLink />;
+    default:
+      return SERVICE_MARKS[kind];
+  }
+}
+
+// The kinds as the add window's tiles. A webhook takes any address, so it
+// stands last.
+function channelItems(t: T): PickerItem[] {
+  return KINDS.map((kind) => ({
+    id: kind,
+    label: t(kind === "smtp" ? "notify.email" : KIND_LABEL[kind]),
+    sub: kind === "smtp" ? "SMTP" : undefined,
+    mark: channelMark(kind),
+    last: kind === "webhook",
+  }));
 }
 
 // The paths of the fields each kind draws. A problem on any other path is
