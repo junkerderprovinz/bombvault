@@ -97,8 +97,8 @@ describe("the Version card", () => {
     expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
   });
 
-  it("names GlimStone 4.5.6", () => {
-    expect(GLIMSTONE_VERSION).toBe("4.5.6");
+  it("names GlimStone 4.5.7", () => {
+    expect(GLIMSTONE_VERSION).toBe("4.5.7");
   });
 
   it("asks the server only when the button is pressed", async () => {
