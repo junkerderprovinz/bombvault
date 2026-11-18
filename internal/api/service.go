@@ -20068,15 +20068,19 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 	}
 	var c notify.Config
 	plain, err := s.openNotifyConf(settings.NotifyConf)
-	if err != nil || plain == nil {
+	if err != nil {
 		return c, err
 	}
-	if err := json.Unmarshal(plain, &c); err != nil {
-		return c, err
+	if plain != nil {
+		if err := json.Unmarshal(plain, &c); err != nil {
+			return c, err
+		}
 	}
 	if c.WantsUnraid() && s.unraidGate(true) {
 		c = c.WithUnraid(unraidRunner{s.ssh})
 	}
+	// A TollRoll sends for BombVault even where BombVault has no channel of
+	// its own.
 	if h := s.notifyHub(); h != nil {
 		c = c.WithHub(h)
 	}
