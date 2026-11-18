@@ -9591,6 +9591,14 @@ export function listHostSnapshots(wake = false): Promise<HostSnapshotList> {
   return fetchJSON(`/api/host-snapshots${wake ? "?wake=1" : ""}`);
 }
 
+// hostSnapRef is the name of a snapshot alone, since the server refuses a body
+// with fields it does not know and the page holds whole snapshots.
+function hostSnapRef(r: HostSnapRef): HostSnapRef {
+  const out: HostSnapRef = { kind: r.kind, source: r.source, name: r.name };
+  if (r.fs !== undefined) out.fs = r.fs;
+  return out;
+}
+
 function postHostSnap<T>(path: string, body: unknown): Promise<T> {
   return fetchKeyJSON(`/api/host-snapshots/${path}`, { method: "POST", body: JSON.stringify(body) });
 }
@@ -9606,29 +9614,29 @@ export function createHostSnapshot(src: {
 }
 
 export function renameHostSnapshot(ref: HostSnapRef, name: string): Promise<OkEnvelope> {
-  return postHostSnap("rename", { ref, name });
+  return postHostSnap("rename", { ref: hostSnapRef(ref), name });
 }
 
 export function holdHostSnapshot(ref: HostSnapRef, hold: boolean): Promise<OkEnvelope> {
-  return postHostSnap("hold", { ref, hold });
+  return postHostSnap("hold", { ref: hostSnapRef(ref), hold });
 }
 
 /** What deleting the ZFS snapshots among refs frees, as ZFS works it out. */
 export function estimateHostSnapshots(refs: HostSnapRef[]): Promise<OkEnvelope & { zfsBytes?: number }> {
-  return postHostSnap("estimate", { refs });
+  return postHostSnap("estimate", { refs: refs.map(hostSnapRef) });
 }
 
 export function deleteHostSnapshots(refs: HostSnapRef[]): Promise<OkEnvelope & { results?: HostSnapResult[] }> {
-  return postHostSnap("delete", { refs });
+  return postHostSnap("delete", { refs: refs.map(hostSnapRef) });
 }
 
 export function whereHostSnapshot(ref: HostSnapRef): Promise<OkEnvelope & { mounts?: HostSnapMount[] }> {
-  return postHostSnap("where", { ref });
+  return postHostSnap("where", { ref: hostSnapRef(ref) });
 }
 
 /** Unmounts a busy ZFS snapshot wherever it hangs, then deletes it. */
 export function freeHostSnapshot(ref: HostSnapRef): Promise<OkEnvelope & { mounts?: HostSnapMount[] }> {
-  return postHostSnap("free", { ref });
+  return postHostSnap("free", { ref: hostSnapRef(ref) });
 }
 
 export function addHostSnapshotPlan(plan: HostSnapPlanInput): Promise<OkEnvelope & { plan?: HostSnapPlan }> {
