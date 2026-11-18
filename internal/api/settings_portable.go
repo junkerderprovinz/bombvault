@@ -973,7 +973,7 @@ func settingsGroups(v settingsView) []string {
 		v.OffsiteRetentionKeepLast > 0 || v.OffsiteRetentionKeepDaily > 0 || v.OffsiteRetentionKeepWeekly > 0 || v.OffsiteRetentionKeepMonthly > 0 ||
 		v.OffsiteRetentionKeepYearly > 0 || len(v.OwnRetention) > 0 || len(v.OwnOffsiteRetention) > 0)
 	add("offsite", v.ContainersOffsite != "" || v.VMsOffsite != "" || v.FlashOffsite != "" || v.ConfigOffsite != "" ||
-		v.FilesOffsite != "" || v.ZFSOffsite != "")
+		v.FilesOffsite != "" || v.ZFSOffsite != "" || (v.NoOffsiteByChoice != nil && *v.NoOffsiteByChoice))
 	add("drills", v.DrillsEnabled || v.DrillsSchedule != "" || v.OffsiteDrillsEnabled || v.StartTestEnabled)
 	add("digest", v.DigestEnabled || v.DigestSchedule != "")
 	add("monitoring", v.MetricsEnabled || v.WidgetTokenSet)
@@ -1648,6 +1648,9 @@ func mergeImportedSettings(existing store.Settings, v settingsView) store.Settin
 	}
 	if v.AppImportEnabled != nil {
 		out.AppImportEnabled = *v.AppImportEnabled
+	}
+	if v.NoOffsiteByChoice != nil {
+		out.NoOffsiteByChoice = *v.NoOffsiteByChoice
 	}
 	// Same contract as the dump switch, and the same reason: a file written
 	// before this version carries none of the four, and reading that as "off"

@@ -2593,6 +2593,9 @@ type settingsView struct {
 	// AppImportEnabled lets a person give an app its own backup back. A pointer
 	// like DBDumpsEnabled: a body or a file without it keeps the stored value.
 	AppImportEnabled *bool `json:"appImportEnabled"`
+	// NoOffsiteByChoice says every backup stays on the premises on purpose. A
+	// pointer like DBDumpsEnabled, for the same reason.
+	NoOffsiteByChoice *bool `json:"noOffsiteByChoice"`
 	// Anomaly detection over the backup history: the switch, the preset every
 	// item follows, the severity from which a finding is pushed, and the pause
 	// on deleting old backups after a loss of data. The two switches are
@@ -2742,6 +2745,7 @@ func toView(s store.Settings) settingsView {
 		PullEnabled:                 s.PullEnabled,
 		DBDumpsEnabled:              &s.DBDumpsEnabled,
 		AppImportEnabled:            &s.AppImportEnabled,
+		NoOffsiteByChoice:           &s.NoOffsiteByChoice,
 		AnomalyEnabled:              &s.AnomalyEnabled,
 		AnomalySensitivity:          s.AnomalySensitivity,
 		AnomalyNotifyMin:            s.AnomalyNotifyMin,
@@ -3409,6 +3413,9 @@ func (h *Handler) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		if v.AppImportEnabled != nil {
 			cur.AppImportEnabled = *v.AppImportEnabled
+		}
+		if v.NoOffsiteByChoice != nil {
+			cur.NoOffsiteByChoice = *v.NoOffsiteByChoice
 		}
 		anomalyChanged = applyAnomalySettings(cur, v)
 		nameChanged = cur.InstanceName != strings.TrimSpace(v.InstanceName)

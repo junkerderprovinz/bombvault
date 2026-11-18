@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // An instance's scorecard says what the overview of that instance says about
 // delete protection: an accepted gap is protected with the risk accepted, and
-// a gap that turns a section amber is named under it.
+// a gap that turns a section amber is named under it. A section kept on the
+// premises by choice reads as protected here.
 import { afterEach, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
@@ -28,6 +29,12 @@ it("calls a section protected with the risk accepted when its only gap was accep
 
   expect(row("containers").getByText(en["ransomware.protAccepted"])).toBeTruthy();
   expect(row("zfs").getByText(en["fleet.protection.green"])).toBeTruthy();
+});
+
+it("calls a section kept on the premises by choice protected here", () => {
+  show([domain({ offsiteConfigured: false, noOffsiteByChoice: true, protection: "green" })]);
+
+  expect(row("containers").getByText(en["ransomware.protByChoice"])).toBeTruthy();
 });
 
 it("names the delete protection gap under an amber section", () => {

@@ -61,6 +61,18 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.2",
+    changes: [
+      {
+        id: "settings-no-offsite",
+        page: "/settings/storage",
+        where: ["nav.settings", "storage.title"],
+        way: ["/settings", "/settings/storage"],
+        text: "whatsNew.noOffsite",
+      },
+    ],
+  },
+  {
     version: "10.6.0",
     changes: [
       // The fortress shows on the Pairing page once it has loaded. The apps'

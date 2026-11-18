@@ -102,6 +102,29 @@ func TestTheSwitchForGivingBackupsBackIsKept(t *testing.T) {
 	}
 }
 
+func TestNoOffsiteByChoiceStartsOffAndIsKept(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	st := store.New(db)
+	if s, err := st.GetSettings(); err != nil || s.NoOffsiteByChoice {
+		t.Fatalf("settings = %v with %v, want the switch off", s.NoOffsiteByChoice, err)
+	}
+	if _, err := st.MutateSettings(func(s *store.Settings) error { s.NoOffsiteByChoice = true; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if s, err := st.GetSettings(); err != nil || !s.NoOffsiteByChoice {
+		t.Fatalf("settings = %v with %v, want the switch on", s.NoOffsiteByChoice, err)
+	}
+	if _, err := db.Exec(`DELETE FROM schema_migrations WHERE name = 'settings_no_offsite_by_choice'`); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Migrate(db); err != nil {
+		t.Fatalf("migrate over the existing column: %v", err)
+	}
+}
+
 func TestMigrateAddsZFSSettingsColumnsWithDefaults(t *testing.T) {
 	db := store.OpenMem(t)
 	if err := store.Migrate(db); err != nil {

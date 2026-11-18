@@ -16,6 +16,7 @@ func TestProtectionLevel(t *testing.T) {
 	}{
 		{"disabled → empty", protInputs{enabled: false, offsiteConfigured: true}, ""},
 		{"enabled, no off-site → red", protInputs{enabled: true, offsiteConfigured: false}, "red"},
+		{"no off-site by choice → green", protInputs{enabled: true, noOffsiteByChoice: true}, "green"},
 		{"immutable, no tamper yet → red", protInputs{
 			enabled: true, offsiteConfigured: true, offsiteImmutable: true, tamperPeriod: week,
 		}, "red"},

@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 
-import type { StorageLocation, StreamingSettings } from "../lib/api";
+import type { Settings, StorageLocation, StreamingSettings } from "../lib/api";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
 
@@ -26,13 +26,39 @@ class NoopEventSource {
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
-  return { ...actual, listStorageLocations: vi.fn(), getStreaming: vi.fn(), setStreaming: vi.fn() };
+  return {
+    ...actual,
+    listStorageLocations: vi.fn(),
+    getStreaming: vi.fn(),
+    setStreaming: vi.fn(),
+    getSettings: vi.fn(),
+    listOffsiteTargets: vi.fn(),
+  };
 });
 
 const api = await import("../lib/api");
 const listStorageLocations = vi.mocked(api.listStorageLocations);
 const getStreaming = vi.mocked(api.getStreaming);
 const setStreaming = vi.mocked(api.setStreaming);
+const getSettings = vi.mocked(api.getSettings);
+const listOffsiteTargets = vi.mocked(api.listOffsiteTargets);
+
+function settingsAnswer(over: Partial<Settings> = {}) {
+  return { ok: true, settings: settings(over), hostMountRoot: "" };
+}
+
+function settings(over: Partial<Settings> = {}): Settings {
+  return {
+    containersOffsite: "",
+    vmsOffsite: "",
+    flashOffsite: "",
+    filesOffsite: "",
+    zfsOffsite: "",
+    configOffsite: "",
+    noOffsiteByChoice: false,
+    ...over,
+  } as unknown as Settings;
+}
 
 const { StoragePage } = await import("./Storage");
 
@@ -111,6 +137,8 @@ beforeEach(() => {
   localStorage.clear();
   getStreaming.mockResolvedValue({ ok: true, settings: STREAMING, candidates: [], streaming: "" });
   setStreaming.mockResolvedValue({ ok: true });
+  getSettings.mockResolvedValue(settingsAnswer());
+  listOffsiteTargets.mockResolvedValue({ ok: true, targets: [] });
 });
 
 afterEach(() => {
@@ -266,6 +294,28 @@ describe("streaming", () => {
     await waitFor(() => expect(setStreaming).toHaveBeenCalledWith({ ...STREAMING, enabled: true }));
     expect(screen.getByText("Media servers")).toBeTruthy();
     expect(screen.getByText("Stream above (Mbit/s)")).toBeTruthy();
+  });
+
+  it("leaves the card out while every backup stays on the premises by choice", async () => {
+    getSettings.mockResolvedValue(settingsAnswer({ noOffsiteByChoice: true }));
+    await renderPage();
+
+    expect(screen.queryByRole("switch", { name: "Slow off-site copies while streaming" })).toBeNull();
+    expect(screen.queryByText("Streaming")).toBeNull();
+  });
+
+  it("shows the card once a section copies off-site, where the choice does not count", async () => {
+    getSettings.mockResolvedValue(settingsAnswer({ noOffsiteByChoice: true, filesOffsite: "rest:http://box:8000/files" }));
+    await renderPage();
+
+    expect(screen.getByRole("switch", { name: "Slow off-site copies while streaming" })).toBeTruthy();
+  });
+
+  it("shows the card when the settings cannot be read", async () => {
+    getSettings.mockRejectedValue(new Error("offline"));
+    await renderPage();
+
+    expect(screen.getByRole("switch", { name: "Slow off-site copies while streaming" })).toBeTruthy();
   });
 
   it("leaves the card out when its settings cannot be read", async () => {

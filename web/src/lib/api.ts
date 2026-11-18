@@ -231,6 +231,9 @@ export interface Settings {
   /** Giving an app in the fortress its own backup back, which replaces what
    *  the app holds. */
   appImportEnabled: boolean;
+  /** Every backup stays on the premises on purpose. It counts only while no
+   *  section copies off-site. */
+  noOffsiteByChoice: boolean;
   /** Anomaly detection over the backup history, the preset every item follows
    *  unless it carries its own, the severity from which a finding is pushed,
    *  and whether a finding that means data was lost pauses the deletion of old
@@ -638,6 +641,9 @@ export interface DomainStatus {
   /** Every copy without delete protection goes to a storage location where
    *  that was accepted. */
   deleteRiskAccepted?: boolean;
+  /** There is no copy off the premises because the user keeps every backup
+   *  here, and no section copies off-site. */
+  noOffsiteByChoice?: boolean;
   replicationState: string; // "" | "never" | "overdue" | "ok" | "paused"
   drillState: string; // "" | "never" | "failed" | "overdue" | "ok"
   encryptionOn: boolean; // repo encryption is enabled
