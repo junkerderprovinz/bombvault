@@ -2068,6 +2068,8 @@ const nl: Partial<Translations> = {
   // De eigen snapshots van de server (ZFS, btrfs, VM's), geen back-ups.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "De snapshots die je server zelf bijhoudt: ZFS-, btrfs- en VM-snapshots. Ze staan vlak naast je data, dus ze zijn snel gemaakt en snel teruggezet. Ze gaan ook verloren met de schijf, en daarom zijn ze geen back-up.",
+  "hostSnap.versusBackup": "Een snapshot legt de stand vast op dezelfde schijf: hij is er meteen en neemt nauwelijks ruimte in, maar verdwijnt met de schijf. Een back-up is een kopie ergens anders.",
+  "hostSnap.bare.title": "nog zonder snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

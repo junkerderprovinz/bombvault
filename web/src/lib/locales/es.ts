@@ -2067,6 +2067,8 @@ const es: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Instantáneas",
   "hostSnap.intro": "Las instantáneas que tu servidor guarda por sí mismo: instantáneas de ZFS, btrfs y VM. Están justo al lado de tus datos, así que se crean rápido y se vuelve a ellas rápido. También se pierden con el disco, por eso no son una copia de seguridad.",
+  "hostSnap.versusBackup": "Una instantánea guarda el estado en el mismo disco: está lista al momento y apenas ocupa espacio, pero se pierde con el disco. Una copia de seguridad es una copia en otro lugar.",
+  "hostSnap.bare.title": "todavía sin instantánea",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

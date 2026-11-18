@@ -2616,6 +2616,8 @@ const bg: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Моментни снимки",
   "hostSnap.intro": "Моментните снимки, които сървърът ти пази сам: на ZFS, btrfs и VM. Стоят точно до данните ти, затова се правят бързо и бързо се връщаш към тях. Но изчезват заедно с диска, затова не са архив.",
+  "hostSnap.versusBackup": "Моментната снимка запазва състоянието на същия диск: готова е веднага и почти не заема място, но изчезва заедно с диска. Архивът е копие на друго място.",
+  "hostSnap.bare.title": "още без моментна снимка",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

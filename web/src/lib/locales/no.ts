@@ -2069,6 +2069,8 @@ const no: Partial<Translations> = {
   // Serverens egne øyeblikksbilder (ZFS, btrfs, VM-er), ikke sikkerhetskopier.
   "hostSnap.title": "Øyeblikksbilder",
   "hostSnap.intro": "Øyeblikksbildene serveren din tar vare på selv: ZFS-, btrfs- og VM-øyeblikksbilder. De ligger rett ved siden av dataene dine, så de er raske å ta og raske å gå tilbake til. De forsvinner også sammen med disken, og derfor er de ingen sikkerhetskopi.",
+  "hostSnap.versusBackup": "Et øyeblikksbilde holder fast tilstanden på samme disk: det er der med en gang og tar nesten ikke plass, men det forsvinner sammen med disken. En sikkerhetskopi er en kopi et annet sted.",
+  "hostSnap.bare.title": "ennå uten øyeblikksbilde",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

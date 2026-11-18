@@ -2060,6 +2060,8 @@ const ko: Partial<Translations> = {
   // 서버 자체의 스냅샷(ZFS, btrfs, VM)이며 백업이 아닙니다.
   "hostSnap.title": "스냅샷",
   "hostSnap.intro": "서버가 스스로 보관하는 스냅샷입니다. ZFS, btrfs, VM 스냅샷이 여기에 해당합니다. 데이터 바로 옆에 있어서 빨리 만들고 빨리 되돌릴 수 있습니다. 하지만 디스크와 함께 사라지므로 백업이 되지는 않습니다.",
+  "hostSnap.versusBackup": "스냅샷은 같은 디스크에 지금 상태를 남겨 두는 것으로, 바로 만들어지고 공간도 거의 차지하지 않지만 디스크와 함께 사라집니다. 백업은 다른 곳에 있는 복사본입니다.",
+  "hostSnap.bare.title": "아직 스냅샷 없음",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

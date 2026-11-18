@@ -2060,6 +2060,8 @@ const ja: Partial<Translations> = {
   // サーバー自身のスナップショット（ZFS、btrfs、VM）。バックアップではありません。
   "hostSnap.title": "スナップショット",
   "hostSnap.intro": "サーバーが自分で保持しているスナップショットです。ZFS、btrfs、VM のスナップショットがあります。データのすぐ隣にあるので、すばやく作成でき、すばやく戻せます。ただしディスクと一緒に失われるので、バックアップにはなりません。",
+  "hostSnap.versusBackup": "スナップショットは同じディスク上に今の状態を残すもので、すぐに使えて容量もほとんど取りませんが、ディスクと一緒に失われます。バックアップは別の場所に置いたコピーです。",
+  "hostSnap.bare.title": "まだスナップショットなし",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

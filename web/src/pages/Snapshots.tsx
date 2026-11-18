@@ -25,6 +25,7 @@ import {
 } from "../lib/api";
 import { humanBytes } from "../lib/forecast";
 import {
+  bareSources,
   codeKey,
   freedEstimate,
   groupSnapshots,
@@ -183,6 +184,7 @@ export function Snapshots() {
 
   const snapshots = useMemo(() => list?.snapshots ?? [], [list]);
   const groups = useMemo(() => groupSnapshots(snapshots), [snapshots]);
+  const bare = useMemo(() => bareSources(list?.sources ?? [], snapshots), [list, snapshots]);
   const plans = list?.plans ?? [];
   const pools = list?.pools ?? [];
   const states = kindStates(list?.kinds);
@@ -262,6 +264,7 @@ export function Snapshots() {
   return (
     <div className={PAGE_SHELL}>
       <PageTitle>{t("hostSnap.title")}</PageTitle>
+      <Note>{t("hostSnap.versusBackup")}</Note>
 
       {failed && <Note tone="fail">{t("hostSnap.code.failed")}</Note>}
       {states.noHost && (
@@ -352,6 +355,37 @@ export function Snapshots() {
         );
       })}
 
+
+      {bare.map((g) => {
+        const title = `${t(KIND_LABEL[g.kind])}: ${t("hostSnap.bare.title")}`;
+        return (
+          <Card key={`bare-${g.kind}`} title={title} hueIndex={nextHue()}>
+            <Rows as="ul" label={title}>
+              {g.sources.map((src) => {
+                const key = sourceKey(src.kind, src.fs, src.source);
+                return (
+                  <li key={key} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 text-xs first:pt-0 last:pb-0">
+                    <span dir="ltr" className="min-w-0 flex-1 font-mono text-carbon-text wrap-anywhere">
+                      {sourceLabel(src.kind, src.fs, src.source, t)}
+                    </span>
+                    {src.canCreate ? (
+                      <Button
+                        label={t("hostSnap.create.title")}
+                        labelKey="hostSnap.create.title"
+                        glyph={<IconAdd />}
+                        tone="subtle"
+                        onClick={() => setOpen({ kind: "create", preset: key })}
+                      />
+                    ) : (
+                      <span className="text-carbon-textMuted">{t(codeKey(src.reason))}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </Rows>
+          </Card>
+        );
+      })}
       {(list?.hiddenSystem ?? 0) > 0 && (
         <p className="text-xs text-carbon-textMuted">{t("hostSnap.hiddenSystem", list?.hiddenSystem ?? 0)}</p>
       )}

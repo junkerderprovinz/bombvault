@@ -2616,6 +2616,8 @@ const is: Partial<Translations> = {
   // Eigin skyndimyndir þjónsins (ZFS, btrfs, VM), ekki afrit.
   "hostSnap.title": "Skyndimyndir",
   "hostSnap.intro": "Skyndimyndirnar sem þjónninn þinn geymir sjálfur: ZFS-, btrfs- og VM-skyndimyndir. Þær liggja rétt við hliðina á gögnunum þínum, svo það er fljótlegt að taka þær og fljótlegt að fara aftur til þeirra. Þær hverfa líka með disknum og þess vegna eru þær ekki afrit.",
+  "hostSnap.versusBackup": "Skyndimynd festir stöðuna á sama diski: hún er til strax og tekur varla neitt pláss, en hún hverfur með disknum. Afrit er eintak á öðrum stað.",
+  "hostSnap.bare.title": "engin skyndimynd enn",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

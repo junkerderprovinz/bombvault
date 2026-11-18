@@ -61,21 +61,24 @@ export function CreateWindow({
     [sources, t]
   );
   const [picked, setPicked] = useState(preset ?? options[0]?.value ?? "");
-  const [name, setName] = useState(() => defaultName(new Date()));
+  // An empty name takes the one offered as its placeholder.
+  const [name, setName] = useState("");
+  const [fallback] = useState(() => defaultName(new Date()));
+  const chosen = name || fallback;
   const [recursive, setRecursive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [refusal, setRefusal] = useState<{ text: string; detail?: string } | null>(null);
   const src = options.find((o) => o.value === picked)?.src;
-  const ok = !!src && validName(name);
+  const ok = !!src && validName(chosen);
 
   async function take() {
     if (!src || !ok) return;
     setBusy(true);
     setRefusal(null);
     try {
-      const res = await createHostSnapshot({ kind: src.kind, fs: src.fs, source: src.source, name, recursive: recursive && src.kind === "zfs" });
+      const res = await createHostSnapshot({ kind: src.kind, fs: src.fs, source: src.source, name: chosen, recursive: recursive && src.kind === "zfs" });
       if (res.ok) {
-        onDone(name);
+        onDone(chosen);
         return;
       }
       if (!ownLogin.handled(res)) setRefusal({ text: t(codeKey(res.code)), detail: res.error });
@@ -107,7 +110,7 @@ export function CreateWindow({
     >
       <Rows>
         <SettingRow label={t("hostSnap.create.source")}>
-          <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap />
+          <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap className={FIELD} />
         </SettingRow>
         <SettingRow label={t("hostSnap.create.name")} htmlFor="host-snap-name">
           <input
@@ -115,6 +118,7 @@ export function CreateWindow({
             type="text"
             dir="ltr"
             value={name}
+            placeholder={fallback}
             spellCheck={false}
             onChange={(e) => setName(e.target.value.trim())}
             onKeyDown={(e) => {
@@ -124,7 +128,7 @@ export function CreateWindow({
           />
         </SettingRow>
       </Rows>
-      {!validName(name) && <Note tone="warn">{t("hostSnap.nameHint")}</Note>}
+      {!validName(chosen) && <Note tone="warn">{t("hostSnap.nameHint")}</Note>}
       {src?.kind === "zfs" && (
         <Checkbox checked={recursive} onChange={setRecursive} label={t("hostSnap.create.recursive")} />
       )}

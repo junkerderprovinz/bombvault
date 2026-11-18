@@ -7,6 +7,7 @@ import {
   groupSnapshots,
   kindStates,
   needsQcow2,
+  bareSources,
   planOf,
   sleepingPools,
   sourceLabel,
@@ -123,5 +124,30 @@ describe("needsQcow2", () => {
       reason,
     });
     expect(needsQcow2([src("vm", "win11", "needs-qcow2"), src("vm", "debian"), src("zfs", "tank")])).toEqual(["win11"]);
+  });
+});
+
+describe("bareSources", () => {
+  it("lists what has no snapshot yet, each kind apart, and leaves out what has one", () => {
+    const src = (kind: "zfs" | "btrfs" | "vm", source: string, fs?: string, reason?: string) => ({
+      kind,
+      fs,
+      source,
+      group: "",
+      usedBytes: -1,
+      newSinceLatestBytes: -1,
+      canRecursive: false,
+      canCreate: !reason,
+      reason,
+    });
+    const groups = bareSources(
+      [src("zfs", "tank"), src("zfs", "tank/apps"), src("vm", "win11", undefined, "needs-qcow2"), src("btrfs", "", "/mnt/cache")],
+      [snap({ source: "tank/apps" })],
+    );
+    expect(groups.map((g) => [g.kind, g.sources.map((s) => s.source)])).toEqual([
+      ["zfs", ["tank"]],
+      ["btrfs", [""]],
+      ["vm", ["win11"]],
+    ]);
   });
 });

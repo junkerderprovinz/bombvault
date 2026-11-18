@@ -2616,6 +2616,8 @@ const sk: Partial<Translations> = {
   // Vlastné snímky servera (ZFS, btrfs, VM), nie zálohy.
   "hostSnap.title": "Snímky",
   "hostSnap.intro": "Snímky, ktoré si tvoj server drží sám: snímky ZFS, btrfs a VM. Ležia hneď vedľa tvojich dát, takže sa rýchlo robia a rýchlo sa k nim vrátiš. S diskom však zmiznú aj ony, preto nie sú zálohou.",
+  "hostSnap.versusBackup": "Snímka zachytí stav na tom istom disku: je hneď k dispozícii a takmer nezaberá miesto, ale s diskom zmizne aj ona. Záloha je kópia na inom mieste.",
+  "hostSnap.bare.title": "zatiaľ bez snímky",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

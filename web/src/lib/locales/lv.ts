@@ -2616,6 +2616,8 @@ const lv: Partial<Translations> = {
   // Servera paša momentuzņēmumi (ZFS, btrfs, VM), nevis rezerves kopijas.
   "hostSnap.title": "Momentuzņēmumi",
   "hostSnap.intro": "Momentuzņēmumi, ko serveris glabā pats: ZFS, btrfs un VM momentuzņēmumi. Tie atrodas tieši blakus jūsu datiem, tāpēc tos var ātri izveidot un pie tiem ātri atgriezties. Taču tie pazūd kopā ar disku, tāpēc tie nav rezerves kopija.",
+  "hostSnap.versusBackup": "Momentuzņēmums saglabā stāvokli tajā pašā diskā: tas ir uzreiz pieejams un gandrīz neaizņem vietu, taču pazūd kopā ar disku. Rezerves kopija ir kopija kādā citā vietā.",
+  "hostSnap.bare.title": "vēl bez momentuzņēmuma",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

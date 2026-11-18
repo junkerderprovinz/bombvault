@@ -2069,6 +2069,8 @@ const fr: Partial<Translations> = {
   // Les instantanés propres au serveur (ZFS, btrfs, VM), pas des sauvegardes.
   "hostSnap.title": "Instantanés",
   "hostSnap.intro": "Les instantanés que votre serveur garde lui-même : instantanés ZFS, btrfs et de VM. Ils se trouvent juste à côté de vos données, ils se prennent donc vite et on y revient vite. Mais ils disparaissent aussi avec le disque, c'est pourquoi ce ne sont pas des sauvegardes.",
+  "hostSnap.versusBackup": "Un instantané fige l'état sur le même disque : il est là tout de suite et ne prend presque pas de place, mais il disparaît avec le disque. Une sauvegarde est une copie ailleurs.",
+  "hostSnap.bare.title": "pas encore d'instantané",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

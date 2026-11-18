@@ -2069,6 +2069,8 @@ const he: Partial<Translations> = {
   // התצלומים של השרת עצמו (ZFS, btrfs, VM), לא גיבויים.
   "hostSnap.title": "תצלומים",
   "hostSnap.intro": "התצלומים שהשרת שומר בעצמו: תצלומי ZFS, btrfs ו-VM. הם נמצאים ממש ליד הנתונים, ולכן מהיר ליצור אותם ומהיר לחזור אליהם. הם גם הולכים לאיבוד יחד עם הדיסק, ולכן הם לא גיבוי.",
+  "hostSnap.versusBackup": "תצלום שומר את המצב על אותו דיסק: הוא זמין מיד וכמעט לא תופס מקום, אבל הולך לאיבוד יחד עם הדיסק. גיבוי הוא עותק במקום אחר.",
+  "hostSnap.bare.title": "עדיין בלי תצלום",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

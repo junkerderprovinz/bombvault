@@ -2616,6 +2616,8 @@ const fa: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "عکس‌های لحظه‌ای",
   "hostSnap.intro": "عکس‌های لحظه‌ای که سرورت خودش نگه می‌دارد: عکس‌های لحظه‌ای ZFS، btrfs و VM. درست کنار داده‌هایت هستند، پس زود گرفته می‌شوند و زود می‌شود به آنها برگشت. ولی همراه دیسک از بین می‌روند و برای همین پشتیبان نیستند.",
+  "hostSnap.versusBackup": "عکس لحظه‌ای وضعیت را روی همان دیسک نگه می‌دارد: فوراً آماده است و تقریباً جایی نمی‌گیرد، ولی همراه دیسک از بین می‌رود. پشتیبان نسخه‌ای در جای دیگری است.",
+  "hostSnap.bare.title": "هنوز بدون عکس لحظه‌ای",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

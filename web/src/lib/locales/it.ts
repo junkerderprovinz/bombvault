@@ -2069,6 +2069,8 @@ const it: Partial<Translations> = {
   // Gli snapshot propri del server (ZFS, btrfs, VM), non backup.
   "hostSnap.title": "Snapshot",
   "hostSnap.intro": "Gli snapshot che il tuo server tiene da sé: snapshot ZFS, btrfs e delle VM. Stanno proprio accanto ai tuoi dati, quindi si creano in fretta e ci si torna in fretta. Ma spariscono anche insieme al disco, ed è per questo che non sono un backup.",
+  "hostSnap.versusBackup": "Uno snapshot fissa lo stato sullo stesso disco: c'è subito e non occupa quasi spazio, ma sparisce insieme al disco. Un backup è una copia da un'altra parte.",
+  "hostSnap.bare.title": "ancora nessuno snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",
