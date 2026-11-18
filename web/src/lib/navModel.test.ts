@@ -18,10 +18,10 @@ import type { NavPins } from "./navPins";
 // The registry reads one settings field. The pins decide the other two gates.
 const DETECTION_OFF = { anomalyEnabled: false } as Settings;
 const DETECTION_ON = { anomalyEnabled: true } as Settings;
-const UNPINNED: NavPins = { storage: false, instances: false };
-const PINNED: NavPins = { storage: true, instances: true };
+const UNPINNED: NavPins = { storage: false, instances: false, snapshots: false };
+const PINNED: NavPins = { storage: true, instances: true, snapshots: true };
 
-const ORDER = ["/dashboard", "/anomalies", "/backups", "/restore", "/storage", "/instances", "/settings"];
+const ORDER = ["/dashboard", "/anomalies", "/backups", "/restore", "/storage", "/instances", "/snapshots", "/settings"];
 const BAR = ["/dashboard", "/backups", "/restore", "/settings"];
 
 const routes = (list: NavDestination[]) => list.map((d) => d.to);
@@ -59,9 +59,9 @@ describe("destinations, the one ordered registry", () => {
     }
   });
 
-  it("reads Overview, Anomalies, Backups, Restore, Storage locations, Instances, Settings in English", () => {
+  it("reads Overview, Anomalies, Backups, Restore, Storage locations, Instances, Snapshots, Settings in English", () => {
     const labels = destinations(DETECTION_ON, PINNED).map((d) => en[d.labelKey]);
-    expect(labels).toEqual(["Overview", "Anomalies", "Backups", "Restore", "Storage locations", "Instances", "Settings"]);
+    expect(labels).toEqual(["Overview", "Anomalies", "Backups", "Restore", "Storage locations", "Instances", "Snapshots", "Settings"]);
   });
 
   it("puts only Settings at the foot of the sidebar, as the last entry", () => {
@@ -111,6 +111,12 @@ describe("each gate flips exactly its own entry", () => {
     expect(changed(after)).toEqual(["/instances"]);
     expect(after.find((d) => d.to === "/instances")).toMatchObject({ sidebar: true, phone: true });
   });
+
+  it("pinning Snapshots shows them in the sidebar and on a phone", () => {
+    const after = destinations(DETECTION_OFF, { ...UNPINNED, snapshots: true });
+    expect(changed(after)).toEqual(["/snapshots"]);
+    expect(after.find((d) => d.to === "/snapshots")).toMatchObject({ sidebar: true, phone: true });
+  });
 });
 
 describe("sidebarDestinations, the rail's rows", () => {
@@ -123,7 +129,7 @@ describe("sidebarDestinations, the rail's rows", () => {
       "/restore",
       "/settings",
     ]);
-    expect(routes(sidebarDestinations(DETECTION_OFF, { storage: true, instances: false }))).toEqual([
+    expect(routes(sidebarDestinations(DETECTION_OFF, { storage: true, instances: false, snapshots: false }))).toEqual([
       "/dashboard",
       "/backups",
       "/restore",
@@ -144,7 +150,7 @@ describe("barDestinations, the bottom bar's slots", () => {
 describe("moreDestinations, the More sheet's rows", () => {
   it("holds every phone entry without a slot, in sidebar order", () => {
     const more = routes(moreDestinations(DETECTION_ON, PINNED));
-    expect(more).toEqual(["/anomalies", "/storage", "/instances"]);
+    expect(more).toEqual(["/anomalies", "/storage", "/instances", "/snapshots"]);
     for (const slot of BAR) expect(more, `${slot} has a slot in the bar`).not.toContain(slot);
   });
 
@@ -156,7 +162,7 @@ describe("moreDestinations, the More sheet's rows", () => {
     const before = routes(moreDestinations(DETECTION_OFF, UNPINNED));
     const after = routes(moreDestinations(DETECTION_OFF, PINNED));
     expect(after.filter((r) => before.includes(r))).toEqual(before);
-    expect(after).toEqual(["/storage", "/instances"]);
+    expect(after).toEqual(["/storage", "/instances", "/snapshots"]);
   });
 
   it("splits the phone entries with the bar and loses none", () => {

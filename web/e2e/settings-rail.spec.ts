@@ -42,7 +42,7 @@ test("settings @ 1280px: the rail is a column beside the page", async ({ page },
   await openSettings(page, 1280, "general");
   const at = await layout(page);
   expect(at.columns, "tiles side by side").toBe(1);
-  expect(at.rows, "a row per page").toBe(14);
+  expect(at.rows, "a row per page").toBe(15);
   expect(at.above).toBe(false);
   expect(at.docPan).toBeLessThanOrEqual(1);
   expect(at.mainPan).toBeLessThanOrEqual(1);

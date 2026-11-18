@@ -74,6 +74,19 @@ type Config struct {
 	NotifyOnUpdate bool `json:"notifyOnUpdate"`
 
 	unraid kit.Runner
+	hub    Hub
+}
+
+// Hub is another app of the fortress that sends messages for BombVault.
+// Deliver reports whether it took e; when it did not, the channels send it.
+type Hub interface {
+	Deliver(ctx context.Context, e kit.Event) bool
+}
+
+// WithHub returns c with a hub that is offered every message first.
+func (c Config) WithHub(h Hub) Config {
+	c.hub = h
+	return c
 }
 
 // channelForm is Config without its methods, so decoding into it neither
@@ -150,9 +163,12 @@ func (c Config) WantsUnraid() bool {
 	return false
 }
 
-// Active reports whether any channel hears anything: one that is on, can be
-// reached and does not say never.
+// Active reports whether anything hears BombVault: a hub, or a channel that is
+// on, can be reached and does not say never.
 func (c Config) Active() bool {
+	if c.hub != nil {
+		return true
+	}
 	for _, ch := range c.usable() {
 		if ch.On != kit.OnNever {
 			return true
@@ -164,12 +180,16 @@ func (c Config) Active() bool {
 // TakesMessages reports whether a channel carries messages, which a
 // Healthchecks check does not.
 func (c Config) TakesMessages() bool {
-	return len(c.messageChannels()) > 0
+	return c.hub != nil || len(c.messageChannels()) > 0
 }
 
-// Carries reports whether a channel's policy takes ev, so a message that went
-// nowhere can tell a channel that failed from one that never wanted it.
+// Carries reports whether a hub or a channel's policy takes ev, so a message
+// that went nowhere can tell a channel that failed from one that never wanted
+// it. A hub hears successes too, since they close what a failure opened.
 func (c Config) Carries(ev Event) bool {
+	if c.hub != nil {
+		return true
+	}
 	for _, ch := range c.messageChannels() {
 		if ch.On == kit.OnAlways || ev.severity() != kit.SeveritySuccess {
 			return true
@@ -243,6 +263,9 @@ type Event struct {
 	// CheckHeld names a failure a success must not hide on the health check it
 	// shares with other backups. The check then hears this instead of a success.
 	CheckHeld string
+	// Key names what the message is about, such as one container, so a hub
+	// sends a failure once and lets a success with the same key close it.
+	Key string
 }
 
 func (ev Event) severity() kit.Severity {
@@ -283,15 +306,23 @@ func Send(ctx context.Context, c Config, domain string, ev Event) bool {
 	delivered := false
 	// In summary mode Service.ScheduledNotifyResult reports the item instead.
 	folded := ev.ItemResult && MessagesSuppressed(ctx) && c.ScheduledSummary
-	if channels := c.messageChannels(); !folded && len(channels) > 0 {
+	e := kit.Event{
+		Kind:     ev.kind(key),
+		Severity: ev.severity(),
+		Title:    redact.Credentials(ev.Title),
+		Body:     redact.Credentials(ev.Message),
+		Key:      key,
+	}
+	if !folded && c.hub != nil {
+		// The hub names the app in front of the title itself, and keys the
+		// message by what it is about rather than by the domain's check.
+		h := e
+		h.Title, h.Key = strings.TrimPrefix(e.Title, source+": "), ev.Key
+		delivered = c.hub.Deliver(ctx, h)
+	}
+	if channels := c.messageChannels(); !folded && !delivered && len(channels) > 0 {
 		if d := c.dispatcher(channels); d != nil {
-			delivered = logged(d.Send(ctx, kit.Event{
-				Kind:     ev.kind(key),
-				Severity: ev.severity(),
-				Title:    redact.Credentials(ev.Title),
-				Body:     redact.Credentials(ev.Message),
-				Key:      key,
-			}))
+			delivered = logged(d.Send(ctx, e))
 		}
 	}
 	if !healthchecksSuppressed(ctx) {

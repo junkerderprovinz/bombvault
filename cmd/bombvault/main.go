@@ -22,6 +22,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/backup"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/hostsnap"
 	"github.com/junkerderprovinz/bombvault/internal/logring"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
@@ -357,6 +358,7 @@ func run() error {
 	svc.SetResticCacheDir(resticCacheDir)
 	svc.SetHostSSH(sc)                 // NVRAM transfer over SSH + the Settings key/test endpoints
 	svc.SetZFSHost(zfs.NewSSHHost(sc)) // same connection: snapshots and dataset listings for the ZFS domain
+	svc.SetHostSnapshots(hostsnap.New(sc, vc))
 	// Live backup/restore progress: the service publishes percentages here and the
 	// SSE endpoint (/api/progress) streams them to the SPA's per-card bars.
 	prog := progress.NewStore()
@@ -694,6 +696,8 @@ func run() error {
 	// Backups deferred while their app was busy, also those a restart cut
 	// short, are tried again from here on.
 	svc.StartDeferrals()
+	// Snapshot plans take and prune the server's own snapshots on their cadence.
+	svc.StartHostSnapshotPlans(ctx)
 
 	server := api.NewServer(cfg, web.DistFS(), handler.Router(), handler.FortressTabs())
 	svc.ServePhonePages(server.Handler())

@@ -401,6 +401,22 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
     },
   ],
 
+  snapshots: [
+    {
+      title: "settings.labels.sidebar",
+      rows: [{ key: "tile.sidebar.show", hint: "tile.sidebar.showHint" }],
+    },
+    {
+      title: "hostSnap.plans.title",
+      hint: "hostSnap.plans.hint",
+      rows: [
+        { key: "hostSnap.plans.keep" },
+        { key: "hostSnap.plans.skipAsleep", hint: "hostSnap.plans.skipAsleepHint" },
+        { key: "hostSnap.create.recursive" },
+      ],
+    },
+  ],
+
   pairing: [
     { title: "pairing.step1Title", rows: [], body: ["pairing.step1Body"] },
     { title: "pairing.stepOtherTitle", rows: [], body: ["pairing.step2Body"] },

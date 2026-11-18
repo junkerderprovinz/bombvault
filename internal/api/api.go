@@ -571,6 +571,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/items/{domain}/{name}/diff", h.handleDiffBackups)
 	mux.HandleFunc("POST /api/items/{domain}/{name}/export/preview", h.handleExportPreview)
 	mux.HandleFunc("POST /api/items/{domain}/{name}/export", h.handleExportBackup)
+	h.registerHostSnapshotRoutes(mux)
 	// ZFS endpoints (the zfs domain: a dataset and the datasets below it, read
 	// from one recursive snapshot).
 	mux.HandleFunc("GET /api/zfs", h.handleListZFSDatasets)

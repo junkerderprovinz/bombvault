@@ -9495,3 +9495,173 @@ export function addMcpCertificateName(
     body: JSON.stringify({ host }),
   });
 }
+
+/** The system that keeps one of the server's own snapshots. */
+export type HostSnapKind = "zfs" | "btrfs" | "vm";
+
+/** Names one of the server's snapshots. For btrfs, name is the snapshot's
+ *  path below the filesystem's top level and fs is that top level. */
+export interface HostSnapRef {
+  kind: HostSnapKind;
+  fs?: string;
+  source: string;
+  name: string;
+}
+
+export interface HostSnapshot extends HostSnapRef {
+  label: string;
+  createdAt: number;
+  /** -1 where the system does not report it. */
+  usedBytes: number;
+  referencedBytes: number;
+  newSinceBytes: number;
+  holds: string[];
+  clones: string[];
+  /** "plan", "backup", "replica", "safety" or "". */
+  owner: string;
+  planId?: string;
+  readOnly: boolean;
+  managedBy?: string;
+  caps: { rename: boolean; hold: boolean; delete: boolean; estimate: boolean };
+}
+
+export interface HostSnapSource {
+  kind: HostSnapKind;
+  fs?: string;
+  source: string;
+  group: string;
+  usedBytes: number;
+  newSinceLatestBytes: number;
+  canRecursive: boolean;
+  canCreate: boolean;
+  /** Why canCreate is off, such as "needs-qcow2" for a VM with raw disks. */
+  reason?: string;
+}
+
+export interface HostSnapPool {
+  kind: HostSnapKind;
+  name: string;
+  state: "awake" | "asleep" | "unknown";
+  read: boolean;
+  woke: boolean;
+}
+
+export interface HostSnapPlan {
+  id: string;
+  kind: HostSnapKind;
+  fs: string;
+  source: string;
+  cadence: string;
+  keep: number;
+  recursive: boolean;
+  skipAsleep: boolean;
+  enabled: boolean;
+  createdAt: number;
+  lastRunAt: number;
+  lastCode: string;
+  lastDetail: string;
+}
+
+export type HostSnapPlanInput = Pick<
+  HostSnapPlan,
+  "kind" | "fs" | "source" | "cadence" | "keep" | "recursive" | "skipAsleep" | "enabled"
+>;
+
+export interface HostSnapshotList extends OkEnvelope {
+  kinds?: Partial<Record<HostSnapKind, { code: string; detail?: string }>>;
+  pools?: HostSnapPool[];
+  sources?: HostSnapSource[];
+  snapshots?: HostSnapshot[];
+  hiddenSystem?: number;
+  plans?: HostSnapPlan[];
+}
+
+export interface HostSnapMount {
+  pid: number;
+  path: string;
+  host: boolean;
+  containerId?: string;
+  container?: string;
+  code?: string;
+  detail?: string;
+}
+
+export interface HostSnapResult {
+  ref: HostSnapRef;
+  code: string;
+  detail?: string;
+}
+
+/** GET /api/host-snapshots. Pools whose disks sleep are read only with wake. */
+export function listHostSnapshots(wake = false): Promise<HostSnapshotList> {
+  return fetchJSON(`/api/host-snapshots${wake ? "?wake=1" : ""}`);
+}
+
+function postHostSnap<T>(path: string, body: unknown): Promise<T> {
+  return fetchKeyJSON(`/api/host-snapshots/${path}`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function createHostSnapshot(src: {
+  kind: HostSnapKind;
+  fs?: string;
+  source: string;
+  name: string;
+  recursive: boolean;
+}): Promise<OkEnvelope> {
+  return postHostSnap("create", src);
+}
+
+export function renameHostSnapshot(ref: HostSnapRef, name: string): Promise<OkEnvelope> {
+  return postHostSnap("rename", { ref, name });
+}
+
+export function holdHostSnapshot(ref: HostSnapRef, hold: boolean): Promise<OkEnvelope> {
+  return postHostSnap("hold", { ref, hold });
+}
+
+/** What deleting the ZFS snapshots among refs frees, as ZFS works it out. */
+export function estimateHostSnapshots(refs: HostSnapRef[]): Promise<OkEnvelope & { zfsBytes?: number }> {
+  return postHostSnap("estimate", { refs });
+}
+
+export function deleteHostSnapshots(refs: HostSnapRef[]): Promise<OkEnvelope & { results?: HostSnapResult[] }> {
+  return postHostSnap("delete", { refs });
+}
+
+export function whereHostSnapshot(ref: HostSnapRef): Promise<OkEnvelope & { mounts?: HostSnapMount[] }> {
+  return postHostSnap("where", { ref });
+}
+
+/** Unmounts a busy ZFS snapshot wherever it hangs, then deletes it. */
+export function freeHostSnapshot(ref: HostSnapRef): Promise<OkEnvelope & { mounts?: HostSnapMount[] }> {
+  return postHostSnap("free", { ref });
+}
+
+export function addHostSnapshotPlan(plan: HostSnapPlanInput): Promise<OkEnvelope & { plan?: HostSnapPlan }> {
+  return postHostSnap("plans", plan);
+}
+
+export function updateHostSnapshotPlan(
+  id: string,
+  plan: HostSnapPlanInput
+): Promise<OkEnvelope & { plan?: HostSnapPlan }> {
+  return fetchKeyJSON(`/api/host-snapshots/plans/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(plan),
+  });
+}
+
+export function deleteHostSnapshotPlan(id: string): Promise<OkEnvelope> {
+  return fetchKeyJSON(`/api/host-snapshots/plans/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export function runHostSnapshotPlan(
+  id: string
+): Promise<OkEnvelope & { result?: { code: string; created?: string; removed: string[]; detail?: string } }> {
+  return postHostSnap(`plans/${encodeURIComponent(id)}/run`, {});
+}
+
+/** GET /api/host-snapshots/plans, the schedules without a read of the host. */
+export function listHostSnapshotPlans(): Promise<OkEnvelope & { plans?: HostSnapPlan[] }> {
+  return fetchJSON("/api/host-snapshots/plans");
+}
