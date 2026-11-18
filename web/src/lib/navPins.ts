@@ -2,7 +2,7 @@
 // the look, so it is stored and synced with the other display preferences.
 
 import { useMemo, useSyncExternalStore } from "react";
-import type { Settings } from "./api";
+import { openedAsPairedPhone, type Settings } from "./api";
 import { ADOPTED_EVENT, save as saveDisplayPrefs } from "./displayPrefs";
 
 const KEY = "bombvault.navPins";
@@ -58,7 +58,9 @@ function resolve(raw: string, modulesOn: boolean, hostOn: boolean): NavPins {
   return {
     storage: chosen.storage ?? true,
     instances: chosen.instances ?? modulesOn,
-    snapshots: chosen.snapshots ?? hostOn,
+    // A paired phone reaches none of the snapshot routes, so the entry would
+    // only lead it to a refusal.
+    snapshots: !openedAsPairedPhone() && (chosen.snapshots ?? hostOn),
   };
 }
 
