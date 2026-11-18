@@ -110,7 +110,9 @@ else
 fi
 if [ -n "$BTRFS" ]; then
 	echo "T${tab}btrfs${tab}ok"
-	awk '$3 == "btrfs" && $1 !~ /^\/dev\/loop/ && $2 !~ /^\/var\/lib\/docker/ && $2 !~ /^\/etc\/libvirt/ { print $1 "\t" $2 "\t" $4 }' /proc/self/mounts |
+	# Docker's and libvirt's images are loop-mounted btrfs too, and stay out by
+	# where they hang. A btrfs image someone mounts elsewhere is theirs to see.
+	awk '$3 == "btrfs" && $2 !~ /^\/var\/lib\/docker/ && $2 !~ /^\/etc\/libvirt/ { print $1 "\t" $2 "\t" $4 }' /proc/self/mounts |
 	awk -F'\t' '{
 		top = ($3 ~ /(^|,)subvolid=5(,|$)/ || $3 ~ /(^|,)subvol=\/(,|$)/)
 		if (!($1 in best) || (top && !istop[$1])) { best[$1] = $2; istop[$1] = top; order[++n] = $1 }
