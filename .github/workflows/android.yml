@@ -29,7 +29,7 @@ jobs:
   # Only a published release has to carry the newest GlimStone.
   glimstone:
     if: github.event_name == 'release'
-    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@main
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@b7a5006e947cce048494e8430ee389bec897c082 # main
 
   apk:
     needs: glimstone
@@ -80,7 +80,7 @@ jobs:
           npm ci
           npm run build:launcher
 
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
         with:
           distribution: temurin
           java-version: "25"
