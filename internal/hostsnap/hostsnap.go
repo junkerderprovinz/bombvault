@@ -35,6 +35,7 @@ type VMs interface {
 	SnapshotTable(ctx context.Context, domain string) (string, error)
 	SnapshotCreate(ctx context.Context, domain, name string) error
 	SnapshotDelete(ctx context.Context, domain, name string) error
+	DumpXML(ctx context.Context, domain string) (string, error)
 }
 
 // Ref names one snapshot. Source is the dataset, the subvolume path below the
@@ -89,6 +90,8 @@ type Source struct {
 	NewSinceLatest int64 `json:"newSinceLatestBytes"`
 	Recursive      bool  `json:"canRecursive"`
 	Create         bool  `json:"canCreate"`
+	// Reason says why Create is off, such as CodeNeedsQcow2.
+	Reason string `json:"reason,omitempty"`
 }
 
 // Pool is a ZFS pool or a btrfs filesystem with the power state of its disks.

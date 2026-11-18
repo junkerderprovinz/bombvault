@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"path"
 	"regexp"
 	"strconv"
@@ -571,8 +572,10 @@ func btrfsTime(s string, loc *time.Location) int64 {
 type vmPart struct {
 	state   KindState
 	domains []string
-	snaps   []Snapshot
-	unraid  map[string]string
+	// raw names the domains whose disks cannot hold an internal snapshot.
+	raw    map[string]bool
+	snaps  []Snapshot
+	unraid map[string]string
 }
 
 // vmListWorkers bounds the virsh calls in flight. Over qemu+ssh each one is a
@@ -586,6 +589,7 @@ func (h *Host) surveyVMs(ctx context.Context) vmPart {
 	}
 	part := vmPart{state: KindState{Code: "ok"}, domains: names}
 	results := make([][]Snapshot, len(names))
+	raw := make([]bool, len(names))
 	sem := make(chan struct{}, vmListWorkers)
 	var wg sync.WaitGroup
 	for i, name := range names {
@@ -598,11 +602,18 @@ func (h *Host) surveyVMs(ctx context.Context) vmPart {
 			if err == nil {
 				results[i] = parseVMSnapshots(name, table)
 			}
+			if def, err := h.vms.DumpXML(ctx, name); err == nil {
+				raw[i] = !internalSnapshots(def)
+			}
 		}()
 	}
 	wg.Wait()
-	for _, r := range results {
+	part.raw = map[string]bool{}
+	for i, r := range results {
 		part.snaps = append(part.snaps, r...)
+		if raw[i] {
+			part.raw[names[i]] = true
+		}
 	}
 	return part
 }
@@ -613,7 +624,11 @@ func (p vmPart) fill(s *Survey) {
 	}
 	s.Kinds[KindVM] = p.state
 	for _, d := range p.domains {
-		s.Sources = append(s.Sources, Source{Kind: KindVM, Name: d, Group: "vm", Used: -1, NewSinceLatest: -1, Create: true})
+		src := Source{Kind: KindVM, Name: d, Group: "vm", Used: -1, NewSinceLatest: -1, Create: true}
+		if p.raw[d] {
+			src.Create, src.Reason = false, CodeNeedsQcow2
+		}
+		s.Sources = append(s.Sources, src)
 	}
 	known := map[string]bool{}
 	for _, sn := range p.snaps {
@@ -692,4 +707,31 @@ func parseUnraidDB(vm, b64 string) []Snapshot {
 		})
 	}
 	return out
+}
+
+// internalSnapshots reports whether every disk of a domain definition can
+// hold a snapshot inside its image, which libvirt's internal snapshots need.
+// A CD-ROM, a floppy and a read-only disk are left out of a snapshot anyway.
+func internalSnapshots(def string) bool {
+	var d struct {
+		Disks []struct {
+			Device   string    `xml:"device,attr"`
+			ReadOnly *struct{} `xml:"readonly"`
+			Driver   struct {
+				Type string `xml:"type,attr"`
+			} `xml:"driver"`
+		} `xml:"devices>disk"`
+	}
+	if xml.Unmarshal([]byte(def), &d) != nil {
+		return true
+	}
+	for _, disk := range d.Disks {
+		if disk.Device == "cdrom" || disk.Device == "floppy" || disk.ReadOnly != nil {
+			continue
+		}
+		if disk.Driver.Type != "qcow2" {
+			return false
+		}
+	}
+	return true
 }

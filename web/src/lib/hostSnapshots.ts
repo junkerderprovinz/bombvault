@@ -1,7 +1,7 @@
 // The server's own snapshots: ZFS, btrfs and VM snapshots, which are not
 // backups. The page groups them by what they were taken of, works out what a
 // delete frees and turns the backend's codes into sentences.
-import type { HostSnapKind, HostSnapPlan, HostSnapPool, HostSnapRef, HostSnapshot, HostSnapshotList } from "./api";
+import type { HostSnapKind, HostSnapPlan, HostSnapPool, HostSnapRef, HostSnapSource, HostSnapshot, HostSnapshotList } from "./api";
 import type { TranslationKey } from "./i18n";
 
 export const KIND_ORDER: HostSnapKind[] = ["zfs", "btrfs", "vm"];
@@ -152,6 +152,7 @@ const CODE_KEY: Record<string, TranslationKey> = {
   "ssh-unreachable": "hostSnap.code.noHost",
   "skipped-asleep": "hostSnap.code.skippedAsleep",
   "kept-some": "hostSnap.code.keptSome",
+  "needs-qcow2": "hostSnap.code.needsQcow2",
 };
 
 /** codeKey is the sentence for a backend code, a generic failure for one it
@@ -182,4 +183,10 @@ export function defaultName(now: Date): string {
  *  round trip. */
 export function validName(name: string): boolean {
   return /^[A-Za-z0-9_.:][A-Za-z0-9_.:-]{0,199}$/.test(name) && name !== "." && name !== "..";
+}
+
+/** needsQcow2 names the VMs whose raw disks cannot hold a snapshot, which a
+ *  window lists apart instead of offering them. */
+export function needsQcow2(sources: HostSnapSource[]): string[] {
+  return sources.filter((s) => s.kind === "vm" && s.reason === "needs-qcow2").map((s) => s.source);
 }

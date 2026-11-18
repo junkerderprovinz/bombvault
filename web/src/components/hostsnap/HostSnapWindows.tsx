@@ -10,7 +10,7 @@ import {
   type HostSnapSource,
   type HostSnapshot,
 } from "../../lib/api";
-import { codeKey, defaultName, KIND_LABEL, sourceKey, sourceLabel, validName } from "../../lib/hostSnapshots";
+import { codeKey, defaultName, KIND_LABEL, needsQcow2, sourceKey, sourceLabel, validName } from "../../lib/hostSnapshots";
 import { useT } from "../../lib/i18n";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
@@ -130,6 +130,9 @@ export function CreateWindow({
       )}
       {src?.kind === "btrfs" && <Note>{t("hostSnap.create.btrfsHint")}</Note>}
       {src?.kind === "vm" && <Note>{t("hostSnap.create.vmHint")}</Note>}
+      {needsQcow2(sources).length > 0 && (
+        <Note>{t("hostSnap.create.needsQcow2").replace("{names}", () => needsQcow2(sources).join(", "))}</Note>
+      )}
       {refusal && (
         <div role="alert" className="flex flex-col gap-1">
           <Note tone="fail">{refusal.text}</Note>

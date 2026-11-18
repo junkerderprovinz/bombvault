@@ -9528,6 +9528,8 @@ export interface HostSnapSource {
   newSinceLatestBytes: number;
   canRecursive: boolean;
   canCreate: boolean;
+  /** Why canCreate is off, such as "needs-qcow2" for a VM with raw disks. */
+  reason?: string;
 }
 
 export interface HostSnapPool {

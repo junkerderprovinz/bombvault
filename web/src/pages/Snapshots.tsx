@@ -18,6 +18,7 @@ import {
   estimateHostSnapshots,
   holdHostSnapshot,
   listHostSnapshots,
+  openedAsPairedPhone,
   type HostSnapPlan,
   type HostSnapshot,
   type HostSnapshotList,
@@ -174,7 +175,11 @@ export function Snapshots() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => load(wake), [load, wake]);
+  // A paired phone reaches none of these routes, so it does not ask.
+  const paired = openedAsPairedPhone();
+  useEffect(() => {
+    if (!paired) load(wake);
+  }, [load, wake, paired]);
 
   const snapshots = useMemo(() => list?.snapshots ?? [], [list]);
   const groups = useMemo(() => groupSnapshots(snapshots), [snapshots]);
@@ -239,6 +244,15 @@ export function Snapshots() {
       push(t("hostSnap.code.failed"), "fail");
     }
     refresh();
+  }
+
+  if (paired) {
+    return (
+      <div className={PAGE_SHELL}>
+        <PageTitle>{t("hostSnap.title")}</PageTitle>
+        <Note>{t("hostSnap.pairedOnly")}</Note>
+      </div>
+    );
   }
 
   const asleep = sleepingPools(pools);

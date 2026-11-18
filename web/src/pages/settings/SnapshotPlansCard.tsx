@@ -14,13 +14,14 @@ import {
   deleteHostSnapshotPlan,
   listHostSnapshotPlans,
   listHostSnapshots,
+  openedAsPairedPhone,
   runHostSnapshotPlan,
   updateHostSnapshotPlan,
   type HostSnapPlan,
   type HostSnapPlanInput,
   type HostSnapSource,
 } from "../../lib/api";
-import { codeKey, KIND_LABEL, sourceKey, sourceLabel } from "../../lib/hostSnapshots";
+import { codeKey, KIND_LABEL, needsQcow2, sourceKey, sourceLabel } from "../../lib/hostSnapshots";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
@@ -48,6 +49,7 @@ function input(p: HostSnapPlan): HostSnapPlanInput {
 function usePlans() {
   const [plans, setPlans] = useState<HostSnapPlan[] | null>(null);
   useEffect(() => {
+    if (openedAsPairedPhone()) return;
     let live = true;
     listHostSnapshotPlans()
       .then((res) => live && setPlans(res.ok ? (res.plans ?? []) : []))
@@ -265,6 +267,9 @@ function AddPlanWindow({
         </SettingRow>
       )}
       <Note>{t("hostSnap.plans.addHint")}</Note>
+      {sources && needsQcow2(sources).length > 0 && (
+        <Note>{t("hostSnap.create.needsQcow2").replace("{names}", () => needsQcow2(sources).join(", "))}</Note>
+      )}
       {refusal && (
         <div role="alert">
           <Note tone="fail">{refusal}</Note>
@@ -295,6 +300,14 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
     } catch {
       push(t("hostSnap.code.failed"), "fail");
     }
+  }
+
+  if (openedAsPairedPhone()) {
+    return (
+      <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex}>
+        <Note>{t("hostSnap.pairedOnly")}</Note>
+      </Card>
+    );
   }
 
   return (

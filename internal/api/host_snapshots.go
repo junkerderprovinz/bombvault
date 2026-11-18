@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/hostsnap"
+	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/zfs"
@@ -290,6 +291,7 @@ func (s *Service) runHostSnapshotPlan(ctx context.Context, h *hostsnap.Host, p s
 	if err := s.store.RecordHostSnapshotRun(p.ID, now.Unix(), res.Code, detail); err != nil {
 		log.Printf("api: snapshots: recording the run of plan %s: %v", p.ID, err)
 	}
+	s.notifyHostSnapshotPlan(ctx, p, res)
 	if res.Code != "ok" && res.Code != hostsnap.CodeSkippedAsleep {
 		log.Printf("api: snapshots: plan %s on %s: %s %s", p.ID, p.Source, res.Code, scrubError(errors.New(res.Detail))) //nolint:gosec // G706: ids and codes only, the detail is scrubbed
 	}
@@ -351,4 +353,74 @@ func (s *Service) StartHostSnapshotPlans(ctx context.Context) {
 // HostSnapshotPlans lists the plans without reaching the host.
 func (s *Service) HostSnapshotPlans() ([]store.HostSnapshotPlan, error) {
 	return s.store.ListHostSnapshotPlans()
+}
+
+// hostSnapPlanLabel names a plan's source the way a person reads it.
+func hostSnapPlanLabel(p store.HostSnapshotPlan) string {
+	switch hostsnap.Kind(p.Kind) {
+	case hostsnap.KindBtrfs:
+		if p.Source == "" {
+			return p.FS
+		}
+		return p.FS + "/" + p.Source
+	case hostsnap.KindVM:
+		return "the VM " + p.Source
+	}
+	return p.Source
+}
+
+// hostSnapPlanEvent is what a run of p tells, and false when it tells
+// nothing: a run that went through like the one before it, or one left out
+// while the disks slept. A run that goes through after a failure says so,
+// which closes the failure where a hub keeps track of it.
+func hostSnapPlanEvent(p store.HostSnapshotPlan, res hostsnap.RunResult) (notify.Event, bool) {
+	key := "snapshot-plan:" + p.ID
+	label := hostSnapPlanLabel(p)
+	reason := res.Detail
+	if reason == "" {
+		reason = res.Code
+	}
+	failedBefore := p.LastCode != "" && p.LastCode != "ok" && p.LastCode != hostsnap.CodeSkippedAsleep
+	code := res.Code
+	if code != "ok" && res.Created != "" {
+		code = hostsnap.CodeKeptSome
+	}
+	switch code {
+	case hostsnap.CodeSkippedAsleep:
+		return notify.Event{}, false
+	case "ok":
+		if !failedBefore {
+			return notify.Event{}, false
+		}
+		return notify.Event{
+			Title:   "BombVault: snapshot schedule works again",
+			Message: "The snapshot schedule for " + label + " took its snapshot again.",
+			OK:      true, Key: key,
+		}, true
+	case hostsnap.CodeKeptSome:
+		return notify.Event{
+			Title:   "BombVault: snapshot schedule kept old snapshots",
+			Message: "The snapshot schedule for " + label + " took its snapshot, but some old ones could not be removed: " + reason,
+			OK:      true, Warning: true, Key: key,
+		}, true
+	}
+	return notify.Event{
+		Title:   "BombVault: snapshot schedule failed",
+		Message: "The snapshot schedule for " + label + " took no snapshot: " + reason,
+		Key:     key,
+	}, true
+}
+
+// notifyHostSnapshotPlan tells what a run of p did, where it tells anything.
+// Snapshots have no health check of their own, so none is pinged.
+func (s *Service) notifyHostSnapshotPlan(ctx context.Context, p store.HostSnapshotPlan, res hostsnap.RunResult) {
+	ev, send := hostSnapPlanEvent(p, res)
+	if !send {
+		return
+	}
+	c, err := s.NotifyConfig()
+	if err != nil || !c.Active() {
+		return
+	}
+	notify.Send(notify.WithHealthchecksSuppressed(context.WithoutCancel(ctx)), c, "snapshots", ev)
 }

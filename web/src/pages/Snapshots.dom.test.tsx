@@ -14,12 +14,14 @@ const calls = vi.hoisted(() => ({
   estimate: [] as unknown[],
   deleted: [] as unknown[],
   answer: (() => ({ ok: true })) as (wake: boolean) => unknown,
+  paired: false,
 }));
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
+    openedAsPairedPhone: () => calls.paired,
     listHostSnapshots: (wake: boolean) => {
       calls.list.push(wake);
       return Promise.resolve(calls.answer(wake));
@@ -89,6 +91,7 @@ beforeEach(() => {
   calls.estimate = [];
   calls.deleted = [];
   calls.answer = list;
+  calls.paired = false;
 });
 
 afterEach(cleanup);
@@ -122,5 +125,14 @@ describe("the Snapshots page", () => {
     await open();
     expect(screen.getByText(en["hostSnap.noHost"])).toBeTruthy();
     expect(screen.queryByText(en["hostSnap.empty"])).toBeNull();
+  });
+});
+
+describe("the Snapshots page on a paired phone", () => {
+  it("says the snapshots are managed at the server and asks for nothing", async () => {
+    calls.paired = true;
+    await open();
+    expect(screen.getByText(en["hostSnap.pairedOnly"])).toBeTruthy();
+    expect(calls.list).toEqual([]);
   });
 });

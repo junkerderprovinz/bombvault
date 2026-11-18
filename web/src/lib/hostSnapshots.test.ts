@@ -6,6 +6,7 @@ import {
   freedEstimate,
   groupSnapshots,
   kindStates,
+  needsQcow2,
   planOf,
   sleepingPools,
   sourceLabel,
@@ -106,5 +107,21 @@ describe("names", () => {
     expect(planOf(snap({}), [plan])).toBeUndefined();
     expect(codeKey("busy")).toBe("hostSnap.code.busy");
     expect(codeKey("something new")).toBe("hostSnap.code.failed");
+  });
+});
+
+describe("needsQcow2", () => {
+  it("names the VMs with raw disks and nothing else", () => {
+    const src = (kind: "zfs" | "vm", source: string, reason?: string) => ({
+      kind,
+      source,
+      group: "",
+      usedBytes: -1,
+      newSinceLatestBytes: -1,
+      canRecursive: false,
+      canCreate: !reason,
+      reason,
+    });
+    expect(needsQcow2([src("vm", "win11", "needs-qcow2"), src("vm", "debian"), src("zfs", "tank")])).toEqual(["win11"]);
   });
 });

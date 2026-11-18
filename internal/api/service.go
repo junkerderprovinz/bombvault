@@ -285,6 +285,8 @@ type Service struct {
 	zfsHostLast *zfsHostListing
 	// hostSnap reaches the snapshots the server itself keeps.
 	hostSnap hostSnaps
+	// hubLooks remembers which TollRolls of the fortress send messages.
+	hubLooks hubLooks
 	replica  zfsReplicaRuntime
 	// snapNames names the snapshots runs take, so no two runs pick the same
 	// one and no sweep removes one that is still being read.
@@ -20075,6 +20077,9 @@ func (s *Service) NotifyConfig() (notify.Config, error) {
 	if c.WantsUnraid() && s.unraidGate(true) {
 		c = c.WithUnraid(unraidRunner{s.ssh})
 	}
+	if h := s.notifyHub(); h != nil {
+		c = c.WithHub(h)
+	}
 	return c, nil
 }
 
@@ -21152,7 +21157,7 @@ func (s *Service) notifyBackup(ctx context.Context, domain, name, cancelKey stri
 	case !ok:
 		title = "BombVault: backup FAILED"
 	}
-	ev := notify.Event{Title: title, Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete}
+	ev := notify.Event{Title: title, Message: msg, OK: ok || cancelled || interrupted, ItemResult: true, Warning: incomplete, Key: domain + ":" + target}
 	if ev.OK {
 		ev.CheckHeld = s.healthcheckHold(c, domain)
 	}

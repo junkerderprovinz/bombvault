@@ -38,6 +38,7 @@ func (e exitErr) ExitCode() int { return int(e) }
 
 type fakeVMs struct {
 	tables  map[string]string
+	xml     map[string]string
 	created []string
 	deleted []string
 	err     error
@@ -195,5 +196,47 @@ func TestMountEscapesRoundTrip(t *testing.T) {
 	}
 	if mountEscape("tank/my share@a") != `tank/my\040share@a` {
 		t.Errorf("escape = %q", mountEscape("tank/my share@a"))
+	}
+}
+
+func (f *fakeVMs) DumpXML(_ context.Context, d string) (string, error) {
+	return f.xml[d], nil
+}
+
+const rawVM = `<domain><devices>
+<disk type="file" device="disk"><driver name="qemu" type="raw"/><source file="/mnt/user/domains/win/vdisk1.img"/></disk>
+<disk type="file" device="cdrom"><driver name="qemu" type="raw"/></disk>
+</devices></domain>`
+
+const qcowVM = `<domain><devices>
+<disk type="file" device="disk"><driver name="qemu" type="qcow2"/></disk>
+<disk type="file" device="cdrom"><driver name="qemu" type="raw"/></disk>
+</devices></domain>`
+
+func TestAVMWithRawDisksIsListedButNotOfferedForSnapshots(t *testing.T) {
+	vms := &fakeVMs{
+		tables: map[string]string{"win11": "", "debian": ""},
+		xml:    map[string]string{"win11": rawVM, "debian": qcowVM},
+	}
+	s := New(&fakeShell{}, vms).Survey(context.Background(), false)
+	by := map[string]Source{}
+	for _, src := range s.Sources {
+		if src.Kind == KindVM {
+			by[src.Name] = src
+		}
+	}
+	if w := by["win11"]; w.Create || w.Reason != CodeNeedsQcow2 {
+		t.Errorf("win11 = %+v, want listed, not offered, with the reason", w)
+	}
+	if d := by["debian"]; !d.Create || d.Reason != "" {
+		t.Errorf("debian = %+v, want offered", d)
+	}
+}
+
+func TestLibvirtRefusingARawDiskSaysItNeedsQcow2(t *testing.T) {
+	vms := &fakeVMs{tables: map[string]string{}, err: errors.New("virshcli: snapshot-create-as: unsupported configuration: internal snapshot for disk hdc unsupported for storage type raw")}
+	err := New(&fakeShell{}, vms).Create(context.Background(), Source{Kind: KindVM, Name: "win11"}, "before-update", false)
+	if CodeOf(err) != CodeNeedsQcow2 {
+		t.Errorf("err = %v, want %s", err, CodeNeedsQcow2)
 	}
 }

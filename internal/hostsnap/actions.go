@@ -20,6 +20,8 @@ const (
 	CodeManaged   = "managed"
 	CodeNoSupport = "not-supported"
 	CodeFailed    = "failed"
+	// CodeNeedsQcow2 is a VM whose disks cannot hold a snapshot of their own.
+	CodeNeedsQcow2 = "needs-qcow2"
 )
 
 // Create takes a snapshot. recursive applies to ZFS alone, where it takes
@@ -460,6 +462,8 @@ func virshError(err error) error {
 		return &Error{Code: CodeExists, Detail: clip(msg)}
 	case strings.Contains(low, "not found"), strings.Contains(low, "no domain snapshot"):
 		return &Error{Code: CodeNotFound, Detail: clip(msg)}
+	case strings.Contains(low, "for storage type"), strings.Contains(low, "internal snapshot") && strings.Contains(low, "unsupported"):
+		return &Error{Code: CodeNeedsQcow2, Detail: clip(msg)}
 	case strings.Contains(low, "unsupported"), strings.Contains(low, "not supported"):
 		return &Error{Code: CodeNoSupport, Detail: clip(msg)}
 	}
