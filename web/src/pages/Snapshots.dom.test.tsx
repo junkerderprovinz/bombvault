@@ -65,7 +65,11 @@ function list(wake: boolean): HostSnapshotList {
       { kind: "zfs", name: "tank", state: "awake", read: true, woke: false },
       { kind: "zfs", name: "disk1", state: "asleep", read: wake, woke: wake },
     ],
-    sources: [{ kind: "zfs", source: "tank/apps", group: "tank", usedBytes: 1, newSinceLatestBytes: 1, canRecursive: true, canCreate: true }],
+    sources: [
+      { kind: "zfs", source: "tank/apps", group: "tank", usedBytes: 1, newSinceLatestBytes: 1, canRecursive: true, canCreate: true },
+      { kind: "zfs", source: "tank/media", group: "tank", usedBytes: 1, newSinceLatestBytes: 1, canRecursive: true, canCreate: true },
+      { kind: "vm", source: "win11", group: "vm", usedBytes: -1, newSinceLatestBytes: -1, canRecursive: false, canCreate: false, reason: "needs-qcow2" },
+    ],
     snapshots: [snap("before-update")],
     hiddenSystem: 0,
     plans: [],
@@ -134,5 +138,17 @@ describe("the Snapshots page on a paired phone", () => {
     await open();
     expect(screen.getByText(en["hostSnap.pairedOnly"])).toBeTruthy();
     expect(calls.list).toEqual([]);
+  });
+});
+
+describe("the Snapshots page without a snapshot of a source", () => {
+  it("says what a snapshot is beside a backup and offers the first snapshot of each source", async () => {
+    await open();
+    expect(screen.getByText(en["hostSnap.versusBackup"])).toBeTruthy();
+    expect(screen.getByText("tank/media")).toBeTruthy();
+    expect(screen.getByText("win11")).toBeTruthy();
+    expect(screen.getByText(en["hostSnap.code.needsQcow2"])).toBeTruthy();
+    // One per card that has snapshots, one for tank/media, and the page's own.
+    expect(screen.getAllByRole("button", { name: en["hostSnap.create.title"] })).toHaveLength(3);
   });
 });

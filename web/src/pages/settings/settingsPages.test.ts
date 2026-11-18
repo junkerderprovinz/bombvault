@@ -43,6 +43,13 @@ describe("the settings tiles", () => {
     expect(order.slice(0, 3)).toEqual(["system", "general", "look"]);
     expect(order).toHaveLength(SETTINGS_PAGES.length);
   });
+
+  it("keep Info as the last tile, below a tile the saved order does not know", () => {
+    const before = SETTINGS_PAGES.map((p) => p.id).filter((id) => id !== "snapshots");
+    const order = orderPages(before).map((p) => p.id);
+    expect(order.slice(-2)).toEqual(["snapshots", "info"]);
+    expect(orderPages(["info", "general"]).map((p) => p.id).at(-1)).toBe("info");
+  });
 });
 
 describe("an address from an earlier version", () => {

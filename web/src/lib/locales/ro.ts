@@ -2076,6 +2076,8 @@ const ro: Partial<Translations> = {
   // Instantaneele proprii ale serverului (ZFS, btrfs, VM-uri), nu copii de rezervă.
   "hostSnap.title": "Instantanee",
   "hostSnap.intro": "Instantaneele pe care serverul tău le păstrează singur: instantanee ZFS, btrfs și VM. Stau chiar lângă datele tale, așa că se fac repede și te întorci repede la ele. Dar dispar odată cu discul, de aceea nu sunt o copie de rezervă.",
+  "hostSnap.versusBackup": "Un instantaneu păstrează starea pe același disc: e gata imediat și aproape nu ocupă loc, dar dispare odată cu discul. O copie de rezervă este o copie în alt loc.",
+  "hostSnap.bare.title": "încă fără instantaneu",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

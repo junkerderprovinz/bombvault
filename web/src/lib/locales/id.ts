@@ -2622,6 +2622,8 @@ const id: Partial<Translations> = {
   // Snapshot milik server sendiri (ZFS, btrfs, VM), bukan cadangan.
   "hostSnap.title": "Snapshot",
   "hostSnap.intro": "Snapshot yang disimpan server Anda sendiri: snapshot ZFS, btrfs, dan VM. Snapshot ini ada tepat di samping data Anda, jadi cepat dibuat dan cepat untuk kembali ke sana. Tapi snapshot ini juga ikut hilang bersama disknya, karena itu snapshot bukan cadangan.",
+  "hostSnap.versusBackup": "Snapshot menyimpan keadaan di disk yang sama: langsung tersedia dan hampir tidak memakan tempat, tapi ikut hilang bersama disknya. Cadangan adalah salinan di tempat lain.",
+  "hostSnap.bare.title": "belum ada snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

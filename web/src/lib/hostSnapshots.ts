@@ -190,3 +190,18 @@ export function validName(name: string): boolean {
 export function needsQcow2(sources: HostSnapSource[]): string[] {
   return sources.filter((s) => s.kind === "vm" && s.reason === "needs-qcow2").map((s) => s.source);
 }
+
+export interface BareGroup {
+  kind: HostSnapKind;
+  sources: HostSnapSource[];
+}
+
+/** bareSources are the datasets, subvolumes and VMs without a snapshot yet,
+ *  per kind, so the page can offer the first one. */
+export function bareSources(sources: HostSnapSource[], snaps: HostSnapshot[]): BareGroup[] {
+  const taken = new Set(snaps.map((s) => sourceKey(s.kind, s.fs, s.source)));
+  return KIND_ORDER.map((kind) => ({
+    kind,
+    sources: sources.filter((s) => s.kind === kind && !taken.has(sourceKey(s.kind, s.fs, s.source)) && (s.canCreate || s.reason)),
+  })).filter((g) => g.sources.length > 0);
+}

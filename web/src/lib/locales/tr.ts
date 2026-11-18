@@ -2075,6 +2075,8 @@ const tr: Partial<Translations> = {
   // Sunucunun kendi anlık görüntüleri (ZFS, btrfs, VM'ler), yedek değil.
   "hostSnap.title": "Anlık görüntüler",
   "hostSnap.intro": "Sunucunun kendi tuttuğu anlık görüntüler: ZFS, btrfs ve VM anlık görüntüleri. Verilerinin hemen yanında durdukları için hızlı alınırlar ve onlara hızlı dönülür. Ama disk giderse onlar da gider, bu yüzden yedek değildirler.",
+  "hostSnap.versusBackup": "Anlık görüntü durumu aynı diskte tutar: hemen hazırdır ve neredeyse yer kaplamaz, ama disk giderse o da gider. Yedek ise başka bir yerdeki kopyadır.",
+  "hostSnap.bare.title": "henüz anlık görüntü yok",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

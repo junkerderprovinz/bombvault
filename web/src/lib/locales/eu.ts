@@ -2622,6 +2622,8 @@ const eu: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Argazkiak",
   "hostSnap.intro": "Zure zerbitzariak berak gordetzen dituen argazkiak: ZFS, btrfs eta VM argazkiak. Zure datuen ondoan daude, beraz azkar ateratzen dira eta azkar itzul zaitezke haietara. Diskoarekin batera galtzen dira, ordea, eta horregatik ez dira babeskopia.",
+  "hostSnap.versusBackup": "Argazki batek egoera disko berean gordetzen du: berehala dago prest eta ia ez du lekurik hartzen, baina diskoarekin batera galtzen da. Babeskopia beste toki batean dagoen kopia bat da.",
+  "hostSnap.bare.title": "argazkirik gabe oraindik",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

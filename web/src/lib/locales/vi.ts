@@ -2066,6 +2066,8 @@ const vi: Partial<Translations> = {
   // Ảnh chụp riêng của máy chủ (ZFS, btrfs, VM), không phải bản sao lưu.
   "hostSnap.title": "Ảnh chụp",
   "hostSnap.intro": "Các ảnh chụp mà máy chủ của bạn tự giữ: ảnh chụp ZFS, btrfs và VM. Chúng nằm ngay cạnh dữ liệu của bạn, nên tạo nhanh và quay lại cũng nhanh. Nhưng hỏng ổ đĩa là chúng cũng mất theo, vì vậy chúng không phải là bản sao lưu.",
+  "hostSnap.versusBackup": "Ảnh chụp lưu lại trạng thái trên cùng ổ đĩa: có ngay lập tức và gần như không tốn chỗ, nhưng mất ổ đĩa là mất luôn. Bản sao lưu là một bản sao nằm ở nơi khác.",
+  "hostSnap.bare.title": "chưa có ảnh chụp",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

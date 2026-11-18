@@ -2622,6 +2622,8 @@ const gl: Partial<Translations> = {
   // As instantáneas propias do servidor (ZFS, btrfs, VM), non copias de seguridade.
   "hostSnap.title": "Instantáneas",
   "hostSnap.intro": "As instantáneas que o teu servidor garda por si mesmo: instantáneas ZFS, btrfs e de VM. Están xusto ao lado dos teus datos, así que se fan axiña e vólvese a elas axiña. Pero tamén se perden co disco, por iso non son unha copia de seguridade.",
+  "hostSnap.versusBackup": "Unha instantánea garda o estado no mesmo disco: está lista ao momento e case non ocupa espazo, pero pérdese co disco. Unha copia de seguridade é unha copia noutro lugar.",
+  "hostSnap.bare.title": "aínda sen instantánea",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

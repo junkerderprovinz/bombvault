@@ -2075,6 +2075,8 @@ const da: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "De snapshots, din server selv holder: ZFS-, btrfs- og VM-snapshots. De ligger lige ved siden af dine data, så de er hurtige at tage og hurtige at gå tilbage til. De forsvinder også sammen med disken, og derfor er de ingen sikkerhedskopi.",
+  "hostSnap.versusBackup": "Et snapshot fastholder tilstanden på samme disk: det er der med det samme og fylder næsten intet, men det forsvinder sammen med disken. En sikkerhedskopi er en kopi et andet sted.",
+  "hostSnap.bare.title": "endnu uden snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

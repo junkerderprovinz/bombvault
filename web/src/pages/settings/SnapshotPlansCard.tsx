@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/Button";
 import { CadenceBuilder, ALL_CADENCE_MODES } from "../../components/CadenceBuilder";
-import { Checkbox } from "../../components/Checkbox";
 import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
@@ -31,6 +30,8 @@ import { InstanceWindow } from "../instances/InstanceWindow";
 import { Card, ToggleRow } from "./shared";
 
 const KEEP_SAVE_MS = 600;
+
+const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
 function input(p: HostSnapPlan): HostSnapPlanInput {
   return {
@@ -152,10 +153,11 @@ function PlanRow({
           disabled={running}
           onClick={() => void runNow()}
         />
-        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} variant="icon" glyphOnly onClick={onRemove} />
+        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="subtle" onClick={onRemove} />
       </div>
       <CadenceBuilder
         label={t("hostSnap.plans.when")}
+        inline
         value={plan.cadence}
         modes={ALL_CADENCE_MODES.filter((m) => m !== "off")}
         onChange={(cadence) => {
@@ -169,11 +171,12 @@ function PlanRow({
           value={keep}
           aria-label={t("hostSnap.plans.keep")}
           onChange={(e) => changeKeep(Number(e.target.value))}
-          className="w-20"
+          wrapperClassName="w-28"
+          className={`w-full ${FIELD}`}
         />
       </SettingRow>
       {plan.kind === "zfs" && (
-        <Checkbox checked={plan.recursive} onChange={(v) => void save({ ...plan, recursive: v })} label={t("hostSnap.create.recursive")} />
+        <ToggleRow label={t("hostSnap.create.recursive")} checked={plan.recursive} onChange={(v) => void save({ ...plan, recursive: v })} />
       )}
       {plan.kind !== "vm" && (
         <ToggleRow
@@ -263,7 +266,7 @@ function AddPlanWindow({
         <Note>{t("hostSnap.plans.noSources")}</Note>
       ) : (
         <SettingRow label={t("hostSnap.create.source")}>
-          <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap />
+          <SelectField value={picked} onChange={setPicked} options={options} label={t("hostSnap.create.source")} wrap className={FIELD} />
         </SettingRow>
       )}
       <Note>{t("hostSnap.plans.addHint")}</Note>

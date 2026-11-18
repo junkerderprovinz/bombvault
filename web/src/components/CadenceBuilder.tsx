@@ -179,10 +179,14 @@ export function CadenceBuilder({
   modes,
   onChange,
   hueIndex,
+  inline = false,
 }: {
   label: string;
   value: string;
   disabled?: boolean;
+  /** The strip hugs its modes instead of spanning the card, for a card whose
+   *  other rows are narrow. */
+  inline?: boolean;
   /** Modes this call site offers. Defaults to ALL_CADENCE_MODES. */
   modes?: CadenceMode[];
   onChange: (v: string) => void;
@@ -267,6 +271,7 @@ export function CadenceBuilder({
         select="one"
         active={state.mode}
         onChange={(id) => update({ mode: id as CadenceMode })}
+        inline={inline}
       />
 
       {/* Explains a missing Every N days, which a user may know from another

@@ -124,10 +124,12 @@ export function redirectFor(param: string | undefined, hash: string): string | n
 }
 
 /** orderPages lays the pages out in the reader's saved order. A page the saved
- *  order does not know yet goes after the ones it does, in its default place. */
+ *  order does not know yet goes after the ones it does, in its default place.
+ *  Info closes the rail wherever the saved order put it. */
 export function orderPages(saved: readonly string[]): SettingsPageDef[] {
   const known = saved.filter(isSettingsPage);
   const rank = (id: SettingsPageId) => {
+    if (id === "info") return Number.MAX_SAFE_INTEGER;
     const at = known.indexOf(id);
     return at === -1 ? known.length + SETTINGS_PAGES.findIndex((p) => p.id === id) : at;
   };

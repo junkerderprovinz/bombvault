@@ -2076,6 +2076,8 @@ const ar: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "اللقطات",
   "hostSnap.intro": "اللقطات التي يحتفظ بها خادمك بنفسه: لقطات ZFS وbtrfs وVM. تقع مباشرة بجانب بياناتك، لذلك يكون التقاطها سريعًا والرجوع إليها سريعًا. لكنها تضيع مع القرص، ولهذا ليست نسخة احتياطية.",
+  "hostSnap.versusBackup": "تحفظ اللقطة الحالة على القرص نفسه: تكون جاهزة فورًا ولا تشغل مساحة تُذكر، لكنها تضيع مع القرص. أما النسخة الاحتياطية فهي نسخة في مكان آخر.",
+  "hostSnap.bare.title": "لا توجد لقطة بعد",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",

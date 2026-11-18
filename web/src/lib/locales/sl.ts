@@ -2606,6 +2606,8 @@ const sl: Partial<Translations> = {
   // Lastni posnetki strežnika (ZFS, btrfs, VM), ne varnostne kopije.
   "hostSnap.title": "Posnetki",
   "hostSnap.intro": "Posnetki, ki jih tvoj strežnik hrani sam: posnetki ZFS, btrfs in VM. Ležijo tik ob tvojih podatkih, zato jih hitro narediš in se nanje hitro vrneš. Z diskom pa izginejo tudi oni, zato niso varnostna kopija.",
+  "hostSnap.versusBackup": "Posnetek zabeleži stanje na istem disku: takoj je na voljo in skoraj ne zasede prostora, a z diskom izgine tudi on. Varnostna kopija je kopija nekje drugje.",
+  "hostSnap.bare.title": "še brez posnetka",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
   "hostSnap.kind.vm": "VM",
