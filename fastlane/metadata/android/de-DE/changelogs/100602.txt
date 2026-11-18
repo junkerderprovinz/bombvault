@@ -1,0 +1,1 @@
+BombVault 10.6.2 lässt einen Server seine Sicherungen mit Absicht zu Hause behalten. Schalte Keine Off-site-Kopien ein, dann sieht die Übersicht deswegen nicht mehr rot, und eine fehlgeschlagene oder überfällige Sicherung fällt dir trotzdem auf.
