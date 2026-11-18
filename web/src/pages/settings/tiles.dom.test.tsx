@@ -394,7 +394,7 @@ describe("the Restore tile", () => {
     const stored = [entry({ host: "git.home.lan", username: "jdp", kind: "gitea" }), entry({ host: "ghcr.io" })];
     await renderTile(RestorePage, settings({ registryAuths: stored }));
     fireEvent.click(registries().getAllByRole("button", { name: en["common.edit"] })[0]);
-    expect(screen.getByRole("dialog").getAttribute("aria-label")).toBe("Edit Gitea");
+    expect(screen.getByRole("dialog", { name: "Edit Gitea" })).toBeTruthy();
     expect(dialog().queryByRole("button", { name: en["common.back"] })).toBeNull();
     expect(dialog().getByText(en["tile.registry.keepToken"])).toBeTruthy();
     fireEvent.change(dialog().getByLabelText(en["settings.registryUser"]), { target: { value: "other" } });
