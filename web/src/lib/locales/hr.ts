@@ -851,6 +851,8 @@ const hr: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Kontejner, VM, mapa ili ZFS skup podataka može raditi prema vlastitom rasporedu. Postavljate ga na kartici Postavke stavke i ne morate prije toga uključiti nikakav prekidač.",
   "whatsNew.deleteRisk": "Mjesto pohrane bez zaštite od brisanja možeš prihvatiti takvo kakvo jest. Pregled tada prestaje upozoravati na njega i i dalje kaže da se kopije ondje mogu izbrisati.",
   "whatsNew.noOffsite": "Ako sigurnosne kopije ne bi trebale napustiti prostor, uključite Bez kopija izvan lokacije. Pregled tada prikazuje kopiju koja nedostaje sivo umjesto crveno, a neuspjela ili zakašnjela sigurnosna kopija i dalje se vidi.",
+  "whatsNew.snapshots": "Nova stranica Snimke prikazuje svaku ZFS, btrfs i VM snimku na poslužitelju. Ondje ih možete izrađivati, preimenovati, zadržati i brisati, a prije brisanja vidite koliko će se prostora osloboditi.",
+  "whatsNew.snapshotPlans": "Rasporedi snimki sami izrađuju snimke i čuvaju najnovije. Brišu samo snimke koje su sami izradili.",
   "whatsNew.overviewMoveMode": "Dok prilagođavate pregled, njegove se kartice lagano njišu kako bi pokazale da ih možete premjestiti.",
   "whatsNew.labelGlyphs": "Oznake prikazuju simbol za svaki izbor, kao i Kutovi i Animacija.",
   "whatsNew.copyDecision": "Kad BombVault na odredištu pronađe sigurnosne kopije odjeljka od prije ove baze podataka, Traži pažnju i stranica odredišta pitaju želite li Preuzmi ih za ovaj poslužitelj ili Najprije provjeri pravila.",

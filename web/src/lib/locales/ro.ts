@@ -1198,6 +1198,8 @@ const ro: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Un container, o VM, un folder sau un set de date ZFS poate rula după o programare proprie. O setezi în fila Setări a elementului, fără să pornești mai întâi vreun comutator.",
   "whatsNew.deleteRisk": "O locație de stocare fără protecție împotriva ștergerii poate fi acceptată așa cum este. Prezentarea generală nu mai avertizează atunci despre ea și spune în continuare că copiile de acolo pot fi șterse.",
   "whatsNew.noOffsite": "Dacă copiile tale nu ar trebui să părăsească sediul, pornește Fără copii externe. Prezentarea generală arată atunci copia care lipsește cu gri în loc de roșu, iar un backup eșuat sau întârziat tot iese în evidență.",
+  "whatsNew.snapshots": "Noua pagină Instantanee arată fiecare instantaneu ZFS, btrfs și VM de pe server. Acolo le poți face, redenumi, reține și șterge, iar înainte de ștergere vezi cât spațiu se eliberează.",
+  "whatsNew.snapshotPlans": "Programările de instantanee fac instantanee singure și le păstrează pe cele mai noi. Șterg doar instantaneele pe care le-au făcut ele însele.",
   "whatsNew.overviewMoveMode": "Cât timp personalizezi prezentarea, cardurile ei se leagănă ușor ca să arate că le poți muta.",
   "whatsNew.labelGlyphs": "Etichete afișează un simbol pentru fiecare opțiune, ca Colțuri și Animație.",
   "whatsNew.copyDecision": "Când BombVault găsește pe o destinație copii de rezervă ale unei secțiuni de dinainte de această bază de date, Necesită atenție și pagina destinației te întreabă dacă vrei Preia-le ca fiind ale acestui server sau Verifică mai întâi regulile.",

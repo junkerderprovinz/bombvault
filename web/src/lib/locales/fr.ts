@@ -1200,6 +1200,8 @@ const fr: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Un conteneur, une VM, un dossier ou un jeu de données ZFS peut suivre son propre planning. Vous le réglez dans l'onglet Paramètres de l'élément, sans interrupteur à activer d'abord.",
   "whatsNew.deleteRisk": "Un emplacement sans protection contre la suppression peut être accepté tel quel. L'aperçu cesse alors d'avertir à son sujet et indique toujours que les sauvegardes qui s'y trouvent peuvent être supprimées.",
   "whatsNew.noOffsite": "Si vos sauvegardes ne devraient pas quitter les lieux, activez Pas de copies hors site. L'aperçu affiche alors la copie manquante en gris plutôt qu'en rouge, et une sauvegarde échouée ou en retard se voit toujours.",
+  "whatsNew.snapshots": "La nouvelle page Instantanés liste chaque instantané ZFS, btrfs et VM du serveur. Vous pouvez y prendre, renommer, retenir et supprimer des instantanés, et avant une suppression elle vous indique combien d'espace sera libéré.",
+  "whatsNew.snapshotPlans": "Les plannings d'instantanés prennent des instantanés tout seuls et gardent les plus récents. Ils ne suppriment que les instantanés qu'ils ont pris eux-mêmes.",
   "whatsNew.overviewMoveMode": "Pendant que vous personnalisez l'aperçu, ses cartes oscillent doucement pour montrer que vous pouvez les déplacer.",
   "whatsNew.labelGlyphs": "Libellés affiche un symbole pour chaque choix, comme Angles et Animation.",
   "whatsNew.copyDecision": "Quand BombVault trouve sur une destination des sauvegardes d'une section antérieures à cette base de données, À traiter et la page de la destination vous demandent si vous voulez Les adopter pour ce serveur ou Vérifier d'abord les règles.",

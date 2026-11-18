@@ -851,6 +851,8 @@ const et: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Konteiner, VM, kaust või ZFS-i andmekogum saab töötada oma ajakava järgi. Määrad selle kirje vahekaardil Seaded ja ühtegi lülitit ei pea enne sisse lülitama.",
   "whatsNew.deleteRisk": "Kustutamiskaitseta salvestuskoha saab aktsepteerida sellisena, nagu see on. Ülevaade lõpetab siis selle kohta hoiatamise ja ütleb endiselt, et sealsed varukoopiad saab kustutada.",
   "whatsNew.noOffsite": "Kui varukoopiad ei peaks kohapealt lahkuma, lülita sisse Väliseid koopiaid pole. Ülevaade näitab siis puuduvat koopiat punase asemel hallina ja ebaõnnestunud või hilinev varundus paistab ikka silma.",
+  "whatsNew.snapshots": "Uus leht Hetktõmmised näitab kõiki serveri ZFS-, btrfs- ja VM-hetktõmmiseid. Seal saad neid teha, ümber nimetada, hoida ja kustutada, ning enne kustutamist näed, kui palju ruumi vabaneb.",
+  "whatsNew.snapshotPlans": "Hetktõmmiste ajakavad teevad hetktõmmiseid ise ja hoiavad alles uusimad. Need kustutavad ainult hetktõmmiseid, mille nad ise tegid.",
   "whatsNew.overviewMoveMode": "Kui sa ülevaadet kohandad, kõiguvad selle kaardid kergelt, et näidata, et saad neid liigutada.",
   "whatsNew.labelGlyphs": "Sildid näitab iga valiku juures sümbolit, nagu Nurgad ja Animatsioon.",
   "whatsNew.copyDecision": "Kui BombVault leiab sihtkohast jaotise varundusi ajast enne seda andmebaasi, küsivad Vajab tähelepanu ja sihtkoha leht, kas Võta üle selle serveri omadena või Kontrolli enne reegleid.",

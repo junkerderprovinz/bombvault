@@ -851,6 +851,8 @@ const lt: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Konteineris, VM, aplankas ar ZFS duomenų rinkinys gali veikti pagal savo tvarkaraštį. Jį nustatai įrašo skirtuke Nustatymai, prieš tai nereikia įjungti jokio jungiklio.",
   "whatsNew.deleteRisk": "Saugojimo vietą be apsaugos nuo trynimo gali priimti tokią, kokia ji yra. Apžvalga tada nustoja dėl jos įspėti ir toliau sako, kad ten esančias kopijas galima ištrinti.",
   "whatsNew.noOffsite": "Jei atsarginės kopijos neturėtų palikti patalpų, įjunkite Be nuotolinių kopijų. Tada apžvalga trūkstamą kopiją rodo pilkai, o ne raudonai, o nepavykusi ar vėluojanti kopija vis tiek matyti.",
+  "whatsNew.snapshots": "Naujas puslapis Momentinės kopijos rodo kiekvieną serverio ZFS, btrfs ir VM momentinę kopiją. Ten galite jas kurti, pervadinti, sulaikyti ir ištrinti, o prieš trinant matote, kiek vietos atsilaisvins.",
+  "whatsNew.snapshotPlans": "Momentinių kopijų tvarkaraščiai patys kuria momentines kopijas ir palieka naujausias. Jie ištrina tik tas momentines kopijas, kurias patys sukūrė.",
   "whatsNew.overviewMoveMode": "Kol tinkini apžvalgą, jos kortelės švelniai siūbuoja, kad matytum, jog jas gali perkelti.",
   "whatsNew.labelGlyphs": "Etiketės rodo kiekvieno pasirinkimo simbolį, kaip ir Kampai bei Animacija.",
   "whatsNew.copyDecision": "Kai BombVault paskirties vietoje randa sekcijos atsargines kopijas, padarytas prieš šią duomenų bazę, Reikia dėmesio ir paskirties vietos puslapis klausia, ar nori Perimti kaip šio serverio kopijas, ar Pirmiau patikrinti taisykles.",

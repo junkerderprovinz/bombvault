@@ -851,6 +851,8 @@ const eu: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Edukiontzi, MB, karpeta edo ZFS datu-multzo batek bere plangintza propioa izan dezake. Elementuaren Ezarpenak fitxan ezartzen duzu, aurretik etengailurik aktibatu gabe.",
   "whatsNew.deleteRisk": "Ezabatzearen aurkako babesik gabeko biltegiratze-kokaleku bat dagoen bezala onar daiteke. Orduan ikuspegi orokorrak ez du horri buruz ohartarazten, eta han dauden babeskopiak ezaba daitezkeela esaten jarraitzen du.",
   "whatsNew.noOffsite": "Zure babeskopiek lokaletik irten behar ez badute, piztu Kanpoko kopiarik ez. Ikuspegi orokorrak falta den kopia grisez erakusten du orduan gorriz beharrean, eta huts egin duen edo atzeratuta dagoen babeskopia bat oraindik nabarmentzen da.",
+  "whatsNew.snapshots": "Argazkiak orri berriak zerbitzariko ZFS, btrfs eta VM argazki guztiak erakusten ditu. Han atera, izena aldatu, atxiki eta ezaba ditzakezu, eta ezabatu aurretik ikusten duzu zenbat leku libratuko den.",
+  "whatsNew.snapshotPlans": "Argazkien egutegiek argazkiak beren kabuz ateratzen dituzte eta berrienak gordetzen dituzte. Beraiek ateratako argazkiak bakarrik ezabatzen dituzte.",
   "whatsNew.overviewMoveMode": "Laburpena pertsonalizatzen duzun bitartean, txartelak leunki kulunkatzen dira, mugi ditzakezula erakusteko.",
   "whatsNew.labelGlyphs": "Etiketak aukera bakoitzeko ikur bat erakusten du, Ertzak eta Animazioa bezala.",
   "whatsNew.copyDecision": "BombVault-ek helmuga batean datu-base hau baino lehenagoko atal baten babeskopiak aurkitzen dituenean, Arreta behar du atalak eta helmugaren orriak galdetzen dute ea Hartu zerbitzari honen propiotzat edo Egiaztatu arauak lehenik aukeratzen duzun.",

@@ -304,14 +304,14 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
 
   if (openedAsPairedPhone()) {
     return (
-      <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex}>
+      <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex} newId="settings-snapshots">
         <Note>{t("hostSnap.pairedOnly")}</Note>
       </Card>
     );
   }
 
   return (
-    <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex}>
+    <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex} newId="settings-snapshots">
       {plans !== null && plans.length === 0 && <p className="text-xs text-carbon-textMuted">{t("hostSnap.plans.none")}</p>}
       {plans !== null && plans.length > 0 && (
         <Rows as="ul" label={t("hostSnap.plans.title")}>

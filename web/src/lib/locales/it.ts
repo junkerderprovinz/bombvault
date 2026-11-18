@@ -1200,6 +1200,8 @@ const it: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Un container, una VM, una cartella o un dataset ZFS può seguire una pianificazione propria. La imposti nella scheda Impostazioni dell'elemento, senza dover prima attivare un interruttore.",
   "whatsNew.deleteRisk": "Una posizione di archiviazione senza protezione dall'eliminazione può essere accettata così com'è. La panoramica smette allora di segnalarla e continua a dire che i backup lì possono essere eliminati.",
   "whatsNew.noOffsite": "Se i tuoi backup non dovrebbero lasciare la sede, attiva Nessuna copia off-site. La panoramica mostra allora la copia mancante in grigio invece che in rosso, e un backup fallito o in ritardo si nota sempre.",
+  "whatsNew.snapshots": "La nuova pagina Snapshot mostra ogni snapshot ZFS, btrfs e VM del server. Lì puoi crearli, rinominarli, trattenerli ed eliminarli, e prima di un'eliminazione vedi quanto spazio si libera.",
+  "whatsNew.snapshotPlans": "Le pianificazioni degli snapshot creano snapshot da sole e tengono i più recenti. Eliminano solo gli snapshot che hanno creato loro stesse.",
   "whatsNew.overviewMoveMode": "Mentre personalizzi la panoramica, le sue schede ondeggiano leggermente per mostrare che puoi spostarle.",
   "whatsNew.labelGlyphs": "Etichette mostra un simbolo per ogni scelta, come Angoli e Animazione.",
   "whatsNew.copyDecision": "Quando BombVault trova su una destinazione backup di una sezione precedenti a questo database, Richiede attenzione e la pagina della destinazione chiedono se vuoi Adottali per questo server o Prima controlla le regole.",

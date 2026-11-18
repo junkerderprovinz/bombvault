@@ -61,7 +61,7 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
-    version: "10.6.2",
+    version: "10.7.0",
     changes: [
       {
         id: "settings-no-offsite",
@@ -69,6 +69,20 @@ export const RELEASES: Release[] = [
         where: ["nav.settings", "storage.title"],
         way: ["/settings", "/settings/storage"],
         text: "whatsNew.noOffsite",
+      },
+      {
+        id: "snapshots-page",
+        page: "/snapshots",
+        where: ["hostSnap.title"],
+        way: ["/settings", "/settings/snapshots", "/snapshots"],
+        text: "whatsNew.snapshots",
+      },
+      {
+        id: "settings-snapshots",
+        page: "/settings/snapshots",
+        where: ["nav.settings", "hostSnap.title"],
+        way: ["/settings", "/settings/snapshots"],
+        text: "whatsNew.snapshotPlans",
       },
     ],
   },

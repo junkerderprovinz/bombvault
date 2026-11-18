@@ -851,6 +851,8 @@ const is: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Gámur, sýndarvél, mappa eða ZFS-gagnasafn getur keyrt á eigin áætlun. Þú stillir hana á flipanum Stillingar í færslunni og þarft ekki fyrst að kveikja á neinum rofa.",
   "whatsNew.deleteRisk": "Geymslustað án varnar gegn eyðingu má samþykkja eins og hann er. Yfirlitið hættir þá að vara við honum og segir áfram að afritunum þar megi eyða.",
   "whatsNew.noOffsite": "Ef afritin eiga ekki að fara af staðnum skaltu kveikja á Engin fjarafrit. Yfirlitið sýnir þá afritið sem vantar grátt í stað rauðs, og misheppnað eða seint afrit sker sig enn úr.",
+  "whatsNew.snapshots": "Nýja síðan Skyndimyndir sýnir allar ZFS-, btrfs- og VM-skyndimyndir á þjóninum. Þar geturðu tekið þær og endurnefnt, haldið þeim og eytt þeim, og áður en þú eyðir sérðu hve mikið pláss losnar.",
+  "whatsNew.snapshotPlans": "Tímaáætlanir skyndimynda taka skyndimyndir sjálfkrafa og halda þeim nýjustu. Þær eyða aðeins skyndimyndum sem þær tóku sjálfar.",
   "whatsNew.overviewMoveMode": "Á meðan þú sérsníður yfirlitið vagga spjöldin þess létt til að sýna að þú getur fært þau.",
   "whatsNew.labelGlyphs": "Merkingar sýnir tákn fyrir hvern valkost, eins og Horn og Hreyfimynd.",
   "whatsNew.copyDecision": "Þegar BombVault finnur á áfangastað afrit hluta frá því fyrir þennan gagnagrunn spyrja Krefst athygli og síða áfangastaðarins hvort þú viljir Taka þau sem eigin afrit þjónsins eða Athuga reglurnar fyrst.",

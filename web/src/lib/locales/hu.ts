@@ -1201,6 +1201,8 @@ const hu: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Egy konténer, VM, mappa vagy ZFS-adatkészlet saját ütemezés szerint is futhat. Az elem Beállítások lapján állítod be, anélkül hogy előbb bármilyen kapcsolót be kellene kapcsolnod.",
   "whatsNew.deleteRisk": "Egy törlés elleni védelem nélküli tárolóhelyet úgy is elfogadhatsz, ahogy van. Az áttekintés ekkor már nem figyelmeztet miatta, de továbbra is jelzi, hogy az ottani mentések törölhetők.",
   "whatsNew.noOffsite": "Ha a mentéseidnek nem kellene elhagyniuk a helyszínt, kapcsold be a Nincsenek telephelyen kívüli másolatok kapcsolót. Az áttekintés ekkor a hiányzó másolatot piros helyett szürkén mutatja, és a sikertelen vagy késő mentés továbbra is feltűnik.",
+  "whatsNew.snapshots": "Az új Pillanatképek oldal a szerver minden ZFS-, btrfs- és VM-pillanatképét mutatja. Ott készíthetsz, átnevezhetsz, visszatarthatsz és törölhetsz pillanatképeket, és törlés előtt látod, mennyi hely szabadul fel.",
+  "whatsNew.snapshotPlans": "A pillanatkép-ütemezések maguktól készítenek pillanatképeket, és megtartják a legújabbakat. Csak azokat a pillanatképeket törlik, amelyeket ők maguk készítettek.",
   "whatsNew.overviewMoveMode": "Amíg testreszabod az Áttekintést, a kártyái finoman ringatóznak, jelezve, hogy áthelyezheted őket.",
   "whatsNew.labelGlyphs": "A Feliratok minden választáshoz szimbólumot mutat, mint a Sarkok és az Animáció.",
   "whatsNew.copyDecision": "Ha a BombVault egy célon ennél az adatbázisnál régebbi mentéseket talál egy szakaszból, a Figyelmet igényel és a cél oldala megkérdezi, hogy az Átvétel a szerver saját mentéseiként vagy az Előbb a szabályok ellenőrzése legyen.",

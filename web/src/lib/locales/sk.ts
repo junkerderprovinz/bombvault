@@ -851,6 +851,8 @@ const sk: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Kontajner, VM, priečinok alebo dátová sada ZFS môže bežať podľa vlastného plánu. Nastavíš ho na karte Nastavenia položky a nemusíš predtým zapínať žiadny prepínač.",
   "whatsNew.deleteRisk": "Úložisko bez ochrany proti zmazaniu môžeš prijať také, aké je. Prehľad potom pred ním prestane varovať a naďalej uvádza, že zálohy tam sa dajú zmazať.",
   "whatsNew.noOffsite": "Ak zálohy nemajú opustiť priestory, zapnite Žiadne externé kópie. Prehľad potom ukazuje chýbajúcu kópiu sivou namiesto červenej a neúspešnú alebo meškajúcu zálohu je stále vidieť.",
+  "whatsNew.snapshots": "Nová stránka Snímky ukazuje každú snímku ZFS, btrfs a VM na serveri. Môžete ich tam robiť, premenovať, podržať a odstrániť, a pred odstránením uvidíte, koľko miesta sa uvoľní.",
+  "whatsNew.snapshotPlans": "Plány snímok robia snímky samy a nechávajú si tie najnovšie. Odstraňujú iba snímky, ktoré samy urobili.",
   "whatsNew.overviewMoveMode": "Keď prispôsobujete prehľad, jeho karty sa jemne pohupujú, aby bolo vidieť, že ich môžete presúvať.",
   "whatsNew.labelGlyphs": "Označenia zobrazujú pri každej voľbe symbol, rovnako ako Rohy a Animácia.",
   "whatsNew.copyDecision": "Keď BombVault nájde v cieli zálohy sekcie spred tejto databázy, Vyžaduje pozornosť a stránka cieľa sa spýtajú, či ich chceš Prevziať ako vlastné zálohy tohto servera, alebo Najprv skontrolovať pravidlá.",

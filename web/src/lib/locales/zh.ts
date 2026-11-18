@@ -1199,6 +1199,8 @@ const zh: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "容器、虚拟机、文件夹或 ZFS 数据集都可以按独立计划运行。在条目的设置选项卡中直接设置，无需先打开任何开关。",
   "whatsNew.deleteRisk": "没有防删除保护的存储位置现在可以按原样接受。概览随后不再为此发出警告，但仍会说明那里的备份可以被删除。",
   "whatsNew.noOffsite": "如果备份不应离开本地，请打开“不做异地副本”。概览会把缺少的副本显示为灰色而不是红色，失败或逾期的备份依然醒目。",
+  "whatsNew.snapshots": "新的“快照”页面列出服务器上所有 ZFS、btrfs 和 VM 快照。你可以在那里创建、重命名、保留和删除快照，删除前还能看到会腾出多少空间。",
+  "whatsNew.snapshotPlans": "快照计划会自动创建快照，并保留最新的快照。它们只会删除自己创建的快照。",
   "whatsNew.overviewMoveMode": "自定义概览时，卡片会轻轻摆动，表示你可以移动它们。",
   "whatsNew.labelGlyphs": "标签像圆角和动画一样，为每个选项显示一个符号。",
   "whatsNew.copyDecision": "当 BombVault 在某个目标中发现某部分在此数据库之前的备份时，需要处理和该目标的页面会询问你是要接收为此服务器自己的备份，还是先检查规则。",

@@ -361,7 +361,9 @@ export function Snapshots() {
           {selected.length > 0 && (
             <PageAction label={t("hostSnap.deleteSelected", selected.length)} glyph={<IconTrash />} onClick={() => void remove(selected)} />
           )}
-          <PageAction label={t("hostSnap.refresh")} glyph={<IconRefresh />} busy={loading} onClick={refresh} />
+          <span data-new="snapshots-page" className="flex">
+            <PageAction label={t("hostSnap.refresh")} glyph={<IconRefresh />} busy={loading} onClick={refresh} />
+          </span>
           {sources.some((s) => s.canCreate) && (
             <PageAction primary label={t("hostSnap.create.title")} glyph={<IconAdd />} onClick={() => setOpen({ kind: "create" })} />
           )}

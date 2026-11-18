@@ -851,6 +851,8 @@ const lv: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Konteiners, VM, mape vai ZFS datu kopa var darboties pēc sava grafika. To iestatāt ieraksta cilnē Iestatījumi, iepriekš neieslēdzot nekādu slēdzi.",
   "whatsNew.deleteRisk": "Krātuves vietu bez aizsardzības pret dzēšanu var pieņemt tādu, kāda tā ir. Pārskats tad vairs nebrīdina par to un joprojām norāda, ka tur esošās kopijas var izdzēst.",
   "whatsNew.noOffsite": "Ja rezerves kopijām nevajadzētu pamest telpas, ieslēdziet Bez attālajām kopijām. Pārskats tad trūkstošo kopiju rāda pelēku, nevis sarkanu, un neizdevusies vai kavēta rezerves kopija joprojām ir pamanāma.",
+  "whatsNew.snapshots": "Jaunā lapa Momentuzņēmumi rāda katru servera ZFS, btrfs un VM momentuzņēmumu. Tur varat tos izveidot, pārdēvēt, aizturēt un dzēst, un pirms dzēšanas redzat, cik daudz vietas atbrīvosies.",
+  "whatsNew.snapshotPlans": "Momentuzņēmumu grafiki paši izveido momentuzņēmumus un patur jaunākos. Tie dzēš tikai tos momentuzņēmumus, ko paši izveidojuši.",
   "whatsNew.overviewMoveMode": "Kamēr tu pielāgo pārskatu, tā kartītes viegli šūpojas, lai parādītu, ka tās vari pārvietot.",
   "whatsNew.labelGlyphs": "Uzraksti rāda simbolu katrai izvēlei, tāpat kā Stūri un Animācija.",
   "whatsNew.copyDecision": "Kad BombVault mērķī atrod sadaļas rezerves kopijas, kas izveidotas pirms šīs datubāzes, Nepieciešama uzmanība un mērķa lapa jautā, vai vēlaties Pārņemt kā šī servera kopijas vai Vispirms pārbaudīt noteikumus.",

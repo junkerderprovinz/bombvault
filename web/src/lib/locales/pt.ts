@@ -1197,6 +1197,8 @@ const pt: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Um container, uma VM, uma pasta ou um conjunto de dados ZFS pode correr num agendamento próprio. Defines-o no separador Definições da entrada, sem teres de ligar primeiro um interruptor.",
   "whatsNew.deleteRisk": "Um local de armazenamento sem proteção contra eliminação pode ser aceite tal como está. A vista geral deixa então de avisar sobre ele e continua a dizer que as cópias lá podem ser eliminadas.",
   "whatsNew.noOffsite": "Se as tuas cópias não devem sair das instalações, liga Sem cópias externas. A vista geral mostra então a cópia em falta a cinzento em vez de vermelho, e um backup falhado ou em atraso continua a destacar-se.",
+  "whatsNew.snapshots": "A nova página Instantâneos mostra todos os instantâneos ZFS, btrfs e VM do servidor. Aí podes criá-los, renomeá-los, retê-los e apagá-los, e antes de apagar vês quanto espaço fica livre.",
+  "whatsNew.snapshotPlans": "Os agendamentos de instantâneos criam instantâneos sozinhos e guardam os mais recentes. Só apagam instantâneos que eles próprios criaram.",
   "whatsNew.overviewMoveMode": "Enquanto personalizas a visão geral, os cartões balançam ligeiramente para mostrar que os podes mover.",
   "whatsNew.labelGlyphs": "Rótulos mostra um símbolo para cada opção, como Cantos e Animação.",
   "whatsNew.copyDecision": "Quando o BombVault encontra num destino backups de uma secção de antes desta base de dados, Precisa de atenção e a página do destino perguntam se queres Assumir como backups deste servidor ou Verificar primeiro as regras.",

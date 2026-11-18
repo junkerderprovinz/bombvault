@@ -1196,6 +1196,8 @@ const nl: Partial<Translations> = {
   "whatsNew.entryOwnPlan": "Een container, VM, map of ZFS-dataset kan op een eigen planning draaien. Je stelt die in op het tabblad Instellingen van het item, zonder eerst een schakelaar aan te zetten.",
   "whatsNew.deleteRisk": "Een opslaglocatie zonder bescherming tegen verwijderen kun je accepteren zoals ze is. Het overzicht waarschuwt er dan niet meer voor en zegt nog steeds dat de back-ups daar verwijderd kunnen worden.",
   "whatsNew.noOffsite": "Als je back-ups het pand beter niet verlaten, zet dan Geen off-site-kopieën aan. Het overzicht toont de ontbrekende kopie dan grijs in plaats van rood, en een mislukte of te late back-up valt nog steeds op.",
+  "whatsNew.snapshots": "De nieuwe pagina Snapshots toont elke ZFS-, btrfs- en VM-snapshot op de server. Daar kun je ze maken, hernoemen, vasthouden en verwijderen, en voor het verwijderen zie je hoeveel ruimte er vrijkomt.",
+  "whatsNew.snapshotPlans": "Snapshotplanningen maken uit zichzelf snapshots en houden de nieuwste. Ze verwijderen alleen snapshots die ze zelf hebben gemaakt.",
   "whatsNew.overviewMoveMode": "Terwijl je het overzicht aanpast, wiegen de kaarten zachtjes om te laten zien dat je ze kunt verplaatsen.",
   "whatsNew.labelGlyphs": "Labels toont voor elke keuze een symbool, net als Hoeken en Animatie.",
   "whatsNew.copyDecision": "Vindt BombVault op een bestemming back-ups van een onderdeel van vóór deze database, dan vragen Aandacht nodig en de pagina van de bestemming of je ze Als back-ups van deze server overnemen of Eerst de regels controleren wilt.",
