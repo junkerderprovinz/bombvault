@@ -181,7 +181,6 @@ function useRegistryForm(onSave: SaveEntry, onClose: () => void, initial: Draft)
   return { start, save, fields };
 }
 
-/** The window a new registry starts in: the tiles, then the picked kind's form. */
 function AddRegistryWindow({ onSave, onClose }: { onSave: SaveEntry; onClose: () => void }) {
   const { t } = useT();
   const form = useRegistryForm(onSave, onClose, { host: "", username: "", token: "" });

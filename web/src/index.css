@@ -2299,12 +2299,9 @@ body {
    the ink's full contrast. */
 .glim-provider-pick .glim-readme-btn-unit:is(:hover, :focus-within) .glim-readme-btn-sub { opacity: 1; }
 
-/* GlimStone's picker window (@glimstone/react's PickerWindow): 48rem wide, the
-   search at its top end from the moment it opens, and only the tiles scrolling
-   under it, so the heading, the search and the foot stay where they are. A
-   form after the pick narrows the window to a form's width around the same
-   middle. A tile takes its brand's colours from its list item, and one of
-   BombVault's own glyphs lights its tile in the accent. */
+/* GlimStone's picker window (@glimstone/react's PickerWindow). Only the tiles
+   scroll, a form after the pick narrows the window, and a tile takes its
+   brand's colours from its list item or the accent for one of our glyphs. */
 .glim-window.glim-pick-window {
   max-width: 48rem;
   transition: max-width var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1);
