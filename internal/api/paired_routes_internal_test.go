@@ -23,8 +23,8 @@ import (
 // routeBuilders are the functions that register routes from a table or a
 // constant of another package: the public API and the fortress status, which
 // gate themselves on their own tokens, and the routes members call over the
-// group channel, which never pass authGate.
-var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux"}
+// group channel and the router of a node, which never pass authGate.
+var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux", "NodeRouter"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
 // its source.
