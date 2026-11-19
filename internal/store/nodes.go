@@ -144,3 +144,45 @@ func (r *Repo) SetNodeLinkReleased(at int64) error {
 	}
 	return nil
 }
+
+// NodePlacement is where a node sends one section's backups, as home told it.
+type NodePlacement struct {
+	Domain string
+	Repo   string
+	// CredsEnc is the sign-in for Repo, sealed under the node's APP_KEY.
+	CredsEnc []byte
+	// CAPEM is the certificate the node trusts Repo's server by, empty for
+	// one the system trusts.
+	CAPEM string
+	SetAt int64
+}
+
+// SetNodePlacement stores where a section's backups go, in place of what was
+// there.
+func (r *Repo) SetNodePlacement(p NodePlacement) error {
+	_, err := r.db.Exec(`INSERT INTO node_placements (domain, repo, creds_enc, ca_pem, set_at) VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT (domain) DO UPDATE SET repo = excluded.repo, creds_enc = excluded.creds_enc, ca_pem = excluded.ca_pem, set_at = excluded.set_at`,
+		p.Domain, p.Repo, notNullBlob(p.CredsEnc), p.CAPEM, p.SetAt)
+	if err != nil {
+		return fmt.Errorf("SetNodePlacement: %w", err)
+	}
+	return nil
+}
+
+// NodePlacements returns where each section's backups go, by section.
+func (r *Repo) NodePlacements() ([]NodePlacement, error) {
+	rows, err := r.db.Query(`SELECT domain, repo, creds_enc, ca_pem, set_at FROM node_placements ORDER BY domain`)
+	if err != nil {
+		return nil, fmt.Errorf("NodePlacements: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only cursor
+	var out []NodePlacement
+	for rows.Next() {
+		var p NodePlacement
+		if err := rows.Scan(&p.Domain, &p.Repo, &p.CredsEnc, &p.CAPEM, &p.SetAt); err != nil {
+			return nil, fmt.Errorf("NodePlacements: %w", err)
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}

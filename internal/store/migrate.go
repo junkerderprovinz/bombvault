@@ -3978,6 +3978,41 @@ INSERT OR IGNORE INTO node_link (id) VALUES (1);`,
 		alreadySatisfied: columnPresent("nodes", "state"),
 		sql:              `ALTER TABLE nodes ADD COLUMN state TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		version:          nodePlacementsMigration,
+		name:             "node_placements",
+		alreadySatisfied: tablePresent("node_placements"),
+		sql: `CREATE TABLE IF NOT EXISTS node_placements (
+	domain    TEXT PRIMARY KEY,
+	repo      TEXT NOT NULL,
+	creds_enc BLOB NOT NULL,
+	ca_pem    TEXT NOT NULL DEFAULT '',
+	set_at    INTEGER NOT NULL
+);`,
+	},
+	{
+		// home's receiver is where nodes write too, at an address of its own
+		// that they reach from outside.
+		version:          receiverNodeAddressMigration,
+		name:             "receiver_server_node_address",
+		alreadySatisfied: columnPresent("receiver_server", "node_url"),
+		sql: `ALTER TABLE receiver_server ADD COLUMN node_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE receiver_server ADD COLUMN node_ca_pem TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// A node's login on the receiver comes with the node, not from a role
+		// a member asked for.
+		version:          receiverLoginForNodeMigration,
+		name:             "receiver_logins_for_node",
+		alreadySatisfied: columnPresent("receiver_logins", "for_node"),
+		sql:              `ALTER TABLE receiver_logins ADD COLUMN for_node INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version:          receivedRepoNodeMigration,
+		name:             "received_repos_node_id",
+		alreadySatisfied: columnPresent("received_repos", "node_id"),
+		sql:              `ALTER TABLE received_repos ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4655,6 +4690,18 @@ const nodeLinkMigration = 981
 
 // nodeStateMigration numbers whether home is still letting a node go.
 const nodeStateMigration = 982
+
+// nodePlacementsMigration numbers where a node sends each section's backups.
+const nodePlacementsMigration = 983
+
+// receiverNodeAddressMigration numbers the address nodes reach the receiver at.
+const receiverNodeAddressMigration = 984
+
+// receiverLoginForNodeMigration numbers the mark of a node's login.
+const receiverLoginForNodeMigration = 985
+
+// receivedRepoNodeMigration numbers the node a received repository is from.
+const receivedRepoNodeMigration = 986
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

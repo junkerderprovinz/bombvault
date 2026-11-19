@@ -72,3 +72,63 @@ func TestANodeRemembersTheHomeThatAdoptedIt(t *testing.T) {
 		t.Errorf("released: %+v", link)
 	}
 }
+
+func TestANodeKeepsWhereHomeSendsEachSectionsBackups(t *testing.T) {
+	r := newRepo(t)
+	for _, p := range []store.NodePlacement{
+		{Domain: "files", Repo: "rest:https://home.example.org/vps/files", CredsEnc: []byte{1}, SetAt: 10},
+		{Domain: "containers", Repo: "rest:https://home.example.org/vps/containers", CredsEnc: []byte{2}, CAPEM: "pem", SetAt: 10},
+		{Domain: "files", Repo: "s3:https://s3.example.org/bucket/vps/files", CredsEnc: []byte{3}, SetAt: 20},
+	} {
+		if err := r.SetNodePlacement(p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got, err := r.NodePlacements()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0].Domain != "containers" || got[0].CAPEM != "pem" || got[1].Repo != "s3:https://s3.example.org/bucket/vps/files" || got[1].SetAt != 20 {
+		t.Errorf("placements = %+v, want one per section, the later one kept", got)
+	}
+}
+
+func TestHomeKeepsWhatItsReceiverHandsToNodes(t *testing.T) {
+	r := newRepo(t)
+	if err := r.SaveReceiverServer(store.ReceiverServer{ContainerName: "rest", Folder: "backups", Port: 8000, User: "home"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetReceiverNodeAddress("https://backup.example.org", "pem"); err != nil {
+		t.Fatal(err)
+	}
+	rs, _, err := r.GetReceiverServer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rs.NodeURL != "https://backup.example.org" || rs.NodeCAPEM != "pem" {
+		t.Errorf("receiver = %+v", rs)
+	}
+	rs.Check = "protected"
+	if err := r.SaveReceiverServer(rs); err != nil {
+		t.Fatal(err)
+	}
+	if again, _, _ := r.GetReceiverServer(); again.NodeURL != rs.NodeURL {
+		t.Errorf("a save lost the address for nodes: %+v", again)
+	}
+
+	if err := r.CreateReceiverLogin(store.ReceiverLogin{MemberID: "node-1", MemberName: "vps", User: "vps", ForNode: true}); err != nil {
+		t.Fatal(err)
+	}
+	if l, ok, err := r.GetReceiverLogin("node-1"); err != nil || !ok || !l.ForNode {
+		t.Errorf("login = %+v %v %v", l, ok, err)
+	}
+
+	rr, err := r.CreateReceivedRepo(store.ReceivedRepo{Name: "vps containers", Repo: "backups/vps/containers", NodeID: "node-1", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _, err := r.GetReceivedRepo(rr.ID)
+	if err != nil || got.NodeID != "node-1" || got.NeedsPairing() {
+		t.Errorf("received repo = %+v %v, want it from the node and paired", got, err)
+	}
+}
