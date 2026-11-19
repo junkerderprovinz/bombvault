@@ -141,6 +141,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                           {t("signIns.default")}
                         </Badge>
                       )}
+                      {s.default && <InfoBubble tip={t("signIns.defaultAlso")} />}
                       {s.s3KeyId && (
                         <Badge tone="neutral" size="small">
                           S3
@@ -161,7 +162,6 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                       {key}
                     </span>
                   )}
-                  {s.default && <span>{t("signIns.defaultAlso")}</span>}
                 </ConnectionRow>
               </li>
             );

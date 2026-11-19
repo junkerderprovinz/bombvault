@@ -97,7 +97,7 @@ it("shows each sign-in as a row with Edit alone, the default as a badge after it
   await renderCard();
   expect(within(row("Wasabi")).getAllByRole("button").map((b) => b.textContent)).toEqual(["Edit"]);
   expect(row("Hetzner S3").textContent).toContain("Default");
-  expect(row("Hetzner S3").textContent).toContain("Also used for addresses typed in by hand");
+  expect(within(row("Hetzner S3")).getByLabelText(/^Also used for addresses typed in by hand/)).toBeTruthy();
   expect(screen.getByText("Used by Wasabi box and Wasabi too")).toBeTruthy();
   expect(row("Old NAS").textContent).toContain("Not used by any storage location");
   expect(screen.getByText("NAS direct (kept credentials)")).toBeTruthy();
