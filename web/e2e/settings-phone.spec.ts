@@ -609,7 +609,7 @@ function rowOf(scope: Locator, name: string): Locator {
     .last();
 }
 
-const OFFSITE_SECTIONS = ["Container", "VMs", "Flash", "Ordner", "ZFS", "Selbstbackup"];
+const OFFSITE_SECTIONS = ["Container", "VMs", "Flash", "Ordner", "ZFS", "Selbstsicherung"];
 
 for (const [what, rows] of [
   [
@@ -638,7 +638,7 @@ for (const [what, rows] of [
   [
     "credential sets",
     async (page: Page) => ({
-      scope: page.locator('[data-search-card="Zugangsdaten"]'),
+      scope: page.locator('[data-search-card="Anmeldedaten"]'),
       names: CRED_SETS.map((c) => c.name),
     }),
   ],

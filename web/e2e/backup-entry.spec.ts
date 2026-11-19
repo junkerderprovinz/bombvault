@@ -532,7 +532,7 @@ test("the Settings tab gives a container the cards of its kind", async ({ page }
   await stage(page);
   await openEntry(page, "/backups/container/immich?tab=settings", "immich");
 
-  for (const title of ["Zeitplan und Speicherort", "Repository", "Container", "Gesicherte Ordner", "Ausschlussmuster"]) {
+  for (const title of ["Zeitplan und Speicherort", "Repository", "Container", "Sicherungsordner", "Ausschlussmuster"]) {
     await expect(card(page, title)).toBeVisible();
   }
   await expect(card(page, "Zeitplan und Speicherort")).toContainText("Folgt der Vorgabe");

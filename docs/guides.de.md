@@ -15,7 +15,7 @@ Jedes dieser Beispiele führt eine echte Aufgabe von Anfang bis Ende durch, mit 
 
 ## Sicherungen und Zeitpläne {#backups}
 
-- [Drei Pläne, die zusammenpassen](schedules.md#example): ein Gesamt-Backup in der Nacht, VMs einmal die Woche und ein eigener Plan für einen Eintrag alle 6 Stunden.
+- [Drei Pläne, die zusammenpassen](schedules.md#example): eine Gesamtsicherung in der Nacht, VMs einmal die Woche und ein eigener Plan für einen Eintrag alle 6 Stunden.
 - [Plex wartet, solange jemand schaut](backups.md#example-plex): eine geplante Sicherung, die keinen Film unterbricht.
 - [Eine VM mit zwei Unraid-Snapshots](vm-backup-ssh-setup.md#example-unraid-snapshots): eine Live-Sicherung, die die Snapshots behält, und eine Wiederherstellung neben das Original.
 - [Eine Replik auf eine zweite Unraid-Box](zfs-datasets.md#example-replica): eine ZFS-Kopie, die du jederzeit lesen kannst, und drei Wege, eine einzelne Datei daraus zu holen.

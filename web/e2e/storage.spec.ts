@@ -316,7 +316,7 @@ test.describe("on the desktop", () => {
 
     await expect(window.getByText("Welche Bereiche sichern hierher?")).toBeVisible();
     await expect(window.getByText("7 Einträge · bis zu 32 Sicherungen").first()).toBeVisible();
-    for (const section of ["VMs", "Ordner", "Selbstbackup"]) {
+    for (const section of ["VMs", "Ordner", "Selbstsicherung"]) {
       await window.getByRole("switch", { name: section }).click();
     }
     expect(staged.writes).toEqual([]);

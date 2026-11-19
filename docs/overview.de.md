@@ -15,7 +15,7 @@ Der Kopf sitzt oben auf der Seite und bleibt immer dort. Sein Ring zeigt, wie vi
 | **Gesichert, mit Hinweisen** | Alles ist gesichert, und manche Läufe haben einen Hinweis hinterlassen, etwa Dateien, die sie nicht lesen konnten. |
 | **Noch nicht alles geschützt** | Einige Einträge haben keine aktuelle Sicherung, zum Beispiel weil sie auf ihre erste warten. |
 | **3 Sachen brauchen dich** | Etwas ist fehlgeschlagen oder wartet auf eine Entscheidung. Die Karte **Braucht dich** listet es auf. |
-| **Sichert gerade** | Eine Sicherung läuft. Der Ring wird zum Fortschrittsring mit den Stationen **Anhalten**, **Lesen** und **Starten**, und ein Gesamt-Backup zählt seine Einträge mit, etwa **Sichert gerade: 12 von 43**. **Lauf ansehen** öffnet den Lauf. |
+| **Sichert gerade** | Eine Sicherung läuft. Der Ring wird zum Fortschrittsring mit den Stationen **Anhalten**, **Lesen** und **Starten**, und eine Gesamtsicherung zählt ihre Einträge mit, etwa **Sichert gerade: 12 von 43**. **Lauf ansehen** öffnet den Lauf. |
 | **Off-site-Kopie läuft** | Eine Kopie auf einen Speicherort läuft. Sie zeigt keine Prozentzahl, weil `restic copy` keine meldet. |
 
 Unter der Zeile stehen der Zeitpunkt des letzten Laufs und der Start des nächsten geplanten.

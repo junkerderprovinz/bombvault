@@ -55,7 +55,7 @@ Was passiert, wenn etwas schiefgeht:
 
 Die automatischen [Datenbank-Dumps](backups.md#database-dumps) laufen mit der Sicherung eines Containers, nicht mit einem ZFS-Eintrag. Eine Datenbank, deren Container nur über sein Dataset gesichert wird, bekommt keinen Dump, gib ihr hier also einen Befehl.
 
-Ein Container kann auf dieser Liste stehen und zugleich als Container gesichert werden. Seine Daten werden dann zweimal gespeichert, in zwei Repositories, und das Gesamt-Backup hält ihn zweimal an. Der Eintrag sagt das.
+Ein Container kann auf dieser Liste stehen und zugleich als Container gesichert werden. Seine Daten werden dann zweimal gespeichert, in zwei Repositories, und die Gesamtsicherung hält ihn zweimal an. Der Eintrag sagt das.
 
 ## Wiederherstellen {#restore}
 
