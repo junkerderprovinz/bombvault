@@ -70,6 +70,11 @@ type Config struct {
 	// Mode (env MODE) is how this process runs: the whole app, or a node that
 	// a home instance controls.
 	Mode Mode
+	// NodeHome (env NODE_HOME) is what a node knows of the home instance it
+	// belongs to, as home wrote it.
+	NodeHome string
+	// NodeName (env NODE_NAME) is what home shows for a node.
+	NodeName string
 }
 
 // Mode is how a process runs.
@@ -129,6 +134,8 @@ func Load(env map[string]string) (Config, error) {
 		FlashDir:       stringOr(env["FLASH_DIR"], "/host/boot"),
 		TrustedProxies: trustedProxies(env["TRUSTED_PROXY"]),
 		Mode:           mode,
+		NodeHome:       strings.TrimSpace(env["NODE_HOME"]),
+		NodeName:       strings.TrimSpace(env["NODE_NAME"]),
 	}
 	c.DBPath = filepath.Join(c.DataDir, "bombvault.sqlite")
 	if wasPlaceholder {

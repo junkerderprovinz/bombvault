@@ -341,3 +341,13 @@ func TestLoadRefusesAnUnknownMode(t *testing.T) {
 		t.Fatalf("MODE=nodes gave %v, want an error that names MODE", err)
 	}
 }
+
+func TestLoadReadsWhereANodeFindsItsHome(t *testing.T) {
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64), "MODE": "node", "NODE_HOME": " bvhome1.abc\n", "NODE_NAME": " vps "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.NodeHome != "bvhome1.abc" || c.NodeName != "vps" {
+		t.Errorf("NodeHome %q, NodeName %q", c.NodeHome, c.NodeName)
+	}
+}
