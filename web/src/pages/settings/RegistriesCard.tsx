@@ -4,11 +4,12 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import { catalogPicker } from "@glimstone/core";
 import { REGISTRY_PROVIDERS } from "@glimstone/core/registryProviders";
 import { PickerWindow } from "@glimstone/react/PickerWindow";
+import { ConnectionRow } from "@glimstone/react/ConnectionRow";
 import { BrandMark } from "@glimstone/react/ReadmeButton";
 import { Window, type WindowAction } from "@glimstone/react/Window";
 import { Button } from "../../components/Button";
 import { IconSave } from "../../components/glyphs";
-import { IconAdd, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { IconAdd, IconDatabase } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import type { RegistryAuthEntry } from "../../lib/api";
@@ -256,44 +257,28 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
       {entries.length === 0 ? (
         <p className="text-sm text-carbon-textMuted">{t("settings.registriesEmpty")}</p>
       ) : (
-        <Rows as="ul">
+        <ul className="flex flex-col gap-2">
           {entries.map((entry, i) => {
             const kind = registryKind(entry.host, entry.kind);
+            const facts = [
+              entry.host,
+              entry.username && t("tile.registry.userLine").replace("{user}", () => entry.username),
+              entry.tokenSet && t("tile.registry.tokenSaved"),
+            ];
             return (
-              <li key={entry.host} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
-                <RegistryMark kind={kind} />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate text-sm font-semibold text-carbon-text">{kind?.name ?? entry.host}</span>
-                  <span className="flex flex-wrap gap-x-1.5 text-xs text-carbon-textMuted">
-                    <bdi dir="ltr">{entry.host}</bdi>
-                    {entry.username && (
-                      <span className="before:me-1.5 before:content-['·']">
-                        {t("tile.registry.userLine").replace("{user}", () => entry.username)}
-                      </span>
-                    )}
-                    {entry.tokenSet && (
-                      <span className="before:me-1.5 before:content-['·']">{t("tile.registry.tokenSaved")}</span>
-                    )}
-                  </span>
-                </div>
-                <div className="ms-auto flex max-w-full flex-wrap items-center justify-end gap-2">
-                  <Button
-                    label={t("common.edit")}
-                    labelKey="common.edit"
-                    glyph={<IconPencil />}
-                    onClick={() => setOpen({ at: "edit", index: i })}
-                  />
-                  <Button
-                    label={t("settings.registryRemove")}
-                    labelKey="settings.registryRemove"
-                    glyph={<IconTrash />}
-                    onClick={() => void store(entries.filter((_, j) => j !== i))}
-                  />
-                </div>
+              <li key={entry.host}>
+                <ConnectionRow
+                  name={kind?.name ?? entry.host}
+                  mark={kind?.mark ?? <IconDatabase />}
+                  status={facts.filter(Boolean).join(" · ")}
+                  text={{ test: t("offsite.test"), edit: t("common.edit"), remove: t("settings.registryRemove") }}
+                  onEdit={() => setOpen({ at: "edit", index: i })}
+                  onRemove={() => void store(entries.filter((_, j) => j !== i))}
+                />
               </li>
             );
           })}
-        </Rows>
+        </ul>
       )}
       {open?.at === "add" && <AddRegistryWindow onSave={(entry) => store([...entries, entry])} onClose={() => setOpen(null)} />}
       {open?.at === "edit" && (

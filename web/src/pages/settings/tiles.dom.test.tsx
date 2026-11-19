@@ -378,7 +378,7 @@ describe("the Restore tile", () => {
       })
     );
     const rows = registries().getAllByRole("listitem");
-    expect(rows.map((row) => row.querySelector("span.font-semibold")?.textContent)).toEqual([
+    expect(rows.map((row) => row.querySelector(".glim-connection-name")?.textContent)).toEqual([
       "Gitea",
       "GitHub",
       "registry.home.lan",
