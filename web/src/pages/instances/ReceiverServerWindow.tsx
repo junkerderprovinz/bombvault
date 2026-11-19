@@ -163,6 +163,7 @@ export function ReceiverServerWindow({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={t("receiver.server.title")}
       hint={t("receiver.server.tip")}
       onClose={close}
@@ -372,6 +373,7 @@ function ReceiverServerDialog({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={t("receiver.server.setUp")}
       onClose={onClose}
       footer={

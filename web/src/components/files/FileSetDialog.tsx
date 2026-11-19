@@ -110,6 +110,7 @@ export function FileSetDialog({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={initial ? t("files.editSet") : t("files.addSet")}
       onClose={onClose}
       footer={

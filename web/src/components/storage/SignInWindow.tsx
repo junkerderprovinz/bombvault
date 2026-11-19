@@ -148,6 +148,7 @@ export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; se
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={credSetLabel(t, set)}
       hint={t("signIns.windowHint")}
       facts={

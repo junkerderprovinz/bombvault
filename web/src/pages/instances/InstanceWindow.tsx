@@ -19,6 +19,7 @@ export function InstanceWindow({
   facts,
   footer,
   picker = false,
+  closeOnBackdrop = true,
   onClose,
   children,
 }: {
@@ -32,6 +33,9 @@ export function InstanceWindow({
   /** A long window of steps: at most 85% of the screen tall, so the page
    *  stays in sight around it. */
   picker?: boolean;
+  /** Off while the window holds typed input, which a stray press beside it
+   *  would throw away. Escape and the footer still close it. */
+  closeOnBackdrop?: boolean;
   /** Returning false keeps the window open, and Back with it. */
   onClose: () => void | boolean;
   children: ReactNode;
@@ -100,7 +104,7 @@ export function InstanceWindow({
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (closeOnBackdrop && e.target === e.currentTarget) onClose();
       }}
     >
       <div

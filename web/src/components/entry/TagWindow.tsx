@@ -76,6 +76,7 @@ export function TagWindow({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={t("entry.tag.title")}
       facts={`${name}, ${formatRecent(rowTime(row), lang)}`}
       onClose={onClose}

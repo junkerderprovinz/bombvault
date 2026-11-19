@@ -241,12 +241,14 @@ function ChangePassword({ text, onAnswer }: { text: FortressText; onAnswer: (ans
     <Window
       title={text.phraseTitle}
       text={{ cancel: text.cancel, close: text.close }}
+      closeOnBackdrop={false}
       onClose={() => onAnswer({ error: t("fortress.changeKept") })}
       actions={[
         {
           label: text.changeConfirm,
           labelKey: "api.rotate",
           primary: true,
+          busy,
           disabled: busy || password === "",
           attrs: { "data-fortress": "change-unlock" },
           onClick: () => {
