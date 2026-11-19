@@ -213,7 +213,7 @@ function EditRegistryWindow({ entry, onSave, onClose }: { entry: RegistryAuthEnt
   const name = kind?.name ?? entry.host;
   return (
     <Window
-      title={t("tile.registry.editTitle").replace("{name}", () => name)}
+      title={t("common.editTitle").replace("{name}", () => name)}
       text={{ cancel: t("common.cancel"), close: t("common.close") }}
       actions={[form.save(entry.kind, entry)]}
       closeOnBackdrop={false}
