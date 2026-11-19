@@ -451,6 +451,7 @@ function ChannelRow({
         }
         test={check.face}
         text={{ test: t("notify.test"), edit: t("common.edit"), remove: t("notify.remove") }}
+        labelKeys={{ test: "notify.test", edit: "common.edit", remove: "notify.remove" }}
         onTest={check.run}
         onEdit={() => setEditing(true)}
         onRemove={onRemove}

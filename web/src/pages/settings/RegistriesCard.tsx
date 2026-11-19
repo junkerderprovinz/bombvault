@@ -272,6 +272,7 @@ export function RegistriesCard({ hueIndex }: { hueIndex: number }) {
                   mark={kind?.mark ?? <IconDatabase />}
                   status={facts.filter(Boolean).join(" · ")}
                   text={{ test: t("offsite.test"), edit: t("common.edit"), remove: t("settings.registryRemove") }}
+                  labelKeys={{ edit: "common.edit", remove: "offsite.targets.remove" }}
                   onEdit={() => setOpen({ at: "edit", index: i })}
                   onRemove={() => void store(entries.filter((_, j) => j !== i))}
                 />

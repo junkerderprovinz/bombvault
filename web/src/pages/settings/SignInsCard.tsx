@@ -155,6 +155,7 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                     </>
                   }
                   text={{ test: t("signIns.test"), edit: t("offsite.targets.edit"), remove: t("offsite.targets.remove") }}
+                  labelKeys={{ edit: "offsite.targets.edit" }}
                   onEdit={() => setEditing(s.id)}
                 >
                   {key && (
