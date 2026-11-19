@@ -382,17 +382,16 @@ func run() error {
 	}
 
 	if settings, sErr := st.GetSettings(); sErr == nil {
-		// Apply the saved CPU cap before anything can start a restic child ([558]).
+		// The saved caps apply before anything can start a restic child.
 		restic.SetMaxProcs(settings.BackupCores)
 		restic.SetMemLimitMB(settings.BackupMemoryMB)
 	} else {
 		log.Printf("main: could not read settings: %v", sErr)
 	}
 	scheduler := newScheduler(cfg.Mode, svc, st)
-	// Containers a backup or a dataset snapshot left stopped, and those a cut-off restore
-	// removed, come back before anything else:
-	// this is Docker only and fast, and a user's applications being down outranks
-	// the rest of the boot.
+	// Containers a backup or a dataset snapshot left stopped, and those a cut-off
+	// restore removed, come back before anything else: this is Docker only and
+	// fast, and applications being down outranks the rest of the boot.
 	svc.RecoverZFSRestarts(context.Background())
 	svc.RecoverInterruptedRestores(context.Background())
 	svc.RecoverContainerRestarts(context.Background())
@@ -452,14 +451,11 @@ func run() error {
 		scheduler.CatchUpMissed(time.Now())
 	}()
 
-	// JSON API + embedded SPA.
 	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
-	handler.SetProgress(prog) // same store the service publishes to → SSE endpoint
-	// Warm the host-integration check at startup so the dashboard shows the
-	// green result list immediately on first load (no manual click needed).
+	handler.SetProgress(prog)
+	// The first visit to the overview shows the host check and the repository
+	// sizes without waiting for a click or the next backup.
 	go handler.WarmSpike()
-	// Sample existing repos' size shortly after boot so the dashboard Storage card
-	// shows data for repos that already have backups (no wait for the next backup).
 	go svc.CollectStatsOnStartup()
 	// A stop signal ends the backups with a run row that says so, rather than
 	// leaving the next boot to call them interrupted. The way out is the reverse
