@@ -57,11 +57,7 @@ async function renderCard() {
 }
 
 function row(name: string): HTMLElement {
-  return screen.getByText(name).closest("li") as HTMLElement;
-}
-
-function removeButton(name: string): HTMLButtonElement {
-  return within(row(name)).getByRole("button", { name: /^Remove/ }) as HTMLButtonElement;
+  return screen.getByRole("group", { name });
 }
 
 async function edit(name: string) {
@@ -69,6 +65,18 @@ async function edit(name: string) {
     fireEvent.click(within(row(name)).getByRole("button", { name: "Edit" }));
   });
   return screen.getByRole("dialog");
+}
+
+/** Remove in the sign-in's window, which Edit opens. */
+async function removeButton(name: string): Promise<HTMLButtonElement> {
+  const window = await edit(name);
+  return within(window).getByRole("button", { name: /^Remove/ }) as HTMLButtonElement;
+}
+
+async function closeWindow() {
+  await act(async () => {
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel" }));
+  });
 }
 
 beforeEach(() => {
@@ -85,8 +93,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-it("marks the default and says who signs in with each sign-in", async () => {
+it("shows each sign-in as a row with Edit alone, the default as a badge after its name", async () => {
   await renderCard();
+  expect(within(row("Wasabi")).getAllByRole("button").map((b) => b.textContent)).toEqual(["Edit"]);
   expect(row("Hetzner S3").textContent).toContain("Default");
   expect(row("Hetzner S3").textContent).toContain("Also used for addresses typed in by hand");
   expect(screen.getByText("Used by Wasabi box and Wasabi too")).toBeTruthy();
@@ -116,24 +125,27 @@ it("shows once what became of the shared credentials", async () => {
 
 it("keeps a sign-in a storage location uses and says who uses it", async () => {
   await renderCard();
-  expect(removeButton("Hetzner S3").disabled).toBe(true);
-  expect(removeButton("Wasabi").disabled).toBe(true);
+  expect((await removeButton("Hetzner S3")).disabled).toBe(true);
+  await closeWindow();
+  expect((await removeButton("Wasabi")).disabled).toBe(true);
   expect(screen.getAllByLabelText("Still used by Wasabi box and Wasabi too. Pick another sign-in there first.").length).toBeGreaterThan(0);
-  expect(removeButton("Old NAS").disabled).toBe(false);
+  await closeWindow();
+  expect((await removeButton("Old NAS")).disabled).toBe(false);
 });
 
 it("keeps the default while another sign-in could take its place", async () => {
   sets = [{ ...SETS[0], usedBy: [] }, SETS[2]];
   await renderCard();
-  expect(removeButton("Hetzner S3").disabled).toBe(true);
+  expect((await removeButton("Hetzner S3")).disabled).toBe(true);
   expect(screen.getAllByLabelText("This is the default sign-in. Make another one the default first.").length).toBeGreaterThan(0);
 });
 
 it("lets the last sign-in go with the default mark", async () => {
   sets = [{ ...SETS[0], usedBy: [] }];
   await renderCard();
+  const remove = await removeButton("Hetzner S3");
   await act(async () => {
-    fireEvent.click(removeButton("Hetzner S3"));
+    fireEvent.click(remove);
   });
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm remove" }));
@@ -143,14 +155,17 @@ it("lets the last sign-in go with the default mark", async () => {
 
 it("removes an unused sign-in on the second click", async () => {
   await renderCard();
+  const remove = await removeButton("Old NAS");
   await act(async () => {
-    fireEvent.click(removeButton("Old NAS"));
+    fireEvent.click(remove);
   });
+  expect(removeSignIn).not.toHaveBeenCalled();
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirm remove" }));
   });
   expect(removeSignIn).toHaveBeenCalledWith("nas");
   expect(setCloudCredSets).not.toHaveBeenCalled();
+  expect(screen.queryByRole("dialog")).toBeNull();
 });
 
 it("saves an edited sign-in from its window without a test", async () => {
@@ -195,11 +210,13 @@ it("has nothing to test a sign-in no storage location uses against", async () =>
   expect(within(window).getAllByLabelText("No storage location uses this sign-in, so there is nothing to test it against.").length).toBeGreaterThan(0);
 });
 
-it("makes another sign-in the default in one request", async () => {
+it("makes another sign-in the default in one request from its window", async () => {
   await renderCard();
-  expect(within(row("Hetzner S3")).queryByRole("button", { name: "Make default" })).toBeNull();
+  expect(within(await edit("Hetzner S3")).queryByRole("button", { name: "Make default" })).toBeNull();
+  await closeWindow();
+  const window = await edit("Wasabi");
   await act(async () => {
-    fireEvent.click(within(row("Wasabi")).getByRole("button", { name: "Make default" }));
+    fireEvent.click(within(window).getByRole("button", { name: "Make default" }));
   });
   expect(makeDefaultSignIn).toHaveBeenCalledWith("wasabi");
   expect(setCloudCredSets).not.toHaveBeenCalled();
