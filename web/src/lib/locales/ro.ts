@@ -2609,8 +2609,6 @@ const ro: Partial<Translations> = {
   "mcp.search": "Caută clienți",
   "mcp.noMatch": "Niciun client nu se potrivește. Orice alt client se conectează prin „Alt client”.",
   "mcp.connectHint": "Alege clientul tău pentru o configurare făcută pentru el: o cheie cu numele lui, configurația de copiat și pasul pentru certificat de care are nevoie. Orice alt client se conectează prin Alt client. Ce citește asistentul, cum ar fi numele elementelor, istoricul și mesajele de eroare, ajunge la furnizorul de IA din spatele lui, după ce BombVault elimină căile gazdei, locațiile depozitelor și datele de autentificare.",
-  "mcp.groupLocal": "Pe acest computer",
-  "mcp.groupCloud": "În cloud",
   "mcp.cloudWarningTitle": "BombVault trebuie să fie accesibil din internet",
   "mcp.cloudWarning": "Aceste servicii apelează BombVault de pe serverele furnizorului lor, nu de pe computerul tău. BombVault trebuie atunci să fie accesibil din internet cu un certificat de încredere publică, de exemplu în spatele unui proxy invers. O autentificare pe acel proxy poate proteja interfața web, dar /mcp trebuie să treacă până la BombVault, care verifică singur cheia: aceste servicii nu se pot autentifica la un proxy. Le Chat respinge certificatele autosemnate.",
   "mcp.otherClient": "Alt client",

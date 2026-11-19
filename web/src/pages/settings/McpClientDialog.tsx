@@ -8,7 +8,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import type { McpKeyView, McpOAuthView } from "../../lib/api";
 import type { TranslationKey } from "../../lib/i18n";
-import { KIND_LABEL, OTHER_CLIENT, clientById, snippetFor, type ConfigPaths, type McpClient } from "../../lib/mcpClients";
+import { GROUP_LABEL, OTHER_CLIENT, clientById, clientEntry, snippetFor, type ConfigPaths, type McpClient } from "../../lib/mcpClients";
 import { KEY_PLACEHOLDER, KEY_VARIABLE, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { tLtr } from "../../lib/ltrFragments";
 import { InstanceWindow } from "../instances/InstanceWindow";
@@ -150,6 +150,7 @@ export function McpClientDialog({
     </div>
   );
 
+  const kind = client === OTHER_CLIENT ? undefined : clientEntry(client)?.group;
   const who = (
     <div className="flex items-center gap-3">
       <span className="glim-client-mark glim-client-mark-lg" aria-hidden="true">
@@ -157,7 +158,7 @@ export function McpClientDialog({
       </span>
       <span className="flex flex-col">
         <span className="text-sm font-semibold leading-snug text-carbon-text">{name}</span>
-        {client.kind && <span className="text-xs text-carbon-textSub">{t(KIND_LABEL[client.kind])}</span>}
+        {kind && <span className="text-xs text-carbon-textSub">{t(GROUP_LABEL[kind])}</span>}
       </span>
     </div>
   );

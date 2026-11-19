@@ -3181,8 +3181,6 @@ const id: Partial<Translations> = {
   "mcp.search": "Cari klien",
   "mcp.noMatch": "Tidak ada klien yang cocok. Klien lain mana pun terhubung lewat \"Klien lain\".",
   "mcp.connectHint": "Pilih klien Anda untuk penyiapan yang dibuat khusus untuknya: kunci dengan namanya, konfigurasi untuk disalin, dan langkah sertifikat yang ia butuhkan. Klien lain mana pun terhubung lewat Klien lain. Apa yang dibaca asisten, seperti nama entri, riwayat, dan pesan galat, dikirim ke penyedia AI di belakangnya, setelah BombVault menghapus jalur host, lokasi repositori, dan kredensial.",
-  "mcp.groupLocal": "Di komputer ini",
-  "mcp.groupCloud": "Di cloud",
   "mcp.cloudWarningTitle": "BombVault harus bisa dijangkau dari internet",
   "mcp.cloudWarning": "Layanan ini memanggil BombVault dari server penyedianya, bukan dari komputer Anda. BombVault lalu harus bisa dijangkau dari internet dengan sertifikat yang dipercaya publik, misalnya di balik reverse proxy. Login di proxy itu boleh melindungi antarmuka web, tetapi /mcp harus diteruskan ke BombVault, yang memeriksa kuncinya sendiri: layanan ini tidak bisa login ke proxy. Le Chat menolak sertifikat yang ditandatangani sendiri.",
   "mcp.otherClient": "Klien lain",

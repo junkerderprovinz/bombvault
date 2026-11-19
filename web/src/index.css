@@ -2419,39 +2419,6 @@ body {
   height: 1.6rem;
 }
 
-/* The MCP clients' tile colours (McpServerCard's client buttons), from the
-   brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
-   wherever white reaches 2:1 on the fill, near-black below that. */
-.glim-tile-anythingllm { --tile: #020617; --tile-ink: #ffffff; } /* 20.2:1 */
-.glim-tile-antigravity { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
-.glim-tile-chatgpt { --tile: #10a37f; --tile-ink: #ffffff; } /* 3.2:1 */
-.glim-tile-claude { --tile: #d97757; --tile-ink: #ffffff; } /* 3.1:1 */
-.glim-tile-cline { --tile: #e8912d; --tile-ink: #ffffff; } /* 2.5:1 */
-.glim-tile-openai { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-continue { --tile: #005dc7; --tile-ink: #ffffff; } /* 6.2:1 */
-.glim-tile-copilot { --tile: #8957e5; --tile-ink: #ffffff; } /* 4.6:1 */
-.glim-tile-cursor { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-gemini { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
-.glim-tile-goose { --tile: #ff6d3b; --tile-ink: #ffffff; } /* 2.8:1 */
-.glim-tile-grok { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-jan { --tile: #f17455; --tile-ink: #ffffff; } /* 2.8:1 */
-.glim-tile-jetbrains { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-kimi { --tile: #007cff; --tile-ink: #ffffff; } /* 3.9:1 */
-.glim-tile-lmstudio { --tile: #4f46e5; --tile-ink: #ffffff; } /* 6.3:1 */
-.glim-tile-mistral { --tile: #fa520f; --tile-ink: #ffffff; } /* 3.3:1 */
-.glim-tile-msty { --tile: #7c5cfc; --tile-ink: #ffffff; } /* 4.4:1 */
-.glim-tile-n8n { --tile: #ea4b71; --tile-ink: #ffffff; } /* 3.7:1 */
-.glim-tile-openwebui { --tile: #0a0a0a; --tile-ink: #ffffff; } /* 19.8:1 */
-.glim-tile-opencode { --tile: #211e1e; --tile-ink: #ffffff; } /* 16.5:1 */
-.glim-tile-perplexity { --tile: #20808d; --tile-ink: #ffffff; } /* 4.6:1 */
-.glim-tile-qwen { --tile: #615ced; --tile-ink: #ffffff; } /* 4.9:1 */
-.glim-tile-roocode { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-visualstudio { --tile: #5c2d91; --tile-ink: #ffffff; } /* 9.4:1 */
-.glim-tile-vscode { --tile: #007acc; --tile-ink: #ffffff; } /* 4.5:1 */
-.glim-tile-warp { --tile: #01a4ff; --tile-ink: #ffffff; } /* 2.7:1 */
-.glim-tile-windsurf { --tile: #58e5c0; --tile-ink: #161616; } /* 11.5:1 */
-.glim-tile-zed { --tile: #0866ff; --tile-ink: #ffffff; } /* 4.8:1 */
-
 /* A tile set straight on a card. Its chips, its switch while off and a panel
    opened inside it each keep one step of contrast to the tile, which the
    card's own tones would not: a neutral chip is the dark tile's colour. */
@@ -2478,13 +2445,6 @@ body {
 .glim-client-mark svg { width: 100%; height: 100%; display: block; }
 .glim-client-mark .glim-mark-hover { display: none; }
 .glim-client-mark-lg { width: 2.25rem; height: 1.75rem; }
-
-/* A mark colour that reads as a hole on the dark theme's button is lifted
-   there; the lit tile swaps in the single-colour mark anyway. */
-[data-theme="dark"] .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
-}
 
 /* The dot of a setup dialog waiting for the client's first call breathes, so
    the wait reads as live rather than stuck. */

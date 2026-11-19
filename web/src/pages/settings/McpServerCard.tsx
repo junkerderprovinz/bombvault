@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { catalogPicker } from "@glimstone/core";
+import { MCP_PROVIDERS } from "@glimstone/core/mcpProviders";
+import { PickerWindow } from "@glimstone/react/PickerWindow";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { ConfirmPrompt } from "../../components/ConfirmPrompt";
 import { Note } from "../../components/entry/Note";
 import { IconInfo, IconKeyRevoke, IconLink, IconLog, IconRetry } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
-import { PickerGroup, PickerNoMatch } from "../../components/Picker";
 import { RevealInput } from "../../components/RevealInput";
-import { ReadmeButton } from "../../components/ReadmeButton";
-import { IconAdd, IconClose, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
+import { IconAdd, IconDownload, IconPencil, IconTrash } from "../../components/navGlyphs";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { Toggle } from "../../components/Toggle";
 import {
@@ -30,18 +31,26 @@ import {
 import { withinBase } from "../../lib/base";
 import { copyText } from "../../lib/clipboard";
 import { useT, type TranslationKey } from "../../lib/i18n";
-import { CLOUD_CLIENTS, KIND_LABEL, LOCAL_CLIENTS, OTHER_CLIENT, clientById, type McpClient } from "../../lib/mcpClients";
+import {
+  CLOUD_CLIENTS,
+  GROUP_LABEL,
+  LOCAL_CLIENTS,
+  OTHER_CLIENT,
+  catalogId,
+  clientById,
+  storedId,
+  type McpClient,
+} from "../../lib/mcpClients";
 import { mcpUrl, type McpSnippetInput } from "../../lib/mcpSnippets";
 import { formatTs, relativeTime } from "../../lib/reltime";
 import { useToast } from "../../lib/toast";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../instances/InstanceWindow";
 import { McpClientDialog, type FreshKey } from "./McpClientDialog";
-import { ClientMark } from "./McpClientMark";
+import { ClientMark, catalogGlyph } from "./McpClientMark";
 import { CopyField } from "./CopyField";
 import { McpKeyLog } from "./McpKeyLog";
 import { McpOAuthSettings } from "./McpOAuthSettings";
-import { fold } from "./SettingsSearch";
 import { Card, SubCard, useOpenPasswordField } from "./shared";
 
 // McpServerCard is where an MCP key comes from, and the only place it is ever
@@ -89,44 +98,48 @@ type Pending =
  *  the client's first call. */
 const FIRST_CALL_POLL_MS = 3000;
 
-/** The window of clients: the ones on this computer, the cloud ones, and
- *  Other client as the last tile. */
-function ClientPicker({ button, onClose }: { button: (c: McpClient) => ReactNode; onClose: () => void }) {
-  const { t } = useT();
-  const [query, setQuery] = useState("");
-  const q = fold(query.trim());
-  const hit = (c: McpClient) => fold(c === OTHER_CLIENT ? t("mcp.otherClient") : c.name).includes(q);
-  const groups = [
-    { id: "local", title: t("mcp.groupLocal"), tip: undefined, clients: LOCAL_CLIENTS.filter(hit) },
-    { id: "cloud", title: t("mcp.groupCloud"), tip: t("mcp.cloudWarning"), clients: CLOUD_CLIENTS.filter(hit) },
-  ].filter((g) => g.clients.length > 0);
-  const other = hit(OTHER_CLIENT);
+/** The window of clients, in the catalog's groups, with Other client as the
+ *  last tile. The web chats call in from their vendor's servers, so their
+ *  group carries the warning about the internet. */
+function ClientPicker({ onPick, onClose }: { onPick: (c: McpClient) => void; onClose: () => void }) {
+  const { t, lang } = useT();
+  const clients = [...LOCAL_CLIENTS, ...CLOUD_CLIENTS, OTHER_CLIENT];
+  const { items, groups } = catalogPicker(MCP_PROVIDERS, {
+    ids: clients.map((c) => catalogId(c.id)),
+    titles: {
+      chat: t(GROUP_LABEL.chat),
+      models: t(GROUP_LABEL.models),
+      web: { title: t(GROUP_LABEL.web), hint: t("mcp.cloudWarning") },
+      editor: t(GROUP_LABEL.editor),
+      extension: t(GROUP_LABEL.extension),
+      terminal: t(GROUP_LABEL.terminal),
+      automation: t(GROUP_LABEL.automation),
+    },
+    glyph: (entry) => catalogGlyph(entry.glyph),
+    lang,
+    own: (entry) => (entry.id === OTHER_CLIENT.id ? { label: t("mcp.otherClient"), last: true } : undefined),
+  });
 
   return (
-    <InstanceWindow
+    <PickerWindow
       title={t("mcp.chooseClient")}
       hint={t("mcp.connectHint")}
-      picker
-      search={{ value: query, onChange: setQuery, label: t("mcp.search") }}
-      footer={<Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} onClick={onClose} />}
+      items={items}
+      groups={groups}
+      text={{
+        search: t("mcp.search"),
+        none: t("mcp.noMatch"),
+        clear: t("settings.search.clear"),
+        close: t("common.close"),
+        cancel: t("common.cancel"),
+        back: t("common.back"),
+      }}
+      onPick={(id) => {
+        const client = clients.find((c) => c.id === storedId(id));
+        if (client) onPick(client);
+      }}
       onClose={onClose}
-    >
-      {groups.map((g) => (
-        <PickerGroup key={g.id} title={g.title} tip={g.tip}>
-          <ul className="glim-provider-pick">
-            {g.clients.map((c) => (
-              <li key={c.id}>{button(c)}</li>
-            ))}
-          </ul>
-        </PickerGroup>
-      ))}
-      {other && (
-        <ul className="glim-provider-pick">
-          <li>{button(OTHER_CLIENT)}</li>
-        </ul>
-      )}
-      <PickerNoMatch shown={groups.length === 0 && !other} text={t("mcp.noMatch")} />
-    </InstanceWindow>
+    />
   );
 }
 
@@ -340,23 +353,6 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     selfSigned: ownCertificate,
   };
   const endpoint = mcpUrl(snippetBase);
-
-  function clientButton(c: McpClient) {
-    const open = () => {
-      setChoosing(false);
-      setDialog(c);
-    };
-    const name = c === OTHER_CLIENT ? t("mcp.otherClient") : c.name;
-    return (
-      <ReadmeButton
-        key={c.id}
-        tile={c.tile}
-        className={c.lift ? "glim-mark-lift" : undefined}
-        parts={[{ name, sub: c.kind ? t(KIND_LABEL[c.kind]) : undefined, onClick: open }]}
-        mark={<ClientMark client={c} />}
-      />
-    );
-  }
 
   // The newest restore-revoked key still matters as long as no key was created
   // after it: once one was, the operator has clearly seen the notice.
@@ -709,7 +705,15 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
         </InstanceWindow>
       )}
 
-      {choosing && <ClientPicker button={clientButton} onClose={() => setChoosing(false)} />}
+      {choosing && (
+        <ClientPicker
+          onPick={(c) => {
+            setChoosing(false);
+            setDialog(c);
+          }}
+          onClose={() => setChoosing(false)}
+        />
+      )}
       {dialog !== null && data !== null && (
         <McpClientDialog
           key={dialog.id}

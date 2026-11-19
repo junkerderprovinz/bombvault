@@ -3181,8 +3181,6 @@ const lt: Partial<Translations> = {
   "mcp.search": "Ieškoti klientų",
   "mcp.noMatch": "Joks klientas neatitinka. Bet kuris kitas klientas jungiasi per „Kitas klientas“.",
   "mcp.connectHint": "Pasirink savo klientą ir gausi jam pritaikytą sąranką: raktą su jo pavadinimu, kopijuojamą konfigūraciją ir liudijimo žingsnį, kurio jam reikia. Bet kuris kitas klientas jungiasi per Kitas klientas. Tai, ką skaito asistentas, pavyzdžiui, įrašų pavadinimai, istorija ir klaidų pranešimai, keliauja už jo esančiam DI teikėjui, kai BombVault pašalina serverio kelius, saugyklų vietas ir prisijungimo duomenis.",
-  "mcp.groupLocal": "Šiame kompiuteryje",
-  "mcp.groupCloud": "Debesyje",
   "mcp.cloudWarningTitle": "BombVault turi būti pasiekiamas iš interneto",
   "mcp.cloudWarning": "Šios paslaugos kviečia BombVault iš savo teikėjo serverių, ne iš tavo kompiuterio. Tada BombVault turi būti pasiekiamas iš interneto su viešai patikimu liudijimu, pavyzdžiui, už atvirkštinio tarpinio serverio. Prisijungimas tame tarpiniame serveryje gali saugoti žiniatinklio sąsają, bet /mcp turi būti praleidžiamas iki BombVault, kuris pats tikrina raktą: šios paslaugos negali prisijungti prie tarpinio serverio. Le Chat atmeta savarankiškai pasirašytus liudijimus.",
   "mcp.otherClient": "Kitas klientas",

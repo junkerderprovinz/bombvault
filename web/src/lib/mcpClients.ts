@@ -4,20 +4,20 @@
 // does with a certificate it does not know. Where the documentation leaves the
 // certificate open, the dialog words that step as "if it refuses", never as a
 // promise. docs/mcp.md lists the same clients.
+import type { CatalogEntry } from "@glimstone/core";
+import { MCP_PROVIDERS, type McpGroup, type McpProviderId } from "@glimstone/core/mcpProviders";
 import type { TranslationKey } from "./i18n";
 import { SNIPPETS, type McpSnippetClient, type McpSnippetInput } from "./mcpSnippets";
 
-/** The second line of a client's button. */
-export type ClientKind = "terminal" | "editor" | "desktop" | "vscode" | "localModels" | "automation" | "webChat";
-
-export const KIND_LABEL: Record<ClientKind, TranslationKey> = {
-  terminal: "mcp.kindTerminal",
+/** The title of each of the catalog's groups, which is also a client's kind. */
+export const GROUP_LABEL: Record<McpGroup, TranslationKey> = {
+  chat: "mcp.kindDesktop",
+  models: "mcp.kindLocalModels",
+  web: "mcp.kindWebChat",
   editor: "mcp.kindEditor",
-  desktop: "mcp.kindDesktop",
-  vscode: "mcp.kindVsCode",
-  localModels: "mcp.kindLocalModels",
+  extension: "mcp.kindVsCode",
+  terminal: "mcp.kindTerminal",
   automation: "mcp.kindAutomation",
-  webChat: "mcp.kindWebChat",
 };
 
 /** Where a configuration file lives. `unix` stands for macOS and Linux alike. */
@@ -77,15 +77,7 @@ export interface McpClient {
   /** Stored with a key made for this client, so it must never change. */
   id: string;
   name: string;
-  kind?: ClientKind;
   group: ClientGroup;
-  /** The key into CLIENT_MARKS; the Other client button draws a glyph. */
-  mark?: string;
-  /** The `.glim-tile-*` class its button lights up in. */
-  tile: string;
-  /** Brightens the resting mark on the dark theme, where its colour would read
-   *  as a hole in the button. */
-  lift?: boolean;
   setup: SetupWay;
   key: KeyWay;
   cert: CertWay;
@@ -120,10 +112,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "anythingllm",
     name: "AnythingLLM",
-    kind: "localModels",
     group: "local",
-    mark: "anythingllm",
-    tile: "glim-tile-anythingllm",
     setup: {
       kind: "file",
       paths: {
@@ -139,10 +128,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "antigravity",
     name: "Antigravity",
-    kind: "editor",
     group: "local",
-    mark: "antigravity",
-    tile: "glim-tile-antigravity",
     setup: { kind: "file", paths: home(".gemini/config/mcp_config.json"), ui: "Manage MCP Servers, View raw config" },
     key: { kind: "env" },
     cert: NODE_CERT,
@@ -150,10 +136,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "claude-code",
     name: "Claude Code",
-    kind: "terminal",
     group: "local",
-    mark: "claudecode",
-    tile: "glim-tile-claude",
     setup: { kind: "command" },
     key: { kind: "keyFile" },
     cert: { kind: "placeholder" },
@@ -162,10 +145,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "claude-desktop",
     name: "Claude Desktop",
-    kind: "desktop",
     group: "local",
-    mark: "claude",
-    tile: "glim-tile-claude",
     setup: {
       kind: "file",
       paths: {
@@ -181,10 +161,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "cline",
     name: "Cline",
-    kind: "vscode",
     group: "local",
-    mark: "cline",
-    tile: "glim-tile-cline",
     setup: {
       kind: "file",
       paths: vsCodeStorage("globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"),
@@ -196,10 +173,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "codex",
     name: "Codex CLI",
-    kind: "terminal",
     group: "local",
-    mark: "openai",
-    tile: "glim-tile-openai",
     setup: { kind: "file", paths: home(".codex/config.toml") },
     key: { kind: "env" },
     cert: { kind: "env", variable: "CODEX_CA_CERTIFICATE" },
@@ -207,10 +181,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "continue",
     name: "Continue",
-    kind: "vscode",
     group: "local",
-    mark: "continue",
-    tile: "glim-tile-continue",
     setup: { kind: "file", paths: home(".continue/config.yaml") },
     key: { kind: "dotenv", file: "~/.continue/.env" },
     cert: NODE_CERT,
@@ -218,10 +189,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "copilot-cli",
     name: "Copilot CLI",
-    kind: "terminal",
     group: "local",
-    mark: "copilot",
-    tile: "glim-tile-copilot",
     setup: { kind: "file", paths: home(".copilot/mcp-config.json") },
     key: { kind: "inFile" },
     cert: NODE_CERT,
@@ -229,10 +197,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "cursor",
     name: "Cursor",
-    kind: "editor",
     group: "local",
-    mark: "cursor",
-    tile: "glim-tile-cursor",
     setup: { kind: "file", paths: home(".cursor/mcp.json"), ui: "Settings, MCP, Add new global MCP server" },
     key: { kind: "env" },
     cert: NODE_CERT,
@@ -240,10 +205,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "gemini",
     name: "Gemini CLI",
-    kind: "terminal",
     group: "local",
-    mark: "gemini",
-    tile: "glim-tile-gemini",
     setup: { kind: "file", paths: home(".gemini/settings.json") },
     key: { kind: "env", unsure: true },
     cert: NODE_CERT,
@@ -251,10 +213,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "copilot",
     name: "GitHub Copilot",
-    kind: "vscode",
     group: "local",
-    mark: "vscode",
-    tile: "glim-tile-vscode",
     setup: { kind: "file", paths: vsCodeStorage("mcp.json"), ui: "MCP: Open User Configuration" },
     key: { kind: "prompt" },
     cert: SYSTEM_CERT,
@@ -262,10 +221,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "goose",
     name: "Goose",
-    kind: "desktop",
     group: "local",
-    mark: "goose",
-    tile: "glim-tile-goose",
     setup: {
       kind: "file",
       paths: { windows: "%APPDATA%\\Block\\goose\\config\\config.yaml", unix: "~/.config/goose/config.yaml" },
@@ -276,10 +232,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "jan",
     name: "Jan",
-    kind: "localModels",
     group: "local",
-    mark: "jan",
-    tile: "glim-tile-jan",
     setup: { kind: "form", ui: "Settings, MCP Servers, Add MCP Server" },
     key: { kind: "inApp" },
     cert: SYSTEM_CERT,
@@ -287,10 +240,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "jetbrains",
     name: "JetBrains",
-    kind: "editor",
     group: "local",
-    mark: "jetbrains",
-    tile: "glim-tile-jetbrains",
     setup: {
       kind: "file",
       paths: home(".junie/mcp/mcp.json"),
@@ -303,10 +253,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "kimi",
     name: "Kimi Code",
-    kind: "terminal",
     group: "local",
-    mark: "kimi",
-    tile: "glim-tile-kimi",
     setup: { kind: "file", paths: home(".kimi/mcp.json") },
     key: { kind: "inFile" },
     cert: PYTHON_CERT,
@@ -314,10 +261,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "lmstudio",
     name: "LM Studio",
-    kind: "localModels",
     group: "local",
-    mark: "lmstudio",
-    tile: "glim-tile-lmstudio",
     setup: { kind: "file", paths: home(".lmstudio/mcp.json"), ui: "Program, Install, Edit mcp.json" },
     key: { kind: "inFile" },
     cert: { kind: "ownList" },
@@ -325,10 +269,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "vibe",
     name: "Mistral Vibe",
-    kind: "terminal",
     group: "local",
-    mark: "mistral",
-    tile: "glim-tile-mistral",
     setup: { kind: "file", paths: home(".vibe/config.toml") },
     key: { kind: "env" },
     cert: PYTHON_CERT,
@@ -336,11 +277,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "msty",
     name: "Msty",
-    kind: "localModels",
     group: "local",
-    mark: "msty",
-    tile: "glim-tile-msty",
-    lift: true,
     setup: { kind: "form", ui: "Toolbox, Tools, Add New Tool" },
     key: { kind: "inApp" },
     cert: SYSTEM_CERT,
@@ -348,10 +285,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "n8n",
     name: "n8n",
-    kind: "automation",
     group: "local",
-    mark: "n8n",
-    tile: "glim-tile-n8n",
     setup: { kind: "form", ui: "MCP Client Tool" },
     key: { kind: "credential" },
     cert: NODE_CERT,
@@ -359,10 +293,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "openwebui",
     name: "Open WebUI",
-    kind: "localModels",
     group: "local",
-    mark: "openwebui",
-    tile: "glim-tile-openwebui",
     setup: { kind: "form", ui: "Admin Panel, Settings, External Tools, Add Connection" },
     key: { kind: "inApp" },
     cert: PYTHON_CERT,
@@ -370,10 +301,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "opencode",
     name: "opencode",
-    kind: "terminal",
     group: "local",
-    mark: "opencode",
-    tile: "glim-tile-opencode",
     setup: { kind: "file", paths: home(".config/opencode/opencode.json") },
     key: { kind: "env" },
     cert: NODE_CERT,
@@ -381,10 +309,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "perplexity",
     name: "Perplexity",
-    kind: "desktop",
     group: "local",
-    mark: "perplexity",
-    tile: "glim-tile-perplexity",
     setup: { kind: "form", ui: "Settings, Connectors, Add Connector, MCP Connector" },
     key: { kind: "keyFile" },
     cert: { kind: "placeholder" },
@@ -394,10 +319,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "qwen",
     name: "Qwen Code",
-    kind: "terminal",
     group: "local",
-    mark: "qwen",
-    tile: "glim-tile-qwen",
     setup: { kind: "file", paths: home(".qwen/settings.json") },
     key: { kind: "env", unsure: true },
     cert: NODE_CERT,
@@ -405,10 +327,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "roo",
     name: "Roo Code",
-    kind: "vscode",
     group: "local",
-    mark: "roocode",
-    tile: "glim-tile-roocode",
     setup: {
       kind: "file",
       paths: vsCodeStorage("globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json"),
@@ -420,11 +339,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "visualstudio",
     name: "Visual Studio",
-    kind: "editor",
     group: "local",
-    mark: "visualstudio",
-    tile: "glim-tile-visualstudio",
-    lift: true,
     setup: { kind: "file", paths: { windows: "%USERPROFILE%\\.mcp.json" } },
     key: { kind: "inFile" },
     cert: SYSTEM_CERT,
@@ -432,10 +347,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "warp",
     name: "Warp",
-    kind: "terminal",
     group: "local",
-    mark: "warp",
-    tile: "glim-tile-warp",
     setup: {
       kind: "file",
       paths: { unix: "~/.warp/.mcp.json" },
@@ -447,10 +359,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "windsurf",
     name: "Windsurf",
-    kind: "editor",
     group: "local",
-    mark: "windsurf",
-    tile: "glim-tile-windsurf",
     setup: {
       kind: "file",
       paths: { windows: "%APPDATA%\\devin\\mcp_config.json", unix: "~/.config/devin/mcp_config.json" },
@@ -461,10 +370,7 @@ export const LOCAL_CLIENTS: McpClient[] = [
   {
     id: "zed",
     name: "Zed",
-    kind: "editor",
     group: "local",
-    mark: "zed",
-    tile: "glim-tile-zed",
     setup: {
       kind: "file",
       paths: { windows: "%APPDATA%\\Zed\\settings.json", unix: "~/.config/zed/settings.json" },
@@ -478,10 +384,7 @@ export const CLOUD_CLIENTS: McpClient[] = [
   {
     id: "chatgpt",
     name: "ChatGPT",
-    kind: "webChat",
     group: "cloud",
-    mark: "chatgpt",
-    tile: "glim-tile-chatgpt",
     setup: { kind: "other" },
     key: { kind: "vendor" },
     cert: { kind: "none" },
@@ -490,10 +393,7 @@ export const CLOUD_CLIENTS: McpClient[] = [
   {
     id: "claudeai",
     name: "Claude",
-    kind: "webChat",
     group: "cloud",
-    mark: "claude",
-    tile: "glim-tile-claude",
     setup: { kind: "other" },
     key: { kind: "vendor" },
     cert: { kind: "none" },
@@ -502,10 +402,7 @@ export const CLOUD_CLIENTS: McpClient[] = [
   {
     id: "grok",
     name: "Grok",
-    kind: "webChat",
     group: "cloud",
-    mark: "grok",
-    tile: "glim-tile-grok",
     setup: { kind: "form", ui: "grok.com, Connectors, New Connector, Custom" },
     key: { kind: "vendor" },
     cert: { kind: "none" },
@@ -514,10 +411,7 @@ export const CLOUD_CLIENTS: McpClient[] = [
   {
     id: "lechat",
     name: "Le Chat",
-    kind: "webChat",
     group: "cloud",
-    mark: "mistral",
-    tile: "glim-tile-mistral",
     setup: { kind: "form", ui: "Connectors, Add a Custom Connector" },
     key: { kind: "vendor" },
     cert: { kind: "none" },
@@ -528,7 +422,6 @@ export const OTHER_CLIENT: McpClient = {
   id: "other",
   name: "",
   group: "local",
-  tile: "glim-tile-house",
   setup: { kind: "other" },
   key: { kind: "other" },
   cert: { kind: "other" },
@@ -537,6 +430,28 @@ export const OTHER_CLIENT: McpClient = {
 const BY_ID = new Map<string, McpClient>(
   [...LOCAL_CLIENTS, ...CLOUD_CLIENTS, OTHER_CLIENT].map((c) => [c.id, c])
 );
+
+// The catalog calls the web chat at claude.ai claude. Keys and sign-ins made
+// for it carry claudeai, so that stays the id BombVault stores.
+const CATALOG_ID: Record<string, McpProviderId> = { claudeai: "claude" };
+
+/** The catalog's id for a client of BombVault's. */
+export function catalogId(id: string): McpProviderId {
+  return CATALOG_ID[id] ?? (id as McpProviderId);
+}
+
+/** The id BombVault stores for a client picked from the catalog. */
+export function storedId(id: string): string {
+  return Object.keys(CATALOG_ID).find((own) => CATALOG_ID[own] === id) ?? id;
+}
+
+const ENTRIES = new Map(MCP_PROVIDERS.entries.map((e) => [e.id as string, e]));
+
+/** A client's entry in the catalog: its mark or glyph, and the group that says
+ *  what kind of app it is. */
+export function clientEntry(client: McpClient): CatalogEntry<McpGroup, McpProviderId> | undefined {
+  return ENTRIES.get(catalogId(client.id));
+}
 
 /** The client a key was created for, or undefined for a key made before the
  *  list existed, through Other client, or for a client since dropped. */

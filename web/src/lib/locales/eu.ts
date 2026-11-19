@@ -3181,8 +3181,6 @@ const eu: Partial<Translations> = {
   "mcp.search": "Bilatu bezeroak",
   "mcp.noMatch": "Ez dago bezero egokirik. Beste edozein bezero „Beste bezero bat“ bidez konektatzen da.",
   "mcp.connectHint": "Aukeratu zure bezeroa, harentzat egindako konfigurazio bat izateko: haren izena duen gako bat, kopiatzeko konfigurazioa eta behar duen ziurtagiri-urratsa. Beste edozein bezero Beste bezero bat botoiaren bidez konektatzen da. Laguntzaileak irakurtzen duena, hala nola elementuen izenak, historia eta errore-mezuak, haren atzean dagoen AA hornitzailera doa, BombVaultek ostalariaren bideak, biltegien kokapenak eta kredentzialak kendu ondoren.",
-  "mcp.groupLocal": "Ordenagailu honetan",
-  "mcp.groupCloud": "Hodeian",
   "mcp.cloudWarningTitle": "BombVault internetetik eskuragarri egon behar da",
   "mcp.cloudWarning": "Zerbitzu hauek beren hornitzailearen zerbitzarietatik deitzen diote BombVaulti, ez zure ordenagailutik. Orduan BombVault internetetik eskuragarri egon behar da, publikoki fidagarria den ziurtagiri batekin, adibidez alderantzizko proxy baten atzean. Proxy horretako saio-hasierak web-interfazea babes dezake, baina /mcp-k BombVaultera iritsi behar du, gakoa berak egiaztatzen baitu: zerbitzu hauek ezin dute proxy batean saioa hasi. Le Chatek auto-sinatutako ziurtagiriak baztertzen ditu.",
   "mcp.otherClient": "Beste bezero bat",

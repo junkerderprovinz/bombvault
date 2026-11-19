@@ -2608,8 +2608,6 @@ const no: Partial<Translations> = {
   "mcp.search": "Søk i klienter",
   "mcp.noMatch": "Ingen klient passer. Alle andre klienter kobler til via «Annen klient».",
   "mcp.connectHint": "Velg klienten din for et oppsett laget for den: en nøkkel med navnet dens, konfigurasjonen du skal kopiere og sertifikatsteget den trenger. Alle andre klienter kobler til via Annen klient. Det assistenten leser, som navn på elementer, historikken og feilmeldinger, går til AI-leverandøren bak den, etter at BombVault har fjernet vertsstier, plasseringer av repositorier og påloggingsdata.",
-  "mcp.groupLocal": "På denne datamaskinen",
-  "mcp.groupCloud": "I skyen",
   "mcp.cloudWarningTitle": "BombVault må kunne nås fra internett",
   "mcp.cloudWarning": "Disse tjenestene kaller BombVault fra leverandørens servere, ikke fra datamaskinen din. BombVault må da kunne nås fra internett med et offentlig klarert sertifikat, for eksempel bak en omvendt proxy. En pålogging på den proxyen kan beskytte nettgrensesnittet, men /mcp må slippe gjennom til BombVault, som sjekker nøkkelen selv: disse tjenestene kan ikke logge på en proxy. Le Chat avviser selvsignerte sertifikater.",
   "mcp.otherClient": "Annen klient",

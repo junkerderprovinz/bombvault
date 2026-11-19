@@ -2607,8 +2607,6 @@ const nl: Partial<Translations> = {
   "mcp.search": "Clients zoeken",
   "mcp.noMatch": "Geen client past. Elke andere client verbindt via „Andere client”.",
   "mcp.connectHint": "Kies je client voor een installatie die erbij past: een sleutel met zijn naam, de configuratie om te kopiëren en de certificaatstap die hij nodig heeft. Elke andere client verbindt via Andere client. Wat de assistent leest, zoals namen van items, de geschiedenis en foutmeldingen, gaat naar de AI-aanbieder erachter, nadat BombVault hostpaden, repository-locaties en inloggegevens heeft verwijderd.",
-  "mcp.groupLocal": "Op deze computer",
-  "mcp.groupCloud": "In de cloud",
   "mcp.cloudWarningTitle": "BombVault moet vanaf internet bereikbaar zijn",
   "mcp.cloudWarning": "Deze diensten roepen BombVault aan vanaf de servers van hun aanbieder, niet vanaf je computer. BombVault moet dan vanaf internet bereikbaar zijn met een publiek vertrouwd certificaat, bijvoorbeeld achter een reverse proxy. Een aanmelding op die proxy mag de webinterface beschermen, maar /mcp moet door naar BombVault, dat de sleutel zelf controleert: deze diensten kunnen zich niet bij een proxy aanmelden. Le Chat weigert zelfondertekende certificaten.",
   "mcp.otherClient": "Andere client",

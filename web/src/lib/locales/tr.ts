@@ -2608,8 +2608,6 @@ const tr: Partial<Translations> = {
   "mcp.search": "İstemci ara",
   "mcp.noMatch": "Hiçbir istemci eşleşmiyor. Diğer istemciler “Başka istemci” ile bağlanır.",
   "mcp.connectHint": "İstemcini seç, ona göre yapılmış bir kurulum al: onun adını taşıyan bir anahtar, kopyalanacak yapılandırma ve ihtiyaç duyduğu sertifika adımı. Diğer her istemci Başka istemci üzerinden bağlanır. Asistanın okudukları, örneğin öge adları, geçmiş ve hata iletileri, BombVault ana makine yollarını, depo konumlarını ve kimlik bilgilerini çıkardıktan sonra arkasındaki yapay zekâ sağlayıcısına gider.",
-  "mcp.groupLocal": "Bu bilgisayarda",
-  "mcp.groupCloud": "Bulutta",
   "mcp.cloudWarningTitle": "BombVault internetten erişilebilir olmalı",
   "mcp.cloudWarning": "Bu hizmetler BombVault'u senin bilgisayarından değil, sağlayıcılarının sunucularından çağırır. BombVault bu durumda herkesçe güvenilen bir sertifikayla internetten erişilebilir olmalı, örneğin bir ters proxy'nin arkasında. O proxy'deki bir oturum açma web arayüzünü koruyabilir, ama /mcp anahtarı kendisi denetleyen BombVault'a kadar geçmeli: bu hizmetler bir proxy'de oturum açamaz. Le Chat kendinden imzalı sertifikaları reddeder.",
   "mcp.otherClient": "Başka istemci",

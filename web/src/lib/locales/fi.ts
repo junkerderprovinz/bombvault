@@ -2608,8 +2608,6 @@ const fi: Partial<Translations> = {
   "mcp.search": "Hae asiakasohjelmia",
   "mcp.noMatch": "Mikään asiakasohjelma ei täsmää. Muut asiakasohjelmat yhdistyvät kohdasta „Muu asiakasohjelma”.",
   "mcp.connectHint": "Valitse asiakasohjelmasi, niin saat sille tehdyn käyttöönoton: avaimen sen nimellä, kopioitavan määrityksen ja sen tarvitseman varmennevaiheen. Mikä tahansa muu asiakasohjelma yhdistää kohdan Muu asiakasohjelma kautta. Se, mitä avustaja lukee, kuten merkintöjen nimet, historia ja virheilmoitukset, menee sen takana olevalle tekoälypalvelulle sen jälkeen, kun BombVault on poistanut isännän polut, repositorioiden sijainnit ja tunnistetiedot.",
-  "mcp.groupLocal": "Tällä tietokoneella",
-  "mcp.groupCloud": "Pilvessä",
   "mcp.cloudWarningTitle": "BombVaultin on oltava tavoitettavissa internetistä",
   "mcp.cloudWarning": "Nämä palvelut kutsuvat BombVaultia palveluntarjoajansa palvelimilta, eivät sinun tietokoneeltasi. BombVaultin on silloin oltava tavoitettavissa internetistä julkisesti luotetulla varmenteella, esimerkiksi käänteisen välityspalvelimen takana. Välityspalvelimen kirjautuminen voi suojata verkkokäyttöliittymää, mutta /mcp:n on päästävä läpi BombVaultille, joka tarkistaa avaimen itse: nämä palvelut eivät osaa kirjautua välityspalvelimeen. Le Chat hylkää itse allekirjoitetut varmenteet.",
   "mcp.otherClient": "Muu asiakasohjelma",

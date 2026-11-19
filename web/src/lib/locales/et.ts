@@ -3181,8 +3181,6 @@ const et: Partial<Translations> = {
   "mcp.search": "Otsi kliente",
   "mcp.noMatch": "Ükski klient ei sobi. Iga muu klient ühendub valikuga „Muu klient“.",
   "mcp.connectHint": "Vali oma klient ja saad just talle tehtud seadistuse: tema nimega võtme, kopeeritava konfiguratsiooni ja sertifikaadisammu, mida ta vajab. Iga muu klient ühendub nupu Muu klient kaudu. See, mida assistent loeb, näiteks kirjete nimed, ajalugu ja veateated, läheb tema taga olevale tehisintellekti pakkujale pärast seda, kui BombVault on eemaldanud hosti teed, hoidlate asukohad ja mandaadid.",
-  "mcp.groupLocal": "Selles arvutis",
-  "mcp.groupCloud": "Pilves",
   "mcp.cloudWarningTitle": "BombVault peab olema internetist kättesaadav",
   "mcp.cloudWarning": "Need teenused kutsuvad BombVaulti oma pakkuja serveritest, mitte sinu arvutist. BombVault peab siis olema internetist kättesaadav avalikult usaldatud sertifikaadiga, näiteks pöördpuhverserveri taga. Selle puhverserveri sisselogimine võib kaitsta veebiliidest, kuid /mcp peab jõudma läbi BombVaultini, mis kontrollib võtit ise: need teenused ei oska puhverserverisse sisse logida. Le Chat lükkab endasigneeritud sertifikaadid tagasi.",
   "mcp.otherClient": "Muu klient",

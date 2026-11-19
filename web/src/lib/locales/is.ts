@@ -3181,8 +3181,6 @@ const is: Partial<Translations> = {
   "mcp.search": "Leita að biðlurum",
   "mcp.noMatch": "Enginn biðlari passar. Allir aðrir biðlarar tengjast í gegnum „Annar biðlari“.",
   "mcp.connectHint": "Veldu biðlarann þinn fyrir uppsetningu sem er gerð fyrir hann: lykil með nafni hans, stillingarnar til að afrita og skilríkjaskrefið sem hann þarf. Allir aðrir biðlarar tengjast gegnum Annar biðlari. Það sem aðstoðarmaðurinn les, svo sem nöfn færslna, ferillinn og villuboð, fer til gervigreindarþjónustunnar að baki honum, eftir að BombVault hefur fjarlægt slóðir hýsilsins, staðsetningar gagnageymslna og innskráningarupplýsingar.",
-  "mcp.groupLocal": "Á þessari tölvu",
-  "mcp.groupCloud": "Í skýinu",
   "mcp.cloudWarningTitle": "BombVault þarf að vera aðgengilegt af netinu",
   "mcp.cloudWarning": "Þessar þjónustur kalla á BombVault frá netþjónum söluaðila síns, ekki frá tölvunni þinni. BombVault þarf þá að vera aðgengilegt af netinu með opinberlega traustu skilríki, til dæmis á bak við öfugan milliþjón. Innskráning á þeim milliþjóni má vernda vefviðmótið, en /mcp þarf að komast í gegn til BombVault, sem athugar lykilinn sjálft: þessar þjónustur geta ekki skráð sig inn á milliþjón. Le Chat hafnar sjálfundirrituðum skilríkjum.",
   "mcp.otherClient": "Annar biðlari",

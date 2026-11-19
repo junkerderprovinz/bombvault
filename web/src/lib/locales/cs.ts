@@ -2606,8 +2606,6 @@ const cs: Partial<Translations> = {
   "mcp.search": "Hledat klienty",
   "mcp.noMatch": "Žádný klient neodpovídá. Jakýkoli jiný klient se připojí přes „Jiný klient“.",
   "mcp.connectHint": "Vyber svého klienta a dostaneš nastavení udělané přímo pro něj: klíč s jeho jménem, konfiguraci ke zkopírování a krok s certifikátem, který potřebuje. Každý jiný klient se připojí přes Jiný klient. Co asistent čte, třeba názvy položek, historii a chybová hlášení, jde k poskytovateli AI za ním, poté co BombVault odstraní cesty hostitele, umístění repozitářů a přihlašovací údaje.",
-  "mcp.groupLocal": "Na tomto počítači",
-  "mcp.groupCloud": "V cloudu",
   "mcp.cloudWarningTitle": "BombVault musí být dostupný z internetu",
   "mcp.cloudWarning": "Tyto služby volají BombVault ze serverů svého poskytovatele, ne z tvého počítače. BombVault pak musí být dostupný z internetu s veřejně důvěryhodným certifikátem, například za reverzní proxy. Přihlášení na této proxy může chránit webové rozhraní, ale /mcp musí projít až k BombVaultu, který klíč kontroluje sám: tyto služby se k proxy přihlásit neumějí. Le Chat odmítá certifikáty podepsané sebou samým.",
   "mcp.otherClient": "Jiný klient",

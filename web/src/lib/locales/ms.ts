@@ -3181,8 +3181,6 @@ const ms: Partial<Translations> = {
   "mcp.search": "Cari klien",
   "mcp.noMatch": "Tiada klien yang sepadan. Mana-mana klien lain bersambung melalui \"Klien lain\".",
   "mcp.connectHint": "Pilih klien anda untuk persediaan yang dibuat khas untuknya: kunci dengan namanya, konfigurasi untuk disalin dan langkah sijil yang diperlukannya. Mana-mana klien lain bersambung melalui Klien lain. Apa yang dibaca oleh pembantu, seperti nama entri, sejarah dan mesej ralat, dihantar kepada penyedia AI di belakangnya, selepas BombVault membuang laluan hos, lokasi repositori dan bukti kelayakan.",
-  "mcp.groupLocal": "Pada komputer ini",
-  "mcp.groupCloud": "Dalam awan",
   "mcp.cloudWarningTitle": "BombVault mesti boleh dicapai dari internet",
   "mcp.cloudWarning": "Perkhidmatan ini memanggil BombVault dari pelayan penyedianya, bukan dari komputer anda. BombVault kemudiannya mesti boleh dicapai dari internet dengan sijil yang dipercayai umum, contohnya di belakang proksi songsang. Log masuk pada proksi itu boleh melindungi antara muka web, tetapi /mcp mesti diteruskan kepada BombVault, yang menyemak kunci itu sendiri: perkhidmatan ini tidak boleh log masuk ke proksi. Le Chat menolak sijil yang ditandatangani sendiri.",
   "mcp.otherClient": "Klien lain",

@@ -2609,8 +2609,6 @@ const hu: Partial<Translations> = {
   "mcp.search": "Kliens keresése",
   "mcp.noMatch": "Egyik kliens sem egyezik. Bármely más kliens az „Egyéb kliens” révén csatlakozik.",
   "mcp.connectHint": "Válaszd ki a kliensedet, és hozzá készült beállítást kapsz: egy kulcsot a nevével, a másolandó konfigurációt és a tanúsítványlépést, amire szüksége van. Bármely más kliens az Egyéb kliens gombon át csatlakozik. Amit az asszisztens olvas, például az elemek nevét, az előzményeket és a hibaüzeneteket, az a mögötte álló MI-szolgáltatóhoz kerül, miután a BombVault eltávolította a gazdagép útvonalait, a tárolók helyét és a hitelesítő adatokat.",
-  "mcp.groupLocal": "Ezen a számítógépen",
-  "mcp.groupCloud": "A felhőben",
   "mcp.cloudWarningTitle": "A BombVaultnak elérhetőnek kell lennie az internetről",
   "mcp.cloudWarning": "Ezek a szolgáltatások a szolgáltatójuk szervereiről hívják a BombVaultot, nem a számítógépedről. A BombVaultnak ilyenkor nyilvánosan megbízható tanúsítvánnyal elérhetőnek kell lennie az internetről, például egy fordított proxy mögött. A proxy bejelentkezése védheti a webes felületet, de a /mcp útvonalnak át kell jutnia a BombVaulthoz, amely maga ellenőrzi a kulcsot: ezek a szolgáltatások nem tudnak bejelentkezni egy proxyba. A Le Chat elutasítja az önaláírt tanúsítványokat.",
   "mcp.otherClient": "Egyéb kliens",

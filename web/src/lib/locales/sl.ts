@@ -3165,8 +3165,6 @@ const sl: Partial<Translations> = {
   "mcp.search": "Išči odjemalce",
   "mcp.noMatch": "Noben odjemalec ne ustreza. Vsak drug odjemalec se poveže prek „Drug odjemalec“.",
   "mcp.connectHint": "Izberi svojega odjemalca za nastavitev, narejeno zanj: ključ z njegovim imenom, konfiguracijo za kopiranje in korak s potrdilom, ki ga potrebuje. Vsak drug odjemalec se poveže prek Drug odjemalec. Kar pomočnik prebere, na primer imena vnosov, zgodovino in sporočila o napakah, gre k ponudniku umetne inteligence za njim, potem ko BombVault odstrani poti gostitelja, lokacije repozitorijev in poverilnice.",
-  "mcp.groupLocal": "Na tem računalniku",
-  "mcp.groupCloud": "V oblaku",
   "mcp.cloudWarningTitle": "BombVault mora biti dosegljiv iz interneta",
   "mcp.cloudWarning": "Te storitve kličejo BombVault s strežnikov svojega ponudnika, ne s tvojega računalnika. BombVault mora biti takrat dosegljiv iz interneta z javno zaupanja vrednim potrdilom, na primer za povratnim posredniškim strežnikom. Prijava na tem strežniku lahko ščiti spletni vmesnik, a /mcp mora priti do BombVaulta, ki ključ preveri sam: te storitve se ne morejo prijaviti na posredniški strežnik. Le Chat zavrne samopodpisana potrdila.",
   "mcp.otherClient": "Drug odjemalec",

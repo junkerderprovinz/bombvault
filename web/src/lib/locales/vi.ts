@@ -2599,8 +2599,6 @@ const vi: Partial<Translations> = {
   "mcp.search": "Tìm máy khách",
   "mcp.noMatch": "Không có máy khách nào khớp. Mọi máy khách khác kết nối qua “Máy khách khác”.",
   "mcp.connectHint": "Hãy chọn máy khách của bạn để có phần thiết lập dành riêng cho nó: một khóa mang tên nó, cấu hình để sao chép và bước chứng chỉ nó cần. Mọi máy khách khác kết nối qua Máy khách khác. Những gì trợ lý đọc, như tên mục, lịch sử và thông báo lỗi, sẽ đến nhà cung cấp AI đứng sau nó, sau khi BombVault gỡ bỏ đường dẫn máy chủ, vị trí kho lưu trữ và thông tin đăng nhập.",
-  "mcp.groupLocal": "Trên máy tính này",
-  "mcp.groupCloud": "Trên đám mây",
   "mcp.cloudWarningTitle": "BombVault phải truy cập được từ internet",
   "mcp.cloudWarning": "Các dịch vụ này gọi BombVault từ máy chủ của nhà cung cấp, không phải từ máy tính của bạn. Khi đó BombVault phải truy cập được từ internet với chứng chỉ được tin cậy công khai, ví dụ sau một reverse proxy. Đăng nhập trên proxy đó có thể bảo vệ giao diện web, nhưng /mcp phải được chuyển thẳng tới BombVault, nơi tự kiểm tra khóa: các dịch vụ này không đăng nhập vào proxy được. Le Chat từ chối chứng chỉ tự ký.",
   "mcp.otherClient": "Máy khách khác",

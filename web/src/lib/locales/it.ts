@@ -2608,8 +2608,6 @@ const it: Partial<Translations> = {
   "mcp.search": "Cerca client",
   "mcp.noMatch": "Nessun client corrisponde. Qualsiasi altro client si collega con «Altro client».",
   "mcp.connectHint": "Scegli il tuo client per una configurazione fatta apposta: una chiave con il suo nome, la configurazione da copiare e il passaggio del certificato che gli serve. Qualsiasi altro client si collega tramite Altro client. Ciò che l'assistente legge, come i nomi degli elementi, la cronologia e i messaggi di errore, va al fornitore di IA che c'è dietro, dopo che BombVault ha tolto i percorsi dell'host, le posizioni dei repository e le credenziali.",
-  "mcp.groupLocal": "Su questo computer",
-  "mcp.groupCloud": "Nel cloud",
   "mcp.cloudWarningTitle": "BombVault deve essere raggiungibile da internet",
   "mcp.cloudWarning": "Questi servizi chiamano BombVault dai server del loro fornitore, non dal tuo computer. BombVault deve quindi essere raggiungibile da internet con un certificato attendibile pubblicamente, per esempio dietro un reverse proxy. Un accesso su quel proxy può proteggere l'interfaccia web, ma /mcp deve arrivare fino a BombVault, che controlla la chiave da sé: questi servizi non sanno accedere a un proxy. Le Chat rifiuta i certificati autofirmati.",
   "mcp.otherClient": "Altro client",

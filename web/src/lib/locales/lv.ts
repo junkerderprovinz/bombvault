@@ -3181,8 +3181,6 @@ const lv: Partial<Translations> = {
   "mcp.search": "Meklēt klientus",
   "mcp.noMatch": "Neviens klients neatbilst. Jebkurš cits klients savienojas caur „Cits klients”.",
   "mcp.connectHint": "Izvēlieties savu klientu, un saņemsiet tam pielāgotu iestatīšanu: atslēgu ar tā nosaukumu, kopējamo konfigurāciju un sertifikāta soli, kas tam vajadzīgs. Jebkurš cits klients savienojas caur Cits klients. Tas, ko asistents lasa, piemēram, ierakstu nosaukumi, vēsture un kļūdu ziņojumi, nonāk pie aiz tā esošā MI pakalpojumu sniedzēja pēc tam, kad BombVault ir noņēmis resursdatora ceļus, repozitoriju atrašanās vietas un akreditācijas datus.",
-  "mcp.groupLocal": "Šajā datorā",
-  "mcp.groupCloud": "Mākonī",
   "mcp.cloudWarningTitle": "BombVault jābūt sasniedzamam no interneta",
   "mcp.cloudWarning": "Šie pakalpojumi izsauc BombVault no sava pakalpojumu sniedzēja serveriem, nevis no jūsu datora. Tad BombVault jābūt sasniedzamam no interneta ar publiski uzticamu sertifikātu, piemēram, aiz reversā starpniekservera. Pieteikšanās šajā starpniekserverī var aizsargāt tīmekļa saskarni, bet /mcp jālaiž cauri līdz BombVault, kas pats pārbauda atslēgu: šie pakalpojumi nevar pieteikties starpniekserverī. Le Chat noraida pašparakstītus sertifikātus.",
   "mcp.otherClient": "Cits klients",

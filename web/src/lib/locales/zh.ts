@@ -2599,8 +2599,6 @@ const zh: Partial<Translations> = {
   "mcp.search": "搜索客户端",
   "mcp.noMatch": "没有匹配的客户端。其他任何客户端都可通过“其他客户端”连接。",
   "mcp.connectHint": "选择你的客户端，获得为它准备的设置：以它命名的密钥、要复制的配置，以及它需要的证书步骤。其他客户端都通过“其他客户端”连接。助手读取的内容，例如条目名称、历史记录和错误信息，会在 BombVault 去掉主机路径、仓库位置和凭据之后，发送给它背后的 AI 提供商。",
-  "mcp.groupLocal": "在这台电脑上",
-  "mcp.groupCloud": "在云端",
   "mcp.cloudWarningTitle": "BombVault 必须能从互联网访问",
   "mcp.cloudWarning": "这些服务从其提供商的服务器调用 BombVault，而不是从你的电脑。因此 BombVault 必须能从互联网访问，并使用公开受信任的证书，例如放在反向代理之后。代理上的登录可以保护网页界面，但 /mcp 必须直接放行到 BombVault，由它自己检查密钥：这些服务无法登录代理。Le Chat 会拒绝自签名证书。",
   "mcp.otherClient": "其他客户端",

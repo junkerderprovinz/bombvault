@@ -3181,8 +3181,6 @@ const ca: Partial<Translations> = {
   "mcp.search": "Cerca clients",
   "mcp.noMatch": "Cap client coincideix. Qualsevol altre client es connecta amb «Un altre client».",
   "mcp.connectHint": "Tria el teu client per a una configuració feta a mida: una clau amb el seu nom, la configuració per copiar i el pas del certificat que necessita. Qualsevol altre client es connecta amb Un altre client. El que llegeix l'assistent, com els noms dels elements, l'historial i els missatges d'error, va al proveïdor d'IA que hi ha al darrere, després que el BombVault hagi tret els camins de l'amfitrió, les ubicacions dels repositoris i les credencials.",
-  "mcp.groupLocal": "En aquest ordinador",
-  "mcp.groupCloud": "Al núvol",
   "mcp.cloudWarningTitle": "El BombVault ha de ser accessible des d'internet",
   "mcp.cloudWarning": "Aquests serveis criden el BombVault des dels servidors del seu proveïdor, no des del teu ordinador. Aleshores el BombVault ha de ser accessible des d'internet amb un certificat de confiança pública, per exemple darrere d'un servidor intermediari invers. Un inici de sessió en aquest servidor intermediari pot protegir la interfície web, però /mcp ha d'arribar fins al BombVault, que comprova la clau ell mateix: aquests serveis no poden iniciar sessió en un servidor intermediari. Le Chat rebutja els certificats autosignats.",
   "mcp.otherClient": "Un altre client",

@@ -3181,8 +3181,6 @@ const hr: Partial<Translations> = {
   "mcp.search": "Traži klijente",
   "mcp.noMatch": "Nijedan klijent ne odgovara. Svaki drugi klijent spaja se preko „Drugi klijent“.",
   "mcp.connectHint": "Odaberite svog klijenta za postavljanje napravljeno za njega: ključ s njegovim imenom, konfiguraciju za kopiranje i korak s certifikatom koji mu treba. Svaki drugi klijent povezuje se preko Drugi klijent. Ono što asistent čita, poput naziva stavki, povijesti i poruka o pogreškama, ide pružatelju umjetne inteligencije iza njega, nakon što BombVault ukloni putanje domaćina, lokacije repozitorija i vjerodajnice.",
-  "mcp.groupLocal": "Na ovom računalu",
-  "mcp.groupCloud": "U oblaku",
   "mcp.cloudWarningTitle": "BombVault mora biti dostupan s interneta",
   "mcp.cloudWarning": "Ove usluge pozivaju BombVault s poslužitelja svog pružatelja, ne s vašeg računala. BombVault tada mora biti dostupan s interneta s javno pouzdanim certifikatom, na primjer iza obrnutog proxyja. Prijava na tom proxyju smije štititi web sučelje, ali /mcp mora prolaziti do BombVaulta, koji sam provjerava ključ: ove se usluge ne mogu prijaviti na proxy. Le Chat odbija samopotpisane certifikate.",
   "mcp.otherClient": "Drugi klijent",
