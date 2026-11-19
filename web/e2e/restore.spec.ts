@@ -813,7 +813,7 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(wizard(page).getByLabel("age-Identität")).toHaveCount(0);
   await expect(wizard(page).getByText("Sein Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
   await expect(wizard(page).getByText(/Noch ist nichts gespeichert\. Der Schlüssel bleibt noch 30 Minuten/)).toBeVisible();
-  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Zugang fehlt");
+  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Anmeldedaten fehlen");
   await expect(wizard(page).getByTestId("emergency-kit")).toHaveText(/^Recovery-Kit von tower, geschrieben /);
   await expect(wizard(page).getByRole("button", { name: "Weiter" })).toHaveCount(0);
   expect(asked).toEqual(["POST /read", "POST /read"]);

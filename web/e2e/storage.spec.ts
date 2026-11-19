@@ -206,7 +206,7 @@ test.describe("on the desktop", () => {
     // Anywhere on the row, not only on the name.
     await row.click();
     await expect(page).toHaveURL(new RegExp(`${encodeURIComponent(B2.id)}$`));
-    await expect(page.getByText("Zugangsdaten", { exact: true })).toBeVisible();
+    await expect(page.getByText("Anmeldedaten", { exact: true })).toBeVisible();
 
     await page.goto(locationUrl("destination:gone"));
     await expect(page.getByText("Diesen Speicherort gibt es nicht mehr.")).toBeVisible();
@@ -398,7 +398,7 @@ test.describe("on the desktop", () => {
     await page.goto(locationUrl(LOCAL.id));
     await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
     await expect(page.getByText("Verbindung", { exact: true })).toBeVisible();
-    for (const absent of ["Kopieren", "Zugangsdaten", "rclone.conf", "Löschschutz", "Löschschutz (append-only)"]) {
+    for (const absent of ["Kopieren", "Anmeldedaten", "rclone.conf", "Löschschutz", "Löschschutz (append-only)"]) {
       await expect(page.getByText(absent, { exact: true })).toHaveCount(0);
     }
     await expect(page.getByRole("switch", { name: "Löschschutz (append-only)" })).toHaveCount(0);
