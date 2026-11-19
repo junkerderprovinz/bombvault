@@ -2307,12 +2307,14 @@ body {
   transition: max-width var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1);
 }
 .glim-window.glim-pick-window--form { max-width: 40rem; }
-.glim-pick-window > .glim-window-body { overflow: hidden; }
+.glim-pick-window:not(.glim-pick-window--form) > .glim-window-body { overflow: hidden; }
 .glim-pick-window .glim-provider-pick .glim-readme-btn-unit {
   --tile: var(--provider-tile, var(--accent));
   --tile-ink: var(--provider-ink, var(--accent-contrast));
 }
 .glim-brand-svg { display: contents; }
+.glim-brand-svg > :is(.glim-mark-rest, .glim-mark-hover) { width: 100%; height: 100%; }
+.glim-brand-svg > .glim-mark-rest { display: block; }
 .glim-input.glim-pick-search {
   flex: none;
   align-self: flex-end;
@@ -2340,9 +2342,20 @@ body {
   flex-direction: column;
   gap: 0.75rem;
 }
-.glim-pick-section > .glim-eyebrow {
+/* A group's badge and (i) stand in its eyebrow's line. */
+.glim-pick-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.glim-pick-eyebrow > .glim-eyebrow {
   margin: 0;
   font-weight: inherit;
+}
+/* The tile picked before keeps a ring in the colour it lights up in. */
+.glim-provider-pick .glim-readme-btn[aria-current="true"] {
+  outline: 2px solid var(--tile);
+  outline-offset: 2px;
 }
 .glim-pick-none {
   margin: 0;
