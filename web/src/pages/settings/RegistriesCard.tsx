@@ -1,58 +1,32 @@
 // The sign-ins for private container registries. A registry is added in a
 // window: pick its kind from the tiles, then fill in what is missing.
-import { useState, type ReactNode } from "react";
-import { PickerWindow, type PickerItem, type TileMark } from "@glimstone/react/PickerWindow";
+import { useState, type CSSProperties, type ReactNode } from "react";
+import { catalogPicker } from "@glimstone/core";
+import { REGISTRY_PROVIDERS } from "@glimstone/core/registryProviders";
+import { PickerWindow } from "@glimstone/react/PickerWindow";
+import { BrandMark } from "@glimstone/react/ReadmeButton";
 import { Window, type WindowAction } from "@glimstone/react/Window";
 import { Button } from "../../components/Button";
 import { IconSave } from "../../components/glyphs";
 import { IconAdd, IconDatabase, IconPencil, IconTrash } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
 import { Rows, SettingRow } from "../../components/storage/rows";
-import { textInkOn } from "../../lib/accent";
 import type { RegistryAuthEntry } from "../../lib/api";
-import { useT, type TranslationKey } from "../../lib/i18n";
-import { REGISTRY_KINDS, registryKind, type RegistryGroup, type RegistryKind } from "../../lib/registryMarks";
+import { useT } from "../../lib/i18n";
+import { REGISTRY_KINDS, registryKind, type RegistryKind } from "../../lib/registries";
 import { useReveal } from "../../lib/useReveal";
 import { Card, type SaveState } from "./shared";
 import { useSettings } from "./settingsStore";
-
-const GROUPS: { id: RegistryGroup; title: TranslationKey }[] = [
-  { id: "public", title: "tile.registry.public" },
-  { id: "selfHosted", title: "tile.registry.selfHosted" },
-  { id: "cloud", title: "tile.registry.cloud" },
-];
 
 // The tile that takes any address. Its entries are stored without a kind.
 const OTHER = "other";
 
 const FIELD = "rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus w-64 max-w-full";
 
-function logoSrc(kind: RegistryKind): string {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(kind.mark)}`;
-}
-
-/** A registry's logo as a picker tile's mark. It is drawn as an image, so the
- *  ids inside one logo cannot meet another's, and the image carries the
- *  filter that turns it to the tile's ink when the tile lights up. A logo with
- *  a glyph shows the glyph there instead. */
-function tileMark(kind: RegistryKind): TileMark {
-  const ink = textInkOn(kind.tile);
-  const lit = ink === "#FFFFFF" ? "brightness(0) invert(1)" : "brightness(0)";
-  const dark = kind.dark ? " glim-registry-dark" : "";
-  const glyph = kind.glyph
-    ? `<img class="glim-registry-logo glim-registry-glyph" style="--logo-lit:${lit}" src="data:image/svg+xml;utf8,${encodeURIComponent(kind.glyph)}" alt="">`
-    : "";
-  return {
-    svg: `<img class="glim-registry-logo${dark}${glyph ? " glim-registry-rest" : ""}" style="--logo-lit:${lit}" src="${logoSrc(kind)}" alt="">${glyph}`,
-    tile: kind.tile,
-    ink,
-  };
-}
-
-/** RegistryMark is a registry's logo on a tile of its colour, a plain glyph
- *  for a registry of no known kind. */
+/** RegistryMark is a registry's logo on a tile of its colour, as the picker
+ *  lights it, and a plain glyph for a registry of no known kind. */
 function RegistryMark({ kind, large = false }: { kind?: RegistryKind; large?: boolean }) {
-  const box = large ? "h-12 w-12" : "h-(--btn-h) w-(--btn-h)";
+  const box = large ? "h-12 w-12 [&_svg]:h-7 [&_svg]:w-7" : "h-(--btn-h) w-(--btn-h) [&_svg]:h-5 [&_svg]:w-5";
   if (!kind) {
     return (
       <span className={`flex ${box} shrink-0 items-center justify-center rounded-control bg-carbon-surface2 text-carbon-textSub`}>
@@ -60,12 +34,14 @@ function RegistryMark({ kind, large = false }: { kind?: RegistryKind; large?: bo
       </span>
     );
   }
+  const { svg, hover, tile, ink } = kind.mark;
   return (
     <span
-      className={`glim-registry-mark flex ${box} shrink-0 items-center justify-center rounded-control`}
-      style={{ backgroundColor: kind.tile }}
+      aria-hidden="true"
+      className={`flex ${box} shrink-0 items-center justify-center rounded-control`}
+      style={{ backgroundColor: tile, color: ink, "--mark-ink": ink } as CSSProperties}
     >
-      <img src={logoSrc(kind)} alt="" />
+      <BrandMark svg={hover ?? svg} />
     </span>
   );
 }
@@ -186,35 +162,28 @@ function useRegistryForm(onSave: SaveEntry, onClose: () => void, initial: Draft)
 }
 
 function AddRegistryWindow({ onSave, onClose }: { onSave: SaveEntry; onClose: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const form = useRegistryForm(onSave, onClose, { host: "", username: "", token: "" });
   const [picked, setPicked] = useState<string | null>(null);
   const kind = REGISTRY_KINDS.find((k) => k.id === picked);
   const name = kind?.name ?? t("tile.registry.other");
-  const items: PickerItem[] = [
-    ...REGISTRY_KINDS.map((k) => ({
-      id: k.id,
-      label: k.name,
-      sub: k.host ?? t("tile.registry.ownAddress"),
-      group: k.group,
-      mark: tileMark(k),
-    })),
-    {
-      id: OTHER,
-      label: t("tile.registry.other"),
-      sub: t("tile.registry.ownAddress"),
-      group: GROUPS[GROUPS.length - 1].id,
-      mark: <IconDatabase />,
-      last: true,
+  const { items, groups } = catalogPicker(REGISTRY_PROVIDERS, {
+    ids: [...REGISTRY_KINDS.map((k) => k.id), OTHER],
+    titles: { public: t("tile.registry.public"), cloud: t("tile.registry.cloud"), selfHosted: t("tile.registry.selfHosted") },
+    glyph: () => <IconDatabase />,
+    lang,
+    own: (entry) => {
+      const sub = REGISTRY_KINDS.find((k) => k.id === entry.id)?.host ?? t("tile.registry.ownAddress");
+      return entry.id === OTHER ? { label: t("tile.registry.other"), sub, last: true } : { sub };
     },
-  ];
+  });
 
   return (
     <PickerWindow
       title={picked === null ? t("settings.registryAdd") : t("tile.registry.addTitle").replace("{name}", () => name)}
       hint={t("settings.registriesHint")}
       items={items}
-      groups={GROUPS.map((g) => ({ id: g.id, title: t(g.title) }))}
+      groups={groups}
       text={{
         search: t("tile.registry.search"),
         none: t("tile.registry.noMatch"),

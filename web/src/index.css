@@ -6102,32 +6102,6 @@ body {
   transform: none;
 }
 
-/* A registry's logo is an image. It keeps its own colours on a picker tile,
-   takes the tile's ink where the tile lights up in the brand's colour, and a
-   logo in dark ink is flipped on a dark ground. */
-.glim-registry-logo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.glim-registry-mark img {
-  width: 60%;
-  height: 60%;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-:root:not([data-theme="light"]) .glim-registry-logo.glim-registry-dark { filter: invert(1); }
-.glim-brand-tile:focus-visible .glim-registry-logo { filter: var(--logo-lit); }
-.glim-registry-glyph,
-.glim-brand-tile:focus-visible .glim-registry-rest { display: none; }
-.glim-brand-tile:focus-visible .glim-registry-glyph { display: block; }
-@media (hover: hover) {
-  .group:hover > .glim-brand-tile .glim-registry-logo { filter: var(--logo-lit); }
-  .group:hover > .glim-brand-tile .glim-registry-rest { display: none; }
-  .group:hover > .glim-brand-tile .glim-registry-glyph { display: block; }
-}
-
 /* The week of planned runs. Each kind of run has a colour of its own, which
    says what it is and follows neither the accent nor the rainbow. */
 :root {
