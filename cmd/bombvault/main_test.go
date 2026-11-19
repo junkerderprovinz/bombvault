@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func TestPlatformForTrueNAS(t *testing.T) {
@@ -127,5 +130,40 @@ func TestARoundCountsAnEntryWithNowhereToGoAsFailed(t *testing.T) {
 	}
 	if err := roundItemErr(errors.New("disk full")); err == nil {
 		t.Fatal("roundItemErr dropped a real failure")
+	}
+}
+
+func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	st := store.New(db)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = true
+	settings.ContainersSchedule = "30 2 * * *"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}, st, nil, nil, nil)
+
+	planned := func(mode config.Mode) []schedule.NextRun {
+		s := newScheduler(mode, svc, st)
+		s.Start()
+		defer s.Stop()
+		return s.NextRuns()
+	}
+	if len(planned(config.ModeFull)) == 0 {
+		t.Fatal("the full app plans nothing, so the test proves nothing")
+	}
+	if runs := planned(config.ModeNode); len(runs) != 0 {
+		t.Errorf("a node plans %+v", runs)
 	}
 }

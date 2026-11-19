@@ -327,8 +327,13 @@ func run() error {
 	}
 	svc.LinkTypedOwnFolders()
 	svc.NoteSectionPlans()
-	svc.StartGroup()
-	defer svc.StopGroup()
+	node := cfg.Mode == config.ModeNode
+	// A node is in no pairing group and serves no fortress: it talks to its
+	// home instance alone.
+	if !node {
+		svc.StartGroup()
+		defer svc.StopGroup()
+	}
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
 	// host BombVault is running on, and map it to a concrete Platform adapter
 	// (internal/platform): the appdata-fallback convention, cross-instance
@@ -376,6 +381,166 @@ func run() error {
 		log.Printf("offsite: moved %d additional target(s) off sort order 0 so a settings save keeps them", n)
 	}
 
+	if settings, sErr := st.GetSettings(); sErr == nil {
+		// Apply the saved CPU cap before anything can start a restic child ([558]).
+		restic.SetMaxProcs(settings.BackupCores)
+		restic.SetMemLimitMB(settings.BackupMemoryMB)
+	} else {
+		log.Printf("main: could not read settings: %v", sErr)
+	}
+	scheduler := newScheduler(cfg.Mode, svc, st)
+	// Containers a backup or a dataset snapshot left stopped, and those a cut-off restore
+	// removed, come back before anything else:
+	// this is Docker only and fast, and a user's applications being down outranks
+	// the rest of the boot.
+	svc.RecoverZFSRestarts(context.Background())
+	svc.RecoverInterruptedRestores(context.Background())
+	svc.RecoverContainerRestarts(context.Background())
+	svc.RecoverVMRestarts(context.Background())
+	// The sweep talks to the host over SSH, where one call can take half a
+	// minute, so it runs in the background: the image health check would restart
+	// the container in the middle of a boot that waits for it. Holding the domain
+	// lock from here keeps a scheduled ZFS job behind the sweep all the same.
+	unlockZFS := svc.LockDomainForStartupSweep()
+	go func() {
+		defer unlockZFS()
+		sctx, cancel := context.WithTimeout(context.Background(), zfsStartupSweepBudget)
+		defer cancel()
+		svc.SweepZFSLeftoversOnStartup(sctx)
+	}()
+	// A changed-block VM backup that was running when BombVault stopped left
+	// its backup job on the VM and its checkpoints on record. virsh goes over
+	// SSH, so this runs in the background like the ZFS sweep.
+	go func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.SweepBlockBackupLeftovers(cctx)
+	}()
+	// A start test that was running when BombVault stopped left its copy,
+	// network and restored data behind. They go before the scheduler and the
+	// web interface start, so no new test can meet them and none of it is
+	// removed from under one.
+	func() {
+		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+		svc.CleanupStartTestLeftovers(cctx)
+	}()
+	svc.SweepAppdataImportLeftovers()
+	svc.SweepFlashZipScratch()
+	if node {
+		return serveNode(cfg, svc, engine)
+	}
+
+	scheduler.Start()
+	defer scheduler.Stop()
+
+	// A server that was off overnight missed its scheduled fire, so shortly
+	// after boot each enabled domain whose last success predates its last fire
+	// runs the job it missed (Settings.CatchUpMissed, on by default). The delay
+	// gives the array, Docker and the shares time to come up. It runs once, since
+	// a later settings reload must not start surprise backups.
+	go func() {
+		time.Sleep(catchUpStartupDelay)
+		settings, sErr := st.GetSettings()
+		if sErr != nil {
+			log.Printf("schedule: catch-up skipped, could not read settings: %v", sErr)
+			return
+		}
+		if !settings.CatchUpMissed {
+			return
+		}
+		scheduler.CatchUpMissed(time.Now())
+	}()
+
+	// JSON API + embedded SPA.
+	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	handler.SetProgress(prog) // same store the service publishes to → SSE endpoint
+	// Warm the host-integration check at startup so the dashboard shows the
+	// green result list immediately on first load (no manual click needed).
+	go handler.WarmSpike()
+	// Sample existing repos' size shortly after boot so the dashboard Storage card
+	// shows data for repos that already have backups (no wait for the next backup).
+	go svc.CollectStatsOnStartup()
+	// A stop signal ends the backups with a run row that says so, rather than
+	// leaving the next boot to call them interrupted. The way out is the reverse
+	// of the way in: stop serving first, since a new request would only start
+	// work about to be cancelled, then cancel the backups and wait for their
+	// rows. SIGINT as well as SIGTERM, so a foreground `go run` behaves like the
+	// container, and stop() restores the default handler, so a second Ctrl-C
+	// kills at once.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	// The anomaly worker evaluates the backup history after every run and stops
+	// with the same context the server does.
+	svc.StartAnomalyEngine(ctx)
+	svc.EnableFirstProbes()
+	// Container load for slowing off-site uploads while a media server streams.
+	svc.StartTrafficWatch(ctx)
+	svc.StartIdleWaits()
+	// Backups deferred while their app was busy, also those a restart cut
+	// short, are tried again from here on.
+	svc.StartDeferrals()
+	// Snapshot plans take and prune the server's own snapshots on their cadence.
+	svc.StartHostSnapshotPlans(ctx)
+
+	server := api.NewServer(cfg, web.DistFS(), handler.Router(), handler.FortressTabs())
+	svc.ServePhonePages(server.Handler())
+	handler.StartIntegrations()
+	// An MCP listing of a repository that stopped answering holds its request
+	// open until the stop context ends; without this the server would wait out
+	// its grace for it and exit with an error.
+	server.BeforeShutdown = svc.EndDetachedWork
+	runErr := server.Run(ctx)
+	handler.StopIntegrations()
+
+	if ctx.Err() != nil {
+		stop() // a second signal now kills, instead of waiting behind this
+		endWork(svc, engine)
+	}
+	return runErr
+}
+
+// serveNode runs a node until a signal stops it. It keeps the anomaly engine
+// and the deferred backups, and serves nothing but its health.
+func serveNode(cfg config.Config, svc *api.Service, engine *restic.Restic) error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	svc.StartAnomalyEngine(ctx)
+	svc.StartDeferrals()
+	log.Print("node mode, waiting for home")
+	runErr := api.NewNodeServer(cfg, api.NodeRouter(nil)).Run(ctx)
+	if ctx.Err() != nil {
+		stop()
+		endWork(svc, engine)
+	}
+	return runErr
+}
+
+// endWork cancels the backups still running once the server stopped on a
+// signal, and waits for their rows to be written.
+func endWork(svc *api.Service, engine *restic.Restic) {
+	log.Printf("shutdown: signal received, stopping")
+	svc.BeginShutdown()
+	// A restic left running would outlive this process, and the end of
+	// the container kills it without a chance to drop its lock.
+	if engine.Processes.End(resticEndGrace) {
+		// The samples write to the store as their restic runs return,
+		// and the store closes once run does.
+		svc.WaitForSamples()
+	} else {
+		log.Printf("shutdown: restic still running after %s, leaving it", resticEndGrace)
+	}
+	log.Printf("shutdown: done")
+}
+
+// newScheduler returns the scheduler with every job wired and the saved
+// schedules loaded. A node gets one without jobs, since its home instance
+// decides when it backs up.
+func newScheduler(mode config.Mode, svc *api.Service, st *store.Repo) *schedule.Scheduler {
+	if mode == config.ModeNode {
+		return schedule.New(nil, st.ListTargetsScheduleOrder)
+	}
 	// Per-domain scheduler; the containers job calls the service's Backup, the
 	// VMs job calls BackupVM (wired via SetVMJob below). Each scheduled item runs
 	// with its own Healthchecks ping suppressed (context flag) so the run's ONE
@@ -579,150 +744,18 @@ func run() error {
 	zfsLastRun := schedule.ZFSDueGate(st, svc.ZFSReplicaOnlySuccessAmong)
 	everythingLastRun := schedule.LastRunFunc(st.LastEverythingPass)
 
-	if settings, sErr := st.GetSettings(); sErr == nil {
-		// Apply the saved CPU cap before anything can start a restic child ([558]).
-		restic.SetMaxProcs(settings.BackupCores)
-		restic.SetMemLimitMB(settings.BackupMemoryMB)
-		gates := schedule.DueGates{
-			Containers: containersLastRun, VMs: vmsLastRun, Flash: flashLastRun,
-			Config: configLastRun, Files: filesLastRun, ZFS: zfsLastRun,
-			Everything: everythingLastRun,
-		}
-		if rErr := scheduler.ReloadWithGates(settings, gates); rErr != nil {
-			log.Printf("scheduler: initial reload failed: %v", rErr)
-		}
-	} else {
-		log.Printf("scheduler: could not read settings: %v", sErr)
+	settings, err := st.GetSettings()
+	if err != nil {
+		log.Printf("scheduler: could not read settings: %v", err)
+		return scheduler
 	}
-	// Containers a backup or a dataset snapshot left stopped, and those a cut-off restore
-	// removed, come back before anything else:
-	// this is Docker only and fast, and a user's applications being down outranks
-	// the rest of the boot.
-	svc.RecoverZFSRestarts(context.Background())
-	svc.RecoverInterruptedRestores(context.Background())
-	svc.RecoverContainerRestarts(context.Background())
-	svc.RecoverVMRestarts(context.Background())
-	// The sweep talks to the host over SSH, where one call can take half a
-	// minute, so it runs in the background: the image health check would restart
-	// the container in the middle of a boot that waits for it. Holding the domain
-	// lock from here keeps a scheduled ZFS job behind the sweep all the same.
-	unlockZFS := svc.LockDomainForStartupSweep()
-	go func() {
-		defer unlockZFS()
-		sctx, cancel := context.WithTimeout(context.Background(), zfsStartupSweepBudget)
-		defer cancel()
-		svc.SweepZFSLeftoversOnStartup(sctx)
-	}()
-	// A changed-block VM backup that was running when BombVault stopped left
-	// its backup job on the VM and its checkpoints on record. virsh goes over
-	// SSH, so this runs in the background like the ZFS sweep.
-	go func() {
-		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-		svc.SweepBlockBackupLeftovers(cctx)
-	}()
-	// A start test that was running when BombVault stopped left its copy,
-	// network and restored data behind. They go before the scheduler and the
-	// web interface start, so no new test can meet them and none of it is
-	// removed from under one.
-	func() {
-		cctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cancel()
-		svc.CleanupStartTestLeftovers(cctx)
-	}()
-	svc.SweepAppdataImportLeftovers()
-	svc.SweepFlashZipScratch()
-
-	scheduler.Start()
-	defer scheduler.Stop()
-
-	// Anacron-style catch-up (gated on Settings.CatchUpMissed, default on): a
-	// home server that is off overnight never sees its scheduled fire, so shortly
-	// after boot each enabled backup domain whose last success predates its last
-	// scheduled fire is re-run through the exact cron job it missed. The fixed
-	// delay gives the array/Docker/shares time to come up first; the settings are
-	// re-read at fire time so a toggle during the window is honored. One-shot on
-	// purpose — a later settings reload must not trigger surprise backups.
-	go func() {
-		time.Sleep(catchUpStartupDelay)
-		settings, sErr := st.GetSettings()
-		if sErr != nil {
-			log.Printf("schedule: catch-up skipped — could not read settings: %v", sErr)
-			return
-		}
-		if !settings.CatchUpMissed {
-			return
-		}
-		scheduler.CatchUpMissed(time.Now())
-	}()
-
-	// JSON API + embedded SPA.
-	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
-	handler.SetProgress(prog) // same store the service publishes to → SSE endpoint
-	// Warm the host-integration check at startup so the dashboard shows the
-	// green result list immediately on first load (no manual click needed).
-	go handler.WarmSpike()
-	// Sample existing repos' size shortly after boot so the dashboard Storage card
-	// shows data for repos that already have backups (no wait for the next backup).
-	go svc.CollectStatsOnStartup()
-	// Stopping on purpose ([375]). Until this, nothing in the project caught a
-	// signal: `docker stop` killed the process outright, restic's child died with
-	// it, and the run row stayed 'running' until the next boot's
-	// ReapInterruptedRuns wrote "interrupted (BombVault restarted mid-run)" -- a
-	// sentence that cannot tell an update from a crash, because it is written by
-	// the lifetime AFTER the one that ended.
-	//
-	// Order matters on the way out and is the reverse of the way in:
-	//
-	//  1. Stop serving. New requests would only start work we are about to kill.
-	//  2. Then cancel the backups and wait for their rows to be written. Doing
-	//     this first would leave the UI cheerfully accepting a new backup while
-	//     the process is leaving.
-	//
-	// SIGINT as well as SIGTERM, so a foreground `go run` behaves like the
-	// container does. NotifyContext also restores the default handler on stop(),
-	// which is what makes a SECOND Ctrl-C kill immediately rather than being
-	// swallowed by a shutdown that is taking too long.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	// The anomaly worker evaluates the backup history after every run and stops
-	// with the same context the server does.
-	svc.StartAnomalyEngine(ctx)
-	svc.EnableFirstProbes()
-	// Container load for slowing off-site uploads while a media server streams.
-	svc.StartTrafficWatch(ctx)
-	svc.StartIdleWaits()
-	// Backups deferred while their app was busy, also those a restart cut
-	// short, are tried again from here on.
-	svc.StartDeferrals()
-	// Snapshot plans take and prune the server's own snapshots on their cadence.
-	svc.StartHostSnapshotPlans(ctx)
-
-	server := api.NewServer(cfg, web.DistFS(), handler.Router(), handler.FortressTabs())
-	svc.ServePhonePages(server.Handler())
-	handler.StartIntegrations()
-	// An MCP listing of a repository that stopped answering holds its request
-	// open until the stop context ends; without this the server would wait out
-	// its grace for it and exit with an error.
-	server.BeforeShutdown = svc.EndDetachedWork
-	runErr := server.Run(ctx)
-	handler.StopIntegrations()
-
-	if ctx.Err() != nil {
-		log.Printf("shutdown: signal received, stopping")
-		stop() // a second signal now kills, instead of waiting behind this
-		svc.BeginShutdown()
-		// A restic left running would outlive this process, and the end of
-		// the container kills it without a chance to drop its lock.
-		if engine.Processes.End(resticEndGrace) {
-			// The samples write to the store as their restic runs return,
-			// and the store closes once run does.
-			svc.WaitForSamples()
-		} else {
-			log.Printf("shutdown: restic still running after %s, leaving it", resticEndGrace)
-		}
-		log.Printf("shutdown: done")
+	gates := schedule.DueGates{
+		Containers: containersLastRun, VMs: vmsLastRun, Flash: flashLastRun,
+		Config: configLastRun, Files: filesLastRun, ZFS: zfsLastRun,
+		Everything: everythingLastRun,
 	}
-	return runErr
+	if err := scheduler.ReloadWithGates(settings, gates); err != nil {
+		log.Printf("scheduler: initial reload failed: %v", err)
+	}
+	return scheduler
 }
