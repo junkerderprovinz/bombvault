@@ -1082,6 +1082,8 @@ const sl: Partial<Translations> = {
   "notify.email": "E-pošta",
   "notify.search": "Išči kanale",
   "notify.noMatch": "Noben kanal se ne ujema. „Webhook“ doseže skoraj vsako storitev.",
+  "notify.groupService": "Storitve",
+  "notify.groupStandard": "E-pošta in webhooki",
   "notify.remove": "Odstrani kanal",
   "notify.empty": "Kanala še ni. Dodaj enega in BombVault te bo lahko dosegel.",
   "notify.name": "Ime",

@@ -1082,6 +1082,8 @@ const sk: Partial<Translations> = {
   "notify.email": "E-mail",
   "notify.search": "Hľadať kanály",
   "notify.noMatch": "Žiadny kanál nezodpovedá. „Webhook“ siaha takmer na akúkoľvek službu.",
+  "notify.groupService": "Služby",
+  "notify.groupStandard": "E-mail a webhooky",
   "notify.remove": "Odobrať kanál",
   "notify.empty": "Zatiaľ tu nie je žiadny kanál. Pridaj nejaký a BombVault ťa zastihne.",
   "notify.name": "Názov",

@@ -1019,6 +1019,8 @@ const es: Partial<Translations> = {
   "notify.email": "Correo",
   "notify.search": "Buscar canales",
   "notify.noMatch": "Ningún canal coincide. «Webhook» llega a casi cualquier servicio.",
+  "notify.groupService": "Servicios",
+  "notify.groupStandard": "Correo y webhooks",
   "notify.remove": "Quitar canal",
   "notify.empty": "Aún no hay ningún canal. Añade uno y BombVault podrá avisarte.",
   "notify.name": "Nombre",

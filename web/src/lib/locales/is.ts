@@ -1082,6 +1082,8 @@ const is: Partial<Translations> = {
   "notify.email": "Tölvupóstur",
   "notify.search": "Leita að leiðum",
   "notify.noMatch": "Engin leið passar. „Webhook“ nær til nánast hvaða þjónustu sem er.",
+  "notify.groupService": "Þjónustur",
+  "notify.groupStandard": "Tölvupóstur og webhooks",
   "notify.remove": "Fjarlægja leið",
   "notify.empty": "Engin leið enn. Bættu einni við og BombVault getur náð í þig.",
   "notify.name": "Heiti",

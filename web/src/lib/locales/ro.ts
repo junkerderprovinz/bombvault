@@ -1008,6 +1008,8 @@ const ro: Partial<Translations> = {
   "notify.email": "E-mail",
   "notify.search": "Caută canale",
   "notify.noMatch": "Niciun canal nu se potrivește. „Webhook” ajunge la aproape orice serviciu.",
+  "notify.groupService": "Servicii",
+  "notify.groupStandard": "E-mail și webhookuri",
   "notify.remove": "Elimină canalul",
   "notify.empty": "Încă nu există niciun canal. Adaugă unul și BombVault te va putea anunța.",
   "notify.name": "Nume",

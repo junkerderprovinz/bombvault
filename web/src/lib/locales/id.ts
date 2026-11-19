@@ -1082,6 +1082,8 @@ const id: Partial<Translations> = {
   "notify.email": "Email",
   "notify.search": "Cari saluran",
   "notify.noMatch": "Tidak ada saluran yang cocok. \"Webhook\" menjangkau hampir semua layanan.",
+  "notify.groupService": "Layanan",
+  "notify.groupStandard": "Email dan webhook",
   "notify.remove": "Hapus saluran",
   "notify.empty": "Belum ada saluran. Tambahkan satu agar BombVault bisa menghubungi Anda.",
   "notify.name": "Nama",

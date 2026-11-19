@@ -1011,6 +1011,8 @@ const he: Partial<Translations> = {
   "notify.email": "אימייל",
   "notify.search": "חיפוש ערוצים",
   "notify.noMatch": "אין ערוץ מתאים. \"Webhook\" מגיע כמעט לכל שירות.",
+  "notify.groupService": "שירותים",
+  "notify.groupStandard": "אימייל ו-Webhook",
   "notify.remove": "הסרת הערוץ",
   "notify.empty": "עדיין אין ערוץ. הוסיפו אחד, ו-BombVault יוכל להגיע אליכם.",
   "notify.name": "שם",

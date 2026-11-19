@@ -1082,6 +1082,8 @@ const lt: Partial<Translations> = {
   "notify.email": "El. paštas",
   "notify.search": "Ieškoti kanalų",
   "notify.noMatch": "Joks kanalas neatitinka. „Webhook“ pasiekia beveik bet kurią paslaugą.",
+  "notify.groupService": "Paslaugos",
+  "notify.groupStandard": "El. paštas ir webhook",
   "notify.remove": "Pašalinti kanalą",
   "notify.empty": "Kanalų dar nėra. Pridėk vieną, ir BombVault galės tave pasiekti.",
   "notify.name": "Pavadinimas",

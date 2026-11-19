@@ -1082,6 +1082,8 @@ const eu: Partial<Translations> = {
   "notify.email": "Posta elektronikoa",
   "notify.search": "Bilatu kanalak",
   "notify.noMatch": "Ez dago kanal egokirik. «Webhook» aukerak ia edozein zerbitzutara iristen da.",
+  "notify.groupService": "Zerbitzuak",
+  "notify.groupStandard": "Posta elektronikoa eta webhookak",
   "notify.remove": "Kendu kanala",
   "notify.empty": "Oraindik ez dago kanalik. Gehitu bat, eta BombVaultek zuregana iritsi ahal izango du.",
   "notify.name": "Izena",

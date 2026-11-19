@@ -1008,6 +1008,8 @@ const uk: Partial<Translations> = {
   "notify.email": "Електронна пошта",
   "notify.search": "Пошук каналів",
   "notify.noMatch": "Жоден канал не підходить. «Webhook» підходить майже для будь-якого сервісу.",
+  "notify.groupService": "Сервіси",
+  "notify.groupStandard": "Ел. пошта й вебхуки",
   "notify.remove": "Видалити канал",
   "notify.empty": "Каналів поки немає. Додайте один, і BombVault зможе з вами зв'язатися.",
   "notify.name": "Назва",

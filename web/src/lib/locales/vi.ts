@@ -1002,6 +1002,8 @@ const vi: Partial<Translations> = {
   "notify.email": "Email",
   "notify.search": "Tìm kênh",
   "notify.noMatch": "Không có kênh nào khớp. \"Webhook\" gửi được tới gần như mọi dịch vụ.",
+  "notify.groupService": "Dịch vụ",
+  "notify.groupStandard": "Email và webhook",
   "notify.remove": "Xóa kênh",
   "notify.empty": "Chưa có kênh nào. Thêm một kênh để BombVault có thể báo cho bạn.",
   "notify.name": "Tên",

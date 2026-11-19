@@ -1082,6 +1082,8 @@ const et: Partial<Translations> = {
   "notify.email": "E-post",
   "notify.search": "Otsi kanaleid",
   "notify.noMatch": "Ükski kanal ei sobi. „Veebihook“ jõuab peaaegu iga teenuseni.",
+  "notify.groupService": "Teenused",
+  "notify.groupStandard": "E-post ja veebihookid",
   "notify.remove": "Eemalda kanal",
   "notify.empty": "Kanalit veel pole. Lisa üks ja BombVault saab sinuni jõuda.",
   "notify.name": "Nimi",

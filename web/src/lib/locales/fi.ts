@@ -1011,6 +1011,8 @@ const fi: Partial<Translations> = {
   "notify.email": "Sähköposti",
   "notify.search": "Hae kanavia",
   "notify.noMatch": "Mikään kanava ei täsmää. ”Webhook” yltää lähes mihin tahansa palveluun.",
+  "notify.groupService": "Palvelut",
+  "notify.groupStandard": "Sähköposti ja webhookit",
   "notify.remove": "Poista kanava",
   "notify.empty": "Kanavaa ei ole vielä. Lisää yksi, niin BombVault tavoittaa sinut.",
   "notify.name": "Nimi",

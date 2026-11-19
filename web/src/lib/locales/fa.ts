@@ -1082,6 +1082,8 @@ const fa: Partial<Translations> = {
   "notify.email": "ایمیل",
   "notify.search": "جست‌وجوی کانال‌ها",
   "notify.noMatch": "هیچ کانالی مطابقت ندارد. «Webhook» تقریباً به هر سرویسی می‌رسد.",
+  "notify.groupService": "سرویس‌ها",
+  "notify.groupStandard": "ایمیل و Webhook",
   "notify.remove": "حذف کانال",
   "notify.empty": "هنوز کانالی نیست. یکی اضافه کن تا BombVault بتواند به تو خبر بدهد.",
   "notify.name": "نام",

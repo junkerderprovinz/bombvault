@@ -1082,6 +1082,8 @@ const lv: Partial<Translations> = {
   "notify.email": "E-pasts",
   "notify.search": "Meklēt kanālus",
   "notify.noMatch": "Neviens kanāls neatbilst. „Webhook“ sasniedz gandrīz jebkuru pakalpojumu.",
+  "notify.groupService": "Pakalpojumi",
+  "notify.groupStandard": "E-pasts un webhook",
   "notify.remove": "Noņemt kanālu",
   "notify.empty": "Kanāla vēl nav. Pievienojiet vienu, un BombVault varēs jūs sasniegt.",
   "notify.name": "Nosaukums",

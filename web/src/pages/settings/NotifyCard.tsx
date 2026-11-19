@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { PickerWindow, type PickerItem, type TileMark } from "@glimstone/react/PickerWindow";
-import { SERVICE_MARKS } from "@glimstone/core/serviceMarks";
+import { catalogPicker } from "@glimstone/core";
+import { NOTIFY_PROVIDERS } from "@glimstone/core/notifyProviders";
+import { PickerWindow } from "@glimstone/react/PickerWindow";
 import { Button } from "../../components/Button";
 import { Exceptions } from "../../components/Exceptions";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -22,7 +23,6 @@ import {
   type NotifyConfig,
   type NotifyKind,
 } from "../../lib/api";
-import { UNRAID_SVG } from "../../lib/appMarks";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
@@ -103,6 +103,7 @@ export function NotifyCard({
   tail?: ReactNode;
 }) {
   const { push } = useToast();
+  const { lang } = useT();
   const [cfg, setCfg] = useState<NotifyConfig>(EMPTY);
   // The form as typed, read by a save that fires after a pause, which the
   // state of the render that scheduled it would not show.
@@ -289,7 +290,7 @@ export function NotifyCard({
           <PickerWindow
             title={t("notify.add")}
             hint={t("notify.channelsHint")}
-            items={channelItems(t)}
+            {...channelPicker(t, lang)}
             text={{
               search: t("notify.search"),
               none: t("notify.noMatch"),
@@ -310,41 +311,20 @@ export function NotifyCard({
   );
 }
 
-// Unraid's tile colours, as .glim-tile-unraid has them.
-const UNRAID_TILE: TileMark = { svg: UNRAID_SVG, tile: "#f15a2c", ink: "#ffffff" };
-
-// GlimStone lifts Matrix's black to grey on a dark ground. White reads as the
-// logo there, the way GitHub's does.
-const MATRIX_TILE: TileMark = {
-  ...SERVICE_MARKS.matrix,
-  svg: SERVICE_MARKS.matrix.svg.replace("#828282", "#ffffff"),
-};
-
-function channelMark(kind: NotifyKind): TileMark | ReactNode {
-  switch (kind) {
-    case "unraid":
-      return UNRAID_TILE;
-    case "matrix":
-      return MATRIX_TILE;
-    case "smtp":
-      return <IconMail />;
-    case "webhook":
-      return <IconLink />;
-    default:
-      return SERVICE_MARKS[kind];
-  }
-}
-
-// The kinds as the add window's tiles. A webhook takes any address, so it
-// stands last.
-function channelItems(t: T): PickerItem[] {
-  return KINDS.map((kind) => ({
-    id: kind,
-    label: kind === "unraid" ? "Unraid" : t(kind === "smtp" ? "notify.email" : KIND_LABEL[kind]),
-    sub: kind === "smtp" ? "SMTP" : undefined,
-    mark: channelMark(kind),
-    last: kind === "webhook",
-  }));
+// The kinds as the add window's tiles. Email and the webhook are words, the
+// services are brands, and the webhook takes any address, so it stands last.
+function channelPicker(t: T, lang: string) {
+  return catalogPicker(NOTIFY_PROVIDERS, {
+    ids: KINDS,
+    titles: { service: t("notify.groupService"), standard: t("notify.groupStandard") },
+    glyph: (entry) => (entry.glyph === "IconMail" ? <IconMail /> : <IconLink />),
+    lang,
+    own: (entry) => {
+      if (entry.id === "smtp") return { label: t("notify.email") };
+      if (entry.id === "webhook") return { label: t(KIND_LABEL.webhook), last: true };
+      return undefined;
+    },
+  });
 }
 
 // The paths of the fields each kind draws. A problem on any other path is

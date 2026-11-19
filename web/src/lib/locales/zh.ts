@@ -1002,6 +1002,8 @@ const zh: Partial<Translations> = {
   "notify.email": "邮件",
   "notify.search": "搜索渠道",
   "notify.noMatch": "没有匹配的渠道。“Webhook”几乎可以连接任何服务。",
+  "notify.groupService": "服务",
+  "notify.groupStandard": "邮件和 Webhook",
   "notify.remove": "移除渠道",
   "notify.empty": "还没有渠道。添加一个，BombVault 就能联系到你。",
   "notify.name": "名称",

@@ -1011,6 +1011,8 @@ const tr: Partial<Translations> = {
   "notify.email": "E-posta",
   "notify.search": "Kanal ara",
   "notify.noMatch": "Eşleşen kanal yok. \"Webhook\" neredeyse her servise ulaşır.",
+  "notify.groupService": "Hizmetler",
+  "notify.groupStandard": "E-posta ve webhook'lar",
   "notify.remove": "Kanalı kaldır",
   "notify.empty": "Henüz kanal yok. Bir tane ekle, BombVault sana ulaşabilsin.",
   "notify.name": "Ad",

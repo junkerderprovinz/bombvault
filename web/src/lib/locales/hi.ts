@@ -1082,6 +1082,8 @@ const hi: Partial<Translations> = {
   "notify.email": "ईमेल",
   "notify.search": "चैनल खोजें",
   "notify.noMatch": "कोई चैनल मेल नहीं खाता। «Webhook» लगभग किसी भी सेवा तक पहुँचता है।",
+  "notify.groupService": "सेवाएँ",
+  "notify.groupStandard": "ईमेल और Webhook",
   "notify.remove": "चैनल हटाएँ",
   "notify.empty": "अभी कोई चैनल नहीं है। एक जोड़ें, ताकि BombVault आप तक पहुँच सके।",
   "notify.name": "नाम",

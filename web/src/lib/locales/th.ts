@@ -1011,6 +1011,8 @@ const th: Partial<Translations> = {
   "notify.email": "อีเมล",
   "notify.search": "ค้นหาช่องทาง",
   "notify.noMatch": "ไม่พบช่องทางที่ตรงกัน \"Webhook\" ส่งถึงบริการได้เกือบทุกแบบ",
+  "notify.groupService": "บริการ",
+  "notify.groupStandard": "อีเมลและ Webhook",
   "notify.remove": "ลบช่องทาง",
   "notify.empty": "ยังไม่มีช่องทาง เพิ่มสักช่องทางแล้ว BombVault จะติดต่อคุณได้",
   "notify.name": "ชื่อ",

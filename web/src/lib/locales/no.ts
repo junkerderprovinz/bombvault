@@ -1008,6 +1008,8 @@ const no: Partial<Translations> = {
   "notify.email": "E-post",
   "notify.search": "Søk etter kanaler",
   "notify.noMatch": "Ingen kanal passer. «Webhook» når nesten alle tjenester.",
+  "notify.groupService": "Tjenester",
+  "notify.groupStandard": "E-post og webhooker",
   "notify.remove": "Fjern kanal",
   "notify.empty": "Ingen kanal ennå. Legg til én, så kan BombVault nå deg.",
   "notify.name": "Navn",

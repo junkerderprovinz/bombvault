@@ -1011,6 +1011,8 @@ const ar: Partial<Translations> = {
   "notify.email": "البريد الإلكتروني",
   "notify.search": "البحث عن القنوات",
   "notify.noMatch": "لا توجد قناة مطابقة. «Webhook» يصل إلى أي خدمة تقريبًا.",
+  "notify.groupService": "الخدمات",
+  "notify.groupStandard": "البريد الإلكتروني وWebhook",
   "notify.remove": "إزالة القناة",
   "notify.empty": "لا توجد قناة بعد. أضف واحدة ليتمكن BombVault من الوصول إليك.",
   "notify.name": "الاسم",

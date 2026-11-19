@@ -1011,6 +1011,8 @@ const hu: Partial<Translations> = {
   "notify.email": "E-mail",
   "notify.search": "Csatornák keresése",
   "notify.noMatch": "Egy csatorna sem egyezik. A „Webhook” szinte bármilyen szolgáltatást elér.",
+  "notify.groupService": "Szolgáltatások",
+  "notify.groupStandard": "E-mail és webhookok",
   "notify.remove": "Csatorna eltávolítása",
   "notify.empty": "Még nincs csatorna. Adj hozzá egyet, és a BombVault elér téged.",
   "notify.name": "Név",

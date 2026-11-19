@@ -1002,6 +1002,8 @@ const ko: Partial<Translations> = {
   "notify.email": "이메일",
   "notify.search": "채널 검색",
   "notify.noMatch": "일치하는 채널이 없습니다. \"Webhook\"으로 거의 모든 서비스에 보낼 수 있습니다.",
+  "notify.groupService": "서비스",
+  "notify.groupStandard": "이메일과 Webhook",
   "notify.remove": "채널 삭제",
   "notify.empty": "아직 채널이 없습니다. 하나를 추가하면 BombVault가 연락할 수 있습니다.",
   "notify.name": "이름",

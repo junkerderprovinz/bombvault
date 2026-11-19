@@ -1082,6 +1082,8 @@ const gl: Partial<Translations> = {
   "notify.email": "Correo",
   "notify.search": "Buscar canles",
   "notify.noMatch": "Ningunha canle coincide. «Webhook» chega a case calquera servizo.",
+  "notify.groupService": "Servizos",
+  "notify.groupStandard": "Correo e webhooks",
   "notify.remove": "Quitar canle",
   "notify.empty": "Aínda non hai ningunha canle. Engade unha e BombVault poderá avisarte.",
   "notify.name": "Nome",

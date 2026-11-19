@@ -1007,6 +1007,8 @@ const nl: Partial<Translations> = {
   "notify.email": "E-mail",
   "notify.search": "Kanalen zoeken",
   "notify.noMatch": "Geen kanaal past. Met \"Webhook\" bereik je bijna elke dienst.",
+  "notify.groupService": "Diensten",
+  "notify.groupStandard": "E-mail en webhooks",
   "notify.remove": "Kanaal verwijderen",
   "notify.empty": "Nog geen kanaal. Voeg er een toe, dan kan BombVault je bereiken.",
   "notify.name": "Naam",

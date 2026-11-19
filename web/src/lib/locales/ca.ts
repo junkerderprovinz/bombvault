@@ -1082,6 +1082,8 @@ const ca: Partial<Translations> = {
   "notify.email": "Correu",
   "notify.search": "Cerca canals",
   "notify.noMatch": "Cap canal coincideix. «Webhook» arriba a gairebé qualsevol servei.",
+  "notify.groupService": "Serveis",
+  "notify.groupStandard": "Correu i webhooks",
   "notify.remove": "Elimina el canal",
   "notify.empty": "Encara no hi ha cap canal. Afegeix-ne un i BombVault et podrà avisar.",
   "notify.name": "Nom",

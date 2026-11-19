@@ -1002,6 +1002,8 @@ const ja: Partial<Translations> = {
   "notify.email": "メール",
   "notify.search": "チャンネルを検索",
   "notify.noMatch": "一致するチャンネルがありません。「Webhook」ならほぼすべてのサービスに届きます。",
+  "notify.groupService": "サービス",
+  "notify.groupStandard": "メールと Webhook",
   "notify.remove": "チャンネルを削除",
   "notify.empty": "まだチャンネルがありません。1 つ追加すると、BombVault から連絡が届くようになります。",
   "notify.name": "名前",

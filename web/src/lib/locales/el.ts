@@ -1011,6 +1011,8 @@ const el: Partial<Translations> = {
   "notify.email": "Email",
   "notify.search": "Αναζήτηση καναλιών",
   "notify.noMatch": "Κανένα κανάλι δεν ταιριάζει. Το «Webhook» φτάνει σχεδόν σε κάθε υπηρεσία.",
+  "notify.groupService": "Υπηρεσίες",
+  "notify.groupStandard": "Email και webhook",
   "notify.remove": "Αφαίρεση καναλιού",
   "notify.empty": "Δεν υπάρχει ακόμη κανάλι. Προσθέστε ένα, για να μπορεί το BombVault να σας ειδοποιεί.",
   "notify.name": "Όνομα",
