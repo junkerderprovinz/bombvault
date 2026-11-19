@@ -20,8 +20,10 @@ preview. They stand centred under the intro, side by side when a repository
 has both, between their own markers, which the first run puts in above the
 table of contents. A repository with only these two needs no download rows.
 
-A button carries one line, its name, as the apps' buttons do at rest. Only a
-listing still to come adds a second line saying so.
+A button carries its name, as the apps' buttons do at rest. A desktop build
+adds its architecture on a second line, since an ARM segment beside a bare
+name reads as the only build there is. A listing still to come adds a line
+saying so.
 An ARM build is a segment of the button it belongs to, and so is the macOS
 zip. A portable build gets its own button, like the Flatpak, because its ARM
 build needs a segment too.
@@ -100,7 +102,8 @@ COMPANIONS = 4
 # brand file, background, ink, name, segment label, accessible name. The same
 # thing carries the same words in every README. The group's title already says
 # Server, Desktop or Android, so a name says only what tells the buttons of a
-# group apart. The segment label is the one line a segment shows.
+# group apart. The segment label is the one line a segment shows, and the
+# second line of the buttons in ARCH.
 WINDOWS = ("#0078d4", "#ffffff")
 KINDS = {
     # The middle of the orange in Unraid's logo, where white holds 3.4:1,
@@ -124,23 +127,26 @@ KINDS = {
     # stands apart from the yellow, and white holds 6.5:1 on it.
     "preview":          (None, "eye", "#6f42c1", "#ffffff", "Live preview", "live site", "Try it live"),
     "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
-    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM", "Download for Windows on ARM"),
+    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM64", "Download for Windows on ARM"),
     "windows-portable": (1, "windows", *WINDOWS, "Portable", "x64", "Download the portable Windows app"),
-    "windows-portable-arm": (1, None, *WINDOWS, "Portable", "ARM", "Download the portable Windows app for ARM"),
+    "windows-portable-arm": (1, None, *WINDOWS, "Portable", "ARM64", "Download the portable Windows app for ARM"),
     "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
-    # Space grey, since black vanishes against GitHub's dark theme.
-    "macos":            (1, "apple", "#6e6e73", "#ffffff", "macOS", "Universal", "Download for macOS"),
+    # Space grey, since black vanishes against GitHub's dark theme. "Apple
+    # silicon and Intel" is wider than the button.
+    "macos":            (1, "apple", "#6e6e73", "#ffffff", "macOS", "Apple and Intel", "Download for macOS on Apple silicon or Intel"),
     "macos-zip":        (1, None, "#6e6e73", "#ffffff", "macOS", "Zip", "Download the macOS app as a zip"),
     # For apps that ship Intel and Apple silicon as two files.
-    "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Intel, ARM", "Download for macOS on Intel or Apple silicon"),
+    "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Apple and Intel", "Download for macOS on Apple silicon or Intel"),
     # Tux yellow, with dark ink for contrast.
     "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
-    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM", "Download for Linux on ARM"),
+    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
     "linux-portable":   (1, "linux", "#fcc624", "#1b1b1b", "Portable", "x64", "Download the portable Linux app"),
-    "linux-portable-arm": (1, None, "#fcc624", "#1b1b1b", "Portable", "ARM", "Download the portable Linux app for ARM"),
+    "linux-portable-arm": (1, None, "#fcc624", "#1b1b1b", "Portable", "ARM64", "Download the portable Linux app for ARM"),
+    "appimage":         (1, "linux", "#fcc624", "#1b1b1b", "AppImage", "x64", "Download the AppImage"),
+    "appimage-arm":     (1, None, "#fcc624", "#1b1b1b", "AppImage", "ARM64", "Download the AppImage for ARM"),
     # Flatpak's own blue, where white holds 3.3:1, about as much as on Unraid's orange.
     "flatpak":          (1, "flatpak", "#4a90d9", "#ffffff", "Flatpak", "x64", "Download the Flatpak"),
-    "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM", "Download the Flatpak for ARM"),
+    "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM64", "Download the Flatpak for ARM"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
@@ -169,7 +175,10 @@ KINDS = {
 SEGMENTS = {
     "windows": ("windows-arm",), "windows-portable": ("windows-portable-arm",), "macos": ("macos-zip",),
     "linux": ("linux-arm",), "linux-portable": ("linux-portable-arm",), "flatpak": ("flatpak-arm",),
+    "appimage": ("appimage-arm",),
 }
+# The builds whose architecture stands under their name.
+ARCH = {"windows", "windows-portable", "macos", "macos-split", "linux", "linux-portable", "flatpak", "appimage"}
 # A store listing that does not exist yet is drawn without a link, with "Soon"
 # under its name, or nobody could tell why the button leads nowhere.
 SOON = {
@@ -282,7 +291,7 @@ MARK = """  <g transform="translate({gx} {gy}) scale({scale})" fill="{ink}">
 """
 # The one line sits on the baseline that centres a cap height of 82 units.
 NAME = """  <text x="{head_x}" y="151" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>"""
-NAME_AND_SOON = """  <text x="{head_x}" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
+NAME_AND_SUB = """  <text x="{head_x}" y="108" font-family="{font}" font-size="82" font-weight="700" fill="{ink}">{head}</text>
   <text x="{sub_x}" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # A segment has no mark, and its left edge is a darker line against the part
@@ -448,8 +457,9 @@ def num(x):
 
 def button(part, delay, cycle):
     """One part's own SVG document, its band starting after `delay`."""
-    common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub if part.soon else "")
-    words = (NAME_AND_SOON if part.soon else NAME).format(head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
+    two_lines = part.soon or part.kind in ARCH
+    common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub if two_lines else "")
+    words = (NAME_AND_SUB if two_lines else NAME).format(head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
     if part.mark:
         markup, scale, dx, dy = brand(part.mark, part.ink)
         face = MARK.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup, ink=part.ink) + words
