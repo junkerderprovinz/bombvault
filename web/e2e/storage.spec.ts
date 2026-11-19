@@ -304,7 +304,7 @@ test.describe("on the desktop", () => {
 
     await window.getByRole("searchbox", { name: "Anbieter suchen" }).fill("rest");
     await expect(window.locator(".glim-provider-pick button")).toHaveCount(1);
-    await window.getByRole("button", { name: /^Rest server/ }).click();
+    await window.getByRole("button", { name: /^rest-server/ }).click();
 
     await expect(window.getByRole("radio", { name: "Ordner" })).toBeDisabled();
     await window.getByLabel("Adresse").fill("https://nas.local:8000/tower");

@@ -1658,6 +1658,7 @@ const pt: Partial<Translations> = {
   "dest.provider.path": "Caminho montado",
   "dest.provider.s3": "Compatível com S3",
   "dest.provider.smb": "Partilha SMB",
+  "dest.provider.smbKind": "Partilha do Windows",
   "dest.immutableHint": "O BombVault nunca faz limpeza nem elimina aí e deixa a retenção para o outro lado, que tem de recusar a eliminação para que isto proteja alguma coisa.",
   "offsite.tamperTestNow": "Testar append-only agora",
   "offsite.tamperTesting": "A testar…",

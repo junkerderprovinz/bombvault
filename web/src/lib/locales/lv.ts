@@ -567,6 +567,7 @@ const lv: Partial<Translations> = {
   "dest.provider.path": "Piesaistīts ceļš",
   "dest.provider.s3": "S3 saderīgs",
   "dest.provider.smb": "SMB koplietojums",
+  "dest.provider.smbKind": "Windows koplietojums",
   "dest.immutableHint": "Tad BombVault tur nekad netīra un nedzēš, bet saglabāšanu atstāj otrai pusei, kurai, lai tas kaut ko aizsargātu, jāatsakās dzēst.",
   "offsite.tamperTestNow": "Pārbaudīt tikai-pievienot tagad",
   "offsite.tamperTesting": "Pārbauda…",

@@ -1661,6 +1661,7 @@ const zh: Partial<Translations> = {
   "dest.provider.path": "已挂载路径",
   "dest.provider.s3": "兼容 S3",
   "dest.provider.smb": "SMB 共享",
+  "dest.provider.smbKind": "Windows 共享",
   "dest.immutableHint": "这样 BombVault 在那里就不会再清理或删除，保留策略交给对端处理，而对端必须拒绝删除，这样才真正起到保护作用。",
   "offsite.tamperTestNow": "立即测试 append-only",
   "offsite.tamperTesting": "测试中…",

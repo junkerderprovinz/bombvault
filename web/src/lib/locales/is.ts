@@ -567,6 +567,7 @@ const is: Partial<Translations> = {
   "dest.provider.path": "Tengd slóð",
   "dest.provider.s3": "S3-samhæft",
   "dest.provider.smb": "SMB-sameign",
+  "dest.provider.smbKind": "Windows-sameign",
   "dest.immutableHint": "BombVault hreinsar þá aldrei né eyðir þar og lætur hina hliðina um varðveislu, en hún verður að neita eyðingu til að þetta verndi nokkuð.",
   "offsite.tamperTestNow": "Prófa aðeins-bæta-við núna",
   "offsite.tamperTesting": "Prófa…",

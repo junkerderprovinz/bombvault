@@ -567,6 +567,7 @@ const eu: Partial<Translations> = {
   "dest.provider.path": "Muntatutako bidea",
   "dest.provider.s3": "S3rekin bateragarria",
   "dest.provider.smb": "SMB partekatutako karpeta",
+  "dest.provider.smbKind": "Windows partekatutako karpeta",
   "dest.immutableHint": "BombVaultek orduan ez du han inoiz garbitzen edo ezabatzen eta atxikipena beste aldeari uzten dio, zeinak ezabatzeari uko egin behar dion honek zerbait babesteko.",
   "offsite.tamperTestNow": "Probatu gehitu-soilik orain",
   "offsite.tamperTesting": "Probatzen…",

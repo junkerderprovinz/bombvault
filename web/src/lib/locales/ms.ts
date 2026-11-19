@@ -567,6 +567,7 @@ const ms: Partial<Translations> = {
   "dest.provider.path": "Laluan yang di-mount",
   "dest.provider.s3": "Serasi S3",
   "dest.provider.smb": "Perkongsian SMB",
+  "dest.provider.smbKind": "Perkongsian Windows",
   "dest.immutableHint": "BombVault kemudian tidak pernah memangkas atau memadam di sana dan menyerahkan pengekalan kepada pihak sana, yang mesti menolak pemadaman supaya ini melindungi apa-apa.",
   "offsite.tamperTestNow": "Uji tambah-sahaja sekarang",
   "offsite.tamperTesting": "Menguji…",

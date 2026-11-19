@@ -1659,6 +1659,7 @@ const ro: Partial<Translations> = {
   "dest.provider.path": "Cale montată",
   "dest.provider.s3": "Compatibil S3",
   "dest.provider.smb": "Partajare SMB",
+  "dest.provider.smbKind": "Partajare Windows",
   "dest.immutableHint": "BombVault nu curăță și nu șterge atunci niciodată acolo și lasă retenția în seama părții îndepărtate, care trebuie să refuze ștergerea pentru ca acest lucru să protejeze ceva.",
   "offsite.tamperTestNow": "Testează append-only acum",
   "offsite.tamperTesting": "Se testează…",

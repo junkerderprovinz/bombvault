@@ -567,6 +567,7 @@ const bg: Partial<Translations> = {
   "dest.provider.path": "Монтиран път",
   "dest.provider.s3": "Съвместим със S3",
   "dest.provider.smb": "SMB споделен ресурс",
+  "dest.provider.smbKind": "Споделен ресурс на Windows",
   "dest.immutableHint": "BombVault тогава никога не почиства и не изтрива там и оставя задържането на отсрещната страна, която трябва да отказва изтриване, за да защитава това нещо.",
   "offsite.tamperTestNow": "Провери само-добавянето сега",
   "offsite.tamperTesting": "Проверка…",

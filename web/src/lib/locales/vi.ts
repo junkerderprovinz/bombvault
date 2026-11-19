@@ -1661,6 +1661,7 @@ const vi: Partial<Translations> = {
   "dest.provider.path": "Đường dẫn đã gắn",
   "dest.provider.s3": "Tương thích S3",
   "dest.provider.smb": "Thư mục chia sẻ SMB",
+  "dest.provider.smbKind": "Thư mục chia sẻ Windows",
   "dest.immutableHint": "Khi đó BombVault không bao giờ dọn bớt hay xóa ở đó và để việc lưu giữ cho phía bên kia, phía này phải từ chối việc xóa thì mới bảo vệ được gì.",
   "offsite.tamperTestNow": "Kiểm tra append-only ngay",
   "offsite.tamperTesting": "Đang kiểm tra…",

@@ -1668,6 +1668,7 @@ const es: Partial<Translations> = {
   "dest.provider.path": "Ruta montada",
   "dest.provider.s3": "Compatible con S3",
   "dest.provider.smb": "Recurso compartido SMB",
+  "dest.provider.smbKind": "Recurso compartido de Windows",
   "dest.immutableHint": "BombVault entonces nunca purga ni borra allí y deja la retención al otro lado, que debe rechazar el borrado para que esto proteja algo.",
   "offsite.tamperTestNow": "Probar append-only ahora",
   "offsite.tamperTesting": "Probando…",

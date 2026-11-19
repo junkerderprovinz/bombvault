@@ -1662,6 +1662,7 @@ const it: Partial<Translations> = {
   "dest.provider.path": "Percorso montato",
   "dest.provider.s3": "Compatibile S3",
   "dest.provider.smb": "Condivisione SMB",
+  "dest.provider.smbKind": "Condivisione Windows",
   "dest.immutableHint": "BombVault allora non pota né elimina mai lì e lascia la conservazione all'altro lato, che deve rifiutare le eliminazioni perché questo protegga davvero qualcosa.",
   "offsite.tamperTestNow": "Prova append-only ora",
   "offsite.tamperTesting": "Prova in corso…",

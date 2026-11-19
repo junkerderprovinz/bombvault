@@ -522,7 +522,7 @@ describe("adding a storage location", () => {
     await renderPage();
     await click(screen.getByRole("button", { name: "Add storage location" }));
     const window = await screen.findByRole("dialog", { name: "Add storage location" });
-    await within(window).findByRole("button", { name: /^Rest server/ });
+    await within(window).findByRole("button", { name: /^rest-server/ });
     return window;
   }
 
@@ -530,18 +530,12 @@ describe("adding a storage location", () => {
     return [...window.querySelectorAll(".glim-provider-pick button")].map((b) => (b.textContent ?? "").trim());
   }
 
-  it("opens from the list's own button with the providers in their groups, a local folder first and an own rclone configuration last", async () => {
+  it("opens from the list's own button with the providers in the catalog's groups, a local folder first and an own rclone configuration last", async () => {
     const window = await open();
 
     const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
-    expect(groups.map((g) => g.replace(/(best|good) fit|works, but slower/, ""))).toEqual([
-      "Local",
-      "NAS or server",
-      "S3 service",
-      "Cloud storage",
-      "Own rclone configuration",
-    ]);
-    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive", "Rclone"]);
+    expect(groups).toEqual(["Local", "Cloud storage", "S3 service", "NAS or server", "Own rclone configuration"]);
+    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "rest-server", "Rclone"]);
   });
 
   it("saves a pasted rclone configuration and lists its remotes", async () => {
@@ -628,7 +622,7 @@ describe("adding a storage location", () => {
 
   it("walks the steps in one window and holds the later ones back until the connection is tested", async () => {
     const window = await open();
-    await click(within(window).getByRole("button", { name: /^Rest server/ }));
+    await click(within(window).getByRole("button", { name: /^rest-server/ }));
 
     expect(within(window).getByText("Sign in to Rest server")).toBeTruthy();
     expect((within(window).getByRole("radio", { name: "Folder" }) as HTMLButtonElement).disabled).toBe(true);
@@ -647,7 +641,7 @@ describe("adding a storage location", () => {
 
   it("asks last which sections use the new place and switches it on for exactly those", async () => {
     const window = await open();
-    await click(within(window).getByRole("button", { name: /^Rest server/ }));
+    await click(within(window).getByRole("button", { name: /^rest-server/ }));
     await click(within(window).getByRole("button", { name: "Test connection" }));
     await within(window).findByText("Connection established", { exact: false });
     await click(within(window).getByRole("button", { name: "Next" }));

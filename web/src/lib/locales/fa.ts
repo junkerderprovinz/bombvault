@@ -567,6 +567,7 @@ const fa: Partial<Translations> = {
   "dest.provider.path": "مسیر متصل‌شده",
   "dest.provider.s3": "سازگار با S3",
   "dest.provider.smb": "اشتراک SMB",
+  "dest.provider.smbKind": "اشتراک Windows",
   "dest.immutableHint": "در این صورت BombVault هرگز آنجا پاک‌سازی یا حذف نمی‌کند و نگهداری را به طرف مقابل می‌سپارد که برای محافظت‌کردن باید حذف را رد کند.",
   "offsite.tamperTestNow": "آزمایش فقط-افزودنی همین حالا",
   "offsite.tamperTesting": "در حال آزمایش…",

@@ -1670,6 +1670,7 @@ const da: Partial<Translations> = {
   "dest.provider.path": "Monteret sti",
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-deling",
+  "dest.provider.smbKind": "Windows-deling",
   "dest.immutableHint": "BombVault pruner eller sletter så aldrig dér og overlader opbevaring til fjernsiden, som skal afvise sletning, for at dette beskytter noget.",
   "offsite.tamperTestNow": "Test append-only nu",
   "offsite.tamperTesting": "Tester…",

@@ -1671,6 +1671,7 @@ const th: Partial<Translations> = {
   "dest.provider.path": "พาธที่เมานต์",
   "dest.provider.s3": "รองรับ S3",
   "dest.provider.smb": "แชร์ SMB",
+  "dest.provider.smbKind": "แชร์ของ Windows",
   "dest.immutableHint": "BombVault จะไม่พรูนหรือลบที่นั่นอีก และปล่อยให้ฝั่งปลายทางดูแลการเก็บรักษา ฝั่งปลายทางต้องปฏิเสธการลบ จึงจะป้องกันได้จริง",
   "offsite.tamperTestNow": "ทดสอบ append-only เดี๋ยวนี้",
   "offsite.tamperTesting": "กำลังทดสอบ…",

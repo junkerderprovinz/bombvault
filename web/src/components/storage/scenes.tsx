@@ -9,7 +9,7 @@ import { IconTrash } from "../navGlyphs";
 import { useT } from "../../lib/i18n";
 import { LocationMark } from "./LocationMark";
 
-type Marked = Pick<StorageLocation, "mark" | "kind" | "name">;
+type Marked = Pick<StorageLocation, "provider" | "kind" | "name">;
 
 function Head({ x, width, place }: { x: number; width: number; place: Marked }) {
   return (
@@ -55,7 +55,7 @@ function packAt(box: number, k: number): [number, number] {
  */
 export function CopyScene({ target }: { target: Marked }) {
   const { t } = useT();
-  const source: Marked = { kind: "local", name: t("source.local") };
+  const source: Marked = { provider: "", kind: "local", name: t("source.local") };
   return (
     <div className="glim-pic glim-scene flex flex-col items-center gap-2">
       <svg viewBox="0 0 360 118" role="img" aria-label={t("storage.copy.sceneAlt")} className="max-w-[440px]">

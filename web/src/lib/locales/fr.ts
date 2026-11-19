@@ -1662,6 +1662,7 @@ const fr: Partial<Translations> = {
   "dest.provider.path": "Chemin monté",
   "dest.provider.s3": "Compatible S3",
   "dest.provider.smb": "Partage SMB",
+  "dest.provider.smbKind": "Partage Windows",
   "dest.immutableHint": "BombVault n'élague ni ne supprime alors jamais là-bas et laisse la rétention au côté distant, qui doit refuser les suppressions pour que cela protège quoi que ce soit.",
   "offsite.tamperTestNow": "Tester l'append-only maintenant",
   "offsite.tamperTesting": "Test…",

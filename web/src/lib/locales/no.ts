@@ -1658,6 +1658,7 @@ const no: Partial<Translations> = {
   "dest.provider.path": "Montert sti",
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-ressurs",
+  "dest.provider.smbKind": "Windows-ressurs",
   "dest.immutableHint": "BombVault rydder eller sletter da aldri der og overlater oppbevaringen til den andre siden, som må nekte sletting for at dette skal beskytte noe.",
   "offsite.tamperTestNow": "Test append-only nå",
   "offsite.tamperTesting": "Tester…",

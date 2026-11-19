@@ -1653,6 +1653,7 @@ const ko: Partial<Translations> = {
   "dest.provider.path": "마운트된 경로",
   "dest.provider.s3": "S3 호환",
   "dest.provider.smb": "SMB 공유",
+  "dest.provider.smbKind": "Windows 공유",
   "dest.immutableHint": "이 경우 BombVault는 그곳에서 정리나 삭제를 하지 않고 보존을 상대 측에 맡깁니다. 이것이 보호 효과를 가지려면 상대 측이 삭제를 거부해야 합니다.",
   "offsite.tamperTestNow": "지금 append-only 테스트",
   "offsite.tamperTesting": "테스트 중…",

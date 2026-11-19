@@ -352,7 +352,7 @@ picture("storage/add-providers", DESKTOP, async (page) => {
 
 picture("storage/add-signin", DESKTOP, async (page) => {
   const win = await addLocation(page);
-  await win.locator(".glim-provider-pick button").filter({ hasText: "Rest server" }).click();
+  await win.locator(".glim-provider-pick button").filter({ hasText: "rest-server" }).click();
   // Name, address, user name and password, in the order the form asks.
   const fields = win.locator("input:not([type=search])");
   await fields.nth(0).fill("Offsite NAS");

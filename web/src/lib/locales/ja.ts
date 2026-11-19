@@ -1653,6 +1653,7 @@ const ja: Partial<Translations> = {
   "dest.provider.path": "マウント済みパス",
   "dest.provider.s3": "S3 互換",
   "dest.provider.smb": "SMB 共有",
+  "dest.provider.smbKind": "Windows 共有",
   "dest.immutableHint": "この場合 BombVault はそこで整理も削除も行わず、保持をリモート側に任せます。保護として機能させるには、リモート側が削除を拒否する必要があります。",
   "offsite.tamperTestNow": "append-only を今すぐテスト",
   "offsite.tamperTesting": "テスト中…",

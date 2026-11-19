@@ -1662,6 +1662,7 @@ const he: Partial<Translations> = {
   "dest.provider.path": "נתיב מעוגן",
   "dest.provider.s3": "תואם S3",
   "dest.provider.smb": "שיתוף SMB",
+  "dest.provider.smbKind": "שיתוף Windows",
   "dest.immutableHint": "BombVault אז לעולם לא גוזם ולא מוחק שם ומשאיר את השמירה לצד המרוחק, שחייב לסרב למחיקה כדי שזה יגן על משהו.",
   "offsite.tamperTestNow": "בדיקת append-only עכשיו",
   "offsite.tamperTesting": "בודק…",

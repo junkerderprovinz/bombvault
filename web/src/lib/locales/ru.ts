@@ -1655,6 +1655,7 @@ const ru: Partial<Translations> = {
   "dest.provider.path": "Смонтированный путь",
   "dest.provider.s3": "S3-совместимое",
   "dest.provider.smb": "Ресурс SMB",
+  "dest.provider.smbKind": "Общая папка Windows",
   "dest.immutableHint": "Тогда BombVault никогда не очищает и не удаляет там данные и оставляет хранение удалённой стороне, которая должна отклонять удаление, иначе защиты не будет.",
   "offsite.tamperTestNow": "Проверить append-only сейчас",
   "offsite.tamperTesting": "Проверка…",

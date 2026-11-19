@@ -1663,6 +1663,7 @@ const hu: Partial<Translations> = {
   "dest.provider.path": "Csatolt útvonal",
   "dest.provider.s3": "S3-kompatibilis",
   "dest.provider.smb": "SMB-megosztás",
+  "dest.provider.smbKind": "Windows-megosztás",
   "dest.immutableHint": "A BombVault ilyenkor ott soha nem nyes és nem töröl, a megőrzést a túloldalra bízza, amelynek el kell utasítania a törlést, hogy ez bármit védjen.",
   "offsite.tamperTestNow": "Append-only tesztelése most",
   "offsite.tamperTesting": "Tesztelés…",

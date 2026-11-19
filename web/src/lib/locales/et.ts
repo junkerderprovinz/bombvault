@@ -567,6 +567,7 @@ const et: Partial<Translations> = {
   "dest.provider.path": "Haagitud tee",
   "dest.provider.s3": "S3-ühilduv",
   "dest.provider.smb": "SMB jagatud kaust",
+  "dest.provider.smbKind": "Windowsi jagatud kaust",
   "dest.immutableHint": "BombVault siis ei puhasta ega kustuta seal kunagi ja jätab säilituse teisele poolele, mis peab kustutamisest keelduma, et see midagi kaitseks.",
   "offsite.tamperTestNow": "Testi ainult-lisamist kohe",
   "offsite.tamperTesting": "Testimine…",

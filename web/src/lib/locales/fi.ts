@@ -1670,6 +1670,7 @@ const fi: Partial<Translations> = {
   "dest.provider.path": "Liitetty polku",
   "dest.provider.s3": "S3-yhteensopiva",
   "dest.provider.smb": "SMB-jako",
+  "dest.provider.smbKind": "Windows-jako",
   "dest.immutableHint": "BombVault ei tällöin koskaan karsi tai poista siellä mitään vaan jättää säilytyksen vastapuolelle, jonka on kieltäydyttävä poistoista, jotta tästä olisi mitään suojaa.",
   "offsite.tamperTestNow": "Testaa append-only nyt",
   "offsite.tamperTesting": "Testataan…",

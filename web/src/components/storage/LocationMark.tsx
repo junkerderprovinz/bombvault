@@ -1,8 +1,7 @@
 import type { CSSProperties } from "react";
 import type { StorageLocation } from "../../lib/api";
-import { PROVIDER_TILES } from "../../lib/providerMarks";
-import { ProviderMark } from "../destinations/ProviderPicker";
-import { IconLocal } from "../navGlyphs";
+import { ProviderMark, storageEntry } from "../destinations/providers";
+import { IconCloud, IconLocal } from "../navGlyphs";
 
 const SIZES = {
   row: "h-10 w-10 [&_svg]:h-5 [&_svg]:w-5",
@@ -22,12 +21,12 @@ export function LocationMark({
   size = "row",
   bare = false,
 }: {
-  location: Pick<StorageLocation, "mark" | "kind">;
+  location: Pick<StorageLocation, "provider" | "kind">;
   size?: keyof typeof SIZES;
   bare?: boolean;
 }) {
-  const brand = location.mark ? PROVIDER_TILES[location.mark] : undefined;
-  const local = !location.mark && location.kind === "local";
+  const brand = storageEntry(location.provider)?.mark;
+  const local = !location.provider && location.kind === "local";
   const tile = brand?.tile ?? (local ? "var(--accent)" : "var(--carbon-surface3)");
   const ink = brand?.ink ?? (local ? "var(--accent-contrast)" : "var(--carbon-text)");
   return (
@@ -36,7 +35,7 @@ export function LocationMark({
       className={`inline-flex flex-none items-center justify-center rounded-control ${SIZES[size]}`}
       style={bare ? undefined : ({ background: tile, color: ink, "--mark-ink": ink, "--mark-cut": "transparent" } as CSSProperties)}
     >
-      {local ? <IconLocal /> : <ProviderMark provider={location} />}
+      {local ? <IconLocal /> : location.provider ? <ProviderMark id={location.provider} /> : <IconCloud />}
     </span>
   );
 }

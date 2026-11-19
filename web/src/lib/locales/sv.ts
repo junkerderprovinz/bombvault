@@ -1670,6 +1670,7 @@ const sv: Partial<Translations> = {
   "dest.provider.path": "Monterad sökväg",
   "dest.provider.s3": "S3-kompatibel",
   "dest.provider.smb": "SMB-utdelning",
+  "dest.provider.smbKind": "Windows-utdelning",
   "dest.immutableHint": "BombVault rensar eller raderar då aldrig där och överlåter lagringstiden åt andra sidan, som måste neka radering för att något ska skyddas.",
   "offsite.tamperTestNow": "Testa append-only nu",
   "offsite.tamperTesting": "Testar…",

@@ -567,6 +567,7 @@ const hr: Partial<Translations> = {
   "dest.provider.path": "Montirana putanja",
   "dest.provider.s3": "S3 kompatibilno",
   "dest.provider.smb": "SMB dijeljenje",
+  "dest.provider.smbKind": "Windows dijeljenje",
   "dest.immutableHint": "BombVault tada tamo nikad ne čisti niti briše i prepušta zadržavanje drugoj strani, koja mora odbijati brisanje da bi ovo išta štitilo.",
   "offsite.tamperTestNow": "Testiraj samo-dodavanje sada",
   "offsite.tamperTesting": "Testiranje…",

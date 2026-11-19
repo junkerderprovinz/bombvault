@@ -567,6 +567,7 @@ const id: Partial<Translations> = {
   "dest.provider.path": "Path yang di-mount",
   "dest.provider.s3": "Kompatibel S3",
   "dest.provider.smb": "Share SMB",
+  "dest.provider.smbKind": "Share Windows",
   "dest.immutableHint": "BombVault kemudian tidak pernah memangkas atau menghapus di sana dan menyerahkan retensi kepada sisi lain, yang harus menolak penghapusan agar ini melindungi apa pun.",
   "offsite.tamperTestNow": "Uji append-only sekarang",
   "offsite.tamperTesting": "Menguji…",

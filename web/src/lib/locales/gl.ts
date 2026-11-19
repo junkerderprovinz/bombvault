@@ -567,6 +567,7 @@ const gl: Partial<Translations> = {
   "dest.provider.path": "Camiño montado",
   "dest.provider.s3": "Compatible con S3",
   "dest.provider.smb": "Comparticón SMB",
+  "dest.provider.smbKind": "Comparticón de Windows",
   "dest.immutableHint": "BombVault nunca limpa nin elimina alí e deixa a retención ao outro lado, que ten que rexeitar as eliminacións para que isto protexa algo.",
   "offsite.tamperTestNow": "Probar só-engadir agora",
   "offsite.tamperTesting": "Probando…",

@@ -1667,6 +1667,7 @@ const uk: Partial<Translations> = {
   "dest.provider.path": "Змонтований шлях",
   "dest.provider.s3": "Сумісний із S3",
   "dest.provider.smb": "Ресурс SMB",
+  "dest.provider.smbKind": "Спільна папка Windows",
   "dest.immutableHint": "Тоді BombVault там ніколи не очищає й не видаляє, а зберігання лишає віддаленій стороні, яка має відхиляти видалення, інакше це нічого не захищає.",
   "offsite.tamperTestNow": "Перевірити append-only зараз",
   "offsite.tamperTesting": "Перевірка…",

@@ -1670,6 +1670,7 @@ const tr: Partial<Translations> = {
   "dest.provider.path": "Bağlı yol",
   "dest.provider.s3": "S3 uyumlu",
   "dest.provider.smb": "SMB paylaşımı",
+  "dest.provider.smbKind": "Windows paylaşımı",
   "dest.immutableHint": "BombVault orada artık budama veya silme yapmaz ve saklamayı karşı tarafa bırakır; bunun bir şeyi koruması için karşı tarafın silmeyi reddetmesi gerekir.",
   "offsite.tamperTestNow": "Append-only'yi şimdi test et",
   "offsite.tamperTesting": "Test ediliyor…",

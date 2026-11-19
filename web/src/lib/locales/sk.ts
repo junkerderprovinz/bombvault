@@ -567,6 +567,7 @@ const sk: Partial<Translations> = {
   "dest.provider.path": "Pripojená cesta",
   "dest.provider.s3": "Kompatibilné s S3",
   "dest.provider.smb": "Zdieľanie SMB",
+  "dest.provider.smbKind": "Zdieľanie Windows",
   "dest.immutableHint": "BombVault tam potom nikdy nečistí ani nemaže a ponecháva uchovávanie na druhú stranu, ktorá musí mazanie odmietať, inak nič nechráni.",
   "offsite.tamperTestNow": "Otestovať len-na-pridávanie teraz",
   "offsite.tamperTesting": "Testuje sa…",

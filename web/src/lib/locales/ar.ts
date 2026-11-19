@@ -1671,6 +1671,7 @@ const ar: Partial<Translations> = {
   "dest.provider.path": "مسار محمّل",
   "dest.provider.s3": "متوافق مع S3",
   "dest.provider.smb": "مجلد مشترك SMB",
+  "dest.provider.smbKind": "مجلد مشترك في Windows",
   "dest.immutableHint": "عندها لا يقلّم BombVault ولا يحذف هناك أبداً ويترك الاحتفاظ للطرف البعيد، الذي يجب أن يرفض الحذف حتى يحمي هذا شيئاً.",
   "offsite.tamperTestNow": "اختبار append-only الآن",
   "offsite.tamperTesting": "جارٍ الاختبار…",

@@ -1670,6 +1670,7 @@ const el: Partial<Translations> = {
   "dest.provider.path": "Προσαρτημένη διαδρομή",
   "dest.provider.s3": "Συμβατό με S3",
   "dest.provider.smb": "Κοινόχρηστος φάκελος SMB",
+  "dest.provider.smbKind": "Κοινόχρηστος φάκελος Windows",
   "dest.immutableHint": "Το BombVault τότε δεν κλαδεύει ούτε διαγράφει ποτέ εκεί και αφήνει τη διατήρηση στην άλλη πλευρά, η οποία πρέπει να αρνείται τη διαγραφή για να προστατεύει κάτι.",
   "offsite.tamperTestNow": "Δοκιμή append-only τώρα",
   "offsite.tamperTesting": "Δοκιμή…",

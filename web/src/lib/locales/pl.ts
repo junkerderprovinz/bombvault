@@ -1655,6 +1655,7 @@ const pl: Partial<Translations> = {
   "dest.provider.path": "Zamontowana ścieżka",
   "dest.provider.s3": "Zgodne z S3",
   "dest.provider.smb": "Udział SMB",
+  "dest.provider.smbKind": "Udział Windows",
   "dest.immutableHint": "BombVault nigdy tam wtedy nie czyści ani nie usuwa i zostawia retencję drugiej stronie, która musi odmawiać usuwania, żeby to cokolwiek chroniło.",
   "offsite.tamperTestNow": "Przetestuj append-only teraz",
   "offsite.tamperTesting": "Testowanie…",
