@@ -3943,6 +3943,34 @@ ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT
 	last_detail TEXT NOT NULL DEFAULT ''
 );`,
 	},
+	{
+		// A node's APP_KEY is made here and kept sealed, since home derives
+		// the link to the node and its restic password from it.
+		version:          nodesMigration,
+		name:             "nodes",
+		alreadySatisfied: tablePresent("nodes"),
+		sql: `CREATE TABLE IF NOT EXISTS nodes (
+	id          TEXT PRIMARY KEY,
+	name        TEXT NOT NULL,
+	app_key_enc BLOB NOT NULL,
+	relay_mode  TEXT NOT NULL,
+	relay_url   TEXT NOT NULL DEFAULT '',
+	created_at  INTEGER NOT NULL,
+	adopted_at  INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		version:          nodeLinkMigration,
+		name:             "node_link",
+		alreadySatisfied: tablePresent("node_link"),
+		sql: `CREATE TABLE IF NOT EXISTS node_link (
+	id          INTEGER PRIMARY KEY CHECK (id = 1),
+	home_id     TEXT NOT NULL DEFAULT '',
+	adopted_at  INTEGER NOT NULL DEFAULT 0,
+	released_at INTEGER NOT NULL DEFAULT 0
+);
+INSERT OR IGNORE INTO node_link (id) VALUES (1);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4611,6 +4639,12 @@ const noOffsiteByChoiceMigration = 951
 
 // hostSnapshotPlansMigration numbers the schedules of the server's own snapshots.
 const hostSnapshotPlansMigration = 970
+
+// nodesMigration numbers the servers home runs backups on.
+const nodesMigration = 980
+
+// nodeLinkMigration numbers a node's record of the home that adopted it.
+const nodeLinkMigration = 981
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
