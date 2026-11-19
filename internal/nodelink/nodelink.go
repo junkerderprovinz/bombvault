@@ -54,11 +54,7 @@ func Open(cfg Config) (*Link, error) {
 	if err != nil {
 		return nil, err
 	}
-	nodeSeed, err := derive(cfg.NodeKey, "bombvault-node-member")
-	if err != nil {
-		return nil, err
-	}
-	node, err := member.FromSeed(member.KindInstance, nodeSeed)
+	node, err := nodeIdentity(cfg.NodeKey)
 	if err != nil {
 		return nil, err
 	}
