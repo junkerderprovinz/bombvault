@@ -2069,7 +2069,7 @@ const ko: Partial<Translations> = {
   // 서버 자체의 스냅샷(ZFS, btrfs, VM)이며 백업이 아닙니다.
   "hostSnap.title": "스냅샷",
   "hostSnap.intro": "서버가 스스로 보관하는 스냅샷입니다. ZFS, btrfs, VM 스냅샷이 여기에 해당합니다. 데이터 바로 옆에 있어서 빨리 만들고 빨리 되돌릴 수 있습니다. 하지만 디스크와 함께 사라지므로 백업이 되지는 않습니다.",
-  "hostSnap.versusBackup": "스냅샷은 같은 디스크에 지금 상태를 남겨 두는 것으로, 바로 만들어지고 공간도 거의 차지하지 않지만 디스크와 함께 사라집니다. 백업은 다른 곳에 있는 복사본입니다.",
+  "hostSnap.versusBackup": "스냅샷은 복사본이 아닙니다. ZFS, btrfs 또는 VM이 한 순간의 상태를 고정하고, 이후에 바뀐 만큼만 공간을 차지합니다. 하지만 같은 디스크에 있어서 디스크와 함께 사라집니다. 백업은 모든 파일을 암호화한 복사본을 원하는 곳에 둔 것입니다. 이 페이지에는 Unraid와 다른 도구가 만든 것까지 포함해 서버의 모든 스냅샷이 표시됩니다.",
   "hostSnap.bare.title": "아직 스냅샷 없음",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

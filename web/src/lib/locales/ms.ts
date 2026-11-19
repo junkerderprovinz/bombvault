@@ -2625,7 +2625,7 @@ const ms: Partial<Translations> = {
   // Syot kilat milik pelayan sendiri (ZFS, btrfs, VM), bukan sandaran.
   "hostSnap.title": "Syot kilat",
   "hostSnap.intro": "Syot kilat yang disimpan oleh pelayan anda sendiri: syot kilat ZFS, btrfs dan VM. Ia terletak betul-betul di sebelah data anda, jadi cepat diambil dan cepat untuk kembali kepadanya. Ia juga hilang bersama cakera, sebab itulah ia bukan sandaran.",
-  "hostSnap.versusBackup": "Syot kilat menyimpan keadaan pada cakera yang sama: ia sedia serta-merta dan hampir tidak memakan ruang, tetapi ia hilang bersama cakera. Sandaran ialah salinan di tempat lain.",
+  "hostSnap.versusBackup": "Syot kilat bukan salinan. ZFS, btrfs atau VM membekukan keadaan pada satu saat, dan syot kilat hanya memakan ruang apabila sesuatu berubah selepas itu, tetapi ia kekal pada cakera yang sama dan hilang bersamanya. Sandaran ialah salinan yang disulitkan bagi setiap fail di tempat pilihan anda. Halaman ini menunjukkan setiap syot kilat pada pelayan, termasuk yang diambil oleh Unraid dan alat lain.",
   "hostSnap.bare.title": "belum ada syot kilat",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

@@ -3275,7 +3275,7 @@ export const en = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "The snapshots your server keeps by itself: ZFS, btrfs and VM snapshots. They sit right next to your data, so they are quick to take and quick to go back to. They also go down with the disk, which is why they are no backup.",
-  "hostSnap.versusBackup": "A snapshot holds the state on the same disk: it is there at once and takes hardly any space, but it is gone with the disk. A backup is a copy somewhere else.",
+  "hostSnap.versusBackup": "A snapshot is not a copy. ZFS, btrfs or the VM freezes the state in a moment, and it only takes up space as things change afterwards, but it stays on the same disk and is lost with it. A backup is an encrypted copy of every file in a place of your choosing. This page shows every snapshot on the server, including those that Unraid and other tools take.",
   "hostSnap.bare.title": "no snapshot yet",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
@@ -8832,7 +8832,7 @@ export const de: Translations = {
   // Die eigenen Snapshots des Servers (ZFS, btrfs, VMs), keine Sicherungen.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "Die Snapshots, die dein Server selbst hält: ZFS-, btrfs- und VM-Snapshots. Sie liegen direkt neben deinen Daten, sind schnell angelegt und schnell zurückgeholt. Mit der Platte sind sie aber auch weg, deshalb sind sie keine Sicherung.",
-  "hostSnap.versusBackup": "Ein Snapshot hält den Stand auf derselben Platte fest: Er ist sofort da und braucht kaum Platz, ist mit der Platte aber auch weg. Eine Sicherung ist eine Kopie an einem anderen Ort.",
+  "hostSnap.versusBackup": "Ein Snapshot ist keine Kopie. ZFS, btrfs oder die VM frieren den Stand in einem Augenblick ein, und er braucht erst Platz, wenn sich danach etwas ändert. Er liegt aber auf derselben Platte und ist mit ihr weg. Eine Sicherung ist eine verschlüsselte Kopie jeder Datei an einem Ort deiner Wahl. Hier siehst du jeden Snapshot auf dem Server, auch die, die Unraid und andere Werkzeuge anlegen.",
   "hostSnap.bare.title": "noch ohne Snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

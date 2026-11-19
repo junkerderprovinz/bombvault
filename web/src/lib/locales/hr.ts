@@ -2625,7 +2625,7 @@ const hr: Partial<Translations> = {
   // Vlastite snimke poslužitelja (ZFS, btrfs, VM-ovi), ne sigurnosne kopije.
   "hostSnap.title": "Snimke",
   "hostSnap.intro": "Snimke koje vaš poslužitelj čuva sam: ZFS, btrfs i VM snimke. Nalaze se odmah uz vaše podatke, pa se brzo izrađuju i brzo im se vraćate. No s diskom nestaju i one, zato nisu sigurnosna kopija.",
-  "hostSnap.versusBackup": "Snimka bilježi stanje na istom disku: odmah je tu i gotovo ne zauzima prostor, ali s diskom nestaje i ona. Sigurnosna kopija je kopija na nekom drugom mjestu.",
+  "hostSnap.versusBackup": "Snimka nije kopija. ZFS, btrfs ili VM zamrzavaju stanje u jednom trenutku, a snimka zauzima prostor tek kad se nakon toga nešto promijeni, ali ostaje na istom disku i nestaje s njim. Sigurnosna kopija je enkriptirana kopija svake datoteke na mjestu koje sami odaberete. Ova stranica prikazuje svaku snimku na poslužitelju, uključujući i one koje izrađuju Unraid i drugi alati.",
   "hostSnap.bare.title": "još bez snimke",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

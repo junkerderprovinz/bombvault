@@ -2076,7 +2076,7 @@ const cs: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Snímky",
   "hostSnap.intro": "Snímky, které si server drží sám: snímky ZFS, btrfs a VM. Leží hned vedle tvých dat, takže se rychle pořizují a rychle se k nim vracíš. Zmizí ale spolu s diskem, a proto nejsou zálohou.",
-  "hostSnap.versusBackup": "Snímek zachytí stav na stejném disku: je hned k dispozici a skoro nezabírá místo, ale s diskem zmizí i on. Záloha je kopie na jiném místě.",
+  "hostSnap.versusBackup": "Snímek není kopie. ZFS, btrfs nebo VM zmrazí stav v jednom okamžiku a snímek zabírá místo, teprve když se potom něco změní, zůstává ale na stejném disku a s ním i zmizí. Záloha je šifrovaná kopie každého souboru na místě, které si vybereš. Tady vidíš každý snímek na serveru, i ty, které pořizují Unraid a jiné nástroje.",
   "hostSnap.bare.title": "zatím bez snímku",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

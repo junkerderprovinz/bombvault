@@ -2069,7 +2069,7 @@ const zh: Partial<Translations> = {
   // 服务器自己的快照（ZFS、btrfs、VM），不是备份。
   "hostSnap.title": "快照",
   "hostSnap.intro": "你的服务器自己保存的快照：ZFS、btrfs 和 VM 快照。它们就在你的数据旁边，所以创建快，回退也快。但磁盘坏了它们也会一起丢失，所以它们不是备份。",
-  "hostSnap.versusBackup": "快照把状态保存在同一块磁盘上：它立刻就有，几乎不占空间，但磁盘没了它也就没了。备份是放在别处的一份副本。",
+  "hostSnap.versusBackup": "快照不是副本。ZFS、btrfs 或 VM 会把某一刻的状态冻结下来，之后有变化时它才开始占用空间，但它和数据在同一块磁盘上，磁盘没了它也就没了。备份是把每个文件加密后复制一份，放在你选的地方。这个页面显示服务器上的所有快照，包括 Unraid 和其他工具创建的快照。",
   "hostSnap.bare.title": "还没有快照",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

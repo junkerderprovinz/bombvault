@@ -2078,7 +2078,7 @@ const no: Partial<Translations> = {
   // Serverens egne øyeblikksbilder (ZFS, btrfs, VM-er), ikke sikkerhetskopier.
   "hostSnap.title": "Øyeblikksbilder",
   "hostSnap.intro": "Øyeblikksbildene serveren din tar vare på selv: ZFS-, btrfs- og VM-øyeblikksbilder. De ligger rett ved siden av dataene dine, så de er raske å ta og raske å gå tilbake til. De forsvinner også sammen med disken, og derfor er de ingen sikkerhetskopi.",
-  "hostSnap.versusBackup": "Et øyeblikksbilde holder fast tilstanden på samme disk: det er der med en gang og tar nesten ikke plass, men det forsvinner sammen med disken. En sikkerhetskopi er en kopi et annet sted.",
+  "hostSnap.versusBackup": "Et øyeblikksbilde er ikke en kopi. ZFS, btrfs eller VM-en fryser tilstanden på et gitt tidspunkt, og øyeblikksbildet tar først plass når noe endres etterpå, men det ligger på samme disk og forsvinner sammen med den. En sikkerhetskopi er en kryptert kopi av hver fil på et sted du selv velger. Denne siden viser alle øyeblikksbilder på serveren, også de som Unraid og andre verktøy tar.",
   "hostSnap.bare.title": "ennå uten øyeblikksbilde",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

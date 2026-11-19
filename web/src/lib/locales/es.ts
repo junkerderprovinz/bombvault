@@ -2076,7 +2076,7 @@ const es: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Instantáneas",
   "hostSnap.intro": "Las instantáneas que tu servidor guarda por sí mismo: instantáneas de ZFS, btrfs y VM. Están justo al lado de tus datos, así que se crean rápido y se vuelve a ellas rápido. También se pierden con el disco, por eso no son una copia de seguridad.",
-  "hostSnap.versusBackup": "Una instantánea guarda el estado en el mismo disco: está lista al momento y apenas ocupa espacio, pero se pierde con el disco. Una copia de seguridad es una copia en otro lugar.",
+  "hostSnap.versusBackup": "Una instantánea no es una copia. ZFS, btrfs o la VM congelan el estado en un momento, y la instantánea solo ocupa espacio cuando algo cambia después, pero se queda en el mismo disco y se pierde con él. Una copia de seguridad es una copia cifrada de cada archivo en un lugar que tú elijas. Esta página muestra todas las instantáneas del servidor, también las que crean Unraid y otras herramientas.",
   "hostSnap.bare.title": "todavía sin instantánea",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

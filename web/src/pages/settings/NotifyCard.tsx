@@ -313,10 +313,19 @@ export function NotifyCard({
 // Unraid's tile colours, as .glim-tile-unraid has them.
 const UNRAID_TILE: TileMark = { svg: UNRAID_SVG, tile: "#f15a2c", ink: "#ffffff" };
 
+// GlimStone lifts Matrix's black to grey on a dark ground. White reads as the
+// logo there, the way GitHub's does.
+const MATRIX_TILE: TileMark = {
+  ...SERVICE_MARKS.matrix,
+  svg: SERVICE_MARKS.matrix.svg.replace("#828282", "#ffffff"),
+};
+
 function channelMark(kind: NotifyKind): TileMark | ReactNode {
   switch (kind) {
     case "unraid":
       return UNRAID_TILE;
+    case "matrix":
+      return MATRIX_TILE;
     case "smtp":
       return <IconMail />;
     case "webhook":
@@ -331,7 +340,7 @@ function channelMark(kind: NotifyKind): TileMark | ReactNode {
 function channelItems(t: T): PickerItem[] {
   return KINDS.map((kind) => ({
     id: kind,
-    label: t(kind === "smtp" ? "notify.email" : KIND_LABEL[kind]),
+    label: kind === "unraid" ? "Unraid" : t(kind === "smtp" ? "notify.email" : KIND_LABEL[kind]),
     sub: kind === "smtp" ? "SMTP" : undefined,
     mark: channelMark(kind),
     last: kind === "webhook",

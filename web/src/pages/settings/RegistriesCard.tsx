@@ -33,13 +33,17 @@ function logoSrc(kind: RegistryKind): string {
 
 /** A registry's logo as a picker tile's mark. It is drawn as an image, so the
  *  ids inside one logo cannot meet another's, and the image carries the
- *  filter that turns it to the tile's ink when the tile lights up. */
+ *  filter that turns it to the tile's ink when the tile lights up. A logo with
+ *  a glyph shows the glyph there instead. */
 function tileMark(kind: RegistryKind): TileMark {
   const ink = textInkOn(kind.tile);
   const lit = ink === "#FFFFFF" ? "brightness(0) invert(1)" : "brightness(0)";
   const dark = kind.dark ? " glim-registry-dark" : "";
+  const glyph = kind.glyph
+    ? `<img class="glim-registry-logo glim-registry-glyph" style="--logo-lit:${lit}" src="data:image/svg+xml;utf8,${encodeURIComponent(kind.glyph)}" alt="">`
+    : "";
   return {
-    svg: `<img class="glim-registry-logo${dark}" style="--logo-lit:${lit}" src="${logoSrc(kind)}" alt="">`,
+    svg: `<img class="glim-registry-logo${dark}${glyph ? " glim-registry-rest" : ""}" style="--logo-lit:${lit}" src="${logoSrc(kind)}" alt="">${glyph}`,
     tile: kind.tile,
     ink,
   };

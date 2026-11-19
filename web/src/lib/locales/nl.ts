@@ -2077,7 +2077,7 @@ const nl: Partial<Translations> = {
   // De eigen snapshots van de server (ZFS, btrfs, VM's), geen back-ups.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "De snapshots die je server zelf bijhoudt: ZFS-, btrfs- en VM-snapshots. Ze staan vlak naast je data, dus ze zijn snel gemaakt en snel teruggezet. Ze gaan ook verloren met de schijf, en daarom zijn ze geen back-up.",
-  "hostSnap.versusBackup": "Een snapshot legt de stand vast op dezelfde schijf: hij is er meteen en neemt nauwelijks ruimte in, maar verdwijnt met de schijf. Een back-up is een kopie ergens anders.",
+  "hostSnap.versusBackup": "Een snapshot is geen kopie. ZFS, btrfs of de VM bevriest de stand op één moment, en het snapshot neemt pas ruimte in als er daarna iets verandert, maar het staat op dezelfde schijf en is samen met die schijf weg. Een back-up is een versleutelde kopie van elk bestand op een plek die je zelf kiest. Deze pagina toont elk snapshot op de server, ook de snapshots die Unraid en andere tools maken.",
   "hostSnap.bare.title": "nog zonder snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

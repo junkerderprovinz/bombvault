@@ -2079,7 +2079,7 @@ const hu: Partial<Translations> = {
   // A szerver saját pillanatképei (ZFS, btrfs, VM-ek), nem mentések.
   "hostSnap.title": "Pillanatképek",
   "hostSnap.intro": "A pillanatképek, amelyeket a szervered magától tart: ZFS-, btrfs- és VM-pillanatképek. Közvetlenül az adataid mellett vannak, ezért gyorsan elkészülnek, és gyorsan vissza lehet térni hozzájuk. A lemezzel együtt viszont el is vesznek, ezért nem számítanak mentésnek.",
-  "hostSnap.versusBackup": "A pillanatkép ugyanazon a lemezen rögzíti az állapotot: azonnal megvan, és alig foglal helyet, de a lemezzel együtt elvész. A biztonsági mentés egy másik helyen tárolt másolat.",
+  "hostSnap.versusBackup": "A pillanatkép nem másolat. A ZFS, a btrfs vagy a VM egy adott pillanatban befagyasztja az állapotot, és a pillanatkép csak akkor foglal helyet, amikor utána valami változik, de ugyanazon a lemezen marad, és vele együtt elvész. A biztonsági mentés minden fájl titkosított másolata egy általad választott helyen. Ezen az oldalon a szerver minden pillanatképét látod, azokat is, amelyeket az Unraid és más eszközök készítenek.",
   "hostSnap.bare.title": "még nincs pillanatkép",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

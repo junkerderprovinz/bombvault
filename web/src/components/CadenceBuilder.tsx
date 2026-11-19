@@ -180,6 +180,7 @@ export function CadenceBuilder({
   onChange,
   hueIndex,
   inline = false,
+  row = false,
 }: {
   label: string;
   value: string;
@@ -187,6 +188,9 @@ export function CadenceBuilder({
   /** The strip hugs its modes instead of spanning the card, for a card whose
    *  other rows are narrow. */
   inline?: boolean;
+  /** The label shows, and the time and the strip stand beside it in one row,
+   *  the strip at the end, for a card with several schedules. */
+  row?: boolean;
   /** Modes this call site offers. Defaults to ALL_CADENCE_MODES. */
   modes?: CadenceMode[];
   onChange: (v: string) => void;
@@ -236,6 +240,31 @@ export function CadenceBuilder({
     update({ weekdays: next });
   }
 
+  // Without `equalWidth` this is the small scale of the grooved selector; see
+  // Selector.tsx.
+  const strip = (
+    <Selector
+      items={offered.map((m) => ({
+        id: m,
+        label:
+          m === "off"
+            ? t("cadence.off")
+            : m === "daily"
+              ? t("cadence.daily")
+              : m === "weekly"
+                ? t("cadence.weekly")
+                : m === "everyN"
+                  ? t("cadence.everyN")
+                  : t("cadence.cron"),
+      }))}
+      label={label}
+      select="one"
+      active={state.mode}
+      onChange={(id) => update({ mode: id as CadenceMode })}
+      inline={inline}
+    />
+  );
+
   const inputCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well disabled:opacity-50";
 
@@ -251,28 +280,17 @@ export function CadenceBuilder({
         {label}
       </legend>
 
-      {/* Without `equalWidth` this is the small scale of the grooved
-          selector; see Selector.tsx. */}
-      <Selector
-        items={offered.map((m) => ({
-          id: m,
-          label:
-            m === "off"
-              ? t("cadence.off")
-              : m === "daily"
-                ? t("cadence.daily")
-                : m === "weekly"
-                  ? t("cadence.weekly")
-                  : m === "everyN"
-                    ? t("cadence.everyN")
-                    : t("cadence.cron"),
-        }))}
-        label={label}
-        select="one"
-        active={state.mode}
-        onChange={(id) => update({ mode: id as CadenceMode })}
-        inline={inline}
-      />
+      {row ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="min-w-0 flex-1 text-sm text-carbon-text group-disabled:opacity-50">{label}</span>
+          {state.mode !== "off" && state.mode !== "cron" && (
+            <TimePicker value={state.time} onChange={(time) => update({ time })} label={t("cadence.time")} hueIndex={hueIndex} />
+          )}
+          {strip}
+        </div>
+      ) : (
+        strip
+      )}
 
       {/* Explains a missing Every N days, which a user may know from another
           card. Keyed off `allowed` rather than `offered`, so it also shows
@@ -282,7 +300,7 @@ export function CadenceBuilder({
       )}
 
       {/* A cron expression carries its own times. */}
-      {state.mode !== "off" && state.mode !== "cron" && (
+      {!row && state.mode !== "off" && state.mode !== "cron" && (
         <div className="flex items-center gap-3">
           <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.time")}</label>
           <TimePicker

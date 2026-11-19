@@ -2078,7 +2078,7 @@ const tr: Partial<Translations> = {
   // Sunucunun kendi anlık görüntüleri (ZFS, btrfs, VM'ler), yedek değil.
   "hostSnap.title": "Anlık görüntüler",
   "hostSnap.intro": "Sunucunun kendi tuttuğu anlık görüntüler: ZFS, btrfs ve VM anlık görüntüleri. Verilerinin hemen yanında durdukları için hızlı alınırlar ve onlara hızlı dönülür. Ama disk giderse onlar da gider, bu yüzden yedek değildirler.",
-  "hostSnap.versusBackup": "Anlık görüntü durumu aynı diskte tutar: hemen hazırdır ve neredeyse yer kaplamaz, ama disk giderse o da gider. Yedek ise başka bir yerdeki kopyadır.",
+  "hostSnap.versusBackup": "Anlık görüntü bir kopya değildir. ZFS, btrfs ya da VM durumu tek bir anda dondurur ve anlık görüntü ancak sonrasında bir şey değiştikçe yer kaplar, ama aynı diskte kalır ve diskle birlikte gider. Yedek ise her dosyanın, senin seçtiğin bir yerde duran şifrelenmiş kopyasıdır. Bu sayfa, Unraid'in ve başka araçların aldıkları da dahil olmak üzere sunucudaki her anlık görüntüyü gösterir.",
   "hostSnap.bare.title": "henüz anlık görüntü yok",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

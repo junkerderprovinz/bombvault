@@ -2625,7 +2625,7 @@ const lt: Partial<Translations> = {
   // Paties serverio momentinės kopijos (ZFS, btrfs, VM), ne atsarginės kopijos.
   "hostSnap.title": "Momentinės kopijos",
   "hostSnap.intro": "Momentinės kopijos, kurias serveris laiko pats: ZFS, btrfs ir VM momentinės kopijos. Jos yra visai šalia tavo duomenų, todėl greitai sukuriamos ir prie jų greitai grįžtama. Bet jos dingsta kartu su disku, todėl tai ne atsarginė kopija.",
-  "hostSnap.versusBackup": "Momentinė kopija užfiksuoja būseną tame pačiame diske: ji iškart yra ir beveik neužima vietos, bet dingsta kartu su disku. Atsarginė kopija yra kopija kitoje vietoje.",
+  "hostSnap.versusBackup": "Momentinė kopija nėra atskira duomenų kopija. ZFS, btrfs arba VM užfiksuoja būseną vieną akimirką, ir momentinė kopija užima vietos tik tada, kai vėliau kas nors pasikeičia, bet ji lieka tame pačiame diske ir dingsta kartu su juo. Atsarginė kopija yra užšifruota kiekvieno failo kopija tavo pasirinktoje vietoje. Šiame puslapyje matai kiekvieną serverio momentinę kopiją, taip pat ir tas, kurias sukuria Unraid ir kiti įrankiai.",
   "hostSnap.bare.title": "dar be momentinės kopijos",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

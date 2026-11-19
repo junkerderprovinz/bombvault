@@ -2625,7 +2625,7 @@ const ca: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Instantànies",
   "hostSnap.intro": "Les instantànies que el teu servidor guarda per si mateix: instantànies de ZFS, btrfs i VM. Són just al costat de les teves dades, així que es fan ràpid i s'hi torna ràpid. També es perden amb el disc, per això no són una còpia de seguretat.",
-  "hostSnap.versusBackup": "Una instantània desa l'estat al mateix disc: és a punt de seguida i gairebé no ocupa espai, però es perd amb el disc. Una còpia de seguretat és una còpia en un altre lloc.",
+  "hostSnap.versusBackup": "Una instantània no és una còpia. ZFS, btrfs o la VM congelen l'estat en un moment, i la instantània només ocupa espai quan després canvia alguna cosa, però es queda al mateix disc i es perd amb ell. Una còpia de seguretat és una còpia xifrada de cada fitxer en un lloc que tu triïs. Aquesta pàgina mostra totes les instantànies del servidor, també les que fan Unraid i altres eines.",
   "hostSnap.bare.title": "encara sense instantània",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

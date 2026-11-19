@@ -2625,7 +2625,7 @@ const et: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Hetktõmmised",
   "hostSnap.intro": "Hetktõmmised, mida su server ise hoiab: ZFS-i, btrfs-i ja VM-i hetktõmmised. Need on kohe su andmete kõrval, nii et neid on kiire teha ja kiire nende juurde tagasi minna. Koos kettaga kaovad ka need, sellepärast pole need varundus.",
-  "hostSnap.versusBackup": "Hetktõmmis jäädvustab seisu samal kettal: see on kohe olemas ja võtab vaevu ruumi, aga kaob koos kettaga. Varundus on koopia kuskil mujal.",
+  "hostSnap.versusBackup": "Hetktõmmis ei ole koopia. ZFS, btrfs või VM külmutab seisu ühel hetkel ja hetktõmmis võtab ruumi alles siis, kui pärast midagi muutub, aga see jääb samale kettale ja kaob koos sellega. Varundus on krüpteeritud koopia igast failist sinu valitud kohas. Sellel lehel on näha kõik serveri hetktõmmised, ka need, mida teevad Unraid ja teised tööriistad.",
   "hostSnap.bare.title": "veel ilma hetktõmmiseta",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

@@ -2075,7 +2075,7 @@ const pl: Partial<Translations> = {
   // Własne migawki serwera (ZFS, btrfs, VM), nie kopie zapasowe.
   "hostSnap.title": "Migawki",
   "hostSnap.intro": "Migawki, które serwer trzyma sam: migawki ZFS, btrfs i VM. Leżą tuż obok twoich danych, więc szybko się je robi i szybko się do nich wraca. Giną jednak razem z dyskiem, dlatego nie są kopią zapasową.",
-  "hostSnap.versusBackup": "Migawka utrwala stan na tym samym dysku: jest od razu i prawie nie zajmuje miejsca, ale ginie razem z dyskiem. Kopia zapasowa to kopia w innym miejscu.",
+  "hostSnap.versusBackup": "Migawka nie jest kopią. ZFS, btrfs albo VM zamraża stan w jednej chwili, a migawka zajmuje miejsce dopiero wtedy, gdy potem coś się zmieni, ale zostaje na tym samym dysku i ginie razem z nim. Kopia zapasowa to zaszyfrowana kopia każdego pliku w wybranym przez ciebie miejscu. Ta strona pokazuje każdą migawkę na serwerze, także te, które robią Unraid i inne narzędzia.",
   "hostSnap.bare.title": "jeszcze bez migawki",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

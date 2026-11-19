@@ -7,7 +7,7 @@ import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
 import { SelectField } from "../../components/SelectField";
 import { IconAdd, IconBackupNow, IconTrash } from "../../components/Sidebar";
-import { Rows, SettingRow } from "../../components/storage/rows";
+import { SettingRow } from "../../components/storage/rows";
 import {
   addHostSnapshotPlan,
   deleteHostSnapshotPlan,
@@ -32,6 +32,8 @@ import { Card, ToggleRow } from "./shared";
 const KEEP_SAVE_MS = 600;
 
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
+// A plan sits on its own sub-card, so its field takes the next surface up.
+const PLAN_FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
 function input(p: HostSnapPlan): HostSnapPlanInput {
   return {
@@ -139,7 +141,7 @@ function PlanRow({
   }
 
   return (
-    <li className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+    <li className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <span dir="ltr" className="min-w-0 flex-1 font-mono text-xs text-carbon-text wrap-anywhere">
           {label}
@@ -158,6 +160,7 @@ function PlanRow({
       <CadenceBuilder
         label={t("hostSnap.plans.when")}
         inline
+        row
         value={plan.cadence}
         modes={ALL_CADENCE_MODES.filter((m) => m !== "off")}
         onChange={(cadence) => {
@@ -172,7 +175,7 @@ function PlanRow({
           aria-label={t("hostSnap.plans.keep")}
           onChange={(e) => changeKeep(Number(e.target.value))}
           wrapperClassName="w-28"
-          className={`w-full ${FIELD}`}
+          className={`w-full ${PLAN_FIELD}`}
         />
       </SettingRow>
       {plan.kind === "zfs" && (
@@ -317,7 +320,7 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
     <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex} newId="settings-snapshots">
       {plans !== null && plans.length === 0 && <p className="text-xs text-carbon-textMuted">{t("hostSnap.plans.none")}</p>}
       {plans !== null && plans.length > 0 && (
-        <Rows as="ul" label={t("hostSnap.plans.title")}>
+        <ul aria-label={t("hostSnap.plans.title")} className="m-0 flex list-none flex-col gap-3 p-0">
           {plans.map((p) => (
             <PlanRow
               key={p.id}
@@ -326,7 +329,7 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
               onRemove={() => void remove(p)}
             />
           ))}
-        </Rows>
+        </ul>
       )}
       <div className="flex justify-end">
         <Button label={t("hostSnap.plans.add")} labelKey="hostSnap.plans.add" glyph={<IconAdd />} tone="subtle" onClick={() => setAdding(true)} />

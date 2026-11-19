@@ -2078,7 +2078,7 @@ const fi: Partial<Translations> = {
   // Palvelimen omat tilannevedokset (ZFS, btrfs, VM:t), eivät varmuuskopioita.
   "hostSnap.title": "Tilannevedokset",
   "hostSnap.intro": "Tilannevedokset, joita palvelimesi pitää itse: ZFS-, btrfs- ja VM-tilannevedokset. Ne ovat aivan datasi vieressä, joten ne syntyvät nopeasti ja niihin palaa nopeasti. Levyn mukana ne myös katoavat, ja siksi ne eivät ole varmuuskopio.",
-  "hostSnap.versusBackup": "Tilannevedos tallentaa tilan samalle levylle: se on heti valmis ja vie tuskin lainkaan tilaa, mutta katoaa levyn mukana. Varmuuskopio on kopio jossain muualla.",
+  "hostSnap.versusBackup": "Tilannevedos ei ole kopio. ZFS, btrfs tai VM jäädyttää tilan yhdellä hetkellä, ja tilannevedos vie tilaa vasta, kun jokin muuttuu sen jälkeen, mutta se pysyy samalla levyllä ja katoaa sen mukana. Varmuuskopio on salattu kopio jokaisesta tiedostosta valitsemassasi paikassa. Tällä sivulla näkyvät kaikki palvelimen tilannevedokset, myös ne, jotka Unraid ja muut työkalut ottavat.",
   "hostSnap.bare.title": "ei vielä tilannevedosta",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

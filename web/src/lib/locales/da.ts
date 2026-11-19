@@ -2078,7 +2078,7 @@ const da: Partial<Translations> = {
   // The server's own snapshots (ZFS, btrfs, VMs), not backups.
   "hostSnap.title": "Snapshots",
   "hostSnap.intro": "De snapshots, din server selv holder: ZFS-, btrfs- og VM-snapshots. De ligger lige ved siden af dine data, så de er hurtige at tage og hurtige at gå tilbage til. De forsvinder også sammen med disken, og derfor er de ingen sikkerhedskopi.",
-  "hostSnap.versusBackup": "Et snapshot fastholder tilstanden på samme disk: det er der med det samme og fylder næsten intet, men det forsvinder sammen med disken. En sikkerhedskopi er en kopi et andet sted.",
+  "hostSnap.versusBackup": "Et snapshot er ikke en kopi. ZFS, btrfs eller VM'en fryser tilstanden på et bestemt tidspunkt, og snapshottet fylder først, når der bagefter ændres noget, men det ligger på samme disk og forsvinder sammen med den. En sikkerhedskopi er en krypteret kopi af hver fil et sted, du selv vælger. Her ser du alle snapshots på serveren, også dem, som Unraid og andre værktøjer tager.",
   "hostSnap.bare.title": "endnu uden snapshot",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",

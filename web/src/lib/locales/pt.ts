@@ -2078,7 +2078,7 @@ const pt: Partial<Translations> = {
   // Os instantâneos do próprio servidor (ZFS, btrfs, VMs), não backups.
   "hostSnap.title": "Instantâneos",
   "hostSnap.intro": "Os instantâneos que o teu servidor guarda sozinho: instantâneos ZFS, btrfs e de VMs. Ficam mesmo ao lado dos teus dados, por isso são rápidos de criar e rápidos de repor. Também desaparecem com o disco, e é por isso que não são um backup.",
-  "hostSnap.versusBackup": "Um instantâneo guarda o estado no mesmo disco: está lá de imediato e quase não ocupa espaço, mas desaparece com o disco. Um backup é uma cópia noutro sítio.",
+  "hostSnap.versusBackup": "Um instantâneo não é uma cópia. O ZFS, o btrfs ou a VM congelam o estado num dado momento, e o instantâneo só ocupa espaço à medida que algo muda depois, mas fica no mesmo disco e perde-se com ele. Um backup é uma cópia encriptada de cada ficheiro num sítio à tua escolha. Esta página mostra todos os instantâneos do servidor, incluindo os que o Unraid e outras ferramentas criam.",
   "hostSnap.bare.title": "ainda sem instantâneo",
   "hostSnap.kind.zfs": "ZFS",
   "hostSnap.kind.btrfs": "btrfs",
