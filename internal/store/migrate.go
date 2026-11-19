@@ -3971,6 +3971,13 @@ ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT
 );
 INSERT OR IGNORE INTO node_link (id) VALUES (1);`,
 	},
+	{
+		// A node that missed its release stays until it hears it.
+		version:          nodeStateMigration,
+		name:             "nodes_state",
+		alreadySatisfied: columnPresent("nodes", "state"),
+		sql:              `ALTER TABLE nodes ADD COLUMN state TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4645,6 +4652,9 @@ const nodesMigration = 980
 
 // nodeLinkMigration numbers a node's record of the home that adopted it.
 const nodeLinkMigration = 981
+
+// nodeStateMigration numbers whether home is still letting a node go.
+const nodeStateMigration = 982
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

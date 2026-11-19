@@ -33,6 +33,12 @@ func TestHomeKeepsItsNodesUntilTheyAreReleased(t *testing.T) {
 	if err != nil || len(list) != 2 || list[0].ID != "aa" || list[1].RelayURL != "https://relay.example.org" {
 		t.Errorf("list = %+v, %v, want both, oldest first", list, err)
 	}
+	if err := r.SetNodeState("aa", store.NodeReleasing); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.State != store.NodeReleasing {
+		t.Errorf("state = %q, want releasing", got.State)
+	}
 	if err := r.DeleteNode("aa"); err != nil {
 		t.Fatal(err)
 	}

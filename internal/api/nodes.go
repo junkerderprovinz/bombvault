@@ -21,33 +21,37 @@ import (
 // nodeCallTimeout bounds one call home makes to a node.
 const nodeCallTimeout = 30 * time.Second
 
-// NodeView is a node as home lists it.
+// NodeView is a node as home lists it. State is "releasing" while the node
+// has not heard that home let it go.
 type NodeView struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt int64  `json:"createdAt"`
 	AdoptedAt int64  `json:"adoptedAt"`
+	State     string `json:"state,omitempty"`
 }
 
 func nodeViewOf(n store.Node) NodeView {
-	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt}
+	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State}
 }
 
 var (
 	errNodeName = errors.New("a node needs a name of at most 64 characters on one line")
-	// errNodeReleased is a node's answer that home let it go before.
-	errNodeReleased = errors.New("the node was let go before and needs a new APP_KEY")
+	// errNodeReleased and errNodeNotAdopted are a node's answers that home
+	// let it go before, or has not adopted it yet.
+	errNodeReleased   = errors.New("the node was let go before and needs a new APP_KEY")
+	errNodeNotAdopted = errors.New("the node has not taken this instance as its home yet")
 )
 
-// homeNode is the link home holds to one node, and the adoption it may still
-// be waiting for.
+// homeNode is the link home holds to one node, and the adoption or release
+// it may still be waiting to get through.
 type homeNode struct {
 	link   *nodelink.Link
 	cancel context.CancelFunc
 	done   chan struct{}
 }
 
-// stop ends the adoption still waiting and returns once it has.
+// stop ends the adoption or release still waiting and returns once it has.
 func (hn *homeNode) stop() {
 	hn.cancel()
 	<-hn.done
@@ -61,9 +65,12 @@ func (s *Service) OpenNodeLinks() {
 		return
 	}
 	for _, n := range nodes {
-		if err := s.openNode(n); err != nil {
+		link, err := s.nodeLink(n)
+		if err != nil {
 			log.Printf("nodes: %s: %v", n.Name, err)
+			continue
 		}
+		s.keepNode(n, link)
 	}
 }
 
@@ -79,59 +86,97 @@ func (s *Service) CloseNodeLinks() {
 	}
 }
 
-func (s *Service) openNode(n store.Node) error {
-	appKey, err := secret.Decrypt(s.cfg.AppKey, n.AppKeyEnc)
+// nodeLink opens the link to node n.
+func (s *Service) nodeLink(n store.Node) (*nodelink.Link, error) {
+	appKey, err := s.nodeAppKey(n)
 	if err != nil {
-		return fmt.Errorf("the node's APP_KEY does not open: %w", err)
+		return nil, err
 	}
 	seed, err := s.depositSeed()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	link, err := nodelink.Open(nodelink.Config{
-		NodeKey: string(appKey), Seed: seed, Name: s.pairName(),
+		NodeKey: appKey, Seed: seed, Name: s.pairName(),
 		Relay: group.Mode(n.RelayMode), RelayURL: n.RelayURL,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	link.Serve(s.answersForNodes())
+	return link, nil
+}
+
+// nodeAppKey opens the APP_KEY home keeps for node n.
+func (s *Service) nodeAppKey(n store.Node) (string, error) {
+	appKey, err := secret.Decrypt(s.cfg.AppKey, n.AppKeyEnc)
+	if err != nil {
+		return "", fmt.Errorf("the node's APP_KEY does not open: %w", err)
+	}
+	return string(appKey), nil
+}
+
+// keepNode holds link for node n and, in the background, gets through what
+// the node still has to hear: its adoption, or that home let it go.
+func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 	ctx, cancel := context.WithCancel(context.Background())
 	hn := &homeNode{link: link, cancel: cancel, done: make(chan struct{})}
-	go func() {
-		defer close(hn.done)
-		if n.AdoptedAt == 0 {
-			s.adoptUntilTaken(ctx, n.ID, link)
-		}
-	}()
 	s.nodeMu.Lock()
 	if s.nodeLinks == nil {
 		s.nodeLinks = map[string]*homeNode{}
 	}
 	s.nodeLinks[n.ID] = hn
 	s.nodeMu.Unlock()
-	return nil
+	go func() {
+		defer close(hn.done)
+		switch {
+		case n.State == store.NodeReleasing:
+			if untilDone(ctx, func() error { return s.releaseNode(ctx, n.ID, link) }) {
+				s.dropNode(n.ID, hn)
+			}
+		case n.AdoptedAt == 0:
+			untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) })
+		}
+	}()
 }
 
-// adoptUntilTaken asks the node to take this instance as its home until it
-// does. A node may be set up hours after home made it, so the wait grows
-// after each miss.
-func (s *Service) adoptUntilTaken(ctx context.Context, id string, link *nodelink.Link) {
+// untilDone runs try until it succeeds or ctx ends, and reports whether it
+// succeeded. A node may be away for hours, so the wait grows after each miss.
+func untilDone(ctx context.Context, try func() error) bool {
 	wait := time.Second
 	for {
-		err := s.adoptNode(ctx, id, link)
-		if err == nil || errors.Is(err, errNodeReleased) {
-			if err != nil {
-				log.Printf("nodes: %s: %v", id, err)
-			}
-			return
+		err := try()
+		if err == nil {
+			return true
+		}
+		if errors.Is(err, errNodeReleased) {
+			log.Printf("nodes: %v", err)
+			return false
 		}
 		select {
 		case <-ctx.Done():
-			return
+			return false
 		case <-time.After(wait):
 		}
 		wait = min(2*wait, time.Minute)
+	}
+}
+
+// dropNode forgets a node that heard its release, unless hn is no longer the
+// link home holds to it.
+func (s *Service) dropNode(id string, hn *homeNode) {
+	s.nodeMu.Lock()
+	ours := s.nodeLinks[id] == hn
+	if ours {
+		delete(s.nodeLinks, id)
+	}
+	s.nodeMu.Unlock()
+	if !ours {
+		return
+	}
+	_ = hn.link.Close()
+	if err := s.store.DeleteNode(id); err != nil {
+		log.Printf("nodes: forget %s: %v", id, err)
 	}
 }
 
@@ -146,6 +191,16 @@ func (s *Service) adoptNode(ctx context.Context, id string, link *nodelink.Link)
 	return s.store.SetNodeAdopted(id, time.Now().Unix())
 }
 
+// releaseNode tells the node home lets it go. A node that was let go before,
+// or never took this instance as its home, has nothing more to hear.
+func (s *Service) releaseNode(ctx context.Context, id string, link *nodelink.Link) error {
+	err := s.callNode(ctx, link, keydeposit.ProofNodeRelease, id, nodeReleasePath, "", nil)
+	if errors.Is(err, errNodeReleased) || errors.Is(err, errNodeNotAdopted) {
+		return nil
+	}
+	return err
+}
+
 // callNode signs a call for node id, sends it over link and reads the answer
 // into out unless out is nil.
 func (s *Service) callNode(ctx context.Context, link *nodelink.Link, action, id, path, name string, out any) error {
@@ -157,14 +212,31 @@ func (s *Service) callNode(ctx context.Context, link *nodelink.Link, action, id,
 	if err != nil {
 		return err
 	}
+	return postNode(ctx, link, path, body, out)
+}
+
+// postNode sends body to path over a node's link and reads the answer into
+// out unless out is nil.
+func postNode(ctx context.Context, link *nodelink.Link, path string, body []byte, out any) error {
 	cctx, cancel := context.WithTimeout(ctx, nodeCallTimeout)
 	defer cancel()
 	status, answer, err := link.Call(cctx, path, body)
-	switch {
-	case err != nil:
+	if err != nil {
 		return err
-	case status == http.StatusConflict:
-		return errNodeReleased
+	}
+	if status == http.StatusConflict {
+		var refusal struct {
+			Code string `json:"code"`
+		}
+		_ = json.Unmarshal(answer, &refusal)
+		switch refusal.Code {
+		case codeNodeReleased:
+			return errNodeReleased
+		case codeNodeNotAdopted:
+			return errNodeNotAdopted
+		}
+	}
+	switch {
 	case status != http.StatusOK:
 		return fmt.Errorf("the node refused the call with HTTP %d", status)
 	case out != nil && json.Unmarshal(answer, out) != nil:
@@ -231,10 +303,12 @@ func (s *Service) AddNode(name string) (NodeView, map[string]string, error) {
 	if err := s.store.AddNode(n); err != nil {
 		return NodeView{}, nil, err
 	}
-	if err := s.openNode(n); err != nil {
+	link, err := s.nodeLink(n)
+	if err != nil {
 		_ = s.store.DeleteNode(id)
 		return NodeView{}, nil, err
 	}
+	s.keepNode(n, link)
 	compose := map[string]string{"MODE": "node", "APP_KEY": appKey, "NODE_HOME": home, "NODE_NAME": name}
 	return nodeViewOf(n), compose, nil
 }
@@ -252,27 +326,36 @@ func (s *Service) ListNodes() ([]NodeView, error) {
 	return out, nil
 }
 
-// ReleaseNode lets the node with id go and forgets it. told says whether the
-// node heard it; one that did not keeps waiting for a home that no longer
-// calls.
+// ReleaseNode lets the node with id go. told says whether the node heard it
+// now; until it does, home keeps it as being released and tells it once it
+// is back on the relay.
 func (s *Service) ReleaseNode(ctx context.Context, id string) (told bool, err error) {
-	if _, err := s.store.GetNode(id); err != nil {
+	n, err := s.store.GetNode(id)
+	if err != nil {
 		return false, err
 	}
+	if err := s.store.SetNodeState(id, store.NodeReleasing); err != nil {
+		return false, err
+	}
+	n.State = store.NodeReleasing
 	s.nodeMu.Lock()
 	hn := s.nodeLinks[id]
 	delete(s.nodeLinks, id)
 	s.nodeMu.Unlock()
+	var link *nodelink.Link
 	if hn != nil {
 		hn.stop()
-		if err := s.callNode(ctx, hn.link, keydeposit.ProofNodeRelease, id, nodeReleasePath, "", nil); err != nil {
-			log.Printf("nodes: %s did not hear it was let go: %v", id, err)
-		} else {
-			told = true
-		}
-		_ = hn.link.Close()
+		link = hn.link
+	} else if link, err = s.nodeLink(n); err != nil {
+		return false, err
 	}
-	return told, s.store.DeleteNode(id)
+	if err := s.releaseNode(ctx, id, link); err != nil {
+		log.Printf("nodes: %s did not hear it was let go, and hears it once it is back: %v", id, err)
+		s.keepNode(n, link)
+		return false, nil
+	}
+	_ = link.Close()
+	return true, s.store.DeleteNode(id)
 }
 
 // handleListNodes lists the nodes this instance runs backups on.
@@ -307,7 +390,8 @@ func (h *Handler) handleAddNode(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleReleaseNode lets a node go. told says whether the node heard it.
+// handleReleaseNode lets a node go. told says whether the node heard it now;
+// one that did not hears it once it is back.
 // DELETE /api/nodes/{id}
 func (h *Handler) handleReleaseNode(w http.ResponseWriter, r *http.Request) {
 	if !h.requireSignIn(w, r, "releasing a node") {

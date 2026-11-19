@@ -20,23 +20,29 @@ type Node struct {
 	// AdoptedAt is when the node first took this instance as its home, zero
 	// before.
 	AdoptedAt int64
+	// State is NodeReleasing while home lets the node go and the node has not
+	// heard it yet, empty otherwise.
+	State string
 }
+
+// NodeReleasing is the state of a node home let go that has not heard it.
+const NodeReleasing = "releasing"
 
 // ErrNodeNotFound is returned for an id no node has.
 var ErrNodeNotFound = errors.New("no such node")
 
-const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at`
+const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
-	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt)
+	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State)
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt); err != nil {
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -77,6 +83,18 @@ func (r *Repo) SetNodeAdopted(id string, at int64) error {
 	res, err := r.db.Exec(`UPDATE nodes SET adopted_at = ? WHERE id = ?`, at, id)
 	if err != nil {
 		return fmt.Errorf("SetNodeAdopted: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNodeNotFound
+	}
+	return nil
+}
+
+// SetNodeState records the state of a node.
+func (r *Repo) SetNodeState(id, state string) error {
+	res, err := r.db.Exec(`UPDATE nodes SET state = ? WHERE id = ?`, state, id)
+	if err != nil {
+		return fmt.Errorf("SetNodeState: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNodeNotFound

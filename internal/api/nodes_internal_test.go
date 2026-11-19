@@ -172,6 +172,9 @@ func TestANodeTakesEachSignedCallOnceAndOnlyFromItsHome(t *testing.T) {
 	if code := post(routes, nodeAdoptPath, signedForNode(t, home, keydeposit.ProofNodeRelease, id, "")); code != http.StatusForbidden {
 		t.Errorf("a release passed off as an adoption = %d", code)
 	}
+	if code := post(routes, nodeReleasePath, signedForNode(t, home, keydeposit.ProofNodeRelease, id, "")); code != http.StatusConflict {
+		t.Errorf("a release before the adoption = %d, want 409", code)
+	}
 	adopt := signedForNode(t, home, keydeposit.ProofNodeAdopt, id, "home")
 	if code := post(routes, nodeAdoptPath, adopt); code != http.StatusOK {
 		t.Fatalf("home's adoption = %d", code)
@@ -236,5 +239,41 @@ func TestHomeAnswersItsNodesNothingButHello(t *testing.T) {
 		if code := post(routes, path, nil); code != http.StatusNotFound {
 			t.Errorf("%s = %d, want 404", path, code)
 		}
+	}
+}
+
+func TestANodeThatMissesItsReleaseHearsItWhenItComesBack(t *testing.T) {
+	home := homeWithRelay(t)
+	compose := addNode(t, home, "vps")
+	id, _ := nodelink.NodeID(compose["APP_KEY"])
+	node := startNode(t, compose)
+	eventually(t, "the adoption", func() bool {
+		n, err := home.st.GetNode(id)
+		return err == nil && n.AdoptedAt != 0
+	})
+	node.svc.CloseHomeLink()
+
+	code, out := home.do(t, http.MethodDelete, "/api/nodes/"+id, nil)
+	if code != http.StatusOK || out["ok"] != true || out["told"] != false {
+		t.Fatalf("release while the node is away = %d %v", code, out)
+	}
+	_, out = home.do(t, http.MethodGet, "/api/nodes", nil)
+	if listed, _ := json.Marshal(out); !bytes.Contains(listed, []byte(`"state":"releasing"`)) {
+		t.Errorf("list = %s, want the node there as being released", listed)
+	}
+
+	h, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := node.svc.OpenHomeLink(h, "vps"); err != nil {
+		t.Fatal(err)
+	}
+	eventually(t, "home to drop the node once it heard the release", func() bool {
+		nodes, err := home.st.ListNodes()
+		return err == nil && len(nodes) == 0
+	})
+	if link, _ := node.st.GetNodeLink(); link.ReleasedAt == 0 {
+		t.Errorf("the node's link = %+v, want it released", link)
 	}
 }

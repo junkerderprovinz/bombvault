@@ -43,8 +43,12 @@ type nodeCall struct {
 	Name string `json:"name,omitempty"`
 }
 
-// codeNodeReleased refuses an adoption of a node home let go.
-const codeNodeReleased = "node-released"
+// codeNodeReleased refuses a call to a node home let go, and
+// codeNodeNotAdopted one that needs an adoption first.
+const (
+	codeNodeReleased   = "node-released"
+	codeNodeNotAdopted = "node-not-adopted"
+)
 
 // OpenHomeLink connects this node to the home NODE_HOME names and answers its
 // calls there. It refuses a home other than the one that adopted this node.
@@ -167,7 +171,7 @@ func (n *nodeSide) adopt(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *nodeSide) release(w http.ResponseWriter, r *http.Request) {
-	if _, ok := n.signed(w, r, keydeposit.ProofNodeRelease); !ok {
+	if _, ok := n.signed(w, r, keydeposit.ProofNodeRelease); !ok || !n.adopted(w) {
 		return
 	}
 	if err := n.s.store.SetNodeLinkReleased(time.Now().Unix()); err != nil {
@@ -176,6 +180,24 @@ func (n *nodeSide) release(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Print("node: home let this node go")
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
+}
+
+// adopted reports whether home adopted this node and has not let it go, and
+// answers the call itself when not. Every call but the hello and the
+// adoption needs it.
+func (n *nodeSide) adopted(w http.ResponseWriter) bool {
+	link, err := n.s.store.GetNodeLink()
+	switch {
+	case err != nil:
+		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
+	case link.ReleasedAt != 0:
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "code": codeNodeReleased, "error": "home let this node go"})
+	case link.AdoptedAt == 0:
+		writeJSON(w, http.StatusConflict, map[string]any{"ok": false, "code": codeNodeNotAdopted, "error": "home has not adopted this node yet"})
+	default:
+		return true
+	}
+	return false
 }
 
 // signed reads a call home signed for action, and answers it itself when the
