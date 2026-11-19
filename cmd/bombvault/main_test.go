@@ -4,15 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 func TestPlatformForTrueNAS(t *testing.T) {
@@ -133,7 +137,9 @@ func TestARoundCountsAnEntryWithNowhereToGoAsFailed(t *testing.T) {
 	}
 }
 
-func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
+// memStore is a migrated store in memory.
+func memStore(t *testing.T) *store.Repo {
+	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +148,11 @@ func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
 	if err := store.Migrate(db); err != nil {
 		t.Fatal(err)
 	}
-	st := store.New(db)
+	return store.New(db)
+}
+
+func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
+	st := memStore(t)
 	settings, err := st.GetSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -165,5 +175,39 @@ func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
 	}
 	if runs := planned(config.ModeNode); len(runs) != 0 {
 		t.Errorf("a node plans %+v", runs)
+	}
+}
+
+func TestANodeJoinsTheHomeItsVariablesName(t *testing.T) {
+	rs := httptest.NewServer(relay.New())
+	t.Cleanup(rs.Close)
+	t.Cleanup(rs.CloseClientConnections)
+	appKey := strings.Repeat("b", 64)
+	homeKey := make([]byte, 32)
+	nodeHome, err := nodelink.EncodeHome(appKey, nodelink.Home{ID: "home-1", Key: homeKey, Relay: group.ModeOwn, RelayURL: rs.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), Mode: config.ModeNode}
+	svc := api.NewService(cfg, memStore(t), nil, nil, nil)
+
+	leave, err := joinHome(cfg, svc)
+	if err != nil {
+		t.Fatalf("without NODE_HOME: %v", err)
+	}
+	leave()
+
+	cfg.NodeHome = nodeHome
+	leave, err = joinHome(cfg, svc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	leave()
+
+	typo := []byte(nodeHome)
+	typo[len(typo)/2] ^= 1
+	cfg.NodeHome = string(typo)
+	if _, err := joinHome(cfg, svc); err == nil {
+		t.Error("a NODE_HOME with a typo was taken")
 	}
 }

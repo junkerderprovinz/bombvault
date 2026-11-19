@@ -24,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/hostsnap"
 	"github.com/junkerderprovinz/bombvault/internal/logring"
+	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
@@ -333,6 +334,8 @@ func run() error {
 	if !node {
 		svc.StartGroup()
 		defer svc.StopGroup()
+		svc.OpenNodeLinks()
+		defer svc.CloseNodeLinks()
 	}
 	// Detect (or honor cfg.PlatformOverride, i.e. the PLATFORM env var) which
 	// host BombVault is running on, and map it to a concrete Platform adapter
@@ -498,19 +501,42 @@ func run() error {
 }
 
 // serveNode runs a node until a signal stops it. It keeps the anomaly engine
-// and the deferred backups, and serves nothing but its health.
+// and the deferred backups, answers its home over their link and serves
+// nothing but its health on its own port.
 func serveNode(cfg config.Config, svc *api.Service, engine *restic.Restic) error {
+	leave, err := joinHome(cfg, svc)
+	if err != nil {
+		return err
+	}
+	defer leave()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	svc.StartAnomalyEngine(ctx)
 	svc.StartDeferrals()
-	log.Print("node mode, waiting for home")
 	runErr := api.NewNodeServer(cfg, api.NodeRouter(nil)).Run(ctx)
 	if ctx.Err() != nil {
 		stop()
 		endWork(svc, engine)
 	}
 	return runErr
+}
+
+// joinHome opens the link to the home NODE_HOME names and returns what
+// leaves it. Without NODE_HOME the node waits for nobody.
+func joinHome(cfg config.Config, svc *api.Service) (func(), error) {
+	if cfg.NodeHome == "" {
+		log.Print("node mode: NODE_HOME is not set, so no home reaches this node")
+		return func() {}, nil
+	}
+	home, err := nodelink.DecodeHome(cfg.AppKey, cfg.NodeHome)
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.OpenHomeLink(home, cfg.NodeName); err != nil {
+		return nil, err
+	}
+	log.Printf("node mode, waiting for home %q", home.ID)
+	return svc.CloseHomeLink, nil
 }
 
 // endWork cancels the backups still running once the server stopped on a
