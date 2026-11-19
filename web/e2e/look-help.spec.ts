@@ -127,12 +127,17 @@ function placed(card: Locator): Promise<Placed[]> {
       const name = unit.querySelector(".glim-readme-btn-name")!;
       const n = name.getBoundingClientRect();
       const sub = unit.querySelector(".glim-readme-btn-sub");
-      const last = sub && getComputedStyle(sub).opacity !== "0" ? sub.getBoundingClientRect() : n;
+      const lastEl = sub && getComputedStyle(sub).opacity !== "0" ? sub : name;
+      const last = lastEl.getBoundingClientRect();
+      // The name and its second line reach past their line box to keep the
+      // descenders, so the text is measured inside that padding.
+      const textTop = n.top + parseFloat(getComputedStyle(name).paddingTop);
+      const textBottom = last.bottom - parseFloat(getComputedStyle(lastEl).paddingBottom);
       return {
         name: name.textContent ?? "",
         mark: { x: m.x - u.x, y: m.y - u.y, w: m.width, h: m.height },
         ink: { cx: (left + right) / 2 - u.x, cy: (top + bottom) / 2 - u.y, long: Math.max(right - left, bottom - top) },
-        text: { x: n.x - u.x, cy: (n.top + last.bottom) / 2 - u.y },
+        text: { x: n.x - u.x, cy: (textTop + textBottom) / 2 - u.y },
         viewBox: svg.getAttribute("viewBox") ?? "",
       };
     }),
