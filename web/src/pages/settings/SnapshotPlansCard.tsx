@@ -32,7 +32,7 @@ import { Card, ToggleRow } from "./shared";
 const KEEP_SAVE_MS = 600;
 
 const FIELD = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
-// A plan sits on its own sub-card, so its field takes the next surface up.
+// A plan sits on its own sub-card, so its field and buttons take the next surface up.
 const PLAN_FIELD = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-3 py-1.5 glim-field-focus-well";
 
 function input(p: HostSnapPlan): HostSnapPlanInput {
@@ -150,12 +150,12 @@ function PlanRow({
           label={t("hostSnap.plans.runNow")}
           labelKey="hostSnap.plans.runNow"
           glyph={<IconBackupNow />}
-          tone="subtle"
+          tone="neutral"
           busy={running}
           disabled={running}
           onClick={() => void runNow()}
         />
-        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="subtle" onClick={onRemove} />
+        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="neutral" onClick={onRemove} />
       </div>
       <CadenceBuilder
         label={t("hostSnap.plans.when")}
