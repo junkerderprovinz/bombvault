@@ -566,6 +566,10 @@ var pairedRefused = []string{
 	"POST /api/containers/{name}/dbdumps/{id}/import",
 	"POST /api/flash/plugins/restore",
 	"POST /api/stacks/{project}/restore",
+	// The servers home runs backups on, which hold a root shell on each.
+	"GET /api/nodes",
+	"POST /api/nodes",
+	"DELETE /api/nodes/{id}",
 }
 
 // sessionRoutes are the registered routes that need a session.

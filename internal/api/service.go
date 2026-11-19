@@ -43,6 +43,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
@@ -725,6 +726,11 @@ type Service struct {
 	probeQueue   []string
 	probeWorking bool
 	firstProbes  atomic.Bool
+	// nodeMu guards nodeLinks, home's links to its nodes by node id, and
+	// homeLink, a node's link to its home.
+	nodeMu    sync.Mutex
+	nodeLinks map[string]*homeNode
+	homeLink  *nodelink.Link
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock

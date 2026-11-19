@@ -189,6 +189,11 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/homeassistant", h.handleSetHomeAssistant)
 	mux.HandleFunc("GET /api/mdns", h.handleGetMDNS)
 	mux.HandleFunc("PUT /api/mdns", h.handleSetMDNS)
+	// The servers this instance runs backups on. Adding one hands out its
+	// APP_KEY, so these stay with a person signed in here.
+	mux.HandleFunc("GET /api/nodes", h.handleListNodes)
+	mux.HandleFunc("POST /api/nodes", h.handleAddNode)
+	mux.HandleFunc("DELETE /api/nodes/{id}", h.handleReleaseNode)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
