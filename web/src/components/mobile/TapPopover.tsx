@@ -144,18 +144,28 @@ export function TapPopover({
     const triggerEl = triggerRef.current;
     const panel = panelRef.current;
     if (!triggerEl || !panel) return;
-    const rect = triggerEl.getBoundingClientRect();
-    const viewport = {
-      width: document.documentElement.clientWidth || window.innerWidth,
-      height: document.documentElement.clientHeight || window.innerHeight,
+    const place = () => {
+      const rect = triggerEl.getBoundingClientRect();
+      const viewport = {
+        width: document.documentElement.clientWidth || window.innerWidth,
+        height: document.documentElement.clientHeight || window.innerHeight,
+      };
+      const { left, top } = computeBubblePosition(
+        rect,
+        { width: panel.offsetWidth, height: panel.offsetHeight },
+        viewport,
+      );
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
     };
-    const { left, top } = computeBubblePosition(
-      rect,
-      { width: panel.offsetWidth, height: panel.offsetHeight },
-      viewport,
-    );
-    panel.style.left = `${left}px`;
-    panel.style.top = `${top}px`;
+    place();
+    // Content that settles its own layout after the first paint, such as a
+    // row of tabs that only shows once it knows it fits, changes the panel's
+    // width, and the clamp has to follow.
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(place);
+    observer.observe(panel);
+    return () => observer.disconnect();
   }, [open]);
 
   // Light focus, BottomSheet's open-effect shape minus the trap: move
