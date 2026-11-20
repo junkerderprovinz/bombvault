@@ -5486,6 +5486,8 @@ const bg: Partial<Translations> = {
   "shared.offer.asking": "Питам…",
   "shared.offer.asked": "Попита {name}. Щом те пусне, дестинацията се появява под Дестинации.",
   "shared.offer.joined": "Вътре си в общото хранилище на {name}. Дестинацията се появява под Дестинации.",
+  "nodes.away": "Възелът в момента е недостъпен. Може да е изключен или офлайн.",
+  "nodes.notAdopted": "Възелът още не е стартиран със своя compose файл.",
 };
 
 export default bg;

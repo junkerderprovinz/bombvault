@@ -5486,6 +5486,8 @@ const sk: Partial<Translations> = {
   "shared.offer.asking": "Žiadam…",
   "shared.offer.asked": "Žiadosť odišla na {name}. Keď ťa pustí dnu, cieľ sa zobrazí v časti Ciele.",
   "shared.offer.joined": "Si v spoločnom repozitári {name}. Cieľ sa zobrazí v časti Ciele.",
+  "nodes.away": "Uzol je práve nedostupný. Možno je vypnutý alebo offline.",
+  "nodes.notAdopted": "Uzol sa so svojím compose súborom ešte nespustil.",
 };
 
 export default sk;

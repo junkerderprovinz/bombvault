@@ -5486,6 +5486,8 @@ const ms: Partial<Translations> = {
   "shared.offer.asking": "Sedang meminta…",
   "shared.offer.asked": "Permintaan dihantar kepada {name}. Sebaik sahaja ia membenarkan anda masuk, destinasi itu muncul di bawah Destinasi.",
   "shared.offer.joined": "Anda kini dalam repositori bersama {name}. Destinasi itu muncul di bawah Destinasi.",
+  "nodes.away": "Nod tidak dapat dicapai sekarang. Mungkin ia dimatikan atau di luar talian.",
+  "nodes.notAdopted": "Nod belum dimulakan dengan fail compose miliknya.",
 };
 
 export default ms;

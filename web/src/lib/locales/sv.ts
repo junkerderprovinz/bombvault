@@ -5475,6 +5475,8 @@ const sv: Partial<Translations> = {
   "shared.offer.asking": "Frågar…",
   "shared.offer.asked": "{name} har fått frågan. När den släpper in dig dyker målet upp under Mål.",
   "shared.offer.joined": "Du är med i det gemensamma arkivet på {name}. Målet dyker upp under Mål.",
+  "nodes.away": "Noden går inte att nå just nu. Den kan vara avstängd eller offline.",
+  "nodes.notAdopted": "Noden har inte startat med sin compose-fil än.",
 };
 
 export default sv;

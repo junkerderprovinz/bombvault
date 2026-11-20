@@ -5485,6 +5485,8 @@ const id: Partial<Translations> = {
   "shared.offer.asking": "Meminta…",
   "shared.offer.asked": "Permintaan terkirim ke {name}. Begitu Anda diizinkan masuk, tujuan ini muncul di bawah Tujuan.",
   "shared.offer.joined": "Anda sudah masuk ke repositori bersama {name}. Tujuan ini muncul di bawah Tujuan.",
+  "nodes.away": "Node tidak bisa dijangkau saat ini. Mungkin sedang mati atau offline.",
+  "nodes.notAdopted": "Node belum dijalankan dengan file compose-nya.",
 };
 
 export default id;

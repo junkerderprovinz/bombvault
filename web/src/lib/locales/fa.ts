@@ -5486,6 +5486,8 @@ const fa: Partial<Translations> = {
   "shared.offer.asking": "در حال درخواست…",
   "shared.offer.asked": "از {name} درخواست شد. وقتی راهت داد، مقصد زیر مقصدها نشان داده می‌شود.",
   "shared.offer.joined": "در مخزن مشترک {name} عضو شدی. مقصد زیر مقصدها نشان داده می‌شود.",
+  "nodes.away": "الان نمی‌شود به گره رسید. شاید خاموش یا آفلاین باشد.",
+  "nodes.notAdopted": "گره هنوز با فایل compose خودش راه‌اندازی نشده است.",
 };
 
 export default fa;

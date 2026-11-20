@@ -5486,6 +5486,8 @@ const et: Partial<Translations> = {
   "shared.offer.asking": "Küsin…",
   "shared.offer.asked": "Eksemplarilt {name} on küsitud. Kui see sind sisse laseb, ilmub sihtkoht jaotisesse Sihtkohad.",
   "shared.offer.joined": "Oled eksemplari {name} ühises hoidlas sees. Sihtkoht ilmub jaotisesse Sihtkohad.",
+  "nodes.away": "Sõlmega ei saa praegu ühendust. Võib-olla on see välja lülitatud või võrgust väljas.",
+  "nodes.notAdopted": "Sõlm pole veel oma compose-failiga käivitunud.",
 };
 
 export default et;

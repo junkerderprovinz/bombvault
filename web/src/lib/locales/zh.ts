@@ -5466,6 +5466,8 @@ const zh: Partial<Translations> = {
   "shared.offer.asking": "正在申请…",
   "shared.offer.asked": "已向 {name} 申请。对方同意后，该目标会出现在“目标”下。",
   "shared.offer.joined": "你已加入 {name} 上的共享仓库。该目标会出现在“目标”下。",
+  "nodes.away": "暂时无法连接到节点。它可能已关机或离线。",
+  "nodes.notAdopted": "节点尚未用它的 compose 文件启动。",
 };
 
 export default zh;

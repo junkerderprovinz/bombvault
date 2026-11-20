@@ -5477,6 +5477,8 @@ const ar: Partial<Translations> = {
   "shared.offer.asking": "جارٍ الطلب…",
   "shared.offer.asked": "تم سؤال {name}. بمجرد أن يسمح لك بالدخول، تظهر الوجهة ضمن الوجهات.",
   "shared.offer.joined": "انضممت إلى المستودع المشترك على {name}. تظهر الوجهة ضمن الوجهات.",
+  "nodes.away": "يتعذّر الوصول إلى العقدة الآن. ربما هي مطفأة أو غير متصلة.",
+  "nodes.notAdopted": "لم تبدأ العقدة بملف compose الخاص بها بعد.",
 };
 
 export default ar;

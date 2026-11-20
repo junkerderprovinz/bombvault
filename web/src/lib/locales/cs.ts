@@ -5474,6 +5474,8 @@ const cs: Partial<Translations> = {
   "shared.offer.asking": "Žádám…",
   "shared.offer.asked": "Instance {name} je požádaná. Jakmile tě pustí dovnitř, cíl se objeví v části Cíle.",
   "shared.offer.joined": "Jsi uvnitř sdíleného repozitáře na instanci {name}. Cíl se objeví v části Cíle.",
+  "nodes.away": "Uzel teď není dostupný. Možná je vypnutý nebo offline.",
+  "nodes.notAdopted": "Uzel se zatím nespustil se svým souborem compose.",
 };
 
 export default cs;

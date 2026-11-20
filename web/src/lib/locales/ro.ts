@@ -5477,6 +5477,8 @@ const ro: Partial<Translations> = {
   "shared.offer.asking": "Se trimite cererea…",
   "shared.offer.asked": "Ai cerut acces la {name}. Când te primește, destinația apare în Destinații.",
   "shared.offer.joined": "Faci parte din depozitul comun al instanței {name}. Destinația apare în Destinații.",
+  "nodes.away": "Nodul nu poate fi contactat acum. Poate e oprit sau offline.",
+  "nodes.notAdopted": "Nodul nu a pornit încă cu fișierul său compose.",
 };
 
 export default ro;

@@ -5486,6 +5486,8 @@ const ca: Partial<Translations> = {
   "shared.offer.asking": "Demanant…",
   "shared.offer.asked": "Ho has demanat a {name}. Quan et deixi entrar, la destinació apareixerà a Destinacions.",
   "shared.offer.joined": "Ja ets dins del repositori compartit de {name}. La destinació apareix a Destinacions.",
+  "nodes.away": "Ara mateix no es pot arribar al node. Potser està apagat o fora de línia.",
+  "nodes.notAdopted": "El node encara no s'ha iniciat amb el seu fitxer compose.",
 };
 
 export default ca;

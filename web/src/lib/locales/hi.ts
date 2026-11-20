@@ -5486,6 +5486,8 @@ const hi: Partial<Translations> = {
   "shared.offer.asking": "पूछ रहे हैं…",
   "shared.offer.asked": "{name} से पूछ लिया गया। जैसे ही वह आपको अंदर आने देगा, यह गंतव्य “गंतव्य” पेज पर दिखेगा।",
   "shared.offer.joined": "आप {name} की साझा रिपॉज़िटरी में जुड़ गए। यह गंतव्य “गंतव्य” पेज पर दिखता है।",
+  "nodes.away": "नोड तक अभी पहुँचा नहीं जा सकता। शायद वह बंद है या ऑफ़लाइन है।",
+  "nodes.notAdopted": "नोड अभी अपनी compose फ़ाइल के साथ शुरू नहीं हुआ है।",
 };
 
 export default hi;

@@ -5466,6 +5466,8 @@ const ja: Partial<Translations> = {
   "shared.offer.asking": "申し込み中…",
   "shared.offer.asked": "{name} に申し込みました。受け入れられると、保存先が「保存先」に表示されます。",
   "shared.offer.joined": "{name} の共有リポジトリに参加しました。保存先は「保存先」に表示されます。",
+  "nodes.away": "今はノードに接続できません。電源が切れているか、オフラインの可能性があります。",
+  "nodes.notAdopted": "ノードはまだ compose ファイルで起動していません。",
 };
 
 export default ja;

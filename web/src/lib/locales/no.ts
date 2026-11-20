@@ -5476,6 +5476,8 @@ const no: Partial<Translations> = {
   "shared.offer.asking": "Spør…",
   "shared.offer.asked": "Du har spurt {name}. Når den slipper deg inn, dukker målet opp under Mål.",
   "shared.offer.joined": "Du er med i det felles repositoriet til {name}. Målet dukker opp under Mål.",
+  "nodes.away": "Noden kan ikke nås akkurat nå. Den er kanskje slått av eller frakoblet.",
+  "nodes.notAdopted": "Noden har ikke startet med compose-filen sin ennå.",
 };
 
 export default no;

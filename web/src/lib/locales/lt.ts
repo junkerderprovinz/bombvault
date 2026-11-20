@@ -5485,6 +5485,8 @@ const lt: Partial<Translations> = {
   "shared.offer.asking": "Klausiama…",
   "shared.offer.asked": "Paprašei egzemplioriaus {name}. Kai tik jis tave įsileis, paskirties vieta atsiras skiltyje Paskirties vietos.",
   "shared.offer.joined": "Prisijungei prie egzemplioriaus {name} bendros saugyklos. Paskirties vieta atsiras skiltyje Paskirties vietos.",
+  "nodes.away": "Mazgas dabar nepasiekiamas. Gal jis išjungtas arba neprisijungęs.",
+  "nodes.notAdopted": "Mazgas dar nepaleistas su savo compose failu.",
 };
 
 export default lt;

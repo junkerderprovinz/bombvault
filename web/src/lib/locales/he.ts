@@ -5476,6 +5476,8 @@ const he: Partial<Translations> = {
   "shared.offer.asking": "שולח בקשה…",
   "shared.offer.asked": "הבקשה נשלחה אל {name}. ברגע שהיא תאושר, היעד יופיע תחת יעדים.",
   "shared.offer.joined": "המופע הזה הצטרף למאגר המשותף של {name}. היעד מופיע תחת יעדים.",
+  "nodes.away": "אי אפשר להגיע לצומת כרגע. ייתכן שהוא כבוי או לא מחובר.",
+  "nodes.notAdopted": "הצומת עוד לא הופעל עם קובץ ה-compose שלו.",
 };
 
 export default he;

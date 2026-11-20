@@ -5476,6 +5476,8 @@ const fi: Partial<Translations> = {
   "shared.offer.asking": "Kysytään…",
   "shared.offer.asked": "Kysyit instanssilta {name}. Kun se päästää sinut mukaan, kohde näkyy kohdassa Kohteet.",
   "shared.offer.joined": "Olet mukana instanssin {name} jaetussa arkistossa. Kohde näkyy kohdassa Kohteet.",
+  "nodes.away": "Solmua ei tavoiteta juuri nyt. Se voi olla sammutettuna tai offline-tilassa.",
+  "nodes.notAdopted": "Solmua ei ole vielä käynnistetty compose-tiedostollaan.",
 };
 
 export default fi;

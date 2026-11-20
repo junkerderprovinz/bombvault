@@ -5476,6 +5476,8 @@ const th: Partial<Translations> = {
   "shared.offer.asking": "กำลังขอ…",
   "shared.offer.asked": "ขอ {name} แล้ว เมื่ออนุญาตให้คุณเข้าร่วม ปลายทางจะปรากฏใน ปลายทาง",
   "shared.offer.joined": "คุณเข้าร่วมคลังร่วมบน {name} แล้ว ปลายทางจะปรากฏใน ปลายทาง",
+  "nodes.away": "ตอนนี้ติดต่อโหนดไม่ได้ อาจปิดเครื่องอยู่หรือออฟไลน์",
+  "nodes.notAdopted": "โหนดยังไม่ได้เริ่มทำงานด้วยไฟล์ compose ของตัวเอง",
 };
 
 export default th;

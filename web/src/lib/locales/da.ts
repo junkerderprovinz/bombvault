@@ -5476,6 +5476,8 @@ const da: Partial<Translations> = {
   "shared.offer.asking": "Spørger…",
   "shared.offer.asked": "{name} er spurgt. Så snart den lukker dig ind, dukker destinationen op under Destinationer.",
   "shared.offer.joined": "Du er med i det delte arkiv hos {name}. Destinationen dukker op under Destinationer.",
+  "nodes.away": "Noden kan ikke nås lige nu. Den er måske slukket eller offline.",
+  "nodes.notAdopted": "Noden er ikke startet med sin compose-fil endnu.",
 };
 
 export default da;

@@ -5485,6 +5485,8 @@ const lv: Partial<Translations> = {
   "shared.offer.asking": "Lūdz…",
   "shared.offer.asked": "Lūgums nosūtīts instancei {name}. Tiklīdz tā jūs ielaidīs, mērķis parādīsies sadaļā Mērķi.",
   "shared.offer.joined": "Jūs esat instances {name} kopīgajā repozitorijā. Mērķis parādās sadaļā Mērķi.",
+  "nodes.away": "Mezgls pašlaik nav sasniedzams. Iespējams, tas ir izslēgts vai bezsaistē.",
+  "nodes.notAdopted": "Mezgls vēl nav palaists ar savu compose failu.",
 };
 
 export default lv;

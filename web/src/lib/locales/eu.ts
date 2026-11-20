@@ -5486,6 +5486,8 @@ const eu: Partial<Translations> = {
   "shared.offer.asking": "Eskatzen…",
   "shared.offer.asked": "{name} instantziari eskatu zaio. Onartzen zaituenean, helmuga Helmugak atalean agertuko da.",
   "shared.offer.joined": "{name} instantziaren biltegi partekatuan zaude. Helmuga Helmugak atalean agertzen da.",
+  "nodes.away": "Ezin da orain nodora iritsi. Agian itzalita edo lineaz kanpo dago.",
+  "nodes.notAdopted": "Nodoa ez da oraindik bere compose fitxategiarekin abiarazi.",
 };
 
 export default eu;

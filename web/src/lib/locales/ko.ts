@@ -5466,6 +5466,8 @@ const ko: Partial<Translations> = {
   "shared.offer.asking": "요청하는 중…",
   "shared.offer.asked": "{name}에 요청했습니다. 승인되면 이 대상이 대상에 표시됩니다.",
   "shared.offer.joined": "{name}의 공유 저장소에 참여했습니다. 이 대상은 대상에 표시됩니다.",
+  "nodes.away": "지금은 노드에 연결할 수 없습니다. 꺼져 있거나 오프라인일 수 있습니다.",
+  "nodes.notAdopted": "노드가 아직 compose 파일로 시작되지 않았습니다.",
 };
 
 export default ko;

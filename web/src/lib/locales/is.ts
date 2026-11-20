@@ -5485,6 +5485,8 @@ const is: Partial<Translations> = {
   "shared.offer.asking": "Spyr…",
   "shared.offer.asked": "Spurði tilvikið {name}. Um leið og það hleypir þér inn birtist áfangastaðurinn undir Áfangastaðir.",
   "shared.offer.joined": "Þú ert með í sameiginlega geymslusafninu hjá tilvikinu {name}. Áfangastaðurinn birtist undir Áfangastaðir.",
+  "nodes.away": "Ekki næst í hnútinn í augnablikinu. Kannski er slökkt á honum eða hann ótengdur.",
+  "nodes.notAdopted": "Hnúturinn hefur ekki enn verið ræstur með compose-skránni sinni.",
 };
 
 export default is;

@@ -5475,6 +5475,8 @@ const nl: Partial<Translations> = {
   "shared.offer.asking": "Even vragen…",
   "shared.offer.asked": "{name} is gevraagd. Zodra ze je toelaat, verschijnt de bestemming onder Bestemmingen.",
   "shared.offer.joined": "Je doet mee met de gedeelde repository van {name}. De bestemming verschijnt onder Bestemmingen.",
+  "nodes.away": "De node is nu niet bereikbaar. Misschien staat hij uit of is hij offline.",
+  "nodes.notAdopted": "De node is nog niet gestart met zijn compose-bestand.",
 };
 
 export default nl;

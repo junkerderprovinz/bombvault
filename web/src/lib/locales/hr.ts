@@ -5486,6 +5486,8 @@ const hr: Partial<Translations> = {
   "shared.offer.asking": "Šalje se zahtjev…",
   "shared.offer.asked": "Zahtjev je poslan instanci {name}. Čim vas propusti, odredište se pojavljuje pod Odredišta.",
   "shared.offer.joined": "Unutra ste u zajedničkom repozitoriju instance {name}. Odredište se pojavljuje pod Odredišta.",
+  "nodes.away": "Čvor trenutačno nije dostupan. Možda je isključen ili nije na mreži.",
+  "nodes.notAdopted": "Čvor se još nije pokrenuo sa svojom compose datotekom.",
 };
 
 export default hr;

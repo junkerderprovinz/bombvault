@@ -5475,6 +5475,8 @@ const tr: Partial<Translations> = {
   "shared.offer.asking": "Soruluyor…",
   "shared.offer.asked": "{name} örneğine soruldu. Seni içeri aldığında hedef Hedefler altında görünür.",
   "shared.offer.joined": "{name} örneğindeki ortak depodasın. Hedef Hedefler altında görünür.",
+  "nodes.away": "Düğüme şu an ulaşılamıyor. Kapalı ya da çevrimdışı olabilir.",
+  "nodes.notAdopted": "Düğüm henüz compose dosyasıyla başlatılmadı.",
 };
 
 export default tr;

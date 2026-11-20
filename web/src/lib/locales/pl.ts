@@ -5473,6 +5473,8 @@ const pl: Partial<Translations> = {
   "shared.offer.asking": "Pytam…",
   "shared.offer.asked": "Wysłano prośbę do {name}. Gdy cię wpuści, miejsce pojawi się w sekcji Miejsca docelowe.",
   "shared.offer.joined": "Jesteś we wspólnym repozytorium {name}. Miejsce pojawi się w sekcji Miejsca docelowe.",
+  "nodes.away": "Węzeł jest teraz nieosiągalny. Może jest wyłączony albo offline.",
+  "nodes.notAdopted": "Węzeł nie został jeszcze uruchomiony ze swoim plikiem compose.",
 };
 
 export default pl;

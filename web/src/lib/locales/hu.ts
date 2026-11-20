@@ -5476,6 +5476,8 @@ const hu: Partial<Translations> = {
   "shared.offer.asking": "Kérés…",
   "shared.offer.asked": "Megkérted a(z) {name} példányt. Amint beenged, a cél megjelenik a Célok alatt.",
   "shared.offer.joined": "Bent vagy a(z) {name} közös tárolójában. A cél megjelenik a Célok alatt.",
+  "nodes.away": "A csomópont most nem érhető el. Lehet, hogy ki van kapcsolva vagy offline.",
+  "nodes.notAdopted": "A csomópont még nem indult el a compose fájljával.",
 };
 
 export default hu;

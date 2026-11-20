@@ -5486,6 +5486,8 @@ const gl: Partial<Translations> = {
   "shared.offer.asking": "Pedindo…",
   "shared.offer.asked": "Pedíchesllo a {name}. Cando te deixe entrar, o destino aparece en Destinos.",
   "shared.offer.joined": "Xa estás no repositorio compartido de {name}. O destino aparece en Destinos.",
+  "nodes.away": "Agora mesmo non se pode chegar ao nodo. Pode estar apagado ou sen conexión.",
+  "nodes.notAdopted": "O nodo aínda non arrincou co seu ficheiro compose.",
 };
 
 export default gl;

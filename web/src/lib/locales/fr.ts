@@ -5476,6 +5476,8 @@ const fr: Partial<Translations> = {
   "shared.offer.asking": "Demande en cours…",
   "shared.offer.asked": "Demande envoyée à {name}. Dès que l'instance vous accepte, la destination apparaît sous Destinations.",
   "shared.offer.joined": "Vous avez rejoint le dépôt partagé de {name}. La destination apparaît sous Destinations.",
+  "nodes.away": "Le nœud est injoignable pour le moment. Il est peut-être éteint ou hors ligne.",
+  "nodes.notAdopted": "Le nœud n'a pas encore démarré avec son fichier compose.",
 };
 
 export default fr;

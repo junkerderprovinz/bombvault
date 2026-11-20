@@ -5466,6 +5466,8 @@ const vi: Partial<Translations> = {
   "shared.offer.asking": "Đang hỏi…",
   "shared.offer.asked": "Đã hỏi {name}. Khi bạn được cho vào, đích sao lưu sẽ hiện trong Đích sao lưu.",
   "shared.offer.joined": "Bạn đã tham gia kho chung trên {name}. Đích sao lưu sẽ hiện trong Đích sao lưu.",
+  "nodes.away": "Hiện không kết nối được với node. Có thể node đang tắt hoặc ngoại tuyến.",
+  "nodes.notAdopted": "Node chưa khởi động bằng tệp compose của nó.",
 };
 
 export default vi;

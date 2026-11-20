@@ -5476,6 +5476,8 @@ const pt: Partial<Translations> = {
   "shared.offer.asking": "A pedir…",
   "shared.offer.asked": "Pedido enviado a {name}. Assim que te deixar entrar, o destino aparece em Destinos.",
   "shared.offer.joined": "Já fazes parte do repositório partilhado de {name}. O destino aparece em Destinos.",
+  "nodes.away": "Não é possível contactar o nó agora. Pode estar desligado ou offline.",
+  "nodes.notAdopted": "O nó ainda não arrancou com o seu ficheiro compose.",
 };
 
 export default pt;

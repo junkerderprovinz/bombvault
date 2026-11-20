@@ -5469,6 +5469,8 @@ const sl: Partial<Translations> = {
   "shared.offer.asking": "Sprašujem…",
   "shared.offer.asked": "Instanca {name} je vprašana. Ko te spusti noter, se cilj prikaže pod Cilji.",
   "shared.offer.joined": "Zraven si v skupnem repozitoriju na instanci {name}. Cilj se prikaže pod Cilji.",
+  "nodes.away": "Vozlišče trenutno ni dosegljivo. Morda je izklopljeno ali brez povezave.",
+  "nodes.notAdopted": "Vozlišče se s svojo datoteko compose še ni zagnalo.",
 };
 
 export default sl;
