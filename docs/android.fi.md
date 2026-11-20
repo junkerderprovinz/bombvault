@@ -54,6 +54,10 @@ Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merk
 
 Ennen versiota 10.0.0 pariutettu puhelin alkaa allekirjoittaa kutsunsa ensimmäisellä käynnillä päivityksen jälkeen, ja jokainen palvelin pitää ensimmäisen puhelimelle saamansa avaimen. Jos joku muu, joka tuntee ryhmän sanat, ehtii ensin puhelimen ollessa offline-tilassa, palvelin hylkää puhelimen siitä lähtien, eikä sovellus enää voi avata sitä releen kautta. Korjaa tämä kirjautumalla kyseiselle palvelimelle selaimella, valitsemalla puhelimen kortista Ilmentymät-sivulla **Unohda avain** ja sitten **Vahvista unohtaminen**, ja avaamalla sovellus uudelleen. Palvelin ottaa puhelimen oman avaimen seuraavassa kutsussa. Jos puhelin hylätään uudelleen, joku muu tuntee sanat: anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla, kuten kadonneen puhelimen kohdalla.
 
+## Solmut {#nodes}
+
+[Solmuja](nodes.md) hoidetaan verkkokäyttöliittymässä. Pariutetun puhelimen istunto ei ulotu niihin, joten sovellus ei näytä Ilmentymät-sivulla solmujen kortteja, yleiskatsauksessa **Solmut**-korttia eikä kohdassa **Varmuuskopiot** solmujen osioita, ja **Lisää solmu** vastaa, että se vaatii kirjautumisen itse palvelimella. Avaa palvelin selaimessa ja kirjaudu salasanalla, kun haluat lisätä solmun, muuttaa sen varmuuskopioiden määränpäätä tai palauttaa jonkin sen merkinnöistä.
+
 ## Asetukset {#settings}
 
 Plussan vieressä oleva ratas avaa sovelluksen asetukset:
