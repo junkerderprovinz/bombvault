@@ -34,4 +34,5 @@
 ## 서버가 여러 대일 때 {#several-servers}
 
 - [Unraid 서버 두 대 페어링](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): 서로의 사본을 보관하지만 상대의 백업은 지울 수 없는 서버 두 대.
+- [수신 서버로 백업하는 VPS](nodes.md#example-vps): 컨테이너와 함께 홈에서 관리하는 노드이며, VPS에는 열린 포트가 없습니다.
 - [Home Assistant의 카드와 알림](api.md#home-assistant-example): 대시보드에 BombVault를 올리고, 백업이 실패하면 메시지를 받습니다.
