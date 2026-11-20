@@ -1,0 +1,1 @@
+BombVault 10.6.3 gibt jedem Speicherort, jeder Anmeldung und jedem Kanal eine eigene, aufgeräumte Zeile und holt die Anbieter aus einem Katalog voller Logos. Snapshot-Zeitpläne sind auf wenige Zeilen geschrumpft, und ein neues Passwort tippst du jetzt zweimal, damit dich kein Tippfehler aussperrt.
