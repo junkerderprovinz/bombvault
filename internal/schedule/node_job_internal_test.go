@@ -30,3 +30,27 @@ func TestTheNodeSchedulesTickAndShowTheirNextRun(t *testing.T) {
 		t.Fatalf("found %v, fired %d times; want the node job registered and run once", found, fired)
 	}
 }
+
+func TestThePullJobRunsWithPullOffOnAHomeWithNodes(t *testing.T) {
+	noTargets := func() ([]store.Target, error) { return nil, nil }
+	sc := New(func(string) error { return nil }, noTargets)
+	sc.SetPullJob(func() error { return nil }, func(time.Time) (time.Time, bool) { return time.Time{}, false })
+	pull := func() bool {
+		if err := sc.ReloadWithDueChecks(store.Settings{}, nil, nil, nil, nil, nil, nil); err != nil {
+			t.Fatalf("ReloadWithDueChecks: %v", err)
+		}
+		for _, e := range sc.entries {
+			if e.job == "pull" {
+				return true
+			}
+		}
+		return false
+	}
+	if pull() {
+		t.Error("the pull job runs with Pull off and no nodes")
+	}
+	sc.SetNodeJob(func() error { return nil }, func(time.Time) (time.Time, bool) { return time.Time{}, false })
+	if !pull() {
+		t.Error("the pull job does not run with Pull off on a home with nodes")
+	}
+}

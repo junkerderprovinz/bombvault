@@ -1653,7 +1653,9 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		}
 	}
 
-	if settings.PullEnabled {
+	// A home with nodes fetches the backups a node keeps itself with Pull off
+	// too.
+	if settings.PullEnabled || s.nodeFn != nil {
 		domains = append(domains, domainSpec{
 			cadence: SweepCadence,
 			name:    "pull",

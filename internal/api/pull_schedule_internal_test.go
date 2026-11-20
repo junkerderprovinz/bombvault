@@ -135,3 +135,55 @@ func TestTheNextPullIsTheSoonestSourcesOwnFire(t *testing.T) {
 		t.Fatalf("next = %v, %v, want %v", next, ok, want)
 	}
 }
+
+// pullOffFixture is pullSweepFixture with Pull switched off and the source
+// from node, empty for a source of the group.
+func pullOffFixture(t *testing.T, node string, saved time.Time) (*Service, *pullRecorder) {
+	t.Helper()
+	svc, st, eng, ps := pullSweepFixture(t, "daily 04:00", saved)
+	if _, err := st.MutateSettings(func(s *store.Settings) error {
+		s.PullEnabled = false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.DeletePullSource(ps.ID); err != nil {
+		t.Fatal(err)
+	}
+	ps.NodeID = node
+	if node != "" {
+		ps.MemberID = ""
+	}
+	if _, err := st.CreatePullSource(ps); err != nil {
+		t.Fatal(err)
+	}
+	return svc, eng
+}
+
+func TestANodesBackupsAreFetchedWithPullSwitchedOff(t *testing.T) {
+	now := time.Date(2026, time.November, 5, 4, 0, 0, 0, time.Local)
+	svc, eng := pullOffFixture(t, "node-1", now.AddDate(0, 0, -2))
+	if _, ok := svc.NextPull(now.Add(-time.Hour)); !ok {
+		t.Error("a node's source has no next pull with Pull off")
+	}
+	if err := svc.runPullsAt(context.Background(), now); err != nil {
+		t.Fatal(err)
+	}
+	if !pullCopied(eng) {
+		t.Fatalf("a node's source was not fetched at its time: %v", eng.calls)
+	}
+}
+
+func TestAGroupSourceRestsWhilePullIsSwitchedOff(t *testing.T) {
+	now := time.Date(2026, time.November, 5, 4, 0, 0, 0, time.Local)
+	svc, eng := pullOffFixture(t, "", now.AddDate(0, 0, -2))
+	if _, ok := svc.NextPull(now.Add(-time.Hour)); ok {
+		t.Error("a group source has a next pull with Pull off")
+	}
+	if err := svc.runPullsAt(context.Background(), now); err != nil {
+		t.Fatal(err)
+	}
+	if len(eng.calls) != 0 {
+		t.Fatalf("a group source was read with Pull off: %v", eng.calls)
+	}
+}
