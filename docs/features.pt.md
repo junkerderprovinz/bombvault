@@ -75,6 +75,7 @@ Um catálogo curto do que o BombVault faz. Cada linha liga à página que a expl
 - **A página Instâncias** com o grupo como uma rede e as funções **Recetor**, **Recolhedor**, **Servidor ZFS** e **Guardião da chave**. [Instâncias e funções](offsite-recovery.md#roles)
 - **Um servidor recetor** configurado por ti, em modo append-only. [Servidor recetor](offsite-recovery.md#receiving-server)
 - **Um repositório partilhado** para onde copiam vários servidores, para que o que têm em comum fique guardado uma só vez. Só o servidor que o mantém poda. [Repositório partilhado](offsite-recovery.md#shared-repository)
+- **Nós**: BombVault sem interface web num VPS ou noutro servidor, gerido a partir da instância base com os seus agendamentos, alertas e restauros. Não precisa de nenhuma porta aberta. [Nós](nodes.md)
 
 ## Assistentes de IA (MCP) {#mcp}
 

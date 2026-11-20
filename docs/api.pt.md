@@ -1,6 +1,6 @@
 # API e integrações
 
-O BombVault tem uma pequena API HTTP para scripts, painéis e domótica. Lê o mesmo que a visão geral mostra e pode iniciar um backup. Tudo o resto, como restauros, eliminação de backups e definições, fica na interface web.
+O BombVault tem uma pequena API HTTP para scripts, painéis e domótica. Lê o mesmo que a visão geral mostra e pode iniciar um backup. Tudo o resto, como restauros, eliminação de backups, definições e [nós](#nodes), fica na interface web.
 
 ## Tokens {#tokens}
 
@@ -68,6 +68,32 @@ Os inícios seguem os mesmos limites dos [inícios por MCP](mcp.md#starting-back
 ## OpenAPI {#openapi}
 
 O BombVault serve uma descrição destas rotas em `/api/v1/openapi.json` (OpenAPI 3.1). Não precisa de token. Carrega-a no Swagger UI, no Postman ou num gerador de código.
+
+## Nós {#nodes}
+
+As rotas que gerem os [nós](nodes.md) pertencem à interface web, não à API com token descrita acima. Com uma palavra-passe de início de sessão definida, precisam de uma sessão de navegador vinda de um início de sessão nesta instância. Um token de API ou uma chave MCP não abre nenhuma delas, os telemóveis emparelhados não chegam até elas e o `/api/v1/openapi.json` não as descreve. Adicionar um nó, mostrar outra vez o seu ficheiro compose e chegar às rotas de um nó são recusados até estar definida uma palavra-passe de início de sessão. Um script que muda alguma coisa envia `Content-Type: application/json`, como em toda a interface web.
+
+| Rota | O que faz |
+|---|---|
+| `GET /api/nodes` | Cada nó, com se está online, a sua versão, para onde vão os seus backups, o plano de cada secção, o último backup, os erros e as anomalias em aberto |
+| `POST /api/nodes` | Adiciona um nó, como `{"name":"vps-helsinki"}`, e devolve-o com `compose`: `MODE`, `APP_KEY`, `NODE_HOME` e `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Devolve outra vez os mesmos valores de `compose`, para **Substituir** |
+| `POST /api/nodes/{id}/placement` | Envia os backups do nó para um destino e responde por secção se o nó chegou ao seu repositório, com um `warning` no caso de um destino |
+| `PUT /api/nodes/{id}/schedule` | Define os planos, como `{"containers":"daily 03:00","files":"off"}`. Uma secção que fique de fora mantém o seu plano |
+| `DELETE /api/nodes/{id}` | Liberta o nó. `told` diz se ele ficou a saber logo ou se fica a saber quando voltar |
+| `GET /api/nodes/routes` | A lista das rotas do próprio nó para onde a instância base passa os pedidos |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Passa o pedido à rota `/api/{path}` do nó quando essa rota está na lista, e devolve a resposta JSON do nó |
+| `PUT /api/receiver/node-address` | Define o **Endereço para os nós** do servidor recetor, como `{"url":"https://backup.tower.example.org","caPem":""}`. Um `url` vazio tira os nós do servidor |
+
+Os três destinos:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Um pedido a `/api/nodes/{id}/api/...` leva no máximo 32 KiB. Uma rota que não está na lista responde `403`, um nó que ainda não respondeu ou que está a ser libertado responde `409` com o código `node-not-adopted`, e um nó ausente responde `502` com o código `node-away`. Por exemplo, `GET /api/nodes/{id}/api/runs?limit=20` devolve as últimas 20 execuções do nó, e `POST /api/nodes/{id}/api/containers/nextcloud/backup` faz backup do seu container `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

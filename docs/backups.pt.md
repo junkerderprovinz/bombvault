@@ -32,6 +32,8 @@ Três botões por cima da lista restringem-na:
 
 As entradas que já não estão instaladas mas ainda têm backups ficam à parte em **Não instalado (apenas backups)**. Restaura-as, ou elimina os seus backups para libertar o espaço.
 
+Com [nós](nodes.md), as listas Containers e Pastas têm uma secção para cada nó por baixo das tuas próprias entradas, com a indicação de se o nó está ligado e de quantas entradas tem. **Entradas em** e o nome do nó escondem as entradas da secção e voltam a mostrá-las. O menu de uma entrada oferece **Fazer backup agora**, que inicia o backup dela no nó, e **Abrir**. A sua página lista os backups com **Restaurar** ao lado de cada um, que restaura a entrada no nó. O container do próprio nó não aparece na lista. Vê [As entradas de um nó](nodes.md#entries).
+
 A ação principal da página flutua em baixo à direita: **Fazer backup de tudo agora** inicia uma execução sobre todas as secções ligadas. **Mais** guarda o resto:
 
 - **Selecionar** inicia uma seleção, vê abaixo.

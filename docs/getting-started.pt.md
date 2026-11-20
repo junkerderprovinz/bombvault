@@ -180,6 +180,17 @@ A partir de agora os containers são copiados todas as noites. Bons passos segui
 !!! note "Verificação de integração com o host"
     O cartão **Integração com o host** na visão geral sonda cada montagem e CLI (socket Docker, libvirt, restic, qemu-img, rclone) e comunica quaisquer peças em falta, para que possas confirmar que o container está corretamente ligado antes de depender dele. Fica à espera em **Personalizar** até o adicionares.
 
+## Fazer backup de um VPS como nó {#node}
+
+Um VPS ou outro servidor pequeno não precisa de um BombVault próprio com interface web. Adiciona-o como nó deste, e esta instância trata dos seus backups:
+
+1. Define uma palavra-passe de início de sessão em **Definições, Segurança**, se ainda não o fizeste.
+2. Abre **Instâncias**, escolhe **Adicionar nó** e escreve um nome como `vps-helsinki`.
+3. Escolhe para onde vão os seus backups, por exemplo o servidor recetor desta instância, e quando faz backup.
+4. Copia para o servidor o ficheiro compose que a janela mostra, aponta o seu volume Host Data e o `HOST_SOURCE_ROOT` para os dados de que queres fazer backup e corre `docker compose up -d`.
+
+Assim que o nó responde, o cartão diz **Ligada** e os seus containers aparecem em **Backups**. [Nós](nodes.md) explica tudo passo a passo com um exemplo.
+
 ## Orientar-te {#navigation}
 
 ![As definições como mosaicos, com os cartões do mosaico escolhido ao lado. Cada alteração é escrita no momento em que a fazes.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ A compilação da interface também é necessária para o `go run`. O repositór
 - Garante que uma falha te chega com as **[Notificações](notifications.md)**.
 - Vê quando as coisas correm em **[Agendamentos](schedules.md)**.
 - Leva todos os servidores do teu grupo no telemóvel com a **[Aplicação Android](android.md)**.
+- Faz backup de um VPS a partir daqui com um **[nó](nodes.md)**.
 - Os **[exemplos práticos](guides.md)** percorrem as tarefas mais comuns, e as **[Funcionalidades](features.md)** listam tudo o que o BombVault faz.
 - A clonar uma configuração ou a mudar para uma máquina nova? Leva toda a tua configuração contigo com o cartão **Exportar / importar configurações**. Consulta [Configuração](configuration.md#portable-settings-export-and-import).
 - Encontraste um obstáculo? Consulta a **[Resolução de problemas](troubleshooting.md)**.
