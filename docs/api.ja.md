@@ -1,6 +1,6 @@
 # API と連携
 
-BombVault には、スクリプト、ダッシュボード、ホームオートメーション向けの小さな HTTP API があります。概要に表示されるものと同じ内容を読み取れ、バックアップを開始できます。復元、バックアップの削除、設定など、それ以外はすべて Web 画面にとどまります。
+BombVault には、スクリプト、ダッシュボード、ホームオートメーション向けの小さな HTTP API があります。概要に表示されるものと同じ内容を読み取れ、バックアップを開始できます。復元、バックアップの削除、設定、[ノード](#nodes)など、それ以外はすべて Web 画面にとどまります。
 
 ## トークン {#tokens}
 
@@ -68,6 +68,32 @@ BombVault 自身の自己署名証明書を使う場合は、`--cacert bombvault
 ## OpenAPI {#openapi}
 
 BombVault は、これらのルートの記述を `/api/v1/openapi.json`（OpenAPI 3.1）で提供します。トークンは不要です。Swagger UI、Postman、コードジェネレーターに読み込めます。
+
+## ノード {#nodes}
+
+[ノード](nodes.md)を管理するルートは、上のトークン API ではなく Web 画面に属します。ログインパスワードが設定されている場合、このインスタンスでのサインインによるブラウザーのセッションが必要です。API トークンや MCP キーではどれも開けず、ペアリングしたスマートフォンも届かず、`/api/v1/openapi.json` にも記述されません。ノードの追加、compose ファイルの再表示、ノード自身のルートへの到達は、ログインパスワードが設定されるまで拒否されます。何かを変更するスクリプトは、Web 画面のどこでもそうであるように、`Content-Type: application/json` を送ります。
+
+| ルート | 内容 |
+|---|---|
+| `GET /api/nodes` | すべてのノードと、オンラインかどうか、バージョン、バックアップの送り先、各セクションのプラン、最後のバックアップ、エラー、未処理の異常 |
+| `POST /api/nodes` | `{"name":"vps-helsinki"}` のようにノードを追加し、`compose` 付きで返します。中身は `MODE`、`APP_KEY`、`NODE_HOME`、`NODE_NAME` です |
+| `POST /api/nodes/{id}/compose` | **置き換え**のために、同じ `compose` の値をもう一度返します |
+| `POST /api/nodes/{id}/placement` | ノードのバックアップの送り先を決め、ノードがリポジトリに届いたかをセクションごとに答えます。保存先の場合は `warning` が付きます |
+| `PUT /api/nodes/{id}/schedule` | `{"containers":"daily 03:00","files":"off"}` のようにプランを設定します。省いたセクションはプランが変わりません |
+| `DELETE /api/nodes/{id}` | ノードを解放します。`told` は、ノードがすぐに受け取ったか、戻ったときに受け取るかを示します |
+| `GET /api/nodes/routes` | ホームが要求を中継する、ノード自身のルートの一覧 |
+| `GET`、`POST`、`PATCH /api/nodes/{id}/api/{path}` | そのルートが一覧にあれば、要求をノードのルート `/api/{path}` に中継し、ノードの JSON の答えを返します |
+| `PUT /api/receiver/node-address` | 受信サーバーの**ノード用のアドレス**を設定します。たとえば `{"url":"https://backup.tower.example.org","caPem":""}` です。`url` を空にすると、ノードはそこを使わなくなります |
+
+3 つの送り先：
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+`/api/nodes/{id}/api/...` への要求は最大 32 KiB です。一覧にないルートは `403` を、まだ応答していないノードや解放中のノードは `409` とコード `node-not-adopted` を、つながっていないノードは `502` とコード `node-away` を返します。たとえば `GET /api/nodes/{id}/api/runs?limit=20` はノードの直近 20 件の実行を返し、`POST /api/nodes/{id}/api/containers/nextcloud/backup` はノードのコンテナ `nextcloud` をバックアップします。
 
 ## Home Assistant {#home-assistant}
 
