@@ -202,7 +202,7 @@ function PlanRow({
       )}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <span className="min-w-0 flex-1 basis-48 text-xs text-carbon-textMuted">{lastRunLine(plan, t)}</span>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+        <div className="flex min-w-0 flex-wrap justify-end gap-2">
           <Button
             label={t(open ? "common.done" : "common.edit")}
             labelKey={open ? "common.done" : "common.edit"}
