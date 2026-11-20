@@ -190,7 +190,7 @@ export function DraftField({
         className={`w-md max-w-full ${FIELD} font-mono text-start`}
       />
       {examples.length > 0 && (
-        <span className="flex w-full flex-wrap justify-end gap-1.5">
+        <span data-examples className="flex w-full flex-wrap justify-end gap-1.5">
           {examples.map((e) => (
             <Badge
               key={e.value}
@@ -467,7 +467,7 @@ export function KeyInstall({ draft }: { draft: DestinationDraftState }) {
   }
 
   return (
-    <div data-new="storagebox-key-install" className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+    <div data-new="storagebox-key-install" className="glim-form-sub flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <Rows>
         <SettingRow
           label={t("dest.keyInstall.password")}
@@ -516,7 +516,7 @@ export function KeyInstall({ draft }: { draft: DestinationDraftState }) {
 export function MoreSettings({ children }: { children: ReactNode }) {
   const { t } = useT();
   return (
-    <section aria-label={t("dest.more")} className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+    <section aria-label={t("dest.more")} className="glim-form-sub flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
         {t("dest.more")}
       </span>

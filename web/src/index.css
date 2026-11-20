@@ -2311,15 +2311,30 @@ body {
    one edge. A long label wraps inside its column. On a phone the label stands
    over its field. */
 .glim-form-rows .glim-form-row {
+  --form-label: 12rem;
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, var(--form-label)) minmax(0, 1fr);
   align-items: center;
   column-gap: 1rem;
 }
-.glim-form-rows .glim-form-row > :nth-child(2) { justify-self: end; }
+/* Every control starts on the field edge, a text field runs to the end of the
+   row, and what stands under a field, such as its suggested values, starts
+   on the same edge. */
+.glim-form-rows .glim-form-row > :nth-child(2) {
+  justify-self: stretch;
+  justify-content: flex-start;
+}
+.glim-form-rows .glim-form-row > :nth-child(2) > span.flex { justify-content: flex-start; }
+.glim-form-rows .glim-form-row > :nth-child(2):is(input, textarea, .relative),
+.glim-form-rows .glim-form-row > :nth-child(2) > :is(input, textarea, .relative) { width: 100%; }
+/* A field's suggested values stand on the step card's surface, so they take
+   the fields' step to read as choices. */
+.glim-form-rows [data-examples] > .bg-carbon-surface2:not(:hover) { background-color: var(--carbon-surface3); }
+/* A box of fields inside the form, such as its more settings, is inset by its
+   padding, so its label column gives that back to keep the field edge. */
+.glim-form-rows .glim-form-sub .glim-form-row { --form-label: calc(12rem - 0.75rem); }
 @media (max-width: 39.99rem) {
   .glim-form-rows .glim-form-row { grid-template-columns: minmax(0, 1fr); }
-  .glim-form-rows .glim-form-row > :nth-child(2) { justify-self: stretch; }
 }
 .glim-pick-window:not(.glim-pick-window--form) > .glim-window-body { overflow: hidden; }
 .glim-pick-window .glim-provider-pick .glim-readme-btn-unit {

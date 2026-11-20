@@ -110,30 +110,32 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
         </>
       }
     >
-      {shares && (
-        <p className="text-xs text-carbon-textMuted">
-          {t("storage.conn.sharedSignIn")
-            .replaceAll("{name}", () => credSetLabel(t, shares))
-            .replace("{signIns}", () => t("signIns.title"))}
-        </p>
-      )}
-      <Rows>{fields.main.map(field)}</Rows>
-      {browsable && (
-        <RemoteFolderBrowser
-          label={t("storage.folder")}
-          hint={t("storage.add.folderTip")}
-          value={folder}
-          onChange={setDir}
-          provider={provider.id}
-          settings={{ ...stored.values, ...typed }}
-          destination={provider.route === "rclone" ? location.id.replace(/^destination:/, "") : undefined}
-          // The server fills in a remote's hidden values from its config,
-          // but not a sign-in's secret.
-          needsSecret={provider.route !== "rclone" && stored.hidden.some((name) => !typed[name])}
-        />
-      )}
-      {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}
-      <VerdictLine verdict={test.verdict} />
+      <div className="glim-form-rows flex flex-col gap-6">
+        {shares && (
+          <p className="text-xs text-carbon-textMuted">
+            {t("storage.conn.sharedSignIn")
+              .replaceAll("{name}", () => credSetLabel(t, shares))
+              .replace("{signIns}", () => t("signIns.title"))}
+          </p>
+        )}
+        <Rows>{fields.main.map(field)}</Rows>
+        {browsable && (
+          <RemoteFolderBrowser
+            label={t("storage.folder")}
+            hint={t("storage.add.folderTip")}
+            value={folder}
+            onChange={setDir}
+            provider={provider.id}
+            settings={{ ...stored.values, ...typed }}
+            destination={provider.route === "rclone" ? location.id.replace(/^destination:/, "") : undefined}
+            // The server fills in a remote's hidden values from its config,
+            // but not a sign-in's secret.
+            needsSecret={provider.route !== "rclone" && stored.hidden.some((name) => !typed[name])}
+          />
+        )}
+        {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}
+        <VerdictLine verdict={test.verdict} />
+      </div>
     </InstanceWindow>
   );
 }
