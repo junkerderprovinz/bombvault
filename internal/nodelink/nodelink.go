@@ -140,3 +140,13 @@ func (s *memStore) Save(b []byte) error {
 	s.raw = bytes.Clone(b)
 	return nil
 }
+
+// Online reports whether the other end can be called now.
+func (l *Link) Online() bool {
+	for _, m := range l.g.Members() {
+		if m.ID == l.peer && m.Online() {
+			return true
+		}
+	}
+	return false
+}

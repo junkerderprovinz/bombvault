@@ -211,3 +211,25 @@ func waitFor(t *testing.T, what string, ok func() bool) {
 		time.Sleep(25 * time.Millisecond)
 	}
 }
+
+func TestALinkSaysWhetherTheOtherEndIsThere(t *testing.T) {
+	url, _ := startRelay(t)
+	appKey := strings.Repeat("9", 64)
+	home, err := Open(Config{NodeKey: appKey, Seed: homeSeed, Relay: group.ModeOwn, RelayURL: url})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = home.Close() })
+	if home.Online() {
+		t.Error("home sees a node that never came")
+	}
+	node, err := Open(Config{NodeKey: appKey, Home: homeKey(t), Relay: group.ModeOwn, RelayURL: url})
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "home to see the node", home.Online)
+	if err := node.Close(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "home to see the node gone", func() bool { return !home.Online() })
+}
