@@ -208,6 +208,26 @@ Startskärmen säger varför på serverns kort:
 - **Inloggning behövs:** en server som lagts till med sin adress frågar efter lösenordet. Se även [En telefon hamnar på inloggningssidan](#a-phone-lands-on-the-login-page).
 - **Nyckeln ändrades:** startskärmen visar den nya nyckelns fingeravtryck, och sidan öppnas först när du litar på den. Se [Borta från hemmet](android.md#away).
 
+## En nod står kvar på "Väntar på noden" {#node-waiting}
+
+Noden har inte svarat sin hemmainstans än. Öppna dess containerlogg på nodens server (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** följt av hemmainstansens id: noden körs och väntar på reläet. Kontrollera att servern når reläets adress. Anslutningen går ut från noden, så den behöver ingen öppen port.
+- **`NODE_HOME is not set`**: compose-filen har tappat sina värden. Välj **Ersätt** på nodens kort, kopiera filen igen och kör `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: de två värdena kommer från olika noder. Kopiera båda från samma kort.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: en annan hemmainstans har tagit hand om noden. Släpp den där först, eller lägg till servern här som en ny nod med en ny compose-fil.
+- **`MODE=... is neither full nor node`**: sätt `MODE: node`.
+
+## En nod når inte sina repositorier {#node-reach}
+
+Efter att du valt ett mål säger hemmainstansen per avsnitt om noden öppnade sitt repositorium, till exempel **Noden når inte arkivet för Containers** med orsaken från restic. Kontrollera från nodens server att adressen svarar. På mottagarservern är det **Adress för noder**: en omvänd proxy måste skicka den vidare till rest-servern, och en server med ett eget certifikat behöver det certifikatet under **Certifikat**. På ett lagringsmål kontrollerar du inloggningen som skapades för noden. Välj sedan **Ändra mål** och **Spara** igen. Se [Vart säkerhetskopiorna går](nodes.md#placement).
+
+För en nod som behåller sina säkerhetskopior själv nekas en port som en annan container på noden håller, med den containerns namn, så välj en annan. När hemmainstansen inte kan hämta, släpp igenom porten i nodens brandvägg.
+
+## En släppt nod kommer inte tillbaka {#node-released}
+
+En släppt nod tar inte emot någon hemmainstans igen med sin gamla `APP_KEY`, och dess mapp `config` minns att den släpptes. Lägg till servern som en ny nod och starta den med den nya compose-filen och en tom mapp `config`. Dess gamla säkerhetskopior ligger kvar där de var, liksom varje kopia som hemmainstansen hämtat.
+
 ## En annan användare kan inte läsa det lokala repositoriet {#repository-permissions}
 
 Det lokala repositoriet förblir läsbart för andra användare, till exempel en synkanvändare över SMB. Före 10.4.1 kunde filer som en rensning, tagg, hämtning, avsnittsflytt, radering eller stackbackup skrev förbli oläsbara till nästa natt. Uppdatera BombVault, så är de läsbara direkt. Repositoriet för auto-säkerhetskopian förblir läsbart bara för root, med avsikt, eftersom det innehåller BombVaults inställningar.

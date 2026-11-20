@@ -1,6 +1,6 @@
 # API och integrationer
 
-BombVault har ett litet HTTP-API för skript, instrumentpaneler och hemautomation. Det läser samma saker som översikten visar och kan starta en säkerhetskopia. Allt annat, som återställningar, borttagning av kopior och inställningar, stannar i webbgränssnittet.
+BombVault har ett litet HTTP-API för skript, instrumentpaneler och hemautomation. Det läser samma saker som översikten visar och kan starta en säkerhetskopia. Allt annat, som återställningar, borttagning av kopior, inställningar och [noder](#nodes), stannar i webbgränssnittet.
 
 ## Token {#tokens}
 
@@ -68,6 +68,32 @@ Starter följer samma gränser som [starter via MCP](mcp.md#starting-backups): 1
 ## OpenAPI {#openapi}
 
 BombVault levererar en beskrivning av de här rutterna på `/api/v1/openapi.json` (OpenAPI 3.1). Den kräver inget token. Läs in den i Swagger UI, Postman eller en kodgenerator.
+
+## Noder {#nodes}
+
+Rutterna som sköter [noder](nodes.md) hör till webbgränssnittet, inte till token-API:et ovan. Med ett inloggningslösenord satt kräver de en webbläsarsession från en inloggning på den här instansen. En API-token eller en MCP-nyckel öppnar ingen av dem, parkopplade telefoner når dem inte, och `/api/v1/openapi.json` beskriver dem inte. Att lägga till en nod, visa dess compose-fil igen och nå en nods egna rutter nekas tills ett inloggningslösenord är satt. Ett skript som ändrar något skickar `Content-Type: application/json`, som överallt i webbgränssnittet.
+
+| Rutt | Vad den gör |
+|---|---|
+| `GET /api/nodes` | Varje nod med om den är online, dess version, vart dess säkerhetskopior går, schemat för varje avsnitt, dess senaste säkerhetskopia, dess fel och dess öppna avvikelser |
+| `POST /api/nodes` | Lägger till en nod, som `{"name":"vps-helsinki"}`, och returnerar den med `compose`: `MODE`, `APP_KEY`, `NODE_HOME` och `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Returnerar samma `compose`-värden igen, för **Ersätt** |
+| `POST /api/nodes/{id}/placement` | Skickar nodens säkerhetskopior till ett mål och svarar per avsnitt om noden nådde sitt repositorium, med en `warning` för ett lagringsmål |
+| `PUT /api/nodes/{id}/schedule` | Ställer in scheman, som `{"containers":"daily 03:00","files":"off"}`. Ett avsnitt som utelämnas behåller sitt schema |
+| `DELETE /api/nodes/{id}` | Släpper noden. `told` säger om den fick veta det nu eller får veta det när den är tillbaka |
+| `GET /api/nodes/routes` | Listan över nodens egna rutter som hemmainstansen skickar vidare begäranden till |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Skickar vidare begäran till nodens rutt `/api/{path}` när den rutten finns på listan, och returnerar nodens JSON-svar |
+| `PUT /api/receiver/node-address` | Ställer in mottagarserverns **Adress för noder**, som `{"url":"https://backup.tower.example.org","caPem":""}`. En tom `url` tar bort noderna från den |
+
+De tre målen:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+En begäran till `/api/nodes/{id}/api/...` bär högst 32 KiB. En rutt som inte finns på listan svarar `403`, en nod som inte har svarat än eller som håller på att släppas `409` med koden `node-not-adopted`, och en nod som är borta `502` med koden `node-away`. Till exempel returnerar `GET /api/nodes/{id}/api/runs?limit=20` nodens 20 senaste körningar, och `POST /api/nodes/{id}/api/containers/nextcloud/backup` säkerhetskopierar dess container `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

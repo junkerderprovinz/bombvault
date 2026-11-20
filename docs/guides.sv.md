@@ -34,4 +34,5 @@ Vart och ett av de här går igenom en verklig uppgift från början till slut, 
 ## Flera servrar {#several-servers}
 
 - [Parkoppla två Unraid-lådor](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): två servrar som håller varandras kopior, och ingen kan radera den andras säkerhetskopior.
+- [En VPS som säkerhetskopierar till mottagarservern](nodes.md#example-vps): en nod med sina containrar, styrd från hemmainstansen, utan öppen port på VPS:en.
 - [Ett kort och en avisering i Home Assistant](api.md#home-assistant-example): BombVault på en instrumentpanel, med ett meddelande när en säkerhetskopiering misslyckas.
