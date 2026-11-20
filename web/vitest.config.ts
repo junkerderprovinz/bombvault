@@ -5,6 +5,8 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // The compose file of a node lives in deploy/ and the page reads it from there.
+  server: { fs: { allow: [".."] } },
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],

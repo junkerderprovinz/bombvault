@@ -37,6 +37,7 @@ let initial: ReceiverServer | null = null;
 const sent: ReceiverServerInput[] = [];
 const revoked: string[] = [];
 const hosts: string[] = [];
+const nodeAddresses: string[] = [];
 let forgotten = 0;
 
 vi.mock("../../lib/api", async (importOriginal) => {
@@ -55,6 +56,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     setReceiverServerHost: (host: string) => {
       hosts.push(host);
       return Promise.resolve({ ok: true, server: { ...server, host, url: `http://${host}:8001`, needsHost: false } });
+    },
+    setReceiverNodeAddress: (url: string) => {
+      nodeAddresses.push(url);
+      return Promise.resolve({ ok: true, nodeUrl: url });
     },
     revokeReceiverLogin: (memberId: string) => {
       revoked.push(memberId);
@@ -90,6 +95,7 @@ afterEach(() => {
   sent.length = 0;
   revoked.length = 0;
   hosts.length = 0;
+  nodeAddresses.length = 0;
   closed.length = 0;
   forgotten = 0;
 });
@@ -135,7 +141,8 @@ describe("ReceiverServerWindow", () => {
     expect(screen.getByText(en["receiver.server.needsHost"])).toBeTruthy();
     expect(screen.queryByText(en["receiver.server.noAddress"])).toBeNull();
 
-    const save = screen.getByRole("button", { name: en["settings.save"] }) as HTMLButtonElement;
+    // The first Save is the address for members, the second the one for nodes.
+    const save = screen.getAllByRole("button", { name: en["settings.save"] })[0] as HTMLButtonElement;
     expect(save.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(en["receiver.server.host"]), { target: { value: " 192.168.1.30 " } });
     await act(async () => {
@@ -208,5 +215,20 @@ describe("ReceiverServerWindow", () => {
       fireEvent.click(buttons[buttons.length - 1]);
     });
     expect(forgotten).toBe(1);
+  });
+
+  it("takes the address nodes reach it at and refuses plain http to the internet", async () => {
+    initial = server;
+    await renderWindow();
+    const field = screen.getByLabelText(en["nodes.address"]);
+    fireEvent.change(field, { target: { value: "http://backup.example.org:8000" } });
+    expect(screen.getByRole("alert").textContent).toBe(en["nodes.addressPlain"]);
+    fireEvent.change(field, { target: { value: "https://backup.example.org" } });
+    expect(screen.queryByRole("alert")).toBeNull();
+    const save = screen.getAllByRole("button", { name: en["settings.save"] }).find((b) => !(b as HTMLButtonElement).disabled)!;
+    await act(async () => {
+      fireEvent.click(save);
+    });
+    expect(nodeAddresses).toEqual(["https://backup.example.org"]);
   });
 });

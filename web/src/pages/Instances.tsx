@@ -13,7 +13,7 @@ import { InfoBubble } from "../components/InfoBubble";
 import { PageAction, PageActions } from "../components/PageActions";
 import { PageTitle } from "../components/PageTitle";
 import { IconEye, IconInfo, IconKey, IconLink } from "../components/glyphs";
-import { IconReceiver } from "../components/navGlyphs";
+import { IconAdd, IconReceiver } from "../components/navGlyphs";
 import { useReplicaServers } from "../components/zfs/replica/replicaStore";
 import { getSettings } from "../lib/api";
 import type { DomainStatus, RoleSection, SelfRoles, Settings } from "../lib/api";
@@ -25,7 +25,9 @@ import { ForgetKeyButton } from "./instances/ForgetKeyButton";
 import { FortressAppsSection } from "./settings/pairing/FortressSection";
 import { Facts, Figure, InstanceCard, InstanceMark } from "./instances/InstanceCard";
 import { NetPicture, useNetHover } from "./instances/NetPicture";
+import { AddNodeWindow } from "./instances/AddNodeWindow";
 import { KeyDepositWindow } from "./instances/KeyDepositWindow";
+import { NodeCards } from "./instances/NodeCards";
 import { PeerDetails } from "./instances/PeerDetails";
 import { ReceiverServerWindow } from "./instances/ReceiverServerWindow";
 import { RemoveInstanceButton } from "./instances/RemoveInstanceButton";
@@ -38,6 +40,7 @@ import { ZFSServerCards } from "./instances/ZFSServerCards";
 import { buildInstances, protectionFigures, ROLE_KINDS, unreachableToKeep, type Instance, type Presence, type RoleKind, type RoleState } from "./instances/instancesModel";
 import { groupNodes } from "./instances/netModel";
 import { useInstances, type InstancesState, type Modules, type Self } from "./instances/useInstances";
+import { useNodes } from "../lib/useNodes";
 import { useSharedRepo } from "./instances/useSharedRepo";
 
 /** The figures under an instance's name. Only this server knows its open
@@ -321,7 +324,9 @@ export function Instances() {
   const [detailsOf, setDetailsOf] = useState<string | null>(null);
   const [serverOpen, setServerOpen] = useState(false);
   const [depositsOpen, setDepositsOpen] = useState(false);
+  const [addingNode, setAddingNode] = useState(false);
   const { hot, handlers } = useNetHover();
+  const { nodes: ownNodes, reload: reloadNodes } = useNodes();
 
   useEffect(() => {
     getSettings()
@@ -385,7 +390,8 @@ export function Instances() {
   const ownsShared = below && state.receiverServer && (shared.loaded || shared.error !== null);
   const inShared = below && shared.memberships.length > 0;
   // The hue goes on from the last card of the grid.
-  const hueAfterGrid = 1 + servers.length + zfsCards + phones.length;
+  const nodeIndex = 1 + servers.length + zfsCards;
+  const hueAfterGrid = nodeIndex + ownNodes.length + phones.length;
   const memberHue = hueAfterGrid + (ownsShared ? 1 : 0);
   const unplacedHue = memberHue + (inShared ? 1 : 0);
 
@@ -441,7 +447,7 @@ export function Instances() {
               />
             )}
             {servers.map((inst, i) => peerCard(inst, i + 1))}
-            {shown.length === 0 && (
+            {shown.length === 0 && ownNodes.length === 0 && (
               <div
                 data-instance="none"
                 className="flex flex-col items-center justify-center gap-3 rounded-card border-[1.5px] border-dashed border-carbon-border px-5 py-7 text-center"
@@ -451,7 +457,8 @@ export function Instances() {
               </div>
             )}
             {modules.zfs && <ZFSServerCards replicas={state.data.replicas} firstIndex={servers.length + 1} hot={hot} />}
-            {phones.map((inst, i) => peerCard(inst, servers.length + zfsCards + i + 1))}
+            <NodeCards nodes={ownNodes} firstIndex={nodeIndex} onChanged={() => void reloadNodes()} />
+            {phones.map((inst, i) => peerCard(inst, nodeIndex + ownNodes.length + i))}
           </div>
           <FortressAppsSection hueStart={hueAfterGrid} />
         </div>
@@ -481,8 +488,10 @@ export function Instances() {
         />
       )}
       {depositsOpen && <KeyDepositWindow state={state} onClose={() => setDepositsOpen(false)} />}
+      {addingNode && <AddNodeWindow onClose={() => setAddingNode(false)} onChanged={() => void reloadNodes()} />}
       {modules && !state.loading && (
         <PageActions>
+          <PageAction label={t("nodes.add")} glyph={<IconAdd />} onClick={() => setAddingNode(true)} />
           <span data-new="instances-pair" className="flex">
             <PageAction primary label={t("pairing.title")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
           </span>
