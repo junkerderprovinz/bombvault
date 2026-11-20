@@ -14,7 +14,8 @@ import { CheckDraw } from "../../components/CheckDraw";
 import { StepBar } from "../../components/restore/StepBar";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { ComposeView } from "./NodeCompose";
-import { DEFAULT_NODE_SCHEDULE, NodeSchedule } from "./NodeSchedule";
+import { parseCadenceString } from "../../components/CadenceBuilder";
+import { TimePicker } from "../../components/TimePicker";
 import { InstanceWindow } from "./InstanceWindow";
 import {
   PlacementFields,
@@ -48,7 +49,9 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
   const [choice, setChoice] = useState<PlacementChoice | null>(null);
   const [adopted, setAdopted] = useState(false);
   const [placed, setPlaced] = useState<Placed>({ state: "waiting" });
-  const [schedule, setSchedule] = useState(DEFAULT_NODE_SCHEDULE);
+  // The node arrives with both sections daily at the time this instance
+  // picked for it, half an hour after its own containers.
+  const [startAt, setStartAt] = useState("");
 
   useEffect(() => {
     if (sources && !choice) setChoice(firstChoice(sources));
@@ -92,6 +95,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
       const res = await addNode(name.trim());
       if (res.node && res.compose) {
         setCreated({ node: res.node, compose: res.compose });
+        setStartAt(parseCadenceString(res.node.containersCadence).time);
         onChanged();
         setStep(2);
         return;
@@ -110,7 +114,8 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
     setBusy(true);
     setError(null);
     try {
-      const saved = await setNodeSchedule(created.node.id, schedule).catch((err: unknown) => ({
+      const daily = `daily ${startAt}`;
+      const saved = await setNodeSchedule(created.node.id, { containers: daily, files: daily }).catch((err: unknown) => ({
         ok: false as const,
         error: err instanceof Error ? err.message : undefined,
       }));
@@ -192,7 +197,13 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
       )}
 
       {step === 2 && sources && choice && <PlacementFields choice={choice} sources={sources} onChange={setChoice} />}
-      {step === 2 && sources && <NodeSchedule value={schedule} onChange={(section, cadence) => setSchedule({ ...schedule, [section]: cadence })} />}
+      {step === 2 && sources && startAt && (
+        <Rows>
+          <SettingRow label={t("nodes.startAt")} hint={t("nodes.startAtTip")} narrow>
+            <TimePicker value={startAt} onChange={setStartAt} label={t("nodes.startAt")} />
+          </SettingRow>
+        </Rows>
+      )}
       {step === 2 && !sources && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
 
       {step === 3 && created && (

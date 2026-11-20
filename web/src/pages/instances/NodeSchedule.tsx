@@ -8,17 +8,13 @@ import { useToast } from "../../lib/toast";
 
 const NODE_SECTIONS: NodeSection[] = ["containers", "files"];
 
-/** What the window offers a new node, half an hour apart so the two sections
- *  do not wait for each other. */
-export const DEFAULT_NODE_SCHEDULE: Record<NodeSection, string> = { containers: "daily 02:00", files: "daily 02:30" };
-
 function scheduleOf(node: NodeView): Record<NodeSection, string> {
   return { containers: node.containersCadence, files: node.filesCadence };
 }
 
 /** NodeSchedule is when this instance starts the backups of each section of a
  *  node, as one schedule button per section. */
-export function NodeSchedule({
+function NodeSchedule({
   value,
   onChange,
 }: {
