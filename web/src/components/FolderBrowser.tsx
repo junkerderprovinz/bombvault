@@ -167,7 +167,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
           directory. Rows set min-h-8 because .glim-btn-xs sets no height, and
           !justify-start because .glim-btn centres with a higher specificity. */}
       {!loading && !manualFallback && (
-        <div className="flex flex-col gap-0.5 h-[clamp(12rem,55vh,32rem)] overflow-y-auto">
+        <div className={`flex flex-col gap-0.5 overflow-y-auto ${inDialog ? "h-[clamp(8rem,30dvh,20rem)]" : "h-[clamp(10rem,45dvh,32rem)]"}`}>
           {browsePath !== "" && (
             <Button
               // The file-manager convention, not a phrase to translate.
@@ -335,7 +335,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               role="dialog"
               aria-modal="true"
               aria-label={label}
-              className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl flex flex-col gap-2"
+              className="w-full max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-card bg-carbon-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl flex flex-col gap-2"
             >
               {panel}
             </div>

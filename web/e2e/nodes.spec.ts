@@ -159,6 +159,14 @@ test("a node's folder sets are added and edited in its section through the node"
   await add.getByRole("button", { name: "srv", exact: true }).click();
   await add.getByRole("button", { name: "photos", exact: true }).click();
   await expect(add.getByRole("button", { name: t("folder.newFolder") })).toHaveCount(0);
+  // The window's own Cancel and Save stick to its bottom, so on a phone the
+  // picker's button has to clear them without scrolling.
+  const use = add.getByRole("button", { name: t("folder.use") });
+  expect(await use.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.bottom - 2);
+    return hit !== null && el.contains(hit);
+  })).toBe(true);
   await add.getByRole("button", { name: t("folder.use") }).click();
   await expect(add.getByPlaceholder("user/appdata")).toHaveValue("srv/photos");
   expect((await overflow(page)).pan).toBe(0);
