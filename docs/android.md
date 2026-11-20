@@ -54,6 +54,10 @@ The phone gets its own card on the Instances page of every server in the group, 
 
 A phone paired before 10.0.0 starts signing its calls on its first visit after the update, and each server keeps the first key it gets for the phone. If someone else who knows the group's words gets there first while the phone is offline, that server turns the phone away from then on, and the app can no longer open it over the relay. To fix this, sign in to that server in a browser, choose **Forget key** on the phone's card on the Instances page and then **Confirm forget**, and open the app again. The server takes the phone's own key on its next call. If the phone is turned away again, someone else has the words: let every instance **Leave group** and pair them again with new words, as for a lost phone.
 
+## Nodes {#nodes}
+
+[Nodes](nodes.md) are looked after in the web interface. A paired phone's session does not reach them, so the app shows no node cards on the Instances page, no **Nodes** card on the overview and no node sections under **Backups**, and **Add node** answers that it needs a sign-in at the server itself. Open the server in a browser and sign in with the password to add a node, change where its backups go or restore one of its entries.
+
 ## Settings {#settings}
 
 The gear beside the plus opens the app's settings:

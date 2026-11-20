@@ -140,6 +140,10 @@ A database that has only database dumps and no files backup, and whose container
 
 In a [shared repository](offsite-recovery.md#shared-repository) every key opens the backups of all servers, so the Restore page lists the other members under **Other servers**, each with its name, its host, how many entries it has and when its newest backup ran. A host that belongs to no server this one knows shows as **A server this one does not know**. A click opens **Backups of** and the server's name, read-only and with nothing to enter. Folder sets and ZFS datasets go into a folder you choose. Containers and VMs come back as plain files in a folder, because the other server seals their definitions with its own key. This server's own backups in the shared repository are on the **Backups** tab of each entry.
 
+## Nodes {#nodes}
+
+A [node](nodes.md)'s entries are restored from their pages under **Backups**, not from this page. **Restore** beside a backup there restores the entry on the node and replaces what is there now. A copy this instance fetched from a node that [keeps its backups itself](nodes.md#keep-on-node) is listed here under **Other sources**, as [What this server fetched](offsite-recovery.md#restore-what-was-fetched). When the node's server is gone, set the node up again with **Replace** on its card: the same `APP_KEY` and `NODE_HOME` make the new server the same node, and its backups open again. The chapter **Nodes** of the [recovery kit](offsite-recovery.md#recovery-kit) opens them with plain restic as well.
+
 ## After a restore {#after}
 
 A copy restored next to the original is listed under **Backups** as excluded, so it does not count as an open task. Add it to the schedule if you want to keep it. A container or VM that was running when it was backed up comes back running, one that was stopped stays stopped. On Unraid a restored container reappears in the Docker tab as a normal, editable app, and a VM in the VM Manager with its disks and NVRAM attached.

@@ -180,6 +180,17 @@ From now on the containers are backed up every night. Good next steps, in this o
 !!! note "Host integration check"
     The **Host Integration** card on the overview probes every mount and CLI (Docker socket, libvirt, restic, qemu-img, rclone) and reports any missing pieces, so you can confirm the container is wired up correctly before you rely on it. It waits under **Customize** until you add it.
 
+## Back up a VPS as a node {#node}
+
+A VPS or another small server needs no BombVault with a web interface of its own. Add it as a node of this one, and this instance runs its backups:
+
+1. Set a login password under **Settings, Security**, if you have not yet.
+2. Open **Instances**, choose **Add node** and type a name such as `vps-helsinki`.
+3. Pick where its backups go, such as this instance's receiving server, and when it backs up.
+4. Copy the compose file the window shows to the server, point its Host Data volume and `HOST_SOURCE_ROOT` at the data to back up, and run `docker compose up -d`.
+
+Once the node answers, its card says **Connected** and its containers show up under **Backups**. [Nodes](nodes.md) walks through it with an example.
+
 ## Finding your way {#navigation}
 
 ![Settings as tiles, with the cards of the chosen tile beside them. Every change is written as you make it.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ The interface build is needed for `go run` too. The repository tracks only an em
 - Make sure a failure reaches you with **[Notifications](notifications.md)**.
 - Check when things run under **[Schedules](schedules.md)**.
 - Put every server of your group on your phone with the **[Android app](android.md)**.
+- Back up a VPS from here with a **[node](nodes.md)**.
 - The **[worked examples](guides.md)** walk through the common jobs, and **[Features](features.md)** lists everything BombVault does.
 - Cloning a setup or moving to a new box? Carry your whole configuration over with the **Export / import settings** card. See [Configuration](configuration.md#portable-settings-export-and-import).
 - Hit a snag? See **[Troubleshooting](troubleshooting.md)**.

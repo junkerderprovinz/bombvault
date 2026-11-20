@@ -208,6 +208,26 @@ The start screen says why on the server's card:
 - **Sign-in needed:** a server added by its address asks for the password. See also [A phone lands on the login page](#a-phone-lands-on-the-login-page).
 - **The key changed:** the start screen shows the new key's fingerprint, and the page opens only after you trust it. See [Away from home](android.md#away).
 
+## A node stays at "Waiting for the node" {#node-waiting}
+
+The node has not answered home yet. Open its container log on the node's server (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** followed by home's id: the node runs and waits on the relay. Check that the server can reach the relay's address. The connection goes out from the node, so it needs no open port.
+- **`NODE_HOME is not set`**: the compose file lost its values. Choose **Replace** on the node's card, copy the file again and run `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: the two values come from different nodes. Copy both from the same card.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: the node was taken on by another home. Release it there first, or add the server here as a new node with a new compose file.
+- **`MODE=... is neither full nor node`**: set `MODE: node`.
+
+## A node cannot reach its repositories {#node-reach}
+
+After a placement, home says per section whether the node opened its repository, such as **The node cannot reach the containers repository** with restic's reason. Check from the node's server that the address answers. On the receiving server that is **Address for nodes**: a reverse proxy has to pass it through to the rest-server, and a server with a certificate of its own needs that certificate under **Certificate**. At a storage location, check the sign-in made for the node. Then choose **Edit placement** and **Save** again. See [Where the backups go](nodes.md#placement).
+
+For a node that keeps its backups itself, a port another container holds on the node is refused with that container's name, so pick another one. When home cannot fetch, let the port through the node's firewall.
+
+## A node was released and does not come back {#node-released}
+
+A released node takes no home again with its old `APP_KEY`, and its `config` folder remembers the release. Add the server as a new node, and start it with the new compose file and an empty `config` folder. Its old backups stay where they were, and so does every copy home fetched.
+
 ## Another user cannot read the local repository {#repository-permissions}
 
 The local repository stays readable for other users, such as a sync user over SMB. Before 10.4.1, files that a prune, tag, pull, section move, delete or stack backup wrote could stay unreadable until the next night. Update BombVault, and they are readable right away. The self-backup repository stays readable by root only, on purpose, because it holds BombVault's settings.

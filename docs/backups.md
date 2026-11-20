@@ -32,6 +32,8 @@ Three buttons above the list narrow it down:
 
 Entries that are no longer installed but still have backups stand apart under **Not installed (backups only)**. Restore them, or delete their backups to free the space.
 
+With [nodes](nodes.md), the Containers and Folders lists have a section for each node below your own entries, with whether the node is connected and how many entries it has. **Entries on** and the node's name hides the section's entries and shows them again. An entry's menu offers **Back up now**, which starts its backup on the node, and **Open**. Its page lists its backups with **Restore** beside each, which restores the entry on the node. The node's own container is not listed. See [A node's entries](nodes.md#entries).
+
 The page's main action floats at the bottom right: **Back up everything now** starts a run over every switched-on section. **More** holds the rest:
 
 - **Select** starts a selection, see below.

@@ -16,6 +16,8 @@ Every plan is a button that reads as a sentence, such as *daily at 03:00* or *ev
 
 All times are in the server's time zone. On Unraid that is the system's own. Elsewhere, set `TZ`, or every plan runs in UTC, see [Environment variables](configuration.md#environment-variables).
 
+Home plans the backups of its [nodes](nodes.md) as well, but not here: each node's card on the Instances page has a plan for its containers and one for its folders. A new node starts half an hour after this instance's container backups. See [When nodes back up](nodes.md#schedule).
+
 ## Week {#week}
 
 The **Week** card draws every planned run from Monday to Sunday, one line per day: backups, off-site copies and checks. Point at a stroke to read what starts there. Where three plans start within two hours, the stretch is marked, so you can spread them out.
