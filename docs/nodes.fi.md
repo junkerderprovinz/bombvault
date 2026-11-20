@@ -148,6 +148,8 @@ Kodin vastaanotinvalvonta seuraa myös jokaista solmun repositorya kuolleen mieh
 
 Kohdassa **Varmuuskopiot** Kontit- ja Kansiot-listoissa on osio jokaiselle solmulle omien merkintöjesi alapuolella. Solmun omaa konttia ei listata. Merkinnän valikon **Varmuuskopioi nyt** käynnistää sen varmuuskopion solmulla, ja **Avaa** avaa sen sivun.
 
+Solmun osiossa Kansiot-listassa **Lisää kansiojoukko** lisää solmulle kansiojoukon, ja joukon valikon **Muokkaa** muuttaa sitä. Molemmat avaavat saman ikkunan kuin omille joukoillesi. Ikkunan kansionvalitsin selaa solmun kansioita, mutta ei luo sinne uusia.
+
 ![Solmun vps-falkenstein osio Kontit-listassa: nextcloud, nextcloud-db, caddy ja uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Solmun vps-falkenstein osio Kontit-listassa: nextcloud, nextcloud-db, caddy ja uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

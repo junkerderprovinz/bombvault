@@ -148,6 +148,8 @@ Việc theo dõi của bộ nhận trên home cũng trông chừng từng kho c�
 
 Trong **Bản sao lưu**, danh sách Containers và Thư mục có một phần cho mỗi node, nằm dưới các mục của chính bạn. Container của chính node không có trong đó. **Sao lưu ngay** trong menu của một mục bắt đầu sao lưu mục đó trên node, còn **Mở** mở trang của nó.
 
+Trong phần của một node ở danh sách Thư mục, **Thêm bộ thư mục** thêm một bộ thư mục trên node, còn **Chỉnh sửa** trong menu của một bộ sẽ thay đổi bộ đó. Cả hai mở cùng cửa sổ như với các bộ của chính bạn. Trình chọn thư mục trong đó duyệt các thư mục của node, nhưng không tạo thư mục mới ở đó.
+
 ![Phần của node vps-falkenstein trong danh sách Containers: nextcloud, nextcloud-db, caddy và uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Phần của node vps-falkenstein trong danh sách Containers: nextcloud, nextcloud-db, caddy và uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

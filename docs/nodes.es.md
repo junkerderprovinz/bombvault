@@ -148,6 +148,8 @@ La supervisión del receptor de la instancia base también cuida de cada reposit
 
 En **Copias de seguridad**, las listas Contenedores y Carpetas tienen una sección para cada nodo debajo de tus propios elementos. El contenedor del propio nodo no aparece. **Copiar ahora** en el menú de un elemento inicia su copia en el nodo, y **Abrir** abre su página.
 
+En la sección de un nodo de la lista Carpetas, **Añadir conjunto de carpetas** añade un conjunto de carpetas en el nodo, y **Editar** en el menú de un conjunto lo cambia. Ambos abren la misma ventana que para tus propios conjuntos. El selector de carpetas de esa ventana recorre las carpetas del nodo, pero no crea carpetas nuevas allí.
+
 ![La sección del nodo vps-falkenstein en la lista Contenedores: nextcloud, nextcloud-db, caddy y uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![La sección del nodo vps-falkenstein en la lista Contenedores: nextcloud, nextcloud-db, caddy y uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

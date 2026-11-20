@@ -148,6 +148,8 @@ Ana örneğin alıcı izlemesi, düğümün her deposuna da bir ölü adam anaht
 
 **Yedekler** altında Konteynerler ve Klasörler listeleri, kendi ögelerinin altında her düğüm için bir bölüm içerir. Düğümün kendi konteyneri listede yer almaz. Bir ögenin menüsündeki **Şimdi yedekle** onun yedeğini düğümde başlatır, **Aç** da sayfasını açar.
 
+Klasörler listesinde bir düğümün bölümünde **Klasör seti ekle** düğüme bir klasör seti ekler, bir setin menüsündeki **Düzenle** de onu değiştirir. İkisi de kendi setlerin için açılan pencerenin aynısını açar. Penceredeki klasör seçici düğümün klasörlerine göz atar, ama orada yeni klasör oluşturmaz.
+
 ![Konteynerler listesinde vps-falkenstein düğümünün bölümü: nextcloud, nextcloud-db, caddy ve uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Konteynerler listesinde vps-falkenstein düğümünün bölümü: nextcloud, nextcloud-db, caddy ve uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

@@ -148,6 +148,8 @@ Sledování přijímače na domově hlídá i každý repozitář uzlu, se spín
 
 V **Zálohy** mají seznamy Kontejnery a Složky pod tvými vlastními položkami sekci pro každý uzel. Vlastní kontejner uzlu je vynechaný. **Zálohovat nyní** v nabídce položky spustí její zálohu na uzlu a **Otevřít** otevře její stránku.
 
+V sekci uzlu v seznamu Složky přidá **Přidat sadu složek** sadu složek na uzlu a **Upravit** v nabídce sady ji změní. Obojí otevře stejné okno jako u tvých vlastních sad. Výběr složek v něm prochází složky uzlu, ale nové tam nevytváří.
+
 ![Sekce uzlu vps-falkenstein v seznamu Kontejnery: nextcloud, nextcloud-db, caddy a uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Sekce uzlu vps-falkenstein v seznamu Kontejnery: nextcloud, nextcloud-db, caddy a uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

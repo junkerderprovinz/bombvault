@@ -148,6 +148,8 @@ De ontvangerbewaking van de thuisinstantie houdt ook elk repository van een node
 
 Onder **Back-ups** hebben de lijsten Containers en Mappen onder je eigen items een onderdeel voor elke node. De eigen container van de node staat er niet bij. **Nu back-up maken** in het menu van een item start zijn back-up op de node, en **Openen** opent zijn pagina.
 
+In het onderdeel van een node in de lijst Mappen voegt **Mappenset toevoegen** een mappenset op de node toe, en **Bewerken** in het menu van een set wijzigt die. Beide openen hetzelfde venster als voor je eigen sets. De mappenkiezer daarin bladert door de mappen van de node, maar maakt daar geen nieuwe mappen aan.
+
 ![Het onderdeel van de node vps-falkenstein in de lijst Containers: nextcloud, nextcloud-db, caddy en uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Het onderdeel van de node vps-falkenstein in de lijst Containers: nextcloud, nextcloud-db, caddy en uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

@@ -148,6 +148,8 @@ Hemmainstansens mottagarövervakning tar också hand om varje repositorium för 
 
 Under **Säkerhetskopior** har listorna Containers och Mappar ett avsnitt för varje nod under dina egna poster. Nodens egen container visas inte där. **Säkerhetskopiera nu** i en posts meny startar dess säkerhetskopiering på noden, och **Öppna** öppnar dess sida.
 
+I en nods avsnitt i listan Mappar lägger **Lägg till mappuppsättning** till en mappuppsättning på noden, och **Redigera** i en uppsättnings meny ändrar den. Båda öppnar samma fönster som för dina egna uppsättningar. Mappväljaren i det bläddrar bland nodens mappar men skapar inga nya mappar där.
+
 ![Avsnittet för noden vps-falkenstein i listan Containers: nextcloud, nextcloud-db, caddy och uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Avsnittet för noden vps-falkenstein i listan Containers: nextcloud, nextcloud-db, caddy och uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

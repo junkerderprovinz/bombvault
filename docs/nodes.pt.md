@@ -148,6 +148,8 @@ A monitorização do recetor da instância base trata também de cada repositór
 
 Em **Backups**, as listas Containers e Pastas têm uma secção para cada nó por baixo das tuas próprias entradas. O container do próprio nó não aparece. **Fazer backup agora** no menu de uma entrada inicia o backup dela no nó, e **Abrir** abre a sua página.
 
+Na secção de um nó da lista Pastas, **Adicionar conjunto de pastas** adiciona um conjunto de pastas no nó, e **Editar** no menu de um conjunto altera-o. Ambos abrem a mesma janela que para os teus próprios conjuntos. O seletor de pastas dessa janela percorre as pastas do nó, mas não cria pastas novas lá.
+
 ![A secção do nó vps-falkenstein na lista Containers: nextcloud, nextcloud-db, caddy e uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![A secção do nó vps-falkenstein na lista Containers: nextcloud, nextcloud-db, caddy e uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

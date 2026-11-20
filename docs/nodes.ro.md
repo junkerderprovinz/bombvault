@@ -148,6 +148,8 @@ Supravegherea receptorului pe instanța-mamă se ocupă și de fiecare depozit a
 
 La **Copii de rezervă**, listele Containere și Foldere au câte o secțiune pentru fiecare nod, sub propriile tale elemente. Containerul propriu al nodului este lăsat deoparte. **Copiază acum** din meniul unui element îi pornește copia pe nod, iar **Deschide** îi deschide pagina.
 
+În secțiunea unui nod din lista Foldere, **Adaugă set de foldere** adaugă un set de foldere pe nod, iar **Editează** din meniul unui set îl schimbă. Ambele deschid aceeași fereastră ca pentru propriile tale seturi. Selectorul de foldere din ea răsfoiește folderele nodului, dar nu creează foldere noi acolo.
+
 ![Secțiunea nodului vps-falkenstein din lista Containere: nextcloud, nextcloud-db, caddy și uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Secțiunea nodului vps-falkenstein din lista Containere: nextcloud, nextcloud-db, caddy și uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

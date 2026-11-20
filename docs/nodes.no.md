@@ -148,6 +148,8 @@ Mottakerovervåkingen til hjemmeinstansen passer også på hvert repository for 
 
 Under **Sikkerhetskopier** har listene Kontainere og Mapper et område for hver node under dine egne elementer. Nodens egen container er ikke med. **Sikkerhetskopier nå** i menyen til et element starter sikkerhetskopien på noden, og **Åpne** åpner siden til elementet.
 
+I en nodes område i listen Mapper legger **Legg til mappesett** til et mappesett på noden, og **Rediger** i menyen til et sett endrer det. Begge åpner det samme vinduet som for dine egne sett. Mappevelgeren der blar gjennom nodens mapper, men lager ikke nye mapper der.
+
 ![Området for noden vps-falkenstein i listen Kontainere: nextcloud, nextcloud-db, caddy og uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Området for noden vps-falkenstein i listen Kontainere: nextcloud, nextcloud-db, caddy og uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

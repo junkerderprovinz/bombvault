@@ -148,6 +148,8 @@ La surveillance du récepteur de l'instance d'attache s'occupe aussi de chaque d
 
 Sous **Sauvegardes**, les listes Conteneurs et Dossiers ont une section pour chaque nœud, sous vos propres éléments. Le conteneur du nœud lui-même n'y figure pas. **Sauvegarder maintenant** dans le menu d'un élément lance sa sauvegarde sur le nœud, et **Ouvrir** ouvre sa page.
 
+Dans la section d'un nœud de la liste Dossiers, **Ajouter un jeu de dossiers** ajoute un jeu de dossiers sur le nœud, et **Modifier** dans le menu d'un jeu le change. Les deux ouvrent la même fenêtre que pour vos propres jeux. Le sélecteur de dossiers de cette fenêtre parcourt les dossiers du nœud, mais n'y crée pas de nouveaux dossiers.
+
 ![La section du nœud vps-falkenstein dans la liste Conteneurs : nextcloud, nextcloud-db, caddy et uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![La section du nœud vps-falkenstein dans la liste Conteneurs : nextcloud, nextcloud-db, caddy et uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

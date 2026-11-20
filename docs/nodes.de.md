@@ -148,6 +148,8 @@ Die Empfänger-Überwachung der Heiminstanz kümmert sich außerdem um jedes Rep
 
 Unter **Sicherungen** haben die Listen Container und Ordner unter deinen eigenen Einträgen einen Abschnitt für jeden Knoten. Der eigene Container des Knotens fehlt darin. **Jetzt sichern** im Menü eines Eintrags startet seine Sicherung auf dem Knoten, und **Öffnen** öffnet seine Seite.
 
+Im Abschnitt eines Knotens in der Liste Ordner legst du mit **Ordner-Set hinzufügen** ein Ordner-Set auf dem Knoten an, und mit **Bearbeiten** im Menü eines Sets änderst du es. Beides öffnet dasselbe Fenster wie bei deinen eigenen Sets. Die Ordnerauswahl darin zeigt die Ordner des Knotens, neue Ordner legt sie dort aber nicht an.
+
 ![Der Abschnitt des Knotens vps-falkenstein in der Liste Container: nextcloud, nextcloud-db, caddy und uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Der Abschnitt des Knotens vps-falkenstein in der Liste Container: nextcloud, nextcloud-db, caddy und uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

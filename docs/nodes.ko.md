@@ -148,6 +148,8 @@
 
 **백업**의 컨테이너와 폴더 목록에는 자기 항목 아래에 노드마다 섹션이 있습니다. 노드 자체의 컨테이너는 빠집니다. 항목 메뉴의 **지금 백업**은 노드에서 그 항목의 백업을 시작하고, **열기**는 항목의 페이지를 엽니다.
 
+폴더 목록의 노드 섹션에서 **폴더 세트 추가**는 노드에 폴더 세트를 추가하고, 세트 메뉴의 **편집**은 그 세트를 바꿉니다. 둘 다 자기 세트와 같은 창을 엽니다. 그 창의 폴더 선택기는 노드의 폴더를 둘러보지만 그곳에 새 폴더를 만들지는 않습니다.
+
 ![컨테이너 목록에 있는 노드 vps-falkenstein의 섹션: nextcloud, nextcloud-db, caddy, uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![컨테이너 목록에 있는 노드 vps-falkenstein의 섹션: nextcloud, nextcloud-db, caddy, uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

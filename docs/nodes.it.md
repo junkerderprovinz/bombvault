@@ -148,6 +148,8 @@ Il monitoraggio del ricevitore dell'istanza madre si occupa anche di ogni reposi
 
 In **Backup**, gli elenchi Container e Cartelle hanno una sezione per ogni nodo sotto i tuoi elementi. Il container del nodo stesso non compare. **Esegui backup ora** nel menu di un elemento avvia il suo backup sul nodo, e **Apri** apre la sua pagina.
 
+Nella sezione di un nodo dell'elenco Cartelle, **Aggiungi set di cartelle** aggiunge un set di cartelle sul nodo, e **Modifica** nel menu di un set lo cambia. Entrambi aprono la stessa finestra dei tuoi set. Il selettore di cartelle della finestra sfoglia le cartelle del nodo, ma non vi crea cartelle nuove.
+
 ![La sezione del nodo vps-falkenstein nell'elenco Container: nextcloud, nextcloud-db, caddy e uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![La sezione del nodo vps-falkenstein nell'elenco Container: nextcloud, nextcloud-db, caddy e uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

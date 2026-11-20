@@ -148,6 +148,8 @@
 
 在**备份**下，容器和文件夹列表在你自己的条目下方为每个节点设有一个分区。节点自己的容器不会列出。条目菜单里的**立即备份**会在节点上启动它的备份，**打开**会打开它的页面。
 
+在文件夹列表里节点的分区中，**添加文件夹集**会在节点上添加一个文件夹集，文件夹集菜单里的**编辑**会修改它。两者打开的窗口和你自己的文件夹集一样。其中的文件夹选择器浏览节点的文件夹，但不会在那里新建文件夹。
+
 ![容器列表中节点 vps-falkenstein 的分区：nextcloud、nextcloud-db、caddy 和 uptime-kuma。](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![容器列表中节点 vps-falkenstein 的分区：nextcloud、nextcloud-db、caddy 和 uptime-kuma。](assets/screenshots/nodes/backups-section-light.png#only-light)
 

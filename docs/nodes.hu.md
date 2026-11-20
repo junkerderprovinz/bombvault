@@ -148,6 +148,8 @@ Az anyapéldány fogadófigyelése a csomópont minden tárolójára is ügyel, 
 
 A **Biztonsági mentések** alatt a Konténerek és a Mappák lista a saját elemeid alatt minden csomópontnak külön szakaszt ad. A csomópont saját konténere kimarad. Egy elem menüjében a **Biztonsági mentés most** elindítja a mentését a csomóponton, a **Megnyitás** pedig megnyitja az oldalát.
 
+Egy csomópont szakaszában a Mappák listában a **Mappakészlet hozzáadása** mappakészletet ad a csomóponthoz, egy készlet menüjében a **Szerkesztés** pedig módosítja azt. Mindkettő ugyanazt az ablakot nyitja meg, mint a saját készleteidnél. Az ablak mappaválasztója a csomópont mappáit böngészi, de új mappát nem hoz létre ott.
+
 ![A vps-falkenstein csomópont szakasza a Konténerek listában: nextcloud, nextcloud-db, caddy és uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![A vps-falkenstein csomópont szakasza a Konténerek listában: nextcloud, nextcloud-db, caddy és uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

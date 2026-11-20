@@ -148,6 +148,8 @@ Nadzór odbiornika w domu obejmuje też każde repozytorium węzła, z wyłączn
 
 W **Kopie zapasowe** listy Containers i Foldery mają pod Twoimi elementami sekcję dla każdego węzła. Własny kontener węzła jest pominięty. **Utwórz kopię teraz** w menu elementu uruchamia jego kopię na węźle, a **Otwórz** otwiera jego stronę.
 
+W sekcji węzła na liście Foldery **Dodaj zestaw folderów** dodaje zestaw folderów na węźle, a **Edytuj** w menu zestawu go zmienia. Oba otwierają to samo okno co dla Twoich własnych zestawów. Wybór folderów w tym oknie przegląda foldery węzła, ale nie tworzy tam nowych.
+
 ![Sekcja węzła vps-falkenstein na liście Containers: nextcloud, nextcloud-db, caddy i uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Sekcja węzła vps-falkenstein na liście Containers: nextcloud, nextcloud-db, caddy i uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 

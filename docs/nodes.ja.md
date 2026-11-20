@@ -148,6 +148,8 @@
 
 **バックアップ**のコンテナとフォルダーの一覧には、自分の項目の下に、ノードごとのセクションがあります。ノード自身のコンテナは含まれません。項目のメニューの**今すぐバックアップ**はノードでそのバックアップを開始し、**開く**はその項目のページを開きます。
 
+フォルダーの一覧にあるノードのセクションでは、**フォルダーセットを追加**でノードにフォルダーセットを追加し、セットのメニューの**編集**でそれを変更します。どちらも自分のセットと同じウィンドウを開きます。その中のフォルダー選択はノードのフォルダーを参照しますが、そこに新しいフォルダーは作りません。
+
 ![コンテナの一覧にあるノード vps-falkenstein のセクション。nextcloud、nextcloud-db、caddy、uptime-kuma。](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![コンテナの一覧にあるノード vps-falkenstein のセクション。nextcloud、nextcloud-db、caddy、uptime-kuma。](assets/screenshots/nodes/backups-section-light.png#only-light)
 

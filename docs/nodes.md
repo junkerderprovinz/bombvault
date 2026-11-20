@@ -148,6 +148,8 @@ Home's receiver watch also looks after each repository of a node, with a dead ma
 
 Under **Backups**, the Containers and Folders lists have a section for each node below your own entries. The node's own container is left out. **Back up now** in an entry's menu starts its backup on the node, and **Open** opens its page.
 
+In a node's section of the Folders list, **Add folder set** adds a folder set on the node, and **Edit** in a set's menu changes one. Both open the same window as for your own sets. Its folder picker browses the node's folders but cannot make new ones there.
+
 ![The section of the node vps-falkenstein in the Containers list: nextcloud, nextcloud-db, caddy and uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![The section of the node vps-falkenstein in the Containers list: nextcloud, nextcloud-db, caddy and uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 
