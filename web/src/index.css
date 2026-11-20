@@ -683,12 +683,16 @@
    fixed-height control centres its content, but with the overflow clip here
    that would cut descenders: at 0.875rem the line box is 14px while Segoe UI
    needs about 18.6px. 1.4 clears every face in the stack, and the extra
-   leading splits evenly around the text inside the button's own height. */
+   leading splits evenly around the text inside the button's own height.
+   Arabic hangs its tails and dots lower still, so the box reaches a little
+   past the line and gives that room back. */
 .glim-btn-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.4;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
 }
 
 /* Reactive labels: the label mode that shows only the glyph and reveals the
@@ -716,6 +720,8 @@
   transform-origin: left center;
   /* The same descender clipping as `.glim-btn-label`. */
   line-height: 1.4;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
 }
 
 /* The active item keeps its words in every reactive strip: "which tab am I on"
@@ -2189,6 +2195,56 @@ body {
   opacity: 0.45;
 }
 
+/* A wordmark already says the name, so it spans the button in the name's
+   place, and the SVG centres it on its own aspect. A long one is held to a
+   width that keeps its letters near the size of a name, and a short one
+   grows to the full height. The hidden name still holds the second line
+   where it stands on every tile, and when that line comes in the wordmark
+   rises and shrinks onto the name's line. */
+.glim-readme-btn-mark--wordmark {
+  inset-inline: 0.875rem;
+  width: auto;
+  height: 1.625rem;
+  justify-content: center;
+  transition:
+    translate calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease),
+    scale calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease);
+}
+
+.glim-readme-btn-mark--wordmark svg {
+  max-width: 6rem;
+}
+
+.glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text {
+  inset-inline: 0.875rem;
+  align-items: center;
+  text-align: center;
+}
+
+.glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text > .glim-readme-btn-name {
+  visibility: hidden;
+}
+
+/* The (i) at the end takes the same room off both sides, so the wordmark
+   stays in the middle of the tile. */
+.glim-readme-btn-unit:has(.glim-readme-btn-hint) :is(.glim-readme-btn-mark--wordmark, .glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text) {
+  inset-inline: 1.75rem;
+}
+
+.glim-readme-btn-unit:is(:hover, :focus-within, .glim-readme-btn-unit--note, .glim-readme-btn-soon)
+  > .glim-readme-btn:has(.glim-readme-btn-sub)
+  > .glim-readme-btn-mark--wordmark {
+  translate: 0 calc(-50% - 0.4375rem);
+  scale: 0.53;
+}
+
+@media (hover: none) {
+  .glim-readme-btn:has(.glim-readme-btn-sub) > .glim-readme-btn-mark--wordmark {
+    translate: 0 calc(-50% - 0.4375rem);
+    scale: 0.53;
+  }
+}
+
 /* Without a pointer there is no hover to bring the second line in. */
 @media (hover: none) {
   .glim-readme-btn-name:not(:only-child) {
@@ -2421,7 +2477,9 @@ body {
   width: 5.5rem;
   background-color: var(--tile);
   color: var(--tile-ink);
-  box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
+  /* Only toward the name: its other edges are the row's, where a ring would
+     draw a frame the card shows through. */
+  border-inline-end: 1px solid var(--tile-edge, transparent);
 }
 .glim-connection-mark {
   display: flex;
@@ -4362,19 +4420,19 @@ body {
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
   }
-  .glim-modal-foot > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg),
-  .glim-modal-foot > .glim-tip-wrap > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
+  :is(.glim-modal-foot, .glim-window-actions) > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg),
+  :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
     min-width: var(--btn-w-xs);
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn {
     height: auto;
     min-height: var(--btn-h);
     padding-block: 0.375rem;
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn-key {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn-key {
     min-height: var(--btn-h-key);
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn > .glim-btn-label {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn > .glim-btn-label {
     white-space: normal;
     text-wrap: balance;
     text-align: center;
@@ -4409,7 +4467,7 @@ body {
     gap: 0.75rem;
     padding: 1rem 1.25rem;
   }
-  .glim-modal-foot > .glim-tip-wrap {
+  :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap {
     flex: none;
   }
   .glim-btn--accent {
@@ -4855,12 +4913,21 @@ body {
     gap: 1rem;
     padding-top: 1.75rem;
   }
+  /* A window's buttons wrap as one group, so a start line too long to stand
+     beside all of them takes a line of its own above them, and none of them
+     drops below the others for it. */
   .glim-window-start {
-    flex: 1 1 0;
-    min-width: min(4rem, 100%);
+    flex: 1 1 auto;
     overflow-wrap: anywhere;
     font-size: var(--text-meta);
     color: var(--carbon-text-muted);
+  }
+  .glim-window-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: inherit;
   }
   .glim-pill {
     display: inline-flex;
@@ -4953,7 +5020,7 @@ body {
   .glim-field-row-group {
     display: grid;
     grid-template-columns: repeat(var(--field-columns, 1), max-content minmax(0, 1fr));
-    gap: 0.5rem 1.5rem;
+    gap: 0.25rem 0.75rem;
   }
   .glim-field-row-group > .glim-field-row {
     display: grid;
@@ -5021,6 +5088,70 @@ body {
   .glim-secret-eye > svg {
     width: 0.95rem;
     height: 0.95rem;
+  }
+  /* The second field of a PasswordField with confirm, drawn as a row of its
+     own under the first: its label at the start, the field at the end with
+     the first one's width, and the mismatch line under the field. The line's
+     live region holds no room while it is empty. */
+  .glim-secret-confirm {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem 0.75rem;
+    min-width: 0;
+  }
+  .glim-secret-confirm-label {
+    margin-inline-end: auto;
+    font-size: var(--text-body);
+  }
+  .glim-secret-confirm-box {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .glim-secret-confirm-live {
+    display: block;
+  }
+  .glim-field-row-controls:has(> .glim-secret-confirm) {
+    flex-wrap: wrap;
+  }
+  /* The line under a field whose value it cannot take (FieldError). */
+  .glim-field-error {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.25rem;
+    color: var(--status-fail-text);
+    font-size: var(--text-subline);
+  }
+  .glim-field-error > svg {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+  /* A field's width (FieldWidth), on the input or on the wrapper that holds it.
+     After the wrappers, whose own width it replaces. */
+  .glim-field--short {
+    flex: none;
+    width: 5.5rem;
+  }
+  .glim-field--medium {
+    flex: none;
+    width: 12rem;
+    max-width: 100%;
+  }
+  .glim-field--wide {
+    flex: none;
+    width: 22rem;
+    max-width: 100%;
+  }
+  .glim-field--grow {
+    flex: 1 1 13rem;
+    width: auto;
+    min-width: 0;
   }
   .glim-sr-only {
     position: absolute;
