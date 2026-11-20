@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 )
@@ -86,8 +87,12 @@ func (s *Service) forgetBackupKey() {
 	s.backupKeyMu.Unlock()
 }
 
-// backupKey returns the key the backups are under.
+// backupKey returns the key the backups are under. A node's are always
+// under its own APP_KEY, which home derives their password from.
 func (s *Service) backupKey() (string, error) {
+	if s.cfg.Mode == config.ModeNode {
+		return s.cfg.AppKey, nil
+	}
 	k := s.currentBackupKey()
 	switch {
 	case k.unread:

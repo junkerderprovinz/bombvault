@@ -14,11 +14,15 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
+	"github.com/junkerderprovinz/bombvault/internal/restickey"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
 
@@ -143,5 +147,23 @@ func TestANodeRefusesAPlacementItCannotUse(t *testing.T) {
 	}
 	if kept, _ := n.node.st.NodePlacements(); len(kept) != 0 {
 		t.Errorf("kept %+v from refused placements", kept)
+	}
+}
+
+func TestANodeBacksUpUnderItsOwnAPPKeyWhateverKeyItWasGiven(t *testing.T) {
+	appKey := strings.Repeat("e5", 32)
+	node := newInstance(t, "vps", appKey)
+	node.svc.cfg.Mode = config.ModeNode
+	other := strings.Repeat("f6", 32)
+	enc, err := secret.Encrypt(appKey, []byte(other))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := node.st.SetAdoptedKey(enc, "another server", true); err != nil {
+		t.Fatal(err)
+	}
+	node.svc.forgetBackupKey()
+	if got, want := node.svc.backupPassword(), restickey.Derive(appKey); got != want {
+		t.Errorf("a node backs up with %s, want the password of its own APP_KEY %s", got, want)
 	}
 }
