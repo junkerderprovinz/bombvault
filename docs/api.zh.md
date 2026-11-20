@@ -1,6 +1,6 @@
 # API 与集成
 
-BombVault 提供一个小型 HTTP API，供脚本、仪表盘和家庭自动化使用。它读取概览里显示的内容，也能启动备份。其余的操作，例如恢复、删除备份和更改设置，仍然只在网页界面里进行。
+BombVault 提供一个小型 HTTP API，供脚本、仪表盘和家庭自动化使用。它读取概览里显示的内容，也能启动备份。其余的操作，例如恢复、删除备份、更改设置和[节点](#nodes)，仍然只在网页界面里进行。
 
 ## 令牌 {#tokens}
 
@@ -68,6 +68,32 @@ curl -s -X POST -H "Authorization: Bearer $BOMBVAULT_TOKEN" \
 ## OpenAPI {#openapi}
 
 BombVault 在 `/api/v1/openapi.json` 提供这些路由的描述（OpenAPI 3.1）。不需要令牌。可以把它加载到 Swagger UI、Postman 或代码生成器里。
+
+## 节点 {#nodes}
+
+管理[节点](nodes.md)的路由属于网页界面，而不属于上面的令牌 API。设置了登录密码时，它们需要在此实例上登录得到的浏览器会话。API 令牌和 MCP 密钥都打不开它们，已配对的手机访问不到它们，`/api/v1/openapi.json` 也不描述它们。在设置登录密码之前，添加节点、再次显示它的 compose 文件以及访问节点自身的路由都会被拒绝。会更改内容的脚本要发送 `Content-Type: application/json`，和网页界面的其他地方一样。
+
+| 路由 | 作用 |
+|---|---|
+| `GET /api/nodes` | 每个节点，以及它是否在线、版本、备份去向、每个分区的计划、上一次备份、错误和未处理的异常 |
+| `POST /api/nodes` | 添加一个节点，例如 `{"name":"vps-helsinki"}`，并连同 `compose` 一起返回：`MODE`、`APP_KEY`、`NODE_HOME` 和 `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | 为**替换**再次返回同样的 `compose` 值 |
+| `POST /api/nodes/{id}/placement` | 为节点的备份设定去向，并按分区回答节点是否访问到了它的仓库，存储位置会附带 `warning` |
+| `PUT /api/nodes/{id}/schedule` | 设置计划，例如 `{"containers":"daily 03:00","files":"off"}`。未写出的分区保留原计划 |
+| `DELETE /api/nodes/{id}` | 释放节点。`told` 表示节点是现在就得知了，还是等它回来后才得知 |
+| `GET /api/nodes/routes` | 主实例会转发请求的节点自身路由列表 |
+| `GET`、`POST`、`PATCH /api/nodes/{id}/api/{path}` | 当该路由在列表上时，把请求转发到节点的路由 `/api/{path}`，并返回节点的 JSON 应答 |
+| `PUT /api/receiver/node-address` | 设置接收服务器的**节点使用的地址**，例如 `{"url":"https://backup.tower.example.org","caPem":""}`。`url` 为空时节点不再使用它 |
+
+三种去向：
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+发往 `/api/nodes/{id}/api/...` 的请求最多 32 KiB。不在列表上的路由返回 `403`，尚未应答或正在释放的节点返回 `409` 和代码 `node-not-adopted`，不在线的节点返回 `502` 和代码 `node-away`。例如，`GET /api/nodes/{id}/api/runs?limit=20` 返回节点最近的 20 次运行，`POST /api/nodes/{id}/api/containers/nextcloud/backup` 备份它的容器 `nextcloud`。
 
 ## Home Assistant {#home-assistant}
 
