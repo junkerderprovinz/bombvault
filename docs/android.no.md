@@ -53,6 +53,10 @@ Telefonen får sitt eget kort på Instanser-siden på hver server i gruppen, mer
 
 En telefon som ble paret før 10.0.0, begynner å signere kallene sine ved første besøk etter oppdateringen, og hver server beholder den første nøkkelen den får for telefonen. Hvis noen andre som kjenner gruppens ord, kommer først mens telefonen er frakoblet, avviser den serveren telefonen fra da av, og appen kan ikke lenger åpne den over relayet. Slik løser du det: logg inn på den serveren i en nettleser, velg **Glem nøkkelen** på telefonens kort på Instanser-siden og deretter **Bekreft glemming**, og åpne appen igjen. Serveren tar telefonens egen nøkkel ved neste kall. Blir telefonen avvist igjen, har noen andre ordene: la hver instans bruke **Forlat gruppen** og par dem på nytt med nye ord, som for en mistet telefon.
 
+## Noder {#nodes}
+
+[Noder](nodes.md) styres i nettgrensesnittet. Økten til en paret telefon når ikke frem til dem, så appen viser ingen nodekort på siden Instanser, ikke noe kort **Noder** i oversikten og ingen nodeområder under **Sikkerhetskopier**, og **Legg til node** svarer at det trengs en pålogging på selve serveren. Åpne serveren i en nettleser og logg på med passordet for å legge til en node, endre hvor sikkerhetskopiene dens går, eller gjenopprette et av elementene dens.
+
 ## Innstillinger {#settings}
 
 Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:

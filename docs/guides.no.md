@@ -34,4 +34,5 @@ Hvert av disse tar én ekte oppgave fra start til slutt, med navn og tall fylt i
 ## Flere servere {#several-servers}
 
 - [Pare to Unraid-bokser](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): to servere som oppbevarer hverandres kopier, og ingen av dem kan slette den andres sikkerhetskopier.
+- [En VPS som tar sikkerhetskopi til mottaksserveren](nodes.md#example-vps): en node med containerne sine, styrt fra hjemmeinstansen, uten åpen port på VPS-en.
 - [Et kort og en varsling i Home Assistant](api.md#home-assistant-example): BombVault på et dashbord, med en melding når en sikkerhetskopi feiler.

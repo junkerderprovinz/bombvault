@@ -1,6 +1,6 @@
 # API og integrasjoner
 
-BombVault har et lite HTTP-API for skript, dashbord og hjemmeautomasjon. Det leser det samme som oversikten viser, og kan starte en sikkerhetskopi. Alt annet, som gjenoppretting, sletting av kopier og innstillinger, blir i nettgrensesnittet.
+BombVault har et lite HTTP-API for skript, dashbord og hjemmeautomasjon. Det leser det samme som oversikten viser, og kan starte en sikkerhetskopi. Alt annet, som gjenoppretting, sletting av kopier, innstillinger og [noder](#nodes), blir i nettgrensesnittet.
 
 ## Tokener {#tokens}
 
@@ -68,6 +68,32 @@ Starter følger de samme grensene som [starter via MCP](mcp.md#starting-backups)
 ## OpenAPI {#openapi}
 
 BombVault leverer en beskrivelse av disse rutene på `/api/v1/openapi.json` (OpenAPI 3.1). Den krever ikke noe token. Last den inn i Swagger UI, Postman eller en kodegenerator.
+
+## Noder {#nodes}
+
+Rutene som styrer [noder](nodes.md), hører til nettgrensesnittet, ikke til token-API-et ovenfor. Med et påloggingspassord satt krever de en nettleserøkt fra en pålogging på denne instansen. Et API-token eller en MCP-nøkkel åpner ingen av dem, parede telefoner når dem ikke, og `/api/v1/openapi.json` beskriver dem ikke. Å legge til en node, vise compose-filen dens på nytt og nå nodens egne ruter avvises til et påloggingspassord er satt. Et skript som endrer noe, sender `Content-Type: application/json`, som overalt i nettgrensesnittet.
+
+| Rute | Hva den gjør |
+|---|---|
+| `GET /api/nodes` | Hver node med om den er tilkoblet, versjonen, hvor sikkerhetskopiene går, planen for hvert område, den siste sikkerhetskopien, feilene og de åpne avvikene |
+| `POST /api/nodes` | Legger til en node, som `{"name":"vps-helsinki"}`, og returnerer den med `compose`: `MODE`, `APP_KEY`, `NODE_HOME` og `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Returnerer de samme `compose`-verdiene på nytt, for **Erstatt** |
+| `POST /api/nodes/{id}/placement` | Sender sikkerhetskopiene til noden til et mål og svarer per område om noden nådde repositoryet sitt, med en `warning` for et mål |
+| `PUT /api/nodes/{id}/schedule` | Setter planene, som `{"containers":"daily 03:00","files":"off"}`. Et område som er utelatt, beholder planen sin |
+| `DELETE /api/nodes/{id}` | Frigir noden. `told` sier om den fikk vite det nå eller får vite det når den er tilbake |
+| `GET /api/nodes/routes` | Listen over nodens egne ruter som hjemmeinstansen sender forespørsler videre til |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Sender forespørselen videre til nodens rute `/api/{path}` når den ruten står på listen, og returnerer JSON-svaret fra noden |
+| `PUT /api/receiver/node-address` | Setter **Adresse for noder** for mottaksserveren, som `{"url":"https://backup.tower.example.org","caPem":""}`. En tom `url` tar nodene av den |
+
+De tre målene:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+En forespørsel til `/api/nodes/{id}/api/...` bærer høyst 32 KiB. En rute som ikke står på listen, svarer `403`, en node som ikke har svart ennå eller holder på å bli frigitt, `409` med koden `node-not-adopted`, og en node som er borte, `502` med koden `node-away`. For eksempel returnerer `GET /api/nodes/{id}/api/runs?limit=20` de 20 siste kjøringene til noden, og `POST /api/nodes/{id}/api/containers/nextcloud/backup` tar sikkerhetskopi av containeren `nextcloud` på noden.
 
 ## Home Assistant {#home-assistant}
 

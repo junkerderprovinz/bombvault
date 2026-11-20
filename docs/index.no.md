@@ -81,6 +81,7 @@ Noen ord har en fast betydning i BombVault og på disse sidene.
 | **Plassering** | Hvilke mål som får sikkerhetskopiene til et element, satt på elementet eller som standard for området. Se [Plassering per element](offsite-recovery.md#placement). |
 | **Replika** | En blokk-eksakt kopi av et ZFS-element på en andre ZFS-server, laget med `zfs send`. Den står ved siden av sikkerhetskopien og erstatter den ikke. Se [Replika](zfs-datasets.md#replica). |
 | **Rolle** | Noe én instans i gruppen din gjør for en annen: Mottaker, Henter, ZFS-server eller Nøkkelvokter. Se [Instanser og roller](offsite-recovery.md#roles). |
+| **Node** | En BombVault uten nettgrensesnitt, for eksempel på en VPS, som en annen instans, hjemmeinstansen, sier hva den skal ta sikkerhetskopi av, når og hvor. Se [Noder](nodes.md). |
 
 ## Takk til {#credits}
 

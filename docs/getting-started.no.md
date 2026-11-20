@@ -180,6 +180,17 @@ Fra nå av sikkerhetskopieres containerne hver natt. Gode neste steg, i denne re
 !!! note "Host-integrasjonssjekk"
     Kortet **Host-integrasjon** på oversikten sonderer hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer manglende deler, slik at du kan bekrefte at containeren er riktig koblet opp før du stoler på den. Det venter under **Tilpass** til du legger det til.
 
+## Ta sikkerhetskopi av en VPS som node {#node}
+
+En VPS eller en annen liten server trenger ingen egen BombVault med nettgrensesnitt. Legg den til som en node av denne, så tar denne instansen seg av sikkerhetskopiene dens:
+
+1. Sett et påloggingspassord under **Innstillinger, Sikkerhet**, hvis du ikke har gjort det ennå.
+2. Åpne **Instanser**, velg **Legg til node** og skriv et navn som `vps-helsinki`.
+3. Velg hvor sikkerhetskopiene skal, for eksempel mottaksserveren til denne instansen, og når den tar sikkerhetskopi.
+4. Kopier compose-filen som vinduet viser, til serveren, pek volumet Host Data og `HOST_SOURCE_ROOT` mot dataene du vil ta sikkerhetskopi av, og kjør `docker compose up -d`.
+
+Når noden svarer, sier kortet **Tilkoblet**, og containerne dens dukker opp under **Sikkerhetskopier**. [Noder](nodes.md) går gjennom det med et eksempel.
+
 ## Finn frem {#navigation}
 
 ![Innstillinger som fliser, med kortene til den valgte flisen ved siden av. Hver endring skrives mens du gjør den.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ Grensesnittbygget trengs også for `go run`. Arkivet inneholder bare en tom mark
 - Sørg for at en feil når fram til deg med **[Varsler](notifications.md)**.
 - Sjekk når ting kjører under **[Tidsplaner](schedules.md)**.
 - Ha alle servere i gruppen din på telefonen med **[Android-appen](android.md)**.
+- Ta sikkerhetskopi av en VPS herfra med en **[node](nodes.md)**.
 - **[Gjennomgåtte eksempler](guides.md)** går gjennom de vanlige oppgavene, og **[Funksjoner](features.md)** lister alt BombVault gjør.
 - Kloner du et oppsett eller flytter til en ny boks? Ta med hele konfigurasjonen din via kortet **Eksporter / importer innstillinger**. Se [Konfigurasjon](configuration.md#portable-settings-export-and-import).
 - Støtt på et problem? Se **[Feilsøking](troubleshooting.md)**.
