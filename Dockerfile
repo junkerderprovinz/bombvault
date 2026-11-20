@@ -8,6 +8,8 @@ FROM --platform=$BUILDPLATFORM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f094
 WORKDIR /src
 COPY web/ ./web/
 RUN npm --prefix web ci --no-audit --no-fund
+# The add-node window shows this compose file as it is written.
+COPY deploy/docker-compose.node.yml ./deploy/
 RUN npm --prefix web run build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.4-bookworm@sha256:4fa7c968ba93f1635670522dbb01a2c78150443e1385746924566079f36570ea AS build
