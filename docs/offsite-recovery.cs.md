@@ -390,7 +390,7 @@ Pevnost spojuje BombVault s ostatními aplikacemi z rodiny, třeba ShipLog, Towe
 
 ## Instance a role {#roles}
 
-Stránka **Instance** (dlaždice nastavení, kterou lze připnout do postranního panelu) ukazuje skupinu jako síť, kdo co pro koho dělá, kartu této instance a kartu každého dalšího člena, telefony s Androidem a servery ZFS. **Párování** vpravo dole vede na stránku párování. Které části jsou zapnuté, se nastavuje v **Nastavení, Instance, Více serverů**: **Instance**, **Přijímač** a **Stažení**.
+Stránka **Instance** (dlaždice nastavení, kterou lze připnout do postranního panelu) ukazuje skupinu jako síť, kdo co pro koho dělá, kartu této instance a kartu každého dalšího člena, telefony s Androidem, servery ZFS a uzly této instance. **Párování** vpravo dole vede na stránku párování a **Přidat uzel** vedle něj přidá uzel. Které části jsou zapnuté, se nastavuje v **Nastavení, Instance, Více serverů**: **Instance**, **Přijímač** a **Stažení**.
 
 ![Stránka Instance: skupina jako síť a karta pro každou instanci s dlaždicemi rolí, jedna z nich Neaktivní.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Stránka Instance: skupina jako síť a karta pro každou instanci s dlaždicemi rolí, jedna z nich Neaktivní.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Zapnutí role pošle žádost a nic nezačne, dokud někdo na druhé instanci ne
 
 Pod kartami patří ke [sdílenému repozitáři](#shared-repository) karta **Sdílený repozitář** na krabici s přijímacím serverem a karta **Sdílené repozitáře** na členovi.
 
-Člen může druhému členovi přes skupinu nabídnout vlastní úložiště mimo lokalitu. Druhý správce vidí nabídku v **Podrobnostech** člena a přijme ji nebo odmítne. Přijetí vytvoří uložené přihlašovací údaje a obyčejný cíl, po stejných kontrolách jako u cíle, který zadáš sám. Cíl přijde se zapnutou ochranou proti smazání, protože recept, který nabídka ukazuje, je rest-server append-only, takže **Jak dlouho uchovávat** tam neplatí. Každá nabídka má vlastní přihlášení a vlastní složku, takže když sekci nabídneš znovu, stejnému členovi nebo jinému, kopie prvního partnera zůstanou nedotčené: přidej nový řádek do `.htpasswd` a nech server běžet. Takto putují jen údaje o připojení, nikdy data záloh. **Zkontrolovat nyní** požádá člena, aby ověřil repozitář jedné sekce. Nic na stránce nemůže spustit zálohu, obnovu ani smazání na jiné krabici.
+Člen může druhému členovi přes skupinu nabídnout vlastní úložiště mimo lokalitu. Druhý správce vidí nabídku v **Podrobnostech** člena a přijme ji nebo odmítne. Přijetí vytvoří uložené přihlašovací údaje a obyčejný cíl, po stejných kontrolách jako u cíle, který zadáš sám. Cíl přijde se zapnutou ochranou proti smazání, protože recept, který nabídka ukazuje, je rest-server append-only, takže **Jak dlouho uchovávat** tam neplatí. Každá nabídka má vlastní přihlášení a vlastní složku, takže když sekci nabídneš znovu, stejnému členovi nebo jinému, kopie prvního partnera zůstanou nedotčené: přidej nový řádek do `.htpasswd` a nech server běžet. Takto putují jen údaje o připojení, nikdy data záloh. **Zkontrolovat nyní** požádá člena, aby ověřil repozitář jedné sekce. Členové nechávají zálohy ostatních na pokoji: nic na stránce nespustí zálohu na jiném členovi, nic tam neobnoví ani tam nic nesmaže.
+
+**Uzly** jsou něco jiného, protože nejsou členy. Uzel je BombVault bez webového rozhraní, který přijímá pokyny od této instance, takže tato instance na něm spouští zálohy a obnovy a uklízí jeho staré zálohy. Každý uzel má kartu s jeho stavem, verzí, cílem jeho záloh a tím, kdy se zálohuje která sekce, s **Změnit cíl**, **Nahradit** a **Uvolnit**. Nový uzel říká **Čeká se na uzel**, dokud poprvé neodpoví, a uvolněný, který je pryč, říká **Uvolňuje se**. Viz [Uzly](nodes.md).
+
+![Karta uzlu: Připojeno, jeho verze, jeho zálohy na přijímacím serveru a jeho plány podle sekcí.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Karta uzlu: Připojeno, jeho verze, jeho zálohy na přijímacím serveru a jeho plány podle sekcí.](assets/screenshots/nodes/card-light.png#only-light)
 
 Instance, které jsou vypnuté, a telefony se zavřenou aplikací si ponechají kartu jako **Neaktivní**, šedě, s tím, kdy byly naposledy vidět, a stojí v síti ztlumeně, dokud je neodebereš pomocí **Odebrat**. Hned po startu tohoto serveru taková karta říká **Ověřuje se**, dokud se skupina nevrátí. **Odebrat** na takové kartě funguje, ať jsou zapnuté jakékoli části, a ukončí také otevřené žádosti člena, jeho nečinné sloty příjmu ZFS a čekající žádosti o klíč. Karta **Instance** na stránce párování tyto členy vypisuje také jako **Neaktivní**.
 
@@ -443,7 +448,7 @@ Instance ve tvé skupině pak server najdou mezi poskytovateli pod **Z tvé skup
 
 Instance, která dosáhne na přijímací krabici jen přes relay, server použít nemůže, protože relay nenese zálohy. Přidej nejdřív na stránce párování adresu přijímací krabice. Když BombVault běží na vlastní IP adrese (třeba na br0), vyplň **Adresa pro partnery**, protože server naslouchá na adrese hostitele.
 
-Přijímací krabice může pro skupinu držet i [sdílený repozitář](#shared-repository).
+Přijímací krabice může pro skupinu držet i [sdílený repozitář](#shared-repository) a přijímat zálohy [uzlů](nodes.md#to-receiver) této instance na své **Adresa pro uzly**.
 
 ## Sdílený repozitář {#shared-repository}
 
@@ -620,6 +625,8 @@ Strážce klíče je instance tvé skupiny, která drží zapečetěnou kopii sa
 
 V ten den potřebuješ tři věci: dvanáct slov své skupiny, kód úschovy a přístup k rozhraní strážce, kde někdo musí stisknout **Povolit**. V Nouzovém průvodci zvol **Přes skupinu**, vyber úschovu, požádej o ni a zadej kód úschovy. Kód se použije na novém serveru a strážci se neposílá. U strážce se žádost ukáže pod **Úschova klíče** s tím, kdo žádá, zda tam tuto instanci někdy předtím viděli a jak často žádala. **Povolit** vydá zapečetěnou kopii a povolení vyžaduje přihlašovací heslo. Nová instalace má na vyzvednutí po povolení 30 minut, žádost, na kterou nikdo neodpoví, vyprší po dni a instance, která žádá příliš často, musí počkat hodinu.
 
+Úschova nese také `APP_KEY` každého [uzlu](nodes.md) tohoto serveru, protože ho obsahuje sada. S kódem by strážce mohl otevřít jejich repozitáře, ale uzlu nikdy nic nepřikáže, protože k tomu je potřeba podpis tohoto serveru.
+
 Bez kódu kopii nikdo otevřít nemůže, ani strážce. Pokud se kód ztratí, vytvoř nový, dokud tento server ještě běží. Pokud je server už pryč, sada pro obnovu a napsaný APP_KEY stále fungují. Strážce může úschovu kdykoli smazat a vlastník pak musí požádat znovu.
 
 ## Sada pro obnovu {#recovery-kit}
@@ -627,6 +634,8 @@ Bez kódu kopii nikdo otevřít nemůže, ani strážce. Pokud se kód ztratí, 
 Tohle je kus, který umožňuje obnovu po havárii i tehdy, když žádný BombVault neběží.
 
 **Stáhnout sadu pro obnovu** v kartě **Pro nouzové případy** v **Nastavení, Obnova** ti dá **klíč**, **odvozené heslo resticu**, každý **cíl** s repozitářem každé sekce, přihlášení, která nová instalace potřebuje, aby se k nim dostala, a **přesné příkazy resticu**, takže můžeš obnovovat rovnou pomocí CLI resticu na libovolném stroji. Vyžaduje přihlašovací heslo. Sada vypíše klíč i s vypnutým šifrováním, protože definice kontejnerů a VM jsou jím vždy zapečetěny. Po převzetí vypíše převzatý klíč záloh a APP_KEY tohoto serveru, který nová instalace potřebuje jen k vrácení nastavení. Karta **Ulož si sadu pro obnovu** v Přehledu ti to připomíná, dokud ji neuložíš.
+
+Server s [uzly](nodes.md) dostane ve své sadě kapitolu **Uzly**. Uvádí každý uzel s jeho id, jeho `APP_KEY`, heslem resticu odvozeným z toho klíče a repozitářem každé sekce. Otevře je vlastní heslo uzlu a také heslo tohoto serveru, protože tento server přidává svůj klíč do každého repozitáře uzlu. Stáhni si sadu znovu, když přidáš uzel nebo změníš, kam jdou jeho zálohy. S `APP_KEY` uzlu a jeho `NODE_HOME` se z nového serveru stane zase tentýž uzel, viz [Nahrazení a uvolnění](nodes.md#replace-release).
 
 !!! danger "Ulož sadu pro obnovu mimo server"
     Sada obsahuje tajemství, které dešifruje tvé zálohy. Drž ji na bezpečném místě odděleném od serveru (správce hesel, vytištěná kopie v trezoru). Pokud ztratíš BombVault i `APP_KEY` bez sady pro obnovu a bez úschovy klíče, tvé šifrované zálohy nelze obnovit.

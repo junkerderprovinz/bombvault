@@ -81,6 +81,7 @@ Několik slov má v BombVaultu a na těchto stránkách pevný význam.
 | **Umístění** | Které cíle dostávají zálohy položky, nastavené na položce nebo jako výchozí nastavení její sekce. Viz [Umístění podle položky](offsite-recovery.md#placement). |
 | **Replika** | Blokově přesná kopie položky ZFS na druhém serveru ZFS, pořízená pomocí `zfs send`. Stojí vedle zálohy a nenahrazuje ji. Viz [Replika](zfs-datasets.md#replica). |
 | **Role** | Něco, co jedna instance tvé skupiny dělá pro jinou: Přijímač, Stahovač, Server ZFS nebo Strážce klíče. Viz [Instance a role](offsite-recovery.md#roles). |
+| **Uzel** | BombVault bez webového rozhraní, třeba na VPS, kterému jiná instance, jeho domov, říká, co, kdy a kam zálohovat. Viz [Uzly](nodes.md). |
 
 ## Poděkování {#credits}
 

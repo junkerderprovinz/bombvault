@@ -34,4 +34,5 @@ Každý z nich provede jedním skutečným úkolem od začátku do konce, s dopl
 ## Více serverů {#several-servers}
 
 - [Spárování dvou krabic s Unraidem](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): dva servery, které si drží navzájem kopie, a ani jeden nemůže mazat zálohy toho druhého.
+- [VPS, který zálohuje na přijímací server](nodes.md#example-vps): uzel s kontejnery, řízený z domova, a na VPS žádný otevřený port.
 - [Karta a upozornění v Home Assistantu](api.md#home-assistant-example): BombVault na dashboardu a zpráva, když záloha selže.

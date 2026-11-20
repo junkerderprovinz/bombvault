@@ -140,6 +140,10 @@ Databáze, která má jen výpisy databáze a žádnou zálohu souborů a její�
 
 Ve [sdíleném repozitáři](offsite-recovery.md#shared-repository) otevírá každý klíč zálohy všech serverů, takže stránka Obnova vypisuje ostatní členy pod **Další servery**, každého s jeho jménem, hostem, počtem položek a časem jeho nejnovější zálohy. Host, který nepatří žádnému serveru, jejž tento server zná, se ukáže jako **Server, který tento server nezná**. Kliknutí otevře **Zálohy serveru** a jméno serveru, jen pro čtení a bez zadávání čehokoli. Sady složek a datové sady ZFS jdou do složky, kterou vybereš. Kontejnery a VM se vrátí jako obyčejné soubory ve složce, protože druhý server jejich definice pečetí vlastním klíčem. Vlastní zálohy tohoto serveru ve sdíleném repozitáři jsou na záložce **Zálohy** každé položky.
 
+## Uzly {#nodes}
+
+Položky [uzlu](nodes.md) se obnovují z jejich stránek pod **Zálohy**, ne z této stránky. **Obnovit** u zálohy tam obnoví položku na uzlu a nahradí to, co tam je teď. Kopie, kterou tato instance stáhla z uzlu, který [si zálohy drží sám](nodes.md#keep-on-node), je tady uvedena pod **Další zdroje**, jako [Co tento server stáhl](offsite-recovery.md#restore-what-was-fetched). Když je server uzlu pryč, postav uzel znovu pomocí **Nahradit** na jeho kartě: stejný `APP_KEY` a `NODE_HOME` udělají z nového serveru tentýž uzel a jeho zálohy se zase otevřou. Kapitola **Uzly** v [sadě pro obnovu](offsite-recovery.md#recovery-kit) je otevře i holým resticem.
+
 ## Po obnově {#after}
 
 Kopie obnovená vedle originálu je vypsaná pod **Zálohy** jako vyloučená, takže se nepočítá jako otevřený úkol. Přidej ji do plánu, pokud ji chceš udržet. Kontejner nebo VM, které v době zálohy běžely, se vrátí běžící, zastavené zůstane zastavené. Na Unraidu se obnovený kontejner znovu objeví v záložce Docker jako normální, upravitelná aplikace a VM ve VM Manageru s připojenými disky a NVRAM.
