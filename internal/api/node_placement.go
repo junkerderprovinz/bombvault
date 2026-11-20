@@ -161,12 +161,13 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 		return nodePlaceResult{}, err
 	}
 	var repos []nodeRepo
+	var target string
 	result := nodePlaceResult{Reach: []nodeReach{}}
 	switch req.Kind {
 	case nodePlaceReceiver:
-		repos, err = s.receiverRepos(ctx, n)
+		repos, target, err = s.receiverRepos(ctx, n)
 	case nodePlaceLocation:
-		repos, err = s.locationRepos(n, req)
+		repos, target, err = s.locationRepos(n, req)
 		result.Warning = nodeLocationWarning
 	default:
 		err = errNodePlaceKind
@@ -189,7 +190,7 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 	if err := s.watchNodeRepos(n, repos, password); err != nil {
 		return nodePlaceResult{}, err
 	}
-	if err := s.store.SetNodePlaced(id, req.Kind); err != nil {
+	if err := s.store.SetNodePlaced(id, req.Kind, target); err != nil {
 		return nodePlaceResult{}, err
 	}
 	result.Reach = ans.Reach
@@ -197,18 +198,19 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 }
 
 // receiverRepos are the node's repositories on home's receiver, one folder
-// per section under the node's own login.
-func (s *Service) receiverRepos(ctx context.Context, n store.Node) ([]nodeRepo, error) {
+// per section under the node's own login, and the address the node reaches
+// them at.
+func (s *Service) receiverRepos(ctx context.Context, n store.Node) ([]nodeRepo, string, error) {
 	rs, ok, err := s.store.GetReceiverServer()
 	if err != nil || !ok {
-		return nil, cmp.Or(err, errNoReceiver)
+		return nil, "", cmp.Or(err, errNoReceiver)
 	}
 	if rs.NodeURL == "" {
-		return nil, errNoNodeAddress
+		return nil, "", errNoNodeAddress
 	}
 	user, password, err := s.receiverNodeLogin(ctx, rs, n)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var out []nodeRepo
 	for _, d := range nodeDomains {
@@ -220,7 +222,7 @@ func (s *Service) receiverRepos(ctx context.Context, n store.Node) ([]nodeRepo, 
 			local: path.Join(rs.Folder, user, d),
 		})
 	}
-	return out, nil
+	return out, rs.NodeURL, nil
 }
 
 // receiverNodeLogin returns the node's login on the receiver, creating it the
@@ -260,32 +262,33 @@ func (s *Service) receiverNodeLogin(ctx context.Context, rs store.ReceiverServer
 }
 
 // locationRepos are the node's repositories under a storage location of
-// home's, which the node reaches with the sign-in req names for it.
-func (s *Service) locationRepos(n store.Node, req nodePlaceRequest) ([]nodeRepo, error) {
+// home's, which the node reaches with the sign-in req names for it, and the
+// location's id.
+func (s *Service) locationRepos(n store.Node, req nodePlaceRequest) ([]nodeRepo, string, error) {
 	dest, ok, err := s.store.GetDestination(req.Location)
 	if err != nil || !ok {
-		return nil, cmp.Or(err, errNodeLocation)
+		return nil, "", cmp.Or(err, errNodeLocation)
 	}
 	base := strings.TrimRight(strings.TrimSpace(dest.Repo), "/")
 	if !nodeReachesLocation(base) {
-		return nil, errNodeLocation
+		return nil, "", errNodeLocation
 	}
 	if req.SignIn == "" || req.SignIn == dest.CredsRef {
-		return nil, errNodeSignInShared
+		return nil, "", errNodeSignInShared
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	creds, err := s.savedSignIn(settings, req.SignIn)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var env []string
 	if dest.CredsRef != "" {
 		own, err := s.savedSignIn(settings, dest.CredsRef)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		env = cloudEnv(own)
 	}
@@ -297,7 +300,7 @@ func (s *Service) locationRepos(n store.Node, req nodePlaceRequest) ([]nodeRepo,
 			local:     repo, env: env, credsRef: dest.CredsRef,
 		})
 	}
-	return out, nil
+	return out, dest.ID, nil
 }
 
 // nodeReachesLocation reports whether a node may be sent to the location at

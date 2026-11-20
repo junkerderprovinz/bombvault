@@ -154,6 +154,14 @@ func TestHomeSendsANodeToItsReceiverWithALoginOfItsOwn(t *testing.T) {
 		t.Errorf("reach = %s", raw)
 	}
 
+	_, listed := home.do(t, http.MethodGet, "/api/nodes", nil)
+	raw, _ = json.Marshal(listed["nodes"])
+	var views []NodeView
+	if err := json.Unmarshal(raw, &views); err != nil || len(views) != 1 || !views[0].Online || views[0].Version != Version ||
+		views[0].Placement != nodePlaceReceiver || views[0].PlacementTarget != "https://backup.example.org" || views[0].LastSeen == 0 {
+		t.Errorf("list = %s", raw)
+	}
+
 	l, ok, err := home.st.GetReceiverLogin(id)
 	if err != nil || !ok || !l.ForNode || l.User != user {
 		t.Fatalf("the node's login = %+v %v %v", l, ok, err)
@@ -371,5 +379,23 @@ func TestANodeOnTheReceiverHearsANewAddressWhenItIsBack(t *testing.T) {
 	eventually(t, "home to note that it heard it", func() bool {
 		n, err := home.st.GetNode(id)
 		return err == nil && !n.PlacementDue
+	})
+}
+
+func TestHomeShowsANodesComposeValuesAgainOnlyToItsOwnSignIn(t *testing.T) {
+	home := homeWithRelay(t)
+	compose := addNode(t, home, "vps")
+	id, _ := nodelink.NodeID(compose["APP_KEY"])
+	code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/compose", nil)
+	again, _ := json.Marshal(out["compose"])
+	want, _ := json.Marshal(compose)
+	if code != http.StatusOK || string(again) != string(want) {
+		t.Errorf("compose again = %d %s, want %s", code, again, want)
+	}
+	hash, epoch, _ := home.h.authEnabled()
+	home.as(listedPhoneSession(t, home.st, home.appKey, hash, epoch), func() {
+		if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/compose", nil); code != http.StatusForbidden {
+			t.Errorf("a paired phone = %d %v", code, out)
+		}
 	})
 }

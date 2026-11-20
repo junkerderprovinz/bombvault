@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	kitgroup "github.com/junkerderprovinz/parleyport/kit/group"
@@ -149,4 +150,14 @@ func (l *Link) Online() bool {
 		}
 	}
 	return false
+}
+
+// LastSeen is when the other end was last reachable, zero if never.
+func (l *Link) LastSeen() time.Time {
+	for _, m := range l.g.Members() {
+		if m.ID == l.peer {
+			return m.LastSeen
+		}
+	}
+	return time.Time{}
 }

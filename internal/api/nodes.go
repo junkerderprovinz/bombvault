@@ -1,6 +1,7 @@
 package api
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -22,19 +24,29 @@ import (
 const nodeCallTimeout = 30 * time.Second
 
 // NodeView is a node as home lists it. State is "releasing" while the node
-// has not heard that home let it go, and Placement where its backups go.
+// has not heard that home let it go. Placement is where its backups go and
+// PlacementTarget the receiver's address or the storage location's name
+// there. Version is what the node runs, empty while it is away.
 type NodeView struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	CreatedAt int64  `json:"createdAt"`
-	AdoptedAt int64  `json:"adoptedAt"`
-	State     string `json:"state,omitempty"`
-	Placement string `json:"placement,omitempty"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	CreatedAt       int64  `json:"createdAt"`
+	AdoptedAt       int64  `json:"adoptedAt"`
+	State           string `json:"state,omitempty"`
+	Placement       string `json:"placement,omitempty"`
+	PlacementTarget string `json:"placementTarget,omitempty"`
+	Online          bool   `json:"online"`
+	LastSeen        int64  `json:"lastSeen,omitempty"`
+	Version         string `json:"version,omitempty"`
 }
 
 func nodeViewOf(n store.Node) NodeView {
-	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement}
+	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement, PlacementTarget: n.PlacementTarget}
 }
+
+// nodeHelloWait bounds the question to each node what it runs, so a slow one
+// does not hold up the list.
+const nodeHelloWait = 3 * time.Second
 
 var (
 	errNodeName = errors.New("a node needs a name of at most 64 characters on one line")
@@ -357,25 +369,21 @@ func (s *Service) AddNode(name string) (NodeView, map[string]string, error) {
 	if err != nil {
 		return NodeView{}, nil, err
 	}
-	seed, err := s.depositSeed()
-	if err != nil {
-		return NodeView{}, nil, err
-	}
 	// A node reaches home over a relay whatever home's members use, so
 	// pairing without one still leaves it the project's.
 	mode, url := group.Mode(g.RelayMode), strings.TrimSpace(g.RelayURL)
 	if mode != group.ModeOwn {
 		mode, url = group.ModeProject, ""
 	}
-	home, err := nodelink.EncodeHome(appKey, nodelink.Home{ID: g.InstanceID, Key: keydeposit.OwnerKey(seed), Relay: mode, RelayURL: url})
-	if err != nil {
-		return NodeView{}, nil, err
-	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, []byte(appKey))
 	if err != nil {
 		return NodeView{}, nil, err
 	}
 	n := store.Node{ID: id, Name: name, AppKeyEnc: enc, RelayMode: string(mode), RelayURL: url, CreatedAt: time.Now().Unix()}
+	compose, err := s.nodeCompose(n)
+	if err != nil {
+		return NodeView{}, nil, err
+	}
 	if err := s.store.AddNode(n); err != nil {
 		return NodeView{}, nil, err
 	}
@@ -385,20 +393,91 @@ func (s *Service) AddNode(name string) (NodeView, map[string]string, error) {
 		return NodeView{}, nil, err
 	}
 	s.keepNode(n, link)
-	compose := map[string]string{"MODE": "node", "APP_KEY": appKey, "NODE_HOME": home, "NODE_NAME": name}
 	return nodeViewOf(n), compose, nil
 }
 
-// ListNodes returns every node of this instance.
-func (s *Service) ListNodes() ([]NodeView, error) {
+// nodeCompose returns the values node n's compose file takes, its APP_KEY
+// among them.
+func (s *Service) nodeCompose(n store.Node) (map[string]string, error) {
+	appKey, err := s.nodeAppKey(n)
+	if err != nil {
+		return nil, err
+	}
+	g, err := s.store.GetGroupState()
+	if err != nil {
+		return nil, err
+	}
+	seed, err := s.depositSeed()
+	if err != nil {
+		return nil, err
+	}
+	home, err := nodelink.EncodeHome(appKey, nodelink.Home{ID: g.InstanceID, Key: keydeposit.OwnerKey(seed), Relay: group.Mode(n.RelayMode), RelayURL: n.RelayURL})
+	if err != nil {
+		return nil, err
+	}
+	return map[string]string{"MODE": "node", "APP_KEY": appKey, "NODE_HOME": home, "NODE_NAME": n.Name}, nil
+}
+
+// handleNodeCompose hands out the values a node's compose file takes again,
+// its APP_KEY among them, to set the node up anew on another server.
+// POST /api/nodes/{id}/compose
+func (h *Handler) handleNodeCompose(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAuthForSecrets(w, r, "showing a node's APP_KEY") {
+		return
+	}
+	n, err := h.store.GetNode(r.PathValue("id"))
+	if errors.Is(err, store.ErrNodeNotFound) {
+		writeJSON(w, http.StatusNotFound, codedFailEnvelope(err, "not-found"))
+		return
+	}
+	compose, err := h.svc.nodeCompose(n)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"compose": compose}))
+}
+
+// ListNodes returns every node of this instance, with whether it is there
+// now and what it runs, which each node that is there is asked for.
+func (s *Service) ListNodes(ctx context.Context) ([]NodeView, error) {
 	nodes, err := s.store.ListNodes()
 	if err != nil {
 		return nil, err
 	}
-	out := make([]NodeView, 0, len(nodes))
-	for _, n := range nodes {
-		out = append(out, nodeViewOf(n))
+	dests := map[string]string{}
+	if list, err := s.store.ListDestinations(); err == nil {
+		for _, d := range list {
+			dests[d.ID] = d.Name
+		}
 	}
+	out := make([]NodeView, len(nodes))
+	var wg sync.WaitGroup
+	for i, n := range nodes {
+		out[i] = nodeViewOf(n)
+		if n.Placement == nodePlaceLocation {
+			out[i].PlacementTarget = cmp.Or(dests[n.PlacementTarget], n.PlacementTarget)
+		}
+		link, ok := s.nodeLinkOf(n.ID)
+		if !ok {
+			continue
+		}
+		if seen := link.LastSeen(); !seen.IsZero() {
+			out[i].LastSeen = seen.Unix()
+		}
+		if out[i].Online = link.Online(); !out[i].Online {
+			continue
+		}
+		wg.Go(func() {
+			hctx, cancel := context.WithTimeout(ctx, nodeHelloWait)
+			defer cancel()
+			var hello nodeHello
+			if postNode(hctx, link, nodeHelloPath, nil, &hello) == nil {
+				out[i].Version = hello.Version
+			}
+		})
+	}
+	wg.Wait()
 	return out, nil
 }
 
@@ -436,8 +515,8 @@ func (s *Service) ReleaseNode(ctx context.Context, id string) (told bool, err er
 
 // handleListNodes lists the nodes this instance runs backups on.
 // GET /api/nodes
-func (h *Handler) handleListNodes(w http.ResponseWriter, _ *http.Request) {
-	nodes, err := h.svc.ListNodes()
+func (h *Handler) handleListNodes(w http.ResponseWriter, r *http.Request) {
+	nodes, err := h.svc.ListNodes(r.Context())
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
