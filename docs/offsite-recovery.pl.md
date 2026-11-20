@@ -390,7 +390,7 @@ Twierdza łączy BombVault z pozostałymi aplikacjami z rodziny, takimi jak Ship
 
 ## Instancje i role {#roles}
 
-Strona **Instancje** (kafelek ustawień, który można przypiąć do paska bocznego) pokazuje grupę jako sieć tego, kto co robi dla kogo, kartę dla tej instancji i kartę dla każdego innego członka, telefonów z Androidem i serwerów ZFS. **Parowanie** w prawym dolnym rogu prowadzi do strony parowania. To, które części są włączone, ustawia się w **Ustawienia, Instancje, Wiele serwerów**: **Instancje**, **Odbiornik** i **Pobieranie**.
+Strona **Instancje** (kafelek ustawień, który można przypiąć do paska bocznego) pokazuje grupę jako sieć tego, kto co robi dla kogo, kartę dla tej instancji i kartę dla każdego innego członka, telefonów z Androidem, serwerów ZFS i węzłów tej instancji. **Parowanie** w prawym dolnym rogu prowadzi do strony parowania, a **Dodaj węzeł** obok dodaje węzeł. To, które części są włączone, ustawia się w **Ustawienia, Instancje, Wiele serwerów**: **Instancje**, **Odbiornik** i **Pobieranie**.
 
 ![Strona Instancje: grupa jako sieć i karta dla każdej instancji z kafelkami ról, jeden z nich Nieaktywne.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Strona Instancje: grupa jako sieć i karta dla każdej instancji z kafelkami ról, jeden z nich Nieaktywne.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Włączenie roli wysyła prośbę, a nic nie startuje, dopóki ktoś na drugiej 
 
 Pod kartami są dwie karty [wspólnego repozytorium](#shared-repository): **Wspólne repozytorium** na maszynie z serwerem odbiorczym i **Wspólne repozytoria** na członku.
 
-Członek może zaoferować drugiemu przez grupę własną pamięć poza siedzibą. Drugi administrator widzi ofertę w **Szczegóły** członka i ją przyjmuje albo odrzuca. Przyjęcie tworzy zapisane dane logowania i zwykłe miejsce docelowe, po tych samych kontrolach co miejsce, które wpisujesz. Miejsce dostaje włączoną ochronę przed usunięciem, bo przepis, który pokazuje oferta, to rest-server append-only, więc **Jak długo przechowywać** tam nie obowiązuje. Każda oferta ma własne logowanie i własny folder, więc ponowne zaoferowanie sekcji, temu samemu członkowi albo innemu, nie rusza kopii pierwszego partnera: dopisz nową linię do `.htpasswd` i zostaw serwer uruchomiony. W ten sposób podróżują tylko dane połączenia, nigdy dane kopii. **Sprawdź teraz** prosi członka o weryfikację repozytorium jednej sekcji. Nic na stronie nie może uruchomić kopii, przywracania ani usunięcia na innej maszynie.
+Członek może zaoferować drugiemu przez grupę własną pamięć poza siedzibą. Drugi administrator widzi ofertę w **Szczegóły** członka i ją przyjmuje albo odrzuca. Przyjęcie tworzy zapisane dane logowania i zwykłe miejsce docelowe, po tych samych kontrolach co miejsce, które wpisujesz. Miejsce dostaje włączoną ochronę przed usunięciem, bo przepis, który pokazuje oferta, to rest-server append-only, więc **Jak długo przechowywać** tam nie obowiązuje. Każda oferta ma własne logowanie i własny folder, więc ponowne zaoferowanie sekcji, temu samemu członkowi albo innemu, nie rusza kopii pierwszego partnera: dopisz nową linię do `.htpasswd` i zostaw serwer uruchomiony. W ten sposób podróżują tylko dane połączenia, nigdy dane kopii. **Sprawdź teraz** prosi członka o weryfikację repozytorium jednej sekcji. Członkowie zostawiają nawzajem swoje kopie w spokoju: nic na stronie nie uruchamia kopii na innym członku, niczego tam nie przywraca ani nie usuwa.
+
+**Węzły** to co innego, bo nie są członkami. Węzeł to BombVault bez interfejsu WWW, który przyjmuje polecenia od tej instancji, więc ta instancja uruchamia na nim kopie i przywracania i porządkuje jego stare kopie. Każdy węzeł ma kartę z jego stanem, wersją, miejscem docelowym kopii i tym, kiedy każda sekcja robi kopie, z **Zmień miejsce docelowe**, **Zastąp** i **Zwolnij**. Nowy węzeł pokazuje **Oczekiwanie na węzeł**, dopóki pierwszy raz nie odpowie, a zwolniony, którego nie ma, pokazuje **Trwa zwalnianie**. Zobacz [Węzły](nodes.md).
+
+![Karta węzła: Połączono, jego wersja, jego kopie na serwerze odbiorczym i jego plany dla każdej sekcji.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Karta węzła: Połączono, jego wersja, jego kopie na serwerze odbiorczym i jego plany dla każdej sekcji.](assets/screenshots/nodes/card-light.png#only-light)
 
 Wyłączone instancje i telefony z zamkniętą aplikacją zachowują swoją kartę jako **Nieaktywne**, na szaro, z informacją, kiedy ostatnio je widziano, i stoją przyciemnione w sieci, dopóki ich nie **Usuń**. Zaraz po starcie tego serwera taka karta mówi **Sprawdzanie**, dopóki grupa nie wróci. **Usuń** działa na takiej karcie niezależnie od tego, które części są włączone, i kończy też otwarte prośby członka, jego bezczynne gniazda odbioru ZFS i oczekujące prośby o klucz. Karta **Instancje** na stronie parowania wymienia tych członków także jako **Nieaktywne**.
 
@@ -443,7 +448,7 @@ Instancje Twojej grupy znajdują potem serwer wśród dostawców w **Z twojej gr
 
 Instancja, która dociera do maszyny odbierającej tylko przez relay, nie może używać serwera, bo relay nie niesie kopii. Najpierw dodaj adres maszyny odbierającej na stronie parowania. Gdy BombVault działa na własnym adresie IP (na przykład na br0), wypełnij **Adres dla partnerów**, bo serwer nasłuchuje na adresie hosta.
 
-Maszyna odbierająca może też prowadzić dla grupy [wspólne repozytorium](#shared-repository).
+Maszyna odbierająca może też prowadzić dla grupy [wspólne repozytorium](#shared-repository) i przyjmować kopie [węzłów](nodes.md#to-receiver) tej instancji pod swoim **Adres dla węzłów**.
 
 ## Wspólne repozytorium {#shared-repository}
 
@@ -620,6 +625,8 @@ Przechowawca klucza to instancja Twojej grupy, która trzyma zapieczętowaną ko
 
 W tym dniu potrzebujesz trzech rzeczy: dwunastu słów swojej grupy, kodu odblokowania i dostępu do interfejsu przechowawcy, gdzie ktoś musi nacisnąć **Zezwól**. W Kreatorze awaryjnym wybierz **Przez grupę**, wskaż depozyt, poproś o niego i wpisz kod odblokowania. Kod jest używany na nowym serwerze i nie jest wysyłany do przechowawcy. U przechowawcy prośba pokazuje się w **Depozyt klucza** z informacją, kto prosi, czy ta instancja była tam kiedykolwiek widziana i jak często prosiła. **Zezwól** wydaje zapieczętowaną kopię, a zezwolenie wymaga hasła logowania. Nowa instalacja ma 30 minut na odebranie jej po zezwoleniu, prośba, na którą nikt nie odpowie, wygasa po dobie, a instancja, która prosi zbyt często, musi poczekać godzinę.
 
+Depozyt niesie też `APP_KEY` każdego [węzła](nodes.md) tego serwera, bo zawiera go zestaw. Z kodem przechowawca mógłby otworzyć ich repozytoria, ale nigdy nie może wydawać poleceń węzłowi, bo do tego potrzebny jest podpis tego serwera.
+
 Bez kodu nikt nie otworzy kopii, przechowawca też nie. Jeśli kod zgubisz, utwórz nowy, gdy ten serwer jeszcze działa. Jeśli serwera już nie ma, zestaw odzyskiwania i wpisany APP_KEY nadal działają. Przechowawca może w każdej chwili usunąć depozyt, a właściciel musi wtedy poprosić ponownie.
 
 ## Zestaw odzyskiwania {#recovery-kit}
@@ -627,6 +634,8 @@ Bez kodu nikt nie otworzy kopii, przechowawca też nie. Jeśli kod zgubisz, utw�
 To element, który umożliwia odzyskiwanie po awarii nawet wtedy, gdy nie działa żaden BombVault.
 
 **Pobierz zestaw odzyskiwania** w karcie **Na wypadek awarii** w **Ustawienia, Przywracanie** daje **klucz**, **wyprowadzone hasło restic**, każde **miejsce docelowe** z repozytorium każdej sekcji, dane logowania, których nowa instalacja potrzebuje, by do nich sięgnąć, oraz **dokładne polecenia restic**, żebyś mógł przywracać prosto przez CLI restic na dowolnej maszynie. Wymaga hasła logowania. Zestaw drukuje klucz także przy wyłączonym szyfrowaniu, bo definicje kontenerów i maszyn wirtualnych są zawsze nim pieczętowane. Po przejęciu drukuje przejęty klucz kopii i APP_KEY tego serwera, którego nowa instalacja potrzebuje tylko do przywrócenia ustawień. Karta **Zapisz swój zestaw odzyskiwania** w przeglądzie przypomina o tym, dopóki go nie zapiszesz.
+
+Serwer z [węzłami](nodes.md) dostaje w zestawie rozdział **Węzły**. Wymienia każdy węzeł z jego identyfikatorem, `APP_KEY`, hasłem restic wyprowadzonym z tego klucza i repozytorium każdej sekcji. Otwiera je własne hasło węzła, a także hasło tego serwera, bo ten serwer dodaje swój klucz do każdego repozytorium węzła. Pobierz zestaw ponownie po dodaniu węzła albo zmianie miejsca docelowego jego kopii. Z `APP_KEY` węzła i jego `NODE_HOME` nowy serwer staje się znów tym samym węzłem, zobacz [Zastępowanie i zwalnianie](nodes.md#replace-release).
 
 !!! danger "Przechowuj zestaw odzyskiwania poza serwerem"
     Zestaw zawiera sekret, który odszyfrowuje Twoje kopie. Trzymaj go w bezpiecznym miejscu, osobno od serwera (menedżer haseł, wydruk w sejfie). Jeśli stracisz zarówno BombVault, jak i `APP_KEY`, bez zestawu odzyskiwania i bez depozytu klucza, Twoich zaszyfrowanych kopii nie da się odzyskać.

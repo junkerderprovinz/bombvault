@@ -81,6 +81,7 @@ Kilka słów ma w BombVault i na tych stronach stałe znaczenie.
 | **Ustawienie** | Które miejsca docelowe dostają kopie elementu, ustawiane na elemencie albo jako domyślne dla jego sekcji. Zobacz [Ustawienie dla elementu](offsite-recovery.md#placement). |
 | **Replika** | Kopia ZFS co do bloku na drugim serwerze ZFS, zrobiona przez `zfs send`. Stoi obok kopii zapasowej i jej nie zastępuje. Zobacz [Replika](zfs-datasets.md#replica). |
 | **Rola** | To, co jedna instancja Twojej grupy robi dla drugiej: Odbiornik, Pobierający, Serwer ZFS albo Przechowawca klucza. Zobacz [Instancje i role](offsite-recovery.md#roles). |
+| **Węzeł** | BombVault bez interfejsu WWW, na przykład na VPS-ie, któremu inna instancja, jego dom, mówi, co kopiować, kiedy i dokąd. Zobacz [Węzły](nodes.md). |
 
 ## Podziękowania {#credits}
 

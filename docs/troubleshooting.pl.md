@@ -208,6 +208,26 @@ Ekran startowy mówi na karcie serwera dlaczego:
 - **Wymagane logowanie:** serwer dodany po adresie pyta o hasło. Zobacz też [Telefon trafia na stronę logowania](#a-phone-lands-on-the-login-page).
 - **Klucz się zmienił:** ekran startowy pokazuje odcisk nowego klucza, a strona otwiera się dopiero po zaufaniu mu. Zobacz [Poza domem](android.md#away).
 
+## Węzeł zostaje na "Oczekiwanie na węzeł" {#node-waiting}
+
+Węzeł jeszcze nie odpowiedział domowi. Otwórz dziennik jego kontenera na serwerze węzła (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`**, a po nim identyfikator domu: węzeł działa i czeka na relay. Sprawdź, czy serwer dociera do adresu relay. Połączenie wychodzi od węzła, więc nie potrzebuje otwartego portu.
+- **`NODE_HOME is not set`**: plik compose stracił swoje wartości. Wybierz **Zastąp** na karcie węzła, skopiuj plik ponownie i uruchom `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: obie wartości pochodzą z różnych węzłów. Skopiuj obie z tej samej karty.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: węzeł przejął inny dom. Najpierw go tam zwolnij albo dodaj tu serwer jako nowy węzeł z nowym plikiem compose.
+- **`MODE=... is neither full nor node`**: ustaw `MODE: node`.
+
+## Węzeł nie dociera do swoich repozytoriów {#node-reach}
+
+Po wybraniu miejsca docelowego dom mówi dla każdej sekcji, czy węzeł otworzył swoje repozytorium, na przykład **Węzeł nie może połączyć się z repozytorium Containers** z przyczyną podaną przez restic. Sprawdź z serwera węzła, czy adres odpowiada. Na serwerze odbiorczym to **Adres dla węzłów**: reverse proxy musi przekazywać go do rest-servera, a serwer z własnym certyfikatem potrzebuje tego certyfikatu w **Certyfikat**. W miejscu docelowym sprawdź dane logowania utworzone dla węzła. Potem wybierz **Zmień miejsce docelowe** i ponownie **Zapisz**. Zobacz [Dokąd trafiają kopie](nodes.md#placement).
+
+Dla węzła, który sam trzyma swoje kopie, port zajęty na węźle przez inny kontener jest odrzucany z nazwą tego kontenera, więc wybierz inny. Gdy dom nie może pobierać, przepuść port przez zaporę węzła.
+
+## Zwolniony węzeł nie wraca {#node-released}
+
+Zwolniony węzeł nie przyjmie już żadnego domu ze swoim starym `APP_KEY`, a jego folder `config` pamięta zwolnienie. Dodaj serwer jako nowy węzeł i uruchom go z nowym plikiem compose i pustym folderem `config`. Jego stare kopie zostają tam, gdzie były, podobnie jak każda kopia, którą pobrał dom.
+
 ## Inny użytkownik nie może odczytać lokalnego repozytorium {#repository-permissions}
 
 Lokalne repozytorium pozostaje czytelne dla innych użytkowników, takich jak użytkownik synchronizacji przez SMB. Przed 10.4.1 pliki zapisane przez przycinanie, tag, pobieranie, przeniesienie sekcji, usunięcie albo kopię stosu mogły pozostać nieczytelne do następnej nocy. Zaktualizuj BombVault, a będą czytelne od razu. Repozytorium autokopii pozostaje celowo czytelne tylko dla roota, bo zawiera ustawienia BombVault.
