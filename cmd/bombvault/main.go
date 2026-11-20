@@ -430,11 +430,7 @@ func run() error {
 	svc.SweepAppdataImportLeftovers()
 	svc.SweepFlashZipScratch()
 	if node {
-		// The requests home passes on run through the routes a browser
-		// would reach; the node lets through only those of its list.
-		nodeAPI := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
-		nodeAPI.SetProgress(prog)
-		svc.ServeNodeAPI(nodeAPI.Router())
+		svc.ServeNodeAPI(nodeRouter(cfg, st, dc, svc, scheduler, prog))
 		return serveNode(cfg, svc, engine)
 	}
 
@@ -524,6 +520,14 @@ func serveNode(cfg config.Config, svc *api.Service, engine *restic.Restic) error
 		endWork(svc, engine)
 	}
 	return runErr
+}
+
+// nodeRouter is what the requests home passes on run through: the routes a
+// browser would reach, of which the node lets through only those of its list.
+func nodeRouter(cfg config.Config, st *store.Repo, dc dockercli.Docker, svc *api.Service, scheduler *schedule.Scheduler, prog *progress.Store) http.Handler {
+	h := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	h.SetProgress(prog)
+	return h.Router()
 }
 
 // joinHome opens the link to the home NODE_HOME names and returns what

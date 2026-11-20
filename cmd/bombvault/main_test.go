@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -14,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
@@ -209,5 +211,18 @@ func TestANodeJoinsTheHomeItsVariablesName(t *testing.T) {
 	cfg.NodeHome = string(typo)
 	if _, err := joinHome(cfg, svc); err == nil {
 		t.Error("a NODE_HOME with a typo was taken")
+	}
+}
+
+func TestANodeRunsWhatHomePassesOnThroughItsOwnRoutes(t *testing.T) {
+	st := memStore(t)
+	cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: t.TempDir(), Mode: config.ModeNode}
+	svc := api.NewService(cfg, st, nil, nil, nil)
+	router := nodeRouter(cfg, st, nil, svc, newScheduler(config.ModeNode, svc, st), progress.NewStore())
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/runs", nil))
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"ok":true`) {
+		t.Errorf("GET /api/runs on a node = %d %s", w.Code, w.Body)
 	}
 }
