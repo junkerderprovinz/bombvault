@@ -42,6 +42,7 @@ var (
 	// let it go before, or has not adopted it yet.
 	errNodeReleased   = errors.New("the node was let go before and needs a new APP_KEY")
 	errNodeNotAdopted = errors.New("the node has not taken this instance as its home yet")
+	errNodeAway       = errors.New("the node is not on the relay")
 )
 
 // homeNode is the link home holds to one node, and the adoption or release
@@ -142,6 +143,11 @@ func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 		}
 		if n.PlacementDue {
 			untilDone(ctx, func() error {
+				// Making the repositories again costs restic runs, which wait
+				// until the node is back to hear where they are.
+				if !link.Online() {
+					return errNodeAway
+				}
 				_, err := s.PlaceNode(ctx, n.ID, nodePlaceRequest{Kind: n.Placement})
 				return err
 			})

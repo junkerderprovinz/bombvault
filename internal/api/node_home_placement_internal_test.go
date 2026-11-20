@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -27,6 +28,8 @@ type repoStore struct {
 	keys  map[string][]string
 	alias map[string]string
 	env   map[string][]string
+	// opened counts the repositories asked to open.
+	opened int
 }
 
 func newRepoStore() *repoStore {
@@ -55,6 +58,7 @@ func (r *repoStore) Init(_ context.Context, repo string, m restic.Mode) error {
 func (r *repoStore) RepoOpensErr(_ context.Context, repo string, m restic.Mode) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.opened++
 	if !slices.Contains(r.keys[r.at(repo)], m.Password) {
 		return errors.New("Fatal: wrong password or no key found")
 	}
@@ -335,6 +339,8 @@ func TestANodeOnTheReceiverHearsANewAddressWhenItIsBack(t *testing.T) {
 		t.Errorf("node = %+v, want it placed on the receiver", n)
 	}
 	node.svc.CloseHomeLink()
+	link, _ := home.svc.nodeLinkOf(id)
+	eventually(t, "home to see the node away", func() bool { return !link.Online() })
 
 	if code, out := home.do(t, http.MethodPut, "/api/receiver/node-address", map[string]any{"url": "https://new.example.org"}); code != http.StatusOK {
 		t.Fatalf("new address = %d %v", code, out)
@@ -342,6 +348,15 @@ func TestANodeOnTheReceiverHearsANewAddressWhenItIsBack(t *testing.T) {
 	if n, _ := home.st.GetNode(id); !n.PlacementDue {
 		t.Errorf("node = %+v, want the new address waiting for it", n)
 	}
+	repos.mu.Lock()
+	before := repos.opened
+	repos.mu.Unlock()
+	time.Sleep(2500 * time.Millisecond)
+	repos.mu.Lock()
+	if repos.opened != before {
+		t.Errorf("home opened %d repositories while the node was away", repos.opened-before)
+	}
+	repos.mu.Unlock()
 	h, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
 	if err != nil {
 		t.Fatal(err)
