@@ -10,7 +10,10 @@
 #   2. Point the Host Data volume at the data you want backed up.
 #   3. docker compose up -d
 #
-# The node reaches home over the relay, so it needs no open port.
+# The node reaches home over the relay, so it needs no open port. Only when it
+# keeps its backups itself does it start a rest-server next to it, with the
+# repositories in bombvault-node under Host Data, and home fetches them on the
+# port of the address you give home. Open that port to home.
 
 services:
   bombvault-node:
