@@ -2195,40 +2195,47 @@ body {
   opacity: 0.45;
 }
 
-/* A wordmark already says the name, so it spans the button in the name's
-   place, and the SVG centres it on its own aspect. A long one is held to a
-   width that keeps its letters near the size of a name, and a short one
+/* A mark is cropped to its drawing, and a tile's middle rarely falls on a
+   whole pixel, so the SVG's own clip would shave the soft edge of a shape
+   that reaches the box, such as a filled circle's bottom. */
+.glim-readme-btn-mark svg {
+  overflow: visible;
+}
+
+/* A wordmark already says the name, so it stands in the name's place,
+   starting where a symbol would. It keeps its own aspect: a long one is held
+   to a width that keeps its letters near the size of a name, and a short one
    grows to the full height. The hidden name still holds the second line
    where it stands on every tile, and when that line comes in the wordmark
-   rises and shrinks onto the name's line. */
+   rises and shrinks onto the name's line from its start. */
 .glim-readme-btn-mark--wordmark {
   inset-inline: 0.875rem;
   width: auto;
   height: 1.625rem;
-  justify-content: center;
+  justify-content: flex-start;
+  transform-origin: left center;
   transition:
     translate calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease),
     scale calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease);
 }
 
+[dir="rtl"] .glim-readme-btn-mark--wordmark { transform-origin: right center; }
+
 .glim-readme-btn-mark--wordmark svg {
-  max-width: 6rem;
+  width: auto;
+  max-width: 7rem;
 }
 
 .glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text {
   inset-inline: 0.875rem;
-  align-items: center;
-  text-align: center;
 }
 
 .glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text > .glim-readme-btn-name {
   visibility: hidden;
 }
 
-/* The (i) at the end takes the same room off both sides, so the wordmark
-   stays in the middle of the tile. */
 .glim-readme-btn-unit:has(.glim-readme-btn-hint) :is(.glim-readme-btn-mark--wordmark, .glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text) {
-  inset-inline: 1.75rem;
+  inset-inline-end: 1.75rem;
 }
 
 .glim-readme-btn-unit:is(:hover, :focus-within, .glim-readme-btn-unit--note, .glim-readme-btn-soon)
@@ -2508,6 +2515,12 @@ body {
   width: 100%;
   height: 100%;
 }
+/* A name written out takes the tile's width, less the margin a symbol keeps
+   round it, and the height of a name rather than of a symbol. */
+.glim-connection-mark--wordmark {
+  width: calc(100% - 1rem);
+  height: 1.5rem;
+}
 .glim-connection-main {
   display: flex;
   flex: 1 1 0;
@@ -2563,13 +2576,19 @@ body {
   position: relative;
 }
 .glim-row-linked:has(> .glim-row-link:hover) > .glim-connection { background-color: var(--hover); }
-/* The state washes are measured over the card, and the well's darker ground
-   takes their text under 4.5:1, so a badge here lays its wash over the card's
-   surface. A neutral one steps up a surface, or it vanishes into the well. */
+/* A badge stays a size below the buttons, so it reads as a state and not as
+   one more thing to press. The state washes are measured over the card, and
+   the well's darker ground takes their text under 4.5:1, so a badge here lays
+   its wash over the card's surface. A neutral one stands halfway between the
+   well and the buttons' surface. */
+.glim-connection-badges .glim-badge {
+  --badge-h: 1.5rem;
+  --badge-px: 0.625rem;
+}
 .glim-connection-badges .glim-badge--ok { background: linear-gradient(var(--status-ok-bg), var(--status-ok-bg)) var(--carbon-surface); }
 .glim-connection-badges .glim-badge--fail { background: linear-gradient(var(--status-fail-bg), var(--status-fail-bg)) var(--carbon-surface); }
 .glim-connection-badges .glim-badge--active { background: linear-gradient(var(--accent-soft), var(--accent-soft)) var(--carbon-surface); }
-.glim-connection-badges .glim-badge--neutral { background-color: var(--carbon-surface3); }
+.glim-connection-badges .glim-badge--neutral { background-color: color-mix(in srgb, var(--carbon-surface2), var(--carbon-surface3)); }
 .glim-connection-about {
   display: flex;
   flex: 1 1 12rem;
@@ -4499,6 +4518,10 @@ body {
   .glim-btn--subtle {
     background-color: var(--carbon-surface2);
     color: var(--carbon-text);
+  }
+  /* A connection row is a well of surface2, where a quiet button would vanish. */
+  .glim-connection .glim-btn--subtle {
+    background-color: var(--carbon-surface3);
   }
   .glim-btn--ok {
     background-color: var(--status-ok-solid);
