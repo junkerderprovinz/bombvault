@@ -570,6 +570,8 @@ var pairedRefused = []string{
 	"GET /api/nodes",
 	"POST /api/nodes",
 	"DELETE /api/nodes/{id}",
+	"POST /api/nodes/{id}/placement",
+	"PUT /api/receiver/node-address",
 }
 
 // sessionRoutes are the registered routes that need a session.

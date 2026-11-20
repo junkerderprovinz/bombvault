@@ -36,7 +36,9 @@ type receivedRepoView struct {
 	CreatedAt         int64  `json:"createdAt"`
 	SortOrder         int    `json:"sortOrder"`
 	MemberID          string `json:"memberId"`
-	NeedsPairing      bool   `json:"needsPairing"`
+	// NodeID is the node of this instance that writes the repository.
+	NodeID       string `json:"nodeId,omitempty"`
+	NeedsPairing bool   `json:"needsPairing"`
 }
 
 // receivedRepoStatus adds the live status the list endpoint probes: the newest
@@ -88,6 +90,7 @@ func receivedRepoToView(rr store.ReceivedRepo) receivedRepoView {
 		CreatedAt:         rr.CreatedAt,
 		SortOrder:         rr.SortOrder,
 		MemberID:          rr.MemberID,
+		NodeID:            rr.NodeID,
 		NeedsPairing:      rr.NeedsPairing(),
 	}
 }

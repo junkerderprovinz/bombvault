@@ -180,6 +180,17 @@ func (s *Service) dropNode(id string, hn *homeNode) {
 	}
 }
 
+// nodeLinkOf returns the link home holds to node id.
+func (s *Service) nodeLinkOf(id string) (*nodelink.Link, bool) {
+	s.nodeMu.Lock()
+	defer s.nodeMu.Unlock()
+	hn, ok := s.nodeLinks[id]
+	if !ok {
+		return nil, false
+	}
+	return hn.link, true
+}
+
 func (s *Service) adoptNode(ctx context.Context, id string, link *nodelink.Link) error {
 	var hello nodeHello
 	if err := s.callNode(ctx, link, keydeposit.ProofNodeAdopt, id, nodeAdoptPath, nil, &hello); err != nil {

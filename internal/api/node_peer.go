@@ -377,3 +377,13 @@ func (s *Service) reachPlacement(ctx context.Context, p nodePlacement) nodeReach
 	}
 	return nodeReach{Domain: p.Domain, Reached: true}
 }
+
+// placementCreds opens the sign-in home sent for a placement.
+func (s *Service) placementCreds(p store.NodePlacement) (CloudCreds, error) {
+	raw, err := secret.Decrypt(s.cfg.AppKey, p.CredsEnc)
+	if err != nil {
+		return CloudCreds{}, err
+	}
+	var c CloudCreds
+	return c, json.Unmarshal(raw, &c)
+}

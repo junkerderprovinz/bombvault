@@ -194,6 +194,8 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/nodes", h.handleListNodes)
 	mux.HandleFunc("POST /api/nodes", h.handleAddNode)
 	mux.HandleFunc("DELETE /api/nodes/{id}", h.handleReleaseNode)
+	mux.HandleFunc("POST /api/nodes/{id}/placement", h.handlePlaceNode)
+	mux.HandleFunc("PUT /api/receiver/node-address", h.handleSetReceiverNodeAddress)
 
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
