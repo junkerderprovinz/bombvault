@@ -5519,7 +5519,7 @@ const is: Partial<Translations> = {
   "nodes.toLocation": "Áfangastaður",
   "nodes.toLocationText": "S3-þjónusta eða REST-þjónn sem hnúturinn nær í, með eigin innskráningu.",
   "nodes.toNode": "Geyma þau á hnútnum",
-  "nodes.toNodeText": "Hnúturinn geymir afritin sín á bak við eigin rest-server og þetta tilvik sækir afrit á klukkutíma fresti. Til þess þarf hnúturinn opna gátt fyrir þetta tilvik.",
+  "nodes.toNodeText": "Hnúturinn geymir afritin sín á bak við eigin rest-server og þetta tilvik sækir afrit eftir hverja afritun. Til þess þarf hnúturinn opna gátt fyrir þetta tilvik.",
   "nodes.noReceiver": "Þetta tilvik keyrir ekki enn móttökuþjón. Settu einn upp fyrst eða veldu áfangastað.",
   "nodes.address": "Vistfang fyrir hnúta",
   "nodes.addressTip": "Þar sem hnútar ná í móttökuþjóninn. Hnútur sendir yfirleitt af netinu, svo notaðu https:// á bak við reverse proxy, eða http:// með einkavistfangi, til dæmis frá VPN.",

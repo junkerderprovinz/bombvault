@@ -5508,7 +5508,7 @@ const cs: Partial<Translations> = {
   "nodes.toLocation": "Cíl",
   "nodes.toLocationText": "Služba S3 nebo REST server, na který uzel dosáhne, s vlastními přihlašovacími údaji.",
   "nodes.toNode": "Nechat je na uzlu",
-  "nodes.toNodeText": "Uzel uchovává své zálohy za vlastním rest-serverem a tato instance si každou hodinu stáhne kopii. Uzel k tomu potřebuje port otevřený pro tuto instanci.",
+  "nodes.toNodeText": "Uzel uchovává své zálohy za vlastním rest-serverem a tato instance si po každé záloze stáhne kopii. Uzel k tomu potřebuje port otevřený pro tuto instanci.",
   "nodes.noReceiver": "Tato instance zatím neprovozuje přijímací server. Nejdřív ho nastav, nebo vyber cíl.",
   "nodes.address": "Adresa pro uzly",
   "nodes.addressTip": "Kde uzly najdou přijímací server. Uzel obvykle posílá z internetu, takže použij https:// za reverzní proxy, nebo http:// se soukromou adresou, třeba z VPN.",

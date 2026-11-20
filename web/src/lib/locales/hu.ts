@@ -5510,7 +5510,7 @@ const hu: Partial<Translations> = {
   "nodes.toLocation": "Egy cél",
   "nodes.toLocationText": "S3 szolgáltatás vagy REST szerver, amelyet a csomópont elér, saját bejelentkezéssel.",
   "nodes.toNode": "Maradjanak a csomóponton",
-  "nodes.toNodeText": "A csomópont a saját rest-servere mögött tartja a biztonsági mentéseit, ez a példány pedig óránként letölt róluk egy másolatot. Ehhez a csomópontnak nyitott port kell ennek a példánynak.",
+  "nodes.toNodeText": "A csomópont a saját rest-servere mögött tartja a biztonsági mentéseit, ez a példány pedig minden mentés után letölt róluk egy másolatot. Ehhez a csomópontnak nyitott port kell ennek a példánynak.",
   "nodes.noReceiver": "Ez a példány még nem futtat fogadószervert. Előbb állíts be egyet, vagy válassz egy célt.",
   "nodes.address": "Cím a csomópontoknak",
   "nodes.addressTip": "Ezen a címen érik el a csomópontok a fogadószervert. Egy csomópont általában az internetről küld, ezért használj https:// címet egy reverse proxy mögött, vagy http:// címet privát címmel, például egy VPN címével.",

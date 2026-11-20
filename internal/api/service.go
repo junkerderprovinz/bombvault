@@ -781,7 +781,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		s.engine = guardOwnData(eng, s)
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
-	s.nodes = newNodeWatch(st, s.callNodeByID, s.notifyNode, s.pruneNodeSection)
+	s.nodes = newNodeWatch(st, s.callNodeByID, s.notifyNode, s.pruneNodeSection, s.fetchNodeSection)
 	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
 	if st != nil {
 		st.SetRunStartedHook(s.runStarted)

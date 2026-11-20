@@ -95,9 +95,16 @@ type watchUnderTest struct {
 	node   *fakeNode
 	alerts []string
 
-	mu     sync.Mutex
-	pruned []string
-	hold   chan struct{}
+	mu      sync.Mutex
+	pruned  []string
+	fetched []string
+	hold    chan struct{}
+}
+
+func (wt *watchUnderTest) fetches() []string {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	return slices.Clone(wt.fetched)
 }
 
 func (wt *watchUnderTest) prunes() []string {
@@ -138,6 +145,11 @@ func newWatchUnderTest(t *testing.T, n store.Node) *watchUnderTest {
 			defer wt.mu.Unlock()
 			wt.pruned = append(wt.pruned, domain)
 			return nil
+		},
+		func(_ store.Node, domain string) {
+			wt.mu.Lock()
+			defer wt.mu.Unlock()
+			wt.fetched = append(wt.fetched, domain)
 		})
 	return wt
 }
@@ -457,5 +469,40 @@ func TestTheEpisodesOfANodeFollowWhatHomeLearnedOfIt(t *testing.T) {
 				t.Errorf("opened %v and closed %v, want %v and %v", keys, closed, c.opened, c.closed)
 			}
 		})
+	}
+}
+
+func TestHomeFetchesASectionOfANodeThatKeepsItsBackupsOnceItsRunsEnd(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{ContainersCadence: "daily 03:00", Placement: nodePlaceNode})
+	run := func(id, target, status string, end *int64) nodeRunReport {
+		return nodeRunReport{ID: id, Kind: "backup", Domain: "container", Target: target, Status: status, StartedAt: inWeek(18, 3, 0).Unix(), FinishedAt: end}
+	}
+	wt.node.set(func(f *fakeNode) {
+		f.runs = []nodeRunReport{run("r1", "web", "running", nil), run("r2", "db", "running", nil)}
+	})
+	wt.tick(t, inWeek(18, 3, 5))
+	wt.node.set(func(f *fakeNode) { f.runs[0] = run("r1", "web", "success", finished(inWeek(18, 3, 7))) })
+	wt.tick(t, inWeek(18, 3, 5).Add(nodePollEvery))
+	if got := wt.fetches(); len(got) != 0 {
+		t.Fatalf("fetched %v while a run of the section was still going", got)
+	}
+	wt.node.set(func(f *fakeNode) { f.runs[1] = run("r2", "db", "failed", finished(inWeek(18, 3, 12))) })
+	wt.tick(t, inWeek(18, 3, 5).Add(2*nodePollEvery))
+	wt.tick(t, inWeek(18, 3, 5).Add(3*nodePollEvery))
+	if got := wt.fetches(); !slices.Equal(got, []string{"containers"}) {
+		t.Errorf("fetches = %v, want the containers once, after the last of their runs ended", got)
+	}
+}
+
+func TestHomeFetchesNothingAfterTheRunsOfANodeItSendsElsewhere(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{Placement: nodePlaceReceiver})
+	wt.node.set(func(f *fakeNode) {
+		f.runs = []nodeRunReport{{ID: "r1", Kind: "backup", Domain: "files", Target: "docs", Status: "running", StartedAt: inWeek(18, 3, 0).Unix()}}
+	})
+	wt.tick(t, inWeek(18, 3, 5))
+	wt.node.set(func(f *fakeNode) { f.runs[0].Status, f.runs[0].FinishedAt = "success", finished(inWeek(18, 3, 8)) })
+	wt.tick(t, inWeek(18, 3, 5).Add(nodePollEvery))
+	if got := wt.fetches(); len(got) != 0 {
+		t.Errorf("fetched %v from a node on the receiver", got)
 	}
 }

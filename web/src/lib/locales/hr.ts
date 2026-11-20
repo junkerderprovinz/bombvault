@@ -5520,7 +5520,7 @@ const hr: Partial<Translations> = {
   "nodes.toLocation": "Odredište",
   "nodes.toLocationText": "S3 usluga ili REST poslužitelj do kojeg čvor može doći, s vlastitim vjerodajnicama.",
   "nodes.toNode": "Čuvati ih na čvoru",
-  "nodes.toNodeText": "Čvor čuva svoje sigurnosne kopije iza vlastitog rest-servera, a ova instanca svaki sat preuzme kopiju. Za to čvor treba port otvoren za ovu instancu.",
+  "nodes.toNodeText": "Čvor čuva svoje sigurnosne kopije iza vlastitog rest-servera, a ova instanca nakon svake sigurnosne kopije preuzme kopiju. Za to čvor treba port otvoren za ovu instancu.",
   "nodes.noReceiver": "Ova instanca još nema prijamni poslužitelj. Najprije ga postavite ili odaberite odredište.",
   "nodes.address": "Adresa za čvorove",
   "nodes.addressTip": "Adresa na kojoj čvorovi dolaze do prijamnog poslužitelja. Čvor obično šalje s interneta, pa koristite https:// iza obrnutog proxyja ili http:// s privatnom adresom, na primjer iz VPN-a.",

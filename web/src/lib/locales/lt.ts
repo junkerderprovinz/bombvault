@@ -5519,7 +5519,7 @@ const lt: Partial<Translations> = {
   "nodes.toLocation": "Paskirties vieta",
   "nodes.toLocationText": "S3 paslauga arba REST serveris, kurį mazgas pasiekia, su atskiru prisijungimu.",
   "nodes.toNode": "Laikyti jas mazge",
-  "nodes.toNodeText": "Mazgas laiko atsargines kopijas už savo rest-server, o šis egzempliorius kas valandą pasiima kopiją. Tam mazgas turi turėti šiam egzemplioriui atvirą prievadą.",
+  "nodes.toNodeText": "Mazgas laiko atsargines kopijas už savo rest-server, o šis egzempliorius po kiekvieno atsarginio kopijavimo pasiima kopiją. Tam mazgas turi turėti šiam egzemplioriui atvirą prievadą.",
   "nodes.noReceiver": "Šis egzempliorius dar neturi priėmimo serverio. Pirmiausia jį nustatyk arba pasirink paskirties vietą.",
   "nodes.address": "Adresas mazgams",
   "nodes.addressTip": "Adresas, kuriuo mazgai pasiekia priėmimo serverį. Mazgas paprastai siunčia iš interneto, todėl naudok https:// už atvirkštinio tarpinio serverio arba http:// su privačiu adresu, pavyzdžiui, VPN.",

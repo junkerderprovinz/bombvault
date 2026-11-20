@@ -5509,7 +5509,7 @@ const it: Partial<Translations> = {
   "nodes.toLocation": "Una destinazione",
   "nodes.toLocationText": "Un servizio S3 o un server REST che il nodo può raggiungere, con credenziali proprie.",
   "nodes.toNode": "Tenerli sul nodo",
-  "nodes.toNodeText": "Il nodo tiene i suoi backup dietro un proprio rest-server, e questa istanza ne prende una copia ogni ora. Per questo il nodo ha bisogno di una porta aperta verso questa istanza.",
+  "nodes.toNodeText": "Il nodo tiene i suoi backup dietro un proprio rest-server, e questa istanza ne prende una copia dopo ogni backup. Per questo il nodo ha bisogno di una porta aperta verso questa istanza.",
   "nodes.noReceiver": "Questa istanza non ha ancora un server ricevente. Configurane prima uno, oppure scegli una destinazione.",
   "nodes.address": "Indirizzo per i nodi",
   "nodes.addressTip": "Dove i nodi raggiungono il server ricevente. Di solito un nodo invia da internet, quindi usa https:// dietro un reverse proxy, oppure http:// con un indirizzo privato, come quello di una VPN.",

@@ -5511,7 +5511,7 @@ const ro: Partial<Translations> = {
   "nodes.toLocation": "O destinație",
   "nodes.toLocationText": "Un serviciu S3 sau un server REST la care nodul ajunge, cu autentificare proprie.",
   "nodes.toNode": "Păstrează-le pe nod",
-  "nodes.toNodeText": "Nodul își păstrează copiile de rezervă în spatele propriului rest-server, iar această instanță ia o copie în fiecare oră. Pentru asta, nodul are nevoie de un port deschis spre această instanță.",
+  "nodes.toNodeText": "Nodul își păstrează copiile de rezervă în spatele propriului rest-server, iar această instanță ia o copie după fiecare backup. Pentru asta, nodul are nevoie de un port deschis spre această instanță.",
   "nodes.noReceiver": "Această instanță nu rulează încă un server receptor. Configurează mai întâi unul sau alege o destinație.",
   "nodes.address": "Adresă pentru noduri",
   "nodes.addressTip": "Adresa la care nodurile ajung la serverul receptor. De obicei un nod trimite din internet, așa că folosește https:// în spatele unui reverse proxy sau http:// cu o adresă privată, de exemplu dintr-un VPN.",

@@ -5510,7 +5510,7 @@ const no: Partial<Translations> = {
   "nodes.toLocation": "Et mål",
   "nodes.toLocationText": "En S3-tjeneste eller REST-server som noden når, med egen pålogging.",
   "nodes.toNode": "Behold dem på noden",
-  "nodes.toNodeText": "Noden oppbevarer sikkerhetskopiene sine bak sin egen rest-server, og denne instansen henter en kopi hver time. Da må noden ha en port åpen for denne instansen.",
+  "nodes.toNodeText": "Noden oppbevarer sikkerhetskopiene sine bak sin egen rest-server, og denne instansen henter en kopi etter hver sikkerhetskopiering. Da må noden ha en port åpen for denne instansen.",
   "nodes.noReceiver": "Denne instansen kjører ingen mottaksserver ennå. Sett opp en først, eller velg et mål.",
   "nodes.address": "Adresse for noder",
   "nodes.addressTip": "Der nodene når mottaksserveren. En node sender som regel fra internett, så bruk https:// bak en omvendt proxy, eller http:// med en privat adresse, for eksempel fra et VPN.",

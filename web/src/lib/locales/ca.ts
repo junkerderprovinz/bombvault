@@ -5520,7 +5520,7 @@ const ca: Partial<Translations> = {
   "nodes.toLocation": "Una destinació",
   "nodes.toLocationText": "Un servei S3 o un servidor REST al qual arribi el node, amb unes credencials pròpies.",
   "nodes.toNode": "Desar-les al node",
-  "nodes.toNodeText": "El node desa les seves còpies darrere del seu propi rest-server, i aquesta instància n'agafa una còpia cada hora. Per això, el node necessita un port obert cap a aquesta instància.",
+  "nodes.toNodeText": "El node desa les seves còpies darrere del seu propi rest-server, i aquesta instància n'agafa una còpia després de cada còpia de seguretat. Per això, el node necessita un port obert cap a aquesta instància.",
   "nodes.noReceiver": "Aquesta instància encara no té cap servidor receptor. Configura'n un primer, o tria una destinació.",
   "nodes.address": "Adreça per als nodes",
   "nodes.addressTip": "On els nodes troben el servidor receptor. Un node sol enviar des d'internet, així que fes servir https:// darrere d'un proxy invers, o http:// amb una adreça privada, com la d'una VPN.",

@@ -5503,7 +5503,7 @@ const sl: Partial<Translations> = {
   "nodes.toLocation": "Cilj",
   "nodes.toLocationText": "Storitev S3 ali strežnik REST, ki ga vozlišče doseže, z lastnimi poverilnicami.",
   "nodes.toNode": "Hrani jih na vozlišču",
-  "nodes.toNodeText": "Vozlišče hrani svoje varnostne kopije za lastnim rest-serverjem, ta instanca pa vsako uro prenese kopijo. Za to mora imeti vozlišče odprta vrata za to instanco.",
+  "nodes.toNodeText": "Vozlišče hrani svoje varnostne kopije za lastnim rest-serverjem, ta instanca pa po vsaki varnostni kopiji prenese kopijo. Za to mora imeti vozlišče odprta vrata za to instanco.",
   "nodes.noReceiver": "Ta instanca še ne poganja sprejemnega strežnika. Najprej ga nastavi ali izberi cilj.",
   "nodes.address": "Naslov za vozlišča",
   "nodes.addressTip": "Na tem naslovu vozlišča dosežejo sprejemni strežnik. Vozlišče običajno pošilja iz interneta, zato uporabi https:// za obratnim posrednikom ali http:// z zasebnim naslovom, na primer iz VPN.",

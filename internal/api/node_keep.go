@@ -478,3 +478,22 @@ func (s *Service) pruneOnNode(ctx context.Context, n store.Node, domain string, 
 	}
 }
 
+// fetchNodeSection fetches in the background what the runs of section domain
+// on node n wrote, unless home does not fetch from n or a fetch runs already.
+func (s *Service) fetchNodeSection(n store.Node, domain string) {
+	sources, err := s.store.ListPullSources()
+	if err != nil {
+		log.Printf("nodes: %s: %v", n.Name, err) //nolint:gosec // G706: the name is one home gave the node
+		return
+	}
+	for _, ps := range sources {
+		if ps.NodeID != n.ID || ps.Domain != domain || !ps.Enabled {
+			continue
+		}
+		go func() {
+			if _, err := s.PullFromSource(s.StopContext(), ps); err != nil && !errors.Is(err, errPullBusy) {
+				log.Printf("nodes: %s: the fetch of its %s failed: %v", n.Name, domain, err) //nolint:gosec // G706: the name is one home gave the node
+			}
+		}()
+	}
+}

@@ -5520,7 +5520,7 @@ const gl: Partial<Translations> = {
   "nodes.toLocation": "Un destino",
   "nodes.toLocationText": "Un servizo S3 ou un servidor REST ao que chegue o nodo, coas súas propias credenciais.",
   "nodes.toNode": "Gardalas no nodo",
-  "nodes.toNodeText": "O nodo garda as súas copias de seguridade detrás do seu propio rest-server, e esta instancia colle unha copia cada hora. Para iso, o nodo precisa un porto aberto cara a esta instancia.",
+  "nodes.toNodeText": "O nodo garda as súas copias de seguridade detrás do seu propio rest-server, e esta instancia colle unha copia despois de cada copia de seguridade. Para iso, o nodo precisa un porto aberto cara a esta instancia.",
   "nodes.noReceiver": "Esta instancia aínda non ten servidor receptor. Configura un primeiro ou escolle un destino.",
   "nodes.address": "Enderezo para os nodos",
   "nodes.addressTip": "Onde os nodos chegan ao servidor receptor. Un nodo adoita enviar desde internet, así que usa https:// detrás dun proxy inverso, ou http:// cun enderezo privado, como o dunha VPN.",

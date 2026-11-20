@@ -5508,7 +5508,7 @@ const es: Partial<Translations> = {
   "nodes.toLocation": "Un destino",
   "nodes.toLocationText": "Un servicio S3 o un servidor REST al que llegue el nodo, con credenciales propias.",
   "nodes.toNode": "Guardarlas en el nodo",
-  "nodes.toNodeText": "El nodo guarda sus copias detrás de su propio rest-server, y esta instancia recoge una copia cada hora. Para eso, el nodo necesita un puerto abierto hacia esta instancia.",
+  "nodes.toNodeText": "El nodo guarda sus copias detrás de su propio rest-server, y esta instancia recoge una copia después de cada copia de seguridad. Para eso, el nodo necesita un puerto abierto hacia esta instancia.",
   "nodes.noReceiver": "Esta instancia aún no tiene un servidor receptor. Configura uno primero o elige un destino.",
   "nodes.address": "Dirección para nodos",
   "nodes.addressTip": "Donde los nodos encuentran el servidor receptor. Un nodo suele enviar desde internet, así que usa https:// detrás de un proxy inverso, o http:// con una dirección privada, como la de una VPN.",

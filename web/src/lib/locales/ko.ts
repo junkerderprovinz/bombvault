@@ -5500,7 +5500,7 @@ const ko: Partial<Translations> = {
   "nodes.toLocation": "대상",
   "nodes.toLocationText": "노드가 접속할 수 있는 S3 서비스 또는 REST 서버로, 별도의 자격 증명을 사용합니다.",
   "nodes.toNode": "노드에 보관",
-  "nodes.toNodeText": "노드가 자체 rest-server 뒤에 백업을 보관하고, 이 인스턴스가 매시간 사본을 가져옵니다. 그러려면 노드에 이 인스턴스용으로 열린 포트가 필요합니다.",
+  "nodes.toNodeText": "노드가 자체 rest-server 뒤에 백업을 보관하고, 이 인스턴스가 백업할 때마다 사본을 가져옵니다. 그러려면 노드에 이 인스턴스용으로 열린 포트가 필요합니다.",
   "nodes.noReceiver": "이 인스턴스는 아직 수신 서버를 운영하지 않습니다. 먼저 설정하거나 대상을 선택하세요.",
   "nodes.address": "노드용 주소",
   "nodes.addressTip": "노드가 수신 서버에 접속하는 주소입니다. 노드는 보통 인터넷을 거쳐 보내므로, 리버스 프록시 뒤에서 https://를 쓰거나 VPN 같은 사설 주소로 http://를 쓰세요.",

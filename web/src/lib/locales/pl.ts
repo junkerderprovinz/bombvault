@@ -5507,7 +5507,7 @@ const pl: Partial<Translations> = {
   "nodes.toLocation": "Miejsce docelowe",
   "nodes.toLocationText": "Usługa S3 lub serwer REST, do którego węzeł dociera, z własnymi danymi logowania.",
   "nodes.toNode": "Trzymaj je na węźle",
-  "nodes.toNodeText": "Węzeł trzyma kopie zapasowe za własnym rest-serverem, a ta instancja co godzinę pobiera z nich kopię. Do tego węzeł musi mieć port otwarty dla tej instancji.",
+  "nodes.toNodeText": "Węzeł trzyma kopie zapasowe za własnym rest-serverem, a ta instancja pobiera kopię po każdym tworzeniu kopii zapasowej. Do tego węzeł musi mieć port otwarty dla tej instancji.",
   "nodes.noReceiver": "Ta instancja nie ma jeszcze serwera odbiorczego. Najpierw go skonfiguruj albo wybierz miejsce docelowe.",
   "nodes.address": "Adres dla węzłów",
   "nodes.addressTip": "Pod tym adresem węzły docierają do serwera odbiorczego. Węzeł zwykle wysyła z internetu, więc użyj https:// za reverse proxy albo http:// z adresem prywatnym, na przykład z VPN.",

@@ -5500,7 +5500,7 @@ const zh: Partial<Translations> = {
   "nodes.toLocation": "目标",
   "nodes.toLocationText": "节点能访问到的 S3 服务或 REST 服务器，使用单独的凭据。",
   "nodes.toNode": "保留在节点上",
-  "nodes.toNodeText": "节点把备份保存在自己的 rest-server 后面，此实例每小时取回一份副本。为此，节点需要向此实例开放一个端口。",
+  "nodes.toNodeText": "节点把备份保存在自己的 rest-server 后面，此实例在每次备份后取回一份副本。为此，节点需要向此实例开放一个端口。",
   "nodes.noReceiver": "此实例尚未运行接收服务器。请先设置一个，或选择一个目标。",
   "nodes.address": "节点使用的地址",
   "nodes.addressTip": "节点通过此地址访问接收服务器。节点通常从互联网发送数据，因此请在反向代理后使用 https://，或将 http:// 与私有地址（例如 VPN 地址）一起使用。",

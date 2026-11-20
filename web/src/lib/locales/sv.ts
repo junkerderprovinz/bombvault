@@ -5509,7 +5509,7 @@ const sv: Partial<Translations> = {
   "nodes.toLocation": "Ett mål",
   "nodes.toLocationText": "En S3-tjänst eller en REST-server som noden når, med en egen inloggning.",
   "nodes.toNode": "Behåll dem på noden",
-  "nodes.toNodeText": "Noden behåller sina säkerhetskopior bakom en egen rest-server, och den här instansen hämtar en kopia varje timme. Därför behöver noden en port som är öppen för den här instansen.",
+  "nodes.toNodeText": "Noden behåller sina säkerhetskopior bakom en egen rest-server, och den här instansen hämtar en kopia efter varje säkerhetskopiering. Därför behöver noden en port som är öppen för den här instansen.",
   "nodes.noReceiver": "Den här instansen kör ingen mottagarserver än. Sätt upp en först, eller välj ett mål.",
   "nodes.address": "Adress för noder",
   "nodes.addressTip": "Där når noder mottagarservern. En nod skickar oftast från internet, så använd https:// bakom en omvänd proxy, eller http:// med en privat adress, till exempel från ett VPN.",

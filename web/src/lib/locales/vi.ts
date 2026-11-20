@@ -5500,7 +5500,7 @@ const vi: Partial<Translations> = {
   "nodes.toLocation": "Một đích sao lưu",
   "nodes.toLocationText": "Một dịch vụ S3 hoặc máy chủ REST mà node tới được, với thông tin đăng nhập riêng.",
   "nodes.toNode": "Giữ trên node",
-  "nodes.toNodeText": "Node giữ bản sao lưu sau rest-server riêng của nó, và phiên bản này lấy một bản sao mỗi giờ. Vì vậy node cần một cổng mở cho phiên bản này.",
+  "nodes.toNodeText": "Node giữ bản sao lưu sau rest-server riêng của nó, và phiên bản này lấy một bản sao sau mỗi lần sao lưu. Vì vậy node cần một cổng mở cho phiên bản này.",
   "nodes.noReceiver": "Phiên bản này chưa chạy máy chủ nhận nào. Hãy thiết lập một máy chủ trước, hoặc chọn một đích sao lưu.",
   "nodes.address": "Địa chỉ cho node",
   "nodes.addressTip": "Địa chỉ để node tới máy chủ nhận. Node thường gửi từ internet, nên hãy dùng https:// sau một proxy ngược, hoặc http:// với địa chỉ riêng như địa chỉ VPN.",

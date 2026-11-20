@@ -5509,7 +5509,7 @@ const nl: Partial<Translations> = {
   "nodes.toLocation": "Een bestemming",
   "nodes.toLocationText": "Een S3-dienst of REST-server die de node kan bereiken, met eigen inloggegevens.",
   "nodes.toNode": "Op de node bewaren",
-  "nodes.toNodeText": "De node bewaart zijn back-ups achter een eigen rest-server, en deze instantie haalt elk uur een kopie op. Daarvoor moet de node een poort openzetten voor deze instantie.",
+  "nodes.toNodeText": "De node bewaart zijn back-ups achter een eigen rest-server, en deze instantie haalt na elke back-up een kopie op. Daarvoor moet de node een poort openzetten voor deze instantie.",
   "nodes.noReceiver": "Deze instantie draait nog geen ontvangserver. Stel er eerst een in of kies een bestemming.",
   "nodes.address": "Adres voor nodes",
   "nodes.addressTip": "Via dit adres bereiken nodes de ontvangserver. Een node verstuurt meestal vanaf het internet, dus gebruik https:// achter een reverse proxy, of http:// met een privéadres, zoals dat van een VPN.",

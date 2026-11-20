@@ -5509,7 +5509,7 @@ const tr: Partial<Translations> = {
   "nodes.toLocation": "Bir hedef",
   "nodes.toLocationText": "Düğümün ulaşabildiği bir S3 hizmeti ya da REST sunucusu, kendine ait oturum açma bilgisiyle.",
   "nodes.toNode": "Düğümde tut",
-  "nodes.toNodeText": "Düğüm yedeklerini kendi rest-server'ının arkasında tutar, bu örnek de her saat bir kopyasını alır. Bunun için düğümde bu örneğe açık bir port gerekir.",
+  "nodes.toNodeText": "Düğüm yedeklerini kendi rest-server'ının arkasında tutar, bu örnek de her yedeklemeden sonra bir kopyasını alır. Bunun için düğümde bu örneğe açık bir port gerekir.",
   "nodes.noReceiver": "Bu örnek henüz bir alıcı sunucu çalıştırmıyor. Önce bir tane kur ya da bir hedef seç.",
   "nodes.address": "Düğümler için adres",
   "nodes.addressTip": "Düğümlerin alıcı sunucuya ulaştığı adres. Düğüm genelde internetten gönderir, bu yüzden ters vekil sunucu arkasında https:// ya da VPN adresi gibi özel bir adresle http:// kullan.",

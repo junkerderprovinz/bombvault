@@ -5520,7 +5520,7 @@ const ms: Partial<Translations> = {
   "nodes.toLocation": "Destinasi",
   "nodes.toLocationText": "Perkhidmatan S3 atau pelayan REST yang boleh dicapai oleh nod, dengan log masuknya sendiri.",
   "nodes.toNode": "Simpan pada nod",
-  "nodes.toNodeText": "Nod menyimpan sandarannya di belakang rest-server sendiri, dan instans ini mengambil salinan setiap jam. Untuk itu nod memerlukan port yang terbuka kepada instans ini.",
+  "nodes.toNodeText": "Nod menyimpan sandarannya di belakang rest-server sendiri, dan instans ini mengambil salinan selepas setiap sandaran. Untuk itu nod memerlukan port yang terbuka kepada instans ini.",
   "nodes.noReceiver": "Instans ini belum menjalankan pelayan penerima. Sediakan satu dahulu atau pilih destinasi.",
   "nodes.address": "Alamat untuk nod",
   "nodes.addressTip": "Alamat yang digunakan nod untuk mencapai pelayan penerima. Nod biasanya menghantar dari internet, jadi gunakan https:// di belakang proksi songsang, atau http:// dengan alamat peribadi seperti alamat VPN.",

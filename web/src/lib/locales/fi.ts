@@ -5510,7 +5510,7 @@ const fi: Partial<Translations> = {
   "nodes.toLocation": "Kohde",
   "nodes.toLocationText": "S3-palvelu tai REST-palvelin, jonka solmu tavoittaa, omilla tunnuksillaan.",
   "nodes.toNode": "Säilytä ne solmulla",
-  "nodes.toNodeText": "Solmu säilyttää varmuuskopionsa oman rest-serverinsä takana, ja tämä instanssi hakee niistä kopion joka tunti. Siksi solmulla pitää olla tälle instanssille avoin portti.",
+  "nodes.toNodeText": "Solmu säilyttää varmuuskopionsa oman rest-serverinsä takana, ja tämä instanssi hakee niistä kopion jokaisen varmuuskopioinnin jälkeen. Siksi solmulla pitää olla tälle instanssille avoin portti.",
   "nodes.noReceiver": "Tällä instanssilla ei ole vielä vastaanottopalvelinta. Ota se ensin käyttöön tai valitse kohde.",
   "nodes.address": "Osoite solmuille",
   "nodes.addressTip": "Osoite, josta solmut tavoittavat vastaanottopalvelimen. Solmu lähettää yleensä internetistä, joten käytä https://-osoitetta käänteisen välityspalvelimen takana tai http://-osoitetta yksityisellä osoitteella, esimerkiksi VPN:n osoitteella.",

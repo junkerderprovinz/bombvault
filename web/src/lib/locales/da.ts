@@ -5510,7 +5510,7 @@ const da: Partial<Translations> = {
   "nodes.toLocation": "En destination",
   "nodes.toLocationText": "En S3-tjeneste eller en REST-server, som noden kan nå, med sine egne adgangsoplysninger.",
   "nodes.toNode": "Behold dem på noden",
-  "nodes.toNodeText": "Noden gemmer sine sikkerhedskopier bag sin egen rest-server, og denne instans henter en kopi hver time. Derfor skal noden have en port åben for denne instans.",
+  "nodes.toNodeText": "Noden gemmer sine sikkerhedskopier bag sin egen rest-server, og denne instans henter en kopi efter hver sikkerhedskopiering. Derfor skal noden have en port åben for denne instans.",
   "nodes.noReceiver": "Denne instans kører ikke nogen modtageserver endnu. Sæt en op først, eller vælg en destination.",
   "nodes.address": "Adresse til noder",
   "nodes.addressTip": "Hvor noderne når modtageserveren. En node sender som regel fra internettet, så brug https:// bag en omvendt proxy, eller http:// med en privat adresse, for eksempel fra en VPN.",

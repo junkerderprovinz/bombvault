@@ -5519,7 +5519,7 @@ const id: Partial<Translations> = {
   "nodes.toLocation": "Sebuah tujuan",
   "nodes.toLocationText": "Layanan S3 atau server REST yang bisa dijangkau node, dengan login sendiri.",
   "nodes.toNode": "Simpan di node",
-  "nodes.toNodeText": "Node menyimpan cadangannya di balik rest-server miliknya sendiri, dan instance ini mengambil salinannya setiap jam. Untuk itu node perlu port yang terbuka bagi instance ini.",
+  "nodes.toNodeText": "Node menyimpan cadangannya di balik rest-server miliknya sendiri, dan instance ini mengambil salinannya setelah setiap pencadangan. Untuk itu node perlu port yang terbuka bagi instance ini.",
   "nodes.noReceiver": "Instance ini belum menjalankan server penerima. Siapkan dulu satu, atau pilih tujuan.",
   "nodes.address": "Alamat untuk node",
   "nodes.addressTip": "Alamat tempat node menjangkau server penerima. Node biasanya mengirim dari internet, jadi pakai https:// di balik reverse proxy, atau http:// dengan alamat pribadi, misalnya alamat VPN.",

@@ -5519,7 +5519,7 @@ const lv: Partial<Translations> = {
   "nodes.toLocation": "Mērķis",
   "nodes.toLocationText": "S3 pakalpojums vai REST serveris, ko mezgls var sasniegt, ar savu pieteikšanos.",
   "nodes.toNode": "Glabāt tās mezglā",
-  "nodes.toNodeText": "Mezgls glabā savas rezerves kopijas aiz sava rest-server, un šī instance katru stundu paņem kopiju. Tam mezglam vajag šai instancei atvērtu portu.",
+  "nodes.toNodeText": "Mezgls glabā savas rezerves kopijas aiz sava rest-server, un šī instance pēc katras dublēšanas paņem kopiju. Tam mezglam vajag šai instancei atvērtu portu.",
   "nodes.noReceiver": "Šī instance vēl nedarbina uztvērējserveri. Vispirms iestatiet to vai izvēlieties mērķi.",
   "nodes.address": "Adrese mezgliem",
   "nodes.addressTip": "Adrese, pa kuru mezgli sasniedz uztvērējserveri. Mezgls parasti sūta no interneta, tāpēc izmantojiet https:// aiz reversā starpniekservera vai http:// ar privātu adresi, piemēram, no VPN.",

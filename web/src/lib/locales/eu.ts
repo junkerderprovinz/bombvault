@@ -5520,7 +5520,7 @@ const eu: Partial<Translations> = {
   "nodes.toLocation": "Helmuga bat",
   "nodes.toLocationText": "Nodoa irits daitekeen S3 zerbitzu bat edo REST zerbitzari bat, bere saio-hasiera propioarekin.",
   "nodes.toNode": "Nodoan gorde",
-  "nodes.toNodeText": "Nodoak bere rest-server propioaren atzean gordetzen ditu babeskopiak, eta instantzia honek kopia bat hartzen du orduro. Horretarako, nodoak instantzia honentzat irekitako ataka bat behar du.",
+  "nodes.toNodeText": "Nodoak bere rest-server propioaren atzean gordetzen ditu babeskopiak, eta instantzia honek kopia bat hartzen du babeskopia bakoitzaren ondoren. Horretarako, nodoak instantzia honentzat irekitako ataka bat behar du.",
   "nodes.noReceiver": "Instantzia honek ez du oraindik hartzaile-zerbitzaririk. Konfiguratu bat lehenik, edo aukeratu helmuga bat.",
   "nodes.address": "Nodoentzako helbidea",
   "nodes.addressTip": "Nodoek hartzaile-zerbitzaria aurkitzen duten helbidea. Nodo batek internetetik bidaltzen du normalean, beraz erabili https:// alderantzizko proxy baten atzean, edo http:// helbide pribatu batekin, VPN batena adibidez.",

@@ -5520,7 +5520,7 @@ const sk: Partial<Translations> = {
   "nodes.toLocation": "Cieľ",
   "nodes.toLocationText": "Služba S3 alebo REST server, na ktorý uzol dosiahne, s vlastnými prihlasovacími údajmi.",
   "nodes.toNode": "Nechať ich na uzle",
-  "nodes.toNodeText": "Uzol uchováva svoje zálohy za vlastným rest-serverom a táto inštancia si každú hodinu stiahne kópiu. Uzol na to potrebuje port otvorený pre túto inštanciu.",
+  "nodes.toNodeText": "Uzol uchováva svoje zálohy za vlastným rest-serverom a táto inštancia si po každej zálohe stiahne kópiu. Uzol na to potrebuje port otvorený pre túto inštanciu.",
   "nodes.noReceiver": "Táto inštancia zatiaľ neprevádzkuje prijímací server. Najprv ho nastav alebo vyber cieľ.",
   "nodes.address": "Adresa pre uzly",
   "nodes.addressTip": "Na tejto adrese uzly dosiahnu prijímací server. Uzol zvyčajne posiela z internetu, takže použi https:// za reverznou proxy alebo http:// so súkromnou adresou, napríklad z VPN.",

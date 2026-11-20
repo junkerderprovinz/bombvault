@@ -5510,7 +5510,7 @@ const pt: Partial<Translations> = {
   "nodes.toLocation": "Um destino",
   "nodes.toLocationText": "Um serviço S3 ou um servidor REST que o nó consiga alcançar, com credenciais próprias.",
   "nodes.toNode": "Guardá-los no nó",
-  "nodes.toNodeText": "O nó guarda os backups atrás do seu próprio rest-server, e esta instância vai buscar uma cópia a cada hora. Para isso, o nó precisa de uma porta aberta para esta instância.",
+  "nodes.toNodeText": "O nó guarda os backups atrás do seu próprio rest-server, e esta instância vai buscar uma cópia depois de cada backup. Para isso, o nó precisa de uma porta aberta para esta instância.",
   "nodes.noReceiver": "Esta instância ainda não tem um servidor recetor. Configura um primeiro ou escolhe um destino.",
   "nodes.address": "Endereço para os nós",
   "nodes.addressTip": "Onde os nós chegam ao servidor recetor. Normalmente um nó envia a partir da internet, por isso usa https:// atrás de um reverse proxy, ou http:// com um endereço privado, como o de uma VPN.",
