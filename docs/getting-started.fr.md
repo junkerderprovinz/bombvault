@@ -180,6 +180,17 @@ Dès maintenant, les conteneurs sont sauvegardés chaque nuit. De bonnes prochai
 !!! note "Contrôle de l'intégration à l'hôte"
     La carte **Intégration hôte** de l'aperçu sonde chaque montage et chaque CLI (socket Docker, libvirt, restic, qemu-img, rclone) et signale les éléments manquants, pour que vous puissiez confirmer que le conteneur est bien raccordé avant de compter dessus. Elle attend sous **Personnaliser** jusqu'à ce que vous l'ajoutiez.
 
+## Sauvegarder un VPS comme nœud {#node}
+
+Un VPS ou un autre petit serveur n'a pas besoin de son propre BombVault avec interface web. Ajoutez-le comme nœud de celui-ci, et cette instance se charge de ses sauvegardes :
+
+1. Définissez un mot de passe de connexion sous **Paramètres, Sécurité**, si ce n'est pas déjà fait.
+2. Ouvrez **Instances**, choisissez **Ajouter un nœud** et saisissez un nom comme `vps-helsinki`.
+3. Choisissez où vont ses sauvegardes, par exemple le serveur récepteur de cette instance, et quand il sauvegarde.
+4. Copiez sur le serveur le fichier compose que montre la fenêtre, faites pointer son volume Host Data et `HOST_SOURCE_ROOT` vers les données à sauvegarder, et lancez `docker compose up -d`.
+
+Dès que le nœud répond, sa carte affiche **Connectée** et ses conteneurs apparaissent sous **Sauvegardes**. [Nœuds](nodes.md) détaille tout cela avec un exemple.
+
 ## S'y retrouver {#navigation}
 
 ![Les paramètres sous forme de tuiles, avec les cartes de la tuile choisie à côté. Chaque modification est enregistrée au moment où vous la faites.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ La compilation de l'interface est nécessaire aussi pour `go run`. Le dépôt ne
 - Assurez-vous qu'un échec vous parvienne avec les **[Notifications](notifications.md)**.
 - Vérifiez quand les choses s'exécutent sous **[Plannings](schedules.md)**.
 - Mettez tous les serveurs de votre groupe sur votre téléphone avec l'**[application Android](android.md)**.
+- Sauvegardez un VPS depuis ici avec un **[nœud](nodes.md)**.
 - Les **[exemples pas à pas](guides.md)** parcourent les tâches courantes, et **[Fonctionnalités](features.md)** liste tout ce que fait BombVault.
 - Vous clonez une installation ou vous passez à un nouveau serveur ? Reportez toute votre configuration avec la carte **Exporter / importer les paramètres**. Voir [Configuration](configuration.md#portable-settings-export-and-import).
 - Un souci ? Voir **[Dépannage](troubleshooting.md)**.

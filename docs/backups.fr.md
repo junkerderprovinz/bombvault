@@ -32,6 +32,8 @@ Trois boutons au-dessus de la liste permettent de l'affiner :
 
 Les éléments qui ne sont plus installés mais ont encore des sauvegardes sont à part, sous **Non installé (sauvegardes uniquement)**. Restaurez-les, ou supprimez leurs sauvegardes pour libérer la place.
 
+Avec des [nœuds](nodes.md), les listes Conteneurs et Dossiers ont une section pour chaque nœud sous vos propres éléments, qui indique si le nœud est connecté et combien d'éléments il a. **Éléments sur** suivi du nom du nœud masque les éléments de la section et les affiche de nouveau. Le menu d'un élément propose **Sauvegarder maintenant**, qui lance sa sauvegarde sur le nœud, et **Ouvrir**. Sa page liste ses sauvegardes avec **Restaurer** à côté de chacune, ce qui restaure l'élément sur le nœud. Le conteneur du nœud lui-même n'est pas listé. Voir [Les éléments d'un nœud](nodes.md#entries).
+
 L'action principale de la page flotte en bas à droite : **Tout sauvegarder maintenant** lance une exécution sur toutes les sections activées. **Plus** contient le reste :
 
 - **Sélectionner** démarre une sélection, voir plus bas.

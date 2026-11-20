@@ -34,4 +34,5 @@ Chacun de ces exemples suit une vraie tâche du début à la fin, avec des noms 
 ## Plusieurs serveurs {#several-servers}
 
 - [Appairer deux serveurs Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end) : deux serveurs qui gardent les copies l'un de l'autre, sans que ni l'un ni l'autre puisse supprimer les sauvegardes de l'autre.
+- [Un VPS qui sauvegarde vers le serveur récepteur](nodes.md#example-vps) : un nœud avec ses conteneurs, piloté depuis l'instance d'attache, sans port ouvert sur le VPS.
 - [Une carte et une alerte dans Home Assistant](api.md#home-assistant-example) : BombVault sur un tableau de bord, avec un message quand une sauvegarde échoue.
