@@ -2306,6 +2306,12 @@ body {
   margin-block: calc(var(--text-body) * 1.5);
 }
 
+/* GlimStone's well: the ground a connection row stands on inside a card. */
+.glim-well {
+  background-color: var(--carbon-surface2);
+  border-radius: var(--radius-control);
+}
+
 /* GlimStone's eyebrow label: small, uppercase, quiet. It heads a picker's
    groups. */
 .glim-eyebrow {
