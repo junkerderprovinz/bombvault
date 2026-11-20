@@ -267,6 +267,10 @@ export function CadenceBuilder({
 
   const inputCls =
     "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well disabled:opacity-50";
+  // In a row the controls of every mode stand at the row's end, with the time
+  // and the strip above them.
+  const end = row ? "justify-end" : "";
+  const subLabel = `text-xs text-carbon-textMuted group-disabled:opacity-50 ${row ? "" : "w-16"}`;
 
   return (
     // The fieldset disables every nested control natively. Opacity on the
@@ -314,8 +318,8 @@ export function CadenceBuilder({
 
       {/* Same variant as the mode pills, so the two rows read as one family. */}
       {state.mode === "weekly" && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.days")}</label>
+        <div className={`flex items-center gap-2 flex-wrap ${end}`}>
+          <label className={subLabel}>{t("cadence.days")}</label>
           <Selector
             items={WEEKDAYS.map((d) => ({ id: d, label: d }))}
             label={t("cadence.days")}
@@ -323,7 +327,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
-            className="flex-1"
+            className={row ? undefined : "flex-1"}
           />
         </div>
       )}
@@ -331,8 +335,8 @@ export function CadenceBuilder({
       {state.mode === "everyN" && (
         // In a column too narrow for the label beside them, the field and its
         // unit go under the label together.
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.every")}</label>
+        <div className={`flex flex-wrap items-center gap-3 ${end}`}>
+          <label className={subLabel}>{t("cadence.every")}</label>
           <span className="flex flex-wrap items-center gap-2">
             <NumberField
               min={1}
@@ -355,6 +359,7 @@ export function CadenceBuilder({
       {state.mode === "cron" && (
         <CronEditor
           value={state.cron}
+          end={row}
           inputCls={inputCls}
           onChange={(expr) => update({ cron: expr })}
           t={t}
@@ -383,12 +388,15 @@ function formatFireTime(d: Date, lang: string): string {
 // a "next fires" preview computed client-side, and clickable example rows.
 function CronEditor({
   value,
+  end,
   inputCls,
   onChange,
   t,
   lang,
 }: {
   value: string;
+  /** Stands at the row's end, as the cadence's other controls do in a row. */
+  end: boolean;
   inputCls: string;
   onChange: (expr: string) => void;
   t: CadenceT;
@@ -403,9 +411,9 @@ function CronEditor({
 
   return (
     // bv-convention-exception: setting-row-beside-label: the cron label already stands beside its input in the row below, this box stacks that row with its notes.
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${end ? "items-end text-end" : ""}`}>
       <div className="flex items-center gap-3">
-        <label className="text-xs text-carbon-textMuted w-16 group-disabled:opacity-50">{t("cadence.cronExpr")}</label>
+        <label className={`text-xs text-carbon-textMuted group-disabled:opacity-50 ${end ? "" : "w-16"}`}>{t("cadence.cronExpr")}</label>
         <input
           type="text"
           value={value}
@@ -431,13 +439,13 @@ function CronEditor({
         <p className="text-xs text-carbon-textSub group-disabled:opacity-50">{t("cadence.cronValid")}</p>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className={`flex flex-col gap-1 ${end ? "items-end" : ""}`}>
         <span className="text-xs text-carbon-textMuted group-disabled:opacity-50">{t("cadence.cronExamples")}</span>
         {CRON_EXAMPLES.map((ex) => (
           <button
             key={ex.expr}
             onClick={() => onChange(ex.expr)}
-            className="glim-btn-neutral self-start rounded-pill bg-carbon-surface3 px-2 py-0.5 pointer-coarse:min-h-(--btn-h) text-xs text-carbon-textSub hover:bg-hover hover:text-carbon-text transition-colors disabled:opacity-50"
+            className="glim-btn-neutral rounded-pill bg-carbon-surface3 px-2 py-0.5 pointer-coarse:min-h-(--btn-h) text-xs text-carbon-textSub hover:bg-hover hover:text-carbon-text transition-colors disabled:opacity-50"
           >
             <code dir="ltr" className="font-mono text-carbon-text text-start">{ex.expr}</code>
             <span className="ms-2">{t(ex.key)}</span>
