@@ -390,7 +390,7 @@ Una fortezza riunisce BombVault e le altre app della famiglia, come ShipLog, Tow
 
 ## Istanze e ruoli {#roles}
 
-La pagina **Istanze** (un riquadro delle impostazioni che si può fissare alla barra laterale) mostra il gruppo come una rete di chi fa cosa per chi, una scheda per questa istanza e una scheda per ogni altro membro, i telefoni Android e i server ZFS. **Associazione** in basso a destra porta alla pagina di associazione. Quali parti sono attive si imposta in **Impostazioni, Istanze, Più server**: **Istanze**, **Ricevitore** e **Prelievo**.
+La pagina **Istanze** (un riquadro delle impostazioni che si può fissare alla barra laterale) mostra il gruppo come una rete di chi fa cosa per chi, una scheda per questa istanza e una scheda per ogni altro membro, i telefoni Android, i server ZFS e i nodi di questa istanza. **Associazione** in basso a destra porta alla pagina di associazione, e **Aggiungi nodo** lì accanto aggiunge un nodo. Quali parti sono attive si imposta in **Impostazioni, Istanze, Più server**: **Istanze**, **Ricevitore** e **Prelievo**.
 
 ![La pagina Istanze: il gruppo come una rete e una scheda per istanza con i suoi riquadri dei ruoli, uno di essi Inattiva.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![La pagina Istanze: il gruppo come una rete e una scheda per istanza con i suoi riquadri dei ruoli, uno di essi Inattiva.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Attivare un ruolo invia una richiesta, e nulla parte finché qualcuno sull'altra
 
 Sotto le schede, la scheda **Repository condiviso** su una macchina con un server ricevente e la scheda **Repository condivisi** su un membro riguardano il [repository condiviso](#shared-repository).
 
-Un membro può offrire la propria archiviazione off-site a un altro membro attraverso il gruppo. L'altro amministratore vede l'offerta nei **Dettagli** del membro e la accetta o la rifiuta. Accettare crea delle credenziali salvate e una normale destinazione, dopo gli stessi controlli di una destinazione che digiti tu. La destinazione arriva con la protezione dall'eliminazione attiva, perché la ricetta mostrata dall'offerta è un rest-server append-only, quindi **Per quanto tempo conservare** lì non si applica. Ogni offerta ha un login e una cartella propri, quindi offrire di nuovo una sezione, allo stesso membro o a un altro, lascia in pace le copie del primo partner: aggiungi la nuova riga a `.htpasswd` e tieni il server in funzione. In questo modo viaggiano solo i dettagli di connessione, mai i dati di backup. **Controlla ora** chiede a un membro di verificare il repository di una sezione. Nulla nella pagina può avviare un backup, un ripristino o eliminare qualcosa su un'altra macchina.
+Un membro può offrire la propria archiviazione off-site a un altro membro attraverso il gruppo. L'altro amministratore vede l'offerta nei **Dettagli** del membro e la accetta o la rifiuta. Accettare crea delle credenziali salvate e una normale destinazione, dopo gli stessi controlli di una destinazione che digiti tu. La destinazione arriva con la protezione dall'eliminazione attiva, perché la ricetta mostrata dall'offerta è un rest-server append-only, quindi **Per quanto tempo conservare** lì non si applica. Ogni offerta ha un login e una cartella propri, quindi offrire di nuovo una sezione, allo stesso membro o a un altro, lascia in pace le copie del primo partner: aggiungi la nuova riga a `.htpasswd` e tieni il server in funzione. In questo modo viaggiano solo i dettagli di connessione, mai i dati di backup. **Controlla ora** chiede a un membro di verificare il repository di una sezione. I membri lasciano in pace i backup degli altri: nulla nella pagina avvia un backup su un altro membro, ripristina qualcosa lì o vi elimina qualcosa.
+
+I **nodi** sono un'altra cosa, perché non sono membri. Un nodo è un BombVault senza interfaccia web che prende ordini da questa istanza, quindi è questa istanza ad avviare i suoi backup e i suoi ripristini e a potare i suoi vecchi backup. Ogni nodo ha una scheda con il suo stato, la sua versione, dove vanno i suoi backup e quando fa il backup ogni sezione, con **Cambia destinazione**, **Sostituisci** e **Rilascia**. Un nodo nuovo dice **In attesa del nodo** finché non risponde per la prima volta, e uno rilasciato che è assente dice **In fase di rilascio**. Vedi [Nodi](nodes.md).
+
+![La scheda di un nodo: Connessa, la sua versione, i suoi backup sul server ricevente e i suoi piani per sezione.](assets/screenshots/nodes/card-dark.png#only-dark)
+![La scheda di un nodo: Connessa, la sua versione, i suoi backup sul server ricevente e i suoi piani per sezione.](assets/screenshots/nodes/card-light.png#only-light)
 
 Le istanze spente e i telefoni con l'app chiusa mantengono la loro scheda come **Inattiva**, in grigio, con l'indicazione di quando sono stati visti l'ultima volta, e restano attenuati nella rete finché non li **Rimuovi**. Subito dopo l'avvio di questo server, una scheda simile dice **Controllo in corso** finché il gruppo non è tornato. **Rimuovi** funziona su una scheda simile qualunque parte sia attiva, e termina anche le richieste aperte del membro, i suoi slot di ricezione ZFS inattivi e le sue richieste di chiave in attesa. Anche la scheda **Istanze** nella pagina di associazione elenca questi membri come **Inattiva**.
 
@@ -443,7 +448,7 @@ Le istanze del tuo gruppo trovano poi il server tra i fornitori sotto **Dal tuo 
 
 Un'istanza che raggiunge la macchina ricevente solo tramite il relay non può usare il server, perché il relay non trasporta backup. Aggiungi prima l'indirizzo della macchina ricevente nella pagina di associazione. Quando BombVault gira su un indirizzo IP proprio (su br0, per esempio), compila **Indirizzo per i partner**, perché il server ascolta sull'indirizzo dell'host.
 
-Una macchina ricevente può anche ospitare un [repository condiviso](#shared-repository) per il gruppo.
+Una macchina ricevente può anche ospitare un [repository condiviso](#shared-repository) per il gruppo, e ricevere i backup dei [nodi](nodes.md#to-receiver) di questa istanza al suo **Indirizzo per i nodi**.
 
 ## Repository condiviso {#shared-repository}
 
@@ -620,6 +625,8 @@ Un custode della chiave è un'istanza del tuo gruppo che custodisce una copia si
 
 Quel giorno ti servono tre cose: le dodici parole del tuo gruppo, il codice di sblocco e l'accesso all'interfaccia del custode, dove qualcuno deve premere **Consenti**. Nella Procedura guidata di emergenza scegli **Tramite il gruppo**, scegli il deposito, chiedilo e digita il codice di sblocco. Il codice viene usato sul nuovo server e non viene inviato al custode. Sul custode la richiesta compare sotto **Deposito chiave** con chi la fa, se quell'istanza è mai stata vista lì prima e quante volte ha chiesto. **Consenti** consegna la copia sigillata, e consentire richiede una password di accesso. La nuova installazione ha 30 minuti per ritirarla dopo il Consenti, una richiesta a cui nessuno risponde scade dopo un giorno, e un'istanza che chiede troppo spesso deve aspettare un'ora.
 
+Il deposito contiene anche la `APP_KEY` di ciascuno dei [nodi](nodes.md) di questo server, perché la contiene il kit. Con il codice un custode potrebbe aprire i loro repository, ma non potrà mai dare ordini a un nodo, perché per farlo serve la firma di questo server.
+
 Senza il codice nessuno può aprire la copia, nemmeno il custode. Se il codice va perso, creane uno nuovo finché questo server gira ancora. Se il server non c'è già più, il kit di ripristino e la APP_KEY digitata funzionano comunque. Il custode può eliminare un deposito in qualsiasi momento, e il proprietario deve allora chiederlo di nuovo.
 
 ## Kit di ripristino {#recovery-kit}
@@ -627,6 +634,8 @@ Senza il codice nessuno può aprire la copia, nemmeno il custode. Se il codice v
 È il pezzo che rende possibile il disaster recovery anche quando non c'è alcun BombVault in funzione.
 
 **Scarica il kit di ripristino** nella scheda **Per le emergenze** in **Impostazioni, Ripristino** ti dà la **chiave**, la **password restic derivata**, ogni **destinazione** con il repository di ogni sezione, le credenziali di cui una nuova installazione ha bisogno per raggiungerle e i **comandi restic esatti**, così puoi ripristinare direttamente con la CLI di restic su qualsiasi macchina. Richiede una password di accesso. Il kit stampa la chiave anche con la crittografia disattivata, perché le definizioni di container e VM sono sempre sigillate con essa. Dopo un'adozione stampa la chiave dei backup adottata e la APP_KEY di questo server, di cui una nuova installazione ha bisogno solo per riportare indietro le impostazioni. Una scheda **Salva il tuo kit di ripristino** nella panoramica te lo ricorda finché non l'hai conservato.
+
+Un server con dei [nodi](nodes.md) riceve nel suo kit un capitolo **Nodes**. Nomina ogni nodo con il suo id, la sua `APP_KEY`, la password restic ricavata da quella chiave e il repository di ogni sezione. La password del nodo li apre, e anche quella di questo server, perché questo server aggiunge la propria chiave a ogni repository di un nodo. Scarica di nuovo il kit dopo aver aggiunto un nodo o cambiato dove vanno i suoi backup. Con la `APP_KEY` del nodo e il suo `NODE_HOME` un nuovo server torna a essere lo stesso nodo, vedi [Sostituire e rilasciare](nodes.md#replace-release).
 
 !!! danger "Conserva il kit di ripristino fuori dal server"
     Il kit contiene il segreto che decifra i tuoi backup. Tienilo in un posto sicuro e separato dal server (un gestore di password, una copia stampata in una cassaforte). Se perdi sia BombVault sia `APP_KEY` senza kit di ripristino né deposito della chiave, i tuoi backup cifrati non si possono recuperare.

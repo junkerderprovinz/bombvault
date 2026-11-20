@@ -32,6 +32,8 @@ Tre pulsanti sopra l'elenco lo restringono:
 
 Gli elementi che non sono più installati ma hanno ancora backup stanno a parte sotto **Non installato (solo backup)**. Ripristinali, oppure elimina i loro backup per liberare spazio.
 
+Con i [nodi](nodes.md), gli elenchi Container e Cartelle hanno una sezione per ogni nodo sotto i tuoi elementi, con l'indicazione se il nodo è connesso e quanti elementi ha. **Elementi su** e il nome del nodo nasconde gli elementi della sezione e li mostra di nuovo. Il menu di un elemento offre **Esegui backup ora**, che avvia il suo backup sul nodo, e **Apri**. La sua pagina elenca i suoi backup con **Ripristina** accanto a ciascuno, che ripristina l'elemento sul nodo. Il container del nodo stesso non compare nell'elenco. Vedi [Gli elementi di un nodo](nodes.md#entries).
+
 L'azione principale della pagina galleggia in basso a destra: **Esegui il backup di tutto ora** avvia un'esecuzione su ogni sezione attivata. **Altro** contiene il resto:
 
 - **Seleziona** avvia una selezione, vedi sotto.

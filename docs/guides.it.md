@@ -34,4 +34,5 @@ Ognuno di questi passa in rassegna un compito reale dall'inizio alla fine, con n
 ## Più server {#several-servers}
 
 - [Associare due server Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): due server che si tengono a vicenda le copie, e nessuno dei due può eliminare i backup dell'altro.
+- [Un VPS che fa il backup sul server ricevente](nodes.md#example-vps): un nodo con i suoi container, gestito dall'istanza madre, senza porte aperte sul VPS.
 - [Una scheda e un avviso in Home Assistant](api.md#home-assistant-example): BombVault su una dashboard, con un messaggio quando un backup fallisce.

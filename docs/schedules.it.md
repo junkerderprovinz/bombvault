@@ -16,6 +16,8 @@ Ogni piano è un pulsante che si legge come una frase, per esempio *ogni giorno 
 
 Tutti gli orari sono nel fuso orario del server. Su Unraid è quello del sistema. Altrove imposta `TZ`, altrimenti ogni piano gira in UTC, vedi [Variabili d'ambiente](configuration.md#environment-variables).
 
+Questa istanza pianifica anche i backup dei suoi [nodi](nodes.md), ma non qui: la scheda di ogni nodo nella pagina Istanze ha un piano per i suoi container e uno per le sue cartelle. Un nodo nuovo parte mezz'ora dopo i backup dei container di questa istanza. Vedi [Quando fanno il backup i nodi](nodes.md#schedule).
+
 ## Settimana {#week}
 
 La scheda **Settimana** disegna ogni esecuzione prevista da lunedì a domenica, una riga per giorno: backup, copie off-site e controlli. Punta un tratto per leggere cosa parte lì. Dove tre piani partono entro due ore, il tratto è segnato, così puoi distanziarli.
