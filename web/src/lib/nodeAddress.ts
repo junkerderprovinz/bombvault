@@ -1,8 +1,9 @@
 // The receiving server takes the same address check before it stores one.
 // Doing it here as well lets the field say what is wrong while it is typed.
 
-/** What is wrong with an address nodes are to reach the receiver at: not an
- *  address at all, or plain http to a server on the internet. */
+/** What is wrong with an address nodes are to reach the receiver at, or this
+ *  instance a node at: not an address at all, or plain http to a server on
+ *  the internet. */
 export type NodeAddressProblem = "form" | "plain";
 
 function ipv4(host: string): number[] | null {
@@ -22,7 +23,9 @@ function privateV6(host: string): boolean {
   return bare === "::1" || /^f[cd][0-9a-f]{0,2}:/.test(bare);
 }
 
-export function nodeAddressProblem(raw: string): NodeAddressProblem | null {
+/** A node's own rest-server serves its repositories at its root, so with
+ *  `atRoot` an address that names a folder is no address for it. */
+export function nodeAddressProblem(raw: string, atRoot = false): NodeAddressProblem | null {
   const text = raw.trim();
   if (text === "") return null;
   let url: URL;
@@ -32,6 +35,7 @@ export function nodeAddressProblem(raw: string): NodeAddressProblem | null {
     return "form";
   }
   if (!url.host || url.username || url.password || url.search || url.hash) return "form";
+  if (atRoot && url.pathname !== "/") return "form";
   if (url.protocol === "https:") return null;
   if (url.protocol !== "http:") return "form";
   const v4 = ipv4(url.hostname);

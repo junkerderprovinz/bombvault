@@ -19,6 +19,7 @@ import { InstanceWindow } from "./InstanceWindow";
 import {
   PlacementFields,
   firstChoice,
+  placedSentence,
   placementOf,
   placementReady,
   placementTarget,
@@ -210,7 +211,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
               </span>
             )}
             {target && placed.state === "waiting" && (
-              <span className="text-xs text-carbon-textMuted">{t("nodes.placementLater").replace("{target}", () => target)}</span>
+              <span className="text-xs text-carbon-textMuted">{choice && placedSentence(t, choice, target, true)}</span>
             )}
             {!target && <span className="text-xs text-carbon-textMuted">{t("nodes.placementWaits")}</span>}
             {placed.state === "sending" && (
@@ -222,7 +223,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
             {placed.state === "done" && placed.failures.length === 0 && (
               <span className="inline-flex items-center gap-1.5 text-xs text-statusOk">
                 <CheckDraw />
-                {t("nodes.placed").replace("{target}", () => target)}
+                {choice && placedSentence(t, choice, target)}
               </span>
             )}
             {placed.state === "done" &&

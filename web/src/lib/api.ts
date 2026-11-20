@@ -6764,9 +6764,11 @@ export interface NodeView {
   adoptedAt: number;
   /** "releasing" while the node has not heard yet that it was let go. */
   state?: "releasing";
-  /** Where its backups go: the receiving server or a storage location. */
+  /** Where its backups go: the receiving server, a storage location or the
+   *  node itself. */
   placement?: NodePlaceKind;
-  /** The receiving server's address for nodes, or the storage location's name. */
+  /** The receiving server's address for nodes, the storage location's name, or
+   *  the address of a node that keeps its own backups. */
   placementTarget?: string;
   online: boolean;
   lastSeen?: number;
@@ -6782,7 +6784,7 @@ export interface NodeView {
   anomalies: number;
 }
 
-export type NodePlaceKind = "receiver" | "location";
+export type NodePlaceKind = "receiver" | "location" | "node";
 
 /** The sections of a node, each with its own schedule. */
 export type NodeSection = "containers" | "files";
@@ -6803,8 +6805,9 @@ export interface NodeReach {
 }
 
 /** Where a node's backups go. At a storage location the node signs in with
- *  a saved sign-in of its own, never the one this instance writes with. */
-export type NodePlacement = { kind: "receiver" } | { kind: "location"; location: string; signIn: string };
+ *  a saved sign-in of its own, never the one this instance writes with, and a
+ *  node that keeps them itself is fetched from at address. */
+export type NodePlacement = { kind: "receiver" } | { kind: "location"; location: string; signIn: string } | { kind: "node"; address: string };
 
 export function listNodes(): Promise<OkEnvelope & { nodes?: NodeView[] }> {
   return fetchJSON("/api/nodes");

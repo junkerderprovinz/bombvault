@@ -1,7 +1,7 @@
 // Where a node's backups go: this instance's receiving server, which the node
-// can only add to, or a storage location of this instance that the node
-// reaches with a sign-in of its own. The node sends there directly; the relay
-// carries only the requests.
+// can only add to, a storage location of this instance that the node reaches
+// with a sign-in of its own, or the node itself, which this instance fetches
+// them from. The backups go directly; the relay carries only the requests.
 
 import { useEffect, useState } from "react";
 import {
@@ -41,6 +41,8 @@ export interface PlacementChoice {
   address: string;
   /** A certificate in PEM form, empty to send none. */
   certificate: string;
+  /** Where this instance reaches a node that keeps its own backups. */
+  nodeAddress: string;
   location: string;
   signIn: string;
 }
@@ -78,11 +80,12 @@ export function usePlacementSources(): PlacementSources | null {
 
 export function firstChoice(sources: PlacementSources, node?: NodeView): PlacementChoice {
   const location = sources.locations.find((l) => l.name === node?.placementTarget) ?? sources.locations[0];
-  const kind = node?.placement ?? (sources.receiver || !location ? "receiver" : "location");
+  const kind = node?.placement ?? (sources.receiver ? "receiver" : location ? "location" : "node");
   return {
     kind,
     address: sources.receiver?.nodeUrl ?? "",
     certificate: "",
+    nodeAddress: node?.placement === "node" ? (node.placementTarget ?? "") : "",
     location: location?.id ?? "",
     signIn: "",
   };
@@ -99,17 +102,22 @@ export function placementReady(choice: PlacementChoice, sources: PlacementSource
   if (choice.kind === "receiver") {
     return sources.receiver !== null && choice.address.trim() !== "" && nodeAddressProblem(choice.address) === null;
   }
+  if (choice.kind === "node") return choice.nodeAddress.trim() !== "" && nodeAddressProblem(choice.nodeAddress, true) === null;
   const location = sources.locations.find((l) => l.id === choice.location);
   return signInsFor(location, sources.signIns).some((s) => s.id === choice.signIn);
 }
 
 export function placementOf(choice: PlacementChoice): NodePlacement {
+  if (choice.kind === "node") return { kind: "node", address: bareAddress(choice.nodeAddress) };
   return choice.kind === "receiver" ? { kind: "receiver" } : { kind: "location", location: choice.location, signIn: choice.signIn };
 }
+
+const bareAddress = (typed: string) => typed.trim().replace(/\/+$/, "");
 
 /** The name the card shows for where the backups go. */
 export function placementTarget(choice: PlacementChoice, sources: PlacementSources): string {
   if (choice.kind === "receiver") return choice.address.trim();
+  if (choice.kind === "node") return bareAddress(choice.nodeAddress);
   return sources.locations.find((l) => l.id === choice.location)?.name ?? "";
 }
 
@@ -130,6 +138,14 @@ export async function saveAddress(choice: PlacementChoice, sources: PlacementSou
     if (err instanceof ApiError) return err.detail ?? err.message;
     return t("settings.error");
   }
+}
+
+/** placedSentence says where the backups go, or will go once the node is
+ *  online. */
+export function placedSentence(t: T, choice: PlacementChoice, target: string, later = false): string {
+  const onNode = choice.kind === "node";
+  const key = later ? (onNode ? "nodes.placementLaterOnNode" : "nodes.placementLater") : onNode ? "nodes.placedOnNode" : "nodes.placed";
+  return t(key).replace("{target}", () => target);
 }
 
 /** The sentences for the repositories a node could not reach. */
@@ -155,6 +171,7 @@ export function PlacementFields({
   const { t } = useT();
   const set = (patch: Partial<PlacementChoice>) => onChange({ ...choice, ...patch });
   const problem = nodeAddressProblem(choice.address);
+  const nodeProblem = nodeAddressProblem(choice.nodeAddress, true);
   const location = sources.locations.find((l) => l.id === choice.location);
   const signIns = signInsFor(location, sources.signIns);
 
@@ -164,6 +181,7 @@ export function PlacementFields({
       <Choices label={t("nodes.step.placement")}>
         <Choice on={choice.kind === "receiver"} title={t("nodes.toReceiver")} text={t("nodes.toReceiverText")} onPick={() => set({ kind: "receiver" })} />
         <Choice on={choice.kind === "location"} title={t("nodes.toLocation")} text={t("nodes.toLocationText")} onPick={() => set({ kind: "location" })} />
+        <Choice on={choice.kind === "node"} title={t("nodes.toNode")} text={t("nodes.toNodeText")} onPick={() => set({ kind: "node" })} />
       </Choices>
 
       {choice.kind === "receiver" &&
@@ -211,6 +229,33 @@ export function PlacementFields({
         ) : (
           <p className="text-sm text-statusWarn">{t("nodes.noReceiver")}</p>
         ))}
+
+      {choice.kind === "node" && (
+        <div className="flex flex-col gap-2">
+          <Rows>
+            <SettingRow label={t("nodes.nodeAddress")} hint={t("nodes.nodeAddressTip")} htmlFor="bv-node-own-address">
+              <input
+                id="bv-node-own-address"
+                type="url"
+                value={choice.nodeAddress}
+                onChange={(e) => set({ nodeAddress: e.target.value })}
+                placeholder="https://203.0.113.7:8000"
+                spellCheck={false}
+                autoComplete="off"
+                dir="ltr"
+                aria-invalid={nodeProblem !== null}
+                className={`${INPUT} w-72 max-w-full font-mono text-start`}
+              />
+            </SettingRow>
+          </Rows>
+          <p className="text-xs text-carbon-textSub">{t("nodes.portNote")}</p>
+          {nodeProblem && (
+            <p role="alert" className="text-xs text-statusWarn">
+              {t(nodeProblem === "plain" ? "nodes.fetchPlain" : "nodes.addressForm")}
+            </p>
+          )}
+        </div>
+      )}
 
       {choice.kind === "location" &&
         (sources.locations.length === 0 ? (
@@ -283,7 +328,7 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
       onSaved();
       const said = reachFailures(t, res.reach);
       if (said.length === 0) {
-        push(t("nodes.placed").replace("{target}", () => placementTarget(choice, sources)), "success");
+        push(placedSentence(t, choice, placementTarget(choice, sources)), "success");
         onClose();
         return;
       }

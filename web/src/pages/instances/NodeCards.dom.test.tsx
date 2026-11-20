@@ -90,6 +90,13 @@ describe("NodeCards", () => {
     expect((c.getByRole("button", { name: en["nodes.editPlacement"] }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("shows a node that keeps its own backups with the address they are fetched from", async () => {
+    await renderCards([{ ...online, placement: "node", placementTarget: "https://203.0.113.7:8443" }]);
+    const c = within(card("n1"));
+    expect(c.getByText(en["nodes.fig.onNode"])).toBeTruthy();
+    expect(c.getByText("https://203.0.113.7:8443")).toBeTruthy();
+  });
+
   it("says when an away node was last seen", async () => {
     const lastSeen = Math.floor(Date.now() / 1000) - 7200;
     await renderCards([{ ...online, online: false, lastSeen, version: undefined }]);

@@ -1,7 +1,7 @@
 // The node pages on the demo server: a card per node on Instances with when it
-// backs up, the window that adds one, the nodes card on the overview, a
-// section per node on the Backups list, and the page of an entry on a node
-// with its backups and a restore. Every request about a node
+// backs up and where its backups go, the window that adds one, the nodes card
+// on the overview, a section per node on the Backups list, and the page of an
+// entry on a node with its backups and a restore. Every request about a node
 // goes to its route under /api/nodes/{id}/api, never to this server's own.
 //
 // NODE_SHOTS=<folder> also writes the pictures of these pages in the light,
@@ -14,7 +14,7 @@ import { join } from "node:path";
 
 import { stageDemo, words } from "./demo";
 import { overflow, settle } from "./entries";
-import { COMPOSE, NODE, NODE_CONTAINERS, stageNodes } from "./nodes";
+import { COMPOSE, NODE, NODE_CONTAINERS, NODES, stageNodes } from "./nodes";
 
 const t = words("en");
 
@@ -159,6 +159,62 @@ test("an entry on a node lists its backups and restores one through the node", a
   expect((await overflow(page)).pan).toBe(0);
 });
 
+// keepOnNode opens the placement step of a new node and picks keeping the
+// backups on the node itself.
+async function keepOnNode(page: Page) {
+  await page.getByRole("button", { name: t("nodes.add") }).first().click();
+  await page.getByRole("dialog", { name: t("nodes.add") }).getByRole("textbox", { name: t("nodes.step.name") }).fill("vps-helsinki");
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  await page.getByRole("radio", { name: new RegExp(`^${t("nodes.toNode")}`) }).click();
+}
+
+// onNode stages the online node as one that keeps its own backups.
+async function onNode(page: Page) {
+  await page.route(
+    (url) => url.pathname === "/api/nodes",
+    (route) => route.fulfill({ json: { ok: true, nodes: [{ ...NODE, placement: "node", placementTarget: KEPT_AT }, ...NODES.slice(1)] } }),
+  );
+}
+
+const KEPT_AT = "https://203.0.113.7:8443";
+
+test("a node keeps its own backups at an address checked as it is typed", async ({ page }) => {
+  const calls = await open(page, "/instances");
+  await keepOnNode(page);
+  const box = page.getByRole("dialog", { name: t("nodes.add") });
+  await expect(box).toContainText(t("nodes.portNote"));
+  const address = page.getByLabel(t("nodes.nodeAddress"));
+  await address.fill("http://203.0.113.7:8000");
+  await expect(page.getByRole("alert")).toHaveText(t("nodes.fetchPlain"));
+  await expect(page.getByRole("button", { name: t("nodes.next") })).toBeDisabled();
+  await address.fill(KEPT_AT + "/backups");
+  await expect(page.getByRole("alert")).toHaveText(t("nodes.addressForm"));
+  await address.fill(KEPT_AT);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect((await overflow(page)).pan).toBe(0);
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  await expect(page.getByTestId("node-adoption")).toContainText(t("nodes.placedOnNode").replace("{target}", KEPT_AT), { timeout: 15_000 });
+  expect(calls.placed).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { kind: "node", address: KEPT_AT } }]);
+  expect(calls.addresses).toEqual([]);
+});
+
+test("a node that keeps its own backups shows where on its card and keeps its address when placed again", async ({ page }) => {
+  await stageDemo(page, { theme: "dark" });
+  const calls = await stageNodes(page);
+  await onNode(page);
+  await page.goto("/instances");
+  const online = card(page, NODE.id);
+  await expect(online).toContainText(t("nodes.fig.onNode"));
+  await expect(online).toContainText(KEPT_AT);
+  await online.getByRole("button", { name: t("nodes.editPlacement") }).click();
+  const box = page.getByRole("dialog", { name: t("nodes.editPlacement") });
+  await expect(box.getByRole("radio", { name: new RegExp(`^${t("nodes.toNode")}`) })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByLabel(t("nodes.nodeAddress"))).toHaveValue(KEPT_AT);
+  await box.getByRole("button", { name: t("settings.save") }).click();
+  await expect.poll(() => calls.placed).toEqual([{ id: NODE.id, body: { kind: "node", address: KEPT_AT } }]);
+  expect((await overflow(page)).pan).toBe(0);
+});
+
 const SHOTS = process.env.NODE_SHOTS;
 const LOOKS = ["light", "dark", "rainbow"] as const;
 const WIDTHS = [1280, 375];
@@ -240,6 +296,35 @@ test("pictures of the node pages", async ({ browser }, testInfo) => {
       await page.getByRole("button", { name: t("snapshots.restore") }).first().waitFor();
       await shoot(page, `node-entry-${at}`);
       await page.context().close();
+    }
+  }
+});
+
+test("pictures of a node that keeps its own backups", async ({ browser }, testInfo) => {
+  test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for the pictures is named");
+  test.setTimeout(300_000);
+  mkdirSync(SHOTS!, { recursive: true });
+  for (const theme of LOOKS) {
+    for (const width of WIDTHS) {
+      const at = `${theme}-${width}`;
+      const page = await look(browser, width, theme);
+      await page.goto("/instances");
+      await keepOnNode(page);
+      await page.getByLabel(t("nodes.nodeAddress")).fill(KEPT_AT);
+      await shoot(page, `keep-on-node-add-step-2-${at}`);
+      await page.getByLabel(t("nodes.nodeAddress")).fill("http://203.0.113.7:8000");
+      await shoot(page, `keep-on-node-add-step-2-refused-${at}`);
+      await page.context().close();
+
+      const placed = await look(browser, width, theme);
+      await onNode(placed);
+      await placed.goto("/instances");
+      await card(placed, NODE.id).scrollIntoViewIfNeeded();
+      await shoot(placed, `keep-on-node-card-${at}`);
+      await card(placed, NODE.id).getByRole("button", { name: t("nodes.editPlacement") }).click();
+      await placed.getByLabel(t("nodes.nodeAddress")).waitFor();
+      await shoot(placed, `keep-on-node-edit-placement-${at}`);
+      await placed.context().close();
     }
   }
 });

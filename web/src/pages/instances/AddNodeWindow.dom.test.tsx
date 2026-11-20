@@ -118,6 +118,38 @@ describe("AddNodeWindow", () => {
     expect(placed).toEqual([["n1", { kind: "receiver" }]]);
   });
 
+  it("lets a node keep its own backups at the address this instance fetches them from", async () => {
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(`^${en["nodes.toNode"]}`) }));
+    expect(screen.getByText(en["nodes.portNote"])).toBeTruthy();
+    expect(next().disabled).toBe(true);
+
+    const address = screen.getByLabelText(en["nodes.nodeAddress"]);
+    fireEvent.change(address, { target: { value: "http://203.0.113.7:8000" } });
+    expect(screen.getByRole("alert").textContent).toBe(en["nodes.fetchPlain"]);
+    expect(next().disabled).toBe(true);
+    fireEvent.change(address, { target: { value: "https://203.0.113.7:8443/backups" } });
+    expect(screen.getByRole("alert").textContent).toBe(en["nodes.addressForm"]);
+    fireEvent.change(address, { target: { value: "https://203.0.113.7:8443" } });
+    expect(screen.queryByRole("alert")).toBeNull();
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    expect(addresses).toEqual([]);
+    expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.placementLaterOnNode"].replace("{target}", "https://203.0.113.7:8443"));
+
+    adoptedAt = 2;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ADOPT_POLL_MS);
+    });
+    expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.placedOnNode"].replace("{target}", "https://203.0.113.7:8443"));
+    expect(placed).toEqual([["n1", { kind: "node", address: "https://203.0.113.7:8443" }]]);
+  });
+
   it("says why it cannot add a node while no login password is set", async () => {
     refusal = { ok: false, code: "password-not-set" };
     await renderWindow();

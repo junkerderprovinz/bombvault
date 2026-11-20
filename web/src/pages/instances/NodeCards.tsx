@@ -16,6 +16,8 @@ import { PlacementWindow } from "./NodePlacement";
 import { NodeCardSchedule } from "./NodeSchedule";
 import { isAdopted } from "../../lib/useNodes";
 
+const PLACEMENT_LABEL = { receiver: "nodes.fig.receiver", location: "nodes.fig.location", node: "nodes.fig.onNode" } as const;
+
 /** NodeBadge says whether a node is there, waits for its first start or is
  *  being released. */
 export function NodeBadge({ node }: { node: NodeView }) {
@@ -107,7 +109,7 @@ export function NodeCards({
                     t("nodes.notPlaced")
                   )
                 }
-                label={t(node.placement === "receiver" ? "nodes.fig.receiver" : node.placement === "location" ? "nodes.fig.location" : "nodes.fig.backupsTo")}
+                label={t(node.placement ? PLACEMENT_LABEL[node.placement] : "nodes.fig.backupsTo")}
               />
             }
             actions={

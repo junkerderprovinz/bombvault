@@ -16,4 +16,10 @@ describe("nodeAddressProblem", () => {
   it.each(["backup.example.org", "ftp://192.168.1.20", "https://user:pw@backup.example.org", "https://backup.example.org/?a=1"])("refuses %s as no address", (url) => {
     expect(nodeAddressProblem(url)).toBe("form");
   });
+
+  it("refuses a folder in the address of a node's own rest-server", () => {
+    expect(nodeAddressProblem("https://203.0.113.7:8443/backups", true)).toBe("form");
+    expect(nodeAddressProblem("https://203.0.113.7:8443/", true)).toBeNull();
+    expect(nodeAddressProblem("http://203.0.113.7:8000", true)).toBe("plain");
+  });
 });
