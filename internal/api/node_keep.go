@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/trust"
@@ -355,3 +357,124 @@ func (s *Service) stopFetchingFrom(id string) error {
 	}
 	return nil
 }
+
+// nodePrunePath is where home has a node age and prune a repository it keeps
+// itself.
+const nodePrunePath = "/node/prune"
+
+// The states of such a prune.
+const (
+	nodePruneRunning = "running"
+	nodePruneDone    = "done"
+	nodePruneFailed  = "failed"
+)
+
+// nodePruneWait is how long home waits before it asks a node again how the
+// prune of a repository it keeps itself goes. A variable so a test does not
+// wait it out.
+var nodePruneWait = 30 * time.Second
+
+// nodePruneCall is home's keep rule for one section a node keeps itself. Run
+// names the prune, so the same call made again asks how it goes instead of
+// starting another.
+type nodePruneCall struct {
+	Domain string                 `json:"domain"`
+	Run    string                 `json:"run"`
+	Keep   restic.RetentionPolicy `json:"keep"`
+}
+
+// nodePruneAnswer is how a node's prune goes.
+type nodePruneAnswer struct {
+	OK    bool   `json:"ok"`
+	State string `json:"state"`
+	Error string `json:"error,omitempty"`
+}
+
+// nodePrune is the prune a node runs or ran last on a section.
+type nodePrune struct {
+	run, state, err string
+}
+
+// prune starts the prune of a section this node keeps itself, unless it runs
+// or ran already, and answers how it goes.
+func (n *nodeSide) prune(w http.ResponseWriter, r *http.Request) {
+	call, ok := n.signed(w, r, keydeposit.ProofNodePrune)
+	if !ok || !n.adopted(w) {
+		return
+	}
+	var req nodePruneCall
+	if json.Unmarshal(call.Body, &req) != nil || !slices.Contains(nodeDomains, req.Domain) || req.Run == "" || !req.Keep.Any() {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "a prune names a section a node backs up, a run and what to keep"})
+		return
+	}
+	writeJSON(w, http.StatusOK, n.s.pruneKept(req))
+}
+
+// pruneKept starts the prune req names in the background and answers how it
+// goes. While another prune of the section runs, it answers that one.
+func (s *Service) pruneKept(req nodePruneCall) nodePruneAnswer {
+	s.nodeMu.Lock()
+	defer s.nodeMu.Unlock()
+	if cur, ok := s.keptPrunes[req.Domain]; ok && (cur.run == req.Run || cur.state == nodePruneRunning) {
+		return nodePruneAnswer{OK: true, State: cur.state, Error: cur.err}
+	}
+	if s.keptPrunes == nil {
+		s.keptPrunes = map[string]nodePrune{}
+	}
+	s.keptPrunes[req.Domain] = nodePrune{run: req.Run, state: nodePruneRunning}
+	go func() {
+		done := nodePrune{run: req.Run, state: nodePruneDone}
+		if err := s.pruneKeptRepo(s.StopContext(), req.Domain, req.Keep); err != nil {
+			done.state, done.err = nodePruneFailed, scrubError(err)
+			log.Printf("node: the prune of the %s failed: %v", req.Domain, err) //nolint:gosec // G706: the domain is one of nodeDomains
+		}
+		s.nodeMu.Lock()
+		s.keptPrunes[req.Domain] = done
+		s.nodeMu.Unlock()
+	}()
+	return nodePruneAnswer{OK: true, State: nodePruneRunning}
+}
+
+// pruneKeptRepo ages the repository of domain this node keeps by p, under its
+// own host alone, and prunes it. It works on the folder itself, since the
+// rest-server in front of it takes no deletes.
+func (s *Service) pruneKeptRepo(ctx context.Context, domain string, p restic.RetentionPolicy) error {
+	repo := path.Join(s.cfg.HostMountRoot, nodeRestFolder, nodeRestUser, domain)
+	mode := restic.Mode{Encrypted: true, Password: s.backupPassword()}
+	if err := s.engine.RepoOpensErr(ctx, repo, mode); err != nil {
+		return err
+	}
+	return s.ageAndPrune(ctx, repo, mode, s.resticHost(), p)
+}
+
+// pruneOnNode has n age and prune the repository of domain it keeps itself by
+// p, and waits until it is done. A node that is away is asked again once it is
+// back, for as long as a run may take.
+func (s *Service) pruneOnNode(ctx context.Context, n store.Node, domain string, p restic.RetentionPolicy) error {
+	run, err := randomHex(8)
+	if err != nil {
+		return err
+	}
+	call := nodePruneCall{Domain: domain, Run: run, Keep: p}
+	until := time.Now().Add(nodeRunLongest)
+	for {
+		var ans nodePruneAnswer
+		err := s.callNodeByID(ctx, n.ID, keydeposit.ProofNodePrune, nodePrunePath, call, &ans)
+		switch {
+		case err != nil && !errors.Is(err, errNodeAway):
+			return err
+		case err == nil && ans.State == nodePruneDone:
+			return nil
+		case err == nil && ans.State == nodePruneFailed:
+			return errors.New(cmp.Or(ans.Error, "the node could not prune"))
+		case time.Now().After(until):
+			return errors.New("the node did not finish its prune in time")
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(nodePruneWait):
+		}
+	}
+}
+

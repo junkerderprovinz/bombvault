@@ -726,11 +726,13 @@ type Service struct {
 	probeQueue   []string
 	probeWorking bool
 	firstProbes  atomic.Bool
-	// nodeMu guards nodeLinks, home's links to its nodes by node id, and
-	// homeLink, a node's link to its home.
-	nodeMu    sync.Mutex
-	nodeLinks map[string]*homeNode
-	homeLink  *nodelink.Link
+	// nodeMu guards nodeLinks, home's links to its nodes by node id,
+	// homeLink, a node's link to its home, and keptPrunes, the prune a node
+	// runs or ran last on each section it keeps itself.
+	nodeMu     sync.Mutex
+	nodeLinks  map[string]*homeNode
+	homeLink   *nodelink.Link
+	keptPrunes map[string]nodePrune
 	// nodeAPI is the router a node runs the requests of its home through.
 	nodeAPI atomic.Pointer[http.Handler]
 	// nodes keeps the schedules home holds for its nodes.

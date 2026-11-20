@@ -151,6 +151,8 @@ func (n *nodeSide) serve(w http.ResponseWriter, r *http.Request) {
 		n.run(w, r)
 	case nodeKeepPath:
 		n.keep(w, r)
+	case nodePrunePath:
+		n.prune(w, r)
 	default:
 		http.NotFound(w, r)
 	}
