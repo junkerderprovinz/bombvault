@@ -38,7 +38,7 @@ FROM --platform=$BUILDPLATFORM debian:stable-slim@sha256:fbfb4059d2127120aa05b6e
 # come from upstream. fetch-tool.sh checks them against upstream's signed
 # SHA256SUMS, which is why a version bump is all an update takes.
 # renovate: datasource=github-releases depName=restic/restic
-ARG RESTIC_VERSION=0.19.1
+ARG RESTIC_VERSION=0.20.0
 # renovate: datasource=github-releases depName=rclone/rclone
 ARG RCLONE_VERSION=1.76.0
 ARG TARGETARCH
