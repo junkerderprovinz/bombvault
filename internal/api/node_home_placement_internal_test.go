@@ -246,3 +246,33 @@ func TestANodeThatIsNotAdoptedGetsNoPlacement(t *testing.T) {
 		t.Errorf("a placement for a node that never came = %v", out)
 	}
 }
+
+func TestTheRecoveryKitNamesEachNodeWithItsKeyAndRepositories(t *testing.T) {
+	home := homeWithRelay(t)
+	repos := newRepoStore()
+	home.svc.engine = repos
+	if err := home.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "own", Name: "home's", CloudCreds: CloudCreds{S3KeyID: "HOME"}},
+		{ID: "vps", Name: "the node's", CloudCreds: CloudCreds{S3KeyID: "NODE"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	dest, err := home.st.SaveDestination(store.OffsiteTarget{Name: "Bucket", Repo: "s3:https://s3.example.org/bucket", CredsRef: "own"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, id, appKey := adoptedNode(t, home, repos)
+	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "location", "location": dest.ID, "signIn": "vps"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("place = %d %v", code, out)
+	}
+
+	kit, err := home.svc.RecoveryKit()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"## Nodes", "vps", appKey, restickey.Derive(appKey), "s3:https://s3.example.org/bucket/bombvault-nodes/" + id[:12] + "/containers"} {
+		if !strings.Contains(kit, want) {
+			t.Errorf("the kit does not name %q", want)
+		}
+	}
+}

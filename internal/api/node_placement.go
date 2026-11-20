@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/netip"
 	"net/url"
@@ -383,4 +384,47 @@ func (h *Handler) handlePlaceNode(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reach": result.Reach, "warning": result.Warning}))
 	}
+}
+
+// nodesKitSection writes the recovery kit's chapter on this server's nodes:
+// each node's APP_KEY, which brings the node back on a new server, and its
+// repositories, which this server's own password opens as well.
+func (s *Service) nodesKitSection(w func(string, ...any)) {
+	nodes, err := s.store.ListNodes()
+	if err != nil {
+		log.Printf("api: recovery kit: the nodes could not be read: %v", err)
+		return
+	}
+	if len(nodes) == 0 {
+		return
+	}
+	repos, err := s.store.ListReceivedRepos()
+	if err != nil {
+		log.Printf("api: recovery kit: the repositories of the nodes could not be read: %v", err)
+	}
+	w("## Nodes\n\n")
+	w("These servers back up for this one. A node set up again with the same APP_KEY\n")
+	w("and NODE_HOME is the same node. Its repositories open with the restic password\n")
+	w("of its APP_KEY, and with this server's password above as well.\n\n")
+	for _, n := range nodes {
+		w("- %s (id %s)\n", n.Name, n.ID)
+		appKey, err := s.nodeAppKey(n)
+		if err != nil {
+			w("  APP_KEY: (it does not open with this server's APP_KEY)\n")
+		} else {
+			w("  APP_KEY: %s\n", appKey)
+			w("  restic password: %s\n", restickey.Derive(appKey))
+		}
+		for _, rr := range repos {
+			if rr.NodeID != n.ID {
+				continue
+			}
+			loc := rr.Repo
+			if resolved, err := s.resolveRepo(rr.Repo); err == nil {
+				loc = resolved
+			}
+			w("  %s: %s\n", rr.Name, loc)
+		}
+	}
+	w("\n")
 }
