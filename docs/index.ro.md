@@ -81,6 +81,7 @@ Câteva cuvinte au un sens fix în BombVault și în aceste pagini.
 | **Amplasare** | Ce destinații primesc copiile unui element, stabilit pe element sau ca valoare implicită a secțiunii. Vezi [Amplasare per element](offsite-recovery.md#placement). |
 | **Replică** | O copie identică bloc cu bloc a unui element ZFS pe un al doilea server ZFS, făcută cu `zfs send`. Stă lângă backup și nu îl înlocuiește. Vezi [Replică](zfs-datasets.md#replica). |
 | **Rol** | Ceva ce o instanță din grupul tău face pentru alta: Receptor, Preluator, Server ZFS sau Păstrător de cheie. Vezi [Instanțe și roluri](offsite-recovery.md#roles). |
+| **Nod** | Un BombVault fără interfață web, de exemplu pe un VPS, căruia altă instanță, instanța lui mamă, îi spune ce să copieze, când și unde. Vezi [Noduri](nodes.md). |
 
 ## Mulțumiri {#credits}
 

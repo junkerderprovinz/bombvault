@@ -390,7 +390,7 @@ O fortăreață aduce BombVault laolaltă cu celelalte aplicații ale familiei, 
 
 ## Instanțe și roluri {#roles}
 
-Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android și serverele ZFS. **Împerechere**, jos în dreapta, duce la pagina de împerechere. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.
+Pagina **Instanțe** (o placă de setări care poate fi fixată în bara laterală) arată grupul ca o rețea cu cine ce face pentru cine, un card pentru această instanță și un card pentru fiecare alt membru, telefoanele Android, serverele ZFS și nodurile acestei instanțe. **Împerechere**, jos în dreapta, duce la pagina de împerechere, iar **Adaugă nod**, alături, adaugă un nod. Ce părți sunt pornite se stabilește la **Setări, Instanțe, Mai multe servere**: **Instanțe**, **Receptor** și **Preluare**.
 
 ![Pagina Instanțe: grupul ca o rețea și câte un card pentru fiecare instanță, cu plăcile de roluri, una dintre ele Inactivă.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Pagina Instanțe: grupul ca o rețea și câte un card pentru fiecare instanță, cu plăcile de roluri, una dintre ele Inactivă.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Pornirea unui rol trimite o cerere, și nimic nu începe până când cineva de 
 
 Sub carduri, cardul **Depozit comun** pe o stație cu server receptor și cardul **Depozite comune** pe un membru țin de [depozitul comun](#shared-repository).
 
-Un membru își poate oferi propria stocare off-site altui membru prin grup. Celălalt administrator vede oferta în **Detalii** ale membrului și o acceptă sau o refuză. Acceptarea creează o autentificare salvată și o destinație obișnuită, după aceleași verificări ca o destinație pe care o introduci tu. Destinația vine cu protecția la ștergere pornită, pentru că rețeta pe care o arată oferta este un rest-server append-only, așa că **Cât timp se păstrează** nu se aplică acolo. Fiecare ofertă are o autentificare și un folder proprii, așa că oferirea din nou a unei secțiuni, aceluiași membru sau altuia, lasă în pace copiile primului partener: adaugă noul rând în `.htpasswd` și lasă serverul să ruleze. Pe această cale circulă doar datele de conexiune, niciodată date de backup. **Verifică acum** cere unui membru să verifice depozitul unei secțiuni. Nimic de pe pagină nu poate porni un backup, o restaurare sau șterge ceva pe altă stație.
+Un membru își poate oferi propria stocare off-site altui membru prin grup. Celălalt administrator vede oferta în **Detalii** ale membrului și o acceptă sau o refuză. Acceptarea creează o autentificare salvată și o destinație obișnuită, după aceleași verificări ca o destinație pe care o introduci tu. Destinația vine cu protecția la ștergere pornită, pentru că rețeta pe care o arată oferta este un rest-server append-only, așa că **Cât timp se păstrează** nu se aplică acolo. Fiecare ofertă are o autentificare și un folder proprii, așa că oferirea din nou a unei secțiuni, aceluiași membru sau altuia, lasă în pace copiile primului partener: adaugă noul rând în `.htpasswd` și lasă serverul să ruleze. Pe această cale circulă doar datele de conexiune, niciodată date de backup. **Verifică acum** cere unui membru să verifice depozitul unei secțiuni. Membrii nu se ating de copiile celorlalți: nimic de pe pagină nu pornește o copie pe alt membru, nu restaurează nimic acolo și nu șterge nimic acolo.
+
+**Nodurile** sunt altceva, pentru că nu sunt membri. Un nod este un BombVault fără interfață web care primește comenzi de la această instanță, așa că această instanță îi pornește copiile și restaurările și face curățenie în copiile lui vechi. Fiecare nod are un card cu starea, versiunea, locul unde merg copiile și ora la care face copii fiecare secțiune, cu **Schimbă destinația**, **Înlocuiește** și **Eliberează**. Un nod nou arată **Se așteaptă nodul** până răspunde prima dată, iar unul eliberat care lipsește arată **Se eliberează**. Vezi [Noduri](nodes.md).
+
+![Cardul unui nod: Conectat, versiunea lui, copiile lui pe serverul receptor și planurile lui pe secțiuni.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Cardul unui nod: Conectat, versiunea lui, copiile lui pe serverul receptor și planurile lui pe secțiuni.](assets/screenshots/nodes/card-light.png#only-light)
 
 Instanțele oprite și telefoanele cu aplicația închisă își păstrează cardul ca **Inactivă**, în gri, cu momentul în care au fost văzute ultima dată, și stau estompate în rețea până când le elimini cu **Elimină**. Imediat după pornirea acestui server, un astfel de card arată **Se verifică** până când grupul revine. **Elimină** funcționează pe un astfel de card indiferent ce părți sunt pornite și încheie și cererile deschise ale membrului, locurile lui de recepție ZFS nefolosite și cererile lui de chei în așteptare. Cardul **Instanțe** de pe pagina de împerechere listează și el acești membri ca **Inactivă**.
 
@@ -443,7 +448,7 @@ Instanțele din grupul tău găsesc apoi serverul printre furnizori la **Din gru
 
 O instanță care ajunge la stația receptoare doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă copii. Adaugă mai întâi adresa stației receptoare pe pagina de împerechere. Când BombVault rulează pe o adresă IP proprie (pe br0, de exemplu), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
 
-O stație receptoare poate deține și un [depozit comun](#shared-repository) pentru grup.
+O stație receptoare poate deține și un [depozit comun](#shared-repository) pentru grup și poate primi copiile [nodurilor](nodes.md#to-receiver) acestei instanțe la **Adresă pentru noduri**.
 
 ## Depozit comun {#shared-repository}
 
@@ -620,6 +625,8 @@ Un păstrător de cheie este o instanță a grupului tău care ține o copie sig
 
 În acea zi ai nevoie de trei lucruri: cele douăsprezece cuvinte ale grupului tău, codul de deblocare și accesul la interfața păstrătorului, unde cineva trebuie să apese **Permite**. În Asistentul de urgență alege **Prin grup**, alege depunerea, cere-o și tastează codul de deblocare. Codul este folosit pe noul server și nu este trimis păstrătorului. Pe păstrător, cererea apare la **Depunerea cheii** cu cine o cere, dacă acea instanță a fost văzută vreodată acolo și de câte ori a cerut. **Permite** predă copia sigilată, iar permiterea cere o parolă de conectare. Instalarea nouă are 30 de minute ca s-o ridice după Permite, o cerere la care nimeni nu răspunde expiră după o zi, iar o instanță care cere prea des trebuie să aștepte o oră.
 
+Depunerea poartă și `APP_KEY` al fiecărui [nod](nodes.md) al acestui server, pentru că îl conține kitul. Cu codul, un păstrător le-ar putea deschide depozitele, dar nu poate comanda niciodată un nod, pentru că pentru asta e nevoie de semnătura acestui server.
+
 Fără cod nimeni nu poate deschide copia, nici păstrătorul. Dacă codul se pierde, creează unul nou cât timp acest server încă rulează. Dacă serverul a dispărut deja, kitul de recuperare și `APP_KEY` tastat funcționează în continuare. Păstrătorul poate șterge o depunere oricând, iar proprietarul trebuie atunci să ceară din nou.
 
 ## Kit de recuperare {#recovery-kit}
@@ -627,6 +634,8 @@ Fără cod nimeni nu poate deschide copia, nici păstrătorul. Dacă codul se pi
 Aceasta este piesa care face posibilă recuperarea după dezastru chiar și când nu rulează niciun BombVault.
 
 **Descarcă kitul de recuperare** în cardul **Pentru urgențe** de la **Setări, Restaurare** îți dă **cheia**, **parola restic derivată**, fiecare **destinație** cu depozitul fiecărei secțiuni, autentificările de care are nevoie o instalare nouă ca să ajungă la ele și **comenzile restic exacte**, ca să poți restaura direct cu CLI-ul restic pe orice mașină. Cere o parolă de conectare. Kitul tipărește cheia și cu criptarea oprită, pentru că definițiile containerelor și ale VM-urilor sunt mereu sigilate cu ea. După o preluare tipărește cheia de rezervă preluată și `APP_KEY` al acestui server, de care o instalare nouă are nevoie doar pentru a readuce setările. Un card **Salvează-ți kitul de recuperare** din prezentare îți amintește până îl păstrezi.
+
+Un server cu [noduri](nodes.md) primește în kit un capitol **Noduri**. Acesta numește fiecare nod cu id-ul lui, `APP_KEY`, parola restic derivată din acea cheie și depozitul fiecărei secțiuni. Le deschide parola proprie a nodului și tot așa parola acestui server, pentru că acest server își adaugă cheia în fiecare depozit al unui nod. Descarcă din nou kitul după ce adaugi un nod sau schimbi unde merg copiile lui. Cu `APP_KEY` și `NODE_HOME` ale nodului, un server nou devine din nou același nod, vezi [Înlocuire și eliberare](nodes.md#replace-release).
 
 !!! danger "Păstrează kitul de recuperare în afara serverului"
     Kitul conține secretul care decriptează copiile tale. Păstrează-l undeva în siguranță și separat de server (un manager de parole, o copie tipărită într-un seif). Dacă pierzi și BombVault, și `APP_KEY`, fără kit de recuperare și fără depunere de cheie, copiile tale criptate nu mai pot fi recuperate.

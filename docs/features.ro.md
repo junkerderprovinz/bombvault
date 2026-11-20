@@ -75,6 +75,7 @@ Un scurt catalog cu ce face BombVault. Fiecare rând trimite la pagina care îl 
 - **Pagina Instanțe** cu grupul ca rețea și rolurile **Receptor**, **Preluator**, **Server ZFS** și **Păstrător de cheie**. [Instanțe și roluri](offsite-recovery.md#roles)
 - **Un server receptor** configurat pentru tine, în modul append-only. [Server receptor](offsite-recovery.md#receiving-server)
 - **Un depozit comun** în care copiază mai multe servere, așa că ce au în comun e păstrat o singură dată. Doar serverul care îl deține face curățarea. [Depozit comun](offsite-recovery.md#shared-repository)
+- **Noduri**: BombVault fără interfață web pe un VPS sau pe alt server, condus de la instanța-mamă cu programările, alertele și restaurările lui. Nu are nevoie de niciun port deschis. [Noduri](nodes.md)
 
 ## Asistenți IA (MCP) {#mcp}
 

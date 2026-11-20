@@ -208,6 +208,26 @@ Ecranul de start spune de ce, pe cardul serverului:
 - **Este nevoie de autentificare:** un server adăugat după adresă cere parola. Vezi și [Un telefon ajunge pe pagina de autentificare](#a-phone-lands-on-the-login-page).
 - **Cheia s-a schimbat:** ecranul de start arată amprenta cheii noi, iar pagina se deschide abia după ce ai încredere în ea. Vezi [În afara casei](android.md#away).
 
+## Un nod rămâne la "Se așteaptă nodul" {#node-waiting}
+
+Nodul nu i-a răspuns încă instanței-mamă. Deschide jurnalul containerului lui pe serverul nodului (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** urmat de id-ul instanței-mamă: nodul rulează și așteaptă pe relay. Verifică dacă serverul ajunge la adresa relay-ului. Conexiunea pleacă de la nod, deci nu are nevoie de niciun port deschis.
+- **`NODE_HOME is not set`**: fișierul compose și-a pierdut valorile. Alege **Înlocuiește** pe cardul nodului, copiază din nou fișierul și rulează `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: cele două valori vin de la noduri diferite. Copiază-le pe amândouă de pe același card.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: nodul a fost preluat de altă instanță-mamă. Eliberează-l mai întâi acolo sau adaugă serverul aici ca nod nou, cu un fișier compose nou.
+- **`MODE=... is neither full nor node`**: setează `MODE: node`.
+
+## Un nod nu ajunge la depozitele lui {#node-reach}
+
+După o alegere a destinației, instanța-mamă spune pe secțiune dacă nodul și-a deschis depozitul, de exemplu **Nodul nu poate ajunge la depozitul pentru Containere** cu motivul dat de restic. Verifică de pe serverul nodului că adresa răspunde. Pe serverul receptor aceasta este **Adresă pentru noduri**: un reverse proxy trebuie să o transmită mai departe la rest-server, iar un server cu certificat propriu are nevoie de acel certificat la **Certificat**. La o destinație, verifică autentificarea făcută pentru nod. Apoi alege **Schimbă destinația** și din nou **Salvare**. Vezi [Unde merg copiile](nodes.md#placement).
+
+Pentru un nod care își păstrează singur copiile, un port ținut pe nod de alt container este refuzat cu numele acelui container, așa că alege altul. Când instanța-mamă nu poate prelua, lasă portul să treacă prin firewall-ul nodului.
+
+## Un nod eliberat nu mai revine {#node-released}
+
+Un nod eliberat nu mai acceptă nicio instanță-mamă cu vechiul lui `APP_KEY`, iar folderul lui `config` ține minte eliberarea. Adaugă serverul ca nod nou și pornește-l cu noul fișier compose și un folder `config` gol. Copiile lui vechi rămân unde erau, la fel ca fiecare copie preluată de instanța-mamă.
+
 ## Alt utilizator nu poate citi depozitul local {#repository-permissions}
 
 Depozitul local rămâne citibil pentru alți utilizatori, de exemplu un utilizator de sincronizare prin SMB. Înainte de 10.4.1, fișierele scrise de un prune, o etichetare, un pull, o mutare de secțiune, o ștergere sau un backup de stack puteau rămâne necitibile până în noaptea următoare. Actualizează BombVault și devin citibile imediat. Depozitul auto-backupului rămâne citibil doar de root, intenționat, pentru că ține setările BombVault.

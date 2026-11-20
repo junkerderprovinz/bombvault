@@ -1,6 +1,6 @@
 # API și integrări
 
-BombVault are un mic API HTTP pentru scripturi, panouri și automatizarea casei. Citește aceleași lucruri pe care le arată prezentarea și poate porni o copie. Tot restul, cum ar fi restaurările, ștergerea copiilor și setările, rămâne în interfața web.
+BombVault are un mic API HTTP pentru scripturi, panouri și automatizarea casei. Citește aceleași lucruri pe care le arată prezentarea și poate porni o copie. Tot restul, cum ar fi restaurările, ștergerea copiilor, setările și [nodurile](#nodes), rămâne în interfața web.
 
 ## Tokenuri {#tokens}
 
@@ -68,6 +68,32 @@ Pornirile respectă aceleași limite ca [pornirile prin MCP](mcp.md#starting-bac
 ## OpenAPI {#openapi}
 
 BombVault servește o descriere a acestor rute la `/api/v1/openapi.json` (OpenAPI 3.1). Nu cere token. Încarc-o în Swagger UI, Postman sau un generator de cod.
+
+## Noduri {#nodes}
+
+Rutele care se ocupă de [noduri](nodes.md) țin de interfața web, nu de API-ul cu tokenuri de mai sus. Cu o parolă de conectare setată, cer o sesiune de browser obținută printr-o autentificare pe această instanță. Un token API sau o cheie MCP nu deschide niciuna dintre ele, telefoanele împerecheate nu ajung la ele, iar `/api/v1/openapi.json` nu le descrie. Adăugarea unui nod, afișarea din nou a fișierului lui compose și accesul la rutele proprii ale unui nod sunt refuzate până când se setează o parolă de conectare. Un script care schimbă ceva trimite `Content-Type: application/json`, ca peste tot în interfața web.
+
+| Rută | Ce face |
+|---|---|
+| `GET /api/nodes` | Fiecare nod, cu starea online, versiunea, unde merg copiile lui, planul fiecărei secțiuni, ultima copie, erorile și anomaliile deschise |
+| `POST /api/nodes` | Adaugă un nod, de exemplu `{"name":"vps-helsinki"}`, și îl returnează cu `compose`: `MODE`, `APP_KEY`, `NODE_HOME` și `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Returnează din nou aceleași valori `compose`, pentru **Înlocuiește** |
+| `POST /api/nodes/{id}/placement` | Trimite copiile nodului într-un loc și răspunde pe secțiune dacă nodul a ajuns la depozitul lui, cu un `warning` pentru o destinație |
+| `PUT /api/nodes/{id}/schedule` | Setează planurile, de exemplu `{"containers":"daily 03:00","files":"off"}`. O secțiune omisă își păstrează planul |
+| `DELETE /api/nodes/{id}` | Eliberează nodul. `told` spune dacă nodul a aflat acum sau află când revine |
+| `GET /api/nodes/routes` | Lista rutelor proprii ale nodului spre care instanța-mamă transmite cereri |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Transmite cererea către ruta nodului `/api/{path}` când acea rută este pe listă și returnează răspunsul JSON al nodului |
+| `PUT /api/receiver/node-address` | Setează **Adresă pentru noduri** a serverului receptor, de exemplu `{"url":"https://backup.tower.example.org","caPem":""}`. Un `url` gol închide serverul pentru noduri |
+
+Cele trei destinații:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+O cerere către `/api/nodes/{id}/api/...` poartă cel mult 32 KiB. O rută care nu e pe listă răspunde `403`, un nod care nu a răspuns încă sau care este eliberat `409` cu codul `node-not-adopted`, iar un nod care lipsește `502` cu codul `node-away`. De exemplu, `GET /api/nodes/{id}/api/runs?limit=20` returnează ultimele 20 de rulări ale nodului, iar `POST /api/nodes/{id}/api/containers/nextcloud/backup` face o copie a containerului lui `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

@@ -180,6 +180,17 @@ De acum containerele sunt salvate în fiecare noapte. Pași următori buni, în 
 !!! note "Verificare integrare gazdă"
     Cardul **Integrare gazdă** din prezentare sondează fiecare montare și CLI (socket Docker, libvirt, restic, qemu-img, rclone) și raportează orice element lipsă, astfel încât să poți confirma că containerul este cablat corect înainte să te bazezi pe el. Așteaptă la **Personalizează** până îl adaugi.
 
+## Copii pentru un VPS ca nod {#node}
+
+Un VPS sau alt server mic nu are nevoie de un BombVault propriu cu interfață web. Adaugă-l ca nod al acestei instanțe, iar ea se ocupă de copiile lui:
+
+1. Setează o parolă de conectare la **Setări, Securitate**, dacă nu ai făcut-o încă.
+2. Deschide **Instanțe**, alege **Adaugă nod** și scrie un nume, de exemplu `vps-helsinki`.
+3. Alege unde merg copiile lui, de exemplu pe serverul receptor al acestei instanțe, și când face copii.
+4. Copiază pe server fișierul compose arătat de fereastră, îndreaptă volumul lui Host Data și `HOST_SOURCE_ROOT` spre datele de copiat și rulează `docker compose up -d`.
+
+Când nodul răspunde, cardul lui arată **Conectat**, iar containerele lui apar la **Copii de rezervă**. [Noduri](nodes.md) te conduce prin pași cu un exemplu.
+
 ## Să te orientezi {#navigation}
 
 ![Setările ca plăci, cu cardurile plăcii alese alături. Fiecare modificare se scrie pe loc.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ Compilarea interfeței este necesară și pentru `go run`. Depozitul urmărește
 - Asigură-te că un eșec ajunge la tine cu **[Notificările](notifications.md)**.
 - Verifică ce rulează când la **[Programări](schedules.md)**.
 - Pune toate serverele grupului tău pe telefon cu **[Aplicația Android](android.md)**.
+- Fă de aici copii pentru un VPS cu un **[nod](nodes.md)**.
 - **[Exemplele lucrate](guides.md)** parcurg sarcinile obișnuite, iar **[Funcționalități](features.md)** enumeră tot ce face BombVault.
 - Clonezi o configurație sau te muți pe o stație nouă? Mută-ți întreaga configurație cu cardul **Exportă / importă setările**. Vezi [Configurare](configuration.md#portable-settings-export-and-import).
 - Te-ai blocat? Vezi **[Depanare](troubleshooting.md)**.
