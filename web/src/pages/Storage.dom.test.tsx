@@ -167,7 +167,7 @@ describe("the list", () => {
     expect(within(local).getByLabelText("11 % used. At the growth of the last weeks, full in about 33 weeks.")).toBeTruthy();
   });
 
-  it("marks where a measured location is full and leaves the mark out where the size is unknown", async () => {
+  it("says how much a measured location holds, and that the size of another is unknown", async () => {
     listStorageLocations.mockResolvedValue({
       ok: true,
       locations: [
@@ -177,9 +177,9 @@ describe("the list", () => {
     });
     await renderPage();
 
-    expect(row("Local").querySelector(".glim-vessel-full")).not.toBeNull();
+    expect(within(row("Local")).getByText("10.0 GB of 100.0 GB")).toBeTruthy();
+    expect(within(row("Local")).queryByText("Size unknown")).toBeNull();
     const b2 = row("B2");
-    expect(b2.querySelector(".glim-vessel-full")).toBeNull();
     expect(within(b2).getByText("Size unknown")).toBeTruthy();
     expect(within(b2).getByText("2.0 GB")).toBeTruthy();
     expect(
@@ -208,7 +208,7 @@ describe("the list", () => {
     });
     await renderPage();
 
-    expect(row("Local").querySelector(".glim-vessel-warn")).not.toBeNull();
+    expect(row("Local").querySelector(".glim-badge--warn")?.textContent).toBe("full in about 3 weeks");
   });
 
   it("says a location is off and that nothing uses it, and names delete protection", async () => {
@@ -222,16 +222,21 @@ describe("the list", () => {
     expect(within(local).getByText("Off")).toBeTruthy();
     expect(within(local).getByText("Delete protection")).toBeTruthy();
     expect(local.textContent).toContain("Not ticked anywhere yet");
-    expect(local.querySelector(".glim-vessel-liquid")).toBeNull();
+    expect(within(local).queryByLabelText(/% used/)).toBeNull();
   });
 
-  it("opens a location from its row", async () => {
+  it("opens a location from its row and from Open", async () => {
     listStorageLocations.mockResolvedValue({ ok: true, locations: [location({ id: "destination:4f2a", object: "destination", kind: "offsite", name: "Box" })] });
     await renderPage();
 
     const link = screen.getByRole("link", { name: "Box" });
     expect(link.getAttribute("href")).toBe("/storage/destination%3A4f2a");
     fireEvent.click(link);
+    expect(await screen.findByText("opened destination:4f2a")).toBeTruthy();
+    cleanup();
+
+    await renderPage();
+    fireEvent.click(within(row("Box")).getByRole("button", { name: "Open" }));
     expect(await screen.findByText("opened destination:4f2a")).toBeTruthy();
   });
 
