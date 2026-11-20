@@ -73,9 +73,11 @@ func privateAddr(ip netip.Addr) bool {
 
 // SetReceiverNodeAddress stores where nodes reach the receiver and the
 // certificate they trust it by, both empty to take nodes off it, and returns
-// the address as stored.
+// the address as stored. Every node on the receiver hears a new one, when it
+// is back if it is away.
 func (s *Service) SetReceiverNodeAddress(raw, caPEM string) (string, error) {
-	if _, ok, err := s.store.GetReceiverServer(); err != nil || !ok {
+	rs, ok, err := s.store.GetReceiverServer()
+	if err != nil || !ok {
 		return "", cmp.Or(err, errNoReceiver)
 	}
 	addr := ""
@@ -92,7 +94,26 @@ func (s *Service) SetReceiverNodeAddress(raw, caPEM string) (string, error) {
 		}
 		caPEM += "\n"
 	}
-	return addr, s.store.SetReceiverNodeAddress(addr, caPEM)
+	if err := s.store.SetReceiverNodeAddress(addr, caPEM); err != nil {
+		return "", err
+	}
+	if addr == "" || (addr == rs.NodeURL && caPEM == rs.NodeCAPEM) {
+		return addr, nil
+	}
+	nodes, err := s.store.ListNodes()
+	if err != nil {
+		return addr, err
+	}
+	for _, n := range nodes {
+		if n.Placement != nodePlaceReceiver || n.AdoptedAt == 0 || n.State != "" {
+			continue
+		}
+		if err := s.store.SetNodePlacementDue(n.ID); err != nil {
+			return addr, err
+		}
+		s.renewNode(n.ID)
+	}
+	return addr, nil
 }
 
 // nodePlaceRequest is where a person sends a node's backups. Location and
@@ -166,6 +187,9 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 		return nodePlaceResult{}, err
 	}
 	if err := s.watchNodeRepos(n, repos, password); err != nil {
+		return nodePlaceResult{}, err
+	}
+	if err := s.store.SetNodePlaced(id, req.Kind); err != nil {
 		return nodePlaceResult{}, err
 	}
 	result.Reach = ans.Reach

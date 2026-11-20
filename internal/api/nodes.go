@@ -22,17 +22,18 @@ import (
 const nodeCallTimeout = 30 * time.Second
 
 // NodeView is a node as home lists it. State is "releasing" while the node
-// has not heard that home let it go.
+// has not heard that home let it go, and Placement where its backups go.
 type NodeView struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt int64  `json:"createdAt"`
 	AdoptedAt int64  `json:"adoptedAt"`
 	State     string `json:"state,omitempty"`
+	Placement string `json:"placement,omitempty"`
 }
 
 func nodeViewOf(n store.Node) NodeView {
-	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State}
+	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement}
 }
 
 var (
@@ -117,7 +118,8 @@ func (s *Service) nodeAppKey(n store.Node) (string, error) {
 }
 
 // keepNode holds link for node n and, in the background, gets through what
-// the node still has to hear: its adoption, or that home let it go.
+// the node still has to hear: its adoption and a change to where its backups
+// go, or that home let it go.
 func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 	ctx, cancel := context.WithCancel(context.Background())
 	hn := &homeNode{link: link, cancel: cancel, done: make(chan struct{})}
@@ -129,13 +131,20 @@ func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 	s.nodeMu.Unlock()
 	go func() {
 		defer close(hn.done)
-		switch {
-		case n.State == store.NodeReleasing:
+		if n.State == store.NodeReleasing {
 			if untilDone(ctx, func() error { return s.releaseNode(ctx, n.ID, link) }) {
 				s.dropNode(n.ID, hn)
 			}
-		case n.AdoptedAt == 0:
-			untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) })
+			return
+		}
+		if n.AdoptedAt == 0 && !untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) }) {
+			return
+		}
+		if n.PlacementDue {
+			untilDone(ctx, func() error {
+				_, err := s.PlaceNode(ctx, n.ID, nodePlaceRequest{Kind: n.Placement})
+				return err
+			})
 		}
 	}()
 }
@@ -200,6 +209,25 @@ func (s *Service) forgetNode(id string) error {
 		}
 	}
 	return s.store.DeleteNode(id)
+}
+
+// renewNode has the link to node id get through what the node has still to
+// hear, as the store says it now.
+func (s *Service) renewNode(id string) {
+	s.nodeMu.Lock()
+	hn := s.nodeLinks[id]
+	delete(s.nodeLinks, id)
+	s.nodeMu.Unlock()
+	if hn == nil {
+		return
+	}
+	hn.stop()
+	n, err := s.store.GetNode(id)
+	if err != nil {
+		_ = hn.link.Close()
+		return
+	}
+	s.keepNode(n, hn.link)
 }
 
 // nodeLinkOf returns the link home holds to node id.

@@ -88,7 +88,14 @@ func (r *repoStore) opens(repo, password string) bool {
 // adoptedNode is a node home made and that took home on over the relay.
 func adoptedNode(t *testing.T, home *instance, repos *repoStore) (node *instance, id, appKey string) {
 	t.Helper()
-	compose := addNode(t, home, "vps")
+	node, id, compose := adoptedNodeWith(t, home, repos)
+	return node, id, compose["APP_KEY"]
+}
+
+// adoptedNodeWith is adoptedNode with the values of the node's compose file.
+func adoptedNodeWith(t *testing.T, home *instance, repos *repoStore) (node *instance, id string, compose map[string]string) {
+	t.Helper()
+	compose = addNode(t, home, "vps")
 	id, _ = nodelink.NodeID(compose["APP_KEY"])
 	node = startNode(t, compose)
 	node.svc.engine = repos
@@ -96,7 +103,7 @@ func adoptedNode(t *testing.T, home *instance, repos *repoStore) (node *instance
 		n, err := home.st.GetNode(id)
 		return err == nil && n.AdoptedAt != 0
 	})
-	return node, id, compose["APP_KEY"]
+	return node, id, compose
 }
 
 func TestHomeSendsANodeToItsReceiverWithALoginOfItsOwn(t *testing.T) {
@@ -290,4 +297,64 @@ func TestTheRecoveryKitNamesEachNodeWithItsKeyAndRepositories(t *testing.T) {
 			t.Errorf("the kit does not name %q", want)
 		}
 	}
+}
+
+// receiverHome is home with a receiver whose folders lie in a temporary host
+// mount, and the storage its repositories are on.
+func receiverHome(t *testing.T) (*instance, *repoStore) {
+	t.Helper()
+	home := homeWithRelay(t)
+	repos := newRepoStore()
+	home.svc.engine = repos
+	home.svc.cfg.HostMountRoot = t.TempDir()
+	if err := os.MkdirAll(filepath.Join(home.svc.cfg.HostMountRoot, "backups"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := home.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "bombvault-rest-server", Folder: "backups", Port: 8000, User: "home"}); err != nil {
+		t.Fatal(err)
+	}
+	return home, repos
+}
+
+func TestANodeOnTheReceiverHearsANewAddressWhenItIsBack(t *testing.T) {
+	home, repos := receiverHome(t)
+	if code, out := home.do(t, http.MethodPut, "/api/receiver/node-address", map[string]any{"url": "https://old.example.org"}); code != http.StatusOK {
+		t.Fatalf("address = %d %v", code, out)
+	}
+	node, id, compose := adoptedNodeWith(t, home, repos)
+	for _, host := range []string{"old", "new"} {
+		for _, d := range nodeDomains {
+			local, _ := home.svc.resolveRepo("backups/vps/" + d)
+			repos.alias["rest:https://"+host+".example.org/vps/"+d] = local
+		}
+	}
+	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "receiver"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("place = %d %v", code, out)
+	}
+	if n, _ := home.st.GetNode(id); n.Placement != nodePlaceReceiver || n.PlacementDue {
+		t.Errorf("node = %+v, want it placed on the receiver", n)
+	}
+	node.svc.CloseHomeLink()
+
+	if code, out := home.do(t, http.MethodPut, "/api/receiver/node-address", map[string]any{"url": "https://new.example.org"}); code != http.StatusOK {
+		t.Fatalf("new address = %d %v", code, out)
+	}
+	if n, _ := home.st.GetNode(id); !n.PlacementDue {
+		t.Errorf("node = %+v, want the new address waiting for it", n)
+	}
+	h, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := node.svc.OpenHomeLink(h, "vps"); err != nil {
+		t.Fatal(err)
+	}
+	eventually(t, "the node to hear the new address", func() bool {
+		kept, err := node.st.NodePlacements()
+		return err == nil && len(kept) == 2 && strings.HasPrefix(kept[0].Repo, "rest:https://new.example.org/")
+	})
+	eventually(t, "home to note that it heard it", func() bool {
+		n, err := home.st.GetNode(id)
+		return err == nil && !n.PlacementDue
+	})
 }
