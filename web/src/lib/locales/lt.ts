@@ -5540,6 +5540,14 @@ const lt: Partial<Translations> = {
   "nodes.reachFailed": "Mazgas nepasiekia {domain} saugyklos: {detail}",
   "nodes.replaceTitle": "Pakeisti mazgą",
   "nodes.replaceIntro": "Jei nori perkelti mazgą {name} į kitą serverį ar įdiegti iš naujo, paleisk ten šį compose failą ir išjunk senąjį. Du serveriai su tuo pačiu APP_KEY laikomi vienu mazgu.",
+  "nodes.sectionToggle": "Įrašai mazge {name}",
+  "nodes.sectionEmpty": "Šiame mazge kol kas nėra ką čia rodyti.",
+  "nodes.onNode": "Mazge {name}",
+  "nodes.backupStarted": "Mazge pradėtas įrašo {name} atsarginės kopijos kūrimas.",
+  "nodes.noSnapshots": "Šio įrašo atsarginių kopijų dar nėra.",
+  "nodes.restoreAsk": "Atkurti įrašą {name} mazge iš atsarginės kopijos ({time})? Tai, kas ten yra dabar, bus pakeista.",
+  "nodes.restoreStarted": "Mazge pradėtas įrašo {name} atkūrimas.",
+  "nodes.entryMissing": "Mazgo sąraše šio įrašo nėra.",
 };
 
 export default lt;

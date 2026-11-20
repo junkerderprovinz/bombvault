@@ -5532,6 +5532,14 @@ const ro: Partial<Translations> = {
   "nodes.reachFailed": "Nodul nu poate ajunge la depozitul pentru {domain}: {detail}",
   "nodes.replaceTitle": "Înlocuiește nodul",
   "nodes.replaceIntro": "Ca să muți {name} pe alt server sau să-l refaci, pornește acolo acest fișier compose și oprește-l pe cel vechi. Două servere cu același APP_KEY contează ca un singur nod.",
+  "nodes.sectionToggle": "Elemente pe {name}",
+  "nodes.sectionEmpty": "Pe acest nod nu e încă nimic de arătat aici.",
+  "nodes.onNode": "Pe {name}",
+  "nodes.backupStarted": "Copia de rezervă pentru {name} a pornit pe nod.",
+  "nodes.noSnapshots": "Acest element nu are încă nicio copie de rezervă.",
+  "nodes.restoreAsk": "Restaurezi {name} pe nod din copia de rezervă din {time}? Ce e acolo acum va fi înlocuit.",
+  "nodes.restoreStarted": "Restaurarea pentru {name} a pornit pe nod.",
+  "nodes.entryMissing": "Nodul nu listează acest element.",
 };
 
 export default ro;

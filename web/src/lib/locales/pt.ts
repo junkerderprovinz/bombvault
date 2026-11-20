@@ -5531,6 +5531,14 @@ const pt: Partial<Translations> = {
   "nodes.reachFailed": "O nó não consegue chegar ao repositório de {domain}: {detail}",
   "nodes.replaceTitle": "Substituir nó",
   "nodes.replaceIntro": "Para mudar {name} para outro servidor ou reconstruí-lo, arranca lá este ficheiro compose e desliga o antigo. Dois servidores com a mesma APP_KEY contam como um só nó.",
+  "nodes.sectionToggle": "Entradas em {name}",
+  "nodes.sectionEmpty": "Ainda não há nada neste nó para mostrar aqui.",
+  "nodes.onNode": "Em {name}",
+  "nodes.backupStarted": "O backup de {name} começou no nó.",
+  "nodes.noSnapshots": "Ainda não há backups desta entrada.",
+  "nodes.restoreAsk": "Restaurar {name} no nó a partir do backup de {time}? O que lá está agora será substituído.",
+  "nodes.restoreStarted": "O restauro de {name} começou no nó.",
+  "nodes.entryMissing": "O nó não tem esta entrada na lista.",
 };
 
 export default pt;

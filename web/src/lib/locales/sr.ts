@@ -5524,6 +5524,14 @@ const sr: Partial<Translations> = {
   "nodes.reachFailed": "Чвор не стиже до репозиторијума за {domain}: {detail}",
   "nodes.replaceTitle": "Замени чвор",
   "nodes.replaceIntro": "Да би {name} преселио на други сервер или га поново изградио, покрени тамо ову compose датотеку и угаси стари. Два сервера са истим APP_KEY рачунају се као један чвор.",
+  "nodes.sectionToggle": "Ставке на {name}",
+  "nodes.sectionEmpty": "На овом чвору овде још нема ничега за приказ.",
+  "nodes.onNode": "На {name}",
+  "nodes.backupStarted": "Резервно копирање {name} је покренуто на чвору.",
+  "nodes.noSnapshots": "За ову ставку још нема резервних копија.",
+  "nodes.restoreAsk": "Вратим {name} на чвору из резервне копије од {time}? Оно што је тамо сада биће замењено.",
+  "nodes.restoreStarted": "Враћање {name} је покренуто на чвору.",
+  "nodes.entryMissing": "Чвор нема ову ставку на списку.",
 };
 
 export default sr;

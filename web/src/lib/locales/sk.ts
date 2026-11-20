@@ -5541,6 +5541,14 @@ const sk: Partial<Translations> = {
   "nodes.reachFailed": "Uzol nedosiahne na repozitár {domain}: {detail}",
   "nodes.replaceTitle": "Nahradiť uzol",
   "nodes.replaceIntro": "Ak chceš {name} presunúť na iný server alebo ho znova postaviť, spusti tam tento compose súbor a starý vypni. Dva servery s rovnakým APP_KEY sa rátajú ako jeden uzol.",
+  "nodes.sectionToggle": "Položky na {name}",
+  "nodes.sectionEmpty": "Na tomto uzle tu zatiaľ nie je čo ukázať.",
+  "nodes.onNode": "Na {name}",
+  "nodes.backupStarted": "Záloha {name} sa na uzle spustila.",
+  "nodes.noSnapshots": "Táto položka zatiaľ nemá žiadne zálohy.",
+  "nodes.restoreAsk": "Obnoviť {name} na uzle zo zálohy z {time}? To, čo tam je teraz, sa nahradí.",
+  "nodes.restoreStarted": "Obnova {name} sa na uzle spustila.",
+  "nodes.entryMissing": "Uzol túto položku nemá v zozname.",
 };
 
 export default sk;

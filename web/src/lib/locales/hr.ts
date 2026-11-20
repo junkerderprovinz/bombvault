@@ -5541,6 +5541,14 @@ const hr: Partial<Translations> = {
   "nodes.reachFailed": "Čvor ne može doći do repozitorija za {domain}: {detail}",
   "nodes.replaceTitle": "Zamijeni čvor",
   "nodes.replaceIntro": "Da biste {name} premjestili na drugi poslužitelj ili ga ponovno izgradili, pokrenite ondje ovu compose datoteku i ugasite stari. Dva poslužitelja s istim APP_KEY računaju se kao jedan čvor.",
+  "nodes.sectionToggle": "Stavke na {name}",
+  "nodes.sectionEmpty": "Na ovom čvoru zasad nema ničega za prikaz.",
+  "nodes.onNode": "Na {name}",
+  "nodes.backupStarted": "Sigurnosno kopiranje stavke {name} pokrenuto je na čvoru.",
+  "nodes.noSnapshots": "Ova stavka još nema sigurnosnih kopija.",
+  "nodes.restoreAsk": "Vratiti {name} na čvoru iz sigurnosne kopije od {time}? Ono što je sada ondje bit će zamijenjeno.",
+  "nodes.restoreStarted": "Vraćanje stavke {name} pokrenuto je na čvoru.",
+  "nodes.entryMissing": "Čvor ne navodi ovu stavku.",
 };
 
 export default hr;

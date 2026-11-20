@@ -5541,6 +5541,14 @@ const gl: Partial<Translations> = {
   "nodes.reachFailed": "O nodo non chega ao repositorio de {domain}: {detail}",
   "nodes.replaceTitle": "Substituír o nodo",
   "nodes.replaceIntro": "Para levar {name} a outro servidor ou reconstruílo, arrinca alí este ficheiro compose e apaga o antigo. Dous servidores coa mesma APP_KEY contan como un só nodo.",
+  "nodes.sectionToggle": "Elementos en {name}",
+  "nodes.sectionEmpty": "Aínda non hai nada deste nodo que amosar aquí.",
+  "nodes.onNode": "En {name}",
+  "nodes.backupStarted": "A copia de seguridade de {name} comezou no nodo.",
+  "nodes.noSnapshots": "Aínda non hai copias de seguridade deste elemento.",
+  "nodes.restoreAsk": "Restaurar {name} no nodo desde a copia de seguridade do {time}? O que hai alí agora será substituído.",
+  "nodes.restoreStarted": "A restauración de {name} comezou no nodo.",
+  "nodes.entryMissing": "O nodo non lista este elemento.",
 };
 
 export default gl;

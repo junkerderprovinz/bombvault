@@ -5531,6 +5531,14 @@ const he: Partial<Translations> = {
   "nodes.reachFailed": "הצומת לא מצליח להגיע למאגר של {domain}: {detail}",
   "nodes.replaceTitle": "החלפת צומת",
   "nodes.replaceIntro": "כדי להעביר את {name} לשרת אחר או לבנות אותו מחדש, מפעילים שם את קובץ ה-compose הזה ומכבים את הישן. שני שרתים עם אותו APP_KEY נחשבים לצומת אחד.",
+  "nodes.sectionToggle": "פריטים ב-{name}",
+  "nodes.sectionEmpty": "עוד אין כאן מה להציג מהצומת הזה.",
+  "nodes.onNode": "ב-{name}",
+  "nodes.backupStarted": "הגיבוי של {name} התחיל בצומת.",
+  "nodes.noSnapshots": "עוד אין גיבויים של הפריט הזה.",
+  "nodes.restoreAsk": "לשחזר את {name} בצומת מהגיבוי מ-{time}? מה שנמצא שם עכשיו יוחלף.",
+  "nodes.restoreStarted": "השחזור של {name} התחיל בצומת.",
+  "nodes.entryMissing": "הצומת לא מציג את הפריט הזה ברשימה.",
 };
 
 export default he;

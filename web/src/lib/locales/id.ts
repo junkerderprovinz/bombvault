@@ -5540,6 +5540,14 @@ const id: Partial<Translations> = {
   "nodes.reachFailed": "Node tidak bisa menjangkau repositori {domain}: {detail}",
   "nodes.replaceTitle": "Ganti node",
   "nodes.replaceIntro": "Untuk memindahkan {name} ke server lain atau membangunnya ulang, jalankan file compose ini di sana lalu matikan yang lama. Dua server dengan APP_KEY yang sama dihitung sebagai satu node.",
+  "nodes.sectionToggle": "Entri di {name}",
+  "nodes.sectionEmpty": "Belum ada yang bisa ditampilkan dari node ini.",
+  "nodes.onNode": "Di {name}",
+  "nodes.backupStarted": "Pencadangan {name} dimulai di node.",
+  "nodes.noSnapshots": "Entri ini belum punya cadangan.",
+  "nodes.restoreAsk": "Pulihkan {name} di node dari cadangan {time}? Isi yang ada di sana sekarang akan diganti.",
+  "nodes.restoreStarted": "Pemulihan {name} dimulai di node.",
+  "nodes.entryMissing": "Node tidak mencantumkan entri ini.",
 };
 
 export default id;

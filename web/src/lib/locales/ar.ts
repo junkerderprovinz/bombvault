@@ -5532,6 +5532,14 @@ const ar: Partial<Translations> = {
   "nodes.reachFailed": "لا تستطيع العقدة الوصول إلى مستودع {domain}: {detail}",
   "nodes.replaceTitle": "استبدال العقدة",
   "nodes.replaceIntro": "لنقل {name} إلى خادم آخر أو إعادة بنائها، شغّل ملف compose هذا هناك وأوقف الخادم القديم. خادمان بنفس APP_KEY يُعدّان عقدة واحدة.",
+  "nodes.sectionToggle": "الإدخالات على {name}",
+  "nodes.sectionEmpty": "لا شيء على هذه العقدة لعرضه هنا بعد.",
+  "nodes.onNode": "على {name}",
+  "nodes.backupStarted": "بدأ النسخ الاحتياطي لـ {name} على العقدة.",
+  "nodes.noSnapshots": "لا توجد نسخ احتياطية لهذا الإدخال بعد.",
+  "nodes.restoreAsk": "استعادة {name} على العقدة من النسخة الاحتياطية بتاريخ {time}؟ سيُستبدل ما هو موجود هناك الآن.",
+  "nodes.restoreStarted": "بدأت استعادة {name} على العقدة.",
+  "nodes.entryMissing": "لا تُدرج العقدة هذا الإدخال.",
 };
 
 export default ar;

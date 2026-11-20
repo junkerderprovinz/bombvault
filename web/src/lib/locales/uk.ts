@@ -5527,6 +5527,14 @@ const uk: Partial<Translations> = {
   "nodes.reachFailed": "Вузол не може дістатися репозиторію {domain}: {detail}",
   "nodes.replaceTitle": "Замінити вузол",
   "nodes.replaceIntro": "Щоб перенести {name} на інший сервер або перебудувати його, запустіть там цей compose-файл і вимкніть старий. Два сервери з однаковим APP_KEY вважаються одним вузлом.",
+  "nodes.sectionToggle": "Записи на {name}",
+  "nodes.sectionEmpty": "На цьому вузлі тут поки нічого показати.",
+  "nodes.onNode": "На {name}",
+  "nodes.backupStarted": "Резервне копіювання {name} запущено на вузлі.",
+  "nodes.noSnapshots": "Резервних копій цього запису поки немає.",
+  "nodes.restoreAsk": "Відновити {name} на вузлі з резервної копії від {time}? Те, що там зараз, буде замінено.",
+  "nodes.restoreStarted": "Відновлення {name} запущено на вузлі.",
+  "nodes.entryMissing": "У списку вузла немає цього запису.",
 };
 
 export default uk;

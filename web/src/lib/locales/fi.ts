@@ -5531,6 +5531,14 @@ const fi: Partial<Translations> = {
   "nodes.reachFailed": "Solmu ei tavoita osion {domain} arkistoa: {detail}",
   "nodes.replaceTitle": "Korvaa solmu",
   "nodes.replaceIntro": "Jos haluat siirtää solmun {name} toiselle palvelimelle tai rakentaa sen uudelleen, käynnistä tämä compose-tiedosto siellä ja sammuta vanha. Kaksi palvelinta, joilla on sama APP_KEY, lasketaan yhdeksi solmuksi.",
+  "nodes.sectionToggle": "Merkinnät solmulla {name}",
+  "nodes.sectionEmpty": "Tällä solmulla ei ole vielä mitään näytettävää.",
+  "nodes.onNode": "Solmulla {name}",
+  "nodes.backupStarted": "{name}: varmuuskopiointi alkoi solmulla.",
+  "nodes.noSnapshots": "Tästä merkinnästä ei ole vielä varmuuskopioita.",
+  "nodes.restoreAsk": "Palautetaanko {name} solmulle varmuuskopiosta, joka on tehty {time}? Siellä nyt oleva korvataan.",
+  "nodes.restoreStarted": "{name}: palautus alkoi solmulla.",
+  "nodes.entryMissing": "Solmu ei listaa tätä merkintää.",
 };
 
 export default fi;

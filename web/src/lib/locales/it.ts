@@ -5530,6 +5530,14 @@ const it: Partial<Translations> = {
   "nodes.reachFailed": "Il nodo non raggiunge il repository di {domain}: {detail}",
   "nodes.replaceTitle": "Sostituisci nodo",
   "nodes.replaceIntro": "Per spostare {name} su un altro server o ricostruirlo, avvia lì questo file compose e spegni quello vecchio. Due server con la stessa APP_KEY contano come un solo nodo.",
+  "nodes.sectionToggle": "Elementi su {name}",
+  "nodes.sectionEmpty": "Su questo nodo non c'è ancora niente da mostrare qui.",
+  "nodes.onNode": "Su {name}",
+  "nodes.backupStarted": "Il backup di {name} è partito sul nodo.",
+  "nodes.noSnapshots": "Nessun backup di questo elemento per ora.",
+  "nodes.restoreAsk": "Ripristinare {name} sul nodo dal backup del {time}? Quello che c'è ora verrà sostituito.",
+  "nodes.restoreStarted": "Il ripristino di {name} è partito sul nodo.",
+  "nodes.entryMissing": "Il nodo non elenca questo elemento.",
 };
 
 export default it;

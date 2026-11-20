@@ -5528,6 +5528,14 @@ const ru: Partial<Translations> = {
   "nodes.reachFailed": "Узел не может достучаться до репозитория {domain}: {detail}",
   "nodes.replaceTitle": "Заменить узел",
   "nodes.replaceIntro": "Чтобы перенести {name} на другой сервер или пересобрать его, запустите там этот compose-файл и выключите старый. Два сервера с одним APP_KEY считаются одним узлом.",
+  "nodes.sectionToggle": "Записи на {name}",
+  "nodes.sectionEmpty": "На этом узле здесь пока нечего показать.",
+  "nodes.onNode": "На {name}",
+  "nodes.backupStarted": "Резервное копирование {name} запущено на узле.",
+  "nodes.noSnapshots": "Резервных копий этой записи пока нет.",
+  "nodes.restoreAsk": "Восстановить {name} на узле из резервной копии от {time}? То, что там сейчас, будет заменено.",
+  "nodes.restoreStarted": "Восстановление {name} запущено на узле.",
+  "nodes.entryMissing": "В списке узла нет этой записи.",
 };
 
 export default ru;

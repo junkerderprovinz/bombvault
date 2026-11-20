@@ -5541,6 +5541,14 @@ const hi: Partial<Translations> = {
   "nodes.reachFailed": "नोड {domain} की रिपॉज़िटरी तक नहीं पहुँच पा रहा: {detail}",
   "nodes.replaceTitle": "नोड बदलें",
   "nodes.replaceIntro": "{name} को किसी दूसरे सर्वर पर ले जाने या दोबारा बनाने के लिए, वहाँ यह compose फ़ाइल शुरू करें और पुराने को बंद कर दें। एक ही APP_KEY वाले दो सर्वर एक ही नोड गिने जाते हैं।",
+  "nodes.sectionToggle": "{name} पर प्रविष्टियाँ",
+  "nodes.sectionEmpty": "इस नोड पर अभी यहाँ दिखाने को कुछ नहीं है।",
+  "nodes.onNode": "{name} पर",
+  "nodes.backupStarted": "{name} का बैकअप नोड पर शुरू हो गया।",
+  "nodes.noSnapshots": "इस प्रविष्टि का अभी कोई बैकअप नहीं है।",
+  "nodes.restoreAsk": "{name} को नोड पर {time} के बैकअप से रीस्टोर करें? वहाँ अभी जो है, वह बदल दिया जाएगा।",
+  "nodes.restoreStarted": "{name} का रीस्टोर नोड पर शुरू हो गया।",
+  "nodes.entryMissing": "नोड इस प्रविष्टि को सूची में नहीं दिखाता।",
 };
 
 export default hi;

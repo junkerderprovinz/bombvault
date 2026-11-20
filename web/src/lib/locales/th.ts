@@ -5531,6 +5531,14 @@ const th: Partial<Translations> = {
   "nodes.reachFailed": "โหนดเข้าถึงรีพอสิทอรีของ {domain} ไม่ได้: {detail}",
   "nodes.replaceTitle": "แทนที่โหนด",
   "nodes.replaceIntro": "หากต้องการย้าย {name} ไปเซิร์ฟเวอร์อื่นหรือสร้างใหม่ ให้เริ่มไฟล์ compose นี้ที่นั่นแล้วปิดเครื่องเก่า เซิร์ฟเวอร์สองเครื่องที่ใช้ APP_KEY เดียวกันนับเป็นโหนดเดียว",
+  "nodes.sectionToggle": "รายการบน {name}",
+  "nodes.sectionEmpty": "ยังไม่มีอะไรบนโหนดนี้ให้แสดงที่นี่",
+  "nodes.onNode": "บน {name}",
+  "nodes.backupStarted": "เริ่มสำรองข้อมูล {name} บนโหนดแล้ว",
+  "nodes.noSnapshots": "รายการนี้ยังไม่มีข้อมูลสำรอง",
+  "nodes.restoreAsk": "กู้คืน {name} บนโหนดจากข้อมูลสำรองเมื่อ {time} ไหม? ข้อมูลที่อยู่ที่นั่นตอนนี้จะถูกแทนที่",
+  "nodes.restoreStarted": "เริ่มกู้คืน {name} บนโหนดแล้ว",
+  "nodes.entryMissing": "โหนดไม่มีรายการนี้",
 };
 
 export default th;

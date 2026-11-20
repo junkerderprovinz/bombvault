@@ -5531,6 +5531,14 @@ const fr: Partial<Translations> = {
   "nodes.reachFailed": "Le nœud ne joint pas le dépôt de {domain} : {detail}",
   "nodes.replaceTitle": "Remplacer le nœud",
   "nodes.replaceIntro": "Pour déplacer {name} vers un autre serveur ou le reconstruire, lancez ce fichier compose là-bas et arrêtez l'ancien. Deux serveurs avec le même APP_KEY comptent comme un seul nœud.",
+  "nodes.sectionToggle": "Éléments sur {name}",
+  "nodes.sectionEmpty": "Rien à afficher ici pour ce nœud pour l'instant.",
+  "nodes.onNode": "Sur {name}",
+  "nodes.backupStarted": "La sauvegarde de {name} a démarré sur le nœud.",
+  "nodes.noSnapshots": "Pas encore de sauvegarde de cet élément.",
+  "nodes.restoreAsk": "Restaurer {name} sur le nœud à partir de la sauvegarde du {time} ? Ce qui s'y trouve maintenant sera remplacé.",
+  "nodes.restoreStarted": "La restauration de {name} a démarré sur le nœud.",
+  "nodes.entryMissing": "Le nœud ne liste pas cet élément.",
 };
 
 export default fr;

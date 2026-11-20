@@ -5528,6 +5528,14 @@ const pl: Partial<Translations> = {
   "nodes.reachFailed": "Węzeł nie może połączyć się z repozytorium {domain}: {detail}",
   "nodes.replaceTitle": "Zastąp węzeł",
   "nodes.replaceIntro": "Aby przenieść węzeł {name} na inny serwer albo go odbudować, uruchom tam ten plik compose i wyłącz stary. Dwa serwery z tym samym APP_KEY liczą się jako jeden węzeł.",
+  "nodes.sectionToggle": "Wpisy na węźle {name}",
+  "nodes.sectionEmpty": "Na tym węźle nie ma tu jeszcze nic do pokazania.",
+  "nodes.onNode": "Na węźle {name}",
+  "nodes.backupStarted": "Kopia zapasowa wpisu {name} ruszyła na węźle.",
+  "nodes.noSnapshots": "Ten wpis nie ma jeszcze kopii zapasowych.",
+  "nodes.restoreAsk": "Przywrócić wpis {name} na węźle z kopii zapasowej z {time}? To, co jest tam teraz, zostanie zastąpione.",
+  "nodes.restoreStarted": "Przywracanie wpisu {name} ruszyło na węźle.",
+  "nodes.entryMissing": "Węzeł nie ma tego wpisu na liście.",
 };
 
 export default pl;

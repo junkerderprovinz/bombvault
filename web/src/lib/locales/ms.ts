@@ -5541,6 +5541,14 @@ const ms: Partial<Translations> = {
   "nodes.reachFailed": "Nod tidak dapat mencapai repositori {domain}: {detail}",
   "nodes.replaceTitle": "Ganti nod",
   "nodes.replaceIntro": "Untuk memindahkan {name} ke pelayan lain atau membinanya semula, mulakan fail compose ini di sana dan matikan pelayan lama. Dua pelayan dengan APP_KEY yang sama dikira sebagai satu nod.",
+  "nodes.sectionToggle": "Entri pada {name}",
+  "nodes.sectionEmpty": "Belum ada apa-apa pada nod ini untuk dipaparkan di sini.",
+  "nodes.onNode": "Pada {name}",
+  "nodes.backupStarted": "Sandaran {name} telah bermula pada nod.",
+  "nodes.noSnapshots": "Belum ada sandaran untuk entri ini.",
+  "nodes.restoreAsk": "Pulihkan {name} pada nod daripada sandaran {time}? Apa yang ada di sana sekarang akan diganti.",
+  "nodes.restoreStarted": "Pemulihan {name} telah bermula pada nod.",
+  "nodes.entryMissing": "Nod tidak menyenaraikan entri ini.",
 };
 
 export default ms;

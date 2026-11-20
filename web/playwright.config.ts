@@ -95,6 +95,7 @@ const testMatch = [
   "look-help.spec.ts",
   "schedules.spec.ts",
   "docs-pictures.spec.ts",
+  "nodes.spec.ts",
 ];
 
 for (const spec of testMatch) {

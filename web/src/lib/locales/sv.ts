@@ -5530,6 +5530,14 @@ const sv: Partial<Translations> = {
   "nodes.reachFailed": "Noden når inte arkivet för {domain}: {detail}",
   "nodes.replaceTitle": "Ersätt nod",
   "nodes.replaceIntro": "För att flytta {name} till en annan server eller bygga om den startar du den här compose-filen där och stänger av den gamla. Två servrar med samma APP_KEY räknas som en nod.",
+  "nodes.sectionToggle": "Poster på {name}",
+  "nodes.sectionEmpty": "Det finns inget att visa här på den här noden än.",
+  "nodes.onNode": "På {name}",
+  "nodes.backupStarted": "Säkerhetskopieringen av {name} har startat på noden.",
+  "nodes.noSnapshots": "Inga säkerhetskopior av den här posten än.",
+  "nodes.restoreAsk": "Återställa {name} på noden från säkerhetskopian från {time}? Det som finns där nu ersätts.",
+  "nodes.restoreStarted": "Återställningen av {name} har startat på noden.",
+  "nodes.entryMissing": "Noden listar inte den här posten.",
 };
 
 export default sv;

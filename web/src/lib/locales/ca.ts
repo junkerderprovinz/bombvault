@@ -5541,6 +5541,14 @@ const ca: Partial<Translations> = {
   "nodes.reachFailed": "El node no arriba al repositori de {domain}: {detail}",
   "nodes.replaceTitle": "Substitueix el node",
   "nodes.replaceIntro": "Per moure {name} a un altre servidor o reconstruir-lo, inicia-hi aquest fitxer compose i atura l'antic. Dos servidors amb la mateixa APP_KEY compten com un sol node.",
+  "nodes.sectionToggle": "Entrades a {name}",
+  "nodes.sectionEmpty": "Encara no hi ha res en aquest node per mostrar aquí.",
+  "nodes.onNode": "A {name}",
+  "nodes.backupStarted": "La còpia de {name} s'ha iniciat al node.",
+  "nodes.noSnapshots": "Encara no hi ha còpies d'aquesta entrada.",
+  "nodes.restoreAsk": "Vols restaurar {name} al node des de la còpia del {time}? El que hi ha ara se substituirà.",
+  "nodes.restoreStarted": "La restauració de {name} s'ha iniciat al node.",
+  "nodes.entryMissing": "El node no té aquesta entrada a la llista.",
 };
 
 export default ca;

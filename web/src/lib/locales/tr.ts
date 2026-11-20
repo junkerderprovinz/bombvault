@@ -5530,6 +5530,14 @@ const tr: Partial<Translations> = {
   "nodes.reachFailed": "Düğüm {domain} deposuna ulaşamıyor: {detail}",
   "nodes.replaceTitle": "Düğümü değiştir",
   "nodes.replaceIntro": "{name} düğümünü başka bir sunucuya taşımak ya da yeniden kurmak için bu compose dosyasını orada başlat ve eskisini kapat. Aynı APP_KEY'e sahip iki sunucu tek bir düğüm sayılır.",
+  "nodes.sectionToggle": "{name} üzerindeki kayıtlar",
+  "nodes.sectionEmpty": "Bu düğümde henüz burada gösterilecek bir şey yok.",
+  "nodes.onNode": "{name} üzerinde",
+  "nodes.backupStarted": "{name} yedeklemesi düğümde başladı.",
+  "nodes.noSnapshots": "Bu kaydın henüz yedeği yok.",
+  "nodes.restoreAsk": "{name}, düğümde {time} tarihli yedekten geri yüklensin mi? Şu an orada olan her şey değiştirilecek.",
+  "nodes.restoreStarted": "{name} geri yüklemesi düğümde başladı.",
+  "nodes.entryMissing": "Düğüm bu kaydı listelemiyor.",
 };
 
 export default tr;

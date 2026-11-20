@@ -5531,6 +5531,14 @@ const no: Partial<Translations> = {
   "nodes.reachFailed": "Noden når ikke repositoryet for {domain}: {detail}",
   "nodes.replaceTitle": "Erstatt node",
   "nodes.replaceIntro": "For å flytte {name} til en annen server eller bygge den opp på nytt starter du denne compose-filen der og slår av den gamle. To servere med samme APP_KEY regnes som én node.",
+  "nodes.sectionToggle": "Elementer på {name}",
+  "nodes.sectionEmpty": "Ingenting å vise her fra denne noden ennå.",
+  "nodes.onNode": "På {name}",
+  "nodes.backupStarted": "Sikkerhetskopieringen av {name} har startet på noden.",
+  "nodes.noSnapshots": "Ingen sikkerhetskopier av dette elementet ennå.",
+  "nodes.restoreAsk": "Gjenopprette {name} på noden fra sikkerhetskopien fra {time}? Det som ligger der nå, blir erstattet.",
+  "nodes.restoreStarted": "Gjenopprettingen av {name} har startet på noden.",
+  "nodes.entryMissing": "Noden har ikke dette elementet i listen sin.",
 };
 
 export default no;

@@ -5540,6 +5540,14 @@ const lv: Partial<Translations> = {
   "nodes.reachFailed": "Mezgls nevar sasniegt {domain} repozitoriju: {detail}",
   "nodes.replaceTitle": "Aizstāt mezglu",
   "nodes.replaceIntro": "Lai pārvietotu mezglu {name} uz citu serveri vai uzstādītu to no jauna, palaidiet tur šo compose failu un izslēdziet veco. Divi serveri ar vienu un to pašu APP_KEY skaitās viens mezgls.",
+  "nodes.sectionToggle": "Ieraksti mezglā {name}",
+  "nodes.sectionEmpty": "Šajā mezglā vēl nav nekā, ko šeit rādīt.",
+  "nodes.onNode": "Mezglā {name}",
+  "nodes.backupStarted": "Mezglā sākta ieraksta {name} dublēšana.",
+  "nodes.noSnapshots": "Šim ierakstam vēl nav rezerves kopiju.",
+  "nodes.restoreAsk": "Atjaunot ierakstu {name} mezglā no rezerves kopijas ({time})? Tas, kas tur ir tagad, tiks aizstāts.",
+  "nodes.restoreStarted": "Mezglā sākta ieraksta {name} atjaunošana.",
+  "nodes.entryMissing": "Mezgla sarakstā šī ieraksta nav.",
 };
 
 export default lv;

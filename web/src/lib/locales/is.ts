@@ -5540,6 +5540,14 @@ const is: Partial<Translations> = {
   "nodes.reachFailed": "Hnúturinn nær ekki í geymsluna fyrir {domain}: {detail}",
   "nodes.replaceTitle": "Skipta út hnút",
   "nodes.replaceIntro": "Til að flytja {name} á annan þjón eða endurbyggja hann skaltu ræsa þessa compose-skrá þar og slökkva á þeim gamla. Tveir þjónar með sama APP_KEY teljast einn hnútur.",
+  "nodes.sectionToggle": "Færslur á {name}",
+  "nodes.sectionEmpty": "Ekkert á þessum hnút til að sýna hér enn.",
+  "nodes.onNode": "Á {name}",
+  "nodes.backupStarted": "Afritun á {name} hófst á hnútnum.",
+  "nodes.noSnapshots": "Engin afrit af þessari færslu enn.",
+  "nodes.restoreAsk": "Endurheimta {name} á hnútnum úr afritinu frá {time}? Því sem er þar núna verður skipt út.",
+  "nodes.restoreStarted": "Endurheimt á {name} hófst á hnútnum.",
+  "nodes.entryMissing": "Hnúturinn listar ekki þessa færslu.",
 };
 
 export default is;

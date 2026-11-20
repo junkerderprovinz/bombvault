@@ -5521,6 +5521,14 @@ const ko: Partial<Translations> = {
   "nodes.reachFailed": "노드가 {domain} 저장소에 연결할 수 없습니다: {detail}",
   "nodes.replaceTitle": "노드 교체",
   "nodes.replaceIntro": "{name} 노드를 다른 서버로 옮기거나 다시 구축하려면 그곳에서 이 compose 파일을 시작하고 이전 서버를 종료하세요. 같은 APP_KEY를 가진 서버 두 대는 하나의 노드로 취급됩니다.",
+  "nodes.sectionToggle": "{name}의 항목",
+  "nodes.sectionEmpty": "이 노드에는 아직 여기에 표시할 것이 없습니다.",
+  "nodes.onNode": "{name}에서",
+  "nodes.backupStarted": "노드에서 {name} 백업을 시작했습니다.",
+  "nodes.noSnapshots": "이 항목의 백업이 아직 없습니다.",
+  "nodes.restoreAsk": "노드에서 {name} 항목을 {time} 백업으로 복원할까요? 지금 있는 내용은 대체됩니다.",
+  "nodes.restoreStarted": "노드에서 {name} 복원을 시작했습니다.",
+  "nodes.entryMissing": "노드 목록에 이 항목이 없습니다.",
 };
 
 export default ko;

@@ -5874,6 +5874,14 @@ export const en = {
   "nodes.reachFailed": "The node cannot reach the {domain} repository: {detail}",
   "nodes.replaceTitle": "Replace node",
   "nodes.replaceIntro": "To move {name} to another server or rebuild it, start this compose file there and shut the old one down. Two servers with the same APP_KEY count as one node.",
+  "nodes.sectionToggle": "Entries on {name}",
+  "nodes.sectionEmpty": "Nothing on this node to show here yet.",
+  "nodes.onNode": "On {name}",
+  "nodes.backupStarted": "The backup of {name} started on the node.",
+  "nodes.noSnapshots": "No backups of this entry yet.",
+  "nodes.restoreAsk": "Restore {name} on the node from the backup of {time}? What is there now gets replaced.",
+  "nodes.restoreStarted": "The restore of {name} started on the node.",
+  "nodes.entryMissing": "The node does not list this entry.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -11466,6 +11474,14 @@ export const de: Translations = {
   "nodes.reachFailed": "Der Knoten erreicht das Repository für {domain} nicht: {detail}",
   "nodes.replaceTitle": "Knoten ersetzen",
   "nodes.replaceIntro": "Um {name} auf einen anderen Server umzuziehen oder neu aufzusetzen, starte diese Compose-Datei dort und fahr den alten herunter. Zwei Server mit demselben APP_KEY gelten als ein Knoten.",
+  "nodes.sectionToggle": "Einträge auf {name}",
+  "nodes.sectionEmpty": "Auf diesem Knoten gibt es hier noch nichts.",
+  "nodes.onNode": "Auf {name}",
+  "nodes.backupStarted": "Die Sicherung von {name} läuft auf dem Knoten.",
+  "nodes.noSnapshots": "Von diesem Eintrag gibt es noch keine Sicherung.",
+  "nodes.restoreAsk": "{name} auf dem Knoten aus der Sicherung vom {time} wiederherstellen? Was dort jetzt liegt, wird ersetzt.",
+  "nodes.restoreStarted": "Die Wiederherstellung von {name} läuft auf dem Knoten.",
+  "nodes.entryMissing": "Der Knoten führt diesen Eintrag nicht.",
 };
 
 // ---------------------------------------------------------------------------

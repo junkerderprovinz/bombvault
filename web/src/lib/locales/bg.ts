@@ -5541,6 +5541,14 @@ const bg: Partial<Translations> = {
   "nodes.reachFailed": "Възелът не може да стигне до хранилището за {domain}: {detail}",
   "nodes.replaceTitle": "Замяна на възел",
   "nodes.replaceIntro": "За да преместиш {name} на друг сървър или да го изградиш наново, стартирай този compose файл там и спри стария. Два сървъра с един и същ APP_KEY се броят за един възел.",
+  "nodes.sectionToggle": "Записи на {name}",
+  "nodes.sectionEmpty": "На този възел още няма какво да се покаже тук.",
+  "nodes.onNode": "На {name}",
+  "nodes.backupStarted": "Архивирането на {name} започна на възела.",
+  "nodes.noSnapshots": "Все още няма архиви на този запис.",
+  "nodes.restoreAsk": "Да възстановя ли {name} на възела от архива от {time}? Това, което е там сега, ще бъде заменено.",
+  "nodes.restoreStarted": "Възстановяването на {name} започна на възела.",
+  "nodes.entryMissing": "Възелът не показва този запис.",
 };
 
 export default bg;

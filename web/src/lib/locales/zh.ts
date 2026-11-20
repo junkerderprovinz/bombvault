@@ -5521,6 +5521,14 @@ const zh: Partial<Translations> = {
   "nodes.reachFailed": "节点无法访问 {domain} 的仓库：{detail}",
   "nodes.replaceTitle": "替换节点",
   "nodes.replaceIntro": "要将 {name} 迁移到另一台服务器或重建它，请在那里启动此 compose 文件，并关闭旧服务器。使用同一 APP_KEY 的两台服务器算作同一个节点。",
+  "nodes.sectionToggle": "{name} 上的条目",
+  "nodes.sectionEmpty": "此节点上暂时没有可在这里显示的内容。",
+  "nodes.onNode": "在 {name} 上",
+  "nodes.backupStarted": "{name} 的备份已在节点上开始。",
+  "nodes.noSnapshots": "此条目还没有备份。",
+  "nodes.restoreAsk": "要在节点上从 {time} 的备份还原 {name} 吗？那里现有的内容将被替换。",
+  "nodes.restoreStarted": "{name} 的还原已在节点上开始。",
+  "nodes.entryMissing": "节点没有列出此条目。",
 };
 
 export default zh;

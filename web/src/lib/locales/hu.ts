@@ -5531,6 +5531,14 @@ const hu: Partial<Translations> = {
   "nodes.reachFailed": "A csomópont nem éri el a(z) {domain} tárolóját: {detail}",
   "nodes.replaceTitle": "Csomópont cseréje",
   "nodes.replaceIntro": "Ha a(z) {name} csomópontot másik szerverre költöztetnéd vagy újraépítenéd, indítsd el ott ezt a compose fájlt, és állítsd le a régit. Két szerver ugyanazzal az APP_KEY kulccsal egy csomópontnak számít.",
+  "nodes.sectionToggle": "Elemek itt: {name}",
+  "nodes.sectionEmpty": "Ezen a csomóponton még nincs itt megjeleníthető elem.",
+  "nodes.onNode": "Itt: {name}",
+  "nodes.backupStarted": "{name} biztonsági mentése elindult a csomóponton.",
+  "nodes.noSnapshots": "Ennek az elemnek még nincs biztonsági mentése.",
+  "nodes.restoreAsk": "Visszaállítod ezt a csomóponton a(z) {time} időpontú biztonsági mentésből: {name}? Ami most ott van, felülíródik.",
+  "nodes.restoreStarted": "{name} visszaállítása elindult a csomóponton.",
+  "nodes.entryMissing": "A csomópont nem sorolja fel ezt az elemet.",
 };
 
 export default hu;

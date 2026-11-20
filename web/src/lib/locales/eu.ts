@@ -5541,6 +5541,14 @@ const eu: Partial<Translations> = {
   "nodes.reachFailed": "Nodoa ezin da {domain} biltegira iritsi: {detail}",
   "nodes.replaceTitle": "Ordeztu nodoa",
   "nodes.replaceIntro": "{name} beste zerbitzari batera eramateko edo berreraikitzeko, abiarazi compose fitxategi hau han eta itzali zaharra. APP_KEY bera duten bi zerbitzari nodo bakartzat hartzen dira.",
+  "nodes.sectionToggle": "{name} nodoko sarrerak",
+  "nodes.sectionEmpty": "Nodo honetan ez dago oraindik hemen erakusteko ezer.",
+  "nodes.onNode": "{name} nodoan",
+  "nodes.backupStarted": "Babeskopia nodoan hasi da: {name}.",
+  "nodes.noSnapshots": "Sarrera honek ez du oraindik babeskopiarik.",
+  "nodes.restoreAsk": "{name} nodoan berrezarri nahi duzu? Babeskopia: {time}. Orain han dagoena ordeztu egingo da.",
+  "nodes.restoreStarted": "Berrezartzea nodoan hasi da: {name}.",
+  "nodes.entryMissing": "Nodoak ez du sarrera hau zerrendatzen.",
 };
 
 export default eu;

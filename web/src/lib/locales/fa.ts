@@ -5541,6 +5541,14 @@ const fa: Partial<Translations> = {
   "nodes.reachFailed": "گره به مخزن {domain} نمی‌رسد: {detail}",
   "nodes.replaceTitle": "جایگزینی گره",
   "nodes.replaceIntro": "برای بردن {name} به سرور دیگر یا ساختن دوباره‌اش، این فایل compose را آنجا راه‌اندازی کن و سرور قدیمی را خاموش کن. دو سرور با یک APP_KEY یک گره حساب می‌شوند.",
+  "nodes.sectionToggle": "موارد روی {name}",
+  "nodes.sectionEmpty": "هنوز چیزی روی این گره برای نمایش اینجا نیست.",
+  "nodes.onNode": "روی {name}",
+  "nodes.backupStarted": "پشتیبان‌گیری از {name} روی گره شروع شد.",
+  "nodes.noSnapshots": "هنوز پشتیبانی از این مورد نیست.",
+  "nodes.restoreAsk": "{name} روی گره از پشتیبانِ {time} بازیابی شود؟ آنچه الان آنجاست جایگزین می‌شود.",
+  "nodes.restoreStarted": "بازیابی {name} روی گره شروع شد.",
+  "nodes.entryMissing": "گره این مورد را در فهرستش ندارد.",
 };
 
 export default fa;

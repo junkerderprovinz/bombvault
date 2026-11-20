@@ -5524,6 +5524,14 @@ const sl: Partial<Translations> = {
   "nodes.reachFailed": "Vozlišče ne doseže repozitorija {domain}: {detail}",
   "nodes.replaceTitle": "Zamenjaj vozlišče",
   "nodes.replaceIntro": "Če želiš {name} preseliti na drug strežnik ali ga postaviti na novo, tam zaženi to datoteko compose in starega izklopi. Dva strežnika z istim APP_KEY štejeta kot eno vozlišče.",
+  "nodes.sectionToggle": "Vnosi na {name}",
+  "nodes.sectionEmpty": "Na tem vozlišču tu še ni ničesar za prikaz.",
+  "nodes.onNode": "Na {name}",
+  "nodes.backupStarted": "Varnostno kopiranje {name} se je začelo na vozlišču.",
+  "nodes.noSnapshots": "Za ta vnos še ni varnostnih kopij.",
+  "nodes.restoreAsk": "Obnovim {name} na vozlišču iz varnostne kopije, narejene {time}? Kar je tam zdaj, bo zamenjano.",
+  "nodes.restoreStarted": "Obnova {name} se je začela na vozlišču.",
+  "nodes.entryMissing": "Vozlišče tega vnosa nima na seznamu.",
 };
 
 export default sl;

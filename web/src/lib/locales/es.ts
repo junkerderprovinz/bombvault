@@ -5529,6 +5529,14 @@ const es: Partial<Translations> = {
   "nodes.reachFailed": "El nodo no llega al repositorio de {domain}: {detail}",
   "nodes.replaceTitle": "Reemplazar nodo",
   "nodes.replaceIntro": "Para mover {name} a otro servidor o reconstruirlo, inicia allí este archivo compose y apaga el antiguo. Dos servidores con la misma APP_KEY cuentan como un solo nodo.",
+  "nodes.sectionToggle": "Entradas en {name}",
+  "nodes.sectionEmpty": "Aún no hay nada en este nodo para mostrar aquí.",
+  "nodes.onNode": "En {name}",
+  "nodes.backupStarted": "La copia de {name} ha empezado en el nodo.",
+  "nodes.noSnapshots": "Aún no hay copias de esta entrada.",
+  "nodes.restoreAsk": "¿Restaurar {name} en el nodo desde la copia del {time}? Lo que hay ahora allí se reemplazará.",
+  "nodes.restoreStarted": "La restauración de {name} ha empezado en el nodo.",
+  "nodes.entryMissing": "El nodo no tiene esta entrada en su lista.",
 };
 
 export default es;

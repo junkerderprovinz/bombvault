@@ -5541,6 +5541,14 @@ const et: Partial<Translations> = {
   "nodes.reachFailed": "Sõlm ei jõua hoidlani {domain} jaoks: {detail}",
   "nodes.replaceTitle": "Asenda sõlm",
   "nodes.replaceIntro": "Et viia {name} teise serverisse või see uuesti üles seada, käivita seal see compose-fail ja lülita vana välja. Kaks sama APP_KEY-ga serverit loetakse üheks sõlmeks.",
+  "nodes.sectionToggle": "Kirjed sõlmes {name}",
+  "nodes.sectionEmpty": "Selles sõlmes pole siin veel midagi näidata.",
+  "nodes.onNode": "Sõlmes {name}",
+  "nodes.backupStarted": "Varundus algas sõlmes: {name}.",
+  "nodes.noSnapshots": "Sellest kirjest pole veel varundusi.",
+  "nodes.restoreAsk": "Kas taastada {name} sõlmes varundusest, mis tehti {time}? Praegu seal olev asendatakse.",
+  "nodes.restoreStarted": "Taastamine algas sõlmes: {name}.",
+  "nodes.entryMissing": "Sõlm ei loetle seda kirjet.",
 };
 
 export default et;

@@ -5529,6 +5529,14 @@ const cs: Partial<Translations> = {
   "nodes.reachFailed": "Uzel se nedostane k repozitáři pro {domain}: {detail}",
   "nodes.replaceTitle": "Nahradit uzel",
   "nodes.replaceIntro": "Chceš-li {name} přesunout na jiný server nebo ho postavit znovu, spusť tam tento soubor compose a starý vypni. Dva servery se stejným APP_KEY se počítají jako jeden uzel.",
+  "nodes.sectionToggle": "Položky na uzlu {name}",
+  "nodes.sectionEmpty": "Na tomto uzlu tu zatím nic k zobrazení není.",
+  "nodes.onNode": "Na uzlu {name}",
+  "nodes.backupStarted": "Zálohování {name} na uzlu začalo.",
+  "nodes.noSnapshots": "Z této položky zatím není žádná záloha.",
+  "nodes.restoreAsk": "Obnovit {name} na uzlu ze zálohy z {time}? To, co tam je teď, se nahradí.",
+  "nodes.restoreStarted": "Obnova {name} na uzlu začala.",
+  "nodes.entryMissing": "Uzel tuto položku neuvádí.",
 };
 
 export default cs;

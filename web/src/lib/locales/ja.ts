@@ -5521,6 +5521,14 @@ const ja: Partial<Translations> = {
   "nodes.reachFailed": "ノードが {domain} のリポジトリに接続できません: {detail}",
   "nodes.replaceTitle": "ノードを置き換え",
   "nodes.replaceIntro": "{name} を別のサーバーへ移したり作り直したりするには、そこでこの compose ファイルを起動し、古いサーバーを停止してください。同じ APP_KEY を持つ 2 台のサーバーは 1 つのノードとして扱われます。",
+  "nodes.sectionToggle": "{name} の項目",
+  "nodes.sectionEmpty": "このノードには、ここに表示できるものがまだありません。",
+  "nodes.onNode": "{name} 上",
+  "nodes.backupStarted": "{name} のバックアップをノードで開始しました。",
+  "nodes.noSnapshots": "この項目のバックアップはまだありません。",
+  "nodes.restoreAsk": "ノード上の {name} を {time} のバックアップから復元しますか？今ある内容は置き換えられます。",
+  "nodes.restoreStarted": "{name} の復元をノードで開始しました。",
+  "nodes.entryMissing": "ノードの一覧にこの項目はありません。",
 };
 
 export default ja;

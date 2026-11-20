@@ -5530,6 +5530,14 @@ const nl: Partial<Translations> = {
   "nodes.reachFailed": "De node kan de repository voor {domain} niet bereiken: {detail}",
   "nodes.replaceTitle": "Node vervangen",
   "nodes.replaceIntro": "Om {name} naar een andere server te verhuizen of opnieuw op te bouwen, start je dit compose-bestand daar en zet je de oude uit. Twee servers met dezelfde APP_KEY tellen als één node.",
+  "nodes.sectionToggle": "Items op {name}",
+  "nodes.sectionEmpty": "Op deze node is hier nog niets te zien.",
+  "nodes.onNode": "Op {name}",
+  "nodes.backupStarted": "De back-up van {name} is op de node gestart.",
+  "nodes.noSnapshots": "Nog geen back-ups van dit item.",
+  "nodes.restoreAsk": "{name} op de node herstellen uit de back-up van {time}? Wat er nu staat, wordt vervangen.",
+  "nodes.restoreStarted": "Het herstel van {name} is op de node gestart.",
+  "nodes.entryMissing": "De node kent dit item niet.",
 };
 
 export default nl;

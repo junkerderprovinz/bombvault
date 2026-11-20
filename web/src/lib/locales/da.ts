@@ -5531,6 +5531,14 @@ const da: Partial<Translations> = {
   "nodes.reachFailed": "Noden kan ikke nå arkivet for {domain}: {detail}",
   "nodes.replaceTitle": "Erstat node",
   "nodes.replaceIntro": "For at flytte {name} til en anden server eller genopbygge den skal du starte denne compose-fil dér og lukke den gamle ned. To servere med samme APP_KEY tæller som én node.",
+  "nodes.sectionToggle": "Poster på {name}",
+  "nodes.sectionEmpty": "Der er ikke noget på denne node at vise her endnu.",
+  "nodes.onNode": "På {name}",
+  "nodes.backupStarted": "Sikkerhedskopieringen af {name} er startet på noden.",
+  "nodes.noSnapshots": "Ingen sikkerhedskopier af denne post endnu.",
+  "nodes.restoreAsk": "Gendan {name} på noden fra sikkerhedskopien fra {time}? Det, der ligger der nu, bliver erstattet.",
+  "nodes.restoreStarted": "Gendannelsen af {name} er startet på noden.",
+  "nodes.entryMissing": "Noden har ikke denne post på sin liste.",
 };
 
 export default da;

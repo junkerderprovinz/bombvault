@@ -5521,6 +5521,14 @@ const vi: Partial<Translations> = {
   "nodes.reachFailed": "Node không tới được kho lưu trữ {domain}: {detail}",
   "nodes.replaceTitle": "Thay thế node",
   "nodes.replaceIntro": "Để chuyển {name} sang máy chủ khác hoặc dựng lại, hãy khởi động tệp compose này ở đó và tắt máy chủ cũ. Hai máy chủ có cùng APP_KEY được tính là một node.",
+  "nodes.sectionToggle": "Mục trên {name}",
+  "nodes.sectionEmpty": "Chưa có gì trên node này để hiển thị ở đây.",
+  "nodes.onNode": "Trên {name}",
+  "nodes.backupStarted": "Đã bắt đầu sao lưu {name} trên node.",
+  "nodes.noSnapshots": "Mục này chưa có bản sao lưu nào.",
+  "nodes.restoreAsk": "Khôi phục {name} trên node từ bản sao lưu lúc {time}? Những gì đang có ở đó sẽ bị thay thế.",
+  "nodes.restoreStarted": "Đã bắt đầu khôi phục {name} trên node.",
+  "nodes.entryMissing": "Node không có mục này trong danh sách.",
 };
 
 export default vi;
