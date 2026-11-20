@@ -16181,8 +16181,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		Repo:        repo,
 		TargetID:    set.ID,
 		SetName:     set.Name,
-		Excludes: append(s.excludesAsSeenHere(set.Excludes),
-			excludedBranches(anchored)...),
+		Excludes:    s.fileSetExcludes(set.Excludes, anchored),
 		Restic: &resticAdapter{
 			engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx)),
 			missing: strings.Join(missing, ", "), watchEmpty: true,
@@ -16308,6 +16307,17 @@ func (s *Service) excludesAsSeenHere(lines []string) []string {
 			}
 		}
 		out = append(out, line)
+	}
+	return out
+}
+
+// fileSetExcludes are the patterns a folder set's backup leaves out: the set's
+// own, the branches its selection drops and, on a node, the folder of the
+// repositories the node keeps itself, which it must never back up.
+func (s *Service) fileSetExcludes(own, anchored []string) []string {
+	out := append(s.excludesAsSeenHere(own), excludedBranches(anchored)...)
+	if s.cfg.Mode == config.ModeNode {
+		out = append(out, path.Join(s.cfg.HostMountRoot, nodeRestFolder))
 	}
 	return out
 }
