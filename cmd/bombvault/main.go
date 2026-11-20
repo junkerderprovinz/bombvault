@@ -753,6 +753,9 @@ func newScheduler(mode config.Mode, svc *api.Service, st *store.Repo) *schedule.
 	scheduler.SetSharedUpkeepJob(func() error {
 		return svc.RunSharedUpkeep(context.Background())
 	}, svc.NextSharedUpkeep)
+	// Home owns the schedules of its nodes and starts their backups over the
+	// link, a tick like the pull sweep.
+	scheduler.SetNodeJob(svc.RunNodeSchedules, svc.NextNodeRun)
 	// Fleet peer sweep: the daily poll of every enabled fleet peer's protection
 	// status (read-only, no notifications — each peer's own instance already
 	// alerts on its own overdue backups).

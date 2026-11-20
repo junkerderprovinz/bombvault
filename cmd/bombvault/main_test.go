@@ -180,6 +180,24 @@ func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
 	}
 }
 
+func TestHomePlansTheBackupsOfItsNodes(t *testing.T) {
+	st := memStore(t)
+	n := store.Node{ID: "aabbccddeeff00", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 1, AdoptedAt: 1, ContainersCadence: "daily 03:00"}
+	if err := st.AddNode(n); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}, st, nil, nil, nil)
+	s := newScheduler(config.ModeFull, svc, st)
+	s.Start()
+	defer s.Stop()
+	for _, run := range s.NextRuns() {
+		if run.Job == "nodes" {
+			return
+		}
+	}
+	t.Errorf("the next runs %+v leave out the node's", s.NextRuns())
+}
+
 func TestANodeJoinsTheHomeItsVariablesName(t *testing.T) {
 	rs := httptest.NewServer(relay.New())
 	t.Cleanup(rs.Close)

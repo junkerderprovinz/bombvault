@@ -26,22 +26,62 @@ const nodeCallTimeout = 30 * time.Second
 // NodeView is a node as home lists it. State is "releasing" while the node
 // has not heard that home let it go. Placement is where its backups go and
 // PlacementTarget the receiver's address or the storage location's name
-// there. Version is what the node runs, empty while it is away.
+// there. Version is what the node runs, empty while it is away. The cadences
+// are when home starts the backups of each section.
 type NodeView struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	CreatedAt       int64  `json:"createdAt"`
-	AdoptedAt       int64  `json:"adoptedAt"`
-	State           string `json:"state,omitempty"`
-	Placement       string `json:"placement,omitempty"`
-	PlacementTarget string `json:"placementTarget,omitempty"`
-	Online          bool   `json:"online"`
-	LastSeen        int64  `json:"lastSeen,omitempty"`
-	Version         string `json:"version,omitempty"`
+	ID                string `json:"id"`
+	Name              string `json:"name"`
+	CreatedAt         int64  `json:"createdAt"`
+	AdoptedAt         int64  `json:"adoptedAt"`
+	State             string `json:"state,omitempty"`
+	Placement         string `json:"placement,omitempty"`
+	PlacementTarget   string `json:"placementTarget,omitempty"`
+	Online            bool   `json:"online"`
+	LastSeen          int64  `json:"lastSeen,omitempty"`
+	Version           string `json:"version,omitempty"`
+	ContainersCadence string `json:"containersCadence"`
+	FilesCadence      string `json:"filesCadence"`
+	// LastBackup is when the newest backup home knows of on the node
+	// finished. Failures counts the entries whose backups fail and what the
+	// receiver watch raised about the node's repositories, and Anomalies what
+	// the node had open when home last asked.
+	LastBackup int64 `json:"lastBackup,omitempty"`
+	Failures   int   `json:"failures"`
+	Anomalies  int   `json:"anomalies"`
 }
 
 func nodeViewOf(n store.Node) NodeView {
-	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement, PlacementTarget: n.PlacementTarget}
+	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement, PlacementTarget: n.PlacementTarget,
+		ContainersCadence: n.ContainersCadence, FilesCadence: n.FilesCadence}
+}
+
+// nodeHealth fills in how the backups of node v go, as far as home learned.
+func (s *Service) nodeHealth(v *NodeView) error {
+	runs, err := s.store.NodeRuns(v.ID)
+	if err != nil {
+		return err
+	}
+	for _, r := range runs {
+		if r.Status == "success" || r.Status == "warning" {
+			v.LastBackup = max(v.LastBackup, r.FinishedAt)
+		}
+	}
+	open, err := s.store.NodeEpisodes(v.ID)
+	if err != nil {
+		return err
+	}
+	for key := range open {
+		if key != nodeAwayEpisode {
+			v.Failures++
+		}
+	}
+	watched, err := s.store.NodeWatchAlerts(v.ID)
+	if err != nil {
+		return err
+	}
+	v.Failures += watched
+	v.Anomalies = s.nodes.anomalies(v.ID)
+	return nil
 }
 
 // nodeHelloWait bounds the question to each node what it runs, so a slow one
@@ -322,6 +362,8 @@ func postNode(ctx context.Context, link *nodelink.Link, path string, body []byte
 			return errNodeReleased
 		case codeNodeNotAdopted:
 			return errNodeNotAdopted
+		case codeNodeBusy:
+			return errNodeRunBusy
 		}
 	}
 	switch {
@@ -458,11 +500,15 @@ func (s *Service) ListNodes(ctx context.Context) ([]NodeView, error) {
 		if n.Placement == nodePlaceLocation {
 			out[i].PlacementTarget = cmp.Or(dests[n.PlacementTarget], n.PlacementTarget)
 		}
+		if err := s.nodeHealth(&out[i]); err != nil {
+			return nil, err
+		}
+		out[i].LastSeen = n.SeenAt
 		link, ok := s.nodeLinkOf(n.ID)
 		if !ok {
 			continue
 		}
-		if seen := link.LastSeen(); !seen.IsZero() {
+		if seen := link.LastSeen(); seen.Unix() > out[i].LastSeen {
 			out[i].LastSeen = seen.Unix()
 		}
 		if out[i].Online = link.Online(); !out[i].Online {

@@ -354,7 +354,7 @@ func (s *Service) watchNodeRepos(n store.Node, repos []nodeRepo, password string
 		return err
 	}
 	for _, r := range repos {
-		id := "node-" + n.ID[:12] + "-" + r.placement.Domain
+		id := nodeRepoID(n.ID, r.placement.Domain)
 		rr, found, err := s.store.GetReceivedRepo(id)
 		if err != nil {
 			return err

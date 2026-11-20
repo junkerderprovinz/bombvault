@@ -23,12 +23,13 @@ import (
 const nodeAPIPath = "/node/api"
 
 // nodeRoutes are the routes of a node home may reach, as the router
-// registers them: reading the containers, folder sets and runs, and backing
-// up and restoring them. Nothing that deletes, or reaches the settings, the
-// storage, the keys, the group or the tokens, is among them.
+// registers them: reading the containers, folder sets, runs and anomalies,
+// and backing up and restoring the entries. Nothing that deletes, or reaches
+// the settings, the storage, the keys, the group or the tokens, is among them.
 var nodeRoutes = []string{
 	"GET /api/status",
 	"GET /api/runs",
+	"GET /api/anomalies/summary",
 	"GET /api/containers",
 	"GET /api/containers/{name}",
 	"GET /api/containers/{name}/mounts",

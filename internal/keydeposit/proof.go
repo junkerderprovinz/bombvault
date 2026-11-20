@@ -48,10 +48,12 @@ const (
 	// ProofNodeAdopt and ProofNodeRelease are home taking a node on and
 	// letting it go. ProofNodePlacement says where a node sends its backups,
 	// and ProofNodeAPI is a request home passes to a node's own routes.
+	// ProofNodeRun is home starting the backups of a section on a node.
 	ProofNodeAdopt     = "node-adopt"
 	ProofNodeRelease   = "node-release"
 	ProofNodePlacement = "node-placement"
 	ProofNodeAPI       = "node-api"
+	ProofNodeRun       = "node-run"
 )
 
 // Claim is what an install says and signs. Counter only ever grows, so a call

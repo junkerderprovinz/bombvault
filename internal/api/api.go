@@ -195,6 +195,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("POST /api/nodes", h.handleAddNode)
 	mux.HandleFunc("DELETE /api/nodes/{id}", h.handleReleaseNode)
 	mux.HandleFunc("POST /api/nodes/{id}/placement", h.handlePlaceNode)
+	mux.HandleFunc("PUT /api/nodes/{id}/schedule", h.handleNodeSchedule)
 	mux.HandleFunc("GET /api/nodes/routes", h.handleNodeRoutes)
 	mux.HandleFunc("POST /api/nodes/{id}/compose", h.handleNodeCompose)
 	mux.HandleFunc("GET /api/nodes/{id}/api/{path...}", h.handleNodeAPI)

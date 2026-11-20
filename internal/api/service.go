@@ -733,6 +733,8 @@ type Service struct {
 	homeLink  *nodelink.Link
 	// nodeAPI is the router a node runs the requests of its home through.
 	nodeAPI atomic.Pointer[http.Handler]
+	// nodes keeps the schedules home holds for its nodes.
+	nodes *nodeWatch
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -777,6 +779,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		s.engine = guardOwnData(eng, s)
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
+	s.nodes = newNodeWatch(st, s.callNodeByID, s.notifyNode, s.pruneNodeRepos)
 	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
 	if st != nil {
 		st.SetRunStartedHook(s.runStarted)
