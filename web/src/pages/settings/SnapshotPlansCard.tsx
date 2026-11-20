@@ -187,17 +187,19 @@ function PlanRow({
         {toggle(t("hostSnap.plans.enabled"), plan.enabled, (v) => void save({ ...plan, enabled: v }))}
       </Rows>
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <span className="me-auto text-xs text-carbon-textMuted">{lastRunLine(plan, t)}</span>
-        <Button
-          label={t("hostSnap.plans.runNow")}
-          labelKey="hostSnap.plans.runNow"
-          glyph={<IconBackupNow />}
-          tone="neutral"
-          busy={running}
-          disabled={running}
-          onClick={() => void runNow()}
-        />
-        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="neutral" onClick={onRemove} />
+        <span className="min-w-0 flex-1 basis-48 text-xs text-carbon-textMuted">{lastRunLine(plan, t)}</span>
+        <div className="flex shrink-0 gap-2">
+          <Button
+            label={t("hostSnap.plans.runNow")}
+            labelKey="hostSnap.plans.runNow"
+            glyph={<IconBackupNow />}
+            tone="neutral"
+            busy={running}
+            disabled={running}
+            onClick={() => void runNow()}
+          />
+          <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="neutral" onClick={onRemove} />
+        </div>
       </div>
       {ownLogin.dialog}
     </li>
