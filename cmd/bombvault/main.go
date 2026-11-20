@@ -430,6 +430,11 @@ func run() error {
 	svc.SweepAppdataImportLeftovers()
 	svc.SweepFlashZipScratch()
 	if node {
+		// The requests home passes on run through the routes a browser
+		// would reach; the node lets through only those of its list.
+		nodeAPI := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+		nodeAPI.SetProgress(prog)
+		svc.ServeNodeAPI(nodeAPI.Router())
 		return serveNode(cfg, svc, engine)
 	}
 

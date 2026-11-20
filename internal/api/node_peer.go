@@ -145,6 +145,8 @@ func (n *nodeSide) serve(w http.ResponseWriter, r *http.Request) {
 		n.release(w, r)
 	case nodePlacementPath:
 		n.placement(w, r)
+	case nodeAPIPath:
+		n.api(w, r)
 	default:
 		http.NotFound(w, r)
 	}

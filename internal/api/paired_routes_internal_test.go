@@ -571,6 +571,10 @@ var pairedRefused = []string{
 	"POST /api/nodes",
 	"DELETE /api/nodes/{id}",
 	"POST /api/nodes/{id}/placement",
+	"GET /api/nodes/routes",
+	"GET /api/nodes/{id}/api/{path...}",
+	"POST /api/nodes/{id}/api/{path...}",
+	"PATCH /api/nodes/{id}/api/{path...}",
 	"PUT /api/receiver/node-address",
 }
 

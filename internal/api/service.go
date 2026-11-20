@@ -731,6 +731,8 @@ type Service struct {
 	nodeMu    sync.Mutex
 	nodeLinks map[string]*homeNode
 	homeLink  *nodelink.Link
+	// nodeAPI is the router a node runs the requests of its home through.
+	nodeAPI atomic.Pointer[http.Handler]
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
