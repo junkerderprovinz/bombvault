@@ -341,7 +341,7 @@ function channelPicker(t: T, lang: string) {
     lang,
     own: (entry) => {
       if (entry.id === "smtp") return { label: t("notify.email") };
-      if (entry.id === "webhook") return { label: t(KIND_LABEL.webhook), last: true };
+      if (entry.id === "webhook") return { label: t(KIND_LABEL.webhook) };
       return undefined;
     },
   });

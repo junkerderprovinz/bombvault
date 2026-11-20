@@ -117,7 +117,7 @@ function ClientPicker({ onPick, onClose }: { onPick: (c: McpClient) => void; onC
     },
     glyph: (entry) => catalogGlyph(entry.glyph),
     lang,
-    own: (entry) => (entry.id === OTHER_CLIENT.id ? { label: t("mcp.otherClient"), last: true } : undefined),
+    own: (entry) => (entry.id === OTHER_CLIENT.id ? { label: t("mcp.otherClient") } : undefined),
   });
 
   return (

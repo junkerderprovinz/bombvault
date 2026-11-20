@@ -177,7 +177,7 @@ function AddRegistryWindow({ onSave, onClose }: { onSave: SaveEntry; onClose: ()
     lang,
     own: (entry) => {
       const sub = REGISTRY_KINDS.find((k) => k.id === entry.id)?.host ?? t("tile.registry.ownAddress");
-      return entry.id === OTHER ? { label: t("tile.registry.other"), sub, last: true } : { sub };
+      return entry.id === OTHER ? { label: t("tile.registry.other"), sub } : { sub };
     },
   });
 
