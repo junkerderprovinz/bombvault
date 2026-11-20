@@ -75,6 +75,7 @@ Ein kurzer Katalog dessen, was BombVault kann. Jede Zeile verlinkt auf die Seite
 - **Die Seite Instanzen** mit der Gruppe als Netz und den Rollen **Empfänger**, **Abholer**, **ZFS-Server** und **Schlüsselhüter**. [Instanzen und Rollen](offsite-recovery.md#roles)
 - **Ein Empfangsserver**, für dich eingerichtet, im Append-only-Modus. [Empfangsserver](offsite-recovery.md#receiving-server)
 - **Ein gemeinsames Repository**, in das mehrere Server kopieren, damit das, was sie gemeinsam haben, nur einmal gespeichert wird. Aufräumen darf nur der Server, dem es gehört. [Gemeinsames Repository](offsite-recovery.md#shared-repository)
+- **Knoten**: BombVault ohne Weboberfläche auf einem VPS oder einem anderen Server, gesteuert von der Heiminstanz, mit Zeitplänen, Alarmen und Wiederherstellungen. Ein Knoten braucht keinen offenen Port. [Knoten](nodes.md)
 
 ## KI-Assistenten (MCP) {#mcp}
 

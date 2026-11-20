@@ -34,4 +34,5 @@ Jedes dieser Beispiele führt eine echte Aufgabe von Anfang bis Ende durch, mit 
 ## Mehrere Server {#several-servers}
 
 - [Zwei Unraid-Boxen koppeln](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): zwei Server, die gegenseitig ihre Kopien verwahren, und keiner kann die Sicherungen des anderen löschen.
+- [Ein VPS, der auf den Empfangsserver sichert](nodes.md#example-vps): ein Knoten mit seinen Containern, gesteuert von der Heiminstanz, ohne offenen Port auf dem VPS.
 - [Eine Karte und ein Alarm in Home Assistant](api.md#home-assistant-example): BombVault auf einem Dashboard, mit einer Nachricht, wenn eine Sicherung fehlschlägt.

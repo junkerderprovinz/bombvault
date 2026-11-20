@@ -90,6 +90,7 @@ Ein paar Wörter haben in BombVault und auf diesen Seiten eine feste Bedeutung.
 | **Zuordnung** | Welche Speicherorte die Sicherungen eines Eintrags bekommen, am Eintrag oder als Vorgabe seines Bereichs eingestellt. Siehe [Zuordnung pro Eintrag](offsite-recovery.md#placement). |
 | **Replik** | Eine blockgenaue Kopie eines ZFS-Eintrags auf einem zweiten ZFS-Server, gemacht mit `zfs send`. Sie steht neben der Sicherung und ersetzt sie nicht. Siehe [Replik](zfs-datasets.md#replica). |
 | **Rolle** | Etwas, das eine Instanz deiner Gruppe für eine andere tut: Empfänger, Abholer, ZFS-Server oder Schlüsselhüter. Siehe [Instanzen und Rollen](offsite-recovery.md#roles). |
+| **Knoten** | Ein BombVault ohne Weboberfläche, etwa auf einem VPS. Eine andere Instanz, seine Heiminstanz, sagt ihm, was es wann und wohin sichert. Siehe [Knoten](nodes.md). |
 
 ## Danksagung {#credits}
 

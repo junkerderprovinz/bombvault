@@ -208,6 +208,26 @@ Der Startbildschirm sagt auf der Karte des Servers warum:
 - **Anmeldung nötig:** Ein über seine Adresse hinzugefügter Server fragt nach dem Passwort. Siehe auch [Ein Handy landet auf der Login-Seite](#a-phone-lands-on-the-login-page).
 - **Der Schlüssel hat sich geändert:** Der Startbildschirm zeigt den Fingerabdruck des neuen Schlüssels, und die Seite öffnet sich erst, nachdem du ihm vertraust. Siehe [Unterwegs](android.md#away).
 
+## Ein Knoten bleibt bei „Wartet auf den Knoten“ {#node-waiting}
+
+Der Knoten hat seiner Heiminstanz noch nicht geantwortet. Öffne auf dem Server des Knotens sein Container-Protokoll (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`**, gefolgt von der ID der Heiminstanz: Der Knoten läuft und wartet am Relay. Prüfe, ob der Server die Adresse des Relays erreicht. Die Verbindung geht vom Knoten aus, er braucht also keinen offenen Port.
+- **`NODE_HOME is not set`**: Die Compose-Datei hat ihre Werte verloren. Wähle **Ersetzen** auf der Karte des Knotens, kopiere die Datei erneut und führe `docker compose up -d` aus.
+- **`NODE_HOME does not belong to this APP_KEY`**: Die beiden Werte stammen von verschiedenen Knoten. Kopiere beide von derselben Karte.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: Eine andere Heiminstanz hat den Knoten übernommen. Gib ihn dort zuerst frei oder füge den Server hier als neuen Knoten mit einer neuen Compose-Datei hinzu.
+- **`MODE=... is neither full nor node`**: Setze `MODE: node`.
+
+## Ein Knoten erreicht seine Repositories nicht {#node-reach}
+
+Nachdem du das Ziel gesetzt hast, sagt die Heiminstanz pro Bereich, ob der Knoten sein Repository geöffnet hat, etwa **Der Knoten erreicht das Repository für Container nicht** mit dem Grund, den restic nennt. Prüfe vom Server des Knotens aus, ob die Adresse antwortet. Beim Empfangsserver ist das die **Adresse für Knoten**: Ein Reverse Proxy muss sie an den rest-server durchreichen, und ein Server mit eigenem Zertifikat braucht dieses Zertifikat unter **Zertifikat**. Bei einem Speicherort prüfe die Zugangsdaten, die du für den Knoten angelegt hast. Wähle dann noch einmal **Ziel ändern** und **Speichern**. Siehe [Wohin die Sicherungen gehen](nodes.md#placement).
+
+Bewahrt ein Knoten seine Sicherungen selbst auf, lehnt BombVault einen Port, den ein anderer Container auf dem Knoten belegt, mit dem Namen dieses Containers ab. Nimm dann einen anderen. Kann die Heiminstanz nicht holen, gib den Port in der Firewall des Knotens frei.
+
+## Ein freigegebener Knoten kommt nicht zurück {#node-released}
+
+Ein freigegebener Knoten nimmt mit seinem alten `APP_KEY` keine Heiminstanz mehr an, und sein Ordner `config` merkt sich die Freigabe. Füge den Server als neuen Knoten hinzu und starte ihn mit der neuen Compose-Datei und einem leeren Ordner `config`. Seine alten Sicherungen bleiben, wo sie waren, ebenso jede Kopie, die die Heiminstanz geholt hat.
+
 ## Ein anderer Benutzer kann das lokale Repository nicht lesen {#repository-permissions}
 
 Das lokale Repository bleibt für andere Benutzer lesbar, etwa einen Sync-Benutzer über SMB. Vor 10.4.1 konnten Dateien, die ein Aufräumen, Tag, Pull, Bereichsumzug, Löschen oder Stack-Sicherung geschrieben hatte, bis zur nächsten Nacht unlesbar bleiben. Aktualisiere BombVault, dann sind sie sofort lesbar. Das Selbstbackup-Repository bleibt absichtlich nur für root lesbar, weil es die Einstellungen von BombVault enthält.
