@@ -2311,7 +2311,7 @@ body {
    one edge. A long label wraps inside its column. On a phone the label stands
    over its field. */
 .glim-form-rows .glim-form-row {
-  --form-label: 12rem;
+  --form-label: 15rem;
   display: grid;
   grid-template-columns: minmax(0, var(--form-label)) minmax(0, 1fr);
   align-items: center;
@@ -2330,9 +2330,9 @@ body {
 /* A field's suggested values stand on the step card's surface, so they take
    the fields' step to read as choices. */
 .glim-form-rows [data-examples] > .bg-carbon-surface2:not(:hover) { background-color: var(--carbon-surface3); }
-/* A box of fields inside the form, such as its more settings, is inset by its
-   padding, so its label column gives that back to keep the field edge. */
-.glim-form-rows .glim-form-sub .glim-form-row { --form-label: calc(12rem - 0.75rem); }
+/* A box of fields inside the form, such as its more settings, reaches out by
+   its padding, so its labels and fields stand on the form's own edges. */
+.glim-form-rows .glim-form-box { margin-inline: -0.75rem; }
 @media (max-width: 39.99rem) {
   .glim-form-rows .glim-form-row { grid-template-columns: minmax(0, 1fr); }
 }

@@ -467,7 +467,7 @@ export function KeyInstall({ draft }: { draft: DestinationDraftState }) {
   }
 
   return (
-    <div data-new="storagebox-key-install" className="glim-form-sub flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+    <div data-new="storagebox-key-install" className="glim-form-box flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <Rows>
         <SettingRow
           label={t("dest.keyInstall.password")}
@@ -529,7 +529,7 @@ export function MoreSettings({ own, children }: { own: boolean; children: ReactN
   const [choice, setChoice] = useState<boolean | null>(null);
   const open = choice ?? own;
   return (
-    <section aria-label={t("dest.more")} className="glim-form-sub flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
+    <section aria-label={t("dest.more")} className="glim-form-box flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
       <button
         type="button"
         aria-expanded={open}
