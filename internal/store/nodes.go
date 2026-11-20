@@ -31,6 +31,49 @@ type Node struct {
 	// PlacementTarget is the receiver's address for nodes, or the id of the
 	// storage location, the node was sent to.
 	PlacementTarget string
+	// ContainersCadence and FilesCadence are when home starts the backups of
+	// each section on the node, and ContainersStartedAt and FilesStartedAt
+	// when it last did.
+	ContainersCadence   string
+	FilesCadence        string
+	ContainersStartedAt int64
+	FilesStartedAt      int64
+	// SeenAt is when home last reached the node.
+	SeenAt int64
+	// PrunedWindow is when the last prune window opened that home pruned the
+	// node's repositories in.
+	PrunedWindow int64
+}
+
+// Cadence is when home starts the backups of section domain on the node.
+func (n Node) Cadence(domain string) string {
+	switch domain {
+	case "containers":
+		return n.ContainersCadence
+	case "files":
+		return n.FilesCadence
+	}
+	return ""
+}
+
+// StartedAt is when home last started the backups of section domain.
+func (n Node) StartedAt(domain string) int64 {
+	switch domain {
+	case "containers":
+		return n.ContainersStartedAt
+	case "files":
+		return n.FilesStartedAt
+	}
+	return 0
+}
+
+// nodeSection checks that domain is a section a node backs up, which is
+// also the prefix of its columns.
+func nodeSection(domain string) (string, error) {
+	if domain != "containers" && domain != "files" {
+		return "", fmt.Errorf("a node backs up no section %q", domain)
+	}
+	return domain, nil
 }
 
 // NodeReleasing is the state of a node home let go that has not heard it.
@@ -39,20 +82,23 @@ const NodeReleasing = "releasing"
 // ErrNodeNotFound is returned for an id no node has.
 var ErrNodeNotFound = errors.New("no such node")
 
-const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due, placement_target`
+const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due, placement_target,
+	containers_cadence, files_cadence, containers_started_at, files_started_at, seen_at, pruned_window`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
 	var due int
-	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due, &n.PlacementTarget)
+	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due, &n.PlacementTarget,
+		&n.ContainersCadence, &n.FilesCadence, &n.ContainersStartedAt, &n.FilesStartedAt, &n.SeenAt, &n.PrunedWindow)
 	n.PlacementDue = due != 0
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue), n.PlacementTarget); err != nil {
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue), n.PlacementTarget,
+		n.ContainersCadence, n.FilesCadence, n.ContainersStartedAt, n.FilesStartedAt, n.SeenAt, n.PrunedWindow); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -134,10 +180,148 @@ func (r *Repo) updateNode(query string, args ...any) error {
 	return nil
 }
 
-// DeleteNode forgets a node.
+// SetNodeCadence records when home starts the backups of section domain on
+// the node.
+func (r *Repo) SetNodeCadence(id, domain, cadence string) error {
+	col, err := nodeSection(domain)
+	if err != nil {
+		return err
+	}
+	return r.updateNode(`UPDATE nodes SET `+col+`_cadence = ? WHERE id = ?`, cadence, id)
+}
+
+// SetNodeStarted records that home started the backups of section domain on
+// the node at at.
+func (r *Repo) SetNodeStarted(id, domain string, at int64) error {
+	col, err := nodeSection(domain)
+	if err != nil {
+		return err
+	}
+	return r.updateNode(`UPDATE nodes SET `+col+`_started_at = ? WHERE id = ?`, at, id)
+}
+
+// SetNodeSeen records that home reached the node at at.
+func (r *Repo) SetNodeSeen(id string, at int64) error {
+	return r.updateNode(`UPDATE nodes SET seen_at = ? WHERE id = ?`, at, id)
+}
+
+// SetNodePruned records the prune window home pruned the node's
+// repositories in.
+func (r *Repo) SetNodePruned(id string, window int64) error {
+	return r.updateNode(`UPDATE nodes SET pruned_window = ? WHERE id = ?`, window, id)
+}
+
+// DeleteNode forgets a node with what home learned of its runs.
 func (r *Repo) DeleteNode(id string) error {
-	if _, err := r.db.Exec(`DELETE FROM nodes WHERE id = ?`, id); err != nil {
+	tx, err := r.db.Begin()
+	if err != nil {
 		return fmt.Errorf("DeleteNode: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // a no-op once committed
+	for _, q := range []string{`DELETE FROM node_runs WHERE node_id = ?`, `DELETE FROM node_episodes WHERE node_id = ?`, `DELETE FROM nodes WHERE id = ?`} {
+		if _, err := tx.Exec(q, id); err != nil {
+			return fmt.Errorf("DeleteNode: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("DeleteNode: %w", err)
+	}
+	return nil
+}
+
+// NodeRun is one run of a node as home last learned it.
+type NodeRun struct {
+	NodeID string
+	ID     string
+	// Domain is the section, "containers" or "files", and Target the entry.
+	Domain     string
+	Target     string
+	Status     string
+	StartedAt  int64
+	FinishedAt int64
+	Error      string
+}
+
+// NodeRunsKept is how many runs of each node home keeps.
+const NodeRunsKept = 500
+
+// SaveNodeRuns records what home learned of runs of node id, in place of
+// what it knew of them, and keeps the newest NodeRunsKept.
+func (r *Repo) SaveNodeRuns(id string, runs []NodeRun) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("SaveNodeRuns: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // a no-op once committed
+	for _, run := range runs {
+		if _, err := tx.Exec(`INSERT INTO node_runs (node_id, id, domain, target, status, started_at, finished_at, error) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT (node_id, id) DO UPDATE SET domain = excluded.domain, target = excluded.target, status = excluded.status,
+				started_at = excluded.started_at, finished_at = excluded.finished_at, error = excluded.error`,
+			id, run.ID, run.Domain, run.Target, run.Status, run.StartedAt, run.FinishedAt, run.Error); err != nil {
+			return fmt.Errorf("SaveNodeRuns: %w", err)
+		}
+	}
+	if _, err := tx.Exec(`DELETE FROM node_runs WHERE node_id = ? AND id NOT IN (
+		SELECT id FROM node_runs WHERE node_id = ? ORDER BY started_at DESC, id DESC LIMIT ?)`, id, id, NodeRunsKept); err != nil {
+		return fmt.Errorf("SaveNodeRuns: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("SaveNodeRuns: %w", err)
+	}
+	return nil
+}
+
+// NodeRuns returns what home knows of the runs of node id, newest first.
+func (r *Repo) NodeRuns(id string) ([]NodeRun, error) {
+	rows, err := r.db.Query(`SELECT node_id, id, domain, target, status, started_at, finished_at, error FROM node_runs
+		WHERE node_id = ? ORDER BY started_at DESC, id DESC`, id)
+	if err != nil {
+		return nil, fmt.Errorf("NodeRuns: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only cursor
+	var out []NodeRun
+	for rows.Next() {
+		var run NodeRun
+		if err := rows.Scan(&run.NodeID, &run.ID, &run.Domain, &run.Target, &run.Status, &run.StartedAt, &run.FinishedAt, &run.Error); err != nil {
+			return nil, fmt.Errorf("NodeRuns: %w", err)
+		}
+		out = append(out, run)
+	}
+	return out, rows.Err()
+}
+
+// NodeEpisodes returns the alerts about node id whose episode is not over,
+// each with when it went out.
+func (r *Repo) NodeEpisodes(id string) (map[string]int64, error) {
+	rows, err := r.db.Query(`SELECT episode, since FROM node_episodes WHERE node_id = ?`, id)
+	if err != nil {
+		return nil, fmt.Errorf("NodeEpisodes: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only cursor
+	out := map[string]int64{}
+	for rows.Next() {
+		var ep string
+		var since int64
+		if err := rows.Scan(&ep, &since); err != nil {
+			return nil, fmt.Errorf("NodeEpisodes: %w", err)
+		}
+		out[ep] = since
+	}
+	return out, rows.Err()
+}
+
+// OpenNodeEpisode records that an alert about node id went out at since.
+func (r *Repo) OpenNodeEpisode(id, episode string, since int64) error {
+	if _, err := r.db.Exec(`INSERT OR IGNORE INTO node_episodes (node_id, episode, since) VALUES (?, ?, ?)`, id, episode, since); err != nil {
+		return fmt.Errorf("OpenNodeEpisode: %w", err)
+	}
+	return nil
+}
+
+// CloseNodeEpisode records that what an alert about node id said is over.
+func (r *Repo) CloseNodeEpisode(id, episode string) error {
+	if _, err := r.db.Exec(`DELETE FROM node_episodes WHERE node_id = ? AND episode = ?`, id, episode); err != nil {
+		return fmt.Errorf("CloseNodeEpisode: %w", err)
 	}
 	return nil
 }

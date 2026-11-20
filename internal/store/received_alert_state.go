@@ -66,3 +66,14 @@ func (r *Repo) DeleteReceivedAlertStatesForRepo(receivedRepoID string) error {
 	}
 	return nil
 }
+
+// NodeWatchAlerts counts the episodes the receiver watch has open on the
+// repositories of node id.
+func (r *Repo) NodeWatchAlerts(id string) (int, error) {
+	var n int
+	if err := r.db.QueryRow(`SELECT COUNT(*) FROM received_alert_state s JOIN received_repos rr ON rr.id = s.received_repo_id
+		WHERE rr.node_id = ? AND rr.enabled = 1`, id).Scan(&n); err != nil {
+		return 0, fmt.Errorf("NodeWatchAlerts: %w", err)
+	}
+	return n, nil
+}

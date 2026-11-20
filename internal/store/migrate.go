@@ -4028,6 +4028,46 @@ ALTER TABLE nodes ADD COLUMN placement_due INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("nodes", "placement_target"),
 		sql:              `ALTER TABLE nodes ADD COLUMN placement_target TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Home decides when a node backs up. A start it could not make
+		// while the node was away is due until it can.
+		version:          nodeScheduleMigration,
+		name:             "nodes_schedule",
+		alreadySatisfied: columnPresent("nodes", "containers_cadence"),
+		sql: `ALTER TABLE nodes ADD COLUMN containers_cadence TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN files_cadence TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN containers_started_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN files_started_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN seen_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version:          nodeRunsMigration,
+		name:             "node_runs",
+		alreadySatisfied: tablePresent("node_runs"),
+		sql: `CREATE TABLE IF NOT EXISTS node_runs (
+	node_id     TEXT NOT NULL,
+	id          TEXT NOT NULL,
+	domain      TEXT NOT NULL,
+	target      TEXT NOT NULL DEFAULT '',
+	status      TEXT NOT NULL,
+	started_at  INTEGER NOT NULL,
+	finished_at INTEGER NOT NULL DEFAULT 0,
+	error       TEXT NOT NULL DEFAULT '',
+	PRIMARY KEY (node_id, id)
+);`,
+	},
+	{
+		version:          nodeEpisodesMigration,
+		name:             "node_episodes",
+		alreadySatisfied: tablePresent("node_episodes"),
+		sql: `CREATE TABLE IF NOT EXISTS node_episodes (
+	node_id TEXT NOT NULL,
+	episode TEXT NOT NULL,
+	since   INTEGER NOT NULL,
+	PRIMARY KEY (node_id, episode)
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4724,6 +4764,15 @@ const nodePlacementKindMigration = 987
 // nodePlacementTargetMigration numbers which receiver address or storage
 // location a node's backups go to.
 const nodePlacementTargetMigration = 988
+
+// nodeScheduleMigration numbers when home backs up each section of a node.
+const nodeScheduleMigration = 989
+
+// nodeRunsMigration numbers what home learned of its nodes' runs.
+const nodeRunsMigration = 990
+
+// nodeEpisodesMigration numbers the alerts about a node that are still open.
+const nodeEpisodesMigration = 991
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

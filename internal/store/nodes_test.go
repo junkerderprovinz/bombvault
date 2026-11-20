@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -145,5 +146,134 @@ func TestHomeKeepsWhatItsReceiverHandsToNodes(t *testing.T) {
 	got, _, err := r.GetReceivedRepo(rr.ID)
 	if err != nil || got.NodeID != "node-1" || got.NeedsPairing() {
 		t.Errorf("received repo = %+v %v, want it from the node and paired", got, err)
+	}
+}
+
+func TestHomeKeepsWhenItBacksUpEachSectionOfANode(t *testing.T) {
+	r := newRepo(t)
+	if err := r.AddNode(store.Node{ID: "aa", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 10}); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeCadence("aa", "containers", "daily 03:00"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeCadence("aa", "files", "weekly sun 04:00"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeCadence("aa", "vms", "daily 03:00"); err == nil {
+		t.Error("a node took a cadence for a section it does not back up")
+	}
+	if err := r.SetNodeStarted("aa", "files", 40); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeSeen("aa", 50); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodePruned("aa", 60); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.GetNode("aa")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Cadence("containers") != "daily 03:00" || got.Cadence("files") != "weekly sun 04:00" || got.StartedAt("containers") != 0 || got.StartedAt("files") != 40 {
+		t.Errorf("schedule = %+v", got)
+	}
+	if got.SeenAt != 50 || got.PrunedWindow != 60 {
+		t.Errorf("seen %d and pruned %d, want 50 and 60", got.SeenAt, got.PrunedWindow)
+	}
+	if err := r.SetNodeCadence("bb", "files", "off"); !errors.Is(err, store.ErrNodeNotFound) {
+		t.Errorf("a cadence for a node that is not there: %v", err)
+	}
+}
+
+func TestHomeKeepsWhatItLearnedOfANodesRunsAndForgetsItWithTheNode(t *testing.T) {
+	r := newRepo(t)
+	if err := r.AddNode(store.Node{ID: "aa", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 10}); err != nil {
+		t.Fatal(err)
+	}
+	runs := []store.NodeRun{
+		{ID: "r1", Domain: "containers", Target: "web", Status: "running", StartedAt: 100},
+		{ID: "r2", Domain: "files", Target: "photos", Status: "failed", StartedAt: 110, FinishedAt: 120, Error: "disk full"},
+	}
+	if err := r.SaveNodeRuns("aa", runs); err != nil {
+		t.Fatal(err)
+	}
+	runs[0].Status, runs[0].FinishedAt = "success", 130
+	if err := r.SaveNodeRuns("aa", runs[:1]); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.NodeRuns("aa")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0].ID != "r2" || got[0].Error != "disk full" || got[1].Status != "success" || got[1].FinishedAt != 130 || got[1].NodeID != "aa" {
+		t.Errorf("runs = %+v, want both, newest first, the first one finished", got)
+	}
+
+	if err := r.OpenNodeEpisode("aa", "away", 200); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.OpenNodeEpisode("aa", "failed:files:photos", 210); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.CloseNodeEpisode("aa", "away"); err != nil {
+		t.Fatal(err)
+	}
+	open, err := r.NodeEpisodes("aa")
+	if err != nil || len(open) != 1 || open["failed:files:photos"] != 210 {
+		t.Errorf("episodes = %v %v, want the failure alone", open, err)
+	}
+
+	if err := r.DeleteNode("aa"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.NodeRuns("aa"); len(got) != 0 {
+		t.Errorf("runs of a node that is gone: %+v", got)
+	}
+	if open, _ := r.NodeEpisodes("aa"); len(open) != 0 {
+		t.Errorf("episodes of a node that is gone: %v", open)
+	}
+}
+
+func TestHomeKeepsOnlyTheNewestRunsOfANode(t *testing.T) {
+	r := newRepo(t)
+	var runs []store.NodeRun
+	for i := range store.NodeRunsKept + 5 {
+		runs = append(runs, store.NodeRun{ID: fmt.Sprint(i), Domain: "containers", Target: "web", Status: "success", StartedAt: int64(i)})
+	}
+	if err := r.SaveNodeRuns("aa", runs); err != nil {
+		t.Fatal(err)
+	}
+	got, err := r.NodeRuns("aa")
+	if err != nil || len(got) != store.NodeRunsKept || got[len(got)-1].StartedAt != 5 {
+		t.Errorf("kept %d runs down to %d, %v; want the newest %d", len(got), got[len(got)-1].StartedAt, err, store.NodeRunsKept)
+	}
+}
+
+func TestHomeCountsWhatTheReceiverWatchRaisedAboutANodesRepositories(t *testing.T) {
+	r := newRepo(t)
+	own, err := r.CreateReceivedRepo(store.ReceivedRepo{Name: "vps files", Repo: "backups/vps/files", NodeID: "aa", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	member, err := r.CreateReceivedRepo(store.ReceivedRepo{Name: "tower", Repo: "backups/tower", MemberID: "m1", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, st := range []store.ReceivedAlertState{
+		{ReceivedRepoID: own.ID, Source: "bv-1\x00fileset:photos", NotifiedAt: 10, BasedOn: 5},
+		{ReceivedRepoID: own.ID, Source: "\x00unread", NotifiedAt: 11, BasedOn: 11},
+		{ReceivedRepoID: member.ID, Source: "\x00unread", NotifiedAt: 12, BasedOn: 12},
+	} {
+		if err := r.UpsertReceivedAlertState(st); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n, err := r.NodeWatchAlerts("aa"); err != nil || n != 2 {
+		t.Errorf("alerts about the node = %d %v, want 2", n, err)
+	}
+	if n, err := r.NodeWatchAlerts("bb"); err != nil || n != 0 {
+		t.Errorf("alerts about a node without repositories = %d %v", n, err)
 	}
 }
