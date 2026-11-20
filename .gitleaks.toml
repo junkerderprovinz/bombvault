@@ -40,6 +40,9 @@ paths = [
   # credentials are made up, and some are shaped like the encrypted values
   # Duplicacy Web writes.
   '''internal/jobimport/testdata/.*''',
+  # Playwright fixtures for the node pages. The APP_KEY and NODE_HOME a mocked
+  # "add node" answer carries are invented, and the relay is example.org.
+  '''web/e2e/nodes\.ts$''',
 ]
 
 [[allowlists]]
