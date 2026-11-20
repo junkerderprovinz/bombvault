@@ -34,4 +34,5 @@ Each of these walks through one real job from start to end, with names and numbe
 ## Several servers {#several-servers}
 
 - [Pairing two Unraid boxes](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): two servers that keep each other's copies, and neither can delete the other's backups.
+- [A VPS that backs up to the receiving server](nodes.md#example-vps): a node with its containers, run from home, and no open port on the VPS.
 - [A card and an alert in Home Assistant](api.md#home-assistant-example): BombVault on a dashboard, with a message when a backup fails.

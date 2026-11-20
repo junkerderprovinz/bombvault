@@ -79,6 +79,7 @@ A few words have a fixed meaning in BombVault and in these pages.
 | **Placement** | Which storage locations get an entry's backups, set on the entry or as its section's default. See [Placement per entry](offsite-recovery.md#placement). |
 | **Replica** | A block-exact copy of a ZFS entry on a second ZFS server, made with `zfs send`. It stands beside the backup and does not replace it. See [Replica](zfs-datasets.md#replica). |
 | **Role** | Something one instance of your group does for another: Receiver, Fetcher, ZFS server or Key keeper. See [Instances and roles](offsite-recovery.md#roles). |
+| **Node** | A BombVault without a web interface, on a VPS for example, that another instance, its home, tells what to back up, when and where. See [Nodes](nodes.md). |
 
 ## Credits {#credits}
 
