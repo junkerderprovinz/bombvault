@@ -16,7 +16,7 @@ Każdy plan to przycisk, który czyta się jak zdanie, na przykład *codziennie 
 
 Wszystkie godziny są w strefie czasowej serwera. Na Unraid to strefa samego systemu. Gdzie indziej ustaw `TZ`, bo inaczej każdy plan działa w UTC, zobacz [Zmienne środowiskowe](configuration.md#environment-variables).
 
-Dom planuje też kopie swoich [węzłów](nodes.md), ale nie tutaj: karta każdego węzła na stronie Instancje ma plan dla jego kontenerów i plan dla jego folderów. Nowy węzeł startuje pół godziny po kopiach kontenerów tej instancji. Zobacz [Kiedy węzły robią kopie](nodes.md#schedule).
+Instancja domowa planuje też kopie swoich [węzłów](nodes.md), ale nie tutaj: karta każdego węzła na stronie Instancje ma plan dla jego kontenerów i plan dla jego folderów. Nowy węzeł startuje pół godziny po kopiach kontenerów tej instancji. Zobacz [Kiedy węzły robią kopie](nodes.md#schedule).
 
 ## Tydzień {#week}
 

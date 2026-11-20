@@ -34,5 +34,5 @@ Jokainen näistä käy läpi yhden oikean tehtävän alusta loppuun, nimet ja lu
 ## Useita palvelimia {#several-servers}
 
 - [Kahden Unraid-koneen pariliitos](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): kaksi palvelinta, jotka säilyttävät toistensa kopioita, eikä kumpikaan voi poistaa toisen varmuuskopioita.
-- [VPS, joka varmuuskopioi vastaanottopalvelimelle](nodes.md#example-vps): solmu kontteineen, jota ohjataan kodista, eikä VPS:llä ole avointa porttia.
+- [VPS, joka varmuuskopioi vastaanottopalvelimelle](nodes.md#example-vps): solmu kontteineen, jota ohjataan kotiinstanssista, eikä VPS:llä ole avointa porttia.
 - [Kortti ja hälytys Home Assistantissa](api.md#home-assistant-example): BombVault kojelaudalla ja viesti, kun varmuuskopio epäonnistuu.

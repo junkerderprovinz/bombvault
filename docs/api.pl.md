@@ -81,7 +81,7 @@ Trasy, które obsługują [węzły](nodes.md), należą do interfejsu WWW, a nie
 | `POST /api/nodes/{id}/placement` | Kieruje kopie węzła w wybrane miejsce i odpowiada dla każdej sekcji, czy węzeł dotarł do swojego repozytorium, z `warning` dla miejsca docelowego |
 | `PUT /api/nodes/{id}/schedule` | Ustawia plany, na przykład `{"containers":"daily 03:00","files":"off"}`. Pominięta sekcja zachowuje swój plan |
 | `DELETE /api/nodes/{id}` | Zwalnia węzeł. `told` mówi, czy węzeł dowiedział się o tym od razu, czy dowie się po powrocie |
-| `GET /api/nodes/routes` | Lista własnych tras węzła, do których dom przekazuje żądania |
+| `GET /api/nodes/routes` | Lista własnych tras węzła, do których instancja domowa przekazuje żądania |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Przekazuje żądanie do trasy węzła `/api/{path}`, gdy ta trasa jest na liście, i zwraca odpowiedź JSON węzła |
 | `PUT /api/receiver/node-address` | Ustawia **Adres dla węzłów** serwera odbiorczego, na przykład `{"url":"https://backup.tower.example.org","caPem":""}`. Pusty `url` zamyka serwer dla węzłów |
 

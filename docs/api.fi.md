@@ -81,7 +81,7 @@ BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` 
 | `POST /api/nodes/{id}/placement` | Lähettää solmun varmuuskopiot johonkin paikkaan ja kertoo osioittain, tavoittiko solmu repositorynsa, kohteen kohdalla `warning`-kentän kanssa |
 | `PUT /api/nodes/{id}/schedule` | Asettaa aikataulut, esimerkiksi `{"containers":"daily 03:00","files":"off"}`. Pois jätetty osio pitää aikataulunsa |
 | `DELETE /api/nodes/{id}` | Vapauttaa solmun. `told` kertoo, kuuliko solmu sen heti vai kuuleeko se palattuaan |
-| `GET /api/nodes/routes` | Lista solmun omista reiteistä, joille koti välittää pyyntöjä |
+| `GET /api/nodes/routes` | Lista solmun omista reiteistä, joille kotiinstanssi välittää pyyntöjä |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Välittää pyynnön solmun reitille `/api/{path}`, kun reitti on listalla, ja palauttaa solmun JSON-vastauksen |
 | `PUT /api/receiver/node-address` | Asettaa vastaanottopalvelimen kohdan **Osoite solmuille**, esimerkiksi `{"url":"https://backup.tower.example.org","caPem":""}`. Tyhjä `url` ottaa palvelimen pois solmujen käytöstä |
 

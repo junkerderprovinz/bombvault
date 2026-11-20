@@ -34,5 +34,5 @@ Każdy z nich prowadzi przez jedno prawdziwe zadanie od początku do końca, z w
 ## Kilka serwerów {#several-servers}
 
 - [Parowanie dwóch maszyn Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): dwa serwery, które trzymają nawzajem swoje kopie, a żaden nie może usunąć kopii drugiego.
-- [VPS, który robi kopie na serwer odbiorczy](nodes.md#example-vps): węzeł z kontenerami, sterowany z domu, bez otwartego portu na VPS-ie.
+- [VPS, który robi kopie na serwer odbiorczy](nodes.md#example-vps): węzeł z kontenerami, sterowany z instancji domowej, bez otwartego portu na VPS-ie.
 - [Karta i alert w Home Assistant](api.md#home-assistant-example): BombVault na pulpicie z wiadomością, gdy kopia się nie uda.

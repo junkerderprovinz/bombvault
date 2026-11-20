@@ -81,7 +81,8 @@ Muutamalla sanalla on BombVaultissa ja näillä sivuilla kiinteä merkitys.
 | **Sijoittelu** | Mihin kohteisiin merkinnän varmuuskopiot menevät. Se asetetaan merkinnälle tai osion oletuksena. Katso [Sijoittelu merkinnän mukaan](offsite-recovery.md#placement). |
 | **Replika** | ZFS-merkinnän lohkotarkka kopio toisella ZFS-palvelimella, tehty `zfs send` -komennolla. Se on varmuuskopion rinnalla eikä korvaa sitä. Katso [Replika](zfs-datasets.md#replica). |
 | **Rooli** | Jotain, mitä ryhmäsi yksi instanssi tekee toiselle: Vastaanottaja, Noutaja, ZFS-palvelin tai Avaimenhaltija. Katso [Instanssit ja roolit](offsite-recovery.md#roles). |
-| **Solmu** | BombVault ilman verkkokäyttöliittymää, esimerkiksi VPS:llä, jolle toinen instanssi, sen koti, kertoo, mitä, milloin ja minne varmuuskopioidaan. Katso [Solmut](nodes.md). |
+| **Solmu** | BombVault ilman verkkokäyttöliittymää, esimerkiksi VPS:llä, jolle toinen instanssi, sen kotiinstanssi, kertoo, mitä, milloin ja minne varmuuskopioidaan. Katso [Solmut](nodes.md). |
+| **Kotiinstanssi** | Instanssi, joka lisäsi solmun ja ohjaa sitä. Se säilyttää solmun avainta ja kertoo solmulle, mitä, milloin ja minne varmuuskopioidaan. Katso [Solmut](nodes.md). |
 
 ## Kiitokset {#credits}
 

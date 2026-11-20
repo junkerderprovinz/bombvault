@@ -81,7 +81,7 @@ Cesty, které se starají o [uzly](nodes.md), patří k webovému rozhraní, ne 
 | `POST /api/nodes/{id}/placement` | Pošle zálohy uzlu na určité místo a pro každou sekci odpoví, zda uzel dosáhl na svůj repozitář, u cíle s `warning` |
 | `PUT /api/nodes/{id}/schedule` | Nastaví plány, například `{"containers":"daily 03:00","files":"off"}`. Vynechaná sekce si ponechá svůj plán |
 | `DELETE /api/nodes/{id}` | Uvolní uzel. `told` říká, zda se to uzel dozvěděl hned, nebo se to dozví, až se vrátí |
-| `GET /api/nodes/routes` | Seznam vlastních cest uzlu, na které domov předává požadavky |
+| `GET /api/nodes/routes` | Seznam vlastních cest uzlu, na které domovská instance předává požadavky |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Předá požadavek na cestu uzlu `/api/{path}`, když je ta cesta na seznamu, a vrátí odpověď uzlu v JSON |
 | `PUT /api/receiver/node-address` | Nastaví **Adresa pro uzly** přijímacího serveru, například `{"url":"https://backup.tower.example.org","caPem":""}`. Prázdné `url` server pro uzly uzavře |
 

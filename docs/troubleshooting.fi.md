@@ -210,23 +210,23 @@ Aloitusnäyttö kertoo syyn palvelimen kortilla:
 
 ## Solmu jää tilaan "Odotetaan solmua" {#node-waiting}
 
-Solmu ei ole vielä vastannut kodille. Avaa sen kontin loki solmun palvelimella (`docker logs bombvault-node`):
+Solmu ei ole vielä vastannut kotiinstanssille. Avaa sen kontin loki solmun palvelimella (`docker logs bombvault-node`):
 
-- **`node mode, waiting for home`** ja sen perässä kodin tunniste: solmu toimii ja odottaa releellä. Tarkista, että palvelin tavoittaa releen osoitteen. Yhteys lähtee solmulta, joten se ei tarvitse avointa porttia.
+- **`node mode, waiting for home`** ja sen perässä kotiinstanssin tunniste: solmu toimii ja odottaa releellä. Tarkista, että palvelin tavoittaa releen osoitteen. Yhteys lähtee solmulta, joten se ei tarvitse avointa porttia.
 - **`NODE_HOME is not set`**: compose-tiedosto on menettänyt arvonsa. Valitse solmun kortista **Korvaa**, kopioi tiedosto uudelleen ja suorita `docker compose up -d`.
 - **`NODE_HOME does not belong to this APP_KEY`**: arvot ovat eri solmuilta. Kopioi molemmat samalta kortilta.
-- **`this node belongs to the home ... and NODE_HOME names ...`**: toinen koti on ottanut solmun hoitoonsa. Vapauta se ensin siellä tai lisää palvelin tänne uutena solmuna uudella compose-tiedostolla.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: toinen kotiinstanssi on ottanut solmun hoitoonsa. Vapauta se ensin siellä tai lisää palvelin tänne uutena solmuna uudella compose-tiedostolla.
 - **`MODE=... is neither full nor node`**: aseta `MODE: node`.
 
 ## Solmu ei tavoita repositoryjaan {#node-reach}
 
-Määränpään asettamisen jälkeen koti kertoo osioittain, avasiko solmu repositorynsa, esimerkiksi **Solmu ei tavoita osion Kontit arkistoa** ja resticin antaman syyn. Tarkista solmun palvelimelta, että osoite vastaa. Vastaanottopalvelimella se on **Osoite solmuille**: käänteisen välityspalvelimen on välitettävä se rest-serverille, ja palvelin, jolla on oma varmenne, tarvitsee sen varmenteen kohtaan **Varmenne**. Kohteessa tarkista solmua varten tehdyt tunnukset. Valitse sitten **Vaihda määränpää** ja **Tallenna** uudelleen. Katso [Minne varmuuskopiot menevät](nodes.md#placement).
+Määränpään asettamisen jälkeen kotiinstanssi kertoo osioittain, avasiko solmu repositorynsa, esimerkiksi **Solmu ei tavoita osion Kontit arkistoa** ja resticin antaman syyn. Tarkista solmun palvelimelta, että osoite vastaa. Vastaanottopalvelimella se on **Osoite solmuille**: käänteisen välityspalvelimen on välitettävä se rest-serverille, ja palvelin, jolla on oma varmenne, tarvitsee sen varmenteen kohtaan **Varmenne**. Kohteessa tarkista solmua varten tehdyt tunnukset. Valitse sitten **Vaihda määränpää** ja **Tallenna** uudelleen. Katso [Minne varmuuskopiot menevät](nodes.md#placement).
 
-Solmulla, joka säilyttää varmuuskopionsa itse, portti, jota jokin toinen solmun kontti pitää, hylätään ja kontin nimi kerrotaan, joten valitse toinen portti. Kun koti ei pysty hakemaan, päästä portti solmun palomuurin läpi.
+Solmulla, joka säilyttää varmuuskopionsa itse, portti, jota jokin toinen solmun kontti pitää, hylätään ja kontin nimi kerrotaan, joten valitse toinen portti. Kun kotiinstanssi ei pysty hakemaan, päästä portti solmun palomuurin läpi.
 
 ## Vapautettu solmu ei palaa {#node-released}
 
-Vapautettu solmu ei ota uutta kotia vanhalla `APP_KEY`-avaimellaan, ja sen `config`-kansio muistaa vapautuksen. Lisää palvelin uutena solmuna ja käynnistä se uudella compose-tiedostolla ja tyhjällä `config`-kansiolla. Sen vanhat varmuuskopiot jäävät sinne, missä ne olivat, samoin jokainen kopio, jonka koti on hakenut.
+Vapautettu solmu ei ota uutta kotiinstanssia vanhalla `APP_KEY`-avaimellaan, ja sen `config`-kansio muistaa vapautuksen. Lisää palvelin uutena solmuna ja käynnistä se uudella compose-tiedostolla ja tyhjällä `config`-kansiolla. Sen vanhat varmuuskopiot jäävät sinne, missä ne olivat, samoin jokainen kopio, jonka kotiinstanssi on hakenut.
 
 ## Toinen käyttäjä ei voi lukea paikallista repoa {#repository-permissions}
 

@@ -1,35 +1,35 @@
 # Solmut
 
-Solmu on BombVault ilman verkkokäyttöliittymää, esimerkiksi VPS:llä tai pienellä palvelimella ystävän luona. Se varmuuskopioi oman palvelimensa kontit ja kansiot, ja BombVault, johon lisäät sen, tällä sivulla **koti**, kertoo sille, milloin varmuuskopioidaan ja minne varmuuskopiot menevät. Hoidat solmua kodin verkkokäyttöliittymästä omien merkintöjesi rinnalla.
+Solmu on BombVault ilman verkkokäyttöliittymää, esimerkiksi VPS:llä tai pienellä palvelimella ystävän luona. Se varmuuskopioi oman palvelimensa kontit ja kansiot, ja BombVault, johon lisäät sen, tällä sivulla **kotiinstanssi**, kertoo sille, milloin varmuuskopioidaan ja minne varmuuskopiot menevät. Hoidat solmua kotiinstanssin verkkokäyttöliittymästä omien merkintöjesi rinnalla.
 
 ![Solmun vps-falkenstein kortti Ilmentymät-sivulla: Yhdistetty, sen versio, sen varmuuskopiot vastaanottopalvelimella, milloin kukin osio varmuuskopioidaan sekä Vaihda määränpää, Korvaa ja Vapauta.](assets/screenshots/nodes/card-dark.png#only-dark)
 ![Solmun vps-falkenstein kortti Ilmentymät-sivulla: Yhdistetty, sen versio, sen varmuuskopiot vastaanottopalvelimella, milloin kukin osio varmuuskopioidaan sekä Vaihda määränpää, Korvaa ja Vapauta.](assets/screenshots/nodes/card-light.png#only-light)
 
 ## Näin se toimii {#how-it-works}
 
-- **Koti pitää solmun avainta.** Kun lisäät solmun, koti luo sen `APP_KEY`-avaimen, pitää siitä sinetöidyn kopion ja antaa sen sinulle kerran, solmun compose-tiedostossa. Tämän kopion avulla koti tavoittaa solmun ja avaa sen varmuuskopiot.
-- **Solmu ei tarvitse avointa porttia.** Koti ja solmu keskustelevat releen kautta omaa yksityistä yhteyttään pitkin, erillään pariliitosryhmästäsi. Koti aloittaa jokaisen kutsun ja allekirjoittaa sen, eikä solmu pyydä kodilta mitään muuta kuin tervehdyksensä. Ainoa määränpää, joka tarvitsee avoimen portin, on [varmuuskopioiden säilyttäminen solmulla](#keep-on-node).
-- **Varmuuskopiot eivät koskaan kulje releen kautta.** Solmu lähettää ne suoraan valitsemaasi paikkaan: kodin vastaanottopalvelimelle, johonkin kodin kohteista tai solmun omaan rest-serveriin.
-- **Solmu ei suunnittele itse mitään.** Se ei aja aikatauluja, ei lähetä ilmoituksia eikä liity ryhmään tai linnoitukseen. Koti käynnistää sen varmuuskopiot, seuraa niiden kulkua ja lähettää hälytykset.
+- **Kotiinstanssi pitää solmun avainta.** Kun lisäät solmun, kotiinstanssi luo sen `APP_KEY`-avaimen, pitää siitä sinetöidyn kopion ja antaa sen sinulle kerran, solmun compose-tiedostossa. Tämän kopion avulla kotiinstanssi tavoittaa solmun ja avaa sen varmuuskopiot.
+- **Solmu ei tarvitse avointa porttia.** Kotiinstanssi ja solmu keskustelevat releen kautta omaa yksityistä yhteyttään pitkin, erillään pariliitosryhmästäsi. Kotiinstanssi aloittaa jokaisen kutsun ja allekirjoittaa sen, eikä solmu pyydä kotiinstanssilta mitään muuta kuin tervehdyksensä. Ainoa määränpää, joka tarvitsee avoimen portin, on [varmuuskopioiden säilyttäminen solmulla](#keep-on-node).
+- **Varmuuskopiot eivät koskaan kulje releen kautta.** Solmu lähettää ne suoraan valitsemaasi paikkaan: kotiinstanssin vastaanottopalvelimelle, johonkin kotiinstanssin kohteista tai solmun omaan rest-serveriin.
+- **Solmu ei suunnittele itse mitään.** Se ei aja aikatauluja, ei lähetä ilmoituksia eikä liity ryhmään tai linnoitukseen. Kotiinstanssi käynnistää sen varmuuskopiot, seuraa niiden kulkua ja lähettää hälytykset.
 - **Solmu varmuuskopioi kontteja ja kansiojoukkoja.** Virtuaalikoneet, flash-asema, ZFS-tietojoukot ja itsevarmuuskopio jäävät täysille asennuksille.
 
-Yhteys käyttää kodin omaa relettä, kun sen ryhmällä on sellainen, ja muuten projektin relettä, myös silloin kun koti pariutuu ilman relettä.
+Yhteys käyttää kotiinstanssin omaa relettä, kun sen ryhmällä on sellainen, ja muuten projektin relettä, myös silloin kun kotiinstanssi pariutuu ilman relettä.
 
 ## Ennen kuin aloitat {#before-you-start}
 
-- **Kirjautumissalasana kodissa.** Solmun lisääminen, sen compose-tiedoston näyttäminen uudelleen ja sen merkintöjen avaaminen vaativat kirjautumisen salasanalla, katso [Kirjautuminen](configuration.md#login).
+- **Kirjautumissalasana kotiinstanssissa.** Solmun lisääminen, sen compose-tiedoston näyttäminen uudelleen ja sen merkintöjen avaaminen vaativat kirjautumisen salasanalla, katso [Kirjautuminen](configuration.md#login).
 - **Docker ja Compose solmun palvelimella.**
 - **Paikka varmuuskopioille**, yksi kolmesta kohdassa [Minne varmuuskopiot menevät](#placement). Vastaanottopalvelin on turvallisin valinta, koska solmu ei voi poistaa sieltä mitään.
 
 ## Solmun lisääminen {#add}
 
-1. Avaa kodissa **Ilmentymät** ja valitse oikeasta alakulmasta **Lisää solmu**.
+1. Avaa kotiinstanssissa **Ilmentymät** ja valitse oikeasta alakulmasta **Lisää solmu**.
 2. **Nimi.** Kirjoita, millä nimellä solmu näkyy täällä, esimerkiksi palvelimen nimi, ja valitse **Seuraava**.
 
     ![Lisää solmu -ikkuna ensimmäisessä vaiheessa, nimeksi kirjoitettuna vps-helsinki.](assets/screenshots/nodes/add-name-dark.png#only-dark)
     ![Lisää solmu -ikkuna ensimmäisessä vaiheessa, nimeksi kirjoitettuna vps-helsinki.](assets/screenshots/nodes/add-name-light.png#only-light)
 
-3. **Varmuuskopiot.** Valitse, minne varmuuskopiot menevät, ja täytä, mitä kyseinen paikka kysyy. **Varmuuskopioi päivittäin klo** on aika, jolloin molemmat osiot alkavat. Koti ehdottaa puolta tuntia omien konttivarmuuskopioidensa jälkeen, jotta ne eivät käytä samoja levyjä yhtä aikaa. Voit myöhemmin antaa kortilla kullekin osiolle oman aikataulun. Valitse **Seuraava**.
+3. **Varmuuskopiot.** Valitse, minne varmuuskopiot menevät, ja täytä, mitä kyseinen paikka kysyy. **Varmuuskopioi päivittäin klo** on aika, jolloin molemmat osiot alkavat. Kotiinstanssi ehdottaa puolta tuntia omien konttivarmuuskopioidensa jälkeen, jotta ne eivät käytä samoja levyjä yhtä aikaa. Voit myöhemmin antaa kortilla kullekin osiolle oman aikataulun. Valitse **Seuraava**.
 
     ![Toinen vaihe: vastaanottopalvelin valittuna, Osoite solmuille täytettynä https-osoitteella ja Varmuuskopioi päivittäin klo 03:00.](assets/screenshots/nodes/add-placement-dark.png#only-dark)
     ![Toinen vaihe: vastaanottopalvelin valittuna, Osoite solmuille täytettynä https-osoitteella ja Varmuuskopioi päivittäin klo 03:00.](assets/screenshots/nodes/add-placement-light.png#only-light)
@@ -44,19 +44,19 @@ Yhteys käyttää kodin omaa relettä, kun sen ryhmällä on sellainen, ja muute
 
     Ennen kuin käynnistät sen, osoita Host Data -taltio dataan, jonka haluat varmuuskopioida, ja aseta `HOST_SOURCE_ROOT` samaan polkuun, kuten alla oleva esimerkki näyttää.
 
-5. Ikkuna odottaa solmua. Kun solmu vastaa, koti kertoo sille, minne sen varmuuskopiot menevät, ja tarkistaa, että se tavoittaa ne. Ikkunassa lukee silloin **vps-helsinki on verkossa ja ottaa ohjeensa tältä instanssilta.**
+5. Ikkuna odottaa solmua. Kun solmu vastaa, kotiinstanssi kertoo sille, minne sen varmuuskopiot menevät, ja tarkistaa, että se tavoittaa ne. Ikkunassa lukee silloin **vps-helsinki on verkossa ja ottaa ohjeensa tältä instanssilta.**
 
     ![Viimeinen vaihe: compose-tiedosto ja sen jälkeen solmu verkossa ja sen varmuuskopiot sijoitettuina vastaanottopalvelimelle.](assets/screenshots/nodes/add-start-dark.png#only-dark)
     ![Viimeinen vaihe: compose-tiedosto ja sen jälkeen solmu verkossa ja sen varmuuskopiot sijoitettuina vastaanottopalvelimelle.](assets/screenshots/nodes/add-start-light.png#only-light)
 
-Voit sulkea ikkunan ennen kuin solmu vastaa. Sen kortissa lukee silloin **Odotetaan solmua**, ja koti kertoo sille varmuuskopioiden määränpään, kun se ilmestyy.
+Voit sulkea ikkunan ennen kuin solmu vastaa. Sen kortissa lukee silloin **Odotetaan solmua**, ja kotiinstanssi kertoo sille varmuuskopioiden määränpään, kun se ilmestyy.
 
 ### Esimerkki: VPS, joka varmuuskopioi vastaanottopalvelimelle {#example-vps}
 
-Koti on Unraid-kone nimeltä `tower`, joka ajaa [vastaanottopalvelinta](offsite-recovery.md#receiving-server). Käänteinen välityspalvelin julkaisee sen osoitteessa `https://backup.tower.example.org`. VPS `vps-helsinki` ajaa Nextcloudia ja Caddya, joiden data on hakemistossa `/srv/appdata`.
+Kotiinstanssi on Unraid-kone nimeltä `tower`, joka ajaa [vastaanottopalvelinta](offsite-recovery.md#receiving-server). Käänteinen välityspalvelin julkaisee sen osoitteessa `https://backup.tower.example.org`. VPS `vps-helsinki` ajaa Nextcloudia ja Caddya, joiden data on hakemistossa `/srv/appdata`.
 
 1. Koneella `tower`: **Ilmentymät**, **Lisää solmu**, nimeksi `vps-helsinki`, **Seuraava**.
-2. Valitse **Tämän instanssin vastaanottopalvelin** ja kirjoita `https://backup.tower.example.org` kohtaan **Osoite solmuille**. Kodin kontit varmuuskopioidaan kello 02.30, joten ikkuna tarjoaa aikaa 03:00. Pidä se ja valitse **Seuraava**.
+2. Valitse **Tämän instanssin vastaanottopalvelin** ja kirjoita `https://backup.tower.example.org` kohtaan **Osoite solmuille**. Kotiinstanssin kontit varmuuskopioidaan kello 02.30, joten ikkuna tarjoaa aikaa 03:00. Pidä se ja valitse **Seuraava**.
 3. Tallenna VPS:llä ikkunan tiedosto niin, että taltiot ja `HOST_SOURCE_ROOT` osoittavat hakemistoon `/srv/appdata`:
 
     ```yaml
@@ -80,7 +80,7 @@ Koti on Unraid-kone nimeltä `tower`, joka ajaa [vastaanottopalvelinta](offsite-
     ```
 
 4. `docker compose up -d`. Muutamaa sekuntia myöhemmin koneen `tower` ikkuna kertoo, että solmu on verkossa, ja **Varmuuskopioiden määränpää on https://backup.tower.example.org.**
-5. Kello 03.00 koti käynnistää solmun varmuuskopiot. Seuraavana aamuna yleiskatsauksen **Solmut**-kortti näyttää solmun `vps-helsinki` viimeisen varmuuskopion, ja **Varmuuskopiot** listaa sen kontit omassa osiossaan.
+5. Kello 03.00 kotiinstanssi käynnistää solmun varmuuskopiot. Seuraavana aamuna yleiskatsauksen **Solmut**-kortti näyttää solmun `vps-helsinki` viimeisen varmuuskopion, ja **Varmuuskopiot** listaa sen kontit omassa osiossaan.
 
 Miten kontin data löytyy tavalliselta Docker-isännältä, kerrotaan kohdassa [Varmuuskopiolähteen tunnistus](configuration.md#backup-source-detection).
 
@@ -90,45 +90,45 @@ Jokaisella solmulla on yksi määränpää molemmille osioilleen. Kortin **Vaihd
 
 ### Tämän instanssin vastaanottopalvelin {#to-receiver}
 
-Solmu kirjoittaa kodin vastaanottopalvelimelle append-only-tilassa: se voi lisätä varmuuskopioita mutta ei poistaa niitä. Se saa sinne oman tunnuksen solmun nimellä ja yhden repositoryn osiota kohti omassa kansiossaan. Koti lisää oman avaimensa jokaiseen repositoryyn ja siivoaa ne itse, koska solmu ei voi.
+Solmu kirjoittaa kotiinstanssin vastaanottopalvelimelle append-only-tilassa: se voi lisätä varmuuskopioita mutta ei poistaa niitä. Se saa sinne oman tunnuksen solmun nimellä ja yhden repositoryn osiota kohti omassa kansiossaan. Kotiinstanssi lisää oman avaimensa jokaiseen repositoryyn ja siivoaa ne itse, koska solmu ei voi.
 
 Solmu tavoittaa palvelimen osoitteessa **Osoite solmuille**, jonka asetat toisessa vaiheessa tai **Vastaanottopalvelin**-ikkunassa. Solmu lähettää yleensä internetistä, joten osoitteen on oltava jokin näistä:
 
 - `https://`, esimerkiksi käänteisen välityspalvelimen, Pangolinin tai tunnelin takana. Kun palvelin näyttää oman varmenteensa julkisen varmentajan varmenteen sijaan, liitä se PEM-muodossa kohtaan **Varmenne**.
 - `http://` yksityisellä IP-osoitteella, kuten `10.0.0.5` WireGuard-yhteydellä tai `100.101.102.103` Tailscalessa.
 
-Pelkkä `http://` julkiseen osoitteeseen hylätään, koska solmu lähettäisi varmuuskopionsa internetin yli salaamattomina. Kun muutat osoitetta, koti kertoo sen jokaiselle vastaanottimen solmulle, ja poissa oleva solmu kuulee sen palattuaan.
+Pelkkä `http://` julkiseen osoitteeseen hylätään, koska solmu lähettäisi varmuuskopionsa internetin yli salaamattomina. Kun muutat osoitetta, kotiinstanssi kertoo sen jokaiselle vastaanottimen solmulle, ja poissa oleva solmu kuulee sen palattuaan.
 
 ### Kohde {#to-location}
 
-Solmu kirjoittaa johonkin kodin kohteista, jonka se itse tavoittaa: S3-palveluun tai REST-palvelimeen, `https://`-osoitteella tai yksityisessä osoitteessa. Sen repositoryt ovat siellä polulla `bombvault-nodes/<node id>/containers` ja `bombvault-nodes/<node id>/files`.
+Solmu kirjoittaa johonkin kotiinstanssin kohteista, jonka se itse tavoittaa: S3-palveluun tai REST-palvelimeen, `https://`-osoitteella tai yksityisessä osoitteessa. Sen repositoryt ovat siellä polulla `bombvault-nodes/<node id>/containers` ja `bombvault-nodes/<node id>/files`.
 
-Solmu kirjautuu sitä varten tehdyillä [tallennetuilla tunnuksilla](offsite-recovery.md#sign-ins), joiden on oltava eri kuin ne, joilla koti kirjoittaa kohteeseen. Lisää ensin tunnukset, jos ikkuna kertoo, ettei niitä ole. Näillä tunnuksilla solmu voi yleensä poistaa kohteessa olevaa, toisin kuin vastaanottopalvelimella, ja ikkuna kertoo sen.
+Solmu kirjautuu sitä varten tehdyillä [tallennetuilla tunnuksilla](offsite-recovery.md#sign-ins), joiden on oltava eri kuin ne, joilla kotiinstanssi kirjoittaa kohteeseen. Lisää ensin tunnukset, jos ikkuna kertoo, ettei niitä ole. Näillä tunnuksilla solmu voi yleensä poistaa kohteessa olevaa, toisin kuin vastaanottopalvelimella, ja ikkuna kertoo sen.
 
 ### Säilytä ne solmulla {#keep-on-node}
 
-Solmu säilyttää varmuuskopionsa itse oman rest-serverinsä takana append-only-tilassa, ja koti hakee kustakin osiosta kopion omaan tallennustilaansa. Tämä sopii solmulle, jolle koti ei voi tarjota paikkaa. Se on ainoa määränpää, joka tarvitsee avoimen portin.
+Solmu säilyttää varmuuskopionsa itse oman rest-serverinsä takana append-only-tilassa, ja kotiinstanssi hakee kustakin osiosta kopion omaan tallennustilaansa. Tämä sopii solmulle, jolle kotiinstanssi ei voi tarjota paikkaa. Se on ainoa määränpää, joka tarvitsee avoimen portin.
 
 ![Toinen vaihe, jossa Säilytä ne solmulla on valittuna, osoite https://203.0.113.7:8443 ja huomautus avoimesta portista.](assets/screenshots/nodes/add-keep-dark.png#only-dark)
 ![Toinen vaihe, jossa Säilytä ne solmulla on valittuna, osoite https://203.0.113.7:8443 ja huomautus avoimesta portista.](assets/screenshots/nodes/add-keep-light.png#only-light)
 
-1. Kirjoita kohtaan **Solmun osoite**, mistä koti tavoittaa solmun: sen julkinen osoite ja vapaa portti, kuten `https://203.0.113.7:8443`, ilman kansiota perässä. Käytä `http://`-osoitetta vain yksityisellä osoitteella, kuten yllä.
-2. Solmu käynnistää kontin `bombvault-node-rest-server` tähän porttiin, ja sen repositoryt ovat Host Datan kansiossa `bombvault-node`. `https://`-osoitteella se tekee varmenteen tälle osoitteelle, ja koti kiinnittää sen.
-3. Päästä portti solmun palomuurin läpi, jotta koti tavoittaa sen. Jos portti on jo jonkin toisen solmun kontin käytössä, se hylätään ja kontin nimi kerrotaan.
+1. Kirjoita kohtaan **Solmun osoite**, mistä kotiinstanssi tavoittaa solmun: sen julkinen osoite ja vapaa portti, kuten `https://203.0.113.7:8443`, ilman kansiota perässä. Käytä `http://`-osoitetta vain yksityisellä osoitteella, kuten yllä.
+2. Solmu käynnistää kontin `bombvault-node-rest-server` tähän porttiin, ja sen repositoryt ovat Host Datan kansiossa `bombvault-node`. `https://`-osoitteella se tekee varmenteen tälle osoitteelle, ja kotiinstanssi kiinnittää sen.
+3. Päästä portti solmun palomuurin läpi, jotta kotiinstanssi tavoittaa sen. Jos portti on jo jonkin toisen solmun kontin käytössä, se hylätään ja kontin nimi kerrotaan.
 
-Koti hakee osion heti, kun solmun sen osion varmuuskopiot päättyvät, ja varalta joka tunti vartin yli, myös kun **Nouto** on pois päältä. Mitä koti on hakenut, jää kotiin kuten mikä tahansa [noudettu kopio](offsite-recovery.md#receiver), myös solmun poistuttua. Solmu siivoaa omat repositorynsa, kun koti pyytää, koska sen rest-server ei ota vastaan poistoja, ja sen kansiojoukot jättävät kansion `bombvault-node` pois, joten se ei koskaan varmuuskopioi omia varmuuskopioitaan.
+Kotiinstanssi hakee osion heti, kun solmun sen osion varmuuskopiot päättyvät, ja varalta joka tunti vartin yli, myös kun **Nouto** on pois päältä. Mitä kotiinstanssi on hakenut, jää kotiinstanssiin kuten mikä tahansa [noudettu kopio](offsite-recovery.md#receiver), myös solmun poistuttua. Solmu siivoaa omat repositorynsa, kun kotiinstanssi pyytää, koska sen rest-server ei ota vastaan poistoja, ja sen kansiojoukot jättävät kansion `bombvault-node` pois, joten se ei koskaan varmuuskopioi omia varmuuskopioitaan.
 
 ## Milloin solmut varmuuskopioivat {#schedule}
 
-Koti omistaa jokaisen solmun aikataulun. Kortti näyttää aikataulun osiota kohti, esimerkiksi **Kontit** *päivittäin kello 2.00* ja **Kansiot** *viikoittain (su) kello 4.00*. Napsautus avaa saman muokkaimen kuin kohdassa [Aikataulut](schedules.md#plans), ja muutos tallentuu heti.
+Kotiinstanssi omistaa jokaisen solmun aikataulun. Kortti näyttää aikataulun osiota kohti, esimerkiksi **Kontit** *päivittäin kello 2.00* ja **Kansiot** *viikoittain (su) kello 4.00*. Napsautus avaa saman muokkaimen kuin kohdassa [Aikataulut](schedules.md#plans), ja muutos tallentuu heti.
 
 ![Solmun konttien aikataulu avattuna sen kortilta: Pois, Päivittäin, Viikoittain, Joka N. päivä ja Cron.](assets/screenshots/nodes/schedule-dark.png#only-dark)
 ![Solmun konttien aikataulu avattuna sen kortilta: Pois, Päivittäin, Viikoittain, Joka N. päivä ja Cron.](assets/screenshots/nodes/schedule-light.png#only-light)
 
-- **Poissa ollut solmu** käynnistää väliin jääneet varmuuskopiot heti, kun se palaa. Koti katsoo tilanteen viiden minuutin välein.
+- **Poissa ollut solmu** käynnistää väliin jääneet varmuuskopiot heti, kun se palaa. Kotiinstanssi katsoo tilanteen viiden minuutin välein.
 - **Kiireiseltä solmulta** kysytään uudelleen viiden minuutin kuluttua.
-- **Kun koti siivoaa** solmun vanhoja varmuuskopioita, solmu ei käynnistä mitään ennen kuin koti on valmis. Vastaanottopalvelimella ja itse solmulla tämä ikkuna aukeaa joka sunnuntai kello 03.00 ja kestää enintään kuusi tuntia. Kohteessa se seuraa kodin etäkopioaikataulua kyseiselle kohteelle. Koti säilyttää varmuuskopiot osion oman sääntönsä mukaan kohdassa **Kuinka kauan säilytetään** tai kohteen säännön mukaan, jos kohteella on sellainen.
-- **Solmun ajolistassa** kodin käynnistämät varmuuskopiot ja palautukset näkyvät kodin käynnistäminä.
+- **Kun kotiinstanssi siivoaa** solmun vanhoja varmuuskopioita, solmu ei käynnistä mitään ennen kuin kotiinstanssi on valmis. Vastaanottopalvelimella ja itse solmulla tämä ikkuna aukeaa joka sunnuntai kello 03.00 ja kestää enintään kuusi tuntia. Kohteessa se seuraa kotiinstanssin etäkopioaikataulua kyseiselle kohteelle. Kotiinstanssi säilyttää varmuuskopiot osion oman sääntönsä mukaan kohdassa **Kuinka kauan säilytetään** tai kohteen säännön mukaan, jos kohteella on sellainen.
+- **Solmun ajolistassa** kotiinstanssin käynnistämät varmuuskopiot ja palautukset näkyvät kotiinstanssin käynnistäminä.
 
 ## Solmujen seuraaminen {#watch}
 
@@ -137,12 +137,12 @@ Yleiskatsauksen **Solmut**-kortti listaa jokaisen solmun tilan, viimeisen varmuu
 ![Yleiskatsauksen Solmut-kortti, jossa on kolme solmua: yksi yhdistetty, yksi ei aktiivinen kahdella virheellä ja yksi, joka odottaa yhä solmua.](assets/screenshots/nodes/overview-card-dark.png#only-dark)
 ![Yleiskatsauksen Solmut-kortti, jossa on kolme solmua: yksi yhdistetty, yksi ei aktiivinen kahdella virheellä ja yksi, joka odottaa yhä solmua.](assets/screenshots/nodes/overview-card-light.png#only-light)
 
-Koti lähettää yhden hälytyksen jaksoa kohti [ilmoituskanaviensa](notifications.md) kautta ja seuraavan vasta, kun jakso on ohi:
+Kotiinstanssi lähettää yhden hälytyksen jaksoa kohti [ilmoituskanaviensa](notifications.md) kautta ja seuraavan vasta, kun jakso on ohi:
 
 - **Varmuuskopio epäonnistui**, esimerkiksi *BombVault: vps-helsinki: backup failed*, merkinnän ja syyn kanssa. Saman merkinnän myöhempi onnistunut varmuuskopio päättää jakson.
-- **Solmu ei ole tavoitettavissa**, esimerkiksi *BombVault: vps-helsinki is out of reach*. Koti odottaa solmun repositoryjen lyhimmän kuolleen miehen kytkimen ajan, 26 tuntia, ellet muuta sitä, tai 6 tuntia, kun solmulla ei vielä ole määränpäätä.
+- **Solmu ei ole tavoitettavissa**, esimerkiksi *BombVault: vps-helsinki is out of reach*. Kotiinstanssi odottaa solmun repositoryjen lyhimmän kuolleen miehen kytkimen ajan, 26 tuntia, ellet muuta sitä, tai 6 tuntia, kun solmulla ei vielä ole määränpäätä.
 
-Kodin vastaanotinvalvonta seuraa myös jokaista solmun repositorya kuolleen miehen kytkimellä ja päivittäisellä `restic check` -ajolla kello 04.00, katso [Vastaanotin ja noutaja](offsite-recovery.md#receiver).
+Kotiinstanssin vastaanotinvalvonta seuraa myös jokaista solmun repositorya kuolleen miehen kytkimellä ja päivittäisellä `restic check` -ajolla kello 04.00, katso [Vastaanotin ja noutaja](offsite-recovery.md#receiver).
 
 ## Solmun merkinnät {#entries}
 
@@ -153,21 +153,21 @@ Solmun osiossa Kansiot-listassa **Lisää kansiojoukko** lisää solmulle kansio
 ![Solmun vps-falkenstein osio Kontit-listassa: nextcloud, nextcloud-db, caddy ja uptime-kuma.](assets/screenshots/nodes/backups-section-dark.png#only-dark)
 ![Solmun vps-falkenstein osio Kontit-listassa: nextcloud, nextcloud-db, caddy ja uptime-kuma.](assets/screenshots/nodes/backups-section-light.png#only-light)
 
-Solmun merkinnän sivulla lukee **Solmulla** ja solmun nimi, ja sivu listaa merkinnän varmuuskopiot. **Palauta** jonkin niistä kohdalla palauttaa merkinnän solmulle ja korvaa sen, mitä siellä nyt on. Kontti pysäytetään sitä varten, aivan kuten kodissakin.
+Solmun merkinnän sivulla lukee **Solmulla** ja solmun nimi, ja sivu listaa merkinnän varmuuskopiot. **Palauta** jonkin niistä kohdalla palauttaa merkinnän solmulle ja korvaa sen, mitä siellä nyt on. Kontti pysäytetään sitä varten, aivan kuten kotiinstanssissakin.
 
 ![Merkinnän nextcloud sivu solmulla vps-falkenstein, varmuuskopiot ja jokaisen vieressä Palauta-painike.](assets/screenshots/nodes/entry-dark.png#only-dark)
 ![Merkinnän nextcloud sivu solmulla vps-falkenstein, varmuuskopiot ja jokaisen vieressä Palauta-painike.](assets/screenshots/nodes/entry-light.png#only-light)
 
-Kodin kautta tavoitat kiinteän listan solmun omia reittejä: sen kontit, kansiojoukot, ajot ja poikkeamat sekä niiden varmuuskopioinnin ja palauttamisen. Solmun asetukset, avaimet ja tallennustila jäävät ulottumattomiin, eikä mikään listan reitti poista mitään. Katso [Solmut API:ssa](api.md#nodes).
+Kotiinstanssin kautta tavoitat kiinteän listan solmun omia reittejä: sen kontit, kansiojoukot, ajot ja poikkeamat sekä niiden varmuuskopioinnin ja palauttamisen. Solmun asetukset, avaimet ja tallennustila jäävät ulottumattomiin, eikä mikään listan reitti poista mitään. Katso [Solmut API:ssa](api.md#nodes).
 
 ## Korvaaminen ja vapauttaminen {#replace-release}
 
 **Korvaa** näyttää solmun compose-tiedoston uudelleen, kun olet kirjautunut salasanalla. Käytä sitä, kun siirrät solmun toiselle palvelimelle tai rakennat sen uudelleen: käynnistä tiedosto siellä ja sammuta vanha palvelin. Sama `APP_KEY` ja `NODE_HOME` tekevät siitä taas saman solmun varmuuskopioineen ja historioineen. Kaksi palvelinta, joilla on sama `APP_KEY`, lasketaan yhdeksi solmuksi, joten älä koskaan aja molempia.
 
-**Vapauta** päästää solmun menemään. Se lakkaa ottamasta ohjeita kodilta eikä varmuuskopioi enää mitään. Sen varmuuskopiot jäävät paikoilleen, samoin jokainen kopio, jonka koti on hakenut. Sen tunnus vastaanottopalvelimella poistuu, ja koti lopettaa sen repositoryjen valvonnan. Jos solmu on poissa, kun vapautat sen, sen kortti näyttää tilaa **Vapautetaan**, kunnes solmu kuulee asiasta. Vapautettu solmu ei ota uutta kotia samalla `APP_KEY`-avaimella. Jos haluat käyttää palvelinta taas, lisää se uutena solmuna ja käynnistä se uudella compose-tiedostolla ja tyhjällä `config`-kansiolla.
+**Vapauta** päästää solmun menemään. Se lakkaa ottamasta ohjeita kotiinstanssilta eikä varmuuskopioi enää mitään. Sen varmuuskopiot jäävät paikoilleen, samoin jokainen kopio, jonka kotiinstanssi on hakenut. Sen tunnus vastaanottopalvelimella poistuu, ja kotiinstanssi lopettaa sen repositoryjen valvonnan. Jos solmu on poissa, kun vapautat sen, sen kortti näyttää tilaa **Vapautetaan**, kunnes solmu kuulee asiasta. Vapautettu solmu ei ota uutta kotiinstanssia samalla `APP_KEY`-avaimella. Jos haluat käyttää palvelinta taas, lisää se uutena solmuna ja käynnistä se uudella compose-tiedostolla ja tyhjällä `config`-kansiolla.
 
 ## Turvallisuus {#security}
 
-Jos koti kaapataan, hyökkääjä hallitsee myös sen solmuja, ja solmulla on palvelimensa Docker käytössään, mikä vastaa siellä root-oikeuksia. Suojaa koti salasanalla ja pidä se poissa internetistä. Jos solmu kaapataan, hyökkääjä ei saa pariliitosryhmää, linnoitusta, muita solmuja eikä muita repositoryja, eikä voi poistaa historiaa vastaanottopalvelimelta. Yksityiskohdat ovat kohdassa [Solmut tietoturvamallissa](configuration.md#nodes).
+Jos kotiinstanssi kaapataan, hyökkääjä hallitsee myös sen solmuja, ja solmulla on palvelimensa Docker käytössään, mikä vastaa siellä root-oikeuksia. Suojaa kotiinstanssi salasanalla ja pidä se poissa internetistä. Jos solmu kaapataan, hyökkääjä ei saa pariliitosryhmää, linnoitusta, muita solmuja eikä muita repositoryja, eikä voi poistaa historiaa vastaanottopalvelimelta. Yksityiskohdat ovat kohdassa [Solmut tietoturvamallissa](configuration.md#nodes).
 
 [Palautuspaketissa](offsite-recovery.md#recovery-kit) on luku **Solmut**, jossa on jokaisen solmun `APP_KEY`, sen restic-salasana ja sen repositoryt, joten voit palauttaa solmun tai sen varmuuskopiot pelkällä resticillä.

@@ -16,7 +16,7 @@ Jokainen aikataulu on painike, joka kuuluu lauseena, esimerkiksi *päivittäin k
 
 Kaikki ajat ovat palvelimen aikavyöhykkeellä. Unraidissa se on järjestelmän oma. Muualla aseta `TZ`, tai jokainen aikataulu ajetaan UTC:ssä, katso [Ympäristömuuttujat](configuration.md#environment-variables).
 
-Koti suunnittelee myös [solmujensa](nodes.md) varmuuskopiot, mutta ei täällä: jokaisen solmun kortissa Ilmentymät-sivulla on yksi aikataulu sen konteille ja yksi sen kansioille. Uusi solmu alkaa puoli tuntia tämän instanssin konttivarmuuskopioiden jälkeen. Katso [Milloin solmut varmuuskopioivat](nodes.md#schedule).
+Kotiinstanssi suunnittelee myös [solmujensa](nodes.md) varmuuskopiot, mutta ei täällä: jokaisen solmun kortissa Ilmentymät-sivulla on yksi aikataulu sen konteille ja yksi sen kansioille. Uusi solmu alkaa puoli tuntia tämän instanssin konttivarmuuskopioiden jälkeen. Katso [Milloin solmut varmuuskopioivat](nodes.md#schedule).
 
 ## Viikko {#week}
 
