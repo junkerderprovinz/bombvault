@@ -34,4 +34,5 @@
 ## כמה שרתים {#several-servers}
 
 - [צימוד של שתי תיבות Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): שני שרתים ששומרים זה את העותקים של זה, ואף אחד מהם לא יכול למחוק את הגיבויים של השני.
+- [VPS שמגבה לשרת המקלט](nodes.md#example-vps): צומת עם הקונטיינרים שלו, שמנוהל מהבית, ובלי פורט פתוח ב-VPS.
 - [כרטיס והתראה ב-Home Assistant](api.md#home-assistant-example): BombVault בלוח מחוונים, עם הודעה כשגיבוי נכשל.
