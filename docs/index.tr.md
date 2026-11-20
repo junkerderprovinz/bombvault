@@ -82,6 +82,7 @@ Birkaç sözcüğün BombVault'ta ve bu sayfalarda sabit bir anlamı vardır.
 | **Replika** | Bir ZFS ögesinin ikinci bir ZFS sunucusundaki, `zfs send` ile yapılmış, blok blok aynı kopyası. Yedeğin yanında durur ve onun yerini almaz. Bkz. [Replika](zfs-datasets.md#replica). |
 | **Rol** | Grubunun bir örneğinin başka bir örnek için yaptığı şey: Alıcı, Çeken, ZFS sunucusu ya da Anahtar bekçisi. Bkz. [Örnekler ve roller](offsite-recovery.md#roles). |
 | **Düğüm** | Web arayüzü olmayan bir BombVault, örneğin bir VPS'te, ona neyi, ne zaman ve nereye yedekleyeceğini başka bir örnek, yani ana örneği söyler. Bkz. [Düğümler](nodes.md). |
+| **Ana örnek** | Bir düğümü ekleyen ve yöneten örnek. Düğümün anahtarını tutar ve ona neyi, ne zaman ve nereye yedekleyeceğini söyler. Bkz. [Düğümler](nodes.md). |
 
 ## Katkıda bulunanlar {#credits}
 

@@ -82,6 +82,7 @@ Een paar woorden hebben in BombVault en op deze pagina's een vaste betekenis.
 | **Replica** | Een blokgetrouwe kopie van een ZFS-item op een tweede ZFS-server, gemaakt met `zfs send`. Ze staat naast de back-up en vervangt hem niet. Zie [Replica](zfs-datasets.md#replica). |
 | **Rol** | Iets wat een instantie van je groep voor een andere doet: Ontvanger, Ophaler, ZFS-server of Sleutelbewaarder. Zie [Instanties en rollen](offsite-recovery.md#roles). |
 | **Node** | Een BombVault zonder webinterface, bijvoorbeeld op een VPS, die van een andere instantie, zijn thuisinstantie, te horen krijgt wat hij wanneer en waarheen back-upt. Zie [Nodes](nodes.md). |
+| **Thuisinstantie** | De instantie die een node heeft toegevoegd en hem aanstuurt. Ze bewaart de sleutel van de node en vertelt hem wat hij wanneer en waarheen back-upt. Zie [Nodes](nodes.md). |
 
 ## Dankwoord {#credits}
 

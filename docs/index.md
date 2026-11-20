@@ -80,6 +80,7 @@ A few words have a fixed meaning in BombVault and in these pages.
 | **Replica** | A block-exact copy of a ZFS entry on a second ZFS server, made with `zfs send`. It stands beside the backup and does not replace it. See [Replica](zfs-datasets.md#replica). |
 | **Role** | Something one instance of your group does for another: Receiver, Fetcher, ZFS server or Key keeper. See [Instances and roles](offsite-recovery.md#roles). |
 | **Node** | A BombVault without a web interface, on a VPS for example, that another instance, its home, tells what to back up, when and where. See [Nodes](nodes.md). |
+| **Home instance** | The instance that added a node and runs it. It keeps the node's key and tells the node what to back up, when and where. These pages often just say home. See [Nodes](nodes.md). |
 
 ## Credits {#credits}
 

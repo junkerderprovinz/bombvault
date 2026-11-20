@@ -82,6 +82,7 @@ Néhány szónak rögzített jelentése van a BombVaultban és ezeken az oldalak
 | **Replika** | Egy ZFS-elem blokkpontos másolata egy második ZFS-szerveren, `zfs send` paranccsal készítve. A mentés mellett áll, és nem helyettesíti azt. Lásd: [Replika](zfs-datasets.md#replica). |
 | **Szerep** | Valami, amit a csoportod egyik példánya tesz egy másikért: Fogadó, Lehívó, ZFS-kiszolgáló vagy Kulcsőrző. Lásd: [Példányok és szerepek](offsite-recovery.md#roles). |
 | **Csomópont** | Webes felület nélküli BombVault, például egy VPS-en, amelynek egy másik példány, az anyapéldánya, megmondja, mit, mikor és hová mentsen. Lásd: [Csomópontok](nodes.md). |
+| **Anyapéldány** | Az a példány, amely egy csomópontot hozzáadott és irányít. Őrzi a csomópont kulcsát, és megmondja neki, mit, mikor és hová mentsen. Lásd: [Csomópontok](nodes.md). |
 
 ## Köszönetnyilvánítás {#credits}
 

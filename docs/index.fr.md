@@ -82,6 +82,7 @@ Quelques mots ont un sens fixe dans BombVault et dans ces pages.
 | **Réplique** | Une copie exacte au bloc près d'un élément ZFS sur un second serveur ZFS, faite avec `zfs send`. Elle se tient à côté de la sauvegarde et ne la remplace pas. Voir [Réplique](zfs-datasets.md#replica). |
 | **Rôle** | Ce qu'une instance de votre groupe fait pour une autre : Récepteur, Rapatrieur, Serveur ZFS ou Gardien. Voir [Instances et rôles](offsite-recovery.md#roles). |
 | **Nœud** | Un BombVault sans interface web, sur un VPS par exemple, auquel une autre instance, son instance d'attache, dit quoi sauvegarder, quand et où. Voir [Nœuds](nodes.md). |
+| **Instance d'attache** | L'instance qui a ajouté un nœud et le pilote. Elle garde la clé du nœud et lui dit quoi sauvegarder, quand et où. Voir [Nœuds](nodes.md). |
 
 ## Remerciements {#credits}
 
