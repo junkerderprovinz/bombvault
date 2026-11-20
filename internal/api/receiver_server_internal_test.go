@@ -39,7 +39,16 @@ type receiverDocker struct {
 
 	pulled  []string
 	created []model.Inspect
+	removed []string
 	signals []string
+}
+
+func (d *receiverDocker) Stop(context.Context, string, time.Duration) error { return nil }
+
+func (d *receiverDocker) Remove(_ context.Context, name string) error {
+	d.removed = append(d.removed, name)
+	delete(d.live, name)
+	return nil
 }
 
 func (d *receiverDocker) Signal(_ context.Context, name, signal string) error {

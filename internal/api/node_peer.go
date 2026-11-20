@@ -149,6 +149,8 @@ func (n *nodeSide) serve(w http.ResponseWriter, r *http.Request) {
 		n.api(w, r)
 	case nodeRunPath:
 		n.run(w, r)
+	case nodeKeepPath:
+		n.keep(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -355,19 +357,26 @@ func (s *Service) keepPlacement(p nodePlacement) error {
 	if err != nil {
 		return err
 	}
-	cert := filepath.Join(trust.Dir(s.cfg.DataDir), "node-"+p.Domain+".pem")
-	if p.CAPEM == "" {
-		err = os.Remove(cert)
-		if errors.Is(err, os.ErrNotExist) {
-			err = nil
-		}
-	} else if err = os.MkdirAll(filepath.Dir(cert), 0o750); err == nil {
-		err = os.WriteFile(cert, []byte(p.CAPEM), 0o600)
-	}
-	if err != nil {
+	if err := writeTrusted(filepath.Join(trust.Dir(s.cfg.DataDir), "node-"+p.Domain+".pem"), p.CAPEM); err != nil {
 		return err
 	}
 	return s.store.SetNodePlacement(store.NodePlacement{Domain: p.Domain, Repo: p.Repo, CredsEnc: enc, CAPEM: p.CAPEM, SetAt: time.Now().Unix()})
+}
+
+// writeTrusted puts pemText into file in the certs folder, where restic
+// trusts it, or takes file away when pemText is empty.
+func writeTrusted(file, pemText string) error {
+	if pemText == "" {
+		err := os.Remove(file)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(file), 0o750); err != nil {
+		return err
+	}
+	return os.WriteFile(file, []byte(pemText), 0o600)
 }
 
 // reachPlacement opens the repository of p as this node's backups will,

@@ -55,6 +55,7 @@ var sealSites = map[string]string{
 	"sealFortress":           "fortress_membership.secret_enc",
 	"AddNode":                "nodes.app_key_enc",
 	"watchNodeRepos":         "received_repos.restic_password_enc",
+	"fetchFromNode":          "pull_sources.restic_password_enc",
 	"keepPlacement":          "node_placements.creds_enc",
 }
 

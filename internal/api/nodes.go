@@ -249,9 +249,12 @@ func (s *Service) dropNode(id string, hn *homeNode) {
 
 // forgetNode drops a node that heard its release. Its login on the receiver
 // goes, and the receiver stops watching its repositories, which stay with
-// their backups.
+// their backups. Home stops fetching from it and keeps what it fetched.
 func (s *Service) forgetNode(id string) error {
 	if err := s.RevokeReceiverLogin(context.Background(), id); err != nil && !errors.Is(err, errNoReceiver) {
+		return err
+	}
+	if err := s.stopFetchingFrom(id); err != nil {
 		return err
 	}
 	repos, err := s.store.ListReceivedRepos()

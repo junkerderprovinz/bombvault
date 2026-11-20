@@ -386,12 +386,8 @@ func (s *Service) SetUpReceiver(ctx context.Context, in receiverServerInput) (re
 		return receiverSetupResult{}, err
 	}
 
-	if id, err := s.docker.ImageID(ctx, restServerImage); err != nil {
+	if err := s.ensureRestServerImage(ctx); err != nil {
 		return receiverSetupResult{}, err
-	} else if id == "" {
-		if err := s.docker.Pull(ctx, restServerImage); err != nil {
-			return receiverSetupResult{}, fmt.Errorf("download %s: %w", restServerImage, err)
-		}
 	}
 	unraid := s.platformFn().Kind() == platform.KindUnraid
 	if err := s.docker.CreateAndStart(ctx, receiverContainerSpec(hostPath, in.Port, unraid), true); err != nil {
@@ -414,6 +410,18 @@ func (s *Service) SetUpReceiver(ctx context.Context, in receiverServerInput) (re
 	s.checkReceiver(ctx, rs, password)
 	result.Server, err = s.receiverView(ctx)
 	return result, err
+}
+
+// ensureRestServerImage downloads rest-server's image unless Docker has it.
+func (s *Service) ensureRestServerImage(ctx context.Context) error {
+	id, err := s.docker.ImageID(ctx, restServerImage)
+	if err != nil || id != "" {
+		return err
+	}
+	if err := s.docker.Pull(ctx, restServerImage); err != nil {
+		return fmt.Errorf("download %s: %w", restServerImage, err)
+	}
+	return nil
 }
 
 // writeReceiverTemplate writes the receiver's Unraid template into the flash

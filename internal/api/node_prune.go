@@ -18,8 +18,12 @@ func nodeRepoID(id, domain string) string {
 
 // pruneNodeRepos ages each watched repository of n by home's rules for its
 // section and prunes it. Only the snapshots under the node's own host are
-// aged, so whatever else lies there stays.
+// aged, so whatever else lies there stays. The rest-server of a node that
+// keeps its own backups takes no deletes, so those are left alone.
 func (s *Service) pruneNodeRepos(ctx context.Context, n store.Node) error {
+	if n.Placement == nodePlaceNode {
+		return nil
+	}
 	appKey, err := s.nodeAppKey(n)
 	if err != nil {
 		return err

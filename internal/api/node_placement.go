@@ -20,11 +20,13 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// The kinds of place home sends a node's backups to: its own receiver, or a
-// storage location of home's that the node reaches with a sign-in of its own.
+// The kinds of place home sends a node's backups to: its own receiver, a
+// storage location of home's that the node reaches with a sign-in of its own,
+// or the node itself, which home fetches them from.
 const (
 	nodePlaceReceiver = "receiver"
 	nodePlaceLocation = "location"
+	nodePlaceNode     = "node"
 )
 
 // nodeKeyUser labels the key home adds to every repository of a node, so
@@ -38,7 +40,7 @@ var (
 	errNoNodeAddress    = errors.New("set where nodes reach the receiver first, under Receiver, Address for nodes")
 	errNodeLocation     = errors.New("a node reaches only an S3 service or a REST server of home's, over https:// or a private address")
 	errNodeSignInShared = errors.New("pick a sign-in made for the node, not the one this instance writes to the location with")
-	errNodePlaceKind    = errors.New("place a node's backups on the receiver or at a storage location")
+	errNodePlaceKind    = errors.New("place a node's backups on the receiver, at a storage location or on the node itself")
 )
 
 // nodeLocationWarning goes with every placement at a storage location.
@@ -117,11 +119,13 @@ func (s *Service) SetReceiverNodeAddress(raw, caPEM string) (string, error) {
 }
 
 // nodePlaceRequest is where a person sends a node's backups. Location and
-// SignIn name the storage location and the sign-in made for the node.
+// SignIn name the storage location and the sign-in made for the node, and
+// Address is where home reaches a node that keeps its own.
 type nodePlaceRequest struct {
 	Kind     string `json:"kind"`
 	Location string `json:"location,omitempty"`
 	SignIn   string `json:"signIn,omitempty"`
+	Address  string `json:"address,omitempty"`
 }
 
 // nodePlaceResult is whether the node reached each repository it was given,
@@ -143,7 +147,7 @@ type nodeRepo struct {
 
 // PlaceNode makes the node's repositories at the place req names, adds home's
 // own key to each, tells the node where they are and has the receiver watch
-// them.
+// them. Home fetches from a node that keeps them itself.
 func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest) (nodePlaceResult, error) {
 	n, err := s.store.GetNode(id)
 	if err != nil {
@@ -169,6 +173,8 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 	case nodePlaceLocation:
 		repos, target, err = s.locationRepos(n, req)
 		result.Warning = nodeLocationWarning
+	case nodePlaceNode:
+		repos, target, err = s.keptRepos(ctx, n, link, req.Address)
 	default:
 		err = errNodePlaceKind
 	}
@@ -188,6 +194,14 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 		return nodePlaceResult{}, err
 	}
 	if err := s.watchNodeRepos(n, repos, password); err != nil {
+		return nodePlaceResult{}, err
+	}
+	if req.Kind == nodePlaceNode {
+		err = s.fetchFromNode(n, repos, password)
+	} else {
+		err = s.stopFetchingFrom(id)
+	}
+	if err != nil {
 		return nodePlaceResult{}, err
 	}
 	if err := s.store.SetNodePlaced(id, req.Kind, target); err != nil {
@@ -394,8 +408,8 @@ func (h *Handler) handleSetReceiverNodeAddress(w http.ResponseWriter, r *http.Re
 	}
 }
 
-// handlePlaceNode sends a node's backups to the receiver or a storage
-// location, and answers whether the node reaches them.
+// handlePlaceNode sends a node's backups to the receiver, a storage location
+// or the node itself, and answers whether the node reaches them.
 // POST /api/nodes/{id}/placement
 func (h *Handler) handlePlaceNode(w http.ResponseWriter, r *http.Request) {
 	var req nodePlaceRequest
@@ -406,6 +420,8 @@ func (h *Handler) handlePlaceNode(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, store.ErrNodeNotFound):
 		writeJSON(w, http.StatusNotFound, codedFailEnvelope(err, "not-found"))
+	case errors.Is(err, errNodeAddressForm) || errors.Is(err, errNodeFetchPlain):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
 	case err != nil:
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	default:
