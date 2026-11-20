@@ -390,7 +390,7 @@ En fæstning samler BombVault og de andre apps i familien, såsom ShipLog, Tower
 
 ## Instanser og roller {#roles}
 
-Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) viser gruppen som et net af, hvem der gør hvad for hvem, et kort for denne instans og et kort for hvert andet medlem, Android-telefonerne og ZFS-serverne. **Parring** nederst til højre fører til parringssiden. Hvilke dele der er slået til, sættes under **Indstillinger, Instanser, Flere servere**: **Instanser**, **Modtager** og **Hentning**.
+Siden **Instanser** (et indstillingsfelt, der kan fæstnes til sidepanelet) viser gruppen som et net af, hvem der gør hvad for hvem, et kort for denne instans og et kort for hvert andet medlem, Android-telefonerne, ZFS-serverne og denne instans' noder. **Parring** nederst til højre fører til parringssiden, og **Tilføj node** ved siden af tilføjer en node. Hvilke dele der er slået til, sættes under **Indstillinger, Instanser, Flere servere**: **Instanser**, **Modtager** og **Hentning**.
 
 ![Siden Instanser: gruppen som et net og et kort pr. instans med dets rolleflader, hvoraf én er Inaktiv.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Siden Instanser: gruppen som et net og et kort pr. instans med dets rolleflader, hvoraf én er Inaktiv.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ At slå en rolle til sender en anmodning, og intet starter, før nogen på den a
 
 Under kortene hører kortet **Delt arkiv** på en boks med en modtageserver og kortet **Delte arkiver** på et medlem til det [delte arkiv](#shared-repository).
 
-Et medlem kan tilbyde sin egen off-site-lagring til et andet medlem over gruppen. Den anden administrator ser tilbuddet i medlemmets **Detaljer** og accepterer eller afviser det. Hvis tilbuddet accepteres, oprettes gemte adgangsoplysninger og en almindelig destination efter de samme tjek som en destination, du selv skriver ind. Destinationen kommer med beskyttelse mod sletning slået til, da opskriften, tilbuddet viser, er en append-only rest-server, så **Hvor længe der gemmes** gælder ikke dér. Hvert tilbud har sit eget login og sin egen mappe. Tilbyder du et område igen, til det samme medlem eller et andet, får den første partners kopier altså lov at være: tilføj den nye linje til `.htpasswd`, og lad serveren køre. Kun forbindelsesoplysninger rejser på den måde, aldrig sikkerhedskopidata. **Tjek nu** beder et medlem om at verificere ét områdes repository. Intet på siden kan starte en sikkerhedskopiering, en gendannelse eller en sletning på en anden boks.
+Et medlem kan tilbyde sin egen off-site-lagring til et andet medlem over gruppen. Den anden administrator ser tilbuddet i medlemmets **Detaljer** og accepterer eller afviser det. Hvis tilbuddet accepteres, oprettes gemte adgangsoplysninger og en almindelig destination efter de samme tjek som en destination, du selv skriver ind. Destinationen kommer med beskyttelse mod sletning slået til, da opskriften, tilbuddet viser, er en append-only rest-server, så **Hvor længe der gemmes** gælder ikke dér. Hvert tilbud har sit eget login og sin egen mappe. Tilbyder du et område igen, til det samme medlem eller et andet, får den første partners kopier altså lov at være: tilføj den nye linje til `.htpasswd`, og lad serveren køre. Kun forbindelsesoplysninger rejser på den måde, aldrig sikkerhedskopidata. **Tjek nu** beder et medlem om at verificere ét områdes repository. Medlemmer lader hinandens sikkerhedskopier være: intet på siden starter en sikkerhedskopiering på et andet medlem, gendanner noget dér eller sletter noget dér.
+
+**Noder** er noget andet, fordi de ikke er medlemmer. En node er en BombVault uden brugerflade, der tager imod ordrer fra denne instans, så denne instans starter dens sikkerhedskopieringer og gendannelser på den og beskærer dens gamle sikkerhedskopier. Hver node har et kort med dens tilstand, dens version, hvor dens sikkerhedskopier går hen, og hvornår hvert område tager sikkerhedskopi, med **Skift destination**, **Erstat** og **Frigiv**. En ny node siger **Venter på noden**, indtil den svarer første gang, og en frigivet node, der er væk, siger **Frigives**. Se [Noder](nodes.md).
+
+![Kortet for en node: Forbundet, dens version, dens sikkerhedskopier på modtageserveren og dens planer pr. område.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Kortet for en node: Forbundet, dens version, dens sikkerhedskopier på modtageserveren og dens planer pr. område.](assets/screenshots/nodes/card-light.png#only-light)
 
 Instanser, der er lukket ned, og telefoner med appen lukket beholder deres kort som **Inaktiv**, i gråt, med hvornår de sidst blev set, og står dæmpet i nettet, indtil du fjerner dem med **Fjern**. Lige efter at denne server er startet, viser sådan et kort **Kontrollerer**, indtil gruppen er tilbage. **Fjern** virker på sådan et kort, uanset hvilke dele der er slået til, og afslutter også medlemmets åbne anmodninger, dets ubrugte ZFS-modtagepladser og dets ventende nøgleanmodninger. Kortet **Instanser** på parringssiden viser også disse medlemmer som **Inaktiv**.
 
@@ -443,7 +448,7 @@ Instanserne i din gruppe finder så serveren blandt udbyderne under **Fra din gr
 
 En instans, der kun når modtagerboksen gennem relayet, kan ikke bruge serveren, fordi relayet ikke bærer sikkerhedskopier. Tilføj først modtagerboksens adresse på parringssiden. Når BombVault kører på en egen IP-adresse (for eksempel på br0), udfyld **Adresse for partnere**, fordi serveren lytter på værtens adresse.
 
-En modtagerboks kan også have et [delt arkiv](#shared-repository) for gruppen.
+En modtagerboks kan også have et [delt arkiv](#shared-repository) for gruppen og tage imod sikkerhedskopierne fra denne instans' [noder](nodes.md#to-receiver) på sin **Adresse til noder**.
 
 ## Delt arkiv {#shared-repository}
 
@@ -620,6 +625,8 @@ En nøgleholder er en instans i din gruppe, der opbevarer en forseglet kopi af d
 
 Den dag skal du bruge tre ting: din gruppes tolv ord, frigivelseskoden og adgang til holderens grænseflade, hvor nogen skal trykke på **Tillad**. I Nødguiden vælger du **Via gruppen**, vælger deponeringen, beder om den og taster frigivelseskoden. Koden bruges på den nye server og sendes ikke til holderen. Hos holderen vises anmodningen under **Nøgledeponering** med, hvem der spørger, om den instans nogensinde er set dér før, og hvor ofte den har spurgt. **Tillad** udleverer den forseglede kopi, og tilladelsen kræver en login-adgangskode. Den nye installation har 30 minutter til at hente den efter Tillad, en anmodning, ingen besvarer, udløber efter et døgn, og en instans, der spørger for ofte, må vente en time.
 
+Deponeringen indeholder også `APP_KEY` for hver af denne servers [noder](nodes.md), da kittet gør det. Med koden kunne en holder åbne deres repositories, men den kan aldrig give en node ordrer, fordi det kræver denne servers signatur.
+
 Uden koden kan ingen åbne kopien, heller ikke holderen. Hvis koden går tabt, lav en ny, mens denne server stadig kører. Hvis serveren allerede er væk, virker gendannelseskittet og den indtastede APP_KEY stadig. Holderen kan til enhver tid slette en deponering, og ejeren må så spørge igen.
 
 ## Gendannelseskit {#recovery-kit}
@@ -627,6 +634,8 @@ Uden koden kan ingen åbne kopien, heller ikke holderen. Hvis koden går tabt, l
 Dette er den brik, der gør katastrofegendannelse mulig, selv når der ikke er nogen kørende BombVault.
 
 **Download gendannelseskit** i kortet **Til nødsituationer** under **Indstillinger, Gendannelse** giver dig **nøglen**, det **afledte restic-kodeord**, hver **destination** med repositoriet for hvert område, de logins, en ny installation har brug for for at nå dem, og de **præcise restic-kommandoer**, så du kan gendanne direkte med restic CLI på en hvilken som helst maskine. Det kræver en login-adgangskode. Kittet udskriver også nøglen med kryptering slået fra, fordi container- og VM-definitionerne altid er forseglet med den. Efter en overtagelse udskriver det den overtagne sikkerhedskopinøgle og denne servers APP_KEY, som en ny installation kun skal bruge for at hente indstillingerne tilbage. Et kort **Gem dit gendannelseskit** på oversigten minder dig om det, indtil du har gemt det.
+
+En server med [noder](nodes.md) får et kapitel **Nodes** i sit kit. Det nævner hver node med dens id, dens `APP_KEY`, den restic-adgangskode, der udledes af den nøgle, og repositoryet for hvert område. Nodens egen adgangskode åbner dem, og det gør denne servers også, fordi denne server tilføjer sin nøgle til hvert repository for en node. Download kittet igen, når du har tilføjet en node eller ændret, hvor dens sikkerhedskopier går hen. Med nodens `APP_KEY` og dens `NODE_HOME` bliver en ny server den samme node igen, se [Erstat og frigiv](nodes.md#replace-release).
 
 !!! danger "Opbevar gendannelseskittet uden for serveren"
     Kittet indeholder den hemmelighed, der dekrypterer dine sikkerhedskopier. Opbevar det et sikkert sted adskilt fra serveren (en adgangskodemanager, en udskrift i et pengeskab). Mister du både BombVault og `APP_KEY` uden gendannelseskit og uden nøgledeponering, kan dine krypterede sikkerhedskopier ikke gendannes.

@@ -54,6 +54,10 @@ Telefonen får sit eget kort på Instanser-siden på hver server i gruppen, mark
 
 En telefon, der blev parret før 10.0.0, begynder at signere sine kald ved det første besøg efter opdateringen, og hver server beholder den første nøgle, den får til telefonen. Hvis en anden, der kender gruppens ord, kommer først, mens telefonen er offline, afviser den server telefonen fra da af, og appen kan ikke længere åbne den over relayet. Sådan løser du det: log ind på den server i en browser, vælg **Glem nøglen** på telefonens kort på Instanser-siden og derefter **Bekræft at glemme**, og åbn appen igen. Serveren tager telefonens egen nøgle ved næste kald. Bliver telefonen afvist igen, har en anden ordene: lad hver instans **Forlad gruppen** og par dem igen med nye ord, som ved en mistet telefon.
 
+## Noder {#nodes}
+
+[Noder](nodes.md) passes i brugerfladen. En parret telefons session når ikke frem til dem, så appen viser ingen nodekort på siden Instanser, intet **Noder**-kort i oversigten og ingen nodeområder under **Sikkerhedskopier**, og **Tilføj node** svarer, at det kræver et login på selve serveren. Åbn serveren i en browser, og log ind med adgangskoden for at tilføje en node, ændre, hvor dens sikkerhedskopier går hen, eller gendanne en af dens poster.
+
 ## Indstillinger {#settings}
 
 Tandhjulet ved siden af plusset åbner appens indstillinger:

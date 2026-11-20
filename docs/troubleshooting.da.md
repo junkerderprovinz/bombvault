@@ -208,6 +208,26 @@ Startskærmen siger hvorfor på serverens kort:
 - **Login påkrævet:** En server tilføjet med sin adresse beder om adgangskoden. Se også [En telefon havner på loginsiden](#a-phone-lands-on-the-login-page).
 - **Nøglen er ændret:** Startskærmen viser den nye nøgles fingeraftryk, og siden åbner først, når du stoler på den. Se [Væk hjemmefra](android.md#away).
 
+## En node bliver ved med at vise "Venter på noden" {#node-waiting}
+
+Noden har ikke svaret sin hjemmeinstans endnu. Åbn dens containerlog på nodens server (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** efterfulgt af hjemmeinstansens id: noden kører og venter på videresenderen. Tjek, at serveren kan nå videresenderens adresse. Forbindelsen går ud fra noden, så den har ikke brug for en åben port.
+- **`NODE_HOME is not set`**: compose-filen har mistet sine værdier. Vælg **Erstat** på nodens kort, kopiér filen igen, og kør `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: de to værdier kommer fra forskellige noder. Kopiér begge fra det samme kort.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: en anden hjemmeinstans har taget noden til sig. Frigiv den dér først, eller tilføj serveren her som en ny node med en ny compose-fil.
+- **`MODE=... is neither full nor node`**: sæt `MODE: node`.
+
+## En node kan ikke nå sine repositories {#node-reach}
+
+Når du har valgt en destination, siger hjemmeinstansen pr. område, om noden åbnede sit repository, for eksempel **Noden kan ikke nå arkivet for Containers** med årsagen fra restic. Tjek fra nodens server, at adressen svarer. På modtageserveren er det **Adresse til noder**: en reverse proxy skal sende den videre til rest-serveren, og en server med sit eget certifikat har brug for det certifikat under **Certifikat**. På en destination skal du tjekke de adgangsoplysninger, der er lavet til noden. Vælg så **Skift destination** og **Gem** igen. Se [Hvor sikkerhedskopierne går hen](nodes.md#placement).
+
+For en node, der selv beholder sine sikkerhedskopier, afvises en port, som en anden container på noden holder, med den containers navn, så vælg en anden. Når hjemmeinstansen ikke kan hente, så åbn porten i nodens firewall.
+
+## En frigivet node kommer ikke tilbage {#node-released}
+
+En frigivet node tager ikke imod nogen hjemmeinstans igen med sin gamle `APP_KEY`, og dens mappe `config` husker frigivelsen. Tilføj serveren som en ny node, og start den med den nye compose-fil og en tom mappe `config`. Dens gamle sikkerhedskopier bliver, hvor de var, og det gør hver kopi, hjemmeinstansen har hentet, også.
+
 ## En anden bruger kan ikke læse det lokale repository {#repository-permissions}
 
 Det lokale repository forbliver læsbart for andre brugere, for eksempel en synkroniseringsbruger over SMB. Før 10.4.1 kunne filer, som en beskæring, et tag, en hentning, en områdeflytning, en sletning eller en stak-sikkerhedskopi skrev, forblive ulæselige til næste nat. Opdatér BombVault, så er de læsbare med det samme. Repositoryet til auto-sikkerhedskopien kan med vilje kun læses af root, fordi det rummer BombVaults indstillinger.
