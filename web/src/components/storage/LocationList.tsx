@@ -11,6 +11,7 @@ import type { StorageLocationList } from "../../lib/useStorageLocations";
 import { CardFoot } from "../../pages/settings/shared";
 import { Button } from "../Button";
 import { ProviderMark, storageEntry } from "../destinations/providers";
+import { IconForward } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCloud, IconLocal } from "../navGlyphs";
 import { fillTip, forecastText } from "./Vessel";
@@ -70,9 +71,8 @@ export function LocationRow({ location, note }: { location: StorageLocation; not
             )}
           </>
         }
-        text={{ test: t("offsite.test"), edit: t("instances.open"), remove: t("offsite.targets.remove") }}
-        labelKeys={{ edit: "instances.open" }}
-        onEdit={() => navigate(route)}
+        actions={[{ id: "open", label: t("instances.open"), labelKey: "instances.open", glyph: <IconForward />, onClick: () => navigate(route) }]}
+        text={{ test: t("offsite.test"), edit: t("common.edit"), remove: t("offsite.targets.remove") }}
       >
         {/* On a phone what it holds goes under the address instead of
             pushing past the edge, and drops the dot that would start its line. */}

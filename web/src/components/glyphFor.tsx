@@ -113,7 +113,7 @@ const RULES: Rule[] = [
   [/cancel|skip|close|dismiss/i, () => <IconClose />],
   [/back|previous|prev\b/i, () => <IconBack />],
   [/jumpToLatest/i, () => <IconLatest />],
-  [/next|continue|forward|\.open$/i, () => <IconForward />],
+  [/next|continue|forward/i, () => <IconForward />],
 
   // Connections, above the probing rules so recovery.connectPreview, which
   // connects first and previews after, gets the link. Dropping one is the
