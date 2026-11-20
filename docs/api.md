@@ -1,6 +1,6 @@
 # API and integrations
 
-BombVault has a small HTTP API for scripts, dashboards and home automation. It reads the same things the overview shows and can start a backup. Everything else, such as restores, deleting backups and settings, stays in the web interface.
+BombVault has a small HTTP API for scripts, dashboards and home automation. It reads the same things the overview shows and can start a backup. Everything else, such as restores, deleting backups, settings and [nodes](#nodes), stays in the web interface.
 
 ## Tokens {#tokens}
 
@@ -68,6 +68,32 @@ Starts follow the same limits as [starts through MCP](mcp.md#starting-backups): 
 ## OpenAPI {#openapi}
 
 BombVault serves a description of these routes at `/api/v1/openapi.json` (OpenAPI 3.1). It needs no token. Load it into Swagger UI, Postman or a code generator.
+
+## Nodes {#nodes}
+
+The routes that look after [nodes](nodes.md) belong to the web interface, not to the token API above. With a login password set they need a browser session from a sign-in at this instance. An API token or an MCP key opens none of them, paired phones do not reach them, and `/api/v1/openapi.json` does not describe them. Adding a node, showing its compose file again and reaching a node's own routes are refused until a login password is set. A script that changes something sends `Content-Type: application/json`, as everywhere in the web interface.
+
+| Route | What it does |
+|---|---|
+| `GET /api/nodes` | Every node with whether it is online, its version, where its backups go, the plan of each section, its last backup, its errors and its open anomalies |
+| `POST /api/nodes` | Adds a node, such as `{"name":"vps-helsinki"}`, and returns it with `compose`: `MODE`, `APP_KEY`, `NODE_HOME` and `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Returns the same `compose` values again, for **Replace** |
+| `POST /api/nodes/{id}/placement` | Sends the node's backups somewhere and answers per section whether the node reached its repository, with a `warning` for a storage location |
+| `PUT /api/nodes/{id}/schedule` | Sets the plans, such as `{"containers":"daily 03:00","files":"off"}`. A section left out keeps its plan |
+| `DELETE /api/nodes/{id}` | Releases the node. `told` says whether it heard it now or hears it once it is back |
+| `GET /api/nodes/routes` | The list of the node's own routes that home passes requests to |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Passes the request to the node's route `/api/{path}` when that route is on the list, and returns the node's JSON answer |
+| `PUT /api/receiver/node-address` | Sets **Address for nodes** of the receiving server, such as `{"url":"https://backup.tower.example.org","caPem":""}`. An empty `url` takes the nodes off it |
+
+The three placements:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+A request to `/api/nodes/{id}/api/...` carries at most 32 KiB. A route that is not on the list answers `403`, a node that has not answered yet or is being released `409` with the code `node-not-adopted`, and a node that is away `502` with the code `node-away`. For example, `GET /api/nodes/{id}/api/runs?limit=20` returns the node's last 20 runs, and `POST /api/nodes/{id}/api/containers/nextcloud/backup` backs up its container `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 
