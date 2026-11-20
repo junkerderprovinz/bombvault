@@ -10,6 +10,23 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
+// nodeStartLag is how long after home's own containers a new node backs up, so
+// the two do not reach for the same disks at once.
+const nodeStartLag = 30 * time.Minute
+
+// nodeStartTime is the time of day, as HH:MM, a new node backs up at: half an
+// hour after the next run of home's containers schedule, or after 02:00, the
+// time a schedule editor offers first, while home has none.
+func nodeStartTime(homeCadence string, now time.Time) string {
+	at := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, now.Location())
+	if cad, err := schedule.ParseCadence(homeCadence); err == nil {
+		if next, ok := cad.NextDue(time.Time{}, now); ok {
+			at = next
+		}
+	}
+	return at.Add(nodeStartLag).Format("15:04")
+}
+
 var errNodeCadence = errors.New("a schedule reads as off, daily HH:MM, weekly DOW HH:MM, everyN N HH:MM or a cron expression")
 
 // nodeSchedule is when home starts the backups of each section of a node. A

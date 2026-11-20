@@ -424,7 +424,13 @@ func (s *Service) AddNode(name string) (NodeView, map[string]string, error) {
 	if err != nil {
 		return NodeView{}, nil, err
 	}
-	n := store.Node{ID: id, Name: name, AppKeyEnc: enc, RelayMode: string(mode), RelayURL: url, CreatedAt: time.Now().Unix()}
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return NodeView{}, nil, err
+	}
+	start := "daily " + nodeStartTime(settings.ContainersSchedule, time.Now())
+	n := store.Node{ID: id, Name: name, AppKeyEnc: enc, RelayMode: string(mode), RelayURL: url, CreatedAt: time.Now().Unix(),
+		ContainersCadence: start, FilesCadence: start}
 	compose, err := s.nodeCompose(n)
 	if err != nil {
 		return NodeView{}, nil, err

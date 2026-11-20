@@ -79,3 +79,30 @@ func TestHomeListsHowEachNodesBackupsGo(t *testing.T) {
 		t.Errorf("node = %+v, want the last backup at 160, the failing folder set and the unread repository, and four anomalies", got)
 	}
 }
+
+func TestANewNodeBacksUpHalfAnHourAfterHomesContainers(t *testing.T) {
+	now := time.Date(2026, time.November, 18, 12, 0, 0, 0, time.Local)
+	for home, want := range map[string]string{
+		"daily 02:30":      "03:00",
+		"daily 23:45":      "00:15",
+		"weekly sun 04:00": "04:30",
+		"15 1 * * *":       "01:45",
+		"off":              "02:30",
+		"":                 "02:30",
+	} {
+		if got := nodeStartTime(home, now); got != want {
+			t.Errorf("home at %q: a node starts at %s, want %s", home, got, want)
+		}
+	}
+
+	home := homeWithRelay(t)
+	if _, err := home.st.MutateSettings(func(s *store.Settings) error { s.ContainersSchedule = "daily 23:45"; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	compose := addNode(t, home, "vps")
+	id, _ := nodelink.NodeID(compose["APP_KEY"])
+	n, err := home.st.GetNode(id)
+	if err != nil || n.Cadence("containers") != "daily 00:15" || n.Cadence("files") != "daily 00:15" {
+		t.Errorf("node = %+v %v, want both sections daily at a quarter past midnight", n, err)
+	}
+}
