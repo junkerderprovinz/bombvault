@@ -182,7 +182,7 @@ func (s *Service) dropNode(id string, hn *homeNode) {
 
 func (s *Service) adoptNode(ctx context.Context, id string, link *nodelink.Link) error {
 	var hello nodeHello
-	if err := s.callNode(ctx, link, keydeposit.ProofNodeAdopt, id, nodeAdoptPath, s.pairName(), &hello); err != nil {
+	if err := s.callNode(ctx, link, keydeposit.ProofNodeAdopt, id, nodeAdoptPath, nil, &hello); err != nil {
 		return err
 	}
 	if hello.ID != id {
@@ -194,21 +194,30 @@ func (s *Service) adoptNode(ctx context.Context, id string, link *nodelink.Link)
 // releaseNode tells the node home lets it go. A node that was let go before,
 // or never took this instance as its home, has nothing more to hear.
 func (s *Service) releaseNode(ctx context.Context, id string, link *nodelink.Link) error {
-	err := s.callNode(ctx, link, keydeposit.ProofNodeRelease, id, nodeReleasePath, "", nil)
+	err := s.callNode(ctx, link, keydeposit.ProofNodeRelease, id, nodeReleasePath, nil, nil)
 	if errors.Is(err, errNodeReleased) || errors.Is(err, errNodeNotAdopted) {
 		return nil
 	}
 	return err
 }
 
-// callNode signs a call for node id, sends it over link and reads the answer
-// into out unless out is nil.
-func (s *Service) callNode(ctx context.Context, link *nodelink.Link, action, id, path, name string, out any) error {
-	p, err := s.signCall(action, id, callPayload(name))
+// callNode signs a call for node id that says in, sends it over link and
+// reads the answer into out unless out is nil.
+func (s *Service) callNode(ctx context.Context, link *nodelink.Link, action, id, path string, in, out any) error {
+	call := nodeCall{Name: s.pairName()}
+	if in != nil {
+		b, err := json.Marshal(in)
+		if err != nil {
+			return err
+		}
+		call.Body = b
+	}
+	p, err := s.signCall(action, id, call.payload())
 	if err != nil {
 		return err
 	}
-	body, err := json.Marshal(nodeCall{peerProof: p, Name: name})
+	call.peerProof = p
+	body, err := json.Marshal(call)
 	if err != nil {
 		return err
 	}

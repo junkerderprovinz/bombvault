@@ -131,15 +131,30 @@ func TestAddingANodeNeedsALoginPasswordAndAName(t *testing.T) {
 // signedForNode is a call home signs for the node with id.
 func signedForNode(t *testing.T, home *instance, action, id, name string) []byte {
 	t.Helper()
-	p, err := home.svc.signCall(action, id, callPayload(name))
+	return signedBodyForNode(t, home, action, id, name, nil)
+}
+
+// signedBodyForNode is a call home signs for the node with id that says body.
+func signedBodyForNode(t *testing.T, home *instance, action, id, name string, body any) []byte {
+	t.Helper()
+	call := nodeCall{Name: name}
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		call.Body = b
+	}
+	p, err := home.svc.signCall(action, id, call.payload())
 	if err != nil {
 		t.Fatal(err)
 	}
-	body, err := json.Marshal(nodeCall{peerProof: p, Name: name})
+	call.peerProof = p
+	raw, err := json.Marshal(call)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return body
+	return raw
 }
 
 func post(h http.Handler, path string, body []byte) int {

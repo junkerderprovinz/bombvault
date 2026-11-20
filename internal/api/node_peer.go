@@ -3,25 +3,35 @@ package api
 import (
 	"bytes"
 	"cmp"
+	"context"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
 
 // The calls home makes over a node's link. A node asks home for its hello
 // alone.
 const (
-	nodeHelloPath   = "/node/hello"
-	nodeAdoptPath   = "/node/adopt"
-	nodeReleasePath = "/node/release"
+	nodeHelloPath     = "/node/hello"
+	nodeAdoptPath     = "/node/adopt"
+	nodeReleasePath   = "/node/release"
+	nodePlacementPath = "/node/placement"
 )
 
 // maxNodeCall caps what a call over a node's link may carry.
@@ -36,12 +46,16 @@ type nodeHello struct {
 	AdoptedAt int64  `json:"adoptedAt,omitempty"`
 }
 
-// nodeCall is a call home signs for a node. Name is home's, and the signature
-// covers it.
+// nodeCall is a call home signs for a node. Name is home's and Body what
+// the call says, and the signature covers both.
 type nodeCall struct {
 	peerProof
-	Name string `json:"name,omitempty"`
+	Name string          `json:"name,omitempty"`
+	Body json.RawMessage `json:"body,omitempty"`
 }
+
+// payload is what the signature of a call covers besides its claim.
+func (c nodeCall) payload() []byte { return callPayload(c.Name, string(c.Body)) }
 
 // codeNodeReleased refuses a call to a node home let go, and
 // codeNodeNotAdopted one that needs an adoption first.
@@ -129,6 +143,8 @@ func (n *nodeSide) serve(w http.ResponseWriter, r *http.Request) {
 		n.adopt(w, r)
 	case nodeReleasePath:
 		n.release(w, r)
+	case nodePlacementPath:
+		n.placement(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -208,7 +224,7 @@ func (n *nodeSide) signed(w http.ResponseWriter, r *http.Request, action string)
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "the call could not be read"})
 		return call, false
 	}
-	err := n.verify(action, callPayload(call.Name), call.peerProof)
+	err := n.verify(action, call.payload(), call.peerProof)
 	switch {
 	case errors.Is(err, errUnsignedCall) || errors.Is(err, store.ErrMemberCounter):
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": err.Error()})
@@ -235,4 +251,129 @@ func (n *nodeSide) verify(action string, payload []byte, p peerProof) error {
 		return errUnsignedCall
 	}
 	return n.s.store.AdvanceMemberCounter(n.home.ID, p.Counter)
+}
+
+// nodeDomains are the sections a node backs up.
+var nodeDomains = []string{"containers", "files"}
+
+// nodeReachWait bounds the test whether a node reaches a repository, which
+// restic would otherwise retry for minutes.
+const nodeReachWait = time.Minute
+
+// nodePlacement is where home sends one section of a node's backups, with
+// the sign-in the node uses there and the certificate it trusts the server
+// by, empty for one the system trusts.
+type nodePlacement struct {
+	Domain string     `json:"domain"`
+	Repo   string     `json:"repo"`
+	Creds  CloudCreds `json:"creds"`
+	CAPEM  string     `json:"caPem,omitempty"`
+}
+
+// nodeReach is whether a node opened the repository of a section.
+type nodeReach struct {
+	Domain  string `json:"domain"`
+	Reached bool   `json:"reached"`
+	Detail  string `json:"detail,omitempty"`
+}
+
+// nodePlacementAnswer is a node's answer to its placements.
+type nodePlacementAnswer struct {
+	OK    bool        `json:"ok"`
+	Reach []nodeReach `json:"reach"`
+}
+
+var errNodePlacement = errors.New("a placement names a section a node does not back up, a location on this host or a certificate that does not read")
+
+// placement stores where each section's backups go and answers whether this
+// node opens each repository there.
+func (n *nodeSide) placement(w http.ResponseWriter, r *http.Request) {
+	call, ok := n.signed(w, r, keydeposit.ProofNodePlacement)
+	if !ok || !n.adopted(w) {
+		return
+	}
+	var ps []nodePlacement
+	if json.Unmarshal(call.Body, &ps) != nil || checkPlacements(ps) != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": errNodePlacement.Error()})
+		return
+	}
+	ans := nodePlacementAnswer{OK: true, Reach: []nodeReach{}}
+	for _, p := range ps {
+		if err := n.s.keepPlacement(p); err != nil {
+			writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
+			return
+		}
+		ans.Reach = append(ans.Reach, n.s.reachPlacement(r.Context(), p))
+	}
+	writeJSON(w, http.StatusOK, ans)
+}
+
+func checkPlacements(ps []nodePlacement) error {
+	seen := map[string]bool{}
+	for _, p := range ps {
+		if !slices.Contains(nodeDomains, p.Domain) || seen[p.Domain] || !restic.IsRemoteRepo(p.Repo) {
+			return errNodePlacement
+		}
+		seen[p.Domain] = true
+		if p.CAPEM != "" && !certificatesIn(p.CAPEM) {
+			return errNodePlacement
+		}
+	}
+	return nil
+}
+
+// certificatesIn reports whether pemText holds certificates and nothing else.
+func certificatesIn(pemText string) bool {
+	rest, found := []byte(pemText), false
+	for {
+		block, more := pem.Decode(rest)
+		if block == nil {
+			return found && len(bytes.TrimSpace(more)) == 0
+		}
+		if block.Type != "CERTIFICATE" {
+			return false
+		}
+		if _, err := x509.ParseCertificate(block.Bytes); err != nil {
+			return false
+		}
+		rest, found = more, true
+	}
+}
+
+// keepPlacement stores p with its sign-in sealed, and puts its certificate
+// where restic trusts it.
+func (s *Service) keepPlacement(p nodePlacement) error {
+	creds, err := json.Marshal(p.Creds)
+	if err != nil {
+		return err
+	}
+	enc, err := secret.Encrypt(s.cfg.AppKey, creds)
+	if err != nil {
+		return err
+	}
+	cert := filepath.Join(trust.Dir(s.cfg.DataDir), "node-"+p.Domain+".pem")
+	if p.CAPEM == "" {
+		err = os.Remove(cert)
+		if errors.Is(err, os.ErrNotExist) {
+			err = nil
+		}
+	} else if err = os.MkdirAll(filepath.Dir(cert), 0o750); err == nil {
+		err = os.WriteFile(cert, []byte(p.CAPEM), 0o600)
+	}
+	if err != nil {
+		return err
+	}
+	return s.store.SetNodePlacement(store.NodePlacement{Domain: p.Domain, Repo: p.Repo, CredsEnc: enc, CAPEM: p.CAPEM, SetAt: time.Now().Unix()})
+}
+
+// reachPlacement opens the repository of p as this node's backups will,
+// without a lock and with no sign-in but the one home sent.
+func (s *Service) reachPlacement(ctx context.Context, p nodePlacement) nodeReach {
+	ctx, cancel := context.WithTimeout(ctx, nodeReachWait)
+	defer cancel()
+	mode := restic.Mode{Encrypted: true, Password: s.backupPassword(), NoLock: true, NoAmbientCreds: true, Env: cloudEnv(p.Creds)}
+	if err := s.engine.RepoOpensErr(ctx, p.Repo, mode); err != nil {
+		return nodeReach{Domain: p.Domain, Detail: scrubError(err)}
+	}
+	return nodeReach{Domain: p.Domain, Reached: true}
 }
