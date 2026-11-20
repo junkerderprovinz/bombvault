@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -132,5 +133,46 @@ func TestANodeAtAStorageLocationAgesByThatLocationsKeepRule(t *testing.T) {
 	}
 	if len(repos.forgets) == 0 || !strings.HasSuffix(repos.forgets[0], " 7") {
 		t.Errorf("forgets = %q, want the location's seven", repos.forgets)
+	}
+}
+
+// lockedRepos is a repository whose first prune meets a lock, and which
+// records how it was unlocked.
+type lockedRepos struct {
+	agingRepos
+	locked  bool
+	unlocks []bool
+}
+
+func (l *lockedRepos) Prune(ctx context.Context, repo string, m restic.Mode) error {
+	l.mu.Lock()
+	first := !l.locked
+	l.locked = true
+	l.mu.Unlock()
+	if first {
+		return errors.New("Fatal: unable to create lock in backend: repository is already locked")
+	}
+	return l.agingRepos.Prune(ctx, repo, m)
+}
+
+func (l *lockedRepos) Unlock(_ context.Context, _ string, removeAll bool, _ restic.Mode) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.unlocks = append(l.unlocks, removeAll)
+	return nil
+}
+
+func TestAPruneThatMeetsALockClearsOnlyStaleLocks(t *testing.T) {
+	node := newInstance(t, "vps", strings.Repeat("b2", 32))
+	repos := &lockedRepos{}
+	node.svc.engine = repos
+	if err := node.svc.ageAndPrune(context.Background(), "/srv/repo", restic.Mode{Encrypted: true, Password: "pw"}, "bv-node", restic.RetentionPolicy{KeepLast: 3, Direct: true}); err != nil {
+		t.Fatal(err)
+	}
+	if len(repos.unlocks) != 1 || repos.unlocks[0] {
+		t.Errorf("unlocks = %v, want one that leaves the locks of live runs alone", repos.unlocks)
+	}
+	if len(repos.prunes) != 1 {
+		t.Errorf("prunes = %v, want the prune made once the lock was cleared", repos.prunes)
 	}
 }
