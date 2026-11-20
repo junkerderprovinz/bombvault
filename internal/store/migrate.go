@@ -4068,6 +4068,13 @@ ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
 	PRIMARY KEY (node_id, episode)
 );`,
 	},
+	{
+		// A node that keeps its own backups is a source home fetches from.
+		version:          pullSourceNodeMigration,
+		name:             "pull_sources_node_id",
+		alreadySatisfied: columnPresent("pull_sources", "node_id"),
+		sql:              `ALTER TABLE pull_sources ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4773,6 +4780,9 @@ const nodeRunsMigration = 990
 
 // nodeEpisodesMigration numbers the alerts about a node that are still open.
 const nodeEpisodesMigration = 991
+
+// pullSourceNodeMigration numbers the node a pull source fetches from.
+const pullSourceNodeMigration = 992
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
