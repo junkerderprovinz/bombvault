@@ -75,6 +75,7 @@ Een korte catalogus van wat BombVault doet. Elke regel linkt naar de pagina die 
 - **De pagina Instanties** met de groep als net en de rollen **Ontvanger**, **Ophaler**, **ZFS-server** en **Sleutelbewaarder**. [Instanties en rollen](offsite-recovery.md#roles)
 - **Een ontvangende server** die voor je wordt ingesteld, in append-only-modus. [Ontvangserver](offsite-recovery.md#receiving-server)
 - **Een gedeelde repository** waar meerdere servers naartoe kopiëren, zodat wat ze gemeen hebben maar één keer wordt opgeslagen. Alleen de server die er eigenaar van is, schoont op. [Gedeelde repository](offsite-recovery.md#shared-repository)
+- **Nodes**: BombVault zonder webinterface op een VPS of een andere server, beheerd vanuit de thuisinstantie met zijn planningen, waarschuwingen en herstelacties. Er is geen open poort nodig. [Nodes](nodes.md)
 
 ## AI-assistenten (MCP) {#mcp}
 

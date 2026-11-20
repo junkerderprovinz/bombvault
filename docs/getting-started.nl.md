@@ -180,6 +180,17 @@ Vanaf nu worden de containers elke nacht geback-upt. Goede volgende stappen, in 
 !!! note "Controle van de hostintegratie"
     De kaart **Host-integratie** op het overzicht test elke mount en elk CLI-programma (Docker-socket, libvirt, restic, qemu-img, rclone) en meldt wat er ontbreekt, zodat je kunt controleren of de container goed is aangesloten voordat je erop vertrouwt. Hij wacht onder **Aanpassen** tot je hem toevoegt.
 
+## Een VPS als node back-uppen {#node}
+
+Een VPS of een andere kleine server heeft geen eigen BombVault met webinterface nodig. Voeg hem toe als node van deze, en deze instantie zorgt voor zijn back-ups:
+
+1. Stel onder **Instellingen, Beveiliging** een inlogwachtwoord in, als je dat nog niet hebt gedaan.
+2. Open **Instanties**, kies **Node toevoegen** en typ een naam zoals `vps-helsinki`.
+3. Kies waar zijn back-ups heen gaan, bijvoorbeeld de ontvangserver van deze instantie, en wanneer hij een back-up maakt.
+4. Kopieer het compose-bestand uit het venster naar de server, richt zijn volume Host Data en `HOST_SOURCE_ROOT` op de data waarvan je een back-up wilt en voer `docker compose up -d` uit.
+
+Zodra de node antwoordt, zegt zijn kaart **Verbonden** en verschijnen zijn containers onder **Back-ups**. [Nodes](nodes.md) loopt het met een voorbeeld door.
+
 ## Je weg vinden {#navigation}
 
 ![Instellingen als tegels, met de kaarten van de gekozen tegel ernaast. Elke wijziging wordt opgeslagen terwijl je haar maakt.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -221,6 +232,7 @@ De interfacebuild is ook voor `go run` nodig. De repository volgt onder `web/dis
 - Zorg dat een mislukking je bereikt met **[Meldingen](notifications.md)**.
 - Kijk wanneer dingen draaien onder **[Planningen](schedules.md)**.
 - Zet elke server van je groep op je telefoon met de **[Android-app](android.md)**.
+- Maak van hieruit back-ups van een VPS met een **[node](nodes.md)**.
 - De **[uitgewerkte voorbeelden](guides.md)** lopen de gebruikelijke klussen langs, en **[Functies](features.md)** toont alles wat BombVault doet.
 - Een opstelling klonen of naar een nieuwe machine verhuizen? Neem je hele configuratie mee met de kaart **Instellingen exporteren / importeren**. Zie [Configuratie](configuration.md#portable-settings-export-and-import).
 - Loop je ergens op vast? Zie **[Problemen oplossen](troubleshooting.md)**.

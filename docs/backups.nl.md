@@ -32,6 +32,8 @@ Drie knoppen boven de lijst beperken haar:
 
 Items die niet meer geïnstalleerd zijn maar nog back-ups hebben, staan apart onder **Niet geïnstalleerd (alleen back-ups)**. Herstel ze, of verwijder hun back-ups om de ruimte vrij te maken.
 
+Met [nodes](nodes.md) hebben de lijsten Containers en Mappen onder je eigen items een onderdeel voor elke node, met of de node verbonden is en hoeveel items hij heeft. **Items op** met de naam van de node verbergt de items van het onderdeel en toont ze weer. Het menu van een item biedt **Nu back-up maken**, dat zijn back-up op de node start, en **Openen**. Zijn pagina toont zijn back-ups met **Herstellen** naast elke back-up, wat het item op de node herstelt. De eigen container van de node staat niet in de lijst. Zie [De items van een node](nodes.md#entries).
+
 De hoofdactie van de pagina zweeft rechtsonder: **Nu alles back-uppen** start een run over elk ingeschakeld onderdeel. **Meer** bevat de rest:
 
 - **Selecteren** begint een selectie, zie hieronder.

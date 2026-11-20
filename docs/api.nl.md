@@ -1,6 +1,6 @@
 # API en integraties
 
-BombVault heeft een kleine HTTP-API voor scripts, dashboards en domotica. Die leest hetzelfde als wat het overzicht toont en kan een back-up starten. Al het andere, zoals herstellen, back-ups verwijderen en instellingen, blijft in de webinterface.
+BombVault heeft een kleine HTTP-API voor scripts, dashboards en domotica. Die leest hetzelfde als wat het overzicht toont en kan een back-up starten. Al het andere, zoals herstellen, back-ups verwijderen, instellingen en [nodes](#nodes), blijft in de webinterface.
 
 ## Tokens {#tokens}
 
@@ -68,6 +68,32 @@ Starts volgen dezelfde limieten als [starts via MCP](mcp.md#starting-backups): 1
 ## OpenAPI {#openapi}
 
 BombVault levert een beschrijving van deze routes op `/api/v1/openapi.json` (OpenAPI 3.1). Daar is geen token voor nodig. Laad hem in Swagger UI, Postman of een codegenerator.
+
+## Nodes {#nodes}
+
+De routes waarmee je [nodes](nodes.md) beheert, horen bij de webinterface, niet bij de token-API hierboven. Met een inlogwachtwoord ingesteld vragen ze een browsersessie uit een aanmelding op deze instantie. Een API-token of een MCP-sleutel opent er geen enkele, gekoppelde telefoons bereiken ze niet, en `/api/v1/openapi.json` beschrijft ze niet. Een node toevoegen, zijn compose-bestand opnieuw tonen en de eigen routes van een node bereiken worden geweigerd tot er een inlogwachtwoord is ingesteld. Een script dat iets wijzigt, stuurt `Content-Type: application/json`, zoals overal in de webinterface.
+
+| Route | Wat het doet |
+|---|---|
+| `GET /api/nodes` | Elke node, met of hij online is, zijn versie, waar zijn back-ups heen gaan, de planning van elk onderdeel, zijn laatste back-up, zijn fouten en zijn openstaande anomalieën |
+| `POST /api/nodes` | Voegt een node toe, zoals `{"name":"vps-helsinki"}`, en geeft hem terug met `compose`: `MODE`, `APP_KEY`, `NODE_HOME` en `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Geeft dezelfde `compose`-waarden opnieuw terug, voor **Vervangen** |
+| `POST /api/nodes/{id}/placement` | Stuurt de back-ups van de node naar een bestemming en zegt per onderdeel of de node zijn repository bereikte, met een `warning` bij een bestemming |
+| `PUT /api/nodes/{id}/schedule` | Stelt de planningen in, zoals `{"containers":"daily 03:00","files":"off"}`. Een onderdeel dat ontbreekt, houdt zijn planning |
+| `DELETE /api/nodes/{id}` | Geeft de node vrij. `told` zegt of hij het nu hoorde of het hoort zodra hij terug is |
+| `GET /api/nodes/routes` | De lijst met eigen routes van de node waaraan de thuisinstantie verzoeken doorgeeft |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Geeft het verzoek door aan de route `/api/{path}` van de node als die route op de lijst staat, en geeft het JSON-antwoord van de node terug |
+| `PUT /api/receiver/node-address` | Stelt het **Adres voor nodes** van de ontvangserver in, zoals `{"url":"https://backup.tower.example.org","caPem":""}`. Een lege `url` haalt de nodes van de server af |
+
+De drie bestemmingen:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Een verzoek aan `/api/nodes/{id}/api/...` draagt hoogstens 32 KiB. Een route die niet op de lijst staat, antwoordt `403`, een node die nog niet heeft geantwoord of die wordt vrijgegeven `409` met de code `node-not-adopted`, en een node die weg is `502` met de code `node-away`. Zo geeft `GET /api/nodes/{id}/api/runs?limit=20` de laatste 20 runs van de node terug, en maakt `POST /api/nodes/{id}/api/containers/nextcloud/backup` een back-up van zijn container `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 
