@@ -391,7 +391,7 @@ A fortress brings BombVault together with the other apps of the family, such as 
 
 ## Instances and roles {#roles}
 
-The **Instances** page (a settings tile that can be pinned to the sidebar) shows the group as a net of who does what for whom, a card for this instance and a card for every other member, the Android phones and the ZFS servers. **Pairing** at the bottom right leads to the pairing page. Which parts are on is set under **Settings, Instances, Multiple servers**: **Instances**, **Receiver** and **Pull**.
+The **Instances** page (a settings tile that can be pinned to the sidebar) shows the group as a net of who does what for whom, a card for this instance and a card for every other member, the Android phones, the ZFS servers and this instance's nodes. **Pairing** at the bottom right leads to the pairing page, and **Add node** beside it adds a node. Which parts are on is set under **Settings, Instances, Multiple servers**: **Instances**, **Receiver** and **Pull**.
 
 ![The Instances page: the group as a net, and a card per instance with its role tiles, one of them Inactive.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![The Instances page: the group as a net, and a card per instance with its role tiles, one of them Inactive.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -409,7 +409,12 @@ Switching a role on sends a request, and nothing starts until someone on the oth
 
 Below the cards, the **Shared repository** card on a box with a receiving server and the **Shared repositories** card on a member belong to the [shared repository](#shared-repository).
 
-A member can offer its own off-site storage to another member over the group. The other admin sees the offer in the member's **Details** and accepts or declines it. Accepting creates a saved sign-in and an ordinary storage location, after the same checks as a location you type in. The location comes with delete protection switched on, since the recipe the offer shows is an append-only rest-server, so **How long to keep** does not apply there. Every offer has a login and a folder of its own, so offering a section again, to the same member or another one, leaves the first partner's copies alone: add the new line to `.htpasswd` and keep the server running. Only connection details travel this way, never backup data. **Check now** asks a member to verify one section's repository. Nothing on the page can start a backup, restore or delete anything on another box.
+A member can offer its own off-site storage to another member over the group. The other admin sees the offer in the member's **Details** and accepts or declines it. Accepting creates a saved sign-in and an ordinary storage location, after the same checks as a location you type in. The location comes with delete protection switched on, since the recipe the offer shows is an append-only rest-server, so **How long to keep** does not apply there. Every offer has a login and a folder of its own, so offering a section again, to the same member or another one, leaves the first partner's copies alone: add the new line to `.htpasswd` and keep the server running. Only connection details travel this way, never backup data. **Check now** asks a member to verify one section's repository. Members leave each other's backups alone: nothing on the page starts a backup on another member, restores there or deletes anything there.
+
+**Nodes** are different, since they are not members. A node is a BombVault without a web interface that takes its orders from this instance, so this instance starts its backups and restores on it and tidies up its old backups. Each node has a card with its state, its version, where its backups go and when each section backs up, with **Edit placement**, **Replace** and **Release**. A new node says **Waiting for the node** until it first answers, and a released one that is away says **Being released**. See [Nodes](nodes.md).
+
+![The card of a node: Connected, its version, its backups on the receiving server and its plans per section.](assets/screenshots/nodes/card-dark.png#only-dark)
+![The card of a node: Connected, its version, its backups on the receiving server and its plans per section.](assets/screenshots/nodes/card-light.png#only-light)
 
 Instances that are shut down and phones with the app closed keep their card as **Inactive**, in grey, with when they were last seen, and stand dimmed in the net until you **Remove** them. Right after this server starts, such a card says **Checking** until the group is back. **Remove** works on such a card whichever parts are switched on, and it also ends the member's open requests, its idle ZFS receive slots and its waiting key requests. The **Instances** card on the pairing page lists these members as **Inactive** too.
 
@@ -444,7 +449,7 @@ The instances in your group then find the server among the providers under **Fro
 
 An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address on the pairing page first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
 
-A receiving box can also hold a [shared repository](#shared-repository) for the group.
+A receiving box can also hold a [shared repository](#shared-repository) for the group, and take the backups of this instance's [nodes](nodes.md#to-receiver) at its **Address for nodes**.
 
 ## Shared repository {#shared-repository}
 
@@ -621,6 +626,8 @@ A key keeper is an instance of your group that holds a sealed copy of this serve
 
 On that day you need three things: the twelve words of your group, the recovery code, and access to the keeper's interface, where someone has to press **Allow**. In the Emergency wizard choose **Through the group**, pick the deposit, ask for it and type the recovery code. The code is used on the new server and is not sent to the keeper. On the keeper, the request shows under **Key deposit** with who asks, whether that instance was ever seen there before and how often it asked. **Allow** hands out the sealed copy, and allowing needs a login password. The new install has 30 minutes to collect it after the Allow, a request nobody answers runs out after a day, and an instance that asks too often has to wait an hour.
 
+The deposit carries the `APP_KEY` of each of this server's [nodes](nodes.md) as well, since the kit does. With the code a keeper could open their repositories, but it can never command a node, because that takes this server's signature.
+
 Without the code nobody can open the copy, the keeper included. If the code is lost, make a new one while this server still runs. If the server is already gone, the recovery kit and the typed APP_KEY still work. The keeper can delete a deposit at any time, and the owner then has to ask again.
 
 ## Recovery kit {#recovery-kit}
@@ -628,6 +635,8 @@ Without the code nobody can open the copy, the keeper included. If the code is l
 This is the piece that makes disaster recovery possible even when there is no running BombVault.
 
 **Download recovery kit** in the **For emergencies** card under **Settings, Restore** gives you the **key**, the **derived restic password**, every **storage location** with the repository of each section, the sign-ins a new install needs to reach them, and the **exact restic commands**, so you can restore straight with the restic CLI on any machine. It needs a login password. The kit prints the key also with encryption switched off, because the container and VM definitions are always sealed with it. After a takeover it prints the taken-over backup key and this server's APP_KEY, which a new install needs only to bring back the settings. A **Save your recovery kit** card on the overview reminds you until you have stored it.
+
+A server with [nodes](nodes.md) gets a chapter **Nodes** in its kit. It names each node with its id, its `APP_KEY`, the restic password worked out from that key and the repository of each section. The node's own password opens them, and so does this server's, because this server adds its key to every repository of a node. Download the kit again after you add a node or change where its backups go. With the node's `APP_KEY` and its `NODE_HOME` a new server becomes the same node again, see [Replacing and releasing](nodes.md#replace-release).
 
 !!! danger "Store the recovery kit off the server"
     The kit contains the secret that decrypts your backups. Keep it somewhere safe and separate from the server (a password manager, a printed copy in a safe). If you lose both BombVault and `APP_KEY` with no recovery kit and no key deposit, your encrypted backups cannot be recovered.
