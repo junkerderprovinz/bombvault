@@ -75,6 +75,7 @@ Rövid katalógus arról, mit tud a BombVault. Minden sor arra az oldalra mutat,
 - **A Példányok oldal**, a csoporttal hálóként, és a **Fogadó**, **Lehívó**, **ZFS-kiszolgáló** és **Kulcsőrző** szerepekkel. [Példányok és szerepek](offsite-recovery.md#roles)
 - **Egy fogadó szerver** beállítva helyetted, append-only módban. [Fogadó szerver](offsite-recovery.md#receiving-server)
 - **Egy közös tároló**, amelybe több szerver másol, így ami közös bennük, az csak egyszer tárolódik. Csak a tulajdonos szerver nyes. [Közös tároló](offsite-recovery.md#shared-repository)
+- **Csomópontok**: webes felület nélküli BombVault egy VPS-en vagy egy másik szerveren, amelyet az anyapéldány irányít az ütemezéseivel, riasztásaival és visszaállításaival. Nem kell hozzá nyitott port. [Csomópontok](nodes.md)
 
 ## MI-asszisztensek (MCP) {#mcp}
 

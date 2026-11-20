@@ -54,6 +54,10 @@ A telefon saját kártyát kap a csoport minden szerverének Példányok oldalá
 
 A 10.0.0 előtt párosított telefon a frissítés utáni első látogatásakor kezdi aláírni a hívásait, és minden szerver megtartja az első kulcsot, amelyet a telefonhoz kap. Ha a telefon offline állapota alatt valaki más, aki ismeri a csoport szavait, előbb ér oda, az a szerver attól kezdve elutasítja a telefont, és az alkalmazás már nem tudja megnyitni a relayen keresztül. A javításhoz jelentkezz be arra a szerverre böngészőből, válaszd a **Kulcs elfelejtése** gombot a telefon kártyáján a Példányok oldalon, majd az **Elfelejtés megerősítése** gombot, és nyisd meg újra az alkalmazást. A szerver a következő híváskor a telefon saját kulcsát veszi át. Ha a telefont újra elutasítják, valaki másnak megvannak a szavak: válaszd minden példánynál a **Csoport elhagyása** lehetőséget, és párosítsd őket újra új szavakkal, mint elveszett telefon esetén.
 
+## Csomópontok {#nodes}
+
+A [csomópontokat](nodes.md) a webes felületen kezeled. Egy párosított telefon munkamenete nem éri el őket, ezért az alkalmazás nem mutat csomópontkártyákat a Példányok oldalon, **Csomópontok** kártyát az áttekintésben és csomóponti szakaszokat a **Biztonsági mentések** alatt, a **Csomópont hozzáadása** pedig azt feleli, hogy magán a szerveren kell bejelentkezni hozzá. Csomópont hozzáadásához, a mentései helyének módosításához vagy egy eleme visszaállításához nyisd meg a szervert böngészőben, és jelentkezz be a jelszóval.
+
 ## Beállítások {#settings}
 
 A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:

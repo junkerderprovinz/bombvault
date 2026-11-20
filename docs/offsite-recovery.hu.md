@@ -390,7 +390,7 @@ Az erőd egyetlen tizenkét szavas jelmondat alatt hozza össze a BombVaultot é
 
 ## Példányok és szerepek {#roles}
 
-A **Példányok** oldal (egy beállítási csempe, amelyet kitűzhetsz az oldalsávra) a csoportot hálóként mutatja, hogy ki mit csinál kinek, egy kártyával ehhez a példányhoz, és egyel minden más taghoz, az Android-telefonokhoz és a ZFS-kiszolgálókhoz. A jobb alul lévő **Párosítás** a párosítási oldalra vezet. Hogy mely részek vannak bekapcsolva, azt a **Beállítások, Példányok, Több szerver** alatt állítod: **Példányok**, **Fogadó** és **Lehívás**.
+A **Példányok** oldal (egy beállítási csempe, amelyet kitűzhetsz az oldalsávra) a csoportot hálóként mutatja, hogy ki mit csinál kinek, egy kártyával ehhez a példányhoz, és egyel minden más taghoz, az Android-telefonokhoz, a ZFS-kiszolgálókhoz és ennek a példánynak a csomópontjaihoz. A jobb alul lévő **Párosítás** a párosítási oldalra vezet, a mellette lévő **Csomópont hozzáadása** pedig csomópontot ad hozzá. Hogy mely részek vannak bekapcsolva, azt a **Beállítások, Példányok, Több szerver** alatt állítod: **Példányok**, **Fogadó** és **Lehívás**.
 
 ![A Példányok oldal: a csoport hálóként, és példányonként egy kártya a szerepcsempéivel, egyikük Inaktív.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![A Példányok oldal: a csoport hálóként, és példányonként egy kártya a szerepcsempéivel, egyikük Inaktív.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Egy kártya **Részletek** gombja megnyitja a többit: a tag fogadott tárolóit
 
 A kártyák alatt a fogadószerverrel rendelkező gépen a **Közös tároló**, egy tagon pedig a **Közös tárolók** kártya tartozik a [közös tárolóhoz](#shared-repository).
 
-Egy tag felajánlhatja a saját telephelyen kívüli tárolóját egy másik tagnak a csoporton át. A másik adminisztrátor az ajánlatot a tag **Részletek** ablakában látja, és elfogadja vagy elutasítja. Az elfogadás mentett bejelentkezést és egy átlagos mentési célt hoz létre, ugyanazokkal az ellenőrzésekkel, mint egy általad beírt célnál. A cél bekapcsolt törlés elleni védelemmel érkezik, mert az ajánlatban látható recept egy append-only rest-server, így a **Meddig őrizze meg** ott nem érvényes. Minden ajánlatnak saját bejelentkezése és saját mappája van, így ha egy szakaszt újra felajánlasz, ugyanannak a tagnak vagy egy másiknak, az első partner másolatai érintetlenek maradnak: add hozzá az új sort a `.htpasswd` fájlhoz, és hagyd futni a szervert. Csak kapcsolati adatok utaznak így, mentési adatok soha. Az **Ellenőrzés most** megkér egy tagot, hogy ellenőrizze egy szakasz tárolóját. Az oldalon semmi nem tud mentést, visszaállítást vagy törlést indítani egy másik gépen.
+Egy tag felajánlhatja a saját telephelyen kívüli tárolóját egy másik tagnak a csoporton át. A másik adminisztrátor az ajánlatot a tag **Részletek** ablakában látja, és elfogadja vagy elutasítja. Az elfogadás mentett bejelentkezést és egy átlagos mentési célt hoz létre, ugyanazokkal az ellenőrzésekkel, mint egy általad beírt célnál. A cél bekapcsolt törlés elleni védelemmel érkezik, mert az ajánlatban látható recept egy append-only rest-server, így a **Meddig őrizze meg** ott nem érvényes. Minden ajánlatnak saját bejelentkezése és saját mappája van, így ha egy szakaszt újra felajánlasz, ugyanannak a tagnak vagy egy másiknak, az első partner másolatai érintetlenek maradnak: add hozzá az új sort a `.htpasswd` fájlhoz, és hagyd futni a szervert. Csak kapcsolati adatok utaznak így, mentési adatok soha. Az **Ellenőrzés most** megkér egy tagot, hogy ellenőrizze egy szakasz tárolóját. A tagok nem nyúlnak egymás mentéseihez: az oldalon semmi nem indít mentést egy másik tagon, és semmit sem állít vissza vagy töröl ott.
+
+A **csomópontok** mások, mert nem tagok. A csomópont egy webes felület nélküli BombVault, amely ettől a példánytól kapja az utasításait, így ez a példány indítja rajta a mentéseket és a visszaállításokat, és ez rak rendet a régi mentései között. Minden csomópontnak van egy kártyája az állapotával, a verziójával, a mentései helyével és azzal, hogy melyik szakasz mikor ment, a **Cél módosítása**, a **Csere** és az **Elengedés** gombbal. Egy új csomópont kártyáján a **Várakozás a csomópontra** áll, amíg először nem válaszol, egy elengedett, de távol lévő csomópontén pedig az **Elengedés folyamatban**. Lásd: [Csomópontok](nodes.md).
+
+![Egy csomópont kártyája: Csatlakozva, a verziója, a mentései a fogadószerveren és a szakaszonkénti tervei.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Egy csomópont kártyája: Csatlakozva, a verziója, a mentései a fogadószerveren és a szakaszonkénti tervei.](assets/screenshots/nodes/card-light.png#only-light)
 
 A leállított példányok és a bezárt alkalmazású telefonok **Inaktív** állapotban, szürkén megtartják a kártyájukat, azzal együtt, hogy mikor látták őket utoljára, és a hálóban halványítva állnak, amíg az **Eltávolítás** gombbal el nem távolítod őket. Közvetlenül ennek a szervernek az indulása után egy ilyen kártya **Ellenőrzés** állapotot mutat, amíg a csoport újra elérhető nem lesz. Az **Eltávolítás** egy ilyen kártyán attól függetlenül működik, hogy mely részek vannak bekapcsolva, és a tag nyitott kéréseit, kihasználatlan ZFS-fogadóhelyeit és várakozó kulcskéréseit is lezárja. A párosítási oldal **Példányok** kártyája ezeket a tagokat szintén **Inaktív** állapotban sorolja fel.
 
@@ -443,7 +448,7 @@ A csoportod példányai ezután a szolgáltatók között **A csoportodból** al
 
 Az a példány, amely a fogadó gépet csak a relayn át éri el, nem használhatja a szervert, mert a relay nem szállít mentéseket. Előbb add hozzá a fogadó gép címét a párosítási oldalon. Ha a BombVault saját IP-címen fut (például br0-n), töltsd ki a **Cím a partnereknek** mezőt, mert a szerver a gazdagép címén hallgat.
 
-A fogadó gép a csoport számára egy [közös tárolót](#shared-repository) is tarthat.
+A fogadó gép a csoport számára egy [közös tárolót](#shared-repository) is tarthat, és a **Cím a csomópontoknak** címén fogadhatja ennek a példánynak a [csomópontjaitól](nodes.md#to-receiver) érkező mentéseket.
 
 ## Közös tároló {#shared-repository}
 
@@ -620,6 +625,8 @@ A kulcsőrző a csoportod egy példánya, amely ennek a szervernek a helyreáll�
 
 Azon a napon három dolog kell: a csoportod tizenkét szava, a feloldókód, és hozzáférés az őrző felületéhez, ahol valakinek meg kell nyomnia az **Engedélyezés** gombot. A Vészvarázslóban válaszd **A csoporton át** opciót, válaszd ki a letétet, kérd el, és add meg a feloldókódot. A kódot az új szerveren használják, az őrzőnek nem küldik el. Az őrzőn a kérés a **Kulcsletét** alatt jelenik meg: ki kéri, látták-e valaha ott azt a példányt, és hányszor kért. Az **Engedélyezés** kiadja a lezárt másolatot, az engedélyezéshez pedig bejelentkezési jelszó kell. Az új telepítésnek az Engedélyezés után 30 perce van átvenni, a kérés, amelyre senki sem válaszol, egy nap után lejár, és az a példány, amely túl gyakran kér, egy órát vár.
 
+A letét ennek a szervernek minden [csomópontja](nodes.md) `APP_KEY` kulcsát is viszi, mert a csomag is tartalmazza. A kóddal egy őrző meg tudná nyitni a tárolóikat, de csomópontot soha nem tud utasítani, mert ahhoz ennek a szervernek az aláírása kell.
+
 Kód nélkül senki nem tudja megnyitni a másolatot, az őrző sem. Ha a kód elveszett, készíts újat, amíg ez a szerver még fut. Ha a szerver már eltűnt, a helyreállítási csomag és a beírt APP_KEY továbbra is működik. Az őrző bármikor törölhet egy letétet, és a tulajdonosnak ezután újra kérnie kell.
 
 ## Helyreállítási csomag {#recovery-kit}
@@ -627,6 +634,8 @@ Kód nélkül senki nem tudja megnyitni a másolatot, az őrző sem. Ha a kód e
 Ez az a darab, amely akkor is lehetővé teszi a katasztrófa utáni helyreállítást, ha nincs futó BombVault.
 
 A **Beállítások, Visszaállítás** alatti **Vészhelyzetre** kártyán a **Helyreállítási csomag letöltése** megadja a **kulcsot**, a **származtatott restic-jelszót**, minden **mentési célt** az egyes szakaszok tárolójával, azokat a bejelentkezéseket, amelyek egy új telepítésnek kellenek az eléréshez, és a **pontos restic-parancsokat**, így közvetlenül a restic CLI-vel visszaállíthatsz bármely gépen. Bejelentkezési jelszó kell hozzá. A csomag a kulcsot kikapcsolt titkosításnál is kiírja, mert a konténer- és VM-definíciókat mindig ezzel zárják le. Átvétel után kiírja az átvett mentési kulcsot és ennek a szervernek az APP_KEY-ét, amelyre egy új telepítésnek csak a beállítások visszahozásához van szüksége. Az Áttekintés **Mentsd el a helyreállítási csomagot** kártyája emlékeztet, amíg el nem tároltad.
+
+Egy [csomópontokkal](nodes.md) rendelkező szerver csomagjában **Csomópontok** fejezet is van. Ez minden csomópontot megnevez az azonosítójával, az `APP_KEY` kulcsával, az ebből a kulcsból kiszámított restic-jelszóval és az egyes szakaszok tárolójával. A csomópont saját jelszava megnyitja őket, és ennek a szervernek a jelszava is, mert ez a szerver a csomópontok minden tárolójához hozzáadja a saját kulcsát. Töltsd le újra a csomagot, ha csomópontot adsz hozzá, vagy módosítod, hová kerülnek a mentései. A csomópont `APP_KEY` kulcsával és a `NODE_HOME` értékével egy új szerver újra ugyanaz a csomópont lesz, lásd: [Csere és elengedés](nodes.md#replace-release).
 
 !!! danger "A helyreállítási csomagot a szerveren kívül tárold"
     A csomag tartalmazza azt a titkot, amely visszafejti a mentéseidet. Tartsd biztos helyen, a szervertől elkülönítve (jelszókezelő, kinyomtatott példány egy széfben). Ha a BombVaultot és az `APP_KEY` értékét is elveszíted helyreállítási csomag és kulcsletét nélkül, a titkosított mentéseidet nem lehet visszaszerezni.
