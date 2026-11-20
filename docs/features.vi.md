@@ -75,7 +75,7 @@ Một danh mục ngắn về những gì BombVault làm. Mỗi dòng liên kết
 - **Trang Phiên bản** với nhóm hiển thị như một mạng và các vai trò **Bộ nhận**, **Bên kéo**, **Máy chủ ZFS** và **Bên giữ khóa**. [Phiên bản và vai trò](offsite-recovery.md#roles)
 - **Một máy chủ nhận** được thiết lập sẵn cho bạn, ở chế độ append-only. [Máy chủ nhận](offsite-recovery.md#receiving-server)
 - **Một kho chung** mà nhiều máy chủ cùng sao chép vào, nên phần chúng có chung chỉ được lưu một lần. Chỉ máy chủ giữ kho mới dọn bớt. [Kho chung](offsite-recovery.md#shared-repository)
-- **Node**: BombVault không có giao diện web trên một VPS hoặc một máy chủ khác, được home điều hành với lịch, cảnh báo và khôi phục của nó. Không cần mở cổng nào. [Node](nodes.md)
+- **Node**: BombVault không có giao diện web trên một VPS hoặc một máy chủ khác, được phiên bản chủ điều hành với lịch, cảnh báo và khôi phục của nó. Không cần mở cổng nào. [Node](nodes.md)
 
 ## Trợ lý AI (MCP) {#mcp}
 

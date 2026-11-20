@@ -81,7 +81,7 @@ BombVault מגישה תיאור של הנתיבים האלה ב-`/api/v1/openapi
 | `POST /api/nodes/{id}/placement` | שולח את הגיבויים של הצומת למקום מסוים ועונה לכל תחום אם הצומת הגיע למאגר שלו, עם `warning` ליעד |
 | `PUT /api/nodes/{id}/schedule` | קובע את התוכניות, כמו `{"containers":"daily 03:00","files":"off"}`. תחום שלא צוין שומר על התוכנית שלו |
 | `DELETE /api/nodes/{id}` | משחרר את הצומת. `told` אומר אם הוא שמע על זה עכשיו או ישמע כשיחזור |
-| `GET /api/nodes/routes` | הרשימה של הנתיבים של הצומת עצמו שהבית מעביר אליהם בקשות |
+| `GET /api/nodes/routes` | הרשימה של הנתיבים של הצומת עצמו שמופע הבית מעביר אליהם בקשות |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | מעביר את הבקשה לנתיב `/api/{path}` של הצומת כשהנתיב הזה ברשימה, ומחזיר את תשובת ה-JSON של הצומת |
 | `PUT /api/receiver/node-address` | קובע את **כתובת לצמתים** של שרת המקלט, כמו `{"url":"https://backup.tower.example.org","caPem":""}`. ‏`url` ריק מוציא ממנו את הצמתים |
 

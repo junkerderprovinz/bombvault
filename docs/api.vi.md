@@ -81,7 +81,7 @@ Các route chăm sóc [node](nodes.md) thuộc về giao diện web, không thu�
 | `POST /api/nodes/{id}/placement` | Gửi bản sao lưu của node tới một nơi và trả lời theo từng phần xem node có tới được kho của nó không, kèm một `warning` cho đích sao lưu |
 | `PUT /api/nodes/{id}/schedule` | Đặt kế hoạch, như `{"containers":"daily 03:00","files":"off"}`. Phần nào không có trong đó thì giữ kế hoạch cũ |
 | `DELETE /api/nodes/{id}` | Giải phóng node. `told` cho biết node đã nghe ngay hay sẽ nghe khi quay lại |
-| `GET /api/nodes/routes` | Danh sách các route riêng của node mà home chuyển yêu cầu tới |
+| `GET /api/nodes/routes` | Danh sách các route riêng của node mà phiên bản chủ chuyển yêu cầu tới |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Chuyển yêu cầu tới route `/api/{path}` của node khi route đó có trong danh sách, và trả về câu trả lời JSON của node |
 | `PUT /api/receiver/node-address` | Đặt **Địa chỉ cho node** của máy chủ nhận, như `{"url":"https://backup.tower.example.org","caPem":""}`. Một `url` trống sẽ đưa các node ra khỏi đó |
 
