@@ -53,6 +53,9 @@ var sealSites = map[string]string{
 	"letIn":                  "shared_repo_joins.once_enc",
 	"addOwnSharedKey":        "shared_repo_joins.login_enc",
 	"sealFortress":           "fortress_membership.secret_enc",
+	"AddNode":                "nodes.app_key_enc",
+	"watchNodeRepos":         "received_repos.restic_password_enc",
+	"keepPlacement":          "node_placements.creds_enc",
 }
 
 // sealingFunctions returns the functions of the module, tests left out, that
