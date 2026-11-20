@@ -20,6 +20,7 @@ import (
 // node holds.
 type fakeNode struct {
 	mu      sync.Mutex
+	asked   int
 	away    bool
 	busy    bool
 	runs    []nodeRunReport
@@ -30,6 +31,9 @@ type fakeNode struct {
 func (f *fakeNode) call(_ context.Context, _, action, path string, in, out any) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if path == nodeAPIPath && in.(nodeAPIRequest).Path == "/api/runs" {
+		f.asked++
+	}
 	if f.away {
 		return errNodeAway
 	}
@@ -68,20 +72,38 @@ func (f *fakeNode) set(change func(f *fakeNode)) {
 	change(f)
 }
 
+func (f *fakeNode) polls() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.asked
+}
+
 func (f *fakeNode) starts() []string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.started)
 }
 
+// watchedID is the node a watchUnderTest watches.
+const watchedID = "aabbccddeeff00112233445566778899"
+
 // watchUnderTest is a nodeWatch over one adopted node, with what it sent and
-// pruned.
+// pruned. A prune waits while hold is open.
 type watchUnderTest struct {
 	w      *nodeWatch
 	st     *store.Repo
 	node   *fakeNode
 	alerts []string
-	pruned int
+
+	mu     sync.Mutex
+	pruned []string
+	hold   chan struct{}
+}
+
+func (wt *watchUnderTest) prunes() []string {
+	wt.mu.Lock()
+	defer wt.mu.Unlock()
+	return slices.Clone(wt.pruned)
 }
 
 // inWeek is a time in the week of Wednesday 18 November 2026, on the clock the
@@ -94,7 +116,7 @@ func newWatchUnderTest(t *testing.T, n store.Node) *watchUnderTest {
 	t.Helper()
 	wt := &watchUnderTest{st: newTestStore(t), node: &fakeNode{}}
 	if n.ID == "" {
-		n.ID = "aa"
+		n.ID = watchedID
 	}
 	n.Name, n.AppKeyEnc, n.RelayMode, n.CreatedAt = "vps", []byte{1}, "project", inWeek(16, 12, 0).Unix()
 	if n.AdoptedAt == 0 {
@@ -105,8 +127,25 @@ func newWatchUnderTest(t *testing.T, n store.Node) *watchUnderTest {
 	}
 	wt.w = newNodeWatch(wt.st, wt.node.call,
 		func(_ context.Context, title, message string) { wt.alerts = append(wt.alerts, title+"\n"+message) },
-		func(context.Context, store.Node) error { wt.pruned++; return nil })
+		func(_ context.Context, _ store.Node, domain string) error {
+			wt.mu.Lock()
+			hold := wt.hold
+			wt.mu.Unlock()
+			if hold != nil {
+				<-hold
+			}
+			wt.mu.Lock()
+			defer wt.mu.Unlock()
+			wt.pruned = append(wt.pruned, domain)
+			return nil
+		})
 	return wt
+}
+
+// pruneDone waits until home recorded the prune of window.
+func (wt *watchUnderTest) pruneDone(t *testing.T, window time.Time) {
+	t.Helper()
+	eventually(t, "the prune to be recorded", func() bool { return wt.get(t).PrunedWindow == window.Unix() })
 }
 
 func (wt *watchUnderTest) tick(t *testing.T, now time.Time) {
@@ -118,7 +157,7 @@ func (wt *watchUnderTest) tick(t *testing.T, now time.Time) {
 
 func (wt *watchUnderTest) get(t *testing.T) store.Node {
 	t.Helper()
-	n, err := wt.st.GetNode("aa")
+	n, err := wt.st.GetNode(watchedID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +175,7 @@ func TestHomeStartsANodesSectionOncePerFireAndOnlyOnceItKnowsWhereBackupsGo(t *t
 	if got := wt.node.starts(); len(got) != 0 {
 		t.Fatalf("a node with nowhere to back up to was started: %v", got)
 	}
-	if err := wt.st.SetNodePlaced("aa", nodePlaceReceiver, "https://backup.example.org"); err != nil {
+	if err := wt.st.SetNodePlaced(watchedID, nodePlaceReceiver, "https://backup.example.org"); err != nil {
 		t.Fatal(err)
 	}
 	wt.tick(t, inWeek(18, 3, 6))
@@ -194,20 +233,99 @@ func TestNoNodeBackupStartsWhileHomePrunesItsRepositories(t *testing.T) {
 		f.runs = []nodeRunReport{{ID: "r1", Kind: "backup", Domain: "container", Target: "web", Status: "running", StartedAt: inWeek(22, 2, 50).Unix()}}
 	})
 	wt.tick(t, sunday)
-	if wt.pruned != 0 || len(wt.node.starts()) != 0 {
-		t.Fatalf("with a backup still running on the node: pruned %d, started %v", wt.pruned, wt.node.starts())
+	if len(wt.prunes()) != 0 || len(wt.node.starts()) != 0 {
+		t.Fatalf("with a backup still running on the node: pruned %v, started %v", wt.prunes(), wt.node.starts())
 	}
 	wt.node.set(func(f *fakeNode) { f.runs[0].Status, f.runs[0].FinishedAt = "success", finished(inWeek(22, 3, 4)) })
 	wt.tick(t, sunday.Add(nodePollEvery))
-	if wt.pruned != 1 || wt.get(t).PrunedWindow != inWeek(22, 3, 0).Unix() {
-		t.Fatalf("pruned %d times in window %d", wt.pruned, wt.get(t).PrunedWindow)
+	wt.pruneDone(t, inWeek(22, 3, 0))
+	if got := wt.prunes(); !slices.Equal(got, nodeDomains) {
+		t.Fatalf("pruned %v, want each section once", got)
 	}
+	wt.tick(t, sunday.Add(nodePollEvery+time.Minute))
 	if got := wt.node.starts(); !slices.Equal(got, []string{"containers"}) {
 		t.Errorf("starts after the prune = %v, want the one it held", got)
 	}
 	wt.tick(t, sunday.Add(2*nodePollEvery))
-	if wt.pruned != 1 {
-		t.Errorf("pruned %d times in one window", wt.pruned)
+	if got := wt.prunes(); len(got) != len(nodeDomains) {
+		t.Errorf("pruned %v in one window", got)
+	}
+}
+
+func TestATickGoesOnWhileAPruneRuns(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{ContainersCadence: "daily 03:00", Placement: nodePlaceReceiver})
+	hold := make(chan struct{})
+	wt.mu.Lock()
+	wt.hold = hold
+	wt.mu.Unlock()
+	sunday := inWeek(22, 3, 2)
+	done := make(chan struct{})
+	go func() {
+		wt.tick(t, sunday)
+		wt.tick(t, sunday.Add(nodePollEvery))
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("a tick waited for the prune")
+	}
+	if got := wt.node.polls(); got != 2 {
+		t.Errorf("the node was asked %d times while home pruned, want 2", got)
+	}
+	if got := wt.node.starts(); len(got) != 0 {
+		t.Errorf("starts while home prunes = %v", got)
+	}
+	close(hold)
+	wt.pruneDone(t, inWeek(22, 3, 0))
+	if got := wt.prunes(); !slices.Equal(got, nodeDomains) {
+		t.Errorf("pruned %v, want each section once though two ticks saw the window", got)
+	}
+}
+
+func TestHomePrunesANodeWhenItPrunesItsOwnCopiesAtTheLocationAndOtherwiseOnSunday(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{})
+	loc, err := wt.st.SaveDestination(store.OffsiteTarget{Name: "Wasabi", Repo: "s3:https://s3.example.org/bucket"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := wt.st.EnsureDestinationTarget(loc.ID, "files", "s3:https://s3.example.org/bucket/files"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := wt.st.MutateSettings(func(s *store.Settings) error { s.FilesOffsiteSchedule = "daily 05:00"; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if err := wt.st.SetNodePlaced(watchedID, nodePlaceLocation, loc.ID); err != nil {
+		t.Fatal(err)
+	}
+	wt.tick(t, inWeek(18, 5, 10))
+	wt.pruneDone(t, inWeek(18, 5, 0))
+
+	receiver := newWatchUnderTest(t, store.Node{Placement: nodePlaceReceiver})
+	receiver.tick(t, inWeek(18, 5, 10))
+	if got := receiver.prunes(); len(got) != 0 {
+		t.Errorf("a node on the receiver was pruned on a Wednesday: %v", got)
+	}
+	receiver.tick(t, inWeek(22, 3, 10))
+	receiver.pruneDone(t, inWeek(22, 3, 0))
+}
+
+func TestANodeIsOutOfReachAfterTheDeadMansHoursOfItsRepositories(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{SeenAt: inWeek(18, 3, 0).Unix()})
+	for _, d := range nodeDomains {
+		hours := map[string]int{"containers": 2, "files": 30}[d]
+		if _, err := wt.st.CreateReceivedRepo(store.ReceivedRepo{ID: nodeRepoID(watchedID, d), NodeID: watchedID, Repo: "backups/vps/" + d, DeadManHours: hours, Enabled: true}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	wt.node.set(func(f *fakeNode) { f.away = true })
+	wt.tick(t, inWeek(18, 4, 55))
+	if len(wt.alerts) != 0 {
+		t.Fatalf("alerts before two hours = %q", wt.alerts)
+	}
+	wt.tick(t, inWeek(18, 5, 0))
+	if len(wt.alerts) != 1 {
+		t.Errorf("alerts after the shortest dead man's switch = %q", wt.alerts)
 	}
 }
 
@@ -232,14 +350,14 @@ func TestAFailedNodeRunAlertsOncePerEpisodeWithTheNodesName(t *testing.T) {
 		t.Fatalf("a second failure in the same episode alerted again: %q", wt.alerts)
 	}
 	step(run("r3", "success", "", 20))
-	if open, _ := wt.st.NodeEpisodes("aa"); len(open) != 0 {
+	if open, _ := wt.st.NodeEpisodes(watchedID); len(open) != 0 {
 		t.Fatalf("a success left %v open", open)
 	}
 	step(run("r4", "failed", "repository locked", 30))
 	if len(wt.alerts) != 2 || !strings.Contains(wt.alerts[1], "repository locked") {
 		t.Errorf("alerts = %q, want a new episode", wt.alerts)
 	}
-	if runs, _ := wt.st.NodeRuns("aa"); len(runs) != 4 || runs[0].Domain != "containers" {
+	if runs, _ := wt.st.NodeRuns(watchedID); len(runs) != 4 || runs[0].Domain != "containers" {
 		t.Errorf("home kept %+v", runs)
 	}
 }
@@ -259,13 +377,13 @@ func TestANodeAwayForHoursAlertsOnceAndClearsWhenItIsBack(t *testing.T) {
 	wt.node.set(func(f *fakeNode) { f.away = false; f.open = AnomalyOpenCounts{Critical: 1, Warning: 2, Info: 4} })
 	back := inWeek(18, 3, 0).Add(nodeAwayAlertAfter + 2*nodePollEvery)
 	wt.tick(t, back)
-	if open, _ := wt.st.NodeEpisodes("aa"); len(open) != 0 {
+	if open, _ := wt.st.NodeEpisodes(watchedID); len(open) != 0 {
 		t.Errorf("the outage is still open once back: %v", open)
 	}
 	if n := wt.get(t); n.SeenAt != back.Unix() {
 		t.Errorf("seen at %d, want %d", n.SeenAt, back.Unix())
 	}
-	if got := wt.w.anomalies("aa"); got != 3 {
+	if got := wt.w.anomalies(watchedID); got != 3 {
 		t.Errorf("anomalies = %d, want the critical and warning ones", got)
 	}
 }
@@ -277,6 +395,7 @@ func TestTheEpisodesOfANodeFollowWhatHomeLearnedOfIt(t *testing.T) {
 		return store.NodeRun{ID: id, Domain: domain, Target: target, Status: status, StartedAt: started, FinishedAt: started + 60}
 	}
 	webFailed := nodeFailedEpisode("containers", "web")
+	sixHours := int64(6 * 3600)
 	cases := []struct {
 		name    string
 		open    map[string]int64
@@ -284,30 +403,30 @@ func TestTheEpisodesOfANodeFollowWhatHomeLearnedOfIt(t *testing.T) {
 		opened  []string
 		closed  []string
 	}{
-		{name: "a node in reach with nothing failed", sighted: nodeSighting{now: now, seenAt: now, reached: true}},
-		{name: "a node away for a short while", sighted: nodeSighting{now: now, seenAt: hours(1)}},
-		{name: "a node away for hours", sighted: nodeSighting{now: now, seenAt: hours(7)}, opened: []string{nodeAwayEpisode}},
-		{name: "a node still away", open: map[string]int64{nodeAwayEpisode: hours(1)}, sighted: nodeSighting{now: now, seenAt: hours(8)}},
-		{name: "a node that is back", open: map[string]int64{nodeAwayEpisode: hours(1)}, sighted: nodeSighting{now: now, seenAt: now, reached: true}, closed: []string{nodeAwayEpisode}},
+		{name: "a node in reach with nothing failed", sighted: nodeSighting{now: now, awayAfter: sixHours, seenAt: now, reached: true}},
+		{name: "a node away for a short while", sighted: nodeSighting{now: now, awayAfter: sixHours, seenAt: hours(1)}},
+		{name: "a node away for hours", sighted: nodeSighting{now: now, awayAfter: sixHours, seenAt: hours(7)}, opened: []string{nodeAwayEpisode}},
+		{name: "a node still away", open: map[string]int64{nodeAwayEpisode: hours(1)}, sighted: nodeSighting{now: now, awayAfter: sixHours, seenAt: hours(8)}},
+		{name: "a node that is back", open: map[string]int64{nodeAwayEpisode: hours(1)}, sighted: nodeSighting{now: now, awayAfter: sixHours, seenAt: now, reached: true}, closed: []string{nodeAwayEpisode}},
 		{
 			name:    "a new failure",
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{ran("r1", "containers", "web", "failed", hours(1))}},
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{ran("r1", "containers", "web", "failed", hours(1))}},
 			opened:  []string{webFailed},
 		},
 		{
 			name:    "a failure in an open episode",
 			open:    map[string]int64{webFailed: hours(2)},
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{ran("r2", "containers", "web", "failed", hours(1))}},
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{ran("r2", "containers", "web", "failed", hours(1))}},
 		},
 		{
 			name:    "a success after the failures",
 			open:    map[string]int64{webFailed: hours(2)},
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{ran("r3", "containers", "web", "success", hours(1)), ran("r2", "containers", "web", "failed", hours(2))}},
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{ran("r3", "containers", "web", "success", hours(1)), ran("r2", "containers", "web", "failed", hours(2))}},
 			closed:  []string{webFailed},
 		},
 		{
 			name: "a run under way after a failure",
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{
 				{ID: "r4", Domain: "containers", Target: "web", Status: "running", StartedAt: hours(1)},
 				ran("r3", "containers", "web", "failed", hours(2)),
 			}},
@@ -315,7 +434,7 @@ func TestTheEpisodesOfANodeFollowWhatHomeLearnedOfIt(t *testing.T) {
 		},
 		{
 			name: "failures of two entries",
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{
 				ran("r5", "files", "photos", "failed", hours(1)),
 				ran("r6", "containers", "web", "failed", hours(2)),
 				ran("r7", "containers", "db", "success", hours(3)),
@@ -324,7 +443,7 @@ func TestTheEpisodesOfANodeFollowWhatHomeLearnedOfIt(t *testing.T) {
 		},
 		{
 			name:    "a cancelled run",
-			sighted: nodeSighting{now: now, reached: true, seenAt: now, runs: []store.NodeRun{ran("r8", "containers", "web", "cancelled", hours(1))}},
+			sighted: nodeSighting{now: now, awayAfter: sixHours, reached: true, seenAt: now, runs: []store.NodeRun{ran("r8", "containers", "web", "cancelled", hours(1))}},
 		},
 	}
 	for _, c := range cases {

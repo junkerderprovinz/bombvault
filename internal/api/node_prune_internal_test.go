@@ -82,8 +82,10 @@ func TestHomeAgesANodesRepositoriesByItsRulesUnderTheNodesHostAlone(t *testing.T
 		}
 	}
 
-	if err := home.svc.pruneNodeRepos(context.Background(), n); err != nil {
-		t.Fatal(err)
+	for _, d := range nodeDomains {
+		if err := home.svc.pruneNodeSection(context.Background(), n, d); err != nil {
+			t.Fatal(err)
+		}
 	}
 	host := restickey.Host(nodeKey)
 	repo := "rest:https://backup.example.org/vps/containers"
@@ -94,5 +96,41 @@ func TestHomeAgesANodesRepositoriesByItsRulesUnderTheNodesHostAlone(t *testing.T
 	}
 	if !slices.Equal(repos.prunes, []string{repo + " " + host}) {
 		t.Errorf("prunes = %q, want the repository a watch is on, once", repos.prunes)
+	}
+}
+
+func TestANodeAtAStorageLocationAgesByThatLocationsKeepRule(t *testing.T) {
+	home := newInstance(t, "home", strings.Repeat("a1", 32))
+	repos := &agingRepos{}
+	home.svc.engine = repos
+	if _, err := home.st.MutateSettings(func(s *store.Settings) error { s.RetentionKeepLast = 3; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	loc, err := home.st.SaveDestination(store.OffsiteTarget{Name: "Wasabi", Repo: "s3:https://s3.example.org/bucket", RetentionKeepLast: 7, Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	nodeKey := strings.Repeat("b2", 32)
+	keyEnc, err := secret.Encrypt(home.svc.cfg.AppKey, []byte(nodeKey))
+	if err != nil {
+		t.Fatal(err)
+	}
+	passwordEnc, err := secret.Encrypt(home.svc.cfg.AppKey, []byte(restickey.Derive(nodeKey)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := store.Node{ID: "aabbccddeeff00", Name: "vps", AppKeyEnc: keyEnc, RelayMode: "project", CreatedAt: 1, AdoptedAt: 1, Placement: nodePlaceLocation, PlacementTarget: loc.ID}
+	if err := home.st.AddNode(n); err != nil {
+		t.Fatal(err)
+	}
+	repo := "s3:https://s3.example.org/bucket/bombvault-nodes/aabbccddeeff/files"
+	if _, err := home.st.CreateReceivedRepo(store.ReceivedRepo{ID: nodeRepoID(n.ID, "files"), NodeID: n.ID, Repo: repo, ResticPasswordEnc: passwordEnc, Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := home.svc.pruneNodeSection(context.Background(), n, "files"); err != nil {
+		t.Fatal(err)
+	}
+	if len(repos.forgets) == 0 || !strings.HasSuffix(repos.forgets[0], " 7") {
+		t.Errorf("forgets = %q, want the location's seven", repos.forgets)
 	}
 }

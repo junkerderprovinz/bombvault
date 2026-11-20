@@ -25,7 +25,7 @@ import (
 const nodePollEvery = 5 * time.Minute
 
 // nodeAwayAlertAfter is how long a node may be out of reach before home says
-// so.
+// so, while none of its repositories has a dead man's switch of its own.
 const nodeAwayAlertAfter = 6 * time.Hour
 
 // nodeRunsAsked is how many of its newest runs a node is asked for.
@@ -36,9 +36,10 @@ const nodeRunsAsked = 50
 // node lost track of.
 const nodeRunLongest = 24 * time.Hour
 
-// The prune window home ages and prunes its nodes' repositories in, as a
-// shared repository's owner does by default. Home starts no run on a node
-// while the window is open and it has not pruned there yet.
+// The prune window home ages and prunes its nodes' repositories in when the
+// place they lie at has no schedule of its own, as a shared repository's owner
+// does by default. Home starts no run on a node while the window is open and
+// it has not pruned there yet.
 const (
 	nodePruneCadence = "weekly sun 03:00"
 	nodePruneHours   = 6
@@ -60,24 +61,26 @@ type nodeWatch struct {
 	store *store.Repo
 	call  func(ctx context.Context, id, action, path string, in, out any) error
 	alert func(ctx context.Context, title, message string)
-	prune func(ctx context.Context, n store.Node) error
+	prune func(ctx context.Context, n store.Node, domain string) error
 
-	// ticking lets a tick go by while the one before still runs, such as a
-	// long prune.
+	// ticking lets a tick go by while the one before still runs, such as one
+	// waiting on a slow relay.
 	ticking sync.Mutex
 	mu      sync.Mutex
 	// asked is when home last asked each node how its runs went, held when a
-	// busy node may be asked to start a section again, and open the open
-	// anomalies each node last reported.
-	asked map[string]time.Time
-	held  map[string]time.Time
-	open  map[string]int
+	// busy node may be asked to start a section again, open the open
+	// anomalies each node last reported, and pruning the repositories a prune
+	// runs in.
+	asked   map[string]time.Time
+	held    map[string]time.Time
+	open    map[string]int
+	pruning map[string]bool
 }
 
 func newNodeWatch(st *store.Repo, call func(ctx context.Context, id, action, path string, in, out any) error,
-	alert func(ctx context.Context, title, message string), prune func(ctx context.Context, n store.Node) error) *nodeWatch {
+	alert func(ctx context.Context, title, message string), prune func(ctx context.Context, n store.Node, domain string) error) *nodeWatch {
 	return &nodeWatch{store: st, call: call, alert: alert, prune: prune,
-		asked: map[string]time.Time{}, held: map[string]time.Time{}, open: map[string]int{}}
+		asked: map[string]time.Time{}, held: map[string]time.Time{}, open: map[string]int{}, pruning: map[string]bool{}}
 }
 
 // Tick runs for every adopted node what is due at now: learning how its runs
@@ -112,23 +115,50 @@ func (w *nodeWatch) tickNode(ctx context.Context, n store.Node, now time.Time) e
 			return err
 		}
 	}
-	if window, open := nodePruneWindow(n, now); open {
+	if window, open := w.pruneWindow(n, now); open {
 		runs, err := w.store.NodeRuns(n.ID)
 		if err != nil {
 			return err
 		}
-		if nodeRunning(runs, now) {
-			return nil
+		if !nodeRunning(runs, now) {
+			w.pruneInBackground(ctx, n, window)
 		}
-		if err := w.prune(ctx, n); err != nil {
-			log.Printf("nodes: %s: the prune of its repositories failed and waits for the next window: %v", n.Name, err) //nolint:gosec // G706: the name is one home gave the node
-		}
-		if err := w.store.SetNodePruned(n.ID, window.Unix()); err != nil {
-			return err
-		}
-		n.PrunedWindow = window.Unix()
+		return nil
 	}
 	return w.start(ctx, n, now)
+}
+
+// pruneInBackground prunes each repository of n unless a prune runs there
+// already, and records the window once all are done. The node starts no run
+// until then.
+func (w *nodeWatch) pruneInBackground(ctx context.Context, n store.Node, window time.Time) {
+	repos := make([]string, len(nodeDomains))
+	for i, d := range nodeDomains {
+		repos[i] = n.ID + "/" + d
+	}
+	w.mu.Lock()
+	if slices.ContainsFunc(repos, func(r string) bool { return w.pruning[r] }) {
+		w.mu.Unlock()
+		return
+	}
+	for _, r := range repos {
+		w.pruning[r] = true
+	}
+	w.mu.Unlock()
+	ctx = context.WithoutCancel(ctx)
+	go func() {
+		for i, d := range nodeDomains {
+			if err := w.prune(ctx, n, d); err != nil {
+				log.Printf("nodes: %s: the prune of its %s failed and waits for the next window: %v", n.Name, d, err) //nolint:gosec // G706: the name is one home gave the node
+			}
+			w.mu.Lock()
+			delete(w.pruning, repos[i])
+			w.mu.Unlock()
+		}
+		if err := w.store.SetNodePruned(n.ID, window.Unix()); err != nil {
+			log.Printf("nodes: %s: %v", n.Name, err) //nolint:gosec // G706: the name is one home gave the node
+		}
+	}()
 }
 
 // Next is when the soonest section of a node comes up next.
@@ -165,7 +195,7 @@ func (w *nodeWatch) start(ctx context.Context, n store.Node, now time.Time) erro
 	if n.Placement == "" || n.PlacementDue {
 		return nil
 	}
-	if _, open := nodePruneWindow(n, now); open {
+	if _, open := w.pruneWindow(n, now); open {
 		return nil
 	}
 	for _, d := range nodeDomains {
@@ -305,7 +335,7 @@ func (w *nodeWatch) raise(ctx context.Context, n store.Node, reached bool, now t
 	if err != nil {
 		return err
 	}
-	seen := nodeSighting{now: now.Unix(), seenAt: max(n.SeenAt, n.AdoptedAt), reached: reached, runs: runs}
+	seen := nodeSighting{now: now.Unix(), seenAt: max(n.SeenAt, n.AdoptedAt), awayAfter: int64(w.awayAfter(n).Seconds()), reached: reached, runs: runs}
 	opened, closed := nodeEpisodes(open, seen)
 	for _, ep := range opened {
 		title, message := nodeAlertText(n.Name, ep, seen)
@@ -323,12 +353,14 @@ func (w *nodeWatch) raise(ctx context.Context, n store.Node, reached bool, now t
 }
 
 // nodeSighting is what home learned of a node at one look: whether it
-// answered, when it last did, and its runs, newest first.
+// answered, when it last did, how long it may be away, and its runs, newest
+// first.
 type nodeSighting struct {
-	now     int64
-	seenAt  int64
-	reached bool
-	runs    []store.NodeRun
+	now       int64
+	seenAt    int64
+	awayAfter int64
+	reached   bool
+	runs      []store.NodeRun
 }
 
 // nodeEpisode is an episode that begins, with the failed run behind it.
@@ -345,7 +377,7 @@ func nodeEpisodes(open map[string]int64, seen nodeSighting) (opened []nodeEpisod
 	switch {
 	case seen.reached && away:
 		closed = append(closed, nodeAwayEpisode)
-	case !seen.reached && !away && seen.now-seen.seenAt >= int64(nodeAwayAlertAfter.Seconds()):
+	case !seen.reached && !away && seen.now-seen.seenAt >= seen.awayAfter:
 		opened = append(opened, nodeEpisode{key: nodeAwayEpisode})
 	}
 	decided := map[string]bool{}
@@ -386,6 +418,30 @@ func nodeAlertText(name string, ep nodeEpisode, seen nodeSighting) (title, messa
 		fmt.Sprintf("%s: the backup of the %s %s failed: %s", name, section, ep.run.Target, detail)
 }
 
+// pruneCadence opens the prune window of n. At a storage location home copies
+// its own backups to, it is the off-site schedule of a section that copies
+// there, since home prunes there right after each copy.
+func (w *nodeWatch) pruneCadence(n store.Node) string {
+	if n.Placement != nodePlaceLocation {
+		return nodePruneCadence
+	}
+	targets, err := w.store.DestinationTargets(n.PlacementTarget)
+	if err != nil {
+		return nodePruneCadence
+	}
+	settings, err := w.store.GetSettings()
+	if err != nil {
+		return nodePruneCadence
+	}
+	for _, t := range targets {
+		own := offsiteScheduleFromSettings(t.Domain, settings)
+		if cad, err := schedule.ParseCadence(own); err == nil && cad.Enabled && t.Enabled {
+			return own
+		}
+	}
+	return nodePruneCadence
+}
+
 // nodeRunning reports whether a run a node reported is still under way.
 func nodeRunning(runs []store.NodeRun, now time.Time) bool {
 	return slices.ContainsFunc(runs, func(r store.NodeRun) bool {
@@ -393,10 +449,26 @@ func nodeRunning(runs []store.NodeRun, now time.Time) bool {
 	})
 }
 
-// nodePruneWindow is the prune window open at now, if home has not pruned the
+// awayAfter is how long n may be out of reach: the shortest dead man's switch
+// the receiver watch keeps on its repositories.
+func (w *nodeWatch) awayAfter(n store.Node) time.Duration {
+	hours := 0
+	for _, d := range nodeDomains {
+		rr, found, err := w.store.GetReceivedRepo(nodeRepoID(n.ID, d))
+		if err == nil && found && rr.Enabled && rr.DeadManHours > 0 && (hours == 0 || rr.DeadManHours < hours) {
+			hours = rr.DeadManHours
+		}
+	}
+	if hours == 0 {
+		return nodeAwayAlertAfter
+	}
+	return time.Duration(hours) * time.Hour
+}
+
+// pruneWindow is the prune window open at now, if home has not pruned the
 // repositories of n in it yet.
-func nodePruneWindow(n store.Node, now time.Time) (time.Time, bool) {
-	cad, err := schedule.ParseCadence(nodePruneCadence)
+func (w *nodeWatch) pruneWindow(n store.Node, now time.Time) (time.Time, bool) {
+	cad, err := schedule.ParseCadence(w.pruneCadence(n))
 	if err != nil {
 		return time.Time{}, false
 	}

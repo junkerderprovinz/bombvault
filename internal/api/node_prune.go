@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
@@ -16,44 +14,40 @@ func nodeRepoID(id, domain string) string {
 	return "node-" + id[:12] + "-" + domain
 }
 
-// pruneNodeRepos ages each watched repository of n by home's rules for its
-// section and prunes it. Only the snapshots under the node's own host are
-// aged, so whatever else lies there stays. The rest-server of a node that
+// pruneNodeSection ages the watched repository of section domain of n and
+// prunes it. It ages by the keep rule of the storage location it lies at, or
+// by home's own rule for the section, and only the snapshots under the node's
+// own host, so whatever else lies there stays. The rest-server of a node that
 // keeps its own backups takes no deletes, so those are left alone.
-func (s *Service) pruneNodeRepos(ctx context.Context, n store.Node) error {
+func (s *Service) pruneNodeSection(ctx context.Context, n store.Node, domain string) error {
 	if n.Placement == nodePlaceNode {
 		return nil
 	}
-	appKey, err := s.nodeAppKey(n)
-	if err != nil {
+	rr, found, err := s.store.GetReceivedRepo(nodeRepoID(n.ID, domain))
+	if err != nil || !found || !rr.Enabled {
 		return err
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
 		return err
 	}
-	var errs []error
-	for _, d := range nodeDomains {
-		rr, found, err := s.store.GetReceivedRepo(nodeRepoID(n.ID, d))
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		if !found || !rr.Enabled {
-			continue
-		}
-		p := keepPolicy(namedRepoKeep(settings, d))
-		// Everything in the repository is the node's own, so a direct
-		// snapshot of it ages with the rest.
-		p.Direct = true
-		if !p.Any() {
-			continue
-		}
-		if err := s.pruneNodeRepo(ctx, rr, restickey.Host(appKey), p); err != nil {
-			errs = append(errs, fmt.Errorf("the %s: %w", d, err))
+	p := keepPolicy(namedRepoKeep(settings, domain))
+	if n.Placement == nodePlaceLocation {
+		if d, found, err := s.store.GetDestination(n.PlacementTarget); err == nil && found && keepPolicy(targetKeep(d)).Any() {
+			p = keepPolicy(targetKeep(d))
 		}
 	}
-	return errors.Join(errs...)
+	// Everything in the repository is the node's own, so a direct snapshot of
+	// it ages with the rest.
+	p.Direct = true
+	if !p.Any() {
+		return nil
+	}
+	appKey, err := s.nodeAppKey(n)
+	if err != nil {
+		return err
+	}
+	return s.pruneNodeRepo(ctx, rr, restickey.Host(appKey), p)
 }
 
 func (s *Service) pruneNodeRepo(ctx context.Context, rr store.ReceivedRepo, host string, p restic.RetentionPolicy) error {
