@@ -81,7 +81,7 @@ BombVault는 이 경로들의 설명을 `/api/v1/openapi.json`(OpenAPI 3.1)에�
 | `POST /api/nodes/{id}/placement` | 노드의 백업을 보낼 곳을 정하고, 노드가 저장소에 닿았는지 섹션마다 답합니다. 대상이면 `warning`이 붙습니다 |
 | `PUT /api/nodes/{id}/schedule` | `{"containers":"daily 03:00","files":"off"}`처럼 계획을 정합니다. 빠진 섹션은 계획을 유지합니다 |
 | `DELETE /api/nodes/{id}` | 노드를 해제합니다. `told`는 노드가 지금 들었는지, 돌아오면 듣게 되는지를 알려 줍니다 |
-| `GET /api/nodes/routes` | 홈이 요청을 전달하는 노드 자체 경로의 목록 |
+| `GET /api/nodes/routes` | 홈 인스턴스가 요청을 전달하는 노드 자체 경로의 목록 |
 | `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | 그 경로가 목록에 있으면 요청을 노드의 경로 `/api/{path}`로 전달하고, 노드의 JSON 응답을 돌려줍니다 |
 | `PUT /api/receiver/node-address` | 수신 서버의 **노드용 주소**를 정합니다. 예: `{"url":"https://backup.tower.example.org","caPem":""}`. `url`을 비우면 노드가 그 주소를 더 이상 쓰지 않습니다 |
 

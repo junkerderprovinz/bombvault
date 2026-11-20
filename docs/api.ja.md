@@ -81,7 +81,7 @@ BombVault は、これらのルートの記述を `/api/v1/openapi.json`（OpenA
 | `POST /api/nodes/{id}/placement` | ノードのバックアップの送り先を決め、ノードがリポジトリに届いたかをセクションごとに答えます。保存先の場合は `warning` が付きます |
 | `PUT /api/nodes/{id}/schedule` | `{"containers":"daily 03:00","files":"off"}` のようにプランを設定します。省いたセクションはプランが変わりません |
 | `DELETE /api/nodes/{id}` | ノードを解放します。`told` は、ノードがすぐに受け取ったか、戻ったときに受け取るかを示します |
-| `GET /api/nodes/routes` | ホームが要求を中継する、ノード自身のルートの一覧 |
+| `GET /api/nodes/routes` | ホームインスタンスが要求を中継する、ノード自身のルートの一覧 |
 | `GET`、`POST`、`PATCH /api/nodes/{id}/api/{path}` | そのルートが一覧にあれば、要求をノードのルート `/api/{path}` に中継し、ノードの JSON の答えを返します |
 | `PUT /api/receiver/node-address` | 受信サーバーの**ノード用のアドレス**を設定します。たとえば `{"url":"https://backup.tower.example.org","caPem":""}` です。`url` を空にすると、ノードはそこを使わなくなります |
 
