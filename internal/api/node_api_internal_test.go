@@ -64,19 +64,17 @@ func TestANodePassesOnlyItsListedRoutesToItsOwnRouter(t *testing.T) {
 	if !strings.Contains(string(body), `"via":"home"`) {
 		t.Errorf("a backup home started is recorded as %s", body)
 	}
-	_, ans = n.api(t, nodeAPIRequest{Method: http.MethodGet, Path: "/api/progress"})
-	if body, _ = ans.body(); !strings.Contains(string(body), "snapshot=1") {
-		t.Errorf("the progress stream was passed on as %s, want a snapshot", body)
-	}
 
 	for name, req := range map[string]nodeAPIRequest{
-		"settings":          {Method: http.MethodGet, Path: "/api/settings"},
-		"a delete":          {Method: http.MethodDelete, Path: "/api/containers/plex"},
-		"a climb":           {Method: http.MethodGet, Path: "/api/containers/../settings"},
-		"another method":    {Method: http.MethodPut, Path: "/api/status"},
-		"a path without /":  {Method: http.MethodGet, Path: "api/status"},
-		"a full address":    {Method: http.MethodGet, Path: "//elsewhere/api/status"},
-		"a query in a path": {Method: http.MethodGet, Path: "/api/settings?x=/api/status"},
+		"settings":            {Method: http.MethodGet, Path: "/api/settings"},
+		"a delete":            {Method: http.MethodDelete, Path: "/api/containers/plex"},
+		"a climb":             {Method: http.MethodGet, Path: "/api/containers/../settings"},
+		"another method":      {Method: http.MethodPut, Path: "/api/status"},
+		"a path without /":    {Method: http.MethodGet, Path: "api/status"},
+		"a full address":      {Method: http.MethodGet, Path: "//elsewhere/api/status"},
+		"a query in a path":   {Method: http.MethodGet, Path: "/api/settings?x=/api/status"},
+		"the progress stream": {Method: http.MethodGet, Path: "/api/progress"},
+		"a fixed name":        {Method: http.MethodGet, Path: "/api/containers/backup-order"},
 	} {
 		if code, _ := n.api(t, req); code != http.StatusForbidden {
 			t.Errorf("%s = %d, want 403", name, code)
@@ -96,6 +94,11 @@ func TestANodePassesOnlyItsListedRoutesToItsOwnRouter(t *testing.T) {
 
 func TestEveryNodeRouteIsARouteThatNeitherDeletesNorReachesSecrets(t *testing.T) {
 	routes := registeredRoutes(t)
+	for _, r := range nodeRouteShadows {
+		if !slices.Contains(routes, r) {
+			t.Errorf("nodeRouteShadows lists %s, which is no route", r)
+		}
+	}
 	for _, r := range nodeRoutes {
 		if !slices.Contains(routes, r) {
 			t.Errorf("nodeRoutes lists %s, which is no route", r)

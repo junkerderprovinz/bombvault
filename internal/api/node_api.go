@@ -11,6 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
@@ -27,7 +28,6 @@ const nodeAPIPath = "/node/api"
 // storage, the keys, the group or the tokens, is among them.
 var nodeRoutes = []string{
 	"GET /api/status",
-	"GET /api/progress",
 	"GET /api/runs",
 	"GET /api/containers",
 	"GET /api/containers/{name}",
@@ -45,10 +45,20 @@ var nodeRoutes = []string{
 	"POST /api/backup/cancel",
 }
 
+// nodeRouteShadows are routes of the router that a wildcard of nodeRoutes
+// would match too. The router takes them by their fixed name, so they are no
+// node route.
+var nodeRouteShadows = []string{
+	"GET /api/containers/backup-order",
+}
+
 // nodeRouteMux matches a request against nodeRoutes alone.
 var nodeRouteMux = func() *http.ServeMux {
 	mux := http.NewServeMux()
 	for _, r := range nodeRoutes {
+		mux.Handle(r, http.NotFoundHandler())
+	}
+	for _, r := range nodeRouteShadows {
 		mux.Handle(r, http.NotFoundHandler())
 	}
 	return mux
@@ -59,6 +69,9 @@ var nodeRouteMux = func() *http.ServeMux {
 // climbs out of a listed one matches none.
 func nodeRoute(r *http.Request) string {
 	_, pattern := nodeRouteMux.Handler(r)
+	if slices.Contains(nodeRouteShadows, pattern) {
+		return ""
+	}
 	return pattern
 }
 
@@ -77,12 +90,6 @@ func (req nodeAPIRequest) request(ctx context.Context) (*http.Request, error) {
 		return nil, errNodeRoute
 	}
 	u := &url.URL{Path: req.Path, RawQuery: req.Query}
-	// The live stream never ends, and a call has to.
-	if req.Path == "/api/progress" {
-		q := u.Query()
-		q.Set("snapshot", "1")
-		u.RawQuery = q.Encode()
-	}
 	r, err := http.NewRequestWithContext(ctx, req.Method, u.RequestURI(), bytes.NewReader(req.Body))
 	if err != nil {
 		return nil, errNodeRoute
