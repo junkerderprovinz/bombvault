@@ -5252,7 +5252,7 @@ const gl: Partial<Translations> = {
   "pairing.backToEmergency": "Volver ao asistente de emerxencia",
   "pairing.oldPhrase": "Aínda coa frase antiga: {names}. Seguirán por si mesmos en canto estean en liña.",
   "pairing.behindTitle": "Non viñeron",
-  "pairing.behindTip": "Estes dispositivos estaban emparellados con este antes de que se unise á fortaleza, pero non o seguiron en 30 días, así que o seu emparellamento antigo pechouse. Para traer un, introduce nel a frase da fortaleza. Se xa non o usas, quítao sen máis.",
+  "pairing.behindTip": "Estes dispositivos estaban emparellados con este antes de que se unise á fortaleza, pero non o seguiron en 30 días, así que o seu emparellamento antigo pechouse. Para traer un, introduce nel a frase. Se xa non o usas, quítao sen máis.",
   "pairing.kindInstance": "Instancia de BombVault",
   "fortress.title": "Fortaleza",
   "fortress.noPhraseKept": "BombVault uniuse a esta fortaleza desde a consola, así que non coñece a frase. Para amosala ou cambiala aquí, sae e volve unirte coa frase.",

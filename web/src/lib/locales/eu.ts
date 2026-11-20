@@ -4069,7 +4069,7 @@ const eu: Partial<Translations> = {
   "launcher.cameraHint": "Kamerarako sarbidea behar da QR kodea eskaneatzeko.",
   "launcher.cameraAllow": "Baimendu sarbidea",
   "launcher.scanHint": "Eskaneatu esaldiaren ondoan agertzen den QR kodea",
-  "launcher.groupFound": "Erlai honetan",
+  "launcher.groupFound": "Bitartekari honetan",
   "launcher.noInstances": "Talde honetako instantziarik ez da oraindik bitartekarian agertu. Egiaztatu esaldia eta gutxienez instantzia bat martxan dagoela. Aplikazioak ezin du parekatu «Bitartekaririk ez» ezarrita duen instantziarekin: aukeratu bitartekari bat instantzia horretan, Ezarpenak > Parekatzea atalean.",
   "launcher.adoptOne": "Gehitu instantzia hau",
   "launcher.adoptAll": "Gehitu {count}ak",

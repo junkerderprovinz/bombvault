@@ -5242,7 +5242,7 @@ const pt: Partial<Translations> = {
   "pairing.backToEmergency": "Voltar ao assistente de emergência",
   "pairing.oldPhrase": "Ainda na frase antiga: {names}. Seguem sozinhos assim que estiverem online.",
   "pairing.behindTitle": "Ficaram para trás",
-  "pairing.behindTip": "Estes dispositivos estavam emparelhados com este antes de ele entrar na fortaleza, mas não o seguiram em 30 dias, por isso o emparelhamento antigo foi fechado. Para trazer um, introduza nele a frase da fortaleza. Se já não o usa, basta removê-lo.",
+  "pairing.behindTip": "Estes dispositivos estavam emparelhados com este antes de ele entrar na fortaleza, mas não o seguiram em 30 dias, por isso o emparelhamento antigo foi fechado. Para trazer um, introduza nele a frase. Se já não o usa, basta removê-lo.",
   "pairing.kindInstance": "Instância do BombVault",
   "fortress.title": "Fortaleza",
   "fortress.noPhraseKept": "O BombVault entrou nesta fortaleza a partir da consola, por isso não conhece a frase. Para a mostrar ou mudar aqui, saia e volte a entrar com a frase.",
