@@ -91,6 +91,7 @@ For each container, BombVault auto-selects which bind mounts and named volumes t
 ### Nodes {#nodes}
 
 A [node](nodes.md) is a BombVault without a web interface that takes its orders from a home instance.
+
 - **Home holds the node.** A node mounts the Docker socket of its server, which is root there, and home controls the node. If home is taken over, the attacker controls all its nodes as well. Give home a login password and keep its web interface off the internet.
 - **A node holds little.** If a node is taken over, the attacker gets no pairing group, no fortress, no other node and no other repository. The node has a link to its home alone, a login of its own on the receiving server and a folder of its own at a storage location. On the receiving server it cannot delete history, because the server is append-only. It can fill the server's disk, because rest-server sets no quota, so give the receiving server room or a share of its own. At a storage location its sign-in can usually delete what lies there. Backups kept on the node are in the attacker's hands, which is why home fetches a copy of them.
 - **The link is private and signed.** Home and the node talk over the relay through a link of their own, sealed with a secret derived from the node's `APP_KEY`. Each side knows the other's key before the first call, so there is no approval step. Home signs every call with its own key and a counter, and the node refuses a call that is not signed by home or that it took before. The node calls nothing at home but its hello.
