@@ -152,6 +152,16 @@ function SnapshotRow({
   );
 }
 
+const EXPLAINED_KEY = "bv-snapshots-explained";
+
+function wasExplained(): boolean {
+  try {
+    return localStorage.getItem(EXPLAINED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function Snapshots() {
   const { t } = useT();
   const navigate = useNavigate();
@@ -164,6 +174,16 @@ export function Snapshots() {
   const [loading, setLoading] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Open>(null);
+  const [explained, setExplained] = useState(wasExplained);
+
+  function understood() {
+    setExplained(true);
+    try {
+      localStorage.setItem(EXPLAINED_KEY, "1");
+    } catch {
+      // Without storage the note comes back with the next visit.
+    }
+  }
 
   const load = useCallback((readSleeping: boolean) => {
     setLoading(true);
@@ -257,6 +277,9 @@ export function Snapshots() {
     );
   }
 
+  // Once understood, what a snapshot is beside a backup waits in the (i) of
+  // the cards instead of standing on the page.
+  const intro = explained ? `${t("hostSnap.intro")} ${t("hostSnap.versusBackup")}` : t("hostSnap.intro");
   const asleep = sleepingPools(pools);
   const woke = wokenPools(pools);
   const stayed = stillAsleep(pools);
@@ -264,7 +287,6 @@ export function Snapshots() {
   return (
     <div className={PAGE_SHELL}>
       <PageTitle>{t("hostSnap.title")}</PageTitle>
-      <Note>{t("hostSnap.versusBackup")}</Note>
 
       {failed && <Note tone="fail">{t("hostSnap.code.failed")}</Note>}
       {states.noHost && (
@@ -312,13 +334,13 @@ export function Snapshots() {
         </Card>
       )}
 
-      {list && groups.length === 0 && !states.noHost && <Note hint={t("hostSnap.intro")}>{t("hostSnap.empty")}</Note>}
+      {list && groups.length === 0 && !states.noHost && <Note hint={intro}>{t("hostSnap.empty")}</Note>}
 
       {groups.map((g) => {
         const title = `${t(KIND_LABEL[g.kind])}: ${sourceLabel(g.kind, g.fs, g.source, t)}`;
         const canTake = sources.some((s) => sourceKey(s.kind, s.fs, s.source) === g.key && s.canCreate);
         return (
-          <Card key={g.key} title={title} hint={t("hostSnap.intro")} hueIndex={nextHue()}>
+          <Card key={g.key} title={title} hint={intro} hueIndex={nextHue()}>
             <Rows as="ul" label={title}>
               {g.snapshots.map((s) => (
                 <SnapshotRow
@@ -388,6 +410,11 @@ export function Snapshots() {
       })}
       {(list?.hiddenSystem ?? 0) > 0 && (
         <p className="text-xs text-carbon-textMuted">{t("hostSnap.hiddenSystem", list?.hiddenSystem ?? 0)}</p>
+      )}
+      {!explained && (
+        <Note action={<Button label={t("common.gotIt")} labelKey="common.gotIt" tone="subtle" onClick={understood} />}>
+          {t("hostSnap.versusBackup")}
+        </Note>
       )}
 
       {list && (
