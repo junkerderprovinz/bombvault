@@ -1,0 +1,16 @@
+name: Component update
+
+on:
+  workflow_run:
+    workflows: ["Build Docker Image", ".github/workflows/lint.yml"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  issue:
+    permissions:
+      issues: write
+      pull-requests: read
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/component-update.yml@f74be41e79778bc4528eb7a9b6f9541c6a9ce952 # main
