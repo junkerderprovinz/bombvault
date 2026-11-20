@@ -120,6 +120,8 @@ function container(name: string, placement = placementView()): Container {
 const PROVIDERS = [
   { id: "gdrive", name: "Google Drive", backend: "drive", group: "cloud", route: "rclone" },
   { id: "b2", name: "Backblaze B2", backend: "", group: "storage", route: "s3", lock: true },
+  { id: "s3", name: "S3 compatible", backend: "", group: "selfs3", route: "s3", lock: true },
+  { id: "wasabi", name: "Wasabi", backend: "", group: "storage", route: "s3", lock: true },
   { id: "rest", name: "Rest server", backend: "", group: "server", route: "rest", lock: true },
   { id: "path", name: "Mounted path", backend: "", group: "server", route: "path" },
 ] as Provider[];
@@ -535,7 +537,13 @@ describe("adding a storage location", () => {
 
     const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
     expect(groups).toEqual(["Local", "Cloud storage", "S3 service", "NAS or server", "Own rclone configuration"]);
-    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "rest-server", "Rclone"]);
+    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "Wasabi", "S3 compatible", "rest-server", "Rclone"]);
+  });
+
+  it("puts S3 compatible last among the S3 services, as the tile that takes any of them", async () => {
+    const window = await open();
+    const section = within(window).getByRole("heading", { name: "S3 service" }).closest("section") as HTMLElement;
+    expect(tileNames(section).at(-1)).toBe("S3 compatible");
   });
 
   it("saves a pasted rclone configuration and lists its remotes", async () => {

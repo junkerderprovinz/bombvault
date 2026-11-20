@@ -228,7 +228,7 @@ export function AddLocationWindow({
     lang,
     own: (entry) => {
       if (entry.id === "path") return { label: t("storage.localFolder"), group: LOCAL };
-      if (entry.id === "s3") return { label: t("dest.provider.s3") };
+      if (entry.id === "s3") return { label: t("dest.provider.s3"), last: true };
       if (entry.id === "smb") return { sub: t("dest.provider.smbKind") };
       return undefined;
     },
