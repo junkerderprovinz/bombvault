@@ -112,8 +112,7 @@ test("a node is added in three steps and turns green once it answers", async ({ 
   await expect(page.getByRole("button", { name: t("nodes.next") })).toBeDisabled();
   await address.fill("https://backup.tower.example.org");
   await expect(page.getByRole("alert")).toHaveCount(0);
-  await expect(plan(box, "nav.containers")).toContainText("2:00");
-  await expect(plan(box, "nav.files")).toContainText("2:30");
+  await expect(box.getByRole("button", { name: `${t("nodes.startAt")}: 03:00` })).toBeVisible();
   await measure();
   await page.getByRole("button", { name: t("nodes.next") }).click();
 
@@ -126,7 +125,7 @@ test("a node is added in three steps and turns green once it answers", async ({ 
   await expect(page.getByTestId("node-adoption")).toContainText(t("nodes.placed").replace("{target}", "https://backup.tower.example.org"));
   expect(calls.addresses).toEqual([{ url: "https://backup.tower.example.org", caPem: "" }]);
   expect(calls.placed).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { kind: "receiver" } }]);
-  expect(calls.scheduled).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { containers: "daily 02:00", files: "daily 02:30" } }]);
+  expect(calls.scheduled).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { containers: "daily 03:00", files: "daily 03:00" } }]);
   // Every step of the window keeps the one width the other windows have.
   if (desktop) expect(new Set(widths).size).toBe(1);
   if (desktop) expect(widths[0]).toBeLessThanOrEqual(768);
@@ -263,6 +262,13 @@ test("pictures of the node pages", async ({ browser }, testInfo) => {
       await page.getByRole("button", { name: t("nodes.next") }).click();
       await page.getByLabel(t("nodes.address")).fill("http://203.0.113.7:8000");
       await shoot(page, `add-node-2-placement-${at}`);
+      const startAt = page.getByRole("button", { name: `${t("nodes.startAt")}: 03:00` });
+      await startAt.click();
+      await page.getByRole("listbox", { name: t("timePicker.hour") }).waitFor();
+      await shoot(page, `add-node-2-start-time-${at}`);
+      // A second tap on the trigger lands on the picker's backdrop and closes it.
+      await startAt.click({ force: true });
+      await page.getByRole("listbox", { name: t("timePicker.hour") }).waitFor({ state: "detached" });
       await page.getByLabel(t("nodes.address")).fill("https://backup.tower.example.org");
       await page.getByRole("button", { name: t("nodes.next") }).click();
       await shoot(page, `add-node-3-compose-${at}`);

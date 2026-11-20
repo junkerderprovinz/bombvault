@@ -212,8 +212,8 @@ export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<Node
           createdAt: NOW,
           adoptedAt: 0,
           online: false,
-          containersCadence: "",
-          filesCadence: "",
+          containersCadence: "daily 03:00",
+          filesCadence: "daily 03:00",
           failures: 0,
           anomalies: 0,
         };
