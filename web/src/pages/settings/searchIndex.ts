@@ -354,8 +354,7 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
       rows: [
         { key: "auth.currentPassword" },
         { key: "auth.setPassword" },
-        { key: "auth.changePassword" },
-        { key: "auth.confirmPassword", hint: "auth.passwordMinHint" },
+        { key: "auth.changePassword", hint: "auth.passwordMinHint" },
       ],
     },
     {

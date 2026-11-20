@@ -4,6 +4,7 @@
 // password.
 import { render, screen, cleanup, waitFor, fireEvent, act, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { componentText } from "@glimstone/core";
 import { en } from "../lib/i18n";
 
 const startPasswordReset = vi.fn();
@@ -128,7 +129,7 @@ describe("LoginPage, a forgotten password", () => {
 
     await fillAndSubmit("ABCD-EFGH-JKLM", "correct horse battery", "correct horse batterx");
 
-    expect(screen.getByRole("alert").textContent).toBe(en["auth.passwordMismatch"]);
+    expect(screen.getByRole("alert").textContent).toBe(componentText("en").passwordField.mismatch);
     expect(finishPasswordReset).not.toHaveBeenCalled();
   });
 

@@ -2392,6 +2392,18 @@ body {
 @media (max-width: 39.99rem) {
   .glim-form-rows .glim-form-row { grid-template-columns: minmax(0, 1fr); }
 }
+/* A password asked for twice stands in a settings row as two lines of one
+   grid: the repeat's label under the row's label and its field under the
+   first field, one column on a phone. */
+.glim-form-row:has(.glim-secret-confirm) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+}
+.glim-form-row:has(.glim-secret-confirm) > :last-child,
+.glim-form-row .glim-secret-confirm { display: contents; }
+@media (max-width: 39.99rem) {
+  .glim-form-row:has(.glim-secret-confirm) { grid-template-columns: minmax(0, 1fr); }
+}
 .glim-pick-window:not(.glim-pick-window--form) > .glim-window-body { overflow: hidden; }
 .glim-pick-window .glim-provider-pick .glim-readme-btn-unit {
   --tile: var(--provider-tile, var(--accent));

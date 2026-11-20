@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { componentText } from "@glimstone/core";
 import {
   finishPasskeyWithCode,
   finishPasswordReset,
@@ -27,7 +28,7 @@ interface LoginPageProps {
 // The field waits for that answer even when GET /api/auth already reports a
 // factor, so nobody spends a 30-second code window on a mistyped password.
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   // Set once a passkey signed in and the server asks for the code on top.
   const [passkeyHandle, setPasskeyHandle] = useState<string | null>(null);
   const [minLen, setMinLen] = useState(12);
@@ -51,6 +52,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     };
   }, []);
 
+  const field = componentText(lang).passwordField;
   const text: SignInText = {
     password: t("auth.passwordLabel"),
     signIn: t("auth.signIn"),
@@ -64,10 +66,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     resetCode: t("auth.resetCodeLabel"),
     resetCodeTip: t("auth.resetCodeTip"),
     newPassword: t("auth.newPassword"),
-    confirmPassword: t("auth.confirmPassword"),
+    confirmPassword: field.confirm,
     setPassword: t("auth.setPassword"),
     saving: t("auth.saving"),
-    mismatch: t("auth.passwordMismatch"),
+    mismatch: field.mismatch,
     tooShort: t("auth.passwordMinHint", minLen),
     resetRejected: t("auth.resetCodeRejected"),
     failed: t("auth.loginError"),
