@@ -23,6 +23,8 @@ func nodeRouter() http.Handler {
 	mux.HandleFunc("GET /api/status", answer)
 	mux.HandleFunc("GET /api/runs", answer)
 	mux.HandleFunc("GET /api/progress", answer)
+	mux.HandleFunc("GET /api/browse", answer)
+	mux.HandleFunc("POST /api/browse/mkdir", answer)
 	mux.HandleFunc("POST /api/containers/{name}/backup", answer)
 	mux.HandleFunc("GET /api/settings", answer)
 	mux.HandleFunc("DELETE /api/containers/{name}", answer)
@@ -112,6 +114,48 @@ func TestEveryNodeRouteIsARouteThatNeitherDeletesNorReachesSecrets(t *testing.T)
 				t.Errorf("nodeRoutes lists %s", r)
 			}
 		}
+	}
+}
+
+func TestANodeLetsHomeBrowseItsFoldersOnlyWhileAdopted(t *testing.T) {
+	n := newNodeUnderTest(t)
+	n.node.svc.ServeNodeAPI(nodeRouter())
+	browse := nodeAPIRequest{Method: http.MethodGet, Path: "/api/browse", Query: "path=appdata"}
+	if code, _ := n.api(t, browse); code != http.StatusConflict {
+		t.Errorf("browsing before the adoption = %d", code)
+	}
+	n.adopt(t)
+	stranger := newInstance(t, "stranger", strings.Repeat("c3", 32))
+	if code := post(n.routes, nodeAPIPath, signedBodyForNode(t, stranger, keydeposit.ProofNodeAPI, n.id, "stranger", browse)); code != http.StatusForbidden {
+		t.Errorf("browsing signed by another instance = %d", code)
+	}
+	code, ans := n.api(t, browse)
+	body, _ := ans.body()
+	if code != http.StatusOK || !strings.Contains(string(body), `"query":"path=appdata"`) {
+		t.Errorf("browsing once adopted = %d %s", code, body)
+	}
+	if code, _ := n.api(t, nodeAPIRequest{Method: http.MethodPost, Path: "/api/browse/mkdir", Body: json.RawMessage(`{"path":"","name":"x"}`)}); code != http.StatusForbidden {
+		t.Errorf("making a folder = %d, want 403", code)
+	}
+	if w := n.call(t, keydeposit.ProofNodeRelease, nodeReleasePath, nil); w.Code != http.StatusOK {
+		t.Fatal(w.Body)
+	}
+	if code, _ := n.api(t, browse); code != http.StatusConflict {
+		t.Errorf("browsing after the release = %d", code)
+	}
+}
+
+func TestHomeBrowsesANodesFoldersButMakesNone(t *testing.T) {
+	home := homeWithRelay(t)
+	node, id, _ := adoptedNode(t, home, newRepoStore())
+	node.svc.ServeNodeAPI(nodeRouter())
+
+	code, out := home.do(t, http.MethodGet, "/api/nodes/"+id+"/api/browse?path=appdata", nil)
+	if code != http.StatusOK || out["path"] != "/api/browse" || out["query"] != "path=appdata" {
+		t.Errorf("browsing through home = %d %v", code, out)
+	}
+	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/api/browse/mkdir", map[string]string{"path": "", "name": "x"}); code != http.StatusForbidden {
+		t.Errorf("making a folder through home = %d %v", code, out)
 	}
 }
 

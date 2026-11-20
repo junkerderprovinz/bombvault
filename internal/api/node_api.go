@@ -24,8 +24,9 @@ const nodeAPIPath = "/node/api"
 
 // nodeRoutes are the routes of a node home may reach, as the router
 // registers them: reading the containers, folder sets, runs and anomalies,
-// and backing up and restoring the entries. Nothing that deletes, or reaches
-// the settings, the storage, the keys, the group or the tokens, is among them.
+// browsing the folders a set can point at, and backing up and restoring the
+// entries. Nothing that deletes, makes folders, or reaches the settings, the
+// storage, the keys, the group or the tokens, is among them.
 var nodeRoutes = []string{
 	"GET /api/status",
 	"GET /api/runs",
@@ -44,6 +45,7 @@ var nodeRoutes = []string{
 	"POST /api/files/sets/{id}/backup",
 	"POST /api/files/sets/{id}/restore",
 	"POST /api/backup/cancel",
+	"GET /api/browse",
 }
 
 // nodeRouteShadows are routes of the router that a wildcard of nodeRoutes
