@@ -1,0 +1,1 @@
+BombVault 10.6.4 bringt restic 0.20.0 mit zwei Sicherheitskorrekturen fürs Wiederherstellen, damit eine zurückgeholte Datei nie aus Versehen root gehört. Deine Sicherungen bleiben, wo sie sind, nur ein Stück sicherer.

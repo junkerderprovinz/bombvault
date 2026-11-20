@@ -1,0 +1,1 @@
+BombVault 10.6.4 brings restic 0.20.0 with two security fixes for restores, so a file you get back never ends up belonging to root by accident. Your backups stay exactly where they are, just a little safer.
