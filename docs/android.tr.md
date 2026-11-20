@@ -54,6 +54,10 @@ Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır, And
 
 10.0.0'dan önce eşleşmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı tutar. Grubun kelimelerini bilen başka biri, telefon çevrimdışıyken oraya önce ulaşırsa, o sunucu telefonu o andan sonra geri çevirir ve uygulama onu artık röle üzerinden açamaz. Bunu düzeltmek için o sunucuda bir tarayıcıda oturum aç, Örnekler sayfasındaki telefonun kartında **Anahtarı unut**'u, sonra **Unutmayı onayla**'yı seç ve uygulamayı yeniden aç. Sunucu bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeleri başkası biliyor demektir: her örnek **Gruptan ayrıl** yapsın ve onları kayıp bir telefonda olduğu gibi yeni kelimelerle yeniden eşleştir.
 
+## Düğümler {#nodes}
+
+[Düğümler](nodes.md) web arayüzünden yönetilir. Eşleşmiş bir telefonun oturumu onlara ulaşmaz, bu yüzden uygulama Örnekler sayfasında düğüm kartlarını, genel bakışta **Düğümler** kartını ve **Yedekler** altında düğüm bölümlerini göstermez, **Düğüm ekle** de bunun için sunucunun kendisinde oturum açmak gerektiğini söyler. Bir düğüm eklemek, yedeklerinin nereye gideceğini değiştirmek ya da ögelerinden birini geri yüklemek için sunucuyu bir tarayıcıda aç ve parolayla oturum aç.
+
 ## Ayarlar {#settings}
 
 Artının yanındaki dişli uygulamanın ayarlarını açar:

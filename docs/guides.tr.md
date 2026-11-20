@@ -34,4 +34,5 @@ Bu örneklerin her biri gerçek bir işi baştan sona anlatır, isimler ve sayı
 ## Birden çok sunucu {#several-servers}
 
 - [İki Unraid makinesini eşleştirmek](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): birbirinin kopyalarını tutan iki sunucu, hiçbiri ötekinin yedeklerini silemez.
+- [Alıcı sunucuya yedekleyen bir VPS](nodes.md#example-vps): ana örnekten yönetilen, konteynerleriyle bir düğüm ve VPS'te açık port yok.
 - [Home Assistant'ta bir kart ve bir uyarı](api.md#home-assistant-example): panonda BombVault ve yedekleme başarısız olunca bir mesaj.

@@ -390,7 +390,7 @@ Bir kale, BombVault'u ShipLog, TowerTorch, FireSquire ve TollRoll gibi ailenin d
 
 ## Örnekler ve roller {#roles}
 
-**Örnekler** sayfası (kenar çubuğuna sabitlenebilen bir ayar kutucuğu) grubu kimin kimin için ne yaptığının bir ağı olarak, bu örnek için bir kart ve her diğer üye, Android telefonları ve ZFS sunucuları için bir kartla gösterir. Sağ alttaki **Eşleştirme** eşleştirme sayfasına götürür. Hangi parçaların açık olduğu **Ayarlar, Örnekler, Birden çok sunucu** altında ayarlanır: **Örnekler**, **Alıcı** ve **Çekme**.
+**Örnekler** sayfası (kenar çubuğuna sabitlenebilen bir ayar kutucuğu) grubu kimin kimin için ne yaptığının bir ağı olarak, bu örnek için bir kart ve her diğer üye, Android telefonları, ZFS sunucuları ve bu örneğin düğümleri için bir kartla gösterir. Sağ alttaki **Eşleştirme** eşleştirme sayfasına götürür, yanındaki **Düğüm ekle** de bir düğüm ekler. Hangi parçaların açık olduğu **Ayarlar, Örnekler, Birden çok sunucu** altında ayarlanır: **Örnekler**, **Alıcı** ve **Çekme**.
 
 ![Örnekler sayfası: ağ olarak grup ve rol kutucuklarıyla örnek başına bir kart, biri Etkin değil.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Örnekler sayfası: ağ olarak grup ve rol kutucuklarıyla örnek başına bir kart, biri Etkin değil.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Bir karttaki **Ayrıntılar** gerisini açar: o üyenin alınan depoları ve çe
 
 Kartların altında, alıcı sunucusu olan makinede **Ortak depo** kartı, bir üyede de **Ortak depolar** kartı durur. İkisi de [ortak depoya](#shared-repository) aittir.
 
-Bir üye kendi site dışı depolamasını grup üzerinden başka bir üyeye sunabilir. Diğer yönetici teklifi üyenin **Ayrıntılar**'ında görür ve kabul eder ya da reddeder. Kabul etmek, yazdığın bir hedefle aynı denetimlerden sonra kayıtlı bir oturum açma bilgisi ve sıradan bir hedef oluşturur. Hedef silmeye karşı koruma açık olarak gelir, çünkü teklifin gösterdiği tarif salt ekleme yapan bir rest-server'dır, bu yüzden orada **Ne kadar saklanır** geçerli değildir. Her teklifin kendi oturum açması ve kendi klasörü vardır, bu yüzden bir bölümü aynı üyeye ya da başka birine yeniden sunmak ilk ortağın kopyalarına dokunmaz: `.htpasswd` dosyasına yeni satırı ekle ve sunucuyu çalışır bırak. Bu yolla yalnızca bağlantı ayrıntıları gider, yedek verisi asla. **Şimdi denetle**, bir üyeden bir bölümün deposunu doğrulamasını ister. Sayfadaki hiçbir şey başka bir makinede bir yedek, geri yükleme başlatamaz ya da bir şey silemez.
+Bir üye kendi site dışı depolamasını grup üzerinden başka bir üyeye sunabilir. Diğer yönetici teklifi üyenin **Ayrıntılar**'ında görür ve kabul eder ya da reddeder. Kabul etmek, yazdığın bir hedefle aynı denetimlerden sonra kayıtlı bir oturum açma bilgisi ve sıradan bir hedef oluşturur. Hedef silmeye karşı koruma açık olarak gelir, çünkü teklifin gösterdiği tarif salt ekleme yapan bir rest-server'dır, bu yüzden orada **Ne kadar saklanır** geçerli değildir. Her teklifin kendi oturum açması ve kendi klasörü vardır, bu yüzden bir bölümü aynı üyeye ya da başka birine yeniden sunmak ilk ortağın kopyalarına dokunmaz: `.htpasswd` dosyasına yeni satırı ekle ve sunucuyu çalışır bırak. Bu yolla yalnızca bağlantı ayrıntıları gider, yedek verisi asla. **Şimdi denetle**, bir üyeden bir bölümün deposunu doğrulamasını ister. Üyeler birbirinin yedeklerine dokunmaz: sayfadaki hiçbir şey başka bir üyede yedek başlatmaz, orada bir şey geri yüklemez ya da silmez.
+
+**Düğümler** farklıdır, çünkü üye değildir. Düğüm, komutlarını bu örnekten alan, web arayüzü olmayan bir BombVault'tur, bu yüzden onun üzerinde yedekleri ve geri yüklemeleri bu örnek başlatır ve eski yedeklerini de bu örnek toparlar. Her düğümün durumunu, sürümünü, yedeklerinin nereye gittiğini ve her bölümün ne zaman yedeklendiğini gösteren, **Hedefi değiştir**, **Değiştir** ve **Serbest bırak** içeren bir kartı vardır. Yeni bir düğüm ilk kez yanıt verene kadar **Düğüm bekleniyor**, serbest bırakılmış ama uzakta olan bir düğüm de **Serbest bırakılıyor** gösterir. Bkz. [Düğümler](nodes.md).
+
+![Bir düğümün kartı: Bağlı, sürümü, alıcı sunucudaki yedekleri ve bölüm başına planları.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Bir düğümün kartı: Bağlı, sürümü, alıcı sunucudaki yedekleri ve bölüm başına planları.](assets/screenshots/nodes/card-light.png#only-light)
 
 Kapatılmış örnekler ve uygulaması kapalı telefonlar kartlarını gri olarak **Etkin değil** diye, en son ne zaman görüldükleriyle korurlar ve sen onları **Kaldır**'a kadar ağda soluk dururlar. Bu sunucu başlar başlamaz böyle bir kart grup dönene kadar **Denetleniyor** der. **Kaldır** hangi parçalar açık olursa olsun böyle bir kartta çalışır ve ayrıca üyenin açık isteklerini, boşta ZFS alma yuvalarını ve bekleyen anahtar isteklerini de sonlandırır. Eşleştirme sayfasındaki **Örnekler** kartı bu üyeleri de **Etkin değil** olarak listeler.
 
@@ -443,7 +448,7 @@ Grubundaki örnekler sunucuyu o zaman sağlayıcılar arasında **Grubundan** al
 
 Alıcı makineye yalnızca röle üzerinden ulaşan bir örnek sunucuyu kullanamaz, çünkü röle yedek taşımaz. Önce alıcı makinenin adresini eşleştirme sayfasına ekle. BombVault kendi IP adresinde (örneğin br0'da) çalışıyorsa **Ortaklar için adres**'i doldur, çünkü sunucu ana makinenin adresini dinler.
 
-Alıcı makine grup için bir [ortak depo](#shared-repository) da tutabilir.
+Alıcı makine grup için bir [ortak depo](#shared-repository) da tutabilir ve **Düğümler için adres** üzerinden bu örneğin [düğümlerinin](nodes.md#to-receiver) yedeklerini alabilir.
 
 ## Ortak depo {#shared-repository}
 
@@ -620,6 +625,8 @@ Anahtar bekçisi, bu sunucunun kurtarma kitinin mühürlü bir kopyasını tutan
 
 O gün üç şeye ihtiyacın var: grubunun on iki kelimesi, teslim kodu ve birinin **İzin ver**'e basması gereken bekçinin arayüzüne erişim. Acil durum sihirbazında **Grup üzerinden**'i seç, emaneti seç, iste ve teslim kodunu yaz. Kod yeni sunucuda kullanılır ve bekçiye gönderilmez. Bekçide istek, **Anahtar emaneti** altında kimin istediği, o örneğin orada daha önce görülüp görülmediği ve ne sıklıkla istediğiyle görünür. **İzin ver** mühürlü kopyayı verir ve izin vermek bir giriş parolası ister. Yeni kurulumun İzin ver'den sonra onu almak için 30 dakikası vardır, kimsenin yanıtlamadığı bir isteğin süresi bir gün sonra dolar ve çok sık isteyen bir örnek bir saat beklemek zorundadır.
 
+Kit bu sunucunun her [düğümünün](nodes.md) `APP_KEY` anahtarını içerdiği için emanet de onları taşır. Kodla bir bekçi onların depolarını açabilir, ama bir düğüme asla komut veremez, çünkü bunun için bu sunucunun imzası gerekir.
+
 Kod olmadan kopyayı hiç kimse açamaz, bekçi dahil. Kod kaybolduysa bu sunucu hâlâ çalışırken yeni bir tane oluştur. Sunucu zaten gittiyse kurtarma kiti ve yazılmış APP_KEY yine çalışır. Bekçi bir emaneti her an silebilir ve sahibinin o zaman yeniden istemesi gerekir.
 
 ## Kurtarma kiti {#recovery-kit}
@@ -627,6 +634,8 @@ Kod olmadan kopyayı hiç kimse açamaz, bekçi dahil. Kod kaybolduysa bu sunucu
 Bu, çalışan hiçbir BombVault olmadığında bile felaket kurtarmayı mümkün kılan parçadır.
 
 **Ayarlar, Geri yükleme** altındaki **Acil durumlar için** kartında **Kurtarma kitini indir**, sana **anahtarı**, **türetilmiş restic parolasını**, her bölümün deposuyla her **hedefi**, yeni bir kurulumun onlara ulaşması için gereken oturum açma bilgilerini ve **tam restic komutlarını** verir, böylece herhangi bir makinede restic CLI ile doğrudan geri yükleyebilirsin. Bir giriş parolası ister. Kit anahtarı şifreleme kapalıyken de basar, çünkü konteyner ve VM tanımları her zaman onunla mühürlenir. Bir devralmadan sonra devralınan yedek anahtarını ve bu sunucunun APP_KEY'ini basar, ikincisine yeni bir kurulum yalnızca ayarları geri getirmek için ihtiyaç duyar. Genel bakıştaki **Kurtarma kitini sakla** kartı, onu saklayana kadar sana hatırlatır.
+
+[Düğümleri](nodes.md) olan bir sunucunun kitinde bir **Düğümler** bölümü bulunur. Bu bölüm her düğümü kimliği, `APP_KEY` anahtarı, bu anahtardan türetilen restic parolası ve her bölümün deposuyla listeler. Onları düğümün kendi parolası açar, bu sunucunun parolası da açar, çünkü bu sunucu her düğüm deposuna kendi anahtarını ekler. Bir düğüm ekledikten ya da yedeklerinin nereye gittiğini değiştirdikten sonra kiti yeniden indir. Düğümün `APP_KEY` ve `NODE_HOME` değerleriyle yeni bir sunucu yeniden aynı düğüm olur, bkz. [Değiştirmek ve serbest bırakmak](nodes.md#replace-release).
 
 !!! danger "Kurtarma kitini sunucu dışında sakla"
     Kit yedeklerini çözen gizli bilgiyi içerir. Onu sunucudan ayrı güvenli bir yerde sakla (bir parola yöneticisi, bir kasada basılı bir kopya). Kurtarma kiti ve anahtar emaneti olmadan hem BombVault'u hem `APP_KEY`'i kaybedersen şifreli yedeklerin kurtarılamaz.

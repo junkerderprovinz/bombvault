@@ -32,6 +32,8 @@ Listenin üstündeki üç düğme onu daraltır:
 
 Artık kurulu olmayan ama hâlâ yedekleri olan ögeler **Kurulu değil (yalnızca yedekler)** altında ayrı durur. Onları geri yükle ya da yer açmak için yedeklerini sil.
 
+[Düğümlerin](nodes.md) varsa Konteynerler ve Klasörler listeleri, kendi ögelerinin altında her düğüm için bir bölüm içerir, düğümün bağlı olup olmadığını ve kaç ögesi olduğunu da gösterir. Düğümün adıyla başlayan **üzerindeki kayıtlar** satırı, bölümün ögelerini gizler ve yeniden gösterir. Bir ögenin menüsü, yedeğini düğümde başlatan **Şimdi yedekle** ile **Aç** seçeneklerini sunar. Sayfası yedeklerini listeler, her birinin yanında ögeyi düğümde geri yükleyen bir **Geri yükle** vardır. Düğümün kendi konteyneri listelenmez. Bkz. [Bir düğümün ögeleri](nodes.md#entries).
+
 Sayfanın ana eylemi sağ altta yüzer: **Şimdi tümünü yedekle**, açık olan her bölüm üzerinde bir geçiş başlatır. **Diğer** gerisini barındırır:
 
 - **Seç** bir seçim başlatır, aşağıya bak.
