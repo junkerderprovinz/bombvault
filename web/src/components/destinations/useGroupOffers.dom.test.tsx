@@ -2,9 +2,10 @@
 // "From your group" offers the shared repositories the group's members hold
 // beside their receivers. Picking one asks its owner to let this instance in
 // and closes the wizard, since the location only follows once the owner says
-// yes. One already asked for or joined is not offered a second time.
+// yes. One already asked for or joined stays in view but cannot be picked.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { PickerWindow } from "@glimstone/react/PickerWindow";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { GroupReceiver, SharedOffer, SharedMembershipState } from "../../lib/api";
@@ -27,17 +28,31 @@ vi.mock("../../lib/api", async (importOriginal) => {
   };
 });
 
-const { GroupReceiverPicker } = await import("./GroupReceiverPicker");
+const { useGroupOffers } = await import("./useGroupOffers");
 
 const picked: string[] = [];
 let asked = 0;
+
+function Picker() {
+  const offers = useGroupOffers({ onPick: (r) => picked.push(r.memberId), onAsked: () => asked++ });
+  return (
+    <PickerWindow
+      title="Add"
+      items={offers.items}
+      groups={offers.group ? [offers.group] : []}
+      text={{ search: "Search", none: "None", clear: "Clear", close: "Close", cancel: "Cancel", back: "Back" }}
+      onPick={(id) => offers.pick(id)}
+      onClose={() => undefined}
+    />
+  );
+}
 
 async function renderPicker() {
   await act(async () => {
     render(
       <I18nProvider>
         <ToastProvider>
-          <GroupReceiverPicker onPick={(r) => picked.push(r.memberId)} onAsked={() => asked++} />
+          <Picker />
         </ToastProvider>
       </I18nProvider>,
     );
@@ -57,7 +72,7 @@ afterEach(() => {
   asked = 0;
 });
 
-describe("GroupReceiverPicker", () => {
+describe("the tiles from the group", () => {
   it("shows a member's shared repository as a tile of its own beside its receiver", async () => {
     receivers = [{ memberId: "m-tower", name: "tower", url: "http://192.168.1.20:8000", needsAddress: false }];
     offers = [tower];
@@ -87,6 +102,13 @@ describe("GroupReceiverPicker", () => {
       fireEvent.click(screen.getByRole("button", { name: new RegExp(`^${tile("tower")}`) }));
     });
     expect(await screen.findByText(en["shared.offer.joined"].replace("{name}", "tower"))).toBeTruthy();
+  });
+
+  it("fills the form from a receiver with an address", async () => {
+    receivers = [{ memberId: "m-tower", name: "tower", url: "http://192.168.1.20:8000", needsAddress: false }];
+    await renderPicker();
+    fireEvent.click(screen.getByRole("button", { name: /^tower/ }));
+    expect(picked).toEqual(["m-tower"]);
   });
 
   it("does not ask twice for a repository asked for or joined already", async () => {

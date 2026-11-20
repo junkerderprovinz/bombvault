@@ -86,7 +86,7 @@ Die Suche dauert eine Weile, weil restic jede Sicherung durchgeht. **Stoppen** b
 - Off-site-Speicherorte wie S3, B2 oder SFTP bleiben außen vor, außer du schaltest **Auch Off-site-Speicherorte durchsuchen** ein. Dann werden dort nur die Sicherungen gelesen, die kein Speicherort hier hat, meist die älteren, die eine längere Aufbewahrung off-site hält. Die erste Suche an so einem Speicherort kann lange dauern, und manche Anbieter verrechnen die Daten, die dabei geladen werden.
 - Ein Speicherort, der sich nicht öffnen ließ, zeigt **konnte nicht gelesen werden**, und das (i) daneben sagt, warum. Die anderen Speicherorte werden trotzdem durchsucht.
 
-Virtuelle Maschinen werden als ganze Festplatten gesichert, darum werden die Dateien darin nicht durchsucht. Das Selbstbackup, die Sicherungen eines anderen BombVault unter **Andere Quellen** und die der Server unter **Andere Server** werden ebenfalls nicht durchsucht. Eine Suche listet die ersten 200 Dateien, ein kurzer Name wie `log` braucht also vielleicht ein paar Buchstaben mehr.
+Virtuelle Maschinen werden als ganze Festplatten gesichert, darum werden die Dateien darin nicht durchsucht. Die Selbstsicherung, die Sicherungen eines anderen BombVault unter **Andere Quellen** und die der Server unter **Andere Server** werden ebenfalls nicht durchsucht. Eine Suche listet die ersten 200 Dateien, ein kurzer Name wie `log` braucht also vielleicht ein paar Buchstaben mehr.
 
 ## Was zurückkommt, nach Art {#kinds}
 
@@ -102,7 +102,7 @@ Eine Sicherung kann Ordner enthalten, die beim Container nicht mehr gewählt sin
 
 **ZFS-Datasets** haben eigene Ziele und behalten ihre ZFS-Eigenschaften, siehe [Wiederherstellen](zfs-datasets.md#restore).
 
-**Das Selbstbackup** kommt nur über den Notfall-Assistenten zurück, der BombVault neu startet, sodass die laufende Datenbank nie unter einem offenen Handle überschrieben wird.
+**Die Selbstsicherung** kommt nur über den Notfall-Assistenten zurück, der BombVault neu startet, sodass die laufende Datenbank nie unter einem offenen Handle überschrieben wird.
 
 **Datenbank-Dumps** werden nie von allein zurückgespielt. Eine Zeile unter **Datenbank-Dumps** lässt sich herunterladen, in einen Ordner speichern oder in eine frisch gestartete Datenbank importieren. Siehe [Datenbank-Dumps](backups.md#database-dumps).
 
@@ -113,7 +113,7 @@ Wähle auf der Seite Wiederherstellung Einträge so, wie du Zeilen in der Liste 
 - **Welche Sicherung**: **Empfohlen** nimmt für jeden Eintrag die Sicherung, die sein eigenes Fenster empfehlen würde. **Ein Zeitpunkt für alle** nimmt für jeden Eintrag seine neueste Sicherung ab einem **Zeitpunkt**, den du wählst, oder früher, zum Beispiel am Abend, bevor etwas schiefging.
 - **Wohin**: **Neben das Original** oder **Original ersetzen**, mit **Vorher den heutigen Zustand sichern**.
 
-Jeder Eintrag wird so geprüft wie eine einzelne Wiederherstellung, und dann laufen sie nacheinander. Jede Zeile zeigt, wie ihre eigene verlief: **Wartet**, **Läuft**, **Wiederhergestellt**, **Fehlgeschlagen** oder **Ausgelassen**. **Nach diesem anhalten** lässt die laufende Wiederherstellung fertig werden und startet keine weitere. Der Flash kommt als ZIP zum Herunterladen, und ZFS-Datasets und das Selbstbackup werden einzeln wiederhergestellt.
+Jeder Eintrag wird so geprüft wie eine einzelne Wiederherstellung, und dann laufen sie nacheinander. Jede Zeile zeigt, wie ihre eigene verlief: **Wartet**, **Läuft**, **Wiederhergestellt**, **Fehlgeschlagen** oder **Ausgelassen**. **Nach diesem anhalten** lässt die laufende Wiederherstellung fertig werden und startet keine weitere. Der Flash kommt als ZIP zum Herunterladen, und ZFS-Datasets und die Selbstsicherung werden einzeln wiederhergestellt.
 
 ![Mehrere Einträge wiederherstellen: eine Zeile pro Eintrag mit ihrem Fortschritt.](assets/screenshots/restore/several-dark.png#only-dark)
 ![Mehrere Einträge wiederherstellen: eine Zeile pro Eintrag mit ihrem Fortschritt.](assets/screenshots/restore/several-light.png#only-light)

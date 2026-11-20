@@ -1,6 +1,6 @@
 # Sicherungen und Einträge
 
-Alles, was BombVault sichert, steht in einer Liste unter **Sicherungen**: Container, VMs, Ordner-Sets, der Flash, ZFS-Datasets und das Selbstbackup. Jedes davon ist ein **Eintrag** mit einer eigenen Seite. Diese Seite führt durch die Liste, die Eintragsseite und ihre drei Tabs sowie die Einstellungen, die ein Eintrag haben kann.
+Alles, was BombVault sichert, steht in einer Liste unter **Sicherungen**: Container, VMs, Ordner-Sets, der Flash, ZFS-Datasets und die Selbstsicherung. Jedes davon ist ein **Eintrag** mit einer eigenen Seite. Diese Seite führt durch die Liste, die Eintragsseite und ihre drei Tabs sowie die Einstellungen, die ein Eintrag haben kann.
 
 ![Die Liste Sicherungen mit gewählter Kachel Container: Jede Zeile zeigt ihre letzten Läufe als Streifen und einen Status.](assets/screenshots/backups/list-dark.png#only-dark)
 ![Die Liste Sicherungen mit gewählter Kachel Container: Jede Zeile zeigt ihre letzten Läufe als Streifen und einen Status.](assets/screenshots/backups/list-light.png#only-light)
@@ -12,7 +12,7 @@ Alles, was BombVault sichert, steht in einer Liste unter **Sicherungen**: Contai
 | **Container** | Der Appdata-Ordner plus die Container-Definition: Image, Variablen, Ports, Labels und Volumes. Die Karte **Gesicherte Ordner** auf dem Tab **Einstellungen** des Containers hakt genau ab, welche Ordner die Sicherung abdeckt, mit einer laufenden Zählung der Pfade und einer Liste dessen, was du ausgelassen hast. Daten, die ein Container außerhalb von Host Data ablegt, etwa in einem TrueNAS-ixVolume oder einem Compose-Projekt unter `/opt`, werden nicht gesichert, und der Lauf nennt die Ordner, die er ausgelassen hat. Der Lauf nennt auch einen Ordner innerhalb von Host Data, den es gerade nicht gibt. Systempfade wie `/etc/localtime` oder der Docker-Socket zählen nicht als Daten. |
 | **VMs** | Die Disk-Images, die XML-Definition und das UEFI-NVRAM, mit einem Graceful-Shutdown oder einem Live-Snapshot, über SSH. Siehe [VM-Sicherungen](vm-backup-ssh-setup.md). |
 | **Flash** | Nur Unraid. Der ganze USB-Flash (`/boot`): Betriebssystem, Lizenz, Array-Konfiguration, Shares, Netzwerk und Plugin-Konfiguration. |
-| **Selbstbackup** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten der Speicherorte, das libvirt-SSH-Schlüsselpaar, der Schlüssel und die festgehaltenen Host-Schlüssel der ZFS-Server und die Zertifikate, als Snapshot mit SQLite `VACUUM INTO`, damit die Datenbank nie mitten in einem Schreibvorgang erfasst wird. |
+| **Selbstsicherung** | Das eigene `/config` von BombVault: seine Einstellungsdatenbank, die Zugangsdaten der Speicherorte, das libvirt-SSH-Schlüsselpaar, der Schlüssel und die festgehaltenen Host-Schlüssel der ZFS-Server und die Zertifikate, als Snapshot mit SQLite `VACUUM INTO`, damit die Datenbank nie mitten in einem Schreibvorgang erfasst wird. |
 | **Ordner** | Jeder Ordner auf dem Server als Ordner-Set, etwa ein Share, deine Dokumente oder eine Fotobibliothek, mit optionalen Ausschlussmustern. Ordner-Sets haben Zeitpläne, Aufbewahrung, Off-site-Kopien, Prüfungen und Wiederherstellungsproben wie alles andere auch. |
 | **ZFS-Datasets** | Ein Dataset und jedes Dataset darunter, gelesen aus einem ZFS-Snapshot, sodass alle vom selben Augenblick stammen, und mit restic wie ein Ordner gespeichert. Ein ZFS-Eintrag kann außerdem eine blockgenaue Replik auf einem zweiten ZFS-Server halten. Siehe [ZFS-Datasets](zfs-datasets.md). |
 
@@ -63,7 +63,7 @@ Container, VMs und der Flash erscheinen von selbst, sobald ihr Bereich unter **E
 
 ## Einen Eintrag auslassen {#dont-back-up}
 
-Einen Eintrag, den du absichtlich auslässt, etwa einen Testcontainer, kannst du mit **Nicht sichern** markieren. Er zählt dann nicht mehr als nicht geschützt, und **Nicht mehr ausnehmen** holt ihn zurück. **Zeitplan pausieren** ist der sanftere Weg: Der Eintrag verlässt den Zeitplan und das Gesamt-Backup, trägt ein graues Abzeichen **Zeitplan pausiert**, und **Jetzt sichern** funktioniert weiter. Es setzt denselben Schalter wie **Im Zeitplan** auf dem Tab Einstellungen des Eintrags.
+Einen Eintrag, den du absichtlich auslässt, etwa einen Testcontainer, kannst du mit **Nicht sichern** markieren. Er zählt dann nicht mehr als nicht geschützt, und **Nicht mehr ausnehmen** holt ihn zurück. **Zeitplan pausieren** ist der sanftere Weg: Der Eintrag verlässt den Zeitplan und die Gesamtsicherung, trägt ein graues Abzeichen **Zeitplan pausiert**, und **Jetzt sichern** funktioniert weiter. Es setzt denselben Schalter wie **Im Zeitplan** auf dem Tab Einstellungen des Eintrags.
 
 ## Die Seite eines Eintrags {#entry-page}
 
@@ -91,7 +91,7 @@ Wie viele Snapshots bleiben, legt der Speicherort fest, siehe [Wie lange aufhebe
 Jeder Eintrag beginnt mit **Zeitplan und Speicherort**:
 
 - **Im Zeitplan** nimmt den Eintrag in die geplanten Läufe auf oder heraus.
-- **Eigener Plan** gibt diesem einen Eintrag einen eigenen Plan, siehe [Ein eigener Plan für einen Eintrag](schedules.md#own-plan). Ohne einen läuft er nach dem Plan seines Bereichs oder im Gesamt-Backup.
+- **Eigener Plan** gibt diesem einen Eintrag einen eigenen Plan, siehe [Ein eigener Plan für einen Eintrag](schedules.md#own-plan). Ohne einen läuft er nach dem Plan seines Bereichs oder in der Gesamtsicherung.
 - Eine Reihe von Knöpfen, **Lokal** und je einer pro Off-site-Speicherort, sagt, wohin die Sicherungen gehen. **Folgt der Vorgabe** heißt, der Eintrag geht dorthin, wohin sein Bereich geht, und ein Klick darauf öffnet **Speicherorte je Bereich**. Siehe [Zuordnung pro Eintrag](offsite-recovery.md#placement).
 - **Repository** nennt, wohin die Sicherungen geschrieben werden (**Gespeichert auf**). Dieser Ort steht ab der ersten Sicherung fest, die Kopien können sich jederzeit ändern.
 
@@ -166,7 +166,7 @@ Der Tab Einstellungen des Containers hat außerdem einen älteren, einfacheren W
 
 ### Beispiel: Plex wartet, solange jemand schaut {#example-plex}
 
-Das Gesamt-Backup läuft jede Nacht um 03:00. Niemand soll einen Film abbrechen sehen, weil Plex für seine Sicherung heruntergefahren wurde, aber die Sicherung soll trotzdem vor dem Morgen stattfinden.
+Die Gesamtsicherung läuft jede Nacht um 03:00. Niemand soll einen Film abbrechen sehen, weil Plex für seine Sicherung heruntergefahren wurde, aber die Sicherung soll trotzdem vor dem Morgen stattfinden.
 
 1. Öffne **Sicherungen**, dann den Eintrag `plex`, dann seinen Tab **Einstellungen**.
 2. Stelle in **Wenn die App beschäftigt ist** die **Aktivitätsprüfung** auf Plex. Du musst nichts eintippen.
@@ -185,7 +185,7 @@ Für eine eigene Prüfung lass den **Befehl vor der Sicherung** mit Code 75 ende
 restic bleibt die Engine, aber ein Export gibt dir eine Kopie, die weder BombVault noch restic braucht.
 
 - **Container exportieren** und **VM exportieren** unter **Mehr** auf der Seite eines Eintrags schreiben eine Kopie des jetzigen Stands neben das Repository: die Sicherungsordner des Containers plus sein Unraid-Template, oder die Disk-Images der VM plus ihre Definition, wiederherstellbar mit `virsh define`.
-- **Exportieren** an einem Snapshot schreibt eine gespeicherte Sicherung in den Export-Ordner auf dem Server, als tar, zip oder als eigenes restic-Repository, und kann einen Snapshot oder alle nehmen. Eine Flash-Sicherung und ein Selbstbackup enthalten Schlüssel, darum braucht ihr Export ein Login-Passwort und eine Anmeldung an der Instanz.
+- **Exportieren** an einem Snapshot schreibt eine gespeicherte Sicherung in den Export-Ordner auf dem Server, als tar, zip oder als eigenes restic-Repository, und kann einen Snapshot oder alle nehmen. Eine Flash-Sicherung und eine Selbstsicherung enthalten Schlüssel, darum braucht ihr Export ein Login-Passwort und eine Anmeldung an der Instanz.
 
 Exporte sind standardmäßig einfache Dateien. **Exporte mit age verschlüsseln** unter **Einstellungen, System** versiegelt sie, das Flash-ZIP eingeschlossen, für die Empfänger, die du aufführst, jeweils ein öffentlicher age-Schlüssel oder ein öffentlicher SSH-Schlüssel. Du entschlüsselst sie später außerhalb der Box mit dem passenden privaten Schlüssel. Ist die Verschlüsselung an und es gibt keinen gültigen Empfänger, schlägt ein Export mit einer klaren Fehlermeldung fehl, statt je einfache Dateien zu schreiben.
 

@@ -19,7 +19,7 @@ import {
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { useToast } from "../../lib/toast";
 import { useTestVerdict, type TestVerdictState } from "../../lib/useTestVerdict";
-import { providerName } from "./ProviderPicker";
+import { providerName } from "./providers";
 
 // Settings the provider decides, or BombVault fills in.
 const HIDDEN = new Set(["provider", "vendor", "key_file", "env_auth", "type"]);

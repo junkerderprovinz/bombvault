@@ -122,6 +122,7 @@ export function FileSetDialog({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={title}
       onClose={onClose}
       footer={

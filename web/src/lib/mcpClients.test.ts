@@ -1,14 +1,9 @@
 // A key stores its client's id, so an id that changes or collides would put the
 // wrong mark on keys already made. The rest keeps a button from opening a
 // dialog with nothing to copy or a mark that is not there.
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CLIENT_MARKS } from "./mcpClientMarks";
-import { CLOUD_CLIENTS, LOCAL_CLIENTS, OTHER_CLIENT, clientById, snippetFor } from "./mcpClients";
+import { CLOUD_CLIENTS, LOCAL_CLIENTS, OTHER_CLIENT, catalogId, clientById, clientEntry, snippetFor, storedId } from "./mcpClients";
 
-const indexCss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "index.css"), "utf8");
 const ALL = [...LOCAL_CLIENTS, ...CLOUD_CLIENTS, OTHER_CLIENT];
 const input = { origin: "https://tower:3443", endpointPath: "/mcp", key: "<your key>", selfSigned: true };
 
@@ -24,11 +19,20 @@ describe("the client list", () => {
     for (const id of ids) expect(id).toMatch(/^[a-z0-9][a-z0-9-]{0,31}$/);
   });
 
-  it("has a mark and a tile colour for every button", () => {
-    for (const c of [...LOCAL_CLIENTS, ...CLOUD_CLIENTS]) {
-      expect(CLIENT_MARKS[c.mark ?? ""], c.id).toBeDefined();
-    }
-    for (const c of ALL) expect(indexCss, c.tile).toContain(`.${c.tile} {`);
+  it("finds every client in GlimStone's catalog, which draws its tile", () => {
+    for (const c of ALL) expect(clientEntry(c), c.id).toBeDefined();
+  });
+
+  it("keeps claudeai as the stored id of the web chat the catalog calls claude", () => {
+    expect(catalogId("claudeai")).toBe("claude");
+    expect(storedId("claude")).toBe("claudeai");
+    expect(clientById(storedId("claude"))?.name).toBe("Claude");
+    expect(catalogId("claude-code")).toBe("claude-code");
+    expect(storedId("claude-code")).toBe("claude-code");
+  });
+
+  it("puts only the cloud clients in the catalog's group of web chats", () => {
+    for (const c of ALL) expect(clientEntry(c)?.group === "web", c.id).toBe(c.group === "cloud");
   });
 
   it("has a configuration to copy for every client that gets a setup", () => {

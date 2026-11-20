@@ -7,7 +7,7 @@ Ein kurzer Katalog dessen, was BombVault kann. Jede Zeile verlinkt auf die Seite
 - **Container**: der Appdata-Ordner und die Container-Definition, mit Ordnerauswahl pro Container. [Sicherungen und Einträge](backups.md#what-is-saved)
 - **VMs**: Disk-Images, XML und UEFI-NVRAM über SSH, mit geordnetem Herunterfahren, Live-Snapshot oder nur geänderten Blöcken. VMs mit Unraid-Snapshots und Disks auf zvols sind vollständig abgedeckt. [VM-Sicherungen](vm-backup-ssh-setup.md)
 - **Flash**: der gesamte Unraid-USB-Flash, mit geplantem ZIP-Export. [Sicherungen und Einträge](backups.md#settings-tab)
-- **Selbstbackup**: die eigenen Einstellungen und Zugangsdaten von BombVault. [Notfall-Assistent](offsite-recovery.md#emergency)
+- **Selbstsicherung**: die eigenen Einstellungen und Zugangsdaten von BombVault. [Notfall-Assistent](offsite-recovery.md#emergency)
 - **Ordner**: jeder Ordner auf dem Server als Ordner-Set. [Einen Ordner hinzufügen](backups.md#add)
 - **ZFS-Datasets**: ein Dataset-Baum, gelesen aus einem Snapshot, mit einzeln wiederherstellbaren Dateien und einer optionalen Replik auf einem zweiten ZFS-Server. [ZFS-Datasets](zfs-datasets.md)
 - **Datenbank-Dumps**: PostgreSQL, MySQL und MariaDB, vom laufenden Server in einen eigenen Wiederherstellungspunkt gedumpt. [Datenbank-Dumps](backups.md#database-dumps)
@@ -48,7 +48,7 @@ Ein kurzer Katalog dessen, was BombVault kann. Jede Zeile verlinkt auf die Seite
 - **Direkte Repositories**, aufgelistet unter **Sichert direkt hierher**. [Direkte Repositories](offsite-recovery.md#direct-repositories)
 - **Aufbewahrung als Zeitleiste**: **Kurz**, **Ausgewogen**, **Lang** oder **Eigene Werte** pro Ort, mit Regeln pro Bereich. [Wie lange aufheben](offsite-recovery.md#keep)
 - **Den Verlauf eines Bereichs umziehen**, und **Speicherort entfernen** mit oder ohne seine Sicherungen. [Umziehen und entfernen](offsite-recovery.md#move-remove)
-- **Zeitpläne, die sich wie Sätze lesen**, das Band **Woche**, ein Gesamt-Backup, Pläne pro Bereich und ein eigener Plan pro Eintrag. [Zeitpläne](schedules.md)
+- **Zeitpläne, die sich wie Sätze lesen**, das Band **Woche**, eine Gesamtsicherung, Pläne pro Bereich und ein eigener Plan pro Eintrag. [Zeitpläne](schedules.md)
 - **Verpasste Sicherungen nachholen**, eine manuelle Reihenfolge und Updates nach einer erfolgreichen Sicherung. [Zeitpläne](schedules.md)
 
 ## Überblick, Prüfung und Überwachung {#insight-verification-monitoring}

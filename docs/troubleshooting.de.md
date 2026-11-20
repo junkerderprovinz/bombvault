@@ -230,7 +230,7 @@ Ein freigegebener Knoten nimmt mit seinem alten `APP_KEY` keine Heiminstanz mehr
 
 ## Ein anderer Benutzer kann das lokale Repository nicht lesen {#repository-permissions}
 
-Das lokale Repository bleibt für andere Benutzer lesbar, etwa einen Sync-Benutzer über SMB. Vor 10.4.1 konnten Dateien, die ein Aufräumen, Tag, Pull, Bereichsumzug, Löschen oder Stack-Sicherung geschrieben hatte, bis zur nächsten Nacht unlesbar bleiben. Aktualisiere BombVault, dann sind sie sofort lesbar. Das Selbstbackup-Repository bleibt absichtlich nur für root lesbar, weil es die Einstellungen von BombVault enthält.
+Das lokale Repository bleibt für andere Benutzer lesbar, etwa einen Sync-Benutzer über SMB. Vor 10.4.1 konnten Dateien, die ein Aufräumen, Tag, Pull, Bereichsumzug, Löschen oder Stack-Sicherung geschrieben hatte, bis zur nächsten Nacht unlesbar bleiben. Aktualisiere BombVault, dann sind sie sofort lesbar. Das Repository der Selbstsicherung bleibt absichtlich nur für root lesbar, weil es die Einstellungen von BombVault enthält.
 
 ## Immer noch nicht weiter? {#still-stuck}
 

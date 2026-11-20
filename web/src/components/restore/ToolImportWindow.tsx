@@ -178,6 +178,7 @@ export function ToolImportWindow({ hostMountRoot, onClose }: { hostMountRoot: st
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={t("toolImport.title")}
       hint={t("toolImport.intro")}
       onClose={onClose}

@@ -683,12 +683,16 @@
    fixed-height control centres its content, but with the overflow clip here
    that would cut descenders: at 0.875rem the line box is 14px while Segoe UI
    needs about 18.6px. 1.4 clears every face in the stack, and the extra
-   leading splits evenly around the text inside the button's own height. */
+   leading splits evenly around the text inside the button's own height.
+   Arabic hangs its tails and dots lower still, so the box reaches a little
+   past the line and gives that room back. */
 .glim-btn-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.4;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
 }
 
 /* Reactive labels: the label mode that shows only the glyph and reveals the
@@ -716,6 +720,8 @@
   transform-origin: left center;
   /* The same descender clipping as `.glim-btn-label`. */
   line-height: 1.4;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
 }
 
 /* The active item keeps its words in every reactive strip: "which tab am I on"
@@ -2137,11 +2143,16 @@ body {
   inset-inline-end: 1.75rem;
 }
 
+/* The clip that ends a long name also cuts the descenders below a tight line
+   box, so the box reaches a little past the line on both sides and gives that
+   room back outside. */
 .glim-readme-btn-name,
 .glim-readme-btn-sub {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
 }
 
 .glim-readme-btn-name {
@@ -2182,6 +2193,63 @@ body {
 
 .glim-readme-btn-soon .glim-readme-btn-mark {
   opacity: 0.45;
+}
+
+/* A mark is cropped to its drawing, and a tile's middle rarely falls on a
+   whole pixel, so the SVG's own clip would shave the soft edge of a shape
+   that reaches the box, such as a filled circle's bottom. */
+.glim-readme-btn-mark svg {
+  overflow: visible;
+}
+
+/* A wordmark already says the name, so it stands in the name's place,
+   starting where a symbol would. It keeps its own aspect: a long one is held
+   to a width that keeps its letters near the size of a name, and a short one
+   grows to the full height. The hidden name still holds the second line
+   where it stands on every tile, and when that line comes in the wordmark
+   rises and shrinks onto the name's line from its start. */
+.glim-readme-btn-mark--wordmark {
+  inset-inline: 0.875rem;
+  width: auto;
+  height: 1.625rem;
+  justify-content: flex-start;
+  transform-origin: left center;
+  transition:
+    translate calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease),
+    scale calc(var(--motion-page-dur, 0ms) / 2) var(--motion-page-ease, ease);
+}
+
+[dir="rtl"] .glim-readme-btn-mark--wordmark { transform-origin: right center; }
+
+.glim-readme-btn-mark--wordmark svg {
+  width: auto;
+  max-width: 7rem;
+}
+
+.glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text {
+  inset-inline: 0.875rem;
+}
+
+.glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text > .glim-readme-btn-name {
+  visibility: hidden;
+}
+
+.glim-readme-btn-unit:has(.glim-readme-btn-hint) :is(.glim-readme-btn-mark--wordmark, .glim-readme-btn-mark--wordmark ~ .glim-readme-btn-text) {
+  inset-inline-end: 1.75rem;
+}
+
+.glim-readme-btn-unit:is(:hover, :focus-within, .glim-readme-btn-unit--note, .glim-readme-btn-soon)
+  > .glim-readme-btn:has(.glim-readme-btn-sub)
+  > .glim-readme-btn-mark--wordmark {
+  translate: 0 calc(-50% - 0.4375rem);
+  scale: 0.53;
+}
+
+@media (hover: none) {
+  .glim-readme-btn:has(.glim-readme-btn-sub) > .glim-readme-btn-mark--wordmark {
+    translate: 0 calc(-50% - 0.4375rem);
+    scale: 0.53;
+  }
 }
 
 /* Without a pointer there is no hover to bring the second line in. */
@@ -2245,13 +2313,10 @@ body {
   margin-block: calc(var(--text-body) * 1.5);
 }
 
-/* A provider in the off-site wizard takes its colour pair from its list item,
-   since there are too many brands for a class each. A kind of storage with no
-   brand, such as SFTP or a folder, lights up in plain black or white rather
-   than the accent, which would pass it off as a brand. */
-.glim-tile-provider {
-  --tile: var(--provider-tile, var(--carbon-text));
-  --tile-ink: var(--provider-ink, var(--carbon-surface));
+/* GlimStone's well: the ground a connection row stands on inside a card. */
+.glim-well {
+  background-color: var(--carbon-surface2);
+  border-radius: var(--radius-control);
 }
 
 /* GlimStone's eyebrow label: small, uppercase, quiet. It heads a picker's
@@ -2280,8 +2345,7 @@ body {
 .glim-provider-pick .glim-readme-btn-unit { display: flex; }
 .glim-provider-pick .glim-readme-btn { flex: 1; width: auto; }
 
-/* The picked provider and one reached with Tab stay lit, as under the pointer. */
-.glim-provider-picked > .glim-brand-tile,
+/* A tile reached with Tab stays lit, as under the pointer. */
 .glim-provider-pick .glim-brand-tile:focus-visible {
   background-color: var(--tile);
   color: var(--tile-ink);
@@ -2289,12 +2353,11 @@ body {
   --mark-ink: var(--tile-ink);
   --mark-cut: var(--tile);
 }
-.glim-provider-picked .glim-readme-btn-mark,
 .glim-provider-pick .glim-brand-tile:focus-visible .glim-readme-btn-mark {
   color: var(--tile-ink);
 }
-:is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-rest { display: none; }
-:is(.glim-provider-picked > .glim-brand-tile, .glim-provider-pick .glim-brand-tile:focus-visible) .glim-mark-hover { display: block; }
+.glim-provider-pick .glim-brand-tile:focus-visible .glim-mark-rest { display: none; }
+.glim-provider-pick .glim-brand-tile:focus-visible .glim-mark-hover { display: block; }
 /* The second line on a lit tile is small text on the brand colour and needs
    the ink's full contrast. */
 .glim-provider-pick .glim-readme-btn-unit:is(:hover, :focus-within) .glim-readme-btn-sub { opacity: 1; }
@@ -2306,13 +2369,62 @@ body {
   max-width: 48rem;
   transition: max-width var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1);
 }
-.glim-window.glim-pick-window--form { max-width: 40rem; }
-.glim-pick-window > .glim-window-body { overflow: hidden; }
+/* The form after the pick keeps the tiles' width, so the window does not
+   jump between steps, and a window that edits what a picker made takes the
+   same width, so one form looks the same wherever it opens. */
+.glim-window.glim-pick-window--form,
+.glim-window.glim-form-window { max-width: 48rem; }
+
+/* The fields of a form in a window: one row each, the label in a column of one
+   width at the start and the control at the end, so the controls line up on
+   one edge. A long label wraps inside its column. On a phone the label stands
+   over its field. */
+.glim-form-rows .glim-form-row {
+  --form-label: 15rem;
+  display: grid;
+  grid-template-columns: minmax(0, var(--form-label)) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1rem;
+}
+/* Every control starts on the field edge, a text field runs to the end of the
+   row, and what stands under a field, such as its suggested values, starts
+   on the same edge. */
+.glim-form-rows .glim-form-row > :nth-child(2) {
+  justify-self: stretch;
+  justify-content: flex-start;
+}
+.glim-form-rows .glim-form-row > :nth-child(2) > span.flex { justify-content: flex-start; }
+.glim-form-rows .glim-form-row > :nth-child(2):is(input, textarea, .relative),
+.glim-form-rows .glim-form-row > :nth-child(2) > :is(input, textarea, .relative) { width: 100%; }
+/* A field's suggested values stand on the step card's surface, so they take
+   the fields' step to read as choices. */
+.glim-form-rows [data-examples] > .bg-carbon-surface2:not(:hover) { background-color: var(--carbon-surface3); }
+/* A box of fields inside the form, such as its more settings, reaches out by
+   its padding, so its labels and fields stand on the form's own edges. */
+.glim-form-rows .glim-form-box { margin-inline: -0.75rem; }
+@media (max-width: 39.99rem) {
+  .glim-form-rows .glim-form-row { grid-template-columns: minmax(0, 1fr); }
+}
+/* A password asked for twice stands in a settings row as two lines of one
+   grid: the repeat's label under the row's label and its field under the
+   first field, one column on a phone. */
+.glim-form-row:has(.glim-secret-confirm) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+}
+.glim-form-row:has(.glim-secret-confirm) > :last-child,
+.glim-form-row .glim-secret-confirm { display: contents; }
+@media (max-width: 39.99rem) {
+  .glim-form-row:has(.glim-secret-confirm) { grid-template-columns: minmax(0, 1fr); }
+}
+.glim-pick-window:not(.glim-pick-window--form) > .glim-window-body { overflow: hidden; }
 .glim-pick-window .glim-provider-pick .glim-readme-btn-unit {
   --tile: var(--provider-tile, var(--accent));
   --tile-ink: var(--provider-ink, var(--accent-contrast));
 }
 .glim-brand-svg { display: contents; }
+.glim-brand-svg > :is(.glim-mark-rest, .glim-mark-hover) { width: 100%; height: 100%; }
+.glim-brand-svg > .glim-mark-rest { display: block; }
 .glim-input.glim-pick-search {
   flex: none;
   align-self: flex-end;
@@ -2340,9 +2452,20 @@ body {
   flex-direction: column;
   gap: 0.75rem;
 }
-.glim-pick-section > .glim-eyebrow {
+/* A group's badge and (i) stand in its eyebrow's line. */
+.glim-pick-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.glim-pick-eyebrow > .glim-eyebrow {
   margin: 0;
   font-weight: inherit;
+}
+/* The tile picked before keeps a ring in the colour it lights up in. */
+.glim-provider-pick .glim-readme-btn[aria-current="true"] {
+  outline: 2px solid var(--tile);
+  outline-offset: 2px;
 }
 .glim-pick-none {
   margin: 0;
@@ -2354,6 +2477,144 @@ body {
 @media (max-width: 600px) {
   .glim-input.glim-pick-search { width: 100%; }
   .glim-pick-window .glim-provider-pick { gap: 0.5rem; }
+}
+
+/* A connected service or account (GlimStone's ConnectionRow): a flat group on
+   the well's surface with its mark lit on a tile the row's whole height, the
+   brand's colour pair from the tile's own style or the accent for one of our
+   glyphs. The tile is about as wide as a row at rest is high, so it stands
+   square there and grows taller with a row that wraps. */
+.glim-connection {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  container: connection / inline-size;
+}
+.glim-connection-tile {
+  --tile: var(--accent);
+  --tile-ink: var(--accent-contrast);
+  --mark-ink: var(--tile-ink);
+  --mark-cut: var(--tile);
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 5.5rem;
+  background-color: var(--tile);
+  color: var(--tile-ink);
+  /* Only toward the name: its other edges are the row's, where a ring would
+     draw a frame the card shows through. */
+  border-inline-end: 1px solid var(--tile-edge, transparent);
+}
+.glim-connection-mark {
+  display: flex;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.glim-connection-mark svg {
+  width: 100%;
+  height: 100%;
+}
+/* A name written out takes the tile's width, less the margin a symbol keeps
+   round it, and the height of a name rather than of a symbol. */
+.glim-connection-mark--wordmark {
+  width: calc(100% - 1rem);
+  height: 1.5rem;
+}
+.glim-connection-main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+}
+/* The name keeps its line and the badges move under it before it ends in an
+   ellipsis, and the buttons do the same under the status. */
+.glim-connection-head,
+.glim-connection-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.glim-connection-head { gap: 0.25rem 0.75rem; }
+.glim-connection-foot { gap: 0.5rem 1rem; }
+.glim-connection-name {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--carbon-text);
+}
+.glim-connection-badges,
+.glim-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+/* A connection row that opens a page: the link behind it covers the row and
+   its controls stand above the link, and the row lights up under the pointer
+   as a list row does. */
+.glim-row-linked { position: relative; }
+.glim-row-link {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: var(--radius-card);
+  color: transparent;
+  overflow: hidden;
+}
+.glim-row-link:focus-visible { outline: 2px solid var(--focus-ring); }
+.glim-row-linked .glim-connection { pointer-events: none; }
+.glim-row-linked :is(.glim-connection-actions, .glim-connection-badges, .glim-connection-about) :is(button, [role="switch"], [tabindex]) {
+  pointer-events: auto;
+  position: relative;
+}
+.glim-row-linked:has(> .glim-row-link:hover) > .glim-connection { background-color: var(--hover); }
+/* A badge stays a size below the buttons, so it reads as a state and not as
+   one more thing to press. The state washes are measured over the card, and
+   the well's darker ground takes their text under 4.5:1, so a badge here lays
+   its wash over the card's surface. A neutral one stands halfway between the
+   well and the buttons' surface. */
+.glim-connection-badges .glim-badge {
+  --badge-h: 1.5rem;
+  --badge-px: 0.625rem;
+}
+.glim-connection-badges .glim-badge--ok { background: linear-gradient(var(--status-ok-bg), var(--status-ok-bg)) var(--carbon-surface); }
+.glim-connection-badges .glim-badge--fail { background: linear-gradient(var(--status-fail-bg), var(--status-fail-bg)) var(--carbon-surface); }
+.glim-connection-badges .glim-badge--active { background: linear-gradient(var(--accent-soft), var(--accent-soft)) var(--carbon-surface); }
+.glim-connection-badges .glim-badge--neutral { background-color: color-mix(in srgb, var(--carbon-surface2), var(--carbon-surface3)); }
+.glim-connection-about {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  font-size: var(--text-subline);
+  color: var(--carbon-text-sub);
+}
+.glim-connection-status {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@container connection (max-width: 30rem) {
+  .glim-connection-tile { width: 4.5rem; }
+  .glim-connection-mark { width: 2rem; height: 2rem; }
+  .glim-connection-main { padding-inline: 0.75rem; }
+}
+/* A contrast theme forces the ground and the glyphs but not a mark's inline
+   fills, which would stay white on its white. */
+@media (forced-colors: active) {
+  .glim-connection-tile {
+    --mark-ink: CanvasText;
+    --mark-cut: Canvas;
+    border-inline-end: 1px solid CanvasText;
+  }
 }
 
 /* GlimStone's GlyphField and IconButton, which the picker's search is made
@@ -2406,39 +2667,6 @@ body {
   height: 1.6rem;
 }
 
-/* The MCP clients' tile colours (McpServerCard's client buttons), from the
-   brands' own palettes, with the ink as GlimStone's brand tiles pick it: white
-   wherever white reaches 2:1 on the fill, near-black below that. */
-.glim-tile-anythingllm { --tile: #020617; --tile-ink: #ffffff; } /* 20.2:1 */
-.glim-tile-antigravity { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
-.glim-tile-chatgpt { --tile: #10a37f; --tile-ink: #ffffff; } /* 3.2:1 */
-.glim-tile-claude { --tile: #d97757; --tile-ink: #ffffff; } /* 3.1:1 */
-.glim-tile-cline { --tile: #e8912d; --tile-ink: #ffffff; } /* 2.5:1 */
-.glim-tile-openai { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-continue { --tile: #005dc7; --tile-ink: #ffffff; } /* 6.2:1 */
-.glim-tile-copilot { --tile: #8957e5; --tile-ink: #ffffff; } /* 4.6:1 */
-.glim-tile-cursor { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-gemini { --tile: #4285f4; --tile-ink: #ffffff; } /* 3.6:1 */
-.glim-tile-goose { --tile: #ff6d3b; --tile-ink: #ffffff; } /* 2.8:1 */
-.glim-tile-grok { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-jan { --tile: #f17455; --tile-ink: #ffffff; } /* 2.8:1 */
-.glim-tile-jetbrains { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-kimi { --tile: #007cff; --tile-ink: #ffffff; } /* 3.9:1 */
-.glim-tile-lmstudio { --tile: #4f46e5; --tile-ink: #ffffff; } /* 6.3:1 */
-.glim-tile-mistral { --tile: #fa520f; --tile-ink: #ffffff; } /* 3.3:1 */
-.glim-tile-msty { --tile: #7c5cfc; --tile-ink: #ffffff; } /* 4.4:1 */
-.glim-tile-n8n { --tile: #ea4b71; --tile-ink: #ffffff; } /* 3.7:1 */
-.glim-tile-openwebui { --tile: #0a0a0a; --tile-ink: #ffffff; } /* 19.8:1 */
-.glim-tile-opencode { --tile: #211e1e; --tile-ink: #ffffff; } /* 16.5:1 */
-.glim-tile-perplexity { --tile: #20808d; --tile-ink: #ffffff; } /* 4.6:1 */
-.glim-tile-qwen { --tile: #615ced; --tile-ink: #ffffff; } /* 4.9:1 */
-.glim-tile-roocode { --tile: #000000; --tile-ink: #ffffff; } /* 21.0:1 */
-.glim-tile-visualstudio { --tile: #5c2d91; --tile-ink: #ffffff; } /* 9.4:1 */
-.glim-tile-vscode { --tile: #007acc; --tile-ink: #ffffff; } /* 4.5:1 */
-.glim-tile-warp { --tile: #01a4ff; --tile-ink: #ffffff; } /* 2.7:1 */
-.glim-tile-windsurf { --tile: #58e5c0; --tile-ink: #161616; } /* 11.5:1 */
-.glim-tile-zed { --tile: #0866ff; --tile-ink: #ffffff; } /* 4.8:1 */
-
 /* A tile set straight on a card. Its chips, its switch while off and a panel
    opened inside it each keep one step of contrast to the tile, which the
    card's own tones would not: a neutral chip is the dark tile's colour. */
@@ -2465,13 +2693,6 @@ body {
 .glim-client-mark svg { width: 100%; height: 100%; display: block; }
 .glim-client-mark .glim-mark-hover { display: none; }
 .glim-client-mark-lg { width: 2.25rem; height: 1.75rem; }
-
-/* A mark colour that reads as a hole on the dark theme's button is lifted
-   there; the lit tile swaps in the single-colour mark anyway. */
-[data-theme="dark"] .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) .glim-mark-lift .glim-mark-rest { filter: brightness(1.55); }
-}
 
 /* The dot of a setup dialog waiting for the client's first call breathes, so
    the wait reads as live rather than stuck. */
@@ -4236,19 +4457,19 @@ body {
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
   }
-  .glim-modal-foot > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg),
-  .glim-modal-foot > .glim-tip-wrap > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
+  :is(.glim-modal-foot, .glim-window-actions) > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg),
+  :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap > :is(.glim-btn-sm, .glim-btn-md, .glim-btn-lg) {
     min-width: var(--btn-w-xs);
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn {
     height: auto;
     min-height: var(--btn-h);
     padding-block: 0.375rem;
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn-key {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn-key {
     min-height: var(--btn-h-key);
   }
-  :is(.glim-modal-foot, .glim-modal-foot > .glim-tip-wrap) > .glim-btn > .glim-btn-label {
+  :is(.glim-modal-foot, .glim-window-actions, :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap) > .glim-btn > .glim-btn-label {
     white-space: normal;
     text-wrap: balance;
     text-align: center;
@@ -4283,7 +4504,7 @@ body {
     gap: 0.75rem;
     padding: 1rem 1.25rem;
   }
-  .glim-modal-foot > .glim-tip-wrap {
+  :is(.glim-modal-foot, .glim-window-actions) > .glim-tip-wrap {
     flex: none;
   }
   .glim-btn--accent {
@@ -4297,6 +4518,10 @@ body {
   .glim-btn--subtle {
     background-color: var(--carbon-surface2);
     color: var(--carbon-text);
+  }
+  /* A connection row is a well of surface2, where a quiet button would vanish. */
+  .glim-connection .glim-btn--subtle {
+    background-color: var(--carbon-surface3);
   }
   .glim-btn--ok {
     background-color: var(--status-ok-solid);
@@ -4729,12 +4954,21 @@ body {
     gap: 1rem;
     padding-top: 1.75rem;
   }
+  /* A window's buttons wrap as one group, so a start line too long to stand
+     beside all of them takes a line of its own above them, and none of them
+     drops below the others for it. */
   .glim-window-start {
-    flex: 1 1 0;
-    min-width: min(4rem, 100%);
+    flex: 1 1 auto;
     overflow-wrap: anywhere;
     font-size: var(--text-meta);
     color: var(--carbon-text-muted);
+  }
+  .glim-window-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: inherit;
   }
   .glim-pill {
     display: inline-flex;
@@ -4827,7 +5061,7 @@ body {
   .glim-field-row-group {
     display: grid;
     grid-template-columns: repeat(var(--field-columns, 1), max-content minmax(0, 1fr));
-    gap: 0.5rem 1.5rem;
+    gap: 0.25rem 0.75rem;
   }
   .glim-field-row-group > .glim-field-row {
     display: grid;
@@ -4895,6 +5129,70 @@ body {
   .glim-secret-eye > svg {
     width: 0.95rem;
     height: 0.95rem;
+  }
+  /* The second field of a PasswordField with confirm, drawn as a row of its
+     own under the first: its label at the start, the field at the end with
+     the first one's width, and the mismatch line under the field. The line's
+     live region holds no room while it is empty. */
+  .glim-secret-confirm {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem 0.75rem;
+    min-width: 0;
+  }
+  .glim-secret-confirm-label {
+    margin-inline-end: auto;
+    font-size: var(--text-body);
+  }
+  .glim-secret-confirm-box {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .glim-secret-confirm-live {
+    display: block;
+  }
+  .glim-field-row-controls:has(> .glim-secret-confirm) {
+    flex-wrap: wrap;
+  }
+  /* The line under a field whose value it cannot take (FieldError). */
+  .glim-field-error {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.25rem;
+    color: var(--status-fail-text);
+    font-size: var(--text-subline);
+  }
+  .glim-field-error > svg {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+  /* A field's width (FieldWidth), on the input or on the wrapper that holds it.
+     After the wrappers, whose own width it replaces. */
+  .glim-field--short {
+    flex: none;
+    width: 5.5rem;
+  }
+  .glim-field--medium {
+    flex: none;
+    width: 12rem;
+    max-width: 100%;
+  }
+  .glim-field--wide {
+    flex: none;
+    width: 22rem;
+    max-width: 100%;
+  }
+  .glim-field--grow {
+    flex: 1 1 13rem;
+    width: auto;
+    min-width: 0;
   }
   .glim-sr-only {
     position: absolute;
@@ -6087,32 +6385,6 @@ body {
 .glim-crypt-open .glim-crypt-readable {
   opacity: 1;
   transform: none;
-}
-
-/* A registry's logo is an image. It keeps its own colours on a picker tile,
-   takes the tile's ink where the tile lights up in the brand's colour, and a
-   logo in dark ink is flipped on a dark ground. */
-.glim-registry-logo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.glim-registry-mark img {
-  width: 60%;
-  height: 60%;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-:root:not([data-theme="light"]) .glim-registry-logo.glim-registry-dark { filter: invert(1); }
-.glim-brand-tile:focus-visible .glim-registry-logo { filter: var(--logo-lit); }
-.glim-registry-glyph,
-.glim-brand-tile:focus-visible .glim-registry-rest { display: none; }
-.glim-brand-tile:focus-visible .glim-registry-glyph { display: block; }
-@media (hover: hover) {
-  .group:hover > .glim-brand-tile .glim-registry-logo { filter: var(--logo-lit); }
-  .group:hover > .glim-brand-tile .glim-registry-rest { display: none; }
-  .group:hover > .glim-brand-tile .glim-registry-glyph { display: block; }
 }
 
 /* The week of planned runs. Each kind of run has a colour of its own, which

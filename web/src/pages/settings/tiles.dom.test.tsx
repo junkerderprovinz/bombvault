@@ -378,7 +378,7 @@ describe("the Restore tile", () => {
       })
     );
     const rows = registries().getAllByRole("listitem");
-    expect(rows.map((row) => row.querySelector("span.font-semibold")?.textContent)).toEqual([
+    expect(rows.map((row) => row.querySelector(".glim-connection-name")?.textContent)).toEqual([
       "Gitea",
       "GitHub",
       "registry.home.lan",
@@ -386,8 +386,8 @@ describe("the Restore tile", () => {
     expect(rows[0].textContent).toContain("git.home.lan");
     expect(rows[0].textContent).toContain("User jdp");
     expect(rows[0].textContent).toContain(en["tile.registry.tokenSaved"]);
-    expect(rows[0].querySelector("img")).not.toBeNull();
-    expect(rows[2].querySelector("img")).toBeNull();
+    expect(rows[0].querySelector(".glim-brand-svg")).not.toBeNull();
+    expect(rows[2].querySelector(".glim-brand-svg")).toBeNull();
   });
 
   it("edits an entry without asking for its token again, and keeps its kind", async () => {

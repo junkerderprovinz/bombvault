@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Badge } from "../../components/Badge";
+import { Badge } from "@glimstone/react/Badge";
+import { ConnectionRow } from "@glimstone/react/ConnectionRow";
 import { Button } from "../../components/Button";
-import { IconStar } from "../../components/glyphs";
+import { IconKey, IconStar } from "../../components/glyphs";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck } from "../../components/navGlyphs";
 import { SignInWindow } from "../../components/storage/SignInWindow";
@@ -46,12 +47,8 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
   const { push } = useToast();
   const sets = useCloudCredSets();
   const [note, setNote] = useState<SignInsNote | null>(null);
-  const [editing, setEditing] = useState<CloudCredSetInfo | null>(null);
-  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [defaultingId, setDefaultingId] = useState<string | null>(null);
-  // A failed action shakes the button that caused it, keyed per row.
-  const [shake, setShake] = useState<Record<string, number>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const open = sets.find((s) => s.id === editing);
 
   useEffect(() => {
     let alive = true;
@@ -65,10 +62,6 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     };
   }, []);
 
-  function bumpShake(key: string) {
-    setShake((sh) => ({ ...sh, [key]: (sh[key] ?? 0) + 1 }));
-  }
-
   /** Why a sign-in cannot go, or null when it can. The default goes last,
    *  since every place that names no sign-in falls back to it. */
   function blocker(s: CloudCredSetInfo): string | null {
@@ -78,47 +71,21 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
     return null;
   }
 
-  async function remove(s: CloudCredSetInfo) {
-    if (confirmRemove !== s.id) {
-      setConfirmRemove(s.id);
-      return;
-    }
-    setRemovingId(s.id);
+  /** The answer of an action on one sign-in, said in a toast, and whether it worked. */
+  async function act(run: () => Promise<{ ok: boolean; error?: string; warnings?: Parameters<typeof pushSaveWarnings>[2] }>, saved?: string) {
     try {
-      const r = await removeSignIn(s.id);
-      if (r.ok) {
-        credSetsChanged();
-        pushSaveWarnings(push, t, r.warnings);
-      } else {
-        push(r.error ?? t("settings.error"), "fail");
-        bumpShake(`remove:${s.id}`);
-      }
-    } catch (err) {
-      push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      bumpShake(`remove:${s.id}`);
-    } finally {
-      setRemovingId(null);
-      setConfirmRemove(null);
-    }
-  }
-
-  async function makeDefault(s: CloudCredSetInfo) {
-    setDefaultingId(s.id);
-    try {
-      const r = await makeDefaultSignIn(s.id);
+      const r = await run();
       if (!r.ok) {
         push(r.error ?? t("settings.error"), "fail");
-        bumpShake(`default:${s.id}`);
-        return;
+        return false;
       }
       credSetsChanged();
-      push(t("settings.saved"), "success");
+      if (saved) push(saved, "success");
       pushSaveWarnings(push, t, r.warnings);
+      return true;
     } catch (err) {
       push(err instanceof Error ? err.message : t("settings.error"), "fail");
-      bumpShake(`default:${s.id}`);
-    } finally {
-      setDefaultingId(null);
+      return false;
     }
   }
 
@@ -148,20 +115,24 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
       {sets.length === 0 && <span className="text-xs text-carbon-textMuted">{t("signIns.none")}</span>}
 
       {sets.length > 0 && (
-        <ul className="flex flex-col divide-y divide-carbon-border/60">
+        <ul className="flex flex-col gap-2">
           {sets.map((s) => {
             const users = s.usedBy ?? [];
-            const why = blocker(s);
+            const name = credSetLabel(t, s);
+            const key = s.s3KeyId || s.restUser;
             return (
-              <li key={s.id} className="flex flex-col py-3 first:pt-0 last:pb-0">
-                {/* On a phone the actions go under the name, which beside them
-                    shrinks to a column one character wide. */}
-                <div className="flex items-start justify-between gap-3 max-md:flex-col">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <span className="flex flex-wrap items-center gap-2 text-sm text-carbon-text">
-                      <span className="min-w-0 truncate max-md:whitespace-normal max-md:wrap-anywhere">{credSetLabel(t, s)}</span>
-                      {s.s3KeyId && <Badge tone="neutral" size="small">S3</Badge>}
-                      {s.restUser && <Badge tone="neutral" size="small">restic REST</Badge>}
+              <li key={s.id} data-new="sign-in-edit">
+                <ConnectionRow
+                  name={name}
+                  title={name}
+                  mark={<IconKey />}
+                  status={
+                    users.length > 0
+                      ? t("signIns.usedBy").replace("{list}", () => formatList(lang, users.map((u) => u.name)))
+                      : t("signIns.unused")
+                  }
+                  badges={
+                    <>
                       {s.default && (
                         <Badge tone="ok" size="small">
                           <span className="flex [&_svg]:h-[1em] [&_svg]:w-[1em]">
@@ -170,57 +141,44 @@ export function SignInsCard({ hueIndex }: { hueIndex?: number }) {
                           {t("signIns.default")}
                         </Badge>
                       )}
+                      {s.default && <InfoBubble tip={t("signIns.defaultAlso")} />}
+                      {s.s3KeyId && (
+                        <Badge tone="neutral" size="small">
+                          S3
+                        </Badge>
+                      )}
+                      {s.restUser && (
+                        <Badge tone="neutral" size="small">
+                          restic REST
+                        </Badge>
+                      )}
+                    </>
+                  }
+                  text={{ test: t("signIns.test"), edit: t("offsite.targets.edit"), remove: t("offsite.targets.remove") }}
+                  labelKeys={{ edit: "offsite.targets.edit" }}
+                  onEdit={() => setEditing(s.id)}
+                >
+                  {key && (
+                    <span dir="ltr" title={key} className="block truncate text-start font-mono">
+                      {key}
                     </span>
-                    {(s.s3KeyId || s.restUser) && (
-                      <span dir="ltr" className="break-all text-start font-mono text-xs text-carbon-textMuted">
-                        {s.s3KeyId || s.restUser}
-                      </span>
-                    )}
-                    <span className="text-xs text-carbon-textSub wrap-break-word">
-                      {users.length > 0
-                        ? t("signIns.usedBy").replace("{list}", () => formatList(lang, users.map((u) => u.name)))
-                        : t("signIns.unused")}
-                    </span>
-                    {s.default && <span className="text-xs text-carbon-textSub wrap-break-word">{t("signIns.defaultAlso")}</span>}
-                  </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {!s.default && (
-                      <span data-new="sign-in-make-default" className="flex">
-                        <Button
-                          key={shake[`default:${s.id}`] || 0}
-                          label={t("signIns.makeDefault")}
-                          labelKey="signIns.makeDefault"
-                          onClick={() => void makeDefault(s)}
-                          disabled={defaultingId !== null}
-                          busy={defaultingId === s.id}
-                          className={shake[`default:${s.id}`] ? "glim-shake" : ""}
-                        />
-                      </span>
-                    )}
-                    <span data-new="sign-in-edit" className="flex">
-                      <Button label={t("offsite.targets.edit")} labelKey="offsite.targets.edit" tone="neutral" onClick={() => setEditing(s)} />
-                    </span>
-                    {/* A destructive action gets no red of its own in this app. */}
-                    <Button
-                      key={shake[`remove:${s.id}`] || 0}
-                      label={t(confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove")}
-                      labelKey={confirmRemove === s.id ? "offsite.targets.confirmRemove" : "offsite.targets.remove"}
-                      tone="neutral"
-                      onClick={() => void remove(s)}
-                      disabled={why !== null || removingId === s.id}
-                      busy={removingId === s.id}
-                      hint={why ?? undefined}
-                      className={shake[`remove:${s.id}`] ? "glim-shake" : ""}
-                    />
-                  </div>
-                </div>
+                  )}
+                </ConnectionRow>
               </li>
             );
           })}
         </ul>
       )}
 
-      {editing && <SignInWindow set={editing} sets={sets} onClose={() => setEditing(null)} />}
+      {open && (
+        <SignInWindow
+          set={open}
+          sets={sets}
+          onClose={() => setEditing(null)}
+          makeDefault={() => act(() => makeDefaultSignIn(open.id), t("settings.saved"))}
+          remove={{ blocker: blocker(open), run: () => act(() => removeSignIn(open.id)) }}
+        />
+      )}
     </Card>
   );
 }

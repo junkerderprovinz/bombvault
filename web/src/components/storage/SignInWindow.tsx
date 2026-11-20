@@ -38,9 +38,25 @@ function CheckRow({ check }: { check: SignInCheck }) {
 /**
  * SignInWindow edits a saved sign-in for every storage location that uses it.
  * Test signs in to each of them with the values as typed; Save does not wait
- * for a test. `sets` is the whole list, which every save resends.
+ * for a test. `sets` is the whole list, which every save resends. Where the
+ * window is opened from the list of sign-ins, it also makes the sign-in the
+ * default and removes it, the removal on a second press.
  */
-export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; sets: CloudCredSetInfo[]; onClose: () => void }) {
+export function SignInWindow({
+  set,
+  sets,
+  onClose,
+  makeDefault,
+  remove,
+}: {
+  set: CloudCredSetInfo;
+  sets: CloudCredSetInfo[];
+  onClose: () => void;
+  /** Makes the sign-in the default and answers whether that worked. */
+  makeDefault?: () => Promise<boolean>;
+  /** Removes the sign-in. `blocker` says why it cannot go, or is null when it can. */
+  remove?: { blocker: string | null; run: () => Promise<boolean> };
+}) {
   const { t, lang } = useT();
   const uid = useId();
   const { push } = useToast();
@@ -48,6 +64,12 @@ export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; se
   const [checks, setChecks] = useState<SignInCheck[]>([]);
   const [saving, setSaving] = useState(false);
   const [shake, setShake] = useState(0);
+  const [defaulting, setDefaulting] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  // A failed action shakes the button that caused it.
+  const [failed, setFailed] = useState<Record<string, number>>({});
+  const fail = (key: string) => setFailed((f) => ({ ...f, [key]: (f[key] ?? 0) + 1 }));
   const test = useTestVerdict(draft, t("offsite.testFailed"));
   const revealSecret = useReveal();
   const revealPassword = useReveal();
@@ -66,6 +88,28 @@ export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; se
       setChecks(found);
       return { ok: found.every((check) => check.reachable) };
     });
+  }
+
+  async function runDefault() {
+    if (!makeDefault) return;
+    setDefaulting(true);
+    const ok = await makeDefault();
+    setDefaulting(false);
+    if (!ok) fail("default");
+  }
+
+  async function runRemove() {
+    if (!remove) return;
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setRemoving(true);
+    const ok = await remove.run();
+    setRemoving(false);
+    setConfirming(false);
+    if (ok) onClose();
+    else fail("remove");
   }
 
   async function save() {
@@ -148,6 +192,7 @@ export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; se
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={credSetLabel(t, set)}
       hint={t("signIns.windowHint")}
       facts={
@@ -159,6 +204,33 @@ export function SignInWindow({ set, sets, onClose }: { set: CloudCredSetInfo; se
       footer={
         <>
           <Button label={t("common.cancel")} labelKey="common.cancel" tone="neutral" onClick={onClose} />
+          {makeDefault && !set.default && (
+            <span data-new="sign-in-make-default" className="flex">
+              <Button
+                key={failed.default ?? 0}
+                label={t("signIns.makeDefault")}
+                labelKey="signIns.makeDefault"
+                onClick={() => void runDefault()}
+                disabled={defaulting}
+                busy={defaulting}
+                className={failed.default ? "glim-shake" : ""}
+              />
+            </span>
+          )}
+          {remove && (
+            // A destructive action gets no red of its own in this app.
+            <Button
+              key={failed.remove ?? 0}
+              label={t(confirming ? "offsite.targets.confirmRemove" : "offsite.targets.remove")}
+              labelKey={confirming ? "offsite.targets.confirmRemove" : "offsite.targets.remove"}
+              tone="neutral"
+              onClick={() => void runRemove()}
+              disabled={remove.blocker !== null || removing}
+              busy={removing}
+              hint={remove.blocker ?? undefined}
+              className={failed.remove ? "glim-shake" : ""}
+            />
+          )}
           <TestButton
             label={t("signIns.test")}
             labelKey="signIns.test"

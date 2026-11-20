@@ -69,6 +69,23 @@ export function newChannel(kind: NotifyKind, taken: NotifyChannel[]): NotifyChan
   return c;
 }
 
+/** channelTarget is where a channel sends, as its row names it, or "" while
+ *  that is not filled in. Unraid sends to the server it runs on. */
+export function channelTarget(c: NotifyChannel): string {
+  switch (c.kind) {
+    case "matrix":
+      return [c.matrix?.room, c.matrix?.homeserver].map((s) => s?.trim()).filter(Boolean).join(", ");
+    case "smtp":
+      return c.smtp?.to.trim() ?? "";
+    case "apprise":
+      return (c.apprise?.url.trim() || c.apprise?.urls?.find((u) => u.trim() !== "")?.trim()) ?? "";
+    case "unraid":
+      return "";
+    default:
+      return c[c.kind]?.url?.trim() ?? "";
+  }
+}
+
 function freeID(kind: NotifyKind, taken: NotifyChannel[]): string {
   const ids = new Set(taken.map((c) => c.id));
   if (!ids.has(kind)) return kind;

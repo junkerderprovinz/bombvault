@@ -150,6 +150,7 @@ export function AddReplicaServerDialog({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={heading}
       hint={t("zfs.replica.hint")}
       onClose={saving ? () => undefined : onClose}

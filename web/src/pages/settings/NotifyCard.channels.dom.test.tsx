@@ -69,8 +69,12 @@ async function pause(ms: number) {
   });
 }
 
-function channel(id: string): HTMLElement {
+function row(id: string): HTMLElement {
   return document.querySelector(`[data-channel="${id}"]`) as HTMLElement;
+}
+
+function channel(id: string): HTMLElement {
+  return document.querySelector(`[data-channel-form="${id}"]`) as HTMLElement;
 }
 
 beforeEach(() => {
@@ -89,15 +93,28 @@ afterEach(() => {
 });
 
 describe("the channel list", () => {
-  it("shows each channel by its name or its kind, with its switch and its own policy", async () => {
+  it("shows each channel as a row with its switch, where it sends and its policy, or that it is off", async () => {
     show();
     const gotify = await screen.findByRole("switch", { name: en["notify.gotify"] });
     expect(gotify.getAttribute("aria-checked")).toBe("true");
     expect(screen.getByRole("switch", { name: "Phone" }).getAttribute("aria-checked")).toBe("false");
-    const always = within(channel("gotify")).getByRole("tab", { name: en["notify.onAlways"] });
-    expect(always.getAttribute("aria-selected")).toBe("true");
-    const failure = within(channel("phone")).getByRole("tab", { name: en["notify.onFailure"] });
+    expect(row("gotify").textContent).toContain(en["notify.onAlways"]);
+    expect(row("gotify").textContent).toContain("https://push.example");
+    expect(row("phone").textContent).toContain(en["notify.statusOff"]);
+  });
+
+  it("keeps the fields in a window that Edit opens, and gives the focus back to Edit on Escape", async () => {
+    show();
+    await screen.findByRole("switch", { name: "Phone" });
+    const edit = within(row("phone")).getByRole("button", { name: en["common.edit"] });
+    edit.focus();
+    const form = await waitChannel("phone");
+    expect(screen.getByRole("dialog", { name: en["common.editTitle"].replace("{name}", "Phone") })).toBeTruthy();
+    const failure = within(form).getByRole("tab", { name: en["notify.onFailure"] });
     expect(failure.getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    await waitFor(() => expect(channel("phone")).toBeNull());
+    expect(document.activeElement).toBe(edit);
   });
 
   it("shows a stored token as kept without its value", async () => {
@@ -166,27 +183,52 @@ describe("the channel list", () => {
   it("adds a switched-off channel of the picked kind with an id of its own", async () => {
     onServer = { ...stored(), channels: [{ id: "ntfy", kind: "ntfy", enabled: true, ntfy: { url: "https://n.example/a" } }] };
     show();
-    await waitChannel("ntfy");
+    await screen.findByRole("switch", { name: en["notify.kindNtfy"] });
     fireEvent.click(screen.getByRole("button", { name: en["notify.add"] }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["notify.kindNtfy"] }));
     await pause(50);
     expect(saved.at(-1)?.channels[1]).toMatchObject({ id: "ntfy-2", kind: "ntfy", enabled: false });
+    expect(within(screen.getByRole("dialog")).getByLabelText(en["notify.ntfyUrl"])).toBeTruthy();
+  });
+
+  it("takes a channel back out when Back leaves its form for the tiles", async () => {
+    onServer = { ...stored(), channels: [] };
+    show();
+    fireEvent.click(await screen.findByRole("button", { name: en["notify.add"] }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["notify.kindNtfy"] }));
+    await pause(50);
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["common.back"] }));
+    await pause(50);
+    expect(saved.at(-1)?.channels).toEqual([]);
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: en["notify.kindNtfy"] })).toBeTruthy();
   });
 
   it("removes a channel", async () => {
     show();
-    fireEvent.click(within(await waitChannel("phone")).getByRole("button", { name: en["notify.remove"] }));
+    await waitChannel("gotify");
+    fireEvent.click(within(row("phone")).getByRole("button", { name: en["notify.remove"] }));
     await pause(50);
     expect(saved.at(-1)?.channels.map((c) => c.id)).toEqual(["gotify"]);
   });
 
-  it("tests the channel as the form shows it and says why it failed", async () => {
+  it("tests a channel from its row and says there why it failed", async () => {
     testAnswer = { ok: false, code: "auth", status: 401, error: "gotify: HTTP 401" };
     show();
-    const gotify = await waitChannel("gotify");
-    fireEvent.click(within(gotify).getByRole("button", { name: en["notify.test"] }));
-    expect(await within(gotify).findByText(en["notify.result.auth"])).toBeTruthy();
+    await screen.findByRole("switch", { name: en["notify.gotify"] });
+    const test = within(row("gotify")).getByRole("button", { name: en["notify.test"] });
+    fireEvent.click(test);
+    expect(await within(row("gotify")).findByText(en["notify.result.auth"])).toBeTruthy();
+    expect(test.classList.contains("glim-btn--danger")).toBe(true);
     expect(tested[0]).toMatchObject({ id: "gotify", kind: "gotify" });
+  });
+
+  it("tests the channel in its window as the form shows it", async () => {
+    show();
+    const form = await waitChannel("phone");
+    fireEvent.change(within(form).getByLabelText(en["notify.ntfyUrl"]), { target: { value: "https://ntfy.example/new" } });
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: en["notify.test"] }));
+    await pause(50);
+    expect(tested.at(-1)?.ntfy?.url).toBe("https://ntfy.example/new");
   });
 
   it("saves nothing while the stored channels could not be read", async () => {
@@ -252,7 +294,9 @@ describe("a Healthchecks channel", () => {
   });
 });
 
+/** waitChannel opens a channel's window from its row and hands back its form. */
 async function waitChannel(id: string): Promise<HTMLElement> {
-  await waitFor(() => expect(channel(id), `channel ${id}`).toBeTruthy());
+  await waitFor(() => expect(row(id), `channel ${id}`).toBeTruthy());
+  if (!channel(id)) fireEvent.click(within(row(id)).getByRole("button", { name: en["common.edit"] }));
   return channel(id);
 }

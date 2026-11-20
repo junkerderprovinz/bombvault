@@ -1,4 +1,8 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { catalogPicker, type PickGroup } from "@glimstone/core";
+import { STORAGE_PROVIDERS, type StorageProviderId } from "@glimstone/core/storageProviders";
+import { PickerWindow, type PickerItem } from "@glimstone/react/PickerWindow";
+import type { WindowAction } from "@glimstone/react/Window";
 import { useNavigate } from "react-router-dom";
 import {
   destinationFolder,
@@ -11,7 +15,6 @@ import {
   type PlacementDomain,
   type PlacementOptions,
   type Provider,
-  type ProviderGroup,
   type TargetPreview,
 } from "../../lib/api";
 import { hueVars } from "../../lib/appearance";
@@ -27,20 +30,17 @@ import { useLocalNames } from "../../lib/useLocalName";
 import { offsiteTargetsChanged } from "../../lib/useOffsiteTargets";
 import { usePlacementOptions } from "../../lib/usePlacementOptions";
 import { useRcloneRemotes } from "../../lib/useRcloneRemotes";
-import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { GroupReceiverPicker } from "../destinations/GroupReceiverPicker";
-import { ProviderMark, ProviderTiles, providerName, providerTileStyle } from "../destinations/ProviderPicker";
+import { RCLONE_MARK, providerName, storageEntry, storageGlyph } from "../destinations/providers";
 import { FolderBody, ProtectBody, RecoveryBody, SignInBody, type DestinationWords } from "../destinations/steps";
 import { useDestinationDraft } from "../destinations/useDestinationDraft";
-import { IconBack, IconForward, IconSave } from "../glyphs";
+import { receiverTile, useGroupOffers } from "../destinations/useGroupOffers";
+import { IconForward, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
-import { IconCheck, IconClose, IconPencil } from "../navGlyphs";
-import { PickerGroup, PickerNoMatch } from "../Picker";
+import { IconCheck, IconCloud, IconPencil } from "../navGlyphs";
 import { itemName } from "../placement/NewTargetQuestion";
-import { ReadmeButton } from "../ReadmeButton";
 import { Selector } from "../Selector";
-import { TestButton } from "../TestButton";
+import { verdictKey } from "../TestButton";
 import { Toggle } from "../Toggle";
 import { OwnRcloneWindow } from "./OwnRcloneWindow";
 import { DomainGlyph } from "./rows";
@@ -60,44 +60,15 @@ const STEPS: TranslationKey[] = [
   "storage.add.stepSections",
 ];
 
-interface TileSection {
-  id: string;
-  title: TranslationKey;
-  groups: ProviderGroup[];
-  fit?: { label: TranslationKey; tone: "ok" | "warn" };
-  tips: TranslationKey[];
-}
-
 // A folder on this host is a provider like the others to the server, and the
 // one tile that needs no sign-in, so it stands apart and first.
-const LOCAL: TileSection = { id: "local", title: "placement.segLocal", groups: [], tips: ["storage.add.localTip"] };
-const SECTIONS: TileSection[] = [
-  {
-    id: "server",
-    title: "storage.add.groupServer",
-    groups: ["server", "selfs3"],
-    fit: { label: "dest.fit.good", tone: "ok" },
-    tips: ["dest.groupTip.server", "dest.groupTip.selfs3"],
-  },
-  {
-    id: "s3",
-    title: "storage.add.groupS3",
-    groups: ["storage"],
-    fit: { label: "dest.fit.best", tone: "ok" },
-    tips: ["dest.groupTip.storage"],
-  },
-  {
-    id: "cloud",
-    title: "dest.group.cloud",
-    groups: ["cloud"],
-    fit: { label: "dest.fit.slower", tone: "warn" },
-    tips: ["dest.groupTip.cloud"],
-  },
-];
+const LOCAL = "local";
 
-function fold(text: string): string {
-  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-}
+// The tile for remotes from an rclone.conf of one's own.
+const OWN_RCLONE = "rclone.conf";
+
+// Where a provider the catalog does not know yet stands, by the server's group.
+const UNKNOWN_GROUP = { storage: "storage", selfs3: "storage", server: "protocol", cloud: "cloud" } as const;
 
 interface SectionChoice {
   domain: OffsiteDomain;
@@ -151,12 +122,15 @@ export function AddLocationWindow({
   const { picked } = draft;
   const [step, setStep] = useState(1);
   const [furthest, setFurthest] = useState(1);
-  const [query, setQuery] = useState("");
   const [off, setOff] = useState<OffsiteDomain[]>([]);
   const [previews, setPreviews] = useState<Partial<Record<PlacementDomain, TargetPreview>>>({});
   const [placing, setPlacing] = useState(false);
   const [ownConf, setOwnConf] = useState(false);
   const rclone = useRcloneRemotes();
+  const offers = useGroupOffers({
+    onPick: (r) => void draft.pickFromGroup(r).then((filled) => filled && go(2)),
+    onAsked: onClose,
+  });
   const options: Record<PlacementDomain, PlacementOptions | null> = {
     containers: usePlacementOptions("containers").options,
     vms: usePlacementOptions("vms").options,
@@ -237,18 +211,55 @@ export function AddLocationWindow({
     }
   }
 
-  const q = fold(query.trim());
-  const matches = (name: string) => q === "" || fold(name).includes(q);
-  const tiles = [LOCAL, ...SECTIONS]
-    .map((section) => ({
-      section,
-      providers: draft.providers
-        .filter((p) => (section === LOCAL ? p.route === "path" : p.route !== "path" && section.groups.includes(p.group)))
-        .filter((p) => matches(nameOf(p)))
-        .sort((a, b) => section.groups.indexOf(a.group) - section.groups.indexOf(b.group)),
-    }))
-    .filter(({ providers }) => providers.length > 0);
-  const ownShown = matches(t("storage.add.ownRclone")) || matches("rclone.conf");
+  const catalog = catalogPicker(STORAGE_PROVIDERS, {
+    ids: draft.providers.filter((p) => storageEntry(p.id)).map((p) => p.id as StorageProviderId),
+    titles: {
+      cloud: { title: t("dest.group.cloud"), badge: { label: t("dest.fit.slower"), tone: "warn" }, hint: t("dest.groupTip.cloud") },
+      storage: {
+        title: t("storage.add.groupS3"),
+        badge: { label: t("dest.fit.best"), tone: "ok" },
+        hint: `${t("dest.groupTip.storage")} ${t("dest.groupTip.selfs3")}`,
+      },
+      protocol: { title: t("storage.add.groupServer"), badge: { label: t("dest.fit.good"), tone: "ok" }, hint: t("dest.groupTip.server") },
+      // BombVault offers no target built on another one.
+      layered: "",
+    },
+    glyph: (entry) => storageGlyph(entry.glyph),
+    lang,
+    own: (entry) => {
+      if (entry.id === "path") return { label: t("storage.localFolder"), group: LOCAL };
+      if (entry.id === "s3") return { label: t("dest.provider.s3"), terms: ["S3 compatible", t("dest.provider.s3Word")] };
+      if (entry.id === "smb") return { sub: t("dest.provider.smbKind") };
+      return undefined;
+    },
+  });
+  const unknown: PickerItem[] = draft.providers
+    .filter((p) => !storageEntry(p.id))
+    .map((p) => ({ id: p.id, label: p.name, group: UNKNOWN_GROUP[p.group], mark: <IconCloud /> }));
+  const own: PickerItem = {
+    id: OWN_RCLONE,
+    label: "Rclone",
+    sub: rclone.remotes.join(", ") || undefined,
+    group: OWN_RCLONE,
+    mark: RCLONE_MARK,
+  };
+  const items = [...offers.items, ...catalog.items, ...unknown, own];
+  const groups: PickGroup[] = [
+    ...(offers.group ? [offers.group] : []),
+    { id: LOCAL, title: t("placement.segLocal"), hint: t("storage.add.localTip") },
+    ...catalog.groups,
+    { id: OWN_RCLONE, title: t("storage.add.ownRclone"), hint: t("storage.add.ownRcloneTip") },
+  ];
+
+  function onPick(id: string) {
+    if (offers.pick(id)) return;
+    if (id === OWN_RCLONE) {
+      setOwnConf(true);
+      return;
+    }
+    const p = draft.providers.find((provider) => provider.id === id);
+    if (p) pick(p);
+  }
 
   if (ownConf) {
     return (
@@ -256,103 +267,73 @@ export function AddLocationWindow({
     );
   }
 
-  const cancel = <Button label={t("common.cancel")} labelKey="common.cancel" glyph={<IconClose />} tone="neutral" onClick={onClose} />;
-  const back = <Button label={t("common.back")} labelKey="common.back" glyph={<IconBack />} tone="neutral" onClick={() => setStep(shown - 1)} />;
-  const next = (disabled = false) => (
-    <Button
-      label={t("zfs.replica.add.next")}
-      labelKey="zfs.replica.add.next"
-      glyph={<IconForward />}
-      tone="accent"
-      disabled={disabled}
-      onClick={() => go(shown + 1)}
-    />
-  );
-  const forward =
-    shown === 2 ? (
-      <TestButton
-        label={t("offsite.test")}
-        labelKey="offsite.test"
-        tone="accent"
-        test={draft.test}
-        onClick={() => void draft.runTest().then((ok) => ok && go(3))}
-      />
-    ) : shown === 3 ? (
-      next(draft.folderOpen)
-    ) : shown === 4 ? (
-      next()
-    ) : (
-      <Button
-        label={t("storage.add.save")}
-        labelKey="storage.add.save"
-        glyph={<IconSave />}
-        tone="accent"
-        busy={placing}
-        disabled={placing || draft.folderOpen}
-        onClick={() => void finish()}
-      />
-    );
+  const next = (disabled = false): WindowAction => ({
+    label: t("zfs.replica.add.next"),
+    labelKey: "zfs.replica.add.next",
+    glyph: <IconForward />,
+    primary: true,
+    disabled,
+    onClick: () => {
+      go(shown + 1);
+      return false;
+    },
+  });
+  const { verdict, running } = draft.test;
+  const forward: WindowAction =
+    shown === 2
+      ? {
+          label: t("offsite.test"),
+          labelKey: "offsite.test",
+          primary: true,
+          busy: running,
+          disabled: running,
+          tone: verdict ? (verdict.ok ? "ok" : "danger") : undefined,
+          title: verdict ? t(verdictKey(verdict, "connection")) : undefined,
+          onClick: () => {
+            void draft.runTest().then((ok) => ok && go(3));
+            return false;
+          },
+        }
+      : shown === 3
+        ? next(draft.folderOpen)
+        : shown === 4
+          ? next()
+          : {
+              label: t("storage.add.save"),
+              labelKey: "storage.add.save",
+              glyph: <IconSave />,
+              primary: true,
+              busy: placing,
+              disabled: placing || draft.folderOpen,
+              onClick: () => {
+                void finish();
+                return false;
+              },
+            };
 
   return (
-    <InstanceWindow
+    <PickerWindow
       title={t("storage.add.title")}
       hint={t("storage.listHint")}
-      picker
-      search={shown === 1 ? { value: query, onChange: setQuery, label: t("storage.add.search") } : undefined}
+      items={items}
+      groups={groups}
+      text={{
+        search: t("storage.add.search"),
+        none: t("storage.add.noMatch"),
+        clear: t("settings.search.clear"),
+        close: t("common.cancel"),
+        cancel: t("common.cancel"),
+        back: t("common.back"),
+      }}
+      selected={draft.fromMember ? receiverTile(draft.fromMember) : picked?.id}
+      start={shown === 1 && draft.loadError ? <span className="text-statusFail">{draft.loadError}</span> : undefined}
+      onPick={onPick}
+      actions={shown === 1 ? [] : [forward]}
+      onBack={() => setStep(shown - 1)}
       onClose={onClose}
-      footer={
-        shown === 1 ? (
-          cancel
-        ) : (
-          <>
-            {cancel}
-            {back}
-            {forward}
-          </>
-        )
-      }
     >
-      {shown === 1 ? (
-        <>
-          {draft.loadError && <p className="text-xs text-statusFail">{draft.loadError}</p>}
-          <GroupReceiverPicker
-            picked={draft.fromMember}
-            matches={matches}
-            onPick={(r) => void draft.pickFromGroup(r).then((filled) => filled && go(2))}
-            onAsked={onClose}
-          />
-          {tiles.length > 0 && (
-            <div data-new="provider-logos" className="flex flex-col gap-6">
-              {tiles.map(({ section, providers }) => (
-                <PickerGroup
-                  key={section.id}
-                  title={t(section.title)}
-                  fit={section.fit && { label: t(section.fit.label), tone: section.fit.tone }}
-                  tip={section.tips.map((tip) => t(tip)).join(" ")}
-                >
-                  <ProviderTiles providers={providers} picked={draft.fromMember ? undefined : picked?.id} onPick={pick} nameOf={nameOf} />
-                </PickerGroup>
-              ))}
-            </div>
-          )}
-          {ownShown && (
-            <PickerGroup title={t("storage.add.ownRclone")} tip={t("storage.add.ownRcloneTip")}>
-              <ul className="glim-provider-pick">
-                <li data-new="storage-add-own-rclone" style={providerTileStyle("rclone")}>
-                  <ReadmeButton
-                    tile="glim-tile-provider"
-                    parts={[{ name: "Rclone", sub: rclone.remotes.join(", ") || undefined, onClick: () => setOwnConf(true) }]}
-                    mark={<ProviderMark provider={{ mark: "rclone" }} />}
-                    markClass="text-carbon-textSub"
-                  />
-                </li>
-              </ul>
-            </PickerGroup>
-          )}
-          <PickerNoMatch shown={tiles.length === 0 && !ownShown && q !== ""} text={t("storage.add.noMatch")} />
-        </>
-      ) : (
-        <div className="flex flex-col gap-4">
+      {shown > 1 && (
+        <div className="glim-form-rows flex flex-col gap-4">
           <Selector
             items={STEPS.map((key, i) => ({
               id: String(i + 1),
@@ -440,6 +421,6 @@ export function AddLocationWindow({
           )}
         </div>
       )}
-    </InstanceWindow>
+    </PickerWindow>
   );
 }

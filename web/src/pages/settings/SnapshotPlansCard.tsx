@@ -5,9 +5,11 @@ import { Button } from "../../components/Button";
 import { CadenceBuilder, ALL_CADENCE_MODES } from "../../components/CadenceBuilder";
 import { Note } from "../../components/entry/Note";
 import { NumberField } from "../../components/NumberField";
+import { cadenceLabel } from "../../components/ScheduleBadge";
 import { SelectField } from "../../components/SelectField";
 import { IconAdd, IconBackupNow, IconTrash } from "../../components/Sidebar";
-import { SettingRow } from "../../components/storage/rows";
+import { Rows, SettingRow } from "../../components/storage/rows";
+import { Toggle } from "../../components/Toggle";
 import {
   addHostSnapshotPlan,
   deleteHostSnapshotPlan,
@@ -27,7 +29,7 @@ import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useOwnLogin } from "../../lib/useOwnLogin";
 import { InstanceWindow } from "../instances/InstanceWindow";
-import { Card, ToggleRow } from "./shared";
+import { Card } from "./shared";
 
 const KEEP_SAVE_MS = 600;
 
@@ -88,14 +90,18 @@ function lastRunLine(p: HostSnapPlan, t: ReturnType<typeof useT>["t"]): string {
 
 function PlanRow({
   plan,
+  open: openAtFirst = false,
   onChange,
   onRemove,
 }: {
   plan: HostSnapPlan;
+  /** Shows the fields from the start, for a schedule just added. */
+  open?: boolean;
   onChange: (next: HostSnapPlan) => void;
   onRemove: () => void;
 }) {
   const { t } = useT();
+  const [open, setOpen] = useState(openAtFirst);
   const { push } = useToast();
   const ownLogin = useOwnLogin();
   const [keep, setKeep] = useState(plan.keep);
@@ -140,57 +146,82 @@ function PlanRow({
     }
   }
 
+  const summary = [plan.enabled ? cadenceLabel(plan.cadence, t) : t("jobs.notScheduled"), `${t("hostSnap.plans.keep")}: ${plan.keep}`].join(" · ");
+  const toggle = (name: string, checked: boolean, change: (v: boolean) => void, hint?: string) => (
+    <SettingRow label={name} hint={hint} narrow>
+      <Toggle hideLabel label={name} checked={checked} onChange={change} />
+    </SettingRow>
+  );
+
   return (
-    <li className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span dir="ltr" className="min-w-0 flex-1 font-mono text-xs text-carbon-text wrap-anywhere">
-          {label}
-        </span>
-        <Button
-          label={t("hostSnap.plans.runNow")}
-          labelKey="hostSnap.plans.runNow"
-          glyph={<IconBackupNow />}
-          tone="neutral"
-          busy={running}
-          disabled={running}
-          onClick={() => void runNow()}
+    <li className="flex flex-col gap-3 rounded-card bg-carbon-surface2 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div data-plan-head className="flex min-w-0 flex-col gap-0.5">
+          <span dir="ltr" className="text-start text-sm font-semibold text-carbon-text wrap-anywhere">
+            {label}
+          </span>
+          <span className="text-xs text-carbon-textMuted">{summary}</span>
+        </div>
+        <Toggle
+          hideLabel
+          label={t("hostSnap.plans.enabled")}
+          checked={plan.enabled}
+          onChange={(v) => void save({ ...plan, enabled: v })}
+          className="mt-0.5"
         />
-        <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="neutral" onClick={onRemove} />
       </div>
-      <CadenceBuilder
-        label={t("hostSnap.plans.when")}
-        inline
-        row
-        value={plan.cadence}
-        modes={ALL_CADENCE_MODES.filter((m) => m !== "off")}
-        onChange={(cadence) => {
-          if (cadence !== plan.cadence && cadence !== "off" && cadence !== "") void save({ ...plan, cadence });
-        }}
-      />
-      <SettingRow label={t("hostSnap.plans.keep")} narrow>
-        <NumberField
-          min={1}
-          max={1000}
-          value={keep}
-          aria-label={t("hostSnap.plans.keep")}
-          onChange={(e) => changeKeep(Number(e.target.value))}
-          wrapperClassName="w-28"
-          className={`w-full ${PLAN_FIELD}`}
-        />
-      </SettingRow>
-      {plan.kind === "zfs" && (
-        <ToggleRow label={t("hostSnap.create.recursive")} checked={plan.recursive} onChange={(v) => void save({ ...plan, recursive: v })} />
+      {open && (
+        <Rows>
+          <div className="py-3 first:pt-0">
+            <CadenceBuilder
+              label={t("hostSnap.plans.when")}
+              inline
+              row
+              value={plan.cadence}
+              modes={ALL_CADENCE_MODES.filter((m) => m !== "off")}
+              onChange={(cadence) => {
+                if (cadence !== plan.cadence && cadence !== "off" && cadence !== "") void save({ ...plan, cadence });
+              }}
+            />
+          </div>
+          <SettingRow label={t("hostSnap.plans.keep")} narrow>
+            <NumberField
+              min={1}
+              max={1000}
+              value={keep}
+              aria-label={t("hostSnap.plans.keep")}
+              onChange={(e) => changeKeep(Number(e.target.value))}
+              wrapperClassName="w-28"
+              className={`w-full ${PLAN_FIELD}`}
+            />
+          </SettingRow>
+          {plan.kind === "zfs" && toggle(t("hostSnap.create.recursive"), plan.recursive, (v) => void save({ ...plan, recursive: v }))}
+          {plan.kind !== "vm" &&
+            toggle(t("hostSnap.plans.skipAsleep"), plan.skipAsleep, (v) => void save({ ...plan, skipAsleep: v }), t("hostSnap.plans.skipAsleepHint"))}
+        </Rows>
       )}
-      {plan.kind !== "vm" && (
-        <ToggleRow
-          label={t("hostSnap.plans.skipAsleep")}
-          hint={t("hostSnap.plans.skipAsleepHint")}
-          checked={plan.skipAsleep}
-          onChange={(v) => void save({ ...plan, skipAsleep: v })}
-        />
-      )}
-      <ToggleRow label={t("hostSnap.plans.enabled")} checked={plan.enabled} onChange={(v) => void save({ ...plan, enabled: v })} />
-      <span className="text-xs text-carbon-textMuted">{lastRunLine(plan, t)}</span>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <span className="min-w-0 flex-1 basis-48 text-xs text-carbon-textMuted">{lastRunLine(plan, t)}</span>
+        <div className="flex min-w-0 flex-wrap justify-end gap-2">
+          <Button
+            label={t(open ? "common.done" : "common.edit")}
+            labelKey={open ? "common.done" : "common.edit"}
+            tone="neutral"
+            ariaExpanded={open}
+            onClick={() => setOpen((v) => !v)}
+          />
+          <Button
+            label={t("hostSnap.plans.runNow")}
+            labelKey="hostSnap.plans.runNow"
+            glyph={<IconBackupNow />}
+            tone="neutral"
+            busy={running}
+            disabled={running}
+            onClick={() => void runNow()}
+          />
+          <Button label={t("hostSnap.plans.remove")} labelKey="hostSnap.plans.remove" glyph={<IconTrash />} tone="neutral" onClick={onRemove} />
+        </div>
+      </div>
       {ownLogin.dialog}
     </li>
   );
@@ -294,6 +325,7 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
   const ownLogin = useOwnLogin();
   const { plans, setPlans } = usePlans();
   const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState<string | null>(null);
 
   async function remove(p: HostSnapPlan) {
     const label = sourceLabel(p.kind, p.fs, p.source, t);
@@ -320,11 +352,12 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
     <Card title={t("hostSnap.plans.title")} hint={t("hostSnap.plans.hint")} hueIndex={hueIndex} newId="settings-snapshots">
       {plans !== null && plans.length === 0 && <p className="text-xs text-carbon-textMuted">{t("hostSnap.plans.none")}</p>}
       {plans !== null && plans.length > 0 && (
-        <ul aria-label={t("hostSnap.plans.title")} className="m-0 flex list-none flex-col gap-3 p-0">
+        <ul aria-label={t("hostSnap.plans.title")} className="m-0 flex list-none flex-col gap-4 p-0">
           {plans.map((p) => (
             <PlanRow
               key={p.id}
               plan={p}
+              open={p.id === added}
               onChange={(next) => setPlans((prev) => (prev ?? []).map((x) => (x.id === next.id ? next : x)))}
               onRemove={() => void remove(p)}
             />
@@ -339,6 +372,7 @@ export function SnapshotPlansCard({ hueIndex }: { hueIndex: number }) {
           onClose={() => setAdding(false)}
           onAdded={(p) => {
             setAdding(false);
+            setAdded(p.id);
             setPlans((prev) => [...(prev ?? []), p]);
           }}
         />

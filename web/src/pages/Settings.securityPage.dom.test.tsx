@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // Settings > Security: the login password. The api module is mocked, so the
 // password write is a captured call.
+import { componentText } from "@glimstone/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -92,7 +93,7 @@ function save(card: HTMLElement) {
 
 function typeNewPassword(card: HTMLElement) {
   typeInto(card, en["auth.changePassword"], "correct horse battery");
-  typeInto(card, en["auth.confirmPassword"], "correct horse battery");
+  typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
 }
 
 beforeEach(() => {
@@ -131,12 +132,23 @@ describe("the login password", () => {
     authOn = false;
     await renderPage();
     const card = passwordCard();
-    const [pw, again] = card.querySelectorAll<HTMLInputElement>("input");
-    fireEvent.change(pw, { target: { value: "correct horse battery" } });
-    fireEvent.change(again, { target: { value: "correct horse battery" } });
+    typeInto(card, en["auth.setPassword"], "correct horse battery");
+    typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
     save(card);
     await waitFor(() => expect(writes.map((w) => w.password)).toEqual(["correct horse battery"]));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("keeps Save off until the new password is typed the same twice", async () => {
+    const card = await signedInCard();
+    const saveButton = within(card).getByRole("button", { name: en["settings.save"] }) as HTMLButtonElement;
+    typeInto(card, en["auth.changePassword"], "correct horse battery");
+    expect(saveButton.disabled).toBe(true);
+    typeInto(card, componentText("en").passwordField.confirm, "correct horse batterx");
+    expect(within(card).getByText(componentText("en").passwordField.mismatch)).toBeTruthy();
+    expect(saveButton.disabled).toBe(true);
+    typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
+    expect(saveButton.disabled).toBe(false);
   });
 
   it("changes nothing without the current password", async () => {

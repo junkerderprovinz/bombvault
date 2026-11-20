@@ -14,7 +14,7 @@ import { IconForward } from "../components/glyphs";
 import { InfoBubble } from "../components/InfoBubble";
 import { IconPencil, IconTrash } from "../components/navGlyphs";
 import { PageTitle } from "../components/PageTitle";
-import { providerName } from "../components/destinations/ProviderPicker";
+import { providerName } from "../components/destinations/providers";
 import { ConnectionCard } from "../components/storage/ConnectionCard";
 import { ConnectionWindow } from "../components/storage/ConnectionWindow";
 import { CopyCard } from "../components/storage/CopyCard";

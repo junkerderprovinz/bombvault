@@ -813,7 +813,7 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(wizard(page).getByLabel("age-Identität")).toHaveCount(0);
   await expect(wizard(page).getByText("Sein Schlüssel öffnet 2 von 4 Speicherorten.")).toBeVisible();
   await expect(wizard(page).getByText(/Noch ist nichts gespeichert\. Der Schlüssel bleibt noch 30 Minuten/)).toBeVisible();
-  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Zugang fehlt");
+  await expect(page.getByTestId("emergency-place").nth(2)).toContainText("Anmeldedaten fehlen");
   await expect(wizard(page).getByTestId("emergency-kit")).toHaveText(/^Recovery-Kit von tower, geschrieben /);
   await expect(wizard(page).getByRole("button", { name: "Weiter" })).toHaveCount(0);
   expect(asked).toEqual(["POST /read", "POST /read"]);
@@ -823,8 +823,8 @@ test("the emergency reads a sealed recovery kit, takes its key over when told to
   await expect(question).toContainText("Bis zur ersten Sicherung kannst du das rückgängig machen.");
   await question.getByRole("button", { name: "Schlüssel übernehmen" }).click();
   await expect(wizard(page).getByText(/^Schlüssel übernommen\./)).toBeVisible();
-  await wizard(page).getByRole("button", { name: "Zugangsdaten speichern" }).click();
-  await expect(wizard(page).getByText("Zugangsdaten gespeichert, die Speicherorte wurden neu geprüft.")).toBeVisible();
+  await wizard(page).getByRole("button", { name: "Anmeldedaten speichern" }).click();
+  await expect(wizard(page).getByText("Anmeldedaten gespeichert, die Speicherorte wurden neu geprüft.")).toBeVisible();
   await expect(page.getByTestId("emergency-place").nth(2)).toContainText("lesbar");
 
   await wizard(page).getByRole("button", { name: "Weiter" }).click();
@@ -939,7 +939,7 @@ for (const width of [320, 360]) {
     const ask = page.getByRole("dialog", { name: "Bestätigen" });
     await sheetUp(ask);
     await ask.getByRole("button", { name: "Schlüssel übernehmen" }).click();
-    await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
+    await expect(wizard(page).getByRole("button", { name: "Anmeldedaten speichern" })).toBeVisible();
     await settle(page);
     expect((await edges(page)).clipped, "the taken-over key clips the edge").toEqual([]);
 
@@ -1203,7 +1203,7 @@ test("pictures of the page", async ({ page }, testInfo) => {
     const ask = page.getByRole("dialog", { name: "Bestätigen" });
     await sheetUp(ask);
     await ask.getByRole("button", { name: "Schlüssel übernehmen" }).click();
-    await expect(wizard(page).getByRole("button", { name: "Zugangsdaten speichern" })).toBeVisible();
+    await expect(wizard(page).getByRole("button", { name: "Anmeldedaten speichern" })).toBeVisible();
     await page.screenshot({ path: join(SHOTS!, `emergency-taken-${name}.png`) });
     await page.goto("/restore");
     await expect(page.getByTestId("key-adopted")).toBeVisible();

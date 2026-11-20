@@ -114,6 +114,7 @@ export function DirectRepoDialog({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={withTarget(t("directRepo.title"))}
       hint={withTarget(t("directRepo.intro"))}
       onClose={onClose}

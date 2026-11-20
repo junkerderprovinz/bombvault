@@ -206,7 +206,7 @@ test.describe("on the desktop", () => {
     // Anywhere on the row, not only on the name.
     await row.click();
     await expect(page).toHaveURL(new RegExp(`${encodeURIComponent(B2.id)}$`));
-    await expect(page.getByText("Zugangsdaten", { exact: true })).toBeVisible();
+    await expect(page.getByText("Anmeldedaten", { exact: true })).toBeVisible();
 
     await page.goto(locationUrl("destination:gone"));
     await expect(page.getByText("Diesen Speicherort gibt es nicht mehr.")).toBeVisible();
@@ -304,7 +304,7 @@ test.describe("on the desktop", () => {
 
     await window.getByRole("searchbox", { name: "Anbieter suchen" }).fill("rest");
     await expect(window.locator(".glim-provider-pick button")).toHaveCount(1);
-    await window.getByRole("button", { name: /^Rest server/ }).click();
+    await window.getByRole("button", { name: /^rest-server/ }).click();
 
     await expect(window.getByRole("radio", { name: "Ordner" })).toBeDisabled();
     await window.getByLabel("Adresse").fill("https://nas.local:8000/tower");
@@ -316,7 +316,7 @@ test.describe("on the desktop", () => {
 
     await expect(window.getByText("Welche Bereiche sichern hierher?")).toBeVisible();
     await expect(window.getByText("7 Einträge · bis zu 32 Sicherungen").first()).toBeVisible();
-    for (const section of ["VMs", "Ordner", "Selbstbackup"]) {
+    for (const section of ["VMs", "Ordner", "Selbstsicherung"]) {
       await window.getByRole("switch", { name: section }).click();
     }
     expect(staged.writes).toEqual([]);
@@ -398,7 +398,7 @@ test.describe("on the desktop", () => {
     await page.goto(locationUrl(LOCAL.id));
     await expect(page.getByText("Wie lange aufheben", { exact: true })).toBeVisible();
     await expect(page.getByText("Verbindung", { exact: true })).toBeVisible();
-    for (const absent of ["Kopieren", "Zugangsdaten", "rclone.conf", "Löschschutz", "Löschschutz (append-only)"]) {
+    for (const absent of ["Kopieren", "Anmeldedaten", "rclone.conf", "Löschschutz", "Löschschutz (append-only)"]) {
       await expect(page.getByText(absent, { exact: true })).toHaveCount(0);
     }
     await expect(page.getByRole("switch", { name: "Löschschutz (append-only)" })).toHaveCount(0);

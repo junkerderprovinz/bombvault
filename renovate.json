@@ -1,71 +1,46 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests",
-    "docker:pinDigests",
-    ":semanticCommits",
-    ":dependencyDashboard",
-    ":enableVulnerabilityAlertsWithLabel(security)"
-  ],
-  "timezone": "Europe/Vienna",
-  "schedule": ["before 6am on monday"],
-  "labels": ["dependencies"],
-  "prHourlyLimit": 4,
-  "prConcurrentLimit": 6,
-  "customManagers": [
-    {
-      "description": "restic and rclone in the Dockerfile. The build checks them against upstream's signed SHA256SUMS, so the version is all that changes.",
-      "customType": "regex",
-      "managerFilePatterns": ["/(^|/)Dockerfile$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+ARG \\w+_VERSION=(?<currentValue>\\S+)"
-      ],
-      "extractVersionTemplate": "^v(?<version>.+)$"
-    }
+    "local>junkerderprovinz/junkerderprovinz//renovate/base",
+    "local>junkerderprovinz/junkerderprovinz//renovate/components"
   ],
   "packageRules": [
     {
-      "description": "Node stays on 24 until 26 is tested. This covers the node image, node-version in setup-node (looked up as actions/node-versions), .nvmrc, engines and @types/node.",
-      "matchPackageNames": ["node", "actions/node-versions", "@types/node"],
-      "allowedVersions": "<25"
-    },
-    {
-      "description": "GitHub Actions: auto-merge all updates",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true,
-      "commitMessagePrefix": "ci:",
-      "labels": ["github-actions"]
-    },
-    {
-      "description": "MCP SDK: its own PR, never grouped, never auto-merged. A bump moves the protocol surface and the SDK's security defaults, so it goes in only after somebody has re-run the MCP interop tests and the hardware checklist.",
-      "matchManagers": ["gomod"],
-      "matchPackageNames": ["github.com/modelcontextprotocol/go-sdk"],
+      "description": "MCP SDK: its own PR, never grouped or merged by itself. A bump moves the protocol surface and the SDK's security defaults, so it goes in only after the MCP interop tests and the hardware checklist have run again.",
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "github.com/modelcontextprotocol/go-sdk"
+      ],
       "groupName": null,
       "automerge": false,
-      "labels": ["dependencies", "mcp"]
+      "labels": [
+        "dependencies",
+        "mcp"
+      ]
     },
     {
-      "description": "Go: group minor+patch module updates into one weekly PR; majors stay separate for review",
-      "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "Go modules (non-major)",
-      "commitMessagePrefix": "chore(deps):"
-    },
-    {
-      "description": "web/lint-ts's typescript pin is a deliberate TS 6.x side-by-side shim so typescript-eslint (which does not support TS >=7, see typescript-eslint#10940) can keep linting the project's real TS 7 sources. Do not propose bumping it until that upstream issue closes (#128).",
-      "matchManagers": ["npm"],
-      "matchFileNames": ["web/lint-ts/package.json"],
-      "matchDepNames": ["typescript"],
+      "description": "web/lint-ts pins TypeScript 6 beside the project's TypeScript 7, because typescript-eslint does not support 7 yet (typescript-eslint#10940). It stays until that issue closes (#128).",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchFileNames": [
+        "web/lint-ts/package.json"
+      ],
+      "matchDepNames": [
+        "typescript"
+      ],
       "enabled": false
     },
     {
-      "description": "BombVault's OWN published image stays on the floating :latest tag, never a pinned digest. docker:pinDigests (above) is right for build INPUTS — the golang base image in the Dockerfile — but deploy/docker-compose.generic.yml is a file users copy to RUN BombVault, and the Unraid CA template it mirrors installs :latest. A digest there freezes every copy of that file on one build forever, so nobody receives an update, and it silently drifts from the template. Renovate proposed exactly that in #168, which was closed rather than merged.",
-      "matchManagers": ["docker-compose"],
-      "matchDepNames": ["junkerderprovinz/bombvault"],
+      "description": "BombVault's own image stays on :latest in deploy/docker-compose.generic.yml. People copy that file to run BombVault, and a digest there would freeze every copy on one build and drift from the Unraid template (#168).",
+      "matchManagers": [
+        "docker-compose"
+      ],
+      "matchDepNames": [
+        "junkerderprovinz/bombvault"
+      ],
       "pinDigests": false,
       "enabled": false
     }

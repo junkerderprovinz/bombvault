@@ -166,9 +166,9 @@ describe("no sentence lives in two keys", () => {
 describe("German keeps one name for each thing", () => {
   // A dialog that switches between Sicherung and Backup, or Snapshot and
   // Schnappschuss, reads like a different action. Backup survives only in the
-  // names the navigation and the Schedule page show, and in the plugin's name.
+  // plugin's name and in a setting's name.
   it("calls a backup a Sicherung and a snapshot a Snapshot", () => {
-    const fixedNames = /Gesamt-Backup|Selbstbackup|Appdata\.Backup|BACKUP_/g;
+    const fixedNames = /Appdata\.Backup|BACKUP_/g;
     const odd = Object.entries(de)
       .filter(([, value]) => /Schnappschuss/.test(value) || /Backup/.test(value.replace(fixedNames, "")))
       .map(([key, value]) => `${key}: ${value}`);

@@ -26,13 +26,15 @@ const POPS = [
   [21, 0.65],
 ];
 
-function forecastText(t: T, weeks: number | undefined): string {
+/** When a location is full at its growth, as a few words. */
+export function forecastText(t: T, weeks: number | undefined): string {
   if (weeks === undefined) return "";
   if (weeks > FORECAST_CAP_WEEKS) return t("storage.vessel.fullOverYear");
   return t("storage.vessel.fullInWeeks", weeks);
 }
 
-function tipText(t: T, fill: Fill): string {
+/** How full a location is and when it fills, as one sentence. */
+export function fillTip(t: T, fill: Fill): string {
   if (fill.state === "unsupported") return t("storage.vessel.unsupportedTip");
   if (fill.state === "unmeasured") return t("storage.vessel.unmeasuredTip");
   const pct = String(Math.round(fill.share * 100));
@@ -60,7 +62,7 @@ export function Vessel({
   const id = useId();
   const fill = fillOf(capacity);
   const measured = fill.state === "measured";
-  const tip = tipText(t, fill);
+  const tip = fillTip(t, fill);
   const bubble = useTipBubble(tip);
   const level = measured ? FLOOR - fill.share * (FLOOR - BRIM) : UNSIZED_LEVEL;
   const warn = measured && fill.warn;

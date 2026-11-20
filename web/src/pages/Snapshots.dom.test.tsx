@@ -98,7 +98,10 @@ beforeEach(() => {
   calls.paired = false;
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
 
 describe("the Snapshots page", () => {
   it("leaves sleeping disks alone until asked and then says they woke", async () => {
@@ -150,5 +153,33 @@ describe("the Snapshots page without a snapshot of a source", () => {
     expect(screen.getByText(en["hostSnap.code.needsQcow2"])).toBeTruthy();
     // One per card that has snapshots, one for tank/media, and the page's own.
     expect(screen.getAllByRole("button", { name: en["hostSnap.create.title"] })).toHaveLength(3);
+  });
+});
+
+describe("what a snapshot is beside a backup", () => {
+  const explainer = en["hostSnap.versusBackup"];
+  const inBubble = () => screen.queryAllByLabelText((_, el) => (el?.getAttribute("aria-label") ?? "").includes(explainer));
+
+  it("stands at the end of the page until it is understood, then waits in the (i) of the cards", async () => {
+    await open();
+    const note = screen.getByText(explainer);
+    const cards = [...document.querySelectorAll("[data-search-card]")];
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) expect(card.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(inBubble()).toHaveLength(0);
+
+    const gotIt = screen.getByRole("button", { name: en["common.gotIt"] });
+    expect(gotIt.classList.contains("glim-btn-neutral")).toBe(true);
+    await act(async () => {
+      fireEvent.click(gotIt);
+    });
+    expect(screen.queryByText(explainer)).toBeNull();
+    expect(inBubble().length).toBeGreaterThan(0);
+  });
+
+  it("stays out of the way in this browser once understood", async () => {
+    localStorage.setItem("bv-snapshots-explained", "1");
+    await open();
+    expect(screen.queryByText(explainer)).toBeNull();
   });
 });

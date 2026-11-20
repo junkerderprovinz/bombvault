@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { RCLONE_MARK } from "../components/destinations/providers";
 import { textInkOn } from "./accent";
-import { PROVIDER_TILES } from "./providerMarks";
-import { REGISTRY_KINDS } from "./registryMarks";
 
 function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -27,12 +26,8 @@ describe("textInkOn", () => {
   });
 });
 
-describe("a lit brand tile", () => {
-  it.each(Object.entries(PROVIDER_TILES))("%s holds its words at 4.5:1", (_, { tile, ink }) => {
-    expect(contrast(tile, ink)).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it.each(REGISTRY_KINDS.map((k) => [k.name, k.tile] as const))("%s holds its words at 4.5:1", (_, tile) => {
-    expect(contrast(tile, textInkOn(tile))).toBeGreaterThanOrEqual(4.5);
+describe("a lit brand tile of our own", () => {
+  it("holds Rclone's words at 4.5:1", () => {
+    expect(contrast(RCLONE_MARK.tile!, RCLONE_MARK.ink!)).toBeGreaterThanOrEqual(4.5);
   });
 });

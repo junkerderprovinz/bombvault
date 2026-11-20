@@ -13,7 +13,7 @@ Ist nichts offen, zeigt **Lernfortschritt** pro Eintrag einen Ring aus zehn Teil
 
 ## Was geprüft wird {#checks}
 
-Jede Sicherung eines Containers, einer VM, einem Ordner-Set, eines Datenbank-Dumps, des Flash und des Selbstbackups wird mit dem eigenen Verlauf des Eintrags verglichen. Die Prüfungen sehen sich an:
+Jede Sicherung eines Containers, einer VM, einem Ordner-Set, eines Datenbank-Dumps, des Flash und der Selbstsicherung wird mit dem eigenen Verlauf des Eintrags verglichen. Die Prüfungen sehen sich an:
 
 - die neuen Daten, die ein Lauf abgelegt hat, im Vergleich zu den größten üblichen Mengen der letzten Sicherungen und zur üblichen Rate pro Stunde,
 - eine Sicherung, die den Großteil der Daten noch einmal abgelegt hat, dazu zählen auch umbenannte und neu geschriebene Dateien,

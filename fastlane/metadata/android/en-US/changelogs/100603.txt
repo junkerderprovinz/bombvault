@@ -1,0 +1,1 @@
+BombVault 10.6.3 gives every storage location, sign-in and channel a tidy row of its own and picks providers from a catalog full of logos. Snapshot schedules shrank to a few lines, and a new password now has to be typed twice, so a typo can't lock you out.

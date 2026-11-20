@@ -1,13 +1,13 @@
 import { useState } from "react";
+import { componentText } from "@glimstone/core";
+import { PasswordField } from "@glimstone/react/PasswordField";
 import { getAuth, setAuthPassword, explainedError } from "../../../lib/api";
 import { PasskeyCard } from "../PasskeyCard";
 import { TwoFactorCard } from "../TwoFactorCard";
 import { EncryptionCard } from "../EncryptionCard";
 import { PhonePairingCard } from "../PhonePairingCard";
 import { Button } from "../../../components/Button";
-import { RevealInput } from "../../../components/RevealInput";
 import { Rows, SettingRow } from "../../../components/storage/rows";
-import { useReveal } from "../../../lib/useReveal";
 import { useT } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { useConfirm } from "../../../lib/useConfirm";
@@ -15,7 +15,7 @@ import { Card, LOGIN_PASSWORD_FIELD, hueCounter, type SaveState } from "../share
 import { useSettings } from "../settingsStore";
 
 export function SecurityPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { push } = useToast();
   const { confirm, confirmDialog } = useConfirm();
   const {
@@ -30,26 +30,18 @@ export function SecurityPage() {
 
   const [pwCurrent, setPwCurrent] = useState("");
   const [pwNew, setPwNew] = useState("");
-  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwConfirmed, setPwConfirmed] = useState(false);
   const [pwCode, setPwCode] = useState("");
   const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
   const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
   const [pwSaveShake, setPwSaveShake] = useState(0);
-  const revealPwCurrent = useReveal();
-  const revealPwNew = useReveal();
-  const revealPwConfirm = useReveal();
+  const fieldText = componentText(lang).passwordField;
 
-  // The password keeps a manual Save button. Two fields must agree before a
-  // write is safe, so there is no keystroke to auto-save on, and
+  // The password keeps a manual Save button. A new one is typed twice and
+  // Save waits until both agree, so there is no keystroke to auto-save on, and
   // setAuthPassword takes effect at once for the whole instance (a blank
-  // password switches login off). A mismatch stays inline next to the fields
-  // rather than in a toast that could vanish while the user is still typing.
+  // password switches login off).
   async function handleSetPassword() {
-    if (pwNew !== pwConfirm) {
-      setPwSaveMsg(t("auth.passwordMismatch"));
-      setPwSaveState("error");
-      return;
-    }
     // The server refuses a short password too, and its answer is what the
     // user would eventually see. Checking here as well saves a round trip and
     // puts the message next to the field instead of in a toast. An empty
@@ -87,7 +79,6 @@ export function SecurityPage() {
         push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
         setPwCurrent("");
         setPwNew("");
-        setPwConfirm("");
         setPwCode("");
         if (pwNew === "") setTotpEnabled(false);
       } else {
@@ -124,7 +115,7 @@ export function SecurityPage() {
               labelKey="settings.save"
               tone="accent"
               onClick={() => void handleSetPassword()}
-              disabled={pwSaveState === "saving"}
+              disabled={pwSaveState === "saving" || (pwNew !== "" && !pwConfirmed)}
               busy={pwSaveState === "saving"}
               title={pwSaveState === "saving" ? t("auth.saving") : undefined}
               className={pwSaveShake ? "glim-shake" : ""}
@@ -146,40 +137,27 @@ export function SecurityPage() {
           <Rows>
           {authEnabled && (
             <SettingRow label={t("auth.currentPassword")} htmlFor="bv-password-current">
-              <RevealInput
-                {...revealPwCurrent}
+              <PasswordField
                 id="bv-password-current"
                 value={pwCurrent}
                 onChange={(e) => setPwCurrent(e.target.value)}
                 autoComplete="current-password"
                 placeholder="••••••••"
-                wrapperClassName="w-72 max-w-full"
-                className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+                width="wide"
+                text={fieldText}
               />
             </SettingRow>
           )}
           <SettingRow label={authEnabled ? t("auth.changePassword") : t("auth.setPassword")} htmlFor={LOGIN_PASSWORD_FIELD}>
-            <RevealInput
-              {...revealPwNew}
+            <PasswordField
               id={LOGIN_PASSWORD_FIELD}
               value={pwNew}
               onChange={(e) => setPwNew(e.target.value)}
-              autoComplete="new-password"
               placeholder="••••••••"
-              wrapperClassName="w-72 max-w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
-            />
-          </SettingRow>
-          <SettingRow label={t("auth.confirmPassword")} htmlFor="bv-password-confirm">
-            <RevealInput
-              {...revealPwConfirm}
-              id="bv-password-confirm"
-              value={pwConfirm}
-              onChange={(e) => setPwConfirm(e.target.value)}
-              autoComplete="new-password"
-              placeholder="••••••••"
-              wrapperClassName="w-72 max-w-full"
-              className="rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus"
+              width="wide"
+              text={fieldText}
+              confirm
+              onConfirmedChange={setPwConfirmed}
             />
           </SettingRow>
           {authEnabled && totpEnabled && (

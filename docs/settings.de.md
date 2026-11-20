@@ -11,7 +11,7 @@ Diese Seite listet jede Kachel und ihre Karten auf und verlinkt auf die Seite, d
 
 ## Allgemein {#general}
 
-- **Bereiche** schaltet jeden Bereich ein oder aus: **Container**, **VMs**, **Flash**, **Ordner**, **ZFS-Datasets** und **Selbstbackup**. Ein Bereich, der aus ist, wird nach keinem Zeitplan gesichert, auch nicht nach dem eigenen Plan eines Eintrags, und seine Einträge zählen nicht. **Jetzt sichern** funktioniert trotzdem. **Flash** erscheint nur auf Unraid.
+- **Bereiche** schaltet jeden Bereich ein oder aus: **Container**, **VMs**, **Flash**, **Ordner**, **ZFS-Datasets** und **Selbstsicherung**. Ein Bereich, der aus ist, wird nach keinem Zeitplan gesichert, auch nicht nach dem eigenen Plan eines Eintrags, und seine Einträge zählen nicht. **Jetzt sichern** funktioniert trotzdem. **Flash** erscheint nur auf Unraid.
 - **Container** enthält, was für alle Container gilt, etwa **Automatische Datenbank-Dumps**. Alles, was einen einzelnen Container betrifft, steht auf seiner Seite. Siehe [Datenbank-Dumps](backups.md#database-dumps).
 
 ## Aussehen {#look}
@@ -24,7 +24,7 @@ BombVault hält das Aussehen auf dem Server. Ein Browser, der zum ersten Mal kom
 
 ## Zeitplan {#schedule}
 
-**Woche**, **Gesamt-Backup** mit **Wann gesichert wird**, **Verpasste Sicherungen nach dem Start nachholen** und **Befehle vorher und nachher**, **Pläne pro Bereich** mit **Off-site-Kopien pro Bereich**, **Einträge im Zeitplan**, **Reihenfolge** mit **Neustart nach der Sicherung**, **Snapshot statt Stopp**, **Updates nach der Sicherung** und **Ruhe vor der Sicherung**. Siehe [Zeitpläne](schedules.md).
+**Woche**, **Gesamtsicherung** mit **Wann gesichert wird**, **Verpasste Sicherungen nach dem Start nachholen** und **Befehle vorher und nachher**, **Pläne pro Bereich** mit **Off-site-Kopien pro Bereich**, **Einträge im Zeitplan**, **Reihenfolge** mit **Neustart nach der Sicherung**, **Snapshot statt Stopp**, **Updates nach der Sicherung** und **Ruhe vor der Sicherung**. Siehe [Zeitpläne](schedules.md).
 
 ## Speicherorte {#storage-locations}
 

@@ -120,6 +120,8 @@ function container(name: string, placement = placementView()): Container {
 const PROVIDERS = [
   { id: "gdrive", name: "Google Drive", backend: "drive", group: "cloud", route: "rclone" },
   { id: "b2", name: "Backblaze B2", backend: "", group: "storage", route: "s3", lock: true },
+  { id: "s3", name: "S3 compatible", backend: "", group: "selfs3", route: "s3", lock: true },
+  { id: "wasabi", name: "Wasabi", backend: "", group: "storage", route: "s3", lock: true },
   { id: "rest", name: "Rest server", backend: "", group: "server", route: "rest", lock: true },
   { id: "path", name: "Mounted path", backend: "", group: "server", route: "path" },
 ] as Provider[];
@@ -522,7 +524,7 @@ describe("adding a storage location", () => {
     await renderPage();
     await click(screen.getByRole("button", { name: "Add storage location" }));
     const window = await screen.findByRole("dialog", { name: "Add storage location" });
-    await within(window).findByRole("button", { name: /^Rest server/ });
+    await within(window).findByRole("button", { name: /^rest-server/ });
     return window;
   }
 
@@ -530,18 +532,26 @@ describe("adding a storage location", () => {
     return [...window.querySelectorAll(".glim-provider-pick button")].map((b) => (b.textContent ?? "").trim());
   }
 
-  it("opens from the list's own button with the providers in their groups, a local folder first and an own rclone configuration last", async () => {
+  it("opens from the list's own button with the providers in the catalog's groups, a local folder first and an own rclone configuration last", async () => {
     const window = await open();
 
     const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
-    expect(groups.map((g) => g.replace(/(best|good) fit|works, but slower/, ""))).toEqual([
-      "Local",
-      "NAS or server",
-      "S3 service",
-      "Cloud storage",
-      "Own rclone configuration",
-    ]);
-    expect(tileNames(window)).toEqual(["Local folder", "Rest server", "Backblaze B2", "Google Drive", "Rclone"]);
+    expect(groups).toEqual(["Local", "Cloud storage", "S3 service", "NAS or server", "Own rclone configuration"]);
+    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "Wasabi", "Custom S3", "rest-server", "Rclone"]);
+  });
+
+  it("puts Custom S3 last among the S3 services, as the tile that takes any of them", async () => {
+    const window = await open();
+    const section = within(window).getByRole("heading", { name: "S3 service" }).closest("section") as HTMLElement;
+    expect(tileNames(section).at(-1)).toBe("Custom S3");
+  });
+
+  it("finds Custom S3 by the words S3 compatible", async () => {
+    const window = await open();
+    await act(async () => {
+      fireEvent.change(within(window).getByRole("searchbox", { name: "Search providers" }), { target: { value: "s3 compatible" } });
+    });
+    expect(tileNames(window)).toEqual(["Custom S3"]);
   });
 
   it("saves a pasted rclone configuration and lists its remotes", async () => {
@@ -628,7 +638,7 @@ describe("adding a storage location", () => {
 
   it("walks the steps in one window and holds the later ones back until the connection is tested", async () => {
     const window = await open();
-    await click(within(window).getByRole("button", { name: /^Rest server/ }));
+    await click(within(window).getByRole("button", { name: /^rest-server/ }));
 
     expect(within(window).getByText("Sign in to Rest server")).toBeTruthy();
     expect((within(window).getByRole("radio", { name: "Folder" }) as HTMLButtonElement).disabled).toBe(true);
@@ -647,7 +657,7 @@ describe("adding a storage location", () => {
 
   it("asks last which sections use the new place and switches it on for exactly those", async () => {
     const window = await open();
-    await click(within(window).getByRole("button", { name: /^Rest server/ }));
+    await click(within(window).getByRole("button", { name: /^rest-server/ }));
     await click(within(window).getByRole("button", { name: "Test connection" }));
     await within(window).findByText("Connection established", { exact: false });
     await click(within(window).getByRole("button", { name: "Next" }));

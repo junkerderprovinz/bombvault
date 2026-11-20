@@ -1,67 +1,94 @@
+import type { ReactNode } from "react";
+import type { TileMark } from "@glimstone/core";
+import { Badge as GlimBadge } from "@glimstone/react/Badge";
+import { ConnectionRow } from "@glimstone/react/ConnectionRow";
 import { Link, useNavigate } from "react-router-dom";
 
 import type { StorageLocation } from "../../lib/api";
 import { useT } from "../../lib/i18n";
-import { locationRoute, usedByText } from "../../lib/storageLocations";
+import { amountText, fillOf, locationRoute, usedByText } from "../../lib/storageLocations";
 import type { StorageLocationList } from "../../lib/useStorageLocations";
 import { CardFoot } from "../../pages/settings/shared";
-import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { ProviderMark, storageEntry } from "../destinations/providers";
 import { IconForward } from "../glyphs";
-import { LocationMark } from "./LocationMark";
-import { Vessel } from "./Vessel";
+import { InfoBubble } from "../InfoBubble";
+import { IconCloud, IconLocal } from "../navGlyphs";
+import { fillTip, forecastText } from "./Vessel";
 
-/** LocationRow is one storage location as a row that opens its page. `note`
- *  stands in for the sections that use it. */
+/** The tile a location wears: its provider's mark on the brand's colour, or
+ *  a glyph on the accent for a folder on this host and an address typed in. */
+function locationMark(location: StorageLocation): TileMark | ReactNode {
+  const brand = storageEntry(location.provider)?.mark;
+  if (brand) return brand;
+  if (location.provider) return <ProviderMark id={location.provider} />;
+  return location.kind === "local" ? <IconLocal /> : <IconCloud />;
+}
+
+/** LocationRow is one storage location as a connection row. The whole row
+ *  opens the location's page, as does Open. `note` stands in for the sections
+ *  that use it. */
 export function LocationRow({ location, note }: { location: StorageLocation; note?: string }) {
   const { t, lang } = useT();
   const navigate = useNavigate();
-  const route = locationRoute(location.id);
   const folder = location.object === "path";
   // Only a backend that opens several connections at once has the setting.
   const network = location.connections !== undefined;
+  const route = locationRoute(location.id);
+  const fill = fillOf(location.capacity);
+  const measured = fill.state === "measured";
+  const soon = location.enabled && measured && fill.warn;
+  const amount = amountText(t, location.capacity);
+  const outlook = measured ? (soon ? "" : forecastText(t, fill.weeks)) : t("storage.vessel.unknown");
   return (
-    <li
-      data-new-way={folder ? "location folder" : network ? "location network" : "location"}
-      className="relative -mx-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control px-2 py-3 hover:bg-hover"
-    >
-      <LocationMark location={location} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        {/* The link's box is stretched over the row, so the whole row opens
-            the location while a screen reader still hears one named link. */}
-        <Link
-          to={route}
-          className="truncate text-sm font-semibold text-carbon-text after:absolute after:inset-0 after:rounded-control focus-visible:outline-none focus-visible:after:outline-solid focus-visible:after:outline-2 focus-visible:after:outline-(--focus-ring)"
-        >
-          {location.name}
-        </Link>
-        {/* Two lines on a phone, where one would cut both halves short. */}
-        <span className="flex min-w-0 flex-col text-xs text-carbon-textMuted md:flex-row md:gap-1.5">
-          <span dir="ltr" className="min-w-0 truncate text-start">
+    <li data-new-way={folder ? "location folder" : network ? "location network" : "location"} className="glim-row-linked">
+      {/* Stretched over the row below it, so the whole row opens the location
+          while a screen reader hears one named link. */}
+      <Link to={route} className="glim-row-link">
+        {location.name}
+      </Link>
+      <ConnectionRow
+        name={location.name}
+        title={location.name}
+        mark={locationMark(location)}
+        status={note ?? usedByText(t, lang, location)}
+        badges={
+          <>
+            {location.protection.immutable && (
+              <GlimBadge tone="ok" size="small">
+                {t("storage.protected")}
+              </GlimBadge>
+            )}
+            {!location.enabled && (
+              <GlimBadge tone="neutral" size="small">
+                {t("storage.off")}
+              </GlimBadge>
+            )}
+            {soon && (
+              <GlimBadge tone="warn" size="small">
+                {forecastText(t, fill.weeks)}
+              </GlimBadge>
+            )}
+          </>
+        }
+        actions={[{ id: "open", label: t("instances.open"), labelKey: "instances.open", glyph: <IconForward />, onClick: () => navigate(route) }]}
+        text={{ test: t("offsite.test"), edit: t("common.edit"), remove: t("offsite.targets.remove") }}
+      >
+        {/* On a phone what it holds goes under the address instead of
+            pushing past the edge, and drops the dot that would start its line. */}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 sm:flex-nowrap">
+          <span dir="ltr" title={location.where} className="min-w-0 max-w-full truncate text-start">
             {location.where}
           </span>
-          <span className="min-w-0 truncate md:before:me-1.5 md:before:content-['·']">{note ?? usedByText(t, lang, location)}</span>
+          {location.enabled && (
+            <>
+              {amount && <span className="shrink-0 before:me-1.5 before:content-['·'] max-sm:before:content-none">{amount}</span>}
+              {outlook && <span className="shrink-0 before:me-1.5 before:content-['·'] max-sm:before:content-none">{outlook}</span>}
+              <InfoBubble tip={fillTip(t, fill)} />
+            </>
+          )}
         </span>
-      </div>
-      <div className="flex min-w-0 items-center gap-3 max-md:w-full max-md:ps-[52px]">
-        {location.protection.immutable && (
-          <Badge tone="ok" className="max-md:hidden">
-            {t("storage.protected")}
-          </Badge>
-        )}
-        {location.enabled ? (
-          // Above the stretched link, so the vessel explains itself under the
-          // pointer; a click on it still opens the location.
-          <span className="relative z-10 min-w-0 cursor-pointer" onClick={() => navigate(route)}>
-            <Vessel capacity={location.capacity} />
-          </span>
-        ) : (
-          <Badge tone="neutral">{t("storage.off")}</Badge>
-        )}
-        <span className="ms-auto inline-flex text-carbon-textMuted">
-          <IconForward />
-        </span>
-      </div>
+      </ConnectionRow>
     </li>
   );
 }
@@ -85,7 +112,7 @@ export function LocationList({ list }: { list: StorageLocationList }) {
   if (!loaded) return <p className="text-sm text-carbon-textSub">{t("dashboard.checking")}</p>;
   if (locations.length === 0) return <p className="text-sm text-carbon-textMuted">{t("storage.empty")}</p>;
   return (
-    <ul className="flex flex-col divide-y divide-carbon-border/60">
+    <ul className="flex flex-col gap-2">
       {locations.map((location) => (
         <LocationRow key={location.id} location={location} />
       ))}

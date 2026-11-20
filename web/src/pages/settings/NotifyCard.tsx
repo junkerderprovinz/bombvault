@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { PickerWindow, type PickerItem, type TileMark } from "@glimstone/react/PickerWindow";
-import { SERVICE_MARKS } from "@glimstone/core/serviceMarks";
+import { catalogPicker } from "@glimstone/core";
+import { NOTIFY_PROVIDERS } from "@glimstone/core/notifyProviders";
+import type { TileMark } from "@glimstone/core";
+import { Badge as GlimBadge } from "@glimstone/react/Badge";
+import { ConnectionRow, type ConnectionTest } from "@glimstone/react/ConnectionRow";
+import { PickerWindow } from "@glimstone/react/PickerWindow";
+import { Window, type WindowAction } from "@glimstone/react/Window";
 import { Button } from "../../components/Button";
 import { Exceptions } from "../../components/Exceptions";
 import { InfoBubble } from "../../components/InfoBubble";
@@ -8,7 +13,8 @@ import { NumberField } from "../../components/NumberField";
 import { RevealInput } from "../../components/RevealInput";
 import { SelectField } from "../../components/SelectField";
 import { Selector } from "../../components/Selector";
-import { TestButton, VerdictLine } from "../../components/TestButton";
+import { VerdictLine, verdictKey } from "../../components/TestButton";
+import { Toggle } from "../../components/Toggle";
 import { SettingRow } from "../../components/storage/rows";
 import { KIND_LABEL as SECTION_LABEL, KindGlyph } from "../../components/backups/kinds";
 import { IconLink, IconMail } from "../../components/glyphs";
@@ -22,7 +28,6 @@ import {
   type NotifyConfig,
   type NotifyKind,
 } from "../../lib/api";
-import { UNRAID_SVG } from "../../lib/appMarks";
 import type { EntryKind } from "../../lib/backupEntry";
 import { useT } from "../../lib/i18n";
 import { tLtr } from "../../lib/ltrFragments";
@@ -34,6 +39,7 @@ import {
   KIND_HINT,
   KIND_LABEL,
   PLACEHOLDERS,
+  channelTarget,
   hasSecret,
   newChannel,
   outgoing,
@@ -66,7 +72,7 @@ const EMPTY: NotifyConfig = { channels: [], scheduledSummary: false, notifyOnUpd
 const inputCls = "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
 const selectCls = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
 // A channel's own fields stand under its switch, set in by a step.
-const fieldCls = "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 ps-4 text-sm text-carbon-text";
+const fieldCls = "glim-form-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-carbon-text";
 const fieldInputCls = "w-full sm:w-md";
 
 /** How a channel edit saves: after a pause for typing, at once for a choice. */
@@ -103,6 +109,7 @@ export function NotifyCard({
   tail?: ReactNode;
 }) {
   const { push } = useToast();
+  const { lang } = useT();
   const [cfg, setCfg] = useState<NotifyConfig>(EMPTY);
   // The form as typed, read by a save that fires after a pause, which the
   // state of the render that scheduled it would not show.
@@ -209,10 +216,11 @@ export function NotifyCard({
     };
   }
 
-  function addChannel(kind: NotifyKind) {
+  function addChannel(kind: NotifyKind): string {
     const added = newChannel(kind, cfgRef.current.channels);
     apply({ ...cfgRef.current, channels: [...cfgRef.current.channels, added] });
     save("add", () => apply({ ...cfgRef.current, channels: cfgRef.current.channels.filter((c) => c.id !== added.id) }), false);
+    return added.id;
   }
 
   function removeChannel(id: string) {
@@ -227,6 +235,23 @@ export function NotifyCard({
   }
 
   const [adding, setAdding] = useState(false);
+  // The channel the add window made, whose form it shows after the pick.
+  const [added, setAdded] = useState<string | null>(null);
+
+  const formFor = (c: NotifyChannel) => (
+    <ChannelForm
+      t={t}
+      channel={c}
+      good={goodRef.current}
+      edit={editChannel(c.id)}
+      problems={problems.filter((p) => p.channel === c.id)}
+      shake={shake}
+      sections={sections}
+      platformKind={platformKind}
+      platformSet={platformSet}
+    />
+  );
+  const addedAt = cfg.channels.findIndex((c) => c.id === added);
 
   return (
     <>
@@ -266,85 +291,60 @@ export function NotifyCard({
         {cfg.channels.length === 0 ? (
           <p className="text-sm text-carbon-textMuted">{t("notify.empty")}</p>
         ) : (
-          <div className="flex flex-col divide-y divide-carbon-border/60 [&>*]:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
-            {cfg.channels.map((c, i) => (
-              <ChannelBlock
-                key={c.id}
-                t={t}
-                channel={c}
-                good={goodRef.current}
-                hueIndex={i}
-                edit={editChannel(c.id)}
-                onRemove={() => removeChannel(c.id)}
-                problems={problems.filter((p) => p.channel === c.id)}
-                shake={shake}
-                sections={sections}
-                platformKind={platformKind}
-                platformSet={platformSet}
-              />
+          <ul className="flex flex-col gap-2">
+            {cfg.channels.map((c) => (
+              <li key={c.id}>
+                <ChannelRow
+                  t={t}
+                  channel={c}
+                  idle={c.kind === "unraid" && c.enabled && platformKind !== "unraid"}
+                  switchShake={shake[`${c.id}:enabled`] ?? shake[`${c.id}:`]}
+                  onSwitch={(v) => editChannel(c.id)((ch) => ({ ...ch, enabled: v }), "enabled", false)}
+                  onRemove={() => removeChannel(c.id)}
+                >
+                  {formFor(c)}
+                </ChannelRow>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
         {adding && (
-          <PickerWindow
-            title={t("notify.add")}
-            hint={t("notify.channelsHint")}
-            items={channelItems(t)}
-            text={{
-              search: t("notify.search"),
-              none: t("notify.noMatch"),
-              clear: t("settings.search.clear"),
-              close: t("common.close"),
-              cancel: t("common.cancel"),
-              back: t("common.back"),
+          <AddChannelWindow
+            t={t}
+            lang={lang}
+            channel={addedAt < 0 ? undefined : cfg.channels[addedAt]}
+            onPick={(kind) => setAdded(addChannel(kind))}
+            onBack={() => {
+              if (added) removeChannel(added);
+              setAdded(null);
             }}
-            onPick={(kind) => {
+            onClose={() => {
               setAdding(false);
-              addChannel(kind as NotifyKind);
+              setAdded(null);
             }}
-            onClose={() => setAdding(false)}
-          />
+          >
+            {addedAt < 0 ? null : formFor(cfg.channels[addedAt])}
+          </AddChannelWindow>
         )}
       </Card>
     </>
   );
 }
 
-// Unraid's tile colours, as .glim-tile-unraid has them.
-const UNRAID_TILE: TileMark = { svg: UNRAID_SVG, tile: "#f15a2c", ink: "#ffffff" };
-
-// GlimStone lifts Matrix's black to grey on a dark ground. White reads as the
-// logo there, the way GitHub's does.
-const MATRIX_TILE: TileMark = {
-  ...SERVICE_MARKS.matrix,
-  svg: SERVICE_MARKS.matrix.svg.replace("#828282", "#ffffff"),
-};
-
-function channelMark(kind: NotifyKind): TileMark | ReactNode {
-  switch (kind) {
-    case "unraid":
-      return UNRAID_TILE;
-    case "matrix":
-      return MATRIX_TILE;
-    case "smtp":
-      return <IconMail />;
-    case "webhook":
-      return <IconLink />;
-    default:
-      return SERVICE_MARKS[kind];
-  }
-}
-
-// The kinds as the add window's tiles. A webhook takes any address, so it
-// stands last.
-function channelItems(t: T): PickerItem[] {
-  return KINDS.map((kind) => ({
-    id: kind,
-    label: kind === "unraid" ? "Unraid" : t(kind === "smtp" ? "notify.email" : KIND_LABEL[kind]),
-    sub: kind === "smtp" ? "SMTP" : undefined,
-    mark: channelMark(kind),
-    last: kind === "webhook",
-  }));
+// The kinds as the add window's tiles. Email and the webhook are words, the
+// services are brands, and the webhook takes any address, so it stands last.
+function channelPicker(t: T, lang: string) {
+  return catalogPicker(NOTIFY_PROVIDERS, {
+    ids: KINDS,
+    titles: { service: t("notify.groupService"), standard: t("notify.groupStandard") },
+    glyph: (entry) => (entry.glyph === "IconMail" ? <IconMail /> : <IconLink />),
+    lang,
+    own: (entry) => {
+      if (entry.id === "smtp") return { label: t("notify.email") };
+      if (entry.id === "webhook") return { label: t(KIND_LABEL.webhook) };
+      return undefined;
+    },
+  });
 }
 
 // The paths of the fields each kind draws. A problem on any other path is
@@ -366,13 +366,172 @@ function under(field: string, path: string): boolean {
   return field === path || field.startsWith(path + ".");
 }
 
-function ChannelBlock({
+/** The test of one channel, which its row and its window share. */
+function useChannelTest(c: NotifyChannel | undefined, t: T) {
+  const test = useTestVerdict(c ?? null, t("settings.error"));
+  const { verdict, running } = test;
+  const outcome = verdict ? (!verdict.ok && verdict.reason) || t(verdictKey(verdict, "delivery")) : undefined;
+  function run() {
+    if (!c) return;
+    void test.run(async () => {
+      const r = await testNotify(c);
+      if (r.ok) return { ok: true };
+      const key = resultKey(r.code);
+      return { ok: false, reason: key ? t(key) : t("settings.error") };
+    });
+  }
+  const face: ConnectionTest = { busy: running, tone: verdict ? (verdict.ok ? "ok" : "danger") : undefined, title: outcome };
+  const action: WindowAction = {
+    label: t("notify.test"),
+    labelKey: "notify.test",
+    ...face,
+    onClick: () => {
+      run();
+      return false;
+    },
+  };
+  const start = verdict && !verdict.ok ? <VerdictLine verdict={verdict} /> : undefined;
+  return { outcome, face, action, start, run };
+}
+
+function channelMark(kind: NotifyKind): ReactNode | TileMark {
+  const entry = NOTIFY_PROVIDERS.entries.find((e) => e.id === kind);
+  if (entry?.mark) return entry.mark;
+  return entry?.glyph === "IconMail" ? <IconMail /> : <IconLink />;
+}
+
+const ON_LABEL = { never: "notify.onNever", failure: "notify.onFailure", always: "notify.onAlways" } as const;
+
+/**
+ * ChannelRow is one channel as a connection row: its mark, its switch, where
+ * it sends and how its last test went. Edit opens its form in a window, where
+ * every field saves itself as everywhere else in the settings.
+ */
+function ChannelRow({
+  t,
+  channel: c,
+  idle,
+  switchShake,
+  onSwitch,
+  onRemove,
+  children,
+}: {
+  t: T;
+  channel: NotifyChannel;
+  /** The switch is on, but this host is not the platform the channel sends on. */
+  idle: boolean;
+  switchShake?: number;
+  onSwitch: (on: boolean) => void;
+  onRemove: () => void;
+  /** The channel's form. */
+  children: ReactNode;
+}) {
+  const [editing, setEditing] = useState(false);
+  const check = useChannelTest(c, t);
+  const title = c.name?.trim() || t(KIND_LABEL[c.kind]);
+  const target = channelTarget(c);
+  const status = check.outcome ?? (c.enabled ? t(ON_LABEL[c.on || "failure"]) : t("notify.statusOff"));
+  return (
+    <>
+      <ConnectionRow
+        data-channel={c.id}
+        name={title}
+        title={title}
+        mark={channelMark(c.kind)}
+        status={status}
+        badges={
+          <>
+            {idle && (
+              <GlimBadge tone="warn" size="small">
+                {t("notify.idle")}
+              </GlimBadge>
+            )}
+            <Toggle key={switchShake} hideLabel label={title} checked={c.enabled} onChange={onSwitch} className={switchShake ? "glim-shake" : undefined} />
+          </>
+        }
+        test={check.face}
+        text={{ test: t("notify.test"), edit: t("common.edit"), remove: t("notify.remove") }}
+        labelKeys={{ test: "notify.test", edit: "common.edit", remove: "notify.remove" }}
+        onTest={check.run}
+        onEdit={() => setEditing(true)}
+        onRemove={onRemove}
+      >
+        <span dir="ltr" title={target || undefined} className="block truncate text-start">
+          {target || t("notify.noAddress")}
+        </span>
+      </ConnectionRow>
+      {editing && (
+        <Window
+          title={t("common.editTitle").replace("{name}", () => title)}
+          text={{ cancel: t("common.cancel"), close: t("common.close") }}
+          actions={[check.action]}
+          start={check.start}
+          className="glim-form-window"
+          closeOnBackdrop={false}
+          onClose={() => setEditing(false)}
+        >
+          {children}
+        </Window>
+      )}
+    </>
+  );
+}
+
+/** AddChannelWindow is the catalog's tiles, and after a pick the new
+ *  channel's form, the same one its Edit opens. */
+function AddChannelWindow({
+  t,
+  lang,
+  channel,
+  onPick,
+  onBack,
+  onClose,
+  children,
+}: {
+  t: T;
+  lang: string;
+  /** The channel the pick added, once it is there. */
+  channel?: NotifyChannel;
+  onPick: (kind: NotifyKind) => void;
+  onBack: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const check = useChannelTest(channel, t);
+  const [picked, setPicked] = useState<string>();
+  return (
+    <PickerWindow
+      title={t("notify.add")}
+      hint={t("notify.channelsHint")}
+      {...channelPicker(t, lang)}
+      text={{
+        search: t("notify.search"),
+        none: t("notify.noMatch"),
+        clear: t("settings.search.clear"),
+        close: t("common.close"),
+        cancel: t("common.cancel"),
+        back: t("common.back"),
+      }}
+      selected={picked}
+      start={channel ? check.start : undefined}
+      actions={channel ? [check.action] : []}
+      onPick={(kind) => {
+        setPicked(kind);
+        onPick(kind as NotifyKind);
+      }}
+      onBack={onBack}
+      onClose={onClose}
+    >
+      {channel ? children : undefined}
+    </PickerWindow>
+  );
+}
+
+function ChannelForm({
   t,
   channel: c,
   good,
-  hueIndex,
   edit,
-  onRemove,
   problems,
   shake,
   sections,
@@ -382,9 +541,7 @@ function ChannelBlock({
   t: T;
   channel: NotifyChannel;
   good: NotifyConfig;
-  hueIndex: number;
   edit: Edit;
-  onRemove: () => void;
   problems: ChannelProblem[];
   shake: Partial<Record<string, number>>;
   sections: EntryKind[];
@@ -395,24 +552,14 @@ function ChannelBlock({
   const hint = KIND_HINT[c.kind];
   const shakeOf = (path: string) => shake[`${c.id}:${path}`];
   const shook = (path: string) => (shakeOf(path) ? "glim-shake" : "");
-  const test = useTestVerdict(c, t("settings.error"));
   // A section added as an exception keeps its row while its URL is still blank.
   const [addedHc, setAddedHc] = useState<string[]>([]);
-
-  function handleTest() {
-    void test.run(async () => {
-      const r = await testNotify(c);
-      if (r.ok) return { ok: true };
-      const key = resultKey(r.code);
-      return { ok: false, reason: key ? t(key) : t("settings.error") };
-    });
-  }
 
   function problemLines(path: string): ReactNode {
     return problems
       .filter((p) => under(p.field, path))
       .map((p) => (
-        <p key={`${p.field}:${p.code}`} className="ps-4 text-xs text-statusFail">
+        <p key={`${p.field}:${p.code}`} className="text-xs text-statusFail">
           {t(problemKey(p.code))}
         </p>
       ));
@@ -432,7 +579,7 @@ function ChannelBlock({
     return (
       <>
         <label className={fieldCls}>
-          {label}
+          <span>{label}</span>
           {control}
         </label>
         {note}
@@ -464,7 +611,7 @@ function ChannelBlock({
     const waiting = waitsForSecret(c, good);
     const note =
       value === REDACTED ? (
-        <p className={`ps-4 text-xs ${waiting ? "text-statusWarn" : "text-carbon-textMuted"}`}>
+        <p className={`text-xs ${waiting ? "text-statusWarn" : "text-carbon-textMuted"}`}>
           {t(waiting ? "notify.secretAgain" : "notify.secretKept")}
         </p>
       ) : null;
@@ -637,7 +784,7 @@ function ChannelBlock({
             className={shook("webhook.headers")}
           />
           {Object.values(c.webhook?.headers ?? {}).includes(REDACTED) && (
-            <p className={`ps-4 text-xs ${waitsForSecret(c, good) ? "text-statusWarn" : "text-carbon-textMuted"}`}>
+            <p className={`text-xs ${waitsForSecret(c, good) ? "text-statusWarn" : "text-carbon-textMuted"}`}>
               {t(waitsForSecret(c, good) ? "notify.secretAgain" : "notify.secretKept")}
             </p>
           )}
@@ -693,7 +840,7 @@ function ChannelBlock({
             />
           </label>
           {problemLines("healthchecks.url")}
-          <div className="ps-4">
+          <div>
             <Exceptions
               label={t("notify.healthchecksTitle")}
               taken={taken.map(asSection)}
@@ -748,22 +895,15 @@ function ChannelBlock({
   }
 
   return (
-    <div data-channel={c.id} className="flex flex-col gap-2">
-      <ToggleRow
-        label={title}
-        hint={hint ? tLtr(t, hint) : undefined}
-        checked={c.enabled}
-        onChange={(v) => edit((ch) => ({ ...ch, enabled: v }), "enabled", false)}
-        hueIndex={hueIndex}
-        shakeNonce={shakeOf("enabled") ?? shakeOf("")}
-      />
+    <div data-channel-form={c.id} className="glim-form-rows flex flex-col gap-2">
+      {hint && <p className="text-xs text-carbon-textSub">{tLtr(t, hint)}</p>}
       {loose.map((p) => (
         <p key={`${p.field}:${p.code}`} className="text-xs text-statusFail">
           {t(problemKey(p.code))}
         </p>
       ))}
       {c.kind !== "healthchecks" && (
-        <div className="ps-4">
+        <div>
           <SettingRow label={t("notify.on")}>
             <Selector
               key={shakeOf("on")}
@@ -794,11 +934,6 @@ function ChannelBlock({
         />
       )}
       {fields}
-      <VerdictLine verdict={test.verdict} className="ps-4" />
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <TestButton label={t("notify.test")} labelKey="notify.test" words="delivery" test={test} onClick={handleTest} />
-        <Button label={t("notify.remove")} labelKey="notify.remove" glyph={<IconTrash />} variant="icon" glyphOnly onClick={onRemove} />
-      </div>
     </div>
   );
 }
@@ -859,7 +994,7 @@ function HeadersEditor({
   }
 
   return (
-    <div className="flex flex-col gap-2 ps-4">
+    <div className="flex flex-col gap-2">
       <span className="text-sm text-carbon-text">{t("notify.webhookHeaders")}</span>
       {rows.map((row, i) => (
         <div key={i} className={`flex flex-wrap items-center gap-2 ${className}`}>

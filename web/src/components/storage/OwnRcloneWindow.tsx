@@ -53,6 +53,7 @@ export function OwnRcloneWindow({
 
   return (
     <InstanceWindow
+      closeOnBackdrop={false}
       title={t("storage.add.title")}
       hint={t("storage.listHint")}
       onClose={onClose}

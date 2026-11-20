@@ -6,7 +6,7 @@ import { DOMAIN_LABEL, sectionDomains } from "../../lib/storageLocations";
 import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { useTestVerdict, type Verdict } from "../../lib/useTestVerdict";
 import { Card } from "../../pages/settings/shared";
-import { providerName } from "../destinations/ProviderPicker";
+import { providerName } from "../destinations/providers";
 import { TestButton, VerdictLine } from "../TestButton";
 import { Toggle } from "../Toggle";
 import { ownFolderSections } from "./OwnFoldersCard";

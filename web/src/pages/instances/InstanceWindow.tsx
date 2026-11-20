@@ -1,11 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 import { Badge } from "../../components/Badge";
 import { InfoBubble } from "../../components/InfoBubble";
 import { BottomSheet } from "../../components/mobile/BottomSheet";
 import { SheetFoot } from "../../components/mobile/SheetFoot";
-import { PickerSearch, type PickerSearchProps } from "../../components/Picker";
 import { useBackCloses } from "../../lib/useBackCloses";
 import { hueVars } from "../../lib/appearance";
 import { focusableElements } from "../../lib/useConfirm";
@@ -20,7 +19,7 @@ export function InstanceWindow({
   facts,
   footer,
   picker = false,
-  search,
+  closeOnBackdrop = true,
   onClose,
   children,
 }: {
@@ -31,11 +30,12 @@ export function InstanceWindow({
    *  title and this line, without it by the title as a notch. */
   facts?: ReactNode;
   footer: ReactNode;
-  /** A window of tiles to pick from, and the steps that follow the pick: at
-   *  most 85% of the screen tall, so the page stays in sight around it. */
+  /** A long window of steps: at most 85% of the screen tall, so the page
+   *  stays in sight around it. */
   picker?: boolean;
-  /** The picker's search, at the top right above the tiles. */
-  search?: PickerSearchProps;
+  /** Off while the window holds typed input, which a stray press beside it
+   *  would throw away. Escape and the footer still close it. */
+  closeOnBackdrop?: boolean;
   /** Returning false keeps the window open, and Back with it. */
   onClose: () => void | boolean;
   children: ReactNode;
@@ -45,22 +45,6 @@ export function InstanceWindow({
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   useBackCloses(isDesktop, onClose);
-
-  // While a search narrows the tiles the window keeps the height it had
-  // without one. A centred box would shrink from both ends and carry the field
-  // away from the eye with every letter.
-  const restHeight = useRef(0);
-  const searching = !!search && search.value !== "";
-  useLayoutEffect(() => {
-    const box = boxRef.current;
-    if (!box) return;
-    if (searching) {
-      box.style.minHeight = `min(${restHeight.current}px, 85vh)`;
-      return;
-    }
-    box.style.minHeight = "";
-    restHeight.current = box.offsetHeight;
-  });
 
   useEffect(() => {
     if (!isDesktop) return;
@@ -110,7 +94,6 @@ export function InstanceWindow({
       >
         <div className="flex flex-col gap-6 pb-4 pt-1">
           {facts && <p className="text-xs text-carbon-textMuted wrap-anywhere">{facts}</p>}
-          {search && <PickerSearch {...search} />}
           {children}
         </div>
       </BottomSheet>
@@ -121,7 +104,7 @@ export function InstanceWindow({
     <div
       className="glim-modal-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (closeOnBackdrop && e.target === e.currentTarget) onClose();
       }}
     >
       <div
@@ -148,12 +131,7 @@ export function InstanceWindow({
             </Badge>
           </h2>
         )}
-        {search && (
-          <div className="flex justify-end px-6 pt-6">
-            <PickerSearch {...search} />
-          </div>
-        )}
-        <div className={`flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-2 ${search ? "pt-5" : "pt-6"}`}>{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-2 pt-6">{children}</div>
         <div data-dialog-actions className="flex flex-wrap items-center justify-end gap-2 px-6 pb-6 pt-4">{footer}</div>
       </div>
     </div>,

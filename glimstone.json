@@ -3,13 +3,13 @@
     {
       "name": "web",
       "mode": "port",
-      "version": "4.5.8",
+      "version": "4.8.1",
       "versionFile": "web/src/lib/glimstoneVersion.ts"
     },
     {
       "name": "web packages",
       "mode": "npm",
-      "version": "4.5.8",
+      "version": "4.8.1",
       "package": "web/package.json"
     }
   ]
