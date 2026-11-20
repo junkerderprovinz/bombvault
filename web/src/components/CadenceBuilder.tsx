@@ -327,6 +327,7 @@ export function CadenceBuilder({
             active={new Set(state.weekdays)}
             onChange={toggleWeekday}
             size="sm"
+            inline={row}
             className={row ? undefined : "flex-1"}
           />
         </div>
