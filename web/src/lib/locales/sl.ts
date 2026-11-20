@@ -5538,6 +5538,8 @@ const sl: Partial<Translations> = {
   "nodes.sectionEmpty": "Na tem vozlišču tu še ni ničesar za prikaz.",
   "nodes.onNode": "Na {name}",
   "nodes.backupStarted": "Varnostno kopiranje {name} se je začelo na vozlišču.",
+  "nodes.addSet": "Dodaj nabor map na {name}",
+  "nodes.editSet": "Uredi nabor map na {name}",
   "nodes.noSnapshots": "Za ta vnos še ni varnostnih kopij.",
   "nodes.restoreAsk": "Obnovim {name} na vozlišču iz varnostne kopije, narejene {time}? Kar je tam zdaj, bo zamenjano.",
   "nodes.restoreStarted": "Obnova {name} se je začela na vozlišču.",

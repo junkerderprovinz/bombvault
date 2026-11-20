@@ -1,11 +1,21 @@
 // A node's containers and folder sets stand under this instance's own, one
 // section per node. Each is read through the node when it is opened, so a
-// node that is away costs the page nothing until someone looks.
+// node that is away costs the page nothing until someone looks. Folder sets
+// are added and edited here in the same window as this instance's own.
 
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { backupFileSet, backupNow, listContainers, listFileSets, type BackupItem, type NodeView } from "../../lib/api";
+import {
+  backupFileSet,
+  backupNow,
+  browse,
+  listContainers,
+  listFileSets,
+  type BackupItem,
+  type FileSetView,
+  type NodeView,
+} from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { containerItem, fileSetItem, nodeEntryPath, type NodeEntryKind } from "../../lib/nodeEntries";
 import { inNode } from "../../lib/nodeScope";
@@ -16,7 +26,8 @@ import { Badge } from "../Badge";
 import { stopAcknowledged } from "../BackupButton";
 import { Button } from "../Button";
 import { IconEye, IconEyeOff } from "../glyphs";
-import { IconBackupNow } from "../navGlyphs";
+import { IconAdd, IconBackupNow, IconPencil } from "../navGlyphs";
+import { FileSetDialog } from "../files/FileSetDialog";
 import { Card } from "../../pages/settings/shared";
 import { ActionMenu, type MenuPlace } from "./ActionMenu";
 import { BackupRow, LIST_COLUMNS, LIST_SPAN } from "./BackupRow";
@@ -65,6 +76,7 @@ function NodeSection({ node, kinds, hueIndex }: { node: NodeView; kinds: NodeEnt
   const [items, setItems] = useState<BackupItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ place: MenuPlace; item: BackupItem } | null>(null);
+  const [setWindow, setSetWindow] = useState<{ set: FileSetView | null; root: string } | null>(null);
   const kindsKey = kinds.join(",");
 
   const load = useCallback(() => {
@@ -100,6 +112,29 @@ function NodeSection({ node, kinds, hueIndex }: { node: NodeView; kinds: NodeEnt
     }
   }
 
+  // The window shows paths under the node's own mount, which only the node
+  // knows, and edits the set as the node has it now.
+  async function openSet(id: string | null) {
+    try {
+      const [place, sets] = await Promise.all([
+        inNode(node.id, () => browse("")),
+        id === null ? null : inNode(node.id, () => listFileSets()),
+      ]);
+      if (!place.ok || place.root === undefined) {
+        push(place.error ?? t("folder.browseFailed"), "fail");
+        return;
+      }
+      const set = sets?.fileSets.find((f) => f.id === id) ?? null;
+      if (id !== null && set === null) {
+        push(t("backups.loadFailed"), "fail");
+        return;
+      }
+      setSetWindow({ set, root: place.root });
+    } catch (err) {
+      push(err instanceof Error ? err.message : t("folder.browseFailed"), "fail");
+    }
+  }
+
   const shown = items ?? [];
   const toggleLabel = t("nodes.sectionToggle").replace("{name}", () => node.name);
 
@@ -109,16 +144,20 @@ function NodeSection({ node, kinds, hueIndex }: { node: NodeView; kinds: NodeEnt
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={node.online ? "ok" : "neutral"}>{t(node.online ? "instances.connected" : "instances.inactive")}</Badge>
           {items && <span className="text-xs text-carbon-textMuted tabular-nums">{shown.length}</span>}
-          <Button
-            label={toggleLabel}
-            labelKey={null}
-            glyph={open ? <IconEyeOff /> : <IconEye />}
-            tone="subtle"
-            ariaExpanded={open}
-            ariaControls={`bv-node-entries-${node.id}`}
-            onClick={toggle}
-            className="ms-auto"
-          />
+          <div className="ms-auto flex min-w-0 flex-wrap items-center gap-2">
+            {kinds.includes("files") && (
+              <Button label={t("files.addSet")} labelKey="files.addSet" glyph={<IconAdd />} tone="subtle" onClick={() => void openSet(null)} />
+            )}
+            <Button
+              label={toggleLabel}
+              labelKey={null}
+              glyph={open ? <IconEyeOff /> : <IconEye />}
+              tone="subtle"
+              ariaExpanded={open}
+              ariaControls={`bv-node-entries-${node.id}`}
+              onClick={toggle}
+            />
+          </div>
         </div>
         {open && (
           <div id={`bv-node-entries-${node.id}`} className="@container glim-content-fade">
@@ -160,6 +199,9 @@ function NodeSection({ node, kinds, hueIndex }: { node: NodeView; kinds: NodeEnt
           label={entryName(menu.item, t)}
           actions={[
             { id: "backup", label: t("containers.backupNow"), glyph: <IconBackupNow />, onSelect: () => void backUp(menu.item) },
+            ...(menu.item.kind === "files"
+              ? [{ id: "edit", label: t("common.edit"), glyph: <IconPencil />, onSelect: () => void openSet(menu.item.key) }]
+              : []),
             {
               id: "open",
               label: t("instances.open"),
@@ -169,6 +211,20 @@ function NodeSection({ node, kinds, hueIndex }: { node: NodeView; kinds: NodeEnt
           ]}
           place={menu.place}
           onClose={() => setMenu(null)}
+        />
+      )}
+      {setWindow && (
+        <FileSetDialog
+          initial={setWindow.set}
+          presetSeed={null}
+          hostMountRoot={setWindow.root}
+          node={node}
+          t={t}
+          onClose={() => setSetWindow(null)}
+          onSaved={() => {
+            setSetWindow(null);
+            load();
+          }}
         />
       )}
     </section>

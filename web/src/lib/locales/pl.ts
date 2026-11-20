@@ -5542,6 +5542,8 @@ const pl: Partial<Translations> = {
   "nodes.sectionEmpty": "Na tym węźle nie ma tu jeszcze nic do pokazania.",
   "nodes.onNode": "Na węźle {name}",
   "nodes.backupStarted": "Kopia zapasowa wpisu {name} ruszyła na węźle.",
+  "nodes.addSet": "Dodaj zestaw folderów na węźle {name}",
+  "nodes.editSet": "Edytuj zestaw folderów na węźle {name}",
   "nodes.noSnapshots": "Ten wpis nie ma jeszcze kopii zapasowych.",
   "nodes.restoreAsk": "Przywrócić wpis {name} na węźle z kopii zapasowej z {time}? To, co jest tam teraz, zostanie zastąpione.",
   "nodes.restoreStarted": "Przywracanie wpisu {name} ruszyło na węźle.",

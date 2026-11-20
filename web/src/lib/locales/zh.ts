@@ -5535,6 +5535,8 @@ const zh: Partial<Translations> = {
   "nodes.sectionEmpty": "此节点上暂时没有可在这里显示的内容。",
   "nodes.onNode": "在 {name} 上",
   "nodes.backupStarted": "{name} 的备份已在节点上开始。",
+  "nodes.addSet": "在 {name} 上添加文件夹集",
+  "nodes.editSet": "编辑 {name} 上的文件夹集",
   "nodes.noSnapshots": "此条目还没有备份。",
   "nodes.restoreAsk": "要在节点上从 {time} 的备份还原 {name} 吗？那里现有的内容将被替换。",
   "nodes.restoreStarted": "{name} 的还原已在节点上开始。",

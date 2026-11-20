@@ -5554,6 +5554,8 @@ const lv: Partial<Translations> = {
   "nodes.sectionEmpty": "Šajā mezglā vēl nav nekā, ko šeit rādīt.",
   "nodes.onNode": "Mezglā {name}",
   "nodes.backupStarted": "Mezglā sākta ieraksta {name} dublēšana.",
+  "nodes.addSet": "Pievienot mapju kopu mezglā {name}",
+  "nodes.editSet": "Rediģēt mapju kopu mezglā {name}",
   "nodes.noSnapshots": "Šim ierakstam vēl nav rezerves kopiju.",
   "nodes.restoreAsk": "Atjaunot ierakstu {name} mezglā no rezerves kopijas ({time})? Tas, kas tur ir tagad, tiks aizstāts.",
   "nodes.restoreStarted": "Mezglā sākta ieraksta {name} atjaunošana.",

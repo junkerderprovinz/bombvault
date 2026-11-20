@@ -5542,6 +5542,8 @@ const ru: Partial<Translations> = {
   "nodes.sectionEmpty": "На этом узле здесь пока нечего показать.",
   "nodes.onNode": "На {name}",
   "nodes.backupStarted": "Резервное копирование {name} запущено на узле.",
+  "nodes.addSet": "Добавить набор папок на {name}",
+  "nodes.editSet": "Изменить набор папок на {name}",
   "nodes.noSnapshots": "Резервных копий этой записи пока нет.",
   "nodes.restoreAsk": "Восстановить {name} на узле из резервной копии от {time}? То, что там сейчас, будет заменено.",
   "nodes.restoreStarted": "Восстановление {name} запущено на узле.",

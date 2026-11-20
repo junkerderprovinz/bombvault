@@ -5555,6 +5555,8 @@ const et: Partial<Translations> = {
   "nodes.sectionEmpty": "Selles sõlmes pole siin veel midagi näidata.",
   "nodes.onNode": "Sõlmes {name}",
   "nodes.backupStarted": "Varundus algas sõlmes: {name}.",
+  "nodes.addSet": "Lisa kaustakomplekt sõlme {name}",
+  "nodes.editSet": "Muuda kaustakomplekti sõlmes {name}",
   "nodes.noSnapshots": "Sellest kirjest pole veel varundusi.",
   "nodes.restoreAsk": "Kas taastada {name} sõlmes varundusest, mis tehti {time}? Praegu seal olev asendatakse.",
   "nodes.restoreStarted": "Taastamine algas sõlmes: {name}.",

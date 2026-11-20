@@ -5555,6 +5555,8 @@ const bg: Partial<Translations> = {
   "nodes.sectionEmpty": "На този възел още няма какво да се покаже тук.",
   "nodes.onNode": "На {name}",
   "nodes.backupStarted": "Архивирането на {name} започна на възела.",
+  "nodes.addSet": "Добави набор от папки на {name}",
+  "nodes.editSet": "Редактирай набора от папки на {name}",
   "nodes.noSnapshots": "Все още няма архиви на този запис.",
   "nodes.restoreAsk": "Да възстановя ли {name} на възела от архива от {time}? Това, което е там сега, ще бъде заменено.",
   "nodes.restoreStarted": "Възстановяването на {name} започна на възела.",

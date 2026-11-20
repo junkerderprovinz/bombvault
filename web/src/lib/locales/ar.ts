@@ -5546,6 +5546,8 @@ const ar: Partial<Translations> = {
   "nodes.sectionEmpty": "لا شيء على هذه العقدة لعرضه هنا بعد.",
   "nodes.onNode": "على {name}",
   "nodes.backupStarted": "بدأ النسخ الاحتياطي لـ {name} على العقدة.",
+  "nodes.addSet": "إضافة مجموعة مجلدات على {name}",
+  "nodes.editSet": "تعديل مجموعة المجلدات على {name}",
   "nodes.noSnapshots": "لا توجد نسخ احتياطية لهذا الإدخال بعد.",
   "nodes.restoreAsk": "استعادة {name} على العقدة من النسخة الاحتياطية بتاريخ {time}؟ سيُستبدل ما هو موجود هناك الآن.",
   "nodes.restoreStarted": "بدأت استعادة {name} على العقدة.",

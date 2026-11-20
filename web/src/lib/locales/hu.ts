@@ -5545,6 +5545,8 @@ const hu: Partial<Translations> = {
   "nodes.sectionEmpty": "Ezen a csomóponton még nincs itt megjeleníthető elem.",
   "nodes.onNode": "Itt: {name}",
   "nodes.backupStarted": "{name} biztonsági mentése elindult a csomóponton.",
+  "nodes.addSet": "Mappakészlet hozzáadása itt: {name}",
+  "nodes.editSet": "Mappakészlet szerkesztése itt: {name}",
   "nodes.noSnapshots": "Ennek az elemnek még nincs biztonsági mentése.",
   "nodes.restoreAsk": "Visszaállítod ezt a csomóponton a(z) {time} időpontú biztonsági mentésből: {name}? Ami most ott van, felülíródik.",
   "nodes.restoreStarted": "{name} visszaállítása elindult a csomóponton.",

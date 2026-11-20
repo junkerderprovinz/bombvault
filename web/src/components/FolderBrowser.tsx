@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { inNode } from "../lib/nodeScope";
 import { useBackCloses } from "../lib/useBackCloses";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
@@ -31,9 +32,11 @@ export interface FolderBrowserProps {
   /** The row's rainbow position for the Browse button, where several folder
    *  rows stand in one card and would otherwise share its colour. */
   hueIndex?: number;
+  /** The node whose folders are browsed, absent for this instance's own. */
+  node?: string;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, hueIndex }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, hueIndex, node }: FolderBrowserProps) {
   const { t } = useT();
   // "New folder" and "Use this folder" sit one above the other; one stage for
   // both gives the column a straight edge in every language.
@@ -58,7 +61,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   const doFetch = useCallback((path: string) => {
     setLoading(true);
     setBrowseError(null);
-    browse(path)
+    inNode(node ?? null, () => browse(path))
       .then((res) => {
         if (!res.ok) {
           setBrowseError(res.error ?? t("folder.couldNotRead"));
@@ -74,7 +77,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         setManualFallback(true);
       })
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, node]);
 
   function handleOpen() {
     setManualFallback(false);
@@ -198,7 +201,9 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         </div>
       )}
 
-      {!manualFallback && (
+      {/* Home passes a node no route that makes folders, so a node's folders
+          are only browsed. */}
+      {!manualFallback && !node && (
         <div className="flex items-center gap-2">
           <input
             type="text"

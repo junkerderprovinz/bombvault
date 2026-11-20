@@ -5543,6 +5543,8 @@ const cs: Partial<Translations> = {
   "nodes.sectionEmpty": "Na tomto uzlu tu zatím nic k zobrazení není.",
   "nodes.onNode": "Na uzlu {name}",
   "nodes.backupStarted": "Zálohování {name} na uzlu začalo.",
+  "nodes.addSet": "Přidat sadu složek na uzlu {name}",
+  "nodes.editSet": "Upravit sadu složek na uzlu {name}",
   "nodes.noSnapshots": "Z této položky zatím není žádná záloha.",
   "nodes.restoreAsk": "Obnovit {name} na uzlu ze zálohy z {time}? To, co tam je teď, se nahradí.",
   "nodes.restoreStarted": "Obnova {name} na uzlu začala.",

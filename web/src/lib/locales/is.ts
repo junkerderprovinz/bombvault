@@ -5554,6 +5554,8 @@ const is: Partial<Translations> = {
   "nodes.sectionEmpty": "Ekkert á þessum hnút til að sýna hér enn.",
   "nodes.onNode": "Á {name}",
   "nodes.backupStarted": "Afritun á {name} hófst á hnútnum.",
+  "nodes.addSet": "Bæta við möppusetti á {name}",
+  "nodes.editSet": "Breyta möppusetti á {name}",
   "nodes.noSnapshots": "Engin afrit af þessari færslu enn.",
   "nodes.restoreAsk": "Endurheimta {name} á hnútnum úr afritinu frá {time}? Því sem er þar núna verður skipt út.",
   "nodes.restoreStarted": "Endurheimt á {name} hófst á hnútnum.",

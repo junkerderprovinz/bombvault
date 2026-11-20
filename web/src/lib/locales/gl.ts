@@ -5555,6 +5555,8 @@ const gl: Partial<Translations> = {
   "nodes.sectionEmpty": "Aínda non hai nada deste nodo que amosar aquí.",
   "nodes.onNode": "En {name}",
   "nodes.backupStarted": "A copia de seguridade de {name} comezou no nodo.",
+  "nodes.addSet": "Engadir conxunto de cartafoles en {name}",
+  "nodes.editSet": "Editar conxunto de cartafoles en {name}",
   "nodes.noSnapshots": "Aínda non hai copias de seguridade deste elemento.",
   "nodes.restoreAsk": "Restaurar {name} no nodo desde a copia de seguridade do {time}? O que hai alí agora será substituído.",
   "nodes.restoreStarted": "A restauración de {name} comezou no nodo.",

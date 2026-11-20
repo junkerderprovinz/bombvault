@@ -1,8 +1,9 @@
 // The node pages on the demo server: a card per node on Instances with when it
 // backs up and where its backups go, the window that adds one, the nodes card
-// on the overview, a section per node on the Backups list, and the page of an
-// entry on a node with its backups and a restore. Every request about a node
-// goes to its route under /api/nodes/{id}/api, never to this server's own.
+// on the overview, a section per node on the Backups list with the window that
+// adds and edits a node's folder sets, and the page of an entry on a node with
+// its backups and a restore. Every request about a node goes to its route
+// under /api/nodes/{id}/api, never to this server's own.
 //
 // NODE_SHOTS=<folder> also writes the pictures of these pages in the light,
 // dark and rainbow look at 1280 and 375 pixels:
@@ -14,7 +15,7 @@ import { join } from "node:path";
 
 import { stageDemo, words } from "./demo";
 import { overflow, settle } from "./entries";
-import { COMPOSE, NODE, NODE_CONTAINERS, NODES, stageNodes } from "./nodes";
+import { COMPOSE, NODE, NODE_CONTAINERS, NODE_FILE_SETS, NODES, stageNodes } from "./nodes";
 
 const t = words("en");
 
@@ -142,6 +143,40 @@ test("a node's containers stand in a section of their own and lead to its pages"
 
   await section.getByRole("link", { name: "nextcloud", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/nodes/${NODE.id}/backups/container/nextcloud$`));
+});
+
+test("a node's folder sets are added and edited in its section through the node", async ({ page }) => {
+  const calls = await open(page, "/backups?kind=files");
+  const section = page.locator(`[data-node-section="${NODE.id}"]`);
+  const uploads = section.getByRole("link", { name: "Website uploads" });
+  await uploads.waitFor();
+
+  await section.getByRole("button", { name: t("files.addSet") }).click();
+  const add = page.getByRole("dialog", { name: t("nodes.addSet").replace("{name}", NODE.name) });
+  await expect(add.getByRole("group", { name: t("storage.title") })).toHaveCount(0);
+  await add.getByPlaceholder("documents").fill("Photos");
+  await add.getByRole("button", { name: t("folder.browseTitle") }).click();
+  await add.getByRole("button", { name: "srv", exact: true }).click();
+  await add.getByRole("button", { name: "photos", exact: true }).click();
+  await expect(add.getByRole("button", { name: t("folder.newFolder") })).toHaveCount(0);
+  await add.getByRole("button", { name: t("folder.use") }).click();
+  await expect(add.getByPlaceholder("user/appdata")).toHaveValue("srv/photos");
+  expect((await overflow(page)).pan).toBe(0);
+  await add.getByRole("button", { name: t("settings.save") }).click();
+  await expect(add).toHaveCount(0);
+
+  await uploads.click({ button: "right" });
+  await page.getByRole("menuitem", { name: t("common.edit") }).click();
+  const edit = page.getByRole("dialog", { name: t("nodes.editSet").replace("{name}", NODE.name) });
+  await expect(edit.getByPlaceholder("documents")).toBeDisabled();
+  await edit.locator("textarea").fill("cache/");
+  await edit.getByRole("button", { name: t("settings.save") }).click();
+  await expect(edit).toHaveCount(0);
+
+  expect(calls.sets).toEqual([
+    { method: "POST", path: "/api/files/sets", body: { name: "Photos", path: "srv/photos", excludes: [], enabled: true } },
+    { method: "PATCH", path: `/api/files/sets/${NODE_FILE_SETS[0].id}`, body: { name: "Website uploads", path: "srv/www/uploads", excludes: ["cache/"], enabled: true } },
+  ]);
 });
 
 test("an entry on a node lists its backups and restores one through the node", async ({ page }) => {
@@ -301,6 +336,37 @@ test("pictures of the node pages", async ({ browser }, testInfo) => {
       await page.goto(`/nodes/${NODE.id}/backups/container/nextcloud`);
       await page.getByRole("button", { name: t("snapshots.restore") }).first().waitFor();
       await shoot(page, `node-entry-${at}`);
+      await page.context().close();
+    }
+  }
+});
+
+test("pictures of a node's folder set window", async ({ browser }, testInfo) => {
+  test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for the pictures is named");
+  test.setTimeout(300_000);
+  mkdirSync(SHOTS!, { recursive: true });
+  for (const theme of LOOKS) {
+    for (const width of WIDTHS) {
+      const at = `${theme}-${width}`;
+      const page = await look(browser, width, theme);
+      await page.goto("/backups?kind=files");
+      const section = page.locator(`[data-node-section="${NODE.id}"]`);
+      await section.getByRole("link", { name: "Website uploads" }).waitFor();
+      await section.getByRole("button", { name: t("files.addSet") }).click();
+      const add = page.getByRole("dialog", { name: t("nodes.addSet").replace("{name}", NODE.name) });
+      await add.getByPlaceholder("documents").fill("Photos");
+      await add.getByRole("button", { name: t("folder.browseTitle") }).click();
+      await add.getByRole("button", { name: "srv", exact: true }).click();
+      await add.getByRole("button", { name: "photos", exact: true }).waitFor();
+      await shoot(page, `node-folder-set-browse-${at}`);
+      await add.getByRole("button", { name: "photos", exact: true }).click();
+      await add.getByRole("button", { name: t("folder.use") }).click();
+      await shoot(page, `node-folder-set-add-${at}`);
+      await add.getByRole("button", { name: t("files.cancel") }).click();
+      await section.getByRole("link", { name: "Website uploads" }).click({ button: "right" });
+      await page.getByRole("menuitem", { name: t("common.edit") }).click();
+      await page.getByRole("dialog", { name: t("nodes.editSet").replace("{name}", NODE.name) }).waitFor();
+      await shoot(page, `node-folder-set-edit-${at}`);
       await page.context().close();
     }
   }

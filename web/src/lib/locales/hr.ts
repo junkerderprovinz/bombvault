@@ -5555,6 +5555,8 @@ const hr: Partial<Translations> = {
   "nodes.sectionEmpty": "Na ovom čvoru zasad nema ničega za prikaz.",
   "nodes.onNode": "Na {name}",
   "nodes.backupStarted": "Sigurnosno kopiranje stavke {name} pokrenuto je na čvoru.",
+  "nodes.addSet": "Dodaj skup mapa na {name}",
+  "nodes.editSet": "Uredi skup mapa na {name}",
   "nodes.noSnapshots": "Ova stavka još nema sigurnosnih kopija.",
   "nodes.restoreAsk": "Vratiti {name} na čvoru iz sigurnosne kopije od {time}? Ono što je sada ondje bit će zamijenjeno.",
   "nodes.restoreStarted": "Vraćanje stavke {name} pokrenuto je na čvoru.",

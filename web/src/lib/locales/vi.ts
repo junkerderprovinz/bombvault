@@ -5535,6 +5535,8 @@ const vi: Partial<Translations> = {
   "nodes.sectionEmpty": "Chưa có gì trên node này để hiển thị ở đây.",
   "nodes.onNode": "Trên {name}",
   "nodes.backupStarted": "Đã bắt đầu sao lưu {name} trên node.",
+  "nodes.addSet": "Thêm bộ thư mục trên {name}",
+  "nodes.editSet": "Sửa bộ thư mục trên {name}",
   "nodes.noSnapshots": "Mục này chưa có bản sao lưu nào.",
   "nodes.restoreAsk": "Khôi phục {name} trên node từ bản sao lưu lúc {time}? Những gì đang có ở đó sẽ bị thay thế.",
   "nodes.restoreStarted": "Đã bắt đầu khôi phục {name} trên node.",

@@ -5555,6 +5555,8 @@ const ms: Partial<Translations> = {
   "nodes.sectionEmpty": "Belum ada apa-apa pada nod ini untuk dipaparkan di sini.",
   "nodes.onNode": "Pada {name}",
   "nodes.backupStarted": "Sandaran {name} telah bermula pada nod.",
+  "nodes.addSet": "Tambah set folder pada {name}",
+  "nodes.editSet": "Edit set folder pada {name}",
   "nodes.noSnapshots": "Belum ada sandaran untuk entri ini.",
   "nodes.restoreAsk": "Pulihkan {name} pada nod daripada sandaran {time}? Apa yang ada di sana sekarang akan diganti.",
   "nodes.restoreStarted": "Pemulihan {name} telah bermula pada nod.",

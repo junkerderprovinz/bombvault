@@ -5555,6 +5555,8 @@ const sk: Partial<Translations> = {
   "nodes.sectionEmpty": "Na tomto uzle tu zatiaľ nie je čo ukázať.",
   "nodes.onNode": "Na {name}",
   "nodes.backupStarted": "Záloha {name} sa na uzle spustila.",
+  "nodes.addSet": "Pridať sadu priečinkov na {name}",
+  "nodes.editSet": "Upraviť sadu priečinkov na {name}",
   "nodes.noSnapshots": "Táto položka zatiaľ nemá žiadne zálohy.",
   "nodes.restoreAsk": "Obnoviť {name} na uzle zo zálohy z {time}? To, čo tam je teraz, sa nahradí.",
   "nodes.restoreStarted": "Obnova {name} sa na uzle spustila.",

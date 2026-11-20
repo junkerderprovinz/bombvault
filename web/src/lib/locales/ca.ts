@@ -5555,6 +5555,8 @@ const ca: Partial<Translations> = {
   "nodes.sectionEmpty": "Encara no hi ha res en aquest node per mostrar aquí.",
   "nodes.onNode": "A {name}",
   "nodes.backupStarted": "La còpia de {name} s'ha iniciat al node.",
+  "nodes.addSet": "Afegeix un conjunt de carpetes a {name}",
+  "nodes.editSet": "Edita el conjunt de carpetes a {name}",
   "nodes.noSnapshots": "Encara no hi ha còpies d'aquesta entrada.",
   "nodes.restoreAsk": "Vols restaurar {name} al node des de la còpia del {time}? El que hi ha ara se substituirà.",
   "nodes.restoreStarted": "La restauració de {name} s'ha iniciat al node.",

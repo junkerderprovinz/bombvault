@@ -5545,6 +5545,8 @@ const he: Partial<Translations> = {
   "nodes.sectionEmpty": "עוד אין כאן מה להציג מהצומת הזה.",
   "nodes.onNode": "ב-{name}",
   "nodes.backupStarted": "הגיבוי של {name} התחיל בצומת.",
+  "nodes.addSet": "הוספת ערכת תיקיות ב-{name}",
+  "nodes.editSet": "עריכת ערכת תיקיות ב-{name}",
   "nodes.noSnapshots": "עוד אין גיבויים של הפריט הזה.",
   "nodes.restoreAsk": "לשחזר את {name} בצומת מהגיבוי מ-{time}? מה שנמצא שם עכשיו יוחלף.",
   "nodes.restoreStarted": "השחזור של {name} התחיל בצומת.",

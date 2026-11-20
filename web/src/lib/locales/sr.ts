@@ -5538,6 +5538,8 @@ const sr: Partial<Translations> = {
   "nodes.sectionEmpty": "На овом чвору овде још нема ничега за приказ.",
   "nodes.onNode": "На {name}",
   "nodes.backupStarted": "Резервно копирање {name} је покренуто на чвору.",
+  "nodes.addSet": "Додај скуп фасцикли на {name}",
+  "nodes.editSet": "Уреди скуп фасцикли на {name}",
   "nodes.noSnapshots": "За ову ставку још нема резервних копија.",
   "nodes.restoreAsk": "Вратим {name} на чвору из резервне копије од {time}? Оно што је тамо сада биће замењено.",
   "nodes.restoreStarted": "Враћање {name} је покренуто на чвору.",

@@ -5545,6 +5545,8 @@ const fi: Partial<Translations> = {
   "nodes.sectionEmpty": "Tällä solmulla ei ole vielä mitään näytettävää.",
   "nodes.onNode": "Solmulla {name}",
   "nodes.backupStarted": "{name}: varmuuskopiointi alkoi solmulla.",
+  "nodes.addSet": "Lisää kansiojoukko solmulle {name}",
+  "nodes.editSet": "Muokkaa kansiojoukkoa solmulla {name}",
   "nodes.noSnapshots": "Tästä merkinnästä ei ole vielä varmuuskopioita.",
   "nodes.restoreAsk": "Palautetaanko {name} solmulle varmuuskopiosta, joka on tehty {time}? Siellä nyt oleva korvataan.",
   "nodes.restoreStarted": "{name}: palautus alkoi solmulla.",

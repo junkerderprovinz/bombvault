@@ -5555,6 +5555,8 @@ const eu: Partial<Translations> = {
   "nodes.sectionEmpty": "Nodo honetan ez dago oraindik hemen erakusteko ezer.",
   "nodes.onNode": "{name} nodoan",
   "nodes.backupStarted": "Babeskopia nodoan hasi da: {name}.",
+  "nodes.addSet": "Gehitu karpeta-multzoa {name} nodoan",
+  "nodes.editSet": "Editatu karpeta-multzoa {name} nodoan",
   "nodes.noSnapshots": "Sarrera honek ez du oraindik babeskopiarik.",
   "nodes.restoreAsk": "{name} nodoan berrezarri nahi duzu? Babeskopia: {time}. Orain han dagoena ordeztu egingo da.",
   "nodes.restoreStarted": "Berrezartzea nodoan hasi da: {name}.",

@@ -5545,6 +5545,8 @@ const pt: Partial<Translations> = {
   "nodes.sectionEmpty": "Ainda não há nada neste nó para mostrar aqui.",
   "nodes.onNode": "Em {name}",
   "nodes.backupStarted": "O backup de {name} começou no nó.",
+  "nodes.addSet": "Adicionar conjunto de pastas em {name}",
+  "nodes.editSet": "Editar conjunto de pastas em {name}",
   "nodes.noSnapshots": "Ainda não há backups desta entrada.",
   "nodes.restoreAsk": "Restaurar {name} no nó a partir do backup de {time}? O que lá está agora será substituído.",
   "nodes.restoreStarted": "O restauro de {name} começou no nó.",

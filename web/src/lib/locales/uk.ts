@@ -5541,6 +5541,8 @@ const uk: Partial<Translations> = {
   "nodes.sectionEmpty": "На цьому вузлі тут поки нічого показати.",
   "nodes.onNode": "На {name}",
   "nodes.backupStarted": "Резервне копіювання {name} запущено на вузлі.",
+  "nodes.addSet": "Додати набір папок на {name}",
+  "nodes.editSet": "Змінити набір папок на {name}",
   "nodes.noSnapshots": "Резервних копій цього запису поки немає.",
   "nodes.restoreAsk": "Відновити {name} на вузлі з резервної копії від {time}? Те, що там зараз, буде замінено.",
   "nodes.restoreStarted": "Відновлення {name} запущено на вузлі.",

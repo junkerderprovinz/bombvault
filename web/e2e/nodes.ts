@@ -44,6 +44,7 @@ export const ROUTES = [
   "POST /api/files/sets/{id}/backup",
   "POST /api/files/sets/{id}/restore",
   "POST /api/backup/cancel",
+  "GET /api/browse",
 ];
 
 export const NODES: StagedNode[] = [
@@ -135,6 +136,13 @@ export const NODE_FILE_SETS = [
   },
 ];
 
+// The folders under the node's mount, for its folder picker.
+const NODE_FOLDERS: Record<string, string[]> = {
+  "": ["bombvault-node", "srv"],
+  srv: ["appdata", "photos", "www"],
+  "srv/www": ["uploads"],
+};
+
 const SNAPSHOTS = Array.from({ length: 5 }, (_, i) => ({
   id: `${(0x5a3c91e0 + i * 977).toString(16)}d2b4f6a8c0e1f3a5b7c9d0e2f4a6b8`,
   time: iso(NOW - (7 + 24 * i) * HOUR),
@@ -191,13 +199,14 @@ export interface NodeCalls {
   placed: { id: string; body: unknown }[];
   addresses: unknown[];
   scheduled: { id: string; body: unknown }[];
+  sets: { method: string; path: string; body: unknown }[];
 }
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, json: body });
 
 /** stageNodes answers every node route, on top of whatever else the page has staged. */
 export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<NodeCalls> {
-  const calls: NodeCalls = { restored: [], placed: [], addresses: [], scheduled: [] };
+  const calls: NodeCalls = { restored: [], placed: [], addresses: [], scheduled: [], sets: [] };
   let added: StagedNode | null = null;
   let looks = 0;
 
@@ -257,7 +266,16 @@ export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<Node
         calls.restored.push({ path, body: route.request().postDataJSON() });
         return json(route, { ok: true, started: true });
       }
+      if (path.startsWith("/api/files/sets") && !path.endsWith("/backup")) {
+        calls.sets.push({ method, path, body: route.request().postDataJSON() });
+        return json(route, { ok: true, id: "c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9" });
+      }
       if (method === "POST") return json(route, { ok: true, started: true });
+      if (path === "/api/browse") {
+        const at = new URL(route.request().url()).searchParams.get("path") ?? "";
+        const names = NODE_FOLDERS[at] ?? [];
+        return json(route, { ok: true, root: "/host/user", path: at, dirs: names.map((name) => ({ name, path: at ? `${at}/${name}` : name })), status: "ok", truncated: false });
+      }
       if (path === "/api/containers") return json(route, { ok: true, containers: NODE_CONTAINERS });
       if (path === "/api/files") return json(route, { ok: true, fileSets: NODE_FILE_SETS });
       if (path.endsWith("/snapshots")) return json(route, { ok: true, snapshots: SNAPSHOTS });

@@ -5555,6 +5555,8 @@ const hi: Partial<Translations> = {
   "nodes.sectionEmpty": "इस नोड पर अभी यहाँ दिखाने को कुछ नहीं है।",
   "nodes.onNode": "{name} पर",
   "nodes.backupStarted": "{name} का बैकअप नोड पर शुरू हो गया।",
+  "nodes.addSet": "{name} पर फ़ोल्डर सेट जोड़ें",
+  "nodes.editSet": "{name} पर फ़ोल्डर सेट एडिट करें",
   "nodes.noSnapshots": "इस प्रविष्टि का अभी कोई बैकअप नहीं है।",
   "nodes.restoreAsk": "{name} को नोड पर {time} के बैकअप से रीस्टोर करें? वहाँ अभी जो है, वह बदल दिया जाएगा।",
   "nodes.restoreStarted": "{name} का रीस्टोर नोड पर शुरू हो गया।",

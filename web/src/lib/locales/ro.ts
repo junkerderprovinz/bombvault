@@ -5546,6 +5546,8 @@ const ro: Partial<Translations> = {
   "nodes.sectionEmpty": "Pe acest nod nu e încă nimic de arătat aici.",
   "nodes.onNode": "Pe {name}",
   "nodes.backupStarted": "Copia de rezervă pentru {name} a pornit pe nod.",
+  "nodes.addSet": "Adaugă set de foldere pe {name}",
+  "nodes.editSet": "Editează setul de foldere pe {name}",
   "nodes.noSnapshots": "Acest element nu are încă nicio copie de rezervă.",
   "nodes.restoreAsk": "Restaurezi {name} pe nod din copia de rezervă din {time}? Ce e acolo acum va fi înlocuit.",
   "nodes.restoreStarted": "Restaurarea pentru {name} a pornit pe nod.",

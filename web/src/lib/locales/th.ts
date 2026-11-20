@@ -5545,6 +5545,8 @@ const th: Partial<Translations> = {
   "nodes.sectionEmpty": "ยังไม่มีอะไรบนโหนดนี้ให้แสดงที่นี่",
   "nodes.onNode": "บน {name}",
   "nodes.backupStarted": "เริ่มสำรองข้อมูล {name} บนโหนดแล้ว",
+  "nodes.addSet": "เพิ่มชุดโฟลเดอร์บน {name}",
+  "nodes.editSet": "แก้ไขชุดโฟลเดอร์บน {name}",
   "nodes.noSnapshots": "รายการนี้ยังไม่มีข้อมูลสำรอง",
   "nodes.restoreAsk": "กู้คืน {name} บนโหนดจากข้อมูลสำรองเมื่อ {time} ไหม? ข้อมูลที่อยู่ที่นั่นตอนนี้จะถูกแทนที่",
   "nodes.restoreStarted": "เริ่มกู้คืน {name} บนโหนดแล้ว",

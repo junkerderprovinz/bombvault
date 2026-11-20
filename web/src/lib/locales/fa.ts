@@ -5555,6 +5555,8 @@ const fa: Partial<Translations> = {
   "nodes.sectionEmpty": "هنوز چیزی روی این گره برای نمایش اینجا نیست.",
   "nodes.onNode": "روی {name}",
   "nodes.backupStarted": "پشتیبان‌گیری از {name} روی گره شروع شد.",
+  "nodes.addSet": "افزودن مجموعه پوشه روی {name}",
+  "nodes.editSet": "ویرایش مجموعه پوشه روی {name}",
   "nodes.noSnapshots": "هنوز پشتیبانی از این مورد نیست.",
   "nodes.restoreAsk": "{name} روی گره از پشتیبانِ {time} بازیابی شود؟ آنچه الان آنجاست جایگزین می‌شود.",
   "nodes.restoreStarted": "بازیابی {name} روی گره شروع شد.",

@@ -5554,6 +5554,8 @@ const lt: Partial<Translations> = {
   "nodes.sectionEmpty": "Šiame mazge kol kas nėra ką čia rodyti.",
   "nodes.onNode": "Mazge {name}",
   "nodes.backupStarted": "Mazge pradėtas įrašo {name} atsarginės kopijos kūrimas.",
+  "nodes.addSet": "Pridėti aplankų rinkinį mazge {name}",
+  "nodes.editSet": "Redaguoti aplankų rinkinį mazge {name}",
   "nodes.noSnapshots": "Šio įrašo atsarginių kopijų dar nėra.",
   "nodes.restoreAsk": "Atkurti įrašą {name} mazge iš atsarginės kopijos ({time})? Tai, kas ten yra dabar, bus pakeista.",
   "nodes.restoreStarted": "Mazge pradėtas įrašo {name} atkūrimas.",

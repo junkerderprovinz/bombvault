@@ -5554,6 +5554,8 @@ const id: Partial<Translations> = {
   "nodes.sectionEmpty": "Belum ada yang bisa ditampilkan dari node ini.",
   "nodes.onNode": "Di {name}",
   "nodes.backupStarted": "Pencadangan {name} dimulai di node.",
+  "nodes.addSet": "Tambah set folder di {name}",
+  "nodes.editSet": "Edit set folder di {name}",
   "nodes.noSnapshots": "Entri ini belum punya cadangan.",
   "nodes.restoreAsk": "Pulihkan {name} di node dari cadangan {time}? Isi yang ada di sana sekarang akan diganti.",
   "nodes.restoreStarted": "Pemulihan {name} dimulai di node.",

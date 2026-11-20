@@ -5535,6 +5535,8 @@ const ko: Partial<Translations> = {
   "nodes.sectionEmpty": "이 노드에는 아직 여기에 표시할 것이 없습니다.",
   "nodes.onNode": "{name}에서",
   "nodes.backupStarted": "노드에서 {name} 백업을 시작했습니다.",
+  "nodes.addSet": "{name}에 폴더 세트 추가",
+  "nodes.editSet": "{name}의 폴더 세트 편집",
   "nodes.noSnapshots": "이 항목의 백업이 아직 없습니다.",
   "nodes.restoreAsk": "노드에서 {name} 항목을 {time} 백업으로 복원할까요? 지금 있는 내용은 대체됩니다.",
   "nodes.restoreStarted": "노드에서 {name} 복원을 시작했습니다.",

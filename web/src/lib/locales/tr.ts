@@ -5544,6 +5544,8 @@ const tr: Partial<Translations> = {
   "nodes.sectionEmpty": "Bu düğümde henüz burada gösterilecek bir şey yok.",
   "nodes.onNode": "{name} üzerinde",
   "nodes.backupStarted": "{name} yedeklemesi düğümde başladı.",
+  "nodes.addSet": "{name} üzerine klasör seti ekle",
+  "nodes.editSet": "{name} üzerindeki klasör setini düzenle",
   "nodes.noSnapshots": "Bu kaydın henüz yedeği yok.",
   "nodes.restoreAsk": "{name}, düğümde {time} tarihli yedekten geri yüklensin mi? Şu an orada olan her şey değiştirilecek.",
   "nodes.restoreStarted": "{name} geri yüklemesi düğümde başladı.",

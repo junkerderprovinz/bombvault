@@ -5545,6 +5545,8 @@ const fr: Partial<Translations> = {
   "nodes.sectionEmpty": "Rien à afficher ici pour ce nœud pour l'instant.",
   "nodes.onNode": "Sur {name}",
   "nodes.backupStarted": "La sauvegarde de {name} a démarré sur le nœud.",
+  "nodes.addSet": "Ajouter un jeu de dossiers sur {name}",
+  "nodes.editSet": "Modifier le jeu de dossiers sur {name}",
   "nodes.noSnapshots": "Pas encore de sauvegarde de cet élément.",
   "nodes.restoreAsk": "Restaurer {name} sur le nœud à partir de la sauvegarde du {time} ? Ce qui s'y trouve maintenant sera remplacé.",
   "nodes.restoreStarted": "La restauration de {name} a démarré sur le nœud.",

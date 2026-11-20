@@ -5545,6 +5545,8 @@ const da: Partial<Translations> = {
   "nodes.sectionEmpty": "Der er ikke noget på denne node at vise her endnu.",
   "nodes.onNode": "På {name}",
   "nodes.backupStarted": "Sikkerhedskopieringen af {name} er startet på noden.",
+  "nodes.addSet": "Tilføj mappesæt på {name}",
+  "nodes.editSet": "Redigér mappesæt på {name}",
   "nodes.noSnapshots": "Ingen sikkerhedskopier af denne post endnu.",
   "nodes.restoreAsk": "Gendan {name} på noden fra sikkerhedskopien fra {time}? Det, der ligger der nu, bliver erstattet.",
   "nodes.restoreStarted": "Gendannelsen af {name} er startet på noden.",

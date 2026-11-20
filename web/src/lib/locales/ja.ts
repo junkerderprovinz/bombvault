@@ -5535,6 +5535,8 @@ const ja: Partial<Translations> = {
   "nodes.sectionEmpty": "このノードには、ここに表示できるものがまだありません。",
   "nodes.onNode": "{name} 上",
   "nodes.backupStarted": "{name} のバックアップをノードで開始しました。",
+  "nodes.addSet": "{name} にフォルダーセットを追加",
+  "nodes.editSet": "{name} のフォルダーセットを編集",
   "nodes.noSnapshots": "この項目のバックアップはまだありません。",
   "nodes.restoreAsk": "ノード上の {name} を {time} のバックアップから復元しますか？今ある内容は置き換えられます。",
   "nodes.restoreStarted": "{name} の復元をノードで開始しました。",

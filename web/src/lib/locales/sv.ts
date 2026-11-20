@@ -5544,6 +5544,8 @@ const sv: Partial<Translations> = {
   "nodes.sectionEmpty": "Det finns inget att visa här på den här noden än.",
   "nodes.onNode": "På {name}",
   "nodes.backupStarted": "Säkerhetskopieringen av {name} har startat på noden.",
+  "nodes.addSet": "Lägg till mappuppsättning på {name}",
+  "nodes.editSet": "Redigera mappuppsättning på {name}",
   "nodes.noSnapshots": "Inga säkerhetskopior av den här posten än.",
   "nodes.restoreAsk": "Återställa {name} på noden från säkerhetskopian från {time}? Det som finns där nu ersätts.",
   "nodes.restoreStarted": "Återställningen av {name} har startat på noden.",
