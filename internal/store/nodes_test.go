@@ -39,6 +39,21 @@ func TestHomeKeepsItsNodesUntilTheyAreReleased(t *testing.T) {
 	if got, _ := r.GetNode("aa"); got.State != store.NodeReleasing {
 		t.Errorf("state = %q, want releasing", got.State)
 	}
+	if err := r.SetNodePlaced("aa", "receiver"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodePlacementDue("aa"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.Placement != "receiver" || !got.PlacementDue {
+		t.Errorf("placed = %+v, want on the receiver with a change to hear", got)
+	}
+	if err := r.SetNodePlaced("aa", "location"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.Placement != "location" || got.PlacementDue {
+		t.Errorf("placed again = %+v", got)
+	}
 	if err := r.DeleteNode("aa"); err != nil {
 		t.Fatal(err)
 	}

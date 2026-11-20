@@ -4013,6 +4013,15 @@ ALTER TABLE receiver_server ADD COLUMN node_ca_pem TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("received_repos", "node_id"),
 		sql:              `ALTER TABLE received_repos ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Where a node's backups go, and whether it still has to hear a
+		// change to it, such as a new address of the receiver.
+		version:          nodePlacementKindMigration,
+		name:             "nodes_placement",
+		alreadySatisfied: columnPresent("nodes", "placement"),
+		sql: `ALTER TABLE nodes ADD COLUMN placement TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN placement_due INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4702,6 +4711,9 @@ const receiverLoginForNodeMigration = 985
 
 // receivedRepoNodeMigration numbers the node a received repository is from.
 const receivedRepoNodeMigration = 986
+
+// nodePlacementKindMigration numbers where home sends a node's backups.
+const nodePlacementKindMigration = 987
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

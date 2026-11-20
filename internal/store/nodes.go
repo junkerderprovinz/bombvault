@@ -23,6 +23,11 @@ type Node struct {
 	// State is NodeReleasing while home lets the node go and the node has not
 	// heard it yet, empty otherwise.
 	State string
+	// Placement is where home sends the node's backups, "receiver" or
+	// "location", empty before it was placed. PlacementDue says the node has
+	// still to hear a change to it.
+	Placement    string
+	PlacementDue bool
 }
 
 // NodeReleasing is the state of a node home let go that has not heard it.
@@ -31,18 +36,20 @@ const NodeReleasing = "releasing"
 // ErrNodeNotFound is returned for an id no node has.
 var ErrNodeNotFound = errors.New("no such node")
 
-const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state`
+const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
-	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State)
+	var due int
+	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due)
+	n.PlacementDue = due != 0
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State); err != nil {
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue)); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -95,6 +102,28 @@ func (r *Repo) SetNodeState(id, state string) error {
 	res, err := r.db.Exec(`UPDATE nodes SET state = ? WHERE id = ?`, state, id)
 	if err != nil {
 		return fmt.Errorf("SetNodeState: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNodeNotFound
+	}
+	return nil
+}
+
+// SetNodePlaced records where the node's backups go, now that it heard it.
+func (r *Repo) SetNodePlaced(id, placement string) error {
+	return r.updateNode(`UPDATE nodes SET placement = ?, placement_due = 0 WHERE id = ?`, placement, id)
+}
+
+// SetNodePlacementDue records that the node has still to hear a change to
+// where its backups go.
+func (r *Repo) SetNodePlacementDue(id string) error {
+	return r.updateNode(`UPDATE nodes SET placement_due = 1 WHERE id = ?`, id)
+}
+
+func (r *Repo) updateNode(query string, args ...any) error {
+	res, err := r.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("update node: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNodeNotFound
