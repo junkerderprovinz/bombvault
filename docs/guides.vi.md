@@ -34,4 +34,5 @@ Mỗi ví dụ dưới đây đi qua một công việc thật từ đầu đế
 ## Nhiều máy chủ {#several-servers}
 
 - [Ghép đôi hai máy Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): hai máy chủ giữ bản sao cho nhau, và không bên nào xóa được bản sao lưu của bên kia.
+- [Một VPS sao lưu tới máy chủ nhận](nodes.md#example-vps): một node cùng các container của nó, được home điều hành, và không có cổng nào mở trên VPS.
 - [Một thẻ và một cảnh báo trong Home Assistant](api.md#home-assistant-example): BombVault trên một bảng điều khiển, kèm tin nhắn khi một bản sao lưu bị lỗi.

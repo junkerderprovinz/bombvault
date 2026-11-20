@@ -390,7 +390,7 @@ Một pháo đài gom BombVault cùng các ứng dụng khác trong gia đình, 
 
 ## Phiên bản và vai trò {#roles}
 
-Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hiển thị nhóm như một mạng lưới ai làm gì cho ai, một thẻ cho phiên bản này và một thẻ cho mọi thành viên khác, điện thoại Android và máy chủ ZFS. **Ghép nối** ở dưới cùng bên phải dẫn tới trang ghép nối. Phần nào bật được đặt dưới **Cài đặt, Phiên bản, Nhiều máy chủ**: **Phiên bản**, **Bộ nhận** và **Kéo về**.
+Trang **Phiên bản** (một ô cài đặt có thể ghim vào thanh bên) hiển thị nhóm như một mạng lưới ai làm gì cho ai, một thẻ cho phiên bản này và một thẻ cho mọi thành viên khác, điện thoại Android, máy chủ ZFS và các node của phiên bản này. **Ghép nối** ở dưới cùng bên phải dẫn tới trang ghép nối, và **Thêm node** bên cạnh dùng để thêm node. Phần nào bật được đặt dưới **Cài đặt, Phiên bản, Nhiều máy chủ**: **Phiên bản**, **Bộ nhận** và **Kéo về**.
 
 ![Trang Phiên bản: nhóm dưới dạng một mạng, và một thẻ cho mỗi phiên bản với các ô vai trò của nó, một ô đang Không hoạt động.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Trang Phiên bản: nhóm dưới dạng một mạng, và một thẻ cho mỗi phiên bản với các ô vai trò của nó, một ô đang Không hoạt động.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Bật một vai trò gửi một yêu cầu, và không gì bắt đầu cho đ�
 
 Bên dưới các thẻ, thẻ **Kho chung** trên máy có máy chủ nhận và thẻ **Các kho chung** trên một thành viên thuộc về [kho chung](#shared-repository).
 
-Một thành viên có thể đưa ra bộ nhớ off-site của riêng nó cho một thành viên khác qua nhóm. Quản trị viên bên kia thấy lời đề nghị trong **Chi tiết** của thành viên và chấp nhận hoặc từ chối. Chấp nhận sẽ tạo một thông tin đăng nhập đã lưu và một đích sao lưu bình thường, sau cùng các kiểm tra như một đích bạn tự gõ vào. Đích sao lưu đến với bảo vệ chống xóa đã bật, vì công thức mà lời đề nghị hiển thị là một rest-server append-only, nên **Giữ trong bao lâu** không áp dụng ở đó. Mỗi lời đề nghị có thông tin đăng nhập và thư mục riêng, nên việc đề nghị lại một phần, cho cùng thành viên hay cho một thành viên khác, sẽ để yên các bản sao của đối tác đầu tiên: hãy thêm dòng mới vào `.htpasswd` và giữ máy chủ tiếp tục chạy. Chỉ thông tin kết nối đi theo cách này, không bao giờ là dữ liệu sao lưu. **Kiểm tra ngay** yêu cầu một thành viên xác minh kho của một phần. Không có gì trên trang này có thể bắt đầu sao lưu, khôi phục hay xóa bất cứ thứ gì trên một máy khác.
+Một thành viên có thể đưa ra bộ nhớ off-site của riêng nó cho một thành viên khác qua nhóm. Quản trị viên bên kia thấy lời đề nghị trong **Chi tiết** của thành viên và chấp nhận hoặc từ chối. Chấp nhận sẽ tạo một thông tin đăng nhập đã lưu và một đích sao lưu bình thường, sau cùng các kiểm tra như một đích bạn tự gõ vào. Đích sao lưu đến với bảo vệ chống xóa đã bật, vì công thức mà lời đề nghị hiển thị là một rest-server append-only, nên **Giữ trong bao lâu** không áp dụng ở đó. Mỗi lời đề nghị có thông tin đăng nhập và thư mục riêng, nên việc đề nghị lại một phần, cho cùng thành viên hay cho một thành viên khác, sẽ để yên các bản sao của đối tác đầu tiên: hãy thêm dòng mới vào `.htpasswd` và giữ máy chủ tiếp tục chạy. Chỉ thông tin kết nối đi theo cách này, không bao giờ là dữ liệu sao lưu. **Kiểm tra ngay** yêu cầu một thành viên xác minh kho của một phần. Các thành viên không động tới bản sao lưu của nhau: không có gì trên trang này bắt đầu sao lưu trên một thành viên khác, khôi phục ở đó hay xóa bất cứ thứ gì ở đó.
+
+**Node** thì khác, vì chúng không phải thành viên. Một node là một BombVault không có giao diện web, nhận lệnh từ phiên bản này, nên phiên bản này bắt đầu sao lưu và khôi phục trên nó và dọn dẹp các bản sao lưu cũ của nó. Mỗi node có một thẻ với trạng thái, phiên bản phần mềm, nơi gửi bản sao lưu và thời điểm sao lưu của từng phần, cùng **Đổi đích**, **Thay thế** và **Giải phóng**. Một node mới hiện **Đang chờ node** cho đến khi nó trả lời lần đầu, và một node đã giải phóng nhưng đang vắng mặt hiện **Đang giải phóng**. Xem [Node](nodes.md).
+
+![Thẻ của một node: Đã kết nối, phiên bản phần mềm, bản sao lưu trên máy chủ nhận và kế hoạch của từng phần.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Thẻ của một node: Đã kết nối, phiên bản phần mềm, bản sao lưu trên máy chủ nhận và kế hoạch của từng phần.](assets/screenshots/nodes/card-light.png#only-light)
 
 Các phiên bản đã tắt và điện thoại đã đóng ứng dụng vẫn giữ thẻ của mình ở trạng thái **Không hoạt động**, màu xám, kèm thời điểm được thấy lần cuối, và hiện mờ trong mạng cho đến khi bạn **Xóa** chúng. Ngay sau khi máy chủ này khởi động, thẻ như vậy hiện **Đang kiểm tra** cho đến khi nhóm hoạt động trở lại. **Xóa** dùng được trên thẻ như vậy bất kể phần nào đang bật, và nó cũng kết thúc các yêu cầu đang mở của thành viên, các khe nhận ZFS đang rảnh và các yêu cầu khóa đang chờ của thành viên đó. Thẻ **Phiên bản** trên trang ghép nối cũng liệt kê những thành viên này là **Không hoạt động**.
 
@@ -443,7 +448,7 @@ Các phiên bản trong nhóm của bạn khi đó thấy máy chủ trong số 
 
 Một phiên bản chỉ tới được máy nhận qua relay thì không dùng được máy chủ, vì relay không mang bản sao lưu. Hãy thêm địa chỉ của máy nhận trên trang ghép nối trước. Khi BombVault chạy trên một địa chỉ IP riêng (ví dụ trên br0), hãy điền **Địa chỉ cho đối tác (tùy chọn)**, vì máy chủ lắng nghe trên địa chỉ của host.
 
-Một máy nhận cũng có thể giữ một [kho chung](#shared-repository) cho cả nhóm.
+Một máy nhận cũng có thể giữ một [kho chung](#shared-repository) cho cả nhóm, và nhận bản sao lưu của các [node](nodes.md#to-receiver) của phiên bản này tại **Địa chỉ cho node** của nó.
 
 ## Kho chung {#shared-repository}
 
@@ -620,6 +625,8 @@ Bên giữ khóa là một phiên bản trong nhóm của bạn giữ một bả
 
 Vào ngày đó bạn cần ba thứ: mười hai từ của nhóm, mã mở bản gửi, và quyền vào giao diện của bên giữ khóa, nơi ai đó phải nhấn **Cho phép**. Trong Trình hướng dẫn khẩn cấp chọn **Qua nhóm**, chọn bản gửi, xin nó và gõ mã mở bản gửi. Mã được dùng trên máy chủ mới và không gửi cho bên giữ khóa. Trên bên giữ khóa, yêu cầu hiện dưới **Bản gửi khóa** cùng ai xin, phiên bản đó đã từng được thấy ở đó chưa và đã xin bao nhiêu lần. **Cho phép** trao bản niêm phong, và việc cho phép cần mật khẩu đăng nhập. Bản cài mới có 30 phút để lấy nó sau khi Cho phép, một yêu cầu không ai trả lời hết hạn sau một ngày, và một phiên bản xin quá thường xuyên phải chờ một giờ.
 
+Bản gửi cũng mang theo `APP_KEY` của từng [node](nodes.md) của máy chủ này, vì bộ khôi phục có chúng. Với mã, một bên giữ khóa có thể mở kho của các node đó, nhưng không bao giờ ra lệnh được cho node, vì việc đó cần chữ ký của máy chủ này.
+
 Không có mã thì không ai mở được bản đó, kể cả bên giữ khóa. Nếu mất mã, hãy tạo mã mới khi máy chủ này còn chạy. Nếu máy chủ đã mất, bộ khôi phục và APP_KEY nhập tay vẫn dùng được. Bên giữ khóa có thể xóa một bản gửi bất cứ lúc nào, và chủ sở hữu khi đó phải xin lại.
 
 ## Bộ khôi phục {#recovery-kit}
@@ -627,6 +634,8 @@ Không có mã thì không ai mở được bản đó, kể cả bên giữ kh�
 Đây là mảnh khiến việc khôi phục sau thảm họa trở nên khả thi ngay cả khi không có một BombVault đang chạy.
 
 **Tải bộ khôi phục** trong thẻ **Cho trường hợp khẩn cấp** dưới **Cài đặt, Khôi phục** cho bạn **khóa**, **mật khẩu restic dẫn xuất**, mọi **đích sao lưu** cùng kho của từng phần, các đăng nhập mà một bản cài mới cần để tới chúng, và **các lệnh restic chính xác**, để bạn khôi phục thẳng bằng restic CLI trên bất kỳ máy nào. Nó cần mật khẩu đăng nhập. Bộ khôi phục in khóa cả khi mã hóa tắt, vì định nghĩa container và VM luôn được niêm phong bằng nó. Sau một lần tiếp nhận nó in khóa sao lưu được tiếp nhận và APP_KEY của máy chủ này, thứ mà bản cài mới chỉ cần để đưa cài đặt trở lại. Một thẻ **Lưu bộ khôi phục của bạn** trên Tổng quan nhắc bạn cho đến khi bạn đã cất nó.
+
+Một máy chủ có [node](nodes.md) sẽ có thêm chương **Node** trong bộ khôi phục. Chương này ghi từng node với id, `APP_KEY`, mật khẩu restic tính từ khóa đó và kho của từng phần. Mật khẩu của chính node mở được các kho này, mật khẩu của máy chủ này cũng vậy, vì máy chủ này thêm khóa của mình vào mọi kho của node. Hãy tải lại bộ khôi phục sau khi bạn thêm một node hoặc đổi nơi gửi bản sao lưu của nó. Với `APP_KEY` và `NODE_HOME` của node, một máy chủ mới sẽ lại trở thành chính node đó, xem [Thay thế và giải phóng](nodes.md#replace-release).
 
 !!! danger "Cất giữ bộ khôi phục ngoài máy chủ"
     Bộ khôi phục chứa bí mật giải mã các bản sao lưu của bạn. Hãy cất nó ở nơi an toàn tách biệt khỏi máy chủ (trình quản lý mật khẩu, một bản in trong két). Nếu bạn mất cả BombVault lẫn `APP_KEY` mà không có bộ khôi phục và không có bản gửi khóa, các bản sao lưu đã mã hóa của bạn không thể khôi phục được.

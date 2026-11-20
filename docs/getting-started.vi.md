@@ -180,6 +180,17 @@ Từ giờ các container được sao lưu mỗi đêm. Những bước tiếp 
 !!! note "Kiểm tra tích hợp máy chủ"
     Thẻ **Tích hợp máy chủ** trên Tổng quan kiểm tra mọi điểm gắn kết và CLI (Docker socket, libvirt, restic, qemu-img, rclone) và báo cáo bất kỳ phần nào bị thiếu, để bạn có thể xác nhận container được kết nối đúng cách trước khi tin cậy nó. Thẻ này nằm chờ trong **Tùy chỉnh** cho đến khi bạn thêm nó.
 
+## Sao lưu một VPS dưới dạng node {#node}
+
+Một VPS hoặc một máy chủ nhỏ khác không cần một BombVault có giao diện web riêng. Hãy thêm nó làm node của phiên bản này, và phiên bản này sẽ chạy các bản sao lưu của nó:
+
+1. Đặt mật khẩu đăng nhập trong **Cài đặt, Bảo mật**, nếu bạn chưa đặt.
+2. Mở **Phiên bản**, chọn **Thêm node** và gõ một tên như `vps-helsinki`.
+3. Chọn nơi gửi bản sao lưu của nó, như máy chủ nhận của phiên bản này, và khi nào nó sao lưu.
+4. Sao chép tệp compose mà cửa sổ hiện ra sang máy chủ, trỏ volume Host Data và `HOST_SOURCE_ROOT` của nó tới dữ liệu cần sao lưu, rồi chạy `docker compose up -d`.
+
+Khi node trả lời, thẻ của nó hiện **Đã kết nối** và các container của nó xuất hiện dưới **Bản sao lưu**. [Node](nodes.md) đi qua từng bước với một ví dụ.
+
 ## Tìm đường {#navigation}
 
 ![Cài đặt dưới dạng các ô, với các thẻ của ô được chọn bên cạnh. Mỗi thay đổi được ghi ngay khi bạn thực hiện.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -223,6 +234,7 @@ go run ./cmd/bombvault         # phục vụ https://localhost:3443 với chứn
 - Hãy chắc chắn lỗi đến được với bạn bằng **[Thông báo](notifications.md)**.
 - Xem khi nào mọi thứ chạy trong **[Lịch trình](schedules.md)**.
 - Đưa mọi máy chủ trong nhóm của bạn lên điện thoại với **[Ứng dụng Android](android.md)**.
+- Sao lưu một VPS từ đây bằng một **[node](nodes.md)**.
 - Các **[ví dụ thực hành](guides.md)** đi qua những việc thường gặp, và **[Tính năng](features.md)** liệt kê mọi thứ BombVault làm.
 - Nhân bản một thiết lập hay chuyển sang một máy mới? Mang toàn bộ cấu hình của bạn theo với thẻ **Xuất / nhập cài đặt**. Xem [Cấu hình](configuration.md#portable-settings-export-and-import).
 - Gặp trục trặc? Xem **[Khắc phục sự cố](troubleshooting.md)**.

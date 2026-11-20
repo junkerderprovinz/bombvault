@@ -1,6 +1,6 @@
 # API và tích hợp
 
-BombVault có một HTTP API nhỏ dành cho script, bảng điều khiển và tự động hóa nhà thông minh. Nó đọc những gì Tổng quan hiển thị và có thể bắt đầu một bản sao lưu. Mọi thứ khác, như khôi phục, xóa bản sao lưu và cài đặt, vẫn nằm trong giao diện web.
+BombVault có một HTTP API nhỏ dành cho script, bảng điều khiển và tự động hóa nhà thông minh. Nó đọc những gì Tổng quan hiển thị và có thể bắt đầu một bản sao lưu. Mọi thứ khác, như khôi phục, xóa bản sao lưu, cài đặt và [node](#nodes), vẫn nằm trong giao diện web.
 
 ## Mã thông báo {#tokens}
 
@@ -68,6 +68,32 @@ Việc bắt đầu tuân theo cùng giới hạn như [bắt đầu qua MCP](mc
 ## OpenAPI {#openapi}
 
 BombVault cung cấp mô tả các tuyến này tại `/api/v1/openapi.json` (OpenAPI 3.1). Không cần mã thông báo. Hãy nạp nó vào Swagger UI, Postman hoặc một trình tạo mã.
+
+## Node {#nodes}
+
+Các route chăm sóc [node](nodes.md) thuộc về giao diện web, không thuộc API dùng token ở trên. Khi đã đặt mật khẩu đăng nhập, chúng cần một phiên trình duyệt từ lần đăng nhập tại phiên bản này. Token API hay khóa MCP không mở được route nào trong số đó, điện thoại đã ghép nối không tới được chúng, và `/api/v1/openapi.json` không mô tả chúng. Thêm node, hiện lại tệp compose của nó và tới các route riêng của node đều bị từ chối cho đến khi đặt mật khẩu đăng nhập. Một script thay đổi gì đó sẽ gửi `Content-Type: application/json`, như ở mọi nơi trong giao diện web.
+
+| Route | Tác dụng |
+|---|---|
+| `GET /api/nodes` | Mọi node cùng việc nó có trực tuyến không, phiên bản, nơi gửi bản sao lưu, kế hoạch của từng phần, bản sao lưu gần nhất, lỗi và các bất thường còn mở |
+| `POST /api/nodes` | Thêm một node, như `{"name":"vps-helsinki"}`, và trả nó về kèm `compose`: `MODE`, `APP_KEY`, `NODE_HOME` và `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Trả lại cùng các giá trị `compose`, cho **Thay thế** |
+| `POST /api/nodes/{id}/placement` | Gửi bản sao lưu của node tới một nơi và trả lời theo từng phần xem node có tới được kho của nó không, kèm một `warning` cho đích sao lưu |
+| `PUT /api/nodes/{id}/schedule` | Đặt kế hoạch, như `{"containers":"daily 03:00","files":"off"}`. Phần nào không có trong đó thì giữ kế hoạch cũ |
+| `DELETE /api/nodes/{id}` | Giải phóng node. `told` cho biết node đã nghe ngay hay sẽ nghe khi quay lại |
+| `GET /api/nodes/routes` | Danh sách các route riêng của node mà home chuyển yêu cầu tới |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Chuyển yêu cầu tới route `/api/{path}` của node khi route đó có trong danh sách, và trả về câu trả lời JSON của node |
+| `PUT /api/receiver/node-address` | Đặt **Địa chỉ cho node** của máy chủ nhận, như `{"url":"https://backup.tower.example.org","caPem":""}`. Một `url` trống sẽ đưa các node ra khỏi đó |
+
+Ba loại đích:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Một yêu cầu tới `/api/nodes/{id}/api/...` mang tối đa 32 KiB. Một route không có trong danh sách trả `403`, một node chưa trả lời hoặc đang được giải phóng trả `409` với mã `node-not-adopted`, và một node đang vắng mặt trả `502` với mã `node-away`. Ví dụ, `GET /api/nodes/{id}/api/runs?limit=20` trả về 20 lượt chạy gần nhất của node, và `POST /api/nodes/{id}/api/containers/nextcloud/backup` sao lưu container `nextcloud` của nó.
 
 ## Home Assistant {#home-assistant}
 

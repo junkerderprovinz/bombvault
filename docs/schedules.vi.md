@@ -16,6 +16,8 @@ Mỗi kế hoạch là một nút đọc như một câu, chẳng hạn *hằng 
 
 Mọi giờ đều theo múi giờ của máy chủ. Trên Unraid đó là múi giờ của chính hệ thống. Ở nơi khác, hãy đặt `TZ`, nếu không mọi kế hoạch chạy theo UTC, xem [Biến môi trường](configuration.md#environment-variables).
 
+Home cũng lên kế hoạch sao lưu cho các [node](nodes.md) của nó, nhưng không phải ở đây: thẻ của từng node trên trang Phiên bản có một kế hoạch cho container và một cho thư mục. Một node mới bắt đầu nửa giờ sau các bản sao lưu container của phiên bản này. Xem [Khi nào node sao lưu](nodes.md#schedule).
+
 ## Tuần {#week}
 
 Thẻ **Tuần** vẽ mọi lần chạy đã lên kế hoạch từ thứ Hai đến Chủ nhật, mỗi ngày một dòng: sao lưu, sao chép ngoài site và kiểm tra. Trỏ vào một nét để đọc cái gì bắt đầu ở đó. Ở chỗ ba kế hoạch bắt đầu trong vòng hai giờ, khoảng đó được đánh dấu, để bạn có thể dàn chúng ra.
