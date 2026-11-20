@@ -75,15 +75,15 @@ export function LocationRow({ location, note }: { location: StorageLocation; not
         onEdit={() => navigate(route)}
       >
         {/* On a phone what it holds goes under the address instead of
-            pushing past the edge. */}
-        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+            pushing past the edge, and drops the dot that would start its line. */}
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 sm:flex-nowrap">
           <span dir="ltr" title={location.where} className="min-w-0 max-w-full truncate text-start">
             {location.where}
           </span>
           {location.enabled && (
             <>
-              {amount && <span className="shrink-0 before:me-1.5 before:content-['·']">{amount}</span>}
-              {outlook && <span className="shrink-0 before:me-1.5 before:content-['·']">{outlook}</span>}
+              {amount && <span className="shrink-0 before:me-1.5 before:content-['·'] max-sm:before:content-none">{amount}</span>}
+              {outlook && <span className="shrink-0 before:me-1.5 before:content-['·'] max-sm:before:content-none">{outlook}</span>}
               <InfoBubble tip={fillTip(t, fill)} />
             </>
           )}
