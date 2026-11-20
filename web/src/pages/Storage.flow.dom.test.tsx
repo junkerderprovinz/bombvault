@@ -537,13 +537,21 @@ describe("adding a storage location", () => {
 
     const groups = within(window).getAllByRole("heading", { level: 3 }).map((h) => h.textContent ?? "");
     expect(groups).toEqual(["Local", "Cloud storage", "S3 service", "NAS or server", "Own rclone configuration"]);
-    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "Wasabi", "S3 compatible", "rest-server", "Rclone"]);
+    expect(tileNames(window)).toEqual(["Local folder", "Google Drive", "Backblaze B2", "Wasabi", "Custom S3", "rest-server", "Rclone"]);
   });
 
-  it("puts S3 compatible last among the S3 services, as the tile that takes any of them", async () => {
+  it("puts Custom S3 last among the S3 services, as the tile that takes any of them", async () => {
     const window = await open();
     const section = within(window).getByRole("heading", { name: "S3 service" }).closest("section") as HTMLElement;
-    expect(tileNames(section).at(-1)).toBe("S3 compatible");
+    expect(tileNames(section).at(-1)).toBe("Custom S3");
+  });
+
+  it("finds Custom S3 by the words S3 compatible", async () => {
+    const window = await open();
+    await act(async () => {
+      fireEvent.change(within(window).getByRole("searchbox", { name: "Search providers" }), { target: { value: "s3 compatible" } });
+    });
+    expect(tileNames(window)).toEqual(["Custom S3"]);
   });
 
   it("saves a pasted rclone configuration and lists its remotes", async () => {
