@@ -18,12 +18,18 @@ interface StagedNode {
   online: boolean;
   lastSeen?: number;
   version?: string;
+  containersCadence: string;
+  filesCadence: string;
+  lastBackup?: number;
+  failures: number;
+  anomalies: number;
 }
 
 export const ROUTES = [
   "GET /api/status",
   "GET /api/progress",
   "GET /api/runs",
+  "GET /api/anomalies/summary",
   "GET /api/containers",
   "GET /api/containers/{name}",
   "GET /api/containers/{name}/mounts",
@@ -50,6 +56,11 @@ export const NODES: StagedNode[] = [
     placementTarget: "https://backup.tower.example.org",
     online: true,
     version: "v10.5.0",
+    containersCadence: "daily 02:00",
+    filesCadence: "weekly sun 04:00",
+    lastBackup: NOW - 7 * HOUR,
+    failures: 0,
+    anomalies: 1,
   },
   {
     id: "2b4d6f8a0c1e3a5b7c9d0e1f2a3b4c5d",
@@ -61,8 +72,23 @@ export const NODES: StagedNode[] = [
     online: false,
     lastSeen: NOW - 5 * HOUR,
     version: "v10.4.2",
+    containersCadence: "daily 03:00",
+    filesCadence: "off",
+    lastBackup: NOW - 29 * HOUR,
+    failures: 2,
+    anomalies: 0,
   },
-  { id: "9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b", name: "pi-garage", createdAt: NOW - HOUR, adoptedAt: 0, online: false },
+  {
+    id: "9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
+    name: "pi-garage",
+    createdAt: NOW - HOUR,
+    adoptedAt: 0,
+    online: false,
+    containersCadence: "",
+    filesCadence: "",
+    failures: 0,
+    anomalies: 0,
+  },
 ];
 
 export const NODE = NODES[0];
@@ -164,13 +190,14 @@ export interface NodeCalls {
   restored: { path: string; body: unknown }[];
   placed: { id: string; body: unknown }[];
   addresses: unknown[];
+  scheduled: { id: string; body: unknown }[];
 }
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, json: body });
 
 /** stageNodes answers every node route, on top of whatever else the page has staged. */
 export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<NodeCalls> {
-  const calls: NodeCalls = { restored: [], placed: [], addresses: [] };
+  const calls: NodeCalls = { restored: [], placed: [], addresses: [], scheduled: [] };
   let added: StagedNode | null = null;
   let looks = 0;
 
@@ -179,7 +206,17 @@ export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<Node
     (route) => {
       if (route.request().method() === "POST") {
         const name = (route.request().postDataJSON() as { name: string }).name;
-        added = { id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", name, createdAt: NOW, adoptedAt: 0, online: false };
+        added = {
+          id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d",
+          name,
+          createdAt: NOW,
+          adoptedAt: 0,
+          online: false,
+          containersCadence: "",
+          filesCadence: "",
+          failures: 0,
+          anomalies: 0,
+        };
         return json(route, { ok: true, node: added, compose: { ...COMPOSE, NODE_NAME: name } });
       }
       const nodes = [...NODES];
@@ -195,9 +232,13 @@ export async function stageNodes(page: Page, receiverNodeUrl = ""): Promise<Node
     (route) => json(route, { ok: true, routes: ROUTES }),
   );
   await page.route(
-    (url) => /^\/api\/nodes\/[^/]+\/(compose|placement)$/.test(url.pathname),
+    (url) => /^\/api\/nodes\/[^/]+\/(compose|placement|schedule)$/.test(url.pathname),
     (route) => {
       const [, , , id, what] = new URL(route.request().url()).pathname.split("/");
+      if (what === "schedule") {
+        calls.scheduled.push({ id, body: route.request().postDataJSON() });
+        return json(route, { ok: true });
+      }
       if (what === "compose") return json(route, { ok: true, compose: { ...COMPOSE, NODE_NAME: NODES.find((n) => n.id === id)?.name ?? "" } });
       calls.placed.push({ id, body: route.request().postDataJSON() });
       return json(route, { ok: true, reach: [{ domain: "containers", reached: true }, { domain: "files", reached: true }], warning: "" });

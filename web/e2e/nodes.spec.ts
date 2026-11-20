@@ -1,6 +1,7 @@
-// The node pages on the demo server: a card per node on Instances, the window
-// that adds one, a section per node on the Backups list, and the page of an
-// entry on a node with its backups and a restore. Every request about a node
+// The node pages on the demo server: a card per node on Instances with when it
+// backs up, the window that adds one, the nodes card on the overview, a
+// section per node on the Backups list, and the page of an entry on a node
+// with its backups and a restore. Every request about a node
 // goes to its route under /api/nodes/{id}/api, never to this server's own.
 //
 // NODE_SHOTS=<folder> also writes the pictures of these pages in the light,
@@ -47,6 +48,49 @@ test("every node has its card with its state, where its backups go and its actio
   expect((await overflow(page)).pan).toBe(0);
 });
 
+const plan = (scope: Page | ReturnType<typeof card>, section: string) => scope.getByRole("button", { name: new RegExp(`^${t(section)}:`) });
+
+// pickMode picks a mode in an open schedule editor: a row of tabs where they
+// fit, a list that opens on a narrow phone.
+async function pickMode(page: Page, key: string) {
+  const editor = page.getByRole("dialog").last();
+  await editor.getByRole("group").waitFor();
+  if ((await editor.getByRole("combobox").count()) > 0) {
+    await editor.getByRole("combobox").click();
+    await page.getByRole("option", { name: t(key) }).click();
+  } else {
+    await editor.getByRole("tab", { name: t(key) }).click();
+  }
+}
+
+test("a node's card says when each section backs up and saves a change at once", async ({ page }) => {
+  const calls = await open(page, "/instances");
+  const online = card(page, NODE.id);
+  await expect(plan(online, "nav.containers")).toContainText("2:00");
+  await expect(plan(online, "nav.files")).toBeVisible();
+  await plan(online, "nav.containers").click();
+  await pickMode(page, "cadence.off");
+  await expect.poll(() => calls.scheduled).toEqual([{ id: NODE.id, body: { containers: "off" } }]);
+  await expect(plan(online, "nav.containers")).toContainText(t("cadence.off"));
+  expect((await overflow(page)).pan).toBe(0);
+});
+
+test("the overview shows each node with its last backup, its errors and its anomalies", async ({ page }) => {
+  await open(page, "/dashboard");
+  const nodes = page.getByTestId("overview-nodes");
+  await expect(nodes.locator("[data-node]")).toHaveCount(3);
+  const online = nodes.locator(`[data-node="${NODE.id}"]`);
+  await expect(online).toContainText(NODE.name);
+  await expect(online).toContainText(t("instances.connected"));
+  await expect(online).toContainText(t("containers.lastBackup"));
+  await expect(online).toContainText(t("nav.anomalies"));
+  const away = nodes.locator('[data-node="2b4d6f8a0c1e3a5b7c9d0e1f2a3b4c5d"]');
+  await expect(away).toContainText(t("instances.inactive"));
+  await expect(away.locator(".text-statusFail")).toHaveText("2");
+  await expect(nodes.locator('[data-node="9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b"]')).toContainText(t("containers.never"));
+  expect((await overflow(page)).pan).toBe(0);
+});
+
 test("a node is added in three steps and turns green once it answers", async ({ page }, testInfo) => {
   const calls = await open(page, "/instances");
   await page.getByRole("button", { name: t("nodes.add") }).first().click();
@@ -68,6 +112,8 @@ test("a node is added in three steps and turns green once it answers", async ({ 
   await expect(page.getByRole("button", { name: t("nodes.next") })).toBeDisabled();
   await address.fill("https://backup.tower.example.org");
   await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(plan(box, "nav.containers")).toContainText("2:00");
+  await expect(plan(box, "nav.files")).toContainText("2:30");
   await measure();
   await page.getByRole("button", { name: t("nodes.next") }).click();
 
@@ -80,6 +126,7 @@ test("a node is added in three steps and turns green once it answers", async ({ 
   await expect(page.getByTestId("node-adoption")).toContainText(t("nodes.placed").replace("{target}", "https://backup.tower.example.org"));
   expect(calls.addresses).toEqual([{ url: "https://backup.tower.example.org", caPem: "" }]);
   expect(calls.placed).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { kind: "receiver" } }]);
+  expect(calls.scheduled).toEqual([{ id: "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d", body: { containers: "daily 02:00", files: "daily 02:30" } }]);
   // Every step of the window keeps the one width the other windows have.
   if (desktop) expect(new Set(widths).size).toBe(1);
   if (desktop) expect(widths[0]).toBeLessThanOrEqual(768);
@@ -149,6 +196,10 @@ test("pictures of the node pages", async ({ browser }, testInfo) => {
       await page.goto("/instances");
       await card(page, NODE.id).scrollIntoViewIfNeeded();
       await shoot(page, `instances-node-cards-${at}`);
+      await plan(card(page, NODE.id), "nav.containers").click();
+      await page.getByRole("dialog", { name: t("nav.containers") }).waitFor();
+      await shoot(page, `node-schedule-open-${at}`);
+      await page.keyboard.press("Escape");
 
       await page.getByRole("button", { name: t("nodes.add") }).first().click();
       await page.getByRole("dialog", { name: t("nodes.add") }).getByRole("textbox", { name: t("nodes.step.name") }).fill("vps-helsinki");
@@ -162,6 +213,22 @@ test("pictures of the node pages", async ({ browser }, testInfo) => {
       await expect(page.getByTestId("node-adoption")).toContainText(t("nodes.placed").replace("{target}", "https://backup.tower.example.org"), { timeout: 15_000 });
       await page.getByTestId("node-adoption").scrollIntoViewIfNeeded();
       await shoot(page, `add-node-3-online-${at}`);
+
+      await page.goto("/dashboard");
+      const nodes = page.getByTestId("overview-nodes");
+      await nodes.locator("[data-node]").first().waitFor();
+      await shoot(page, `overview-${at}`);
+      const nodesCard = nodes.locator("xpath=ancestor::*[@data-grid-block][1]");
+      await nodesCard.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await settle(page);
+      // The heading badge stands above the card's edge, so the picture reaches
+      // a little higher than the card.
+      const box = (await nodesCard.boundingBox())!;
+      await page.screenshot({
+        path: join(SHOTS!, `overview-nodes-card-${at}.png`),
+        clip: { x: box.x, y: box.y - 16, width: box.width, height: box.height + 16 },
+        animations: "disabled",
+      });
 
       await page.goto("/backups?kind=container");
       await page.locator(`[data-node-section="${NODE.id}"]`).getByRole("link", { name: "nextcloud", exact: true }).waitFor();
