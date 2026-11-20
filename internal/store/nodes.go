@@ -28,6 +28,9 @@ type Node struct {
 	// still to hear a change to it.
 	Placement    string
 	PlacementDue bool
+	// PlacementTarget is the receiver's address for nodes, or the id of the
+	// storage location, the node was sent to.
+	PlacementTarget string
 }
 
 // NodeReleasing is the state of a node home let go that has not heard it.
@@ -36,20 +39,20 @@ const NodeReleasing = "releasing"
 // ErrNodeNotFound is returned for an id no node has.
 var ErrNodeNotFound = errors.New("no such node")
 
-const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due`
+const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due, placement_target`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
 	var due int
-	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due)
+	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due, &n.PlacementTarget)
 	n.PlacementDue = due != 0
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue)); err != nil {
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue), n.PlacementTarget); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -110,8 +113,8 @@ func (r *Repo) SetNodeState(id, state string) error {
 }
 
 // SetNodePlaced records where the node's backups go, now that it heard it.
-func (r *Repo) SetNodePlaced(id, placement string) error {
-	return r.updateNode(`UPDATE nodes SET placement = ?, placement_due = 0 WHERE id = ?`, placement, id)
+func (r *Repo) SetNodePlaced(id, placement, target string) error {
+	return r.updateNode(`UPDATE nodes SET placement = ?, placement_target = ?, placement_due = 0 WHERE id = ?`, placement, target, id)
 }
 
 // SetNodePlacementDue records that the node has still to hear a change to

@@ -4022,6 +4022,12 @@ ALTER TABLE receiver_server ADD COLUMN node_ca_pem TEXT NOT NULL DEFAULT '';`,
 		sql: `ALTER TABLE nodes ADD COLUMN placement TEXT NOT NULL DEFAULT '';
 ALTER TABLE nodes ADD COLUMN placement_due INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		version:          nodePlacementTargetMigration,
+		name:             "nodes_placement_target",
+		alreadySatisfied: columnPresent("nodes", "placement_target"),
+		sql:              `ALTER TABLE nodes ADD COLUMN placement_target TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4714,6 +4720,10 @@ const receivedRepoNodeMigration = 986
 
 // nodePlacementKindMigration numbers where home sends a node's backups.
 const nodePlacementKindMigration = 987
+
+// nodePlacementTargetMigration numbers which receiver address or storage
+// location a node's backups go to.
+const nodePlacementTargetMigration = 988
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
