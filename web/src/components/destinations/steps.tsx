@@ -388,7 +388,7 @@ export function SignInBody({ draft, providerLabel }: { draft: DestinationDraftSt
         )}
       </Rows>
       {fields.more.length > 0 && (
-        <MoreSettings>
+        <MoreSettings own={holdsOwnValue(fields.more, draft.settings)}>
           {fields.more.map((o) => (
             <DraftField key={o.name} draft={draft} option={o} />
           ))}
@@ -511,16 +511,42 @@ export function KeyInstall({ draft }: { draft: DestinationDraftState }) {
   );
 }
 
+/** holdsOwnValue reports whether any of the fields holds a value other than
+ *  its default, which a reader of the form should see without asking. */
+export function holdsOwnValue(options: BackendOption[], settings: Record<string, string>): boolean {
+  return options.some((o) => {
+    const value = settings[o.name] ?? "";
+    return value !== "" && value !== o.default;
+  });
+}
+
 /** MoreSettings holds the settings of a provider that most people leave as
- *  they are, in a sub-card under the ones everybody fills in. */
-export function MoreSettings({ children }: { children: ReactNode }) {
+ *  they are, folded until asked for. It opens by itself while one of them
+ *  holds a value of its own. */
+export function MoreSettings({ own, children }: { own: boolean; children: ReactNode }) {
   const { t } = useT();
+  const id = useId();
+  const [choice, setChoice] = useState<boolean | null>(null);
+  const open = choice ?? own;
   return (
     <section aria-label={t("dest.more")} className="glim-form-sub flex flex-col gap-3 rounded-card bg-carbon-surface2 p-3">
-      <span className="text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setChoice(!open)}
+        className="flex items-center gap-1.5 self-start rounded-control text-[length:var(--text-caption)] font-medium uppercase tracking-[0.06em] text-carbon-textMuted hover:text-carbon-text"
+      >
+        <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true" className={`shrink-0 ${open ? "rotate-90" : "rtl:rotate-180"}`}>
+          <path fill="currentColor" d="M4 1.3 8.5 6 4 10.7Z" />
+        </svg>
         {t("dest.more")}
-      </span>
-      <Rows>{children}</Rows>
+      </button>
+      {open && (
+        <div id={id}>
+          <Rows>{children}</Rows>
+        </div>
+      )}
     </section>
   );
 }

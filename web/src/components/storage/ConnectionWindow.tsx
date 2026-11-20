@@ -11,7 +11,7 @@ import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { RemoteFolderBrowser } from "../destinations/RemoteFolderBrowser";
 import { Rows } from "./rows";
-import { DraftField, masked, MoreSettings } from "../destinations/steps";
+import { DraftField, holdsOwnValue, masked, MoreSettings } from "../destinations/steps";
 import { formFields } from "../destinations/useDestinationDraft";
 import { IconClose } from "../navGlyphs";
 import { TestButton, VerdictLine } from "../TestButton";
@@ -133,7 +133,9 @@ export function ConnectionWindow({ edit, form, onClose }: { edit: LocationEdit; 
             needsSecret={provider.route !== "rclone" && stored.hidden.some((name) => !typed[name])}
           />
         )}
-        {fields.more.length > 0 && <MoreSettings>{fields.more.map(field)}</MoreSettings>}
+        {fields.more.length > 0 && (
+          <MoreSettings own={holdsOwnValue(fields.more, { ...stored.values, ...typed })}>{fields.more.map(field)}</MoreSettings>
+        )}
         <VerdictLine verdict={test.verdict} />
       </div>
     </InstanceWindow>

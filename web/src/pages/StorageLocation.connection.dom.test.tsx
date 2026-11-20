@@ -188,8 +188,11 @@ describe("the connection of an rclone destination", () => {
     expect(password.value).toBe("");
     expect(password.placeholder).toBe("saved (leave blank to keep)");
     expect((within(dialog).getByLabelText("Folder") as HTMLInputElement).value).toBe("bombvault");
-    // A setting most people leave alone stands in a sub-card of its own.
-    expect(within(within(dialog).getByRole("region", { name: "More settings" })).getByLabelText("Port")).toBeTruthy();
+    // A setting most people leave alone stands folded in a sub-card of its own.
+    const more = within(dialog).getByRole("region", { name: "More settings" });
+    expect(within(more).queryByLabelText("Port")).toBeNull();
+    await click(within(more).getByRole("button", { name: "More settings" }));
+    expect(within(more).getByLabelText("Port")).toBeTruthy();
     expect(within(dialog).queryByRole("switch", { name: "More settings" })).toBeNull();
   });
 
@@ -234,6 +237,7 @@ describe("the connection of an rclone destination", () => {
     await renderPage(location());
     const dialog = await openWindow("Storage Box");
 
+    await click(within(dialog).getByRole("button", { name: "More settings" }));
     await type(within(dialog).getByLabelText("Port"), "23");
     await click(within(dialog).getByRole("button", { name: "Test and save" }));
 
