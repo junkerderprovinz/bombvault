@@ -29,6 +29,7 @@ import {
   words,
   type Demo,
 } from "./demo";
+import { NODE, stageNodes } from "./nodes";
 
 const SHOTS = process.env.DOCS_SHOTS;
 const LANG = process.env.DOCS_LANG ?? "en";
@@ -456,4 +457,81 @@ picture(
   },
   { findings: [CRITICAL, WARNING, INFO] },
 );
+
+// Nodes
+
+const nodeCard = (page: Page) => instance(page, `node:${NODE.id}`);
+
+async function addNode(page: Page): Promise<Locator> {
+  await stageNodes(page);
+  await page.goto("/instances");
+  await page.getByRole("button", { name: t("nodes.add") }).first().click();
+  const win = page.getByRole("dialog", { name: t("nodes.add") });
+  await win.getByRole("textbox", { name: t("nodes.step.name") }).fill("vps-helsinki");
+  return win;
+}
+
+picture("nodes/card", DESKTOP, async (page) => {
+  await stageNodes(page);
+  await page.goto("/instances");
+  await expect(nodeCard(page)).toContainText(t("instances.connected"));
+  return nodeCard(page);
+});
+
+picture("nodes/add-name", DESKTOP, async (page) => {
+  await addNode(page);
+});
+
+picture("nodes/add-placement", DESKTOP, async (page) => {
+  await addNode(page);
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  await page.getByLabel(t("nodes.address")).fill("https://backup.tower.example.org");
+  await expect(page.getByRole("button", { name: `${t("nodes.startAt")}: 03:00` })).toBeVisible();
+});
+
+picture("nodes/add-keep", DESKTOP, async (page) => {
+  await addNode(page);
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  await page.getByRole("radio", { name: new RegExp(`^${t("nodes.toNode")}`) }).click();
+  await page.getByLabel(t("nodes.nodeAddress")).fill("https://203.0.113.7:8443");
+});
+
+picture("nodes/add-start", DESKTOP, async (page) => {
+  await addNode(page);
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  await page.getByLabel(t("nodes.address")).fill("https://backup.tower.example.org");
+  await page.getByRole("button", { name: t("nodes.next") }).click();
+  const adoption = page.getByTestId("node-adoption");
+  await expect(adoption).toContainText(t("nodes.placed").replace("{target}", "https://backup.tower.example.org"), { timeout: 15_000 });
+  await scrollTo(adoption, "end");
+});
+
+picture("nodes/schedule", DESKTOP, async (page) => {
+  await stageNodes(page);
+  await page.goto("/instances");
+  await nodeCard(page).getByRole("button", { name: new RegExp(`^${t("nav.containers")}:`) }).click();
+  await expect(page.getByRole("dialog", { name: t("nav.containers") })).toBeVisible();
+});
+
+picture("nodes/overview-card", DESKTOP, async (page) => {
+  await stageNodes(page);
+  await overview(page);
+  const nodes = page.getByTestId("overview-nodes");
+  await expect(nodes.locator("[data-node]")).toHaveCount(3);
+  return nodes.locator("xpath=ancestor::*[@data-grid-block][1]");
+});
+
+picture("nodes/backups-section", DESKTOP, async (page) => {
+  await stageNodes(page);
+  await page.goto("/backups?kind=container");
+  const section = page.locator(`[data-node-section="${NODE.id}"]`);
+  await expect(section.getByRole("link", { name: "nextcloud", exact: true })).toBeVisible();
+  return section;
+});
+
+picture("nodes/entry", DESKTOP, async (page) => {
+  await stageNodes(page);
+  await page.goto(`/nodes/${NODE.id}/backups/container/nextcloud`);
+  await expect(page.getByRole("button", { name: t("snapshots.restore") }).first()).toBeVisible();
+});
 
