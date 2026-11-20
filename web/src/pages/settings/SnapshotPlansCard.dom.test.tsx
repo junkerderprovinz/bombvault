@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { HostSnapPlan } from "../../lib/api";
 import { I18nProvider, en } from "../../lib/i18n";
@@ -26,6 +26,12 @@ let plans: HostSnapPlan[] = [PLAN];
 vi.mock("../../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/api")>()),
   listHostSnapshotPlans: () => Promise.resolve({ ok: true, plans }),
+  listHostSnapshots: () =>
+    Promise.resolve({
+      ok: true,
+      sources: [{ kind: "zfs", source: "tank/new", group: "tank", usedBytes: 0, newSinceLatestBytes: 0, canRecursive: true, canCreate: true }],
+    }),
+  addHostSnapshotPlan: () => Promise.resolve({ ok: true, plan: { ...PLAN, id: "p2", source: "tank/new" } }),
   openedAsPairedPhone: () => false,
 }));
 
@@ -43,7 +49,7 @@ async function show() {
       </MemoryRouter>
     );
   });
-  return screen.getByRole("listitem");
+  return screen.getAllByRole("listitem")[0];
 }
 
 afterEach(() => {
@@ -70,5 +76,29 @@ describe("a snapshot schedule", () => {
     const order = [...plan.querySelectorAll("button, [role=switch]")].filter((e) => controls.includes(e as HTMLElement));
     const names = order.map((e) => e.getAttribute("aria-label") ?? e.textContent);
     expect(names.slice(-2)).toEqual([en["hostSnap.plans.runNow"], en["hostSnap.plans.remove"]]);
+  });
+
+  it("shows its target, its plan and its switch, and keeps the fields closed until Edit", async () => {
+    const plan = await show();
+    expect(within(plan).getByRole("switch", { name: en["hostSnap.plans.enabled"] })).toBeTruthy();
+    expect(within(plan).queryByLabelText(en["hostSnap.plans.keep"])).toBeNull();
+    const edit = within(plan).getByRole("button", { name: en["common.edit"] });
+    expect(edit.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(edit);
+    expect(within(plan).getByLabelText(en["hostSnap.plans.keep"])).toBeTruthy();
+    fireEvent.click(within(plan).getByRole("button", { name: en["common.done"] }));
+    expect(within(plan).queryByLabelText(en["hostSnap.plans.keep"])).toBeNull();
+  });
+
+  it("opens a new schedule with its fields shown", async () => {
+    await show();
+    fireEvent.click(screen.getByRole("button", { name: en["hostSnap.plans.add"] }));
+    const window = await screen.findByRole("dialog");
+    await act(async () => {
+      fireEvent.click(await within(window).findByRole("button", { name: en["hostSnap.plans.add"] }));
+    });
+    const added = screen.getAllByRole("listitem")[1];
+    expect(within(added).getByLabelText(en["hostSnap.plans.keep"])).toBeTruthy();
+    expect(within(screen.getAllByRole("listitem")[0]).queryByLabelText(en["hostSnap.plans.keep"])).toBeNull();
   });
 });
