@@ -168,8 +168,10 @@ describe("what a snapshot is beside a backup", () => {
     for (const card of cards) expect(card.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(inBubble()).toHaveLength(0);
 
+    const gotIt = screen.getByRole("button", { name: en["common.gotIt"] });
+    expect(gotIt.classList.contains("glim-btn-neutral")).toBe(true);
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: en["common.gotIt"] }));
+      fireEvent.click(gotIt);
     });
     expect(screen.queryByText(explainer)).toBeNull();
     expect(inBubble().length).toBeGreaterThan(0);

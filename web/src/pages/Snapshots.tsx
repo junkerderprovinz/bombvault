@@ -412,7 +412,7 @@ export function Snapshots() {
         <p className="text-xs text-carbon-textMuted">{t("hostSnap.hiddenSystem", list?.hiddenSystem ?? 0)}</p>
       )}
       {!explained && (
-        <Note action={<Button label={t("common.gotIt")} labelKey="common.gotIt" tone="subtle" onClick={understood} />}>
+        <Note action={<Button label={t("common.gotIt")} labelKey="common.gotIt" tone="neutral" onClick={understood} />}>
           {t("hostSnap.versusBackup")}
         </Note>
       )}
