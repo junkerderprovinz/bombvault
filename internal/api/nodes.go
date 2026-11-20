@@ -175,9 +175,31 @@ func (s *Service) dropNode(id string, hn *homeNode) {
 		return
 	}
 	_ = hn.link.Close()
-	if err := s.store.DeleteNode(id); err != nil {
+	if err := s.forgetNode(id); err != nil {
 		log.Printf("nodes: forget %s: %v", id, err)
 	}
+}
+
+// forgetNode drops a node that heard its release. Its login on the receiver
+// goes, and the receiver stops watching its repositories, which stay with
+// their backups.
+func (s *Service) forgetNode(id string) error {
+	if err := s.RevokeReceiverLogin(context.Background(), id); err != nil && !errors.Is(err, errNoReceiver) {
+		return err
+	}
+	repos, err := s.store.ListReceivedRepos()
+	if err != nil {
+		return err
+	}
+	for _, rr := range repos {
+		if rr.NodeID == id && rr.Enabled {
+			rr.Enabled = false
+			if err := s.store.UpdateReceivedRepo(rr); err != nil {
+				return err
+			}
+		}
+	}
+	return s.store.DeleteNode(id)
 }
 
 // nodeLinkOf returns the link home holds to node id.
@@ -375,7 +397,7 @@ func (s *Service) ReleaseNode(ctx context.Context, id string) (told bool, err er
 		return false, nil
 	}
 	_ = link.Close()
-	return true, s.store.DeleteNode(id)
+	return true, s.forgetNode(id)
 }
 
 // handleListNodes lists the nodes this instance runs backups on.

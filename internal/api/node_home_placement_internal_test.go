@@ -179,6 +179,21 @@ func TestHomeSendsANodeToItsReceiverWithALoginOfItsOwn(t *testing.T) {
 	if watched, _ := home.st.ListReceivedRepos(); len(watched) != 2 {
 		t.Errorf("placing again watches %d repositories, want the same two", len(watched))
 	}
+
+	if code, out := home.do(t, http.MethodDelete, "/api/nodes/"+id, nil); code != http.StatusOK || out["told"] != true {
+		t.Fatalf("release = %d %v", code, out)
+	}
+	if _, ok, _ := home.st.GetReceiverLogin(id); ok {
+		t.Error("the node let go keeps its login on the receiver")
+	}
+	htpasswd, _ = os.ReadFile(filepath.Join(home.svc.cfg.HostMountRoot, "backups", htpasswdName))
+	if strings.Contains("\n"+string(htpasswd), "\n"+user+":") {
+		t.Errorf("htpasswd = %q, want the node's login gone", htpasswd)
+	}
+	watched, _ = home.st.ListReceivedRepos()
+	if len(watched) != 2 || watched[0].Enabled || watched[1].Enabled {
+		t.Errorf("after the release home watches %+v, want the repositories kept and switched off", watched)
+	}
 }
 
 func TestHomeSendsANodeToAStorageLocationWithASignInMadeForIt(t *testing.T) {
