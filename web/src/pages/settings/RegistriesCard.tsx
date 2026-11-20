@@ -116,44 +116,46 @@ function useRegistryForm(onSave: SaveEntry, onClose: () => void, initial: Draft)
             <span className="text-xs text-carbon-textMuted wrap-anywhere">{kind?.host ?? t("tile.registry.withOwnAddress")}</span>
           </div>
         </div>
-        <Rows>
-          <SettingRow label={t("settings.registryHost")}>
-            <input
-              type="text"
-              value={draft.host}
-              onChange={(e) => edit({ host: e.target.value })}
-              placeholder={kind?.placeholder ?? "registry.example.org"}
-              aria-label={t("settings.registryHost")}
-              spellCheck={false}
-              dir="ltr"
-              key={missing}
-              className={`${FIELD}${missing ? " glim-shake" : ""}`}
-            />
-          </SettingRow>
-          <SettingRow label={t("settings.registryUser")}>
-            <input
-              type="text"
-              value={draft.username}
-              onChange={(e) => edit({ username: e.target.value })}
-              aria-label={t("settings.registryUser")}
-              autoComplete="off"
-              spellCheck={false}
-              className={FIELD}
-            />
-          </SettingRow>
-          <SettingRow label={t("settings.registryToken")} note={entry ? t("tile.registry.keepToken") : undefined}>
-            <RevealInput
-              {...reveal}
-              value={draft.token}
-              onChange={(e) => edit({ token: e.target.value })}
-              aria-label={t("settings.registryToken")}
-              autoComplete="new-password"
-              placeholder={entry?.tokenSet ? t("cloud.secretSet") : ""}
-              wrapperClassName="w-64 max-w-full"
-              className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
-            />
-          </SettingRow>
-        </Rows>
+        <div className="glim-form-rows">
+          <Rows>
+            <SettingRow label={t("settings.registryHost")}>
+              <input
+                type="text"
+                value={draft.host}
+                onChange={(e) => edit({ host: e.target.value })}
+                placeholder={kind?.placeholder ?? "registry.example.org"}
+                aria-label={t("settings.registryHost")}
+                spellCheck={false}
+                dir="ltr"
+                key={missing}
+                className={`${FIELD}${missing ? " glim-shake" : ""}`}
+              />
+            </SettingRow>
+            <SettingRow label={t("settings.registryUser")}>
+              <input
+                type="text"
+                value={draft.username}
+                onChange={(e) => edit({ username: e.target.value })}
+                aria-label={t("settings.registryUser")}
+                autoComplete="off"
+                spellCheck={false}
+                className={FIELD}
+              />
+            </SettingRow>
+            <SettingRow label={t("settings.registryToken")} note={entry ? t("tile.registry.keepToken") : undefined}>
+              <RevealInput
+                {...reveal}
+                value={draft.token}
+                onChange={(e) => edit({ token: e.target.value })}
+                aria-label={t("settings.registryToken")}
+                autoComplete="new-password"
+                placeholder={entry?.tokenSet ? t("cloud.secretSet") : ""}
+                wrapperClassName="w-64 max-w-full"
+                className="rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm text-carbon-text glim-field-focus"
+              />
+            </SettingRow>
+          </Rows>
+        </div>
         {missing > 0 && !draft.host.trim() && <p className="text-xs text-statusFail">{t("tile.registry.hostFirst")}</p>}
       </>
     );
@@ -216,6 +218,7 @@ function EditRegistryWindow({ entry, onSave, onClose }: { entry: RegistryAuthEnt
       title={t("common.editTitle").replace("{name}", () => name)}
       text={{ cancel: t("common.cancel"), close: t("common.close") }}
       actions={[form.save(entry.kind, entry)]}
+      className="glim-form-window"
       closeOnBackdrop={false}
       onClose={onClose}
     >

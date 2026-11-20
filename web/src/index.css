@@ -2300,7 +2300,27 @@ body {
   max-width: 48rem;
   transition: max-width var(--motion-modal-dur) cubic-bezier(.2, .6, .2, 1);
 }
-.glim-window.glim-pick-window--form { max-width: 40rem; }
+/* The form after the pick keeps the tiles' width, so the window does not
+   jump between steps, and a window that edits what a picker made takes the
+   same width, so one form looks the same wherever it opens. */
+.glim-window.glim-pick-window--form,
+.glim-window.glim-form-window { max-width: 48rem; }
+
+/* The fields of a form in a window: one row each, the label in a column of one
+   width at the start and the control at the end, so the controls line up on
+   one edge. A long label wraps inside its column. On a phone the label stands
+   over its field. */
+.glim-form-rows .glim-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1rem;
+}
+.glim-form-rows .glim-form-row > :nth-child(2) { justify-self: end; }
+@media (max-width: 39.99rem) {
+  .glim-form-rows .glim-form-row { grid-template-columns: minmax(0, 1fr); }
+  .glim-form-rows .glim-form-row > :nth-child(2) { justify-self: stretch; }
+}
 .glim-pick-window:not(.glim-pick-window--form) > .glim-window-body { overflow: hidden; }
 .glim-pick-window .glim-provider-pick .glim-readme-btn-unit {
   --tile: var(--provider-tile, var(--accent));

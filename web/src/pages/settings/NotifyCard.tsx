@@ -72,7 +72,7 @@ const EMPTY: NotifyConfig = { channels: [], scheduledSummary: false, notifyOnUpd
 const inputCls = "rounded-control bg-carbon-surface3 text-carbon-text text-sm font-mono px-3 py-1.5 glim-field-focus-well";
 const selectCls = "rounded-control bg-carbon-surface3 text-carbon-text text-sm px-2.5 py-1.5 glim-field-focus-well";
 // A channel's own fields stand under its switch, set in by a step.
-const fieldCls = "flex flex-wrap items-center justify-between gap-x-4 gap-y-1 ps-4 text-sm text-carbon-text";
+const fieldCls = "glim-form-row flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm text-carbon-text";
 const fieldInputCls = "w-full sm:w-md";
 
 /** How a channel edit saves: after a pause for typing, at once for a choice. */
@@ -466,6 +466,7 @@ function ChannelRow({
           text={{ cancel: t("common.cancel"), close: t("common.close") }}
           actions={[check.action]}
           start={check.start}
+          className="glim-form-window"
           closeOnBackdrop={false}
           onClose={() => setEditing(false)}
         >
@@ -558,7 +559,7 @@ function ChannelForm({
     return problems
       .filter((p) => under(p.field, path))
       .map((p) => (
-        <p key={`${p.field}:${p.code}`} className="ps-4 text-xs text-statusFail">
+        <p key={`${p.field}:${p.code}`} className="text-xs text-statusFail">
           {t(problemKey(p.code))}
         </p>
       ));
@@ -578,7 +579,7 @@ function ChannelForm({
     return (
       <>
         <label className={fieldCls}>
-          {label}
+          <span>{label}</span>
           {control}
         </label>
         {note}
@@ -610,7 +611,7 @@ function ChannelForm({
     const waiting = waitsForSecret(c, good);
     const note =
       value === REDACTED ? (
-        <p className={`ps-4 text-xs ${waiting ? "text-statusWarn" : "text-carbon-textMuted"}`}>
+        <p className={`text-xs ${waiting ? "text-statusWarn" : "text-carbon-textMuted"}`}>
           {t(waiting ? "notify.secretAgain" : "notify.secretKept")}
         </p>
       ) : null;
@@ -783,7 +784,7 @@ function ChannelForm({
             className={shook("webhook.headers")}
           />
           {Object.values(c.webhook?.headers ?? {}).includes(REDACTED) && (
-            <p className={`ps-4 text-xs ${waitsForSecret(c, good) ? "text-statusWarn" : "text-carbon-textMuted"}`}>
+            <p className={`text-xs ${waitsForSecret(c, good) ? "text-statusWarn" : "text-carbon-textMuted"}`}>
               {t(waitsForSecret(c, good) ? "notify.secretAgain" : "notify.secretKept")}
             </p>
           )}
@@ -839,7 +840,7 @@ function ChannelForm({
             />
           </label>
           {problemLines("healthchecks.url")}
-          <div className="ps-4">
+          <div>
             <Exceptions
               label={t("notify.healthchecksTitle")}
               taken={taken.map(asSection)}
@@ -894,7 +895,7 @@ function ChannelForm({
   }
 
   return (
-    <div data-channel-form={c.id} className="flex flex-col gap-2">
+    <div data-channel-form={c.id} className="glim-form-rows flex flex-col gap-2">
       {hint && <p className="text-xs text-carbon-textSub">{tLtr(t, hint)}</p>}
       {loose.map((p) => (
         <p key={`${p.field}:${p.code}`} className="text-xs text-statusFail">
@@ -902,7 +903,7 @@ function ChannelForm({
         </p>
       ))}
       {c.kind !== "healthchecks" && (
-        <div className="ps-4">
+        <div>
           <SettingRow label={t("notify.on")}>
             <Selector
               key={shakeOf("on")}
@@ -993,7 +994,7 @@ function HeadersEditor({
   }
 
   return (
-    <div className="flex flex-col gap-2 ps-4">
+    <div className="flex flex-col gap-2">
       <span className="text-sm text-carbon-text">{t("notify.webhookHeaders")}</span>
       {rows.map((row, i) => (
         <div key={i} className={`flex flex-wrap items-center gap-2 ${className}`}>

@@ -333,7 +333,7 @@ export function AddLocationWindow({
       onClose={onClose}
     >
       {shown > 1 && (
-        <div className="flex flex-col gap-4">
+        <div className="glim-form-rows flex flex-col gap-4">
           <Selector
             items={STEPS.map((key, i) => ({
               id: String(i + 1),
