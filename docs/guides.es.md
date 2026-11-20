@@ -34,4 +34,5 @@ Cada uno de estos recorre un trabajo real de principio a fin, con nombres y núm
 ## Varios servidores {#several-servers}
 
 - [Emparejar dos equipos Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): dos servidores que guardan las copias del otro, y ninguno puede borrar las copias del otro.
+- [Un VPS que copia al servidor receptor](nodes.md#example-vps): un nodo con sus contenedores, gestionado desde la instancia base y sin ningún puerto abierto en el VPS.
 - [Una tarjeta y una alerta en Home Assistant](api.md#home-assistant-example): BombVault en un panel, con un mensaje cuando falla una copia.

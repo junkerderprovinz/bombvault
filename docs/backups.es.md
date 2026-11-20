@@ -32,6 +32,8 @@ Tres botones sobre la lista la acotan:
 
 Los elementos que ya no están instalados pero aún tienen copias aparecen aparte bajo **No instalado (solo copias)**. Restáuralos o borra sus copias para liberar el espacio.
 
+Con [nodos](nodes.md), las listas Contenedores y Carpetas tienen una sección para cada nodo debajo de tus propios elementos, con si el nodo está conectado y cuántos elementos tiene. **Entradas en** y el nombre del nodo oculta los elementos de la sección y los vuelve a mostrar. El menú de un elemento ofrece **Copiar ahora**, que inicia su copia en el nodo, y **Abrir**. Su página lista sus copias con **Restaurar** junto a cada una, que restaura el elemento en el nodo. El contenedor del propio nodo no aparece. Consulta [Los elementos de un nodo](nodes.md#entries).
+
 La acción principal de la página flota abajo a la derecha: **Copiar todo ahora** inicia una ejecución sobre todas las secciones activadas. **Más** contiene el resto:
 
 - **Seleccionar** inicia una selección, mira más abajo.

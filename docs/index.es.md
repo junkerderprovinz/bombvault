@@ -81,6 +81,7 @@ Algunas palabras tienen un significado fijo en BombVault y en estas páginas.
 | **Destino por elemento** | Qué destinos reciben las copias de un elemento, fijado en el elemento o como valor predeterminado de su sección. Consulta [Destino por elemento](offsite-recovery.md#placement). |
 | **Réplica** | Una copia exacta a nivel de bloque de un elemento ZFS en un segundo servidor ZFS, hecha con `zfs send`. Está junto a la copia de seguridad y no la sustituye. Consulta [Réplica](zfs-datasets.md#replica). |
 | **Rol** | Algo que una instancia de tu grupo hace por otra: Receptor, Recolector, Servidor ZFS o Guardián de claves. Consulta [Instancias y roles](offsite-recovery.md#roles). |
+| **Nodo** | Un BombVault sin interfaz web, por ejemplo en un VPS, al que otra instancia, su instancia base, le dice qué copiar, cuándo y adónde. Consulta [Nodos](nodes.md). |
 
 ## Créditos {#credits}
 
