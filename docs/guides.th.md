@@ -34,4 +34,5 @@
 ## หลายเซิร์ฟเวอร์ {#several-servers}
 
 - [จับคู่กล่อง Unraid สองเครื่อง](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): สองเซิร์ฟเวอร์ที่เก็บสำเนาให้กันและกัน และไม่มีฝ่ายไหนลบข้อมูลสำรองของอีกฝ่ายได้
+- [VPS ที่สำรองไปยังเซิร์ฟเวอร์รับ](nodes.md#example-vps): โหนดพร้อมคอนเทนเนอร์ของมัน ที่อินสแตนซ์หลักดูแล และ VPS ไม่ต้องเปิดพอร์ต
 - [การ์ดและการเตือนใน Home Assistant](api.md#home-assistant-example): BombVault บนแดชบอร์ด พร้อมข้อความเมื่อการสำรองล้มเหลว
