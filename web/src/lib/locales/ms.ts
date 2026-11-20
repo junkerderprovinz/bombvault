@@ -3051,6 +3051,7 @@ const ms: Partial<Translations> = {
   "activityLog.jobReceiver": "pemeriksaan repositori diterima",
   "activityLog.jobFleet": "pemeriksaan instans",
   "activityLog.jobPull": "tarikan dari sumber",
+  "activityLog.jobNodes": "sandaran pada nod",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Menyandarkan {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Mereplikasi {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const ms: Partial<Translations> = {
   "nodes.restoreAsk": "Pulihkan {name} pada nod daripada sandaran {time}? Apa yang ada di sana sekarang akan diganti.",
   "nodes.restoreStarted": "Pemulihan {name} telah bermula pada nod.",
   "nodes.entryMissing": "Nod tidak menyenaraikan entri ini.",
+  "nodes.when": "Bila ia membuat sandaran",
+  "nodes.whenTip": "Instans ini memulakan sandaran nod pada waktu-waktu ini. Jika nod tiada ketika itu, sandaran bermula sebaik sahaja ia kembali. Pada awal pagi Ahad, sandaran menunggu sehingga instans ini selesai mengemas sandaran lama nod.",
+  "overview.nodes.title": "Nod",
+  "overview.nodes.hint": "Pelayan yang digunakan instans ini untuk membuat sandaran, dan keadaan sandarannya.",
+  "overview.nodes.none": "Belum ada nod. Anda boleh menambah satu di bawah Instans.",
 };
 
 export default ms;

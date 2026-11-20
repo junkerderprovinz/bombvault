@@ -3035,6 +3035,7 @@ const sr: Partial<Translations> = {
   "activityLog.jobReceiver": "провера примљених репозиторијума",
   "activityLog.jobFleet": "провера инстанци",
   "activityLog.jobPull": "преузимање из извора",
+  "activityLog.jobNodes": "резервне копије на чворовима",
   "activityLog.jobReplica": "ZFS реплика",
   "activityLog.lineBackingUpItem": "Израда резервне копије {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Репликација {name} … {percent}%",
@@ -5532,6 +5533,11 @@ const sr: Partial<Translations> = {
   "nodes.restoreAsk": "Вратим {name} на чвору из резервне копије од {time}? Оно што је тамо сада биће замењено.",
   "nodes.restoreStarted": "Враћање {name} је покренуто на чвору.",
   "nodes.entryMissing": "Чвор нема ову ставку на списку.",
+  "nodes.when": "Када прави копије",
+  "nodes.whenTip": "Ова инстанца покреће резервне копије чвора у ова времена. Ако чвор тада није доступан, почињу чим се врати. Недељом рано ујутру чекају док ова инстанца не среди старе копије чвора.",
+  "overview.nodes.title": "Чворови",
+  "overview.nodes.hint": "Сервери преко којих ова инстанца прави резервне копије и како им иду копије.",
+  "overview.nodes.none": "Још нема чворова. Можеш да додаш један у одељку Инстанце.",
 };
 
 export default sr;

@@ -2875,6 +2875,7 @@ const pt: Partial<Translations> = {
   "activityLog.jobReceiver": "verificação de repositórios recebidos",
   "activityLog.jobFleet": "verificação de instâncias",
   "activityLog.jobPull": "recolha das origens",
+  "activityLog.jobNodes": "backups nos nós",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineOffsiteSuccess": "Replicação externa concluída: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "A replicação externa não encontrou nada novo para copiar: {domain}",
@@ -5539,6 +5540,11 @@ const pt: Partial<Translations> = {
   "nodes.restoreAsk": "Restaurar {name} no nó a partir do backup de {time}? O que lá está agora será substituído.",
   "nodes.restoreStarted": "O restauro de {name} começou no nó.",
   "nodes.entryMissing": "O nó não tem esta entrada na lista.",
+  "nodes.when": "Quando faz backup",
+  "nodes.whenTip": "Esta instância inicia os backups do nó a estas horas. Se o nó não estiver disponível nessa altura, começam assim que voltar. Ao domingo de madrugada esperam até esta instância arrumar os backups antigos do nó.",
+  "overview.nodes.title": "Nós",
+  "overview.nodes.hint": "Os servidores através dos quais esta instância faz backups, e como estão a correr os backups deles.",
+  "overview.nodes.none": "Ainda não há nós. Podes adicionar um em Instâncias.",
 };
 
 export default pt;

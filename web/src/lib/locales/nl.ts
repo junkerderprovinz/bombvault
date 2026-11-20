@@ -2874,6 +2874,7 @@ const nl: Partial<Translations> = {
   "activityLog.jobReceiver": "controle van ontvangen repository's",
   "activityLog.jobFleet": "controle van instanties",
   "activityLog.jobPull": "ophalen bij bronnen",
+  "activityLog.jobNodes": "back-ups op nodes",
   "activityLog.jobReplica": "ZFS-replica",
   "activityLog.lineOffsiteSuccess": "Off-site replicatie voltooid: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Off-site replicatie vond niets nieuws om te kopiëren: {domain}",
@@ -5538,6 +5539,11 @@ const nl: Partial<Translations> = {
   "nodes.restoreAsk": "{name} op de node herstellen uit de back-up van {time}? Wat er nu staat, wordt vervangen.",
   "nodes.restoreStarted": "Het herstel van {name} is op de node gestart.",
   "nodes.entryMissing": "De node kent dit item niet.",
+  "nodes.when": "Wanneer hij back-upt",
+  "nodes.whenTip": "Deze instantie start de back-ups van de node op deze tijden. Is de node er dan niet, dan beginnen ze zodra hij terug is. Vroeg op zondag wachten ze tot deze instantie de oude back-ups van de node heeft opgeruimd.",
+  "overview.nodes.title": "Nodes",
+  "overview.nodes.hint": "De servers waarlangs deze instantie back-upt, en hoe het met hun back-ups gaat.",
+  "overview.nodes.none": "Nog geen nodes. Je kunt er een toevoegen onder Instanties.",
 };
 
 export default nl;

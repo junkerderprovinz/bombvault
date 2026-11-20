@@ -2875,6 +2875,7 @@ const fi: Partial<Translations> = {
   "activityLog.jobReceiver": "vastaanotettujen arkistojen tarkistus",
   "activityLog.jobFleet": "instanssien tarkistus",
   "activityLog.jobPull": "nouto lähteistä",
+  "activityLog.jobNodes": "solmujen varmuuskopiot",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Etäreplikointi valmis: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Etäreplikointi ei löytänyt mitään uutta kopioitavaa: {domain}",
@@ -5539,6 +5540,11 @@ const fi: Partial<Translations> = {
   "nodes.restoreAsk": "Palautetaanko {name} solmulle varmuuskopiosta, joka on tehty {time}? Siellä nyt oleva korvataan.",
   "nodes.restoreStarted": "{name}: palautus alkoi solmulla.",
   "nodes.entryMissing": "Solmu ei listaa tätä merkintää.",
+  "nodes.when": "Milloin se varmuuskopioi",
+  "nodes.whenTip": "Tämä instanssi käynnistää solmun varmuuskopiot näihin aikoihin. Jos solmu ei silloin ole tavoitettavissa, ne alkavat heti kun se palaa. Sunnuntaiaamuna varhain ne odottavat, kunnes tämä instanssi on siivonnut solmun vanhat varmuuskopiot.",
+  "overview.nodes.title": "Solmut",
+  "overview.nodes.hint": "Palvelimet, joiden kautta tämä instanssi varmuuskopioi, ja miten niiden varmuuskopiot sujuvat.",
+  "overview.nodes.none": "Solmuja ei vielä ole. Voit lisätä sellaisen kohdassa Ilmentymät.",
 };
 
 export default fi;

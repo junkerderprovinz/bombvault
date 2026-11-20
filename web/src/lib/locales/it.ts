@@ -2875,6 +2875,7 @@ const it: Partial<Translations> = {
   "activityLog.jobReceiver": "controllo dei repository ricevuti",
   "activityLog.jobFleet": "controllo delle istanze",
   "activityLog.jobPull": "prelievo dalle origini",
+  "activityLog.jobNodes": "backup sui nodi",
   "activityLog.jobReplica": "replica ZFS",
   "activityLog.lineOffsiteSuccess": "Replica off-site completata: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "La replica off-site non ha trovato nulla di nuovo da copiare: {domain}",
@@ -5538,6 +5539,11 @@ const it: Partial<Translations> = {
   "nodes.restoreAsk": "Ripristinare {name} sul nodo dal backup del {time}? Quello che c'è ora verrà sostituito.",
   "nodes.restoreStarted": "Il ripristino di {name} è partito sul nodo.",
   "nodes.entryMissing": "Il nodo non elenca questo elemento.",
+  "nodes.when": "Quando fa il backup",
+  "nodes.whenTip": "Questa istanza avvia i backup del nodo a questi orari. Se in quel momento il nodo non c'è, partono appena torna. La domenica all'alba aspettano che questa istanza abbia riordinato i vecchi backup del nodo.",
+  "overview.nodes.title": "Nodi",
+  "overview.nodes.hint": "I server attraverso cui questa istanza fa i backup, e come vanno i loro backup.",
+  "overview.nodes.none": "Ancora nessun nodo. Puoi aggiungerne uno in Istanze.",
 };
 
 export default it;

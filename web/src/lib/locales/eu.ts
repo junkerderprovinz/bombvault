@@ -3051,6 +3051,7 @@ const eu: Partial<Translations> = {
   "activityLog.jobReceiver": "jasotako biltegien egiaztapena",
   "activityLog.jobFleet": "instantzien egiaztapena",
   "activityLog.jobPull": "iturburuetatik ekartzea",
+  "activityLog.jobNodes": "nodoetako babeskopiak",
   "activityLog.jobReplica": "ZFS erreplika",
   "activityLog.lineBackingUpItem": "{name} babesten… %{percent}",
   "activityLog.lineReplicatingItem": "{name} erreplikatzen… %{percent}",
@@ -5549,6 +5550,11 @@ const eu: Partial<Translations> = {
   "nodes.restoreAsk": "{name} nodoan berrezarri nahi duzu? Babeskopia: {time}. Orain han dagoena ordeztu egingo da.",
   "nodes.restoreStarted": "Berrezartzea nodoan hasi da: {name}.",
   "nodes.entryMissing": "Nodoak ez du sarrera hau zerrendatzen.",
+  "nodes.when": "Noiz egiten dituen babeskopiak",
+  "nodes.whenTip": "Instantzia honek nodoaren babeskopiak ordu hauetan abiarazten ditu. Nodoa orduan ez badago, itzuli bezain laster hasten dira. Igande goizean goiz itxaron egiten dute, instantzia honek nodoaren babeskopia zaharrak txukundu arte.",
+  "overview.nodes.title": "Nodoak",
+  "overview.nodes.hint": "Instantzia honek babeskopiak egiteko erabiltzen dituen zerbitzariak, eta nola doazen haien babeskopiak.",
+  "overview.nodes.none": "Oraindik ez dago nodorik. Instantziak atalean gehi dezakezu bat.",
 };
 
 export default eu;

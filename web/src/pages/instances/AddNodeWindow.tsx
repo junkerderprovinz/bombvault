@@ -1,10 +1,10 @@
-// Adding a node takes three steps: its name, which makes its APP_KEY, where its
-// backups are to go, and the compose file that starts it. The window then
+// Adding a node takes three steps: its name, which makes its APP_KEY, where and
+// when its backups are to go, and the compose file that starts it. The window then
 // waits until the node answers, and only then sends it where its backups go,
 // since a node takes that from the home it has adopted.
 
 import { useEffect, useState } from "react";
-import { addNode, listNodes, placeNode, type NodeCompose, type NodeView } from "../../lib/api";
+import { addNode, listNodes, placeNode, setNodeSchedule, type NodeCompose, type NodeView } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { secretsSentence } from "../../lib/secretsRefusal";
 import { useOwnLogin } from "../../lib/useOwnLogin";
@@ -14,6 +14,7 @@ import { CheckDraw } from "../../components/CheckDraw";
 import { StepBar } from "../../components/restore/StepBar";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { ComposeView } from "./NodeCompose";
+import { DEFAULT_NODE_SCHEDULE, NodeSchedule } from "./NodeSchedule";
 import { InstanceWindow } from "./InstanceWindow";
 import {
   PlacementFields,
@@ -46,6 +47,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
   const [choice, setChoice] = useState<PlacementChoice | null>(null);
   const [adopted, setAdopted] = useState(false);
   const [placed, setPlaced] = useState<Placed>({ state: "waiting" });
+  const [schedule, setSchedule] = useState(DEFAULT_NODE_SCHEDULE);
 
   useEffect(() => {
     if (sources && !choice) setChoice(firstChoice(sources));
@@ -103,11 +105,16 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
   }
 
   async function confirmPlacement() {
-    if (!choice || !sources) return;
+    if (!choice || !sources || !created) return;
     setBusy(true);
     setError(null);
     try {
-      const refused = placeable ? await saveAddress(choice, sources, t) : null;
+      const saved = await setNodeSchedule(created.node.id, schedule).catch((err: unknown) => ({
+        ok: false as const,
+        error: err instanceof Error ? err.message : undefined,
+      }));
+      let refused = saved.ok ? null : (saved.error ?? t("settings.error"));
+      if (!refused && placeable) refused = await saveAddress(choice, sources, t);
       if (refused) setError(refused);
       else setStep(3);
     } finally {
@@ -184,6 +191,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
       )}
 
       {step === 2 && sources && choice && <PlacementFields choice={choice} sources={sources} onChange={setChoice} />}
+      {step === 2 && sources && <NodeSchedule value={schedule} onChange={(section, cadence) => setSchedule({ ...schedule, [section]: cadence })} />}
       {step === 2 && !sources && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
 
       {step === 3 && created && (

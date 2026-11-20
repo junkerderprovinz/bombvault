@@ -2876,6 +2876,7 @@ const th: Partial<Translations> = {
   "activityLog.jobReceiver": "การตรวจสอบที่เก็บที่ได้รับ",
   "activityLog.jobFleet": "การตรวจสอบอินสแตนซ์",
   "activityLog.jobPull": "การดึงจากต้นทาง",
+  "activityLog.jobNodes": "การสำรองข้อมูลบนโหนด",
   "activityLog.jobReplica": "สำเนา ZFS",
   "activityLog.lineOffsiteSuccess": "การจำลองข้อมูลนอกสถานที่เสร็จสิ้น {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "การจำลองข้อมูลนอกสถานที่ไม่พบสิ่งใหม่ที่ต้องคัดลอก {domain}",
@@ -5539,6 +5540,11 @@ const th: Partial<Translations> = {
   "nodes.restoreAsk": "กู้คืน {name} บนโหนดจากข้อมูลสำรองเมื่อ {time} ไหม? ข้อมูลที่อยู่ที่นั่นตอนนี้จะถูกแทนที่",
   "nodes.restoreStarted": "เริ่มกู้คืน {name} บนโหนดแล้ว",
   "nodes.entryMissing": "โหนดไม่มีรายการนี้",
+  "nodes.when": "เวลาสำรองข้อมูล",
+  "nodes.whenTip": "อินสแตนซ์นี้เริ่มการสำรองข้อมูลของโหนดตามเวลาเหล่านี้ ถ้าตอนนั้นโหนดไม่พร้อมใช้งาน การสำรองจะเริ่มทันทีที่โหนดกลับมา ช่วงเช้าตรู่วันอาทิตย์ การสำรองจะรอจนกว่าอินสแตนซ์นี้จะจัดระเบียบข้อมูลสำรองเก่าของโหนดเสร็จ",
+  "overview.nodes.title": "โหนด",
+  "overview.nodes.hint": "เซิร์ฟเวอร์ที่อินสแตนซ์นี้ใช้สำรองข้อมูล และสถานะการสำรองข้อมูลของแต่ละเครื่อง",
+  "overview.nodes.none": "ยังไม่มีโหนด คุณเพิ่มได้ที่หน้าอินสแตนซ์",
 };
 
 export default th;

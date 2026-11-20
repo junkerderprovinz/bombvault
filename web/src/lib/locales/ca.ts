@@ -3051,6 +3051,7 @@ const ca: Partial<Translations> = {
   "activityLog.jobReceiver": "comprovació de repositoris rebuts",
   "activityLog.jobFleet": "comprovació d'instàncies",
   "activityLog.jobPull": "recollida d'orígens",
+  "activityLog.jobNodes": "còpies als nodes",
   "activityLog.jobReplica": "rèplica ZFS",
   "activityLog.lineBackingUpItem": "Fent còpia de {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replicant {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const ca: Partial<Translations> = {
   "nodes.restoreAsk": "Vols restaurar {name} al node des de la còpia del {time}? El que hi ha ara se substituirà.",
   "nodes.restoreStarted": "La restauració de {name} s'ha iniciat al node.",
   "nodes.entryMissing": "El node no té aquesta entrada a la llista.",
+  "nodes.when": "Quan fa còpies",
+  "nodes.whenTip": "Aquesta instància inicia les còpies del node a aquestes hores. Si llavors el node no hi és, comencen tan bon punt torna. Diumenge a primera hora esperen fins que aquesta instància ha endreçat les còpies antigues del node.",
+  "overview.nodes.title": "Nodes",
+  "overview.nodes.hint": "Els servidors a través dels quals fa còpies aquesta instància, i com van les seves còpies.",
+  "overview.nodes.none": "Encara no hi ha cap node. En pots afegir un a Instàncies.",
 };
 
 export default ca;

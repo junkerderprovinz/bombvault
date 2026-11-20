@@ -3051,6 +3051,7 @@ const sk: Partial<Translations> = {
   "activityLog.jobReceiver": "kontrola prijatých úložísk",
   "activityLog.jobFleet": "kontrola inštancií",
   "activityLog.jobPull": "sťahovanie zo zdrojov",
+  "activityLog.jobNodes": "zálohy na uzloch",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Zálohuje sa {name} … {percent} %",
   "activityLog.lineReplicatingItem": "Replikuje sa {name} … {percent} %",
@@ -5549,6 +5550,11 @@ const sk: Partial<Translations> = {
   "nodes.restoreAsk": "Obnoviť {name} na uzle zo zálohy z {time}? To, čo tam je teraz, sa nahradí.",
   "nodes.restoreStarted": "Obnova {name} sa na uzle spustila.",
   "nodes.entryMissing": "Uzol túto položku nemá v zozname.",
+  "nodes.when": "Kedy zálohuje",
+  "nodes.whenTip": "Táto inštancia spúšťa zálohy uzla v tieto časy. Ak vtedy uzol nie je dostupný, spustia sa hneď, ako sa vráti. V nedeľu skoro ráno počkajú, kým táto inštancia upratá staré zálohy uzla.",
+  "overview.nodes.title": "Uzly",
+  "overview.nodes.hint": "Servery, cez ktoré táto inštancia zálohuje, a ako sa im darí so zálohami.",
+  "overview.nodes.none": "Zatiaľ žiadne uzly. Jeden môžeš pridať v časti Inštancie.",
 };
 
 export default sk;

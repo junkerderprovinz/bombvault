@@ -3051,6 +3051,7 @@ const gl: Partial<Translations> = {
   "activityLog.jobReceiver": "comprobación de repositorios recibidos",
   "activityLog.jobFleet": "comprobación de instancias",
   "activityLog.jobPull": "recollida de orixes",
+  "activityLog.jobNodes": "copias nos nodos",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineBackingUpItem": "Copiando {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replicando {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const gl: Partial<Translations> = {
   "nodes.restoreAsk": "Restaurar {name} no nodo desde a copia de seguridade do {time}? O que hai alí agora será substituído.",
   "nodes.restoreStarted": "A restauración de {name} comezou no nodo.",
   "nodes.entryMissing": "O nodo non lista este elemento.",
+  "nodes.when": "Cando fai copias",
+  "nodes.whenTip": "Esta instancia inicia as copias do nodo a estas horas. Se o nodo non está nese momento, comezan en canto volve. O domingo de madrugada agardan ata que esta instancia ordena as copias antigas do nodo.",
+  "overview.nodes.title": "Nodos",
+  "overview.nodes.hint": "Os servidores a través dos que fai copias esta instancia, e como van as súas copias.",
+  "overview.nodes.none": "Aínda non hai nodos. Podes engadir un en Instancias.",
 };
 
 export default gl;

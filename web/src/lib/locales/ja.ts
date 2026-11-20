@@ -2866,6 +2866,7 @@ const ja: Partial<Translations> = {
   "activityLog.jobReceiver": "受信リポジトリの点検",
   "activityLog.jobFleet": "インスタンスの点検",
   "activityLog.jobPull": "取得元からの取り込み",
+  "activityLog.jobNodes": "ノードのバックアップ",
   "activityLog.jobReplica": "ZFS レプリカ",
   "activityLog.lineOffsiteSuccess": "オフサイトレプリケーション完了：{domain}（{duration}）",
   "activityLog.lineOffsiteNothing": "オフサイトレプリケーションでコピーする新しいものはありませんでした：{domain}",
@@ -5529,6 +5530,11 @@ const ja: Partial<Translations> = {
   "nodes.restoreAsk": "ノード上の {name} を {time} のバックアップから復元しますか？今ある内容は置き換えられます。",
   "nodes.restoreStarted": "{name} の復元をノードで開始しました。",
   "nodes.entryMissing": "ノードの一覧にこの項目はありません。",
+  "nodes.when": "バックアップの時刻",
+  "nodes.whenTip": "このインスタンスは、これらの時刻にノードのバックアップを開始します。その時刻にノードが不在なら、戻りしだい開始します。日曜日の早朝は、このインスタンスがノードの古いバックアップを整理し終えるまで待ちます。",
+  "overview.nodes.title": "ノード",
+  "overview.nodes.hint": "このインスタンスがバックアップに使うサーバーと、そのバックアップの状況です。",
+  "overview.nodes.none": "ノードはまだありません。インスタンスで追加できます。",
 };
 
 export default ja;

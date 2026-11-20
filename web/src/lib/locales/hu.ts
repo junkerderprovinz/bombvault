@@ -2876,6 +2876,7 @@ const hu: Partial<Translations> = {
   "activityLog.jobReceiver": "fogadott tárolók ellenőrzése",
   "activityLog.jobFleet": "példányok ellenőrzése",
   "activityLog.jobPull": "behúzás forrásokból",
+  "activityLog.jobNodes": "mentések a csomópontokon",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Telephelyen kívüli replikáció kész: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "A telephelyen kívüli replikáció nem talált új másolnivalót: {domain}",
@@ -5539,6 +5540,11 @@ const hu: Partial<Translations> = {
   "nodes.restoreAsk": "Visszaállítod ezt a csomóponton a(z) {time} időpontú biztonsági mentésből: {name}? Ami most ott van, felülíródik.",
   "nodes.restoreStarted": "{name} visszaállítása elindult a csomóponton.",
   "nodes.entryMissing": "A csomópont nem sorolja fel ezt az elemet.",
+  "nodes.when": "Mikor ment",
+  "nodes.whenTip": "Ez a példány ezekben az időpontokban indítja a csomópont mentéseit. Ha a csomópont akkor nem érhető el, a mentések azonnal elindulnak, amint visszatér. Vasárnap kora reggel megvárják, amíg ez a példány rendet tesz a csomópont régi mentései között.",
+  "overview.nodes.title": "Csomópontok",
+  "overview.nodes.hint": "A szerverek, amelyeken keresztül ez a példány ment, és hogy állnak a mentéseik.",
+  "overview.nodes.none": "Még nincs csomópont. A Példányok alatt hozzáadhatsz egyet.",
 };
 
 export default hu;

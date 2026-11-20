@@ -3051,6 +3051,7 @@ const is: Partial<Translations> = {
   "activityLog.jobReceiver": "athugun á móttekinni geymslu",
   "activityLog.jobFleet": "athugun á tilvikum",
   "activityLog.jobPull": "sókn frá upprunum",
+  "activityLog.jobNodes": "afritun á hnútum",
   "activityLog.jobReplica": "ZFS-afrit",
   "activityLog.lineBackingUpItem": "Afrita {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Býr til eftirmynd af {name} … {percent}%",
@@ -5548,6 +5549,11 @@ const is: Partial<Translations> = {
   "nodes.restoreAsk": "Endurheimta {name} á hnútnum úr afritinu frá {time}? Því sem er þar núna verður skipt út.",
   "nodes.restoreStarted": "Endurheimt á {name} hófst á hnútnum.",
   "nodes.entryMissing": "Hnúturinn listar ekki þessa færslu.",
+  "nodes.when": "Hvenær hann tekur afrit",
+  "nodes.whenTip": "Þetta tilvik ræsir afritun hnútsins á þessum tímum. Ef hnúturinn er ekki tengdur þá hefst hún um leið og hann kemur aftur. Snemma á sunnudagsmorgnum bíður hún þar til þetta tilvik hefur tekið til í gömlu afritum hnútsins.",
+  "overview.nodes.title": "Hnútar",
+  "overview.nodes.hint": "Þjónarnir sem þetta tilvik tekur afrit í gegnum, og hvernig afritunin þeirra gengur.",
+  "overview.nodes.none": "Engir hnútar enn. Þú getur bætt einum við undir Tilvik.",
 };
 
 export default is;

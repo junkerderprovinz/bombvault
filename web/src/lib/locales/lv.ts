@@ -3051,6 +3051,7 @@ const lv: Partial<Translations> = {
   "activityLog.jobReceiver": "saņemto repozitoriju pārbaude",
   "activityLog.jobFleet": "instances pārbaude",
   "activityLog.jobPull": "ievilkšana no avotiem",
+  "activityLog.jobNodes": "mezglu rezerves kopijas",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Dublē {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replicē {name} … {percent}%",
@@ -5548,6 +5549,11 @@ const lv: Partial<Translations> = {
   "nodes.restoreAsk": "Atjaunot ierakstu {name} mezglā no rezerves kopijas ({time})? Tas, kas tur ir tagad, tiks aizstāts.",
   "nodes.restoreStarted": "Mezglā sākta ieraksta {name} atjaunošana.",
   "nodes.entryMissing": "Mezgla sarakstā šī ieraksta nav.",
+  "nodes.when": "Kad tas veido kopijas",
+  "nodes.whenTip": "Šī instance šajos laikos sāk mezgla rezerves kopēšanu. Ja mezgls tobrīd nav pieejams, tā sākas, tiklīdz tas atgriežas. Svētdienas agrā rītā tā gaida, līdz šī instance sakārto mezgla vecās rezerves kopijas.",
+  "overview.nodes.title": "Mezgli",
+  "overview.nodes.hint": "Serveri, caur kuriem šī instance veido rezerves kopijas, un kā tām klājas.",
+  "overview.nodes.none": "Mezglu vēl nav. Vienu varat pievienot sadaļā Instances.",
 };
 
 export default lv;

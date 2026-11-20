@@ -2875,6 +2875,7 @@ const sv: Partial<Translations> = {
   "activityLog.jobReceiver": "kontroll av mottagna arkiv",
   "activityLog.jobFleet": "kontroll av instanser",
   "activityLog.jobPull": "hämtning från källor",
+  "activityLog.jobNodes": "säkerhetskopior på noder",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering klar: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Off-site-replikering hittade inget nytt att kopiera: {domain}",
@@ -5538,6 +5539,11 @@ const sv: Partial<Translations> = {
   "nodes.restoreAsk": "Återställa {name} på noden från säkerhetskopian från {time}? Det som finns där nu ersätts.",
   "nodes.restoreStarted": "Återställningen av {name} har startat på noden.",
   "nodes.entryMissing": "Noden listar inte den här posten.",
+  "nodes.when": "När den säkerhetskopierar",
+  "nodes.whenTip": "Den här instansen startar nodens säkerhetskopior vid de här tiderna. Är noden borta då, startar de så fort den är tillbaka. Tidigt på söndagsmorgonen väntar de tills den här instansen har städat bland nodens gamla säkerhetskopior.",
+  "overview.nodes.title": "Noder",
+  "overview.nodes.hint": "Servrarna som den här instansen säkerhetskopierar genom, och hur det går för deras säkerhetskopior.",
+  "overview.nodes.none": "Inga noder än. Du kan lägga till en under Instanser.",
 };
 
 export default sv;

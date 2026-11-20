@@ -2876,6 +2876,7 @@ const ro: Partial<Translations> = {
   "activityLog.jobReceiver": "verificarea depozitelor primite",
   "activityLog.jobFleet": "verificarea instanțelor",
   "activityLog.jobPull": "preluare din surse",
+  "activityLog.jobNodes": "copii pe noduri",
   "activityLog.jobReplica": "replică ZFS",
   "activityLog.lineOffsiteSuccess": "Replicarea externă finalizată: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Replicarea externă nu a găsit nimic nou de copiat: {domain}",
@@ -5540,6 +5541,11 @@ const ro: Partial<Translations> = {
   "nodes.restoreAsk": "Restaurezi {name} pe nod din copia de rezervă din {time}? Ce e acolo acum va fi înlocuit.",
   "nodes.restoreStarted": "Restaurarea pentru {name} a pornit pe nod.",
   "nodes.entryMissing": "Nodul nu listează acest element.",
+  "nodes.when": "Când face copii",
+  "nodes.whenTip": "Această instanță pornește copiile de rezervă ale nodului la aceste ore. Dacă nodul nu e disponibil atunci, pornesc imediat ce revine. Duminică dimineața devreme așteaptă până când această instanță face ordine în copiile vechi ale nodului.",
+  "overview.nodes.title": "Noduri",
+  "overview.nodes.hint": "Serverele prin care face copii această instanță și cum merg copiile lor.",
+  "overview.nodes.none": "Încă nu există noduri. Poți adăuga unul la Instanțe.",
 };
 
 export default ro;

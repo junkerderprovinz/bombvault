@@ -3051,6 +3051,7 @@ const fa: Partial<Translations> = {
   "activityLog.jobReceiver": "بررسی مخازن دریافتی",
   "activityLog.jobFleet": "بررسی نمونه‌ها",
   "activityLog.jobPull": "کشیدن از منابع",
+  "activityLog.jobNodes": "پشتیبان‌گیری روی گره‌ها",
   "activityLog.jobReplica": "رونوشت ZFS",
   "activityLog.lineBackingUpItem": "در حال پشتیبان‌گیری {name} … {percent}٪",
   "activityLog.lineReplicatingItem": "در حال ایجاد ریپلیکای {name} … {percent}٪",
@@ -5549,6 +5550,11 @@ const fa: Partial<Translations> = {
   "nodes.restoreAsk": "{name} روی گره از پشتیبانِ {time} بازیابی شود؟ آنچه الان آنجاست جایگزین می‌شود.",
   "nodes.restoreStarted": "بازیابی {name} روی گره شروع شد.",
   "nodes.entryMissing": "گره این مورد را در فهرستش ندارد.",
+  "nodes.when": "زمان پشتیبان‌گیری",
+  "nodes.whenTip": "این نمونه پشتیبان‌گیری‌های گره را در این زمان‌ها شروع می‌کند. اگر گره در آن زمان در دسترس نباشد، به محض برگشتنش شروع می‌شوند. صبح زود یکشنبه صبر می‌کنند تا این نمونه پشتیبان‌های قدیمی گره را مرتب کند.",
+  "overview.nodes.title": "گره‌ها",
+  "overview.nodes.hint": "سرورهایی که این نمونه از طریق آن‌ها پشتیبان می‌گیرد، و وضعیت پشتیبان‌هایشان.",
+  "overview.nodes.none": "هنوز گرهی نیست. می‌توانی یکی را در نمونه‌ها اضافه کنی.",
 };
 
 export default fa;

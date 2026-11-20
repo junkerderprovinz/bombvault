@@ -3051,6 +3051,7 @@ const id: Partial<Translations> = {
   "activityLog.jobReceiver": "pemeriksaan repositori diterima",
   "activityLog.jobFleet": "pemeriksaan instance",
   "activityLog.jobPull": "penarikan dari sumber",
+  "activityLog.jobNodes": "pencadangan di node",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Mencadangkan {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Mereplikasi {name} … {percent}%",
@@ -5548,6 +5549,11 @@ const id: Partial<Translations> = {
   "nodes.restoreAsk": "Pulihkan {name} di node dari cadangan {time}? Isi yang ada di sana sekarang akan diganti.",
   "nodes.restoreStarted": "Pemulihan {name} dimulai di node.",
   "nodes.entryMissing": "Node tidak mencantumkan entri ini.",
+  "nodes.when": "Kapan mencadangkan",
+  "nodes.whenTip": "Instance ini memulai pencadangan node pada waktu-waktu ini. Jika node sedang tidak tersedia saat itu, pencadangan dimulai begitu node kembali. Pada Minggu pagi buta, pencadangan menunggu sampai instance ini selesai merapikan cadangan lama node.",
+  "overview.nodes.title": "Node",
+  "overview.nodes.hint": "Server tempat instance ini mencadangkan, dan bagaimana kabar cadangannya.",
+  "overview.nodes.none": "Belum ada node. Anda bisa menambahkannya di Instansi.",
 };
 
 export default id;

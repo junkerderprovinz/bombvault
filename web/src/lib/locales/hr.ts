@@ -3051,6 +3051,7 @@ const hr: Partial<Translations> = {
   "activityLog.jobReceiver": "provjera primljenih repozitorija",
   "activityLog.jobFleet": "provjera instance",
   "activityLog.jobPull": "dohvat iz izvora",
+  "activityLog.jobNodes": "sigurnosne kopije na čvorovima",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Izrada sigurnosne kopije {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replikacija {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const hr: Partial<Translations> = {
   "nodes.restoreAsk": "Vratiti {name} na čvoru iz sigurnosne kopije od {time}? Ono što je sada ondje bit će zamijenjeno.",
   "nodes.restoreStarted": "Vraćanje stavke {name} pokrenuto je na čvoru.",
   "nodes.entryMissing": "Čvor ne navodi ovu stavku.",
+  "nodes.when": "Kada radi kopije",
+  "nodes.whenTip": "Ova instanca pokreće sigurnosne kopije čvora u ta vremena. Ako čvor tada nije dostupan, počinju čim se vrati. U nedjelju rano ujutro čekaju dok ova instanca ne posloži stare kopije čvora.",
+  "overview.nodes.title": "Čvorovi",
+  "overview.nodes.hint": "Poslužitelji preko kojih ova instanca radi sigurnosne kopije i kako im idu kopije.",
+  "overview.nodes.none": "Još nema čvorova. Jedan možete dodati pod Instance.",
 };
 
 export default hr;

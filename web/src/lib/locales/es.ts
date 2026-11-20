@@ -2873,6 +2873,7 @@ const es: Partial<Translations> = {
   "activityLog.jobReceiver": "comprobación de repositorios recibidos",
   "activityLog.jobFleet": "comprobación de instancias",
   "activityLog.jobPull": "recogida de orígenes",
+  "activityLog.jobNodes": "copias en nodos",
   "activityLog.jobReplica": "réplica ZFS",
   "activityLog.lineOffsiteSuccess": "Replicación externa completada: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "La replicación externa no encontró nada nuevo que copiar: {domain}",
@@ -5537,6 +5538,11 @@ const es: Partial<Translations> = {
   "nodes.restoreAsk": "¿Restaurar {name} en el nodo desde la copia del {time}? Lo que hay ahora allí se reemplazará.",
   "nodes.restoreStarted": "La restauración de {name} ha empezado en el nodo.",
   "nodes.entryMissing": "El nodo no tiene esta entrada en su lista.",
+  "nodes.when": "Cuándo hace copias",
+  "nodes.whenTip": "Esta instancia inicia las copias del nodo a estas horas. Si el nodo no está en ese momento, empiezan en cuanto vuelve. El domingo de madrugada esperan hasta que esta instancia ha ordenado las copias antiguas del nodo.",
+  "overview.nodes.title": "Nodos",
+  "overview.nodes.hint": "Los servidores a través de los que hace copias esta instancia, y cómo van sus copias.",
+  "overview.nodes.none": "Aún no hay nodos. Puedes añadir uno en Instancias.",
 };
 
 export default es;

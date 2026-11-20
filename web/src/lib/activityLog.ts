@@ -118,6 +118,7 @@ export const JOB_KEYS: Record<string, string> = {
   receiver: "activityLog.jobReceiver",
   fleet: "activityLog.jobFleet",
   pull: "activityLog.jobPull",
+  nodes: "activityLog.jobNodes",
   replica: "activityLog.jobReplica",
 };
 

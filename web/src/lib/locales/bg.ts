@@ -3051,6 +3051,7 @@ const bg: Partial<Translations> = {
   "activityLog.jobReceiver": "проверка на получените хранилища",
   "activityLog.jobFleet": "проверка на инстанциите",
   "activityLog.jobPull": "изтегляне от източници",
+  "activityLog.jobNodes": "архиви на възли",
   "activityLog.jobReplica": "ZFS реплика",
   "activityLog.lineBackingUpItem": "Архивиране на {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Репликиране на {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const bg: Partial<Translations> = {
   "nodes.restoreAsk": "Да възстановя ли {name} на възела от архива от {time}? Това, което е там сега, ще бъде заменено.",
   "nodes.restoreStarted": "Възстановяването на {name} започна на възела.",
   "nodes.entryMissing": "Възелът не показва този запис.",
+  "nodes.when": "Кога архивира",
+  "nodes.whenTip": "Тази инстанция стартира архивирането на възела в тези часове. Ако тогава възелът не е на линия, архивирането започва веднага щом се върне. В неделя рано сутрин то изчаква, докато тази инстанция подреди старите архиви на възела.",
+  "overview.nodes.title": "Възли",
+  "overview.nodes.hint": "Сървърите, чрез които архивира тази инстанция, и как вървят архивите им.",
+  "overview.nodes.none": "Още няма възли. Можеш да добавиш един в Инстанции.",
 };
 
 export default bg;

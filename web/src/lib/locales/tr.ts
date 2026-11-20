@@ -2875,6 +2875,7 @@ const tr: Partial<Translations> = {
   "activityLog.jobReceiver": "alınan depo denetimi",
   "activityLog.jobFleet": "örnek denetimi",
   "activityLog.jobPull": "kaynaklardan çekme",
+  "activityLog.jobNodes": "düğümlerdeki yedekler",
   "activityLog.jobReplica": "ZFS kopyası",
   "activityLog.lineOffsiteSuccess": "Site dışı çoğaltma tamamlandı: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Site dışı çoğaltma kopyalanacak yeni bir şey bulmadı: {domain}",
@@ -5538,6 +5539,11 @@ const tr: Partial<Translations> = {
   "nodes.restoreAsk": "{name}, düğümde {time} tarihli yedekten geri yüklensin mi? Şu an orada olan her şey değiştirilecek.",
   "nodes.restoreStarted": "{name} geri yüklemesi düğümde başladı.",
   "nodes.entryMissing": "Düğüm bu kaydı listelemiyor.",
+  "nodes.when": "Ne zaman yedekler",
+  "nodes.whenTip": "Bu örnek, düğümün yedeklerini bu saatlerde başlatır. Düğüm o sırada ulaşılamıyorsa, yedekler döner dönmez başlar. Pazar sabahı erken saatlerde, bu örnek düğümün eski yedeklerini toparlayana kadar beklerler.",
+  "overview.nodes.title": "Düğümler",
+  "overview.nodes.hint": "Bu örneğin üzerinden yedek aldığı sunucular ve yedeklerinin durumu.",
+  "overview.nodes.none": "Henüz düğüm yok. Örnekler altında bir tane ekleyebilirsin.",
 };
 
 export default tr;

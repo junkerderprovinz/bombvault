@@ -2875,6 +2875,7 @@ const fr: Partial<Translations> = {
   "activityLog.jobReceiver": "vérification des dépôts reçus",
   "activityLog.jobFleet": "vérification des instances",
   "activityLog.jobPull": "récupération depuis les sources",
+  "activityLog.jobNodes": "sauvegardes sur les nœuds",
   "activityLog.jobReplica": "réplique ZFS",
   "activityLog.lineOffsiteSuccess": "Réplication hors site terminée : {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "La réplication hors site n’a rien trouvé de nouveau à copier : {domain}",
@@ -5539,6 +5540,11 @@ const fr: Partial<Translations> = {
   "nodes.restoreAsk": "Restaurer {name} sur le nœud à partir de la sauvegarde du {time} ? Ce qui s'y trouve maintenant sera remplacé.",
   "nodes.restoreStarted": "La restauration de {name} a démarré sur le nœud.",
   "nodes.entryMissing": "Le nœud ne liste pas cet élément.",
+  "nodes.when": "Quand il sauvegarde",
+  "nodes.whenTip": "Cette instance lance les sauvegardes du nœud à ces heures. Si le nœud est absent à ce moment-là, elles démarrent dès qu'il revient. Tôt le dimanche, elles attendent que cette instance ait fait le tri dans les anciennes sauvegardes du nœud.",
+  "overview.nodes.title": "Nœuds",
+  "overview.nodes.hint": "Les serveurs par lesquels cette instance sauvegarde, et où en sont leurs sauvegardes.",
+  "overview.nodes.none": "Pas encore de nœud. Vous pouvez en ajouter un dans Instances.",
 };
 
 export default fr;

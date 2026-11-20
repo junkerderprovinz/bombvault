@@ -2876,6 +2876,7 @@ const ar: Partial<Translations> = {
   "activityLog.jobReceiver": "فحص المستودعات المستلمة",
   "activityLog.jobFleet": "فحص المثيلات",
   "activityLog.jobPull": "السحب من المصادر",
+  "activityLog.jobNodes": "النسخ الاحتياطي على العقد",
   "activityLog.jobReplica": "نسخة ZFS المتماثلة",
   "activityLog.lineOffsiteSuccess": "اكتمل النسخ المتماثل خارج الموقع: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "لم يجد النسخ المتماثل خارج الموقع شيئًا جديدًا لنسخه: {domain}",
@@ -5540,6 +5541,11 @@ const ar: Partial<Translations> = {
   "nodes.restoreAsk": "استعادة {name} على العقدة من النسخة الاحتياطية بتاريخ {time}؟ سيُستبدل ما هو موجود هناك الآن.",
   "nodes.restoreStarted": "بدأت استعادة {name} على العقدة.",
   "nodes.entryMissing": "لا تُدرج العقدة هذا الإدخال.",
+  "nodes.when": "متى يُنسخ احتياطيًا",
+  "nodes.whenTip": "يبدأ هذا المثيل النسخ الاحتياطي للعقدة في هذه الأوقات. إذا لم تكن العقدة متصلة حينها، يبدأ النسخ فور عودتها. في صباح الأحد ينتظر النسخ حتى ينتهي هذا المثيل من ترتيب النسخ القديمة للعقدة.",
+  "overview.nodes.title": "العقد",
+  "overview.nodes.hint": "الخوادم التي ينسخ هذا المثيل احتياطيًا من خلالها، وكيف تسير نسخها الاحتياطية.",
+  "overview.nodes.none": "لا توجد عقد بعد. يمكنك إضافة واحدة من المثيلات.",
 };
 
 export default ar;

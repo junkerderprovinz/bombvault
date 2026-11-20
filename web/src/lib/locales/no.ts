@@ -2875,6 +2875,7 @@ const no: Partial<Translations> = {
   "activityLog.jobReceiver": "sjekk av mottatte arkiver",
   "activityLog.jobFleet": "sjekk av instanser",
   "activityLog.jobPull": "henting fra kilder",
+  "activityLog.jobNodes": "sikkerhetskopier på noder",
   "activityLog.jobReplica": "ZFS-replika",
   "activityLog.lineOffsiteSuccess": "Off-site-replikering fullført: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Off-site-replikering fant ikke noe nytt å kopiere: {domain}",
@@ -5539,6 +5540,11 @@ const no: Partial<Translations> = {
   "nodes.restoreAsk": "Gjenopprette {name} på noden fra sikkerhetskopien fra {time}? Det som ligger der nå, blir erstattet.",
   "nodes.restoreStarted": "Gjenopprettingen av {name} har startet på noden.",
   "nodes.entryMissing": "Noden har ikke dette elementet i listen sin.",
+  "nodes.when": "Når den tar sikkerhetskopi",
+  "nodes.whenTip": "Denne instansen starter nodens sikkerhetskopier på disse tidspunktene. Er noden borte da, starter de så snart den er tilbake. Tidlig søndag morgen venter de til denne instansen har ryddet i nodens gamle sikkerhetskopier.",
+  "overview.nodes.title": "Noder",
+  "overview.nodes.hint": "Serverne denne instansen tar sikkerhetskopi gjennom, og hvordan det går med sikkerhetskopiene deres.",
+  "overview.nodes.none": "Ingen noder ennå. Du kan legge til en under Instanser.",
 };
 
 export default no;

@@ -2866,6 +2866,7 @@ const zh: Partial<Translations> = {
   "activityLog.jobReceiver": "接收仓库检查",
   "activityLog.jobFleet": "实例检查",
   "activityLog.jobPull": "从来源拉取",
+  "activityLog.jobNodes": "节点上的备份",
   "activityLog.jobReplica": "ZFS 副本",
   "activityLog.lineOffsiteSuccess": "异地复制完成：{domain}（{duration}）",
   "activityLog.lineOffsiteNothing": "异地复制没有发现需要复制的新内容：{domain}",
@@ -5529,6 +5530,11 @@ const zh: Partial<Translations> = {
   "nodes.restoreAsk": "要在节点上从 {time} 的备份还原 {name} 吗？那里现有的内容将被替换。",
   "nodes.restoreStarted": "{name} 的还原已在节点上开始。",
   "nodes.entryMissing": "节点没有列出此条目。",
+  "nodes.when": "备份时间",
+  "nodes.whenTip": "此实例会在这些时间启动节点的备份。如果节点届时不在线，备份会在它恢复后立即开始。周日清晨，备份会等此实例整理完节点的旧备份后再开始。",
+  "overview.nodes.title": "节点",
+  "overview.nodes.hint": "此实例借以备份的服务器，以及它们的备份情况。",
+  "overview.nodes.none": "还没有节点。你可以在实例中添加一个。",
 };
 
 export default zh;

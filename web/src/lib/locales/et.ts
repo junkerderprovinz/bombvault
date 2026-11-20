@@ -3051,6 +3051,7 @@ const et: Partial<Translations> = {
   "activityLog.jobReceiver": "vastuvõetud hoidlate kontroll",
   "activityLog.jobFleet": "eksemplaride kontroll",
   "activityLog.jobPull": "tõmbamine allikatest",
+  "activityLog.jobNodes": "sõlmede varundused",
   "activityLog.jobReplica": "ZFS-i koopia",
   "activityLog.lineBackingUpItem": "Varundatakse {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replikeeritakse {name} … {percent}%",
@@ -5549,6 +5550,11 @@ const et: Partial<Translations> = {
   "nodes.restoreAsk": "Kas taastada {name} sõlmes varundusest, mis tehti {time}? Praegu seal olev asendatakse.",
   "nodes.restoreStarted": "Taastamine algas sõlmes: {name}.",
   "nodes.entryMissing": "Sõlm ei loetle seda kirjet.",
+  "nodes.when": "Millal see varundab",
+  "nodes.whenTip": "See eksemplar käivitab sõlme varundused nendel aegadel. Kui sõlm pole siis kättesaadav, algavad need kohe, kui ta tagasi on. Pühapäeva varahommikul ootavad need, kuni see eksemplar on sõlme vanad varundused korda teinud.",
+  "overview.nodes.title": "Sõlmed",
+  "overview.nodes.hint": "Serverid, mille kaudu see eksemplar varundab, ja kuidas nende varundustel läheb.",
+  "overview.nodes.none": "Sõlmi veel pole. Saad ühe lisada jaotises Eksemplarid.",
 };
 
 export default et;

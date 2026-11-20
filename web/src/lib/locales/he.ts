@@ -2875,6 +2875,7 @@ const he: Partial<Translations> = {
   "activityLog.jobReceiver": "בדיקת מאגרים שהתקבלו",
   "activityLog.jobFleet": "בדיקת מופעים",
   "activityLog.jobPull": "משיכה ממקורות",
+  "activityLog.jobNodes": "גיבויים בצמתים",
   "activityLog.jobReplica": "עותק ZFS משוכפל",
   "activityLog.lineOffsiteSuccess": "שכפול מחוץ לאתר הושלם: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "השכפול מחוץ לאתר לא מצא שום דבר חדש להעתקה: {domain}",
@@ -5539,6 +5540,11 @@ const he: Partial<Translations> = {
   "nodes.restoreAsk": "לשחזר את {name} בצומת מהגיבוי מ-{time}? מה שנמצא שם עכשיו יוחלף.",
   "nodes.restoreStarted": "השחזור של {name} התחיל בצומת.",
   "nodes.entryMissing": "הצומת לא מציג את הפריט הזה ברשימה.",
+  "nodes.when": "מתי הוא מגבה",
+  "nodes.whenTip": "המופע הזה מפעיל את הגיבויים של הצומת בשעות האלה. אם הצומת לא זמין אז, הם מתחילים ברגע שהוא חוזר. ביום ראשון מוקדם בבוקר הם ממתינים עד שהמופע הזה מסדר את הגיבויים הישנים של הצומת.",
+  "overview.nodes.title": "צמתים",
+  "overview.nodes.hint": "השרתים שדרכם המופע הזה מגבה, ומה מצב הגיבויים שלהם.",
+  "overview.nodes.none": "עדיין אין צמתים. אפשר להוסיף צומת במופעים.",
 };
 
 export default he;

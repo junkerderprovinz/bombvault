@@ -13,9 +13,12 @@ import { useConfirm } from "../../lib/useConfirm";
 import { Facts, Figure, InstanceCard } from "./InstanceCard";
 import { ReplaceWindow } from "./NodeCompose";
 import { PlacementWindow } from "./NodePlacement";
+import { NodeCardSchedule } from "./NodeSchedule";
 import { isAdopted } from "../../lib/useNodes";
 
-function NodeBadge({ node }: { node: NodeView }) {
+/** NodeBadge says whether a node is there, waits for its first start or is
+ *  being released. */
+export function NodeBadge({ node }: { node: NodeView }) {
   const { t } = useT();
   if (node.state === "releasing") {
     return (
@@ -125,7 +128,9 @@ export function NodeCards({
               )
             }
             index={firstIndex + i}
-          />
+          >
+            {!releasing && <NodeCardSchedule node={node} onSaved={onChanged} />}
+          </InstanceCard>
         );
       })}
       {confirmDialog}

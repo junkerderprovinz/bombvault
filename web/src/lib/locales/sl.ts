@@ -3035,6 +3035,7 @@ const sl: Partial<Translations> = {
   "activityLog.jobReceiver": "preverjanje prejetih repozitorijev",
   "activityLog.jobFleet": "preverjanje instanc",
   "activityLog.jobPull": "prenos iz virov",
+  "activityLog.jobNodes": "varnostne kopije na vozliščih",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineBackingUpItem": "Izdelovanje varnostne kopije {name} … {percent} %",
   "activityLog.lineReplicatingItem": "Replikacija {name} … {percent} %",
@@ -5532,6 +5533,11 @@ const sl: Partial<Translations> = {
   "nodes.restoreAsk": "Obnovim {name} na vozlišču iz varnostne kopije, narejene {time}? Kar je tam zdaj, bo zamenjano.",
   "nodes.restoreStarted": "Obnova {name} se je začela na vozlišču.",
   "nodes.entryMissing": "Vozlišče tega vnosa nima na seznamu.",
+  "nodes.when": "Kdaj dela kopije",
+  "nodes.whenTip": "Ta instanca ob teh časih zažene varnostne kopije vozlišča. Če vozlišča takrat ni, se začnejo, takoj ko se vrne. V nedeljo zgodaj zjutraj počakajo, da ta instanca pospravi stare kopije vozlišča.",
+  "overview.nodes.title": "Vozlišča",
+  "overview.nodes.hint": "Strežniki, prek katerih ta instanca dela varnostne kopije, in kako gre njihovim kopijam.",
+  "overview.nodes.none": "Vozlišč še ni. Enega lahko dodaš pod Primerki.",
 };
 
 export default sl;

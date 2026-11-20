@@ -3705,6 +3705,7 @@ export const en = {
   "activityLog.jobReceiver": "received-repo check",
   "activityLog.jobFleet": "instance check",
   "activityLog.jobPull": "pull from sources",
+  "activityLog.jobNodes": "backups on nodes",
   "activityLog.jobReplica": "ZFS replica",
   "activityLog.lineBackingUpItem": "Backing up {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replicating {name} … {percent}%",
@@ -5882,6 +5883,11 @@ export const en = {
   "nodes.restoreAsk": "Restore {name} on the node from the backup of {time}? What is there now gets replaced.",
   "nodes.restoreStarted": "The restore of {name} started on the node.",
   "nodes.entryMissing": "The node does not list this entry.",
+  "nodes.when": "When it backs up",
+  "nodes.whenTip": "This instance starts the node's backups at these times. If the node is away then, they start as soon as it is back. Early on Sunday they wait while this instance tidies up the node's old backups.",
+  "overview.nodes.title": "Nodes",
+  "overview.nodes.hint": "The servers this instance backs up through, and how their backups are going.",
+  "overview.nodes.none": "No nodes yet. You can add one under Instances.",
 } as const;
 
 export type TranslationKey = keyof typeof en;
@@ -9324,6 +9330,7 @@ export const de: Translations = {
   "activityLog.jobReceiver": "Prüfung empfangener Repositories",
   "activityLog.jobFleet": "Instanzen-Prüfung",
   "activityLog.jobPull": "Abholen von Quellen",
+  "activityLog.jobNodes": "Sicherungen auf Knoten",
   "activityLog.jobReplica": "ZFS-Replik",
   "activityLog.lineBackingUpItem": "Sichere {name} … {percent} %",
   "activityLog.lineReplicatingItem": "Repliziere {name} … {percent} %",
@@ -11482,6 +11489,11 @@ export const de: Translations = {
   "nodes.restoreAsk": "{name} auf dem Knoten aus der Sicherung vom {time} wiederherstellen? Was dort jetzt liegt, wird ersetzt.",
   "nodes.restoreStarted": "Die Wiederherstellung von {name} läuft auf dem Knoten.",
   "nodes.entryMissing": "Der Knoten führt diesen Eintrag nicht.",
+  "nodes.when": "Wann er sichert",
+  "nodes.whenTip": "Diese Instanz startet die Sicherungen des Knotens zu diesen Zeiten. Ist der Knoten dann nicht da, starten sie, sobald er zurück ist. Sonntags früh warten sie, bis diese Instanz die alten Sicherungen des Knotens aufgeräumt hat.",
+  "overview.nodes.title": "Knoten",
+  "overview.nodes.hint": "Die Server, über die diese Instanz sichert, und wie es um ihre Sicherungen steht.",
+  "overview.nodes.none": "Noch keine Knoten. Unter Instanzen kannst du einen hinzufügen.",
 };
 
 // ---------------------------------------------------------------------------

@@ -3051,6 +3051,7 @@ const lt: Partial<Translations> = {
   "activityLog.jobReceiver": "gautų saugyklų patikra",
   "activityLog.jobFleet": "egzemplioriaus patikra",
   "activityLog.jobPull": "parsisiuntimas iš šaltinių",
+  "activityLog.jobNodes": "mazgų atsarginės kopijos",
   "activityLog.jobReplica": "ZFS replika",
   "activityLog.lineBackingUpItem": "Kopijuojama {name} … {percent}%",
   "activityLog.lineReplicatingItem": "Replikuojama {name} … {percent}%",
@@ -5548,6 +5549,11 @@ const lt: Partial<Translations> = {
   "nodes.restoreAsk": "Atkurti įrašą {name} mazge iš atsarginės kopijos ({time})? Tai, kas ten yra dabar, bus pakeista.",
   "nodes.restoreStarted": "Mazge pradėtas įrašo {name} atkūrimas.",
   "nodes.entryMissing": "Mazgo sąraše šio įrašo nėra.",
+  "nodes.when": "Kada daromos kopijos",
+  "nodes.whenTip": "Šis egzempliorius šiais laikais paleidžia mazgo atsargines kopijas. Jei tuo metu mazgo nėra, jos prasideda vos jam sugrįžus. Sekmadienio ankstų rytą jos palaukia, kol šis egzempliorius sutvarkys senas mazgo kopijas.",
+  "overview.nodes.title": "Mazgai",
+  "overview.nodes.hint": "Serveriai, per kuriuos šis egzempliorius daro atsargines kopijas, ir kaip joms sekasi.",
+  "overview.nodes.none": "Mazgų dar nėra. Vieną gali pridėti skiltyje Egzemplioriai.",
 };
 
 export default lt;

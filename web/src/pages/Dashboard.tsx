@@ -28,6 +28,7 @@ import { tallyEntries } from "../lib/protectionTally";
 import { failedRunsNeedingAttention } from "../lib/runFailures";
 import { useAnomalySummary } from "../lib/useAnomalies";
 import { useLogoHold } from "../lib/useLogoHold";
+import { useNodes } from "../lib/useNodes";
 import { useIsDesktop } from "../lib/useMediaQuery";
 import { AnomaliesBlock } from "./overview/AnomaliesCard";
 import { OVERVIEW_CARDS, OVERVIEW_MIGRATION, PHONE_ORDER } from "./overview/cards";
@@ -38,6 +39,7 @@ import { HealthHeatmapCard } from "./overview/HealthHeatmapCard";
 import { HistoryCard, type HistoryView } from "./overview/HistoryCard";
 import { NeedsCard } from "./overview/NeedsCard";
 import { NextRunCard, nextBackupFireAt } from "./overview/NextRunCard";
+import { NodesCard } from "./overview/NodesCard";
 import { HiddenTray, OverviewGrid, type GridCard } from "./overview/OverviewGrid";
 import { ProtectionCard } from "./overview/ProtectionCard";
 import { sectionsOf } from "./overview/protectionChecks";
@@ -58,6 +60,10 @@ import { withinBase } from "../lib/base";
 // endpoint at different rates can show two answers.
 const SCHEDULE_POLL_MS = 30000;
 
+// Home asks its nodes how their backups went every few minutes, so the card
+// has nothing new to show more often.
+const NODES_POLL_MS = 60000;
+
 const CARD = Object.fromEntries(OVERVIEW_CARDS.map((card) => [card.id, card]));
 
 const HOLDABLE = "touch-none select-none [-webkit-touch-callout:none]";
@@ -75,6 +81,7 @@ export function Dashboard() {
   const progress = useProgress();
   const { needs, fresh, items: backupItems, runs, runsReady, runsFailed, refreshRuns, locations } = useAttention();
   const anomalySummary = useAnomalySummary().summary;
+  const { nodes } = useNodes(NODES_POLL_MS);
   const platform = usePlatform();
   const trial = useTrialRestore(t("verify.failed"));
   const app = inApp();
@@ -339,6 +346,7 @@ export function Dashboard() {
         </div>
       ),
     },
+    nodes: { label: t("overview.nodes.title"), render: (hue) => <NodesCard t={t} hueIndex={hue} nodes={nodes} /> },
     anomalies: { label: t("anomaly.title"), render: (hue) => <AnomaliesBlock t={t} hueIndex={hue} /> },
     coverage: {
       label: t("coverage.title"),
@@ -403,9 +411,12 @@ export function Dashboard() {
   // The history shows where the layout hides it while the log is narrowed,
   // or a link to a run would land on a page without its log. The card of
   // what needs the person has nothing to show while nothing does, and stands
-  // empty only while the page is arranged.
+  // empty only while the page is arranged. The nodes card stays away on a
+  // server without nodes.
   const shows = (id: string) =>
-    (!layout.hidden.includes(id) || (id === "history" && narrowed)) && (id !== "needs" || needs.length > 0 || arranging);
+    (!layout.hidden.includes(id) || (id === "history" && narrowed)) &&
+    (id !== "needs" || needs.length > 0 || arranging) &&
+    (id !== "nodes" || nodes.length > 0);
   const visible = (isDesktop ? layout.order : PHONE_ORDER).filter(shows);
   const hiddenCards = layout.order.filter((id) => layout.hidden.includes(id)).map((id) => ({ id, label: blocks[id].label }));
 

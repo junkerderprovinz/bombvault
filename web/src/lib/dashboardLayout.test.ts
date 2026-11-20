@@ -380,8 +380,8 @@ describe("the overview's own cards", () => {
   const stored = (layout: unknown) => migrateLayout(layout, OVERVIEW_CARDS, OVERVIEW_MIGRATION);
   const visible = (layout: ReturnType<typeof stored>) => layout.order.filter((id) => !layout.hidden.includes(id));
 
-  it("show four cards under the status head in a browser with nothing stored", () => {
-    expect(visible(stored(null))).toEqual(["needs", "protection", "targets", "history"]);
+  it("show four cards under the status head in a browser with nothing stored, and the nodes card for a server with nodes", () => {
+    expect(visible(stored(null))).toEqual(["needs", "protection", "targets", "nodes", "history"]);
     expect(stored(null).hidden).toEqual(["anomalies", "coverage", "heatmap", "storage", "summary", "stats", "spike"]);
   });
 
@@ -412,6 +412,7 @@ describe("the overview's own cards", () => {
       "stats",
       "protection",
       "targets",
+      "nodes",
       "coverage",
       "anomalies",
       "heatmap",

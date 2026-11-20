@@ -2866,6 +2866,7 @@ const ko: Partial<Translations> = {
   "activityLog.jobReceiver": "수신 저장소 점검",
   "activityLog.jobFleet": "인스턴스 점검",
   "activityLog.jobPull": "원본에서 가져오기",
+  "activityLog.jobNodes": "노드 백업",
   "activityLog.jobReplica": "ZFS 복제본",
   "activityLog.lineOffsiteSuccess": "오프사이트 복제 완료: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "오프사이트 복제에서 새로 복사할 항목이 없습니다: {domain}",
@@ -5529,6 +5530,11 @@ const ko: Partial<Translations> = {
   "nodes.restoreAsk": "노드에서 {name} 항목을 {time} 백업으로 복원할까요? 지금 있는 내용은 대체됩니다.",
   "nodes.restoreStarted": "노드에서 {name} 복원을 시작했습니다.",
   "nodes.entryMissing": "노드 목록에 이 항목이 없습니다.",
+  "nodes.when": "백업 시간",
+  "nodes.whenTip": "이 인스턴스는 이 시간에 노드의 백업을 시작합니다. 그때 노드가 연결되어 있지 않으면 돌아오는 즉시 시작합니다. 일요일 이른 아침에는 이 인스턴스가 노드의 오래된 백업을 정리할 때까지 기다립니다.",
+  "overview.nodes.title": "노드",
+  "overview.nodes.hint": "이 인스턴스가 백업에 사용하는 서버와 그 백업 상태입니다.",
+  "overview.nodes.none": "아직 노드가 없습니다. 인스턴스에서 추가할 수 있습니다.",
 };
 
 export default ko;

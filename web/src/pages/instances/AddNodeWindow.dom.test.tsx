@@ -8,13 +8,14 @@ import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
 import type { NodePlacement, NodeView, ReceiverServer } from "../../lib/api";
 
-const NODE: NodeView = { id: "n1", name: "vps-falkenstein", createdAt: 1, adoptedAt: 0, online: false };
+const NODE: NodeView = { id: "n1", name: "vps-falkenstein", createdAt: 1, adoptedAt: 0, online: false, containersCadence: "", filesCadence: "", failures: 0, anomalies: 0 };
 const COMPOSE = { MODE: "node", APP_KEY: "a".repeat(64), NODE_HOME: "bvhome1.xyz", NODE_NAME: "vps-falkenstein" };
 
 const receiver = { url: "http://192.168.1.20:8000", nodeUrl: "", nodeCa: false } as ReceiverServer;
 const added: string[] = [];
 const addresses: string[] = [];
 const placed: [string, NodePlacement][] = [];
+const scheduled: [string, unknown][] = [];
 let refusal: { ok: false; code: string } | null = null;
 let adoptedAt = 0;
 
@@ -33,6 +34,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     setReceiverNodeAddress: (url: string) => {
       addresses.push(url);
       return Promise.resolve({ ok: true, nodeUrl: url });
+    },
+    setNodeSchedule: (id: string, schedule: unknown) => {
+      scheduled.push([id, schedule]);
+      return Promise.resolve({ ok: true });
     },
     placeNode: (id: string, placement: NodePlacement) => {
       placed.push([id, placement]);
@@ -67,12 +72,13 @@ afterEach(() => {
   added.length = 0;
   addresses.length = 0;
   placed.length = 0;
+  scheduled.length = 0;
   refusal = null;
   adoptedAt = 0;
 });
 
 describe("AddNodeWindow", () => {
-  it("adds a node, places it on the receiver once it answers, and ticks green", async () => {
+  it("adds a node with its schedule, places it on the receiver once it answers, and ticks green", async () => {
     await renderWindow();
     expect(next().disabled).toBe(true);
     fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: " vps-falkenstein " } });
@@ -88,10 +94,15 @@ describe("AddNodeWindow", () => {
 
     fireEvent.change(address, { target: { value: "https://backup.example.org" } });
     expect(screen.queryByRole("alert")).toBeNull();
+    const files = screen.getByRole("button", { name: new RegExp(`^${en["nav.files"]}:`) });
+    expect(files.textContent).toContain("2:30");
+    fireEvent.click(files);
+    fireEvent.click(screen.getByRole("tab", { name: en["cadence.off"] }));
     await act(async () => {
       fireEvent.click(next());
     });
     expect(addresses).toEqual(["https://backup.example.org"]);
+    expect(scheduled).toEqual([["n1", { containers: "daily 02:00", files: "off" }]]);
 
     expect(screen.getByTestId("node-compose").textContent).toContain(`APP_KEY: "${COMPOSE.APP_KEY}"`);
     expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.waitingFor"].replace("{name}", "vps-falkenstein"));

@@ -2872,6 +2872,7 @@ const ru: Partial<Translations> = {
   "activityLog.jobReceiver": "проверка полученных репозиториев",
   "activityLog.jobFleet": "проверка экземпляров",
   "activityLog.jobPull": "забор из источников",
+  "activityLog.jobNodes": "резервные копии на узлах",
   "activityLog.jobReplica": "реплика ZFS",
   "activityLog.lineOffsiteSuccess": "Внешняя репликация завершена — {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Внешняя репликация не нашла ничего нового для копирования: {domain}",
@@ -5536,6 +5537,11 @@ const ru: Partial<Translations> = {
   "nodes.restoreAsk": "Восстановить {name} на узле из резервной копии от {time}? То, что там сейчас, будет заменено.",
   "nodes.restoreStarted": "Восстановление {name} запущено на узле.",
   "nodes.entryMissing": "В списке узла нет этой записи.",
+  "nodes.when": "Когда создаются копии",
+  "nodes.whenTip": "Этот экземпляр запускает резервное копирование узла в это время. Если узел тогда недоступен, копирование начнётся, как только он вернётся. Рано утром в воскресенье оно ждёт, пока этот экземпляр не приведёт в порядок старые копии узла.",
+  "overview.nodes.title": "Узлы",
+  "overview.nodes.hint": "Серверы, через которые этот экземпляр создаёт резервные копии, и как идут их копии.",
+  "overview.nodes.none": "Узлов пока нет. Вы можете добавить узел в разделе «Экземпляры».",
 };
 
 export default ru;

@@ -3051,6 +3051,7 @@ const hi: Partial<Translations> = {
   "activityLog.jobReceiver": "प्राप्त रिपॉजिटरी जाँच",
   "activityLog.jobFleet": "इंस्टेंस जाँच",
   "activityLog.jobPull": "स्रोतों से खींचना",
+  "activityLog.jobNodes": "नोड पर बैकअप",
   "activityLog.jobReplica": "ZFS रेप्लिका",
   "activityLog.lineBackingUpItem": "{name} का बैकअप लिया जा रहा है … {percent}%",
   "activityLog.lineReplicatingItem": "{name} की रेप्लिका बनाई जा रही है … {percent}%",
@@ -5549,6 +5550,11 @@ const hi: Partial<Translations> = {
   "nodes.restoreAsk": "{name} को नोड पर {time} के बैकअप से रीस्टोर करें? वहाँ अभी जो है, वह बदल दिया जाएगा।",
   "nodes.restoreStarted": "{name} का रीस्टोर नोड पर शुरू हो गया।",
   "nodes.entryMissing": "नोड इस प्रविष्टि को सूची में नहीं दिखाता।",
+  "nodes.when": "बैकअप कब होता है",
+  "nodes.whenTip": "यह इंस्टेंस इन समयों पर नोड के बैकअप शुरू करता है। अगर उस समय नोड उपलब्ध न हो, तो उसके लौटते ही वे शुरू हो जाते हैं। रविवार सुबह जल्दी वे तब तक रुकते हैं जब तक यह इंस्टेंस नोड के पुराने बैकअप व्यवस्थित न कर ले।",
+  "overview.nodes.title": "नोड",
+  "overview.nodes.hint": "वे सर्वर जिनके ज़रिए यह इंस्टेंस बैकअप लेता है, और उनके बैकअप कैसे चल रहे हैं।",
+  "overview.nodes.none": "अभी कोई नोड नहीं है। आप इंस्टेंस में एक जोड़ सकते हैं।",
 };
 
 export default hi;

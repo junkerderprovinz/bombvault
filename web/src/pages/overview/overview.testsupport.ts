@@ -9,6 +9,7 @@ import type {
   AnomalyView,
   BackupItem,
   DomainStatus,
+  NodeView,
   Run,
   Settings,
   StorageLocation,
@@ -186,6 +187,7 @@ export const server = {
   runs: [] as Answer<Run[]>,
   locations: [] as Answer<StorageLocation[]>,
   findings: [] as AnomalyView[],
+  nodes: [] as NodeView[],
   /** Whether anomaly detection is on. */
   detection: false,
   /** Encryption is on and the recovery kit is not confirmed. */
@@ -210,6 +212,7 @@ export function resetServer(): void {
     runs: [],
     locations: [],
     findings: [],
+    nodes: [],
     detection: false,
     kitDue: false,
     keyLocked: false,
@@ -274,6 +277,7 @@ export function stagedApi<M extends object>(actual: M): M {
     listStorageLocations: vi.fn(() => answer(server.locations, (locations) => ({ ok: true, locations }))),
     getCoverage: () => Promise.resolve({ ok: true, coverage: { total: 0, protected: 0, domains: [] } }),
     getScheduleNext: () => Promise.resolve([]),
+    listNodes: () => Promise.resolve({ ok: true, nodes: server.nodes }),
     getSettings: () =>
       Promise.resolve({
         ok: true,

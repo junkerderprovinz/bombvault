@@ -1,11 +1,13 @@
 import type { CardDefault, LayoutMigration } from "../../lib/dashboardLayout";
 
 /** The overview's cards in their default order. The first four show from the
- *  start, the others wait among the hidden cards. */
+ *  start, and the nodes card too once there is a node. The others wait among
+ *  the hidden cards. */
 export const OVERVIEW_CARDS: CardDefault[] = [
   { id: "needs", span: 6 },
   { id: "protection", span: 3 },
   { id: "targets", span: 3 },
+  { id: "nodes", span: 3 },
   { id: "history", span: 6 },
   { id: "anomalies", span: 3, hidden: true },
   { id: "coverage", span: 3, hidden: true },
@@ -27,6 +29,7 @@ export const PHONE_ORDER = [
   "needs",
   "protection",
   "targets",
+  "nodes",
   "history",
   "anomalies",
   "coverage",

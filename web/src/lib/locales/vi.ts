@@ -2866,6 +2866,7 @@ const vi: Partial<Translations> = {
   "activityLog.jobReceiver": "kiểm tra kho lưu trữ đã nhận",
   "activityLog.jobFleet": "kiểm tra phiên bản",
   "activityLog.jobPull": "kéo về từ các nguồn",
+  "activityLog.jobNodes": "sao lưu trên node",
   "activityLog.jobReplica": "bản sao ZFS",
   "activityLog.lineOffsiteSuccess": "Sao chép off-site hoàn tất: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Sao chép off-site không thấy gì mới để chép: {domain}",
@@ -5529,6 +5530,11 @@ const vi: Partial<Translations> = {
   "nodes.restoreAsk": "Khôi phục {name} trên node từ bản sao lưu lúc {time}? Những gì đang có ở đó sẽ bị thay thế.",
   "nodes.restoreStarted": "Đã bắt đầu khôi phục {name} trên node.",
   "nodes.entryMissing": "Node không có mục này trong danh sách.",
+  "nodes.when": "Thời điểm sao lưu",
+  "nodes.whenTip": "Phiên bản này bắt đầu sao lưu cho node vào các thời điểm này. Nếu lúc đó node không có mặt, việc sao lưu sẽ bắt đầu ngay khi node quay lại. Sáng sớm Chủ nhật, việc sao lưu chờ đến khi phiên bản này dọn xong các bản sao lưu cũ của node.",
+  "overview.nodes.title": "Node",
+  "overview.nodes.hint": "Các máy chủ mà phiên bản này dùng để sao lưu, và tình hình sao lưu của chúng.",
+  "overview.nodes.none": "Chưa có node nào. Bạn có thể thêm một node trong mục Phiên bản.",
 };
 
 export default vi;

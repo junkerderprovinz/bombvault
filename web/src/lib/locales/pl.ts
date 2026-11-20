@@ -2872,6 +2872,7 @@ const pl: Partial<Translations> = {
   "activityLog.jobReceiver": "sprawdzenie odebranych repozytoriów",
   "activityLog.jobFleet": "sprawdzenie instancji",
   "activityLog.jobPull": "pobieranie ze źródeł",
+  "activityLog.jobNodes": "kopie na węzłach",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikacja poza siedzibą zakończona: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Replikacja poza siedzibą nie znalazła nic nowego do skopiowania: {domain}",
@@ -5536,6 +5537,11 @@ const pl: Partial<Translations> = {
   "nodes.restoreAsk": "Przywrócić wpis {name} na węźle z kopii zapasowej z {time}? To, co jest tam teraz, zostanie zastąpione.",
   "nodes.restoreStarted": "Przywracanie wpisu {name} ruszyło na węźle.",
   "nodes.entryMissing": "Węzeł nie ma tego wpisu na liście.",
+  "nodes.when": "Kiedy robi kopie",
+  "nodes.whenTip": "Ta instancja uruchamia kopie zapasowe węzła o tych porach. Jeśli węzła wtedy nie ma, ruszają, gdy tylko wróci. W niedzielę wcześnie rano czekają, aż ta instancja uporządkuje stare kopie węzła.",
+  "overview.nodes.title": "Węzły",
+  "overview.nodes.hint": "Serwery, przez które ta instancja robi kopie zapasowe, i jak idą ich kopie.",
+  "overview.nodes.none": "Nie ma jeszcze węzłów. Możesz dodać węzeł w zakładce Instancje.",
 };
 
 export default pl;

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // A node's card says whether it is there, what it runs and where its backups
-// go, and carries Edit placement, Replace and Release. A node that has not
-// answered yet cannot be placed, and one being released has no actions.
+// go, when each section backs up, and carries Edit placement, Replace and
+// Release. A node that has not answered yet cannot be placed, and one being
+// released has no actions.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
@@ -10,7 +11,9 @@ import type { NodeView } from "../../lib/api";
 
 const released: string[] = [];
 const composed: string[] = [];
+const scheduled: { id: string; schedule: unknown }[] = [];
 let told = true;
+let scheduleRefused = false;
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -19,6 +22,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     releaseNode: (id: string) => {
       released.push(id);
       return Promise.resolve({ ok: true, told });
+    },
+    setNodeSchedule: (id: string, schedule: unknown) => {
+      scheduled.push({ id, schedule });
+      return Promise.resolve(scheduleRefused ? { ok: false, error: "the node is gone" } : { ok: true });
     },
     nodeCompose: (id: string) => {
       composed.push(id);
@@ -38,6 +45,10 @@ const online: NodeView = {
   placementTarget: "https://backup.example.org",
   online: true,
   version: "v10.5.0",
+  containersCadence: "daily 02:00",
+  filesCadence: "off",
+  failures: 0,
+  anomalies: 0,
 };
 
 let changed = 0;
@@ -60,7 +71,9 @@ afterEach(() => {
   cleanup();
   released.length = 0;
   composed.length = 0;
+  scheduled.length = 0;
   told = true;
+  scheduleRefused = false;
   changed = 0;
   localStorage.clear();
 });
@@ -112,6 +125,32 @@ describe("NodeCards", () => {
     expect(released).toEqual(["n1"]);
     expect(changed).toBe(1);
     expect(screen.getByText(en["nodes.releaseLater"].replace("{name}", "vps-falkenstein"))).toBeTruthy();
+  });
+
+  it("saves a section's schedule as soon as it changes", async () => {
+    await renderCards([online]);
+    const c = within(card("n1"));
+    const containers = c.getByRole("button", { name: new RegExp(`^${en["nav.containers"]}:`) });
+    expect(containers.textContent).toContain("2:00");
+    fireEvent.click(containers);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("tab", { name: en["cadence.off"] }));
+    });
+    expect(scheduled).toEqual([{ id: "n1", schedule: { containers: "off" } }]);
+    expect(changed).toBe(1);
+    expect(c.getByRole("button", { name: new RegExp(`^${en["nav.containers"]}:`) }).textContent).toContain(en["cadence.off"]);
+  });
+
+  it("goes back to the stored schedule when the save fails", async () => {
+    scheduleRefused = true;
+    await renderCards([online]);
+    const c = within(card("n1"));
+    fireEvent.click(c.getByRole("button", { name: new RegExp(`^${en["nav.containers"]}:`) }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("tab", { name: en["cadence.off"] }));
+    });
+    expect(screen.getByText("the node is gone")).toBeTruthy();
+    expect(c.getByRole("button", { name: new RegExp(`^${en["nav.containers"]}:`) }).textContent).toContain("2:00");
   });
 
   it("hands out the compose file again on Replace", async () => {

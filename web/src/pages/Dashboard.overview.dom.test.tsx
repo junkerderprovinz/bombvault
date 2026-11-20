@@ -199,7 +199,8 @@ describe("customize mode", () => {
     fireEvent.click(screen.getByRole("button", { name: en["dashboard.resetLayout"] }));
 
     expect(shownCards()).toEqual(["needs", "protection", "targets", "history"]);
-    expect(stored()).toMatchObject({ order: ALL, widths: {}, heights: {} });
+    // The nodes card keeps its place in the default order on a server without nodes.
+    expect(stored()).toMatchObject({ order: [...ALL.slice(0, 3), "nodes", ...ALL.slice(3)], widths: {}, heights: {} });
   });
 
   it("lets the cards wiggle only while they can be moved", async () => {
@@ -679,5 +680,41 @@ describe("the colour engine", () => {
       }
       cleanup();
     }
+  });
+});
+
+describe("the nodes card", () => {
+  const node = {
+    id: "n1",
+    name: "vps-falkenstein",
+    createdAt: 1,
+    adoptedAt: 2,
+    online: true,
+    containersCadence: "daily 02:00",
+    filesCadence: "off",
+    lastBackup: Math.floor(Date.now() / 1000) - 3600,
+    failures: 2,
+    anomalies: 1,
+  };
+
+  it("stays away while there is no node", async () => {
+    setDesktop(true);
+    await renderPage();
+    expect(document.querySelector('[data-testid="overview-nodes"]')).toBeNull();
+  });
+
+  it("shows each node with its last backup, its errors and its anomalies", async () => {
+    setDesktop(true);
+    server.nodes = [node, { ...node, id: "n2", name: "pi-garage", online: false, lastBackup: undefined, failures: 0, anomalies: 0 }];
+    await renderPage();
+    const card = await screen.findByTestId("overview-nodes");
+    const first = within(card.querySelector('[data-node="n1"]') as HTMLElement);
+    expect(first.getByText("vps-falkenstein")).toBeTruthy();
+    expect(first.getByText(en["instances.connected"])).toBeTruthy();
+    expect(first.getByText(/1 ?h/)).toBeTruthy();
+    expect(first.getByText("2").className).toContain("text-statusFail");
+    const second = within(card.querySelector('[data-node="n2"]') as HTMLElement);
+    expect(second.getByText(en["instances.inactive"])).toBeTruthy();
+    expect(second.getByText(en["containers.never"])).toBeTruthy();
   });
 });

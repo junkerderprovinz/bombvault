@@ -6771,9 +6771,21 @@ export interface NodeView {
   online: boolean;
   lastSeen?: number;
   version?: string;
+  /** When this instance starts the backups of each section, "off" or empty for never. */
+  containersCadence: string;
+  filesCadence: string;
+  /** When the newest backup this instance knows of finished on the node. */
+  lastBackup?: number;
+  /** Entries whose backups fail, and repositories the receiver watch is worried about. */
+  failures: number;
+  /** Critical and warning anomalies the node had open when last asked. */
+  anomalies: number;
 }
 
 export type NodePlaceKind = "receiver" | "location";
+
+/** The sections of a node, each with its own schedule. */
+export type NodeSection = "containers" | "files";
 
 /** The values of a node's compose file. Only home can make them again. */
 export interface NodeCompose {
@@ -6811,6 +6823,12 @@ export function nodeCompose(id: string): Promise<OkEnvelope & { code?: SecretsRe
 /** Lets a node go. told is false while it is away; it hears once it is back. */
 export function releaseNode(id: string): Promise<OkEnvelope & { told?: boolean }> {
   return fetchJSON(`/api/nodes/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Sets when this instance starts the backups of a node's sections. A section
+ *  left out keeps its schedule. */
+export function setNodeSchedule(id: string, schedule: Partial<Record<NodeSection, string>>): Promise<OkEnvelope> {
+  return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/schedule`, { method: "PUT", body: JSON.stringify(schedule) });
 }
 
 export function placeNode(id: string, placement: NodePlacement): Promise<OkEnvelope & { reach?: NodeReach[]; warning?: string }> {

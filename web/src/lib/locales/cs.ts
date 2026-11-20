@@ -2873,6 +2873,7 @@ const cs: Partial<Translations> = {
   "activityLog.jobReceiver": "kontrola přijatých úložišť",
   "activityLog.jobFleet": "kontrola instancí",
   "activityLog.jobPull": "stahování ze zdrojů",
+  "activityLog.jobNodes": "zálohy na uzlech",
   "activityLog.jobReplica": "replika ZFS",
   "activityLog.lineOffsiteSuccess": "Replikace mimo lokalitu dokončena: {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Replikace mimo lokalitu nenašla nic nového ke kopírování: {domain}",
@@ -5537,6 +5538,11 @@ const cs: Partial<Translations> = {
   "nodes.restoreAsk": "Obnovit {name} na uzlu ze zálohy z {time}? To, co tam je teď, se nahradí.",
   "nodes.restoreStarted": "Obnova {name} na uzlu začala.",
   "nodes.entryMissing": "Uzel tuto položku neuvádí.",
+  "nodes.when": "Kdy zálohuje",
+  "nodes.whenTip": "Tato instance spouští zálohy uzlu v tyto časy. Pokud tehdy uzel není dostupný, spustí se, jakmile se vrátí. V neděli brzy ráno počkají, než tato instance uklidí staré zálohy uzlu.",
+  "overview.nodes.title": "Uzly",
+  "overview.nodes.hint": "Servery, přes které tato instance zálohuje, a jak se jim zálohy daří.",
+  "overview.nodes.none": "Zatím žádné uzly. Jeden můžeš přidat v sekci Instance.",
 };
 
 export default cs;

@@ -2872,6 +2872,7 @@ const uk: Partial<Translations> = {
   "activityLog.jobReceiver": "перевірка отриманих репозиторіїв",
   "activityLog.jobFleet": "перевірка екземплярів",
   "activityLog.jobPull": "забирання з джерел",
+  "activityLog.jobNodes": "резервні копії на вузлах",
   "activityLog.jobReplica": "репліка ZFS",
   "activityLog.lineOffsiteSuccess": "Зовнішню реплікацію завершено — {domain} ({duration})",
   "activityLog.lineOffsiteNothing": "Зовнішня реплікація не знайшла нічого нового для копіювання: {domain}",
@@ -5535,6 +5536,11 @@ const uk: Partial<Translations> = {
   "nodes.restoreAsk": "Відновити {name} на вузлі з резервної копії від {time}? Те, що там зараз, буде замінено.",
   "nodes.restoreStarted": "Відновлення {name} запущено на вузлі.",
   "nodes.entryMissing": "У списку вузла немає цього запису.",
+  "nodes.when": "Коли створюються копії",
+  "nodes.whenTip": "Цей екземпляр запускає резервне копіювання вузла в цей час. Якщо вузол тоді недоступний, копіювання почнеться, щойно він повернеться. Рано вранці в неділю воно чекає, доки цей екземпляр не впорядкує старі копії вузла.",
+  "overview.nodes.title": "Вузли",
+  "overview.nodes.hint": "Сервери, через які цей екземпляр створює резервні копії, і як ідуть їхні копії.",
+  "overview.nodes.none": "Вузлів поки немає. Ви можете додати вузол у розділі «Екземпляри».",
 };
 
 export default uk;
