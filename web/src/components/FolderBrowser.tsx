@@ -57,6 +57,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   const [manualFallback, setManualFallback] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const inPlaceRef = useRef<HTMLDivElement>(null);
 
   const doFetch = useCallback((path: string) => {
     setLoading(true);
@@ -106,6 +107,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
 
   useBackCloses(open, handleClose);
 
+  // On a phone the listing is taller than the room left under the field, so
+  // the panel would open with its actions under the window's foot. jsdom has
+  // no scrollIntoView.
+  useEffect(() => {
+    if (open && inDialog) inPlaceRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [open, inDialog]);
+
   function handleUp() {
     const parts = browsePath.split("/").filter(Boolean);
     parts.pop();
@@ -154,50 +162,55 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         <p className="text-xs text-statusFail">{browseError}</p>
       )}
 
-      {/* border-accentText rather than border-accent: the flat accent is under
-          the 3:1 contrast a non-text indicator needs in the light theme. */}
-      {loading && (
-        <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
-          <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
-          {t("folder.loading")}
-        </div>
-      )}
-
       {/* A fixed height, so the dialog keeps one size from directory to
-          directory. Rows set min-h-8 because .glim-btn-xs sets no height, and
-          !justify-start because .glim-btn centres with a higher specificity. */}
-      {!loading && !manualFallback && (
+          directory, and the window around a panel in place keeps its scroll
+          while a folder loads. Rows set min-h-8 because .glim-btn-xs sets no
+          height, and !justify-start because .glim-btn centres with a higher
+          specificity. */}
+      {!manualFallback && (
         <div className={`flex flex-col gap-0.5 overflow-y-auto ${inDialog ? "h-[clamp(8rem,30dvh,20rem)]" : "h-[clamp(10rem,45dvh,32rem)]"}`}>
-          {browsePath !== "" && (
-            <Button
-              // The file-manager convention, not a phrase to translate.
-              label={".."}
-              labelKey={null}
-              glyph={<IconBack />}
-              tone="neutral"
-              onClick={handleUp}
-              keepLabel
-              className="w-full !justify-start min-h-8"
-            />
+          {/* border-accentText rather than border-accent: the flat accent is
+              under the 3:1 contrast a non-text indicator needs in the light
+              theme. */}
+          {loading ? (
+            <div className="flex items-center gap-2 px-2 text-xs text-carbon-textMuted">
+              <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
+              {t("folder.loading")}
+            </div>
+          ) : (
+            <>
+              {browsePath !== "" && (
+                <Button
+                  // The file-manager convention, not a phrase to translate.
+                  label={".."}
+                  labelKey={null}
+                  glyph={<IconBack />}
+                  tone="neutral"
+                  onClick={handleUp}
+                  keepLabel
+                  className="w-full !justify-start min-h-8"
+                />
+              )}
+              {dirs.length === 0 && !browseError && (
+                <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
+              )}
+              {dirs.map((d) => (
+                <Button
+                  key={d.path}
+                  label={d.name}
+                  // a directory name is user data, not a translation key
+                  labelKey={null}
+                  glyph={<IconFolder />}
+                  tone="neutral"
+                  onClick={() => doFetch(d.path)}
+                  // Folder names stay visible in every label mode: a listing read
+                  // one hover at a time is not a listing.
+                  keepLabel
+                  className="w-full !justify-start min-h-8"
+                />
+              ))}
+            </>
           )}
-          {dirs.length === 0 && !browseError && (
-            <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
-          )}
-          {dirs.map((d) => (
-            <Button
-              key={d.path}
-              label={d.name}
-              // a directory name is user data, not a translation key
-              labelKey={null}
-              glyph={<IconFolder />}
-              tone="neutral"
-              onClick={() => doFetch(d.path)}
-              // Folder names stay visible in every label mode: a listing read
-              // one hover at a time is not a listing.
-              keepLabel
-              className="w-full !justify-start min-h-8"
-            />
-          ))}
         </div>
       )}
 
@@ -313,7 +326,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       {/* A dialog, except when this is already inside one: a second window on
           top of the one being filled in gets in the way. */}
       {open && (inDialog ? (
-        <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+        <div ref={inPlaceRef} className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2 scroll-mb-4">
           {panel}
         </div>
       ) : createPortal(

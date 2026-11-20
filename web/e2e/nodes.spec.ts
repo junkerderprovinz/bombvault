@@ -13,7 +13,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { stageDemo, words } from "./demo";
+import { FILES_DOCS, stageDemo, words } from "./demo";
 import { overflow, settle } from "./entries";
 import { COMPOSE, NODE, NODE_CONTAINERS, NODE_FILE_SETS, NODES, stageNodes } from "./nodes";
 
@@ -379,6 +379,78 @@ test("pictures of a node's folder set window", async ({ browser }, testInfo) => 
     }
   }
 });
+
+// openFolderWindow opens the folder set window on home or on the node and
+// browses into a folder, the way the pictures above do.
+async function openFolderWindow(page: Page, scope: "home" | "node") {
+  if (scope === "home") {
+    await page.route(
+      (url) => url.pathname === "/api/browse",
+      (route) => {
+        const at = new URL(route.request().url()).searchParams.get("path") ?? "";
+        const dirs = ["appdata", "photos", "www"].map((name) => ({ name, path: at ? `${at}/${name}` : name }));
+        return route.fulfill({ json: { ok: true, root: "/mnt/user", path: at, dirs, status: "ok", truncated: false } });
+      },
+    );
+    await page.goto(`/backups/files/${FILES_DOCS}?tab=settings`);
+    await page.getByRole("button", { name: t("common.edit") }).click();
+    const edit = page.getByRole("dialog", { name: t("files.editSet") });
+    await edit.getByRole("button", { name: t("folder.browseTitle") }).click();
+    await edit.getByRole("button", { name: "photos", exact: true }).click();
+    await edit.getByRole("button", { name: "www", exact: true }).waitFor();
+    return edit;
+  }
+  await page.goto("/backups?kind=files");
+  const section = page.locator(`[data-node-section="${NODE.id}"]`);
+  await section.getByRole("link", { name: "Website uploads" }).waitFor();
+  await section.getByRole("button", { name: t("files.addSet") }).click();
+  const add = page.getByRole("dialog", { name: t("nodes.addSet").replace("{name}", NODE.name) });
+  await add.getByRole("button", { name: t("folder.browseTitle") }).click();
+  await add.getByRole("button", { name: "srv", exact: true }).click();
+  await add.getByRole("button", { name: "photos", exact: true }).waitFor();
+  return add;
+}
+
+for (const scope of ["home", "node"] as const) {
+  test(`the folder window on ${scope} keeps "Use this folder" clear of the window's foot on a phone`, async ({ browser }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-1280", "opens its own phone-sized pages");
+    for (const theme of ["light", "dark"] as const) {
+      const page = await look(browser, 375, theme);
+      const dialog = await openFolderWindow(page, scope);
+      const use = dialog.getByRole("button", { name: t("folder.use") });
+      await expect(use).toBeVisible();
+      // The window's body keeps 1rem below its last row, so the button rests at
+      // least that far above the foot that holds Cancel and Save.
+      await expect
+        .poll(async () => {
+          const button = (await use.boundingBox())!;
+          const foot = (await dialog.locator("[data-dialog-actions]").boundingBox())!;
+          return button.y >= 0 && button.y + button.height <= foot.y - 16 && foot.y + foot.height <= 812;
+        })
+        .toBe(true);
+      const sideways = await dialog.evaluate((el) => {
+        const vw = window.innerWidth;
+        const scrollers = [el, ...el.querySelectorAll("*")].filter((node) => ["auto", "scroll"].includes(getComputedStyle(node).overflowX));
+        return {
+          pan: Math.max(0, ...scrollers.map((node) => node.scrollWidth - node.clientWidth)),
+          past: [...el.querySelectorAll("button, input")].filter((node) => {
+            const r = node.getBoundingClientRect();
+            return r.width > 0 && (r.right > vw + 1 || r.left < -1);
+          }).length,
+        };
+      });
+      expect(sideways).toEqual({ pan: 0, past: 0 });
+      expect((await overflow(page)).pan).toBe(0);
+      if (SHOTS) {
+        mkdirSync(SHOTS, { recursive: true });
+        await page.mouse.move(0, 0);
+        await settle(page);
+        await page.screenshot({ path: join(SHOTS, `folder-window-footer-${scope}-${theme}-375.png`), animations: "disabled" });
+      }
+      await page.context().close();
+    }
+  });
+}
 
 test("pictures of a node that keeps its own backups", async ({ browser }, testInfo) => {
   test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for the pictures is named");
