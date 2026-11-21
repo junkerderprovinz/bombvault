@@ -169,16 +169,30 @@ func (r *Repo) SetNodePlaced(id, placement, target, signIn string) error {
 }
 
 // SetNodeAdoptionDue records that an adopted node home has not let go
-// answered as one set up anew, so that home adopts it again and sends it its
-// placement. It reports whether this call was the one to record it.
+// answered as one set up anew, and reports whether its adoption was not due
+// before. Its placement is due each time, since a node set up anew once more
+// while home adopted it lost that too.
 func (r *Repo) SetNodeAdoptionDue(id string) (bool, error) {
-	res, err := r.db.Exec(`UPDATE nodes SET adoption_due = 1, placement_due = placement <> '' OR placement_due
-		WHERE id = ? AND adopted_at <> 0 AND state = '' AND adoption_due = 0`, id)
+	tx, err := r.db.Begin()
 	if err != nil {
 		return false, fmt.Errorf("SetNodeAdoptionDue: %w", err)
 	}
-	n, _ := res.RowsAffected()
-	return n > 0, nil
+	defer tx.Rollback() //nolint:errcheck // a no-op once committed
+	var due int
+	err = tx.QueryRow(`SELECT adoption_due FROM nodes WHERE id = ? AND adopted_at <> 0 AND state = ''`, id).Scan(&due)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("SetNodeAdoptionDue: %w", err)
+	}
+	if _, err := tx.Exec(`UPDATE nodes SET adoption_due = 1, placement_due = placement <> '' OR placement_due WHERE id = ?`, id); err != nil {
+		return false, fmt.Errorf("SetNodeAdoptionDue: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return false, fmt.Errorf("SetNodeAdoptionDue: %w", err)
+	}
+	return due == 0, nil
 }
 
 // KeepNodeRecords stores the records of node id, sealed. A node due to be

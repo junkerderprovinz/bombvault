@@ -109,6 +109,15 @@ func TestHomeAdoptsANodeSetUpAnewOnceAndKeepsItsFirstAdoption(t *testing.T) {
 	if got, _ := r.GetNode("bb"); !got.AdoptionDue || got.PlacementDue {
 		t.Errorf("unplaced node = %+v, want only its adoption due", got)
 	}
+	if err := r.SetNodePlaced("aa", "location", "dest-1", "vps"); err != nil {
+		t.Fatal(err)
+	}
+	if due, _ := r.SetNodeAdoptionDue("aa"); due {
+		t.Error("a node set up anew once more while due was due again")
+	}
+	if got, _ := r.GetNode("aa"); !got.AdoptionDue || !got.PlacementDue {
+		t.Errorf("node set up anew once more = %+v, want its placement due again", got)
+	}
 	if err := r.SetNodeAdopted("aa", 50); err != nil {
 		t.Fatal(err)
 	}

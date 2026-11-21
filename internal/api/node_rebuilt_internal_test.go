@@ -75,11 +75,7 @@ func (p *placedHome) adoptAndPlace(t *testing.T, req map[string]any) {
 // APP_KEY and NODE_HOME, and lets home's watch look at it once it is back.
 func (p *placedHome) rebuild(t *testing.T) *instance {
 	t.Helper()
-	link, _ := p.home.svc.nodeLinkOf(p.id)
-	p.node.svc.CloseHomeLink()
-	eventually(t, "home to see the node away", func() bool { return !link.Online() })
-	rebuilt := p.bootNode(t)
-	eventually(t, "home to see the node back", link.Online)
+	rebuilt := p.setUpAnew(t)
 	n, err := p.home.st.GetNode(p.id)
 	if err != nil {
 		t.Fatal(err)
@@ -88,6 +84,18 @@ func (p *placedHome) rebuild(t *testing.T) *instance {
 		t.Error("home's watch read the runs of a node that has not taken it as its home")
 	}
 	return rebuilt
+}
+
+// setUpAnew replaces the node with one on an empty config folder and waits
+// until home sees it on the relay.
+func (p *placedHome) setUpAnew(t *testing.T) *instance {
+	t.Helper()
+	link, _ := p.home.svc.nodeLinkOf(p.id)
+	p.node.svc.CloseHomeLink()
+	eventually(t, "home to see the node away", func() bool { return !link.Online() })
+	p.node = p.bootNode(t)
+	eventually(t, "home to see the node back", link.Online)
+	return p.node
 }
 
 func receiverPlaced(t *testing.T) *placedHome {
@@ -250,4 +258,48 @@ func TestANodeSetUpAnewGetsItsContainersFolderSetsAndRunsBackFromHome(t *testing
 			}
 		})
 	}
+}
+
+func TestANodeSetUpAnewTwiceWhileHomeAdoptsItIsAdoptedAndPlacedAsTheLastOne(t *testing.T) {
+	p := receiverPlaced(t)
+	if _, err := p.node.st.CreateFileSet(store.FileSet{Name: "Docs", Path: "docs", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	n, _ := p.home.st.GetNode(p.id)
+	if !p.home.svc.nodes.poll(context.Background(), n, time.Now()) {
+		t.Fatal("home's watch does not reach the node")
+	}
+	// Without its address for nodes the receiver holds the placement back,
+	// so home is still adopting the first node set up anew when the second
+	// one comes.
+	rs, _, err := p.home.st.GetReceiverServer()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := p.home.st.SetReceiverNodeAddress("", ""); err != nil {
+		t.Fatal(err)
+	}
+	first := p.rebuild(t)
+	eventually(t, "home to adopt the first node set up anew", func() bool {
+		link, err := first.st.GetNodeLink()
+		return err == nil && link.AdoptedAt != 0
+	})
+	second := p.setUpAnew(t)
+	if err := p.home.st.SetReceiverNodeAddress(rs.NodeURL, rs.NodeCAPEM); err != nil {
+		t.Fatal(err)
+	}
+
+	eventually(t, "home to adopt the second node set up anew", func() bool {
+		link, err := second.st.GetNodeLink()
+		return err == nil && link.AdoptedAt != 0
+	})
+	eventually(t, "the second one to hear where its backups go and get its folder sets back", func() bool {
+		kept, _ := second.st.NodePlacements()
+		sets, _ := second.st.ListFileSets()
+		return len(kept) == 2 && kept[0].Repo == p.placedAt && len(sets) == 1
+	})
+	eventually(t, "home to note that the node has what it had", func() bool {
+		n, err := p.home.st.GetNode(p.id)
+		return err == nil && !n.AdoptionDue && !n.PlacementDue
+	})
 }

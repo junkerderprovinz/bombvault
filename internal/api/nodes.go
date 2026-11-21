@@ -191,35 +191,48 @@ func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 			}
 			return
 		}
-		if (n.AdoptedAt == 0 || n.AdoptionDue) && !untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) }) {
-			return
-		}
-		if n.PlacementDue && !untilDone(ctx, func() error { return s.placeAgain(ctx, n.ID, link) }) {
-			return
-		}
-		if n.AdoptionDue {
-			untilDone(ctx, func() error { return s.giveBackRecords(ctx, n.ID, link) })
+		if n.AdoptedAt == 0 || n.AdoptionDue || n.PlacementDue {
+			untilDone(ctx, func() error { return s.catchUp(ctx, n.ID, link) })
 		}
 	}()
 }
 
-// placeAgain sends node id the placement home keeps for it, unless the node
-// heard it meanwhile.
-func (s *Service) placeAgain(ctx context.Context, id string, link *nodelink.Link) error {
+// catchUp gets node id through what the store says it has still to hear: its
+// adoption, its placement and, set up anew, its records. Each try starts from
+// the top, so a node set up anew once more on the way is adopted again too.
+func (s *Service) catchUp(ctx context.Context, id string, link *nodelink.Link) error {
+	n, err := s.store.GetNode(id)
+	if err != nil {
+		return err
+	}
+	if n.AdoptedAt == 0 || n.AdoptionDue {
+		if err := s.adoptNode(ctx, id, link); err != nil {
+			return err
+		}
+	}
+	if n.PlacementDue {
+		if err := s.placeAgain(ctx, n, link); err != nil {
+			return err
+		}
+	}
+	if n.AdoptionDue {
+		return s.giveBackRecords(ctx, id, link)
+	}
+	return nil
+}
+
+// placeAgain sends node n the placement home keeps for it.
+func (s *Service) placeAgain(ctx context.Context, n store.Node, link *nodelink.Link) error {
 	// Making the repositories again costs restic runs, which wait until the
 	// node is back to hear where they are.
 	if !link.Online() {
 		return errNodeAway
 	}
-	n, err := s.store.GetNode(id)
-	if err != nil || !n.PlacementDue {
-		return err
-	}
 	req := nodePlaceRequest{Kind: n.Placement}
 	if n.Placement == nodePlaceLocation {
 		req.Location, req.SignIn = n.PlacementTarget, n.PlacementSignIn
 	}
-	_, err = s.PlaceNode(ctx, id, req)
+	_, err := s.PlaceNode(ctx, n.ID, req)
 	return err
 }
 
