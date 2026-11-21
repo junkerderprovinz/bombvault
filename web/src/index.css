@@ -2009,9 +2009,10 @@ a.glim-version-number:focus-visible { color: var(--accent-text); }
 }
 .glim-version-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.25rem 1rem;
 }
 .glim-version-app {
   min-width: 0;
@@ -2020,6 +2021,8 @@ a.glim-version-number:focus-visible { color: var(--accent-text); }
   color: var(--carbon-text);
 }
 .glim-version-head .glim-version-number {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: var(--text-body);
   color: var(--carbon-text);
 }
