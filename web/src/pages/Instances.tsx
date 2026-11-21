@@ -121,7 +121,7 @@ function SelfCard({
     <InstanceCard
       cardKey="self"
       name={self.name}
-      eyebrow={t("instances.thisInstance")}
+      kind="self"
       facts={
         <Facts items={[self.version]} />
       }
@@ -234,7 +234,7 @@ function PeerCard({
     <InstanceCard
       cardKey={instance.key}
       name={name}
-      eyebrow={instance.app ? t("fleet.kindAndroid") : undefined}
+      kind={instance.app ? "phone" : "member"}
       mark={
         instance.app ? (
           <span data-new="instances-phones" className="flex">

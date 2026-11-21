@@ -385,7 +385,7 @@ for (const width of [1280, 390]) {
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toContainText("Nicht mitgekommen");
     await expect(rows.nth(0)).toContainText("Ferienhaus Altaussee Dachboden");
-    await expect(rows.nth(0)).toContainText("BombVault-Instanz");
+    await expect(rows.nth(0)).toContainText("Mitglied");
     await expect(rows.nth(1)).toContainText("Altes Tablet");
     await expect(rows.nth(1)).toContainText("Android-App");
     await expect(list).not.toContainText(/\d+\.\d+\.\d+\.\d+|:\d{2,5}/);

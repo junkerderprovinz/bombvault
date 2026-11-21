@@ -88,7 +88,7 @@ export function NodeCards({
             key={node.id}
             cardKey={`node:${node.id}`}
             name={node.name}
-            eyebrow={t("nodes.kind")}
+            kind="node"
             badges={<NodeBadge node={node} />}
             facts={
               <Facts

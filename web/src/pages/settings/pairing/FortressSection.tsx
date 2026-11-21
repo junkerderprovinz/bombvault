@@ -326,7 +326,8 @@ function AppCard({
       <InstanceCard
         cardKey={`app-${app.id}`}
         name={app.name}
-        eyebrow={view.eyebrow || undefined}
+        kind="app"
+        caption={view.eyebrow}
         mark={
           app.logo ? (
             <LogoMark src={app.logo} />

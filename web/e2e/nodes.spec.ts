@@ -50,7 +50,7 @@ test("every node has its card with its state, where its backups go and its actio
   expect((await overflow(page)).pan).toBe(0);
 });
 
-test("a node's card says it is a node in the caption under its name, as the other instance cards do", async ({ page }) => {
+test("a node's card says it is a node in the caption under its name, below its state", async ({ page }) => {
   await open(page, "/instances");
   const online = card(page, NODE.id);
   const kind = online.getByText(t("nodes.kind"), { exact: true });
@@ -63,12 +63,25 @@ test("a node's card says it is a node in the caption under its name, as the othe
   );
   expect(k.y).toBeGreaterThanOrEqual(name.y + name.height - 1);
   expect(k.y).toBeGreaterThanOrEqual(state.y + state.height - 1);
-  const look = (el: Element) => {
-    const s = getComputedStyle(el);
-    return [s.fontSize, s.letterSpacing, s.textTransform, s.color].join(" ");
-  };
-  const other = page.locator('[data-instance^="zfs:"]').getByText(t("instances.overSsh"), { exact: true });
-  expect(await kind.evaluate(look)).toBe(await other.evaluate(look));
+});
+
+test("every card on Instances says what it is in one caption under its name, in one style", async ({ page }) => {
+  await open(page, "/instances");
+  await card(page, NODE.id).waitFor();
+  const said = await page.locator("[data-instance]").evaluateAll((all) =>
+    all.map((c) => {
+      const captions = [...c.querySelectorAll('[data-new="instances-full-names"] + span')];
+      const s = captions[0] ? getComputedStyle(captions[0]) : null;
+      return {
+        card: c.getAttribute("data-instance"),
+        captions: captions.length,
+        look: s ? [s.fontSize, s.letterSpacing, s.textTransform, s.color].join(" ") : "",
+      };
+    }),
+  );
+  expect(said.length).toBeGreaterThan(4);
+  expect(said.filter((c) => c.captions !== 1)).toEqual([]);
+  expect(new Set(said.map((c) => c.look)).size).toBe(1);
 });
 
 test("the address and the certificate of the placement stand without a line between them", async ({ page }) => {

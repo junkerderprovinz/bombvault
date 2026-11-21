@@ -161,7 +161,7 @@ export function MemberCards({
         <InstanceCard
           cardKey="self"
           name={group.name}
-          eyebrow={t("instances.thisInstance")}
+          kind="self"
           badges={
             badge && (
               <span data-testid="pair-state" className="flex">
@@ -178,7 +178,7 @@ export function MemberCards({
             key={m.id}
             cardKey={m.id}
             name={m.name || m.id}
-            eyebrow={m.kind === "android" ? t("fleet.kindAndroid") : undefined}
+            kind={m.kind === "android" ? "phone" : "member"}
             badges={
               <Badge tone="ok" size="large">
                 {t("instances.connected")}
@@ -193,7 +193,7 @@ export function MemberCards({
             key={m.id}
             cardKey={m.id}
             name={m.name || m.id}
-            eyebrow={m.kind === "android" ? t("fleet.kindAndroid") : undefined}
+            kind={m.kind === "android" ? "phone" : "member"}
             badges={
               <span data-new="pairing-inactive" className="flex">
                 <Badge tone="neutral" size="large">
@@ -216,7 +216,7 @@ export function MemberCards({
                 key={m.id}
                 cardKey={m.id}
                 name={m.name || m.id}
-                eyebrow={t(m.kind === "android" ? "fleet.kindAndroid" : "pairing.kindInstance")}
+                kind={m.kind === "android" ? "phone" : "member"}
                 badges={
                   <Badge tone="warn" size="large">
                     {t("pairing.behindTitle")}

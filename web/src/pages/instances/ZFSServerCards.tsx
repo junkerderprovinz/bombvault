@@ -44,7 +44,7 @@ export function ZFSServerCards({
             key={s.id}
             cardKey={`zfs:${s.id}`}
             name={s.name}
-            eyebrow={t("instances.overSsh")}
+            kind="zfs"
             mark={
               <GlyphMark>
                 <IconZFS />
@@ -64,6 +64,7 @@ export function ZFSServerCards({
             facts={
               <Facts
                 items={[
+                  t("instances.overSsh"),
                   <bdi dir="ltr">{`${s.user}@${s.host}`}</bdi>,
                   <bdi dir="ltr" className="font-mono">
                     {s.root}
