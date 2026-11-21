@@ -274,8 +274,8 @@ func untilDone(ctx context.Context, try func() error) bool {
 	}
 }
 
-// dropNode forgets a node that heard its release, unless hn is no longer the
-// link home holds to it.
+// dropNode forgets a node that heard its release, unless home has since
+// replaced hn with a newer link to it.
 func (s *Service) dropNode(id string, hn *homeNode) {
 	s.nodeMu.Lock()
 	ours := s.nodeLinks[id] == hn

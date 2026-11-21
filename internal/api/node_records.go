@@ -197,7 +197,7 @@ func (s *Service) heldNodeRecords(id string) ([]byte, error) {
 }
 
 // giveBackRecords hands node id the records home keeps of it and notes that
-// it has what it had. Records that no longer open are left out, so the node
+// it has what it had. Records that fail to decrypt are left out, so the node
 // still gets back to its backups.
 func (s *Service) giveBackRecords(ctx context.Context, id string, link *nodelink.Link) error {
 	sealed, err := s.store.NodeRecords(id)
