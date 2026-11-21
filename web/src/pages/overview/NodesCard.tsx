@@ -16,7 +16,7 @@ export function NodesCard({ t, hueIndex, nodes }: { t: T; hueIndex?: number; nod
       {nodes.length === 0 ? (
         <p className="text-xs text-carbon-textMuted">{t("overview.nodes.none")}</p>
       ) : (
-        <ul data-testid="overview-nodes" className="flex flex-col divide-y divide-carbon-border/60">
+        <ul data-testid="overview-nodes" data-new="overview-nodes" className="flex flex-col divide-y divide-carbon-border/60">
           {nodes.map((node) => {
             const away = isAdopted(node) && !node.online;
             return (

@@ -491,7 +491,9 @@ export function Instances() {
       {addingNode && <AddNodeWindow onClose={() => setAddingNode(false)} onChanged={() => void reloadNodes()} />}
       {modules && !state.loading && (
         <PageActions>
-          <PageAction label={t("nodes.add")} glyph={<IconAdd />} onClick={() => setAddingNode(true)} />
+          <span data-new="instances-add-node" data-new-way="add-node" className="flex">
+            <PageAction label={t("nodes.add")} glyph={<IconAdd />} onClick={() => setAddingNode(true)} />
+          </span>
           <span data-new="instances-pair" className="flex">
             <PageAction primary label={t("pairing.title")} glyph={<IconLink />} onClick={() => navigate("/settings/pairing")} />
           </span>

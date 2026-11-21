@@ -185,18 +185,20 @@ export function PlacementFields({
   return (
     <>
       <p className="text-sm text-carbon-textSub">{t("nodes.placementIntro")}</p>
-      <Choices label={t("nodes.step.placement")}>
-        {PLACE_KINDS.map(({ kind, title, text }) => (
-          <Choice
-            key={kind}
-            on={choice.kind === kind}
-            title={t(title)}
-            text={t(text)}
-            picture={<PlacementPicture kind={kind} on={choice.kind === kind} />}
-            onPick={() => set({ kind })}
-          />
-        ))}
-      </Choices>
+      <div data-new="node-placement">
+        <Choices label={t("nodes.step.placement")}>
+          {PLACE_KINDS.map(({ kind, title, text }) => (
+            <Choice
+              key={kind}
+              on={choice.kind === kind}
+              title={t(title)}
+              text={t(text)}
+              picture={<PlacementPicture kind={kind} on={choice.kind === kind} />}
+              onPick={() => set({ kind })}
+            />
+          ))}
+        </Choices>
+      </div>
 
       {choice.kind === "receiver" &&
         (sources.receiver ? (
