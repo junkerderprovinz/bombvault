@@ -6,7 +6,8 @@
 // under /api/nodes/{id}/api, never to this server's own.
 //
 // NODE_SHOTS=<folder> also writes the pictures of these pages in the light,
-// dark and rainbow look at 1280 and 375 pixels:
+// dark and rainbow look at 1280 and 375 pixels, those of the placement in the
+// OLED look as well:
 //
 //   NODE_SHOTS=../shots npx playwright test nodes --project=desktop-1280
 import { expect, test, type Browser, type Page } from "@playwright/test";
@@ -282,18 +283,27 @@ const SHOTS = process.env.NODE_SHOTS;
 const LOOKS = ["light", "dark", "rainbow"] as const;
 const WIDTHS = [1280, 375];
 
-async function look(browser: Browser, width: number, theme: (typeof LOOKS)[number]): Promise<Page> {
+type Look = (typeof LOOKS)[number] | "oled";
+
+const STORED: Partial<Record<Look, Record<string, string>>> = {
+  rainbow: { "bv-rainbow": JSON.stringify({ on: true, reactive: false }) },
+  oled: { "bv-oled": "1" },
+};
+
+async function look(
+  browser: Browser,
+  width: number,
+  theme: Look,
+  { lang = "en", motion = false, receiverNodeUrl = "" } = {},
+): Promise<Page> {
   const context = await browser.newContext({
     viewport: { width, height: width > 600 ? 900 : 812 },
     colorScheme: theme === "light" ? "light" : "dark",
-    reducedMotion: "reduce",
+    reducedMotion: motion ? "no-preference" : "reduce",
   });
   const page = await context.newPage();
-  await stageDemo(page, {
-    theme: theme === "light" ? "light" : "dark",
-    stored: theme === "rainbow" ? { "bv-rainbow": JSON.stringify({ on: true, reactive: false }) } : {},
-  });
-  await stageNodes(page);
+  await stageDemo(page, { theme: theme === "light" ? "light" : "dark", lang, stored: STORED[theme] ?? {} });
+  await stageNodes(page, receiverNodeUrl);
   return page;
 }
 
@@ -499,5 +509,55 @@ test("pictures of a node that keeps its own backups", async ({ browser }, testIn
       await shoot(placed, `keep-on-node-edit-placement-${at}`);
       await placed.context().close();
     }
+  }
+});
+
+test("pictures of where a node's backups go", async ({ browser }, testInfo) => {
+  test.skip(!SHOTS || testInfo.project.name !== "desktop-1280", "only when a folder for the pictures is named");
+  test.setTimeout(600_000);
+  mkdirSync(SHOTS!, { recursive: true });
+  const de = words("de");
+  const receiverNodeUrl = "https://backup.tower.example.org";
+  for (const theme of ["light", "dark", "oled", "rainbow"] as const) {
+    for (const width of WIDTHS) {
+      const at = `${theme}-${width}`;
+      const page = await look(browser, width, theme, { lang: "de", receiverNodeUrl });
+      await page.goto("/instances");
+      await card(page, NODE.id).scrollIntoViewIfNeeded();
+      await shoot(page, `node-card-${at}`);
+      await card(page, NODE.id).getByRole("button", { name: de("nodes.editPlacement") }).click();
+      await page.getByLabel(de("nodes.address")).waitFor();
+      await shoot(page, `edit-placement-${at}`);
+      await page.keyboard.press("Escape");
+      await page.getByRole("button", { name: de("nodes.add") }).first().click();
+      await page.getByRole("dialog", { name: de("nodes.add") }).getByRole("textbox", { name: de("nodes.step.name") }).fill("vps-helsinki");
+      await page.getByRole("button", { name: de("nodes.next") }).click();
+      await page.getByLabel(de("nodes.address")).waitFor();
+      await shoot(page, `add-node-placement-${at}`);
+      await page.context().close();
+    }
+  }
+
+  // A still of each picture in motion: the parcel halfway along its way.
+  for (const theme of ["light", "dark"] as const) {
+    const page = await look(browser, 1280, theme, { lang: "de", motion: true, receiverNodeUrl });
+    await page.goto("/instances");
+    await card(page, NODE.id).getByRole("button", { name: de("nodes.editPlacement") }).click();
+    for (const [kind, title] of [["receiver", "nodes.toReceiver"], ["location", "nodes.toLocation"], ["node", "nodes.toNode"]] as const) {
+      const choice = page.getByRole("radio", { name: new RegExp(`^${de(title)}`) });
+      await choice.click();
+      await page.mouse.move(0, 0);
+      await settle(page);
+      await page.evaluate(() => {
+        for (const a of document.getAnimations()) {
+          const timing = a.effect?.getTiming();
+          if (timing?.iterations !== Infinity) continue;
+          a.pause();
+          a.currentTime = Number(timing.duration) * 0.2;
+        }
+      });
+      await choice.screenshot({ path: join(SHOTS!, `placement-still-${kind}-${theme}.png`) });
+    }
+    await page.context().close();
   }
 });

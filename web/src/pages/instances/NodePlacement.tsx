@@ -29,8 +29,15 @@ import { SelectField } from "../../components/SelectField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { useToast } from "../../lib/toast";
 import { InstanceWindow } from "./InstanceWindow";
+import { PlacementPicture } from "./placementArt";
 
 type T = ReturnType<typeof useT>["t"];
+
+const PLACE_KINDS = [
+  { kind: "receiver", title: "nodes.toReceiver", text: "nodes.toReceiverText" },
+  { kind: "location", title: "nodes.toLocation", text: "nodes.toLocationText" },
+  { kind: "node", title: "nodes.toNode", text: "nodes.toNodeText" },
+] as const;
 
 const INPUT = "rounded-control bg-carbon-surface2 text-carbon-text text-sm px-3 py-1.5 glim-field-focus";
 
@@ -179,9 +186,16 @@ export function PlacementFields({
     <>
       <p className="text-sm text-carbon-textSub">{t("nodes.placementIntro")}</p>
       <Choices label={t("nodes.step.placement")}>
-        <Choice on={choice.kind === "receiver"} title={t("nodes.toReceiver")} text={t("nodes.toReceiverText")} onPick={() => set({ kind: "receiver" })} />
-        <Choice on={choice.kind === "location"} title={t("nodes.toLocation")} text={t("nodes.toLocationText")} onPick={() => set({ kind: "location" })} />
-        <Choice on={choice.kind === "node"} title={t("nodes.toNode")} text={t("nodes.toNodeText")} onPick={() => set({ kind: "node" })} />
+        {PLACE_KINDS.map(({ kind, title, text }) => (
+          <Choice
+            key={kind}
+            on={choice.kind === kind}
+            title={t(title)}
+            text={t(text)}
+            picture={<PlacementPicture kind={kind} on={choice.kind === kind} />}
+            onPick={() => set({ kind })}
+          />
+        ))}
       </Choices>
 
       {choice.kind === "receiver" &&

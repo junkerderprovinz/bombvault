@@ -9,16 +9,19 @@ export function Choices({ label, children }: { label: string; children: ReactNod
   );
 }
 
-/** Choice is one of those ways, with a line that says what it leads to. */
+/** Choice is one of those ways, with a line that says what it leads to and,
+ *  where it helps, a small picture of it at the end. */
 export function Choice({
   on,
   title,
   text,
+  picture,
   onPick,
 }: {
   on: boolean;
   title: string;
   text?: string;
+  picture?: ReactNode;
   onPick: () => void;
 }) {
   return (
@@ -42,6 +45,7 @@ export function Choice({
         <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
         {text && <span className="text-xs text-carbon-textMuted wrap-anywhere">{text}</span>}
       </span>
+      {picture && <span className="ms-auto flex-none self-center">{picture}</span>}
     </button>
   );
 }

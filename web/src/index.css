@@ -4167,6 +4167,13 @@ body {
     animation-duration: var(--motion-scene-dur, 6s);
     animation-delay: calc(var(--motion-scene-dur, 6s) / 2);
   }
+  /* The pictures of where a node's backups go. Only the choice that is taken
+     moves, and there the parcel that rests on the way gives way to the one
+     that travels. */
+  :root:not([data-motion="off"]) .glim-place:not(.glim-place-on) :is(.glim-scene-flow, .glim-parcel-fly, .glim-parcel-hop, .glim-parcel-ring) {
+    animation: none;
+  }
+  :root:not([data-motion="off"]) .glim-place-on .glim-place-parked { display: none; }
 
   /* The three step cards play one scene over two passes. --step-at is the
      share of the loop at which a word shows or a button is pressed. */
@@ -7086,6 +7093,24 @@ body {
   0%, 44%   { transform: none; animation-timing-function: ease-out; }
   50%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * -.25)); animation-timing-function: ease-in; }
   57%, 100% { transform: none; }
+}
+
+/* The pictures in the choices of where a node's backups go. A mark on a
+   corner stands apart from what it marks by a ring of the tile's ground. */
+.glim-place > svg { direction: ltr; }
+.glim-place-tile { rx: min(calc(var(--radius-control) * .7), 8px); }
+.glim-place-ground { fill: var(--carbon-surface3); }
+.glim-place-ink { color: var(--pic); }
+.glim-place-badge {
+  fill: var(--pic);
+  stroke: var(--carbon-surface2);
+  stroke-width: 2;
+}
+.glim-place-badge-ink { color: var(--carbon-surface); }
+.glim-place-kept {
+  stroke: var(--carbon-surface2);
+  stroke-width: 2;
+  paint-order: stroke;
 }
 
 /* The pictures on the three step cards of the pairing page. Corners follow

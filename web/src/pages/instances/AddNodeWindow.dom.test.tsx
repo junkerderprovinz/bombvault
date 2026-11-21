@@ -117,6 +117,21 @@ describe("AddNodeWindow", () => {
     expect(placed).toEqual([["n1", { kind: "receiver" }]]);
   });
 
+  it("pictures each placement and sets only the one that is taken in motion", async () => {
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    const moving = () => [...document.querySelectorAll(".glim-place-on")].map((p) => p.getAttribute("data-placement-picture"));
+    for (const kind of ["receiver", "location", "node"]) {
+      expect(document.querySelector(`[role="radio"] [data-placement-picture="${kind}"] svg[aria-hidden="true"]`)).toBeTruthy();
+    }
+    expect(moving()).toEqual(["receiver"]);
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(`^${en["nodes.toNode"]}`) }));
+    expect(moving()).toEqual(["node"]);
+  });
+
   it("keeps the address and the certificate apart by room alone, with no line between", async () => {
     await renderWindow();
     fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
