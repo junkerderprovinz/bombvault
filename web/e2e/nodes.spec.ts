@@ -56,7 +56,8 @@ test("a node's card says it is a node in a badge before its state", async ({ pag
   const kind = online.getByText(t("nodes.kind"), { exact: true });
   const state = online.getByText(t("instances.connected"), { exact: true });
   await expect(kind).toBeVisible();
-  const [k, s] = [(await kind.boundingBox())!, (await state.boundingBox())!];
+  // Both in one reading, since the card may still be moving in.
+  const [k, s] = await kind.evaluate((el, other) => [el.getBoundingClientRect(), other!.getBoundingClientRect()].map((r) => r.toJSON() as DOMRect), await state.elementHandle());
   expect(k.x + k.width).toBeLessThanOrEqual(s.x);
   expect(Math.abs(k.y - s.y)).toBeLessThan(2);
   await expect(kind).toHaveCount(1);
