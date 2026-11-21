@@ -1997,6 +1997,12 @@ body {
    ink under the pointer: no frame, no fill and no underline, so it never reads
    as a button. */
 a.glim-version-number:focus-visible { color: var(--accent-text); }
+/* A number that opens its release is a tap target of 24px, as every control
+   is, and the margin takes the padding back so it looks no taller. */
+a.glim-version-number {
+  padding-block: 2px;
+  margin-block: -2px;
+}
 @media (hover: hover) {
   a.glim-version-number:hover { color: var(--accent-text); }
 }
