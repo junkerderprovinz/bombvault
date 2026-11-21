@@ -64,6 +64,7 @@ Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của �
 
 - ngôn ngữ, và tên mà điện thoại hiển thị trên trang Phiên bản (để trống thì dùng tên mẫu điện thoại),
 - giao diện, theo máy chủ đầu tiên trong danh sách cho đến khi bạn tự chọn, còn hiệu ứng chuyển động có cài đặt riêng,
+- thẻ Phiên bản, cho biết cửa hàng mà bản cập nhật đến từ đó (Google Play, F-Droid hoặc GitHub Releases) và mở ghi chú của phiên bản này trong **Có gì mới**, cùng thẻ Thành phần,
 - một bản báo cáo để sao chép khi báo lỗi. Nó không chứa địa chỉ, tên hay cụm từ nào,
 - thẻ Giới thiệu kèm chính sách quyền riêng tư,
 - **Xóa tất cả máy chủ**, xóa mọi máy chủ khỏi ứng dụng và rời nhóm. Mỗi máy chủ mà điện thoại còn kết nối được sẽ gỡ điện thoại khỏi trang Phiên bản của nó.

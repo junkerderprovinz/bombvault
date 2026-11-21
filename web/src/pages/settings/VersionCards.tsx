@@ -39,7 +39,7 @@ const TONE: Record<UpdateTone, string> = {
  * so it does not pass for a button. An empty version is one that could not be
  * read.
  */
-function VersionNumber({ row, unreleased, className }: { row: ComponentRow; unreleased: (version: string) => string; className: string }) {
+export function VersionNumber({ row, unreleased, className }: { row: ComponentRow; unreleased: (version: string) => string; className: string }) {
   const { t } = useT();
   if (!row.version) return <span className="text-sm text-carbon-textMuted">{t("tile.info.versionUnknown")}</span>;
   const { shown, released, href } = numberLink(row);

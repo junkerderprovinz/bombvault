@@ -64,6 +64,7 @@ Plussan vieressä oleva ratas avaa sovelluksen asetukset:
 
 - kieli sekä nimi, jolla puhelin näkyy Ilmentymät-sivulla (tyhjä tarkoittaa puhelimen mallia),
 - ulkoasu, joka seuraa luettelon ensimmäistä palvelinta, kunnes asetat oman, sekä animaatiot, joilla on oma asetuksensa,
+- Versio-kortti, joka kertoo, mistä kaupasta päivitykset tulevat (Google Play, F-Droid tai GitHub Releases), ja avaa tämän version tiedot kohdasta **Uutta**, sekä Komponentit-kortti,
 - raportti kopioitavaksi, kun ilmoitat ongelmasta. Se ei sisällä osoitetta, nimeä eikä lausetta,
 - Tietoja-kortti tietosuojaselosteineen,
 - **Poista kaikki palvelimet**, joka poistaa sovelluksesta kaikki palvelimet ja eroaa ryhmästä. Jokainen palvelin, jonka puhelin vielä tavoittaa, poistaa sen Ilmentymät-sivultaan.

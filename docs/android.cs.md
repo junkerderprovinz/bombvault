@@ -64,6 +64,7 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 
 - jazyk a název, pod kterým se telefon zobrazuje na stránce Instance (prázdné pole znamená model telefonu),
 - vzhled, který se řídí prvním serverem v seznamu, dokud si nenastavíš vlastní, a animace, které mají vlastní nastavení,
+- kartu Verze, která uvádí obchod, odkud přicházejí aktualizace (Google Play, F-Droid nebo GitHub Releases), a pod **Novinky** otevře poznámky této verze, a kartu Komponenty,
 - hlášení ke zkopírování, když hlásíš problém. Neobsahuje žádnou adresu, název ani frázi,
 - kartu O aplikaci se zásadami ochrany osobních údajů,
 - **Odebrat všechny servery**, které z aplikace odebere všechny servery a opustí skupinu. Každý server, na který telefon ještě dosáhne, ho odebere ze své stránky Instance.

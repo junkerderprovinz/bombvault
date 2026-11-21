@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { componentText, designRow, updateLine, whatsNewLabel, withApp } from "@glimstone/core";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
@@ -8,8 +9,9 @@ import { IconCheck, IconCopy, IconTrash } from "../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../components/ReadmeButton";
 import { Toggle } from "../components/Toggle";
 import { AboutContent } from "../pages/settings/AboutCard";
-import { IconAccentSystem } from "../components/glyphs";
+import { IconAccentSystem, IconWhatsNew } from "../components/glyphs";
 import { IconResetArrow, useSystemAccent } from "../pages/settings/AccentCard";
+import { VersionNumber } from "../pages/settings/VersionCards";
 import {
   DEFAULT_ACCENT,
   DEFAULT_ACCENT_PRESETS,
@@ -29,10 +31,12 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { darkShowing, getOled, getResolvedTheme, getTheme, oledRefusal, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
+import { GLIMSTONE_VERSION } from "../lib/glimstoneVersion";
 import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
 import { PageTop } from "./PageTop";
+import { storeOf } from "./store";
 import { FOLLOWED_EVENT, following as isFollowing, keepAsOwn, setFollowing } from "./look";
 
 type T = ReturnType<typeof useT>["t"];
@@ -221,6 +225,7 @@ export function SettingsPage({
   onRemoveAll: () => void;
 }) {
   const { lang, languages } = useT();
+  const words = componentText(lang);
   const { confirm, confirmDialog } = useConfirm();
   const [name, setName] = useState(app.deviceName);
   const [copied, setCopied] = useState(false);
@@ -553,6 +558,51 @@ export function SettingsPage({
             tile="glim-tile-zip"
             parts={[{ name: t("launcher.appsSource"), sub: t("launcher.appsZip"), href: sourceZip(app.version) }]}
             mark={<BrandMark svg={ZIP_SVG} />}
+          />
+        </div>
+      </Section>
+
+      {/* GlimStone's Version and Components cards. The app's updates come
+          through the store it came from, so the Version card checks nothing. */}
+      <Section title={words.versionCard.title} hue={5} info={withApp(words.versionCard.hint, "BombVault")}>
+        <div className="flex items-baseline justify-between gap-4 py-2">
+          <span className="min-w-0 text-body font-semibold text-carbon-text">BombVault</span>
+          <VersionNumber
+            row={{ name: "BombVault", version: app.version, repoUrl: REPO }}
+            unreleased={words.versionCard.unreleased}
+            className="flex-none text-body tabular-nums text-carbon-text"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pb-1">
+          <p role="status" className="m-0 min-w-0 flex-[1_1_8rem] text-sm text-carbon-textSub">
+            {updateLine({ kind: "store", store: storeOf(app.installer ?? "") }, words.versionCard).line}
+          </p>
+          <Button
+            label={whatsNewLabel(words.versionCard)}
+            labelKey="version.whatsNew"
+            glyph={
+              <span className="inline-flex items-center gap-1.5">
+                <i aria-hidden="true" className="glim-new-dot glim-new-dot-still glim-new-dot-seen" />
+                <IconWhatsNew />
+              </span>
+            }
+            keepLabel
+            onClick={() => open(`${REPO}/releases/tag/v${app.version}`)}
+            className="ms-auto"
+          />
+        </div>
+      </Section>
+
+      <Section title={words.componentsCard.title} hue={8} info={withApp(words.componentsCard.hint, "BombVault")}>
+        <div className="flex items-center justify-between gap-4 py-2">
+          <span className="flex min-w-0 items-center gap-1.5 text-sm text-carbon-text">
+            GlimStone
+            <InfoBubble tip={words.componentsCard.design} />
+          </span>
+          <VersionNumber
+            row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }}
+            unreleased={words.componentsCard.unreleased}
+            className="flex-none text-sm tabular-nums text-carbon-textSub"
           />
         </div>
       </Section>

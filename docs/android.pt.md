@@ -63,6 +63,7 @@ A roda dentada ao lado do botão + abre as definições da aplicação:
 
 - o idioma e o nome que o telemóvel mostra na página Instâncias (vazio significa o modelo do telemóvel),
 - o aspeto, que segue o primeiro servidor da lista até definir o seu, e as animações, que têm uma definição própria,
+- o cartão Versão, que indica a loja de onde vêm as atualizações (Google Play, F-Droid ou GitHub Releases) e abre as notas desta versão em **Novidades**, e o cartão Componentes,
 - um relatório para copiar quando comunicares um problema. Não contém nenhum endereço, nome ou frase,
 - o cartão **Sobre** com a política de privacidade,
 - **Remover todos os servidores**, que retira todos os servidores da aplicação e sai do grupo. Cada servidor que o telemóvel ainda alcança retira-o da sua página Instâncias.
