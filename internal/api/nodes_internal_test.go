@@ -294,3 +294,21 @@ func TestANodeThatMissesItsReleaseHearsItWhenItComesBack(t *testing.T) {
 		t.Errorf("the node's link = %+v, want it released", link)
 	}
 }
+
+func TestANodeThatNeverCameOnlineIsGoneOnceReleased(t *testing.T) {
+	home := homeWithRelay(t)
+	compose := addNode(t, home, "vps")
+	id, _ := nodelink.NodeID(compose["APP_KEY"])
+
+	code, out := home.do(t, http.MethodDelete, "/api/nodes/"+id, nil)
+	if code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("release = %d %v", code, out)
+	}
+	nodes, err := home.st.ListNodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(nodes) != 0 {
+		t.Errorf("nodes = %+v, want none", nodes)
+	}
+}

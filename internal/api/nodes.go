@@ -593,14 +593,22 @@ func (s *Service) ReleaseNode(ctx context.Context, id string) (told bool, err er
 	if err != nil {
 		return false, err
 	}
-	if err := s.store.SetNodeState(id, store.NodeReleasing); err != nil {
-		return false, err
-	}
-	n.State = store.NodeReleasing
 	s.nodeMu.Lock()
 	hn := s.nodeLinks[id]
 	delete(s.nodeLinks, id)
 	s.nodeMu.Unlock()
+	// A node that was never adopted would never come back to hear it.
+	if n.AdoptedAt == 0 {
+		if hn != nil {
+			hn.stop()
+			_ = hn.link.Close()
+		}
+		return true, s.forgetNode(id)
+	}
+	if err := s.store.SetNodeState(id, store.NodeReleasing); err != nil {
+		return false, err
+	}
+	n.State = store.NodeReleasing
 	var link *nodelink.Link
 	if hn != nil {
 		hn.stop()
