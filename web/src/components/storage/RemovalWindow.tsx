@@ -27,8 +27,7 @@ import { storageLocationsChanged } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
 import { FolderBrowser } from "../FolderBrowser";
-import { pickSub, pickSurface } from "../entry/Choice";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { IconClose, IconTrash } from "../navGlyphs";
 import { DetachedList, ErasureDetails, erasable } from "./removalParts";
 
@@ -74,9 +73,9 @@ function Way({
         role="radio"
         aria-checked={picked}
         onClick={onPick}
+        onKeyDown={pickWithArrows}
         className={`flex items-start gap-3 rounded-card p-4 text-start transition-colors ${pickSurface(picked)}`}
       >
-        <RadioMark on={picked} className="mt-0.5" />
         <span className="flex min-w-0 flex-col gap-1">
           <span className="text-sm font-semibold">{title}</span>
           <span className={`text-xs leading-relaxed ${pickSub(picked, "text-carbon-textSub")}`}>{text}</span>

@@ -30,7 +30,7 @@ import { CloudCard } from "../../pages/settings/CloudCard";
 import { RcloneCard } from "../../pages/settings/RcloneCard";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { pickSub, pickSurface } from "../entry/Choice";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconImport, IconKey, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
@@ -75,6 +75,7 @@ function WayCard({
       role="radio"
       aria-checked={on}
       onClick={onPick}
+      onKeyDown={pickWithArrows}
       className={`flex items-start gap-3 rounded-card p-4 text-start transition-colors ${pickSurface(on)} ${wide ? "sm:col-span-2" : ""}`}
     >
       <span

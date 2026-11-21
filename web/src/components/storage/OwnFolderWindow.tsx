@@ -26,8 +26,7 @@ import { IconMove } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconClose } from "../navGlyphs";
 import { isRemotePath } from "../PathModeSwitch";
-import { pickSub, pickSurface } from "../entry/Choice";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { SelectField } from "../SelectField";
 import { Toggle } from "../Toggle";
 import { useKeepLessQuestion } from "./keepFields";
@@ -323,9 +322,9 @@ export function OwnFolderWindow({
                     aria-label={choice.name}
                     disabled={busy}
                     onClick={() => setTo(choice.id)}
+                    onKeyDown={pickWithArrows}
                     className={`flex items-center gap-3 rounded-control px-3 py-2.5 text-start transition-colors ${pickSurface(on)}`}
                   >
-                    <RadioMark on={on} />
                     <LocationMark location={choice} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
@@ -356,9 +355,9 @@ export function OwnFolderWindow({
                 aria-label={t("own.other")}
                 disabled={busy}
                 onClick={() => setTo(OTHER)}
+                onKeyDown={pickWithArrows}
                 className={`flex items-center gap-3 rounded-control px-3 py-2.5 text-start transition-colors ${pickSurface(to === OTHER)}`}
               >
-                <RadioMark on={to === OTHER} />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-sm font-semibold">{t("own.other")}</span>
                   <span className={`text-xs ${pickSub(to === OTHER, "text-carbon-textSub")}`}>{t("own.otherSub")}</span>
