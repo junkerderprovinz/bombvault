@@ -97,6 +97,7 @@ Kilka rzeczy wymaga hasła logowania, jak zestaw odzyskiwania i depozyty kluczy.
 
 ## Info {#info}
 
-- **Wersja**: BombVault, GlimStone, restic i rclone, z **Sprawdź aktualizacje** i **Nowości**, które liczą zmiany, jakich jeszcze nie widziałeś, i otwierają okno, które je wymienia.
+- **Wersja**: wersja BombVaulta i stan jego aktualizacji. **Szukaj aktualizacji** pyta GitHuba o najnowsze wydanie. **Nowości** liczą zmiany, których jeszcze nie widziałeś, i otwierają okno, które je wypisuje. Gdy czeka nowsze wydanie, pokazują zamiast tego jego notatki, a **Jak zaktualizować** otwiera [Aktualizację](getting-started.md#update).
+- **Komponenty**: rclone, restic i GlimStone w wersjach, które przynosi to wydanie. Każdy numer otwiera najnowsze wydanie swojego projektu.
 - **Pomoc**: **Podręcznik** otwiera tę dokumentację, a **Zgłoszenie błędu** pobiera ZIP z usuniętymi danymi wrażliwymi do zgłoszenia na GitHubie. Wymaga hasła logowania.
-- **O programie BombVault**: projekt, jego licencja i jak skontaktować się z autorem.
+- **O aplikacji**: projekt, jego licencja i jak skontaktować się z autorem.

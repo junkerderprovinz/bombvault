@@ -97,6 +97,7 @@ Mehreres braucht ein Login-Passwort, etwa das Recovery-Kit und Schlüsselhinterl
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic und rclone, mit **Nach Updates suchen** und **Neu**, das die Änderungen zählt, die du noch nicht gesehen hast, und ein Fenster öffnet, das sie auflistet.
+- **Version**: die Version von BombVault und wie es um die Updates steht. **Nach Updates suchen** fragt GitHub nach dem neuesten Release. **Neuigkeiten** zählt die Änderungen, die du noch nicht gesehen hast, und öffnet ein Fenster, das sie auflistet. Wartet ein neueres Release, zeigt es stattdessen dessen Hinweise, und **Anleitung zum Update** öffnet [Update](getting-started.md#update).
+- **Komponenten**: rclone, restic und GlimStone mit den Versionen, die dieses Release mitbringt. Jede Nummer öffnet das neueste Release ihres Projekts.
 - **Hilfe**: **Handbuch** öffnet diese Dokumentation, und **Fehlerbericht** lädt eine bereinigte ZIP für ein GitHub-Issue herunter. Es braucht ein Login-Passwort.
-- **Über BombVault**: das Projekt, seine Lizenz und wie du den Autor erreichst.
+- **Über**: das Projekt, seine Lizenz und wie du den Autor erreichst.

@@ -97,6 +97,7 @@ Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarko
 
 ## Info {#info}
 
-- **Versie**: BombVault, GlimStone, restic en rclone, met **Controleren op updates** en **Nieuw**, dat telt hoeveel wijzigingen je nog niet hebt gezien en een venster opent dat ze toont.
+- **Versie**: de versie van BombVault en hoe het met de updates staat. **Zoeken naar updates** vraagt GitHub naar de nieuwste release. **Nieuw** telt de wijzigingen die je nog niet hebt gezien en opent een venster dat ze opsomt. Wacht er een nieuwere release, dan toont het in plaats daarvan de notities van die release, en **Zo werk je bij** opent [Bijwerken](getting-started.md#update).
+- **Onderdelen**: rclone, restic en GlimStone, met de versies die deze release meebrengt. Elk nummer opent de nieuwste release van zijn project.
 - **Help**: **Handleiding** opent deze documentatie, en **Bugrapport** downloadt een geredigeerde ZIP voor een GitHub-issue. Het vereist een inlogwachtwoord.
-- **Over BombVault**: het project, zijn licentie en hoe je de auteur bereikt.
+- **Over**: het project, zijn licentie en hoe je de auteur bereikt.

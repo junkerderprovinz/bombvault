@@ -544,11 +544,16 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
   ],
 
   info: [
+    // The Version and Components cards draw GlimStone's words. These keys
+    // carry the same words, which InfoPage.dom.test.tsx holds them to.
     {
       title: "about.version",
-      hint: "tile.info.versionHint",
-      rows: [{ key: "tile.info.check" }, { key: "whatsNew.title", hint: "whatsNew.hint" }, { key: "whatsNew.markAll" }, { key: "whatsNew.showAll" }],
-      body: ["tile.info.glimstoneHint", "tile.info.resticHint", "tile.info.rcloneHint"],
+      rows: [{ key: "tile.info.check" }, { key: "tile.info.whatsNew", hint: "whatsNew.hint" }, { key: "whatsNew.markAll" }, { key: "whatsNew.showAll" }],
+    },
+    {
+      title: "tile.info.components",
+      rows: [],
+      body: ["tile.info.resticHint", "tile.info.rcloneHint"],
     },
     {
       title: "tile.info.help",

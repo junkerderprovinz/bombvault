@@ -121,6 +121,14 @@ services:
 
 For også at sikkerhedskopiere navngivne Docker-volumener skal du montere en mappe, der rummer både dine data og Dockers datarod (`docker info -f '{{.DockerRootDir}}'`, som regel `/var/lib/docker`), på samme måde som Unraid-skabelonen monterer hele `/mnt`.
 
+## Opdatering {#update}
+
+En container erstatter ikke sig selv, så du opdaterer BombVault dér, hvor du installerede den. **Indstillinger, Info** viser, når en nyere udgivelse er ude, og **Nyheder** viser dens noter. Dine indstillinger i `/config` og dine sikkerhedskopier forbliver, som de er. Opdater, mens ingen sikkerhedskopiering eller gendannelse kører.
+
+- **Unraid:** vælg **Check for Updates** på fanen **Docker** og derefter **apply update** ved BombVault.
+- **Docker Compose:** kør `docker compose pull` og derefter `docker compose up -d` i mappen med din compose-fil.
+- **TrueNAS SCALE, ZimaOS, CasaOS og MOS:** opdater appen på værtens app-side, som henter det nyere image.
+
 ## Den ene påkrævede indstilling {#the-one-required-setting}
 
 Den eneste variabel, du skal angive, er `APP_KEY`, en 32-byte hex-hemmelighed (64 hex-tegn), der bruges til at udlede restic-repositoriets adgangskode.
@@ -198,7 +206,7 @@ Sider og indstillinger bruger vinduets fulde bredde. Et vindue har sine knapper 
 - **Indstillinger** er fjorten fliser: Generelt, Udseende, Tidsplan, Destinationer, Gendannelse, Notifikationer, Verificering, Sikkerhed, Instanser, Parring, Integrationer, Apps, System og Info. Se [Indstillinger](settings.md). Tryk på `/` eller Ctrl+K for at søge i dem alle, også efter de navne, siderne havde i tidligere versioner. Træk fliserne i din egen rækkefølge under **Udseende**. Hvor en kolonne af fliser ved siden af siden ville presse den sammen, som i et vindue omkring 1200 pixel bredt, bliver fliserne en stribe over siden, der ruller sidelæns. En telefon viser den samme stribe.
 - **Destinationer** og **Instanser** er indstillingsfliser med sider for sig. **Vis også i sidepanelet** på deres flise fæstner dem til sidepanelet.
 
-Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering åbner et vindue sig selv med et kort for hver udgivelse siden din sidste version, og grønne prikker markerer, hvad der er ændret. Et klik skjuler en prik. **Nyt** i kortet Version under **Indstillinger, Info** tæller det, du endnu ikke har set, og åbner det vindue igen, med noterne for hver udgivelse og dens ændringer med **Gå derhen**.
+Intet har en Gem-knap, og intet folder sig ud: sjældne ting har et kort eller et vindue for sig, og forklaringer står i (i)-boblerne. Efter en opdatering åbner et vindue sig selv med et kort for hver udgivelse siden din sidste version, og grønne prikker markerer, hvad der er ændret. Et klik skjuler en prik. **Nyheder** i kortet Version under **Indstillinger, Info** tæller det, du endnu ikke har set, og åbner det vindue igen, med noterne for hver udgivelse og dens ændringer med **Gå derhen**.
 
 ## Byg fra kildekoden {#build-from-source}
 

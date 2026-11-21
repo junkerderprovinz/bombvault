@@ -97,6 +97,7 @@ Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tal
 
 ## Tietoja {#info}
 
-- **Versio**: BombVault, GlimStone, restic ja rclone, kohdilla **Hae päivityksiä** ja **Uutta**, joka laskee muutokset, joita et ole vielä nähnyt, ja avaa ikkunan, joka listaa ne.
+- **Versio**: BombVaultin versio ja päivitysten tilanne. **Hae päivityksiä** kysyy GitHubilta uusinta julkaisua. **Uutta** laskee muutokset, joita et ole vielä nähnyt, ja avaa ikkunan, jossa ne luetellaan. Kun uudempi julkaisu odottaa, se näyttää sen sijaan julkaisun tiedot, ja **Näin päivität** avaa kohdan [Päivitys](getting-started.md#update).
+- **Komponentit**: rclone, restic ja GlimStone niinä versioina, jotka tämä julkaisu tuo mukanaan. Jokainen numero avaa projektinsa uusimman julkaisun.
 - **Ohje**: **Käyttöopas** avaa tämän dokumentaation, ja **Virheraportti** lataa sensuroidun ZIP-tiedoston GitHub-issuea varten. Se vaatii kirjautumissalasanan.
-- **Tietoja BombVaultista**: projekti, sen lisenssi ja miten tavoitat tekijän.
+- **Tietoja**: projekti, sen lisenssi ja miten tavoitat tekijän.

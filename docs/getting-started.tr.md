@@ -121,6 +121,14 @@ services:
 
 Docker adlandırılmış birimlerini de yedeklemek için, Unraid şablonunun `/mnt`'nin tamamını bağlaması gibi, hem verini hem de Docker'ın veri kökünü (`docker info -f '{{.DockerRootDir}}'`, genellikle `/var/lib/docker`) tutan bir klasörü bağla.
 
+## Güncelleme {#update}
+
+Bir konteyner kendini değiştirmez, bu yüzden BombVault'u kurduğun yerde güncellersin. Daha yeni bir sürüm çıktığında **Ayarlar, Bilgi** bunu gösterir, **Yenilikler** de notlarını gösterir. `/config` içindeki ayarların ve yedeklerin olduğu gibi kalır. Hiçbir yedekleme ya da geri yükleme çalışmıyorken güncelle.
+
+- **Unraid:** **Docker** sekmesinde **Check for Updates**'i, ardından BombVault'un yanındaki **apply update**'i seç.
+- **Docker Compose:** compose dosyanın olduğu klasörde `docker compose pull`, ardından `docker compose up -d` çalıştır.
+- **TrueNAS SCALE, ZimaOS, CasaOS ve MOS:** uygulamayı ana makinenin uygulama sayfasında güncelle, o sayfa daha yeni imajı çeker.
+
 ## Gerekli tek ayar {#the-one-required-setting}
 
 Ayarlaman gereken tek değişken `APP_KEY`'dir, restic deposu parolasını türetmek için kullanılan 32 baytlık onaltılık bir gizli bilgi (64 onaltılık karakter).
@@ -198,7 +206,7 @@ Sayfalar ve ayarlar pencerenin tüm genişliğini kullanır. Bir pencere düğme
 - **Ayarlar** on dört kutucuktur: Genel, Görünüm, Zamanlama, Hedefler, Geri yükleme, Bildirimler, Doğrulama, Güvenlik, Örnekler, Eşleştirme, Entegrasyonlar, Uygulamalar, Sistem ve Bilgi. Bkz. [Ayarlar](settings.md). Hepsinde arama yapmak için `/` ya da Ctrl+K'ya bas, sayfaların önceki sürümlerdeki adlarıyla da. Kutucukları **Görünüm** altında kendi sırana sürükle. Sayfanın yanındaki bir kutucuk sütununun onu sıkıştıracağı yerde, örneğin yaklaşık 1200 piksel genişliğinde bir pencerede, kutucuklar sayfanın üstünde yana kayan bir şeride dönüşür. Telefon aynı şeridi gösterir.
 - **Hedefler** ve **Örnekler**, kendi sayfaları olan ayar kutucuklarıdır. Kutucuklarındaki **Kenar çubuğunda da göster** onları kenar çubuğuna sabitler.
 
-Hiçbir şeyde Kaydet düğmesi ve katlanan bölüm yoktur: nadir şeylerin kendi kartı ya da penceresi vardır, açıklamalar (i) balonlarındadır. Bir güncellemeden sonra son sürümünden bu yana her sürüm için bir kartlı bir pencere kendiliğinden açılır ve yeşil noktalar neyin değiştiğini işaretler. Bir tıklama noktayı gizler. **Ayarlar, Bilgi** altındaki Sürüm kartındaki **Yeni**, henüz görmediklerini sayar ve her sürümün notları ve **Oraya git** ile değişiklikleriyle o pencereyi yeniden açar.
+Hiçbir şeyde Kaydet düğmesi ve katlanan bölüm yoktur: nadir şeylerin kendi kartı ya da penceresi vardır, açıklamalar (i) balonlarındadır. Bir güncellemeden sonra son sürümünden bu yana her sürüm için bir kartlı bir pencere kendiliğinden açılır ve yeşil noktalar neyin değiştiğini işaretler. Bir tıklama noktayı gizler. **Ayarlar, Bilgi** altındaki Sürüm kartındaki **Yenilikler**, henüz görmediklerini sayar ve her sürümün notları ve **Oraya git** ile değişiklikleriyle o pencereyi yeniden açar.
 
 ## Kaynaktan derlemek {#build-from-source}
 

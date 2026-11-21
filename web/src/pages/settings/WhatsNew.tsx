@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "../../components/Badge";
 import { hueVars } from "../../lib/appearance";
 import { Button } from "../../components/Button";
-import { IconConfirm, IconEye, IconForward, IconWhatsNew } from "../../components/glyphs";
+import { IconConfirm, IconEye, IconForward } from "../../components/glyphs";
 import { IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { withinBase } from "../../lib/base";
@@ -220,25 +220,26 @@ export function WhatsNewHost({ version }: { version: string | null }) {
 }
 
 /**
- * WhatsNewButton stands in the Version card and opens the window. It wears
- * the gift like every button wears its glyph, counts what is still unseen,
- * and the dot before the gift goes grey once nothing is.
+ * NewReleaseWindow holds the notes of a release this server does not run yet,
+ * for the Version card while an update is waiting. `version` is the bare
+ * number, such as "10.7.0".
  */
-export function WhatsNewButton() {
+export function NewReleaseWindow({ version, onClose }: { version: string; onClose: () => void }) {
   const { t } = useT();
-  const left = useWhatsNew().unseen.length;
   return (
-    <Button
-      label={left > 0 ? `${t("whatsNew.title")} · ${left}` : t("whatsNew.title")}
-      labelKey={null}
-      glyph={
-        <span className="inline-flex items-center gap-1.5">
-          <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${left > 0 ? "" : " glim-new-dot-seen"}`} />
-          <IconWhatsNew />
-        </span>
+    <InstanceWindow
+      title={t("whatsNew.windowTitle").replace("{version}", version)}
+      onClose={onClose}
+      footer={
+        <>
+          <Badge as="a" href={releasePage(`v${version}`)} target="_blank" rel="noopener noreferrer" tone="neutral" size="large" className="me-auto">
+            {t("whatsnew.viewOnGitHub")}
+          </Badge>
+          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={onClose} />
+        </>
       }
-      keepLabel
-      onClick={() => openWhatsNew(true)}
-    />
+    >
+      <ReleaseNotes version={`v${version}`} />
+    </InstanceWindow>
   );
 }

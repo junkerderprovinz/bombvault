@@ -97,6 +97,7 @@ Mai multe lucruri cer o parolă de conectare, de exemplu kitul de recuperare și
 
 ## Info {#info}
 
-- **Versiune**: BombVault, GlimStone, restic și rclone, cu **Caută actualizări** și **Nou**, care numără schimbările pe care nu le-ai văzut încă și deschide o fereastră care le listează.
+- **Versiune**: versiunea BombVault și stadiul actualizărilor. **Caută actualizări** întreabă GitHub de cea mai nouă versiune. **Noutăți** numără schimbările pe care nu le-ai văzut încă și deschide o fereastră care le enumeră. Când așteaptă o versiune mai nouă, arată în schimb notele ei, iar **Cum actualizezi** deschide [Actualizare](getting-started.md#update).
+- **Componente**: rclone, restic și GlimStone, în versiunile pe care le aduce această versiune. Fiecare număr deschide cea mai nouă versiune a proiectului său.
 - **Ajutor**: **Manual** deschide această documentație, iar **Raport de eroare** descarcă un ZIP cu date șterse pentru un issue GitHub. Cere o parolă de conectare.
-- **Despre BombVault**: proiectul, licența lui și cum îl poți contacta pe autor.
+- **Despre**: proiectul, licența lui și cum îl poți contacta pe autor.

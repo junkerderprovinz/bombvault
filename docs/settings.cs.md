@@ -97,6 +97,7 @@ Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a u
 
 ## Info {#info}
 
-- **Verze**: BombVault, GlimStone, restic a rclone, s **Hledat aktualizace** a **Nové**, které počítá změny, jež jsi ještě neviděl, a otevře okno, které je vypíše.
+- **Verze**: verze BombVaultu a jak jsou na tom aktualizace. **Hledat aktualizace** se zeptá GitHubu na nejnovější vydání. **Novinky** spočítá změny, které jsi ještě neviděl, a otevře okno, které je vypíše. Když čeká novější vydání, ukáže místo toho jeho poznámky a **Jak aktualizovat** otevře [Aktualizace](getting-started.md#update).
+- **Komponenty**: rclone, restic a GlimStone ve verzích, které toto vydání přináší. Každé číslo otevře nejnovější vydání svého projektu.
 - **Nápověda**: **Příručka** otevře tuto dokumentaci a **Hlášení chyby** stáhne vyčištěné ZIP pro issue na GitHubu. Vyžaduje přihlašovací heslo.
-- **O aplikaci BombVault**: projekt, jeho licence a jak autora zastihnout.
+- **O aplikaci**: projekt, jeho licence a jak autora zastihnout.

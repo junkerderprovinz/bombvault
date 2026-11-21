@@ -97,6 +97,7 @@ Một số việc cần mật khẩu đăng nhập, chẳng hạn bộ khôi ph�
 
 ## Thông tin {#info}
 
-- **Phiên bản**: BombVault, GlimStone, restic và rclone, với **Kiểm tra cập nhật** và **Mới**, đếm những thay đổi bạn chưa xem và mở một cửa sổ liệt kê chúng.
+- **Phiên bản**: phiên bản của BombVault và tình trạng cập nhật. **Tìm bản cập nhật** hỏi GitHub về bản phát hành mới nhất. **Có gì mới** đếm những thay đổi bạn chưa xem và mở một cửa sổ liệt kê chúng. Khi có bản phát hành mới hơn đang chờ, nó hiện ghi chú của bản đó thay vào, và **Cách cập nhật** mở [Cập nhật](getting-started.md#update).
+- **Thành phần**: rclone, restic và GlimStone với các phiên bản đi kèm bản phát hành này. Mỗi số mở bản phát hành mới nhất của dự án đó.
 - **Trợ giúp**: **Hướng dẫn** mở tài liệu này, và **Báo lỗi** tải về một tệp ZIP đã che thông tin nhạy cảm cho một issue trên GitHub. Nó cần mật khẩu đăng nhập.
-- **Giới thiệu về BombVault**: dự án, giấy phép của nó và cách liên lạc với tác giả.
+- **Giới thiệu**: dự án, giấy phép của nó và cách liên lạc với tác giả.

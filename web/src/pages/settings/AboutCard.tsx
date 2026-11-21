@@ -1,72 +1,24 @@
-// What GlimStone's About card says: what this is, the ways to give, where to
-// report, and the versions. The Info page spreads the parts over three cards;
+// What GlimStone's About card says: what this is, the ways to give and where
+// to report. The Info page spreads the parts over its Help and About cards;
 // the Android app shows them in one.
-import { useEffect, useState } from "react";
-import { GLIMSTONE_RELEASE_URL } from "@glimstone/core";
+import { useState } from "react";
 import { CoffeeDialog } from "../../components/CoffeeDialog";
 import { CryptoDonateDialog } from "../../components/CryptoDonateDialog";
 import { IconBitcoin, IconPayPal } from "../../components/donateMarks";
 import { IconDiscord, IconGithub } from "../../components/glyphs";
 import { PaypalDialog } from "../../components/PaypalDialog";
 import { BrandMark, ReadmeButton } from "../../components/ReadmeButton";
-import { getHealth } from "../../lib/api";
 import { COFFEE_BUTTON_SVG } from "../../lib/appMarks";
-import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { useT } from "../../lib/i18n";
 
-export { GLIMSTONE_RELEASE_URL, GLIMSTONE_VERSION };
 export const REPO = "https://github.com/junkerderprovinz/bombvault";
 /** The BombVault forum on the workshop's Discord server. */
 const DISCORD = "https://discord.gg/RSdmzWtN25";
-
-/**
- * releaseTag returns the git tag for a running version such as
- * `v8.3.1+feature-control-engine.59b73a6`: the part before the semver build
- * metadata, with a leading "v".
- */
-export function releaseTag(version: string): string {
-  const bare = version.split("+")[0].trim();
-  if (!bare) return "";
-  return bare.startsWith("v") ? bare : `v${bare}`;
-}
 
 /** A version as the card shows it: `v4.2.8` reads "4.2.8". The "v" names the tag, not the version. */
 export function shownVersion(version: string): string {
   const trimmed = version.trim();
   return /^v\d/.test(trimmed) ? trimmed.slice(1) : trimmed;
-}
-
-/** The address of a version's release page, "" for a build without a tag. */
-export function releaseUrl(repo: string, version: string): string {
-  const tag = releaseTag(version);
-  return tag ? `${repo}/releases/tag/${encodeURIComponent(tag)}` : "";
-}
-
-/** A `Label 1.2.3` pair where only the number links to a release page. */
-function VersionLink({ label, version, href }: { label: string; version: string; href: string }) {
-  if (!href) {
-    return (
-      <span className="text-carbon-textMuted">
-        {label} <span className="font-mono tabular-nums">{shownVersion(version)}</span>
-      </span>
-    );
-  }
-  return (
-    // The hover colour is the affordance. Under a coarse pointer the padding
-    // widens the target and the negative margin takes it back, so the line
-    // keeps its height.
-    <span className="text-carbon-textMuted">
-      {label}{" "}
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-mono tabular-nums text-carbon-textMuted no-underline hover:text-carbon-text pointer-coarse:inline-block pointer-coarse:-m-2.5 pointer-coarse:p-2.5"
-      >
-        {shownVersion(version)}
-      </a>
-    </span>
-  );
 }
 
 /**
@@ -139,26 +91,11 @@ export function ReportButtons() {
 
 /**
  * AboutContent is the whole About card for a page that draws its own card
- * around it. The Android app passes its own version and its privacy policy,
- * and hands PayPal to the browser.
+ * around it. The Android app passes its privacy policy and hands PayPal to
+ * the browser.
  */
-export function AboutContent({ app }: { app?: { version: string; paypal: () => void; privacy: { label: string; href: string } } }) {
+export function AboutContent({ app }: { app?: { paypal: () => void; privacy: { label: string; href: string } } }) {
   const { t } = useT();
-  const [version, setVersion] = useState<string | null>(app?.version ?? null);
-
-  useEffect(() => {
-    if (app) return;
-    let active = true;
-    getHealth()
-      .then((h) => {
-        if (active) setVersion(h.version ?? null);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [app]);
-
   return (
     <>
       <AboutGive paypal={app?.paypal} />
@@ -166,12 +103,6 @@ export function AboutContent({ app }: { app?: { version: string; paypal: () => v
       <div className="glim-readme-btn-rows">
         <ReportButtons />
       </div>
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        {version && <VersionLink label={t("about.version")} version={version} href={releaseUrl(REPO, version)} />}
-        {version && <span aria-hidden="true" className="text-carbon-textMuted">·</span>}
-        {/* A GlimStone patch tag folds into the next minor and goes, the newest release stays. */}
-        <VersionLink label="GlimStone" version={GLIMSTONE_VERSION} href={GLIMSTONE_RELEASE_URL} />
-      </p>
       {app && (
         <a href={app.privacy.href} target="_blank" rel="noopener noreferrer" className="self-start text-xs text-accentText no-underline">
           {app.privacy.label}

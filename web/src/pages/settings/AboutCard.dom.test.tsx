@@ -5,17 +5,10 @@
 // the document and not presence. The content must also never name a contact
 // route it has no button for. The Android app shows it as one card; the Info
 // page spreads the same parts over three.
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
-import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { AboutContent } from "./AboutCard";
-
-// The card fetches the running version on mount; without it the footer is
-// only half rendered.
-vi.mock("../../lib/api", () => ({
-  getHealth: () => Promise.resolve({ version: "8.3.1" }),
-}));
 
 afterEach(cleanup);
 
@@ -41,14 +34,13 @@ function positionOfButton(name: string): number {
   return where(screen.getByRole("button", { name: new RegExp(name, "i") }));
 }
 
-it("keeps the house order: what it is, the coffee, the report, the versions", () => {
+it("keeps the house order: what it is, the coffee, then the report", () => {
   renderCard();
   const body = positionOf(en["about.body"]);
   const coffee = positionOf(en["about.coffee"]);
   const coffeeButton = positionOfButton(en["about.coffeeButton"]);
   const report = positionOf(en["about.report"]);
   const repoButton = positionOfButton(en["about.repo"]);
-  const versions = positionOf("GlimStone");
 
   expect(body).toBeLessThan(coffee);
   // The coffee button belongs to the coffee sentence, not to a row of buttons
@@ -56,7 +48,6 @@ it("keeps the house order: what it is, the coffee, the report, the versions", ()
   expect(coffee).toBeLessThan(coffeeButton);
   expect(coffeeButton).toBeLessThan(report);
   expect(report).toBeLessThan(repoButton);
-  expect(repoButton).toBeLessThan(versions);
 });
 
 it("runs the give buttons hosted-page first, wallet last", () => {
@@ -169,9 +160,8 @@ it("reports through GitHub and Discord and offers no mail", () => {
   expect(document.querySelector('a[href^="mailto:"], .glim-tile-house')).toBeNull();
 });
 
-it("links GlimStone's number to its newest release", () => {
+it("shows no version line, which the Version and Components cards carry", () => {
   renderCard();
-  expect(screen.getByRole("link", { name: GLIMSTONE_VERSION }).getAttribute("href")).toBe(
-    "https://github.com/junkerderprovinz/glimstone/releases/latest",
-  );
+  expect(document.body.textContent).not.toContain("GlimStone");
+  expect(screen.queryAllByRole("link").filter((a) => a.getAttribute("href")?.includes("/releases/"))).toEqual([]);
 });

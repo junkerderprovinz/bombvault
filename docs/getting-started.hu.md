@@ -121,6 +121,14 @@ services:
 
 A Docker elnevezett köteteinek mentéséhez is csatolj egy olyan mappát, amely az adataidat és a Docker adatgyökerét is tartalmazza (`docker info -f '{{.DockerRootDir}}'`, általában `/var/lib/docker`), ahogy az Unraid-sablon a teljes `/mnt` mappát csatolja.
 
+## Frissítés {#update}
+
+Egy konténer nem cseréli le önmagát, ezért a BombVaultot ott frissíted, ahová telepítetted. A **Beállítások, Információ** megmutatja, ha újabb kiadás jelent meg, az **Újdonságok** pedig a jegyzeteit. A `/config` alatti beállításaid és a mentéseid úgy maradnak, ahogy vannak. Akkor frissíts, amikor nem fut mentés és visszaállítás sem.
+
+- **Unraid:** a **Docker** lapon válaszd a **Check for Updates** gombot, majd a BombVault mellett az **apply update** lehetőséget.
+- **Docker Compose:** a compose-fájlod mappájában futtasd a `docker compose pull`, majd a `docker compose up -d` parancsot.
+- **TrueNAS SCALE, ZimaOS, CasaOS és MOS:** frissítsd az alkalmazást a gazdagép alkalmazásoldalán, amely letölti az újabb image-et.
+
 ## Az egyetlen kötelező beállítás {#the-one-required-setting}
 
 Az egyetlen változó, amelyet be kell állítanod, az `APP_KEY`, egy 32 bájtos hexadecimális titok (64 hexadecimális karakter), amely a restic tároló jelszavának származtatására szolgál.

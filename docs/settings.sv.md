@@ -97,6 +97,7 @@ Flera saker kräver ett inloggningslösenord, till exempel återställningskitet
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic och rclone, med **Sök efter uppdateringar** och **Ny**, som räknar de ändringar du inte sett än och öppnar ett fönster som listar dem.
+- **Version**: BombVaults version och hur det står till med uppdateringarna. **Sök efter uppdateringar** frågar GitHub efter den senaste utgåvan. **Nyheter** räknar de ändringar du inte sett än och öppnar ett fönster som listar dem. Väntar en nyare utgåva visar det i stället dess anteckningar, och **Så uppdaterar du** öppnar [Uppdatering](getting-started.md#update).
+- **Komponenter**: rclone, restic och GlimStone i de versioner som den här utgåvan har med sig. Varje nummer öppnar den senaste utgåvan av sitt projekt.
 - **Hjälp**: **Manual** öppnar den här dokumentationen, och **Felrapport** laddar ner en redigerad ZIP-fil för ett GitHub-ärende. Den kräver ett inloggningslösenord.
-- **Om BombVault**: projektet, dess licens och hur du når upphovsmannen.
+- **Om**: projektet, dess licens och hur du når upphovsmannen.

@@ -587,7 +587,6 @@ export function SettingsPage({
         <div className="my-1 flex flex-col gap-4">
           <AboutContent
             app={{
-              version: app.version,
               paypal: () => open(PAYPAL),
               privacy: { label: t("launcher.privacy"), href: `${REPO}/blob/main/android/PRIVACY.md` },
             }}

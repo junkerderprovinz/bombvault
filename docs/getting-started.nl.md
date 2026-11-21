@@ -121,6 +121,14 @@ services:
 
 Om ook Docker-benoemde volumes te back-uppen, mount je een map die zowel je data als de dataroot van Docker bevat (`docker info -f '{{.DockerRootDir}}'`, meestal `/var/lib/docker`), zoals de Unraid-template heel `/mnt` mount.
 
+## Bijwerken {#update}
+
+Een container vervangt zichzelf niet, dus je werkt BombVault bij waar je het hebt geïnstalleerd. **Instellingen, Info** laat zien wanneer er een nieuwere release is, en **Nieuw** toont de notities ervan. Je instellingen in `/config` en je back-ups blijven zoals ze zijn. Werk bij terwijl er geen back-up of herstel loopt.
+
+- **Unraid:** kies op het tabblad **Docker** voor **Check for Updates** en daarna voor **apply update** naast BombVault.
+- **Docker Compose:** voer in de map met je compose-bestand `docker compose pull` uit en daarna `docker compose up -d`.
+- **TrueNAS SCALE, ZimaOS, CasaOS en MOS:** werk de app bij op de app-pagina van de host, die de nieuwere image ophaalt.
+
 ## De enige vereiste instelling {#the-one-required-setting}
 
 De enige variabele die je moet instellen is `APP_KEY`, een geheim van 32 bytes in hex (64 hex-tekens) waarmee het wachtwoord van het restic-repository wordt afgeleid.

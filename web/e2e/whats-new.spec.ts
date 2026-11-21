@@ -114,7 +114,9 @@ async function picture(page: Page, name: string): Promise<void> {
 const markAll = (page: Page, n: number) => page.getByRole("button", { name: `Mark all as seen · ${n}` });
 const showAll = (page: Page, n: number) => page.getByRole("button", { name: `Show all again · ${n}` });
 const newButton = (page: Page, n?: number) =>
-  page.locator("#bv-main").getByRole("button", { name: n === undefined ? /^New( · \d+)?$/ : n > 0 ? `New · ${n}` : "New", exact: true });
+  page
+    .locator("#bv-main")
+    .getByRole("button", { name: n === undefined ? /^What's new( · \d+)?$/ : n > 0 ? `What's new · ${n}` : "What's new", exact: true });
 const list = (page: Page) => page.getByRole("dialog", { name: /^New (since|in) / });
 const unseen = (page: Page) => page.locator("[data-change]:not([data-seen])").count();
 
@@ -288,7 +290,7 @@ test("nothing is marked during the first start, though the browser saw an older 
   await page.goto("/settings/info");
   await expect(page.locator('[data-new="settings-version"]')).toBeVisible();
   await expect(dots(page)).toHaveCount(0);
-  await expect(newButton(page)).toHaveText(/^New · \d+$/);
+  await expect(newButton(page)).toHaveText(/^What's new · \d+$/);
 });
 
 test("the dots lead from the navigation over a backup's button into the restore window", async ({ page }, testInfo) => {
