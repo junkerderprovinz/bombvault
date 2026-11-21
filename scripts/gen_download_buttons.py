@@ -168,8 +168,8 @@ KINDS = {
     # logo's darker half, since a one-ink mark cannot carry its colours.
     "parleyport":       (COMPANIONS, "parleyport", "#1f2328", "#ffffff", "ParleyPort", "own relay", "Get ParleyPort, the relay for apps that pair their instances"),
     "bombvault-widget": (COMPANIONS, "bombvault-widget", "#4e5051", "#ffffff", "Widget", "Unraid plugin", "Get the BombVault Widget for the Unraid dashboard"),
-    # The brown of TollRoll's ribbon, where white holds 7.5:1.
-    "tollroll":         (COMPANIONS, "tollroll", "#7f443a", "#ffffff", "TollRoll", "Unraid plugin", "Get TollRoll, the tile for the Unraid dashboard"),
+    # The gold of TollRoll's logo, where the dark ink holds 9.6:1.
+    "tollroll":         (COMPANIONS, "tollroll", "#e6bc59", "#1b1b1b", "TollRoll", "Unraid plugin", "Get TollRoll, the tile for the Unraid dashboard"),
 }
 # Joined to the button they belong to, in this order, rather than standing alone.
 SEGMENTS = {
