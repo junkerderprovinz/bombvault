@@ -124,7 +124,7 @@ func TestANodeAtAStorageLocationAgesByThatLocationsKeepRule(t *testing.T) {
 	if err := home.st.AddNode(n); err != nil {
 		t.Fatal(err)
 	}
-	repo := "s3:https://s3.example.org/bucket/bombvault-nodes/aabbccddeeff/files"
+	repo := "s3:https://s3.example.org/bucket/bombvault-node-aabbccddeeff-files"
 	if _, err := home.st.CreateReceivedRepo(store.ReceivedRepo{ID: nodeRepoID(n.ID, "files"), NodeID: n.ID, Repo: repo, ResticPasswordEnc: passwordEnc, Enabled: true}); err != nil {
 		t.Fatal(err)
 	}

@@ -101,7 +101,7 @@ Un simple `http://` vers une adresse publique est refusé, car le nœud enverrai
 
 ### Une destination {#to-location}
 
-Le nœud écrit sur une destination de l'instance d'attache qu'il peut joindre lui-même : un service S3 ou un serveur REST, en `https://` ou à une adresse privée. Ses dépôts s'y trouvent dans `bombvault-nodes/<node id>/containers` et `bombvault-nodes/<node id>/files`.
+Le nœud écrit sur une destination de l'instance d'attache qu'il peut joindre lui-même : un service S3 ou un serveur REST, en `https://` ou à une adresse privée. Ses dépôts s'y trouvent dans `bombvault-node-<node id>-containers` et `bombvault-node-<node id>-files`.
 
 Le nœud se connecte avec des [identifiants enregistrés](offsite-recovery.md#sign-ins) créés pour lui, qui doivent être différents de ceux avec lesquels l'instance d'attache écrit sur la destination. Ajoutez-en d'abord si la fenêtre indique qu'il n'y en a pas. Avec ces identifiants, le nœud peut en général supprimer ce qui se trouve sur la destination, contrairement au serveur récepteur, et la fenêtre le signale.
 

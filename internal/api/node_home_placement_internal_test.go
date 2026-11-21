@@ -251,7 +251,7 @@ func TestHomeSendsANodeToAStorageLocationWithASignInMadeForIt(t *testing.T) {
 	if code != http.StatusOK || out["ok"] != true || out["warning"] == "" {
 		t.Fatalf("place at the location = %d %v", code, out)
 	}
-	repo := "s3:https://s3.example.org/bucket/bombvault-nodes/" + id[:12] + "/containers"
+	repo := "s3:https://s3.example.org/bucket/bombvault-node-" + id[:12] + "-containers"
 	if !repos.opens(repo, restickey.Derive(appKey)) || !repos.opens(repo, home.svc.backupPassword()) {
 		t.Errorf("%s opens with %v", repo, repos.keys[repo])
 	}
@@ -269,6 +269,38 @@ func TestHomeSendsANodeToAStorageLocationWithASignInMadeForIt(t *testing.T) {
 	watched, _ := home.st.ListReceivedRepos()
 	if len(watched) != 2 || watched[0].CredsRef != "own" || watched[0].Repo != repo {
 		t.Errorf("home watches %+v", watched)
+	}
+}
+
+// rest-server takes repositories at most two folders deep, so a location that
+// already sits in a folder leaves the node one level of its own.
+func TestANodeAtARESTServerGetsItsRepositoriesOneFolderBelowTheLocation(t *testing.T) {
+	home := homeWithRelay(t)
+	repos := newRepoStore()
+	home.svc.engine = repos
+	if err := home.svc.SetCloudCredSets([]CloudCredSet{
+		{ID: "own", Name: "home's", CloudCreds: CloudCreds{RESTUser: "home", RESTPassword: "home-secret"}},
+		{ID: "vps", Name: "the node's", CloudCreds: CloudCreds{RESTUser: "vps", RESTPassword: "node-secret"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	dest, err := home.st.SaveDestination(store.OffsiteTarget{Name: "Box", Repo: "rest:https://box.example.org:8000/home", CredsRef: "own"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, id, _ := adoptedNode(t, home, repos)
+	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "location", "location": dest.ID, "signIn": "vps"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("place = %d %v", code, out)
+	}
+	watched, _ := home.st.ListReceivedRepos()
+	if len(watched) != 2 {
+		t.Fatalf("home watches %+v", watched)
+	}
+	for _, w := range watched {
+		rest, ok := strings.CutPrefix(w.Repo, "rest:https://box.example.org:8000/home/")
+		if !ok || strings.Contains(rest, "/") || !strings.Contains(rest, id[:12]) {
+			t.Errorf("repository %q, want one folder below the location naming the node", w.Repo)
+		}
 	}
 }
 
@@ -304,7 +336,7 @@ func TestTheRecoveryKitNamesEachNodeWithItsKeyAndRepositories(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"## Nodes", "vps", appKey, restickey.Derive(appKey), "s3:https://s3.example.org/bucket/bombvault-nodes/" + id[:12] + "/containers"} {
+	for _, want := range []string{"## Nodes", "vps", appKey, restickey.Derive(appKey), "s3:https://s3.example.org/bucket/bombvault-node-" + id[:12] + "-containers"} {
 		if !strings.Contains(kit, want) {
 			t.Errorf("the kit does not name %q", want)
 		}

@@ -101,7 +101,7 @@ Zwykłe `http://` na publiczny adres jest odrzucane, bo węzeł wysyłałby kopi
 
 ### Miejsce docelowe {#to-location}
 
-Węzeł zapisuje do jednego z miejsc docelowych instancji domowej, do którego sam dociera: do usługi S3 albo serwera REST, przez `https://` albo pod prywatnym adresem. Jego repozytoria leżą tam w `bombvault-nodes/<node id>/containers` i `bombvault-nodes/<node id>/files`.
+Węzeł zapisuje do jednego z miejsc docelowych instancji domowej, do którego sam dociera: do usługi S3 albo serwera REST, przez `https://` albo pod prywatnym adresem. Jego repozytoria leżą tam w `bombvault-node-<node id>-containers` i `bombvault-node-<node id>-files`.
 
 Węzeł loguje się [zapisanymi danymi logowania](offsite-recovery.md#sign-ins) utworzonymi dla niego, które muszą być inne niż te, którymi instancja domowa zapisuje w tym miejscu. Najpierw je dodaj, jeśli okno mówi, że ich nie ma. Z tymi danymi logowania węzeł zwykle może usuwać to, co leży w miejscu docelowym, inaczej niż na serwerze odbiorczym, i okno to mówi.
 

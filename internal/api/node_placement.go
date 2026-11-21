@@ -308,7 +308,9 @@ func (s *Service) locationRepos(n store.Node, req nodePlaceRequest) ([]nodeRepo,
 	}
 	var out []nodeRepo
 	for _, d := range nodeDomains {
-		repo := base + "/bombvault-nodes/" + n.ID[:12] + "/" + d
+		// One folder below the location: rest-server takes repositories at
+		// most two folders deep, and a location often sits in one already.
+		repo := base + "/bombvault-node-" + n.ID[:12] + "-" + d
 		out = append(out, nodeRepo{
 			placement: nodePlacement{Domain: d, Repo: repo, Creds: creds},
 			local:     repo, env: env, credsRef: dest.CredsRef,

@@ -101,7 +101,7 @@
 
 ### 存储位置 {#to-location}
 
-节点写入主实例的某个它自己能访问到的存储位置：通过 `https://` 或私有地址访问的 S3 服务或 REST 服务器。它的仓库位于那里的 `bombvault-nodes/<node id>/containers` 和 `bombvault-nodes/<node id>/files`。
+节点写入主实例的某个它自己能访问到的存储位置：通过 `https://` 或私有地址访问的 S3 服务或 REST 服务器。它的仓库位于那里的 `bombvault-node-<node id>-containers` 和 `bombvault-node-<node id>-files`。
 
 节点用一组为它创建的[已保存的凭据](offsite-recovery.md#sign-ins)登录，这组凭据必须不同于主实例写入该位置所用的凭据。如果窗口说还没有，请先添加一组。与接收服务器不同，凭这组凭据，节点通常可以删除该位置上的内容，窗口也会这样提示。
 

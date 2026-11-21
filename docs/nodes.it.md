@@ -101,7 +101,7 @@ Un semplice `http://` verso un indirizzo pubblico viene rifiutato, perché il no
 
 ### Una destinazione {#to-location}
 
-Il nodo scrive su una delle destinazioni dell'istanza madre che riesce a raggiungere da solo: un servizio S3 o un server REST, su `https://` o a un indirizzo privato. I suoi repository stanno lì in `bombvault-nodes/<node id>/containers` e `bombvault-nodes/<node id>/files`.
+Il nodo scrive su una delle destinazioni dell'istanza madre che riesce a raggiungere da solo: un servizio S3 o un server REST, su `https://` o a un indirizzo privato. I suoi repository stanno lì in `bombvault-node-<node id>-containers` e `bombvault-node-<node id>-files`.
 
 Il nodo accede con delle [credenziali salvate](offsite-recovery.md#sign-ins) create apposta per lui, che devono essere diverse da quelle con cui l'istanza madre scrive sulla destinazione. Se la finestra dice che non ce ne sono, aggiungine prima di tutto. Con queste credenziali il nodo di solito può eliminare ciò che si trova sulla destinazione, a differenza del server ricevente, e la finestra lo segnala.
 

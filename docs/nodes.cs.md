@@ -101,7 +101,7 @@ Holé `http://` na veřejnou adresu se odmítne, protože by uzel posílal zálo
 
 ### Cíl {#to-location}
 
-Uzel zapisuje do některého z cílů domovské instance, na který sám dosáhne: do služby S3 nebo na REST server, přes `https://` nebo na soukromé adrese. Jeho repozitáře tam leží v `bombvault-nodes/<node id>/containers` a `bombvault-nodes/<node id>/files`.
+Uzel zapisuje do některého z cílů domovské instance, na který sám dosáhne: do služby S3 nebo na REST server, přes `https://` nebo na soukromé adrese. Jeho repozitáře tam leží v `bombvault-node-<node id>-containers` a `bombvault-node-<node id>-files`.
 
 Uzel se přihlašuje [uloženými přihlašovacími údaji](offsite-recovery.md#sign-ins) vytvořenými pro něj, které se musí lišit od těch, kterými do cíle zapisuje domovská instance. Pokud okno říká, že žádné nejsou, nejdřív je přidej. S těmito údaji může uzel v cíli obvykle mazat, co tam leží, na rozdíl od přijímacího serveru, a okno na to upozorní.
 

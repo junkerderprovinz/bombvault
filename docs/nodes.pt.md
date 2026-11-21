@@ -101,7 +101,7 @@ Um `http://` simples para um endereço público é recusado, porque o nó enviar
 
 ### Um destino {#to-location}
 
-O nó escreve num dos destinos da instância base a que consegue chegar sozinho: um serviço S3 ou um servidor REST, por `https://` ou num endereço privado. Os seus repositórios ficam lá em `bombvault-nodes/<node id>/containers` e `bombvault-nodes/<node id>/files`.
+O nó escreve num dos destinos da instância base a que consegue chegar sozinho: um serviço S3 ou um servidor REST, por `https://` ou num endereço privado. Os seus repositórios ficam lá em `bombvault-node-<node id>-containers` e `bombvault-node-<node id>-files`.
 
 O nó inicia sessão com umas [credenciais guardadas](offsite-recovery.md#sign-ins) criadas para ele, que têm de ser diferentes das que a instância base usa para escrever nesse destino. Se a janela disser que não há nenhumas, adiciona-as primeiro. Com essas credenciais o nó costuma conseguir apagar o que está no destino, ao contrário do servidor recetor, e a janela avisa disso.
 

@@ -101,7 +101,7 @@ Vanlig `http://` till en offentlig adress nekas, eftersom noden då skulle skick
 
 ### Ett lagringsmål {#to-location}
 
-Noden skriver till ett av hemmainstansens lagringsmål som den själv kan nå: en S3-tjänst eller en REST-server, över `https://` eller på en privat adress. Dess repositorier ligger där i `bombvault-nodes/<node id>/containers` och `bombvault-nodes/<node id>/files`.
+Noden skriver till ett av hemmainstansens lagringsmål som den själv kan nå: en S3-tjänst eller en REST-server, över `https://` eller på en privat adress. Dess repositorier ligger där i `bombvault-node-<node id>-containers` och `bombvault-node-<node id>-files`.
 
 Noden loggar in med en [sparad inloggning](offsite-recovery.md#sign-ins) som skapats för den, och den måste vara en annan än den hemmainstansen skriver till lagringsmålet med. Lägg till en först om fönstret säger att det inte finns någon. Med den inloggningen kan noden oftast radera det som ligger på lagringsmålet, till skillnad från på mottagarservern, och fönstret säger det.
 

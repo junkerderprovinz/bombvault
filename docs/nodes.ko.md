@@ -101,7 +101,7 @@
 
 ### 대상 {#to-location}
 
-노드는 스스로 접속할 수 있는 홈 인스턴스의 대상 가운데 하나에 씁니다. `https://`나 사설 주소로 접속하는 S3 서비스 또는 REST 서버입니다. 저장소는 그곳의 `bombvault-nodes/<node id>/containers`와 `bombvault-nodes/<node id>/files`에 있습니다.
+노드는 스스로 접속할 수 있는 홈 인스턴스의 대상 가운데 하나에 씁니다. `https://`나 사설 주소로 접속하는 S3 서비스 또는 REST 서버입니다. 저장소는 그곳의 `bombvault-node-<node id>-containers`와 `bombvault-node-<node id>-files`에 있습니다.
 
 노드는 노드용으로 만든 [저장된 자격 증명](offsite-recovery.md#sign-ins)으로 로그인합니다. 이 자격 증명은 홈 인스턴스가 그 대상에 쓸 때 쓰는 것과 달라야 합니다. 창에 자격 증명이 없다고 나오면 먼저 하나 추가하세요. 수신 서버와 달리 이 자격 증명으로는 노드가 대개 대상에 있는 것을 삭제할 수 있으며, 창에도 그렇게 나옵니다.
 

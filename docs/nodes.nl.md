@@ -101,7 +101,7 @@ Gewoon `http://` naar een publiek adres wordt geweigerd, omdat de node zijn back
 
 ### Een bestemming {#to-location}
 
-De node schrijft naar een bestemming van de thuisinstantie die hij zelf kan bereiken: een S3-dienst of een REST-server, via `https://` of op een privéadres. Zijn repository's staan daar in `bombvault-nodes/<node id>/containers` en `bombvault-nodes/<node id>/files`.
+De node schrijft naar een bestemming van de thuisinstantie die hij zelf kan bereiken: een S3-dienst of een REST-server, via `https://` of op een privéadres. Zijn repository's staan daar in `bombvault-node-<node id>-containers` en `bombvault-node-<node id>-files`.
 
 De node meldt zich aan met [opgeslagen inloggegevens](offsite-recovery.md#sign-ins) die voor hem zijn gemaakt, en die moeten verschillen van de inloggegevens waarmee de thuisinstantie naar de bestemming schrijft. Voeg ze eerst toe als het venster zegt dat er geen zijn. Met die inloggegevens kan de node meestal verwijderen wat er op de bestemming staat, anders dan op de ontvangserver, en het venster wijst je daarop.
 

@@ -101,7 +101,7 @@ Pelkkä `http://` julkiseen osoitteeseen hylätään, koska solmu lähettäisi v
 
 ### Kohde {#to-location}
 
-Solmu kirjoittaa johonkin kotiinstanssin kohteista, jonka se itse tavoittaa: S3-palveluun tai REST-palvelimeen, `https://`-osoitteella tai yksityisessä osoitteessa. Sen repositoryt ovat siellä polulla `bombvault-nodes/<node id>/containers` ja `bombvault-nodes/<node id>/files`.
+Solmu kirjoittaa johonkin kotiinstanssin kohteista, jonka se itse tavoittaa: S3-palveluun tai REST-palvelimeen, `https://`-osoitteella tai yksityisessä osoitteessa. Sen repositoryt ovat siellä polulla `bombvault-node-<node id>-containers` ja `bombvault-node-<node id>-files`.
 
 Solmu kirjautuu sitä varten tehdyillä [tallennetuilla tunnuksilla](offsite-recovery.md#sign-ins), joiden on oltava eri kuin ne, joilla kotiinstanssi kirjoittaa kohteeseen. Lisää ensin tunnukset, jos ikkuna kertoo, ettei niitä ole. Näillä tunnuksilla solmu voi yleensä poistaa kohteessa olevaa, toisin kuin vastaanottopalvelimella, ja ikkuna kertoo sen.
 

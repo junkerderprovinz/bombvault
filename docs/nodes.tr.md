@@ -101,7 +101,7 @@ Herkese açık bir adrese düz `http://` reddedilir, çünkü düğüm yedekleri
 
 ### Bir hedef {#to-location}
 
-Düğüm, ana örneğin kendisinin de ulaşabildiği hedeflerinden birine yazar: `https://` üzerinden ya da özel bir adreste bir S3 hizmetine veya bir REST sunucusuna. Depoları orada `bombvault-nodes/<node id>/containers` ve `bombvault-nodes/<node id>/files` altında durur.
+Düğüm, ana örneğin kendisinin de ulaşabildiği hedeflerinden birine yazar: `https://` üzerinden ya da özel bir adreste bir S3 hizmetine veya bir REST sunucusuna. Depoları orada `bombvault-node-<node id>-containers` ve `bombvault-node-<node id>-files` altında durur.
 
 Düğüm, kendisi için oluşturulmuş [kayıtlı bir oturum açma bilgisiyle](offsite-recovery.md#sign-ins) oturum açar, ve bu bilgi ana örneğin hedefe yazarken kullandığından farklı olmalıdır. Pencere hiç olmadığını söylüyorsa önce bir tane ekle. Bu oturum açma bilgisiyle düğüm, alıcı sunucunun aksine, hedefteki şeyleri genellikle silebilir ve pencere bunu belirtir.
 

@@ -101,7 +101,7 @@ Einfaches `http://` an eine öffentliche Adresse lehnt BombVault ab, weil der Kn
 
 ### Ein Speicherort {#to-location}
 
-Der Knoten schreibt auf einen Speicherort der Heiminstanz, den er selbst erreicht: einen S3-Dienst oder einen REST-Server, über `https://` oder unter einer privaten Adresse. Seine Repositories liegen dort in `bombvault-nodes/<node id>/containers` und `bombvault-nodes/<node id>/files`.
+Der Knoten schreibt auf einen Speicherort der Heiminstanz, den er selbst erreicht: einen S3-Dienst oder einen REST-Server, über `https://` oder unter einer privaten Adresse. Seine Repositories liegen dort in `bombvault-node-<node id>-containers` und `bombvault-node-<node id>-files`.
 
 Der Knoten meldet sich mit eigenen [gespeicherten Zugangsdaten](offsite-recovery.md#sign-ins) an. Sie müssen andere sein als die, mit denen die Heiminstanz auf den Speicherort schreibt. Sagt das Fenster, dass es keine gibt, lege zuerst welche an. Anders als auf dem Empfangsserver kann der Knoten mit diesen Zugangsdaten meist löschen, was am Speicherort liegt, und das Fenster weist darauf hin.
 

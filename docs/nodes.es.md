@@ -101,7 +101,7 @@ Un `http://` simple hacia una dirección pública se rechaza, porque el nodo env
 
 ### Un destino {#to-location}
 
-El nodo escribe en uno de los destinos de la instancia base al que puede llegar por sí mismo: un servicio S3 o un servidor REST, por `https://` o en una dirección privada. Sus repositorios están allí en `bombvault-nodes/<node id>/containers` y `bombvault-nodes/<node id>/files`.
+El nodo escribe en uno de los destinos de la instancia base al que puede llegar por sí mismo: un servicio S3 o un servidor REST, por `https://` o en una dirección privada. Sus repositorios están allí en `bombvault-node-<node id>-containers` y `bombvault-node-<node id>-files`.
 
 El nodo inicia sesión con unas [credenciales guardadas](offsite-recovery.md#sign-ins) creadas para él, que tienen que ser distintas de las que usa la instancia base para escribir en ese destino. Si la ventana dice que no hay ninguna, añade unas primero. Con esas credenciales el nodo suele poder borrar lo que hay en el destino, a diferencia del servidor receptor, y la ventana lo avisa.
 

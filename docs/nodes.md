@@ -101,7 +101,7 @@ Plain `http://` to a public address is refused, because the node would send its 
 
 ### A storage location {#to-location}
 
-The node writes to one of home's storage locations that it can reach itself: an S3 service or a REST server, over `https://` or at a private address. Its repositories lie in `bombvault-nodes/<node id>/containers` and `bombvault-nodes/<node id>/files` there.
+The node writes to one of home's storage locations that it can reach itself: an S3 service or a REST server, over `https://` or at a private address. Its repositories lie in `bombvault-node-<node id>-containers` and `bombvault-node-<node id>-files` there.
 
 The node signs in with a [saved sign-in](offsite-recovery.md#sign-ins) made for it, which has to differ from the one home writes to the location with. Add one first if the window says there is none. With that sign-in the node can usually delete what lies at the location, unlike on the receiving server, and the window says so.
 

@@ -101,7 +101,7 @@ Un `http://` simplu spre o adresă publică este refuzat, pentru că nodul și-a
 
 ### O destinație {#to-location}
 
-Nodul scrie într-una dintre destinațiile instanței-mamă la care ajunge el însuși: un serviciu S3 sau un server REST, prin `https://` sau la o adresă privată. Depozitele lui se află acolo în `bombvault-nodes/<node id>/containers` și `bombvault-nodes/<node id>/files`.
+Nodul scrie într-una dintre destinațiile instanței-mamă la care ajunge el însuși: un serviciu S3 sau un server REST, prin `https://` sau la o adresă privată. Depozitele lui se află acolo în `bombvault-node-<node id>-containers` și `bombvault-node-<node id>-files`.
 
 Nodul se conectează cu o [autentificare salvată](offsite-recovery.md#sign-ins) făcută pentru el, care trebuie să fie diferită de cea cu care scrie instanța-mamă în destinație. Adaug-o întâi dacă fereastra spune că nu există niciuna. Cu această autentificare, nodul poate de obicei să șteargă ce se află în destinație, spre deosebire de serverul receptor, iar fereastra îți spune asta.
 

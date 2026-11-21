@@ -101,7 +101,7 @@ Node tới máy chủ qua **Địa chỉ cho node**, mà bạn đặt ở bướ
 
 ### Một đích sao lưu {#to-location}
 
-Node ghi vào một trong các đích sao lưu của phiên bản chủ mà nó tự tới được: một dịch vụ S3 hoặc một máy chủ REST, qua `https://` hoặc ở một địa chỉ riêng. Kho của nó nằm ở `bombvault-nodes/<node id>/containers` và `bombvault-nodes/<node id>/files` tại đó.
+Node ghi vào một trong các đích sao lưu của phiên bản chủ mà nó tự tới được: một dịch vụ S3 hoặc một máy chủ REST, qua `https://` hoặc ở một địa chỉ riêng. Kho của nó nằm ở `bombvault-node-<node id>-containers` và `bombvault-node-<node id>-files` tại đó.
 
 Node đăng nhập bằng một [thông tin đăng nhập đã lưu](offsite-recovery.md#sign-ins) được tạo cho nó, và thông tin này phải khác với thông tin phiên bản chủ dùng để ghi vào đích đó. Nếu cửa sổ báo chưa có, hãy thêm một cái trước. Khác với trên máy chủ nhận, với thông tin đăng nhập này node thường xóa được những gì nằm ở đích, và cửa sổ cũng nói rõ điều đó.
 

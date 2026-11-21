@@ -101,7 +101,7 @@ A sima `http://` nyilvános címre el van utasítva, mert a csomópont titkosít
 
 ### Egy cél {#to-location}
 
-A csomópont az anyapéldány egyik olyan mentési céljába ír, amelyet maga is elér: egy S3-szolgáltatásba vagy egy REST-szerverre, `https://` címen vagy privát címen. A tárolói ott a `bombvault-nodes/<node id>/containers` és a `bombvault-nodes/<node id>/files` alatt vannak.
+A csomópont az anyapéldány egyik olyan mentési céljába ír, amelyet maga is elér: egy S3-szolgáltatásba vagy egy REST-szerverre, `https://` címen vagy privát címen. A tárolói ott a `bombvault-node-<node id>-containers` és a `bombvault-node-<node id>-files` alatt vannak.
 
 A csomópont egy neki készült [mentett bejelentkezéssel](offsite-recovery.md#sign-ins) jelentkezik be, amelynek különböznie kell attól, amellyel az anyapéldány a célba ír. Ha az ablak szerint nincs ilyen, előbb vegyél fel egyet. Ezzel a bejelentkezéssel a csomópont a célban általában törölni is tudja, ami ott van, a fogadószerverrel ellentétben, és ezt az ablak jelzi is.
 

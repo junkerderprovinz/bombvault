@@ -101,7 +101,7 @@ Vanlig `http://` til en offentlig adresse avvises, fordi noden da ville sende si
 
 ### Et mål {#to-location}
 
-Noden skriver til et av målene til hjemmeinstansen som den selv kan nå: en S3-tjeneste eller en REST-server, over `https://` eller på en privat adresse. Repositoryene dens ligger der i `bombvault-nodes/<node id>/containers` og `bombvault-nodes/<node id>/files`.
+Noden skriver til et av målene til hjemmeinstansen som den selv kan nå: en S3-tjeneste eller en REST-server, over `https://` eller på en privat adresse. Repositoryene dens ligger der i `bombvault-node-<node id>-containers` og `bombvault-node-<node id>-files`.
 
 Noden logger på med en [lagret pålogging](offsite-recovery.md#sign-ins) som er laget for den, og den må være en annen enn den hjemmeinstansen skriver til målet med. Legg til en først hvis vinduet sier at det ikke finnes noen. Med den påloggingen kan noden som regel slette det som ligger på målet, i motsetning til på mottaksserveren, og vinduet sier fra om det.
 
