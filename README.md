@@ -206,7 +206,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Each item chooses local only, local and off-site, or off-site only | ✅ | ⚠️ by the jobs it is in | ❌ | ⚠️ a job per destination | ⚠️ a job per storage | ❌ | ⚠️ via Borgmatic |
 | Shows how many sites hold each item and whether 3-2-1 is met | ✅ | ⚠️ for the whole server, not per item | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Pre/post-backup hooks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ via Borgmatic |
-| Live progress and cancel, backup and restore | ✅ | ⚠️ no restore cancel | ⚠️ log, no percentage | ✅ | ⚠️ no restore cancel in the web UI | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
+| Live progress and cancel, backup and restore | ✅ | ✅ | ⚠️ log, no percentage | ✅ | ⚠️ no restore cancel in the web UI | ⚠️ [no restore percentage](https://github.com/kopia/kopia/issues/3609) | ⚠️ CLI or Vorta |
 | Notifications | ✅ SMTP, Matrix, Apprise, more | ✅ Discord, Unraid | ✅ Unraid's agents | ✅ email, Telegram, HTTP | ⚠️ email, HTTP, Web Edition only | ✅ email, Pushover, webhook | ⚠️ via Borgmatic |
 | Anomaly detection (size, duration, shrink) | ✅ | ✅ | ❌ | ⚠️ paid Console | ❌ | ❌ | ❌ |
 | AI assistant access (MCP) | ✅ | ✅ | ❌ | ⚠️ third party | ⚠️ third party | ❌ | ❌ |
@@ -220,7 +220,7 @@ The closest counterpart is [**Vault**](https://github.com/ruaan-deysel/vault) by
 | Android app | ✅ APK, F-Droid, Google Play | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Track record | ⚠️ since 2026, one maintainer | ⚠️ since 2026, one maintainer | ⚠️ since 2023, feature-frozen | ✅ since 2008 | ✅ since 2016 | ✅ since 2019 | ✅ since 2015 |
 
-✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, every Vault cell on 20 October 2026, and the Duplicacy column and the rows for deduplication across servers and for taking over backups from other tools on 10 November 2026. Duplicacy's command line is free for personal use, and its Web Edition needs a licence to make backups.
+✅ yes · ⚠️ partly · ❌ no. The other tools were checked against their code and docs on 25 September 2026, the start-test row and Vault's cells for idle waiting, mDNS, Home Assistant and changed-block VM backups again on 28 September 2026, the rows for placement, 3-2-1 and the Android app on 4 October 2026, every Vault cell on 20 October 2026, the Duplicacy column and the rows for deduplication across servers and for taking over backups from other tools on 10 November 2026, and every Vault cell again on 21 November 2026 against Vault 2026.11.03. Duplicacy's command line is free for personal use, and its Web Edition needs a licence to make backups.
 
 <br>
 
