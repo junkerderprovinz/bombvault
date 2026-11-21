@@ -117,6 +117,18 @@ describe("AddNodeWindow", () => {
     expect(placed).toEqual([["n1", { kind: "receiver" }]]);
   });
 
+  it("keeps the address and the certificate apart by room alone, with no line between", async () => {
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    const row = (label: string) => screen.getByLabelText(label).closest(".glim-form-row")!;
+    const address = row(en["nodes.address"]);
+    expect(address.parentElement).toBe(row(en["nodes.certificate"]).parentElement);
+    expect(address.parentElement!.className).not.toMatch(/divide-/);
+  });
+
   it("lets a node keep its own backups at the address this instance fetches them from", async () => {
     await renderWindow();
     fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });

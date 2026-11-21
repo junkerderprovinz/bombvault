@@ -187,7 +187,7 @@ export function PlacementFields({
       {choice.kind === "receiver" &&
         (sources.receiver ? (
           <div className="flex flex-col gap-2">
-            <Rows>
+            <Rows plain>
               <SettingRow label={t("nodes.address")} hint={t("nodes.addressTip")} htmlFor="bv-node-address">
                 <input
                   id="bv-node-address"
@@ -232,7 +232,7 @@ export function PlacementFields({
 
       {choice.kind === "node" && (
         <div className="flex flex-col gap-2">
-          <Rows>
+          <Rows plain>
             <SettingRow label={t("nodes.nodeAddress")} hint={t("nodes.nodeAddressTip")} htmlFor="bv-node-own-address">
               <input
                 id="bv-node-own-address"
@@ -262,7 +262,7 @@ export function PlacementFields({
           <p className="text-sm text-statusWarn">{t("nodes.noLocation")}</p>
         ) : (
           <div className="flex flex-col gap-2">
-            <Rows>
+            <Rows plain>
               <SettingRow label={t("nodes.fig.location")} htmlFor="bv-node-location">
                 <SelectField
                   id="bv-node-location"

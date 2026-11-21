@@ -49,6 +49,15 @@ test("every node has its card with its state, where its backups go and its actio
   expect((await overflow(page)).pan).toBe(0);
 });
 
+test("the address and the certificate of the placement stand without a line between them", async ({ page }) => {
+  await open(page, "/instances", "https://backup.tower.example.org");
+  await card(page, NODE.id).getByRole("button", { name: t("nodes.editPlacement") }).click();
+  const row = (label: string) => page.getByLabel(t(label)).locator("xpath=ancestor::*[contains(@class, 'glim-form-row')][1]");
+  const border = (el: Element, side: string) => getComputedStyle(el).getPropertyValue(side);
+  expect(await row("nodes.address").evaluate(border, "border-bottom-width")).toBe("0px");
+  expect(await row("nodes.certificate").evaluate(border, "border-top-width")).toBe("0px");
+});
+
 const plan = (scope: Page | ReturnType<typeof card>, section: string) => scope.getByRole("button", { name: new RegExp(`^${t(section)}:`) });
 
 // pickMode picks a mode in an open schedule editor: a row of tabs where they
