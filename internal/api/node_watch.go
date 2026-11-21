@@ -192,9 +192,10 @@ func nodeStartedSince(n store.Node, domain string) time.Time {
 }
 
 // start asks the node to back up each section with a start due. One the node
-// cannot take now, being away or busy, stays due.
+// cannot take now, being away or busy, stays due, and so does every section
+// of a node set up anew until it has what it had.
 func (w *nodeWatch) start(ctx context.Context, n store.Node, now time.Time) error {
-	if n.Placement == "" || n.PlacementDue {
+	if n.Placement == "" || n.PlacementDue || n.AdoptionDue {
 		return nil
 	}
 	if _, open := w.pruneWindow(n, now); open {

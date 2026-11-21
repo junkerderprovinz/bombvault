@@ -172,7 +172,8 @@ func (s *Service) nodeAppKey(n store.Node) (string, error) {
 
 // keepNode holds link for node n and, in the background, gets through what
 // the node still has to hear: its adoption and a change to where its backups
-// go, or that home let it go.
+// go, or that home let it go. A node set up anew hears its adoption and its
+// placement again.
 func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 	ctx, cancel := context.WithCancel(context.Background())
 	hn := &homeNode{link: link, cancel: cancel, done: make(chan struct{})}
@@ -190,21 +191,52 @@ func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 			}
 			return
 		}
-		if n.AdoptedAt == 0 && !untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) }) {
+		if (n.AdoptedAt == 0 || n.AdoptionDue) && !untilDone(ctx, func() error { return s.adoptNode(ctx, n.ID, link) }) {
 			return
 		}
-		if n.PlacementDue {
-			untilDone(ctx, func() error {
-				// Making the repositories again costs restic runs, which wait
-				// until the node is back to hear where they are.
-				if !link.Online() {
-					return errNodeAway
-				}
-				_, err := s.PlaceNode(ctx, n.ID, nodePlaceRequest{Kind: n.Placement})
-				return err
-			})
+		if n.PlacementDue && !untilDone(ctx, func() error { return s.placeAgain(ctx, n.ID, link) }) {
+			return
+		}
+		if n.AdoptionDue {
+			untilDone(ctx, func() error { return s.store.SetNodeAdoptedAgain(n.ID) })
 		}
 	}()
+}
+
+// placeAgain sends node id the placement home keeps for it, unless the node
+// heard it meanwhile.
+func (s *Service) placeAgain(ctx context.Context, id string, link *nodelink.Link) error {
+	// Making the repositories again costs restic runs, which wait until the
+	// node is back to hear where they are.
+	if !link.Online() {
+		return errNodeAway
+	}
+	n, err := s.store.GetNode(id)
+	if err != nil || !n.PlacementDue {
+		return err
+	}
+	req := nodePlaceRequest{Kind: n.Placement}
+	if n.Placement == nodePlaceLocation {
+		req.Location, req.SignIn = n.PlacementTarget, n.PlacementSignIn
+	}
+	_, err = s.PlaceNode(ctx, id, req)
+	return err
+}
+
+// adoptAgain has home adopt node id again and send it its placement, once the
+// node answered as one set up anew with its APP_KEY and NODE_HOME.
+func (s *Service) adoptAgain(id string) {
+	due, err := s.store.SetNodeAdoptionDue(id)
+	if err != nil {
+		log.Printf("nodes: %s: %v", id, err)
+		return
+	}
+	if !due {
+		return
+	}
+	log.Printf("nodes: %s answers as a node set up anew and is adopted again", id)
+	// The keeper of the node may be the one whose call heard it.
+	go s.renewNode(id)
 }
 
 // untilDone runs try until it succeeds or ctx ends, and reports whether it
@@ -343,7 +375,11 @@ func (s *Service) callNode(ctx context.Context, link *nodelink.Link, action, id,
 	if err != nil {
 		return err
 	}
-	return postNode(ctx, link, path, body, out)
+	err = postNode(ctx, link, path, body, out)
+	if errors.Is(err, errNodeNotAdopted) {
+		s.adoptAgain(id)
+	}
+	return err
 }
 
 // postNode sends body to path over a node's link and reads the answer into

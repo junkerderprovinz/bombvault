@@ -178,7 +178,7 @@ func (s *Service) CallNodeAPI(ctx context.Context, id string, req nodeAPIRequest
 		return 0, nil, err
 	}
 	link, ok := s.nodeLinkOf(id)
-	if !ok || n.AdoptedAt == 0 || n.State != "" {
+	if !ok || n.AdoptedAt == 0 || n.AdoptionDue || n.State != "" {
 		return 0, nil, errNodeNotAdopted
 	}
 	var ans nodeAPIAnswer

@@ -18,8 +18,10 @@ type Node struct {
 	RelayURL  string
 	CreatedAt int64
 	// AdoptedAt is when the node first took this instance as its home, zero
-	// before.
-	AdoptedAt int64
+	// before. AdoptionDue says the node answered as one set up anew, which
+	// home has still to adopt again and give back what it had.
+	AdoptedAt   int64
+	AdoptionDue bool
 	// State is NodeReleasing while home lets the node go and the node has not
 	// heard it yet, empty otherwise.
 	State string
@@ -29,8 +31,10 @@ type Node struct {
 	Placement    string
 	PlacementDue bool
 	// PlacementTarget is the receiver's address for nodes, or the id of the
-	// storage location, the node was sent to.
+	// storage location, the node was sent to. PlacementSignIn is the saved
+	// sign-in the node uses at that location.
 	PlacementTarget string
+	PlacementSignIn string
 	// ContainersCadence and FilesCadence are when home starts the backups of
 	// each section on the node, and ContainersStartedAt and FilesStartedAt
 	// when it last did.
@@ -83,22 +87,22 @@ const NodeReleasing = "releasing"
 var ErrNodeNotFound = errors.New("no such node")
 
 const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due, placement_target,
-	containers_cadence, files_cadence, containers_started_at, files_started_at, seen_at, pruned_window`
+	containers_cadence, files_cadence, containers_started_at, files_started_at, seen_at, pruned_window, adoption_due, placement_sign_in`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
-	var due int
+	var due, adoptionDue int
 	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due, &n.PlacementTarget,
-		&n.ContainersCadence, &n.FilesCadence, &n.ContainersStartedAt, &n.FilesStartedAt, &n.SeenAt, &n.PrunedWindow)
-	n.PlacementDue = due != 0
+		&n.ContainersCadence, &n.FilesCadence, &n.ContainersStartedAt, &n.FilesStartedAt, &n.SeenAt, &n.PrunedWindow, &adoptionDue, &n.PlacementSignIn)
+	n.PlacementDue, n.AdoptionDue = due != 0, adoptionDue != 0
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue), n.PlacementTarget,
-		n.ContainersCadence, n.FilesCadence, n.ContainersStartedAt, n.FilesStartedAt, n.SeenAt, n.PrunedWindow); err != nil {
+		n.ContainersCadence, n.FilesCadence, n.ContainersStartedAt, n.FilesStartedAt, n.SeenAt, n.PrunedWindow, boolInt(n.AdoptionDue), n.PlacementSignIn); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -134,9 +138,10 @@ func (r *Repo) GetNode(id string) (Node, error) {
 	return n, nil
 }
 
-// SetNodeAdopted records when a node took this instance as its home.
+// SetNodeAdopted records when a node took this instance as its home. A node
+// adopted again keeps the time of its first adoption.
 func (r *Repo) SetNodeAdopted(id string, at int64) error {
-	res, err := r.db.Exec(`UPDATE nodes SET adopted_at = ? WHERE id = ?`, at, id)
+	res, err := r.db.Exec(`UPDATE nodes SET adopted_at = CASE adopted_at WHEN 0 THEN ? ELSE adopted_at END WHERE id = ?`, at, id)
 	if err != nil {
 		return fmt.Errorf("SetNodeAdopted: %w", err)
 	}
@@ -159,8 +164,27 @@ func (r *Repo) SetNodeState(id, state string) error {
 }
 
 // SetNodePlaced records where the node's backups go, now that it heard it.
-func (r *Repo) SetNodePlaced(id, placement, target string) error {
-	return r.updateNode(`UPDATE nodes SET placement = ?, placement_target = ?, placement_due = 0 WHERE id = ?`, placement, target, id)
+func (r *Repo) SetNodePlaced(id, placement, target, signIn string) error {
+	return r.updateNode(`UPDATE nodes SET placement = ?, placement_target = ?, placement_sign_in = ?, placement_due = 0 WHERE id = ?`, placement, target, signIn, id)
+}
+
+// SetNodeAdoptionDue records that an adopted node home has not let go
+// answered as one set up anew, so that home adopts it again and sends it its
+// placement. It reports whether this call was the one to record it.
+func (r *Repo) SetNodeAdoptionDue(id string) (bool, error) {
+	res, err := r.db.Exec(`UPDATE nodes SET adoption_due = 1, placement_due = placement <> '' OR placement_due
+		WHERE id = ? AND adopted_at <> 0 AND state = '' AND adoption_due = 0`, id)
+	if err != nil {
+		return false, fmt.Errorf("SetNodeAdoptionDue: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	return n > 0, nil
+}
+
+// SetNodeAdoptedAgain records that a node set up anew has been adopted again
+// and got back what it had.
+func (r *Repo) SetNodeAdoptedAgain(id string) error {
+	return r.updateNode(`UPDATE nodes SET adoption_due = 0 WHERE id = ?`, id)
 }
 
 // SetNodePlacementDue records that the node has still to hear a change to

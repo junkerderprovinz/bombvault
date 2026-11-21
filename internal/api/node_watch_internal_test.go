@@ -187,7 +187,7 @@ func TestHomeStartsANodesSectionOncePerFireAndOnlyOnceItKnowsWhereBackupsGo(t *t
 	if got := wt.node.starts(); len(got) != 0 {
 		t.Fatalf("a node with nowhere to back up to was started: %v", got)
 	}
-	if err := wt.st.SetNodePlaced(watchedID, nodePlaceReceiver, "https://backup.example.org"); err != nil {
+	if err := wt.st.SetNodePlaced(watchedID, nodePlaceReceiver, "https://backup.example.org", ""); err != nil {
 		t.Fatal(err)
 	}
 	wt.tick(t, inWeek(18, 3, 6))
@@ -220,6 +220,21 @@ func TestAStartTheNodeMissedWhileAwayIsDueUntilItCanBeMade(t *testing.T) {
 	wt.tick(t, inWeek(18, 9, 1))
 	if got := wt.node.starts(); !slices.Equal(got, []string{"files"}) {
 		t.Errorf("starts once back = %v, want the missed one once", got)
+	}
+}
+
+func TestANodeSetUpAnewStartsNoRoundBeforeHomeGaveItBackWhatItHad(t *testing.T) {
+	wt := newWatchUnderTest(t, store.Node{ContainersCadence: "daily 03:00", Placement: nodePlaceReceiver, AdoptionDue: true})
+	wt.tick(t, inWeek(18, 3, 5))
+	if got := wt.node.starts(); len(got) != 0 {
+		t.Fatalf("starts while home adopts the node again = %v", got)
+	}
+	if err := wt.st.SetNodeAdoptedAgain(watchedID); err != nil {
+		t.Fatal(err)
+	}
+	wt.tick(t, inWeek(18, 3, 6))
+	if got := wt.node.starts(); !slices.Equal(got, []string{"containers"}) {
+		t.Errorf("starts once adopted again = %v, want the containers", got)
 	}
 }
 
@@ -307,7 +322,7 @@ func TestHomePrunesANodeWhenItPrunesItsOwnCopiesAtTheLocationAndOtherwiseOnSunda
 	if _, err := wt.st.MutateSettings(func(s *store.Settings) error { s.FilesOffsiteSchedule = "daily 05:00"; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if err := wt.st.SetNodePlaced(watchedID, nodePlaceLocation, loc.ID); err != nil {
+	if err := wt.st.SetNodePlaced(watchedID, nodePlaceLocation, loc.ID, "vps"); err != nil {
 		t.Fatal(err)
 	}
 	wt.tick(t, inWeek(18, 5, 10))

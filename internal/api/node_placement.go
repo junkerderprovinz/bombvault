@@ -204,7 +204,11 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 	if err != nil {
 		return nodePlaceResult{}, err
 	}
-	if err := s.store.SetNodePlaced(id, req.Kind, target); err != nil {
+	signIn := ""
+	if req.Kind == nodePlaceLocation {
+		signIn = req.SignIn
+	}
+	if err := s.store.SetNodePlaced(id, req.Kind, target, signIn); err != nil {
 		return nodePlaceResult{}, err
 	}
 	result.Reach = ans.Reach

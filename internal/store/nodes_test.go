@@ -40,7 +40,7 @@ func TestHomeKeepsItsNodesUntilTheyAreReleased(t *testing.T) {
 	if got, _ := r.GetNode("aa"); got.State != store.NodeReleasing {
 		t.Errorf("state = %q, want releasing", got.State)
 	}
-	if err := r.SetNodePlaced("aa", "receiver", "https://backup.example.org"); err != nil {
+	if err := r.SetNodePlaced("aa", "receiver", "https://backup.example.org", ""); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.SetNodePlacementDue("aa"); err != nil {
@@ -49,10 +49,10 @@ func TestHomeKeepsItsNodesUntilTheyAreReleased(t *testing.T) {
 	if got, _ := r.GetNode("aa"); got.Placement != "receiver" || got.PlacementTarget != "https://backup.example.org" || !got.PlacementDue {
 		t.Errorf("placed = %+v, want on the receiver with a change to hear", got)
 	}
-	if err := r.SetNodePlaced("aa", "location", "dest-1"); err != nil {
+	if err := r.SetNodePlaced("aa", "location", "dest-1", "vps"); err != nil {
 		t.Fatal(err)
 	}
-	if got, _ := r.GetNode("aa"); got.Placement != "location" || got.PlacementTarget != "dest-1" || got.PlacementDue {
+	if got, _ := r.GetNode("aa"); got.Placement != "location" || got.PlacementTarget != "dest-1" || got.PlacementSignIn != "vps" || got.PlacementDue {
 		t.Errorf("placed again = %+v", got)
 	}
 	if err := r.DeleteNode("aa"); err != nil {
@@ -63,6 +63,60 @@ func TestHomeKeepsItsNodesUntilTheyAreReleased(t *testing.T) {
 	}
 	if err := r.SetNodeAdopted("aa", 40); !errors.Is(err, store.ErrNodeNotFound) {
 		t.Errorf("adopting a node that is gone: %v", err)
+	}
+}
+
+func TestHomeAdoptsANodeSetUpAnewOnceAndKeepsItsFirstAdoption(t *testing.T) {
+	r := newRepo(t)
+	for _, n := range []store.Node{
+		{ID: "aa", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 10},
+		{ID: "bb", Name: "cloud", AppKeyEnc: []byte{2}, RelayMode: "project", CreatedAt: 20},
+		{ID: "cc", Name: "old", AppKeyEnc: []byte{3}, RelayMode: "project", CreatedAt: 30},
+	} {
+		if err := r.AddNode(n); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if due, err := r.SetNodeAdoptionDue("aa"); err != nil || due {
+		t.Errorf("a node never adopted = %v %v, want nothing due", due, err)
+	}
+	for _, id := range []string{"aa", "bb", "cc"} {
+		if err := r.SetNodeAdopted(id, 40); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := r.SetNodePlaced("aa", "location", "dest-1", "vps"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeState("cc", store.NodeReleasing); err != nil {
+		t.Fatal(err)
+	}
+	if due, err := r.SetNodeAdoptionDue("cc"); err != nil || due {
+		t.Errorf("a node being released = %v %v, want nothing due", due, err)
+	}
+	if due, err := r.SetNodeAdoptionDue("aa"); err != nil || !due {
+		t.Fatalf("an adopted node set up anew = %v %v", due, err)
+	}
+	if due, _ := r.SetNodeAdoptionDue("aa"); due {
+		t.Error("the same node set up anew was due twice")
+	}
+	if due, _ := r.SetNodeAdoptionDue("bb"); !due {
+		t.Error("another node set up anew was not due")
+	}
+	if got, _ := r.GetNode("aa"); !got.AdoptionDue || !got.PlacementDue || got.PlacementSignIn != "vps" {
+		t.Errorf("placed node = %+v, want its adoption and placement due", got)
+	}
+	if got, _ := r.GetNode("bb"); !got.AdoptionDue || got.PlacementDue {
+		t.Errorf("unplaced node = %+v, want only its adoption due", got)
+	}
+	if err := r.SetNodeAdopted("aa", 50); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.SetNodeAdoptedAgain("aa"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.AdoptedAt != 40 || got.AdoptionDue {
+		t.Errorf("adopted again = %+v, want the first adoption kept and nothing due", got)
 	}
 }
 

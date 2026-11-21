@@ -4083,6 +4083,15 @@ ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("node_placements", "kept"),
 		sql:              `ALTER TABLE node_placements ADD COLUMN kept INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		// A node set up anew is adopted and placed again, at a storage
+		// location with the sign-in it was placed there with.
+		version:          nodeAdoptAgainMigration,
+		name:             "nodes_adopt_again",
+		alreadySatisfied: columnPresent("nodes", "adoption_due"),
+		sql: `ALTER TABLE nodes ADD COLUMN adoption_due INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN placement_sign_in TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4795,6 +4804,10 @@ const pullSourceNodeMigration = 992
 // nodePlacementKeptMigration numbers whether a node keeps a section's
 // repository itself.
 const nodePlacementKeptMigration = 993
+
+// nodeAdoptAgainMigration numbers whether home has to adopt a node set up
+// anew, and the sign-in its placement at a storage location uses.
+const nodeAdoptAgainMigration = 994
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
