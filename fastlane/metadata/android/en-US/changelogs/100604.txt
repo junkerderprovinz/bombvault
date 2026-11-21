@@ -1,0 +1,1 @@
+BombVault 10.6.4 now backs up servers it doesn't even run on. Turn a VPS or any Docker host into a node, and this instance plans its backups without an open port. They land on your receiving server, on a storage location or on the node itself, and a rebuilt node gets everything back. restic 0.20.0 rides along with two safer restores.
