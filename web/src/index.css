@@ -2462,11 +2462,22 @@ body {
   margin: 0;
   font-weight: inherit;
 }
-/* The tile picked before keeps a ring in the colour it lights up in. */
+/* The tile picked before stays lit in its own colour, the way a pick is
+   marked everywhere: by its surface, never by a ring. */
 .glim-provider-pick .glim-readme-btn[aria-current="true"] {
-  outline: 2px solid var(--tile);
-  outline-offset: 2px;
+  background-color: var(--tile);
+  color: var(--tile-ink);
+  box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
+  --mark-ink: var(--tile-ink);
+  --mark-cut: var(--tile);
+  --brand-android: var(--tile-ink);
+  --brand-docker: var(--tile-ink);
+  --brand-unraid-from: var(--tile-ink);
+  --brand-unraid-to: var(--tile-ink);
 }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-readme-btn-mark { color: var(--tile-ink); }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-mark-rest { display: none; }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-mark-hover { display: block; }
 .glim-pick-none {
   margin: 0;
   padding-block: 1.5rem;
