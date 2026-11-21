@@ -17,6 +17,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -270,12 +271,14 @@ const nodeReachWait = time.Minute
 
 // nodePlacement is where home sends one section of a node's backups, with
 // the sign-in the node uses there and the certificate it trusts the server
-// by, empty for one the system trusts.
+// by, empty for one the system trusts. Kept marks a repository behind the
+// node's own rest-server, at the address home fetches it from.
 type nodePlacement struct {
 	Domain string     `json:"domain"`
 	Repo   string     `json:"repo"`
 	Creds  CloudCreds `json:"creds"`
 	CAPEM  string     `json:"caPem,omitempty"`
+	Kept   bool       `json:"kept,omitempty"`
 }
 
 // nodeReach is whether a node opened the repository of a section.
@@ -307,11 +310,12 @@ func (n *nodeSide) placement(w http.ResponseWriter, r *http.Request) {
 	}
 	ans := nodePlacementAnswer{OK: true, Reach: []nodeReach{}}
 	for _, p := range ps {
-		if err := n.s.keepPlacement(p); err != nil {
+		kept, err := n.s.keepPlacement(p)
+		if err != nil {
 			writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
 			return
 		}
-		ans.Reach = append(ans.Reach, n.s.reachPlacement(r.Context(), p))
+		ans.Reach = append(ans.Reach, n.s.reachPlacement(r.Context(), kept))
 	}
 	writeJSON(w, http.StatusOK, ans)
 }
@@ -319,7 +323,7 @@ func (n *nodeSide) placement(w http.ResponseWriter, r *http.Request) {
 func checkPlacements(ps []nodePlacement) error {
 	seen := map[string]bool{}
 	for _, p := range ps {
-		if !slices.Contains(nodeDomains, p.Domain) || seen[p.Domain] || !restic.IsRemoteRepo(p.Repo) {
+		if !slices.Contains(nodeDomains, p.Domain) || seen[p.Domain] || !restic.IsRemoteRepo(p.Repo) || restic.CheckLocation(p.Repo) != nil {
 			return errNodePlacement
 		}
 		seen[p.Domain] = true
@@ -348,21 +352,22 @@ func certificatesIn(pemText string) bool {
 	}
 }
 
-// keepPlacement stores p with its sign-in sealed, and puts its certificate
-// where restic trusts it.
-func (s *Service) keepPlacement(p nodePlacement) error {
+// keepPlacement stores p with its sign-in sealed, puts its certificate where
+// restic trusts it and returns it as stored.
+func (s *Service) keepPlacement(p nodePlacement) (store.NodePlacement, error) {
 	creds, err := json.Marshal(p.Creds)
 	if err != nil {
-		return err
+		return store.NodePlacement{}, err
 	}
 	enc, err := secret.Encrypt(s.cfg.AppKey, creds)
 	if err != nil {
-		return err
+		return store.NodePlacement{}, err
 	}
 	if err := writeTrusted(filepath.Join(trust.Dir(s.cfg.DataDir), "node-"+p.Domain+".pem"), p.CAPEM); err != nil {
-		return err
+		return store.NodePlacement{}, err
 	}
-	return s.store.SetNodePlacement(store.NodePlacement{Domain: p.Domain, Repo: p.Repo, CredsEnc: enc, CAPEM: p.CAPEM, SetAt: time.Now().Unix()})
+	kept := store.NodePlacement{Domain: p.Domain, Repo: p.Repo, CredsEnc: enc, CAPEM: p.CAPEM, Kept: p.Kept, SetAt: time.Now().Unix()}
+	return kept, s.store.SetNodePlacement(kept)
 }
 
 // writeTrusted puts pemText into file in the certs folder, where restic
@@ -382,15 +387,58 @@ func writeTrusted(file, pemText string) error {
 }
 
 // reachPlacement opens the repository of p as this node's backups will,
-// without a lock and with no sign-in but the one home sent.
-func (s *Service) reachPlacement(ctx context.Context, p nodePlacement) nodeReach {
+// without a lock.
+func (s *Service) reachPlacement(ctx context.Context, p store.NodePlacement) nodeReach {
 	ctx, cancel := context.WithTimeout(ctx, nodeReachWait)
 	defer cancel()
-	mode := restic.Mode{Encrypted: true, Password: s.backupPassword(), NoLock: true, NoAmbientCreds: true, Env: cloudEnv(p.Creds)}
-	if err := s.engine.RepoOpensErr(ctx, p.Repo, mode); err != nil {
+	mode := s.placedMode(p)
+	mode.NoLock = true
+	if err := s.engine.RepoOpensErr(ctx, s.placedRepo(p), mode); err != nil {
 		return nodeReach{Domain: p.Domain, Detail: scrubError(err)}
 	}
 	return nodeReach{Domain: p.Domain, Reached: true}
+}
+
+// placedSection is where home placed section domain of this node, and false
+// off a node and before home placed it.
+func (s *Service) placedSection(domain string) (store.NodePlacement, bool, error) {
+	if s.cfg.Mode != config.ModeNode {
+		return store.NodePlacement{}, false, nil
+	}
+	ps, err := s.store.NodePlacements()
+	if err != nil {
+		return store.NodePlacement{}, false, err
+	}
+	i := slices.IndexFunc(ps, func(p store.NodePlacement) bool { return p.Domain == domain })
+	if i < 0 {
+		return store.NodePlacement{}, false, nil
+	}
+	return ps[i], true, nil
+}
+
+// placedRepo is the repository of p as this node opens it. One behind its own
+// rest-server it opens on its own disk: p names the address home fetches it
+// at, which the node may not reach from inside.
+func (s *Service) placedRepo(p store.NodePlacement) string {
+	if p.Kept {
+		return s.keptRepoDir(p.Domain)
+	}
+	return p.Repo
+}
+
+// placedMode opens the repository of p with the password of this node's
+// APP_KEY, and with no sign-in but the one home sent.
+func (s *Service) placedMode(p store.NodePlacement) restic.Mode {
+	mode := restic.Mode{Encrypted: true, Password: s.backupPassword(), Host: s.resticHost()}
+	if p.Kept {
+		return mode
+	}
+	creds, err := s.placementCreds(p)
+	if err != nil {
+		log.Printf("node: the sign-in home sent for the %s does not open: %v", p.Domain, err) //nolint:gosec // G706: the domain is one of nodeDomains
+	}
+	mode.Env, mode.NoAmbientCreds = cloudEnv(creds), true
+	return mode
 }
 
 // placementCreds opens the sign-in home sent for a placement.

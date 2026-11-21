@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -49,6 +50,7 @@ func addNode(t *testing.T, home *instance, name string) map[string]string {
 func startNode(t *testing.T, compose map[string]string) *instance {
 	t.Helper()
 	node := newInstance(t, compose["NODE_NAME"], compose["APP_KEY"])
+	node.svc.cfg.Mode = config.ModeNode
 	t.Cleanup(node.svc.CloseHomeLink)
 	home, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
 	if err != nil {

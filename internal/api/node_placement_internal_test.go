@@ -14,6 +14,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
 
@@ -56,6 +58,7 @@ func newNodeUnderTest(t *testing.T) *nodeUnderTest {
 	compose := addNode(t, home, "vps")
 	id, _ := nodelink.NodeID(compose["APP_KEY"])
 	node := newInstance(t, "vps", compose["APP_KEY"])
+	node.svc.cfg.Mode = config.ModeNode
 	h, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
 	if err != nil {
 		t.Fatal(err)
@@ -131,12 +134,47 @@ func TestANodeKeepsItsPlacementSealedAndSaysWhetherItGetsThere(t *testing.T) {
 	}
 }
 
+func TestANodeBacksUpAPlacedSectionWithTheSignInHomeSentAlone(t *testing.T) {
+	n := newNodeUnderTest(t)
+	n.adopt(t)
+	svc := n.node.svc
+	n.node.engine.want = svc.backupPassword()
+	placed := nodePlacement{Domain: "containers", Repo: "rest:https://backup.example.org/vps/containers", Creds: CloudCreds{RESTUser: "vps", RESTPassword: "rest-secret"}}
+	if w := n.call(t, keydeposit.ProofNodePlacement, nodePlacementPath, []nodePlacement{placed}); w.Code != http.StatusOK {
+		t.Fatalf("placement = %d %s", w.Code, w.Body)
+	}
+	settings, err := n.node.st.MutateSettings(func(s *store.Settings) error {
+		s.ContainersPath, s.FilesPath = "backups/containers", "backups/files"
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repo, err := svc.containerRepoForName(settings, "plex", "local")
+	if err != nil || repo != placed.Repo {
+		t.Fatalf("the container backs up to %q %v, want %q", repo, err, placed.Repo)
+	}
+	mode := svc.repoModeFor(settings, "containers", "local", repo)
+	if !mode.NoAmbientCreds || !slices.Contains(mode.Env, "RESTIC_REST_PASSWORD=rest-secret") || mode.Password != restickey.Derive(n.node.appKey) {
+		t.Errorf("the placed repository opens with %+v", mode)
+	}
+	files, err := svc.repoFor(settings, "files", "local")
+	if want, _ := svc.resolveRepo("backups/files"); err != nil || files != want {
+		t.Errorf("the section home placed nowhere backs up to %q %v, want its own folder %q", files, err, want)
+	}
+	if mode := svc.repoModeFor(settings, "files", "local", files); mode.NoAmbientCreds {
+		t.Errorf("the section home placed nowhere opens with %+v", mode)
+	}
+}
+
 func TestANodeRefusesAPlacementItCannotUse(t *testing.T) {
 	n := newNodeUnderTest(t)
 	n.adopt(t)
 	for name, ps := range map[string][]nodePlacement{
 		"another section":   {{Domain: "vms", Repo: "rest:https://backup.example.org/vps/vms"}},
 		"a folder here":     {{Domain: "files", Repo: "/mnt/user/backups"}},
+		"an rclone option":  {{Domain: "files", Repo: "rclone:-o=x:f"}},
 		"a section twice":   {{Domain: "files", Repo: "rest:https://a.example.org/f"}, {Domain: "files", Repo: "rest:https://b.example.org/f"}},
 		"no certificate":    {{Domain: "files", Repo: "rest:https://a.example.org/f", CAPEM: "not a certificate"}},
 		"a key, not a cert": {{Domain: "files", Repo: "rest:https://a.example.org/f", CAPEM: "-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----\n"}},

@@ -67,12 +67,20 @@ func TestANodeAgesTheRepositoryItKeepsInItsFolderAndSaysWhenItIsDone(t *testing.
 	repos := &agingRepos{}
 	n.node.svc.engine = repos
 	n.node.svc.cfg.HostMountRoot = t.TempDir()
+	kept := []nodePlacement{{Domain: "containers", Repo: "rest:https://203.0.113.7:8443/" + nodeRestUser + "/containers", Kept: true}}
+	if w := n.call(t, keydeposit.ProofNodePlacement, nodePlacementPath, kept); w.Code != http.StatusOK {
+		t.Fatalf("placement = %d %s", w.Code, w.Body)
+	}
 	call := nodePruneCall{Domain: "containers", Run: "r1", Keep: restic.RetentionPolicy{KeepLast: 3, Direct: true}}
 	if ans := pruneAnswer(t, n.call(t, keydeposit.ProofNodePrune, nodePrunePath, call).Body); !ans.OK || ans.State != nodePruneRunning {
 		t.Fatalf("first answer = %+v, want the prune running", ans)
 	}
 	eventually(t, "the prune to be done", func() bool {
 		return pruneAnswer(t, n.call(t, keydeposit.ProofNodePrune, nodePrunePath, call).Body).State == nodePruneDone
+	})
+	elsewhere := nodePruneCall{Domain: "files", Run: "r2", Keep: call.Keep}
+	eventually(t, "the prune of a section home placed elsewhere to fail", func() bool {
+		return pruneAnswer(t, n.call(t, keydeposit.ProofNodePrune, nodePrunePath, elsewhere).Body).State == nodePruneFailed
 	})
 	repo := path.Join(n.node.svc.cfg.HostMountRoot, nodeRestFolder, nodeRestUser, "containers")
 	host := restickey.Host(n.node.svc.cfg.AppKey)
@@ -83,7 +91,7 @@ func TestANodeAgesTheRepositoryItKeepsInItsFolderAndSaysWhenItIsDone(t *testing.
 		t.Errorf("forgets = %q, want %q", forgets, want)
 	}
 	if !slices.Equal(repos.prunes, []string{repo + " " + host}) {
-		t.Errorf("prunes = %q, want the folder once, the same prune asked about again included", repos.prunes)
+		t.Errorf("prunes = %q, want the folder once, the same prune asked about again included and the other section left alone", repos.prunes)
 	}
 }
 

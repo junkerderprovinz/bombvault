@@ -353,6 +353,13 @@ func newRestoreRig(t *testing.T) *restoreRig {
 	if runtime.GOOS == "windows" {
 		t.Skip("restic's <id>:<path> selector cannot carry a Windows drive letter")
 	}
+	return newBackupRig(t)
+}
+
+// newBackupRig is newRestoreRig for a test that only backs up and lists,
+// which restic does on Windows as well.
+func newBackupRig(t *testing.T) *restoreRig {
+	t.Helper()
 	if _, err := exec.LookPath("restic"); err != nil {
 		t.Skip("no restic")
 	}

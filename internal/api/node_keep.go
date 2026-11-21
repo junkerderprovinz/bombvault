@@ -279,7 +279,7 @@ func (s *Service) keptRepos(ctx context.Context, n store.Node, link *nodelink.Li
 	for _, d := range nodeDomains {
 		repo := "rest:" + addr + "/" + kept.User + "/" + d
 		out = append(out, nodeRepo{
-			placement: nodePlacement{Domain: d, Repo: repo, Creds: creds, CAPEM: kept.CAPEM},
+			placement: nodePlacement{Domain: d, Repo: repo, Creds: creds, CAPEM: kept.CAPEM, Kept: true},
 			local:     repo, env: cloudEnv(creds), credsRef: ref,
 		})
 	}
@@ -435,16 +435,28 @@ func (s *Service) pruneKept(req nodePruneCall) nodePruneAnswer {
 	return nodePruneAnswer{OK: true, State: nodePruneRunning}
 }
 
-// pruneKeptRepo ages the repository of domain this node keeps by p, under its
-// own host alone, and prunes it. It works on the folder itself, since the
+// keptRepoDir is the folder that holds the repository of domain behind this
+// node's rest-server.
+func (s *Service) keptRepoDir(domain string) string {
+	return path.Join(s.cfg.HostMountRoot, nodeRestFolder, nodeRestUser, domain)
+}
+
+// pruneKeptRepo ages the repository of domain this node keeps by keep, under
+// its own host alone, and prunes it. It works on the folder itself, since the
 // rest-server in front of it takes no deletes.
-func (s *Service) pruneKeptRepo(ctx context.Context, domain string, p restic.RetentionPolicy) error {
-	repo := path.Join(s.cfg.HostMountRoot, nodeRestFolder, nodeRestUser, domain)
-	mode := restic.Mode{Encrypted: true, Password: s.backupPassword()}
+func (s *Service) pruneKeptRepo(ctx context.Context, domain string, keep restic.RetentionPolicy) error {
+	p, placed, err := s.placedSection(domain)
+	if err != nil {
+		return err
+	}
+	if !placed || !p.Kept {
+		return fmt.Errorf("home has not placed the %s on this node itself", domain)
+	}
+	repo, mode := s.placedRepo(p), s.placedMode(p)
 	if err := s.engine.RepoOpensErr(ctx, repo, mode); err != nil {
 		return err
 	}
-	return s.ageAndPrune(ctx, repo, mode, s.resticHost(), p)
+	return s.ageAndPrune(ctx, repo, mode, s.resticHost(), keep)
 }
 
 // pruneOnNode has n age and prune the repository of domain it keeps itself by

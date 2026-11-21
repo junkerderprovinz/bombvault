@@ -370,15 +370,17 @@ type NodePlacement struct {
 	// CAPEM is the certificate the node trusts Repo's server by, empty for
 	// one the system trusts.
 	CAPEM string
+	// Kept marks a repository behind the node's own rest-server.
+	Kept  bool
 	SetAt int64
 }
 
 // SetNodePlacement stores where a section's backups go, in place of what was
 // there.
 func (r *Repo) SetNodePlacement(p NodePlacement) error {
-	_, err := r.db.Exec(`INSERT INTO node_placements (domain, repo, creds_enc, ca_pem, set_at) VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT (domain) DO UPDATE SET repo = excluded.repo, creds_enc = excluded.creds_enc, ca_pem = excluded.ca_pem, set_at = excluded.set_at`,
-		p.Domain, p.Repo, notNullBlob(p.CredsEnc), p.CAPEM, p.SetAt)
+	_, err := r.db.Exec(`INSERT INTO node_placements (domain, repo, creds_enc, ca_pem, kept, set_at) VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT (domain) DO UPDATE SET repo = excluded.repo, creds_enc = excluded.creds_enc, ca_pem = excluded.ca_pem, kept = excluded.kept, set_at = excluded.set_at`,
+		p.Domain, p.Repo, notNullBlob(p.CredsEnc), p.CAPEM, p.Kept, p.SetAt)
 	if err != nil {
 		return fmt.Errorf("SetNodePlacement: %w", err)
 	}
@@ -387,7 +389,7 @@ func (r *Repo) SetNodePlacement(p NodePlacement) error {
 
 // NodePlacements returns where each section's backups go, by section.
 func (r *Repo) NodePlacements() ([]NodePlacement, error) {
-	rows, err := r.db.Query(`SELECT domain, repo, creds_enc, ca_pem, set_at FROM node_placements ORDER BY domain`)
+	rows, err := r.db.Query(`SELECT domain, repo, creds_enc, ca_pem, kept, set_at FROM node_placements ORDER BY domain`)
 	if err != nil {
 		return nil, fmt.Errorf("NodePlacements: %w", err)
 	}
@@ -395,7 +397,7 @@ func (r *Repo) NodePlacements() ([]NodePlacement, error) {
 	var out []NodePlacement
 	for rows.Next() {
 		var p NodePlacement
-		if err := rows.Scan(&p.Domain, &p.Repo, &p.CredsEnc, &p.CAPEM, &p.SetAt); err != nil {
+		if err := rows.Scan(&p.Domain, &p.Repo, &p.CredsEnc, &p.CAPEM, &p.Kept, &p.SetAt); err != nil {
 			return nil, fmt.Errorf("NodePlacements: %w", err)
 		}
 		out = append(out, p)

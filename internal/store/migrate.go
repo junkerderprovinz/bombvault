@@ -4075,6 +4075,14 @@ ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
 		alreadySatisfied: columnPresent("pull_sources", "node_id"),
 		sql:              `ALTER TABLE pull_sources ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// A node reaches a repository it keeps itself on its own disk, not
+		// through the address home fetches it at.
+		version:          nodePlacementKeptMigration,
+		name:             "node_placements_kept",
+		alreadySatisfied: columnPresent("node_placements", "kept"),
+		sql:              `ALTER TABLE node_placements ADD COLUMN kept INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4783,6 +4791,10 @@ const nodeEpisodesMigration = 991
 
 // pullSourceNodeMigration numbers the node a pull source fetches from.
 const pullSourceNodeMigration = 992
+
+// nodePlacementKeptMigration numbers whether a node keeps a section's
+// repository itself.
+const nodePlacementKeptMigration = 993
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {
