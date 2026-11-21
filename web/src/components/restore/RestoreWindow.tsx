@@ -69,6 +69,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { IconApply, IconCompare, IconConfirm } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
+import { pickSub, pickSurface } from "../entry/Choice";
 import { RadioMark } from "../RadioMark";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
@@ -252,14 +253,12 @@ export function WhereOption({
         next.focus();
         next.click();
       }}
-      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-        on ? "ring-accent" : "ring-transparent"
-      }`}
+      className={`flex items-center gap-3 rounded-control p-3 text-start transition-colors ${pickSurface(on)}`}
     >
       <RadioMark on={on} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
-        <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
+        <span className="text-sm font-semibold wrap-anywhere">{title}</span>
+        <span className={`text-xs wrap-anywhere ${pickSub(on)}`}>{sub}</span>
       </span>
       <TargetScene where={where} playing={on} kept={kept} />
     </button>

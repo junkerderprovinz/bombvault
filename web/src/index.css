@@ -5788,6 +5788,11 @@ body {
 .glim-pic {
   --pic: color-mix(in srgb, var(--accent), var(--accent-text));
 }
+/* A picture on a picked tile stands on the accent, so it draws in the
+   accent's ink and cuts its shapes out of that ink in the accent. */
+.glim-active .glim-pic { --pic: var(--accent-contrast); }
+.glim-active .glim-pic .glim-scene-cut { fill: var(--accent); }
+.glim-active .glim-pic .glim-scene-cut-line { stroke: var(--accent); }
 
 .glim-vessel-shape { rx: min(calc(var(--radius-control) / 2), 6px); }
 .glim-vessel-back { fill: var(--carbon-surface2); }
@@ -7112,6 +7117,10 @@ body {
   stroke-width: 2;
   paint-order: stroke;
 }
+.glim-active .glim-place-ground { fill: var(--accent-contrast); }
+.glim-active .glim-place-ink,
+.glim-active .glim-place-badge-ink { color: var(--accent); }
+.glim-active :is(.glim-place-badge, .glim-place-kept) { stroke: var(--accent); }
 
 /* The pictures on the three step cards of the pairing page. Corners follow
    the shape engine, and what sits on a filled shape is cut out of it in the

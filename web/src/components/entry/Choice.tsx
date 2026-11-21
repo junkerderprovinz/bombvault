@@ -1,4 +1,17 @@
 import type { ReactNode } from "react";
+import { RadioMark } from "../RadioMark";
+
+/** pickSurface is the ground of a tile to pick from. A picked tile turns into
+ *  the accent, the way every selection in the app is marked. */
+export function pickSurface(on: boolean): string {
+  return on ? "glim-active bg-accent text-accentContrast hover:bg-accentHover" : "bg-carbon-surface2 text-carbon-text hover:bg-hover";
+}
+
+/** pickSub is the colour of the line under a tile's title, which on the accent
+ *  is the accent's own ink, a little fainter. */
+export function pickSub(on: boolean, off = "text-carbon-textMuted"): string {
+  return on ? "opacity-80" : off;
+}
 
 /** Choices holds the ways a window offers, of which one is taken. */
 export function Choices({ label, children }: { label: string; children: ReactNode }) {
@@ -30,20 +43,12 @@ export function Choice({
       role="radio"
       aria-checked={on}
       onClick={onPick}
-      className={`flex items-start gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-        on ? "ring-accent" : "ring-transparent"
-      }`}
+      className={`flex items-start gap-3 rounded-control p-3 text-start transition-colors ${pickSurface(on)}`}
     >
-      <span
-        className={`mt-0.5 flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 ${
-          on ? "border-accent" : "border-carbon-textMuted"
-        }`}
-      >
-        {on && <span className="h-2 w-2 rounded-full bg-accent" />}
-      </span>
+      <RadioMark on={on} className="mt-0.5" />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
-        {text && <span className="text-xs text-carbon-textMuted wrap-anywhere">{text}</span>}
+        <span className="text-sm font-semibold wrap-anywhere">{title}</span>
+        {text && <span className={`text-xs wrap-anywhere ${pickSub(on)}`}>{text}</span>}
       </span>
       {picture && <span className="ms-auto flex-none self-center">{picture}</span>}
     </button>

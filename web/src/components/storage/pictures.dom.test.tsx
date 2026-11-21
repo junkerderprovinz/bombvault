@@ -228,7 +228,9 @@ describe("how the pictures are drawn", () => {
   });
 
   it("never draws inside a filled shape with the accent's contrast colour", () => {
-    const pictures = css.slice(css.indexOf(".glim-pic {"));
+    // On a picked tile the ground is the accent, so there its contrast colour
+    // is the ink and the accent is what a shape is cut out in.
+    const pictures = css.slice(css.indexOf(".glim-pic {")).replace(/^\.glim-active [^{\n]*\{[^}\n]*\}$/gm, "");
     expect(pictures.length).toBeGreaterThan(1000);
     expect(pictures).not.toMatch(/accent-contrast/);
     for (const file of ["scenes.tsx", "Vessel.tsx", "KeepTimeline.tsx"]) {

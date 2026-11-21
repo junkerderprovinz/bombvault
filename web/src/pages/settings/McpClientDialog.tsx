@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
+import { pickSub, pickSurface } from "../../components/entry/Choice";
 import { InfoBubble } from "../../components/InfoBubble";
 import { IconCheck, IconCopy, IconDownload } from "../../components/navGlyphs";
 import { RevealInput } from "../../components/RevealInput";
@@ -382,16 +383,18 @@ export function McpClientDialog({
                         type="button"
                         aria-pressed={on}
                         onClick={() => setPicked({ id: k.id, since: k.lastUsedAt })}
-                        className={`flex w-full items-center gap-2.5 rounded-control bg-carbon-surface2 px-3 py-2 text-start [--mark-ground:var(--carbon-surface2)] hover:bg-hover hover:[--mark-ground:var(--hover)] focus-visible:outline-2 focus-visible:outline-(--focus-ring) ${
-                          on ? "shadow-[inset_0_0_0_1.5px_var(--accent-text)]" : ""
+                        className={`flex w-full items-center gap-2.5 rounded-control px-3 py-2 text-start focus-visible:outline-2 focus-visible:outline-(--focus-ring) ${pickSurface(on)} ${
+                          on
+                            ? "[--mark-ground:var(--accent)] hover:[--mark-ground:var(--accent-hover)]"
+                            : "[--mark-ground:var(--carbon-surface2)] hover:[--mark-ground:var(--hover)]"
                         }`}
                       >
                         <span className="glim-client-mark" aria-hidden="true">
                           <ClientMark client={clientById(k.client)} forKey />
                         </span>
                         <span className="flex min-w-0 flex-col">
-                          <span className="truncate text-sm text-carbon-text">{k.label}</span>
-                          <span className="text-xs text-carbon-textMuted">
+                          <span className="truncate text-sm">{k.label}</span>
+                          <span className={`text-xs ${pickSub(on)}`}>
                             {t("mcp.keyHint").replace("{hint}", k.hint)}
                           </span>
                         </span>
