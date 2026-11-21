@@ -1,27 +1,23 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { componentText, type ComponentRow, type UpdateState } from "@glimstone/core";
 import { Button } from "../../../components/Button";
-import { IconForward, IconUpdateAvailable, IconUpToDate } from "../../../components/glyphs";
-import { IconClose, IconDiagnostics, IconSync } from "../../../components/navGlyphs";
+import { IconForward } from "../../../components/glyphs";
+import { IconDiagnostics } from "../../../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../../../components/ReadmeButton";
 import { Rows, SettingRow } from "../../../components/storage/rows";
-import {
-  checkForUpdate,
-  downloadDiagnostics,
-  getVersions,
-  type ComponentVersions,
-  type UpdateCheck,
-  type UpdateCheckRefusal,
-} from "../../../lib/api";
+import { checkForUpdate, downloadDiagnostics, getVersions, type ComponentVersions, type UpdateCheckRefusal } from "../../../lib/api";
 import { MANUAL_SVG } from "../../../lib/appMarks";
-import { groupStage } from "../../../lib/controls";
 import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
-import { AboutGive, GLIMSTONE_RELEASE_URL, GLIMSTONE_VERSION, REPO, ReportButtons, releaseUrl, shownVersion } from "../AboutCard";
+import { openWhatsNew, useWhatsNew } from "../../../lib/whatsNewStore";
+import { AboutGive, REPO, ReportButtons, shownVersion } from "../AboutCard";
+import { InfoComponentsCard, InfoVersionCard } from "../InfoCards";
 import { Card, hueCounter } from "../shared";
-import { WhatsNewButton } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
+// A container cannot replace itself, so "How to update" leads to how it was set up.
+const GUIDE = `${DOCS}getting-started/#install-on-unraid`;
 
 const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "dev-build": "tile.info.refused.devBuild",
@@ -30,99 +26,15 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "bad-response": "tile.info.refused.badResponse",
 };
 
-/** A version number that opens a release page. A build without a tag has
- *  none and shows the number alone. */
-function Version({ version, href = "" }: { version: string; href?: string }) {
-  const number = "text-sm tabular-nums";
-  if (!href) return <span className={`${number} text-carbon-textSub`}>{shownVersion(version)}</span>;
-  return (
-    // Under a coarse pointer the padding widens the target and the negative
-    // margin takes it back, so the row keeps its height.
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`${number} text-accentText no-underline hover:underline pointer-coarse:-m-2.5 pointer-coarse:p-2.5`}
-    >
-      {shownVersion(version)}
-    </a>
-  );
-}
-
-type Check = { state: "idle" } | { state: "running" } | { state: "done"; update: UpdateCheck } | { state: "refused"; reason: string };
-
-function UpdateButton() {
-  const { t } = useT();
-  const [check, setCheck] = useState<Check>({ state: "idle" });
-  const [shake, setShake] = useState(0);
-
-  async function run() {
-    setCheck({ state: "running" });
-    let next: Check;
-    try {
-      const res = await checkForUpdate();
-      if (res.ok && res.update) next = { state: "done", update: res.update };
-      else next = { state: "refused", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) };
-    } catch (e) {
-      next = { state: "refused", reason: e instanceof Error && e.message ? e.message : t("tile.info.refused.offline") };
-    }
-    if (next.state === "refused") setShake((n) => n + 1);
-    setCheck(next);
-  }
-
-  const resting = t("tile.info.check");
-  const current = t("tile.info.upToDate");
-  const waiting = t("tile.info.updates", 1);
-  const failed = t("verdict.failed");
-  let label = resting;
-  let labelKey = "tile.info.check";
-  let glyph: ReactNode = <IconSync />;
-  let tone: "neutral" | "ok" | "warn" | "danger" = "neutral";
-  if (check.state === "done") {
-    const behind = check.update.updateAvailable;
-    label = behind ? waiting : current;
-    labelKey = behind ? "tile.info.updates" : "tile.info.upToDate";
-    glyph = behind ? <IconUpdateAvailable /> : <IconUpToDate />;
-    tone = behind ? "warn" : "ok";
-  } else if (check.state === "refused") {
-    label = failed;
-    labelKey = "verdict.failed";
-    glyph = <IconClose />;
-    tone = "danger";
-  }
-
-  return (
-    <div className="flex flex-col items-end gap-2">
-      {check.state === "refused" && <p className="text-xs text-statusFail wrap-break-word">{check.reason}</p>}
-      {check.state === "done" && check.update.updateAvailable && (
-        <p className="text-xs text-statusWarn">
-          <a href={check.update.releaseUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-            {t("tile.info.available").replace("{version}", () => shownVersion(check.update.latest))}
-          </a>
-        </p>
-      )}
-      <Button
-        key={shake}
-        label={label}
-        labelKey={labelKey}
-        glyph={glyph}
-        tone={tone}
-        stage={groupStage([resting, current, waiting, failed])}
-        onClick={() => void run()}
-        disabled={check.state === "running"}
-        busy={check.state === "running"}
-        title={check.state === "idle" || check.state === "running" ? undefined : resting}
-        className={check.state === "refused" ? "glim-shake" : ""}
-      />
-    </div>
-  );
-}
-
 export function InfoPage() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const navigate = useNavigate();
   const { push } = useToast();
+  const unseen = useWhatsNew().unseen.length;
   const [versions, setVersions] = useState<ComponentVersions | null>(null);
+  const [update, setUpdate] = useState<UpdateState | null>(null);
+  const [release, setRelease] = useState("");
+  const words = useMemo(() => componentText(lang), [lang]);
   const nextHue = hueCounter();
 
   useEffect(() => {
@@ -137,39 +49,64 @@ export function InfoPage() {
     };
   }, []);
 
+  async function check() {
+    setUpdate({ kind: "checking" });
+    try {
+      const res = await checkForUpdate();
+      if (res.ok && res.update?.updateAvailable) {
+        setRelease(res.update.releaseUrl);
+        setUpdate({ kind: "available", version: shownVersion(res.update.latest) });
+      } else if (res.ok && res.update) {
+        setUpdate({ kind: "current", checkedAt: new Date() });
+      } else {
+        setUpdate({ kind: "failed", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) });
+      }
+    } catch (e) {
+      setUpdate({ kind: "failed", reason: e instanceof Error && e.message ? e.message : t("tile.info.refused.offline") });
+    }
+  }
+
   async function bugReport() {
     const refused = await downloadDiagnostics();
     if (refused) push(refused, "fail");
   }
 
-  const unknown = <span className="text-sm text-carbon-textMuted">{t("tile.info.versionUnknown")}</span>;
-  const tool = (version: string | null | undefined) => (version ? <Version version={version} /> : unknown);
+  const tool = (name: string, repo: string, hint: TranslationKey, version: string | null | undefined): ComponentRow => ({
+    name,
+    kind: "tool",
+    hint: t(hint),
+    version: version ?? "",
+    repoUrl: repo,
+    status: versions && !version ? t("tile.info.versionUnknown") : undefined,
+  });
 
   return (
     <>
-      <Card title={t("about.version")} hint={t("tile.info.versionHint")} hueIndex={nextHue()}>
-        <Rows>
-          <SettingRow label="BombVault">
-            {versions?.bombvault ? <Version version={versions.bombvault} href={releaseUrl(REPO, versions.bombvault)} /> : unknown}
-          </SettingRow>
-          <SettingRow label="GlimStone" hint={t("tile.info.glimstoneHint")}>
-            {/* A GlimStone patch tag folds into the next minor and goes, the newest release stays. */}
-            <Version version={GLIMSTONE_VERSION} href={GLIMSTONE_RELEASE_URL} />
-          </SettingRow>
-          <SettingRow label="restic" hint={t("tile.info.resticHint")}>
-            {tool(versions?.restic)}
-          </SettingRow>
-          <SettingRow label="rclone" hint={t("tile.info.rcloneHint")}>
-            {tool(versions?.rclone)}
-          </SettingRow>
-        </Rows>
-        <div className="flex flex-wrap items-end justify-end gap-2">
-          <span data-new="settings-version" className="flex">
-            <WhatsNewButton />
-          </span>
-          <UpdateButton />
-        </div>
-      </Card>
+      <InfoVersionCard
+        text={words.versionCard}
+        name="BombVault"
+        version={versions?.bombvault ?? ""}
+        repoUrl={REPO}
+        route="guide"
+        state={update}
+        onCheck={() => void check()}
+        guideUrl={GUIDE}
+        // Once a newer release is found, What's new tells what that one brings.
+        onWhatsNew={() => (update?.kind === "available" ? window.open(release, "_blank", "noopener,noreferrer") : openWhatsNew(true))}
+        unseen={unseen}
+        newId="settings-version"
+        hueIndex={nextHue()}
+      />
+
+      <InfoComponentsCard
+        text={words.componentsCard}
+        name="BombVault"
+        rows={[
+          tool("restic", "https://github.com/restic/restic", "tile.info.resticHint", versions?.restic),
+          tool("rclone", "https://github.com/rclone/rclone", "tile.info.rcloneHint", versions?.rclone),
+        ]}
+        hueIndex={nextHue()}
+      />
 
       <Card title={t("tile.info.help")} hint={t("tile.info.helpHint")} hueIndex={nextHue()}>
         <p className="text-sm text-carbon-textSub">{t("about.report")}</p>

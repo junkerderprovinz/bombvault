@@ -1958,6 +1958,113 @@ body {
   .glim-brand-tile:active :is(.glim-house-mark, .glim-docs-mark) .glim-mark-hover { display: block; }
 }
 
+/* The Version and Components cards of the Info page, as in GlimStone's
+   reference/tokens.css ("The Info tile"): a row per part with its name at the
+   start and its number at the end, and the Version card's head and last row. */
+.glim-version-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.glim-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.glim-version-name {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.glim-version-part {
+  font-size: var(--text-body);
+  line-height: 1.25rem;
+  color: var(--carbon-text);
+}
+.glim-version-number {
+  flex-shrink: 0;
+  font-size: var(--text-body);
+  line-height: 1.25rem;
+  color: var(--carbon-text-sub);
+  text-decoration: none;
+}
+/* A number that opens its release reads as plain text and takes the accent's
+   ink under the pointer: no frame, no fill and no underline, so it never reads
+   as a button. */
+a.glim-version-number:focus-visible { color: var(--accent-text); }
+@media (hover: hover) {
+  a.glim-version-number:hover { color: var(--accent-text); }
+}
+.glim-version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+.glim-version-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.glim-version-app {
+  min-width: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--carbon-text);
+}
+.glim-version-head .glim-version-number {
+  font-size: var(--text-body);
+  color: var(--carbon-text);
+}
+/* The card's last row: where the updates stand at its start, the buttons at
+   its end, and the buttons drop under the words when the row is narrow. */
+.glim-version-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+.glim-version-foot .glim-version-actions { margin-inline-start: auto; }
+.glim-version-state {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.25rem;
+  color: var(--carbon-text-sub);
+}
+.glim-version-state[data-tone="ok"] .glim-version-line { color: var(--status-ok-text); }
+.glim-version-state[data-tone="warn"] .glim-version-line { color: var(--status-warn-text); }
+.glim-version-state[data-tone="fail"] .glim-version-line { color: var(--status-fail-text); }
+.glim-version-note { color: var(--carbon-text-muted); }
+.glim-version-status { margin-inline-start: auto; font-size: var(--text-meta); }
+.glim-version-status[data-tone="ok"] { color: var(--status-ok-text); }
+.glim-version-status[data-tone="warn"] { color: var(--status-warn-text); }
+.glim-version-status[data-tone="fail"] { color: var(--status-fail-text); }
+
+/* The dot before "What's new": green while something is unseen, grey once nothing is. */
+.glim-version-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--carbon-text-muted);
+}
+.glim-version-dot[data-unseen] {
+  background: var(--status-ok-solid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-ok-solid) 25%, transparent);
+}
+
 /* The About card's marks at rest. A published brand colour fails on one of
    the two grounds, so they take the adjusted theme tokens, and the house mark
    follows the accent as ink. */

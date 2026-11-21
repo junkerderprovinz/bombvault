@@ -3,7 +3,7 @@
     {
       "name": "web",
       "mode": "port",
-      "version": "4.8.1",
+      "version": "4.8.2",
       "versionFile": "web/src/lib/glimstoneVersion.ts"
     },
     {

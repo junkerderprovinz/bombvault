@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "../../components/Badge";
 import { hueVars } from "../../lib/appearance";
 import { Button } from "../../components/Button";
-import { IconConfirm, IconEye, IconForward, IconWhatsNew } from "../../components/glyphs";
+import { IconConfirm, IconEye, IconForward } from "../../components/glyphs";
 import { IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { withinBase } from "../../lib/base";
@@ -217,28 +217,4 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
 export function WhatsNewHost({ version }: { version: string | null }) {
   if (!useWhatsNewOpen()) return null;
   return <WhatsNewWindow version={version} onClose={() => openWhatsNew(false)} />;
-}
-
-/**
- * WhatsNewButton stands in the Version card and opens the window. It wears
- * the gift like every button wears its glyph, counts what is still unseen,
- * and the dot before the gift goes grey once nothing is.
- */
-export function WhatsNewButton() {
-  const { t } = useT();
-  const left = useWhatsNew().unseen.length;
-  return (
-    <Button
-      label={left > 0 ? `${t("whatsNew.title")} · ${left}` : t("whatsNew.title")}
-      labelKey={null}
-      glyph={
-        <span className="inline-flex items-center gap-1.5">
-          <i aria-hidden="true" className={`glim-new-dot glim-new-dot-still${left > 0 ? "" : " glim-new-dot-seen"}`} />
-          <IconWhatsNew />
-        </span>
-      }
-      keepLabel
-      onClick={() => openWhatsNew(true)}
-    />
-  );
 }

@@ -7,10 +7,12 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { componentText } from "@glimstone/core";
 import { I18nProvider, en } from "../../lib/i18n";
 import { CHANGES, placed, RELEASES } from "../../lib/whatsNew";
-import { beginWhatsNew, markAbsent, markSeen, openWhatsNew } from "../../lib/whatsNewStore";
-import { WhatsNewButton, WhatsNewHost } from "./WhatsNew";
+import { beginWhatsNew, markAbsent, markSeen, openWhatsNew, useWhatsNew } from "../../lib/whatsNewStore";
+import { InfoVersionCard } from "./InfoCards";
+import { WhatsNewHost } from "./WhatsNew";
 
 const KEY = "bv-whats-new";
 const NEWEST = RELEASES[0].version;
@@ -28,12 +30,29 @@ function Where() {
   return <output data-testid="where">{useLocation().pathname}</output>;
 }
 
+const words = componentText("en").versionCard;
+
+// The Version card wired the way the Info page wires it.
+function VersionCard() {
+  return (
+    <InfoVersionCard
+      text={words}
+      name="BombVault"
+      version=""
+      route="guide"
+      state={null}
+      onWhatsNew={() => openWhatsNew(true)}
+      unseen={useWhatsNew().unseen.length}
+    />
+  );
+}
+
 async function renderApp(open: boolean) {
   await act(async () => {
     render(
       <I18nProvider>
         <MemoryRouter initialEntries={["/settings/info"]}>
-          <WhatsNewButton />
+          <VersionCard />
           <WhatsNewHost version={`v${NEWEST}`} />
           <Where />
         </MemoryRouter>
@@ -77,30 +96,30 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("the New button", () => {
+describe("the What's new button", () => {
   it("counts what is left and opens the window", async () => {
     markSeen(["overview-head"]);
     await renderButton();
-    await press(screen.getByRole("button", { name: `${en["whatsNew.title"]} · ${CHANGES.length - 1}` }));
+    await press(screen.getByRole("button", { name: `${words.whatsNew} · ${CHANGES.length - 1}` }));
     expect(screen.getByRole("dialog", { name: en["whatsNew.windowTitleSince"].replace("{version}", "9.9.1") })).toBeTruthy();
   });
 
   it("drops the count once everything was seen", async () => {
     markSeen(CHANGES.map((change) => change.id));
     await renderButton();
-    expect(screen.getByRole("button", { name: en["whatsNew.title"] })).toBeTruthy();
+    expect(screen.getByRole("button", { name: words.whatsNew })).toBeTruthy();
   });
 
   it("wears the gift behind its dot, and the dot greys once everything was seen", async () => {
     await renderButton();
-    const button = screen.getByRole("button", { name: `${en["whatsNew.title"]} · ${CHANGES.length}` });
-    const dot = button.querySelector(".glim-new-dot")!;
+    const button = screen.getByRole("button", { name: `${words.whatsNew} · ${CHANGES.length}` });
+    const dot = button.querySelector(".glim-version-dot")!;
     expect(dot.nextElementSibling?.tagName.toLowerCase()).toBe("svg");
-    expect(dot.classList.contains("glim-new-dot-seen")).toBe(false);
+    expect(dot.hasAttribute("data-unseen")).toBe(true);
     cleanup();
     markSeen(CHANGES.map((change) => change.id));
     await renderButton();
-    expect(screen.getByRole("button", { name: en["whatsNew.title"] }).querySelector(".glim-new-dot-seen")).toBeTruthy();
+    expect(screen.getByRole("button", { name: words.whatsNew }).querySelector(".glim-version-dot")?.hasAttribute("data-unseen")).toBe(false);
   });
 });
 

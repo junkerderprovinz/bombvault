@@ -54,6 +54,7 @@ import {
   IconUnlink,
   IconUnlock,
   IconUpload,
+  IconWhatsNew,
 } from "./glyphs";
 
 // glyphFor picks the symbol a button wears by meaning, so one verb has one shape
@@ -65,6 +66,16 @@ import {
 type Rule = [RegExp, () => ReactNode];
 
 const RULES: Rule[] = [
+  // The buttons of the Version and Components cards, by the keys GlimStone
+  // gives them, before "check" and "update" fall to the general rules.
+  [/^version\.whatsNew$/, () => <IconWhatsNew />],
+  [/^version\.check$/, () => <IconSync />],
+  [/^version\.update$/, () => <IconInstall />],
+  [/^version\.restart$/, () => <IconRetry />],
+  [/^version\.guide$/, () => <IconInfo />],
+  [/^version\.plugins$/, () => <IconForward />],
+  [/^components\.update$/, () => <IconDownload />],
+
   // Backups and restores, the app's own verbs, before anything generic.
   [/backupNow|backupAll|backupSelected|runNow/i, () => <IconBackupNow />],
   // Undo takes back the step just made, which is not a restore of a backup.
