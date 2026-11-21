@@ -58,7 +58,7 @@ describe("the settings index in English", () => {
 
   it("leads to the list of what is new, a button of the Version card, by its name and by the button inside", () => {
     const named = search(items, "new").filter((h) => !h.inHint && h.item.page === "info");
-    expect(named.map((h) => h.item.name)).toContain(en["tile.info.whatsNew"]);
+    expect(named.map((h) => h.item.name)).toContain(en["whatsNew.title"]);
     expect(where("mark all as seen")).toEqual([`info: ${en["about.version"]}`]);
   });
 

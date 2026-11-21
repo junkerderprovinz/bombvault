@@ -58,8 +58,10 @@ LABEL org.opencontainers.image.title="bombvault" \
       org.opencontainers.image.licenses="AGPL-3.0-only"
 
 # curl is for the Backup Everything hooks, which run in this container and use
-# it for health pings.
+# it for health pings. The upgrade picks up security fixes that reach Debian's
+# archive before they reach the pinned base image.
 RUN apt-get update \
+    && apt-get -y upgrade \
     && apt-get install -y --no-install-recommends ca-certificates libvirt-clients qemu-utils openssh-client tini curl \
     && rm -rf /var/lib/apt/lists/*
 

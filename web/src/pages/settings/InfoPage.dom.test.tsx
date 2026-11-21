@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
-// The Info page: BombVault's version and where its updates stand, the
-// components it ships, the ways to get help and the list of what the last
-// update changed. The check runs on the server and can be refused, and the bug
-// report can be too; both refusals have to reach the person in words.
+// The Info page: BombVault's version with the check for a newer release, the
+// versions of what it brings along, the ways to get help and the list of what
+// the last update changed. The check runs on the server and can be refused,
+// and the bug report can be too; both refusals have to reach the person in words.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { COMPONENT_LANGUAGES, componentText } from "@glimstone/core";
+import { componentText } from "@glimstone/core";
 import { I18nProvider, en } from "../../lib/i18n";
 import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
-import { allLocales } from "../../lib/localesForTests";
+import { IconSync } from "../../components/navGlyphs";
 
 const api = vi.hoisted(() => ({
   getVersions: vi.fn(),
@@ -31,10 +31,7 @@ vi.mock("../../lib/toast", () => ({
   }),
 }));
 
-const { InfoPage, UPDATE_GUIDE } = await import("./pages/InfoPage");
-
-const words = componentText("en");
-const LAST_CHECK = "bombvault.lastUpdateCheck";
+const { InfoPage } = await import("./pages/InfoPage");
 
 async function renderPage() {
   await act(async () => {
@@ -54,14 +51,15 @@ function card(title: string): HTMLElement {
   return el;
 }
 
-const version = () => within(card(words.versionCard.title));
-const components = () => within(card(words.componentsCard.title));
-const status = () => version().getByRole("status").textContent ?? "";
-const button = (name: string) => version().queryByRole("button", { name: new RegExp(`^${name}`) });
+const words = componentText("en");
+const version = () => within(card(en["about.version"]));
+const components = () => within(card(en["tile.info.components"]));
+const checkButton = () => version().getByRole("button", { name: words.versionCard.check });
+const state = () => version().getByRole("status").textContent ?? "";
 
 async function check() {
   await act(async () => {
-    fireEvent.click(button(words.versionCard.check)!);
+    fireEvent.click(checkButton());
   });
 }
 
@@ -76,94 +74,55 @@ afterEach(() => {
   for (const fn of Object.values(api)) fn.mockReset();
   pushed.length = 0;
   localStorage.removeItem("bv-lang");
-  localStorage.removeItem(LAST_CHECK);
-});
-
-describe("the Info tile", () => {
-  it("has the Version, Components, Help and About cards, in that order", async () => {
-    await renderPage();
-    const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
-    expect(titles).toEqual([words.versionCard.title, words.componentsCard.title, en["tile.info.help"], "About"]);
-  });
-
-  it.each(COMPONENT_LANGUAGES)("lets the settings search find the cards by GlimStone's words in %s", (lang) => {
-    const t = allLocales[lang];
-    const w = componentText(lang);
-    expect([t["about.version"], t["tile.info.components"], t["tile.info.check"], t["tile.info.whatsNew"]]).toEqual([
-      w.versionCard.title,
-      w.componentsCard.title,
-      w.versionCard.check,
-      w.versionCard.whatsNew,
-    ]);
-    expect(t["about.title"]).not.toContain("BombVault");
-  });
+  localStorage.removeItem("bombvault.lastUpdateCheck");
 });
 
 describe("the Version card", () => {
-  it("shows BombVault alone, its number opening the newest release", async () => {
+  it("holds BombVault alone, with a number that opens its newest release", async () => {
     await renderPage();
-    expect(card(words.versionCard.title).textContent).toContain("BombVault");
-    expect(card(words.versionCard.title).textContent).not.toMatch(/GlimStone|restic|rclone/);
-    const links = version()
-      .getAllByRole("link")
-      .map((a) => [a.textContent, a.getAttribute("href")]);
-    expect(links).toEqual([["10.0.0", "https://github.com/junkerderprovinz/bombvault/releases/latest"]]);
+    const link = version().getByRole("link", { name: "10.0.0" });
+    expect(link.getAttribute("href")).toBe("https://github.com/junkerderprovinz/bombvault/releases/latest");
+    expect(version().getByText("BombVault")).toBeTruthy();
+    for (const name of ["GlimStone", "restic", "rclone"]) expect(card(en["about.version"]).textContent).not.toContain(name);
   });
 
   it("shows a tagged version without its v", async () => {
     api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "v10.0.0", restic: "0.18.1", rclone: "v1.75.2" } });
     await renderPage();
     expect(version().getByRole("link", { name: "10.0.0" })).toBeTruthy();
-    expect(card(words.versionCard.title).textContent).not.toMatch(/\bv\d/);
+    expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
   });
 
-  it("calls a build without a release number what it is and links nothing", async () => {
-    api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "dev", restic: "0.18.1", rclone: null } });
-    await renderPage();
-    expect(version().getByText(words.versionCard.unreleased("dev"))).toBeTruthy();
-    expect(version().queryAllByRole("link")).toEqual([]);
+  it("names GlimStone 4.8.2", () => {
+    expect(GLIMSTONE_VERSION).toBe("4.8.2");
   });
 
-  it("reads a version number as plain text and never as a button or with an underline", async () => {
-    await renderPage();
-    const number = version().getByRole("link", { name: "10.0.0" });
-    expect(number.className).toContain("no-underline");
-    expect(number.className).toContain("text-carbon-text");
-    expect(number.className).toContain("hover:text-accentText");
-    expect(number.className).not.toMatch(/\bbg-|\bborder\b|rounded/);
-  });
-
-  it("asks the server only when Check for updates is pressed", async () => {
+  it("asks the server only when Check for updates is pressed, and says nothing before", async () => {
     await renderPage();
     expect(api.checkForUpdate).not.toHaveBeenCalled();
-    expect(status()).toBe(words.versionCard.current);
-    expect(button(words.versionCard.check)).toBeTruthy();
+    expect(state()).toBe("");
   });
 
-  it("puts What's new, then Check for updates, in the last row and no update button while nothing waits", async () => {
+  it("wears the two arrows on Check for updates", async () => {
     await renderPage();
-    const names = version()
-      .getAllByRole("button")
-      .map((b) => b.textContent ?? "");
-    expect(names).toHaveLength(2);
-    expect(names[0]).toContain(words.versionCard.whatsNew);
-    expect(names[1]).toContain(words.versionCard.check);
+    const drawn = checkButton().querySelector("svg")?.innerHTML;
+    const { container } = render(<IconSync />);
+    expect(drawn).toBe(container.querySelector("svg")?.innerHTML);
   });
 
-  it("says it is up to date and when it last looked", async () => {
+  it("says it is up to date and when it checked, once nothing newer exists", async () => {
     api.checkForUpdate.mockResolvedValue({
       ok: true,
-      update: { current: "10.0.0", latest: "v10.0.0", updateAvailable: false, releaseUrl: "" },
+      update: { current: "10.0.0", latest: "10.0.0", updateAvailable: false, releaseUrl: "" },
     });
     await renderPage();
     await check();
-    expect(api.checkForUpdate).toHaveBeenCalledTimes(1);
-    expect(status()).toContain(words.versionCard.current);
-    expect(status()).toContain(words.versionCard.checked(new Date()));
-    expect(button(words.versionCard.check)).toBeTruthy();
+    expect(state()).toContain(words.versionCard.current);
+    expect(version().getByRole("status").querySelector(".glim-version-note")?.textContent).toBeTruthy();
+    expect(checkButton()).toBeTruthy();
   });
 
-  it("offers How to update while a newer release waits, hides the check and opens the guide", async () => {
+  it("names a newer version, leads to the update guide and lets What's new open its release", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     api.checkForUpdate.mockResolvedValue({
       ok: true,
@@ -171,37 +130,17 @@ describe("the Version card", () => {
     });
     await renderPage();
     await check();
-    expect(status()).toBe(words.versionCard.available("10.0.1"));
-    expect(version().getByRole("status").querySelector("a")).toBeNull();
-    expect(button(words.versionCard.check)).toBeNull();
-    fireEvent.click(button(words.versionCard.guide)!);
-    expect(open).toHaveBeenCalledWith(UPDATE_GUIDE, "_blank", "noopener,noreferrer");
-    expect(UPDATE_GUIDE).toBe("https://junkerderprovinz.github.io/bombvault/getting-started/#update");
-  });
-
-  it("opens the waiting release's notes from What's new", async () => {
-    api.checkForUpdate.mockResolvedValue({
-      ok: true,
-      update: { current: "10.0.0", latest: "v10.0.1", updateAvailable: true, releaseUrl: "" },
-    });
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: true, body: "" }), { status: 200 }));
-    await renderPage();
-    await check();
-    await act(async () => {
-      fireEvent.click(button(words.versionCard.whatsNew)!);
-    });
-    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(en["whatsNew.windowTitle"].replace("{version}", "10.0.1"));
-  });
-
-  it("remembers the last answer for the version that asked, and forgets it after an update", async () => {
-    localStorage.setItem(LAST_CHECK, JSON.stringify({ at: new Date().toISOString(), running: "10.0.0", latest: "v10.0.1", available: true }));
-    await renderPage();
-    expect(status()).toBe(words.versionCard.available("10.0.1"));
-    cleanup();
-
-    api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "10.0.1", restic: "0.18.1", rclone: null } });
-    await renderPage();
-    expect(status()).toBe(words.versionCard.current);
+    expect(state()).toContain(words.versionCard.available("10.0.1"));
+    expect(version().queryByRole("button", { name: words.versionCard.check })).toBeNull();
+    expect(version().queryByRole("link", { name: /10\.0\.1/ })).toBeNull();
+    fireEvent.click(version().getByRole("button", { name: words.versionCard.guide }));
+    expect(open).toHaveBeenLastCalledWith(
+      "https://junkerderprovinz.github.io/bombvault/getting-started/#update",
+      "_blank",
+      "noopener,noreferrer",
+    );
+    fireEvent.click(version().getByRole("button", { name: words.versionCard.whatsNew }));
+    expect(open).toHaveBeenLastCalledWith("https://example.org/v10.0.1", "_blank", "noopener,noreferrer");
   });
 
   it.each([
@@ -213,49 +152,55 @@ describe("the Version card", () => {
     api.checkForUpdate.mockResolvedValue({ ok: false, code });
     await renderPage();
     await check();
-    expect(status()).toBe(words.versionCard.failed + en[key]);
-    expect(version().getByText(words.versionCard.failed).className).toContain("text-statusFail");
-    expect(button(words.versionCard.check)).toBeTruthy();
+    expect(state()).toContain(words.versionCard.failed);
+    expect(state()).toContain(en[key]);
+    expect(version().getByRole("status").getAttribute("data-tone")).toBe("fail");
   });
 
   it("says so as well when the request itself fails", async () => {
     api.checkForUpdate.mockRejectedValue(new Error("HTTP 502 Bad Gateway"));
     await renderPage();
     await check();
-    expect(version().getByText("HTTP 502 Bad Gateway")).toBeTruthy();
+    expect(state()).toContain("HTTP 502 Bad Gateway");
+  });
+
+  it("remembers the last answer for the version that asked, and forgets it after an update", async () => {
+    api.checkForUpdate.mockResolvedValue({
+      ok: true,
+      update: { current: "10.0.0", latest: "v10.0.1", updateAvailable: true, releaseUrl: "https://example.org/v10.0.1" },
+    });
+    await renderPage();
+    await check();
+    cleanup();
+
+    await renderPage();
+    expect(api.checkForUpdate).toHaveBeenCalledTimes(1);
+    expect(state()).toContain(words.versionCard.available("10.0.1"));
+    cleanup();
+
+    api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "10.0.1", restic: "0.18.1", rclone: null } });
+    await renderPage();
+    expect(state()).toBe("");
   });
 });
 
 describe("the Components card", () => {
-  it("lists the programs by name, then GlimStone, each with its (i) and no line under it", async () => {
+  it("lists the bundled tools by name and GlimStone last, each with what it is in its (i)", async () => {
     await renderPage();
-    const rows = [...card(words.componentsCard.title).querySelectorAll("[data-search-row]")];
-    expect(rows.map((r) => r.getAttribute("data-search-row"))).toEqual(["rclone", "restic", "GlimStone"]);
-    const tips = rows.map((r) => r.querySelector('[role="img"]')?.getAttribute("aria-label"));
-    expect(tips).toEqual([en["tile.info.rcloneHint"], en["tile.info.resticHint"], words.componentsCard.design]);
+    const names = [...card(en["tile.info.components"]).querySelectorAll(".glim-version-part")].map((el) => el.textContent);
+    expect(names).toEqual(["rclone", "restic", "GlimStone"]);
+    for (const tip of [en["tile.info.resticHint"], en["tile.info.rcloneHint"], words.componentsCard.design]) {
+      expect(components().getByLabelText(tip)).toBeTruthy();
+    }
   });
 
-  it("links every number it knows to its project's newest release and says when one is unknown", async () => {
+  it("opens each project's newest release from its number, and says so where a version is unknown", async () => {
     await renderPage();
-    const links = components()
-      .getAllByRole("link")
-      .map((a) => [a.textContent, a.getAttribute("href")]);
-    expect(links).toEqual([
-      ["0.18.1", "https://github.com/restic/restic/releases/latest"],
-      [GLIMSTONE_VERSION, "https://github.com/junkerderprovinz/glimstone/releases/latest"],
-    ]);
+    expect(components().getByRole("link", { name: "0.18.1" }).getAttribute("href")).toBe("https://github.com/restic/restic/releases/latest");
+    expect(components().getByRole("link", { name: GLIMSTONE_VERSION }).getAttribute("href")).toBe(
+      "https://github.com/junkerderprovinz/glimstone/releases/latest",
+    );
     expect(components().getByText(en["tile.info.versionUnknown"])).toBeTruthy();
-  });
-
-  it("offers no switch and no button, since its programs come with BombVault's own release", async () => {
-    await renderPage();
-    expect(components().queryAllByRole("button")).toEqual([]);
-    expect(components().queryAllByRole("switch")).toEqual([]);
-    expect(components().queryAllByRole("checkbox")).toEqual([]);
-  });
-
-  it("names GlimStone 4.8.2", () => {
-    expect(GLIMSTONE_VERSION).toBe("4.8.2");
   });
 });
 
@@ -345,6 +290,26 @@ describe("the Help card", () => {
     await waitFor(() => expect(pushed).toHaveLength(1));
     expect(pushed[0].message).toContain("login password");
     expect(pushed[0].severity).toBe("fail");
+  });
+});
+
+describe("the list of what is new", () => {
+  it("is a button of the Version card, and Components, Help and About follow in that order", async () => {
+    await renderPage();
+    const titles = [...document.querySelectorAll("[data-search-card]")].map((el) => el.getAttribute("data-search-card"));
+    expect(titles).toEqual([en["about.version"], en["tile.info.components"], en["tile.info.help"], en["about.title"]]);
+    expect(version().getByRole("button", { name: words.versionCard.whatsNew })).toBeTruthy();
+  });
+
+  it("has one button for the window, before the update check", async () => {
+    await renderPage();
+    const names = version()
+      .getAllByRole("button")
+      .map((button) => button.textContent ?? "");
+    const at = (label: string) => names.findIndex((name) => name.includes(label));
+    expect(at(en["whatsNew.notesTab"])).toBe(-1);
+    expect(at(words.versionCard.whatsNew)).toBeGreaterThanOrEqual(0);
+    expect(at(words.versionCard.check)).toBe(at(words.versionCard.whatsNew) + 1);
   });
 });
 

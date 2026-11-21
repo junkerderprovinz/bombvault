@@ -11,7 +11,7 @@ import { Toggle } from "../components/Toggle";
 import { AboutContent } from "../pages/settings/AboutCard";
 import { IconAccentSystem, IconWhatsNew } from "../components/glyphs";
 import { IconResetArrow, useSystemAccent } from "../pages/settings/AccentCard";
-import { VersionNumber } from "../pages/settings/VersionCards";
+import { VersionNumber } from "../pages/settings/InfoCards";
 import {
   DEFAULT_ACCENT,
   DEFAULT_ACCENT_PRESETS,
@@ -565,46 +565,43 @@ export function SettingsPage({
       {/* GlimStone's Version and Components cards. The app's updates come
           through the store it came from, so the Version card checks nothing. */}
       <Section title={words.versionCard.title} hue={5} info={withApp(words.versionCard.hint, "BombVault")}>
-        <div className="flex items-baseline justify-between gap-4 py-2">
-          <span className="min-w-0 text-body font-semibold text-carbon-text">BombVault</span>
-          <VersionNumber
-            row={{ name: "BombVault", version: app.version, repoUrl: REPO }}
-            unreleased={words.versionCard.unreleased}
-            className="flex-none text-body tabular-nums text-carbon-text"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pb-1">
-          <p role="status" className="m-0 min-w-0 flex-[1_1_8rem] text-sm text-carbon-textSub">
-            {updateLine({ kind: "store", store: storeOf(app.installer ?? "") }, words.versionCard).line}
-          </p>
-          <Button
-            label={whatsNewLabel(words.versionCard)}
-            labelKey="version.whatsNew"
-            glyph={
-              <span className="inline-flex items-center gap-1.5">
-                <i aria-hidden="true" className="glim-new-dot glim-new-dot-still glim-new-dot-seen" />
-                <IconWhatsNew />
-              </span>
-            }
-            keepLabel
-            onClick={() => open(`${REPO}/releases/tag/v${app.version}`)}
-            className="ms-auto"
-          />
+        <div className="flex flex-col gap-3 py-2">
+          <div className="glim-version-head">
+            <span className="glim-version-app">BombVault</span>
+            <VersionNumber row={{ name: "BombVault", version: app.version, repoUrl: REPO }} unreleased={words.versionCard.unreleased} />
+          </div>
+          <div className="glim-version-foot">
+            <p className="glim-version-state" role="status">
+              <span className="glim-version-line">{updateLine({ kind: "store", store: storeOf(app.installer ?? "") }, words.versionCard).line}</span>
+            </p>
+            <div className="glim-version-actions">
+              <Button
+                label={whatsNewLabel(words.versionCard)}
+                labelKey="version.whatsNew"
+                glyph={
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="glim-version-dot" aria-hidden="true" />
+                    <IconWhatsNew />
+                  </span>
+                }
+                keepLabel
+                onClick={() => open(`${REPO}/releases/tag/v${app.version}`)}
+              />
+            </div>
+          </div>
         </div>
       </Section>
 
       <Section title={words.componentsCard.title} hue={8} info={withApp(words.componentsCard.hint, "BombVault")}>
-        <div className="flex items-center justify-between gap-4 py-2">
-          <span className="flex min-w-0 items-center gap-1.5 text-sm text-carbon-text">
-            GlimStone
-            <InfoBubble tip={words.componentsCard.design} />
-          </span>
-          <VersionNumber
-            row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }}
-            unreleased={words.componentsCard.unreleased}
-            className="flex-none text-sm tabular-nums text-carbon-textSub"
-          />
-        </div>
+        <ul className="glim-version-rows py-2">
+          <li className="glim-version-row">
+            <span className="glim-version-name">
+              <span className="glim-version-part">GlimStone</span>
+              <InfoBubble tip={words.componentsCard.design} />
+            </span>
+            <VersionNumber row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }} unreleased={words.componentsCard.unreleased} />
+          </li>
+        </ul>
       </Section>
 
       <Section title={t("launcher.problems")} hue={2} info={t("launcher.problemsHint")}>

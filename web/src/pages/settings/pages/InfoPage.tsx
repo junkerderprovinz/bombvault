@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { componentText, type ComponentRow, type UpdateState } from "@glimstone/core";
 import { Button } from "../../../components/Button";
@@ -12,11 +12,12 @@ import { useT, type TranslationKey } from "../../../lib/i18n";
 import { useToast } from "../../../lib/toast";
 import { openWhatsNew, useWhatsNew } from "../../../lib/whatsNewStore";
 import { AboutGive, REPO, ReportButtons, shownVersion } from "../AboutCard";
+import { InfoComponentsCard, InfoVersionCard } from "../InfoCards";
 import { Card, hueCounter } from "../shared";
-import { ComponentsCard, VersionCard } from "../VersionCards";
-import { NewReleaseWindow } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
+// A container cannot replace itself, so "How to update" leads to the steps for each host.
+const GUIDE = `${DOCS}getting-started/#update`;
 
 const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "dev-build": "tile.info.refused.devBuild",
@@ -25,13 +26,10 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "bad-response": "tile.info.refused.badResponse",
 };
 
-/** Where the guide for updating the container lives, for "How to update". */
-export const UPDATE_GUIDE = `${DOCS}getting-started/#update`;
-
 const LAST_CHECK = "bombvault.lastUpdateCheck";
 
 /** The answer of the last check this browser ran, so the card can say when it looked. */
-type LastCheck = { at: string; running: string; latest: string; available: boolean };
+type LastCheck = { at: string; running: string; latest: string; available: boolean; releaseUrl: string };
 
 function readLastCheck(running: string): LastCheck | null {
   try {
@@ -52,54 +50,28 @@ function keepLastCheck(last: LastCheck) {
   }
 }
 
-function stateOf(last: LastCheck | null): UpdateState {
-  if (!last) return { kind: "current" };
-  if (last.available) return { kind: "available", version: shownVersion(last.latest) };
-  return { kind: "current", checkedAt: new Date(last.at) };
-}
-
-/**
- * useUpdateState asks the server for the newest release when `check` runs and
- * at no other time, and remembers the last answer for this version.
- */
-function useUpdateState(running: string) {
-  const { t } = useT();
-  const [state, setState] = useState<UpdateState>({ kind: "current" });
-
-  useEffect(() => {
-    if (running) setState(stateOf(readLastCheck(running)));
-  }, [running]);
-
-  async function check() {
-    setState({ kind: "checking" });
-    try {
-      const res = await checkForUpdate();
-      if (res.ok && res.update) {
-        const last = { at: new Date().toISOString(), running, latest: res.update.latest, available: res.update.updateAvailable };
-        keepLastCheck(last);
-        setState(stateOf(last));
-      } else {
-        setState({ kind: "failed", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) });
-      }
-    } catch (e) {
-      setState({ kind: "failed", reason: e instanceof Error && e.message ? e.message : t("tile.info.refused.offline") });
-    }
-  }
-
-  return { state, check };
+function stateOf(last: LastCheck): UpdateState {
+  return last.available ? { kind: "available", version: shownVersion(last.latest) } : { kind: "current", checkedAt: new Date(last.at) };
 }
 
 export function InfoPage() {
   const { t, lang } = useT();
   const navigate = useNavigate();
   const { push } = useToast();
-  const [versions, setVersions] = useState<ComponentVersions | null>(null);
-  const [notes, setNotes] = useState<string | null>(null);
   const unseen = useWhatsNew().unseen.length;
-  const running = versions?.bombvault ?? "";
-  const update = useUpdateState(running);
+  const [versions, setVersions] = useState<ComponentVersions | null>(null);
+  const [update, setUpdate] = useState<UpdateState | null>(null);
+  const [release, setRelease] = useState("");
+  const words = useMemo(() => componentText(lang), [lang]);
   const nextHue = hueCounter();
-  const words = componentText(lang);
+
+  const running = versions?.bombvault ?? "";
+  useEffect(() => {
+    const last = running ? readLastCheck(running) : null;
+    if (!last) return;
+    setRelease(last.releaseUrl);
+    setUpdate(stateOf(last));
+  }, [running]);
 
   useEffect(() => {
     let alive = true;
@@ -113,35 +85,70 @@ export function InfoPage() {
     };
   }, []);
 
+  async function check() {
+    setUpdate({ kind: "checking" });
+    try {
+      const res = await checkForUpdate();
+      if (res.ok && res.update) {
+        const last = {
+          at: new Date().toISOString(),
+          running,
+          latest: res.update.latest,
+          available: res.update.updateAvailable,
+          releaseUrl: res.update.releaseUrl,
+        };
+        keepLastCheck(last);
+        setRelease(last.releaseUrl);
+        setUpdate(stateOf(last));
+      } else {
+        setUpdate({ kind: "failed", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) });
+      }
+    } catch (e) {
+      setUpdate({ kind: "failed", reason: e instanceof Error && e.message ? e.message : t("tile.info.refused.offline") });
+    }
+  }
+
   async function bugReport() {
     const refused = await downloadDiagnostics();
     if (refused) push(refused, "fail");
   }
 
-  const tools: ComponentRow[] = [
-    { name: "restic", kind: "tool", hint: t("tile.info.resticHint"), version: versions?.restic ?? "", repoUrl: "https://github.com/restic/restic" },
-    { name: "rclone", kind: "tool", hint: t("tile.info.rcloneHint"), version: versions?.rclone ?? "", repoUrl: "https://github.com/rclone/rclone" },
-  ];
+  const tool = (name: string, repo: string, hint: TranslationKey, version: string | null | undefined): ComponentRow => ({
+    name,
+    kind: "tool",
+    hint: t(hint),
+    version: version ?? "",
+    repoUrl: repo,
+    status: versions && !version ? t("tile.info.versionUnknown") : undefined,
+  });
 
   return (
     <>
-      <VersionCard
+      <InfoVersionCard
         text={words.versionCard}
         name="BombVault"
         version={running}
         repoUrl={REPO}
         route="guide"
-        state={update.state}
-        onCheck={() => void update.check()}
-        guideUrl={UPDATE_GUIDE}
-        // While a newer release waits, its notes are what is new.
-        onWhatsNew={() => (update.state.kind === "available" ? setNotes(update.state.version) : openWhatsNew(true))}
+        state={update}
+        onCheck={() => void check()}
+        guideUrl={GUIDE}
+        // Once a newer release is found, What's new tells what that one brings.
+        onWhatsNew={() => (update?.kind === "available" ? window.open(release, "_blank", "noopener,noreferrer") : openWhatsNew(true))}
         unseen={unseen}
+        newId="settings-version"
         hueIndex={nextHue()}
       />
-      {notes && <NewReleaseWindow version={notes} onClose={() => setNotes(null)} />}
 
-      <ComponentsCard text={words.componentsCard} name="BombVault" rows={tools} hueIndex={nextHue()} />
+      <InfoComponentsCard
+        text={words.componentsCard}
+        name="BombVault"
+        rows={[
+          tool("restic", "https://github.com/restic/restic", "tile.info.resticHint", versions?.restic),
+          tool("rclone", "https://github.com/rclone/rclone", "tile.info.rcloneHint", versions?.rclone),
+        ]}
+        hueIndex={nextHue()}
+      />
 
       <Card title={t("tile.info.help")} hint={t("tile.info.helpHint")} hueIndex={nextHue()}>
         <p className="text-sm text-carbon-textSub">{t("about.report")}</p>
