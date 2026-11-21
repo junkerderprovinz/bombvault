@@ -5492,7 +5492,7 @@ const lv: Partial<Translations> = {
   "nodes.away": "Mezgls pašlaik nav sasniedzams. Iespējams, tas ir izslēgts vai bezsaistē.",
   "nodes.notAdopted": "Mezgls vēl nav palaists ar savu compose failu.",
   "nodes.add": "Pievienot mezglu",
-  "nodes.eyebrow": "Mezgls",
+  "nodes.kind": "Mezgls",
   "nodes.waiting": "Gaida mezglu",
   "nodes.releasing": "Tiek atbrīvots",
   "nodes.releasingTip": "Mezgls pašlaik nav sasniedzams. Kad tas atgriezīsies, tas uzzinās, ka ir atbrīvots, un šī kartīte pazudīs.",

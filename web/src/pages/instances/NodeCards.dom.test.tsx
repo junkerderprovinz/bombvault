@@ -90,6 +90,16 @@ describe("NodeCards", () => {
     expect((c.getByRole("button", { name: en["nodes.editPlacement"] }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("says what it is in a badge before its state, not in a caption under the name", async () => {
+    await renderCards([online]);
+    const c = card("n1");
+    const kind = within(c).getByText(en["nodes.kind"]);
+    const state = within(c).getByText(en["instances.connected"]);
+    expect(kind.parentElement).toBe(state.parentElement);
+    expect(kind.compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(c).getAllByText(en["nodes.kind"])).toHaveLength(1);
+  });
+
   it("shows a node that keeps its own backups with the address they are fetched from", async () => {
     await renderCards([{ ...online, placement: "node", placementTarget: "https://203.0.113.7:8443" }]);
     const c = within(card("n1"));

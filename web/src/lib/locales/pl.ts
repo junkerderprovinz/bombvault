@@ -5480,7 +5480,7 @@ const pl: Partial<Translations> = {
   "nodes.away": "Węzeł jest teraz nieosiągalny. Może jest wyłączony albo offline.",
   "nodes.notAdopted": "Węzeł nie został jeszcze uruchomiony ze swoim plikiem compose.",
   "nodes.add": "Dodaj węzeł",
-  "nodes.eyebrow": "Węzeł",
+  "nodes.kind": "Węzeł",
   "nodes.waiting": "Oczekiwanie na węzeł",
   "nodes.releasing": "Trwa zwalnianie",
   "nodes.releasingTip": "Węzła teraz nie ma. Gdy wróci, dowie się, że został zwolniony, a ta karta zniknie.",

@@ -5493,7 +5493,7 @@ const ca: Partial<Translations> = {
   "nodes.away": "Ara mateix no es pot arribar al node. Potser està apagat o fora de línia.",
   "nodes.notAdopted": "El node encara no s'ha iniciat amb el seu fitxer compose.",
   "nodes.add": "Afegeix un node",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Esperant el node",
   "nodes.releasing": "S'està alliberant",
   "nodes.releasingTip": "El node ara no hi és. Quan torni sabrà que s'ha alliberat, i llavors aquesta targeta desapareixerà.",

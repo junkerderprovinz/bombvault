@@ -5483,7 +5483,7 @@ const fi: Partial<Translations> = {
   "nodes.away": "Solmua ei tavoiteta juuri nyt. Se voi olla sammutettuna tai offline-tilassa.",
   "nodes.notAdopted": "Solmua ei ole vielä käynnistetty compose-tiedostollaan.",
   "nodes.add": "Lisää solmu",
-  "nodes.eyebrow": "Solmu",
+  "nodes.kind": "Solmu",
   "nodes.waiting": "Odotetaan solmua",
   "nodes.releasing": "Vapautetaan",
   "nodes.releasingTip": "Solmu ei ole nyt paikalla. Kun se palaa, se saa tietää, että se on vapautettu, ja tämä kortti poistuu.",

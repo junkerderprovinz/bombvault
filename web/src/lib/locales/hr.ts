@@ -5493,7 +5493,7 @@ const hr: Partial<Translations> = {
   "nodes.away": "Čvor trenutačno nije dostupan. Možda je isključen ili nije na mreži.",
   "nodes.notAdopted": "Čvor se još nije pokrenuo sa svojom compose datotekom.",
   "nodes.add": "Dodaj čvor",
-  "nodes.eyebrow": "Čvor",
+  "nodes.kind": "Čvor",
   "nodes.waiting": "Čeka se čvor",
   "nodes.releasing": "Otpušta se",
   "nodes.releasingTip": "Čvor trenutačno nije tu. Kad se vrati, saznat će da je otpušten, a onda ova kartica nestaje.",

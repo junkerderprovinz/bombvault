@@ -5483,7 +5483,7 @@ const hu: Partial<Translations> = {
   "nodes.away": "A csomópont most nem érhető el. Lehet, hogy ki van kapcsolva vagy offline.",
   "nodes.notAdopted": "A csomópont még nem indult el a compose fájljával.",
   "nodes.add": "Csomópont hozzáadása",
-  "nodes.eyebrow": "Csomópont",
+  "nodes.kind": "Csomópont",
   "nodes.waiting": "Várakozás a csomópontra",
   "nodes.releasing": "Elengedés folyamatban",
   "nodes.releasingTip": "A csomópont most nem elérhető. Amikor visszatér, megtudja, hogy elengedted, és ez a kártya eltűnik.",

@@ -5493,7 +5493,7 @@ const gl: Partial<Translations> = {
   "nodes.away": "Agora mesmo non se pode chegar ao nodo. Pode estar apagado ou sen conexión.",
   "nodes.notAdopted": "O nodo aínda non arrincou co seu ficheiro compose.",
   "nodes.add": "Engadir nodo",
-  "nodes.eyebrow": "Nodo",
+  "nodes.kind": "Nodo",
   "nodes.waiting": "Agardando polo nodo",
   "nodes.releasing": "Liberándose",
   "nodes.releasingTip": "O nodo non está dispoñible. Cando volva saberá que foi liberado e entón esta tarxeta desaparecerá.",

@@ -5483,7 +5483,7 @@ const th: Partial<Translations> = {
   "nodes.away": "ตอนนี้ติดต่อโหนดไม่ได้ อาจปิดเครื่องอยู่หรือออฟไลน์",
   "nodes.notAdopted": "โหนดยังไม่ได้เริ่มทำงานด้วยไฟล์ compose ของตัวเอง",
   "nodes.add": "เพิ่มโหนด",
-  "nodes.eyebrow": "โหนด",
+  "nodes.kind": "โหนด",
   "nodes.waiting": "กำลังรอโหนด",
   "nodes.releasing": "กำลังปล่อย",
   "nodes.releasingTip": "ตอนนี้โหนดไม่อยู่ เมื่อกลับมาจะรู้ว่าถูกปล่อยแล้ว จากนั้นการ์ดนี้จะหายไป",

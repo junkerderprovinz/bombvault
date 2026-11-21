@@ -5481,7 +5481,7 @@ const es: Partial<Translations> = {
   "nodes.away": "Ahora mismo no se puede llegar al nodo. Puede que esté apagado o sin conexión.",
   "nodes.notAdopted": "El nodo aún no se ha iniciado con su archivo compose.",
   "nodes.add": "Añadir nodo",
-  "nodes.eyebrow": "Nodo",
+  "nodes.kind": "Nodo",
   "nodes.waiting": "Esperando al nodo",
   "nodes.releasing": "Liberándose",
   "nodes.releasingTip": "El nodo no está ahora mismo. Cuando vuelva, sabrá que se ha liberado y entonces esta tarjeta desaparecerá.",

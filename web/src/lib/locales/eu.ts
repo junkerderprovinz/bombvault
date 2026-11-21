@@ -5493,7 +5493,7 @@ const eu: Partial<Translations> = {
   "nodes.away": "Ezin da orain nodora iritsi. Agian itzalita edo lineaz kanpo dago.",
   "nodes.notAdopted": "Nodoa ez da oraindik bere compose fitxategiarekin abiarazi.",
   "nodes.add": "Gehitu nodoa",
-  "nodes.eyebrow": "Nodoa",
+  "nodes.kind": "Nodoa",
   "nodes.waiting": "Nodoaren zain",
   "nodes.releasing": "Askatzen",
   "nodes.releasingTip": "Nodoa ez dago orain. Itzultzen denean, askatu dutela jakingo du, eta orduan txartel hau desagertuko da.",

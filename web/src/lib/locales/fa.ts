@@ -5493,7 +5493,7 @@ const fa: Partial<Translations> = {
   "nodes.away": "الان نمی‌شود به گره رسید. شاید خاموش یا آفلاین باشد.",
   "nodes.notAdopted": "گره هنوز با فایل compose خودش راه‌اندازی نشده است.",
   "nodes.add": "افزودن گره",
-  "nodes.eyebrow": "گره",
+  "nodes.kind": "گره",
   "nodes.waiting": "در انتظار گره",
   "nodes.releasing": "در حال رهاسازی",
   "nodes.releasingTip": "گره الان در دسترس نیست. وقتی برگردد، می‌فهمد که رها شده و بعد این کارت حذف می‌شود.",

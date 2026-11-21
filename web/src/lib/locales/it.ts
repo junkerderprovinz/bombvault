@@ -5482,7 +5482,7 @@ const it: Partial<Translations> = {
   "nodes.away": "Il nodo non è raggiungibile in questo momento. Forse è spento o offline.",
   "nodes.notAdopted": "Il nodo non è ancora partito con il suo file compose.",
   "nodes.add": "Aggiungi nodo",
-  "nodes.eyebrow": "Nodo",
+  "nodes.kind": "Nodo",
   "nodes.waiting": "In attesa del nodo",
   "nodes.releasing": "In fase di rilascio",
   "nodes.releasingTip": "Il nodo non c'è al momento. Quando torna scopre di essere stato rilasciato, e allora questa scheda sparisce.",

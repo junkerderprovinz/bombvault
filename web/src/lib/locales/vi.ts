@@ -5473,7 +5473,7 @@ const vi: Partial<Translations> = {
   "nodes.away": "Hiện không kết nối được với node. Có thể node đang tắt hoặc ngoại tuyến.",
   "nodes.notAdopted": "Node chưa khởi động bằng tệp compose của nó.",
   "nodes.add": "Thêm node",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Đang chờ node",
   "nodes.releasing": "Đang giải phóng",
   "nodes.releasingTip": "Node hiện không có mặt. Khi quay lại, node sẽ biết mình đã được giải phóng, rồi thẻ này sẽ biến mất.",

@@ -49,6 +49,18 @@ test("every node has its card with its state, where its backups go and its actio
   expect((await overflow(page)).pan).toBe(0);
 });
 
+test("a node's card says it is a node in a badge before its state", async ({ page }) => {
+  await open(page, "/instances");
+  const online = card(page, NODE.id);
+  const kind = online.getByText(t("nodes.kind"), { exact: true });
+  const state = online.getByText(t("instances.connected"), { exact: true });
+  await expect(kind).toBeVisible();
+  const [k, s] = [(await kind.boundingBox())!, (await state.boundingBox())!];
+  expect(k.x + k.width).toBeLessThanOrEqual(s.x);
+  expect(Math.abs(k.y - s.y)).toBeLessThan(2);
+  await expect(kind).toHaveCount(1);
+});
+
 test("the address and the certificate of the placement stand without a line between them", async ({ page }) => {
   await open(page, "/instances", "https://backup.tower.example.org");
   await card(page, NODE.id).getByRole("button", { name: t("nodes.editPlacement") }).click();

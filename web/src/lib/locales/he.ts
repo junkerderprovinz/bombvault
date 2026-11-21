@@ -5483,7 +5483,7 @@ const he: Partial<Translations> = {
   "nodes.away": "אי אפשר להגיע לצומת כרגע. ייתכן שהוא כבוי או לא מחובר.",
   "nodes.notAdopted": "הצומת עוד לא הופעל עם קובץ ה-compose שלו.",
   "nodes.add": "הוספת צומת",
-  "nodes.eyebrow": "צומת",
+  "nodes.kind": "צומת",
   "nodes.waiting": "ממתין לצומת",
   "nodes.releasing": "בתהליך שחרור",
   "nodes.releasingTip": "הצומת לא זמין כרגע. כשיחזור הוא יגלה שהוא שוחרר, ואז הכרטיס הזה ייעלם.",

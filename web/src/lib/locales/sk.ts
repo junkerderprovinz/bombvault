@@ -5493,7 +5493,7 @@ const sk: Partial<Translations> = {
   "nodes.away": "Uzol je práve nedostupný. Možno je vypnutý alebo offline.",
   "nodes.notAdopted": "Uzol sa so svojím compose súborom ešte nespustil.",
   "nodes.add": "Pridať uzol",
-  "nodes.eyebrow": "Uzol",
+  "nodes.kind": "Uzol",
   "nodes.waiting": "Čaká sa na uzol",
   "nodes.releasing": "Uvoľňuje sa",
   "nodes.releasingTip": "Uzol je práve preč. Keď sa vráti, dozvie sa, že bol uvoľnený, a táto karta zmizne.",

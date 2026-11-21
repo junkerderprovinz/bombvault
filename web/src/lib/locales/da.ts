@@ -5483,7 +5483,7 @@ const da: Partial<Translations> = {
   "nodes.away": "Noden kan ikke nås lige nu. Den er måske slukket eller offline.",
   "nodes.notAdopted": "Noden er ikke startet med sin compose-fil endnu.",
   "nodes.add": "Tilføj node",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Venter på noden",
   "nodes.releasing": "Frigives",
   "nodes.releasingTip": "Noden er væk lige nu. Når den er tilbage, får den besked om, at den er frigivet, og så forsvinder dette kort.",

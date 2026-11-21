@@ -5480,7 +5480,7 @@ const ru: Partial<Translations> = {
   "nodes.away": "Узел сейчас недоступен. Возможно, он выключен или не в сети.",
   "nodes.notAdopted": "Узел ещё не запущен со своим compose-файлом.",
   "nodes.add": "Добавить узел",
-  "nodes.eyebrow": "Узел",
+  "nodes.kind": "Узел",
   "nodes.waiting": "Ожидание узла",
   "nodes.releasing": "Отвязывается",
   "nodes.releasingTip": "Узел сейчас недоступен. Когда он вернётся, он узнает, что его отвязали, и эта карточка исчезнет.",

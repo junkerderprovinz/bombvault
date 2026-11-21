@@ -5476,7 +5476,7 @@ const sl: Partial<Translations> = {
   "nodes.away": "Vozlišče trenutno ni dosegljivo. Morda je izklopljeno ali brez povezave.",
   "nodes.notAdopted": "Vozlišče se s svojo datoteko compose še ni zagnalo.",
   "nodes.add": "Dodaj vozlišče",
-  "nodes.eyebrow": "Vozlišče",
+  "nodes.kind": "Vozlišče",
   "nodes.waiting": "Čakanje na vozlišče",
   "nodes.releasing": "Sproščanje",
   "nodes.releasingTip": "Vozlišče je trenutno odsotno. Ko se vrne, izve, da je bilo sproščeno, in ta kartica izgine.",

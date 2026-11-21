@@ -5473,7 +5473,7 @@ const ko: Partial<Translations> = {
   "nodes.away": "지금은 노드에 연결할 수 없습니다. 꺼져 있거나 오프라인일 수 있습니다.",
   "nodes.notAdopted": "노드가 아직 compose 파일로 시작되지 않았습니다.",
   "nodes.add": "노드 추가",
-  "nodes.eyebrow": "노드",
+  "nodes.kind": "노드",
   "nodes.waiting": "노드를 기다리는 중",
   "nodes.releasing": "해제 중",
   "nodes.releasingTip": "노드가 지금 연결되어 있지 않습니다. 다시 연결되면 해제되었다는 것을 알게 되고, 이 카드는 사라집니다.",

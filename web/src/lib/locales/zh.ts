@@ -5473,7 +5473,7 @@ const zh: Partial<Translations> = {
   "nodes.away": "暂时无法连接到节点。它可能已关机或离线。",
   "nodes.notAdopted": "节点尚未用它的 compose 文件启动。",
   "nodes.add": "添加节点",
-  "nodes.eyebrow": "节点",
+  "nodes.kind": "节点",
   "nodes.waiting": "正在等待节点",
   "nodes.releasing": "正在释放",
   "nodes.releasingTip": "节点暂时不在线。它回来后会得知自己已被释放，之后这张卡片会消失。",

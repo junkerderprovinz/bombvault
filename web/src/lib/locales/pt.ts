@@ -5483,7 +5483,7 @@ const pt: Partial<Translations> = {
   "nodes.away": "Não é possível contactar o nó agora. Pode estar desligado ou offline.",
   "nodes.notAdopted": "O nó ainda não arrancou com o seu ficheiro compose.",
   "nodes.add": "Adicionar nó",
-  "nodes.eyebrow": "Nó",
+  "nodes.kind": "Nó",
   "nodes.waiting": "À espera do nó",
   "nodes.releasing": "A ser libertado",
   "nodes.releasingTip": "O nó está ausente. Quando voltar, fica a saber que foi libertado e este cartão desaparece.",

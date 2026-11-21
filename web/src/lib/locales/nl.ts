@@ -5482,7 +5482,7 @@ const nl: Partial<Translations> = {
   "nodes.away": "De node is nu niet bereikbaar. Misschien staat hij uit of is hij offline.",
   "nodes.notAdopted": "De node is nog niet gestart met zijn compose-bestand.",
   "nodes.add": "Node toevoegen",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Wacht op de node",
   "nodes.releasing": "Wordt vrijgegeven",
   "nodes.releasingTip": "De node is even weg. Zodra hij terug is, hoort hij dat hij is vrijgegeven, en dan verdwijnt deze kaart.",

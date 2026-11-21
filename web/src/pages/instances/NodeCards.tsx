@@ -88,8 +88,12 @@ export function NodeCards({
             key={node.id}
             cardKey={`node:${node.id}`}
             name={node.name}
-            eyebrow={t("nodes.eyebrow")}
-            badges={<NodeBadge node={node} />}
+            badges={
+              <>
+                <Badge size="large">{t("nodes.kind")}</Badge>
+                <NodeBadge node={node} />
+              </>
+            }
             facts={
               <Facts
                 items={[

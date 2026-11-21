@@ -5493,7 +5493,7 @@ const hi: Partial<Translations> = {
   "nodes.away": "नोड तक अभी पहुँचा नहीं जा सकता। शायद वह बंद है या ऑफ़लाइन है।",
   "nodes.notAdopted": "नोड अभी अपनी compose फ़ाइल के साथ शुरू नहीं हुआ है।",
   "nodes.add": "नोड जोड़ें",
-  "nodes.eyebrow": "नोड",
+  "nodes.kind": "नोड",
   "nodes.waiting": "नोड का इंतज़ार",
   "nodes.releasing": "मुक्त किया जा रहा है",
   "nodes.releasingTip": "नोड अभी उपलब्ध नहीं है। लौटने पर उसे पता चलेगा कि उसे मुक्त कर दिया गया है, फिर यह कार्ड हट जाएगा।",

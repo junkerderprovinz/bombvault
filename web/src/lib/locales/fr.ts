@@ -5483,7 +5483,7 @@ const fr: Partial<Translations> = {
   "nodes.away": "Le nœud est injoignable pour le moment. Il est peut-être éteint ou hors ligne.",
   "nodes.notAdopted": "Le nœud n'a pas encore démarré avec son fichier compose.",
   "nodes.add": "Ajouter un nœud",
-  "nodes.eyebrow": "Nœud",
+  "nodes.kind": "Nœud",
   "nodes.waiting": "En attente du nœud",
   "nodes.releasing": "Libération en cours",
   "nodes.releasingTip": "Le nœud est absent. À son retour, il apprendra qu'il a été libéré, puis cette carte disparaîtra.",

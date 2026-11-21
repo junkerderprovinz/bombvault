@@ -5493,7 +5493,7 @@ const bg: Partial<Translations> = {
   "nodes.away": "Възелът в момента е недостъпен. Може да е изключен или офлайн.",
   "nodes.notAdopted": "Възелът още не е стартиран със своя compose файл.",
   "nodes.add": "Добави възел",
-  "nodes.eyebrow": "Възел",
+  "nodes.kind": "Възел",
   "nodes.waiting": "Чака се възелът",
   "nodes.releasing": "Освобождава се",
   "nodes.releasingTip": "Възелът в момента не е на линия. Когато се върне, ще разбере, че е освободен, и тази карта ще изчезне.",

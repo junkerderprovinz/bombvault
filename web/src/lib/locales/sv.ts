@@ -5482,7 +5482,7 @@ const sv: Partial<Translations> = {
   "nodes.away": "Noden går inte att nå just nu. Den kan vara avstängd eller offline.",
   "nodes.notAdopted": "Noden har inte startat med sin compose-fil än.",
   "nodes.add": "Lägg till nod",
-  "nodes.eyebrow": "Nod",
+  "nodes.kind": "Nod",
   "nodes.waiting": "Väntar på noden",
   "nodes.releasing": "Släpps",
   "nodes.releasingTip": "Noden är borta just nu. När den är tillbaka får den veta att den har släppts, och sedan försvinner kortet.",

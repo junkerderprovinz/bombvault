@@ -5493,7 +5493,7 @@ const ms: Partial<Translations> = {
   "nodes.away": "Nod tidak dapat dicapai sekarang. Mungkin ia dimatikan atau di luar talian.",
   "nodes.notAdopted": "Nod belum dimulakan dengan fail compose miliknya.",
   "nodes.add": "Tambah nod",
-  "nodes.eyebrow": "Nod",
+  "nodes.kind": "Nod",
   "nodes.waiting": "Menunggu nod",
   "nodes.releasing": "Sedang dilepaskan",
   "nodes.releasingTip": "Nod tiada buat masa ini. Apabila ia kembali, ia akan tahu bahawa ia telah dilepaskan, dan kad ini akan hilang.",

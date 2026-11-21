@@ -5493,7 +5493,7 @@ const et: Partial<Translations> = {
   "nodes.away": "Sõlmega ei saa praegu ühendust. Võib-olla on see välja lülitatud või võrgust väljas.",
   "nodes.notAdopted": "Sõlm pole veel oma compose-failiga käivitunud.",
   "nodes.add": "Lisa sõlm",
-  "nodes.eyebrow": "Sõlm",
+  "nodes.kind": "Sõlm",
   "nodes.waiting": "Ootab sõlme",
   "nodes.releasing": "Vabastamisel",
   "nodes.releasingTip": "Sõlm on praegu eemal. Kui see tagasi tuleb, saab ta teada, et ta on vabastatud, ja siis see kaart kaob.",

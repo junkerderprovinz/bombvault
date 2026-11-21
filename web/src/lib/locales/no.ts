@@ -5483,7 +5483,7 @@ const no: Partial<Translations> = {
   "nodes.away": "Noden kan ikke nås akkurat nå. Den er kanskje slått av eller frakoblet.",
   "nodes.notAdopted": "Noden har ikke startet med compose-filen sin ennå.",
   "nodes.add": "Legg til node",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Venter på noden",
   "nodes.releasing": "Frigis",
   "nodes.releasingTip": "Noden er borte akkurat nå. Når den er tilbake, får den vite at den er frigitt, og da forsvinner dette kortet.",

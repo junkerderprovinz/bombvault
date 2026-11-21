@@ -5476,7 +5476,7 @@ const sr: Partial<Translations> = {
   "nodes.away": "Чвор тренутно није доступан. Можда је искључен или ван мреже.",
   "nodes.notAdopted": "Чвор још није покренут са својом compose датотеком.",
   "nodes.add": "Додај чвор",
-  "nodes.eyebrow": "Чвор",
+  "nodes.kind": "Чвор",
   "nodes.waiting": "Чека се чвор",
   "nodes.releasing": "Ослобађа се",
   "nodes.releasingTip": "Чвор тренутно није ту. Кад се врати, сазнаће да је ослобођен, и ова картица ће нестати.",

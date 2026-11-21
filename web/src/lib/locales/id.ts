@@ -5492,7 +5492,7 @@ const id: Partial<Translations> = {
   "nodes.away": "Node tidak bisa dijangkau saat ini. Mungkin sedang mati atau offline.",
   "nodes.notAdopted": "Node belum dijalankan dengan file compose-nya.",
   "nodes.add": "Tambah node",
-  "nodes.eyebrow": "Node",
+  "nodes.kind": "Node",
   "nodes.waiting": "Menunggu node",
   "nodes.releasing": "Sedang dilepas",
   "nodes.releasingTip": "Node sedang tidak ada. Saat kembali, node akan tahu bahwa ia sudah dilepas, lalu kartu ini hilang.",

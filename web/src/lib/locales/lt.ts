@@ -5492,7 +5492,7 @@ const lt: Partial<Translations> = {
   "nodes.away": "Mazgas dabar nepasiekiamas. Gal jis išjungtas arba neprisijungęs.",
   "nodes.notAdopted": "Mazgas dar nepaleistas su savo compose failu.",
   "nodes.add": "Pridėti mazgą",
-  "nodes.eyebrow": "Mazgas",
+  "nodes.kind": "Mazgas",
   "nodes.waiting": "Laukiama mazgo",
   "nodes.releasing": "Atsiejamas",
   "nodes.releasingTip": "Mazgas dabar nepasiekiamas. Kai grįš, sužinos, kad buvo atsietas, ir ši kortelė dings.",

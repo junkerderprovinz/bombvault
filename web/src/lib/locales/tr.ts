@@ -5482,7 +5482,7 @@ const tr: Partial<Translations> = {
   "nodes.away": "Düğüme şu an ulaşılamıyor. Kapalı ya da çevrimdışı olabilir.",
   "nodes.notAdopted": "Düğüm henüz compose dosyasıyla başlatılmadı.",
   "nodes.add": "Düğüm ekle",
-  "nodes.eyebrow": "Düğüm",
+  "nodes.kind": "Düğüm",
   "nodes.waiting": "Düğüm bekleniyor",
   "nodes.releasing": "Serbest bırakılıyor",
   "nodes.releasingTip": "Düğüme şu an ulaşılamıyor. Geri döndüğünde serbest bırakıldığını öğrenir ve bu kart kaybolur.",

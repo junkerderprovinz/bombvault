@@ -5484,7 +5484,7 @@ const ar: Partial<Translations> = {
   "nodes.away": "يتعذّر الوصول إلى العقدة الآن. ربما هي مطفأة أو غير متصلة.",
   "nodes.notAdopted": "لم تبدأ العقدة بملف compose الخاص بها بعد.",
   "nodes.add": "إضافة عقدة",
-  "nodes.eyebrow": "عقدة",
+  "nodes.kind": "عقدة",
   "nodes.waiting": "في انتظار العقدة",
   "nodes.releasing": "جارٍ التحرير",
   "nodes.releasingTip": "العقدة غير متصلة الآن. عندما تعود ستعرف أنها حُرِّرت، ثم تختفي هذه البطاقة.",

@@ -5473,7 +5473,7 @@ const ja: Partial<Translations> = {
   "nodes.away": "今はノードに接続できません。電源が切れているか、オフラインの可能性があります。",
   "nodes.notAdopted": "ノードはまだ compose ファイルで起動していません。",
   "nodes.add": "ノードを追加",
-  "nodes.eyebrow": "ノード",
+  "nodes.kind": "ノード",
   "nodes.waiting": "ノードを待っています",
   "nodes.releasing": "解放中",
   "nodes.releasingTip": "ノードは今つながっていません。次につながったときに解放されたことを受け取り、このカードは消えます。",

@@ -5492,7 +5492,7 @@ const is: Partial<Translations> = {
   "nodes.away": "Ekki næst í hnútinn í augnablikinu. Kannski er slökkt á honum eða hann ótengdur.",
   "nodes.notAdopted": "Hnúturinn hefur ekki enn verið ræstur með compose-skránni sinni.",
   "nodes.add": "Bæta við hnút",
-  "nodes.eyebrow": "Hnútur",
+  "nodes.kind": "Hnútur",
   "nodes.waiting": "Beðið eftir hnútnum",
   "nodes.releasing": "Verið að sleppa",
   "nodes.releasingTip": "Hnúturinn er ekki við. Þegar hann kemur aftur fréttir hann að honum hafi verið sleppt og þá hverfur þetta spjald.",

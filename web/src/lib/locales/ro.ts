@@ -5484,7 +5484,7 @@ const ro: Partial<Translations> = {
   "nodes.away": "Nodul nu poate fi contactat acum. Poate e oprit sau offline.",
   "nodes.notAdopted": "Nodul nu a pornit încă cu fișierul său compose.",
   "nodes.add": "Adaugă nod",
-  "nodes.eyebrow": "Nod",
+  "nodes.kind": "Nod",
   "nodes.waiting": "Se așteaptă nodul",
   "nodes.releasing": "Se eliberează",
   "nodes.releasingTip": "Nodul nu e disponibil acum. Când revine, află că a fost eliberat, iar cardul acesta dispare.",

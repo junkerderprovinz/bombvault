@@ -5481,7 +5481,7 @@ const cs: Partial<Translations> = {
   "nodes.away": "Uzel teď není dostupný. Možná je vypnutý nebo offline.",
   "nodes.notAdopted": "Uzel se zatím nespustil se svým souborem compose.",
   "nodes.add": "Přidat uzel",
-  "nodes.eyebrow": "Uzel",
+  "nodes.kind": "Uzel",
   "nodes.waiting": "Čeká se na uzel",
   "nodes.releasing": "Uvolňuje se",
   "nodes.releasingTip": "Uzel je teď mimo dosah. Až se vrátí, dozví se, že byl uvolněn, a tahle karta zmizí.",
