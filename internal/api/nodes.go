@@ -173,7 +173,7 @@ func (s *Service) nodeAppKey(n store.Node) (string, error) {
 // keepNode holds link for node n and, in the background, gets through what
 // the node still has to hear: its adoption and a change to where its backups
 // go, or that home let it go. A node set up anew hears its adoption and its
-// placement again.
+// placement again and gets back the records home kept of it.
 func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 	ctx, cancel := context.WithCancel(context.Background())
 	hn := &homeNode{link: link, cancel: cancel, done: make(chan struct{})}
@@ -198,7 +198,7 @@ func (s *Service) keepNode(n store.Node, link *nodelink.Link) {
 			return
 		}
 		if n.AdoptionDue {
-			untilDone(ctx, func() error { return s.store.SetNodeAdoptedAgain(n.ID) })
+			untilDone(ctx, func() error { return s.giveBackRecords(ctx, n.ID, link) })
 		}
 	}()
 }

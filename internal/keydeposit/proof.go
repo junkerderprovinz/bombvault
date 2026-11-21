@@ -51,13 +51,18 @@ const (
 	// ProofNodeRun is home starting the backups of a section on a node,
 	// ProofNodeKeep home asking a node to keep its backups itself, and
 	// ProofNodePrune home having such a node age and prune them.
-	ProofNodeAdopt     = "node-adopt"
-	ProofNodeRelease   = "node-release"
-	ProofNodePlacement = "node-placement"
-	ProofNodeAPI       = "node-api"
-	ProofNodeRun       = "node-run"
-	ProofNodeKeep      = "node-keep"
-	ProofNodePrune     = "node-prune"
+	// ProofNodeRecords is home asking a node for its containers, folder sets
+	// and runs, and ProofNodeRecordsBack home giving them back to the node set
+	// up anew.
+	ProofNodeAdopt       = "node-adopt"
+	ProofNodeRelease     = "node-release"
+	ProofNodePlacement   = "node-placement"
+	ProofNodeAPI         = "node-api"
+	ProofNodeRun         = "node-run"
+	ProofNodeKeep        = "node-keep"
+	ProofNodePrune       = "node-prune"
+	ProofNodeRecords     = "node-records"
+	ProofNodeRecordsBack = "node-records-back"
 )
 
 // Claim is what an install says and signs. Counter only ever grows, so a call

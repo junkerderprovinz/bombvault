@@ -454,7 +454,8 @@ func (s *Service) nodesKitSection(w func(string, ...any)) {
 	w("## Nodes\n\n")
 	w("These servers back up for this one. A node set up again with the same APP_KEY\n")
 	w("and NODE_HOME is the same node. Its repositories open with the restic password\n")
-	w("of its APP_KEY, and with this server's password above as well.\n\n")
+	w("of its APP_KEY, and with this server's password above as well. This server keeps\n")
+	w("each node's containers, folder sets and runs and gives them back to it.\n\n")
 	for _, n := range nodes {
 		w("- %s (id %s)\n", n.Name, n.ID)
 		appKey, err := s.nodeAppKey(n)

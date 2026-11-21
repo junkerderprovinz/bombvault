@@ -150,7 +150,8 @@ func newWatchUnderTest(t *testing.T, n store.Node) *watchUnderTest {
 			wt.mu.Lock()
 			defer wt.mu.Unlock()
 			wt.fetched = append(wt.fetched, domain)
-		})
+		},
+		func(context.Context, store.Node) error { return nil })
 	return wt
 }
 

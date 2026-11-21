@@ -154,6 +154,10 @@ func (n *nodeSide) serve(w http.ResponseWriter, r *http.Request) {
 		n.keep(w, r)
 	case nodePrunePath:
 		n.prune(w, r)
+	case nodeRecordsPath:
+		n.records(w, r)
+	case nodeRecordsBackPath:
+		n.recordsBack(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -228,8 +232,13 @@ func (n *nodeSide) adopted(w http.ResponseWriter) bool {
 // signed reads a call home signed for action, and answers it itself when the
 // signature does not hold or the call was taken before.
 func (n *nodeSide) signed(w http.ResponseWriter, r *http.Request, action string) (nodeCall, bool) {
+	return n.signedUpTo(w, r, action, maxNodeCall)
+}
+
+// signedUpTo is signed for a call that may carry up to limit bytes.
+func (n *nodeSide) signedUpTo(w http.ResponseWriter, r *http.Request, action string, limit int64) (nodeCall, bool) {
 	var call nodeCall
-	if json.NewDecoder(io.LimitReader(r.Body, maxNodeCall)).Decode(&call) != nil {
+	if json.NewDecoder(io.LimitReader(r.Body, limit)).Decode(&call) != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": "the call could not be read"})
 		return call, false
 	}

@@ -56,13 +56,15 @@ func nodeFailedEpisode(domain, target string) string {
 // nodeWatch keeps the schedules home holds for its nodes, learns how their
 // runs went and alerts once per episode. call reaches a node as home's signed
 // calls do, alert sends a message, prune ages and prunes a node's
-// repositories, and fetch fetches a section of a node that keeps its own.
+// repositories, fetch fetches a section of a node that keeps its own, and
+// records keeps a node's records.
 type nodeWatch struct {
-	store *store.Repo
-	call  func(ctx context.Context, id, action, path string, in, out any) error
-	alert func(ctx context.Context, title, message string)
-	prune func(ctx context.Context, n store.Node, domain string) error
-	fetch func(n store.Node, domain string)
+	store   *store.Repo
+	call    func(ctx context.Context, id, action, path string, in, out any) error
+	alert   func(ctx context.Context, title, message string)
+	prune   func(ctx context.Context, n store.Node, domain string) error
+	fetch   func(n store.Node, domain string)
+	records func(ctx context.Context, n store.Node) error
 
 	// ticking lets a tick go by while the one before still runs, such as one
 	// waiting on a slow relay.
@@ -80,8 +82,8 @@ type nodeWatch struct {
 
 func newNodeWatch(st *store.Repo, call func(ctx context.Context, id, action, path string, in, out any) error,
 	alert func(ctx context.Context, title, message string), prune func(ctx context.Context, n store.Node, domain string) error,
-	fetch func(n store.Node, domain string)) *nodeWatch {
-	return &nodeWatch{store: st, call: call, alert: alert, prune: prune, fetch: fetch,
+	fetch func(n store.Node, domain string), records func(ctx context.Context, n store.Node) error) *nodeWatch {
+	return &nodeWatch{store: st, call: call, alert: alert, prune: prune, fetch: fetch, records: records,
 		asked: map[string]time.Time{}, held: map[string]time.Time{}, open: map[string]int{}, pruning: map[string]bool{}}
 }
 
@@ -270,9 +272,9 @@ type nodeRunReport struct {
 var nodeRunDomains = map[string]string{"container": "containers", "files": "files"}
 
 // poll asks the node how its backups went and what anomalies it has open,
-// keeps what it said and reports whether the node answered. Each section of a
-// node that keeps its own backups is fetched once its runs have ended; the
-// hourly fetch catches one this misses.
+// keeps what it said and its records, and reports whether the node answered.
+// Each section of a node that keeps its own backups is fetched once its runs
+// have ended; the hourly fetch catches one this misses.
 func (w *nodeWatch) poll(ctx context.Context, n store.Node, now time.Time) bool {
 	var listed struct {
 		Runs []nodeRunReport `json:"runs"`
@@ -314,6 +316,9 @@ func (w *nodeWatch) poll(ctx context.Context, n store.Node, now time.Time) bool 
 		w.mu.Lock()
 		w.open[n.ID] = summary.Summary.Open.Critical + summary.Summary.Open.Warning
 		w.mu.Unlock()
+	}
+	if err := w.records(ctx, n); err != nil && !errors.Is(err, errNodeAway) {
+		log.Printf("nodes: %s: its records could not be kept: %v", n.Name, err) //nolint:gosec // G706: the name is one home gave the node
 	}
 	if err := w.store.SetNodeSeen(n.ID, now.Unix()); err != nil {
 		log.Printf("nodes: %s: %v", n.Name, err) //nolint:gosec // G706: the name is one home gave the node

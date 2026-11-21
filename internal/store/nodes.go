@@ -181,6 +181,29 @@ func (r *Repo) SetNodeAdoptionDue(id string) (bool, error) {
 	return n > 0, nil
 }
 
+// KeepNodeRecords stores the records of node id, sealed. A node due to be
+// adopted again keeps the ones home holds, which it is to get back.
+func (r *Repo) KeepNodeRecords(id string, sealed []byte) error {
+	if _, err := r.db.Exec(`UPDATE nodes SET records_enc = ? WHERE id = ? AND adoption_due = 0`, notNullBlob(sealed), id); err != nil {
+		return fmt.Errorf("KeepNodeRecords: %w", err)
+	}
+	return nil
+}
+
+// NodeRecords returns the sealed records home keeps of node id, empty while
+// it keeps none.
+func (r *Repo) NodeRecords(id string) ([]byte, error) {
+	var sealed []byte
+	err := r.db.QueryRow(`SELECT records_enc FROM nodes WHERE id = ?`, id).Scan(&sealed)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNodeNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("NodeRecords: %w", err)
+	}
+	return sealed, nil
+}
+
 // SetNodeAdoptedAgain records that a node set up anew has been adopted again
 // and got back what it had.
 func (r *Repo) SetNodeAdoptedAgain(id string) error {

@@ -131,6 +131,7 @@ func keptPlaced(t *testing.T) *placedHome {
 	home := homeWithRelay(t)
 	repos := newRepoStore()
 	home.svc.engine = repos
+	home.svc.nodes.fetch = func(store.Node, string) {}
 	addr := "https://203.0.113.7:8443"
 	p := &placedHome{home: home, repos: repos, placedAt: "rest:" + addr + "/" + nodeRestUser + "/containers"}
 	p.prepare = func(t *testing.T, node *instance) {
@@ -189,6 +190,63 @@ func TestHomeAdoptsANodeSetUpAnewAndPlacesItAgain(t *testing.T) {
 				if !ps.Enabled || !strings.HasPrefix(ps.Repo, "rest:https://203.0.113.7:8443/") {
 					t.Errorf("home fetches from %+v, want the node set up anew", ps)
 				}
+			}
+		})
+	}
+}
+
+func TestANodeSetUpAnewGetsItsContainersFolderSetsAndRunsBackFromHome(t *testing.T) {
+	for kind, place := range map[string]func(*testing.T) *placedHome{
+		nodePlaceReceiver: receiverPlaced,
+		nodePlaceLocation: locationPlaced,
+		nodePlaceNode:     keptPlaced,
+	} {
+		t.Run(kind, func(t *testing.T) {
+			p := place(t)
+			set, err := p.node.st.CreateFileSet(store.FileSet{Name: "Docs", Path: "docs", Excludes: []string{"*.tmp"}, Enabled: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			definition := `{"inspect":{"Name":"/plex","Config":{"Image":"plexinc/pms-docker:latest"}}}`
+			tg, err := p.node.st.UpsertTarget(store.Target{ContainerName: "plex", AppdataPaths: []string{"/mnt/user/appdata/plex"}, Definition: definition})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := p.node.st.SetInclude("plex", true); err != nil {
+				t.Fatal(err)
+			}
+			run, err := p.node.st.StartRun(tg.ID, "backup")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := p.node.st.FinishRun(run, "success", "snap-1", 10, ""); err != nil {
+				t.Fatal(err)
+			}
+			n, _ := p.home.st.GetNode(p.id)
+			if !p.home.svc.nodes.poll(context.Background(), n, time.Now()) {
+				t.Fatal("home's watch does not reach the node")
+			}
+
+			rebuilt := p.rebuild(t)
+			eventually(t, "home to give the node its folder sets back", func() bool {
+				sets, err := rebuilt.st.ListFileSets()
+				return err == nil && len(sets) == 1
+			})
+			eventually(t, "home to note that the node has what it had", func() bool {
+				n, err := p.home.st.GetNode(p.id)
+				return err == nil && !n.AdoptionDue
+			})
+			sets, _ := rebuilt.st.ListFileSets()
+			if got := sets[0]; got.ID != set.ID || got.Name != "Docs" || got.Path != "docs" || !got.Enabled || len(got.Excludes) != 1 {
+				t.Errorf("the folder set came back as %+v, want %+v", got, set)
+			}
+			back, err := rebuilt.st.GetTargetByContainer("plex")
+			if err != nil || back.ID != tg.ID || back.Definition != definition || !back.IncludeInSchedule || len(back.AppdataPaths) != 1 {
+				t.Errorf("the container came back as %+v %v", back, err)
+			}
+			runs, err := rebuilt.st.ListRuns(10)
+			if err != nil || len(runs) != 1 || runs[0].ID != run || runs[0].SnapshotID != "snap-1" || runs[0].Status != "success" {
+				t.Errorf("the runs came back as %+v %v", runs, err)
 			}
 		})
 	}

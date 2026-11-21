@@ -15,6 +15,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
+	"github.com/junkerderprovinz/bombvault/internal/platform"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -24,8 +25,9 @@ import (
 // back up.
 type placedNode struct {
 	*restoreRig
-	n   *nodeUnderTest
-	set store.FileSet
+	n       *nodeUnderTest
+	set     store.FileSet
+	compose map[string]string
 }
 
 func newPlacedNode(t *testing.T) *placedNode {
@@ -38,25 +40,52 @@ func newPlacedNode(t *testing.T) *placedNode {
 		t.Fatal(err)
 	}
 	r.svc.cfg.AppKey, r.svc.cfg.Mode = compose["APP_KEY"], config.ModeNode
-	r.svc.ServeNodeAPI(NewHandler(r.svc.cfg, r.st, r.docker, r.svc, nil, nil).Router())
-	link, err := nodelink.DecodeHome(compose["APP_KEY"], compose["NODE_HOME"])
-	if err != nil {
-		t.Fatal(err)
-	}
-	routes, err := r.svc.homeRoutes(link, "vps")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := &placedNode{restoreRig: r, n: &nodeUnderTest{home: home, id: id, routes: routes}}
+	p := &placedNode{restoreRig: r, n: &nodeUnderTest{home: home, id: id}, compose: compose}
+	p.serve(t)
 	p.n.adopt(t)
 
 	// Home makes each repository through the node's rest-server before it
 	// places the section there.
-	var placements []nodePlacement
 	for _, d := range nodeDomains {
 		if err := r.svc.engine.Init(context.Background(), p.keptRepo(d), p.nodeMode()); err != nil {
 			t.Fatal(err)
 		}
+	}
+	p.place(t)
+
+	r.write(t, map[string]string{
+		"appdata/plex/library.db": "library at backup time",
+		"docs/letter.txt":         "dear home",
+	})
+	in := model.Inspect{ID: "id-plex", Name: "/plex", Running: true, Config: model.Config{Image: plexImage}}
+	in.HostConfig.Binds = []string{"/mnt/user/appdata/plex:/config"}
+	in.Mounts = []model.Mount{{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"}}
+	r.docker.containers["plex"] = in
+	r.docker.images[plexImage] = true
+	if p.set, err = r.st.CreateFileSet(store.FileSet{Name: "Docs", Path: "docs", Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+// serve answers home's calls with the node's service as it is.
+func (p *placedNode) serve(t *testing.T) {
+	t.Helper()
+	p.svc.ServeNodeAPI(NewHandler(p.svc.cfg, p.st, p.docker, p.svc, nil, nil).Router())
+	link, err := nodelink.DecodeHome(p.compose["APP_KEY"], p.compose["NODE_HOME"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.n.routes, err = p.svc.homeRoutes(link, "vps"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// place tells the node to keep both its sections itself.
+func (p *placedNode) place(t *testing.T) {
+	t.Helper()
+	var placements []nodePlacement
+	for _, d := range nodeDomains {
 		placements = append(placements, nodePlacement{
 			Domain: d, Repo: "rest:https://vps.invalid/" + nodeRestUser + "/" + d, Kept: true,
 			Creds: CloudCreds{RESTUser: nodeRestUser, RESTPassword: "rest-secret"},
@@ -72,20 +101,42 @@ func newPlacedNode(t *testing.T) *placedNode {
 			t.Errorf("the node does not reach the %s it keeps itself: %s", reach.Domain, reach.Detail)
 		}
 	}
+}
 
-	r.write(t, map[string]string{
-		"appdata/plex/library.db": "library at backup time",
-		"docs/letter.txt":         "dear home",
-	})
-	in := model.Inspect{ID: "id-plex", Name: "/plex", Running: true, Config: model.Config{Image: plexImage}}
-	in.HostConfig.Binds = []string{"/mnt/user/appdata/plex:/config"}
-	in.Mounts = []model.Mount{{Type: "bind", Source: "/mnt/user/appdata/plex", Destination: "/config"}}
-	r.docker.containers["plex"] = in
-	r.docker.images[plexImage] = true
-	if p.set, err = r.st.CreateFileSet(store.FileSet{Name: "Docs", Path: "docs", Enabled: true}); err != nil {
+// rebuild has home keep the node's records as its watch does, and sets the
+// node up anew on the same Host Data with an empty config folder. Home adopts
+// it again, places it and gives its records back.
+func (p *placedNode) rebuild(t *testing.T) {
+	t.Helper()
+	var ans nodeRecordsAnswer
+	w := p.n.call(t, keydeposit.ProofNodeRecords, nodeRecordsPath, nodeRecordsCall{})
+	if err := json.Unmarshal(w.Body.Bytes(), &ans); err != nil || w.Code != http.StatusOK || len(ans.Records) == 0 {
+		t.Fatalf("records = %d %s", w.Code, w.Body)
+	}
+	if err := p.n.home.svc.holdNodeRecords(p.n.id, ans.Records); err != nil {
 		t.Fatal(err)
 	}
-	return p
+
+	cfg := p.svc.cfg
+	cfg.DataDir = filepath.Join(p.root, "bombvault-anew")
+	if err := os.Mkdir(cfg.DataDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	p.st = newTestStore(t)
+	p.svc = NewService(cfg, p.st, p.docker, p.virsh, restic.Restic{Bin: "restic"})
+	p.svc.SetPlatform(platform.Generic{})
+	p.svc.SetProgress(p.progress)
+	p.serve(t)
+	p.n.adopt(t)
+	p.place(t)
+
+	held, err := p.n.home.svc.heldNodeRecords(p.n.id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w := p.n.call(t, keydeposit.ProofNodeRecordsBack, nodeRecordsBackPath, nodeRecordsBack{Records: held}); w.Code != http.StatusOK {
+		t.Fatalf("records back = %d %s", w.Code, w.Body)
+	}
 }
 
 // keptRepo is the folder behind the node's rest-server that holds the
@@ -231,5 +282,68 @@ func TestANodeRestoresFromWhereHomePlacedItsSections(t *testing.T) {
 		if err != nil || string(got) != want {
 			t.Errorf("%s = %q %v after the restore, want %q", file, got, err, want)
 		}
+	}
+}
+
+func TestANodeSetUpAnewListsItsBackupsAndRecreatesARemovedContainerFromItsDefinition(t *testing.T) {
+	p := newPlacedNode(t)
+	p.backUp(t)
+	p.rebuild(t)
+
+	code, ans := p.n.api(t, nodeAPIRequest{Method: http.MethodGet, Path: "/api/files"})
+	body, err := ans.body()
+	var listed struct {
+		FileSets []FileSetView `json:"fileSets"`
+	}
+	if code != http.StatusOK || err != nil || json.Unmarshal(body, &listed) != nil || len(listed.FileSets) != 1 || listed.FileSets[0].ID != p.set.ID {
+		t.Fatalf("GET /api/files = %d %s %v, want the folder set back", code, body, err)
+	}
+	if got := p.listed(t, "/api/containers/plex/snapshots"); len(got) != 1 {
+		t.Errorf("home sees %d snapshots of the container, want 1", len(got))
+	}
+	if got := p.listed(t, "/api/files/sets/"+p.set.ID+"/snapshots"); len(got) != 1 {
+		t.Errorf("home sees %d snapshots of the folder set, want 1", len(got))
+	}
+	runs, err := p.st.ListRuns(10)
+	if err != nil || len(runs) != 2 {
+		t.Errorf("the node has %d runs %v, want both backups back", len(runs), err)
+	}
+	p.backUp(t)
+	p.requireBackupsWherePlaced(t, 2)
+
+	delete(p.docker.containers, "plex")
+	if started, err := p.svc.StartRestore(context.Background(), "plex", definitionOnly, "local", RestoreOptions{}); err != nil || !started {
+		t.Fatalf("recreate: started=%v err=%v", started, err)
+	}
+	p.wait(t)
+	if in, back := p.docker.container("plex"); !back || in.Config.Image != plexImage {
+		t.Errorf("the container came back as %+v %v, want it made again from its definition", in, back)
+	}
+}
+
+func TestANodeSetUpAnewRecreatesARemovedContainerFromWhereHomePlacedIt(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("restic's <id>:<path> selector cannot carry a Windows drive letter")
+	}
+	p := newPlacedNode(t)
+	p.backUp(t)
+	delete(p.docker.containers, "plex")
+	p.write(t, map[string]string{"appdata/plex/library.db": "changed since"})
+	p.rebuild(t)
+
+	container := p.listed(t, "/api/containers/plex/snapshots")
+	if len(container) != 1 {
+		t.Fatalf("home sees %d snapshots of the container, want 1", len(container))
+	}
+	if started, err := p.svc.StartRestore(context.Background(), "plex", container[0].ID, "local", RestoreOptions{}); err != nil || !started {
+		t.Fatalf("container restore: started=%v err=%v", started, err)
+	}
+	p.wait(t)
+	if in, back := p.docker.container("plex"); !back || in.Config.Image != plexImage {
+		t.Errorf("the container came back as %+v %v, want it made again from its definition", in, back)
+	}
+	got, err := os.ReadFile(filepath.Join(p.root, "appdata", "plex", "library.db"))
+	if err != nil || string(got) != "library at backup time" {
+		t.Errorf("library.db = %q %v after the restore", got, err)
 	}
 }

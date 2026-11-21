@@ -4092,6 +4092,14 @@ ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
 		sql: `ALTER TABLE nodes ADD COLUMN adoption_due INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE nodes ADD COLUMN placement_sign_in TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		// Home keeps a node's containers, folder sets and runs sealed, so a
+		// node set up anew gets them back.
+		version:          nodeRecordsMigration,
+		name:             "nodes_records",
+		alreadySatisfied: columnPresent("nodes", "records_enc"),
+		sql:              `ALTER TABLE nodes ADD COLUMN records_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4808,6 +4816,9 @@ const nodePlacementKeptMigration = 993
 // nodeAdoptAgainMigration numbers whether home has to adopt a node set up
 // anew, and the sign-in its placement at a storage location uses.
 const nodeAdoptAgainMigration = 994
+
+// nodeRecordsMigration numbers the records home keeps of each node.
+const nodeRecordsMigration = 995
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -336,7 +336,7 @@ func TestTheRecoveryKitNamesEachNodeWithItsKeyAndRepositories(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"## Nodes", "vps", appKey, restickey.Derive(appKey), "s3:https://s3.example.org/bucket/bombvault-node-" + id[:12] + "-containers"} {
+	for _, want := range []string{"## Nodes", "vps", "gives them back", appKey, restickey.Derive(appKey), "s3:https://s3.example.org/bucket/bombvault-node-" + id[:12] + "-containers"} {
 		if !strings.Contains(kit, want) {
 			t.Errorf("the kit does not name %q", want)
 		}
