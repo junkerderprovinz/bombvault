@@ -208,6 +208,26 @@ A kezdőképernyő a szerver kártyáján megmondja, miért:
 - **Bejelentkezés szükséges:** a címével hozzáadott szerver a jelszót kéri. Lásd még: [Egy telefon a bejelentkezési oldalra érkezik](#a-phone-lands-on-the-login-page).
 - **A kulcs megváltozott:** a kezdőképernyő az új kulcs ujjlenyomatát mutatja, és az oldal csak az elfogadása után nyílik meg. Lásd: [Otthonról távol](android.md#away).
 
+## Egy csomópont a "Várakozás a csomópontra" állapotban marad {#node-waiting}
+
+A csomópont még nem válaszolt az anyapéldánynak. Nyisd meg a konténere naplóját a csomópont szerverén (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`**, utána az anyapéldány azonosítójával: a csomópont fut, és a relayen vár. Ellenőrizd, hogy a szerver eléri-e a relay címét. A kapcsolat a csomópontból indul kifelé, ezért nem kell hozzá nyitott port.
+- **`NODE_HOME is not set`**: a compose fájlból elvesztek az értékek. Válaszd a csomópont kártyáján a **Csere** gombot, másold ki újra a fájlt, és futtasd a `docker compose up -d` parancsot.
+- **`NODE_HOME does not belong to this APP_KEY`**: a két érték különböző csomópontoktól származik. Mindkettőt ugyanarról a kártyáról másold.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: a csomópontot egy másik anyapéldány vette át. Előbb ott engedd el, vagy add hozzá itt a szervert új csomópontként, új compose fájllal.
+- **`MODE=... is neither full nor node`**: állítsd be a `MODE: node` értéket.
+
+## Egy csomópont nem éri el a tárolóit {#node-reach}
+
+A cél kiválasztása után az anyapéldány szakaszonként megmondja, megnyitotta-e a csomópont a tárolóját, például **A csomópont nem éri el a(z) Konténerek tárolóját**, a restic által adott okkal. A csomópont szerveréről ellenőrizd, hogy a cím válaszol-e. A fogadószerveren ez a **Cím a csomópontoknak**: egy fordított proxynak tovább kell adnia a rest-servernek, a saját tanúsítványú szervernek pedig szüksége van erre a tanúsítványra a **Tanúsítvány** mezőben. Egy célnál ellenőrizd a csomópontnak készült bejelentkezést. Ezután válaszd a **Cél módosítása** gombot, és újra a **Mentés** gombot. Lásd: [Hová kerülnek a mentések](nodes.md#placement).
+
+A saját mentéseit őrző csomópontnál az a port, amelyet a csomóponton egy másik konténer foglal, a konténer nevével együtt el lesz utasítva, ezért válassz másikat. Ha az anyapéldány nem tud lehívni, engedd át a portot a csomópont tűzfalán.
+
+## Egy elengedett csomópont nem tér vissza {#node-released}
+
+Az elengedett csomópont a régi `APP_KEY` kulcsával nem fogad el újra anyapéldányt, és a `config` mappája emlékszik az elengedésre. Add hozzá a szervert új csomópontként, és indítsd az új compose fájllal és egy üres `config` mappával. A régi mentései ott maradnak, ahol voltak, ahogy minden másolat is, amelyet az anyapéldány lehívott.
+
 ## Egy másik felhasználó nem tudja olvasni a helyi tárolót {#repository-permissions}
 
 A helyi tároló olvasható marad más felhasználók számára, például egy SMB-n át szinkronizáló felhasználónak. A 10.4.1 előtt a nyesés, címkézés, lehívás, szakaszáthelyezés, törlés vagy stackmentés által írt fájlok a következő éjszakáig olvashatatlanok maradhattak. Frissítsd a BombVaultot, és azonnal olvashatók. Az önmentés tárolója szándékosan csak a root számára olvasható marad, mert a BombVault beállításait tartalmazza.

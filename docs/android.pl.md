@@ -53,6 +53,10 @@ Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, 
 
 Telefon sparowany przed wersją 10.0.0 zaczyna podpisywać swoje wywołania przy pierwszej wizycie po aktualizacji, a każdy serwer zachowuje pierwszy klucz, jaki dostanie dla telefonu. Jeśli ktoś inny, kto zna słowa grupy, zdąży pierwszy, gdy telefon jest offline, ten serwer od tej pory odrzuca telefon, a aplikacja nie może go już otworzyć przez relay. Aby to naprawić, zaloguj się na ten serwer w przeglądarce, wybierz **Zapomnij klucz** na karcie telefonu na stronie Instancje, potem **Potwierdź zapomnienie** i otwórz aplikację ponownie. Serwer przejmie własny klucz telefonu przy następnym wywołaniu. Jeśli telefon zostanie odrzucony ponownie, słowa ma ktoś inny: na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami, tak jak w przypadku zgubionego telefonu.
 
+## Węzły {#nodes}
+
+[Węzłami](nodes.md) zarządza się w interfejsie WWW. Sesja sparowanego telefonu do nich nie sięga, więc aplikacja nie pokazuje kart węzłów na stronie Instancje, karty **Węzły** w przeglądzie ani sekcji węzłów w **Kopie zapasowe**, a **Dodaj węzeł** odpowiada, że wymaga zalogowania na samym serwerze. Otwórz serwer w przeglądarce i zaloguj się hasłem, żeby dodać węzeł, zmienić, dokąd trafiają jego kopie, albo przywrócić jeden z jego elementów.
+
 ## Ustawienia {#settings}
 
 Zębatka obok plusa otwiera ustawienia aplikacji:

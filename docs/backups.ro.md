@@ -32,6 +32,8 @@ Trei butoane deasupra listei o restrâng:
 
 Elementele care nu mai sunt instalate, dar au încă backupuri, stau deoparte sub **Neinstalat (numai copii de rezervă)**. Restaurează-le sau șterge-le backupurile ca să eliberezi spațiul.
 
+Cu [noduri](nodes.md), listele Containere și Foldere au sub propriile tale elemente câte o secțiune pentru fiecare nod, cu informația dacă nodul e conectat și câte elemente are. **Elemente pe** și numele nodului ascunde elementele secțiunii și le arată din nou. Meniul unui element oferă **Copiază acum**, care îi pornește copia pe nod, și **Deschide**. Pagina lui îi listează copiile, cu **Restaurare** lângă fiecare, care restaurează elementul pe nod. Containerul propriu al nodului nu este listat. Vezi [Elementele unui nod](nodes.md#entries).
+
 Acțiunea principală a paginii plutește jos în dreapta: **Copiază tot acum** pornește o rulare peste fiecare secțiune pornită. **Mai mult** conține restul:
 
 - **Selectează** începe o selecție, vezi mai jos.

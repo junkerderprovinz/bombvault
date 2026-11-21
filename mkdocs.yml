@@ -129,6 +129,7 @@ nav:
       - backups.md
       - restore.md
       - offsite-recovery.md
+      - nodes.md
       - schedules.md
       - notifications.md
       - anomalies.md

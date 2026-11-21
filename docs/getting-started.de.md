@@ -188,6 +188,17 @@ Ab jetzt werden die Container jede Nacht gesichert. Gute nächste Schritte, in d
 !!! note "Host-Integrations-Check"
     Die Karte **Host-Integration** in der Übersicht prüft jeden Mount und jedes CLI (Docker-Socket, libvirt, restic, qemu-img, rclone) und meldet fehlende Teile, damit du bestätigen kannst, dass der Container richtig verdrahtet ist, bevor du dich darauf verlässt. Sie wartet unter **Anpassen**, bis du sie hinzufügst.
 
+## Einen VPS als Knoten sichern {#node}
+
+Ein VPS oder ein anderer kleiner Server braucht kein eigenes BombVault mit Weboberfläche. Füge ihn als Knoten dieser Instanz hinzu, dann kümmert sich diese Instanz um seine Sicherungen:
+
+1. Setze unter **Einstellungen, Sicherheit** ein Login-Passwort, falls du noch keines hast.
+2. Öffne **Instanzen**, wähle **Knoten hinzufügen** und gib einen Namen ein, etwa `vps-helsinki`.
+3. Wähle, wohin seine Sicherungen gehen, etwa auf den Empfangsserver dieser Instanz, und wann er sichert.
+4. Kopiere die Compose-Datei aus dem Fenster auf den Server, richte ihr Volume Host Data und `HOST_SOURCE_ROOT` auf die Daten, die gesichert werden sollen, und führe `docker compose up -d` aus.
+
+Sobald der Knoten antwortet, sagt seine Karte **Verbunden**, und seine Container erscheinen unter **Sicherungen**. [Knoten](nodes.md) geht das Ganze an einem Beispiel durch.
+
 ## Sich zurechtfinden {#navigation}
 
 ![Die Einstellungen als Kacheln, daneben die Karten der gewählten Kachel. Jede Änderung wird beim Machen geschrieben.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Der Bau der Oberfläche ist auch für `go run` nötig. Das Repository verfolgt u
 - Sorge mit **[Benachrichtigungen](notifications.md)** dafür, dass dich ein Fehler erreicht.
 - Prüfe unter **[Zeitpläne](schedules.md)**, wann was läuft.
 - Bring mit der **[Android-App](android.md)** jeden Server deiner Gruppe aufs Handy.
+- Sichere von hier aus einen VPS mit einem **[Knoten](nodes.md)**.
 - Die **[Praxisbeispiele](guides.md)** führen durch die üblichen Aufgaben, und **[Funktionen](features.md)** listet alles auf, was BombVault kann.
 - Eine Einrichtung klonen oder auf eine neue Box umziehen? Nimm deine ganze Konfiguration mit der Karte **Einstellungen exportieren / importieren** mit. Siehe [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Hakt etwas? Siehe **[Fehlersuche](troubleshooting.md)**.

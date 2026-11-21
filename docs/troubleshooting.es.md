@@ -208,6 +208,26 @@ La pantalla de inicio dice por qué en la tarjeta del servidor:
 - **Inicio de sesión necesario:** un servidor añadido por su dirección pide la contraseña. Consulta también [Un teléfono acaba en la página de inicio de sesión](#a-phone-lands-on-the-login-page).
 - **La clave cambió:** la pantalla de inicio muestra la huella de la clave nueva, y la página solo se abre después de que confíes en ella. Consulta [Fuera de casa](android.md#away).
 
+## Un nodo se queda en "Esperando al nodo" {#node-waiting}
+
+El nodo todavía no ha respondido a su instancia base. Abre el registro de su contenedor en el servidor del nodo (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** seguido del id de la instancia base: el nodo funciona y espera en el repetidor. Comprueba que el servidor llega a la dirección del repetidor. La conexión sale del nodo, así que no necesita ningún puerto abierto.
+- **`NODE_HOME is not set`**: el archivo compose perdió sus valores. Elige **Reemplazar** en la tarjeta del nodo, copia de nuevo el archivo y ejecuta `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: los dos valores vienen de nodos distintos. Copia los dos desde la misma tarjeta.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: otra instancia base adoptó el nodo. Libéralo allí primero, o añade aquí el servidor como un nodo nuevo con un archivo compose nuevo.
+- **`MODE=... is neither full nor node`**: pon `MODE: node`.
+
+## Un nodo no llega a sus repositorios {#node-reach}
+
+Tras fijar un destino, la instancia base dice por sección si el nodo abrió su repositorio, por ejemplo **El nodo no llega al repositorio de Contenedores** con el motivo de restic. Comprueba desde el servidor del nodo que la dirección responde. En el servidor receptor es la **Dirección para nodos**: un proxy inverso tiene que pasarla al rest-server, y un servidor con certificado propio necesita ese certificado en **Certificado**. En un destino, revisa las credenciales creadas para el nodo. Después elige **Cambiar destino** y **Guardar** de nuevo. Consulta [Adónde van las copias](nodes.md#placement).
+
+En un nodo que guarda sus copias él mismo, un puerto que ocupa otro contenedor en el nodo se rechaza con el nombre de ese contenedor, así que elige otro. Cuando la instancia base no puede recoger, abre el puerto en el cortafuegos del nodo.
+
+## Un nodo liberado no vuelve {#node-released}
+
+Un nodo liberado no acepta de nuevo ninguna instancia base con su antigua `APP_KEY`, y su carpeta `config` recuerda la liberación. Añade el servidor como un nodo nuevo y arráncalo con el archivo compose nuevo y una carpeta `config` vacía. Sus copias antiguas se quedan donde estaban, igual que cada copia que recogió la instancia base.
+
 ## Otro usuario no puede leer el repositorio local {#repository-permissions}
 
 El repositorio local sigue siendo legible para otros usuarios, como un usuario de sincronización por SMB. Antes de la 10.4.1, los archivos que escribía una poda, una etiqueta, una recogida, un movimiento de sección, un borrado o una copia de un stack podían quedar ilegibles hasta la noche siguiente. Actualiza BombVault y son legibles al instante. El repositorio de la autocopia sigue siendo legible solo para root, a propósito, porque contiene los ajustes de BombVault.

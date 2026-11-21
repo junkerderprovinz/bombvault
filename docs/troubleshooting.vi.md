@@ -208,6 +208,26 @@ Màn hình bắt đầu cho biết lý do trên thẻ của máy chủ:
 - **Cần đăng nhập:** một máy chủ được thêm bằng địa chỉ sẽ hỏi mật khẩu. Xem thêm [Điện thoại bị đưa tới trang đăng nhập](#a-phone-lands-on-the-login-page).
 - **Khóa của máy chủ đã thay đổi:** màn hình bắt đầu hiện dấu vân tay của khóa mới, và trang chỉ mở sau khi bạn tin cậy nó. Xem [Khi ở xa nhà](android.md#away).
 
+## Một node đứng yên ở "Đang chờ node" {#node-waiting}
+
+Node chưa trả lời phiên bản chủ. Hãy mở nhật ký container của nó trên máy chủ của node (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** kèm theo id của phiên bản chủ: node đang chạy và chờ trên relay. Hãy kiểm tra máy chủ có tới được địa chỉ của relay không. Kết nối đi ra từ node, nên không cần mở cổng nào.
+- **`NODE_HOME is not set`**: tệp compose đã mất các giá trị của nó. Chọn **Thay thế** trên thẻ của node, sao chép lại tệp và chạy `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: hai giá trị đến từ hai node khác nhau. Hãy sao chép cả hai từ cùng một thẻ.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: node đã được một phiên bản chủ khác nhận. Hãy giải phóng nó ở đó trước, hoặc thêm máy chủ ở đây như một node mới với một tệp compose mới.
+- **`MODE=... is neither full nor node`**: đặt `MODE: node`.
+
+## Một node không tới được kho của nó {#node-reach}
+
+Sau khi chọn đích, phiên bản chủ cho biết theo từng phần xem node có mở được kho của nó không, như **Node không tới được kho lưu trữ container** kèm lý do của restic. Hãy kiểm tra từ máy chủ của node xem địa chỉ có trả lời không. Trên máy chủ nhận, đó là **Địa chỉ cho node**: một proxy ngược phải chuyển nó tới rest-server, và một máy chủ có chứng chỉ riêng cần chứng chỉ đó trong **Chứng chỉ**. Ở một đích sao lưu, hãy kiểm tra thông tin đăng nhập được tạo cho node. Rồi chọn **Đổi đích** và **Lưu** lại. Xem [Bản sao lưu đi đâu](nodes.md#placement).
+
+Với một node tự giữ bản sao lưu, một cổng mà container khác trên node đang giữ sẽ bị từ chối kèm tên container đó, nên hãy chọn cổng khác. Khi phiên bản chủ không lấy về được, hãy cho phép cổng đi qua tường lửa của node.
+
+## Một node đã giải phóng không quay lại {#node-released}
+
+Một node đã giải phóng không nhận phiên bản chủ nào nữa với `APP_KEY` cũ, và thư mục `config` của nó nhớ việc giải phóng. Hãy thêm máy chủ như một node mới, và khởi động nó bằng tệp compose mới cùng một thư mục `config` trống. Các bản sao lưu cũ của nó vẫn ở nguyên chỗ, và mọi bản sao phiên bản chủ đã lấy về cũng vậy.
+
 ## Người dùng khác không đọc được kho cục bộ {#repository-permissions}
 
 Kho cục bộ vẫn đọc được với những người dùng khác, chẳng hạn một người dùng đồng bộ qua SMB. Trước 10.4.1, các tệp mà prune, thẻ, pull, di chuyển phần, xóa hoặc sao lưu stack ghi ra có thể vẫn không đọc được cho đến đêm kế tiếp. Hãy cập nhật BombVault, và chúng đọc được ngay. Kho tự sao lưu vẫn chỉ root đọc được, có chủ ý, vì nó chứa cài đặt của BombVault.

@@ -321,3 +321,33 @@ func TestLoadFallsBackToTheDefaultForAPortOutOfRange(t *testing.T) {
 		t.Errorf("PORT %d and HTTPS_PORT %d, want 1 and 65535", c.Port, c.HTTPSPort)
 	}
 }
+
+func TestLoadRunsTheFullAppUnlessModeSaysNode(t *testing.T) {
+	key := strings.Repeat("a", 64)
+	for raw, want := range map[string]config.Mode{"": config.ModeFull, "full": config.ModeFull, "node": config.ModeNode, " Node ": config.ModeNode} {
+		c, err := config.Load(map[string]string{"APP_KEY": key, "MODE": raw})
+		if err != nil {
+			t.Fatalf("MODE=%q: %v", raw, err)
+		}
+		if c.Mode != want {
+			t.Errorf("MODE=%q gave %q, want %q", raw, c.Mode, want)
+		}
+	}
+}
+
+func TestLoadRefusesAnUnknownMode(t *testing.T) {
+	_, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64), "MODE": "nodes"})
+	if err == nil || !strings.Contains(err.Error(), "MODE") {
+		t.Fatalf("MODE=nodes gave %v, want an error that names MODE", err)
+	}
+}
+
+func TestLoadReadsWhereANodeFindsItsHome(t *testing.T) {
+	c, err := config.Load(map[string]string{"APP_KEY": strings.Repeat("a", 64), "MODE": "node", "NODE_HOME": " bvhome1.abc\n", "NODE_NAME": " vps "})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.NodeHome != "bvhome1.abc" || c.NodeName != "vps" {
+		t.Errorf("NodeHome %q, NodeName %q", c.NodeHome, c.NodeName)
+	}
+}

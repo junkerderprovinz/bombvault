@@ -559,6 +559,10 @@ func pullDue(ps store.PullSource, now time.Time) bool {
 
 // NextPull is when the soonest enabled source comes up next.
 func (s *Service) NextPull(now time.Time) (time.Time, bool) {
+	settings, err := s.store.GetSettings()
+	if err != nil {
+		return time.Time{}, false
+	}
 	sources, err := s.store.ListPullSources()
 	if err != nil {
 		return time.Time{}, false
@@ -566,7 +570,7 @@ func (s *Service) NextPull(now time.Time) (time.Time, bool) {
 	var soonest time.Time
 	for _, ps := range sources {
 		cad, err := schedule.ParseCadence(ps.Cadence)
-		if err != nil || !ps.Enabled {
+		if err != nil || !ps.Enabled || !pullsFrom(settings, ps) {
 			continue
 		}
 		if next, ok := cad.NextDue(time.Unix(max(ps.LastPullAt, ps.CreatedAt), 0), now); ok && (soonest.IsZero() || next.Before(soonest)) {
@@ -582,6 +586,13 @@ func (s *Service) RunPulls(ctx context.Context) error {
 	return s.runPullsAt(ctx, time.Now())
 }
 
+// pullsFrom reports whether this box fetches from ps at all. Pull lets it
+// fetch from the group, and a node's backups are fetched whenever home keeps
+// them there.
+func pullsFrom(settings store.Settings, ps store.PullSource) bool {
+	return settings.PullEnabled || ps.NodeID != ""
+}
+
 // runPullsAt is RunPulls with an injectable now. One that is not pulled still
 // has its earlier pulls moved, once a day since that reads both repositories.
 func (s *Service) runPullsAt(ctx context.Context, now time.Time) error {
@@ -594,7 +605,7 @@ func (s *Service) runPullsAt(ctx context.Context, now time.Time) error {
 		return fmt.Errorf("list pull sources: %w", err)
 	}
 	for _, ps := range sources {
-		if !settings.PullEnabled || !ps.Enabled || !pullDue(ps, now) {
+		if !pullsFrom(settings, ps) || !ps.Enabled || !pullDue(ps, now) {
 			if moved, err := s.store.PullLeftoversMoved(ps.ID); err == nil && !moved && s.pullReachDue(ps.ID) && s.claimPull(ps.ID) {
 				s.settleEarlierPulls(ctx, ps, true)
 				s.releasePull(ps.ID)

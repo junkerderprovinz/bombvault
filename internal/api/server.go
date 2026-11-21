@@ -149,7 +149,7 @@ func (s *Server) Run(ctx context.Context) error {
 			ReadHeaderTimeout: 15 * time.Second,
 		}
 		printBanner()
-		printReady("HTTP", s.cfg.Port)
+		printReady("HTTP", s.cfg.Port, s.cfg.Mode == config.ModeNode)
 		serve = srv.ListenAndServe
 	} else {
 		certPath, keyPath, err := EnsureSelfSigned(s.cfg.DataDir)
@@ -168,7 +168,7 @@ func (s *Server) Run(ctx context.Context) error {
 			ErrorLog:          newHandshakeLogger(),
 		}
 		printBanner()
-		printReady("HTTPS", s.cfg.HTTPSPort)
+		printReady("HTTPS", s.cfg.HTTPSPort, s.cfg.Mode == config.ModeNode)
 		serve = func() error { return srv.ListenAndServeTLS("", "") }
 	}
 
@@ -298,7 +298,17 @@ func printBanner() {
 // printReady prints the ready line in the format the other container images
 // use, to stdout like the banner. It is the last output before the server
 // starts listening.
-func printReady(scheme string, port int) {
-	fmt.Printf("  \033[0;32m✓ BOMBVAULT%s IS READY\033[0m - Open the WebUI now (%s %d)\n", versionTag(), scheme, port)
+func printReady(scheme string, port int, node bool) {
+	fmt.Println(readyLine(scheme, port, node))
 	fmt.Println()
+}
+
+// readyLine is the ready line. A node has no web interface to open, home
+// tells it what to do.
+func readyLine(scheme string, port int, node bool) string {
+	next := fmt.Sprintf("Open the WebUI now (%s %d)", scheme, port)
+	if node {
+		next = "Running as a node, home gives the orders"
+	}
+	return fmt.Sprintf("  \033[0;32m✓ BOMBVAULT%s IS READY\033[0m - %s", versionTag(), next)
 }

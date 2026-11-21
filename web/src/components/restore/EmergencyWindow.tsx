@@ -60,7 +60,7 @@ import { IconBack, IconConfirm, IconForward, IconPause } from "../glyphs";
 import { IconDownload, IconRestore } from "../navGlyphs";
 import { DiscoverFindings } from "../placement/DiscoverFindings";
 import { ProgressBar } from "../ProgressBar";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { isOffsiteSource, SourceToggle, type RepoSource } from "../SourceToggle";
 import { Rows, SettingRow } from "../storage/rows";
 import { Toggle } from "../Toggle";
@@ -106,14 +106,12 @@ function Choice({ on, title, sub, onPick }: { on: boolean; title: string; sub: s
       role="radio"
       aria-checked={on}
       onClick={onPick}
-      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-        on ? "ring-accent" : "ring-transparent"
-      }`}
+      onKeyDown={pickWithArrows}
+      className={`flex items-center gap-3 rounded-control p-3 text-start transition-colors ${pickSurface(on)}`}
     >
-      <RadioMark on={on} />
       <span className="flex min-w-0 flex-col">
-        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
-        <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
+        <span className="text-sm font-semibold wrap-anywhere">{title}</span>
+        <span className={`text-xs wrap-anywhere ${pickSub(on)}`}>{sub}</span>
       </span>
     </button>
   );

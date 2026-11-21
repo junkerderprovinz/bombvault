@@ -54,6 +54,10 @@ Chứng chỉ tự ký được tin cậy một lần theo dấu vân tay SHA-25
 
 Điện thoại đã ghép nối trước 10.0.0 sẽ bắt đầu ký các lệnh gọi của mình ở lần truy cập đầu tiên sau khi cập nhật, và mỗi máy chủ giữ khóa đầu tiên nhận được cho điện thoại đó. Nếu một người khác biết các từ của nhóm đến trước khi điện thoại đang ngoại tuyến, máy chủ đó sẽ từ chối điện thoại kể từ lúc ấy, và ứng dụng không còn mở được nó qua relay. Để khắc phục, hãy đăng nhập vào máy chủ đó bằng trình duyệt, chọn **Quên khóa** trên thẻ của điện thoại ở trang Phiên bản rồi chọn **Xác nhận quên**, sau đó mở lại ứng dụng. Máy chủ sẽ lấy khóa riêng của điện thoại ở lệnh gọi tiếp theo. Nếu điện thoại lại bị từ chối, nghĩa là người khác có các từ: hãy cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới, như với điện thoại bị mất.
 
+## Node {#nodes}
+
+[Node](nodes.md) được chăm sóc trong giao diện web. Phiên của một điện thoại đã ghép nối không tới được chúng, nên ứng dụng không hiện thẻ node trên trang Phiên bản, không có thẻ **Node** trên Tổng quan và không có phần node nào dưới **Bản sao lưu**, còn **Thêm node** trả lời rằng cần đăng nhập ngay tại máy chủ. Hãy mở máy chủ trong trình duyệt và đăng nhập bằng mật khẩu để thêm node, đổi nơi gửi bản sao lưu của nó hoặc khôi phục một mục của nó.
+
 ## Cài đặt {#settings}
 
 Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của ứng dụng:

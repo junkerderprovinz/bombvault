@@ -1,6 +1,6 @@
 # API et intégrations
 
-BombVault propose une petite API HTTP pour les scripts, les tableaux de bord et la domotique. Elle lit ce que montre l'aperçu et peut lancer une sauvegarde. Tout le reste, comme les restaurations, la suppression de sauvegardes et les réglages, reste dans l'interface web.
+BombVault propose une petite API HTTP pour les scripts, les tableaux de bord et la domotique. Elle lit ce que montre l'aperçu et peut lancer une sauvegarde. Tout le reste, comme les restaurations, la suppression de sauvegardes, les réglages et les [nœuds](#nodes), reste dans l'interface web.
 
 ## Jetons {#tokens}
 
@@ -68,6 +68,32 @@ Les lancements suivent les mêmes limites que les [lancements via MCP](mcp.md#st
 ## OpenAPI {#openapi}
 
 BombVault sert une description de ces routes sous `/api/v1/openapi.json` (OpenAPI 3.1). Aucun jeton n'est nécessaire. Chargez-la dans Swagger UI, Postman ou un générateur de code.
+
+## Nœuds {#nodes}
+
+Les routes qui gèrent les [nœuds](nodes.md) appartiennent à l'interface web, pas à l'API à jeton décrite plus haut. Avec un mot de passe de connexion défini, elles demandent une session de navigateur issue d'une connexion sur cette instance. Un jeton d'API ou une clé MCP n'en ouvre aucune, les téléphones appairés ne les atteignent pas, et `/api/v1/openapi.json` ne les décrit pas. Ajouter un nœud, afficher de nouveau son fichier compose et atteindre les routes d'un nœud sont refusés tant qu'aucun mot de passe de connexion n'est défini. Un script qui modifie quelque chose envoie `Content-Type: application/json`, comme partout dans l'interface web.
+
+| Route | Ce qu'elle fait |
+|---|---|
+| `GET /api/nodes` | Chaque nœud, avec s'il est en ligne, sa version, la destination de ses sauvegardes, le planning de chaque section, sa dernière sauvegarde, ses erreurs et ses anomalies ouvertes |
+| `POST /api/nodes` | Ajoute un nœud, par exemple `{"name":"vps-helsinki"}`, et le renvoie avec `compose` : `MODE`, `APP_KEY`, `NODE_HOME` et `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Renvoie de nouveau les mêmes valeurs `compose`, pour **Remplacer** |
+| `POST /api/nodes/{id}/placement` | Envoie les sauvegardes du nœud vers une destination et répond par section si le nœud a atteint son dépôt, avec un `warning` pour une destination |
+| `PUT /api/nodes/{id}/schedule` | Règle les plannings, par exemple `{"containers":"daily 03:00","files":"off"}`. Une section omise garde son planning |
+| `DELETE /api/nodes/{id}` | Libère le nœud. `told` indique s'il l'a appris tout de suite ou s'il l'apprendra à son retour |
+| `GET /api/nodes/routes` | La liste des routes du nœud vers lesquelles l'instance d'attache transmet les requêtes |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Transmet la requête à la route `/api/{path}` du nœud quand cette route figure sur la liste, et renvoie la réponse JSON du nœud |
+| `PUT /api/receiver/node-address` | Règle l'**Adresse pour les nœuds** du serveur récepteur, par exemple `{"url":"https://backup.tower.example.org","caPem":""}`. Une `url` vide retire les nœuds du serveur |
+
+Les trois destinations :
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Une requête vers `/api/nodes/{id}/api/...` transporte au plus 32 KiB. Une route absente de la liste répond `403`, un nœud qui n'a pas encore répondu ou qui est en cours de libération `409` avec le code `node-not-adopted`, et un nœud absent `502` avec le code `node-away`. Par exemple, `GET /api/nodes/{id}/api/runs?limit=20` renvoie les 20 dernières exécutions du nœud, et `POST /api/nodes/{id}/api/containers/nextcloud/backup` sauvegarde son conteneur `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

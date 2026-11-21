@@ -69,7 +69,7 @@ import { FolderBrowser } from "../FolderBrowser";
 import { IconApply, IconCompare, IconConfirm } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import { IconCopy, IconDownload, IconRecovery, IconRestore, IconTrash } from "../navGlyphs";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { Selector } from "../Selector";
 import { SelectField } from "../SelectField";
 import { SnapshotFileTree } from "../SnapshotFileTree";
@@ -210,8 +210,6 @@ function SelfRestoreNote({ deletes, onClose }: { deletes: React.ReactNode; onClo
   );
 }
 
-const ARROW_STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
-
 /** WhereOption is one target of a restore, with the scene that plays it. Its
  *  radio group is one tab stop, and the arrow keys pick the next target, as
  *  in any radio group. */
@@ -240,26 +238,12 @@ export function WhereOption({
       tabIndex={on ? 0 : -1}
       disabled={disabled}
       onClick={onPick}
-      onKeyDown={(e) => {
-        const step = ARROW_STEP[e.key];
-        const group = e.currentTarget.closest('[role="radiogroup"]');
-        if (!step || !group) return;
-        e.preventDefault();
-        // Left and right follow the reading direction.
-        const flip = (e.key === "ArrowLeft" || e.key === "ArrowRight") && getComputedStyle(group).direction === "rtl";
-        const radios = Array.from(group.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)'));
-        const next = radios[(radios.indexOf(e.currentTarget) + (flip ? -step : step) + radios.length) % radios.length];
-        next.focus();
-        next.click();
-      }}
-      className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-        on ? "ring-accent" : "ring-transparent"
-      }`}
+      onKeyDown={pickWithArrows}
+      className={`flex items-center gap-3 rounded-control p-3 text-start transition-colors ${pickSurface(on)}`}
     >
-      <RadioMark on={on} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
-        <span className="text-xs text-carbon-textMuted wrap-anywhere">{sub}</span>
+        <span className="text-sm font-semibold wrap-anywhere">{title}</span>
+        <span className={`text-xs wrap-anywhere ${pickSub(on)}`}>{sub}</span>
       </span>
       <TargetScene where={where} playing={on} kept={kept} />
     </button>

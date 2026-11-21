@@ -188,6 +188,17 @@ Od teraz kontenery są kopiowane co noc. Dobre następne kroki, w tej kolejnośc
 !!! note "Sprawdzenie integracji z hostem"
     Karta **Integracja z hostem** w przeglądzie sonduje każdy montaż i każde CLI (gniazdo Docker, libvirt, restic, qemu-img, rclone) i zgłasza wszelkie brakujące elementy, więc możesz potwierdzić, że kontener jest poprawnie połączony, zanim na nim polegasz. Czeka w **Dostosuj**, aż ją dodasz.
 
+## Kopia VPS-a jako węzła {#node}
+
+VPS albo inny mały serwer nie potrzebuje własnego BombVault z interfejsem WWW. Dodaj go jako węzeł tej instancji, a ona będzie robić jego kopie:
+
+1. Ustaw hasło logowania w **Ustawienia, Bezpieczeństwo**, jeśli jeszcze go nie masz.
+2. Otwórz **Instancje**, wybierz **Dodaj węzeł** i wpisz nazwę, na przykład `vps-helsinki`.
+3. Wybierz, dokąd trafiają jego kopie, na przykład na serwer odbiorczy tej instancji, i kiedy je robi.
+4. Skopiuj plik compose pokazany w oknie na serwer, skieruj jego wolumen Host Data i `HOST_SOURCE_ROOT` na dane do kopiowania i uruchom `docker compose up -d`.
+
+Gdy węzeł odpowie, jego karta pokazuje **Połączono**, a jego kontenery pojawiają się w **Kopie zapasowe**. Strona [Węzły](nodes.md) prowadzi przez to na przykładzie.
+
 ## Poruszanie się po aplikacji {#navigation}
 
 ![Ustawienia jako kafelki, obok nich karty wybranego kafelka. Każda zmiana jest zapisywana, gdy ją wprowadzasz.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Zbudowanie interfejsu jest potrzebne także dla `go run`. Repozytorium śledzi p
 - Zadbaj, żeby błąd do Ciebie dotarł, dzięki **[Powiadomieniom](notifications.md)**.
 - Sprawdź, kiedy co działa, w **[Harmonogramach](schedules.md)**.
 - Przenieś wszystkie serwery swojej grupy na telefon dzięki **[aplikacji na Androida](android.md)**.
+- Rób stąd kopie VPS-a jako **[węzła](nodes.md)**.
 - **[Przykłady krok po kroku](guides.md)** prowadzą przez typowe zadania, a **[Funkcje](features.md)** wymieniają wszystko, co robi BombVault.
 - Klonujesz konfigurację lub przenosisz się na nową maszynę? Przenieś całą swoją konfigurację za pomocą karty **Eksport / import ustawień**. Zobacz [Konfiguracja](configuration.md#portable-settings-export-and-import).
 - Napotkałeś problem? Zobacz **[Rozwiązywanie problemów](troubleshooting.md)**.

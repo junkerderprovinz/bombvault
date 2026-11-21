@@ -208,6 +208,26 @@ Başlangıç ekranı nedenini sunucunun kartında söyler:
 - **Oturum açma gerekiyor:** adresiyle eklenen bir sunucu parola ister. Bkz. ayrıca [Bir telefon giriş sayfasına düşüyor](#a-phone-lands-on-the-login-page).
 - **Anahtar değişti:** başlangıç ekranı yeni anahtarın parmak izini gösterir ve sayfa yalnızca ona güvendikten sonra açılır. Bkz. [Evden uzakta](android.md#away).
 
+## Bir düğüm "Düğüm bekleniyor" durumunda kalıyor {#node-waiting}
+
+Düğüm henüz ana örneğe yanıt vermedi. Düğümün sunucusunda konteynerinin günlüğünü aç (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** ve ardından ana örneğin kimliği: düğüm çalışıyor ve rölede bekliyor. Sunucunun rölenin adresine ulaşıp ulaşmadığını denetle. Bağlantı düğümden dışarı doğru kurulur, bu yüzden açık port gerekmez.
+- **`NODE_HOME is not set`**: compose dosyası değerlerini kaybetmiş. Düğümün kartında **Değiştir**'i seç, dosyayı yeniden kopyala ve `docker compose up -d` çalıştır.
+- **`NODE_HOME does not belong to this APP_KEY`**: iki değer farklı düğümlerden geliyor. İkisini de aynı karttan kopyala.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: düğümü başka bir ana örnek üstlenmiş. Önce onu orada serbest bırak ya da sunucuyu burada yeni bir compose dosyasıyla yeni bir düğüm olarak ekle.
+- **`MODE=... is neither full nor node`**: `MODE: node` ayarla.
+
+## Bir düğüm depolarına ulaşamıyor {#node-reach}
+
+Hedef seçildikten sonra ana örnek, bölüm başına düğümün deposunu açıp açmadığını söyler, örneğin restic'in verdiği nedenle **Düğüm Konteynerler deposuna ulaşamıyor**. Düğümün sunucusundan adresin yanıt verdiğini denetle. Alıcı sunucuda bu **Düğümler için adres**'tir: bir ters proxy onu rest-server'a iletmelidir, kendi sertifikası olan bir sunucu da o sertifikayı **Sertifika** alanında ister. Bir hedefte, düğüm için oluşturulan oturum açma bilgisini denetle. Sonra **Hedefi değiştir**'i seç ve yeniden **Kaydet**. Bkz. [Yedekler nereye gider](nodes.md#placement).
+
+Yedeklerini kendisi tutan bir düğümde, düğümdeki başka bir konteynerin tuttuğu port o konteynerin adıyla reddedilir, bu yüzden başka bir port seç. Ana örnek çekemiyorsa portu düğümün güvenlik duvarından geçir.
+
+## Serbest bırakılan bir düğüm geri gelmiyor {#node-released}
+
+Serbest bırakılmış bir düğüm eski `APP_KEY` anahtarıyla bir daha hiçbir ana örneği kabul etmez ve `config` klasörü serbest bırakıldığını hatırlar. Sunucuyu yeni bir düğüm olarak ekle ve yeni compose dosyası ile boş bir `config` klasörüyle başlat. Eski yedekleri olduğu yerde kalır, ana örneğin çektiği her kopya da öyle.
+
 ## Başka bir kullanıcı yerel depoyu okuyamıyor {#repository-permissions}
 
 Yerel depo, SMB üzerinden bir senkronizasyon kullanıcısı gibi diğer kullanıcılar için okunabilir kalır. 10.4.1'den önce bir budama, etiket, çekme, bölüm taşıma, silme ya da stack yedeğinin yazdığı dosyalar bir sonraki geceye kadar okunamaz kalabiliyordu. BombVault'u güncelle, hemen okunabilir olurlar. Öz yedek deposu, BombVault'un ayarlarını tuttuğu için bilerek yalnızca root tarafından okunabilir kalır.

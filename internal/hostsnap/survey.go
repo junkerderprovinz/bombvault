@@ -94,7 +94,7 @@ type zfsDataset struct {
 type zfsSnap struct {
 	dataset, name         string
 	creation, used, refer int64
-	userrefs              int
+	userrefs              int64
 	clones                []string
 }
 
@@ -213,7 +213,7 @@ func parseZFSSnap(f []string) (zfsSnap, bool) {
 		return zfsSnap{}, false
 	}
 	s := zfsSnap{dataset: ds, name: name, creation: num(f[1]), used: num(f[2]), refer: num(f[3])}
-	s.userrefs = int(num(f[4]))
+	s.userrefs = num(f[4])
 	if c := strings.TrimSpace(f[5]); c != "" && c != "-" {
 		s.clones = strings.Split(c, ",")
 	}
@@ -334,7 +334,7 @@ func zfsSnapshot(sn zfsSnap) Snapshot {
 	if sn.userrefs > 0 {
 		// The tags themselves come from the detail pass; until then the
 		// count alone stands for them.
-		for i := 0; i < sn.userrefs; i++ {
+		for range sn.userrefs {
 			s.Holds = append(s.Holds, "")
 		}
 	}

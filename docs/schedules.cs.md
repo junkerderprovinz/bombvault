@@ -16,6 +16,8 @@ Každý plán je tlačítko, které se čte jako věta, například *denně ve 0
 
 Všechny časy jsou v časovém pásmu serveru. Na Unraidu je to pásmo systému. Jinde nastav `TZ`, jinak každý plán běží v UTC, viz [Proměnné prostředí](configuration.md#environment-variables).
 
+Domovská instance plánuje i zálohy svých [uzlů](nodes.md), ale ne tady: karta každého uzlu na stránce Instance má plán pro jeho kontejnery a jeden pro jeho složky. Nový uzel začíná půl hodiny po zálohách kontejnerů této instance. Viz [Kdy uzly zálohují](nodes.md#schedule).
+
 ## Týden {#week}
 
 Karta **Týden** kreslí každý plánovaný běh od pondělí do neděle, jeden řádek na den: zálohy, kopie mimo lokalitu a kontroly. Ukaž na čárku a přečteš si, co tam začíná. Kde se tři plány spustí v rozmezí dvou hodin, je úsek označen, takže je můžeš rozložit.

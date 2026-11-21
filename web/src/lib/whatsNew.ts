@@ -61,6 +61,25 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.4",
+    changes: [
+      { id: "instances-add-node", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.nodes" },
+      // The three places stand in the window that Add node opens.
+      {
+        id: "node-placement",
+        page: "/instances",
+        where: ["instances.title"],
+        way: [...TO_INSTANCES, "add-node"],
+        text: "whatsNew.nodePlacement",
+      },
+      // The Nodes card shows on the overview once a node has been added.
+      { id: "overview-nodes", page: "/dashboard", where: ["nav.overview"], way: ["/dashboard"], text: "whatsNew.nodeHome" },
+      // Home takes a rebuilt node on again by itself, so no page has an
+      // element for it.
+      { id: "node-rebuilt", text: "whatsNew.nodeRebuilt" },
+    ],
+  },
+  {
     version: "10.6.2",
     changes: [
       {

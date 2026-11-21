@@ -115,6 +115,7 @@ export default [
             "Restore.tsx": "PAGE_SHELL_RESPONSIVE",
             "Anomalies.tsx": "PAGE_SHELL_RESPONSIVE",
             "BackupEntry.tsx": "PAGE_SHELL_RESPONSIVE",
+            "NodeEntry.tsx": "PAGE_SHELL_RESPONSIVE",
             "Backups.tsx": "PAGE_SHELL_RESPONSIVE",
             "Instances.tsx": "PAGE_SHELL_RESPONSIVE",
             "Settings.tsx": "PAGE_SHELL_RESPONSIVE",

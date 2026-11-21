@@ -188,6 +188,17 @@ Fra nu af bliver containerne sikkerhedskopieret hver nat. Gode næste skridt, i 
 !!! note "Vært-integrationstjek"
     Kortet **Vært-integration** på oversigten prober hver montering og hvert CLI (Docker-socket, libvirt, restic, qemu-img, rclone) og rapporterer eventuelle manglende dele, så du kan bekræfte, at containeren er korrekt forbundet, før du forlader dig på den. Det venter under **Tilpas**, til du tilføjer det.
 
+## Sikkerhedskopiér en VPS som node {#node}
+
+En VPS eller en anden lille server har ikke brug for sin egen BombVault med brugerflade. Tilføj den som node til denne, så tager denne instans sig af dens sikkerhedskopier:
+
+1. Sæt en login-adgangskode under **Indstillinger, Sikkerhed**, hvis du ikke har gjort det endnu.
+2. Åbn **Instanser**, vælg **Tilføj node**, og skriv et navn som `vps-helsinki`.
+3. Vælg, hvor dens sikkerhedskopier skal hen, for eksempel denne instans' modtageserver, og hvornår den tager sikkerhedskopi.
+4. Kopiér compose-filen, som vinduet viser, til serveren, peg dens volumen Host Data og `HOST_SOURCE_ROOT` på de data, der skal sikkerhedskopieres, og kør `docker compose up -d`.
+
+Når noden svarer, siger dens kort **Forbundet**, og dens containere dukker op under **Sikkerhedskopier**. [Noder](nodes.md) gennemgår det med et eksempel.
+
 ## Find rundt {#navigation}
 
 ![Indstillinger som fliser, med kortene for den valgte flise ved siden af. Hver ændring skrives, mens du laver den.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Grænsefladebygget er også nødvendigt for `go run`. Repositoriet indeholder ku
 - Sørg for, at en fejl når dig, med **[Notifikationer](notifications.md)**.
 - Se, hvornår tingene kører, under **[Tidsplaner](schedules.md)**.
 - Få alle servere i din gruppe på din telefon med **[Android-appen](android.md)**.
+- Tag sikkerhedskopi af en VPS herfra med en **[node](nodes.md)**.
 - De **[gennemgåede eksempler](guides.md)** følger de almindelige jobs, og **[Funktioner](features.md)** viser alt, BombVault kan.
 - Kloner du en opsætning eller flytter til en ny boks? Bær hele din konfiguration over med kortet **Eksportér / importér indstillinger**. Se [Konfiguration](configuration.md#portable-settings-export-and-import).
 - Løb ind i et problem? Se **[Fejlfinding](troubleshooting.md)**.

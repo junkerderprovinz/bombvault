@@ -140,6 +140,10 @@ Yalnızca veritabanı dökümleri olan, dosya yedeği olmayan ve konteyneri ile 
 
 Bir [ortak depoda](offsite-recovery.md#shared-repository) her anahtar bütün sunucuların yedeklerini açar, bu yüzden Geri yükleme sayfası diğer üyeleri **Diğer sunucular** altında listeler: her birini adıyla, host'uyla, kaç ögesi olduğuyla ve en yeni yedeğinin ne zaman çalıştığıyla. Bu sunucunun tanıdığı hiçbir sunucuya ait olmayan bir host **Bu sunucunun tanımadığı bir sunucu** olarak görünür. Bir tıklama, başlığında sunucunun adı ve ardından **sunucusunun yedekleri** yazan salt okunur bir pencere açar, hiçbir şey girmen gerekmez. Klasör kümeleri ve ZFS veri kümeleri seçtiğin bir klasöre gider. Konteynerler ve VM'ler bir klasöre düz dosyalar olarak geri gelir, çünkü diğer sunucu tanımlarını kendi anahtarıyla mühürler. Bu sunucunun ortak depodaki kendi yedekleri her ögenin **Yedekler** sekmesindedir.
 
+## Düğümler {#nodes}
+
+Bir [düğümün](nodes.md) ögeleri bu sayfadan değil, **Yedekler** altındaki kendi sayfalarından geri yüklenir. Oradaki bir yedeğin yanındaki **Geri yükle**, ögeyi düğümde geri yükler ve şu an orada olanın yerine koyar. Bu örneğin, [yedeklerini kendisi tutan](nodes.md#keep-on-node) bir düğümden çektiği kopya, [Bu sunucunun çektikleri](offsite-recovery.md#restore-what-was-fetched) gibi burada **Diğer kaynaklar** altında listelenir. Düğümün sunucusu yok olduğunda düğümü kartındaki **Değiştir** ile yeniden kur: aynı `APP_KEY` ve `NODE_HOME` yeni sunucuyu aynı düğüm yapar ve yedekleri yeniden açılır. [Kurtarma kitinin](offsite-recovery.md#recovery-kit) **Düğümler** bölümü onları düz restic ile de açar.
+
 ## Bir geri yüklemeden sonra {#after}
 
 Orijinalin yanına geri yüklenen bir kopya **Yedekler** altında hariç tutulmuş olarak listelenir, yani açık bir görev sayılmaz. Saklamak istiyorsan zamanlamaya ekle. Yedeklendiğinde çalışan bir konteyner ya da VM çalışır şekilde geri gelir, durmuş olan durmuş kalır. Unraid'de geri yüklenen bir konteyner Docker sekmesinde normal, düzenlenebilir bir uygulama olarak yeniden görünür, bir VM de diskleri ve NVRAM'ı bağlı olarak VM Manager'da.

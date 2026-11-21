@@ -32,6 +32,8 @@ Kolme listan yläpuolella olevaa painiketta rajaavat sitä:
 
 Merkinnät, joita ei enää ole asennettuna mutta joilla on vielä varmuuskopioita, ovat erillään kohdassa **Ei asennettu (vain varmuuskopiot)**. Palauta ne tai poista niiden varmuuskopiot vapauttaaksesi tilan.
 
+Kun sinulla on [solmuja](nodes.md), Kontit- ja Kansiot-listoissa on omien merkintöjesi alapuolella osio jokaiselle solmulle, ja siinä näkyy, onko solmu yhdistetty ja montako merkintää sillä on. **Merkinnät solmulla** ja solmun nimi piilottaa osion merkinnät ja näyttää ne taas. Merkinnän valikossa on **Varmuuskopioi nyt**, joka käynnistää sen varmuuskopion solmulla, sekä **Avaa**. Merkinnän sivu listaa sen varmuuskopiot, ja jokaisen vieressä on **Palauta**, joka palauttaa merkinnän solmulle. Solmun omaa konttia ei listata. Katso [Solmun merkinnät](nodes.md#entries).
+
 Sivun pääasiallinen toiminto leijuu oikeassa alakulmassa: **Varmuuskopioi kaikki nyt** käynnistää ajon kaikille päällä oleville osioille. **Lisää** sisältää loput:
 
 - **Valitse** aloittaa valinnan, katso alla.

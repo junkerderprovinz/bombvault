@@ -1,6 +1,6 @@
 # API e integraciones
 
-BombVault tiene una pequeña API HTTP para scripts, paneles y domótica. Lee lo mismo que muestra el resumen y puede iniciar una copia. Todo lo demás, como las restauraciones, el borrado de copias y los ajustes, se queda en la interfaz web.
+BombVault tiene una pequeña API HTTP para scripts, paneles y domótica. Lee lo mismo que muestra el resumen y puede iniciar una copia. Todo lo demás, como las restauraciones, el borrado de copias, los ajustes y los [nodos](#nodes), se queda en la interfaz web.
 
 ## Tokens {#tokens}
 
@@ -68,6 +68,32 @@ Los inicios siguen los mismos límites que los [inicios por MCP](mcp.md#starting
 ## OpenAPI {#openapi}
 
 BombVault ofrece una descripción de estas rutas en `/api/v1/openapi.json` (OpenAPI 3.1). No necesita token. Cárgala en Swagger UI, Postman o un generador de código.
+
+## Nodos {#nodes}
+
+Las rutas que gestionan los [nodos](nodes.md) pertenecen a la interfaz web, no a la API con token de arriba. Con una contraseña de acceso definida, necesitan una sesión de navegador iniciada en esta instancia. Un token de API o una clave MCP no abre ninguna, los teléfonos emparejados no llegan a ellas y `/api/v1/openapi.json` no las describe. Añadir un nodo, volver a mostrar su archivo compose y llegar a las rutas propias de un nodo se rechaza hasta que se define una contraseña de acceso. Un script que cambia algo envía `Content-Type: application/json`, como en toda la interfaz web.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/nodes` | Cada nodo con si está en línea, su versión, adónde van sus copias, el plan de cada sección, su última copia, sus errores y sus anomalías abiertas |
+| `POST /api/nodes` | Añade un nodo, como `{"name":"vps-helsinki"}`, y lo devuelve con `compose`: `MODE`, `APP_KEY`, `NODE_HOME` y `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Devuelve otra vez los mismos valores de `compose`, para **Reemplazar** |
+| `POST /api/nodes/{id}/placement` | Envía las copias del nodo a un destino y responde por sección si el nodo llegó a su repositorio, con un `warning` en el caso de un destino |
+| `PUT /api/nodes/{id}/schedule` | Fija los planes, como `{"containers":"daily 03:00","files":"off"}`. Una sección que falta conserva su plan |
+| `DELETE /api/nodes/{id}` | Libera el nodo. `told` dice si se enteró ahora o se enterará cuando vuelva |
+| `GET /api/nodes/routes` | La lista de rutas propias del nodo a las que la instancia base pasa las solicitudes |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Pasa la solicitud a la ruta `/api/{path}` del nodo cuando esa ruta está en la lista, y devuelve la respuesta JSON del nodo |
+| `PUT /api/receiver/node-address` | Fija la **Dirección para nodos** del servidor receptor, como `{"url":"https://backup.tower.example.org","caPem":""}`. Una `url` vacía quita los nodos del servidor |
+
+Los tres destinos:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Una solicitud a `/api/nodes/{id}/api/...` lleva como mucho 32 KiB. Una ruta que no está en la lista responde `403`, un nodo que aún no ha respondido o que se está liberando, `409` con el código `node-not-adopted`, y un nodo que no está, `502` con el código `node-away`. Por ejemplo, `GET /api/nodes/{id}/api/runs?limit=20` devuelve las últimas 20 ejecuciones del nodo, y `POST /api/nodes/{id}/api/containers/nextcloud/backup` copia su contenedor `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

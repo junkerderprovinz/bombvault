@@ -1,6 +1,6 @@
 # API a integrace
 
-BombVault má malé HTTP API pro skripty, dashboardy a domácí automatizaci. Čte totéž, co ukazuje Přehled, a umí spustit zálohu. Všechno ostatní, jako obnovy, mazání záloh a nastavení, zůstává ve webovém rozhraní.
+BombVault má malé HTTP API pro skripty, dashboardy a domácí automatizaci. Čte totéž, co ukazuje Přehled, a umí spustit zálohu. Všechno ostatní, jako obnovy, mazání záloh, nastavení a [uzly](#nodes), zůstává ve webovém rozhraní.
 
 ## Tokeny {#tokens}
 
@@ -68,6 +68,32 @@ Spuštění mají stejné limity jako [spuštění přes MCP](mcp.md#starting-ba
 ## OpenAPI {#openapi}
 
 BombVault poskytuje popis těchto cest na `/api/v1/openapi.json` (OpenAPI 3.1). Nepotřebuje token. Načti ho do Swagger UI, Postmanu nebo generátoru kódu.
+
+## Uzly {#nodes}
+
+Cesty, které se starají o [uzly](nodes.md), patří k webovému rozhraní, ne k tokenovému API výše. S nastaveným přihlašovacím heslem vyžadují relaci prohlížeče z přihlášení na této instanci. Token API ani klíč MCP žádnou z nich neotevře, spárované telefony na ně nedosáhnou a `/api/v1/openapi.json` je nepopisuje. Přidání uzlu, opětovné zobrazení jeho souboru compose a přístup k vlastním cestám uzlu jsou odmítnuty, dokud není nastaveno přihlašovací heslo. Skript, který něco mění, posílá `Content-Type: application/json`, jako všude ve webovém rozhraní.
+
+| Cesta | Co dělá |
+|---|---|
+| `GET /api/nodes` | Každý uzel s tím, zda je online, jeho verzí, cílem jeho záloh, plánem každé sekce, poslední zálohou, chybami a otevřenými anomáliemi |
+| `POST /api/nodes` | Přidá uzel, například `{"name":"vps-helsinki"}`, a vrátí ho s `compose`: `MODE`, `APP_KEY`, `NODE_HOME` a `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Vrátí znovu stejné hodnoty `compose`, pro **Nahradit** |
+| `POST /api/nodes/{id}/placement` | Pošle zálohy uzlu na určité místo a pro každou sekci odpoví, zda uzel dosáhl na svůj repozitář, u cíle s `warning` |
+| `PUT /api/nodes/{id}/schedule` | Nastaví plány, například `{"containers":"daily 03:00","files":"off"}`. Vynechaná sekce si ponechá svůj plán |
+| `DELETE /api/nodes/{id}` | Uvolní uzel. `told` říká, zda se to uzel dozvěděl hned, nebo se to dozví, až se vrátí |
+| `GET /api/nodes/routes` | Seznam vlastních cest uzlu, na které domovská instance předává požadavky |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Předá požadavek na cestu uzlu `/api/{path}`, když je ta cesta na seznamu, a vrátí odpověď uzlu v JSON |
+| `PUT /api/receiver/node-address` | Nastaví **Adresa pro uzly** přijímacího serveru, například `{"url":"https://backup.tower.example.org","caPem":""}`. Prázdné `url` server pro uzly uzavře |
+
+Tři cíle:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Požadavek na `/api/nodes/{id}/api/...` nese nejvýš 32 KiB. Cesta, která není na seznamu, odpoví `403`, uzel, který ještě neodpověděl nebo se uvolňuje, `409` s kódem `node-not-adopted` a uzel, který je pryč, `502` s kódem `node-away`. Například `GET /api/nodes/{id}/api/runs?limit=20` vrátí posledních 20 běhů uzlu a `POST /api/nodes/{id}/api/containers/nextcloud/backup` zazálohuje jeho kontejner `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

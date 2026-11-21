@@ -188,6 +188,17 @@ Bundan sonra konteynerler her gece yedeklenir. Sırasıyla iyi sonraki adımlar:
 !!! note "Host entegrasyon denetimi"
     Genel bakıştaki **Host Entegrasyonu** kartı her bağlamayı ve CLI'yi (Docker soketi, libvirt, restic, qemu-img, rclone) yoklar ve eksik parçaları bildirir, böylece konteynerin doğru bağlandığını güvenmeden önce doğrulayabilirsin. Sen ekleyene kadar **Özelleştir** altında bekler.
 
+## Bir VPS'i düğüm olarak yedeklemek {#node}
+
+Bir VPS'in ya da başka küçük bir sunucunun, kendi web arayüzü olan bir BombVault'a ihtiyacı yoktur. Onu bu örneğin düğümü olarak ekle, yedeklerini bu örnek yürütsün:
+
+1. Henüz yapmadıysan **Ayarlar, Güvenlik** altında bir giriş parolası ayarla.
+2. **Örnekler** sayfasını aç, **Düğüm ekle**'yi seç ve `vps-helsinki` gibi bir ad yaz.
+3. Yedeklerinin nereye gideceğini, örneğin bu örneğin alıcı sunucusunu, ve ne zaman yedekleyeceğini seç.
+4. Pencerenin gösterdiği compose dosyasını sunucuya kopyala, Host Data birimini ve `HOST_SOURCE_ROOT` değerini yedeklenecek verilere yönlendir ve `docker compose up -d` çalıştır.
+
+Düğüm yanıt verince kartında **Bağlı** yazar ve konteynerleri **Yedekler** altında görünür. [Düğümler](nodes.md) sayfası bunu bir örnekle adım adım anlatır.
+
 ## Yolunu bulmak {#navigation}
 
 ![Kutucuklar olarak Ayarlar, yanlarında seçilen kutucuğun kartları. Her değişiklik yapıldığı anda yazılır.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Arayüz derlemesi `go run` için de gerekir. Depo `web/dist` altında yalnızca 
 - Bir hatanın sana ulaştığından **[Bildirimler](notifications.md)** ile emin ol.
 - İşlerin ne zaman çalıştığına **[Zamanlamalar](schedules.md)** altında bak.
 - Grubundaki her sunucuyu **[Android uygulaması](android.md)** ile telefonuna taşı.
+- Bir VPS'i buradan bir **[düğümle](nodes.md)** yedekle.
 - **[Adım adım örnekler](guides.md)** yaygın işleri anlatır, **[Özellikler](features.md)** ise BombVault'un yaptığı her şeyi listeler.
 - Bir kurulumu klonluyor ya da yeni bir makineye mi taşınıyorsun? Tüm yapılandırmanı **Ayarları dışa / içe aktar** kartıyla taşı. Bkz. [Yapılandırma](configuration.md#portable-settings-export-and-import).
 - Bir sorunla mı karşılaştın? Bkz. **[Sorun Giderme](troubleshooting.md)**.

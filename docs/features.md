@@ -76,6 +76,7 @@ A short catalogue of what BombVault does. Each line links to the page that expla
 - **The Instances page** with the group as a net and the roles **Receiver**, **Fetcher**, **ZFS server** and **Key keeper**. [Instances and roles](offsite-recovery.md#roles)
 - **A receiving server** set up for you, in append-only mode. [Receiving server](offsite-recovery.md#receiving-server)
 - **A shared repository** that several servers copy into, so what they have in common is stored once. Only the server that holds it prunes. [Shared repository](offsite-recovery.md#shared-repository)
+- **Nodes**: BombVault without a web interface on a VPS or another server, run from home with its schedules, alerts and restores. It needs no open port. [Nodes](nodes.md)
 
 ## AI assistants (MCP) {#mcp}
 

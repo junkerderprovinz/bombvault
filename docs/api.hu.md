@@ -1,6 +1,6 @@
 # API és integrációk
 
-A BombVault kis HTTP API-t kínál szkriptekhez, irányítópultokhoz és otthonautomatizáláshoz. Ugyanazt olvassa, amit az áttekintés mutat, és el tud indítani egy mentést. Minden más, például a visszaállítás, a mentések törlése és a beállítások, a webes felületen marad.
+A BombVault kis HTTP API-t kínál szkriptekhez, irányítópultokhoz és otthonautomatizáláshoz. Ugyanazt olvassa, amit az áttekintés mutat, és el tud indítani egy mentést. Minden más, például a visszaállítás, a mentések törlése, a beállítások és a [csomópontok](#nodes), a webes felületen marad.
 
 ## Tokenek {#tokens}
 
@@ -68,6 +68,32 @@ Az indításokra ugyanazok a korlátok vonatkoznak, mint az [MCP-n keresztüliek
 ## OpenAPI {#openapi}
 
 A BombVault ezeknek az útvonalaknak a leírását a `/api/v1/openapi.json` címen szolgálja ki (OpenAPI 3.1). Ehhez nem kell token. Töltsd be a Swagger UI-ba, a Postmanbe vagy egy kódgenerátorba.
+
+## Csomópontok {#nodes}
+
+A [csomópontokat](nodes.md) kezelő útvonalak a webes felülethez tartoznak, nem a fenti tokenes API-hoz. Beállított bejelentkezési jelszó mellett olyan böngészős munkamenetet kérnek, amely ezen a példányon való bejelentkezésből származik. API-token vagy MCP-kulcs egyiket sem nyitja meg, a párosított telefonok nem érik el őket, és a `/api/v1/openapi.json` nem írja le őket. Egy csomópont hozzáadása, a compose fájljának újbóli megjelenítése és a csomópont saját útvonalainak elérése addig le van tiltva, amíg nincs beállítva bejelentkezési jelszó. Egy szkript, amely módosít valamit, `Content-Type: application/json` fejlécet küld, ahogy a webes felületen mindenhol.
+
+| Útvonal | Mit tesz |
+|---|---|
+| `GET /api/nodes` | Minden csomópont, azzal, hogy online-e, a verziójával, a mentései helyével, az egyes szakaszok tervével, az utolsó mentésével, a hibáival és a nyitott anomáliáival |
+| `POST /api/nodes` | Hozzáad egy csomópontot, például `{"name":"vps-helsinki"}`, és visszaadja `compose` mezővel: `MODE`, `APP_KEY`, `NODE_HOME` és `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Újra visszaadja ugyanazokat a `compose` értékeket, a **Csere** számára |
+| `POST /api/nodes/{id}/placement` | Valahová irányítja a csomópont mentéseit, és szakaszonként megmondja, elérte-e a csomópont a tárolóját, egy célnál `warning` mezővel |
+| `PUT /api/nodes/{id}/schedule` | Beállítja a terveket, például `{"containers":"daily 03:00","files":"off"}`. A kihagyott szakasz megtartja a tervét |
+| `DELETE /api/nodes/{id}` | Elengedi a csomópontot. A `told` megmondja, hogy a csomópont most értesült-e róla, vagy akkor értesül, amikor visszatér |
+| `GET /api/nodes/routes` | A csomópont saját útvonalainak listája, amelyekre az anyapéldány kéréseket továbbít |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Továbbítja a kérést a csomópont `/api/{path}` útvonalára, ha az az útvonal a listán van, és visszaadja a csomópont JSON-válaszát |
+| `PUT /api/receiver/node-address` | Beállítja a fogadószerver **Cím a csomópontoknak** értékét, például `{"url":"https://backup.tower.example.org","caPem":""}`. Az üres `url` lezárja a szervert a csomópontok előtt |
+
+A három cél:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Egy `/api/nodes/{id}/api/...` kérés legfeljebb 32 KiB lehet. A listán nem szereplő útvonal `403` választ ad, a még nem válaszolt vagy éppen elengedett csomópont `409` választ `node-not-adopted` kóddal, a távol lévő csomópont pedig `502` választ `node-away` kóddal. Például a `GET /api/nodes/{id}/api/runs?limit=20` visszaadja a csomópont utolsó 20 futását, a `POST /api/nodes/{id}/api/containers/nextcloud/backup` pedig menti a `nextcloud` konténerét.
 
 ## Home Assistant {#home-assistant}
 

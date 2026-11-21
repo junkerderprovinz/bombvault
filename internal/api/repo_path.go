@@ -131,7 +131,15 @@ func (e *noLocationErr) Is(target error) bool { return target == ErrNoLocation }
 
 // sectionRepo resolves a section's own repository location, refusing an empty
 // one: path.Clean would turn it into the mount root and call that a traversal.
+// On a node it is the repository home placed the section at.
 func (s *Service) sectionRepo(domain, loc string) (string, error) {
+	p, placed, err := s.placedSection(domain)
+	if err != nil {
+		return "", err
+	}
+	if placed {
+		return s.placedRepo(p), nil
+	}
 	if strings.TrimSpace(loc) == "" {
 		return "", &noLocationErr{domain: domain}
 	}

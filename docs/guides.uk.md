@@ -34,4 +34,5 @@
 ## Кілька серверів {#several-servers}
 
 - [Зв'язка двох серверів Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): два сервери зберігають копії одне одного, і жоден не може видалити чужі копії.
+- [VPS, який копіює на приймальний сервер](nodes.md#example-vps): вузол із контейнерами, яким керує домашній екземпляр, і жодного відкритого порту на VPS.
 - [Картка й сповіщення в Home Assistant](api.md#home-assistant-example): BombVault на панелі та повідомлення, коли копія не вдалася.

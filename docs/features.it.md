@@ -75,6 +75,7 @@ Un breve catalogo di ciò che BombVault sa fare. Ogni riga rimanda alla pagina c
 - **La pagina Istanze** con il gruppo come una rete e i ruoli **Ricevitore**, **Prelevatore**, **Server ZFS** e **Custode della chiave**. [Istanze e ruoli](offsite-recovery.md#roles)
 - **Un server ricevente** configurato per te, in modalità append-only. [Server ricevente](offsite-recovery.md#receiving-server)
 - **Un repository condiviso** in cui copiano più server, così ciò che hanno in comune viene salvato una volta sola. Pota solo il server che lo ospita. [Repository condiviso](offsite-recovery.md#shared-repository)
+- **Nodi**: BombVault senza interfaccia web su un VPS o un altro server, gestito dall'istanza madre con pianificazioni, avvisi e ripristini. Non richiede porte aperte. [Nodi](nodes.md)
 
 ## Assistenti IA (MCP) {#mcp}
 

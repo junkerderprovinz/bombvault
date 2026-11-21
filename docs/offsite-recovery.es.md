@@ -390,7 +390,7 @@ Una fortaleza reúne a BombVault con las demás apps de la familia, como ShipLog
 
 ## Instancias y roles {#roles}
 
-La página **Instancias** (un mosaico de ajustes que se puede anclar a la barra lateral) muestra el grupo como una red de quién hace qué por quién, una tarjeta para esta instancia y una tarjeta para cada otro miembro, los teléfonos Android y los servidores ZFS. **Emparejamiento**, abajo a la derecha, lleva a la página de emparejamiento. Qué partes están activadas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.
+La página **Instancias** (un mosaico de ajustes que se puede anclar a la barra lateral) muestra el grupo como una red de quién hace qué por quién, una tarjeta para esta instancia y una tarjeta para cada otro miembro, los teléfonos Android, los servidores ZFS y los nodos de esta instancia. **Emparejamiento**, abajo a la derecha, lleva a la página de emparejamiento, y **Añadir nodo**, a su lado, añade un nodo. Qué partes están activadas se fija en **Ajustes, Instancias, Varios servidores**: **Instancias**, **Receptor** y **Recogida**.
 
 ![La página Instancias: el grupo como una red, y una tarjeta por instancia con sus mosaicos de roles, uno de ellos Inactiva.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![La página Instancias: el grupo como una red, y una tarjeta por instancia con sus mosaicos de roles, uno de ellos Inactiva.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Activar un rol envía una solicitud, y no empieza nada hasta que alguien de la o
 
 Debajo de las tarjetas, la tarjeta **Repositorio compartido** en un equipo con servidor receptor y la tarjeta **Repositorios compartidos** en un miembro pertenecen al [repositorio compartido](#shared-repository).
 
-Un miembro puede ofrecer su propio almacenamiento externo a otro miembro por el grupo. El otro administrador ve la oferta en los **Detalles** del miembro y la acepta o la rechaza. Aceptar crea unas credenciales guardadas y un destino normal, tras las mismas comprobaciones que un destino que escribes tú. El destino llega con la protección contra borrado activada, porque la receta que muestra la oferta es un rest-server append-only, así que **Cuánto tiempo conservar** no se aplica ahí. Cada oferta tiene sus propios datos de acceso y su propia carpeta, así que ofrecer una sección de nuevo, al mismo miembro o a otro, deja en paz las copias del primer socio: añade la nueva línea a `.htpasswd` y mantén el servidor en marcha. Por este camino viajan solo los datos de conexión, nunca datos de copias. **Comprobar ahora** pide a un miembro que verifique el repositorio de una sección. Nada en la página puede iniciar una copia, una restauración ni borrar nada en otro equipo.
+Un miembro puede ofrecer su propio almacenamiento externo a otro miembro por el grupo. El otro administrador ve la oferta en los **Detalles** del miembro y la acepta o la rechaza. Aceptar crea unas credenciales guardadas y un destino normal, tras las mismas comprobaciones que un destino que escribes tú. El destino llega con la protección contra borrado activada, porque la receta que muestra la oferta es un rest-server append-only, así que **Cuánto tiempo conservar** no se aplica ahí. Cada oferta tiene sus propios datos de acceso y su propia carpeta, así que ofrecer una sección de nuevo, al mismo miembro o a otro, deja en paz las copias del primer socio: añade la nueva línea a `.htpasswd` y mantén el servidor en marcha. Por este camino viajan solo los datos de conexión, nunca datos de copias. **Comprobar ahora** pide a un miembro que verifique el repositorio de una sección. Los miembros no tocan las copias de los demás: nada en la página inicia una copia en otro miembro, restaura allí ni borra nada allí.
+
+Los **nodos** son distintos, porque no son miembros. Un nodo es un BombVault sin interfaz web que recibe órdenes de esta instancia, así que esta instancia inicia sus copias y restauraciones en él y poda sus copias antiguas. Cada nodo tiene una tarjeta con su estado, su versión, adónde van sus copias y cuándo copia cada sección, con **Cambiar destino**, **Reemplazar** y **Liberar**. Un nodo nuevo dice **Esperando al nodo** hasta que responde por primera vez, y uno liberado que no está dice **Liberándose**. Consulta [Nodos](nodes.md).
+
+![La tarjeta de un nodo: Conectada, su versión, sus copias en el servidor receptor y sus planes por sección.](assets/screenshots/nodes/card-dark.png#only-dark)
+![La tarjeta de un nodo: Conectada, su versión, sus copias en el servidor receptor y sus planes por sección.](assets/screenshots/nodes/card-light.png#only-light)
 
 Las instancias apagadas y los teléfonos con la app cerrada conservan su tarjeta como **Inactiva**, en gris, con cuándo se vieron por última vez, y aparecen atenuadas en la red hasta que las **Eliminas**. Justo después de arrancar este servidor, una tarjeta así dice **Comprobando** hasta que el grupo vuelve. **Eliminar** funciona en una tarjeta así tenga las partes que tenga activadas, y además termina las solicitudes abiertas del miembro, sus ranuras de recepción ZFS inactivas y sus solicitudes de clave en espera. La tarjeta **Instancias** de la página de emparejamiento también lista estos miembros como **Inactiva**.
 
@@ -443,7 +448,7 @@ Las instancias de tu grupo encuentran entonces el servidor entre los proveedores
 
 Una instancia que llega al equipo receptor solo a través del repetidor no puede usar el servidor, porque el repetidor no transporta copias. Añade antes la dirección del equipo receptor en la página de emparejamiento. Cuando BombVault se ejecuta en una dirección IP propia (en br0, por ejemplo), rellena **Dirección para socios**, porque el servidor escucha en la dirección del host.
 
-Un equipo receptor también puede alojar un [repositorio compartido](#shared-repository) para el grupo.
+Un equipo receptor también puede alojar un [repositorio compartido](#shared-repository) para el grupo, y recibir las copias de los [nodos](nodes.md#to-receiver) de esta instancia en su **Dirección para nodos**.
 
 ## Repositorio compartido {#shared-repository}
 
@@ -620,6 +625,8 @@ Un guardián de claves es una instancia de tu grupo que guarda una copia sellada
 
 Ese día necesitas tres cosas: las doce palabras de tu grupo, el código de recuperación y acceso a la interfaz del guardián, donde alguien tiene que pulsar **Permitir**. En el Asistente de emergencia elige **A través del grupo**, elige el depósito, pídelo y escribe el código de recuperación. El código se usa en el servidor nuevo y no se envía al guardián. En el guardián, la solicitud aparece en **Depósito de claves** con quién la pide, si esa instancia se había visto allí antes y cuántas veces lo pidió. **Permitir** entrega la copia sellada, y permitir requiere una contraseña de acceso. La instalación nueva tiene 30 minutos para recogerla tras el Permitir, una solicitud que nadie responde caduca al cabo de un día, y una instancia que pide con demasiada frecuencia tiene que esperar una hora.
 
+El depósito lleva también la `APP_KEY` de cada uno de los [nodos](nodes.md) de este servidor, porque el kit la lleva. Con el código, un guardián podría abrir sus repositorios, pero nunca puede dar órdenes a un nodo, porque para eso hace falta la firma de este servidor.
+
 Sin el código nadie puede abrir la copia, ni siquiera el guardián. Si se pierde el código, crea uno nuevo mientras este servidor siga funcionando. Si el servidor ya ha desaparecido, el kit de recuperación y la APP_KEY escrita siguen funcionando. El guardián puede borrar un depósito en cualquier momento, y el propietario tiene que pedirlo de nuevo.
 
 ## Kit de recuperación {#recovery-kit}
@@ -627,6 +634,8 @@ Sin el código nadie puede abrir la copia, ni siquiera el guardián. Si se pierd
 Esta es la pieza que hace posible la recuperación ante desastres incluso cuando no hay ningún BombVault en marcha.
 
 **Descargar kit de recuperación** en la tarjeta **Para emergencias** de **Ajustes, Restauración** te da la **clave**, la **contraseña de restic derivada**, cada **destino** con el repositorio de cada sección, las credenciales que necesita una instalación nueva para llegar a ellos y los **comandos exactos de restic**, para que puedas restaurar directamente con la CLI de restic en cualquier equipo. Requiere una contraseña de acceso. El kit imprime la clave también con el cifrado desactivado, porque las definiciones de contenedores y VMs siempre se sellan con ella. Tras una adopción imprime la clave de las copias adoptada y la APP_KEY de este servidor, que una instalación nueva necesita solo para recuperar los ajustes. Una tarjeta **Guarda tu kit de recuperación** en el resumen te lo recuerda hasta que lo has guardado.
+
+Un servidor con [nodos](nodes.md) recibe en su kit un capítulo **Nodes**. Nombra cada nodo con su id, su `APP_KEY`, la contraseña de restic que sale de esa clave y el repositorio de cada sección. La propia contraseña del nodo los abre, y también la de este servidor, porque este servidor añade su clave a cada repositorio de un nodo. Vuelve a descargar el kit después de añadir un nodo o cambiar adónde van sus copias. Con la `APP_KEY` del nodo y su `NODE_HOME`, un servidor nuevo vuelve a ser el mismo nodo, consulta [Reemplazar y liberar](nodes.md#replace-release).
 
 !!! danger "Guarda el kit de recuperación fuera del servidor"
     El kit contiene el secreto que descifra tus copias. Guárdalo en un lugar seguro y separado del servidor (un gestor de contraseñas, una copia impresa en una caja fuerte). Si pierdes a la vez BombVault y `APP_KEY` sin kit de recuperación ni depósito de claves, tus copias cifradas no se pueden recuperar.

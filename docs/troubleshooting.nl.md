@@ -208,6 +208,26 @@ Het startscherm zegt op de kaart van de server waarom:
 - **Aanmelden nodig:** een server die via zijn adres is toegevoegd, vraagt om het wachtwoord. Zie ook [Een telefoon belandt op de inlogpagina](#a-phone-lands-on-the-login-page).
 - **De sleutel is veranderd:** het startscherm toont de vingerafdruk van de nieuwe sleutel, en de pagina opent pas nadat je hem vertrouwt. Zie [Onderweg](android.md#away).
 
+## Een node blijft op "Wacht op de node" staan {#node-waiting}
+
+De node heeft zijn thuisinstantie nog niet geantwoord. Open het containerlogboek op de server van de node (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** gevolgd door de id van de thuisinstantie: de node draait en wacht op de relay. Controleer of de server het adres van de relay bereikt. De verbinding gaat uit van de node, dus hij heeft geen open poort nodig.
+- **`NODE_HOME is not set`**: het compose-bestand is zijn waarden kwijt. Kies **Vervangen** op de kaart van de node, kopieer het bestand opnieuw en voer `docker compose up -d` uit.
+- **`NODE_HOME does not belong to this APP_KEY`**: de twee waarden komen van verschillende nodes. Kopieer ze allebei van dezelfde kaart.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: een andere thuisinstantie heeft de node aangenomen. Geef hem daar eerst vrij, of voeg de server hier toe als nieuwe node met een nieuw compose-bestand.
+- **`MODE=... is neither full nor node`**: zet `MODE: node`.
+
+## Een node bereikt zijn repository's niet {#node-reach}
+
+Na het kiezen van een bestemming zegt de thuisinstantie per onderdeel of de node zijn repository heeft geopend, bijvoorbeeld **De node kan de repository voor Containers niet bereiken** met de reden van restic. Controleer vanaf de server van de node of het adres antwoordt. Op de ontvangserver is dat het **Adres voor nodes**: een reverse proxy moet het doorgeven aan de rest-server, en een server met een eigen certificaat heeft dat certificaat nodig onder **Certificaat**. Controleer op een bestemming de inloggegevens die voor de node zijn gemaakt. Kies daarna opnieuw **Bestemming wijzigen** en **Opslaan**. Zie [Waar de back-ups heen gaan](nodes.md#placement).
+
+Bij een node die zijn back-ups zelf bewaart, wordt een poort die een andere container op de node bezet, geweigerd met de naam van die container, dus kies een andere. Kan de thuisinstantie niet ophalen, zet de poort dan open in de firewall van de node.
+
+## Een vrijgegeven node komt niet terug {#node-released}
+
+Een vrijgegeven node neemt met zijn oude `APP_KEY` geen thuisinstantie meer aan, en zijn map `config` onthoudt de vrijgave. Voeg de server toe als nieuwe node en start hem met het nieuwe compose-bestand en een lege map `config`. Zijn oude back-ups blijven waar ze waren, net als elke kopie die de thuisinstantie heeft opgehaald.
+
 ## Een andere gebruiker kan het lokale repository niet lezen {#repository-permissions}
 
 Het lokale repository blijft leesbaar voor andere gebruikers, zoals een syncgebruiker via SMB. Vóór 10.4.1 konden bestanden die een opschoonronde, tag, ophaalactie, onderdeelverplaatsing, verwijdering of stackback-up schreef tot de volgende nacht onleesbaar blijven. Werk BombVault bij, en ze zijn meteen leesbaar. Het repository van de zelf-back-up blijft met opzet alleen voor root leesbaar, omdat het de instellingen van BombVault bevat.

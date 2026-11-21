@@ -16,6 +16,8 @@ Cada calendario es un botón que se lee como una frase, como *a diario a las 03:
 
 Todas las horas están en la zona horaria del servidor. En Unraid es la del propio sistema. En otros sitios, define `TZ`, o todos los calendarios se ejecutan en UTC, consulta [Variables de entorno](configuration.md#environment-variables).
 
+Esta instancia también planifica las copias de sus [nodos](nodes.md), pero no aquí: la tarjeta de cada nodo en la página Instancias tiene un plan para sus contenedores y otro para sus carpetas. Un nodo nuevo empieza media hora después de las copias de contenedores de esta instancia. Consulta [Cuándo copian los nodos](nodes.md#schedule).
+
 ## Semana {#week}
 
 La tarjeta **Semana** dibuja cada ejecución prevista de lunes a domingo, una línea por día: copias, copias externas y comprobaciones. Apunta a un trazo para leer qué empieza ahí. Donde tres calendarios empiezan en un margen de dos horas, el tramo se marca, para que puedas repartirlos.

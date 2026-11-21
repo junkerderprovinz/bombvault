@@ -1026,7 +1026,7 @@ describe("a group that moved into the fortress", () => {
     const cards = [...list.querySelectorAll<HTMLElement>("[data-instance]")];
     expect(cards.map((c) => c.dataset.instance)).toEqual(["m3", "p1"]);
     expect(cards[0].textContent).toContain(en["pairing.behindTitle"]);
-    expect(cards[0].textContent).toContain(en["pairing.kindInstance"]);
+    expect(cards[0].textContent).toContain(en["instances.kindMember"]);
     expect(cards[1].textContent).toContain(en["fleet.kindAndroid"]);
     expect(within(cards[0]).getByLabelText(en["pairing.behindTip"])).toBeTruthy();
     expect(list.textContent).not.toMatch(/192\.168|:3443/);

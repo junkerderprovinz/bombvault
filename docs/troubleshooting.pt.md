@@ -208,6 +208,26 @@ O ecrã inicial diz porquê no cartão do servidor:
 - **Início de sessão necessário:** um servidor adicionado pelo endereço pede a palavra-passe. Vê também [Um telemóvel vai parar à página de início de sessão](#a-phone-lands-on-the-login-page).
 - **A chave mudou:** o ecrã inicial mostra a impressão digital da chave nova, e a página só abre depois de confiares nela. Vê [Fora de casa](android.md#away).
 
+## Um nó fica em "À espera do nó" {#node-waiting}
+
+O nó ainda não respondeu à sua instância base. Abre o registo do seu container no servidor do nó (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** seguido do id da instância base: o nó está a correr e espera no relay. Verifica se o servidor chega ao endereço do relay. A ligação parte do nó, por isso não precisa de nenhuma porta aberta.
+- **`NODE_HOME is not set`**: o ficheiro compose perdeu os seus valores. Escolhe **Substituir** no cartão do nó, copia outra vez o ficheiro e corre `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: os dois valores vêm de nós diferentes. Copia os dois do mesmo cartão.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: outra instância base adotou o nó. Liberta-o lá primeiro, ou adiciona aqui o servidor como um nó novo com um ficheiro compose novo.
+- **`MODE=... is neither full nor node`**: define `MODE: node`.
+
+## Um nó não chega aos seus repositórios {#node-reach}
+
+Depois de escolheres um destino, a instância base diz por secção se o nó abriu o seu repositório, por exemplo **O nó não consegue chegar ao repositório de Containers** com o motivo dado pelo restic. Verifica a partir do servidor do nó se o endereço responde. No servidor recetor é o **Endereço para os nós**: um proxy reverso tem de o passar ao rest-server, e um servidor com certificado próprio precisa desse certificado em **Certificado**. Num destino, verifica as credenciais criadas para o nó. Depois escolhe **Alterar destino** e **Guardar** outra vez. Vê [Para onde vão os backups](nodes.md#placement).
+
+Num nó que guarda ele próprio os seus backups, uma porta que outro container do nó ocupe é recusada com o nome desse container, por isso escolhe outra. Quando a instância base não consegue recolher, abre a porta na firewall do nó.
+
+## Um nó libertado não volta {#node-released}
+
+Um nó libertado não aceita outra vez nenhuma instância base com a sua `APP_KEY` antiga, e a sua pasta `config` lembra-se da libertação. Adiciona o servidor como um nó novo e arranca-o com o ficheiro compose novo e uma pasta `config` vazia. Os seus backups antigos ficam onde estavam, tal como cada cópia que a instância base recolheu.
+
 ## Outro utilizador não consegue ler o repositório local {#repository-permissions}
 
 O repositório local continua legível para outros utilizadores, como um utilizador de sincronização por SMB. Antes da 10.4.1, os ficheiros que uma poda, etiqueta, recolha, mudança de secção, eliminação ou backup de stack escrevia podiam ficar ilegíveis até à noite seguinte. Atualiza o BombVault e passam a ficar legíveis logo. O repositório do auto-backup continua legível só por root, de propósito, porque guarda as definições do BombVault.

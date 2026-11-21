@@ -54,6 +54,10 @@ Telefonul primește propriul card pe pagina Instanțe a fiecărui server din gru
 
 Un telefon împerecheat înainte de 10.0.0 începe să-și semneze apelurile la prima vizită după actualizare, iar fiecare server păstrează prima cheie pe care o primește pentru telefon. Dacă altcineva care cunoaște cuvintele grupului ajunge primul în timp ce telefonul este offline, serverul acela respinge telefonul din acel moment, iar aplicația nu-l mai poate deschide prin relay. Ca să rezolvi, autentifică-te pe serverul respectiv într-un browser, alege **Uită cheia** pe cardul telefonului din pagina Instanțe, apoi **Confirmă uitarea**, și deschide din nou aplicația. Serverul preia cheia proprie a telefonului la următorul apel. Dacă telefonul este respins din nou, altcineva are cuvintele: lasă fiecare instanță să aleagă **Părăsește grupul** și împerechează-le din nou cu cuvinte noi, ca în cazul unui telefon pierdut.
 
+## Noduri {#nodes}
+
+[Nodurile](nodes.md) se administrează din interfața web. Sesiunea unui telefon împerecheat nu ajunge la ele, așa că aplicația nu arată carduri de noduri pe pagina Instanțe, nici cardul **Noduri** în prezentare, nici secțiuni de noduri la **Copii de rezervă**, iar **Adaugă nod** răspunde că are nevoie de o autentificare chiar pe server. Deschide serverul într-un browser și autentifică-te cu parola ca să adaugi un nod, să schimbi unde merg copiile lui sau să restaurezi unul dintre elementele lui.
+
 ## Setări {#settings}
 
 Rotița de lângă butonul + deschide setările aplicației:

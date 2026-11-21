@@ -32,6 +32,8 @@ Tre knapper over listen avgrenser den:
 
 Elementer som ikke lenger er installert men fortsatt har sikkerhetskopier, står for seg under **Ikke installert (kun sikkerhetskopier)**. Gjenopprett dem, eller slett sikkerhetskopiene deres for å frigjøre plassen.
 
+Med [noder](nodes.md) har listene Kontainere og Mapper et område for hver node under dine egne elementer, med om noden er tilkoblet og hvor mange elementer den har. **Elementer på** og navnet på noden skjuler elementene i området og viser dem igjen. Menyen til et element tilbyr **Sikkerhetskopier nå**, som starter sikkerhetskopien på noden, og **Åpne**. Siden til elementet lister sikkerhetskopiene med **Gjenopprett** ved siden av hver, som gjenoppretter elementet på noden. Nodens egen container står ikke i listen. Se [Elementene til en node](nodes.md#entries).
+
 Sidens hovedhandling flyter nederst til høyre: **Sikkerhetskopier alt nå** starter en kjøring over alle områder som er slått på. **Mer** har resten:
 
 - **Velg** starter et utvalg, se nedenfor.

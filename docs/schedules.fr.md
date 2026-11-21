@@ -16,6 +16,8 @@ Chaque planning est un bouton qui se lit comme une phrase, par exemple *tous les
 
 Toutes les heures sont dans le fuseau horaire du serveur. Sur Unraid, c'est celui du système. Ailleurs, réglez `TZ`, sinon chaque planning s'exécute en UTC, voir [Variables d'environnement](configuration.md#environment-variables).
 
+Cette instance planifie aussi les sauvegardes de ses [nœuds](nodes.md), mais pas ici : la carte de chaque nœud sur la page Instances a un planning pour ses conteneurs et un autre pour ses dossiers. Un nouveau nœud démarre une demi-heure après les sauvegardes de conteneurs de cette instance. Voir [Quand les nœuds sauvegardent](nodes.md#schedule).
+
 ## Semaine {#week}
 
 La carte **Semaine** dessine chaque exécution prévue du lundi au dimanche, une ligne par jour : sauvegardes, copies hors site et contrôles. Pointez un trait pour lire ce qui démarre là. Là où trois plannings démarrent à moins de deux heures d'écart, la plage est marquée, pour que vous puissiez les espacer.

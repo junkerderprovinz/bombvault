@@ -23,8 +23,8 @@ import (
 // routeBuilders are the functions that register routes from a table or a
 // constant of another package: the public API and the fortress status, which
 // gate themselves on their own tokens, and the routes members call over the
-// group channel, which never pass authGate.
-var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux"}
+// group channel and the router of a node, which never pass authGate.
+var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux", "NodeRouter"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
 // its source.
@@ -566,6 +566,18 @@ var pairedRefused = []string{
 	"POST /api/containers/{name}/dbdumps/{id}/import",
 	"POST /api/flash/plugins/restore",
 	"POST /api/stacks/{project}/restore",
+	// The servers home runs backups on, which hold a root shell on each.
+	"GET /api/nodes",
+	"POST /api/nodes",
+	"DELETE /api/nodes/{id}",
+	"POST /api/nodes/{id}/placement",
+	"PUT /api/nodes/{id}/schedule",
+	"GET /api/nodes/routes",
+	"POST /api/nodes/{id}/compose",
+	"GET /api/nodes/{id}/api/{path...}",
+	"POST /api/nodes/{id}/api/{path...}",
+	"PATCH /api/nodes/{id}/api/{path...}",
+	"PUT /api/receiver/node-address",
 }
 
 // sessionRoutes are the registered routes that need a session.

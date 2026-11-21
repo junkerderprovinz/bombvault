@@ -5,11 +5,13 @@
 
 import { useEffect, useState } from "react";
 import {
+  ApiError,
   RECEIVER_TEMPLATE_URL,
   checkReceiverServer,
   forgetReceiverServer,
   getReceiverServer,
   revokeReceiverLogin,
+  setReceiverNodeAddress,
   setReceiverServerHost,
   setUpReceiverServer,
   type ReceiverLogin,
@@ -29,6 +31,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import { InstanceWindow } from "./InstanceWindow";
 import { SharedUpkeepSection } from "./SharedUpkeepSection";
 import { dateLocale } from "../../lib/dateLocale";
+import { nodeAddressProblem } from "../../lib/nodeAddress";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -79,6 +82,9 @@ export function ReceiverServerWindow({
   // null while the address field shows what the server has.
   const [hostDraft, setHostDraft] = useState<string | null>(null);
   const [savingHost, setSavingHost] = useState(false);
+  // null while the field shows the address nodes are given.
+  const [nodeDraft, setNodeDraft] = useState<string | null>(null);
+  const [savingNode, setSavingNode] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -131,6 +137,21 @@ export function ReceiverServerWindow({
       push(e instanceof Error ? e.message : t("settings.error"), "fail");
     } finally {
       setSavingHost(false);
+    }
+  }
+
+  async function saveNodeAddress(url: string) {
+    setSavingNode(true);
+    try {
+      const r = await setReceiverNodeAddress(url.trim(), "");
+      if (r.ok) {
+        setServer((s) => s && { ...s, nodeUrl: r.nodeUrl ?? "", nodeCa: false });
+        setNodeDraft(null);
+      } else push(r.error ?? t("settings.error"), "fail");
+    } catch (e) {
+      push(e instanceof ApiError ? (e.detail ?? e.message) : t("settings.error"), "fail");
+    } finally {
+      setSavingNode(false);
     }
   }
 
@@ -256,6 +277,40 @@ export function ReceiverServerWindow({
                 />
               </div>
             </SettingRow>
+            <SettingRow
+              label={t("nodes.address")}
+              hint={t("nodes.addressTip")}
+              htmlFor="bv-receiver-node-address"
+              note={server.nodeCa ? t("nodes.certificateSet") : undefined}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  id="bv-receiver-node-address"
+                  type="url"
+                  value={nodeDraft ?? server.nodeUrl ?? ""}
+                  onChange={(e) => setNodeDraft(e.target.value)}
+                  placeholder="https://backup.example.org"
+                  spellCheck={false}
+                  autoComplete="off"
+                  dir="ltr"
+                  aria-invalid={nodeDraft !== null && nodeAddressProblem(nodeDraft) !== null}
+                  className={`${INPUT} w-56 max-w-full font-mono text-start`}
+                />
+                <Button
+                  label={t("settings.save")}
+                  labelKey="settings.save"
+                  tone="neutral"
+                  onClick={() => void saveNodeAddress(nodeDraft ?? "")}
+                  busy={savingNode}
+                  disabled={savingNode || nodeDraft === null || nodeAddressProblem(nodeDraft) !== null || nodeDraft.trim() === (server.nodeUrl ?? "")}
+                />
+              </div>
+            </SettingRow>
+            {nodeDraft !== null && nodeAddressProblem(nodeDraft) && (
+              <p role="alert" className="py-2 text-xs text-statusWarn">
+                {t(nodeAddressProblem(nodeDraft) === "plain" ? "nodes.addressPlain" : "nodes.addressForm")}
+              </p>
+            )}
             <SettingRow label={t("receiver.server.outsideUser")}>
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text text-start">{server.user}</bdi>
             </SettingRow>

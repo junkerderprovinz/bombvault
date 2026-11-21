@@ -18,7 +18,7 @@ import { Button } from "../Button";
 import { IconBack, IconForward } from "../glyphs";
 import { IconRestore } from "../navGlyphs";
 import { ProgressBar } from "../ProgressBar";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { RestoreCancelButton } from "../RestoreCancelButton";
 import { SourceToggle, isOffsiteSource, type RepoSource } from "../SourceToggle";
 import { RestoreCheckPanel } from "./RestoreCheckPanel";
@@ -187,14 +187,12 @@ export function StackWindow({
                   role="radio"
                   aria-checked={on}
                   onClick={() => choose({ project: s.project })}
-                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 p-3 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-                    on ? "ring-accent" : "ring-transparent"
-                  }`}
+                  onKeyDown={pickWithArrows}
+                  className={`flex items-center gap-3 rounded-control p-3 text-start transition-colors ${pickSurface(on)}`}
                 >
-                  <RadioMark on={on} />
                   <span className="flex min-w-0 flex-col">
-                    <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{s.project}</span>
-                    <span className="text-xs text-carbon-textMuted wrap-anywhere">{membersLine(s, t)}</span>
+                    <span className="text-sm font-semibold wrap-anywhere">{s.project}</span>
+                    <span className={`text-xs wrap-anywhere ${pickSub(on)}`}>{membersLine(s, t)}</span>
                   </span>
                 </button>
               );

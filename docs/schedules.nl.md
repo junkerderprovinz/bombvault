@@ -16,6 +16,8 @@ Elke planning is een knop die als een zin leest, zoals *dagelijks om 03:00* of *
 
 Alle tijden zijn in de tijdzone van de server. Op Unraid is dat die van het systeem zelf. Elders stel je `TZ` in, anders draait elke planning in UTC, zie [Omgevingsvariabelen](configuration.md#environment-variables).
 
+Deze instantie plant ook de back-ups van haar [nodes](nodes.md), maar niet hier: de kaart van elke node op de pagina Instanties heeft een planning voor zijn containers en een voor zijn mappen. Een nieuwe node start een half uur na de containerback-ups van deze instantie. Zie [Wanneer nodes back-ups maken](nodes.md#schedule).
+
 ## Week {#week}
 
 De kaart **Week** tekent elke geplande run van maandag tot zondag, één regel per dag: back-ups, off-site-kopieën en controles. Wijs op een streepje om te lezen wat daar start. Waar drie planningen binnen twee uur starten, is het stuk gemarkeerd, zodat je ze kunt spreiden.

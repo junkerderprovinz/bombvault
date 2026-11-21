@@ -16,6 +16,8 @@ Jeder Plan ist ein Knopf, der sich wie ein Satz liest, etwa *täglich um 03:00* 
 
 Alle Zeiten gelten in der Zeitzone des Servers. Auf Unraid ist das die des Systems. Anderswo setze `TZ`, sonst läuft jeder Plan in UTC, siehe [Umgebungsvariablen](configuration.md#environment-variables).
 
+Diese Instanz plant auch die Sicherungen ihrer [Knoten](nodes.md), aber nicht hier: Die Karte jedes Knotens auf der Seite Instanzen hat einen Plan für seine Container und einen für seine Ordner. Ein neuer Knoten startet eine halbe Stunde nach den Container-Sicherungen dieser Instanz. Siehe [Wann Knoten sichern](nodes.md#schedule).
+
 ## Woche {#week}
 
 Die Karte **Woche** zeichnet jeden geplanten Lauf von Montag bis Sonntag, eine Zeile pro Tag: Sicherungen, Off-site-Kopien und Prüfungen. Zeig auf einen Strich, um zu lesen, was dort startet. Wo drei Pläne innerhalb von zwei Stunden starten, ist der Abschnitt markiert, damit du sie entzerren kannst.

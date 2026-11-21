@@ -32,6 +32,8 @@ Tre knapper over listen indsnævrer den:
 
 Poster, der ikke længere er installeret, men stadig har sikkerhedskopier, står for sig under **Ikke installeret (kun sikkerhedskopier)**. Gendan dem, eller slet deres sikkerhedskopier for at frigøre pladsen.
 
+Med [noder](nodes.md) har listerne Containers og Mapper et område for hver node under dine egne poster, med om noden er forbundet, og hvor mange poster den har. **Poster på** og nodens navn skjuler områdets poster og viser dem igen. En posts menu tilbyder **Sikkerhedskopier nu**, som starter dens sikkerhedskopiering på noden, og **Åbn**. Dens side viser dens sikkerhedskopier med **Gendan** ved siden af hver, som gendanner posten på noden. Nodens egen container er ikke på listen. Se [En nodes poster](nodes.md#entries).
+
 Sidens hovedhandling svæver nederst til højre: **Sikkerhedskopiér alt nu** starter en kørsel over hvert aktiveret område. **Mere** rummer resten:
 
 - **Vælg** starter et valg, se nedenfor.

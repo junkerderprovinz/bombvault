@@ -54,6 +54,10 @@ Das Handy bekommt auf der Seite Instanzen jedes Servers der Gruppe eine eigene K
 
 Ein Handy, das vor 10.0.0 gekoppelt wurde, beginnt bei seinem ersten Besuch nach dem Update, seine Aufrufe zu signieren, und jeder Server behält den ersten Schlüssel, den er für das Handy bekommt. Kommt jemand anderes, der die Wörter der Gruppe kennt, zuerst dorthin, während das Handy offline ist, weist dieser Server das Handy von da an ab, und die App kann ihn über das Relay nicht mehr öffnen. Zur Behebung melde dich an diesem Server in einem Browser an, wähle auf der Karte des Handys auf der Seite Instanzen **Schlüssel vergessen** und dann **Vergessen bestätigen**, und öffne die App wieder. Der Server nimmt bei seinem nächsten Aufruf den eigenen Schlüssel des Handys. Wird das Handy wieder abgewiesen, hat jemand anderes die Wörter: Lass jede Instanz **Gruppe verlassen** und koppele sie mit neuen Wörtern neu, wie bei einem verlorenen Handy.
 
+## Knoten {#nodes}
+
+[Knoten](nodes.md) verwaltest du in der Weboberfläche. Die Sitzung eines gekoppelten Handys reicht nicht bis zu ihnen, deshalb zeigt die App keine Knotenkarten auf der Seite Instanzen, keine Karte **Knoten** in der Übersicht und keine Knotenabschnitte unter **Sicherungen**, und **Knoten hinzufügen** antwortet, dass es eine Anmeldung am Server selbst braucht. Öffne den Server im Browser und melde dich mit dem Passwort an, um einen Knoten hinzuzufügen, das Ziel seiner Sicherungen zu ändern oder einen seiner Einträge wiederherzustellen.
+
 ## Einstellungen {#settings}
 
 Das Zahnrad neben dem Plus öffnet die Einstellungen der App:

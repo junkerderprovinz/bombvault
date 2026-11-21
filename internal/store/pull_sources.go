@@ -59,11 +59,14 @@ type PullSource struct {
 	// Landing is the repository the pulled snapshots lie in, empty before the
 	// first pull. It stays when the domain's own folder moves.
 	Landing string
+	// NodeID is the node of this box that keeps the backups, empty for a
+	// source of the pairing group.
+	NodeID string
 }
 
 const pullSourceCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, creds_ref, domain, cadence,
 	limit_download, limit_upload, last_pull_at, last_pull_ok, last_pull_error,
-	snapshots_pulled, enabled, created_at, sort_order, landing`
+	snapshots_pulled, enabled, created_at, sort_order, landing, node_id`
 
 // CreatePullSource inserts a new pull source, assigning an ID and CreatedAt
 // when they are unset, and returns the stored row.
@@ -81,10 +84,10 @@ func (r *Repo) CreatePullSource(ps PullSource) (PullSource, error) {
 	ps.LegacyAppKeyEnc = notNullBlob(ps.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO pull_sources (`+pullSourceCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		ps.ID, ps.MemberID, ps.Name, ps.Repo, ps.ResticPasswordEnc, ps.LegacyAppKeyEnc, ps.CredsRef, ps.Domain, ps.Cadence,
 		ps.LimitDownload, ps.LimitUpload, ps.LastPullAt, nullBool(ps.LastPullOK), ps.LastPullError,
-		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.CreatedAt, ps.SortOrder, ps.Landing,
+		ps.SnapshotsPulled, boolInt(ps.Enabled), ps.CreatedAt, ps.SortOrder, ps.Landing, ps.NodeID,
 	)
 	if err != nil {
 		return PullSource{}, fmt.Errorf("CreatePullSource: %w", err)
@@ -229,7 +232,7 @@ func scanPullSource(s scanner) (PullSource, error) {
 	err := s.Scan(
 		&ps.ID, &ps.MemberID, &ps.Name, &ps.Repo, &ps.ResticPasswordEnc, &ps.LegacyAppKeyEnc, &ps.CredsRef, &ps.Domain, &ps.Cadence,
 		&ps.LimitDownload, &ps.LimitUpload, &ps.LastPullAt, &ps.LastPullOK, &ps.LastPullError,
-		&ps.SnapshotsPulled, &enabled, &ps.CreatedAt, &ps.SortOrder, &ps.Landing,
+		&ps.SnapshotsPulled, &enabled, &ps.CreatedAt, &ps.SortOrder, &ps.Landing, &ps.NodeID,
 	)
 	if err != nil {
 		return PullSource{}, fmt.Errorf("scanPullSource: %w", err)
@@ -238,5 +241,6 @@ func scanPullSource(s scanner) (PullSource, error) {
 	return ps, nil
 }
 
-// NeedsPairing reports whether the row predates pairing and names no member.
-func (ps PullSource) NeedsPairing() bool { return ps.MemberID == "" }
+// NeedsPairing reports whether the row predates pairing and names no member
+// or node.
+func (ps PullSource) NeedsPairing() bool { return ps.MemberID == "" && ps.NodeID == "" }

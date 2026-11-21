@@ -1,6 +1,6 @@
 # API와 연동
 
-BombVault에는 스크립트, 대시보드, 홈 오토메이션을 위한 작은 HTTP API가 있습니다. 개요가 보여 주는 것과 같은 내용을 읽을 수 있고 백업을 시작할 수 있습니다. 복원, 백업 삭제, 설정 같은 나머지는 모두 웹 인터페이스에서만 합니다.
+BombVault에는 스크립트, 대시보드, 홈 오토메이션을 위한 작은 HTTP API가 있습니다. 개요가 보여 주는 것과 같은 내용을 읽을 수 있고 백업을 시작할 수 있습니다. 복원, 백업 삭제, 설정, [노드](#nodes) 같은 나머지는 모두 웹 인터페이스에서만 합니다.
 
 ## 토큰 {#tokens}
 
@@ -68,6 +68,32 @@ BombVault 자체 서명 인증서를 쓰는 경우 `--cacert bombvault-cert.pem`
 ## OpenAPI {#openapi}
 
 BombVault는 이 경로들의 설명을 `/api/v1/openapi.json`(OpenAPI 3.1)에서 제공합니다. 토큰은 필요 없습니다. Swagger UI, Postman, 코드 생성기에 불러오세요.
+
+## 노드 {#nodes}
+
+[노드](nodes.md)를 관리하는 경로는 위의 토큰 API가 아니라 웹 인터페이스에 속합니다. 로그인 비밀번호가 설정되어 있으면 이 인스턴스에서 로그인해 얻은 브라우저 세션이 필요합니다. API 토큰이나 MCP 키로는 어느 것도 열 수 없고, 페어링한 휴대폰도 닿지 않으며, `/api/v1/openapi.json`에도 설명되지 않습니다. 노드 추가, compose 파일 다시 보기, 노드 자체 경로에 닿기는 로그인 비밀번호를 설정하기 전에는 거부됩니다. 무언가를 바꾸는 스크립트는 웹 인터페이스의 다른 곳과 마찬가지로 `Content-Type: application/json`을 보냅니다.
+
+| 경로 | 하는 일 |
+|---|---|
+| `GET /api/nodes` | 모든 노드와 온라인 여부, 버전, 백업을 보낼 곳, 섹션별 계획, 마지막 백업, 오류, 열린 이상 징후 |
+| `POST /api/nodes` | `{"name":"vps-helsinki"}`처럼 노드를 추가하고, `MODE`, `APP_KEY`, `NODE_HOME`, `NODE_NAME`이 든 `compose`와 함께 돌려줍니다 |
+| `POST /api/nodes/{id}/compose` | **교체**를 위해 같은 `compose` 값을 다시 돌려줍니다 |
+| `POST /api/nodes/{id}/placement` | 노드의 백업을 보낼 곳을 정하고, 노드가 저장소에 닿았는지 섹션마다 답합니다. 대상이면 `warning`이 붙습니다 |
+| `PUT /api/nodes/{id}/schedule` | `{"containers":"daily 03:00","files":"off"}`처럼 계획을 정합니다. 빠진 섹션은 계획을 유지합니다 |
+| `DELETE /api/nodes/{id}` | 노드를 해제합니다. `told`는 노드가 지금 들었는지, 돌아오면 듣게 되는지를 알려 줍니다 |
+| `GET /api/nodes/routes` | 홈 인스턴스가 요청을 전달하는 노드 자체 경로의 목록 |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | 그 경로가 목록에 있으면 요청을 노드의 경로 `/api/{path}`로 전달하고, 노드의 JSON 응답을 돌려줍니다 |
+| `PUT /api/receiver/node-address` | 수신 서버의 **노드용 주소**를 정합니다. 예: `{"url":"https://backup.tower.example.org","caPem":""}`. `url`을 비우면 노드가 그 주소를 더 이상 쓰지 않습니다 |
+
+세 가지 보낼 곳:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+`/api/nodes/{id}/api/...`로 가는 요청은 최대 32 KiB입니다. 목록에 없는 경로는 `403`을, 아직 응답하지 않았거나 해제 중인 노드는 `409`와 코드 `node-not-adopted`를, 연결되어 있지 않은 노드는 `502`와 코드 `node-away`를 돌려줍니다. 예를 들어 `GET /api/nodes/{id}/api/runs?limit=20`은 노드의 최근 실행 20개를 돌려주고, `POST /api/nodes/{id}/api/containers/nextcloud/backup`은 노드의 컨테이너 `nextcloud`를 백업합니다.
 
 ## Home Assistant {#home-assistant}
 

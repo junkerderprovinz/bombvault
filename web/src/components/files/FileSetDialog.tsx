@@ -6,6 +6,7 @@ import { placementErrorText } from "../../lib/placementCodes";
 import { createPlacedFileSet } from "./createPlacedFileSet";
 import { FolderBrowser } from "../FolderBrowser";
 import { useT } from "../../lib/i18n";
+import { inNode } from "../../lib/nodeScope";
 import { Button } from "../Button";
 import { InfoBubble } from "../InfoBubble";
 import { ExcludesEverythingNote } from "../ExcludesEverythingNote";
@@ -22,6 +23,7 @@ export function FileSetDialog({
   initial,
   presetSeed,
   hostMountRoot,
+  node,
   t,
   onClose,
   onSaved,
@@ -33,6 +35,8 @@ export function FileSetDialog({
    *  Ignored when editing; every field stays editable. */
   presetSeed: { name: string; path: string; excludes: string[] } | null;
   hostMountRoot: string;
+  /** The node the set lives on, absent for this instance's own sets. */
+  node?: { id: string; name: string };
   t: T;
   onClose: () => void;
   onSaved: () => void;
@@ -90,9 +94,13 @@ export function FileSetDialog({
       .map((line) => line.trim())
       .filter((line) => line !== "");
     try {
-      const res = initial
-        ? await patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
-        : await createSet(excludes);
+      // A node's sets take the node's placement, so no repository is made
+      // first and the create starts inside the node's scope.
+      const res = await inNode(node?.id ?? null, () =>
+        initial
+          ? patchFileSet(initial.id, { name: name.trim(), path: path.trim(), excludes, enabled })
+          : createSet(excludes)
+      );
       if (res.ok) {
         push(t("settings.saved"), "success");
         onSaved();
@@ -108,10 +116,14 @@ export function FileSetDialog({
     }
   }
 
+  const title = node
+    ? t(initial ? "nodes.editSet" : "nodes.addSet").replace("{name}", () => node.name)
+    : t(initial ? "files.editSet" : "files.addSet");
+
   return (
     <InstanceWindow
       closeOnBackdrop={false}
-      title={initial ? t("files.editSet") : t("files.addSet")}
+      title={title}
       onClose={onClose}
       footer={
         <>
@@ -158,6 +170,7 @@ export function FileSetDialog({
           label={t("files.path")}
           value={path}
           hostMountRoot={hostMountRoot}
+          node={node?.id}
           onChange={setPath}
           hint={`${t("files.pathHint")} ${t("files.pathChangeHint")}`}
         />
@@ -192,8 +205,9 @@ export function FileSetDialog({
       </div>
 
       {/* A new set has no card yet, so its placement is chosen here; an
-          existing set changes it on its card. */}
-      {!initial && <PlacementDraft value={placement} onChange={setPlacement} />}
+          existing set changes it on its card. A node's sets go where the
+          node's placement sends them. */}
+      {!initial && !node && <PlacementDraft value={placement} onChange={setPlacement} />}
 
       {/* ToggleRow, not a bare Toggle: every setting row in this app puts
           the words at the start and the switch at the end. */}

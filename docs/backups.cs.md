@@ -32,6 +32,8 @@ Tři tlačítka nad seznamem ho zužují:
 
 Položky, které už nejsou nainstalované, ale mají ještě zálohy, stojí stranou pod **Není nainstalováno (pouze zálohy)**. Obnov je, nebo smaž jejich zálohy, aby se uvolnilo místo.
 
+S [uzly](nodes.md) mají seznamy Kontejnery a Složky pod tvými vlastními položkami sekci pro každý uzel, s tím, zda je uzel připojený a kolik má položek. **Položky na uzlu** a jméno uzlu skryje položky sekce a zase je ukáže. Nabídka položky nabízí **Zálohovat nyní**, které spustí její zálohu na uzlu, a **Otevřít**. Její stránka vypisuje její zálohy a u každé je **Obnovit**, které položku obnoví na uzlu. Vlastní kontejner uzlu se nevypisuje. Viz [Položky uzlu](nodes.md#entries).
+
 Hlavní akce stránky plave vpravo dole: **Zálohovat vše nyní** spustí běh přes všechny zapnuté sekce. **Více** drží zbytek:
 
 - **Vybrat** zahájí výběr, viz níže.

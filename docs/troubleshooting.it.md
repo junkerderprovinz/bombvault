@@ -208,6 +208,26 @@ La schermata iniziale dice il perché sulla scheda del server:
 - **Accesso necessario:** un server aggiunto con il suo indirizzo chiede la password. Vedi anche [Un telefono finisce nella pagina di accesso](#a-phone-lands-on-the-login-page).
 - **La chiave è cambiata:** la schermata iniziale mostra l'impronta della nuova chiave, e la pagina si apre solo dopo che ti fidi. Vedi [Fuori casa](android.md#away).
 
+## Un nodo resta su "In attesa del nodo" {#node-waiting}
+
+Il nodo non ha ancora risposto alla sua istanza madre. Apri il registro del suo container sul server del nodo (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** seguito dall'id dell'istanza madre: il nodo gira e aspetta sul relay. Controlla che il server raggiunga l'indirizzo del relay. La connessione parte dal nodo, quindi non serve nessuna porta aperta.
+- **`NODE_HOME is not set`**: il file compose ha perso i suoi valori. Scegli **Sostituisci** sulla scheda del nodo, copia di nuovo il file ed esegui `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: i due valori vengono da nodi diversi. Copiali entrambi dalla stessa scheda.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: un'altra istanza madre ha preso in carico il nodo. Rilascialo prima lì, oppure aggiungi qui il server come nuovo nodo con un nuovo file compose.
+- **`MODE=... is neither full nor node`**: imposta `MODE: node`.
+
+## Un nodo non raggiunge i suoi repository {#node-reach}
+
+Dopo aver scelto una destinazione, l'istanza madre dice per sezione se il nodo ha aperto il suo repository, per esempio **Il nodo non raggiunge il repository di Container** con il motivo dato da restic. Controlla dal server del nodo che l'indirizzo risponda. Sul server ricevente è l'**Indirizzo per i nodi**: un reverse proxy deve passarlo al rest-server, e un server con un certificato proprio ha bisogno di quel certificato in **Certificato**. Su una destinazione, controlla le credenziali create per il nodo. Poi scegli di nuovo **Cambia destinazione** e **Salva**. Vedi [Dove vanno i backup](nodes.md#placement).
+
+Per un nodo che tiene i backup da sé, una porta occupata da un altro container sul nodo viene rifiutata con il nome di quel container, quindi scegline un'altra. Quando l'istanza madre non riesce a prelevare, apri la porta nel firewall del nodo.
+
+## Un nodo rilasciato non torna {#node-released}
+
+Un nodo rilasciato non accetta più un'istanza madre con la sua vecchia `APP_KEY`, e la sua cartella `config` ricorda il rilascio. Aggiungi il server come nuovo nodo e avvialo con il nuovo file compose e una cartella `config` vuota. I suoi vecchi backup restano dove erano, come ogni copia che l'istanza madre ha prelevato.
+
 ## Un altro utente non riesce a leggere il repository locale {#repository-permissions}
 
 Il repository locale resta leggibile per altri utenti, come un utente di sincronizzazione via SMB. Prima della 10.4.1, i file scritti da una potatura, un tag, un prelievo, uno spostamento di sezione, un'eliminazione o un backup di stack potevano restare illeggibili fino alla notte successiva. Aggiorna BombVault, e sono leggibili subito. Il repository dell'auto-backup resta leggibile solo da root, di proposito, perché contiene le impostazioni di BombVault.

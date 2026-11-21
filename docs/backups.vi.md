@@ -32,6 +32,8 @@ Ba nút phía trên danh sách giúp thu hẹp nó:
 
 Các mục không còn được cài nhưng vẫn có bản sao lưu nằm riêng dưới **Chưa cài đặt (chỉ có bản sao lưu)**. Hãy khôi phục chúng, hoặc xóa bản sao lưu của chúng để giải phóng chỗ.
 
+Khi có [node](nodes.md), danh sách Containers và Thư mục có một phần cho mỗi node bên dưới các mục của chính bạn, kèm việc node có đang kết nối không và nó có bao nhiêu mục. Tiêu đề mang tên node, như **Mục trên vps-falkenstein**, ẩn các mục của phần đó và hiện lại chúng. Menu của một mục có **Sao lưu ngay**, bắt đầu sao lưu trên node, và **Mở**. Trang của mục liệt kê các bản sao lưu với **Khôi phục** bên cạnh mỗi bản, để khôi phục mục đó trên node. Container của chính node không được liệt kê. Xem [Các mục của một node](nodes.md#entries).
+
 Hành động chính của trang nổi ở góc dưới bên phải: **Sao lưu tất cả ngay** bắt đầu một lượt chạy trên mọi phần đang bật. **Thêm** chứa phần còn lại:
 
 - **Chọn** bắt đầu một lựa chọn, xem bên dưới.

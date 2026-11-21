@@ -4,12 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
+	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/group"
+	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
+	"github.com/junkerderprovinz/bombvault/internal/progress"
+	"github.com/junkerderprovinz/bombvault/internal/schedule"
+	"github.com/junkerderprovinz/bombvault/internal/store"
+	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
 func TestPlatformForTrueNAS(t *testing.T) {
@@ -127,5 +136,111 @@ func TestARoundCountsAnEntryWithNowhereToGoAsFailed(t *testing.T) {
 	}
 	if err := roundItemErr(errors.New("disk full")); err == nil {
 		t.Fatal("roundItemErr dropped a real failure")
+	}
+}
+
+// memStore is a migrated store in memory.
+func memStore(t *testing.T) *store.Repo {
+	t.Helper()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	return store.New(db)
+}
+
+func TestANodePlansNoBackupsOfItsOwn(t *testing.T) {
+	st := memStore(t)
+	settings, err := st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.ContainersEnabled = true
+	settings.ContainersSchedule = "30 2 * * *"
+	if err := st.UpdateSettings(settings); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}, st, nil, nil, nil)
+
+	planned := func(mode config.Mode) []schedule.NextRun {
+		s := newScheduler(mode, svc, st)
+		s.Start()
+		defer s.Stop()
+		return s.NextRuns()
+	}
+	if len(planned(config.ModeFull)) == 0 {
+		t.Fatal("the full app plans nothing, so the test proves nothing")
+	}
+	if runs := planned(config.ModeNode); len(runs) != 0 {
+		t.Errorf("a node plans %+v", runs)
+	}
+}
+
+func TestHomePlansTheBackupsOfItsNodes(t *testing.T) {
+	st := memStore(t)
+	n := store.Node{ID: "aabbccddeeff00", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 1, AdoptedAt: 1, ContainersCadence: "daily 03:00"}
+	if err := st.AddNode(n); err != nil {
+		t.Fatal(err)
+	}
+	svc := api.NewService(config.Config{AppKey: strings.Repeat("a", 64), DataDir: t.TempDir()}, st, nil, nil, nil)
+	s := newScheduler(config.ModeFull, svc, st)
+	s.Start()
+	defer s.Stop()
+	for _, run := range s.NextRuns() {
+		if run.Job == "nodes" {
+			return
+		}
+	}
+	t.Errorf("the next runs %+v leave out the node's", s.NextRuns())
+}
+
+func TestANodeJoinsTheHomeItsVariablesName(t *testing.T) {
+	rs := httptest.NewServer(relay.New())
+	t.Cleanup(rs.Close)
+	t.Cleanup(rs.CloseClientConnections)
+	appKey := strings.Repeat("b", 64)
+	homeKey := make([]byte, 32)
+	nodeHome, err := nodelink.EncodeHome(appKey, nodelink.Home{ID: "home-1", Key: homeKey, Relay: group.ModeOwn, RelayURL: rs.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := config.Config{AppKey: appKey, DataDir: t.TempDir(), Mode: config.ModeNode}
+	svc := api.NewService(cfg, memStore(t), nil, nil, nil)
+
+	leave, err := joinHome(cfg, svc)
+	if err != nil {
+		t.Fatalf("without NODE_HOME: %v", err)
+	}
+	leave()
+
+	cfg.NodeHome = nodeHome
+	leave, err = joinHome(cfg, svc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	leave()
+
+	typo := []byte(nodeHome)
+	typo[len(typo)/2] ^= 1
+	cfg.NodeHome = string(typo)
+	if _, err := joinHome(cfg, svc); err == nil {
+		t.Error("a NODE_HOME with a typo was taken")
+	}
+}
+
+func TestANodeRunsWhatHomePassesOnThroughItsOwnRoutes(t *testing.T) {
+	st := memStore(t)
+	cfg := config.Config{AppKey: strings.Repeat("c", 64), DataDir: t.TempDir(), Mode: config.ModeNode}
+	svc := api.NewService(cfg, st, nil, nil, nil)
+	router := nodeRouter(cfg, st, nil, svc, newScheduler(config.ModeNode, svc, st), progress.NewStore())
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/runs", nil))
+	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"ok":true`) {
+		t.Errorf("GET /api/runs on a node = %d %s", w.Code, w.Body)
 	}
 }

@@ -111,6 +111,10 @@ type receiverServerView struct {
 	// NeedsHost says the address has to be set by hand: no check found the
 	// server at an IP address members can be given.
 	NeedsHost bool `json:"needsHost"`
+	// NodeURL is where nodes reach the server, and NodeCA whether they are
+	// given a certificate to trust it by.
+	NodeURL string `json:"nodeUrl"`
+	NodeCA  bool   `json:"nodeCa"`
 }
 
 // receiverLoginView is a member's login as the Receiver tab lists it.
@@ -382,12 +386,8 @@ func (s *Service) SetUpReceiver(ctx context.Context, in receiverServerInput) (re
 		return receiverSetupResult{}, err
 	}
 
-	if id, err := s.docker.ImageID(ctx, restServerImage); err != nil {
+	if err := s.ensureRestServerImage(ctx); err != nil {
 		return receiverSetupResult{}, err
-	} else if id == "" {
-		if err := s.docker.Pull(ctx, restServerImage); err != nil {
-			return receiverSetupResult{}, fmt.Errorf("download %s: %w", restServerImage, err)
-		}
 	}
 	unraid := s.platformFn().Kind() == platform.KindUnraid
 	if err := s.docker.CreateAndStart(ctx, receiverContainerSpec(hostPath, in.Port, unraid), true); err != nil {
@@ -410,6 +410,18 @@ func (s *Service) SetUpReceiver(ctx context.Context, in receiverServerInput) (re
 	s.checkReceiver(ctx, rs, password)
 	result.Server, err = s.receiverView(ctx)
 	return result, err
+}
+
+// ensureRestServerImage downloads rest-server's image unless Docker has it.
+func (s *Service) ensureRestServerImage(ctx context.Context) error {
+	id, err := s.docker.ImageID(ctx, restServerImage)
+	if err != nil || id != "" {
+		return err
+	}
+	if err := s.docker.Pull(ctx, restServerImage); err != nil {
+		return fmt.Errorf("download %s: %w", restServerImage, err)
+	}
+	return nil
 }
 
 // writeReceiverTemplate writes the receiver's Unraid template into the flash
@@ -671,7 +683,8 @@ func (s *Service) receiverView(ctx context.Context) (receiverServerView, error) 
 		ContainerName: rs.ContainerName, Folder: rs.Folder, HostPath: rs.HostPath, Port: rs.Port, User: rs.User,
 		Host: rs.Host, CreatedAt: rs.CreatedAt, Present: live != "" || err != nil,
 		Check: rs.Check, CheckDetail: rs.CheckDetail, CheckedAt: rs.CheckedAt,
-		Logins: make([]receiverLoginView, 0, len(logins)),
+		Logins:  make([]receiverLoginView, 0, len(logins)),
+		NodeURL: rs.NodeURL, NodeCA: rs.NodeCAPEM != "",
 	}
 	for _, l := range logins {
 		v.Logins = append(v.Logins, receiverLoginView{MemberID: l.MemberID, Name: l.MemberName, User: l.User, CreatedAt: l.CreatedAt})

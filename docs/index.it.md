@@ -81,6 +81,8 @@ Alcune parole hanno in BombVault, e in queste pagine, un significato fisso.
 | **Destinazioni di un elemento** | Quali destinazioni ricevono i backup di un elemento, impostate sull'elemento o come valore predefinito della sua sezione. Vedi [Destinazioni per elemento](offsite-recovery.md#placement). |
 | **Replica** | Una copia identica a livello di blocchi di un elemento ZFS su un secondo server ZFS, fatta con `zfs send`. Sta accanto al backup e non lo sostituisce. Vedi [Replica](zfs-datasets.md#replica). |
 | **Ruolo** | Qualcosa che un'istanza del tuo gruppo fa per un'altra: Ricevitore, Prelevatore, Server ZFS o Custode della chiave. Vedi [Istanze e ruoli](offsite-recovery.md#roles). |
+| **Nodo** | Un BombVault senza interfaccia web, per esempio su un VPS, a cui un'altra istanza, la sua istanza madre, dice di cosa fare il backup, quando e dove. Vedi [Nodi](nodes.md). |
+| **Istanza madre** | L'istanza che ha aggiunto un nodo e lo controlla. Conserva la chiave del nodo e gli dice di cosa fare il backup, quando e dove. Vedi [Nodi](nodes.md). |
 
 ## Riconoscimenti {#credits}
 

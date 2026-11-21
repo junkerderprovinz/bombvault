@@ -140,6 +140,10 @@ Một cơ sở dữ liệu chỉ có bản kết xuất cơ sở dữ liệu mà
 
 Trong một [kho chung](offsite-recovery.md#shared-repository), mọi khóa đều mở được bản sao lưu của tất cả máy chủ, nên trang Khôi phục liệt kê các thành viên khác dưới **Máy chủ khác**, mỗi thành viên kèm tên, host, số mục và lúc bản sao lưu mới nhất của nó chạy. Một host không thuộc máy chủ nào mà máy chủ này biết sẽ hiện là **Một máy chủ mà máy chủ này không biết**. Một cú nhấp sẽ mở **Bản sao lưu của** và tên máy chủ, chỉ để đọc và không cần nhập gì. Bộ thư mục và tập dữ liệu ZFS được khôi phục vào một thư mục bạn chọn. Container và VM quay lại dưới dạng tệp thường trong một thư mục, vì máy chủ kia niêm phong định nghĩa của chúng bằng khóa riêng của nó. Bản sao lưu của chính máy chủ này trong kho chung nằm ở tab **Bản sao lưu** của từng mục.
 
+## Node {#nodes}
+
+Các mục của một [node](nodes.md) được khôi phục từ trang của chúng trong **Bản sao lưu**, không phải từ trang này. **Khôi phục** bên cạnh một bản sao lưu ở đó sẽ khôi phục mục trên node và thay thế những gì đang có ở đó. Một bản sao mà phiên bản này lấy về từ một node [tự giữ bản sao lưu của nó](nodes.md#keep-on-node) được liệt kê ở đây dưới **Nguồn khác**, như [Những gì máy chủ này đã kéo về](offsite-recovery.md#restore-what-was-fetched). Khi máy chủ của node không còn, hãy dựng lại node bằng **Thay thế** trên thẻ của nó: cùng `APP_KEY` và `NODE_HOME` sẽ khiến máy chủ mới là node cũ, và các bản sao lưu của nó lại mở được. Chương **Node** của [bộ khôi phục](offsite-recovery.md#recovery-kit) cũng mở được chúng bằng restic thuần.
+
 ## Sau khi khôi phục {#after}
 
 Một bản sao được khôi phục bên cạnh bản gốc được liệt kê dưới **Bản sao lưu** là đã loại trừ, nên nó không được tính là một việc đang mở. Hãy thêm nó vào lịch nếu bạn muốn giữ. Một container hoặc VM đang chạy lúc được sao lưu sẽ trở lại ở trạng thái chạy, còn cái đã dừng thì vẫn dừng. Trên Unraid, một container được khôi phục xuất hiện lại trong tab Docker như một ứng dụng bình thường, sửa được, và một VM trong VM Manager với đĩa cùng NVRAM đã được gắn.

@@ -9,6 +9,8 @@ export default defineConfig({
     emptyOutDir: false,
   },
   server: {
+    // The compose file of a node lives in deploy/ and the page reads it from there.
+    fs: { allow: [".."] },
     proxy: {
       "/api": {
         target: "https://localhost:3443",

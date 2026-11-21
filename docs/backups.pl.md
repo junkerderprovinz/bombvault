@@ -32,6 +32,8 @@ Trzy przyciski nad listą zawężają ją:
 
 Elementy, które nie są już zainstalowane, ale nadal mają kopie, stoją osobno pod **Niezainstalowany (tylko kopie zapasowe)**. Przywróć je albo usuń ich kopie, żeby zwolnić miejsce.
 
+Przy [węzłach](nodes.md) listy Containers i Foldery mają pod Twoimi elementami sekcję dla każdego węzła, z informacją, czy węzeł jest połączony i ile ma elementów. **Wpisy na węźle** z nazwą węzła chowa elementy sekcji i pokazuje je z powrotem. Menu elementu oferuje **Utwórz kopię teraz**, które uruchamia jego kopię na węźle, oraz **Otwórz**. Jego strona wymienia kopie, a przy każdej jest **Przywróć**, które przywraca element na węźle. Własny kontener węzła nie jest wymieniony. Zobacz [Elementy węzła](nodes.md#entries).
+
 Główna akcja strony unosi się w prawym dolnym rogu: **Utwórz kopię wszystkiego teraz** uruchamia przebieg obejmujący każdą włączoną sekcję. **Więcej** zawiera resztę:
 
 - **Zaznacz** zaczyna zaznaczanie, zobacz niżej.

@@ -32,6 +32,8 @@ Drei Knöpfe über der Liste grenzen sie ein:
 
 Einträge, die nicht mehr installiert sind, aber noch Sicherungen haben, stehen getrennt unter **Nicht installiert (nur Sicherungen)**. Stelle sie wieder her oder lösche ihre Sicherungen, um den Platz freizugeben.
 
+Mit [Knoten](nodes.md) haben die Listen Container und Ordner unter deinen eigenen Einträgen einen Abschnitt für jeden Knoten, mit der Angabe, ob der Knoten verbunden ist und wie viele Einträge er hat. **Einträge auf** und der Name des Knotens blendet die Einträge des Abschnitts aus und wieder ein. Das Menü eines Eintrags bietet **Jetzt sichern**, das seine Sicherung auf dem Knoten startet, und **Öffnen**. Seine Seite listet seine Sicherungen mit **Wiederherstellen** neben jeder, das den Eintrag auf dem Knoten wiederherstellt. Der eigene Container des Knotens steht nicht in der Liste. Siehe [Die Einträge eines Knotens](nodes.md#entries).
+
 Die Hauptaktion der Seite schwebt unten rechts: **Jetzt alles sichern** startet einen Lauf über alle eingeschalteten Bereiche. **Mehr** enthält den Rest:
 
 - **Auswählen** startet eine Auswahl, siehe unten.

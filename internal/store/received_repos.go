@@ -17,10 +17,13 @@ var ErrEmptyReceivedRepo = errors.New("received repo location must not be empty"
 type ReceivedRepo struct {
 	ID string
 	// MemberID is the sending instance's id in the pairing group. It is
-	// empty on a row from before pairing, which has to be paired again.
+	// empty on a row from before pairing, which has to be paired again, and
+	// on a repository of one of this instance's nodes.
 	MemberID string
-	Name     string
-	Repo     string
+	// NodeID is the node of this instance that writes the repository.
+	NodeID string
+	Name   string
+	Repo   string
 	// ResticPasswordEnc is the sending instance's restic password, sealed
 	// with this instance's key (internal/secret). It opens the repository
 	// and nothing else, and it is never logged or returned in the clear.
@@ -57,11 +60,12 @@ type ReceivedRepo struct {
 	SortOrder         int
 }
 
-// NeedsPairing reports whether the row predates pairing and names no member.
-func (rr ReceivedRepo) NeedsPairing() bool { return rr.MemberID == "" }
+// NeedsPairing reports whether the row predates pairing and names no member
+// or node.
+func (rr ReceivedRepo) NeedsPairing() bool { return rr.MemberID == "" && rr.NodeID == "" }
 
 const receivedRepoCols = `id, member_id, name, repo, restic_password_enc, app_key_enc, dead_man_hours, check_cadence, read_data_percent,
-	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order, creds_ref, last_read_at`
+	last_check_at, last_check_ok, last_check_error, last_check_read_data, enabled, created_at, sort_order, creds_ref, last_read_at, node_id`
 
 // CreateReceivedRepo inserts a new received repo, assigning an ID and CreatedAt
 // when they are unset, and returns the stored row.
@@ -79,10 +83,10 @@ func (r *Repo) CreateReceivedRepo(rr ReceivedRepo) (ReceivedRepo, error) {
 	rr.LegacyAppKeyEnc = notNullBlob(rr.LegacyAppKeyEnc)
 	_, err := r.db.Exec(`
 		INSERT INTO received_repos (`+receivedRepoCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		rr.ID, rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
-		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder, rr.CredsRef, rr.LastReadAt,
+		boolInt(rr.Enabled), rr.CreatedAt, rr.SortOrder, rr.CredsRef, rr.LastReadAt, rr.NodeID,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("CreateReceivedRepo: %w", err)
@@ -114,11 +118,12 @@ func (r *Repo) UpdateReceivedRepo(rr ReceivedRepo) error {
 		  last_check_read_data = ?,
 		  enabled              = ?,
 		  sort_order           = ?,
-		  creds_ref            = ?
+		  creds_ref            = ?,
+		  node_id              = ?
 		WHERE id = ?`,
 		rr.MemberID, rr.Name, rr.Repo, rr.ResticPasswordEnc, rr.LegacyAppKeyEnc, rr.DeadManHours, rr.CheckCadence, rr.ReadDataPercent,
 		rr.LastCheckAt, nullBool(rr.LastCheckOK), rr.LastCheckError, boolInt(rr.LastCheckReadData),
-		boolInt(rr.Enabled), rr.SortOrder, rr.CredsRef, rr.ID,
+		boolInt(rr.Enabled), rr.SortOrder, rr.CredsRef, rr.NodeID, rr.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("UpdateReceivedRepo: %w", err)
@@ -201,7 +206,7 @@ func scanReceivedRepo(s scanner) (ReceivedRepo, error) {
 	var readData, enabled int
 	err := s.Scan(
 		&rr.ID, &rr.MemberID, &rr.Name, &rr.Repo, &rr.ResticPasswordEnc, &rr.LegacyAppKeyEnc, &rr.DeadManHours, &rr.CheckCadence, &rr.ReadDataPercent,
-		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder, &rr.CredsRef, &rr.LastReadAt,
+		&rr.LastCheckAt, &rr.LastCheckOK, &rr.LastCheckError, &readData, &enabled, &rr.CreatedAt, &rr.SortOrder, &rr.CredsRef, &rr.LastReadAt, &rr.NodeID,
 	)
 	if err != nil {
 		return ReceivedRepo{}, fmt.Errorf("scanReceivedRepo: %w", err)

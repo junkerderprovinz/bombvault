@@ -34,4 +34,5 @@ Mindegyik példa egy valódi feladatot visz végig az elejétől a végéig, kit
 ## Több szerver {#several-servers}
 
 - [Két Unraid-gép párosítása](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): két szerver, amely egymás másolatait tartja, és egyik sem törölheti a másik mentéseit.
+- [Egy VPS, amely a fogadószerverre ment](nodes.md#example-vps): egy csomópont a konténereivel, amelyet az anyapéldány irányít, és a VPS-en nincs nyitott port.
 - [Egy kártya és egy riasztás a Home Assistantben](api.md#home-assistant-example): a BombVault egy irányítópulton, és üzenet, ha egy mentés hibázik.

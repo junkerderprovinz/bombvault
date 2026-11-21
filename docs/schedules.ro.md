@@ -16,6 +16,8 @@ Fiecare plan este un buton care se citește ca o propoziție, de exemplu *zilnic
 
 Toate orele sunt în fusul orar al serverului. Pe Unraid este cel al sistemului. În altă parte setează `TZ`, altfel fiecare plan rulează în UTC, vezi [Variabile de mediu](configuration.md#environment-variables).
 
+Instanța-mamă planifică și copiile [nodurilor](nodes.md) ei, dar nu aici: cardul fiecărui nod de pe pagina Instanțe are un plan pentru containerele lui și unul pentru folderele lui. Un nod nou pornește la o jumătate de oră după copiile containerelor acestei instanțe. Vezi [Când fac nodurile copii](nodes.md#schedule).
+
 ## Săptămâna {#week}
 
 Cardul **Săptămâna** desenează fiecare rulare planificată de luni până duminică, câte o linie pe zi: backupuri, copii off-site și verificări. Treci cu mouse-ul peste o liniuță ca să citești ce pornește acolo. Unde trei planuri pornesc într-un interval de două ore, porțiunea este marcată, ca să le poți răspândi.

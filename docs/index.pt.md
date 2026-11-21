@@ -81,6 +81,8 @@ Algumas palavras têm um significado fixo no BombVault e nestas páginas.
 | **Localização por entrada** | Que destinos recebem os backups de uma entrada, definido na entrada ou como predefinição da sua secção. Vê [Localização por entrada](offsite-recovery.md#placement). |
 | **Réplica** | Uma cópia exata ao bloco de uma entrada ZFS num segundo servidor ZFS, feita com `zfs send`. Fica ao lado do backup e não o substitui. Vê [Réplica](zfs-datasets.md#replica). |
 | **Função** | Algo que uma instância do teu grupo faz por outra: Recetor, Recolhedor, Servidor ZFS ou Guardião da chave. Vê [Instâncias e funções](offsite-recovery.md#roles). |
+| **Nó** | Um BombVault sem interface web, por exemplo num VPS, a quem outra instância, a sua instância base, diz de que fazer backup, quando e para onde. Vê [Nós](nodes.md). |
+| **Instância base** | A instância que adicionou um nó e o controla. Guarda a chave do nó e diz-lhe de que fazer backup, quando e para onde. Vê [Nós](nodes.md). |
 
 ## Créditos {#credits}
 

@@ -188,6 +188,17 @@ openssl rand -hex 32
 !!! note "主机集成检查"
     概览上的**主机集成**卡片会探测每个挂载和命令行工具（Docker 套接字、libvirt、restic、qemu-img、rclone），并报告缺少的部分，这样你在依赖它之前就能确认容器配置正确。在你添加它之前，它放在**自定义**里。
 
+## 把 VPS 作为节点备份 {#node}
+
+VPS 或其他小服务器不需要一个有自己网页界面的 BombVault。把它添加为此实例的节点，由此实例来运行它的备份：
+
+1. 如果还没有，在**设置、安全**下设置登录密码。
+2. 打开**实例**，选择**添加节点**，输入一个名称，例如 `vps-helsinki`。
+3. 选择它的备份发往哪里，例如此实例的接收服务器，以及它什么时候备份。
+4. 把窗口里显示的 compose 文件复制到那台服务器上，把它的 Host Data 卷和 `HOST_SOURCE_ROOT` 指向要备份的数据，然后执行 `docker compose up -d`。
+
+节点一应答，它的卡片就显示**已连接**，它的容器也会出现在**备份**下。[节点](nodes.md)用一个示例完整地走了一遍。
+
 ## 找到你要的页面 {#navigation}
 
 ![设置以磁贴呈现，所选磁贴的卡片显示在旁边。每次更改都会立即写入。](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signe
 - 用**[通知](notifications.md)**确保失败的消息能到达你。
 - 在**[计划](schedules.md)**里查看各项何时运行。
 - 用 **[Android 应用](android.md)**把你组里的每台服务器都放到手机上。
+- 用 **[节点](nodes.md)**从这里备份一台 VPS。
 - **[示例](guides.md)**把常见的工作走了一遍，**[功能](features.md)**列出了 BombVault 的全部功能。
 - 要复制一套配置，或者搬到新机器？用**导出 / 导入设置**卡片带上你的全部配置。参见[配置](configuration.md#portable-settings-export-and-import)。
 - 遇到问题？参见**[故障排除](troubleshooting.md)**。

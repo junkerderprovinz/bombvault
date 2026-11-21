@@ -390,7 +390,7 @@ Een vesting brengt BombVault samen met de andere apps van de familie, zoals Ship
 
 ## Instanties en rollen {#roles}
 
-De pagina **Instanties** (een instellingentegel die aan de zijbalk kan worden vastgezet) toont de groep als een net van wie wat voor wie doet, een kaart voor deze instantie en een kaart voor elk ander lid, de Android-telefoons en de ZFS-servers. **Koppeling** rechtsonder leidt naar de koppelpagina. Welke delen aanstaan, stel je in onder **Instellingen, Instanties, Meerdere servers**: **Instanties**, **Ontvanger** en **Ophalen**.
+De pagina **Instanties** (een instellingentegel die aan de zijbalk kan worden vastgezet) toont de groep als een net van wie wat voor wie doet, een kaart voor deze instantie en een kaart voor elk ander lid, de Android-telefoons, de ZFS-servers en de nodes van deze instantie. **Koppeling** rechtsonder leidt naar de koppelpagina, en **Node toevoegen** ernaast voegt een node toe. Welke delen aanstaan, stel je in onder **Instellingen, Instanties, Meerdere servers**: **Instanties**, **Ontvanger** en **Ophalen**.
 
 ![De pagina Instanties: de groep als net, en een kaart per instantie met zijn roltegels, waarvan één Inactief.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![De pagina Instanties: de groep als net, en een kaart per instantie met zijn roltegels, waarvan één Inactief.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Een rol inschakelen stuurt een verzoek, en niets start tot iemand op de andere i
 
 Onder de kaarten horen de kaart **Gedeelde repository** op een machine met een ontvangserver en de kaart **Gedeelde repository's** op een lid bij de [gedeelde repository](#shared-repository).
 
-Een lid kan zijn eigen off-site-opslag via de groep aan een ander lid aanbieden. De andere beheerder ziet het aanbod in de **Details** van het lid en accepteert of wijst het af. Accepteren maakt opgeslagen inloggegevens en een gewone bestemming aan, na dezelfde controles als bij een bestemming die je intypt. De bestemming komt met bescherming tegen verwijderen ingeschakeld, omdat het recept dat het aanbod toont een append-only rest-server is, dus **Hoe lang bewaren** geldt daar niet. Elk aanbod heeft een eigen login en een eigen map. Bied je een onderdeel opnieuw aan, aan hetzelfde lid of een ander, dan blijven de kopieën van de eerste partner dus met rust: voeg de nieuwe regel toe aan `.htpasswd` en laat de server draaien. Alleen verbindingsgegevens reizen zo, nooit back-updata. **Nu controleren** vraagt een lid het repository van één onderdeel te controleren. Niets op de pagina kan een back-up of herstel starten of iets verwijderen op een andere machine.
+Een lid kan zijn eigen off-site-opslag via de groep aan een ander lid aanbieden. De andere beheerder ziet het aanbod in de **Details** van het lid en accepteert of wijst het af. Accepteren maakt opgeslagen inloggegevens en een gewone bestemming aan, na dezelfde controles als bij een bestemming die je intypt. De bestemming komt met bescherming tegen verwijderen ingeschakeld, omdat het recept dat het aanbod toont een append-only rest-server is, dus **Hoe lang bewaren** geldt daar niet. Elk aanbod heeft een eigen login en een eigen map. Bied je een onderdeel opnieuw aan, aan hetzelfde lid of een ander, dan blijven de kopieën van de eerste partner dus met rust: voeg de nieuwe regel toe aan `.htpasswd` en laat de server draaien. Alleen verbindingsgegevens reizen zo, nooit back-updata. **Nu controleren** vraagt een lid het repository van één onderdeel te controleren. Leden laten elkaars back-ups met rust: niets op de pagina start een back-up op een ander lid, herstelt daar iets of verwijdert daar iets.
+
+**Nodes** zijn anders, want het zijn geen leden. Een node is een BombVault zonder webinterface die zijn opdrachten van deze instantie krijgt, dus deze instantie start er zijn back-ups en herstelacties op en schoont zijn oude back-ups op. Elke node heeft een kaart met zijn status, zijn versie, waar zijn back-ups heen gaan en wanneer elk onderdeel een back-up maakt, met **Bestemming wijzigen**, **Vervangen** en **Vrijgeven**. Een nieuwe node zegt **Wacht op de node** tot hij voor het eerst antwoordt, en een vrijgegeven node die weg is, zegt **Wordt vrijgegeven**. Zie [Nodes](nodes.md).
+
+![De kaart van een node: Verbonden, zijn versie, zijn back-ups op de ontvangserver en zijn planningen per onderdeel.](assets/screenshots/nodes/card-dark.png#only-dark)
+![De kaart van een node: Verbonden, zijn versie, zijn back-ups op de ontvangserver en zijn planningen per onderdeel.](assets/screenshots/nodes/card-light.png#only-light)
 
 Instanties die zijn uitgeschakeld en telefoons met de app gesloten, houden hun kaart als **Inactief**, in grijs, met wanneer ze voor het laatst zijn gezien, en staan gedimd in het net tot je ze **Verwijderen**. Direct nadat deze server start, zegt zo'n kaart **Controleren** tot de groep weer terug is. **Verwijderen** werkt op zo'n kaart ongeacht welke delen aanstaan, en beëindigt ook de openstaande verzoeken van het lid, zijn ongebruikte ZFS-ontvangstplekken en zijn wachtende sleutelverzoeken. De kaart **Instanties** op de koppelpagina toont deze leden ook als **Inactief**.
 
@@ -443,7 +448,7 @@ De instanties in je groep vinden de server dan onder de aanbieders bij **Uit je 
 
 Een instantie die de ontvangende machine alleen via de relay bereikt, kan de server niet gebruiken, omdat de relay geen back-ups draagt. Voeg eerst het adres van de ontvangende machine toe op de koppelpagina. Draait BombVault op een eigen IP-adres (bijvoorbeeld op br0), vul dan **Adres voor partners (optioneel)** in, omdat de server op het adres van de host luistert.
 
-Een ontvangende machine kan ook een [gedeelde repository](#shared-repository) voor de groep bijhouden.
+Een ontvangende machine kan ook een [gedeelde repository](#shared-repository) voor de groep bijhouden, en de back-ups van de [nodes](nodes.md#to-receiver) van deze instantie aannemen op haar **Adres voor nodes**.
 
 ## Gedeelde repository {#shared-repository}
 
@@ -620,6 +625,8 @@ Een sleutelbewaarder is een instantie van je groep die een verzegelde kopie van 
 
 Op die dag heb je drie dingen nodig: de twaalf woorden van je groep, de vrijgavecode en toegang tot de interface van de bewaarder, waar iemand op **Toestaan** moet drukken. Kies in de Noodassistent **Via de groep**, kies de bewaarkopie, vraag haar aan en typ de vrijgavecode. De code wordt op de nieuwe server gebruikt en niet naar de bewaarder gestuurd. Bij de bewaarder staat het verzoek onder **Bewaarkopie van de sleutel** met wie het vraagt, of die instantie daar ooit eerder is gezien en hoe vaak ze vroeg. **Toestaan** geeft de verzegelde kopie uit, en toestaan vereist een inlogwachtwoord. De nieuwe installatie heeft na het toestaan 30 minuten om haar op te halen, een verzoek dat niemand beantwoordt verloopt na een dag, en een instantie die te vaak vraagt, moet een uur wachten.
 
+De bewaarkopie bevat ook de `APP_KEY` van elk van de [nodes](nodes.md) van deze server, omdat de kit die bevat. Met de code zou een bewaarder hun repository's kunnen openen, maar hij kan nooit een node aansturen, want daarvoor is de handtekening van deze server nodig.
+
 Zonder de code kan niemand de kopie openen, de bewaarder inbegrepen. Is de code kwijt, maak dan een nieuwe zolang deze server nog draait. Is de server al weg, dan werken de herstelkit en de ingetypte APP_KEY nog. De bewaarder kan een bewaarkopie op elk moment verwijderen, en de eigenaar moet dan opnieuw vragen.
 
 ## Herstelkit {#recovery-kit}
@@ -627,6 +634,8 @@ Zonder de code kan niemand de kopie openen, de bewaarder inbegrepen. Is de code 
 Dit is het onderdeel dat noodherstel mogelijk maakt, ook als er geen draaiende BombVault is.
 
 **Herstelkit downloaden** in de kaart **Voor noodgevallen** onder **Instellingen, Herstel** geeft je de **sleutel**, het **afgeleide restic-wachtwoord**, elke **bestemming** met het repository van elk onderdeel, de inloggegevens die een nieuwe installatie nodig heeft om ze te bereiken, en de **exacte restic-opdrachten**, zodat je rechtstreeks kunt herstellen met de restic-CLI op een willekeurige machine. Het vereist een inlogwachtwoord. De kit toont de sleutel ook met versleuteling uitgeschakeld, omdat de container- en VM-definities er altijd mee zijn verzegeld. Na een overname toont ze de overgenomen back-upsleutel en de APP_KEY van deze server, die een nieuwe installatie alleen nodig heeft om de instellingen terug te halen. Een kaart **Bewaar je herstelkit** op het overzicht herinnert je eraan tot je haar hebt opgeslagen.
+
+Een server met [nodes](nodes.md) krijgt in zijn kit een hoofdstuk **Nodes**. Het noemt elke node met zijn id, zijn `APP_KEY`, het restic-wachtwoord dat uit die sleutel volgt en het repository van elk onderdeel. Het eigen wachtwoord van de node opent ze, en dat van deze server ook, omdat deze server zijn sleutel aan elk repository van een node toevoegt. Download de kit opnieuw nadat je een node hebt toegevoegd of hebt gewijzigd waar zijn back-ups heen gaan. Met de `APP_KEY` en de `NODE_HOME` van de node wordt een nieuwe server weer dezelfde node, zie [Vervangen en vrijgeven](nodes.md#replace-release).
 
 !!! danger "Bewaar de herstelkit buiten de server"
     De kit bevat het geheim waarmee je back-ups worden ontsleuteld. Bewaar haar ergens veilig en gescheiden van de server (een wachtwoordmanager, een afgedrukt exemplaar in een kluis). Raak je zowel BombVault als `APP_KEY` kwijt zonder herstelkit en zonder bewaarkopie van de sleutel, dan zijn je versleutelde back-ups niet te herstellen.

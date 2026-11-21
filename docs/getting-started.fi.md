@@ -188,6 +188,17 @@ Tästä lähtien kontit varmuuskopioidaan joka yö. Hyviä seuraavia askelia tä
 !!! note "Isäntäintegraation tarkistus"
     Yleiskatsauksen **Isäntäintegraatio**-kortti koettelee jokaisen liitoksen ja komentorivityökalun (Docker-soketti, libvirt, restic, qemu-img, rclone) ja raportoi puuttuvat osat, joten voit varmistaa kontin olevan kytketty oikein ennen kuin luotat siihen. Se odottaa kohdassa **Mukauta**, kunnes lisäät sen.
 
+## VPS:n varmuuskopiointi solmuna {#node}
+
+VPS tai muu pieni palvelin ei tarvitse omaa BombVaultia verkkokäyttöliittymineen. Lisää se tämän solmuksi, niin tämä instanssi hoitaa sen varmuuskopiot:
+
+1. Aseta kirjautumissalasana kohdassa **Asetukset, Turvallisuus**, jos et ole vielä tehnyt sitä.
+2. Avaa **Ilmentymät**, valitse **Lisää solmu** ja kirjoita nimi, kuten `vps-helsinki`.
+3. Valitse, minne sen varmuuskopiot menevät, esimerkiksi tämän instanssin vastaanottopalvelimelle, ja milloin se varmuuskopioi.
+4. Kopioi ikkunan näyttämä compose-tiedosto palvelimelle, osoita sen Host Data -taltio ja `HOST_SOURCE_ROOT` varmuuskopioitavaan dataan ja suorita `docker compose up -d`.
+
+Kun solmu vastaa, sen kortissa lukee **Yhdistetty** ja sen kontit näkyvät kohdassa **Varmuuskopiot**. [Solmut](nodes.md) käy sen läpi esimerkin kanssa.
+
 ## Tutustu käyttöliittymään {#navigation}
 
 ![Asetukset ruutuina, valitun ruudun kortit vieressä. Jokainen muutos kirjoitetaan heti, kun teet sen.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Käyttöliittymän rakennus tarvitaan myös komentoon `go run`. Repo seuraa vain
 - Varmista, että epäonnistuminen tavoittaa sinut **[Ilmoitusten](notifications.md)** avulla.
 - Tarkista, milloin asiat ajetaan, **[Aikatauluista](schedules.md)**.
 - Tuo kaikki ryhmäsi palvelimet puhelimeesi **[Android-sovelluksella](android.md)**.
+- Varmuuskopioi VPS täältä käsin **[solmun](nodes.md)** avulla.
 - **[Esimerkit vaihe vaiheelta](guides.md)** käyvät läpi yleiset työt, ja **[Ominaisuudet](features.md)** listaa kaiken, mitä BombVault tekee.
 - Kloonaatko asetuksen tai siirrytkö uuteen laatikkoon? Siirrä koko kokoonpanosi **Vie / tuo asetukset** -kortilla. Katso [Kokoonpano](configuration.md#portable-settings-export-and-import).
 - Törmäsitkö ongelmaan? Katso **[Vianmääritys](troubleshooting.md)**.

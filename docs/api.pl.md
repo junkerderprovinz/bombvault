@@ -1,6 +1,6 @@
 # API i integracje
 
-BombVault ma małe API HTTP dla skryptów, pulpitów i automatyki domowej. Odczytuje to samo, co pokazuje przegląd, i może uruchomić kopię. Wszystko inne, jak przywracanie, usuwanie kopii i ustawienia, zostaje w interfejsie WWW.
+BombVault ma małe API HTTP dla skryptów, pulpitów i automatyki domowej. Odczytuje to samo, co pokazuje przegląd, i może uruchomić kopię. Wszystko inne, jak przywracanie, usuwanie kopii, ustawienia i [węzły](#nodes), zostaje w interfejsie WWW.
 
 ## Tokeny {#tokens}
 
@@ -68,6 +68,32 @@ Uruchomienia podlegają tym samym limitom co [uruchomienia przez MCP](mcp.md#sta
 ## OpenAPI {#openapi}
 
 BombVault udostępnia opis tych tras pod `/api/v1/openapi.json` (OpenAPI 3.1). Nie potrzeba do tego tokenu. Wczytaj go do Swagger UI, Postmana albo generatora kodu.
+
+## Węzły {#nodes}
+
+Trasy, które obsługują [węzły](nodes.md), należą do interfejsu WWW, a nie do opisanego wyżej API z tokenami. Przy ustawionym haśle logowania wymagają sesji przeglądarki z zalogowania na tej instancji. Token API ani klucz MCP nie otwiera żadnej z nich, sparowane telefony do nich nie sięgają, a `/api/v1/openapi.json` ich nie opisuje. Dodanie węzła, ponowne pokazanie jego pliku compose i dostęp do własnych tras węzła są odrzucane, dopóki nie ustawiono hasła logowania. Skrypt, który coś zmienia, wysyła `Content-Type: application/json`, jak wszędzie w interfejsie WWW.
+
+| Trasa | Co robi |
+|---|---|
+| `GET /api/nodes` | Każdy węzeł z informacją, czy jest online, jego wersją, miejscem docelowym kopii, planem każdej sekcji, ostatnią kopią, błędami i otwartymi anomaliami |
+| `POST /api/nodes` | Dodaje węzeł, na przykład `{"name":"vps-helsinki"}`, i zwraca go z `compose`: `MODE`, `APP_KEY`, `NODE_HOME` i `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Zwraca ponownie te same wartości `compose`, dla **Zastąp** |
+| `POST /api/nodes/{id}/placement` | Kieruje kopie węzła w wybrane miejsce i odpowiada dla każdej sekcji, czy węzeł dotarł do swojego repozytorium, z `warning` dla miejsca docelowego |
+| `PUT /api/nodes/{id}/schedule` | Ustawia plany, na przykład `{"containers":"daily 03:00","files":"off"}`. Pominięta sekcja zachowuje swój plan |
+| `DELETE /api/nodes/{id}` | Zwalnia węzeł. `told` mówi, czy węzeł dowiedział się o tym od razu, czy dowie się po powrocie |
+| `GET /api/nodes/routes` | Lista własnych tras węzła, do których instancja domowa przekazuje żądania |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Przekazuje żądanie do trasy węzła `/api/{path}`, gdy ta trasa jest na liście, i zwraca odpowiedź JSON węzła |
+| `PUT /api/receiver/node-address` | Ustawia **Adres dla węzłów** serwera odbiorczego, na przykład `{"url":"https://backup.tower.example.org","caPem":""}`. Pusty `url` zamyka serwer dla węzłów |
+
+Trzy miejsca docelowe:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Żądanie do `/api/nodes/{id}/api/...` może mieć najwyżej 32 KiB. Trasa spoza listy odpowiada `403`, węzeł, który jeszcze nie odpowiedział albo jest zwalniany, `409` z kodem `node-not-adopted`, a węzeł, którego nie ma, `502` z kodem `node-away`. Na przykład `GET /api/nodes/{id}/api/runs?limit=20` zwraca 20 ostatnich przebiegów węzła, a `POST /api/nodes/{id}/api/containers/nextcloud/backup` robi kopię jego kontenera `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

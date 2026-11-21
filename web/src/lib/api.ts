@@ -1,6 +1,7 @@
 import { withinBase } from "./base";
 import { busySentence } from "./busySentence";
 import { translate } from "./i18n";
+import { currentNode, nodeRoutes, nodeTarget } from "./nodeScope";
 import { ZFS_CODE_KEY, zfsCodeSentence } from "./zfsCodes";
 
 // ---------------------------------------------------------------------------
@@ -887,6 +888,10 @@ function knownSentence(status: number, code: string | undefined, busy?: Busy): s
       return translate(status === 413 ? "apiError.relayTooLarge" : "apiError.relayRefused");
     case "opened-refused":
       return translate("apiError.openedRefused");
+    case "node-away":
+      return translate("nodes.away");
+    case "node-not-adopted":
+      return translate("nodes.notAdopted");
     default:
       return undefined;
   }
@@ -950,10 +955,12 @@ function apiError(res: Response, body: Refusal): ApiError {
 // A call that never reached the server fails as one that did, with a sentence
 // of its own. One the caller stopped stays the AbortError it expects.
 async function send(path: string, options?: RequestInit): Promise<Response> {
+  const node = currentNode();
   try {
+    const target = node === null ? path : (nodeTarget(await nodeRoutes(), node, options?.method ?? "GET", path) ?? path);
     // The caller's headers go after the default, so passing one of its own
     // cannot drop the Content-Type the server refuses a body without.
-    return await fetch(withinBase(path), {
+    return await fetch(withinBase(target), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -6673,6 +6680,10 @@ export interface ReceiverServer {
   host: string;
   /** The server's address without a login, empty while needsHost. */
   url: string;
+  /** Where nodes reach the server, empty while none is set. */
+  nodeUrl?: string;
+  /** Whether nodes are given a certificate to trust it by. */
+  nodeCa?: boolean;
   /** No check found the server at an IP address members can be given, so the
    *  address has to be set. */
   needsHost?: boolean;
@@ -6735,6 +6746,97 @@ export function revokeReceiverLogin(memberId: string): Promise<OkEnvelope & { se
 }
 
 export const RECEIVER_TEMPLATE_URL = withinBase("/api/receiver/server/template");
+
+/** Sets where nodes reach the receiving server, and the certificate they
+ *  trust it by, both empty to take nodes off it. An http:// address is
+ *  refused unless it is a private one, such as a VPN's. */
+export function setReceiverNodeAddress(url: string, caPem: string): Promise<OkEnvelope & { nodeUrl?: string }> {
+  return fetchJSON("/api/receiver/node-address", { method: "PUT", body: JSON.stringify({ url, caPem }) });
+}
+
+/** A node from GET /api/nodes: a BombVault without a web interface, on a VPS
+ *  for example, that this instance backs up through. */
+export interface NodeView {
+  id: string;
+  name: string;
+  createdAt: number;
+  /** When the node first answered and took this instance as its home, 0 until then. */
+  adoptedAt: number;
+  /** "releasing" while the node has not heard yet that it was let go. */
+  state?: "releasing";
+  /** Where its backups go: the receiving server, a storage location or the
+   *  node itself. */
+  placement?: NodePlaceKind;
+  /** The receiving server's address for nodes, the storage location's name, or
+   *  the address of a node that keeps its own backups. */
+  placementTarget?: string;
+  online: boolean;
+  lastSeen?: number;
+  version?: string;
+  /** When this instance starts the backups of each section, "off" or empty for never. */
+  containersCadence: string;
+  filesCadence: string;
+  /** When the newest backup this instance knows of finished on the node. */
+  lastBackup?: number;
+  /** Entries whose backups fail, and repositories the receiver watch is worried about. */
+  failures: number;
+  /** Critical and warning anomalies the node had open when last asked. */
+  anomalies: number;
+}
+
+export type NodePlaceKind = "receiver" | "location" | "node";
+
+/** The sections of a node, each with its own schedule. */
+export type NodeSection = "containers" | "files";
+
+/** The values of a node's compose file. Only home can make them again. */
+export interface NodeCompose {
+  MODE: string;
+  APP_KEY: string;
+  NODE_HOME: string;
+  NODE_NAME: string;
+}
+
+/** Whether the node reached the repository of one section where it was sent. */
+export interface NodeReach {
+  domain: string;
+  reached: boolean;
+  detail?: string;
+}
+
+/** Where a node's backups go. At a storage location the node signs in with
+ *  a saved sign-in of its own, never the one this instance writes with, and a
+ *  node that keeps them itself is fetched from at address. */
+export type NodePlacement = { kind: "receiver" } | { kind: "location"; location: string; signIn: string } | { kind: "node"; address: string };
+
+export function listNodes(): Promise<OkEnvelope & { nodes?: NodeView[] }> {
+  return fetchJSON("/api/nodes");
+}
+
+/** Makes a node's APP_KEY, which comes back with the compose values this once. */
+export function addNode(name: string): Promise<OkEnvelope & { code?: SecretsRefusal; node?: NodeView; compose?: NodeCompose }> {
+  return fetchKeyJSON("/api/nodes", { method: "POST", body: JSON.stringify({ name }) });
+}
+
+/** The compose values of a node again, to set it up on another server. */
+export function nodeCompose(id: string): Promise<OkEnvelope & { code?: SecretsRefusal; compose?: NodeCompose }> {
+  return fetchKeyJSON(`/api/nodes/${encodeURIComponent(id)}/compose`, { method: "POST" });
+}
+
+/** Lets a node go. told is false while it is away; it hears once it is back. */
+export function releaseNode(id: string): Promise<OkEnvelope & { told?: boolean }> {
+  return fetchJSON(`/api/nodes/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+/** Sets when this instance starts the backups of a node's sections. A section
+ *  left out keeps its schedule. */
+export function setNodeSchedule(id: string, schedule: Partial<Record<NodeSection, string>>): Promise<OkEnvelope> {
+  return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/schedule`, { method: "PUT", body: JSON.stringify(schedule) });
+}
+
+export function placeNode(id: string, placement: NodePlacement): Promise<OkEnvelope & { reach?: NodeReach[]; warning?: string }> {
+  return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/placement`, { method: "POST", body: JSON.stringify(placement) });
+}
 
 /** A server that copies into a shared repository. */
 export interface SharedMember {

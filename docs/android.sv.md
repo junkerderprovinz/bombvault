@@ -54,6 +54,10 @@ Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, mar
 
 En telefon som parkopplades före 10.0.0 börjar signera sina anrop vid första besöket efter uppdateringen, och varje server behåller den första nyckeln den får för telefonen. Om någon annan som kan gruppens ord hinner först medan telefonen är offline, avvisar den servern telefonen från och med då, och appen kan inte längre öppna den via reläet. Så här åtgärdar du det: logga in på den servern i en webbläsare, välj **Glöm nyckeln** på telefonens kort på Instanser-sidan och sedan **Bekräfta att glömma**, och öppna appen igen. Servern tar telefonens egen nyckel vid nästa anrop. Avvisas telefonen igen har någon annan orden: låt varje instans välja **Lämna gruppen** och parkoppla dem på nytt med nya ord, som för en borttappad telefon.
 
+## Noder {#nodes}
+
+[Noder](nodes.md) sköts i webbgränssnittet. En parkopplad telefons session når inte fram till dem, så appen visar inga nodkort på sidan Instanser, inget kort **Noder** i översikten och inga nodavsnitt under **Säkerhetskopior**, och **Lägg till nod** svarar att det krävs en inloggning på själva servern. Öppna servern i en webbläsare och logga in med lösenordet för att lägga till en nod, ändra vart dess säkerhetskopior går eller återställa en av dess poster.
+
 ## Inställningar {#settings}
 
 Kugghjulet bredvid plustecknet öppnar appens inställningar:

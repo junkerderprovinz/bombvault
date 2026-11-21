@@ -3943,6 +3943,163 @@ ALTER TABLE fortress_membership ADD COLUMN removed_here INTEGER NOT NULL DEFAULT
 	last_detail TEXT NOT NULL DEFAULT ''
 );`,
 	},
+	{
+		// A node's APP_KEY is made here and kept sealed, since home derives
+		// the link to the node and its restic password from it.
+		version:          nodesMigration,
+		name:             "nodes",
+		alreadySatisfied: tablePresent("nodes"),
+		sql: `CREATE TABLE IF NOT EXISTS nodes (
+	id          TEXT PRIMARY KEY,
+	name        TEXT NOT NULL,
+	app_key_enc BLOB NOT NULL,
+	relay_mode  TEXT NOT NULL,
+	relay_url   TEXT NOT NULL DEFAULT '',
+	created_at  INTEGER NOT NULL,
+	adopted_at  INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		version:          nodeLinkMigration,
+		name:             "node_link",
+		alreadySatisfied: tablePresent("node_link"),
+		sql: `CREATE TABLE IF NOT EXISTS node_link (
+	id          INTEGER PRIMARY KEY CHECK (id = 1),
+	home_id     TEXT NOT NULL DEFAULT '',
+	adopted_at  INTEGER NOT NULL DEFAULT 0,
+	released_at INTEGER NOT NULL DEFAULT 0
+);
+INSERT OR IGNORE INTO node_link (id) VALUES (1);`,
+	},
+	{
+		// A node that missed its release stays until it hears it.
+		version:          nodeStateMigration,
+		name:             "nodes_state",
+		alreadySatisfied: columnPresent("nodes", "state"),
+		sql:              `ALTER TABLE nodes ADD COLUMN state TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		version:          nodePlacementsMigration,
+		name:             "node_placements",
+		alreadySatisfied: tablePresent("node_placements"),
+		sql: `CREATE TABLE IF NOT EXISTS node_placements (
+	domain    TEXT PRIMARY KEY,
+	repo      TEXT NOT NULL,
+	creds_enc BLOB NOT NULL,
+	ca_pem    TEXT NOT NULL DEFAULT '',
+	set_at    INTEGER NOT NULL
+);`,
+	},
+	{
+		// home's receiver is where nodes write too, at an address of its own
+		// that they reach from outside.
+		version:          receiverNodeAddressMigration,
+		name:             "receiver_server_node_address",
+		alreadySatisfied: columnPresent("receiver_server", "node_url"),
+		sql: `ALTER TABLE receiver_server ADD COLUMN node_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE receiver_server ADD COLUMN node_ca_pem TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// A node's login on the receiver comes with the node, not from a role
+		// a member asked for.
+		version:          receiverLoginForNodeMigration,
+		name:             "receiver_logins_for_node",
+		alreadySatisfied: columnPresent("receiver_logins", "for_node"),
+		sql:              `ALTER TABLE receiver_logins ADD COLUMN for_node INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version:          receivedRepoNodeMigration,
+		name:             "received_repos_node_id",
+		alreadySatisfied: columnPresent("received_repos", "node_id"),
+		sql:              `ALTER TABLE received_repos ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Where a node's backups go, and whether it still has to hear a
+		// change to it, such as a new address of the receiver.
+		version:          nodePlacementKindMigration,
+		name:             "nodes_placement",
+		alreadySatisfied: columnPresent("nodes", "placement"),
+		sql: `ALTER TABLE nodes ADD COLUMN placement TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN placement_due INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version:          nodePlacementTargetMigration,
+		name:             "nodes_placement_target",
+		alreadySatisfied: columnPresent("nodes", "placement_target"),
+		sql:              `ALTER TABLE nodes ADD COLUMN placement_target TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Home decides when a node backs up. A start it could not make
+		// while the node was away is due until it can.
+		version:          nodeScheduleMigration,
+		name:             "nodes_schedule",
+		alreadySatisfied: columnPresent("nodes", "containers_cadence"),
+		sql: `ALTER TABLE nodes ADD COLUMN containers_cadence TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN files_cadence TEXT NOT NULL DEFAULT '';
+ALTER TABLE nodes ADD COLUMN containers_started_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN files_started_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN seen_at INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN pruned_window INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		version:          nodeRunsMigration,
+		name:             "node_runs",
+		alreadySatisfied: tablePresent("node_runs"),
+		sql: `CREATE TABLE IF NOT EXISTS node_runs (
+	node_id     TEXT NOT NULL,
+	id          TEXT NOT NULL,
+	domain      TEXT NOT NULL,
+	target      TEXT NOT NULL DEFAULT '',
+	status      TEXT NOT NULL,
+	started_at  INTEGER NOT NULL,
+	finished_at INTEGER NOT NULL DEFAULT 0,
+	error       TEXT NOT NULL DEFAULT '',
+	PRIMARY KEY (node_id, id)
+);`,
+	},
+	{
+		version:          nodeEpisodesMigration,
+		name:             "node_episodes",
+		alreadySatisfied: tablePresent("node_episodes"),
+		sql: `CREATE TABLE IF NOT EXISTS node_episodes (
+	node_id TEXT NOT NULL,
+	episode TEXT NOT NULL,
+	since   INTEGER NOT NULL,
+	PRIMARY KEY (node_id, episode)
+);`,
+	},
+	{
+		// A node that keeps its own backups is a source home fetches from.
+		version:          pullSourceNodeMigration,
+		name:             "pull_sources_node_id",
+		alreadySatisfied: columnPresent("pull_sources", "node_id"),
+		sql:              `ALTER TABLE pull_sources ADD COLUMN node_id TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// A node reaches a repository it keeps itself on its own disk, not
+		// through the address home fetches it at.
+		version:          nodePlacementKeptMigration,
+		name:             "node_placements_kept",
+		alreadySatisfied: columnPresent("node_placements", "kept"),
+		sql:              `ALTER TABLE node_placements ADD COLUMN kept INTEGER NOT NULL DEFAULT 0;`,
+	},
+	{
+		// A node set up anew is adopted and placed again, at a storage
+		// location with the sign-in it was placed there with.
+		version:          nodeAdoptAgainMigration,
+		name:             "nodes_adopt_again",
+		alreadySatisfied: columnPresent("nodes", "adoption_due"),
+		sql: `ALTER TABLE nodes ADD COLUMN adoption_due INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE nodes ADD COLUMN placement_sign_in TEXT NOT NULL DEFAULT '';`,
+	},
+	{
+		// Home keeps a node's containers, folder sets and runs sealed, so a
+		// node set up anew gets them back.
+		version:          nodeRecordsMigration,
+		name:             "nodes_records",
+		alreadySatisfied: columnPresent("nodes", "records_enc"),
+		sql:              `ALTER TABLE nodes ADD COLUMN records_enc BLOB NOT NULL DEFAULT x'';`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4611,6 +4768,57 @@ const noOffsiteByChoiceMigration = 951
 
 // hostSnapshotPlansMigration numbers the schedules of the server's own snapshots.
 const hostSnapshotPlansMigration = 970
+
+// nodesMigration numbers the servers home runs backups on.
+const nodesMigration = 980
+
+// nodeLinkMigration numbers a node's record of the home that adopted it.
+const nodeLinkMigration = 981
+
+// nodeStateMigration numbers whether home is still letting a node go.
+const nodeStateMigration = 982
+
+// nodePlacementsMigration numbers where a node sends each section's backups.
+const nodePlacementsMigration = 983
+
+// receiverNodeAddressMigration numbers the address nodes reach the receiver at.
+const receiverNodeAddressMigration = 984
+
+// receiverLoginForNodeMigration numbers the mark of a node's login.
+const receiverLoginForNodeMigration = 985
+
+// receivedRepoNodeMigration numbers the node a received repository is from.
+const receivedRepoNodeMigration = 986
+
+// nodePlacementKindMigration numbers where home sends a node's backups.
+const nodePlacementKindMigration = 987
+
+// nodePlacementTargetMigration numbers which receiver address or storage
+// location a node's backups go to.
+const nodePlacementTargetMigration = 988
+
+// nodeScheduleMigration numbers when home backs up each section of a node.
+const nodeScheduleMigration = 989
+
+// nodeRunsMigration numbers what home learned of its nodes' runs.
+const nodeRunsMigration = 990
+
+// nodeEpisodesMigration numbers the alerts about a node that are still open.
+const nodeEpisodesMigration = 991
+
+// pullSourceNodeMigration numbers the node a pull source fetches from.
+const pullSourceNodeMigration = 992
+
+// nodePlacementKeptMigration numbers whether a node keeps a section's
+// repository itself.
+const nodePlacementKeptMigration = 993
+
+// nodeAdoptAgainMigration numbers whether home has to adopt a node set up
+// anew, and the sign-in its placement at a storage location uses.
+const nodeAdoptAgainMigration = 994
+
+// nodeRecordsMigration numbers the records home keeps of each node.
+const nodeRecordsMigration = 995
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

@@ -16,6 +16,8 @@ Hver plan er en knap, der læses som en sætning, for eksempel *dagligt kl. 03:0
 
 Alle tider er i serverens tidszone. På Unraid er det systemets egen. Andre steder skal du sætte `TZ`, ellers kører hver plan i UTC, se [Miljøvariabler](configuration.md#environment-variables).
 
+Denne instans planlægger også sikkerhedskopierne for sine [noder](nodes.md), men ikke her: hver nodes kort på siden Instanser har en plan for dens containere og en for dens mapper. En ny node starter en halv time efter denne instans' containerkopier. Se [Hvornår noder tager sikkerhedskopi](nodes.md#schedule).
+
 ## Uge {#week}
 
 Kortet **Uge** tegner hver planlagt kørsel fra mandag til søndag, én linje pr. dag: sikkerhedskopier, off-site-kopier og tjek. Peg på en streg for at læse, hvad der starter dér. Hvor tre planer starter inden for to timer, er strækket markeret, så du kan sprede dem.

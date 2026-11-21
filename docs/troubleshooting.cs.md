@@ -208,6 +208,26 @@ Pingy Healthchecks nezávisejí na **Oznámit**, viz [Healthchecks](notification
 - **Nutné přihlášení:** server přidaný podle adresy se ptá na heslo. Viz také [Telefon skončí na přihlašovací stránce](#a-phone-lands-on-the-login-page).
 - **Klíč se změnil:** úvodní obrazovka ukáže otisk nového klíče a stránka se otevře, až mu důvěřuješ. Viz [Mimo domov](android.md#away).
 
+## Uzel zůstává na "Čeká se na uzel" {#node-waiting}
+
+Uzel domovské instanci ještě neodpověděl. Otevři log jeho kontejneru na serveru uzlu (`docker logs bombvault-node`):
+
+- **`node mode, waiting for home`** a za tím id domovské instance: uzel běží a čeká na přeposílači. Zkontroluj, že server dosáhne na adresu přeposílače. Spojení jde ven z uzlu, takže nepotřebuje otevřený port.
+- **`NODE_HOME is not set`**: soubor compose přišel o své hodnoty. Zvol **Nahradit** na kartě uzlu, zkopíruj soubor znovu a spusť `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`**: obě hodnoty pocházejí z různých uzlů. Zkopíruj obě ze stejné karty.
+- **`this node belongs to the home ... and NODE_HOME names ...`**: uzel si převzala jiná domovská instance. Nejdřív ho tam uvolni, nebo přidej server sem jako nový uzel s novým souborem compose.
+- **`MODE=... is neither full nor node`**: nastav `MODE: node`.
+
+## Uzel nedosáhne na své repozitáře {#node-reach}
+
+Po umístění domovská instance pro každou sekci řekne, zda uzel otevřel svůj repozitář, například **Uzel se nedostane k repozitáři pro Kontejnery** s důvodem od resticu. Ze serveru uzlu ověř, že adresa odpovídá. Na přijímacím serveru je to **Adresa pro uzly**: reverzní proxy ji musí předávat na rest-server a server s vlastním certifikátem potřebuje ten certifikát v **Certifikát**. U cíle zkontroluj přihlašovací údaje vytvořené pro uzel. Pak zvol **Změnit cíl** a znovu **Uložit**. Viz [Kam jdou zálohy](nodes.md#placement).
+
+U uzlu, který si zálohy drží sám, se port, který na uzlu drží jiný kontejner, odmítne i se jménem toho kontejneru, takže vyber jiný. Když domovská instance nemůže stahovat, povol port ve firewallu uzlu.
+
+## Uvolněný uzel se nevrací {#node-released}
+
+Uvolněný uzel se svým starým `APP_KEY` žádnou domovskou instanci nepřijme a jeho složka `config` si uvolnění pamatuje. Přidej server jako nový uzel a spusť ho s novým souborem compose a prázdnou složkou `config`. Jeho staré zálohy zůstanou, kde byly, stejně jako každá kopie, kterou domovská instance stáhla.
+
 ## Jiný uživatel nemůže číst místní repozitář {#repository-permissions}
 
 Místní repozitář zůstává čitelný pro ostatní uživatele, například pro uživatele synchronizace přes SMB. Před 10.4.1 mohly soubory, které zapsalo čištění, štítkování, stahování, přesun sekce, smazání nebo záloha stacku, zůstat do příští noci nečitelné. Aktualizuj BombVault a budou čitelné hned. Repozitář autozálohy zůstává čitelný jen pro roota, schválně, protože drží nastavení BombVaultu.

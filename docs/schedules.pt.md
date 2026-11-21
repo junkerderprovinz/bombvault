@@ -16,6 +16,8 @@ Cada plano é um botão que se lê como uma frase, por exemplo *todos os dias à
 
 Todas as horas estão no fuso horário do servidor. No Unraid é o do próprio sistema. Noutros sítios, define `TZ`, ou todos os planos correm em UTC, vê [Variáveis de ambiente](configuration.md#environment-variables).
 
+Esta instância também planeia os backups dos seus [nós](nodes.md), mas não aqui: o cartão de cada nó na página Instâncias tem um plano para os seus containers e outro para as suas pastas. Um nó novo começa meia hora depois dos backups de containers desta instância. Vê [Quando os nós fazem backup](nodes.md#schedule).
+
 ## Semana {#week}
 
 O cartão **Semana** desenha todas as execuções planeadas de segunda a domingo, uma linha por dia: backups, cópias externas e verificações. Aponta para um traço para ler o que começa aí. Onde três planos começam em duas horas, o trecho fica marcado, para os poderes espaçar.

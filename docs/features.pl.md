@@ -75,6 +75,7 @@ Krótki katalog tego, co robi BombVault. Każda linia odsyła do strony, która 
 - **Strona Instancje** z grupą jako siecią i rolami **Odbiornik**, **Pobierający**, **Serwer ZFS** i **Przechowawca klucza**. [Instancje i role](offsite-recovery.md#roles)
 - **Serwer odbiorczy** ustawiony za Ciebie, w trybie append-only. [Serwer odbiorczy](offsite-recovery.md#receiving-server)
 - **Wspólne repozytorium**, do którego kopiuje kilka serwerów, więc to, co mają wspólne, jest zapisane tylko raz. Przycina je tylko serwer, który jest jego właścicielem. [Wspólne repozytorium](offsite-recovery.md#shared-repository)
+- **Węzły**: BombVault bez interfejsu WWW na VPS-ie albo innym serwerze, sterowany z instancji domowej, z jej harmonogramami, alertami i przywracaniem. Nie potrzebuje otwartego portu. [Węzły](nodes.md)
 
 ## Asystenci AI (MCP) {#mcp}
 

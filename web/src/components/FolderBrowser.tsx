@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { browse, createFolder } from "../lib/api";
 import { useT } from "../lib/i18n";
+import { inNode } from "../lib/nodeScope";
 import { useBackCloses } from "../lib/useBackCloses";
 import { InfoBubble } from "./InfoBubble";
 import { Button } from "./Button";
@@ -31,9 +32,11 @@ export interface FolderBrowserProps {
   /** The row's rainbow position for the Browse button, where several folder
    *  rows stand in one card and would otherwise share its colour. */
   hueIndex?: number;
+  /** The node whose folders are browsed, absent for this instance's own. */
+  node?: string;
 }
 
-export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, hueIndex }: FolderBrowserProps) {
+export function FolderBrowser({ label, value, hostMountRoot, onChange, placeholder, hint, renderLabel = true, inDialog = false, hueIndex, node }: FolderBrowserProps) {
   const { t } = useT();
   // "New folder" and "Use this folder" sit one above the other; one stage for
   // both gives the column a straight edge in every language.
@@ -54,11 +57,12 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   const [manualFallback, setManualFallback] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const inPlaceRef = useRef<HTMLDivElement>(null);
 
   const doFetch = useCallback((path: string) => {
     setLoading(true);
     setBrowseError(null);
-    browse(path)
+    inNode(node ?? null, () => browse(path))
       .then((res) => {
         if (!res.ok) {
           setBrowseError(res.error ?? t("folder.couldNotRead"));
@@ -74,7 +78,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         setManualFallback(true);
       })
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, node]);
 
   function handleOpen() {
     setManualFallback(false);
@@ -102,6 +106,13 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
   }, [open]);
 
   useBackCloses(open, handleClose);
+
+  // On a phone the listing is taller than the room left under the field, so
+  // the panel would open with its actions under the window's foot. jsdom has
+  // no scrollIntoView.
+  useEffect(() => {
+    if (open && inDialog) inPlaceRef.current?.scrollIntoView?.({ block: "nearest" });
+  }, [open, inDialog]);
 
   function handleUp() {
     const parts = browsePath.split("/").filter(Boolean);
@@ -151,54 +162,61 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
         <p className="text-xs text-statusFail">{browseError}</p>
       )}
 
-      {/* border-accentText rather than border-accent: the flat accent is under
-          the 3:1 contrast a non-text indicator needs in the light theme. */}
-      {loading && (
-        <div className="flex items-center gap-2 text-xs text-carbon-textMuted">
-          <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
-          {t("folder.loading")}
-        </div>
-      )}
-
       {/* A fixed height, so the dialog keeps one size from directory to
-          directory. Rows set min-h-8 because .glim-btn-xs sets no height, and
-          !justify-start because .glim-btn centres with a higher specificity. */}
-      {!loading && !manualFallback && (
-        <div className="flex flex-col gap-0.5 h-[clamp(12rem,55vh,32rem)] overflow-y-auto">
-          {browsePath !== "" && (
-            <Button
-              // The file-manager convention, not a phrase to translate.
-              label={".."}
-              labelKey={null}
-              glyph={<IconBack />}
-              tone="neutral"
-              onClick={handleUp}
-              keepLabel
-              className="w-full !justify-start min-h-8"
-            />
+          directory, and the window around a panel in place keeps its scroll
+          while a folder loads. Rows set min-h-8 because .glim-btn-xs sets no
+          height, and !justify-start because .glim-btn centres with a higher
+          specificity. */}
+      {!manualFallback && (
+        <div className={`flex flex-col gap-0.5 overflow-y-auto ${inDialog ? "h-[clamp(8rem,30dvh,20rem)]" : "h-[clamp(10rem,45dvh,32rem)]"}`}>
+          {/* border-accentText rather than border-accent: the flat accent is
+              under the 3:1 contrast a non-text indicator needs in the light
+              theme. */}
+          {loading ? (
+            <div className="flex items-center gap-2 px-2 text-xs text-carbon-textMuted">
+              <span className="h-3 w-3 rounded-full border-2 border-accentText border-t-transparent animate-spin" />
+              {t("folder.loading")}
+            </div>
+          ) : (
+            <>
+              {browsePath !== "" && (
+                <Button
+                  // The file-manager convention, not a phrase to translate.
+                  label={".."}
+                  labelKey={null}
+                  glyph={<IconBack />}
+                  tone="neutral"
+                  onClick={handleUp}
+                  keepLabel
+                  className="w-full !justify-start min-h-8"
+                />
+              )}
+              {dirs.length === 0 && !browseError && (
+                <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
+              )}
+              {dirs.map((d) => (
+                <Button
+                  key={d.path}
+                  label={d.name}
+                  // a directory name is user data, not a translation key
+                  labelKey={null}
+                  glyph={<IconFolder />}
+                  tone="neutral"
+                  onClick={() => doFetch(d.path)}
+                  // Folder names stay visible in every label mode: a listing read
+                  // one hover at a time is not a listing.
+                  keepLabel
+                  className="w-full !justify-start min-h-8"
+                />
+              ))}
+            </>
           )}
-          {dirs.length === 0 && !browseError && (
-            <p className="text-xs text-carbon-textMuted px-2">{t("folder.none")}</p>
-          )}
-          {dirs.map((d) => (
-            <Button
-              key={d.path}
-              label={d.name}
-              // a directory name is user data, not a translation key
-              labelKey={null}
-              glyph={<IconFolder />}
-              tone="neutral"
-              onClick={() => doFetch(d.path)}
-              // Folder names stay visible in every label mode: a listing read
-              // one hover at a time is not a listing.
-              keepLabel
-              className="w-full !justify-start min-h-8"
-            />
-          ))}
         </div>
       )}
 
-      {!manualFallback && (
+      {/* Home passes a node no route that makes folders, so a node's folders
+          are only browsed. */}
+      {!manualFallback && !node && (
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -308,7 +326,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
       {/* A dialog, except when this is already inside one: a second window on
           top of the one being filled in gets in the way. */}
       {open && (inDialog ? (
-        <div className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2">
+        <div ref={inPlaceRef} className="mt-1 rounded-card bg-carbon-background p-3 flex flex-col gap-2 scroll-mb-4">
           {panel}
         </div>
       ) : createPortal(
@@ -330,7 +348,7 @@ export function FolderBrowser({ label, value, hostMountRoot, onChange, placehold
               role="dialog"
               aria-modal="true"
               aria-label={label}
-              className="w-full max-h-[90vh] overflow-y-auto rounded-card bg-carbon-surface p-5 shadow-2xl flex flex-col gap-2"
+              className="w-full max-h-[calc(100dvh-4rem)] overflow-y-auto rounded-card bg-carbon-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl flex flex-col gap-2"
             >
               {panel}
             </div>

@@ -1,6 +1,6 @@
 # API ja integraatiot
 
-BombVaultissa on pieni HTTP-API skripteille, kojelaudoille ja kotiautomaatiolle. Se lukee samoja asioita, joita yleiskatsaus näyttää, ja voi käynnistää varmuuskopion. Kaikki muu, kuten palautukset, kopioiden poistaminen ja asetukset, pysyy käyttöliittymässä.
+BombVaultissa on pieni HTTP-API skripteille, kojelaudoille ja kotiautomaatiolle. Se lukee samoja asioita, joita yleiskatsaus näyttää, ja voi käynnistää varmuuskopion. Kaikki muu, kuten palautukset, kopioiden poistaminen, asetukset ja [solmut](#nodes), pysyy käyttöliittymässä.
 
 ## Tokenit {#tokens}
 
@@ -68,6 +68,32 @@ Käynnistyksiin pätevät samat rajat kuin [MCP:n kautta tehtyihin](mcp.md#start
 ## OpenAPI {#openapi}
 
 BombVault tarjoaa näiden reittien kuvauksen osoitteessa `/api/v1/openapi.json` (OpenAPI 3.1). Se ei vaadi tokenia. Lataa se Swagger UI:hin, Postmaniin tai koodigeneraattoriin.
+
+## Solmut {#nodes}
+
+[Solmuja](nodes.md) hoitavat reitit kuuluvat verkkokäyttöliittymään eivätkä yllä olevaan token-API:in. Kun kirjautumissalasana on asetettu, ne vaativat selainistunnon, joka on saatu kirjautumalla tähän instanssiin. API-token tai MCP-avain ei avaa niistä yhtäkään, pariutetut puhelimet eivät ulotu niihin, eikä `/api/v1/openapi.json` kuvaa niitä. Solmun lisääminen, sen compose-tiedoston näyttäminen uudelleen ja solmun omien reittien käyttäminen kielletään, kunnes kirjautumissalasana on asetettu. Skripti, joka muuttaa jotakin, lähettää `Content-Type: application/json`, kuten kaikkialla verkkokäyttöliittymässä.
+
+| Reitti | Mitä se tekee |
+|---|---|
+| `GET /api/nodes` | Jokainen solmu: onko se verkossa, sen versio, varmuuskopioiden määränpää, kunkin osion aikataulu, viimeisin varmuuskopio, virheet ja avoimet poikkeamat |
+| `POST /api/nodes` | Lisää solmun, esimerkiksi `{"name":"vps-helsinki"}`, ja palauttaa sen kentän `compose` kanssa: `MODE`, `APP_KEY`, `NODE_HOME` ja `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Palauttaa samat `compose`-arvot uudelleen toimintoa **Korvaa** varten |
+| `POST /api/nodes/{id}/placement` | Lähettää solmun varmuuskopiot johonkin paikkaan ja kertoo osioittain, tavoittiko solmu repositorynsa, kohteen kohdalla `warning`-kentän kanssa |
+| `PUT /api/nodes/{id}/schedule` | Asettaa aikataulut, esimerkiksi `{"containers":"daily 03:00","files":"off"}`. Pois jätetty osio pitää aikataulunsa |
+| `DELETE /api/nodes/{id}` | Vapauttaa solmun. `told` kertoo, kuuliko solmu sen heti vai kuuleeko se palattuaan |
+| `GET /api/nodes/routes` | Lista solmun omista reiteistä, joille kotiinstanssi välittää pyyntöjä |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Välittää pyynnön solmun reitille `/api/{path}`, kun reitti on listalla, ja palauttaa solmun JSON-vastauksen |
+| `PUT /api/receiver/node-address` | Asettaa vastaanottopalvelimen kohdan **Osoite solmuille**, esimerkiksi `{"url":"https://backup.tower.example.org","caPem":""}`. Tyhjä `url` ottaa palvelimen pois solmujen käytöstä |
+
+Kolme määränpäätä:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Pyyntö reitille `/api/nodes/{id}/api/...` voi olla enintään 32 KiB. Reitti, joka ei ole listalla, vastaa `403`, solmu, joka ei ole vielä vastannut tai jota vapautetaan, `409` koodilla `node-not-adopted`, ja poissa oleva solmu `502` koodilla `node-away`. Esimerkiksi `GET /api/nodes/{id}/api/runs?limit=20` palauttaa solmun 20 viimeisintä ajoa, ja `POST /api/nodes/{id}/api/containers/nextcloud/backup` varmuuskopioi sen kontin `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

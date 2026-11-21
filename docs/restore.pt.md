@@ -140,6 +140,10 @@ Uma base de dados que só tem despejos da base de dados e nenhum backup de fiche
 
 Num [repositório partilhado](offsite-recovery.md#shared-repository) cada chave abre os backups de todos os servidores, por isso a página Restauração lista os outros membros em **Outros servidores**, cada um com o seu nome, o seu host, quantas entradas tem e quando correu o seu backup mais recente. Um host que não pertence a nenhum servidor que este conheça aparece como **Um servidor que este não conhece**. Um clique abre **Backups de** e o nome do servidor, só de leitura e sem nada para introduzir. Os conjuntos de pastas e os conjuntos de dados ZFS vão para uma pasta que escolhes. Os containers e as VMs voltam como ficheiros simples numa pasta, porque o outro servidor sela as definições deles com a sua própria chave. Os backups deste servidor no repositório partilhado estão no separador **Backups** de cada entrada.
 
+## Nós {#nodes}
+
+As entradas de um [nó](nodes.md) restauram-se a partir das suas páginas em **Backups**, não a partir desta página. **Restaurar** ao lado de um backup lá restaura a entrada no nó e substitui o que lá está agora. Uma cópia que esta instância recolheu de um nó que [guarda ele próprio os seus backups](nodes.md#keep-on-node) aparece aqui em **Outras origens**, como [O que este servidor recolheu](offsite-recovery.md#restore-what-was-fetched). Quando o servidor do nó desaparece, volta a montar o nó com **Substituir** no seu cartão: a mesma `APP_KEY` e o mesmo `NODE_HOME` fazem do servidor novo o mesmo nó, e os seus backups abrem outra vez. O capítulo **Nodes** do [kit de recuperação](offsite-recovery.md#recovery-kit) também os abre só com o restic.
+
 ## Depois de uma restauração {#after}
 
 Uma cópia restaurada ao lado do original aparece em **Backups** como excluída, para não contar como tarefa em aberto. Junta-a ao agendamento se a quiseres manter. Um container ou uma VM que estava a correr quando foi copiado volta a correr, um que estava parado continua parado. No Unraid, um container restaurado reaparece no separador Docker como uma aplicação normal e editável, e uma VM no Gestor de VMs com os seus discos e a NVRAM ligados.

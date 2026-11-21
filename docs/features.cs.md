@@ -75,6 +75,7 @@ Stručný katalog toho, co BombVault umí. Každý řádek odkazuje na stránku,
 - **Stránka Instance** se skupinou jako sítí a rolemi **Přijímač**, **Stahovač**, **Server ZFS** a **Strážce klíče**. [Instance a role](offsite-recovery.md#roles)
 - **Přijímací server** nastavený za tebe, v režimu append-only. [Přijímací server](offsite-recovery.md#receiving-server)
 - **Sdílený repozitář**, do kterého kopíruje několik serverů, takže to, co mají společné, se uloží jen jednou. Čistí ho jen server, který je jeho vlastníkem. [Sdílený repozitář](offsite-recovery.md#shared-repository)
+- **Uzly**: BombVault bez webového rozhraní na VPS nebo jiném serveru, řízený z domovské instance i s plány, upozorněními a obnovami. Nepotřebuje otevřený port. [Uzly](nodes.md)
 
 ## Asistenti AI (MCP) {#mcp}
 

@@ -34,4 +34,5 @@ Elk voorbeeld loopt één echte klus van begin tot eind door, met namen en getal
 ## Meerdere servers {#several-servers}
 
 - [Twee Unraid-machines koppelen](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): twee servers die elkaars kopieën bewaren, waarbij geen van beide de back-ups van de ander kan verwijderen.
+- [Een VPS die back-ups maakt naar de ontvangserver](nodes.md#example-vps): een node met zijn containers, beheerd vanuit de thuisinstantie, zonder open poort op de VPS.
 - [Een kaart en een melding in Home Assistant](api.md#home-assistant-example): BombVault op een dashboard, met een bericht als een back-up mislukt.

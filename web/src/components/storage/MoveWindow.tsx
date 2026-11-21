@@ -15,7 +15,7 @@ import { useToast } from "../../lib/toast";
 import { useStorageLocations } from "../../lib/useStorageLocations";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { Button } from "../Button";
-import { RadioMark } from "../RadioMark";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { IconForward } from "../glyphs";
 import { IconClose } from "../navGlyphs";
 import { LocationMark } from "./LocationMark";
@@ -141,13 +141,13 @@ export function MoveWindow({
                   aria-label={candidate.name}
                   disabled={busy}
                   onClick={() => pick(candidate)}
-                  className={`flex items-center gap-3 rounded-control bg-carbon-surface2 px-3 py-2.5 text-start hover:bg-hover ${picked ? "ring-2 ring-accent" : ""}`}
+                  onKeyDown={pickWithArrows}
+                  className={`flex items-center gap-3 rounded-control px-3 py-2.5 text-start transition-colors ${pickSurface(picked)}`}
                 >
-                  <RadioMark on={picked} />
                   <LocationMark location={candidate} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm font-semibold text-carbon-text">{candidate.name}</span>
-                    <span dir="ltr" className="truncate text-start text-xs text-carbon-textMuted">
+                    <span className="truncate text-sm font-semibold">{candidate.name}</span>
+                    <span dir="ltr" className={`truncate text-start text-xs ${pickSub(picked)}`}>
                       {candidate.where}
                     </span>
                   </span>

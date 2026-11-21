@@ -188,6 +188,17 @@ openssl rand -hex 32
 !!! note "호스트 통합 확인"
     개요의 **호스트 통합** 카드는 모든 마운트와 CLI(Docker 소켓, libvirt, restic, qemu-img, rclone)를 검사하고 누락된 부분을 보고하므로, 컨테이너에 의존하기 전에 올바르게 연결되었는지 확인할 수 있습니다. 추가하기 전까지는 **사용자 지정**에 들어 있습니다.
 
+## VPS를 노드로 백업하기 {#node}
+
+VPS나 다른 작은 서버에는 웹 인터페이스가 있는 BombVault를 따로 둘 필요가 없습니다. 이 인스턴스의 노드로 추가하면, 이 인스턴스가 그 서버의 백업을 실행합니다.
+
+1. 아직 설정하지 않았다면 **설정, 보안**에서 로그인 비밀번호를 설정합니다.
+2. **인스턴스**를 열고 **노드 추가**를 누른 뒤 `vps-helsinki` 같은 이름을 입력합니다.
+3. 백업을 보낼 곳(예를 들어 이 인스턴스의 수신 서버)과 백업할 시간을 고릅니다.
+4. 창에 나오는 compose 파일을 서버로 복사하고, Host Data 볼륨과 `HOST_SOURCE_ROOT`를 백업할 데이터로 지정한 뒤 `docker compose up -d`를 실행합니다.
+
+노드가 응답하면 카드에 **연결됨**이 나오고, 그 컨테이너가 **백업**에 나타납니다. [노드](nodes.md)에서 예시와 함께 차근차근 안내합니다.
+
 ## 화면 둘러보기 {#navigation}
 
 ![타일로 보는 설정과, 고른 타일의 카드. 바꾸는 즉시 기록됩니다.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ go run ./cmd/bombvault         # serves https://localhost:3443 with a self-signe
 - **[알림](notifications.md)**으로 실패가 꼭 전해지게 하세요.
 - **[일정](schedules.md)**에서 언제 실행되는지 확인하세요.
 - **[Android 앱](android.md)**으로 그룹의 모든 서버를 휴대폰에 담으세요.
+- **[노드](nodes.md)**로 이곳에서 VPS를 백업하세요.
 - **[실전 예시](guides.md)**는 자주 하는 작업을 안내하고, **[기능](features.md)**은 BombVault가 하는 모든 일을 나열합니다.
 - 설정을 복제하거나 새 장비로 옮기시나요? **설정 내보내기 / 가져오기** 카드로 전체 구성을 옮기세요. [구성](configuration.md#portable-settings-export-and-import)을 참고하세요.
 - 문제가 생겼나요? **[문제 해결](troubleshooting.md)**을 참고하세요.

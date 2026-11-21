@@ -188,6 +188,17 @@ Od teď se kontejnery zálohují každou noc. Dobré další kroky, v tomto poř
 !!! note "Kontrola integrace hostitele"
     Karta **Integrace hostitele** v Přehledu prozkoumá každé připojení a CLI (Docker socket, libvirt, restic, qemu-img, rclone) a nahlásí případné chybějící části, takže si můžeš potvrdit, že je kontejner správně zapojen, dříve než se na něj budeš spoléhat. Čeká pod **Přizpůsobit**, dokud ji nepřidáš.
 
+## Záloha VPS jako uzlu {#node}
+
+VPS ani jiný malý server nepotřebuje vlastní BombVault s webovým rozhraním. Přidej ho jako uzel této instance a ona se postará o jeho zálohy:
+
+1. Nastav přihlašovací heslo v **Nastavení, Zabezpečení**, pokud ho ještě nemáš.
+2. Otevři **Instance**, zvol **Přidat uzel** a napiš název, třeba `vps-helsinki`.
+3. Vyber, kam jdou jeho zálohy, třeba na přijímací server této instance, a kdy zálohuje.
+4. Zkopíruj soubor compose, který okno ukáže, na server, nasměruj jeho svazek Host Data a `HOST_SOURCE_ROOT` na data k zálohování a spusť `docker compose up -d`.
+
+Jakmile uzel odpoví, jeho karta říká **Připojeno** a jeho kontejnery se objeví pod **Zálohy**. [Uzly](nodes.md) to projdou na příkladu.
+
 ## Orientace v rozhraní {#navigation}
 
 ![Nastavení jako dlaždice, vedle nich karty zvolené dlaždice. Každá změna se zapíše hned, jak ji uděláš.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ Sestavení rozhraní je potřeba i pro `go run`. Repozitář obsahuje pod `web/d
 - Postarej se, aby se k tobě selhání dostalo, pomocí **[Oznámení](notifications.md)**.
 - Zkontroluj, kdy co běží, v **[Plánech](schedules.md)**.
 - Dej si všechny servery své skupiny do telefonu s **[aplikací pro Android](android.md)**.
+- Zálohuj odsud VPS pomocí **[uzlu](nodes.md)**.
 - **[Praktické příklady](guides.md)** provedou běžnými úkoly a **[Funkce](features.md)** vypisují všechno, co BombVault umí.
 - Klonuješ sestavu nebo přecházíš na nový stroj? Přenes celou svou konfiguraci pomocí karty **Export / import nastavení**. Viz [Konfigurace](configuration.md#portable-settings-export-and-import).
 - Narazil jsi na problém? Viz **[Řešení problémů](troubleshooting.md)**.

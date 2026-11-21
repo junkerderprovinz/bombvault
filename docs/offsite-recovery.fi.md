@@ -390,7 +390,7 @@ Linnoitus kokoaa BombVaultin ja perheen muut sovellukset, kuten ShipLogin, Tower
 
 ## Ilmentymät ja roolit {#roles}
 
-**Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille ja ZFS-palvelimille. **Pariliitos** oikeassa alakulmassa vie pariliitossivulle. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.
+**Ilmentymät**-sivu (asetusruutu, jonka voi kiinnittää sivupalkkiin) näyttää ryhmän verkkona siitä, kuka tekee mitä kenelle, kortti tälle instanssille ja kortti jokaiselle muulle jäsenelle, Android-puhelimille, ZFS-palvelimille ja tämän instanssin solmuille. **Pariliitos** oikeassa alakulmassa vie pariliitossivulle, ja sen vieressä oleva **Lisää solmu** lisää solmun. Mitkä osat ovat päällä, asetetaan kohdassa **Asetukset, Ilmentymät, Useita palvelimia**: **Ilmentymät**, **Vastaanotin** ja **Nouto**.
 
 ![Ilmentymät-sivu: ryhmä verkkona ja kortti kutakin instanssia kohti rooliruutuineen, yksi niistä Ei aktiivinen.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![Ilmentymät-sivu: ryhmä verkkona ja kortti kutakin instanssia kohti rooliruutuineen, yksi niistä Ei aktiivinen.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Kortin **Tiedot** avaa loput: jäsenen vastaanotetut repositoryt ja noutolähtee
 
 Korttien alla oleva **Jaettu arkisto** -kortti laatikossa, jolla on vastaanottopalvelin, ja **Jaetut arkistot** -kortti jäsenellä kuuluvat [jaettuun arkistoon](#shared-repository).
 
-Jäsen voi tarjota omaa etätallennustilaansa toiselle jäsenelle ryhmän kautta. Toinen ylläpitäjä näkee tarjouksen jäsenen kohdassa **Tiedot** ja hyväksyy tai hylkää sen. Hyväksyminen luo tallennetut tunnukset ja tavallisen kohteen samojen tarkistusten jälkeen kuin itse kirjoittamasi kohde. Kohteen poistosuoja on valmiiksi päällä, koska tarjouksen näyttämä ohje on append-only-tilainen rest-server, joten **Kuinka kauan säilytetään** ei koske sitä. Jokaisella tarjouksella on omat tunnuksensa ja oma kansionsa, joten osion tarjoaminen uudelleen samalle tai toiselle jäsenelle jättää ensimmäisen kumppanin kopiot rauhaan: lisää uusi rivi tiedostoon `.htpasswd` ja pidä palvelin käynnissä. Tätä kautta kulkevat vain yhteystiedot, ei koskaan varmuuskopiodataa. **Tarkista nyt** pyytää jäsentä tarkistamaan yhden osion repositoryn. Mikään sivulla ei voi käynnistää varmuuskopiota tai palautusta eikä poistaa mitään toisella laatikolla.
+Jäsen voi tarjota omaa etätallennustilaansa toiselle jäsenelle ryhmän kautta. Toinen ylläpitäjä näkee tarjouksen jäsenen kohdassa **Tiedot** ja hyväksyy tai hylkää sen. Hyväksyminen luo tallennetut tunnukset ja tavallisen kohteen samojen tarkistusten jälkeen kuin itse kirjoittamasi kohde. Kohteen poistosuoja on valmiiksi päällä, koska tarjouksen näyttämä ohje on append-only-tilainen rest-server, joten **Kuinka kauan säilytetään** ei koske sitä. Jokaisella tarjouksella on omat tunnuksensa ja oma kansionsa, joten osion tarjoaminen uudelleen samalle tai toiselle jäsenelle jättää ensimmäisen kumppanin kopiot rauhaan: lisää uusi rivi tiedostoon `.htpasswd` ja pidä palvelin käynnissä. Tätä kautta kulkevat vain yhteystiedot, ei koskaan varmuuskopiodataa. **Tarkista nyt** pyytää jäsentä tarkistamaan yhden osion repositoryn. Jäsenet jättävät toistensa varmuuskopiot rauhaan: mikään sivulla ei käynnistä varmuuskopiota toisella jäsenellä, palauta sinne mitään eikä poista sieltä mitään.
+
+**Solmut** ovat eri asia, koska ne eivät ole jäseniä. Solmu on BombVault ilman verkkokäyttöliittymää, joka ottaa ohjeensa tältä instanssilta, joten tämä instanssi käynnistää sen varmuuskopiot ja palautukset ja siivoaa sen vanhat varmuuskopiot. Jokaisella solmulla on kortti, joka näyttää sen tilan, version, varmuuskopioiden määränpään ja sen, milloin kukin osio varmuuskopioidaan, sekä toiminnot **Vaihda määränpää**, **Korvaa** ja **Vapauta**. Uuden solmun kortissa lukee **Odotetaan solmua**, kunnes solmu vastaa ensimmäisen kerran, ja vapautetun mutta poissa olevan solmun kortissa **Vapautetaan**. Katso [Solmut](nodes.md).
+
+![Solmun kortti: Yhdistetty, sen versio, sen varmuuskopiot vastaanottopalvelimella ja sen aikataulut osioittain.](assets/screenshots/nodes/card-dark.png#only-dark)
+![Solmun kortti: Yhdistetty, sen versio, sen varmuuskopiot vastaanottopalvelimella ja sen aikataulut osioittain.](assets/screenshots/nodes/card-light.png#only-light)
 
 Sammutetut instanssit ja puhelimet, joiden sovellus on suljettu, säilyttävät korttinsa tilassa **Ei aktiivinen**, harmaana ja tiedolla siitä, milloin ne nähtiin viimeksi, ja ne näkyvät verkossa himmennettyinä, kunnes poistat ne toiminnolla **Poista**. Heti tämän palvelimen käynnistyttyä tällainen kortti näyttää **Tarkistetaan**, kunnes ryhmä on taas tavoitettavissa. **Poista** toimii tällaisella kortilla riippumatta siitä, mitkä osat on kytketty päälle, ja se päättää myös jäsenen avoimet pyynnöt, sen käyttämättömät ZFS-vastaanottopaikat ja sen odottavat avainpyynnöt. Pariliitossivun **Ilmentymät**-kortti listaa nämä jäsenet myös tilassa **Ei aktiivinen**.
 
@@ -443,7 +448,7 @@ Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta ko
 
 Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite pariliitossivulla ensin. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitteessa.
 
-Vastaanottava laatikko voi myös pitää ryhmälle [jaettua arkistoa](#shared-repository).
+Vastaanottava laatikko voi myös pitää ryhmälle [jaettua arkistoa](#shared-repository) ja ottaa vastaan tämän instanssin [solmujen](nodes.md#to-receiver) varmuuskopiot osoitteessaan **Osoite solmuille**.
 
 ## Jaettu arkisto {#shared-repository}
 
@@ -620,6 +625,8 @@ Avaimen säilyttäjä on ryhmäsi instanssi, joka pitää tämän palvelimen pal
 
 Sinä päivänä tarvitset kolme asiaa: ryhmäsi kaksitoista sanaa, noutokoodin ja pääsyn säilyttäjän käyttöliittymään, jossa jonkun täytyy painaa **Salli**. Valitse Hätäohjatussa toiminnossa **Ryhmän kautta**, valitse talletus, pyydä sitä ja kirjoita noutokoodi. Koodia käytetään uudella palvelimella, eikä sitä lähetetä säilyttäjälle. Säilyttäjällä pyyntö näkyy kohdassa **Avaimen talletus** pyytäjän, sen, onko kyseinen instanssi koskaan nähty siellä aiemmin, ja pyyntöjen määrän kanssa. **Salli** luovuttaa sinetöidyn kopion, ja sallimiseen tarvitaan kirjautumissalasana. Uudella asennuksella on 30 minuuttia aikaa noutaa se Sallimisen jälkeen, pyyntö, johon kukaan ei vastaa, vanhenee päivän kuluttua, ja instanssin, joka pyytää liian usein, täytyy odottaa tunti.
 
+Talletus sisältää myös tämän palvelimen jokaisen [solmun](nodes.md) `APP_KEY`-avaimen, koska paketti sisältää ne. Koodin avulla säilyttäjä voisi avata niiden repositoryt, mutta se ei voi koskaan komentaa solmua, koska siihen tarvitaan tämän palvelimen allekirjoitus.
+
 Ilman koodia kukaan ei voi avata kopiota, säilyttäjäkään. Jos koodi katoaa, tee uusi, kun tämä palvelin yhä toimii. Jos palvelin on jo poissa, palautuspaketti ja kirjoitettu APP_KEY toimivat yhä. Säilyttäjä voi poistaa talletuksen milloin tahansa, ja omistajan täytyy silloin pyytää uudelleen.
 
 ## Palautuspaketti {#recovery-kit}
@@ -627,6 +634,8 @@ Ilman koodia kukaan ei voi avata kopiota, säilyttäjäkään. Jos koodi katoaa,
 Tämä on se pala, joka tekee katastrofista toipumisen mahdolliseksi silloinkin kun käynnissä olevaa BombVaultia ei ole.
 
 **Lataa palautuspaketti** kortissa **Hätätilanteiden varalle** kohdassa **Asetukset, Palautus** antaa sinulle **avaimen**, **johdetun restic-salasanan**, jokaisen **kohteen** kunkin osion repositoryineen, tunnukset, joita uusi asennus tarvitsee niihin pääsyyn, sekä **tarkat restic-komennot**, jotta voit palauttaa suoraan restic-komentorivillä millä tahansa koneella. Se vaatii kirjautumissalasanan. Paketti tulostaa avaimen myös salaus pois päältä, koska kontti- ja VM-määritykset sinetöidään aina sillä. Haltuunoton jälkeen se tulostaa haltuun otetun varmuuskopioavaimen ja tämän palvelimen APP_KEY:n, jota uusi asennus tarvitsee vain asetusten palauttamiseen. Yleiskatsauksen kortti **Tallenna palautuspakettisi** muistuttaa, kunnes olet tallentanut sen.
+
+Palvelin, jolla on [solmuja](nodes.md), saa pakettiinsa luvun **Solmut**. Se nimeää jokaisen solmun tunnisteineen, `APP_KEY`-avaimineen, avaimesta johdettuine restic-salasanoineen ja kunkin osion repositoryineen. Solmun oma salasana avaa ne, ja niin avaa myös tämän palvelimen salasana, koska tämä palvelin lisää avaimensa jokaiseen solmun repositoryyn. Lataa paketti uudelleen, kun lisäät solmun tai muutat sen varmuuskopioiden määränpäätä. Solmun `APP_KEY`-avaimella ja `NODE_HOME`-arvolla uudesta palvelimesta tulee taas sama solmu, katso [Korvaaminen ja vapauttaminen](nodes.md#replace-release).
 
 !!! danger "Säilytä palautuspaketti palvelimen ulkopuolella"
     Paketti sisältää salaisuuden, joka purkaa varmuuskopiosi. Säilytä se turvallisessa paikassa erillään palvelimesta (salasanahallinta, tulostettu kopio kassakaapissa). Jos menetät sekä BombVaultin että `APP_KEY`:n ilman palautuspakettia ja ilman avaintalletusta, salattuja varmuuskopioitasi ei voi palauttaa.

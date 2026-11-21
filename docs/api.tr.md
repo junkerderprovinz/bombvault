@@ -1,6 +1,6 @@
 # API ve entegrasyonlar
 
-BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si vardır. Genel bakışın gösterdiği şeyleri okur ve bir yedekleme başlatabilir. Geri yüklemeler, yedekleri silme ve ayarlar gibi geri kalan her şey web arayüzünde kalır.
+BombVault'un betikler, panolar ve ev otomasyonu için küçük bir HTTP API'si vardır. Genel bakışın gösterdiği şeyleri okur ve bir yedekleme başlatabilir. Geri yüklemeler, yedekleri silme, ayarlar ve [düğümler](#nodes) gibi geri kalan her şey web arayüzünde kalır.
 
 ## Belirteçler {#tokens}
 
@@ -68,6 +68,32 @@ Başlatmalar [MCP üzerinden başlatmalar](mcp.md#starting-backups) ile aynı s�
 ## OpenAPI {#openapi}
 
 BombVault bu rotaların bir tanımını `/api/v1/openapi.json` adresinde sunar (OpenAPI 3.1). Belirteç gerekmez. Swagger UI'ye, Postman'a ya da bir kod üreticisine yükle.
+
+## Düğümler {#nodes}
+
+[Düğümleri](nodes.md) yöneten rotalar yukarıdaki belirteçli API'ye değil, web arayüzüne aittir. Bir giriş parolası ayarlıysa bu örnekte oturum açılarak elde edilmiş bir tarayıcı oturumu isterler. Bir API belirteci ya da MCP anahtarı bunların hiçbirini açmaz, eşleşmiş telefonlar onlara ulaşmaz ve `/api/v1/openapi.json` onları tanımlamaz. Düğüm eklemek, compose dosyasını yeniden göstermek ve bir düğümün kendi rotalarına ulaşmak, bir giriş parolası ayarlanana kadar reddedilir. Bir şey değiştiren betik, web arayüzünün her yerinde olduğu gibi `Content-Type: application/json` gönderir.
+
+| Rota | Ne yapar |
+|---|---|
+| `GET /api/nodes` | Her düğüm: çevrimiçi olup olmadığı, sürümü, yedeklerinin nereye gittiği, her bölümün planı, son yedeği, hataları ve açık anormallikleri |
+| `POST /api/nodes` | Örneğin `{"name":"vps-helsinki"}` ile bir düğüm ekler ve onu `compose` ile döndürür: `MODE`, `APP_KEY`, `NODE_HOME` ve `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | **Değiştir** için aynı `compose` değerlerini yeniden döndürür |
+| `POST /api/nodes/{id}/placement` | Düğümün yedeklerini bir yere yönlendirir ve bölüm başına düğümün deposuna ulaşıp ulaşmadığını yanıtlar, bir hedef için `warning` ile |
+| `PUT /api/nodes/{id}/schedule` | Planları ayarlar, örneğin `{"containers":"daily 03:00","files":"off"}`. Belirtilmeyen bölüm planını korur |
+| `DELETE /api/nodes/{id}` | Düğümü serbest bırakır. `told`, düğümün bunu hemen mi duyduğunu yoksa döndüğünde mi duyacağını söyler |
+| `GET /api/nodes/routes` | Ana örneğin istekleri ilettiği, düğümün kendi rotalarının listesi |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Rota listedeyse isteği düğümün `/api/{path}` rotasına iletir ve düğümün JSON yanıtını döndürür |
+| `PUT /api/receiver/node-address` | Alıcı sunucunun **Düğümler için adres** değerini ayarlar, örneğin `{"url":"https://backup.tower.example.org","caPem":""}`. Boş bir `url` sunucuyu düğümlere kapatır |
+
+Üç hedef:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+`/api/nodes/{id}/api/...` isteği en fazla 32 KiB taşır. Listede olmayan bir rota `403`, henüz yanıt vermemiş ya da serbest bırakılmakta olan bir düğüm `node-not-adopted` koduyla `409`, uzaktaki bir düğüm de `node-away` koduyla `502` yanıtını verir. Örneğin `GET /api/nodes/{id}/api/runs?limit=20` düğümün son 20 çalışmasını döndürür, `POST /api/nodes/{id}/api/containers/nextcloud/backup` de `nextcloud` konteynerini yedekler.
 
 ## Home Assistant {#home-assistant}
 

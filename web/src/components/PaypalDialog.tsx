@@ -126,8 +126,8 @@ export function PaypalDialog({ onClose }: { onClose: () => void }) {
                 aria-label={t("about.paypalOtherAmount")}
                 aria-invalid={typed !== "" && !typedAmount}
                 onChange={(e) => setTyped(e.target.value)}
-                className={`h-9 w-36 rounded-control border bg-carbon-surface2 px-3 text-sm text-carbon-text glim-field-focus ${
-                  typedAmount ? "border-accent" : "border-transparent"
+                className={`h-9 w-36 rounded-control px-3 text-sm glim-field-focus ${
+                  typedAmount ? "bg-accent text-accentContrast" : "bg-carbon-surface2 text-carbon-text"
                 }`}
               />
             </div>

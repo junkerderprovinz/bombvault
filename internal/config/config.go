@@ -67,7 +67,26 @@ type Config struct {
 	// failures lock out every client. Empty trusts nobody; otherwise a caller
 	// could pick its own throttle bucket with a forged header.
 	TrustedProxies []net.IPNet
+	// Mode (env MODE) is how this process runs: the whole app, or a node that
+	// a home instance controls.
+	Mode Mode
+	// NodeHome (env NODE_HOME) is what a node knows of the home instance it
+	// belongs to, as home wrote it.
+	NodeHome string
+	// NodeName (env NODE_NAME) is what home shows for a node.
+	NodeName string
 }
+
+// Mode is how a process runs.
+type Mode string
+
+const (
+	// ModeFull is the app with its web interface and its own schedules.
+	ModeFull Mode = "full"
+	// ModeNode serves no interface and plans nothing itself: it waits for
+	// the home instance it belongs to.
+	ModeNode Mode = "node"
+)
 
 // Load reads configuration from the provided env map and applies defaults.
 // It returns an error if APP_KEY is missing or does not match [0-9a-f]{64}.
@@ -75,6 +94,10 @@ func Load(env map[string]string) (Config, error) {
 	key := env["APP_KEY"]
 	if !appKeyRe.MatchString(key) {
 		return Config{}, fmt.Errorf("APP_KEY must be exactly 64 lowercase hex characters")
+	}
+	mode, err := modeOf(env["MODE"])
+	if err != nil {
+		return Config{}, err
 	}
 
 	uriHost, uriUser, uriPort, hasURI := sshTargetFromURI(env["LIBVIRT_URI"])
@@ -110,6 +133,9 @@ func Load(env map[string]string) (Config, error) {
 		// the Unraid flash, /boot mounted at /host/boot
 		FlashDir:       stringOr(env["FLASH_DIR"], "/host/boot"),
 		TrustedProxies: trustedProxies(env["TRUSTED_PROXY"]),
+		Mode:           mode,
+		NodeHome:       strings.TrimSpace(env["NODE_HOME"]),
+		NodeName:       strings.TrimSpace(env["NODE_NAME"]),
 	}
 	c.DBPath = filepath.Join(c.DataDir, "bombvault.sqlite")
 	if wasPlaceholder {
@@ -196,6 +222,16 @@ func LoadFromEnv() (Config, error) {
 		}
 	}
 	return Load(env)
+}
+
+func modeOf(raw string) (Mode, error) {
+	switch m := Mode(strings.ToLower(strings.TrimSpace(raw))); m {
+	case "", ModeFull:
+		return ModeFull, nil
+	case ModeNode:
+		return ModeNode, nil
+	}
+	return "", fmt.Errorf("MODE=%q is neither full nor node; leave it empty for the full app", raw)
 }
 
 func stringOr(v, def string) string {

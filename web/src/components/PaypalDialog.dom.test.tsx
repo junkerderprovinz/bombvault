@@ -148,12 +148,13 @@ it("lets a typed amount take the selection from the presets, and gives it back w
 
   fireEvent.change(field, { target: { value: "12,50" } });
   expect(selected()).toEqual(["false", "false", "false"]);
-  expect(field.className).toContain("border-accent");
+  expect(field.className.split(" ")).toEqual(expect.arrayContaining(["bg-accent", "text-accentContrast"]));
+  expect(field.className).not.toMatch(/\bborder-/);
   expect(order().purchase_units[0]!.amount.value).toBe("12.50");
 
   fireEvent.change(field, { target: { value: "" } });
   expect(selected()).toEqual(["false", "true", "false"]);
-  expect(field.className).not.toContain("border-accent");
+  expect(field.className.split(" ")).not.toContain("bg-accent");
 });
 
 it("keeps PayPal shut while the typed amount does not parse", async () => {

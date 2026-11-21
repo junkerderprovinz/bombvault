@@ -140,6 +140,10 @@ Een database die alleen databasedumps heeft en geen back-up van bestanden, en wa
 
 In een [gedeelde repository](offsite-recovery.md#shared-repository) opent elke sleutel de back-ups van alle servers. Daarom toont de pagina Herstel de andere leden onder **Andere servers**, elk met zijn naam, zijn host, hoeveel items hij heeft en wanneer zijn nieuwste back-up liep. Een host die bij geen server hoort die deze kent, verschijnt als **Een server die deze niet kent**. Een klik opent **Back-ups van** en de naam van de server, alleen-lezen en zonder dat je iets hoeft in te voeren. Mappensets en ZFS-datasets gaan naar een map die je kiest. Containers en VM's komen terug als gewone bestanden in een map, omdat de andere server hun definities met zijn eigen sleutel verzegelt. De eigen back-ups van deze server in de gedeelde repository staan op het tabblad **Back-ups** van elk item.
 
+## Nodes {#nodes}
+
+De items van een [node](nodes.md) herstel je vanaf hun pagina's onder **Back-ups**, niet vanaf deze pagina. **Herstellen** naast een back-up daar herstelt het item op de node en vervangt wat er nu staat. Een kopie die deze instantie heeft opgehaald van een node die [zijn back-ups zelf bewaart](nodes.md#keep-on-node), staat hier onder **Andere bronnen**, zoals bij [Wat deze server heeft opgehaald](offsite-recovery.md#restore-what-was-fetched). Is de server van de node weg, zet de node dan opnieuw op met **Vervangen** op zijn kaart: dezelfde `APP_KEY` en dezelfde `NODE_HOME` maken van de nieuwe server dezelfde node, en zijn back-ups gaan weer open. Het hoofdstuk **Nodes** van de [herstelkit](offsite-recovery.md#recovery-kit) opent ze ook met alleen restic.
+
 ## Na een herstel {#after}
 
 Een kopie die naast het origineel is hersteld, staat onder **Back-ups** als uitgesloten, zodat ze niet als openstaande taak telt. Voeg haar toe aan de planning als je haar wilt houden. Een container of VM die draaide toen hij werd geback-upt, komt draaiend terug, een die gestopt was, blijft gestopt. Op Unraid verschijnt een herstelde container weer in het Docker-tabblad als een gewone, bewerkbare app, en een VM in de VM Manager met zijn schijven en NVRAM gekoppeld.

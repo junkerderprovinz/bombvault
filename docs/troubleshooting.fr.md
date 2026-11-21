@@ -208,6 +208,26 @@ L'écran d'accueil dit pourquoi sur la carte du serveur :
 - **Connexion nécessaire :** un serveur ajouté par son adresse demande le mot de passe. Voir aussi [Un téléphone arrive sur la page de connexion](#a-phone-lands-on-the-login-page).
 - **La clé a changé :** l'écran d'accueil montre l'empreinte de la nouvelle clé, et la page ne s'ouvre qu'après que vous l'avez approuvée. Voir [Hors de chez soi](android.md#away).
 
+## Un nœud reste sur « En attente du nœud » {#node-waiting}
+
+Le nœud n'a pas encore répondu à son instance d'attache. Ouvrez le journal de son conteneur sur le serveur du nœud (`docker logs bombvault-node`) :
+
+- **`node mode, waiting for home`** suivi de l'identifiant de l'instance d'attache : le nœud tourne et attend sur le relais. Vérifiez que le serveur peut joindre l'adresse du relais. La connexion part du nœud, il n'a donc besoin d'aucun port ouvert.
+- **`NODE_HOME is not set`** : le fichier compose a perdu ses valeurs. Choisissez **Remplacer** sur la carte du nœud, copiez de nouveau le fichier et lancez `docker compose up -d`.
+- **`NODE_HOME does not belong to this APP_KEY`** : les deux valeurs viennent de nœuds différents. Copiez-les toutes les deux depuis la même carte.
+- **`this node belongs to the home ... and NODE_HOME names ...`** : une autre instance d'attache a pris le nœud en charge. Libérez-le d'abord là-bas, ou ajoutez ici le serveur comme nouveau nœud avec un nouveau fichier compose.
+- **`MODE=... is neither full nor node`** : réglez `MODE: node`.
+
+## Un nœud n'atteint pas ses dépôts {#node-reach}
+
+Après le choix d'une destination, l'instance d'attache indique par section si le nœud a ouvert son dépôt, par exemple **Le nœud ne joint pas le dépôt de Conteneurs** avec la raison donnée par restic. Vérifiez depuis le serveur du nœud que l'adresse répond. Sur le serveur récepteur, il s'agit de l'**Adresse pour les nœuds** : un reverse proxy doit la transmettre au rest-server, et un serveur qui a son propre certificat a besoin de ce certificat sous **Certificat**. Sur une destination, vérifiez les identifiants créés pour le nœud. Choisissez ensuite **Changer la destination** puis de nouveau **Enregistrer**. Voir [Où vont les sauvegardes](nodes.md#placement).
+
+Pour un nœud qui garde ses sauvegardes lui-même, un port tenu par un autre conteneur sur le nœud est refusé avec le nom de ce conteneur, alors choisissez-en un autre. Quand l'instance d'attache ne parvient pas à rapatrier, ouvrez le port dans le pare-feu du nœud.
+
+## Un nœud libéré ne revient pas {#node-released}
+
+Un nœud libéré n'accepte plus d'instance d'attache avec son ancien `APP_KEY`, et son dossier `config` se souvient de la libération. Ajoutez le serveur comme nouveau nœud, et démarrez-le avec le nouveau fichier compose et un dossier `config` vide. Ses anciennes sauvegardes restent où elles étaient, tout comme chaque copie que l'instance d'attache a rapatriée.
+
 ## Un autre utilisateur ne peut pas lire le dépôt local {#repository-permissions}
 
 Le dépôt local reste lisible pour d'autres utilisateurs, comme un utilisateur de synchronisation via SMB. Avant la 10.4.1, des fichiers qu'écrivaient un élagage, une étiquette, un rapatriement, un déplacement de section, une suppression ou une sauvegarde de stack pouvaient rester illisibles jusqu'à la nuit suivante. Mettez BombVault à jour, et ils sont lisibles tout de suite. Le dépôt de l'auto-sauvegarde reste lisible par root seulement, exprès, car il contient les réglages de BombVault.

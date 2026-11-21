@@ -54,6 +54,10 @@ De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de
 
 Een telefoon die voor 10.0.0 is gekoppeld, gaat zijn aanroepen ondertekenen bij het eerste bezoek na de update, en elke server bewaart de eerste sleutel die hij voor de telefoon krijgt. Als iemand anders die de woorden van de groep kent er eerder bij is terwijl de telefoon offline is, wijst die server de telefoon vanaf dat moment af, en kan de app hem niet meer openen via de relay. Los dit op door in een browser in te loggen op die server, op de kaart van de telefoon op de Instanties-pagina **Sleutel vergeten** te kiezen en daarna **Vergeten bevestigen**, en de app opnieuw te openen. De server neemt bij de volgende aanroep de eigen sleutel van de telefoon over. Wordt de telefoon opnieuw afgewezen, dan heeft iemand anders de woorden. Laat dan elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden, net als bij een verloren telefoon.
 
+## Nodes {#nodes}
+
+[Nodes](nodes.md) beheer je in de webinterface. De sessie van een gekoppelde telefoon reikt niet tot hen, dus de app toont geen nodekaarten op de pagina Instanties, geen kaart **Nodes** in het overzicht en geen node-onderdelen onder **Back-ups**, en **Node toevoegen** antwoordt dat er een aanmelding op de server zelf nodig is. Open de server in een browser en meld je aan met het wachtwoord om een node toe te voegen, te wijzigen waar zijn back-ups heen gaan of een van zijn items te herstellen.
+
 ## Instellingen {#settings}
 
 Het tandwiel naast het plusteken opent de instellingen van de app:

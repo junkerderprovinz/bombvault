@@ -140,6 +140,10 @@ Baza danych, która ma tylko zrzuty bazy, bez kopii plików, i której kontenera
 
 We [wspólnym repozytorium](offsite-recovery.md#shared-repository) każdy klucz otwiera kopie wszystkich serwerów, więc strona Przywracanie wymienia pozostałych członków w **Inne serwery**, każdego z jego nazwą, hostem, liczbą elementów i czasem jego najnowszej kopii. Host, który nie należy do żadnego serwera znanego temu serwerowi, jest pokazany jako **Serwer, którego ten nie zna**. Kliknięcie otwiera **Kopie zapasowe serwera** i nazwę serwera, tylko do odczytu i bez niczego do wpisywania. Zestawy folderów i zbiory danych ZFS trafiają do wybranego przez Ciebie folderu. Kontenery i maszyny wirtualne wracają jako zwykłe pliki w folderze, bo drugi serwer pieczętuje ich definicje własnym kluczem. Własne kopie tego serwera we wspólnym repozytorium są na karcie **Kopie zapasowe** każdego elementu.
 
+## Węzły {#nodes}
+
+Elementy [węzła](nodes.md) przywraca się z ich stron w **Kopie zapasowe**, a nie z tej strony. **Przywróć** przy kopii przywraca tam element na węźle i zastępuje to, co jest tam teraz. Kopia, którą ta instancja pobrała z węzła, który [sam trzyma swoje kopie](nodes.md#keep-on-node), jest wymieniona tutaj w **Inne źródła**, jako [Co ten serwer pobrał](offsite-recovery.md#restore-what-was-fetched). Gdy serwera węzła już nie ma, postaw węzeł na nowo przez **Zastąp** na jego karcie: ten sam `APP_KEY` i `NODE_HOME` sprawiają, że nowy serwer jest tym samym węzłem, a jego kopie znów się otwierają. Rozdział **Węzły** w [zestawie odzyskiwania](offsite-recovery.md#recovery-kit) otwiera je także zwykłym resticiem.
+
 ## Po przywróceniu {#after}
 
 Kopia przywrócona obok oryginału jest wymieniona pod **Kopie zapasowe** jako wykluczona, więc nie liczy się jako otwarte zadanie. Dodaj ją do harmonogramu, jeśli chcesz ją zachować. Kontener lub maszyna wirtualna, które działały w chwili kopii, wracają działające, a zatrzymane zostają zatrzymane. Na Unraid przywrócony kontener pojawia się ponownie w zakładce Docker jako zwykła, edytowalna aplikacja, a maszyna wirtualna w VM Manager z podłączonymi dyskami i NVRAM.

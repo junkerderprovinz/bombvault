@@ -13,6 +13,7 @@ import { BarButton, BulkBar } from "../components/backups/BulkBar";
 import { KIND_LABEL, KIND_SCHEDULE_LABEL, entryName, tileLabel } from "../components/backups/kinds";
 import { KindTiles } from "../components/backups/KindTiles";
 import { ListBar } from "../components/backups/ListBar";
+import { NodeSections } from "../components/backups/NodeSections";
 import { BatchNote, DumpIntro, ZFSDownNote } from "../components/backups/ListNotes";
 import { useBulkActions } from "../components/backups/useBulkActions";
 import { useReplicateAll } from "../components/backups/useReplicateAll";
@@ -78,6 +79,8 @@ import { useAnomalyItems, useAnomalySummary, useOpenAnomalies } from "../lib/use
 import { useConfirm } from "../lib/useConfirm";
 import { useLoadMore } from "../lib/useLoadMore";
 import { useIsDesktop } from "../lib/useMediaQuery";
+import { useNodes } from "../lib/useNodes";
+import type { NodeEntryKind } from "../lib/nodeEntries";
 
 const PHONE_ROWS = 20;
 
@@ -118,6 +121,7 @@ export function Backups() {
   const anomalyEnabled = useAnomalySummary().summary?.enabled ?? false;
   const { byRunId } = useOpenAnomalies();
   const sentence = useScheduleSentence();
+  const { nodes } = useNodes();
 
   const [list, setList] = useState<ListItemsResponse | null>(null);
   const [failed, setFailed] = useState(false);
@@ -221,6 +225,7 @@ export function Backups() {
   const showIp = view.sort.field === "ip";
 
   const onContainers = tile === "all" || tile === "container";
+  const nodeKinds: NodeEntryKind[] = tile === "all" ? ["container", "files"] : tile === "container" || tile === "files" ? [tile] : [];
   const databases = onContainers
     ? introDatabases(entries.filter((item) => item.kind === "container" && !isGone(item)))
     : [];
@@ -488,6 +493,7 @@ export function Backups() {
               </Card>
             </div>
           )}
+          <NodeSections nodes={nodes} kinds={nodeKinds} firstHue={1} />
         </>
       )}
 

@@ -16,6 +16,8 @@ Her plan, cümle gibi okunan bir düğmedir, örneğin *her gün 03:00'te* ya da
 
 Tüm saatler sunucunun saat dilimindedir. Unraid'de bu sistemin kendi saat dilimidir. Başka yerlerde `TZ` ayarla, yoksa her plan UTC'de çalışır, bkz. [Ortam değişkenleri](configuration.md#environment-variables).
 
+Ana örnek [düğümlerinin](nodes.md) yedeklerini de planlar, ama burada değil: Örnekler sayfasındaki her düğüm kartında konteynerleri için bir plan, klasörleri için bir plan vardır. Yeni bir düğüm, bu örneğin konteyner yedeklerinden yarım saat sonra başlar. Bkz. [Düğümler ne zaman yedekler](nodes.md#schedule).
+
 ## Hafta {#week}
 
 **Hafta** kartı planlanmış her çalıştırmayı Pazartesi'den Pazar'a, gün başına bir satır olarak çizer: yedekler, site dışı kopyalar ve denetimler. Neyin orada başladığını okumak için bir çizgiye gel. İki saat içinde üç planın başladığı yerde aralık işaretlenir, böylece onları açabilirsin.

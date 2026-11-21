@@ -390,7 +390,7 @@ Uma fortaleza junta o BombVault às outras apps da família, como o ShipLog, o T
 
 ## Instâncias e funções {#roles}
 
-A página **Instâncias** (um mosaico de definições que pode ser fixado na barra lateral) mostra o grupo como uma rede de quem faz o quê por quem, um cartão para esta instância e um cartão para cada outro membro, os telemóveis Android e os servidores ZFS. **Emparelhamento**, em baixo à direita, leva à página de emparelhamento. Que partes estão ligadas define-se em **Definições, Instâncias, Vários servidores**: **Instâncias**, **Recetor** e **Recolha**.
+A página **Instâncias** (um mosaico de definições que pode ser fixado na barra lateral) mostra o grupo como uma rede de quem faz o quê por quem, um cartão para esta instância e um cartão para cada outro membro, os telemóveis Android, os servidores ZFS e os nós desta instância. **Emparelhamento**, em baixo à direita, leva à página de emparelhamento, e **Adicionar nó**, ao lado, adiciona um nó. Que partes estão ligadas define-se em **Definições, Instâncias, Vários servidores**: **Instâncias**, **Recetor** e **Recolha**.
 
 ![A página Instâncias: o grupo como uma rede, e um cartão por instância com os seus mosaicos de função, um deles Inativa.](assets/screenshots/offsite/instances-dark.png#only-dark)
 ![A página Instâncias: o grupo como uma rede, e um cartão por instância com os seus mosaicos de função, um deles Inativa.](assets/screenshots/offsite/instances-light.png#only-light)
@@ -408,7 +408,12 @@ Os **Detalhes** num cartão abrem o resto: os repositórios recebidos e as orige
 
 Abaixo dos cartões, o cartão **Repositório partilhado** numa máquina com servidor recetor e o cartão **Repositórios partilhados** num membro pertencem ao [repositório partilhado](#shared-repository).
 
-Um membro pode oferecer o seu próprio armazenamento externo a outro membro pelo grupo. O outro administrador vê a oferta nos **Detalhes** do membro e aceita-a ou recusa-a. Aceitar cria umas credenciais guardadas e um destino normal, depois das mesmas verificações de um destino que escreves tu. O destino vem com a proteção contra eliminação ligada, já que a receita que a oferta mostra é um rest-server append-only, por isso **Durante quanto tempo guardar** não se aplica lá. Cada oferta tem credenciais e uma pasta próprias, por isso oferecer outra vez uma secção, ao mesmo membro ou a outro, deixa em paz as cópias do primeiro parceiro: junta a nova linha ao `.htpasswd` e mantém o servidor a correr. Só viajam assim os dados de ligação, nunca dados de backup. **Verificar agora** pede a um membro que verifique o repositório de uma secção. Nada na página pode iniciar um backup, uma restauração ou eliminar o que quer que seja noutra máquina.
+Um membro pode oferecer o seu próprio armazenamento externo a outro membro pelo grupo. O outro administrador vê a oferta nos **Detalhes** do membro e aceita-a ou recusa-a. Aceitar cria umas credenciais guardadas e um destino normal, depois das mesmas verificações de um destino que escreves tu. O destino vem com a proteção contra eliminação ligada, já que a receita que a oferta mostra é um rest-server append-only, por isso **Durante quanto tempo guardar** não se aplica lá. Cada oferta tem credenciais e uma pasta próprias, por isso oferecer outra vez uma secção, ao mesmo membro ou a outro, deixa em paz as cópias do primeiro parceiro: junta a nova linha ao `.htpasswd` e mantém o servidor a correr. Só viajam assim os dados de ligação, nunca dados de backup. **Verificar agora** pede a um membro que verifique o repositório de uma secção. Os membros deixam em paz os backups uns dos outros: nada na página inicia um backup noutro membro, restaura lá ou apaga lá o que quer que seja.
+
+Os **nós** são diferentes, porque não são membros. Um nó é um BombVault sem interface web que recebe ordens desta instância, por isso é esta instância que inicia nele os backups e os restauros e que poda os seus backups antigos. Cada nó tem um cartão com o seu estado, a sua versão, para onde vão os seus backups e quando cada secção faz backup, com **Alterar destino**, **Substituir** e **Libertar**. Um nó novo diz **À espera do nó** até responder pela primeira vez, e um nó libertado que esteja ausente diz **A ser libertado**. Vê [Nós](nodes.md).
+
+![O cartão de um nó: Ligada, a sua versão, os seus backups no servidor recetor e os seus planos por secção.](assets/screenshots/nodes/card-dark.png#only-dark)
+![O cartão de um nó: Ligada, a sua versão, os seus backups no servidor recetor e os seus planos por secção.](assets/screenshots/nodes/card-light.png#only-light)
 
 As instâncias que estão desligadas e os telemóveis com a aplicação fechada mantêm o seu cartão como **Inativa**, em cinzento, com quando foram vistos pela última vez, e ficam esbatidos na rede até os **Remover**es. Logo depois de este servidor arrancar, um cartão assim diz **A verificar** até o grupo voltar. **Remover** funciona num cartão destes sejam quais forem as partes ligadas, e termina também os pedidos em aberto do membro, os seus espaços de receção ZFS inativos e os seus pedidos de chave à espera. O cartão **Instâncias** na página de emparelhamento lista também esses membros como **Inativa**.
 
@@ -443,7 +448,7 @@ As instâncias do teu grupo encontram então o servidor entre os fornecedores em
 
 Uma instância que só alcança a máquina recetora pelo relay não pode usar o servidor, porque o relay não transporta backups. Junta primeiro o endereço da máquina recetora na página de emparelhamento. Quando o BombVault corre num endereço IP próprio (em br0, por exemplo), preenche **Endereço para parceiros**, porque o servidor escuta no endereço do host.
 
-Uma máquina recetora pode também manter um [repositório partilhado](#shared-repository) para o grupo.
+Uma máquina recetora pode também manter um [repositório partilhado](#shared-repository) para o grupo, e receber os backups dos [nós](nodes.md#to-receiver) desta instância no seu **Endereço para os nós**.
 
 ## Repositório partilhado {#shared-repository}
 
@@ -620,6 +625,8 @@ Um guardião da chave é uma instância do teu grupo que guarda uma cópia selad
 
 Nesse dia precisas de três coisas: as doze palavras do teu grupo, o código de desbloqueio e acesso à interface do guardião, onde alguém tem de carregar em **Permitir**. No assistente de emergência escolhe **Através do grupo**, escolhe o depósito, pede-o e escreve o código de desbloqueio. O código é usado no servidor novo e não é enviado ao guardião. No guardião, o pedido aparece em **Depósito da chave** com quem pede, se essa instância já foi vista lá antes e quantas vezes pediu. **Permitir** entrega a cópia selada, e permitir precisa de uma palavra-passe de acesso. A instalação nova tem 30 minutos para a recolher depois do Permitir, um pedido a que ninguém responde expira ao fim de um dia, e uma instância que pede demasiadas vezes tem de esperar uma hora.
 
+O depósito leva também a `APP_KEY` de cada um dos [nós](nodes.md) deste servidor, já que o kit a leva. Com o código, um guardião poderia abrir os repositórios deles, mas nunca consegue dar ordens a um nó, porque isso exige a assinatura deste servidor.
+
 Sem o código ninguém consegue abrir a cópia, o guardião incluído. Se o código se perder, cria um novo enquanto este servidor ainda corre. Se o servidor já desapareceu, o kit de recuperação e a APP_KEY escrita à mão continuam a funcionar. O guardião pode eliminar um depósito a qualquer altura, e o dono tem então de o pedir outra vez.
 
 ## Kit de recuperação {#recovery-kit}
@@ -627,6 +634,8 @@ Sem o código ninguém consegue abrir a cópia, o guardião incluído. Se o cód
 Esta é a peça que torna possível a recuperação de desastres mesmo quando não há nenhum BombVault a correr.
 
 **Descarregar kit de recuperação** no cartão **Para emergências** em **Definições, Restauro** dá-te a **chave**, a **palavra-passe do restic derivada**, todos os **destinos** com o repositório de cada secção, as credenciais de que uma instalação nova precisa para os alcançar, e os **comandos exatos do restic**, para restaurares diretamente com a CLI do restic em qualquer máquina. Precisa de uma palavra-passe de acesso. O kit imprime a chave também com a encriptação desligada, porque as definições de containers e VMs são sempre seladas com ela. Depois de uma adoção, imprime a chave de backup adotada e a APP_KEY deste servidor, de que uma instalação nova só precisa para trazer as definições de volta. Um cartão **Guarda o teu kit de recuperação** na visão geral lembra-te até o teres guardado.
+
+Um servidor com [nós](nodes.md) recebe no kit um capítulo **Nodes**. Nomeia cada nó com o seu id, a sua `APP_KEY`, a palavra-passe do restic tirada dessa chave e o repositório de cada secção. A palavra-passe do próprio nó abre-os, e a deste servidor também, porque este servidor junta a sua chave a cada repositório de um nó. Descarrega o kit outra vez depois de adicionares um nó ou de mudares para onde vão os seus backups. Com a `APP_KEY` do nó e o seu `NODE_HOME`, um servidor novo volta a ser o mesmo nó, vê [Substituir e libertar](nodes.md#replace-release).
 
 !!! danger "Guarda o kit de recuperação fora do servidor"
     O kit contém o segredo que desencripta os teus backups. Guarda-o num sítio seguro e separado do servidor (um gestor de palavras-passe, uma cópia impressa num cofre). Se perderes o BombVault e a `APP_KEY` sem kit de recuperação nem depósito da chave, os teus backups encriptados não podem ser recuperados.

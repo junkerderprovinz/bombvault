@@ -159,6 +159,14 @@ func (s *Service) primaryLimitsFor(domain, repo string) restic.Limits {
 // leaving it out here would give a passing connection test and backups that
 // run with the shared credentials.
 func (s *Service) primaryModeFor(settings store.Settings, domain, repo string) restic.Mode {
+	// A node opens what home placed with home's sign-in alone.
+	p, placed, err := s.placedSection(domain)
+	if err != nil {
+		log.Printf("api: where home placed the %s could not be read: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
+	}
+	if placed && sameRepoLocation(s.placedRepo(p), repo) {
+		return s.placedMode(p)
+	}
 	mode := s.ModeFor(settings)
 	// A named repository answers for itself. The domain's row describes the
 	// domain's own repository; applied here it would back up a container

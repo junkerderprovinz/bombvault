@@ -188,6 +188,17 @@ Mostantól a konténereid minden éjjel mentésre kerülnek. Jó következő lé
 !!! note "Hosztintegráció-ellenőrzés"
     Az áttekintés **Hosztintegráció** kártyája minden csatolást és CLI-t megvizsgál (Docker socket, libvirt, restic, qemu-img, rclone), és jelenti a hiányzó darabokat, így megbizonyosodhatsz róla, hogy a konténer helyesen van bekötve, mielőtt rá hagyatkoznál. A **Testreszabás** alatt vár, amíg hozzáadod.
 
+## VPS mentése csomópontként {#node}
+
+Egy VPS-nek vagy más kis szervernek nem kell saját, webes felületű BombVault. Add hozzá ennek a példánynak a csomópontjaként, és a mentéseit ez a példány intézi:
+
+1. Állíts be bejelentkezési jelszót a **Beállítások, Biztonság** alatt, ha még nem tetted meg.
+2. Nyisd meg a **Példányok** oldalt, válaszd a **Csomópont hozzáadása** gombot, és írj be egy nevet, például `vps-helsinki`.
+3. Válaszd ki, hová kerüljenek a mentései, például ennek a példánynak a fogadószerverére, és hogy mikor mentsen.
+4. Másold a szerverre az ablakban látható compose fájlt, irányítsd a Host Data kötetét és a `HOST_SOURCE_ROOT` értékét a mentendő adatokra, és futtasd a `docker compose up -d` parancsot.
+
+Amint a csomópont válaszol, a kártyáján a **Csatlakozva** áll, a konténerei pedig megjelennek a **Biztonsági mentések** alatt. A [Csomópontok](nodes.md) oldal egy példán vezet végig.
+
 ## Eligazodás {#navigation}
 
 ![A beállítások csempékként, mellettük a kiválasztott csempe kártyái. Minden változás azonnal kiíródik.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ A felület fordítása a `go run`-hoz is kell. A repó a `web/dist` alatt csak e
 - Gondoskodj róla, hogy egy hiba eljusson hozzád az **[Értesítésekkel](notifications.md)**.
 - Nézd meg, mikor mi fut, az **[Ütemezéseknél](schedules.md)**.
 - Vidd a csoportod összes szerverét a telefonodra az **[Android-alkalmazással](android.md)**.
+- Ments innen egy VPS-t egy **[csomóponttal](nodes.md)**.
 - A **[részletes példák](guides.md)** végigvezetnek a gyakori feladatokon, a **[Funkciók](features.md)** pedig felsorol mindent, amit a BombVault tud.
 - Egy beállítást klónozol, vagy új gépre költözöl? Vidd át a teljes konfigurációdat a **Beállítások exportálása / importálása** kártyával. Lásd: [Konfiguráció](configuration.md#portable-settings-export-and-import).
 - Elakadtál? Lásd: **[Hibaelhárítás](troubleshooting.md)**.

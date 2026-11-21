@@ -32,6 +32,8 @@ Tre knappar ovanför listan avgränsar den:
 
 Poster som inte längre är installerade men som fortfarande har säkerhetskopior står för sig under **Inte installerad (enbart säkerhetskopior)**. Återställ dem, eller radera deras säkerhetskopior för att frigöra utrymmet.
 
+Med [noder](nodes.md) har listorna Containers och Mappar ett avsnitt för varje nod under dina egna poster, med om noden är ansluten och hur många poster den har. **Poster på** och nodens namn döljer avsnittets poster och visar dem igen. En posts meny erbjuder **Säkerhetskopiera nu**, som startar dess säkerhetskopiering på noden, och **Öppna**. Dess sida listar dess säkerhetskopior med **Återställ** bredvid var och en, som återställer posten på noden. Nodens egen container listas inte. Se [En nods poster](nodes.md#entries).
+
 Sidans huvudåtgärd svävar nere till höger: **Säkerhetskopiera allt nu** startar en körning över varje påslaget avsnitt. **Mer** innehåller resten:
 
 - **Markera** startar ett urval, se nedan.

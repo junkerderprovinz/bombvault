@@ -2462,11 +2462,22 @@ body {
   margin: 0;
   font-weight: inherit;
 }
-/* The tile picked before keeps a ring in the colour it lights up in. */
+/* The tile picked before stays lit in its own colour, the way a pick is
+   marked everywhere: by its surface, never by a ring. */
 .glim-provider-pick .glim-readme-btn[aria-current="true"] {
-  outline: 2px solid var(--tile);
-  outline-offset: 2px;
+  background-color: var(--tile);
+  color: var(--tile-ink);
+  box-shadow: inset 0 0 0 1px var(--tile-edge, transparent);
+  --mark-ink: var(--tile-ink);
+  --mark-cut: var(--tile);
+  --brand-android: var(--tile-ink);
+  --brand-docker: var(--tile-ink);
+  --brand-unraid-from: var(--tile-ink);
+  --brand-unraid-to: var(--tile-ink);
 }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-readme-btn-mark { color: var(--tile-ink); }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-mark-rest { display: none; }
+.glim-provider-pick .glim-readme-btn[aria-current="true"] .glim-mark-hover { display: block; }
 .glim-pick-none {
   margin: 0;
   padding-block: 1.5rem;
@@ -4167,6 +4178,13 @@ body {
     animation-duration: var(--motion-scene-dur, 6s);
     animation-delay: calc(var(--motion-scene-dur, 6s) / 2);
   }
+  /* The pictures of where a node's backups go. Only the choice that is taken
+     moves, and there the parcel that rests on the way gives way to the one
+     that travels. */
+  :root:not([data-motion="off"]) .glim-place:not(.glim-place-on) :is(.glim-scene-flow, .glim-parcel-fly, .glim-parcel-hop, .glim-parcel-ring) {
+    animation: none;
+  }
+  :root:not([data-motion="off"]) .glim-place-on .glim-place-parked { display: none; }
 
   /* The three step cards play one scene over two passes. --step-at is the
      share of the loop at which a word shows or a button is pressed. */
@@ -5781,6 +5799,11 @@ body {
 .glim-pic {
   --pic: color-mix(in srgb, var(--accent), var(--accent-text));
 }
+/* A picture on a picked tile stands on the accent, so it draws in the
+   accent's ink and cuts its shapes out of that ink in the accent. */
+.glim-active .glim-pic { --pic: var(--accent-contrast); }
+.glim-active .glim-pic .glim-scene-cut { fill: var(--accent); }
+.glim-active .glim-pic .glim-scene-cut-line { stroke: var(--accent); }
 
 .glim-vessel-shape { rx: min(calc(var(--radius-control) / 2), 6px); }
 .glim-vessel-back { fill: var(--carbon-surface2); }
@@ -7087,6 +7110,28 @@ body {
   50%       { transform: translateY(calc(var(--motion-scene-hop, 0px) * -.25)); animation-timing-function: ease-in; }
   57%, 100% { transform: none; }
 }
+
+/* The pictures in the choices of where a node's backups go. A mark on a
+   corner stands apart from what it marks by a ring of the tile's ground. */
+.glim-place > svg { direction: ltr; }
+.glim-place-tile { rx: min(calc(var(--radius-control) * .7), 8px); }
+.glim-place-ground { fill: var(--carbon-surface3); }
+.glim-place-ink { color: var(--pic); }
+.glim-place-badge {
+  fill: var(--pic);
+  stroke: var(--carbon-surface2);
+  stroke-width: 2;
+}
+.glim-place-badge-ink { color: var(--carbon-surface); }
+.glim-place-kept {
+  stroke: var(--carbon-surface2);
+  stroke-width: 2;
+  paint-order: stroke;
+}
+.glim-active .glim-place-ground { fill: var(--accent-contrast); }
+.glim-active .glim-place-ink,
+.glim-active .glim-place-badge-ink { color: var(--accent); }
+.glim-active :is(.glim-place-badge, .glim-place-kept) { stroke: var(--accent); }
 
 /* The pictures on the three step cards of the pairing page. Corners follow
    the shape engine, and what sits on a filled shape is cut out of it in the

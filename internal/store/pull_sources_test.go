@@ -127,3 +127,23 @@ func TestPullSourceCRUD(t *testing.T) {
 		t.Fatalf("deleting a missing row must be a no-op, got %v", err)
 	}
 }
+
+func TestAPullSourceFromANodeKeepsItsNodeAndNeedsNoPairing(t *testing.T) {
+	db := store.OpenMem(t)
+	if err := store.Migrate(db); err != nil {
+		t.Fatal(err)
+	}
+	r := store.New(db)
+	made, err := r.CreatePullSource(store.PullSource{Name: "vps containers", Repo: "rest:https://203.0.113.7:8000/bombvault/containers", NodeID: "node-1", Domain: "containers"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	made.Name = "vps"
+	if err := r.UpdatePullSource(made); err != nil {
+		t.Fatal(err)
+	}
+	got, ok, err := r.GetPullSource(made.ID)
+	if err != nil || !ok || got.NodeID != "node-1" || got.NeedsPairing() {
+		t.Fatalf("got %+v %v %v, want the node kept and no pairing asked for", got, ok, err)
+	}
+}

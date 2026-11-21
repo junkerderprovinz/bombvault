@@ -1,0 +1,47 @@
+# A BombVault node: a server, such as a VPS, that a BombVault at home backs
+# up. It has no web interface and plans nothing itself; home tells it what to
+# back up and where the backups go.
+#
+# Home fills in APP_KEY, NODE_HOME and NODE_NAME when you add the node under
+# Instances. Keep APP_KEY safe: the same APP_KEY and NODE_HOME on a new server
+# make it the same node again.
+#
+#   1. Save this file as docker-compose.yml on the node.
+#   2. Point the Host Data volume at the data you want backed up.
+#   3. docker compose up -d
+#
+# The node reaches home over the relay, so it needs no open port. Only when it
+# keeps its backups itself does it start a rest-server next to it, with the
+# repositories in bombvault-node under Host Data, and home fetches them on the
+# port of the address you give home. Open that port to home.
+
+services:
+  bombvault-node:
+    image: junkerderprovinz/bombvault:latest
+    restart: unless-stopped
+
+    # restic records the hostname in its locks, so a fixed one lets a new
+    # container clear the lock of the one before it at once.
+    hostname: bombvault-node
+    container_name: bombvault-node
+
+    volumes:
+      # The node's own state: its database and restic cache.
+      - ./config:/config
+
+      # Lets the node stop and start containers around a backup or a restore.
+      # This is root access to this server, which home holds through the node.
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Host Data: where the containers and folders to back up keep their data.
+      # Replace ./data with that absolute path and set HOST_SOURCE_ROOT below to
+      # the same path.
+      - ./data:/host/user
+
+    environment:
+      MODE: node
+      APP_KEY: ""
+      NODE_HOME: ""
+      NODE_NAME: ""
+      PLATFORM: generic
+      HOST_SOURCE_ROOT: /host/user

@@ -752,6 +752,8 @@ type Scheduler struct {
 	pullNext          func(time.Time) (time.Time, bool)
 	sharedUpkeepFn    func() error
 	sharedUpkeepNext  func(time.Time) (time.Time, bool)
+	nodeFn            func() error
+	nodeNext          func(time.Time) (time.Time, bool)
 	fleetFn           func() error
 	everythingFn      func() error
 	// offsiteInUse reports whether a domain has an off-site target to copy to;
@@ -829,7 +831,7 @@ type NextRun struct {
 // jobDomainFromName derives the job and domain label from a domainSpec name. A
 // backup domain maps to ("backup", name), "<domain>-offsite" to ("offsite",
 // domain), and the app-wide jobs (drills, tamper, digest, watchdog, receiver,
-// pull, fleet) to their own job with an empty domain.
+// pull, nodes, fleet) to their own job with an empty domain.
 func jobDomainFromName(name string) (job, domain string) {
 	switch name {
 	case "drills":
@@ -844,6 +846,8 @@ func jobDomainFromName(name string) (job, domain string) {
 		return "receiver", ""
 	case "pull":
 		return "pull", ""
+	case "nodes":
+		return "nodes", ""
 	case "fleet":
 		return "fleet", ""
 	}
@@ -1649,7 +1653,9 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 		}
 	}
 
-	if settings.PullEnabled {
+	// A home with nodes fetches the backups a node keeps itself with Pull off
+	// too.
+	if settings.PullEnabled || s.nodeFn != nil {
 		domains = append(domains, domainSpec{
 			cadence: SweepCadence,
 			name:    "pull",
@@ -1676,6 +1682,19 @@ func (s *Scheduler) ReloadWithGates(settings store.Settings, g DueGates) error {
 			fn: func() {
 				if err := s.sharedUpkeepFn(); err != nil {
 					log.Printf("schedule: shared upkeep job: %v", err)
+				}
+			},
+		})
+	}
+
+	if s.nodeFn != nil {
+		domains = append(domains, domainSpec{
+			cadence: SweepCadence,
+			name:    "nodes",
+			next:    s.nodeNext,
+			fn: func() {
+				if err := s.nodeFn(); err != nil {
+					log.Printf("schedule: nodes job: %v", err)
 				}
 			},
 		})

@@ -140,6 +140,10 @@ O bază de date care are doar dumpuri de baze de date și niciun backup de fiși
 
 Într-un [depozit comun](offsite-recovery.md#shared-repository) fiecare cheie deschide copiile tuturor serverelor, așa că pagina Restaurare îi listează pe ceilalți membri la **Alte servere**, fiecare cu numele, gazda, câte elemente are și când a rulat cea mai nouă copie a lui. O gazdă care nu aparține niciunui server cunoscut de acesta apare ca **Un server pe care acesta nu îl cunoaște**. Un clic deschide **Copii de rezervă de la** urmat de numele serverului, doar în citire și fără nimic de introdus. Seturile de foldere și seturile de date ZFS ajung într-un folder ales de tine. Containerele și VM-urile revin ca fișiere simple într-un folder, pentru că celălalt server le sigilează definițiile cu propria cheie. Copiile proprii ale acestui server din depozitul comun sunt în fila **Copii de rezervă** a fiecărui element.
 
+## Noduri {#nodes}
+
+Elementele unui [nod](nodes.md) se restaurează din paginile lor de la **Copii de rezervă**, nu din această pagină. **Restaurare** lângă o copie de acolo restaurează elementul pe nod și înlocuiește ce se află acolo acum. O copie pe care această instanță a preluat-o de la un nod care [își păstrează singur copiile](nodes.md#keep-on-node) este listată aici la **Alte surse**, ca la [Ce a preluat acest server](offsite-recovery.md#restore-what-was-fetched). Când serverul nodului a dispărut, refă nodul cu **Înlocuiește** de pe cardul lui: același `APP_KEY` și același `NODE_HOME` fac din serverul nou același nod, iar copiile lui se deschid din nou. Capitolul **Noduri** din [kitul de recuperare](offsite-recovery.md#recovery-kit) le deschide și cu restic simplu.
+
 ## După o restaurare {#after}
 
 O copie restaurată lângă original este listată la **Copii de rezervă** ca exclusă, deci nu contează ca sarcină deschisă. Adaugă-o în programare dacă vrei s-o păstrezi. Un container sau o VM care rula când s-a făcut backupul revine pornit, unul care era oprit rămâne oprit. Pe Unraid un container restaurat reapare în fila Docker ca o aplicație obișnuită, editabilă, iar o VM în VM Manager cu discurile și NVRAM-ul atașate.

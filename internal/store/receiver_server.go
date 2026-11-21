@@ -33,9 +33,13 @@ type ReceiverServer struct {
 	// ReachedHost is the host the last check that reached the server found it
 	// at, which members get while Host is empty.
 	ReachedHost string
+	// NodeURL is where nodes reach the server from outside, and NodeCAPEM
+	// the certificate they trust it by, empty for one the system trusts.
+	NodeURL   string
+	NodeCAPEM string
 }
 
-const receiverServerCols = `container_name, folder, host_path, port, rest_user, password_enc, host, created_at, check_verdict, check_detail, checked_at, reached_host`
+const receiverServerCols = `container_name, folder, host_path, port, rest_user, password_enc, host, created_at, check_verdict, check_detail, checked_at, reached_host, node_url, node_ca_pem`
 
 // GetReceiverServer returns the receiving server, and false when none is set
 // up.
@@ -43,7 +47,7 @@ func (r *Repo) GetReceiverServer() (ReceiverServer, bool, error) {
 	var s ReceiverServer
 	err := r.db.QueryRow(`SELECT `+receiverServerCols+` FROM receiver_server WHERE id = 1`).Scan(
 		&s.ContainerName, &s.Folder, &s.HostPath, &s.Port, &s.User, &s.PasswordEnc, &s.Host,
-		&s.CreatedAt, &s.Check, &s.CheckDetail, &s.CheckedAt, &s.ReachedHost,
+		&s.CreatedAt, &s.Check, &s.CheckDetail, &s.CheckedAt, &s.ReachedHost, &s.NodeURL, &s.NodeCAPEM,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return ReceiverServer{}, false, nil
@@ -64,9 +68,9 @@ func (r *Repo) SaveReceiverServer(s ReceiverServer) error {
 		s.PasswordEnc = []byte{}
 	}
 	_, err := r.db.Exec(`INSERT OR REPLACE INTO receiver_server (id, `+receiverServerCols+`)
-		VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		s.ContainerName, s.Folder, s.HostPath, s.Port, s.User, s.PasswordEnc, s.Host,
-		s.CreatedAt, s.Check, s.CheckDetail, s.CheckedAt, s.ReachedHost,
+		s.CreatedAt, s.Check, s.CheckDetail, s.CheckedAt, s.ReachedHost, s.NodeURL, s.NodeCAPEM,
 	)
 	if err != nil {
 		return fmt.Errorf("SaveReceiverServer: %w", err)
@@ -94,6 +98,15 @@ func (r *Repo) SetReceiverServerHost(host string) error {
 	return nil
 }
 
+// SetReceiverNodeAddress stores where nodes reach the server and the
+// certificate they trust it by.
+func (r *Repo) SetReceiverNodeAddress(url, caPEM string) error {
+	if _, err := r.db.Exec(`UPDATE receiver_server SET node_url = ?, node_ca_pem = ? WHERE id = 1`, url, caPEM); err != nil {
+		return fmt.Errorf("SetReceiverNodeAddress: %w", err)
+	}
+	return nil
+}
+
 // DeleteReceiverServer forgets the receiving server and the logins it handed
 // out. Its container and data are left alone.
 func (r *Repo) DeleteReceiverServer() error {
@@ -103,21 +116,26 @@ func (r *Repo) DeleteReceiverServer() error {
 	return nil
 }
 
-// ReceiverLogin is the login a group member got on the receiving server.
+// ReceiverLogin is the login a group member, or a node of this instance, got
+// on the receiving server.
 type ReceiverLogin struct {
+	// MemberID is the member's id, or the node's for a login ForNode.
 	MemberID   string
 	MemberName string
 	User       string
 	// PasswordEnc is sealed with this instance's key, like the server's own.
 	PasswordEnc []byte
 	CreatedAt   int64
+	ForNode     bool
 }
 
-const receiverLoginCols = `member_id, member_name, rest_user, password_enc, created_at`
+const receiverLoginCols = `member_id, member_name, rest_user, password_enc, created_at, for_node`
 
 func scanReceiverLogin(row interface{ Scan(...any) error }) (ReceiverLogin, error) {
 	var l ReceiverLogin
-	err := row.Scan(&l.MemberID, &l.MemberName, &l.User, &l.PasswordEnc, &l.CreatedAt)
+	var forNode int
+	err := row.Scan(&l.MemberID, &l.MemberName, &l.User, &l.PasswordEnc, &l.CreatedAt, &forNode)
+	l.ForNode = forNode != 0
 	return l, err
 }
 
@@ -159,8 +177,8 @@ func (r *Repo) CreateReceiverLogin(l ReceiverLogin) error {
 	if l.PasswordEnc == nil {
 		l.PasswordEnc = []byte{}
 	}
-	_, err := r.db.Exec(`INSERT INTO receiver_logins (`+receiverLoginCols+`) VALUES (?, ?, ?, ?, ?)`,
-		l.MemberID, l.MemberName, l.User, l.PasswordEnc, l.CreatedAt)
+	_, err := r.db.Exec(`INSERT INTO receiver_logins (`+receiverLoginCols+`) VALUES (?, ?, ?, ?, ?, ?)`,
+		l.MemberID, l.MemberName, l.User, l.PasswordEnc, l.CreatedAt, boolInt(l.ForNode))
 	if err != nil {
 		return fmt.Errorf("CreateReceiverLogin: %w", err)
 	}

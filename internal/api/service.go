@@ -43,6 +43,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/hostload"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/nodelink"
 	"github.com/junkerderprovinz/bombvault/internal/notify"
 	"github.com/junkerderprovinz/bombvault/internal/paths"
 	"github.com/junkerderprovinz/bombvault/internal/platform"
@@ -725,6 +726,17 @@ type Service struct {
 	probeQueue   []string
 	probeWorking bool
 	firstProbes  atomic.Bool
+	// nodeMu guards nodeLinks, home's links to its nodes by node id,
+	// homeLink, a node's link to its home, and keptPrunes, the prune a node
+	// runs or ran last on each section it keeps itself.
+	nodeMu     sync.Mutex
+	nodeLinks  map[string]*homeNode
+	homeLink   *nodelink.Link
+	keptPrunes map[string]nodePrune
+	// nodeAPI is the router a node runs the requests of its home through.
+	nodeAPI atomic.Pointer[http.Handler]
+	// nodes keeps the schedules home holds for its nodes.
+	nodes *nodeWatch
 }
 
 // lockTamper blocks until it holds domain's tamper lock and returns the unlock
@@ -769,6 +781,7 @@ func NewService(cfg config.Config, st *store.Repo, d dockercli.Docker, v virshcl
 		s.engine = guardOwnData(eng, s)
 	}
 	s.anomalies = newAnomalyEngine(s, time.Now)
+	s.nodes = newNodeWatch(st, s.callNodeByID, s.notifyNode, s.pruneNodeSection, s.fetchNodeSection, s.keepNodeRecords)
 	s.load = hostload.NewSampler(procDir, cgroupDir, loadEvery)
 	if st != nil {
 		st.SetRunStartedHook(s.runStarted)
@@ -16170,8 +16183,7 @@ func (s *Service) BackupFileSet(ctx context.Context, id string) (_ backup.Summar
 		Repo:        repo,
 		TargetID:    set.ID,
 		SetName:     set.Name,
-		Excludes: append(s.excludesAsSeenHere(set.Excludes),
-			excludedBranches(anchored)...),
+		Excludes:    s.fileSetExcludes(set.Excludes, anchored),
 		Restic: &resticAdapter{
 			engine: step.engine, mode: mode, selectionFP: selectionFP, extraTags: withTags(s.directTags(settings, "files", repo), beforeRestoreTags(ctx)),
 			missing: strings.Join(missing, ", "), watchEmpty: true,
@@ -16297,6 +16309,17 @@ func (s *Service) excludesAsSeenHere(lines []string) []string {
 			}
 		}
 		out = append(out, line)
+	}
+	return out
+}
+
+// fileSetExcludes are the patterns a folder set's backup leaves out: the set's
+// own, the branches its selection drops and, on a node, the folder of the
+// repositories the node keeps itself, which it must never back up.
+func (s *Service) fileSetExcludes(own, anchored []string) []string {
+	out := append(s.excludesAsSeenHere(own), excludedBranches(anchored)...)
+	if s.cfg.Mode == config.ModeNode {
+		out = append(out, path.Join(s.cfg.HostMountRoot, nodeRestFolder))
 	}
 	return out
 }
@@ -20855,6 +20878,7 @@ func (s *Service) RecoveryKit() (string, error) {
 	}
 
 	s.sharedKitSection(w, settings, key)
+	s.nodesKitSection(w)
 
 	// BombVault's own settings backup (the "config" self-backup domain). This repo is
 	// the single bootstrap seed a rebuilt box needs: restore it FIRST to bring

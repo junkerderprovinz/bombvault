@@ -54,6 +54,10 @@ El teléfono tiene su propia tarjeta en la página Instancias de cada servidor d
 
 Un teléfono emparejado antes de la 10.0.0 empieza a firmar sus llamadas en su primera visita tras la actualización, y cada servidor se queda con la primera clave que recibe del teléfono. Si otra persona que conoce las palabras del grupo llega antes mientras el teléfono está sin conexión, ese servidor rechaza el teléfono desde ese momento y la app ya no puede abrirlo por el repetidor. Para arreglarlo, inicia sesión en ese servidor en un navegador, elige **Olvidar la clave** en la tarjeta del teléfono de la página Instancias y luego **Confirmar olvido**, y abre la app otra vez. El servidor toma la clave propia del teléfono en su siguiente llamada. Si el teléfono vuelve a ser rechazado, otra persona tiene las palabras: deja que cada instancia use **Salir del grupo** y empareja de nuevo con palabras nuevas, como con un teléfono perdido.
 
+## Nodos {#nodes}
+
+Los [nodos](nodes.md) se gestionan en la interfaz web. La sesión de un teléfono emparejado no llega a ellos, así que la app no muestra tarjetas de nodo en la página Instancias, ni la tarjeta **Nodos** en el resumen, ni secciones de nodo en **Copias de seguridad**, y **Añadir nodo** responde que hace falta iniciar sesión en el propio servidor. Abre el servidor en un navegador e inicia sesión con la contraseña para añadir un nodo, cambiar adónde van sus copias o restaurar uno de sus elementos.
+
 ## Ajustes {#settings}
 
 El engranaje junto al signo más abre los ajustes de la app:

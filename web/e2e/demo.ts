@@ -64,7 +64,7 @@ export function words(lang: string): (key: string) => string {
 
 // Entries
 
-const FILES_DOCS = "d0c5d0c5d0c5d0c5d0c5d0c5d0c5d0c5";
+export const FILES_DOCS = "d0c5d0c5d0c5d0c5d0c5d0c5d0c5d0c5";
 const FILES_PHOTOS = "9407059407059407059407059407a0b1";
 export const ZFS_APPDATA = "2fa5a0d2fa5a0d2fa5a0d2fa5a0d2fa5";
 const VM_NAME = "homeassistant";

@@ -378,6 +378,28 @@ describe("the instances grid", () => {
     expect(card("m3").textContent).toContain(en["fleet.kindAndroid"]);
   });
 
+  it("says on every card what it is, in one caption under its name and in one style", async () => {
+    flags.zfsEnabled = true;
+    servers = [server()];
+    members = [M1, groupMember({ id: "m3", name: "Pixel 8", kind: "android", address: "", direct: false, relay: true })];
+    fortress = { joined: true, members: [{ id: "k1", app: "knightloader", name: "KnightLoader", version: "2.1.0", device: "Bottich", deployment: "container", kind: "instance", online: true, relay: true, opens: true }] };
+    await renderPage();
+    await screen.findByRole("region", { name: en["instances.fortressApps"] });
+    const said = cards().map((c) => {
+      const captions = [...c.querySelectorAll('[data-new="instances-full-names"] + span')];
+      return [c.getAttribute("data-instance"), captions.map((caption) => caption.textContent).join("|"), captions[0]?.className];
+    });
+    expect(said.map(([key, text]) => [key, text])).toEqual([
+      ["self", en["instances.thisInstance"]],
+      ["m1", en["instances.kindMember"]],
+      [`zfs:${server().id}`, en["instances.kindZfs"]],
+      ["m3", en["fleet.kindAndroid"]],
+      ["app-knightloader", "Container"],
+    ]);
+    expect(new Set(said.map(([, , style]) => style)).size).toBe(1);
+    expect(card(`zfs:${server().id}`).textContent?.split(en["instances.overSsh"]).length).toBe(2);
+  });
+
   it("gives every card the next colour of the page, and the rows without an instance the one after the last card", async () => {
     flags.zfsEnabled = true;
     servers = [server()];

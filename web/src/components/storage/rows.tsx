@@ -13,11 +13,22 @@ import { IconConfig, IconContainers, IconFiles, IconFlash, IconVM, IconZFS } fro
 /**
  * Rows is how every list in the app looks: its rows parted by a hairline, with
  * no filled block behind them. A list of things rather than settings is a `ul`
- * of SettingRows `as="li"`.
+ * of SettingRows `as="li"`. The fields of a form that are filled in together
+ * stand `plain`, parted by their room alone.
  */
-export function Rows({ children, as: Tag = "div", label }: { children: ReactNode; as?: "div" | "ul"; label?: string }) {
+export function Rows({
+  children,
+  as: Tag = "div",
+  label,
+  plain = false,
+}: {
+  children: ReactNode;
+  as?: "div" | "ul";
+  label?: string;
+  plain?: boolean;
+}) {
   return (
-    <Tag aria-label={label} className="flex flex-col divide-y divide-carbon-border/60">
+    <Tag aria-label={label} className={plain ? "flex flex-col" : "flex flex-col divide-y divide-carbon-border/60"}>
       {children}
     </Tag>
   );

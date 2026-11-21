@@ -34,4 +34,5 @@
 ## عدة خوادم {#several-servers}
 
 - [اقتران جهازي Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): خادمان يحتفظ كل منهما بنسخ الآخر، ولا يستطيع أي منهما حذف نسخ الآخر.
+- [VPS ينسخ إلى خادم الاستقبال](nodes.md#example-vps): عقدة مع حاوياتها، يديرها المثيل الأم، ولا منفذ مفتوحًا على VPS.
 - [بطاقة وتنبيه في Home Assistant](api.md#home-assistant-example): BombVault على لوحتك، ورسالة عند فشل نسخة احتياطية.

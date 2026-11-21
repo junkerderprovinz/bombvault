@@ -188,6 +188,17 @@ A partir de ahora los contenedores se copian cada noche. Buenos siguientes pasos
 !!! note "Comprobación de la integración con el host"
     La tarjeta **Integración con el host** del resumen sondea cada montaje y cada CLI (socket de Docker, libvirt, restic, qemu-img, rclone) e informa de lo que falte, para que puedas confirmar que el contenedor está bien conectado antes de depender de él. Espera en **Personalizar** hasta que la añadas.
 
+## Copiar un VPS como nodo {#node}
+
+Un VPS u otro servidor pequeño no necesita un BombVault propio con interfaz web. Añádelo como nodo de este, y esta instancia se encarga de sus copias:
+
+1. Define una contraseña de acceso en **Ajustes, Seguridad**, si aún no lo has hecho.
+2. Abre **Instancias**, elige **Añadir nodo** y escribe un nombre como `vps-helsinki`.
+3. Elige adónde van sus copias, por ejemplo al servidor receptor de esta instancia, y cuándo copia.
+4. Copia al servidor el archivo compose que muestra la ventana, apunta su volumen Host Data y `HOST_SOURCE_ROOT` a los datos que quieres copiar y ejecuta `docker compose up -d`.
+
+En cuanto el nodo responde, su tarjeta dice **Conectada** y sus contenedores aparecen en **Copias de seguridad**. [Nodos](nodes.md) lo explica paso a paso con un ejemplo.
+
 ## Orientarse {#navigation}
 
 ![Los ajustes como mosaicos, con las tarjetas del mosaico elegido a su lado. Cada cambio se escribe en cuanto lo haces.](assets/screenshots/getting-started/settings-rail-dark.png#only-dark)
@@ -229,6 +240,7 @@ La compilación de la interfaz también hace falta para `go run`. El repositorio
 - Asegúrate de que un fallo te llegue con las **[Notificaciones](notifications.md)**.
 - Revisa cuándo se ejecuta cada cosa en **[Calendarios](schedules.md)**.
 - Lleva a tu teléfono todos los servidores de tu grupo con la **[app de Android](android.md)**.
+- Copia un VPS desde aquí con un **[nodo](nodes.md)**.
 - Los **[ejemplos prácticos](guides.md)** recorren los trabajos habituales, y **[Funciones](features.md)** lista todo lo que hace BombVault.
 - ¿Clonas una configuración o te mudas a un equipo nuevo? Lleva toda tu configuración con la tarjeta **Exportar / importar ajustes**. Consulta [Configuración](configuration.md#portable-settings-export-and-import).
 - ¿Te has atascado? Consulta **[Solución de problemas](troubleshooting.md)**.

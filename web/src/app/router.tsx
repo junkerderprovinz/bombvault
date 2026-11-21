@@ -4,6 +4,7 @@ import { Dashboard } from "../pages/Dashboard";
 import { Welcome } from "../pages/Welcome";
 import { Anomalies } from "../pages/Anomalies";
 import { BackupEntryPage } from "../pages/BackupEntry";
+import { NodeEntryPage } from "../pages/NodeEntry";
 import { Backups } from "../pages/Backups";
 import { Instances } from "../pages/Instances";
 import { KindRedirect } from "../pages/KindRedirect";
@@ -17,6 +18,7 @@ import { GlyphSheet } from "../pages/Glyphs";
 import { OAuthConsent } from "../pages/OAuthConsent";
 import { routerBase } from "../lib/base";
 import { ENTRY_KIND, ENTRY_KINDS, ENTRY_LIST_PATH, ENTRY_ROUTE } from "../lib/backupEntry";
+import { NODE_ENTRY_ROUTE } from "../lib/nodeEntries";
 import { mcpShipped } from "../lib/mcpSwitch";
 import { I18nProvider } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
@@ -47,6 +49,7 @@ export function AppRouter() {
               <Route path="/anomalies" element={<Anomalies />} />
               <Route path={ENTRY_LIST_PATH} element={<Backups />} />
               <Route path={ENTRY_ROUTE} element={<BackupEntryPage />} />
+              <Route path={NODE_ENTRY_ROUTE} element={<NodeEntryPage />} />
               {/* A link to a kind's own page leads to the list of that kind,
                   or to the entry it names. */}
               {ENTRY_KINDS.map((kind) => (

@@ -75,6 +75,7 @@ Lyhyt luettelo siitä, mitä BombVault tekee. Jokainen rivi linkittää sivulle,
 - **Ilmentymät-sivu**, jolla ryhmä näkyy verkkona, ja roolit **Vastaanotin**, **Noutaja**, **ZFS-palvelin** ja **Säilyttäjä**. [Ilmentymät ja roolit](offsite-recovery.md#roles)
 - **Vastaanottava palvelin** valmiiksi asetettuna, append-only-tilassa. [Vastaanottava palvelin](offsite-recovery.md#receiving-server)
 - **Jaettu arkisto**, johon useampi palvelin kopioi, joten niiden yhteinen data tallennetaan vain kerran. Vain arkiston omistava palvelin karsii. [Jaettu arkisto](offsite-recovery.md#shared-repository)
+- **Solmut**: BombVault ilman verkkokäyttöliittymää VPS:llä tai toisella palvelimella, jota ohjataan kotiinstanssista aikatauluineen, hälytyksineen ja palautuksineen. Se ei tarvitse avointa porttia. [Solmut](nodes.md)
 
 ## Tekoälyavustajat (MCP) {#mcp}
 

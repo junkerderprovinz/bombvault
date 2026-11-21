@@ -54,6 +54,10 @@ Telefon dostane na stránce Instance každého serveru ve skupině vlastní kart
 
 Telefon spárovaný před verzí 10.0.0 začne své požadavky podepisovat při první návštěvě po aktualizaci a každý server si ponechá první klíč, který pro telefon dostane. Pokud je mu někdo jiný, kdo zná slova skupiny, v patách a telefon je offline, takový server telefon od té chvíle odmítá a aplikace ho už nemůže otevřít přes relay. Oprava: přihlas se k tomu serveru v prohlížeči, na kartě telefonu na stránce Instance zvol **Zapomenout klíč**, potom **Potvrdit zapomenutí** a aplikaci otevři znovu. Server si při dalším požadavku převezme vlastní klíč telefonu. Pokud je telefon odmítnut znovu, slova má někdo jiný: nech každou instanci **Opustit skupinu** a spáruj je znovu s novými slovy, stejně jako u ztraceného telefonu.
 
+## Uzly {#nodes}
+
+O [uzly](nodes.md) se staráš ve webovém rozhraní. Relace spárovaného telefonu na ně nedosáhne, takže aplikace neukazuje karty uzlů na stránce Instance, kartu **Uzly** v Přehledu ani sekce uzlů pod **Zálohy** a **Přidat uzel** odpoví, že potřebuje přihlášení přímo na serveru. Chceš-li přidat uzel, změnit, kam jdou jeho zálohy, nebo obnovit některou z jeho položek, otevři server v prohlížeči a přihlas se heslem.
+
 ## Nastavení {#settings}
 
 Ozubené kolo vedle plusu otevře nastavení aplikace:

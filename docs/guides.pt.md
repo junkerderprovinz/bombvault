@@ -34,4 +34,5 @@ Cada um destes percorre uma tarefa real do princípio ao fim, com nomes e númer
 ## Vários servidores {#several-servers}
 
 - [Emparelhar duas caixas Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): dois servidores que guardam as cópias um do outro, e nenhum pode eliminar os backups do outro.
+- [Um VPS que faz backup para o servidor recetor](nodes.md#example-vps): um nó com os seus containers, gerido a partir da instância base, sem nenhuma porta aberta no VPS.
 - [Um cartão e um alerta no Home Assistant](api.md#home-assistant-example): o BombVault num painel, com uma mensagem quando um backup falha.

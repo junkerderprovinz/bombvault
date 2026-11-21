@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { hueVars } from "../../lib/appearance";
 import { withinBase } from "../../lib/base";
+import { useT, type TranslationKey } from "../../lib/i18n";
 
 /** The box every card's mark fills, the logo or a glyph, so the marks of a
  *  grid stand the same size. */
@@ -46,6 +47,18 @@ export function Figure({ value, label }: { value: ReactNode; label: string }) {
   );
 }
 
+/** What each kind of card says it is, in the caption under its name. */
+const CARD_KIND = {
+  self: "instances.thisInstance",
+  member: "instances.kindMember",
+  phone: "fleet.kindAndroid",
+  zfs: "instances.kindZfs",
+  node: "nodes.kind",
+  app: "instances.kindApp",
+} as const satisfies Record<string, TranslationKey>;
+
+export type CardKind = keyof typeof CARD_KIND;
+
 /** InstanceCard is one tile of the instances grid: the mark beside the name
  *  with its badges, what kind it is, a line of facts and the figures, then
  *  what the instance does, and the actions along the foot. The grid gives
@@ -55,7 +68,8 @@ export function Figure({ value, label }: { value: ReactNode; label: string }) {
 export function InstanceCard({
   cardKey,
   name,
-  eyebrow,
+  kind,
+  caption,
   mark,
   badges,
   facts,
@@ -68,7 +82,9 @@ export function InstanceCard({
   /** What the card stands for: "self", a member id or a ZFS server's id. */
   cardKey: string;
   name: string;
-  eyebrow?: string;
+  kind: CardKind;
+  /** What another app says it is, in place of the kind's own word. */
+  caption?: string;
   mark?: ReactNode;
   badges?: ReactNode;
   facts?: ReactNode;
@@ -80,6 +96,7 @@ export function InstanceCard({
   /** The pointer is on this instance in the net picture. */
   hot?: boolean;
 }) {
+  const { t } = useT();
   const footBeside = !children && !figures;
   const foot = (className: string) => actions && <div className={`flex flex-wrap items-center justify-end gap-2 ${className}`}>{actions}</div>;
   return (
@@ -107,7 +124,9 @@ export function InstanceCard({
               <span className="min-w-0 max-w-full font-semibold text-carbon-text wrap-anywhere">{name}</span>
               {badges && <span className="ms-auto flex flex-wrap items-center gap-2">{badges}</span>}
             </div>
-            {eyebrow && <span className="text-dense uppercase tracking-[.14em] text-carbon-textMuted">{eyebrow}</span>}
+            <span data-card-kind={kind} className="text-dense uppercase tracking-[.14em] text-carbon-textMuted">
+              {caption || t(CARD_KIND[kind])}
+            </span>
             {facts && <p className="text-xs text-carbon-textMuted wrap-anywhere">{facts}</p>}
           </div>
           {figures && <div className="flex flex-wrap items-baseline gap-x-7 gap-y-3 empty:hidden">{figures}</div>}

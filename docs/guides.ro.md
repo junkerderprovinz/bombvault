@@ -34,4 +34,5 @@ Fiecare dintre ele parcurge o sarcină reală de la început până la sfârșit
 ## Mai multe servere {#several-servers}
 
 - [Împerecherea a două stații Unraid](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end): două servere care își păstrează reciproc copiile, fără ca vreunul să poată șterge backupurile celuilalt.
+- [Un VPS care face copii pe serverul receptor](nodes.md#example-vps): un nod cu containerele lui, condus de la instanța-mamă, fără niciun port deschis pe VPS.
 - [Un card și o alertă în Home Assistant](api.md#home-assistant-example): BombVault pe un dashboard, cu un mesaj când un backup eșuează.

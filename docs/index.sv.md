@@ -81,6 +81,8 @@ Några ord har en fast betydelse i BombVault och på de här sidorna.
 | **Placering** | Vilka mål som får en posts säkerhetskopior, inställt på posten eller som dess avsnitts standard. Se [Placering per post](offsite-recovery.md#placement). |
 | **Replik** | En blockexakt kopia av en ZFS-post på en andra ZFS-server, gjord med `zfs send`. Den står bredvid säkerhetskopian och ersätter den inte. Se [Replik](zfs-datasets.md#replica). |
 | **Roll** | Något som en instans i din grupp gör åt en annan: Mottagare, Hämtare, ZFS-server eller Nyckelförvarare. Se [Instanser och roller](offsite-recovery.md#roles). |
+| **Nod** | En BombVault utan webbgränssnitt, till exempel på en VPS, som en annan instans, dess hemmainstans, talar om för vad den ska säkerhetskopiera, när och vart. Se [Noder](nodes.md). |
+| **Hemmainstans** | Instansen som lade till en nod och styr den. Den har nodens nyckel och talar om för noden vad den ska säkerhetskopiera, när och vart. Se [Noder](nodes.md). |
 
 ## Tack till {#credits}
 

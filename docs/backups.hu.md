@@ -32,6 +32,8 @@ Három gomb a lista fölött szűkíti:
 
 Azok az elemek, amelyek már nincsenek telepítve, de még vannak mentéseik, külön állnak a **Nincs telepítve (csak biztonsági mentések)** alatt. Állítsd vissza őket, vagy töröld a mentéseiket a hely felszabadításához.
 
+Ha vannak [csomópontjaid](nodes.md), a Konténerek és a Mappák lista a saját elemeid alatt minden csomópontnak külön szakaszt ad, azzal, hogy a csomópont csatlakozva van-e, és hány eleme van. Az **Elemek itt:** és a csomópont neve elrejti a szakasz elemeit, majd újra megmutatja őket. Egy elem menüje a **Biztonsági mentés most** lehetőséget kínálja, amely a csomóponton indítja el a mentését, valamint a **Megnyitás** lehetőséget. Az oldala felsorolja a mentéseit, mindegyik mellett egy **Visszaállítás** gombbal, amely a csomóponton állítja vissza az elemet. A csomópont saját konténere nem szerepel a listán. Lásd: [Egy csomópont elemei](nodes.md#entries).
+
 Az oldal fő művelete lebeg a jobb alsó sarokban: az **Összes mentése most** futást indít minden bekapcsolt szakaszon. A **Több** tartalmazza a többit:
 
 - A **Kijelölés** kijelölést indít, lásd lent.

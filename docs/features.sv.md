@@ -75,6 +75,7 @@ En kort katalog över vad BombVault gör. Varje rad länkar till sidan som förk
 - **Sidan Instanser** med gruppen som ett nät och rollerna **Mottagare**, **Hämtare**, **ZFS-server** och **Nyckelförvarare**. [Instanser och roller](offsite-recovery.md#roles)
 - **En mottagande server** som sätts upp åt dig, i append-only-läge. [Mottagande server](offsite-recovery.md#receiving-server)
 - **Ett gemensamt arkiv** som flera servrar kopierar till, så att det de har gemensamt bara lagras en gång. Bara servern som äger det rensar. [Gemensamt arkiv](offsite-recovery.md#shared-repository)
+- **Noder**: BombVault utan webbgränssnitt på en VPS eller en annan server, styrd från hemmainstansen med dess scheman, larm och återställningar. Den behöver ingen öppen port. [Noder](nodes.md)
 
 ## AI-assistenter (MCP) {#mcp}
 

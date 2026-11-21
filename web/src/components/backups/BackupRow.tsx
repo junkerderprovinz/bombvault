@@ -226,6 +226,7 @@ export function BackupRow({
   onPick,
   onMenu,
   onLongPress,
+  to,
   t,
   lang,
 }: {
@@ -242,15 +243,18 @@ export function BackupRow({
   showIp: boolean;
   /** Answers true when the click picked rows and must not open the entry. */
   onClick: (e: MouseEvent) => boolean;
-  onPick: (next: boolean) => void;
+  /** Picks the row or lets it go. A list whose rows cannot be picked passes none. */
+  onPick?: (next: boolean) => void;
   onMenu: (e: MouseEvent) => void;
   onLongPress: () => void;
+  /** Where the row leads, the entry's own page unless the entry lives elsewhere. */
+  to?: string;
   t: T;
   lang: string;
 }) {
   const navigate = useNavigate();
   const press = useLongPress(onLongPress);
-  const target = entryTarget(item);
+  const target = to ?? entryTarget(item);
   const running = runsNow(progress);
   const replicating = !running && replicaProgress?.active === true;
   const facts = rowFacts({ item, running, anomaly, anomalyEnabled, scheduleSentence, t, lang });
@@ -373,17 +377,19 @@ export function BackupRow({
         {/* A mouse picks with Ctrl or Shift and a finger with a long press,
             so the row draws no mark. The switch is there for the keyboard
             and a screen reader, and its focus rings the glyph tile. */}
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={picked}
-          aria-label={pickLabel}
-          onClick={(e) => {
-            e.stopPropagation();
-            onPick(!picked);
-          }}
-          className="sr-only"
-        />
+        {onPick && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={picked}
+            aria-label={pickLabel}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPick(!picked);
+            }}
+            className="sr-only"
+          />
+        )}
       </span>
       <span className={TEXT}>
         <span className={`flex min-w-0 flex-1 items-center gap-2 ${NAME_ROOM}`}>

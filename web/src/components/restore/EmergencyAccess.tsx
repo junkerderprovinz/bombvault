@@ -30,6 +30,7 @@ import { CloudCard } from "../../pages/settings/CloudCard";
 import { RcloneCard } from "../../pages/settings/RcloneCard";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
+import { pickSub, pickSurface, pickWithArrows } from "../entry/Choice";
 import { FolderBrowser } from "../FolderBrowser";
 import { IconBack, IconImport, IconKey, IconSave } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
@@ -74,17 +75,20 @@ function WayCard({
       role="radio"
       aria-checked={on}
       onClick={onPick}
-      className={`flex items-start gap-3 rounded-card bg-carbon-surface2 p-4 text-start ring-2 ring-inset transition-colors hover:bg-hover ${
-        on ? "ring-accent" : "ring-transparent"
-      } ${wide ? "sm:col-span-2" : ""}`}
+      onKeyDown={pickWithArrows}
+      className={`flex items-start gap-3 rounded-card p-4 text-start transition-colors ${pickSurface(on)} ${wide ? "sm:col-span-2" : ""}`}
     >
-      <span className="flex h-11 w-11 flex-none items-center justify-center rounded-control bg-accent text-accentContrast [&_svg]:h-5 [&_svg]:w-5">
+      <span
+        className={`flex h-11 w-11 flex-none items-center justify-center rounded-control [&_svg]:h-5 [&_svg]:w-5 ${
+          on ? "bg-carbon-surface text-accentText" : "bg-accent text-accentContrast"
+        }`}
+      >
         {glyph}
       </span>
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-sm font-semibold text-carbon-text wrap-anywhere">{title}</span>
-        <span className="text-xs leading-relaxed text-carbon-textMuted wrap-anywhere">{sub}</span>
-        {note && <span className="pt-1 text-xs font-semibold text-accentText wrap-anywhere">{note}</span>}
+        <span className="text-sm font-semibold wrap-anywhere">{title}</span>
+        <span className={`text-xs leading-relaxed wrap-anywhere ${pickSub(on)}`}>{sub}</span>
+        {note && <span className={`pt-1 text-xs font-semibold wrap-anywhere ${on ? "" : "text-accentText"}`}>{note}</span>}
       </span>
     </button>
   );

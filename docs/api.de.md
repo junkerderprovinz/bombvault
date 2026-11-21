@@ -1,6 +1,6 @@
 # API und Integrationen
 
-BombVault hat eine kleine HTTP-API für Skripte, Dashboards und Hausautomation. Sie liest dieselben Dinge, die die Übersicht zeigt, und kann eine Sicherung starten. Alles andere, etwa Wiederherstellungen, das Löschen von Sicherungen und Einstellungen, bleibt in der Weboberfläche.
+BombVault hat eine kleine HTTP-API für Skripte, Dashboards und Hausautomation. Sie liest dieselben Dinge, die die Übersicht zeigt, und kann eine Sicherung starten. Alles andere, etwa Wiederherstellungen, das Löschen von Sicherungen, Einstellungen und [Knoten](#nodes), bleibt in der Weboberfläche.
 
 ## Tokens {#tokens}
 
@@ -68,6 +68,32 @@ Starts folgen denselben Limits wie [Starts über MCP](mcp.md#starting-backups): 
 ## OpenAPI {#openapi}
 
 BombVault liefert eine Beschreibung dieser Routen unter `/api/v1/openapi.json` (OpenAPI 3.1). Sie braucht kein Token. Lade sie in Swagger UI, Postman oder einen Code-Generator.
+
+## Knoten {#nodes}
+
+Die Routen, mit denen du [Knoten](nodes.md) verwaltest, gehören zur Weboberfläche, nicht zur Token-API oben. Mit gesetztem Login-Passwort brauchen sie eine Browsersitzung aus einer Anmeldung an dieser Instanz. Ein API-Token oder ein MCP-Schlüssel öffnet keine davon, gekoppelte Handys erreichen sie nicht, und `/api/v1/openapi.json` beschreibt sie nicht. Einen Knoten hinzufügen, seine Compose-Datei erneut zeigen und die eigenen Routen eines Knotens erreichen wird abgelehnt, bis ein Login-Passwort gesetzt ist. Ein Skript, das etwas ändert, schickt `Content-Type: application/json`, wie überall in der Weboberfläche.
+
+| Route | Was sie tut |
+|---|---|
+| `GET /api/nodes` | Jeder Knoten mit der Angabe, ob er online ist, seiner Version, dem Ziel seiner Sicherungen, dem Plan jedes Bereichs, seiner letzten Sicherung, seinen Fehlern und seinen offenen Anomalien |
+| `POST /api/nodes` | Fügt einen Knoten hinzu, etwa `{"name":"vps-helsinki"}`, und gibt ihn mit `compose` zurück: `MODE`, `APP_KEY`, `NODE_HOME` und `NODE_NAME` |
+| `POST /api/nodes/{id}/compose` | Gibt dieselben `compose`-Werte noch einmal zurück, für **Ersetzen** |
+| `POST /api/nodes/{id}/placement` | Schickt die Sicherungen des Knotens an ein Ziel und sagt pro Bereich, ob der Knoten sein Repository erreicht hat, bei einem Speicherort mit einer `warning` |
+| `PUT /api/nodes/{id}/schedule` | Setzt die Pläne, etwa `{"containers":"daily 03:00","files":"off"}`. Ein Bereich, der fehlt, behält seinen Plan |
+| `DELETE /api/nodes/{id}` | Gibt den Knoten frei. `told` sagt, ob er es gleich erfahren hat oder erst, wenn er zurück ist |
+| `GET /api/nodes/routes` | Die Liste der eigenen Routen des Knotens, an die die Heiminstanz Anfragen weitergibt |
+| `GET`, `POST`, `PATCH /api/nodes/{id}/api/{path}` | Gibt die Anfrage an die Route `/api/{path}` des Knotens weiter, wenn diese Route auf der Liste steht, und liefert die JSON-Antwort des Knotens zurück |
+| `PUT /api/receiver/node-address` | Setzt die **Adresse für Knoten** des Empfangsservers, etwa `{"url":"https://backup.tower.example.org","caPem":""}`. Eine leere `url` nimmt die Knoten vom Server |
+
+Die drei Ziele:
+
+```json
+{"kind": "receiver"}
+{"kind": "location", "location": "<storage location id>", "signIn": "<sign-in id made for the node>"}
+{"kind": "node", "address": "https://203.0.113.7:8443"}
+```
+
+Eine Anfrage an `/api/nodes/{id}/api/...` trägt höchstens 32 KiB. Eine Route, die nicht auf der Liste steht, antwortet mit `403`, ein Knoten, der noch nicht geantwortet hat oder gerade freigegeben wird, mit `409` und dem Code `node-not-adopted`, und ein Knoten, der nicht da ist, mit `502` und dem Code `node-away`. Zum Beispiel liefert `GET /api/nodes/{id}/api/runs?limit=20` die letzten 20 Läufe des Knotens, und `POST /api/nodes/{id}/api/containers/nextcloud/backup` sichert seinen Container `nextcloud`.
 
 ## Home Assistant {#home-assistant}
 

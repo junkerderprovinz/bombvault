@@ -34,4 +34,5 @@
 ## 複数のサーバー {#several-servers}
 
 - [2 台の Unraid をペアリングする](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end)：互いのコピーを預かり合い、どちらも相手のバックアップを削除できない 2 台のサーバー。
+- [受信サーバーにバックアップする VPS](nodes.md#example-vps)：コンテナごとホームインスタンスから動かすノードで、VPS にポートを開ける必要はありません。
 - [Home Assistant のカードとアラート](api.md#home-assistant-example)：BombVault をダッシュボードに表示し、バックアップが失敗したらメッセージを受け取ります。

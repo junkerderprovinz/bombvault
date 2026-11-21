@@ -34,4 +34,5 @@
 ## 多台服务器 {#several-servers}
 
 - [配对两台 Unraid 机器](offsite-recovery.md#worked-example-two-unraid-boxes-end-to-end)：两台服务器互相保存对方的副本，谁也删不掉对方的备份。
+- [备份到接收服务器的 VPS](nodes.md#example-vps)：一个带着容器的节点，由主实例管理，VPS 上无需开放端口。
 - [Home Assistant 里的卡片和提醒](api.md#home-assistant-example)：BombVault 显示在仪表盘上，备份失败时发出消息。

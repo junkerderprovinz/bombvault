@@ -140,6 +140,10 @@ En database, der kun har databasedumps og ingen sikkerhedskopi af filer, og hvis
 
 I et [delt arkiv](offsite-recovery.md#shared-repository) åbner hver nøgle alle serveres sikkerhedskopier. Derfor viser siden Gendannelse de andre medlemmer under **Andre servere**, hver med sit navn, sin host, hvor mange elementer den har, og hvornår dens nyeste sikkerhedskopi kørte. En host, der ikke hører til nogen server, som denne kender, vises som **En server, som denne ikke kender**. Et klik åbner **Sikkerhedskopier fra** og serverens navn, skrivebeskyttet og uden noget at indtaste. Mappesæt og ZFS-datasæt lægges i en mappe, du vælger. Containere og VM'er kommer tilbage som almindelige filer i en mappe, fordi den anden server forsegler deres definitioner med sin egen nøgle. Denne servers egne sikkerhedskopier i det delte arkiv ligger på fanen **Sikkerhedskopier** for hvert element.
 
+## Noder {#nodes}
+
+En [nodes](nodes.md) poster gendannes fra deres sider under **Sikkerhedskopier**, ikke fra denne side. **Gendan** ved siden af en sikkerhedskopi dér gendanner posten på noden og erstatter det, der er der nu. En kopi, som denne instans har hentet fra en node, der [selv beholder sine sikkerhedskopier](nodes.md#keep-on-node), står her under **Andre kilder**, som under [Det, denne server har hentet](offsite-recovery.md#restore-what-was-fetched). Er nodens server væk, så sæt noden op igen med **Erstat** på dens kort: samme `APP_KEY` og `NODE_HOME` gør den nye server til den samme node, og dens sikkerhedskopier kan åbnes igen. Kapitlet **Nodes** i [gendannelseskittet](offsite-recovery.md#recovery-kit) åbner dem også med restic alene.
+
 ## Efter en gendannelse {#after}
 
 En kopi, der er gendannet ved siden af originalen, står under **Sikkerhedskopier** som udeladt, så den ikke tæller som en åben opgave. Føj den til tidsplanen, hvis du vil beholde den. En container eller VM, der kørte, da den blev sikkerhedskopieret, kommer tilbage kørende, en der var stoppet, forbliver stoppet. På Unraid dukker en gendannet container op igen på fanen Docker som en almindelig, redigerbar app, og en VM i VM Manager med sine diske og NVRAM sat til.

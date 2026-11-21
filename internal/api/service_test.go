@@ -2556,6 +2556,37 @@ func TestStartBackupSingleFlight(t *testing.T) {
 	}
 }
 
+func TestAFolderSetOnANodeLeavesTheRepositoriesTheNodeKeepsOut(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.ToSlash(dir)
+	if err := os.MkdirAll(root+"/srv", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []config.Mode{config.ModeFull, config.ModeNode} {
+		cfg := config.Config{AppKey: strings.Repeat("a", 64), DataDir: dir, HostMountRoot: root, Mode: mode}
+		st := newMemStore(t)
+		s := mustSettings(t, st)
+		s.FilesPath = "backups/files"
+		if err := st.UpdateSettings(s); err != nil {
+			t.Fatal(err)
+		}
+		set, err := st.CreateFileSet(store.FileSet{Name: "everything", Path: "srv", Excludes: []string{"*.tmp"}, Enabled: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		eng := &fakeResticEngine{}
+		svc := api.NewService(cfg, st, &fakeServiceDocker{}, fakeVirsh{}, eng)
+		t.Cleanup(svc.WaitForSamples)
+		if _, err := svc.BackupFileSet(context.Background(), set.ID); err != nil {
+			t.Fatalf("%s: BackupFileSet: %v", mode, err)
+		}
+		kept := slices.Contains(eng.lastExcludes, root+"/bombvault-node")
+		if kept != (mode == config.ModeNode) {
+			t.Errorf("%s: excludes = %v", mode, eng.lastExcludes)
+		}
+	}
+}
+
 // TestServiceBackupRefusesEmptyWhenPriorDataVanishes pins the silent-no-op fix: a
 // container that PREVIOUSLY backed up data but now resolves to no paths (its
 // appdata share went missing) must be refused, not recorded as a successful empty

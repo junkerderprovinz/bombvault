@@ -75,6 +75,7 @@ BombVault'un neler yaptığının kısa bir kataloğu. Her satır, onu açıklay
 - Grubun bir ağ olarak göründüğü ve **Alıcı**, **Çeken**, **ZFS sunucusu** ve **Anahtar bekçisi** rollerinin olduğu **Örnekler sayfası**. [Örnekler ve roller](offsite-recovery.md#roles)
 - Senin için kurulan, append-only kipinde **bir alıcı sunucu**. [Alıcı sunucu](offsite-recovery.md#receiving-server)
 - Birkaç sunucunun içine kopyaladığı **bir ortak depo**, böylece ortak oldukları şeyler bir kez saklanır. Yalnızca onu tutan sunucu budar. [Ortak depo](offsite-recovery.md#shared-repository)
+- **Düğümler**: bir VPS'te ya da başka bir sunucuda web arayüzü olmayan, zamanlamaları, uyarıları ve geri yüklemeleriyle ana örnekten yönetilen BombVault. Açık bir porta ihtiyaç duymaz. [Düğümler](nodes.md)
 
 ## Yapay zeka asistanları (MCP) {#mcp}
 

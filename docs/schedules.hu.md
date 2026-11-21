@@ -16,6 +16,8 @@ Minden terv egy gomb, amely mondatként olvasható, például *naponta 03:00-kor
 
 Minden idő a szerver időzónájában értendő. Unraidon ez a rendszeré. Máshol állítsd be a `TZ` értékét, különben minden terv UTC szerint fut, lásd: [Környezeti változók](configuration.md#environment-variables).
 
+Az anyapéldány a [csomópontjai](nodes.md) mentéseit is ütemezi, de nem itt: minden csomópont kártyáján a Példányok oldalon van egy terv a konténereire és egy a mappáira. Egy új csomópont fél órával ennek a példánynak a konténermentései után indul. Lásd: [Mikor mentenek a csomópontok](nodes.md#schedule).
+
 ## Hét {#week}
 
 A **Hét** kártya hétfőtől vasárnapig megrajzol minden tervezett futást, naponta egy sorban: mentéseket, telephelyen kívüli másolatokat és ellenőrzéseket. Mutass egy vonásra, hogy lásd, mi indul ott. Ahol három terv két órán belül indul, a szakaszt megjelöli, így széthúzhatod őket.

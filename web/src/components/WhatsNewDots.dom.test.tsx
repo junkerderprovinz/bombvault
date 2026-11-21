@@ -402,11 +402,13 @@ describe("a change its page has nothing for", () => {
     await wait(1900);
     expect(absent()).toEqual([]);
     await wait(200);
-    expect(absent()).toEqual(["overview-decline"]);
+    // The page stands without a node, so the Nodes card is missing as well.
+    expect(absent()).toEqual(["overview-nodes", "overview-decline"]);
 
     await press(screen.getByRole("link", { name: "Backups" }));
     expect(toOverview()).toBeDefined();
     expect(toOverview()!.getAttribute("aria-label")).not.toContain(text("overview-decline"));
+    expect(toOverview()!.getAttribute("aria-label")).not.toContain(text("overview-nodes"));
   });
 
   it("is not absent while its page leads on to it", async () => {

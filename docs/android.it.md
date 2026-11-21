@@ -54,6 +54,10 @@ Il telefono ha una scheda propria nella pagina Istanze di ogni server del gruppo
 
 Un telefono associato prima della 10.0.0 comincia a firmare le sue chiamate alla prima visita dopo l'aggiornamento, e ogni server tiene la prima chiave che riceve per il telefono. Se qualcun altro che conosce le parole del gruppo arriva prima mentre il telefono è offline, quel server respinge da quel momento il telefono, e l'app non riesce più ad aprirlo tramite il relay. Per rimediare, accedi a quel server in un browser, scegli **Dimentica chiave** sulla scheda del telefono nella pagina Istanze e poi **Conferma di dimenticare**, e riapri l'app. Il server prende la chiave del telefono alla chiamata successiva. Se il telefono viene respinto di nuovo, qualcun altro ha le parole: fai **Lascia il gruppo** a ogni istanza e associale di nuovo con parole nuove, come per un telefono perso.
 
+## Nodi {#nodes}
+
+I [nodi](nodes.md) si gestiscono nell'interfaccia web. La sessione di un telefono associato non li raggiunge, quindi l'app non mostra schede dei nodi nella pagina Istanze, né la scheda **Nodi** nella panoramica, né sezioni dei nodi in **Backup**, e **Aggiungi nodo** risponde che serve un accesso sul server stesso. Apri il server in un browser e accedi con la password per aggiungere un nodo, cambiare dove vanno i suoi backup o ripristinare uno dei suoi elementi.
+
 ## Impostazioni {#settings}
 
 L'ingranaggio accanto al più apre le impostazioni dell'app:
