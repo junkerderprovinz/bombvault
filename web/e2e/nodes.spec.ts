@@ -50,17 +50,25 @@ test("every node has its card with its state, where its backups go and its actio
   expect((await overflow(page)).pan).toBe(0);
 });
 
-test("a node's card says it is a node in a badge before its state", async ({ page }) => {
+test("a node's card says it is a node in the caption under its name, as the other instance cards do", async ({ page }) => {
   await open(page, "/instances");
   const online = card(page, NODE.id);
   const kind = online.getByText(t("nodes.kind"), { exact: true });
-  const state = online.getByText(t("instances.connected"), { exact: true });
   await expect(kind).toBeVisible();
-  // Both in one reading, since the card may still be moving in.
-  const [k, s] = await kind.evaluate((el, other) => [el.getBoundingClientRect(), other!.getBoundingClientRect()].map((r) => r.toJSON() as DOMRect), await state.elementHandle());
-  expect(k.x + k.width).toBeLessThanOrEqual(s.x);
-  expect(Math.abs(k.y - s.y)).toBeLessThan(2);
   await expect(kind).toHaveCount(1);
+  // All in one reading, since the card may still be moving in.
+  const [k, name, state] = await kind.evaluate(
+    (el, [nameEl, stateEl]) => [el, nameEl!, stateEl!].map((n) => n.getBoundingClientRect().toJSON() as DOMRect),
+    [await online.getByText(NODE.name, { exact: true }).elementHandle(), await online.getByText(t("instances.connected"), { exact: true }).elementHandle()],
+  );
+  expect(k.y).toBeGreaterThanOrEqual(name.y + name.height - 1);
+  expect(k.y).toBeGreaterThanOrEqual(state.y + state.height - 1);
+  const look = (el: Element) => {
+    const s = getComputedStyle(el);
+    return [s.fontSize, s.letterSpacing, s.textTransform, s.color].join(" ");
+  };
+  const other = page.locator('[data-instance^="zfs:"]').getByText(t("instances.overSsh"), { exact: true });
+  expect(await kind.evaluate(look)).toBe(await other.evaluate(look));
 });
 
 test("the address and the certificate of the placement stand without a line between them", async ({ page }) => {

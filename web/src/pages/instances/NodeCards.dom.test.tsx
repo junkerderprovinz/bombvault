@@ -90,13 +90,12 @@ describe("NodeCards", () => {
     expect((c.getByRole("button", { name: en["nodes.editPlacement"] }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it("says what it is in a badge before its state, not in a caption under the name", async () => {
+  it("says what it is in the caption under its name, as every instance card does, and not beside its state", async () => {
     await renderCards([online]);
     const c = card("n1");
     const kind = within(c).getByText(en["nodes.kind"]);
-    const state = within(c).getByText(en["instances.connected"]);
-    expect(kind.parentElement).toBe(state.parentElement);
-    expect(kind.compareDocumentPosition(state) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(kind.previousElementSibling?.textContent).toContain("vps-falkenstein");
+    expect(within(c).getByText(en["instances.connected"]).parentElement?.contains(kind)).toBe(false);
     expect(within(c).getAllByText(en["nodes.kind"])).toHaveLength(1);
   });
 
