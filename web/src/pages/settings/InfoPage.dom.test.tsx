@@ -122,7 +122,7 @@ describe("the Version card", () => {
     expect(checkButton()).toBeTruthy();
   });
 
-  it("names a newer version, leads to the update guide and lets What's new open its release", async () => {
+  it("names a newer version, leads to the update guide and opens its notes in a window from What's new", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     api.checkForUpdate.mockResolvedValue({
       ok: true,
@@ -139,8 +139,16 @@ describe("the Version card", () => {
       "_blank",
       "noopener,noreferrer",
     );
-    fireEvent.click(version().getByRole("button", { name: words.versionCard.whatsNew }));
-    expect(open).toHaveBeenLastCalledWith("https://example.org/v10.0.1", "_blank", "noopener,noreferrer");
+    const fetched = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: true, body: "## Added\n\n- Faster" }), { status: 200 }));
+    await act(async () => {
+      fireEvent.click(version().getByRole("button", { name: words.versionCard.whatsNew }));
+    });
+    const notes = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(notes.textContent).toContain(en["whatsNew.windowTitle"].replace("{version}", "10.0.1"));
+    expect(fetched.mock.calls.at(-1)?.[0]).toContain("/api/release-notes?version=v10.0.1");
+    expect(within(notes).getByRole("link", { name: en["whatsnew.viewOnGitHub"] }).getAttribute("href")).toBe(
+      "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.0.1",
+    );
   });
 
   it.each([

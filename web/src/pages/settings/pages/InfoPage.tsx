@@ -14,6 +14,7 @@ import { openWhatsNew, useWhatsNew } from "../../../lib/whatsNewStore";
 import { AboutGive, REPO, ReportButtons, shownVersion } from "../AboutCard";
 import { InfoComponentsCard, InfoVersionCard } from "../InfoCards";
 import { Card, hueCounter } from "../shared";
+import { NewReleaseWindow } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
 // A container cannot replace itself, so "How to update" leads to the steps for each host.
@@ -29,7 +30,7 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
 const LAST_CHECK = "bombvault.lastUpdateCheck";
 
 /** The answer of the last check this browser ran, so the card can say when it looked. */
-type LastCheck = { at: string; running: string; latest: string; available: boolean; releaseUrl: string };
+type LastCheck = { at: string; running: string; latest: string; available: boolean };
 
 function readLastCheck(running: string): LastCheck | null {
   try {
@@ -61,7 +62,7 @@ export function InfoPage() {
   const unseen = useWhatsNew().unseen.length;
   const [versions, setVersions] = useState<ComponentVersions | null>(null);
   const [update, setUpdate] = useState<UpdateState | null>(null);
-  const [release, setRelease] = useState("");
+  const [notes, setNotes] = useState<string | null>(null);
   const words = useMemo(() => componentText(lang), [lang]);
   const nextHue = hueCounter();
 
@@ -69,7 +70,6 @@ export function InfoPage() {
   useEffect(() => {
     const last = running ? readLastCheck(running) : null;
     if (!last) return;
-    setRelease(last.releaseUrl);
     setUpdate(stateOf(last));
   }, [running]);
 
@@ -95,10 +95,8 @@ export function InfoPage() {
           running,
           latest: res.update.latest,
           available: res.update.updateAvailable,
-          releaseUrl: res.update.releaseUrl,
         };
         keepLastCheck(last);
-        setRelease(last.releaseUrl);
         setUpdate(stateOf(last));
       } else {
         setUpdate({ kind: "failed", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) });
@@ -134,11 +132,12 @@ export function InfoPage() {
         onCheck={() => void check()}
         guideUrl={GUIDE}
         // Once a newer release is found, What's new tells what that one brings.
-        onWhatsNew={() => (update?.kind === "available" ? window.open(release, "_blank", "noopener,noreferrer") : openWhatsNew(true))}
+        onWhatsNew={() => (update?.kind === "available" ? setNotes(update.version) : openWhatsNew(true))}
         unseen={unseen}
         newId="settings-version"
         hueIndex={nextHue()}
       />
+      {notes && <NewReleaseWindow version={notes} onClose={() => setNotes(null)} />}
 
       <InfoComponentsCard
         text={words.componentsCard}
