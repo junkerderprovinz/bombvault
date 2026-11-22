@@ -97,6 +97,7 @@ Adım kartları ve **İfade oluştur** ya da **İfade gir** içeren **Eşleştir
 
 ## Bilgi {#info}
 
-- **Sürüm**: BombVault, GlimStone, restic ve rclone, **Güncellemeleri denetle** ve henüz görmediğin değişiklikleri sayıp onları listeleyen bir pencere açan **Yeni** ile.
+- **Sürüm**: BombVault'un sürümü ve güncellemelerinin durumu. **Güncellemeleri ara** GitHub'a en yeni sürümü sorar. **Yenilikler** henüz görmediğin değişiklikleri sayar ve onları listeleyen bir pencere açar. Daha yeni bir sürüm beklerken onun yerine o sürümün notlarını gösterir, **Nasıl güncellenir** de [Güncelleme](getting-started.md#update) bölümünü açar.
+- **Bileşenler**: bu sürümün getirdiği sürümleriyle rclone, restic ve GlimStone. Her numara kendi projesinin en yeni sürümünü açar.
 - **Yardım**: **Kılavuz** bu belgeleri açar, **Hata bildirimi** bir GitHub issue'su için temizlenmiş bir ZIP indirir. Giriş parolası gerekir.
-- **BombVault hakkında**: proje, lisansı ve yazara nasıl ulaşılacağı.
+- **Hakkında**: proje, lisansı ve yazara nasıl ulaşılacağı.

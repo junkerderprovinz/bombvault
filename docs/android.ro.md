@@ -64,6 +64,7 @@ Rotița de lângă butonul + deschide setările aplicației:
 
 - limba și numele pe care telefonul îl arată pe pagina Instanțe (gol înseamnă modelul telefonului),
 - aspectul, care urmează primul server din listă până când îl setezi pe al tău, și animațiile, care au o setare proprie,
+- cardul Versiune, care numește magazinul din care vin actualizările (Google Play, F-Droid sau GitHub Releases) și deschide notele acestei versiuni la **Noutăți**, și cardul Componente,
 - un raport de copiat când raportezi o problemă. Nu conține nicio adresă, niciun nume și nicio frază,
 - cardul **Despre** cu politica de confidențialitate,
 - **Elimină toate serverele**, care scoate toate serverele din aplicație și părăsește grupul. Fiecare server la care telefonul mai ajunge îl scoate de pe pagina sa Instanțe.

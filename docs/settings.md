@@ -97,6 +97,7 @@ Several things need a login password, such as the recovery kit and key deposits.
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic and rclone, with **Check for updates** and **New**, which counts the changes you have not seen yet and opens a window that lists them.
+- **Version**: BombVault's version and where its updates stand. **Check for updates** asks GitHub for the newest release. **What's new** counts the changes you have not seen yet and opens a window that lists them. While a newer release waits, it shows that release's notes instead, and **How to update** opens [Update](getting-started.md#update).
+- **Components**: rclone, restic and GlimStone, with the versions this release ships. Each number opens its project's newest release.
 - **Help**: **Manual** opens this documentation, and **Bug report** downloads a redacted ZIP for a GitHub issue. It needs a login password.
-- **About BombVault**: the project, its licence and how to reach the author.
+- **About**: the project, its licence and how to reach the author.

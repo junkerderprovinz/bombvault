@@ -14,10 +14,11 @@ import { openWhatsNew, useWhatsNew } from "../../../lib/whatsNewStore";
 import { AboutGive, REPO, ReportButtons, shownVersion } from "../AboutCard";
 import { InfoComponentsCard, InfoVersionCard } from "../InfoCards";
 import { Card, hueCounter } from "../shared";
+import { NewReleaseWindow } from "../WhatsNew";
 
 const DOCS = "https://junkerderprovinz.github.io/bombvault/";
-// A container cannot replace itself, so "How to update" leads to how it was set up.
-const GUIDE = `${DOCS}getting-started/#install-on-unraid`;
+// A container cannot replace itself, so "How to update" leads to the steps for each host.
+const GUIDE = `${DOCS}getting-started/#update`;
 
 const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "dev-build": "tile.info.refused.devBuild",
@@ -26,6 +27,34 @@ const REFUSED: Record<UpdateCheckRefusal, TranslationKey> = {
   "bad-response": "tile.info.refused.badResponse",
 };
 
+const LAST_CHECK = "bombvault.lastUpdateCheck";
+
+/** The answer of the last check this browser ran, so the card can say when it looked. */
+type LastCheck = { at: string; running: string; latest: string; available: boolean };
+
+function readLastCheck(running: string): LastCheck | null {
+  try {
+    const last = JSON.parse(localStorage.getItem(LAST_CHECK) ?? "null") as LastCheck | null;
+    // An answer about the release that ran before an update says nothing
+    // about this one.
+    return last && last.running === running ? last : null;
+  } catch {
+    return null;
+  }
+}
+
+function keepLastCheck(last: LastCheck) {
+  try {
+    localStorage.setItem(LAST_CHECK, JSON.stringify(last));
+  } catch {
+    // Without storage the card forgets the answer on the next visit.
+  }
+}
+
+function stateOf(last: LastCheck): UpdateState {
+  return last.available ? { kind: "available", version: shownVersion(last.latest) } : { kind: "current", checkedAt: new Date(last.at) };
+}
+
 export function InfoPage() {
   const { t, lang } = useT();
   const navigate = useNavigate();
@@ -33,9 +62,16 @@ export function InfoPage() {
   const unseen = useWhatsNew().unseen.length;
   const [versions, setVersions] = useState<ComponentVersions | null>(null);
   const [update, setUpdate] = useState<UpdateState | null>(null);
-  const [release, setRelease] = useState("");
+  const [notes, setNotes] = useState<string | null>(null);
   const words = useMemo(() => componentText(lang), [lang]);
   const nextHue = hueCounter();
+
+  const running = versions?.bombvault ?? "";
+  useEffect(() => {
+    const last = running ? readLastCheck(running) : null;
+    if (!last) return;
+    setUpdate(stateOf(last));
+  }, [running]);
 
   useEffect(() => {
     let alive = true;
@@ -53,11 +89,15 @@ export function InfoPage() {
     setUpdate({ kind: "checking" });
     try {
       const res = await checkForUpdate();
-      if (res.ok && res.update?.updateAvailable) {
-        setRelease(res.update.releaseUrl);
-        setUpdate({ kind: "available", version: shownVersion(res.update.latest) });
-      } else if (res.ok && res.update) {
-        setUpdate({ kind: "current", checkedAt: new Date() });
+      if (res.ok && res.update) {
+        const last = {
+          at: new Date().toISOString(),
+          running,
+          latest: res.update.latest,
+          available: res.update.updateAvailable,
+        };
+        keepLastCheck(last);
+        setUpdate(stateOf(last));
       } else {
         setUpdate({ kind: "failed", reason: res.code ? t(REFUSED[res.code]) : (res.error ?? t("tile.info.refused.badResponse")) });
       }
@@ -85,18 +125,19 @@ export function InfoPage() {
       <InfoVersionCard
         text={words.versionCard}
         name="BombVault"
-        version={versions?.bombvault ?? ""}
+        version={running}
         repoUrl={REPO}
         route="guide"
         state={update}
         onCheck={() => void check()}
         guideUrl={GUIDE}
         // Once a newer release is found, What's new tells what that one brings.
-        onWhatsNew={() => (update?.kind === "available" ? window.open(release, "_blank", "noopener,noreferrer") : openWhatsNew(true))}
+        onWhatsNew={() => (update?.kind === "available" ? setNotes(update.version) : openWhatsNew(true))}
         unseen={unseen}
         newId="settings-version"
         hueIndex={nextHue()}
       />
+      {notes && <NewReleaseWindow version={notes} onClose={() => setNotes(null)} />}
 
       <InfoComponentsCard
         text={words.componentsCard}

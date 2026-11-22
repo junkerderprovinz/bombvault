@@ -73,6 +73,9 @@ export interface AppInfo {
   model: string;
   /** The name chosen in the settings, empty while the phone's own is used. */
   deviceName: string;
+  /** The package of the store that installed the app, "" for an APK
+   *  installed by hand. Older apps send none. */
+  installer?: string;
 }
 
 export interface LauncherState {

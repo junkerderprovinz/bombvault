@@ -121,6 +121,14 @@ services:
 
 Um auch benannte Docker-Volumes zu sichern, mounte einen Ordner, der sowohl deine Daten als auch die Datenwurzel von Docker enthält (`docker info -f '{{.DockerRootDir}}'`, meist `/var/lib/docker`), so wie das Unraid-Template ganz `/mnt` mountet.
 
+## Update {#update}
+
+Ein Container ersetzt sich nicht selbst, also aktualisierst du BombVault dort, wo du es installiert hast. **Einstellungen, Info** zeigt, wenn ein neueres Release da ist, und **Neuigkeiten** zeigt seine Hinweise. Deine Einstellungen in `/config` und deine Sicherungen bleiben, wie sie sind. Aktualisiere, während keine Sicherung und keine Wiederherstellung läuft.
+
+- **Unraid:** Wähle im Tab **Docker** **Check for Updates** und dann **apply update** neben BombVault.
+- **Docker Compose:** Führe im Ordner mit deiner Compose-Datei `docker compose pull` und dann `docker compose up -d` aus.
+- **TrueNAS SCALE, ZimaOS, CasaOS und MOS:** Aktualisiere die App auf der App-Seite des Hosts, die zieht das neuere Image.
+
 ## Die eine erforderliche Einstellung {#the-one-required-setting}
 
 Die einzige Variable, die du setzen musst, ist `APP_KEY`, ein Hex-Geheimnis mit 32 Byte (64 Hex-Zeichen), aus dem das Passwort des restic-Repositorys abgeleitet wird.
@@ -209,7 +217,7 @@ Seiten und Einstellungen nutzen die ganze Breite des Fensters. Ein Fenster hält
 - Die **Einstellungen** sind vierzehn Kacheln: Allgemein, Aussehen, Zeitplan, Speicherorte, Wiederherstellung, Benachrichtigungen, Prüfung, Sicherheit, Instanzen, Kopplung, Anbindungen, Apps, System und Info. Siehe [Einstellungen](settings.md). Drücke `/` oder Strg+K, um alle zu durchsuchen, auch nach den Namen, die Seiten in früheren Versionen hatten. Zieh die Kacheln unter **Aussehen** in deine eigene Reihenfolge. Wo eine Kachelspalte neben der Seite sie zusammendrücken würde, etwa in einem Fenster von etwa 1200 Pixeln Breite, werden die Kacheln zu einem Streifen über der Seite, der seitlich scrollt. Ein Handy zeigt denselben Streifen.
 - **Speicherorte** und **Instanzen** sind Einstellungskacheln mit eigenen Seiten. **Auch in der Seitenleiste zeigen** auf ihrer Kachel heftet sie an die Seitenleiste.
 
-Nichts hat einen Speichern-Knopf, und nichts klappt auf: Seltenes hat eine eigene Karte oder ein Fenster, und Erklärungen stehen in den (i)-Blasen. Nach einem Update öffnet sich von selbst ein Fenster mit einer Karte für jede Version seit deiner letzten, und grüne Punkte markieren, was sich geändert hat. Ein Klick blendet einen Punkt aus. **Neu** in der Karte Version unter **Einstellungen, Info** zählt, was du noch nicht gesehen hast, und öffnet dieses Fenster wieder, mit den Hinweisen jeder Version und ihren Änderungen mit **Hingehen**.
+Nichts hat einen Speichern-Knopf, und nichts klappt auf: Seltenes hat eine eigene Karte oder ein Fenster, und Erklärungen stehen in den (i)-Blasen. Nach einem Update öffnet sich von selbst ein Fenster mit einer Karte für jede Version seit deiner letzten, und grüne Punkte markieren, was sich geändert hat. Ein Klick blendet einen Punkt aus. **Neuigkeiten** in der Karte Version unter **Einstellungen, Info** zählt, was du noch nicht gesehen hast, und öffnet dieses Fenster wieder, mit den Hinweisen jeder Version und ihren Änderungen mit **Hingehen**.
 
 ## Aus dem Quellcode bauen {#build-from-source}
 

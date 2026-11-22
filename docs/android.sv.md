@@ -64,6 +64,7 @@ Kugghjulet bredvid plustecknet öppnar appens inställningar:
 
 - språket och namnet som telefonen visar på Instanser-sidan (tomt betyder telefonens modell),
 - utseendet, som följer den första servern i listan tills du ställer in ett eget, och animationerna, som har en egen inställning,
+- kortet Version, som nämner butiken som uppdateringarna kommer från (Google Play, F-Droid eller GitHub Releases) och öppnar anteckningarna för den här versionen under **Nyheter**, och kortet Komponenter,
 - en rapport att kopiera när du rapporterar ett problem. Den innehåller ingen adress, inget namn och ingen fras,
 - kortet Om appen med integritetspolicyn,
 - **Ta bort alla servrar**, som tar bort alla servrar från appen och lämnar gruppen. Varje server som telefonen fortfarande når tar bort den från sin Instanser-sida.

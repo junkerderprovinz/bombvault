@@ -121,6 +121,14 @@ services:
 
 For å sikkerhetskopiere navngitte Docker-volumer også, monterer du en mappe som har både dataene dine og Dockers datarot (`docker info -f '{{.DockerRootDir}}'`, vanligvis `/var/lib/docker`), slik Unraid-malen monterer hele `/mnt`.
 
+## Oppdatering {#update}
+
+En container erstatter ikke seg selv, så du oppdaterer BombVault der du installerte den. **Innstillinger, Info** viser når en nyere utgivelse er ute, og **Nyheter** viser notatene. Innstillingene dine i `/config` og sikkerhetskopiene dine blir som de er. Oppdater mens ingen sikkerhetskopiering eller gjenoppretting kjører.
+
+- **Unraid:** velg **Check for Updates** i fanen **Docker**, og deretter **apply update** ved BombVault.
+- **Docker Compose:** kjør `docker compose pull` og deretter `docker compose up -d` i mappen med compose-filen din.
+- **TrueNAS SCALE, ZimaOS, CasaOS og MOS:** oppdater appen på vertens app-side, som henter det nyere imaget.
+
 ## Den ene påkrevde innstillingen {#the-one-required-setting}
 
 Den eneste variabelen du må sette, er `APP_KEY`, en 32-byte hex-hemmelighet (64 hex-tegn) som brukes til å utlede passordet til restic-repositoriet.
@@ -209,7 +217,7 @@ Sider og innstillinger bruker hele bredden av vinduet. Et vindu har knappene sin
 - **Innstillinger** er fjorten fliser: Generelt, Utseende, Tidsplan, Mål, Gjenoppretting, Varsler, Verifisering, Sikkerhet, Instanser, Paring, Integrasjoner, Apper, System og Info. Se [Innstillinger](settings.md). Trykk `/` eller Ctrl+K for å søke i alle, også etter navnene sidene hadde i tidligere versjoner. Dra flisene i din egen rekkefølge under **Utseende**. Der en kolonne med fliser ved siden av siden ville presse den sammen, som i et vindu på rundt 1200 piksler bredde, blir flisene en stripe over siden som kan rulles sidelengs. En telefon viser den samme stripen.
 - **Mål** og **Instanser** er innstillingsfliser med egne sider. **Vis også i sidefeltet** på flisen deres fester dem til sidefeltet.
 
-Ingenting har en Lagre-knapp og ingenting folder seg ut: sjeldne ting har et eget kort eller et vindu, og forklaringer står i (i)-boblene. Etter en oppdatering åpner et vindu seg av seg selv med et kort for hver utgivelse siden din forrige versjon, og grønne prikker markerer det som er endret. Et klikk skjuler en prikk. **Nytt** i kortet Versjon under **Innstillinger, Info** teller det du ikke har sett ennå og åpner det vinduet igjen, med utgivelsesnotatene for hver utgivelse og endringene i den med **Gå dit**.
+Ingenting har en Lagre-knapp og ingenting folder seg ut: sjeldne ting har et eget kort eller et vindu, og forklaringer står i (i)-boblene. Etter en oppdatering åpner et vindu seg av seg selv med et kort for hver utgivelse siden din forrige versjon, og grønne prikker markerer det som er endret. Et klikk skjuler en prikk. **Nyheter** i kortet Versjon under **Innstillinger, Info** teller det du ikke har sett ennå og åpner det vinduet igjen, med utgivelsesnotatene for hver utgivelse og endringene i den med **Gå dit**.
 
 ## Bygge fra kildekode {#build-from-source}
 

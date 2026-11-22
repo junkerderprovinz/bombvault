@@ -212,6 +212,31 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
   );
 }
 
+/**
+ * NewReleaseWindow holds the notes of a release this server does not run yet,
+ * for the Version card while an update waits. `version` is the bare number,
+ * such as "10.7.0"; the server fetches its notes from GitHub.
+ */
+export function NewReleaseWindow({ version, onClose }: { version: string; onClose: () => void }) {
+  const { t } = useT();
+  return (
+    <InstanceWindow
+      title={t("whatsNew.windowTitle").replace("{version}", version)}
+      onClose={onClose}
+      footer={
+        <>
+          <Badge as="a" href={releasePage(`v${version}`)} target="_blank" rel="noopener noreferrer" tone="neutral" size="large" className="me-auto">
+            {t("whatsnew.viewOnGitHub")}
+          </Badge>
+          <Button label={t("common.close")} labelKey="common.close" glyph={<IconClose />} tone="accent" onClick={onClose} />
+        </>
+      }
+    >
+      <ReleaseNotes version={`v${version}`} />
+    </InstanceWindow>
+  );
+}
+
 /** WhatsNewHost draws the window wherever it was opened from, once in the
  *  app's layout. */
 export function WhatsNewHost({ version }: { version: string | null }) {

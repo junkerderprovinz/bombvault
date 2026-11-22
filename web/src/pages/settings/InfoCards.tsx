@@ -24,7 +24,7 @@ import { GLIMSTONE_VERSION } from "../../lib/glimstoneVersion";
 import { Card } from "./shared";
 
 /** A number that reads as plain text and opens the newest release of its project. */
-function VersionNumber({ row, unreleased }: { row: ComponentRow; unreleased: (version: string) => string }) {
+export function VersionNumber({ row, unreleased }: { row: ComponentRow; unreleased: (version: string) => string }) {
   const { shown, released, href } = numberLink(row);
   if (!href) return <span className="glim-num glim-version-number">{released ? shown : unreleased(shown)}</span>;
   return (

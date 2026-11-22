@@ -4033,8 +4033,9 @@ func TestReleaseNotesHandler(t *testing.T) {
 		t.Fatalf("version = %v, want v6.1.0", m["version"])
 	}
 
-	// A version with no embedded notes degrades to ok=false (the dialog then
-	// shows its GitHub-link fallback) instead of erroring.
+	// A version with notes neither here nor on GitHub degrades to ok=false
+	// (the dialog then shows its GitHub-link fallback) instead of erroring.
+	api.NoGitHubNotes(t)
 	_, m = doJSON(t, h, http.MethodGet, "/api/release-notes?version=v0.0.1", "")
 	if m["ok"] != false {
 		t.Fatalf("expected ok=false for a version with no bundled notes, got %v", m)

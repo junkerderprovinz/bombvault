@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
+import { componentText, designRow, updateLine, whatsNewLabel, withApp } from "@glimstone/core";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
@@ -8,8 +9,9 @@ import { IconCheck, IconCopy, IconTrash } from "../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../components/ReadmeButton";
 import { Toggle } from "../components/Toggle";
 import { AboutContent } from "../pages/settings/AboutCard";
-import { IconAccentSystem } from "../components/glyphs";
+import { IconAccentSystem, IconWhatsNew } from "../components/glyphs";
 import { IconResetArrow, useSystemAccent } from "../pages/settings/AccentCard";
+import { VersionNumber } from "../pages/settings/InfoCards";
 import {
   DEFAULT_ACCENT,
   DEFAULT_ACCENT_PRESETS,
@@ -29,10 +31,12 @@ import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
 import { darkShowing, getOled, getResolvedTheme, getTheme, oledRefusal, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
+import { GLIMSTONE_VERSION } from "../lib/glimstoneVersion";
 import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
 import { PageTop } from "./PageTop";
+import { storeOf } from "./store";
 import { FOLLOWED_EVENT, following as isFollowing, keepAsOwn, setFollowing } from "./look";
 
 type T = ReturnType<typeof useT>["t"];
@@ -221,6 +225,7 @@ export function SettingsPage({
   onRemoveAll: () => void;
 }) {
   const { lang, languages } = useT();
+  const words = componentText(lang);
   const { confirm, confirmDialog } = useConfirm();
   const [name, setName] = useState(app.deviceName);
   const [copied, setCopied] = useState(false);
@@ -557,6 +562,48 @@ export function SettingsPage({
         </div>
       </Section>
 
+      {/* GlimStone's Version and Components cards. The app's updates come
+          through the store it came from, so the Version card checks nothing. */}
+      <Section title={words.versionCard.title} hue={5} info={withApp(words.versionCard.hint, "BombVault")}>
+        <div className="flex flex-col gap-3 py-2">
+          <div className="glim-version-head">
+            <span className="glim-version-app">BombVault</span>
+            <VersionNumber row={{ name: "BombVault", version: app.version, repoUrl: REPO }} unreleased={words.versionCard.unreleased} />
+          </div>
+          <div className="glim-version-foot">
+            <p className="glim-version-state" role="status">
+              <span className="glim-version-line">{updateLine({ kind: "store", store: storeOf(app.installer ?? "") }, words.versionCard).line}</span>
+            </p>
+            <div className="glim-version-actions">
+              <Button
+                label={whatsNewLabel(words.versionCard)}
+                labelKey="version.whatsNew"
+                glyph={
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="glim-version-dot" aria-hidden="true" />
+                    <IconWhatsNew />
+                  </span>
+                }
+                keepLabel
+                onClick={() => open(`${REPO}/releases/tag/v${app.version}`)}
+              />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section title={words.componentsCard.title} hue={8} info={withApp(words.componentsCard.hint, "BombVault")}>
+        <ul className="glim-version-rows py-2">
+          <li className="glim-version-row">
+            <span className="glim-version-name">
+              <span className="glim-version-part">GlimStone</span>
+              <InfoBubble tip={words.componentsCard.design} />
+            </span>
+            <VersionNumber row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }} unreleased={words.componentsCard.unreleased} />
+          </li>
+        </ul>
+      </Section>
+
       <Section title={t("launcher.problems")} hue={2} info={t("launcher.problemsHint")}>
         <pre
           dir="ltr"
@@ -587,7 +634,6 @@ export function SettingsPage({
         <div className="my-1 flex flex-col gap-4">
           <AboutContent
             app={{
-              version: app.version,
               paypal: () => open(PAYPAL),
               privacy: { label: t("launcher.privacy"), href: `${REPO}/blob/main/android/PRIVACY.md` },
             }}

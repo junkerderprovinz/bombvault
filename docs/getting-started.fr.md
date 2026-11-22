@@ -121,6 +121,14 @@ services:
 
 Pour sauvegarder aussi les volumes nommés Docker, montez un dossier qui contient à la fois vos données et la racine de données de Docker (`docker info -f '{{.DockerRootDir}}'`, en général `/var/lib/docker`), comme le modèle Unraid monte tout `/mnt`.
 
+## Mettre à jour {#update}
+
+Un conteneur ne se remplace pas lui-même, vous mettez donc BombVault à jour là où vous l'avez installé. **Paramètres, Info** indique quand une version plus récente est sortie, et **Nouveautés** en montre les notes. Vos réglages dans `/config` et vos sauvegardes restent tels quels. Mettez à jour quand aucune sauvegarde ni restauration n'est en cours.
+
+- **Unraid :** dans l'onglet **Docker**, choisissez **Check for Updates**, puis **apply update** à côté de BombVault.
+- **Docker Compose :** lancez `docker compose pull`, puis `docker compose up -d`, dans le dossier qui contient votre fichier compose.
+- **TrueNAS SCALE, ZimaOS, CasaOS et MOS :** mettez l'app à jour sur la page des apps de l'hôte, qui récupère l'image plus récente.
+
 ## Le seul réglage obligatoire {#the-one-required-setting}
 
 La seule variable à régler obligatoirement est `APP_KEY`, un secret hexadécimal de 32 octets (64 caractères hexadécimaux) qui sert à dériver le mot de passe du dépôt restic.
@@ -209,7 +217,7 @@ Les pages et les paramètres utilisent toute la largeur de la fenêtre. Une fen�
 - **Paramètres** compte quatorze tuiles : Général, Apparence, Planning, Destinations, Restauration, Notifications, Vérification, Sécurité, Instances, Appairage, Intégrations, Applications, Système et Info. Voir [Paramètres](settings.md). Appuyez sur `/` ou Ctrl+K pour les parcourir toutes, aussi par les noms que des pages portaient dans des versions antérieures. Faites glisser les tuiles dans votre propre ordre sous **Apparence**. Quand une colonne de tuiles à côté de la page l'écraserait, comme dans une fenêtre d'environ 1200 pixels de large, les tuiles deviennent une bande au-dessus de la page qui défile sur les côtés. Un téléphone montre la même bande.
 - **Destinations** et **Instances** sont des tuiles de paramètres avec leurs propres pages. **Afficher aussi dans la barre latérale** sur leur tuile les épingle à la barre latérale.
 
-Rien n'a de bouton Enregistrer et rien ne se déplie : les choses rares ont une carte à elles ou une fenêtre, et les explications se trouvent dans les bulles (i). Après une mise à jour, une fenêtre s'ouvre toute seule avec une carte pour chaque version depuis votre dernière, et des points verts marquent ce qui a changé. Un clic masque un point. **Nouveau** dans la carte Version sous **Paramètres, Info** compte ce que vous n'avez pas encore vu et rouvre cette fenêtre, avec les notes de chaque version et ses changements avec **Y aller**.
+Rien n'a de bouton Enregistrer et rien ne se déplie : les choses rares ont une carte à elles ou une fenêtre, et les explications se trouvent dans les bulles (i). Après une mise à jour, une fenêtre s'ouvre toute seule avec une carte pour chaque version depuis votre dernière, et des points verts marquent ce qui a changé. Un clic masque un point. **Nouveautés** dans la carte Version sous **Paramètres, Info** compte ce que vous n'avez pas encore vu et rouvre cette fenêtre, avec les notes de chaque version et ses changements avec **Y aller**.
 
 ## Compiler depuis les sources {#build-from-source}
 

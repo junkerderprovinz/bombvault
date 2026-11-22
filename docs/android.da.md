@@ -64,6 +64,7 @@ Tandhjulet ved siden af plusset åbner appens indstillinger:
 
 - sproget og det navn, telefonen viser på Instanser-siden (tomt betyder telefonens model),
 - udseendet, der følger den første server på listen, indtil du vælger dit eget, og animationerne, der har deres egen indstilling,
+- kortet Version, som nævner den butik, opdateringerne kommer fra (Google Play, F-Droid eller GitHub Releases), og åbner noterne til denne version under **Nyheder**, og kortet Komponenter,
 - en rapport til at kopiere, når du melder et problem. Den indeholder ingen adresse, intet navn og ingen sætning,
 - kortet Om appen med privatlivspolitikken,
 - **Fjern alle servere**, der fjerner alle servere fra appen og forlader gruppen. Hver server, telefonen stadig når, fjerner den fra sin Instanser-side.

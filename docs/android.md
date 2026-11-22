@@ -64,6 +64,7 @@ The gear beside the plus opens the app's settings:
 
 - the language, and the name the phone shows on the Instances page (empty means the phone's model),
 - the look, which follows the first server in the list until you set your own, and animations, which have a setting of their own,
+- the Version card, which names the store the updates come through (Google Play, F-Droid or GitHub Releases) and opens this version's notes under **What's new**, and the Components card,
 - a report to copy when you report a problem. It contains no address, name or phrase,
 - the About card with the privacy policy,
 - **Remove all servers**, which removes every server from the app and leaves the group. Every server the phone still reaches takes it off its Instances page.

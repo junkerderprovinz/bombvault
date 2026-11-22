@@ -63,6 +63,7 @@ Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:
 
 - språket og navnet telefonen viser på Instanser-siden (tomt betyr telefonens modell),
 - utseendet, som følger den første serveren i listen til du velger ditt eget, og animasjonene, som har en egen innstilling,
+- kortet Versjon, som nevner butikken oppdateringene kommer fra (Google Play, F-Droid eller GitHub Releases) og åpner notatene for denne versjonen under **Nyheter**, og kortet Komponenter,
 - en rapport å kopiere når du melder fra om et problem. Den inneholder ingen adresse, ikke noe navn og ingen frase,
 - kortet Om appen med personvernerklæringen,
 - **Fjern alle servere**, som fjerner alle servere fra appen og forlater gruppen. Hver server telefonen fortsatt når, fjerner den fra sin Instanser-side.

@@ -121,6 +121,14 @@ services:
 
 Để sao lưu cả các volume có tên của Docker, hãy gắn một thư mục chứa cả dữ liệu của bạn lẫn gốc dữ liệu của Docker (`docker info -f '{{.DockerRootDir}}'`, thường là `/var/lib/docker`), giống cách mẫu Unraid gắn cả `/mnt`.
 
+## Cập nhật {#update}
+
+Container không tự thay chính nó, nên bạn cập nhật BombVault ở nơi bạn đã cài. **Cài đặt, Thông tin** cho biết khi có bản phát hành mới hơn, và **Có gì mới** hiện ghi chú của bản đó. Cài đặt của bạn trong `/config` và các bản sao lưu vẫn giữ nguyên. Hãy cập nhật khi không có bản sao lưu hay khôi phục nào đang chạy.
+
+- **Unraid:** trong thẻ **Docker**, chọn **Check for Updates**, rồi **apply update** cạnh BombVault.
+- **Docker Compose:** chạy `docker compose pull`, rồi `docker compose up -d`, trong thư mục chứa tệp compose của bạn.
+- **TrueNAS SCALE, ZimaOS, CasaOS và MOS:** cập nhật ứng dụng trên trang ứng dụng của máy chủ, trang đó sẽ tải image mới hơn.
+
 ## Cài đặt bắt buộc duy nhất {#the-one-required-setting}
 
 Biến duy nhất bạn phải đặt là `APP_KEY`, một bí mật hex 32 byte (64 ký tự hex) dùng để dẫn xuất mật khẩu kho lưu trữ restic.
@@ -211,7 +219,7 @@ Các trang và phần cài đặt dùng toàn bộ chiều rộng cửa sổ. M�
 - **Cài đặt** gồm mười bốn ô: Chung, Giao diện, Lịch trình, Đích sao lưu, Khôi phục, Thông báo, Xác minh, Bảo mật, Phiên bản, Ghép nối, Tích hợp, Ứng dụng, Hệ thống và Thông tin. Xem [Cài đặt](settings.md). Nhấn `/` hoặc Ctrl+K để tìm trong tất cả, kể cả theo tên mà các trang từng có ở các phiên bản trước. Kéo các ô vào thứ tự riêng của bạn trong **Giao diện**. Khi một cột ô bên cạnh trang sẽ làm trang quá hẹp, như trong cửa sổ rộng khoảng 1200 pixel, các ô trở thành một dải phía trên trang và cuộn ngang được. Điện thoại hiển thị cùng dải đó.
 - **Đích sao lưu** và **Phiên bản** là các ô cài đặt có trang riêng. **Hiện cả trong thanh bên** trên ô của chúng ghim chúng vào thanh bên.
 
-Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, một cửa sổ tự mở với một thẻ cho mỗi bản phát hành kể từ phiên bản trước của bạn, và các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm. **Mới** trong thẻ Phiên bản dưới **Cài đặt, Thông tin** đếm những gì bạn chưa xem và mở lại cửa sổ đó, với ghi chú phát hành của từng bản và các thay đổi của nó kèm **Đi tới đó**.
+Không có gì có nút Lưu và không có gì bung ra: những thứ hiếm dùng có thẻ riêng hoặc một cửa sổ, và phần giải thích nằm trong các bong bóng (i). Sau một bản cập nhật, một cửa sổ tự mở với một thẻ cho mỗi bản phát hành kể từ phiên bản trước của bạn, và các chấm xanh đánh dấu những gì đã đổi. Một cú nhấp sẽ ẩn chấm. **Có gì mới** trong thẻ Phiên bản dưới **Cài đặt, Thông tin** đếm những gì bạn chưa xem và mở lại cửa sổ đó, với ghi chú phát hành của từng bản và các thay đổi của nó kèm **Đi tới đó**.
 
 ## Dựng từ mã nguồn {#build-from-source}
 

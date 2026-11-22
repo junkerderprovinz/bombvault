@@ -121,6 +121,14 @@ services:
 
 Aby kopiować także nazwane woluminy Dockera, zamontuj folder, który zawiera zarówno Twoje dane, jak i katalog główny danych Dockera (`docker info -f '{{.DockerRootDir}}'`, zwykle `/var/lib/docker`), tak jak szablon Unraid montuje całe `/mnt`.
 
+## Aktualizacja {#update}
+
+Kontener nie podmienia sam siebie, więc BombVaulta aktualizujesz tam, gdzie go zainstalowałeś. **Ustawienia, Info** pokazują, kiedy wyszło nowsze wydanie, a **Nowości** pokazują jego notatki. Twoje ustawienia w `/config` i kopie zapasowe zostają bez zmian. Aktualizuj, gdy nie trwa żadna kopia zapasowa ani przywracanie.
+
+- **Unraid:** na karcie **Docker** wybierz **Check for Updates**, a potem **apply update** obok BombVaulta.
+- **Docker Compose:** w folderze z plikiem compose uruchom `docker compose pull`, a potem `docker compose up -d`.
+- **TrueNAS SCALE, ZimaOS, CasaOS i MOS:** zaktualizuj aplikację na stronie aplikacji hosta, która pobierze nowszy obraz.
+
 ## Jedno wymagane ustawienie {#the-one-required-setting}
 
 Jedyną zmienną, którą musisz ustawić, jest `APP_KEY`, 32-bajtowy sekret w formacie hex (64 znaki hex) używany do wyprowadzenia hasła repozytorium restic.

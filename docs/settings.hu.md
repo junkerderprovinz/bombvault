@@ -97,6 +97,7 @@ A **Párosítás** a lépéskártyákkal és a **Jelmondat létrehozása** vagy 
 
 ## Információ {#info}
 
-- **Verzió**: BombVault, GlimStone, restic és rclone, a **Frissítések keresése** és az **Újdonságok** gombbal, amely megszámolja a még nem látott változásokat, és megnyit egy ablakot, amely felsorolja őket.
+- **Verzió**: a BombVault verziója és a frissítései állása. A **Frissítések keresése** megkérdezi a GitHubot a legújabb kiadásról. Az **Újdonságok** megszámolja a még nem látott változásokat, és megnyit egy ablakot, amely felsorolja őket. Ha újabb kiadás vár, helyettük annak a kiadásnak a jegyzeteit mutatja, **A frissítés módja** pedig megnyitja a [Frissítés](getting-started.md#update) részt.
+- **Összetevők**: rclone, restic és GlimStone, azokkal a verziókkal, amelyeket ez a kiadás hoz. Minden szám a saját projektje legújabb kiadását nyitja meg.
 - **Súgó**: a **Kézikönyv** megnyitja ezt a dokumentációt, a **Hibajelentés** pedig letölt egy kitakart ZIP-et egy GitHub-hibajegyhez. Belépési jelszó kell hozzá.
-- **A BombVault névjegye**: a projekt, a licence és az, hogyan érhető el a szerző.
+- **Névjegy**: a projekt, a licence és az, hogyan érhető el a szerző.

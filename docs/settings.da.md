@@ -97,6 +97,7 @@ Flere ting kræver en loginadgangskode, for eksempel gendannelseskittet og nøgl
 
 ## Info {#info}
 
-- **Version**: BombVault, GlimStone, restic og rclone, med **Søg efter opdateringer** og **Ny**, som tæller de ændringer, du endnu ikke har set, og åbner et vindue, der viser dem.
+- **Version**: BombVaults version og hvordan opdateringerne står. **Søg efter opdateringer** spørger GitHub om den nyeste udgivelse. **Nyheder** tæller de ændringer, du endnu ikke har set, og åbner et vindue, der viser dem. Venter en nyere udgivelse, viser det i stedet dens noter, og **Sådan opdaterer du** åbner [Opdatering](getting-started.md#update).
+- **Komponenter**: rclone, restic og GlimStone i de versioner, denne udgivelse har med. Hvert nummer åbner sit projekts nyeste udgivelse.
 - **Hjælp**: **Manual** åbner denne dokumentation, og **Fejlrapport** downloader en redigeret ZIP til et GitHub-issue. Den kræver en loginadgangskode.
-- **Om BombVault**: projektet, dets licens og hvordan du når forfatteren.
+- **Om**: projektet, dets licens og hvordan du når forfatteren.

@@ -121,6 +121,14 @@ services:
 
 För att också säkerhetskopiera namngivna Docker-volymer monterar du en mapp som innehåller både dina data och Dockers datarot (`docker info -f '{{.DockerRootDir}}'`, oftast `/var/lib/docker`), på samma sätt som Unraid-mallen monterar hela `/mnt`.
 
+## Uppdatering {#update}
+
+En container ersätter inte sig själv, så du uppdaterar BombVault där du installerade den. **Inställningar, Info** visar när en nyare utgåva har kommit, och **Nyheter** visar dess anteckningar. Dina inställningar i `/config` och dina säkerhetskopior blir kvar som de är. Uppdatera när ingen säkerhetskopiering eller återställning pågår.
+
+- **Unraid:** välj **Check for Updates** på fliken **Docker** och sedan **apply update** vid BombVault.
+- **Docker Compose:** kör `docker compose pull` och sedan `docker compose up -d` i mappen med din compose-fil.
+- **TrueNAS SCALE, ZimaOS, CasaOS och MOS:** uppdatera appen på värdens appsida, som hämtar den nyare imagen.
+
 ## Den enda obligatoriska inställningen {#the-one-required-setting}
 
 Den enda variabeln du måste sätta är `APP_KEY`, en 32-byte hex-hemlighet (64 hex-tecken) som används för att härleda restic-repositoriets lösenord.
@@ -209,7 +217,7 @@ Sidor och inställningar använder fönstrets hela bredd. Ett fönster har sina 
 - **Inställningar** är fjorton brickor: Allmänt, Utseende, Schema, Lagringsmål, Återställning, Aviseringar, Verifiera, Säkerhet, Instanser, Parkoppling, Integrationer, Appar, System och Info. Se [Inställningar](settings.md). Tryck `/` eller Ctrl+K för att söka i alla, även efter de namn sidorna hade i tidigare versioner. Dra brickorna till din egen ordning under **Utseende**. Där en kolumn med brickor bredvid sidan skulle göra sidan för smal, som i ett fönster omkring 1200 pixlar brett, blir brickorna en remsa ovanför sidan som scrollar i sidled. En telefon visar samma remsa.
 - **Lagringsmål** och **Instanser** är inställningsbrickor med egna sidor. **Visa även i sidofältet** på deras bricka fäster dem i sidofältet.
 
-Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering öppnas av sig själv ett fönster med ett kort för varje utgåva sedan din senaste version, och gröna prickar markerar vad som ändrats. Ett klick döljer en prick. **Ny** i kortet Version under **Inställningar, Info** räknar vad du inte sett ännu och öppnar det fönstret igen, med anteckningarna för varje utgåva och dess ändringar med **Gå dit**.
+Inget har en Spara-knapp och inget fälls ut: ovanliga saker har ett eget kort eller ett fönster, och förklaringarna finns i (i)-bubblorna. Efter en uppdatering öppnas av sig själv ett fönster med ett kort för varje utgåva sedan din senaste version, och gröna prickar markerar vad som ändrats. Ett klick döljer en prick. **Nyheter** i kortet Version under **Inställningar, Info** räknar vad du inte sett ännu och öppnar det fönstret igen, med anteckningarna för varje utgåva och dess ändringar med **Gå dit**.
 
 ## Bygga från källkod {#build-from-source}
 

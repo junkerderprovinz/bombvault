@@ -97,6 +97,7 @@ Plusieurs choses demandent un mot de passe de connexion, comme le kit de récup�
 
 ## Info {#info}
 
-- **Version** : BombVault, GlimStone, restic et rclone, avec **Rechercher des mises à jour** et **Nouveau**, qui compte les changements que vous n'avez pas encore vus et ouvre une fenêtre qui les liste.
+- **Version** : la version de BombVault et où en sont ses mises à jour. **Rechercher des mises à jour** demande à GitHub la version la plus récente. **Nouveautés** compte les changements que vous n'avez pas encore vus et ouvre une fenêtre qui les liste. Quand une version plus récente attend, elle montre à la place les notes de cette version, et **Comment mettre à jour** ouvre [Mettre à jour](getting-started.md#update).
+- **Composants** : rclone, restic et GlimStone, dans les versions que cette version embarque. Chaque numéro ouvre la version la plus récente de son projet.
 - **Aide** : **Manuel** ouvre cette documentation, et **Rapport de bug** télécharge un ZIP expurgé pour un ticket GitHub. Il demande un mot de passe de connexion.
-- **À propos de BombVault** : le projet, sa licence et comment joindre l'auteur.
+- **À propos** : le projet, sa licence et comment joindre l'auteur.

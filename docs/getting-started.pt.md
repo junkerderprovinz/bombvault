@@ -121,6 +121,14 @@ services:
 
 Para copiar também os volumes com nome do Docker, monta uma pasta que guarde tanto os teus dados como a raiz de dados do Docker (`docker info -f '{{.DockerRootDir}}'`, normalmente `/var/lib/docker`), tal como o template do Unraid monta todo o `/mnt`.
 
+## Atualizar {#update}
+
+Um contentor não se substitui a si próprio, por isso atualizas o BombVault onde o instalaste. **Definições, Info** mostra quando sai uma versão mais nova, e **Novidades** mostra as notas dela. As tuas definições em `/config` e as tuas cópias de segurança ficam como estão. Atualiza quando não estiver a correr nenhuma cópia de segurança nem restauro.
+
+- **Unraid:** no separador **Docker**, escolhe **Check for Updates** e depois **apply update** ao lado do BombVault.
+- **Docker Compose:** corre `docker compose pull` e depois `docker compose up -d` na pasta do teu ficheiro compose.
+- **TrueNAS SCALE, ZimaOS, CasaOS e MOS:** atualiza a app na página de apps do anfitrião, que vai buscar a imagem mais nova.
+
 ## A única definição obrigatória {#the-one-required-setting}
 
 A única variável que tens de definir é o `APP_KEY`, um segredo hexadecimal de 32 bytes (64 caracteres hexadecimais) usado para derivar a palavra-passe do repositório restic.
@@ -209,7 +217,7 @@ As páginas e as definições usam toda a largura da janela. Uma janela guarda o
 - As **Definições** são catorze mosaicos: Geral, Aspeto, Agendamento, Destinos, Restauro, Notificações, Verificação, Segurança, Instâncias, Emparelhamento, Integrações, Aplicações, Sistema e Info. Vê [Definições](settings.md). Carrega em `/` ou Ctrl+K para pesquisar em todos, também pelos nomes que as páginas tinham em versões anteriores. Arrasta os mosaicos para a tua própria ordem em **Aspeto**. Onde uma coluna de mosaicos ao lado da página a apertaria, como numa janela com cerca de 1200 píxeis de largura, os mosaicos passam a uma faixa por cima da página que desliza para os lados. Um telemóvel mostra a mesma faixa.
 - **Destinos** e **Instâncias** são mosaicos de definições com páginas próprias. **Mostrar também na barra lateral** no mosaico deles fixa-os à barra lateral.
 
-Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização abre-se sozinha uma janela com um cartão para cada versão desde a tua última, e pontos verdes marcam o que mudou. Um clique esconde um ponto. **Novo** no cartão Versão em **Definições, Info** conta o que ainda não viste e volta a abrir essa janela, com as notas de cada versão e as suas alterações com **Ir para lá**.
+Nada tem um botão Guardar e nada se desdobra: as coisas raras têm um cartão próprio ou uma janela, e as explicações estão nos balões (i). Depois de uma atualização abre-se sozinha uma janela com um cartão para cada versão desde a tua última, e pontos verdes marcam o que mudou. Um clique esconde um ponto. **Novidades** no cartão Versão em **Definições, Info** conta o que ainda não viste e volta a abrir essa janela, com as notas de cada versão e as suas alterações com **Ir para lá**.
 
 ## Compilar a partir do código-fonte {#build-from-source}
 

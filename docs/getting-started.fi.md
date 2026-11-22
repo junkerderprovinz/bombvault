@@ -121,6 +121,14 @@ services:
 
 Varmuuskopioidaksesi myös Dockerin nimetyt taltiot liitä kansio, joka sisältää sekä datasi että Dockerin datajuuren (`docker info -f '{{.DockerRootDir}}'`, yleensä `/var/lib/docker`), samaan tapaan kuin Unraid-malli liittää koko `/mnt`:n.
 
+## Päivitys {#update}
+
+Kontti ei korvaa itseään, joten päivität BombVaultin siellä, mihin sen asensit. **Asetukset, Tietoja** näyttää, kun uudempi julkaisu on ilmestynyt, ja **Uutta** näyttää sen tiedot. Asetuksesi kansiossa `/config` ja varmuuskopiosi pysyvät ennallaan. Päivitä, kun mikään varmuuskopiointi tai palautus ei ole käynnissä.
+
+- **Unraid:** valitse **Docker**-välilehdellä **Check for Updates** ja sitten **apply update** BombVaultin kohdalla.
+- **Docker Compose:** suorita compose-tiedostosi kansiossa `docker compose pull` ja sitten `docker compose up -d`.
+- **TrueNAS SCALE, ZimaOS, CasaOS ja MOS:** päivitä sovellus isännän sovellussivulla, joka hakee uudemman imagen.
+
 ## Yksi pakollinen asetus {#the-one-required-setting}
 
 Ainoa muuttuja, joka sinun täytyy asettaa, on `APP_KEY`, 32-tavuinen heksasalaisuus (64 heksamerkkiä), jolla johdetaan resticin repon salasana.

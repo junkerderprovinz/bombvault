@@ -74,6 +74,7 @@ afterEach(() => {
   for (const fn of Object.values(api)) fn.mockReset();
   pushed.length = 0;
   localStorage.removeItem("bv-lang");
+  localStorage.removeItem("bombvault.lastUpdateCheck");
 });
 
 describe("the Version card", () => {
@@ -121,7 +122,7 @@ describe("the Version card", () => {
     expect(checkButton()).toBeTruthy();
   });
 
-  it("names a newer version, leads to the install guide and lets What's new open its release", async () => {
+  it("names a newer version, leads to the update guide and opens its notes in a window from What's new", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     api.checkForUpdate.mockResolvedValue({
       ok: true,
@@ -134,12 +135,20 @@ describe("the Version card", () => {
     expect(version().queryByRole("link", { name: /10\.0\.1/ })).toBeNull();
     fireEvent.click(version().getByRole("button", { name: words.versionCard.guide }));
     expect(open).toHaveBeenLastCalledWith(
-      "https://junkerderprovinz.github.io/bombvault/getting-started/#install-on-unraid",
+      "https://junkerderprovinz.github.io/bombvault/getting-started/#update",
       "_blank",
       "noopener,noreferrer",
     );
-    fireEvent.click(version().getByRole("button", { name: words.versionCard.whatsNew }));
-    expect(open).toHaveBeenLastCalledWith("https://example.org/v10.0.1", "_blank", "noopener,noreferrer");
+    const fetched = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ ok: true, body: "## Added\n\n- Faster" }), { status: 200 }));
+    await act(async () => {
+      fireEvent.click(version().getByRole("button", { name: words.versionCard.whatsNew }));
+    });
+    const notes = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(notes.textContent).toContain(en["whatsNew.windowTitle"].replace("{version}", "10.0.1"));
+    expect(fetched.mock.calls.at(-1)?.[0]).toContain("/api/release-notes?version=v10.0.1");
+    expect(within(notes).getByRole("link", { name: en["whatsnew.viewOnGitHub"] }).getAttribute("href")).toBe(
+      "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.0.1",
+    );
   });
 
   it.each([
@@ -161,6 +170,25 @@ describe("the Version card", () => {
     await renderPage();
     await check();
     expect(state()).toContain("HTTP 502 Bad Gateway");
+  });
+
+  it("remembers the last answer for the version that asked, and forgets it after an update", async () => {
+    api.checkForUpdate.mockResolvedValue({
+      ok: true,
+      update: { current: "10.0.0", latest: "v10.0.1", updateAvailable: true, releaseUrl: "https://example.org/v10.0.1" },
+    });
+    await renderPage();
+    await check();
+    cleanup();
+
+    await renderPage();
+    expect(api.checkForUpdate).toHaveBeenCalledTimes(1);
+    expect(state()).toContain(words.versionCard.available("10.0.1"));
+    cleanup();
+
+    api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "10.0.1", restic: "0.18.1", rclone: null } });
+    await renderPage();
+    expect(state()).toBe("");
   });
 });
 

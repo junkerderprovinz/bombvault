@@ -64,6 +64,7 @@ Artının yanındaki dişli uygulamanın ayarlarını açar:
 
 - dil ve telefonun Örnekler sayfasında gösterdiği ad (boş, telefonun modeli demektir),
 - kendi görünümünü ayarlayana kadar listedeki ilk sunucuyu izleyen görünüm ve kendi ayarı olan animasyonlar,
+- güncellemelerin geldiği mağazayı (Google Play, F-Droid ya da GitHub Releases) söyleyen ve **Yenilikler** altında bu sürümün notlarını açan Sürüm kartı ile Bileşenler kartı,
 - bir sorun bildirirken kopyalanacak bir rapor. Adres, ad ya da ifade içermez,
 - gizlilik politikasıyla Hakkında kartı,
 - uygulamadan her sunucuyu kaldıran ve gruptan ayrılan **Tüm sunucuları kaldır**. Telefonun hâlâ ulaşabildiği her sunucu onu kendi Örnekler sayfasından alır.

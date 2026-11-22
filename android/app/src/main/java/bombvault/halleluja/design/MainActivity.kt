@@ -507,7 +507,20 @@ class MainActivity : ComponentActivity() {
             .put("android", Build.VERSION.SDK_INT.toString())
             .put("model", pairing.phoneName)
             .put("deviceName", pairing.deviceName)
+            .put("installer", installer())
     }
+
+    /** The package of the store that installed the app, such as com.android.vending, or "" for an APK installed by hand. */
+    private fun installer(): String = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            packageManager.getInstallSourceInfo(packageName).installingPackageName
+        } else {
+            @Suppress("DEPRECATION")
+            packageManager.getInstallerPackageName(packageName)
+        }
+    } catch (e: PackageManager.NameNotFoundException) {
+        null
+    } ?: ""
 
     /** Goes back to the launcher, which tells the person why [server] did not open. */
     private fun fail(server: Server, kind: String, fingerprint: String? = null, detail: String? = null, relay: Boolean = false) {

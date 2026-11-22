@@ -64,6 +64,7 @@ El engranaje junto al signo más abre los ajustes de la app:
 
 - el idioma y el nombre que muestra el teléfono en la página Instancias (vacío significa el modelo del teléfono),
 - el aspecto, que sigue al primer servidor de la lista hasta que pongas el tuyo, y las animaciones, que tienen su propio ajuste,
+- la tarjeta Versión, que nombra la tienda de la que llegan las actualizaciones (Google Play, F-Droid o GitHub Releases) y abre las notas de esta versión en **Novedades**, y la tarjeta Componentes,
 - un informe para copiar cuando comuniques un problema. No contiene ninguna dirección, nombre ni frase,
 - la tarjeta Acerca de con la política de privacidad,
 - **Quitar todos los servidores**, que quita todos los servidores de la app y sale del grupo. Cada servidor al que el teléfono aún llega lo elimina de su página Instancias.

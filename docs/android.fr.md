@@ -64,6 +64,7 @@ La roue dentée à côté du bouton + ouvre les paramètres de l'application :
 
 - la langue, et le nom que le téléphone affiche sur la page Instances (vide, c'est le modèle du téléphone),
 - l'apparence, qui suit le premier serveur de la liste jusqu'à ce que vous définissiez la vôtre, et les animations, qui ont leur propre réglage,
+- la carte **Version**, qui nomme la boutique d'où viennent les mises à jour (Google Play, F-Droid ou GitHub Releases) et ouvre les notes de cette version sous **Nouveautés**, puis la carte **Composants**,
 - un rapport à copier quand vous signalez un problème. Il ne contient ni adresse, ni nom, ni phrase,
 - la carte **À propos** avec la politique de confidentialité,
 - **Supprimer tous les serveurs**, qui retire tous les serveurs de l'application et quitte le groupe. Chaque serveur que le téléphone joint encore le retire de sa page Instances.

@@ -63,6 +63,7 @@ Zębatka obok plusa otwiera ustawienia aplikacji:
 
 - język oraz nazwa, pod którą telefon widnieje na stronie Instancje (puste pole oznacza model telefonu),
 - wygląd, który podąża za pierwszym serwerem na liście, dopóki nie ustawisz własnego, oraz animacje, które mają osobne ustawienie,
+- kartę Wersja, która podaje sklep, z którego przychodzą aktualizacje (Google Play, F-Droid albo GitHub Releases), i pod **Nowości** otwiera notatki tej wersji, oraz kartę Komponenty,
 - raport do skopiowania, gdy zgłaszasz problem; nie zawiera adresu, nazwy ani frazy,
 - karta O aplikacji z polityką prywatności,
 - **Usuń wszystkie serwery**, które usuwa z aplikacji wszystkie serwery i opuszcza grupę. Każdy serwer, do którego telefon jeszcze dociera, usuwa go ze swojej strony Instancje.

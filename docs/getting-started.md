@@ -121,6 +121,14 @@ services:
 
 To back up Docker named volumes as well, mount a folder that holds both your data and Docker's data root (`docker info -f '{{.DockerRootDir}}'`, usually `/var/lib/docker`), the way the Unraid template mounts all of `/mnt`.
 
+## Update {#update}
+
+A container does not replace itself, so you update BombVault where you installed it. **Settings, Info** shows when a newer release is out, and **What's new** shows its notes. Your settings in `/config` and your backups stay as they are. Update while no backup or restore is running.
+
+- **Unraid:** on the **Docker** tab, choose **Check for Updates**, then **apply update** beside BombVault.
+- **Docker Compose:** run `docker compose pull`, then `docker compose up -d`, in the folder that holds your compose file.
+- **TrueNAS SCALE, ZimaOS, CasaOS and MOS:** update the app on the host's app page, which pulls the newer image.
+
 ## The one required setting {#the-one-required-setting}
 
 The only variable you must set is `APP_KEY`, a 32-byte hex secret (64 hex characters) used to derive the restic repository password.
@@ -209,7 +217,7 @@ Pages and settings use the whole width of the window. A window keeps its buttons
 - **Settings** are fourteen tiles: General, Look, Schedule, Storage locations, Restore, Notifications, Verify, Security, Instances, Pairing, Integrations, Apps, System and Info. See [Settings](settings.md). Press `/` or Ctrl+K to search them all, also by the names pages had in earlier versions. Drag the tiles into your own order under **Look**. Where a column of tiles beside the page would squeeze it, as in a window about 1200 pixels wide, the tiles become a strip above the page that scrolls sideways. A phone shows the same strip.
 - **Storage locations** and **Instances** are settings tiles with pages of their own. **Also show in the sidebar** on their tile pins them to the sidebar.
 
-Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update a window opens by itself with a card for every release since your last version, and green dots mark what changed. A click hides a dot. **New** in the Version card under **Settings, Info** counts what you have not seen yet and opens that window again, with the notes of each release and its changes with **Go there**.
+Nothing has a Save button and nothing folds out: rare things have a card of their own or a window, and explanations sit in the (i) bubbles. After an update a window opens by itself with a card for every release since your last version, and green dots mark what changed. A click hides a dot. **What's new** in the Version card under **Settings, Info** counts what you have not seen yet and opens that window again, with the notes of each release and its changes with **Go there**.
 
 ## Building from source {#build-from-source}
 

@@ -25,7 +25,7 @@ export function previewBridge(): Bridge {
     addressGone: ["Office NAS"],
     group: { paired: false, connected: false },
     camera: true,
-    app: { version: "0.0.3", versionCode: 3, android: "36", model: "Pixel 8", deviceName: "" },
+    app: { version: "0.0.3", versionCode: 3, android: "36", model: "Pixel 8", deviceName: "", installer: "com.android.vending" },
   };
 
   function post(msg: object) {

@@ -121,6 +121,14 @@ services:
 
 Chceš-li zálohovat i pojmenované svazky Dockeru, připoj složku, která drží jak tvá data, tak datový kořen Dockeru (`docker info -f '{{.DockerRootDir}}'`, obvykle `/var/lib/docker`), tak jako šablona Unraidu připojuje celé `/mnt`.
 
+## Aktualizace {#update}
+
+Kontejner se sám nenahradí, takže BombVault aktualizuješ tam, kde jsi ho nainstaloval. **Nastavení, Info** ukáže, když vyjde novější vydání, a **Novinky** ukážou jeho poznámky. Tvoje nastavení v `/config` a tvoje zálohy zůstanou, jak jsou. Aktualizuj, když neběží žádná záloha ani obnova.
+
+- **Unraid:** na kartě **Docker** zvol **Check for Updates** a pak **apply update** u BombVaultu.
+- **Docker Compose:** ve složce se svým souborem compose spusť `docker compose pull` a pak `docker compose up -d`.
+- **TrueNAS SCALE, ZimaOS, CasaOS a MOS:** aktualizuj aplikaci na stránce aplikací hostitele, ta stáhne novější image.
+
 ## Jediné povinné nastavení {#the-one-required-setting}
 
 Jedinou proměnnou, kterou musíš nastavit, je `APP_KEY`, 32bajtové hex tajemství (64 hex znaků) použité k odvození hesla k restic repozitáři.

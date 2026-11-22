@@ -64,6 +64,7 @@ L'ingranaggio accanto al più apre le impostazioni dell'app:
 
 - la lingua e il nome che il telefono mostra nella pagina Istanze (vuoto significa il modello del telefono),
 - l'aspetto, che segue il primo server dell'elenco finché non ne imposti uno tuo, e le animazioni, che hanno un'impostazione a parte,
+- la scheda Versione, che nomina lo store da cui arrivano gli aggiornamenti (Google Play, F-Droid o GitHub Releases) e apre le note di questa versione sotto **Novità**, e la scheda Componenti,
 - un rapporto da copiare quando segnali un problema. Non contiene indirizzi, nomi né frasi,
 - la scheda Informazioni con l'informativa sulla privacy,
 - **Rimuovi tutti i server**, che toglie dall'app ogni server e lascia il gruppo. Ogni server che il telefono raggiunge ancora lo toglie dalla sua pagina Istanze.

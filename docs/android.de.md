@@ -64,6 +64,7 @@ Das Zahnrad neben dem Plus öffnet die Einstellungen der App:
 
 - die Sprache und den Namen, den das Handy auf der Seite Instanzen zeigt (leer heißt: das Modell des Handys),
 - das Aussehen, das dem ersten Server der Liste folgt, bis du ein eigenes festlegst, und Animationen, die eine eigene Einstellung haben,
+- die Karte Version, die den Store nennt, über den die Updates kommen (Google Play, F-Droid oder GitHub Releases), und unter **Neuigkeiten** die Hinweise dieser Version öffnet, und die Karte Komponenten,
 - einen Bericht zum Kopieren, wenn du ein Problem meldest. Er enthält keine Adresse, keinen Namen und keine Phrase,
 - die Karte Über mit der Datenschutzerklärung,
 - **Alle Server entfernen**, was jeden Server aus der App entfernt und die Gruppe verlässt. Jeder Server, den das Handy noch erreicht, nimmt es von seiner Seite Instanzen.

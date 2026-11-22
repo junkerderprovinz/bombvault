@@ -507,3 +507,54 @@ test("only the row of a location with the setting leads to Simultaneous connecti
   await expectOn(dotOf(page, "location-connections"), field);
   await picture(page, "location-connections");
 });
+
+/** Stages a newer release that Check for updates finds, and the answer the
+ *  server gives for its notes. */
+async function stageWaiting(page: Page, notes: { ok: boolean; body: string }): Promise<void> {
+  await stage(page, { from: "" });
+  await page.route("**/api/update-check", (route) =>
+    route.fulfill({
+      json: { ok: true, update: { current: "v10.0.0", latest: "v10.1.0", updateAvailable: true, releaseUrl: "" } },
+    }),
+  );
+  await page.route("**/api/release-notes?version=v10.1.0", (route) =>
+    route.fulfill({ json: { ...notes, version: "v10.1.0", htmlUrl: "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.1.0" } }),
+  );
+  await page.goto("/settings/info");
+  await page.getByRole("button", { name: "Check for updates" }).click();
+  await expect(page.getByText("Update to 10.1.0 available")).toBeVisible();
+  await newButton(page).click();
+}
+
+test("What's new shows the running release's notes in the app", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "once at desktop width and on both phones");
+  await stage(page, { from: "" });
+  await page.goto("/settings/info");
+  await newButton(page).click();
+  await expect(list(page).getByText("One list.").first()).toBeVisible();
+});
+
+test("while an update waits, What's new shows that release's notes, with GitHub at the start of the foot and Close at its end", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "once at desktop width and on both phones");
+  await stageWaiting(page, { ok: true, body: "## Added\n\n- **Faster** restores." });
+  const notes = page.getByRole("dialog", { name: "New in 10.1.0" });
+  await expect(notes.getByText("restores.")).toBeVisible();
+  await expect(notes.locator("strong", { hasText: "Faster" })).toBeVisible();
+  const github = notes.getByRole("link", { name: "View full release on GitHub" });
+  const close = notes.getByRole("button", { name: "Close" });
+  await expect(github).toHaveAttribute("href", "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.1.0");
+  const [left, right] = [await github.boundingBox(), await close.boundingBox()];
+  expect(left!.x).toBeLessThan(right!.x);
+  await picture(page, `waiting-notes-${testInfo.project.name}`);
+  await close.click();
+  await expect(notes).toHaveCount(0);
+});
+
+test("notes of a waiting release that cannot be fetched say so and leave the way to GitHub", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "desktop-768", "once at desktop width and on both phones");
+  await stageWaiting(page, { ok: false, body: "" });
+  const notes = page.getByRole("dialog", { name: "New in 10.1.0" });
+  await expect(notes.getByText("Couldn't load the release notes here. Open them on GitHub.")).toBeVisible();
+  await expect(notes.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(notes.getByRole("link", { name: "View full release on GitHub" })).toBeVisible();
+});

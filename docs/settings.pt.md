@@ -97,6 +97,7 @@ Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperaç
 
 ## Info {#info}
 
-- **Versão**: BombVault, GlimStone, restic e rclone, com **Procurar atualizações** e **Novo**, que conta as alterações que ainda não viste e abre uma janela que as lista.
+- **Versão**: a versão do BombVault e o ponto das suas atualizações. **Procurar atualizações** pergunta ao GitHub pela versão mais recente. **Novidades** conta as alterações que ainda não viste e abre uma janela que as lista. Quando espera uma versão mais nova, mostra em vez disso as notas dessa versão, e **Como atualizar** abre [Atualizar](getting-started.md#update).
+- **Componentes**: rclone, restic e GlimStone, nas versões que esta versão traz. Cada número abre a versão mais recente do seu projeto.
 - **Ajuda**: o **Manual** abre esta documentação, e o **Relatório de erro** descarrega um ZIP com dados ocultados para um issue do GitHub. Precisa de uma palavra-passe de acesso.
-- **Sobre o BombVault**: o projeto, a sua licença e como contactar o autor.
+- **Sobre**: o projeto, a sua licença e como contactar o autor.

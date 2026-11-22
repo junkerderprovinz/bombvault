@@ -121,6 +121,14 @@ services:
 
 Per salvare anche i volumi Docker con nome, monta una cartella che contenga sia i tuoi dati sia la radice dati di Docker (`docker info -f '{{.DockerRootDir}}'`, di solito `/var/lib/docker`), come il template Unraid monta tutto `/mnt`.
 
+## Aggiornare {#update}
+
+Un container non si sostituisce da solo, quindi aggiorni BombVault dove l'hai installato. **Impostazioni, Info** mostra quando esce una versione più nuova, e **Novità** ne mostra le note. Le tue impostazioni in `/config` e i tuoi backup restano come sono. Aggiorna quando non è in corso nessun backup né ripristino.
+
+- **Unraid:** nella scheda **Docker** scegli **Check for Updates**, poi **apply update** accanto a BombVault.
+- **Docker Compose:** esegui `docker compose pull` e poi `docker compose up -d` nella cartella del tuo file compose.
+- **TrueNAS SCALE, ZimaOS, CasaOS e MOS:** aggiorna l'app nella pagina delle app dell'host, che scarica l'immagine più nuova.
+
 ## L'unica impostazione obbligatoria {#the-one-required-setting}
 
 L'unica variabile che devi impostare è `APP_KEY`, un segreto esadecimale di 32 byte (64 caratteri esadecimali) usato per derivare la password del repository restic.

@@ -64,6 +64,7 @@ A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
 
 - a nyelv, és az a név, amellyel a telefon a Példányok oldalon megjelenik (üresen hagyva a telefon típusa),
 - a megjelenés, amely a lista első szerverét követi, amíg sajátot nem állítasz be, valamint az animációk, amelyeknek külön beállításuk van,
+- a Verzió kártya, amely megnevezi a boltot, ahonnan a frissítések érkeznek (Google Play, F-Droid vagy GitHub Releases), és az **Újdonságok** alatt megnyitja ennek a verziónak a jegyzeteit, valamint az Összetevők kártya,
 - egy másolható jelentés, ha hibát jelentesz. Nincs benne cím, név vagy jelmondat,
 - a Névjegy kártya az adatvédelmi irányelvekkel,
 - a **Minden szerver eltávolítása**, amely minden szervert eltávolít az alkalmazásból, és kilép a csoportból. Minden szerver, amelyet a telefon még elér, leveszi a telefont a Példányok oldaláról.
