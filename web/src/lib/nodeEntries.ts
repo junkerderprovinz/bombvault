@@ -7,8 +7,8 @@ export type NodeEntryKind = "container" | "files";
 
 export const NODE_ENTRY_KINDS: NodeEntryKind[] = ["container", "files"];
 
-// Home plans a node's schedules, not the node, so an entry the node keeps in
-// its schedule counts as one that runs.
+// Home plans a node's schedules, not the node, whose own stay off, so an
+// entry the node keeps in its schedule counts as one that runs.
 const PLANNED = { kind: "domain", spec: "" } as const;
 
 export function containerItem(c: Container): BackupItem {
@@ -39,7 +39,7 @@ export function fileSetItem(f: FileSetView): BackupItem {
     name: f.name,
     included: f.enabled,
     paused: false,
-    effectiveSchedule: f.effectiveSchedule ?? PLANNED,
+    effectiveSchedule: PLANNED,
     lastBackup: f.lastBackup,
     lastRunStatus: "",
     sourceBytes: null,

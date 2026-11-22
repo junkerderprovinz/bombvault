@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Container, FileSetView } from "./api";
+import { rowStatus } from "./backupList";
 import { containerItem, fileSetItem, nodeEntryPath, parseNodeEntryPath } from "./nodeEntries";
 
 const container = {
@@ -41,8 +42,14 @@ describe("node entries", () => {
     expect(containerItem({ ...container, lastBackup: null }).lastBackup).toBe(0);
   });
 
-  it("lists a folder set by its id and keeps its schedule", () => {
-    expect(fileSetItem(fileSet)).toMatchObject({ kind: "files", key: "s1", name: "Documents", included: false, effectiveSchedule: { kind: "none" } });
+  it("lists a folder set by its id and keeps whether it is in the schedule", () => {
+    expect(fileSetItem(fileSet)).toMatchObject({ kind: "files", key: "s1", name: "Documents", included: false });
+    expect(rowStatus(fileSetItem(fileSet), 0)).toEqual({ is: "notProtected" });
+  });
+
+  it("counts a folder set the node backed up as protected, whatever schedule the node reports", () => {
+    const backedUp = { ...fileSet, enabled: true, lastBackup: 1_700_000_000, effectiveSchedule: { kind: "none", spec: "", reason: "domainOff" } } as FileSetView;
+    expect(rowStatus(fileSetItem(backedUp), 0)).toEqual({ is: "last", quiet: true });
   });
 
   it("addresses an entry under its node and reads the address back", () => {
