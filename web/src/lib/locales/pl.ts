@@ -5543,6 +5543,7 @@ const pl: Partial<Translations> = {
   "nodes.reachFailed": "Węzeł nie może połączyć się z repozytorium {domain}: {detail}",
   "nodes.restUnreachable": "Ta instancja nie dotarła do rest-servera węzła pod {address} w ciągu {seconds} s. Sprawdź, czy port {port} jest otwarty w zaporze węzła i w zaporze jego dostawcy.",
   "nodes.restForeign": "Serwer pod {address} ma inny certyfikat niż ten, który utworzył węzeł. Sprawdź, czy adres prowadzi do węzła.",
+  "nodes.restPulling": "Węzeł wciąż pobiera obraz rest-servera. Spróbuj ponownie za kilka minut.",
   "nodes.replaceTitle": "Zastąp węzeł",
   "nodes.replaceIntro": "Aby przenieść węzeł {name} na inny serwer albo go odbudować, uruchom tam ten plik compose i wyłącz stary. Dwa serwery z tym samym APP_KEY liczą się jako jeden węzeł.",
   "nodes.sectionToggle": "Wpisy na węźle {name}",

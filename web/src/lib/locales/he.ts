@@ -5546,6 +5546,7 @@ const he: Partial<Translations> = {
   "nodes.reachFailed": "הצומת לא מצליח להגיע למאגר של {domain}: {detail}",
   "nodes.restUnreachable": "המופע הזה לא הצליח להגיע ל-rest-server של הצומת בכתובת {address} תוך {seconds} שניות. כדאי לבדוק שהפורט {port} פתוח בחומת האש של הצומת ובחומת האש של הספק שלו.",
   "nodes.restForeign": "לשרת בכתובת {address} יש תעודה אחרת מזו שהצומת יצר. כדאי לבדוק שהכתובת מובילה לצומת.",
+  "nodes.restPulling": "הצומת עדיין מוריד את האימג' של rest-server. כדאי לנסות שוב בעוד כמה דקות.",
   "nodes.replaceTitle": "החלפת צומת",
   "nodes.replaceIntro": "כדי להעביר את {name} לשרת אחר או לבנות אותו מחדש, מפעילים שם את קובץ ה-compose הזה ומכבים את הישן. שני שרתים עם אותו APP_KEY נחשבים לצומת אחד.",
   "nodes.sectionToggle": "פריטים ב-{name}",

@@ -5556,6 +5556,7 @@ const gl: Partial<Translations> = {
   "nodes.reachFailed": "O nodo non chega ao repositorio de {domain}: {detail}",
   "nodes.restUnreachable": "Esta instancia non chegou ao rest-server do nodo en {address} en {seconds} s. Comproba que o porto {port} estea aberto na devasa do nodo e na do seu provedor.",
   "nodes.restForeign": "O servidor en {address} ten un certificado distinto do que creou o nodo. Comproba que o enderezo leve ao nodo.",
+  "nodes.restPulling": "O nodo aínda está a descargar a imaxe do rest-server. Téntao de novo nuns minutos.",
   "nodes.replaceTitle": "Substituír o nodo",
   "nodes.replaceIntro": "Para levar {name} a outro servidor ou reconstruílo, arrinca alí este ficheiro compose e apaga o antigo. Dous servidores coa mesma APP_KEY contan como un só nodo.",
   "nodes.sectionToggle": "Elementos en {name}",

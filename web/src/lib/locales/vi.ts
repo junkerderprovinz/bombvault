@@ -5536,6 +5536,7 @@ const vi: Partial<Translations> = {
   "nodes.reachFailed": "Node không tới được kho lưu trữ {domain}: {detail}",
   "nodes.restUnreachable": "Phiên bản này không kết nối được tới rest-server của node tại {address} trong {seconds} giây. Hãy kiểm tra cổng {port} đã mở trong tường lửa của node và trong tường lửa của nhà cung cấp chưa.",
   "nodes.restForeign": "Máy chủ tại {address} dùng chứng chỉ khác với chứng chỉ node đã tạo. Hãy kiểm tra địa chỉ có dẫn tới node không.",
+  "nodes.restPulling": "Node vẫn đang tải image của rest-server. Hãy thử lại sau vài phút.",
   "nodes.replaceTitle": "Thay thế node",
   "nodes.replaceIntro": "Để chuyển {name} sang máy chủ khác hoặc dựng lại, hãy khởi động tệp compose này ở đó và tắt máy chủ cũ. Hai máy chủ có cùng APP_KEY được tính là một node.",
   "nodes.sectionToggle": "Mục trên {name}",

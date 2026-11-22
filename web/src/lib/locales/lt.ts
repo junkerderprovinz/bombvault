@@ -5555,6 +5555,7 @@ const lt: Partial<Translations> = {
   "nodes.reachFailed": "Mazgas nepasiekia {domain} saugyklos: {detail}",
   "nodes.restUnreachable": "Šis egzempliorius per {seconds} s nepasiekė mazgo rest-server adresu {address}. Patikrink, ar prievadas {port} atidarytas mazgo užkardoje ir jo paslaugų teikėjo užkardoje.",
   "nodes.restForeign": "Serveris adresu {address} turi kitą sertifikatą, ne tą, kurį sukūrė mazgas. Patikrink, ar adresas veda į mazgą.",
+  "nodes.restPulling": "Mazgas dar atsisiunčia rest-server atvaizdą. Pabandyk dar kartą po kelių minučių.",
   "nodes.replaceTitle": "Pakeisti mazgą",
   "nodes.replaceIntro": "Jei nori perkelti mazgą {name} į kitą serverį ar įdiegti iš naujo, paleisk ten šį compose failą ir išjunk senąjį. Du serveriai su tuo pačiu APP_KEY laikomi vienu mazgu.",
   "nodes.sectionToggle": "Įrašai mazge {name}",

@@ -5545,6 +5545,7 @@ const tr: Partial<Translations> = {
   "nodes.reachFailed": "Düğüm {domain} deposuna ulaşamıyor: {detail}",
   "nodes.restUnreachable": "Bu örnek {seconds} sn içinde {address} adresindeki düğümün rest-server'ına ulaşamadı. {port} portunun düğümün güvenlik duvarında ve sağlayıcısının güvenlik duvarında açık olduğunu kontrol et.",
   "nodes.restForeign": "{address} adresindeki sunucunun sertifikası düğümün oluşturduğu sertifika değil. Adresin düğüme gittiğini kontrol et.",
+  "nodes.restPulling": "Düğüm rest-server imajını hâlâ indiriyor. Birkaç dakika sonra yeniden dene.",
   "nodes.replaceTitle": "Düğümü değiştir",
   "nodes.replaceIntro": "{name} düğümünü başka bir sunucuya taşımak ya da yeniden kurmak için bu compose dosyasını orada başlat ve eskisini kapat. Aynı APP_KEY'e sahip iki sunucu tek bir düğüm sayılır.",
   "nodes.sectionToggle": "{name} üzerindeki kayıtlar",

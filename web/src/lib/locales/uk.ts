@@ -5542,6 +5542,7 @@ const uk: Partial<Translations> = {
   "nodes.reachFailed": "Вузол не може дістатися репозиторію {domain}: {detail}",
   "nodes.restUnreachable": "Цей екземпляр не дістався до rest-server вузла за адресою {address} за {seconds} с. Перевірте, що порт {port} відкритий у брандмауері вузла та в брандмауері його провайдера.",
   "nodes.restForeign": "Сервер за адресою {address} має інший сертифікат, не той, що створив вузол. Перевірте, що адреса веде до вузла.",
+  "nodes.restPulling": "Вузол ще завантажує образ rest-server. Спробуйте знову за кілька хвилин.",
   "nodes.replaceTitle": "Замінити вузол",
   "nodes.replaceIntro": "Щоб перенести {name} на інший сервер або перебудувати його, запустіть там цей compose-файл і вимкніть старий. Два сервери з однаковим APP_KEY вважаються одним вузлом.",
   "nodes.sectionToggle": "Записи на {name}",

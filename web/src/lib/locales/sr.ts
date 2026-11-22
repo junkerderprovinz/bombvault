@@ -5539,6 +5539,7 @@ const sr: Partial<Translations> = {
   "nodes.reachFailed": "Чвор не стиже до репозиторијума за {domain}: {detail}",
   "nodes.restUnreachable": "Ова инстанца није досегла rest-server чвора на {address} за {seconds} s. Провери да ли је порт {port} отворен у заштитном зиду чвора и у заштитном зиду његовог провајдера.",
   "nodes.restForeign": "Сервер на {address} има други сертификат, а не онај који је чвор направио. Провери да ли адреса води до чвора.",
+  "nodes.restPulling": "Чвор још преузима слику за rest-server. Покушај поново за неколико минута.",
   "nodes.replaceTitle": "Замени чвор",
   "nodes.replaceIntro": "Да би {name} преселио на други сервер или га поново изградио, покрени тамо ову compose датотеку и угаси стари. Два сервера са истим APP_KEY рачунају се као један чвор.",
   "nodes.sectionToggle": "Ставке на {name}",

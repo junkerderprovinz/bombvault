@@ -5556,6 +5556,7 @@ const bg: Partial<Translations> = {
   "nodes.reachFailed": "Възелът не може да стигне до хранилището за {domain}: {detail}",
   "nodes.restUnreachable": "Тази инстанция не достигна rest-server на възела на {address} за {seconds} s. Провери дали порт {port} е отворен в защитната стена на възела и в тази на доставчика му.",
   "nodes.restForeign": "Сървърът на {address} има друг сертификат, а не този, който възелът създаде. Провери дали адресът води до възела.",
+  "nodes.restPulling": "Възелът още изтегля образа на rest-server. Опитай отново след няколко минути.",
   "nodes.replaceTitle": "Замяна на възел",
   "nodes.replaceIntro": "За да преместиш {name} на друг сървър или да го изградиш наново, стартирай този compose файл там и спри стария. Два сървъра с един и същ APP_KEY се броят за един възел.",
   "nodes.sectionToggle": "Записи на {name}",

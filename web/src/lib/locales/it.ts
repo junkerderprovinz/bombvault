@@ -5545,6 +5545,7 @@ const it: Partial<Translations> = {
   "nodes.reachFailed": "Il nodo non raggiunge il repository di {domain}: {detail}",
   "nodes.restUnreachable": "Questa istanza non ha raggiunto il rest-server del nodo su {address} entro {seconds} s. Controlla che la porta {port} sia aperta nel firewall del nodo e in quello del suo provider.",
   "nodes.restForeign": "Il server su {address} ha un certificato diverso da quello creato dal nodo. Controlla che l'indirizzo porti al nodo.",
+  "nodes.restPulling": "Il nodo sta ancora scaricando l'immagine del rest-server. Riprova tra qualche minuto.",
   "nodes.replaceTitle": "Sostituisci nodo",
   "nodes.replaceIntro": "Per spostare {name} su un altro server o ricostruirlo, avvia lì questo file compose e spegni quello vecchio. Due server con la stessa APP_KEY contano come un solo nodo.",
   "nodes.sectionToggle": "Elementi su {name}",

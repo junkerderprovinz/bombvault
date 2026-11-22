@@ -199,6 +199,25 @@ describe("AddNodeWindow", () => {
     );
   });
 
+  it("says the node is still downloading its rest-server when that holds the placement up", async () => {
+    placeRefusal = { ok: false, code: "node-rest-pulling", error: "the node is still downloading the rest-server image" };
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(`^${en["nodes.toNode"]}`) }));
+    fireEvent.change(screen.getByLabelText(en["nodes.nodeAddress"]), { target: { value: "https://203.0.113.7:8000" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    adoptedAt = 2;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ADOPT_POLL_MS);
+    });
+    expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.restPulling"]);
+  });
+
   it("says why it cannot add a node while no login password is set", async () => {
     refusal = { ok: false, code: "password-not-set" };
     await renderWindow();

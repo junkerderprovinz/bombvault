@@ -5545,6 +5545,7 @@ const nl: Partial<Translations> = {
   "nodes.reachFailed": "De node kan de repository voor {domain} niet bereiken: {detail}",
   "nodes.restUnreachable": "Deze instantie kon de rest-server van de node op {address} niet binnen {seconds} s bereiken. Controleer of poort {port} openstaat in de firewall van de node en in die van zijn provider.",
   "nodes.restForeign": "De server op {address} heeft een ander certificaat dan het certificaat dat de node maakte. Controleer of het adres naar de node leidt.",
+  "nodes.restPulling": "De node downloadt de image van de rest-server nog. Probeer het over een paar minuten opnieuw.",
   "nodes.replaceTitle": "Node vervangen",
   "nodes.replaceIntro": "Om {name} naar een andere server te verhuizen of opnieuw op te bouwen, start je dit compose-bestand daar en zet je de oude uit. Twee servers met dezelfde APP_KEY tellen als één node.",
   "nodes.sectionToggle": "Items op {name}",

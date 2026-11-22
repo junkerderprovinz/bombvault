@@ -5546,6 +5546,7 @@ const hu: Partial<Translations> = {
   "nodes.reachFailed": "A csomópont nem éri el a(z) {domain} tárolóját: {detail}",
   "nodes.restUnreachable": "Ez a példány {seconds} s alatt nem érte el a csomópont rest-serverét itt: {address}. Nézd meg, hogy a(z) {port} port nyitva van-e a csomópont tűzfalán és a szolgáltatója tűzfalán.",
   "nodes.restForeign": "A(z) {address} címen lévő szervernek más a tanúsítványa, mint amit a csomópont készített. Nézd meg, hogy a cím a csomóponthoz vezet-e.",
+  "nodes.restPulling": "A csomópont még tölti le a rest-server image-ét. Próbáld újra pár perc múlva.",
   "nodes.replaceTitle": "Csomópont cseréje",
   "nodes.replaceIntro": "Ha a(z) {name} csomópontot másik szerverre költöztetnéd vagy újraépítenéd, indítsd el ott ezt a compose fájlt, és állítsd le a régit. Két szerver ugyanazzal az APP_KEY kulccsal egy csomópontnak számít.",
   "nodes.sectionToggle": "Elemek itt: {name}",

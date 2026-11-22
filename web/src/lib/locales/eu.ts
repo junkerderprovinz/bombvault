@@ -5556,6 +5556,7 @@ const eu: Partial<Translations> = {
   "nodes.reachFailed": "Nodoa ezin da {domain} biltegira iritsi: {detail}",
   "nodes.restUnreachable": "Instantzia hau ez da {seconds} s-tan iritsi nodoaren rest-server-era {address} helbidean. Egiaztatu {port} ataka irekita dagoela nodoaren suhesian eta haren hornitzailearenean.",
   "nodes.restForeign": "{address} helbideko zerbitzariak nodoak sortutakoa ez den beste ziurtagiri bat du. Egiaztatu helbideak nodora eramaten duela.",
+  "nodes.restPulling": "Nodoa oraindik rest-server-aren irudia deskargatzen ari da. Saiatu berriro minutu batzuk barru.",
   "nodes.replaceTitle": "Ordeztu nodoa",
   "nodes.replaceIntro": "{name} beste zerbitzari batera eramateko edo berreraikitzeko, abiarazi compose fitxategi hau han eta itzali zaharra. APP_KEY bera duten bi zerbitzari nodo bakartzat hartzen dira.",
   "nodes.sectionToggle": "{name} nodoko sarrerak",

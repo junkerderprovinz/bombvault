@@ -5555,6 +5555,7 @@ const is: Partial<Translations> = {
   "nodes.reachFailed": "Hnúturinn nær ekki í geymsluna fyrir {domain}: {detail}",
   "nodes.restUnreachable": "Þetta tilvik náði ekki í rest-server hnútsins á {address} innan {seconds} s. Athugaðu hvort gátt {port} sé opin í eldvegg hnútsins og í eldvegg þjónustuaðila hans.",
   "nodes.restForeign": "Þjónninn á {address} er með annað skilríki en það sem hnúturinn bjó til. Athugaðu hvort vistfangið leiði að hnútnum.",
+  "nodes.restPulling": "Hnúturinn er enn að sækja myndina af rest-server. Reyndu aftur eftir nokkrar mínútur.",
   "nodes.replaceTitle": "Skipta út hnút",
   "nodes.replaceIntro": "Til að flytja {name} á annan þjón eða endurbyggja hann skaltu ræsa þessa compose-skrá þar og slökkva á þeim gamla. Tveir þjónar með sama APP_KEY teljast einn hnútur.",
   "nodes.sectionToggle": "Færslur á {name}",

@@ -21,7 +21,7 @@ import {
   type OffsiteDomain,
   type ReceiverServer,
 } from "../../lib/api";
-import { useT } from "../../lib/i18n";
+import { useT, type TranslationKey } from "../../lib/i18n";
 import { nodeAddressProblem } from "../../lib/nodeAddress";
 import { DOMAIN_LABEL } from "../../lib/storageLocations";
 import { Button } from "../../components/Button";
@@ -156,10 +156,16 @@ export function placedSentence(t: T, choice: PlacementChoice, target: string, la
   return t(key).replace("{target}", () => target);
 }
 
+const PLACE_ERRORS: Record<string, TranslationKey> = {
+  "node-rest-unreachable": "nodes.restUnreachable",
+  "node-rest-foreign": "nodes.restForeign",
+  "node-rest-pulling": "nodes.restPulling",
+};
+
 /** placeError says why a placement failed, in the reader's language where the
  *  server named the reason. */
 export function placeError(t: T, res: NodePlaceResult): string {
-  const key = res.code === "node-rest-unreachable" ? "nodes.restUnreachable" : res.code === "node-rest-foreign" ? "nodes.restForeign" : null;
+  const key = res.code ? PLACE_ERRORS[res.code] : undefined;
   if (!key) return res.error ?? t("settings.error");
   return t(key)
     .replace("{address}", () => res.address ?? "")

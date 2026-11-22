@@ -5556,6 +5556,7 @@ const ms: Partial<Translations> = {
   "nodes.reachFailed": "Nod tidak dapat mencapai repositori {domain}: {detail}",
   "nodes.restUnreachable": "Instans ini tidak dapat mencapai rest-server nod di {address} dalam {seconds} s. Pastikan port {port} terbuka dalam tembok api nod dan dalam tembok api penyedianya.",
   "nodes.restForeign": "Pelayan di {address} menggunakan sijil lain, bukan yang dibuat oleh nod. Pastikan alamat itu membawa ke nod.",
+  "nodes.restPulling": "Nod masih memuat turun imej rest-server. Cuba lagi dalam beberapa minit.",
   "nodes.replaceTitle": "Ganti nod",
   "nodes.replaceIntro": "Untuk memindahkan {name} ke pelayan lain atau membinanya semula, mulakan fail compose ini di sana dan matikan pelayan lama. Dua pelayan dengan APP_KEY yang sama dikira sebagai satu nod.",
   "nodes.sectionToggle": "Entri pada {name}",

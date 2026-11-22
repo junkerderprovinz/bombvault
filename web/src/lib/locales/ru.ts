@@ -5543,6 +5543,7 @@ const ru: Partial<Translations> = {
   "nodes.reachFailed": "Узел не может достучаться до репозитория {domain}: {detail}",
   "nodes.restUnreachable": "Этот экземпляр не достучался до rest-server узла по адресу {address} за {seconds} с. Проверьте, что порт {port} открыт в брандмауэре узла и в брандмауэре его провайдера.",
   "nodes.restForeign": "У сервера по адресу {address} другой сертификат, не тот, что создал узел. Проверьте, что адрес ведёт к узлу.",
+  "nodes.restPulling": "Узел ещё загружает образ rest-server. Попробуйте снова через несколько минут.",
   "nodes.replaceTitle": "Заменить узел",
   "nodes.replaceIntro": "Чтобы перенести {name} на другой сервер или пересобрать его, запустите там этот compose-файл и выключите старый. Два сервера с одним APP_KEY считаются одним узлом.",
   "nodes.sectionToggle": "Записи на {name}",

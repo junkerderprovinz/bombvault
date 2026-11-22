@@ -5556,6 +5556,7 @@ const hr: Partial<Translations> = {
   "nodes.reachFailed": "Čvor ne može doći do repozitorija za {domain}: {detail}",
   "nodes.restUnreachable": "Ova instanca nije dosegnula rest-server čvora na {address} unutar {seconds} s. Provjerite je li port {port} otvoren u vatrozidu čvora i u vatrozidu njegova pružatelja.",
   "nodes.restForeign": "Poslužitelj na {address} ima drugi certifikat od onoga koji je čvor izradio. Provjerite vodi li adresa do čvora.",
+  "nodes.restPulling": "Čvor još preuzima sliku rest-servera. Pokušajte ponovno za nekoliko minuta.",
   "nodes.replaceTitle": "Zamijeni čvor",
   "nodes.replaceIntro": "Da biste {name} premjestili na drugi poslužitelj ili ga ponovno izgradili, pokrenite ondje ovu compose datoteku i ugasite stari. Dva poslužitelja s istim APP_KEY računaju se kao jedan čvor.",
   "nodes.sectionToggle": "Stavke na {name}",
