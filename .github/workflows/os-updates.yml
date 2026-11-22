@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: junkerderprovinz/junkerderprovinz/.github/workflows/os-updates.yml@827ea277c997dd85269a7b902037b04b6e928ec5 # main
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/os-updates.yml@c5de9719d2e5cc47b1a74812fc23413bfaa9dd9f # main
     with:
       dockerhub-user: ${{ vars.DOCKERHUB_USERNAME }}
     secrets:
