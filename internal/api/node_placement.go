@@ -435,6 +435,9 @@ func (h *Handler) handlePlaceNode(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, codedFailEnvelope(err, "not-found"))
 	case errors.Is(err, errNodeAddressForm) || errors.Is(err, errNodeFetchPlain):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+	case errors.Is(err, errNodeRestPulling):
+		log.Printf("nodes: placing the backups of node %s: %v", r.PathValue("id"), err) //nolint:gosec // G706: the id is one of home's nodes
+		writeJSON(w, http.StatusOK, codedFailEnvelope(err, codeNodeRestPulling))
 	case errors.As(err, &unreached):
 		log.Printf("nodes: placing the backups of node %s: %v", r.PathValue("id"), err) //nolint:gosec // G706: the id is one of home's nodes
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "code": unreached.code(), "address": unreached.url.String(), "port": unreached.port(), "seconds": int(nodeRestReach.Seconds())})

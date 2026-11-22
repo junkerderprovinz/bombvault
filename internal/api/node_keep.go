@@ -70,12 +70,25 @@ var (
 	nodeRepoPrepare = 2 * time.Minute
 )
 
+// nodeRestPullWait is how long home waits for a node to download
+// rest-server's image, asking every nodeRestPullPoll, and nodeRestPullLongest
+// how long the node gives the download. A call over the relay ends long before
+// a slow download does, so the node downloads in the background.
+var (
+	nodeRestPullWait    = 2 * time.Minute
+	nodeRestPullPoll    = 3 * time.Second
+	nodeRestPullLongest = 15 * time.Minute
+)
+
 // The codes of a placement that failed because home could not reach the
 // node's rest-server, or found a server there with another certificate.
 const (
 	codeNodeRestUnreachable = "node-rest-unreachable"
 	codeNodeRestForeign     = "node-rest-foreign"
+	codeNodeRestPulling     = "node-rest-pulling"
 )
+
+var errNodeRestPulling = errors.New("the node is still downloading the rest-server image: try again in a few minutes")
 
 var errNodeFetchPlain = errors.New("this instance would fetch the node's backups over the internet unencrypted: use https://, or http:// only with a private IP address such as one of a VPN")
 
@@ -85,9 +98,11 @@ type nodeKeepCall struct {
 }
 
 // nodeKeepAnswer is the login on the node's rest-server and the certificate
-// it serves, empty over plain http.
+// it serves, empty over plain http. Pulling says the node is still downloading
+// rest-server's image and home should ask again.
 type nodeKeepAnswer struct {
 	OK       bool   `json:"ok"`
+	Pulling  bool   `json:"pulling,omitempty"`
 	Error    string `json:"error,omitempty"`
 	User     string `json:"user,omitempty"`
 	Password string `json:"password,omitempty"`
@@ -144,6 +159,13 @@ func (s *Service) keepBackupsHere(ctx context.Context, addr string) (nodeKeepAns
 			return nodeKeepAnswer{}, fmt.Errorf("port %d is taken by %s on the node; choose another one", port, a.Name)
 		}
 	}
+	ready, err := s.restServerImageReady(ctx)
+	if err != nil {
+		return nodeKeepAnswer{}, err
+	}
+	if !ready {
+		return nodeKeepAnswer{Pulling: true}, nil
+	}
 	password, _, err := s.addHtpasswdUser(nodeRestFolder, nodeRestUser)
 	if err != nil {
 		return nodeKeepAnswer{}, err
@@ -155,9 +177,6 @@ func (s *Service) keepBackupsHere(ctx context.Context, addr string) (nodeKeepAns
 		}
 		tls := "/data/" + nodeRestTLS
 		options += " --tls --tls-cert " + tls + "/cert.pem --tls-key " + tls + "/key.pem"
-	}
-	if err := s.ensureRestServerImage(ctx); err != nil {
-		return nodeKeepAnswer{}, err
 	}
 	if live, err := s.docker.InspectName(ctx, nodeRestName); err != nil {
 		return nodeKeepAnswer{}, err
@@ -176,6 +195,49 @@ func (s *Service) keepBackupsHere(ctx context.Context, addr string) (nodeKeepAns
 		return nodeKeepAnswer{}, fmt.Errorf("create the %s container: %w", nodeRestName, err)
 	}
 	return nodeKeepAnswer{OK: true, User: nodeRestUser, Password: password, CAPEM: certPEM}, nil
+}
+
+// imagePull is a download of rest-server's image, and how it ended once done
+// is closed.
+type imagePull struct {
+	done chan struct{}
+	err  error
+}
+
+// restServerImageReady reports whether Docker has rest-server's image. When it
+// does not, it starts the download in the background, unless one runs, and a
+// download that failed is reported once before the next one starts.
+func (s *Service) restServerImageReady(ctx context.Context) (bool, error) {
+	id, err := s.docker.ImageID(ctx, restServerImage)
+	if err != nil || id != "" {
+		return id != "", err
+	}
+	s.nodeMu.Lock()
+	defer s.nodeMu.Unlock()
+	if p := s.restPull; p != nil {
+		select {
+		case <-p.done:
+			s.restPull = nil
+			if p.err != nil {
+				return false, fmt.Errorf("download %s: %w", restServerImage, p.err)
+			}
+			// It ended between the look at Docker and this one.
+			return true, nil
+		default:
+			return false, nil
+		}
+	}
+	p := &imagePull{done: make(chan struct{})}
+	s.restPull = p
+	go func() {
+		ctx, cancel := context.WithTimeout(s.StopContext(), nodeRestPullLongest)
+		defer cancel()
+		if p.err = s.docker.Pull(ctx, restServerImage); p.err != nil {
+			log.Printf("node: download %s: %v", restServerImage, p.err)
+		}
+		close(p.done)
+	}()
+	return false, nil
 }
 
 // nodeRestAddress reads where home reaches a node's rest-server, which serves
@@ -278,8 +340,23 @@ func (s *Service) keptRepos(ctx context.Context, n store.Node, link *nodelink.Li
 	}
 	addr := u.String()
 	var kept nodeKeepAnswer
-	if err := s.callNode(ctx, link, keydeposit.ProofNodeKeep, n.ID, nodeKeepPath, nodeKeepCall{Address: addr}, &kept); err != nil {
-		return nil, "", err
+	until := time.Now().Add(nodeRestPullWait)
+	for {
+		kept = nodeKeepAnswer{}
+		if err := s.callNode(ctx, link, keydeposit.ProofNodeKeep, n.ID, nodeKeepPath, nodeKeepCall{Address: addr}, &kept); err != nil {
+			return nil, "", err
+		}
+		if !kept.Pulling {
+			break
+		}
+		if time.Now().After(until) {
+			return nil, "", errNodeRestPulling
+		}
+		select {
+		case <-ctx.Done():
+			return nil, "", ctx.Err()
+		case <-time.After(nodeRestPullPoll):
+		}
 	}
 	if !kept.OK {
 		return nil, "", errors.New(cmp.Or(kept.Error, "the node could not start its rest-server"))

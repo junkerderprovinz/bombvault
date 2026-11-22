@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -15,6 +16,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -410,5 +412,145 @@ func TestHomeStopsWaitingForANodeRepositoryThatDoesNotAnswer(t *testing.T) {
 		}
 	case <-time.After(10 * time.Second):
 		t.Fatal("the placement still runs after 10 s")
+	}
+}
+
+// slowPull is the Docker of a node that has no rest-server image yet and
+// downloads it only when the test sends on release, with the error sent.
+type slowPull struct {
+	*receiverDocker
+	release chan error
+	mu      sync.Mutex
+	have    bool
+	pulls   int
+}
+
+func newSlowPull(t *testing.T, d *receiverDocker) *slowPull {
+	sp := &slowPull{receiverDocker: d, release: make(chan error)}
+	t.Cleanup(func() { close(sp.release) })
+	return sp
+}
+
+func (d *slowPull) ImageID(context.Context, string) (string, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.have {
+		return "sha256:rest", nil
+	}
+	return "", nil
+}
+
+func (d *slowPull) Pull(ctx context.Context, _ string) error {
+	d.mu.Lock()
+	d.pulls++
+	d.mu.Unlock()
+	select {
+	case err := <-d.release:
+		d.mu.Lock()
+		d.have = err == nil
+		d.mu.Unlock()
+		return err
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (d *slowPull) pulled() int {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.pulls
+}
+
+func TestANodeDownloadsTheRestServerImageInTheBackgroundAndSaysItIsStillAtIt(t *testing.T) {
+	n, d := keepingNode(t)
+	sp := newSlowPull(t, d)
+	n.node.svc.docker = sp
+	keep := nodeKeepCall{Address: "https://203.0.113.7:8443"}
+
+	for range 2 {
+		ans := keepAnswer(t, n.call(t, keydeposit.ProofNodeKeep, nodeKeepPath, keep).Body)
+		if ans.OK || !ans.Pulling || ans.Password != "" {
+			t.Fatalf("keep while the image downloads = %+v", ans)
+		}
+	}
+	if len(d.created) != 0 || sp.pulled() != 1 {
+		t.Errorf("%d containers made and %d downloads started, want none and one", len(d.created), sp.pulled())
+	}
+	if _, err := os.Stat(filepath.Join(n.node.svc.cfg.HostMountRoot, nodeRestFolder, htpasswdName)); err == nil {
+		t.Error("the node gave out a login before its rest-server could start")
+	}
+
+	sp.release <- nil
+	var ans nodeKeepAnswer
+	eventually(t, "the rest-server once the image is there", func() bool {
+		ans = keepAnswer(t, n.call(t, keydeposit.ProofNodeKeep, nodeKeepPath, keep).Body)
+		return !ans.Pulling
+	})
+	if !ans.OK || ans.Password == "" || len(d.created) != 1 {
+		t.Errorf("keep after the download = %+v, %d containers", ans, len(d.created))
+	}
+}
+
+func TestANodeSaysWhyTheRestServerImageDidNotDownloadAndTriesAgain(t *testing.T) {
+	n, d := keepingNode(t)
+	sp := newSlowPull(t, d)
+	n.node.svc.docker = sp
+	keep := nodeKeepCall{Address: "https://203.0.113.7:8443"}
+	if ans := keepAnswer(t, n.call(t, keydeposit.ProofNodeKeep, nodeKeepPath, keep).Body); !ans.Pulling {
+		t.Fatalf("keep = %+v, want the download started", ans)
+	}
+	sp.release <- errors.New("toomanyrequests: pull rate limit")
+	var ans nodeKeepAnswer
+	eventually(t, "the node to say the download failed", func() bool {
+		ans = keepAnswer(t, n.call(t, keydeposit.ProofNodeKeep, nodeKeepPath, keep).Body)
+		return !ans.Pulling
+	})
+	if ans.OK || !strings.Contains(ans.Error, "pull rate limit") || !strings.Contains(ans.Error, restServerImage) {
+		t.Errorf("keep after a failed download = %+v", ans)
+	}
+	if again := keepAnswer(t, n.call(t, keydeposit.ProofNodeKeep, nodeKeepPath, keep).Body); !again.Pulling {
+		t.Errorf("keep after that = %+v, want a new download", again)
+	}
+	eventually(t, "a second download", func() bool { return sp.pulled() == 2 })
+}
+
+func TestHomeWaitsWhileTheNodeDownloadsTheRestServerImage(t *testing.T) {
+	poll := nodeRestPullPoll
+	nodeRestPullPoll = 20 * time.Millisecond
+	t.Cleanup(func() { nodeRestPullPoll = poll })
+	home, node, id, _ := keepingHome(t)
+	sp := newSlowPull(t, node.svc.docker.(*receiverDocker))
+	node.svc.docker = sp
+	servesNodeRest(t, home, node.svc.cfg.HostMountRoot)
+
+	done := make(chan map[string]any, 1)
+	go func() {
+		_, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": "https://203.0.113.7:8443"})
+		done <- out
+	}()
+	eventually(t, "the node to start the download", func() bool { return sp.pulled() == 1 })
+	sp.release <- nil
+	if out := <-done; out["ok"] != true {
+		t.Errorf("placement once the image is there = %v", out)
+	}
+}
+
+func TestHomeSaysTheNodeIsStillDownloadingTheRestServerImage(t *testing.T) {
+	wait, poll := nodeRestPullWait, nodeRestPullPoll
+	nodeRestPullWait, nodeRestPullPoll = 300*time.Millisecond, 20*time.Millisecond
+	t.Cleanup(func() { nodeRestPullWait, nodeRestPullPoll = wait, poll })
+	home, node, id, _ := keepingHome(t)
+	node.svc.docker = newSlowPull(t, node.svc.docker.(*receiverDocker))
+
+	start := time.Now()
+	code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": "https://203.0.113.7:8443"})
+	if took := time.Since(start); took > 10*time.Second {
+		t.Errorf("the placement took %s", took)
+	}
+	if code != http.StatusOK || out["ok"] != false || out["code"] != codeNodeRestPulling {
+		t.Fatalf("placement while the image downloads = %d %v", code, out)
+	}
+	if msg, _ := out["error"].(string); !strings.Contains(msg, "still downloading") {
+		t.Errorf("error %q does not say the node is still downloading", msg)
 	}
 }
