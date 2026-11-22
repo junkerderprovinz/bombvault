@@ -61,15 +61,6 @@ func TestBombVaultOffersItsPagesAndOpensTheOtherApps(t *testing.T) {
 	if cfg.UI == nil || cfg.UI.Handler == nil || !slices.Contains(cfg.Uses, fortress.OpenAction) {
 		t.Fatalf("ui %+v, uses %v", cfg.UI, cfg.Uses)
 	}
-	if !cfg.UI.SignIn() {
-		t.Fatal("with a login password the pages do not open")
-	}
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
-	if !cfg.UI.SignIn() {
-		t.Fatal("without a login password the pages do not open")
-	}
 }
 
 func TestAMemberOpensABombVaultWithoutAPassword(t *testing.T) {

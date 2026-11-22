@@ -61,10 +61,8 @@ github.com/hashicorp/golang-lru/v2 v2.0.7 h1:a+bsQ5rvGLjzHuww6tVxozPZFVghXaHOwFs
 github.com/hashicorp/golang-lru/v2 v2.0.7/go.mod h1:QeFd9opnmA6QUJc5vARoKUSoFhyfM2/ZepoAG6RGpeM=
 github.com/jinzhu/copier v0.3.5 h1:GlvfUwHk62RokgqVNvYsku0TATCF7bAHVwEXoBh3iJg=
 github.com/jinzhu/copier v0.3.5/go.mod h1:DfbEm0FYsaqBcKcFuvmOZb218JkPGtvSHsKg8S8hyyg=
-github.com/junkerderprovinz/parleyport/kit v1.0.3 h1:IQgt3LzMK41NcHozofxk9P2Zqv5oBmEov6rSQxSEvJc=
-github.com/junkerderprovinz/parleyport/kit v1.0.3/go.mod h1:vc2DLH4ySgN4rGhP9+HxkPYWxLvTDLYkQwQJfDKjWSM=
-github.com/junkerderprovinz/parleyport/kit v1.0.5 h1:93ZiYuSYcd24xPdBJw8HmSwWy18JUIRFS6k8eQ27wNw=
-github.com/junkerderprovinz/parleyport/kit v1.0.5/go.mod h1:vc2DLH4ySgN4rGhP9+HxkPYWxLvTDLYkQwQJfDKjWSM=
+github.com/junkerderprovinz/parleyport/kit v1.0.6 h1:Vt9ehAz55DC+ocKzC23kcR85OCBw2516VrZKJ+k+hc0=
+github.com/junkerderprovinz/parleyport/kit v1.0.6/go.mod h1:vc2DLH4ySgN4rGhP9+HxkPYWxLvTDLYkQwQJfDKjWSM=
 github.com/klauspost/compress v1.20.4 h1:dD0v/bvxtjCBqQu6sx1TNWkalEY5lNTIe+HY9w8TeNI=
 github.com/klauspost/compress v1.20.4/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/kr/fs v0.1.0 h1:Jskdu9ieNAYnjxsi0LbQp1ulIKZV1LAFgK1tWhpZgl8=
