@@ -70,6 +70,10 @@ var (
 	nodeRepoPrepare = 2 * time.Minute
 )
 
+// nodePlaceWait bounds a whole placement: the reach check, each section's
+// repository and the call that tells the node.
+var nodePlaceWait = nodeRestReach + time.Duration(len(nodeDomains))*nodeRepoPrepare + time.Minute
+
 // nodeRestPullWait is how long home waits for a node to download
 // rest-server's image, asking every nodeRestPullPoll, and nodeRestPullLongest
 // how long the node gives the download. A call over the relay ends long before

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"slices"
@@ -481,4 +482,70 @@ func TestHomeShowsANodesComposeValuesAgainOnlyToItsOwnSignIn(t *testing.T) {
 			t.Errorf("a paired phone = %d %v", code, out)
 		}
 	})
+}
+
+// gatedRepos holds the first repository it is asked to create until release
+// is closed, and says on started that it got there.
+type gatedRepos struct {
+	*repoStore
+	once    sync.Once
+	started chan struct{}
+	release chan struct{}
+}
+
+func (g *gatedRepos) Init(ctx context.Context, repo string, m restic.Mode) error {
+	g.once.Do(func() {
+		close(g.started)
+		<-g.release
+	})
+	return g.repoStore.Init(ctx, repo, m)
+}
+
+func TestAPlacementFinishesWhenTheBrowserGoesAway(t *testing.T) {
+	home := homeWithRelay(t)
+	repos := newRepoStore()
+	home.svc.engine = repos
+	home.svc.cfg.HostMountRoot = t.TempDir()
+	if err := os.MkdirAll(filepath.Join(home.svc.cfg.HostMountRoot, "backups"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := home.st.SaveReceiverServer(store.ReceiverServer{ContainerName: "bombvault-rest-server", Folder: "backups", Port: 8000, User: "home"}); err != nil {
+		t.Fatal(err)
+	}
+	if code, out := home.do(t, http.MethodPut, "/api/receiver/node-address", map[string]any{"url": "https://backup.example.org"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("set the address for nodes = %d %v", code, out)
+	}
+	node, id, _ := adoptedNode(t, home, repos)
+	for _, d := range nodeDomains {
+		resolved, err := home.svc.resolveRepo("backups/vps/" + d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		repos.alias["rest:https://backup.example.org/vps/"+d] = resolved
+	}
+	gate := &gatedRepos{repoStore: repos, started: make(chan struct{}), release: make(chan struct{})}
+	home.svc.engine = gate
+
+	ctx, leave := context.WithCancel(context.Background())
+	r := httptest.NewRequestWithContext(ctx, http.MethodPost, "/api/nodes/"+id+"/placement", strings.NewReader(`{"kind":"receiver"}`))
+	r.Host = "localhost"
+	r.Header.Set("Content-Type", "application/json")
+	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: home.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		home.router.ServeHTTP(httptest.NewRecorder(), r)
+	}()
+	<-gate.started
+	leave()
+	close(gate.release)
+	<-done
+
+	eventually(t, "the placement", func() bool {
+		n, err := home.st.GetNode(id)
+		return err == nil && n.Placement == nodePlaceReceiver
+	})
+	if kept, err := node.st.NodePlacements(); err != nil || len(kept) != 2 {
+		t.Errorf("the node keeps %+v %v, want both sections placed", kept, err)
+	}
 }

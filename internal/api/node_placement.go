@@ -147,8 +147,13 @@ type nodeRepo struct {
 
 // PlaceNode makes the node's repositories at the place req names, adds home's
 // own key to each, tells the node where they are and has the receiver watch
-// them. Home fetches from a node that keeps them itself.
+// them. Home fetches from a node that keeps them itself. It runs to the end
+// under nodePlaceWait even when the browser that asked goes away, since a
+// placement cut short leaves the node with some of its repositories and no
+// place to send its backups.
 func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest) (nodePlaceResult, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), nodePlaceWait)
+	defer cancel()
 	n, err := s.store.GetNode(id)
 	if err != nil {
 		return nodePlaceResult{}, err
