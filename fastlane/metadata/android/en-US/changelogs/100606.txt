@@ -1,0 +1,1 @@
+BombVault 10.6.6 is one for the lone wolves: an instance without a pairing group can now run a receiving server for its nodes. Pick it for a node and the placement step sets it up on the spot. Later, your own card on Instances opens it again.
