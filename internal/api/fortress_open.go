@@ -278,8 +278,10 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !ok {
-		c := h.newSessionCookie(rand.Text(), int(sessionTTL.Seconds()))
-		c.Name = visitorCookieName
+		c := &http.Cookie{ //nolint:gosec // G124: Secure is off only in HTTP-only mode, as for the session cookie
+			Name: visitorCookieName, Value: rand.Text(), Path: "/", MaxAge: int(sessionTTL.Seconds()),
+			HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: !h.cfg.HTTPOnly,
+		}
 		http.SetCookie(w, c)
 		name, valid = sessionName(c.Value), h.noPassword
 	}
