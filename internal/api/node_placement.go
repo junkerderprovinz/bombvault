@@ -184,7 +184,13 @@ func (s *Service) PlaceNode(ctx context.Context, id string, req nodePlaceRequest
 	password := restickey.Derive(appKey)
 	placements := make([]nodePlacement, 0, len(repos))
 	for _, r := range repos {
-		if err := s.prepareNodeRepo(ctx, r.local, password, r.env); err != nil {
+		rctx, cancel := context.WithTimeout(ctx, nodeRepoPrepare)
+		err := s.prepareNodeRepo(rctx, r.local, password, r.env)
+		cancel()
+		if errors.Is(err, context.DeadlineExceeded) && ctx.Err() == nil {
+			err = fmt.Errorf("it did not answer within %d s", int(nodeRepoPrepare.Seconds()))
+		}
+		if err != nil {
 			return nodePlaceResult{}, fmt.Errorf("the %s repository of the node: %w", r.placement.Domain, err)
 		}
 		placements = append(placements, r.placement)
@@ -423,12 +429,20 @@ func (h *Handler) handlePlaceNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.svc.PlaceNode(r.Context(), r.PathValue("id"), req)
+	var unreached *nodeRestUnreached
 	switch {
 	case errors.Is(err, store.ErrNodeNotFound):
 		writeJSON(w, http.StatusNotFound, codedFailEnvelope(err, "not-found"))
 	case errors.Is(err, errNodeAddressForm) || errors.Is(err, errNodeFetchPlain):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"ok": false, "error": err.Error()})
+	case errors.Is(err, errNodeRestPulling):
+		log.Printf("nodes: placing the backups of node %s: %v", r.PathValue("id"), err) //nolint:gosec // G706: the id is one of home's nodes
+		writeJSON(w, http.StatusOK, codedFailEnvelope(err, codeNodeRestPulling))
+	case errors.As(err, &unreached):
+		log.Printf("nodes: placing the backups of node %s: %v", r.PathValue("id"), err) //nolint:gosec // G706: the id is one of home's nodes
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "code": unreached.code(), "address": unreached.url.String(), "port": unreached.port(), "seconds": int(nodeRestReach.Seconds())})
 	case err != nil:
+		log.Printf("nodes: placing the backups of node %s: %s", r.PathValue("id"), scrubError(err)) //nolint:gosec // G706: the id is one of home's nodes
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 	default:
 		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"reach": result.Reach, "warning": result.Warning}))

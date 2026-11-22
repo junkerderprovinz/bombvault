@@ -6827,7 +6827,11 @@ export function setNodeSchedule(id: string, schedule: Partial<Record<NodeSection
   return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/schedule`, { method: "PUT", body: JSON.stringify(schedule) });
 }
 
-export function placeNode(id: string, placement: NodePlacement): Promise<OkEnvelope & { reach?: NodeReach[]; warning?: string }> {
+/** The answer to a placement. A placement this instance could not reach the
+ *  node's rest-server for names its address and port, and how long it tried. */
+export type NodePlaceResult = OkEnvelope & { reach?: NodeReach[]; warning?: string; address?: string; port?: string; seconds?: number };
+
+export function placeNode(id: string, placement: NodePlacement): Promise<NodePlaceResult> {
   return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/placement`, { method: "POST", body: JSON.stringify(placement) });
 }
 

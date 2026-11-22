@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"log"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -727,12 +728,17 @@ type Service struct {
 	probeWorking bool
 	firstProbes  atomic.Bool
 	// nodeMu guards nodeLinks, home's links to its nodes by node id,
-	// homeLink, a node's link to its home, and keptPrunes, the prune a node
-	// runs or ran last on each section it keeps itself.
+	// homeLink, a node's link to its home, keptPrunes, the prune a node
+	// runs or ran last on each section it keeps itself, and restPull, the
+	// node's download of rest-server's image.
 	nodeMu     sync.Mutex
 	nodeLinks  map[string]*homeNode
 	homeLink   *nodelink.Link
 	keptPrunes map[string]nodePrune
+	restPull   *imagePull
+	// nodeRestDial is how home dials the rest-server of a node that keeps its
+	// own backups; nil dials it directly.
+	nodeRestDial func(ctx context.Context, network, addr string) (net.Conn, error)
 	// nodeAPI is the router a node runs the requests of its home through.
 	nodeAPI atomic.Pointer[http.Handler]
 	// nodes keeps the schedules home holds for its nodes.

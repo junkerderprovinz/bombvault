@@ -142,9 +142,13 @@ func keptPlaced(t *testing.T) *placedHome {
 	home.svc.nodes.fetch = func(store.Node, string) {}
 	addr := "https://203.0.113.7:8443"
 	p := &placedHome{home: home, repos: repos, placedAt: "rest:" + addr + "/" + nodeRestUser + "/containers"}
+	// The server set up anew mounts the same Host Data, where home finds the
+	// rest-server's certificate.
+	hostData := t.TempDir()
+	servesNodeRest(t, home, hostData)
 	p.prepare = func(t *testing.T, node *instance) {
 		node.svc.docker = &receiverDocker{imageID: "sha256:rest"}
-		node.svc.cfg.HostMountRoot = t.TempDir()
+		node.svc.cfg.HostMountRoot = hostData
 		node.svc.cfg.HostSourceRoot = "/srv/data"
 	}
 	p.adoptAndPlace(t, map[string]any{"kind": "node", "address": addr})
