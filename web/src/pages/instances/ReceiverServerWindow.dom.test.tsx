@@ -34,6 +34,7 @@ const withPartners: ReceiverServer = {
 };
 
 let initial: ReceiverServer | null = null;
+let grouped = true;
 const sent: ReceiverServerInput[] = [];
 const revoked: string[] = [];
 const hosts: string[] = [];
@@ -45,6 +46,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getReceiverServer: () => Promise.resolve({ ok: true, server: initial, defaultPort: 8000, hostMountRoot: "/host/user" }),
+    getGroup: () => Promise.resolve({ ok: true, active: grouped, members: [], away: [], settling: false }),
     setUpReceiverServer: (input: ReceiverServerInput) => {
       sent.push(input);
       return Promise.resolve({ ok: true, server: { ...server, port: input.port }, password: "one-time-pw", template: "download" });
@@ -92,6 +94,7 @@ async function renderWindow(lead?: string) {
 afterEach(() => {
   cleanup();
   initial = null;
+  grouped = true;
   sent.length = 0;
   revoked.length = 0;
   hosts.length = 0;
@@ -230,5 +233,27 @@ describe("ReceiverServerWindow", () => {
       fireEvent.click(save);
     });
     expect(nodeAddresses).toEqual(["https://backup.example.org"]);
+  });
+
+  it("speaks of nodes and asks no partner address on an instance without a group", async () => {
+    grouped = false;
+    initial = { ...server, url: "", needsHost: true, logins: [{ memberId: "n1", name: "vps", user: "vps", createdAt: 1_700_000_000 }] };
+    await renderWindow();
+    expect(screen.queryByText(en["receiver.server.needsHost"])).toBeNull();
+    expect(screen.queryByLabelText(en["receiver.server.host"])).toBeNull();
+    expect(screen.getByText(en["receiver.server.offeredNodes"])).toBeTruthy();
+    expect(screen.getByText(en["receiver.server.loginsNodes"])).toBeTruthy();
+    expect(screen.queryByText(en["receiver.server.logins"])).toBeNull();
+    expect(screen.getByLabelText(en["nodes.address"])).toBeTruthy();
+  });
+
+  it("sets up a server for the nodes on an instance without a group", async () => {
+    grouped = false;
+    await renderWindow();
+    expect(screen.getByText(en["receiver.server.introNodes"])).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: en["receiver.server.setUp"] }));
+    const form = screen.getByRole("dialog", { name: en["receiver.server.setUp"] });
+    expect(form.textContent).toContain(en["receiver.server.formIntroNodes"]);
+    expect(screen.queryByLabelText(en["receiver.server.host"])).toBeNull();
   });
 });

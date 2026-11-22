@@ -2395,6 +2395,16 @@ export const en = {
   "receiver.server.forget": "Stop offering",
   "receiver.server.forgetTip": "Your group no longer sees this receiving server. The container and the backups in its folder stay.",
   "receiver.server.forgetAsk": "Stop offering this receiving server to your group? The container and the backups in its folder stay, and so do the logins already handed out. They drop off this list, though, and can no longer be revoked here.",
+  "receiver.server.tipNodes": "A rest-server in append-only mode on this box. Your nodes copy their backups to it, and even someone holding a node's login cannot delete what has arrived.",
+  "receiver.server.introNodes": "Let your nodes copy their backups to this box. BombVault starts an append-only rest-server here and gives each node a login of its own.",
+  "receiver.server.formIntroNodes": "BombVault creates a rest-server container in append-only mode, starts it and checks that it refuses deletes. Each node gets a login of its own when you place its backups here.",
+  "receiver.server.folderTipNodes": "The backups your nodes send end up here, next to the server's login file. Pick a share with room to spare.",
+  "receiver.server.offeredNodes": "Your nodes reach this server at Address for nodes. Each one has a login of its own and writes only into its own folder.",
+  "receiver.server.loginsNodes": "Nodes with a login",
+  "receiver.server.loginsTipNodes": "A node gets its login the first time you place its backups on this server.",
+  "receiver.server.noLoginsNodes": "No node has its backups here yet.",
+  "receiver.server.forgetTipNodes": "New nodes can no longer be placed on this receiving server. The container and the backups in its folder stay.",
+  "receiver.server.forgetAskNodes": "Stop using this receiving server for new nodes? The container and the backups in its folder stay, and so do the logins already handed out. They drop off this list, though, and can no longer be revoked here.",
 
   // Shared repository
   "shared.title": "Shared repository",
@@ -8056,6 +8066,16 @@ export const de: Translations = {
   "receiver.server.forget": "Nicht mehr anbieten",
   "receiver.server.forgetTip": "Deine Gruppe sieht diesen Empfangsserver nicht mehr. Der Container und die Sicherungen in seinem Ordner bleiben.",
   "receiver.server.forgetAsk": "Diesen Empfangsserver deiner Gruppe nicht mehr anbieten? Der Container und die Sicherungen in seinem Ordner bleiben, ebenso die schon vergebenen Anmeldedaten. Die fallen aber aus dieser Liste und lassen sich hier nicht mehr entziehen.",
+  "receiver.server.tipNodes": "Ein rest-server im Append-only-Modus auf diesem Server. Deine Knoten kopieren ihre Sicherungen hierher, und selbst wer die Anmeldedaten eines Knotens kennt, kann nichts löschen, was schon angekommen ist.",
+  "receiver.server.introNodes": "Lass deine Knoten ihre Sicherungen auf diesen Server kopieren. BombVault startet hier einen rest-server im Append-only-Modus und gibt jedem Knoten eigene Anmeldedaten.",
+  "receiver.server.formIntroNodes": "BombVault legt einen rest-server-Container im Append-only-Modus an, startet ihn und prüft, dass er Löschen verweigert. Jeder Knoten bekommt eigene Anmeldedaten, sobald du seine Sicherungen hierher legst.",
+  "receiver.server.folderTipNodes": "Hier landen die Sicherungen deiner Knoten, neben der Login-Datei des Servers. Wähl einen Share mit reichlich Platz.",
+  "receiver.server.offeredNodes": "Deine Knoten erreichen diesen Server unter Adresse für Knoten. Jeder hat eigene Anmeldedaten und schreibt nur in seinen eigenen Ordner.",
+  "receiver.server.loginsNodes": "Knoten mit Login",
+  "receiver.server.loginsTipNodes": "Ein Knoten bekommt seinen Login, sobald du seine Sicherungen zum ersten Mal auf diesen Server legst.",
+  "receiver.server.noLoginsNodes": "Noch hat kein Knoten seine Sicherungen hier.",
+  "receiver.server.forgetTipNodes": "Neue Knoten lassen sich nicht mehr auf diesen Empfangsserver legen. Der Container und die Sicherungen in seinem Ordner bleiben.",
+  "receiver.server.forgetAskNodes": "Diesen Empfangsserver nicht mehr für neue Knoten nutzen? Der Container und die Sicherungen in seinem Ordner bleiben, ebenso die schon vergebenen Logins. Sie verschwinden aber aus dieser Liste und lassen sich hier nicht mehr entziehen.",
 
   // Gemeinsames Repository
   "shared.title": "Gemeinsames Repository",

@@ -10,6 +10,7 @@ import {
   RECEIVER_TEMPLATE_URL,
   checkReceiverServer,
   forgetReceiverServer,
+  getGroup,
   getReceiverServer,
   revokeReceiverLogin,
   setReceiverNodeAddress,
@@ -86,9 +87,14 @@ export function ReceiverServerWindow({
   // null while the field shows the address nodes are given.
   const [nodeDraft, setNodeDraft] = useState<string | null>(null);
   const [savingNode, setSavingNode] = useState(false);
+  // Without a group the server is there for the nodes alone.
+  const [alone, setAlone] = useState(false);
 
   useEffect(() => {
     let alive = true;
+    getGroup()
+      .then((g) => alive && setAlone(!g.active))
+      .catch(() => undefined);
     getReceiverServer()
       .then((r) => {
         if (!alive) return;
@@ -157,7 +163,8 @@ export function ReceiverServerWindow({
   }
 
   async function forget() {
-    if (!(await confirm(t("receiver.server.forgetAsk"), { confirmKey: "receiver.server.forget" }))) return;
+    const ask = t(alone ? "receiver.server.forgetAskNodes" : "receiver.server.forgetAsk");
+    if (!(await confirm(ask, { confirmKey: "receiver.server.forget" }))) return;
     try {
       const r = await forgetReceiverServer();
       if (!r.ok) {
@@ -187,7 +194,7 @@ export function ReceiverServerWindow({
     <InstanceWindow
       closeOnBackdrop={false}
       title={t("receiver.server.title")}
-      hint={t("receiver.server.tip")}
+      hint={t(alone ? "receiver.server.tipNodes" : "receiver.server.tip")}
       onClose={close}
       footer={
         <>
@@ -200,7 +207,7 @@ export function ReceiverServerWindow({
                 label={t("receiver.server.forget")}
                 labelKey="receiver.server.forget"
                 tone="neutral"
-                hint={t("receiver.server.forgetTip")}
+                hint={t(alone ? "receiver.server.forgetTipNodes" : "receiver.server.forgetTip")}
                 onClick={() => void forget()}
               />
             </>
@@ -219,7 +226,7 @@ export function ReceiverServerWindow({
     >
       {error && <p className="text-sm text-statusFail wrap-break-word">{error}</p>}
 
-      {offerSetUp && <p className="text-sm text-carbon-textSub">{t("receiver.server.intro")}</p>}
+      {offerSetUp && <p className="text-sm text-carbon-textSub">{t(alone ? "receiver.server.introNodes" : "receiver.server.intro")}</p>}
 
       {server && (
         <div className="flex flex-col gap-3">
@@ -250,34 +257,38 @@ export function ReceiverServerWindow({
             <p className="text-xs text-carbon-textSub wrap-break-word">{server.checkDetail}</p>
           )}
           <Rows>
-            <SettingRow label={t("receiver.server.address")}>
-              <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
-                {server.url || t(server.needsHost ? "receiver.server.needsHost" : "receiver.server.noAddress")}
-              </bdi>
-            </SettingRow>
-            <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-set-host">
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  id="bv-receiver-server-set-host"
-                  type="text"
-                  value={hostDraft ?? server.host}
-                  onChange={(e) => setHostDraft(e.target.value)}
-                  placeholder={t("receiver.server.hostPlaceholder")}
-                  spellCheck={false}
-                  autoComplete="off"
-                  dir="ltr"
-                  className={`${INPUT} w-56 max-w-full font-mono text-start`}
-                />
-                <Button
-                  label={t("settings.save")}
-                  labelKey="settings.save"
-                  tone="neutral"
-                  onClick={() => void saveHost(hostDraft ?? "")}
-                  busy={savingHost}
-                  disabled={savingHost || hostDraft === null || hostDraft.trim() === server.host}
-                />
-              </div>
-            </SettingRow>
+            {!alone && (
+              <>
+                <SettingRow label={t("receiver.server.address")}>
+                  <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">
+                    {server.url || t(server.needsHost ? "receiver.server.needsHost" : "receiver.server.noAddress")}
+                  </bdi>
+                </SettingRow>
+                <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-set-host">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      id="bv-receiver-server-set-host"
+                      type="text"
+                      value={hostDraft ?? server.host}
+                      onChange={(e) => setHostDraft(e.target.value)}
+                      placeholder={t("receiver.server.hostPlaceholder")}
+                      spellCheck={false}
+                      autoComplete="off"
+                      dir="ltr"
+                      className={`${INPUT} w-56 max-w-full font-mono text-start`}
+                    />
+                    <Button
+                      label={t("settings.save")}
+                      labelKey="settings.save"
+                      tone="neutral"
+                      onClick={() => void saveHost(hostDraft ?? "")}
+                      busy={savingHost}
+                      disabled={savingHost || hostDraft === null || hostDraft.trim() === server.host}
+                    />
+                  </div>
+                </SettingRow>
+              </>
+            )}
             <SettingRow
               label={t("nodes.address")}
               hint={t("nodes.addressTip")}
@@ -319,14 +330,16 @@ export function ReceiverServerWindow({
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text break-all text-start">{server.hostPath}</bdi>
             </SettingRow>
           </Rows>
-          <p className="text-xs text-carbon-textMuted">{t("receiver.server.offered")}</p>
+          <p className="text-xs text-carbon-textMuted">{t(alone ? "receiver.server.offeredNodes" : "receiver.server.offered")}</p>
 
           <div className="flex flex-col gap-1.5">
             <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
-              {t("receiver.server.logins")}
-              <InfoBubble tip={t("receiver.server.loginsTip")} />
+              {t(alone ? "receiver.server.loginsNodes" : "receiver.server.logins")}
+              <InfoBubble tip={t(alone ? "receiver.server.loginsTipNodes" : "receiver.server.loginsTip")} />
             </span>
-            {server.logins.length === 0 && <p className="text-xs text-carbon-textMuted">{t("receiver.server.noLogins")}</p>}
+            {server.logins.length === 0 && (
+              <p className="text-xs text-carbon-textMuted">{t(alone ? "receiver.server.noLoginsNodes" : "receiver.server.noLogins")}</p>
+            )}
             {server.logins.length > 0 && (
               <Rows as="ul">
                 {server.logins.map((l) => (
@@ -377,6 +390,7 @@ export function ReceiverServerWindow({
         <ReceiverServerDialog
           t={t}
           lead={lead}
+          alone={alone}
           defaults={defaults}
           onClose={() => setFormOpen(false)}
           onDone={(s, f) => {
@@ -393,12 +407,14 @@ export function ReceiverServerWindow({
 function ReceiverServerDialog({
   t,
   lead,
+  alone,
   defaults,
   onClose,
   onDone,
 }: {
   t: T;
   lead?: string;
+  alone: boolean;
   defaults: { port: number; hostMountRoot: string };
   onClose: () => void;
   onDone: (server: ReceiverServer, fresh: Fresh) => void;
@@ -447,10 +463,10 @@ function ReceiverServerDialog({
       }
     >
       {lead && <p className="text-sm text-carbon-text">{lead}</p>}
-      <p className="text-xs text-carbon-textSub">{t("receiver.server.formIntro")}</p>
+      <p className="text-xs text-carbon-textSub">{t(alone ? "receiver.server.formIntroNodes" : "receiver.server.formIntro")}</p>
       <FolderBrowser
         label={t("receiver.server.folder")}
-        hint={t("receiver.server.folderTip")}
+        hint={t(alone ? "receiver.server.folderTipNodes" : "receiver.server.folderTip")}
         value={folder}
         hostMountRoot={defaults.hostMountRoot}
         onChange={setFolder}
@@ -469,19 +485,21 @@ function ReceiverServerDialog({
             className={`${INPUT} w-full`}
           />
         </SettingRow>
-        <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-host">
-          <input
-            id="bv-receiver-server-host"
-            type="text"
-            value={host}
-            onChange={(e) => setHost(e.target.value)}
-            placeholder={t("receiver.server.hostPlaceholder")}
-            spellCheck={false}
-            autoComplete="off"
-            dir="ltr"
-            className={`${INPUT} w-72 max-w-full font-mono text-start`}
-          />
-        </SettingRow>
+        {!alone && (
+          <SettingRow label={t("receiver.server.host")} hint={t("receiver.server.hostTip")} htmlFor="bv-receiver-server-host">
+            <input
+              id="bv-receiver-server-host"
+              type="text"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder={t("receiver.server.hostPlaceholder")}
+              spellCheck={false}
+              autoComplete="off"
+              dir="ltr"
+              className={`${INPUT} w-72 max-w-full font-mono text-start`}
+            />
+          </SettingRow>
+        )}
       </Rows>
     </InstanceWindow>
   );
