@@ -68,13 +68,13 @@ func (n *remoteNotes) get(client *http.Client, base, tag string) (string, error)
 }
 
 func fetchReleaseNotes(ctx context.Context, client *http.Client, url string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil) //nolint:gosec // G704: GitHub's API and a tag that matched plainTag
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "BombVault")
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec // G704: GitHub's API and a tag that matched plainTag
 	if err != nil {
 		return "", fmt.Errorf("GitHub could not be reached: %w", err)
 	}

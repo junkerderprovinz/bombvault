@@ -4307,7 +4307,7 @@ func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
 	if !ok && plainTag.MatchString(tag) {
 		remote, err := githubNotes.get(updateHTTPClient, releaseByTagURL, tag)
 		if err != nil {
-			log.Printf("release notes %s: %v", tag, err)
+			log.Printf("release notes %s: %v", tag, err) //nolint:gosec // G706: the tag matched plainTag, digits and dots only
 		} else {
 			body, ok = remote, true
 		}
