@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,13 +9,18 @@ import (
 	"testing"
 )
 
-// fakeGitHub answers every release with notes naming its tag, or with status
-// when that is not 200, and counts the calls.
+// fakeGitHub names v99.0.0 as the newest release and answers every release
+// with notes naming its tag, or with status when that is not 200. It counts
+// the requests for notes.
 func fakeGitHub(t *testing.T, status int) *atomic.Int32 {
 	t.Helper()
-	var calls atomic.Int32
+	var notes atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls.Add(1)
+		if strings.HasSuffix(r.URL.Path, "/latest") {
+			_ = json.NewEncoder(w).Encode(map[string]string{"tag_name": "v99.0.0"})
+			return
+		}
+		notes.Add(1)
 		if status != http.StatusOK {
 			w.WriteHeader(status)
 			return
@@ -25,10 +29,21 @@ func fakeGitHub(t *testing.T, status int) *atomic.Int32 {
 		_ = json.NewEncoder(w).Encode(map[string]string{"body": "## Added\n\n- " + tag})
 	}))
 	t.Cleanup(srv.Close)
-	oldURL, oldClient, oldNotes := releaseByTagURL, updateHTTPClient, githubNotes
-	releaseByTagURL, updateHTTPClient, githubNotes = srv.URL+"/tags/", srv.Client(), &remoteNotes{}
-	t.Cleanup(func() { releaseByTagURL, updateHTTPClient, githubNotes = oldURL, oldClient, oldNotes })
-	return &calls
+	oldLatest, oldByTag, oldClient, oldNotes, oldVersion := latestReleaseURL, releaseByTagURL, updateHTTPClient, githubNotes, Version
+	latestReleaseURL, releaseByTagURL, updateHTTPClient, githubNotes, Version = srv.URL+"/latest", srv.URL+"/tags/", srv.Client(), &remoteNotes{}, "v10.0.0"
+	t.Cleanup(func() {
+		latestReleaseURL, releaseByTagURL, updateHTTPClient, githubNotes, Version = oldLatest, oldByTag, oldClient, oldNotes, oldVersion
+	})
+	return &notes
+}
+
+func checkUpdate(t *testing.T) {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	(&Handler{}).handleUpdateCheck(rec, httptest.NewRequest(http.MethodPost, "/api/update-check", nil))
+	if !strings.Contains(rec.Body.String(), `"updateAvailable":true`) {
+		t.Fatalf("update check: %s", rec.Body)
+	}
 }
 
 func askNotes(t *testing.T, version string) map[string]any {
@@ -42,54 +57,46 @@ func askNotes(t *testing.T, version string) map[string]any {
 	return got
 }
 
-func TestReleaseNotesOfANewerReleaseComeFromGitHubOncePerWindow(t *testing.T) {
-	calls := fakeGitHub(t, http.StatusOK)
+func TestReleaseNotesOfTheReleaseTheUpdateCheckFoundComeFromGitHubOncePerWindow(t *testing.T) {
+	notes := fakeGitHub(t, http.StatusOK)
+	checkUpdate(t)
 	for range 3 {
 		got := askNotes(t, "v99.0.0")
 		if got["ok"] != true || got["body"] != "## Added\n\n- v99.0.0" {
 			t.Fatalf("got %v", got)
 		}
 	}
-	if calls.Load() != 1 {
-		t.Fatalf("GitHub asked %d times", calls.Load())
+	if notes.Load() != 1 {
+		t.Fatalf("GitHub asked %d times", notes.Load())
+	}
+}
+
+func TestReleaseNotesOfAnyOtherTagCostNoRequest(t *testing.T) {
+	notes := fakeGitHub(t, http.StatusOK)
+	if got := askNotes(t, "v99.0.0"); got["ok"] != false {
+		t.Fatalf("before any update check: got %v", got)
+	}
+	checkUpdate(t)
+	for _, v := range []string{"v98.0.0", "v99.0.1", "v1.2.3", "dev"} {
+		if got := askNotes(t, v); got["ok"] != false {
+			t.Errorf("%s: got notes %v", v, got)
+		}
+	}
+	if notes.Load() != 0 {
+		t.Fatalf("GitHub asked %d times", notes.Load())
 	}
 }
 
 func TestReleaseNotesThatGitHubRefusesLeaveTheLinkToGitHub(t *testing.T) {
-	calls := fakeGitHub(t, http.StatusNotFound)
-	got := askNotes(t, "v99.0.1")
-	if got["ok"] != false || got["htmlUrl"] != "https://github.com/junkerderprovinz/bombvault/releases/tag/v99.0.1" {
+	notes := fakeGitHub(t, http.StatusNotFound)
+	checkUpdate(t)
+	got := askNotes(t, "v99.0.0")
+	if got["ok"] != false || got["htmlUrl"] != "https://github.com/junkerderprovinz/bombvault/releases/tag/v99.0.0" {
 		t.Fatalf("got %v", got)
 	}
-	askNotes(t, "v99.0.1")
-	if calls.Load() != 1 {
-		t.Fatalf("a refusal was not remembered, GitHub asked %d times", calls.Load())
-	}
-}
-
-func TestReleaseNotesAskGitHubOnlyForAPlainTag(t *testing.T) {
-	calls := fakeGitHub(t, http.StatusOK)
-	for _, v := range []string{"dev", "v99", "0.0.0"} {
-		if got := askNotes(t, v); got["ok"] == true {
-			t.Errorf("%s: got notes %v", v, got)
-		}
-	}
-	if calls.Load() != 0 {
-		t.Fatalf("GitHub asked %d times", calls.Load())
-	}
-	// Whatever surrounds a version, only the plain tag reaches GitHub.
-	if got := askNotes(t, "../v99.0.0-rc1"); got["version"] != "v99.0.0" || got["body"] != "## Added\n\n- v99.0.0" {
-		t.Fatalf("got %v", got)
-	}
-}
-
-func TestReleaseNotesKeepABoundedMemory(t *testing.T) {
-	fakeGitHub(t, http.StatusOK)
-	for i := range remoteNotesKeys + 10 {
-		askNotes(t, fmt.Sprintf("v99.1.%d", i))
-	}
-	if n := len(githubNotes.entries); n > remoteNotesKeys {
-		t.Fatalf("%d answers kept", n)
+	askNotes(t, "v99.0.0")
+	if notes.Load() != 1 {
+		t.Fatalf("a refusal was not remembered, GitHub asked %d times", notes.Load())
 	}
 }
 

@@ -4289,8 +4289,8 @@ func (h *Handler) handleTestNotify(w http.ResponseWriter, r *http.Request) {
 // the "What's new" dialog (#48) works without a runtime call to api.github.com —
 // which the app's own CSP (connect-src 'self') blocks, so the dialog always
 // failed (#54). Same-origin, so the CSP allows it. GET /api/release-notes?version=vX.Y.Z
-// (version defaults to the running build). A release this build does not
-// carry, such as the newer one the update check found, comes from GitHub.
+// (version defaults to the running build). The newer release the update
+// check found, which this build does not carry, comes from GitHub.
 // Returns {ok, version, body, htmlUrl}; ok=false when there are no notes so
 // the dialog shows its GitHub link.
 func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
@@ -4306,10 +4306,11 @@ func (h *Handler) handleReleaseNotes(w http.ResponseWriter, r *http.Request) {
 	body, ok := releasenotes.Notes(version)
 	if !ok && plainTag.MatchString(tag) {
 		remote, err := githubNotes.get(updateHTTPClient, releaseByTagURL, tag)
-		if err != nil {
-			log.Printf("release notes %s: %v", tag, err) //nolint:gosec // G706: the tag matched plainTag, digits and dots only
-		} else {
+		switch {
+		case err == nil:
 			body, ok = remote, true
+		case !errors.Is(err, errNotFound):
+			log.Printf("release notes %s: %v", tag, err) //nolint:gosec // G706: the tag matched plainTag, digits and dots only
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

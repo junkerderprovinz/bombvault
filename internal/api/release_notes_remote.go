@@ -16,55 +16,61 @@ import (
 // appended. It is a variable so a test can point it at a server of its own.
 var releaseByTagURL = "https://api.github.com/repos/junkerderprovinz/bombvault/releases/tags/"
 
-// Only a release this build does not carry is fetched, which is a newer one
-// the update check found. One answer serves every page for a while, and a
-// failure is asked again sooner.
+// Only the release the last update check found newer than this build is
+// fetched, so a made-up tag costs no request to GitHub. One answer serves
+// every page for a while, and a failure is asked again sooner.
 const (
 	remoteNotesFresh  = time.Hour
 	remoteNotesFailed = 5 * time.Minute
-	// More tags than releases exist only come from someone making them up.
-	remoteNotesKeys = 64
 )
 
 var plainTag = regexp.MustCompile(`^v\d{1,4}\.\d{1,4}\.\d{1,4}$`)
 
-type remoteNotesEntry struct {
+// errNotFound answers a tag no update check has named.
+var errNotFound = errors.New("no update check found this release")
+
+// remoteNotes holds the release the last update check found newer than this
+// build, and GitHub's answer about its notes with when it asked.
+type remoteNotes struct {
+	mu      sync.Mutex
+	found   string
 	body    string
 	err     error
 	checked time.Time
 }
 
-// remoteNotes remembers the notes GitHub gave for each tag and when it asked.
-type remoteNotes struct {
-	mu      sync.Mutex
-	entries map[string]remoteNotesEntry
-}
-
 var githubNotes = &remoteNotes{}
 
-// get answers from memory while the last answer for tag is fresh. The lock is
-// held during the request, so pages that ask at once share one call.
+// allow names the release whose notes get may fetch.
+func (n *remoteNotes) allow(tag string) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if tag != n.found {
+		n.found, n.body, n.err, n.checked = tag, "", nil, time.Time{}
+	}
+}
+
+// get answers from memory while the last answer is fresh. The lock is held
+// during the request, so pages that ask at once share one call.
 func (n *remoteNotes) get(client *http.Client, base, tag string) (string, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if e, ok := n.entries[tag]; ok {
-		keep := remoteNotesFresh
-		if e.err != nil {
-			keep = remoteNotesFailed
-		}
-		if time.Since(e.checked) < keep {
-			return e.body, e.err
-		}
+	if tag == "" || tag != n.found {
+		return "", errNotFound
 	}
-	if n.entries == nil || len(n.entries) >= remoteNotesKeys {
-		n.entries = map[string]remoteNotesEntry{}
+	keep := remoteNotesFresh
+	if n.err != nil {
+		keep = remoteNotesFailed
+	}
+	if !n.checked.IsZero() && time.Since(n.checked) < keep {
+		return n.body, n.err
 	}
 	// A page that closes mid-request does not cancel the answer the next one gets.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	body, err := fetchReleaseNotes(ctx, client, base+tag)
-	n.entries[tag] = remoteNotesEntry{body: body, err: err, checked: time.Now()}
-	return body, err
+	n.body, n.err = fetchReleaseNotes(ctx, client, base+tag)
+	n.checked = time.Now()
+	return n.body, n.err
 }
 
 func fetchReleaseNotes(ctx context.Context, client *http.Client, url string) (string, error) {

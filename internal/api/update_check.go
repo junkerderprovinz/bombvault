@@ -109,5 +109,8 @@ func (h *Handler) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(err, reason))
 		return
 	}
+	if check.UpdateAvailable {
+		githubNotes.allow(check.Latest)
+	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"update": check}))
 }
