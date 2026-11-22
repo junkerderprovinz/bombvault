@@ -40,7 +40,6 @@ const CODE_MESSAGE: Record<string, TranslationKey> = {
   "mcp-key-limit": "api.limitReached",
   "mcp-key-label-invalid": "api.labelInvalid",
   "mcp-key-label-taken": "api.labelTaken",
-  "mcp-key-needs-password": "api.needsPasswordForHost",
 };
 
 /** The route each tool answers, so a token's log names what the script called. */
@@ -114,17 +113,14 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
     void reload();
   }, [reload, passwordSet]);
 
-  const host = window.location.hostname.replace(/^\[(.*)\]$/, "$1");
   const tokens = data?.tokens ?? [];
   const revoked = data?.revoked ?? [];
   const limit = data?.limit ?? 0;
-  const canMint = data?.hostAllowsKeys !== false;
   const address = `${window.location.origin}${withinBase(data?.basePath ?? "/api/v1/")}`;
 
   function refusal(res: OkEnvelope): string {
     const key = res.code ? CODE_MESSAGE[res.code] : undefined;
     if (key === "api.limitReached") return t(key, limit);
-    if (key === "api.needsPasswordForHost") return t(key).replace("{host}", host);
     if (key) return t(key);
     return res.error ?? t("common.actionFailed");
   }
@@ -138,7 +134,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       if (!res.ok) {
         if (!ownLogin.handled(res)) push(refusal(res), "fail");
         bumpShake(id);
-        if (res.code === "mcp-key-not-found" || res.code === "mcp-key-needs-password") await reload();
+        if (res.code === "mcp-key-not-found") await reload();
         return null;
       }
       if (okMessage) push(okMessage, "success");
@@ -235,8 +231,7 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       hueIndex={hueIndex}
       foot={
         data !== null &&
-        !failed &&
-        canMint && (
+        !failed && (
           <Button
             label={t("api.createToken")}
             labelKey="api.createToken"
@@ -265,12 +260,6 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 hueIndex={hueIndex}
               />
             </div>
-          )}
-
-          {!canMint && (
-            <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-              {t("api.needsPasswordForHost").replace("{host}", host)}
-            </p>
           )}
 
           <SettingRow label={t("api.addressLabel")} hint={tLtr(t, "api.addressHint")}>
@@ -402,17 +391,15 @@ export function ApiTokensCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 className={shake[`revoke:${k.id}`] ? "glim-shake" : ""}
                 hueIndex={hueIndex}
               />
-              {canMint && (
-                <Button
-                  label={t("api.rotate")}
-                  labelKey="api.rotate"
-                  tone="neutral"
-                  onClick={() => setPending({ kind: "rotate", item: k })}
-                  disabled={busy}
-                  className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
-                  hueIndex={hueIndex}
-                />
-              )}
+              <Button
+                label={t("api.rotate")}
+                labelKey="api.rotate"
+                tone="neutral"
+                onClick={() => setPending({ kind: "rotate", item: k })}
+                disabled={busy}
+                className={shake[`rotate:${k.id}`] ? "glim-shake" : ""}
+                hueIndex={hueIndex}
+              />
             </SettingRow>
           ))}
         </Rows>

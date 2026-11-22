@@ -114,7 +114,7 @@ func TestHomeAddsANodeThatTakesItAsHomeAndLetsItGo(t *testing.T) {
 	}
 }
 
-func TestAddingANodeNeedsALoginPasswordAndAName(t *testing.T) {
+func TestAddingANodeNeedsANameButNoLoginPassword(t *testing.T) {
 	home := homeWithRelay(t)
 	if code, out := home.do(t, http.MethodPost, "/api/nodes", map[string]any{"name": " "}); code != http.StatusBadRequest {
 		t.Errorf("a node without a name = %d %v", code, out)
@@ -125,7 +125,8 @@ func TestAddingANodeNeedsALoginPasswordAndAName(t *testing.T) {
 	if _, err := home.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if code, out := home.do(t, http.MethodPost, "/api/nodes", map[string]any{"name": "vps"}); code != http.StatusForbidden || out["code"] != codeNoPassword {
+	home.session = ""
+	if code, out := home.do(t, http.MethodPost, "/api/nodes", map[string]any{"name": "vps"}); code != http.StatusOK || out["ok"] != true {
 		t.Errorf("without a login password = %d %v", code, out)
 	}
 }

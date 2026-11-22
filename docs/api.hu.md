@@ -14,7 +14,7 @@ A tokent fejlécben küldd, `Authorization: Bearer <token>` vagy `X-API-Key: <to
 
 Minden tokennek van egy csempéje a nevével, azzal, hogy indíthat-e mentést, az utolsó négy karakterével, a legutóbbi használat idejével és helyével, valamint a mai hívásaival. A csempén átnevezheted, módosíthatod a jogait, lecserélheted vagy visszavonhatod. A **Napló** mutatja az általa indított mentéseket és a legutóbbi hívásait. Ha a BombVault beállításait mentésből állítod vissza, minden token visszavonódik, mert a mentés olyan tokeneket is tartalmazhat, amelyeket azóta visszavontál.
 
-Belépési jelszó nélkül bárki, aki meg tudja nyitni a webes felületet, tokent is létrehozhat. Ha a BombVaultot nyilvánosnak tűnő néven nyitod meg, és nincs jelszó, arról a címről nem lehet tokent létrehozni, ugyanúgy, mint az [MCP-kulcsoknál](mcp.md#switch-on).
+Belépési jelszó nélkül bárki, aki meg tudja nyitni a webes felületet, tokent is létrehozhat.
 
 ## Végpontok {#endpoints}
 

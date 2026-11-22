@@ -184,7 +184,7 @@ func appImportFailure(app string, err error) error {
 // may. A refusal comes back with the id the page words it by.
 func (h *Handler) handleImportAppExport(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "giving an app its backup back") {
+	if !ok || !h.requireSignIn(w, r, "giving an app its backup back") {
 		return
 	}
 	err := h.svc.ImportAppExport(r.Context(), name, sourceParam(r), r.PathValue("id"))

@@ -58,7 +58,7 @@ The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Em
 
 ## Security {#security}
 
-- **Password**: the login password, at least 12 characters. Changing or clearing it asks for the current one and, with two-factor authentication on, the code.
+- **Password**: the login password, of any length. Below 12 characters the page suggests a longer one. Changing or clearing it asks for the current one and, with two-factor authentication on, the code.
 - **Two-factor authentication**: a code from an authenticator app on top of the password, with eight recovery codes shown once.
 - **Passkeys**: sign in with a key on your phone, laptop or security stick. They need a real domain name and a certificate the browser trusts.
 - **Android app**: **Phones can pair with the group's twelve words**, which lets a paired phone sign in without the password.

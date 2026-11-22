@@ -49,7 +49,7 @@ Starts via de [API](api.md#errors) en vanuit [Home Assistant](api.md#home-assist
 3. Zet **Back-ups laten starten** aan voor een sleutel die back-ups moet kunnen starten. Zonder die schakelaar kan de sleutel alleen lezen. Je kunt dat later wijzigen in de **Details** van de sleutel, en de wijziging geldt voor het volgende verzoek van de assistent zonder opnieuw te verbinden.
 4. Klik op **Sleutel aanmaken**. De sleutel wordt één keer getoond. BombVault bewaart er alleen een vingerafdruk van en kan hem niet opnieuw tonen, dus kopieer hem nu. Sluit je het venster voordat de client de sleutel heeft gebruikt, dan blijft de kaart hem tonen tot je bevestigt dat je hem hebt gekopieerd.
 
-Zonder inlogwachtwoord staat de webinterface zelf open voor iedereen op je netwerk, en wie haar kan openen, kan ook een sleutel aanmaken. De kaart zegt dat. Open je BombVault onder een naam die publiek lijkt (bijvoorbeeld `bombvault.example.com` via een reverse proxy) en is er geen inlogwachtwoord ingesteld, dan kunnen vanaf dat adres geen sleutels worden aangemaakt of vervangen, zodat geen enkele webpagina op internet je browser er een kan laten aanmaken. Stel een inlogwachtwoord in, of open BombVault via het IP-adres of een lokale naam zoals `tower` of `tower.local`.
+Zonder inlogwachtwoord staat de webinterface zelf open voor iedereen op je netwerk, en wie haar kan openen, kan ook een sleutel aanmaken. De kaart zegt dat.
 
 ## Je sleutels en hun logboek {#keys}
 
@@ -235,7 +235,6 @@ Achter een proxy draagt elk verzoek het adres van de proxy. Vijf foute sleutels 
 - Elke aanmaak, vervanging, rechtenwijziging en intrekking stuurt een melding via je meldingskanalen, met het adres waarvandaan het kwam, tenzij meldingen zijn uitgeschakeld.
 - 5 foute sleutels per minuut per adres, daarna `429`. 120 verzoeken per minuut en 12 gestarte back-ups per uur per sleutel, plus de afkoeltijd en de bewaarbescherming hierboven.
 - Verzoeken van een browserpagina met een andere oorsprong worden geweigerd.
-- Sleutels kunnen niet worden aangemaakt vanaf een hostnaam die publiek lijkt zolang er geen inlogwachtwoord is ingesteld.
 - Elke back-up die een assistent start, en de opschoon- en off-site-runs die hij veroorzaakt, is gemarkeerd met "via MCP" en de naam van de sleutel in het activiteitenlogboek, in het foutpaneel en in de back-upmelding.
 - Elke toolaanroep wordt in het containerlogboek geschreven met de id en de laatste vier tekens van de sleutel (nooit zijn naam) en geteld in `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Het herstellen van een configuratieback-up trekt elke sleutel in, omdat de herstelde database sleutels kan bevatten die je na het opslaan hebt ingetrokken. Maak daarna nieuwe sleutels aan.

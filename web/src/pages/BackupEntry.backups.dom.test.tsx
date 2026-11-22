@@ -274,7 +274,7 @@ describe("the own backup of the app in a container", () => {
 
   it("starts no download the server refuses", async () => {
     withAppBackup();
-    checkAppExportDownload.mockResolvedValue({ ok: false, code: "password-not-set", error: "set a login password" });
+    checkAppExportDownload.mockResolvedValue({ ok: false, code: "own-login-needed", error: "sign in with the password" });
     await renderPage("/backups/container/immich");
     await press(within(appRow()).getByRole("button", { name: en["entry.list.download"] }));
     await waitFor(() => expect(checkAppExportDownload).toHaveBeenCalled());

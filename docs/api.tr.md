@@ -14,7 +14,7 @@ Belirteci bir başlıkta gönder: `Authorization: Bearer <token>` ya da `X-API-K
 
 Her belirtecin adı, yedekleme başlatıp başlatamadığı, son dört karakteri, en son ne zaman ve nereden kullanıldığı ve bugünkü çağrıları olan bir kutucuğu vardır. Kutucukta onu yeniden adlandırabilir, yapabildiklerini değiştirebilir, değiştirebilir ya da iptal edebilirsin. **Günlük**, başlattığı yedekleri ve son çağrılarını gösterir. BombVault yapılandırmasını bir yedekten geri yüklemek her belirteci iptal eder, çünkü yedek, sonradan iptal ettiğin belirteçleri içerebilir.
 
-Giriş parolası olmadan web arayüzünü açabilen herkes bir belirteç de oluşturabilir. BombVault'u herkese açık gibi görünen bir adla açarsan ve parola ayarlı değilse, o adresten belirteç oluşturulamaz, [MCP anahtarları](mcp.md#switch-on) için de aynı kural geçerlidir.
+Giriş parolası olmadan web arayüzünü açabilen herkes bir belirteç de oluşturabilir.
 
 ## Uç noktalar {#endpoints}
 

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
@@ -165,14 +164,11 @@ func (h *Handler) handleFinishPasswordReset(w http.ResponseWriter, r *http.Reque
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	// Checked before the code, so a password that is too short does not cost
-	// the code.
-	if utf8.RuneCountInString(body.Password) < secret.MinPasswordLen {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":     false,
-			"error":  fmt.Sprintf("the password must be at least %d characters", secret.MinPasswordLen),
-			"minLen": secret.MinPasswordLen,
-		})
+	// Checked before the code, so an empty field does not cost the code. A
+	// reset sets a password, and switching the login off is for the settings
+	// page.
+	if body.Password == "" {
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the new password is empty"})
 		return
 	}
 

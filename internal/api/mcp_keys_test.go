@@ -128,71 +128,27 @@ func TestMCPKeyCreateValidationCodes(t *testing.T) {
 	}
 }
 
-func TestMCPKeyCreateHostRuleWithoutPassword(t *testing.T) {
+func TestAKeyIsMadeUnderAnyHostNameWithoutAPassword(t *testing.T) {
 	st := newMemStore(t)
 	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
 
-	allowed := []string{"192.168.1.10:3443", "[fd00::1]:3443", "localhost", "tower", "tower.local", "nas.home.arpa", "bv.tail1234.ts.net"}
-	for i, host := range allowed {
-		w, m := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys",
-			fmt.Sprintf(`{"label":"Client %d"}`, i), host, "")
+	for i, host := range []string{"192.168.1.10:3443", "tower.local", "bombvault.example.com"} {
+		w, m := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys", fmt.Sprintf(`{"label":"Client %d"}`, i), host, "")
 		if w.Code != http.StatusOK || m["ok"] != true {
-			t.Fatalf("host %q must be able to create a key: status=%d body=%v", host, w.Code, m)
+			t.Fatalf("create under %q: status=%d body=%v", host, w.Code, m)
 		}
-		_, list := doMCPKeyJSON(t, h, http.MethodGet, "/api/mcp/keys", "", host, "")
-		if list["hostAllowsKeys"] != true {
-			t.Fatalf("host %q: hostAllowsKeys must be true", host)
+		item, _ := m["item"].(map[string]any)
+		id, _ := item["id"].(string)
+		if _, rm := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys/"+id+"/rotate", "", host, ""); rm["ok"] != true {
+			t.Fatalf("rotate under %q: %v", host, rm)
 		}
-	}
-
-	before, err := st.ActiveMCPKeys()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, host := range []string{"bombvault.example.com", "rebind.attacker.net"} {
-		_, m := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys", `{"label":"From the web"}`, host, "")
-		if m["code"] != "mcp-key-needs-password" {
-			t.Fatalf("host %q: code = %v, want mcp-key-needs-password", host, m["code"])
-		}
-		after, err := st.ActiveMCPKeys()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(after) != len(before) {
-			t.Fatalf("host %q: a refused create still wrote a row (%d -> %d)", host, len(before), len(after))
-		}
-
-		_, rm := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys/"+before[0].ID+"/rotate", "", host, "")
-		if rm["code"] != "mcp-key-needs-password" {
-			t.Fatalf("host %q: rotate code = %v, want mcp-key-needs-password", host, rm["code"])
-		}
-
-		// A page that rebound its DNS to this address could otherwise spend the
-		// certificate's sixteen names, and nothing in the product takes one back.
-		_, cm := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"1.2.3.4"}`, host, "")
-		if cm["code"] != "mcp-key-needs-password" {
-			t.Fatalf("host %q: certificate name code = %v, want mcp-key-needs-password", host, cm["code"])
-		}
-
-		w, lm := doMCPKeyJSON(t, h, http.MethodGet, "/api/mcp/keys", "", host, "")
-		if w.Code != http.StatusOK || lm["hostAllowsKeys"] != false {
-			t.Fatalf("host %q: hostAllowsKeys = %v, want false", host, lm["hostAllowsKeys"])
+		if _, tm := doMCPKeyJSON(t, h, http.MethodPost, "/api/tokens", fmt.Sprintf(`{"label":"Script %d"}`, i), host, ""); tm["ok"] != true {
+			t.Fatalf("API token under %q: %v", host, tm)
 		}
 	}
-}
-
-func TestMCPKeyCreateHostRuleOffWithPassword(t *testing.T) {
-	st := newMemStore(t)
-	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
-	cookie := enableLogin(t, st, mcpAppKey)
-
-	w, m := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/keys", `{"label":"Behind a proxy"}`, "bombvault.example.com", cookie)
-	if w.Code != http.StatusOK || m["ok"] != true {
-		t.Fatalf("a public host name with a login password must create a key: status=%d body=%v", w.Code, m)
-	}
-	_, lm := doMCPKeyJSON(t, h, http.MethodGet, "/api/mcp/keys", "", "bombvault.example.com", cookie)
-	if lm["hostAllowsKeys"] != true {
-		t.Fatalf("hostAllowsKeys = %v, want true once a login password exists", lm["hostAllowsKeys"])
+	_, cm := doMCPKeyJSON(t, h, http.MethodPost, "/api/mcp/certificate/names", `{"host":"192.168.1.10"}`, "bombvault.example.com", "")
+	if cm["ok"] != true {
+		t.Fatalf("certificate name under a public host name: %v", cm)
 	}
 }
 

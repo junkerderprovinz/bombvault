@@ -58,7 +58,7 @@ Kortet **Streaming**, som sänker uppladdningsgränsen medan Plex, Jellyfin elle
 
 ## Säkerhet {#security}
 
-- **Lösenord**: inloggningslösenordet, minst 12 tecken. Att ändra eller ta bort det kräver det nuvarande och, med tvåfaktorsautentisering på, koden.
+- **Lösenord**: inloggningslösenordet, valfri längd. Under 12 tecken föreslår sidan ett längre. Att ändra eller ta bort det kräver det nuvarande och, med tvåfaktorsautentisering på, koden.
 - **Tvåfaktorsautentisering**: en kod från en autentiseringsapp utöver lösenordet, med åtta återställningskoder som visas en gång.
 - **Lösennycklar**: logga in med en nyckel på telefonen, laptopen eller en säkerhetsnyckel. De kräver ett riktigt domännamn och ett certifikat som webbläsaren litar på.
 - **Android-app**: **Telefoner kan parkopplas med gruppens tolv ord**, vilket låter en parkopplad telefon logga in utan lösenordet.

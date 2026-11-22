@@ -14,7 +14,7 @@ Token posílej v hlavičce, buď `Authorization: Bearer <token>`, nebo `X-API-Ke
 
 Každý token má dlaždici s názvem, informací, zda smí spouštět zálohy, posledními čtyřmi znaky, časem a místem posledního použití a dnešními voláními. Na dlaždici ho můžeš přejmenovat, změnit, co smí, nahradit ho nebo zneplatnit. **Protokol** ukáže zálohy, které spustil, a jeho poslední volání. Obnova konfigurace BombVault ze zálohy zneplatní všechny tokeny, protože záloha může obsahovat tokeny, které jsi později zneplatnil.
 
-Bez přihlašovacího hesla může token vytvořit každý, kdo otevře webové rozhraní. Když BombVault otevřeš pod jménem, které vypadá veřejně, a heslo není nastavené, z této adresy tokeny vytvořit nejde, stejně jako [klíče MCP](mcp.md#switch-on).
+Bez přihlašovacího hesla může token vytvořit každý, kdo otevře webové rozhraní.
 
 ## Koncové body {#endpoints}
 

@@ -14,7 +14,7 @@ Envoyez le jeton dans un en-tête, soit `Authorization: Bearer <token>`, soit `X
 
 Chaque jeton a une tuile avec son nom, s'il peut lancer des sauvegardes, ses quatre derniers caractères, quand et d'où il a servi la dernière fois, et ses appels du jour. Sur la tuile, vous pouvez le renommer, changer ce qu'il peut faire, le remplacer ou le révoquer. **Journal** montre les sauvegardes qu'il a lancées et ses derniers appels. Restaurer la configuration de BombVault depuis une sauvegarde révoque tous les jetons, car la sauvegarde peut contenir des jetons que vous avez révoqués depuis.
 
-Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web peut aussi créer un jeton. Si vous ouvrez BombVault sous un nom d'apparence publique sans mot de passe, aucun jeton ne peut être créé depuis cette adresse, comme pour les [clés MCP](mcp.md#switch-on).
+Sans mot de passe de connexion, toute personne qui peut ouvrir l'interface web peut aussi créer un jeton.
 
 ## Points d'accès {#endpoints}
 

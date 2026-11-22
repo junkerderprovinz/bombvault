@@ -58,7 +58,7 @@ Kortet **Streaming**, som sænker upload-grænsen, mens Plex, Jellyfin eller Emb
 
 ## Sikkerhed {#security}
 
-- **Adgangskode**: loginadgangskoden, mindst 12 tegn. At ændre eller rydde den spørger efter den nuværende og, med tofaktorgodkendelse slået til, koden.
+- **Adgangskode**: loginadgangskoden, i enhver længde. Under 12 tegn foreslår siden en længere. At ændre eller rydde den spørger efter den nuværende og, med tofaktorgodkendelse slået til, koden.
 - **Tofaktorgodkendelse**: en kode fra en autentificeringsapp oven i adgangskoden, med otte gendannelseskoder, der vises én gang.
 - **Adgangsnøgler**: log ind med en nøgle på din telefon, laptop eller sikkerhedspind. De kræver et rigtigt domænenavn og et certifikat, browseren stoler på.
 - **Android-app**: **Telefoner kan parre med gruppens tolv ord**, hvilket lader en parret telefon logge ind uden adgangskoden.

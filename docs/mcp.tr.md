@@ -49,7 +49,7 @@ Bir bölüm ya da Şimdi tümünü yedekle başlatması, bir sınırın tuttuğu
 3. Yedekleme başlatabilmesi gereken bir anahtar için **Yedekleme başlatmaya izin ver**'i aç. Onsuz anahtar yalnızca okuyabilir. Bunu sonra anahtarın **Ayrıntılar**'ında değiştirebilirsin ve değişiklik yeniden bağlanmadan asistanın sonraki isteğinde geçerli olur.
 4. **Anahtar oluştur**'a tıkla. Anahtar bir kez gösterilir. BombVault yalnızca parmak izini tutar ve onu yeniden gösteremez, bu yüzden şimdi kopyala. İstemci anahtarı kullanmadan pencereyi kapatırsan, kopyaladığını onaylayana kadar kart onu göstermeye devam eder.
 
-Giriş parolası olmadan web arayüzünün kendisi ağındaki herkese açıktır ve onu açabilen herkes bir anahtar da oluşturabilir. Kart bunu söyler. BombVault'u herkese açık gibi görünen bir adla açarsan (örneğin bir ters proxy ile `bombvault.example.com`) ve giriş parolası ayarlı değilse, o adresten anahtar oluşturulamaz ya da değiştirilemez, böylece internetteki hiçbir web sayfası tarayıcının bir tane oluşturmasını sağlayamaz. Bir giriş parolası ayarla ya da BombVault'u IP adresiyle veya `tower` ya da `tower.local` gibi yerel bir adla aç.
+Giriş parolası olmadan web arayüzünün kendisi ağındaki herkese açıktır ve onu açabilen herkes bir anahtar da oluşturabilir. Kart bunu söyler.
 
 ## Anahtarların ve günlükleri {#keys}
 
@@ -235,7 +235,6 @@ Bir proxy'nin arkasında her istek proxy'nin adresini taşır. Yanlış yapılan
 - Her oluşturma, değiştirme, izin değişikliği ve iptal, bildirimler kapalı değilse, geldiği adresle bildirim kanallarından bir bildirim gönderir.
 - Adres başına dakikada 5 yanlış anahtar, sonra `429`. Anahtar başına dakikada 120 istek ve saatte 12 başlatılmış yedek, artı yukarıdaki bekleme süresi ve saklama koruması.
 - Başka bir kaynaktaki (origin) bir tarayıcı sayfasından gelen istekler reddedilir.
-- Giriş parolası ayarlı değilken herkese açık gibi görünen bir ana makine adından anahtar oluşturulamaz.
 - Bir asistanın başlattığı her yedek ve neden olduğu budama ve site dışı çalıştırmalar, Etkinlik günlüğünde, hata panelinde ve yedekleme bildiriminde anahtarın adıyla "MCP üzerinden" olarak işaretlenir.
 - Her araç çağrısı, anahtarın kimliği ve son dört karakteriyle (adıyla asla) konteyner günlüğüne yazılır ve `/metrics` içinde sayılır (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Bir yapılandırma yedeğini geri yüklemek her anahtarı iptal eder, çünkü geri yüklenen veritabanı kaydedildikten sonra iptal ettiğin anahtarları içerebilir. Sonrasında yeni anahtarlar oluştur.

@@ -324,15 +324,12 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/display-prefs", h.handleGetDisplayPrefs)
 	mux.HandleFunc("PUT /api/display-prefs", h.handlePutDisplayPrefs)
 	// Portable settings export / import (a JSON file to move a configuration
-	// between instances; no live link). Session-protected like every other /api
-	// route, and — because the credentialed export IS the recovery kit's class of
-	// payload — that variant additionally requires auth to be ENABLED
-	// (requireAuthForSecrets), so trusted-LAN mode cannot hand every stored
-	// backend credential to an unauthenticated LAN client.
+	// between instances; no live link). The credentialed export is the recovery
+	// kit's class of payload, so where a password is set a paired phone's
+	// session does not reach it (requireSignIn).
 	mux.HandleFunc("GET /api/settings/export", h.handleExportSettings)
-	// The support bundle. Gated by requireAuthForSecrets inside the handler and
-	// on neither authGate allowlist: it carries the whole configuration and the
-	// recent log, so it fails closed in trusted-LAN mode like the recovery kit.
+	// The support bundle, on neither authGate allowlist and behind
+	// requireSignIn inside the handler like the recovery kit.
 	mux.HandleFunc("GET /api/diagnostics", h.handleDiagnostics)
 	mux.HandleFunc("POST /api/settings/import", h.handleImportSettings)
 	mux.HandleFunc("GET /api/recovery-kit", h.handleRecoveryKit)
@@ -481,8 +478,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("PUT /api/anomalies/items/{targetId}/prefs", h.handleAnomalyItemPrefs)
 	mux.HandleFunc("DELETE /api/anomalies/items/{targetId}/expectations/{family}", h.handleForgetAnomalyExpectation)
 	// An SMB or WebDAV destination from a form instead of a hand-written rclone
-	// config. Carries a live storage password, so it sits behind
-	// requireAuthForSecrets inside the handler.
+	// config.
 	mux.HandleFunc("POST /api/offsite/rclone-remote", h.handleAddRcloneRemote)
 	mux.HandleFunc("GET /api/history", h.handleHistory)
 	mux.HandleFunc("GET /api/stats", h.handleStats)
@@ -631,8 +627,7 @@ func (h *Handler) Router() http.Handler {
 	mux.HandleFunc("GET /api/receiver/repos/{id}/inventory", h.handleReceiverInventory)
 	mux.HandleFunc("POST /api/receiver/repos/{id}/check", h.handleReceiverCheck)
 	// The append-only rest-server this box runs for its group. Setting it up
-	// starts a container and answers with its password, so that route sits
-	// behind requireAuthForSecrets inside the handler.
+	// starts a container and answers with its password.
 	mux.HandleFunc("GET /api/receiver/server", h.handleGetReceiver)
 	mux.HandleFunc("POST /api/receiver/server", h.handleSetUpReceiver)
 	mux.HandleFunc("POST /api/receiver/server/check", h.handleCheckReceiver)

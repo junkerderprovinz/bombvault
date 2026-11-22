@@ -49,7 +49,7 @@ Starts through the [API](api.md#errors) and from [Home Assistant](api.md#home-as
 3. Switch **Allow starting backups** on for a key that should be able to start backups. Without it the key can only read. You can change it later in the key's **Details**, and the change applies to the assistant's next request without a reconnect.
 4. Click **Create key**. The key is shown once. BombVault keeps only a fingerprint of it and cannot show it again, so copy it now. If you close the window before the client has used the key, the card keeps showing it until you confirm that you have copied it.
 
-Without a login password the web interface itself is open to everyone on your network, and anyone who can open it can also create a key. The card says so. If you open BombVault under a public-looking name (for example `bombvault.example.com` through a reverse proxy) and no login password is set, keys cannot be created or replaced from that address, so that no web page on the internet can make your browser create one. Set a login password, or open BombVault by its IP address or a local name such as `tower` or `tower.local`.
+Without a login password the web interface itself is open to everyone on your network, and anyone who can open it can also create a key. The card says so.
 
 ## Your keys and their log {#keys}
 
@@ -235,7 +235,6 @@ Behind a proxy every request carries the proxy's address. Five wrong keys from o
 - Every create, replace, permission change and revoke sends a notification through your notification channels, with the address it came from, unless notifications are switched off.
 - 5 wrong keys per minute per address, then `429`. 120 requests per minute and 12 started backups per hour per key, plus the cooldown and the retention guard above.
 - Requests from a browser page on another origin are refused.
-- Keys cannot be created from a public-looking host name while no login password is set.
 - Every backup an assistant starts, and the prune and off-site runs it causes, is marked "via MCP" with the key's name in the Activity log, in the error panel and in the backup notification.
 - Every tool call is written to the container log with the key's id and last four characters (never its name) and counted in `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Restoring a configuration backup revokes every key, because the restored database may hold keys you revoked after it was saved. Create new keys afterwards.

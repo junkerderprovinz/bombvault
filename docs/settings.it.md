@@ -58,7 +58,7 @@ La scheda **Streaming**, che abbassa il limite di upload mentre Plex, Jellyfin o
 
 ## Sicurezza {#security}
 
-- **Password**: la password di accesso, di almeno 12 caratteri. Cambiarla o cancellarla richiede quella attuale e, con l'autenticazione a due fattori attiva, il codice.
+- **Password**: la password di accesso, di qualsiasi lunghezza. Sotto i 12 caratteri la pagina ne suggerisce una più lunga. Cambiarla o cancellarla richiede quella attuale e, con l'autenticazione a due fattori attiva, il codice.
 - **Autenticazione a due fattori**: un codice da un'app di autenticazione oltre alla password, con otto codici di ripristino mostrati una sola volta.
 - **Passkey**: accedi con una chiave sul telefono, sul portatile o su una chiavetta di sicurezza. Richiedono un vero nome di dominio e un certificato di cui il browser si fida.
 - **App Android**: **I telefoni possono associarsi con le dodici parole del gruppo**, cosa che permette a un telefono associato di accedere senza la password.

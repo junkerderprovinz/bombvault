@@ -11,14 +11,19 @@ function answer(body: unknown) {
 }
 
 describe("flashZipRefusal", () => {
-  it("names the password in the words of the recovery kit until one is set", async () => {
+  it("lets the ZIP download without a login password", async () => {
     answer({ ok: true, enabled: false, authed: false });
     await api.getAuth();
-    expect(flashZipRefusal(t)).toBe(en["secrets.passwordNotSet"]);
-
-    answer({ ok: true, enabled: true });
-    await api.setAuthPassword("a long enough password");
     expect(flashZipRefusal(t)).toBeUndefined();
+    vi.unstubAllGlobals();
+  });
+
+  it("asks a paired phone for its own sign-in", async () => {
+    answer({ ok: true, enabled: true, authed: true, paired: true });
+    await api.getAuth();
+    expect(flashZipRefusal(t)).toBe(en["restoreMany.flashOwnLogin"]);
+    answer({ ok: true, enabled: true, authed: true });
+    await api.getAuth();
     vi.unstubAllGlobals();
   });
 });

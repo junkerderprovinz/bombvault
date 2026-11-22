@@ -31,7 +31,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const { t, lang } = useT();
   // Set once a passkey signed in and the server asks for the code on top.
   const [passkeyHandle, setPasskeyHandle] = useState<string | null>(null);
-  const [minLen, setMinLen] = useState(12);
+  const [recommendedLen, setRecommendedLen] = useState(12);
   // What a reset removed, held until the reader has seen it.
   const [removed, setRemoved] = useState<PasswordResetRemoved | null>(null);
 
@@ -70,7 +70,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setPassword: t("auth.setPassword"),
     saving: t("auth.saving"),
     mismatch: field.mismatch,
-    tooShort: t("auth.passwordMinHint", minLen),
+    shortPassword: t("auth.passwordShortHint", recommendedLen),
     resetRejected: t("auth.resetCodeRejected"),
     failed: t("auth.loginError"),
   };
@@ -83,7 +83,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       idPrefix="bv"
       passkey={passkeyOffer}
       reset
-      minPassword={minLen}
+      recommendedPassword={recommendedLen}
       step={removed ? <ResetDone removed={removed} onDone={onLogin} /> : undefined}
       onSignIn={async ({ password, code, passkey }) => {
         try {
@@ -136,7 +136,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           if (!res.ok) return { error: res.error ?? t("auth.loginError") };
           void getAuth()
             .then((a) => {
-              if (a.minPasswordLen) setMinLen(a.minPasswordLen);
+              if (a.recommendedPasswordLen) setRecommendedLen(a.recommendedPasswordLen);
             })
             .catch(() => undefined);
           return { ok: true };

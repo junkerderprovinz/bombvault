@@ -522,7 +522,7 @@ func (s *Service) nodeCompose(n store.Node) (map[string]string, error) {
 // its APP_KEY among them, to set the node up anew on another server.
 // POST /api/nodes/{id}/compose
 func (h *Handler) handleNodeCompose(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "showing a node's APP_KEY") {
+	if !h.requireSignIn(w, r, "showing a node's APP_KEY") {
 		return
 	}
 	n, err := h.store.GetNode(r.PathValue("id"))
@@ -643,7 +643,7 @@ func (h *Handler) handleAddNode(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name string `json:"name"`
 	}
-	if !decodeBody(w, r, &body) || !h.requireAuthForSecrets(w, r, "adding a node") {
+	if !decodeBody(w, r, &body) || !h.requireSignIn(w, r, "adding a node") {
 		return
 	}
 	node, compose, err := h.svc.AddNode(body.Name)

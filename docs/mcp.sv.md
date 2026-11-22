@@ -49,7 +49,7 @@ Starter via [API:t](api.md#errors) och från [Home Assistant](api.md#home-assist
 3. Slå på **Tillåt att starta säkerhetskopior** för en nyckel som ska kunna starta säkerhetskopior. Utan det kan den bara läsa. Du kan ändra det senare i nyckelns **Detaljer**, och ändringen gäller från assistentens nästa förfrågan utan ny anslutning.
 4. Klicka på **Skapa nyckel**. Nyckeln visas en gång. BombVault behåller bara ett fingeravtryck av den och kan inte visa den igen, så kopiera den nu. Stänger du fönstret innan klienten har använt nyckeln fortsätter kortet att visa den tills du bekräftar att du har kopierat den.
 
-Utan inloggningslösenord är själva webbgränssnittet öppet för alla i ditt nätverk, och den som kan öppna det kan också skapa en nyckel. Kortet säger det. Öppnar du BombVault under ett namn som ser offentligt ut (till exempel `bombvault.example.com` bakom en omvänd proxy) och inget inloggningslösenord är satt, går det inte att skapa eller byta nycklar från den adressen, så att ingen webbsida på internet kan få din webbläsare att skapa en. Sätt ett inloggningslösenord, eller öppna BombVault via dess IP-adress eller ett lokalt namn som `tower` eller `tower.local`.
+Utan inloggningslösenord är själva webbgränssnittet öppet för alla i ditt nätverk, och den som kan öppna det kan också skapa en nyckel. Kortet säger det.
 
 ## Dina nycklar och deras logg {#keys}
 
@@ -235,7 +235,6 @@ Bakom en proxy bär varje förfrågan proxyns adress. Fem felaktiga nycklar frå
 - Varje skapande, byte, behörighetsändring och återkallelse skickar en avisering via dina aviseringskanaler, med adressen den kom ifrån, om inte aviseringar är avstängda.
 - 5 felaktiga nycklar per minut och adress, därefter `429`. 120 förfrågningar per minut och 12 startade säkerhetskopior per timme och nyckel, plus väntetiden och lagringsskyddet ovan.
 - Förfrågningar från en webbläsarsida med en annan origin nekas.
-- Så länge inget inloggningslösenord är satt går det inte att skapa nycklar från ett värdnamn som ser offentligt ut.
 - Varje säkerhetskopia som en assistent startar, och de prune- och off-site-körningar som följer av den, markeras "via MCP" med nyckelns namn i aktivitetsloggen, i felpanelen och i aviseringen om säkerhetskopian.
 - Varje verktygsanrop skrivs i containerns logg med nyckelns id och dess sista fyra tecken (aldrig namnet) och räknas i `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Att återställa en säkerhetskopia av konfigurationen återkallar alla nycklar, eftersom den återställda databasen kan innehålla nycklar som du återkallade efter att den sparades. Skapa nya nycklar efteråt.

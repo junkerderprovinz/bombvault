@@ -180,7 +180,7 @@ func (s *Service) DownloadAppExport(ctx context.Context, name, source, snapshotI
 // the browser takes over the download.
 func (h *Handler) handleDownloadAppExport(w http.ResponseWriter, r *http.Request) {
 	name, ok := h.nameParam(w, r)
-	if !ok || !h.requireAuthForSecrets(w, r, "downloading the own backup of an app") {
+	if !ok || !h.requireSignIn(w, r, "downloading the own backup of an app") {
 		return
 	}
 	id := r.PathValue("id")

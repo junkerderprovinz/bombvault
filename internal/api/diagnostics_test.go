@@ -50,22 +50,13 @@ func zipMembers(t *testing.T, raw []byte) map[string]string {
 	return out
 }
 
-// TestDiagnosticsRefusedWhenAuthDisabled: the bundle carries the whole
-// configuration and the recent log, so it fails closed exactly as the recovery
-// kit does rather than being fetchable by anyone on the LAN.
-func TestDiagnosticsRefusedWhenAuthDisabled(t *testing.T) {
+func TestDiagnosticsDownloadWithoutALoginPassword(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
 
 	w := getRaw(t, h, "/api/diagnostics", nil)
-	if w.Code != http.StatusForbidden {
-		t.Fatalf("status = %d, want 403 with auth off", w.Code)
-	}
-	if !strings.Contains(w.Body.String(), "login password") {
-		t.Fatalf("a refusal must say what to do, got %s", w.Body.String())
-	}
-	if strings.Contains(w.Header().Get("Content-Disposition"), "attachment") {
-		t.Fatalf("a refusal must not stream a file")
+	if w.Code != http.StatusOK || !strings.Contains(w.Header().Get("Content-Disposition"), "attachment") {
+		t.Fatalf("status = %d, want the bundle: %s", w.Code, w.Body.String())
 	}
 }
 

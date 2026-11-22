@@ -14,7 +14,7 @@ Skicka tokenet i ett huvud, antingen `Authorization: Bearer <token>` eller `X-AP
 
 Varje token har en ruta med namnet, om det får starta kopior, de fyra sista tecknen, när och varifrån det senast användes och dagens anrop. I rutan kan du byta namn på det, ändra vad det får göra, byta ut det eller återkalla det. **Logg** visar kopiorna det startade och de senaste anropen. Återställer du BombVaults konfiguration från en kopia återkallas alla token, eftersom kopian kan innehålla token som du har återkallat sedan dess.
 
-Utan inloggningslösenord kan alla som kan öppna webbgränssnittet också skapa ett token. Öppnar du BombVault under ett namn som ser offentligt ut och inget lösenord är satt, går det inte att skapa token från den adressen, samma regel som för [MCP-nycklarna](mcp.md#switch-on).
+Utan inloggningslösenord kan alla som kan öppna webbgränssnittet också skapa ett token.
 
 ## Slutpunkter {#endpoints}
 

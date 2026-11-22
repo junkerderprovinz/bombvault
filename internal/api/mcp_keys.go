@@ -41,9 +41,8 @@ type mcpKeyView struct {
 }
 
 var (
-	errMCPKeyLabel         = errors.New("a key needs a name of 1 to 64 characters")
-	errMCPKeyClient        = errors.New("a client id is 1 to 32 lower-case letters, digits and dashes")
-	errMCPKeyNeedsPassword = errors.New("set a login password before creating a key or adding a certificate name from this address")
+	errMCPKeyLabel  = errors.New("a key needs a name of 1 to 64 characters")
+	errMCPKeyClient = errors.New("a client id is 1 to 32 lower-case letters, digits and dashes")
 )
 
 // mcpErrorCodes translates the refusals of the card's two subjects, the keys
@@ -101,44 +100,6 @@ func mcpKeyIDParam(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	return id, true
-}
-
-// mcpKeyPrivateSuffixes only ever resolve inside a network, so no answer from
-// public DNS can point one of them at a LAN address.
-var mcpKeyPrivateSuffixes = []string{".local", ".lan", ".home", ".home.arpa", ".internal", ".localdomain", ".ts.net"}
-
-// mcpKeyHostAllowed reports whether a key may be created or replaced from the
-// given request host while no login password is set: an IP literal, localhost,
-// a single-label name or a private-use suffix, none of which a public DNS name
-// can rebind.
-func mcpKeyHostAllowed(host string) bool {
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		host = h
-	}
-	host = strings.ToLower(strings.Trim(strings.TrimSpace(host), "[]"))
-	if host == "" {
-		return false
-	}
-	if net.ParseIP(host) != nil || !strings.Contains(host, ".") {
-		return true
-	}
-	for _, suffix := range mcpKeyPrivateSuffixes {
-		if strings.HasSuffix(host, suffix) {
-			return true
-		}
-	}
-	return false
-}
-
-// mcpKeysAllowedFrom reports whether this request may mint key material. A
-// login password settles it: the session cookie is bound to the real host name,
-// so a page that rebound its DNS to this address carries no session. Without
-// one, only a host that cannot be rebound at all counts.
-func (h *Handler) mcpKeysAllowedFrom(r *http.Request) bool {
-	if _, _, on := h.authEnabled(); on {
-		return true
-	}
-	return mcpKeyHostAllowed(r.Host)
 }
 
 // servedOwnCertificate reports whether the browser behind r negotiated TLS with
@@ -272,7 +233,6 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 		"certificate":      certificate,
 		"limit":            store.MCPKeyLimit,
 		"authEnabled":      authOn,
-		"hostAllowsKeys":   h.mcpKeysAllowedFrom(r),
 		"startsPerHour":    mcpStartsPerHour,
 		"cooldownMinutes":  int(mcpStartCooldown / time.Minute),
 		"itemStartsPerDay": mcpItemStartsPerDay,
@@ -298,10 +258,6 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 	defer release()
 	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
 		writeJSON(w, http.StatusOK, failEnvelope(errMCPKeyClient))
-		return
-	}
-	if !h.mcpKeysAllowedFrom(r) {
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return
 	}
 	label, ok := normalizeMCPKeyLabel(body.Label)
@@ -369,10 +325,6 @@ func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 	id, ok := mcpKeyIDParam(w, r)
 	if !ok || !h.requireSignIn(w, r, "replacing a key") {
-		return
-	}
-	if !h.mcpKeysAllowedFrom(r) {
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return
 	}
 	current, err := h.store.GetMCPKey(id)
@@ -481,9 +433,7 @@ func (h *Handler) handleMCPCertificate(w http.ResponseWriter, r *http.Request) {
 
 // handleAddMCPCertificateName adds the address the operator reached BombVault
 // on to its certificate, which is what a Node client needs before it connects.
-// It follows the same host rule as creating a key: the names are material the
-// server then presents, there are only sixteen of them, and nothing in the
-// product takes one back.
+// There are only sixteen names, and nothing in the product takes one back.
 func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Host string `json:"host"`
@@ -493,10 +443,6 @@ func (h *Handler) handleAddMCPCertificateName(w http.ResponseWriter, r *http.Req
 	}
 	if h.cfg.HTTPOnly {
 		http.NotFound(w, r)
-		return
-	}
-	if !h.mcpKeysAllowedFrom(r) {
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
 		return
 	}
 	info, err := h.svc.AddCertificateName(body.Host)

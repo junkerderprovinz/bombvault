@@ -14,7 +14,7 @@ Send the token in a header, either `Authorization: Bearer <token>` or `X-API-Key
 
 Each token has a tile with its name, whether it may start backups, the last four characters, when it was last used and from where, and its calls today. On the tile you can rename it, change what it may do, replace it or revoke it. **Log** shows the backups it started and its recent calls. Restoring BombVault's configuration from a backup revokes every token, because the backup may hold tokens you revoked later.
 
-Without a login password, anyone who can open the web interface can also create a token. If you open BombVault under a public-looking name and no password is set, tokens cannot be created from that address, the same rule as for [MCP keys](mcp.md#switch-on).
+Without a login password, anyone who can open the web interface can also create a token.
 
 ## Endpoints {#endpoints}
 

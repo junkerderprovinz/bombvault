@@ -49,7 +49,7 @@ Az [API-n](api.md#errors) keresztüli és a [Home Assistantből](api.md#home-ass
 3. Kapcsold be a **Biztonsági mentések indításának engedélyezése** kapcsolót annál a kulcsnál, amelynek mentéseket kell tudnia indítani. Enélkül a kulcs csak olvasni tud. Később a kulcs **Részletek** ablakában módosíthatod, és a változás az asszisztens következő kérésétől érvényes, újracsatlakozás nélkül.
 4. Kattints a **Kulcs létrehozása** gombra. A kulcs egyszer jelenik meg. A BombVault csak egy ujjlenyomatot őriz belőle, és nem tudja újra megmutatni, ezért most másold ki. Ha bezárod az ablakot, mielőtt a kliens használta a kulcsot, a kártya tovább mutatja, amíg meg nem erősíted, hogy kimásoltad.
 
-Bejelentkezési jelszó nélkül maga a webes felület is nyitva áll mindenki előtt a hálózatodon, és aki meg tudja nyitni, kulcsot is létrehozhat. A kártya ezt jelzi. Ha a BombVaultot nyilvánosnak tűnő néven nyitod meg (például `bombvault.example.com` egy fordított proxy mögött), és nincs bejelentkezési jelszó, arról a címről nem lehet kulcsot létrehozni vagy cserélni, így egyetlen internetes weboldal sem veheti rá a böngésződet, hogy létrehozzon egyet. Állíts be bejelentkezési jelszót, vagy nyisd meg a BombVaultot az IP-címén vagy egy helyi néven, például `tower` vagy `tower.local`.
+Bejelentkezési jelszó nélkül maga a webes felület is nyitva áll mindenki előtt a hálózatodon, és aki meg tudja nyitni, kulcsot is létrehozhat. A kártya ezt jelzi.
 
 ## A kulcsaid és a naplójuk {#keys}
 
@@ -235,7 +235,6 @@ Proxy mögött minden kérés a proxy címét viseli. Egyetlen rosszul beállít
 - Minden létrehozás, csere, jogosultság-módosítás és visszavonás értesítést küld az értesítési csatornáidon a címmel együtt, ahonnan érkezett, hacsak nincsenek kikapcsolva az értesítések.
 - Címenként percenként 5 hibás kulcs, utána `429`. Kulcsonként percenként 120 kérés és óránként 12 elindított mentés, ehhez jön a fent leírt várakozási idő és a megőrzésvédelem.
 - Egy másik originről érkező böngészőoldal kéréseit elutasítja.
-- Amíg nincs bejelentkezési jelszó, nyilvánosnak tűnő gazdagépnévről nem lehet kulcsot létrehozni.
 - Minden mentés, amelyet egy asszisztens indít, és az ebből következő prune és off-site futások "MCP-n keresztül" jelölést kapnak a kulcs nevével a tevékenységnaplóban, a hibapanelen és a mentés értesítésében.
 - Minden eszközhívás bekerül a konténer naplójába a kulcs azonosítójával és utolsó négy karakterével (a nevével soha), és a `/metrics` számolja (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Egy konfigurációs mentés visszaállítása minden kulcsot visszavon, mert a visszaállított adatbázis olyan kulcsokat is tartalmazhat, amelyeket a mentése után vontál vissza. Utána hozz létre új kulcsokat.

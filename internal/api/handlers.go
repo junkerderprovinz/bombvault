@@ -26,7 +26,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
 	kitstatus "github.com/junkerderprovinz/parleyport/kit/status"
@@ -3571,17 +3570,15 @@ func (h *Handler) handleDetectEncryption(w http.ResponseWriter, r *http.Request)
 }
 
 // handleRecoveryKit streams the encryption-key recovery kit as a download.
-// GET /api/recovery-kit — BEHIND authGate AND additionally requires auth to be
-// ENABLED: the kit is the master secret (the APP_KEY + the derived restic
-// password + the stored off-site backend credentials). The rest of the
-// trusted-LAN API is intentionally open to CURRENT data when auth is off, but
-// this export permanently decrypts EVERY repo — including the append-only
-// off-site archives designed to survive host compromise — so it fails CLOSED
-// when auth is disabled instead of handing the master key to any LAN client.
-// The body is the owner's own recovery document and carries the real repo
-// locations (no path scrubbing here), and it is never logged.
+// GET /api/recovery-kit. The kit is the master secret: the APP_KEY, the
+// derived restic password and the stored off-site backend credentials, enough
+// to decrypt every repository for good. Where a password is set only a person
+// signed in for it gets the kit, never a paired phone's session. Without one
+// the owner chose an open instance, which the Security page says. The body is
+// the owner's own recovery document and carries the real repo locations (no
+// path scrubbing here), and it is never logged.
 func (h *Handler) handleRecoveryKit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "downloading the recovery kit") {
+	if !h.requireSignIn(w, r, "downloading the recovery kit") {
 		return
 	}
 	// The seal decision is made BEFORE the kit is built, from ONE settings read,
@@ -4786,27 +4783,11 @@ func (h *Handler) authEnabled() (hash, epoch string, on bool) {
 	return s.AuthPasswordHash, s.SessionEpoch, s.AuthPasswordHash != ""
 }
 
-// requireAuthForSecrets is the second gate every handler that hands out STORED
-// SECRETS in the clear must pass. It reports whether the request may proceed,
-// and answers 403 itself when it may not.
-//
-// authGate alone is not enough for these: with no login password set it is a
-// pass-through by design (the trusted-LAN model — the rest of the API is open
-// to current data), so a handler that decrypts credentials would hand them to
-// any host on the LAN, unauthenticated. Current data is a lesser thing than the
-// keys to it: these payloads decrypt every repository, including the append-only
-// off-site archives that exist to survive a host compromise, and the backend
-// accounts they live in. So they fail CLOSED instead.
-//
-// A store read error blocks too (authEnabled reports auth OFF then), which is
-// the safe direction.
-//
-// The session has to be one a person signed in for. The one a paired phone is
-// given for the group's words opens the pages and stops here, so the words
-// alone never reach a key.
-//
-// action names what is being refused, e.g. "downloading the recovery kit".
-func (h *Handler) requireAuthForSecrets(w http.ResponseWriter, r *http.Request, action string) bool {
+// requireLoginPassword refuses to arm a second factor or a passkey while no
+// login password is set, since either is an extra way in and never the only
+// one. It answers 403 itself when it refuses, and asks what requireSignIn asks
+// otherwise.
+func (h *Handler) requireLoginPassword(w http.ResponseWriter, r *http.Request, action string) bool {
 	if _, _, on := h.authEnabled(); !on {
 		writeJSON(w, http.StatusForbidden, map[string]any{
 			"ok":    false,
@@ -4919,9 +4900,9 @@ func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
 		// for a code, and it asks before anybody is signed in. It reveals only
 		// that this instance is harder to get into.
 		"totp": false,
-		// The rule the password field enforces, so the frontend can say the
-		// number rather than hard-code a second copy of it.
-		"minPasswordLen": secret.MinPasswordLen,
+		// The length below which the password field suggests a longer one,
+		// so the frontend can say the number rather than hard-code a copy.
+		"recommendedPasswordLen": secret.RecommendedPasswordLen,
 		// A page a phone opens through the relay can neither sign in nor
 		// out, so the interface leaves both out there.
 		"relayed": relayedPage(r),
@@ -5483,23 +5464,6 @@ func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash := ""
-	if body.Password != "" {
-		// The minimum is checked HERE and nowhere else. Verification stays
-		// unconditional, so an instance whose password predates this rule keeps
-		// working and its owner is asked to change it rather than shut out by an
-		// upgrade. See secret.MinPasswordLen for why twelve.
-		//
-		// Counted in runes, not bytes: a passphrase in a language that spends
-		// three bytes a character is not longer for it.
-		if utf8.RuneCountInString(body.Password) < secret.MinPasswordLen {
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok":     false,
-				"error":  fmt.Sprintf("the password must be at least %d characters", secret.MinPasswordLen),
-				"minLen": secret.MinPasswordLen,
-			})
-			return
-		}
-	}
 	if gen.hash != "" && !h.ownerConfirmed(w, r, gen.hash, body.Current, body.Code) {
 		return
 	}
@@ -5638,7 +5602,7 @@ func (h *Handler) storePassword(gen authGeneration, hash string) (string, error)
 // handleTOTPConfirm sees a working code, so an enrolment abandoned halfway
 // leaves the login exactly as it was.
 func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "setting up two-factor authentication") {
+	if !h.requireLoginPassword(w, r, "setting up two-factor authentication") {
 		return
 	}
 	s, err := h.store.GetSettings()
@@ -5700,7 +5664,7 @@ func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 // The recovery codes are shown exactly once, here. They are stored hashed, so
 // this response is the only chance to write them down, and the frontend says so.
 func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "setting up two-factor authentication") {
+	if !h.requireLoginPassword(w, r, "setting up two-factor authentication") {
 		return
 	}
 	var body struct {
@@ -5758,7 +5722,7 @@ func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
 // off. It requires a current code or a recovery code, so that a session someone
 // walked away from cannot be used to quietly remove the factor.
 func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "changing two-factor authentication") {
+	if !h.requireLoginPassword(w, r, "changing two-factor authentication") {
 		return
 	}
 	var body struct {
@@ -6268,7 +6232,7 @@ func (h *headerOnFirstWrite) Write(p []byte) (int, error) {
 // (restic dump). GET so it can be a plain link; non-destructive — the live /boot
 // is never touched. ?snapshot=<id> selects the snapshot ("" / "latest" = newest).
 func (h *Handler) handleDownloadFlash(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "downloading a flash backup") {
+	if !h.requireSignIn(w, r, "downloading a flash backup") {
 		return
 	}
 	id := r.URL.Query().Get("snapshot")

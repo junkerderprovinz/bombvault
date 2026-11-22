@@ -19,7 +19,7 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getSettings: () => Promise.resolve({ ok: true, settings: {} as Settings, hostMountRoot: "/host/user", platform: "unraid" }),
-    getAuth: () => Promise.resolve({ enabled: authOn, authed: authOn, totp: totpOn, minPasswordLen: 12 }),
+    getAuth: () => Promise.resolve({ enabled: authOn, authed: authOn, totp: totpOn, recommendedPasswordLen: 12 }),
     setAuthPassword: (password: string, current = "", code = "") => {
       writes.push({ password, current, code });
       return Promise.resolve(answer ?? { ok: true, enabled: password !== "" });
@@ -137,6 +137,20 @@ describe("the login password", () => {
     save(card);
     await waitFor(() => expect(writes.map((w) => w.password)).toEqual(["correct horse battery"]));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("suggests a longer password and still saves a short one", async () => {
+    authOn = false;
+    await renderPage();
+    const card = passwordCard();
+    const hint = en["auth.passwordShortHint"].replace("{n}", "12");
+    expect(within(card).queryByText(hint)).toBeNull();
+    typeInto(card, en["auth.setPassword"], "1234");
+    expect(within(card).getByText(hint)).toBeTruthy();
+    typeInto(card, componentText("en").passwordField.confirm, "1234");
+    save(card);
+    await waitFor(() => expect(writes.map((w) => w.password)).toEqual(["1234"]));
+    expect(within(card).queryByText(hint)).toBeNull();
   });
 
   it("keeps Save off until the new password is typed the same twice", async () => {

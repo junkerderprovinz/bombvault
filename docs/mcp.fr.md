@@ -49,7 +49,7 @@ Les lancements via l'[API](api.md#errors) et depuis [Home Assistant](api.md#home
 3. Activez **Autoriser le lancement de sauvegardes** pour une clé qui doit pouvoir lancer des sauvegardes. Sans cela, elle peut seulement lire. Vous pouvez le changer plus tard dans les **Détails** de la clé, et le changement vaut dès la requête suivante de l'assistant, sans reconnexion.
 4. Cliquez sur **Créer la clé**. La clé s'affiche une seule fois. BombVault n'en garde qu'une empreinte et ne peut pas la remontrer, alors copiez-la maintenant. Si vous fermez la fenêtre avant que le client ait utilisé la clé, la carte continue de l'afficher jusqu'à ce que vous confirmiez l'avoir copiée.
 
-Sans mot de passe de connexion, l'interface web elle-même est ouverte à tout votre réseau, et quiconque peut l'ouvrir peut aussi créer une clé. La carte le signale. Si vous ouvrez BombVault sous un nom qui a l'air public (par exemple `bombvault.example.com` derrière un reverse proxy) et qu'aucun mot de passe de connexion n'est défini, aucune clé ne peut être créée ni remplacée depuis cette adresse, pour qu'aucune page web sur Internet ne puisse amener votre navigateur à en créer une. Définissez un mot de passe de connexion, ou ouvrez BombVault par son adresse IP ou par un nom local comme `tower` ou `tower.local`.
+Sans mot de passe de connexion, l'interface web elle-même est ouverte à tout votre réseau, et quiconque peut l'ouvrir peut aussi créer une clé. La carte le signale.
 
 ## Vos clés et leur journal {#keys}
 
@@ -235,7 +235,6 @@ Derrière un proxy, chaque requête porte l'adresse du proxy. Cinq mauvaises cl�
 - Chaque création, remplacement, changement de droits et révocation envoie une notification par vos canaux de notification, avec l'adresse d'où elle vient, sauf si les notifications sont désactivées.
 - 5 mauvaises clés par minute et par adresse, puis `429`. 120 requêtes par minute et 12 sauvegardes lancées par heure et par clé, plus le délai d'attente et la garde de rétention décrits plus haut.
 - Les requêtes d'une page de navigateur d'une autre origine sont refusées.
-- Tant qu'aucun mot de passe de connexion n'est défini, aucune clé ne peut être créée depuis un nom d'hôte qui a l'air public.
 - Chaque sauvegarde lancée par un assistant, ainsi que les exécutions de prune et de copie hors site qui en découlent, est marquée « via MCP » avec le nom de la clé, dans le journal d'activité, dans le panneau d'erreur et dans la notification de sauvegarde.
 - Chaque appel d'outil est écrit dans le journal du conteneur avec l'identifiant de la clé et ses quatre derniers caractères (jamais son nom) et compté dans `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Restaurer une sauvegarde de la configuration révoque toutes les clés, parce que la base restaurée peut contenir des clés que vous avez révoquées après son enregistrement. Créez-en de nouvelles ensuite.

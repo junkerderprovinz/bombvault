@@ -58,7 +58,7 @@ Die Karte **Streaming**, die das Upload-Limit senkt, während Plex, Jellyfin ode
 
 ## Sicherheit {#security}
 
-- **Passwort**: das Login-Passwort, mindestens 12 Zeichen. Es zu ändern oder zu löschen verlangt das aktuelle und, bei eingeschalteter Zwei-Faktor-Authentifizierung, den Code.
+- **Passwort**: das Login-Passwort, beliebig lang. Unter 12 Zeichen schlägt die Seite ein längeres vor. Es zu ändern oder zu löschen verlangt das aktuelle und, bei eingeschalteter Zwei-Faktor-Authentifizierung, den Code.
 - **Zwei-Faktor-Authentifizierung**: ein Code aus einer Authenticator-App zusätzlich zum Passwort, mit acht Wiederherstellungscodes, die einmal angezeigt werden.
 - **Passkeys**: Anmelden mit einem Schlüssel auf Handy, Laptop oder Sicherheitsstick. Sie brauchen einen echten Domainnamen und ein Zertifikat, dem der Browser vertraut.
 - **Android-App**: **Handys können sich mit den zwölf Wörtern der Gruppe koppeln**, womit sich ein gekoppeltes Handy ohne das Passwort anmelden kann.

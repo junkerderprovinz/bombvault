@@ -146,7 +146,7 @@ func TestAnOpenedPageTakesItsBaseFromThePrefix(t *testing.T) {
 	}
 }
 
-func TestOnlyASessionSignedInWithThePasswordOpensAnotherApp(t *testing.T) {
+func TestAPhonesSessionOpensNoOtherApp(t *testing.T) {
 	in := fortressInstance(t)
 	if _, out := in.do(t, http.MethodPost, "/api/fortress/open/abc", nil); out["code"] != "noFortress" {
 		t.Fatalf("outside a fortress = %v", out)
@@ -157,14 +157,63 @@ func TestOnlyASessionSignedInWithThePasswordOpensAnotherApp(t *testing.T) {
 			t.Fatalf("a phone's session = %d %v", code, out)
 		}
 	})
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
+}
+
+func TestWithoutALoginPasswordTheBrowserGetsASessionForTheTab(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pagesA := servePages(a)
+	servePages(b)
+	id := inOneFortress(t, a, b)
+	if _, err := a.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	in.as("", func() {
-		if code, out := in.do(t, http.MethodPost, "/api/fortress/open/abc", nil); code != http.StatusForbidden || out["code"] != codeNoPassword {
-			t.Fatalf("without a login password = %d %v", code, out)
+
+	r := httptest.NewRequest(http.MethodPost, "/api/fortress/open/"+id, nil)
+	r.Host = "localhost"
+	w := httptest.NewRecorder()
+	a.router.ServeHTTP(w, r)
+	var out map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &out)
+	tab, _ := out["path"].(string)
+	if out["ok"] != true || !strings.HasPrefix(tab, fortress.OpenPath) {
+		t.Fatalf("open without a password = %d %v", w.Code, out)
+	}
+	var browser *http.Cookie
+	for _, c := range w.Result().Cookies() {
+		if c.Name == sessionCookieNameHTTP && c.Value != "" {
+			browser = c
 		}
-	})
+	}
+	if browser == nil {
+		t.Fatal("the answer sets no session for the browser")
+	}
+	get := func(cookie *http.Cookie) int {
+		r := httptest.NewRequest(http.MethodGet, tab, nil)
+		if cookie != nil {
+			r.AddCookie(cookie)
+		}
+		w := httptest.NewRecorder()
+		pagesA.ServeHTTP(w, r)
+		return w.Code
+	}
+	if code := get(nil); code != http.StatusSeeOther {
+		t.Fatalf("the tab in another browser = %d", code)
+	}
+	if code := get(browser); code != http.StatusOK {
+		t.Fatalf("the tab in the browser that opened it = %d", code)
+	}
+
+	hash, err := secret.HashPassword(a.appKey, testPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = hash; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if code := get(browser); code != http.StatusSeeOther {
+		t.Fatalf("the tab once a password is set = %d", code)
+	}
 }
 
 func mustSettings(t *testing.T, in *instance) store.Settings {

@@ -773,9 +773,9 @@ export interface AuthStatusResponse {
   /** True while the stored password is still in the pre-v8.6.0 format. It is
    *  upgraded on the next sign-in, so this is informational, not a warning. */
   passwordNeedsUpgrade?: boolean;
-  /** The minimum length the server enforces, so the field says the server's
-   *  number rather than keeping a second copy of it. */
-  minPasswordLen?: number;
+  /** The length below which the password field suggests a longer one, so it
+   *  says the server's number rather than keeping a second copy of it. */
+  recommendedPasswordLen?: number;
   /** The page came through the relay, where nobody signs in or out. */
   relayed?: boolean;
   /** The session is a paired phone's, through the relay or not, which some
@@ -837,7 +837,6 @@ export class ApiError extends Error {
 
 let throughRelay = false;
 let pairedSession = false;
-let noLoginPassword = false;
 
 /** Whether this page was opened through the relay, as GET /api/auth said. */
 export function openedThroughRelay(): boolean {
@@ -847,11 +846,6 @@ export function openedThroughRelay(): boolean {
 /** Whether this page runs on a paired phone's session, as GET /api/auth said. */
 export function openedAsPairedPhone(): boolean {
   return pairedSession;
-}
-
-/** Whether this server has no login password, as GET /api/auth said. */
-export function openedWithoutPassword(): boolean {
-  return noLoginPassword;
 }
 
 /** The sentence of a failure this client can explain: a code it knows, a
@@ -865,7 +859,7 @@ function knownSentence(status: number, code: string | undefined, busy?: Busy): s
     case "own-login-needed":
       return translate(throughRelay ? "auth.relayLoginNeeded" : "auth.ownLoginNeeded");
     case "password-not-set":
-      return translate("secrets.passwordNotSet");
+      return translate("auth.twoFactorNeedsPassword");
     case "session-ended":
       return translate("apiError.sessionEnded");
     case "phone-pairing-off":
@@ -984,12 +978,11 @@ async function fetchJSON<T>(
   return res.json() as Promise<T>;
 }
 
-/** What a route that makes or hands out key material answers a 403 with:
- *  the server has no login password, or the session is the one a paired phone
- *  got for the group's words. A route that deletes backups for good answers
- *  only the second. After it, signing in at this instance (login) and sending
- *  the same request again goes through. */
-export type SecretsRefusal = "password-not-set" | "own-login-needed";
+/** What a route that makes or hands out key material, or deletes backups for
+ *  good, answers a 403 with where a password is set: the session is the one a
+ *  paired phone got for the group's words. After it, signing in at this
+ *  instance (login) and sending the same request again goes through. */
+export type SecretsRefusal = "own-login-needed";
 
 /** fetchJSON for the routes that can answer with a SecretsRefusal: that 403
  *  comes back as the answer, with its code, and every other failure throws. */
@@ -997,7 +990,7 @@ async function fetchKeyJSON<T>(path: string, options?: RequestInit): Promise<T> 
   const res = await send(path, options);
   if (res.status === 403) {
     const body = await readRefusal(res);
-    if (body?.code === "password-not-set" || body?.code === "own-login-needed") {
+    if (body?.code === "own-login-needed") {
       return body as T;
     }
     throw apiError(res, body);
@@ -7333,8 +7326,8 @@ export function removeFortressMember(id: string): Promise<FortressState> {
 
 /** POST /api/fortress/open/{id} - open another member's pages in a tab of
  *  their own. The answer carries the tab's path, or the code of why it did not
- *  open: a code of the kit's, or a server without a login password or a
- *  session that is not one somebody signed in for. */
+ *  open: a code of the kit's, or a session that is not one somebody signed in
+ *  for. */
 export function openFortressMember(id: string): Promise<OkEnvelope & { path?: string }> {
   return fetchKeyJSON(`/api/fortress/open/${encodeURIComponent(id)}`, { method: "POST" });
 }
@@ -7630,8 +7623,8 @@ export function listDeposits(): Promise<DepositAnswer<{ deposits?: Deposits }>> 
 /** PUT /api/group/members/{id}/roles/keeper: gives the member this instance's
  *  deposit. `recoveryCode` is the recovery code, in four groups of five; it comes
  *  with the first deposit only and is stored nowhere, so it has to be shown
- *  and written down then. Answers a SecretsRefusal without a login password
- *  or with a paired phone's session. */
+ *  and written down then. Answers a SecretsRefusal for a paired phone's
+ *  session. */
 export function askKeeper(memberId: string): Promise<DepositAnswer<{ keeper?: KeeperRole; recoveryCode?: string }>> {
   return fetchKeyJSON(`/api/group/members/${encodeURIComponent(memberId)}/roles/keeper`, { method: "PUT" });
 }
@@ -7882,7 +7875,6 @@ export async function getAuth(): Promise<AuthStatusResponse> {
   const res = await fetchJSON<AuthStatusResponse>("/api/auth");
   throughRelay = res.relayed === true;
   pairedSession = res.paired === true;
-  noLoginPassword = !res.enabled;
   return res;
 }
 
@@ -7954,13 +7946,11 @@ export function logoutAll(): Promise<OkEnvelope> {
  * Passing an empty string disables authentication. Once a login exists the
  * server wants the current password, and the code while two-factor is on.
  */
-export async function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
-  const res = await fetchJSON<SetPasswordResponse>("/api/auth/password", {
+export function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
+  return fetchJSON<SetPasswordResponse>("/api/auth/password", {
     method: "POST",
     body: JSON.stringify({ password, current, code }),
   });
-  if (res.enabled !== undefined) noLoginPassword = !res.enabled;
-  return res;
 }
 
 /** GET /api/auth/phone-pairing: whether a phone of the group may pair. */
@@ -9342,9 +9332,6 @@ export interface McpKeysResponse extends OkEnvelope {
   endpointPath: string;
   limit: number;
   authEnabled: boolean;
-  /** False when the request came in under a public-looking host name while no
-   *  login password is set: keys can then neither be created nor replaced. */
-  hostAllowsKeys: boolean;
   startsPerHour: number;
   cooldownMinutes: number;
   itemStartsPerDay: number;
@@ -9483,9 +9470,6 @@ export interface ApiTokensResponse extends OkEnvelope {
   openapiPath: string;
   limit: number;
   authEnabled: boolean;
-  /** False when no login password is set and the page was opened under a
-   *  public-looking host name: tokens can then neither be created nor replaced. */
-  hostAllowsKeys: boolean;
   startsPerHour: number;
   cooldownMinutes: number;
   itemStartsPerDay: number;

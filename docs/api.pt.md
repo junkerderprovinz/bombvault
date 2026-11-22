@@ -14,7 +14,7 @@ Envia o token num cabeçalho, `Authorization: Bearer <token>` ou `X-API-Key: <to
 
 Cada token tem um mosaico com o nome, se pode iniciar backups, os últimos quatro caracteres, quando e de onde foi usado pela última vez e as chamadas de hoje. No mosaico podes mudar-lhe o nome, alterar o que pode fazer, substituí-lo ou revogá-lo. **Registo** mostra os backups que iniciou e as últimas chamadas. Restaurar a configuração do BombVault a partir de um backup revoga todos os tokens, porque o backup pode conter tokens que revogaste depois.
 
-Sem palavra-passe de acesso, quem conseguir abrir a interface web também consegue criar um token. Se abrires o BombVault com um nome que parece público e sem palavra-passe, não se criam tokens a partir desse endereço, tal como com as [chaves MCP](mcp.md#switch-on).
+Sem palavra-passe de acesso, quem conseguir abrir a interface web também consegue criar um token.
 
 ## Rotas {#endpoints}
 

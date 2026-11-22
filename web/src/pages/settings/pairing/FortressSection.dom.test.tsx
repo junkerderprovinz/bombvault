@@ -363,9 +363,6 @@ describe("the other apps", () => {
     renderApps();
     await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
     expect(toasts).toEqual([fortressText("en").openRefused.ui_no_login]);
-    opened = { ok: false, code: "password-not-set" };
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
-    expect(toasts[1]).toBe(en["fortress.openNeedsPassword"]);
   });
 
   it("show the state of an app without pages of its own, such as a plugin", async () => {

@@ -3,6 +3,7 @@ import {
   createSignInFlow,
   focusFirstField,
   labelInside,
+  passwordShort,
   resetBlocked,
   showRefusal,
   signInBlocked,
@@ -31,8 +32,8 @@ export interface SignInCardProps extends SignInHandlers {
   passkey?: boolean;
   /** Offers Forgot password? and the reset form. */
   reset?: boolean;
-  /** The shortest new password the reset form takes, as the server says. */
-  minPassword?: number;
+  /** The length below which the reset form suggests a longer password, as the server says. */
+  recommendedPassword?: number;
   /** A step the page runs itself, in place of the card's forms. */
   step?: ReactNode;
   /** The start of the fields' ids: `-password`, `-code`, `-reset-code`, `-new` and `-confirm` follow it. */
@@ -65,13 +66,13 @@ export function SignInCard({
   text,
   passkey = false,
   reset = false,
-  minPassword = 12,
+  recommendedPassword = 12,
   step,
   idPrefix,
   ...handlers
 }: SignInCardProps) {
-  const latest = useRef({ ...handlers, text, minPassword });
-  latest.current = { ...handlers, text, minPassword };
+  const latest = useRef({ ...handlers, text, recommendedPassword });
+  latest.current = { ...handlers, text, recommendedPassword };
   const [flow] = useState(() => createSignInFlow(() => latest.current));
   const s = useSyncExternalStore(flow.subscribe, flow.state, flow.state);
   const id = (name: string) => `${idPrefix}-${name}`;
@@ -143,6 +144,9 @@ export function SignInCard({
                   wrapperClassName="w-full"
                   className={FIELD}
                 />
+                {passwordShort(s.newPassword, recommendedPassword) && (
+                  <p className="mt-1 text-xs text-carbon-textSub">{text.shortPassword}</p>
+                )}
               </SignInField>
               <SignInField label={text.confirmPassword} htmlFor={id("confirm")}>
                 <RevealInput

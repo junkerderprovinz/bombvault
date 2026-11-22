@@ -36,8 +36,6 @@ export interface McpClientDialogProps {
   lists: number;
   /** The address, endpoint and certificate state the snippets are written for. */
   snippetBase: Omit<McpSnippetInput, "key">;
-  /** Why this address may not create a key; undefined when it may. */
-  mintRefused?: string;
   /** Why no further key can be made, while the active keys are at the limit. */
   limitNote?: string;
   /** The (i) of the permission switch, with the server's limits filled in. */
@@ -76,7 +74,6 @@ export function McpClientDialog({
   keys,
   lists,
   snippetBase,
-  mintRefused,
   limitNote,
   allowStartHint,
   oauth,
@@ -89,13 +86,12 @@ export function McpClientDialog({
   t,
 }: McpClientDialogProps) {
   const other = client.id === OTHER_CLIENT.id;
-  const canMint = mintRefused === undefined;
   const name = other ? t("mcp.otherClient") : client.name;
   // A grant belongs to the client that signed in and cannot be handed to
   // another one, so only keys are offered for reuse.
   const staticKeys = keys.filter((k) => !k.viaOAuth);
   const [mode, setMode] = useState<"new" | "pick">(
-    (canMint && !limitNote) || staticKeys.every((k) => k.unusable) ? "new" : "pick"
+    !limitNote || staticKeys.every((k) => k.unusable) ? "new" : "pick"
   );
   const [label, setLabel] = useState(other ? "" : client.name);
   const [allowStart, setAllowStart] = useState(false);
@@ -319,16 +315,10 @@ export function McpClientDialog({
         </SettingRow>
       );
     } else {
-      const items = [];
-      if (canMint) items.push({ id: "new", label: t("mcp.newKey") });
+      const items = [{ id: "new", label: t("mcp.newKey") }];
       if (usable.length > 0) items.push({ id: "pick", label: t("mcp.existingKey") });
       content = (
         <>
-          {items.length === 0 && (
-            <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-              {mintRefused}
-            </p>
-          )}
           {items.length > 1 && (
             <Selector
               items={items}
@@ -337,7 +327,7 @@ export function McpClientDialog({
               onChange={(id) => setMode(id as "new" | "pick")}
             />
           )}
-          {mode === "new" && canMint && (
+          {mode === "new" && (
             <>
               <Rows>
                 <SettingRow label={t("mcp.labelLabel")} htmlFor="bv-mcp-dialog-label">

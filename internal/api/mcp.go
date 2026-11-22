@@ -206,10 +206,9 @@ func (h *Handler) buildMCPHTTP() http.Handler {
 		// under any other name, before any key is read, which is what
 		// tailscale serve and a reverse proxy in the same network namespace
 		// both look like. It is meant for unauthenticated localhost servers.
-		// Here the key is the defence: a DNS-rebinding page cannot know one,
-		// and it cannot mint one either, because creating a key while no login
-		// password is set only works from a host a public DNS name cannot
-		// rebind (mcpKeyHostAllowed).
+		// Here the key is the defence: a DNS-rebinding page cannot know one.
+		// Where no login password is set it could mint one, but there it
+		// reaches the whole API anyway.
 		DisableLocalhostProtection:   true,
 		MaxRequestBodyBytes:          mcpMaxBody,
 		PropagateRequestCancellation: true,

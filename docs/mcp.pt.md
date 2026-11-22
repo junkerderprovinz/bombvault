@@ -49,7 +49,7 @@ Os inícios pela [API](api.md#errors) e a partir do [Home Assistant](api.md#home
 3. Liga **Permitir iniciar backups** para uma chave que deva poder iniciar backups. Sem isso só pode ler. Podes mudar isto mais tarde nos **Detalhes** da chave, e a alteração vale a partir do pedido seguinte do assistente, sem nova ligação.
 4. Clica em **Criar chave**. A chave é mostrada uma vez. O BombVault guarda apenas uma impressão digital dela e não a pode mostrar outra vez, por isso copia-a agora. Se fechares a janela antes de o cliente ter usado a chave, o cartão continua a mostrá-la até confirmares que a copiaste.
 
-Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a tua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso. Se abrires o BombVault com um nome que parece público (por exemplo `bombvault.example.com` atrás de um proxy inverso) e não houver palavra-passe de início de sessão, a partir desse endereço não é possível criar nem substituir chaves, para que nenhuma página da Internet consiga levar o teu navegador a criar uma. Define uma palavra-passe de início de sessão, ou abre o BombVault pelo endereço IP ou por um nome local como `tower` ou `tower.local`.
+Sem palavra-passe de início de sessão, a própria interface web está aberta a toda a tua rede, e quem a conseguir abrir também pode criar uma chave. O cartão avisa disso.
 
 ## As suas chaves e o registo delas {#keys}
 
@@ -235,7 +235,6 @@ Atrás de um proxy, cada pedido traz o endereço do proxy. Cinco chaves erradas 
 - Cada criação, substituição, mudança de permissão e revogação envia uma notificação pelos seus canais de notificação, com o endereço de onde veio, a não ser que as notificações estejam desligadas.
 - 5 chaves erradas por minuto e por endereço, depois `429`. 120 pedidos por minuto e 12 backups iniciados por hora e por chave, mais a espera e a proteção da retenção descritas acima.
 - Pedidos de uma página de navegador de outra origem são recusados.
-- Enquanto não houver palavra-passe de início de sessão, não é possível criar chaves a partir de um nome de anfitrião que pareça público.
 - Cada backup que um assistente inicia, e as execuções de prune e de cópia externa que daí resultam, fica marcado "via MCP" com o nome da chave no registo de atividade, no painel de erros e na notificação do backup.
 - Cada chamada a uma ferramenta é escrita no registo do contentor com o id da chave e os seus últimos quatro caracteres (nunca o nome) e contada em `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Restaurar um backup da configuração revoga todas as chaves, porque a base de dados restaurada pode conter chaves que revogaste depois de ela ter sido guardada. Cria chaves novas a seguir.

@@ -48,7 +48,6 @@ func (h *Handler) handleListAPITokens(w http.ResponseWriter, r *http.Request) {
 		"openapiPath":      apiV1OpenAPIPath,
 		"limit":            store.APITokenLimit,
 		"authEnabled":      authOn,
-		"hostAllowsKeys":   h.mcpKeysAllowedFrom(r),
 		"startsPerHour":    mcpStartsPerHour,
 		"cooldownMinutes":  int(mcpStartCooldown / time.Minute),
 		"itemStartsPerDay": mcpItemStartsPerDay,
@@ -57,8 +56,8 @@ func (h *Handler) handleListAPITokens(w http.ResponseWriter, r *http.Request) {
 	}))
 }
 
-// handleCreateAPIToken mints a token under the same host rule as an MCP key. A
-// token starts read-only unless the request asks for more.
+// handleCreateAPIToken mints a token, which starts read-only unless the
+// request asks for more.
 func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Label           string `json:"label"`
@@ -72,10 +71,6 @@ func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer release()
-	if !h.mcpKeysAllowedFrom(r) {
-		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyNeedsPassword, "mcp-key-needs-password"))
-		return
-	}
 	label, ok := normalizeMCPKeyLabel(body.Label)
 	if !ok {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyLabel, "mcp-key-label-invalid"))

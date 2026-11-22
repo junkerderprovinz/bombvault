@@ -54,7 +54,6 @@ const REFUSAL: Record<EmergencyCode, TranslationKey> = {
   "deposit-owner": "deposit.code.deposit-owner",
   "deposit-unreadable": "deposit.code.deposit-unreadable",
   "deposit-busy": "deposit.code.deposit-busy",
-  "password-not-set": "secrets.passwordNotSet",
   "own-login-needed": "secrets.ownLoginNeeded",
 };
 

@@ -49,7 +49,7 @@ Los inicios por la [API](api.md#errors) y desde [Home Assistant](api.md#home-ass
 3. Activa **Permitir iniciar copias** para una clave que deba poder iniciar copias. Sin eso la clave solo puede leer. Puedes cambiarlo más tarde en los **Detalles** de la clave, y el cambio se aplica a la siguiente petición del asistente sin reconectar.
 4. Haz clic en **Crear clave**. La clave se muestra una sola vez. BombVault guarda solo una huella suya y no puede volver a mostrarla, así que cópiala ahora. Si cierras la ventana antes de que el cliente haya usado la clave, la tarjeta sigue mostrándola hasta que confirmes que la has copiado.
 
-Sin contraseña de acceso la propia interfaz web está abierta a todos en tu red, y cualquiera que pueda abrirla también puede crear una clave. La tarjeta lo dice. Si abres BombVault con un nombre de aspecto público (por ejemplo `bombvault.example.com` a través de un proxy inverso) y no hay contraseña de acceso, no se pueden crear ni sustituir claves desde esa dirección, para que ninguna página web de internet pueda hacer que tu navegador cree una. Define una contraseña de acceso, o abre BombVault por su dirección IP o por un nombre local como `tower` o `tower.local`.
+Sin contraseña de acceso la propia interfaz web está abierta a todos en tu red, y cualquiera que pueda abrirla también puede crear una clave. La tarjeta lo dice.
 
 ## Tus claves y su registro {#keys}
 
@@ -235,7 +235,6 @@ Detrás de un proxy cada petición lleva la dirección del proxy. Cinco claves e
 - Cada creación, sustitución, cambio de permiso y revocación envía una notificación por tus canales de notificación, con la dirección de origen, salvo que las notificaciones estén desactivadas.
 - 5 claves erróneas por minuto y dirección, y luego `429`. 120 peticiones por minuto y 12 copias iniciadas por hora y clave, además del tiempo de espera y la protección de retención de arriba.
 - Las peticiones desde una página del navegador de otro origen se rechazan.
-- No se pueden crear claves desde un nombre de host de aspecto público mientras no haya contraseña de acceso.
 - Cada copia que inicia un asistente, y las podas y copias externas que provoca, se marca como "via MCP" con el nombre de la clave en el registro de actividad, en el panel de errores y en la notificación de la copia.
 - Cada llamada a una herramienta se escribe en el registro del contenedor con el id de la clave y sus últimos cuatro caracteres (nunca su nombre) y se cuenta en `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Restaurar una copia de la configuración revoca todas las claves, porque la base de datos restaurada podría contener claves que revocaste después de guardarla. Crea claves nuevas después.

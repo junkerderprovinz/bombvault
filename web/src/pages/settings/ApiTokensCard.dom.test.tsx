@@ -57,7 +57,6 @@ function payload(over: Partial<ApiTokensResponse> = {}): ApiTokensResponse {
     openapiPath: "/api/v1/openapi.json",
     limit: 10,
     authEnabled: true,
-    hostAllowsKeys: true,
     startsPerHour: 12,
     cooldownMinutes: 15,
     itemStartsPerDay: 4,
@@ -111,10 +110,11 @@ describe("ApiTokensCard", () => {
     expect(screen.queryByText("sign in at this instance's web interface")).toBeNull();
   });
 
-  it("refuses to mint from a public-looking name without a password", async () => {
-    await renderCard(payload({ authEnabled: false, hostAllowsKeys: false }));
+  it("mints without a password and says that anyone who opens the page can", async () => {
+    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
+    await renderCard(payload({ authEnabled: false }));
     await screen.findByText(en["api.noPasswordWarning"]);
-    expect(screen.queryByRole("button", { name: new RegExp(en["api.createToken"]) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(en["api.createToken"]) })).toBeTruthy();
   });
 
   it("leads Set password to the field on the Security page", async () => {

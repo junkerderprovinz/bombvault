@@ -40,7 +40,6 @@ vi.mock("../lib/api", async (importOriginal) => {
         endpointPath: "/mcp",
         limit: 10,
         authEnabled: true,
-        hostAllowsKeys: true,
         startsPerHour: 12,
         cooldownMinutes: 15,
         itemStartsPerDay: 5,

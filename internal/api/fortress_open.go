@@ -197,18 +197,24 @@ func (s *Service) memberAppName(id string) string {
 	return ""
 }
 
-// passwordSession is the session a request carries that somebody signed in
-// with the password, and false for none.
-func (h *Handler) passwordSession(r *http.Request) (string, bool) {
-	hash, epoch, on := h.authEnabled()
-	if !on || openedPage(r) || relayedPage(r) {
+// tabSession is the session a request carries that may open another
+// member's pages, and false for none: one somebody signed in for with the
+// password or, while none is set, the one this browser was handed for its
+// tabs. Setting or changing the password ends either.
+func (h *Handler) tabSession(r *http.Request) (string, bool) {
+	if openedPage(r) || relayedPage(r) {
 		return "", false
 	}
 	c, err := h.sessionCookie(r)
-	if err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
+	if err != nil || secret.PairedSessionToken(c.Value) || !h.tabSessionValid(c.Value) {
 		return "", false
 	}
 	return c.Value, true
+}
+
+func (h *Handler) tabSessionValid(token string) bool {
+	hash, epoch, _ := h.authEnabled()
+	return secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
 }
 
 // sessionName names a session to the fortress without giving it away.
@@ -217,14 +223,14 @@ func sessionName(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// FortressTabs serves the tabs in which a user signed in here opens other
+// FortressTabs serves the tabs in which a user of this instance opens other
 // members of the fortress, outside the auth gate and the security headers:
 // the kit checks the session itself, and the bar it draws frames the opened
 // page. A phone's page over the relay and a page opened here through the
 // fortress do not reach them.
 func (h *Handler) FortressTabs() http.Handler {
 	session := func(r *http.Request) (string, bool) {
-		token, ok := h.passwordSession(r)
+		token, ok := h.tabSession(r)
 		if !ok {
 			return "", false
 		}
@@ -241,20 +247,22 @@ func (h *Handler) FortressTabs() http.Handler {
 }
 
 // handleFortressOpen opens another member's pages for the browser that asks,
-// in a tab of their own, and answers with its path. Only a session somebody
-// signed in for with the password may open one: the other app keeps its
-// sign-in apart by it, and the tab closes once it ends.
+// in a tab of their own, and answers with its path. The other app keeps its
+// sign-in apart by the session the tab is opened for, and the tab closes once
+// that session ends. Where a password is set it is one somebody signed in for
+// with it. Without one the browser is handed a session of its own here.
 // POST /api/fortress/open/{id}
 func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 	if openedPage(r) {
 		refuseOpened(w, http.StatusForbidden, "this works at BombVault's own address, not through the fortress")
 		return
 	}
-	if !h.requireAuthForSecrets(w, r, "opening another app") {
+	if !h.requireSignIn(w, r, "opening another app") {
 		return
 	}
-	token, ok := h.passwordSession(r)
-	if !ok {
+	hash, epoch, on := h.authEnabled()
+	token, ok := h.tabSession(r)
+	if !ok && (on || relayedPage(r)) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "sign in with the password to open another app", "code": codeOwnLoginNeeded})
 		return
 	}
@@ -263,16 +271,16 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		writeFortressError(w, errNoFortress)
 		return
 	}
-	valid := func() bool {
-		hash, epoch, on := h.authEnabled()
-		return on && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
+	if !ok {
+		token = secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
+		http.SetCookie(w, h.newSessionCookie(token, int(sessionTTL.Seconds())))
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), moveTimeout)
 	defer cancel()
 	tab, err := f.Open(ctx, fortress.Visit{
 		Member:  r.PathValue("id"),
 		Session: sessionName(token),
-		Valid:   valid,
+		Valid:   func() bool { return h.tabSessionValid(token) },
 		Back:    forwardedPrefix(r) + "settings/pairing",
 	})
 	if err != nil {

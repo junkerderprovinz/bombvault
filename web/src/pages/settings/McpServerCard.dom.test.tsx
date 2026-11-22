@@ -90,7 +90,6 @@ function payload(over: Partial<McpKeysResponse> = {}): McpKeysResponse {
     endpointPath: "/mcp",
     limit: 10,
     authEnabled: true,
-    hostAllowsKeys: true,
     startsPerHour: 12,
     cooldownMinutes: 15,
     itemStartsPerDay: 5,
@@ -195,25 +194,18 @@ describe("the MCP card without a key", () => {
     expect(screen.getByTestId("where").textContent).toBe(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
   });
 
-  it("hides key creation for a public host without a password", async () => {
+  it("offers key creation on a public host without a password", async () => {
     vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
-    await renderCard(payload({ authEnabled: false, hostAllowsKeys: false, keys: [key()] }));
+    await renderCard(payload({ authEnabled: false }));
 
-    await waitFor(() =>
-      expect(
-        screen.getByText(en["mcp.needsPasswordForHost"].replace("{host}", "backup.example.com"))
-      ).toBeTruthy()
-    );
-    expect(screen.queryByRole("button", { name: en["mcp.rotate"] })).toBeNull();
+    await waitFor(() => expect(screen.getByText(en["mcp.noPasswordWarning"])).toBeTruthy());
     const dialog = await openClient("Cursor");
-    expect(within(dialog).queryByRole("button", { name: en["mcp.createKey"] })).toBeNull();
-    expect(within(dialog).getByRole("button", { name: /office laptop/ })).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: en["mcp.createKey"] })).toBeTruthy();
   });
 
-  it("offers key creation once a login password is set on this page", async () => {
-    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
+  it("drops the warning once a login password is set on this page", async () => {
     listMcpKeys.mockReset();
-    listMcpKeys.mockResolvedValue(payload({ authEnabled: false, hostAllowsKeys: false }));
+    listMcpKeys.mockResolvedValue(payload({ authEnabled: false }));
     const view = render(<McpServerCard hueIndex={0} passwordSet={false} />, { wrapper: MemoryRouter });
     await waitFor(() => expect(screen.getByText(en["mcp.noPasswordWarning"])).toBeTruthy());
 
@@ -221,8 +213,6 @@ describe("the MCP card without a key", () => {
     view.rerender(<McpServerCard hueIndex={0} passwordSet />);
 
     await waitFor(() => expect(screen.queryByText(en["mcp.noPasswordWarning"])).toBeNull());
-    const dialog = await openClient("Cursor");
-    expect(within(dialog).getByRole("button", { name: en["mcp.createKey"] })).toBeTruthy();
   });
 });
 
@@ -416,14 +406,6 @@ describe("a client's setup dialog", () => {
     } finally {
       vi.useRealTimers();
     }
-  });
-
-  it("says in the key step why no key can be made here", async () => {
-    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
-    await renderCard(payload({ authEnabled: false, hostAllowsKeys: false }));
-
-    await openClient("Cursor");
-    expect(dialogText()).toContain(en["mcp.needsPasswordForHost"].replace("{host}", "backup.example.com"));
   });
 
   it("hands an unused new key back to the card when it closes", async () => {
@@ -665,18 +647,16 @@ describe("the certificate of this address", () => {
     expect(dialogText()).toContain("NODE_EXTRA_CA_CERTS");
   });
 
-  it("does not offer a certificate name the server would refuse", async () => {
+  it("offers a certificate name on a public host without a password", async () => {
     vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
-    await renderCard(
-      payload({ authEnabled: false, hostAllowsKeys: false, keys: [key()], certificate: selfIssued })
-    );
+    await renderCard(payload({ authEnabled: false, keys: [key()], certificate: selfIssued }));
 
     await waitFor(() =>
       expect(
         screen.getByText(en["mcp.certNotForThisAddress"].replace("{host}", "backup.example.com"))
       ).toBeTruthy()
     );
-    expect(screen.queryByRole("button", { name: en["mcp.certAddAddress"] })).toBeNull();
+    expect(screen.getByRole("button", { name: en["mcp.certAddAddress"] })).toBeTruthy();
   });
 
   it("leaves an operator's own certificate alone", async () => {
@@ -1028,22 +1008,6 @@ describe("a refusal from the server", () => {
         countText(en["mcp.limitReached"], "en", 10).replace("{n}", "10")
       )
     );
-    cleanup();
-
-    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
-    await createWith({ ok: false, code: "mcp-key-needs-password", error: "needs password" });
-    await waitFor(() =>
-      expect(pushed.map((p) => p.message)).toContain(
-        en["mcp.needsPasswordForHost"].replace("{host}", "backup.example.com")
-      )
-    );
-  });
-
-  it("refreshes the list when the server wants a login password first", async () => {
-    vi.stubGlobal("location", new URL("https://backup.example.com/settings"));
-    await createWith({ ok: false, code: "mcp-key-needs-password", error: "needs password" });
-
-    await waitFor(() => expect(listMcpKeys.mock.calls.length).toBeGreaterThan(1));
   });
 
   it("keeps a refused new name open and shakes it", async () => {

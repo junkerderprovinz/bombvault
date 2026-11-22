@@ -58,7 +58,7 @@ BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa
 
 ## Turvallisuus {#security}
 
-- **Salasana**: kirjautumissalasana, vähintään 12 merkkiä. Sen vaihtaminen tai tyhjentäminen kysyy nykyistä ja kaksivaiheisen tunnistautumisen ollessa päällä koodin.
+- **Salasana**: kirjautumissalasana, minkä pituinen tahansa. Alle 12 merkin salasanalle sivu ehdottaa pidempää. Sen vaihtaminen tai tyhjentäminen kysyy nykyistä ja kaksivaiheisen tunnistautumisen ollessa päällä koodin.
 - **Kaksivaiheinen tunnistautuminen**: tunnistussovelluksen koodi salasanan lisäksi, kahdeksan palautuskoodia näytetään kerran.
 - **Pääsyavaimet**: kirjaudu avaimella puhelimessa, kannettavassa tai turvatikulla. Ne tarvitsevat oikean verkkotunnuksen ja varmenteen, johon selain luottaa.
 - **Android-sovellus**: **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla**, jolloin pariliitetty puhelin voi kirjautua ilman salasanaa.

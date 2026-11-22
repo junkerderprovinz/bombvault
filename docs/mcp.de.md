@@ -49,7 +49,7 @@ Starts über die [API](api.md#errors) und von [Home Assistant](api.md#home-assis
 3. Schalte **Sicherungen starten erlauben** für einen Schlüssel ein, der Sicherungen starten können soll. Ohne das kann der Schlüssel nur lesen. Du kannst es später in den **Details** des Schlüssels ändern, und die Änderung gilt für die nächste Anfrage des Assistenten ohne neue Verbindung.
 4. Klicke auf **Schlüssel anlegen**. Der Schlüssel wird einmal angezeigt. BombVault behält nur einen Fingerabdruck davon und kann ihn nicht erneut zeigen, kopiere ihn also jetzt. Schließt du das Fenster, bevor der Client den Schlüssel genutzt hat, zeigt die Karte ihn weiter, bis du bestätigst, dass du ihn kopiert hast.
 
-Ohne Login-Passwort steht die Weboberfläche selbst jedem in deinem Netzwerk offen, und jeder, der sie öffnen kann, kann auch einen Schlüssel anlegen. Die Karte sagt das. Öffnest du BombVault unter einem öffentlich aussehenden Namen (zum Beispiel `bombvault.example.com` über einen Reverse-Proxy) und ist kein Login-Passwort gesetzt, lassen sich Schlüssel von dieser Adresse aus weder anlegen noch ersetzen, damit keine Webseite im Internet deinen Browser dazu bringen kann, einen anzulegen. Setze ein Login-Passwort oder öffne BombVault über seine IP-Adresse oder einen lokalen Namen wie `tower` oder `tower.local`.
+Ohne Login-Passwort steht die Weboberfläche selbst jedem in deinem Netzwerk offen, und jeder, der sie öffnen kann, kann auch einen Schlüssel anlegen. Die Karte sagt das.
 
 ## Deine Schlüssel und ihr Protokoll {#keys}
 
@@ -235,7 +235,6 @@ Hinter einem Proxy trägt jede Anfrage die Adresse des Proxys. Fünf falsche Sch
 - Jedes Anlegen, Ersetzen, Ändern der Berechtigung und Entziehen sendet eine Benachrichtigung über deine Benachrichtigungskanäle, mit der Adresse, von der es kam, sofern Benachrichtigungen nicht ausgeschaltet sind.
 - 5 falsche Schlüssel pro Minute und Adresse, dann `429`. 120 Anfragen pro Minute und 12 gestartete Sicherungen pro Stunde und Schlüssel, dazu die Wartezeit und der Aufbewahrungsschutz von oben.
 - Anfragen von einer Browserseite auf einem anderen Origin werden abgelehnt.
-- Schlüssel lassen sich nicht von einem öffentlich aussehenden Hostnamen aus anlegen, solange kein Login-Passwort gesetzt ist.
 - Jede Sicherung, die ein Assistent startet, und die Aufräum- und Off-site-Läufe, die sie auslöst, sind im Aktivitätsprotokoll, im Fehlerfeld und in der Sicherungsbenachrichtigung mit „via MCP“ und dem Namen des Schlüssels markiert.
 - Jeder Tool-Aufruf wird mit der ID und den letzten vier Zeichen des Schlüssels (nie seinem Namen) in das Container-Protokoll geschrieben und in `/metrics` gezählt (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Das Wiederherstellen einer Konfigurationssicherung entzieht jeden Schlüssel, weil die wiederhergestellte Datenbank Schlüssel enthalten kann, die du nach dem Speichern entzogen hast. Lege danach neue Schlüssel an.

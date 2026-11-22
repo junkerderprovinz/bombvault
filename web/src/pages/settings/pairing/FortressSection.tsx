@@ -411,12 +411,11 @@ interface StatusShown {
  *  in a window, as for a plugin, whose pages live in Unraid. A refusal says
  *  why in a toast. */
 function useOpenMember(view: FortressState, text: FortressText): [(app: FortressApp, instance: FortressInstance) => void, ReactNode] {
-  const { t, lang } = useT();
+  const { lang } = useT();
   const { push } = useToast();
   const [shown, setShown] = useState<StatusShown | null>(null);
 
   const refusal = (code?: string) => {
-    if (code === "password-not-set") return t("fortress.openNeedsPassword");
     if (code === "own-login-needed") return failureOf(403, code).message;
     return openRefusalText(text, code ?? "unreachable");
   };

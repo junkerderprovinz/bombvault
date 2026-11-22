@@ -14,7 +14,7 @@ Stuur het token mee in een header, als `Authorization: Bearer <token>` of als `X
 
 Elk token heeft een tegel met zijn naam, of het back-ups mag starten, de laatste vier tekens, wanneer en vanwaar het voor het laatst is gebruikt en zijn aanroepen van vandaag. Op de tegel kun je het hernoemen, wijzigen wat het mag, vervangen of intrekken. **Logboek** toont de back-ups die het startte en zijn recente aanroepen. Als je de configuratie van BombVault uit een back-up herstelt, worden alle tokens ingetrokken, want de back-up kan tokens bevatten die je later hebt ingetrokken.
 
-Zonder inlogwachtwoord kan iedereen die de webinterface kan openen ook een token aanmaken. Open je BombVault onder een naam die publiek lijkt en is er geen wachtwoord ingesteld, dan kunnen er vanaf dat adres geen tokens worden aangemaakt. Dat is dezelfde regel als bij [MCP-sleutels](mcp.md#switch-on).
+Zonder inlogwachtwoord kan iedereen die de webinterface kan openen ook een token aanmaken.
 
 ## Eindpunten {#endpoints}
 

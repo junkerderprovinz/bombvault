@@ -58,7 +58,7 @@ La tarjeta **Streaming**, que baja el límite de subida mientras Plex, Jellyfin 
 
 ## Seguridad {#security}
 
-- **Contraseña**: la contraseña de acceso, de al menos 12 caracteres. Cambiarla o borrarla pide la actual y, con la verificación en dos pasos activada, el código.
+- **Contraseña**: la contraseña de acceso, de cualquier longitud. Por debajo de 12 caracteres la página sugiere una más larga. Cambiarla o borrarla pide la actual y, con la verificación en dos pasos activada, el código.
 - **Verificación en dos pasos**: un código de una app autenticadora además de la contraseña, con ocho códigos de recuperación que se muestran una vez.
 - **Claves de acceso**: inicia sesión con una clave en tu teléfono, portátil o llave de seguridad. Necesitan un nombre de dominio real y un certificado en el que confíe el navegador.
 - **App de Android**: **Los teléfonos pueden emparejarse con las doce palabras del grupo**, que permite a un teléfono emparejado iniciar sesión sin la contraseña.
