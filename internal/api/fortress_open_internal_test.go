@@ -214,12 +214,15 @@ func TestWithoutALoginPasswordTheBrowserGetsASessionForTheTab(t *testing.T) {
 	}
 	var browser *http.Cookie
 	for _, c := range w.Result().Cookies() {
-		if c.Name == sessionCookieNameHTTP && c.Value != "" {
+		if c.Name == sessionCookieNameHTTP {
+			t.Fatalf("the answer signs the browser in: %v", c)
+		}
+		if c.Name == visitorCookieName && c.Value != "" && c.HttpOnly {
 			browser = c
 		}
 	}
 	if browser == nil {
-		t.Fatal("the answer sets no session for the browser")
+		t.Fatal("the answer sets no visitor cookie for the browser")
 	}
 	get := func(cookie *http.Cookie) int {
 		r := httptest.NewRequest(http.MethodGet, tab, nil)

@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -189,24 +190,41 @@ func (s *Service) memberAppName(id string) string {
 	return ""
 }
 
-// tabSession is the session a request carries that may open another
-// member's pages, and false for none: one somebody signed in for with the
-// password or, while none is set, the one this browser was handed for its
-// tabs. Setting or changing the password ends either.
-func (h *Handler) tabSession(r *http.Request) (string, bool) {
+// visitorCookieName holds a random name a browser gets on an instance
+// without a login password, so that a tab opened there belongs to that
+// browser alone, as it belongs to a sign-in where a password is set.
+const visitorCookieName = "bv_visitor"
+
+// tabSession names the browser session a request may open another member's
+// pages with, and reports whether it still stands: the sign-in where a
+// password is set, the visitor cookie where none is. A phone's page and a
+// page opened here through the fortress have none.
+func (h *Handler) tabSession(r *http.Request) (name string, valid func() bool, ok bool) {
 	if openedPage(r) || relayedPage(r) {
-		return "", false
+		return "", nil, false
+	}
+	hash, epoch, on := h.authEnabled()
+	if !on {
+		c, err := r.Cookie(visitorCookieName)
+		if err != nil || c.Value == "" {
+			return "", nil, false
+		}
+		return sessionName(c.Value), h.noPassword, true
 	}
 	c, err := h.sessionCookie(r)
-	if err != nil || secret.PairedSessionToken(c.Value) || !h.tabSessionValid(c.Value) {
-		return "", false
+	if err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
+		return "", nil, false
 	}
-	return c.Value, true
+	token := c.Value
+	return sessionName(token), func() bool {
+		hash, epoch, on := h.authEnabled()
+		return on && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
+	}, true
 }
 
-func (h *Handler) tabSessionValid(token string) bool {
-	hash, epoch, _ := h.authEnabled()
-	return secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
+func (h *Handler) noPassword() bool {
+	_, _, on := h.authEnabled()
+	return !on
 }
 
 // sessionName names a session to the fortress without giving it away.
@@ -222,11 +240,8 @@ func sessionName(token string) string {
 // fortress do not reach them.
 func (h *Handler) FortressTabs() http.Handler {
 	session := func(r *http.Request) (string, bool) {
-		token, ok := h.tabSession(r)
-		if !ok {
-			return "", false
-		}
-		return sessionName(token), true
+		name, _, ok := h.tabSession(r)
+		return name, ok
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f := h.svc.fortressNow()
@@ -241,8 +256,8 @@ func (h *Handler) FortressTabs() http.Handler {
 // handleFortressOpen opens another member's pages for the browser that asks,
 // in a tab of their own, and answers with its path. The other app keeps its
 // sign-in apart by the session the tab is opened for, and the tab closes once
-// that session ends. Where a password is set it is one somebody signed in for
-// with it. Without one the browser is handed a session of its own here.
+// that session ends. Without a login password the browser gets a visitor
+// cookie for it, and setting a password closes the tab.
 // POST /api/fortress/open/{id}
 func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 	if openedPage(r) {
@@ -252,9 +267,8 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 	if !h.requireSignIn(w, r, "opening another app") {
 		return
 	}
-	hash, epoch, on := h.authEnabled()
-	token, ok := h.tabSession(r)
-	if !ok && (on || relayedPage(r)) {
+	name, valid, ok := h.tabSession(r)
+	if !ok && (!h.noPassword() || relayedPage(r)) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "sign in with the password to open another app", "code": codeOwnLoginNeeded})
 		return
 	}
@@ -264,15 +278,17 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !ok {
-		token = secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
-		http.SetCookie(w, h.newSessionCookie(token, int(sessionTTL.Seconds())))
+		c := h.newSessionCookie(rand.Text(), int(sessionTTL.Seconds()))
+		c.Name = visitorCookieName
+		http.SetCookie(w, c)
+		name, valid = sessionName(c.Value), h.noPassword
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), moveTimeout)
 	defer cancel()
 	tab, err := f.Open(ctx, fortress.Visit{
 		Member:  r.PathValue("id"),
-		Session: sessionName(token),
-		Valid:   func() bool { return h.tabSessionValid(token) },
+		Session: name,
+		Valid:   valid,
 		Back:    forwardedPrefix(r) + "settings/pairing",
 	})
 	if err != nil {
