@@ -13,4 +13,4 @@ jobs:
     permissions:
       issues: write
       pull-requests: read
-    uses: junkerderprovinz/junkerderprovinz/.github/workflows/component-update.yml@f74be41e79778bc4528eb7a9b6f9541c6a9ce952 # main
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/component-update.yml@c5de9719d2e5cc47b1a74812fc23413bfaa9dd9f # main
