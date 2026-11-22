@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"log"
 	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -733,6 +734,9 @@ type Service struct {
 	nodeLinks  map[string]*homeNode
 	homeLink   *nodelink.Link
 	keptPrunes map[string]nodePrune
+	// nodeRestDial is how home dials the rest-server of a node that keeps its
+	// own backups; nil dials it directly.
+	nodeRestDial func(ctx context.Context, network, addr string) (net.Conn, error)
 	// nodeAPI is the router a node runs the requests of its home through.
 	nodeAPI atomic.Pointer[http.Handler]
 	// nodes keeps the schedules home holds for its nodes.

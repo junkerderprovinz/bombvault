@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/json"
@@ -59,6 +60,22 @@ const nodePullCadence = "15 * * * *"
 
 // nodeRestStop bounds the stop of the rest-server before it is made anew.
 const nodeRestStop = 10 * time.Second
+
+// nodeRestReach is how long home keeps trying to reach the rest-server a node
+// has just started, and nodeRepoPrepare how long it waits on each of the
+// node's repositories. restic retries a server that does not answer for a
+// quarter of an hour, so without them a placement looks stuck.
+var (
+	nodeRestReach   = 30 * time.Second
+	nodeRepoPrepare = 2 * time.Minute
+)
+
+// The codes of a placement that failed because home could not reach the
+// node's rest-server, or found a server there with another certificate.
+const (
+	codeNodeRestUnreachable = "node-rest-unreachable"
+	codeNodeRestForeign     = "node-rest-foreign"
+)
 
 var errNodeFetchPlain = errors.New("this instance would fetch the node's backups over the internet unencrypted: use https://, or http:// only with a private IP address such as one of a VPN")
 
@@ -267,6 +284,9 @@ func (s *Service) keptRepos(ctx context.Context, n store.Node, link *nodelink.Li
 	if !kept.OK {
 		return nil, "", errors.New(cmp.Or(kept.Error, "the node could not start its rest-server"))
 	}
+	if err := s.reachNodeRest(ctx, u, kept.CAPEM); err != nil {
+		return nil, "", err
+	}
 	if err := writeTrusted(s.nodeCertFile(n.ID), kept.CAPEM); err != nil {
 		return nil, "", err
 	}
@@ -284,6 +304,79 @@ func (s *Service) keptRepos(ctx context.Context, n store.Node, link *nodelink.Li
 		})
 	}
 	return out, addr, nil
+}
+
+// nodeRestUnreached is a node's rest-server home could not reach at url, or
+// found another server at when foreign is set.
+type nodeRestUnreached struct {
+	url     *url.URL
+	foreign bool
+	err     error
+}
+
+func (e *nodeRestUnreached) Error() string {
+	if e.foreign {
+		return fmt.Sprintf("the server at %s has another certificate than the one the node made: check that the address leads to the node (%v)", e.url, e.err)
+	}
+	return fmt.Sprintf("this instance could not reach the node's rest-server at %s within %d s: check that port %s is open in the node's firewall and in its provider's firewall (%v)",
+		e.url, int(nodeRestReach.Seconds()), e.port(), e.err)
+}
+
+func (e *nodeRestUnreached) code() string {
+	if e.foreign {
+		return codeNodeRestForeign
+	}
+	return codeNodeRestUnreachable
+}
+
+func (e *nodeRestUnreached) port() string {
+	if p := e.url.Port(); p != "" {
+		return p
+	}
+	if e.url.Scheme == "http" {
+		return "80"
+	}
+	return "443"
+}
+
+// reachNodeRest waits until the rest-server at u answers, over the
+// certificate caPEM when it is https. The server may take a moment to listen
+// after the node started it, so home asks again until nodeRestReach is up.
+func (s *Service) reachNodeRest(ctx context.Context, u *url.URL, caPEM string) error {
+	ctx, cancel := context.WithTimeout(ctx, nodeRestReach)
+	defer cancel()
+	tr := &http.Transport{DialContext: s.nodeRestDial, DisableKeepAlives: true}
+	if caPEM != "" {
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM([]byte(caPEM))
+		tr.TLSClientConfig = &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}
+	}
+	client := http.Client{Transport: tr}
+	for {
+		req, err := http.NewRequestWithContext(ctx, http.MethodHead, u.String()+"/", nil)
+		if err != nil {
+			return err
+		}
+		res, err := client.Do(req)
+		if err == nil {
+			_ = res.Body.Close()
+			return nil
+		}
+		var cert *tls.CertificateVerificationError
+		if errors.As(err, &cert) {
+			return &nodeRestUnreached{url: u, foreign: true, err: cert.Err}
+		}
+		// The error around it names the address already.
+		var ue *url.Error
+		if errors.As(err, &ue) {
+			err = ue.Err
+		}
+		select {
+		case <-ctx.Done():
+			return &nodeRestUnreached{url: u, err: err}
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 // nodeCertFile is where home keeps the certificate of node id's rest-server.

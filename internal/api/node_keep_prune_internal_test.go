@@ -110,6 +110,7 @@ func TestHomeHasANodeThatKeepsItsBackupsAgeThemItselfAndWaitsForIt(t *testing.T)
 	node.svc.cfg.HostMountRoot = t.TempDir()
 	node.svc.cfg.HostSourceRoot = "/srv/data"
 	node.engine.want = node.svc.backupPassword()
+	servesNodeRest(t, home, node.svc.cfg.HostMountRoot)
 	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": "https://203.0.113.7:8443"}); code != http.StatusOK || out["ok"] != true {
 		t.Fatalf("keep on the node = %d %v", code, out)
 	}

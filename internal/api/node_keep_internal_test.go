@@ -2,20 +2,27 @@ package api
 
 import (
 	"bytes"
+	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"io"
+	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/model"
+	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/restickey"
 	"github.com/junkerderprovinz/bombvault/internal/trust"
 )
@@ -153,6 +160,7 @@ func TestHomeFetchesTheBackupsANodeKeepsAndTrustsItsCertificate(t *testing.T) {
 	node.svc.cfg.HostMountRoot = t.TempDir()
 	node.svc.cfg.HostSourceRoot = "/srv/data"
 	node.engine.want = node.svc.backupPassword()
+	servesNodeRest(t, home, node.svc.cfg.HostMountRoot)
 
 	for name, addr := range map[string]string{"plain http, public": "http://203.0.113.7:8000", "no address": "", "not an address": "vps:8000", "a folder": "https://203.0.113.7:8443/backups"} {
 		if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": addr}); code != http.StatusBadRequest || out["ok"] != false {
@@ -235,5 +243,172 @@ func TestHomeFetchesTheBackupsANodeKeepsAndTrustsItsCertificate(t *testing.T) {
 	sources, _ = home.st.ListPullSources()
 	if len(sources) != 2 || sources[0].Enabled || sources[1].Enabled {
 		t.Errorf("after the release home fetches from %+v, want the sources kept and switched off", sources)
+	}
+}
+
+// servesNodeRest has home reach the node's rest-server at a server on this
+// machine that serves the certificate in hostData, as the one the node started
+// there does.
+func servesNodeRest(t *testing.T, home *instance, hostData string) {
+	t.Helper()
+	dir := filepath.Join(hostData, nodeRestFolder, nodeRestTLS)
+	l, err := tls.Listen("tcp", "127.0.0.1:0", &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+			cert, err := tls.LoadX509KeyPair(filepath.Join(dir, "cert.pem"), filepath.Join(dir, "key.pem"))
+			return &cert, err
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := &http.Server{
+		Handler:           http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusUnauthorized) }),
+		ReadHeaderTimeout: time.Second,
+		ErrorLog:          log.New(io.Discard, "", 0),
+	}
+	go srv.Serve(l) //nolint:errcheck // it ends when the test closes it
+	t.Cleanup(func() { _ = srv.Close() })
+	var d net.Dialer
+	home.svc.nodeRestDial = func(ctx context.Context, network, _ string) (net.Conn, error) {
+		return d.DialContext(ctx, network, l.Addr().String())
+	}
+}
+
+// keepingHome is home with an adopted node that starts its rest-server on a
+// Docker of its own.
+func keepingHome(t *testing.T) (home *instance, node *instance, id string, repos *repoStore) {
+	t.Helper()
+	home = homeWithRelay(t)
+	repos = newRepoStore()
+	home.svc.engine = repos
+	node, id, _ = adoptedNode(t, home, repos)
+	node.svc.docker = &receiverDocker{imageID: "sha256:rest"}
+	node.svc.cfg.HostMountRoot = t.TempDir()
+	node.svc.cfg.HostSourceRoot = "/srv/data"
+	node.engine.want = node.svc.backupPassword()
+	return home, node, id, repos
+}
+
+func TestHomeGivesUpOnANodeRestServerThatTakesTheConnectionButNeverAnswers(t *testing.T) {
+	reach := nodeRestReach
+	nodeRestReach = 300 * time.Millisecond
+	t.Cleanup(func() { nodeRestReach = reach })
+	home, _, id, repos := keepingHome(t)
+	silent, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = silent.Close() })
+	held := make(chan net.Conn, 8)
+	go func() {
+		for {
+			c, err := silent.Accept()
+			if err != nil {
+				return
+			}
+			held <- c
+		}
+	}()
+	t.Cleanup(func() {
+		for len(held) > 0 {
+			_ = (<-held).Close()
+		}
+	})
+
+	repos.mu.Lock()
+	opened := repos.opened
+	repos.mu.Unlock()
+	addr := "https://" + silent.Addr().String()
+	start := time.Now()
+	code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": addr})
+	if took := time.Since(start); took > 10*time.Second {
+		t.Errorf("the placement took %s", took)
+	}
+	_, port, _ := net.SplitHostPort(silent.Addr().String())
+	if code != http.StatusOK || out["ok"] != false || out["code"] != codeNodeRestUnreachable || out["address"] != addr || out["port"] != port {
+		t.Fatalf("placement at a silent port = %d %v", code, out)
+	}
+	if msg, _ := out["error"].(string); !strings.Contains(msg, addr) || !strings.Contains(msg, "firewall") {
+		t.Errorf("error %q does not say what to check", msg)
+	}
+	repos.mu.Lock()
+	asked := repos.opened - opened
+	repos.mu.Unlock()
+	if asked != 0 {
+		t.Errorf("home asked restic about %d repositories it cannot reach", asked)
+	}
+	if sources, _ := home.st.ListPullSources(); len(sources) != 0 {
+		t.Errorf("home fetches from %+v", sources)
+	}
+	if n, _ := home.st.GetNode(id); n.Placement != "" {
+		t.Errorf("the node is placed %q after a failed placement", n.Placement)
+	}
+}
+
+func TestHomeRefusesARestServerWithAnotherCertificateThanTheNodeMade(t *testing.T) {
+	home, _, id, _ := keepingHome(t)
+	other := t.TempDir()
+	certPEM, keyPEM, err := selfSignedFor("203.0.113.7")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(other, nodeRestFolder, nodeRestTLS)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "cert.pem"), certPEM, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "key.pem"), keyPEM, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	servesNodeRest(t, home, other)
+
+	start := time.Now()
+	code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": "https://203.0.113.7:8443"})
+	if took := time.Since(start); took > 5*time.Second {
+		t.Errorf("home tried %s on a certificate that will not change", took)
+	}
+	if code != http.StatusOK || out["ok"] != false || out["code"] != codeNodeRestForeign || out["address"] != "https://203.0.113.7:8443" {
+		t.Fatalf("placement behind another certificate = %d %v", code, out)
+	}
+}
+
+// stuckRepos is storage whose every call waits until it is called off, as
+// restic does while it retries a server that does not answer.
+type stuckRepos struct{ *repoStore }
+
+func (stuckRepos) RepoOpensErr(ctx context.Context, _ string, _ restic.Mode) error {
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+func (stuckRepos) Init(ctx context.Context, _ string, _ restic.Mode) error {
+	<-ctx.Done()
+	return ctx.Err()
+}
+
+func TestHomeStopsWaitingForANodeRepositoryThatDoesNotAnswer(t *testing.T) {
+	prepare := nodeRepoPrepare
+	nodeRepoPrepare = 200 * time.Millisecond
+	t.Cleanup(func() { nodeRepoPrepare = prepare })
+	home, node, id, repos := keepingHome(t)
+	servesNodeRest(t, home, node.svc.cfg.HostMountRoot)
+	home.svc.engine = stuckRepos{repos}
+
+	done := make(chan map[string]any, 1)
+	go func() {
+		_, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "node", "address": "https://203.0.113.7:8443"})
+		done <- out
+	}()
+	select {
+	case out := <-done:
+		msg, _ := out["error"].(string)
+		if out["ok"] != false || !strings.Contains(msg, "containers repository") || !strings.Contains(msg, "did not answer") {
+			t.Errorf("placement with a repository that does not answer = %v", out)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the placement still runs after 10 s")
 	}
 }
