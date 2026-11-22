@@ -14,7 +14,7 @@ vi.mock("../lib/api", () => ({
   loginWithPasskey: vi.fn(),
   passkeyStatus: vi.fn(),
   passkeysAvailableInBrowser: () => false,
-  getAuth: () => Promise.resolve({ ok: true, enabled: true, authed: false, minPasswordLen: 12 }),
+  getAuth: () => Promise.resolve({ ok: true, enabled: true, authed: false, recommendedPasswordLen: 12 }),
   startPasswordReset: (...a: unknown[]) => startPasswordReset(...a),
   finishPasswordReset: (...a: unknown[]) => finishPasswordReset(...a),
 }));
@@ -133,14 +133,18 @@ describe("LoginPage, a forgotten password", () => {
     expect(finishPasswordReset).not.toHaveBeenCalled();
   });
 
-  it("sends nothing for a password below the server's minimum", async () => {
+  it("suggests a longer password and still sets a short one", async () => {
+    finishPasswordReset.mockResolvedValue({ ok: true });
     render(<LoginPage onLogin={vi.fn()} />);
     await openReset();
+    expect(screen.queryByText(en["auth.passwordShortHint"].replace("{n}", "12"))).toBeNull();
 
+    type("bv-new", "short");
+    expect(screen.getByText(en["auth.passwordShortHint"].replace("{n}", "12"))).toBeTruthy();
     await fillAndSubmit("ABCD-EFGH-JKLM", "short");
 
-    expect(screen.getByRole("alert")).toBeTruthy();
-    expect(finishPasswordReset).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(finishPasswordReset).toHaveBeenCalledWith("ABCD-EFGH-JKLM", "short");
   });
 
   it("says so when the code is refused, keeps what was typed and asks for a code in case it expired", async () => {

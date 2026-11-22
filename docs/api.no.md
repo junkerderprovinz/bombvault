@@ -14,7 +14,7 @@ Send tokenet i en header, enten `Authorization: Bearer <token>` eller `X-API-Key
 
 Hvert token har en flis med navnet, om det kan starte kopier, de fire siste tegnene, når og hvorfra det sist ble brukt, og dagens kall. På flisen kan du gi det nytt navn, endre hva det får gjøre, bytte det eller tilbakekalle det. **Logg** viser kopiene det startet og de siste kallene. Gjenoppretter du BombVaults konfigurasjon fra en kopi, blir alle tokener tilbakekalt, fordi kopien kan inneholde tokener du har tilbakekalt senere.
 
-Uten innloggingspassord kan alle som kan åpne nettgrensesnittet, også lage et token. Åpner du BombVault under et navn som ser offentlig ut, og det ikke er satt noe passord, kan det ikke lages tokener fra den adressen, samme regel som for [MCP-nøklene](mcp.md#switch-on).
+Uten innloggingspassord kan alle som kan åpne nettgrensesnittet, også lage et token.
 
 ## Endepunkter {#endpoints}
 

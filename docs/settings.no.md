@@ -58,7 +58,7 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 
 ## Sikkerhet {#security}
 
-- **Passord**: innloggingspassordet, minst 12 tegn. Å endre eller fjerne det krever det nåværende og, med tofaktorautentisering på, koden.
+- **Passord**: innloggingspassordet, uansett lengde. Under 12 tegn foreslår siden et lengre. Å endre eller fjerne det krever det nåværende og, med tofaktorautentisering på, koden.
 - **Tofaktorautentisering**: en kode fra en autentiseringsapp i tillegg til passordet, med åtte gjenopprettingskoder som vises én gang.
 - **Passnøkler**: logg inn med en nøkkel på telefonen, laptopen eller en sikkerhetsnøkkel. De trenger et ekte domenenavn og et sertifikat nettleseren stoler på.
 - **Android-app**: **Telefoner kan pare med gruppens tolv ord**, som lar en paret telefon logge inn uten passordet.

@@ -14,7 +14,7 @@ Sende das Token in einem Header, entweder `Authorization: Bearer <token>` oder `
 
 Jedes Token hat eine Kachel mit seinem Namen, ob es Sicherungen starten darf, den letzten vier Zeichen, wann und von wo es zuletzt benutzt wurde, und seinen Aufrufen heute. Auf der Kachel kannst du es umbenennen, ändern, was es darf, es ersetzen oder entziehen. Das **Protokoll** zeigt die Sicherungen, die es gestartet hat, und seine letzten Aufrufe. Wird die Konfiguration von BombVault aus einer Sicherung wiederhergestellt, werden alle Tokens entzogen, weil die Sicherung Tokens enthalten kann, die du später entzogen hast.
 
-Ohne Login-Passwort kann jeder, der die Weboberfläche öffnen kann, auch ein Token anlegen. Öffnest du BombVault unter einem öffentlich aussehenden Namen und ist kein Passwort gesetzt, lassen sich von dieser Adresse aus keine Tokens anlegen, dieselbe Regel wie bei [MCP-Schlüsseln](mcp.md#switch-on).
+Ohne Login-Passwort kann jeder, der die Weboberfläche öffnen kann, auch ein Token anlegen.
 
 ## Endpunkte {#endpoints}
 

@@ -49,7 +49,7 @@ Pornirile prin [API](api.md#errors) și din [Home Assistant](api.md#home-assista
 3. Pornește **Permite pornirea copiilor** pentru o cheie care trebuie să poată porni copii. Fără asta poate doar să citească. Poți schimba asta mai târziu la **Detalii** ale cheii, iar schimbarea se aplică de la următoarea cerere a asistentului, fără reconectare.
 4. Dă clic pe **Creează cheia**. Cheia e afișată o singură dată. BombVault păstrează doar o amprentă a ei și nu o mai poate arăta, așa că copiaz-o acum. Dacă închizi fereastra înainte ca clientul să fi folosit cheia, cardul continuă să o afișeze până confirmi că ai copiat-o.
 
-Fără parolă de autentificare, interfața web însăși e deschisă pentru toată lumea din rețeaua ta, iar cine o poate deschide poate crea și o cheie. Cardul spune asta. Dacă deschizi BombVault sub un nume care pare public (de exemplu `bombvault.example.com` în spatele unui proxy invers) și nu e setată nicio parolă de autentificare, de la acea adresă nu se pot crea și nici înlocui chei, ca nicio pagină web de pe internet să nu-ți poată face browserul să creeze una. Setează o parolă de autentificare sau deschide BombVault prin adresa IP ori printr-un nume local precum `tower` sau `tower.local`.
+Fără parolă de autentificare, interfața web însăși e deschisă pentru toată lumea din rețeaua ta, iar cine o poate deschide poate crea și o cheie. Cardul spune asta.
 
 ## Cheile tale și jurnalul lor {#keys}
 
@@ -235,7 +235,6 @@ location /mcp {
 - Fiecare creare, înlocuire, schimbare de permisiune și revocare trimite o notificare pe canalele tale de notificare, cu adresa de la care a venit, în afară de cazul în care notificările sunt oprite.
 - 5 chei greșite pe minut de la aceeași adresă, apoi `429`. 120 de cereri pe minut și 12 copii pornite pe oră pentru fiecare cheie, plus așteptarea și protecția păstrării de mai sus.
 - Cererile de la o pagină de browser cu altă origine sunt refuzate.
-- Cât timp nu e setată o parolă de autentificare, nu se pot crea chei de la un nume de gazdă care pare public.
 - Fiecare copie pornită de un asistent, precum și rulările de prune și off-site care rezultă din ea, sunt marcate "prin MCP" cu numele cheii în jurnalul de activitate, în panoul de erori și în notificarea copiei.
 - Fiecare apel de unealtă e scris în jurnalul containerului cu id-ul cheii și ultimele ei patru caractere (niciodată cu numele) și e numărat în `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Restaurarea unei copii a configurației revocă toate cheile, pentru că baza de date restaurată poate conține chei pe care le-ai revocat după ce a fost salvată. Creează chei noi după aceea.

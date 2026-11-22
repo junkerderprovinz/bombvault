@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -171,21 +170,15 @@ func TestAnAppBackupIsSealedWhenExportsAre(t *testing.T) {
 	}
 }
 
-func TestAnAppBackupDownloadNeedsAPersonSignedIn(t *testing.T) {
-	f, eng := appExportFixture(t)
+func TestAnAppBackupDownloadsWithoutALoginPassword(t *testing.T) {
+	f, _ := appExportFixture(t)
 
 	w := f.download("/api/containers/knightloader/appexports/e1e1e1e1/download")
-	var out struct {
-		Code string `json:"code"`
+	if w.Code != http.StatusOK || !strings.HasSuffix(w.Header().Get("Content-Disposition"), `-e1e1e1e1.zip"`) {
+		t.Fatalf("status %d under %q: %s", w.Code, w.Header().Get("Content-Disposition"), w.Body.String())
 	}
-	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
-		t.Fatal(err)
-	}
-	if w.Code != http.StatusForbidden || out.Code != codeNoPassword {
-		t.Fatalf("status %d with code %q, want the refusal that asks for a password", w.Code, out.Code)
-	}
-	if len(eng.dumped) != 0 || w.Header().Get("Content-Disposition") != "" {
-		t.Fatalf("streamed %v under %q", eng.dumped, w.Header().Get("Content-Disposition"))
+	if !bytes.Equal(w.Body.Bytes(), zipBackup) {
+		t.Errorf("body = %q, want the app's backup", w.Body.Bytes())
 	}
 }
 

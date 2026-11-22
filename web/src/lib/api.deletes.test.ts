@@ -25,8 +25,8 @@ afterEach(() => vi.unstubAllGlobals());
 const item = { domain: "containers" as const, key: "nginx" };
 
 describe("a call that deletes backups for good or restores for a paired phone", () => {
-  it.each(["password-not-set", "own-login-needed"])("answers with the refusal when the server refuses it as %s", async (code) => {
-    const refused = { ok: false, error: "the server's sentence", code };
+  it("answers with the refusal when the server asks for a sign-in of a person", async () => {
+    const refused = { ok: false, error: "the server's sentence", code: "own-login-needed" };
     answers(403, refused);
     const api = await import("./api");
     const calls = [

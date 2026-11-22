@@ -58,7 +58,7 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 
 ## Beveiliging {#security}
 
-- **Wachtwoord**: het inlogwachtwoord, minstens 12 tekens. Wijzigen of wissen vraagt om het huidige en, met tweefactorauthenticatie aan, om de code.
+- **Wachtwoord**: het inlogwachtwoord, van elke lengte. Onder 12 tekens stelt de pagina een langer wachtwoord voor. Wijzigen of wissen vraagt om het huidige en, met tweefactorauthenticatie aan, om de code.
 - **Tweefactorauthenticatie**: een code uit een authenticator-app bovenop het wachtwoord, met acht herstelcodes die één keer worden getoond.
 - **Passkeys**: meld je aan met een sleutel op je telefoon, laptop of beveiligingsstick. Ze hebben een echte domeinnaam en een certificaat nodig dat de browser vertrouwt.
 - **Android-app**: **Telefoons kunnen koppelen met de twaalf woorden van de groep**, waarmee een gekoppelde telefoon zich zonder het wachtwoord kan aanmelden.

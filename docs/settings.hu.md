@@ -58,7 +58,7 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 
 ## Biztonság {#security}
 
-- **Jelszó**: a belépési jelszó, legalább 12 karakter. Megváltoztatása vagy törlése a jelenlegit kéri, és bekapcsolt kétlépcsős azonosításnál a kódot is.
+- **Jelszó**: a belépési jelszó, bármilyen hosszú lehet. 12 karakter alatt az oldal hosszabbat javasol. Megváltoztatása vagy törlése a jelenlegit kéri, és bekapcsolt kétlépcsős azonosításnál a kódot is.
 - **Kétlépcsős azonosítás**: egy hitelesítő alkalmazás kódja a jelszó mellett, nyolc helyreállítási kóddal, amelyeket egyszer mutat meg.
 - **Hozzáférési kulcsok**: bejelentkezés a telefonodon, laptopodon vagy biztonsági kulcsodon lévő kulccsal. Valódi domainnévre és a böngésző által elfogadott tanúsítványra van szükségük.
 - **Android-alkalmazás**: **A telefonok párosíthatók a csoport tizenkét szavával**, ami lehetővé teszi, hogy egy párosított telefon jelszó nélkül jelentkezzen be.

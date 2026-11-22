@@ -49,7 +49,7 @@ Các lần bắt đầu qua [API](api.md#errors) và từ [Home Assistant](api.m
 3. Bật **Cho phép bắt đầu sao lưu** cho khóa cần bắt đầu được bản sao lưu. Nếu không, khóa chỉ đọc được. Bạn có thể đổi sau trong **Chi tiết** của khóa, và thay đổi có hiệu lực từ yêu cầu tiếp theo của trợ lý mà không cần kết nối lại.
 4. Bấm **Tạo khóa**. Khóa chỉ hiện một lần. BombVault chỉ giữ dấu vân của khóa và không thể hiện lại nó, nên hãy sao chép ngay. Nếu bạn đóng cửa sổ trước khi máy khách dùng khóa, thẻ vẫn tiếp tục hiện khóa cho đến khi bạn xác nhận đã sao chép.
 
-Khi không có mật khẩu đăng nhập, chính giao diện web đã mở cho mọi người trong mạng của bạn, và ai mở được nó cũng có thể tạo khóa. Thẻ sẽ báo điều này. Nếu bạn mở BombVault bằng một tên trông như công khai (ví dụ `bombvault.example.com` sau một reverse proxy) và chưa đặt mật khẩu đăng nhập, thì không thể tạo hay thay khóa từ địa chỉ đó, để không trang web nào trên Internet có thể khiến trình duyệt của bạn tạo khóa. Hãy đặt mật khẩu đăng nhập, hoặc mở BombVault bằng địa chỉ IP hay một tên cục bộ như `tower` hoặc `tower.local`.
+Khi không có mật khẩu đăng nhập, chính giao diện web đã mở cho mọi người trong mạng của bạn, và ai mở được nó cũng có thể tạo khóa. Thẻ sẽ báo điều này.
 
 ## Các khóa của bạn và nhật ký của chúng {#keys}
 
@@ -235,7 +235,6 @@ Sau một proxy, mọi yêu cầu đều mang địa chỉ của proxy. Khi đó
 - Mỗi lần tạo, thay, đổi quyền và thu hồi đều gửi một thông báo qua các kênh thông báo của bạn, kèm địa chỉ gửi yêu cầu, trừ khi thông báo đang tắt.
 - 5 khóa sai mỗi phút cho mỗi địa chỉ, sau đó là `429`. 120 yêu cầu mỗi phút và 12 lần bắt đầu sao lưu mỗi giờ cho mỗi khóa, cộng thêm thời gian chờ và bảo vệ lưu giữ nêu trên.
 - Yêu cầu từ trang trình duyệt có nguồn gốc (origin) khác bị từ chối.
-- Chừng nào chưa đặt mật khẩu đăng nhập thì không thể tạo khóa từ một tên máy chủ trông như công khai.
 - Mọi lần sao lưu do trợ lý bắt đầu, cùng các lần chạy prune và off-site kéo theo, đều được đánh dấu "qua MCP" kèm tên khóa trong nhật ký hoạt động, trong bảng lỗi và trong thông báo sao lưu.
 - Mọi lệnh gọi công cụ được ghi vào nhật ký container cùng id của khóa và bốn ký tự cuối (không bao giờ ghi tên) và được đếm trong `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Khôi phục một bản sao lưu cấu hình sẽ thu hồi mọi khóa, vì cơ sở dữ liệu được khôi phục có thể chứa các khóa bạn đã thu hồi sau khi nó được lưu. Hãy tạo khóa mới sau đó.

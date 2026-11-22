@@ -219,7 +219,7 @@ func (h *Handler) handleListDeposits(w http.ResponseWriter, _ *http.Request) {
 // given this install's deposit. The answer carries the recovery code when
 // this made it, which is the one time it is shown.
 func (h *Handler) askKeeper(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) || !h.requireAuthForSecrets(w, r, "depositing the key") {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "depositing the key") {
 		return
 	}
 	state, code, err := h.svc.MakeDeposit(r.Context(), r.PathValue("id"))
@@ -253,7 +253,7 @@ func (h *Handler) withdrawKeeper(w http.ResponseWriter, r *http.Request) {
 // one, which is shown this once.
 // POST /api/group/deposit/code
 func (h *Handler) handleNewDepositCode(w http.ResponseWriter, r *http.Request) {
-	if !crossOriginGuard(w, r) || !h.requireAuthForSecrets(w, r, "making a new recovery code") {
+	if !crossOriginGuard(w, r) || !h.requireSignIn(w, r, "making a new recovery code") {
 		return
 	}
 	code, err := h.svc.NewDepositCode(r.Context())
@@ -277,8 +277,7 @@ func (h *Handler) handleRenewDeposits(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleDecideRelease allows or refuses a request for a deposit. Neither is
-// for the session of a paired phone, and allowing, which hands key material
-// out, is for nobody on a server without a login password.
+// for the session of a paired phone.
 // POST /api/group/deposits/releases/{id}
 func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 	var body struct {
@@ -289,9 +288,6 @@ func (h *Handler) handleDecideRelease(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.Decision != "allow" && body.Decision != "refuse" {
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "the decision must be allow or refuse"})
-		return
-	}
-	if body.Decision == "allow" && !h.requireAuthForSecrets(w, r, "allowing a deposit to be handed out") {
 		return
 	}
 	if !h.requireSignIn(w, r, "answering a request for a deposit") {

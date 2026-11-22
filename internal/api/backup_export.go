@@ -489,7 +489,7 @@ func (h *Handler) exportAllowed(w http.ResponseWriter, r *http.Request, domain s
 	if domain != "flash" && domain != "config" {
 		return true
 	}
-	return h.requireAuthForSecrets(w, r, "exporting a "+domain+" backup")
+	return h.requireSignIn(w, r, "exporting a "+domain+" backup")
 }
 
 // handleExportPreview serves POST /api/items/{domain}/{name}/export/preview?source=

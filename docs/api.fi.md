@@ -14,7 +14,7 @@ Lähetä token otsakkeessa, joko `Authorization: Bearer <token>` tai `X-API-Key:
 
 Jokaisella tokenilla on ruutu, jossa näkyvät nimi, saako se käynnistää kopioita, neljä viimeistä merkkiä, milloin ja mistä sitä viimeksi käytettiin sekä tämän päivän kutsut. Ruudussa voit nimetä sen uudelleen, muuttaa sen oikeuksia, vaihtaa sen tai mitätöidä sen. **Loki** näyttää sen käynnistämät kopiot ja viimeisimmät kutsut. Kun palautat BombVaultin määritykset varmuuskopiosta, kaikki tokenit mitätöidään, koska kopiossa voi olla tokeneita, jotka mitätöit myöhemmin.
 
-Ilman kirjautumissalasanaa jokainen, joka voi avata käyttöliittymän, voi myös luoda tokenin. Jos avaat BombVaultin julkiselta näyttävällä nimellä eikä salasanaa ole, siitä osoitteesta ei voi luoda tokeneita, sama sääntö kuin [MCP-avaimilla](mcp.md#switch-on).
+Ilman kirjautumissalasanaa jokainen, joka voi avata käyttöliittymän, voi myös luoda tokenin.
 
 ## Päätepisteet {#endpoints}
 

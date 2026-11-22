@@ -254,11 +254,9 @@ func (h *Handler) dbDumpDiagnostics(ctx context.Context) ([]diagDBDump, error) {
 // handleDiagnostics streams a redacted support bundle as a ZIP.
 // GET /api/diagnostics
 //
-// Gated by requireAuthForSecrets, the same gate the recovery kit and the
-// credentialed settings export use. authGate alone is a deliberate pass-through
-// in trusted-LAN mode, and this file carries the whole configuration plus the
-// recent log: not credentials, but far more than the read API's usual fare, and
-// the one file most likely to be posted in public.
+// Gated by requireSignIn, like the recovery kit and the credentialed settings
+// export: this file carries the whole configuration plus the recent log, far
+// more than a paired phone's session should reach.
 //
 // Never age-sealed, even when export encryption is on. The flash
 // download and the plain exports seal because they are the user's own data
@@ -270,7 +268,7 @@ func (h *Handler) dbDumpDiagnostics(ctx context.Context) ([]diagDBDump, error) {
 // memory means a failure halfway through still answers a clean JSON envelope
 // instead of a truncated file with a 200 on it.
 func (h *Handler) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "downloading the diagnostics bundle") {
+	if !h.requireSignIn(w, r, "downloading the diagnostics bundle") {
 		return
 	}
 

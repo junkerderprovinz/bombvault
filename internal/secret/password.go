@@ -145,12 +145,9 @@ func NeedsRehash(storedHash string) bool {
 	return m < argonMemoryKiB || t < argonTime || p < argonThreads || len(key) < argonKeyLen
 }
 
-// MinPasswordLen is the shortest password the settings page will store. The
-// login throttle allows 5 attempts a minute, about 7200 a day, which exhausts a
-// four-digit PIN in under two days; twelve characters put brute force out of
-// reach regardless of the throttle.
-//
-// It applies when a password is set, not when one is verified, so an existing
-// shorter password keeps working and its owner is asked to change it instead of
-// being locked out.
-const MinPasswordLen = 12
+// RecommendedPasswordLen is the length below which the settings page suggests
+// a longer password. The login throttle allows 5 attempts a minute, about 7200
+// a day, which exhausts a four-digit PIN in under two days; twelve characters
+// put brute force out of reach regardless of the throttle. A shorter password
+// is still stored, since a password is the owner's choice.
+const RecommendedPasswordLen = 12

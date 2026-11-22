@@ -2,6 +2,7 @@ import { useState } from "react";
 import { componentText } from "@glimstone/core";
 import { PasswordField } from "@glimstone/react/PasswordField";
 import { getAuth, setAuthPassword, explainedError } from "../../../lib/api";
+import { passwordShort } from "../../../lib/signIn";
 import { PasskeyCard } from "../PasskeyCard";
 import { TwoFactorCard } from "../TwoFactorCard";
 import { EncryptionCard } from "../EncryptionCard";
@@ -25,7 +26,7 @@ export function SecurityPage() {
     setTotpEnabled,
     recoveryLeft,
     setRecoveryLeft,
-    minPasswordLen,
+    recommendedPasswordLen,
   } = useSettings();
 
   const [pwCurrent, setPwCurrent] = useState("");
@@ -42,16 +43,6 @@ export function SecurityPage() {
   // setAuthPassword takes effect at once for the whole instance (a blank
   // password switches login off).
   async function handleSetPassword() {
-    // The server refuses a short password too, and its answer is what the
-    // user would eventually see. Checking here as well saves a round trip and
-    // puts the message next to the field instead of in a toast. An empty
-    // password is not "too short": it means "switch authentication off".
-    if (pwNew !== "" && [...pwNew].length < minPasswordLen) {
-      setPwSaveMsg(t("auth.passwordMinHint", minPasswordLen));
-      setPwSaveState("error");
-      setPwSaveShake((n) => n + 1);
-      return;
-    }
     // A session left open is not enough to change or remove the login.
     if (authEnabled && pwCurrent === "") {
       setPwSaveMsg(t("auth.currentPasswordWrong"));
@@ -173,10 +164,10 @@ export function SecurityPage() {
             </SettingRow>
           )}
           </Rows>
-          {/* The rule, stated before it is broken rather than after. */}
-          <span className="text-xs text-carbon-textSub">
-            {t("auth.passwordMinHint", minPasswordLen)}
-          </span>
+          {/* A short password is the owner's choice, so this only suggests. */}
+          {passwordShort(pwNew, recommendedPasswordLen) && (
+            <span className="text-xs text-carbon-textSub">{t("auth.passwordShortHint", recommendedPasswordLen)}</span>
+          )}
 
           {/* Only the pre-flight validation errors render here; the save
               outcome is a toast. */}

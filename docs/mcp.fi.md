@@ -49,7 +49,7 @@ Osion tai Täysvarmuuskopion käynnistys jättää pois merkinnät, jotka jokin 
 3. Kytke **Salli varmuuskopioiden käynnistys** päälle avaimelle, jonka pitää voida käynnistää varmuuskopioita. Ilman sitä avain voi vain lukea. Voit muuttaa sitä myöhemmin avaimen kohdassa **Tiedot**, ja muutos pätee avustajan seuraavasta pyynnöstä alkaen ilman uutta yhteyttä.
 4. Napsauta **Luo avain**. Avain näytetään kerran. BombVault säilyttää siitä vain sormenjäljen eikä voi näyttää sitä uudelleen, joten kopioi se nyt. Jos suljet ikkunan ennen kuin asiakasohjelma on käyttänyt avainta, kortti näyttää sitä edelleen, kunnes vahvistat kopioineesi sen.
 
-Ilman kirjautumissalasanaa itse verkkokäyttöliittymä on auki kaikille verkossasi, ja kuka tahansa, joka voi avata sen, voi myös luoda avaimen. Kortti kertoo tämän. Jos avaat BombVaultin julkiselta näyttävällä nimellä (esimerkiksi `bombvault.example.com` käänteisen välityspalvelimen takana) eikä kirjautumissalasanaa ole asetettu, siitä osoitteesta ei voi luoda eikä vaihtaa avaimia, jotta mikään internetin verkkosivu ei voi saada selaintasi luomaan sellaista. Aseta kirjautumissalasana, tai avaa BombVault sen IP-osoitteella tai paikallisella nimellä, kuten `tower` tai `tower.local`.
+Ilman kirjautumissalasanaa itse verkkokäyttöliittymä on auki kaikille verkossasi, ja kuka tahansa, joka voi avata sen, voi myös luoda avaimen. Kortti kertoo tämän.
 
 ## Avaimesi ja niiden loki {#keys}
 
@@ -235,7 +235,6 @@ Välityspalvelimen takana jokaisessa pyynnössä on välityspalvelimen osoite. V
 - Jokainen luonti, vaihto, oikeuksien muutos ja peruutus lähettää ilmoituksen ilmoituskanaviesi kautta osoitteen kera, josta se tuli, ellei ilmoituksia ole kytketty pois.
 - 5 väärää avainta minuutissa osoitetta kohden, sen jälkeen `429`. 120 pyyntöä minuutissa ja 12 käynnistettyä varmuuskopiota tunnissa avainta kohden, lisäksi yllä kuvattu odotusaika ja säilytyssuoja.
 - Toisesta originista tulevan selainsivun pyynnöt hylätään.
-- Niin kauan kuin kirjautumissalasanaa ei ole asetettu, avaimia ei voi luoda julkiselta näyttävästä isäntänimestä.
 - Jokainen avustajan käynnistämä varmuuskopio ja siitä seuraavat prune- ja off-site-ajot merkitään "MCP:n kautta" avaimen nimen kera toimintalokiin, virhepaneeliin ja varmuuskopion ilmoitukseen.
 - Jokainen työkalukutsu kirjoitetaan kontin lokiin avaimen tunnisteen ja sen neljän viimeisen merkin kera (ei koskaan nimeä) ja lasketaan `/metrics`-sivulla (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Itsevarmuuskopion palauttaminen peruuttaa kaikki avaimet, koska palautettu tietokanta voi sisältää avaimia, jotka peruutit sen tallentamisen jälkeen. Luo uudet avaimet sen jälkeen.

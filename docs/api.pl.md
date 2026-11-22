@@ -14,7 +14,7 @@ Wysyłaj token w nagłówku: `Authorization: Bearer <token>` albo `X-API-Key: <t
 
 Każdy token ma kafelek z nazwą, informacją, czy może uruchamiać kopie, ostatnimi czterema znakami, tym, kiedy i skąd był ostatnio użyty, oraz dzisiejszymi wywołaniami. Na kafelku możesz zmienić jego nazwę i uprawnienia, wymienić go albo unieważnić. **Dziennik** pokazuje kopie, które uruchomił, i jego ostatnie wywołania. Przywrócenie konfiguracji BombVault z kopii unieważnia wszystkie tokeny, bo kopia może zawierać tokeny, które później unieważniłeś.
 
-Bez hasła logowania każdy, kto może otworzyć interfejs WWW, może też utworzyć token. Jeśli otworzysz BombVault pod nazwą wyglądającą na publiczną i nie ma hasła, z tego adresu nie da się tworzyć tokenów, tak samo jak [kluczy MCP](mcp.md#switch-on).
+Bez hasła logowania każdy, kto może otworzyć interfejs WWW, może też utworzyć token.
 
 ## Punkty końcowe {#endpoints}
 

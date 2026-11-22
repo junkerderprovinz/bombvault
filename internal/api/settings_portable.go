@@ -184,7 +184,7 @@ func locationRedacted(loc string) bool {
 // forum thread, attached to a support request.
 //
 // Applied to the PLAIN export only. The credentialed variant already hands out
-// every stored secret in the clear behind requireAuthForSecrets, so scrubbing
+// every stored secret in the clear, so scrubbing
 // there would leave the one export that is meant to be a complete, portable copy
 // as the only one that is not.
 func redactExportLocations(exp *settingsExport) {
@@ -271,13 +271,10 @@ func redactedLocations(exp settingsExport) []string {
 // The CREDENTIALED export is a different animal: it hands out the decrypted S3
 // keys, the restic-REST password, the WHOLE rclone config, the SMTP password and
 // the Matrix access token. That is the recovery kit's class of payload, so it
-// takes the recovery kit's second gate — auth must actually be ENABLED. Without
-// it, the trusted-LAN mode (no login password → authGate is a pass-through) let
-// any host on the LAN fetch every backend credential this instance holds with a
-// single unauthenticated GET.
+// takes the recovery kit's gate: a paired phone's session does not reach it.
 func (h *Handler) handleExportSettings(w http.ResponseWriter, r *http.Request) {
 	withCredentials := truthy(r.URL.Query().Get("includeCredentials"))
-	if withCredentials && !h.requireAuthForSecrets(w, r, "exporting settings with credentials") {
+	if withCredentials && !h.requireSignIn(w, r, "exporting settings with credentials") {
 		return
 	}
 

@@ -339,13 +339,6 @@ describe("a request to hand a deposit out", () => {
     expect(screen.queryByText("sign in at this instance's web interface")).toBeNull();
   });
 
-  it("says that a login password is needed before it allows one", async () => {
-    refusal = { ok: false, code: "password-not-set", error: "set a login password before handing out a key deposit" };
-    await open({ releases: [depositRelease()] });
-    await click(within(request("rel1")).getByRole("button", { name: en["zfs.receive.allow"] }));
-    expect(screen.getByText(en["secrets.passwordNotSet"])).toBeTruthy();
-  });
-
   it("says in the server's words why it may not allow one", async () => {
     refusal = { ok: false, error: "set a login password before handing out a key deposit" };
     await open({ releases: [depositRelease()] });

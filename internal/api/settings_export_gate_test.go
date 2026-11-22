@@ -54,34 +54,25 @@ func getRaw(t *testing.T, h http.Handler, path string, c *http.Cookie) *httptest
 	return w
 }
 
-// Without a login password authGate lets every request through. The
-// credentialed export carries every backend secret decrypted, so like the
-// recovery kit it has to refuse in that case.
-func TestCredentialedExportRefusedWhenAuthDisabled(t *testing.T) {
+// A login password is optional, so without one the recovery kit and the
+// credentialed export come for the asking, like the rest of the API.
+func TestCredentialedExportWorksWithoutALoginPassword(t *testing.T) {
 	h, _, svc := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	seedExportSecrets(t, svc)
 
-	if kit := getRaw(t, h, "/api/recovery-kit", nil); kit.Code != http.StatusForbidden {
-		t.Fatalf("precondition: recovery kit status = %d, want 403 with auth off", kit.Code)
+	if kit := getRaw(t, h, "/api/recovery-kit", nil); kit.Code != http.StatusOK {
+		t.Fatalf("recovery kit status = %d, want 200 without a password: %s", kit.Code, kit.Body.String())
 	}
-
-	// includeCredentials accepts several truthy spellings; each has to be gated.
 	for _, q := range []string{"true", "1", "yes", "on", "TRUE", "On"} {
 		w := getRaw(t, h, "/api/settings/export?includeCredentials="+q, nil)
-		if w.Code != http.StatusForbidden {
-			t.Fatalf("includeCredentials=%s: status = %d, want 403; the credentialed export must fail closed when auth is off", q, w.Code)
+		if w.Code != http.StatusOK || !strings.Contains(w.Header().Get("Content-Disposition"), "attachment") {
+			t.Fatalf("includeCredentials=%s: status = %d, want the file: %s", q, w.Code, w.Body.String())
 		}
 		body := w.Body.String()
 		for _, secret := range allSeededSecrets() {
-			if strings.Contains(body, secret) {
-				t.Fatalf("includeCredentials=%s: the response leaked a stored secret", q)
+			if !strings.Contains(body, secret) {
+				t.Fatalf("includeCredentials=%s: the export lacks a stored secret", q)
 			}
-		}
-		if !strings.Contains(body, "login password") {
-			t.Fatalf("includeCredentials=%s: refusal must say what to do, got %s", q, body)
-		}
-		if strings.Contains(w.Header().Get("Content-Disposition"), "attachment") {
-			t.Fatalf("includeCredentials=%s: a refusal must not stream a file", q)
 		}
 	}
 }

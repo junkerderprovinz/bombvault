@@ -37,7 +37,7 @@ func gateStatusNamed(t *testing.T, h *Handler, path, cookieName, cookie string) 
 func TestSessionCookieNameDiffersOverPlainHTTP(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
 	h.cfg.HTTPOnly = true
-	pw := strings.Repeat("x", secret.MinPasswordLen)
+	pw := strings.Repeat("x", secret.RecommendedPasswordLen)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))
 	r.Header.Set("Content-Type", "application/json")
@@ -56,7 +56,7 @@ func TestSessionCookieNameDiffersOverPlainHTTP(t *testing.T) {
 
 func TestSessionCookieNameIsTheHTTPSOneByDefault(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
-	pw := strings.Repeat("x", secret.MinPasswordLen)
+	pw := strings.Repeat("x", secret.RecommendedPasswordLen)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))
 	r.Header.Set("Content-Type", "application/json")

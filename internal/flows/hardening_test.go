@@ -87,7 +87,7 @@ func TestAHiddenLocationMovesUnderItsPassword(t *testing.T) {
 	f.finish()
 }
 
-func TestFlashZipAndKeyHoldingExportsAskForAPassword(t *testing.T) {
+func TestFlashZipAndKeyHoldingExportsWorkWithoutAPassword(t *testing.T) {
 	t.Parallel()
 	f := newFlow(t)
 	f.b.start(currentBinary)
@@ -101,15 +101,9 @@ func TestFlashZipAndKeyHoldingExportsAskForAPassword(t *testing.T) {
 		{"POST", "/api/items/flash/flash/export", export},
 		{"POST", "/api/items/config/config/export/preview", export},
 	} {
-		status, raw := f.b.send(r.method, r.path, r.body)
-		if status != http.StatusForbidden || !strings.Contains(string(raw), "password-not-set") {
+		if status, raw := f.b.send(r.method, r.path, r.body); status == http.StatusForbidden || strings.Contains(string(raw), "password-not-set") {
 			f.errorf("%s %s without a password = %d: %s", r.method, r.path, status, raw)
 		}
-	}
-
-	f.b.signIn()
-	if status, raw := f.b.send("GET", "/api/flash/download", nil); status == http.StatusForbidden {
-		f.errorf("the download with a password and a sign-in = %d: %s", status, raw)
 	}
 	f.finish()
 }

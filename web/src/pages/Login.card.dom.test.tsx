@@ -17,7 +17,7 @@ vi.mock("../lib/api", () => ({
   loginWithPasskey: vi.fn(),
   passkeyStatus: vi.fn(),
   passkeysAvailableInBrowser: () => false,
-  getAuth: () => Promise.resolve({ ok: true, enabled: true, authed: false, minPasswordLen: 12 }),
+  getAuth: () => Promise.resolve({ ok: true, enabled: true, authed: false, recommendedPasswordLen: 12 }),
   startPasswordReset: (...a: unknown[]) => startPasswordReset(...a),
   finishPasswordReset: (...a: unknown[]) => finishPasswordReset(...a),
 }));

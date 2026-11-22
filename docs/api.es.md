@@ -14,7 +14,7 @@ Envía el token en una cabecera, bien `Authorization: Bearer <token>` o bien `X-
 
 Cada token tiene un mosaico con su nombre, si puede iniciar copias, los últimos cuatro caracteres, cuándo se usó por última vez y desde dónde, y sus llamadas de hoy. En el mosaico puedes renombrarlo, cambiar lo que puede hacer, sustituirlo o revocarlo. **Registro** muestra las copias que inició y sus llamadas recientes. Restaurar la configuración de BombVault desde una copia revoca todos los tokens, porque la copia puede contener tokens que revocaste más tarde.
 
-Sin contraseña de acceso, cualquiera que pueda abrir la interfaz web también puede crear un token. Si abres BombVault con un nombre de aspecto público y no hay contraseña, no se pueden crear tokens desde esa dirección, la misma regla que para las [claves de MCP](mcp.md#switch-on).
+Sin contraseña de acceso, cualquiera que pueda abrir la interfaz web también puede crear un token.
 
 ## Endpoints {#endpoints}
 

@@ -38,8 +38,8 @@ describe("a call that hands out or creates key material", () => {
     expect(fetchMock.mock.calls[2][1].headers).toEqual({ "Content-Type": "application/json" });
   });
 
-  it.each(["password-not-set", "own-login-needed"])("answers with the refusal when the server refuses it as %s", async (code) => {
-    const refused = { ok: false, error: "the server's sentence", code };
+  it("answers with the refusal when the server asks for a sign-in of a person", async () => {
+    const refused = { ok: false, error: "the server's sentence", code: "own-login-needed" };
     answers(403, refused);
     const { askKeeper, newDepositCode, decideRelease, withdrawKeeper } = await import("./api");
     expect(await askKeeper("m1")).toEqual(refused);

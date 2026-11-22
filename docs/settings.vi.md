@@ -58,7 +58,7 @@ Thẻ **Phát trực tuyến**, giảm giới hạn tải lên khi Plex, Jellyfi
 
 ## Bảo mật {#security}
 
-- **Mật khẩu**: mật khẩu đăng nhập, ít nhất 12 ký tự. Đổi hoặc xóa nó cần mật khẩu hiện tại và, khi bật xác thực hai yếu tố, cả mã.
+- **Mật khẩu**: mật khẩu đăng nhập, dài bao nhiêu cũng được. Dưới 12 ký tự, trang sẽ gợi ý một mật khẩu dài hơn. Đổi hoặc xóa nó cần mật khẩu hiện tại và, khi bật xác thực hai yếu tố, cả mã.
 - **Xác thực hai yếu tố**: một mã từ ứng dụng xác thực thêm vào mật khẩu, với tám mã khôi phục chỉ hiện một lần.
 - **Khóa truy cập**: đăng nhập bằng một khóa trên điện thoại, laptop hoặc thiết bị bảo mật. Chúng cần một tên miền thật và một chứng chỉ mà trình duyệt tin cậy.
 - **Ứng dụng Android**: **Điện thoại có thể ghép nối bằng mười hai từ của nhóm**, cho phép một điện thoại đã ghép nối đăng nhập mà không cần mật khẩu.

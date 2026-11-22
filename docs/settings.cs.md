@@ -58,7 +58,7 @@ Karta **Streamování**, která snižuje limit nahrávání, zatímco streamuje 
 
 ## Zabezpečení {#security}
 
-- **Heslo**: přihlašovací heslo, nejméně 12 znaků. Změna nebo smazání žádá o současné a při zapnutém dvoufaktorovém ověření i o kód.
+- **Heslo**: přihlašovací heslo libovolné délky. Pod 12 znaků stránka navrhne delší. Změna nebo smazání žádá o současné a při zapnutém dvoufaktorovém ověření i o kód.
 - **Dvoufaktorové ověření**: kód z aplikace autentizátoru navíc k heslu, s osmi záložními kódy zobrazenými jednou.
 - **Přístupové klíče**: přihlášení klíčem v telefonu, notebooku nebo na bezpečnostní tyčince. Potřebují skutečné doménové jméno a certifikát, kterému prohlížeč důvěřuje.
 - **Aplikace pro Android**: **Telefony se mohou spárovat s dvanácti slovy skupiny**, což spárovanému telefonu dovolí přihlásit se bez hesla.

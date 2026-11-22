@@ -58,7 +58,7 @@ La carte **Streaming**, qui abaisse la limite d'envoi pendant que Plex, Jellyfin
 
 ## Sécurité {#security}
 
-- **Mot de passe** : le mot de passe de connexion, d'au moins 12 caractères. Le changer ou l'effacer demande l'actuel et, avec l'authentification à deux facteurs, le code.
+- **Mot de passe** : le mot de passe de connexion, de n'importe quelle longueur. En dessous de 12 caractères, la page en suggère un plus long. Le changer ou l'effacer demande l'actuel et, avec l'authentification à deux facteurs, le code.
 - **Authentification à deux facteurs** : un code d'une application d'authentification en plus du mot de passe, avec huit codes de récupération montrés une seule fois.
 - **Clés d'accès** : connectez-vous avec une clé sur votre téléphone, votre ordinateur portable ou une clé de sécurité. Elles demandent un vrai nom de domaine et un certificat que le navigateur approuve.
 - **Application Android** : **Les téléphones peuvent s'appairer avec les douze mots du groupe**, ce qui permet à un téléphone appairé de se connecter sans le mot de passe.

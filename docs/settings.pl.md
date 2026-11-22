@@ -58,7 +58,7 @@ Karta **Streaming**, która obniża limit wysyłania, gdy Plex, Jellyfin lub Emb
 
 ## Bezpieczeństwo {#security}
 
-- **Hasło**: hasło logowania, co najmniej 12 znaków. Zmiana lub wyczyszczenie prosi o obecne i, przy włączonym uwierzytelnianiu dwuskładnikowym, o kod.
+- **Hasło**: hasło logowania dowolnej długości. Poniżej 12 znaków strona proponuje dłuższe. Zmiana lub wyczyszczenie prosi o obecne i, przy włączonym uwierzytelnianiu dwuskładnikowym, o kod.
 - **Uwierzytelnianie dwuskładnikowe**: kod z aplikacji uwierzytelniającej dodatkowo do hasła, z ośmioma kodami odzyskiwania pokazanymi raz.
 - **Klucze dostępu**: logowanie kluczem w telefonie, laptopie albo kluczu sprzętowym. Potrzebują prawdziwej nazwy domeny i certyfikatu, któremu ufa przeglądarka.
 - **Aplikacja na Androida**: **Telefony mogą się sparować z dwunastoma słowami grupy**, co pozwala sparowanemu telefonowi zalogować się bez hasła.

@@ -49,7 +49,7 @@ Gli avvii tramite l'[API](api.md#errors) e da [Home Assistant](api.md#home-assis
 3. Attiva **Consenti di avviare backup** per una chiave che deve poter avviare backup. Senza, può solo leggere. Puoi cambiarlo più tardi nei **Dettagli** della chiave, e la modifica vale dalla richiesta successiva dell'assistente, senza riconnessione.
 4. Fai clic su **Crea chiave**. La chiave viene mostrata una volta sola. BombVault ne conserva solo un'impronta e non può mostrarla di nuovo, quindi copiala adesso. Se chiudi la finestra prima che il client abbia usato la chiave, la scheda continua a mostrarla finché non confermi di averla copiata.
 
-Senza password di accesso l'interfaccia web stessa è aperta a tutta la tua rete, e chi può aprirla può anche creare una chiave. La scheda lo segnala. Se apri BombVault con un nome che sembra pubblico (per esempio `bombvault.example.com` dietro un reverse proxy) e non è impostata una password di accesso, da quell'indirizzo non si possono creare né sostituire chiavi, così nessuna pagina web su Internet può indurre il tuo browser a crearne una. Imposta una password di accesso, oppure apri BombVault dal suo indirizzo IP o da un nome locale come `tower` o `tower.local`.
+Senza password di accesso l'interfaccia web stessa è aperta a tutta la tua rete, e chi può aprirla può anche creare una chiave. La scheda lo segnala.
 
 ## Le tue chiavi e il loro registro {#keys}
 
@@ -235,7 +235,6 @@ Dietro un proxy ogni richiesta porta l'indirizzo del proxy. Cinque chiavi sbagli
 - Ogni creazione, sostituzione, modifica dei permessi e revoca invia una notifica tramite i tuoi canali di notifica, con l'indirizzo da cui è arrivata, a meno che le notifiche siano disattivate.
 - 5 chiavi sbagliate al minuto per indirizzo, poi `429`. 120 richieste al minuto e 12 backup avviati all'ora per chiave, più l'attesa e la protezione della conservazione descritte sopra.
 - Le richieste da una pagina del browser di un'altra origine vengono rifiutate.
-- Finché non è impostata una password di accesso, non si possono creare chiavi da un nome host che sembra pubblico.
 - Ogni backup avviato da un assistente, e le esecuzioni di prune e di copia off-site che ne derivano, è segnato "via MCP" con il nome della chiave nel registro attività, nel pannello degli errori e nella notifica del backup.
 - Ogni chiamata a uno strumento viene scritta nel log del container con l'id della chiave e i suoi ultimi quattro caratteri (mai il nome) e contata in `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Ripristinare un backup della configurazione revoca tutte le chiavi, perché il database ripristinato può contenere chiavi che hai revocato dopo il suo salvataggio. Poi crea chiavi nuove.

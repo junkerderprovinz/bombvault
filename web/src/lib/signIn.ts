@@ -31,8 +31,9 @@ export interface SignInText {
   /** The bubble on Set password while it works. */
   saving: string;
   mismatch: string;
-  /** Says how many characters a new password needs, with the number filled in. */
-  tooShort: string;
+  /** Said below a new password shorter than the recommended length, with the
+   *  number filled in. It holds nothing up. */
+  shortPassword: string;
   /** Said when the page refuses the code from the log. */
   resetRejected: string;
   /** Said when a callback throws or answers without a reason. */
@@ -99,8 +100,8 @@ export interface SignInState {
 
 export interface SignInOptions extends SignInHandlers {
   text: SignInText;
-  /** The shortest new password the reset form takes. */
-  minPassword: number;
+  /** The length below which the reset form suggests a longer password. */
+  recommendedPassword: number;
 }
 
 export interface SignInFlow {
@@ -191,10 +192,9 @@ export function createSignInFlow(options: () => SignInOptions): SignInFlow {
   }
 
   async function setPassword() {
-    const { text, minPassword, onSetPassword, onAskCode } = options();
+    const { text, onSetPassword, onAskCode } = options();
     if (resetBlocked(state) || !onSetPassword) return;
     if (state.newPassword !== state.confirm) return refuse(text.mismatch, "set-password", "confirm");
-    if ([...state.newPassword].length < minPassword) return refuse(text.tooShort, "set-password", "newPassword");
     return run("setPassword", async () => {
       const res = await onSetPassword({ code: state.resetCode.trim(), password: state.newPassword });
       if (res.ok) return;
@@ -255,6 +255,13 @@ export function signInBlocked(s: SignInState): boolean {
 /** Set password waits for the code from the log and a new password. */
 export function resetBlocked(s: SignInState): boolean {
   return !!s.busy || s.resetCode.trim() === "" || s.newPassword === "";
+}
+
+/** Whether a new password is short enough for the reset form to suggest a
+ *  longer one. An empty field is not short, it is still to be typed. */
+export function passwordShort(password: string, recommended: number): boolean {
+  const length = [...password].length;
+  return length > 0 && length < recommended;
 }
 
 /** Which form shows, as a key that changes whenever the focus should move to the first empty field of the new form. */

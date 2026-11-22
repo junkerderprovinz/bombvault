@@ -49,7 +49,7 @@ Spuštění přes [API](api.md#errors) a z [Home Assistant](api.md#home-assistan
 3. Zapni **Povolit spouštění záloh** u klíče, který má moci spouštět zálohy. Bez toho může jen číst. Později to můžeš změnit v **Podrobnostech** klíče a změna platí od dalšího požadavku asistenta, bez nového připojení.
 4. Klikni na **Vytvořit klíč**. Klíč se zobrazí jen jednou. BombVault si nechává jen jeho otisk a znovu ho ukázat nedokáže, takže si ho hned zkopíruj. Když zavřeš okno dřív, než klient klíč použije, karta ho dál ukazuje, dokud nepotvrdíš, že sis ho zkopíroval.
 
-Bez přihlašovacího hesla je samotné webové rozhraní otevřené všem ve tvé síti a kdo ho otevře, může také vytvořit klíč. Karta na to upozorňuje. Pokud BombVault otevři pod názvem, který vypadá veřejně (například `bombvault.example.com` za reverzní proxy), a přihlašovací heslo nastavené není, nelze z této adresy klíče vytvářet ani nahrazovat, aby žádná webová stránka na internetu nemohla přimět tvůj prohlížeč, aby nějaký vytvořil. Nastav přihlašovací heslo, nebo otevři BombVault přes jeho IP adresu či místní název jako `tower` nebo `tower.local`.
+Bez přihlašovacího hesla je samotné webové rozhraní otevřené všem ve tvé síti a kdo ho otevře, může také vytvořit klíč. Karta na to upozorňuje.
 
 ## Tvoje klíče a jejich protokol {#keys}
 
@@ -235,7 +235,6 @@ Za proxy nese každý požadavek adresu proxy. Pět špatných klíčů od jedin
 - Každé vytvoření, nahrazení, změna oprávnění a odvolání odešle oznámení tvými kanály oznámení i s adresou, odkud přišlo, pokud oznámení nemáš vypnutá.
 - 5 špatných klíčů za minutu na adresu, pak `429`. 120 požadavků za minutu a 12 spuštěných záloh za hodinu na klíč, k tomu výše popsaná čekací doba a ochrana uchovávání.
 - Požadavky ze stránky prohlížeče s jiným originem se odmítají.
-- Dokud není nastavené přihlašovací heslo, nelze vytvářet klíče z názvu hostitele, který vypadá veřejně.
 - Každá záloha, kterou spustí asistent, a z ní plynoucí běhy prune a off-site jsou označené "přes MCP" s názvem klíče v protokolu aktivit, v panelu chyb a v oznámení o záloze.
 - Každé volání nástroje se zapíše do logu kontejneru s id klíče a jeho posledními čtyřmi znaky (nikdy s názvem) a započítá se v `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Obnova autozálohy odvolá všechny klíče, protože obnovená databáze může obsahovat klíče, které jsi odvolal až po jejím uložení. Potom vytvoř nové.

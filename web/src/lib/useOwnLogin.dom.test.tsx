@@ -92,7 +92,7 @@ describe("a call refused to the phone app's session", () => {
   });
 
   it("leaves every other answer to the caller", async () => {
-    await call("password-not-set");
+    await call("member-gone");
     expect(handled).toBe(false);
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -101,8 +101,8 @@ describe("a call refused to the phone app's session", () => {
 describe("the sentence of a refusal for the session", () => {
   const t = (key: keyof typeof en) => en[key];
 
-  it("says what is missing for each of the two refusals, and nothing for any other answer", () => {
-    expect(secretsSentence(t, "password-not-set")).toBe(en["secrets.passwordNotSet"]);
+  it("says what is missing for the refusal, and nothing for any other answer", () => {
+    expect(secretsSentence(t, "password-not-set")).toBeUndefined();
     expect(secretsSentence(t, "own-login-needed")).toBe(en["secrets.ownLoginNeeded"]);
     expect(secretsSentence(t, "member-gone")).toBeUndefined();
     expect(secretsSentence(t, undefined)).toBeUndefined();

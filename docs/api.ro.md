@@ -14,7 +14,7 @@ Trimite tokenul într-un antet, fie `Authorization: Bearer <token>`, fie `X-API-
 
 Fiecare token are o casetă cu numele, dacă poate porni copii, ultimele patru caractere, când și de unde a fost folosit ultima dată și apelurile de azi. Din casetă îl poți redenumi, îi poți schimba drepturile, îl poți înlocui sau revoca. **Jurnal** arată copiile pe care le-a pornit și ultimele apeluri. Restaurarea configurației BombVault dintr-o copie revocă toate tokenurile, pentru că acea copie poate conține tokenuri revocate între timp.
 
-Fără parolă de conectare, oricine poate deschide interfața web poate crea și un token. Dacă deschizi BombVault sub un nume care pare public și nu e setată nicio parolă, de la acea adresă nu se pot crea tokenuri, la fel ca la [cheile MCP](mcp.md#switch-on).
+Fără parolă de conectare, oricine poate deschide interfața web poate crea și un token.
 
 ## Puncte de acces {#endpoints}
 

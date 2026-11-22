@@ -58,10 +58,9 @@ import { Card, SubCard, useOpenPasswordField } from "./shared";
 // panel below is lost and has to be replaced.
 //
 // Without a key the endpoint answers 404, which makes this card the switch for
-// the whole feature. It therefore also carries the two conditions under which
-// a key would be handed to the wrong party: a web interface without a login
-// password, and a page opened under a public-looking host name, where the
-// server refuses to mint one at all.
+// the whole feature. It therefore also says when a key could go to the wrong
+// party: a web interface without a login password, where anyone who opens it
+// can make one.
 
 /** The refusals of mcp_keys.go that the card answers with a sentence of its
  *  own rather than with the server's English one. */
@@ -70,7 +69,6 @@ const CODE_MESSAGE: Record<string, TranslationKey> = {
   "mcp-key-limit": "mcp.limitReached",
   "mcp-key-label-invalid": "mcp.labelInvalid",
   "mcp-key-label-taken": "mcp.labelTaken",
-  "mcp-key-needs-password": "mcp.needsPasswordForHost",
   "cert-not-own": "mcp.certNotOwn",
   "cert-name-invalid": "mcp.certNameInvalid",
   "cert-name-limit": "mcp.certNameLimit",
@@ -237,7 +235,6 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   function refusal(res: OkEnvelope): string {
     const key = res.code ? CODE_MESSAGE[res.code] : undefined;
     if (key === "mcp.limitReached") return t(key, limit);
-    if (key === "mcp.needsPasswordForHost") return t(key).replace("{host}", host);
     if (key) return t(key);
     return res.error ?? t("common.actionFailed");
   }
@@ -258,7 +255,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
       if (!res.ok) {
         if (!ownLogin.handled(res)) push(refusal(res), "fail");
         bumpShake(id);
-        if (res.code === "mcp-key-not-found" || res.code === "mcp-key-needs-password") await reload();
+        if (res.code === "mcp-key-not-found") await reload();
         return null;
       }
       if (okMessage) push(okMessage, "success");
@@ -362,7 +359,6 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
   const showRestoreNotice =
     restoreRevoked > 0 && !keys.some((k) => Math.max(k.createdAt, k.rotatedAt) > restoreRevoked);
 
-  const canMint = data?.hostAllowsKeys !== false;
   const open = keys.find((k) => k.id === details) ?? null;
   const allowStartHint = data
     ? t("mcp.allowStartHint")
@@ -441,12 +437,6 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                 hueIndex={hueIndex}
               />
             </div>
-          )}
-
-          {!canMint && (
-            <p className="rounded-card bg-statusWarnBgSoft px-3 py-2.5 text-sm leading-relaxed text-carbon-text">
-              {t("mcp.needsPasswordForHost").replace("{host}", host)}
-            </p>
           )}
 
           {showRestoreNotice && <Note tone="warn">{t("mcp.restoreRevokedNotice")}</Note>}
@@ -556,7 +546,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
                       : t("mcp.certOwnNotForThisAddress")
                     ).replace("{host}", host)}
                   </p>
-                  {certificate.selfIssued && canMint && (
+                  {certificate.selfIssued && (
                     <Button
                       label={t("mcp.certAddAddress")}
                       labelKey="mcp.certAddAddress"
@@ -617,7 +607,7 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           onClose={() => setDetails(null)}
           footer={
             <>
-              {canMint && !open.viaOAuth && (
+              {!open.viaOAuth && (
                 <Button
                   label={t("mcp.rotate")}
                   labelKey="mcp.rotate"
@@ -721,7 +711,6 @@ export function McpServerCard({ hueIndex, passwordSet }: { hueIndex?: number; pa
           keys={keys}
           lists={lists}
           snippetBase={snippetBase}
-          mintRefused={canMint ? undefined : t("mcp.needsPasswordForHost").replace("{host}", host)}
           limitNote={staticKeys >= limit ? t("mcp.limitReached", limit) : undefined}
           oauth={data.oauth}
           authEnabled={data.authEnabled}

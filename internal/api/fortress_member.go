@@ -112,7 +112,9 @@ func (s *Service) fortressConfig(cfg fortress.Config, src status.Source) fortres
 			cfg.Uses = append(cfg.Uses, use)
 		}
 	}
-	cfg.UI = &fortress.UI{Handler: http.HandlerFunc(s.serveOpened), SignIn: s.asksSignIn, Opened: s.openedFrom}
+	// Where a login password is set, the opened page signs in like any
+	// browser.
+	cfg.UI = &fortress.UI{Handler: http.HandlerFunc(s.serveOpened), Opened: s.openedFrom}
 	return cfg
 }
 

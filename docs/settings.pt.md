@@ -58,7 +58,7 @@ O cartão **Streaming**, que baixa o limite de envio enquanto o Plex, o Jellyfin
 
 ## Segurança {#security}
 
-- **Palavra-passe**: a palavra-passe de acesso, com pelo menos 12 caracteres. Mudá-la ou limpá-la pede a atual e, com a autenticação de dois fatores ligada, o código.
+- **Palavra-passe**: a palavra-passe de acesso, de qualquer comprimento. Abaixo de 12 caracteres a página sugere uma mais longa. Mudá-la ou limpá-la pede a atual e, com a autenticação de dois fatores ligada, o código.
 - **Autenticação de dois fatores**: um código de uma aplicação de autenticação por cima da palavra-passe, com oito códigos de recuperação mostrados uma só vez.
 - **Chaves de acesso**: inicia sessão com uma chave no telemóvel, no portátil ou numa chave de segurança. Precisam de um nome de domínio verdadeiro e de um certificado em que o navegador confie.
 - **App para Android**: **Os telemóveis podem emparelhar com as doze palavras do grupo**, o que deixa um telemóvel emparelhado iniciar sessão sem a palavra-passe.

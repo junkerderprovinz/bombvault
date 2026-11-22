@@ -828,14 +828,6 @@ describe("the key keeper tile", () => {
     expect(within(dialog()).queryByText("the server's own words")).toBeNull();
   });
 
-  it("says what is missing when no login password is set", async () => {
-    keeperRefusal = "password-not-set";
-    await renderPage();
-    await click(tile("m1", "keeper"));
-    await click(within(dialog()).getByRole("button", { name: en["keeper.make"] }));
-    expect(within(dialog()).getByText(en["secrets.passwordNotSet"])).toBeTruthy();
-  });
-
   it("says in two sentences what a key keeper is when the pointer rests on it", async () => {
     await renderPage();
     fireEvent.mouseEnter(tile("m1", "keeper"));

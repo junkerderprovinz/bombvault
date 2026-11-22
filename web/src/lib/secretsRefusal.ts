@@ -1,11 +1,10 @@
-// The two refusals a call that hands out or creates key material can meet
-// before it is looked at: no login password is set, or the session is the one
-// the phone app opens this instance with.
-import { openedAsPairedPhone, openedThroughRelay, openedWithoutPassword, type SecretsRefusal } from "./api";
+// The refusal a call that hands out or creates key material can meet before
+// it is looked at: where a password is set, the session is the one the phone
+// app opens this instance with.
+import { openedAsPairedPhone, openedThroughRelay, type SecretsRefusal } from "./api";
 import type { TranslationKey } from "./i18n";
 
 const SECRETS_SENTENCE: Record<SecretsRefusal, TranslationKey> = {
-  "password-not-set": "secrets.passwordNotSet",
   "own-login-needed": "secrets.ownLoginNeeded",
 };
 
@@ -20,6 +19,5 @@ export function secretsSentence(t: (key: TranslationKey) => string, code: string
 /** flashZipRefusal says why the server would refuse the ZIP of a flash backup.
  *  The download is a plain link, and a refusal in its place would leave the page. */
 export function flashZipRefusal(t: (key: TranslationKey) => string): string | undefined {
-  if (openedWithoutPassword()) return secretsSentence(t, "password-not-set");
   return openedAsPairedPhone() ? t("restoreMany.flashOwnLogin") : undefined;
 }

@@ -178,27 +178,11 @@ func TestWithoutTrustedProxyClientsShareABucket(t *testing.T) {
 	}
 }
 
-func TestSetPasswordRefusesAShortOne(t *testing.T) {
+func TestSetPasswordTakesAShortOne(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	code, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"1234"}`, "10.0.0.1:1", nil)
-	if code != http.StatusOK || body["ok"] != false {
-		t.Fatalf("a four-character password must be refused: %d %v", code, body)
-	}
-	s, err := repo.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if s.AuthPasswordHash != "" {
-		t.Fatal("a refused password must not be stored")
-	}
-}
-
-func TestSetPasswordAcceptsTheMinimum(t *testing.T) {
-	h, repo, _ := newAuthGateHandler(t)
-	pw := strings.Repeat("x", secret.MinPasswordLen)
-	code, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"`+pw+`"}`, "10.0.0.1:1", nil)
 	if code != http.StatusOK || body["ok"] != true {
-		t.Fatalf("a password at the minimum must be accepted: %d %v", code, body)
+		t.Fatalf("a four-character password must be taken: %d %v", code, body)
 	}
 	s, err := repo.GetSettings()
 	if err != nil {
@@ -207,16 +191,15 @@ func TestSetPasswordAcceptsTheMinimum(t *testing.T) {
 	if !strings.HasPrefix(s.AuthPasswordHash, "argon2id$") {
 		t.Fatalf("a new password must be stored with Argon2id, got %q", s.AuthPasswordHash)
 	}
+	if _, body := postJSON(t, h.handleLogin, "/api/login", `{"password":"1234"}`, "10.0.0.1:1", nil); body["ok"] != true {
+		t.Fatalf("the short password must sign in: %v", body)
+	}
 }
 
-// A passphrase in a script that spends several bytes per character is not
-// longer for it.
-func TestPasswordLengthIsCountedInCharactersNotBytes(t *testing.T) {
+func TestSetPasswordTakesASingleCharacter(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
-	short := strings.Repeat("ä", secret.MinPasswordLen-1)
-	_, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"`+short+`"}`, "10.0.0.1:1", nil)
-	if body["ok"] != false {
-		t.Fatalf("%d multi-byte characters must still be too short: %v", secret.MinPasswordLen-1, body)
+	if _, body := postJSON(t, h.handleSetPassword, "/api/auth/password", `{"password":"ä"}`, "10.0.0.1:1", nil); body["ok"] != true || body["enabled"] != true {
+		t.Fatalf("a password of one character must be taken: %v", body)
 	}
 }
 
@@ -270,7 +253,7 @@ func TestClearingThePasswordAlsoClearsTheSecondFactor(t *testing.T) {
 func TestAPasswordChangeNeedsTheCurrentPassword(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
 	before := enableAuth(t, h, repo)
-	pw := strings.Repeat("y", secret.MinPasswordLen)
+	pw := strings.Repeat("y", secret.RecommendedPasswordLen)
 	for _, body := range []string{`{"password":"` + pw + `"}`, `{"password":"` + pw + `","current":"wrong"}`, `{"password":""}`} {
 		_, out := postJSON(t, h.handleSetPassword, "/api/auth/password", body, "10.0.0.1:1", sessionOf(h))
 		if out["ok"] != false || out["code"] != codeCurrentPasswordWrong {
@@ -676,7 +659,7 @@ func legacyHashForTest(appKey, password string) string {
 // unauthenticated already had the whole API.
 func TestSetPasswordIssuesASession(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
-	pw := strings.Repeat("x", secret.MinPasswordLen)
+	pw := strings.Repeat("x", secret.RecommendedPasswordLen)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/auth/password", strings.NewReader(`{"password":"`+pw+`"}`))
 	r.Header.Set("Content-Type", "application/json")
@@ -757,7 +740,7 @@ func TestClearingThePasswordSendsTheSessionAway(t *testing.T) {
 // own new cookie has to survive the rotation.
 func TestSetPasswordEndsEveryOtherSession(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
-	pw := strings.Repeat("x", secret.MinPasswordLen)
+	pw := strings.Repeat("x", secret.RecommendedPasswordLen)
 
 	first := postPassword(t, h, pw, "")
 	before, err := repo.GetSettings()

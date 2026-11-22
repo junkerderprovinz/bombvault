@@ -3,6 +3,7 @@ package api
 import (
 	"cmp"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -145,14 +146,6 @@ func (n *noDownload) finish() {
 	}
 }
 
-// asksSignIn reports whether BombVault asks for its own sign-in: only then do
-// its pages open through the fortress, since without a password every holder
-// of the phrase could use them.
-func (s *Service) asksSignIn() bool {
-	settings, err := s.store.GetSettings()
-	return err == nil && settings.AuthPasswordHash != ""
-}
-
 // openedFrom writes into the activity log that another member opened this
 // instance's pages, naming its app, its device and the end of its id, which
 // the bar above the page shows as well.
@@ -197,18 +190,41 @@ func (s *Service) memberAppName(id string) string {
 	return ""
 }
 
-// passwordSession is the session a request carries that somebody signed in
-// with the password, and false for none.
-func (h *Handler) passwordSession(r *http.Request) (string, bool) {
+// visitorCookieName holds a random name a browser gets on an instance
+// without a login password, so that a tab opened there belongs to that
+// browser alone, as it belongs to a sign-in where a password is set.
+const visitorCookieName = "bv_visitor"
+
+// tabSession names the browser session a request may open another member's
+// pages with, and reports whether it still stands: the sign-in where a
+// password is set, the visitor cookie where none is. A phone's page and a
+// page opened here through the fortress have none.
+func (h *Handler) tabSession(r *http.Request) (name string, valid func() bool, ok bool) {
+	if openedPage(r) || relayedPage(r) {
+		return "", nil, false
+	}
 	hash, epoch, on := h.authEnabled()
-	if !on || openedPage(r) || relayedPage(r) {
-		return "", false
+	if !on {
+		c, err := r.Cookie(visitorCookieName)
+		if err != nil || c.Value == "" {
+			return "", nil, false
+		}
+		return sessionName(c.Value), h.noPassword, true
 	}
 	c, err := h.sessionCookie(r)
 	if err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
-		return "", false
+		return "", nil, false
 	}
-	return c.Value, true
+	token := c.Value
+	return sessionName(token), func() bool {
+		hash, epoch, on := h.authEnabled()
+		return on && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
+	}, true
+}
+
+func (h *Handler) noPassword() bool {
+	_, _, on := h.authEnabled()
+	return !on
 }
 
 // sessionName names a session to the fortress without giving it away.
@@ -217,18 +233,15 @@ func sessionName(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// FortressTabs serves the tabs in which a user signed in here opens other
+// FortressTabs serves the tabs in which a user of this instance opens other
 // members of the fortress, outside the auth gate and the security headers:
 // the kit checks the session itself, and the bar it draws frames the opened
 // page. A phone's page over the relay and a page opened here through the
 // fortress do not reach them.
 func (h *Handler) FortressTabs() http.Handler {
 	session := func(r *http.Request) (string, bool) {
-		token, ok := h.passwordSession(r)
-		if !ok {
-			return "", false
-		}
-		return sessionName(token), true
+		name, _, ok := h.tabSession(r)
+		return name, ok
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f := h.svc.fortressNow()
@@ -241,20 +254,21 @@ func (h *Handler) FortressTabs() http.Handler {
 }
 
 // handleFortressOpen opens another member's pages for the browser that asks,
-// in a tab of their own, and answers with its path. Only a session somebody
-// signed in for with the password may open one: the other app keeps its
-// sign-in apart by it, and the tab closes once it ends.
+// in a tab of their own, and answers with its path. The other app keeps its
+// sign-in apart by the session the tab is opened for, and the tab closes once
+// that session ends. Without a login password the browser gets a visitor
+// cookie for it, and setting a password closes the tab.
 // POST /api/fortress/open/{id}
 func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 	if openedPage(r) {
 		refuseOpened(w, http.StatusForbidden, "this works at BombVault's own address, not through the fortress")
 		return
 	}
-	if !h.requireAuthForSecrets(w, r, "opening another app") {
+	if !h.requireSignIn(w, r, "opening another app") {
 		return
 	}
-	token, ok := h.passwordSession(r)
-	if !ok {
+	name, valid, ok := h.tabSession(r)
+	if !ok && (!h.noPassword() || relayedPage(r)) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "sign in with the password to open another app", "code": codeOwnLoginNeeded})
 		return
 	}
@@ -263,15 +277,19 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		writeFortressError(w, errNoFortress)
 		return
 	}
-	valid := func() bool {
-		hash, epoch, on := h.authEnabled()
-		return on && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
+	if !ok {
+		c := &http.Cookie{ //nolint:gosec // G124: Secure is off only in HTTP-only mode, as for the session cookie
+			Name: visitorCookieName, Value: rand.Text(), Path: "/", MaxAge: int(sessionTTL.Seconds()),
+			HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: !h.cfg.HTTPOnly,
+		}
+		http.SetCookie(w, c)
+		name, valid = sessionName(c.Value), h.noPassword
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), moveTimeout)
 	defer cancel()
 	tab, err := f.Open(ctx, fortress.Visit{
 		Member:  r.PathValue("id"),
-		Session: sessionName(token),
+		Session: name,
 		Valid:   valid,
 		Back:    forwardedPrefix(r) + "settings/pairing",
 	})

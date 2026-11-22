@@ -177,14 +177,9 @@ func TestOnlyAnAppBackupOfThisContainerGoesBack(t *testing.T) {
 	}
 }
 
-func TestGivingABackupBackNeedsAPersonSignedIn(t *testing.T) {
+func TestGivingABackupBackWorksWithoutALoginPassword(t *testing.T) {
 	f, _, _ := appImportFixture(t)
 	code, out := f.call(http.MethodPost, "/api/containers/knightloader/appexports/e1e1e1e1/import", map[string]any{})
-	if code != http.StatusForbidden || out["code"] != codeNoPassword {
-		t.Fatalf("status %d with %v, want the refusal that asks for a password", code, out)
-	}
-	f.signIn()
-	code, out = f.call(http.MethodPost, "/api/containers/knightloader/appexports/e1e1e1e1/import", map[string]any{})
 	if code != http.StatusOK || out["ok"] != false || out["code"] != appImportNoFortress {
 		t.Fatalf("status %d with %v, want the refusal of a server in no fortress", code, out)
 	}

@@ -175,15 +175,4 @@ describe("AddNodeWindow", () => {
     expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.placedOnNode"].replace("{target}", "https://203.0.113.7:8443"));
     expect(placed).toEqual([["n1", { kind: "node", address: "https://203.0.113.7:8443" }]]);
   });
-
-  it("says why it cannot add a node while no login password is set", async () => {
-    refusal = { ok: false, code: "password-not-set" };
-    await renderWindow();
-    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
-    await act(async () => {
-      fireEvent.click(next());
-    });
-    expect(screen.getByRole("alert").textContent).toBe(en["secrets.passwordNotSet"]);
-    expect(screen.getByLabelText(en["nodes.step.name"])).toBeTruthy();
-  });
 });

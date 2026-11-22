@@ -49,7 +49,7 @@ Uruchomienia przez [API](api.md#errors) i z [Home Assistant](api.md#home-assista
 3. Włącz **Pozwól uruchamiać kopie** dla klucza, który ma móc uruchamiać kopie. Bez tego klucz może tylko czytać. Możesz to zmienić później w **Szczegóły** klucza, a zmiana obowiązuje od następnego żądania asystenta, bez ponownego łączenia.
 4. Kliknij **Utwórz klucz**. Klucz jest pokazywany raz. BombVault trzyma tylko jego odcisk i nie pokaże go ponownie, więc skopiuj go teraz. Jeśli zamkniesz okno, zanim klient użyje klucza, karta nadal go pokazuje, dopóki nie potwierdzisz, że go skopiowałeś.
 
-Bez hasła logowania sam interfejs WWW jest otwarty dla wszystkich w twojej sieci, a kto może go otworzyć, może też utworzyć klucz. Karta o tym informuje. Jeśli otworzysz BombVault pod nazwą wyglądającą na publiczną (na przykład `bombvault.example.com` za reverse proxy), a hasło logowania nie jest ustawione, z tego adresu nie da się tworzyć ani wymieniać kluczy, żeby żadna strona w internecie nie mogła skłonić twojej przeglądarki do utworzenia klucza. Ustaw hasło logowania albo otwórz BombVault przez adres IP lub lokalną nazwę, taką jak `tower` czy `tower.local`.
+Bez hasła logowania sam interfejs WWW jest otwarty dla wszystkich w twojej sieci, a kto może go otworzyć, może też utworzyć klucz. Karta o tym informuje.
 
 ## Twoje klucze i ich dziennik {#keys}
 
@@ -235,7 +235,6 @@ Za proxy każde żądanie niesie adres proxy. Pięć złych kluczy od jednego ź
 - Każde utworzenie, wymiana, zmiana uprawnień i unieważnienie wysyła powiadomienie twoimi kanałami powiadomień, z adresem, z którego przyszło, chyba że powiadomienia są wyłączone.
 - 5 złych kluczy na minutę z jednego adresu, potem `429`. 120 żądań na minutę i 12 uruchomionych kopii na godzinę na klucz, do tego opisane wyżej odczekanie i ochrona przechowywania.
 - Żądania ze strony przeglądarki z innego originu są odrzucane.
-- Dopóki nie ma hasła logowania, nie można tworzyć kluczy z nazwy hosta wyglądającej na publiczną.
 - Każda kopia uruchomiona przez asystenta oraz wynikające z niej przebiegi prune i off-site są oznaczone "przez MCP" z nazwą klucza w dzienniku aktywności, w panelu błędów i w powiadomieniu o kopii.
 - Każde wywołanie narzędzia trafia do logu kontenera z id klucza i jego czterema ostatnimi znakami (nigdy z nazwą) i jest liczone w `/metrics` (`bombvault_mcp_requests_total`, `bombvault_mcp_tool_calls_total`, `bombvault_mcp_active_keys`).
 - Przywrócenie autokopii unieważnia wszystkie klucze, bo przywrócona baza może zawierać klucze, które unieważniłeś po jej zapisaniu. Potem utwórz nowe.

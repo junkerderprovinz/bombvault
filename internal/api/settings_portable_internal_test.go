@@ -68,7 +68,6 @@ func seedSource(t *testing.T, h *Handler, st *store.Repo) {
 	s.DrillsEnabled = true
 	s.DrillsSchedule = "weekly Sun 04:00"
 	s.RecoveryKitAck = true // per-instance state, never exported
-	// The credentialed export requires a login password (requireAuthForSecrets).
 	s.AuthPasswordHash = "seeded-login-password-hash"
 	if err := st.UpdateSettings(s); err != nil {
 		t.Fatal(err)

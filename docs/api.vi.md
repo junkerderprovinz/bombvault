@@ -14,7 +14,7 @@ Gửi mã trong một tiêu đề, `Authorization: Bearer <token>` hoặc `X-API
 
 Mỗi mã có một ô hiển thị tên, có được bắt đầu sao lưu không, bốn ký tự cuối, thời điểm và nơi dùng gần nhất, và số lượt gọi hôm nay. Trên ô, bạn có thể đổi tên, đổi quyền, thay hoặc thu hồi mã. **Nhật ký** hiển thị các bản sao lưu mã đã bắt đầu và các lượt gọi gần đây. Khôi phục cấu hình BombVault từ bản sao lưu sẽ thu hồi mọi mã, vì bản sao lưu có thể chứa mã bạn đã thu hồi sau đó.
 
-Khi chưa có mật khẩu đăng nhập, ai mở được giao diện web cũng tạo được mã. Nếu bạn mở BombVault bằng một tên trông như công khai và chưa có mật khẩu, không thể tạo mã từ địa chỉ đó, giống như với [khóa MCP](mcp.md#switch-on).
+Khi chưa có mật khẩu đăng nhập, ai mở được giao diện web cũng tạo được mã.
 
 ## Điểm cuối {#endpoints}
 

@@ -193,11 +193,11 @@ func (s *Service) CallNodeAPI(ctx context.Context, id string, req nodeAPIRequest
 }
 
 // handleNodeAPI passes a request to a node's own routes. It reaches a server
-// that holds Docker as root, so it takes a person signed in here with a
-// password, never a paired phone or a token.
+// that holds Docker as root, so where a password is set it takes a person
+// signed in for it, never a paired phone or a token.
 // GET, POST and PATCH /api/nodes/{id}/api/{path...}
 func (h *Handler) handleNodeAPI(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAuthForSecrets(w, r, "reaching a node") {
+	if !h.requireSignIn(w, r, "reaching a node") {
 		return
 	}
 	if r.Method != http.MethodGet && !crossOriginGuard(w, r) {

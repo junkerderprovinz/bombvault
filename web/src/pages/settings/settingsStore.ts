@@ -127,7 +127,7 @@ export function useSettingsStore() {
   // never disagree about the number they both quote to the user.
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [recoveryLeft, setRecoveryLeft] = useState<number | undefined>(undefined);
-  const [minPasswordLen, setMinPasswordLen] = useState(12);
+  const [recommendedPasswordLen, setRecommendedPasswordLen] = useState(12);
 
   // Save state per card. Only the setters are used, as the callbacks that
   // autoSaveField and debouncedSave take.
@@ -200,7 +200,7 @@ export function useSettingsStore() {
         setAuthEnabled(res.enabled);
         setTotpEnabled(res.totp ?? false);
         setRecoveryLeft(res.recoveryCodesLeft);
-        if (res.minPasswordLen) setMinPasswordLen(res.minPasswordLen);
+        if (res.recommendedPasswordLen) setRecommendedPasswordLen(res.recommendedPasswordLen);
       })
       .catch(() => {
         // Non-fatal: Security card shows auth as off.
@@ -635,7 +635,7 @@ export function useSettingsStore() {
     setTotpEnabled,
     recoveryLeft,
     setRecoveryLeft,
-    minPasswordLen,
+    recommendedPasswordLen,
     containers,
     vms,
     save,

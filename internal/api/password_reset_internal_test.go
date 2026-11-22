@@ -460,17 +460,24 @@ func TestResetNeedsALoginPassword(t *testing.T) {
 	}
 }
 
-func TestAShortPasswordIsRefusedAndKeepsTheCode(t *testing.T) {
+func TestAResetTakesAShortPassword(t *testing.T) {
 	h, _, out := newResetHandler(t)
 	code := askForResetCode(t, h, out)
 
-	body, _ := finishReset(t, h, code, "short")
-	if body["ok"] != false {
-		t.Fatalf("a short password must be refused: %v", body)
+	if body, _ := finishReset(t, h, code, "short"); body["ok"] != true {
+		t.Fatalf("a short password must be taken: %v", body)
 	}
+}
 
+func TestAnEmptyPasswordIsRefusedAndKeepsTheCode(t *testing.T) {
+	h, _, out := newResetHandler(t)
+	code := askForResetCode(t, h, out)
+
+	if body, _ := finishReset(t, h, code, ""); body["ok"] != false {
+		t.Fatalf("an empty password must be refused: %v", body)
+	}
 	if got, _ := finishReset(t, h, code, resetNewPass); got["ok"] != true {
-		t.Fatalf("the code must survive a password that was too short: %v", got)
+		t.Fatalf("the code must survive an empty password: %v", got)
 	}
 }
 

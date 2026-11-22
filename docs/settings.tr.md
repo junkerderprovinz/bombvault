@@ -58,7 +58,7 @@ Plex, Jellyfin ya da Emby yayın yaparken yükleme sınırını düşüren **Yay
 
 ## Güvenlik {#security}
 
-- **Parola**: giriş parolası, en az 12 karakter. Değiştirmek ya da silmek mevcut parolayı ve, iki adımlı doğrulama açıksa, kodu ister.
+- **Parola**: giriş parolası, uzunluğu serbest. 12 karakterin altında sayfa daha uzun bir parola önerir. Değiştirmek ya da silmek mevcut parolayı ve, iki adımlı doğrulama açıksa, kodu ister.
 - **İki adımlı doğrulama**: parolanın üstüne bir kimlik doğrulayıcı uygulamasından kod, bir kez gösterilen sekiz kurtarma koduyla.
 - **Geçiş anahtarları**: telefonundaki, dizüstündeki ya da güvenlik anahtarındaki bir anahtarla oturum açma. Gerçek bir alan adı ve tarayıcının güvendiği bir sertifika gerektirirler.
 - **Android uygulaması**: **Telefonlar grubun on iki kelimesiyle eşleşebilir**, eşleşmiş bir telefonun parolasız oturum açmasını sağlar.

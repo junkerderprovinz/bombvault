@@ -268,25 +268,22 @@ func TestAPhoneTakenOffTheInstancesPageLosesItsSessionAtTheOwnAddress(t *testing
 	})
 }
 
-func TestKeyMaterialIsNotMadeOrHandedOutWithoutALoginPassword(t *testing.T) {
+func TestTheKeyIsDepositedWithoutALoginPassword(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
 	if _, err := tower.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	for _, route := range []struct{ method, path string }{
-		{http.MethodPut, "/api/group/members/" + attic.id(t) + "/roles/keeper"},
-		{http.MethodPost, "/api/group/deposit/code"},
-		{http.MethodPost, "/api/group/deposits/releases/any"},
-	} {
-		code, out := tower.do(t, route.method, route.path, map[string]any{"decision": "allow"})
-		if code != http.StatusForbidden || out["code"] != codeNoPassword {
-			t.Errorf("%s %s without a password: %d %v", route.method, route.path, code, out)
-		}
+	tower.session = ""
+	if out := deposit(t, tower, attic); out["ok"] != true {
+		t.Fatalf("depositing without a password: %v", out)
 	}
-	if _, found := kept(t, attic, tower); found {
-		t.Fatal("a deposit was made")
+	if _, found := kept(t, attic, tower); !found {
+		t.Fatal("the keeper holds no deposit")
+	}
+	if code, out := tower.do(t, http.MethodPost, "/api/group/deposit/code", nil); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("a new recovery code without a password: %d %v", code, out)
 	}
 }
 
