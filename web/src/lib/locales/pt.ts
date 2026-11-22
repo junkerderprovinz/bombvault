@@ -3361,6 +3361,8 @@ const pt: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Ainda nenhum nó tem aqui os seus backups.",
   "receiver.server.forgetTipNodes": "Já não é possível colocar nós novos neste servidor recetor. O contentor e os backups na sua pasta ficam.",
   "receiver.server.forgetAskNodes": "Deixar de usar este servidor recetor para nós novos? O contentor e os backups na sua pasta ficam, tal como os inícios de sessão já entregues. Mas desaparecem desta lista e já não podem ser revogados aqui.",
+  "receiver.server.outsideUserNodes": "Início de sessão para uso manual",
+  "receiver.server.passwordTipNodes": "Este início de sessão é para um cliente restic que configuras à mão. Copia-o agora, porque não volta a ser mostrado.",
   "sharedUpkeep.title": "Repositório partilhado",
   "sharedUpkeep.tip": "Os servidores do teu grupo copiam para este repositório, e os ficheiros que têm em comum ficam guardados uma só vez. Só este servidor esquece ali os backups antigos e faz a manutenção, segundo as regras abaixo.",
   "sharedUpkeep.space": "Ocupa {used}. Em separado, seriam precisos {apart} para {servers}. Poupança: {saved}.",

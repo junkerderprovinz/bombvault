@@ -2125,6 +2125,8 @@ const sl: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Še nobeno vozlišče nima tu svojih kopij.",
   "receiver.server.forgetTipNodes": "Na ta sprejemni strežnik ni več mogoče postaviti novih vozlišč. Vsebnik in kopije v njegovi mapi ostanejo.",
   "receiver.server.forgetAskNodes": "Ne uporabljaš več tega sprejemnega strežnika za nova vozlišča? Vsebnik in kopije v njegovi mapi ostanejo, prav tako že izdane prijave. Te pa izginejo s tega seznama in jih od tu ni več mogoče preklicati.",
+  "receiver.server.outsideUserNodes": "Prijava za ročno uporabo",
+  "receiver.server.passwordTipNodes": "Ta prijava je za odjemalca restic, ki ga nastaviš ročno. Kopiraj jo zdaj, ker se ne prikaže znova.",
   "sharedUpkeep.title": "Skupni repozitorij",
   "sharedUpkeep.tip": "Strežniki tvoje skupine kopirajo v ta repozitorij, datoteke, ki so jim skupne, pa so shranjene samo enkrat. Samo ta strežnik tam pozablja stare varnostne kopije in pospravlja, po spodnjih pravilih.",
   "sharedUpkeep.space": "Zaseda {used}. Ločeno bi za {servers} potrebovali {apart}. Prihranek: {saved}.",

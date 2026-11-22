@@ -2131,6 +2131,8 @@ const hr: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Još nijedan čvor nema svoje kopije ovdje.",
   "receiver.server.forgetTipNodes": "Na ovaj prijamni poslužitelj više se ne mogu smjestiti novi čvorovi. Spremnik i kopije u njegovoj mapi ostaju.",
   "receiver.server.forgetAskNodes": "Prestati koristiti ovaj prijamni poslužitelj za nove čvorove? Spremnik i kopije u njegovoj mapi ostaju, kao i već dodijeljene prijave. One ipak nestaju s ovog popisa i odavde se više ne mogu opozvati.",
+  "receiver.server.outsideUserNodes": "Prijava za ručnu upotrebu",
+  "receiver.server.passwordTipNodes": "Ova prijava je za restic klijent koji postavljate ručno. Kopirajte je sada jer se više neće prikazati.",
   "sharedUpkeep.title": "Zajednički repozitorij",
   "sharedUpkeep.tip": "Poslužitelji vaše skupine kopiraju u ovaj repozitorij, a datoteke koje su im zajedničke ondje se spremaju samo jednom. Samo ovaj poslužitelj ondje zaboravlja stare sigurnosne kopije i posprema, prema pravilima ispod.",
   "sharedUpkeep.space": "Zauzima {used}. Odvojeno bi za {servers} trebalo {apart}. Ušteđeno: {saved}.",

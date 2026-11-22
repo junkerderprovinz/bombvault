@@ -2131,6 +2131,8 @@ const ca: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Encara cap node no hi té les seves còpies.",
   "receiver.server.forgetTipNodes": "Ja no es poden col·locar nodes nous en aquest servidor receptor. El contenidor i les còpies de la seva carpeta es queden.",
   "receiver.server.forgetAskNodes": "Vols deixar d'usar aquest servidor receptor per a nodes nous? El contenidor i les còpies de la seva carpeta es queden, i també els inicis de sessió ja donats. Però desapareixen d'aquesta llista i ja no es poden revocar des d'aquí.",
+  "receiver.server.outsideUserNodes": "Inici de sessió per a ús manual",
+  "receiver.server.passwordTipNodes": "Aquest inici de sessió és per a un client restic que configures a mà. Copia'l ara, perquè no es torna a mostrar.",
   "sharedUpkeep.title": "Repositori compartit",
   "sharedUpkeep.tip": "Els servidors del teu grup copien en aquest repositori, i els fitxers que tenen en comú s'hi desen una sola vegada. Només aquest servidor hi elimina les còpies antigues i en fa el manteniment, segons les regles d'aquí sota.",
   "sharedUpkeep.space": "Ocupa {used}. Per separat, els {servers} necessitarien {apart}. Estalviat: {saved}.",

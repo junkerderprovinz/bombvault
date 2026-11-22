@@ -3361,6 +3361,8 @@ const he: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "עוד אין צומת שהגיבויים שלו כאן.",
   "receiver.server.forgetTipNodes": "כבר אי אפשר להציב צמתים חדשים על שרת המקלט הזה. המכל והגיבויים בתיקייה שלו נשארים.",
   "receiver.server.forgetAskNodes": "להפסיק להשתמש בשרת המקלט הזה לצמתים חדשים? המכל והגיבויים בתיקייה שלו נשארים, וכך גם פרטי ההתחברות שכבר חולקו. הם נעלמים אבל מהרשימה הזו ואי אפשר עוד לבטל אותם מכאן.",
+  "receiver.server.outsideUserNodes": "פרטי התחברות לשימוש ידני",
+  "receiver.server.passwordTipNodes": "פרטי ההתחברות האלה מיועדים ללקוח restic שמגדירים ידנית. יש להעתיק אותם עכשיו, כי הם לא יוצגו שוב.",
   "sharedUpkeep.title": "מאגר משותף",
   "sharedUpkeep.tip": "השרתים בקבוצה מעתיקים למאגר הזה, וקבצים שמשותפים להם נשמרים בו פעם אחת בלבד. רק השרת הזה מסיר שם גיבויים ישנים ומנקה, לפי הכללים שלמטה.",
   "sharedUpkeep.space": "תופס {used}. בנפרד היה צריך {apart} עבור {servers}. נחסך: {saved}.",

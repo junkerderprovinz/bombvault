@@ -3358,6 +3358,8 @@ const pl: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Żaden węzeł nie ma tu jeszcze swoich kopii.",
   "receiver.server.forgetTipNodes": "Na tym serwerze odbiorczym nie można już umieszczać nowych węzłów. Kontener i kopie w jego folderze zostają.",
   "receiver.server.forgetAskNodes": "Przestać używać tego serwera odbiorczego dla nowych węzłów? Kontener i kopie w jego folderze zostają, podobnie jak już wydane loginy. Znikają jednak z tej listy i nie da się ich tu już cofnąć.",
+  "receiver.server.outsideUserNodes": "Login do ręcznego użycia",
+  "receiver.server.passwordTipNodes": "Ten login jest dla klienta restic, którego konfigurujesz ręcznie. Skopiuj go teraz, bo nie zostanie pokazany ponownie.",
   "sharedUpkeep.title": "Wspólne repozytorium",
   "sharedUpkeep.tip": "Serwery z twojej grupy kopiują do tego repozytorium, a pliki, które mają wspólne, są w nim zapisane tylko raz. Tylko ten serwer zapomina tam stare kopie zapasowe i robi porządki, według reguł poniżej.",
   "sharedUpkeep.space": "Zajmuje {used}. Osobno na {servers} potrzeba by {apart}. Oszczędność: {saved}.",

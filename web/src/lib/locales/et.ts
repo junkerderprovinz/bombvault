@@ -2131,6 +2131,8 @@ const et: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Ühelgi sõlmel pole siin veel varukoopiaid.",
   "receiver.server.forgetTipNodes": "Sellesse vastuvõtuserverisse ei saa enam uusi sõlmi paigutada. Konteiner ja selle kausta varukoopiad jäävad alles.",
   "receiver.server.forgetAskNodes": "Kas lõpetada selle vastuvõtuserveri kasutamine uute sõlmede jaoks? Konteiner ja selle kausta varukoopiad jäävad alles, samuti juba välja antud sisselogimised. Need kaovad aga sellest loendist ja neid ei saa siit enam tühistada.",
+  "receiver.server.outsideUserNodes": "Sisselogimine käsitsi kasutamiseks",
+  "receiver.server.passwordTipNodes": "See sisselogimine on restic-kliendile, mille seadistad käsitsi. Kopeeri see praegu, sest seda ei näidata uuesti.",
   "sharedUpkeep.title": "Jagatud hoidla",
   "sharedUpkeep.tip": "Sinu grupi serverid kopeerivad sellesse hoidlasse ja failid, mis neil on ühised, salvestatakse ainult üks kord. Ainult see server eemaldab seal vanu varundusi ja korrastab, allolevate reeglite järgi.",
   "sharedUpkeep.space": "Võtab {used}. Eraldi hoides kuluks {apart} ({servers}). Säästetud: {saved}.",

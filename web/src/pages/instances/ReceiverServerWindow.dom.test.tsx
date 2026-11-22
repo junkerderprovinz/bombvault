@@ -245,6 +245,8 @@ describe("ReceiverServerWindow", () => {
     expect(screen.getByText(en["receiver.server.loginsNodes"])).toBeTruthy();
     expect(screen.queryByText(en["receiver.server.logins"])).toBeNull();
     expect(screen.getByLabelText(en["nodes.address"])).toBeTruthy();
+    expect(screen.getByText(en["receiver.server.outsideUserNodes"])).toBeTruthy();
+    expect(screen.queryByText(en["receiver.server.outsideUser"])).toBeNull();
   });
 
   it("sets up a server for the nodes on an instance without a group", async () => {
@@ -255,5 +257,11 @@ describe("ReceiverServerWindow", () => {
     const form = screen.getByRole("dialog", { name: en["receiver.server.setUp"] });
     expect(form.textContent).toContain(en["receiver.server.formIntroNodes"]);
     expect(screen.queryByLabelText(en["receiver.server.host"])).toBeNull();
+    fireEvent.change(screen.getByPlaceholderText("user/restic"), { target: { value: "user/restic" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.server.start"] }));
+    });
+    expect(screen.getByRole("img", { name: en["receiver.server.passwordTipNodes"] })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: en["receiver.server.passwordTip"] })).toBeNull();
   });
 });

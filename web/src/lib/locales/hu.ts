@@ -3362,6 +3362,8 @@ const hu: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Még egyetlen csomópont mentései sincsenek itt.",
   "receiver.server.forgetTipNodes": "Erre a fogadószerverre már nem helyezhetők új csomópontok. A konténer és a mappájában lévő mentések maradnak.",
   "receiver.server.forgetAskNodes": "Nem használod tovább ezt a fogadószervert új csomópontokhoz? A konténer és a mappájában lévő mentések maradnak, ahogy a már kiadott bejelentkezések is. Ezek viszont eltűnnek a listáról, és innen már nem vonhatók vissza.",
+  "receiver.server.outsideUserNodes": "Bejelentkezés kézi használatra",
+  "receiver.server.passwordTipNodes": "Ez a bejelentkezés egy kézzel beállított restic kliensnek szól. Másold ki most, mert többé nem jelenik meg.",
   "sharedUpkeep.title": "Közös tároló",
   "sharedUpkeep.tip": "A csoportod szerverei ebbe a tárolóba másolnak, és a közös fájljaik csak egyszer kerülnek bele. Itt csak ez a szerver töröl régi mentéseket és rak rendet, az alábbi szabályok szerint.",
   "sharedUpkeep.space": "Foglalt: {used}. Külön-külön tárolva {servers} összesen {apart} helyet foglalna. Megtakarítás: {saved}.",

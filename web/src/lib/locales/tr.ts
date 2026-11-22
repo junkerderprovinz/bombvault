@@ -3361,6 +3361,8 @@ const tr: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Henüz hiçbir düğümün yedekleri burada değil.",
   "receiver.server.forgetTipNodes": "Bu alıcı sunucuya artık yeni düğüm konamaz. Kapsayıcı ve klasöründeki yedekler kalır.",
   "receiver.server.forgetAskNodes": "Bu alıcı sunucu yeni düğümler için kullanılmasın mı? Kapsayıcı ve klasöründeki yedekler kalır, dağıtılmış oturum bilgileri de. Ancak bu listeden kaybolurlar ve artık buradan geri alınamazlar.",
+  "receiver.server.outsideUserNodes": "Elle kullanım için oturum bilgisi",
+  "receiver.server.passwordTipNodes": "Bu oturum bilgisi elle kurduğun bir restic istemcisi için. Şimdi kopyala, çünkü tekrar gösterilmez.",
   "sharedUpkeep.title": "Ortak depo",
   "sharedUpkeep.tip": "Grubundaki sunucular bu depoya kopyalar ve ortak oldukları dosyalar yalnızca bir kez saklanır. Oradaki eski yedekleri yalnızca bu sunucu unutur ve aşağıdaki kurallara göre temizlik yapar.",
   "sharedUpkeep.space": "{used} yer kaplıyor. Ayrı tutulsaydı {servers} için {apart} gerekirdi. Kazanç: {saved}.",

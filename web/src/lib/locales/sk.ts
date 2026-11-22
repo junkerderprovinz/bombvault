@@ -2131,6 +2131,8 @@ const sk: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Zatiaľ tu nemá zálohy žiadny uzol.",
   "receiver.server.forgetTipNodes": "Na tento prijímací server sa už nedajú umiestniť nové uzly. Kontajner a zálohy v jeho priečinku zostanú.",
   "receiver.server.forgetAskNodes": "Prestať používať tento prijímací server pre nové uzly? Kontajner a zálohy v jeho priečinku zostanú, rovnako ako už vydané prihlásenia. Z tohto zoznamu však zmiznú a odtiaľto sa už nedajú odobrať.",
+  "receiver.server.outsideUserNodes": "Prihlásenie na ručné použitie",
+  "receiver.server.passwordTipNodes": "Toto prihlásenie je pre klienta restic, ktorého nastavuješ ručne. Skopíruj si ho hneď, znova sa nezobrazí.",
   "sharedUpkeep.title": "Spoločný repozitár",
   "sharedUpkeep.tip": "Servery tvojej skupiny kopírujú do tohto repozitára a súbory, ktoré majú spoločné, sú v ňom uložené iba raz. Iba tento server tam zabúda staré zálohy a upratuje, podľa pravidiel nižšie.",
   "sharedUpkeep.space": "Zaberá {used}. Oddelene by pre {servers} bolo treba {apart}. Ušetrené: {saved}.",

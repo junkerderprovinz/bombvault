@@ -3362,6 +3362,8 @@ const ro: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Niciun nod nu are încă backupurile aici.",
   "receiver.server.forgetTipNodes": "Pe acest server receptor nu se mai pot pune noduri noi. Containerul și backupurile din folderul lui rămân.",
   "receiver.server.forgetAskNodes": "Nu mai folosești acest server receptor pentru noduri noi? Containerul și backupurile din folderul lui rămân, la fel și autentificările deja date. Ele dispar însă din această listă și nu mai pot fi revocate de aici.",
+  "receiver.server.outsideUserNodes": "Autentificare pentru folosire manuală",
+  "receiver.server.passwordTipNodes": "Această autentificare este pentru un client restic pe care îl configurezi de mână. Copiaz-o acum, pentru că nu mai este afișată.",
   "sharedUpkeep.title": "Depozit comun",
   "sharedUpkeep.tip": "Serverele din grupul tău copiază în acest depozit, iar fișierele pe care le au în comun sunt păstrate o singură dată. Doar acest server uită acolo copiile de rezervă vechi și face întreținerea, după regulile de mai jos.",
   "sharedUpkeep.space": "Ocupă {used}. Separat, pentru {servers} ar fi nevoie de {apart}. Economisit: {saved}.",

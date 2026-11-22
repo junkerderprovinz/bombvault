@@ -323,7 +323,7 @@ export function ReceiverServerWindow({
                 {t(nodeAddressProblem(nodeDraft) === "plain" ? "nodes.addressPlain" : "nodes.addressForm")}
               </p>
             )}
-            <SettingRow label={t("receiver.server.outsideUser")}>
+            <SettingRow label={t(alone ? "receiver.server.outsideUserNodes" : "receiver.server.outsideUser")}>
               <bdi dir="ltr" className="font-mono text-xs text-carbon-text text-start">{server.user}</bdi>
             </SettingRow>
             <SettingRow label={t("receiver.server.folder")}>
@@ -371,7 +371,7 @@ export function ReceiverServerWindow({
             <div className="flex flex-col gap-2 rounded-card bg-carbon-surface2 p-3">
               <span className="flex items-center gap-1.5 text-xs text-carbon-textSub">
                 {t("receiver.server.password")}
-                <InfoBubble tip={t("receiver.server.passwordTip")} />
+                <InfoBubble tip={t(alone ? "receiver.server.passwordTipNodes" : "receiver.server.passwordTip")} />
               </span>
               <CopyBlock text={fresh.password} />
               {fresh.template === "written" && (

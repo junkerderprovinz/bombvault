@@ -3352,6 +3352,8 @@ const vi: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Chưa có node nào có bản sao lưu ở đây.",
   "receiver.server.forgetTipNodes": "Không thể đặt node mới lên máy chủ nhận này nữa. Container và các bản sao lưu trong thư mục của nó vẫn còn.",
   "receiver.server.forgetAskNodes": "Ngừng dùng máy chủ nhận này cho node mới? Container và các bản sao lưu trong thư mục của nó vẫn còn, các thông tin đăng nhập đã cấp cũng vậy. Nhưng chúng sẽ biến mất khỏi danh sách này và không thể thu hồi ở đây nữa.",
+  "receiver.server.outsideUserNodes": "Thông tin đăng nhập để dùng thủ công",
+  "receiver.server.passwordTipNodes": "Thông tin đăng nhập này dành cho một ứng dụng restic bạn tự thiết lập. Hãy sao chép ngay bây giờ, vì nó sẽ không hiện lại.",
   "sharedUpkeep.title": "Kho chung",
   "sharedUpkeep.tip": "Các máy chủ trong nhóm của bạn sao chép vào kho lưu trữ này, và những tệp chúng có chung chỉ được lưu một lần. Chỉ máy chủ này quên các bản sao lưu cũ ở đó và dọn dẹp, theo các quy tắc bên dưới.",
   "sharedUpkeep.space": "Đang chiếm {used}. Nếu để riêng, {servers} sẽ cần {apart}. Tiết kiệm được: {saved}.",

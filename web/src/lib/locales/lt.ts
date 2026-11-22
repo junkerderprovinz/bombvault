@@ -2131,6 +2131,8 @@ const lt: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Dar nė vienas mazgas neturi čia savo kopijų.",
   "receiver.server.forgetTipNodes": "Šiame priėmimo serveryje nebegalima padėti naujų mazgų. Konteineris ir kopijos jo aplanke lieka.",
   "receiver.server.forgetAskNodes": "Nebenaudoti šio priėmimo serverio naujiems mazgams? Konteineris ir kopijos jo aplanke lieka, kaip ir jau išduoti prisijungimai. Tačiau jie dingsta iš šio sąrašo ir jų nebegalima čia atšaukti.",
+  "receiver.server.outsideUserNodes": "Prisijungimas naudoti rankiniu būdu",
+  "receiver.server.passwordTipNodes": "Šis prisijungimas skirtas restic klientui, kurį nustatai ranka. Nukopijuok dabar, nes jis daugiau nerodomas.",
   "sharedUpkeep.title": "Bendra saugykla",
   "sharedUpkeep.tip": "Tavo grupės serveriai kopijuoja į šią saugyklą, o jiems bendri failai saugomi tik kartą. Tik šis serveris čia pašalina senas atsargines kopijas ir tvarko saugyklą pagal toliau pateiktas taisykles.",
   "sharedUpkeep.space": "Užima {used}. Laikant atskirai, {servers} užimtų {apart}. Sutaupyta: {saved}.",

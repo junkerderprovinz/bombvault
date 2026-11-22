@@ -3352,6 +3352,8 @@ const ko: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "아직 이곳에 백업을 둔 노드가 없습니다.",
   "receiver.server.forgetTipNodes": "이 수신 서버에는 더 이상 새 노드를 둘 수 없습니다. 컨테이너와 그 폴더의 백업은 남습니다.",
   "receiver.server.forgetAskNodes": "이 수신 서버를 새 노드에 그만 사용할까요? 컨테이너와 그 폴더의 백업은 남고, 이미 내준 로그인도 남습니다. 다만 이 목록에서 사라지며 여기에서 더 이상 취소할 수 없습니다.",
+  "receiver.server.outsideUserNodes": "직접 사용하는 로그인",
+  "receiver.server.passwordTipNodes": "이 로그인은 직접 설정하는 restic 클라이언트용입니다. 다시 표시되지 않으니 지금 복사하세요.",
   "sharedUpkeep.title": "공유 저장소",
   "sharedUpkeep.tip": "그룹의 서버들이 이 저장소로 복사하며, 서로 같은 파일은 한 번만 저장됩니다. 오래된 백업 삭제와 정리는 이 서버만 아래 규칙에 따라 합니다.",
   "sharedUpkeep.space": "사용 중: {used}. 따로 보관하면 {servers}에 모두 {apart}만큼 필요합니다. 절약: {saved}.",

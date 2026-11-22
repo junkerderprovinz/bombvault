@@ -3361,6 +3361,8 @@ const no: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Ingen node har sikkerhetskopiene sine her ennå.",
   "receiver.server.forgetTipNodes": "Nye noder kan ikke lenger legges på denne mottaksserveren. Containeren og sikkerhetskopiene i mappen dens blir.",
   "receiver.server.forgetAskNodes": "Slutte å bruke denne mottaksserveren for nye noder? Containeren og sikkerhetskopiene i mappen dens blir, og det gjør også påloggingene som allerede er delt ut. De forsvinner likevel fra denne listen og kan ikke lenger trekkes tilbake her.",
+  "receiver.server.outsideUserNodes": "Pålogging for manuell bruk",
+  "receiver.server.passwordTipNodes": "Denne påloggingen er for en restic-klient du setter opp for hånd. Kopier den nå, for den vises ikke igjen.",
   "sharedUpkeep.title": "Delt repository",
   "sharedUpkeep.tip": "Servere i gruppen din kopierer til dette repositoryet, og filer de har felles, lagres bare én gang. Bare denne serveren glemmer gamle sikkerhetskopier der og rydder opp, etter reglene nedenfor.",
   "sharedUpkeep.space": "Bruker {used}. Hver for seg ville {servers} trenge {apart}. Spart: {saved}.",

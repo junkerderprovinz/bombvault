@@ -3361,6 +3361,8 @@ const fi: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Yhdelläkään solmulla ei ole vielä varmuuskopioita täällä.",
   "receiver.server.forgetTipNodes": "Tälle vastaanottopalvelimelle ei voi enää sijoittaa uusia solmuja. Kontti ja sen kansion varmuuskopiot jäävät.",
   "receiver.server.forgetAskNodes": "Lopetetaanko tämän vastaanottopalvelimen käyttö uusille solmuille? Kontti ja sen kansion varmuuskopiot jäävät, samoin jo annetut tunnukset. Ne kuitenkin katoavat tästä luettelosta, eikä niitä voi enää perua täältä.",
+  "receiver.server.outsideUserNodes": "Tunnus käsin käyttöön",
+  "receiver.server.passwordTipNodes": "Tämä tunnus on restic-asiakkaalle, jonka määrität käsin. Kopioi se nyt, koska sitä ei näytetä uudelleen.",
   "sharedUpkeep.title": "Jaettu arkisto",
   "sharedUpkeep.tip": "Ryhmäsi palvelimet kopioivat tähän arkistoon, ja niiden yhteiset tiedostot tallennetaan vain kerran. Vain tämä palvelin unohtaa siellä vanhat varmuuskopiot ja siivoaa, alla olevien sääntöjen mukaan.",
   "sharedUpkeep.space": "Vie {used}. Erillisinä arkistoina {servers} tarvitsisi {apart}. Säästetty: {saved}.",

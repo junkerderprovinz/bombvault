@@ -3352,6 +3352,8 @@ const ja: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "まだバックアップをここに置いているノードはありません。",
   "receiver.server.forgetTipNodes": "この受信サーバーには、もう新しいノードを置けません。コンテナとそのフォルダー内のバックアップは残ります。",
   "receiver.server.forgetAskNodes": "この受信サーバーを新しいノードに使うのをやめますか？コンテナとそのフォルダー内のバックアップは残り、すでに渡したログインも残ります。ただし、それらはこの一覧から消え、ここからは取り消せなくなります。",
+  "receiver.server.outsideUserNodes": "手動で使うログイン",
+  "receiver.server.passwordTipNodes": "このログインは、手動で設定する restic クライアント用です。再表示されないので、今のうちにコピーしてください。",
   "sharedUpkeep.title": "共有リポジトリ",
   "sharedUpkeep.tip": "グループのサーバーがこのリポジトリにコピーし、共通のファイルは一度だけ保存されます。古いバックアップの削除と片付けは、このサーバーだけが下のルールに従って行います。",
   "sharedUpkeep.space": "使用量は {used} です。別々に保存すると、{servers}で {apart} 必要になります。節約できた容量: {saved}。",

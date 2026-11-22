@@ -2131,6 +2131,8 @@ const gl: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Aínda ningún nodo ten aquí as súas copias.",
   "receiver.server.forgetTipNodes": "Xa non se poden colocar nodos novos neste servidor receptor. O contedor e as copias do seu cartafol quedan.",
   "receiver.server.forgetAskNodes": "Deixar de usar este servidor receptor para nodos novos? O contedor e as copias do seu cartafol quedan, e tamén os inicios de sesión xa entregados. Pero desaparecen desta lista e xa non se poden revogar desde aquí.",
+  "receiver.server.outsideUserNodes": "Inicio de sesión para uso manual",
+  "receiver.server.passwordTipNodes": "Este inicio de sesión é para un cliente restic que configuras a man. Cópiao agora, porque non se volve amosar.",
   "sharedUpkeep.title": "Repositorio compartido",
   "sharedUpkeep.tip": "Os servidores do teu grupo copian neste repositorio, e os ficheiros que teñen en común gárdanse unha soa vez. Só este servidor esquece alí as copias vellas e fai limpeza, segundo as regras de abaixo.",
   "sharedUpkeep.space": "Ocupa {used}. Por separado, os {servers} necesitarían {apart}. Aforrado: {saved}.",

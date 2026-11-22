@@ -3361,6 +3361,8 @@ const sv: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Ingen nod har sina säkerhetskopior här än.",
   "receiver.server.forgetTipNodes": "Nya noder kan inte längre läggas på den här mottagarservern. Containern och säkerhetskopiorna i dess mapp blir kvar.",
   "receiver.server.forgetAskNodes": "Sluta använda den här mottagarservern för nya noder? Containern och säkerhetskopiorna i dess mapp blir kvar, liksom de inloggningar som redan delats ut. De försvinner dock från listan och kan inte längre återkallas här.",
+  "receiver.server.outsideUserNodes": "Inloggning för manuell användning",
+  "receiver.server.passwordTipNodes": "Den här inloggningen är för en restic-klient du ställer in för hand. Kopiera den nu, för den visas inte igen.",
   "sharedUpkeep.title": "Delat arkiv",
   "sharedUpkeep.tip": "Servrarna i din grupp kopierar till det här arkivet, och filer de har gemensamt lagras bara en gång. Bara den här servern glömmer gamla säkerhetskopior där och städar, enligt reglerna nedan.",
   "sharedUpkeep.space": "Upptar {used}. Var för sig skulle {servers} behöva {apart}. Sparat: {saved}.",

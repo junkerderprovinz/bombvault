@@ -2131,6 +2131,8 @@ const is: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Enginn hnútur er enn með afritin sín hér.",
   "receiver.server.forgetTipNodes": "Ekki er lengur hægt að setja nýja hnúta á þennan móttökuþjón. Gámurinn og afritin í möppu hans verða eftir.",
   "receiver.server.forgetAskNodes": "Hætta að nota þennan móttökuþjón fyrir nýja hnúta? Gámurinn og afritin í möppu hans verða eftir, og sömuleiðis innskráningar sem þegar hafa verið veittar. Þær hverfa þó af þessum lista og ekki er lengur hægt að afturkalla þær héðan.",
+  "receiver.server.outsideUserNodes": "Innskráning til handvirkrar notkunar",
+  "receiver.server.passwordTipNodes": "Þessi innskráning er fyrir restic-biðlara sem þú setur upp handvirkt. Afritaðu hana núna, því hún birtist ekki aftur.",
   "sharedUpkeep.title": "Sameiginlegt geymslusafn",
   "sharedUpkeep.tip": "Þjónar hópsins þíns afrita í þetta geymslusafn og skrár sem þeir eiga sameiginlegar eru geymdar einu sinni. Aðeins þessi þjónn fjarlægir þar gömul afrit og tekur til, samkvæmt reglunum hér fyrir neðan.",
   "sharedUpkeep.space": "Notar {used}. Hver í sínu lagi þyrftu {servers} {apart}. Sparað: {saved}.",

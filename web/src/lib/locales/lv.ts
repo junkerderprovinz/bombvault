@@ -2131,6 +2131,8 @@ const lv: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Vēl nevienam mezglam šeit nav kopiju.",
   "receiver.server.forgetTipNodes": "Šajā uztvērējserverī vairs nevar novietot jaunus mezglus. Konteiners un kopijas tā mapē paliek.",
   "receiver.server.forgetAskNodes": "Vairs neizmantot šo uztvērējserveri jauniem mezgliem? Konteiners un kopijas tā mapē paliek, tāpat kā jau izsniegtās pierakstīšanās. Tās tomēr pazūd no šī saraksta, un tās vairs nevar atsaukt šeit.",
+  "receiver.server.outsideUserNodes": "Pierakstīšanās manuālai lietošanai",
+  "receiver.server.passwordTipNodes": "Šī pierakstīšanās paredzēta restic klientam, ko iestatāt ar roku. Nokopējiet to tagad, jo tā vairs netiks rādīta.",
   "sharedUpkeep.title": "Kopīgais repozitorijs",
   "sharedUpkeep.tip": "Jūsu grupas serveri kopē šajā repozitorijā, un kopīgie faili tajā tiek glabāti tikai vienreiz. Tikai šis serveris tur noņem vecās rezerves kopijas un sakopj, ievērojot tālāk norādītos noteikumus.",
   "sharedUpkeep.space": "Aizņem {used}. Glabājot atsevišķi, {servers} aizņemtu {apart}. Ietaupīts: {saved}.",

@@ -3361,6 +3361,8 @@ const fr: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Aucun nœud n'a encore ses sauvegardes ici.",
   "receiver.server.forgetTipNodes": "Plus aucun nouveau nœud ne peut être placé sur ce serveur récepteur. Le conteneur et les sauvegardes de son dossier restent.",
   "receiver.server.forgetAskNodes": "Ne plus utiliser ce serveur récepteur pour de nouveaux nœuds ? Le conteneur et les sauvegardes de son dossier restent, tout comme les identifiants déjà remis. Ils disparaissent toutefois de cette liste et ne peuvent plus être révoqués ici.",
+  "receiver.server.outsideUserNodes": "Identifiant pour un usage manuel",
+  "receiver.server.passwordTipNodes": "Cet identifiant est destiné à un client restic que vous configurez à la main. Copiez-le maintenant, car il ne sera plus affiché.",
   "sharedUpkeep.title": "Dépôt partagé",
   "sharedUpkeep.tip": "Les serveurs de votre groupe copient dans ce dépôt, et les fichiers qu'ils ont en commun n'y sont stockés qu'une fois. Seul ce serveur y oublie les anciennes sauvegardes et fait le ménage, selon les règles ci-dessous.",
   "sharedUpkeep.space": "Occupe {used}. Séparés, les {servers} auraient besoin de {apart}. Économisé : {saved}.",

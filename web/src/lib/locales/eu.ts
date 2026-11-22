@@ -2131,6 +2131,8 @@ const eu: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Oraindik ez du inongo nodok bere babeskopiarik hemen.",
   "receiver.server.forgetTipNodes": "Ezin da nodo berririk jarri hartzaile-zerbitzari honetan. Edukiontzia eta bere karpetako babeskopiak geratzen dira.",
   "receiver.server.forgetAskNodes": "Hartzaile-zerbitzari hau nodo berrietarako erabiltzeari utzi? Edukiontzia eta bere karpetako babeskopiak geratzen dira, baita emandako saio-hasierak ere. Baina zerrenda honetatik desagertzen dira eta ezin dira hemendik baliogabetu.",
+  "receiver.server.outsideUserNodes": "Eskuz erabiltzeko saio-hasiera",
+  "receiver.server.passwordTipNodes": "Saio-hasiera hau eskuz konfiguratzen duzun restic bezero batentzat da. Kopiatu orain, ez baita berriro erakutsiko.",
   "sharedUpkeep.title": "Biltegi partekatua",
   "sharedUpkeep.tip": "Zure taldeko zerbitzariek biltegi honetara kopiatzen dute, eta komunean dituzten fitxategiak behin bakarrik gordetzen dira. Zerbitzari honek bakarrik ahazten ditu bertan babeskopia zaharrak eta garbitzen du, beheko arauen arabera.",
   "sharedUpkeep.space": "{used} hartzen ditu. Bereizita gordeta, {apart} beharko lirateke ({servers}). Aurreztua: {saved}.",

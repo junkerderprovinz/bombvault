@@ -3352,6 +3352,8 @@ const zh: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "还没有节点把备份放在这里。",
   "receiver.server.forgetTipNodes": "这台接收服务器不能再放置新的节点。容器及其文件夹中的备份会保留。",
   "receiver.server.forgetAskNodes": "不再把这台接收服务器用于新节点？容器及其文件夹中的备份会保留，已发出的登录信息也会保留。但它们会从这个列表中消失，之后无法在这里撤销。",
+  "receiver.server.outsideUserNodes": "手动使用的登录信息",
+  "receiver.server.passwordTipNodes": "这个登录信息供你手动设置的 restic 客户端使用。请现在复制，因为之后不会再显示。",
   "sharedUpkeep.title": "共享仓库",
   "sharedUpkeep.tip": "你组内的服务器都复制到这个仓库，它们共有的文件只存一份。只有这台服务器会在那里遗忘旧备份并进行整理，规则见下方。",
   "sharedUpkeep.space": "占用 {used}。如果分开存放，{servers}需要 {apart}。节省了 {saved}。",

@@ -2405,6 +2405,8 @@ export const en = {
   "receiver.server.noLoginsNodes": "No node has its backups here yet.",
   "receiver.server.forgetTipNodes": "New nodes can no longer be placed on this receiving server. The container and the backups in its folder stay.",
   "receiver.server.forgetAskNodes": "Stop using this receiving server for new nodes? The container and the backups in its folder stay, and so do the logins already handed out. They drop off this list, though, and can no longer be revoked here.",
+  "receiver.server.outsideUserNodes": "Login for manual use",
+  "receiver.server.passwordTipNodes": "This login is for a restic client you set up by hand. Copy it now, because it is not shown again.",
 
   // Shared repository
   "shared.title": "Shared repository",
@@ -8076,6 +8078,8 @@ export const de: Translations = {
   "receiver.server.noLoginsNodes": "Noch hat kein Knoten seine Sicherungen hier.",
   "receiver.server.forgetTipNodes": "Neue Knoten lassen sich nicht mehr auf diesen Empfangsserver legen. Der Container und die Sicherungen in seinem Ordner bleiben.",
   "receiver.server.forgetAskNodes": "Diesen Empfangsserver nicht mehr für neue Knoten nutzen? Der Container und die Sicherungen in seinem Ordner bleiben, ebenso die schon vergebenen Logins. Sie verschwinden aber aus dieser Liste und lassen sich hier nicht mehr entziehen.",
+  "receiver.server.outsideUserNodes": "Anmeldedaten zum Eintragen von Hand",
+  "receiver.server.passwordTipNodes": "Diese Anmeldedaten sind für einen restic-Client, den du von Hand einrichtest. Kopier sie jetzt, denn sie werden nicht noch einmal angezeigt.",
 
   // Gemeinsames Repository
   "shared.title": "Gemeinsames Repository",

@@ -3359,6 +3359,8 @@ const es: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Ningún nodo tiene todavía sus copias aquí.",
   "receiver.server.forgetTipNodes": "Ya no se pueden colocar nodos nuevos en este servidor receptor. El contenedor y las copias de su carpeta se quedan.",
   "receiver.server.forgetAskNodes": "¿Dejar de usar este servidor receptor para nodos nuevos? El contenedor y las copias de su carpeta se quedan, y también los accesos ya entregados. Pero desaparecen de esta lista y ya no se pueden revocar desde aquí.",
+  "receiver.server.outsideUserNodes": "Acceso para uso manual",
+  "receiver.server.passwordTipNodes": "Este acceso es para un cliente restic que configuras a mano. Cópialo ahora, porque no se vuelve a mostrar.",
   "sharedUpkeep.title": "Repositorio compartido",
   "sharedUpkeep.tip": "Los servidores de tu grupo copian en este repositorio, y los archivos que tienen en común se guardan una sola vez. Solo este servidor elimina allí las copias antiguas y hace limpieza, según las reglas de abajo.",
   "sharedUpkeep.space": "Ocupa {used}. Por separado, los {servers} necesitarían {apart}. Ahorrado: {saved}.",

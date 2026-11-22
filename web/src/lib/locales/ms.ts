@@ -2131,6 +2131,8 @@ const ms: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Belum ada nod yang sandarannya di sini.",
   "receiver.server.forgetTipNodes": "Nod baharu tidak boleh lagi diletakkan pada pelayan penerima ini. Bekas dan sandaran dalam foldernya kekal.",
   "receiver.server.forgetAskNodes": "Berhenti menggunakan pelayan penerima ini untuk nod baharu? Bekas dan sandaran dalam foldernya kekal, begitu juga log masuk yang sudah diberikan. Namun ia hilang daripada senarai ini dan tidak boleh lagi dibatalkan di sini.",
+  "receiver.server.outsideUserNodes": "Log masuk untuk kegunaan manual",
+  "receiver.server.passwordTipNodes": "Log masuk ini untuk klien restic yang anda sediakan secara manual. Salin sekarang, kerana ia tidak dipaparkan lagi.",
   "sharedUpkeep.title": "Repositori dikongsi",
   "sharedUpkeep.tip": "Pelayan dalam kumpulan anda menyalin ke repositori ini, dan fail yang mereka miliki bersama disimpan sekali sahaja. Hanya pelayan ini yang melupakan sandaran lama di sana dan menyelenggaranya, mengikut peraturan di bawah.",
   "sharedUpkeep.space": "Menggunakan {used}. Jika berasingan, {servers} memerlukan {apart}. Dijimatkan: {saved}.",

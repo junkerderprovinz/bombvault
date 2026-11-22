@@ -3360,6 +3360,8 @@ const nl: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Nog geen enkele node heeft hier zijn back-ups.",
   "receiver.server.forgetTipNodes": "Nieuwe nodes kunnen niet meer op deze ontvangserver worden geplaatst. De container en de back-ups in zijn map blijven.",
   "receiver.server.forgetAskNodes": "Deze ontvangserver niet meer gebruiken voor nieuwe nodes? De container en de back-ups in zijn map blijven, net als de logins die al zijn uitgegeven. Ze verdwijnen wel uit deze lijst en kunnen hier niet meer worden ingetrokken.",
+  "receiver.server.outsideUserNodes": "Login voor handmatig gebruik",
+  "receiver.server.passwordTipNodes": "Deze login is voor een restic-client die je met de hand instelt. Kopieer hem nu, want hij wordt niet opnieuw getoond.",
   "sharedUpkeep.title": "Gedeelde repository",
   "sharedUpkeep.tip": "Servers uit je groep kopiëren naar deze repository, en bestanden die ze gemeen hebben, worden er maar één keer bewaard. Alleen deze server vergeet daar oude back-ups en ruimt op, volgens de regels hieronder.",
   "sharedUpkeep.space": "Neemt {used} in beslag. Apart zouden de {servers} {apart} nodig hebben. Bespaard: {saved}.",

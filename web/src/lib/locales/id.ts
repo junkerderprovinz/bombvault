@@ -2131,6 +2131,8 @@ const id: Partial<Translations> = {
   "receiver.server.noLoginsNodes": "Belum ada node yang cadangannya di sini.",
   "receiver.server.forgetTipNodes": "Node baru tidak bisa lagi ditempatkan di server penerima ini. Kontainer dan cadangan di foldernya tetap ada.",
   "receiver.server.forgetAskNodes": "Berhenti memakai server penerima ini untuk node baru? Kontainer dan cadangan di foldernya tetap ada, begitu juga login yang sudah dibagikan. Namun login itu hilang dari daftar ini dan tidak bisa lagi dicabut di sini.",
+  "receiver.server.outsideUserNodes": "Login untuk dipakai manual",
+  "receiver.server.passwordTipNodes": "Login ini untuk klien restic yang Anda siapkan secara manual. Salin sekarang, karena tidak akan ditampilkan lagi.",
   "sharedUpkeep.title": "Repositori bersama",
   "sharedUpkeep.tip": "Server di grup Anda menyalin ke repositori ini, dan file yang mereka miliki bersama hanya disimpan sekali. Hanya server ini yang menghapus cadangan lama di sana dan merapikannya, sesuai aturan di bawah.",
   "sharedUpkeep.space": "Terpakai {used}. Jika disimpan terpisah, {servers} akan butuh {apart}. Hemat: {saved}.",
