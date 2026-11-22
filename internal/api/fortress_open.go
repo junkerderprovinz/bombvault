@@ -145,14 +145,6 @@ func (n *noDownload) finish() {
 	}
 }
 
-// asksSignIn reports whether BombVault asks for its own sign-in: only then do
-// its pages open through the fortress, since without a password every holder
-// of the phrase could use them.
-func (s *Service) asksSignIn() bool {
-	settings, err := s.store.GetSettings()
-	return err == nil && settings.AuthPasswordHash != ""
-}
-
 // openedFrom writes into the activity log that another member opened this
 // instance's pages, naming its app, its device and the end of its id, which
 // the bar above the page shows as well.

@@ -67,8 +67,41 @@ func TestBombVaultOffersItsPagesAndOpensTheOtherApps(t *testing.T) {
 	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if cfg.UI.SignIn() {
-		t.Fatal("without a login password the pages open to every holder of the phrase")
+	if !cfg.UI.SignIn() {
+		t.Fatal("without a login password the pages do not open")
+	}
+}
+
+func TestAMemberOpensABombVaultWithoutAPassword(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	pagesA := servePages(a)
+	servePages(b)
+	id := inOneFortress(t, a, b)
+	if _, err := b.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
+		t.Fatal(err)
+	}
+
+	_, out := a.do(t, http.MethodPost, "/api/fortress/open/"+id, nil)
+	tab, _ := out["path"].(string)
+	if out["ok"] != true || !strings.HasPrefix(tab, fortress.OpenPath) {
+		t.Fatalf("open = %v", out)
+	}
+	get := func(path string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(http.MethodGet, path, nil)
+		r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: a.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+		w := httptest.NewRecorder()
+		pagesA.ServeHTTP(w, r)
+		return w
+	}
+	if w := get(tab + "/"); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `<base href="`+tab+`/" />`) {
+		t.Fatalf("the opened shell = %d %s", w.Code, w.Body.String())
+	}
+	if w := get(tab + "/api/auth"); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"enabled":false`) {
+		t.Fatalf("the opened app's auth = %d %s", w.Code, w.Body.String())
+	}
+	if w := get(tab + "/api/tokens"); w.Code != http.StatusForbidden {
+		t.Fatalf("the tokens of the opened app = %d %s", w.Code, w.Body.String())
 	}
 }
 
