@@ -61,6 +61,16 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.5",
+    // None of the three brings an element of its own: the notes open from the
+    // Version card's What's new, and the phone's cards are the app's own.
+    changes: [
+      { id: "password-optional", text: "whatsNew.passwordOptional" },
+      { id: "release-notes-window", text: "whatsNew.releaseNotesWindow" },
+      { id: "app-version-cards", text: "whatsNew.appVersionCards" },
+    ],
+  },
+  {
     version: "10.6.4",
     changes: [
       { id: "instances-add-node", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.nodes" },
