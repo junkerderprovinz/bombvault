@@ -15,6 +15,7 @@ import {
   type Destination,
   type NodePlacement,
   type NodePlaceKind,
+  type NodePlaceResult,
   type NodeReach,
   type NodeView,
   type OffsiteDomain,
@@ -153,6 +154,17 @@ export function placedSentence(t: T, choice: PlacementChoice, target: string, la
   const onNode = choice.kind === "node";
   const key = later ? (onNode ? "nodes.placementLaterOnNode" : "nodes.placementLater") : onNode ? "nodes.placedOnNode" : "nodes.placed";
   return t(key).replace("{target}", () => target);
+}
+
+/** placeError says why a placement failed, in the reader's language where the
+ *  server named the reason. */
+export function placeError(t: T, res: NodePlaceResult): string {
+  const key = res.code === "node-rest-unreachable" ? "nodes.restUnreachable" : res.code === "node-rest-foreign" ? "nodes.restForeign" : null;
+  if (!key) return res.error ?? t("settings.error");
+  return t(key)
+    .replace("{address}", () => res.address ?? "")
+    .replace("{port}", () => res.port ?? "")
+    .replace("{seconds}", () => String(res.seconds ?? ""));
 }
 
 /** The sentences for the repositories a node could not reach. */
@@ -338,7 +350,7 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
       }
       const res = await placeNode(node.id, placementOf(choice));
       if (!res.ok) {
-        setError(res.error ?? t("settings.error"));
+        setError(placeError(t, res));
         return;
       }
       onSaved();

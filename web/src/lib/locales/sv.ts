@@ -5543,6 +5543,8 @@ const sv: Partial<Translations> = {
   "nodes.placed": "Säkerhetskopiorna går till {target}.",
   "nodes.placedOnNode": "Noden behåller sina säkerhetskopior på {target}, och den här instansen hämtar dem där.",
   "nodes.reachFailed": "Noden når inte arkivet för {domain}: {detail}",
+  "nodes.restUnreachable": "Den här instansen nådde inte nodens rest-server på {address} inom {seconds} s. Kontrollera att port {port} är öppen i nodens brandvägg och i leverantörens brandvägg.",
+  "nodes.restForeign": "Servern på {address} har ett annat certifikat än det noden skapade. Kontrollera att adressen leder till noden.",
   "nodes.replaceTitle": "Ersätt nod",
   "nodes.replaceIntro": "För att flytta {name} till en annan server eller bygga om den startar du den här compose-filen där och stänger av den gamla. Två servrar med samma APP_KEY räknas som en nod.",
   "nodes.sectionToggle": "Poster på {name}",

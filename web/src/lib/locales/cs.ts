@@ -5542,6 +5542,8 @@ const cs: Partial<Translations> = {
   "nodes.placed": "Zálohy jdou sem: {target}.",
   "nodes.placedOnNode": "Uzel uchovává své zálohy na {target} a tato instance si je odtud stahuje.",
   "nodes.reachFailed": "Uzel se nedostane k repozitáři pro {domain}: {detail}",
+  "nodes.restUnreachable": "Tato instance se k rest-serveru uzlu na {address} nedostala do {seconds} s. Zkontroluj, že je port {port} otevřený ve firewallu uzlu i ve firewallu jeho poskytovatele.",
+  "nodes.restForeign": "Server na {address} má jiný certifikát, než jaký vytvořil uzel. Zkontroluj, že adresa vede k uzlu.",
   "nodes.replaceTitle": "Nahradit uzel",
   "nodes.replaceIntro": "Chceš-li {name} přesunout na jiný server nebo ho postavit znovu, spusť tam tento soubor compose a starý vypni. Dva servery se stejným APP_KEY se počítají jako jeden uzel.",
   "nodes.sectionToggle": "Položky na uzlu {name}",

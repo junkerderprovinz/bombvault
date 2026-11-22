@@ -5554,6 +5554,8 @@ const fa: Partial<Translations> = {
   "nodes.placed": "پشتیبان‌ها به {target} می‌روند.",
   "nodes.placedOnNode": "گره پشتیبان‌هایش را در {target} نگه می‌دارد و این نمونه آن‌ها را از آنجا برمی‌دارد.",
   "nodes.reachFailed": "گره به مخزن {domain} نمی‌رسد: {detail}",
+  "nodes.restUnreachable": "این نمونه نتوانست در {seconds} ثانیه به rest-server گره در {address} برسد. بررسی کن که پورت {port} در دیوار آتش گره و در دیوار آتش ارائه‌دهندهٔ آن باز باشد.",
+  "nodes.restForeign": "سرور در {address} گواهی دیگری دارد، نه گواهی‌ای که گره ساخته است. بررسی کن که این نشانی به گره برسد.",
   "nodes.replaceTitle": "جایگزینی گره",
   "nodes.replaceIntro": "برای بردن {name} به سرور دیگر یا ساختن دوباره‌اش، این فایل compose را آنجا راه‌اندازی کن و سرور قدیمی را خاموش کن. دو سرور با یک APP_KEY یک گره حساب می‌شوند.",
   "nodes.sectionToggle": "موارد روی {name}",

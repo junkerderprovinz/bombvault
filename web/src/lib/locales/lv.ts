@@ -5553,6 +5553,8 @@ const lv: Partial<Translations> = {
   "nodes.placed": "Rezerves kopiju mērķis: {target}.",
   "nodes.placedOnNode": "Mezgls glabā savas rezerves kopijas adresē {target}, un šī instance tās paņem no turienes.",
   "nodes.reachFailed": "Mezgls nevar sasniegt {domain} repozitoriju: {detail}",
+  "nodes.restUnreachable": "Šī instance {seconds} s laikā nesasniedza mezgla rest-server adresē {address}. Pārbaudiet, vai ports {port} ir atvērts mezgla ugunsmūrī un tā pakalpojumu sniedzēja ugunsmūrī.",
+  "nodes.restForeign": "Serverim adresē {address} ir cits sertifikāts, nevis tas, ko izveidoja mezgls. Pārbaudiet, vai adrese ved uz mezglu.",
   "nodes.replaceTitle": "Aizstāt mezglu",
   "nodes.replaceIntro": "Lai pārvietotu mezglu {name} uz citu serveri vai uzstādītu to no jauna, palaidiet tur šo compose failu un izslēdziet veco. Divi serveri ar vienu un to pašu APP_KEY skaitās viens mezgls.",
   "nodes.sectionToggle": "Ieraksti mezglā {name}",

@@ -5537,6 +5537,8 @@ const sl: Partial<Translations> = {
   "nodes.placed": "Varnostne kopije gredo v {target}.",
   "nodes.placedOnNode": "Vozlišče hrani svoje varnostne kopije na {target}, ta instanca pa jih prenese od tam.",
   "nodes.reachFailed": "Vozlišče ne doseže repozitorija {domain}: {detail}",
+  "nodes.restUnreachable": "Ta instanca v {seconds} s ni dosegla rest-serverja vozlišča na {address}. Preveri, ali so vrata {port} odprta v požarnem zidu vozlišča in v požarnem zidu njegovega ponudnika.",
+  "nodes.restForeign": "Strežnik na {address} ima drugo potrdilo, kot ga je ustvarilo vozlišče. Preveri, ali naslov vodi do vozlišča.",
   "nodes.replaceTitle": "Zamenjaj vozlišče",
   "nodes.replaceIntro": "Če želiš {name} preseliti na drug strežnik ali ga postaviti na novo, tam zaženi to datoteko compose in starega izklopi. Dva strežnika z istim APP_KEY štejeta kot eno vozlišče.",
   "nodes.sectionToggle": "Vnosi na {name}",

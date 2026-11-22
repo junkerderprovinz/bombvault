@@ -5544,6 +5544,8 @@ const pt: Partial<Translations> = {
   "nodes.placed": "Os backups vão para {target}.",
   "nodes.placedOnNode": "O nó guarda os backups em {target}, e esta instância vai buscá-los lá.",
   "nodes.reachFailed": "O nó não consegue chegar ao repositório de {domain}: {detail}",
+  "nodes.restUnreachable": "Esta instância não chegou ao rest-server do nó em {address} em {seconds} s. Verifica se a porta {port} está aberta na firewall do nó e na do seu fornecedor.",
+  "nodes.restForeign": "O servidor em {address} tem outro certificado, não o que o nó criou. Verifica se o endereço leva ao nó.",
   "nodes.replaceTitle": "Substituir nó",
   "nodes.replaceIntro": "Para mudar {name} para outro servidor ou reconstruí-lo, arranca lá este ficheiro compose e desliga o antigo. Dois servidores com a mesma APP_KEY contam como um só nó.",
   "nodes.sectionToggle": "Entradas em {name}",

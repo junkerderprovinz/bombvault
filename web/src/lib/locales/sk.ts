@@ -5554,6 +5554,8 @@ const sk: Partial<Translations> = {
   "nodes.placed": "Zálohy idú do {target}.",
   "nodes.placedOnNode": "Uzol uchováva svoje zálohy na {target} a táto inštancia si ich odtiaľ sťahuje.",
   "nodes.reachFailed": "Uzol nedosiahne na repozitár {domain}: {detail}",
+  "nodes.restUnreachable": "Táto inštancia sa k rest-serveru uzla na {address} nedostala do {seconds} s. Skontroluj, či je port {port} otvorený vo firewalle uzla aj vo firewalle jeho poskytovateľa.",
+  "nodes.restForeign": "Server na {address} má iný certifikát, než aký vytvoril uzol. Skontroluj, či adresa vedie k uzlu.",
   "nodes.replaceTitle": "Nahradiť uzol",
   "nodes.replaceIntro": "Ak chceš {name} presunúť na iný server alebo ho znova postaviť, spusti tam tento compose súbor a starý vypni. Dva servery s rovnakým APP_KEY sa rátajú ako jeden uzol.",
   "nodes.sectionToggle": "Položky na {name}",

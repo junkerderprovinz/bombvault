@@ -5553,6 +5553,8 @@ const id: Partial<Translations> = {
   "nodes.placed": "Cadangan dikirim ke {target}.",
   "nodes.placedOnNode": "Node menyimpan cadangannya di {target}, dan instance ini mengambilnya dari sana.",
   "nodes.reachFailed": "Node tidak bisa menjangkau repositori {domain}: {detail}",
+  "nodes.restUnreachable": "Instance ini tidak bisa menjangkau rest-server node di {address} dalam {seconds} dtk. Pastikan port {port} terbuka di firewall node dan di firewall penyedianya.",
+  "nodes.restForeign": "Server di {address} memakai sertifikat lain, bukan yang dibuat node. Pastikan alamat itu mengarah ke node.",
   "nodes.replaceTitle": "Ganti node",
   "nodes.replaceIntro": "Untuk memindahkan {name} ke server lain atau membangunnya ulang, jalankan file compose ini di sana lalu matikan yang lama. Dua server dengan APP_KEY yang sama dihitung sebagai satu node.",
   "nodes.sectionToggle": "Entri di {name}",

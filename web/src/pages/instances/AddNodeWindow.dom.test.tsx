@@ -17,6 +17,7 @@ const addresses: string[] = [];
 const placed: [string, NodePlacement][] = [];
 const scheduled: [string, unknown][] = [];
 let refusal: { ok: false; code: string } | null = null;
+let placeRefusal: Record<string, unknown> | null = null;
 let adoptedAt = 0;
 
 vi.mock("../../lib/api", async (importOriginal) => {
@@ -41,7 +42,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     },
     placeNode: (id: string, placement: NodePlacement) => {
       placed.push([id, placement]);
-      return Promise.resolve({ ok: true, reach: [{ domain: "containers", reached: true }], warning: "" });
+      return Promise.resolve(placeRefusal ?? { ok: true, reach: [{ domain: "containers", reached: true }], warning: "" });
     },
   };
 });
@@ -74,6 +75,7 @@ afterEach(() => {
   placed.length = 0;
   scheduled.length = 0;
   refusal = null;
+  placeRefusal = null;
   adoptedAt = 0;
 });
 
@@ -174,6 +176,27 @@ describe("AddNodeWindow", () => {
     });
     expect(screen.getByTestId("node-adoption").textContent).toContain(en["nodes.placedOnNode"].replace("{target}", "https://203.0.113.7:8443"));
     expect(placed).toEqual([["n1", { kind: "node", address: "https://203.0.113.7:8443" }]]);
+  });
+
+  it("says which port to open when this instance cannot reach the node's rest-server", async () => {
+    placeRefusal = { ok: false, code: "node-rest-unreachable", error: "dial tcp: i/o timeout", address: "https://203.0.113.7:8000", port: "8000", seconds: 30 };
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(`^${en["nodes.toNode"]}`) }));
+    fireEvent.change(screen.getByLabelText(en["nodes.nodeAddress"]), { target: { value: "https://203.0.113.7:8000" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    adoptedAt = 2;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ADOPT_POLL_MS);
+    });
+    expect(screen.getByTestId("node-adoption").textContent).toContain(
+      en["nodes.restUnreachable"].replace("{address}", "https://203.0.113.7:8000").replace("{seconds}", "30").replace("{port}", "8000"),
+    );
   });
 
   it("says why it cannot add a node while no login password is set", async () => {

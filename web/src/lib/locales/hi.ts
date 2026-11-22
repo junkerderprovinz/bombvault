@@ -5554,6 +5554,8 @@ const hi: Partial<Translations> = {
   "nodes.placed": "बैकअप {target} पर जाते हैं।",
   "nodes.placedOnNode": "नोड अपने बैकअप {target} पर रखता है, और यह इंस्टेंस उन्हें वहाँ से लाता है।",
   "nodes.reachFailed": "नोड {domain} की रिपॉज़िटरी तक नहीं पहुँच पा रहा: {detail}",
+  "nodes.restUnreachable": "यह इंस्टेंस {seconds} सेकंड में {address} पर नोड के rest-server तक नहीं पहुँच सका। जाँचें कि पोर्ट {port} नोड के फ़ायरवॉल में और उसके प्रदाता के फ़ायरवॉल में खुला है।",
+  "nodes.restForeign": "{address} पर मौजूद सर्वर का प्रमाणपत्र वह नहीं है जो नोड ने बनाया था। जाँचें कि यह पता नोड तक जाता है।",
   "nodes.replaceTitle": "नोड बदलें",
   "nodes.replaceIntro": "{name} को किसी दूसरे सर्वर पर ले जाने या दोबारा बनाने के लिए, वहाँ यह compose फ़ाइल शुरू करें और पुराने को बंद कर दें। एक ही APP_KEY वाले दो सर्वर एक ही नोड गिने जाते हैं।",
   "nodes.sectionToggle": "{name} पर प्रविष्टियाँ",

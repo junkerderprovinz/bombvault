@@ -5544,6 +5544,8 @@ const no: Partial<Translations> = {
   "nodes.placed": "Sikkerhetskopiene går til {target}.",
   "nodes.placedOnNode": "Noden oppbevarer sikkerhetskopiene sine på {target}, og denne instansen henter dem der.",
   "nodes.reachFailed": "Noden når ikke repositoryet for {domain}: {detail}",
+  "nodes.restUnreachable": "Denne instansen nådde ikke rest-serveren til noden på {address} innen {seconds} s. Sjekk at port {port} er åpen i brannmuren på noden og i brannmuren til leverandøren.",
+  "nodes.restForeign": "Serveren på {address} har et annet sertifikat enn det noden lagde. Sjekk at adressen fører til noden.",
   "nodes.replaceTitle": "Erstatt node",
   "nodes.replaceIntro": "For å flytte {name} til en annen server eller bygge den opp på nytt starter du denne compose-filen der og slår av den gamle. To servere med samme APP_KEY regnes som én node.",
   "nodes.sectionToggle": "Elementer på {name}",

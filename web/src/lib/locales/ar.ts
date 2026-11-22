@@ -5545,6 +5545,8 @@ const ar: Partial<Translations> = {
   "nodes.placed": "تذهب النسخ الاحتياطية إلى {target}.",
   "nodes.placedOnNode": "تحتفظ العقدة بنسخها الاحتياطية في {target}، ويجلبها هذا المثيل من هناك.",
   "nodes.reachFailed": "لا تستطيع العقدة الوصول إلى مستودع {domain}: {detail}",
+  "nodes.restUnreachable": "لم يصل هذا المثيل إلى rest-server الخاص بالعقدة على {address} خلال {seconds} ث. تحقّق من أن المنفذ {port} مفتوح في جدار الحماية على العقدة وفي جدار الحماية لدى مزوّدها.",
+  "nodes.restForeign": "الخادم على {address} يقدّم شهادة غير التي أنشأتها العقدة. تحقّق من أن العنوان يؤدي إلى العقدة.",
   "nodes.replaceTitle": "استبدال العقدة",
   "nodes.replaceIntro": "لنقل {name} إلى خادم آخر أو إعادة بنائها، شغّل ملف compose هذا هناك وأوقف الخادم القديم. خادمان بنفس APP_KEY يُعدّان عقدة واحدة.",
   "nodes.sectionToggle": "الإدخالات على {name}",

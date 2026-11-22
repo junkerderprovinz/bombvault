@@ -5543,6 +5543,8 @@ const tr: Partial<Translations> = {
   "nodes.placed": "Yedekler {target} hedefine gidiyor.",
   "nodes.placedOnNode": "Düğüm yedeklerini {target} adresinde tutar, bu örnek de onları oradan alır.",
   "nodes.reachFailed": "Düğüm {domain} deposuna ulaşamıyor: {detail}",
+  "nodes.restUnreachable": "Bu örnek {seconds} sn içinde {address} adresindeki düğümün rest-server'ına ulaşamadı. {port} portunun düğümün güvenlik duvarında ve sağlayıcısının güvenlik duvarında açık olduğunu kontrol et.",
+  "nodes.restForeign": "{address} adresindeki sunucunun sertifikası düğümün oluşturduğu sertifika değil. Adresin düğüme gittiğini kontrol et.",
   "nodes.replaceTitle": "Düğümü değiştir",
   "nodes.replaceIntro": "{name} düğümünü başka bir sunucuya taşımak ya da yeniden kurmak için bu compose dosyasını orada başlat ve eskisini kapat. Aynı APP_KEY'e sahip iki sunucu tek bir düğüm sayılır.",
   "nodes.sectionToggle": "{name} üzerindeki kayıtlar",

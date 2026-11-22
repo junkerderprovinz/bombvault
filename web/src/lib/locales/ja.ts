@@ -5534,6 +5534,8 @@ const ja: Partial<Translations> = {
   "nodes.placed": "バックアップは {target} に送られます。",
   "nodes.placedOnNode": "ノードはバックアップを {target} に保管し、このインスタンスがそこから取得します。",
   "nodes.reachFailed": "ノードが {domain} のリポジトリに接続できません: {detail}",
+  "nodes.restUnreachable": "このインスタンスは {seconds} 秒以内に {address} のノードの rest-server に接続できませんでした。ノードのファイアウォールと、そのプロバイダーのファイアウォールでポート {port} が開いているか確認してください。",
+  "nodes.restForeign": "{address} のサーバーは、ノードが作った証明書とは別の証明書を使っています。そのアドレスがノードにつながっているか確認してください。",
   "nodes.replaceTitle": "ノードを置き換え",
   "nodes.replaceIntro": "{name} を別のサーバーへ移したり作り直したりするには、そこでこの compose ファイルを起動し、古いサーバーを停止してください。同じ APP_KEY を持つ 2 台のサーバーは 1 つのノードとして扱われます。",
   "nodes.sectionToggle": "{name} の項目",

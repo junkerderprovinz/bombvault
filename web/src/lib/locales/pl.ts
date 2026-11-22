@@ -5541,6 +5541,8 @@ const pl: Partial<Translations> = {
   "nodes.placed": "Kopie zapasowe trafiają do miejsca {target}.",
   "nodes.placedOnNode": "Węzeł trzyma kopie zapasowe pod adresem {target}, a ta instancja je stamtąd pobiera.",
   "nodes.reachFailed": "Węzeł nie może połączyć się z repozytorium {domain}: {detail}",
+  "nodes.restUnreachable": "Ta instancja nie dotarła do rest-servera węzła pod {address} w ciągu {seconds} s. Sprawdź, czy port {port} jest otwarty w zaporze węzła i w zaporze jego dostawcy.",
+  "nodes.restForeign": "Serwer pod {address} ma inny certyfikat niż ten, który utworzył węzeł. Sprawdź, czy adres prowadzi do węzła.",
   "nodes.replaceTitle": "Zastąp węzeł",
   "nodes.replaceIntro": "Aby przenieść węzeł {name} na inny serwer albo go odbudować, uruchom tam ten plik compose i wyłącz stary. Dwa serwery z tym samym APP_KEY liczą się jako jeden węzeł.",
   "nodes.sectionToggle": "Wpisy na węźle {name}",

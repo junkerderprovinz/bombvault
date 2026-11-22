@@ -20,6 +20,7 @@ import { InstanceWindow } from "./InstanceWindow";
 import {
   PlacementFields,
   firstChoice,
+  placeError,
   placedSentence,
   placementOf,
   placementReady,
@@ -79,7 +80,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
     setPlaced({ state: "sending" });
     onChanged();
     placeNode(nodeId, placementOf(choice))
-      .then((res) => setPlaced(res.ok ? { state: "done", failures: reachFailures(t, res.reach) } : { state: "failed", error: res.error ?? t("settings.error") }))
+      .then((res) => setPlaced(res.ok ? { state: "done", failures: reachFailures(t, res.reach) } : { state: "failed", error: placeError(t, res) }))
       .catch((err: unknown) => setPlaced({ state: "failed", error: err instanceof Error ? err.message : t("settings.error") }))
       .finally(onChanged);
   }, [adopted, nodeId, choice, placeable, placed.state, onChanged, t]);

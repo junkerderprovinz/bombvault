@@ -5544,6 +5544,8 @@ const fr: Partial<Translations> = {
   "nodes.placed": "Les sauvegardes vont vers {target}.",
   "nodes.placedOnNode": "Le nœud garde ses sauvegardes sur {target}, et cette instance les récupère là-bas.",
   "nodes.reachFailed": "Le nœud ne joint pas le dépôt de {domain} : {detail}",
+  "nodes.restUnreachable": "Cette instance n'a pas joint le rest-server du nœud à {address} en {seconds} s. Vérifiez que le port {port} est ouvert dans le pare-feu du nœud et dans celui de son hébergeur.",
+  "nodes.restForeign": "Le serveur à {address} présente un autre certificat que celui créé par le nœud. Vérifiez que l'adresse mène bien au nœud.",
   "nodes.replaceTitle": "Remplacer le nœud",
   "nodes.replaceIntro": "Pour déplacer {name} vers un autre serveur ou le reconstruire, lancez ce fichier compose là-bas et arrêtez l'ancien. Deux serveurs avec le même APP_KEY comptent comme un seul nœud.",
   "nodes.sectionToggle": "Éléments sur {name}",

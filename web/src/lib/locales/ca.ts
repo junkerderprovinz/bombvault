@@ -5554,6 +5554,8 @@ const ca: Partial<Translations> = {
   "nodes.placed": "Les còpies van a {target}.",
   "nodes.placedOnNode": "El node desa les seves còpies a {target}, i aquesta instància les agafa d'allà.",
   "nodes.reachFailed": "El node no arriba al repositori de {domain}: {detail}",
+  "nodes.restUnreachable": "Aquesta instància no ha arribat al rest-server del node a {address} en {seconds} s. Comprova que el port {port} estigui obert al tallafoc del node i al del seu proveïdor.",
+  "nodes.restForeign": "El servidor a {address} té un certificat diferent del que ha creat el node. Comprova que l'adreça porti al node.",
   "nodes.replaceTitle": "Substitueix el node",
   "nodes.replaceIntro": "Per moure {name} a un altre servidor o reconstruir-lo, inicia-hi aquest fitxer compose i atura l'antic. Dos servidors amb la mateixa APP_KEY compten com un sol node.",
   "nodes.sectionToggle": "Entrades a {name}",
