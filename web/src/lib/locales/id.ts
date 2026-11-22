@@ -5525,6 +5525,7 @@ const id: Partial<Translations> = {
   "nodes.toNode": "Simpan di node",
   "nodes.toNodeText": "Node menyimpan cadangannya di balik rest-server miliknya sendiri, dan instance ini mengambil salinannya setelah setiap pencadangan. Untuk itu node perlu port yang terbuka bagi instance ini.",
   "nodes.noReceiver": "Instance ini belum menjalankan server penerima. Siapkan dulu satu, atau pilih tujuan.",
+  "nodes.receiverLead": "Node Anda menyalin cadangannya ke server penerima ini. Setiap node mendapat login sendiri dan bisa menambahkan cadangan di sana, tetapi tidak pernah bisa menghapusnya.",
   "nodes.address": "Alamat untuk node",
   "nodes.addressTip": "Alamat tempat node menjangkau server penerima. Node biasanya mengirim dari internet, jadi pakai https:// di balik reverse proxy, atau http:// dengan alamat pribadi, misalnya alamat VPN.",
   "nodes.addressPlain": "Dengan http://, node akan mengirim cadangannya lewat internet tanpa enkripsi. Pakai https://, atau http:// hanya dengan alamat pribadi, misalnya alamat VPN.",

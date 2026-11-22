@@ -5513,6 +5513,7 @@ const pl: Partial<Translations> = {
   "nodes.toNode": "Trzymaj je na węźle",
   "nodes.toNodeText": "Węzeł trzyma kopie zapasowe za własnym rest-serverem, a ta instancja pobiera kopię po każdym tworzeniu kopii zapasowej. Do tego węzeł musi mieć port otwarty dla tej instancji.",
   "nodes.noReceiver": "Ta instancja nie ma jeszcze serwera odbiorczego. Najpierw go skonfiguruj albo wybierz miejsce docelowe.",
+  "nodes.receiverLead": "Twoje węzły kopiują swoje kopie zapasowe na ten serwer odbiorczy. Każdy węzeł dostaje własny login i może tam dodawać kopie, ale nigdy ich nie usunie.",
   "nodes.address": "Adres dla węzłów",
   "nodes.addressTip": "Pod tym adresem węzły docierają do serwera odbiorczego. Węzeł zwykle wysyła z internetu, więc użyj https:// za reverse proxy albo http:// z adresem prywatnym, na przykład z VPN.",
   "nodes.addressPlain": "Z http:// węzeł wysyłałby kopie zapasowe przez internet bez szyfrowania. Użyj https://, a http:// tylko z adresem prywatnym, na przykład z VPN.",

@@ -31,6 +31,7 @@ import { Rows, SettingRow } from "../../components/storage/rows";
 import { useToast } from "../../lib/toast";
 import { InstanceWindow } from "./InstanceWindow";
 import { PlacementPicture } from "./placementArt";
+import { ReceiverServerWindow } from "./ReceiverServerWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -63,27 +64,35 @@ export interface PlacementSources {
   signIns: CloudCredSetInfo[];
 }
 
-export function usePlacementSources(): PlacementSources | null {
+function readSources(): Promise<PlacementSources> {
+  return Promise.all([
+    getReceiverServer().catch(() => null),
+    listDestinations().catch(() => null),
+    getCloudCredSets().catch(() => null),
+  ]).then(([receiver, locations, signIns]) => ({
+    receiver: receiver?.server ?? null,
+    locations: (locations?.destinations ?? []).filter((d) => /^(rest|s3):/.test(d.repo)),
+    signIns: signIns?.sets ?? [],
+  }));
+}
+
+/** usePlacementSources reads what a placement is made from, and reload reads
+ *  it again. */
+export function usePlacementSources(): { sources: PlacementSources | null; reload: () => Promise<PlacementSources> } {
   const [sources, setSources] = useState<PlacementSources | null>(null);
   useEffect(() => {
     let alive = true;
-    Promise.all([
-      getReceiverServer().catch(() => null),
-      listDestinations().catch(() => null),
-      getCloudCredSets().catch(() => null),
-    ]).then(([receiver, locations, signIns]) => {
-      if (!alive) return;
-      setSources({
-        receiver: receiver?.server ?? null,
-        locations: (locations?.destinations ?? []).filter((d) => /^(rest|s3):/.test(d.repo)),
-        signIns: signIns?.sets ?? [],
-      });
-    });
+    void readSources().then((read) => alive && setSources(read));
     return () => {
       alive = false;
     };
   }, []);
-  return sources;
+  const reload = () =>
+    readSources().then((read) => {
+      setSources(read);
+      return read;
+    });
+  return { sources, reload };
 }
 
 export function firstChoice(sources: PlacementSources, node?: NodeView): PlacementChoice {
@@ -188,17 +197,28 @@ export function PlacementFields({
   choice,
   sources,
   onChange,
+  onReload,
 }: {
   choice: PlacementChoice;
   sources: PlacementSources;
   onChange: (next: PlacementChoice) => void;
+  /** Reads the sources again once a receiving server was set up here. */
+  onReload: () => Promise<PlacementSources>;
 }) {
   const { t } = useT();
+  const [settingUp, setSettingUp] = useState(false);
   const set = (patch: Partial<PlacementChoice>) => onChange({ ...choice, ...patch });
   const problem = nodeAddressProblem(choice.address);
   const nodeProblem = nodeAddressProblem(choice.nodeAddress, true);
   const location = sources.locations.find((l) => l.id === choice.location);
   const signIns = signInsFor(location, sources.signIns);
+
+  async function receiverSetUp(running: boolean) {
+    setSettingUp(false);
+    if (!running) return;
+    const read = await onReload();
+    set({ address: choice.address || (read.receiver?.nodeUrl ?? "") });
+  }
 
   return (
     <>
@@ -261,8 +281,17 @@ export function PlacementFields({
             )}
           </div>
         ) : (
-          <p className="text-sm text-statusWarn">{t("nodes.noReceiver")}</p>
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-statusWarn">{t("nodes.noReceiver")}</p>
+            <Button
+              label={t("receiver.server.setUp")}
+              labelKey="receiver.server.setUp"
+              tone="neutral"
+              onClick={() => setSettingUp(true)}
+            />
+          </div>
         ))}
+      {settingUp && <ReceiverServerWindow t={t} lead={t("nodes.receiverLead")} onClose={(running) => void receiverSetUp(running)} />}
 
       {choice.kind === "node" && (
         <div className="flex flex-col gap-2">
@@ -334,7 +363,7 @@ export function PlacementFields({
 export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; onClose: () => void; onSaved: () => void }) {
   const { t } = useT();
   const { push } = useToast();
-  const sources = usePlacementSources();
+  const { sources, reload } = usePlacementSources();
   const [choice, setChoice] = useState<PlacementChoice | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -398,7 +427,7 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
         )
       }
     >
-      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={setChoice} />}
+      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={setChoice} onReload={reload} />}
       {!sources && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && (
         <p role="alert" className="text-sm text-statusFail wrap-break-word">

@@ -1,7 +1,8 @@
 // ReceiverServerWindow sets up the append-only rest-server this box runs for
-// its pairing group, and shows how it stands once it runs: where members copy
-// to, whether it still refuses deletes, which members have a login of their
-// own, and the Unraid template that keeps it editable in the Docker tab.
+// its pairing group and its nodes, and shows how it stands once it runs: where
+// members copy to, whether it still refuses deletes, which members have a
+// login of their own, and the Unraid template that keeps it editable in the
+// Docker tab.
 
 import { useEffect, useState } from "react";
 import {

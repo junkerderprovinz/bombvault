@@ -5516,6 +5516,7 @@ const fr: Partial<Translations> = {
   "nodes.toNode": "Les garder sur le nœud",
   "nodes.toNodeText": "Le nœud garde ses sauvegardes derrière son propre rest-server, et cette instance en récupère une copie après chaque sauvegarde. Pour cela, le nœud doit ouvrir un port à cette instance.",
   "nodes.noReceiver": "Cette instance n'a pas encore de serveur récepteur. Configurez-en un d'abord, ou choisissez une destination.",
+  "nodes.receiverLead": "Vos nœuds copient leurs sauvegardes sur ce serveur récepteur. Chaque nœud reçoit son propre identifiant et peut y ajouter des sauvegardes, mais jamais les supprimer.",
   "nodes.address": "Adresse pour les nœuds",
   "nodes.addressTip": "L'adresse à laquelle les nœuds joignent le serveur récepteur. Un nœud envoie en général depuis internet, alors utilisez https:// derrière un reverse proxy, ou http:// avec une adresse privée, comme celle d'un VPN.",
   "nodes.addressPlain": "Avec http://, un nœud enverrait ses sauvegardes en clair à travers internet. Utilisez https://, ou http:// seulement avec une adresse privée, comme celle d'un VPN.",

@@ -5526,6 +5526,7 @@ const et: Partial<Translations> = {
   "nodes.toNode": "Hoia need sõlmes",
   "nodes.toNodeText": "Sõlm hoiab oma varundusi oma rest-serveri taga ja see eksemplar toob pärast iga varundust koopia. Selleks peab sõlmel olema sellele eksemplarile avatud port.",
   "nodes.noReceiver": "Sellel eksemplaril pole veel vastuvõtuserverit. Seadista esmalt üks või vali sihtkoht.",
+  "nodes.receiverLead": "Sinu sõlmed kopeerivad oma varukoopiad sellesse vastuvõtuserverisse. Iga sõlm saab oma sisselogimise ja võib sinna varukoopiaid lisada, kuid mitte kunagi kustutada.",
   "nodes.address": "Aadress sõlmedele",
   "nodes.addressTip": "Kust sõlmed vastuvõtuserveri leiavad. Sõlm saadab tavaliselt internetist, seega kasuta https:// pöördproksi taga või http:// privaatse aadressiga, näiteks VPN-i oma.",
   "nodes.addressPlain": "http:// puhul saadaks sõlm oma varundused üle interneti krüpteerimata. Kasuta https:// või http:// ainult privaatse aadressiga, näiteks VPN-i oma.",

@@ -5516,6 +5516,7 @@ const no: Partial<Translations> = {
   "nodes.toNode": "Behold dem på noden",
   "nodes.toNodeText": "Noden oppbevarer sikkerhetskopiene sine bak sin egen rest-server, og denne instansen henter en kopi etter hver sikkerhetskopiering. Da må noden ha en port åpen for denne instansen.",
   "nodes.noReceiver": "Denne instansen kjører ingen mottaksserver ennå. Sett opp en først, eller velg et mål.",
+  "nodes.receiverLead": "Nodene dine kopierer sikkerhetskopiene sine til denne mottaksserveren. Hver node får sin egen pålogging og kan legge til sikkerhetskopier der, men aldri slette dem.",
   "nodes.address": "Adresse for noder",
   "nodes.addressTip": "Der nodene når mottaksserveren. En node sender som regel fra internett, så bruk https:// bak en omvendt proxy, eller http:// med en privat adresse, for eksempel fra et VPN.",
   "nodes.addressPlain": "Med http:// ville en node sende sikkerhetskopiene sine ukryptert over internett. Bruk https://, eller http:// bare med en privat adresse, for eksempel fra et VPN.",

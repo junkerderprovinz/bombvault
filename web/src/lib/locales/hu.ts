@@ -5516,6 +5516,7 @@ const hu: Partial<Translations> = {
   "nodes.toNode": "Maradjanak a csomóponton",
   "nodes.toNodeText": "A csomópont a saját rest-servere mögött tartja a biztonsági mentéseit, ez a példány pedig minden mentés után letölt róluk egy másolatot. Ehhez a csomópontnak nyitott port kell ennek a példánynak.",
   "nodes.noReceiver": "Ez a példány még nem futtat fogadószervert. Előbb állíts be egyet, vagy válassz egy célt.",
+  "nodes.receiverLead": "A csomópontjaid erre a fogadószerverre másolják a mentéseiket. Minden csomópont saját bejelentkezést kap, és mentéseket adhat hozzá, de törölni soha nem tud.",
   "nodes.address": "Cím a csomópontoknak",
   "nodes.addressTip": "Ezen a címen érik el a csomópontok a fogadószervert. Egy csomópont általában az internetről küld, ezért használj https:// címet egy reverse proxy mögött, vagy http:// címet privát címmel, például egy VPN címével.",
   "nodes.addressPlain": "http:// esetén a csomópont titkosítatlanul küldené a biztonsági mentéseit az interneten át. Használj https:// címet, vagy http:// címet csak privát címmel, például egy VPN címével.",

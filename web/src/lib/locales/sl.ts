@@ -5509,6 +5509,7 @@ const sl: Partial<Translations> = {
   "nodes.toNode": "Hrani jih na vozlišču",
   "nodes.toNodeText": "Vozlišče hrani svoje varnostne kopije za lastnim rest-serverjem, ta instanca pa po vsaki varnostni kopiji prenese kopijo. Za to mora imeti vozlišče odprta vrata za to instanco.",
   "nodes.noReceiver": "Ta instanca še ne poganja sprejemnega strežnika. Najprej ga nastavi ali izberi cilj.",
+  "nodes.receiverLead": "Tvoja vozlišča kopirajo svoje varnostne kopije na ta sprejemni strežnik. Vsako vozlišče dobi svojo prijavo in lahko tja dodaja kopije, nikoli pa jih ne more izbrisati.",
   "nodes.address": "Naslov za vozlišča",
   "nodes.addressTip": "Na tem naslovu vozlišča dosežejo sprejemni strežnik. Vozlišče običajno pošilja iz interneta, zato uporabi https:// za obratnim posrednikom ali http:// z zasebnim naslovom, na primer iz VPN.",
   "nodes.addressPlain": "S http:// bi vozlišče pošiljalo varnostne kopije po internetu nešifrirano. Uporabi https:// ali http:// samo z zasebnim naslovom, na primer iz VPN.",

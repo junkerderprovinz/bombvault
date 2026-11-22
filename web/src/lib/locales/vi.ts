@@ -5506,6 +5506,7 @@ const vi: Partial<Translations> = {
   "nodes.toNode": "Giữ trên node",
   "nodes.toNodeText": "Node giữ bản sao lưu sau rest-server riêng của nó, và phiên bản này lấy một bản sao sau mỗi lần sao lưu. Vì vậy node cần một cổng mở cho phiên bản này.",
   "nodes.noReceiver": "Phiên bản này chưa chạy máy chủ nhận nào. Hãy thiết lập một máy chủ trước, hoặc chọn một đích sao lưu.",
+  "nodes.receiverLead": "Các node của bạn sao chép bản sao lưu của chúng sang máy chủ nhận này. Mỗi node nhận một thông tin đăng nhập riêng và có thể thêm bản sao lưu vào đó, nhưng không bao giờ xóa được.",
   "nodes.address": "Địa chỉ cho node",
   "nodes.addressTip": "Địa chỉ để node tới máy chủ nhận. Node thường gửi từ internet, nên hãy dùng https:// sau một proxy ngược, hoặc http:// với địa chỉ riêng như địa chỉ VPN.",
   "nodes.addressPlain": "Với http://, node sẽ gửi bản sao lưu qua internet mà không mã hóa. Hãy dùng https://, hoặc chỉ dùng http:// với địa chỉ riêng như địa chỉ VPN.",

@@ -90,14 +90,15 @@ function PresenceBadge({ presence }: { presence: Presence }) {
 function SelfCard({
   self,
   served,
-  receiverServer,
+  grouped,
   hot,
   onOpenServer,
   onOpenDeposits,
 }: {
   self: Self;
   served: SelfRoles;
-  receiverServer: boolean;
+  /** Without a group the card has no roles to show. */
+  grouped: boolean;
   hot: boolean;
   onOpenServer: () => void;
   /** Opens this server's key deposits. Missing while there are none. */
@@ -128,17 +129,15 @@ function SelfCard({
       figures={<ProtectionFigures domains={self.domains} anomalies={anomalies} />}
       actions={
         <>
-          {receiverServer && (
-            <span data-new-way="receiver-server" className="flex">
-              <Button
-                label={t("receiver.server.title")}
-                labelKey="receiver.server.title"
-                glyph={<IconReceiver />}
-                tone="neutral"
-                onClick={onOpenServer}
-              />
-            </span>
-          )}
+          <span data-new-way="receiver-server" className="flex">
+            <Button
+              label={t("receiver.server.title")}
+              labelKey="receiver.server.title"
+              glyph={<IconReceiver />}
+              tone="neutral"
+              onClick={onOpenServer}
+            />
+          </span>
           {onOpenDeposits && (
             <Button
               label={t("keeper.window.title")}
@@ -160,7 +159,7 @@ function SelfCard({
       index={0}
       hot={hot}
     >
-      <RoleTiles heading={t("instances.serverDoesForOthers")} states={states} details={details} />
+      {grouped && <RoleTiles heading={t("instances.serverDoesForOthers")} states={states} details={details} />}
     </InstanceCard>
   );
 }
@@ -350,9 +349,9 @@ export function Instances() {
   const state = useInstances(modules);
   const { servers: zfsServers } = useReplicaServers();
   const { instances, unplaced } = useMemo(() => buildInstances(state.data), [state.data]);
-  const receiver = modules?.receiver ?? false;
-  // With all three modules off the page is only the way into pairing, and
-  // the home of the ZFS servers if there are any.
+  // With all three modules off the page is the way into pairing and the home
+  // of the nodes and ZFS servers. This instance's card stays while it has
+  // nodes, since their receiving server is opened from it.
   const grouped = modules !== null && (modules.fleet || modules.receiver || modules.pull);
   const shared = useSharedRepo(grouped && !state.loading);
   const shown = grouped ? instances : [];
@@ -375,12 +374,9 @@ export function Instances() {
       return;
     }
     if (hash !== "#receiver" && hash !== "#pull" && hash !== "#fleet") return;
-    if (hash === "#receiver") {
-      if (!receiver) return;
-      setServerOpen(true);
-    }
+    if (hash === "#receiver") setServerOpen(true);
     window.history.replaceState(null, "", window.location.pathname);
-  }, [navigate, receiver]);
+  }, [navigate]);
 
   const opened = shown.find((i) => i.key === detailsOf);
   const { deposits } = state;
@@ -436,11 +432,11 @@ export function Instances() {
             data-new="instances-card-size"
             className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,36rem),1fr))] gap-4 @min-[73rem]:auto-rows-fr"
           >
-            {grouped && state.self && (
+            {(grouped || ownNodes.length > 0) && state.self && (
               <SelfCard
                 self={state.self}
                 served={state.selfRoles}
-                receiverServer={state.receiverServer}
+                grouped={grouped}
                 hot={hot === "self"}
                 onOpenServer={() => setServerOpen(true)}
                 onOpenDeposits={hasDeposits ? () => setDepositsOpen(true) : undefined}

@@ -5526,6 +5526,7 @@ const ms: Partial<Translations> = {
   "nodes.toNode": "Simpan pada nod",
   "nodes.toNodeText": "Nod menyimpan sandarannya di belakang rest-server sendiri, dan instans ini mengambil salinan selepas setiap sandaran. Untuk itu nod memerlukan port yang terbuka kepada instans ini.",
   "nodes.noReceiver": "Instans ini belum menjalankan pelayan penerima. Sediakan satu dahulu atau pilih destinasi.",
+  "nodes.receiverLead": "Nod anda menyalin sandaran mereka ke pelayan penerima ini. Setiap nod mendapat log masuk sendiri dan boleh menambah sandaran di situ, tetapi tidak sekali-kali memadamnya.",
   "nodes.address": "Alamat untuk nod",
   "nodes.addressTip": "Alamat yang digunakan nod untuk mencapai pelayan penerima. Nod biasanya menghantar dari internet, jadi gunakan https:// di belakang proksi songsang, atau http:// dengan alamat peribadi seperti alamat VPN.",
   "nodes.addressPlain": "Dengan http://, nod akan menghantar sandarannya merentasi internet tanpa disulitkan. Gunakan https://, atau http:// hanya dengan alamat peribadi seperti alamat VPN.",

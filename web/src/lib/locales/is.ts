@@ -5525,6 +5525,7 @@ const is: Partial<Translations> = {
   "nodes.toNode": "Geyma þau á hnútnum",
   "nodes.toNodeText": "Hnúturinn geymir afritin sín á bak við eigin rest-server og þetta tilvik sækir afrit eftir hverja afritun. Til þess þarf hnúturinn opna gátt fyrir þetta tilvik.",
   "nodes.noReceiver": "Þetta tilvik keyrir ekki enn móttökuþjón. Settu einn upp fyrst eða veldu áfangastað.",
+  "nodes.receiverLead": "Hnútarnir þínir afrita afritin sín á þennan móttökuþjón. Hver hnútur fær sína eigin innskráningu og getur bætt afritum við þar, en aldrei eytt þeim.",
   "nodes.address": "Vistfang fyrir hnúta",
   "nodes.addressTip": "Þar sem hnútar ná í móttökuþjóninn. Hnútur sendir yfirleitt af netinu, svo notaðu https:// á bak við reverse proxy, eða http:// með einkavistfangi, til dæmis frá VPN.",
   "nodes.addressPlain": "Með http:// myndi hnútur senda afritin sín ódulkóðuð yfir netið. Notaðu https://, eða http:// aðeins með einkavistfangi, til dæmis frá VPN.",

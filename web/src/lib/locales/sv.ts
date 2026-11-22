@@ -5515,6 +5515,7 @@ const sv: Partial<Translations> = {
   "nodes.toNode": "Behåll dem på noden",
   "nodes.toNodeText": "Noden behåller sina säkerhetskopior bakom en egen rest-server, och den här instansen hämtar en kopia efter varje säkerhetskopiering. Därför behöver noden en port som är öppen för den här instansen.",
   "nodes.noReceiver": "Den här instansen kör ingen mottagarserver än. Sätt upp en först, eller välj ett mål.",
+  "nodes.receiverLead": "Dina noder kopierar sina säkerhetskopior till den här mottagarservern. Varje nod får en egen inloggning och kan lägga till säkerhetskopior där, men aldrig radera dem.",
   "nodes.address": "Adress för noder",
   "nodes.addressTip": "Där når noder mottagarservern. En nod skickar oftast från internet, så använd https:// bakom en omvänd proxy, eller http:// med en privat adress, till exempel från ett VPN.",
   "nodes.addressPlain": "Med http:// skulle en nod skicka sina säkerhetskopior okrypterade över internet. Använd https://, eller http:// bara med en privat adress, till exempel från ett VPN.",

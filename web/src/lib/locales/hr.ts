@@ -5526,6 +5526,7 @@ const hr: Partial<Translations> = {
   "nodes.toNode": "Čuvati ih na čvoru",
   "nodes.toNodeText": "Čvor čuva svoje sigurnosne kopije iza vlastitog rest-servera, a ova instanca nakon svake sigurnosne kopije preuzme kopiju. Za to čvor treba port otvoren za ovu instancu.",
   "nodes.noReceiver": "Ova instanca još nema prijamni poslužitelj. Najprije ga postavite ili odaberite odredište.",
+  "nodes.receiverLead": "Vaši čvorovi kopiraju svoje sigurnosne kopije na ovaj prijamni poslužitelj. Svaki čvor dobiva vlastitu prijavu i može ondje dodavati kopije, ali ih nikada ne može obrisati.",
   "nodes.address": "Adresa za čvorove",
   "nodes.addressTip": "Adresa na kojoj čvorovi dolaze do prijamnog poslužitelja. Čvor obično šalje s interneta, pa koristite https:// iza obrnutog proxyja ili http:// s privatnom adresom, na primjer iz VPN-a.",
   "nodes.addressPlain": "S http:// čvor bi slao svoje sigurnosne kopije preko interneta nešifrirano. Koristite https://, ili http:// samo s privatnom adresom, na primjer iz VPN-a.",

@@ -215,6 +215,57 @@ func TestHomeSendsANodeToItsReceiverWithALoginOfItsOwn(t *testing.T) {
 	}
 }
 
+func TestAnInstanceWithoutAGroupSetsUpItsReceiverAndSendsANodeThere(t *testing.T) {
+	home := homeWithRelay(t)
+	if _, err := home.st.MutateSettings(func(s *store.Settings) error {
+		s.FleetEnabled, s.PullEnabled, s.ReceiverEnabled = false, false, false
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	repos := newRepoStore()
+	home.svc.engine = repos
+	home.svc.cfg.HostMountRoot = t.TempDir()
+	home.svc.docker = &receiverDocker{}
+	restore := receiverStartWait
+	receiverStartWait = 0
+	t.Cleanup(func() { receiverStartWait = restore })
+
+	if _, out := home.do(t, http.MethodGet, "/api/group", nil); out["active"] == true {
+		t.Fatalf("home is in a group: %v", out)
+	}
+	code, out := home.do(t, http.MethodPost, "/api/receiver/server", map[string]any{"folder": "backups", "port": 18000, "host": "127.0.0.1"})
+	if code != http.StatusOK || out["ok"] != true || out["password"] == "" {
+		t.Fatalf("set up the receiver = %d %v", code, out)
+	}
+	if code, out := home.do(t, http.MethodPut, "/api/receiver/node-address", map[string]any{"url": "https://backup.example.org"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("set the address for nodes = %d %v", code, out)
+	}
+	node, id, _ := adoptedNode(t, home, repos)
+	for _, d := range nodeDomains {
+		resolved, err := home.svc.resolveRepo("backups/vps/" + d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		repos.alias["rest:https://backup.example.org/vps/"+d] = resolved
+	}
+
+	if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/placement", map[string]any{"kind": "receiver"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("place on the receiver = %d %v", code, out)
+	}
+	l, ok, err := home.st.GetReceiverLogin(id)
+	if err != nil || !ok || !l.ForNode || l.User != "vps" {
+		t.Fatalf("the node's login = %+v %v %v", l, ok, err)
+	}
+	htpasswd, _ := os.ReadFile(filepath.Join(home.svc.cfg.HostMountRoot, "backups", htpasswdName))
+	if !strings.Contains("\n"+string(htpasswd), "\nvps:") {
+		t.Errorf("htpasswd = %q, want the node's login in it", htpasswd)
+	}
+	if kept, err := node.st.NodePlacements(); err != nil || len(kept) != 2 || kept[0].Repo != "rest:https://backup.example.org/vps/containers" {
+		t.Errorf("the node keeps %+v %v", kept, err)
+	}
+}
+
 func TestHomeSendsANodeToAStorageLocationWithASignInMadeForIt(t *testing.T) {
 	home := homeWithRelay(t)
 	repos := newRepoStore()

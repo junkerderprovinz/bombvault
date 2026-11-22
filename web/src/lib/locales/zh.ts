@@ -5506,6 +5506,7 @@ const zh: Partial<Translations> = {
   "nodes.toNode": "保留在节点上",
   "nodes.toNodeText": "节点把备份保存在自己的 rest-server 后面，此实例在每次备份后取回一份副本。为此，节点需要向此实例开放一个端口。",
   "nodes.noReceiver": "此实例尚未运行接收服务器。请先设置一个，或选择一个存储位置。",
+  "nodes.receiverLead": "你的节点会把备份复制到这台接收服务器。每个节点都有自己的登录信息，可以在那里添加备份，但永远无法删除。",
   "nodes.address": "节点使用的地址",
   "nodes.addressTip": "节点通过此地址访问接收服务器。节点通常从互联网发送数据，因此请在反向代理后使用 https://，或将 http:// 与私有地址（例如 VPN 地址）一起使用。",
   "nodes.addressPlain": "使用 http:// 时，节点会通过互联网以未加密的方式发送备份。请使用 https://，或仅在私有地址（例如 VPN 地址）下使用 http://。",

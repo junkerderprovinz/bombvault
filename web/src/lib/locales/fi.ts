@@ -5516,6 +5516,7 @@ const fi: Partial<Translations> = {
   "nodes.toNode": "Säilytä ne solmulla",
   "nodes.toNodeText": "Solmu säilyttää varmuuskopionsa oman rest-serverinsä takana, ja tämä instanssi hakee niistä kopion jokaisen varmuuskopioinnin jälkeen. Siksi solmulla pitää olla tälle instanssille avoin portti.",
   "nodes.noReceiver": "Tällä instanssilla ei ole vielä vastaanottopalvelinta. Ota se ensin käyttöön tai valitse kohde.",
+  "nodes.receiverLead": "Solmusi kopioivat varmuuskopionsa tälle vastaanottopalvelimelle. Jokainen solmu saa oman tunnuksen ja voi lisätä sinne varmuuskopioita, mutta ei koskaan poistaa niitä.",
   "nodes.address": "Osoite solmuille",
   "nodes.addressTip": "Osoite, josta solmut tavoittavat vastaanottopalvelimen. Solmu lähettää yleensä internetistä, joten käytä https://-osoitetta käänteisen välityspalvelimen takana tai http://-osoitetta yksityisellä osoitteella, esimerkiksi VPN:n osoitteella.",
   "nodes.addressPlain": "http://-osoitteella solmu lähettäisi varmuuskopionsa internetin yli salaamattomina. Käytä https://-osoitetta tai http://-osoitetta vain yksityisellä osoitteella, esimerkiksi VPN:n osoitteella.",

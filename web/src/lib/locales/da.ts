@@ -5516,6 +5516,7 @@ const da: Partial<Translations> = {
   "nodes.toNode": "Behold dem på noden",
   "nodes.toNodeText": "Noden gemmer sine sikkerhedskopier bag sin egen rest-server, og denne instans henter en kopi efter hver sikkerhedskopiering. Derfor skal noden have en port åben for denne instans.",
   "nodes.noReceiver": "Denne instans kører ikke nogen modtageserver endnu. Sæt en op først, eller vælg en destination.",
+  "nodes.receiverLead": "Dine noder kopierer deres backups til denne modtageserver. Hver node får sit eget login og kan tilføje backups der, men aldrig slette dem.",
   "nodes.address": "Adresse til noder",
   "nodes.addressTip": "Hvor noderne når modtageserveren. En node sender som regel fra internettet, så brug https:// bag en omvendt proxy, eller http:// med en privat adresse, for eksempel fra en VPN.",
   "nodes.addressPlain": "Med http:// ville en node sende sine sikkerhedskopier ukrypteret over internettet. Brug https://, eller kun http:// med en privat adresse, for eksempel fra en VPN.",

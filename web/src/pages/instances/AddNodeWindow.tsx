@@ -41,7 +41,7 @@ type Placed = { state: "waiting" } | { state: "sending" } | { state: "done"; fai
 export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onChanged: () => void }) {
   const { t } = useT();
   const ownLogin = useOwnLogin();
-  const sources = usePlacementSources();
+  const { sources, reload } = usePlacementSources();
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -197,7 +197,7 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
         </>
       )}
 
-      {step === 2 && sources && choice && <PlacementFields choice={choice} sources={sources} onChange={setChoice} />}
+      {step === 2 && sources && choice && <PlacementFields choice={choice} sources={sources} onChange={setChoice} onReload={reload} />}
       {step === 2 && sources && startAt && (
         <Rows>
           <SettingRow label={t("nodes.startAt")} hint={t("nodes.startAtTip")} narrow>

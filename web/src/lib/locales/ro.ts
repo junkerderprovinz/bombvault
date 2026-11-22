@@ -5517,6 +5517,7 @@ const ro: Partial<Translations> = {
   "nodes.toNode": "Păstrează-le pe nod",
   "nodes.toNodeText": "Nodul își păstrează copiile de rezervă în spatele propriului rest-server, iar această instanță ia o copie după fiecare backup. Pentru asta, nodul are nevoie de un port deschis spre această instanță.",
   "nodes.noReceiver": "Această instanță nu rulează încă un server receptor. Configurează mai întâi unul sau alege o destinație.",
+  "nodes.receiverLead": "Nodurile tale își copiază backupurile pe acest server receptor. Fiecare nod primește o autentificare proprie și poate adăuga backupuri acolo, dar nu le poate șterge niciodată.",
   "nodes.address": "Adresă pentru noduri",
   "nodes.addressTip": "Adresa la care nodurile ajung la serverul receptor. De obicei un nod trimite din internet, așa că folosește https:// în spatele unui reverse proxy sau http:// cu o adresă privată, de exemplu dintr-un VPN.",
   "nodes.addressPlain": "Cu http://, un nod și-ar trimite copiile de rezervă prin internet necriptate. Folosește https:// sau http:// doar cu o adresă privată, de exemplu dintr-un VPN.",

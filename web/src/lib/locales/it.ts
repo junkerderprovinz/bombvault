@@ -5515,6 +5515,7 @@ const it: Partial<Translations> = {
   "nodes.toNode": "Tenerli sul nodo",
   "nodes.toNodeText": "Il nodo tiene i suoi backup dietro un proprio rest-server, e questa istanza ne prende una copia dopo ogni backup. Per questo il nodo ha bisogno di una porta aperta verso questa istanza.",
   "nodes.noReceiver": "Questa istanza non ha ancora un server ricevente. Configurane prima uno, oppure scegli una destinazione.",
+  "nodes.receiverLead": "I tuoi nodi copiano i loro backup su questo server ricevente. Ogni nodo riceve un accesso proprio e può aggiungere backup, ma non può mai eliminarli.",
   "nodes.address": "Indirizzo per i nodi",
   "nodes.addressTip": "Dove i nodi raggiungono il server ricevente. Di solito un nodo invia da internet, quindi usa https:// dietro un reverse proxy, oppure http:// con un indirizzo privato, come quello di una VPN.",
   "nodes.addressPlain": "Con http:// un nodo invierebbe i suoi backup attraverso internet senza cifratura. Usa https://, oppure http:// solo con un indirizzo privato, come quello di una VPN.",

@@ -5514,6 +5514,7 @@ const es: Partial<Translations> = {
   "nodes.toNode": "Guardarlas en el nodo",
   "nodes.toNodeText": "El nodo guarda sus copias detrás de su propio rest-server, y esta instancia recoge una copia después de cada copia de seguridad. Para eso, el nodo necesita un puerto abierto hacia esta instancia.",
   "nodes.noReceiver": "Esta instancia aún no tiene un servidor receptor. Configura uno primero o elige un destino.",
+  "nodes.receiverLead": "Tus nodos copian sus copias de seguridad en este servidor receptor. Cada nodo recibe un acceso propio y puede añadir copias allí, pero nunca borrarlas.",
   "nodes.address": "Dirección para nodos",
   "nodes.addressTip": "Donde los nodos encuentran el servidor receptor. Un nodo suele enviar desde internet, así que usa https:// detrás de un proxy inverso, o http:// con una dirección privada, como la de una VPN.",
   "nodes.addressPlain": "Con http:// un nodo enviaría sus copias por internet sin cifrar. Usa https://, o http:// solo con una dirección privada, como la de una VPN.",

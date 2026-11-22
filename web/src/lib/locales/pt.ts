@@ -5516,6 +5516,7 @@ const pt: Partial<Translations> = {
   "nodes.toNode": "Guardá-los no nó",
   "nodes.toNodeText": "O nó guarda os backups atrás do seu próprio rest-server, e esta instância vai buscar uma cópia depois de cada backup. Para isso, o nó precisa de uma porta aberta para esta instância.",
   "nodes.noReceiver": "Esta instância ainda não tem um servidor recetor. Configura um primeiro ou escolhe um destino.",
+  "nodes.receiverLead": "Os teus nós copiam as suas cópias de segurança para este servidor recetor. Cada nó recebe um início de sessão próprio e pode adicionar cópias lá, mas nunca eliminá-las.",
   "nodes.address": "Endereço para os nós",
   "nodes.addressTip": "Onde os nós chegam ao servidor recetor. Normalmente um nó envia a partir da internet, por isso usa https:// atrás de um reverse proxy, ou http:// com um endereço privado, como o de uma VPN.",
   "nodes.addressPlain": "Com http://, um nó enviaria os backups pela internet sem encriptação. Usa https://, ou http:// apenas com um endereço privado, como o de uma VPN.",

@@ -6,12 +6,31 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { I18nProvider, en } from "../../lib/i18n";
 import { ToastProvider } from "../../lib/toast";
-import type { NodePlacement, NodeView, ReceiverServer } from "../../lib/api";
+import type { NodePlacement, NodeView, ReceiverServer, ReceiverServerInput } from "../../lib/api";
 
 const NODE: NodeView = { id: "n1", name: "vps-falkenstein", createdAt: 1, adoptedAt: 0, online: false, containersCadence: "daily 02:30", filesCadence: "daily 02:30", failures: 0, anomalies: 0 };
 const COMPOSE = { MODE: "node", APP_KEY: "a".repeat(64), NODE_HOME: "bvhome1.xyz", NODE_NAME: "vps-falkenstein" };
 
-const receiver = { url: "http://192.168.1.20:8000", nodeUrl: "", nodeCa: false } as ReceiverServer;
+const RECEIVER = { url: "http://192.168.1.20:8000", nodeUrl: "", nodeCa: false } as ReceiverServer;
+const SET_UP: ReceiverServer = {
+  containerName: "rest-server",
+  folder: "user/restic",
+  hostPath: "/mnt/user/restic",
+  port: 8000,
+  user: "home",
+  host: "",
+  url: "http://192.168.1.20:8000",
+  createdAt: 1,
+  present: true,
+  check: "protected",
+  checkDetail: "",
+  checkedAt: 0,
+  logins: [],
+  nodeUrl: "",
+  nodeCa: false,
+};
+let receiver: ReceiverServer | null = RECEIVER;
+const setUps: ReceiverServerInput[] = [];
 const added: string[] = [];
 const addresses: string[] = [];
 const placed: [string, NodePlacement][] = [];
@@ -25,6 +44,11 @@ vi.mock("../../lib/api", async (importOriginal) => {
   return {
     ...actual,
     getReceiverServer: () => Promise.resolve({ ok: true, server: receiver }),
+    setUpReceiverServer: (input: ReceiverServerInput) => {
+      setUps.push(input);
+      receiver = SET_UP;
+      return Promise.resolve({ ok: true, server: SET_UP, password: "one-time-pw", template: "none" });
+    },
     listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
     getCloudCredSets: () => Promise.resolve({ ok: true, sets: [] }),
     addNode: (name: string) => {
@@ -77,6 +101,8 @@ afterEach(() => {
   refusal = null;
   placeRefusal = null;
   adoptedAt = 0;
+  receiver = RECEIVER;
+  setUps.length = 0;
 });
 
 describe("AddNodeWindow", () => {
@@ -117,6 +143,37 @@ describe("AddNodeWindow", () => {
     expect(status).toContain(en["nodes.online"].replace("{name}", "vps-falkenstein"));
     expect(status).toContain(en["nodes.placed"].replace("{target}", "https://backup.example.org"));
     expect(placed).toEqual([["n1", { kind: "receiver" }]]);
+  });
+
+  it("sets up the receiving server from the placement step and goes on placing the node there", async () => {
+    receiver = null;
+    await renderWindow();
+    fireEvent.change(screen.getByLabelText(en["nodes.step.name"]), { target: { value: "vps" } });
+    await act(async () => {
+      fireEvent.click(next());
+    });
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(`^${en["nodes.toReceiver"]}`) }));
+    expect(screen.getByText(en["nodes.noReceiver"])).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["receiver.server.setUp"] }));
+    });
+    const form = screen.getByRole("dialog", { name: en["receiver.server.setUp"] });
+    expect(within(form).getByText(en["nodes.receiverLead"])).toBeTruthy();
+    fireEvent.change(within(form).getByPlaceholderText("user/restic"), { target: { value: "user/restic" } });
+    await act(async () => {
+      fireEvent.click(within(form).getByRole("button", { name: en["receiver.server.startContinue"] }));
+    });
+    expect(setUps).toEqual([{ folder: "user/restic", port: 8000, host: "" }]);
+
+    const server = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    await act(async () => {
+      fireEvent.click(within(server).getByRole("button", { name: en["common.done"] }));
+    });
+    expect(screen.queryByRole("dialog", { name: en["receiver.server.title"] })).toBeNull();
+    expect(screen.queryByText(en["nodes.noReceiver"])).toBeNull();
+    fireEvent.change(screen.getByLabelText(en["nodes.address"]), { target: { value: "https://backup.example.org" } });
+    expect(next().disabled).toBe(false);
   });
 
   it("pictures each placement and sets only the one that is taken in motion", async () => {

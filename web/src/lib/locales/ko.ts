@@ -5506,6 +5506,7 @@ const ko: Partial<Translations> = {
   "nodes.toNode": "노드에 보관",
   "nodes.toNodeText": "노드가 자체 rest-server 뒤에 백업을 보관하고, 이 인스턴스가 백업할 때마다 사본을 가져옵니다. 그러려면 노드에 이 인스턴스용으로 열린 포트가 필요합니다.",
   "nodes.noReceiver": "이 인스턴스는 아직 수신 서버를 운영하지 않습니다. 먼저 설정하거나 저장 위치를 선택하세요.",
+  "nodes.receiverLead": "노드는 백업을 이 수신 서버로 복사합니다. 각 노드는 자신만의 로그인을 받으며, 백업을 추가할 수는 있지만 삭제할 수는 없습니다.",
   "nodes.address": "노드용 주소",
   "nodes.addressTip": "노드가 수신 서버에 접속하는 주소입니다. 노드는 보통 인터넷을 거쳐 보내므로, 리버스 프록시 뒤에서 https://를 쓰거나 VPN 같은 사설 주소로 http://를 쓰세요.",
   "nodes.addressPlain": "http://를 쓰면 노드가 백업을 암호화하지 않은 채 인터넷으로 보내게 됩니다. https://를 쓰거나, http://는 VPN 같은 사설 주소에서만 쓰세요.",

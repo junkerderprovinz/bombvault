@@ -5526,6 +5526,7 @@ const ca: Partial<Translations> = {
   "nodes.toNode": "Desar-les al node",
   "nodes.toNodeText": "El node desa les seves còpies darrere del seu propi rest-server, i aquesta instància n'agafa una còpia després de cada còpia de seguretat. Per això, el node necessita un port obert cap a aquesta instància.",
   "nodes.noReceiver": "Aquesta instància encara no té cap servidor receptor. Configura'n un primer, o tria una destinació.",
+  "nodes.receiverLead": "Els teus nodes copien les seves còpies de seguretat a aquest servidor receptor. Cada node rep un inici de sessió propi i hi pot afegir còpies, però mai esborrar-les.",
   "nodes.address": "Adreça per als nodes",
   "nodes.addressTip": "On els nodes troben el servidor receptor. Un node sol enviar des d'internet, així que fes servir https:// darrere d'un proxy invers, o http:// amb una adreça privada, com la d'una VPN.",
   "nodes.addressPlain": "Amb http:// un node enviaria les seves còpies per internet sense xifrar. Fes servir https://, o http:// només amb una adreça privada, com la d'una VPN.",

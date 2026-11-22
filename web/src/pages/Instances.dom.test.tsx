@@ -25,6 +25,7 @@ import type {
   GroupReceiver,
   MemberRoles,
   MeshOffer,
+  NodeView,
   PullSourceView,
   ReceivedRepoStatus,
   RoleRequest,
@@ -85,6 +86,7 @@ let locationsOff: { id: string; name: string }[];
 let destinations: Destination[];
 let groupReceivers: GroupReceiver[];
 let memberships: SharedMembership[];
+let nodes: NodeView[];
 const switchedOff: string[] = [];
 const CODE = "K7QF2-M9XRT-4HPLD-W3NVC";
 const SINCE = new Date(2026, 2, 9, 12).toISOString();
@@ -193,6 +195,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     listReceivedRepos: () =>
       receivedHangs ? new Promise<never>(() => undefined) : answer("listReceivedRepos", { ok: true, repos: received }),
     listPullSources: () => answer("listPullSources", { ok: true, sources: pulls }),
+    listNodes: () => Promise.resolve({ ok: true, nodes }),
     getReceiverServer: () =>
       answer("getReceiverServer", {
         ok: true,
@@ -301,6 +304,7 @@ beforeEach(() => {
   destinations = [];
   groupReceivers = [];
   memberships = [];
+  nodes = [];
   switchedOff.length = 0;
   keeperAsked.length = 0;
   keeperWithdrawn.length = 0;
@@ -574,9 +578,12 @@ describe("this server's own card", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("opens the receiving server only while this server runs one", async () => {
+  it("opens the receiving server from this instance's card, and offers to set one up while none runs", async () => {
     await renderPage();
-    expect(within(card("self")).queryByRole("button", { name: en["receiver.server.title"] })).toBeNull();
+    await click(within(card("self")).getByRole("button", { name: en["receiver.server.title"] }));
+    const empty = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    expect(within(empty).getByRole("button", { name: en["receiver.server.setUp"] })).toBeTruthy();
+    await click(within(empty).getByRole("button", { name: en["common.done"] }));
     cleanup();
     serverRuns = true;
     await renderPage();
@@ -1300,7 +1307,6 @@ describe("the modules behind the page", () => {
     expect(called("listReceivedRepos")).toBe(0);
     expect(called("getReceiverServer")).toBe(0);
     expect(called("listPullSources")).toBe(1);
-    expect(within(card("self")).queryByRole("button", { name: en["receiver.server.title"] })).toBeNull();
   });
 
   it("is only the way into pairing while all three are off", async () => {
@@ -1309,6 +1315,17 @@ describe("the modules behind the page", () => {
     expect(cards().map((c) => c.getAttribute("data-instance"))).toEqual(["none"]);
     expect(screen.getByText(en["instances.title"])).toBeTruthy();
     expect(screen.queryByTestId("net-picture")).toBeNull();
+  });
+
+  it("shows this instance with its receiving server and no role tiles while it has nodes and no group", async () => {
+    flags = { receiverEnabled: false, fleetEnabled: false, pullEnabled: false, zfsEnabled: false };
+    nodes = [{ id: "n1", name: "vps", createdAt: 1, adoptedAt: 2, online: true, containersCadence: "daily 02:30", filesCadence: "daily 02:30", failures: 0, anomalies: 0 }];
+    await renderPage();
+    expect(cards().map((c) => c.getAttribute("data-instance"))[0]).toBe("self");
+    expect(Object.keys(tiles(card("self")))).toEqual([]);
+    await click(within(card("self")).getByRole("button", { name: en["receiver.server.title"] }));
+    const win = screen.getByRole("dialog", { name: en["receiver.server.title"] });
+    expect(within(win).getByRole("button", { name: en["receiver.server.setUp"] })).toBeTruthy();
   });
 
   it("says so when the members could not be read", async () => {
@@ -1385,11 +1402,11 @@ describe("an address with a hash", () => {
     expect(window.location.hash).toBe("");
   });
 
-  it("opens nothing for #receiver while the receiver is off", async () => {
+  it("opens the receiving server for #receiver while the Receiver module is off", async () => {
     window.location.hash = "#receiver";
     flags.receiverEnabled = false;
     await renderPage();
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("dialog", { name: en["receiver.server.title"] })).toBeTruthy();
   });
 
   it("shows the grid for #pull and drops the hash", async () => {

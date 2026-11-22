@@ -5525,6 +5525,7 @@ const lv: Partial<Translations> = {
   "nodes.toNode": "Glabāt tās mezglā",
   "nodes.toNodeText": "Mezgls glabā savas rezerves kopijas aiz sava rest-server, un šī instance pēc katras dublēšanas paņem kopiju. Tam mezglam vajag šai instancei atvērtu portu.",
   "nodes.noReceiver": "Šī instance vēl nedarbina uztvērējserveri. Vispirms iestatiet to vai izvēlieties mērķi.",
+  "nodes.receiverLead": "Jūsu mezgli kopē savas rezerves kopijas uz šo uztvērējserveri. Katrs mezgls saņem savu pierakstīšanos un var tur pievienot kopijas, bet nekad tās nedzēst.",
   "nodes.address": "Adrese mezgliem",
   "nodes.addressTip": "Adrese, pa kuru mezgli sasniedz uztvērējserveri. Mezgls parasti sūta no interneta, tāpēc izmantojiet https:// aiz reversā starpniekservera vai http:// ar privātu adresi, piemēram, no VPN.",
   "nodes.addressPlain": "Ar http:// mezgls sūtītu rezerves kopijas pa internetu nešifrētas. Izmantojiet https:// vai http:// tikai ar privātu adresi, piemēram, no VPN.",

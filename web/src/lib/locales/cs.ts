@@ -5514,6 +5514,7 @@ const cs: Partial<Translations> = {
   "nodes.toNode": "Nechat je na uzlu",
   "nodes.toNodeText": "Uzel uchovává své zálohy za vlastním rest-serverem a tato instance si po každé záloze stáhne kopii. Uzel k tomu potřebuje port otevřený pro tuto instanci.",
   "nodes.noReceiver": "Tato instance zatím neprovozuje přijímací server. Nejdřív ho nastav, nebo vyber cíl.",
+  "nodes.receiverLead": "Tvoje uzly kopírují své zálohy na tento přijímací server. Každý uzel dostane vlastní přihlášení a může tam zálohy přidávat, ale nikdy je nesmaže.",
   "nodes.address": "Adresa pro uzly",
   "nodes.addressTip": "Kde uzly najdou přijímací server. Uzel obvykle posílá z internetu, takže použij https:// za reverzní proxy, nebo http:// se soukromou adresou, třeba z VPN.",
   "nodes.addressPlain": "S http:// by uzel posílal zálohy přes internet nešifrovaně. Použij https://, nebo http:// jen se soukromou adresou, třeba z VPN.",

@@ -5526,6 +5526,7 @@ const eu: Partial<Translations> = {
   "nodes.toNode": "Nodoan gorde",
   "nodes.toNodeText": "Nodoak bere rest-server propioaren atzean gordetzen ditu babeskopiak, eta instantzia honek kopia bat hartzen du babeskopia bakoitzaren ondoren. Horretarako, nodoak instantzia honentzat irekitako ataka bat behar du.",
   "nodes.noReceiver": "Instantzia honek ez du oraindik hartzaile-zerbitzaririk. Konfiguratu bat lehenik, edo aukeratu helmuga bat.",
+  "nodes.receiverLead": "Zure nodoek beren babeskopiak hartzaile-zerbitzari honetara kopiatzen dituzte. Nodo bakoitzak saio-hasiera propioa jasotzen du eta babeskopiak gehi ditzake bertan, baina inoiz ez ezabatu.",
   "nodes.address": "Nodoentzako helbidea",
   "nodes.addressTip": "Nodoek hartzaile-zerbitzaria aurkitzen duten helbidea. Nodo batek internetetik bidaltzen du normalean, beraz erabili https:// alderantzizko proxy baten atzean, edo http:// helbide pribatu batekin, VPN batena adibidez.",
   "nodes.addressPlain": "http:// erabiliz, nodo batek bere babeskopiak zifratu gabe bidaliko lituzke internetetik. Erabili https://, edo http:// helbide pribatu batekin soilik, VPN batena adibidez.",

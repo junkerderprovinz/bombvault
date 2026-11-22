@@ -5526,6 +5526,7 @@ const sk: Partial<Translations> = {
   "nodes.toNode": "Nechať ich na uzle",
   "nodes.toNodeText": "Uzol uchováva svoje zálohy za vlastným rest-serverom a táto inštancia si po každej zálohe stiahne kópiu. Uzol na to potrebuje port otvorený pre túto inštanciu.",
   "nodes.noReceiver": "Táto inštancia zatiaľ neprevádzkuje prijímací server. Najprv ho nastav alebo vyber cieľ.",
+  "nodes.receiverLead": "Tvoje uzly kopírujú svoje zálohy na tento prijímací server. Každý uzol dostane vlastné prihlásenie a môže tam zálohy pridávať, ale nikdy ich nezmaže.",
   "nodes.address": "Adresa pre uzly",
   "nodes.addressTip": "Na tejto adrese uzly dosiahnu prijímací server. Uzol zvyčajne posiela z internetu, takže použi https:// za reverznou proxy alebo http:// so súkromnou adresou, napríklad z VPN.",
   "nodes.addressPlain": "S http:// by uzol posielal svoje zálohy cez internet nešifrované. Použi https:// alebo http:// len so súkromnou adresou, napríklad z VPN.",
