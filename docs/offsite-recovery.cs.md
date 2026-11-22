@@ -437,14 +437,14 @@ Stažená kopie jen roste. BombVault do ní přidává a nečistí ji ani nekont
 
 ### Přijímací server {#receiving-server}
 
-Přijímací krabice může také provozovat rest-server, na který ostatní kopírují. Nastaví se poprvé, když povolíš žádost **Přijímač**, která si ho vyžádá: okno říká, že server potřebuje přijímací server, a ptá se na složku na sdílené složce, s **Nová složka** pro její vytvoření, a na port (8000, pokud ho nepoužívá jiný kontejner). BombVault pak:
+Přijímací krabice může také provozovat rest-server, na který ostatní kopírují, a ten, kam posílají zálohy [uzly](nodes.md#to-receiver) této instance. Skupinu k tomu nepotřebuje. Nastavit ho jde na třech místech: **Přijímací server** na kartě této instance, povolená žádost **Přijímač**, která si ho vyžádá, a **Nastavit přijímací server**, když ho vybereš pro uzel. Bez skupiny se karta této instance ukáže, jakmile má uzel. Okno se ptá na složku na sdílené složce, s **Nová složka** pro její vytvoření, a na port (8000, pokud ho nepoužívá jiný kontejner). BombVault pak:
 
 1. odmítne, pokud už existuje kontejner jménem `rest-server` nebo port drží jiný kontejner,
 2. stáhne `restic/rest-server` a spustí ho přes Docker socket v režimu append-only s privátními repozitáři a souborem s přihlášeními ve složce,
 3. zapíše jeho šablonu Unraidu na flashku, aby kontejner zůstal upravitelný v záložce Docker, nebo šablonu nabídne ke stažení, když flashka není dosažitelná,
 4. spustí proti němu tamper test a ukáže, zda mazání odmítá.
 
-Instance ve tvé skupině pak server najdou mezi poskytovateli pod **Z tvé skupiny**, pojmenovaný podle přijímací krabice, a role **Přijímač** ho nabídne jako bezpečnou volbu. Každá instance dostane při prvním použití serveru vlastní přihlášení a zapisuje jen do své vlastní složky tam. Se zapnutým **Přijímač** v **Nastavení, Instance** otevře **Přijímací server** na kartě této instance server znovu. Jeho okno vypisuje přihlášení pod **Partneři s přihlášením** a **Odvolat přihlášení** jedno odebere. Co ta instance už zkopírovala, ve složce zůstává. Nastavení také vytvoří jedno **Přihlášení mimo skupinu**, jehož heslo okno ukáže jednou.
+Instance ve tvé skupině pak server najdou mezi poskytovateli pod **Z tvé skupiny**, pojmenovaný podle přijímací krabice, a role **Přijímač** ho nabídne jako bezpečnou volbu. Každá instance dostane při prvním použití serveru vlastní přihlášení a zapisuje jen do své vlastní složky tam. **Přijímací server** na kartě této instance otevře server znovu. Jeho okno vypisuje přihlášení pod **Partneři s přihlášením** a **Odvolat přihlášení** jedno odebere. Co ta instance už zkopírovala, ve složce zůstává. Nastavení také vytvoří jedno **Přihlášení mimo skupinu**, jehož heslo okno ukáže jednou.
 
 Instance, která dosáhne na přijímací krabici jen přes relay, server použít nemůže, protože relay nenese zálohy. Přidej nejdřív na stránce párování adresu přijímací krabice. Když BombVault běží na vlastní IP adrese (třeba na br0), vyplň **Adresa pro partnery**, protože server naslouchá na adrese hostitele.
 

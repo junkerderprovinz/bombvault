@@ -92,6 +92,8 @@ Fiecare nod are o singură destinație pentru ambele secțiuni. **Schimbă desti
 
 Nodul scrie pe serverul receptor al instanței-mamă în mod append-only: poate adăuga copii, dar nu poate șterge niciuna. Primește acolo o autentificare proprie, numită după nod, și câte un depozit pe secțiune, în propriul folder. Instanța-mamă își adaugă cheia în fiecare depozit și face singură curățenie în ele, pentru că nodul nu poate.
 
+Dacă instanța-mamă nu rulează încă un server receptor, pasul spune asta și oferă **Configurează serverul receptor**. Instanța-mamă nu are nevoie de niciun grup pentru asta. Alege un folder pe o partajare și un port, apasă **Configurează și continuă**, apoi **Gata** când fereastra arată serverul, iar pasul continuă cu el. Detaliile sunt la [Server receptor](offsite-recovery.md#receiving-server).
+
 Nodul ajunge la server la **Adresă pentru noduri**, pe care o setezi la al doilea pas sau în fereastra **Server receptor**. De obicei un nod trimite din internet, așa că adresa trebuie să fie una dintre acestea:
 
 - `https://`, de exemplu în spatele unui reverse proxy, al lui Pangolin sau al unui tunel. Când serverul arată un certificat propriu în locul unuia de la o autoritate publică, lipește-l în format PEM la **Certificat**.

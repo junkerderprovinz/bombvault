@@ -92,6 +92,8 @@ Jokaisella solmulla on yksi määränpää molemmille osioilleen. Kortin **Vaihd
 
 Solmu kirjoittaa kotiinstanssin vastaanottopalvelimelle append-only-tilassa: se voi lisätä varmuuskopioita mutta ei poistaa niitä. Se saa sinne oman tunnuksen solmun nimellä ja yhden repositoryn osiota kohti omassa kansiossaan. Kotiinstanssi lisää oman avaimensa jokaiseen repositoryyn ja siivoaa ne itse, koska solmu ei voi.
 
+Jos kotiinstanssilla ei vielä ole vastaanottopalvelinta, vaihe kertoo sen ja tarjoaa **Ota vastaanottopalvelin käyttöön**. Kotiinstanssi ei tarvitse siihen ryhmää. Valitse kansio jaolta ja portti, valitse **Ota käyttöön ja jatka** ja sitten **Valmis**, kun ikkuna näyttää palvelimen, niin vaihe jatkaa sen kanssa. Yksityiskohdat ovat kohdassa [Vastaanottopalvelin](offsite-recovery.md#receiving-server).
+
 Solmu tavoittaa palvelimen osoitteessa **Osoite solmuille**, jonka asetat toisessa vaiheessa tai **Vastaanottopalvelin**-ikkunassa. Solmu lähettää yleensä internetistä, joten osoitteen on oltava jokin näistä:
 
 - `https://`, esimerkiksi käänteisen välityspalvelimen, Pangolinin tai tunnelin takana. Kun palvelin näyttää oman varmenteensa julkisen varmentajan varmenteen sijaan, liitä se PEM-muodossa kohtaan **Varmenne**.

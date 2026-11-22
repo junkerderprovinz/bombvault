@@ -92,6 +92,8 @@ Hver node har én destination for begge sine områder. **Skift destination** på
 
 Noden skriver til hjemmeinstansens modtageserver i append-only-tilstand: den kan tilføje sikkerhedskopier, men ikke slette nogen. Den får sit eget login dér, opkaldt efter noden, og ét repository pr. område i sin egen mappe. Hjemmeinstansen tilføjer sin egen nøgle til hvert repository og beskærer dem selv, da noden ikke kan.
 
+Kører hjemmeinstansen endnu ingen modtageserver, siger trinnet det og tilbyder **Opsæt modtageserver**. Hjemmeinstansen behøver ingen gruppe til det. Vælg en mappe på en share og en port, vælg **Opsæt og fortsæt** og derefter **Færdig**, når vinduet viser serveren, så fortsætter trinnet med den. Detaljerne står under [Modtageserver](offsite-recovery.md#receiving-server).
+
 Noden når serveren på **Adresse til noder**, som du sætter i andet trin eller i vinduet **Modtageserver**. En node sender som regel fra internettet, så adressen skal være en af disse:
 
 - `https://`, for eksempel bag en reverse proxy, Pangolin eller en tunnel. Viser serveren sit eget certifikat i stedet for et fra en offentlig udsteder, så indsæt det i PEM-format under **Certifikat**.

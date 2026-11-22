@@ -92,6 +92,8 @@ Ogni nodo ha una sola destinazione per entrambe le sezioni. **Cambia destinazion
 
 Il nodo scrive sul server ricevente dell'istanza madre in modalità append-only: può aggiungere backup ma non eliminarne nessuno. Lì riceve un accesso proprio, col nome del nodo, e un repository per sezione nella propria cartella. L'istanza madre aggiunge la propria chiave a ogni repository e li pota da sé, visto che il nodo non può farlo.
 
+Se l'istanza madre non ha ancora un server ricevente, il passo lo dice e offre **Configura server ricevente**. All'istanza madre non serve nessun gruppo per questo. Scegli una cartella su una condivisione e una porta, poi **Configura e continua** e infine **Fatto** quando la finestra mostra il server: il passo prosegue con quello. I dettagli sono in [Server ricevente](offsite-recovery.md#receiving-server).
+
 Il nodo raggiunge il server all'**Indirizzo per i nodi**, che imposti nel secondo passo o nella finestra **Server ricevente**. Di solito un nodo invia da internet, quindi l'indirizzo deve essere uno di questi:
 
 - `https://`, per esempio dietro un reverse proxy, Pangolin o un tunnel. Se il server mostra un certificato proprio invece di uno di un'autorità pubblica, incollalo in formato PEM in **Certificato**.

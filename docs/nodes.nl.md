@@ -92,6 +92,8 @@ Elke node heeft één bestemming voor beide onderdelen. **Bestemming wijzigen** 
 
 De node schrijft in append-only-modus naar de ontvangserver van de thuisinstantie: hij kan back-ups toevoegen, maar er geen verwijderen. Hij krijgt daar een eigen login, genoemd naar de node, en één repository per onderdeel in zijn eigen map. De thuisinstantie voegt haar eigen sleutel aan elk repository toe en schoont ze zelf op, omdat de node dat niet kan.
 
+Draait de thuisinstantie nog geen ontvangserver, dan zegt de stap dat en biedt **Ontvangserver instellen** aan. De thuisinstantie heeft daar geen groep voor nodig. Kies een map op een share en een poort, kies **Instellen en doorgaan** en daarna **Klaar** zodra het venster de server toont, en de stap gaat ermee verder. De details staan onder [Ontvangserver](offsite-recovery.md#receiving-server).
+
 De node bereikt de server op het **Adres voor nodes**, dat je instelt bij de tweede stap of in het venster **Ontvangserver**. Een node verstuurt meestal vanaf het internet, dus het adres moet een van deze zijn:
 
 - `https://`, bijvoorbeeld achter een reverse proxy, Pangolin of een tunnel. Toont de server een eigen certificaat in plaats van een certificaat van een publieke instantie, plak het dan in PEM-formaat onder **Certificaat**.

@@ -437,14 +437,14 @@ En hentet kopi bare vokser. BombVault legger til i den og verken beskjærer elle
 
 ### Mottaksserver {#receiving-server}
 
-Mottaksboksen kan også kjøre rest-serveren de andre kopierer til. Den settes opp første gang du tillater en **Mottaker**-forespørsel som ber om det: vinduet sier at serveren trenger en mottaksserver og ber om en mappe på en deling, med **Ny mappe** for å lage en, og en port (8000 med mindre en annen container bruker den). BombVault da:
+Mottaksboksen kan også kjøre rest-serveren de andre kopierer til, og den som denne instansens [noder](nodes.md#to-receiver) sender sikkerhetskopiene sine til. Den trenger ingen gruppe. Du kan sette den opp tre steder: **Mottaksserver** på kortet til denne instansen, en **Mottaker**-forespørsel som ber om den og som du tillater, og **Sett opp mottaksserver** når du velger den for en node. Uten gruppe vises kortet til denne instansen så snart den har en node. Vinduet ber om en mappe på en deling, med **Ny mappe** for å lage en, og en port (8000 med mindre en annen container bruker den). BombVault da:
 
 1. nekter hvis en container som heter `rest-server` allerede finnes eller en annen container har porten,
 2. henter `restic/rest-server` og starter den gjennom Docker-socketen i append-only-modus med private repositoryer og en påloggingsfil i mappen,
 3. skriver Unraid-malen sin til flash-stasjonen, så containeren kan redigeres i Docker-fanen, eller tilbyr malen som nedlasting når flash-stasjonen er utenfor rekkevidde,
 4. kjører tamper-testen mot den og viser om den nekter sletting.
 
-Instansene i gruppen din finner så serveren blant leverandørene under **Fra gruppen din**, oppkalt etter mottaksboksen, og rollen **Mottaker** tilbyr den som det trygge valget. Hver instans får en egen pålogging første gang den bruker serveren, og skriver bare inn i sin egen mappe der. Med **Mottaker** slått på under **Innstillinger, Instanser** åpner **Mottaksserver** på kortet til denne instansen serveren igjen. Vinduet lister påloggingene under **Partnere med pålogging**, og **Trekk tilbake pålogging** tar en bort. Det den instansen allerede har kopiert, blir i mappen. Oppsettet oppretter også én **Pålogging utenfor gruppen**, hvis passord vinduet viser én gang.
+Instansene i gruppen din finner så serveren blant leverandørene under **Fra gruppen din**, oppkalt etter mottaksboksen, og rollen **Mottaker** tilbyr den som det trygge valget. Hver instans får en egen pålogging første gang den bruker serveren, og skriver bare inn i sin egen mappe der. **Mottaksserver** på kortet til denne instansen åpner serveren igjen. Vinduet lister påloggingene under **Partnere med pålogging**, og **Trekk tilbake pålogging** tar en bort. Det den instansen allerede har kopiert, blir i mappen. Oppsettet oppretter også én **Pålogging utenfor gruppen**, hvis passord vinduet viser én gang.
 
 En instans som bare når mottaksboksen gjennom relayet, kan ikke bruke serveren, fordi relayet ikke bærer sikkerhetskopier. Legg først til adressen til mottaksboksen på parings-siden. Når BombVault kjører på en egen IP-adresse (på br0, for eksempel), fyll ut **Adresse for partnere**, fordi serveren lytter på adressen til verten.
 

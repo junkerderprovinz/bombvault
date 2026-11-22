@@ -437,14 +437,14 @@ Một bản sao đã kéo về chỉ lớn thêm. BombVault thêm vào nó mà k
 
 ### Máy chủ nhận {#receiving-server}
 
-Máy nhận cũng có thể chạy rest-server mà các máy khác sao chép tới. Nó được thiết lập lần đầu bạn cho phép một yêu cầu **Bộ nhận** đòi nó: cửa sổ nói máy chủ cần một máy chủ nhận và hỏi một thư mục trên một share, với **Thư mục mới** để tạo, và một cổng (8000 trừ khi container khác dùng). BombVault sau đó:
+Máy nhận cũng có thể chạy rest-server mà các máy khác sao chép tới, và rest-server mà các [node](nodes.md#to-receiver) của phiên bản này gửi bản sao lưu tới. Nó không cần nhóm. Bạn có thể thiết lập nó từ ba chỗ: **Máy chủ nhận** trên thẻ của phiên bản này, một yêu cầu **Bộ nhận** đòi nó mà bạn cho phép, và **Thiết lập máy chủ nhận** khi bạn chọn nó cho một node. Khi không có nhóm, thẻ của phiên bản này hiện ra ngay khi nó có một node. Cửa sổ hỏi một thư mục trên một share, với **Thư mục mới** để tạo, và một cổng (8000 trừ khi container khác dùng). BombVault sau đó:
 
 1. từ chối nếu đã có container tên `rest-server` hoặc container khác đang giữ cổng đó,
 2. kéo `restic/rest-server` và khởi động nó qua socket Docker ở chế độ append-only, với kho riêng tư và một tệp đăng nhập trong thư mục,
 3. ghi mẫu Unraid của nó vào ổ flash, để container vẫn chỉnh sửa được trong tab Docker, hoặc cho tải mẫu về khi không truy cập được ổ flash,
 4. chạy kiểm tra can thiệp lên nó và cho biết nó có từ chối xóa hay không.
 
-Các phiên bản trong nhóm của bạn khi đó thấy máy chủ trong số các nhà cung cấp dưới **Từ nhóm của bạn**, đặt theo tên máy nhận, và vai trò **Bộ nhận** đưa nó ra như lựa chọn an toàn. Mỗi phiên bản nhận một đăng nhập riêng lần đầu dùng máy chủ, và chỉ ghi vào thư mục riêng của nó ở đó. Với **Bộ nhận** được bật dưới **Cài đặt, Phiên bản**, **Máy chủ nhận** trên thẻ của phiên bản này mở lại máy chủ. Cửa sổ của nó liệt kê các đăng nhập dưới **Đối tác có thông tin đăng nhập**, và **Thu hồi thông tin đăng nhập** lấy một cái đi. Những gì phiên bản đó đã sao chép vẫn nằm trong thư mục. Thiết lập cũng tạo một **Thông tin đăng nhập ngoài nhóm**, mà cửa sổ hiển thị mật khẩu một lần.
+Các phiên bản trong nhóm của bạn khi đó thấy máy chủ trong số các nhà cung cấp dưới **Từ nhóm của bạn**, đặt theo tên máy nhận, và vai trò **Bộ nhận** đưa nó ra như lựa chọn an toàn. Mỗi phiên bản nhận một đăng nhập riêng lần đầu dùng máy chủ, và chỉ ghi vào thư mục riêng của nó ở đó. **Máy chủ nhận** trên thẻ của phiên bản này mở lại máy chủ. Cửa sổ của nó liệt kê các đăng nhập dưới **Đối tác có thông tin đăng nhập**, và **Thu hồi thông tin đăng nhập** lấy một cái đi. Những gì phiên bản đó đã sao chép vẫn nằm trong thư mục. Thiết lập cũng tạo một **Thông tin đăng nhập ngoài nhóm**, mà cửa sổ hiển thị mật khẩu một lần.
 
 Một phiên bản chỉ tới được máy nhận qua relay thì không dùng được máy chủ, vì relay không mang bản sao lưu. Hãy thêm địa chỉ của máy nhận trên trang ghép nối trước. Khi BombVault chạy trên một địa chỉ IP riêng (ví dụ trên br0), hãy điền **Địa chỉ cho đối tác (tùy chọn)**, vì máy chủ lắng nghe trên địa chỉ của host.
 

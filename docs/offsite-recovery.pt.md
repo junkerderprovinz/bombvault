@@ -437,14 +437,14 @@ Uma cópia recolhida só cresce. O BombVault acrescenta-lhe dados e não a poda 
 
 ### Servidor recetor {#receiving-server}
 
-A máquina recetora pode também correr o rest-server para onde os outros copiam. É configurado na primeira vez que permites um pedido de **Recetor** que o pede: a janela diz que o servidor precisa de um servidor recetor e pede uma pasta numa partilha, com **Nova pasta** para criar uma, e uma porta (8000, a menos que outro container a use). O BombVault então:
+A máquina recetora pode também correr o rest-server para onde os outros copiam, e aquele para onde os [nós](nodes.md#to-receiver) desta instância enviam os seus backups. Não precisa de nenhum grupo. Podes configurá-lo em três sítios: **Servidor recetor** no cartão desta instância, um pedido de **Recetor** que o pede e que permites, e **Configurar servidor recetor** quando o escolhes para um nó. Sem grupo, o cartão desta instância aparece assim que tem um nó. A janela pede uma pasta numa partilha, com **Nova pasta** para criar uma, e uma porta (8000, a menos que outro container a use). O BombVault então:
 
 1. recusa se já existir um container chamado `rest-server` ou se outro container tiver a porta,
 2. transfere o `restic/rest-server` e arranca-o pelo socket Docker em modo append-only com repositórios privados e um ficheiro de logins na pasta,
 3. escreve o seu template Unraid na unidade flash, para o container continuar editável no separador Docker, ou oferece o template como transferência quando a flash está fora de alcance,
 4. corre o teste de adulteração contra ele e mostra se recusa eliminações.
 
-As instâncias do teu grupo encontram então o servidor entre os fornecedores em **Do teu grupo**, com o nome da máquina recetora, e a função **Recetor** oferece-o como a escolha segura. Cada instância recebe um início de sessão próprio na primeira vez que usa o servidor, e escreve só na sua própria pasta aí. Com o **Recetor** ligado em **Definições, Instâncias**, **Servidor recetor** no cartão desta instância abre o servidor outra vez. A sua janela lista os inícios de sessão em **Parceiros com início de sessão**, e **Revogar início de sessão** tira um. O que essa instância já copiou fica na pasta. A configuração cria também um **Início de sessão fora do grupo**, cuja palavra-passe a janela mostra uma só vez.
+As instâncias do teu grupo encontram então o servidor entre os fornecedores em **Do teu grupo**, com o nome da máquina recetora, e a função **Recetor** oferece-o como a escolha segura. Cada instância recebe um início de sessão próprio na primeira vez que usa o servidor, e escreve só na sua própria pasta aí. **Servidor recetor** no cartão desta instância abre o servidor outra vez. A sua janela lista os inícios de sessão em **Parceiros com início de sessão**, e **Revogar início de sessão** tira um. O que essa instância já copiou fica na pasta. A configuração cria também um **Início de sessão fora do grupo**, cuja palavra-passe a janela mostra uma só vez.
 
 Uma instância que só alcança a máquina recetora pelo relay não pode usar o servidor, porque o relay não transporta backups. Junta primeiro o endereço da máquina recetora na página de emparelhamento. Quando o BombVault corre num endereço IP próprio (em br0, por exemplo), preenche **Endereço para parceiros**, porque o servidor escuta no endereço do host.
 

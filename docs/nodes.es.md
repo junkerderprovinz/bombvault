@@ -92,6 +92,8 @@ Cada nodo tiene un solo destino para sus dos secciones. **Cambiar destino** en s
 
 El nodo escribe en el servidor receptor de la instancia base en modo append-only: puede añadir copias, pero no borrar ninguna. Recibe allí un acceso propio con el nombre del nodo y un repositorio por sección en su propia carpeta. La instancia base añade su propia clave a cada repositorio y los poda ella misma, ya que el nodo no puede.
 
+Si la instancia base aún no tiene servidor receptor, el paso lo dice y ofrece **Configurar servidor receptor**. La instancia base no necesita ningún grupo para ello. Elige una carpeta en un recurso compartido y un puerto, pulsa **Configurar y continuar** y luego **Listo** cuando la ventana muestre el servidor, y el paso sigue con él. Los detalles están en [Servidor receptor](offsite-recovery.md#receiving-server).
+
 El nodo llega al servidor en **Dirección para nodos**, que fijas en el segundo paso o en la ventana **Servidor receptor**. Un nodo suele enviar desde internet, así que la dirección tiene que ser una de estas:
 
 - `https://`, por ejemplo detrás de un proxy inverso, Pangolin o un túnel. Si el servidor muestra un certificado propio en lugar de uno de una autoridad pública, pégalo en formato PEM en **Certificado**.

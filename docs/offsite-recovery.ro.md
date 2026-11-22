@@ -437,14 +437,14 @@ O copie preluată doar crește. BombVault adaugă la ea și nici nu o curăță,
 
 ### Server receptor {#receiving-server}
 
-Stația care primește poate rula și rest-server-ul spre care copiază ceilalți. Se configurează prima dată când permiți o cerere **Receptor** care îl cere: fereastra spune că serverul are nevoie de un server receptor și cere un folder pe o partajare, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu-l folosește alt container). BombVault apoi:
+Stația care primește poate rula și rest-server-ul spre care copiază ceilalți, precum și pe cel spre care [nodurile](nodes.md#to-receiver) acestei instanțe își trimit backupurile. Nu are nevoie de niciun grup. Îl poți configura din trei locuri: **Server receptor** pe cardul acestei instanțe, o cerere **Receptor** care îl cere și pe care o permiți, și **Configurează serverul receptor** când îl alegi pentru un nod. Fără grup, cardul acestei instanțe apare imediat ce are un nod. Fereastra cere un folder pe o partajare, cu **Dosar nou** pentru a crea unul, și un port (8000, dacă nu-l folosește alt container). BombVault apoi:
 
 1. refuză dacă există deja un container numit `rest-server` sau dacă alt container ține portul,
 2. trage `restic/rest-server` și îl pornește prin socketul Docker în mod append-only, cu depozite private și un fișier de autentificare în folder,
 3. scrie șablonul lui Unraid pe unitatea flash, ca containerul să rămână editabil în fila Docker, sau oferă șablonul ca descărcare când unitatea flash nu poate fi atinsă,
 4. rulează testul de manipulare împotriva lui și arată dacă refuză ștergerile.
 
-Instanțele din grupul tău găsesc apoi serverul printre furnizori la **Din grupul tău**, numit după stația care primește, iar rolul **Receptor** îl oferă ca alegerea sigură. Fiecare instanță primește o autentificare proprie prima dată când folosește serverul și scrie doar în propriul folder de acolo. Cu **Receptor** pornit la **Setări, Instanțe**, **Server receptor** pe cardul acestei instanțe redeschide serverul. Fereastra lui listează autentificările la **Parteneri cu autentificare**, iar **Revocă autentificarea** o scoate pe una. Ce a copiat deja acea instanță rămâne în folder. Configurarea creează și o **Autentificare din afara grupului**, a cărei parolă fereastra o arată o singură dată.
+Instanțele din grupul tău găsesc apoi serverul printre furnizori la **Din grupul tău**, numit după stația care primește, iar rolul **Receptor** îl oferă ca alegerea sigură. Fiecare instanță primește o autentificare proprie prima dată când folosește serverul și scrie doar în propriul folder de acolo. **Server receptor** pe cardul acestei instanțe redeschide serverul. Fereastra lui listează autentificările la **Parteneri cu autentificare**, iar **Revocă autentificarea** o scoate pe una. Ce a copiat deja acea instanță rămâne în folder. Configurarea creează și o **Autentificare din afara grupului**, a cărei parolă fereastra o arată o singură dată.
 
 O instanță care ajunge la stația receptoare doar prin relay nu poate folosi serverul, pentru că relay-ul nu transportă copii. Adaugă mai întâi adresa stației receptoare pe pagina de împerechere. Când BombVault rulează pe o adresă IP proprie (pe br0, de exemplu), completează **Adresă pentru parteneri**, pentru că serverul ascultă pe adresa gazdei.
 

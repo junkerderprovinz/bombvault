@@ -437,14 +437,14 @@ Noudettu kopio vain kasvaa. BombVault lisää siihen eikä karsi tai tarkista si
 
 ### Vastaanottopalvelin {#receiving-server}
 
-Vastaanottava laatikko voi myös ajaa rest-serverin, johon muut kopioivat. Se määritetään ensimmäisellä kerralla, kun sallit **Vastaanotin**-pyynnön, joka sitä pyytää: ikkuna kertoo, että palvelin tarvitsee vastaanottopalvelimen, ja kysyy kansiota jaolta, **Uusi kansio** -toiminnolla uuden luomiseen, sekä porttia (8000, ellei toinen kontti käytä sitä). BombVault sitten:
+Vastaanottava laatikko voi myös ajaa rest-serverin, johon muut kopioivat, ja sen, johon tämän instanssin [solmut](nodes.md#to-receiver) lähettävät varmuuskopionsa. Se ei tarvitse ryhmää. Voit ottaa sen käyttöön kolmesta paikasta: tämän instanssin kortin **Vastaanottopalvelin**, sallimasi **Vastaanotin**-pyyntö, joka sitä pyytää, ja **Ota vastaanottopalvelin käyttöön**, kun valitset sen solmulle. Ilman ryhmää tämän instanssin kortti näkyy, kun sillä on solmu. Ikkuna kysyy kansiota jaolta, **Uusi kansio** -toiminnolla uuden luomiseen, sekä porttia (8000, ellei toinen kontti käytä sitä). BombVault sitten:
 
 1. kieltäytyy jatkamasta, jos kontti nimeltä `rest-server` on jo olemassa tai toinen kontti pitää porttia,
 2. hakee `restic/rest-server`in ja käynnistää sen Dockerin socketin kautta append-only-tilassa yksityisillä repositorioilla ja kansiossa olevalla kirjautumistiedostolla,
 3. kirjoittaa sen Unraid-mallin flash-asemalle, jolloin kontti pysyy muokattavana Docker-välilehdellä, tai tarjoaa mallin ladattavaksi, kun flash-asema ei ole saatavilla,
 4. ajaa sille peukalointitestin ja näyttää, kieltäytyykö se poistoista.
 
-Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta kohdassa **Ryhmästäsi**, vastaanottavan laatikon nimellä, ja **Vastaanotin**-rooli tarjoaa sen turvallisena valintana. Jokainen instanssi saa oman tunnuksen, kun se ensimmäisen kerran käyttää palvelinta, ja kirjoittaa siellä vain omaan kansioonsa. Kun **Vastaanotin** on päällä kohdassa **Asetukset, Ilmentymät**, tämän instanssin kortti **Vastaanottopalvelin** avaa palvelimen uudelleen. Sen ikkuna listaa tunnukset kohdassa **Kumppanit, joilla on tunnus**, ja **Peruuta tunnus** poistaa yhden. Mitä kyseinen instanssi on jo kopioinut, jää kansioon. Käyttöönotto luo myös yhden **Tunnuksen ryhmän ulkopuolelle**, jonka salasanan ikkuna näyttää kerran.
+Ryhmäsi instanssit löytävät palvelimen sitten palveluntarjoajien joukosta kohdassa **Ryhmästäsi**, vastaanottavan laatikon nimellä, ja **Vastaanotin**-rooli tarjoaa sen turvallisena valintana. Jokainen instanssi saa oman tunnuksen, kun se ensimmäisen kerran käyttää palvelinta, ja kirjoittaa siellä vain omaan kansioonsa. Tämän instanssin kortin **Vastaanottopalvelin** avaa palvelimen uudelleen. Sen ikkuna listaa tunnukset kohdassa **Kumppanit, joilla on tunnus**, ja **Peruuta tunnus** poistaa yhden. Mitä kyseinen instanssi on jo kopioinut, jää kansioon. Käyttöönotto luo myös yhden **Tunnuksen ryhmän ulkopuolelle**, jonka salasanan ikkuna näyttää kerran.
 
 Instanssi, joka tavoittaa vastaanottavan laatikon vain releen kautta, ei voi käyttää palvelinta, koska rele ei kuljeta varmuuskopioita. Lisää vastaanottavan laatikon osoite pariliitossivulla ensin. Kun BombVault toimii omalla IP-osoitteellaan (esimerkiksi br0:ssa), täytä **Osoite kumppaneille**, koska palvelin kuuntelee isännän osoitteessa.
 

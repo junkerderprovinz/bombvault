@@ -92,6 +92,8 @@ Každý uzel má pro obě své sekce jeden cíl. **Změnit cíl** na jeho kartě
 
 Uzel zapisuje na přijímací server domovské instance v režimu append-only: zálohy přidávat může, ale žádnou nesmaže. Dostane tam vlastní přihlášení pojmenované podle uzlu a jeden repozitář na sekci ve vlastní složce. Domovská instance přidá do každého repozitáře svůj klíč a sama je uklízí, protože uzel to nedokáže.
 
+Pokud domovská instance ještě nemá přijímací server, krok to řekne a nabídne **Nastavit přijímací server**. Skupinu k tomu domovská instance nepotřebuje. Vyber složku na sdílené složce a port, zvol **Nastavit a pokračovat** a pak **Hotovo**, jakmile okno server ukáže. Krok s ním pak pokračuje. Podrobnosti jsou v části [Přijímací server](offsite-recovery.md#receiving-server).
+
 Uzel se k serveru dostane přes **Adresa pro uzly**, kterou nastavíš ve druhém kroku nebo v okně **Přijímací server**. Uzel obvykle posílá z internetu, takže adresa musí být jedna z těchto:
 
 - `https://`, například za reverzní proxy, Pangolinem nebo tunelem. Když server ukazuje vlastní certifikát místo certifikátu od veřejné autority, vlož ho ve formátu PEM do **Certifikát**.

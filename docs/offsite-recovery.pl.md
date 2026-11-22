@@ -437,14 +437,14 @@ Pobrana kopia tylko rośnie. BombVault dopisuje do niej, ale ani jej nie przycin
 
 ### Serwer odbiorczy {#receiving-server}
 
-Maszyna odbierająca może też uruchamiać rest-server, do którego kopiują pozostałe. Ustawia się go przy pierwszym zezwoleniu na prośbę **Odbiornik**, która o to prosi: okno mówi, że serwer potrzebuje serwera odbiorczego, i pyta o folder na udziale, z **Nowy folder** do utworzenia jednego, oraz o port (8000, chyba że używa go inny kontener). BombVault następnie:
+Maszyna odbierająca może też uruchamiać rest-server, do którego kopiują pozostałe, oraz ten, do którego [węzły](nodes.md#to-receiver) tej instancji wysyłają swoje kopie. Nie potrzebuje do tego grupy. Możesz go skonfigurować w trzech miejscach: przez **Serwer odbiorczy** na karcie tej instancji, przez prośbę **Odbiornik**, która o niego prosi i na którą zezwalasz, oraz przez **Skonfiguruj serwer odbiorczy**, gdy wybierasz go dla węzła. Bez grupy karta tej instancji pojawia się, gdy tylko ma ona węzeł. Okno pyta o folder na udziale, z **Nowy folder** do utworzenia jednego, oraz o port (8000, chyba że używa go inny kontener). BombVault następnie:
 
 1. odmawia, jeśli kontener o nazwie `rest-server` już istnieje albo port zajmuje inny kontener,
 2. pobiera `restic/rest-server` i uruchamia go przez gniazdo Docker w trybie append-only, z prywatnymi repozytoriami i plikiem logowania w folderze,
 3. zapisuje jego szablon Unraid na dysku flash, żeby kontener pozostał edytowalny w zakładce Docker, albo oferuje szablon do pobrania, gdy dysk flash jest poza zasięgiem,
 4. uruchamia na nim test manipulacji i pokazuje, czy odmawia usuwania.
 
-Instancje Twojej grupy znajdują potem serwer wśród dostawców w **Z twojej grupy**, nazwany od maszyny odbierającej, a rola **Odbiornik** oferuje go jako bezpieczny wybór. Każda instancja dostaje własny login przy pierwszym użyciu serwera i zapisuje tylko do własnego folderu tam. Przy włączonym **Odbiornik** w **Ustawienia, Instancje**, **Serwer odbiorczy** na karcie tej instancji otwiera serwer ponownie. Jego okno wymienia loginy w **Partnerzy z loginem**, a **Odwołaj login** zabiera jeden. To, co ta instancja już skopiowała, zostaje w folderze. Konfiguracja tworzy też jeden **Login spoza grupy**, którego hasło okno pokazuje raz.
+Instancje Twojej grupy znajdują potem serwer wśród dostawców w **Z twojej grupy**, nazwany od maszyny odbierającej, a rola **Odbiornik** oferuje go jako bezpieczny wybór. Każda instancja dostaje własny login przy pierwszym użyciu serwera i zapisuje tylko do własnego folderu tam. **Serwer odbiorczy** na karcie tej instancji otwiera serwer ponownie. Jego okno wymienia loginy w **Partnerzy z loginem**, a **Odwołaj login** zabiera jeden. To, co ta instancja już skopiowała, zostaje w folderze. Konfiguracja tworzy też jeden **Login spoza grupy**, którego hasło okno pokazuje raz.
 
 Instancja, która dociera do maszyny odbierającej tylko przez relay, nie może używać serwera, bo relay nie niesie kopii. Najpierw dodaj adres maszyny odbierającej na stronie parowania. Gdy BombVault działa na własnym adresie IP (na przykład na br0), wypełnij **Adres dla partnerów**, bo serwer nasłuchuje na adresie hosta.
 

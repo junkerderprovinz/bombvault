@@ -92,6 +92,8 @@ Varje nod har ett enda mål för båda sina avsnitt. **Ändra mål** på dess ko
 
 Noden skriver till hemmainstansens mottagarserver i append-only-läge: den kan lägga till säkerhetskopior men inte radera några. Den får en egen inloggning där, uppkallad efter noden, och ett repositorium per avsnitt i sin egen mapp. Hemmainstansen lägger till sin egen nyckel i varje repositorium och rensar dem själv, eftersom noden inte kan.
 
+Kör hemmainstansen ingen mottagarserver än, säger steget det och erbjuder **Ställ in mottagarserver**. Hemmainstansen behöver ingen grupp för det. Välj en mapp på en delad resurs och en port, välj **Ställ in och fortsätt** och sedan **Klar** när fönstret visar servern, så fortsätter steget med den. Detaljerna finns under [Mottagarserver](offsite-recovery.md#receiving-server).
+
 Noden når servern på **Adress för noder**, som du anger i det andra steget eller i fönstret **Mottagarserver**. En nod skickar oftast från internet, så adressen måste vara en av de här:
 
 - `https://`, till exempel bakom en omvänd proxy, Pangolin eller en tunnel. När servern visar ett eget certifikat i stället för ett från en offentlig utfärdare, klistra in det i PEM-format under **Certifikat**.

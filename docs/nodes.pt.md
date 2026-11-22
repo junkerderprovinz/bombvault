@@ -92,6 +92,8 @@ Cada nó tem um único destino para as suas duas secções. **Alterar destino** 
 
 O nó escreve no servidor recetor da instância base em modo append-only: pode adicionar backups, mas não pode apagar nenhum. Recebe lá um início de sessão próprio, com o nome do nó, e um repositório por secção na sua própria pasta. A instância base junta a sua própria chave a cada repositório e poda-os ela mesma, já que o nó não pode.
 
+Se a instância base ainda não tem servidor recetor, o passo di-lo e oferece **Configurar servidor recetor**. A instância base não precisa de nenhum grupo para isso. Escolhe uma pasta numa partilha e uma porta, carrega em **Configurar e continuar** e depois em **Concluído** quando a janela mostrar o servidor, e o passo continua com ele. Os detalhes estão em [Servidor recetor](offsite-recovery.md#receiving-server).
+
 O nó chega ao servidor pelo **Endereço para os nós**, que defines no segundo passo ou na janela **Servidor recetor**. Um nó costuma enviar a partir da internet, por isso o endereço tem de ser um destes:
 
 - `https://`, por exemplo atrás de um proxy reverso, do Pangolin ou de um túnel. Quando o servidor mostra um certificado próprio em vez de um de uma autoridade pública, cola-o em formato PEM em **Certificado**.

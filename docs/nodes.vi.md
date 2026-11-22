@@ -92,6 +92,8 @@ Mỗi node có một đích chung cho cả hai phần của nó. **Đổi đích
 
 Node ghi vào máy chủ nhận của phiên bản chủ ở chế độ append-only: nó thêm được bản sao lưu nhưng không xóa được bản nào. Nó có một thông tin đăng nhập riêng, đặt theo tên node, và mỗi phần một kho trong thư mục riêng của nó ở đó. Phiên bản chủ thêm khóa của chính mình vào từng kho và tự dọn dẹp chúng, vì node không làm được.
 
+Nếu phiên bản chủ chưa chạy máy chủ nhận nào, bước này sẽ nói vậy và đưa ra **Thiết lập máy chủ nhận**. Phiên bản chủ không cần nhóm cho việc này. Chọn một thư mục trên một share và một cổng, chọn **Thiết lập và tiếp tục**, rồi **Xong** khi cửa sổ hiện máy chủ, và bước này tiếp tục với nó. Chi tiết nằm ở [Máy chủ nhận](offsite-recovery.md#receiving-server).
+
 Node tới máy chủ qua **Địa chỉ cho node**, mà bạn đặt ở bước thứ hai hoặc trong cửa sổ **Máy chủ nhận**. Node thường gửi từ internet, nên địa chỉ phải là một trong hai dạng sau:
 
 - `https://`, ví dụ sau một proxy ngược, Pangolin hoặc một tunnel. Khi máy chủ đưa ra chứng chỉ riêng thay vì chứng chỉ của một tổ chức cấp phát công khai, hãy dán chứng chỉ đó ở dạng PEM vào **Chứng chỉ**.

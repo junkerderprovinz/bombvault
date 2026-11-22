@@ -438,14 +438,14 @@ A fetched copy only grows. BombVault adds to it and neither prunes it nor checks
 
 ### Receiving server {#receiving-server}
 
-The receiving box can also run the rest-server the others copy to. It is set up the first time you allow a **Receiver** request that asks for it: the window says the server needs a receiving server and asks for a folder on a share, with **New folder** to create one, and a port (8000 unless another container uses it). BombVault then:
+The receiving box can also run the rest-server the others copy to, and the one this instance's [nodes](nodes.md#to-receiver) send their backups to. It needs no group. You can set it up from three places: **Receiving server** on this instance's card, a **Receiver** request you allow that asks for it, and **Set up receiving server** when you pick it for a node. Without a group, this instance's card shows once it has a node. The window asks for a folder on a share, with **New folder** to create one, and a port (8000 unless another container uses it). BombVault then:
 
 1. refuses if a container called `rest-server` already exists or another container holds the port,
 2. pulls `restic/rest-server` and starts it through the Docker socket in append-only mode with private repositories and a login file in the folder,
 3. writes its Unraid template to the flash drive, so the container stays editable in the Docker tab, or offers the template as a download when the flash drive is out of reach,
 4. runs the tamper test against it and shows whether it refuses deletes.
 
-The instances in your group then find the server among the providers under **From your group**, named after the receiving box, and the **Receiver** role offers it as the safe choice. Each instance gets a login of its own the first time it uses the server, and writes only into its own folder there. With **Receiver** switched on under **Settings, Instances**, **Receiving server** on this instance's card opens the server again. Its window lists the logins under **Partners with a login**, and **Revoke login** takes one away. What that instance already copied stays in the folder. Setup also creates one **Login outside the group**, whose password the window shows once.
+The instances in your group then find the server among the providers under **From your group**, named after the receiving box, and the **Receiver** role offers it as the safe choice. Each instance gets a login of its own the first time it uses the server, and writes only into its own folder there. **Receiving server** on this instance's card opens the server again. Its window lists the logins under **Partners with a login**, and **Revoke login** takes one away. What that instance already copied stays in the folder. Setup also creates one **Login outside the group**, whose password the window shows once.
 
 An instance that reaches the receiving box only through the relay cannot use the server, because the relay carries no backups. Add the receiving box's address on the pairing page first. When BombVault runs on an IP address of its own (on br0, for example), fill in **Address for partners**, because the server listens on the host's address.
 

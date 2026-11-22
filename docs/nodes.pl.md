@@ -92,6 +92,8 @@ Każdy węzeł ma jedno miejsce docelowe dla obu swoich sekcji. **Zmień miejsce
 
 Węzeł zapisuje na serwer odbiorczy instancji domowej w trybie append-only: może dodawać kopie, ale żadnej nie usunie. Dostaje tam własny login, nazwany od węzła, i po jednym repozytorium na sekcję we własnym folderze. Instancja domowa dodaje do każdego repozytorium własny klucz i sama je porządkuje, bo węzeł tego nie potrafi.
 
+Jeśli instancja domowa nie ma jeszcze serwera odbiorczego, krok to mówi i proponuje **Skonfiguruj serwer odbiorczy**. Instancja domowa nie potrzebuje do tego grupy. Wybierz folder na udziale i port, kliknij **Skonfiguruj i dalej**, a potem **Gotowe**, gdy okno pokaże serwer, i krok idzie dalej z nim. Szczegóły są w sekcji [Serwer odbiorczy](offsite-recovery.md#receiving-server).
+
 Węzeł dociera do serwera pod **Adres dla węzłów**, który ustawiasz w drugim kroku albo w oknie **Serwer odbiorczy**. Węzeł zwykle wysyła z internetu, więc adres musi być jednym z tych:
 
 - `https://`, na przykład za reverse proxy, Pangolinem albo tunelem. Gdy serwer pokazuje własny certyfikat zamiast certyfikatu publicznego urzędu, wklej go w formacie PEM w **Certyfikat**.

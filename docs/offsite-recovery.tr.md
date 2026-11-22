@@ -437,14 +437,14 @@ Alıcı kesinlikle salt okunurdur. Alınan depoya asla yazmaz, bu yüzden gönde
 
 ### Alıcı sunucu {#receiving-server}
 
-Alıcı makine diğerlerinin kopyaladığı rest-server'ı da çalıştırabilir. Onu isteyen bir **Alıcı** isteğine ilk izin verdiğinde kurulur: pencere sunucunun bir alıcı sunucuya ihtiyaç duyduğunu söyler ve bir paylaşımda bir klasör, oluşturmak için **Yeni klasör** ile, ve bir port (başka bir konteyner kullanmıyorsa 8000) ister. BombVault sonra:
+Alıcı makine diğerlerinin kopyaladığı rest-server'ı ve bu örneğin [düğümlerinin](nodes.md#to-receiver) yedeklerini gönderdiği rest-server'ı da çalıştırabilir. Bunun için bir grup gerekmez. Onu üç yerden kurabilirsin: bu örneğin kartındaki **Alıcı sunucu**, onu isteyen ve izin verdiğin bir **Alıcı** isteği ve bir düğüm için seçtiğinde **Alıcı sunucuyu kur**. Grup yoksa bu örneğin kartı, bir düğümü olduğu anda görünür. Pencere bir paylaşımda bir klasör, oluşturmak için **Yeni klasör** ile, ve bir port (başka bir konteyner kullanmıyorsa 8000) ister. BombVault sonra:
 
 1. `rest-server` adlı bir konteyner zaten varsa ya da portu başka bir konteyner tutuyorsa reddeder,
 2. `restic/rest-server`'ı çeker ve Docker soketi üzerinden append-only kipinde, özel depolar ve klasörde bir giriş dosyasıyla başlatır,
 3. Unraid şablonunu flash sürücüye yazar, böylece konteyner Docker sekmesinde düzenlenebilir kalır ya da flash sürücüye ulaşılamıyorsa şablonu indirme olarak sunar,
 4. üzerinde kurcalama testini çalıştırır ve silmeyi reddedip reddetmediğini gösterir.
 
-Grubundaki örnekler sunucuyu o zaman sağlayıcılar arasında **Grubundan** altında alıcı makinenin adıyla bulur ve **Alıcı** rolü onu güvenli seçim olarak sunar. Her örnek sunucuyu ilk kullandığında kendi girişini alır ve orada yalnızca kendi klasörüne yazar. **Ayarlar, Örnekler** altında **Alıcı** açıkken, bu örneğin kartındaki **Alıcı sunucu** sunucuyu yeniden açar. Penceresi girişleri **Oturum bilgisi olan ortaklar** altında listeler ve **Girişi iptal et** birini alır. O örneğin zaten kopyaladıkları klasörde kalır. Kurulum ayrıca parolasını pencerenin bir kez gösterdiği bir **Grup dışı oturum bilgisi** oluşturur.
+Grubundaki örnekler sunucuyu o zaman sağlayıcılar arasında **Grubundan** altında alıcı makinenin adıyla bulur ve **Alıcı** rolü onu güvenli seçim olarak sunar. Her örnek sunucuyu ilk kullandığında kendi girişini alır ve orada yalnızca kendi klasörüne yazar. Bu örneğin kartındaki **Alıcı sunucu** sunucuyu yeniden açar. Penceresi girişleri **Oturum bilgisi olan ortaklar** altında listeler ve **Girişi iptal et** birini alır. O örneğin zaten kopyaladıkları klasörde kalır. Kurulum ayrıca parolasını pencerenin bir kez gösterdiği bir **Grup dışı oturum bilgisi** oluşturur.
 
 Alıcı makineye yalnızca röle üzerinden ulaşan bir örnek sunucuyu kullanamaz, çünkü röle yedek taşımaz. Önce alıcı makinenin adresini eşleştirme sayfasına ekle. BombVault kendi IP adresinde (örneğin br0'da) çalışıyorsa **Ortaklar için adres**'i doldur, çünkü sunucu ana makinenin adresini dinler.
 

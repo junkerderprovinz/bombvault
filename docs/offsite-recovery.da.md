@@ -437,14 +437,14 @@ En hentet kopi vokser kun. BombVault føjer til den og hverken beskærer eller t
 
 ### Modtageserver {#receiving-server}
 
-Modtagerboksen kan også køre den rest-server, de andre kopierer til. Den sættes op første gang, du tillader en **Modtager**-anmodning, der beder om det: vinduet siger, at serveren har brug for en modtageserver, og beder om en mappe på en share, med **Ny mappe** til at oprette én, og en port (8000, medmindre en anden container bruger den). BombVault så:
+Modtagerboksen kan også køre den rest-server, de andre kopierer til, og den, som denne instans' [noder](nodes.md#to-receiver) sender deres sikkerhedskopier til. Den kræver ingen gruppe. Du kan sætte den op tre steder: **Modtageserver** på denne instans' kort, en **Modtager**-anmodning, du tillader, der beder om den, og **Opsæt modtageserver**, når du vælger den til en node. Uden gruppe vises denne instans' kort, så snart den har en node. Vinduet beder om en mappe på en share, med **Ny mappe** til at oprette én, og en port (8000, medmindre en anden container bruger den). BombVault så:
 
 1. afviser, hvis der allerede findes en container med navnet `rest-server`, eller en anden container holder porten;
 2. henter `restic/rest-server` og starter den gennem Docker-socketten i append-only-tilstand med private repositories og en loginfil i mappen;
 3. skriver dens Unraid-skabelon til flashdrevet, så containeren kan redigeres i fanen Docker, eller tilbyder skabelonen som download, når flashdrevet ikke kan nås;
 4. kører manipulationstesten mod den og viser, om den afviser sletning.
 
-Instanserne i din gruppe finder så serveren blandt udbyderne under **Fra din gruppe**, opkaldt efter modtagerboksen, og rollen **Modtager** tilbyder den som det sikre valg. Hver instans får et eget login, første gang den bruger serveren, og skriver kun i sin egen mappe dér. Med **Modtager** slået til under **Indstillinger, Instanser** åbner **Modtageserver** på denne instans' kort serveren igen. Dens vindue oplister loginsene under **Partnere med login**, og **Træk login tilbage** fjerner ét. Det, den instans allerede har kopieret, bliver i mappen. Opsætningen opretter også ét **Login uden for gruppen**, hvis adgangskode vinduet viser én gang.
+Instanserne i din gruppe finder så serveren blandt udbyderne under **Fra din gruppe**, opkaldt efter modtagerboksen, og rollen **Modtager** tilbyder den som det sikre valg. Hver instans får et eget login, første gang den bruger serveren, og skriver kun i sin egen mappe dér. **Modtageserver** på denne instans' kort åbner serveren igen. Dens vindue oplister loginsene under **Partnere med login**, og **Træk login tilbage** fjerner ét. Det, den instans allerede har kopieret, bliver i mappen. Opsætningen opretter også ét **Login uden for gruppen**, hvis adgangskode vinduet viser én gang.
 
 En instans, der kun når modtagerboksen gennem relayet, kan ikke bruge serveren, fordi relayet ikke bærer sikkerhedskopier. Tilføj først modtagerboksens adresse på parringssiden. Når BombVault kører på en egen IP-adresse (for eksempel på br0), udfyld **Adresse for partnere**, fordi serveren lytter på værtens adresse.
 

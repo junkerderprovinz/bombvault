@@ -92,6 +92,8 @@ Jeder Knoten hat ein Ziel für beide Bereiche. **Ziel ändern** auf seiner Karte
 
 Der Knoten schreibt im Append-only-Modus auf den Empfangsserver der Heiminstanz: Er kann Sicherungen hinzufügen, aber keine löschen. Er bekommt dort ein eigenes Login, benannt nach dem Knoten, und ein Repository pro Bereich in seinem eigenen Ordner. Die Heiminstanz fügt jedem dieser Repositories ihren eigenen Schlüssel hinzu und räumt sie selbst auf, weil der Knoten das nicht kann.
 
+Betreibt die Heiminstanz noch keinen Empfangsserver, sagt der Schritt das und bietet **Empfangsserver einrichten** an. Eine Gruppe braucht die Heiminstanz dafür nicht. Wähl einen Ordner auf einem Share und einen Port, dann **Einrichten und weiter** und **Fertig**, sobald das Fenster den Server zeigt. Danach geht der Schritt mit ihm weiter. Die Einzelheiten stehen unter [Empfangsserver](offsite-recovery.md#receiving-server).
+
 Der Knoten erreicht den Server unter der **Adresse für Knoten**, die du im zweiten Schritt oder im Fenster **Empfangsserver** setzt. Ein Knoten sendet meist aus dem Internet, die Adresse muss also eine von diesen sein:
 
 - `https://`, etwa hinter einem Reverse Proxy, Pangolin oder einem Tunnel. Zeigt der Server ein eigenes Zertifikat statt eines von einer öffentlichen Stelle, füge es im PEM-Format unter **Zertifikat** ein.

@@ -92,6 +92,8 @@ Minden csomópontnak egyetlen célja van mindkét szakaszához. A kártyáján a
 
 A csomópont append-only módban ír az anyapéldány fogadószerverére: mentéseket hozzáadhat, de egyet sem törölhet. Saját, a csomópontról elnevezett bejelentkezést kap ott, és szakaszonként egy tárolót a saját mappájában. Az anyapéldány minden tárolóhoz hozzáadja a saját kulcsát, és maga tartja rendben őket, mert a csomópont erre nem képes.
 
+Ha az anyapéldány még nem futtat fogadószervert, a lépés ezt jelzi, és felkínálja a **Fogadószerver beállítása** gombot. Az anyapéldánynak ehhez nem kell csoport. Válassz egy mappát egy megosztáson és egy portot, kattints a **Beállítás és tovább**, majd a **Kész** gombra, amikor az ablak már a szervert mutatja, és a lépés azzal folytatódik. A részletek a [Fogadószerver](offsite-recovery.md#receiving-server) részben vannak.
+
 A csomópont a **Cím a csomópontoknak** címen éri el a szervert, amelyet a második lépésben vagy a **Fogadószerver** ablakban állítasz be. Egy csomópont általában az internetről küld, ezért a cím ezek egyike legyen:
 
 - `https://`, például fordított proxy, Pangolin vagy alagút mögött. Ha a szerver nyilvános hitelesítésszolgáltatótól kapott tanúsítvány helyett sajátot mutat, illeszd be PEM formában a **Tanúsítvány** mezőbe.

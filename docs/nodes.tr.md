@@ -92,6 +92,8 @@ Her düğümün iki bölümü için tek bir hedefi vardır. Kartındaki **Hedefi
 
 Düğüm, ana örneğin alıcı sunucusuna append-only kipte yazar: yedek ekleyebilir ama hiçbirini silemez. Orada düğümün adını taşıyan kendi girişini ve kendi klasöründe bölüm başına bir depo alır. Ana örnek her depoya kendi anahtarını ekler ve onları kendisi toparlar, çünkü düğüm bunu yapamaz.
 
+Ana örnek henüz bir alıcı sunucu çalıştırmıyorsa adım bunu söyler ve **Alıcı sunucuyu kur** seçeneğini sunar. Ana örneğin bunun için bir gruba ihtiyacı yoktur. Bir paylaşımda bir klasör ve bir port seç, **Kur ve devam et**'i, pencere sunucuyu gösterince de **Tamam**'ı seç. Adım o sunucuyla devam eder. Ayrıntılar [Alıcı sunucu](offsite-recovery.md#receiving-server) bölümünde.
+
 Düğüm sunucuya, ikinci adımda ya da **Alıcı sunucu** penceresinde ayarladığın **Düğümler için adres** üzerinden ulaşır. Düğüm genellikle internetten gönderir, bu yüzden adres şunlardan biri olmalıdır:
 
 - `https://`, örneğin bir ters proxy, Pangolin ya da bir tünel arkasında. Sunucu herkese açık bir sertifika yetkilisinin sertifikası yerine kendi sertifikasını gösteriyorsa, onu PEM biçiminde **Sertifika** alanına yapıştır.

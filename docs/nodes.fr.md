@@ -92,6 +92,8 @@ Chaque nœud a une seule destination pour ses deux sections. **Changer la destin
 
 Le nœud écrit sur le serveur récepteur de l'instance d'attache en mode ajout seul : il peut ajouter des sauvegardes mais pas en supprimer. Il y reçoit un identifiant à lui, au nom du nœud, et un dépôt par section dans son propre dossier. L'instance d'attache ajoute sa propre clé à chaque dépôt et les élague elle-même, puisque le nœud ne le peut pas.
 
+Si l'instance d'attache n'a pas encore de serveur récepteur, l'étape le dit et propose **Configurer le serveur récepteur**. L'instance d'attache n'a besoin d'aucun groupe pour cela. Choisissez un dossier sur un partage et un port, puis **Configurer et continuer**, et **Terminé** dès que la fenêtre montre le serveur : l'étape continue alors avec lui. Les détails sont sous [Serveur récepteur](offsite-recovery.md#receiving-server).
+
 Le nœud joint le serveur à l'**Adresse pour les nœuds**, que vous réglez à la deuxième étape ou dans la fenêtre **Serveur récepteur**. Un nœud envoie le plus souvent depuis Internet, l'adresse doit donc être l'une de celles-ci :
 
 - `https://`, par exemple derrière un reverse proxy, Pangolin ou un tunnel. Si le serveur présente son propre certificat au lieu d'un certificat d'une autorité publique, collez-le au format PEM sous **Certificat**.

@@ -437,14 +437,14 @@ En hämtad kopia bara växer. BombVault lägger till i den och varken gallrar el
 
 ### Mottagande server {#receiving-server}
 
-Den mottagande lådan kan också köra rest-servern som de andra kopierar till. Den sätts upp första gången du tillåter en **Mottagare**-begäran som ber om det: fönstret säger att servern behöver en mottagande server och ber om en mapp på en delad resurs, med **Ny mapp** för att skapa en, och en port (8000 om inte en annan container använder den). BombVault gör då följande:
+Den mottagande lådan kan också köra rest-servern som de andra kopierar till, och den som den här instansens [noder](nodes.md#to-receiver) skickar sina säkerhetskopior till. Den behöver ingen grupp. Du kan sätta upp den från tre ställen: **Mottagarserver** på den här instansens kort, en **Mottagare**-begäran som ber om den och som du tillåter, och **Ställ in mottagarserver** när du väljer den för en nod. Utan grupp visas den här instansens kort så snart den har en nod. Fönstret ber om en mapp på en delad resurs, med **Ny mapp** för att skapa en, och en port (8000 om inte en annan container använder den). BombVault gör då följande:
 
 1. nekar om en container som heter `rest-server` redan finns eller en annan container håller porten,
 2. hämtar `restic/rest-server` och startar den via Docker-socketen i append-only-läge med privata repositorier och en inloggningsfil i mappen,
 3. skriver dess Unraid-mall till flashenheten, så att containern förblir redigerbar i Docker-fliken, eller erbjuder mallen som en nedladdning när flashenheten är utom räckhåll,
 4. kör manipuleringstestet mot den och visar om den nekar radering.
 
-Instanserna i din grupp hittar sedan servern bland leverantörerna under **Från din grupp**, uppkallad efter den mottagande lådan, och rollen **Mottagare** erbjuder den som det säkra valet. Varje instans får en egen inloggning första gången den använder servern och skriver bara in i sin egen mapp där. Med **Mottagare** påslaget under **Inställningar, Instanser** öppnar **Mottagarserver** på den här instansens kort servern igen. Dess fönster listar inloggningarna under **Partner med inloggning**, och **Återkalla inloggning** tar bort en. Det den instansen redan kopierat blir kvar i mappen. Uppsättningen skapar också en **Inloggning utanför gruppen**, vars lösenord fönstret visar en gång.
+Instanserna i din grupp hittar sedan servern bland leverantörerna under **Från din grupp**, uppkallad efter den mottagande lådan, och rollen **Mottagare** erbjuder den som det säkra valet. Varje instans får en egen inloggning första gången den använder servern och skriver bara in i sin egen mapp där. **Mottagarserver** på den här instansens kort öppnar servern igen. Dess fönster listar inloggningarna under **Partner med inloggning**, och **Återkalla inloggning** tar bort en. Det den instansen redan kopierat blir kvar i mappen. Uppsättningen skapar också en **Inloggning utanför gruppen**, vars lösenord fönstret visar en gång.
 
 En instans som når den mottagande lådan bara via reläet kan inte använda servern, eftersom reläet inte bär några säkerhetskopior. Lägg först till den mottagande lådans adress på parkopplingssidan. När BombVault körs på en egen IP-adress (till exempel på br0) fyller du i **Adress för partner**, eftersom servern lyssnar på värdens adress.
 

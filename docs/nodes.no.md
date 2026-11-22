@@ -92,6 +92,8 @@ Hver node har ett mål for begge områdene sine. **Endre mål** på kortet endre
 
 Noden skriver til mottaksserveren til hjemmeinstansen i append-only-modus: den kan legge til sikkerhetskopier, men ikke slette noen. Den får en egen pålogging der, oppkalt etter noden, og ett repository per område i sin egen mappe. Hjemmeinstansen legger sin egen nøkkel til i hvert repository og beskjærer dem selv, fordi noden ikke kan.
 
+Kjører hjemmeinstansen ingen mottaksserver ennå, sier trinnet det og tilbyr **Sett opp mottaksserver**. Hjemmeinstansen trenger ingen gruppe til det. Velg en mappe på en deling og en port, velg **Sett opp og fortsett** og deretter **Ferdig** når vinduet viser serveren, så fortsetter trinnet med den. Detaljene står under [Mottaksserver](offsite-recovery.md#receiving-server).
+
 Noden når serveren på **Adresse for noder**, som du setter i andre steg eller i vinduet **Mottaksserver**. En node sender som regel fra internett, så adressen må være en av disse:
 
 - `https://`, for eksempel bak en omvendt proxy, Pangolin eller en tunnel. Viser serveren sitt eget sertifikat i stedet for et fra en offentlig utsteder, lim det inn i PEM-format under **Sertifikat**.

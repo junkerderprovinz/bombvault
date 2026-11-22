@@ -92,6 +92,8 @@ Each node has one placement for both its sections. **Edit placement** on its car
 
 The node writes to home's receiving server in append-only mode: it can add backups but cannot delete any. It gets a login of its own, named after the node, and one repository per section in its own folder there. Home adds its own key to each repository and tidies them up itself, since the node cannot.
 
+If home runs no receiving server yet, the step says so and offers **Set up receiving server**. Home needs no group for it. Pick a folder on a share and a port, choose **Set up and continue**, then **Done** once the window shows the server, and the step goes on with it. The details are under [Receiving server](offsite-recovery.md#receiving-server).
+
 The node reaches the server at **Address for nodes**, which you set in the second step or in the **Receiving server** window. A node usually sends from the internet, so the address has to be one of these:
 
 - `https://`, for example behind a reverse proxy, Pangolin or a tunnel. When the server shows a certificate of its own instead of one from a public authority, paste it under **Certificate** in PEM form.
