@@ -61,7 +61,7 @@ export function InfoPage() {
   const { push } = useToast();
   const unseen = useWhatsNew().unseen.length;
   const [versions, setVersions] = useState<ComponentVersions | null>(null);
-  const [update, setUpdate] = useState<UpdateState | null>(null);
+  const [update, setUpdate] = useState<UpdateState>({ kind: "unchecked" });
   const [notes, setNotes] = useState<string | null>(null);
   const words = useMemo(() => componentText(lang), [lang]);
   const nextHue = hueCounter();
@@ -132,7 +132,7 @@ export function InfoPage() {
         onCheck={() => void check()}
         guideUrl={GUIDE}
         // Once a newer release is found, What's new tells what that one brings.
-        onWhatsNew={() => (update?.kind === "available" ? setNotes(update.version) : openWhatsNew(true))}
+        onWhatsNew={() => (update.kind === "available" ? setNotes(update.version) : openWhatsNew(true))}
         unseen={unseen}
         newId="settings-version"
         hueIndex={nextHue()}

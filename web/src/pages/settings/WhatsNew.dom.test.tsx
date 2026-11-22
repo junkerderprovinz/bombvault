@@ -40,7 +40,7 @@ function VersionCard() {
       name="BombVault"
       version=""
       route="guide"
-      state={null}
+      state={{ kind: "unchecked" }}
       onWhatsNew={() => openWhatsNew(true)}
       unseen={useWhatsNew().unseen.length}
     />

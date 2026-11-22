@@ -36,7 +36,7 @@ import { useConfirm } from "../lib/useConfirm";
 import type { AppInfo } from "./bridge";
 import { Flag } from "./flags";
 import { PageTop } from "./PageTop";
-import { storeOf } from "./store";
+import { updatesFrom } from "./store";
 import { FOLLOWED_EVENT, following as isFollowing, keepAsOwn, setFollowing } from "./look";
 
 type T = ReturnType<typeof useT>["t"];
@@ -563,7 +563,8 @@ export function SettingsPage({
       </Section>
 
       {/* GlimStone's Version and Components cards. The app's updates come
-          through the store it came from, so the Version card checks nothing. */}
+          through the store it came from or the release page, so the Version
+          card checks nothing. */}
       <Section title={words.versionCard.title} hue={5} info={withApp(words.versionCard.hint, "BombVault")}>
         <div className="flex flex-col gap-3 py-2">
           <div className="glim-version-head">
@@ -572,7 +573,7 @@ export function SettingsPage({
           </div>
           <div className="glim-version-foot">
             <p className="glim-version-state" role="status">
-              <span className="glim-version-line">{updateLine({ kind: "store", store: storeOf(app.installer ?? "") }, words.versionCard).line}</span>
+              <span className="glim-version-line">{updateLine(updatesFrom(app.installer), words.versionCard).line}</span>
             </p>
             <div className="glim-version-actions">
               <Button
@@ -599,7 +600,11 @@ export function SettingsPage({
               <span className="glim-version-part">GlimStone</span>
               <InfoBubble tip={words.componentsCard.design} />
             </span>
-            <VersionNumber row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }} unreleased={words.componentsCard.unreleased} />
+            <span className="glim-version-end">
+              <span className="glim-version-tail">
+                <VersionNumber row={{ ...designRow(words.componentsCard), version: GLIMSTONE_VERSION }} unreleased={words.componentsCard.unreleased} />
+              </span>
+            </span>
           </li>
         </ul>
       </Section>

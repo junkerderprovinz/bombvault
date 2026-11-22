@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The app's appearance card: OLED and the phone's own colour are the phone's,
 // so neither takes the look over from the server it follows. The Version card
-// names the store the app came from.
+// names the store the app came from, or the release page.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { componentText } from "@glimstone/core";
@@ -55,11 +55,19 @@ describe("the Version and Components cards", () => {
   it.each([
     ["com.android.vending", "Google Play"],
     ["org.fdroid.fdroid", "F-Droid"],
-    ["", "GitHub Releases"],
-    [undefined, "GitHub Releases"],
   ])("say the updates of an app installed by %s come through %s", (installer, store) => {
     renderPage(installer);
     expect(card(words.versionCard.title).getByRole("status").textContent).toBe(words.versionCard.store(store));
+  });
+
+  it("send an APK installed by hand to the release page", () => {
+    renderPage("");
+    expect(card(words.versionCard.title).getByRole("status").textContent).toBe(words.versionCard.direct);
+  });
+
+  it("name no store for an app too old to say which one installed it", () => {
+    renderPage();
+    expect(card(words.versionCard.title).getByRole("status").textContent).toBe(words.versionCard.anyStore);
   });
 
   it("show BombVault with its number and no check, and open the running release's notes", () => {

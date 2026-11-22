@@ -1,13 +1,17 @@
 import { expect, it } from "vitest";
-import { storeOf } from "./store";
+import { updatesFrom } from "./store";
 
 it("names the store that installed the app", () => {
-  expect(storeOf("com.android.vending")).toBe("Google Play");
-  expect(storeOf("org.fdroid.fdroid")).toBe("F-Droid");
-  expect(storeOf("com.looker.droidify")).toBe("F-Droid");
+  expect(updatesFrom("com.android.vending")).toEqual({ kind: "store", store: "Google Play" });
+  expect(updatesFrom("org.fdroid.fdroid")).toEqual({ kind: "store", store: "F-Droid" });
+  expect(updatesFrom("com.looker.droidify")).toEqual({ kind: "store", store: "F-Droid" });
 });
 
-it("points an APK installed by hand to the releases on GitHub", () => {
-  expect(storeOf("")).toBe("GitHub Releases");
-  expect(storeOf("com.google.android.packageinstaller")).toBe("GitHub Releases");
+it("sends an APK installed by hand to the release page", () => {
+  expect(updatesFrom("")).toEqual({ kind: "direct" });
+  expect(updatesFrom("com.google.android.packageinstaller")).toEqual({ kind: "direct" });
+});
+
+it("names no store for an app too old to say which one installed it", () => {
+  expect(updatesFrom(undefined)).toEqual({ kind: "store" });
 });

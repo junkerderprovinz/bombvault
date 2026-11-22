@@ -365,6 +365,14 @@ describe("the other apps", () => {
     expect(toasts).toEqual([fortressText("en").openRefused.ui_no_login]);
   });
 
+  it("ask for an update of an app that still wants a login before it opens", async () => {
+    view = state({ members: [member({})] });
+    opened = { ok: false, code: "ui_no_login" };
+    renderApps();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en["instances.open"] })));
+    expect(toasts).toEqual(["This app needs an update before you can open it from here."]);
+  });
+
   it("show the state of an app without pages of its own, such as a plugin", async () => {
     view = state({ members: [member({ id: "s1", app: "shiplog", name: "ShipLog", deployment: "plugin", opens: false })] });
     renderApps();

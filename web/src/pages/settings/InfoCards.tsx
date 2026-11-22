@@ -37,8 +37,8 @@ export function VersionNumber({ row, unreleased }: { row: ComponentRow; unreleas
 /**
  * InfoVersionCard is the first card of the Info page: the app with its
  * number, then a last row with where the updates stand and the buttons that
- * go with it. `state` is null until something was asked, since a container
- * here asks GitHub only when the person presses Check for updates.
+ * go with it. A container here asks GitHub only when the person presses Check
+ * for updates, so `state` is unchecked until then.
  */
 export function InfoVersionCard({
   text,
@@ -60,7 +60,7 @@ export function InfoVersionCard({
   version: string;
   repoUrl?: string;
   route: UpdateRoute;
-  state: UpdateState | null;
+  state: UpdateState;
   onCheck?: () => void;
   onUpdate?: () => void;
   guideUrl?: string;
@@ -70,9 +70,9 @@ export function InfoVersionCard({
   newId?: string;
   hueIndex?: number;
 }) {
-  const face = state && updateLine(state, text);
-  const action = state && updateAction(route, state, text);
-  const check = checkButton(route, state ?? { kind: "current" });
+  const face = updateLine(state, text);
+  const action = updateAction(route, state, text);
+  const check = checkButton(route, state);
   const press = () => {
     if (action?.kind === "guide") {
       if (guideUrl) window.open(guideUrl, "_blank", "noopener,noreferrer");
@@ -85,9 +85,9 @@ export function InfoVersionCard({
         {version && <VersionNumber row={{ name, version, repoUrl }} unreleased={text.unreleased} />}
       </div>
       <div className="glim-version-foot">
-        <p className="glim-version-state" data-tone={face?.tone} role="status">
-          {face && <span className="glim-version-line">{face.line}</span>}
-          {face?.note && <span className="glim-version-note">{face.note}</span>}
+        <p className="glim-version-state" data-tone={face.tone} role="status">
+          <span className="glim-version-line">{face.line}</span>
+          {face.note && <span className="glim-version-note">{face.note}</span>}
         </p>
         <div className="glim-version-actions">
           <span data-new={newId} className="flex">
@@ -149,12 +149,18 @@ export function InfoComponentsCard({
               <span className="glim-version-part">{row.name}</span>
               {row.hint && <InfoBubble tip={row.hint} />}
             </span>
-            {row.status && (
-              <span className="glim-version-status" data-tone={row.tone}>
-                {row.status}
-              </span>
-            )}
-            {row.version && <VersionNumber row={row} unreleased={text.unreleased} />}
+            <span className="glim-version-end">
+              {row.status && (
+                <span className="glim-version-status" data-tone={row.tone}>
+                  {row.status}
+                </span>
+              )}
+              {row.version && (
+                <span className="glim-version-tail">
+                  <VersionNumber row={row} unreleased={text.unreleased} />
+                </span>
+              )}
+            </span>
           </li>
         ))}
       </ul>

@@ -1969,11 +1969,28 @@ body {
   padding: 0;
   list-style: none;
 }
+/* On a narrow card a row breaks before its end, which moves under the name
+   whole. Inside it the button and the number keep one line, and a status
+   that leaves them no room takes a line of its own above them. */
 .glim-version-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.25rem 1rem;
+}
+.glim-version-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem 0.75rem;
+  margin-inline-start: auto;
+}
+.glim-version-tail {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 .glim-version-name {
   display: flex;
@@ -2028,6 +2045,7 @@ a.glim-version-number {
 }
 .glim-version-head .glim-version-number {
   min-width: 0;
+  margin-inline-start: auto;
   overflow-wrap: anywhere;
   font-size: var(--text-body);
   color: var(--carbon-text);
@@ -2057,7 +2075,7 @@ a.glim-version-number {
 .glim-version-state[data-tone="warn"] .glim-version-line { color: var(--status-warn-text); }
 .glim-version-state[data-tone="fail"] .glim-version-line { color: var(--status-fail-text); }
 .glim-version-note { color: var(--carbon-text-muted); }
-.glim-version-status { margin-inline-start: auto; font-size: var(--text-meta); }
+.glim-version-status { font-size: var(--text-meta); white-space: nowrap; }
 .glim-version-status[data-tone="ok"] { color: var(--status-ok-text); }
 .glim-version-status[data-tone="warn"] { color: var(--status-warn-text); }
 .glim-version-status[data-tone="fail"] { color: var(--status-fail-text); }

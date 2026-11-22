@@ -93,14 +93,15 @@ describe("the Version card", () => {
     expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
   });
 
-  it("names GlimStone 4.8.2", () => {
-    expect(GLIMSTONE_VERSION).toBe("4.8.2");
+  it("names GlimStone 4.8.5", () => {
+    expect(GLIMSTONE_VERSION).toBe("4.8.5");
   });
 
-  it("asks the server only when Check for updates is pressed, and says nothing before", async () => {
+  it("asks the server only when Check for updates is pressed, and says it has not looked before", async () => {
     await renderPage();
     expect(api.checkForUpdate).not.toHaveBeenCalled();
-    expect(state()).toBe("");
+    expect(state()).toBe(words.versionCard.unchecked);
+    expect(state()).not.toContain(words.versionCard.current);
   });
 
   it("wears the two arrows on Check for updates", async () => {
@@ -188,7 +189,7 @@ describe("the Version card", () => {
 
     api.getVersions.mockResolvedValue({ ok: true, versions: { bombvault: "10.0.1", restic: "0.18.1", rclone: null } });
     await renderPage();
-    expect(state()).toBe("");
+    expect(state()).toBe(words.versionCard.unchecked);
   });
 });
 
