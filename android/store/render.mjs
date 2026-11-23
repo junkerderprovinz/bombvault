@@ -19,6 +19,10 @@
 // the documentation, plain at 390x844 in the dark and the light theme, to
 // docs/assets/screenshots/android or the folder given.
 //
+// Captions are set in the house typeface, read as TTF from HOUSE_FONTS
+// (default %LOCALAPPDATA%\halleluja-fonts). The status bar keeps the phone's
+// own face, fetched to the OS temp dir.
+//
 // Deps (global): playwright-core with its Chromium installed.
 // Run: (cd web && npm run build && npm run build:launcher) && go build ./cmd/bombvault && node android/store/render.mjs [readme]
 
@@ -98,11 +102,10 @@ async function cached(file, url) {
 }
 
 const dataUrl = (buf, type) => `data:${type};base64,${buf.toString("base64")}`;
-const bree = dataUrl(
-  await cached("BreeSerif-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/breeserif/BreeSerif-Regular.ttf"),
-  "font/ttf",
-);
-const lato = dataUrl(await cached("Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"), "font/ttf");
+// The house typeface is licensed, so it is read from a local folder and never committed.
+const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
+const breeSerif = dataUrl(readFileSync(join(fonts, "bree-serif-light.ttf")), "font/ttf");
+const bree = dataUrl(readFileSync(join(fonts, "bree-light.ttf")), "font/ttf");
 const roboto = dataUrl(
   await cached("Roboto.ttf", "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto%5Bwdth%2Cwght%5D.ttf"),
   "font/ttf",
@@ -519,17 +522,17 @@ async function capture(browser, urls, text, shot) {
 }
 
 const STYLE = `
-@font-face { font-family: "Bree Serif"; src: url(${bree}); }
-@font-face { font-family: Lato; src: url(${lato}); }
+@font-face { font-family: "Bree Serif"; src: url(${breeSerif}); font-weight: 300; }
+@font-face { font-family: Bree; src: url(${bree}); font-weight: 300; }
 * { box-sizing: border-box; margin: 0; }
-body { position: relative; overflow: hidden; font-family: Lato, sans-serif; background: #0c0c0b; }
+body { position: relative; overflow: hidden; font: 300 16px Bree, sans-serif; background: #0c0c0b; }
 .backdrop, .backdrop * { position: absolute; }
 .backdrop { inset: 0; overflow: hidden; }
 .wall { inset: 0; background: radial-gradient(55% 60% at 62% 35%, #26231d, #0f0e0c 72%); }
 .mark { transform: rotate(-10deg); opacity: .32;
   filter: grayscale(1) brightness(.36) contrast(1.2) drop-shadow(-2px -2px 0 rgba(255,255,255,.16)) drop-shadow(12px 18px 26px rgba(0,0,0,.85)); }
 .vignette { inset: 0; box-shadow: inset 0 0 200px rgba(0,0,0,.6); }
-h1 { font-family: "Bree Serif", serif; font-weight: 400; color: #f4f4f4; text-wrap: balance; }
+h1 { font-family: "Bree Serif", serif; font-weight: 300; color: #f4f4f4; text-wrap: balance; }
 h1 em { font-style: normal; color: #FCC419; }
 .sub { color: #9d9481; }
 
@@ -618,7 +621,7 @@ function featureGraphic(back, front, tagline) {
 body { width: 1024px; height: 500px; }
 .copy { position: absolute; left: 70px; top: 0; bottom: 0; width: 470px; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
 .copy img { width: 84px; }
-.name { font: 400 66px/1 "Bree Serif", serif; color: #f4f4f4; }
+.name { font: 300 66px/1 "Bree Serif", serif; color: #f4f4f4; }
 .sub { font-size: 25px; line-height: 1.35; }
 </style></head><body>
 ${backdrop("46%", "-9%", "-4%")}
