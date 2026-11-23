@@ -3,7 +3,7 @@
 // leads to a change elsewhere, and none where nothing can be new.
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useContext, type ReactNode } from "react";
-import { MemoryRouter, Link, useLocation } from "react-router-dom";
+import { MemoryRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AttentionContext } from "../lib/attention";
@@ -18,6 +18,7 @@ vi.mock("../lib/useMediaQuery", async (importOriginal) => ({
 }));
 
 const { WhatsNewDots } = await import("./WhatsNewDots");
+const { PageLinkCard } = await import("../pages/settings/SidebarTile");
 
 const change = (id: string) => CHANGES.find((c) => c.id === id)!;
 const text = (id: string) => en[change(id).text];
@@ -328,6 +329,48 @@ describe("a change elsewhere", () => {
     );
     await press(wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("restore-where")))!);
     expect(restore).toHaveBeenCalledOnce();
+  });
+
+  it("leads to a page out of the sidebar over the card on its settings page that opens it", async () => {
+    await act(async () => {
+      render(
+        <I18nProvider>
+          <MemoryRouter initialEntries={["/dashboard"]}>
+            <Shell>
+              <nav>
+                <Link to="/dashboard">Overview</Link>
+                <Link to="/settings">Settings</Link>
+              </nav>
+              <main id="bv-main">
+                <Routes>
+                  <Route path="/dashboard" element={<div />} />
+                  <Route path="/settings" element={<Link to="/settings/instances">Instances</Link>} />
+                  <Route
+                    path="/settings/instances"
+                    element={<PageLinkCard to="/instances" label={en["instances.title"]} sub="" glyph={null} hueIndex={0} />}
+                  />
+                  <Route
+                    path="/instances"
+                    element={
+                      <span data-new-way="edit-placement">
+                        <button>{en["nodes.editPlacement"]}</button>
+                      </span>
+                    }
+                  />
+                </Routes>
+              </main>
+              <Where />
+            </Shell>
+          </MemoryRouter>
+        </I18nProvider>
+      );
+    });
+    const toCopyOnward = () => wayDots().find((dot) => dot.getAttribute("aria-label")?.includes(text("node-copy-onward")));
+    for (const next of ["/settings", "/settings/instances", "/instances"]) {
+      await press(toCopyOnward()!);
+      expect(screen.getByTestId("where").textContent).toBe(next);
+    }
+    expect(toCopyOnward()).toBeDefined();
   });
 
   it("marks More on a phone for a page its bar has no room for", async () => {

@@ -52,14 +52,11 @@ export function PageLinkCard({
           <span className="text-sm font-semibold text-carbon-text">{label}</span>
           <span className="text-xs text-carbon-textMuted wrap-break-word">{sub}</span>
         </div>
-        <Button
-          label={t("instances.open")}
-          labelKey="instances.open"
-          glyph={<IconForward />}
-          tone="accent"
-          onClick={() => navigate(to)}
-          className="ms-auto"
-        />
+        {/* The page may be out of the sidebar, and then this is the way to it
+            that What's new marks. */}
+        <span data-new-way={to} className="ms-auto flex">
+          <Button label={t("instances.open")} labelKey="instances.open" glyph={<IconForward />} tone="accent" onClick={() => navigate(to)} />
+        </span>
       </div>
     </Card>
   );
