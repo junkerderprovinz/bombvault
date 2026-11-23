@@ -10,7 +10,7 @@ require (
 	github.com/containerd/errdefs v1.0.0
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/junkerderprovinz/parleyport/kit v1.0.7
-	github.com/klauspost/compress v1.20.4
+	github.com/klauspost/compress v1.20.5
 	github.com/moby/moby/api v1.57.0
 	github.com/moby/moby/client v0.6.3
 	github.com/mochi-mqtt/server/v2 v2.7.9
@@ -22,7 +22,7 @@ require (
 	golang.org/x/net v0.63.0
 	golang.org/x/sys v0.50.0
 	golang.org/x/time v0.16.0
-	modernc.org/sqlite v1.62.0
+	modernc.org/sqlite v1.63.0
 )
 
 require (
