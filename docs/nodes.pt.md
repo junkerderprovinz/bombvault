@@ -122,7 +122,7 @@ A instância base recolhe uma secção logo a seguir ao fim dos backups do nó n
 
 ### Cópias externas com as da instância base {#copy-onward}
 
-Liga **Copiar para fora do local com os backups desta instância** no passo **Backups** ou em **Alterar destino**, e a instância base copia os containers e os conjuntos de pastas do nó para os destinos para onde copiam os seus próprios Containers e Pastas, no mesmo plano. O nó não precisa de pasta nem de plano de cópia próprios para isto. Em **Alterar destino**, o interruptor tem efeito de imediato.
+Liga **Copiar para fora do local com os backups desta instância** no passo **Backups** ou em **Alterar destino**, e a instância base copia os containers e os conjuntos de pastas do nó para os destinos para onde copiam os seus próprios Containers e Pastas, no mesmo plano. O nó não precisa de pasta nem de plano de cópia próprios para isto.
 
 - As cópias ficam nos mesmos repositórios que as cópias da instância base, sob o host do nó. As regras da instância base nesse destino deixam-nas em paz, e a instância base guarda-as pela regra do nó, a mesma pela qual [poda os backups do nó](#schedule).
 - A instância base lê os repositórios do nó com a sua própria chave e escreve com as suas próprias credenciais para o destino. O nó não recebe credenciais novas, e o servidor recetor continua append-only. Num nó que guarda ele próprio os seus backups, a instância base copia o que recolheu.

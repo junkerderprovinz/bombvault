@@ -122,7 +122,7 @@ Die Heiminstanz holt einen Bereich, sobald der Knoten ihn gesichert hat, und zur
 
 ### Off-site-Kopien mit denen der Heiminstanz {#copy-onward}
 
-Schalte im Schritt **Sicherungen** oder unter **Ziel ändern** **Mit den Sicherungen dieser Instanz off-site kopieren** ein, dann kopiert die Heiminstanz die Container und Ordner-Sets des Knotens an die Speicherorte, an die sie ihre eigenen Container und Ordner kopiert, nach demselben Plan. Einen eigenen Ordner oder einen eigenen Kopierplan braucht der Knoten dafür nicht. Unter **Ziel ändern** wirkt der Schalter sofort.
+Schalte im Schritt **Sicherungen** oder unter **Ziel ändern** **Mit den Sicherungen dieser Instanz off-site kopieren** ein, dann kopiert die Heiminstanz die Container und Ordner-Sets des Knotens an die Speicherorte, an die sie ihre eigenen Container und Ordner kopiert, nach demselben Plan. Einen eigenen Ordner oder einen eigenen Kopierplan braucht der Knoten dafür nicht.
 
 - Die Kopien liegen in denselben Repositories wie die Kopien der Heiminstanz, unter dem Host des Knotens. Die Regeln der Heiminstanz für den Speicherort lassen sie in Ruhe, und die Heiminstanz behält sie nach der Regel des Knotens, nach der sie auch [seine Sicherungen aufräumt](#schedule).
 - Die Heiminstanz liest die Repositories des Knotens mit ihrem eigenen Schlüssel und schreibt mit ihren eigenen Zugangsdaten für den Speicherort. Der Knoten bekommt keine neuen Zugangsdaten, und der Empfangsserver bleibt Append-only. Bei einem Knoten, der seine Sicherungen selbst aufbewahrt, kopiert die Heiminstanz, was sie geholt hat.

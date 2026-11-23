@@ -122,7 +122,7 @@ La instancia base recoge una sección justo cuando terminan las copias del nodo 
 
 ### Copias externas con las de la instancia base {#copy-onward}
 
-Activa **Copiar fuera del sitio con las copias de esta instancia** en el paso **Copias** o en **Cambiar destino**, y la instancia base copia los contenedores y los conjuntos de carpetas del nodo a los destinos a los que copian sus propios Contenedores y Carpetas, con el mismo plan. El nodo no necesita para ello una carpeta propia ni un plan de copia propio. En **Cambiar destino** el interruptor surte efecto al momento.
+Activa **Copiar fuera del sitio con las copias de esta instancia** en el paso **Copias** o en **Cambiar destino**, y la instancia base copia los contenedores y los conjuntos de carpetas del nodo a los destinos a los que copian sus propios Contenedores y Carpetas, con el mismo plan. El nodo no necesita para ello una carpeta propia ni un plan de copia propio.
 
 - Las copias están en los mismos repositorios que las copias de la instancia base, bajo el host del nodo. Las reglas de la instancia base en el destino no las tocan, y la instancia base las conserva según la regla del nodo, la misma con la que [poda las copias del nodo](#schedule).
 - La instancia base lee los repositorios del nodo con su propia clave y escribe con su propio acceso al destino. El nodo no recibe credenciales nuevas, y el servidor receptor sigue en modo append-only. Para un nodo que guarda sus copias él mismo, la instancia base copia lo que ha recogido.

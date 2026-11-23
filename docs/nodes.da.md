@@ -122,7 +122,7 @@ Hjemmeinstansen henter et område lige efter, at nodens sikkerhedskopier af det 
 
 ### Off-site-kopier sammen med hjemmeinstansens {#copy-onward}
 
-Slå **Kopiér eksternt sammen med denne instans' sikkerhedskopier** til i trinnet **Sikkerhedskopier** eller under **Skift destination**, så kopierer hjemmeinstansen nodens containere og mappesæt til de destinationer, som dens egne Containers og Mapper kopierer til, efter samme plan. Noden skal ikke have sin egen mappe eller sin egen kopiplan til det. Under **Skift destination** virker kontakten med det samme.
+Slå **Kopiér eksternt sammen med denne instans' sikkerhedskopier** til i trinnet **Sikkerhedskopier** eller under **Skift destination**, så kopierer hjemmeinstansen nodens containere og mappesæt til de destinationer, som dens egne Containers og Mapper kopierer til, efter samme plan. Noden skal ikke have sin egen mappe eller sin egen kopiplan til det.
 
 - Kopierne ligger i de samme repositories som hjemmeinstansens kopier, under nodens vært. Hjemmeinstansens regler på destinationen lader dem være, og hjemmeinstansen beholder dem efter nodens regel, den samme, som den [beskærer nodens sikkerhedskopier](#schedule) efter.
 - Hjemmeinstansen læser nodens repositories med sin egen nøgle og skriver med sit eget login til destinationen. Noden får ingen nye loginoplysninger, og modtageserveren forbliver append-only. For en node, der selv beholder sine sikkerhedskopier, kopierer hjemmeinstansen det, den har hentet.

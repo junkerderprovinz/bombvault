@@ -122,7 +122,7 @@ Hjemmeinstansen henter et område rett etter at nodens sikkerhetskopier av det e
 
 ### Eksterne kopier sammen med hjemmeinstansens {#copy-onward}
 
-Slå på **Kopier eksternt sammen med denne instansens sikkerhetskopier** i trinnet **Sikkerhetskopier** eller under **Endre mål**, så kopierer hjemmeinstansen nodens containere og mappesett til de målene som dens egne Kontainere og Mapper kopieres til, etter samme plan. Noden trenger ingen egen mappe og ingen egen kopieringsplan for dette. Under **Endre mål** virker bryteren med en gang.
+Slå på **Kopier eksternt sammen med denne instansens sikkerhetskopier** i trinnet **Sikkerhetskopier** eller under **Endre mål**, så kopierer hjemmeinstansen nodens containere og mappesett til de målene som dens egne Kontainere og Mapper kopieres til, etter samme plan. Noden trenger ingen egen mappe og ingen egen kopieringsplan for dette.
 
 - Kopiene ligger i de samme repositoryene som hjemmeinstansens kopier, under nodens vert. Hjemmeinstansens regler på målet lar dem være i fred, og hjemmeinstansen beholder dem etter nodens regel, den samme som den [beskjærer nodens sikkerhetskopier](#schedule) etter.
 - Hjemmeinstansen leser nodens repositoryer med sin egen nøkkel og skriver med sine egne påloggingsopplysninger for målet. Noden får ingen nye påloggingsopplysninger, og mottaksserveren forblir append-only. For en node som beholder sikkerhetskopiene sine selv, kopierer hjemmeinstansen det den har hentet.

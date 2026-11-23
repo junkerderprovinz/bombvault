@@ -122,7 +122,7 @@ De thuisinstantie haalt een onderdeel op direct nadat de back-ups van de node vo
 
 ### Off-site-kopieën samen met die van de thuisinstantie {#copy-onward}
 
-Zet **Off-site kopiëren met de back-ups van deze instantie** aan in de stap **Back-ups** of onder **Bestemming wijzigen**, en de thuisinstantie kopieert de containers en mappensets van de node naar de bestemmingen waar haar eigen Containers en Mappen naartoe kopiëren, volgens dezelfde planning. De node heeft hiervoor geen eigen map en geen eigen kopieerplanning nodig. Onder **Bestemming wijzigen** werkt de schakelaar meteen.
+Zet **Off-site kopiëren met de back-ups van deze instantie** aan in de stap **Back-ups** of onder **Bestemming wijzigen**, en de thuisinstantie kopieert de containers en mappensets van de node naar de bestemmingen waar haar eigen Containers en Mappen naartoe kopiëren, volgens dezelfde planning. De node heeft hiervoor geen eigen map en geen eigen kopieerplanning nodig.
 
 - De kopieën liggen in dezelfde repository's als de kopieën van de thuisinstantie, onder de host van de node. De regels van de thuisinstantie op de bestemming laten ze met rust, en de thuisinstantie bewaart ze volgens de regel van de node, dezelfde waarmee ze [de back-ups van de node opschoont](#schedule).
 - De thuisinstantie leest de repository's van de node met haar eigen sleutel en schrijft met haar eigen inloggegevens voor de bestemming. De node krijgt geen nieuwe inloggegevens, en de ontvangserver blijft append-only. Bij een node die zijn back-ups zelf bewaart, kopieert de thuisinstantie wat ze heeft opgehaald.

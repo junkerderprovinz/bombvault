@@ -122,7 +122,7 @@ Instanța-mamă preia o secțiune imediat după ce se termină copiile ei pe nod
 
 ### Copii off-site împreună cu cele ale instanței-mamă {#copy-onward}
 
-Pornește **Copiază în afara locației împreună cu copiile acestei instanțe** la pasul **Copii de rezervă** sau la **Schimbă destinația**, iar instanța-mamă copiază containerele și seturile de foldere ale nodului la destinațiile la care copiază propriile ei Containere și Foldere, după același plan. Nodul nu are nevoie pentru asta de un folder propriu sau de un plan de copiere propriu. La **Schimbă destinația**, comutatorul are efect imediat.
+Pornește **Copiază în afara locației împreună cu copiile acestei instanțe** la pasul **Copii de rezervă** sau la **Schimbă destinația**, iar instanța-mamă copiază containerele și seturile de foldere ale nodului la destinațiile la care copiază propriile ei Containere și Foldere, după același plan. Nodul nu are nevoie pentru asta de un folder propriu sau de un plan de copiere propriu.
 
 - Copiile stau în aceleași depozite ca și copiile instanței-mamă, sub gazda nodului. Regulile instanței-mamă de la destinație le lasă în pace, iar instanța-mamă le păstrează după regula nodului, aceeași după care [face curățenie în copiile nodului](#schedule).
 - Instanța-mamă citește depozitele nodului cu propria ei cheie și scrie cu propriile ei credențiale pentru destinație. Nodul nu primește credențiale noi, iar serverul receptor rămâne append-only. La un nod care își păstrează singur copiile, instanța-mamă copiază ce a preluat.

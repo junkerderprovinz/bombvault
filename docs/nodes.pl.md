@@ -122,7 +122,7 @@ Instancja domowa pobiera sekcję zaraz po zakończeniu jej kopii na węźle, a a
 
 ### Kopie poza siedzibą razem z kopiami instancji domowej {#copy-onward}
 
-Włącz **Kopiuj poza siedzibę razem z kopiami tej instancji** w kroku **Kopie zapasowe** albo w **Zmień miejsce docelowe**, a instancja domowa kopiuje kontenery i zestawy folderów węzła do tych miejsc docelowych, do których kopiują jej własne sekcje Containers i Foldery, według tego samego planu. Węzeł nie potrzebuje do tego własnego folderu ani własnego planu kopii. W **Zmień miejsce docelowe** przełącznik działa od razu.
+Włącz **Kopiuj poza siedzibę razem z kopiami tej instancji** w kroku **Kopie zapasowe** albo w **Zmień miejsce docelowe**, a instancja domowa kopiuje kontenery i zestawy folderów węzła do tych miejsc docelowych, do których kopiują jej własne sekcje Containers i Foldery, według tego samego planu. Węzeł nie potrzebuje do tego własnego folderu ani własnego planu kopii.
 
 - Kopie leżą w tych samych repozytoriach co kopie instancji domowej, pod hostem węzła. Reguły instancji domowej w tym miejscu ich nie ruszają, a instancja domowa przechowuje je według reguły węzła, tej samej, według której [porządkuje kopie węzła](#schedule).
 - Instancja domowa czyta repozytoria węzła własnym kluczem i zapisuje z własnymi danymi logowania do tego miejsca. Węzeł nie dostaje nowych danych logowania, a serwer odbiorczy zostaje w trybie append-only. Przy węźle, który sam trzyma swoje kopie, instancja domowa kopiuje to, co pobrała.

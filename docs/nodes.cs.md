@@ -122,7 +122,7 @@ Domovská instance stáhne sekci hned, jak na uzlu skončí její zálohy, a zá
 
 ### Kopie mimo lokalitu spolu s kopiemi domovské instance {#copy-onward}
 
-Zapni **Kopírovat mimo místo spolu se zálohami této instance** v kroku **Zálohy** nebo v **Změnit cíl** a domovská instance bude kopírovat kontejnery a sady složek uzlu do cílů, kam kopíruje své vlastní Kontejnery a Složky, podle stejného plánu. Uzel k tomu nepotřebuje vlastní složku ani vlastní plán kopií. V **Změnit cíl** platí přepínač hned.
+Zapni **Kopírovat mimo místo spolu se zálohami této instance** v kroku **Zálohy** nebo v **Změnit cíl** a domovská instance bude kopírovat kontejnery a sady složek uzlu do cílů, kam kopíruje své vlastní Kontejnery a Složky, podle stejného plánu. Uzel k tomu nepotřebuje vlastní složku ani vlastní plán kopií.
 
 - Kopie leží ve stejných repozitářích jako kopie domovské instance, pod hostitelem uzlu. Pravidla domovské instance v cíli je nechávají být a domovská instance je uchovává podle pravidla uzlu, téhož, podle kterého [uklízí zálohy uzlu](#schedule).
 - Domovská instance čte repozitáře uzlu vlastním klíčem a zapisuje vlastním přihlášením k cíli. Uzel nedostane žádné nové přihlašovací údaje a přijímací server zůstává v režimu append-only. U uzlu, který si zálohy drží sám, kopíruje domovská instance to, co stáhla.

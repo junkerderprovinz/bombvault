@@ -122,7 +122,7 @@ Home fetches a section right after the node's backups of it end, and every hour 
 
 ### Off-site copies with home's {#copy-onward}
 
-Switch on **Copy off site with this instance's backups** in the **Backups** step or under **Edit placement**, and home copies the node's containers and folder sets to the storage locations its own Containers and Folders copy to, on the same plan. The node needs no folder and no copy plan of its own for this. Under **Edit placement** the switch takes effect at once.
+Switch on **Copy off site with this instance's backups** in the **Backups** step or under **Edit placement**, and home copies the node's containers and folder sets to the storage locations its own Containers and Folders copy to, on the same plan. The node needs no folder and no copy plan of its own for this.
 
 - The copies lie in the same repositories as home's copies, under the node's host. Home's rules at the location leave them alone, and home keeps them by the node's rule, the same one it [tidies up the node's backups](#schedule) by.
 - Home reads the node's repositories with its own key and writes with its own sign-in for the location. The node gets no new credentials, and the receiving server stays append-only. For a node that keeps its backups itself, home copies what it fetched.

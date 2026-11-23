@@ -122,7 +122,7 @@ Phiên bản chủ lấy một phần về ngay khi node sao lưu xong phần đ
 
 ### Bản sao off-site cùng với của phiên bản chủ {#copy-onward}
 
-Bật **Sao chép ra ngoài cùng các bản sao lưu của phiên bản này** ở bước **Bản sao lưu** hoặc dưới **Đổi đích**, và phiên bản chủ sẽ sao chép container và bộ thư mục của node tới các đích sao lưu mà Containers và Thư mục của chính nó sao chép tới, theo cùng kế hoạch. Node không cần thư mục riêng hay kế hoạch sao chép riêng cho việc này. Dưới **Đổi đích**, công tắc có hiệu lực ngay.
+Bật **Sao chép ra ngoài cùng các bản sao lưu của phiên bản này** ở bước **Bản sao lưu** hoặc dưới **Đổi đích**, và phiên bản chủ sẽ sao chép container và bộ thư mục của node tới các đích sao lưu mà Containers và Thư mục của chính nó sao chép tới, theo cùng kế hoạch. Node không cần thư mục riêng hay kế hoạch sao chép riêng cho việc này.
 
 - Các bản sao nằm trong cùng các kho với bản sao của phiên bản chủ, dưới host của node. Quy tắc của phiên bản chủ ở đích để yên chúng, và phiên bản chủ giữ chúng theo quy tắc của node, cũng là quy tắc nó dùng để [dọn dẹp bản sao lưu của node](#schedule).
 - Phiên bản chủ đọc các kho của node bằng khóa của chính nó và ghi bằng thông tin đăng nhập của chính nó cho đích đó. Node không nhận thông tin đăng nhập mới nào, và máy chủ nhận vẫn là append-only. Với một node tự giữ bản sao lưu, phiên bản chủ sao chép những gì nó đã kéo về.

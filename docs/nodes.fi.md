@@ -122,7 +122,7 @@ Kotiinstanssi hakee osion heti, kun solmun sen osion varmuuskopiot päättyvät,
 
 ### Etäkopiot kotiinstanssin kopioiden mukana {#copy-onward}
 
-Kytke **Kopioi muualle tämän instanssin varmuuskopioiden mukana** päälle vaiheessa **Varmuuskopiot** tai kohdassa **Vaihda määränpää**, niin kotiinstanssi kopioi solmun kontit ja kansiojoukot niihin kohteisiin, joihin sen omat Kontit ja Kansiot kopioivat, samalla aikataululla. Solmu ei tarvitse tähän omaa kansiota eikä omaa kopioaikataulua. Kohdassa **Vaihda määränpää** kytkin tulee voimaan heti.
+Kytke **Kopioi muualle tämän instanssin varmuuskopioiden mukana** päälle vaiheessa **Varmuuskopiot** tai kohdassa **Vaihda määränpää**, niin kotiinstanssi kopioi solmun kontit ja kansiojoukot niihin kohteisiin, joihin sen omat Kontit ja Kansiot kopioivat, samalla aikataululla. Solmu ei tarvitse tähän omaa kansiota eikä omaa kopioaikataulua.
 
 - Kopiot ovat samoissa repositoryissa kuin kotiinstanssin kopiot, solmun isännän alla. Kotiinstanssin säännöt kohteessa jättävät ne rauhaan, ja kotiinstanssi säilyttää ne solmun säännön mukaan, saman, jonka mukaan se [siivoaa solmun varmuuskopiot](#schedule).
 - Kotiinstanssi lukee solmun repositoryt omalla avaimellaan ja kirjoittaa kohteeseen omalla tunnuksellaan. Solmu ei saa uusia tunnuksia, ja vastaanottopalvelin pysyy append-only-tilassa. Solmulle, joka säilyttää varmuuskopionsa itse, kotiinstanssi kopioi sen, mitä se on hakenut.

@@ -122,7 +122,7 @@ Ana örnek bir bölümü, düğümdeki yedekleri biter bitmez çeker, yedek olar
 
 ### Ana örneğinkilerle site dışı kopyalar {#copy-onward}
 
-**Bu örneğin yedekleriyle birlikte dış konuma kopyala** seçeneğini **Yedekler** adımında ya da **Hedefi değiştir** altında aç, ana örnek de düğümün konteynerlerini ve klasör kümelerini, kendi Konteynerler ve Klasörler bölümlerinin kopyaladığı hedeflere aynı planla kopyalar. Düğümün bunun için kendine ait bir klasöre ve kopya planına ihtiyacı yoktur. **Hedefi değiştir** altında seçenek hemen etkili olur.
+**Bu örneğin yedekleriyle birlikte dış konuma kopyala** seçeneğini **Yedekler** adımında ya da **Hedefi değiştir** altında aç, ana örnek de düğümün konteynerlerini ve klasör kümelerini, kendi Konteynerler ve Klasörler bölümlerinin kopyaladığı hedeflere aynı planla kopyalar. Düğümün bunun için kendine ait bir klasöre ve kopya planına ihtiyacı yoktur.
 
 - Kopyalar, ana örneğin kopyalarıyla aynı depolarda, düğümün host'u altında durur. Ana örneğin hedefteki kuralları onlara dokunmaz, ana örnek de onları düğümün kuralına göre saklar, yani [düğümün yedeklerini toparlarken](#schedule) kullandığı kurala göre.
 - Ana örnek düğümün depolarını kendi anahtarıyla okur ve hedef için kendi oturum açma bilgisiyle yazar. Düğüm yeni bir kimlik bilgisi almaz ve alıcı sunucu append-only kalır. Yedeklerini kendisi tutan bir düğüm için ana örnek, çektiğini kopyalar.

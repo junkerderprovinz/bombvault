@@ -384,40 +384,58 @@ export async function saveCopyOnward(nodeId: string, on: boolean, t: T): Promise
   }
 }
 
+/** placementMoved reports whether a choice sends the backups anywhere else
+ *  than before, which the switch alone does not. */
+export function placementMoved(choice: PlacementChoice, before: PlacementChoice): boolean {
+  return (
+    choice.kind !== before.kind ||
+    choice.address.trim() !== before.address.trim() ||
+    choice.certificate.trim() !== "" ||
+    bareAddress(choice.nodeAddress) !== bareAddress(before.nodeAddress) ||
+    choice.location !== before.location ||
+    choice.signIn !== before.signIn
+  );
+}
+
 /** PlacementWindow changes where an adopted node's backups go. */
 export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; onClose: () => void; onSaved: () => void }) {
   const { t } = useT();
   const { push } = useToast();
   const { sources, reload } = usePlacementSources();
+  const [before, setBefore] = useState<PlacementChoice | null>(null);
   const [choice, setChoice] = useState<PlacementChoice | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
 
   useEffect(() => {
-    if (sources && !choice) setChoice(firstChoice(sources, node));
+    if (sources && !choice) {
+      const first = firstChoice(sources, node);
+      setBefore(first);
+      setChoice(first);
+    }
   }, [sources, choice, node]);
 
-  // The switch saves at once: it changes nothing about where the node sends
-  // its backups, so it needs no new placement.
-  async function change(next: PlacementChoice) {
-    const flipped = choice !== null && next.copyOnward !== choice.copyOnward;
-    setChoice(next);
-    if (!flipped) return;
-    const refused = await saveCopyOnward(node.id, next.copyOnward, t);
-    if (refused) {
-      setChoice({ ...next, copyOnward: !next.copyOnward });
-      push(refused, "fail");
-      return;
-    }
-    onSaved();
-  }
+  const moved = !!choice && !!before && placementMoved(choice, before);
+  const flipped = !!choice && !!before && choice.copyOnward !== before.copyOnward;
 
   async function save() {
     if (!choice || !sources) return;
     setSaving(true);
     setError(null);
     try {
+      // The switch alone leaves the placement as it is, so it needs no new
+      // one and no sign-in picked again.
+      if (!moved) {
+        const refused = await saveCopyOnward(node.id, choice.copyOnward, t);
+        if (refused) {
+          setError(refused);
+          return;
+        }
+        onSaved();
+        onClose();
+        return;
+      }
       const refused = await saveAddress(choice, sources, t);
       if (refused) {
         setError(refused);
@@ -428,7 +446,12 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
         setError(placeError(t, res));
         return;
       }
+      const unswitched = flipped ? await saveCopyOnward(node.id, choice.copyOnward, t) : null;
       onSaved();
+      if (unswitched) {
+        setError(unswitched);
+        return;
+      }
       const said = reachFailures(t, res.reach);
       if (said.length === 0) {
         push(placedSentence(t, choice, placementTarget(choice, sources)), "success");
@@ -461,13 +484,13 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
               tone="accent"
               onClick={() => void save()}
               busy={saving}
-              disabled={saving || !choice || !sources || !placementReady(choice, sources)}
+              disabled={saving || !choice || !sources || (moved ? !placementReady(choice, sources) : !flipped)}
             />
           </>
         )
       }
     >
-      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={(next) => void change(next)} onReload={reload} />}
+      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={setChoice} onReload={reload} />}
       {!sources && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && (
         <p role="alert" className="text-sm text-statusFail wrap-break-word">

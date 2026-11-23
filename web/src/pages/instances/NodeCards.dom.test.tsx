@@ -13,6 +13,7 @@ const released: string[] = [];
 const composed: string[] = [];
 const scheduled: { id: string; schedule: unknown }[] = [];
 const onward: { id: string; on: boolean }[] = [];
+const placed: string[] = [];
 let told = true;
 let scheduleRefused = false;
 
@@ -31,6 +32,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
     setNodeCopyOnward: (id: string, on: boolean) => {
       onward.push({ id, on });
       return Promise.resolve({ ok: true });
+    },
+    placeNode: (id: string) => {
+      placed.push(id);
+      return Promise.resolve({ ok: true, reach: [] });
     },
     getReceiverServer: () => Promise.resolve({ ok: true, server: { nodeUrl: "https://backup.example.org" } }),
     listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
@@ -81,6 +86,7 @@ afterEach(() => {
   composed.length = 0;
   scheduled.length = 0;
   onward.length = 0;
+  placed.length = 0;
   told = true;
   scheduleRefused = false;
   changed = 0;
@@ -124,7 +130,14 @@ describe("NodeCards", () => {
     expect(within(card("n3")).queryByText(en["nodes.fig.copiesTo"])).toBeNull();
   });
 
-  it("switches the copies off site under Edit placement at once, without placing the node again", async () => {
+  it("counts the errors of a node on its card as the overview does", async () => {
+    await renderCards([{ ...online, failures: 1 }, { ...online, id: "n2" }]);
+    const figure = within(card("n1")).getByText(en["dashboard.statErrors"]).parentElement!;
+    expect(within(figure).getByText("1").className).toContain("text-statusFail");
+    expect(within(card("n2")).queryByText(en["dashboard.statErrors"])).toBeNull();
+  });
+
+  async function openPlacementAndFlip() {
     await renderCards([online]);
     await act(async () => {
       fireEvent.click(within(card("n1")).getByRole("button", { name: en["nodes.editPlacement"] }));
@@ -134,9 +147,28 @@ describe("NodeCards", () => {
     await act(async () => {
       fireEvent.click(toggle);
     });
+    expect(onward).toEqual([]);
+  }
+
+  it("saves the copies off site with Save under Edit placement, without placing the node again", async () => {
+    await openPlacementAndFlip();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["settings.save"] }));
+    });
     expect(onward).toEqual([{ id: "n1", on: true }]);
+    expect(placed).toEqual([]);
     expect(changed).toBe(1);
-    expect(screen.getByRole("switch", { name: en["nodes.copyOnward"] }).getAttribute("aria-checked")).toBe("true");
+    expect(screen.queryByRole("switch", { name: en["nodes.copyOnward"] })).toBeNull();
+  });
+
+  it("drops the copies off site when Edit placement is cancelled", async () => {
+    await openPlacementAndFlip();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["common.cancel"] }));
+    });
+    expect(onward).toEqual([]);
+    expect(placed).toEqual([]);
+    expect(changed).toBe(0);
   });
 
   it("says when an away node was last seen", async () => {

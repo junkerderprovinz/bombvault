@@ -122,7 +122,7 @@ Hemmainstansen hämtar ett avsnitt direkt efter att nodens säkerhetskopior av d
 
 ### Off-site-kopior med hemmainstansens {#copy-onward}
 
-Slå på **Kopiera externt med den här instansens säkerhetskopior** i steget **Säkerhetskopior** eller under **Ändra mål**, så kopierar hemmainstansen nodens containrar och mappuppsättningar till de lagringsmål som dess egna Containers och Mappar kopierar till, enligt samma plan. Noden behöver ingen egen mapp och ingen egen kopieringsplan för det. Under **Ändra mål** gäller reglaget direkt.
+Slå på **Kopiera externt med den här instansens säkerhetskopior** i steget **Säkerhetskopior** eller under **Ändra mål**, så kopierar hemmainstansen nodens containrar och mappuppsättningar till de lagringsmål som dess egna Containers och Mappar kopierar till, enligt samma plan. Noden behöver ingen egen mapp och ingen egen kopieringsplan för det.
 
 - Kopiorna ligger i samma repositorier som hemmainstansens kopior, under nodens värd. Hemmainstansens regler på lagringsmålet lämnar dem i fred, och hemmainstansen behåller dem efter nodens regel, samma som den [rensar nodens säkerhetskopior](#schedule) efter.
 - Hemmainstansen läser nodens repositorier med sin egen nyckel och skriver med sin egen inloggning för lagringsmålet. Noden får inga nya inloggningsuppgifter, och mottagarservern förblir append-only. För en nod som behåller sina säkerhetskopior själv kopierar hemmainstansen det den har hämtat.

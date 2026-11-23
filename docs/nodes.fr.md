@@ -122,7 +122,7 @@ L'instance d'attache rapatrie une section juste après la fin des sauvegardes du
 
 ### Copies hors site avec celles de l'instance d'attache {#copy-onward}
 
-Activez **Copier hors site avec les sauvegardes de cette instance** à l'étape **Sauvegardes** ou sous **Changer la destination**, et l'instance d'attache copie les conteneurs et les ensembles de dossiers du nœud vers les destinations où ses propres Conteneurs et Dossiers se copient, selon le même planning. Le nœud n'a besoin pour cela d'aucun dossier ni d'aucun planning de copie à lui. Sous **Changer la destination**, l'interrupteur prend effet aussitôt.
+Activez **Copier hors site avec les sauvegardes de cette instance** à l'étape **Sauvegardes** ou sous **Changer la destination**, et l'instance d'attache copie les conteneurs et les ensembles de dossiers du nœud vers les destinations où ses propres Conteneurs et Dossiers se copient, selon le même planning. Le nœud n'a besoin pour cela d'aucun dossier ni d'aucun planning de copie à lui.
 
 - Les copies se trouvent dans les mêmes dépôts que les copies de l'instance d'attache, sous l'hôte du nœud. Les règles de l'instance d'attache pour la destination n'y touchent pas, et l'instance d'attache les conserve selon la règle du nœud, celle-là même selon laquelle elle [élague les sauvegardes du nœud](#schedule).
 - L'instance d'attache lit les dépôts du nœud avec sa propre clé et écrit avec ses propres identifiants pour la destination. Le nœud ne reçoit aucun nouvel identifiant, et le serveur récepteur reste en ajout seul. Pour un nœud qui garde ses sauvegardes lui-même, l'instance d'attache copie ce qu'elle a rapatrié.

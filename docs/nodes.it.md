@@ -122,7 +122,7 @@ L'istanza madre preleva una sezione subito dopo la fine dei backup del nodo per 
 
 ### Copie off-site con quelle dell'istanza madre {#copy-onward}
 
-Attiva **Copia off-site con i backup di questa istanza** nel passaggio **Backup** o in **Cambia destinazione**, e l'istanza madre copia i container e i set di cartelle del nodo nelle destinazioni in cui copia i propri Container e Cartelle, con la stessa pianificazione. Per questo il nodo non ha bisogno di una cartella né di una pianificazione di copia propria. In **Cambia destinazione** l'interruttore ha effetto subito.
+Attiva **Copia off-site con i backup di questa istanza** nel passaggio **Backup** o in **Cambia destinazione**, e l'istanza madre copia i container e i set di cartelle del nodo nelle destinazioni in cui copia i propri Container e Cartelle, con la stessa pianificazione. Per questo il nodo non ha bisogno di una cartella né di una pianificazione di copia propria.
 
 - Le copie stanno negli stessi repository delle copie dell'istanza madre, sotto l'host del nodo. Le regole dell'istanza madre per la destinazione non le toccano, e l'istanza madre le conserva secondo la regola del nodo, la stessa con cui [pota i backup del nodo](#schedule).
 - L'istanza madre legge i repository del nodo con la propria chiave e scrive con le proprie credenziali per la destinazione. Il nodo non riceve nuove credenziali, e il server ricevente resta append-only. Per un nodo che tiene i backup da sé, l'istanza madre copia ciò che ha prelevato.

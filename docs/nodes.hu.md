@@ -122,7 +122,7 @@ Az anyapéldány egy szakaszt rögtön azután hív le, hogy a csomóponton vég
 
 ### Telephelyen kívüli másolatok az anyapéldányéival {#copy-onward}
 
-Kapcsold be a **Külső helyre másolás ennek a példánynak a mentéseivel** kapcsolót a **Mentések** lépésben vagy a **Cél módosítása** alatt, és az anyapéldány a csomópont konténereit és mappakészleteit ugyanazokra a célokra másolja, ahová a saját Konténereit és Mappáit, ugyanazon terv szerint. A csomópontnak ehhez nem kell saját mappa és saját másolási terv. A **Cél módosítása** alatt a kapcsoló azonnal érvényes.
+Kapcsold be a **Külső helyre másolás ennek a példánynak a mentéseivel** kapcsolót a **Mentések** lépésben vagy a **Cél módosítása** alatt, és az anyapéldány a csomópont konténereit és mappakészleteit ugyanazokra a célokra másolja, ahová a saját Konténereit és Mappáit, ugyanazon terv szerint. A csomópontnak ehhez nem kell saját mappa és saját másolási terv.
 
 - A másolatok ugyanazokban a tárolókban vannak, mint az anyapéldány másolatai, a csomópont gazdagépe alatt. Az anyapéldány szabályai a célon nem nyúlnak hozzájuk, és az anyapéldány a csomópont szabálya szerint őrzi meg őket, ugyanazzal, amellyel [rendet rak a csomópont mentései között](#schedule).
 - Az anyapéldány a saját kulcsával olvassa a csomópont tárolóit, és a cél saját bejelentkezésével ír. A csomópont nem kap új hitelesítő adatokat, és a fogadószerver append-only marad. Ha a csomópont maga őrzi a mentéseit, az anyapéldány azt másolja, amit lehívott.
