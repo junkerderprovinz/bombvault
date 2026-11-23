@@ -1,0 +1,1 @@
+BombVault 10.6.7 nimmt deine Knoten mit: Ein Schalter, und die Sicherungen eines Knotens reisen mit denen dieser Instanz off-site, an dieselben Orte und im selben Takt.
