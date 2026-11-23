@@ -161,6 +161,19 @@ describe("NodeCards", () => {
     expect(screen.queryByRole("switch", { name: en["nodes.copyOnward"] })).toBeNull();
   });
 
+  it("places a node again with Save when nothing in Edit placement changed", async () => {
+    await renderCards([online]);
+    await act(async () => {
+      fireEvent.click(within(card("n1")).getByRole("button", { name: en["nodes.editPlacement"] }));
+    });
+    await screen.findByRole("switch", { name: en["nodes.copyOnward"] });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: en["settings.save"] }));
+    });
+    expect(placed).toEqual(["n1"]);
+    expect(onward).toEqual([]);
+  });
+
   it("drops the copies off site when Edit placement is cancelled", async () => {
     await openPlacementAndFlip();
     await act(async () => {

@@ -418,15 +418,16 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
 
   const moved = !!choice && !!before && placementMoved(choice, before);
   const flipped = !!choice && !!before && choice.copyOnward !== before.copyOnward;
+  // The switch alone leaves the placement as it is, so it needs no new one and
+  // no sign-in picked again. Save with nothing changed places the node again.
+  const switchOnly = flipped && !moved;
 
   async function save() {
     if (!choice || !sources) return;
     setSaving(true);
     setError(null);
     try {
-      // The switch alone leaves the placement as it is, so it needs no new
-      // one and no sign-in picked again.
-      if (!moved) {
+      if (switchOnly) {
         const refused = await saveCopyOnward(node.id, choice.copyOnward, t);
         if (refused) {
           setError(refused);
@@ -484,7 +485,7 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
               tone="accent"
               onClick={() => void save()}
               busy={saving}
-              disabled={saving || !choice || !sources || (moved ? !placementReady(choice, sources) : !flipped)}
+              disabled={saving || !choice || !sources || (!switchOnly && !placementReady(choice, sources))}
             />
           </>
         )
