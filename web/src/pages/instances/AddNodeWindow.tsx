@@ -27,6 +27,7 @@ import {
   placementTarget,
   reachFailures,
   saveAddress,
+  saveCopyOnward,
   usePlacementSources,
   type PlacementChoice,
 } from "./NodePlacement";
@@ -80,7 +81,12 @@ export function AddNodeWindow({ onClose, onChanged }: { onClose: () => void; onC
     setPlaced({ state: "sending" });
     onChanged();
     placeNode(nodeId, placementOf(choice))
-      .then((res) => setPlaced(res.ok ? { state: "done", failures: reachFailures(t, res.reach) } : { state: "failed", error: placeError(t, res) }))
+      .then(async (res) => {
+        if (!res.ok) return setPlaced({ state: "failed", error: placeError(t, res) });
+        const failures = reachFailures(t, res.reach);
+        const refused = choice.copyOnward ? await saveCopyOnward(nodeId, true, t) : null;
+        setPlaced({ state: "done", failures: refused ? [...failures, refused] : failures });
+      })
       .catch((err: unknown) => setPlaced({ state: "failed", error: err instanceof Error ? err.message : t("settings.error") }))
       .finally(onChanged);
   }, [adopted, nodeId, choice, placeable, placed.state, onChanged, t]);

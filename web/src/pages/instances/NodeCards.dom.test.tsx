@@ -12,6 +12,7 @@ import type { NodeView } from "../../lib/api";
 const released: string[] = [];
 const composed: string[] = [];
 const scheduled: { id: string; schedule: unknown }[] = [];
+const onward: { id: string; on: boolean }[] = [];
 let told = true;
 let scheduleRefused = false;
 
@@ -27,6 +28,13 @@ vi.mock("../../lib/api", async (importOriginal) => {
       scheduled.push({ id, schedule });
       return Promise.resolve(scheduleRefused ? { ok: false, error: "the node is gone" } : { ok: true });
     },
+    setNodeCopyOnward: (id: string, on: boolean) => {
+      onward.push({ id, on });
+      return Promise.resolve({ ok: true });
+    },
+    getReceiverServer: () => Promise.resolve({ ok: true, server: { nodeUrl: "https://backup.example.org" } }),
+    listDestinations: () => Promise.resolve({ ok: true, destinations: [] }),
+    getCloudCredSets: () => Promise.resolve({ ok: true, sets: [] }),
     nodeCompose: (id: string) => {
       composed.push(id);
       return Promise.resolve({ ok: true, compose: { MODE: "node", APP_KEY: "f".repeat(64), NODE_HOME: "bvhome1.abc", NODE_NAME: "vps" } });
@@ -72,6 +80,7 @@ afterEach(() => {
   released.length = 0;
   composed.length = 0;
   scheduled.length = 0;
+  onward.length = 0;
   told = true;
   scheduleRefused = false;
   changed = 0;
@@ -104,6 +113,30 @@ describe("NodeCards", () => {
     const c = within(card("n1"));
     expect(c.getByText(en["nodes.fig.onNode"])).toBeTruthy();
     expect(c.getByText("https://203.0.113.7:8443")).toBeTruthy();
+  });
+
+  it("shows where the copies of a node go while it follows this instance's copies", async () => {
+    await renderCards([{ ...online, copyOnward: true, copiesTo: ["B2", "Hetzner"] }, { ...online, id: "n2", copyOnward: true }, { ...online, id: "n3" }]);
+    const c = within(card("n1"));
+    expect(c.getByText(en["nodes.fig.copiesTo"])).toBeTruthy();
+    expect(c.getByText("B2, Hetzner")).toBeTruthy();
+    expect(within(card("n2")).getByText(en["nodes.copiesNowhere"])).toBeTruthy();
+    expect(within(card("n3")).queryByText(en["nodes.fig.copiesTo"])).toBeNull();
+  });
+
+  it("switches the copies off site under Edit placement at once, without placing the node again", async () => {
+    await renderCards([online]);
+    await act(async () => {
+      fireEvent.click(within(card("n1")).getByRole("button", { name: en["nodes.editPlacement"] }));
+    });
+    const toggle = await screen.findByRole("switch", { name: en["nodes.copyOnward"] });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    expect(onward).toEqual([{ id: "n1", on: true }]);
+    expect(changed).toBe(1);
+    expect(screen.getByRole("switch", { name: en["nodes.copyOnward"] }).getAttribute("aria-checked")).toBe("true");
   });
 
   it("says when an away node was last seen", async () => {

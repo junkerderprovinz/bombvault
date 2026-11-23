@@ -6775,6 +6775,10 @@ export interface NodeView {
   failures: number;
   /** Critical and warning anomalies the node had open when last asked. */
   anomalies: number;
+  /** Whether this instance copies the node's backups to its own storage
+   *  locations, and their names. */
+  copyOnward?: boolean;
+  copiesTo?: string[];
 }
 
 export type NodePlaceKind = "receiver" | "location" | "node";
@@ -6830,6 +6834,12 @@ export function setNodeSchedule(id: string, schedule: Partial<Record<NodeSection
 /** The answer to a placement. A placement this instance could not reach the
  *  node's rest-server for names its address and port, and how long it tried. */
 export type NodePlaceResult = OkEnvelope & { reach?: NodeReach[]; warning?: string; address?: string; port?: string; seconds?: number };
+
+/** Switches whether this instance copies a node's backups to its own storage
+ *  locations along with its own. */
+export function setNodeCopyOnward(id: string, on: boolean): Promise<OkEnvelope> {
+  return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/copy-onward`, { method: "PUT", body: JSON.stringify({ on }) });
+}
 
 export function placeNode(id: string, placement: NodePlacement): Promise<NodePlaceResult> {
   return fetchJSON(`/api/nodes/${encodeURIComponent(id)}/placement`, { method: "POST", body: JSON.stringify(placement) });

@@ -9,6 +9,7 @@ import {
   getReceiverServer,
   listDestinations,
   placeNode,
+  setNodeCopyOnward,
   setReceiverNodeAddress,
   ApiError,
   type CloudCredSetInfo,
@@ -29,6 +30,7 @@ import { Choice, Choices } from "../../components/entry/Choice";
 import { SelectField } from "../../components/SelectField";
 import { Rows, SettingRow } from "../../components/storage/rows";
 import { useToast } from "../../lib/toast";
+import { ToggleRow } from "../settings/shared";
 import { InstanceWindow } from "./InstanceWindow";
 import { PlacementPicture } from "./placementArt";
 import { ReceiverServerWindow } from "./ReceiverServerWindow";
@@ -54,6 +56,9 @@ export interface PlacementChoice {
   nodeAddress: string;
   location: string;
   signIn: string;
+  /** Whether this instance copies the node's backups to its own storage
+   *  locations along with its own. */
+  copyOnward: boolean;
 }
 
 /** What the choice is made from. */
@@ -105,6 +110,7 @@ export function firstChoice(sources: PlacementSources, node?: NodeView): Placeme
     nodeAddress: node?.placement === "node" ? (node.placementTarget ?? "") : "",
     location: location?.id ?? "",
     signIn: "",
+    copyOnward: node?.copyOnward ?? false,
   };
 }
 
@@ -355,8 +361,26 @@ export function PlacementFields({
             <p className="text-xs text-statusWarn">{t("nodes.locationWarning")}</p>
           </div>
         ))}
+
+      <ToggleRow
+        label={t("nodes.copyOnward")}
+        hint={t("nodes.copyOnwardTip")}
+        checked={choice.copyOnward}
+        onChange={(copyOnward) => set({ copyOnward })}
+      />
     </>
   );
+}
+
+/** saveCopyOnward stores whether the node's backups follow this instance's
+ *  own off site, and returns what went wrong, or null. */
+export async function saveCopyOnward(nodeId: string, on: boolean, t: T): Promise<string | null> {
+  try {
+    const res = await setNodeCopyOnward(nodeId, on);
+    return res.ok ? null : (res.error ?? t("settings.error"));
+  } catch (err) {
+    return err instanceof Error ? err.message : t("settings.error");
+  }
 }
 
 /** PlacementWindow changes where an adopted node's backups go. */
@@ -372,6 +396,21 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
   useEffect(() => {
     if (sources && !choice) setChoice(firstChoice(sources, node));
   }, [sources, choice, node]);
+
+  // The switch saves at once: it changes nothing about where the node sends
+  // its backups, so it needs no new placement.
+  async function change(next: PlacementChoice) {
+    const flipped = choice !== null && next.copyOnward !== choice.copyOnward;
+    setChoice(next);
+    if (!flipped) return;
+    const refused = await saveCopyOnward(node.id, next.copyOnward, t);
+    if (refused) {
+      setChoice({ ...next, copyOnward: !next.copyOnward });
+      push(refused, "fail");
+      return;
+    }
+    onSaved();
+  }
 
   async function save() {
     if (!choice || !sources) return;
@@ -427,7 +466,7 @@ export function PlacementWindow({ node, onClose, onSaved }: { node: NodeView; on
         )
       }
     >
-      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={setChoice} onReload={reload} />}
+      {sources && choice && !done && <PlacementFields choice={choice} sources={sources} onChange={(next) => void change(next)} onReload={reload} />}
       {!sources && <p className="text-sm text-carbon-textMuted">{t("dashboard.checking")}</p>}
       {error && (
         <p role="alert" className="text-sm text-statusFail wrap-break-word">

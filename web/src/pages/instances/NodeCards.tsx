@@ -99,18 +99,26 @@ export function NodeCards({
               />
             }
             figures={
-              <Figure
-                value={
-                  node.placementTarget ? (
-                    <bdi dir="ltr" className="wrap-anywhere">
-                      {node.placementTarget}
-                    </bdi>
-                  ) : (
-                    t("nodes.notPlaced")
-                  )
-                }
-                label={t(node.placement ? PLACEMENT_LABEL[node.placement] : "nodes.fig.backupsTo")}
-              />
+              <>
+                <Figure
+                  value={
+                    node.placementTarget ? (
+                      <bdi dir="ltr" className="wrap-anywhere">
+                        {node.placementTarget}
+                      </bdi>
+                    ) : (
+                      t("nodes.notPlaced")
+                    )
+                  }
+                  label={t(node.placement ? PLACEMENT_LABEL[node.placement] : "nodes.fig.backupsTo")}
+                />
+                {node.copyOnward && (
+                  <Figure
+                    value={node.copiesTo?.length ? <bdi className="wrap-anywhere">{node.copiesTo.join(", ")}</bdi> : t("nodes.copiesNowhere")}
+                    label={t("nodes.fig.copiesTo")}
+                  />
+                )}
+              </>
             }
             actions={
               !releasing && (
