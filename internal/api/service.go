@@ -5804,17 +5804,12 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return err
 	}
 	defer s.lockDomainFor(domain, offsiteLockReason)()
-	return s.replicateWholeDomain(ctx, settings, domain)
-}
-
-// replicateWholeDomain copies every repository of the domain off site and then
-// the domain's section of each node that follows home's copies. A node's
-// failure is the node's own alert, not home's.
-func (s *Service) replicateWholeDomain(ctx context.Context, settings store.Settings, domain string) error {
 	// The skip list goes IN, so the run row this opens records it too rather than
 	// being stamped a success the caller then contradicts.
 	sources, skipped := s.offsiteReplicationSources(settings, domain)
-	err := s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
+	err = s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
+	// A node that follows home's copies goes after them, and its failure is
+	// the node's own alert, not home's.
 	s.copyNodesOnward(ctx, settings, domain)
 	return err
 }
@@ -5862,7 +5857,10 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 			log.Printf("api: offsite %s: replicate start: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			return
 		}
-		if err = s.replicateWholeDomain(ctx, settings, domain); err != nil {
+		sources, skipped := s.offsiteReplicationSources(settings, domain)
+		err = s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
+		s.copyNodesOnward(ctx, settings, domain)
+		if err != nil {
 			log.Printf("api: offsite %s: manual replication failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
 		}
