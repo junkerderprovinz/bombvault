@@ -93,8 +93,8 @@ describe("the Version card", () => {
     expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
   });
 
-  it("names GlimStone 4.8.5", () => {
-    expect(GLIMSTONE_VERSION).toBe("4.8.5");
+  it("names GlimStone 4.9.0, the release its cards follow", () => {
+    expect(GLIMSTONE_VERSION).toBe("4.9.0");
   });
 
   it("asks the server only when Check for updates is pressed, and says it has not looked before", async () => {
@@ -206,7 +206,7 @@ describe("the Components card", () => {
   it("opens each project's newest release from its number, and says so where a version is unknown", async () => {
     await renderPage();
     expect(components().getByRole("link", { name: "0.18.1" }).getAttribute("href")).toBe("https://github.com/restic/restic/releases/latest");
-    expect(components().getByRole("link", { name: GLIMSTONE_VERSION }).getAttribute("href")).toBe(
+    expect(components().getByRole("link", { name: "4.9.0" }).getAttribute("href")).toBe(
       "https://github.com/junkerderprovinz/glimstone/releases/latest",
     );
     expect(components().getByText(en["tile.info.versionUnknown"])).toBeTruthy();
@@ -323,6 +323,12 @@ describe("the list of what is new", () => {
 });
 
 describe("the About card", () => {
+  it("is called About alone, without the app's name", async () => {
+    await renderPage();
+    expect(en["about.title"]).toBe("About");
+    expect(card(en["about.title"])).toBeTruthy();
+  });
+
   it("holds what BombVault is and the ways to give, and leaves reporting to Help", async () => {
     await renderPage();
     const about = within(card(en["about.title"]));
