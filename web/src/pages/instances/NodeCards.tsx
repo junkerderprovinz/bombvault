@@ -112,6 +112,9 @@ export function NodeCards({
                   }
                   label={t(node.placement ? PLACEMENT_LABEL[node.placement] : "nodes.fig.backupsTo")}
                 />
+                {node.failures > 0 && (
+                  <Figure value={<span className="text-statusFail">{node.failures}</span>} label={t("dashboard.statErrors")} />
+                )}
                 {node.copyOnward && (
                   <Figure
                     value={node.copiesTo?.length ? <bdi className="wrap-anywhere">{node.copiesTo.join(", ")}</bdi> : t("nodes.copiesNowhere")}
