@@ -158,6 +158,12 @@ type Mode struct {
 	Host string
 	// Sharing says whether other servers write to the repository too.
 	Sharing Sharing
+	// Guests are the hosts whose snapshots lie in a repository of this server
+	// alone for someone else, such as the copies of a node's backups. A
+	// listing leaves them out, and a keep policy ages the other hosts only.
+	Guests []string
+	// selected are the hosts a keep policy in a repository with guests ages.
+	selected []string
 	// MaxUnused is the share of unused space in percent a prune may leave
 	// behind instead of repacking it. Zero leaves restic's own limit.
 	MaxUnused int
@@ -320,9 +326,10 @@ type SnapshotMetaSummary struct {
 // of its own so that the snapshot lists the SPA receives (snapshot panels,
 // retention preview, foreign inventory) keep the keys they have.
 type SnapshotMeta struct {
-	ID     string   `json:"id"`
-	Tags   []string `json:"tags"`
-	Parent string   `json:"parent,omitempty"`
+	ID       string   `json:"id"`
+	Tags     []string `json:"tags"`
+	Hostname string   `json:"hostname"`
+	Parent   string   `json:"parent,omitempty"`
 	// Summary is absent on snapshots written by restic before 0.17.
 	Summary *SnapshotMetaSummary `json:"summary,omitempty"`
 }
@@ -1348,11 +1355,11 @@ func ForgetPolicyArgs(repo string, p RetentionPolicy, m Mode, tags []string, pru
 	if !m.Encrypted {
 		args = append(args, insecureFlag)
 	}
+	for _, t := range tags {
+		args = append(args, "--tag", t)
+	}
+	args = append(args, hostFlags(m.ownHosts())...)
 	if len(tags) > 0 {
-		for _, t := range tags {
-			args = append(args, "--tag", t)
-		}
-		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		// Repo-wide pass: group by paths only, not restic's default host+paths,
@@ -1400,8 +1407,8 @@ func ForgetPreviewArgs(repo string, p RetentionPolicy, m Mode, tags ...string) [
 			selected = true
 		}
 	}
+	args = append(args, hostFlags(m.ownHosts())...)
 	if selected {
-		args = append(args, hostFlags(m.ownHosts())...)
 		args = append(args, "--group-by", "")
 	} else {
 		args = append(args, "--group-by", "paths")
@@ -3038,7 +3045,7 @@ func (r Restic) snapshots(ctx context.Context, args []string, m Mode) ([]Snapsho
 	if err := json.Unmarshal(out, &snaps); err != nil {
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
-	return snaps, nil
+	return withoutGuests(snaps, m, func(sn Snapshot) string { return sn.Hostname }), nil
 }
 
 // SnapshotsMeta lists the same snapshots as Snapshots and reads the counters
@@ -3052,7 +3059,7 @@ func (r Restic) SnapshotsMeta(ctx context.Context, repo string, m Mode) ([]Snaps
 	if err := json.Unmarshal(out, &metas); err != nil {
 		return nil, fmt.Errorf("restic snapshots: parse JSON: %w", err)
 	}
-	return metas, nil
+	return withoutGuests(metas, m, func(sn SnapshotMeta) string { return sn.Hostname }), nil
 }
 
 // SnapshotParent returns the snapshot one snapshot was based on, empty when it
@@ -3216,6 +3223,10 @@ func (r Restic) ForgetPolicy(ctx context.Context, repo string, p RetentionPolicy
 	if err := errors.Join(m.refuseMemberPrune(), m.refuseRepoWide(tags)); err != nil {
 		return err
 	}
+	m, ours, err := r.selectBesideGuests(ctx, repo, m, tags)
+	if err != nil || !ours {
+		return err
+	}
 	return r.runCounted(ctx, ForgetPolicyArgs(repo, p, m, tags, prune), m)
 }
 
@@ -3233,6 +3244,10 @@ func (r Restic) ForgetPreview(ctx context.Context, repo string, p RetentionPolic
 		return nil, nil
 	}
 	if err := m.refuseRepoWide(tags); err != nil {
+		return nil, err
+	}
+	m, ours, err := r.selectBesideGuests(ctx, repo, m, tags)
+	if err != nil || !ours {
 		return nil, err
 	}
 	out, err := r.run(ctx, ForgetPreviewArgs(repo, p, m, tags...), m)

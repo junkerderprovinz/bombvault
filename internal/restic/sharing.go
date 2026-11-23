@@ -32,9 +32,46 @@ const (
 // In a shared repository only the host this server writes counts.
 func (m Mode) ownHosts() []string {
 	if m.Sharing == SharingNone {
-		return nil
+		return m.selected
 	}
 	return []string{m.backupHost()}
+}
+
+// withoutGuests drops the snapshots of the mode's guests from a listing.
+func withoutGuests[S any](snaps []S, m Mode, host func(S) string) []S {
+	if len(m.Guests) == 0 {
+		return snaps
+	}
+	return slices.DeleteFunc(snaps, func(sn S) bool { return slices.Contains(m.Guests, host(sn)) })
+}
+
+// selectBesideGuests narrows a keep policy in a repository with guests to the
+// other hosts that hold snapshots of the tags, since restic selects hosts but
+// cannot leave one out. ours is false when only guests hold any, and nothing
+// is to be aged.
+func (r Restic) selectBesideGuests(ctx context.Context, repo string, m Mode, tags []string) (narrowed Mode, ours bool, err error) {
+	if len(m.Guests) == 0 || m.Sharing != SharingNone {
+		return m, true, nil
+	}
+	args := snapshotsArgs(repo, m, nil)
+	for _, t := range tags {
+		if t != "" {
+			args = append(args, "--tag", t)
+		}
+	}
+	snaps, err := r.snapshots(ctx, args, m)
+	if err != nil {
+		return m, false, err
+	}
+	var hosts []string
+	for _, sn := range snaps {
+		if !slices.Contains(hosts, sn.Hostname) {
+			hosts = append(hosts, sn.Hostname)
+		}
+	}
+	slices.Sort(hosts)
+	m.selected = hosts
+	return m, len(hosts) > 0, nil
 }
 
 func hostFlags(hosts []string) []string {
