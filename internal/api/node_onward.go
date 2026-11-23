@@ -270,13 +270,19 @@ func (s *Service) noteNodeOnward(ctx context.Context, n store.Node, domain strin
 }
 
 // nodeCopiesTo names the targets of the sections a node backs up, where home
-// copies a node that follows its copies.
+// copies a node that follows its copies, as Storage names them: by the
+// storage location a target follows, or by its address. A row's own name is
+// often just its section's.
 func (s *Service) nodeCopiesTo(settings store.Settings) []string {
 	var out []string
 	for _, d := range nodeDomains {
 		p, _ := s.readPlacement(settings, d)
 		for _, t := range p.enabledTargets() {
-			if name := placementTargetName(t); !slices.Contains(out, name) {
+			name := scrubRepoLocation(t.Repo)
+			if loc, found, err := s.store.GetDestination(t.DestinationID); err == nil && found {
+				name = loc.Name
+			}
+			if !slices.Contains(out, name) {
 				out = append(out, name)
 			}
 		}

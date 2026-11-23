@@ -231,7 +231,15 @@ func TestANodeThatKeepsItsOwnBackupsIsCopiedOnwardFromWhatHomeFetched(t *testing
 
 func TestTheNodeCardSaysWhereTheCopiesGo(t *testing.T) {
 	f, n, _ := onwardScene(t)
-	f.target("files", "Hetzner", "rest:https://backup.example.org/files")
+	// A section's own off-site field names its row after the section.
+	f.target("files", "files", "rest:https://backup.example.org/files")
+	wasabi, err := f.st.SaveDestination(store.OffsiteTarget{Name: "Wasabi", Repo: "s3:https://s3.example.org/bucket", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.st.EnsureDestinationTarget(wasabi.ID, "files", "s3:https://s3.example.org/bucket/files"); err != nil {
+		t.Fatal(err)
+	}
 	f.signIn()
 
 	f.do(http.MethodPut, "/api/nodes/"+n.ID+"/copy-onward", map[string]any{"on": true})
@@ -239,8 +247,9 @@ func TestTheNodeCardSaysWhereTheCopiesGo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v := views[0]; !v.CopyOnward || !slices.Equal(v.CopiesTo, []string{"B2", "Hetzner"}) {
-		t.Errorf("view = %+v, want the copies going to B2 and Hetzner", v)
+	want := []string{"b2:bucket:containers", "rest:https://backup.example.org/files", "Wasabi"}
+	if v := views[0]; !v.CopyOnward || !slices.Equal(v.CopiesTo, want) {
+		t.Errorf("view = %+v, want the copies going to %v, as Storage names them", v, want)
 	}
 	f.do(http.MethodPut, "/api/nodes/"+n.ID+"/copy-onward", map[string]any{"on": false})
 	if views, _ := f.svc.ListNodes(context.Background()); views[0].CopyOnward || len(views[0].CopiesTo) != 0 {
