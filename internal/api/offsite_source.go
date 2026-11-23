@@ -33,26 +33,30 @@ func (s *Service) sourceAccess(settings store.Settings, domain string, src domai
 	if !restic.IsRemoteRepo(src.Loc) {
 		return src.Loc, destMode, nil
 	}
-	c := credsInEnv(s.primaryModeFor(settings, domain, src.Loc).Env)
+	return sourceAccessWith(credsInEnv(s.primaryModeFor(settings, domain, src.Loc).Env), src.Loc, dest, destMode)
+}
+
+// sourceAccessWith is sourceAccess for a source at src that signs in with c.
+func sourceAccessWith(c CloudCreds, src, dest string, destMode restic.Mode) (string, restic.Mode, error) {
 	mode := destMode
 	mode.Env = slices.Clone(destMode.Env)
-	srcScheme, destScheme := repoScheme(src.Loc), repoScheme(dest)
+	srcScheme, destScheme := repoScheme(src), repoScheme(dest)
 	switch srcScheme {
 	case "s3":
 		if c.S3KeyID == "" {
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
 		if destScheme != "s3" {
 			mode.Env = append(mode.Env, cloudEnv(CloudCreds{S3KeyID: c.S3KeyID, S3Secret: c.S3Secret, S3Region: c.S3Region})...)
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
 		// restic signs both ends with the one region in the environment, and
 		// AWS refuses a request signed for a region its bucket is not in.
 		if envValue(destMode.Env, "AWS_ACCESS_KEY_ID") == c.S3KeyID && envValue(destMode.Env, "AWS_SECRET_ACCESS_KEY") == c.S3Secret &&
 			envValue(destMode.Env, "AWS_DEFAULT_REGION") == c.S3Region {
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
-		loc, env, err := s3ThroughRclone(src.Loc, c)
+		loc, env, err := s3ThroughRclone(src, c)
 		if err != nil {
 			return "", restic.Mode{}, err
 		}
@@ -60,19 +64,19 @@ func (s *Service) sourceAccess(settings store.Settings, domain string, src domai
 		return loc, mode, nil
 	case "rest":
 		if c.RESTUser == "" && c.RESTPassword == "" {
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
 		if destScheme != "rest" {
 			mode.Env = append(mode.Env, cloudEnv(CloudCreds{RESTUser: c.RESTUser, RESTPassword: c.RESTPassword})...)
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
 		if envValue(destMode.Env, "RESTIC_REST_USERNAME") == c.RESTUser && envValue(destMode.Env, "RESTIC_REST_PASSWORD") == c.RESTPassword {
-			return src.Loc, mode, nil
+			return src, mode, nil
 		}
-		loc, err := restWithLogin(src.Loc, c.RESTUser, c.RESTPassword)
+		loc, err := restWithLogin(src, c.RESTUser, c.RESTPassword)
 		return loc, mode, err
 	}
-	return src.Loc, mode, nil
+	return src, mode, nil
 }
 
 // credsInEnv reads back the credentials cloudEnv put into an environment.

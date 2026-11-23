@@ -2462,10 +2462,14 @@ func targetOffsiteLimits(t store.OffsiteTarget) restic.Limits {
 // default sign-in, or the credential set the target names. A target of its
 // own with no storage class keeps the class of its sign-in. A destination's
 // target takes the class of its destination, whose empty class means the
-// provider's default.
+// provider's default. The copies of the nodes home copies onward are guests
+// there, which home's own listings and keep rules leave alone.
 func (s *Service) offsiteModeForTarget(settings store.Settings, target store.OffsiteTarget) restic.Mode {
 	mode := s.withRowBackend(s.applyTargetCreds(s.ModeFor(settings), settings, target), target)
 	mode.Sharing = s.sharingAt(target.Repo)
+	if mode.Sharing == restic.SharingNone {
+		mode.Guests = s.onwardHosts()
+	}
 	mode.Compression = storedCompression(target.Compression)
 	// The keep-policy's prune at the target repacks over the same line the
 	// copy is capped on.
@@ -5800,10 +5804,19 @@ func (s *Service) ReplicateOffsite(ctx context.Context, domain string) error {
 		return err
 	}
 	defer s.lockDomainFor(domain, offsiteLockReason)()
+	return s.replicateWholeDomain(ctx, settings, domain)
+}
+
+// replicateWholeDomain copies every repository of the domain off site and then
+// the domain's section of each node that follows home's copies. A node's
+// failure is the node's own alert, not home's.
+func (s *Service) replicateWholeDomain(ctx context.Context, settings store.Settings, domain string) error {
 	// The skip list goes IN, so the run row this opens records it too rather than
 	// being stamped a success the caller then contradicts.
 	sources, skipped := s.offsiteReplicationSources(settings, domain)
-	return s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
+	err := s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
+	s.copyNodesOnward(ctx, settings, domain)
+	return err
 }
 
 // StartReplicateOffsite kicks off an on-demand off-site replication in the
@@ -5849,9 +5862,7 @@ func (s *Service) StartReplicateOffsite(domain string) error {
 			log.Printf("api: offsite %s: replicate start: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			return
 		}
-		sources, skipped := s.offsiteReplicationSources(settings, domain)
-		err = s.copyToOffsite(ctx, domain, settings, "", sources, skipped)
-		if err != nil {
+		if err = s.replicateWholeDomain(ctx, settings, domain); err != nil {
 			log.Printf("api: offsite %s: manual replication failed: %v", domain, err) //nolint:gosec // G706: domain is a fixed literal
 			s.notifyReplicationFailed(ctx, domain, truncateRunErr(err))
 		}

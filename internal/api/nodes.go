@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -48,11 +49,15 @@ type NodeView struct {
 	LastBackup int64 `json:"lastBackup,omitempty"`
 	Failures   int   `json:"failures"`
 	Anomalies  int   `json:"anomalies"`
+	// CopyOnward says home copies the node's backups to its own off-site
+	// targets, and CopiesTo names them.
+	CopyOnward bool     `json:"copyOnward"`
+	CopiesTo   []string `json:"copiesTo,omitempty"`
 }
 
 func nodeViewOf(n store.Node) NodeView {
 	return NodeView{ID: n.ID, Name: n.Name, CreatedAt: n.CreatedAt, AdoptedAt: n.AdoptedAt, State: n.State, Placement: n.Placement, PlacementTarget: n.PlacementTarget,
-		ContainersCadence: n.ContainersCadence, FilesCadence: n.FilesCadence}
+		ContainersCadence: n.ContainersCadence, FilesCadence: n.FilesCadence, CopyOnward: n.CopyOnward}
 }
 
 // nodeHealth fills in how the backups of node v go, as far as home learned.
@@ -551,12 +556,23 @@ func (s *Service) ListNodes(ctx context.Context) ([]NodeView, error) {
 			dests[d.ID] = d.Name
 		}
 	}
+	var copiesTo []string
+	if slices.ContainsFunc(nodes, func(n store.Node) bool { return n.CopyOnward }) {
+		settings, err := s.store.GetSettings()
+		if err != nil {
+			return nil, err
+		}
+		copiesTo = s.nodeCopiesTo(settings)
+	}
 	out := make([]NodeView, len(nodes))
 	var wg sync.WaitGroup
 	for i, n := range nodes {
 		out[i] = nodeViewOf(n)
 		if n.Placement == nodePlaceLocation {
 			out[i].PlacementTarget = cmp.Or(dests[n.PlacementTarget], n.PlacementTarget)
+		}
+		if n.CopyOnward {
+			out[i].CopiesTo = copiesTo
 		}
 		if err := s.nodeHealth(&out[i]); err != nil {
 			return nil, err

@@ -590,6 +590,8 @@ type forgetCall struct {
 	Tags   []string // nil for the repository-wide pass
 	Policy restic.RetentionPolicy
 	Prune  bool
+	// Host is the one host a forget in a shared repository selects.
+	Host string
 }
 
 type forgetIDsCall struct {
@@ -657,12 +659,17 @@ func (e *placementEngine) Snapshots(_ context.Context, repo string, mode restic.
 	if err != nil {
 		return nil, err
 	}
-	// restic lists a shared repository under this server's host alone.
+	return slices.DeleteFunc(snaps, func(sn restic.Snapshot) bool { return !selects(mode, sn) }), nil
+}
+
+// selects reports whether restic under mode lists sn and ages it: in a shared
+// repository only the snapshots of the mode's host, elsewhere every one but a
+// guest's.
+func selects(mode restic.Mode, sn restic.Snapshot) bool {
 	if mode.Sharing != restic.SharingNone {
-		host := cmp.Or(mode.Host, restic.LegacyHost)
-		snaps = slices.DeleteFunc(snaps, func(sn restic.Snapshot) bool { return sn.Hostname != host })
+		return sn.Hostname == cmp.Or(mode.Host, restic.LegacyHost)
 	}
-	return snaps, nil
+	return !slices.Contains(mode.Guests, sn.Hostname)
 }
 
 func (e *placementEngine) SnapshotsOfEveryHost(ctx context.Context, repo string, mode restic.Mode) ([]restic.Snapshot, error) {
@@ -703,18 +710,22 @@ func (e *placementEngine) Copy(_ context.Context, dest, src string, ids []string
 
 // ForgetPolicy keeps the newest KeepLast snapshots carrying one of the tags, as
 // one group, and records the rest of the policy; without a tag it only records.
-func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, _ restic.Mode, tags []string, prune bool) error {
+func (e *placementEngine) ForgetPolicy(_ context.Context, repo string, p restic.RetentionPolicy, mode restic.Mode, tags []string, prune bool) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	key := filepath.ToSlash(repo)
 	tags = slices.Clone(tags)
-	e.forgets = append(e.forgets, forgetCall{Repo: key, Tags: tags, Policy: p, Prune: prune})
+	call := forgetCall{Repo: key, Tags: tags, Policy: p, Prune: prune}
+	if mode.Sharing != restic.SharingNone {
+		call.Host = mode.Host
+	}
+	e.forgets = append(e.forgets, call)
 	if len(tags) == 0 || p.KeepLast == 0 {
 		return nil
 	}
 	var mine []restic.Snapshot
 	for _, sn := range e.snaps[key] {
-		if slices.ContainsFunc(tags, func(t string) bool { return slices.Contains(sn.Tags, t) }) {
+		if selects(mode, sn) && slices.ContainsFunc(tags, func(t string) bool { return slices.Contains(sn.Tags, t) }) {
 			mine = append(mine, sn)
 		}
 	}

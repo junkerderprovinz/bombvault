@@ -28,15 +28,7 @@ func (s *Service) pruneNodeSection(ctx context.Context, n store.Node, domain str
 	if err != nil {
 		return err
 	}
-	p := keepPolicy(namedRepoKeep(settings, domain))
-	if n.Placement == nodePlaceLocation {
-		if d, found, err := s.store.GetDestination(n.PlacementTarget); err == nil && found && keepPolicy(targetKeep(d)).Any() {
-			p = keepPolicy(targetKeep(d))
-		}
-	}
-	// Everything in the repository is the node's own, so a direct snapshot of
-	// it ages with the rest.
-	p.Direct = true
+	p := s.nodeKeepPolicy(settings, n, domain)
 	if !p.Any() {
 		return nil
 	}
@@ -48,6 +40,22 @@ func (s *Service) pruneNodeSection(ctx context.Context, n store.Node, domain str
 		return err
 	}
 	return s.pruneNodeRepo(ctx, rr, restickey.Host(appKey), p)
+}
+
+// nodeKeepPolicy is the keep rule of section domain of n: the rule of the
+// storage location its backups lie at, or home's own rule for the section.
+// Its copies off site age by it too.
+func (s *Service) nodeKeepPolicy(settings store.Settings, n store.Node, domain string) restic.RetentionPolicy {
+	p := keepPolicy(namedRepoKeep(settings, domain))
+	if n.Placement == nodePlaceLocation {
+		if d, found, err := s.store.GetDestination(n.PlacementTarget); err == nil && found && keepPolicy(targetKeep(d)).Any() {
+			p = keepPolicy(targetKeep(d))
+		}
+	}
+	// Everything under the node's host is the node's own, so a direct
+	// snapshot of it ages with the rest.
+	p.Direct = true
+	return p
 }
 
 func (s *Service) pruneNodeRepo(ctx context.Context, rr store.ReceivedRepo, host string, p restic.RetentionPolicy) error {
