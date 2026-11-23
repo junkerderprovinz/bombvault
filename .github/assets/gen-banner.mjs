@@ -1,13 +1,14 @@
 /**
  * Writes bombvault-banner.svg and bombvault-banner-dark.svg: the logo from
- * icon.svg on the left, the name in Bree Serif and the claim in Lato on the
+ * icon.svg on the left, the name in Bree Serif Light and the claim in Bree Light on the
  * right. opentype.js converts the text to paths, so the SVGs need no font and
  * render the same in resvg and in a browser. gen-assets.mjs turns them into
  * PNGs.
  *
- * Needs `npm i -g opentype.js`. The fonts are downloaded to the OS temp dir.
+ * Needs `npm i -g opentype.js` and the house fonts as TTF in HOUSE_FONTS
+ * (default %LOCALAPPDATA%\halleluja-fonts).
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
@@ -33,24 +34,10 @@ const LS = LH / LOGO_H;
 const LW = LOGO_W * LS;
 const nameSize = 132, claimSize = 44, gap = 70, lineGap = 8;
 
-const fontPath = join(tmpdir(), "BombVault-BreeSerif-Regular.ttf");
-if (!existsSync(fontPath)) {
-  const url =
-    "https://github.com/google/fonts/raw/main/ofl/breeserif/BreeSerif-Regular.ttf";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`font fetch ${res.status}`);
-  writeFileSync(fontPath, Buffer.from(await res.arrayBuffer()));
-}
-const font = opentype.parse(readFileSync(fontPath));
-
-// Lato for the claim, as on the other Bree Serif banners.
-const claimFontPath = join(tmpdir(), "BombVault-Lato-Regular.ttf");
-if (!existsSync(claimFontPath)) {
-  const r = await fetch("https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf");
-  if (!r.ok) throw new Error(`claim font fetch ${r.status}`);
-  writeFileSync(claimFontPath, Buffer.from(await r.arrayBuffer()));
-}
-const claimFont = opentype.parse(readFileSync(claimFontPath));
+// The house typeface is licensed, so it is read from a local folder and never committed.
+const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
+const font = opentype.parse(readFileSync(join(fonts, "bree-serif-light.ttf")).buffer);
+const claimFont = opentype.parse(readFileSync(join(fonts, "bree-light.ttf")).buffer);
 
 const nameW = font.getAdvanceWidth(NAME, nameSize);
 const claimW = claimFont.getAdvanceWidth(CLAIM, claimSize);
