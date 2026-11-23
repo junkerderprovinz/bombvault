@@ -4100,6 +4100,18 @@ ALTER TABLE nodes ADD COLUMN placement_sign_in TEXT NOT NULL DEFAULT '';`,
 		alreadySatisfied: columnPresent("nodes", "records_enc"),
 		sql:              `ALTER TABLE nodes ADD COLUMN records_enc BLOB NOT NULL DEFAULT x'';`,
 	},
+	{
+		// A node's backups can follow home's off-site copies. The hosts of
+		// those copies outlive the node, since its copies stay where they went.
+		version:          nodeCopyOnwardMigration,
+		name:             "nodes_copy_onward",
+		alreadySatisfied: tablePresent("onward_hosts"),
+		sql: `ALTER TABLE nodes ADD COLUMN copy_onward INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS onward_hosts (
+	host    TEXT PRIMARY KEY,
+	node_id TEXT NOT NULL
+);`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4819,6 +4831,10 @@ const nodeAdoptAgainMigration = 994
 
 // nodeRecordsMigration numbers the records home keeps of each node.
 const nodeRecordsMigration = 995
+
+// nodeCopyOnwardMigration numbers which nodes home copies onward and the
+// hosts their copies carry.
+const nodeCopyOnwardMigration = 996
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

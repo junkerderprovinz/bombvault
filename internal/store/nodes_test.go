@@ -340,3 +340,37 @@ func TestHomeCountsWhatTheReceiverWatchRaisedAboutANodesRepositories(t *testing.
 		t.Errorf("alerts about a node without repositories = %d %v", n, err)
 	}
 }
+
+func TestHomeRemembersTheHostOfANodeItCopiesOnwardAfterTheNodeIsGone(t *testing.T) {
+	r := newRepo(t)
+	if err := r.AddNode(store.Node{ID: "aa", Name: "vps", AppKeyEnc: []byte{1}, RelayMode: "project", CreatedAt: 10}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.CopyOnward {
+		t.Fatal("a new node copies onward")
+	}
+	if err := r.SetNodeCopyOnward("aa", true, "bv-aaaaaaaaaaaa"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); !got.CopyOnward {
+		t.Error("the switch did not stay on")
+	}
+	if err := r.SetNodeCopyOnward("aa", false, "bv-aaaaaaaaaaaa"); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := r.GetNode("aa"); got.CopyOnward {
+		t.Error("the switch did not go off")
+	}
+	if err := r.DeleteNode("aa"); err != nil {
+		t.Fatal(err)
+	}
+	if hosts, err := r.OnwardHosts(); err != nil || len(hosts) != 1 || hosts[0] != "bv-aaaaaaaaaaaa" {
+		t.Errorf("hosts = %v, %v, want the node's, whose copies still lie off site", hosts, err)
+	}
+	if err := r.SetNodeCopyOnward("bb", true, "bv-bbbbbbbbbbbb"); !errors.Is(err, store.ErrNodeNotFound) {
+		t.Errorf("a node that is not there: %v", err)
+	}
+	if hosts, _ := r.OnwardHosts(); len(hosts) != 1 {
+		t.Errorf("hosts = %v, want none for a node that is not there", hosts)
+	}
+}

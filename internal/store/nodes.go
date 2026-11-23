@@ -47,6 +47,9 @@ type Node struct {
 	// PrunedWindow is when the last prune window opened that home pruned the
 	// node's repositories in.
 	PrunedWindow int64
+	// CopyOnward says home copies the node's backups to its own off-site
+	// targets along with its own.
+	CopyOnward bool
 }
 
 // Cadence is when home starts the backups of section domain on the node.
@@ -87,22 +90,23 @@ const NodeReleasing = "releasing"
 var ErrNodeNotFound = errors.New("no such node")
 
 const nodeCols = `id, name, app_key_enc, relay_mode, relay_url, created_at, adopted_at, state, placement, placement_due, placement_target,
-	containers_cadence, files_cadence, containers_started_at, files_started_at, seen_at, pruned_window, adoption_due, placement_sign_in`
+	containers_cadence, files_cadence, containers_started_at, files_started_at, seen_at, pruned_window, adoption_due, placement_sign_in, copy_onward`
 
 func scanNode(row interface{ Scan(...any) error }) (Node, error) {
 	var n Node
-	var due, adoptionDue int
+	var due, adoptionDue, onward int
 	err := row.Scan(&n.ID, &n.Name, &n.AppKeyEnc, &n.RelayMode, &n.RelayURL, &n.CreatedAt, &n.AdoptedAt, &n.State, &n.Placement, &due, &n.PlacementTarget,
-		&n.ContainersCadence, &n.FilesCadence, &n.ContainersStartedAt, &n.FilesStartedAt, &n.SeenAt, &n.PrunedWindow, &adoptionDue, &n.PlacementSignIn)
-	n.PlacementDue, n.AdoptionDue = due != 0, adoptionDue != 0
+		&n.ContainersCadence, &n.FilesCadence, &n.ContainersStartedAt, &n.FilesStartedAt, &n.SeenAt, &n.PrunedWindow, &adoptionDue, &n.PlacementSignIn, &onward)
+	n.PlacementDue, n.AdoptionDue, n.CopyOnward = due != 0, adoptionDue != 0, onward != 0
 	return n, err
 }
 
 // AddNode stores a new node.
 func (r *Repo) AddNode(n Node) error {
-	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	if _, err := r.db.Exec(`INSERT INTO nodes (`+nodeCols+`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		n.ID, n.Name, n.AppKeyEnc, n.RelayMode, n.RelayURL, n.CreatedAt, n.AdoptedAt, n.State, n.Placement, boolInt(n.PlacementDue), n.PlacementTarget,
-		n.ContainersCadence, n.FilesCadence, n.ContainersStartedAt, n.FilesStartedAt, n.SeenAt, n.PrunedWindow, boolInt(n.AdoptionDue), n.PlacementSignIn); err != nil {
+		n.ContainersCadence, n.FilesCadence, n.ContainersStartedAt, n.FilesStartedAt, n.SeenAt, n.PrunedWindow, boolInt(n.AdoptionDue), n.PlacementSignIn,
+		boolInt(n.CopyOnward)); err != nil {
 		return fmt.Errorf("AddNode: %w", err)
 	}
 	return nil
@@ -270,6 +274,51 @@ func (r *Repo) SetNodeSeen(id string, at int64) error {
 // repositories in.
 func (r *Repo) SetNodePruned(id string, window int64) error {
 	return r.updateNode(`UPDATE nodes SET pruned_window = ? WHERE id = ?`, window, id)
+}
+
+// SetNodeCopyOnward records whether home copies the node's backups onward. A
+// node switched on leaves its host for good, since its copies outlive it.
+func (r *Repo) SetNodeCopyOnward(id string, on bool, host string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("SetNodeCopyOnward: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // a no-op once committed
+	res, err := tx.Exec(`UPDATE nodes SET copy_onward = ? WHERE id = ?`, boolInt(on), id)
+	if err != nil {
+		return fmt.Errorf("SetNodeCopyOnward: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNodeNotFound
+	}
+	if on {
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO onward_hosts (host, node_id) VALUES (?, ?)`, host, id); err != nil {
+			return fmt.Errorf("SetNodeCopyOnward: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("SetNodeCopyOnward: %w", err)
+	}
+	return nil
+}
+
+// OnwardHosts are the hosts of every node home ever copied onward, whose
+// snapshots at home's off-site targets are not home's own.
+func (r *Repo) OnwardHosts() ([]string, error) {
+	rows, err := r.db.Query(`SELECT host FROM onward_hosts ORDER BY host`)
+	if err != nil {
+		return nil, fmt.Errorf("OnwardHosts: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // read-only cursor
+	var out []string
+	for rows.Next() {
+		var host string
+		if err := rows.Scan(&host); err != nil {
+			return nil, fmt.Errorf("OnwardHosts: %w", err)
+		}
+		out = append(out, host)
+	}
+	return out, rows.Err()
 }
 
 // DeleteNode forgets a node with what home learned of its runs.
