@@ -120,6 +120,21 @@ Il nodo tiene i backup da sé, dietro un proprio rest-server in modalità append
 
 L'istanza madre preleva una sezione subito dopo la fine dei backup del nodo per quella sezione, e come riserva ogni ora e un quarto, anche con **Prelievo** disattivato. Ciò che l'istanza madre ha prelevato resta presso di lei come ogni [copia prelevata](offsite-recovery.md#receiver), anche dopo che il nodo non c'è più. Il nodo pota i propri repository quando l'istanza madre glielo chiede, perché il suo rest-server non accetta eliminazioni, e i suoi set di cartelle lasciano fuori la cartella `bombvault-node`, così non fa mai il backup dei propri backup.
 
+### Copie off-site con quelle dell'istanza madre {#copy-onward}
+
+Attiva **Copia off-site con i backup di questa istanza** nel passaggio **Backup** o in **Cambia destinazione**, e l'istanza madre copia i container e i set di cartelle del nodo nelle destinazioni in cui copia i propri Container e Cartelle, con la stessa pianificazione. Per questo il nodo non ha bisogno di una cartella né di una pianificazione di copia propria. In **Cambia destinazione** l'interruttore ha effetto subito.
+
+- Le copie stanno negli stessi repository delle copie dell'istanza madre, sotto l'host del nodo. Le regole dell'istanza madre per la destinazione non le toccano, e l'istanza madre le conserva secondo la regola del nodo, la stessa con cui [pota i backup del nodo](#schedule).
+- L'istanza madre legge i repository del nodo con la propria chiave e scrive con le proprie credenziali per la destinazione. Il nodo non riceve nuove credenziali, e il server ricevente resta append-only. Per un nodo che tiene i backup da sé, l'istanza madre copia ciò che ha prelevato.
+- I repository del nodo hanno impostazioni del chunker proprie, quindi le loro copie condividono pochi dati con quelle dell'istanza madre nella destinazione.
+- In una destinazione append-only non viene potato nulla, come per le copie proprie dell'istanza madre. Un [repository condiviso](offsite-recovery.md#shared-repository) non riceve copie di un nodo, perché il suo proprietario lo pota secondo le regole dei server del gruppo.
+- La scheda mostra **Le copie vanno a** e le destinazioni. Una copia che non riesce conta come errore sulla scheda e manda un avviso, vedi [Tenere d'occhio i nodi](#watch).
+- Con l'interruttore disattivato, l'istanza madre non copia più nulla. Le copie già presenti restano, e le regole dell'istanza madre continuano a non toccarle.
+
+#### Esempio: un VPS copiato su B2 con i container dell'istanza madre {#example-copy-onward}
+
+`tower` tiene 7 backup di ogni container in **Per quanto tempo conservare** e copia i suoi Container in un bucket B2 ogni notte alle 04:00. Il bucket tiene gli ultimi 14. `vps-helsinki` fa il backup sul server ricevente di tower, dove i suoi backup vengono potati secondo gli stessi 7. Con l'interruttore attivo, tower copia alle 04:00 anche i container del VPS nel bucket. Il bucket contiene allora 14 backup di tower per ogni container e 7 per ciascuno di quelli del VPS.
+
 ## Quando fanno il backup i nodi {#schedule}
 
 L'istanza madre gestisce la pianificazione di ogni nodo. La scheda mostra un piano per sezione, come **Container** *Ogni giorno alle 2:00* e **Cartelle** *Settimanale (dom) alle 4:00*. Un clic apre lo stesso editor di [Pianificazioni](schedules.md#plans), e una modifica viene salvata subito.
@@ -143,6 +158,7 @@ L'istanza madre manda un avviso per episodio attraverso i suoi [canali di notifi
 
 - **Un backup non è riuscito**, per esempio *BombVault: vps-helsinki: backup failed*, con l'elemento e il motivo. Un backup successivo di quell'elemento che va a buon fine chiude l'episodio.
 - **Il nodo non è raggiungibile**, per esempio *BombVault: vps-helsinki is out of reach*. L'istanza madre aspetta quanto l'interruttore dell'uomo morto più breve tra i repository del nodo, 26 ore se non lo cambi, oppure 6 ore finché il nodo non ha ancora una destinazione.
+- **Una copia off-site non è riuscita**, per esempio *BombVault: vps-helsinki: off-site copy failed*, quando l'istanza madre non è riuscita a copiare i backup del nodo in una delle sue destinazioni. La copia successiva che va a buon fine chiude l'episodio.
 
 Il monitoraggio del ricevitore dell'istanza madre si occupa anche di ogni repository di un nodo, con un interruttore dell'uomo morto e un `restic check` giornaliero alle 04:00, vedi [Ricevitore e prelevatore](offsite-recovery.md#receiver).
 

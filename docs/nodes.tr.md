@@ -120,6 +120,21 @@ Düğüm yedeklerini, append-only kipte kendi rest-server'ının arkasında kend
 
 Ana örnek bir bölümü, düğümdeki yedekleri biter bitmez çeker, yedek olarak da her saat başını çeyrek geçe, **Çekme** kapalıyken bile. Ana örneğin çektikleri, düğüm gittikten sonra bile her [çekilen kopya](offsite-recovery.md#receiver) gibi ana örnekte kalır. Rest-server'ı silme kabul etmediği için düğüm kendi depolarını ana örnek istediğinde kendisi toparlar, klasör kümeleri de `bombvault-node` klasörünü dışarıda bırakır, böylece kendi yedeklerini asla yedeklemez.
 
+### Ana örneğinkilerle site dışı kopyalar {#copy-onward}
+
+**Bu örneğin yedekleriyle birlikte dış konuma kopyala** seçeneğini **Yedekler** adımında ya da **Hedefi değiştir** altında aç, ana örnek de düğümün konteynerlerini ve klasör kümelerini, kendi Konteynerler ve Klasörler bölümlerinin kopyaladığı hedeflere aynı planla kopyalar. Düğümün bunun için kendine ait bir klasöre ve kopya planına ihtiyacı yoktur. **Hedefi değiştir** altında seçenek hemen etkili olur.
+
+- Kopyalar, ana örneğin kopyalarıyla aynı depolarda, düğümün host'u altında durur. Ana örneğin hedefteki kuralları onlara dokunmaz, ana örnek de onları düğümün kuralına göre saklar, yani [düğümün yedeklerini toparlarken](#schedule) kullandığı kurala göre.
+- Ana örnek düğümün depolarını kendi anahtarıyla okur ve hedef için kendi oturum açma bilgisiyle yazar. Düğüm yeni bir kimlik bilgisi almaz ve alıcı sunucu append-only kalır. Yedeklerini kendisi tutan bir düğüm için ana örnek, çektiğini kopyalar.
+- Düğümün depoları kendi chunker ayarlarını kullanır, bu yüzden kopyaları hedefte ana örneğinkilerle çok az veri paylaşır.
+- Append-only bir hedefte, ana örneğin kendi kopyalarında olduğu gibi hiçbir şey budanmaz. Bir [ortak depo](offsite-recovery.md#shared-repository) düğüm kopyası almaz, çünkü sahibi onu grubun sunucularının kurallarına göre budar.
+- Kart **Kopyaların gittiği yer** ve hedefleri gösterir. Başarısız olan bir kopya kartta hata sayılır ve bir uyarı gönderir, bkz. [Düğümleri izlemek](#watch).
+- Kapatılınca ana örnek artık hiçbir şey kopyalamaz. Zaten orada olan kopyalar kalır ve ana örneğin kuralları onlara yine dokunmaz.
+
+#### Örnek: ana örneğin konteynerleriyle B2'ye kopyalanan bir VPS {#example-copy-onward}
+
+`tower` **Ne kadar saklanır** altında her konteynerin 7 yedeğini tutar ve Konteynerler bölümünü her gece 04:00'te bir B2 bucket'ına kopyalar. Bucket son 14'ü tutar. `vps-helsinki` tower'ın alıcı sunucusuna yedekler, orada yedekleri aynı 7'ye göre budanır. Seçenek açıkken tower 04:00'te VPS'in konteynerlerini de bucket'a kopyalar. Bucket'ta artık tower'ın her konteyner için 14 yedeği ve VPS'in her konteyneri için 7 yedeği vardır.
+
 ## Düğümler ne zaman yedekler {#schedule}
 
 Her düğümün zamanlaması ana örneğe aittir. Kart her bölüm için bir plan gösterir, örneğin **Konteynerler** *her gün 2:00'de* ve **Klasörler** *haftalık (Paz) 4:00'te*. Tıklamak, [Zamanlamalar](schedules.md#plans) altındakiyle aynı düzenleyiciyi açar ve değişiklik hemen kaydedilir.
@@ -143,6 +158,7 @@ Ana örnek, [bildirim kanalları](notifications.md) üzerinden her olay için bi
 
 - **Bir yedek başarısız oldu**, örneğin *BombVault: vps-helsinki: backup failed*, öge ve nedeniyle. O ögenin sonraki başarılı bir yedeği olayı bitirir.
 - **Düğüme ulaşılamıyor**, örneğin *BombVault: vps-helsinki is out of reach*. Ana örnek, düğümün depolarındaki en kısa ölü adam anahtarı kadar bekler, değiştirmezsen 26 saat, düğümün henüz hedefi yokken 6 saat.
+- **Bir site dışı kopya başarısız oldu**, örneğin *BombVault: vps-helsinki: off-site copy failed*, ana örnek düğümün yedeklerini kendi hedeflerinden birine kopyalayamadığında. Başarılı olan bir sonraki kopya olayı bitirir.
 
 Ana örneğin alıcı izlemesi, düğümün her deposuna da bir ölü adam anahtarı ve 04:00'te günlük bir `restic check` ile göz kulak olur, bkz. [Alıcı ve çeken](offsite-recovery.md#receiver).
 

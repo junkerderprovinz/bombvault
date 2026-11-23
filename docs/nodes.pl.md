@@ -120,6 +120,21 @@ Węzeł sam trzyma swoje kopie za własnym rest-serverem w trybie append-only, a
 
 Instancja domowa pobiera sekcję zaraz po zakończeniu jej kopii na węźle, a awaryjnie co godzinę, kwadrans po pełnej, także przy wyłączonym **Pobieranie**. To, co instancja domowa pobrała, zostaje na instancji domowej jak każda [pobrana kopia](offsite-recovery.md#receiver), nawet gdy węzła już nie ma. Węzeł sam porządkuje swoje repozytoria, gdy instancja domowa o to poprosi, bo jego rest-server nie przyjmuje usunięć, a jego zestawy folderów pomijają folder `bombvault-node`, więc nigdy nie kopiuje własnych kopii.
 
+### Kopie poza siedzibą razem z kopiami instancji domowej {#copy-onward}
+
+Włącz **Kopiuj poza siedzibę razem z kopiami tej instancji** w kroku **Kopie zapasowe** albo w **Zmień miejsce docelowe**, a instancja domowa kopiuje kontenery i zestawy folderów węzła do tych miejsc docelowych, do których kopiują jej własne sekcje Containers i Foldery, według tego samego planu. Węzeł nie potrzebuje do tego własnego folderu ani własnego planu kopii. W **Zmień miejsce docelowe** przełącznik działa od razu.
+
+- Kopie leżą w tych samych repozytoriach co kopie instancji domowej, pod hostem węzła. Reguły instancji domowej w tym miejscu ich nie ruszają, a instancja domowa przechowuje je według reguły węzła, tej samej, według której [porządkuje kopie węzła](#schedule).
+- Instancja domowa czyta repozytoria węzła własnym kluczem i zapisuje z własnymi danymi logowania do tego miejsca. Węzeł nie dostaje nowych danych logowania, a serwer odbiorczy zostaje w trybie append-only. Przy węźle, który sam trzyma swoje kopie, instancja domowa kopiuje to, co pobrała.
+- Repozytoria węzła mają własne ustawienia chunkera, więc ich kopie dzielą w tym miejscu niewiele danych z kopiami instancji domowej.
+- W miejscu append-only nic się nie starzeje, tak jak przy własnych kopiach instancji domowej. [Wspólne repozytorium](offsite-recovery.md#shared-repository) nie dostaje kopii węzła, bo jego właściciel porządkuje je według reguł serwerów grupy.
+- Karta pokazuje **Kopie trafiają do** i miejsca docelowe. Nieudana kopia jest błędem na karcie i wysyła alert, zobacz [Pilnowanie węzłów](#watch).
+- Po wyłączeniu instancja domowa nic już nie kopiuje. Kopie, które już są, zostają, a reguły instancji domowej nadal ich nie ruszają.
+
+#### Przykład: VPS kopiowany do B2 razem z kontenerami instancji domowej {#example-copy-onward}
+
+`tower` trzyma w **Jak długo przechowywać** 7 kopii każdego kontenera i co noc o 04:00 kopiuje swoją sekcję Containers do bucketu B2. Bucket trzyma ostatnie 14. `vps-helsinki` robi kopie na serwer odbiorczy `tower`, gdzie jego kopie starzeją się według tych samych 7. Z włączonym przełącznikiem `tower` o 04:00 kopiuje do bucketu także kontenery VPS. Bucket ma wtedy 14 kopii każdego kontenera `tower` i 7 każdego kontenera VPS.
+
 ## Kiedy węzły robią kopie {#schedule}
 
 Harmonogramem każdego węzła zarządza instancja domowa. Karta pokazuje plan dla każdej sekcji, na przykład **Containers** *codziennie o 2:00* i **Foldery** *co tydzień (nd) o 4:00*. Kliknięcie otwiera ten sam edytor co w [Harmonogramy](schedules.md#plans), a zmiana zapisuje się od razu.
@@ -143,6 +158,7 @@ Instancja domowa wysyła jeden alert na epizod przez swoje [kanały powiadomień
 
 - **Kopia się nie udała**, na przykład *BombVault: vps-helsinki: backup failed*, z elementem i przyczyną. Epizod kończy późniejsza udana kopia tego elementu.
 - **Węzeł jest poza zasięgiem**, na przykład *BombVault: vps-helsinki is out of reach*. Instancja domowa czeka tyle, ile wynosi najkrótszy wyłącznik martwego człowieka na repozytoriach węzła, czyli 26 godzin, jeśli tego nie zmienisz, albo 6 godzin, dopóki węzeł nie ma jeszcze miejsca docelowego.
+- **Kopia poza siedzibą się nie udała**, na przykład *BombVault: vps-helsinki: off-site copy failed*, gdy instancja domowa nie mogła skopiować kopii węzła do jednego ze swoich miejsc docelowych. Epizod kończy następna kopia, która się uda.
 
 Nadzór odbiornika na instancji domowej obejmuje też każde repozytorium węzła, z wyłącznikiem martwego człowieka i codziennym `restic check` o 04:00, zobacz [Odbiornik i pobierający](offsite-recovery.md#receiver).
 

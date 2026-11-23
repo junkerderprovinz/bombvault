@@ -120,6 +120,21 @@ El nodo guarda sus copias él mismo, detrás de su propio rest-server en modo ap
 
 La instancia base recoge una sección justo cuando terminan las copias del nodo de esa sección, y como respaldo cada hora y cuarto, también con **Recogida** desactivada. Lo que la instancia base ha recogido se queda con ella como cualquier [copia recogida](offsite-recovery.md#receiver), incluso cuando el nodo ya no existe. El nodo poda sus propios repositorios cuando la instancia base se lo pide, ya que su rest-server no acepta borrados, y sus conjuntos de carpetas dejan fuera la carpeta `bombvault-node`, para que nunca copie sus propias copias.
 
+### Copias externas con las de la instancia base {#copy-onward}
+
+Activa **Copiar fuera del sitio con las copias de esta instancia** en el paso **Copias** o en **Cambiar destino**, y la instancia base copia los contenedores y los conjuntos de carpetas del nodo a los destinos a los que copian sus propios Contenedores y Carpetas, con el mismo plan. El nodo no necesita para ello una carpeta propia ni un plan de copia propio. En **Cambiar destino** el interruptor surte efecto al momento.
+
+- Las copias están en los mismos repositorios que las copias de la instancia base, bajo el host del nodo. Las reglas de la instancia base en el destino no las tocan, y la instancia base las conserva según la regla del nodo, la misma con la que [poda las copias del nodo](#schedule).
+- La instancia base lee los repositorios del nodo con su propia clave y escribe con su propio acceso al destino. El nodo no recibe credenciales nuevas, y el servidor receptor sigue en modo append-only. Para un nodo que guarda sus copias él mismo, la instancia base copia lo que ha recogido.
+- Los repositorios del nodo tienen ajustes de chunker propios, así que sus copias comparten pocos datos con las de la instancia base en el destino.
+- En un destino append-only no se poda nada, igual que con las copias propias de la instancia base. Un [repositorio compartido](offsite-recovery.md#shared-repository) no recibe copias de un nodo, porque su propietario lo poda según las reglas de los servidores del grupo.
+- La tarjeta muestra **Las copias van a** y los destinos. Una copia que falla cuenta como error en la tarjeta y envía una alerta, consulta [Vigilar tus nodos](#watch).
+- Desactivado, la instancia base ya no copia nada. Las copias que ya existen se quedan, y las reglas de la instancia base siguen sin tocarlas.
+
+#### Ejemplo: un VPS copiado a B2 con los contenedores de la instancia base {#example-copy-onward}
+
+`tower` conserva 7 copias de cada contenedor en **Cuánto tiempo conservar** y copia sus Contenedores a un bucket de B2 cada noche a las 04:00. El bucket conserva las últimas 14. `vps-helsinki` copia al servidor receptor de `tower`, donde sus copias se podan según las mismas 7. Con el interruptor activado, `tower` copia también los contenedores del VPS al bucket a las 04:00. El bucket guarda entonces 14 copias de cada contenedor de `tower` y 7 de cada contenedor del VPS.
+
 ## Cuándo copian los nodos {#schedule}
 
 La instancia base lleva el calendario de cada nodo. La tarjeta muestra un plan por sección, como **Contenedores** *Diario a las 2:00* y **Carpetas** *Semanal (dom) a las 4:00*. Un clic abre el mismo editor que en [Calendarios](schedules.md#plans), y un cambio se guarda al momento.
@@ -143,6 +158,7 @@ La instancia base envía una alerta por episodio a través de sus [canales de no
 
 - **Ha fallado una copia**, por ejemplo *BombVault: vps-helsinki: backup failed*, con el elemento y el motivo. Una copia posterior de ese elemento que salga bien termina el episodio.
 - **El nodo está fuera de alcance**, por ejemplo *BombVault: vps-helsinki is out of reach*. La instancia base espera lo que marque el interruptor de hombre muerto más corto de los repositorios del nodo, 26 horas si no lo cambias, o 6 horas mientras el nodo todavía no tiene destino.
+- **Ha fallado una copia externa**, por ejemplo *BombVault: vps-helsinki: off-site copy failed*, cuando la instancia base no ha podido copiar las copias del nodo a uno de sus destinos. La siguiente copia que sale bien termina el episodio.
 
 La supervisión del receptor de la instancia base también cuida de cada repositorio de un nodo, con un interruptor de hombre muerto y un `restic check` diario a las 04:00, consulta [Receptor y recolector](offsite-recovery.md#receiver).
 

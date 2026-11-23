@@ -120,6 +120,21 @@ Solmu säilyttää varmuuskopionsa itse oman rest-serverinsä takana append-only
 
 Kotiinstanssi hakee osion heti, kun solmun sen osion varmuuskopiot päättyvät, ja varalta joka tunti vartin yli, myös kun **Nouto** on pois päältä. Mitä kotiinstanssi on hakenut, jää kotiinstanssiin kuten mikä tahansa [noudettu kopio](offsite-recovery.md#receiver), myös solmun poistuttua. Solmu siivoaa omat repositorynsa, kun kotiinstanssi pyytää, koska sen rest-server ei ota vastaan poistoja, ja sen kansiojoukot jättävät kansion `bombvault-node` pois, joten se ei koskaan varmuuskopioi omia varmuuskopioitaan.
 
+### Etäkopiot kotiinstanssin kopioiden mukana {#copy-onward}
+
+Kytke **Kopioi muualle tämän instanssin varmuuskopioiden mukana** päälle vaiheessa **Varmuuskopiot** tai kohdassa **Vaihda määränpää**, niin kotiinstanssi kopioi solmun kontit ja kansiojoukot niihin kohteisiin, joihin sen omat Kontit ja Kansiot kopioivat, samalla aikataululla. Solmu ei tarvitse tähän omaa kansiota eikä omaa kopioaikataulua. Kohdassa **Vaihda määränpää** kytkin tulee voimaan heti.
+
+- Kopiot ovat samoissa repositoryissa kuin kotiinstanssin kopiot, solmun isännän alla. Kotiinstanssin säännöt kohteessa jättävät ne rauhaan, ja kotiinstanssi säilyttää ne solmun säännön mukaan, saman, jonka mukaan se [siivoaa solmun varmuuskopiot](#schedule).
+- Kotiinstanssi lukee solmun repositoryt omalla avaimellaan ja kirjoittaa kohteeseen omalla tunnuksellaan. Solmu ei saa uusia tunnuksia, ja vastaanottopalvelin pysyy append-only-tilassa. Solmulle, joka säilyttää varmuuskopionsa itse, kotiinstanssi kopioi sen, mitä se on hakenut.
+- Solmun repositoryilla on omat chunker-asetuksensa, joten niiden kopiot jakavat kohteessa vain vähän dataa kotiinstanssin kopioiden kanssa.
+- Append-only-kohteessa mitään ei siivota, kuten kotiinstanssin omissa kopioissakaan. [Jaettu arkisto](offsite-recovery.md#shared-repository) ei saa solmun kopioita, koska sen omistaja siivoaa sen ryhmän palvelinten sääntöjen mukaan.
+- Kortilla näkyy **Kopioiden kohde** ja kohteet. Epäonnistunut kopio näkyy kortilla virheenä ja lähettää hälytyksen, katso [Solmujen seuraaminen](#watch).
+- Pois päältä kotiinstanssi ei kopioi enää mitään. Jo olemassa olevat kopiot jäävät, ja kotiinstanssin säännöt jättävät ne edelleen rauhaan.
+
+#### Esimerkki: VPS kopioituna B2:een kotiinstanssin konttien kanssa {#example-copy-onward}
+
+`tower` säilyttää kohdassa **Kuinka kauan säilytetään** 7 varmuuskopiota kustakin kontista ja kopioi Konttinsa B2-bucketiin joka yö kello 04.00. Bucket säilyttää viimeiset 14. `vps-helsinki` varmuuskopioi `tower`:n vastaanottopalvelimelle, jossa sen varmuuskopiot siivotaan samojen 7:n mukaan. Kun kytkin on päällä, `tower` kopioi kello 04.00 myös VPS:n kontit bucketiin. Bucketissa on silloin 14 `tower`:n varmuuskopiota kustakin kontista ja 7 kustakin VPS:n kontista.
+
 ## Milloin solmut varmuuskopioivat {#schedule}
 
 Kotiinstanssi omistaa jokaisen solmun aikataulun. Kortti näyttää aikataulun osiota kohti, esimerkiksi **Kontit** *päivittäin kello 2.00* ja **Kansiot** *viikoittain (su) kello 4.00*. Napsautus avaa saman muokkaimen kuin kohdassa [Aikataulut](schedules.md#plans), ja muutos tallentuu heti.
@@ -143,6 +158,7 @@ Kotiinstanssi lähettää yhden hälytyksen jaksoa kohti [ilmoituskanaviensa](no
 
 - **Varmuuskopio epäonnistui**, esimerkiksi *BombVault: vps-helsinki: backup failed*, merkinnän ja syyn kanssa. Saman merkinnän myöhempi onnistunut varmuuskopio päättää jakson.
 - **Solmu ei ole tavoitettavissa**, esimerkiksi *BombVault: vps-helsinki is out of reach*. Kotiinstanssi odottaa solmun repositoryjen lyhimmän kuolleen miehen kytkimen ajan, 26 tuntia, ellet muuta sitä, tai 6 tuntia, kun solmulla ei vielä ole määränpäätä.
+- **Etäkopio epäonnistui**, esimerkiksi *BombVault: vps-helsinki: off-site copy failed*, kun kotiinstanssi ei voinut kopioida solmun varmuuskopioita johonkin kohteistaan. Seuraava onnistunut kopio päättää jakson.
 
 Kotiinstanssin vastaanotinvalvonta seuraa myös jokaista solmun repositorya kuolleen miehen kytkimellä ja päivittäisellä `restic check` -ajolla kello 04.00, katso [Vastaanotin ja noutaja](offsite-recovery.md#receiver).
 

@@ -120,6 +120,21 @@ Noden beholder sikkerhetskopiene sine selv, bak sin egen rest-server i append-on
 
 Hjemmeinstansen henter et område rett etter at nodens sikkerhetskopier av det er ferdige, og som reserve hver time kvart over, også med **Henting** slått av. Det hjemmeinstansen har hentet, blir hos den som enhver [hentet kopi](offsite-recovery.md#receiver), også etter at noden er borte. Noden beskjærer sine egne repositoryer når hjemmeinstansen ber om det, fordi rest-serveren dens ikke tar imot slettinger, og mappesettene dens utelater mappen `bombvault-node`, så den aldri tar sikkerhetskopi av sine egne sikkerhetskopier.
 
+### Eksterne kopier sammen med hjemmeinstansens {#copy-onward}
+
+Slå på **Kopier eksternt sammen med denne instansens sikkerhetskopier** i trinnet **Sikkerhetskopier** eller under **Endre mål**, så kopierer hjemmeinstansen nodens containere og mappesett til de målene som dens egne Kontainere og Mapper kopieres til, etter samme plan. Noden trenger ingen egen mappe og ingen egen kopieringsplan for dette. Under **Endre mål** virker bryteren med en gang.
+
+- Kopiene ligger i de samme repositoryene som hjemmeinstansens kopier, under nodens vert. Hjemmeinstansens regler på målet lar dem være i fred, og hjemmeinstansen beholder dem etter nodens regel, den samme som den [beskjærer nodens sikkerhetskopier](#schedule) etter.
+- Hjemmeinstansen leser nodens repositoryer med sin egen nøkkel og skriver med sine egne påloggingsopplysninger for målet. Noden får ingen nye påloggingsopplysninger, og mottaksserveren forblir append-only. For en node som beholder sikkerhetskopiene sine selv, kopierer hjemmeinstansen det den har hentet.
+- Nodens repositoryer har egne chunker-innstillinger, så kopiene deres deler lite data med hjemmeinstansens på målet.
+- På et append-only-mål beskjæres ingenting, som med hjemmeinstansens egne kopier. Et [felles repositorium](offsite-recovery.md#shared-repository) får ingen kopier av en node, fordi eieren beskjærer det etter reglene til gruppens servere.
+- Kortet viser **Kopier går til** og målene. En kopi som feiler, er en feil på kortet og sender en alarm, se [Følge med på nodene dine](#watch).
+- Slått av kopierer hjemmeinstansen ikke noe mer. Kopiene som allerede finnes, blir værende, og hjemmeinstansens regler lar dem fortsatt være i fred.
+
+#### Eksempel: en VPS kopiert til B2 med hjemmeinstansens containere {#example-copy-onward}
+
+`tower` beholder 7 sikkerhetskopier av hver container under **Hvor lenge det beholdes** og kopierer Kontainere til en B2-bucket hver natt kl. 04:00. Bucketen beholder de siste 14. `vps-helsinki` tar sikkerhetskopi til mottaksserveren til `tower`, der sikkerhetskopiene beskjæres etter de samme 7. Med bryteren på kopierer `tower` også containerne til VPS-en til bucketen kl. 04:00. Bucketen har da 14 sikkerhetskopier av hver container fra `tower` og 7 av hver container fra VPS-en.
+
 ## Når noder tar sikkerhetskopi {#schedule}
 
 Hjemmeinstansen eier tidsplanen til hver node. Kortet viser en plan per område, som **Kontainere** *Daglig kl. 2:00* og **Mapper** *Ukentlig (søn) kl. 4:00*. Et klikk åpner den samme redigereren som under [Tidsplaner](schedules.md#plans), og en endring lagres med en gang.
@@ -143,6 +158,7 @@ Hjemmeinstansen sender én alarm per hendelse gjennom [varslingskanalene](notifi
 
 - **En sikkerhetskopi feilet**, for eksempel *BombVault: vps-helsinki: backup failed*, med elementet og årsaken. En senere sikkerhetskopi av det elementet som lykkes, avslutter hendelsen.
 - **Noden kan ikke nås**, for eksempel *BombVault: vps-helsinki is out of reach*. Hjemmeinstansen venter like lenge som den korteste dødmannsbryteren på repositoryene til noden, 26 timer med mindre du endrer det, eller 6 timer så lenge noden ennå ikke har noe mål.
+- **En ekstern kopi feilet**, for eksempel *BombVault: vps-helsinki: off-site copy failed*, når hjemmeinstansen ikke kunne kopiere nodens sikkerhetskopier til et av sine mål. Den neste kopien som går gjennom, avslutter hendelsen.
 
 Mottakerovervåkingen til hjemmeinstansen passer også på hvert repository for en node, med en dødmannsbryter og en daglig `restic check` kl. 04:00, se [Mottaker og henter](offsite-recovery.md#receiver).
 

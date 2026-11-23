@@ -120,6 +120,21 @@ Der Knoten bewahrt seine Sicherungen selbst auf, hinter einem eigenen rest-serve
 
 Die Heiminstanz holt einen Bereich, sobald der Knoten ihn gesichert hat, und zur Sicherheit zusätzlich jede Stunde um Viertel nach, auch wenn **Holen** ausgeschaltet ist. Was die Heiminstanz geholt hat, bleibt bei ihr wie jede [geholte Kopie](offsite-recovery.md#receiver), auch wenn der Knoten nicht mehr da ist. Der Knoten räumt seine eigenen Repositories auf, wenn die Heiminstanz ihn darum bittet, weil sein rest-server kein Löschen annimmt. Seine Ordner-Sets lassen den Ordner `bombvault-node` aus, damit er nie seine eigenen Sicherungen sichert.
 
+### Off-site-Kopien mit denen der Heiminstanz {#copy-onward}
+
+Schalte im Schritt **Sicherungen** oder unter **Ziel ändern** **Mit den Sicherungen dieser Instanz off-site kopieren** ein, dann kopiert die Heiminstanz die Container und Ordner-Sets des Knotens an die Speicherorte, an die sie ihre eigenen Container und Ordner kopiert, nach demselben Plan. Einen eigenen Ordner oder einen eigenen Kopierplan braucht der Knoten dafür nicht. Unter **Ziel ändern** wirkt der Schalter sofort.
+
+- Die Kopien liegen in denselben Repositories wie die Kopien der Heiminstanz, unter dem Host des Knotens. Die Regeln der Heiminstanz für den Speicherort lassen sie in Ruhe, und die Heiminstanz behält sie nach der Regel des Knotens, nach der sie auch [seine Sicherungen aufräumt](#schedule).
+- Die Heiminstanz liest die Repositories des Knotens mit ihrem eigenen Schlüssel und schreibt mit ihren eigenen Zugangsdaten für den Speicherort. Der Knoten bekommt keine neuen Zugangsdaten, und der Empfangsserver bleibt Append-only. Bei einem Knoten, der seine Sicherungen selbst aufbewahrt, kopiert die Heiminstanz, was sie geholt hat.
+- Die Repositories eines Knotens haben eigene Chunker-Einstellungen, deshalb teilen sich ihre Kopien am Speicherort kaum Daten mit denen der Heiminstanz.
+- An einem Append-only-Speicherort altert nichts, wie bei den eigenen Kopien der Heiminstanz. Ein [geteiltes Repository](offsite-recovery.md#shared-repository) bekommt keine Kopien eines Knotens, weil sein Besitzer es nach den Regeln der Server der Gruppe aufräumt.
+- Die Karte zeigt **Kopien gehen an** und die Speicherorte. Schlägt eine Kopie fehl, zählt das auf der Karte als Fehler, und ein Alarm geht raus, siehe [Deine Knoten im Blick](#watch).
+- Ausgeschaltet kopiert die Heiminstanz nichts mehr. Die Kopien, die schon da sind, bleiben, und die Regeln der Heiminstanz lassen sie weiter in Ruhe.
+
+#### Beispiel: ein VPS mit den Containern der Heiminstanz auf B2 {#example-copy-onward}
+
+`tower` behält unter **Wie lange aufheben** 7 Sicherungen je Container und kopiert seine Container jede Nacht um 04:00 in einen B2-Bucket. Der Bucket behält die letzten 14. `vps-helsinki` sichert auf den Empfangsserver von `tower`, wo seine Sicherungen nach denselben 7 altern. Mit dem Schalter kopiert `tower` um 04:00 auch die Container des VPS in den Bucket. Dort liegen dann 14 Sicherungen je Container von `tower` und 7 je Container des VPS.
+
 ## Wann Knoten sichern {#schedule}
 
 Die Heiminstanz bestimmt den Zeitplan jedes Knotens. Die Karte zeigt einen Plan pro Bereich, etwa **Container** *Täglich um 2:00* und **Ordner** *Wöchentlich (So) um 4:00*. Ein Klick öffnet denselben Editor wie unter [Zeitpläne](schedules.md#plans), und eine Änderung ist sofort gespeichert.
@@ -143,6 +158,7 @@ Die Heiminstanz schickt über ihre [Benachrichtigungskanäle](notifications.md) 
 
 - **Eine Sicherung ist fehlgeschlagen**, etwa *BombVault: vps-helsinki: backup failed*, mit dem Eintrag und dem Grund. Klappt eine spätere Sicherung dieses Eintrags, ist der Vorfall vorbei.
 - **Der Knoten ist nicht erreichbar**, etwa *BombVault: vps-helsinki is out of reach*. Die Heiminstanz wartet so lange, wie der kürzeste Totmannschalter der Repositories des Knotens vorgibt: 26 Stunden, wenn du nichts änderst, oder 6 Stunden, solange der Knoten noch kein Ziel hat.
+- **Eine Off-site-Kopie ist fehlgeschlagen**, etwa *BombVault: vps-helsinki: off-site copy failed*, wenn die Heiminstanz die Sicherungen des Knotens nicht an einen ihrer Speicherorte kopieren konnte. Geht die nächste Kopie durch, ist der Vorfall vorbei.
 
 Die Empfänger-Überwachung der Heiminstanz kümmert sich außerdem um jedes Repository eines Knotens, mit einem Totmannschalter und einem täglichen `restic check` um 04:00, siehe [Empfänger und Abholer](offsite-recovery.md#receiver).
 

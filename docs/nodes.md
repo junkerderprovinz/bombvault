@@ -120,6 +120,21 @@ The node keeps its backups itself, behind a rest-server of its own in append-onl
 
 Home fetches a section right after the node's backups of it end, and every hour at a quarter past as a fallback, also with **Pull** switched off. What home fetched stays with home like any [fetched copy](offsite-recovery.md#receiver), even after the node is gone. The node tidies up its own repositories when home asks, since its rest-server takes no deletes, and its folder sets leave the `bombvault-node` folder out, so it never backs up its own backups.
 
+### Off-site copies with home's {#copy-onward}
+
+Switch on **Copy off site with this instance's backups** in the **Backups** step or under **Edit placement**, and home copies the node's containers and folder sets to the storage locations its own Containers and Folders copy to, on the same plan. The node needs no folder and no copy plan of its own for this. Under **Edit placement** the switch takes effect at once.
+
+- The copies lie in the same repositories as home's copies, under the node's host. Home's rules at the location leave them alone, and home keeps them by the node's rule, the same one it [tidies up the node's backups](#schedule) by.
+- Home reads the node's repositories with its own key and writes with its own sign-in for the location. The node gets no new credentials, and the receiving server stays append-only. For a node that keeps its backups itself, home copies what it fetched.
+- The node's repositories use chunker settings of their own, so their copies share little data with home's at the location.
+- At an append-only location nothing ages, as with home's own copies. A [shared repository](offsite-recovery.md#shared-repository) gets no copies of a node, because its owner ages it by the rules of the group's servers.
+- The card shows **Copies go to** and the locations. A copy that fails is an error on the card and sends an alert, see [Watching your nodes](#watch).
+- Switched off, home copies nothing more. The copies already there stay, and home's rules still leave them alone.
+
+#### Example: a VPS copied to B2 with home's containers {#example-copy-onward}
+
+`tower` keeps 7 backups of each container under **How long to keep** and copies its Containers to a B2 bucket every night at 04:00. The bucket keeps the last 14. `vps-helsinki` backs up to tower's receiving server, where its backups age by the same 7. With the switch on, tower copies the VPS's containers to the bucket at 04:00 as well. The bucket then holds 14 of tower's backups of each container and 7 of each of the VPS's.
+
 ## When nodes back up {#schedule}
 
 Home owns every node's schedule. The card shows a plan per section, such as **Containers** *Daily at 2:00* and **Folders** *Weekly (Sun) at 4:00*. A click opens the same editor as under [Schedules](schedules.md#plans), and a change is saved at once.
@@ -143,6 +158,7 @@ Home sends one alert per episode through its [notification channels](notificatio
 
 - **A backup failed**, such as *BombVault: vps-helsinki: backup failed*, with the entry and the reason. A later backup of that entry that works ends the episode.
 - **The node is out of reach**, such as *BombVault: vps-helsinki is out of reach*. Home waits for the shortest dead man's switch on the node's repositories, 26 hours unless you change it, or 6 hours while the node has no placement yet.
+- **An off-site copy failed**, such as *BombVault: vps-helsinki: off-site copy failed*, when home could not copy the node's backups to one of its storage locations. The next copy that goes through ends the episode.
 
 Home's receiver watch also looks after each repository of a node, with a dead man's switch and a daily `restic check` at 04:00, see [Receiver and fetcher](offsite-recovery.md#receiver).
 

@@ -120,6 +120,21 @@ Uzel si zálohy drží sám, za vlastním rest-serverem v režimu append-only, a
 
 Domovská instance stáhne sekci hned, jak na uzlu skončí její zálohy, a záložně každou hodinu ve čtvrt, i se vypnutým **Stažení**. Co domovská instance stáhla, zůstává u domovské instance jako každá [stažená kopie](offsite-recovery.md#receiver), i když uzel zmizí. Uzel si vlastní repozitáře uklízí, když ho o to domovská instance požádá, protože jeho rest-server mazání nepřijímá, a jeho sady složek vynechávají složku `bombvault-node`, takže nikdy nezálohuje vlastní zálohy.
 
+### Kopie mimo lokalitu spolu s kopiemi domovské instance {#copy-onward}
+
+Zapni **Kopírovat mimo místo spolu se zálohami této instance** v kroku **Zálohy** nebo v **Změnit cíl** a domovská instance bude kopírovat kontejnery a sady složek uzlu do cílů, kam kopíruje své vlastní Kontejnery a Složky, podle stejného plánu. Uzel k tomu nepotřebuje vlastní složku ani vlastní plán kopií. V **Změnit cíl** platí přepínač hned.
+
+- Kopie leží ve stejných repozitářích jako kopie domovské instance, pod hostitelem uzlu. Pravidla domovské instance v cíli je nechávají být a domovská instance je uchovává podle pravidla uzlu, téhož, podle kterého [uklízí zálohy uzlu](#schedule).
+- Domovská instance čte repozitáře uzlu vlastním klíčem a zapisuje vlastním přihlášením k cíli. Uzel nedostane žádné nové přihlašovací údaje a přijímací server zůstává v režimu append-only. U uzlu, který si zálohy drží sám, kopíruje domovská instance to, co stáhla.
+- Repozitáře uzlu mají vlastní nastavení chunkeru, takže jejich kopie v cíli sdílejí s kopiemi domovské instance málo dat.
+- V cíli append-only se nic neuklízí, stejně jako u vlastních kopií domovské instance. [Sdílený repozitář](offsite-recovery.md#shared-repository) žádné kopie uzlu nedostává, protože ho jeho vlastník uklízí podle pravidel serverů skupiny.
+- Karta ukazuje **Kam jdou kopie** a cíle. Kopie, která selže, je na kartě chybou a pošle upozornění, viz [Hlídání uzlů](#watch).
+- Po vypnutí už domovská instance nic nekopíruje. Kopie, které už existují, zůstávají a pravidla domovské instance je dál nechávají být.
+
+#### Příklad: VPS kopírovaný do B2 s kontejnery domovské instance {#example-copy-onward}
+
+`tower` uchovává v **Jak dlouho uchovávat** 7 záloh každého kontejneru a své Kontejnery kopíruje každou noc ve 04:00 do bucketu B2. Bucket uchovává posledních 14. `vps-helsinki` zálohuje na přijímací server `tower`, kde se jeho zálohy uklízejí podle stejných 7. Se zapnutým přepínačem kopíruje `tower` ve 04:00 do bucketu i kontejnery VPS. V bucketu pak je 14 záloh každého kontejneru `tower` a 7 každého kontejneru VPS.
+
 ## Kdy uzly zálohují {#schedule}
 
 Plán každého uzlu patří domovské instanci. Karta ukazuje plán pro každou sekci, například **Kontejnery** *denně ve 2:00* a **Složky** *týdně (ne) ve 4:00*. Klik otevře stejný editor jako v [Plány](schedules.md#plans) a změna se uloží hned.
@@ -143,6 +158,7 @@ Domovská instance pošle přes své [kanály oznámení](notifications.md) jedn
 
 - **Záloha selhala**, například *BombVault: vps-helsinki: backup failed*, s položkou a důvodem. Epizodu ukončí pozdější záloha té položky, která projde.
 - **Uzel je mimo dosah**, například *BombVault: vps-helsinki is out of reach*. Domovská instance počká tak dlouho, kolik činí nejkratší spínač mrtvého muže na repozitářích uzlu, tedy 26 hodin, pokud to nezměníš, nebo 6 hodin, dokud uzel ještě nemá cíl.
+- **Kopie mimo lokalitu selhala**, například *BombVault: vps-helsinki: off-site copy failed*, když domovská instance nemohla zkopírovat zálohy uzlu do některého ze svých cílů. Epizodu ukončí další kopie, která projde.
 
 Sledování přijímače na domovské instanci hlídá i každý repozitář uzlu, se spínačem mrtvého muže a denním `restic check` ve 04:00, viz [Přijímač a stahovač](offsite-recovery.md#receiver).
 

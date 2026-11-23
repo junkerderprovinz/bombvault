@@ -120,6 +120,21 @@ Le nœud garde ses sauvegardes lui-même, derrière son propre rest-server en mo
 
 L'instance d'attache rapatrie une section juste après la fin des sauvegardes du nœud pour cette section, et en secours toutes les heures et quart, même avec **Rapatriement** désactivé. Ce que l'instance d'attache a rapatrié reste chez elle comme toute [copie rapatriée](offsite-recovery.md#receiver), même après le départ du nœud. Le nœud élague ses propres dépôts quand l'instance d'attache le lui demande, puisque son rest-server n'accepte aucune suppression, et ses ensembles de dossiers laissent de côté le dossier `bombvault-node`, pour qu'il ne sauvegarde jamais ses propres sauvegardes.
 
+### Copies hors site avec celles de l'instance d'attache {#copy-onward}
+
+Activez **Copier hors site avec les sauvegardes de cette instance** à l'étape **Sauvegardes** ou sous **Changer la destination**, et l'instance d'attache copie les conteneurs et les ensembles de dossiers du nœud vers les destinations où ses propres Conteneurs et Dossiers se copient, selon le même planning. Le nœud n'a besoin pour cela d'aucun dossier ni d'aucun planning de copie à lui. Sous **Changer la destination**, l'interrupteur prend effet aussitôt.
+
+- Les copies se trouvent dans les mêmes dépôts que les copies de l'instance d'attache, sous l'hôte du nœud. Les règles de l'instance d'attache pour la destination n'y touchent pas, et l'instance d'attache les conserve selon la règle du nœud, celle-là même selon laquelle elle [élague les sauvegardes du nœud](#schedule).
+- L'instance d'attache lit les dépôts du nœud avec sa propre clé et écrit avec ses propres identifiants pour la destination. Le nœud ne reçoit aucun nouvel identifiant, et le serveur récepteur reste en ajout seul. Pour un nœud qui garde ses sauvegardes lui-même, l'instance d'attache copie ce qu'elle a rapatrié.
+- Les dépôts du nœud ont leurs propres réglages de chunker, si bien que leurs copies partagent peu de données avec celles de l'instance d'attache sur la destination.
+- Sur une destination en ajout seul, rien n'est élagué, comme pour les propres copies de l'instance d'attache. Un [dépôt partagé](offsite-recovery.md#shared-repository) ne reçoit aucune copie d'un nœud, car son propriétaire l'élague selon les règles des serveurs du groupe.
+- La carte montre **Les copies vont vers** et les destinations. Une copie qui échoue compte comme une erreur sur la carte et envoie une alerte, voir [Surveiller vos nœuds](#watch).
+- Une fois l'interrupteur désactivé, l'instance d'attache ne copie plus rien. Les copies déjà présentes restent, et les règles de l'instance d'attache n'y touchent toujours pas.
+
+#### Exemple : un VPS copié vers B2 avec les conteneurs de l'instance d'attache {#example-copy-onward}
+
+`tower` garde 7 sauvegardes de chaque conteneur sous **Durée de conservation** et copie ses Conteneurs vers un bucket B2 chaque nuit à 04:00. Le bucket garde les 14 dernières. `vps-helsinki` sauvegarde sur le serveur récepteur de tower, où ses sauvegardes sont élaguées selon les mêmes 7. Avec l'interrupteur activé, tower copie aussi les conteneurs du VPS vers le bucket à 04:00. Le bucket contient alors 14 sauvegardes de tower pour chaque conteneur et 7 pour chacun de ceux du VPS.
+
 ## Quand les nœuds sauvegardent {#schedule}
 
 L'instance d'attache tient le planning de chaque nœud. La carte montre un planning par section, comme **Conteneurs** *Tous les jours à 2:00* et **Dossiers** *Hebdomadaire (dim.) à 4:00*. Un clic ouvre le même éditeur que sous [Plannings](schedules.md#plans), et une modification est enregistrée aussitôt.
@@ -143,6 +158,7 @@ L'instance d'attache envoie une alerte par épisode via ses [canaux de notificat
 
 - **Une sauvegarde a échoué**, par exemple *BombVault: vps-helsinki: backup failed*, avec l'élément et la raison. Une sauvegarde ultérieure de cet élément qui réussit met fin à l'épisode.
 - **Le nœud est injoignable**, par exemple *BombVault: vps-helsinki is out of reach*. L'instance d'attache attend le délai de l'interrupteur d'homme mort le plus court parmi les dépôts du nœud, 26 heures sauf si vous le changez, ou 6 heures tant que le nœud n'a pas encore de destination.
+- **Une copie hors site a échoué**, par exemple *BombVault: vps-helsinki: off-site copy failed*, quand l'instance d'attache n'a pas pu copier les sauvegardes du nœud vers l'une de ses destinations. La prochaine copie qui aboutit met fin à l'épisode.
 
 La surveillance du récepteur de l'instance d'attache s'occupe aussi de chaque dépôt d'un nœud, avec un interrupteur d'homme mort et un `restic check` quotidien à 04:00, voir [Récepteur et rapatrieur](offsite-recovery.md#receiver).
 

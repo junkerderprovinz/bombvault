@@ -120,6 +120,21 @@ O nó guarda ele próprio os seus backups, atrás de um rest-server seu em modo 
 
 A instância base recolhe uma secção logo a seguir ao fim dos backups do nó nessa secção, e como reserva a cada hora e um quarto, mesmo com a **Recolha** desligada. O que a instância base recolheu fica com ela como qualquer [cópia recolhida](offsite-recovery.md#receiver), mesmo depois de o nó desaparecer. O nó poda os seus próprios repositórios quando a instância base lho pede, já que o seu rest-server não aceita eliminações, e os seus conjuntos de pastas deixam de fora a pasta `bombvault-node`, para que nunca faça backup dos seus próprios backups.
 
+### Cópias externas com as da instância base {#copy-onward}
+
+Liga **Copiar para fora do local com os backups desta instância** no passo **Backups** ou em **Alterar destino**, e a instância base copia os containers e os conjuntos de pastas do nó para os destinos para onde copiam os seus próprios Containers e Pastas, no mesmo plano. O nó não precisa de pasta nem de plano de cópia próprios para isto. Em **Alterar destino**, o interruptor tem efeito de imediato.
+
+- As cópias ficam nos mesmos repositórios que as cópias da instância base, sob o host do nó. As regras da instância base nesse destino deixam-nas em paz, e a instância base guarda-as pela regra do nó, a mesma pela qual [poda os backups do nó](#schedule).
+- A instância base lê os repositórios do nó com a sua própria chave e escreve com as suas próprias credenciais para o destino. O nó não recebe credenciais novas, e o servidor recetor continua append-only. Num nó que guarda ele próprio os seus backups, a instância base copia o que recolheu.
+- Os repositórios do nó têm definições de chunker próprias, por isso as suas cópias partilham poucos dados com as da instância base nesse destino.
+- Num destino append-only nada é podado, como nas cópias próprias da instância base. Um [repositório partilhado](offsite-recovery.md#shared-repository) não recebe cópias de um nó, porque o seu dono o poda pelas regras dos servidores do grupo.
+- O cartão mostra **As cópias vão para** e os destinos. Uma cópia que falha é um erro no cartão e envia um alerta, vê [Acompanhar os teus nós](#watch).
+- Desligado, a instância base não copia mais nada. As cópias que já lá estão ficam, e as regras da instância base continuam a deixá-las em paz.
+
+#### Exemplo: um VPS copiado para o B2 com os containers da instância base {#example-copy-onward}
+
+`tower` guarda 7 backups de cada container em **Durante quanto tempo guardar** e copia os seus Containers para um bucket B2 todas as noites às 04:00. O bucket guarda os últimos 14. `vps-helsinki` faz backup para o servidor recetor de `tower`, onde os seus backups são podados pelos mesmos 7. Com o interruptor ligado, `tower` copia às 04:00 também os containers do VPS para o bucket. O bucket tem então 14 backups de cada container de `tower` e 7 de cada container do VPS.
+
 ## Quando os nós fazem backup {#schedule}
 
 A instância base gere o agendamento de cada nó. O cartão mostra um plano por secção, como **Containers** *Diariamente às 2:00* e **Pastas** *Semanal (dom) às 4:00*. Um clique abre o mesmo editor que em [Agendamentos](schedules.md#plans), e uma alteração fica guardada de imediato.
@@ -143,6 +158,7 @@ A instância base envia um alerta por episódio pelos seus [canais de notificaç
 
 - **Um backup falhou**, por exemplo *BombVault: vps-helsinki: backup failed*, com a entrada e o motivo. Um backup posterior dessa entrada que corra bem termina o episódio.
 - **O nó está fora de alcance**, por exemplo *BombVault: vps-helsinki is out of reach*. A instância base espera o tempo do interruptor de homem morto mais curto dos repositórios do nó, 26 horas se não o mudares, ou 6 horas enquanto o nó ainda não tem destino.
+- **Uma cópia externa falhou**, por exemplo *BombVault: vps-helsinki: off-site copy failed*, quando a instância base não conseguiu copiar os backups do nó para um dos seus destinos. A próxima cópia que corra bem termina o episódio.
 
 A monitorização do recetor da instância base trata também de cada repositório de um nó, com um interruptor de homem morto e um `restic check` diário às 04:00, vê [Recetor e recolhedor](offsite-recovery.md#receiver).
 

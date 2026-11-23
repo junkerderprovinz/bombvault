@@ -120,6 +120,21 @@ Nodul își păstrează singur copiile, în spatele unui rest-server propriu în
 
 Instanța-mamă preia o secțiune imediat după ce se termină copiile ei pe nod, iar ca rezervă în fiecare oră, la și un sfert, chiar și cu **Preluare** oprită. Ce a preluat rămâne la instanța-mamă ca orice [copie preluată](offsite-recovery.md#receiver), chiar și după ce nodul dispare. Nodul își curăță singur depozitele când i se cere, pentru că rest-server-ul lui nu acceptă ștergeri, iar seturile lui de foldere lasă deoparte folderul `bombvault-node`, ca să nu-și copieze niciodată propriile copii.
 
+### Copii off-site împreună cu cele ale instanței-mamă {#copy-onward}
+
+Pornește **Copiază în afara locației împreună cu copiile acestei instanțe** la pasul **Copii de rezervă** sau la **Schimbă destinația**, iar instanța-mamă copiază containerele și seturile de foldere ale nodului la destinațiile la care copiază propriile ei Containere și Foldere, după același plan. Nodul nu are nevoie pentru asta de un folder propriu sau de un plan de copiere propriu. La **Schimbă destinația**, comutatorul are efect imediat.
+
+- Copiile stau în aceleași depozite ca și copiile instanței-mamă, sub gazda nodului. Regulile instanței-mamă de la destinație le lasă în pace, iar instanța-mamă le păstrează după regula nodului, aceeași după care [face curățenie în copiile nodului](#schedule).
+- Instanța-mamă citește depozitele nodului cu propria ei cheie și scrie cu propriile ei credențiale pentru destinație. Nodul nu primește credențiale noi, iar serverul receptor rămâne append-only. La un nod care își păstrează singur copiile, instanța-mamă copiază ce a preluat.
+- Depozitele nodului au setări de chunker proprii, așa că copiile lor împart puține date cu cele ale instanței-mamă la destinație.
+- La o destinație append-only nu se face curățenie, ca la copiile proprii ale instanței-mamă. Un [depozit comun](offsite-recovery.md#shared-repository) nu primește copii ale unui nod, pentru că proprietarul lui face curățenie în el după regulile serverelor grupului.
+- Cardul arată **Copiile merg la** și destinațiile. O copie care eșuează este o eroare pe card și trimite o alertă, vezi [Urmărirea nodurilor](#watch).
+- Oprit, instanța-mamă nu mai copiază nimic. Copiile care există deja rămân, iar regulile instanței-mamă le lasă în continuare în pace.
+
+#### Exemplu: un VPS copiat în B2 împreună cu containerele instanței-mamă {#example-copy-onward}
+
+`tower` păstrează la **Cât timp se păstrează** 7 copii ale fiecărui container și își copiază Containerele într-un bucket B2 în fiecare noapte la 04:00. Bucket-ul păstrează ultimele 14. `vps-helsinki` face copii pe serverul receptor al lui `tower`, unde se face curățenie în copiile lui după aceleași 7. Cu comutatorul pornit, `tower` copiază la 04:00 și containerele VPS-ului în bucket. Bucket-ul ține atunci 14 copii ale fiecărui container de pe `tower` și 7 ale fiecărui container al VPS-ului.
+
 ## Când fac nodurile copii {#schedule}
 
 Programarea fiecărui nod este a instanței-mamă. Cardul arată un plan pentru fiecare secțiune, de exemplu **Containere** *zilnic la 2:00* și **Foldere** *săptămânal (dum.) la 4:00*. Un clic deschide același editor ca la [Programări](schedules.md#plans), iar o schimbare se salvează imediat.
@@ -143,6 +158,7 @@ Instanța-mamă trimite o singură alertă pe episod prin [canalele ei de notifi
 
 - **O copie a eșuat**, de exemplu *BombVault: vps-helsinki: backup failed*, cu elementul și motivul. O copie ulterioară reușită a acelui element încheie episodul.
 - **Nodul nu poate fi contactat**, de exemplu *BombVault: vps-helsinki is out of reach*. Instanța-mamă așteaptă cât cel mai scurt comutator de om mort de pe depozitele nodului, 26 de ore dacă nu îl schimbi, sau 6 ore cât timp nodul nu are încă o destinație.
+- **O copie off-site a eșuat**, de exemplu *BombVault: vps-helsinki: off-site copy failed*, când instanța-mamă nu a putut copia copiile nodului la una dintre destinațiile ei. Următoarea copie care reușește încheie episodul.
 
 Supravegherea receptorului pe instanța-mamă se ocupă și de fiecare depozit al unui nod, cu un comutator de om mort și un `restic check` zilnic la 04:00, vezi [Receptor și preluator](offsite-recovery.md#receiver).
 

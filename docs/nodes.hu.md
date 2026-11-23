@@ -120,6 +120,21 @@ A csomópont maga őrzi a mentéseit, egy saját, append-only módú rest-server
 
 Az anyapéldány egy szakaszt rögtön azután hív le, hogy a csomóponton véget értek a mentései, tartalékként pedig óránként negyed után, akkor is, ha a **Lehívás** ki van kapcsolva. Amit az anyapéldány lehívott, az nála marad, mint bármely [lehívott másolat](offsite-recovery.md#receiver), akkor is, ha a csomópont már nincs meg. A csomópont kérésre maga tartja rendben a tárolóit, mert a rest-servere nem fogad törlést, a mappakészletei pedig kihagyják a `bombvault-node` mappát, így soha nem menti a saját mentéseit.
 
+### Telephelyen kívüli másolatok az anyapéldányéival {#copy-onward}
+
+Kapcsold be a **Külső helyre másolás ennek a példánynak a mentéseivel** kapcsolót a **Mentések** lépésben vagy a **Cél módosítása** alatt, és az anyapéldány a csomópont konténereit és mappakészleteit ugyanazokra a célokra másolja, ahová a saját Konténereit és Mappáit, ugyanazon terv szerint. A csomópontnak ehhez nem kell saját mappa és saját másolási terv. A **Cél módosítása** alatt a kapcsoló azonnal érvényes.
+
+- A másolatok ugyanazokban a tárolókban vannak, mint az anyapéldány másolatai, a csomópont gazdagépe alatt. Az anyapéldány szabályai a célon nem nyúlnak hozzájuk, és az anyapéldány a csomópont szabálya szerint őrzi meg őket, ugyanazzal, amellyel [rendet rak a csomópont mentései között](#schedule).
+- Az anyapéldány a saját kulcsával olvassa a csomópont tárolóit, és a cél saját bejelentkezésével ír. A csomópont nem kap új hitelesítő adatokat, és a fogadószerver append-only marad. Ha a csomópont maga őrzi a mentéseit, az anyapéldány azt másolja, amit lehívott.
+- A csomópont tárolóinak saját chunker-beállításai vannak, ezért a másolataik a célon kevés adatot osztanak meg az anyapéldányéival.
+- Append-only célon nincs rendrakás, ahogy az anyapéldány saját másolatainál sem. Egy [közös tároló](offsite-recovery.md#shared-repository) nem kap másolatot csomóponttól, mert a tulajdonosa a csoport szervereinek szabályai szerint rak benne rendet.
+- A kártyán ott van **A másolatok helye** és a célok. A sikertelen másolás hibának számít a kártyán, és riasztást küld, lásd: [A csomópontok figyelése](#watch).
+- Kikapcsolva az anyapéldány nem másol többet. A már meglévő másolatok maradnak, és az anyapéldány szabályai továbbra sem nyúlnak hozzájuk.
+
+#### Példa: egy VPS az anyapéldány konténereivel a B2-re másolva {#example-copy-onward}
+
+A `tower` konténerenként 7 mentést tart meg a **Meddig őrizze meg** alatt, és minden éjjel 04:00-kor egy B2 bucketbe másolja a Konténereit. A bucket az utolsó 14-et tartja meg. A `vps-helsinki` a tower fogadószerverére ment, ahol a mentései között ugyanazon 7 szerint folyik a rendrakás. Bekapcsolt kapcsolóval a tower 04:00-kor a VPS konténereit is a bucketbe másolja. A bucketben ezután konténerenként 14 mentés van a towertől, és a VPS minden konténeréből 7.
+
 ## Mikor mentenek a csomópontok {#schedule}
 
 Minden csomópont ütemezése az anyapéldányé. A kártya szakaszonként mutat egy tervet, például **Konténerek** *naponta 2:00-kor* és **Mappák** *hetente (V) 4:00-kor*. Egy kattintás ugyanazt a szerkesztőt nyitja meg, mint az [Ütemezések](schedules.md#plans) alatt, és a módosítás azonnal mentődik.
@@ -143,6 +158,7 @@ Az anyapéldány epizódonként egy riasztást küld az [értesítési csatorná
 
 - **Egy mentés sikertelen**, például *BombVault: vps-helsinki: backup failed*, az elemmel és az okkal. Az epizódot az elem egy későbbi, sikeres mentése zárja le.
 - **A csomópont nem érhető el**, például *BombVault: vps-helsinki is out of reach*. Az anyapéldány a csomópont tárolóin beállított legrövidebb holtember-kapcsoló idejéig vár, ami 26 óra, ha nem módosítod, vagy 6 óra, amíg a csomópontnak még nincs célja.
+- **Egy telephelyen kívüli másolás sikertelen**, például *BombVault: vps-helsinki: off-site copy failed*, ha az anyapéldány nem tudta a csomópont mentéseit az egyik céljára másolni. Az epizódot a következő sikeres másolás zárja le.
 
 Az anyapéldány fogadófigyelése a csomópont minden tárolójára is ügyel, holtember-kapcsolóval és napi `restic check` futtatással 04:00-kor, lásd: [Fogadó és lehívó](offsite-recovery.md#receiver).
 

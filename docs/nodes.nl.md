@@ -120,6 +120,21 @@ De node bewaart zijn back-ups zelf, achter een eigen rest-server in append-only-
 
 De thuisinstantie haalt een onderdeel op direct nadat de back-ups van de node voor dat onderdeel klaar zijn, en als reserve elk uur om kwart over, ook als **Ophalen** uitstaat. Wat de thuisinstantie heeft opgehaald, blijft bij haar zoals elke [opgehaalde kopie](offsite-recovery.md#receiver), ook als de node weg is. De node schoont zijn eigen repository's op als de thuisinstantie daarom vraagt, omdat zijn rest-server geen verwijderingen aanneemt, en zijn mappensets slaan de map `bombvault-node` over, zodat hij nooit een back-up van zijn eigen back-ups maakt.
 
+### Off-site-kopieën samen met die van de thuisinstantie {#copy-onward}
+
+Zet **Off-site kopiëren met de back-ups van deze instantie** aan in de stap **Back-ups** of onder **Bestemming wijzigen**, en de thuisinstantie kopieert de containers en mappensets van de node naar de bestemmingen waar haar eigen Containers en Mappen naartoe kopiëren, volgens dezelfde planning. De node heeft hiervoor geen eigen map en geen eigen kopieerplanning nodig. Onder **Bestemming wijzigen** werkt de schakelaar meteen.
+
+- De kopieën liggen in dezelfde repository's als de kopieën van de thuisinstantie, onder de host van de node. De regels van de thuisinstantie op de bestemming laten ze met rust, en de thuisinstantie bewaart ze volgens de regel van de node, dezelfde waarmee ze [de back-ups van de node opschoont](#schedule).
+- De thuisinstantie leest de repository's van de node met haar eigen sleutel en schrijft met haar eigen inloggegevens voor de bestemming. De node krijgt geen nieuwe inloggegevens, en de ontvangserver blijft append-only. Bij een node die zijn back-ups zelf bewaart, kopieert de thuisinstantie wat ze heeft opgehaald.
+- De repository's van de node hebben eigen chunker-instellingen, dus hun kopieën delen op de bestemming weinig gegevens met die van de thuisinstantie.
+- Op een append-only-bestemming wordt niets opgeschoond, net als bij de eigen kopieën van de thuisinstantie. Een [gedeelde repository](offsite-recovery.md#shared-repository) krijgt geen kopieën van een node, omdat de eigenaar haar opschoont volgens de regels van de servers van de groep.
+- De kaart toont **Kopieën gaan naar** en de bestemmingen. Een kopie die mislukt, is een fout op de kaart en stuurt een waarschuwing, zie [Je nodes in de gaten houden](#watch).
+- Uitgeschakeld kopieert de thuisinstantie niets meer. De kopieën die er al zijn, blijven, en de regels van de thuisinstantie laten ze nog steeds met rust.
+
+#### Voorbeeld: een VPS naar B2 gekopieerd met de containers van de thuisinstantie {#example-copy-onward}
+
+`tower` bewaart onder **Hoe lang bewaren** 7 back-ups van elke container en kopieert zijn Containers elke nacht om 04:00 naar een B2-bucket. De bucket bewaart de laatste 14. `vps-helsinki` maakt back-ups naar de ontvangserver van `tower`, waar zijn back-ups worden opgeschoond volgens dezelfde 7. Met de schakelaar aan kopieert `tower` om 04:00 ook de containers van de VPS naar de bucket. De bucket bevat dan 14 back-ups van elke container van `tower` en 7 van elke container van de VPS.
+
 ## Wanneer nodes back-ups maken {#schedule}
 
 De thuisinstantie beheert de planning van elke node. De kaart toont een planning per onderdeel, zoals **Containers** *Dagelijks om 2:00* en **Mappen** *Wekelijks (zo) om 4:00*. Een klik opent dezelfde editor als onder [Planningen](schedules.md#plans), en een wijziging is meteen opgeslagen.
@@ -143,6 +158,7 @@ De thuisinstantie stuurt één waarschuwing per voorval via haar [meldingskanale
 
 - **Een back-up is mislukt**, bijvoorbeeld *BombVault: vps-helsinki: backup failed*, met het item en de reden. Een latere back-up van dat item die slaagt, sluit het voorval af.
 - **De node is onbereikbaar**, bijvoorbeeld *BombVault: vps-helsinki is out of reach*. De thuisinstantie wacht zo lang als de kortste dodemansknop op de repository's van de node, 26 uur tenzij je dat wijzigt, of 6 uur zolang de node nog geen bestemming heeft.
+- **Een off-site-kopie is mislukt**, bijvoorbeeld *BombVault: vps-helsinki: off-site copy failed*, als de thuisinstantie de back-ups van de node niet naar een van haar bestemmingen kon kopiëren. De volgende kopie die slaagt, sluit het voorval af.
 
 De ontvangerbewaking van de thuisinstantie houdt ook elk repository van een node in de gaten, met een dodemansknop en een dagelijkse `restic check` om 04:00, zie [Ontvanger en ophaler](offsite-recovery.md#receiver).
 

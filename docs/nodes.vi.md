@@ -120,6 +120,21 @@ Node tự giữ bản sao lưu của nó, sau một rest-server riêng ở chế
 
 Phiên bản chủ lấy một phần về ngay khi node sao lưu xong phần đó, và để dự phòng thì lấy thêm mỗi giờ vào phút thứ 15, kể cả khi **Kéo về** đang tắt. Những gì phiên bản chủ đã lấy về ở lại với phiên bản chủ như mọi [bản sao đã kéo về](offsite-recovery.md#receiver), kể cả sau khi node không còn. Node tự dọn dẹp kho của mình khi phiên bản chủ yêu cầu, vì rest-server của nó không nhận lệnh xóa, và các bộ thư mục của node bỏ qua thư mục `bombvault-node`, nên nó không bao giờ sao lưu chính các bản sao lưu của mình.
 
+### Bản sao off-site cùng với của phiên bản chủ {#copy-onward}
+
+Bật **Sao chép ra ngoài cùng các bản sao lưu của phiên bản này** ở bước **Bản sao lưu** hoặc dưới **Đổi đích**, và phiên bản chủ sẽ sao chép container và bộ thư mục của node tới các đích sao lưu mà Containers và Thư mục của chính nó sao chép tới, theo cùng kế hoạch. Node không cần thư mục riêng hay kế hoạch sao chép riêng cho việc này. Dưới **Đổi đích**, công tắc có hiệu lực ngay.
+
+- Các bản sao nằm trong cùng các kho với bản sao của phiên bản chủ, dưới host của node. Quy tắc của phiên bản chủ ở đích để yên chúng, và phiên bản chủ giữ chúng theo quy tắc của node, cũng là quy tắc nó dùng để [dọn dẹp bản sao lưu của node](#schedule).
+- Phiên bản chủ đọc các kho của node bằng khóa của chính nó và ghi bằng thông tin đăng nhập của chính nó cho đích đó. Node không nhận thông tin đăng nhập mới nào, và máy chủ nhận vẫn là append-only. Với một node tự giữ bản sao lưu, phiên bản chủ sao chép những gì nó đã kéo về.
+- Các kho của node dùng thiết lập chunker riêng, nên ở đích các bản sao của chúng chia sẻ ít dữ liệu với bản sao của phiên bản chủ.
+- Ở một đích append-only không có gì bị dọn theo tuổi, giống như với bản sao của chính phiên bản chủ. Một [kho chung](offsite-recovery.md#shared-repository) không nhận bản sao của node, vì chủ sở hữu dọn nó theo quy tắc của các máy chủ trong nhóm.
+- Thẻ hiện **Bản sao được gửi tới** và các đích. Một bản sao thất bại được tính là lỗi trên thẻ và gửi một cảnh báo, xem [Theo dõi các node của bạn](#watch).
+- Khi tắt, phiên bản chủ không sao chép gì thêm. Các bản sao đã có vẫn ở lại, và quy tắc của phiên bản chủ vẫn để yên chúng.
+
+#### Ví dụ: một VPS được sao chép lên B2 cùng các container của phiên bản chủ {#example-copy-onward}
+
+`tower` giữ 7 bản sao lưu của mỗi container dưới **Giữ trong bao lâu** và sao chép Containers của mình tới một bucket B2 mỗi đêm lúc 04:00. Bucket giữ 14 bản gần nhất. `vps-helsinki` sao lưu tới máy chủ nhận của tower, nơi các bản sao lưu của nó được dọn theo cùng con số 7. Khi bật công tắc, tower cũng sao chép các container của VPS tới bucket lúc 04:00. Khi đó bucket chứa 14 bản sao lưu của tower cho mỗi container và 7 bản cho mỗi container của VPS.
+
 ## Khi nào node sao lưu {#schedule}
 
 Phiên bản chủ nắm lịch của mọi node. Thẻ hiện một kế hoạch cho từng phần, như **Containers** *hằng ngày lúc 2:00* và **Thư mục** *hằng tuần (CN) lúc 4:00*. Một cú nhấp mở cùng trình chỉnh sửa như trong [Lịch trình](schedules.md#plans), và thay đổi được lưu ngay.
@@ -143,6 +158,7 @@ Phiên bản chủ gửi một cảnh báo cho mỗi sự cố qua các [kênh t
 
 - **Một bản sao lưu thất bại**, như *BombVault: vps-helsinki: backup failed*, kèm mục và lý do. Một lần sao lưu sau đó của mục ấy thành công thì sự cố kết thúc.
 - **Node ngoài tầm với**, như *BombVault: vps-helsinki is out of reach*. Phiên bản chủ chờ theo công tắc người chết ngắn nhất trên các kho của node, 26 giờ nếu bạn không đổi, hoặc 6 giờ khi node chưa có đích.
+- **Một bản sao off-site thất bại**, như *BombVault: vps-helsinki: off-site copy failed*, khi phiên bản chủ không sao chép được bản sao lưu của node tới một trong các đích sao lưu của nó. Lần sao chép tiếp theo thành công thì sự cố kết thúc.
 
 Việc theo dõi của bộ nhận trên phiên bản chủ cũng trông chừng từng kho của node, với một công tắc người chết và một lượt `restic check` hằng ngày lúc 04:00, xem [Bên nhận và bên kéo](offsite-recovery.md#receiver).
 
