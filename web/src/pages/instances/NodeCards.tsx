@@ -123,15 +123,17 @@ export function NodeCards({
             actions={
               !releasing && (
                 <>
-                  <Button
-                    label={t("nodes.editPlacement")}
-                    labelKey="nodes.editPlacement"
-                    glyph={<IconPencil />}
-                    tone="neutral"
-                    disabled={!adopted}
-                    title={adopted ? undefined : t("nodes.placementWaits")}
-                    onClick={() => setPlacing(node)}
-                  />
+                  <span data-new-way="edit-placement" className="flex">
+                    <Button
+                      label={t("nodes.editPlacement")}
+                      labelKey="nodes.editPlacement"
+                      glyph={<IconPencil />}
+                      tone="neutral"
+                      disabled={!adopted}
+                      title={adopted ? undefined : t("nodes.placementWaits")}
+                      onClick={() => setPlacing(node)}
+                    />
+                  </span>
                   <Button label={t("nodes.replace")} labelKey="nodes.replace" glyph={<IconKey />} tone="neutral" onClick={() => setReplacing(node)} />
                   <Button label={t("nodes.release")} labelKey="nodes.release" glyph={<IconUnlink />} tone="neutral" onClick={() => void release(node)} />
                 </>

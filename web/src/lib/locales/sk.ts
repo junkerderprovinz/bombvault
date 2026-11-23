@@ -859,6 +859,7 @@ const sk: Partial<Translations> = {
   "whatsNew.nodePlacement": "Uzol posiela zálohy na prijímací server tejto inštancie, kam môže iba pridávať, alebo do cieľa s vlastnými prihlasovacími údajmi. Môže si ich nechať aj sám a táto inštancia si potom po každej zálohe stiahne kópiu.",
   "whatsNew.nodeHome": "Každý uzol má na svojej karte plán pre každú sekciu a dobieha zmeškané zálohy. Prehľad má kartu Uzly a Zálohy ukazujú kontajnery a sady priečinkov každého uzla vo vlastnej sekcii.",
   "whatsNew.nodeRebuilt": "Keď sa compose súbor uzla spustí na novom serveri, táto inštancia uzol znova prevezme. Uzol dostane späť svoj cieľ, sady priečinkov, definície kontajnerov a posledné behy.",
+  "whatsNew.nodeCopyOnward": "„Zmeniť cieľ“ na karte uzla má nový prepínač „Kopírovať mimo miesta spolu so zálohami tejto inštancie“. Kontajnery a priečinky uzla potom idú do rovnakých cieľov ako zálohy tejto inštancie, podľa rovnakého plánu, a upratujú sa tam podľa pravidiel uchovávania uzla.",
   "whatsNew.passwordOptional": "BombVault plne funguje bez prihlasovacieho hesla, od súpravy na obnovenie po uzly a ďalšie aplikácie pevnosti. Hodí sa heslo akejkoľvek dĺžky a krátke dostane len tip.",
   "whatsNew.releaseNotesWindow": "Keď Hľadať aktualizácie nájde novšiu verziu, Novinky na karte Verzia ukážu jej poznámky k vydaniu v okne.",
   "whatsNew.appVersionCards": "Nastavenia aplikácie pre Android ukazujú jej verziu a odkiaľ prichádzajú aktualizácie, a v časti Komponenty verziu GlimStone.",

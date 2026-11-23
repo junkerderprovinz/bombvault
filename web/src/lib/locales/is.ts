@@ -859,6 +859,7 @@ const is: Partial<Translations> = {
   "whatsNew.nodePlacement": "Hnútur sendir afritin sín á móttökuþjón þessa tilviks, þar sem hann getur aðeins bætt við, eða á áfangastað með eigin innskráningu. Hann getur líka geymt þau sjálfur og þá sækir þetta tilvik afrit eftir hverja afritun.",
   "whatsNew.nodeHome": "Hver hnútur hefur tímaáætlun fyrir hvern hluta á spjaldinu sínu og vinnur upp afrit sem hann missti af. Yfirlitið er með spjaldið Hnútar og Afrit sýnir gáma og möppusett hvers hnúts í sérstökum hluta.",
   "whatsNew.nodeRebuilt": "Þegar compose-skrá hnúts ræsist á nýjum þjóni tekur þetta tilvik hnútinn aftur að sér. Hnúturinn fær aftur áfangastað sinn, möppusett, skilgreiningar gáma og nýlegar keyrslur.",
+  "whatsNew.nodeCopyOnward": "„Breyta áfangastað“ á korti hnúts er með nýjum rofa, „Afrita utan staðar með afritum þessa tilviks“. Þá fara gámar og möppur hnútsins á sömu áfangastaði og afrit þessa tilviks, eftir sömu áætlun, og eru grisjuð þar eftir geymslureglum hnútsins.",
   "whatsNew.passwordOptional": "BombVault virkar að fullu án innskráningarlykilorðs, frá endurheimtarpakkanum til hnúta og hinna forrita vígisins. Lykilorð af hvaða lengd sem er dugar, og stutt lykilorð fær aðeins ábendingu.",
   "whatsNew.releaseNotesWindow": "Þegar Leita að uppfærslum finnur nýrri útgáfu sýnir Nýjungar á spjaldinu Útgáfa útgáfulýsingu hennar í glugga.",
   "whatsNew.appVersionCards": "Stillingar Android-forritsins sýna útgáfu þess og hvaðan uppfærslurnar koma, ásamt útgáfu GlimStone undir Íhlutir.",

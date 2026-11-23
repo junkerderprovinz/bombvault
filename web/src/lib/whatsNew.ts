@@ -61,6 +61,19 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.7",
+    changes: [
+      // The switch stands in the window Edit placement opens on a node's card.
+      {
+        id: "node-copy-onward",
+        page: "/instances",
+        where: ["instances.title"],
+        way: [...TO_INSTANCES, "edit-placement"],
+        text: "whatsNew.nodeCopyOnward",
+      },
+    ],
+  },
+  {
     version: "10.6.5",
     // None of the three brings an element of its own: the notes open from the
     // Version card's What's new, and the phone's cards are the app's own.

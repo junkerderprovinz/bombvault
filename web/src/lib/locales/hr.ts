@@ -859,6 +859,7 @@ const hr: Partial<Translations> = {
   "whatsNew.nodePlacement": "Čvor šalje svoje sigurnosne kopije na prijamni poslužitelj ove instance, gdje može samo dodavati, ili na odredište s vlastitim vjerodajnicama. Može ih zadržati i sam, a tada ova instanca nakon svake izrade preuzme kopiju.",
   "whatsNew.nodeHome": "Svaki čvor na svojoj kartici ima raspored po odjeljku i nadoknađuje propuštene sigurnosne kopije. Pregled ima karticu Čvorovi, a Sigurnosne kopije prikazuju spremnike i skupove mapa svakog čvora u zasebnom odjeljku.",
   "whatsNew.nodeRebuilt": "Kad se compose datoteka čvora pokrene na novom poslužitelju, ova instanca ponovno preuzima čvor. Čvor dobiva natrag svoje odredište, skupove mapa, definicije spremnika i nedavna pokretanja.",
+  "whatsNew.nodeCopyOnward": "„Promijeni odredište” na kartici čvora ima novi prekidač, „Kopiraj izvan lokacije zajedno sa sigurnosnim kopijama ove instance”. Kontejneri i mape čvora tada idu na ista odredišta kao i oni ove instance, po istom rasporedu, i ondje se čiste po pravilima čuvanja čvora.",
   "whatsNew.passwordOptional": "BombVault potpuno radi bez lozinke za prijavu, od kompleta za oporavak do čvorova i ostalih aplikacija utvrde. Lozinka bilo koje duljine je u redu, a kratka dobiva samo savjet.",
   "whatsNew.releaseNotesWindow": "Kad Potraži ažuriranja pronađe noviju verziju, Novosti na kartici Verzija prikazuju njezine bilješke o izdanju u prozoru.",
   "whatsNew.appVersionCards": "Postavke Android aplikacije prikazuju njezinu verziju i odakle dolaze ažuriranja, a pod Komponente verziju GlimStonea.",

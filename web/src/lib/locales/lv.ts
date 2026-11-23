@@ -859,6 +859,7 @@ const lv: Partial<Translations> = {
   "whatsNew.nodePlacement": "Mezgls sūta savas rezerves kopijas uz šīs instances uztvērējserveri, kur tas var tikai pievienot, vai uz mērķi ar savu pieteikšanos. Tas var tās glabāt arī pats, un tad šī instance pēc katras kopēšanas paņem kopiju.",
   "whatsNew.nodeHome": "Katram mezglam kartītē ir grafiks katrai sadaļai, un tas vēlāk veic nokavētās rezerves kopijas. Pārskatā ir kartīte Mezgli, un Rezerves kopijas rāda katra mezgla konteinerus un mapju kopas atsevišķā sadaļā.",
   "whatsNew.nodeRebuilt": "Kad mezgla compose fails palaižas jaunā serverī, šī instance atkal pieņem mezglu. Mezgls atgūst savu mērķi, mapju kopas, konteineru definīcijas un nesenās palaišanas.",
+  "whatsNew.nodeCopyOnward": "Mezgla kartītē sadaļā “Mainīt mērķi” ir jauns slēdzis “Kopēt ārpus vietnes kopā ar šīs instances rezerves kopijām”. Tad mezgla konteineri un mapes tiek sūtīti uz tiem pašiem mērķiem kā šīs instances kopijas, pēc tā paša grafika, un tur tiek sakārtoti pēc mezgla glabāšanas noteikumiem.",
   "whatsNew.passwordOptional": "BombVault pilnībā darbojas bez pieteikšanās paroles, no atkopšanas komplekta līdz mezgliem un citām cietokšņa lietotnēm. Der jebkura garuma parole, un īsa saņem tikai padomu.",
   "whatsNew.releaseNotesWindow": "Kad Meklēt atjauninājumus atrod jaunāku versiju, kartītes Versija poga Jaunumi parāda tās laidiena piezīmes logā.",
   "whatsNew.appVersionCards": "Android lietotnes iestatījumi rāda tās versiju un to, no kurienes nāk atjauninājumi, kā arī GlimStone versiju sadaļā Komponenti.",

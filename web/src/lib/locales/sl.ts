@@ -859,6 +859,7 @@ const sl: Partial<Translations> = {
   "whatsNew.nodePlacement": "Vozlišče pošilja varnostne kopije na sprejemni strežnik te instance, kamor lahko samo dodaja, ali na cilj z lastnimi poverilnicami. Lahko jih hrani tudi samo, in takrat ta instanca po vsakem kopiranju prevzame kopijo.",
   "whatsNew.nodeHome": "Vsako vozlišče ima na svoji kartici urnik za vsak razdelek in nadoknadi zamujene varnostne kopije. Pregled ima kartico Vozlišča, Varnostne kopije pa prikazujejo vsebnike in nabore map vsakega vozlišča v lastnem razdelku.",
   "whatsNew.nodeRebuilt": "Ko se datoteka compose vozlišča zažene na novem strežniku, ta instanca vozlišče znova prevzame. Vozlišče dobi nazaj svoj cilj, nabore map, definicije vsebnikov in nedavne zagone.",
+  "whatsNew.nodeCopyOnward": "»Spremeni cilj« na kartici vozlišča ima novo stikalo »Kopiraj zunaj lokacije skupaj z varnostnimi kopijami tega primerka«. Vsebniki in mape vozlišča potem gredo na iste cilje kot kopije tega primerka, po istem urniku, in se tam čistijo po pravilih hrambe vozlišča.",
   "whatsNew.passwordOptional": "BombVault v celoti deluje brez prijavnega gesla, od obnovitvenega kompleta do vozlišč in drugih aplikacij trdnjave. Primerno je geslo poljubne dolžine, kratko pa dobi le namig.",
   "whatsNew.releaseNotesWindow": "Ko Poišči posodobitve najde novejšo različico, Novosti na kartici Različica prikažejo njene opombe ob izdaji v oknu.",
   "whatsNew.appVersionCards": "Nastavitve aplikacije za Android prikazujejo njeno različico in od kod prihajajo posodobitve, pod Komponente pa različico GlimStone.",

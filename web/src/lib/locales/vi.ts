@@ -1211,6 +1211,7 @@ const vi: Partial<Translations> = {
   "whatsNew.nodePlacement": "Node gửi bản sao lưu đến máy chủ nhận của phiên bản này, nơi nó chỉ có thể thêm vào, hoặc đến một đích sao lưu có thông tin đăng nhập riêng. Node cũng có thể tự giữ chúng, khi đó phiên bản này lấy một bản sao sau mỗi lần sao lưu.",
   "whatsNew.nodeHome": "Mỗi node có lịch theo từng phần trên thẻ của nó và bù lại các lần sao lưu bị lỡ. Trang tổng quan có thẻ Node, và Bản sao lưu hiển thị container và bộ thư mục của từng node trong một phần riêng.",
   "whatsNew.nodeRebuilt": "Khi tệp compose của một node khởi động trên máy chủ mới, phiên bản này nhận lại node đó. Node lấy lại đích, các bộ thư mục, định nghĩa container và các lần chạy gần đây.",
+  "whatsNew.nodeCopyOnward": "“Đổi đích” trên thẻ của nút có công tắc mới, “Sao chép ra ngoài cùng các bản sao lưu của phiên bản này”. Khi bật, container và thư mục của nút được gửi tới cùng các đích như của phiên bản này, theo cùng lịch, và được dọn ở đó theo quy tắc lưu giữ của nút.",
   "whatsNew.passwordOptional": "BombVault hoạt động đầy đủ mà không cần mật khẩu đăng nhập, từ bộ khôi phục đến các node và những ứng dụng khác trong pháo đài. Mật khẩu dài bao nhiêu cũng được, mật khẩu ngắn chỉ nhận một gợi ý.",
   "whatsNew.releaseNotesWindow": "Khi Tìm bản cập nhật thấy một bản phát hành mới hơn, Có gì mới trên thẻ Phiên bản hiển thị ghi chú phát hành của nó trong một cửa sổ.",
   "whatsNew.appVersionCards": "Phần cài đặt của ứng dụng Android hiển thị phiên bản của nó và nơi các bản cập nhật đến, cùng phiên bản GlimStone trong Thành phần.",

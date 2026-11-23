@@ -363,6 +363,7 @@ export function PlacementFields({
         ))}
 
       <ToggleRow
+        newId="node-copy-onward"
         label={t("nodes.copyOnward")}
         hint={t("nodes.copyOnwardTip")}
         checked={choice.copyOnward}
