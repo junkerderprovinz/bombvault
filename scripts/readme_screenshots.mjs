@@ -132,7 +132,7 @@ async function cached(file, url) {
 const dataUrl = (buf, type) => `data:${type};base64,${buf.toString("base64")}`;
 // The house typeface is licensed, so it is read from a local folder and never committed.
 const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
-const breeSerif = dataUrl(readFileSync(join(fonts, "bree-serif-light.ttf")), "font/ttf");
+const breeSerif = dataUrl(readFileSync(join(fonts, "bree-serif-regular.ttf")), "font/ttf");
 const bree = dataUrl(readFileSync(join(fonts, "bree-light.ttf")), "font/ttf");
 // The drawn browser's own face, for its address bar.
 const lato = dataUrl(await cached("Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"), "font/ttf");
@@ -166,7 +166,7 @@ async function page(browser, { base, path, accent, prepare }) {
 
 function frame(shot, png) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-@font-face { font-family: "Bree Serif"; src: url(${breeSerif}); font-weight: 300; }
+@font-face { font-family: "Bree Serif"; src: url(${breeSerif}); font-weight: 400; }
 @font-face { font-family: Bree; src: url(${bree}); font-weight: 300; }
 @font-face { font-family: Lato; src: url(${lato}); }
 * { box-sizing: border-box; margin: 0; }
@@ -179,7 +179,7 @@ body { width: ${W}px; height: ${H}px; overflow: hidden; position: relative; font
 .vignette { inset: 0; box-shadow: inset 0 0 200px rgba(0,0,0,.6); }
 .copy { position: absolute; left: 80px; top: 0; bottom: 0; width: 330px; display: flex; flex-direction: column; justify-content: center; gap: 26px; }
 .copy img { width: 72px; }
-h1 { font: 300 46px/1.14 "Bree Serif", serif; color: #f4f4f4; text-wrap: balance; }
+h1 { font: 400 46px/1.14 "Bree Serif", serif; color: #f4f4f4; text-wrap: balance; }
 h1 em { font-style: normal; color: #FCC419; }
 .copy p { font-size: 21px; color: #9d9481; }
 .stage { position: absolute; left: 470px; top: ${(H - VIEW_H - BAR_H) / 2}px; width: ${VIEW_W}px; height: ${VIEW_H + BAR_H}px; perspective: 2400px; }
@@ -222,6 +222,7 @@ try {
     const png = await page(browser, shot);
     const canvas = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
     await canvas.setContent(frame(shot, png));
+    await canvas.evaluate(() => document.fonts.load('400 1em "Bree Serif"'));
     await canvas.evaluate(() => document.fonts.ready);
     await canvas.evaluate(() => Promise.all([...document.images].map((img) => img.decode())));
     await canvas.screenshot({ path: join(out, shot.file) });

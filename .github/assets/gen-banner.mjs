@@ -1,9 +1,9 @@
 /**
  * Writes bombvault-banner.svg and bombvault-banner-dark.svg: the logo from
- * icon.svg on the left, the name in Bree Serif Light and the claim in Bree Light on the
- * right. opentype.js converts the text to paths, so the SVGs need no font and
- * render the same in resvg and in a browser. gen-assets.mjs turns them into
- * PNGs.
+ * icon.svg on the left, the name in Bree Serif Regular and the claim in Bree
+ * Light on the right. opentype.js converts the text to paths, so the SVGs need
+ * no font and render the same in resvg and in a browser. gen-assets.mjs turns
+ * them into PNGs.
  *
  * Needs `npm i -g opentype.js` and the house fonts as TTF in HOUSE_FONTS
  * (default %LOCALAPPDATA%\halleluja-fonts).
@@ -36,7 +36,7 @@ const nameSize = 132, claimSize = 44, gap = 70, lineGap = 8;
 
 // The house typeface is licensed, so it is read from a local folder and never committed.
 const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
-const font = opentype.parse(readFileSync(join(fonts, "bree-serif-light.ttf")).buffer);
+const font = opentype.parse(readFileSync(join(fonts, "bree-serif-regular.ttf")).buffer);
 const claimFont = opentype.parse(readFileSync(join(fonts, "bree-light.ttf")).buffer);
 
 const nameW = font.getAdvanceWidth(NAME, nameSize);
