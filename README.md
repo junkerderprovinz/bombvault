@@ -235,6 +235,8 @@ On Unraid, install **BombVault** from [Community Applications](https://unraid.ne
 On any other Docker host or on TrueNAS Scale, take [`deploy/docker-compose.generic.yml`](deploy/docker-compose.generic.yml), set `APP_KEY` and the Host Data volume, and run `docker compose up -d`. VM and ZFS backups reach the host over SSH, so BombVault's public key has to be added there once. [Getting started](https://junkerderprovinz.github.io/bombvault/getting-started/) and [Configuration](https://junkerderprovinz.github.io/bombvault/configuration/) cover the template, the mounts, every variable and the SSH setup.
 
 - **Synology:** in Container Manager, create a project from the compose file (DSM 7.2 or newer).
+- **Ugreen:** in the Docker app of UGOS Pro, create a project from the compose file.
+- **QNAP:** in Container Station, create an application from the compose file.
 - **Proxmox:** see [Proxmox VE](#proxmox-ve) below.
 - **MOS:** install BombVault from the [MOS Hub](https://mos-official.net/apps.html?search=BombVault). It runs there as `PLATFORM=generic` with Host Data on `/mnt/cache`.
 - **ZimaOS and CasaOS:** add the [community store](https://github.com/junkerderprovinz/zimaos-apps#install) and install BombVault from it. It runs there as `PLATFORM=generic` with Host Data on `/DATA`.
