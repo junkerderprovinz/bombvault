@@ -19,6 +19,7 @@ Pair the app with servers on version 9.7.0 or later. A server on an older versio
 1. On any server of your group, open **Settings, Pairing** and choose **Show phrase**. The twelve words appear with a QR code beside them.
 2. In the app, tap **Scan QR code** and point the phone at the code. You can also paste or type the words.
 3. The app lists the servers of that group before it saves anything. **Add all** adds every one of them.
+4. The phone then waits in the **Waiting for approval** card under **Settings, Pairing** on the servers of the group. Press **Approve** on one of them, and the app lists the servers as **Connected**. The words alone let no new device in, see [Pairing instances](offsite-recovery.md#pairing).
 
 The phone then joins the group like another instance. It reads what runs on each server through the group without a sign-in, at home directly and away from home over the relay. How the group itself works is described under [Pairing instances](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ A phone paired with your group opens each of its servers already signed in. Befo
 
 A paired phone does not get everything a password does. Its session reaches a fixed list of what the app shows: the overview, the runs and the activity log, the backups to look at, start and restore, the anomalies to read and the Instances page to look at, without the received repositories and pull sources of its members. Storage locations and commands come back with their addresses and secrets removed. A restore that replaces the original backs up the current state first. A restore into a folder goes into a new folder inside the restore folder set under **Settings, Restore**, and the window offers no other. Keys, the recovery kit, key deposits, settings and deleting backups stay with a sign-in at the server itself, and everything else answers that it needs that sign-in. Over the relay the same list applies, also on a server without a password.
 
-Every phone that knows the group's twelve words can pair, and there is no switch for it. A password reset signs every phone out, and the phones sign in again by themselves. To keep one phone out, remove it on the Instances page.
+Every phone the group has let in signs in by itself, and there is no switch for it. A password reset signs every phone out, and the phones sign in again by themselves. To keep one phone out, remove it on the Instances page.
 
 ## Certificates {#certificates}
 
