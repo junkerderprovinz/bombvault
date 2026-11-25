@@ -473,6 +473,7 @@ func TestANodeDownloadsTheRestServerImageInTheBackgroundAndSaysItIsStillAtIt(t *
 			t.Fatalf("keep while the image downloads = %+v", ans)
 		}
 	}
+	eventually(t, "the download to start", func() bool { return sp.pulled() > 0 })
 	if len(d.created) != 0 || sp.pulled() != 1 {
 		t.Errorf("%d containers made and %d downloads started, want none and one", len(d.created), sp.pulled())
 	}

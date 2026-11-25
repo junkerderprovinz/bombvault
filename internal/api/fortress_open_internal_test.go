@@ -317,7 +317,12 @@ func inOneFortress(t *testing.T, a, b *instance) string {
 		}
 	}
 	var id string
+	// b's join asks the members from a fortress it closes before its own
+	// reaches the relay, and a may still list that one, so b has to see a too.
 	waitLong(t, "a to see that b opens", func() bool {
+		if !slices.ContainsFunc(fortressMembers(t, b), func(m fortressMemberView) bool { return m.Online && m.Device == "cellar" }) {
+			return false
+		}
 		for _, m := range fortressMembers(t, a) {
 			if m.Opens && m.Online && m.Device == "attic" {
 				id = m.ID
@@ -389,5 +394,29 @@ func TestAMemberOpensAnotherThroughTheFortress(t *testing.T) {
 	i := slices.IndexFunc(runs, func(r store.Run) bool { return r.TargetID == store.FortressTargetID && r.Kind == runKindOpened })
 	if i < 0 || !strings.HasPrefix(runs[i].Subject, "BombVault · cellar · ") || runs[i].Status != "success" {
 		t.Fatalf("the activity log of the opened app: %+v", runs)
+	}
+}
+
+func TestAMemberOpensAnotherWhileItReconnects(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	servePages(a)
+	servePages(b)
+	id := inOneFortress(t, a, b)
+
+	// b's join leaves the relay the same way between the fortress that asks
+	// the members and its own.
+	b.svc.closeFortress()
+	back := make(chan error, 1)
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		back <- b.svc.openFortress()
+	}()
+	_, out := a.do(t, http.MethodPost, "/api/fortress/open/"+id, nil)
+	if err := <-back; err != nil {
+		t.Fatal(err)
+	}
+	if tab, _ := out["path"].(string); out["ok"] != true || !strings.HasPrefix(tab, fortress.OpenPath) {
+		t.Fatalf("open while b reconnects = %v", out)
 	}
 }

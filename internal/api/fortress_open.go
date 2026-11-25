@@ -12,6 +12,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/group"
@@ -287,7 +288,7 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), moveTimeout)
 	defer cancel()
-	tab, err := f.Open(ctx, fortress.Visit{
+	tab, err := openSoon(ctx, f, fortress.Visit{
 		Member:  r.PathValue("id"),
 		Session: name,
 		Valid:   valid,
@@ -300,6 +301,31 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"path": tab}))
+}
+
+// openSettle is how long opening keeps trying a member that is off the relay
+// for a moment, as one is while it reconnects or between the fortress its
+// join asks the members from and its own.
+const openSettle = 3 * time.Second
+
+// openSoon opens v.Member, and tries again while it cannot be reached for at
+// most openSettle.
+func openSoon(ctx context.Context, f *fortress.Fortress, v fortress.Visit) (string, error) {
+	until := time.Now().Add(openSettle)
+	for {
+		tab, err := f.Open(ctx, v)
+		// The relay's answer for a member it does not hold is a plain
+		// error, which openRefusal calls failed.
+		gone := errors.Is(err, group.ErrUnreachable) || openRefusal(err) == "failed"
+		if err == nil || !gone || time.Now().After(until) {
+			return tab, err
+		}
+		select {
+		case <-ctx.Done():
+			return "", err
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
 }
 
 // openRefusal is the code the page words a refused opening by.
