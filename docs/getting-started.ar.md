@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault ليس في فهرس تطبيقات TrueNAS بعد، لذا ثبّته كتطبيق مخصص: **Apps, Discover Apps**، ثم **Install via YAML** في القائمة بجانب **Custom App**. يضبط YAML أدناه الأشياء نفسها التي يضبطها إدخال الفهرس في مجلد `truenas-apps` من المستودع. استبدل `tank` بمجمّعك واملأ `APP_KEY` كما يصف القسم التالي.
+BombVault ليس في فهرس تطبيقات TrueNAS بعد، لذا ثبّته كتطبيق مخصص: **Apps, Discover Apps**، ثم **Install via YAML** في القائمة بجانب **Custom App**. يتبع YAML أدناه إدخال الفهرس في مجلد `truenas-apps` من المستودع، ويضبط أيضًا انتشار `rslave` على Host Data، وهو ما تحتاج إليه نسخ مجموعات بيانات ZFS. يُغفل تطبيق الفهرس ذلك، لذا ليس فيه نسخ مجموعات بيانات ZFS. استبدل `tank` بمجمّعك واملأ `APP_KEY` كما يصف القسم التالي.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-ثم افتح `https://<truenas-ip>:30528/`. ما هو مسرود تحت [ما الذي يختلف عن Unraid](#generic-docker-host) ينطبق هنا أيضًا، وعلى TrueNAS:
+ثم افتح `https://<truenas-ip>:30624/`. ما هو مسرود تحت [ما الذي يختلف عن Unraid](#generic-docker-host) ينطبق هنا أيضًا، وعلى TrueNAS:
 
 - **القدرات (capabilities).** يحتاج BombVault إلى السبع المذكورة أعلاه. تفشل نسخ الأجهزة الافتراضية بدون `SETPCAP`، وبدون `SYS_CHROOT` تُوقف كل حاوية طوال نسخها بدل قراءتها من لقطة.
 - **Host Data** مسار مضيف على مجموعة بيانات، هنا `/mnt/tank`، مركّب على المسار نفسه داخل التطبيق. لذلك يسمّيه `HOST_SOURCE_ROOT` و`HOST_MOUNT_ROOT` معًا. يمرّر `rslave` التركيبات التي يجريها المضيف لاحقًا، وتحتاج إليها نسخ مجموعات بيانات ZFS.

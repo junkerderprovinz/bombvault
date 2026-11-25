@@ -51,7 +51,7 @@ Unraid'den farkı:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault henüz TrueNAS uygulama kataloğunda değil, bu yüzden özel bir uygulama olarak kur: **Apps, Discover Apps**, sonra **Custom App**'in yanındaki menüde **Install via YAML**. Aşağıdaki YAML, deponun `truenas-apps` klasöründeki katalog girdisiyle aynı şeyleri ayarlar. `tank`'ı kendi havuzunla değiştir ve `APP_KEY`'i sonraki bölümde anlatıldığı gibi doldur.
+BombVault henüz TrueNAS uygulama kataloğunda değil, bu yüzden özel bir uygulama olarak kur: **Apps, Discover Apps**, sonra **Custom App**'in yanındaki menüde **Install via YAML**. Aşağıdaki YAML, deponun `truenas-apps` klasöründeki katalog girdisini izler ve ayrıca Host Data üzerinde ZFS veri kümesi yedeklerinin ihtiyaç duyduğu `rslave` yayılımını ayarlar. Katalog uygulaması bunu atlar, bu yüzden onda ZFS veri kümesi yedekleri yoktur. `tank`'ı kendi havuzunla değiştir ve `APP_KEY`'i sonraki bölümde anlatıldığı gibi doldur.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Sonra `https://<truenas-ip>:30528/` adresini aç. [Unraid'den farkı](#generic-docker-host) altında listelenenler burada da geçerlidir, TrueNAS'ta ayrıca şunlar:
+Sonra `https://<truenas-ip>:30624/` adresini aç. [Unraid'den farkı](#generic-docker-host) altında listelenenler burada da geçerlidir, TrueNAS'ta ayrıca şunlar:
 
 - **Yetenekler (capabilities).** BombVault'un yukarıdaki yedisine ihtiyacı var. `SETPCAP` olmadan VM yedekleri başarısız olur, `SYS_CHROOT` olmadan da her konteyner bir anlık görüntüden okunmak yerine tüm yedekleme boyunca durdurulur.
 - **Host Data**, bir veri kümesi üzerindeki ana makine yoludur, burada `/mnt/tank`, uygulamanın içinde aynı yola bağlanır. Bu yüzden `HOST_SOURCE_ROOT` ve `HOST_MOUNT_ROOT` ikisi de onu adlandırır. `rslave`, ana makinenin sonradan yaptığı bağlamaları geçirir, bunlar ZFS veri kümesi yedeklerine gerekir.

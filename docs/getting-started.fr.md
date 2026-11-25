@@ -51,7 +51,7 @@ Ce qui diffère d'Unraid :
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault n'est pas encore dans le catalogue d'applications de TrueNAS, installez-le donc comme application personnalisée : **Apps, Discover Apps**, puis **Install via YAML** dans le menu à côté de **Custom App**. Le YAML ci-dessous règle les mêmes choses que l'entrée de catalogue du dossier `truenas-apps` du dépôt. Remplacez `tank` par votre pool et renseignez `APP_KEY` comme le décrit la section suivante.
+BombVault n'est pas encore dans le catalogue d'applications de TrueNAS, installez-le donc comme application personnalisée : **Apps, Discover Apps**, puis **Install via YAML** dans le menu à côté de **Custom App**. Le YAML ci-dessous suit l'entrée de catalogue du dossier `truenas-apps` du dépôt et règle en plus la propagation `rslave` sur Host Data, dont les sauvegardes de jeux de données ZFS ont besoin. L'application du catalogue ne la règle pas, elle n'a donc pas de sauvegardes de jeux de données ZFS. Remplacez `tank` par votre pool et renseignez `APP_KEY` comme le décrit la section suivante.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Ouvrez ensuite `https://<truenas-ip>:30528/`. Ce qui figure sous [Ce qui diffère d'Unraid](#generic-docker-host) vaut ici aussi, et sur TrueNAS :
+Ouvrez ensuite `https://<truenas-ip>:30624/`. Ce qui figure sous [Ce qui diffère d'Unraid](#generic-docker-host) vaut ici aussi, et sur TrueNAS :
 
 - **Capacités.** BombVault a besoin des sept ci-dessus. Les sauvegardes de VM échouent sans `SETPCAP`, et sans `SYS_CHROOT` chaque conteneur est arrêté pendant toute sa sauvegarde au lieu d'être lu depuis un instantané.
 - **Host Data** est un chemin d'hôte sur un dataset, ici `/mnt/tank`, monté au même chemin dans l'application. C'est pourquoi `HOST_SOURCE_ROOT` et `HOST_MOUNT_ROOT` le nomment tous deux. `rslave` transmet les montages que l'hôte fait plus tard, dont les sauvegardes de jeux de données ZFS ont besoin.

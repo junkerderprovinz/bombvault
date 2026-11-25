@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault 还不在 TrueNAS 的应用目录里，所以请把它装成自定义应用：**Apps, Discover Apps**，然后在 **Custom App** 旁边的菜单里选 **Install via YAML**。下面的 YAML 和仓库 `truenas-apps` 文件夹里的目录条目设置的内容一样。把 `tank` 换成你的存储池，`APP_KEY` 按下一节的说明填写。
+BombVault 还不在 TrueNAS 的应用目录里，所以请把它装成自定义应用：**Apps, Discover Apps**，然后在 **Custom App** 旁边的菜单里选 **Install via YAML**。下面的 YAML 沿用仓库 `truenas-apps` 文件夹里的目录条目，还在 Host Data 上设置了 `rslave` 传播，ZFS 数据集备份需要这一点。目录里的应用没有这项设置，所以它没有 ZFS 数据集备份。把 `tank` 换成你的存储池，`APP_KEY` 按下一节的说明填写。
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-然后打开 `https://<truenas-ip>:30528/`。[和 Unraid 的不同之处](#generic-docker-host)下列出的内容在这里同样适用，在 TrueNAS 上还有这些：
+然后打开 `https://<truenas-ip>:30624/`。[和 Unraid 的不同之处](#generic-docker-host)下列出的内容在这里同样适用，在 TrueNAS 上还有这些：
 
 - **权限（capabilities）。** BombVault 需要上面这七个。没有 `SETPCAP`，虚拟机备份会失败。没有 `SYS_CHROOT`，每个容器在整个备份期间都会被停止，而不是从快照读取。
 - **Host Data** 是数据集上的一个主机路径，这里是 `/mnt/tank`，在应用里挂载到同一个路径。所以 `HOST_SOURCE_ROOT` 和 `HOST_MOUNT_ROOT` 写的都是它。`rslave` 会把主机之后新建的挂载传进来，ZFS 数据集备份需要这一点。

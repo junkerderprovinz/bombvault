@@ -51,7 +51,7 @@ Unraid との違いは次のとおりです。
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault は TrueNAS のアプリカタログにまだ入っていないので、カスタムアプリとしてインストールします。**Apps, Discover Apps** を開き、**Custom App** の横のメニューから **Install via YAML** を選びます。下の YAML は、リポジトリの `truenas-apps` フォルダーにあるカタログ項目と同じ設定をします。`tank` を自分のプールに置き換え、次のセクションの説明に従って `APP_KEY` を入力してください。
+BombVault は TrueNAS のアプリカタログにまだ入っていないので、カスタムアプリとしてインストールします。**Apps, Discover Apps** を開き、**Custom App** の横のメニューから **Install via YAML** を選びます。下の YAML は、リポジトリの `truenas-apps` フォルダーにあるカタログ項目に沿ったうえで、ZFS データセットのバックアップに必要な `rslave` のマウント伝播もホストデータに設定します。カタログのアプリにはこの設定がないため、ZFS データセットのバックアップは使えません。`tank` を自分のプールに置き換え、次のセクションの説明に従って `APP_KEY` を入力してください。
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-そのあと `https://<truenas-ip>:30528/` を開きます。[Unraid との違い](#generic-docker-host)に挙げたことはここでも当てはまり、TrueNAS では次の点も加わります。
+そのあと `https://<truenas-ip>:30624/` を開きます。[Unraid との違い](#generic-docker-host)に挙げたことはここでも当てはまり、TrueNAS では次の点も加わります。
 
 - **ケーパビリティ。** BombVault には上の 7 つが必要です。`SETPCAP` がないと VM のバックアップが失敗し、`SYS_CHROOT` がないと、すべてのコンテナがスナップショットから読み取られる代わりにバックアップの間ずっと停止されます。
 - **ホストデータ**は、データセット上のホストのパス（ここでは `/mnt/tank`）で、アプリ内の同じパスにマウントされます。そのため `HOST_SOURCE_ROOT` と `HOST_MOUNT_ROOT` の両方がそれを指しています。`rslave` は、あとからホストが行うマウントを引き継ぐもので、ZFS データセットのバックアップに必要です。

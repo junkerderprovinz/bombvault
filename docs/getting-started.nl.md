@@ -51,7 +51,7 @@ Wat anders is dan op Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault staat nog niet in de TrueNAS-appcatalogus, dus installeer het als eigen app: **Apps, Discover Apps**, daarna **Install via YAML** in het menu naast **Custom App**. De YAML hieronder stelt hetzelfde in als het catalogusitem in de map `truenas-apps` van de repository. Vervang `tank` door je pool en vul `APP_KEY` in zoals de volgende sectie beschrijft.
+BombVault staat nog niet in de TrueNAS-appcatalogus, dus installeer het als eigen app: **Apps, Discover Apps**, daarna **Install via YAML** in het menu naast **Custom App**. De YAML hieronder volgt het catalogusitem in de map `truenas-apps` van de repository en stelt daarnaast `rslave`-propagatie in op Host Data, wat back-ups van ZFS-datasets nodig hebben. De catalogusapp laat dat weg en heeft dus geen back-ups van ZFS-datasets. Vervang `tank` door je pool en vul `APP_KEY` in zoals de volgende sectie beschrijft.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Open daarna `https://<truenas-ip>:30528/`. Wat onder [Wat anders is dan op Unraid](#generic-docker-host) staat, geldt ook hier, en op TrueNAS geldt bovendien:
+Open daarna `https://<truenas-ip>:30624/`. Wat onder [Wat anders is dan op Unraid](#generic-docker-host) staat, geldt ook hier, en op TrueNAS geldt bovendien:
 
 - **Capabilities.** BombVault heeft de zeven hierboven nodig. Zonder `SETPCAP` mislukken VM-back-ups, en zonder `SYS_CHROOT` wordt elke container voor zijn hele back-up gestopt in plaats van uit een snapshot gelezen.
 - **Host Data** is een hostpad op een dataset, hier `/mnt/tank`, op hetzelfde pad in de app gemount. Daarom noemen `HOST_SOURCE_ROOT` en `HOST_MOUNT_ROOT` het allebei. `rslave` geeft de mounts door die de host later maakt, wat back-ups van ZFS-datasets nodig hebben.

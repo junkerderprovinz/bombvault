@@ -29,15 +29,13 @@ questions:
       attrs:
         - variable: app_key
           label: App Key
-          description: |
-            64 lowercase hex characters, for example from `openssl rand -hex 32`.</br>
-            Losing it makes encrypted backups unrecoverable.
+          description: The secret key for BombVault (create with openssl rand -hex 32). Losing it makes encrypted backups unrecoverable.
           schema:
             type: string
             required: true
             private: true
             valid_chars: "^[0-9a-f]{64}$"
-            valid_chars_error: "App Key must be exactly 64 lowercase hex characters (0-9, a-f)."
+            valid_chars_error: "Must be 64 lowercase hex characters."
         - variable: http_only
           label: HTTP Only
           description: Serve plain HTTP instead of HTTPS, for use behind a reverse proxy.
@@ -99,7 +97,7 @@ questions:
                 label: Port Number
                 schema:
                   type: int
-                  default: 30528
+                  default: 30624
                   min: 1
                   max: 65535
                   required: true
@@ -298,9 +296,7 @@ questions:
                         required: true
         - variable: host_data
           label: Host Data
-          description: |
-            The pool or dataset holding the app data to back up, for example /mnt/tank.</br>
-            Data of apps on ixVolume storage is not reachable, and ZFS dataset backups need a Host Path.
+          description: The path holding the data to back up. Use Host Path for a pool such as /mnt/tank. ZFS dataset backups are not available in this app.
           schema:
             type: dict
             attrs:

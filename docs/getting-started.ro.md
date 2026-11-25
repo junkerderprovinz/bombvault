@@ -51,7 +51,7 @@ Ce este diferit față de Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault nu este încă în catalogul de aplicații TrueNAS, așa că instalează-l ca aplicație personalizată: **Apps, Discover Apps**, apoi **Install via YAML** din meniul de lângă **Custom App**. YAML-ul de mai jos setează aceleași lucruri ca intrarea de catalog din folderul `truenas-apps` al depozitului. Înlocuiește `tank` cu pool-ul tău și completează `APP_KEY` așa cum descrie secțiunea următoare.
+BombVault nu este încă în catalogul de aplicații TrueNAS, așa că instalează-l ca aplicație personalizată: **Apps, Discover Apps**, apoi **Install via YAML** din meniul de lângă **Custom App**. YAML-ul de mai jos urmează intrarea de catalog din folderul `truenas-apps` al depozitului și setează în plus propagarea `rslave` pe Host Data, de care au nevoie backupurile seturilor de date ZFS. Aplicația din catalog o omite, așa că nu are backupuri ale seturilor de date ZFS. Înlocuiește `tank` cu pool-ul tău și completează `APP_KEY` așa cum descrie secțiunea următoare.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Apoi deschide `https://<truenas-ip>:30528/`. Ce este enumerat la [Ce este diferit față de Unraid](#generic-docker-host) se aplică și aici, iar pe TrueNAS:
+Apoi deschide `https://<truenas-ip>:30624/`. Ce este enumerat la [Ce este diferit față de Unraid](#generic-docker-host) se aplică și aici, iar pe TrueNAS:
 
 - **Capabilități.** BombVault are nevoie de cele șapte de mai sus. Fără `SETPCAP`, backupurile VM eșuează, iar fără `SYS_CHROOT` fiecare container este oprit pe toată durata copiei sale în loc să fie citit dintr-un instantaneu.
 - **Host Data** este o cale a gazdei pe un set de date, aici `/mnt/tank`, montată la aceeași cale în aplicație. De aceea `HOST_SOURCE_ROOT` și `HOST_MOUNT_ROOT` o numesc amândouă. `rslave` transmite montările pe care gazda le face mai târziu, de care au nevoie backupurile seturilor de date ZFS.

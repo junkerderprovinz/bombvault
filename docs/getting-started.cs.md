@@ -51,7 +51,7 @@ V čem se to liší od Unraidu:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault zatím není v katalogu aplikací TrueNAS, takže ho nainstaluj jako vlastní aplikaci: **Apps, Discover Apps** a pak **Install via YAML** v nabídce vedle **Custom App**. YAML níže nastavuje totéž co položka katalogu ve složce `truenas-apps` v repozitáři. Nahraď `tank` svým poolem a vyplň `APP_KEY`, jak popisuje další oddíl.
+BombVault zatím není v katalogu aplikací TrueNAS, takže ho nainstaluj jako vlastní aplikaci: **Apps, Discover Apps** a pak **Install via YAML** v nabídce vedle **Custom App**. YAML níže vychází z položky katalogu ve složce `truenas-apps` v repozitáři a navíc nastavuje u Host Data propagaci `rslave`, kterou potřebují zálohy datových sad ZFS. Aplikace z katalogu ji vynechává, takže zálohy datových sad ZFS nemá. Nahraď `tank` svým poolem a vyplň `APP_KEY`, jak popisuje další oddíl.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Pak otevři `https://<truenas-ip>:30528/`. Co je uvedeno v [V čem se to liší od Unraidu](#generic-docker-host), platí i tady, a na TrueNAS navíc:
+Pak otevři `https://<truenas-ip>:30624/`. Co je uvedeno v [V čem se to liší od Unraidu](#generic-docker-host), platí i tady, a na TrueNAS navíc:
 
 - **Capabilities.** BombVault potřebuje sedm výše uvedených. Bez `SETPCAP` zálohy VM selžou a bez `SYS_CHROOT` se každý kontejner zastaví na celou zálohu, místo aby se četl ze snímku.
 - **Host Data** je cesta hostitele na datové sadě, zde `/mnt/tank`, připojená pod stejnou cestou uvnitř aplikace. Proto ji uvádějí `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT`. `rslave` předává připojení, která hostitel vytvoří později, a ta potřebují zálohy datových sad ZFS.

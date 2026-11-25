@@ -51,7 +51,7 @@ Czym różni się to od Unraida:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault nie jest jeszcze w katalogu aplikacji TrueNAS, więc zainstaluj go jako własną aplikację: **Apps, Discover Apps**, a potem **Install via YAML** w menu obok **Custom App**. Poniższy YAML ustawia to samo co wpis katalogu w folderze `truenas-apps` repozytorium. Zastąp `tank` swoją pulą i uzupełnij `APP_KEY`, jak opisuje następna sekcja.
+BombVault nie jest jeszcze w katalogu aplikacji TrueNAS, więc zainstaluj go jako własną aplikację: **Apps, Discover Apps**, a potem **Install via YAML** w menu obok **Custom App**. Poniższy YAML opiera się na wpisie katalogu w folderze `truenas-apps` repozytorium, a do tego ustawia propagację `rslave` dla Host Data, której potrzebują kopie zbiorów danych ZFS. Aplikacja z katalogu jej nie ustawia, więc nie ma kopii zbiorów danych ZFS. Zastąp `tank` swoją pulą i uzupełnij `APP_KEY`, jak opisuje następna sekcja.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Następnie otwórz `https://<truenas-ip>:30528/`. To, co wymieniono w [Czym różni się to od Unraida](#generic-docker-host), dotyczy także tego przypadku, a na TrueNAS:
+Następnie otwórz `https://<truenas-ip>:30624/`. To, co wymieniono w [Czym różni się to od Unraida](#generic-docker-host), dotyczy także tego przypadku, a na TrueNAS:
 
 - **Uprawnienia (capabilities).** BombVault potrzebuje siedmiu powyższych. Bez `SETPCAP` kopie VM kończą się błędem, a bez `SYS_CHROOT` każdy kontener jest zatrzymywany na całą swoją kopię, zamiast być czytany z migawki.
 - **Host Data** to ścieżka hosta na zbiorze danych, tutaj `/mnt/tank`, zamontowana pod tą samą ścieżką wewnątrz aplikacji. Dlatego `HOST_SOURCE_ROOT` i `HOST_MOUNT_ROOT` podają ją obie. `rslave` przekazuje montowania, które host wykonuje później, a tego potrzebują kopie zbiorów danych ZFS.

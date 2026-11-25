@@ -51,7 +51,7 @@ Unraid와 다른 점:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault는 아직 TrueNAS 앱 카탈로그에 없으므로 사용자 지정 앱으로 설치합니다. **Apps, Discover Apps**를 연 다음, **Custom App** 옆 메뉴에서 **Install via YAML**을 고릅니다. 아래 YAML은 저장소의 `truenas-apps` 폴더에 있는 카탈로그 항목과 같은 내용을 설정합니다. `tank`를 자신의 풀로 바꾸고, `APP_KEY`는 다음 섹션의 설명대로 채우세요.
+BombVault는 아직 TrueNAS 앱 카탈로그에 없으므로 사용자 지정 앱으로 설치합니다. **Apps, Discover Apps**를 연 다음, **Custom App** 옆 메뉴에서 **Install via YAML**을 고릅니다. 아래 YAML은 저장소의 `truenas-apps` 폴더에 있는 카탈로그 항목을 따르면서, ZFS 데이터세트 백업에 필요한 `rslave` 전파도 Host Data에 설정합니다. 카탈로그 앱에는 이 설정이 빠져 있어서 ZFS 데이터세트 백업이 없습니다. `tank`를 자신의 풀로 바꾸고, `APP_KEY`는 다음 섹션의 설명대로 채우세요.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-그런 다음 `https://<truenas-ip>:30528/`을 엽니다. [Unraid와 다른 점](#generic-docker-host)에 나온 내용은 여기에도 해당하며, TrueNAS에서는 다음이 더 있습니다.
+그런 다음 `https://<truenas-ip>:30624/`을 엽니다. [Unraid와 다른 점](#generic-docker-host)에 나온 내용은 여기에도 해당하며, TrueNAS에서는 다음이 더 있습니다.
 
 - **기능(capabilities).** BombVault에는 위의 일곱 가지가 필요합니다. `SETPCAP`이 없으면 VM 백업이 실패하고, `SYS_CHROOT`가 없으면 모든 컨테이너가 스냅샷에서 읽히지 않고 백업 내내 중지됩니다.
 - **Host Data**는 데이터세트 위의 호스트 경로(여기서는 `/mnt/tank`)이며, 앱 안에서도 같은 경로에 마운트됩니다. 그래서 `HOST_SOURCE_ROOT`와 `HOST_MOUNT_ROOT` 모두 이 경로를 가리킵니다. `rslave`는 호스트가 나중에 만드는 마운트를 전달하며, ZFS 데이터세트 백업에는 이것이 필요합니다.

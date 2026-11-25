@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault עדיין לא בקטלוג האפליקציות של TrueNAS, ולכן מתקינים אותה כאפליקציה מותאמת: **Apps, Discover Apps**, ואז **Install via YAML** בתפריט לצד **Custom App**. ה-YAML שלהלן קובע את אותם דברים כמו הערך בקטלוג בתיקיית `truenas-apps` של המאגר. מחליפים את `tank` במאגר שלך וממלאים את `APP_KEY` כפי שהסעיף הבא מתאר.
+BombVault עדיין לא בקטלוג האפליקציות של TrueNAS, ולכן מתקינים אותה כאפליקציה מותאמת: **Apps, Discover Apps**, ואז **Install via YAML** בתפריט לצד **Custom App**. ה-YAML שלהלן עוקב אחרי הערך בקטלוג בתיקיית `truenas-apps` של המאגר, ובנוסף קובע התפשטות `rslave` על Host Data, מה שגיבויי מערכי נתונים של ZFS צריכים. האפליקציה מהקטלוג משמיטה את זה, ולכן אין בה גיבויי מערכי נתונים של ZFS. מחליפים את `tank` במאגר שלך וממלאים את `APP_KEY` כפי שהסעיף הבא מתאר.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-ואז פותחים `https://<truenas-ip>:30528/`. מה שמפורט תחת [מה שונה מ-Unraid](#generic-docker-host) חל גם כאן, וב-TrueNAS:
+ואז פותחים `https://<truenas-ip>:30624/`. מה שמפורט תחת [מה שונה מ-Unraid](#generic-docker-host) חל גם כאן, וב-TrueNAS:
 
 - **יכולות.** BombVault צריכה את שבע שלמעלה. גיבויי VM נכשלים בלי `SETPCAP`, ובלי `SYS_CHROOT` כל קונטיינר נעצר לאורך כל הגיבוי שלו במקום להיקרא מתצלום.
 - **Host Data** הוא נתיב מארח על מערך נתונים, כאן `/mnt/tank`, מעוגן באותו נתיב בתוך האפליקציה. לכן `HOST_SOURCE_ROOT` ו-`HOST_MOUNT_ROOT` שניהם מציינים אותו. `rslave` מעביר הלאה את העיגונים שהמארח עושה מאוחר יותר, מה שגיבויי מערכי נתונים של ZFS צריכים.

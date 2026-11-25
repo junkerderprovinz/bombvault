@@ -51,7 +51,7 @@ Miben más ez, mint az Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-A BombVault még nincs benne a TrueNAS alkalmazáskatalógusában, ezért egyéni alkalmazásként telepítsd: **Apps, Discover Apps**, majd **Install via YAML** a **Custom App** melletti menüben. Az alábbi YAML ugyanazt állítja be, mint a repó `truenas-apps` mappájában lévő katalógusbejegyzés. Cseréld a `tank` nevet a saját poolodra, és töltsd ki az `APP_KEY` értékét a következő szakasz szerint.
+A BombVault még nincs benne a TrueNAS alkalmazáskatalógusában, ezért egyéni alkalmazásként telepítsd: **Apps, Discover Apps**, majd **Install via YAML** a **Custom App** melletti menüben. Az alábbi YAML a repó `truenas-apps` mappájában lévő katalógusbejegyzést követi, és ezen felül `rslave` propagációt állít be a Host Data csatolásra, amelyre a ZFS-adatkészletek mentésének szüksége van. A katalógusból telepített alkalmazás ezt kihagyja, így nincs benne ZFS-adatkészletek mentése. Cseréld a `tank` nevet a saját poolodra, és töltsd ki az `APP_KEY` értékét a következő szakasz szerint.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Ezután nyisd meg a `https://<truenas-ip>:30528/` címet. Ami a [Miben más ez, mint az Unraid](#generic-docker-host) alatt szerepel, itt is érvényes, TrueNAS-on pedig még:
+Ezután nyisd meg a `https://<truenas-ip>:30624/` címet. Ami a [Miben más ez, mint az Unraid](#generic-docker-host) alatt szerepel, itt is érvényes, TrueNAS-on pedig még:
 
 - **Capabilityk.** A BombVaultnak a fenti hétre van szüksége. `SETPCAP` nélkül a VM-mentések meghiúsulnak, `SYS_CHROOT` nélkül pedig minden konténer a teljes mentése idejére leáll, ahelyett, hogy a BombVault pillanatképből olvasná.
 - **Host Data** egy adatkészleten lévő hoszt-útvonal, itt `/mnt/tank`, az alkalmazáson belül ugyanazon az útvonalon csatolva. Ezért adja meg a `HOST_SOURCE_ROOT` és a `HOST_MOUNT_ROOT` is. Az `rslave` továbbadja a hoszt később létrehozott csatolásait, amelyekre a ZFS-adatkészletek mentésének szüksége van.

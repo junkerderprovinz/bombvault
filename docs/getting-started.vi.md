@@ -51,7 +51,7 @@ Khác gì so với Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault chưa có trong danh mục ứng dụng của TrueNAS, nên hãy cài nó như một ứng dụng tùy chỉnh: **Apps, Discover Apps**, rồi chọn **Install via YAML** trong menu bên cạnh **Custom App**. YAML dưới đây đặt những thứ giống như mục danh mục trong thư mục `truenas-apps` của kho mã. Thay `tank` bằng pool của bạn và điền `APP_KEY` như phần tiếp theo mô tả.
+BombVault chưa có trong danh mục ứng dụng của TrueNAS, nên hãy cài nó như một ứng dụng tùy chỉnh: **Apps, Discover Apps**, rồi chọn **Install via YAML** trong menu bên cạnh **Custom App**. YAML dưới đây theo mục danh mục trong thư mục `truenas-apps` của kho mã và đặt thêm propagation `rslave` cho Host Data, điều mà sao lưu tập dữ liệu ZFS cần. Ứng dụng từ danh mục bỏ qua thiết lập này, nên nó không có sao lưu tập dữ liệu ZFS. Thay `tank` bằng pool của bạn và điền `APP_KEY` như phần tiếp theo mô tả.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Sau đó mở `https://<truenas-ip>:30528/`. Những gì liệt kê trong [Khác gì so với Unraid](#generic-docker-host) cũng áp dụng ở đây, và trên TrueNAS còn có:
+Sau đó mở `https://<truenas-ip>:30624/`. Những gì liệt kê trong [Khác gì so với Unraid](#generic-docker-host) cũng áp dụng ở đây, và trên TrueNAS còn có:
 
 - **Capabilities.** BombVault cần cả bảy capability ở trên. Sao lưu VM sẽ thất bại nếu thiếu `SETPCAP`, và nếu thiếu `SYS_CHROOT` thì mọi container đều bị dừng suốt cả lần sao lưu thay vì được đọc từ ảnh chụp.
 - **Host Data** là một đường dẫn máy chủ trên một tập dữ liệu, ở đây là `/mnt/tank`, được gắn kết tại cùng đường dẫn bên trong ứng dụng. Vì vậy `HOST_SOURCE_ROOT` và `HOST_MOUNT_ROOT` đều nêu đường dẫn này. `rslave` chuyển tiếp các lần gắn kết mà máy chủ tạo sau đó, điều mà sao lưu tập dữ liệu ZFS cần.

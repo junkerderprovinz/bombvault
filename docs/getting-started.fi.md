@@ -51,7 +51,7 @@ Mikä on erilaista kuin Unraidissa:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault ei ole vielä TrueNASin sovelluskatalogissa, joten asenna se mukautettuna sovelluksena: **Apps, Discover Apps**, sitten **Install via YAML** valikossa **Custom App** -painikkeen vieressä. Alla oleva YAML asettaa samat asiat kuin repon `truenas-apps`-kansion katalogimerkintä. Korvaa `tank` poolillasi ja täytä `APP_KEY` kuten seuraava osa kuvaa.
+BombVault ei ole vielä TrueNASin sovelluskatalogissa, joten asenna se mukautettuna sovelluksena: **Apps, Discover Apps**, sitten **Install via YAML** valikossa **Custom App** -painikkeen vieressä. Alla oleva YAML noudattaa repon `truenas-apps`-kansion katalogimerkintää ja asettaa lisäksi Host Data -liitokselle `rslave`-propagoinnin, jota ZFS-tietojoukkojen varmuuskopiointi tarvitsee. Katalogin sovelluksesta se puuttuu, joten siinä ei ole ZFS-tietojoukkojen varmuuskopiointia. Korvaa `tank` poolillasi ja täytä `APP_KEY` kuten seuraava osa kuvaa.
 
 ```yaml
 services:
@@ -77,10 +77,10 @@ services:
         bind:
           propagation: rslave
     ports:
-      - "30528:3443"
+      - "30624:3443"
 ```
 
-Avaa sitten `https://<truenas-ip>:30528/`. Se, mikä on listattuna kohdassa [Mikä on erilaista kuin Unraidissa](#generic-docker-host), pätee myös tässä, ja TrueNASissa lisäksi:
+Avaa sitten `https://<truenas-ip>:30624/`. Se, mikä on listattuna kohdassa [Mikä on erilaista kuin Unraidissa](#generic-docker-host), pätee myös tässä, ja TrueNASissa lisäksi:
 
 - **Oikeudet.** BombVault tarvitsee ylläolevat seitsemän. VM-varmuuskopiot epäonnistuvat ilman `SETPCAP`-oikeutta, ja ilman `SYS_CHROOT`-oikeutta jokainen kontti pysäytetään koko varmuuskopioinnin ajaksi sen sijaan, että se luettaisiin tilannevedoksesta.
 - **Host Data** on isäntäpolku tietojoukolla, tässä `/mnt/tank`, liitettynä samaan polkuun sovelluksen sisällä. Siksi sekä `HOST_SOURCE_ROOT` että `HOST_MOUNT_ROOT` nimeävät sen. `rslave` välittää liitokset, jotka isäntä tekee myöhemmin, mitä ZFS-tietojoukkojen varmuuskopiointi tarvitsee.
