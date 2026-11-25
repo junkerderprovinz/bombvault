@@ -61,6 +61,24 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.6.8",
+    // The sign-in tile is GlimStone's and carries no marks, so only the Address card beside it is placed.
+    changes: [
+      { id: "signin-services", text: "whatsNew.signInServices" },
+      {
+        id: "instance-address",
+        page: "/settings/security",
+        where: ["nav.settings", "settings.tab.security"],
+        way: ["/settings", "/settings/security"],
+        text: "whatsNew.instanceAddress",
+      },
+      { id: "signin-sessions", text: "whatsNew.sessionsCard" },
+      { id: "password-check", text: "whatsNew.passwordCheck" },
+      { id: "signin-accounts", text: "whatsNew.accounts" },
+      { id: "phones-always-pair", text: "whatsNew.phonesAlwaysPair" },
+    ],
+  },
+  {
     version: "10.6.7",
     changes: [
       // The switch stands in the window Edit placement opens on a node's card.

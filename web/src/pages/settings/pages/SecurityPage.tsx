@@ -86,7 +86,7 @@ function AddressCard({ hueIndex }: { hueIndex: number }) {
 
   if (saved === null) return null;
   return (
-    <Card title={t("signin.address.title")} hint={t("signin.address.hint")} hueIndex={hueIndex}>
+    <Card title={t("signin.address.title")} hint={t("signin.address.hint")} hueIndex={hueIndex} newId="instance-address">
       <Rows>
         <SettingRow label={t("signin.address.label")} htmlFor="bv-public-address">
           <input
