@@ -6,7 +6,8 @@ holding them together with the donation buttons, and every button row in
 README.md.
 
 The buttons come in the same five groups, in this order: the server (the
-Unraid template, the container, the Proxmox route and the source), the desktop apps,
+stores, the systems with a section of their own in the README, the container
+and the source), the desktop apps,
 the phone apps, the browser extensions and the house's companion apps. What a
 repository does not ship is left out. Each group opens with its title, a band
 across the column with the group's icon and word, and fills a row of four
@@ -20,7 +21,9 @@ preview. They stand centred under the intro, side by side when a repository
 has both, between their own markers, which the first run puts in above the
 table of contents. A repository with only these two needs no download rows.
 
-A button carries its name, as the apps' buttons do at rest. A desktop build
+A button carries its name, as the apps' buttons do at rest. Where the mark
+is the name, as Synology's and QNAP's wordmarks are, the mark stands alone and
+centred, since their owners allow no other text beside it. A desktop build
 adds its architecture on a second line, since an ARM segment beside a bare
 name reads as the only build there is. A listing still to come adds a line
 saying so.
@@ -32,10 +35,10 @@ Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
-icons), Vivaldi's, Proxmox's and Flatpak's from Simple Icons (Flatpak's mark is CC BY 3.0,
-flatpak.org/press), F-Droid's from its 2015 logo in
+icons), Vivaldi's, Proxmox's, Synology's, QNAP's and Flatpak's from Simple Icons (Flatpak's
+mark is CC BY 3.0, flatpak.org/press), F-Droid's from its 2015 logo in
 gitlab.com/fdroid/artwork (CC BY-SA 3.0 or GPL-3.0-or-later) with the eyes,
-ring and F cut out, and Unraid's from Dashboard Icons (Apache-2.0); see
+ring and F cut out, and Unraid's and UGREEN's from Dashboard Icons (Apache-2.0); see
 scripts/brand-paths/. The companions carry their own
 logos. Every mark is drawn in the button's one ink.
 Each is a trademark of its owner, used unmodified and only to name the platform
@@ -92,6 +95,11 @@ SEAM = 1.0
 # ParleyPort's flag leaves much of its box empty and reads small beside the
 # solid marks, so it is drawn a little larger.
 LARGER = {"parleyport": 1.12}
+# A wordmark standing alone fills this much of the button. The width keeps
+# QNAP's mark above the 95 pixels its guide asks for on screen, and the height
+# leaves Synology's the clear space of its S above and below.
+WORDMARK_W = W * 0.62
+WORDMARK_H = H * 0.42
 
 # A system stack, because an SVG loaded through <img> cannot fetch a webfont.
 # The layout leaves room for a face wider than the one it was measured with.
@@ -116,12 +124,20 @@ KINDS = {
     "zimaos":           (0, "zimaos", "#f4f4f4", "#1b1b1b", "ZimaOS", "Community store", "Install from the ZimaOS and CasaOS store"),
     # The tile Dashboard Icons sets Umbrel's mark on.
     "umbrel":           (0, "umbrel", "#5351f3", "#ffffff", "Umbrel", "Community store", "Install from the umbrelOS community app store"),
-    "docker":           (0, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
-    "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Proxmox's orange. White holds 3.0:1 on it, a little under Unraid's
     # orange, which is enough for type this large. It leads to the README's own
-    # Proxmox section, so its link is an anchor on the page.
+    # Proxmox section, so its link is an anchor on the page, and so do the
+    # three NAS buttons after it.
     "proxmox":          (0, "proxmox", "#e57000", "#ffffff", "Proxmox", "LXC container", "Run it on Proxmox VE"),
+    # Synology's grey with its all-black wordmark, one of the versions its logo
+    # guide allows. Black holds 10:1 on it.
+    "synology":         (0, "synology", "#b5b5b6", "#000000", "", "", "Run it on a Synology NAS"),
+    # QNAP's blue with the white wordmark its guide shows on that blue.
+    "qnap":             (0, "qnap", "#0c2e82", "#ffffff", "", "", "Run it on a QNAP NAS"),
+    # The green UGREEN's NAS site uses as its brand colour. White holds 5.6:1.
+    "ugreen":           (0, "ugreen", "#007934", "#ffffff", "UGREEN", "NAS", "Run it on a UGREEN NAS"),
+    "docker":           (0, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
+    "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
     # Slate, since GitHub's black vanishes in the dark theme.
     "source":           (0, "zip", "#4d5562", "#ffffff", "Source code", "zip archive", "Download the source archive"),
     # No group, see DOCS_PX. The yellow is the coffee button's #fd0, and white
@@ -438,20 +454,21 @@ def outline(w, corners):
     return " ".join(d) + " Z"
 
 
-def brand(name, ink):
-    """One mark as markup in the button's ink, and the scale and offsets that
-    centre it in GLYPH."""
+def brand(name, ink, fit_w, fit_h, room_w, room_h):
+    """One mark as markup in the button's ink, scaled to fit fit_w by fit_h,
+    and the scale and offsets that centre it in room_w by room_h."""
     paths = [p for p in io.open(os.path.join(BRANDS, name + ".txt"), encoding="utf-8").read().splitlines() if p.strip()]
     box = io.open(os.path.join(BRANDS, name + ".box.txt"), encoding="utf-8").read().strip()
     x, y, width, height = (float(n) for n in box.split())
-    # Scaled by height so the marks share an optical size, then nudged right by
-    # half the width they do not use, since Apple's mark is narrower. A mark
-    # wider than WIDEST is scaled by width and lowered by half the height it
-    # leaves. The box's origin is taken off, since not every viewBox starts at 0.
-    scale = min(GLYPH / height, WIDEST / width) * LARGER.get(name, 1.0)
+    # Beside a name, marks are scaled by height so they share an optical size,
+    # then nudged right by half the width they do not use, since Apple's mark is
+    # narrower. A mark wider than WIDEST is scaled by width and lowered by half
+    # the height it leaves. The box's origin is taken off, since not every
+    # viewBox starts at 0.
+    scale = min(fit_h / height, fit_w / width) * LARGER.get(name, 1.0)
     seam = ' stroke="%s" stroke-width="%s"' % (ink, num(SEAM / scale)) if len(paths) > 1 else ""
     markup = "\n".join('    <path d="%s"%s/>' % (p, seam) for p in paths)
-    return markup, scale, (GLYPH - width * scale) / 2 - x * scale, (GLYPH - height * scale) / 2 - y * scale
+    return markup, scale, (room_w - width * scale) / 2 - x * scale, (room_h - height * scale) / 2 - y * scale
 
 
 def num(x):
@@ -465,8 +482,13 @@ def button(part, delay, cycle):
     common = dict(font=FONT, ink=part.ink, head=part.head, sub_text=part.sub if two_lines else "")
     words = (NAME_AND_SUB if two_lines else NAME).format(head_x=TEXT_X, sub_x=TEXT_X + 2, **common)
     if part.mark:
-        markup, scale, dx, dy = brand(part.mark, part.ink)
-        face = MARK.format(gx=round(GX + dx, 2), gy=round(GY + dy, 2), scale=round(scale, 5), paths=markup, ink=part.ink) + words
+        if part.head:
+            markup, scale, dx, dy = brand(part.mark, part.ink, WIDEST, GLYPH, GLYPH, GLYPH)
+            gx, gy = GX + dx, GY + dy
+        else:
+            markup, scale, gx, gy = brand(part.mark, part.ink, WORDMARK_W, WORDMARK_H, part.width, H)
+            words = ""
+        face = MARK.format(gx=round(gx, 2), gy=round(gy, 2), scale=round(scale, 5), paths=markup, ink=part.ink) + words
     else:
         common["sub_text"] = part.sub
         face = SEGMENT_FACE.format(divider=num(DIVIDER_W), h=H, mid=num(part.width / 2), **common)

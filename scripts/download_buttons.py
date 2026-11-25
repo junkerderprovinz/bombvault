@@ -15,6 +15,9 @@ BUTTONS = {
     # carries the pull command and every tag.
     "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
     "proxmox": "#proxmox-ve",
+    "synology": "#synology",
+    "qnap": "#qnap",
+    "ugreen": "#ugreen",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
     "google-play": "https://play.google.com/store/apps/details?id=bombvault.halleluja.design",
     "f-droid": "https://f-droid.org/packages/bombvault.halleluja.design/",
