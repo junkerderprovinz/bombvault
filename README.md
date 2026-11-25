@@ -269,6 +269,8 @@ In Container Station, open **Applications** and click **Create**. Paste [`deploy
 
 In the Docker app of UGOS Pro, open **Project** and click **Create**. Pick a folder for BombVault and paste [`deploy/docker-compose.generic.yml`](deploy/docker-compose.generic.yml).
 
+BombVault needs `/var/run/docker.sock`, which the file mounts.
+
 <sub>The Synology logo is a trademark of Synology Inc. and the QNAP logo a trademark of QNAP Systems, Inc., both registered in Taiwan and other regions.</sub>
 
 ### Android app
