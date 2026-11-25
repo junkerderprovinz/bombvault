@@ -19,6 +19,10 @@
 // the documentation, plain at 390x844 in the dark and the light theme, to
 // docs/assets/screenshots/android or the folder given.
 //
+// Captions are set in the house typeface, read as TTF from HOUSE_FONTS
+// (default %LOCALAPPDATA%\halleluja-fonts). The status bar keeps the phone's
+// own face, fetched to the OS temp dir.
+//
 // Deps (global): playwright-core with its Chromium installed.
 // Run: (cd web && npm run build && npm run build:launcher) && go build ./cmd/bombvault && node android/store/render.mjs [readme]
 
@@ -98,11 +102,10 @@ async function cached(file, url) {
 }
 
 const dataUrl = (buf, type) => `data:${type};base64,${buf.toString("base64")}`;
-const bree = dataUrl(
-  await cached("BreeSerif-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/breeserif/BreeSerif-Regular.ttf"),
-  "font/ttf",
-);
-const lato = dataUrl(await cached("Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"), "font/ttf");
+// The house typeface is licensed, so it is read from a local folder and never committed.
+const fonts = process.env.HOUSE_FONTS ?? join(process.env.LOCALAPPDATA ?? tmpdir(), "halleluja-fonts");
+const breeSerif = dataUrl(readFileSync(join(fonts, "bree-serif-regular.ttf")), "font/ttf");
+const bree = dataUrl(readFileSync(join(fonts, "bree-light.ttf")), "font/ttf");
 const roboto = dataUrl(
   await cached("Roboto.ttf", "https://github.com/google/fonts/raw/main/ofl/roboto/Roboto%5Bwdth%2Cwght%5D.ttf"),
   "font/ttf",
@@ -519,10 +522,10 @@ async function capture(browser, urls, text, shot) {
 }
 
 const STYLE = `
-@font-face { font-family: "Bree Serif"; src: url(${bree}); }
-@font-face { font-family: Lato; src: url(${lato}); }
+@font-face { font-family: "Bree Serif"; src: url(${breeSerif}); font-weight: 400; }
+@font-face { font-family: Bree; src: url(${bree}); font-weight: 300; }
 * { box-sizing: border-box; margin: 0; }
-body { position: relative; overflow: hidden; font-family: Lato, sans-serif; background: #0c0c0b; }
+body { position: relative; overflow: hidden; font: 300 16px Bree, sans-serif; background: #0c0c0b; }
 .backdrop, .backdrop * { position: absolute; }
 .backdrop { inset: 0; overflow: hidden; }
 .wall { inset: 0; background: radial-gradient(55% 60% at 62% 35%, #26231d, #0f0e0c 72%); }
@@ -655,6 +658,7 @@ function storeIcon() {
 async function render(browser, html, width, height, file) {
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
   await page.setContent(html);
+  await page.evaluate(() => document.fonts.load('400 1em "Bree Serif"'));
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all([...document.images].map((img) => img.decode())));
   const big = await page.screenshot();
