@@ -6,7 +6,7 @@ holding them together with the donation buttons, and every button row in
 README.md.
 
 The buttons come in the same five groups, in this order: the server (the
-Unraid template, the container and the source), the desktop apps,
+Unraid template, the container, the Proxmox route and the source), the desktop apps,
 the phone apps, the browser extensions and the house's companion apps. What a
 repository does not ship is left out. Each group opens with its title, a band
 across the column with the group's icon and word, and fills a row of four
@@ -32,7 +32,7 @@ Size and corner radius are the Buy Me a Coffee button's (841.9 by 245.3, rx
 38.2), so every button on the page has the same shape.
 
 The logos are the platforms' own marks from Font Awesome Free (CC BY 4.0 for the
-icons), Vivaldi's and Flatpak's from Simple Icons (Flatpak's mark is CC BY 3.0,
+icons), Vivaldi's, Proxmox's and Flatpak's from Simple Icons (Flatpak's mark is CC BY 3.0,
 flatpak.org/press), F-Droid's from its 2015 logo in
 gitlab.com/fdroid/artwork (CC BY-SA 3.0 or GPL-3.0-or-later) with the eyes,
 ring and F cut out, and Unraid's from Dashboard Icons (Apache-2.0); see
@@ -118,6 +118,10 @@ KINDS = {
     "umbrel":           (0, "umbrel", "#5351f3", "#ffffff", "Umbrel", "Community store", "Install from the umbrelOS community app store"),
     "docker":           (0, "docker", "#1d63ed", "#ffffff", "Docker", "Container", "Run it with Docker"),
     "compose":          (0, "docker", "#1d63ed", "#ffffff", "Docker", "compose file", "Download the docker-compose file"),
+    # Proxmox's orange. White holds 3.0:1 on it, a little under Unraid's
+    # orange, which is enough for type this large. It leads to the README's own
+    # Proxmox section, so its link is an anchor on the page.
+    "proxmox":          (0, "proxmox", "#e57000", "#ffffff", "Proxmox", "LXC container", "Run it on Proxmox VE"),
     # Slate, since GitHub's black vanishes in the dark theme.
     "source":           (0, "zip", "#4d5562", "#ffffff", "Source code", "zip archive", "Download the source archive"),
     # No group, see DOCS_PX. The yellow is the coffee button's #fd0, and white
@@ -371,7 +375,7 @@ def rows():
     for kind, href in config.BUTTONS.items():
         if href is None and kind not in SOON:
             raise SystemExit("%s has no link" % kind)
-        if href and "/%s/" % REPO not in href and not any(host in href for host in STORES):
+        if href and not href.startswith("#") and "/%s/" % REPO not in href and not any(host in href for host in STORES):
             raise SystemExit("REPO is %r, but %s leads to %s" % (REPO, kind, href))
     joined = {s for group in SEGMENTS.values() for s in group}
     for base, group in SEGMENTS.items():

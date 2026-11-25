@@ -14,6 +14,7 @@ BUTTONS = {
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
     "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
+    "proxmox": "#proxmox-ve",
     "docs": "https://junkerderprovinz.github.io/bombvault/",
     "google-play": "https://play.google.com/store/apps/details?id=bombvault.halleluja.design",
     "f-droid": "https://f-droid.org/packages/bombvault.halleluja.design/",
