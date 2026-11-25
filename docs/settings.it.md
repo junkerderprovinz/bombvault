@@ -61,6 +61,8 @@ La scheda **Streaming**, che abbassa il limite di upload mentre Plex, Jellyfin o
 - **Password**: la password di accesso, di qualsiasi lunghezza. Sotto i 12 caratteri la pagina ne suggerisce una più lunga. Cambiarla o cancellarla richiede quella attuale e, con l'autenticazione a due fattori attiva, il codice.
 - **Autenticazione a due fattori**: un codice da un'app di autenticazione oltre alla password, con otto codici di ripristino mostrati una sola volta.
 - **Passkey**: accedi con una chiave sul telefono, sul portatile o su una chiavetta di sicurezza. Richiedono un vero nome di dominio e un certificato di cui il browser si fida.
+- **Indirizzo**: dove apri BombVault, ad esempio `https://bombvault.example.com`. Passkey e servizi di accesso si basano su questo.
+- **Servizi di accesso**: accedi con Pocket ID, Authentik, Authelia, Kanidm, Keycloak o Zitadel, oltre alla password. Per questo BombVault deve stare alla radice del suo indirizzo. Sotto un percorso come `https://example.com/bombvault/` il servizio non riesce ancora a riportarti indietro.
 - **App Android**: **I telefoni possono associarsi con le dodici parole del gruppo**, cosa che permette a un telefono associato di accedere senza la password.
 - **Crittografia**: **Crittografa i backup**, attivo di default.
 

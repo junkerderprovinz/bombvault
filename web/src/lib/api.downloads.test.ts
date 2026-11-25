@@ -8,7 +8,7 @@ const fetchMock = vi.fn();
 
 beforeEach(() => {
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ ok: true }) });
+  fetchMock.mockResolvedValue({ ok: true, status: 200, clone() { return this; }, json: () => Promise.resolve({ ok: true }) });
   vi.stubGlobal("fetch", fetchMock);
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -43,7 +43,7 @@ describe("the download of an app's own backup", () => {
 
   it("asks the route first and hands back a refusal over the login", async () => {
     const refused = { ok: false, error: "sign in with the password first", code: "own-login-needed" };
-    fetchMock.mockResolvedValue({ ok: false, status: 403, statusText: "Forbidden", json: () => Promise.resolve(refused) });
+    fetchMock.mockResolvedValue({ ok: false, status: 403, statusText: "Forbidden", clone() { return this; }, json: () => Promise.resolve(refused) });
     expect(await checkAppExportDownload("kl", "e1e1e1e1", "local")).toEqual(refused);
     expect(asked()).toBe("/api/containers/kl/appexports/e1e1e1e1/download?check=1");
   });

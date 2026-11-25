@@ -43,6 +43,11 @@ func ResetSignInsAfterConfigRestore(st *store.Repo, dataDir string, now time.Tim
 	if err != nil {
 		return fmt.Errorf("remove the passkeys after the configuration restore: %w", err)
 	}
+	more, err := st.EndSignIns()
+	if err != nil {
+		return fmt.Errorf("end the sign-ins after the configuration restore: %w", err)
+	}
+	removed += more
 	log.Printf("selfrestore: ended every session and removed %d passkey(s): a restored configuration may bring back sessions and passkeys that were ended after it was saved; sign in with the password and add your passkeys again under Settings, Security", removed)
 	return os.Remove(marker)
 }

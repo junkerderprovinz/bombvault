@@ -25,7 +25,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/bombvault/internal/virshcli"
@@ -456,7 +455,11 @@ func (f *placementFixture) call(method, path string, body any) (int, map[string]
 	}
 	r := jsonReq(method, path, rd)
 	if f.session != "" {
-		r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
+		c := sessionCookieFor(f.session) //nolint:gosec // G124: a cookie on a test request
+		if c.Name == sessionCookieNameHTTP {
+			c.Name = f.h.sessionCookieNameFor()
+		}
+		r.AddCookie(c)
 	}
 	rec := httptest.NewRecorder()
 	f.h.Router().ServeHTTP(rec, r)
@@ -471,12 +474,10 @@ func (f *placementFixture) call(method, path string, body any) (int, map[string]
 // session of a person signed in with it.
 func (f *placementFixture) signIn() {
 	f.t.Helper()
-	f.withPassword("a password of the owner")
-	settings, err := f.st.GetSettings()
-	if err != nil {
-		f.t.Fatal(err)
+	if f.h.signInOpen() {
+		f.withPassword("a password of the owner")
 	}
-	f.session = secret.NewSessionToken(f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch, time.Hour)
+	f.session = signInWith(f.t, f.h.Router(), "a password of the owner")
 }
 
 func doJSON(t *testing.T, h *Handler, method, path string, body any) map[string]any {

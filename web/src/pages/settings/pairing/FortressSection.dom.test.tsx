@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // The fortress on the Pairing page: its card at the top shows the one phrase
-// behind the password with its QR code, changes it and leaves; below, the
+// with its QR code, changes it and leaves; below, the
 // other apps stand in the cards of the Instances tab, with their logos, and
 // giving backups back sits under the permission it goes with.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +21,7 @@ const calls: string[] = [];
 const toasts: string[] = [];
 let opened: { ok: boolean; path?: string; code?: string } = { ok: true, path: "/fortress/open/0123abcd" };
 let changed = 0;
+let refuse = false;
 
 function state(over: Partial<FortressState> = {}): FortressState {
   return { ok: true, joined: true, phrase: true, defaultDevice: "Tower", passwordSet: true, members: [], permissions: [], pairedWith: [], removed: [], removedHere: false, ...over };
@@ -65,15 +66,14 @@ vi.mock("../../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../../lib/api")>();
   return {
     ...actual,
-    showFortressPhrase: (password: string) =>
-      Promise.resolve(password === "hunter2" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong", error: "wrong" }),
-    showPhrase: (password: string) => {
+    showFortressPhrase: () => Promise.resolve(refuse ? { ok: false, error: "wrong" } : { ok: true, phrase: PHRASE }),
+    showPhrase: () => {
       calls.push("group show");
-      return Promise.resolve(password === "hunter2" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" });
+      return Promise.resolve({ ok: true, phrase: PHRASE });
     },
-    changeFortressPhrase: (password: string) => {
-      calls.push(`change ${password}`);
-      if (view.passwordSet && password !== "hunter2") return Promise.resolve({ ok: false, code: "passwordWrong", error: "wrong" });
+    changeFortressPhrase: () => {
+      calls.push("change");
+      if (refuse) return Promise.resolve({ ok: false, error: "wrong" });
       return Promise.resolve({
         ok: true,
         phrase: NEW_PHRASE,
@@ -130,10 +130,10 @@ function renderApps(giveBack?: GiveBack) {
 
 const button = (hook: string) => document.querySelector<HTMLButtonElement>(`[data-fortress="${hook}"]`)!;
 
-async function showWith(password: string) {
+// Showing and changing the phrase want a fresh sign-in, which the shell asks for in a window of its own when the
+// server wants it, so the card asks for nothing itself.
+async function show() {
   await act(async () => fireEvent.click(button("show")));
-  fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: password } });
-  await act(async () => fireEvent.click(button("unlock")));
 }
 
 beforeEach(() => {
@@ -141,6 +141,7 @@ beforeEach(() => {
   storeShowOthers(true);
   view = state();
   calls.length = 0;
+  refuse = false;
   changed = 0;
   toasts.length = 0;
   opened = { ok: true, path: "/fortress/open/0123abcd" };
@@ -161,20 +162,18 @@ describe("the card of the phrase", () => {
     expect(rows[1].querySelector('[data-fortress="open-leave"]')).toBeTruthy();
   });
 
-  it("shows the phrase with its QR code only after the password", async () => {
+  it("shows the phrase with its QR code", async () => {
     renderBlock();
-    await showWith("wrong");
-    expect((await screen.findByRole("alert")).textContent).toBe("That password is not right.");
-    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
-    await act(async () => fireEvent.click(button("unlock")));
+    await show();
     expect(button("words").querySelectorAll("li")).toHaveLength(12);
     expect(document.querySelector('[data-fortress="qr"]')).toBeTruthy();
     expect(screen.getByText(en["pairing.qrCaption"])).toBeTruthy();
   });
 
+
   it("puts an own relay's address into the code under the words", async () => {
     renderBlock(group({ relay: { ...group().relay, mode: "own", url: "wss://relay.example/relay/connect" } }));
-    await showWith("hunter2");
+    await show();
     const svg = document.querySelector<SVGSVGElement>('[data-fortress="qr"]')!;
     const path = svg.querySelector("path")!.getAttribute("d")!;
     const side = Number(svg.getAttribute("viewBox")!.split(" ")[2]) - 8;
@@ -196,56 +195,46 @@ describe("the card of the phrase", () => {
 
   it("says a phone needs a relay beside the code when none is in use", async () => {
     renderBlock(group({ relay: { ...group().relay, mode: "off", connected: false } }));
-    await showWith("hunter2");
+    await show();
     expect(screen.getByText(en["pairing.phoneNeedsRelay"])).toBeTruthy();
   });
 
   it("shows the group's phrase where the fortress was never opened on it", async () => {
     view = state({ joined: false, phrase: false });
     renderBlock();
-    await showWith("hunter2");
+    await show();
     expect(calls).toEqual(["group show"]);
     expect(button("open-change")).toBeNull();
   });
 
-  it("asks for the password before the phrase changes, and a wrong one changes nothing", async () => {
+  it("keeps the phrase when the server refuses the change", async () => {
+    refuse = true;
     renderBlock();
     fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
-    expect(calls).toEqual([]);
-    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "wrong" } });
-    await act(async () => fireEvent.click(button("change-unlock")));
-    expect(calls).toEqual(["change wrong"]);
-    expect((await screen.findByRole("alert")).textContent).toBe("That password is not right.");
+    expect(calls).toEqual(["change"]);
     expect(document.querySelector('[data-fortress="words"]')).toBeNull();
   });
 
-  it("keeps the phrase when the password window closes", async () => {
-    renderBlock();
-    fireEvent.click(button("open-change"));
-    await act(async () => fireEvent.click(button("change")));
-    await act(async () => fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" }));
-    expect(calls).toEqual([]);
-    expect((await screen.findByRole("alert")).textContent).toBe(en["fortress.changeKept"]);
-  });
+
+
 
   it("changes the phrase without asking where BombVault has no password", async () => {
     view = state({ passwordSet: false });
     renderBlock();
     fireEvent.click(button("open-change"));
     await act(async () => fireEvent.click(button("change")));
-    expect(calls).toEqual(["change "]);
+    expect(calls).toEqual(["change"]);
     expect(button("words").textContent).toContain("wrong");
     expect(changed).toBe(1);
   });
 
-  it("changes the phrase for the password, names each member that missed it, and leaves", async () => {
+
+  it("changes the phrase, names each member that missed it, and leaves", async () => {
     renderBlock();
     fireEvent.click(button("open-change"));
     expect(screen.getByText(en["fortress.changeAway"])).toBeTruthy();
     await act(async () => fireEvent.click(button("change")));
-    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
-    await act(async () => fireEvent.click(button("change-unlock")));
     expect(button("words").textContent).toContain("wrong");
     const missed = listOf("en", ["FireSquire on Tower", "ShipLog on Tower", "Cellar"]);
     expect(screen.getByText(en["fortress.changedLeft"].replace("{devices}", missed))).toBeTruthy();
@@ -253,7 +242,7 @@ describe("the card of the phrase", () => {
 
     fireEvent.click(button("open-leave"));
     await act(async () => fireEvent.click(button("leave")));
-    expect(calls).toEqual(["change hunter2", "leave"]);
+    expect(calls).toEqual(["change", "leave"]);
     expect(changed).toBe(2);
   });
 
@@ -436,7 +425,7 @@ describe("the other apps", () => {
 });
 
 describe("removing another app from the fortress", () => {
-  it("asks first from the app's own card, then offers the new phrase behind the password", async () => {
+  it("asks first from the app's own card, then offers the new phrase", async () => {
     view = state({ members: [member({ id: "fs1", app: "firesquire", name: "FireSquire", device: "Tower", deployment: "plugin" })] });
     renderApps();
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
@@ -447,9 +436,7 @@ describe("removing another app from the fortress", () => {
     expect(changed).toBe(1);
     expect(screen.getByRole("dialog", { name: "Change the phrase now?" })).toBeTruthy();
     await act(async () => fireEvent.click(button("change")));
-    fireEvent.change(screen.getByLabelText("Password of BombVault"), { target: { value: "hunter2" } });
-    await act(async () => fireEvent.click(button("change-unlock")));
-    expect(calls).toEqual(["remove fs1", "change hunter2"]);
+    expect(calls).toEqual(["remove fs1", "change"]);
     expect(button("words").textContent).toContain("wrong");
   });
 

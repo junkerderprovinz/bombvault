@@ -226,7 +226,7 @@ func (b *bombvault) start(bin string) {
 			_ = resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
 				if b.password != "" {
-					b.call("POST", "/api/login", map[string]any{"password": b.password}, nil)
+					b.call("POST", "/api/signin/v1/login", map[string]any{"password": b.password}, nil, sameOrigin...)
 				}
 				return
 			}
@@ -312,9 +312,12 @@ func (s *syncBuffer) tail(n int) string {
 func (b *bombvault) signIn() {
 	b.t.Helper()
 	b.password = "a long enough password for the flows"
-	b.call("POST", "/api/auth/password", map[string]any{"password": b.password}, nil)
-	b.call("POST", "/api/login", map[string]any{"password": b.password}, nil)
+	b.call("PUT", "/api/signin/v1/me/password", map[string]any{"next": b.password}, nil, sameOrigin...)
 }
+
+// sameOrigin is what a browser says about a request of the page itself, which
+// the sign-in wants before it takes a change.
+var sameOrigin = []string{"Sec-Fetch-Site", "same-origin"}
 
 // hostPath is where a path typed relative to the host mount lies on disk.
 func (b *bombvault) hostPath(sub string) string {

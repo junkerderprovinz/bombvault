@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -39,6 +40,10 @@ func bareSettings(t *testing.T, key, password string, recorded bool) string {
 // withPassword gives the server of f a login.
 func (f *placementFixture) withPassword(password string) {
 	f.t.Helper()
+	if f.h.auth != nil {
+		setPasswordOn(f.t, f.h.Router(), password)
+		return
+	}
 	hash, err := secret.HashPassword(f.svc.cfg.AppKey, password)
 	if err != nil {
 		f.t.Fatal(err)
@@ -56,6 +61,14 @@ func restoredLogin(t *testing.T, staged, key string) string {
 		t.Fatal(err)
 	}
 	return settings.AuthPasswordHash
+}
+
+// restoredSignsIn reports whether the install at staged opens for password.
+func restoredSignsIn(t *testing.T, staged, key, password string) bool {
+	t.Helper()
+	svc, st, _ := fileInstall(t, staged, key)
+	router := NewHandler(svc.cfg, st, nil, svc, nil, nil).Router()
+	return kitRequest(t, router, http.MethodPost, "login", "", map[string]any{"password": password}).Code == http.StatusOK
 }
 
 func TestOwnSettingsRestoredWhileAnEmergencyLingersKeepTheServersKey(t *testing.T) {
@@ -80,7 +93,7 @@ func TestOwnSettingsRestoredWhileAnEmergencyLingersKeepTheServersKey(t *testing.
 		t.Fatalf("the restored settings back up under another key than the server's own (state %s, %v)", svc.currentBackupKey().state, err)
 	}
 	// Without the check value nothing shows the login in them is this server's.
-	if hash := restoredLogin(t, staged, own); !secret.VerifyPassword(own, "this server's password", hash) {
+	if !restoredSignsIn(t, staged, own, "this server's password") {
 		t.Fatal("settings without a check value came back with their own login")
 	}
 }

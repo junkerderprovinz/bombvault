@@ -540,7 +540,7 @@ func TestAGrantCannotBeRotatedLikeAKey(t *testing.T) {
 	r := newMCPRepo(t)
 	addOAuthClient(t, r, "c1", 10)
 	addGrant(t, r, "g1", "c1", 20)
-	if _, err := r.RotateMCPKey("g1", "digest", "hint", "check", 30); !errors.Is(err, store.ErrMCPKeyNotFound) {
+	if _, err := r.RotateMCPKey("g1", "", "digest", "hint", "check", 30); !errors.Is(err, store.ErrMCPKeyNotFound) {
 		t.Fatalf("rotating a grant gave %v", err)
 	}
 }

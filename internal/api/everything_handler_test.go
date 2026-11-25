@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
@@ -17,7 +18,7 @@ func TestHandleBackupEverythingStartsAndRefusesConcurrent(t *testing.T) {
 	svc, st, docker, _ := everythingTestService(t, eng)
 
 	sched := schedule.New(func(string) error { return nil }, st.ListTargetsScheduleOrder)
-	h := api.NewHandler(config.Config{}, st, docker, svc, sched, spike.DefaultProbes())
+	h := api.NewHandler(config.Config{AppKey: strings.Repeat("a", 64)}, st, docker, svc, sched, spike.DefaultProbes())
 	router := h.Router()
 
 	w, m := doJSON(t, router, http.MethodPost, "/api/backup-everything", "")

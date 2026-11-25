@@ -120,14 +120,8 @@ export function useSettingsStore() {
   // Which read failed: the first one, or the one after an import.
   const [loadError, setLoadError] = useState<"load" | "import" | null>(null);
 
-  // Auth state for the Security card.
+  // Whether anybody can sign in, for the cards that say what a password changes.
   const [authEnabled, setAuthEnabled] = useState(false);
-  // The second factor's state, and the minimum the server enforces. The
-  // minimum is read rather than hard-coded so the field and the server can
-  // never disagree about the number they both quote to the user.
-  const [totpEnabled, setTotpEnabled] = useState(false);
-  const [recoveryLeft, setRecoveryLeft] = useState<number | undefined>(undefined);
-  const [recommendedPasswordLen, setRecommendedPasswordLen] = useState(12);
 
   // Save state per card. Only the setters are used, as the callbacks that
   // autoSaveField and debouncedSave take.
@@ -198,9 +192,6 @@ export function useSettingsStore() {
     getAuth()
       .then((res) => {
         setAuthEnabled(res.enabled);
-        setTotpEnabled(res.totp ?? false);
-        setRecoveryLeft(res.recoveryCodesLeft);
-        if (res.recommendedPasswordLen) setRecommendedPasswordLen(res.recommendedPasswordLen);
       })
       .catch(() => {
         // Non-fatal: Security card shows auth as off.
@@ -631,11 +622,6 @@ export function useSettingsStore() {
     allTargets,
     authEnabled,
     setAuthEnabled,
-    totpEnabled,
-    setTotpEnabled,
-    recoveryLeft,
-    setRecoveryLeft,
-    recommendedPasswordLen,
     containers,
     vms,
     save,

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -28,6 +29,9 @@ func TestMain(m *testing.M) {
 	fortressLAN = false
 	followEvery = 200 * time.Millisecond
 	store.ReuseMigrations()
+	// The sign-in of every finished test keeps ticking on its closed store,
+	// which would fill the log the tests read.
+	signInLog = func() *slog.Logger { return slog.New(slog.DiscardHandler) }
 	os.Exit(m.Run())
 }
 

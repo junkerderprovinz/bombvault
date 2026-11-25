@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 )
 
 func TestAPairedSessionBacksUpTheContainerItReplaces(t *testing.T) {
@@ -30,7 +32,7 @@ func TestAPairedSessionBacksUpTheContainerItReplaces(t *testing.T) {
 
 func TestAPairedSessionIsRefusedARestoreItCouldNotUndo(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for _, route := range []struct {
 		path string
@@ -51,8 +53,8 @@ func TestAPairedSessionIsRefusedARestoreItCouldNotUndo(t *testing.T) {
 
 func TestAPairedSessionIsRefusedWhatReachesPastTheApp(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	hash, epoch, _ := in.h.authEnabled()
-	if code, out := in.do(t, http.MethodGet, "/api/auth/passkeys", nil); code != http.StatusOK || out["passkeys"] == nil {
+	hash, epoch, _ := in.h.phoneSigning()
+	if code, out := in.do(t, http.MethodGet, signin.APIPrefix+"me/passkeys", nil); code != http.StatusOK {
 		t.Fatalf("the person's own session gets no passkey list, so this test proves nothing: %d %v", code, out)
 	}
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
@@ -74,7 +76,7 @@ func TestAPairedSessionIsRefusedWhatReachesPastTheApp(t *testing.T) {
 	if code, out := in.do(t, http.MethodPost, "/api/runs/ack", map[string]any{"ids": []string{strings.Repeat("a", 32)}}); code != http.StatusOK || out["ok"] != true {
 		t.Errorf("acknowledging one failure with a paired session: %d %v", code, out)
 	}
-	if code, out := in.do(t, http.MethodGet, "/api/auth/passkeys", nil); code != http.StatusOK || out["passkeys"] != nil {
+	if code, out := in.do(t, http.MethodGet, signin.APIPrefix+"me/passkeys", nil); code != http.StatusForbidden || out["passkeys"] != nil {
 		t.Errorf("a paired session read the passkeys: %d %v", code, out)
 	}
 	// What the phone app reads for its own screens.

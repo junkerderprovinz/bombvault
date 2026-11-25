@@ -61,6 +61,8 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 - **Passord**: innloggingspassordet, uansett lengde. Under 12 tegn foreslår siden et lengre. Å endre eller fjerne det krever det nåværende og, med tofaktorautentisering på, koden.
 - **Tofaktorautentisering**: en kode fra en autentiseringsapp i tillegg til passordet, med åtte gjenopprettingskoder som vises én gang.
 - **Passnøkler**: logg inn med en nøkkel på telefonen, laptopen eller en sikkerhetsnøkkel. De trenger et ekte domenenavn og et sertifikat nettleseren stoler på.
+- **Adresse**: adressen du åpner BombVault på, for eksempel `https://bombvault.example.com`. Passnøkler og innloggingstjenester følger den.
+- **Innloggingstjenester**: logg inn via Pocket ID, Authentik, Authelia, Kanidm, Keycloak eller Zitadel ved siden av passordet. Da må BombVault ligge i roten av adressen sin. Under en sti som `https://example.com/bombvault/` kan tjenesten ennå ikke sende deg tilbake.
 - **Android-app**: **Telefoner kan pare med gruppens tolv ord**, som lar en paret telefon logge inn uten passordet.
 - **Kryptering**: **Krypter sikkerhetskopier**, på som standard.
 

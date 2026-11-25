@@ -476,7 +476,7 @@ func TestHomeShowsANodesComposeValuesAgainOnlyToItsOwnSignIn(t *testing.T) {
 	if code != http.StatusOK || string(again) != string(want) {
 		t.Errorf("compose again = %d %s, want %s", code, again, want)
 	}
-	hash, epoch, _ := home.h.authEnabled()
+	hash, epoch, _ := home.h.phoneSigning()
 	home.as(listedPhoneSession(t, home.st, home.appKey, hash, epoch), func() {
 		if code, out := home.do(t, http.MethodPost, "/api/nodes/"+id+"/compose", nil); code != http.StatusForbidden {
 			t.Errorf("a paired phone = %d %v", code, out)
@@ -530,7 +530,7 @@ func TestAPlacementFinishesWhenTheBrowserGoesAway(t *testing.T) {
 	r := httptest.NewRequestWithContext(ctx, http.MethodPost, "/api/nodes/"+id+"/placement", strings.NewReader(`{"kind":"receiver"}`))
 	r.Host = "localhost"
 	r.Header.Set("Content-Type", "application/json")
-	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: home.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+	r.AddCookie(sessionCookieFor(home.session))
 	done := make(chan struct{})
 	go func() {
 		defer close(done)

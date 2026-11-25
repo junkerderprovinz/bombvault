@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 )
 
-// NewSPAHandler hands /api/, /metrics, /widget, /mcp and the OAuth endpoints
+// NewSPAHandler hands /api/, /signin/, /metrics, /widget, /mcp and the OAuth endpoints
 // to apiRouter, serves existing files from spaFS and answers every other path
 // with index.html, so deep links and reloads work. The ones outside /api sit
 // there because Prometheus, embedding pages and MCP clients expect those URLs.
@@ -22,7 +24,7 @@ func NewSPAHandler(spaFS fs.FS, apiRouter http.Handler) http.Handler {
 		// registers the exact /mcp only, so /mcp/x never gets the shell: its
 		// answer is a 404, or a 401 while a login password is set.
 		switch p := r.URL.Path; {
-		case p == "/api" || strings.HasPrefix(p, "/api/") ||
+		case p == "/api" || strings.HasPrefix(p, "/api/") || strings.HasPrefix(p, signin.BrowserPrefix) ||
 			p == "/metrics" || p == "/widget" || p == relayConnectPath ||
 			p == mcpEndpointPath || strings.HasPrefix(p, mcpEndpointPath+"/"),
 			p == oauthResourceMeta, p == oauthServerMetaPath,

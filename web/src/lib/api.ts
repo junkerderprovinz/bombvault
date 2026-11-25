@@ -2,6 +2,7 @@ import { withinBase } from "./base";
 import { busySentence } from "./busySentence";
 import { translate } from "./i18n";
 import { currentNode, nodeRoutes, nodeTarget } from "./nodeScope";
+import { askPassword, signIn, wantsPassword } from "./signInKit";
 import { ZFS_CODE_KEY, zfsCodeSentence } from "./zfsCodes";
 
 // ---------------------------------------------------------------------------
@@ -760,61 +761,15 @@ export interface BrowseResponse {
 /** Response from GET /api/auth */
 export interface AuthStatusResponse {
   ok: boolean;
-  /** Whether authentication is currently enabled (a password has been set). */
+  /** Whether anybody can sign in. Without a password or a sign-in service the instance is open. */
   enabled: boolean;
-  /** Whether the current request carries a valid session cookie. */
+  /** Whether this request comes from somebody signed in. */
   authed: boolean;
-  /** Whether a second factor is armed. Told to everyone, because the login
-   *  screen has to know whether to ask for a code before anybody is signed in. */
-  totp?: boolean;
-  /** How many single-use recovery codes remain. Only present for a signed-in
-   *  caller: a stranger has no business counting them. */
-  recoveryCodesLeft?: number;
-  /** True while the stored password is still in the pre-v8.6.0 format. It is
-   *  upgraded on the next sign-in, so this is informational, not a warning. */
-  passwordNeedsUpgrade?: boolean;
-  /** The length below which the password field suggests a longer one, so it
-   *  says the server's number rather than keeping a second copy of it. */
-  recommendedPasswordLen?: number;
   /** The page came through the relay, where nobody signs in or out. */
   relayed?: boolean;
   /** The session is a paired phone's, through the relay or not, which some
    *  routes refuse. */
   paired?: boolean;
-}
-
-/** Response from POST /api/login. */
-export interface LoginResponse extends OkEnvelope {
-  /** The password was right and a second factor is armed: ask for the code. */
-  needCode?: boolean;
-}
-
-/** Response from POST /api/auth/totp/setup. Flat, like every okEnvelope here. */
-export interface TOTPSetupResponse extends OkEnvelope {
-  /** The base32 secret, for typing in by hand when a QR code cannot be scanned. */
-  secret?: string;
-  /** The otpauth:// URI the QR code encodes. */
-  uri?: string;
-}
-
-/** Response from POST /api/auth/totp/confirm. */
-export interface TOTPConfirmResponse extends OkEnvelope {
-  /** Shown exactly once. They are stored hashed, so there is no second chance. */
-  recoveryCodes?: string[];
-}
-
-/** Response from POST /api/auth/password */
-export interface SetPasswordResponse extends OkEnvelope {
-  /** Whether auth is now enabled after the change. */
-  enabled?: boolean;
-  /** Whether THIS browser is signed in as of this answer. Setting a password
-   *  issues the session cookie in the same response, so the page does not have
-   *  to be reloaded and the password typed again before anything else works -
-   *  the second factor above all, which is unreachable without a session. */
-  authed?: boolean;
-  /** The current password was right, and the second factor's code is
-   *  missing or wrong. */
-  needCode?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -858,10 +813,9 @@ function knownSentence(status: number, code: string | undefined, busy?: Busy): s
       break;
     case "own-login-needed":
       return translate(throughRelay ? "auth.relayLoginNeeded" : "auth.ownLoginNeeded");
-    case "password-not-set":
-      return translate("auth.twoFactorNeedsPassword");
     case "session-ended":
       return translate("apiError.sessionEnded");
+    // An instance of the group on an older BombVault still has the switch.
     case "phone-pairing-off":
       return translate("apiError.phonePairingOff");
     case "no-place":
@@ -948,7 +902,20 @@ function apiError(res: Response, body: Refusal): ApiError {
 
 // A call that never reached the server fails as one that did, with a sentence
 // of its own. One the caller stopped stays the AbortError it expects.
+// A change that wants a fresh sign-in is answered with signInAgain. The page asks for the password once and sends
+// the change again.
 async function send(path: string, options?: RequestInit): Promise<Response> {
+  const res = await sendOnce(path, options);
+  if (res.status !== 403) return res;
+  const body: unknown = await res
+    .clone()
+    .json()
+    .catch(() => null);
+  if (!wantsPassword(res.status, body) || !(await askPassword())) return res;
+  return sendOnce(path, options);
+}
+
+async function sendOnce(path: string, options?: RequestInit): Promise<Response> {
   const node = currentNode();
   try {
     const target = node === null ? path : (nodeTarget(await nodeRoutes(), node, options?.method ?? "GET", path) ?? path);
@@ -7216,9 +7183,9 @@ export function createPhrase(): Promise<OkEnvelope & { phrase?: string; group?: 
   return fetchJSON("/api/group/phrase", { method: "POST" });
 }
 
-/** POST /api/group/phrase/show - the phrase again, for the login password. */
-export function showPhrase(password: string): Promise<OkEnvelope & { phrase?: string }> {
-  return fetchJSON("/api/group/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
+/** POST /api/group/phrase/show - the phrase again, after a fresh sign-in. */
+export function showPhrase(): Promise<OkEnvelope & { phrase?: string }> {
+  return fetchJSON("/api/group/phrase/show", { method: "POST", body: "{}" });
 }
 
 /** POST /api/group/join - join the group a phrase belongs to. */
@@ -7318,15 +7285,15 @@ export function joinFortress(phrase: string): Promise<FortressState & PhraseRefu
   return fetchJSON("/api/fortress/join", { method: "POST", body: JSON.stringify({ phrase }) });
 }
 
-/** POST /api/fortress/phrase/show - the phrase again, for the login password. */
-export function showFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string }> {
-  return fetchJSON("/api/fortress/phrase/show", { method: "POST", body: JSON.stringify({ password }) });
+/** POST /api/fortress/phrase/show - the phrase again, after a fresh sign-in. */
+export function showFortressPhrase(): Promise<OkEnvelope & { phrase?: string }> {
+  return fetchJSON("/api/fortress/phrase/show", { method: "POST", body: "{}" });
 }
 
-/** POST /api/fortress/phrase - a new phrase for the login password, and the
+/** POST /api/fortress/phrase - a new phrase, after a fresh sign-in, and the
  *  devices that still hold the old one. */
-export function changeFortressPhrase(password: string): Promise<OkEnvelope & { phrase?: string; left?: FortressLeft[] }> {
-  return fetchJSON("/api/fortress/phrase", { method: "POST", body: JSON.stringify({ password }) });
+export function changeFortressPhrase(): Promise<OkEnvelope & { phrase?: string; left?: FortressLeft[] }> {
+  return fetchJSON("/api/fortress/phrase", { method: "POST", body: "{}" });
 }
 
 export function setFortressPermission(p: FortressPermissionState): Promise<OkEnvelope> {
@@ -7892,319 +7859,26 @@ export async function getAuth(): Promise<AuthStatusResponse> {
   return res;
 }
 
-/** POST /api/login — attempt password login; sets bv_session cookie on success.
- *  When a second factor is armed the first call comes back with needCode and no
- *  cookie, and the caller asks again with the code. */
-export function login(password: string, code?: string): Promise<LoginResponse> {
-  return fetchJSON("/api/login", {
-    method: "POST",
-    body: JSON.stringify(code ? { password, code } : { password }),
-  });
-}
-
-/** POST /api/auth/reset: has BombVault write a reset code to its container
- *  log. The code itself never comes back here. */
-export function startPasswordReset(): Promise<OkEnvelope> {
-  return fetchJSON("/api/auth/reset", { method: "POST", body: "{}" });
-}
-
-/** What a password reset took away besides the old password. Every other
- *  session ends as well. */
-export interface PasswordResetRemoved {
-  passkeys: number;
-  apiTokens: number;
-  /** MCP keys and the grants of clients signed in through OAuth. */
-  mcpKeys: number;
-  /** Whether two-factor authentication was on and is now off. */
-  twoFactor: boolean;
-  /** Whether phones cannot pair until somebody signed in switches it on. */
-  phonePairingOff: boolean;
-}
-
-export interface PasswordResetResult extends OkEnvelope {
-  removed?: PasswordResetRemoved;
-}
-
-/** POST /api/auth/reset/finish: sets the password with the code from the log
- *  and signs this browser in. A wrong, expired or missing code is refused
- *  with the code "resetCodeRejected", the same for all three. */
-export function finishPasswordReset(code: string, password: string): Promise<PasswordResetResult> {
-  return fetchJSON("/api/auth/reset/finish", {
-    method: "POST",
-    body: JSON.stringify({ code, password }),
-  });
-}
-
-/** POST /api/logout — clears the bv_session cookie. Client-side only: the
- *  stateless token stays valid until expiry. Revocation is a different thing
- *  and lives elsewhere now: setting a password rotates the session epoch. */
+/** POST /api/logout: signs a paired phone out on this instance. A browser
+ *  signs out through the kit. */
 export function logout(): Promise<OkEnvelope> {
   return fetchJSON("/api/logout", { method: "POST" });
 }
 
-/** POST /api/logout-all — rotate the server-side session epoch, invalidating
- *  EVERY outstanding session cookie (all browsers/devices), then clear ours.
- *
- *  NOTHING IN THE UI CALLS THIS ANY MORE, and it is kept on purpose. The button
- *  that did was removed with the Security card's sign-out row (GlimStone 2.1.0,
- *  rule 22), and the capability moved into setAuthPassword: the server rotates
- *  the epoch on every password write. The route stays registered, so this
- *  wrapper is what a future caller reaches for instead of re-deriving the path,
- *  and deleting it would leave a live endpoint with no client at all. */
-export function logoutAll(): Promise<OkEnvelope> {
-  return fetchJSON("/api/logout-all", { method: "POST" });
+/** signOut ends this browser's session with the kit and drops a paired phone's
+ *  session cookie, whichever the browser has. */
+export async function signOut(): Promise<void> {
+  await Promise.allSettled([signIn.logout(), logout()]);
 }
 
-/**
- * POST /api/auth/password: set or change the auth password.
- * Passing an empty string disables authentication. Once a login exists the
- * server wants the current password, and the code while two-factor is on.
- */
-export function setAuthPassword(password: string, current = "", code = ""): Promise<SetPasswordResponse> {
-  return fetchJSON<SetPasswordResponse>("/api/auth/password", {
-    method: "POST",
-    body: JSON.stringify({ password, current, code }),
-  });
+/** GET /api/address: where people reach this instance. */
+export function getPublicAddress(): Promise<OkEnvelope & { address?: string }> {
+  return fetchJSON("/api/address");
 }
 
-/** GET /api/auth/phone-pairing: whether a phone of the group may pair. */
-export function getPhonePairing(): Promise<{ ok: boolean; on?: boolean; error?: string }> {
-  return fetchJSON("/api/auth/phone-pairing");
-}
-
-/** PUT /api/auth/phone-pairing switches pairing of phones on or off. A session
- *  that is not a person's own sign-in gets the refusal back with its code. */
-export function setPhonePairing(on: boolean): Promise<{ ok: boolean; on?: boolean; error?: string; code?: string }> {
-  return fetchKeyJSON("/api/auth/phone-pairing", { method: "PUT", body: JSON.stringify({ on }) });
-}
-
-/** POST /api/auth/totp/setup — mint a secret and return the QR payload. The
- *  factor is NOT armed until confirmTOTP accepts a code from the app. */
-export function setupTOTP(): Promise<TOTPSetupResponse> {
-  return fetchJSON("/api/auth/totp/setup", { method: "POST", body: "{}" });
-}
-
-/** POST /api/auth/totp/confirm — arm the factor and receive the recovery codes. */
-export function confirmTOTP(code: string): Promise<TOTPConfirmResponse> {
-  return fetchJSON("/api/auth/totp/confirm", {
-    method: "POST",
-    body: JSON.stringify({ code }),
-  });
-}
-
-/** POST /api/auth/totp/disable — turn the factor off. Needs a live code or a
- *  recovery code, so an unattended session cannot quietly remove it. */
-export function disableTOTP(code: string): Promise<OkEnvelope> {
-  return fetchJSON("/api/auth/totp/disable", {
-    method: "POST",
-    body: JSON.stringify({ code }),
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Passkeys (WebAuthn)
-//
-// WHAT THE BROWSER NEEDS AND THE WIRE CANNOT CARRY. navigator.credentials wants
-// ArrayBuffers for the challenge, the user handle and every credential id; JSON
-// has no such type, so the server sends base64url and these helpers convert at
-// the boundary in both directions. Getting that encoding wrong is the classic
-// way a WebAuthn integration fails with an unhelpful "NotAllowedError", so the
-// conversion lives in one place rather than at each call site.
-//
-// WHY THE FEATURE CAN BE UNAVAILABLE. A passkey is bound to a DOMAIN, and the
-// browser refuses the whole exchange on an origin that is a bare IP address or
-// whose certificate it does not trust. BombVault's default installation is
-// exactly that, so passkeyStatus answers `supported: false` with the reason,
-// and the interface says it rather than offering a button that cannot work.
-// ---------------------------------------------------------------------------
-
-/** One registered credential, as the list shows it. */
-export interface PasskeyView {
-  id: string;
-  name: string;
-  /** The address this key is bound to. A key registered through a proxy does
-   *  not exist over the IP, which is why the list names it. */
-  rpId: string;
-  /** Whether this key can answer on the address currently open. */
-  usableHere: boolean;
-  /** The authenticator says the key is synced to a cloud keychain. One that is
-   *  not dies with the device. */
-  backedUp: boolean;
-  createdAt: number;
-  lastUsedAt: number;
-  transports: string;
-}
-
-export interface PasskeyStatusResponse extends OkEnvelope {
-  /** Whether THIS address can carry a passkey at all. */
-  supported?: boolean;
-  /** Why not, when it cannot. A whole sentence, ready to show. */
-  reason?: string;
-  /** The relying-party id derived from the address, "" when there is none. */
-  rpId?: string;
-  /** How many keys are registered in total, and how many on this address. */
-  total?: number;
-  here?: number;
-  /** Only present for a signed-in caller (or when no login is set up). */
-  passkeys?: PasskeyView[];
-}
-
-/** GET /api/auth/passkeys - public, like GET /api/auth: the login screen has to
- *  know whether to offer the button before anybody is signed in. */
-export function passkeyStatus(): Promise<PasskeyStatusResponse> {
-  return fetchJSON("/api/auth/passkeys");
-}
-
-interface CeremonyResponse extends OkEnvelope {
-  ceremonyId?: string;
-  options?: Record<string, unknown>;
-}
-
-// base64url, the encoding WebAuthn uses everywhere: "+/" become "-_" and the
-// padding is dropped. atob/btoa speak standard base64 only, hence the swap.
-function b64urlToBytes(s: string): Uint8Array {
-  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
-  const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/") + pad);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-function bytesToB64url(buf: ArrayBuffer): string {
-  const bytes = new Uint8Array(buf);
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-/** Whether this browser can do WebAuthn at all. An old browser, or any page the
- *  browser does not consider a secure context, has no PublicKeyCredential. */
-export function passkeysAvailableInBrowser(): boolean {
-  return typeof window !== "undefined" && "PublicKeyCredential" in window;
-}
-
-// The server sends the options object exactly as the standard defines it, with
-// the binary fields base64url-encoded. These two walk the known fields rather
-// than the whole object: an unknown extension the server adds later should ride
-// through untouched instead of being mangled by a blanket conversion.
-function decodeCreationOptions(o: Record<string, unknown>): PublicKeyCredentialCreationOptions {
-  const out = { ...o } as Record<string, unknown>;
-  out.challenge = b64urlToBytes(o.challenge as string);
-  const user = o.user as { id: string; name: string; displayName: string };
-  out.user = { ...user, id: b64urlToBytes(user.id) };
-  const exclude = o.excludeCredentials as { id: string }[] | undefined;
-  if (exclude) {
-    out.excludeCredentials = exclude.map((c) => ({ ...c, id: b64urlToBytes(c.id) }));
-  }
-  return out as unknown as PublicKeyCredentialCreationOptions;
-}
-
-function decodeRequestOptions(o: Record<string, unknown>): PublicKeyCredentialRequestOptions {
-  const out = { ...o } as Record<string, unknown>;
-  out.challenge = b64urlToBytes(o.challenge as string);
-  const allow = o.allowCredentials as { id: string }[] | undefined;
-  if (allow) {
-    out.allowCredentials = allow.map((c) => ({ ...c, id: b64urlToBytes(c.id) }));
-  }
-  return out as unknown as PublicKeyCredentialRequestOptions;
-}
-
-/** Register a new passkey: begin, prompt the authenticator, finish.
- *
- *  One function rather than three exported halves, because the steps are one
- *  operation from the operator's side and splitting them only invites a caller
- *  to do the middle one differently. */
-export async function registerPasskey(name: string): Promise<OkEnvelope & { passkey?: PasskeyView }> {
-  const begin: CeremonyResponse = await fetchJSON("/api/auth/passkey/register/begin", {
-    method: "POST",
-    body: "{}",
-  });
-  if (!begin.ok || !begin.options || !begin.ceremonyId) return begin;
-
-  const cred = (await navigator.credentials.create({
-    publicKey: decodeCreationOptions(begin.options),
-  })) as PublicKeyCredential | null;
-  if (!cred) return { ok: false, error: "no passkey was created" };
-
-  const att = cred.response as AuthenticatorAttestationResponse;
-  return fetchJSON("/api/auth/passkey/register/finish", {
-    method: "POST",
-    body: JSON.stringify({
-      ceremonyId: begin.ceremonyId,
-      name,
-      credential: {
-        id: cred.id,
-        rawId: bytesToB64url(cred.rawId),
-        type: cred.type,
-        // The transports the authenticator reports are stored and handed back at
-        // login so the browser raises the right prompt (a phone over Bluetooth
-        // rather than a USB key).
-        transports: att.getTransports ? att.getTransports() : [],
-        response: {
-          clientDataJSON: bytesToB64url(att.clientDataJSON),
-          attestationObject: bytesToB64url(att.attestationObject),
-        },
-      },
-    }),
-  });
-}
-
-/** Sign in with a passkey. Sets the session cookie on success, exactly as the
- *  password login does. */
-/** What a passkey sign-in answers. needCode with a ceremonyId asks for the
- *  second factor's code, which finishPasskeyWithCode sends with that id. */
-export type PasskeyLoginAnswer = OkEnvelope & { needCode?: boolean; ceremonyId?: string };
-
-/** POST /api/auth/passkey/login/finish with the code a passkey sign-in asked
- *  for. */
-export function finishPasskeyWithCode(ceremonyId: string, code: string): Promise<PasskeyLoginAnswer> {
-  return fetchJSON("/api/auth/passkey/login/finish", { method: "POST", body: JSON.stringify({ ceremonyId, code }) });
-}
-
-export async function loginWithPasskey(): Promise<PasskeyLoginAnswer> {
-  const begin: CeremonyResponse = await fetchJSON("/api/auth/passkey/login/begin", {
-    method: "POST",
-    body: "{}",
-  });
-  if (!begin.ok || !begin.options || !begin.ceremonyId) return begin;
-
-  const cred = (await navigator.credentials.get({
-    publicKey: decodeRequestOptions(begin.options),
-  })) as PublicKeyCredential | null;
-  if (!cred) return { ok: false, error: "no passkey was used" };
-
-  const asr = cred.response as AuthenticatorAssertionResponse;
-  return fetchJSON("/api/auth/passkey/login/finish", {
-    method: "POST",
-    body: JSON.stringify({
-      ceremonyId: begin.ceremonyId,
-      credential: {
-        id: cred.id,
-        rawId: bytesToB64url(cred.rawId),
-        type: cred.type,
-        response: {
-          clientDataJSON: bytesToB64url(asr.clientDataJSON),
-          authenticatorData: bytesToB64url(asr.authenticatorData),
-          signature: bytesToB64url(asr.signature),
-          userHandle: asr.userHandle ? bytesToB64url(asr.userHandle) : null,
-        },
-      },
-    }),
-  });
-}
-
-/** PATCH /api/auth/passkeys/{id} - rename one. */
-export function renamePasskey(id: string, name: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/auth/passkeys/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ name }),
-  });
-}
-
-/** DELETE /api/auth/passkeys/{id} - remove one. The password always remains, so
- *  removing every passkey never locks anybody out. */
-export function deletePasskey(id: string): Promise<OkEnvelope> {
-  return fetchJSON(`/api/auth/passkeys/${encodeURIComponent(id)}`, { method: "DELETE" });
+/** PUT /api/address: stores where people reach this instance. Empty forgets it. */
+export function setPublicAddress(address: string): Promise<OkEnvelope & { address?: string; code?: string }> {
+  return fetchJSON("/api/address", { method: "PUT", body: JSON.stringify({ address }) });
 }
 
 /**

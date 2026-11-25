@@ -7,14 +7,16 @@ import { en } from "./i18n";
 const fetchMock = vi.fn();
 
 function answers(status: number, body: unknown, statusText = "Error") {
-  fetchMock.mockImplementation(() =>
-    Promise.resolve({
+  fetchMock.mockImplementation(() => {
+    const res = {
       ok: status >= 200 && status < 300,
       status,
       statusText,
       json: () => (body === undefined ? Promise.reject(new SyntaxError("not JSON")) : Promise.resolve(body)),
-    }),
-  );
+      clone: () => res,
+    };
+    return Promise.resolve(res);
+  });
 }
 
 beforeEach(() => {

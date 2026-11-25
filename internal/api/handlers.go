@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"cmp"
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
@@ -28,6 +27,7 @@ import (
 	"time"
 
 	kitnotify "github.com/junkerderprovinz/parleyport/kit/notify"
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 	kitstatus "github.com/junkerderprovinz/parleyport/kit/status"
 
 	"github.com/junkerderprovinz/bombvault/internal/ageseal"
@@ -4753,19 +4753,13 @@ const maxBrowseEntries = 500
 // Authentication
 // ---------------------------------------------------------------------------
 
+// A paired phone's session, and the browser sessions from before the kit's
+// sign-in, travel in a cookie of BombVault's own. HTTPS and plain HTTP give it
+// distinct names, so a Secure cookie one port set never shadows the other's.
 const (
-	sessionCookieName = "bv_session"
-	// sessionCookieNameHTTP is the session cookie's name in HTTP-only mode.
-	// A cookie is scoped to a host, not a port: on the same host a browser
-	// refuses to let an insecure origin overwrite a Secure cookie of the
-	// same name that another port set over HTTPS. An instance reachable both
-	// ways, plain HTTP on one port and HTTPS on another, would otherwise set
-	// a Secure cookie on login that the HTTP side can never read back, so
-	// the login appears to succeed and then bounces straight to the login
-	// screen again. Giving the two modes distinct names keeps each cookie on
-	// its own, so neither can shadow the other.
+	sessionCookieName     = "bv_session"
 	sessionCookieNameHTTP = "bv_session_http"
-	sessionTTL            = 7 * 24 * time.Hour // 7 days
+	sessionTTL            = 7 * 24 * time.Hour
 )
 
 // sessionCookieNameFor is the session cookie name this instance's mode uses.
@@ -4779,88 +4773,6 @@ func (h *Handler) sessionCookieNameFor() string {
 // sessionCookie reads the session cookie for this instance's mode.
 func (h *Handler) sessionCookie(r *http.Request) (*http.Cookie, error) {
 	return r.Cookie(h.sessionCookieNameFor())
-}
-
-// authEnabled reads the stored password hash + session epoch and reports whether
-// authentication is enabled.  On a store error it logs and treats auth as OFF
-// (safe default for a trusted-LAN tool — a transient DB error should not lock
-// everyone out).
-func (h *Handler) authEnabled() (hash, epoch string, on bool) {
-	s, err := h.store.GetSettings()
-	if err != nil {
-		log.Printf("api: authEnabled: GetSettings: %v", err)
-		return "", "", false
-	}
-	return s.AuthPasswordHash, s.SessionEpoch, s.AuthPasswordHash != ""
-}
-
-// requireLoginPassword refuses to arm a second factor or a passkey while no
-// login password is set, since either is an extra way in and never the only
-// one. It answers 403 itself when it refuses, and asks what requireSignIn asks
-// otherwise.
-func (h *Handler) requireLoginPassword(w http.ResponseWriter, r *http.Request, action string) bool {
-	if _, _, on := h.authEnabled(); !on {
-		writeJSON(w, http.StatusForbidden, map[string]any{
-			"ok":    false,
-			"error": "set a login password before " + action,
-			"code":  codeNoPassword,
-		})
-		return false
-	}
-	return h.requireSignIn(w, r, action)
-}
-
-// The codes a 403 carries when a request needs more than its session: a login
-// password has to be set first, the person has to sign in themselves, or a
-// phone asks for a session while pairing phones is switched off.
-const (
-	codeNoPassword      = "password-not-set"
-	codeOwnLoginNeeded  = "own-login-needed"
-	codePhonePairingOff = "phone-pairing-off"
-)
-
-// requireSignIn refuses the session of a paired phone where a password is
-// set. Signing in through POST /api/login and sending the request again is
-// how the caller gets past it. Without a password there is no sign-in to
-// tell apart, and it lets every request through.
-func (h *Handler) requireSignIn(w http.ResponseWriter, r *http.Request, action string) bool {
-	_, ok := h.requireSignInAt(w, r, action)
-	return ok
-}
-
-// authGeneration is the password hash and session epoch a request's session
-// was checked against. Every password change and every reset moves the epoch,
-// so a write that rests on that check applies only while both are unchanged.
-type authGeneration struct {
-	hash, epoch string
-}
-
-func (g authGeneration) current(s *store.Settings) bool {
-	return s.AuthPasswordHash == g.hash && s.SessionEpoch == g.epoch
-}
-
-// errLoginChanged refuses a write whose session ended between its check and
-// the write, through a reset or another password change.
-var errLoginChanged = errors.New("the login changed while this was being saved, sign in again")
-
-// requireSignInAt is requireSignIn that also returns the generation the
-// session was checked against.
-func (h *Handler) requireSignInAt(w http.ResponseWriter, r *http.Request, action string) (authGeneration, bool) {
-	hash, epoch, on := h.authEnabled()
-	gen := authGeneration{hash: hash, epoch: epoch}
-	if !on {
-		return gen, true
-	}
-	c, err := h.sessionCookie(r)
-	if err == nil && !secret.PairedSessionToken(c.Value) && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
-		return gen, true
-	}
-	writeJSON(w, http.StatusForbidden, map[string]any{
-		"ok":    false,
-		"error": "sign in at this instance's web interface before " + action,
-		"code":  codeOwnLoginNeeded,
-	})
-	return gen, false
 }
 
 // newSessionCookie constructs the session cookie with the correct name and
@@ -4879,103 +4791,32 @@ func (h *Handler) newSessionCookie(value string, maxAge int) *http.Cookie {
 	}
 }
 
-// handleAuthStatus handles GET /api/auth.
-// Returns {ok, enabled, authed, totp, ...} so the SPA can decide whether to show
-// the login screen, and what the settings page should say about the account.
-//
-// This endpoint is PUBLIC (allow-listed in authGate), so it says only what an
-// unauthenticated caller may know: whether a password is set, and whether this
-// cookie is currently good for one. The second-factor detail is added only for a
-// caller that is already signed in — how many recovery codes are left is the
-// settings page's business, not a stranger's.
+// handleAuthStatus handles GET /api/auth. It says whether anybody can sign
+// in, whether this request comes from somebody who did, and whether it is a
+// paired phone's, so the interface leaves out what such a phone would be
+// refused. The sign-in itself answers under /api/signin/v1/.
 func (h *Handler) handleAuthStatus(w http.ResponseWriter, r *http.Request) {
-	hash, epoch, on := h.authEnabled()
-	authed := false
-	// A paired phone's session reaches only pairedRoutes, so the interface
-	// leaves out what it would be refused, such as the flash download.
-	paired := relayedPage(r)
-	if on {
-		if c, err := h.sessionCookie(r); err == nil {
-			authed = secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value)
-			if authed && secret.PairedSessionToken(c.Value) {
-				authed = h.pairedPhoneListed(c.Value)
-				paired = paired || authed
-			}
-		}
-	}
-	out := map[string]any{
+	on := !h.signInOpen()
+	v, found := visitor(r)
+	paired := relayedPage(r) || (found && v.Via == signin.ViaDoor)
+	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
 		"enabled": on,
-		"authed":  authed,
-		// Told to everyone, because the login screen has to know whether to ask
-		// for a code, and it asks before anybody is signed in. It reveals only
-		// that this instance is harder to get into.
-		"totp": false,
-		// The length below which the password field suggests a longer one,
-		// so the frontend can say the number rather than hard-code a copy.
-		"recommendedPasswordLen": secret.RecommendedPasswordLen,
+		"authed":  on && found && v.Via != signin.ViaToken,
 		// A page a phone opens through the relay can neither sign in nor
 		// out, so the interface leaves both out there.
 		"relayed": relayedPage(r),
 		"paired":  paired,
-	}
-	if on {
-		if s, err := h.store.GetSettings(); err == nil {
-			out["totp"] = s.TOTPEnabled
-			if authed || !on {
-				out["recoveryCodesLeft"] = len(decodeRecoveryCodes(s.TOTPRecovery))
-				out["passwordNeedsUpgrade"] = secret.NeedsRehash(hash)
-			}
-		}
-	}
-	writeJSON(w, http.StatusOK, out)
+	})
 }
 
-// handleLogin handles POST /api/login.
-// Body: {password string}
-// login brute-force throttle: lock out after loginMaxFails failures within
-// loginWindow, so the optional password gate can't be guessed at full speed.
-//
-// The throttle is checked BEFORE secret.VerifyPassword runs, deliberately: a
-// throttled key is rejected without ever hashing the submitted password, not
-// merely denied credit for a correct guess afterwards. If verification ran
-// FIRST and the throttle only gated on failure, a throttled attacker could
-// keep submitting guesses at full, unthrottled rate: a correct guess would
-// still get verified before the throttle check ever saw it, letting the
-// attacker infer correct/incorrect from response timing or content alone —
-// making the throttle purely cosmetic for exactly the attacker it exists to
-// stop. Checking the throttle first, unconditionally, is what actually caps
-// *attempts* rather than just successes. The tradeoff is that a client which
-// is currently throttled gets a 429 even on a correct password rather than
-// having it be honored immediately; see loginClientKey's doc for why that
-// tradeoff is now scoped to the offending client instead of every client.
+// loginMaxFails failures within loginWindow from one client wait out the
+// window before the next try counts, for the secrets BombVault checks itself
+// such as API tokens.
 const (
 	loginMaxFails = 5
 	loginWindow   = time.Minute
 )
-
-// passwordHashSlots bounds how many Argon2id verifications run at the same time.
-//
-// This is the bill for making the password hash expensive. Until v8.6.0 an
-// unauthenticated login attempt cost one SHA-256 block; now it costs 19 MiB and
-// a few milliseconds, and the throttle above only bounds attempts PER CLIENT.
-// An attacker rotating source addresses is not throttled at all, and without a
-// cap here their request rate multiplies straight into resident memory — on an
-// Unraid container someone capped at --memory 256m, that is the OOM killer
-// stopping a backup tool, which is a worse outcome than the weak hash was.
-//
-// Two slots, so the worst case is around 38 MiB of hashing no matter how hard
-// the door is hammered. Excess logins queue instead of allocating; a login that
-// waits a moment under attack is the correct failure mode, and nothing else in
-// BombVault is behind this queue.
-var passwordHashSlots = make(chan struct{}, 2)
-
-// verifyPassword is secret.VerifyPassword behind that cap.
-func verifyPassword(appKey, password, storedHash string) bool {
-	passwordHashSlots <- struct{}{}
-	defer func() { <-passwordHashSlots }()
-	return secret.VerifyPassword(appKey, password, storedHash)
-}
 
 // loginClientKey returns the throttle key for r: the connecting peer's IP,
 // with any port stripped.
@@ -5225,142 +5066,6 @@ func (h *Handler) recordLoginFail(key string) {
 	h.loginMu.Unlock()
 }
 
-func (h *Handler) recordLoginSuccess(key string) {
-	h.loginMu.Lock()
-	delete(h.loginFails, key)
-	h.loginMu.Unlock()
-}
-
-func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
-	hash, epoch, on := h.authEnabled()
-	if !on {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "authentication is not enabled"})
-		return
-	}
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return
-	}
-
-	var body struct {
-		Password string `json:"password"`
-		// Code is the authenticator app's six digits, or a recovery code, and
-		// is only read when the second factor is switched on.
-		Code string `json:"code"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-
-	if !verifyPassword(h.cfg.AppKey, body.Password, hash) {
-		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": "invalid password"})
-		return
-	}
-
-	// The password is right. If a second factor is armed, nothing is granted
-	// until it is satisfied too — including the throttle reset, so an attacker
-	// who has the password still gets five tries a minute at the code.
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if s.TOTPEnabled {
-		if strings.TrimSpace(body.Code) == "" {
-			// Not a failure: the client asked with what it had and now knows to
-			// show the code field. Counting this would lock people out for
-			// doing exactly the right thing.
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok":       false,
-				"needCode": true,
-				"error":    "enter the code from your authenticator app",
-			})
-			return
-		}
-		if !h.secondFactorOK(&s, body.Code) {
-			h.recordLoginFail(key)
-			writeJSON(w, http.StatusOK, map[string]any{
-				"ok":       false,
-				"needCode": true,
-				"error":    "that code is not valid",
-			})
-			return
-		}
-	}
-	h.recordLoginSuccess(key)
-
-	// Upgrade a legacy password hash now, while the plaintext is in hand and
-	// verified. This is the ONLY moment it can happen.
-	//
-	// It must come BEFORE the token is minted: the session HMAC signs the stored
-	// hash, so a token issued against the old value would be invalidated by the
-	// rehash a line later and the operator would be bounced straight back to the
-	// login screen.
-	if secret.NeedsRehash(hash) {
-		if fresh, hErr := secret.HashPassword(h.cfg.AppKey, body.Password); hErr != nil {
-			log.Printf("api: login: rehash: %v", hErr)
-		} else if _, mErr := h.store.MutateSettings(func(st *store.Settings) error {
-			// Re-check inside the mutation: a parallel password change between
-			// the verify and here must not be overwritten with the old one.
-			if st.AuthPasswordHash == hash {
-				st.AuthPasswordHash = fresh
-			}
-			return nil
-		}); mErr != nil {
-			// Not fatal. The login succeeded; the storage format simply stays
-			// old for another round.
-			log.Printf("api: login: storing upgraded password hash: %v", mErr)
-		} else {
-			hash = fresh
-		}
-	}
-
-	tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
-	http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
-}
-
-var errRecoveryCodeSpent = errors.New("the recovery code was spent")
-
-// secondFactorOK checks code against the time-based secret and, failing that,
-// against the single-use recovery codes. A recovery code that matches is spent
-// here, removed from the stored list, before this returns true.
-func (h *Handler) secondFactorOK(s *store.Settings, code string) bool {
-	if sec, err := h.decryptTOTPSecret(s.TOTPSecret); err == nil && sec != "" {
-		if secret.ValidTOTP(sec, code, time.Now()) {
-			return true
-		}
-	}
-	if secret.MatchRecoveryCode(h.cfg.AppKey, code, decodeRecoveryCodes(s.TOTPRecovery)) < 0 {
-		return false
-	}
-	// The code is matched again against the codes as stored, so two logins
-	// that read them at once cannot both spend one code or bring back the
-	// code the other spent.
-	var remaining []string
-	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
-		stored := decodeRecoveryCodes(st.TOTPRecovery)
-		idx := secret.MatchRecoveryCode(h.cfg.AppKey, code, stored)
-		if idx < 0 {
-			return errRecoveryCodeSpent
-		}
-		remaining = append(append([]string{}, stored[:idx]...), stored[idx+1:]...)
-		st.TOTPRecovery = encodeRecoveryCodes(remaining)
-		return nil
-	}); errors.Is(err, errRecoveryCodeSpent) {
-		return false
-	} else if err != nil {
-		// The code was correct, but it could not be burned. Refuse the login:
-		// a recovery code that survives its own use is a permanent password.
-		log.Printf("api: login: spending recovery code: %v", err)
-		return false
-	}
-	log.Printf("api: login: a recovery code was used, %d left", len(remaining))
-	return true
-}
-
 func decodeRecoveryCodes(raw string) []string {
 	if raw == "" {
 		return nil
@@ -5371,19 +5076,6 @@ func decodeRecoveryCodes(raw string) []string {
 		return nil
 	}
 	return out
-}
-
-func encodeRecoveryCodes(codes []string) string {
-	if len(codes) == 0 {
-		// Empty string, not "[]": the column's zero value and "none left" are
-		// the same state, and only one of them should exist in the database.
-		return ""
-	}
-	b, err := json.Marshal(codes)
-	if err != nil {
-		return ""
-	}
-	return string(b)
 }
 
 // decryptTOTPSecret opens the stored (hex-encoded, APP_KEY-encrypted) secret.
@@ -5402,440 +5094,40 @@ func (h *Handler) decryptTOTPSecret(stored string) (string, error) {
 	return string(plain), nil
 }
 
-func (h *Handler) encryptTOTPSecret(plain string) (string, error) {
-	sealed, err := secret.Encrypt(h.cfg.AppKey, []byte(plain))
-	if err != nil {
-		return "", fmt.Errorf("totp secret: %w", err)
-	}
-	return hex.EncodeToString(sealed), nil
-}
-
-// handleLogout handles POST /api/logout.
-// Clears the session cookie unconditionally. This is CLIENT-SIDE cookie removal
-// only: the stateless token itself stays valid until it expires, so a copied
-// cookie would still work. Revocation is handleLogoutAll (POST /api/logout-all),
-// which rotates the session epoch and thereby invalidates every outstanding
-// cookie server-side.
-func (h *Handler) handleLogout(w http.ResponseWriter, _ *http.Request) {
-	http.SetCookie(w, h.newSessionCookie("", -1))
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
-}
-
-// newSessionEpoch returns a fresh random session epoch (16 bytes, hex).
-func newSessionEpoch() (string, error) {
-	buf := make([]byte, 16)
-	if _, err := rand.Read(buf); err != nil {
-		return "", fmt.Errorf("generate session epoch: %w", err)
-	}
-	return hex.EncodeToString(buf), nil
-}
-
-// handleLogoutAll handles POST /api/logout-all — "log out everywhere".
-// It rotates the stored session epoch to a fresh random value; because every
-// session token's HMAC is bound to the epoch, ALL outstanding cookies (on every
-// browser/device) become invalid at once. This is the revocation path for the
-// otherwise stateless 7-day tokens. The caller's own cookie is cleared too, so
-// the SPA lands on the login screen immediately.
-func (h *Handler) handleLogoutAll(w http.ResponseWriter, _ *http.Request) {
-	epoch, err := newSessionEpoch()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
-		s.SessionEpoch = epoch
-		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	http.SetCookie(w, h.newSessionCookie("", -1))
-	writeJSON(w, http.StatusOK, okEnvelope(nil))
-}
-
-// handleSetPassword handles POST /api/auth/password.
-// Body: {password, current, code}. An empty password switches the login off.
-func (h *Handler) handleSetPassword(w http.ResponseWriter, r *http.Request) {
-	// A paired phone's session that could set the password would be a
-	// signed-in one a request later.
-	gen, ok := h.requireSignInAt(w, r, "changing the password")
-	if !ok {
-		return
-	}
-	var body struct {
-		Password string `json:"password"`
-		// Current is the password in use and Code the second factor while it
-		// is armed. A session someone walked away from must not be enough to
-		// take the login over or switch it off.
-		Current string `json:"current"`
-		Code    string `json:"code"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-
-	hash := ""
-	if gen.hash != "" && !h.ownerConfirmed(w, r, gen.hash, body.Current, body.Code) {
-		return
-	}
-	if body.Password != "" {
-		var err error
-		if hash, err = secret.HashPassword(h.cfg.AppKey, body.Password); err != nil {
-			writeJSON(w, http.StatusOK, failEnvelope(err))
-			return
-		}
-	}
-	epoch, err := h.storePassword(gen, hash)
-	if errors.Is(err, errLoginChanged) {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": err.Error()})
-		return
-	}
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-
-	// Setting a password SIGNS THE OPERATOR IN. Without this the instance locks
-	// itself behind the operator in the same breath: the request that turns the
-	// login on is the last one this browser is allowed to make, because authGate
-	// now demands a session cookie nobody has issued yet. Every control that
-	// writes anything then answers 401 until the page is reloaded and the
-	// password typed a second time - which is how the second factor became
-	// unreachable right after it became relevant, the one moment somebody is
-	// most likely to want it.
-	//
-	// It grants nothing that was not already granted: this route is only
-	// reachable without a session while the login is OFF, so whoever calls it
-	// already had unauthenticated access to the whole API. Once the login is on,
-	// authGate holds the route like any other, and a password CHANGE is made by
-	// a session that already exists.
-	//
-	// The token signs the NEW hash, so it has to be minted after the write.
-	// Clearing the password sends the cookie away instead: the session it
-	// authenticated no longer means anything, and leaving it in the browser
-	// leaves a token signed against a hash that is gone.
-	if hash == "" {
-		http.SetCookie(w, h.newSessionCookie("", -1))
-	} else {
-		tok := secret.NewSessionToken(h.cfg.AppKey, hash, epoch, sessionTTL)
-		http.SetCookie(w, h.newSessionCookie(tok, int(sessionTTL.Seconds())))
-	}
-
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"enabled": hash != "",
-		// The caller is signed in as of this answer, so the Security card can
-		// show the sign-out controls without a round trip or a reload.
-		"authed": hash != "",
-	}))
-}
-
-// codeCurrentPasswordWrong refuses a password change whose current password
-// is not the one in use.
-const codeCurrentPasswordWrong = "currentPasswordWrong"
-
-// ownerConfirmed checks the password in use and, while it is armed, the
-// second factor, under the same throttle as the login. It answers the call
-// itself when either is missing or wrong.
-func (h *Handler) ownerConfirmed(w http.ResponseWriter, r *http.Request, hash, password, code string) bool {
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return false
-	}
-	if !verifyPassword(h.cfg.AppKey, password, hash) {
-		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": codeCurrentPasswordWrong, "error": "the current password is not right"})
-		return false
-	}
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return false
-	}
-	if !s.TOTPEnabled {
-		return true
-	}
-	if strings.TrimSpace(code) == "" {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "needCode": true, "error": "enter the code from your authenticator app"})
-		return false
-	}
-	if !h.secondFactorOK(&s, code) {
-		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "needCode": true, "error": "that code is not valid"})
-		return false
-	}
-	return true
-}
-
-// storePassword stores hash as the login password, or switches the login off
-// when hash is empty, and returns the new session epoch. It refuses with
-// errLoginChanged once the login has left gen.
-func (h *Handler) storePassword(gen authGeneration, hash string) (string, error) {
-	epoch := ""
-	_, err := h.store.MutateSettings(func(s *store.Settings) error {
-		if !gen.current(s) {
-			return errLoginChanged
-		}
-		s.AuthPasswordHash = hash
-		if hash == "" {
-			// A second factor left armed behind a disabled password would
-			// demand a code from an app the operator may have deleted long ago
-			// once the login is switched on again.
-			s.TOTPEnabled = false
-			s.TOTPSecret = ""
-			s.TOTPRecovery = ""
-		}
-		// A new password ends every other session, which is what somebody
-		// changing it out of suspicion expects, and the only way to revoke the
-		// stateless seven-day tokens bound to this epoch. The caller's cookie
-		// is minted from the new epoch, so it keeps working.
-		next, err := newSessionEpoch()
-		if err != nil {
-			return err
-		}
-		s.SessionEpoch = next
-		epoch = next
-		return nil
-	})
-	return epoch, err
-}
-
-// ---------------------------------------------------------------------------
-// Second factor (TOTP)
-// ---------------------------------------------------------------------------
-
-// handleTOTPSetup handles POST /api/auth/totp/setup: mint a fresh secret, store
-// it encrypted but NOT yet armed, and return the otpauth URI for the QR code.
-//
-// The secret is stored before it is proved so that the confirm step has
-// something server-side to check against, which keeps the plaintext secret out
-// of the client's hands between the two steps. TOTPEnabled stays false until
-// handleTOTPConfirm sees a working code, so an enrolment abandoned halfway
-// leaves the login exactly as it was.
-func (h *Handler) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
-	if !h.requireLoginPassword(w, r, "setting up two-factor authentication") {
-		return
-	}
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if s.AuthPasswordHash == "" {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "set a login password first, because a second factor with no first one protects nothing",
-		})
-		return
-	}
-	if s.TOTPEnabled {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "two-factor authentication is already on. Turn it off before setting it up again",
-		})
-		return
-	}
-
-	plain, err := secret.NewTOTPSecret()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	sealed, err := h.encryptTOTPSecret(plain)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
-		// A factor armed in another tab since the read above stays armed.
-		if st.TOTPEnabled {
-			return errLoginChanged
-		}
-		st.TOTPSecret = sealed
-		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-
-	name := s.InstanceName
-	if name == "" {
-		name = "BombVault"
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"secret": plain,
-		"uri":    secret.TOTPURI("BombVault", name, plain),
-	}))
-}
-
-// handleTOTPConfirm handles POST /api/auth/totp/confirm: arm the second factor
-// once the operator has typed a code the stored secret actually produces, and
-// hand back the recovery codes.
-//
-// The recovery codes are shown exactly once, here. They are stored hashed, so
-// this response is the only chance to write them down, and the frontend says so.
-func (h *Handler) handleTOTPConfirm(w http.ResponseWriter, r *http.Request) {
-	if !h.requireLoginPassword(w, r, "setting up two-factor authentication") {
-		return
-	}
-	var body struct {
-		Code string `json:"code"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	plain, err := h.decryptTOTPSecret(s.TOTPSecret)
-	if err != nil || plain == "" {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "no pending setup, start again",
-		})
-		return
-	}
-	if !secret.ValidTOTP(plain, body.Code, time.Now()) {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "that code is not valid. Check the clock on your phone and try the next one",
-		})
-		return
-	}
-
-	codes, hashed, err := secret.NewRecoveryCodes(h.cfg.AppKey)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
-		// A reset or a new setup in the meantime replaced the secret this
-		// code was checked against, and arming the factor now would lock the
-		// owner behind an authenticator they never saw.
-		if st.TOTPSecret != s.TOTPSecret {
-			return errLoginChanged
-		}
-		st.TOTPEnabled = true
-		st.TOTPRecovery = encodeRecoveryCodes(hashed)
-		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"recoveryCodes": codes,
-	}))
-}
-
-// handleTOTPDisable handles POST /api/auth/totp/disable: turn the second factor
-// off. It requires a current code or a recovery code, so that a session someone
-// walked away from cannot be used to quietly remove the factor.
-func (h *Handler) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
-	if !h.requireLoginPassword(w, r, "changing two-factor authentication") {
-		return
-	}
-	var body struct {
-		Code string `json:"code"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	s, err := h.store.GetSettings()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	if !s.TOTPEnabled {
-		writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
-		return
-	}
-	if !h.secondFactorOK(&s, body.Code) {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"ok":    false,
-			"error": "that code is not valid",
-		})
-		return
-	}
-	if _, err := h.store.MutateSettings(func(st *store.Settings) error {
-		// The code was checked against the secret read above. A factor set up
-		// anew since then is not the one it proves.
-		if st.TOTPSecret != s.TOTPSecret {
-			return errLoginChanged
-		}
-		st.TOTPEnabled = false
-		st.TOTPSecret = ""
-		st.TOTPRecovery = ""
-		return nil
-	}); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"enabled": false}))
-}
-
-// authGate is a middleware that enforces authentication when auth is enabled.
-// When auth is OFF it is a no-op passthrough, preserving today's behaviour.
-// The following paths are always permitted (so the SPA and health-check work):
-//   - GET  /api/auth
-//   - POST /api/login
-//   - GET  /api/health
-//   - GET  /metrics  (Prometheus can't carry the session cookie; the endpoint
+// authGate finds who a request comes from through the kit's guard and holds
+// every route but the public ones to somebody signed in. While nobody can
+// sign in, everyone reaches everything. The public paths each gate
+// themselves on a token, a key or a check inside their own handler:
+//   - GET /api/auth, GET /api/health and the kit's sign-in under
+//     /api/signin/v1/ and /signin/, which answers who may do what itself.
+//   - GET /metrics  (Prometheus can't carry the session cookie; the endpoint
 //     gates itself via its own enabled flag + optional bearer token)
-//   - GET  /widget and GET /api/widget/data  (the embeddable dashboard widget —
-//     an iframe on another dashboard can't carry the session cookie either;
-//     both endpoints gate themselves via the stored widget token instead,
-//     failing closed with 403 when none is set. POST/DELETE /api/widget/token
-//     stay session-protected — only a logged-in admin manages the token.)
+//   - GET /widget and GET /api/widget/data  (the embeddable dashboard widget,
+//     gated on the stored widget token, failing closed with 403 when none is
+//     set. POST/DELETE /api/widget/token stay session-protected.)
 //   - POST /api/group/call and GET /relay/connect  (a member of the pairing
 //     group calling this instance directly, and the relay socket while this
-//     instance serves one. Neither carries a session: the call is signed and
-//     sealed with keys only members hold, the socket admits the group's relay
-//     key only, and outside a group both answer 404.)
-//   - GET /api/auth/passkeys and the two POST /api/auth/passkey/login halves
-//     (they are how somebody who is not signed in signs in, beside /api/login.
-//     The status answers an unauthenticated caller with counts and whether this
-//     address can carry a passkey at all, never with a credential; the list of
-//     registered keys is gated inside the handler on a session.)
-//   - POST /api/auth/reset and POST /api/auth/reset/finish  (the way back in
-//     for somebody who lost the password. The first only writes a code to the
-//     container log, the second does nothing without that code.)
-//   - POST /mcp  (an assistant's MCP client carries no session cookie either.
-//     It is self-gated on its own keys and answers 404 while none exists, so it
-//     is never open. The key management routes under /api/mcp stay
+//     instance serves one. The call is signed and sealed with keys only
+//     members hold, the socket admits the group's relay key only, and outside
+//     a group both answer 404.)
+//   - POST /mcp and the OAuth endpoints  (an assistant's MCP client carries
+//     no session cookie either. It is self-gated on its own keys and answers
+//     404 while none exists. The key management routes under /api/mcp stay
 //     session-protected.)
 //   - the fortress status and log  (other apps and dashboards read them.
-//     authorizeFortress demands an API token or a signed-in browser, with or
-//     without a login password.)
+//     authorizeFortress demands an API token or a signed-in browser.)
 //   - everything under /api/v1/  (the public API for scripts and home
 //     automation. Every route but the OpenAPI description demands an API token
-//     inside serveAPIV1, with or without a login password. The token routes
-//     under /api/tokens stay session-protected.)
-//   - the receive slot routes under /api/zfs/receive/<slot>/  (another
-//     instance streams a ZFS replica through them. Each one demands the
-//     slot's bearer token and refuses anything outside the slot; the
-//     requests a person answers under /api/zfs/receive/requests stay
+//     inside serveAPIV1. The token routes under /api/tokens stay
 //     session-protected.)
+//   - the receive slot routes under /api/zfs/receive/<slot>/  (another
+//     instance streams a ZFS replica through them, each gated on the slot's
+//     bearer token.)
+//
+// A token of the kit opens none of BombVault's own routes: API tokens are
+// BombVault's and reach /api/v1 alone.
 func (h *Handler) authGate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Read auth state directly so we can fail CLOSED on a store error: a
-		// transient DB failure must never silently drop the auth gate and expose
-		// the API. Public liveness/auth endpoints stay reachable so the SPA can
-		// still render and recover.
-		s, err := h.store.GetSettings()
-		if err != nil {
-			log.Printf("api: authGate: GetSettings: %v", err)
-			if authGatePublicPath(r.URL.Path) {
-				next.ServeHTTP(w, r)
-			} else {
-				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-					"ok":    false,
-					"error": "authentication unavailable",
-				})
-			}
-			return
-		}
+	gate := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// A page a paired phone opens through the group reaches what the
 		// session of a phone does, with or without a login password, and of
 		// the public paths only the two the shell reads first. Every change
@@ -5859,23 +5151,18 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		hash := s.AuthPasswordHash
-		on := hash != ""
-		// Without a password any host on the network could name itself as
-		// this instance's direct address, so only a signed-in browser teaches it.
-		if !on {
+		v, found := visitor(r)
+		// A phone changes nothing at the sign-in but signing out, and hears
+		// so the way it does everywhere else.
+		if found && v.Via == signin.ViaDoor && phoneChangesSignIn(r) {
+			refusePaired(w)
+			return
+		}
+		if (found && v.Via == signin.ViaAnyone) || authGatePublicPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
-
-		if authGatePublicPath(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// All other /api/* routes require a valid session cookie.
-		c, err := h.sessionCookie(r)
-		if err != nil || !secret.ValidSessionToken(h.cfg.AppKey, hash, s.SessionEpoch, c.Value) {
+		if !found || v.Via == signin.ViaToken {
 			writeJSON(w, http.StatusUnauthorized, map[string]any{
 				"ok":    false,
 				"error": "authentication required",
@@ -5883,15 +5170,10 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// The session of a paired phone reaches what pairedRoutes lists, for
-		// as long as the phone keeps its row. A path that matches no route
-		// is left to the mux to answer, and
-		// behind anything but a mux the gate cannot tell, so it refuses.
-		if secret.PairedSessionToken(c.Value) {
-			if on, err := h.store.PhonePairing(); err != nil || !on || !h.pairedPhoneListed(c.Value) {
-				writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
-				return
-			}
+		// A paired phone reaches what pairedRoutes lists. A path that
+		// matches no route is left to the mux to answer, and behind
+		// anything but a mux the gate cannot tell, so it refuses.
+		if v.Via == signin.ViaDoor {
 			mux, ok := next.(*http.ServeMux)
 			if !ok {
 				refusePaired(w)
@@ -5905,15 +5187,26 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 			return
 		}
 
-		// This request came from a browser signed in with the password, so
-		// its Host header is what actually reaches this instance: the one
-		// address worth learning as where members should send it direct
-		// calls. Whoever holds the group's words could name any host.
+		// This request came from a browser signed in here, so its Host
+		// header is what actually reaches this instance: the one address
+		// worth learning as where members should send it direct calls.
+		// Whoever holds the group's words could name any host.
 		if h.svc != nil {
 			h.svc.learnDirectURL(r)
 		}
 		next.ServeHTTP(w, r)
 	})
+	if h.auth == nil {
+		return gate
+	}
+	return h.auth.Guard(gate)
+}
+
+// phoneChangesSignIn reports whether r changes something at the sign-in
+// other than signing out.
+func phoneChangesSignIn(r *http.Request) bool {
+	return strings.HasPrefix(r.URL.Path, signin.APIPrefix) && r.URL.Path != signin.APIPrefix+"logout" &&
+		r.Method != http.MethodGet && r.Method != http.MethodHead
 }
 
 // authGatePublicPath reports whether a path is reachable without a session. The
@@ -5921,17 +5214,16 @@ func (h *Handler) authGate(next http.Handler) http.Handler {
 // itself on a token, a key or a check inside its own handler.
 func authGatePublicPath(path string) bool {
 	switch path {
-	case "/api/auth", "/api/login", "/api/health",
+	case "/api/auth", "/api/health",
 		"/metrics",
 		"/widget", "/api/widget/data",
 		"/api/group/call", relayConnectPath,
-		"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
-		"/api/auth/reset", "/api/auth/reset/finish",
 		mcpEndpointPath, kitstatus.StatusPath, kitstatus.LogPath,
 		oauthResourceMeta, oauthServerMetaPath, oauthRegisterPath, oauthTokenPath, oauthRevokePath:
 		return true
 	}
-	return strings.HasPrefix(path, apiV1Prefix) || zfsReceiveSlotPath(path)
+	return strings.HasPrefix(path, apiV1Prefix) || zfsReceiveSlotPath(path) ||
+		strings.HasPrefix(path, signin.APIPrefix) || strings.HasPrefix(path, signin.BrowserPrefix)
 }
 
 // ---------------------------------------------------------------------------

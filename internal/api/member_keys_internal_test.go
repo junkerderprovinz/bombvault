@@ -130,7 +130,7 @@ func TestTheOwnerForgetsAMembersKeyAndRemovingOrLeavingDropsIt(t *testing.T) {
 
 	pin()
 	own := in.session
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	in.as(listedPhoneSession(t, in.st, in.appKey, hash, epoch), func() {
 		if code, out := in.do(t, http.MethodDelete, path, nil); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
 			t.Fatalf("forgetting a key with a paired session: %d %v", code, out)

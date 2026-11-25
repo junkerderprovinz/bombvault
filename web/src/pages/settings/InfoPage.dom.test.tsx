@@ -93,8 +93,8 @@ describe("the Version card", () => {
     expect(card(en["about.version"]).textContent).not.toMatch(/\bv\d/);
   });
 
-  it("names GlimStone 4.9.0, the release its cards follow", () => {
-    expect(GLIMSTONE_VERSION).toBe("4.9.0");
+  it("names GlimStone 4.9.2, the release its cards follow", () => {
+    expect(GLIMSTONE_VERSION).toBe("4.9.2");
   });
 
   it("asks the server only when Check for updates is pressed, and says it has not looked before", async () => {
@@ -206,7 +206,7 @@ describe("the Components card", () => {
   it("opens each project's newest release from its number, and says so where a version is unknown", async () => {
     await renderPage();
     expect(components().getByRole("link", { name: "0.18.1" }).getAttribute("href")).toBe("https://github.com/restic/restic/releases/latest");
-    expect(components().getByRole("link", { name: "4.9.0" }).getAttribute("href")).toBe(
+    expect(components().getByRole("link", { name: "4.9.2" }).getAttribute("href")).toBe(
       "https://github.com/junkerderprovinz/glimstone/releases/latest",
     );
     expect(components().getByText(en["tile.info.versionUnknown"])).toBeTruthy();

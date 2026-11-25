@@ -10,7 +10,6 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -52,19 +51,9 @@ func TestAMemberReadsTheLookStoredHere(t *testing.T) {
 }
 
 func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
-	h, _, _, _ := newMCPGateHandler(t)
+	h, router, _, _ := newMCPGateHandler(t)
 	h.svc.peerSession = h.phoneSession
-	hash, err := secret.HashPassword(h.cfg.AppKey, "correct horse")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := h.store.MutateSettings(func(s *store.Settings) error {
-		s.AuthPasswordHash = hash
-		s.SessionEpoch = "e1"
-		return nil
-	}); err != nil {
-		t.Fatal(err)
-	}
+	setPasswordOn(t, router, "correct horse")
 	if _, err := h.store.CreateFleetPeer(store.FleetPeer{MemberID: "phone", Name: "Phone", Kind: "android", Enabled: true}); err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +75,7 @@ func TestAPhoneOnTheInstancesPageSignsInWithoutThePassword(t *testing.T) {
 	if status != http.StatusOK || !resp.Needed || resp.Name != h.sessionCookieNameFor() {
 		t.Fatalf("status %d, answer %+v", status, resp)
 	}
-	if !secret.ValidSessionToken(h.cfg.AppKey, hash, "e1", resp.Value) {
+	if !h.phoneSessionValid("phone", resp.Value) {
 		t.Fatal("the session the phone got does not sign in")
 	}
 

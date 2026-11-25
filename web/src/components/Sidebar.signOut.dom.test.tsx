@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const logout = vi.fn(async () => ({ ok: true }));
 vi.mock("../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
-  logout: () => logout(),
+  signOut: () => logout(),
 }));
 
 const reload = vi.fn();

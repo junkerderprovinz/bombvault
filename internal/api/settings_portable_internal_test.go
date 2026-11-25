@@ -908,7 +908,7 @@ func seedMCPKeys(t *testing.T, st *store.Repo) []string {
 		{"0b7e0b7e0b7e0b7e0b7e0b7e0b7e0b7e", "Claude Code laptop", "9f1c4b2ade", "Zq7X"},
 		{"77aa77aa77aa77aa77aa77aa77aa77aa", "Workshop desktop", "31e8d70ac5", "Wm4P"},
 	} {
-		if _, err := st.CreateMCPKey(k.id, k.label, "", k.digest, k.hint, "check-"+k.id, true, 1789600000); err != nil {
+		if _, err := st.CreateMCPKey(k.id, "", k.label, "", k.digest, k.hint, "check-"+k.id, true, 1789600000); err != nil {
 			t.Fatalf("seed key %s: %v", k.label, err)
 		}
 		traces = append(traces, k.label, k.digest, k.hint)

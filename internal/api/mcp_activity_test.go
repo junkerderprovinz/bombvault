@@ -123,7 +123,7 @@ func TestMCPKeyListCountsTodaysCalls(t *testing.T) {
 }
 
 func TestMCPKeyActivityRoute(t *testing.T) {
-	h, st, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
+	h, _, _ := newTestRouterSvc(t, &fakeServiceDocker{}, &fakeResticEngine{})
 	_, id := createMCPKey(t, h, "Laptop", true)
 
 	w, m := doMCPKey(t, h, http.MethodGet, "/api/mcp/keys/0123456789abcdef0123456789abcdef/activity", "")
@@ -142,7 +142,7 @@ func TestMCPKeyActivityRoute(t *testing.T) {
 		t.Fatalf("a key that never started a backup has runs: %v", runs)
 	}
 
-	enableLogin(t, st, strings.Repeat("a", 64))
+	enableLogin(t, h)
 	if w, _ := doMCPKey(t, h, http.MethodGet, "/api/mcp/keys/"+id+"/activity", ""); w.Code != http.StatusUnauthorized {
 		t.Fatalf("without a session: status = %d, want 401", w.Code)
 	}

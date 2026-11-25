@@ -103,7 +103,7 @@ func seedAPIToken(t *testing.T, h *Handler, repo *store.Repo, label string, canS
 		t.Fatal(err)
 	}
 	id = newMCPKeyID()
-	if _, err := repo.CreateAPIToken(id, label,
+	if _, err := repo.CreateAPIToken(id, "", label,
 		secret.HashMCPKey(h.cfg.AppKey, token), secret.MCPKeyHint(token),
 		secret.MCPKeyCheck(h.cfg.AppKey, id), canStart, time.Now().Unix()); err != nil {
 		t.Fatal(err)

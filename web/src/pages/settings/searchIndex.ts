@@ -349,32 +349,20 @@ export const SETTINGS_INDEX: Record<SettingsPageId, SearchCard[]> = {
 
   security: [
     {
-      title: "auth.security",
-      hint: "auth.passwordHint",
-      rows: [
-        { key: "auth.currentPassword" },
-        { key: "auth.setPassword" },
-        { key: "auth.changePassword" },
-      ],
+      title: "signin.address.title",
+      hint: "signin.address.hint",
+      rows: [{ key: "signin.address.label" }],
     },
     {
-      title: "auth.twoFactor",
-      hint: "auth.twoFactorHint",
-      rows: [
-        { key: "auth.secretManual" },
-        { key: "auth.confirmCode" },
-        { key: "auth.disableCodePrompt" },
-      ],
+      title: "signin.password",
+      hint: "signin.tile.password.hint",
+      rows: [{ key: "signin.tile.password.change" }, { key: "signin.tile.password.remove" }, { key: "signin.tile.askPassword.label", hint: "signin.tile.askPassword.when" }],
     },
-    {
-      title: "auth.passkeys",
-      hint: "auth.passkeysHint",
-      rows: [{ key: "auth.passkeyNameLabel" }],
-    },
-    {
-      title: "apps.phone.title",
-      rows: [{ key: "auth.phonePairing", hint: "auth.phonePairingHint" }],
-    },
+    { title: "signin.tile.twoFactor.title", hint: "signin.tile.twoFactor.hint", rows: [{ key: "signin.tile.twoFactor.setUp" }] },
+    { title: "signin.tile.passkeys.title", hint: "signin.tile.passkeys.hint", rows: [{ key: "signin.tile.passkeys.add" }] },
+    { title: "signin.tile.sessions.title", hint: "signin.tile.sessions.hint", rows: [] },
+    { title: "signin.tile.services.title", hint: "signin.tile.services.hint", rows: [{ key: "signin.tile.services.add" }] },
+    { title: "signin.tile.accounts.title", hint: "signin.tile.accounts.hint", rows: [] },
     {
       title: "tile.crypt.title",
       rows: [

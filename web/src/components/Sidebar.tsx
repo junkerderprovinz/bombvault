@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import type { CSSProperties } from "react";
-import { logout, type Settings } from "../lib/api";
+import { signOut as endSession, type Settings } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { hueVars } from "../lib/appearance";
 import { onDestination, sidebarDestinations, type NavDestination } from "../lib/navModel";
@@ -148,7 +148,7 @@ function SidebarSignOut({ hueIndex }: { hueIndex: number }) {
   const tooltip = useTipBubble(showLabel || reactive ? undefined : label);
 
   async function signOut() {
-    await logout().catch(() => undefined);
+    await endSession();
     const g = globalThis as unknown as { location: { reload(): void } };
     g.location.reload();
   }

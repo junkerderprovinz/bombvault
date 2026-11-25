@@ -231,11 +231,8 @@ func TestApplyingALocationsKeepRuleWorksWithoutALoginPassword(t *testing.T) {
 func TestApplyingALocationsKeepRuleNeedsTheOwnersOwnLoginOnceAPasswordIsSet(t *testing.T) {
 	f := newKeepFixture(t, store.RetentionKeep{KeepLast: 1})
 	f.withPassword("a password of the owner")
-	settings, err := f.st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch)
+	hash, epoch, _ := f.h.phoneSigning()
+	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, hash, epoch)
 	for _, r := range []string{
 		"GET /api/storage/locations/" + f.id + "/keep/preview",
 		"POST /api/storage/locations/" + f.id + "/keep/apply",

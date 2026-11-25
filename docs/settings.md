@@ -61,7 +61,8 @@ The **Streaming** card, which lowers the upload limit while Plex, Jellyfin or Em
 - **Password**: the login password, of any length. Below 12 characters the page suggests a longer one. Changing or clearing it asks for the current one and, with two-factor authentication on, the code.
 - **Two-factor authentication**: a code from an authenticator app on top of the password, with eight recovery codes shown once.
 - **Passkeys**: sign in with a key on your phone, laptop or security stick. They need a real domain name and a certificate the browser trusts.
-- **Android app**: **Phones can pair with the group's twelve words**, which lets a paired phone sign in without the password.
+- **Address**: where you open this instance, such as `https://bombvault.example.com`. Passkeys and sign-in services go by it.
+- **Sign-in services**: sign in through Pocket ID, Authentik, Authelia, Kanidm, Keycloak or Zitadel, next to the password. BombVault has to sit at the root of its address for that. Under a path such as `https://example.com/bombvault/` the service cannot send you back yet.
 - **Encryption**: **Encrypt backups**, on by default.
 
 Several things need a login password, such as the recovery kit and key deposits. See [Security model](configuration.md#security-model).

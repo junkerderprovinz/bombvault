@@ -14,16 +14,13 @@ import { useT } from "../../lib/i18n";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
 
-/** The new-password field on the Security page. The MCP and pairing cards
- *  send the operator there, because a key or a phrase made while the web
- *  interface has no password is handed to whoever can reach the page. */
-export const LOGIN_PASSWORD_FIELD = "bv-login-password";
-
-/** useOpenPasswordField opens the Security page with the cursor in the login
- *  password field. */
+/** useOpenPasswordField opens the Security page, whose sign-in tile sets the
+ *  password. The MCP and pairing cards send the operator there, because a key
+ *  or a phrase made while the web interface has no password is handed to
+ *  whoever can reach the page. */
 export function useOpenPasswordField(): () => void {
   const navigate = useNavigate();
-  return () => navigate(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
+  return () => navigate("/settings/security");
 }
 
 /** hueCounter hands out palette positions in call order. A page makes one per

@@ -8,12 +8,12 @@ import (
 	"sort"
 	"strings"
 	"testing"
-	"time"
+
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/schedule"
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
@@ -66,7 +66,7 @@ func doMCPKeyJSON(t *testing.T, h http.Handler, method, path, body, host, cookie
 		r.Header.Set("Origin", "https://"+host)
 	}
 	if cookie != "" {
-		r.AddCookie(&http.Cookie{Name: "bv_session", Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
+		r.AddCookie(&http.Cookie{Name: sessionCookie, Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -129,23 +129,60 @@ func mcpKeyRows(t *testing.T, list map[string]any, field string) []map[string]an
 	return out
 }
 
-// enableLogin stores a login password and returns a session cookie for it.
-func enableLogin(t *testing.T, st *store.Repo, appKey string) string {
+// enableLogin gives the open instance behind router its first password and
+// returns the session that comes with it.
+func enableLogin(t *testing.T, router http.Handler) string {
 	t.Helper()
-	s, err := st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
+	r := httptest.NewRequest(http.MethodPut, signin.APIPrefix+"me/password", strings.NewReader(`{"next":"hunter2"}`))
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "same-origin")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, r)
+	for _, c := range w.Result().Cookies() {
+		if c.Name == sessionCookie && c.Value != "" {
+			return c.Value
+		}
 	}
-	hash, err := secret.HashPassword(appKey, "hunter2")
-	if err != nil {
-		t.Fatal(err)
-	}
-	s.AuthPasswordHash = hash
-	if err := st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
-	return secret.NewSessionToken(appKey, hash, s.SessionEpoch, 7*24*time.Hour)
+	t.Fatalf("no session from the first password: %d %s", w.Code, w.Body.String())
+	return ""
 }
+
+// signInAgain signs in with the password enableLogin set and returns a
+// session of its own.
+func signInAgain(t *testing.T, router http.Handler) string {
+	t.Helper()
+	r := httptest.NewRequest(http.MethodPost, signin.APIPrefix+"login", strings.NewReader(`{"password":"hunter2"}`))
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "same-origin")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, r)
+	for _, c := range w.Result().Cookies() {
+		if c.Name == sessionCookie && c.Value != "" {
+			return c.Value
+		}
+	}
+	t.Fatalf("no session from the password: %d %s", w.Code, w.Body.String())
+	return ""
+}
+
+// removeLogin takes the password enableLogin gave away again, so the
+// instance is open.
+func removeLogin(t *testing.T, router http.Handler, session string) {
+	t.Helper()
+	r := httptest.NewRequest(http.MethodDelete, signin.APIPrefix+"me/password", strings.NewReader(`{"current":"hunter2"}`))
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "same-origin")
+	r.AddCookie(&http.Cookie{Name: sessionCookie, Value: session}) //nolint:gosec // G124: request cookie
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("remove the password: %d %s", w.Code, w.Body.String())
+	}
+}
+
+// sessionCookie is the name of the kit's session cookie over plain http,
+// which every test request is.
+const sessionCookie = "bombvault_session"
 
 // newMCPToolRouter is a router with one key that may start backups, which is
 // what every tool test needs before it can call anything.

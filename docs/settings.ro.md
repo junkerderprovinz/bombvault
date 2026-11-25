@@ -61,6 +61,8 @@ Cardul **Streaming**, care coboară limita de încărcare cât timp Plex, Jellyf
 - **Parolă**: parola de conectare, de orice lungime. Sub 12 caractere pagina sugerează una mai lungă. Schimbarea sau ștergerea ei cere parola curentă și, cu autentificarea în doi pași pornită, codul.
 - **Autentificare în doi pași**: un cod dintr-o aplicație de autentificare peste parolă, cu opt coduri de recuperare afișate o singură dată.
 - **Chei de acces**: te conectezi cu o cheie de pe telefon, laptop sau cheie de securitate. Au nevoie de un nume de domeniu real și de un certificat în care browserul are încredere.
+- **Adresă**: unde deschizi BombVault, de exemplu `https://bombvault.example.com`. Cheile de acces și serviciile de conectare se ghidează după ea.
+- **Servicii de conectare**: conectare prin Pocket ID, Authentik, Authelia, Kanidm, Keycloak sau Zitadel, pe lângă parolă. Pentru asta BombVault trebuie să stea la rădăcina adresei sale. Sub o cale ca `https://example.com/bombvault/` serviciul nu te poate trimite încă înapoi.
 - **Aplicația Android**: **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului**, ceea ce permite unui telefon împerecheat să se conecteze fără parolă.
 - **Criptare**: **Criptează copiile de rezervă**, pornit implicit.
 

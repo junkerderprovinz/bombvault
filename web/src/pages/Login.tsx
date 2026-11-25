@@ -1,189 +1,89 @@
-import { useEffect, useState } from "react";
-import { componentText } from "@glimstone/core";
-import {
-  finishPasskeyWithCode,
-  finishPasswordReset,
-  getAuth,
-  login,
-  loginWithPasskey,
-  passkeyStatus,
-  passkeysAvailableInBrowser,
-  startPasswordReset,
-  type PasswordResetRemoved,
-} from "../lib/api";
-import { useT } from "../lib/i18n";
-import type { SignInText } from "../lib/signIn";
+import { useEffect, useMemo, useState } from "react";
+import { signInCardHandlers, signInServiceLabel, takeSignInCode, type SignInOffer, type SignInRemoved } from "@glimstone/core";
+import { IDENTITY_PROVIDERS } from "@glimstone/core/identityProviders";
+import { SignInCard, type SignInCardService } from "@glimstone/react/SignInCard";
 import { Button } from "../components/Button";
-import { SignInCard } from "../components/SignInCard";
 import { withinBase } from "../lib/base";
+import { useT } from "../lib/i18n";
+import { signIn } from "../lib/signInKit";
+import { arrivedWords, cardText, errorWords, resetNote } from "../lib/signInWords";
 
 interface LoginPageProps {
-  /** Called after a successful login so the parent can re-check auth state. */
+  /** Called once somebody is signed in, so the parent reads the sign-in again. */
   onLogin: () => void;
 }
 
-// LoginPage is the full-screen login shown while auth is on and nobody is
-// signed in. The password goes first; when a second factor is armed the
-// server answers needCode and the code field appears, with the password kept.
-// The field waits for that answer even when GET /api/auth already reports a
-// factor, so nobody spends a 30-second code window on a mistyped password.
+const CLOSED: SignInOffer = { open: false, owner: true, minPassword: 12, signedIn: false, passkeys: false, services: [] };
+
+// LoginPage is the way in while somebody has to sign in: GlimStone's sign-in card on the kit's sign-in. The sign-in
+// service that is on stands under Sign in, and passkeys come through the browser's offer in the password field.
 export function LoginPage({ onLogin }: LoginPageProps) {
   const { t, lang } = useT();
-  // Set once a passkey signed in and the server asks for the code on top.
-  const [passkeyHandle, setPasskeyHandle] = useState<string | null>(null);
-  const [recommendedLen, setRecommendedLen] = useState(12);
-  // What a reset removed, held until the reader has seen it.
-  const [removed, setRemoved] = useState<PasswordResetRemoved | null>(null);
+  const [offer, setOffer] = useState<SignInOffer | null>(null);
+  // What a reset took away, held until the reader has seen it.
+  const [removed, setRemoved] = useState<SignInRemoved | null>(null);
+  const [refused] = useState(() => {
+    const code = takeSignInCode();
+    return code ? (({ ...errorWords(t), ...arrivedWords(t) }) as Record<string, string | undefined>)[code] ?? t("signin.failed") : undefined;
+  });
 
-  // The passkey button needs WebAuthn in the browser, an address that can carry
-  // a passkey (a bare IP cannot, see internal/api/passkeys.go) and a key
-  // registered for it. A prompt that cannot succeed is worse than no button.
-  const [passkeyOffer, setPasskeyOffer] = useState(false);
   useEffect(() => {
-    if (!passkeysAvailableInBrowser()) return;
     let live = true;
-    void passkeyStatus()
-      .then((s) => {
-        if (live) setPasskeyOffer(s.ok && s.supported === true && (s.here ?? 0) > 0);
-      })
-      .catch(() => undefined);
+    void signIn.options().then((r) => {
+      if (live) setOffer(r.ok ? r.value : CLOSED);
+    });
     return () => {
       live = false;
     };
   }, []);
 
-  const field = componentText(lang).passwordField;
-  const text: SignInText = {
-    password: t("auth.passwordLabel"),
-    signIn: t("auth.signIn"),
-    signingIn: t("auth.signingIn"),
-    passkey: t("auth.signInWithPasskey"),
-    forgot: t("auth.forgotPassword"),
-    code: t("auth.codeLabel"),
-    codeHint: t("auth.codeHint"),
-    codeInvalid: t("auth.codeInvalid"),
-    back: t("common.back"),
-    resetCode: t("auth.resetCodeLabel"),
-    resetCodeTip: t("auth.resetCodeTip"),
-    newPassword: t("auth.newPassword"),
-    confirmPassword: field.confirm,
-    setPassword: t("auth.setPassword"),
-    saving: t("auth.saving"),
-    mismatch: field.mismatch,
-    shortPassword: t("auth.passwordShortHint", recommendedLen),
-    resetRejected: t("auth.resetCodeRejected"),
-    failed: t("auth.loginError"),
-  };
+  const text = useMemo(() => cardText(t, lang), [t, lang]);
+  const handlers = useMemo(
+    () =>
+      signInCardHandlers(signIn, {
+        words: { errors: errorWords(t), failed: t("signin.failed") },
+        onSignedIn: onLogin,
+        onReset: setRemoved,
+      }),
+    [t, onLogin],
+  );
 
+  const first = offer?.services[0];
+  const service = useMemo<SignInCardService | undefined>(() => {
+    if (!first) return undefined;
+    const { name, mark } = signInServiceLabel(first, IDENTITY_PROVIDERS, { services: { unnamed: t("signin.tile.services.unnamed") } });
+    return mark ? { name, mark } : { name };
+  }, [first, t]);
+
+  if (!offer) return null;
   return (
     <SignInCard
       logo={withinBase("/logo.svg")}
       appName={t("auth.loginTitle")}
       text={text}
       idPrefix="bv"
-      passkey={passkeyOffer}
       reset
-      recommendedPassword={recommendedLen}
-      step={removed ? <ResetDone removed={removed} onDone={onLogin} /> : undefined}
-      onSignIn={async ({ password, code, passkey }) => {
-        try {
-          if (passkey) {
-            const res = await finishPasskeyWithCode(passkeyHandle!, code!);
-            if (res.ok) {
-              onLogin();
-              return { ok: true };
-            }
-            const again = res.needCode && res.ceremonyId ? res.ceremonyId : null;
-            setPasskeyHandle(again);
-            return { needCode: !!again, error: res.error ?? t("auth.codeInvalid") };
-          }
-          const res = await login(password, code);
-          if (res.ok) {
-            onLogin();
-            return { ok: true };
-          }
-          if (res.needCode) return { needCode: true, error: res.error ?? t("auth.codeInvalid") };
-          return { error: res.error ?? t("auth.invalidPassword") };
-        } catch {
-          return { error: t("auth.loginError") };
-        }
-      }}
-      onPasskey={async () => {
-        try {
-          const res = await loginWithPasskey();
-          if (res.ok) {
-            onLogin();
-            return { ok: true };
-          }
-          if (res.needCode && res.ceremonyId) {
-            setPasskeyHandle(res.ceremonyId);
-            return { needCode: true };
-          }
-          return {
-            error: res.code === "passkeyNeedsVerification" ? t("auth.passkeyNeedsVerification") : (res.error ?? t("auth.passkeySignInFailed")),
-          };
-        } catch (err) {
-          // A cancelled prompt lands here too, and its own message says more than
-          // a generic one.
-          return { error: err instanceof Error ? err.message : t("auth.passkeySignInFailed") };
-        }
-      }}
-      // The reset form shows only after the server has written a code to its
-      // log, so the form never asks for a code that does not exist.
-      onAskCode={async () => {
-        try {
-          const res = await startPasswordReset();
-          if (!res.ok) return { error: res.error ?? t("auth.loginError") };
-          void getAuth()
-            .then((a) => {
-              if (a.recommendedPasswordLen) setRecommendedLen(a.recommendedPasswordLen);
-            })
-            .catch(() => undefined);
-          return { ok: true };
-        } catch {
-          return { error: t("auth.loginError") };
-        }
-      }}
-      onSetPassword={async ({ code, password }) => {
-        try {
-          const res = await finishPasswordReset(code, password);
-          if (res.ok) {
-            // The answer already carries the session.
-            if (res.removed) setRemoved(res.removed);
-            else onLogin();
-            return { ok: true };
-          }
-          if (res.code === "resetCodeRejected") return { rejected: true };
-          return { error: res.error ?? t("auth.saveError") };
-        } catch {
-          return { error: t("auth.saveError") };
-        }
-      }}
+      minPassword={offer.minPassword}
+      error={refused}
+      service={service}
+      onService={first ? () => location.assign(signIn.serviceAddress(first.id, location.pathname)) : undefined}
+      step={removed ? <ResetDone note={resetNote(t, lang, removed)} onDone={onLogin} /> : undefined}
+      onSignIn={handlers.onSignIn}
+      onPasskeyOffer={offer.passkeys ? handlers.onPasskeyOffer : undefined}
+      onAskCode={handlers.onAskCode}
+      onSetPassword={handlers.onSetPassword}
     />
   );
 }
 
-/** ResetDone lists what the reset removed before the app opens. The owner has
- *  to know that the passkeys are gone, or the next sign-in looks for a key that
- *  no longer exists. */
-function ResetDone({ removed, onDone }: { removed: PasswordResetRemoved; onDone: () => void }) {
+/** ResetDone says what the reset took away before the app opens. The owner has to know that the passkeys and keys
+ *  are gone, or the next sign-in looks for a key that no longer exists. */
+function ResetDone({ note, onDone }: { note: string; onDone: () => void }) {
   const { t } = useT();
-  const keysGone = removed.passkeys + removed.apiTokens + removed.mcpKeys > 0;
   return (
     <div className="glim-signin-form" role="status">
       <h2 className="text-sm font-semibold text-carbon-text">{t("auth.resetDoneTitle")}</h2>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs text-carbon-textSub font-medium">{t("auth.resetDoneIntro")}</p>
-        <ul className="list-disc ps-5 text-sm text-carbon-text flex flex-col gap-1">
-          <li>{t("auth.resetDoneSessions")}</li>
-          {removed.phonePairingOff && <li>{t("auth.resetDonePhones")}</li>}
-          {removed.twoFactor && <li>{t("auth.twoFactorOffNow")}</li>}
-          {removed.passkeys > 0 && <li>{t("auth.resetDonePasskeys", removed.passkeys)}</li>}
-          {removed.apiTokens > 0 && <li>{t("auth.resetDoneApiTokens", removed.apiTokens)}</li>}
-          {removed.mcpKeys > 0 && <li>{t("auth.resetDoneMcpKeys", removed.mcpKeys)}</li>}
-        </ul>
-      </div>
-      {keysGone && <p className="text-xs text-carbon-textSub font-medium">{t("auth.resetDoneHint")}</p>}
+      <p className="text-xs text-carbon-textSub font-medium">{note}</p>
       <Button label={t("common.done")} labelKey="common.done" tone="accent" onClick={onDone} />
     </div>
   );

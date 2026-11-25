@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -29,14 +28,9 @@ const internalRedirect = "https://claude.ai/api/mcp/auth_callback"
 func newOAuthClock(t *testing.T) *oauthClock {
 	t.Helper()
 	h, router, repo, _ := newMCPGateHandler(t)
-	hash := enableAuth(t, h, repo)
-	s, err := repo.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
 	c := &oauthClock{h: h, router: router, now: time.Unix(1_800_000_000, 0)}
 	h.mcp.now = func() time.Time { return c.now }
-	c.session = secret.NewSessionToken(h.cfg.AppKey, hash, s.SessionEpoch, 24*time.Hour)
+	c.session = setPasswordOn(t, router, "hunter2")
 	if err := repo.SetMCPOAuthSettings(store.MCPOAuthSettings{Enabled: true, Issuer: "https://vault.example"}, 1); err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +48,7 @@ func (c *oauthClock) send(t *testing.T, method, path, contentType, body string) 
 	if contentType != "" {
 		r.Header.Set("Content-Type", contentType)
 	}
-	r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: c.session}) //nolint:gosec // G124: request cookie
+	r.AddCookie(sessionCookieFor(c.session))
 	w := httptest.NewRecorder()
 	c.router.ServeHTTP(w, r)
 	var m map[string]any

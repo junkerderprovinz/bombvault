@@ -16,9 +16,9 @@ import (
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/group"
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 	"github.com/junkerderprovinz/parleyport/kit/status"
 
-	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
@@ -35,13 +35,13 @@ const runKindOpened = "opened"
 // reach.
 const codeOpenedRefused = "opened-refused"
 
-// openedClosed are the doors an opened page finds closed: setting and
-// resetting the password and the other ways in, the keys of assistants and
-// scripts, the pages and feeds that gate themselves on a token, and opening
-// other members from here. An entry ending in a slash closes what lies below
-// it, any other the path itself and what lies below.
+// openedClosed are the doors an opened page finds closed: the sign-in
+// services, the keys of assistants and scripts, the pages and feeds that gate
+// themselves on a token, and opening other members from here. An entry ending
+// in a slash closes what lies below it, any other the path itself and what
+// lies below.
 var openedClosed = []string{
-	"/api/auth/password", "/api/auth/reset", "/api/auth/totp", "/api/auth/passkey/register", "/api/auth/passkeys/",
+	signin.BrowserPrefix,
 	mcpEndpointPath, "/api/mcp", "/api/oauth", "/oauth", "/.well-known",
 	"/api/tokens", "/api/v1",
 	"/metrics", "/widget", "/api/widget",
@@ -49,9 +49,22 @@ var openedClosed = []string{
 	"/api/group/call", relayConnectPath,
 }
 
-func closedToOpened(p string) bool {
+// openedReadOnly are what an opened page may read but not change: the
+// sign-in, with the password, its reset and the other ways in, and the
+// address passkeys and sign-in services go by.
+var openedReadOnly = []string{signin.APIPrefix, "/api/address"}
+
+func closedToOpened(method, p string) bool {
 	p = path.Clean("/" + p)
-	for _, door := range openedClosed {
+	if behind(p, openedClosed) {
+		return true
+	}
+	return method != http.MethodGet && method != http.MethodHead && behind(p, openedReadOnly)
+}
+
+// behind reports whether p is one of doors or lies below one.
+func behind(p string, doors []string) bool {
+	for _, door := range doors {
 		if strings.HasSuffix(door, "/") {
 			if strings.HasPrefix(p, door) {
 				return true
@@ -84,7 +97,7 @@ func (s *Service) serveOpened(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if closedToOpened(r.URL.Path) {
+	if closedToOpened(r.Method, r.URL.Path) {
 		refuseOpened(w, http.StatusForbidden, "this works at BombVault's own address, not through the fortress")
 		return
 	}
@@ -204,28 +217,19 @@ func (h *Handler) tabSession(r *http.Request) (name string, valid func() bool, o
 	if openedPage(r) || relayedPage(r) {
 		return "", nil, false
 	}
-	hash, epoch, on := h.authEnabled()
-	if !on {
+	if h.signInOpen() {
 		c, err := r.Cookie(visitorCookieName)
 		if err != nil || c.Value == "" {
 			return "", nil, false
 		}
-		return sessionName(c.Value), h.noPassword, true
+		return sessionName(c.Value), h.signInOpen, true
 	}
-	c, err := h.sessionCookie(r)
-	if err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
+	v, found := visitor(r)
+	if !found || v.Session() == "" {
 		return "", nil, false
 	}
-	token := c.Value
-	return sessionName(token), func() bool {
-		hash, epoch, on := h.authEnabled()
-		return on && secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token)
-	}, true
-}
-
-func (h *Handler) noPassword() bool {
-	_, _, on := h.authEnabled()
-	return !on
+	id := v.Session()
+	return sessionName(id), func() bool { return h.auth.Alive(context.Background(), id) }, true
 }
 
 // sessionName names a session to the fortress without giving it away.
@@ -244,7 +248,7 @@ func (h *Handler) FortressTabs() http.Handler {
 		name, _, ok := h.tabSession(r)
 		return name, ok
 	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	tabs := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f := h.svc.fortressNow()
 		if f == nil || relayedPage(r) || openedPage(r) {
 			http.NotFound(w, r)
@@ -252,6 +256,10 @@ func (h *Handler) FortressTabs() http.Handler {
 		}
 		f.OpenHandler(session, nil).ServeHTTP(w, r)
 	})
+	if h.auth == nil {
+		return tabs
+	}
+	return h.auth.Guard(tabs)
 }
 
 // handleFortressOpen opens another member's pages for the browser that asks,
@@ -269,7 +277,7 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name, valid, ok := h.tabSession(r)
-	if !ok && (!h.noPassword() || relayedPage(r)) {
+	if !ok && (!h.signInOpen() || relayedPage(r)) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "sign in with the password to open another app", "code": codeOwnLoginNeeded})
 		return
 	}
@@ -284,7 +292,7 @@ func (h *Handler) handleFortressOpen(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: !h.cfg.HTTPOnly,
 		}
 		http.SetCookie(w, c)
-		name, valid = sessionName(c.Value), h.noPassword
+		name, valid = sessionName(c.Value), h.signInOpen
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), moveTimeout)
 	defer cancel()

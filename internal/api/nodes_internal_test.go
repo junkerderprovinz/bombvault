@@ -12,7 +12,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/nodelink"
-	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
 )
 
@@ -122,9 +121,7 @@ func TestAddingANodeNeedsANameButNoLoginPassword(t *testing.T) {
 	if code, out := home.do(t, http.MethodPost, "/api/nodes", map[string]any{"name": "a\nb"}); code != http.StatusBadRequest {
 		t.Errorf("a name over two lines = %d %v", code, out)
 	}
-	if _, err := home.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, home.router, home.session, testPassword)
 	home.session = ""
 	if code, out := home.do(t, http.MethodPost, "/api/nodes", map[string]any{"name": "vps"}); code != http.StatusOK || out["ok"] != true {
 		t.Errorf("without a login password = %d %v", code, out)

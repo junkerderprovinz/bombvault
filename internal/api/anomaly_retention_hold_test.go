@@ -426,8 +426,8 @@ func TestPruneRefusesTheRepoWidePassWhileAnythingIsHeld(t *testing.T) {
 
 func TestManualPruneNamesPausedItems(t *testing.T) {
 	eng := &fakeResticEngine{}
-	_, st, h := heldRepo(t, eng)
-	cookie := enableLogin(t, st, strings.Repeat("a", 64))
+	_, _, h := heldRepo(t, eng)
+	cookie := enableLogin(t, h)
 
 	w, m := doMCPKeyJSON(t, h, http.MethodPost, "/api/prune/containers", "{}", "", cookie)
 	if w.Code != http.StatusOK || m["ok"] != true {

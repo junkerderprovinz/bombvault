@@ -2,28 +2,30 @@ package api
 
 import (
 	"database/sql"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// authGatePublicPaths is the complete allowlist: the login screen and the
-// health check have to work without a session and while the store is failing.
-// The widget, group and passkey handlers check their own token or gate the
-// answer inside the handler, because an embedding iframe, a group member and
-// somebody who is not signed in yet carry no session cookie. /mcp is self-gated
-// on its own keys and answers 404 while none exists; the key management routes
-// under /api/mcp stay session-protected.
+// authGatePublicPaths is the complete allowlist: the sign-in and the health
+// check have to work without a session. The widget and group handlers check
+// their own token or gate the answer inside the handler, because an embedding
+// iframe and a group member carry no session cookie. /mcp is self-gated on its
+// own keys and answers 404 while none exists; the key management routes under
+// /api/mcp stay session-protected. The kit's routes decide who may call them.
 var authGatePublicPaths = []string{
-	"/api/auth", "/api/login", "/api/health", "/metrics", "/widget", "/api/widget/data",
-	"/api/group/call", "/relay/connect",
-	"/api/auth/passkeys", "/api/auth/passkey/login/begin", "/api/auth/passkey/login/finish",
-	"/mcp",
+	"/api/auth", "/api/health", "/metrics", "/widget", "/api/widget/data",
+	"/api/group/call", "/relay/connect", "/mcp",
+	"/api/signin/v1/options", "/api/signin/v1/login", "/signin/oidc/callback",
 }
 
 // newAuthGateHandler returns a Handler on a fresh in-memory store, plus the
@@ -41,81 +43,66 @@ func newAuthGateHandler(t *testing.T) (*Handler, *store.Repo, *sql.DB) {
 	}
 	repo := store.New(db)
 	h := &Handler{
-		cfg:   config.Config{AppKey: strings.Repeat("a", 64)},
-		store: repo,
+		cfg:      config.Config{AppKey: strings.Repeat("a", 64)},
+		store:    repo,
+		resetOut: io.Discard,
 	}
 	return h, repo, db
 }
 
-// enableAuth stores a password hash (turning the gate on) and returns the hash
-// so tests can mint session tokens against it.
-func enableAuth(t *testing.T, h *Handler, repo *store.Repo) string {
+// enableAuth gives h a password the way an install from before the kit kept
+// it, opens the sign-in on it and returns the kit's contract behind the gate.
+func enableAuth(t *testing.T, h *Handler, repo *store.Repo) http.Handler {
 	t.Helper()
-	s, err := repo.GetSettings()
+	hash, err := secret.HashPassword(h.cfg.AppKey, "hunter2")
 	if err != nil {
-		t.Fatalf("get settings: %v", err)
+		t.Fatalf("HashPassword: %v", err)
 	}
-	pwHash, pwErr := secret.HashPassword(h.cfg.AppKey, "hunter2")
-	if pwErr != nil {
-		t.Fatalf("HashPassword: %v", pwErr)
-	}
-	s.AuthPasswordHash = pwHash
-	if err := repo.UpdateSettings(s); err != nil {
+	if _, err := repo.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = hash; return nil }); err != nil {
 		t.Fatalf("update settings: %v", err)
 	}
-	return s.AuthPasswordHash
+	return kitRouter(t, h)
 }
 
-// enableAuthLegacyHash stores the password in the legacy bare-HMAC format and
-// returns it. The upgrade-on-sign-in test needs it, and so does the throttle
-// flood test, whose ten thousand attempts would not fit in loginWindow with
-// Argon2id.
-func enableAuthLegacyHash(t *testing.T, h *Handler, repo *store.Repo) string {
+// kitRouter opens h's sign-in and returns its contract behind the gate.
+func kitRouter(t *testing.T, h *Handler) http.Handler {
 	t.Helper()
-	s, err := repo.GetSettings()
-	if err != nil {
-		t.Fatalf("get settings: %v", err)
+	if err := h.OpenSignIn(); err != nil {
+		t.Fatalf("open the sign-in: %v", err)
 	}
-	s.AuthPasswordHash = legacyHashForTest(h.cfg.AppKey, "hunter2")
-	if err := repo.UpdateSettings(s); err != nil {
-		t.Fatalf("update settings: %v", err)
-	}
-	return s.AuthPasswordHash
-}
-
-// setEpoch rotates the stored session epoch (what POST /api/logout-all does).
-func setEpoch(t *testing.T, repo *store.Repo, epoch string) {
-	t.Helper()
-	s, err := repo.GetSettings()
-	if err != nil {
-		t.Fatalf("get settings: %v", err)
-	}
-	s.SessionEpoch = epoch
-	if err := repo.UpdateSettings(s); err != nil {
-		t.Fatalf("update settings: %v", err)
-	}
+	t.Cleanup(func() { _ = h.auth.Close() })
+	mux := http.NewServeMux()
+	mux.Handle(signin.APIPrefix, h.auth.Handler())
+	return h.authGate(mux)
 }
 
 // gateStatus sends one GET through authGate wrapped around a sentinel next
 // handler and reports the response code plus whether next was reached.
-func gateStatus(t *testing.T, h *Handler, path, cookie string) (code int, nextCalled bool) {
+func gateStatus(t *testing.T, h *Handler, path, session string) (code int, nextCalled bool) {
+	t.Helper()
+	return gateRequest(t, h, path, func(r *http.Request) {
+		if session != "" {
+			r.AddCookie(sessionCookieFor(session))
+		}
+	})
+}
+
+func gateRequest(t *testing.T, h *Handler, path string, with func(*http.Request)) (code int, nextCalled bool) {
 	t.Helper()
 	gate := h.authGate(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		nextCalled = true
 		w.WriteHeader(http.StatusOK)
 	}))
 	r := httptest.NewRequest(http.MethodGet, path, nil)
-	if cookie != "" {
-		r.AddCookie(&http.Cookie{Name: sessionCookieName, Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
-	}
+	with(r)
 	w := httptest.NewRecorder()
 	gate.ServeHTTP(w, r)
 	return w.Code, nextCalled
 }
 
-// TestAuthGateOffPassesThrough: with no password stored, everything passes.
 func TestAuthGateOffPassesThrough(t *testing.T) {
 	h, _, _ := newAuthGateHandler(t)
+	kitRouter(t, h)
 	code, called := gateStatus(t, h, "/api/status", "")
 	if code != http.StatusOK || !called {
 		t.Fatalf("auth off: protected path must pass through, got code=%d called=%v", code, called)
@@ -151,7 +138,7 @@ func TestAuthGatePublicPathListIsExact(t *testing.T) {
 			t.Errorf("authGatePublicPath(%q) = false, want true", p)
 		}
 	}
-	for _, p := range []string{"/api/mcp/keys", "/api/mcp/certificate", "/api/status", "/mcp/x", "/api/widget/token", "/api/fleet/peers"} {
+	for _, p := range []string{"/api/mcp/keys", "/api/mcp/certificate", "/api/status", "/mcp/x", "/api/widget/token", "/api/fleet/peers", "/api/signin", "/signin"} {
 		if public[p] {
 			t.Fatalf("%q is on the mirror; it must not be", p)
 		}
@@ -168,48 +155,54 @@ func TestAuthGatePublicPathListIsExact(t *testing.T) {
 	}
 }
 
-// TestAuthGateOnCookieValidation also covers logout-all: rotating the epoch
-// revokes every token minted before it.
-func TestAuthGateOnCookieValidation(t *testing.T) {
+func TestTheGateLetsInASessionUntilItEnds(t *testing.T) {
 	h, repo, _ := newAuthGateHandler(t)
-	hash := enableAuth(t, h, repo)
-
-	// A fresh install has an empty epoch, which is a valid value.
-	tok := secret.NewSessionToken(h.cfg.AppKey, hash, "", sessionTTL)
-	code, called := gateStatus(t, h, "/api/status", tok)
-	if code != http.StatusOK || !called {
-		t.Fatalf("valid cookie (empty epoch): want 200 reaching next, got code=%d called=%v", code, called)
+	router := enableAuth(t, h, repo)
+	session := signInWith(t, router, "hunter2")
+	if code, called := gateStatus(t, h, "/api/status", session); code != http.StatusOK || !called {
+		t.Fatalf("signed in: want 200 reaching next, got code=%d called=%v", code, called)
 	}
-
-	code, called = gateStatus(t, h, "/api/status", "garbage.cookie")
-	if code != http.StatusUnauthorized || called {
+	if code, called := gateStatus(t, h, "/api/status", "garbage"); code != http.StatusUnauthorized || called {
 		t.Fatalf("garbage cookie: want 401 without reaching next, got code=%d called=%v", code, called)
 	}
-
-	setEpoch(t, repo, "0123456789abcdef0123456789abcdef")
-	code, called = gateStatus(t, h, "/api/status", tok)
-	if code != http.StatusUnauthorized || called {
-		t.Fatalf("cookie from before epoch rotation: want 401, got code=%d called=%v", code, called)
+	if w := kitRequest(t, router, http.MethodDelete, "me/sessions", session, nil); w.Code != http.StatusOK {
+		t.Fatalf("sign out everywhere: %d %s", w.Code, w.Body.String())
 	}
-	tok2 := secret.NewSessionToken(h.cfg.AppKey, hash, "0123456789abcdef0123456789abcdef", sessionTTL)
-	code, called = gateStatus(t, h, "/api/status", tok2)
-	if code != http.StatusOK || !called {
-		t.Fatalf("valid cookie (rotated epoch): want 200 reaching next, got code=%d called=%v", code, called)
+	if code, called := gateStatus(t, h, "/api/status", session); code != http.StatusUnauthorized || called {
+		t.Fatalf("after signing out everywhere: want 401, got code=%d called=%v", code, called)
 	}
 }
 
-// TestAuthGateStoreErrorFailsClosed: a failing store closes the gate with 503,
-// while the public paths stay open so the SPA can still load.
+func TestATokenOfTheKitOpensNoneOfBombVaultsRoutes(t *testing.T) {
+	h, repo, _ := newAuthGateHandler(t)
+	router := enableAuth(t, h, repo)
+	session := signInWith(t, router, "hunter2")
+	w := kitRequest(t, router, http.MethodPost, "me/tokens", session, map[string]any{"name": "script", "scopes": []string{"all"}})
+	var made struct {
+		Value string `json:"value"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &made); err != nil || made.Value == "" {
+		t.Fatalf("make a token: %d %s", w.Code, w.Body.String())
+	}
+	code, called := gateRequest(t, h, "/api/settings", func(r *http.Request) { r.Header.Set("Authorization", "Bearer "+made.Value) })
+	if code != http.StatusUnauthorized || called {
+		t.Fatalf("a kit token on BombVault's settings: want 401, got code=%d called=%v", code, called)
+	}
+}
+
+// TestAuthGateStoreErrorFailsClosed: a failing store closes the gate, while
+// the public paths stay open so the SPA can still load.
 func TestAuthGateStoreErrorFailsClosed(t *testing.T) {
 	h, repo, db := newAuthGateHandler(t)
-	enableAuth(t, h, repo)
+	router := enableAuth(t, h, repo)
+	session := signInWith(t, router, "hunter2")
 	if err := db.Close(); err != nil {
 		t.Fatalf("close db: %v", err)
 	}
 
-	code, called := gateStatus(t, h, "/api/status", "")
-	if code != http.StatusServiceUnavailable || called {
-		t.Fatalf("store error: protected path must fail closed with 503, got code=%d called=%v", code, called)
+	code, called := gateStatus(t, h, "/api/status", session)
+	if code != http.StatusUnauthorized || called {
+		t.Fatalf("store error: protected path must fail closed, got code=%d called=%v", code, called)
 	}
 
 	for _, p := range authGatePublicPaths {

@@ -1,211 +1,112 @@
-import { useState } from "react";
-import { componentText } from "@glimstone/core";
-import { PasswordField } from "@glimstone/react/PasswordField";
-import { getAuth, setAuthPassword, explainedError } from "../../../lib/api";
-import { passwordShort } from "../../../lib/signIn";
-import { PasskeyCard } from "../PasskeyCard";
-import { TwoFactorCard } from "../TwoFactorCard";
-import { EncryptionCard } from "../EncryptionCard";
-import { PhonePairingCard } from "../PhonePairingCard";
-import { Button } from "../../../components/Button";
-import { Rows, SettingRow } from "../../../components/storage/rows";
+import { useEffect, useMemo, useState } from "react";
+import { takeSignInCode, type SignInTileCard, type ToastSeverity } from "@glimstone/core";
+import { IDENTITY_PROVIDERS } from "@glimstone/core/identityProviders";
+import { SignInTile } from "@glimstone/react/SignInTile";
+import { explainedError, getPublicAddress, setPublicAddress } from "../../../lib/api";
 import { useT } from "../../../lib/i18n";
+import { formatTs } from "../../../lib/reltime";
+import { signIn } from "../../../lib/signInKit";
+import { tileText } from "../../../lib/signInWords";
 import { useToast } from "../../../lib/toast";
-import { useConfirm } from "../../../lib/useConfirm";
-import { Card, LOGIN_PASSWORD_FIELD, hueCounter, type SaveState } from "../shared";
-import { useSettings } from "../settingsStore";
+import { Rows, SettingRow } from "../../../components/storage/rows";
+import { EncryptionCard } from "../EncryptionCard";
+import { Card, hueCounter } from "../shared";
+
+// API tokens are BombVault's own and live under Integrations beside the MCP keys, so the tile leaves the kit's out.
+const CARDS: SignInTileCard[] = ["password", "askPassword", "twoFactor", "passkeys", "sessions", "services", "accounts"];
 
 export function SecurityPage() {
   const { t, lang } = useT();
   const { push } = useToast();
-  const { confirm, confirmDialog } = useConfirm();
-  const {
-    authEnabled,
-    setAuthEnabled,
-    totpEnabled,
-    setTotpEnabled,
-    recoveryLeft,
-    setRecoveryLeft,
-    recommendedPasswordLen,
-  } = useSettings();
-
-  const [pwCurrent, setPwCurrent] = useState("");
-  const [pwNew, setPwNew] = useState("");
-  const [pwConfirmed, setPwConfirmed] = useState(false);
-  const [pwCode, setPwCode] = useState("");
-  const [pwSaveState, setPwSaveState] = useState<SaveState>("idle");
-  const [pwSaveMsg, setPwSaveMsg] = useState<string | null>(null);
-  const [pwSaveShake, setPwSaveShake] = useState(0);
-  const fieldText = componentText(lang).passwordField;
-
-  // The password keeps a manual Save button. A new one is typed twice and
-  // Save waits until both agree, so there is no keystroke to auto-save on, and
-  // setAuthPassword takes effect at once for the whole instance (a blank
-  // password switches login off).
-  async function handleSetPassword() {
-    // A session left open is not enough to change or remove the login.
-    if (authEnabled && pwCurrent === "") {
-      setPwSaveMsg(t("auth.currentPasswordWrong"));
-      setPwSaveState("error");
-      setPwSaveShake((n) => n + 1);
-      return;
-    }
-    if (authEnabled && totpEnabled && pwCode.trim() === "") {
-      setPwSaveMsg(t("auth.codeHint"));
-      setPwSaveState("error");
-      setPwSaveShake((n) => n + 1);
-      return;
-    }
-    if (pwNew === "" && authEnabled && !(await confirm(t("auth.turnOffAsk"), { confirmKey: "auth.loginDisable" }))) return;
-    setPwSaveState("saving");
-    setPwSaveMsg(null);
-    try {
-      const res = await setAuthPassword(pwNew, pwCurrent, pwCode.trim());
-      if (res.ok) {
-        setAuthEnabled(res.enabled ?? false);
-        // The same response carries the session, so the card can go straight to
-        // its signed-in state; otherwise enabling the second factor would answer
-        // 401 until a reload, because the new login had issued no session yet.
-        setPwSaveState("idle");
-        push(pwNew === "" ? t("auth.passwordCleared") : t("auth.passwordSaved"), "success");
-        setPwCurrent("");
-        setPwNew("");
-        setPwCode("");
-        if (pwNew === "") setTotpEnabled(false);
-      } else {
-        setPwSaveState("idle");
-        const said =
-          res.code === "currentPasswordWrong" ? t("auth.currentPasswordWrong") : res.needCode ? t("auth.codeInvalid") : res.error;
-        push(said ?? t("auth.saveError"), "fail");
-        setPwSaveShake((n) => n + 1);
-      }
-    } catch (err) {
-      setPwSaveState("idle");
-      push(explainedError(err) ?? t("auth.saveError"), "fail");
-      setPwSaveShake((n) => n + 1);
-    }
-  }
-
+  const text = useMemo(() => tileText(t, lang), [t, lang]);
+  const [arrived] = useState(takeSignInCode);
+  const notify = (message: string, severity: ToastSeverity) => push(message, severity === "fail" ? "fail" : severity === "warn" ? "warn" : "success");
   const nextHue = hueCounter();
+  const addressHue = nextHue();
+  const tileHue = nextHue();
 
   return (
     <>
-      {/* One hueIdx for the heading and the button inside. */}
-      {(() => {
-        const hueIdx = nextHue();
-        return (
-      <Card
-        title={t("auth.security")}
-        hint={t("auth.passwordHint")}
-        hueIndex={hueIdx}
-        foot={
-          <span data-new="card-buttons" className="flex">
-            <Button
-              key={pwSaveShake || 0}
-              label={t("settings.save")}
-              labelKey="settings.save"
-              tone="accent"
-              onClick={() => void handleSetPassword()}
-              disabled={pwSaveState === "saving" || (pwNew !== "" && !pwConfirmed)}
-              busy={pwSaveState === "saving"}
-              title={pwSaveState === "saving" ? t("auth.saving") : undefined}
-              className={pwSaveShake ? "glim-shake" : ""}
-              hueIndex={hueIdx}
-            />
-          </span>
-        }
-      >
-        <div className="flex items-center gap-2">
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${authEnabled ? "bg-statusOkSolid" : "bg-carbon-textMuted"}`}
-          />
-          <span className="text-sm text-carbon-text">
-            {authEnabled ? t("auth.authOn") : t("auth.authOff")}
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <Rows>
-          {authEnabled && (
-            <SettingRow label={t("auth.currentPassword")} htmlFor="bv-password-current">
-              <PasswordField
-                id="bv-password-current"
-                value={pwCurrent}
-                onChange={(e) => setPwCurrent(e.target.value)}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                width="wide"
-                text={fieldText}
-              />
-            </SettingRow>
-          )}
-          <SettingRow label={authEnabled ? t("auth.changePassword") : t("auth.setPassword")} htmlFor={LOGIN_PASSWORD_FIELD}>
-            <PasswordField
-              id={LOGIN_PASSWORD_FIELD}
-              value={pwNew}
-              onChange={(e) => setPwNew(e.target.value)}
-              placeholder="••••••••"
-              width="wide"
-              text={fieldText}
-              confirm
-              onConfirmedChange={setPwConfirmed}
-            />
-          </SettingRow>
-          {authEnabled && totpEnabled && (
-            <SettingRow label={t("auth.codeLabel")} htmlFor="bv-password-code">
-              <input
-                id="bv-password-code"
-                value={pwCode}
-                onChange={(e) => setPwCode(e.target.value)}
-                autoComplete="one-time-code"
-                placeholder="000000"
-                className="w-40 rounded-control bg-carbon-surface2 px-3 py-1.5 text-sm tracking-[0.35em] text-carbon-text glim-field-focus"
-              />
-            </SettingRow>
-          )}
-          </Rows>
-          {/* A short password is the owner's choice, so this only suggests. */}
-          {passwordShort(pwNew, recommendedPasswordLen) && (
-            <span className="text-xs text-carbon-textSub">{t("auth.passwordShortHint", recommendedPasswordLen)}</span>
-          )}
-
-          {/* Only the pre-flight validation errors render here; the save
-              outcome is a toast. */}
-          {pwSaveState === "error" && pwSaveMsg && <span className="text-sm text-statusFail">{pwSaveMsg}</span>}
-        </div>
-
-        {/* No sign-out buttons here: a settings card configures and the shell
-            operates, and sign-out lives in the sidebar. Changing the password
-            rotates the session epoch, which ends every other session (see
-            handleSetPassword in internal/api/handlers.go). */}
-      </Card>
-        );
-      })()}
-
-      {/* The second factor has its own card: enrolment takes three steps with a */}
-      {/* QR code and recovery codes, and it is a separate decision from having a */}
-      {/* password at all. */}
-      <TwoFactorCard
-        passwordSet={authEnabled}
-        enabled={totpEnabled}
-        recoveryLeft={recoveryLeft}
-        onChanged={() => {
-          void getAuth()
-            .then((res) => {
-              setTotpEnabled(res.totp ?? false);
-              setRecoveryLeft(res.recoveryCodesLeft);
-            })
-            .catch(() => undefined);
-        }}
-        hueIndex={nextHue()}
+      <AddressCard hueIndex={addressHue} />
+      <SignInTile
+        api={signIn}
+        text={text}
+        lang={lang}
+        providers={IDENTITY_PROVIDERS}
+        cards={CARDS}
+        notify={notify}
+        arrived={arrived}
+        time={(iso) => formatTs(Math.floor(Date.parse(iso) / 1000))}
+        hueStart={tileHue}
       />
-
-      {/* A passkey replaces typing the password rather than strengthening it, */}
-      {/* and it is not always available, so the card first explains when it is not. */}
-      <PasskeyCard passwordSet={authEnabled} hueIndex={nextHue()} />
-      <PhonePairingCard hueIndex={nextHue()} />
-      <EncryptionCard hueIndex={nextHue()} />
-      {confirmDialog}
+      {/* The tile takes at most one hue for each of its cards. */}
+      <EncryptionCard hueIndex={tileHue + CARDS.length} />
     </>
+  );
+}
+
+/** AddressCard keeps where people reach this instance, which passkeys and sign-in services need. It saves as soon
+ *  as the field is left. */
+function AddressCard({ hueIndex }: { hueIndex: number }) {
+  const { t } = useT();
+  const { push } = useToast();
+  const [saved, setSaved] = useState<string | null>(null);
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    void getPublicAddress()
+      .then((r) => {
+        if (live && r.ok) {
+          setSaved(r.address ?? "");
+          setValue(r.address ?? "");
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function save() {
+    if (saved === null || value.trim() === saved) return;
+    try {
+      const r = await setPublicAddress(value.trim());
+      if (!r.ok) {
+        push(r.code === "address-invalid" ? t("signin.address.invalid") : (r.error ?? t("auth.saveError")), "fail");
+        return;
+      }
+      setSaved(r.address ?? "");
+      setValue(r.address ?? "");
+      push(r.address ? t("signin.address.saved") : t("signin.address.cleared"), "success");
+    } catch (err) {
+      push(explainedError(err) ?? t("auth.saveError"), "fail");
+    }
+  }
+
+  if (saved === null) return null;
+  return (
+    <Card title={t("signin.address.title")} hint={t("signin.address.hint")} hueIndex={hueIndex}>
+      <Rows>
+        <SettingRow label={t("signin.address.label")} htmlFor="bv-public-address">
+          <input
+            id="bv-public-address"
+            type="url"
+            inputMode="url"
+            dir="ltr"
+            spellCheck={false}
+            autoCapitalize="off"
+            placeholder="https://backup.example"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={() => void save()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void save();
+            }}
+            className="w-80 max-w-full rounded-control bg-carbon-surface2 px-3 py-1.5 text-start text-sm text-carbon-text glim-field-focus"
+          />
+        </SettingRow>
+      </Rows>
+    </Card>
   );
 }

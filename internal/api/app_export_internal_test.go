@@ -55,7 +55,7 @@ func (f *placementFixture) download(path string) *httptest.ResponseRecorder {
 	f.t.Helper()
 	r := jsonReq(http.MethodGet, path, nil)
 	if f.session != "" {
-		r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
+		r.AddCookie(sessionCookieFor(f.session))
 	}
 	rec := httptest.NewRecorder()
 	f.h.Router().ServeHTTP(rec, r)

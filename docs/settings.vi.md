@@ -61,6 +61,8 @@ Thẻ **Phát trực tuyến**, giảm giới hạn tải lên khi Plex, Jellyfi
 - **Mật khẩu**: mật khẩu đăng nhập, dài bao nhiêu cũng được. Dưới 12 ký tự, trang sẽ gợi ý một mật khẩu dài hơn. Đổi hoặc xóa nó cần mật khẩu hiện tại và, khi bật xác thực hai yếu tố, cả mã.
 - **Xác thực hai yếu tố**: một mã từ ứng dụng xác thực thêm vào mật khẩu, với tám mã khôi phục chỉ hiện một lần.
 - **Khóa truy cập**: đăng nhập bằng một khóa trên điện thoại, laptop hoặc thiết bị bảo mật. Chúng cần một tên miền thật và một chứng chỉ mà trình duyệt tin cậy.
+- **Địa chỉ**: nơi bạn mở BombVault, ví dụ `https://bombvault.example.com`. Khóa truy cập và dịch vụ đăng nhập dựa vào địa chỉ này.
+- **Dịch vụ đăng nhập**: đăng nhập qua Pocket ID, Authentik, Authelia, Kanidm, Keycloak hoặc Zitadel, bên cạnh mật khẩu. Khi đó BombVault phải nằm ở gốc địa chỉ của nó. Dưới một đường dẫn như `https://example.com/bombvault/`, dịch vụ chưa thể đưa bạn quay lại.
 - **Ứng dụng Android**: **Điện thoại có thể ghép nối bằng mười hai từ của nhóm**, cho phép một điện thoại đã ghép nối đăng nhập mà không cần mật khẩu.
 - **Mã hóa**: **Mã hóa bản sao lưu**, bật theo mặc định.
 

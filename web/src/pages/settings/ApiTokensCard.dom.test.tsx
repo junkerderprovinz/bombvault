@@ -7,7 +7,6 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { en } from "../../lib/i18n";
 import type { ApiTokensResponse, McpKeyView } from "../../lib/api";
-import { LOGIN_PASSWORD_FIELD } from "./shared";
 
 const listApiTokens = vi.fn();
 const createApiToken = vi.fn();
@@ -131,7 +130,7 @@ describe("ApiTokensCard", () => {
       </MemoryRouter>
     );
     fireEvent.click(await screen.findByRole("button", { name: en["mcp.setPassword"] }));
-    expect(screen.getByTestId("where").textContent).toBe(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
+    expect(screen.getByTestId("where").textContent).toBe("/settings/security");
   });
 
   it("names the route a logged call reached", async () => {

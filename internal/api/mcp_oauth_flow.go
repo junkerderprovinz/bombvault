@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"maps"
 	"mime"
 	"net/http"
 	"net/url"
@@ -192,17 +193,16 @@ func (h *Handler) openConsent(session, ticket string, now time.Time) (consentTic
 	return t, true
 }
 
-// operatorSession returns the session cookie of a signed-in operator. authGate
-// has checked it already; the value is what a consent ticket is bound to. The
-// session of a paired phone is none: its consent would hand out a sign-in
-// that outlives it.
+// operatorSession returns the id of the session of somebody signed in here,
+// which a consent ticket is bound to. A paired phone, an API token and an open
+// instance have none: a consent from them would hand out a sign-in that
+// outlives them.
 func (h *Handler) operatorSession(r *http.Request) (string, bool) {
-	hash, epoch, on := h.authEnabled()
-	c, err := h.sessionCookie(r)
-	if !on || err != nil || secret.PairedSessionToken(c.Value) || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, c.Value) {
+	v, found := visitor(r)
+	if !found || v.Session() == "" {
 		return "", false
 	}
-	return c.Value, true
+	return v.Session(), true
 }
 
 // withQuery adds v to the query of a redirect URI.
@@ -345,11 +345,16 @@ func (h *Handler) handleOAuthConsent(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errOAuthOff, "oauth-off"))
 		return
 	}
-	// A code is a grant waiting to be picked up, so a reset must not run
-	// between the session check and the code going into the map it clears.
-	h.mintMu.RLock()
-	defer h.mintMu.RUnlock()
+	// A code is a grant waiting to be picked up, so the end of a reset must
+	// not run between the session check and the code going into the map it
+	// clears. The session is checked again under the lock, for a reset that
+	// ended it after the guard looked.
+	h.ownWays.RLock()
+	defer h.ownWays.RUnlock()
 	session, ok := h.operatorSession(r)
+	if ok && h.auth != nil {
+		ok = h.auth.Alive(r.Context(), session)
+	}
 	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "error": "authentication required"})
 		return
@@ -408,6 +413,7 @@ func (h *Handler) handleOAuthConsent(w http.ResponseWriter, r *http.Request) {
 		known:       client.Known,
 		canStart:    body.CanStartBackups,
 		expires:     now.Add(oauthCodeTTL),
+		account:     creator(r),
 	}
 	if !h.mcp.oauth.putCode(secret.HashOAuthSecret(h.cfg.AppKey, "code", code), pending, now) {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errOAuthBusy, "oauth-busy"))
@@ -441,6 +447,14 @@ func (s *oauthState) putCode(digest string, c *oauthCode, now time.Time) bool {
 func (s *oauthState) dropCodes() {
 	s.mu.Lock()
 	clear(s.codes)
+	s.mu.Unlock()
+}
+
+// dropCodesOf forgets the codes account allowed that have not been exchanged
+// yet.
+func (s *oauthState) dropCodesOf(account string) {
+	s.mu.Lock()
+	maps.DeleteFunc(s.codes, func(_ string, c *oauthCode) bool { return c.account == account })
 	s.mu.Unlock()
 }
 
@@ -583,10 +597,10 @@ func writeOAuthTokens(w http.ResponseWriter, access, refresh string) {
 }
 
 func (h *Handler) exchangeOAuthCode(w http.ResponseWriter, r *http.Request, client store.OAuthClient, resource string) {
-	// Held from redeeming the code to storing the grant, so a reset either
-	// drops the code first or revokes the grant after.
-	h.mintMu.RLock()
-	defer h.mintMu.RUnlock()
+	// Held from redeeming the code to storing the grant, so the end of a
+	// reset either drops the code first or revokes the grant after.
+	h.ownWays.RLock()
+	defer h.ownWays.RUnlock()
 	now := h.mcp.now()
 	f := r.PostForm
 	code, replayed := h.mcp.oauth.redeem(secret.HashOAuthSecret(h.cfg.AppKey, "code", f.Get("code")),
@@ -622,6 +636,7 @@ func (h *Handler) exchangeOAuthCode(w http.ResponseWriter, r *http.Request, clie
 		Resource:        code.resource,
 		Check:           secret.MCPKeyCheck(h.cfg.AppKey, code.grantID),
 		CanStartBackups: code.canStart,
+		Account:         code.account,
 		AccessDigest:    accessDigest,
 		RefreshDigest:   refreshDigest,
 		AccessExpires:   now.Add(oauthAccessTTL).Unix(),

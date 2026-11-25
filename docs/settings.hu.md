@@ -61,6 +61,8 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 - **Jelszó**: a belépési jelszó, bármilyen hosszú lehet. 12 karakter alatt az oldal hosszabbat javasol. Megváltoztatása vagy törlése a jelenlegit kéri, és bekapcsolt kétlépcsős azonosításnál a kódot is.
 - **Kétlépcsős azonosítás**: egy hitelesítő alkalmazás kódja a jelszó mellett, nyolc helyreállítási kóddal, amelyeket egyszer mutat meg.
 - **Hozzáférési kulcsok**: bejelentkezés a telefonodon, laptopodon vagy biztonsági kulcsodon lévő kulccsal. Valódi domainnévre és a böngésző által elfogadott tanúsítványra van szükségük.
+- **Cím**: ahol a BombVaultot megnyitod, például `https://bombvault.example.com`. A hozzáférési kulcsok és a bejelentkezési szolgáltatások ehhez igazodnak.
+- **Bejelentkezési szolgáltatások**: bejelentkezés Pocket ID, Authentik, Authelia, Kanidm, Keycloak vagy Zitadel segítségével, a jelszó mellett. Ehhez a BombVaultnak a címe gyökerében kell lennie. Egy `https://example.com/bombvault/` jellegű útvonal alatt a szolgáltatás még nem tud visszairányítani.
 - **Android-alkalmazás**: **A telefonok párosíthatók a csoport tizenkét szavával**, ami lehetővé teszi, hogy egy párosított telefon jelszó nélkül jelentkezzen be.
 - **Titkosítás**: **Mentések titkosítása**, alapértelmezés szerint bekapcsolva.
 

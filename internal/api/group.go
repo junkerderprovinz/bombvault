@@ -779,7 +779,7 @@ func (h *Handler) groupViewNow() (groupView, error) {
 		Active:      h.svc.pairing().Active(),
 		InstanceID:  g.InstanceID,
 		Name:        instanceDisplayName(settings),
-		PasswordSet: settings.AuthPasswordHash != "",
+		PasswordSet: !h.signInOpen(),
 		Members:     members,
 		Away:        away,
 		Settling:    settling,
@@ -900,15 +900,12 @@ func (s *Service) madeHereNow(g store.GroupState) bool {
 	return made != nil && bytes.Equal(*made, g.SecretEnc)
 }
 
-// handleGroupShow shows the phrase again. With a login password set it has to
-// be entered again: a session may be open on an unattended screen, and the
-// phrase lets any instance into the group. Wrong passwords count against the
-// same throttle as the login. POST /api/group/phrase/show
+// handleGroupShow shows the phrase again, to somebody who signed in moments
+// ago or typed the password again: a session may be open on an unattended
+// screen, and the phrase lets any instance into the group.
+// POST /api/group/phrase/show
 func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Password string `json:"password"`
-	}
-	if !decodeBody(w, r, &body) || !h.passwordAgain(w, r, body.Password) {
+	if !crossOriginGuard(w, r) || !h.fresh(w, r, "showing the phrase") {
 		return
 	}
 	g, err := h.store.GetGroupState()
@@ -931,28 +928,6 @@ func (h *Handler) handleGroupShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"phrase": words}))
-}
-
-// passwordAgain checks the login password entered again before a phrase
-// shows, and answers the request itself when it does not match. Without a
-// login password there is nothing to ask for. Wrong passwords count against
-// the same throttle as the login.
-func (h *Handler) passwordAgain(w http.ResponseWriter, r *http.Request, password string) bool {
-	hash, _, on := h.authEnabled()
-	if !on {
-		return true
-	}
-	key := h.loginClientKey(r)
-	if h.loginThrottled(key) {
-		writeJSON(w, http.StatusTooManyRequests, map[string]any{"ok": false, "error": "too many failed attempts, wait a minute and try again"})
-		return false
-	}
-	if !verifyPassword(h.cfg.AppKey, password, hash) {
-		h.recordLoginFail(key)
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "code": "passwordWrong", "error": "the password is needed to show the phrase again"})
-		return false
-	}
-	return true
 }
 
 // handleGroupJoin joins the group a phrase belongs to, leaving any group this
@@ -1242,7 +1217,13 @@ func (h *Handler) handleGroupCall(w http.ResponseWriter, r *http.Request) {
 // handleApproveMember lets in a member that waits for approval, under its id
 // in the group. POST /api/group/members/{id}/approve
 func (h *Handler) handleApproveMember(w http.ResponseWriter, r *http.Request) {
-	if err := h.svc.pairing().Approve(r.PathValue("id")); err != nil {
+	id := r.PathValue("id")
+	if err := h.svc.pairing().Approve(id); err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	// A phone among them answers to whoever let it in.
+	if err := h.store.SetPhoneAccount(id, creator(r)); err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}

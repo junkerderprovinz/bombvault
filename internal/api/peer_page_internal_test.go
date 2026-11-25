@@ -18,7 +18,6 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/group"
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/progress"
-	"github.com/junkerderprovinz/bombvault/internal/store"
 	kitmember "github.com/junkerderprovinz/parleyport/kit/member"
 	"github.com/junkerderprovinz/parleyport/kit/phrase"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
@@ -295,12 +294,7 @@ func TestAPageThroughTheRelayReachesWhatTheSessionOfAPhoneDoes(t *testing.T) {
 	}
 	check("with a password")
 
-	if _, err := attic.st.MutateSettings(func(s *store.Settings) error {
-		s.AuthPasswordHash = ""
-		return nil
-	}); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, attic.router, attic.session, testPassword)
 	check("without a password")
 	if answer, _ := ph.open(attic, http.MethodGet, "/api/status", nil); answer.Status != http.StatusOK {
 		t.Fatalf("the status without a password: %d", answer.Status)
@@ -415,28 +409,21 @@ func TestAPasswordResetEndsThePagesOfEveryPhone(t *testing.T) {
 		t.Fatalf("before: %d", answer.Status)
 	}
 
-	if code, out := attic.do(t, http.MethodPost, "/api/logout-all", nil); code != http.StatusOK {
-		t.Fatalf("sign out everywhere: %d %v", code, out)
+	if w := kitRequest(t, attic.router, http.MethodDelete, "me/sessions", attic.session, nil); w.Code != http.StatusOK {
+		t.Fatalf("sign out everywhere: %d %s", w.Code, w.Body.String())
 	}
 	if status, _ := ph.page(attic, ask, nil); status != http.StatusUnauthorized {
 		t.Fatalf("after signing out everywhere: %d", status)
 	}
 	ph.signIn(attic)
 
-	out := &bytes.Buffer{}
-	attic.h.resetOut = out
-	finished, _ := finishReset(t, attic.h, askForResetCode(t, attic.h, out), resetNewPass)
-	if finished["ok"] != true {
-		t.Fatalf("the reset: %v", finished)
-	}
-	if status, _ := ph.page(attic, ask, nil); status != http.StatusForbidden {
+	resetOn(t, attic, "a new password")
+	if status, _ := ph.page(attic, ask, nil); status != http.StatusUnauthorized {
 		t.Fatalf("after a reset: %d", status)
 	}
-	if err := attic.st.SetPhonePairing(true); err != nil {
-		t.Fatal(err)
-	}
-	if status, _ := ph.page(attic, ask, nil); status != http.StatusUnauthorized {
-		t.Fatalf("the old session after pairing is on again: %d", status)
+	ph.signIn(attic)
+	if _, answer := ph.page(attic, ask, nil); answer.Status != http.StatusOK {
+		t.Fatalf("signed in again after the reset: %d", answer.Status)
 	}
 }
 

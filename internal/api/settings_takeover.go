@@ -260,11 +260,11 @@ func (s *Service) stagedOwnerOf(db *sql.DB, from string, opened, lost int) (whos
 			lost++
 		}
 	}
-	hash, err := store.PasswordHashIn(db)
+	password, err := store.PasswordSetIn(db)
 	if err != nil {
 		return stagedOther, false, err
 	}
-	ownLogin = check == secret.KeyCheck(s.cfg.AppKey) && lost == 0 && hash != ""
+	ownLogin = check == secret.KeyCheck(s.cfg.AppKey) && lost == 0 && password
 	return whoseSettings(check, s.cfg.AppKey, from, opened, lost), ownLogin, nil
 }
 

@@ -456,6 +456,9 @@ func run() error {
 	}()
 
 	handler := api.NewHandler(cfg, st, dc, svc, scheduler, spike.DefaultProbes())
+	if err := handler.OpenSignIn(); err != nil {
+		return fmt.Errorf("open the sign-in: %w", err)
+	}
 	handler.SetProgress(prog)
 	// The first visit to the overview shows the host check and the repository
 	// sizes without waiting for a click or the next backup.

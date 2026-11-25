@@ -211,9 +211,9 @@ func TestMCPRevokeAndRotateTakeEffectImmediately(t *testing.T) {
 // A browser session is not an MCP credential: the endpoint is allow-listed in
 // authGate and decides on its own keys alone.
 func TestMCPSessionCookieIsNotACredential(t *testing.T) {
-	h, st := newGateRouter(t)
+	h, _ := newGateRouter(t)
 	createMCPKey(t, h, "Laptop", true)
-	cookie := enableLogin(t, st, strings.Repeat("a", 64))
+	cookie := enableLogin(t, h)
 
 	w := (mcpReq{body: mcpInitializeBody, headers: [][2]string{{"Cookie", "bv_session=" + cookie}}}).do(t, h)
 	if w.Code != http.StatusUnauthorized {
@@ -222,9 +222,9 @@ func TestMCPSessionCookieIsNotACredential(t *testing.T) {
 }
 
 func TestMCPWorksWithLoginPasswordAndNoCookie(t *testing.T) {
-	h, st := newGateRouter(t)
+	h, _ := newGateRouter(t)
 	key, _ := createMCPKey(t, h, "Laptop", true)
-	enableLogin(t, st, strings.Repeat("a", 64))
+	enableLogin(t, h)
 
 	if w := (mcpReq{key: key, body: mcpInitializeBody}).do(t, h); w.Code != http.StatusOK {
 		t.Fatalf("key without a session: status = %d body=%q", w.Code, w.Body.String())
@@ -305,9 +305,9 @@ func TestMCPRebindingPageStillNeedsKey(t *testing.T) {
 }
 
 func TestMCPFailedAttemptsThrottledPerAddress(t *testing.T) {
-	h, st := newGateRouter(t)
+	h, _ := newGateRouter(t)
 	key, _ := createMCPKey(t, h, "Laptop", true)
-	enableLogin(t, st, strings.Repeat("a", 64))
+	enableLogin(t, h)
 
 	const guesser = "10.0.0.9:1"
 	// A request without any key header is not an attempt, so it must not count.

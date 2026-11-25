@@ -46,6 +46,15 @@ func NewTOTPSecret() (string, error) {
 	return totpEnc.EncodeToString(buf), nil
 }
 
+// TOTPKey returns the key a base32 secret spells.
+func TOTPKey(secret string) ([]byte, error) {
+	key, err := totpEnc.DecodeString(strings.ToUpper(strings.TrimSpace(secret)))
+	if err != nil {
+		return nil, fmt.Errorf("secret: totp: invalid base32 secret: %w", err)
+	}
+	return key, nil
+}
+
 // TOTPCode returns the six-digit code for secret at time t.
 func TOTPCode(secret string, t time.Time) (string, error) {
 	key, err := totpEnc.DecodeString(strings.ToUpper(strings.TrimSpace(secret)))

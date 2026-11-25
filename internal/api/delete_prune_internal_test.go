@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"net/http"
 	"net/http/httptest"
 	"slices"
 	"sync"
@@ -41,7 +40,6 @@ func deleteFixture(t *testing.T) (*placementFixture, *requestBoundEngine, string
 	}
 	eng := &requestBoundEngine{placementEngine: f.eng}
 	f.svc.engine = eng
-	f.signIn()
 	return f, eng, repo
 }
 
@@ -51,7 +49,7 @@ func TestDeletingBackupsFinishesAfterTheRequestEnds(t *testing.T) {
 	cancel()
 
 	r := jsonReq("DELETE", "/api/containers/web/backups", nil).WithContext(ctx)
-	r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
+	r.AddCookie(sessionCookieFor(f.session))
 	f.h.Router().ServeHTTP(httptest.NewRecorder(), r)
 	f.svc.deletePrunes.Wait()
 

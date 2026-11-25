@@ -16,7 +16,6 @@ import type { FortressState, GroupState, MemberRoles, RelayMode, ZFSReplicaServe
 import { server } from "../../../components/zfs/replica/replica.testsupport";
 import { memberRoles, roleRequest, roleSide } from "../../instances/instances.testsupport";
 import { checkPhrase, splitPhrase } from "../../../lib/phraseWords";
-import { LOGIN_PASSWORD_FIELD } from "../shared";
 import { fortressText, storeShowOthers } from "@glimstone/core";
 
 let group: GroupState;
@@ -79,8 +78,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     ...actual,
     getGroup: () => Promise.resolve(group),
     getFortress: () => Promise.resolve(fortress),
-    showFortressPhrase: (password: string) =>
-      Promise.resolve(!fortress.passwordSet || password === "secret" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" }),
+    showFortressPhrase: () => Promise.resolve({ ok: true, phrase: PHRASE }),
     leaveFortress: () => {
       left++;
       group = outside();
@@ -103,10 +101,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       fortress = fortressOf({ passwordSet: group.passwordSet });
       return Promise.resolve({ ok: true, phrase: PHRASE, group });
     },
-    showPhrase: (password: string) =>
-      Promise.resolve(
-        !group.passwordSet || password === "secret" ? { ok: true, phrase: PHRASE } : { ok: false, code: "passwordWrong" },
-      ),
+    showPhrase: () => Promise.resolve({ ok: true, phrase: PHRASE }),
     joinGroup: (phrase: string) => {
       joined.push(phrase);
       if (joinAnswer.ok === false) return Promise.resolve(joinAnswer);
@@ -535,14 +530,10 @@ describe("the badge and the members", () => {
     expect(card.textContent).not.toContain(en["instances.inactive"]);
   });
 
-  it("shows the words again only after the password in a window", async () => {
+  it("shows the words again in a window", async () => {
     await renderTab();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Show phrase" }));
-    });
-    fireEvent.change(within(dialog()).getByLabelText("Password of BombVault"), { target: { value: "secret" } });
-    await act(async () => {
-      fireEvent.click(document.querySelector<HTMLButtonElement>('[data-fortress="unlock"]')!);
     });
     expect(document.querySelectorAll('[data-fortress="words"] li')).toHaveLength(12);
   });
@@ -962,7 +953,6 @@ describe("phrase card without a login password", () => {
       fireEvent.click(within(note).getByRole("button", { name: en["auth.setPassword"] }));
     });
     expect(router.state.location.pathname).toBe("/settings/security");
-    expect(router.state.location.hash).toBe(`#${LOGIN_PASSWORD_FIELD}`);
     expect(tile("pairing.enter").disabled).toBe(false);
     await act(async () => {
       fireEvent.click(tile("pairing.create"));

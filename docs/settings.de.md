@@ -61,6 +61,8 @@ Die Karte **Streaming**, die das Upload-Limit senkt, während Plex, Jellyfin ode
 - **Passwort**: das Login-Passwort, beliebig lang. Unter 12 Zeichen schlägt die Seite ein längeres vor. Es zu ändern oder zu löschen verlangt das aktuelle und, bei eingeschalteter Zwei-Faktor-Authentifizierung, den Code.
 - **Zwei-Faktor-Authentifizierung**: ein Code aus einer Authenticator-App zusätzlich zum Passwort, mit acht Wiederherstellungscodes, die einmal angezeigt werden.
 - **Passkeys**: Anmelden mit einem Schlüssel auf Handy, Laptop oder Sicherheitsstick. Sie brauchen einen echten Domainnamen und ein Zertifikat, dem der Browser vertraut.
+- **Adresse**: die Adresse, unter der du BombVault öffnest, etwa `https://bombvault.example.com`. Passkeys und Anmeldedienste richten sich danach.
+- **Anmeldedienste**: Anmelden über Pocket ID, Authentik, Authelia, Kanidm, Keycloak oder Zitadel, zusätzlich zum Passwort. Dafür muss BombVault direkt unter seiner Adresse liegen. Unter einem Pfad wie `https://example.com/bombvault/` kann der Dienst dich noch nicht zurückschicken.
 - **Android-App**: **Handys können sich mit den zwölf Wörtern der Gruppe koppeln**, womit sich ein gekoppeltes Handy ohne das Passwort anmelden kann.
 - **Verschlüsselung**: **Sicherungen verschlüsseln**, standardmäßig an.
 

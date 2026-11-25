@@ -356,6 +356,25 @@
     background-color: transparent;
   }
 }
+/* A lit list row already wears --hover, which a quiet button in it would hover
+   to and vanish into, so there it fills with the accent, as the row's tile
+   does. */
+.glim-list-row:is(:hover, :focus-within) > .glim-list-row-actions .glim-btn-subtle:not(:disabled):focus-visible,
+.glim-list-row:is(:hover, :focus-within) > .glim-list-row-actions .glim-btn-subtle:not(:disabled):focus-visible > .glim-btn-glyph {
+  color: var(--accent-contrast);
+}
+.glim-list-row:is(:hover, :focus-within) > .glim-list-row-actions .glim-btn-subtle:not(:disabled):focus-visible {
+  background-color: var(--accent);
+}
+@media (hover: hover) {
+  .glim-list-row:hover > .glim-list-row-actions .glim-btn-subtle:not(:disabled):hover,
+  .glim-list-row:hover > .glim-list-row-actions .glim-btn-subtle:not(:disabled):hover > .glim-btn-glyph {
+    color: var(--accent-contrast);
+  }
+  .glim-list-row:hover > .glim-list-row-actions .glim-btn-subtle:not(:disabled):hover {
+    background-color: var(--accent);
+  }
+}
 
 /* The checkbox (components/Checkbox.tsx), the one place a box stands instead
    of a switch (rule 39). Drawn rather than the system's, at the control radius
@@ -2694,6 +2713,12 @@ a.glim-version-number {
   white-space: nowrap;
   color: var(--carbon-text);
 }
+/* A person's passkeys and devices often start alike, "iPhone von ...", so
+   their names wrap rather than end in an ellipsis. */
+.glim-signin-tile-rows .glim-connection-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .glim-connection-badges,
 .glim-connection-actions {
   display: flex;
@@ -2814,15 +2839,17 @@ a.glim-version-number {
 
 /* A tile set straight on a card. Its chips, its switch while off and a panel
    opened inside it each keep one step of contrast to the tile, which the
-   card's own tones would not: a neutral chip is the dark tile's colour. */
-.glim-tile {
+   card's own tones would not: a neutral chip is the dark tile's colour.
+   GlimStone's GlyphTile shares the class name and is only a holder for a
+   glyph, so none of this reaches it. */
+.glim-tile:not([data-glim="GlyphTile"]) {
   background-color: var(--glim-tile-bg);
   --mark-ground: var(--glim-tile-bg);
 }
-.glim-tile .glim-tile-raise { background-color: var(--glim-tile-raised); }
-.glim-tile button.glim-tile-raise:hover:not(:disabled) { background-color: var(--hover); }
-.glim-tile [role="switch"][aria-checked="false"] { background-color: var(--glim-tile-switch-off); }
-.glim-tile .glim-tile-well { background-color: var(--glim-tile-well); }
+.glim-tile:not([data-glim="GlyphTile"]) .glim-tile-raise { background-color: var(--glim-tile-raised); }
+.glim-tile:not([data-glim="GlyphTile"]) button.glim-tile-raise:hover:not(:disabled) { background-color: var(--hover); }
+.glim-tile:not([data-glim="GlyphTile"]) [role="switch"][aria-checked="false"] { background-color: var(--glim-tile-switch-off); }
+.glim-tile:not([data-glim="GlyphTile"]) .glim-tile-well { background-color: var(--glim-tile-well); }
 
 /* A client's mark beside a key's name and in the setup dialog. The hover
    version only belongs to a lit README button. */
@@ -5922,6 +5949,471 @@ a.glim-version-number {
    and caret, and the base ring would win otherwise. */
 .glim-input:focus-visible { outline: none; }
 
+/* GlimStone's sign-in parts (@glimstone/react's SignInCard, SignInTile and
+   SignInReauthWindow) and what they draw inside: list rows, the accordion,
+   empty states and notices. They come from its tokens.css, with the spacing
+   steps and row sizes those rules read. */
+@layer components {
+  :root {
+    --space-1: 0.125rem;
+    --space-2: 0.25rem;
+    --space-3: 0.375rem;
+    --space-4: 0.5rem;
+    --space-5: 0.625rem;
+    --space-6: 0.75rem;
+    --space-8: 1rem;
+    --space-9: 1.25rem;
+    --space-10: 1.5rem;
+    --space-12: 2rem;
+    --space-13: 2.5rem;
+    --row-h: 2.6rem;
+    --row-gap: var(--space-5);
+    --row-pad: var(--space-4);
+    --focus-ring-width: 2px;
+  }
+  /* A brand's mark beside a button's words, such as a sign-in service's, is
+     as tall as a glyph and as wide as its shape asks. */
+  .glim-btn-glyph > .glim-brand-svg > svg {
+    width: auto;
+    height: 0.875rem;
+    flex: none;
+  }
+  .glim-signin-note {
+    padding: var(--space-5) var(--space-6);
+    border-radius: var(--radius-control);
+    background-color: var(--carbon-surface2);
+    font-size: var(--text-subline);
+  }
+  .glim-signin-forgot {
+    align-self: center;
+    padding: var(--space-1) var(--space-3);
+    border: 0;
+    border-radius: var(--radius-control);
+    background: none;
+    color: var(--carbon-text-sub);
+    font: inherit;
+    font-size: var(--text-subline);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .glim-signin-forgot:is(:hover, :focus-visible, :active) {
+    color: var(--accent-text);
+    text-decoration: none;
+  }
+  .glim-signin-forgot:disabled {
+    color: var(--carbon-text-muted);
+    cursor: default;
+  }
+  .glim-signin-forgot[aria-busy="true"] {
+    cursor: progress;
+  }
+  .glim-signin-tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-13);
+  }
+  .glim-signin-tile-body,
+    .glim-signin-tile-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+  .glim-signin-tile-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-4);
+  }
+  .glim-signin-tile-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .glim-signin-tile-text,
+    .glim-signin-tile-quiet,
+    .glim-signin-tile-said {
+    margin: 0;
+    font-size: var(--text-subline);
+    color: var(--carbon-text-sub);
+  }
+  .glim-signin-tile-quiet {
+    font-size: var(--text-meta);
+  }
+  .glim-signin-tile-said--fail {
+    color: var(--status-fail-text);
+  }
+  .glim-signin-tile-goes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding-inline-start: var(--space-9);
+    font-size: var(--text-subline);
+  }
+  .glim-signin-tile-qr {
+    align-self: center;
+    width: 11rem;
+    height: 11rem;
+    padding: var(--space-4);
+    border-radius: var(--radius-control);
+    background-color: #ffffff;
+    fill: #161616;
+  }
+  .glim-signin-tile-codes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--space-8);
+    margin: 0;
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-card);
+    background-color: var(--carbon-surface2);
+    list-style: none;
+    font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .glim-notice {
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-card);
+    background-color: var(--status-warn-bg-soft);
+  }
+  .glim-notice-title,
+    .glim-notice-reason {
+    margin: 0;
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+  }
+  .glim-notice-title {
+    font-weight: 500;
+    color: var(--carbon-text);
+  }
+  .glim-notice-reason {
+    margin-top: var(--space-2);
+    color: var(--carbon-text-sub);
+  }
+  .glim-notice-action {
+    margin-top: var(--space-6);
+  }
+  .glim-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-10);
+    text-align: center;
+  }
+  .glim-empty-glyph {
+    display: flex;
+    color: var(--carbon-text-muted);
+    opacity: 0.4;
+  }
+  .glim-empty-glyph svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .glim-empty-title {
+    margin: 0;
+    font-size: var(--text-body);
+    line-height: 1.25rem;
+    color: var(--carbon-text-sub);
+  }
+  .glim-empty-hint {
+    max-width: 65ch;
+    margin: 0;
+    font-size: var(--text-subline);
+    line-height: 1.25rem;
+    color: var(--carbon-text-muted);
+  }
+  /* A small holder for a glyph (GlyphTile). It fills with the accent while the
+     row, button or link around it is reached. */
+  .glim-tile:where([data-glim="GlyphTile"]) {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius-control);
+    color: var(--accent-glyph);
+  }
+  .glim-tile:where([data-glim="GlyphTile"]) > svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .glim-tile--quiet {
+    color: var(--carbon-text-sub);
+  }
+  .glim-tile--ground {
+    background-color: var(--carbon-surface3);
+  }
+  .glim-tile--active,
+    :is(button, a, .glim-list-row, .glim-nav-row):is(:hover, :focus-visible, :focus-within) > .glim-tile {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .glim-list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--row-gap);
+    min-width: 0;
+    min-height: var(--row-h);
+    padding-inline: var(--row-pad);
+    border-radius: var(--radius-control);
+  }
+  .glim-list-row:is(:hover, :focus-within) {
+    background-color: var(--hover);
+  }
+  .glim-list-row--opens {
+    cursor: pointer;
+  }
+  .glim-list-row-tile {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius-control);
+    color: var(--accent-glyph);
+  }
+  .glim-list-row-tile > svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .glim-list-row:is(:hover, :focus-within) > .glim-list-row-tile {
+    background-color: var(--accent);
+    color: var(--accent-contrast);
+  }
+  /* A brand's mark on a tile is as tall as a glyph there and as wide as its
+     shape asks, its SVG standing in the tile as if it were the tile's own. */
+  .glim-brand-svg {
+    display: contents;
+  }
+  .glim-tile > .glim-brand-svg > svg {
+    width: auto;
+    height: 1.125rem;
+    max-width: 100%;
+  }
+  .glim-list-row:is(:hover, :focus-within) > .glim-list-row-tile > .glim-tile {
+    color: inherit;
+  }
+  .glim-list-row-name {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .glim-list-row-name--mono {
+    font-family: ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: var(--text-subline);
+  }
+  .glim-list-row-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .glim-list-row-tip {
+    display: contents;
+  }
+  .glim-list-row-badges {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+  }
+  .glim-list-row-actions {
+    display: flex;
+    flex: none;
+    gap: var(--space-1);
+    opacity: 0;
+  }
+  .glim-list-row:is(:hover, :focus-within) > .glim-list-row-actions {
+    opacity: 1;
+  }
+  /* A switch among the buttons is a setting, not one more button, so it keeps
+     its distance from them. */
+  .glim-list-row-actions > .glim-toggle:not(:last-child) {
+    margin-inline-end: var(--space-6);
+  }
+  .glim-list-row--steady {
+    flex-wrap: wrap;
+  }
+  .glim-list-row--steady > .glim-list-row-text {
+    flex: 1 1 12rem;
+  }
+  .glim-list-row--steady > .glim-list-row-actions {
+    opacity: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 100%;
+    margin-inline-start: auto;
+  }
+  .glim-list-row:has(> .glim-list-row-text) {
+    min-height: calc(var(--row-h) + var(--space-8));
+    padding-block: var(--space-3);
+  }
+  .glim-list-row-text {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .glim-list-row-text > .glim-list-row-name {
+    flex: none;
+  }
+  .glim-list-row-meta {
+    color: var(--carbon-text-sub);
+    font-size: var(--text-meta);
+    overflow-wrap: anywhere;
+  }
+  @media (hover: none) {
+    .glim-list-row-actions {
+      opacity: 1;
+    }
+  }
+  .glim-list-row {
+    container: list-row / inline-size;
+  }
+  @container list-row (max-width: 30rem) {
+    .glim-list-row-badges {
+      display: none;
+    }
+  }
+  .glim-copy {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-width: 0;
+  }
+  .glim-copy > .glim-input {
+    flex: 1;
+  }
+  .glim-menu-item:focus-visible,
+    .glim-menu-head-edit:focus-visible,
+    .glim-tree-row:focus-visible,
+    .glim-list-row:focus-visible {
+    outline-offset: -2px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .glim-list-row-actions {
+      transition: opacity var(--motion-control-dur) ease;
+    }
+  }
+  .glim-list {
+    position: relative;
+    min-width: 0;
+  }
+  .glim-list:has(thead:hover) .glim-list-hint {
+    visibility: visible;
+  }
+  .glim-accordion {
+    display: flex;
+    flex-direction: column;
+  }
+  .glim-accordion-item + .glim-accordion-item {
+    border-top: 1px solid color-mix(in srgb, var(--carbon-border) 60%, transparent);
+  }
+  .glim-disclosure-heading {
+    margin: 0;
+    font: inherit;
+  }
+  .glim-disclosure-trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    width: 100%;
+    min-height: var(--row-h);
+    padding: var(--space-2) var(--row-pad);
+    border: 0;
+    border-radius: var(--radius-control);
+    background-color: transparent;
+    color: var(--carbon-text);
+    font: inherit;
+    font-size: var(--text-body);
+    font-weight: 500;
+    line-height: 1.25rem;
+    text-align: start;
+    cursor: pointer;
+  }
+  .glim-disclosure-trigger:hover {
+    background-color: var(--hover);
+  }
+  :is(.glim-well, .glim-subcard) .glim-disclosure-trigger:hover {
+    background-color: var(--hover);
+  }
+  .glim-disclosure-trigger:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .glim-disclosure-trigger[data-disabled] {
+    color: var(--carbon-text-muted);
+    background-color: transparent;
+    cursor: default;
+  }
+  .glim-disclosure-label {
+    flex: 1;
+    min-width: 0;
+  }
+  .glim-disclosure-indicator {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--carbon-text-sub);
+  }
+  .glim-disclosure-indicator[data-state="open"] {
+    rotate: 180deg;
+  }
+  .glim-disclosure-content {
+    overflow: hidden;
+  }
+  .glim-disclosure-body {
+    padding: var(--space-2) var(--row-pad) var(--space-6);
+    color: var(--carbon-text-sub);
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .glim-disclosure-indicator {
+      transition: rotate var(--motion-control-dur, 0s) ease;
+    }
+    .glim-collapsible > .glim-disclosure-content[data-state="open"] {
+      animation: glim-disclose-in var(--motion-control-dur, 0s) ease-out;
+    }
+    .glim-collapsible > .glim-disclosure-content[data-state="closed"] {
+      animation: glim-disclose-out var(--motion-control-dur, 0s) ease-in;
+    }
+  }
+  @media (forced-colors: active) {
+    :is(.glim-card, .glim-well, .glim-subcard, .glim-panel, .glim-bubble, .glim-menu, .glim-listbox,
+        .glim-select-content, .glim-popover, .glim-sheet-panel, .glim-modal-card, .glim-window,
+        .glim-toast-card, .glim-notice, .glim-tile, .glim-sel--well, .glim-list) {
+      border: 1px solid CanvasText;
+    }
+  }
+}
+
+/* BombVault's own switches grow to a button's height under a finger, and so do
+   GlimStone's, with the track still drawn at its size. A passkey or device name
+   wraps on a phone, so two that start alike stay apart. */
+@layer components {
+  @media (pointer: coarse) {
+    .glim-toggle-track {
+      height: var(--btn-h);
+      padding-block: calc((var(--btn-h) - 1.25rem) / 2);
+      background-clip: content-box;
+    }
+  }
+  .glim-list-row-text > .glim-list-row-name {
+    white-space: normal;
+  }
+  .glim-list-row-text .glim-list-row-title {
+    overflow-wrap: anywhere;
+  }
+}
+
 /* Pictures of a storage location: its fill level as a vessel, what a
    retention rule keeps, a copy on its way and the delete lock. They draw in the
    theme's own tokens and take the hue of the card they sit in. --pic is a
@@ -7687,4 +8179,3 @@ a.glim-version-number {
 .glim-pairing-cards .glim-fortress > [data-glim="FortressPermissions"] {
   margin-top: 1.5rem;
 }
-

@@ -42,7 +42,7 @@ func (h *Handler) handleListAPITokens(w http.ResponseWriter, r *http.Request) {
 		}
 		active = append(active, v)
 	}
-	_, _, authOn := h.authEnabled()
+	authOn := !h.signInOpen()
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
 		"basePath":         apiV1Prefix,
 		"openapiPath":      apiV1OpenAPIPath,
@@ -66,25 +66,27 @@ func (h *Handler) handleCreateAPIToken(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	release, ok := h.holdSignIn(w, r, "creating an API token")
-	if !ok {
-		return
-	}
-	defer release()
 	label, ok := normalizeMCPKeyLabel(body.Label)
 	if !ok {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPKeyLabel, "mcp-key-label-invalid"))
 		return
 	}
-	token, err := secret.NewAPIToken()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	var token string
+	var row store.MCPKey
+	done, err := h.mint(w, r, "creating an API token", func() error {
+		var err error
+		if token, err = secret.NewAPIToken(); err != nil {
+			return err
+		}
+		id := newMCPKeyID()
+		row, err = h.store.CreateAPIToken(id, creator(r), label,
+			secret.HashMCPKey(h.cfg.AppKey, token), secret.MCPKeyHint(token), secret.MCPKeyCheck(h.cfg.AppKey, id),
+			body.CanStartBackups, time.Now().Unix())
+		return err
+	})
+	if !done {
 		return
 	}
-	id := newMCPKeyID()
-	row, err := h.store.CreateAPIToken(id, label,
-		secret.HashMCPKey(h.cfg.AppKey, token), secret.MCPKeyHint(token), secret.MCPKeyCheck(h.cfg.AppKey, id),
-		body.CanStartBackups, time.Now().Unix())
 	if err != nil {
 		writeMCPError(w, err)
 		return

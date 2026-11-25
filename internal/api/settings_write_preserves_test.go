@@ -13,28 +13,28 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/junkerderprovinz/parleyport/kit/signin"
+
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-// loginCookie sets a login password through the API, logs in and returns the
-// session cookie. A save that reverted the password hash would turn
-// authentication off, so the tests run with it set.
+// loginCookie gives the instance its first login password and returns the
+// session that comes with it. A save that dropped the password would open the
+// instance again, so the tests run with one set.
 func loginCookie(t *testing.T, h http.Handler, password string) *http.Cookie {
 	t.Helper()
-	if _, m := doJSON(t, h, http.MethodPost, "/api/auth/password", `{"password":"`+password+`"}`); m["ok"] != true {
-		t.Fatalf("set password: %v", m)
-	}
-	r := jsonReq(http.MethodPost, "/api/login", strings.NewReader(`{"password":"`+password+`"}`))
+	r := httptest.NewRequest(http.MethodPut, signin.APIPrefix+"me/password", strings.NewReader(`{"next":"`+password+`"}`))
 	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "same-origin")
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	for _, c := range w.Result().Cookies() {
-		if c.Value != "" {
+		if c.Name == sessionCookie && c.Value != "" {
 			return c
 		}
 	}
-	t.Fatalf("login did not set a session cookie: %s", w.Body.String())
+	t.Fatalf("no session from the first password: %d %s", w.Code, w.Body.String())
 	return nil
 }
 

@@ -270,6 +270,12 @@ const MCP_ACTIVITY = {
   runs: [],
 };
 
+// A passkey of PASSKEYS as the kit lists it.
+function kitPasskey(p: (typeof PASSKEYS.passkeys)[number]) {
+  const at = (sec: number) => (sec ? new Date(sec * 1000).toISOString() : undefined);
+  return { id: p.id, name: p.name, created: at(p.createdAt), used: at(p.lastUsedAt), rpID: p.rpId, synced: p.backedUp, here: p.usableHere };
+}
+
 const PASSKEYS = {
   ok: true,
   supported: true,
@@ -369,8 +375,14 @@ async function stage(page: Page): Promise<void> {
   });
   // A release, so the Apps page's phone card shows the number in its corner.
   await page.route("**/api/health", json({ ok: true, version: "v9.8.0" }));
-  await page.route("**/api/auth", json({ ok: true, enabled: true, authed: true, totp: true, recoveryCodesLeft: 7, recommendedPasswordLen: 12 }));
-  await page.route("**/api/auth/passkeys", json(PASSKEYS));
+  await page.route("**/api/auth", json({ ok: true, enabled: true, authed: true }));
+  // The kit's sign-in answers as for an owner signed in with the password, two passkeys among their ways in.
+  await page.route("**/api/signin/v1/me", json({ role: "admin", via: "password", owner: true, password: true, twoFactor: true, recoveryLeft: 7, fresh: true, askPassword: true }));
+  await page.route("**/api/signin/v1/me/passkeys", json({ passkeys: PASSKEYS.passkeys.map(kitPasskey) }));
+  await page.route("**/api/signin/v1/me/sessions", json({ sessions: [] }));
+  await page.route("**/api/signin/v1/settings", json({ askPassword: true }));
+  await page.route("**/api/signin/v1/methods/oidc", json({ services: [] }));
+  await page.route("**/api/signin/v1/accounts", json({ accounts: [] }));
   await page.route("**/api/repos", json({ ok: true, repos: REPOS }));
   await page.route("**/api/offsite/targets*", (route) => {
     const domain = new URL(route.request().url()).searchParams.get("domain") ?? "containers";

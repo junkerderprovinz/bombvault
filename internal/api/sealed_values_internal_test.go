@@ -13,13 +13,8 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
-const (
-	// keptWithLogin is a sealed value of the login, which a settings restore
-	// of another install replaces with this server's own.
-	keptWithLogin = "login"
-	// keptOutside is a sealed value that never reaches the settings database.
-	keptOutside = "outside the database"
-)
+// keptOutside is a sealed value that never reaches the settings database.
+const keptOutside = "outside the database"
 
 // sealSites names, for every function that seals a value with secret.Encrypt,
 // the column the value is kept in. A settings restore of another install
@@ -38,7 +33,6 @@ var sealSites = map[string]string{
 	"Save":                   "group_state.kit_state_enc",
 	"pairedPassword":         "received_repos.restic_password_enc",
 	"ConvertLegacyAppKeys":   "pull_sources.restic_password_enc",
-	"encryptTOTPSecret":      keptWithLogin,
 	"sealBrokerPassword":     "mqtt_settings.password_enc",
 	"handlePeerMeshOffer":    "mesh_offers.rest_password_enc",
 	"addHtpasswdUser":        "receiver_logins.password_enc",
@@ -152,7 +146,7 @@ func TestEverySealedValueIsOneASettingsRestoreCarriesOver(t *testing.T) {
 		switch {
 		case !listed:
 			t.Errorf("%s seals a value with secret.Encrypt and sealSites does not say where it is kept", fn)
-		case kept == keptWithLogin, kept == keptOutside:
+		case kept == keptOutside:
 		case !known[kept]:
 			t.Errorf("%s keeps its sealed value in %s, which a settings restore does not seal again: name a BLOB column *_enc, or add the settings column to store.SealedSettingsText", fn, kept)
 		}

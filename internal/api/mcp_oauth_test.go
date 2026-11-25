@@ -38,7 +38,7 @@ func newOAuthEnv(t *testing.T) oauthEnv {
 	t.Helper()
 	st := newMemStore(t)
 	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
-	cookie := enableLogin(t, st, mcpAppKey)
+	cookie := enableLogin(t, h)
 	w, m := doMCPKeyJSON(t, h, http.MethodPut, "/api/mcp/oauth",
 		`{"enabled":true,"issuer":"`+oauthIssuer+`"}`, oauthHost, cookie)
 	if w.Code != http.StatusOK || m["ok"] != true {
@@ -294,11 +294,7 @@ func TestATokenStopsWorkingWhenTheLoginPasswordGoes(t *testing.T) {
 	if got := mcpStatus(t, e.h, str(tok, "access_token")); got != http.StatusOK {
 		t.Fatalf("fresh token: %d", got)
 	}
-	s := mustSettings(t, e.st)
-	s.AuthPasswordHash = ""
-	if err := e.st.UpdateSettings(s); err != nil {
-		t.Fatal(err)
-	}
+	removeLogin(t, e.h, e.cookie)
 	if got := mcpStatus(t, e.h, str(tok, "access_token")); got == http.StatusOK {
 		t.Fatal("an OAuth token still works after the login password was removed")
 	}
@@ -892,14 +888,14 @@ func TestConsentIsProtectedAgainstForgedRequests(t *testing.T) {
 	r.Host = oauthHost
 	r.Header.Set("Content-Type", "application/json")
 	r.Header.Set("Sec-Fetch-Site", "cross-site")
-	r.AddCookie(&http.Cookie{Name: "bv_session", Value: e.cookie}) //nolint:gosec // G124: request cookie
+	r.AddCookie(&http.Cookie{Name: sessionCookie, Value: e.cookie}) //nolint:gosec // G124: request cookie
 	w := httptest.NewRecorder()
 	e.h.ServeHTTP(w, r)
 	if w.Code != http.StatusForbidden {
 		t.Fatalf("a cross-site POST gave %d", w.Code)
 	}
 
-	other := secret.NewSessionToken(mcpAppKey, mustSettings(t, e.st).AuthPasswordHash, mustSettings(t, e.st).SessionEpoch, 3600*1e9)
+	other := signInAgain(t, e.h)
 	_, m := doMCPKeyJSON(t, e.h, http.MethodPost, "/api/oauth/authorize", body, oauthHost, other)
 	if m["ok"] != false || m["code"] != "oauth-consent-expired" {
 		t.Fatalf("a ticket from another session gave %v", m)
@@ -945,8 +941,13 @@ func TestAConfidentialClientMustAuthenticate(t *testing.T) {
 func TestAnAppKeyChangeMarksTheGrantUnusable(t *testing.T) {
 	e := newOAuthEnv(t)
 	_, tok := e.signIn(t, false)
+	// After a changed APP_KEY the owner gets back in with a reset. Here the
+	// old login is simply dropped and a password set anew.
+	if err := e.st.MarkOldLogin(false); err != nil {
+		t.Fatal(err)
+	}
 	h2, _ := newMCPKeyRouter(t, e.st, mcpAppKeyAfter)
-	cookie := enableLogin(t, e.st, mcpAppKeyAfter)
+	cookie := enableLogin(t, h2)
 	if got := mcpStatus(t, h2, str(tok, "access_token")); got != http.StatusUnauthorized {
 		t.Fatalf("a token under the old APP_KEY: %d", got)
 	}
@@ -963,7 +964,7 @@ func TestDiagnosticsCountGrantsWithoutTheirTokensOrTheAddress(t *testing.T) {
 	t.Cleanup(func() { log.SetOutput(prev) })
 	e := newOAuthEnv(t)
 	_, tok := e.signIn(t, false)
-	w := getRaw(t, e.h, "/api/diagnostics", &http.Cookie{Name: "bv_session", Value: e.cookie}) //nolint:gosec // G124: request cookie
+	w := getRaw(t, e.h, "/api/diagnostics", &http.Cookie{Name: sessionCookie, Value: e.cookie}) //nolint:gosec // G124: request cookie
 	if w.Code != http.StatusOK {
 		t.Fatalf("diagnostics: %d %s", w.Code, w.Body.String())
 	}

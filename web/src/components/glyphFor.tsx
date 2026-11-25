@@ -25,16 +25,19 @@ import {
   IconExport,
   IconEye,
   IconForgotPassword,
+  IconAccounts,
   IconForward,
   IconImport,
   IconInfo,
   IconInstall,
   IconKey,
   IconKeyRevoke,
+  IconLaptop,
   IconLatest,
   IconLink,
   IconLog,
   IconMail,
+  IconPhone,
   IconPlay,
   IconPrune,
   IconRefresh,
@@ -66,6 +69,16 @@ import {
 type Rule = [RegExp, () => ReactNode];
 
 const RULES: Rule[] = [
+  // The keys GlimStone's sign-in parts name their buttons and rows by.
+  [/^deviceLaptop$/, () => <IconLaptop />],
+  [/^devicePhone$/, () => <IconPhone />],
+  [/^account$/, () => <IconAccounts />],
+  [/^(passkey|apiToken|setPassword)$/, () => <IconKey />],
+  [/^(removePassword|revoke)$/, () => <IconKeyRevoke />],
+  [/^(twoFactor|unblock)$/, () => <IconShieldOn />],
+  [/^(turnOff|block)$/, () => <IconShieldOff />],
+  [/^delete$/, () => <IconTrash />],
+  [/^add$/, () => <IconAdd />],
   // The buttons of the Version and Components cards, by the keys GlimStone
   // gives them, before "check" and "update" fall to the general rules.
   [/^version\.whatsNew$/, () => <IconWhatsNew />],

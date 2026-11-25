@@ -29,7 +29,7 @@ func listedPhoneSession(t *testing.T, st *store.Repo, appKey, hash, epoch string
 }
 
 func pairedCookie(t *testing.T, in *instance) *http.Cookie {
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	return &http.Cookie{Name: sessionCookieNameHTTP, Value: listedPhoneSession(t, in.st, in.appKey, hash, epoch)} //nolint:gosec // G124: a cookie on a test request
 }
 
@@ -119,7 +119,7 @@ func TestARemovedPhoneComesBackSwitchedOff(t *testing.T) {
 	if len(rows) != 1 || rows[0].Enabled || listsPhone(rows, wordsHolderID) {
 		t.Fatalf("rows once the phone is back = %+v, want it switched off", rows)
 	}
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	if in.h.pairedPhoneListed(secret.NewPairedSessionToken(in.appKey, hash, epoch, wordsHolderID, time.Hour)) {
 		t.Fatal("the removed phone's session still counts")
 	}

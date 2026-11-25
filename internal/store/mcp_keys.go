@@ -32,6 +32,9 @@ type MCPKey struct {
 	LastUsedFrom    string
 	RevokedAt       int64
 	RevokedReason   string
+	// Account made the key or let the grant in, or replaced the key last.
+	// Empty is the owner.
+	Account string
 }
 
 // MCPKeyLimit is how many keys may be active at once. Several named clients are
@@ -57,12 +60,12 @@ var (
 	ErrMCPKeyActive     = errors.New("mcp key is still active")
 )
 
-const mcpKeyCols = `id, kind, oauth_client, resource, label, client, key_digest, key_hint, key_check, can_start_backups, created_at, rotated_at, last_used_at, last_used_from, revoked_at, revoked_reason` //nolint:gosec // G101: a SQL column list; the digest column holds an HMAC, not a key
+const mcpKeyCols = `id, kind, oauth_client, resource, label, client, key_digest, key_hint, key_check, can_start_backups, created_at, rotated_at, last_used_at, last_used_from, revoked_at, revoked_reason, account` //nolint:gosec // G101: a SQL column list; the digest column holds an HMAC, not a key
 
 func scanMCPKey(s scanner) (MCPKey, error) {
 	var k MCPKey
 	err := s.Scan(&k.ID, &k.Kind, &k.OAuthClient, &k.Resource, &k.Label, &k.Client, &k.Digest, &k.Hint, &k.Check, &k.CanStartBackups,
-		&k.CreatedAt, &k.RotatedAt, &k.LastUsedAt, &k.LastUsedFrom, &k.RevokedAt, &k.RevokedReason)
+		&k.CreatedAt, &k.RotatedAt, &k.LastUsedAt, &k.LastUsedFrom, &k.RevokedAt, &k.RevokedReason, &k.Account)
 	if err != nil {
 		return MCPKey{}, err
 	}
@@ -163,17 +166,17 @@ func (r *Repo) GetMCPKey(id string) (MCPKey, error) {
 // value is derived from it before the row exists. Limit and label are settled
 // inside the transaction that writes the row, so two creates at once cannot
 // both find room.
-func (r *Repo) CreateMCPKey(id, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
-	return r.createKey(MCPKindKey, MCPKeyLimit, id, label, client, digest, hint, check, canStart, now)
+func (r *Repo) CreateMCPKey(id, account, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
+	return r.createKey(MCPKindKey, MCPKeyLimit, id, account, label, client, digest, hint, check, canStart, now)
 }
 
 // CreateAPIToken is CreateMCPKey for an API token, which counts against a
 // limit of its own and whose name only has to differ from the other tokens.
-func (r *Repo) CreateAPIToken(id, label, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
-	return r.createKey(MCPKindAPI, APITokenLimit, id, label, "", digest, hint, check, canStart, now)
+func (r *Repo) CreateAPIToken(id, account, label, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
+	return r.createKey(MCPKindAPI, APITokenLimit, id, account, label, "", digest, hint, check, canStart, now)
 }
 
-func (r *Repo) createKey(kind string, limit int, id, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
+func (r *Repo) createKey(kind string, limit int, id, account, label, client, digest, hint, check string, canStart bool, now int64) (MCPKey, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return MCPKey{}, fmt.Errorf("create %s key: %w", kind, err)
@@ -194,8 +197,8 @@ func (r *Repo) createKey(kind string, limit int, id, label, client, digest, hint
 	if taken {
 		return MCPKey{}, ErrMCPKeyLabelTaken
 	}
-	_, err = tx.Exec(`INSERT INTO mcp_keys (id, kind, label, client, key_digest, key_hint, key_check, can_start_backups, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, kind, label, client, digest, hint, check, canStart, now)
+	_, err = tx.Exec(`INSERT INTO mcp_keys (id, kind, label, client, key_digest, key_hint, key_check, can_start_backups, created_at, account)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, id, kind, label, client, digest, hint, check, canStart, now, account)
 	if err != nil {
 		return MCPKey{}, fmt.Errorf("create %s key: %w", kind, err)
 	}
@@ -220,10 +223,10 @@ func mcpLabelTaken(tx *sql.Tx, kind, label, exceptID string) (bool, error) {
 // its id, label, permission and creation time, so everything that references
 // it stays valid. An OAuth grant has no key to replace; its client signs in
 // again instead.
-func (r *Repo) RotateMCPKey(id, digest, hint, check string, now int64) (MCPKey, error) {
+func (r *Repo) RotateMCPKey(id, account, digest, hint, check string, now int64) (MCPKey, error) {
 	res, err := r.db.Exec(`UPDATE mcp_keys
-		SET key_digest = ?, key_hint = ?, key_check = ?, rotated_at = ?
-		WHERE id = ? AND revoked_at = 0 AND kind IN ('key', 'api')`, digest, hint, check, now, id)
+		SET key_digest = ?, key_hint = ?, key_check = ?, rotated_at = ?, account = ?
+		WHERE id = ? AND revoked_at = 0 AND kind IN ('key', 'api')`, digest, hint, check, now, account, id)
 	if err != nil {
 		return MCPKey{}, fmt.Errorf("RotateMCPKey: %w", err)
 	}
@@ -312,6 +315,32 @@ func revokeMCPKeyTx(tx *sql.Tx, id, reason string, now int64) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// RevokeMCPKeysOf revokes every active key, token and grant of account, drops
+// the grants' tokens and returns how many rows it revoked.
+func (r *Repo) RevokeMCPKeysOf(account, reason string, now int64) (int64, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("RevokeMCPKeysOf: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // rollback after a successful commit is a no-op
+
+	if _, err := tx.Exec(`DELETE FROM mcp_oauth_tokens WHERE grant_id IN
+		(SELECT id FROM mcp_keys WHERE account = ? AND revoked_at = 0)`, account); err != nil {
+		return 0, fmt.Errorf("RevokeMCPKeysOf tokens: %w", err)
+	}
+	res, err := tx.Exec(`UPDATE mcp_keys
+		SET key_digest = '', revoked_at = ?, revoked_reason = ?
+		WHERE account = ? AND revoked_at = 0`, now, reason, account)
+	if err != nil {
+		return 0, fmt.Errorf("RevokeMCPKeysOf: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("RevokeMCPKeysOf commit: %w", err)
+	}
+	return n, nil
 }
 
 // RevokeAllMCPKeys revokes every active key and grant, drops every token, and

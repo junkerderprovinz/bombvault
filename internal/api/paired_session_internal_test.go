@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 
 	"github.com/junkerderprovinz/bombvault/internal/keydeposit"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -84,7 +84,7 @@ func (w *wordsHolder) pairedSession(in *instance) string {
 		"instanceId": w.id, "key": keydeposit.OwnerKey(w.seed), "counter": at, "proof": keydeposit.Prove(w.seed, claim),
 	})
 	value, _ := out["value"].(string)
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	if !secret.ValidSessionToken(in.appKey, hash, epoch, value) {
 		w.t.Fatalf("no session that signs in: %v", out)
 	}
@@ -187,9 +187,9 @@ func TestAPairedSessionOpensThePagesAndStopsAtKeysAndTheLogin(t *testing.T) {
 			{http.MethodGet, "/api/recovery-kit", nil},
 			{http.MethodGet, "/api/diagnostics", nil},
 			{http.MethodGet, "/api/settings/export?includeCredentials=1", nil},
-			{http.MethodPost, "/api/auth/password", map[string]any{"password": "a new password of mine"}},
-			{http.MethodPost, "/api/auth/totp/setup", map[string]any{}},
-			{http.MethodPost, "/api/auth/passkey/register/begin", map[string]any{}},
+			{http.MethodPut, signin.APIPrefix + "me/password", map[string]any{"next": "a new password of mine"}},
+			{http.MethodPost, signin.APIPrefix + "me/totp", map[string]any{}},
+			{http.MethodPost, signin.APIPrefix + "me/passkeys/options", map[string]any{}},
 			{http.MethodPut, "/api/group/members/" + tower.id(t) + "/roles/keeper", map[string]any{}},
 			{http.MethodDelete, "/api/group/members/" + tower.id(t) + "/roles/keeper", map[string]any{}},
 			{http.MethodPost, "/api/group/deposits/releases/any", map[string]any{"decision": "refuse"}},
@@ -272,9 +272,7 @@ func TestTheKeyIsDepositedWithoutALoginPassword(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
-	if _, err := tower.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, tower.router, tower.session, testPassword)
 	tower.session = ""
 	if out := deposit(t, tower, attic); out["ok"] != true {
 		t.Fatalf("depositing without a password: %v", out)
@@ -287,85 +285,25 @@ func TestTheKeyIsDepositedWithoutALoginPassword(t *testing.T) {
 	}
 }
 
-// heldBody tells entered when the request first reads it and hands out its
-// content once release is closed. That holds a request after the gates have
-// let it in and before it reads its body.
-type heldBody struct {
-	entered func()
-	release <-chan struct{}
-	body    *strings.Reader
-}
-
-func (b heldBody) Read(p []byte) (int, error) {
-	b.entered()
-	<-b.release
-	return b.body.Read(p)
-}
-
-func TestASessionTheResetEndedCannotSwitchPairingPhonesOn(t *testing.T) {
-	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
-	entered, release := make(chan struct{}), make(chan struct{})
-	body := heldBody{entered: sync.OnceFunc(func() { close(entered) }), release: release, body: strings.NewReader(`{"on":true}`)}
-	req := httptest.NewRequest(http.MethodPut, "/api/auth/phone-pairing", body)
-	req.Header.Set("Content-Type", "application/json")
-	req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: attic.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
-	w := httptest.NewRecorder()
-	done := make(chan struct{})
-	go func() {
-		attic.router.ServeHTTP(w, req)
-		close(done)
-	}()
-
-	hash, err := secret.HashPassword(attic.appKey, "a new password")
-	if err != nil {
-		t.Fatal(err)
-	}
-	<-entered
-	attic.h.mintMu.Lock()
-	_, _, err = attic.h.resetLogin(hash)
-	attic.h.mintMu.Unlock()
-	if err != nil {
-		t.Fatal(err)
-	}
-	close(release)
-	<-done
-	if on, err := attic.st.PhonePairing(); err != nil || on {
-		t.Fatalf("pairing phones after the reset = %v, %v; answer %d %s", on, err, w.Code, w.Body)
-	}
-}
-
-func TestAResetKeepsPhonesOutUntilAPersonLetsThemPairAgain(t *testing.T) {
+func TestAPhoneOfTheGroupPairsAgainAfterAReset(t *testing.T) {
 	tower := newInstance(t, "tower", strings.Repeat("a1", 32))
 	attic := newInstance(t, "attic", strings.Repeat("b2", 32))
 	groupOf(t, tower, attic)
 	phone := holdWords(t, wordsHolderID, "android", attic)
-	phone.pairedSession(attic)
+	old := phone.pairedSession(attic)
 
-	hash, err := secret.HashPassword(attic.appKey, "a new password")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, _, err := attic.h.resetLogin(hash); err != nil {
-		t.Fatal(err)
-	}
-	if out := phone.call(attic.id(t), wordsHolderID, http.MethodPost, "/api/group/peer/session", map[string]any{"instanceId": wordsHolderID}); out["ok"] != false || out["code"] != codePhonePairingOff {
-		t.Fatalf("a phone asking for a session after the reset: %v", out)
-	}
-	hash, epoch, _ := attic.h.authEnabled()
-	attic.as(listedPhoneSession(t, attic.st, attic.appKey, hash, epoch), func() {
+	resetOn(t, attic, "a new password")
+	attic.as(old, func() {
 		if code, _ := attic.do(t, http.MethodGet, "/api/status", nil); code != http.StatusUnauthorized {
-			t.Fatalf("a paired session while pairing phones is off: %d", code)
+			t.Fatalf("the phone's session from before the reset: %d", code)
 		}
 	})
-
-	attic.session = secret.NewSessionToken(attic.appKey, hash, epoch, time.Hour)
-	if _, out := attic.do(t, http.MethodGet, "/api/auth/phone-pairing", nil); out["on"] != false {
-		t.Fatalf("pairing phones after the reset: %v", out)
-	}
-	if _, out := attic.do(t, http.MethodPut, "/api/auth/phone-pairing", map[string]any{"on": true}); out["ok"] != true {
-		t.Fatalf("switching pairing phones on: %v", out)
-	}
-	phone.pairedSession(attic)
+	fresh := phone.pairedSession(attic)
+	attic.as(fresh, func() {
+		if code, _ := attic.do(t, http.MethodGet, "/api/status", nil); code != http.StatusOK {
+			t.Fatalf("the phone's session after pairing again: %d", code)
+		}
+	})
 }
 
 func isMember(in *instance, id string) bool {

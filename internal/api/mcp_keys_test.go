@@ -163,8 +163,8 @@ func TestMCPKeyUnusableAfterAppKeyChange(t *testing.T) {
 		t.Fatalf("a key from another APP_KEY must be reported unusable, got %v", rows)
 	}
 
-	cookie := enableLogin(t, st, mcpAppKeyAfter)
-	bundle := getRaw(t, after, "/api/diagnostics", &http.Cookie{Name: "bv_session", Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
+	cookie := enableLogin(t, after)
+	bundle := getRaw(t, after, "/api/diagnostics", &http.Cookie{Name: sessionCookie, Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
 	if bundle.Code != http.StatusOK {
 		t.Fatalf("diagnostics: status = %d body = %s", bundle.Code, bundle.Body.String())
 	}
@@ -346,7 +346,7 @@ func TestMCPKeyEndpointsAreSessionProtected(t *testing.T) {
 	st := newMemStore(t)
 	h, _ := newMCPKeyRouter(t, st, mcpAppKey)
 	_, id := createMCPKey(t, h, "Laptop", true)
-	cookie := enableLogin(t, st, mcpAppKey)
+	cookie := enableLogin(t, h)
 
 	routes := []struct {
 		method string
@@ -463,7 +463,7 @@ func TestMCPCertificateEndpoints(t *testing.T) {
 		t.Fatalf("cross-site: status = %d, want 403", w.Code)
 	}
 
-	cookie := enableLogin(t, st, mcpAppKey)
+	cookie := enableLogin(t, h)
 	for _, route := range []struct {
 		method string
 		path   string
@@ -597,7 +597,7 @@ func TestMCPKeyListCarriesEndpointAndAuthState(t *testing.T) {
 	if _, m := doMCPKey(t, h, http.MethodPost, "/api/mcp/keys/"+revokedID+"/revoke", ""); m["ok"] != true {
 		t.Fatalf("revoke: %v", m)
 	}
-	cookie := enableLogin(t, st, mcpAppKey)
+	cookie := enableLogin(t, h)
 
 	_, list = doMCPKeyJSON(t, h, http.MethodGet, "/api/mcp/keys", "", mcpTestHost, cookie)
 	if list["authEnabled"] != true {

@@ -29,7 +29,7 @@ func newStoreWithMCPKeys(t *testing.T) (*store.Repo, *sql.DB) {
 		{"0b7e0b7e0b7e0b7e0b7e0b7e0b7e0b7e", "Laptop"},
 		{"77aa77aa77aa77aa77aa77aa77aa77aa", "Desktop"},
 	} {
-		if _, err := st.CreateMCPKey(k.id, k.label, "", "digest-"+k.id, "x9Qa", "check-"+k.id, true, 1789600000); err != nil {
+		if _, err := st.CreateMCPKey(k.id, "", k.label, "", "digest-"+k.id, "x9Qa", "check-"+k.id, true, 1789600000); err != nil {
 			t.Fatalf("seed key %s: %v", k.label, err)
 		}
 	}

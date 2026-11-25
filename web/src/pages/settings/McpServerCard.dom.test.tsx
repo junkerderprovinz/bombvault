@@ -11,7 +11,6 @@ import { countText, en } from "../../lib/i18n";
 import type { McpKeyView, McpKeysResponse } from "../../lib/api";
 import { MCP_MARKS } from "@glimstone/core/mcpMarks";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
-import { LOGIN_PASSWORD_FIELD } from "./shared";
 
 const listMcpKeys = vi.fn();
 const createMcpKey = vi.fn();
@@ -191,7 +190,7 @@ describe("the MCP card without a key", () => {
       </MemoryRouter>,
     );
     fireEvent.click(await screen.findByRole("button", { name: en["mcp.setPassword"] }));
-    expect(screen.getByTestId("where").textContent).toBe(`/settings/security#${LOGIN_PASSWORD_FIELD}`);
+    expect(screen.getByTestId("where").textContent).toBe("/settings/security");
   });
 
   it("offers key creation on a public host without a password", async () => {

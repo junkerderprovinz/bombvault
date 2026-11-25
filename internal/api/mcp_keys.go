@@ -223,7 +223,7 @@ func (h *Handler) handleListMCPKeys(w http.ResponseWriter, r *http.Request) {
 		}
 		active = append(active, v)
 	}
-	_, _, authOn := h.authEnabled()
+	authOn := !h.signInOpen()
 	var certificate any
 	if info, ok := h.svc.CertificateInfo(); ok && servedOwnCertificate(r) {
 		certificate = info
@@ -251,11 +251,6 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	release, ok := h.holdSignIn(w, r, "creating an MCP key")
-	if !ok {
-		return
-	}
-	defer release()
 	if body.Client != "" && !mcpClientID.MatchString(body.Client) {
 		writeJSON(w, http.StatusOK, failEnvelope(errMCPKeyClient))
 		return
@@ -267,15 +262,22 @@ func (h *Handler) handleCreateMCPKey(w http.ResponseWriter, r *http.Request) {
 	}
 	canStart := body.CanStartBackups == nil || *body.CanStartBackups
 
-	key, err := secret.NewMCPKey()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+	var key string
+	var row store.MCPKey
+	done, err := h.mint(w, r, "creating an MCP key", func() error {
+		var err error
+		if key, err = secret.NewMCPKey(); err != nil {
+			return err
+		}
+		id := newMCPKeyID()
+		row, err = h.store.CreateMCPKey(id, creator(r), label, body.Client,
+			secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
+			canStart, time.Now().Unix())
+		return err
+	})
+	if !done {
 		return
 	}
-	id := newMCPKeyID()
-	row, err := h.store.CreateMCPKey(id, label, body.Client,
-		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
-		canStart, time.Now().Unix())
 	if err != nil {
 		writeMCPError(w, err)
 		return
@@ -324,22 +326,27 @@ func (h *Handler) handleUpdateMCPKey(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleRotateMCPKey(w http.ResponseWriter, r *http.Request) {
 	id, ok := mcpKeyIDParam(w, r)
-	if !ok || !h.requireSignIn(w, r, "replacing a key") {
+	if !ok {
 		return
 	}
-	current, err := h.store.GetMCPKey(id)
-	if err != nil {
-		writeMCPError(w, err)
+	var key string
+	var row store.MCPKey
+	done, err := h.mint(w, r, "replacing a key", func() error {
+		current, err := h.store.GetMCPKey(id)
+		if err != nil {
+			return err
+		}
+		if key, err = newKeyMaterial(current); err != nil {
+			return err
+		}
+		row, err = h.store.RotateMCPKey(id, creator(r),
+			secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
+			time.Now().Unix())
+		return err
+	})
+	if !done {
 		return
 	}
-	key, err := newKeyMaterial(current)
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	row, err := h.store.RotateMCPKey(id,
-		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key), secret.MCPKeyCheck(h.cfg.AppKey, id),
-		time.Now().Unix())
 	if err != nil {
 		writeMCPError(w, err)
 		return

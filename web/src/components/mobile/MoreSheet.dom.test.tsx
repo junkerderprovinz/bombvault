@@ -36,7 +36,7 @@ const logout = vi.fn(async () => ({ ok: true }));
 const getAnomalySummary = vi.fn();
 vi.mock("../../lib/api", async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
-  logout: () => logout(),
+  signOut: () => logout(),
   getAnomalySummary: () => getAnomalySummary(),
 }));
 

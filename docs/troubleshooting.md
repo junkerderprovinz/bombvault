@@ -24,7 +24,7 @@ This server took over another server's backup key in the Emergency wizard, and `
 
 ## A phone lands on the login page {#a-phone-lands-on-the-login-page}
 
-A paired phone gets its session over the group only while **Phones can pair with the group's twelve words** is on under **Settings, Security**. A password reset turns it off. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password. A phone removed from the Instances page comes back switched off when its app opens again. Switch on **Poll this instance** under **Monitoring** in its details to let it in.
+A paired phone gets its session over the group as long as its card on the Instances page is there and switched on. An app older than the server also gets no session until it is updated. A server added by its address always asks for the password. A phone removed from the Instances page comes back switched off when its app opens again. Switch on **Poll this instance** under **Monitoring** in its details to let it in.
 
 ## VM backup will not connect {#vm-backup-will-not-connect}
 

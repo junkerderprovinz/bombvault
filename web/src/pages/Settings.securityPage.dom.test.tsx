@@ -1,40 +1,48 @@
 // @vitest-environment jsdom
-// Settings > Security: the login password. The api module is mocked, so the
-// password write is a captured call.
-import { componentText } from "@glimstone/core";
+// Settings > Security: the address passkeys and sign-in services need, and the kit's sign-in tile. The api module is
+// mocked, and the kit's contract answers from a stub of fetch.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider, en } from "../lib/i18n";
 import { ToastProvider } from "../lib/toast";
-import type { SetPasswordResponse, Settings } from "../lib/api";
+import type { Settings } from "../lib/api";
 
-const writes: { password: string; current: string; code: string }[] = [];
-let authOn = true;
-let totpOn = false;
-let answer: SetPasswordResponse | null = null;
+const saved: string[] = [];
+let refuse = false;
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
     ...actual,
     getSettings: () => Promise.resolve({ ok: true, settings: {} as Settings, hostMountRoot: "/host/user", platform: "unraid" }),
-    getAuth: () => Promise.resolve({ enabled: authOn, authed: authOn, totp: totpOn, recommendedPasswordLen: 12 }),
-    setAuthPassword: (password: string, current = "", code = "") => {
-      writes.push({ password, current, code });
-      return Promise.resolve(answer ?? { ok: true, enabled: password !== "" });
-    },
+    getAuth: () => Promise.resolve({ ok: true, enabled: false, authed: false }),
     listContainers: () => Promise.resolve({ ok: true, containers: [] }),
     listVMs: () => Promise.resolve({ ok: true, vms: [] }),
-    passkeyStatus: () => Promise.resolve({ ok: true, passkeys: [] }),
-    getPhonePairing: () => Promise.resolve({ ok: true, enabled: false }),
     getStatus: () => Promise.resolve({ ok: true }),
+    getPublicAddress: () => Promise.resolve({ ok: true, address: "" }),
+    setPublicAddress: (address: string) => {
+      saved.push(address);
+      return Promise.resolve(refuse ? { ok: false, code: "address-invalid" } : { ok: true, address });
+    },
   };
 });
 
 const { SettingsPage } = await import("./Settings");
 
-function stubBrowser() {
+// The kit answers an open instance: everyone is admin, and nothing is set up yet.
+function kitAnswer(url: string): unknown {
+  const path = new URL(url, "http://bv.test").pathname.replace(/^.*\/api\/signin\/v1\//, "");
+  if (path === "me") return { role: "admin", via: "open", owner: false, password: false, twoFactor: false, recoveryLeft: 0, fresh: true, askPassword: true };
+  if (path === "settings") return { askPassword: true };
+  if (path === "options") return { open: true, owner: true, minPassword: 12, signedIn: false, passkeys: false, services: [] };
+  if (path === "roles") return { roles: ["admin"], serviceRole: "admin" };
+  return { sessions: [], tokens: [], passkeys: [], services: [], accounts: [], presets: [] };
+}
+
+beforeEach(() => {
+  saved.length = 0;
+  refuse = false;
   window.matchMedia = ((query: string) => ({
     matches: true,
     media: query,
@@ -50,7 +58,13 @@ function stubBrowser() {
     unobserve() {}
     disconnect() {}
   } as unknown as typeof ResizeObserver;
-}
+  vi.stubGlobal("fetch", (url: string) => Promise.resolve(new Response(JSON.stringify(kitAnswer(String(url))), { status: 200, headers: { "Content-Type": "application/json" } })));
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 async function renderPage() {
   await act(async () => {
@@ -68,131 +82,42 @@ async function renderPage() {
             }
           />
         </Routes>
-      </MemoryRouter>
+      </MemoryRouter>,
     );
   });
 }
 
-function passwordCard(): HTMLElement {
-  return screen.getByRole("heading", { name: new RegExp(`^${en["auth.security"]}`) }).parentElement as HTMLElement;
-}
-
-async function signedInCard(): Promise<HTMLElement> {
-  await renderPage();
-  await waitFor(() => expect(within(passwordCard()).getByText(en["auth.authOn"])).toBeTruthy());
-  return passwordCard();
-}
-
-function typeInto(card: HTMLElement, label: string, value: string) {
-  fireEvent.change(within(card).getByLabelText(label), { target: { value } });
-}
-
-function save(card: HTMLElement) {
-  fireEvent.click(within(card).getByRole("button", { name: en["settings.save"] }));
-}
-
-function typeNewPassword(card: HTMLElement) {
-  typeInto(card, en["auth.changePassword"], "correct horse battery");
-  typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
-}
-
-beforeEach(() => {
-  stubBrowser();
-  writes.length = 0;
-  authOn = true;
-  totpOn = false;
-  answer = null;
-});
-
-afterEach(() => {
-  cleanup();
-});
-
-describe("the login password", () => {
-  it("asks before empty fields turn the login off, and keeps it on when declined", async () => {
-    const card = await signedInCard();
-    typeInto(card, en["auth.currentPassword"], "the old one");
-    save(card);
-    const ask = await screen.findByRole("dialog");
-    expect(within(ask).getByText(en["auth.turnOffAsk"])).toBeTruthy();
-    fireEvent.click(within(ask).getByRole("button", { name: en["common.cancel"] }));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(writes).toEqual([]);
-  });
-
-  it("turns the login off once the question is answered", async () => {
-    const card = await signedInCard();
-    typeInto(card, en["auth.currentPassword"], "the old one");
-    save(card);
-    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: en["auth.loginDisable"] }));
-    await waitFor(() => expect(writes).toEqual([{ password: "", current: "the old one", code: "" }]));
-  });
-
-  it("sets a first password without asking", async () => {
-    authOn = false;
+describe("the Security page", () => {
+  it("keeps the address once the field is left", async () => {
     await renderPage();
-    const card = passwordCard();
-    typeInto(card, en["auth.setPassword"], "correct horse battery");
-    typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
-    save(card);
-    await waitFor(() => expect(writes.map((w) => w.password)).toEqual(["correct horse battery"]));
-    expect(screen.queryByRole("dialog")).toBeNull();
+    const field = (await screen.findByLabelText(en["signin.address.label"])) as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "https://backup.example" } });
+    await act(async () => {
+      fireEvent.blur(field);
+    });
+    expect(saved).toEqual(["https://backup.example"]);
+    expect(await screen.findByText(en["signin.address.saved"])).toBeTruthy();
   });
 
-  it("suggests a longer password and still saves a short one", async () => {
-    authOn = false;
+  it("says what is wrong with an address it refuses", async () => {
+    refuse = true;
     await renderPage();
-    const card = passwordCard();
-    const hint = en["auth.passwordShortHint"].replace("{n}", "12");
-    expect(within(card).queryByText(hint)).toBeNull();
-    typeInto(card, en["auth.setPassword"], "1234");
-    expect(within(card).getByText(hint)).toBeTruthy();
-    typeInto(card, componentText("en").passwordField.confirm, "1234");
-    save(card);
-    await waitFor(() => expect(writes.map((w) => w.password)).toEqual(["1234"]));
-    expect(within(card).queryByText(hint)).toBeNull();
+    const field = await screen.findByLabelText(en["signin.address.label"]);
+    fireEvent.change(field, { target: { value: "backup" } });
+    await act(async () => {
+      fireEvent.blur(field);
+    });
+    expect(await screen.findByText(en["signin.address.invalid"])).toBeTruthy();
   });
 
-  it("keeps Save off until the new password is typed the same twice", async () => {
-    const card = await signedInCard();
-    const saveButton = within(card).getByRole("button", { name: en["settings.save"] }) as HTMLButtonElement;
-    typeInto(card, en["auth.changePassword"], "correct horse battery");
-    expect(saveButton.disabled).toBe(true);
-    typeInto(card, componentText("en").passwordField.confirm, "correct horse batterx");
-    expect(within(card).getByText(componentText("en").passwordField.mismatch)).toBeTruthy();
-    expect(saveButton.disabled).toBe(true);
-    typeInto(card, componentText("en").passwordField.confirm, "correct horse battery");
-    expect(saveButton.disabled).toBe(false);
+  it("draws the sign-in tile with the password first", async () => {
+    await renderPage();
+    await waitFor(() => expect(screen.getAllByText(en["signin.tile.password.none"]).length).toBeGreaterThan(0));
   });
 
-  it("changes nothing without the current password", async () => {
-    const card = await signedInCard();
-    typeNewPassword(card);
-    save(card);
-    expect(await within(card).findByText(en["auth.currentPasswordWrong"])).toBeTruthy();
-    expect(writes).toEqual([]);
-  });
-
-  it("sends the current password and the code with a change", async () => {
-    totpOn = true;
-    const card = await signedInCard();
-    await waitFor(() => expect(within(card).getByLabelText(en["auth.codeLabel"])).toBeTruthy());
-    typeInto(card, en["auth.currentPassword"], "the old one");
-    typeNewPassword(card);
-    save(card);
-    expect(await within(card).findByText(en["auth.codeHint"])).toBeTruthy();
-    expect(writes).toEqual([]);
-    typeInto(card, en["auth.codeLabel"], "123456");
-    save(card);
-    await waitFor(() => expect(writes).toEqual([{ password: "correct horse battery", current: "the old one", code: "123456" }]));
-  });
-
-  it("says in the reader's language when the current password was wrong", async () => {
-    answer = { ok: false, code: "currentPasswordWrong", error: "the current password is not right" };
-    const card = await signedInCard();
-    typeInto(card, en["auth.currentPassword"], "a guess");
-    typeNewPassword(card);
-    save(card);
-    expect(await screen.findByText(en["auth.currentPasswordWrong"])).toBeTruthy();
+  it("offers no switch for phones, which always pair with the group's words", async () => {
+    await renderPage();
+    await waitFor(() => expect(screen.getAllByText(en["signin.tile.password.none"]).length).toBeGreaterThan(0));
+    expect(screen.queryByText(en["apps.phone.title"])).toBeNull();
   });
 });

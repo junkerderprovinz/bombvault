@@ -30,7 +30,6 @@ func TestACheckOrPruneOutlivesTheRequestThatStartedIt(t *testing.T) {
 	f, _, _, _ := flashScene(t)
 	e := &ctxEngine{ResticEngine: f.svc.engine, ran: map[string]error{}}
 	f.svc.engine = e
-	f.signIn()
 
 	for _, c := range []struct{ path, op string }{
 		{"/api/check/flash?source=local", "check"},
@@ -39,7 +38,6 @@ func TestACheckOrPruneOutlivesTheRequestThatStartedIt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		r := jsonReq(http.MethodPost, c.path, nil).WithContext(ctx)
-		r.AddCookie(&http.Cookie{Name: f.h.sessionCookieNameFor(), Value: f.session}) //nolint:gosec // G124: a cookie on a test request
 		w := httptest.NewRecorder()
 		f.h.Router().ServeHTTP(w, r)
 		err, ran := e.ran[c.op]

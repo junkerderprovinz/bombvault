@@ -44,7 +44,7 @@ func TestDeletingBackupsForGoodWorksWithoutALoginPassword(t *testing.T) {
 	f, b2 := nginxAtHomeAndB2(t)
 	for _, r := range deleteRoutes(f, b2.ID) {
 		code, out := f.call(r.method, r.path, r.body)
-		if code == http.StatusForbidden || out["code"] == codeNoPassword {
+		if code == http.StatusForbidden {
 			t.Errorf("%s %s without a password: %d %v", r.method, r.path, code, out)
 		}
 	}
@@ -57,11 +57,8 @@ func TestAPairedPhoneCannotDeleteBackups(t *testing.T) {
 	f, b2 := nginxAtHomeAndB2(t)
 	routes := deleteRoutes(f, b2.ID)
 	f.withPassword("a password of the owner")
-	settings, err := f.st.GetSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, settings.AuthPasswordHash, settings.SessionEpoch)
+	hash, epoch, _ := f.h.phoneSigning()
+	f.session = listedPhoneSession(t, f.st, f.svc.cfg.AppKey, hash, epoch)
 	for _, r := range routes {
 		code, out := f.call(r.method, r.path, r.body)
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
@@ -99,7 +96,7 @@ func TestAZFSDeleteRefusedWhileARunHoldsTheSectionSaysSo(t *testing.T) {
 func TestRemovingAZFSEntryThatKeepsItsSnapshotsNeedsNoPassword(t *testing.T) {
 	f := newPlacementFixture(t)
 	tank, _ := f.zfsItem("tank/apps")
-	if code, out := f.call(http.MethodDelete, "/api/zfs/datasets/"+tank.ID, nil); out["code"] == codeNoPassword {
+	if code, out := f.call(http.MethodDelete, "/api/zfs/datasets/"+tank.ID, nil); code == http.StatusForbidden {
 		t.Fatalf("removing the entry alone: %d %v", code, out)
 	}
 }

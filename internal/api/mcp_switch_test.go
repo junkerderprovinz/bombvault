@@ -23,7 +23,7 @@ func TestSwitchedOffMCPServerStaysOutOfBundleAndKit(t *testing.T) {
 		t.Fatal(err)
 	}
 	appKey := strings.Repeat("a", 64)
-	if _, err := st.CreateMCPKey("k1", "Laptop", "", secret.HashMCPKey(appKey, key),
+	if _, err := st.CreateMCPKey("k1", "", "Laptop", "", secret.HashMCPKey(appKey, key),
 		secret.MCPKeyHint(key), secret.MCPKeyCheck(appKey, "k1"), true, 1789600000); err != nil {
 		t.Fatal(err)
 	}

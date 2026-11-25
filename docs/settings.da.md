@@ -61,6 +61,8 @@ Kortet **Streaming**, som sænker upload-grænsen, mens Plex, Jellyfin eller Emb
 - **Adgangskode**: loginadgangskoden, i enhver længde. Under 12 tegn foreslår siden en længere. At ændre eller rydde den spørger efter den nuværende og, med tofaktorgodkendelse slået til, koden.
 - **Tofaktorgodkendelse**: en kode fra en autentificeringsapp oven i adgangskoden, med otte gendannelseskoder, der vises én gang.
 - **Adgangsnøgler**: log ind med en nøgle på din telefon, laptop eller sikkerhedspind. De kræver et rigtigt domænenavn og et certifikat, browseren stoler på.
+- **Adresse**: den adresse, du åbner BombVault på, fx `https://bombvault.example.com`. Adgangsnøgler og logintjenester følger den.
+- **Logintjenester**: log ind via Pocket ID, Authentik, Authelia, Kanidm, Keycloak eller Zitadel ved siden af adgangskoden. Det kræver, at BombVault ligger i roden af sin adresse. Under en sti som `https://example.com/bombvault/` kan tjenesten endnu ikke sende dig tilbage.
 - **Android-app**: **Telefoner kan parre med gruppens tolv ord**, hvilket lader en parret telefon logge ind uden adgangskoden.
 - **Kryptering**: **Kryptér sikkerhedskopier**, slået til som standard.
 

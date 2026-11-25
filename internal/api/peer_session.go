@@ -25,14 +25,21 @@ type peerSessionResponse struct {
 }
 
 // phoneSession mints a session without the password, marked as the one of
-// the paired phone phoneID: it opens the pages, and what hands out a key asks
-// for a sign-in on top.
+// the paired phone phoneID: it opens the pages through the phone door, and
+// what hands out a key asks for a sign-in on top. It is signed with the
+// session epoch, which everything that ends the owner's sessions moves.
 func (h *Handler) phoneSession(phoneID string) peerSessionResponse {
-	hash, epoch, on := h.authEnabled()
-	if !on {
+	if h.signInOpen() {
 		return peerSessionResponse{OK: true}
 	}
-	c := h.newSessionCookie(secret.NewPairedSessionToken(h.cfg.AppKey, hash, epoch, phoneID, sessionTTL), int(sessionTTL.Seconds()))
+	if !h.phoneStands(phoneID) {
+		return peerSessionResponse{}
+	}
+	s, err := h.store.GetSettings()
+	if err != nil {
+		return peerSessionResponse{}
+	}
+	c := h.newSessionCookie(secret.NewPairedSessionToken(h.cfg.AppKey, "", s.SessionEpoch, phoneID, sessionTTL), int(sessionTTL.Seconds()))
 	return peerSessionResponse{OK: true, Needed: true, Name: c.Name, Value: c.Value, MaxAge: c.MaxAge, Secure: c.Secure}
 }
 
@@ -41,11 +48,10 @@ func (h *Handler) phoneSession(phoneID string) peerSessionResponse {
 // A session that is not this phone's, or that a sign-out everywhere or a
 // reset ended, gives none.
 func (h *Handler) phoneSessionCookie(phoneID, token string) (*http.Cookie, bool) {
-	hash, epoch, on := h.authEnabled()
-	if !on {
+	if h.signInOpen() {
 		return nil, true
 	}
-	if phone, ok := secret.PairedSessionPhone(token); !ok || phone != phoneID || !secret.ValidSessionToken(h.cfg.AppKey, hash, epoch, token) {
+	if !h.phoneSessionValid(phoneID, token) || !h.phoneStands(phoneID) {
 		return nil, false
 	}
 	return &http.Cookie{Name: h.newSessionCookie("", 0).Name, Value: token}, true //nolint:gosec // G124: a cookie on a request this instance builds for itself
@@ -101,12 +107,8 @@ func (s *Service) phoneNamesItself(r *http.Request, id string, key []byte) bool 
 }
 
 // admitPhone reports whether id is a phone the Instances page lists and lets
-// in while pairing phones is on, and answers the call itself when it is not.
+// in, and answers the call itself when it is not.
 func (s *Service) admitPhone(w http.ResponseWriter, id string) bool {
-	if on, err := s.store.PhonePairing(); err != nil || !on {
-		writeJSON(w, http.StatusForbidden, map[string]any{"ok": false, "error": "pairing phones is switched off on this instance", "code": codePhonePairingOff})
-		return false
-	}
 	if id != "" {
 		// A page asks many times a minute, so the rows are read before they
 		// are synced. A member that joined since anybody last opened the
@@ -146,39 +148,4 @@ func listsPhone(peers []store.FleetPeer, id string) bool {
 		}
 	}
 	return false
-}
-
-// handleGetPhonePairing says whether a phone of the group may pair.
-// GET /api/auth/phone-pairing
-func (h *Handler) handleGetPhonePairing(w http.ResponseWriter, _ *http.Request) {
-	on, err := h.store.PhonePairing()
-	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"on": on}))
-}
-
-// handleSetPhonePairing switches pairing of phones on or off. Off, a phone
-// gets no session and the sessions phones hold are refused.
-// PUT /api/auth/phone-pairing
-func (h *Handler) handleSetPhonePairing(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		On bool `json:"on"`
-	}
-	if !decodeBody(w, r, &body) {
-		return
-	}
-	// Switching it on lets the group's words in, so a session a reset ended
-	// while this request was under way must not do it.
-	release, ok := h.holdSignIn(w, r, "switching pairing phones on or off")
-	if !ok {
-		return
-	}
-	defer release()
-	if err := h.store.SetPhonePairing(body.On); err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
-		return
-	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"on": body.On}))
 }

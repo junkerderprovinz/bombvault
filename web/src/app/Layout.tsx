@@ -4,7 +4,11 @@ import { BottomNav } from "../components/mobile/BottomNav";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { getSettings, getAuth, getHealth, type Settings } from "../lib/api";
 import { useIsDesktop } from "../lib/useMediaQuery";
+import { SignInReauthWindow } from "@glimstone/react/SignInReauthWindow";
 import { LoginPage } from "../pages/Login";
+import { useT } from "../lib/i18n";
+import { reauthClient } from "../lib/signInKit";
+import { reauthText } from "../lib/signInWords";
 import { WhatsNewHost } from "../pages/settings/WhatsNew";
 import { WhatsNewDots } from "../components/WhatsNewDots";
 import { AnomalyProvider } from "../lib/useAnomalies";
@@ -377,8 +381,15 @@ export function Layout() {
           )}
           <WhatsNewDots />
           <WhatsNewHost version={release} />
+          <ReauthWindow />
         </div>
       </AttentionProvider>
     </AnomalyProvider>
   );
+}
+
+/** ReauthWindow asks for the password again when a change wants a fresh sign-in, the kit's own and BombVault's. */
+function ReauthWindow() {
+  const { t, lang } = useT();
+  return <SignInReauthWindow api={reauthClient} text={reauthText(t, lang)} />;
 }

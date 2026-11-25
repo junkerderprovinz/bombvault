@@ -43,7 +43,7 @@ func seedMCPKey(t *testing.T, h *Handler, repo *store.Repo, label string) (key, 
 		t.Fatalf("new mcp key: %v", err)
 	}
 	id = newMCPKeyID()
-	_, err = repo.CreateMCPKey(id, label, "",
+	_, err = repo.CreateMCPKey(id, "", label, "",
 		secret.HashMCPKey(h.cfg.AppKey, key), secret.MCPKeyHint(key),
 		secret.MCPKeyCheck(h.cfg.AppKey, id), true, time.Now().Unix())
 	if err != nil {

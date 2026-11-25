@@ -13,6 +13,7 @@ import (
 
 	"github.com/junkerderprovinz/parleyport/kit/fortress"
 	"github.com/junkerderprovinz/parleyport/kit/relay"
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
 	"github.com/junkerderprovinz/bombvault/internal/secret"
@@ -69,9 +70,7 @@ func TestAMemberOpensABombVaultWithoutAPassword(t *testing.T) {
 	pagesA := servePages(a)
 	servePages(b)
 	id := inOneFortress(t, a, b)
-	if _, err := b.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, b.router, b.session, testPassword)
 
 	_, out := a.do(t, http.MethodPost, "/api/fortress/open/"+id, nil)
 	tab, _ := out["path"].(string)
@@ -80,7 +79,7 @@ func TestAMemberOpensABombVaultWithoutAPassword(t *testing.T) {
 	}
 	get := func(path string) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(http.MethodGet, path, nil)
-		r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: a.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+		r.AddCookie(sessionCookieFor(a.session))
 		w := httptest.NewRecorder()
 		pagesA.ServeHTTP(w, r)
 		return w
@@ -100,12 +99,16 @@ func TestAnOpenedPageFindsTheWaysInAndTheKeysClosed(t *testing.T) {
 	in := fortressInstance(t)
 	servePages(in)
 	for _, c := range []struct{ method, path string }{
-		{http.MethodPost, "/api/auth/password"},
-		{http.MethodPost, "/api/auth/reset"},
-		{http.MethodPost, "/api/auth/reset/finish"},
-		{http.MethodPost, "/api/auth/totp/setup"},
-		{http.MethodPost, "/api/auth/passkey/register/begin"},
-		{http.MethodDelete, "/api/auth/passkeys/abc"},
+		{http.MethodPut, signin.APIPrefix + "me/password"},
+		{http.MethodPost, signin.APIPrefix + "reset-code"},
+		{http.MethodPost, signin.APIPrefix + "reset"},
+		{http.MethodPost, signin.APIPrefix + "me/totp"},
+		{http.MethodPost, signin.APIPrefix + "me/passkeys/options"},
+		{http.MethodDelete, signin.APIPrefix + "me/passkeys/abc"},
+		{http.MethodPost, signin.APIPrefix + "methods/oidc"},
+		{http.MethodDelete, signin.APIPrefix + "accounts/abc"},
+		{http.MethodGet, signin.BrowserPrefix + "oidc/abc"},
+		{http.MethodPut, "/api/address"},
 		{http.MethodGet, "/api/tokens"},
 		{http.MethodPost, "/api/tokens/abc/rotate"},
 		{http.MethodGet, "/api/mcp/keys"},
@@ -127,7 +130,7 @@ func TestAnOpenedPageFindsTheWaysInAndTheKeysClosed(t *testing.T) {
 			t.Errorf("%s %s through the fortress = %d %s", c.method, c.path, w.Code, w.Body.String())
 		}
 	}
-	for _, p := range []string{"/api/health", "/api/auth", "/api/auth/passkeys", "/settings/pairing"} {
+	for _, p := range []string{"/api/health", "/api/auth", signin.APIPrefix + "options", "/settings/pairing"} {
 		if w := throughFortress(in, openedRequest(http.MethodGet, p)); w.Code != http.StatusOK {
 			t.Errorf("GET %s through the fortress = %d %s", p, w.Code, w.Body.String())
 		}
@@ -189,9 +192,7 @@ func TestWithoutALoginPasswordTheBrowserGetsASessionForTheTab(t *testing.T) {
 	pagesA := servePages(a)
 	servePages(b)
 	id := inOneFortress(t, a, b)
-	if _, err := a.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, a.router, a.session, testPassword)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/fortress/open/"+id, nil)
 	r.Host = "localhost"
@@ -231,13 +232,7 @@ func TestWithoutALoginPasswordTheBrowserGetsASessionForTheTab(t *testing.T) {
 		t.Fatalf("the tab in the browser that opened it = %d", code)
 	}
 
-	hash, err := secret.HashPassword(a.appKey, testPassword)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := a.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = hash; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	setPasswordOn(t, a.router, testPassword)
 	if code := get(browser); code != http.StatusSeeOther {
 		t.Fatalf("the tab once a password is set = %d", code)
 	}
@@ -281,7 +276,7 @@ func TestASandboxedPageReachesItsTabWhileTheAPIRefusesItsWrites(t *testing.T) {
 		r.Header.Set("Origin", "null")
 		r.Header.Set("Sec-Fetch-Site", "cross-site")
 		r.Header.Set("Content-Type", "application/json")
-		r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+		r.AddCookie(sessionCookieFor(in.session))
 		return r
 	}
 	tab := httptest.NewRecorder()
@@ -358,7 +353,7 @@ func TestAMemberOpensAnotherThroughTheFortress(t *testing.T) {
 	get := func(path string, signedIn bool) *httptest.ResponseRecorder {
 		r := httptest.NewRequest(http.MethodGet, path, nil)
 		if signedIn {
-			r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: a.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+			r.AddCookie(sessionCookieFor(a.session))
 		}
 		w := httptest.NewRecorder()
 		pagesA.ServeHTTP(w, r)

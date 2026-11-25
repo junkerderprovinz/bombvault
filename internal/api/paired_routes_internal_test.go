@@ -14,17 +14,18 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/junkerderprovinz/bombvault/internal/secret"
+	"github.com/junkerderprovinz/parleyport/kit/signin"
+
 	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // routeBuilders are the functions that register routes from a table or a
 // constant of another package: the public API and the fortress status, which
 // gate themselves on their own tokens, and the routes members call over the
-// group channel and the router of a node, which never pass authGate.
-var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux", "NodeRouter"}
+// group channel and the router of a node, which never pass authGate, and the
+// kit's sign-in, which decides itself who may call what.
+var routeBuilders = []string{"mountAPIV1", "registerFortress", "peerMux", "NodeRouter", "mountSignIn"}
 
 // registeredRoutes reads every pattern the package registers on a mux from
 // its source.
@@ -236,11 +237,10 @@ func (s *server) c() {
 // purpose. A route that is on neither this list nor pairedRoutes fails
 // TestEveryRouteIsDecidedForAPairedSession, so whoever adds one decides.
 var pairedRefused = []string{
-	// The login, its second factor and passkeys, pairing phones, tokens, MCP
-	// keys and OAuth.
-	"DELETE /api/auth/passkeys/{id}",
-	"GET /api/auth/phone-pairing",
-	"PUT /api/auth/phone-pairing",
+	// The address passkeys and sign-in services go by, tokens, MCP keys and
+	// OAuth. The sign-in itself refuses a phone what it may not do there.
+	"GET /api/address",
+	"PUT /api/address",
 	"DELETE /api/mcp/keys/{id}",
 	"DELETE /api/tokens/{id}",
 	"DELETE /api/widget/token",
@@ -250,16 +250,8 @@ var pairedRefused = []string{
 	"GET /api/oauth/authorize",
 	"GET /api/tokens",
 	"GET /api/tokens/{id}/activity",
-	"PATCH /api/auth/passkeys/{id}",
 	"PATCH /api/mcp/keys/{id}",
 	"PATCH /api/tokens/{id}",
-	"POST /api/auth/passkey/register/begin",
-	"POST /api/auth/passkey/register/finish",
-	"POST /api/auth/password",
-	"POST /api/auth/totp/confirm",
-	"POST /api/auth/totp/disable",
-	"POST /api/auth/totp/setup",
-	"POST /api/logout-all",
 	"POST /api/mcp/certificate/names",
 	"POST /api/mcp/keys",
 	"POST /api/mcp/keys/{id}/revoke",
@@ -631,9 +623,9 @@ func requestFor(pattern string) *http.Request {
 
 func TestAPairedSessionReachesTheListedRoutesAndIsRefusedTheRest(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	paired := listedPhoneSession(t, in.st, in.appKey, hash, epoch)
-	full := secret.NewSessionToken(in.appKey, hash, epoch, time.Hour)
+	full := in.session
 
 	// The gate is what decides, so every route answers from a handler that
 	// does nothing.
@@ -646,7 +638,7 @@ func TestAPairedSessionReachesTheListedRoutesAndIsRefusedTheRest(t *testing.T) {
 	for _, r := range routes {
 		for _, session := range []string{paired, full} {
 			req := requestFor(r)
-			req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: session}) //nolint:gosec // G124: a cookie on a test request
+			req.AddCookie(sessionCookieFor(session))
 			w := httptest.NewRecorder()
 			gate.ServeHTTP(w, req)
 			want := http.StatusNoContent
@@ -665,13 +657,15 @@ func TestAPairedSessionReachesTheListedRoutesAndIsRefusedTheRest(t *testing.T) {
 
 func TestAPairedSessionIsRefusedSomethingOfEveryKindItMayNotDo(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for _, route := range []struct {
 		method, path string
 		body         any
 	}{
-		{http.MethodPost, "/api/auth/password", map[string]any{"password": "a password of my own"}},
+		{http.MethodPut, signin.APIPrefix + "me/password", map[string]any{"next": "a password of my own"}},
+		{http.MethodPost, signin.APIPrefix + "methods/oidc", map[string]any{}},
+		{http.MethodPut, "/api/address", map[string]any{"address": "https://elsewhere.example"}},
 		{http.MethodPost, "/api/tokens", map[string]any{"label": "mine"}},
 		{http.MethodGet, "/api/recovery-kit", nil},
 		{http.MethodPost, "/api/emergency/read", map[string]any{"key": strings.Repeat("e", 64)}},
@@ -715,7 +709,7 @@ func pairedReads(in *instance, fill func(path string) string) map[string]string 
 		func() {
 			defer func() { _ = recover() }()
 			req := httptest.NewRequest(method, path, nil)
-			req.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request
+			req.AddCookie(sessionCookieFor(in.session))
 			w := httptest.NewRecorder()
 			in.router.ServeHTTP(w, req)
 			out[pattern] = w.Body.String()
@@ -779,7 +773,7 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 	if !hookSeen {
 		t.Fatal("the person's own session does not read the hook anywhere, so this test proves nothing")
 	}
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)
 	for route, body := range pairedReads(in, fill) {
 		for _, leak := range leaks {

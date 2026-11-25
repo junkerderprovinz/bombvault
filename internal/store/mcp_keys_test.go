@@ -21,7 +21,7 @@ func newMCPRepo(t *testing.T) *store.Repo {
 // so a test can tell one row's secret material from another's.
 func addMCPKey(t *testing.T, r *store.Repo, id, label string, canStart bool, now int64) store.MCPKey {
 	t.Helper()
-	key, err := r.CreateMCPKey(id, label, "", "digest-"+id, "h"+id, "check-"+id, canStart, now)
+	key, err := r.CreateMCPKey(id, "", label, "", "digest-"+id, "h"+id, "check-"+id, canStart, now)
 	if err != nil {
 		t.Fatalf("CreateMCPKey(%s): %v", id, err)
 	}
@@ -33,7 +33,7 @@ func TestCreateMCPKeyEnforcesLimitAndActiveLabel(t *testing.T) {
 	for i := 0; i < store.MCPKeyLimit; i++ {
 		addMCPKey(t, r, fmt.Sprintf("id%02d", i), fmt.Sprintf("client %d", i), true, 1000+int64(i))
 	}
-	_, err := r.CreateMCPKey("one-too-many", "eleven", "", "digest-x", "hx", "check-x", true, 2000)
+	_, err := r.CreateMCPKey("one-too-many", "", "eleven", "", "digest-x", "hx", "check-x", true, 2000)
 	if !errors.Is(err, store.ErrMCPKeyLimit) {
 		t.Fatalf("the eleventh create gave %v, want ErrMCPKeyLimit", err)
 	}
@@ -47,21 +47,21 @@ func TestCreateMCPKeyEnforcesLimitAndActiveLabel(t *testing.T) {
 
 	r = newMCPRepo(t)
 	addMCPKey(t, r, "laptop", "Laptop", true, 1000)
-	_, err = r.CreateMCPKey("second", "laptop", "", "digest-second", "hs", "check-second", true, 1100)
+	_, err = r.CreateMCPKey("second", "", "laptop", "", "digest-second", "hs", "check-second", true, 1100)
 	if !errors.Is(err, store.ErrMCPKeyLabelTaken) {
 		t.Fatalf("a label differing only in case gave %v, want ErrMCPKeyLabelTaken", err)
 	}
 	if err := r.RevokeMCPKey("laptop", "user", 1200); err != nil {
 		t.Fatalf("RevokeMCPKey: %v", err)
 	}
-	if _, err := r.CreateMCPKey("second", "laptop", "", "digest-second", "hs", "check-second", true, 1300); err != nil {
+	if _, err := r.CreateMCPKey("second", "", "laptop", "", "digest-second", "hs", "check-second", true, 1300); err != nil {
 		t.Fatalf("a revoked key must release its label, got %v", err)
 	}
 }
 
 func TestMCPKeyRemembersItsClient(t *testing.T) {
 	r := newMCPRepo(t)
-	if _, err := r.CreateMCPKey("editor", "Cursor", "cursor", "digest-editor", "hed", "check-editor", false, 1000); err != nil {
+	if _, err := r.CreateMCPKey("editor", "", "Cursor", "cursor", "digest-editor", "hed", "check-editor", false, 1000); err != nil {
 		t.Fatalf("CreateMCPKey: %v", err)
 	}
 	addMCPKey(t, r, "nightly", "Nightly report", false, 1100)
@@ -73,7 +73,7 @@ func TestMCPKeyRemembersItsClient(t *testing.T) {
 	if got.Client != "cursor" {
 		t.Fatalf("Client = %q, want cursor", got.Client)
 	}
-	rotated, err := r.RotateMCPKey("editor", "digest-new", "hnew", "check-new", 2000)
+	rotated, err := r.RotateMCPKey("editor", "", "digest-new", "hnew", "check-new", 2000)
 	if err != nil {
 		t.Fatalf("RotateMCPKey: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestRotateMCPKeyKeepsIdentity(t *testing.T) {
 	r := newMCPRepo(t)
 	before := addMCPKey(t, r, "laptop", "Laptop", false, 1000)
 
-	after, err := r.RotateMCPKey("laptop", "digest-new", "hnew", "check-new", 2000)
+	after, err := r.RotateMCPKey("laptop", "", "digest-new", "hnew", "check-new", 2000)
 	if err != nil {
 		t.Fatalf("RotateMCPKey: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestRotateMCPKeyKeepsIdentity(t *testing.T) {
 	if err := r.RevokeMCPKey("laptop", "user", 3000); err != nil {
 		t.Fatalf("RevokeMCPKey: %v", err)
 	}
-	if _, err := r.RotateMCPKey("laptop", "digest-later", "hl", "check-later", 4000); !errors.Is(err, store.ErrMCPKeyNotFound) {
+	if _, err := r.RotateMCPKey("laptop", "", "digest-later", "hl", "check-later", 4000); !errors.Is(err, store.ErrMCPKeyNotFound) {
 		t.Fatalf("rotating a revoked key gave %v, want ErrMCPKeyNotFound", err)
 	}
 }
@@ -293,7 +293,7 @@ func TestTouchMCPKey(t *testing.T) {
 
 func addAPIToken(t *testing.T, r *store.Repo, id, label string, canStart bool, now int64) store.MCPKey {
 	t.Helper()
-	tok, err := r.CreateAPIToken(id, label, "digest-"+id, "h"+id, "check-"+id, canStart, now)
+	tok, err := r.CreateAPIToken(id, "", label, "digest-"+id, "h"+id, "check-"+id, canStart, now)
 	if err != nil {
 		t.Fatalf("CreateAPIToken(%s): %v", id, err)
 	}
@@ -323,14 +323,14 @@ func TestAPITokensAreKeptApartFromMCPKeys(t *testing.T) {
 		t.Fatalf("ActiveAPITokens = %+v, want only the token", tokens)
 	}
 
-	if _, err := r.CreateAPIToken("ha2", "home assistant", "digest-ha2", "h2", "check-ha2", false, 1200); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
+	if _, err := r.CreateAPIToken("ha2", "", "home assistant", "digest-ha2", "h2", "check-ha2", false, 1200); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
 		t.Fatalf("a second token with the same name gave %v, want ErrMCPKeyLabelTaken", err)
 	}
-	if _, err := r.CreateMCPKey("second", "home assistant", "", "digest-second", "hs", "check-second", true, 1300); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
+	if _, err := r.CreateMCPKey("second", "", "home assistant", "", "digest-second", "hs", "check-second", true, 1300); !errors.Is(err, store.ErrMCPKeyLabelTaken) {
 		t.Fatalf("a second MCP key with the same name gave %v, want ErrMCPKeyLabelTaken", err)
 	}
 
-	rotated, err := r.RotateMCPKey("ha", "digest-new", "hnew", "check-new", 2000)
+	rotated, err := r.RotateMCPKey("ha", "", "digest-new", "hnew", "check-new", 2000)
 	if err != nil {
 		t.Fatalf("replacing a token: %v", err)
 	}
@@ -347,7 +347,7 @@ func TestAPITokensHaveTheirOwnLimit(t *testing.T) {
 	for i := 0; i < store.APITokenLimit; i++ {
 		addAPIToken(t, r, fmt.Sprintf("tok%02d", i), fmt.Sprintf("token %d", i), true, 2000+int64(i))
 	}
-	if _, err := r.CreateAPIToken("one-too-many", "eleven", "digest-x", "hx", "check-x", true, 3000); !errors.Is(err, store.ErrMCPKeyLimit) {
+	if _, err := r.CreateAPIToken("one-too-many", "", "eleven", "digest-x", "hx", "check-x", true, 3000); !errors.Is(err, store.ErrMCPKeyLimit) {
 		t.Fatalf("the token over the limit gave %v, want ErrMCPKeyLimit", err)
 	}
 }

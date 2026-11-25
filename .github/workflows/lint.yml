@@ -38,7 +38,7 @@ jobs:
       - run: npm test
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
@@ -50,9 +50,9 @@ jobs:
           sh scripts/fetch-tool.sh restic "$version" amd64 "$RUNNER_TEMP/bin"
           sudo install -m 0755 "$RUNNER_TEMP/bin/restic" /usr/local/bin/restic
           restic version
-      # internal/api alone takes around a quarter of an hour on a hosted runner,
-      # well past go test's default ten-minute limit per package.
-      - run: go test -timeout 30m ./...
+      # internal/api alone takes around half an hour on a hosted runner, well
+      # past go test's default ten-minute limit per package.
+      - run: go test -timeout 45m ./...
   flows:
     # The real server against real restic and real folders, see
     # internal/flows. fetch-depth 0 brings the tags: the update flows build the

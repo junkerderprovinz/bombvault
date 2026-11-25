@@ -42,7 +42,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import type { CSSProperties } from "react";
 import type { Settings } from "../../lib/api";
-import { logout } from "../../lib/api";
+import { signOut as endSession } from "../../lib/api";
 import { useT } from "../../lib/i18n";
 import { hueVars } from "../../lib/appearance";
 import { moreDestinations } from "../../lib/navModel";
@@ -95,7 +95,7 @@ export function MoreSheet({ open, onClose, settings, authEnabled, relayed = fals
   // then the reload that re-runs the auth gate and puts the login screen
   // back. No confirmation dialog: a password is the confirmation.
   const signOut = async () => {
-    await logout().catch(() => undefined);
+    await endSession();
     const g = globalThis as unknown as { location: { reload(): void } };
     g.location.reload();
   };

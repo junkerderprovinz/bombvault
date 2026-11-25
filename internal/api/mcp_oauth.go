@@ -87,6 +87,8 @@ type oauthCode struct {
 	expires     time.Time
 	used        bool
 	grantID     string
+	// account allowed the client, and the grant answers to it.
+	account string
 }
 
 func newOAuthState() *oauthState {
@@ -153,10 +155,11 @@ func knownOAuthClientName(id string) string {
 }
 
 // oauthIssuer returns the issuer while OAuth is offered: the switch is on, a
-// public address is stored and a login password is set. Without the password
-// nobody could be asked for consent, so the whole authorization server is off.
+// public address is stored and somebody can sign in. While the instance is
+// open nobody could be asked for consent, so the whole authorization server
+// is off.
 func (h *Handler) oauthIssuer() (string, bool) {
-	if _, _, on := h.authEnabled(); !on {
+	if h.signInOpen() {
 		return "", false
 	}
 	s, err := h.store.MCPOAuthSettings()
@@ -336,7 +339,7 @@ func (h *Handler) handleSetMCPOAuth(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
-	if _, _, on := h.authEnabled(); body.Enabled && !on {
+	if body.Enabled && h.signInOpen() {
 		writeJSON(w, http.StatusOK, codedFailEnvelope(errMCPOAuthNeedsPassword, "mcp-oauth-needs-password"))
 		return
 	}

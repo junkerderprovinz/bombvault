@@ -43,6 +43,8 @@ type OAuthGrant struct {
 	Resource        string
 	Check           string
 	CanStartBackups bool
+	// Account let the client in.
+	Account string
 
 	AccessDigest   string
 	RefreshDigest  string
@@ -223,9 +225,9 @@ func (r *Repo) CreateOAuthGrant(g OAuthGrant, now int64) (MCPKey, error) {
 		return MCPKey{}, fmt.Errorf("CreateOAuthGrant label: %w", err)
 	}
 	if _, err := tx.Exec(`INSERT INTO mcp_keys
-		(id, kind, oauth_client, resource, label, client, key_digest, key_hint, key_check, can_start_backups, created_at)
-		VALUES (?, 'oauth', ?, ?, ?, ?, '', '', ?, ?, ?)`,
-		g.ID, g.OAuthClient, g.Resource, label, g.Client, g.Check, g.CanStartBackups, now); err != nil {
+		(id, kind, oauth_client, resource, label, client, key_digest, key_hint, key_check, can_start_backups, created_at, account)
+		VALUES (?, 'oauth', ?, ?, ?, ?, '', '', ?, ?, ?, ?)`,
+		g.ID, g.OAuthClient, g.Resource, label, g.Client, g.Check, g.CanStartBackups, now, g.Account); err != nil {
 		return MCPKey{}, fmt.Errorf("CreateOAuthGrant: %w", err)
 	}
 	if g.AccessDigest != "" {

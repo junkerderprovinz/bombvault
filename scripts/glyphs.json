@@ -249,7 +249,7 @@
  {
   "name": "IconWindowMinimise",
   "means": "Minimise a window",
-  "source": "Drawn for KnightLoader",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -262,7 +262,7 @@
  {
   "name": "IconWindowMaximise",
   "means": "Maximise a window",
-  "source": "Drawn for KnightLoader",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -275,7 +275,7 @@
  {
   "name": "IconWindowRestore",
   "means": "Restore a maximised window",
-  "source": "Drawn for KnightLoader",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -509,7 +509,7 @@
  {
   "name": "IconMenu",
   "means": "Menu",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "3 3 14 14",
   "ink": [
    3,
@@ -574,7 +574,7 @@
  {
   "name": "IconCompute",
   "means": "Compute, calculate",
-  "source": "Drawn for TowerTorch, commit a13c2ef",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    1.5,
@@ -587,7 +587,7 @@
  {
   "name": "IconBack",
   "means": "Back",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "4.25 3.6 12.8 12.8",
   "ink": [
    6.6,
@@ -600,7 +600,7 @@
  {
   "name": "IconForward",
   "means": "Next, continue",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "2.95 3.6 12.8 12.8",
   "ink": [
    5.3,
@@ -678,7 +678,7 @@
  {
   "name": "IconExpand",
   "means": "Expand",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "3.6 2.95 12.8 12.8",
   "ink": [
    3.6,
@@ -691,7 +691,7 @@
  {
   "name": "IconCollapse",
   "means": "Collapse",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "3.6 4.25 12.8 12.8",
   "ink": [
    3.6,
@@ -808,7 +808,7 @@
  {
   "name": "IconPin",
   "means": "Pin",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "2.25 2.5 15.5 15.5",
   "ink": [
    5,
@@ -821,7 +821,7 @@
  {
   "name": "IconPriority",
   "means": "Priority",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "4 4 12 12",
   "ink": [
    4,
@@ -834,7 +834,7 @@
  {
   "name": "IconGrip",
   "means": "Drag to reorder",
-  "source": "Drawn for TowerTorch, commit 25aab69",
+  "source": "Drawn for GlimStone",
   "viewBox": "1 1 12 12",
   "ink": [
    3,
@@ -873,7 +873,7 @@
  {
   "name": "IconBolt",
   "means": "Right away",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "2.4 2.4 15.2 15.2",
   "ink": [
    4.8,
@@ -1029,7 +1029,7 @@
  {
   "name": "IconThemeSystem",
   "means": "The look follows the device, light or dark",
-  "source": "Drawn for ArrowLoop after BombVault's System theme mark, ArrowLoop commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1042,7 +1042,7 @@
  {
   "name": "IconCornerRound",
   "means": "Round corners",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1055,7 +1055,7 @@
  {
   "name": "IconCornerSoft",
   "means": "Softly rounded corners",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1068,7 +1068,7 @@
  {
   "name": "IconCornerSquare",
   "means": "Square corners",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1081,7 +1081,7 @@
  {
   "name": "IconCornerLeaf",
   "means": "The leaf: two opposite corners round, the other two square",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1094,7 +1094,7 @@
  {
   "name": "IconMotionOff",
   "means": "No motion",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1107,7 +1107,7 @@
  {
   "name": "IconMotionSubtle",
   "means": "Gentle motion",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1120,7 +1120,7 @@
  {
   "name": "IconMotionWild",
   "means": "Wild motion",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    0,
@@ -1133,7 +1133,7 @@
  {
   "name": "IconMotionStorm",
   "means": "The storm, the hidden level above wild",
-  "source": "Drawn for ArrowLoop, commit 771005df",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 -0.006 14 14",
   "ink": [
    0,
@@ -1432,7 +1432,7 @@
  {
   "name": "IconAccounts",
   "means": "Accounts",
-  "source": "KnightLoader's drawing on a 20-unit grid",
+  "source": "Drawn on a 20-unit grid",
   "viewBox": "3.15 3.3 13.7 13.7",
   "ink": [
    3.5,
@@ -1467,6 +1467,32 @@
    14
   ],
   "svg": "<g>\n    <path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M3.5 1.75c0 -0.13807 0.11193 -0.25 0.25 -0.25h6.5c0.1381 0 0.25 0.11193 0.25 0.25v10.5c0 0.1381 -0.1119 0.25 -0.25 0.25H3.80187c-0.00499 -0.0021 -0.01076 -0.0046 -0.01724 -0.0076 -0.04612 -0.0217 -0.10526 -0.0581 -0.16134 -0.106 -0.0566 -0.0482 -0.09333 -0.0937 -0.11253 -0.1264 -0.0059 -0.0101 -0.00911 -0.0171 -0.01076 -0.0212V1.75ZM3.75 0C2.7835 0 2 0.783502 2 1.75v10.5c0 0.5919 0.36126 1.0316 0.65 1.2778 0.15613 0.1331 0.32809 0.2431 0.49782 0.3227 0.15436 0.0724 0.36996 0.1495 0.60218 0.1495h6.5c0.9665 0 1.75 -0.7835 1.75 -1.75V1.75C12 0.783502 11.2165 0 10.25 0h-6.5ZM6.5 9.75c-0.41421 0 -0.75 0.3358 -0.75 0.75s0.33579 0.75 0.75 0.75h1c0.41421 0 0.75 -0.3358 0.75 -0.75s-0.33579 -0.75 -0.75 -0.75h-1Z\" clip-rule=\"evenodd\" stroke-width=\"1\"></path>\n  </g>"
+ },
+ {
+  "name": "IconServer",
+  "means": "A server, the box an app runs on",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0 14 14",
+  "ink": [
+   0,
+   0.5,
+   14,
+   13
+  ],
+  "svg": "<path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M1.5 0.5h11A1.5 1.5 0 0 1 14 2v2.75A1.5 1.5 0 0 1 12.5 6.25h-11A1.5 1.5 0 0 1 0 4.75V2A1.5 1.5 0 0 1 1.5 0.5ZM2 3.375a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM6 2.625h5.5v1.5H6ZM1.5 7.75h11A1.5 1.5 0 0 1 14 9.25V12A1.5 1.5 0 0 1 12.5 13.5h-11A1.5 1.5 0 0 1 0 12V9.25A1.5 1.5 0 0 1 1.5 7.75ZM2 10.625a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM6 9.875h5.5v1.5H6Z\"></path>"
+ },
+ {
+  "name": "IconLaptop",
+  "means": "A laptop",
+  "source": "Drawn for GlimStone",
+  "viewBox": "0 0.25 14 14",
+  "ink": [
+   0,
+   1.5,
+   14,
+   11.5
+  ],
+  "svg": "<path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M2.5 1.5h9A1.5 1.5 0 0 1 13 3v6.25H1V3A1.5 1.5 0 0 1 2.5 1.5ZM2.5 3v4.75h9V3ZM0 10.75h14v0.75A1.5 1.5 0 0 1 12.5 13h-11A1.5 1.5 0 0 1 0 11.5Z\"></path>"
  },
  {
   "name": "IconBrowser",
@@ -2121,7 +2147,7 @@
  {
   "name": "IconManual",
   "means": "Manual",
-  "source": "Drawn for BombVault's Help card",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0 14 14",
   "ink": [
    1,
@@ -2134,7 +2160,7 @@
  {
   "name": "IconManualOpen",
   "means": "Manual, under the pointer, a finger or the focus",
-  "source": "Drawn for BombVault's Help card",
+  "source": "Drawn for GlimStone",
   "viewBox": "0 0.125 14 14",
   "ink": [
    0,
@@ -2251,7 +2277,7 @@
  {
   "name": "IconResetArrow",
   "means": "Reset one row of a colour card to its defaults",
-  "source": "Drawn for BombVault's accent card",
+  "source": "Drawn for GlimStone",
   "viewBox": "1.5 1 13 13",
   "ink": [
    2,
@@ -2290,7 +2316,7 @@
  {
   "name": "IconFileRaw",
   "means": "A RAW photo straight from the camera",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    0.5,
@@ -2303,7 +2329,7 @@
  {
   "name": "IconFileDesign",
   "means": "A design or vector graphic",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.625 0.75 12.75 12.75",
   "ink": [
    2.5,
@@ -2316,7 +2342,7 @@
  {
   "name": "IconFilePlaylist",
   "means": "A playlist",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.75 1.127 12.75 12.75",
   "ink": [
    0.75,
@@ -2329,7 +2355,7 @@
  {
   "name": "IconFilePdf",
   "means": "A PDF document",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    2,
@@ -2342,7 +2368,7 @@
  {
   "name": "IconFileDoc",
   "means": "A text document from an office suite",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    2,
@@ -2355,7 +2381,7 @@
  {
   "name": "IconFileSheet",
   "means": "A spreadsheet",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    2,
@@ -2368,7 +2394,7 @@
  {
   "name": "IconFileSlides",
   "means": "A presentation",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.625 13 13",
   "ink": [
    0.5,
@@ -2381,7 +2407,7 @@
  {
   "name": "IconBook",
   "means": "An e-book",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.655 13 13",
   "ink": [
    0.5,
@@ -2394,7 +2420,7 @@
  {
   "name": "IconDisc",
   "means": "A disk image or virtual disk",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    0.5,
@@ -2407,7 +2433,7 @@
  {
   "name": "IconFileProgram",
   "means": "A program or installable package",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    0.5,
@@ -2420,7 +2446,7 @@
  {
   "name": "IconFont",
   "means": "A font",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "1 1 12 12",
   "ink": [
    1,
@@ -2433,7 +2459,7 @@
  {
   "name": "IconHash",
   "means": "A checksum or signature",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.75 0.75 12.5 12.5",
   "ink": [
    0.75,
@@ -2446,7 +2472,7 @@
  {
   "name": "IconMagnet",
   "means": "A torrent or magnet link",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "1.25 1 11.5 11.5",
   "ink": [
    1.5,
@@ -2459,7 +2485,7 @@
  {
   "name": "IconCube",
   "means": "A 3D model or CAD drawing",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    1,
@@ -2472,7 +2498,7 @@
  {
   "name": "IconCalendar",
   "means": "A calendar or contact card",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.625 0.5 12.75 12.75",
   "ink": [
    0.75,
@@ -2485,7 +2511,7 @@
  {
   "name": "IconHourglass",
   "means": "A backup, temporary or unfinished file",
-  "source": "Drawn for CannonCommander",
+  "source": "Drawn for GlimStone",
   "viewBox": "0.5 0.5 13 13",
   "ink": [
    2,

@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/restic"
@@ -31,13 +30,11 @@ func TestAManualMaintenanceRunOutlivesItsRequest(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(repo, "config"), []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	cookie := enableLogin(t, st, strings.Repeat("a", 64))
 
 	for _, path := range []string{"/api/check/containers", "/api/verify/containers", "/api/unlock/containers", "/api/prune/containers"} {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		r := httptest.NewRequest(http.MethodPost, path, nil).WithContext(ctx)
-		r.AddCookie(&http.Cookie{Name: "bv_session", Value: cookie}) //nolint:gosec // G124: request cookie; Secure and HttpOnly only apply to responses
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 		var m map[string]any

@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-
-	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func fortressInstance(t *testing.T) *instance {
@@ -52,23 +50,28 @@ func TestJoiningTakesThePhraseAndTheViewNeverGivesItBack(t *testing.T) {
 	}
 }
 
-func TestTheFortressPhraseShowsOnlyWithThePassword(t *testing.T) {
+func TestTheFortressPhraseWantsAFreshSignIn(t *testing.T) {
 	in := fortressInstance(t)
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
-	if _, out := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": "wrong"}); out["code"] != "passwordWrong" || out["phrase"] != nil {
-		t.Fatalf("the wrong password got %v", out)
+	if _, out := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{}); out["ok"] != true || out["phrase"] != words {
+		t.Fatalf("a sign-in from moments ago got %v", out)
 	}
-	if _, out := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": testPassword}); out["ok"] != true || out["phrase"] != words {
-		t.Fatalf("the right password got %v", out)
+	in.session = staleSession(t, in)
+	if code, out := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{}); code != http.StatusForbidden || out["error"] != "signInAgain" || out["phrase"] != nil {
+		t.Fatalf("a sign-in from days ago got %d %v", code, out)
+	}
+	if w := kitRequest(t, in.router, http.MethodPost, "me/confirm", in.session, map[string]any{"password": testPassword}); w.Code != http.StatusOK {
+		t.Fatalf("the password again: %d %s", w.Code, w.Body.String())
+	}
+	if _, out := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{}); out["phrase"] != words {
+		t.Fatalf("after the password again: %v", out)
 	}
 }
 
 func TestWithoutALoginPasswordTheFortressPhraseShowsWithoutOne(t *testing.T) {
 	in := fortressInstance(t)
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, in.router, in.session, testPassword)
 	in.session = ""
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
@@ -84,7 +87,7 @@ func TestChangingTheFortressPhraseAnswersWithTheNewWords(t *testing.T) {
 	in := fortressInstance(t)
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
-	_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{"password": testPassword})
+	_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{})
 	changed, _ := out["phrase"].(string)
 	if out["ok"] != true || len(strings.Fields(changed)) != 12 || changed == words {
 		t.Fatalf("change = %v", out)
@@ -92,7 +95,7 @@ func TestChangingTheFortressPhraseAnswersWithTheNewWords(t *testing.T) {
 	if left, ok := out["left"].([]any); !ok || len(left) != 0 {
 		t.Fatalf("left = %v", out["left"])
 	}
-	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": testPassword}); shown["phrase"] != changed {
+	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{}); shown["phrase"] != changed {
 		t.Fatalf("the phrase shown after the change = %v", shown)
 	}
 }
@@ -137,27 +140,25 @@ func TestTheFortressFollowsTheRelayOfTheGroup(t *testing.T) {
 }
 
 // A new phrase opens the fortress like the old one, so it reaches the browser
-// only for the password, as showing the phrase does.
-func TestChangingTheFortressPhraseNeedsThePassword(t *testing.T) {
+// only after a fresh sign-in, as showing the phrase does.
+func TestChangingTheFortressPhraseWantsAFreshSignIn(t *testing.T) {
 	in := fortressInstance(t)
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})
-	for _, body := range []any{nil, map[string]any{}, map[string]any{"password": "wrong"}} {
-		_, out := in.do(t, http.MethodPost, "/api/fortress/phrase", body)
-		if out["ok"] == true || out["phrase"] != nil {
-			t.Fatalf("a change with %v = %v", body, out)
-		}
+	fresh := in.session
+	in.session = staleSession(t, in)
+	if code, out := in.do(t, http.MethodPost, "/api/fortress/phrase", map[string]any{}); code != http.StatusForbidden || out["phrase"] != nil {
+		t.Fatalf("a change on a sign-in from days ago = %d %v", code, out)
 	}
-	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{"password": testPassword}); shown["phrase"] != words {
+	in.session = fresh
+	if _, shown := in.do(t, http.MethodPost, "/api/fortress/phrase/show", map[string]any{}); shown["phrase"] != words {
 		t.Fatalf("a refused change still changed the phrase: %v", shown)
 	}
 }
 
 func TestWithoutALoginPasswordThePhraseChangesWithoutOne(t *testing.T) {
 	in := fortressInstance(t)
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, in.router, in.session, testPassword)
 	in.session = ""
 	words, _ := newPhrase(t)
 	in.do(t, http.MethodPost, "/api/fortress/join", map[string]any{"phrase": words})

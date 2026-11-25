@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ func selectionRouter(t *testing.T, eng *fakeResticEngine) (http.Handler, *api.Se
 	t.Helper()
 	svc, st, docker, tg := everythingTestService(t, eng)
 	sched := schedule.New(func(string) error { return nil }, st.ListTargetsScheduleOrder)
-	return api.NewHandler(config.Config{}, st, docker, svc, sched, spike.DefaultProbes()).Router(), svc, st, tg
+	return api.NewHandler(config.Config{AppKey: strings.Repeat("a", 64)}, st, docker, svc, sched, spike.DefaultProbes()).Router(), svc, st, tg
 }
 
 func waitForRun(t *testing.T, st *store.Repo, targetID string) *store.Run {

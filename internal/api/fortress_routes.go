@@ -92,15 +92,11 @@ func (h *Handler) fortressViewNow() (fortressView, error) {
 	if err != nil {
 		return fortressView{}, err
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		return fortressView{}, err
-	}
 	v := fortressView{
 		OK:            true,
 		Phrase:        m.Joined(),
 		DefaultDevice: h.svc.defaultPairName(),
-		PasswordSet:   settings.AuthPasswordHash != "",
+		PasswordSet:   !h.signInOpen(),
 		Members:       []fortressMemberView{},
 		Permissions:   []fortressPermissionView{},
 		PairedWith:    []string{},
@@ -213,13 +209,10 @@ func (h *Handler) handleFortressJoin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleFortressShow shows the phrase again, behind the login password as
-// the group's phrase is. POST /api/fortress/phrase/show
+// handleFortressShow shows the phrase again, behind a fresh sign-in as the
+// group's phrase is. POST /api/fortress/phrase/show
 func (h *Handler) handleFortressShow(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Password string `json:"password"`
-	}
-	if !decodeBody(w, r, &body) || !h.passwordAgain(w, r, body.Password) {
+	if !crossOriginGuard(w, r) || !h.fresh(w, r, "showing the phrase") {
 		return
 	}
 	words, err := h.svc.fortressPhrase()
@@ -234,10 +227,7 @@ func (h *Handler) handleFortressShow(w http.ResponseWriter, r *http.Request) {
 // and the devices that still hold the old one. The answer shows the phrase,
 // so it asks for the password as showing it does. POST /api/fortress/phrase
 func (h *Handler) handleFortressChange(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Password string `json:"password"`
-	}
-	if !decodeBody(w, r, &body) || !h.passwordAgain(w, r, body.Password) {
+	if !crossOriginGuard(w, r) || !h.fresh(w, r, "changing the phrase") {
 		return
 	}
 	words, left, err := h.svc.ChangeFortressPhrase(r.Context())

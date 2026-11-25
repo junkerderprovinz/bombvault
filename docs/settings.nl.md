@@ -61,6 +61,8 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 - **Wachtwoord**: het inlogwachtwoord, van elke lengte. Onder 12 tekens stelt de pagina een langer wachtwoord voor. Wijzigen of wissen vraagt om het huidige en, met tweefactorauthenticatie aan, om de code.
 - **Tweefactorauthenticatie**: een code uit een authenticator-app bovenop het wachtwoord, met acht herstelcodes die één keer worden getoond.
 - **Passkeys**: meld je aan met een sleutel op je telefoon, laptop of beveiligingsstick. Ze hebben een echte domeinnaam en een certificaat nodig dat de browser vertrouwt.
+- **Adres**: waar je BombVault opent, bijvoorbeeld `https://bombvault.example.com`. Passkeys en inlogdiensten gaan daarvan uit.
+- **Inlogdiensten**: inloggen via Pocket ID, Authentik, Authelia, Kanidm, Keycloak of Zitadel, naast het wachtwoord. Daarvoor moet BombVault in de root van zijn adres staan. Onder een pad als `https://example.com/bombvault/` kan de dienst je nog niet terugsturen.
 - **Android-app**: **Telefoons kunnen koppelen met de twaalf woorden van de groep**, waarmee een gekoppelde telefoon zich zonder het wachtwoord kan aanmelden.
 - **Versleuteling**: **Back-ups versleutelen**, standaard aan.
 

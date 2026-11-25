@@ -99,6 +99,9 @@ ACTION = [
     "IconCoffee",
     "IconGithub",
     "IconDiscord",
+    "IconLaptop",
+    "IconPhone",
+    "IconAccounts",
 ]
 
 NAV = [

@@ -61,6 +61,8 @@ La carte **Streaming**, qui abaisse la limite d'envoi pendant que Plex, Jellyfin
 - **Mot de passe** : le mot de passe de connexion, de n'importe quelle longueur. En dessous de 12 caractères, la page en suggère un plus long. Le changer ou l'effacer demande l'actuel et, avec l'authentification à deux facteurs, le code.
 - **Authentification à deux facteurs** : un code d'une application d'authentification en plus du mot de passe, avec huit codes de récupération montrés une seule fois.
 - **Clés d'accès** : connectez-vous avec une clé sur votre téléphone, votre ordinateur portable ou une clé de sécurité. Elles demandent un vrai nom de domaine et un certificat que le navigateur approuve.
+- **Adresse** : l'adresse où vous ouvrez BombVault, par exemple `https://bombvault.example.com`. Les clés d'accès et les services de connexion s'y fient.
+- **Services de connexion** : connexion via Pocket ID, Authentik, Authelia, Kanidm, Keycloak ou Zitadel, en plus du mot de passe. BombVault doit alors se trouver à la racine de son adresse. Sous un chemin comme `https://example.com/bombvault/`, le service ne peut pas encore vous renvoyer.
 - **Application Android** : **Les téléphones peuvent s'appairer avec les douze mots du groupe**, ce qui permet à un téléphone appairé de se connecter sans le mot de passe.
 - **Chiffrement** : **Chiffrer les sauvegardes**, activé par défaut.
 

@@ -5,8 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 func TestDirectAddressFromRequestIgnoresLocalAddresses(t *testing.T) {
@@ -50,7 +48,7 @@ func TestSignedInRequestLearnsThisInstancesDirectAddress(t *testing.T) {
 	in := newInstance(t, "cellar", strings.Repeat("a1", 32))
 	r := httptest.NewRequest(http.MethodGet, "/api/group", nil)
 	r.Host = "192.168.1.20:3443"
-	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: request cookie, never set by a server
+	r.AddCookie(sessionCookieFor(in.session))
 	w := httptest.NewRecorder()
 	in.router.ServeHTTP(w, r)
 
@@ -85,7 +83,7 @@ func TestOnlyASignedInRequestTeachesTheDirectAddress(t *testing.T) {
 	}
 
 	// Whoever holds the group's words has a paired session and names no host.
-	hash, epoch, _ := in.h.authEnabled()
+	hash, epoch, _ := in.h.phoneSigning()
 	r = httptest.NewRequest(http.MethodGet, "/api/group", nil)
 	r.Host = "10.0.0.66:3443"
 	r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: listedPhoneSession(t, in.st, in.appKey, hash, epoch)}) //nolint:gosec // G124: request cookie, never set by a server
@@ -94,12 +92,7 @@ func TestOnlyASignedInRequestTeachesTheDirectAddress(t *testing.T) {
 		t.Fatalf("a paired session set DirectURL to %q", got)
 	}
 
-	if _, err := in.st.MutateSettings(func(s *store.Settings) error {
-		s.AuthPasswordHash = ""
-		return nil
-	}); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, in.router, in.session, testPassword)
 	r = httptest.NewRequest(http.MethodGet, "/api/group", nil)
 	r.Host = "10.0.0.66:3443"
 	in.router.ServeHTTP(httptest.NewRecorder(), r)

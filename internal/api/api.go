@@ -1,11 +1,13 @@
 package api
 
 import (
-	"crypto/cipher"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -15,6 +17,7 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/spike"
 	"github.com/junkerderprovinz/bombvault/internal/store"
 	"github.com/junkerderprovinz/parleyport/kit/mqttha"
+	"github.com/junkerderprovinz/parleyport/kit/signin"
 )
 
 // Handler bundles the JSON API dependencies and builds the router.
@@ -43,6 +46,18 @@ type Handler struct {
 	spikeAllOK  bool
 	spikeRan    bool
 
+	// auth is the kit's sign-in, opened by OpenSignIn. The reset code it
+	// logs goes to resetOut, stdout itself and not the logger: the logger
+	// feeds the log ring, the ring is copied into the diagnostics bundle, and
+	// a bundle gets attached to bug reports.
+	auth     *signin.Auth
+	public   atomic.Pointer[url.URL]
+	resetOut io.Writer
+	// ownWays keeps the end of a reset apart from an OAuth grant on its
+	// way: the end holds it to write, the consent and the code exchange hold
+	// it to read.
+	ownWays sync.RWMutex
+
 	// login brute-force throttle: timestamps of recent failed logins, keyed by
 	// client IP (see loginClientKey) so one source locking itself out can't also
 	// lock out every other client — including the legitimate operator logging in
@@ -61,30 +76,6 @@ type Handler struct {
 	// counter this replaces. See loginClientKey's doc comment (handlers.go)
 	// for the full reasoning and why trusting a forwarded-for header to fix
 	// that isn't safe here.
-	// In-flight WebAuthn ceremonies (see internal/api/passkeys.go). A challenge
-	// is worthless once answered or expired, so it lives here rather than in the
-	// database; the cost is that a restart cancels a half-finished registration.
-	passkeyMu         sync.Mutex
-	passkeyCeremonies map[string]passkeyCeremony
-	// Login ceremonies travel sealed in their handle instead; passkeySpent
-	// holds the handles that signed somebody in until they expire.
-	passkeySealOnce sync.Once
-	passkeySealer   cipher.AEAD
-	passkeySpent    map[string]time.Time
-
-	// The live password reset code, and where it is written. resetOut is
-	// stdout itself and not the logger: the logger feeds the log ring, the ring
-	// is copied into the diagnostics bundle, and a bundle gets attached to bug
-	// reports.
-	// mintMu keeps a password reset apart from whatever adds a way in. The
-	// reset holds it to write; adding a passkey, a key, a token or an OAuth
-	// grant holds it to read and checks the session under it (holdSignIn).
-	mintMu       sync.RWMutex
-	resetMu      sync.Mutex
-	reset        passwordReset
-	resetRefused resetRefusals
-	resetOut     io.Writer
-
 	loginMu    sync.Mutex
 	loginFails map[string][]time.Time
 	// loginSweepCalls counts loginThrottled calls since the last full sweep of
@@ -159,6 +150,12 @@ func (h *Handler) SetProgress(p *progress.Store) { h.progress = p }
 // authentication is enabled every request (other than the public allow-listed
 // paths) requires a valid session cookie.
 func (h *Handler) Router() http.Handler {
+	if h.auth == nil && h.store != nil {
+		if err := h.openSignIn(); err != nil {
+			log.Printf("api: the sign-in did not open: %v", err)
+			return signInBroken()
+		}
+	}
 	mux := http.NewServeMux()
 
 	if mcpShipped {
@@ -207,39 +204,12 @@ func (h *Handler) Router() http.Handler {
 	// Public / auth endpoints — also allow-listed inside authGate.
 	mux.HandleFunc("GET /api/health", h.handleHealth)
 	mux.HandleFunc("GET /api/auth", h.handleAuthStatus)
-	mux.HandleFunc("POST /api/login", h.handleLogin)
+	// A paired phone signs out here. The kit's sign-in answers under
+	// /api/signin/v1/ and /signin/ and checks who may call what itself.
 	mux.HandleFunc("POST /api/logout", h.handleLogout)
-	// NOT on the authGate allowlist: when auth is on, only an authenticated
-	// session may revoke every other session (epoch rotation).
-	mux.HandleFunc("POST /api/logout-all", h.handleLogoutAll)
-	mux.HandleFunc("POST /api/auth/password", h.handleSetPassword)
-	mux.HandleFunc("POST /api/auth/reset", h.handleStartPasswordReset)
-	mux.HandleFunc("POST /api/auth/reset/finish", h.handleFinishPasswordReset)
-	mux.HandleFunc("GET /api/auth/phone-pairing", h.handleGetPhonePairing)
-	mux.HandleFunc("PUT /api/auth/phone-pairing", h.handleSetPhonePairing)
-	// The second factor. All three sit behind authGate like any other setting:
-	// arming, proving and removing a factor are things only a signed-in
-	// operator does, and the disable route additionally demands a live code.
-	mux.HandleFunc("POST /api/auth/totp/setup", h.handleTOTPSetup)
-	mux.HandleFunc("POST /api/auth/totp/confirm", h.handleTOTPConfirm)
-	mux.HandleFunc("POST /api/auth/totp/disable", h.handleTOTPDisable)
-	// Passkeys. The STATUS and the two LOGIN halves are allow-listed in authGate
-	// beside /api/login, for the same reason: they are how somebody who is not
-	// signed in signs in, and the login screen has to know whether to offer the
-	// button before it can. They tell an unauthenticated caller only that this
-	// instance has passkeys and whether this address can carry one; the list of
-	// registered keys is gated inside the handler on a valid session.
-	//
-	// Registering, renaming and removing sit BEHIND the gate like the second
-	// factor: adding a way into the instance is something only somebody already
-	// inside does.
-	mux.HandleFunc("GET /api/auth/passkeys", h.handlePasskeyStatus)
-	mux.HandleFunc("POST /api/auth/passkey/login/begin", h.handlePasskeyLoginBegin)
-	mux.HandleFunc("POST /api/auth/passkey/login/finish", h.handlePasskeyLoginFinish)
-	mux.HandleFunc("POST /api/auth/passkey/register/begin", h.handlePasskeyRegisterBegin)
-	mux.HandleFunc("POST /api/auth/passkey/register/finish", h.handlePasskeyRegisterFinish)
-	mux.HandleFunc("PATCH /api/auth/passkeys/{id}", h.handleRenamePasskey)
-	mux.HandleFunc("DELETE /api/auth/passkeys/{id}", h.handleDeletePasskey)
+	h.mountSignIn(mux)
+	mux.HandleFunc("GET /api/address", h.handleGetPublicAddress)
+	mux.HandleFunc("PUT /api/address", h.handleSetPublicAddress)
 
 	// Opt-in Prometheus scrape endpoint. NOT under /api so it never collides with
 	// the JSON routes; it bypasses the session authGate (allow-listed there) and

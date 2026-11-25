@@ -182,7 +182,7 @@ func TestHomeReachesANodesRoutesBehindItsOwnSignIn(t *testing.T) {
 		t.Errorf("routes = %d %s, want %s", code, listed, want)
 	}
 
-	hash, epoch, _ := home.h.authEnabled()
+	hash, epoch, _ := home.h.phoneSigning()
 	home.as(listedPhoneSession(t, home.st, home.appKey, hash, epoch), func() {
 		if code, out := home.do(t, http.MethodGet, "/api/nodes/"+id+"/api/status", nil); code != http.StatusForbidden {
 			t.Errorf("a paired phone = %d %v", code, out)

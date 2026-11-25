@@ -104,8 +104,9 @@ func newInstance(t *testing.T, name, appKey string) *instance {
 	t.Cleanup(svc.StopGroup)
 	t.Cleanup(svc.CloseFortress)
 	h := NewHandler(cfg, st, nil, svc, nil, nil)
-	session := secret.NewSessionToken(appKey, hash, "", time.Hour)
-	return &instance{appKey: appKey, session: session, db: db, st: st, svc: svc, h: h, router: h.Router(), engine: eng}
+	router := h.Router()
+	session := signInWith(t, router, testPassword)
+	return &instance{appKey: appKey, session: session, db: db, st: st, svc: svc, h: h, router: router, engine: eng}
 }
 
 // do sends one JSON request through the instance's full router, gates
@@ -129,10 +130,9 @@ func (in *instance) do(t *testing.T, method, path string, body any) (int, map[st
 	// relay call after it needs.
 	r.Host = "localhost"
 	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("Sec-Fetch-Site", "same-origin")
 	if in.session != "" {
-		// Every instance in these tests runs with HTTPOnly: true, so this is
-		// the cookie name that mode reads.
-		r.AddCookie(&http.Cookie{Name: sessionCookieNameHTTP, Value: in.session}) //nolint:gosec // G124: a cookie on a test request, never set by a server
+		r.AddCookie(sessionCookieFor(in.session))
 	}
 	w := httptest.NewRecorder()
 	in.router.ServeHTTP(w, r)
@@ -441,18 +441,19 @@ func TestJoiningWithAMistypedWordNamesTheWordAndItsPlace(t *testing.T) {
 	}
 }
 
-func TestShowingThePhraseAgainNeedsThePassword(t *testing.T) {
+func TestShowingThePhraseAgainWantsAFreshSignIn(t *testing.T) {
 	in := newInstance(t, "attic", strings.Repeat("b2", 32))
 	_, created := in.do(t, http.MethodPost, "/api/group/phrase", nil)
 	phrase, _ := created["phrase"].(string)
 	if len(strings.Fields(phrase)) != 12 {
 		t.Fatalf("create: %v", created)
 	}
-	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{"password": "wrong"}); code != http.StatusOK || out["code"] != "passwordWrong" || out["phrase"] != nil {
-		t.Fatalf("a session with the wrong password got %d %v", code, out)
+	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); code != http.StatusOK || out["phrase"] != phrase {
+		t.Fatalf("a sign-in from moments ago got %d %v", code, out)
 	}
-	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{"password": testPassword}); code != http.StatusOK || out["phrase"] != phrase {
-		t.Fatalf("the right password got %d %v", code, out)
+	in.session = staleSession(t, in)
+	if code, out := in.do(t, http.MethodPost, "/api/group/phrase/show", map[string]any{}); code != http.StatusForbidden || out["error"] != "signInAgain" || out["phrase"] != nil {
+		t.Fatalf("a sign-in from days ago got %d %v", code, out)
 	}
 }
 
@@ -462,9 +463,7 @@ func TestShowingThePhraseAgainNeedsThePassword(t *testing.T) {
 func TestWithoutALoginPasswordThePhraseIsMadeShownAndTaken(t *testing.T) {
 	noPassword := func(in *instance) {
 		t.Helper()
-		if _, err := in.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-			t.Fatal(err)
-		}
+		removePasswordOn(t, in.router, in.session, testPassword)
 		in.session = ""
 	}
 	donor := newInstance(t, "cellar", strings.Repeat("a1", 32))

@@ -37,9 +37,7 @@ func (p *placedHome) bootNode(t *testing.T) *instance {
 	node.svc.cfg.Mode = config.ModeNode
 	node.svc.engine = p.repos
 	// A node has no web interface and so no login password of its own.
-	if _, err := node.st.MutateSettings(func(s *store.Settings) error { s.AuthPasswordHash = ""; return nil }); err != nil {
-		t.Fatal(err)
-	}
+	removePasswordOn(t, node.router, node.session, testPassword)
 	node.svc.ServeNodeAPI(NewHandler(node.svc.cfg, node.st, nil, node.svc, nil, nil).Router())
 	if p.prepare != nil {
 		p.prepare(t, node)

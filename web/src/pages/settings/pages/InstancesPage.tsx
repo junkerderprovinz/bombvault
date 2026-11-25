@@ -1,6 +1,6 @@
 import { IconFleet } from "../../../components/navGlyphs";
 import { useT, type TranslationKey } from "../../../lib/i18n";
-import { PageLinkCard, PageSentence, SidebarCard } from "../SidebarTile";
+import { PageLinkCard, SidebarCard } from "../SidebarTile";
 import { Card, ToggleRow, hueCounter } from "../shared";
 import { useSettings } from "../settingsStore";
 
@@ -33,7 +33,6 @@ export function InstancesPage() {
             hueIndex={i}
           />
         ))}
-        <PageSentence text="tile.instances.pairingLine" page="pairing.title" to="/settings/pairing" />
       </Card>
       <PageLinkCard
         to="/instances"

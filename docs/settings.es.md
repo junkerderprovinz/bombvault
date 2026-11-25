@@ -61,6 +61,8 @@ La tarjeta **Streaming**, que baja el límite de subida mientras Plex, Jellyfin 
 - **Contraseña**: la contraseña de acceso, de cualquier longitud. Por debajo de 12 caracteres la página sugiere una más larga. Cambiarla o borrarla pide la actual y, con la verificación en dos pasos activada, el código.
 - **Verificación en dos pasos**: un código de una app autenticadora además de la contraseña, con ocho códigos de recuperación que se muestran una vez.
 - **Claves de acceso**: inicia sesión con una clave en tu teléfono, portátil o llave de seguridad. Necesitan un nombre de dominio real y un certificado en el que confíe el navegador.
+- **Dirección**: donde abres BombVault, por ejemplo `https://bombvault.example.com`. Las claves de acceso y los servicios de inicio de sesión se rigen por ella.
+- **Servicios de inicio de sesión**: inicia sesión con Pocket ID, Authentik, Authelia, Kanidm, Keycloak o Zitadel, además de la contraseña. Para ello BombVault tiene que estar en la raíz de su dirección. Bajo una ruta como `https://example.com/bombvault/` el servicio todavía no puede devolverte.
 - **App de Android**: **Los teléfonos pueden emparejarse con las doce palabras del grupo**, que permite a un teléfono emparejado iniciar sesión sin la contraseña.
 - **Cifrado**: **Cifrar las copias**, activado por defecto.
 

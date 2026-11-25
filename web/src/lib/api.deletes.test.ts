@@ -11,6 +11,9 @@ function answers(status: number, body: unknown) {
       ok: status >= 200 && status < 300,
       status,
       statusText: status === 403 ? "Forbidden" : "",
+      clone() {
+        return this;
+      },
       json: () => Promise.resolve(body),
     }),
   );

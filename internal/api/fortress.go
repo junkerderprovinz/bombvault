@@ -46,22 +46,15 @@ func (h *Handler) registerFortress(mux *http.ServeMux) {
 	mux.Handle(status.LogPath, fortress)
 }
 
-// authorizeFortress lets through a browser signed in with the password and a
+// authorizeFortress lets through a browser signed in here and a
 // request carrying an API token. An MCP key is for an assistant and opens
 // nothing here.
 func (h *Handler) authorizeFortress(r *http.Request) error {
 	if foreignOrigin(r) {
 		return status.ErrForbidden
 	}
-	settings, err := h.store.GetSettings()
-	if err != nil {
-		return err
-	}
-	if hash := settings.AuthPasswordHash; hash != "" {
-		if c, err := h.sessionCookie(r); err == nil && !secret.PairedSessionToken(c.Value) &&
-			secret.ValidSessionToken(h.cfg.AppKey, hash, settings.SessionEpoch, c.Value) {
-			return nil
-		}
+	if v, found := visitor(r); found && v.Session() != "" {
+		return nil
 	}
 	presented, present, conflict := presentedMCPKey(r)
 	if !present {

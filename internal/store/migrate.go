@@ -4112,6 +4112,47 @@ CREATE TABLE IF NOT EXISTS onward_hosts (
 	node_id TEXT NOT NULL
 );`,
 	},
+	{
+		// The sign-in keeps its accounts, sessions and passkeys here, as
+		// documents of the kit. The login columns of settings and the
+		// passkeys table are what it imports from on its first start.
+		version:          signInDocsMigration,
+		name:             "signin_docs",
+		alreadySatisfied: tablePresent(SignInTable),
+		sql:              signInDocsTable,
+	},
+	{
+		// Passkeys and sign-in services need the address people reach this
+		// instance at, which the request's Host never decides.
+		version:          publicAddressMigration,
+		name:             "public_address",
+		alreadySatisfied: tablePresent("public_address"),
+		sql: `CREATE TABLE IF NOT EXISTS public_address (
+	id  INTEGER PRIMARY KEY CHECK (id = 1),
+	url TEXT NOT NULL
+);`,
+	},
+	{
+		// Keys, tokens, grants and phones answer to the account that made or
+		// let them in, so they end with it. A row from before names nobody
+		// and stays with the owner.
+		version:          credentialAccountMigration,
+		name:             "credential_accounts",
+		alreadySatisfied: columnPresent("mcp_keys", "account"),
+		sql: `ALTER TABLE mcp_keys ADD COLUMN account TEXT NOT NULL DEFAULT '';
+CREATE TABLE IF NOT EXISTS phone_accounts (
+	member_id TEXT PRIMARY KEY,
+	account   TEXT NOT NULL,
+	ended_at  INTEGER NOT NULL DEFAULT 0
+);`,
+	},
+	{
+		// A phone of the group always pairs, and the Instances page keeps one
+		// out, so the switch for pairing phones goes.
+		version: phonePairingGoneMigration,
+		name:    "phone_pairing_gone",
+		sql:     `DROP TABLE IF EXISTS phone_pairing;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4835,6 +4876,18 @@ const nodeRecordsMigration = 995
 // nodeCopyOnwardMigration numbers which nodes home copies onward and the
 // hosts their copies carry.
 const nodeCopyOnwardMigration = 996
+
+// signInDocsMigration numbers the sign-in's documents.
+const signInDocsMigration = 997
+
+// publicAddressMigration numbers the address people reach this instance at.
+const publicAddressMigration = 998
+
+// credentialAccountMigration numbers the accounts keys and phones answer to.
+const credentialAccountMigration = 999
+
+// phonePairingGoneMigration numbers the end of the switch for pairing phones.
+const phonePairingGoneMigration = 1000
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

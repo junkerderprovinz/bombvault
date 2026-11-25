@@ -166,9 +166,9 @@ describe("the Instances tile", () => {
     expect(screen.getByText(en["tile.instances.none"])).toBeTruthy();
   });
 
-  it("opens the Instances page and points to Pairing", async () => {
+  it("opens the Instances page and leaves Pairing to its own tile", async () => {
     await renderTile(InstancesPage);
-    expect(screen.getByRole("link", { name: en["pairing.title"] }).getAttribute("href")).toBe("/settings/pairing");
+    expect(screen.queryByRole("link", { name: en["pairing.title"] })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: en["instances.open"] }));
     expect(screen.getByTestId("where").textContent).toBe("/instances");
   });

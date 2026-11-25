@@ -248,8 +248,12 @@ func SetAdoptedKeyIn(db *sql.DB, enc []byte, source, lost string) error {
 }
 
 // CarryLoginInto puts this install's login into dst in place of the one dst
-// has: the password, the second factor, the session epoch and the passkeys.
+// has: the sign-in's documents, and the password, the second factor, the
+// session epoch and the passkeys of the version before them.
 func (r *Repo) CarryLoginInto(dst *sql.DB) error {
+	if err := r.carrySignInInto(dst); err != nil {
+		return err
+	}
 	there, err := tableColumns(dst, "settings")
 	if err != nil {
 		return fmt.Errorf("CarryLoginInto: %w", err)
@@ -269,6 +273,44 @@ func (r *Repo) CarryLoginInto(dst *sql.DB) error {
 		}
 	}
 	return r.carryPasskeysInto(dst)
+}
+
+// carrySignInInto replaces the sign-in's documents in dst with this
+// install's. They are sealed under this install's APP_KEY, which dst is about
+// to run with.
+func (r *Repo) carrySignInInto(dst *sql.DB) error {
+	if _, err := dst.Exec(signInDocsTable); err != nil {
+		return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+	}
+	if _, err := dst.Exec(`DELETE FROM ` + SignInTable); err != nil {
+		return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+	}
+	rows, err := r.db.Query(`SELECT kind, id, data FROM ` + SignInTable)
+	if err != nil {
+		return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+	}
+	type doc struct {
+		kind, id string
+		data     []byte
+	}
+	var docs []doc
+	for rows.Next() {
+		var d doc
+		if err := rows.Scan(&d.kind, &d.id, &d.data); err != nil {
+			rows.Close() //nolint:errcheck,gosec // the scan error is the one to report
+			return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+		}
+		docs = append(docs, d)
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+	}
+	for _, d := range docs {
+		if _, err := dst.Exec(`INSERT INTO `+SignInTable+` (kind, id, data) VALUES (?, ?, ?)`, d.kind, d.id, d.data); err != nil {
+			return fmt.Errorf("CarryLoginInto sign-in: %w", err)
+		}
+	}
+	return nil
 }
 
 func (r *Repo) carryPasskeysInto(dst *sql.DB) error {
@@ -424,20 +466,36 @@ func DropTriggersAndViews(db *sql.DB) error {
 	return nil
 }
 
-// PasswordHashIn returns the login password hash of a staged database, empty
-// for none.
-func PasswordHashIn(db *sql.DB) (string, error) {
+// PasswordSetIn reports whether a staged database has a login password: in
+// the sign-in's documents, or in the settings of a version from before them.
+func PasswordSetIn(db *sql.DB) (bool, error) {
+	tables, err := tableColumns(db, SignInTable)
+	if err != nil {
+		return false, fmt.Errorf("PasswordSetIn: %w", err)
+	}
+	if len(tables) > 0 {
+		var n int
+		err := db.QueryRow(`SELECT count(*) FROM ` + SignInTable + ` WHERE kind = 'account'
+			AND (coalesce(json_extract(CAST(data AS TEXT), '$.password'), '') != ''
+			  OR coalesce(json_extract(CAST(data AS TEXT), '$.legacyPassword'), '') != '')`).Scan(&n)
+		if err != nil {
+			return false, fmt.Errorf("PasswordSetIn: %w", err)
+		}
+		if n > 0 {
+			return true, nil
+		}
+	}
 	cols, err := tableColumns(db, "settings")
 	if err != nil || !slices.Contains(cols, "auth_password_hash") {
-		return "", err
+		return false, err
 	}
 	var hash string
 	err = db.QueryRow(`SELECT auth_password_hash FROM settings WHERE id = 1`).Scan(&hash)
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", nil
+		return false, nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("PasswordHashIn: %w", err)
+		return false, fmt.Errorf("PasswordSetIn: %w", err)
 	}
-	return hash, nil
+	return hash != "", nil
 }
