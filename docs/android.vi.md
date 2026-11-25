@@ -19,6 +19,7 @@ Hãy ghép nối ứng dụng với các máy chủ phiên bản 9.7.0 trở lê
 1. Trên bất kỳ máy chủ nào trong nhóm, mở **Cài đặt, Ghép nối** và chọn **Hiện cụm từ**. Mười hai từ hiện ra, bên cạnh là một mã QR.
 2. Trong ứng dụng, chạm vào **Quét mã QR** và hướng điện thoại vào mã. Bạn cũng có thể dán hoặc gõ các từ.
 3. Ứng dụng liệt kê các máy chủ của nhóm đó trước khi lưu bất cứ thứ gì. **Thêm tất cả** sẽ thêm toàn bộ.
+4. Sau đó điện thoại chờ trong thẻ **Đang chờ duyệt** ở **Cài đặt, Ghép nối** trên các máy chủ của nhóm. Bấm **Duyệt** trên một máy chủ trong số đó, ứng dụng sẽ hiện các máy chủ là **Đã kết nối**. Chỉ riêng các từ thì không cho thiết bị mới nào vào, xem [Ghép nối các phiên bản](offsite-recovery.md#pairing).
 
 Sau đó điện thoại gia nhập nhóm như một phiên bản khác. Nó đọc những gì đang chạy trên từng máy chủ qua nhóm mà không cần đăng nhập: ở nhà thì kết nối trực tiếp, khi ra ngoài thì qua relay. Cách nhóm hoạt động được mô tả trong [Ghép nối các phiên bản](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ Một điện thoại đã ghép nối với nhóm của bạn mở từng máy 
 
 Một điện thoại đã ghép nối không nhận được mọi thứ mà mật khẩu mang lại. Phiên của nó chỉ chạm tới một danh sách cố định những gì ứng dụng hiển thị: Tổng quan, các lần chạy và nhật ký hoạt động, các bản sao lưu để xem, bắt đầu và khôi phục, các bất thường để đọc và trang Phiên bản để xem, không kèm kho đã nhận và nguồn kéo của các thành viên. Các đích sao lưu và lệnh được trả về với địa chỉ và bí mật đã bị lược bỏ. Một lần khôi phục thay thế bản gốc sẽ sao lưu trạng thái hiện tại trước. Một lần khôi phục vào thư mục sẽ vào một thư mục mới bên trong thư mục khôi phục đặt ở **Cài đặt, Khôi phục**, và cửa sổ không đưa ra thư mục nào khác. Khóa, bộ khôi phục, bản gửi khóa, cài đặt và việc xóa bản sao lưu vẫn cần đăng nhập ngay tại máy chủ, còn mọi thứ khác đều trả lời rằng cần đăng nhập đó. Qua relay, danh sách này vẫn áp dụng, kể cả trên máy chủ không có mật khẩu.
 
-Công tắc cho việc này là **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trên thẻ **Ứng dụng Android** trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu tắt nó và đăng xuất mọi điện thoại, cho đến khi bạn bật lại ở đó.
+Mọi điện thoại mà nhóm đã cho vào đều tự đăng nhập, và không có công tắc nào cho việc này. Việc đặt lại mật khẩu đăng xuất mọi điện thoại, rồi các điện thoại tự đăng nhập lại. Để giữ một điện thoại ở ngoài, hãy xóa nó trên trang Phiên bản.
 
 ## Chứng chỉ {#certificates}
 
@@ -50,7 +51,7 @@ Chứng chỉ tự ký được tin cậy một lần theo dấu vân tay SHA-25
 
 ## Điện thoại trên trang Phiên bản {#instances}
 
-Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì. **Xóa** gỡ nó khỏi trang và kết thúc phiên của nó ngay lập tức, giống như khi tắt **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó. Điện thoại vẫn biết các từ, nên nó xuất hiện lại khi ứng dụng của nó mở ra, nhưng ở trạng thái tắt, và không nhận được phiên nào cho đến khi có người bật nó lên. Với điện thoại bị mất, hãy xóa thẻ của nó trên mọi máy chủ, hoặc tắt **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** trong **Cài đặt, Bảo mật**, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
+Điện thoại có thẻ riêng trên trang Phiên bản của mọi máy chủ trong nhóm, được đánh dấu là ứng dụng Android và mang tên bạn đặt cho điện thoại. Thẻ này không có bảng điểm vì điện thoại không sao lưu gì. **Xóa** gỡ nó khỏi trang và kết thúc phiên của nó ngay lập tức, giống như khi tắt **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó. Điện thoại vẫn biết các từ, nên nó xuất hiện lại khi ứng dụng của nó mở ra, nhưng ở trạng thái tắt, và không nhận được phiên nào cho đến khi có người bật nó lên. Với điện thoại bị mất, hãy xóa thẻ của nó trên mọi máy chủ, hoặc cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới.
 
 Điện thoại đã ghép nối trước 10.0.0 sẽ bắt đầu ký các lệnh gọi của mình ở lần truy cập đầu tiên sau khi cập nhật, và mỗi máy chủ giữ khóa đầu tiên nhận được cho điện thoại đó. Nếu một người khác biết các từ của nhóm đến trước khi điện thoại đang ngoại tuyến, máy chủ đó sẽ từ chối điện thoại kể từ lúc ấy, và ứng dụng không còn mở được nó qua relay. Để khắc phục, hãy đăng nhập vào máy chủ đó bằng trình duyệt, chọn **Quên khóa** trên thẻ của điện thoại ở trang Phiên bản rồi chọn **Xác nhận quên**, sau đó mở lại ứng dụng. Máy chủ sẽ lấy khóa riêng của điện thoại ở lệnh gọi tiếp theo. Nếu điện thoại lại bị từ chối, nghĩa là người khác có các từ: hãy cho từng phiên bản chọn **Rời nhóm** rồi ghép nối lại bằng các từ mới, như với điện thoại bị mất.
 

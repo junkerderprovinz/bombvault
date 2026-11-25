@@ -19,6 +19,7 @@ Associa l'app a server con la versione 9.7.0 o successiva. Un server con una ver
 1. Su un server qualsiasi del tuo gruppo apri **Impostazioni, Associazione** e scegli **Mostra frase**. Compaiono le dodici parole con un codice QR accanto.
 2. Nell'app tocca **Inquadra codice QR** e punta il telefono sul codice. Puoi anche incollare o digitare le parole.
 3. L'app elenca i server di quel gruppo prima di salvare qualsiasi cosa. **Aggiungi tutte** le aggiunge tutte.
+4. Il telefono aspetta poi nella scheda **In attesa di approvazione** in **Impostazioni, Associazione** sui server del gruppo. Premi **Approva** su uno di essi, e l'app mostra i server come **Connessa**. Le parole da sole non fanno entrare nessun nuovo dispositivo, vedi [Associare le istanze](offsite-recovery.md#pairing).
 
 Il telefono entra poi nel gruppo come un'altra istanza. Legge ciò che gira su ogni server attraverso il gruppo senza un accesso, a casa direttamente e fuori casa tramite il relay. Come funziona il gruppo in sé è descritto in [Associare le istanze](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ Un telefono associato al tuo gruppo apre ciascuno dei suoi server già con l'acc
 
 Un telefono associato non ottiene tutto ciò che ottiene una password. La sua sessione raggiunge un elenco fisso di ciò che l'app mostra: la panoramica, le esecuzioni e il registro attività, i backup da consultare, avvio e ripristino, le anomalie da leggere e la pagina Istanze da consultare, senza i repository ricevuti e le sorgenti di prelievo dei suoi membri. Destinazioni e comandi tornano senza indirizzi e segreti. Un ripristino che sostituisce l'originale esegue prima il backup dello stato attuale. Un ripristino in una cartella finisce in una nuova cartella dentro la cartella di ripristino impostata in **Impostazioni, Ripristino**, e la finestra non ne offre altre. Chiavi, kit di ripristino, depositi della chiave, impostazioni ed eliminazione dei backup restano legati a un accesso sul server stesso, e tutto il resto risponde che serve quell'accesso. Tramite il relay vale lo stesso elenco, anche su un server senza password.
 
-L'interruttore per questo è **I telefoni possono associarsi con le dodici parole del gruppo** nella scheda **App Android** in **Impostazioni, Sicurezza**. Un reset della password lo disattiva e fa uscire ogni telefono, finché non lo riattivi lì.
+Ogni telefono che il gruppo ha fatto entrare accede da solo, e non c'è nessun interruttore per questo. Un reset della password fa uscire ogni telefono, e i telefoni poi accedono di nuovo da soli. Per tenere fuori un telefono, rimuovilo nella pagina Istanze.
 
 ## Certificati {#certificates}
 
@@ -50,7 +51,7 @@ Un certificato autofirmato viene considerato attendibile una volta, tramite la s
 
 ## Il telefono nella pagina Istanze {#instances}
 
-Il telefono ha una scheda propria nella pagina Istanze di ogni server del gruppo, contrassegnata come app Android e col nome che hai dato al telefono. Non ha un riepilogo, perché non salva nulla. **Rimuovi** la toglie dalla pagina e termina subito la sua sessione, come fa anche disattivare **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli. Il telefono conosce ancora le parole, quindi riappare quando si apre la sua app, ma disattivato, e non riceve una sessione finché qualcuno non lo riattiva. Per un telefono perso rimuovi la sua scheda su ogni server, oppure disattiva **I telefoni possono associarsi con le dodici parole del gruppo** in **Impostazioni, Sicurezza**, oppure fai **Lascia il gruppo** a ogni istanza e associale di nuovo con parole nuove.
+Il telefono ha una scheda propria nella pagina Istanze di ogni server del gruppo, contrassegnata come app Android e col nome che hai dato al telefono. Non ha un riepilogo, perché non salva nulla. **Rimuovi** la toglie dalla pagina e termina subito la sua sessione, come fa anche disattivare **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli. Il telefono conosce ancora le parole, quindi riappare quando si apre la sua app, ma disattivato, e non riceve una sessione finché qualcuno non lo riattiva. Per un telefono perso rimuovi la sua scheda su ogni server, oppure fai **Lascia il gruppo** a ogni istanza e associale di nuovo con parole nuove.
 
 Un telefono associato prima della 10.0.0 comincia a firmare le sue chiamate alla prima visita dopo l'aggiornamento, e ogni server tiene la prima chiave che riceve per il telefono. Se qualcun altro che conosce le parole del gruppo arriva prima mentre il telefono è offline, quel server respinge da quel momento il telefono, e l'app non riesce più ad aprirlo tramite il relay. Per rimediare, accedi a quel server in un browser, scegli **Dimentica chiave** sulla scheda del telefono nella pagina Istanze e poi **Conferma di dimenticare**, e riapri l'app. Il server prende la chiave del telefono alla chiamata successiva. Se il telefono viene respinto di nuovo, qualcun altro ha le parole: fai **Lascia il gruppo** a ogni istanza e associale di nuovo con parole nuove, come per un telefono perso.
 

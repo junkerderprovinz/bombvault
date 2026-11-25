@@ -19,6 +19,7 @@ Uygulamayı 9.7.0 ve üstü sürümdeki sunucularla eşleştir. Daha eski bir s�
 1. Grubundaki herhangi bir sunucuda **Ayarlar, Eşleştirme**'yi aç ve **İfadeyi göster**'i seç. On iki kelime, yanında bir QR kodla görünür.
 2. Uygulamada **QR kodu tara**'ya dokun ve telefonu koda tut. Kelimeleri yapıştırabilir ya da yazabilirsin de.
 3. Uygulama bir şey kaydetmeden önce o grubun sunucularını listeler. **Tümünü ekle** hepsini ekler.
+4. Telefon ardından grubun sunucularında **Ayarlar, Eşleştirme** altındaki **Onay bekliyor** kartında bekler. Bunlardan birinde **Onayla**'ya bas, uygulama sunucuları **Bağlı** olarak gösterir. Kelimeler tek başına hiçbir yeni cihazı içeri almaz, bkz. [Örnekleri eşleştirme](offsite-recovery.md#pairing).
 
 Telefon sonra gruba başka bir örnek gibi katılır. Her sunucuda ne çalıştığını oturum açmadan grup üzerinden okur, evdeyken doğrudan, evden uzaktayken röle üzerinden. Grubun kendisinin nasıl çalıştığı [Örnekleri eşleştirme](offsite-recovery.md#pairing) altında anlatılır.
 
@@ -42,7 +43,7 @@ Grubunla eşleşmiş bir telefon, sunucularının her birini zaten oturum açmı
 
 Eşleşmiş bir telefon parolanın verdiği her şeyi almaz. Oturumu, uygulamanın gösterdiği sabit bir listeye ulaşır: genel bakış, çalıştırmalar ve etkinlik günlüğü, bakılacak, başlatılacak ve geri yüklenecek yedekler, okunacak anormallikler ve bakılacak Örnekler sayfası, üyelerinin alınan depoları ve çekme kaynakları olmadan. Hedefler ve komutlar adresleri ve gizli bilgileri kaldırılmış olarak gelir. Orijinali değiştiren bir geri yükleme önce mevcut durumu yedekler. Bir klasöre geri yükleme, **Ayarlar, Geri yükleme** altında ayarlanan geri yükleme klasörünün içinde yeni bir klasöre gider ve pencere başka bir klasör sunmaz. Anahtarlar, kurtarma kiti, anahtar emanetleri, ayarlar ve yedekleri silme sunucunun kendisinde oturum açmaya bağlı kalır, geri kalan her şey o oturum açmaya ihtiyaç duyduğunu yanıtlar. Röle üzerinden aynı liste geçerlidir, parolasız bir sunucuda da.
 
-Bunun anahtarı, **Ayarlar, Güvenlik** altındaki **Android uygulaması** kartında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'dir. Bir parola sıfırlama onu kapatır ve her telefonun oturumunu sonlandırır, orada yeniden açana kadar.
+Grubun içeri aldığı her telefon kendiliğinden oturum açar ve bunun için bir anahtar yoktur. Bir parola sıfırlama her telefonun oturumunu kapatır, telefonlar ardından kendiliğinden yeniden oturum açar. Bir telefonu dışarıda tutmak için onu Örnekler sayfasında kaldır.
 
 ## Sertifikalar {#certificates}
 
@@ -50,7 +51,7 @@ Kendi kendine imzalı bir sertifikaya SHA-256 parmak iziyle bir kez güvenilir. 
 
 ## Örnekler sayfasında telefon {#instances}
 
-Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır, Android uygulaması olarak işaretlenmiş ve telefona verdiğin adı taşır. Hiçbir şey yedeklemediği için puan tablosu yoktur. **Kaldır** onu sayfadan alır ve oturumunu hemen sonlandırır, ayrıntılarında **İzleme** altındaki **Bu örneği sorgula**'yı kapatmak da öyle. Telefon kelimeleri hâlâ bilir, bu yüzden uygulaması yeniden açıldığında tekrar görünür, ama kapalı olarak, ve biri açana kadar oturum almaz. Kayıp bir telefon için kartını her sunucuda kaldır, ya da **Ayarlar, Güvenlik** altında **Telefonlar grubun on iki kelimesiyle eşleşebilir**'i kapat, ya da her örneğin **Gruptan ayrıl**'ını yapmasını sağla ve onları yeni kelimelerle yeniden eşleştir.
+Telefon, gruptaki her sunucunun Örnekler sayfasında kendi kartını alır, Android uygulaması olarak işaretlenmiş ve telefona verdiğin adı taşır. Hiçbir şey yedeklemediği için puan tablosu yoktur. **Kaldır** onu sayfadan alır ve oturumunu hemen sonlandırır, ayrıntılarında **İzleme** altındaki **Bu örneği sorgula**'yı kapatmak da öyle. Telefon kelimeleri hâlâ bilir, bu yüzden uygulaması yeniden açıldığında tekrar görünür, ama kapalı olarak, ve biri açana kadar oturum almaz. Kayıp bir telefon için kartını her sunucuda kaldır, ya da her örneğin **Gruptan ayrıl**'ını yapmasını sağla ve onları yeni kelimelerle yeniden eşleştir.
 
 10.0.0'dan önce eşleşmiş bir telefon, güncellemeden sonraki ilk ziyaretinde çağrılarını imzalamaya başlar ve her sunucu telefon için aldığı ilk anahtarı tutar. Grubun kelimelerini bilen başka biri, telefon çevrimdışıyken oraya önce ulaşırsa, o sunucu telefonu o andan sonra geri çevirir ve uygulama onu artık röle üzerinden açamaz. Bunu düzeltmek için o sunucuda bir tarayıcıda oturum aç, Örnekler sayfasındaki telefonun kartında **Anahtarı unut**'u, sonra **Unutmayı onayla**'yı seç ve uygulamayı yeniden aç. Sunucu bir sonraki çağrıda telefonun kendi anahtarını alır. Telefon yine geri çevrilirse kelimeleri başkası biliyor demektir: her örnek **Gruptan ayrıl** yapsın ve onları kayıp bir telefonda olduğu gibi yeni kelimelerle yeniden eşleştir.
 

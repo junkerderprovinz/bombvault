@@ -19,6 +19,7 @@ Par appen med servere på versjon 9.7.0 eller nyere. En server på en eldre vers
 1. Åpne **Innstillinger, Paring** på en hvilken som helst server i gruppen din, og velg **Vis frase**. De tolv ordene vises med en QR-kode ved siden av.
 2. Trykk på **Skann QR-kode** i appen, og hold telefonen mot koden. Du kan også lime inn eller taste inn ordene.
 3. Appen viser serverne i gruppen før den lagrer noe. **Legg til alle** legger til alle sammen.
+4. Telefonen venter så i kortet **Venter på godkjenning** under **Innstillinger, Paring** på serverne i gruppen. Trykk **Godkjenn** på en av dem, så viser appen serverne som **Tilkoblet**. Ordene alene slipper ingen ny enhet inn, se [Koble instanser sammen](offsite-recovery.md#pairing).
 
 Deretter blir telefonen med i gruppen som enda en instans. Den leser via gruppen hva som kjører på hver server, uten pålogging, direkte hjemme og over relayet når du er borte. Hvordan selve gruppen fungerer, står under [Koble instanser sammen](offsite-recovery.md#pairing).
 
@@ -41,7 +42,7 @@ Når en server er åpen, står navnet på serveren øverst i oversikten, med en 
 En telefon som er paret med gruppen din, åpner hver server i gruppen allerede pålogget. Før den laster en side, ber den serveren om en økt via gruppen, og en server gir bare ut en økt til et medlem som er en telefon.
 En paret telefon får ikke alt et passord gir. Økten når en fast liste over det appen viser: oversikten, kjøringene og aktivitetsloggen, sikkerhetskopiene man kan se på, starte og gjenopprette, avvikene man kan lese og Instanser-siden man kan se på, uten de mottatte repositoryene og henting-kildene til medlemmene. Mål og kommandoer kommer tilbake uten adresser og hemmeligheter. En gjenoppretting som erstatter originalen, tar først en sikkerhetskopi av dagens tilstand. En gjenoppretting til en mappe havner i en ny mappe inne i gjenopprettingsmappen som er satt under **Innstillinger, Gjenoppretting**, og vinduet tilbyr ingen annen. Nøkler, gjenopprettingssettet, nøkkeldeponeringer, innstillinger og sletting av sikkerhetskopier hører til en pålogging på selve serveren, og alt annet svarer at det trenger den påloggingen. Via relayet gjelder den samme listen, også på en server uten passord.
 
-Bryteren for dette er **Telefoner kan pare med gruppens tolv ord** i kortet **Android-app** under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår den av og logger alle telefoner ut, til du slår den på igjen der.
+Hver telefon gruppen har sluppet inn, logger seg på selv, og det finnes ingen bryter for det. En tilbakestilling av passordet logger ut alle telefoner, og telefonene logger seg deretter på igjen selv. For å holde én telefon ute fjerner du den på Instanser-siden.
 
 ## Sertifikater {#certificates}
 
@@ -49,7 +50,7 @@ Et selvsignert sertifikat blir klarert én gang ut fra SHA-256-fingeravtrykket. 
 
 ## Telefonen på Instanser-siden {#instances}
 
-Telefonen får sitt eget kort på Instanser-siden på hver server i gruppen, merket som Android-app og med navnet du har gitt telefonen. Den har ikke noe poengkort, fordi den ikke tar sikkerhetskopier. **Fjern** tar den bort fra siden og avslutter økten dens med en gang, det samme gjør det å slå av **Spør ut denne instansen** under **Overvåking** i detaljene. Telefonen kjenner fortsatt ordene, så den dukker opp igjen når appen åpnes, men slått av, og den får ingen økt før noen slår den på. For en mistet telefon fjerner du kortet på hver server, slår av **Telefoner kan pare med gruppens tolv ord** under **Innstillinger, Sikkerhet**, eller lar hver instans bruke **Forlat gruppen** og parer dem på nytt med nye ord.
+Telefonen får sitt eget kort på Instanser-siden på hver server i gruppen, merket som Android-app og med navnet du har gitt telefonen. Den har ikke noe poengkort, fordi den ikke tar sikkerhetskopier. **Fjern** tar den bort fra siden og avslutter økten dens med en gang, det samme gjør det å slå av **Spør ut denne instansen** under **Overvåking** i detaljene. Telefonen kjenner fortsatt ordene, så den dukker opp igjen når appen åpnes, men slått av, og den får ingen økt før noen slår den på. For en mistet telefon fjerner du kortet på hver server, eller lar hver instans bruke **Forlat gruppen** og parer dem på nytt med nye ord.
 
 En telefon som ble paret før 10.0.0, begynner å signere kallene sine ved første besøk etter oppdateringen, og hver server beholder den første nøkkelen den får for telefonen. Hvis noen andre som kjenner gruppens ord, kommer først mens telefonen er frakoblet, avviser den serveren telefonen fra da av, og appen kan ikke lenger åpne den over relayet. Slik løser du det: logg inn på den serveren i en nettleser, velg **Glem nøkkelen** på telefonens kort på Instanser-siden og deretter **Bekreft glemming**, og åpne appen igjen. Serveren tar telefonens egen nøkkel ved neste kall. Blir telefonen avvist igjen, har noen andre ordene: la hver instans bruke **Forlat gruppen** og par dem på nytt med nye ord, som for en mistet telefon.
 

@@ -19,6 +19,7 @@ Pariliitä sovellus palvelimiin, joiden versio on 9.7.0 tai uudempi. Vanhemman v
 1. Avaa millä tahansa ryhmäsi palvelimella **Asetukset, Pariliitos** ja valitse **Näytä lause**. Kaksitoista sanaa tulevat näkyviin, ja niiden vieressä on QR-koodi.
 2. Napauta sovelluksessa **Skannaa QR-koodi** ja osoita puhelimella koodia. Voit myös liittää tai kirjoittaa sanat.
 3. Sovellus näyttää ryhmän palvelimet ennen kuin tallentaa mitään. **Lisää kaikki** lisää ne kaikki.
+4. Puhelin odottaa sitten ryhmän palvelimilla kortissa **Odottaa hyväksyntää** kohdassa **Asetukset, Pariliitos**. Paina jollakin niistä **Hyväksy**, niin sovellus näyttää palvelimet tilassa **Yhdistetty**. Pelkät sanat eivät päästä sisään uutta laitetta, katso [Instanssien pariliitos](offsite-recovery.md#pairing).
 
 Puhelin liittyy sitten ryhmään kuin mikä tahansa muu instanssi. Se lukee ryhmän kautta ilman kirjautumista, mitä kullakin palvelimella on käynnissä: kotona suoraan ja kodin ulkopuolella releen kautta. Itse ryhmän toiminta kuvataan kohdassa [Instanssien pariliitos](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ Ryhmääsi pariliitetty puhelin avaa jokaisen ryhmän palvelimen valmiiksi kirja
 
 Pariliitetty puhelin ei saa kaikkea, minkä salasana antaa. Sen istunto yltää kiinteään luetteloon siitä, mitä sovellus näyttää: yleiskatsaus, ajot ja toimintaloki, katseltavat varmuuskopiot, käynnistys ja palautus, luettavat poikkeamat ja katseltava Ilmentymät-sivu, ilman jäsenten vastaanotettuja repositoryja ja noutolähteitä. Kohteet ja komennot tulevat sille ilman osoitteitaan ja salaisuuksiaan. Palautus, joka korvaa alkuperäisen, varmuuskopioi ensin nykytilan. Palautus kansioon menee uuteen kansioon kohdassa **Asetukset, Palautus** asetetun palautuskansion sisälle, eikä ikkuna tarjoa muuta kansiota. Avaimet, palautuspaketti, avaintalletukset, asetukset ja varmuuskopioiden poistaminen vaativat kirjautumisen itse palvelimella, ja kaikki muu vastaa tarvitsevansa sen kirjautumisen. Releen kautta pätee sama luettelo, myös palvelimella, jolla ei ole salasanaa.
 
-Kytkin tähän on **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** **Android-sovellus**-kortissa kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois ja kirjaa jokaisen puhelimen ulos, kunnes kytket sen siellä takaisin päälle.
+Jokainen puhelin, jonka ryhmä on päästänyt sisään, kirjautuu itse, eikä sille ole kytkintä. Salasanan nollaus kirjaa jokaisen puhelimen ulos, ja puhelimet kirjautuvat sen jälkeen itse uudelleen. Jos haluat pitää yhden puhelimen ulkona, poista se Ilmentymät-sivulla.
 
 ## Varmenteet {#certificates}
 
@@ -50,7 +51,7 @@ Itse allekirjoitettuun varmenteeseen luotetaan kerran sen SHA-256-sormenjäljen 
 
 ## Puhelin Ilmentymät-sivulla {#instances}
 
-Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään. **Poista** poistaa sen sivulta ja päättää sen istunnon heti, samoin kuin **Kysele tätä instanssia** -kohdan kytkeminen pois sen tietojen kohdassa **Valvonta**. Puhelin tuntee yhä sanat, joten se ilmestyy takaisin, kun sen sovellus avataan, mutta pois kytkettynä, eikä se saa istuntoa ennen kuin joku kytkee sen päälle. Kadonneen puhelimen kohdalla poista sen kortti jokaiselta palvelimelta, kytke **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** pois kohdassa **Asetukset, Turvallisuus** tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
+Puhelin saa oman korttinsa ryhmän jokaisen palvelimen Ilmentymät-sivulle, merkittynä Android-sovellukseksi ja nimettynä puhelimelle antamasi nimen mukaan. Sillä ei ole tuloskorttia, koska se ei varmuuskopioi mitään. **Poista** poistaa sen sivulta ja päättää sen istunnon heti, samoin kuin **Kysele tätä instanssia** -kohdan kytkeminen pois sen tietojen kohdassa **Valvonta**. Puhelin tuntee yhä sanat, joten se ilmestyy takaisin, kun sen sovellus avataan, mutta pois kytkettynä, eikä se saa istuntoa ennen kuin joku kytkee sen päälle. Kadonneen puhelimen kohdalla poista sen kortti jokaiselta palvelimelta tai anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla.
 
 Ennen versiota 10.0.0 pariutettu puhelin alkaa allekirjoittaa kutsunsa ensimmäisellä käynnillä päivityksen jälkeen, ja jokainen palvelin pitää ensimmäisen puhelimelle saamansa avaimen. Jos joku muu, joka tuntee ryhmän sanat, ehtii ensin puhelimen ollessa offline-tilassa, palvelin hylkää puhelimen siitä lähtien, eikä sovellus enää voi avata sitä releen kautta. Korjaa tämä kirjautumalla kyseiselle palvelimelle selaimella, valitsemalla puhelimen kortista Ilmentymät-sivulla **Unohda avain** ja sitten **Vahvista unohtaminen**, ja avaamalla sovellus uudelleen. Palvelin ottaa puhelimen oman avaimen seuraavassa kutsussa. Jos puhelin hylätään uudelleen, joku muu tuntee sanat: anna jokaisen ilmentymän valita **Poistu ryhmästä** ja pariuta ne uudelleen uusilla sanoilla, kuten kadonneen puhelimen kohdalla.
 

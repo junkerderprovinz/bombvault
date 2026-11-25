@@ -19,6 +19,7 @@ Paruj aplikację z serwerami w wersji 9.7.0 lub nowszej. Serwer w starszej wersj
 1. Na dowolnym serwerze swojej grupy otwórz **Ustawienia, Parowanie** i wybierz **Pokaż frazę**. Pojawi się dwanaście słów, a obok nich kod QR.
 2. W aplikacji stuknij **Zeskanuj kod QR** i skieruj telefon na kod. Możesz też wkleić albo wpisać słowa.
 3. Zanim aplikacja cokolwiek zapisze, wyświetla listę serwerów tej grupy. **Dodaj wszystkie** dodaje każdy z nich.
+4. Telefon czeka potem w karcie **Czeka na zatwierdzenie** w **Ustawienia, Parowanie** na serwerach grupy. Naciśnij **Zatwierdź** na jednym z nich, a aplikacja pokaże serwery jako **Połączono**. Same słowa nie wpuszczają żadnego nowego urządzenia, zobacz [Parowanie instancji](offsite-recovery.md#pairing).
 
 Telefon dołącza wtedy do grupy jak kolejna instancja. To, co działa na każdym serwerze, odczytuje przez grupę bez logowania, w domu bezpośrednio, a poza domem przez przekaźnik. Jak działa sama grupa, opisuje [Parowanie instancji](offsite-recovery.md#pairing).
 
@@ -41,7 +42,7 @@ Gdy serwer jest otwarty, u góry jego przeglądu widnieje nazwa serwera, a przed
 Telefon sparowany z Twoją grupą otwiera każdy z jej serwerów od razu zalogowany. Zanim załaduje stronę, prosi ten serwer przez grupę o sesję, a serwer wydaje ją tylko członkowi, który jest telefonem.
 Sparowany telefon nie dostaje wszystkiego, co daje hasło. Jego sesja sięga do stałej listy tego, co pokazuje aplikacja: przeglądu, uruchomień i dziennika aktywności, kopii zapasowych do podejrzenia, uruchomienia i przywrócenia, anomalii do przeczytania oraz strony Instancje do podejrzenia, bez odbieranych repozytoriów i źródeł pobierania jej członków. Miejsca docelowe i polecenia wracają bez adresów i sekretów. Przywrócenie, które zastępuje oryginał, najpierw tworzy kopię zapasową bieżącego stanu. Przywrócenie do folderu trafia do nowego folderu wewnątrz folderu przywracania ustawionego w **Ustawienia, Przywracanie**, a okno nie oferuje innego. Klucze, zestaw odzyskiwania, depozyty kluczy, ustawienia i usuwanie kopii zapasowych zostają przy logowaniu na samym serwerze, a wszystko inne odpowiada, że potrzebuje tego logowania. Przez przekaźnik obowiązuje ta sama lista, także na serwerze bez hasła.
 
-Przełącznik tego ustawienia to **Telefony mogą się sparować z dwunastoma słowami grupy** w karcie **Aplikacja na Androida** w **Ustawienia, Bezpieczeństwo**. Zresetowanie hasła wyłącza go i wylogowuje wszystkie telefony, dopóki nie włączysz go tam z powrotem.
+Każdy telefon, który grupa wpuściła, loguje się sam i nie ma do tego żadnego przełącznika. Reset hasła wylogowuje wszystkie telefony, a telefony potem same logują się ponownie. Aby nie wpuszczać jednego telefonu, usuń go na stronie Instancje.
 
 ## Certyfikaty {#certificates}
 
@@ -49,7 +50,7 @@ Certyfikatowi samopodpisanemu ufa się raz, na podstawie jego odcisku SHA-256. G
 
 ## Telefon na stronie Instancje {#instances}
 
-Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje. **Usuń** zdejmuje go ze strony i od razu kończy jego sesję, podobnie jak wyłączenie **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach. Telefon nadal zna słowa, więc pojawia się znowu, gdy otworzy się jego aplikacja, ale wyłączony, i nie dostaje sesji, dopóki ktoś go nie włączy. W razie zgubienia telefonu usuń jego kartę na każdym serwerze, wyłącz **Telefony mogą się sparować z dwunastoma słowami grupy** w **Ustawienia, Bezpieczeństwo** albo na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami.
+Telefon dostaje własną kartę na stronie Instancje każdego serwera w grupie, oznaczoną jako aplikacja na Androida i z nazwą nadaną telefonowi. Nie ma karty wyników, bo niczego nie kopiuje. **Usuń** zdejmuje go ze strony i od razu kończy jego sesję, podobnie jak wyłączenie **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach. Telefon nadal zna słowa, więc pojawia się znowu, gdy otworzy się jego aplikacja, ale wyłączony, i nie dostaje sesji, dopóki ktoś go nie włączy. W razie zgubienia telefonu usuń jego kartę na każdym serwerze albo na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami.
 
 Telefon sparowany przed wersją 10.0.0 zaczyna podpisywać swoje wywołania przy pierwszej wizycie po aktualizacji, a każdy serwer zachowuje pierwszy klucz, jaki dostanie dla telefonu. Jeśli ktoś inny, kto zna słowa grupy, zdąży pierwszy, gdy telefon jest offline, ten serwer od tej pory odrzuca telefon, a aplikacja nie może go już otworzyć przez relay. Aby to naprawić, zaloguj się na ten serwer w przeglądarce, wybierz **Zapomnij klucz** na karcie telefonu na stronie Instancje, potem **Potwierdź zapomnienie** i otwórz aplikację ponownie. Serwer przejmie własny klucz telefonu przy następnym wywołaniu. Jeśli telefon zostanie odrzucony ponownie, słowa ma ktoś inny: na każdej instancji wybierz **Opuść grupę** i sparuj je ponownie z nowymi słowami, tak jak w przypadku zgubionego telefonu.
 

@@ -19,6 +19,7 @@ Parkoppla appen med servrar på version 9.7.0 eller senare. En server på en äl
 1. Öppna **Inställningar, Parkoppling** på valfri server i din grupp och välj **Visa fras**. De tolv orden visas med en QR-kod bredvid.
 2. Tryck på **Skanna QR-kod** i appen och rikta telefonen mot koden. Du kan också klistra in eller skriva orden.
 3. Appen listar servrarna i gruppen innan den sparar något. **Lägg till alla** lägger till alla.
+4. Telefonen väntar sedan i kortet **Väntar på godkännande** under **Inställningar, Parkoppling** på gruppens servrar. Tryck på **Godkänn** på en av dem, så visar appen servrarna som **Ansluten**. Orden ensamma släpper inte in någon ny enhet, se [Parkoppling av instanser](offsite-recovery.md#pairing).
 
 Telefonen går sedan med i gruppen som ännu en instans. Den läser via gruppen vad som körs på varje server utan inloggning, direkt hemma och via reläet borta. Hur själva gruppen fungerar beskrivs under [Parkoppling av instanser](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ En telefon som är parkopplad med din grupp öppnar varje server i gruppen redan
 
 En parkopplad telefon får inte allt som ett lösenord ger. Dess session når en fast lista över det appen visar: översikten, körningarna och aktivitetsloggen, säkerhetskopiorna att titta på, start och återställning, avvikelserna att läsa och sidan Instanser att titta på, utan medlemmarnas mottagna repositorier och hämtningskällor. Mål och kommandon når den utan adresser och hemligheter. En återställning som ersätter originalet säkerhetskopierar först det nuvarande läget. En återställning till en mapp hamnar i en ny mapp inuti den återställningsmapp som är inställd under **Inställningar, Återställning**, och fönstret erbjuder ingen annan. Nycklar, återställningskitet, nyckeldepositioner, inställningar och borttagning av säkerhetskopior kräver en inloggning på servern själv, och allt annat svarar att det behöver den inloggningen. Via reläet gäller samma lista, även på en server utan lösenord.
 
-Reglaget för detta är **Telefoner kan parkopplas med gruppens tolv ord** på kortet **Android-app** under **Inställningar, Säkerhet**. En återställning av lösenordet stänger av det och loggar ut alla telefoner, tills du slår på det igen där.
+Varje telefon som gruppen har släppt in loggar in av sig själv, och det finns inget reglage för det. En återställning av lösenordet loggar ut alla telefoner, och telefonerna loggar sedan in igen av sig själva. För att hålla en telefon ute tar du bort den på Instanser-sidan.
 
 ## Certifikat {#certificates}
 
@@ -50,7 +51,7 @@ Ett självsignerat certifikat betros en gång utifrån sitt SHA-256-fingeravtryc
 
 ## Telefonen på Instanser-sidan {#instances}
 
-Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något. **Ta bort** tar bort den från sidan och avslutar dess session direkt, precis som när du stänger av **Fråga av den här instansen** under **Övervakning** i dess detaljer. Telefonen kan fortfarande orden, så den dyker upp igen när dess app öppnas, men avstängd, och den får ingen session förrän någon slår på den. För en borttappad telefon tar du bort dess kort på varje server, stänger av **Telefoner kan parkopplas med gruppens tolv ord** under **Inställningar, Säkerhet**, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
+Telefonen får ett eget kort på Instanser-sidan på varje server i gruppen, markerat som Android-app och med det namn du har gett telefonen. Den har inget poängkort eftersom den inte säkerhetskopierar något. **Ta bort** tar bort den från sidan och avslutar dess session direkt, precis som när du stänger av **Fråga av den här instansen** under **Övervakning** i dess detaljer. Telefonen kan fortfarande orden, så den dyker upp igen när dess app öppnas, men avstängd, och den får ingen session förrän någon slår på den. För en borttappad telefon tar du bort dess kort på varje server, eller låter varje instans välja **Lämna gruppen** och parkopplar dem på nytt med nya ord.
 
 En telefon som parkopplades före 10.0.0 börjar signera sina anrop vid första besöket efter uppdateringen, och varje server behåller den första nyckeln den får för telefonen. Om någon annan som kan gruppens ord hinner först medan telefonen är offline, avvisar den servern telefonen från och med då, och appen kan inte längre öppna den via reläet. Så här åtgärdar du det: logga in på den servern i en webbläsare, välj **Glöm nyckeln** på telefonens kort på Instanser-sidan och sedan **Bekräfta att glömma**, och öppna appen igen. Servern tar telefonens egen nyckel vid nästa anrop. Avvisas telefonen igen har någon annan orden: låt varje instans välja **Lämna gruppen** och parkoppla dem på nytt med nya ord, som för en borttappad telefon.
 
