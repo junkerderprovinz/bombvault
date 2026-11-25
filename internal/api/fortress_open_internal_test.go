@@ -317,7 +317,12 @@ func inOneFortress(t *testing.T, a, b *instance) string {
 		}
 	}
 	var id string
+	// b's join asks the members from a fortress it closes before its own
+	// reaches the relay, and a may still list that one, so b has to see a too.
 	waitLong(t, "a to see that b opens", func() bool {
+		if !slices.ContainsFunc(fortressMembers(t, b), func(m fortressMemberView) bool { return m.Online && m.Device == "cellar" }) {
+			return false
+		}
 		for _, m := range fortressMembers(t, a) {
 			if m.Opens && m.Online && m.Device == "attic" {
 				id = m.ID
