@@ -63,7 +63,6 @@ Plex, Jellyfin ya da Emby yayın yaparken yükleme sınırını düşüren **Yay
 - **Geçiş anahtarları**: telefonundaki, dizüstündeki ya da güvenlik anahtarındaki bir anahtarla oturum açma. Gerçek bir alan adı ve tarayıcının güvendiği bir sertifika gerektirirler.
 - **Adres**: BombVault'u açtığın adres, örneğin `https://bombvault.example.com`. Geçiş anahtarları ve giriş hizmetleri buna göre çalışır.
 - **Giriş hizmetleri**: parolanın yanında Pocket ID, Authentik, Authelia, Kanidm, Keycloak veya Zitadel ile giriş yap. Bunun için BombVault adresinin kökünde durmalı. `https://example.com/bombvault/` gibi bir yolun altında hizmet seni henüz geri gönderemez.
-- **Android uygulaması**: **Telefonlar grubun on iki kelimesiyle eşleşebilir**, eşleşmiş bir telefonun parolasız oturum açmasını sağlar.
 - **Şifreleme**: varsayılan olarak açık **Yedekleri şifrele**.
 
 Kurtarma kiti ve anahtar emanetleri gibi bazı şeyler bir giriş parolası gerektirir. Bkz. [Güvenlik modeli](configuration.md#security-model).

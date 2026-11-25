@@ -24,7 +24,7 @@ Denne serveren overtok en annen servers sikkerhetskopinøkkel i nødveiviseren, 
 
 ## En telefon havner på innloggingssiden {#a-phone-lands-on-the-login-page}
 
-En paret telefon får økten sin over gruppen bare så lenge **Telefoner kan pare med gruppens tolv ord** er på under **Innstillinger, Sikkerhet**. En tilbakestilling av passordet slår det av. En app som er eldre enn serveren, får heller ingen økt før den er oppdatert. En server som er lagt til med adressen sin, spør alltid etter passordet. En telefon som er fjernet fra siden Instanser, kommer tilbake slått av når appen åpnes igjen. Slå på **Spør ut denne instansen** under **Overvåking** i detaljene for å slippe den inn.
+En paret telefon får økten sin over gruppen så lenge kortet dens på Instanser-siden er der og slått på. En app som er eldre enn serveren, får heller ingen økt før den er oppdatert. En server som er lagt til med adressen sin, spør alltid etter passordet. En telefon som er fjernet fra siden Instanser, kommer tilbake slått av når appen åpnes igjen. Slå på **Spør ut denne instansen** under **Overvåking** i detaljene for å slippe den inn.
 
 ## VM-sikkerhetskopiering vil ikke koble til {#vm-backup-will-not-connect}
 

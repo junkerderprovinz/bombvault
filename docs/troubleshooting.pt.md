@@ -24,7 +24,7 @@ Este servidor assumiu a chave de backup de outro servidor no assistente de emerg
 
 ## Um telemóvel vai parar à página de início de sessão {#a-phone-lands-on-the-login-page}
 
-Um telemóvel emparelhado só recebe a sessão através do grupo enquanto **Os telemóveis podem emparelhar com as doze palavras do grupo** estiver ligado em **Definições, Segurança**. Uma reposição da palavra-passe desliga-o. Uma aplicação mais antiga do que o servidor também não recebe sessão até ser atualizada. Um servidor adicionado pelo endereço pede sempre a palavra-passe. Um telemóvel removido da página Instâncias regressa desligado quando a sua aplicação volta a abrir. Liga **Consultar esta instância** em **Monitorização** nos seus detalhes para o deixar entrar.
+Um telemóvel emparelhado recebe a sessão através do grupo enquanto o seu cartão na página Instâncias existir e estiver ligado. Uma aplicação mais antiga do que o servidor também não recebe sessão até ser atualizada. Um servidor adicionado pelo endereço pede sempre a palavra-passe. Um telemóvel removido da página Instâncias regressa desligado quando a sua aplicação volta a abrir. Liga **Consultar esta instância** em **Monitorização** nos seus detalhes para o deixar entrar.
 
 ## O backup de VMs não se liga {#vm-backup-will-not-connect}
 

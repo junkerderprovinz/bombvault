@@ -24,7 +24,7 @@ Tento server převzal v Nouzovém průvodci zálohovací klíč jiného serveru 
 
 ## Telefon skončí na přihlašovací stránce {#a-phone-lands-on-the-login-page}
 
-Spárovaný telefon dostane relaci přes skupinu jen tehdy, když je v **Nastavení, Zabezpečení** zapnuto **Telefony se mohou spárovat s dvanácti slovy skupiny**. Reset hesla ho vypne. Aplikace starší než server také nedostane relaci, dokud se neaktualizuje. Server přidaný podle adresy se na heslo ptá vždy. Telefon odebraný ze stránky Instance se po dalším otevření aplikace vrátí vypnutý. Abys ho pustil dovnitř, zapni v jeho podrobnostech v části **Sledování** volbu **Dotázat se na tuto instanci**.
+Spárovaný telefon dostane relaci přes skupinu, dokud je jeho karta na stránce Instance na místě a zapnutá. Aplikace starší než server také nedostane relaci, dokud se neaktualizuje. Server přidaný podle adresy se na heslo ptá vždy. Telefon odebraný ze stránky Instance se po dalším otevření aplikace vrátí vypnutý. Abys ho pustil dovnitř, zapni v jeho podrobnostech v části **Sledování** volbu **Dotázat se na tuto instanci**.
 
 ## Záloha VM se nepřipojí {#vm-backup-will-not-connect}
 

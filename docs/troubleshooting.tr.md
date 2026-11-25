@@ -24,7 +24,7 @@ Bu sunucu Acil durum sihirbazında başka bir sunucunun yedek anahtarını devra
 
 ## Bir telefon giriş sayfasına düşüyor {#a-phone-lands-on-the-login-page}
 
-Eşleşmiş bir telefon oturumunu grup üzerinden yalnızca **Ayarlar, Güvenlik** altında **Telefonlar grubun on iki kelimesiyle eşleşebilir** açıkken alır. Bir parola sıfırlama onu kapatır. Sunucudan eski bir uygulama da güncellenene kadar oturum almaz. Adresiyle eklenen bir sunucu her zaman parola ister. Örnekler sayfasından kaldırılan bir telefon, uygulaması yeniden açıldığında kapalı olarak geri gelir. İçeri almak için ayrıntılarında **İzleme** altındaki **Bu örneği sorgula**'yı aç.
+Eşleşmiş bir telefon, Örnekler sayfasındaki kartı yerinde ve açık olduğu sürece oturumunu grup üzerinden alır. Sunucudan eski bir uygulama da güncellenene kadar oturum almaz. Adresiyle eklenen bir sunucu her zaman parola ister. Örnekler sayfasından kaldırılan bir telefon, uygulaması yeniden açıldığında kapalı olarak geri gelir. İçeri almak için ayrıntılarında **İzleme** altındaki **Bu örneği sorgula**'yı aç.
 
 ## VM yedekleme bağlanmıyor {#vm-backup-will-not-connect}
 
