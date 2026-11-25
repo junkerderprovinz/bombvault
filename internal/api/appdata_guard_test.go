@@ -9,6 +9,7 @@ import (
 
 	"github.com/junkerderprovinz/bombvault/internal/api"
 	"github.com/junkerderprovinz/bombvault/internal/config"
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
 )
@@ -16,6 +17,13 @@ import (
 // appdataService backs up a container "vw" whose appdata sits at
 // <root>/disks/ssd/appdata/vw.
 func appdataService(t *testing.T, eng *fakeResticEngine) (*api.Service, string, string) {
+	t.Helper()
+	return appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return d })
+}
+
+// appdataServiceWith is appdataService with the Docker side wrapped, for a
+// test that needs Docker to answer more than the plain fake does.
+func appdataServiceWith(t *testing.T, eng *fakeResticEngine, wrap func(*fakeServiceDocker) dockercli.Docker) (*api.Service, string, string) {
 	t.Helper()
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -42,10 +50,10 @@ func appdataService(t *testing.T, eng *fakeResticEngine) (*api.Service, string, 
 		t.Fatal(err)
 	}
 	d := &fakeServiceDocker{inspect: model.Inspect{
-		Name: "/vw", Image: "vaultwarden/server:latest", Running: true,
+		ID: "vwid", Name: "/vw", Image: "vaultwarden/server:latest", Running: true,
 		Mounts: []model.Mount{{Type: "bind", Source: appdata, Destination: "/data"}},
 	}}
-	svc := api.NewService(cfg, st, d, fakeVirsh{}, eng)
+	svc := api.NewService(cfg, st, wrap(d), fakeVirsh{}, eng)
 	t.Cleanup(svc.WaitForSamples)
 	return svc, root, appdata
 }
@@ -163,5 +171,23 @@ func TestBackupKeepsBackingUpAFolderThatWasAlwaysEmpty(t *testing.T) {
 
 	if _, err := svc.Backup(context.Background(), "vw"); err != nil {
 		t.Fatalf("backup of a folder that never held data: %v", err)
+	}
+}
+
+// appSeesFiles is a Docker that reports files wherever the app is asked about.
+type appSeesFiles struct{ *fakeServiceDocker }
+
+func (appSeesFiles) HoldsFiles(context.Context, string, string) (bool, error) { return true, nil }
+
+func TestBackupRefusesAFolderMountedAfterBombVaultStarted(t *testing.T) {
+	eng := &fakeResticEngine{}
+	svc, _, appdata := appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return appSeesFiles{d} })
+
+	_, err := svc.Backup(context.Background(), "vw")
+	if err == nil || !strings.Contains(err.Error(), "mounted after BombVault started") || !strings.Contains(err.Error(), appdata) {
+		t.Fatalf("first backup of a folder only the app can see into = %v, want a refusal naming %s", err, appdata)
+	}
+	if len(eng.backedUp) != 0 {
+		t.Fatalf("restic ran %d times, want none", len(eng.backedUp))
 	}
 }

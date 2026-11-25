@@ -314,6 +314,9 @@ func run() error {
 
 	// Backup service bridges the adapters into the DI orchestrator.
 	svc := api.NewService(cfg, st, dc, vc, engine)
+	if note := svc.LateMountNote(); note != "" {
+		log.Printf("main: %s", note)
+	}
 	if err := svc.ConvertLegacyAppKeys(); err != nil {
 		log.Printf("group: converting stored APP_KEYs to restic passwords: %v", err)
 	}

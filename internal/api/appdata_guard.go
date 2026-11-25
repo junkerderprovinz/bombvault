@@ -5,9 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path"
+	"path/filepath"
 	"slices"
+	"strings"
 
+	"github.com/junkerderprovinz/bombvault/internal/dockercli"
+	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/zfs"
 )
 
 // A disk that does not mount at boot leaves its mountpoint an ordinary folder,
@@ -92,4 +98,52 @@ func (s *Service) refuseEmptiedAppdata(ctx context.Context, repo string, mode re
 	}
 	return fmt.Errorf("backup %q: its backup folders hold no files, while earlier backups held data (did a disk not mount?). "+
 		"Refusing an empty backup that retention would count as a real one", name)
+}
+
+// mountedAfterStart returns the host paths of the folders that are empty here
+// while the container sees files in them. Without mount propagation on Host
+// Data, a disk the host mounts after BombVault started never shows up in this
+// container, and a first backup of such a folder would hold nothing.
+func (s *Service) mountedAfterStart(ctx context.Context, in model.Inspect, effective []string) []string {
+	peeker, ok := s.docker.(dockercli.FilePeeker)
+	if !ok || in.ID == "" {
+		return nil
+	}
+	var hidden []string
+	for _, p := range effective {
+		if empty, err := fileSetSourceEmpty(p); err != nil || !empty {
+			continue
+		}
+		host := s.toHostPath(p)
+		for _, m := range in.Mounts {
+			rel, err := filepath.Rel(m.Source, host)
+			if m.Source == "" || err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				continue
+			}
+			holds, err := peeker.HoldsFiles(ctx, in.ID, path.Join(m.Destination, filepath.ToSlash(rel)))
+			if err != nil {
+				log.Printf("api: backup: could not look at %s through Docker: %v", host, err) //nolint:gosec // G706: host is a path from the container's own inspect
+			}
+			if holds {
+				hidden = append(hidden, host)
+			}
+			break
+		}
+	}
+	return hidden
+}
+
+// LateMountNote says, once at startup, that Host Data is bound without mount
+// propagation, and is empty when it is not or when Host Data is no mount here.
+// TrueNAS's app catalog binds Host Data that way, so this is a log line and no error.
+func (s *Service) LateMountNote() string {
+	recs := zfsMountRecords()
+	if !slices.ContainsFunc(recs, func(r zfs.MountRecord) bool { return r.MountPoint == s.cfg.HostMountRoot }) {
+		return ""
+	}
+	if top, _ := zfs.Propagation(recs, s.cfg.HostMountRoot); top {
+		return ""
+	}
+	return fmt.Sprintf("Host Data %s is bound without mount propagation. A disk the host mounts below it after BombVault started "+
+		"shows up here after a restart, and backups of its folders are refused until then", s.cfg.HostMountRoot)
 }

@@ -7299,6 +7299,12 @@ func (s *Service) Backup(ctx context.Context, name string) (out backup.Summary, 
 		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
 		return backup.Summary{}, err
 	}
+	if hidden := s.mountedAfterStart(ctx, in, effective); len(hidden) > 0 {
+		err := fmt.Errorf("backup %q: %s holds files for the app but looks empty here, so it was mounted after BombVault started. "+
+			"Restart BombVault to see it, then back up again", name, strings.Join(hidden, ", "))
+		s.notifyBackup(ctx, "container", name, "", false, backup.Summary{}, err)
+		return backup.Summary{}, err
+	}
 
 	if step, err = s.recordHome(ctx, settings, item, step); err != nil {
 		return backup.Summary{}, err
