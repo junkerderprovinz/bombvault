@@ -12,18 +12,20 @@ import (
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 	"github.com/junkerderprovinz/bombvault/internal/model"
 	"github.com/junkerderprovinz/bombvault/internal/restic"
+	"github.com/junkerderprovinz/bombvault/internal/store"
 )
 
 // appdataService backs up a container "vw" whose appdata sits at
 // <root>/disks/ssd/appdata/vw.
 func appdataService(t *testing.T, eng *fakeResticEngine) (*api.Service, string, string) {
 	t.Helper()
-	return appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return d })
+	svc, root, appdata, _ := appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return d })
+	return svc, root, appdata
 }
 
 // appdataServiceWith is appdataService with the Docker side wrapped, for a
 // test that needs Docker to answer more than the plain fake does.
-func appdataServiceWith(t *testing.T, eng *fakeResticEngine, wrap func(*fakeServiceDocker) dockercli.Docker) (*api.Service, string, string) {
+func appdataServiceWith(t *testing.T, eng *fakeResticEngine, wrap func(*fakeServiceDocker) dockercli.Docker) (*api.Service, string, string, *store.Repo) {
 	t.Helper()
 	dir := t.TempDir()
 	root := filepath.ToSlash(dir)
@@ -55,7 +57,7 @@ func appdataServiceWith(t *testing.T, eng *fakeResticEngine, wrap func(*fakeServ
 	}}
 	svc := api.NewService(cfg, st, wrap(d), fakeVirsh{}, eng)
 	t.Cleanup(svc.WaitForSamples)
-	return svc, root, appdata
+	return svc, root, appdata, st
 }
 
 // mountTable writes a mountinfo fixture listing the given mount points.
@@ -181,7 +183,7 @@ func (appSeesFiles) HoldsFiles(context.Context, string, string) (bool, error) { 
 
 func TestBackupRefusesAFolderMountedAfterBombVaultStarted(t *testing.T) {
 	eng := &fakeResticEngine{}
-	svc, _, appdata := appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return appSeesFiles{d} })
+	svc, _, appdata, st := appdataServiceWith(t, eng, func(d *fakeServiceDocker) dockercli.Docker { return appSeesFiles{d} })
 
 	_, err := svc.Backup(context.Background(), "vw")
 	if err == nil || !strings.Contains(err.Error(), "mounted after BombVault started") || !strings.Contains(err.Error(), appdata) {
@@ -189,5 +191,12 @@ func TestBackupRefusesAFolderMountedAfterBombVaultStarted(t *testing.T) {
 	}
 	if len(eng.backedUp) != 0 {
 		t.Fatalf("restic ran %d times, want none", len(eng.backedUp))
+	}
+	runs, err := st.ListRuns(10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runs) != 1 || runs[0].Status != "failed" || !strings.Contains(runs[0].Error, "mounted after BombVault started") {
+		t.Fatalf("runs = %+v, want one failed run that says why", runs)
 	}
 }
