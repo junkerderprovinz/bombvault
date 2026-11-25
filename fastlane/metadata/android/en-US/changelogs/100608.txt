@@ -1,0 +1,1 @@
+BombVault 10.6.8 signs you in through Pocket ID, authentik, Keycloak and other sign-in services, lists every signed-in browser, and lets every phone of your group pair without a switch to turn on first.

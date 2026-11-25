@@ -1,0 +1,1 @@
+BombVault 10.6.8 meldet dich über Pocket ID, authentik, Keycloak und andere Anmeldedienste an, zeigt jeden angemeldeten Browser und lässt jedes Handy deiner Gruppe koppeln, ohne dass du erst einen Schalter umlegen musst.
