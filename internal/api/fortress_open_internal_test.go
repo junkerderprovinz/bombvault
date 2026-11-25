@@ -396,3 +396,27 @@ func TestAMemberOpensAnotherThroughTheFortress(t *testing.T) {
 		t.Fatalf("the activity log of the opened app: %+v", runs)
 	}
 }
+
+func TestAMemberOpensAnotherWhileItReconnects(t *testing.T) {
+	a := newInstance(t, "cellar", strings.Repeat("a1", 32))
+	b := newInstance(t, "attic", strings.Repeat("b2", 32))
+	servePages(a)
+	servePages(b)
+	id := inOneFortress(t, a, b)
+
+	// b's join leaves the relay the same way between the fortress that asks
+	// the members and its own.
+	b.svc.closeFortress()
+	back := make(chan error, 1)
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		back <- b.svc.openFortress()
+	}()
+	_, out := a.do(t, http.MethodPost, "/api/fortress/open/"+id, nil)
+	if err := <-back; err != nil {
+		t.Fatal(err)
+	}
+	if tab, _ := out["path"].(string); out["ok"] != true || !strings.HasPrefix(tab, fortress.OpenPath) {
+		t.Fatalf("open while b reconnects = %v", out)
+	}
+}
