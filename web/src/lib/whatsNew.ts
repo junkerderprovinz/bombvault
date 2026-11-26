@@ -64,6 +64,18 @@ const TO_CONTAINER_SETTINGS: WayStep[] = ["/backups", "container", { within: "en
 /** Every release that brought something new, newest first. */
 export const RELEASES: Release[] = [
   {
+    version: "10.7.0",
+    changes: [
+      { id: "phone-zfs-replicas", text: "whatsNew.phoneZfsReplicas" },
+      { id: "phone-restores", text: "whatsNew.phoneRestores" },
+      { id: "phone-old-folder", text: "whatsNew.phoneOldFolder" },
+      { id: "phone-anomalies", text: "whatsNew.phoneAnomalies" },
+      { id: "phone-entry-actions", text: "whatsNew.phoneEntryActions" },
+      { id: "phone-key-and-updates", text: "whatsNew.phoneKeyAndUpdates" },
+      { id: "app-settings", text: "whatsNew.appSettings" },
+    ],
+  },
+  {
     version: "10.6.8",
     // The sign-in tile is GlimStone's and carries no marks, so only the Address card beside it is placed.
     changes: [
