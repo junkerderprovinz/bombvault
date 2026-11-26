@@ -7,9 +7,11 @@ const listFlashPlugins = vi.fn(async () => ({
   ok: true,
   plugins: [{ name: "unassigned.devices", version: "2026.09.01", size: 2048, packages: [] }],
 }));
+const session = { phone: false };
 vi.mock("../lib/api", () => ({
   listFlashPlugins: (...a: unknown[]) => listFlashPlugins(...(a as [])),
   restoreFlashPlugin: vi.fn(),
+  openedAsPairedPhone: () => session.phone,
 }));
 
 const fire = vi.fn(async () => {});
@@ -23,7 +25,10 @@ import { FlashPluginList } from "./FlashPluginList";
 const t = ((k: keyof typeof en) => en[k]) as unknown as ReturnType<typeof import("../lib/i18n").useT>["t"];
 
 beforeEach(() => fire.mockClear());
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  session.phone = false;
+});
 
 it("lists each plugin with its version", async () => {
   render(<FlashPluginList snapshotId="abc" source="local" t={t} />);
@@ -45,4 +50,14 @@ it("writes into the flash only after the confirmation", async () => {
     fireEvent.click(within(dialog).getByRole("button", { name: en["flash.pluginRestore"] }));
   });
   await waitFor(() => expect(fire).toHaveBeenCalledTimes(1));
+});
+
+it("says on a paired phone that the flash is backed up first", async () => {
+  session.phone = true;
+  render(<FlashPluginList snapshotId="abc" source="local" t={t} />);
+  await screen.findByText("unassigned.devices");
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: en["flash.pluginRestore"] }));
+  });
+  expect((await screen.findByRole("dialog")).textContent).toContain(en["flash.pluginRestoreBackupFirst"]);
 });

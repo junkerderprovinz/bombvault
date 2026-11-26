@@ -1869,7 +1869,8 @@ func (h *Handler) handleDownloadDBDump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleSaveDBDumpTo writes one database dump into a folder on the server.
+// handleSaveDBDumpTo writes one database dump into a folder on the server, for
+// a paired phone only into a new or empty one inside the restore folder.
 // POST /api/containers/{name}/dbdumps/{id}/save?source=  body {targetPath, gz}
 //
 // Asynchronous like the to-folder restore: validation and the resolved file
@@ -1884,6 +1885,9 @@ func (h *Handler) handleSaveDBDumpTo(w http.ResponseWriter, r *http.Request) {
 		GZ         bool   `json:"gz"`
 	}
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if h.refusePairedFolder(w, r, "containers", body.TargetPath) {
 		return
 	}
 	target, started, err := h.svc.StartSaveDBDumpToPath(r.Context(), name, sourceParam(r), r.PathValue("id"), body.TargetPath, body.GZ)

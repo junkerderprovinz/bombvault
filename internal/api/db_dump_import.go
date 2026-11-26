@@ -167,7 +167,9 @@ type dbImportPlan struct {
 // refusal is answered before the first container call; from then on the work
 // runs detached under its own run kind, like a restore, and the container's
 // previous data folder is set aside rather than deleted. It offers no cancel:
-// from the moment that folder moves there is nothing safe to stop.
+// from the moment that folder moves there is nothing safe to stop. For a paired
+// phone the container is backed up first, and nothing is imported when that
+// backup fails.
 func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotID string) (bool, error) {
 	if !s.batchActive.CompareAndSwap(false, true) {
 		return false, nil
@@ -179,6 +181,7 @@ func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotI
 	}
 	bctx := context.WithoutCancel(ctx)
 	rkey := "container:" + name
+	backupFirst := pairedContext(ctx)
 	go func() {
 		var runID string
 		// A panic skips the restart, so the reason has to name what is down.
@@ -190,6 +193,12 @@ func (s *Service) StartImportDBDump(ctx context.Context, name, source, snapshotI
 		ictx, cancel := context.WithTimeout(bctx, restoreTimeout)
 		defer cancel()
 		runID = s.beginDBDumpRun(name, "dbimport", "import database dump")
+		if backupFirst {
+			if err := s.saveContainerState(WithBulkReplicateSuppressed(withBeforeRestore(ictx, plan.dump.ID)), name, nil); err != nil {
+				s.finishDBImportRun(runID, "", "", fmt.Errorf("nothing was imported, because the backup of the current state failed: %w", err))
+				return
+			}
+		}
 		pctx, startedAt := s.progBeginStage(ictx, rkey, "restore", "dbimport")
 		note, ierr := s.importDBDump(pctx, plan, rkey, startedAt, &stopped)
 		s.progEndStage(rkey, "restore", "dbimport", ierr == nil, startedAt)

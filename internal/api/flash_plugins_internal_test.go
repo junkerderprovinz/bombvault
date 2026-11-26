@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path"
 	"path/filepath"
@@ -177,5 +178,50 @@ func TestRestoreFlashPluginRefusesUnsafeOrUnknownNames(t *testing.T) {
 	}
 	if _, err := svc.StartRestoreFlashPlugin(context.Background(), "latest", "local", "other", false); err == nil {
 		t.Error("a restore without confirmation was accepted")
+	}
+}
+
+// waitForFlash blocks until a plugin restore started in the background ends.
+func waitForFlash(t *testing.T, svc *Service) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for svc.batchActive.Load() {
+		if time.Now().After(deadline) {
+			t.Fatal("the plugin restore never finished")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// lockedFlashEngine is a flash repository the backup key does not open.
+type lockedFlashEngine struct{ *flashFakeEngine }
+
+func (lockedFlashEngine) RepoOpens(context.Context, string, restic.Mode) bool { return false }
+
+func (lockedFlashEngine) RepoOpensErr(context.Context, string, restic.Mode) error {
+	return errors.New("Fatal: wrong password or no key found")
+}
+
+// A plugin runs as root at boot, so a phone puts one back only once the flash
+// as it is has a backup to return to.
+func TestAPairedPhoneRestoresAPluginOnlyAfterTheFlashIsBackedUp(t *testing.T) {
+	svc, flash, eng := flashPluginFixture(t)
+	svc.engine = lockedFlashEngine{eng}
+	ctx := context.WithValue(context.Background(), pairedKey{}, true)
+	started, err := svc.StartRestoreFlashPlugin(ctx, "latest", "local", "unassigned.devices", true)
+	if err != nil || !started {
+		t.Fatalf("start: %v %v", started, err)
+	}
+	waitForFlash(t, svc)
+
+	if _, err := os.Stat(filepath.Join(flash, "config", "plugins", "unassigned.devices.plg")); err == nil {
+		t.Error("the plugin was written although the flash could not be backed up first")
+	}
+	run, err := svc.store.LastRestoreRun(store.FlashTargetID)
+	if err != nil || run == nil {
+		t.Fatalf("no restore run: %v", err)
+	}
+	if run.Status != "failed" || !strings.Contains(run.Error, "backup of the current state failed") {
+		t.Errorf("the restore run = %s %q, want a failure that names the backup first", run.Status, run.Error)
 	}
 }

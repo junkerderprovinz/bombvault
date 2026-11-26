@@ -11,6 +11,8 @@ import {
   deleteSnapshot,
   importDbDump,
   listDbDumps,
+  openedAsPairedPhone,
+  openedThroughRelay,
   removeKeptDataDir,
   saveDbDumpTo,
   type DBDumpView,
@@ -20,6 +22,7 @@ import { ENGINE_NAMES, importRefusedKey, keptStampOf } from "../../lib/dbdump";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { useProgress } from "../../lib/progress";
+import { phoneRestoreFolder } from "../../lib/restorePlan";
 import { isWarningNote, RunReasonText } from "../../lib/runReason";
 import { useConfirm } from "../../lib/useConfirm";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
@@ -132,8 +135,14 @@ function DumpRow({
   const [shake, setShake] = useState(0);
   const [saveOpen, setSaveOpen] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [folder, setFolder] = useState(defaultFolder);
+  const [folderPick, setFolder] = useState(defaultFolder);
   const [savedPath, setSavedPath] = useState("");
+  // A paired phone saves only into a new folder inside the restore folder and
+  // downloads nothing over the relay, which carries no files.
+  const onPhone = openedAsPairedPhone();
+  const [openedAt] = useState(() => new Date());
+  const folder = onPhone ? phoneRestoreFolder(defaultFolder, containerName, openedAt) : folderPick;
+  const downloadable = !onPhone || !openedThroughRelay();
 
   const progressMap = useProgress();
   const prog = progressMap[`container:${containerName}`];
@@ -209,6 +218,7 @@ function DumpRow({
     if (importStops.length > 0) {
       asked += " " + t("dbdump.importStops", importStops.length).replace("{apps}", importStops.join(", "));
     }
+    if (onPhone) asked += " " + t("dbdump.importBackupFirst");
     setChecking(true);
     const check = await checkRestoreOnce({ kind: "dbImport", name: containerName, snapshotId: dump.id, source });
     setChecking(false);
@@ -272,16 +282,18 @@ function DumpRow({
         ) : (
           <>
             <FormatPicker format={format} onChange={onFormat} t={t} />
-            <Button
-              label={t("dbdump.download")}
-              labelKey="dbdump.download"
-              glyph={<IconDownload />}
-              tone="accent"
-              onClick={() => void handleDownload()}
-              disabled={preparing}
-              busy={preparing}
-              className="shrink-0 glim-btn-wrap"
-            />
+            {downloadable && (
+              <Button
+                label={t("dbdump.download")}
+                labelKey="dbdump.download"
+                glyph={<IconDownload />}
+                tone="accent"
+                onClick={() => void handleDownload()}
+                disabled={preparing}
+                busy={preparing}
+                className="shrink-0 glim-btn-wrap"
+              />
+            )}
             <Button
               label={t("dbdump.saveToFolder")}
               labelKey="dbdump.saveToFolder"
@@ -337,12 +349,22 @@ function DumpRow({
       {saveOpen && !dump.damaged && (
         <div className="mt-1 rounded-card bg-carbon-background p-2 flex flex-col gap-1.5">
           <FormatPicker format={format} onChange={onFormat} t={t} />
-          <FolderBrowser
-            label={t("restore.targetPath")}
-            value={folder}
-            hostMountRoot={hostMountRoot}
-            onChange={setFolder}
-          />
+          {onPhone ? (
+            <p className="text-xs text-carbon-textSub wrap-anywhere">
+              {t("dbdump.phoneSaveTo").split("{path}")[0]}
+              <bdi dir="ltr" className="font-mono">
+                {folder}
+              </bdi>
+              {t("dbdump.phoneSaveTo").split("{path}")[1]}
+            </p>
+          ) : (
+            <FolderBrowser
+              label={t("restore.targetPath")}
+              value={folder}
+              hostMountRoot={hostMountRoot}
+              onChange={setFolder}
+            />
+          )}
           <Button
             label={t("common.confirm")}
             labelKey="common.confirm"

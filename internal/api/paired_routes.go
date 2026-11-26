@@ -141,6 +141,15 @@ var pairedRoutes = map[string]bool{
 	"GET /api/stacks/{project}/dir":               true,
 	"GET /api/browse":                             true,
 
+	// A plugin and a database dump go back only once the flash or the
+	// container is backed up, and a dump is saved only into a new folder of
+	// the restore folder. A download reaches the phone at the server's own
+	// address, since the relay carries no files.
+	"POST /api/flash/plugins/restore":                  true,
+	"POST /api/containers/{name}/dbdumps/{id}/import":  true,
+	"POST /api/containers/{name}/dbdumps/{id}/save":    true,
+	"GET /api/containers/{name}/dbdumps/{id}/download": true,
+
 	// The anomalies, to read and to settle, an item's expectations to forget
 	// and its sensitivity. A finding a paired phone settles keeps its hold on
 	// the old backups until a sign-in with the password ends it.

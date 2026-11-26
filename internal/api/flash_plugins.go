@@ -188,7 +188,9 @@ func validFlashPluginName(name string) bool {
 
 // StartRestoreFlashPlugin puts one plugin from a flash backup back into the
 // live flash: its .plg, its folder and its package files. Other files on the
-// flash are left alone. It runs detached and records a restore run.
+// flash are left alone. It runs detached and records a restore run. For a
+// paired phone the flash is backed up first, since the plugin runs as root at
+// the next boot.
 func (s *Service) StartRestoreFlashPlugin(ctx context.Context, snapshotID, source, name string, confirm bool) (bool, error) {
 	if !confirm {
 		return false, errors.New("restoring a plugin writes into the flash and needs a confirmation")
@@ -221,14 +223,25 @@ func (s *Service) StartRestoreFlashPlugin(ctx context.Context, snapshotID, sourc
 		return false, s.busyErr("flash", errDomainBusy)
 	}
 	bctx := context.WithoutCancel(ctx)
+	backupFirst := pairedContext(ctx)
 	go func() {
 		var runID string
 		defer s.recoverOperation("restore flash plugin: "+name, nil, func(msg string) {
 			s.finishRestoreRun(runID, "", errors.New(msg))
 		})
 		defer s.batchActive.Store(false)
-		defer unlock()
+		defer func() { unlock() }()
 		runID, _ = s.startRun(bctx, store.FlashTargetID, "restore")
+		if backupFirst {
+			// The backup takes the domain itself.
+			unlock()
+			unlock = func() {}
+			if _, err := s.BackupFlash(WithBulkReplicateSuppressed(withBeforeRestore(bctx, scan.id))); err != nil {
+				s.finishRestoreRun(runID, "", fmt.Errorf("nothing was restored, because the backup of the current state failed: %w", err))
+				return
+			}
+			unlock = s.lockDomainFor("flash", "restore-plugin")
+		}
 		pctx, startedAt := s.progBegin(bctx, "flash", "restore")
 		rerr := s.restoreFlashPlugin(pctx, scan, *plugin)
 		s.progEnd("flash", "restore", rerr == nil, startedAt)

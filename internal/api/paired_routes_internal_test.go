@@ -482,13 +482,12 @@ var pairedRefused = []string{
 	"PUT /api/settings",
 	"PUT /api/settings/idle",
 	"PUT /api/settings/streaming",
-	// Downloads and exports of what is backed up, and the diagnostics bundle.
+	// Downloads and exports of what is backed up but a database dump, and the
+	// diagnostics bundle.
 	"GET /api/containers/{name}/appexports/{id}/download",
 	"POST /api/containers/{name}/appexports/{id}/import",
-	"GET /api/containers/{name}/dbdumps/{id}/download",
 	"GET /api/diagnostics",
 	"GET /api/flash/download",
-	"POST /api/containers/{name}/dbdumps/{id}/save",
 	"POST /api/containers/{name}/export",
 	"POST /api/items/{domain}/{name}/export",
 	"POST /api/items/{domain}/{name}/export/preview",
@@ -540,10 +539,7 @@ var pairedRefused = []string{
 	// Ending the hold a finding settled on a paired phone keeps, which lets
 	// the old backups be pruned.
 	"POST /api/anomalies/release",
-	// Restores that replace what is there without a backup first, and a
-	// plugin written back to the flash drive, which runs it as root at boot.
-	"POST /api/containers/{name}/dbdumps/{id}/import",
-	"POST /api/flash/plugins/restore",
+	// Restores that replace what is there without a backup first.
 	"POST /api/stacks/{project}/restore",
 	// The servers home runs backups on, which hold a root shell on each.
 	"GET /api/nodes",

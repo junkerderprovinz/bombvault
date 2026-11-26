@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { listFlashPlugins, restoreFlashPlugin, type FlashPlugin } from "../lib/api";
+import { listFlashPlugins, openedAsPairedPhone, restoreFlashPlugin, type FlashPlugin } from "../lib/api";
 import { useBackupWatch } from "../lib/backupWatch";
 import { humanBytes } from "../lib/forecast";
 import { tLtr } from "../lib/ltrFragments";
@@ -36,7 +36,10 @@ function PluginRow({ plugin, snapshotId, source, t }: { plugin: FlashPlugin; sna
   }, [state, push, t, plugin.name]);
 
   async function handleRestore() {
-    const ok = await confirm(t("flash.pluginRestoreConfirm").split("{name}").join(plugin.name), {
+    let asked = t("flash.pluginRestoreConfirm").split("{name}").join(plugin.name);
+    // The server backs up the flash first for a paired phone.
+    if (openedAsPairedPhone()) asked += " " + t("flash.pluginRestoreBackupFirst");
+    const ok = await confirm(asked, {
       confirmKey: "flash.pluginRestore",
     });
     if (ok) void fire();

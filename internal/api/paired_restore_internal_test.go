@@ -62,8 +62,6 @@ func TestAPairedSessionIsRefusedWhatReachesPastTheApp(t *testing.T) {
 		path string
 		body map[string]any
 	}{
-		{"/api/containers/postgres/dbdumps/abc/import", map[string]any{}},
-		{"/api/flash/plugins/restore", map[string]any{"name": "a.plg"}},
 		{"/api/runs/ack", map[string]any{"all": true}},
 		{"/api/runs/ack", map[string]any{"ids": []string{"1", "2"}}},
 		{"/api/zfs/datasets/abc/restore", map[string]any{"stamp": "s", "dataset": "tank/data", "newDataset": "tank/new", "safetySnapshot": true}},

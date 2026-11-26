@@ -1376,6 +1376,9 @@ func (s *Service) prepareSaveDBDump(ctx context.Context, name, source, snapshotI
 	if err != nil {
 		return dbDumpSavePlan{}, err
 	}
+	if pairedContext(ctx) && !paths.EmptyOrMissing(target) {
+		return dbDumpSavePlan{}, errPairedFolderInUse
+	}
 	if err := s.ensureSaveFolder(target); err != nil {
 		return dbDumpSavePlan{}, fmt.Errorf("create target folder: %w", err)
 	}

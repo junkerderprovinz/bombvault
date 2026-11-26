@@ -1676,6 +1676,8 @@ export const en = {
   "dbdump.savedTo": "Saved to {path}",
   "dbdump.import": "Import into a fresh database",
   "dbdump.importConfirm": "Import this {engine} {version} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
+  "dbdump.importBackupFirst": "BombVault backs up the container first. If that fails, nothing is imported.",
+  "dbdump.phoneSaveTo": "Goes into a new folder: {path}",
   "dbdump.importConfirmNoVersion": "Import this {engine} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
   "dbdump.importNoVersion": "This dump does not record its database version. The import fails if the server cannot read it.",
   "dbdump.importStops":
@@ -1929,6 +1931,7 @@ export const en = {
   "flash.pluginsFailed": "Could not read the plugins.",
   "flash.pluginRestore": "Restore",
   "flash.pluginRestoreConfirm": "Write {name} from this backup into the flash? Files with the same name are replaced, everything else stays.",
+  "flash.pluginRestoreBackupFirst": "BombVault backs up the flash first. If that fails, nothing is written.",
   "flash.pluginRestored": "{name} is back on the flash. Unraid installs it on the next boot, or right away under Plugins, Install Plugin with /boot/config/plugins/{name}.plg.",
   // One card for the flash zip export, plain-export encryption and the
   // repositories' own encryption: how exports and repositories are protected.
@@ -7599,6 +7602,8 @@ export const de: Translations = {
   "dbdump.savedTo": "Gespeichert nach {path}",
   "dbdump.import": "In eine frische Datenbank importieren",
   "dbdump.importConfirm": "Diesen {engine}-{version}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
+  "dbdump.importBackupFirst": "BombVault sichert vorher den Container. Klappt das nicht, wird nichts importiert.",
+  "dbdump.phoneSaveTo": "Kommt in einen neuen Ordner: {path}",
   "dbdump.importConfirmNoVersion": "Diesen {engine}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
   "dbdump.importNoVersion": "Dieser Dump hält seine Datenbankversion nicht fest. Der Import schlägt fehl, wenn der Server ihn nicht lesen kann.",
   "dbdump.importStops":
@@ -7812,6 +7817,7 @@ export const de: Translations = {
   "flash.pluginsFailed": "Die Plugins konnten nicht gelesen werden.",
   "flash.pluginRestore": "Wiederherstellen",
   "flash.pluginRestoreConfirm": "{name} aus dieser Sicherung in den Flash schreiben? Dateien gleichen Namens werden ersetzt, alles andere bleibt.",
+  "flash.pluginRestoreBackupFirst": "BombVault sichert vorher den Flash. Klappt das nicht, wird nichts geschrieben.",
   "flash.pluginRestored": "{name} liegt wieder auf dem Flash. Unraid installiert es beim nächsten Start oder sofort unter Plugins, Install Plugin mit /boot/config/plugins/{name}.plg.",
   // Geplanter Flash-ZIP-Export (#28): ein einfaches .zip, das nach jedem Flash-Backup in einen Ordner geschrieben wird.
   "flash.zipExport.title": "Flash-ZIP-Export",

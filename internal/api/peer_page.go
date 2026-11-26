@@ -70,9 +70,11 @@ var relayedPublic = map[string]bool{
 }
 
 // relayedRefused are routes of a phone's session a page over the relay does
-// not reach. Signing out would clear a cookie the phone does not keep there.
+// not reach. Signing out would clear a cookie the phone does not keep there,
+// and the relay carries no file to save.
 var relayedRefused = map[string]bool{
 	"POST /api/logout": true,
+	"GET /api/containers/{name}/dbdumps/{id}/download": true,
 }
 
 type relayedKey struct{}

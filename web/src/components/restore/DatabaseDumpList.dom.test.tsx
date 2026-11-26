@@ -22,6 +22,7 @@ const passing = [
   { id: "space", status: "ok", need: 10, free: 100 },
 ];
 const checkRestore = vi.fn((): Promise<unknown> => Promise.resolve({ ok: true, ready: true, checks: passing, plan: null }));
+const session = { phone: false, relay: false };
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -35,6 +36,8 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listRuns: (...a: unknown[]) => listRuns(...(a as [])),
     checkRestore: (...a: unknown[]) => checkRestore(...(a as [])),
     removeKeptDataDir: (...a: unknown[]) => removeKeptDataDir(...(a as [])),
+    openedAsPairedPhone: () => session.phone,
+    openedThroughRelay: () => session.relay,
   };
 });
 
@@ -136,6 +139,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  session.phone = false;
+  session.relay = false;
   localStorage.clear();
   watched.length = 0;
   listDbDumps.mockReset();
@@ -445,6 +450,43 @@ describe("the database dump list", () => {
 });
 
 // jsdom lays nothing out, so this pins the class the phone layout rests on.
+describe("the database dump list on a paired phone", () => {
+  it("saves into a new folder inside the restore folder and offers no other", async () => {
+    session.phone = true;
+    renderList();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.saveToFolder"] }));
+    expect(screen.queryByText(en["restore.targetPath"])).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: en["common.confirm"] }));
+
+    await waitFor(() => expect(saveDbDumpTo).toHaveBeenCalled());
+    const [, , folder] = saveDbDumpTo.mock.calls[0] as unknown as [string, string, string];
+    expect(folder).toMatch(/^user\/bombvault\/restore\/immich_postgres-\d{8}-\d{6}$/);
+    expect(document.body.textContent).toContain(filled("dbdump.phoneSaveTo", { path: folder }));
+  });
+
+  it("says before an import that the container is backed up first", async () => {
+    session.phone = true;
+    renderList();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.import"] }));
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(screen.getByRole("dialog").textContent).toContain(en["dbdump.importBackupFirst"]);
+  });
+
+  it("offers the download at the server's own address and not over the relay", async () => {
+    session.phone = true;
+    renderList();
+    expect(await screen.findByRole("button", { name: en["dbdump.download"] })).toBeTruthy();
+    cleanup();
+
+    session.relay = true;
+    renderList();
+    await screen.findByRole("button", { name: en["dbdump.saveToFolder"] });
+    expect(screen.queryByRole("button", { name: en["dbdump.download"] })).toBeNull();
+  });
+});
+
 describe("the database dump list at phone width", () => {
   it("lets the actions' labels wrap instead of running past the panel", async () => {
     renderList();
