@@ -35,9 +35,10 @@ We back none of this up ourselves, and uninstalling the app deletes all of it.
 - For a server opened through the relay, the files of its interface (scripts,
   styles, fonts) in the app's cache, so they come through the relay only once.
   Android may clear this cache at any time.
-- Your settings: the interface language, the look (theme, corner shape, accent
-  colour, rainbow mode, and whether to follow the first server's look), and the
-  motion level.
+- Your settings: the interface language, the look (theme, OLED black, corner
+  shape, accent colour, rainbow mode with its reactive mode and colour rotation,
+  whether buttons show their labels, and whether to follow the first server's
+  look), the motion level, and whether notifications stay quiet.
 
 If you use Android's own backup, it may include the app's storage. The group
 key is sealed with a key that stays in this phone's keystore and is not part of
