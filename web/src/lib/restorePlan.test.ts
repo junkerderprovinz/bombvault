@@ -65,6 +65,9 @@ describe("where a restore can go", () => {
     ["zfs", "files", { ...HERE, writable: true, oneDataset: true }, ["replace"]],
     ["zfs", "files", HERE, []],
     ["config", "all", HERE, []],
+    ["container", "files", { ...HERE, phone: true }, ["folder"]],
+    ["container", "all", { ...HERE, phone: true }, ["beside", "replace", "folder"]],
+    ["zfs", "all", { ...HERE, writable: true, oneDataset: true, phone: true }, ["replace", "folder"]],
   ] as const)("%s, %s", (kind, what, facts, wheres) => {
     expect(wheresFor(kind, what, facts)).toEqual(wheres);
   });

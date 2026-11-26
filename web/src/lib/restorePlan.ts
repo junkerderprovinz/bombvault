@@ -19,6 +19,9 @@ export interface TargetFacts {
   writable: boolean;
   /** ZFS: one dataset is chosen and this backup holds it. */
   oneDataset: boolean;
+  /** A paired phone's session, which the server lets put picked files only
+   *  into a folder and make no new dataset. */
+  phone?: boolean;
 }
 
 export function whatsFor(kind: EntryKind, facts: { database: boolean }): RestoreWhat[] {
@@ -44,7 +47,7 @@ export function wheresFor(kind: EntryKind, what: RestoreWhat, facts: TargetFacts
   if (what === "dumps" || what === "plugins") return [];
   switch (kind) {
     case "container":
-      if (what === "files") return ["replace", "folder"];
+      if (what === "files") return facts.phone ? ["folder"] : ["replace", "folder"];
       return facts.hasOriginal ? ["beside", "replace", "folder"] : ["replace", "folder"];
     case "vm":
       return facts.hasOriginal ? ["beside", "replace"] : ["replace"];
@@ -55,7 +58,7 @@ export function wheresFor(kind: EntryKind, what: RestoreWhat, facts: TargetFacts
       if (what === "files") return facts.writable ? ["replace"] : [];
       const targets: RestoreWhere[] = [];
       if (facts.writable) targets.push("replace");
-      if (facts.oneDataset) targets.push("newDataset");
+      if (facts.oneDataset && !facts.phone) targets.push("newDataset");
       return [...targets, "folder"];
     }
     case "flash":

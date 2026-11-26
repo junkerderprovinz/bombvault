@@ -429,6 +429,7 @@ function RestoreForm({
     hasOriginal,
     writable: kind === "zfs" && !wholeTree && (zfsReading || blocked === null),
     oneDataset: kind === "zfs" && !wholeTree && (zfsReading || (member?.snapshotId ?? "") !== ""),
+    phone: onPhone,
   };
   // The item carries what the window asks of a database as well, so the
   // container is not waited for.
@@ -1060,7 +1061,9 @@ function RestoreForm({
               )}
 
               <div className="-my-3 flex flex-col [&>*]:border-t [&>*]:border-carbon-border/60 [&>*]:py-3">
-                {canBackUpFirst && (
+                {/* The server backs up first for a phone, and keeps a ZFS
+                    safety snapshot, whatever the switches say. */}
+                {canBackUpFirst && !onPhone && (
                   <ToggleRow
                     label={t("restoreWindow.backupFirst")}
                     hint={t("restoreWindow.backupFirstHint")}
@@ -1094,12 +1097,14 @@ function RestoreForm({
                         onChange={setApplyProps}
                       />
                     )}
-                    <ToggleRow
-                      label={t("zfs.restore.safetySnapshot")}
-                      hint={t("zfs.restore.safetySnapshotHint")}
-                      checked={safety}
-                      onChange={(next) => void handleSafety(next)}
-                    />
+                    {!onPhone && (
+                      <ToggleRow
+                        label={t("zfs.restore.safetySnapshot")}
+                        hint={t("zfs.restore.safetySnapshotHint")}
+                        checked={safety}
+                        onChange={(next) => void handleSafety(next)}
+                      />
+                    )}
                     {zfsItem && zfsItem.stopContainers.length > 0 && (
                       <ToggleRow
                         label={t("zfs.restore.stopContainers").replace("{names}", zfsItem.stopContainers.join(", "))}

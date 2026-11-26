@@ -332,6 +332,21 @@ describe("a container", () => {
     expect(restoreContainerToPath).toHaveBeenCalledWith("immich", NEWEST, expect.stringMatching(/^user\/restore\/containers\/immich-/), "local");
   });
 
+  it("on a paired phone always backs up before replacing, and puts ticked files only into a folder", async () => {
+    vi.mocked(api.openedAsPairedPhone).mockReturnValue(true);
+    await open(entryOf("container"));
+    await press(target("replace")!);
+    expect(screen.queryByRole("switch", { name: en["restoreWindow.backupFirst"] })).toBeNull();
+    await ready(() => named("restoreWindow.replaceNamed", "immich"));
+    expect(lastCheck()).toMatchObject({ kind: "container", backupFirst: true });
+
+    await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
+    await waitFor(() => expect(listSnapshotFiles).toHaveBeenCalled());
+    await press(await within(dialog()).findByRole("checkbox", { name: "/config" }));
+    expect(target("replace")).toBeFalsy();
+    expect(toFolder()).toBeTruthy();
+  });
+
   it("asks to back up the current state before ticked files replace the original", async () => {
     await open(entryOf("container"));
     await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
