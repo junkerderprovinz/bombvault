@@ -117,6 +117,11 @@ class MainActivity : ComponentActivity() {
         get() = look.getBoolean("oled", false)
         set(on) = look.edit().putBoolean("oled", on).apply()
 
+    /** Quiet notifications, which hide success notices on every server alike. */
+    private var quiet: Boolean
+        get() = look.getBoolean("quiet", false)
+        set(on) = look.edit().putBoolean("quiet", on).apply()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         servers = Servers(this)
@@ -217,13 +222,13 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * What belongs to this phone's screen rather than to a server: OLED, and
-     * from Android 12 Material You's primary as Material 3 takes it for the
+     * What belongs to this phone's screen rather than to a server: OLED, quiet
+     * notifications, and from Android 12 Material You's primary as Material 3 takes it for the
      * light and the dark theme. Below 12 there is no palette to read, and the
      * pages offer no colour of the system's.
      */
     private fun device(): JSONObject {
-        val d = JSONObject().put("oled", oled)
+        val d = JSONObject().put("oled", oled).put("quiet", quiet)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             d.put(
                 "accent",
@@ -391,6 +396,7 @@ class MainActivity : ComponentActivity() {
                 reply.postMessage(deviceMessage())
             }
             "oled" -> if (server.id == current?.id) applyOled(msg.optBoolean("on"))
+            "quiet" -> if (server.id == current?.id) applyQuiet(msg.optBoolean("on"))
             // Leaves the way Back from a server's first page does, so its history goes with it.
             "home" -> if (server.id == current?.id) showLauncher()
         }
@@ -403,6 +409,7 @@ class MainActivity : ComponentActivity() {
             "bars" -> parseColor(msg.optString("color"))?.let { if (current == null) paintBars(it) }
             "device" -> launcher?.postMessage(deviceMessage())
             "oled" -> applyOled(msg.optBoolean("on"))
+            "quiet" -> applyQuiet(msg.optBoolean("on"))
             "open" -> servers.get(msg.getString("id"))?.takeIf { it.opens }?.let(::open)
             "trust" -> {
                 servers.trust(msg.getString("id"), msg.getString("fingerprint"))
@@ -480,6 +487,11 @@ class MainActivity : ComponentActivity() {
 
     private fun applyOled(on: Boolean) {
         oled = on
+        tellDevice()
+    }
+
+    private fun applyQuiet(on: Boolean) {
+        quiet = on
         tellDevice()
     }
 

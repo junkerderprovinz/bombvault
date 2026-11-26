@@ -34,6 +34,15 @@ describe("following the first server", () => {
   });
 });
 
+describe("the labels of the app's buttons", () => {
+  it("follow the first server and take effect at once", () => {
+    adopt(JSON.stringify({ ok: true, prefs: { "bv-labels-buttons": "glyph", "bv-labels-sidebar": "text" }, stored: true }));
+    expect(localStorage.getItem("bv-labels-buttons")).toBe("glyph");
+    expect(document.documentElement.getAttribute("data-labels-buttons")).toBe("glyph");
+    expect(localStorage.getItem("bv-labels-sidebar")).toBeNull();
+  });
+});
+
 describe("a change made while following", () => {
   it("keeps the look on screen instead of the one put away", () => {
     setFollowing(false);

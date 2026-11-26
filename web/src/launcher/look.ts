@@ -1,15 +1,19 @@
 // The launcher looks like the first server in its list until someone sets a
-// look here, as KnightLoader's app follows its default instance. Motion, disco
-// and the language stay the phone's own: they are about how this person uses
-// this phone, and a server's choice for its browser says nothing about that.
+// look here, as KnightLoader's app follows its default instance. Motion, disco,
+// quiet notifications and the language stay the phone's own: they are about how
+// this person uses this phone, and a server's choice for its browser says
+// nothing about that. Of the labels only the buttons' mode follows, since the
+// app's screens have no rail, tabs or bottom bar.
 import { applyStoredAccent } from "../lib/accent";
 import { applyStoredRainbow } from "../lib/appearance";
+import { applyStoredLabelModes } from "../lib/controls";
 import { applyStoredDisco } from "../lib/disco";
 import { applyStoredShape } from "../lib/shape";
 import { applyStoredTheme } from "../lib/theme";
+import { labelModeChanged } from "../lib/useLabelMode";
 
 /** The display preferences a followed server decides. */
-export const FOLLOWED_KEYS = ["bv-theme", "bv-accent", "bv-accent-presets", "bv-rainbow", "bv-shape"] as const;
+export const FOLLOWED_KEYS = ["bv-theme", "bv-accent", "bv-accent-presets", "bv-rainbow", "bv-shape", "bv-labels-buttons"] as const;
 
 /** Set while the look is this phone's own. */
 const LOCAL_KEY = "bv-app-look-local";
@@ -106,6 +110,8 @@ function write(prefs: Record<string, unknown>): void {
   applyStoredAccent();
   applyStoredRainbow({ animate: false });
   applyStoredShape();
+  applyStoredLabelModes();
+  labelModeChanged();
   // The disco walk reads the rainbow, so it decides again whether it runs.
   applyStoredDisco();
   window.dispatchEvent(new Event(FOLLOWED_EVENT));

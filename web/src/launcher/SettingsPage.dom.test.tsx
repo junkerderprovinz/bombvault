@@ -122,3 +122,39 @@ describe("the app's appearance", () => {
     expect(following()).toBe(true);
   });
 });
+
+describe("what the web's look settings offer per device", () => {
+  it("chooses the labels of the buttons and takes the look over from the server", () => {
+    renderPage();
+    const labels = within(screen.getByRole("radiogroup", { name: "Buttons" }));
+    fireEvent.click(labels.getByRole("radio", { name: "Symbol" }));
+    expect(localStorage.getItem("bv-labels-buttons")).toBe("glyph");
+    expect(document.documentElement.getAttribute("data-labels-buttons")).toBe("glyph");
+    expect(following()).toBe(false);
+  });
+
+  it("offers Reactive Mode and Colour Rotation under the rainbow", () => {
+    renderPage();
+    expect(screen.queryByRole("switch", { name: "Reactive Mode" })).toBeNull();
+    fireEvent.click(screen.getByRole("switch", { name: "Rainbow Mode" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Reactive Mode" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Colour Rotation" }));
+    expect(JSON.parse(localStorage.getItem("bv-rainbow")!)).toMatchObject({ on: true, reactive: true, rotate: true });
+    expect(following()).toBe(false);
+  });
+
+  it("keeps quiet notifications on the phone without leaving the followed look", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("switch", { name: "Quiet notifications" }));
+    expect(localStorage.getItem("bombvault.quietToasts")).toBe("1");
+    expect(following()).toBe(true);
+  });
+
+  it("opens the manual", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /^Manual/ }));
+    expect(open).toHaveBeenCalledWith("https://junkerderprovinz.github.io/bombvault/", "_blank", "noopener,noreferrer");
+    open.mockRestore();
+  });
+});

@@ -11,6 +11,7 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { appDevice, tellAppQuiet } from "./appDevice";
 import { ToastViewport } from "../components/Toast";
 import {
   NO_ENGAGEMENT,
@@ -89,12 +90,25 @@ function useDialogActionsClearance(shown: boolean, corner: RefObject<HTMLDivElem
   }, [shown, corner]);
 }
 
-function readStoredQuiet(): boolean {
+/** Whether success notices stay quiet. Inside the Android app the phone's
+ *  choice counts, so every server shows them alike. */
+export function readQuiet(): boolean {
+  const phone = appDevice()?.quiet;
+  if (phone !== undefined) return phone;
   try {
     return localStorage.getItem(QUIET_STORAGE_KEY) === "1";
   } catch {
     return false;
   }
+}
+
+export function storeQuiet(on: boolean): void {
+  try {
+    localStorage.setItem(QUIET_STORAGE_KEY, on ? "1" : "0");
+  } catch {
+    // Quiet mode just won't survive a reload.
+  }
+  tellAppQuiet(on);
 }
 
 interface ToastContextValue {
@@ -122,7 +136,7 @@ const ToastContext = createContext<ToastContextValue>({
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useT();
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
-  const [quiet, setQuietState] = useState<boolean>(readStoredQuiet);
+  const [quiet, setQuietState] = useState<boolean>(readQuiet);
   // One live timer per toast id; pause always clears it before resume
   // schedules a new one.
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -231,11 +245,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const setQuiet = useCallback((next: boolean) => {
     setQuietState(next);
-    try {
-      localStorage.setItem(QUIET_STORAGE_KEY, next ? "1" : "0");
-    } catch {
-      /* quiet mode just won't survive a reload */
-    }
+    storeQuiet(next);
   }, []);
 
   // Clear every timer on unmount so no callback sets state afterwards.

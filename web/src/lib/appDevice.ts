@@ -1,5 +1,5 @@
 // Inside the Android app the phone decides what belongs to its screen: OLED,
-// and the colour Material You hands out. The app sets both as
+// the colour Material You hands out, and whether success notices stay quiet. The app sets both as
 // window.bombvaultDevice before any script of the page runs, so the first frame
 // is already right, and posts them again as a "device" message when they
 // change. The launcher and every server's page read them the same way, and
@@ -9,6 +9,8 @@ export interface AppDevice {
   oled: boolean;
   /** Material You's colour for each theme, absent below Android 12. */
   accent?: { light: string; dark: string };
+  /** Quiet notifications, absent in an app too old to keep them. */
+  quiet?: boolean;
 }
 
 interface Port {
@@ -25,10 +27,11 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 
 function parse(raw: unknown): AppDevice | undefined {
   if (!raw || typeof raw !== "object") return undefined;
-  const { oled, accent } = raw as { oled?: unknown; accent?: { light?: unknown; dark?: unknown } };
+  const { oled, accent, quiet } = raw as { oled?: unknown; accent?: { light?: unknown; dark?: unknown }; quiet?: unknown };
   const tone = (v: unknown): v is string => typeof v === "string" && HEX.test(v);
   const device: AppDevice = { oled: oled === true };
   if (accent && tone(accent.light) && tone(accent.dark)) device.accent = { light: accent.light, dark: accent.dark };
+  if (typeof quiet === "boolean") device.quiet = quiet;
   return device;
 }
 
@@ -76,4 +79,13 @@ export function tellAppOled(on: boolean): void {
   if (!p || !now) return;
   device = { ...now, oled: on };
   p.postMessage(JSON.stringify({ op: "oled", on }));
+}
+
+/** Has the app keep quiet notifications as the phone's choice, for every server alike. */
+export function tellAppQuiet(on: boolean): void {
+  const p = port();
+  const now = appDevice();
+  if (!p || now?.quiet === undefined) return;
+  device = { ...now, quiet: on };
+  p.postMessage(JSON.stringify({ op: "quiet", on }));
 }

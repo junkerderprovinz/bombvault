@@ -23,13 +23,16 @@ import {
   setAccentPresets,
   systemAccentChosen,
 } from "../lib/accent";
-import { DOCKER_SVG, UNRAID_SVG, ZIP_SVG } from "../lib/appMarks";
+import { DOCKER_SVG, MANUAL_SVG, UNRAID_SVG, ZIP_SVG } from "../lib/appMarks";
 import { RAINBOW, getRainbow, hueVars, setRainbow, type RainbowState } from "../lib/appearance";
 import { copyText } from "../lib/clipboard";
+import { LABEL_MODES, getLabelMode, setLabelMode, type LabelMode } from "../lib/controls";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../lib/disco";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { MOTION_INTENSITIES, getMotionIntensity, setMotionIntensity, stormTap, type MotionIntensity } from "../lib/motion";
 import { SHAPES, getShape, leafTap, setShape, type Shape } from "../lib/shape";
+import { readQuiet, storeQuiet } from "../lib/toast";
+import { labelModeChanged } from "../lib/useLabelMode";
 import { darkShowing, getOled, getResolvedTheme, getTheme, oledRefusal, setOled, setTheme, watchDarkShowing, type Theme } from "../lib/theme";
 import { GLIMSTONE_VERSION } from "../lib/glimstoneVersion";
 import { useConfirm } from "../lib/useConfirm";
@@ -43,6 +46,7 @@ type T = ReturnType<typeof useT>["t"];
 
 const REPO = "https://github.com/junkerderprovinz/bombvault";
 const PAYPAL = "https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS";
+const MANUAL = "https://junkerderprovinz.github.io/bombvault/";
 
 /** The source of this build where it is a release, the newest otherwise. A
  *  test build counts 0.0.N and has no tag. */
@@ -203,8 +207,8 @@ function SwatchReset({ label, onClick }: { label: string; onClick: () => void })
 
 /**
  * SettingsPage is the app's settings, card for card the ones KnightLoader's
- * app has: language, this device, appearance, motion, the server it runs on,
- * a report for problems, about, and the danger zone.
+ * app has: language, this device, appearance, labels, motion, the server it
+ * runs on, help with problems, about, and the danger zone.
  */
 export function SettingsPage({
   t,
@@ -245,6 +249,8 @@ export function SettingsPage({
   const [rainbow, setRainbowLocal] = useState<RainbowState>(getRainbow);
   const [disco, setDiscoLocal] = useState(getDisco);
   const [motion, setMotionLocal] = useState<MotionIntensity>(getMotionIntensity);
+  const [labels, setLabelsLocal] = useState<LabelMode>(() => getLabelMode("buttons"));
+  const [quiet, setQuietLocal] = useState(readQuiet);
   // Found is this page's state rather than storage: leave with another value
   // chosen and the hidden entry is gone until the gesture is made again.
   const [leafFound, setLeafFound] = useState(false);
@@ -262,6 +268,7 @@ export function SettingsPage({
       setAccentLocal(getAccent());
       setPresetsLocal(getAccentPresets());
       setRainbowLocal(getRainbow());
+      setLabelsLocal(getLabelMode("buttons"));
     };
     window.addEventListener(FOLLOWED_EVENT, reread);
     return () => window.removeEventListener(FOLLOWED_EVENT, reread);
@@ -490,6 +497,22 @@ export function SettingsPage({
             </Row>
           )}
           {rainbow.on && (
+            <>
+              <Row label={t("settings.rainbowReactive")} info={t("settings.rainbowReactiveHint")}>
+                <Switch label={t("settings.rainbowReactive")} checked={rainbow.reactive} onChange={(reactive) => updateRainbow({ reactive })} hue={4} />
+              </Row>
+              <Row label={t("settings.rainbowRotate")} info={t("settings.rainbowRotateHint")}>
+                <Switch
+                  label={t("settings.rainbowRotate")}
+                  checked={rainbow.rotate}
+                  // A fresh offset at once, so turning it on shows something.
+                  onChange={(rotate) => updateRainbow({ rotate, seed: rotate ? 1 + Math.floor(Math.random() * (RAINBOW.length - 1)) : 0 })}
+                  hue={5}
+                />
+              </Row>
+            </>
+          )}
+          {rainbow.on && (
             <div className="mb-0.5 mt-3 flex items-center gap-3">
               <span className="shrink-0 text-sm text-carbon-text">{t("settings.rainbowPaletteLabel")}</span>
               <span className="flex flex-1 items-center justify-end gap-0.5">
@@ -510,6 +533,37 @@ export function SettingsPage({
               </span>
             </div>
           )}
+        </div>
+        {/* Like OLED this is the phone's own, and the app hands it to every server it opens. */}
+        <Row label={t("settings.quietToasts")} info={t("settings.quietToastsHint")}>
+          <Switch
+            label={t("settings.quietToasts")}
+            checked={quiet}
+            onChange={(on) => {
+              storeQuiet(on);
+              setQuietLocal(on);
+            }}
+            hue={6}
+          />
+        </Row>
+      </Section>
+
+      {/* Only the buttons' labels, since these screens have no rail, tabs or
+          bottom bar. They follow the server with the rest of the look. */}
+      <Section title={t("settings.labels")} hue={2} info={t("settings.labelsHint")}>
+        <div className={`flex flex-col ${follows ? "opacity-40" : ""}`}>
+          <Axis>{t("settings.labels.buttons")}</Axis>
+          <Well
+            label={t("settings.labels.buttons")}
+            options={LABEL_MODES.map((m) => ({ value: m, label: t(`settings.labels.mode.${m}` as TranslationKey) }))}
+            value={labels}
+            onPick={(mode: LabelMode) => {
+              setLabelMode("buttons", mode);
+              setLabelsLocal(mode);
+              labelModeChanged();
+              takeOver();
+            }}
+          />
         </div>
       </Section>
 
@@ -631,6 +685,14 @@ export function SettingsPage({
                 copiedTimer.current = window.setTimeout(() => setCopied(false), 2000);
               })
             }
+          />
+        </div>
+        <div className="glim-readme-btn-rows mb-2.5">
+          <ReadmeButton
+            tile="glim-tile-docs"
+            parts={[{ name: t("tile.info.manual"), sub: t("instances.open"), onClick: () => open(MANUAL) }]}
+            mark={<BrandMark svg={MANUAL_SVG} />}
+            markClass="glim-docs-mark"
           />
         </div>
       </Section>

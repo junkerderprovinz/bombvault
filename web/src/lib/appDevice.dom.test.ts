@@ -77,4 +77,26 @@ describe("the phone's screen", () => {
     expect(phone.posted).toEqual([{ op: "oled", on: true }]);
     expect(appDevice()?.oled).toBe(true);
   });
+
+  it("reads quiet notifications as the phone's choice and hands a change to the app", async () => {
+    const phone = app({ oled: false, quiet: true });
+    const { appDevice } = await load();
+    const { readQuiet, storeQuiet } = await import("./toast");
+    localStorage.setItem("bombvault.quietToasts", "0");
+    expect(readQuiet()).toBe(true);
+    storeQuiet(false);
+    expect(phone.posted).toEqual([{ op: "quiet", on: false }]);
+    expect(appDevice()?.quiet).toBe(false);
+    expect(readQuiet()).toBe(false);
+    localStorage.clear();
+  });
+
+  it("leaves quiet notifications to the page in an app too old to say", async () => {
+    app({ oled: false });
+    await load();
+    const { readQuiet } = await import("./toast");
+    localStorage.setItem("bombvault.quietToasts", "1");
+    expect(readQuiet()).toBe(true);
+    localStorage.clear();
+  });
 });
