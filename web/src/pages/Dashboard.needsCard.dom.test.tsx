@@ -289,6 +289,16 @@ describe("NeedsCard", () => {
     window.removeEventListener(ATTENTION_CHANGED_EVENT, changed);
   });
 
+  it("on a paired phone leaves out resolving a copy that failed in several sections", () => {
+    server.phone = true;
+    renderCard([failedBox()]);
+
+    const row = within(screen.getByTestId("need-failed-copy"));
+    expect(row.queryByRole("button", { name: en["nav.more"] })).toBeNull();
+    expect(row.getByRole("button", { name: en["breakdown.retry"] })).toBeTruthy();
+    expect(row.queryByRole("button", { name: en["errorPanel.resolve"] })).toBeNull();
+  });
+
   it("asks whether the backups found of a section are this server's own", () => {
     renderCard([{ is: "copyDecision", domain: "files" }]);
 

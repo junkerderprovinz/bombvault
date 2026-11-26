@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { listRuns, ackRuns } from "../lib/api";
+import { listRuns, ackRuns, openedAsPairedPhone } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
 import { useBackCloses } from "../lib/useBackCloses";
 import { useToast } from "../lib/toast";
@@ -57,6 +57,7 @@ interface ErrorGroup {
 export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
   const { t } = useT();
   const { push } = useToast();
+  const onPhone = openedAsPairedPhone();
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -252,15 +253,19 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
                       <Badge tone="fail" shape="pill" size="large" className="tabular-nums">
                         {countLabel(g.count)}
                       </Badge>
-                      <Badge
-                        as="button"
-                        tone="neutral"
-                        size="large"
-                        onClick={() => acknowledge({ ids: g.ids })}
-                        disabled={busy}
-                      >
-                        {t("errorPanel.resolve")}
-                      </Badge>
+                      {/* A phone resolves one failure at a time, so it cannot
+                          clear what the person should still see. */}
+                      {(!onPhone || g.ids.length === 1) && (
+                        <Badge
+                          as="button"
+                          tone="neutral"
+                          size="large"
+                          onClick={() => acknowledge({ ids: g.ids })}
+                          disabled={busy}
+                        >
+                          {t("errorPanel.resolve")}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-0.5 ps-4 text-xs text-carbon-textMuted">
@@ -304,13 +309,15 @@ export function ErrorDetailPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex items-center justify-end gap-3 px-5 py-4">
-          <Button
-            label={t("errorPanel.resolveAll")}
-            labelKey="errorPanel.resolveAll"
-            tone="neutral"
-            onClick={() => acknowledge({ all: true })}
-            disabled={busy || groups.length === 0}
-          />
+          {!onPhone && (
+            <Button
+              label={t("errorPanel.resolveAll")}
+              labelKey="errorPanel.resolveAll"
+              tone="neutral"
+              onClick={() => acknowledge({ all: true })}
+              disabled={busy || groups.length === 0}
+            />
+          )}
           <Button
             ref={closeRef}
             label={t("common.close")}

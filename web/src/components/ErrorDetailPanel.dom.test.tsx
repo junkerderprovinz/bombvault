@@ -12,10 +12,16 @@ import { openSelect } from "./selectField.testsupport";
 
 const listRuns = vi.fn();
 const ackRuns = vi.fn();
+const session = vi.hoisted(() => ({ phone: false }));
 
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
-  return { ...actual, listRuns: () => listRuns(), ackRuns: (...a: unknown[]) => ackRuns(...a) };
+  return {
+    ...actual,
+    listRuns: () => listRuns(),
+    ackRuns: (...a: unknown[]) => ackRuns(...a),
+    openedAsPairedPhone: () => session.phone,
+  };
 });
 
 const { ErrorDetailPanel } = await import("./ErrorDetailPanel");
@@ -56,6 +62,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  session.phone = false;
 });
 
 describe("resolving a failure", () => {
@@ -64,6 +71,20 @@ describe("resolving a failure", () => {
     renderPanel([run()]);
     fireEvent.click(await screen.findByRole("button", { name: en["errorPanel.resolve"] }));
     await screen.findByText(en["common.saveFailed"]);
+  });
+});
+
+describe("resolving on a paired phone", () => {
+  it("resolves one failure at a time, as the server takes it from a phone", async () => {
+    session.phone = true;
+    renderPanel([
+      run({ id: "a1", target: "pg", domain: "container", error: "boom" }),
+      run({ id: "b1", target: "maria", domain: "container", error: "bang" }),
+      run({ id: "b2", target: "maria2", domain: "container", error: "bang" }),
+    ]);
+    await waitFor(() => expect(listRuns).toHaveBeenCalled());
+    expect(await screen.findAllByRole("button", { name: en["errorPanel.resolve"] })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: en["errorPanel.resolveAll"] })).toBeNull();
   });
 });
 

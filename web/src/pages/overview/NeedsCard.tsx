@@ -18,6 +18,7 @@ import {
   ackRecoveryKit,
   ackRuns,
   downloadRecoveryKit,
+  openedAsPairedPhone,
   replicateOffsite,
   type AnomalyView,
   type BackupItem,
@@ -368,7 +369,10 @@ function FailedCopyRow({ need, t, lang }: { need: Need & { is: "failedCopy" }; t
             label={t("overview.needs.copyFailed")}
             actions={[
               { id: "retry", label: t("breakdown.retry"), glyph: <IconRetry />, onSelect: () => void retry() },
-              { id: "resolve", label: t("errorPanel.resolve"), glyph: <IconConfirm />, onSelect: () => void resolve() },
+              // A phone resolves one failure at a time.
+              ...(openedAsPairedPhone() && sections.length > 1
+                ? []
+                : [{ id: "resolve", label: t("errorPanel.resolve"), glyph: <IconConfirm />, onSelect: () => void resolve() }]),
             ]}
           />
         </>

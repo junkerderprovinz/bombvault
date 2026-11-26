@@ -194,6 +194,8 @@ export const server = {
   kitDue: false,
   /** APP_KEY stopped opening the key this server took over. */
   keyLocked: false,
+  /** The page runs on a paired phone's session. */
+  phone: false,
   /** What the settings hold beyond the recovery kit. */
   settings: {} as Partial<Settings>,
   platform: "unraid",
@@ -216,6 +218,7 @@ export function resetServer(): void {
     detection: false,
     kitDue: false,
     keyLocked: false,
+    phone: false,
     settings: {},
     platform: "unraid",
     saveRefused: "",
@@ -270,6 +273,7 @@ export function stagedApi<M extends object>(actual: M): M {
   return {
     ...actual,
     getStatus: () => answer(server.domains, (domains) => ({ ok: true, domains })),
+    openedAsPairedPhone: () => server.phone,
     getEmergency: () =>
       Promise.resolve({ ok: true, emergency: { backupKey: server.keyLocked ? "locked" : "own", undoable: false } }),
     listItems: () => answer(server.items, (items) => ({ ok: true, items, unlisted: [] })),
