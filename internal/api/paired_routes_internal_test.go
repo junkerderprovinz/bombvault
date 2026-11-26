@@ -341,7 +341,6 @@ var pairedRefused = []string{
 	"GET /api/zfs/receive/{slot}/points",
 	"GET /api/zfs/replica/key",
 	"GET /api/zfs/replica/local-pools",
-	"GET /api/zfs/replica/servers",
 	"PATCH /api/zfs/receive/requests/{id}",
 	"PATCH /api/zfs/replica/servers/{id}",
 	"POST /api/fleet/mesh-offers/{id}/accept",
@@ -516,7 +515,6 @@ var pairedRefused = []string{
 	"GET /api/items/{domain}/{name}/offsite/{target}/removal",
 	"GET /api/items/{domain}/{name}/removal",
 	"GET /api/items/{domain}/{name}/timeline/{key}/delete",
-	"GET /api/zfs/datasets/{id}/replica",
 	"PATCH /api/containers/{name}",
 	"PATCH /api/files/sets/{id}",
 	"PATCH /api/vms/{name}",
@@ -668,6 +666,8 @@ func TestAPairedSessionIsRefusedSomethingOfEveryKindItMayNotDo(t *testing.T) {
 		{http.MethodGet, "/api/diagnostics", nil},
 		{http.MethodPatch, "/api/containers/nginx", map[string]any{"preHook": "touch /tmp/x"}},
 		{http.MethodPost, "/api/prune/files", map[string]any{}},
+		{http.MethodPatch, "/api/zfs/replica/servers/abc", map[string]any{"host": "elsewhere.example"}},
+		{http.MethodPatch, "/api/zfs/datasets/abc/replica", map[string]any{"target": map[string]any{"kind": "none"}}},
 	} {
 		code, out := in.do(t, route.method, route.path, route.body)
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
@@ -735,6 +735,13 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	srv, err := in.st.CreateZFSReplicaServer(store.ZFSReplicaServer{Name: "far", Host: "replica-host.leak", User: "replicauser", Port: 2222, Pool: "tank", Root: "tank/replica"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := in.st.SetZFSReplicaTarget(ds.ID, store.ZFSReplicaTargetServer, srv.ID); err != nil {
+		t.Fatal(err)
+	}
 	fill := func(path string) string {
 		switch {
 		case strings.HasPrefix(path, "/api/files/sets/"):
@@ -749,18 +756,19 @@ func TestAPairedSessionSeesNoLocationOrHookInWhatItReads(t *testing.T) {
 		return "abc"
 	}
 	passwords := []string{"s3cr", "AKIDLEAK", "LEAK,KEY"}
-	leaks := append(slices.Clone(passwords), "hooksecret")
-	hookSeen := false
+	leaks := append(slices.Clone(passwords), "hooksecret", "replica-host.leak", "replicauser")
+	hookSeen, hostSeen := false, false
 	for route, body := range pairedReads(in, fill) {
 		hookSeen = hookSeen || strings.Contains(body, "hooksecret")
+		hostSeen = hostSeen || strings.Contains(body, "replica-host.leak")
 		for _, leak := range passwords {
 			if strings.Contains(body, leak) {
 				t.Errorf("%s answered the person's own session with %q", route, leak)
 			}
 		}
 	}
-	if !hookSeen {
-		t.Fatal("the person's own session does not read the hook anywhere, so this test proves nothing")
+	if !hookSeen || !hostSeen {
+		t.Fatal("the person's own session does not read the hook or the replica server's address anywhere, so this test proves nothing")
 	}
 	hash, epoch, _ := in.h.phoneSigning()
 	in.session = listedPhoneSession(t, in.st, in.appKey, hash, epoch)

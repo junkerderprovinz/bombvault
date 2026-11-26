@@ -75,6 +75,8 @@ var pairedRoutes = map[string]bool{
 	"GET /api/zfs/datasets/{id}/safety-snapshots": true,
 	"GET /api/zfs/connection":                     true,
 	"GET /api/zfs/host":                           true,
+	"GET /api/zfs/datasets/{id}/replica":          true,
+	"GET /api/zfs/replica/servers":                true,
 	"GET /api/containers/{name}/mounts":           true,
 	"GET /api/retention/preview/{domain}":         true,
 	"GET /api/flash/snapshots":                    true,

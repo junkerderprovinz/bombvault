@@ -8,7 +8,7 @@ import { IconPencil, IconZFS } from "../../components/navGlyphs";
 import { AddReplicaServerDialog } from "../../components/zfs/replica/AddReplicaServerDialog";
 import { unixOf } from "../../components/zfs/replica/replicaModel";
 import { useReplicaServers } from "../../components/zfs/replica/replicaStore";
-import type { ZFSReplicaServer } from "../../lib/api";
+import { openedAsPairedPhone, type ZFSReplicaServer } from "../../lib/api";
 import { humanBytes } from "../../lib/forecast";
 import { useT } from "../../lib/i18n";
 import { relativeTime } from "../../lib/reltime";
@@ -17,7 +17,8 @@ import type { ItemReplica } from "./instancesModel";
 
 /** ZFSServerCards are the ZFS servers without BombVault, reached over SSH.
  *  They take replicas like a paired instance does, so they stand in the same
- *  grid, each opening its own page. */
+ *  grid, each opening its own page. A paired phone is not told a server's
+ *  address and does not change the servers, so its cards only show them. */
 export function ZFSServerCards({
   replicas,
   firstIndex,
@@ -32,6 +33,7 @@ export function ZFSServerCards({
   const navigate = useNavigate();
   const { servers, reload } = useReplicaServers();
   const [editing, setEditing] = useState<ZFSReplicaServer | null>(null);
+  const onPhone = openedAsPairedPhone();
 
   return (
     <>
@@ -65,7 +67,7 @@ export function ZFSServerCards({
               <Facts
                 items={[
                   t("instances.overSsh"),
-                  <bdi dir="ltr">{`${s.user}@${s.host}`}</bdi>,
+                  ...(s.host ? [<bdi dir="ltr">{`${s.user}@${s.host}`}</bdi>] : []),
                   <bdi dir="ltr" className="font-mono">
                     {s.root}
                   </bdi>,
@@ -83,24 +85,26 @@ export function ZFSServerCards({
               </>
             }
             actions={
-              <>
-                <Button
-                  label={t("zfs.replica.server.edit")}
-                  labelKey="zfs.replica.server.edit"
-                  glyph={<IconPencil />}
-                  tone="neutral"
-                  onClick={() => setEditing(s)}
-                />
-                <span data-new-way="zfs-server" className="flex">
+              !onPhone && (
+                <>
                   <Button
-                    label={t("instances.open")}
-                    labelKey="instances.open"
-                    glyph={<IconEye />}
+                    label={t("zfs.replica.server.edit")}
+                    labelKey="zfs.replica.server.edit"
+                    glyph={<IconPencil />}
                     tone="neutral"
-                    onClick={() => navigate(`/instances/zfs/${encodeURIComponent(s.id)}`)}
+                    onClick={() => setEditing(s)}
                   />
-                </span>
-              </>
+                  <span data-new-way="zfs-server" className="flex">
+                    <Button
+                      label={t("instances.open")}
+                      labelKey="instances.open"
+                      glyph={<IconEye />}
+                      tone="neutral"
+                      onClick={() => navigate(`/instances/zfs/${encodeURIComponent(s.id)}`)}
+                    />
+                  </span>
+                </>
+              )
             }
             index={firstIndex + i}
             hot={hot === `zfs:${s.id}`}

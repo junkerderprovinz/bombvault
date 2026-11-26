@@ -56,12 +56,19 @@ func (h *Handler) handleZFSLocalPools(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, pools)
 }
 
+// handleListZFSReplicaServers lists the servers. A paired phone reads them
+// without the address and the login, which only the connection needs.
 // GET /api/zfs/replica/servers
 func (h *Handler) handleListZFSReplicaServers(w http.ResponseWriter, r *http.Request) {
 	servers, err := h.svc.ListZFSReplicaServers(r.Context())
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, failEnvelope(err))
 		return
+	}
+	if isPaired(r) {
+		for i := range servers {
+			servers[i].Host, servers[i].User, servers[i].Port = "", "", 0
+		}
 	}
 	writeJSON(w, http.StatusOK, servers)
 }
