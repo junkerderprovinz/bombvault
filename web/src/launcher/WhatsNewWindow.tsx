@@ -11,11 +11,19 @@ import { InstanceWindow } from "../pages/instances/InstanceWindow";
 // the window opens offline and loads only the notes it shows.
 const NOTES = import.meta.glob<string>("../../../internal/releasenotes/notes/v*.md", { query: "?raw", import: "default" });
 
+const notesPath = (version: string) => `../../../internal/releasenotes/notes/v${version}.md`;
+
 /** notesOf loads the notes of a release from the APK, or gives null for a
- *  version without any, such as a build of no release. */
+ *  version without any. */
 export function notesOf(version: string): Promise<string | null> {
-  const load = NOTES[`../../../internal/releasenotes/notes/v${version}.md`];
+  const load = NOTES[notesPath(version)];
   return load ? load() : Promise.resolve(null);
+}
+
+/** The release the window shows: the app's own, or for a build of no release
+ *  the newest one What's new lists, as the web's window does. */
+function releaseShown(version: string): string {
+  return NOTES[notesPath(version)] ? version : RELEASES[0].version;
 }
 
 /** What a release brought as the web's What's new lists it, without the
@@ -27,8 +35,9 @@ function changesOf(version: string) {
 
 /** WhatsNewWindow shows the notes of the app's own release and what it
  *  brought, as the web's window does for the release a server runs. */
-export function WhatsNewWindow({ version, onClose }: { version: string; onClose: () => void }) {
+export function WhatsNewWindow({ version: running, onClose }: { version: string; onClose: () => void }) {
   const { t } = useT();
+  const version = releaseShown(running);
   const [notes, setNotes] = useState<string | null>();
   useEffect(() => {
     let active = true;

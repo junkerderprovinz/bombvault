@@ -10,6 +10,7 @@ import { en, I18nProvider, useT } from "../lib/i18n";
 import { setSystemAccent } from "../lib/accent";
 import { SettingsPage } from "./SettingsPage";
 import { following } from "./look";
+import { RELEASES } from "../lib/whatsNew";
 
 const APP = { version: "10.6.0", versionCode: 100600, android: "36", model: "Pixel 8", deviceName: "" };
 
@@ -96,6 +97,18 @@ describe("the Version and Components cards", () => {
     const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", "10.6.8") });
     expect(within(notes).getByText(en["whatsNew.signInServices"])).toBeTruthy();
     expect(within(notes).queryByText(en["whatsNew.instanceAddress"])).toBeNull();
+  });
+
+  it("show a build of no release the newest release's notes, as the web does", async () => {
+    render(
+      <I18nProvider>
+        <Harness app={{ ...APP, version: "0.0.465" }} />
+      </I18nProvider>,
+    );
+    fireEvent.click(card(words.versionCard.title).getByRole("button"));
+    const newest = RELEASES[0].version;
+    const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", newest) });
+    expect(await within(notes).findByTestId("release-notes")).toBeTruthy();
   });
 
   it("list GlimStone in the Components card", () => {
