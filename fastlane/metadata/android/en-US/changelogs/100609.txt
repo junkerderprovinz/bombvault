@@ -1,0 +1,1 @@
+BombVault 10.6.9 refuses to back up a folder whose disk was mounted after it started, instead of saving it empty, and tells you to restart BombVault.

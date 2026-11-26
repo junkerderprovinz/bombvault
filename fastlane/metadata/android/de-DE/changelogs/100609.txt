@@ -1,0 +1,1 @@
+BombVault 10.6.9 sichert einen Ordner nicht mehr leer, wenn seine Platte erst nach dem Start eingehängt wurde, sondern lehnt die Sicherung ab und sagt dir, dass du BombVault neu starten sollst.
