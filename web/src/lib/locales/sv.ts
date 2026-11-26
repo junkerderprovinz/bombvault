@@ -1168,6 +1168,7 @@ const sv: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "På telefonen kan du kontrollera en återställning, köra ett starttest, ta in en post i schemat eller ta ut den, avböja den, tagga en säkerhetskopia, rensa i ett ZFS-träd och hitta säkerhetskopior.",
   "whatsNew.phoneKeyAndUpdates": "Telefonen visar när säkerhetskopieringsnyckeln inte längre öppnar, och nyheterna i en nyare version så snart ”Sök efter uppdateringar” hittar en.",
   "whatsNew.appSettings": "Appens inställningar har text på knapparna, ”Reaktivt läge”, ”Färgrotation”, ”Tysta aviseringar” och en länk till handboken.",
+  "whatsNew.appReleaseNotes": "Nyheter på appens kort Version öppnar versionsinformationen i själva appen, även utan anslutning.",
   "whatsNew.passwordOptional": "BombVault fungerar helt utan inloggningslösenord, från återställningskitet till noder och fästningens andra appar. Ett lösenord av valfri längd går bra, och ett kort får bara ett tips.",
   "whatsNew.releaseNotesWindow": "När Sök efter uppdateringar hittar en nyare version visar Nyheter på kortet Version dess versionsinformation i ett fönster.",
   "whatsNew.appVersionCards": "Android-appens inställningar visar dess version och var uppdateringarna kommer ifrån, med GlimStones version under Komponenter.",

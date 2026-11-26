@@ -874,6 +874,7 @@ const lv: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Tālrunī vari pārbaudīt atjaunošanu, palaist starta testu, iekļaut ierakstu grafikā vai izņemt no tā, noraidīt to, pievienot dublējumam birku, noņemt ZFS koka palikušos momentuzņēmumus un atrast dublējumus.",
   "whatsNew.phoneKeyAndUpdates": "Tālrunis parāda, kad dublējumu atslēga vairs neatver, un jaunākas versijas jaunumus, tiklīdz “Meklēt atjauninājumus” to atrod.",
   "whatsNew.appSettings": "Lietotnes iestatījumos ir pogu uzraksti, “Reaktīvais režīms”, “Krāsu rotācija”, “Klusi paziņojumi” un saite uz rokasgrāmatu.",
+  "whatsNew.appReleaseNotes": "Lietotnes kartītes Versija poga Jaunumi atver laidiena piezīmes pašā lietotnē, arī bez savienojuma.",
   "whatsNew.passwordOptional": "BombVault pilnībā darbojas bez pieteikšanās paroles, no atkopšanas komplekta līdz mezgliem un citām cietokšņa lietotnēm. Der jebkura garuma parole, un īsa saņem tikai padomu.",
   "whatsNew.releaseNotesWindow": "Kad Meklēt atjauninājumus atrod jaunāku versiju, kartītes Versija poga Jaunumi parāda tās laidiena piezīmes logā.",
   "whatsNew.appVersionCards": "Android lietotnes iestatījumi rāda tās versiju un to, no kurienes nāk atjauninājumi, kā arī GlimStone versiju sadaļā Komponenti.",

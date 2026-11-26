@@ -1151,6 +1151,7 @@ const ko: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "휴대폰에서 복원을 확인하고, 시작 테스트를 하고, 항목을 일정에 넣거나 빼고, 거절하고, 백업에 태그를 달고, ZFS 트리를 정리하고, 백업을 검색할 수 있습니다.",
   "whatsNew.phoneKeyAndUpdates": "백업 키로 더 이상 열리지 않으면 휴대폰에 표시됩니다. '업데이트 확인'이 새 릴리스를 찾으면 그 새로운 기능도 보여 줍니다.",
   "whatsNew.appSettings": "앱 설정에 버튼 레이블, '반응형 모드', '색상 순환', '조용한 알림', 설명서 링크가 생겼습니다.",
+  "whatsNew.appReleaseNotes": "앱 버전 카드의 새로운 기능은 릴리스 노트를 앱 안에서 바로 엽니다. 연결이 없어도 열립니다.",
   "whatsNew.passwordOptional": "BombVault는 로그인 비밀번호 없이도 복구 키트부터 노드, 요새의 다른 앱까지 모두 사용할 수 있습니다. 비밀번호 길이는 자유이며, 짧은 비밀번호에는 안내만 표시됩니다.",
   "whatsNew.releaseNotesWindow": "업데이트 확인에서 새 릴리스를 찾으면 버전 카드의 새로운 기능이 해당 릴리스 노트를 창으로 보여 줍니다.",
   "whatsNew.appVersionCards": "Android 앱 설정에 앱 버전과 업데이트를 받는 곳이 표시되고, 구성 요소에는 GlimStone 버전이 표시됩니다.",

@@ -1159,6 +1159,7 @@ const vi: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Trên điện thoại, bạn có thể kiểm tra khôi phục, chạy kiểm tra khởi động, đưa một mục vào lịch hoặc bỏ ra khỏi lịch, từ chối mục đó, gắn thẻ cho một bản sao lưu, dọn dẹp một cây ZFS và tìm bản sao lưu.",
   "whatsNew.phoneKeyAndUpdates": "Điện thoại cho biết khi khóa sao lưu không còn mở được, và hiển thị Có gì mới của một bản phát hành mới hơn khi “Kiểm tra cập nhật” tìm thấy.",
   "whatsNew.appSettings": "Phần cài đặt của ứng dụng có nhãn cho nút, “Chế độ phản ứng”, “Luân chuyển màu”, “Thông báo im lặng” và một liên kết tới hướng dẫn sử dụng.",
+  "whatsNew.appReleaseNotes": "Có gì mới trên thẻ Phiên bản của ứng dụng mở ghi chú phát hành ngay trong ứng dụng, kể cả khi không có kết nối.",
   "whatsNew.passwordOptional": "BombVault hoạt động đầy đủ mà không cần mật khẩu đăng nhập, từ bộ khôi phục đến các node và những ứng dụng khác trong pháo đài. Mật khẩu dài bao nhiêu cũng được, mật khẩu ngắn chỉ nhận một gợi ý.",
   "whatsNew.releaseNotesWindow": "Khi Kiểm tra cập nhật thấy một bản phát hành mới hơn, Có gì mới trên thẻ Phiên bản hiển thị ghi chú phát hành của nó trong một cửa sổ.",
   "whatsNew.appVersionCards": "Phần cài đặt của ứng dụng Android hiển thị phiên bản của nó và nơi các bản cập nhật đến, cùng phiên bản GlimStone trong Thành phần.",

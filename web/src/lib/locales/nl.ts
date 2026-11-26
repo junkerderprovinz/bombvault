@@ -1157,6 +1157,7 @@ const nl: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Op de telefoon kun je een herstel controleren, een starttest uitvoeren, een item in het schema opnemen of eruit halen, het afwijzen, een back-up een tag geven, een ZFS-boom opruimen en back-ups ontdekken.",
   "whatsNew.phoneKeyAndUpdates": "De telefoon laat zien wanneer de back-upsleutel niet meer opent, en wat er nieuw is in een nieuwere versie zodra ‘Controleren op updates’ er een vindt.",
   "whatsNew.appSettings": "De instellingen van de app hebben labels bij de knoppen, ‘Reactieve modus’, ‘Kleurrotatie’, ‘Stille meldingen’ en een link naar de handleiding.",
+  "whatsNew.appReleaseNotes": "Nieuw op de kaart Versie van de app opent de releasenotes in de app zelf, ook zonder verbinding.",
   "whatsNew.passwordOptional": "BombVault werkt volledig zonder inlogwachtwoord, van de herstelkit tot nodes en de andere apps van de vesting. Een wachtwoord van elke lengte is goed, en een kort wachtwoord krijgt alleen een tip.",
   "whatsNew.releaseNotesWindow": "Vindt Controleren op updates een nieuwere versie, dan toont Nieuw op de kaart Versie de releasenotes in een venster.",
   "whatsNew.appVersionCards": "De instellingen van de Android-app tonen de versie en waar de updates vandaan komen, met de versie van GlimStone onder Onderdelen.",

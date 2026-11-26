@@ -1159,6 +1159,7 @@ const zh: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "在手机上可以检查恢复、运行启动测试、把条目加入或移出计划、拒绝条目、给备份加标签、清理 ZFS 树以及发现备份。",
   "whatsNew.phoneKeyAndUpdates": "备份密钥打不开时，手机会显示出来。“检查更新”找到更新的版本后，手机也会显示它的新功能。",
   "whatsNew.appSettings": "应用的设置里新增了按钮文字、“响应模式”、“颜色轮换”、“安静的通知”和指向手册的链接。",
+  "whatsNew.appReleaseNotes": "应用版本卡片上的新功能会直接在应用内打开发布说明，没有网络也可以。",
   "whatsNew.passwordOptional": "BombVault 无需登录密码即可完整使用，从恢复工具包到节点和堡垒中的其他应用都是如此。密码长度不限，较短的密码只会收到一条提示。",
   "whatsNew.releaseNotesWindow": "当检查更新找到更新的版本时，版本卡片上的新功能会在窗口中显示该版本的发布说明。",
   "whatsNew.appVersionCards": "Android 应用的设置显示其版本和更新来源，并在组件下显示 GlimStone 的版本。",

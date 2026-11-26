@@ -874,6 +874,7 @@ const lt: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Telefone gali patikrinti atkūrimą, paleisti paleidimo testą, įtraukti įrašą į tvarkaraštį ar jį iš ten išimti, jį atmesti, pažymėti atsarginę kopiją žyma, pašalinti likusias ZFS medžio momentines kopijas ir rasti atsargines kopijas.",
   "whatsNew.phoneKeyAndUpdates": "Telefonas parodo, kai atsarginių kopijų raktas nebeatidaro, ir naujesnės versijos naujienas, kai tik „Tikrinti atnaujinimus“ ją randa.",
   "whatsNew.appSettings": "Programėlės nustatymuose yra mygtukų užrašai, „Reaktyvus režimas“, „Spalvų sukimas“, „Tylūs pranešimai“ ir nuoroda į vadovą.",
+  "whatsNew.appReleaseNotes": "Programėlės kortelės Versija mygtukas Naujienos atidaro išleidimo pastabas pačioje programėlėje, net be ryšio.",
   "whatsNew.passwordOptional": "BombVault visiškai veikia be prisijungimo slaptažodžio, nuo atkūrimo rinkinio iki mazgų ir kitų tvirtovės programų. Tinka bet kokio ilgio slaptažodis, o trumpas gauna tik patarimą.",
   "whatsNew.releaseNotesWindow": "Kai Tikrinti atnaujinimus randa naujesnę versiją, kortelės Versija mygtukas Naujienos parodo jos išleidimo pastabas lange.",
   "whatsNew.appVersionCards": "Android programos nustatymai rodo jos versiją ir iš kur ateina atnaujinimai, o skiltyje Komponentai GlimStone versiją.",

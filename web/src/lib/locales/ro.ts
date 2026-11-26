@@ -1158,6 +1158,7 @@ const ro: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Pe telefon poți verifica o restaurare, rula un test de pornire, pune un element în programare sau îl poți scoate de acolo, îl poți refuza, poți eticheta o copie de rezervă, scoate instantaneele rămase ale unui arbore ZFS și descoperi copii de rezervă.",
   "whatsNew.phoneKeyAndUpdates": "Telefonul arată când cheia copiilor de rezervă nu mai deschide nimic, și Noutăți pentru o versiune mai nouă imediat ce „Caută actualizări” găsește una.",
   "whatsNew.appSettings": "Setările aplicației au etichete pe butoane, „Mod reactiv”, „Rotația culorilor”, „Notificări discrete” și un link către manual.",
+  "whatsNew.appReleaseNotes": "Noutăți de pe cardul Versiune al aplicației deschide notele versiunii chiar în aplicație, și fără conexiune.",
   "whatsNew.passwordOptional": "BombVault funcționează complet fără parolă de autentificare, de la kitul de recuperare până la noduri și celelalte aplicații ale fortăreței. Merge o parolă de orice lungime, iar una scurtă primește doar un sfat.",
   "whatsNew.releaseNotesWindow": "Când Caută actualizări găsește o versiune mai nouă, Noutăți de pe cardul Versiune îi arată notele într-o fereastră.",
   "whatsNew.appVersionCards": "Setările aplicației Android arată versiunea ei și de unde vin actualizările, cu versiunea GlimStone la Componente.",

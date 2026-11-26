@@ -1161,6 +1161,7 @@ const hu: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "A telefonon ellenőrizhetsz egy visszaállítást, futtathatsz indítási tesztet, felvehetsz egy elemet az ütemezésbe vagy kiveheted onnan, elutasíthatod, címkét tehetsz egy mentésre, eltávolíthatod egy ZFS-fa maradék pillanatképeit, és mentéseket fedezhetsz fel.",
   "whatsNew.phoneKeyAndUpdates": "A telefon jelzi, ha a mentési kulcs már nem nyit, és megmutatja egy újabb kiadás újdonságait, amint a „Frissítések keresése” talál egyet.",
   "whatsNew.appSettings": "Az alkalmazás beállításaiban vannak gombfeliratok, „Reaktív mód”, „Színforgatás”, „Csendes értesítések” és egy link a kézikönyvhöz.",
+  "whatsNew.appReleaseNotes": "Az alkalmazás Verzió kártyáján az Újdonságok magában az alkalmazásban nyitja meg a kiadási megjegyzéseket, kapcsolat nélkül is.",
   "whatsNew.passwordOptional": "A BombVault teljesen működik belépési jelszó nélkül, a helyreállítási csomagtól a csomópontokig és az erőd többi alkalmazásáig. Bármilyen hosszú jelszó megfelel, a rövid csak egy tippet kap.",
   "whatsNew.releaseNotesWindow": "Ha a Frissítések keresése újabb verziót talál, a Verzió kártya Újdonságok gombja ablakban mutatja a kiadási megjegyzéseit.",
   "whatsNew.appVersionCards": "Az Android-alkalmazás beállításai mutatják a verzióját és azt, honnan jönnek a frissítések, az Összetevők alatt pedig a GlimStone verzióját.",

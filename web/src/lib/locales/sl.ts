@@ -874,6 +874,7 @@ const sl: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Na telefonu lahko preveriš obnovitev, zaženeš preizkus zagona, dodaš vnos v urnik ali ga odstraniš iz njega, ga zavrneš, označiš kopijo z oznako, odstraniš ostale posnetke drevesa ZFS in poiščeš kopije.",
   "whatsNew.phoneKeyAndUpdates": "Telefon pokaže, ko ključ varnostnih kopij ne odpre več kopij, in novosti novejše različice, takoj ko jo »Preveri posodobitve« najde.",
   "whatsNew.appSettings": "Nastavitve aplikacije imajo napise na gumbih, »Odzivni način«, »Vrtenje barv«, »Tiha obvestila« in povezavo do priročnika.",
+  "whatsNew.appReleaseNotes": "Novosti na kartici Različica v aplikaciji odprejo opombe ob izdaji kar v aplikaciji, tudi brez povezave.",
   "whatsNew.passwordOptional": "BombVault v celoti deluje brez prijavnega gesla, od obnovitvenega kompleta do vozlišč in drugih aplikacij trdnjave. Primerno je geslo poljubne dolžine, kratko pa dobi le namig.",
   "whatsNew.releaseNotesWindow": "Ko Poišči posodobitve najde novejšo različico, Novosti na kartici Različica prikažejo njene opombe ob izdaji v oknu.",
   "whatsNew.appVersionCards": "Nastavitve aplikacije za Android prikazujejo njeno različico in od kod prihajajo posodobitve, pod Komponente pa različico GlimStone.",

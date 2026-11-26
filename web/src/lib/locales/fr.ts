@@ -1160,6 +1160,7 @@ const fr: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Sur le téléphone, tu peux vérifier une restauration, lancer un test de démarrage, ajouter un élément à la planification ou l'en retirer, le refuser, étiqueter une sauvegarde, retirer les instantanés restants d'une arborescence ZFS et découvrir des sauvegardes.",
   "whatsNew.phoneKeyAndUpdates": "Le téléphone signale quand la clé de sauvegarde n'ouvre plus rien, et affiche les Nouveautés d'une version plus récente dès que « Rechercher des mises à jour » en trouve une.",
   "whatsNew.appSettings": "Les paramètres de l'app ont des libellés de boutons, « Mode réactif », « Rotation des couleurs », « Notifications discrètes » et un lien vers le manuel.",
+  "whatsNew.appReleaseNotes": "Nouveautés sur la carte Version de l'app ouvre les notes de version dans l'app elle-même, même sans connexion.",
   "whatsNew.passwordOptional": "BombVault fonctionne entièrement sans mot de passe de connexion, du kit de récupération aux nœuds et aux autres apps de la forteresse. Un mot de passe de n'importe quelle longueur convient, et un mot de passe court reçoit seulement un conseil.",
   "whatsNew.releaseNotesWindow": "Quand Rechercher des mises à jour trouve une version plus récente, Nouveautés sur la carte Version affiche ses notes de version dans une fenêtre.",
   "whatsNew.appVersionCards": "Les réglages de l'app Android affichent sa version et la provenance de ses mises à jour, avec la version de GlimStone sous Composants.",

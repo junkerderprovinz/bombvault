@@ -1168,6 +1168,7 @@ const tr: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Telefonda bir geri yüklemeyi denetleyebilir, başlatma testi çalıştırabilir, bir ögeyi zamanlamaya alabilir ya da zamanlamadan çıkarabilir, reddedebilir, bir yedeği etiketleyebilir, bir ZFS ağacının kalan anlık görüntülerini kaldırabilir ve yedekleri keşfedebilirsin.",
   "whatsNew.phoneKeyAndUpdates": "Telefon, yedek anahtarı artık açılmadığında bunu gösterir. “Güncellemeleri denetle” daha yeni bir sürüm bulduğunda da onun yeniliklerini gösterir.",
   "whatsNew.appSettings": "Uygulamanın ayarlarında düğme etiketleri, “Reaktif mod”, “Renk döngüsü”, “Sessiz bildirimler” ve kılavuza bir bağlantı var.",
+  "whatsNew.appReleaseNotes": "Uygulamanın Sürüm kartındaki Yenilikler, sürüm notlarını uygulamanın içinde açar, bağlantı olmadan da.",
   "whatsNew.passwordOptional": "BombVault, kurtarma kitinden düğümlere ve kalenin diğer uygulamalarına kadar giriş parolası olmadan tamamen çalışır. Her uzunlukta parola olur, kısa bir parola yalnızca bir ipucu alır.",
   "whatsNew.releaseNotesWindow": "Güncellemeleri ara daha yeni bir sürüm bulduğunda, Sürüm kartındaki Yenilikler onun sürüm notlarını bir pencerede gösterir.",
   "whatsNew.appVersionCards": "Android uygulamasının ayarları sürümünü ve güncellemelerin nereden geldiğini, Bileşenler altında da GlimStone sürümünü gösterir.",

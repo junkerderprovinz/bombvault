@@ -874,6 +874,7 @@ const id: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Di ponsel kamu bisa memeriksa pemulihan, menjalankan uji mulai, memasukkan entri ke jadwal atau mengeluarkannya, menolaknya, memberi tag pada cadangan, membersihkan pohon ZFS, dan menemukan cadangan.",
   "whatsNew.phoneKeyAndUpdates": "Ponsel menunjukkan saat kunci cadangan tidak bisa membuka lagi, dan Yang baru untuk rilis yang lebih baru setelah “Periksa pembaruan” menemukannya.",
   "whatsNew.appSettings": "Pengaturan aplikasi kini punya label tombol, “Mode reaktif”, “Rotasi warna”, “Notifikasi senyap”, dan tautan ke panduan.",
+  "whatsNew.appReleaseNotes": "Yang baru di kartu Versi aplikasi membuka catatan rilis di dalam aplikasi itu sendiri, bahkan tanpa koneksi.",
   "whatsNew.passwordOptional": "BombVault berjalan penuh tanpa kata sandi masuk, dari kit pemulihan sampai node dan aplikasi lain di benteng. Kata sandi sepanjang apa pun boleh, dan yang pendek hanya mendapat saran.",
   "whatsNew.releaseNotesWindow": "Saat Periksa pembaruan menemukan rilis yang lebih baru, Yang baru di kartu Versi menampilkan catatan rilisnya di sebuah jendela.",
   "whatsNew.appVersionCards": "Pengaturan aplikasi Android menampilkan versinya dan asal pembaruannya, dengan versi GlimStone di bawah Komponen.",

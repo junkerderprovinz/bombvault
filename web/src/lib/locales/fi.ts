@@ -1168,6 +1168,7 @@ const fi: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Puhelimella voit tarkistaa palautuksen, ajaa käynnistystestin, ottaa kohteen ajastukseen tai poistaa sen siitä, hylätä sen, lisätä varmuuskopiolle tunnisteen, poistaa ZFS-puun jääneet tilannevedokset ja löytää varmuuskopioita.",
   "whatsNew.phoneKeyAndUpdates": "Puhelin näyttää, kun varmuuskopioavain ei enää avaa, ja uudemman version uutuudet heti, kun ”Hae päivityksiä” löytää sellaisen.",
   "whatsNew.appSettings": "Sovelluksen asetuksissa on painikkeiden tekstit, ”Reaktiivinen tila”, ”Värikierto”, ”Hiljaiset ilmoitukset” ja linkki käyttöoppaaseen.",
+  "whatsNew.appReleaseNotes": "Sovelluksen Versio-kortin Uutta avaa julkaisutiedot itse sovelluksessa, myös ilman yhteyttä.",
   "whatsNew.passwordOptional": "BombVault toimii kokonaan ilman kirjautumissalasanaa palautuspaketista solmuihin ja linnoituksen muihin sovelluksiin. Minkä pituinen salasana tahansa käy, ja lyhyt saa vain vinkin.",
   "whatsNew.releaseNotesWindow": "Kun Hae päivityksiä löytää uudemman version, Versio-kortin Uutta näyttää sen julkaisutiedot ikkunassa.",
   "whatsNew.appVersionCards": "Android-sovelluksen asetukset näyttävät sen version ja mistä päivitykset tulevat, ja Komponentit-kohdassa GlimStonen version.",

@@ -73,6 +73,7 @@ export const RELEASES: Release[] = [
       { id: "phone-entry-actions", text: "whatsNew.phoneEntryActions" },
       { id: "phone-key-and-updates", text: "whatsNew.phoneKeyAndUpdates" },
       { id: "app-settings", text: "whatsNew.appSettings" },
+      { id: "app-release-notes", text: "whatsNew.appReleaseNotes" },
     ],
   },
   {

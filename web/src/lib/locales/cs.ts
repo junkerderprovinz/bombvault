@@ -1166,6 +1166,7 @@ const cs: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Na telefonu můžeš ověřit obnovu, provést test spuštění, zařadit položku do plánu nebo ji z něj vyřadit, odmítnout ji, označit zálohu štítkem, odstranit zbylé snímky stromu ZFS a vyhledat zálohy.",
   "whatsNew.phoneKeyAndUpdates": "Telefon ukáže, když klíč záloh už zálohy neotevře, a novinky novější verze, jakmile ji „Hledat aktualizace“ najde.",
   "whatsNew.appSettings": "Nastavení aplikace mají popisky tlačítek, „Reaktivní režim“, „Rotace barev“, „Tichá oznámení“ a odkaz na příručku.",
+  "whatsNew.appReleaseNotes": "Novinky na kartě Verze v aplikaci otevřou poznámky k vydání přímo v aplikaci, i bez připojení.",
   "whatsNew.passwordOptional": "BombVault plně funguje bez přihlašovacího hesla, od sady pro obnovu po uzly a další aplikace pevnosti. Hodí se heslo jakékoli délky a krátké dostane jen tip.",
   "whatsNew.releaseNotesWindow": "Když Hledat aktualizace najde novější verzi, Novinky na kartě Verze ukážou její poznámky k vydání v okně.",
   "whatsNew.appVersionCards": "Nastavení aplikace pro Android ukazuje její verzi a odkud přicházejí aktualizace, a v části Komponenty verzi GlimStone.",

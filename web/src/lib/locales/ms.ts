@@ -874,6 +874,7 @@ const ms: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Pada telefon anda boleh menyemak pemulihan, menjalankan ujian mula, memasukkan entri ke dalam jadual atau mengeluarkannya, menolaknya, meletakkan tag pada sandaran, membersihkan pepohon ZFS dan menemui sandaran.",
   "whatsNew.phoneKeyAndUpdates": "Telefon menunjukkan apabila kunci sandaran tidak lagi dapat membuka, dan Apa yang baharu bagi keluaran yang lebih baharu sebaik sahaja “Semak kemas kini” menemuinya.",
   "whatsNew.appSettings": "Tetapan aplikasi kini ada label butang, “Mod reaktif”, “Putaran warna”, “Pemberitahuan senyap” dan pautan ke manual.",
+  "whatsNew.appReleaseNotes": "Apa yang baharu pada kad Versi aplikasi membuka nota keluaran dalam aplikasi itu sendiri, walaupun tanpa sambungan.",
   "whatsNew.passwordOptional": "BombVault berfungsi sepenuhnya tanpa kata laluan log masuk, daripada kit pemulihan hingga nod dan aplikasi lain dalam kubu. Kata laluan sepanjang mana pun boleh, dan yang pendek hanya mendapat petua.",
   "whatsNew.releaseNotesWindow": "Apabila Semak kemas kini menemui keluaran yang lebih baharu, Apa yang baharu pada kad Versi menunjukkan nota keluarannya dalam tetingkap.",
   "whatsNew.appVersionCards": "Tetapan aplikasi Android menunjukkan versinya dan dari mana kemas kininya datang, dengan versi GlimStone di bawah Komponen.",

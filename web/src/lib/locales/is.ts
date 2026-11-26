@@ -874,6 +874,7 @@ const is: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Í símanum geturðu prófað endurheimt, keyrt ræsingarpróf, tekið færslu inn í áætlunina eða út úr henni, hafnað henni, merkt afrit, hreinsað ZFS-tré og fundið afrit.",
   "whatsNew.phoneKeyAndUpdates": "Síminn sýnir þegar afritunarlykillinn opnar ekki lengur, og nýjungar nýrri útgáfu um leið og „Leita að uppfærslum“ finnur hana.",
   "whatsNew.appSettings": "Stillingar appsins hafa texta á hnöppum, „Viðbragðshamur“, „Litaskipting“, „Hljóðlátar tilkynningar“ og tengil á handbókina.",
+  "whatsNew.appReleaseNotes": "Nýjungar á spjaldinu Útgáfa í appinu opnar útgáfulýsinguna í appinu sjálfu, líka án tengingar.",
   "whatsNew.passwordOptional": "BombVault virkar að fullu án innskráningarlykilorðs, frá endurheimtarpakkanum til hnúta og hinna forrita vígisins. Lykilorð af hvaða lengd sem er dugar, og stutt lykilorð fær aðeins ábendingu.",
   "whatsNew.releaseNotesWindow": "Þegar Leita að uppfærslum finnur nýrri útgáfu sýnir Nýjungar á spjaldinu Útgáfa útgáfulýsingu hennar í glugga.",
   "whatsNew.appVersionCards": "Stillingar Android-forritsins sýna útgáfu þess og hvaðan uppfærslurnar koma, ásamt útgáfu GlimStone undir Íhlutir.",

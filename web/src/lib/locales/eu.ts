@@ -874,6 +874,7 @@ const eu: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Telefonoan berrezarpen bat egiaztatu, abiarazte-proba bat egin, sarrera bat programazioan sartu edo handik atera, baztertu, babeskopia bat etiketatu, ZFS zuhaitz bateko geratutako argazkiak kendu eta babeskopiak aurkitu ditzakezu.",
   "whatsNew.phoneKeyAndUpdates": "Telefonoak erakusten du babeskopien gakoak jada irekitzen ez duenean, eta bertsio berriago baten Berritasunak «Bilatu eguneratzeak» aukerak bat aurkitu bezain laster.",
   "whatsNew.appSettings": "Aplikazioaren ezarpenek botoietarako etiketak, «Modu erreaktiboa», «Kolore-biraketa», «Jakinarazpen isilak» eta eskulibururako esteka dituzte.",
+  "whatsNew.appReleaseNotes": "Aplikazioaren Bertsioa txarteleko Berritasunak botoiak bertsio-oharrak aplikazioan bertan irekitzen ditu, konexiorik gabe ere.",
   "whatsNew.passwordOptional": "BombVault-ek saioa hasteko pasahitzik gabe funtzionatzen du osorik, berreskuratze-kitetik nodoetara eta gotorlekuaren beste aplikazioetaraino. Edozein luzeratako pasahitzak balio du, eta labur batek aholku bat besterik ez du jasotzen.",
   "whatsNew.releaseNotesWindow": "Bilatu eguneratzeak aukerak bertsio berriago bat aurkitzen duenean, Bertsioa txarteleko Berritasunak botoiak haren bertsio-oharrak leiho batean erakusten ditu.",
   "whatsNew.appVersionCards": "Android aplikazioaren ezarpenek haren bertsioa eta eguneraketak nondik datozen erakusten dute, eta Osagaiak atalean GlimStone-ren bertsioa.",

@@ -874,6 +874,7 @@ const et: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Telefonis saad taastamist kontrollida, käivitustesti teha, kirje ajakavasse võtta või sealt välja võtta, sellest keelduda, varundust sildistada, ZFS-i puu ülejäänud hetktõmmised eemaldada ja varundusi leida.",
   "whatsNew.phoneKeyAndUpdates": "Telefon näitab, kui varundusvõti enam ei ava, ja uuema versiooni uudiseid kohe, kui „Otsi uuendusi“ selle leiab.",
   "whatsNew.appSettings": "Rakenduse seadetes on nuppude sildid, „Reaktiivne režiim“, „Värvi pööramine“, „Vaiksed teavitused“ ja link käsiraamatule.",
+  "whatsNew.appReleaseNotes": "Rakenduse kaardi Versioon nupp Uudised avab väljalaskemärkmed rakenduses endas, ka ilma ühenduseta.",
   "whatsNew.passwordOptional": "BombVault töötab täiesti ilma sisselogimisparoolita, taastekomplektist sõlmede ja kindluse teiste rakendusteni. Sobib igas pikkuses parool, ja lühike saab ainult vihje.",
   "whatsNew.releaseNotesWindow": "Kui Otsi uuendusi leiab uuema versiooni, näitab kaardi Versioon nupp Uudised selle väljalaskemärkmeid aknas.",
   "whatsNew.appVersionCards": "Androidi rakenduse seaded näitavad selle versiooni ja seda, kust uuendused tulevad, ning jaotises Komponendid GlimStone'i versiooni.",

@@ -1155,6 +1155,7 @@ const pl: Partial<Translations> = {
   "whatsNew.phoneEntryActions": "Na telefonie możesz sprawdzić przywracanie, przeprowadzić test uruchomienia, włączyć element do harmonogramu albo go z niego wyjąć, odrzucić go, oznaczyć kopię tagiem, usunąć pozostawione migawki drzewa ZFS i wyszukać kopie.",
   "whatsNew.phoneKeyAndUpdates": "Telefon pokazuje, gdy klucz kopii już ich nie otwiera, oraz nowości nowszej wersji, gdy tylko „Sprawdź aktualizacje” ją znajdzie.",
   "whatsNew.appSettings": "Ustawienia aplikacji mają podpisy przycisków, „Tryb reaktywny”, „Rotacja kolorów”, „Ciche powiadomienia” i link do podręcznika.",
+  "whatsNew.appReleaseNotes": "Nowości na karcie Wersja w aplikacji otwierają informacje o wydaniu w samej aplikacji, także bez połączenia.",
   "whatsNew.passwordOptional": "BombVault działa w pełni bez hasła logowania, od zestawu odzyskiwania po węzły i pozostałe aplikacje twierdzy. Hasło dowolnej długości jest w porządku, a krótkie dostaje tylko podpowiedź.",
   "whatsNew.releaseNotesWindow": "Gdy Szukaj aktualizacji znajdzie nowszą wersję, Nowości na karcie Wersja pokazują jej informacje o wydaniu w oknie.",
   "whatsNew.appVersionCards": "Ustawienia aplikacji na Androida pokazują jej wersję i to, skąd przychodzą aktualizacje, a w sekcji Komponenty wersję GlimStone.",
