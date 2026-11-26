@@ -40,9 +40,8 @@ vi.mock("../lib/api", async (importOriginal) => {
     backupNow: vi.fn(),
     backupVMNow: vi.fn(),
     cancelBackup: vi.fn(),
-    setInclude: vi.fn(),
-    setVMInclude: vi.fn(),
-    patchFileSet: vi.fn(),
+    setEntryIncluded: vi.fn(),
+    openedAsPairedPhone: vi.fn(),
     restore: vi.fn(),
     restoreVM: vi.fn(),
     zfsConnection: vi.fn(),
@@ -85,9 +84,8 @@ const backupFlashNow = vi.mocked(api.backupFlashNow);
 const backupNow = vi.mocked(api.backupNow);
 const backupVMNow = vi.mocked(api.backupVMNow);
 const cancelBackup = vi.mocked(api.cancelBackup);
-const setInclude = vi.mocked(api.setInclude);
-const setVMInclude = vi.mocked(api.setVMInclude);
-const patchFileSet = vi.mocked(api.patchFileSet);
+const setEntryIncluded = vi.mocked(api.setEntryIncluded);
+const openedAsPairedPhone = vi.mocked(api.openedAsPairedPhone);
 const zfsConnection = vi.mocked(api.zfsConnection);
 const getZFSReplica = vi.mocked(api.getZFSReplica);
 const runZFSReplica = vi.mocked(api.runZFSReplica);
@@ -290,6 +288,7 @@ beforeEach(() => {
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
   getAnomalies.mockResolvedValue({ ok: true, anomalies: [], nextCursor: "" });
   zfsConnection.mockReturnValue(new Promise(() => {}));
+  openedAsPairedPhone.mockReturnValue(false);
   getZFSReplica.mockResolvedValue(replica({ target: { kind: "none", id: "" }, state: "never" }));
   serve(MIXED);
 });
@@ -907,6 +906,17 @@ describe("the page actions", () => {
     expect(action("More")).toBeTruthy();
   });
 
+  // Adding a folder means browsing the host's folders, which a paired phone
+  // does not reach.
+  it("offer no Add on a paired phone", async () => {
+    openedAsPairedPhone.mockReturnValue(true);
+    await renderPage();
+    expect(action("Add")).toBeNull();
+    await press(tile("Folders"));
+    expect(action("Add folder")).toBeNull();
+    expect(action("More")).toBeTruthy();
+  });
+
   it("make Add the one filled accent of the corner", async () => {
     await renderPage();
     const accents = within(screen.getByTestId("page-actions"))
@@ -1146,26 +1156,24 @@ describe("the bar above picked rows", () => {
   });
 
   it("pauses and resumes each entry through the call of its kind", async () => {
-    setInclude.mockResolvedValue({ ok: true });
-    setVMInclude.mockResolvedValue({ ok: true });
-    patchFileSet.mockResolvedValue({ ok: true });
+    setEntryIncluded.mockResolvedValue({ ok: true });
     await renderPage();
     await pick("plex", "Windows 11", "Documents", "Unraid flash");
     await press(barButton("Pause schedule"));
-    expect(setInclude).toHaveBeenCalledWith("plex", false);
-    expect(setVMInclude).toHaveBeenCalledWith("win11", false);
-    expect(patchFileSet).toHaveBeenCalledWith("f1", { enabled: false });
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "plex", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("vm", "win11", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("files", "f1", false);
     // The flash drive has no switch of its own and is not counted.
     expect(pushed).toEqual([{ message: "Schedule for 3 items paused", severity: "success" }]);
     expect(listItems).toHaveBeenCalledTimes(2);
 
     await press(barButton("Resume schedule"));
-    expect(setInclude).toHaveBeenLastCalledWith("plex", true);
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "plex", true);
     expect(pushed.at(-1)?.message).toBe("Schedule for 3 items is running again");
   });
 
   it("says a save failed instead of claiming the pause", async () => {
-    setInclude.mockResolvedValue({ ok: false, error: "locked" });
+    setEntryIncluded.mockResolvedValue({ ok: false, error: "locked" });
     await renderPage();
     await pick("plex");
     await press(barButton("Pause schedule"));
@@ -1272,11 +1280,11 @@ describe("a right click on a row", () => {
   });
 
   it("pauses the one entry and names it", async () => {
-    setInclude.mockResolvedValue({ ok: true });
+    setEntryIncluded.mockResolvedValue({ ok: true });
     await renderPage();
     await rightClick(row("plex"));
     await chooseFromMenu("Pause schedule");
-    expect(setInclude).toHaveBeenCalledWith("plex", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "plex", false);
     expect(pushed).toEqual([{ message: "Schedule for plex paused", severity: "success" }]);
   });
 

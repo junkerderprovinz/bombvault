@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { setInclude, type OkEnvelope } from "../lib/api";
+import type { OkEnvelope } from "../lib/api";
 import { useT } from "../lib/i18n";
 import { ToggleRow } from "../pages/settings/shared";
 import { useToast } from "../lib/toast";
@@ -7,9 +7,8 @@ import { useToast } from "../lib/toast";
 interface IncludeToggleProps {
   name: string;
   initial: boolean;
-  /** The request that stores the switch: a container's, unless the caller
-   *  passes the one of its kind. */
-  save?: (name: string, include: boolean) => Promise<OkEnvelope>;
+  /** The request that stores the switch for the entry's kind. */
+  save: (name: string, include: boolean) => Promise<OkEnvelope>;
   /** Called with the stored value once the save succeeded. */
   onSaved?: (include: boolean) => void;
   /** Another wording for the switch, with what it means in an (i) bubble. */
@@ -17,7 +16,7 @@ interface IncludeToggleProps {
   hint?: string;
 }
 
-export function IncludeToggle({ name, initial, save = setInclude, onSaved, label, hint }: IncludeToggleProps) {
+export function IncludeToggle({ name, initial, save, onSaved, label, hint }: IncludeToggleProps) {
   const { t } = useT();
   const { push } = useToast();
   const [enabled, setEnabled] = useState(initial);

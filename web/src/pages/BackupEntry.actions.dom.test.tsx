@@ -58,9 +58,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getContainerMounts: vi.fn(),
     listSnapshots: vi.fn(),
     listVMSnapshots: vi.fn(),
-    setInclude: vi.fn(),
-    setVMInclude: vi.fn(),
-    patchFileSet: vi.fn(),
+    setEntryIncluded: vi.fn(),
     setVMMethod: vi.fn(),
     deleteBackups: vi.fn(),
     deleteBackupsVM: vi.fn(),
@@ -92,9 +90,7 @@ const mocks = {
   listItemRuns: vi.mocked(api.listItemRuns),
   getSettings: vi.mocked(api.getSettings),
 };
-const setInclude = vi.mocked(api.setInclude);
-const setVMInclude = vi.mocked(api.setVMInclude);
-const patchFileSet = vi.mocked(api.patchFileSet);
+const setEntryIncluded = vi.mocked(api.setEntryIncluded);
 const setVMMethod = vi.mocked(api.setVMMethod);
 const deleteBackups = vi.mocked(api.deleteBackups);
 const deleteBackupsVM = vi.mocked(api.deleteBackupsVM);
@@ -215,9 +211,7 @@ beforeEach(() => {
   vi.mocked(api.listSnapshots).mockResolvedValue({ ok: true, snapshots: [] });
   vi.mocked(api.listVMSnapshots).mockResolvedValue({ ok: true, snapshots: [] });
   for (const call of [
-    setInclude,
-    setVMInclude,
-    patchFileSet,
+    setEntryIncluded,
     setVMMethod,
     deleteBackups,
     deleteBackupsVM,
@@ -242,7 +236,6 @@ interface Pausable {
   path: string;
   /** What the server holds for the entry while it is in or out of the schedule. */
   staged: (included: boolean) => Staged;
-  save: typeof setInclude | typeof patchFileSet;
   /** The arguments the save takes for the new value. */
   sent: (included: boolean) => unknown[];
 }
@@ -255,31 +248,29 @@ const PAUSABLE: Pausable[] = [
       items: [{ ...IMMICH, included }],
       containers: [containerView({ includeInSchedule: included })],
     }),
-    save: setInclude,
-    sent: (included) => ["immich", included],
+    sent: (included) => ["container", "immich", included],
   },
   {
     what: "a VM",
     path: "/backups/vm/win11",
     staged: (included) => ({ items: [{ ...WIN11, included }], vms: [vmView({ includeInSchedule: included })] }),
-    save: setVMInclude as unknown as typeof setInclude,
-    sent: (included) => ["win11", included],
+    sent: (included) => ["vm", "win11", included],
   },
   {
     what: "a folder set",
     path: `/backups/files/${SET_ID}`,
     staged: (included) => ({ items: [{ ...PHOTOS, included }], fileSets: [fileSetView({ enabled: included })] }),
-    save: patchFileSet,
-    sent: (included) => [SET_ID, { enabled: included }],
+    sent: (included) => ["files", SET_ID, included],
   },
 ];
 
-describe.each(PAUSABLE)("pausing $what", ({ path, staged, save, sent }) => {
+describe.each(PAUSABLE)("pausing $what", ({ path, staged, sent }) => {
+  const save = setEntryIncluded;
   // The save changes what the next read brings, as on the server.
   function serve(included: boolean) {
     serveEntries(mocks, staged(included));
-    save.mockImplementation((async (_key: string, value: boolean | { enabled?: boolean }) => {
-      serveEntries(mocks, staged(typeof value === "boolean" ? value : value.enabled === true));
+    save.mockImplementation((async (_kind: string, _key: string, included: boolean) => {
+      serveEntries(mocks, staged(included));
       return { ok: true };
     }) as never);
   }
@@ -343,7 +334,7 @@ describe("a container that is gone", () => {
     await renderPage("/backups/container/pihole?tab=settings");
     expect(scheduleSwitch().getAttribute("aria-checked")).toBe("true");
     await press(scheduleSwitch());
-    expect(setInclude).toHaveBeenCalledWith("pihole", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "pihole", false);
   });
 
   it("offers Remove entry, not Delete all backups, while it has no backups", async () => {
@@ -387,7 +378,7 @@ describe("a VM that is gone", () => {
     serveEntries(mocks, { items: [OLD_VM], vms: [goneVM()] });
     await renderPage(`${path}?tab=settings`);
     await press(scheduleSwitch());
-    expect(setVMInclude).toHaveBeenCalledWith(OLD_VM_KEY, false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("vm", OLD_VM_KEY, false);
   });
 
   it("offers Remove entry, not Delete all backups, while it has no backups", async () => {

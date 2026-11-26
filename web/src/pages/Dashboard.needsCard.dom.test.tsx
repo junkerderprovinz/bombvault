@@ -186,7 +186,7 @@ describe("NeedsCard", () => {
     fireEvent.click(row.getByRole("button", { name: en["overview.needs.include"] }));
     await act(async () => {});
 
-    expect(called("setInclude")).toEqual([["gitea", true]]);
+    expect(called("setEntryIncluded")).toEqual([["container", "gitea", true]]);
     expect(onItemsChanged).toHaveBeenCalledOnce();
   });
 

@@ -500,13 +500,14 @@ func (h *Handler) handleDiscoverZFS(w http.ResponseWriter, r *http.Request) {
 			log.Printf("api: zfs: reloading the scheduler after the discover failed: %v", rErr)
 		}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
+	fields := map[string]any{
 		"discovered":         n,
-		"repo":               h.svc.DiscoverSource(zfsDomain),
 		"skipped":            skipNames(skipped),
 		"skippedNeedsAction": len(actionableSkips(skipped)) > 0,
 		"rootsToCheck":       h.zfsRootsToCheck(),
-	}))
+	}
+	h.nameDiscoverSource(r, fields, zfsDomain)
+	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
 // zfsRootsToCheck counts the rebuilt items whose root is really a child of a

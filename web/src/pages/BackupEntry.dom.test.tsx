@@ -54,7 +54,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     getAnomalySummary: vi.fn(),
     getAnomalyItems: vi.fn(),
     listSnapshots: vi.fn(),
-    setInclude: vi.fn(),
+    setEntryIncluded: vi.fn(),
     patchFileSet: vi.fn(),
     backupNow: vi.fn(),
     backupVMNow: vi.fn(),
@@ -93,7 +93,7 @@ const getAnomalies = vi.mocked(api.getAnomalies);
 const getAnomalySummary = vi.mocked(api.getAnomalySummary);
 const getAnomalyItems = vi.mocked(api.getAnomalyItems);
 const listSnapshots = vi.mocked(api.listSnapshots);
-const setInclude = vi.mocked(api.setInclude);
+const setEntryIncluded = vi.mocked(api.setEntryIncluded);
 const patchFileSet = vi.mocked(api.patchFileSet);
 const backupNow = vi.mocked(api.backupNow);
 const backupVMNow = vi.mocked(api.backupVMNow);
@@ -223,7 +223,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   getTimeline.mockResolvedValue({ ok: false });
   for (const call of [
-    setInclude,
+    setEntryIncluded,
     patchFileSet,
     deleteFileSet,
     deleteFileSetBackups,
@@ -547,7 +547,7 @@ describe("the actions of the corner", () => {
     await renderPage("/backups/container/immich");
     const before = mocks.getBackupItem.mock.calls.length;
     await press(corner().getByRole("button", { name: en["schedule.pause"] }));
-    expect(setInclude).toHaveBeenCalledWith("immich", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "immich", false);
     await waitFor(() => expect(mocks.getBackupItem.mock.calls.length).toBeGreaterThan(before));
   });
 
@@ -555,7 +555,7 @@ describe("the actions of the corner", () => {
     serveEntries(mocks, { items: [{ ...PHOTOS, included: false }] });
     await renderPage(`/backups/files/${SET_ID}`);
     await press(corner().getByRole("button", { name: en["schedule.resume"] }));
-    expect(patchFileSet).toHaveBeenCalledWith(SET_ID, { enabled: true });
+    expect(setEntryIncluded).toHaveBeenCalledWith("files", SET_ID, true);
   });
 
   it.each([

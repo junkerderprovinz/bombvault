@@ -109,6 +109,20 @@ var pairedRoutes = map[string]bool{
 	"POST /api/checks/starttest/{id}":         true,
 	"POST /api/backup/cancel":                 true,
 
+	// What the backups and entry pages change of an entry: whether a schedule
+	// reaches it, that it is not to be backed up, a person's own tags on one
+	// backup, the snapshot stamps runs left on a ZFS tree, and the entries the
+	// backup storage holds. None of them deletes a backup or shows a hook, and a
+	// discover does not name the repository it read to a paired session.
+	"PUT /api/items/{kind}/{key}/included": true,
+	"PUT /api/items/{kind}/{key}/declined": true,
+	"POST /api/items/{domain}/{name}/tag":  true,
+	"POST /api/zfs/datasets/{id}/sweep":    true,
+	"POST /api/discover":                   true,
+	"POST /api/vms/discover":               true,
+	"POST /api/files/discover":             true,
+	"POST /api/zfs/discover":               true,
+
 	// Restoring and following a restore. The handlers back up what a restore
 	// in place replaces, or refuse it to a paired session, and restore into a
 	// folder only while it holds nothing.

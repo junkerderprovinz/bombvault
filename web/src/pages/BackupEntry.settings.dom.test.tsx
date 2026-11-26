@@ -46,10 +46,9 @@ vi.mock("../lib/api", async (importOriginal) => {
     previewItemPlacement: vi.fn(),
     getContainerMounts: vi.fn(),
     getZFSReplica: vi.fn(),
-    setInclude: vi.fn(),
+    setEntryIncluded: vi.fn(),
     setScheduleCadence: vi.fn(),
     patchFileSet: vi.fn(),
-    setVMInclude: vi.fn(),
     patchZFSDataset: vi.fn(),
     setVMBlockBackup: vi.fn(),
     setUpdateAfterBackup: vi.fn(),
@@ -73,7 +72,7 @@ const mocks = {
   getSettings: vi.mocked(api.getSettings),
 };
 const setItemPlacement = vi.mocked(api.setItemPlacement);
-const setInclude = vi.mocked(api.setInclude);
+const setEntryIncluded = vi.mocked(api.setEntryIncluded);
 const setScheduleCadence = vi.mocked(api.setScheduleCadence);
 const patchFileSet = vi.mocked(api.patchFileSet);
 const patchZFSDataset = vi.mocked(api.patchZFSDataset);
@@ -144,7 +143,7 @@ beforeEach(() => {
   vi.mocked(api.getZFSReplica).mockRejectedValue(new Error("no replica"));
   setItemPlacement.mockResolvedValue({ ok: true, placement: PLACEMENT } as never);
   vi.mocked(api.previewItemPlacement).mockResolvedValue({ ok: true, added: [] });
-  for (const call of [setInclude, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, followUpdateAfterBackup, setZFSSnapshot, putSettings]) {
+  for (const call of [setEntryIncluded, patchZFSDataset, setVMBlockBackup, setUpdateAfterBackup, followUpdateAfterBackup, setZFSSnapshot, putSettings]) {
     call.mockResolvedValue({ ok: true } as never);
   }
 });
@@ -267,13 +266,13 @@ describe("the schedule", () => {
   it("takes the entry out of the schedule through the call of its kind", async () => {
     await renderSettings("container/immich");
     await press(within(card(en["entry.settings.schedule"])).getByRole("switch", { name: en["entry.settings.inSchedule"] }));
-    expect(setInclude).toHaveBeenCalledWith("immich", false);
+    expect(setEntryIncluded).toHaveBeenCalledWith("container", "immich", false);
   });
 
   it("does the same for a ZFS entry", async () => {
     await renderSettings(`zfs/${ZFS_ID}`);
     await press(within(card(en["entry.settings.schedule"])).getByRole("switch", { name: en["entry.settings.inSchedule"] }));
-    expect(patchZFSDataset).toHaveBeenCalledWith(ZFS_ID, { enabled: false });
+    expect(setEntryIncluded).toHaveBeenCalledWith("zfs", ZFS_ID, false);
   });
 
   it("offers every entry a plan of its own, off until one is set", async () => {

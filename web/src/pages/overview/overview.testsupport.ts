@@ -306,7 +306,7 @@ export function stagedApi<M extends object>(actual: M): M {
     backupEverythingNow: record("backupEverythingNow", { ok: true, started: true }),
     backupNow: record("backupNow"),
     confirmPlacementDefault: record("confirmPlacementDefault"),
-    setInclude: record("setInclude"),
+    setEntryIncluded: record("setEntryIncluded"),
     setBackupDeclined: vi.fn((kind: string, key: string, declined: boolean) => {
       if (Array.isArray(server.items)) {
         server.items = server.items.map((item) =>

@@ -2368,16 +2368,6 @@ export function unlinkVMAlias(name: string, old: string): Promise<OkEnvelope> {
   });
 }
 
-export function setInclude(
-  name: string,
-  includeInSchedule: boolean
-): Promise<OkEnvelope> {
-  return fetchJSON(`/api/containers/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ includeInSchedule }),
-  });
-}
-
 /**
  * PATCH /api/containers/{name} — set (or clear) this container's per-item schedule
  * override (#121). Pass a cadence string ("daily HH:MM", "weekly DOW HH:MM", a cron
@@ -4379,6 +4369,16 @@ export function setBackupDeclined(
   });
 }
 
+/** PUT /api/items/{kind}/{key}/included: takes an item into the schedule or
+ *  out of it and changes nothing else of it, which a paired phone may do too.
+ *  Resolves with the item's row. */
+export function setEntryIncluded(kind: BackupItemKind, key: string, included: boolean): Promise<BackupItemResponse> {
+  return fetchJSON(`/api/items/${encodeURIComponent(kind)}/${encodeURIComponent(key)}/included`, {
+    method: "PUT",
+    body: JSON.stringify({ included }),
+  });
+}
+
 /** GET /api/runs for one item of GET /api/items: its runs of every kind,
  *  newest first, at most `limit` of them (500 without one). */
 export function listItemRuns(kind: BackupItemKind, key: string, limit?: number): Promise<ListRunsResponse> {
@@ -4666,16 +4666,6 @@ export function restoreVM(
   return fetchKeyJSON(`/api/vms/${encodeURIComponent(name)}/restore${srcParam(source)}`, {
     method: "POST",
     body: JSON.stringify({ snapshotId, confirm, leaveStopped, ...opts }),
-  });
-}
-
-export function setVMInclude(
-  name: string,
-  includeInSchedule: boolean
-): Promise<OkEnvelope> {
-  return fetchJSON(`/api/vms/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ includeInSchedule }),
   });
 }
 

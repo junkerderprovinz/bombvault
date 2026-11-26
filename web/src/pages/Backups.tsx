@@ -36,6 +36,7 @@ import {
   discoverAll,
   getSettings,
   listItems,
+  openedAsPairedPhone,
   zfsConnection,
   type BackupItem,
   type ListItemsResponse,
@@ -364,7 +365,9 @@ export function Backups() {
       : []),
   ];
 
-  const addWith = addStart(tile, enabled);
+  // A new entry is picked from the host's folders and pools, which a paired
+  // phone does not browse.
+  const addWith = openedAsPairedPhone() ? null : addStart(tile, enabled);
   // The ZFS tile's button opens the dataset form, which offers no folder.
   const addsFolder = !!enabled.files && (addWith === "files" || addWith === "choose");
   const busyTitle = running.active ? t(busyPhraseKey(running.phase, running.stage)) : undefined;

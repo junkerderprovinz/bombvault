@@ -1298,6 +1298,14 @@ func (h *Handler) handleForgetVM(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, okEnvelope(nil))
 }
 
+// nameDiscoverSource puts the repository a discover of domain read into its
+// answer. A paired phone is not told where the backups lie.
+func (h *Handler) nameDiscoverSource(r *http.Request, fields map[string]any, domain string) {
+	if !isPaired(r) {
+		fields["repo"] = h.svc.DiscoverSource(domain)
+	}
+}
+
 // discoverFields is what every Discover answer carries, success or not.
 // skippedNeedsAction flags only skips that need action: a repository somebody
 // switched off is named, but it is not a fault.
@@ -1346,7 +1354,7 @@ func (h *Handler) handleDiscover(w http.ResponseWriter, r *http.Request) {
 	// in the one screen whose entire job is to tell somebody their backups are
 	// still there.
 	fields := discoverFields(res)
-	fields["repo"] = h.svc.DiscoverSource("containers")
+	h.nameDiscoverSource(r, fields, "containers")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
@@ -1371,7 +1379,7 @@ func (h *Handler) handleDiscoverVMs(w http.ResponseWriter, r *http.Request) {
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
 	fields := discoverFields(res)
-	fields["repo"] = h.svc.DiscoverSource("vms")
+	h.nameDiscoverSource(r, fields, "vms")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 
@@ -6549,7 +6557,7 @@ func (h *Handler) handleDiscoverFiles(w http.ResponseWriter, r *http.Request) {
 	// for an off-site repository a step earlier and then reads the PRIMARY
 	// path, and an empty answer about an unnamed folder is unreadable.
 	fields := discoverFields(res)
-	fields["repo"] = h.svc.DiscoverSource("files")
+	h.nameDiscoverSource(r, fields, "files")
 	writeJSON(w, http.StatusOK, okEnvelope(fields))
 }
 

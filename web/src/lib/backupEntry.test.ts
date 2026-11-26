@@ -270,17 +270,18 @@ describe("the calls of a kind", () => {
     expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ method: "POST" }));
   });
 
+  // The route a paired phone may call, which changes nothing else of the entry.
   it.each([
-    ["container", "plex", "/api/containers/plex", { includeInSchedule: false }],
-    ["vm", "win11", "/api/vms/win11", { includeInSchedule: false }],
-    ["files", SET_ID, `/api/files/sets/${SET_ID}`, { enabled: false }],
-    ["zfs", ZFS_ID, `/api/zfs/datasets/${ZFS_ID}`, { enabled: false }],
-  ] as const)("pauses a %s entry", async (kind, key, url, body) => {
+    ["container", "my app", "/api/items/container/my%20app/included"],
+    ["vm", "win11", "/api/items/vm/win11/included"],
+    ["files", SET_ID, `/api/items/files/${SET_ID}/included`],
+    ["zfs", ZFS_ID, `/api/items/zfs/${ZFS_ID}/included`],
+  ] as const)("pauses a %s entry", async (kind, key, url) => {
     await ENTRY_KIND[kind].setIncluded!(key, false);
     const [calledUrl, init] = fetchMock.mock.calls[0];
     expect(calledUrl).toBe(url);
-    expect(init.method).toBe("PATCH");
-    expect(JSON.parse(init.body as string)).toEqual(body);
+    expect(init.method).toBe("PUT");
+    expect(JSON.parse(init.body as string)).toEqual({ included: false });
   });
 
   it.each(["flash", "config"] as const)("offers no pause for %s", (kind) => {
