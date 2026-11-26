@@ -151,7 +151,7 @@ export function BackupsTab({
               onChange={(id) => setView(id as View)}
             />
             {view === "dumps" && (
-              <span className="flex flex-wrap items-center gap-2 text-xs text-carbon-textMuted">
+              <span className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-xs text-carbon-textMuted">
                 {t("source.label")}
                 <SourceToggle source={dumpSource} onChange={setDumpSource} domain="containers" inline />
               </span>

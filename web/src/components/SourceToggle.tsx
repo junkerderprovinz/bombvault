@@ -52,7 +52,7 @@ export function SourceToggle({
   const offsite = isOffsiteSource(source);
 
   return (
-    <span className={`${inline ? "inline-flex" : "flex min-w-0 grow basis-64"} items-center gap-2 flex-wrap`}>
+    <span className={`${inline ? "inline-flex max-w-full" : "flex min-w-0 grow basis-64"} items-center gap-2 flex-wrap`}>
       {/*
         `active` collapses "offsite:<id>" to "offsite", which would otherwise
         match neither item and leave both unselected. Choosing "offsite" picks

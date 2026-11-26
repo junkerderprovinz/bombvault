@@ -839,6 +839,25 @@ for (const width of [320, 390]) {
     await first.click({ position: { x: 16, y: 16 } });
     await expect(page.getByRole("dialog", { name: "immich wiederherstellen" })).toBeVisible();
   });
+
+  test(`the database dumps @ ${width}px keep their source switch inside the card`, async ({ page }, testInfo) => {
+    test.skip(!MOBILE_PROJECTS.has(testInfo.project.name), "the phone layout lives below 48rem");
+    await stage(page);
+    await page.route(
+      (url) => url.pathname === "/api/containers/paperless-db/dbdumps",
+      (route) => route.fulfill({ json: { ok: true, dumps: [] } }),
+    );
+    await page.setViewportSize({ width, height: 800 });
+
+    await openEntry(page, "/backups/container/paperless-db", "paperless-db");
+    await page.getByRole("tablist", { name: "Sicherungen" }).getByRole("tab", { name: "Datenbank-Dumps" }).click();
+    const list = card(page, "Datenbank-Dumps");
+    const source = list.getByRole("tablist", { name: "Quelle:" });
+    await expect(source).toBeVisible();
+    const edge = (await list.boundingBox())!;
+    const strip = (await source.boundingBox())!;
+    expect(strip.x + strip.width, "the switch ends inside its card").toBeLessThanOrEqual(edge.x + edge.width);
+  });
 }
 
 test("pictures of the page", async ({ page }, testInfo) => {
