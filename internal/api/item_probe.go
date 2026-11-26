@@ -34,8 +34,6 @@ const (
 // probeLockPoll is how often a queued probe asks for its domain again.
 var probeLockPoll = 15 * time.Second
 
-var errProbeBusy = errors.New("a backup or another check is running for this item's domain; try again when it finishes")
-
 // errProbeSnapshotElsewhere is a backup the item's repository does not hold
 // because its own folder moved without the backups made before. The next backup
 // lands where the probe reads.
@@ -269,7 +267,7 @@ func (s *Service) ProbeItem(ctx context.Context, targetID string) (store.ItemPro
 	}
 	unlock, ok := s.tryLockDomainFor(it.domain, "verify")
 	if !ok {
-		return store.ItemProbe{}, errProbeBusy
+		return store.ItemProbe{}, s.busyErr(it.domain, errDomainBusy)
 	}
 	defer unlock()
 	rec, err := s.probeAndRecord(context.WithoutCancel(ctx), it, *run, "manual")

@@ -8,11 +8,17 @@ import { Button } from "./Button";
 import { IconPlay } from "./glyphs";
 import { InfoBubble } from "./InfoBubble";
 import { probeItem, runStartTest, type ItemChecks, type StartTest, type StartTestBlocked } from "../lib/api";
+import { busySentence } from "../lib/busySentence";
 import { useT, type TranslationKey } from "../lib/i18n";
 import { relativeTime } from "../lib/reltime";
 import { useToast } from "../lib/toast";
 
 type T = ReturnType<typeof useT>["t"];
+
+/** Why a check did not run, in the user's words where its section was busy. */
+function refusal(t: T, r: { error?: string; code?: string; domain?: string; busyWith?: string }): string | undefined {
+  return (r.code === "domain-busy" ? busySentence(t, r) : undefined) ?? r.error;
+}
 
 /** One check: its name and what it found on the start, its button on the end. */
 function CheckRow({
@@ -75,7 +81,7 @@ export function ItemChecksLine({
     try {
       const r = await probeItem(targetId);
       if (!r.ok) {
-        push(r.error ?? t("checks.restoreFailed"), "fail");
+        push(refusal(t, r) ?? t("checks.restoreFailed"), "fail");
         setShake((n) => n + 1);
       } else if (r.probe && !r.probe.ok) {
         push(r.probe.detail || t("checks.restoreFailed"), "fail");
@@ -90,11 +96,14 @@ export function ItemChecksLine({
     }
   }
 
-  const state = !probe
-    ? t("checks.restoreNever")
-    : probe.ok
-      ? `${t("checks.restoreOk").replace("{time}", relativeTime(t, probe.at))} · ${t("checks.probeFiles", probe.files)}`
-      : t("checks.restoreFailed");
+  // The button's tip says the same on a desktop, but a phone has no hover.
+  const state = busy
+    ? t("checks.probeRunning")
+    : !probe
+      ? t("checks.restoreNever")
+      : probe.ok
+        ? `${t("checks.restoreOk").replace("{time}", relativeTime(t, probe.at))} · ${t("checks.probeFiles", probe.files)}`
+        : t("checks.restoreFailed");
 
   return (
     <div className="flex flex-col divide-y divide-carbon-border/60 [&>*]:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
@@ -102,8 +111,8 @@ export function ItemChecksLine({
         label={t("overview.check.drill")}
         tip={t("checks.probeHint")}
         state={state}
-        failed={probe?.ok === false}
-        detail={probe && !probe.ok ? probe.detail : undefined}
+        failed={!busy && probe?.ok === false}
+        detail={!busy && probe && !probe.ok ? probe.detail : undefined}
         action={
           <Button
             key={shake}
@@ -153,7 +162,7 @@ function StartTestRow({ checks, onChanged, t }: { checks: ItemChecks; onChanged?
     try {
       const r = await runStartTest(checks.targetId);
       if (!r.ok) {
-        push(r.error ?? t("checks.startFailed"), "fail");
+        push(refusal(t, r) ?? t("checks.startFailed"), "fail");
         setShake((n) => n + 1);
       } else if (r.startTest && !r.startTest.ok) {
         push(r.startTest.detail || t("checks.startFailed"), "fail");
@@ -170,7 +179,8 @@ function StartTestRow({ checks, onChanged, t }: { checks: ItemChecks; onChanged?
 
   const mk = test ? methodKey(test.method) : null;
   let state: string;
-  if (blocked) state = t("checks.blocked").replace("{reason}", t(BLOCKED_KEYS[blocked]));
+  if (busy) state = t("checks.startRunning");
+  else if (blocked) state = t("checks.blocked").replace("{reason}", t(BLOCKED_KEYS[blocked]));
   else if (!test) state = t("checks.startNever");
   else if (!test.ok) state = t("checks.startFailed");
   else {
@@ -188,8 +198,8 @@ function StartTestRow({ checks, onChanged, t }: { checks: ItemChecks; onChanged?
       label={t("settings.startTest")}
       tip={t("checks.startHint")}
       state={state}
-      failed={!blocked && test?.ok === false}
-      detail={!blocked && test && !test.ok ? test.detail : undefined}
+      failed={!busy && !blocked && test?.ok === false}
+      detail={!busy && !blocked && test && !test.ok ? test.detail : undefined}
       action={
         <Button
           key={shake}

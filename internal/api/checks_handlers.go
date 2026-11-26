@@ -75,7 +75,7 @@ func (h *Handler) handleItemChecks(w http.ResponseWriter, _ *http.Request) {
 func (h *Handler) handleProbeItem(w http.ResponseWriter, r *http.Request) {
 	probe, err := h.svc.ProbeItem(r.Context(), r.PathValue("id"))
 	if err != nil {
-		writeJSON(w, http.StatusOK, failEnvelope(err))
+		writeJSON(w, http.StatusOK, checkRefusal(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"probe": probe}))
@@ -86,7 +86,7 @@ func (h *Handler) handleProbeItem(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleStartTest(w http.ResponseWriter, r *http.Request) {
 	test, err := h.svc.RunStartTest(r.Context(), r.PathValue("id"))
 	if err != nil {
-		body := failEnvelope(err)
+		body := checkRefusal(err)
 		var blocked startTestBlocked
 		if errors.As(err, &blocked) {
 			body["blocked"] = blocked.Code
@@ -95,4 +95,14 @@ func (h *Handler) handleStartTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"startTest": test}))
+}
+
+// checkRefusal is the envelope of a check that did not run. One refused while
+// its section is busy names the section and what holds it, as a refused start
+// does.
+func checkRefusal(err error) map[string]any {
+	if busyCode(err) != "" {
+		return startRefusal(err)
+	}
+	return failEnvelope(err)
 }

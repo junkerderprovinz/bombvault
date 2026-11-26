@@ -42,7 +42,8 @@ vi.mock("../lib/api", async (importOriginal) => {
   };
 });
 
-vi.mock("../lib/toast", () => ({ useToast: () => ({ push: () => {} }) }));
+const push = vi.fn();
+vi.mock("../lib/toast", () => ({ useToast: () => ({ push }) }));
 
 const api = await import("../lib/api");
 const mocks = {
@@ -149,6 +150,27 @@ describe("the checks", () => {
     expect(await checks.findByText(/Restore checked/)).toBeTruthy();
     await press(checks.getByRole("button", { name: en["checks.probeNow"] }));
     expect(probeItem).toHaveBeenCalledWith("tg-immich");
+  });
+
+  it("say on the row that the restore is being checked while the check waits and runs", async () => {
+    let answer: (value: Awaited<ReturnType<typeof api.probeItem>>) => void = () => {};
+    probeItem.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    await renderVerify("container/immich");
+    const checks = within(card(en["entry.verify.checks"]));
+    await checks.findByText(/Restore checked/);
+    await press(checks.getByRole("button", { name: en["checks.probeNow"] }));
+    expect(checks.getByText(en["checks.probeRunning"])).toBeTruthy();
+    await act(async () => answer({ ok: true, probe: PROBE }));
+    expect(checks.queryByText(en["checks.probeRunning"])).toBeNull();
+  });
+
+  it("name the section and the backup that keep a check from running", async () => {
+    probeItem.mockResolvedValue({ ok: false, error: "busy", code: "domain-busy", domain: "containers", busyWith: "backup" });
+    await renderVerify("container/immich");
+    const checks = within(card(en["entry.verify.checks"]));
+    await checks.findByText(/Restore checked/);
+    await press(checks.getByRole("button", { name: en["checks.probeNow"] }));
+    expect(push).toHaveBeenCalledWith(en["busy.backup"].replace("{section}", en["nav.containers"]), "fail");
   });
 
   it("stand as rows that name the check, say what it found and explain it in a bubble", async () => {

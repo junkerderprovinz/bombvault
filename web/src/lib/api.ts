@@ -2771,14 +2771,22 @@ export function getItemChecks(): Promise<{ ok: boolean; items?: ItemChecks[]; er
 }
 
 /** POST /api/checks/starttest/{id}: a start test of the container, run now. */
+/** A check that did not run because its section was busy says which section
+ *  and what held it. */
+interface CheckBusy {
+  code?: string;
+  domain?: string;
+  busyWith?: string;
+}
+
 export function runStartTest(
   targetId: string
-): Promise<{ ok: boolean; startTest?: StartTest; blocked?: StartTestBlocked; error?: string }> {
+): Promise<{ ok: boolean; startTest?: StartTest; blocked?: StartTestBlocked; error?: string } & CheckBusy> {
   return fetchJSON(`/api/checks/starttest/${encodeURIComponent(targetId)}`, { method: "POST" });
 }
 
 /** POST /api/checks/probe/{id}: a restore probe of the item's newest backup. */
-export function probeItem(targetId: string): Promise<{ ok: boolean; probe?: ItemProbe; error?: string }> {
+export function probeItem(targetId: string): Promise<{ ok: boolean; probe?: ItemProbe; error?: string } & CheckBusy> {
   return fetchJSON(`/api/checks/probe/${encodeURIComponent(targetId)}`, { method: "POST" });
 }
 

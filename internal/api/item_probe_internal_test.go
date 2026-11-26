@@ -3,14 +3,18 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/bombvault/internal/config"
@@ -570,5 +574,28 @@ func TestAProbeOfAFolderOnThisHostAsksItsSnapshotFilesFirst(t *testing.T) {
 	}
 	if slices.Contains(eng.read, "ee11ee11") {
 		t.Fatalf("ls ran on %v, want the missing backup left alone", eng.read)
+	}
+}
+
+func TestAProbeAskedForDuringABackupNamesTheSectionAndTheBackup(t *testing.T) {
+	s, tg := newProbeService(t, &probeEngine{})
+	recordBackup(t, s.store, tg.ID, "abcd1234")
+	s.repoMu = map[string]*sync.Mutex{"containers": {}}
+	unlock, ok := s.takeDomainLock("containers", "backup")
+	if !ok {
+		t.Fatal("the section could not be held for the backup")
+	}
+	defer unlock()
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/api/checks/probe/"+tg.ID, nil)
+	r.SetPathValue("id", tg.ID)
+	(&Handler{svc: s, store: s.store}).handleProbeItem(w, r)
+	var out map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	if out["ok"] != false || out["code"] != codeDomainBusy || out["domain"] != "containers" || out["busyWith"] != "backup" {
+		t.Fatalf("the probe during a backup answered %v", out)
 	}
 }
