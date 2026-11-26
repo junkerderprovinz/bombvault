@@ -416,6 +416,11 @@ async function stageEmergency(page: Page, start: StagedEmergency = { backupKey: 
   let state = start;
   const asked: string[] = [];
   keeper.allows = false;
+  // The overview reads the key's state from the status, as the server names it there too.
+  await page.route("**/api/status", async (route) => {
+    const res = await route.fetch();
+    await route.fulfill({ response: res, json: { ...(await res.json()), backupKey: state.backupKey } });
+  });
   await page.route(
     (url) => url.pathname.startsWith("/api/emergency"),
     (route) => {

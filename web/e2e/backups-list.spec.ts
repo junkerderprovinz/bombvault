@@ -231,6 +231,11 @@ async function stage(page: Page, s: Stage = {}): Promise<{ posts: string[] }> {
     posts.push(`PATCH ${new URL(req.url()).pathname} ${req.postData() ?? ""}`);
     return route.fulfill({ json: { ok: true } });
   };
+  await page.route("**/api/items/*/*/included", (route) => {
+    const req = route.request();
+    posts.push(`PUT ${new URL(req.url()).pathname} ${req.postData() ?? ""}`);
+    return route.fulfill({ json: { ok: true } });
+  });
   await page.route("**/api/containers/*", patched);
   await page.route("**/api/vms/*", patched);
   await page.route("**/api/zfs/datasets/*", patched);
@@ -558,7 +563,7 @@ test("rows are picked like files and acted on together", async ({ page }, testIn
   await expect(bar).toContainText("5 ausgewählt");
 
   await bar.getByRole("button", { name: "Zeitplan pausieren" }).click();
-  await expect.poll(() => posts.filter((p) => p.startsWith("PATCH /api/containers/")).length).toBe(5);
+  await expect.poll(() => posts.filter((p) => p.startsWith("PUT /api/items/container/")).length).toBe(5);
   await expect(page.getByRole("status").filter({ hasText: "Zeitplan für 5 Einträge pausiert" })).toBeVisible();
 
   await page.keyboard.press("ControlOrMeta+a");
@@ -596,7 +601,7 @@ test("a right click opens a row's actions at the pointer", async ({ page }, test
 
   await menu.getByRole("menuitem", { name: "Zeitplan pausieren" }).click();
   await expect(menu).toBeHidden();
-  await expect.poll(() => posts).toContain('PATCH /api/containers/jellyfin {"includeInSchedule":false}');
+  await expect.poll(() => posts).toContain('PUT /api/items/container/jellyfin/included {"included":false}');
 
   // On a picked row the menu is about the whole selection.
   await jellyfin.click({ modifiers: ["ControlOrMeta"] });
