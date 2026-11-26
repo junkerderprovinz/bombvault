@@ -16,7 +16,7 @@ BombVault liefert ab Werk HTTPS auf Port `3443` (selbstsigniertes Zertifikat), �
 
 ## Ich habe das Login-Passwort vergessen {#i-forgot-the-login-password}
 
-Wähle auf der Login-Seite **Passwort vergessen?**. BombVault schreibt einen Code mit 12 Zeichen in sein Container-Protokoll (auf Unraid: Docker-Tab, BombVault-Symbol, **Logs**). Tippe ihn innerhalb von 10 Minuten mit einem neuen Passwort ein. Das Zurücksetzen schaltet außerdem die Zwei-Faktor-Authentifizierung aus, entfernt jeden Passkey, entzieht jedes API-Token, jeden MCP-Schlüssel und jede OAuth-Anmeldung, beendet jede andere Sitzung und schaltet die Handy-Kopplung aus. Füge deine Passkeys unter **Einstellungen, Sicherheit** wieder hinzu, schalte dort die Handy-Kopplung wieder ein und lege neue Tokens und Schlüssel an, wo du sie noch brauchst. Siehe [Sicherheitsmodell](configuration.md#login).
+Wähle auf der Login-Seite **Passwort vergessen?**. BombVault schreibt einen Code mit 12 Zeichen in sein Container-Protokoll (auf Unraid: Docker-Tab, BombVault-Symbol, **Logs**). Tippe ihn innerhalb von 10 Minuten mit einem neuen Passwort ein. Das Zurücksetzen schaltet außerdem die Zwei-Faktor-Authentifizierung aus, entfernt jeden Passkey, entzieht jedes API-Token, jeden MCP-Schlüssel und jede OAuth-Anmeldung, beendet jede andere Sitzung und meldet jedes Handy ab, und die Handys melden sich danach von selbst wieder an. Füge deine Passkeys unter **Einstellungen, Sicherheit** wieder hinzu und lege neue Tokens und Schlüssel an, wo du sie noch brauchst. Siehe [Sicherheitsmodell](configuration.md#login).
 
 ## Sicherungen stehen still und sagen, der Schlüssel lasse sich nicht mehr öffnen {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

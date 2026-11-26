@@ -72,7 +72,7 @@ Het tandwiel naast het plusteken opent de instellingen van de app:
 
 ## Downloads en uploads {#files}
 
-Exports, herstelkits, flash-ZIP's en databasedumps komen in de map Downloads van de telefoon terecht, net als vanuit een browser. Een import van instellingen opent de bestandskiezer van de telefoon. Via de relay wordt geen bestand opgeslagen. Open daarvoor de server op zijn eigen adres.
+De sessie van een gekoppelde telefoon slaat geen bestanden op, dus meld je eerst aan met het wachtwoord op het eigen adres van de server. Na zo'n aanmelding komen exports, herstelkits, flash-ZIP's en databasedumps in de map Downloads van de telefoon terecht, net als vanuit een browser, en een import van instellingen opent de bestandskiezer van de telefoon. Via de relay wordt geen bestand opgeslagen.
 
 ## Op een touchscreen {#touch}
 

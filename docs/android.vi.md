@@ -72,7 +72,7 @@ Biểu tượng bánh răng cạnh dấu cộng mở phần cài đặt của �
 
 ## Tải xuống và tải lên {#files}
 
-Các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt. Nhập cài đặt sẽ mở trình chọn tệp của điện thoại. Qua relay, không có tệp nào được lưu. Muốn lưu, hãy mở máy chủ ở địa chỉ riêng của nó.
+Phiên của một điện thoại đã ghép nối không lưu tệp, nên trước tiên hãy đăng nhập bằng mật khẩu ở địa chỉ riêng của máy chủ. Khi đã đăng nhập như vậy, các bản xuất, bộ khôi phục, tệp ZIP của flash và bản dump cơ sở dữ liệu được lưu vào thư mục Tải xuống của điện thoại, giống như khi tải từ trình duyệt, và nhập cài đặt sẽ mở trình chọn tệp của điện thoại. Qua relay, không có tệp nào được lưu.
 
 ## Trên màn hình cảm ứng {#touch}
 

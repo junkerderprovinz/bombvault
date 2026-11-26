@@ -16,7 +16,7 @@ BombVault serwuje HTTPS od razu po instalacji na porcie `3443` (certyfikat samop
 
 ## Zapomniane hasło logowania {#i-forgot-the-login-password}
 
-Wybierz **Nie pamiętasz hasła?** na stronie logowania. BombVault zapisuje kod z 12 znaków w logu swojego kontenera (w Unraid: zakładka Docker, ikona BombVault, **Logs**). Wpisz go razem z nowym hasłem w ciągu 10 minut. Reset wyłącza też uwierzytelnianie dwuskładnikowe, usuwa każdy klucz dostępu (passkey), unieważnia każdy token API, klucz MCP i logowanie OAuth, kończy wszystkie inne sesje i wyłącza parowanie telefonów. Dodaj swoje klucze dostępu ponownie w **Ustawienia, Bezpieczeństwo**, włącz tam z powrotem parowanie telefonów i utwórz nowe tokeny i klucze tam, gdzie jeszcze ich potrzebujesz. Zobacz [Model bezpieczeństwa](configuration.md#login).
+Wybierz **Nie pamiętasz hasła?** na stronie logowania. BombVault zapisuje kod z 12 znaków w logu swojego kontenera (w Unraid: zakładka Docker, ikona BombVault, **Logs**). Wpisz go razem z nowym hasłem w ciągu 10 minut. Reset wyłącza też uwierzytelnianie dwuskładnikowe, usuwa każdy klucz dostępu (passkey), unieważnia każdy token API, klucz MCP i logowanie OAuth, kończy wszystkie inne sesje i wylogowuje wszystkie telefony, a telefony potem same logują się ponownie. Dodaj swoje klucze dostępu ponownie w **Ustawienia, Bezpieczeństwo** i utwórz nowe tokeny i klucze tam, gdzie jeszcze ich potrzebujesz. Zobacz [Model bezpieczeństwa](configuration.md#login).
 
 ## Kopie zapasowe się zatrzymały i mówią, że klucza nie można już otworzyć {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

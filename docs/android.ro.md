@@ -72,7 +72,7 @@ Rotița de lângă butonul + deschide setările aplicației:
 
 ## Descărcări și încărcări {#files}
 
-Exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser. Un import de setări deschide selectorul de fișiere al telefonului. Prin releu nu se salvează niciun fișier. Deschide serverul la adresa lui proprie.
+Sesiunea unui telefon împerecheat nu salvează fișiere, așa că autentifică-te mai întâi cu parola la adresa proprie a serverului. După o astfel de autentificare, exporturile, kiturile de recuperare, arhivele ZIP ale flash-ului și dumpurile de baze de date ajung în dosarul Descărcări al telefonului, ca dintr-un browser, iar un import de setări deschide selectorul de fișiere al telefonului. Prin releu nu se salvează niciun fișier.
 
 ## Pe un ecran tactil {#touch}
 

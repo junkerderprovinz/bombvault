@@ -71,7 +71,7 @@ Tannhjulet ved siden av plusstegnet åpner innstillingene i appen:
 
 ## Nedlastinger og opplastinger {#files}
 
-Eksporter, gjenopprettingssett, flash-ZIP-filer og databasedumper havner i mappen Nedlastinger på telefonen, akkurat som fra en nettleser. En import av innstillinger åpner filvelgeren på telefonen. Via relayet lagres ingen fil. Åpne serveren på sin egen adresse for det.
+Økten til en paret telefon lagrer ingen filer, så logg først på med passordet på serverens egen adresse. Med en slik pålogging havner eksporter, gjenopprettingssett, flash-ZIP-filer og databasedumper i mappen Nedlastinger på telefonen, akkurat som fra en nettleser, og en import av innstillinger åpner filvelgeren på telefonen. Via relayet lagres ingen fil.
 
 ## På en berøringsskjerm {#touch}
 

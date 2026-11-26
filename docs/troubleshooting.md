@@ -16,7 +16,7 @@ BombVault serves HTTPS out of the box on port `3443` (self-signed certificate), 
 
 ## I forgot the login password {#i-forgot-the-login-password}
 
-Choose **Forgot password?** on the login page. BombVault writes a code of 12 characters to its container log (on Unraid: Docker tab, BombVault icon, **Logs**). Type it with a new password within 10 minutes. The reset also turns two-factor authentication off, removes every passkey, revokes every API token, MCP key and OAuth sign-in, ends every other session and switches phone pairing off. Add your passkeys again under **Settings, Security**, switch phone pairing back on there, and create new tokens and keys where you still need them. See [Security model](configuration.md#login).
+Choose **Forgot password?** on the login page. BombVault writes a code of 12 characters to its container log (on Unraid: Docker tab, BombVault icon, **Logs**). Type it with a new password within 10 minutes. The reset also turns two-factor authentication off, removes every passkey, revokes every API token, MCP key and OAuth sign-in, ends every other session and signs every phone out, and the phones sign in again by themselves. Add your passkeys again under **Settings, Security** and create new tokens and keys where you still need them. See [Security model](configuration.md#login).
 
 ## Backups stopped and say the key can no longer be opened {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

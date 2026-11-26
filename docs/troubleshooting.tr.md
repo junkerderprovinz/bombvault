@@ -16,7 +16,7 @@ BombVault kutudan çıktığı gibi `3443` portunda HTTPS sunar (kendi kendine i
 
 ## Giriş parolamı unuttum {#i-forgot-the-login-password}
 
-Giriş sayfasında **Parolanı mı unuttun?**'u seç. BombVault 12 karakterlik bir kodu konteyner günlüğüne yazar (Unraid'de: Docker sekmesi, BombVault simgesi, **Günlükler**). Onu 10 dakika içinde yeni bir parolayla yaz. Sıfırlama ayrıca iki adımlı doğrulamayı kapatır, her geçiş anahtarını kaldırır, her API belirtecini, MCP anahtarını ve OAuth oturumunu iptal eder, diğer tüm oturumları sonlandırır ve telefon eşleştirmesini kapatır. Geçiş anahtarlarını **Ayarlar, Güvenlik** altında yeniden ekle, telefon eşleştirmesini orada yeniden aç ve hâlâ gerektiği yerde yeni belirteçler ve anahtarlar oluştur. Bkz. [Güvenlik modeli](configuration.md#login).
+Giriş sayfasında **Parolanı mı unuttun?**'u seç. BombVault 12 karakterlik bir kodu konteyner günlüğüne yazar (Unraid'de: Docker sekmesi, BombVault simgesi, **Günlükler**). Onu 10 dakika içinde yeni bir parolayla yaz. Sıfırlama ayrıca iki adımlı doğrulamayı kapatır, her geçiş anahtarını kaldırır, her API belirtecini, MCP anahtarını ve OAuth oturumunu iptal eder, diğer tüm oturumları sonlandırır ve her telefonun oturumunu kapatır, telefonlar ardından kendiliğinden yeniden oturum açar. Geçiş anahtarlarını **Ayarlar, Güvenlik** altında yeniden ekle ve hâlâ gerektiği yerde yeni belirteçler ve anahtarlar oluştur. Bkz. [Güvenlik modeli](configuration.md#login).
 
 ## Yedekler durdu ve anahtarın artık açılamadığını söylüyor {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

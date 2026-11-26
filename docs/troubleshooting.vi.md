@@ -16,7 +16,7 @@ BombVault phục vụ HTTPS ngay từ đầu trên cổng `3443` (chứng chỉ 
 
 ## Tôi quên mật khẩu đăng nhập {#i-forgot-the-login-password}
 
-Chọn **Quên mật khẩu?** trên trang đăng nhập. BombVault ghi một mã gồm 12 ký tự vào nhật ký container của nó (trên Unraid: tab Docker, biểu tượng BombVault, **Logs**). Hãy nhập mã đó cùng một mật khẩu mới trong vòng 10 phút. Việc đặt lại cũng tắt xác thực hai yếu tố, gỡ mọi khóa truy cập, thu hồi mọi mã thông báo API, khóa MCP và phiên đăng nhập OAuth, kết thúc mọi phiên khác và tắt việc ghép nối điện thoại. Hãy thêm lại khóa truy cập trong **Cài đặt, Bảo mật**, bật lại việc ghép nối điện thoại ở đó, rồi tạo mã thông báo và khóa mới ở nơi bạn vẫn cần. Xem [Mô hình bảo mật](configuration.md#login).
+Chọn **Quên mật khẩu?** trên trang đăng nhập. BombVault ghi một mã gồm 12 ký tự vào nhật ký container của nó (trên Unraid: tab Docker, biểu tượng BombVault, **Logs**). Hãy nhập mã đó cùng một mật khẩu mới trong vòng 10 phút. Việc đặt lại cũng tắt xác thực hai yếu tố, gỡ mọi khóa truy cập, thu hồi mọi mã thông báo API, khóa MCP và phiên đăng nhập OAuth, kết thúc mọi phiên khác và đăng xuất mọi điện thoại, rồi các điện thoại tự đăng nhập lại. Hãy thêm lại khóa truy cập trong **Cài đặt, Bảo mật**, rồi tạo mã thông báo và khóa mới ở nơi bạn vẫn cần. Xem [Mô hình bảo mật](configuration.md#login).
 
 ## Sao lưu dừng lại và báo không thể mở khóa nữa {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

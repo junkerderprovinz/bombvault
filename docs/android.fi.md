@@ -72,7 +72,7 @@ Plussan vieressä oleva ratas avaa sovelluksen asetukset:
 
 ## Lataukset ja lähetykset {#files}
 
-Viennit, palautuspaketit, flashin ZIP-tiedostot ja tietokantavedokset tallentuvat puhelimen Lataukset-kansioon samaan tapaan kuin selaimesta. Asetusten tuonti avaa puhelimen tiedostovalitsimen. Releen kautta ei tallenneta tiedostoja. Avaa palvelin sitä varten sen omassa osoitteessa.
+Pariliitetyn puhelimen istunto ei tallenna tiedostoja, joten kirjaudu ensin salasanalla palvelimen omassa osoitteessa. Näin kirjautuneena viennit, palautuspaketit, flashin ZIP-tiedostot ja tietokantavedokset tallentuvat puhelimen Lataukset-kansioon samaan tapaan kuin selaimesta, ja asetusten tuonti avaa puhelimen tiedostovalitsimen. Releen kautta ei tallenneta tiedostoja.
 
 ## Kosketusnäytöllä {#touch}
 

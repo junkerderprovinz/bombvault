@@ -16,7 +16,7 @@ BombVault serve HTTPS pronto all'uso sulla porta `3443` (certificato autofirmato
 
 ## Ho dimenticato la password di accesso {#i-forgot-the-login-password}
 
-Scegli **Password dimenticata?** nella pagina di accesso. BombVault scrive un codice di 12 caratteri nel log del suo container (su Unraid: scheda Docker, icona di BombVault, **Logs**). Digitalo con una nuova password entro 10 minuti. Il reset disattiva anche l'autenticazione a due fattori, rimuove ogni passkey, revoca ogni token API, chiave MCP e accesso OAuth, chiude ogni altra sessione e disattiva l'associazione dei telefoni. Aggiungi di nuovo le tue passkey in **Impostazioni, Sicurezza**, riattiva lì l'associazione dei telefoni e crea nuovi token e chiavi dove ti servono ancora. Vedi [Modello di sicurezza](configuration.md#login).
+Scegli **Password dimenticata?** nella pagina di accesso. BombVault scrive un codice di 12 caratteri nel log del suo container (su Unraid: scheda Docker, icona di BombVault, **Logs**). Digitalo con una nuova password entro 10 minuti. Il reset disattiva anche l'autenticazione a due fattori, rimuove ogni passkey, revoca ogni token API, chiave MCP e accesso OAuth, chiude ogni altra sessione e fa uscire ogni telefono, e i telefoni poi accedono di nuovo da soli. Aggiungi di nuovo le tue passkey in **Impostazioni, Sicurezza** e crea nuovi token e chiavi dove ti servono ancora. Vedi [Modello di sicurezza](configuration.md#login).
 
 ## I backup si sono fermati e dicono che la chiave non si può più aprire {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

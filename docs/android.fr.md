@@ -72,7 +72,7 @@ La roue dentée à côté du bouton + ouvre les paramètres de l'application :
 
 ## Téléchargements et envois {#files}
 
-Les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur. Un import de paramètres ouvre le sélecteur de fichiers du téléphone. Via le relais, aucun fichier n'est enregistré. Ouvrez pour cela le serveur à sa propre adresse.
+La session d'un téléphone appairé n'enregistre aucun fichier. Connectez-vous donc d'abord avec le mot de passe à l'adresse propre du serveur. Après cette connexion, les exports, les kits de récupération, les ZIP de la flash et les dumps de base de données arrivent dans le dossier Téléchargements du téléphone, comme depuis un navigateur, et un import de paramètres ouvre le sélecteur de fichiers du téléphone. Via le relais, aucun fichier n'est enregistré.
 
 ## Sur un écran tactile {#touch}
 

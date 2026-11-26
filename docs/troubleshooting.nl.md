@@ -16,7 +16,7 @@ BombVault serveert standaard HTTPS op poort `3443` (zelfondertekend certificaat)
 
 ## Ik ben het inlogwachtwoord vergeten {#i-forgot-the-login-password}
 
-Kies **Wachtwoord vergeten?** op de inlogpagina. BombVault schrijft een code van 12 tekens naar het containerlogboek (op Unraid: tabblad Docker, BombVault-icoon, **Logs**). Typ haar binnen 10 minuten met een nieuw wachtwoord. De reset zet ook tweefactorauthenticatie uit, verwijdert elke passkey, trekt elk API-token, elke MCP-sleutel en elke OAuth-aanmelding in, beëindigt elke andere sessie en zet het koppelen van telefoons uit. Voeg je passkeys opnieuw toe onder **Instellingen, Beveiliging**, schakel het koppelen van telefoons daar weer in en maak nieuwe tokens en sleutels aan waar je ze nog nodig hebt. Zie [Beveiligingsmodel](configuration.md#login).
+Kies **Wachtwoord vergeten?** op de inlogpagina. BombVault schrijft een code van 12 tekens naar het containerlogboek (op Unraid: tabblad Docker, BombVault-icoon, **Logs**). Typ haar binnen 10 minuten met een nieuw wachtwoord. De reset zet ook tweefactorauthenticatie uit, verwijdert elke passkey, trekt elk API-token, elke MCP-sleutel en elke OAuth-aanmelding in, beëindigt elke andere sessie en meldt alle telefoons af, en de telefoons melden zich daarna zelf weer aan. Voeg je passkeys opnieuw toe onder **Instellingen, Beveiliging** en maak nieuwe tokens en sleutels aan waar je ze nog nodig hebt. Zie [Beveiligingsmodel](configuration.md#login).
 
 ## Back-ups staan stil en zeggen dat de sleutel niet meer te openen is {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

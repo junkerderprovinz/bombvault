@@ -16,7 +16,7 @@ BombVault servește HTTPS din start pe portul `3443` (certificat auto-semnat), d
 
 ## Am uitat parola de conectare {#i-forgot-the-login-password}
 
-Alege **Ai uitat parola?** pe pagina de autentificare. BombVault scrie un cod de 12 caractere în jurnalul containerului său (în Unraid: fila Docker, pictograma BombVault, **Logs**). Tastează-l cu o parolă nouă în 10 minute. Resetarea dezactivează și autentificarea în doi pași, elimină toate cheile de acces, revocă toate tokenurile API, cheile MCP și autentificările OAuth, încheie toate celelalte sesiuni și oprește împerecherea telefoanelor. Adaugă din nou cheile de acces la **Setări, Securitate**, pornește tot acolo împerecherea telefoanelor și creează tokenuri și chei noi unde mai ai nevoie de ele. Vezi [Model de securitate](configuration.md#login).
+Alege **Ai uitat parola?** pe pagina de autentificare. BombVault scrie un cod de 12 caractere în jurnalul containerului său (în Unraid: fila Docker, pictograma BombVault, **Logs**). Tastează-l cu o parolă nouă în 10 minute. Resetarea dezactivează și autentificarea în doi pași, elimină toate cheile de acces, revocă toate tokenurile API, cheile MCP și autentificările OAuth, încheie toate celelalte sesiuni și deconectează toate telefoanele, iar telefoanele se conectează apoi din nou singure. Adaugă din nou cheile de acces la **Setări, Securitate** și creează tokenuri și chei noi unde mai ai nevoie de ele. Vezi [Model de securitate](configuration.md#login).
 
 ## Backupurile s-au oprit și spun că cheia nu mai poate fi deschisă {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

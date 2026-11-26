@@ -16,7 +16,7 @@ BombVault obsluhuje HTTPS rovnou z krabice na portu `3443` (samopodepsaný certi
 
 ## Zapomněl jsem přihlašovací heslo {#i-forgot-the-login-password}
 
-Zvol **Zapomenuté heslo?** na přihlašovací stránce. BombVault zapíše kód o 12 znacích do logu svého kontejneru (na Unraidu: záložka Docker, ikona BombVault, **Logy**). Zadej ho s novým heslem do 10 minut. Reset také vypne dvoufázové ověření, odstraní všechny passkeys, zruší všechny API tokeny, klíče MCP a přihlášení OAuth, ukončí všechny ostatní relace a vypne párování telefonů. Passkeys přidej znovu v **Nastavení, Zabezpečení**, párování telefonů tam zase zapni a nové tokeny a klíče vytvoř tam, kde je ještě potřebuješ. Viz [Bezpečnostní model](configuration.md#login).
+Zvol **Zapomenuté heslo?** na přihlašovací stránce. BombVault zapíše kód o 12 znacích do logu svého kontejneru (na Unraidu: záložka Docker, ikona BombVault, **Logy**). Zadej ho s novým heslem do 10 minut. Reset také vypne dvoufázové ověření, odstraní všechny passkeys, zruší všechny API tokeny, klíče MCP a přihlášení OAuth, ukončí všechny ostatní relace a odhlásí všechny telefony, které se pak samy přihlásí znovu. Passkeys přidej znovu v **Nastavení, Zabezpečení** a nové tokeny a klíče vytvoř tam, kde je ještě potřebuješ. Viz [Bezpečnostní model](configuration.md#login).
 
 ## Zálohy se zastavily a hlásí, že klíč už nejde otevřít {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

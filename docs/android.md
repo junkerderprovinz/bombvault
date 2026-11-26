@@ -72,7 +72,7 @@ The gear beside the plus opens the app's settings:
 
 ## Downloads and uploads {#files}
 
-Exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser. A settings import opens the phone's file picker. Over the relay no file is saved. Open the server at its own address for that.
+A paired phone's session saves no files, so sign in with the password at the server's own address first. Signed in that way, exports, recovery kits, flash ZIPs and database dumps land in the phone's Downloads folder, as they would from a browser, and a settings import opens the phone's file picker. Over the relay no file is saved.
 
 ## On a touch screen {#touch}
 

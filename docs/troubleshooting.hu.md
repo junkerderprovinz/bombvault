@@ -16,7 +16,7 @@ Az `APP_KEY`-ből származik a restic tároló jelszava. Nélküle, a helyreáll
 
 ## Elfelejtettem a bejelentkezési jelszót {#i-forgot-the-login-password}
 
-Válaszd az **Elfelejtetted a jelszót?** lehetőséget a bejelentkezési oldalon. A BombVault egy 12 karakteres kódot ír a konténere naplójába (Unraidon: Docker fül, BombVault ikon, **Logs**). Írd be 10 percen belül egy új jelszóval. A visszaállítás a kétlépcsős azonosítást is kikapcsolja, eltávolít minden hozzáférési kulcsot, visszavon minden API-tokent, MCP-kulcsot és OAuth-bejelentkezést, lezár minden más munkamenetet, és kikapcsolja a telefonok párosítását. Add hozzá újra a hozzáférési kulcsaidat a **Beállítások, Biztonság** alatt, kapcsold vissza ott a telefonok párosítását, és hozz létre új tokeneket és kulcsokat ott, ahol még szükség van rájuk. Lásd: [Biztonsági modell](configuration.md#login).
+Válaszd az **Elfelejtetted a jelszót?** lehetőséget a bejelentkezési oldalon. A BombVault egy 12 karakteres kódot ír a konténere naplójába (Unraidon: Docker fül, BombVault ikon, **Logs**). Írd be 10 percen belül egy új jelszóval. A visszaállítás a kétlépcsős azonosítást is kikapcsolja, eltávolít minden hozzáférési kulcsot, visszavon minden API-tokent, MCP-kulcsot és OAuth-bejelentkezést, lezár minden más munkamenetet, és minden telefont kijelentkeztet, utána a telefonok maguktól újra bejelentkeznek. Add hozzá újra a hozzáférési kulcsaidat a **Beállítások, Biztonság** alatt, és hozz létre új tokeneket és kulcsokat ott, ahol még szükség van rájuk. Lásd: [Biztonsági modell](configuration.md#login).
 
 ## A mentések leálltak, és azt írják, hogy a kulcs már nem nyitható meg {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

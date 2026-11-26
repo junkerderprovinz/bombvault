@@ -71,7 +71,7 @@ Zębatka obok plusa otwiera ustawienia aplikacji:
 
 ## Pobieranie i wysyłanie plików {#files}
 
-Eksporty, zestawy odzyskiwania, pliki ZIP z flasha i zrzuty baz danych trafiają do folderu Pobrane na telefonie, tak jak z przeglądarki. Import ustawień otwiera okno wyboru plików telefonu. Przez przekaźnik żaden plik nie jest zapisywany. Aby to zrobić, otwórz serwer pod jego własnym adresem.
+Sesja sparowanego telefonu nie zapisuje plików, więc najpierw zaloguj się hasłem pod własnym adresem serwera. Po takim zalogowaniu eksporty, zestawy odzyskiwania, pliki ZIP z flasha i zrzuty baz danych trafiają do folderu Pobrane na telefonie, tak jak z przeglądarki, a import ustawień otwiera okno wyboru plików telefonu. Przez przekaźnik żaden plik nie jest zapisywany.
 
 ## Na ekranie dotykowym {#touch}
 

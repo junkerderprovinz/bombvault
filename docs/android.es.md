@@ -72,7 +72,7 @@ El engranaje junto al signo más abre los ajustes de la app:
 
 ## Descargas y subidas {#files}
 
-Las exportaciones, los kits de recuperación, los ZIP de Flash y los volcados de la base de datos van a la carpeta Descargas del teléfono, como desde un navegador. Importar ajustes abre el selector de archivos del teléfono. Por el repetidor no se guarda ningún archivo. Para eso abre el servidor en su propia dirección.
+La sesión de un teléfono emparejado no guarda archivos, así que primero inicia sesión con la contraseña en la propia dirección del servidor. Tras iniciar sesión así, las exportaciones, los kits de recuperación, los ZIP de Flash y los volcados de la base de datos van a la carpeta Descargas del teléfono, como desde un navegador, e importar ajustes abre el selector de archivos del teléfono. Por el repetidor no se guarda ningún archivo.
 
 ## En una pantalla táctil {#touch}
 

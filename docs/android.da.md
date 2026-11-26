@@ -72,7 +72,7 @@ Tandhjulet ved siden af plusset åbner appens indstillinger:
 
 ## Downloads og uploads {#files}
 
-Eksporter, gendannelseskit, flash-ZIP'er og databasedumps havner i telefonens mappe Downloads, ligesom fra en browser. En import af indstillinger åbner telefonens filvælger. Via relayet gemmes ingen fil. Åbn serveren på dens egen adresse til det.
+En parret telefons session gemmer ingen filer, så log først ind med adgangskoden på serverens egen adresse. Med et sådant login havner eksporter, gendannelseskit, flash-ZIP'er og databasedumps i telefonens mappe Downloads, ligesom fra en browser, og en import af indstillinger åbner telefonens filvælger. Via relayet gemmes ingen fil.
 
 ## På en touchskærm {#touch}
 

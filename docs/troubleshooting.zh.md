@@ -16,7 +16,7 @@ BombVault 开箱即用地在 `3443` 端口提供 HTTPS（自签名证书），�
 
 ## 我忘了登录密码 {#i-forgot-the-login-password}
 
-在登录页面上选择**忘记密码？**。BombVault 会把一个 12 个字符的代码写进它的容器日志（在 Unraid 上：Docker 标签页，BombVault 图标，**Logs**）。请在 10 分钟内连同新密码一起输入。重置还会关闭两步验证、移除所有通行密钥、撤销所有 API 令牌、MCP 密钥和 OAuth 登录、结束所有其他会话，并关闭手机配对。请在**设置、安全**下重新添加你的通行密钥，在那里重新打开手机配对，并在仍然需要的地方创建新的令牌和密钥。参见[安全模型](configuration.md#login)。
+在登录页面上选择**忘记密码？**。BombVault 会把一个 12 个字符的代码写进它的容器日志（在 Unraid 上：Docker 标签页，BombVault 图标，**Logs**）。请在 10 分钟内连同新密码一起输入。重置还会关闭两步验证、移除所有通行密钥、撤销所有 API 令牌、MCP 密钥和 OAuth 登录、结束所有其他会话，并让所有手机退出登录，之后手机会自动重新登录。请在**设置、安全**下重新添加你的通行密钥，并在仍然需要的地方创建新的令牌和密钥。参见[安全模型](configuration.md#login)。
 
 ## 备份停止了，并说密钥无法再打开 {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

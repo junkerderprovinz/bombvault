@@ -16,7 +16,7 @@ BombVault serverar HTTPS direkt ur lådan på port `3443` (självsignerat certif
 
 ## Jag har glömt inloggningslösenordet {#i-forgot-the-login-password}
 
-Välj **Glömt lösenordet?** på inloggningssidan. BombVault skriver en kod på 12 tecken till sin containerlogg (på Unraid: fliken Docker, BombVault-ikonen, **Loggar**). Skriv in den med ett nytt lösenord inom 10 minuter. Återställningen stänger också av tvåfaktorsautentisering, tar bort varje lösennyckel, återkallar varje API-token, MCP-nyckel och OAuth-inloggning, avslutar varje annan session och stänger av telefonparkoppling. Lägg till dina lösennycklar igen under **Inställningar, Säkerhet**, slå på telefonparkoppling igen där och skapa nya token och nycklar där du fortfarande behöver dem. Se [Säkerhetsmodell](configuration.md#login).
+Välj **Glömt lösenordet?** på inloggningssidan. BombVault skriver en kod på 12 tecken till sin containerlogg (på Unraid: fliken Docker, BombVault-ikonen, **Loggar**). Skriv in den med ett nytt lösenord inom 10 minuter. Återställningen stänger också av tvåfaktorsautentisering, tar bort varje lösennyckel, återkallar varje API-token, MCP-nyckel och OAuth-inloggning, avslutar varje annan session och loggar ut alla telefoner, och telefonerna loggar sedan in igen av sig själva. Lägg till dina lösennycklar igen under **Inställningar, Säkerhet** och skapa nya token och nycklar där du fortfarande behöver dem. Se [Säkerhetsmodell](configuration.md#login).
 
 ## Säkerhetskopieringen står still och säger att nyckeln inte går att öppna {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

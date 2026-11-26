@@ -16,7 +16,7 @@ A `APP_KEY` deriva a palavra-passe do repositório restic. Sem ela, sem o kit de
 
 ## Esqueci-me da palavra-passe de acesso {#i-forgot-the-login-password}
 
-Escolhe **Esqueceste-te da palavra-passe?** na página de início de sessão. O BombVault escreve um código de 12 caracteres no registo do seu container (no Unraid: separador Docker, ícone do BombVault, **Logs**). Escreve-o com uma palavra-passe nova no prazo de 10 minutos. A reposição também desliga a autenticação de dois fatores, remove todas as chaves de acesso, revoga todos os tokens de API, chaves MCP e inícios de sessão OAuth, termina todas as outras sessões e desliga o emparelhamento de telemóveis. Volta a adicionar as tuas chaves de acesso em **Definições, Segurança**, liga aí de novo o emparelhamento de telemóveis e cria tokens e chaves novos onde ainda precisares deles. Vê [Modelo de segurança](configuration.md#login).
+Escolhe **Esqueceste-te da palavra-passe?** na página de início de sessão. O BombVault escreve um código de 12 caracteres no registo do seu container (no Unraid: separador Docker, ícone do BombVault, **Logs**). Escreve-o com uma palavra-passe nova no prazo de 10 minutos. A reposição também desliga a autenticação de dois fatores, remove todas as chaves de acesso, revoga todos os tokens de API, chaves MCP e inícios de sessão OAuth, termina todas as outras sessões e a sessão de todos os telemóveis, e os telemóveis voltam depois a iniciar sessão sozinhos. Volta a adicionar as tuas chaves de acesso em **Definições, Segurança** e cria tokens e chaves novos onde ainda precisares deles. Vê [Modelo de segurança](configuration.md#login).
 
 ## Os backups pararam e dizem que a chave já não pode ser aberta {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

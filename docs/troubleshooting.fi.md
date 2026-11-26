@@ -16,7 +16,7 @@ BombVault tarjoaa HTTPS:n valmiiksi portissa `3443` (itse allekirjoitettu varmen
 
 ## Unohdin kirjautumissalasanan {#i-forgot-the-login-password}
 
-Valitse kirjautumissivulla **Unohtuiko salasana?**. BombVault kirjoittaa 12 merkin koodin konttinsa lokiin (Unraidissa: Docker-välilehti, BombVaultin kuvake, **Lokit**). Kirjoita se uuden salasanan kanssa 10 minuutin kuluessa. Nollaus kytkee myös kaksivaiheisen tunnistautumisen pois, poistaa jokaisen pääsyavaimen, kumoaa jokaisen API-tokenin, MCP-avaimen ja OAuth-kirjautumisen, päättää jokaisen muun istunnon ja kytkee puhelinten pariliitoksen pois. Lisää pääsyavaimesi uudelleen kohdassa **Asetukset, Turvallisuus**, kytke puhelinten pariliitos takaisin päälle siellä ja luo uudet tokenit ja avaimet siellä, missä niitä vielä tarvitset. Katso [Tietoturvamalli](configuration.md#login).
+Valitse kirjautumissivulla **Unohtuiko salasana?**. BombVault kirjoittaa 12 merkin koodin konttinsa lokiin (Unraidissa: Docker-välilehti, BombVaultin kuvake, **Lokit**). Kirjoita se uuden salasanan kanssa 10 minuutin kuluessa. Nollaus kytkee myös kaksivaiheisen tunnistautumisen pois, poistaa jokaisen pääsyavaimen, kumoaa jokaisen API-tokenin, MCP-avaimen ja OAuth-kirjautumisen, päättää jokaisen muun istunnon ja kirjaa jokaisen puhelimen ulos, ja puhelimet kirjautuvat sen jälkeen itse uudelleen. Lisää pääsyavaimesi uudelleen kohdassa **Asetukset, Turvallisuus** ja luo uudet tokenit ja avaimet siellä, missä niitä vielä tarvitset. Katso [Tietoturvamalli](configuration.md#login).
 
 ## Varmuuskopiointi on pysähtynyt ja sanoo, ettei avainta voi enää avata {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

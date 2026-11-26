@@ -72,7 +72,7 @@ A plusz melletti fogaskerék nyitja meg az alkalmazás beállításait:
 
 ## Letöltések és feltöltések {#files}
 
-Az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is. A beállítások importálása a telefon fájlválasztóját nyitja meg. A relayen át nem mentődik fájl. Ehhez nyisd meg a szervert a saját címén.
+A párosított telefon munkamenete nem ment fájlokat, ezért előbb jelentkezz be jelszóval a szerver saját címén. Így bejelentkezve az exportok, a helyreállítási csomagok, a flash ZIP-ek és az adatbázis-mentések a telefon Letöltések mappájába kerülnek, ahogy egy böngészőből is, a beállítások importálása pedig a telefon fájlválasztóját nyitja meg. A relayen át nem mentődik fájl.
 
 ## Érintőképernyőn {#touch}
 

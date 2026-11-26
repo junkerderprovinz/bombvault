@@ -72,7 +72,7 @@ Artının yanındaki dişli uygulamanın ayarlarını açar:
 
 ## İndirmeler ve yüklemeler {#files}
 
-Dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, bir tarayıcıdan olacağı gibi telefonun İndirilenler klasörüne düşer. Bir ayar içe aktarması telefonun dosya seçicisini açar. Röle üzerinden hiçbir dosya kaydedilmez. Bunun için sunucuyu kendi adresinde aç.
+Eşleşmiş bir telefonun oturumu dosya kaydetmez, bu yüzden önce sunucunun kendi adresinde parolayla oturum aç. Böyle oturum açtığında dışa aktarmalar, kurtarma kitleri, flash ZIP'leri ve veritabanı dökümleri, bir tarayıcıdan olacağı gibi telefonun İndirilenler klasörüne düşer, bir ayar içe aktarması da telefonun dosya seçicisini açar. Röle üzerinden hiçbir dosya kaydedilmez.
 
 ## Dokunmatik ekranda {#touch}
 

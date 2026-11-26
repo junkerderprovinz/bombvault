@@ -72,7 +72,7 @@ Kugghjulet bredvid plustecknet öppnar appens inställningar:
 
 ## Nedladdningar och uppladdningar {#files}
 
-Exporter, återställningskit, flash-ZIP-filer och databasdumpar hamnar i telefonens mapp Nedladdningar, precis som från en webbläsare. En import av inställningar öppnar telefonens filväljare. Via reläet sparas ingen fil. Öppna servern på dess egen adress för det.
+En parkopplad telefons session sparar inga filer, så logga först in med lösenordet på serverns egen adress. Med en sådan inloggning hamnar exporter, återställningskit, flash-ZIP-filer och databasdumpar i telefonens mapp Nedladdningar, precis som från en webbläsare, och en import av inställningar öppnar telefonens filväljare. Via reläet sparas ingen fil.
 
 ## På en pekskärm {#touch}
 

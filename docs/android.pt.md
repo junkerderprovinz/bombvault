@@ -71,7 +71,7 @@ A roda dentada ao lado do botão + abre as definições da aplicação:
 
 ## Transferências e envios {#files}
 
-Exportações, kits de recuperação, ZIP do flash e dumps de bases de dados vão para a pasta Transferências do telemóvel, tal como a partir de um browser. Uma importação de definições abre o seletor de ficheiros do telemóvel. Através do retransmissor não se guarda nenhum ficheiro. Para isso, abre o servidor no seu próprio endereço.
+A sessão de um telemóvel emparelhado não guarda ficheiros, por isso inicia primeiro sessão com a palavra-passe no endereço do próprio servidor. Depois de iniciares sessão assim, exportações, kits de recuperação, ZIP do flash e dumps de bases de dados vão para a pasta Transferências do telemóvel, tal como a partir de um browser, e uma importação de definições abre o seletor de ficheiros do telemóvel. Através do retransmissor não se guarda nenhum ficheiro.
 
 ## Num ecrã tátil {#touch}
 

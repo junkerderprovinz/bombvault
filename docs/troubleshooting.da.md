@@ -16,7 +16,7 @@ BombVault serverer HTTPS fra start på port `3443` (selvsigneret certifikat), s�
 
 ## Jeg har glemt login-adgangskoden {#i-forgot-the-login-password}
 
-Vælg **Glemt adgangskode?** på loginsiden. BombVault skriver en kode på 12 tegn i sin containerlog (på Unraid: fanen Docker, BombVault-ikonet, **Logs**). Skriv den sammen med en ny adgangskode inden for 10 minutter. Nulstillingen slår også tofaktorgodkendelse fra, fjerner alle passkeys, tilbagekalder alle API-tokens, MCP-nøgler og OAuth-logins, afslutter alle andre sessioner og slår telefonparring fra. Tilføj dine passkeys igen under **Indstillinger, Sikkerhed**, slå telefonparring til igen dér, og opret nye tokens og nøgler, hvor du stadig har brug for dem. Se [Sikkerhedsmodel](configuration.md#login).
+Vælg **Glemt adgangskode?** på loginsiden. BombVault skriver en kode på 12 tegn i sin containerlog (på Unraid: fanen Docker, BombVault-ikonet, **Logs**). Skriv den sammen med en ny adgangskode inden for 10 minutter. Nulstillingen slår også tofaktorgodkendelse fra, fjerner alle passkeys, tilbagekalder alle API-tokens, MCP-nøgler og OAuth-logins, afslutter alle andre sessioner og logger alle telefoner ud, og telefonerne logger selv ind igen. Tilføj dine passkeys igen under **Indstillinger, Sikkerhed** og opret nye tokens og nøgler, hvor du stadig har brug for dem. Se [Sikkerhedsmodel](configuration.md#login).
 
 ## Sikkerhedskopierne stoppede og siger, at nøglen ikke længere kan åbnes {#backups-stopped-and-say-the-key-can-no-longer-be-opened}
 

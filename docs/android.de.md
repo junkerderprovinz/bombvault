@@ -72,7 +72,7 @@ Das Zahnrad neben dem Plus öffnet die Einstellungen der App:
 
 ## Downloads und Uploads {#files}
 
-Exporte, Recovery-Kits, Flash-ZIPs und Datenbank-Dumps landen im Ordner Downloads des Handys, wie bei einem Browser. Ein Import von Einstellungen öffnet die Dateiauswahl des Handys. Über das Relay wird keine Datei gespeichert. Öffne dafür den Server unter seiner eigenen Adresse.
+Die Sitzung eines gekoppelten Handys speichert keine Dateien, also melde dich zuerst mit dem Passwort unter der eigenen Adresse des Servers an. Nach dieser Anmeldung landen Exporte, Recovery-Kits, Flash-ZIPs und Datenbank-Dumps im Ordner Downloads des Handys, wie bei einem Browser, und ein Import von Einstellungen öffnet die Dateiauswahl des Handys. Über das Relay wird keine Datei gespeichert.
 
 ## Auf einem Touchscreen {#touch}
 

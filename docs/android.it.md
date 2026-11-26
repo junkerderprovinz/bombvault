@@ -72,7 +72,7 @@ L'ingranaggio accanto al più apre le impostazioni dell'app:
 
 ## Download e upload {#files}
 
-Esportazioni, kit di ripristino, ZIP della flash e dump dei database finiscono nella cartella Download del telefono, come farebbero da un browser. L'importazione delle impostazioni apre il selettore di file del telefono. Tramite il relay non viene salvato alcun file. Per questo apri il server al suo indirizzo.
+La sessione di un telefono associato non salva file, quindi accedi prima con la password all'indirizzo del server. Con questo accesso, esportazioni, kit di ripristino, ZIP della flash e dump dei database finiscono nella cartella Download del telefono, come farebbero da un browser, e l'importazione delle impostazioni apre il selettore di file del telefono. Tramite il relay non viene salvato alcun file.
 
 ## Su uno schermo touch {#touch}
 

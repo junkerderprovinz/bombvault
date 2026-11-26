@@ -72,7 +72,7 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 
 ## Stahování a nahrávání {#files}
 
-Exporty, sady pro obnovu, ZIPy flashe a dumpy databází se ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče. Import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá. Otevři k tomu server na jeho vlastní adrese.
+Relace spárovaného telefonu neukládá žádné soubory, proto se nejdřív přihlas heslem na vlastní adrese serveru. Po takovém přihlášení se exporty, sady pro obnovu, ZIPy flashe a dumpy databází ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče, a import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá.
 
 ## Na dotykové obrazovce {#touch}
 
