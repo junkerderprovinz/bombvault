@@ -9,8 +9,8 @@ import { IconClose } from "../../components/navGlyphs";
 import { ReleaseNotes, releasePage } from "../../components/ReleaseNotes";
 import { withinBase } from "../../lib/base";
 import { useT } from "../../lib/i18n";
-import { CHANGES, placed, RELEASES, type Change } from "../../lib/whatsNew";
-import { markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
+import { placed, RELEASES, type Change } from "../../lib/whatsNew";
+import { changesHere, markSeen, newer, openWhatsNew, releaseOf, useWhatsNew, useWhatsNewOpen } from "../../lib/whatsNewStore";
 import { InstanceWindow } from "../instances/InstanceWindow";
 
 type T = ReturnType<typeof useT>["t"];
@@ -106,7 +106,7 @@ function ReleaseCard({ version, hueIndex, onGo }: { version: string; hueIndex: n
   const { t } = useT();
   const { seen, absent } = useWhatsNew();
   const id = useId();
-  const changes = CHANGES.filter((change) => change.since === version);
+  const changes = changesHere().filter((change) => change.since === version);
 
   return (
     <section
@@ -157,7 +157,7 @@ export function WhatsNewWindow({ version, onClose }: { version: string | null; o
   const running = releaseOf(version ?? "");
   const fetched = useReleasesSince(from);
   const releases = useMemo(() => releasesShown(running, from, unseen, fetched), [running, from, unseen, fetched]);
-  const listed = CHANGES.filter((change) => releases.includes(change.since));
+  const listed = changesHere().filter((change) => releases.includes(change.since));
   const left = listed.filter((change) => !seen.has(change.id));
 
   const close = () => {

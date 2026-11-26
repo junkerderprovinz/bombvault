@@ -26,6 +26,9 @@ interface Placed {
   /** The element is there in the Android app only, so a browser marks neither
    *  it nor the way to it. */
   app?: boolean;
+  /** The page is closed to a paired phone's session, so that session neither
+   *  lists nor counts the change. */
+  unpaired?: boolean;
   text: TranslationKey;
 }
 
@@ -70,6 +73,7 @@ export const RELEASES: Release[] = [
         page: "/settings/security",
         where: ["nav.settings", "settings.tab.security"],
         way: ["/settings", "/settings/security"],
+        unpaired: true,
         text: "whatsNew.instanceAddress",
       },
       { id: "signin-sessions", text: "whatsNew.sessionsCard" },
@@ -87,6 +91,7 @@ export const RELEASES: Release[] = [
         page: "/instances",
         where: ["instances.title"],
         way: [...TO_INSTANCES, "edit-placement"],
+        unpaired: true,
         text: "whatsNew.nodeCopyOnward",
       },
     ],

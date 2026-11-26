@@ -3,7 +3,8 @@
 // server one person's click would hide a dot for everybody.
 
 import { useMemo, useSyncExternalStore } from "react";
-import { CHANGES, type Change } from "./whatsNew";
+import { openedAsPairedPhone } from "./api";
+import { CHANGES, placed, type Change } from "./whatsNew";
 
 const KEY = "bv-whats-new";
 // Older versions kept one slot per release, named after it. The first write takes it over.
@@ -49,6 +50,11 @@ function parse(raw: string): Stored {
     // Anything else in the slot counts as nothing stored.
   }
   return { seen: CHANGES.map((change) => change.id), absent: [] };
+}
+
+/** The changes this session can follow. */
+export function changesHere(): Change[] {
+  return openedAsPairedPhone() ? CHANGES.filter((change) => !(placed(change) && change.unpaired)) : CHANGES;
 }
 
 const listeners = new Set<() => void>();
@@ -133,7 +139,7 @@ export function useWhatsNew(): WhatsNew {
   return useMemo(() => {
     const { seen, absent, from } = parse(raw);
     const known = new Set(seen);
-    return { seen: known, absent: new Set(absent), unseen: CHANGES.filter((change) => !known.has(change.id)), from: from ?? null };
+    return { seen: known, absent: new Set(absent), unseen: changesHere().filter((change) => !known.has(change.id)), from: from ?? null };
   }, [raw]);
 }
 
