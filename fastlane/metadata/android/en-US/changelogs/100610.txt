@@ -1,0 +1,1 @@
+BombVault 10.6.10 keeps your servers reachable for each other while one of them reconnects, and an action you start on another server runs there only once.
