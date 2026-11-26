@@ -8,10 +8,6 @@ import {
   IconCornerRound,
   IconCornerSoft,
   IconCornerSquare,
-  IconLabelGlyph,
-  IconLabelReactive,
-  IconLabelText,
-  IconLabelTextGlyph,
   IconMotionOff,
   IconMotionStorm,
   IconMotionSubtle,
@@ -43,6 +39,7 @@ import {
   type MotionIntensity,
 } from "../../../lib/motion";
 import { applyStoredDisco, discoTap, getDisco, setDisco } from "../../../lib/disco";
+import { LABEL_GLYPHS } from "../../../components/labelGlyphs";
 import { Selector } from "../../../components/Selector";
 import { Card, ToggleRow, hueCounter } from "../shared";
 
@@ -58,13 +55,6 @@ const MOTION_GLYPHS: Record<MotionIntensity, ReactNode> = {
   subtle: <IconMotionSubtle />,
   wild: <IconMotionWild />,
   storm: <IconMotionStorm />,
-};
-
-const LABEL_GLYPHS: Record<LabelMode, ReactNode> = {
-  text: <IconLabelText />,
-  textGlyph: <IconLabelTextGlyph />,
-  glyph: <IconLabelGlyph />,
-  reactive: <IconLabelReactive />,
 };
 
 // PaletteSwatch is one editable colour in the rainbow palette editor. It opens

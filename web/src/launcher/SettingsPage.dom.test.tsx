@@ -133,6 +133,13 @@ describe("what the web's look settings offer per device", () => {
     expect(following()).toBe(false);
   });
 
+  it("gives every label choice a glyph, so a narrow phone shows the glyphs alone", () => {
+    renderPage();
+    const choices = within(screen.getByRole("radiogroup", { name: "Buttons" })).getAllByRole("radio");
+    expect(choices).toHaveLength(4);
+    for (const choice of choices) expect(choice.querySelector("svg")).not.toBeNull();
+  });
+
   it("offers Reactive Mode and Colour Rotation under the rainbow", () => {
     renderPage();
     expect(screen.queryByRole("switch", { name: "Reactive Mode" })).toBeNull();

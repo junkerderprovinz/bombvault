@@ -5,8 +5,10 @@ import { Button } from "../components/Button";
 import { ColorPickerSwatch } from "../components/ColorPickerPopover";
 import { IconTipButton } from "../components/IconTipButton";
 import { InfoBubble } from "../components/InfoBubble";
+import { LABEL_GLYPHS } from "../components/labelGlyphs";
 import { IconCheck, IconCopy, IconTrash } from "../components/navGlyphs";
 import { BrandMark, ReadmeButton } from "../components/ReadmeButton";
+import { Selector } from "../components/Selector";
 import { Toggle } from "../components/Toggle";
 import { AboutContent } from "../pages/settings/AboutCard";
 import { IconAccentSystem, IconWhatsNew } from "../components/glyphs";
@@ -553,13 +555,15 @@ export function SettingsPage({
       <Section title={t("settings.labels")} hue={2} info={t("settings.labelsHint")}>
         <div className={`flex flex-col ${follows ? "opacity-40" : ""}`}>
           <Axis>{t("settings.labels.buttons")}</Axis>
-          <Well
+          <Selector
+            items={LABEL_MODES.map((m) => ({ id: m, label: t(`settings.labels.mode.${m}` as TranslationKey), icon: LABEL_GLYPHS[m] }))}
             label={t("settings.labels.buttons")}
-            options={LABEL_MODES.map((m) => ({ value: m, label: t(`settings.labels.mode.${m}` as TranslationKey) }))}
-            value={labels}
-            onPick={(mode: LabelMode) => {
-              setLabelMode("buttons", mode);
-              setLabelsLocal(mode);
+            select="one"
+            activation="manual"
+            active={labels}
+            onChange={(id) => {
+              setLabelMode("buttons", id as LabelMode);
+              setLabelsLocal(id as LabelMode);
               labelModeChanged();
               takeOver();
             }}
