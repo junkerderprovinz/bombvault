@@ -24,7 +24,7 @@ Ez a szerver átvette egy másik szerver mentési kulcsát a Vészvarázslóban,
 
 ## Egy telefon a bejelentkezési oldalra érkezik {#a-phone-lands-on-the-login-page}
 
-Egy párosított telefon csak akkor kap munkamenetet a csoporton át, ha a **Beállítások, Biztonság** alatt be van kapcsolva az **A telefonok párosíthatók a csoport tizenkét szavával**. A jelszó visszaállítása kikapcsolja. A szervernél régebbi alkalmazás sem kap munkamenetet, amíg frissítve nincs. A címével hozzáadott szerver mindig a jelszót kéri. A Példányok oldalról eltávolított telefon kikapcsolva tér vissza, amikor az alkalmazása újra megnyílik. Kapcsold be az **Ennek a példánynak a lekérdezése** beállítást a részleteiben a **Felügyelet** alatt, hogy beengedd.
+Egy párosított telefon addig kap munkamenetet a csoporton át, amíg a kártyája ott van a Példányok oldalon, és be van kapcsolva. A szervernél régebbi alkalmazás sem kap munkamenetet, amíg frissítve nincs. A címével hozzáadott szerver mindig a jelszót kéri. A Példányok oldalról eltávolított telefon kikapcsolva tér vissza, amikor az alkalmazása újra megnyílik. Kapcsold be az **Ennek a példánynak a lekérdezése** beállítást a részleteiben a **Felügyelet** alatt, hogy beengedd.
 
 ## A VM-mentés nem csatlakozik {#vm-backup-will-not-connect}
 

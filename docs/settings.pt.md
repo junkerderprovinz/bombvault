@@ -63,7 +63,6 @@ O cartão **Streaming**, que baixa o limite de envio enquanto o Plex, o Jellyfin
 - **Chaves de acesso**: inicia sessão com uma chave no telemóvel, no portátil ou numa chave de segurança. Precisam de um nome de domínio verdadeiro e de um certificado em que o navegador confie.
 - **Endereço**: onde abre o BombVault, por exemplo `https://bombvault.example.com`. As chaves de acesso e os serviços de início de sessão regem-se por ele.
 - **Serviços de início de sessão**: inicie sessão com Pocket ID, Authentik, Authelia, Kanidm, Keycloak ou Zitadel, além da palavra-passe. Para isso o BombVault tem de estar na raiz do seu endereço. Num caminho como `https://example.com/bombvault/` o serviço ainda não o consegue trazer de volta.
-- **App para Android**: **Os telemóveis podem emparelhar com as doze palavras do grupo**, o que deixa um telemóvel emparelhado iniciar sessão sem a palavra-passe.
 - **Encriptação**: **Encriptar backups**, ligado por predefinição.
 
 Várias coisas precisam de uma palavra-passe de acesso, como o kit de recuperação e os depósitos de chaves. Vê [Modelo de segurança](configuration.md#security-model).

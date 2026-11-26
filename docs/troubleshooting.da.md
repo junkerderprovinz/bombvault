@@ -24,7 +24,7 @@ Denne server overtog en anden servers sikkerhedskopinøgle i Nødguiden, og `APP
 
 ## En telefon havner på loginsiden {#a-phone-lands-on-the-login-page}
 
-En parret telefon får kun sin session via gruppen, så længe **Telefoner kan parre med gruppens tolv ord** er slået til under **Indstillinger, Sikkerhed**. En nulstilling af adgangskoden slår det fra. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden. En telefon, der er fjernet fra siden Instanser, kommer tilbage slået fra, når dens app åbner igen. Slå **Forespørg denne instans** til under **Overvågning** i dens detaljer for at lukke den ind.
+En parret telefon får sin session via gruppen, så længe dens kort på Instanser-siden er der og slået til. En app, der er ældre end serveren, får heller ingen session, før den er opdateret. En server, der er tilføjet med sin adresse, beder altid om adgangskoden. En telefon, der er fjernet fra siden Instanser, kommer tilbage slået fra, når dens app åbner igen. Slå **Forespørg denne instans** til under **Overvågning** i dens detaljer for at lukke den ind.
 
 ## VM-sikkerhedskopiering vil ikke oprette forbindelse {#vm-backup-will-not-connect}
 

@@ -19,6 +19,7 @@ Koppel de app met servers op versie 9.7.0 of nieuwer. Een server op een oudere v
 1. Open op een willekeurige server van je groep **Instellingen, Koppeling** en kies **Frase tonen**. De twaalf woorden verschijnen met een QR-code ernaast.
 2. Tik in de app op **QR-code scannen** en richt de telefoon op de code. Je kunt de woorden ook plakken of typen.
 3. De app toont de servers van die groep voordat hij iets opslaat. **Alle toevoegen** voegt ze allemaal toe.
+4. De telefoon wacht daarna in de kaart **Wacht op goedkeuring** onder **Instellingen, Koppeling** op de servers van de groep. Druk op een ervan op **Goedkeuren**, en de app toont de servers als **Verbonden**. De woorden alleen laten geen nieuw apparaat binnen, zie [Instanties koppelen](offsite-recovery.md#pairing).
 
 De telefoon treedt daarna tot de groep toe als een extra instantie. Hij leest via de groep zonder aanmelden wat er op elke server draait, thuis rechtstreeks en onderweg via de relay. Hoe de groep zelf werkt, staat bij [Instanties koppelen](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ Een telefoon die met je groep is gekoppeld, opent elke server van die groep al a
 
 Een gekoppelde telefoon krijgt niet alles wat een wachtwoord geeft. Zijn sessie bereikt een vaste lijst van wat de app toont: het overzicht, de runs en het activiteitenlogboek, de back-ups om te bekijken, te starten en te herstellen, de anomalieën om te lezen en de pagina Instanties om te bekijken, zonder de ontvangen repository's en ophaalbronnen van de leden. Bestemmingen en commando's komen terug zonder hun adressen en geheimen. Een herstel dat het origineel vervangt, maakt eerst een back-up van de huidige staat. Een herstel naar een map gaat naar een nieuwe map binnen de herstelmap die onder **Instellingen, Herstel** is ingesteld, en het venster biedt geen andere aan. Sleutels, de herstelkit, bewaarkopieën van de sleutel, instellingen en het verwijderen van back-ups blijven bij een aanmelding op de server zelf, en al het andere antwoordt dat het die aanmelding nodig heeft. Via de relay geldt dezelfde lijst, ook op een server zonder wachtwoord.
 
-De schakelaar hiervoor is **Telefoons kunnen koppelen met de twaalf woorden van de groep** in de kaart **Android-app** onder **Instellingen, Beveiliging**. Een wachtwoordreset zet hem uit en meldt alle telefoons af, totdat je hem daar weer aanzet.
+Elke telefoon die de groep heeft binnengelaten, meldt zich zelf aan, en daar is geen schakelaar voor. Een wachtwoordreset meldt alle telefoons af, en de telefoons melden zich daarna zelf weer aan. Om één telefoon buiten te houden, verwijder je hem op de Instanties-pagina.
 
 ## Certificaten {#certificates}
 
@@ -50,7 +51,7 @@ Een zelfondertekend certificaat wordt één keer vertrouwd op basis van de SHA-2
 
 ## De telefoon op de Instanties-pagina {#instances}
 
-De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de groep, gemarkeerd als Android-app en met de naam die je de telefoon hebt gegeven. Hij heeft geen scorecard omdat hij geen back-ups maakt. **Verwijderen** haalt hem van de pagina en beëindigt meteen zijn sessie, net als het uitzetten van **Deze instantie bevragen** onder **Bewaking** in zijn details. De telefoon kent de woorden nog, dus hij verschijnt weer zodra zijn app opent, maar uitgeschakeld, en hij krijgt geen sessie tot iemand hem aanzet. Verwijder voor een verloren telefoon zijn kaart op elke server, zet **Telefoons kunnen koppelen met de twaalf woorden van de groep** uit onder **Instellingen, Beveiliging**, of laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden.
+De telefoon krijgt een eigen kaart op de Instanties-pagina van elke server in de groep, gemarkeerd als Android-app en met de naam die je de telefoon hebt gegeven. Hij heeft geen scorecard omdat hij geen back-ups maakt. **Verwijder voor een verloren telefoon zijn kaart op elke server, of laat elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden.
 
 Een telefoon die voor 10.0.0 is gekoppeld, gaat zijn aanroepen ondertekenen bij het eerste bezoek na de update, en elke server bewaart de eerste sleutel die hij voor de telefoon krijgt. Als iemand anders die de woorden van de groep kent er eerder bij is terwijl de telefoon offline is, wijst die server de telefoon vanaf dat moment af, en kan de app hem niet meer openen via de relay. Los dit op door in een browser in te loggen op die server, op de kaart van de telefoon op de Instanties-pagina **Sleutel vergeten** te kiezen en daarna **Vergeten bevestigen**, en de app opnieuw te openen. De server neemt bij de volgende aanroep de eigen sleutel van de telefoon over. Wordt de telefoon opnieuw afgewezen, dan heeft iemand anders de woorden. Laat dan elke instantie **Groep verlaten** en koppel ze opnieuw met nieuwe woorden, net als bij een verloren telefoon.
 

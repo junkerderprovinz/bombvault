@@ -63,7 +63,6 @@ Karta **Streamování**, která snižuje limit nahrávání, zatímco streamuje 
 - **Přístupové klíče**: přihlášení klíčem v telefonu, notebooku nebo na bezpečnostní tyčince. Potřebují skutečné doménové jméno a certifikát, kterému prohlížeč důvěřuje.
 - **Adresa**: na které BombVault otevíráš, třeba `https://bombvault.example.com`. Řídí se jí přístupové klíče a přihlašovací služby.
 - **Přihlašovací služby**: přihlášení přes Pocket ID, Authentik, Authelia, Kanidm, Keycloak nebo Zitadel, vedle hesla. BombVault k tomu musí ležet přímo v kořeni své adresy. Pod cestou jako `https://example.com/bombvault/` tě služba zatím neumí vrátit zpět.
-- **Aplikace pro Android**: **Telefony se mohou spárovat s dvanácti slovy skupiny**, což spárovanému telefonu dovolí přihlásit se bez hesla.
 - **Šifrování**: **Šifrovat zálohy**, ve výchozím stavu zapnuto.
 
 Několik věcí vyžaduje přihlašovací heslo, například sada pro obnovu a uložení klíčů u strážce. Viz [Bezpečnostní model](configuration.md#security-model).

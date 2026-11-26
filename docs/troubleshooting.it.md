@@ -24,7 +24,7 @@ Questo server ha adottato la chiave dei backup di un altro server nella Procedur
 
 ## Un telefono finisce nella pagina di accesso {#a-phone-lands-on-the-login-page}
 
-Un telefono associato riceve la sessione tramite il gruppo solo finché **I telefoni possono associarsi con le dodici parole del gruppo** è attivo in **Impostazioni, Sicurezza**. Un reset della password lo disattiva. Anche un'app più vecchia del server non riceve una sessione finché non viene aggiornata. Un server aggiunto con il suo indirizzo chiede sempre la password. Un telefono rimosso dalla pagina Istanze torna disattivato quando la sua app si riapre. Attiva **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli per farlo entrare.
+Un telefono associato riceve la sessione tramite il gruppo finché la sua scheda nella pagina Istanze c'è ed è attiva. Anche un'app più vecchia del server non riceve una sessione finché non viene aggiornata. Un server aggiunto con il suo indirizzo chiede sempre la password. Un telefono rimosso dalla pagina Istanze torna disattivato quando la sua app si riapre. Attiva **Interroga questa istanza** sotto **Monitoraggio** nei suoi dettagli per farlo entrare.
 
 ## Il backup delle VM non si connette {#vm-backup-will-not-connect}
 

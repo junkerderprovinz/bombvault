@@ -63,7 +63,6 @@ De kaart **Streaming**, die de uploadlimiet verlaagt terwijl Plex, Jellyfin of E
 - **Passkeys**: meld je aan met een sleutel op je telefoon, laptop of beveiligingsstick. Ze hebben een echte domeinnaam en een certificaat nodig dat de browser vertrouwt.
 - **Adres**: waar je BombVault opent, bijvoorbeeld `https://bombvault.example.com`. Passkeys en inlogdiensten gaan daarvan uit.
 - **Inlogdiensten**: inloggen via Pocket ID, Authentik, Authelia, Kanidm, Keycloak of Zitadel, naast het wachtwoord. Daarvoor moet BombVault in de root van zijn adres staan. Onder een pad als `https://example.com/bombvault/` kan de dienst je nog niet terugsturen.
-- **Android-app**: **Telefoons kunnen koppelen met de twaalf woorden van de groep**, waarmee een gekoppelde telefoon zich zonder het wachtwoord kan aanmelden.
 - **Versleuteling**: **Back-ups versleutelen**, standaard aan.
 
 Een aantal dingen vraagt om een inlogwachtwoord, zoals de herstelkit en bewaarkopieën van de sleutel. Zie [Beveiligingsmodel](configuration.md#security-model).

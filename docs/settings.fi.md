@@ -63,7 +63,6 @@ BombVault pitää ulkoasun palvelimella. Selain, joka tulee ensimmäistä kertaa
 - **Pääsyavaimet**: kirjaudu avaimella puhelimessa, kannettavassa tai turvatikulla. Ne tarvitsevat oikean verkkotunnuksen ja varmenteen, johon selain luottaa.
 - **Osoite**: osoite, josta avaat BombVaultin, esimerkiksi `https://bombvault.example.com`. Pääsyavaimet ja kirjautumispalvelut käyttävät sitä.
 - **Kirjautumispalvelut**: kirjaudu palvelulla Pocket ID, Authentik, Authelia, Kanidm, Keycloak tai Zitadel salasanan lisäksi. Silloin BombVaultin pitää olla osoitteensa juuressa. Polun kuten `https://example.com/bombvault/` alta palvelu ei vielä osaa palauttaa sinua.
-- **Android-sovellus**: **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla**, jolloin pariliitetty puhelin voi kirjautua ilman salasanaa.
 - **Salaus**: **Salaa varmuuskopiot**, oletuksena päällä.
 
 Useat asiat vaativat kirjautumissalasanan, kuten palautuspaketti ja avainten tallennus. Katso [Tietoturvamalli](configuration.md#security-model).

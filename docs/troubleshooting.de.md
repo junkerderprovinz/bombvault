@@ -24,7 +24,7 @@ Dieser Server hat im Notfall-Assistenten den Sicherungsschlüssel eines anderen 
 
 ## Ein Handy landet auf der Login-Seite {#a-phone-lands-on-the-login-page}
 
-Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe nur, solange **Handys können sich mit den zwölf Wörtern der Gruppe koppeln** unter **Einstellungen, Sicherheit** an ist. Ein Passwort-Reset schaltet es aus. Eine App, die älter ist als der Server, bekommt ebenfalls keine Sitzung, bis sie aktualisiert ist. Ein über seine Adresse hinzugefügter Server fragt immer nach dem Passwort. Ein Handy, das von der Seite Instanzen entfernt wurde, kommt ausgeschaltet zurück, wenn seine App wieder öffnet. Schalte **Diese Instanz abfragen** unter **Überwachung** in seinen Details ein, um es hereinzulassen.
+Ein gekoppeltes Handy bekommt seine Sitzung über die Gruppe, solange seine Karte auf der Seite Instanzen da und eingeschaltet ist. Eine App, die älter ist als der Server, bekommt ebenfalls keine Sitzung, bis sie aktualisiert ist. Ein über seine Adresse hinzugefügter Server fragt immer nach dem Passwort. Ein Handy, das von der Seite Instanzen entfernt wurde, kommt ausgeschaltet zurück, wenn seine App wieder öffnet. Schalte **Diese Instanz abfragen** unter **Überwachung** in seinen Details ein, um es hereinzulassen.
 
 ## Die VM-Sicherung verbindet sich nicht {#vm-backup-will-not-connect}
 

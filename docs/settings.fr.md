@@ -63,7 +63,6 @@ La carte **Streaming**, qui abaisse la limite d'envoi pendant que Plex, Jellyfin
 - **Clés d'accès** : connectez-vous avec une clé sur votre téléphone, votre ordinateur portable ou une clé de sécurité. Elles demandent un vrai nom de domaine et un certificat que le navigateur approuve.
 - **Adresse** : l'adresse où vous ouvrez BombVault, par exemple `https://bombvault.example.com`. Les clés d'accès et les services de connexion s'y fient.
 - **Services de connexion** : connexion via Pocket ID, Authentik, Authelia, Kanidm, Keycloak ou Zitadel, en plus du mot de passe. BombVault doit alors se trouver à la racine de son adresse. Sous un chemin comme `https://example.com/bombvault/`, le service ne peut pas encore vous renvoyer.
-- **Application Android** : **Les téléphones peuvent s'appairer avec les douze mots du groupe**, ce qui permet à un téléphone appairé de se connecter sans le mot de passe.
 - **Chiffrement** : **Chiffrer les sauvegardes**, activé par défaut.
 
 Plusieurs choses demandent un mot de passe de connexion, comme le kit de récupération et les dépôts de clés. Voir [Modèle de sécurité](configuration.md#security-model).

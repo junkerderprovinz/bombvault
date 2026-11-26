@@ -24,7 +24,7 @@ Ce serveur a repris la clé de sauvegarde d'un autre serveur dans l'assistant d'
 
 ## Un téléphone arrive sur la page de connexion {#a-phone-lands-on-the-login-page}
 
-Un téléphone appairé n'obtient sa session via le groupe que tant que **Les téléphones peuvent s'appairer avec les douze mots du groupe** est activé sous **Paramètres, Sécurité**. Une réinitialisation du mot de passe le désactive. Une application plus ancienne que le serveur n'obtient pas non plus de session avant d'être mise à jour. Un serveur ajouté par son adresse demande toujours le mot de passe. Un téléphone retiré de la page Instances revient désactivé quand son application s'ouvre de nouveau. Activez **Interroger cette instance** sous **Surveillance** dans ses détails pour le laisser entrer.
+Un téléphone appairé obtient sa session via le groupe tant que sa carte sur la page Instances existe et est activée. Une application plus ancienne que le serveur n'obtient pas non plus de session avant d'être mise à jour. Un serveur ajouté par son adresse demande toujours le mot de passe. Un téléphone retiré de la page Instances revient désactivé quand son application s'ouvre de nouveau. Activez **Interroger cette instance** sous **Surveillance** dans ses détails pour le laisser entrer.
 
 ## La sauvegarde de VM ne se connecte pas {#vm-backup-will-not-connect}
 

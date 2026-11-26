@@ -63,7 +63,6 @@ BombVault 把外观保存在服务器上。第一次来的浏览器会接管它�
 - **通行密钥**：用手机、笔记本电脑或安全密钥上的密钥登录。它们需要真实的域名和浏览器信任的证书。
 - **地址**：你打开 BombVault 的地址，例如 `https://bombvault.example.com`。通行密钥和登录服务都以它为准。
 - **登录服务**：除了密码，还可以通过 Pocket ID、Authentik、Authelia、Kanidm、Keycloak 或 Zitadel 登录。为此 BombVault 必须位于其地址的根路径下。在 `https://example.com/bombvault/` 这样的路径下，服务暂时还无法把你送回来。
-- **Android 应用**：**允许手机用群组的十二个单词配对**，让已配对的手机不用密码就能登录。
 - **加密**：**加密备份**，默认开启。
 
 有些事情需要登录密码，例如恢复工具包和密钥托管。参见[安全模型](configuration.md#security-model)。

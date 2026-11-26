@@ -24,7 +24,7 @@ Este servidor adoptó la clave de copias de otro servidor en el Asistente de eme
 
 ## Un teléfono acaba en la página de inicio de sesión {#a-phone-lands-on-the-login-page}
 
-Un teléfono emparejado recibe su sesión a través del grupo solo mientras **Los teléfonos pueden emparejarse con las doce palabras del grupo** esté activado en **Ajustes, Seguridad**. Un restablecimiento de contraseña lo desactiva. Una app más antigua que el servidor tampoco recibe sesión hasta que se actualice. Un servidor añadido por su dirección siempre pide la contraseña. Un teléfono quitado de la página Instancias vuelve desactivado cuando su app se abre de nuevo. Activa **Consultar esta instancia** en **Supervisión**, dentro de sus detalles, para dejarlo entrar.
+Un teléfono emparejado recibe su sesión a través del grupo mientras su tarjeta en la página Instancias exista y esté activada. Una app más antigua que el servidor tampoco recibe sesión hasta que se actualice. Un servidor añadido por su dirección siempre pide la contraseña. Un teléfono quitado de la página Instancias vuelve desactivado cuando su app se abre de nuevo. Activa **Consultar esta instancia** en **Supervisión**, dentro de sus detalles, para dejarlo entrar.
 
 ## La copia de VMs no conecta {#vm-backup-will-not-connect}
 

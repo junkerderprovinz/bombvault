@@ -24,7 +24,7 @@ Máy chủ này đã tiếp nhận khóa sao lưu của một máy chủ khác t
 
 ## Điện thoại bị đưa tới trang đăng nhập {#a-phone-lands-on-the-login-page}
 
-Một điện thoại đã ghép nối chỉ nhận phiên qua nhóm khi **Điện thoại có thể ghép nối bằng mười hai từ của nhóm** đang bật trong **Cài đặt, Bảo mật**. Việc đặt lại mật khẩu sẽ tắt nó. Một ứng dụng cũ hơn máy chủ cũng không nhận được phiên cho đến khi được cập nhật. Máy chủ được thêm bằng địa chỉ luôn hỏi mật khẩu. Một điện thoại đã bị xóa khỏi trang Phiên bản sẽ quay lại ở trạng thái tắt khi ứng dụng của nó mở lại. Để cho nó vào, hãy bật **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó.
+Một điện thoại đã ghép nối nhận phiên qua nhóm miễn là thẻ của nó trên trang Phiên bản vẫn còn và đang bật. Một ứng dụng cũ hơn máy chủ cũng không nhận được phiên cho đến khi được cập nhật. Máy chủ được thêm bằng địa chỉ luôn hỏi mật khẩu. Một điện thoại đã bị xóa khỏi trang Phiên bản sẽ quay lại ở trạng thái tắt khi ứng dụng của nó mở lại. Để cho nó vào, hãy bật **Truy vấn phiên bản này** trong **Giám sát** ở phần chi tiết của nó.
 
 ## Sao lưu VM không kết nối được {#vm-backup-will-not-connect}
 

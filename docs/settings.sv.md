@@ -63,7 +63,6 @@ Kortet **Streaming**, som sänker uppladdningsgränsen medan Plex, Jellyfin elle
 - **Lösennycklar**: logga in med en nyckel på telefonen, laptopen eller en säkerhetsnyckel. De kräver ett riktigt domännamn och ett certifikat som webbläsaren litar på.
 - **Adress**: där du öppnar BombVault, till exempel `https://bombvault.example.com`. Lösennycklar och inloggningstjänster utgår från den.
 - **Inloggningstjänster**: logga in via Pocket ID, Authentik, Authelia, Kanidm, Keycloak eller Zitadel, utöver lösenordet. Då måste BombVault ligga i roten av sin adress. Under en sökväg som `https://example.com/bombvault/` kan tjänsten ännu inte skicka tillbaka dig.
-- **Android-app**: **Telefoner kan parkopplas med gruppens tolv ord**, vilket låter en parkopplad telefon logga in utan lösenordet.
 - **Kryptering**: **Kryptera säkerhetskopior**, på som standard.
 
 Flera saker kräver ett inloggningslösenord, till exempel återställningskitet och nyckeldepositioner. Se [Säkerhetsmodell](configuration.md#security-model).

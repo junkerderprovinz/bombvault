@@ -19,6 +19,7 @@ Spáruj aplikaci se servery ve verzi 9.7.0 nebo novější. Server se starší v
 1. Na kterémkoli serveru své skupiny otevři **Nastavení, Párování** a zvol **Zobrazit frázi**. Objeví se dvanáct slov a vedle nich QR kód.
 2. V aplikaci klepni na **Naskenovat QR kód** a namiř telefon na kód. Slova můžeš také vložit nebo napsat.
 3. Než aplikace cokoli uloží, vypíše servery dané skupiny. **Přidat všech** přidá každý z nich.
+4. Telefon pak čeká v kartě **Čeká na schválení** v části **Nastavení, Párování** na serverech skupiny. Na jednom z nich stiskni **Schválit** a aplikace ukáže servery jako **Připojeno**. Samotná slova žádné nové zařízení nepustí, viz [Párování instancí](offsite-recovery.md#pairing).
 
 Telefon se pak připojí ke skupině jako další instance. Co na jednotlivých serverech běží, čte přes skupinu bez přihlášení, doma přímo a mimo domov přes relay. Jak funguje samotná skupina, popisuje [Párování instancí](offsite-recovery.md#pairing).
 
@@ -42,7 +43,7 @@ Telefon spárovaný s tvou skupinou otevře každý z jejích serverů rovnou p�
 
 Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění a obnově, anomálie ke čtení a stránku Instance k prohlížení, bez přijatých repozitářů a zdrojů stahování jejích členů. Cíle a příkazy se vrací bez adres a tajemství. Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav. Obnova do složky jde do nové složky uvnitř složky pro obnovu nastavené v **Nastavení, Obnova** a okno jinou nenabídne. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje. Přes relay platí stejný seznam, i na serveru bez hesla.
 
-Přepínač je **Telefony se mohou spárovat s dvanácti slovy skupiny** v kartě **Aplikace pro Android** v části **Nastavení, Zabezpečení**. Reset hesla ho vypne a odhlásí všechny telefony, dokud ho tam zase nezapneš.
+Každý telefon, který skupina pustila dovnitř, se přihlásí sám a žádný přepínač pro to není. Reset hesla odhlásí všechny telefony a ty se pak samy přihlásí znovu. Chceš-li jeden telefon nechat venku, odeber ho na stránce Instance.
 
 ## Certifikáty {#certificates}
 
@@ -50,7 +51,7 @@ Samopodepsanému certifikátu se důvěřuje jednou podle jeho otisku SHA-256. K
 
 ## Telefon na stránce Instance {#instances}
 
-Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje. **Odebrat** ho ze stránky odstraní a hned ukončí jeho relaci, stejně jako vypnutí **Dotázat se na tuto instanci** v části **Sledování** v jeho podrobnostech. Telefon slova dál zná, takže se znovu objeví, když se jeho aplikace otevře, ale vypnutý, a relaci nedostane, dokud ho někdo nezapne. U ztraceného telefonu odeber jeho kartu na každém serveru, vypni **Telefony se mohou spárovat s dvanácti slovy skupiny** v části **Nastavení, Zabezpečení** nebo nech každou instanci opustit skupinu přes **Opustit skupinu** a spáruj je znovu s novými slovy.
+Telefon dostane na stránce Instance každého serveru ve skupině vlastní kartu, označenou jako aplikace pro Android a pojmenovanou podle názvu, který jsi telefonu dal. Nemá vysvědčení, protože nic nezálohuje. **Odebrat** ho ze stránky odstraní a hned ukončí jeho relaci, stejně jako vypnutí **Dotázat se na tuto instanci** v části **Sledování** v jeho podrobnostech. Telefon slova dál zná, takže se znovu objeví, když se jeho aplikace otevře, ale vypnutý, a relaci nedostane, dokud ho někdo nezapne. U ztraceného telefonu odeber jeho kartu na každém serveru nebo nech každou instanci opustit skupinu přes **Opustit skupinu** a spáruj je znovu s novými slovy.
 
 Telefon spárovaný před verzí 10.0.0 začne své požadavky podepisovat při první návštěvě po aktualizaci a každý server si ponechá první klíč, který pro telefon dostane. Pokud je mu někdo jiný, kdo zná slova skupiny, v patách a telefon je offline, takový server telefon od té chvíle odmítá a aplikace ho už nemůže otevřít přes relay. Oprava: přihlas se k tomu serveru v prohlížeči, na kartě telefonu na stránce Instance zvol **Zapomenout klíč**, potom **Potvrdit zapomenutí** a aplikaci otevři znovu. Server si při dalším požadavku převezme vlastní klíč telefonu. Pokud je telefon odmítnut znovu, slova má někdo jiný: nech každou instanci **Opustit skupinu** a spáruj je znovu s novými slovy, stejně jako u ztraceného telefonu.
 

@@ -63,7 +63,6 @@ A **Streamelés** kártya, amely lejjebb viszi a feltöltési korlátot, amíg a
 - **Hozzáférési kulcsok**: bejelentkezés a telefonodon, laptopodon vagy biztonsági kulcsodon lévő kulccsal. Valódi domainnévre és a böngésző által elfogadott tanúsítványra van szükségük.
 - **Cím**: ahol a BombVaultot megnyitod, például `https://bombvault.example.com`. A hozzáférési kulcsok és a bejelentkezési szolgáltatások ehhez igazodnak.
 - **Bejelentkezési szolgáltatások**: bejelentkezés Pocket ID, Authentik, Authelia, Kanidm, Keycloak vagy Zitadel segítségével, a jelszó mellett. Ehhez a BombVaultnak a címe gyökerében kell lennie. Egy `https://example.com/bombvault/` jellegű útvonal alatt a szolgáltatás még nem tud visszairányítani.
-- **Android-alkalmazás**: **A telefonok párosíthatók a csoport tizenkét szavával**, ami lehetővé teszi, hogy egy párosított telefon jelszó nélkül jelentkezzen be.
 - **Titkosítás**: **Mentések titkosítása**, alapértelmezés szerint bekapcsolva.
 
 Néhány dologhoz belépési jelszó kell, például a helyreállítási csomaghoz és a kulcsletétekhez. Lásd: [Biztonsági modell](configuration.md#security-model).

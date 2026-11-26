@@ -63,7 +63,6 @@ Kortet **Strømming**, som senker opplastingsgrensen mens Plex, Jellyfin eller E
 - **Passnøkler**: logg inn med en nøkkel på telefonen, laptopen eller en sikkerhetsnøkkel. De trenger et ekte domenenavn og et sertifikat nettleseren stoler på.
 - **Adresse**: adressen du åpner BombVault på, for eksempel `https://bombvault.example.com`. Passnøkler og innloggingstjenester følger den.
 - **Innloggingstjenester**: logg inn via Pocket ID, Authentik, Authelia, Kanidm, Keycloak eller Zitadel ved siden av passordet. Da må BombVault ligge i roten av adressen sin. Under en sti som `https://example.com/bombvault/` kan tjenesten ennå ikke sende deg tilbake.
-- **Android-app**: **Telefoner kan pare med gruppens tolv ord**, som lar en paret telefon logge inn uten passordet.
 - **Kryptering**: **Krypter sikkerhetskopier**, på som standard.
 
 Flere ting krever et innloggingspassord, som gjenopprettingssettet og nøkkeldeponering. Se [Sikkerhetsmodell](configuration.md#security-model).

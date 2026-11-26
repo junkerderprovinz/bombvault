@@ -63,7 +63,6 @@ Plex, Jellyfin, Emby가 스트리밍하는 동안 업로드 제한을 낮추는 
 - **패스키**: 휴대폰, 노트북, 보안 키의 키로 로그인합니다. 실제 도메인 이름과 브라우저가 신뢰하는 인증서가 필요합니다.
 - **주소**: BombVault를 여는 주소입니다(예: `https://bombvault.example.com`). 패스키와 로그인 서비스가 이 주소를 따릅니다.
 - **로그인 서비스**: 비밀번호와 함께 Pocket ID, Authentik, Authelia, Kanidm, Keycloak, Zitadel로 로그인합니다. 이를 위해 BombVault는 주소의 루트에 있어야 합니다. `https://example.com/bombvault/` 같은 경로 아래에서는 아직 서비스가 다시 돌려보내지 못합니다.
-- **Android 앱**: **그룹의 12개 단어로 휴대폰 페어링 허용**을 켜면 페어링한 휴대폰이 비밀번호 없이 로그인할 수 있습니다.
 - **암호화**: 기본으로 켜져 있는 **백업 암호화**.
 
 복구 키트나 키 보관처럼 로그인 비밀번호가 필요한 것이 여럿 있습니다. [보안 모델](configuration.md#security-model)을 참고하세요.

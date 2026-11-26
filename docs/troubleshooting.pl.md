@@ -24,7 +24,7 @@ Ten serwer przejął w Kreatorze awaryjnym klucz kopii innego serwera, a potem z
 
 ## Telefon trafia na stronę logowania {#a-phone-lands-on-the-login-page}
 
-Sparowany telefon dostaje sesję przez grupę tylko wtedy, gdy w **Ustawienia, Bezpieczeństwo** włączone jest **Telefony mogą się sparować z dwunastoma słowami grupy**. Reset hasła je wyłącza. Aplikacja starsza niż serwer też nie dostaje sesji, dopóki nie zostanie zaktualizowana. Serwer dodany po adresie zawsze pyta o hasło. Telefon usunięty ze strony Instancje wraca wyłączony, gdy jego aplikacja znowu się otworzy. Aby go wpuścić, włącz **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach.
+Sparowany telefon dostaje sesję przez grupę, dopóki jego karta na stronie Instancje istnieje i jest włączona. Aplikacja starsza niż serwer też nie dostaje sesji, dopóki nie zostanie zaktualizowana. Serwer dodany po adresie zawsze pyta o hasło. Telefon usunięty ze strony Instancje wraca wyłączony, gdy jego aplikacja znowu się otworzy. Aby go wpuścić, włącz **Odpytuj tę instancję** w sekcji **Monitorowanie** w jego szczegółach.
 
 ## Kopia VM nie łączy się {#vm-backup-will-not-connect}
 

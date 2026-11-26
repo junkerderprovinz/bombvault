@@ -24,7 +24,7 @@ Den här servern tog över en annan servers säkerhetskopienyckel i Nödguiden, 
 
 ## En telefon hamnar på inloggningssidan {#a-phone-lands-on-the-login-page}
 
-En parkopplad telefon får sin session via gruppen bara medan **Telefoner kan parkopplas med gruppens tolv ord** är på under **Inställningar, Säkerhet**. En lösenordsåterställning stänger av den. En app som är äldre än servern får heller ingen session förrän den uppdateras. En server som lagts till med sin adress frågar alltid efter lösenordet. En telefon som tagits bort från sidan Instanser kommer tillbaka avstängd när dess app öppnas igen. Slå på **Fråga av den här instansen** under **Övervakning** i dess detaljer för att släppa in den.
+En parkopplad telefon får sin session via gruppen så länge dess kort på Instanser-sidan finns och är påslaget. En app som är äldre än servern får heller ingen session förrän den uppdateras. En server som lagts till med sin adress frågar alltid efter lösenordet. En telefon som tagits bort från sidan Instanser kommer tillbaka avstängd när dess app öppnas igen. Slå på **Fråga av den här instansen** under **Övervakning** i dess detaljer för att släppa in den.
 
 ## VM-säkerhetskopiering ansluter inte {#vm-backup-will-not-connect}
 

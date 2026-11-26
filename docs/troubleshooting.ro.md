@@ -24,7 +24,7 @@ Acest server a preluat cheia de backup a altui server în Asistentul de urgenț�
 
 ## Un telefon ajunge pe pagina de autentificare {#a-phone-lands-on-the-login-page}
 
-Un telefon împerecheat primește sesiunea prin grup doar cât timp **Telefoanele se pot împerechea cu cele douăsprezece cuvinte ale grupului** este pornit la **Setări, Securitate**. O resetare a parolei îl oprește. O aplicație mai veche decât serverul nu primește nici ea sesiune până se actualizează. Un server adăugat după adresă cere mereu parola. Un telefon eliminat de pe pagina Instanțe revine dezactivat când i se deschide din nou aplicația. Pornește **Interoghează această instanță** la **Monitorizare** în detaliile lui ca să-l lași să intre.
+Un telefon împerecheat primește sesiunea prin grup cât timp cardul lui de pe pagina Instanțe există și e pornit. O aplicație mai veche decât serverul nu primește nici ea sesiune până se actualizează. Un server adăugat după adresă cere mereu parola. Un telefon eliminat de pe pagina Instanțe revine dezactivat când i se deschide din nou aplicația. Pornește **Interoghează această instanță** la **Monitorizare** în detaliile lui ca să-l lași să intre.
 
 ## Backupul VM nu se conectează {#vm-backup-will-not-connect}
 

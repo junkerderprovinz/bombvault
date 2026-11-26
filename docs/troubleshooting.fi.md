@@ -24,7 +24,7 @@ Tämä palvelin otti toisen palvelimen varmuuskopioavaimen käyttöön Hätäohj
 
 ## Puhelin päätyy kirjautumissivulle {#a-phone-lands-on-the-login-page}
 
-Pariliitetty puhelin saa istuntonsa ryhmän kautta vain niin kauan kuin **Puhelimet voivat pariutua ryhmän kahdentoista sanan avulla** on päällä kohdassa **Asetukset, Turvallisuus**. Salasanan nollaus kytkee sen pois. Palvelinta vanhempi sovellus ei myöskään saa istuntoa, ennen kuin se päivitetään. Osoitteellaan lisätty palvelin kysyy aina salasanaa. Puhelin, joka poistettiin Ilmentymät-sivulta, palaa kytkettynä pois, kun sen sovellus avataan uudelleen. Kytke päälle **Kysele tätä instanssia** kohdassa **Valvonta** sen tiedoissa päästääksesi sen sisään.
+Pariliitetty puhelin saa istuntonsa ryhmän kautta niin kauan kuin sen kortti on Ilmentymät-sivulla ja päällä. Palvelinta vanhempi sovellus ei myöskään saa istuntoa, ennen kuin se päivitetään. Osoitteellaan lisätty palvelin kysyy aina salasanaa. Puhelin, joka poistettiin Ilmentymät-sivulta, palaa kytkettynä pois, kun sen sovellus avataan uudelleen. Kytke päälle **Kysele tätä instanssia** kohdassa **Valvonta** sen tiedoissa päästääksesi sen sisään.
 
 ## VM-varmuuskopio ei yhdisty {#vm-backup-will-not-connect}
 

@@ -24,7 +24,7 @@ Deze server nam in de Noodassistent de back-upsleutel van een andere server over
 
 ## Een telefoon belandt op de inlogpagina {#a-phone-lands-on-the-login-page}
 
-Een gekoppelde telefoon krijgt zijn sessie alleen via de groep zolang **Telefoons kunnen koppelen met de twaalf woorden van de groep** aanstaat onder **Instellingen, Beveiliging**. Een wachtwoordreset zet het uit. Een app die ouder is dan de server krijgt ook geen sessie tot hij is bijgewerkt. Een server die via zijn adres is toegevoegd, vraagt altijd om het wachtwoord. Een telefoon die van de pagina Instanties is verwijderd, komt uitgeschakeld terug als zijn app weer opent. Schakel **Deze instantie bevragen** onder **Bewaking** in zijn details in om hem binnen te laten.
+Een gekoppelde telefoon krijgt zijn sessie via de groep zolang zijn kaart op de Instanties-pagina er is en aanstaat. Een app die ouder is dan de server krijgt ook geen sessie tot hij is bijgewerkt. Een server die via zijn adres is toegevoegd, vraagt altijd om het wachtwoord. Een telefoon die van de pagina Instanties is verwijderd, komt uitgeschakeld terug als zijn app weer opent. Schakel **Deze instantie bevragen** onder **Bewaking** in zijn details in om hem binnen te laten.
 
 ## VM-back-up kan niet verbinden {#vm-backup-will-not-connect}
 
