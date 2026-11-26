@@ -6,6 +6,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "/",
+  // The release notes the app carries live in internal/releasenotes.
+  server: { fs: { allow: [".."] } },
   build: {
     outDir: "../android/app/src/main/assets/launcher",
     emptyOutDir: true,

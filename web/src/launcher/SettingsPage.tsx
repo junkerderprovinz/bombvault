@@ -43,6 +43,7 @@ import { Flag } from "./flags";
 import { PageTop } from "./PageTop";
 import { updatesFrom } from "./store";
 import { FOLLOWED_EVENT, following as isFollowing, keepAsOwn, setFollowing } from "./look";
+import { WhatsNewWindow } from "./WhatsNewWindow";
 
 type T = ReturnType<typeof useT>["t"];
 
@@ -233,6 +234,7 @@ export function SettingsPage({
   const { lang, languages } = useT();
   const words = componentText(lang);
   const { confirm, confirmDialog } = useConfirm();
+  const [whatsNew, setWhatsNew] = useState(false);
   const [name, setName] = useState(app.deviceName);
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef(0);
@@ -644,7 +646,7 @@ export function SettingsPage({
                   </span>
                 }
                 keepLabel
-                onClick={() => open(`${REPO}/releases/tag/v${app.version}`)}
+                onClick={() => setWhatsNew(true)}
               />
             </div>
           </div>
@@ -731,6 +733,7 @@ export function SettingsPage({
         </div>
       </Section>
       {confirmDialog}
+      {whatsNew && <WhatsNewWindow version={app.version} onClose={() => setWhatsNew(false)} />}
     </main>
   );
 }

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { componentText } from "@glimstone/core";
 import { GLIMSTONE_VERSION } from "../lib/glimstoneVersion";
-import { I18nProvider, useT } from "../lib/i18n";
+import { en, I18nProvider, useT } from "../lib/i18n";
 import { setSystemAccent } from "../lib/accent";
 import { SettingsPage } from "./SettingsPage";
 import { following } from "./look";
@@ -70,15 +70,32 @@ describe("the Version and Components cards", () => {
     expect(card(words.versionCard.title).getByRole("status").textContent).toBe(words.versionCard.anyStore);
   });
 
-  it("show BombVault with its number and no check, and open the running release's notes", () => {
+  it("show BombVault with its number and no check, and open the running release's notes inside the app", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     renderPage("com.android.vending");
     const version = card(words.versionCard.title);
     expect(version.getByRole("link", { name: "10.6.0" }).getAttribute("href")).toBe("https://github.com/junkerderprovinz/bombvault/releases/latest");
     expect(version.getAllByRole("button").map((b) => b.textContent)).toEqual([words.versionCard.whatsNew]);
     fireEvent.click(version.getByRole("button"));
-    expect(open).toHaveBeenCalledWith("https://github.com/junkerderprovinz/bombvault/releases/tag/v10.6.0", "_blank", "noopener,noreferrer");
+    const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", "10.6.0") });
+    expect(await within(notes).findByText(/^BombVault 10\.6\.0 moves into the fortress/)).toBeTruthy();
+    expect(within(notes).getByRole("link", { name: en["whatsnew.viewOnGitHub"] }).getAttribute("href")).toBe(
+      "https://github.com/junkerderprovinz/bombvault/releases/tag/v10.6.0",
+    );
+    expect(open).not.toHaveBeenCalled();
     open.mockRestore();
+  });
+
+  it("list what the running release brought and leave out what a phone cannot open", async () => {
+    render(
+      <I18nProvider>
+        <Harness app={{ ...APP, version: "10.6.8" }} />
+      </I18nProvider>,
+    );
+    fireEvent.click(card(words.versionCard.title).getByRole("button"));
+    const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", "10.6.8") });
+    expect(within(notes).getByText(en["whatsNew.signInServices"])).toBeTruthy();
+    expect(within(notes).queryByText(en["whatsNew.instanceAddress"])).toBeNull();
   });
 
   it("list GlimStone in the Components card", () => {

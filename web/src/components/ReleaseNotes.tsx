@@ -219,6 +219,12 @@ export function ReleaseNotes({ version }: { version: string | null }) {
       </div>
     );
   }
+  return <ReleaseNotesText body={body} />;
+}
+
+/** ReleaseNotesText draws notes already at hand, such as those the app
+ *  carries in its APK. */
+export function ReleaseNotesText({ body }: { body: string }) {
   // The notes are published in English only, so a screen reader has to read
   // them as English whatever language the app is in.
   return (
