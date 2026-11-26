@@ -576,12 +576,31 @@ export function anomalyEntryName(a: AnomalyView, t: TranslateAnomaly): string {
 /** What closing these findings means for the old backups they keep, naming
  *  the item when only one holds any, or null when none of them does. */
 export function anomalyReleaseQuestion(list: AnomalyView[], t: TranslateAnomaly): string | null {
+  return holdQuestion(list, t, "anomaly.releaseConfirm", "anomaly.releaseConfirmMany");
+}
+
+/** anomalyHoldQuestion is what settling the findings asks first: whether to
+ *  stop keeping their old backups, or on a paired phone, which cannot end a
+ *  hold, that the backups stay kept. Null when none of them keeps any. */
+export function anomalyHoldQuestion(
+  list: AnomalyView[],
+  t: TranslateAnomaly,
+  phone: boolean
+): { title: string; message: string } | null {
+  const message = phone
+    ? holdQuestion(list, t, "anomaly.keptConfirm", "anomaly.keptConfirmMany")
+    : anomalyReleaseQuestion(list, t);
+  if (!message) return null;
+  return { title: t(phone ? "anomaly.keptTitle" : "anomaly.releaseTitle"), message };
+}
+
+function holdQuestion(list: AnomalyView[], t: TranslateAnomaly, one: TranslationKey, many: TranslationKey): string | null {
   const held = new Map<string, AnomalyView>();
   for (const a of list) if (a.retentionHeld) held.set(anomalyGroupKey(a), a);
   const [only] = held.values();
   if (!only) return null;
-  if (held.size === 1) return t("anomaly.releaseConfirm").replace("{name}", anomalyEntryName(only, t));
-  return t("anomaly.releaseConfirmMany", held.size);
+  if (held.size === 1) return t(one).replace("{name}", anomalyEntryName(only, t));
+  return t(many, held.size);
 }
 
 /** Which backup type a finding belongs to, and for a restore check which

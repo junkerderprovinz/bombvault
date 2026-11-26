@@ -4182,6 +4182,16 @@ export const en = {
     "BombVault keeps every old backup of {name} while it has an open anomaly, so you can still restore a copy from before the change. Closing the anomaly ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.",
   "anomaly.releaseConfirmMany":
     "one=BombVault keeps every old backup of {n} item while it has open anomalies, so you can still restore a copy from before the change. Closing the anomalies ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.|other=BombVault keeps every old backup of {n} items while they have open anomalies, so you can still restore a copy from before the change. Closing the anomalies ends that hold, and the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.",
+  "anomaly.keptTitle": "Old backups stay kept",
+  "anomaly.keptConfirm":
+    "BombVault keeps every old backup of {name} while this anomaly is open, so you can still restore a copy from before the change. Closing it on a phone keeps that hold. It ends when someone signs in with the password and stops it on the Anomalies page.",
+  "anomaly.keptConfirmMany":
+    "one=BombVault keeps every old backup of {n} item while it has open anomalies, so you can still restore a copy from before the change. Closing them on a phone keeps that hold. It ends when someone signs in with the password and stops it on the Anomalies page.|other=BombVault keeps every old backup of {n} items while they have open anomalies, so you can still restore a copy from before the change. Closing them on a phone keeps that hold. It ends when someone signs in with the password and stops it on the Anomalies page.",
+  "anomaly.holdKept": "Closed on a phone, so the old backups of this item are still kept. Sign in with the password to stop keeping them.",
+  "anomaly.action.release": "Stop keeping old backups",
+  "anomaly.releaseKeptConfirm":
+    "BombVault still keeps every old backup of {name}, so you can restore a copy from before the change. If you stop keeping them, the next cleanup deletes old backups by the usual keep rules again. If files are missing or were encrypted, restore them first.",
+  "anomaly.toast.released": "Old backups follow the usual keep rules again",
   "anomaly.dumpOf": "Database dump of {name}",
   "anomaly.occurrences": "Times seen: {n}",
   "anomaly.severity.critical": "Critical",
@@ -10012,6 +10022,16 @@ export const de: Translations = {
     "BombVault behält alle alten Sicherungen von {name}, solange eine Anomalie dazu offen ist, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalie, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.",
   "anomaly.releaseConfirmMany":
     "one=BombVault behält alle alten Sicherungen von {n} Eintrag, solange eine Anomalie dazu offen ist, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalien, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.|other=BombVault behält alle alten Sicherungen von {n} Einträgen, solange Anomalien dazu offen sind, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du die Anomalien, endet das, und das nächste Aufräumen löscht alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.",
+  "anomaly.keptTitle": "Alte Sicherungen bleiben erhalten",
+  "anomaly.keptConfirm":
+    "BombVault behält alle alten Sicherungen von {name}, solange diese Anomalie offen ist, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du sie auf dem Handy, bleibt das so. Es endet erst, wenn sich jemand mit dem Passwort anmeldet und es auf der Seite Anomalien beendet.",
+  "anomaly.keptConfirmMany":
+    "one=BombVault behält alle alten Sicherungen von {n} Eintrag, solange Anomalien dazu offen sind, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du sie auf dem Handy, bleibt das so. Es endet erst, wenn sich jemand mit dem Passwort anmeldet und es auf der Seite Anomalien beendet.|other=BombVault behält alle alten Sicherungen von {n} Einträgen, solange Anomalien dazu offen sind, damit du einen Stand von vor der Änderung noch wiederherstellen kannst. Schließt du sie auf dem Handy, bleibt das so. Es endet erst, wenn sich jemand mit dem Passwort anmeldet und es auf der Seite Anomalien beendet.",
+  "anomaly.holdKept": "Auf dem Handy geschlossen, daher bleiben die alten Sicherungen dieses Eintrags erhalten. Melde dich mit dem Passwort an, um sie nicht mehr zurückzuhalten.",
+  "anomaly.action.release": "Alte Sicherungen nicht mehr zurückhalten",
+  "anomaly.releaseKeptConfirm":
+    "BombVault behält noch alle alten Sicherungen von {name}, damit du einen Stand von vor der Änderung wiederherstellen kannst. Hältst du sie nicht mehr zurück, löscht das nächste Aufräumen alte Sicherungen wieder nach den üblichen Aufbewahrungsregeln. Fehlen Dateien oder wurden sie verschlüsselt, stell sie vorher wieder her.",
+  "anomaly.toast.released": "Alte Sicherungen folgen wieder den üblichen Aufbewahrungsregeln",
   "anomaly.dumpOf": "Datenbank-Dump von {name}",
   "anomaly.occurrences": "Wie oft gesehen: {n}",
   "anomaly.severity.critical": "Kritisch",

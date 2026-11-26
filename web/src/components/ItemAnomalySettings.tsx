@@ -8,7 +8,13 @@ import {
   anomalyErrorText,
   type TranslateAnomaly,
 } from "../lib/anomalies";
-import { getSettings, setItemAnomalyPrefs, type AnomalyItem } from "../lib/api";
+import {
+  getSettings,
+  openedAsPairedPhone,
+  setItemAnomalyPrefs,
+  setItemAnomalySensitivity,
+  type AnomalyItem,
+} from "../lib/api";
 import { useToast } from "../lib/toast";
 
 // The segment that stands for "no value of its own", which the server stores as "".
@@ -63,10 +69,14 @@ function PrefsFields({ item, globals, t }: { item: AnomalyItem; globals: Anomaly
   const [notifyMin, setNotifyMin] = useState(item.notifyMin);
 
   // Both fields save on their own, and a refusal puts the stored value back,
-  // so the control never shows a setting the server does not hold.
-  async function save(patch: { sensitivity?: string; notifyMin?: string }, revert: () => void) {
+  // so the control never shows a setting the server does not hold. The
+  // sensitivity has a route of its own, which a paired phone reaches too.
+  async function save(patch: { sensitivity: string } | { notifyMin: string }, revert: () => void) {
     try {
-      const res = await setItemAnomalyPrefs(item.targetId, patch);
+      const res =
+        "sensitivity" in patch
+          ? await setItemAnomalySensitivity(item.targetId, patch.sensitivity)
+          : await setItemAnomalyPrefs(item.targetId, patch);
       if (res.ok) return;
       push(anomalyErrorText(res.code, t), "fail");
     } catch {
@@ -117,21 +127,23 @@ function PrefsFields({ item, globals, t }: { item: AnomalyItem; globals: Anomaly
           }}
         />
       </SettingRow>
-      <SettingRow label={t("anomaly.items.notifyMin")}>
-        <Selector
-          items={notifyItems}
-          label={t("anomaly.items.notifyMin")}
-          select="one"
-          activation="manual"
-          inline
-          active={notifyMin || FOLLOW}
-          onChange={(id) => {
-            const before = notifyMin;
-            setNotifyMin(stored(id));
-            void save({ notifyMin: stored(id) }, () => setNotifyMin(before));
-          }}
-        />
-      </SettingRow>
+      {!openedAsPairedPhone() && (
+        <SettingRow label={t("anomaly.items.notifyMin")}>
+          <Selector
+            items={notifyItems}
+            label={t("anomaly.items.notifyMin")}
+            select="one"
+            activation="manual"
+            inline
+            active={notifyMin || FOLLOW}
+            onChange={(id) => {
+              const before = notifyMin;
+              setNotifyMin(stored(id));
+              void save({ notifyMin: stored(id) }, () => setNotifyMin(before));
+            }}
+          />
+        </SettingRow>
+      )}
     </>
   );
 }

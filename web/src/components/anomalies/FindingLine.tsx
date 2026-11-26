@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Badge } from "../Badge";
 import { Button } from "../Button";
-import { IconCompare, IconEye, IconInfo } from "../glyphs";
+import { IconCompare, IconEye, IconInfo, IconUnlock } from "../glyphs";
 import { InfoBubble } from "../InfoBubble";
 import {
   ANOMALY_SEVERITY_LABEL,
@@ -62,6 +62,7 @@ export function FindingLine({
   siblings,
   place,
   onSettle,
+  onRelease,
   onDetails,
 }: {
   a: AnomalyView;
@@ -75,6 +76,8 @@ export function FindingLine({
   /** Every finding of the same item in the list, on the first of several. */
   siblings?: AnomalyView[];
   onSettle?: SettleFindings;
+  /** Ends the hold a finding settled on a paired phone keeps. */
+  onRelease?: (a: AnomalyView) => void;
   onDetails: (compare: boolean) => void;
 }) {
   const { lang } = useT();
@@ -144,7 +147,7 @@ export function FindingLine({
             <InfoBubble tip={t("anomaly.recoveredHint").replace("{date}", findingWhen(a.recoveredAt))} />
           </span>
         )}
-        {!closed && a.retentionHeld && <HeldMark tip={t("anomaly.retentionPaused")} />}
+        {a.retentionHeld && <HeldMark tip={t(closed ? "anomaly.holdKept" : "anomaly.retentionPaused")} />}
         <span className="ms-auto shrink-0 text-subline text-carbon-textMuted">{findingWhen(a.lastSeenAt)}</span>
       </div>
 
@@ -184,6 +187,15 @@ export function FindingLine({
                 />
               )}
             </>
+          )}
+          {closed && a.retentionHeld && onRelease && (
+            <Button
+              label={t("anomaly.action.release")}
+              labelKey="anomaly.action.release"
+              glyph={<IconUnlock />}
+              onClick={() => onRelease(a)}
+              className="glim-btn-wrap"
+            />
           )}
         </span>
         <span className="flex flex-wrap items-center justify-end gap-2 max-sm:w-full">

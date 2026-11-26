@@ -33,7 +33,10 @@ vi.mock("../lib/api", async (importOriginal) => {
     acknowledgeAnomalies: vi.fn(),
     markAnomaliesExpected: vi.fn(),
     setItemAnomalyPrefs: vi.fn(),
+    setItemAnomalySensitivity: vi.fn(),
     forgetAnomalyExpectation: vi.fn(),
+    releaseAnomalyHolds: vi.fn(),
+    openedAsPairedPhone: vi.fn(),
   };
 });
 
@@ -48,6 +51,10 @@ const listStorageLocations = vi.mocked(api.listStorageLocations);
 const acknowledgeAnomalies = vi.mocked(api.acknowledgeAnomalies);
 const markAnomaliesExpected = vi.mocked(api.markAnomaliesExpected);
 const setItemAnomalyPrefs = vi.mocked(api.setItemAnomalyPrefs);
+const setItemAnomalySensitivity = vi.mocked(api.setItemAnomalySensitivity);
+const forgetAnomalyExpectation = vi.mocked(api.forgetAnomalyExpectation);
+const releaseAnomalyHolds = vi.mocked(api.releaseAnomalyHolds);
+const openedAsPairedPhone = vi.mocked(api.openedAsPairedPhone);
 
 const { Anomalies } = await import("./Anomalies");
 
@@ -269,6 +276,10 @@ beforeEach(() => {
   acknowledgeAnomalies.mockReset();
   markAnomaliesExpected.mockReset();
   setItemAnomalyPrefs.mockReset();
+  setItemAnomalySensitivity.mockReset();
+  forgetAnomalyExpectation.mockReset();
+  releaseAnomalyHolds.mockReset();
+  openedAsPairedPhone.mockReturnValue(false);
 
   getAnomalySummary.mockResolvedValue({ ok: true, summary: summary() });
   getAnomalyItems.mockResolvedValue({ ok: true, items: [] });
@@ -430,6 +441,22 @@ describe("settling findings", () => {
     expect(within(dialog).getByRole("heading", { name: en["anomaly.releaseTitle"] })).toBeTruthy();
     expect(within(dialog).getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(acknowledgeAnomalies).not.toHaveBeenCalled();
+
+    await press(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    expect(acknowledgeAnomalies).toHaveBeenCalledWith(["an-1"]);
+  });
+
+  it("tells a paired phone that the old backups stay kept, in place of asking to stop keeping them", async () => {
+    openedAsPairedPhone.mockReturnValue(true);
+    serve([finding({ targetId: "tg-plex", name: "plex", severity: "warning", retentionHeld: true })]);
+    acknowledgeAnomalies.mockResolvedValue({ ok: true, changed: 1, skipped: 0, released: 0, kept: 1 });
+    await renderPage();
+
+    fireEvent.click(within(findings()[0]!).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: en["anomaly.keptTitle"] })).toBeTruthy();
+    expect(within(dialog).getByText(en["anomaly.keptConfirm"].replace("{name}", "plex"))).toBeTruthy();
+    expect(within(dialog).queryByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeNull();
 
     await press(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     expect(acknowledgeAnomalies).toHaveBeenCalledWith(["an-1"]);
@@ -849,6 +876,34 @@ describe("open and closed", () => {
     expect(within(window).queryByRole("button", { name: en["anomaly.action.acknowledge"] })).toBeNull();
   });
 
+  it("lets the person stop keeping the old backups of a finding closed on a phone", async () => {
+    serve([], [finding({ name: "plex", severity: "critical", state: "acknowledged", ackedAt: SEEN, retentionHeld: true })]);
+    releaseAnomalyHolds.mockResolvedValue({ ok: true, released: 1 });
+    await renderPage();
+    await showClosed();
+
+    expect(within(findings()[0]!).getByLabelText(en["anomaly.holdKept"])).toBeTruthy();
+    fireEvent.click(within(findings()[0]!).getByRole("button", { name: en["anomaly.action.release"] }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: en["anomaly.releaseTitle"] })).toBeTruthy();
+    expect(within(dialog).getByText(en["anomaly.releaseKeptConfirm"].replace("{name}", "plex"))).toBeTruthy();
+    expect(releaseAnomalyHolds).not.toHaveBeenCalled();
+
+    await press(within(dialog).getByRole("button", { name: en["anomaly.action.release"] }));
+    expect(releaseAnomalyHolds).toHaveBeenCalledWith(["an-1"]);
+    expect(screen.getByText(en["anomaly.toast.released"])).toBeTruthy();
+  });
+
+  it("offers a paired phone no way to stop keeping old backups", async () => {
+    openedAsPairedPhone.mockReturnValue(true);
+    serve([], [finding({ name: "plex", severity: "critical", state: "acknowledged", ackedAt: SEEN, retentionHeld: true })]);
+    await renderPage();
+    await showClosed();
+
+    expect(within(findings()[0]!).getByLabelText(en["anomaly.holdKept"])).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en["anomaly.action.release"] })).toBeNull();
+  });
+
   it("says when nothing was closed", async () => {
     await renderPage();
     await showClosed();
@@ -1062,12 +1117,12 @@ describe("monitoring", () => {
 
   it("saves a sensitivity straight away and puts it back when the server refuses", async () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
-    setItemAnomalyPrefs.mockResolvedValue({ ok: false, error: "no", code: "bad-request" });
+    setItemAnomalySensitivity.mockResolvedValue({ ok: false, error: "no", code: "bad-request" });
     await renderPage();
     await openMonitoring("plex");
 
     await pick(en["anomaly.items.sensitivity"], en["anomaly.sensitivity.strict"]);
-    expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { sensitivity: "strict" });
+    expect(setItemAnomalySensitivity).toHaveBeenCalledWith("tg-plex", "strict");
     await waitFor(() => expect(screen.getByText(en["anomaly.error.badRequest"])).toBeTruthy());
     const chosen = within(setting(en["anomaly.items.sensitivity"])).getByRole("radio", { checked: true });
     expect(chosen.textContent).toBe(en["anomaly.items.followGlobal"]);
@@ -1094,12 +1149,27 @@ describe("monitoring", () => {
 
   it("goes back to the global sensitivity by storing none of its own", async () => {
     getAnomalyItems.mockResolvedValue({ ok: true, items: [item({ sensitivity: "strict" })] });
-    setItemAnomalyPrefs.mockResolvedValue({ ok: true });
+    setItemAnomalySensitivity.mockResolvedValue({ ok: true });
     await renderPage();
     await openMonitoring("plex");
 
     await pick(en["anomaly.items.sensitivity"], en["anomaly.items.followGlobal"]);
-    expect(setItemAnomalyPrefs).toHaveBeenCalledWith("tg-plex", { sensitivity: "" });
+    expect(setItemAnomalySensitivity).toHaveBeenCalledWith("tg-plex", "");
+  });
+
+  // The notification minimum goes through the item's whole preferences, which
+  // a paired phone does not reach.
+  it("offers a paired phone the sensitivity and not the notification minimum", async () => {
+    openedAsPairedPhone.mockReturnValue(true);
+    getAnomalyItems.mockResolvedValue({ ok: true, items: [item()] });
+    setItemAnomalySensitivity.mockResolvedValue({ ok: true });
+    await renderPage();
+    const window = await openMonitoring("plex");
+
+    expect(within(window).queryByRole("radiogroup", { name: en["anomaly.items.notifyMin"] })).toBeNull();
+    await pick(en["anomaly.items.sensitivity"], en["anomaly.sensitivity.strict"]);
+    expect(setItemAnomalySensitivity).toHaveBeenCalledWith("tg-plex", "strict");
+    expect(setItemAnomalyPrefs).not.toHaveBeenCalled();
   });
 
   it("saves the item's notification minimum on its own", async () => {
@@ -1238,6 +1308,22 @@ describe("monitoring", () => {
       )
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: en["anomaly.expectation.forget"] })).toBeTruthy();
+  });
+
+  it("says so when forgetting an expectation does not reach the server", async () => {
+    getAnomalyItems.mockResolvedValue({
+      ok: true,
+      items: [item({ expectations: [{ scopeKind: "item", part: "", family: "new_data", sinceAt: 0, ceiling: GB, updatedAt: SEEN }] })],
+    });
+    forgetAnomalyExpectation.mockRejectedValue(new Error("offline"));
+    await renderPage();
+    await openMonitoring("plex");
+
+    await press(screen.getByRole("button", { name: en["anomaly.expectation.forget"] }));
+    const confirmDialog = screen.getAllByRole("dialog").at(-1)!;
+    await press(within(confirmDialog).getByRole("button", { name: en["anomaly.expectation.forget"] }));
+    expect(forgetAnomalyExpectation).toHaveBeenCalledWith("tg-plex", "new_data", "item", "");
+    await waitFor(() => expect(screen.getByText(en["anomaly.error.generic"])).toBeTruthy());
   });
 });
 

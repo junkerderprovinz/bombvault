@@ -42,7 +42,7 @@ func TestAPairedSessionIsRefusedARestoreItCouldNotUndo(t *testing.T) {
 		{"/api/containers/plex/restore-files", map[string]any{"snapshotId": "abc", "paths": []string{"/a"}, "confirm": true}},
 		{"/api/files/sets/abc/restore-files", map[string]any{"snapshotId": "abc", "paths": []string{"/a"}, "confirm": true}},
 		{"/api/stacks/media/restore", map[string]any{"confirm": true}},
-		{"/api/anomalies/acknowledge", map[string]any{"ids": []string{"abc"}}},
+		{"/api/anomalies/release", map[string]any{"ids": []string{"abc"}}},
 	} {
 		code, out := in.do(t, http.MethodPost, route.path, route.body)
 		if code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {

@@ -395,15 +395,17 @@ func (s *Service) offsiteTargetNames(rows []store.Anomaly) map[string]string {
 	return out
 }
 
-// AcknowledgeAnomalies settles the episodes the user has seen and releases the
-// retention holds they were carrying.
-func (s *Service) AcknowledgeAnomalies(ctx context.Context, ids []string, note string) (changed, skipped, released int, err error) {
+// AcknowledgeAnomalies settles the episodes the user has seen and reports how
+// many of them were keeping old backups. Settled on a paired phone those
+// backups stay kept, otherwise the hold ends.
+func (s *Service) AcknowledgeAnomalies(ctx context.Context, ids []string, note string) (changed, skipped, held int, err error) {
 	return s.closeAnomalyEpisodes(ctx, ids, note, false)
 }
 
-// MarkAnomaliesExpected settles the episodes and records the new level or
-// amount as normal, so the same condition is not reported again.
-func (s *Service) MarkAnomaliesExpected(ctx context.Context, ids []string, note string) (changed, skipped, released int, err error) {
+// MarkAnomaliesExpected settles the episodes like AcknowledgeAnomalies and
+// records the new level or amount as normal, so the same condition is not
+// reported again.
+func (s *Service) MarkAnomaliesExpected(ctx context.Context, ids []string, note string) (changed, skipped, held int, err error) {
 	return s.closeAnomalyEpisodes(ctx, ids, note, true)
 }
 
@@ -440,6 +442,13 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 	release := s.anomalies.lockScopes(anomalyScopesOf(closable))
 	defer release()
 
+	// Marked before the close, so a failure in between leaves an open finding
+	// with the mark, which holds as it did.
+	if pairedContext(ctx) {
+		if err := s.store.KeepAnomalyHolds(anomalyIDsOf(closable)); err != nil {
+			return 0, 0, 0, err
+		}
+	}
 	now := s.anomalies.nowUnix()
 	closeRows := s.store.AcknowledgeAnomalies
 	state := "acknowledged"
@@ -464,8 +473,22 @@ func (s *Service) closeAnomalyEpisodes(ctx context.Context, ids []string, note s
 	return len(closed), skipped + len(closable) - len(closed), heldAmong(closable, closed, settings), ctx.Err()
 }
 
-// heldAmong counts the closed episodes that were pausing retention, which is
-// what the page reports back as released.
+// ReleaseAnomalyHolds ends the holds settled findings kept and returns how many
+// it ended.
+func (s *Service) ReleaseAnomalyHolds(ctx context.Context, ids []string) (int, error) {
+	released, err := s.store.ReleaseAnomalyHolds(dedupedIDs(ids))
+	if err != nil {
+		return 0, err
+	}
+	if len(released) > 0 {
+		log.Printf("anomaly: the hold of %d settled finding(s) ended from the UI: %v", len(released), anomalyIDsOf(released))
+		s.anomalies.markScopesDirty(anomalyScopesOf(released))
+		s.anomalies.refresh()
+	}
+	return len(released), ctx.Err()
+}
+
+// heldAmong counts the closed episodes that were pausing retention.
 func heldAmong(before, closed []store.Anomaly, settings store.Settings) int {
 	n := 0
 	for _, row := range before {
@@ -640,7 +663,7 @@ func offsiteTargetOf(row store.Anomaly) string {
 // retention pass does not apply.
 func anomalyHolds(row store.Anomaly, settings store.Settings) bool {
 	return settings.AnomalyEnabled && settings.AnomalyRetentionHold &&
-		row.State == "open" && row.Severity == "critical" &&
+		(row.State == "open" || row.HoldKept) && row.Severity == "critical" &&
 		row.RecoveredAt == 0 && slices.Contains(holdingMetrics, row.Metric)
 }
 

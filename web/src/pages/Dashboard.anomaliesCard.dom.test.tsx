@@ -24,12 +24,14 @@ vi.mock("../lib/api", async () => {
     getAnomalySummary: vi.fn(),
     getAnomalies: vi.fn(),
     getAnomalyItems: vi.fn(),
+    openedAsPairedPhone: vi.fn(),
   };
 });
 
 const api = await import("../lib/api");
 const getAnomalySummary = vi.mocked(api.getAnomalySummary);
 const getAnomalies = vi.mocked(api.getAnomalies);
+const openedAsPairedPhone = vi.mocked(api.openedAsPairedPhone);
 
 const t = ((key: string, n?: number) =>
   countText((en as Record<string, string>)[key] ?? key, "en", n)) as unknown as Parameters<
@@ -106,6 +108,7 @@ beforeEach(() => {
   seq = 0;
   getAnomalySummary.mockReset();
   getAnomalies.mockReset();
+  openedAsPairedPhone.mockReturnValue(false);
 });
 
 afterEach(cleanup);
@@ -219,6 +222,25 @@ describe("AnomaliesCard", () => {
     expect(within(dialog).getByText(en["anomaly.releaseConfirm"].replace("{name}", "plex"))).toBeTruthy();
     expect(onAcknowledge).not.toHaveBeenCalled();
 
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    });
+    expect(onAcknowledge).toHaveBeenCalledTimes(1);
+  });
+
+  it("tells a paired phone that acknowledging keeps the old backups", async () => {
+    openedAsPairedPhone.mockReturnValue(true);
+    const onAcknowledge = vi.fn().mockResolvedValue({ ok: true });
+    renderCard({
+      summary: summary({ open: { critical: 1, warning: 0, info: 0 }, retentionHeld: 1 }),
+      open: [finding({ name: "plex", retentionHeld: true })],
+      onAcknowledge,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: en["anomaly.action.acknowledge"] }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("heading", { name: en["anomaly.keptTitle"] })).toBeTruthy();
+    expect(within(dialog).getByText(en["anomaly.keptConfirm"].replace("{name}", "plex"))).toBeTruthy();
     await act(async () => {
       fireEvent.click(within(dialog).getByRole("button", { name: en["anomaly.action.acknowledge"] }));
     });

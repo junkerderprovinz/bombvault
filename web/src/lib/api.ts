@@ -8853,12 +8853,16 @@ export type AnomalyActionResult = OkEnvelope & {
   skipped: number;
   /** How many retention holds this call ended. */
   released: number;
+  /** How many holds the findings keep, which a paired phone's settling leaves
+   *  in place until someone signs in with the password and ends them. */
+  kept?: number;
 };
 
 /**
  * POST /api/anomalies/acknowledge settles what the user has seen. This
  * releases the hold on deleting old backups of those series, so it is the one
- * anomaly action with a consequence beyond the page.
+ * anomaly action with a consequence beyond the page. A paired phone's leaves
+ * the hold in place.
  */
 export function acknowledgeAnomalies(
   ids: string[],
@@ -8881,6 +8885,12 @@ export function markAnomaliesExpected(
   });
 }
 
+/** POST /api/anomalies/release ends the holds of findings settled on a paired
+ *  phone, which a phone is refused. */
+export function releaseAnomalyHolds(ids: string[]): Promise<OkEnvelope & { released?: number }> {
+  return fetchJSON("/api/anomalies/release", { method: "POST", body: JSON.stringify({ ids }) });
+}
+
 /** GET /api/anomalies/items */
 export function getAnomalyItems(): Promise<
   OkEnvelope & { items: AnomalyItem[] }
@@ -8901,6 +8911,15 @@ export function setItemAnomalyPrefs(
     `/api/anomalies/items/${encodeURIComponent(targetId)}/prefs`,
     { method: "PUT", body: JSON.stringify(prefs) }
   );
+}
+
+/** PUT /api/anomalies/items/{targetId}/sensitivity sets the one override a
+ *  paired phone may change. An empty value follows the global setting. */
+export function setItemAnomalySensitivity(targetId: string, sensitivity: string): Promise<OkEnvelope> {
+  return fetchJSON(`/api/anomalies/items/${encodeURIComponent(targetId)}/sensitivity`, {
+    method: "PUT",
+    body: JSON.stringify({ sensitivity }),
+  });
 }
 
 /** DELETE one expectation, so its rule watches the series again. */

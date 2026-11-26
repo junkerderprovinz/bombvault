@@ -115,9 +115,14 @@ export function ItemMonitoring({
     if (!(await confirm(t("anomaly.expectation.forgetConfirm"), { confirmKey: "anomaly.expectation.forget" }))) {
       return;
     }
-    const res = await forgetAnomalyExpectation(item.targetId, family, scopeKind, part);
-    if (!res.ok) {
-      push(anomalyErrorText(res.code, t), "fail");
+    try {
+      const res = await forgetAnomalyExpectation(item.targetId, family, scopeKind, part);
+      if (!res.ok) {
+        push(anomalyErrorText(res.code, t), "fail");
+        return;
+      }
+    } catch {
+      push(anomalyErrorText(undefined, t), "fail");
       return;
     }
     setForgotten((prev) => [...prev, `${scopeKind}:${part}:${family}`]);

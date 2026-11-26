@@ -23,6 +23,8 @@ import {
   getSettings,
   listStorageLocations,
   markAnomaliesExpected,
+  openedAsPairedPhone,
+  releaseAnomalyHolds,
   type AnomalySeverity,
   type AnomalyView,
   type Settings,
@@ -31,8 +33,9 @@ import {
 import {
   ANOMALY_CHANGED_EVENT,
   anomalyErrorText,
+  anomalyEntryName,
   anomalyGroupKey,
-  anomalyReleaseQuestion,
+  anomalyHoldQuestion,
   sortClosedAnomalies,
   sortOpenAnomalies,
 } from "../lib/anomalies";
@@ -123,6 +126,7 @@ export function Anomalies() {
   const [params] = useSearchParams();
   const { confirm, confirmDialog } = useConfirm();
   const { push } = useToast();
+  const phone = openedAsPairedPhone();
   const { items, byTarget, error: itemsFailed, loading: itemsLoading, retry: retryItems } = useAnomalyItems();
   const [view, setView] = useState<View>("open");
   const [chosen, setChosen] = useState<AnomalySeverity[] | null>(null);
@@ -196,8 +200,8 @@ export function Anomalies() {
 
   const settle: SettleFindings = async (list, how) => {
     const confirmKey = how === "expected" ? "anomaly.action.expected" : "anomaly.action.acknowledge";
-    const question = anomalyReleaseQuestion(list, t);
-    if (question && !(await confirm(question, { confirmKey, title: t("anomaly.releaseTitle") }))) return false;
+    const question = anomalyHoldQuestion(list, t, phone);
+    if (question && !(await confirm(question.message, { confirmKey, title: question.title }))) return false;
     try {
       const call = how === "expected" ? markAnomaliesExpected : acknowledgeAnomalies;
       const res = await call(list.map((a) => a.id));
@@ -219,6 +223,25 @@ export function Anomalies() {
     );
     return true;
   };
+
+  // A finding settled on a paired phone keeps its old backups until the person
+  // ends that here.
+  async function release(a: AnomalyView) {
+    const question = t("anomaly.releaseKeptConfirm").replace("{name}", anomalyEntryName(a, t));
+    if (!(await confirm(question, { confirmKey: "anomaly.action.release", title: t("anomaly.releaseTitle") }))) return;
+    try {
+      const res = await releaseAnomalyHolds([a.id]);
+      if (!res.ok) {
+        push(anomalyErrorText(res.code, t), "fail");
+        return;
+      }
+    } catch {
+      push(anomalyErrorText(undefined, t), "fail");
+      return;
+    }
+    window.dispatchEvent(new Event(ANOMALY_CHANGED_EVENT));
+    push(t("anomaly.toast.released"));
+  }
 
   const windowFinding =
     shownWindow?.kind === "finding" ? [...open.list, ...closed.list].find((a) => a.id === shownWindow.id) : undefined;
@@ -305,6 +328,7 @@ export function Anomalies() {
                     siblings={siblings.length > 1 ? siblings : undefined}
                     place={findingPlace(a, places)}
                     onSettle={settle}
+                    onRelease={phone ? undefined : (finding) => void release(finding)}
                     onDetails={(comparing) => setShownWindow({ kind: "finding", id: a.id, comparing })}
                   />
                 );

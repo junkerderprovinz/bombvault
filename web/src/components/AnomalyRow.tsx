@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { InfoBubble } from "./InfoBubble";
-import type { AnomalyView } from "../lib/api";
+import { openedAsPairedPhone, type AnomalyView } from "../lib/api";
 import {
   ANOMALY_SEVERITY_LABEL,
   anomalyErrorText,
@@ -48,8 +48,11 @@ export function AnomalyRow({
 
   async function run(action: AnomalyAction, confirmKey: TranslationKey) {
     if (a.retentionHeld) {
-      const message = t("anomaly.releaseConfirm").replace("{name}", anomalyItemLabel(a, t));
-      if (!(await confirm(message, { confirmKey, title: t("anomaly.releaseTitle") }))) return;
+      // A paired phone cannot end the hold, so it is told the backups stay kept.
+      const phone = openedAsPairedPhone();
+      const message = t(phone ? "anomaly.keptConfirm" : "anomaly.releaseConfirm").replace("{name}", anomalyItemLabel(a, t));
+      const title = t(phone ? "anomaly.keptTitle" : "anomaly.releaseTitle");
+      if (!(await confirm(message, { confirmKey, title }))) return;
     }
     setBusy(true);
     try {

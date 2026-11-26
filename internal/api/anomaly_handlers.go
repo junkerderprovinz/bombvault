@@ -92,17 +92,46 @@ func (h *Handler) settleAnomalies(w http.ResponseWriter, r *http.Request, settle
 			fmt.Errorf("name between 1 and %d findings", anomalyActionLimit), "bad-request"))
 		return
 	}
-	changed, skipped, released, err := settle(r.Context(), body.IDs, body.Note)
+	changed, skipped, held, err := settle(r.Context(), body.IDs, body.Note)
 	if err != nil {
 		writeJSON(w, http.StatusOK, failEnvelope(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{
-		"changed": changed, "skipped": skipped, "released": released,
-	}))
+	answer := map[string]any{"changed": changed, "skipped": skipped, "released": held}
+	if isPaired(r) {
+		answer["released"], answer["kept"] = 0, held
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(answer))
 }
 
-type anomalySettleFunc func(ctx context.Context, ids []string, note string) (changed, skipped, released int, err error)
+type anomalySettleFunc func(ctx context.Context, ids []string, note string) (changed, skipped, held int, err error)
+
+// handleReleaseAnomalyHolds serves POST /api/anomalies/release with the body
+// {ids}: findings settled on a paired phone stop keeping their old backups,
+// which retention may then prune. A paired phone cannot do this itself.
+func (h *Handler) handleReleaseAnomalyHolds(w http.ResponseWriter, r *http.Request) {
+	if isPaired(r) {
+		refusePaired(w)
+		return
+	}
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if len(body.IDs) == 0 || len(body.IDs) > anomalyActionLimit {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(
+			fmt.Errorf("name between 1 and %d findings", anomalyActionLimit), "bad-request"))
+		return
+	}
+	released, err := h.svc.ReleaseAnomalyHolds(r.Context(), body.IDs)
+	if err != nil {
+		writeJSON(w, http.StatusOK, failEnvelope(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"released": released}))
+}
 
 func (h *Handler) handleAnomalyItems(w http.ResponseWriter, r *http.Request) {
 	items, err := h.svc.AnomalyItems(r.Context())
@@ -122,6 +151,24 @@ func (h *Handler) handleAnomalyItemPrefs(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	err := h.svc.SetItemAnomalyPrefs(r.Context(), r.PathValue("targetId"), patch)
+	writeJSON(w, http.StatusOK, anomalyWriteEnvelope(err))
+}
+
+// handleAnomalyItemSensitivity serves PUT
+// /api/anomalies/items/{targetId}/sensitivity with the body {sensitivity}, the
+// one preference of an item a paired phone may change.
+func (h *Handler) handleAnomalyItemSensitivity(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Sensitivity *string `json:"sensitivity"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.Sensitivity == nil {
+		writeJSON(w, http.StatusOK, codedFailEnvelope(errors.New("name the sensitivity"), "bad-request"))
+		return
+	}
+	err := h.svc.SetItemAnomalyPrefs(r.Context(), r.PathValue("targetId"), AnomalyPrefsPatch{Sensitivity: body.Sensitivity})
 	writeJSON(w, http.StatusOK, anomalyWriteEnvelope(err))
 }
 

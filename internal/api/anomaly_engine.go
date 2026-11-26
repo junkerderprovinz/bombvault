@@ -1039,14 +1039,14 @@ func (e *anomalyEngine) RetentionHeld(ctx context.Context, sc anomalyScope) (boo
 		e.noteEvalError()
 		return false, "", err
 	}
-	rows, _, err := e.svc.store.ListAnomalies(store.AnomalyFilter{
-		ScopeKind: sc.Kind, ScopeID: sc.ID, Limit: anomalyOpenRowLimit,
-	})
+	// The rows that hold are read without a page limit, and they include the
+	// findings a paired phone settled.
+	rows, err := e.svc.store.HeldAnomalies(holdingMetrics)
 	if err != nil {
 		return false, "", err
 	}
 	for _, row := range rows {
-		if !anomalyHolds(row, settings) {
+		if row.ScopeKind != sc.Kind || row.ScopeID != sc.ID || !anomalyHolds(row, settings) {
 			continue
 		}
 		if row.Metric == metricNewDataRewrite {

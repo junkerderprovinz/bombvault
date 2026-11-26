@@ -27,6 +27,9 @@ type Anomaly struct {
 	AckNote                                                              string
 	NotifiedAt                                                           int64
 	NotifiedSeverity                                                     string
+	// HoldKept marks a finding settled on a paired phone. Its old backups stay
+	// kept until somebody signed in with the password ends the hold.
+	HoldKept bool
 }
 
 // AnomalyExpectation is what a user marked as expected for one series and one
@@ -116,7 +119,7 @@ const anomalyColumns = `id, fingerprint, detector, metric, severity, state,
 		run_id, last_run_id, last_run_at, last_good_run_id,
 		observed, expected, threshold, samples, sensitivity, details, occurrences,
 		first_seen_at, last_seen_at, recovered_at, resolved_at, acked_at, cleared_at,
-		ack_note, notified_at, notified_severity`
+		ack_note, notified_at, notified_severity, hold_kept`
 
 // AnomalyFingerprint identifies a condition across passes and episodes. The
 // severity is not part of it, so a warning that grows into a critical stays the
@@ -341,7 +344,7 @@ func (r *Repo) ListAnomalies(f AnomalyFilter) ([]Anomaly, string, error) {
 		add(`target_id = ?`, f.TargetID)
 	}
 	if f.Since > 0 {
-		add(`(state = 'open' OR last_seen_at >= ?)`, f.Since)
+		add(`(state = 'open' OR hold_kept = 1 OR last_seen_at >= ?)`, f.Since)
 	}
 
 	order := `last_seen_at DESC, id DESC`
@@ -407,7 +410,7 @@ func (r *Repo) HeldAnomalies(metrics []string) ([]Anomaly, error) {
 	//nolint:gosec // G202: the clause is built from a literal and placeholders.
 	rows, err := r.db.Query(`SELECT `+anomalyColumns+`
 		FROM anomalies
-		WHERE state = 'open' AND severity = 'critical' AND recovered_at = 0 AND `+clause+`
+		WHERE (state = 'open' OR hold_kept = 1) AND severity = 'critical' AND recovered_at = 0 AND `+clause+`
 		ORDER BY last_seen_at DESC, id DESC`, args...)
 	if err != nil {
 		return nil, fmt.Errorf("HeldAnomalies: %w", err)
@@ -451,6 +454,47 @@ func (r *Repo) AcknowledgeAnomalies(ids []string, note string, now int64) ([]Ano
 // the condition as the new normal. The expectation itself is a row of its own.
 func (r *Repo) MarkAnomaliesExpected(ids []string, note string, now int64) ([]Anomaly, error) {
 	return r.closeAnomalies(ids, "expected", note, now)
+}
+
+// KeepAnomalyHolds marks open findings so that settling them leaves the old
+// backups they keep in place.
+func (r *Repo) KeepAnomalyHolds(ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	clause, args := inClause("id", ids)
+	//nolint:gosec // G202: the clause is built from a literal and placeholders.
+	if _, err := r.db.Exec(`UPDATE anomalies SET hold_kept = 1 WHERE state = 'open' AND `+clause, args...); err != nil {
+		return fmt.Errorf("KeepAnomalyHolds: %w", err)
+	}
+	return nil
+}
+
+// ReleaseAnomalyHolds ends the holds settled findings kept and returns the
+// rows it ended them on.
+func (r *Repo) ReleaseAnomalyHolds(ids []string) ([]Anomaly, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	clause, args := inClause("id", ids)
+	//nolint:gosec // G202: the clause is built from a literal and placeholders.
+	rows, err := r.db.Query(`UPDATE anomalies SET hold_kept = 0 WHERE hold_kept = 1 AND `+clause+` RETURNING `+anomalyColumns, args...)
+	if err != nil {
+		return nil, fmt.Errorf("ReleaseAnomalyHolds: %w", err)
+	}
+	defer rows.Close() //nolint:errcheck // rows.Close on a completed query is always nil for SQLite
+	var out []Anomaly
+	for rows.Next() {
+		a, sErr := scanAnomaly(rows)
+		if sErr != nil {
+			return nil, fmt.Errorf("ReleaseAnomalyHolds: %w", sErr)
+		}
+		out = append(out, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("ReleaseAnomalyHolds: %w", err)
+	}
+	return out, nil
 }
 
 func (r *Repo) closeAnomalies(ids []string, state, note string, now int64) ([]Anomaly, error) {
@@ -539,12 +583,14 @@ func (r *Repo) MarkAnomaliesNotified(ids []string, severityByID map[string]strin
 // PruneAnomalies deletes closed findings last touched before the cutoff. An
 // open row stays whatever its age, and so does the current episode of a
 // condition the user closed while it was still present: deleting that one would
-// raise the condition again on the next pass.
+// raise the condition again on the next pass. A finding that keeps its hold
+// stays until the hold ends.
 func (r *Repo) PruneAnomalies(before int64) (int64, error) {
 	res, err := r.db.Exec(`
 		DELETE FROM anomalies
 		WHERE state IN ('resolved', 'acknowledged', 'expected')
 		  AND NOT (state IN ('acknowledged', 'expected') AND cleared_at = 0)
+		  AND hold_kept = 0
 		  AND max(resolved_at, acked_at, last_seen_at) < ?`, before)
 	if err != nil {
 		return 0, fmt.Errorf("PruneAnomalies: %w", err)
@@ -779,7 +825,7 @@ func scanAnomaly(s scanner) (Anomaly, error) {
 		&a.RunID, &a.LastRunID, &a.LastRunAt, &a.LastGoodRunID,
 		&a.Observed, &a.Expected, &a.Threshold, &a.Samples, &a.Sensitivity, &a.Details, &a.Occurrences,
 		&a.FirstSeenAt, &a.LastSeenAt, &a.RecoveredAt, &a.ResolvedAt, &a.AckedAt, &a.ClearedAt,
-		&a.AckNote, &a.NotifiedAt, &a.NotifiedSeverity,
+		&a.AckNote, &a.NotifiedAt, &a.NotifiedSeverity, &a.HoldKept,
 	)
 	if err != nil {
 		return Anomaly{}, err

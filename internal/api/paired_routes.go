@@ -139,14 +139,19 @@ var pairedRoutes = map[string]bool{
 	"GET /api/stacks/{project}/dir":               true,
 	"GET /api/browse":                             true,
 
-	// The anomalies, to read. Acknowledging one ends the hold on the backups
-	// from before it.
-	"GET /api/anomalies":                         true,
-	"GET /api/anomalies/summary":                 true,
-	"GET /api/anomalies/items":                   true,
-	"GET /api/anomalies/items/{targetId}/series": true,
-	"GET /api/anomalies/{id}":                    true,
-	"GET /api/anomalies/{id}/changes":            true,
+	// The anomalies, to read and to settle, an item's expectations to forget
+	// and its sensitivity. A finding a paired phone settles keeps its hold on
+	// the old backups until a sign-in with the password ends it.
+	"GET /api/anomalies":                                           true,
+	"GET /api/anomalies/summary":                                   true,
+	"GET /api/anomalies/items":                                     true,
+	"GET /api/anomalies/items/{targetId}/series":                   true,
+	"GET /api/anomalies/{id}":                                      true,
+	"GET /api/anomalies/{id}/changes":                              true,
+	"POST /api/anomalies/acknowledge":                              true,
+	"POST /api/anomalies/expected":                                 true,
+	"PUT /api/anomalies/items/{targetId}/sensitivity":              true,
+	"DELETE /api/anomalies/items/{targetId}/expectations/{family}": true,
 
 	// The Instances page, to look at.
 	"GET /api/group":                    true,

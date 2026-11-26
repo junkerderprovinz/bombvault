@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -209,5 +210,175 @@ func TestAPairedPhoneDiscoversEntriesWithoutBeingToldWhereTheyLie(t *testing.T) 
 	}
 	if strings.Contains(fmt.Sprint(out), f.root) {
 		t.Errorf("a paired phone was told where the backups lie: %v", out)
+	}
+}
+
+// heldFinding raises a collapse of the nextcloud container, which keeps its
+// old backups, and returns the finding and the series it holds.
+func heldFinding(t *testing.T, f *engineFixture) (store.Anomaly, anomalyScope) {
+	t.Helper()
+	id := f.container(t, "nextcloud")
+	f.steadySeries(t, id, "backup", 11, 40*gib)
+	f.run(t, id, "backup", f.now-3600, 20*mib)
+	f.pass(t)
+	row := onlyRow(t, f.openRows(t))
+	settings, err := f.st.GetSettings()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !anomalyHolds(row, settings) {
+		t.Fatalf("the collapse %s keeps no backups, so this test proves nothing", row.Metric)
+	}
+	return row, anomalyScope{Kind: row.ScopeKind, ID: row.ScopeID}
+}
+
+// settleAs sends one of the anomaly actions straight to its handler, as a
+// paired phone or as the person.
+func settleAs(t *testing.T, handle http.HandlerFunc, path string, paired bool, ids ...string) map[string]any {
+	t.Helper()
+	b, _ := json.Marshal(map[string]any{"ids": ids})
+	req := jsonReq(http.MethodPost, path, strings.NewReader(string(b)))
+	if paired {
+		req = withPaired(req)
+	}
+	rec := httptest.NewRecorder()
+	handle(rec, req)
+	return decodeEnvelope(t, rec)
+}
+
+// stillHeld reports whether every view of the hold says the old backups of sc
+// are kept: the retention guard, the tags a pass leaves alone and the finding.
+func stillHeld(t *testing.T, f *engineFixture, sc anomalyScope, id string) bool {
+	t.Helper()
+	held, _, err := f.e.RetentionHeld(context.Background(), sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tags, err := f.e.HeldIdentityTags()
+	if err != nil {
+		t.Fatal(err)
+	}
+	view, _, err := f.svc.GetAnomaly(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if held != tags.holds("container:nextcloud") || held != view.RetentionHeld {
+		t.Fatalf("the views of the hold disagree: guard %v, tags %v, finding %v", held, tags.holds("container:nextcloud"), view.RetentionHeld)
+	}
+	return held
+}
+
+func TestAFindingAPairedPhoneSettlesKeepsTheOldBackups(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		path   string
+		handle func(h *Handler) http.HandlerFunc
+		state  string
+	}{
+		{"acknowledged", "/api/anomalies/acknowledge", func(h *Handler) http.HandlerFunc { return h.handleAcknowledgeAnomalies }, "acknowledged"},
+		{"marked as expected", "/api/anomalies/expected", func(h *Handler) http.HandlerFunc { return h.handleAnomaliesExpected }, "expected"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := newEngineFixture(t)
+			h := &Handler{store: f.st, svc: f.svc}
+			row, sc := heldFinding(t, f)
+
+			out := settleAs(t, c.handle(h), c.path, true, row.ID)
+			if out["ok"] != true || out["changed"] != float64(1) || out["released"] != float64(0) || out["kept"] != float64(1) {
+				t.Fatalf("settling the finding with a paired session: %v", out)
+			}
+			got, _, err := f.st.GetAnomaly(row.ID)
+			if err != nil || got.State != c.state {
+				t.Fatalf("the finding is %q (%v), want %q", got.State, err, c.state)
+			}
+			if !stillHeld(t, f, sc, row.ID) {
+				t.Fatal("a paired phone ended the hold on the old backups")
+			}
+			f.e.refresh()
+			if n := f.e.summary().RetentionHeld; n != 1 {
+				t.Errorf("the summary counts %d held item(s), want 1", n)
+			}
+			page, err := f.svc.ListAnomalies(context.Background(), store.AnomalyFilter{States: []string{c.state}, Since: f.now + 86400})
+			if err != nil || len(page.Anomalies) != 1 || !page.Anomalies[0].RetentionHeld {
+				t.Errorf("the settled finding that keeps backups is not listed with its hold: %+v (%v)", page.Anomalies, err)
+			}
+
+			if out := settleAs(t, h.handleReleaseAnomalyHolds, "/api/anomalies/release", false, row.ID); out["ok"] != true || out["released"] != float64(1) {
+				t.Fatalf("the person ending the hold: %v", out)
+			}
+			if stillHeld(t, f, sc, row.ID) {
+				t.Error("the hold outlived the person ending it")
+			}
+		})
+	}
+}
+
+func TestThePersonSettlingAFindingEndsItsHold(t *testing.T) {
+	f := newEngineFixture(t)
+	h := &Handler{store: f.st, svc: f.svc}
+	row, sc := heldFinding(t, f)
+	out := settleAs(t, h.handleAcknowledgeAnomalies, "/api/anomalies/acknowledge", false, row.ID)
+	if out["ok"] != true || out["released"] != float64(1) || out["kept"] != nil {
+		t.Fatalf("acknowledging the finding as the person: %v", out)
+	}
+	if stillHeld(t, f, sc, row.ID) {
+		t.Error("the hold outlived the acknowledgement")
+	}
+}
+
+func TestAPairedPhoneEndsNoHold(t *testing.T) {
+	f := newEngineFixture(t)
+	h := &Handler{store: f.st, svc: f.svc}
+	row, _ := heldFinding(t, f)
+	settleAs(t, h.handleAcknowledgeAnomalies, "/api/anomalies/acknowledge", true, row.ID)
+	if out := settleAs(t, h.handleReleaseAnomalyHolds, "/api/anomalies/release", true, row.ID); out["ok"] != false || out["code"] != codeOwnLoginNeeded {
+		t.Errorf("a paired phone ending the hold at the handler: %v", out)
+	}
+
+	in := pairedInstance(t)
+	if code, out := in.do(t, http.MethodPost, "/api/anomalies/release", map[string]any{"ids": []string{"abc"}}); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+		t.Errorf("ending a hold with a paired session: %d %v", code, out)
+	}
+	for _, path := range []string{"/api/anomalies/acknowledge", "/api/anomalies/expected"} {
+		if code, out := in.do(t, http.MethodPost, path, map[string]any{"ids": []string{"abc"}}); code != http.StatusOK || out["ok"] != true {
+			t.Errorf("%s with a paired session: %d %v", path, code, out)
+		}
+	}
+}
+
+func TestAPairedPhoneSetsAnEntrysSensitivityAndNothingElseOfIt(t *testing.T) {
+	in := pairedInstance(t)
+	set, err := in.st.CreateFileSet(store.FileSet{Name: "docs", Path: "docs", Enabled: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := "/api/anomalies/items/" + set.ID + "/sensitivity"
+	if code, out := in.do(t, http.MethodPut, path, map[string]any{"sensitivity": "strict"}); code != http.StatusOK || out["ok"] != true {
+		t.Fatalf("setting the sensitivity with a paired session: %d %v", code, out)
+	}
+	for _, body := range []any{
+		map[string]any{"sensitivity": "permissive", "notifyMin": "none"},
+		map[string]any{"notifyMin": "none"},
+		map[string]any{"sensitivity": "loud"},
+		map[string]any{},
+		[]string{"permissive"},
+	} {
+		if code, out := in.do(t, http.MethodPut, path, body); code != http.StatusOK || out["ok"] != false {
+			t.Errorf("%v with a paired session: %d %v", body, code, out)
+		}
+	}
+	prefs, err := in.st.ListItemPrefs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := prefs[set.ID]; got.Sensitivity != "strict" || got.NotifyMin != "" {
+		t.Errorf("the entry's preferences are %+v, want the strict sensitivity alone", got)
+	}
+	if code, out := in.do(t, http.MethodPut, "/api/anomalies/items/"+set.ID+"/prefs", map[string]any{"notifyMin": "none"}); code != http.StatusForbidden || out["code"] != codeOwnLoginNeeded {
+		t.Errorf("the whole preferences with a paired session: %d %v", code, out)
+	}
+	code, out := in.do(t, http.MethodDelete, "/api/anomalies/items/"+set.ID+"/expectations/"+familyNewData, nil)
+	if code != http.StatusOK || out["ok"] != true {
+		t.Errorf("forgetting an expectation with a paired session: %d %v", code, out)
 	}
 }

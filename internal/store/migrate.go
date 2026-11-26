@@ -4153,6 +4153,14 @@ CREATE TABLE IF NOT EXISTS phone_accounts (
 		name:    "phone_pairing_gone",
 		sql:     `DROP TABLE IF EXISTS phone_pairing;`,
 	},
+	{
+		// A finding settled on a paired phone keeps its hold on the old
+		// backups until a sign-in with the password ends it.
+		version:          anomalyHoldKeptMigration,
+		name:             "anomaly_hold_kept",
+		alreadySatisfied: columnPresent("anomalies", "hold_kept"),
+		sql:              `ALTER TABLE anomalies ADD COLUMN hold_kept INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // hiddenZeroRuleRows are the sections with an all-zero own keep rule whose own
@@ -4888,6 +4896,10 @@ const credentialAccountMigration = 999
 
 // phonePairingGoneMigration numbers the end of the switch for pairing phones.
 const phonePairingGoneMigration = 1000
+
+// anomalyHoldKeptMigration numbers the holds findings keep after a phone
+// settled them.
+const anomalyHoldKeptMigration = 1001
 
 // oneLineColumns are the names and locations the recovery kit prints.
 var oneLineColumns = []struct {

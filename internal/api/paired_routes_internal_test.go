@@ -458,7 +458,6 @@ var pairedRefused = []string{
 	"POST /api/storage/own-folders",
 	"POST /api/storage/own-folders/preview",
 	// Settings, notifications, integrations, discovery and the settings backup.
-	"DELETE /api/anomalies/items/{targetId}/expectations/{family}",
 	"GET /api/config/snapshots",
 	"GET /api/homeassistant",
 	"GET /api/mdns",
@@ -467,7 +466,6 @@ var pairedRefused = []string{
 	"GET /api/settings/idle",
 	"GET /api/settings/streaming",
 	"GET /api/vm/ssh",
-	"POST /api/anomalies/expected",
 	"POST /api/config/restore",
 	"POST /api/import/appdata-backup",
 	"POST /api/import/appdata-backup/scan",
@@ -541,8 +539,9 @@ var pairedRefused = []string{
 	"POST /api/zfs/excludes/preview",
 	"PUT /api/containers/backup-order",
 	"PUT /api/vms/backup-order",
-	// Acknowledging an anomaly, which lets the backups held for it be pruned.
-	"POST /api/anomalies/acknowledge",
+	// Ending the hold a finding settled on a paired phone keeps, which lets
+	// the old backups be pruned.
+	"POST /api/anomalies/release",
 	// Restores that replace what is there without a backup first, and a
 	// plugin written back to the flash drive, which runs it as root at boot.
 	"POST /api/containers/{name}/dbdumps/{id}/import",
