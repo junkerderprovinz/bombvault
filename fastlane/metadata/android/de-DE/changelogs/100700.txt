@@ -1,0 +1,1 @@
+BombVault 10.7.0 stellt die Dateien eines Laufs am Handy in einen neuen Ordner wieder her, bietet am Handy nur Wiederherstellungen an, die es starten darf, und hält deine Server füreinander erreichbar, während sich einer neu verbindet.

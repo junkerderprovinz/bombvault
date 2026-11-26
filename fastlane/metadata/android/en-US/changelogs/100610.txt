@@ -1,1 +1,0 @@
-BombVault 10.6.10 restores a run's files on the phone into a new folder, offers the phone only the restores it can start, and keeps your servers reachable for each other while one of them reconnects.
