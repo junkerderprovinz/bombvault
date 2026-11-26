@@ -38,8 +38,10 @@ import type { Run } from "../../lib/api";
 // (types, ApiError, formatters) stays the real module.
 const listingControl = vi.hoisted(() => {
   const pending: { resolve: (value: unknown) => void }[] = [];
+  const asked: unknown[][] = [];
   return {
     pending,
+    asked,
     deferred() {
       let resolve!: (value: unknown) => void;
       const promise = new Promise((res) => {
@@ -77,7 +79,10 @@ vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
   return {
     ...actual,
-    listSnapshotFiles: () => listingControl.deferred(),
+    listSnapshotFiles: (...args: unknown[]) => {
+      listingControl.asked.push(args);
+      return listingControl.deferred();
+    },
     listSnapshotFilesFileSet: () => listingControl.deferred(),
     checkDomain: () => apiControl.deferred("check"),
     restoreContainerFiles: (...args: unknown[]) => apiControl.deferred("restore-container", args),
@@ -754,6 +759,13 @@ describe("RunDetailSheet", () => {
     expect(screen.getByRole("checkbox", { name: "/config/plex.ini" })).toBeTruthy();
   });
 
+  it("lists a container run's files by the container's name", async () => {
+    renderSheet(makeRun({ targetId: "2160256330a511f2d415a1cc526a2a87", target: "plex" }));
+    fireEvent.click(screen.getByRole("button", { name: en["recovery.foreignStepBrowse"] }));
+    await act(async () => {});
+    expect(listingControl.asked.at(-1)?.[0]).toBe("plex");
+  });
+
   it("restore on a paired phone goes into a new folder inside the restore folder", async () => {
     session.phone = true;
     try {
@@ -769,6 +781,9 @@ describe("RunDetailSheet", () => {
       const confirmButton = screen
         .getAllByRole("button", { name: en["common.confirm"] })
         .find((b) => b.closest("[role='dialog']") !== null);
+      const ask = confirmButton!.closest("[role='dialog']")!.textContent ?? "";
+      expect(ask).toContain(en["restoreWindow.says.folder"]);
+      expect(ask).not.toContain(en["files.restoreConfirm"]);
       await act(async () => {
         fireEvent.click(confirmButton!);
       });

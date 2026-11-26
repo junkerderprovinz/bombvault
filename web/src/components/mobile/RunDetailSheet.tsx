@@ -378,7 +378,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
     let cancelled = false;
     const req =
       run.domain === "container"
-        ? listSnapshotFiles(run.targetId, run.snapshotId)
+        ? listSnapshotFiles(run.target, run.snapshotId)
         : listSnapshotFilesFileSet(run.targetId, run.snapshotId);
     req
       .then((res) => {
@@ -398,7 +398,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
     };
     // Keyed on the run's identity primitives, not the object: a parent
     // refetch that re-creates the Run object must not re-fetch the tree.
-  }, [open, browseOpen, run.domain, run.targetId, run.snapshotId, t]);
+  }, [open, browseOpen, run.domain, run.target, run.targetId, run.snapshotId, t]);
 
   function togglePath(p: string) {
     setSelected((prev) => {
@@ -480,14 +480,16 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
       setBrowseOpen(true);
       return;
     }
-    if (!(await confirm(t("files.restoreConfirm")))) return;
+    const onPhone = openedAsPairedPhone();
+    const ask = onPhone ? `${t("restoreWindow.says.folder")} ${t("restoreWindow.untouched")}` : t("files.restoreConfirm");
+    if (!(await confirm(ask))) return;
     restoreInFlightRef.current = true;
     restoreCancelledRef.current = false;
     setRestoring(true);
     setRestoreResult(null);
     try {
       const paths = [...selected];
-      const into = openedAsPairedPhone() ? await phoneFolder(run) : "";
+      const into = onPhone ? await phoneFolder(run) : "";
       const res =
         run.domain === "container"
           ? await restoreContainerFiles(run.target, run.snapshotId, paths, into, true)
