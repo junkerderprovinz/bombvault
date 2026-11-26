@@ -262,7 +262,7 @@ var pairedRefused = []string{
 	"POST /api/tokens/{id}/rotate",
 	"POST /api/widget/token",
 	"PUT /api/mcp/oauth",
-	// The backup key, the recovery kit, deposits, the emergency and foreign repositories.
+	// The backup key, the recovery kit, deposits and the emergency.
 	"DELETE /api/emergency",
 	"DELETE /api/group/deposits/{owner}",
 	"GET /api/emergency",
@@ -280,11 +280,6 @@ var pairedRefused = []string{
 	"POST /api/emergency/sign-ins",
 	"POST /api/emergency/try-again",
 	"POST /api/emergency/undo",
-	"POST /api/foreign/close",
-	"POST /api/foreign/container-warnings",
-	"POST /api/foreign/files",
-	"POST /api/foreign/open",
-	"POST /api/foreign/restore",
 	"POST /api/group/deposit/code",
 	"POST /api/group/deposit/renew",
 	"POST /api/group/deposits/releases/{id}",
@@ -456,7 +451,9 @@ var pairedRefused = []string{
 	"PUT /api/zfs/replica/only",
 	"POST /api/storage/own-folders",
 	"POST /api/storage/own-folders/preview",
-	// Settings, notifications, integrations, discovery and the settings backup.
+	// Settings, notifications, integrations, discovery and the settings backup,
+	// and the imports, which read host folders the phone does not look into or
+	// create storage locations and sign-ins.
 	"GET /api/config/snapshots",
 	"GET /api/homeassistant",
 	"GET /api/mdns",
@@ -539,8 +536,6 @@ var pairedRefused = []string{
 	// Ending the hold a finding settled on a paired phone keeps, which lets
 	// the old backups be pruned.
 	"POST /api/anomalies/release",
-	// Restores that replace what is there without a backup first.
-	"POST /api/stacks/{project}/restore",
 	// The servers home runs backups on, which hold a root shell on each.
 	"GET /api/nodes",
 	"POST /api/nodes",

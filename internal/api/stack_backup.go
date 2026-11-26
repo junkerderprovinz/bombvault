@@ -193,7 +193,8 @@ func (s *Service) backupStackDir(ctx context.Context, project string, folder sta
 		s.notifyBackup(notify.WithHealthchecksSuppressed(ctx), "stack", project, "", true, backup.Summary{Emptied: true}, nil)
 		return nil
 	}
-	sum, err := s.engine.Backup(ctx, repo, []string{folder.dir}, withTags([]string{tag, "p1"}, s.directTags(settings, "containers", repo)), mode)
+	tags := withTags([]string{tag, "p1"}, withTags(s.directTags(settings, "containers", repo), beforeRestoreTags(ctx)))
+	sum, err := s.engine.Backup(ctx, repo, []string{folder.dir}, tags, mode)
 	if err != nil {
 		return fmt.Errorf("stack %s: %w", project, err)
 	}
@@ -344,13 +345,11 @@ func (s *Service) latestStackDir(ctx context.Context, project, source string) (s
 		}
 		want := stackSnapshotTag(project)
 		for _, sn := range snaps {
-			// Times are RFC3339 from restic, so a string compare orders them; taking
-			// the max avoids depending on the listing order.
-			if slices.Contains(sn.Tags, want) && (!d.found || sn.Time > d.snap.Time) {
+			if slices.Contains(sn.Tags, want) && (!d.found || betterToRestore(sn, d.snap)) {
 				d.snap, d.found = sn, true
 			}
 		}
-		if d.found && (!best.found || d.snap.Time > best.snap.Time) {
+		if d.found && (!best.found || betterToRestore(d.snap, best.snap)) {
 			best = d
 		}
 		if best.repo == "" {
@@ -358,6 +357,16 @@ func (s *Service) latestStackDir(ctx context.Context, project, source string) (s
 		}
 	}
 	return best, nil
+}
+
+// betterToRestore reports whether a stack folder's restore picks a over b: the
+// newer one, where one taken before a restore only counts against another such.
+// Times are RFC3339 from restic, so a string compare orders them.
+func betterToRestore(a, b restic.Snapshot) bool {
+	if before := slices.ContainsFunc(b.Tags, isBeforeRestoreTag); before != slices.ContainsFunc(a.Tags, isBeforeRestoreTag) {
+		return before
+	}
+	return a.Time > b.Time
 }
 
 // guardStackDir is what the restore of a project's folder refuses on. The

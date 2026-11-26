@@ -3,6 +3,8 @@ package api_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -254,5 +256,108 @@ func TestADumpOnlyDatabaseWithItsDataStillOnTheHostStartsAsBefore(t *testing.T) 
 				t.Errorf("db's run says %q, though its data is still on the host", run.Error)
 			}
 		})
+	}
+}
+
+// shopStackOnDisk is the shop stack with its members' data and its project
+// folder on disk, so a backup of them has something to take. The mount root is
+// a path without a drive letter, which the working directory resolves.
+func shopStackOnDisk(t *testing.T) (*shopStack, string) {
+	t.Helper()
+	dir := t.TempDir()
+	t.Chdir(dir)
+	root := filepath.ToSlash(strings.TrimPrefix(dir, filepath.VolumeName(dir)))
+	folder := root + "/stacks/shop"
+	for rel, content := range map[string]string{"stacks/shop/compose.yaml": "services: {}", "appdata/app/app.db": "app", "appdata/db/PG_VERSION": "16"} {
+		p := filepath.Join(dir, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := &fakeServiceDocker{
+		listOut: []dockercli.ContainerInfo{runningContainer("app"), runningContainer("db")},
+		inspects: map[string]model.Inspect{
+			"db":  composeInspect("db", "shop", "db", ""),
+			"app": composeInspect("app", "shop", "app", "db"),
+		},
+	}
+	eng := &folderWatchEngine{docker: d, fakeResticEngine: &fakeResticEngine{snaps: []restic.Snapshot{
+		{ID: "aaaa1111", Tags: []string{"container:app"}, Paths: []string{root + "/appdata/app"}},
+		{ID: "bbbb2222", Tags: []string{"container:db"}, Paths: []string{root + "/appdata/db"}},
+		{ID: "eeee5555", Time: "2026-11-01T00:00:00Z", Tags: []string{"stack:shop"}, Paths: []string{folder}},
+	}}}
+	svc, st, _ := stackTestServiceAt(t, eng, d, root)
+	seedStackTarget(t, st, root, "app", "shop", "app", "db")
+	seedStackTarget(t, st, root, "db", "shop", "db", "")
+	return &shopStack{t: t, eng: eng, docker: d, svc: svc, st: st}, folder
+}
+
+// A phone holds the group's words and nothing else, so what its stack restore
+// replaces has to come back without it.
+func TestAPhonesStackRestoreBacksUpTheMembersAndTheFolderFirst(t *testing.T) {
+	s, folder := shopStackOnDisk(t)
+
+	if _, err := s.svc.RestoreStack(api.PairedContextForTest(context.Background()), "shop", "local", "", true, true); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(s.eng.backedUp) != 3 {
+		t.Fatalf("backed up %d times, want both members and the project folder", len(s.eng.backedUp))
+	}
+	if !slices.Equal(s.eng.lastPaths, []string{folder}) || !slices.Contains(s.eng.lastTags, "stack:shop") {
+		t.Errorf("the last backup took %v tagged %v, want the project folder", s.eng.lastPaths, s.eng.lastTags)
+	}
+	if !slices.ContainsFunc(s.eng.lastTags, func(tag string) bool { return strings.HasPrefix(tag, "bv:before-restore") }) {
+		t.Errorf("the backup is tagged %v, want the state before a restore", s.eng.lastTags)
+	}
+	if !slices.ContainsFunc(s.eng.restored, func(r string) bool { return strings.HasSuffix(r, ":"+folder) }) {
+		t.Errorf("the project folder was not restored after its backup: %v", s.eng.restored)
+	}
+}
+
+func TestAPhonesStackRestoreWritesNothingWhenTheBackupFirstFails(t *testing.T) {
+	s, _ := shopStackOnDisk(t)
+	s.eng.backupErr = errors.New("repository is full")
+
+	if _, err := s.svc.RestoreStack(api.PairedContextForTest(context.Background()), "shop", "local", "", true, true); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(s.eng.restored) != 0 {
+		t.Errorf("restic wrote although the backup first failed: %v", s.eng.restored)
+	}
+	for _, name := range []string{"app", "db"} {
+		run := s.lastRestoreRun(name)
+		if run.Status != "failed" || !strings.Contains(run.Error, "backup of the current state") {
+			t.Errorf("%s: run = %s %q, want a failure that names the backup first", name, run.Status, run.Error)
+		}
+	}
+}
+
+func TestAStackRestoreFromTheWebTakesNoBackupFirst(t *testing.T) {
+	s, _ := shopStackOnDisk(t)
+
+	if _, err := s.svc.RestoreStack(context.Background(), "shop", "local", "", true, true); err != nil {
+		t.Fatal(err)
+	}
+	if len(s.eng.backedUp) != 0 {
+		t.Errorf("a restore from the web backed up %v first", s.eng.backedUp)
+	}
+}
+
+func TestAStackRestoreBringsBackTheFolderOfTheBackupAndNotTheStateBeforeAnEarlierRestore(t *testing.T) {
+	s := newShopStack(t)
+	s.eng.snaps = append(s.eng.snaps, restic.Snapshot{
+		ID: "ffff6666", Time: "2026-11-20T00:00:00Z", Tags: []string{"stack:shop", "bv:before-restore:eeee5555"}, Paths: []string{stackFolder},
+	})
+
+	if _, err := s.restore(); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.ContainsFunc(s.eng.restored, func(r string) bool { return strings.Contains(r, ":eeee5555:"+stackFolder) }) {
+		t.Errorf("restored %v, want the folder from the backup eeee5555", s.eng.restored)
 	}
 }

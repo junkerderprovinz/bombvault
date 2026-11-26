@@ -13,10 +13,12 @@ import {
   listContainers,
   listForeignFiles,
   listVMs,
+  openedAsPairedPhone,
   type FileEntry,
   type ForeignBindWarning,
   type ForeignInventory,
   type ForeignItem,
+  type Settings,
   type Snapshot,
 } from "../../lib/api";
 import type { EntryKind } from "../../lib/backupEntry";
@@ -28,6 +30,7 @@ import { anyActive, useProgress } from "../../lib/progress";
 import { useToast } from "../../lib/toast";
 import { useConfirm } from "../../lib/useConfirm";
 import { useReveal } from "../../lib/useReveal";
+import { phoneRestoreFolder, restoreFolderFor } from "../../lib/restorePlan";
 import { checkRestoreOnce, restoreBlockReason } from "../../lib/useRestoreCheck";
 import { InstanceWindow } from "../../pages/instances/InstanceWindow";
 import { KindGlyph } from "../backups/kinds";
@@ -88,7 +91,9 @@ function zfsSameTree(a: string, b: string): boolean {
  * trusted place on this host. A VM gets a folder for its disks as well: the
  * paths of the other server can point at this host's RAM disk (#122). Its
  * disks land in <destination>/<vm-name>/ and it stays stopped, so it can be
- * checked before its first start.
+ * checked before its first start. On a paired phone every entry goes into
+ * phoneFolder, a new folder inside the restore folder, and nothing is
+ * recreated.
  */
 function ForeignItemRow({
   domain,
@@ -101,6 +106,7 @@ function ForeignItemRow({
   open,
   hidden,
   footer,
+  phoneFolder,
   onOpen,
   onBusyChange,
   onSessionGone,
@@ -120,6 +126,7 @@ function ForeignItemRow({
   /** Another row is open. This one keeps its choices and steps aside. */
   hidden: boolean;
   footer: HTMLElement | null;
+  phoneFolder?: string;
   onOpen: () => void;
   onBusyChange: (busy: boolean) => void;
   onSessionGone: () => void;
@@ -128,9 +135,10 @@ function ForeignItemRow({
   const [snapshot, setSnapshot] = useState("latest");
   // An item without a definition cannot be recreated, but its files can be
   // restored into a folder.
-  const extract = (domain === "containers" || domain === "vms") && !!item.noDefinition;
+  const extract = (domain === "containers" || domain === "vms") && (!!item.noDefinition || phoneFolder !== undefined);
   const recreatable = !extract;
-  const [target, setTarget] = useState(domain === "vms" && recreatable ? "user/domains" : "");
+  const [targetPick, setTarget] = useState(domain === "vms" && recreatable ? "user/domains" : "");
+  const target = phoneFolder ?? targetPick;
   const needsTarget = domain !== "containers" || extract;
   const [busy, setBusy] = useState(false);
   const { push } = useToast();
@@ -250,7 +258,7 @@ function ForeignItemRow({
       session,
       domain,
       paths: picking ? [...selected] : undefined,
-      overwrite: domain === "containers" ? overwrite : undefined,
+      overwrite: domain === "containers" && recreatable ? overwrite : undefined,
       wholeTree: domain === "zfs" ? zfsDataset === "" : undefined,
       network: chosenNetwork,
       toFolder: extract || undefined,
@@ -304,6 +312,19 @@ function ForeignItemRow({
       onBusyChange(false);
     }
   }
+
+  const phoneTarget = phoneFolder !== undefined && (
+    <p className="text-xs text-carbon-textSub wrap-anywhere">
+      {t("restore.phoneNewFolder").split("{path}")[0]}
+      <bdi dir="ltr" className="font-mono">
+        {phoneFolder}
+      </bdi>
+      {t("restore.phoneNewFolder").split("{path}")[1]}
+    </p>
+  );
+  const targetField = phoneTarget || (
+    <FolderBrowser label={t("recovery.foreignTargetFolder")} value={target} hostMountRoot={hostMountRoot} onChange={setTarget} />
+  );
 
   const tree = picking && (
     <SnapshotFileTree
@@ -362,15 +383,13 @@ function ForeignItemRow({
           </>
         )}
       </div>
-      {extract && (
+      {extract && item.noDefinition && (
         <p className="text-xs text-carbon-textMuted">
           {withLtrFragments(t("recovery.foreignNoDefinition").replaceAll("{name}", item.name), [item.name])}
         </p>
       )}
 
-      {open && extract && (
-        <FolderBrowser label={t("recovery.foreignTargetFolder")} value={target} hostMountRoot={hostMountRoot} onChange={setTarget} />
-      )}
+      {open && extract && targetField}
       {open && recreatable && (
         <div className="flex flex-col gap-3">
           {domain === "files" && (
@@ -391,7 +410,7 @@ function ForeignItemRow({
                 <InfoBubble tip={t("recovery.foreignSubfolderHint")} />
               </div>
               {tree}
-              <FolderBrowser label={t("recovery.foreignTargetFolder")} value={target} hostMountRoot={hostMountRoot} onChange={setTarget} />
+              {targetField}
             </>
           )}
           {domain === "vms" && (
@@ -421,7 +440,7 @@ function ForeignItemRow({
                 )}
               </div>
               {tree}
-              <FolderBrowser label={t("recovery.foreignTargetFolder")} value={target} hostMountRoot={hostMountRoot} onChange={setTarget} />
+              {targetField}
             </>
           )}
           {domain === "containers" && (
@@ -480,10 +499,13 @@ function ForeignItemRow({
 
 export function OldFolderWindow({
   hostMountRoot,
+  restoreFolders,
   onClose,
   opened,
 }: {
   hostMountRoot: string;
+  /** Where a paired phone restores, which is the only place it reaches. */
+  restoreFolders?: Pick<Settings, "restoreFolder" | "restoreFolders">;
   onClose: () => void;
   /** A copy this server opens by itself, such as what it fetched from another
    *  instance. There is no address or key to ask for. */
@@ -499,7 +521,10 @@ export function OldFolderWindow({
   const { t } = useT();
   const { push } = useToast();
   const [remote, setRemote] = useState(false);
-  const [folder, setFolder] = useState("");
+  const onPhone = openedAsPairedPhone();
+  const [openedAt] = useState(() => new Date());
+  const folders = restoreFolders ?? { restoreFolder: "" };
+  const [folder, setFolder] = useState(onPhone ? restoreFolderFor(folders, "files") : "");
   const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
   // The key comes with the old instance's recovery kit or is typed. The kit
@@ -748,13 +773,16 @@ export function OldFolderWindow({
               </Rows>
             </>
           ) : (
-            <FolderBrowser
-              label={t("oldFolder.folder")}
-              value={folder}
-              hostMountRoot={hostMountRoot}
-              onChange={setFolder}
-              hint={t("oldFolder.folderHint")}
-            />
+            <>
+              <FolderBrowser
+                label={t("oldFolder.folder")}
+                value={folder}
+                hostMountRoot={hostMountRoot}
+                onChange={setFolder}
+                hint={t("oldFolder.folderHint")}
+              />
+              {onPhone && <p className="text-xs leading-relaxed text-carbon-textSub">{t("oldFolder.phoneFolderHint")}</p>}
+            </>
           )}
           <SettingRow label={t("oldFolder.keyVia")} hint={t("recovery.foreignKeyHint")}>
             <Selector
@@ -856,6 +884,7 @@ export function OldFolderWindow({
                         open={openItem === id}
                         hidden={openItem !== null && openItem !== id}
                         footer={footer}
+                        phoneFolder={onPhone ? phoneRestoreFolder(restoreFolderFor(folders, KIND[g.domain]), item.name, openedAt) : undefined}
                         onOpen={() => setOpenItem(id)}
                         onBusyChange={onBusyChange}
                         onSessionGone={() => setExpired(true)}

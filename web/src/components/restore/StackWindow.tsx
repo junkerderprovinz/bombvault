@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { getStackDir } from "../../lib/api";
+import { getStackDir, openedAsPairedPhone } from "../../lib/api";
 import type { StackGroup } from "../../lib/backupList";
 import { useT, type TranslationKey } from "../../lib/i18n";
 import { placementErrorText } from "../../lib/placementCodes";
@@ -224,6 +224,8 @@ export function StackWindow({
       {step === "check" && (
         <>
           <p className="text-sm text-carbon-text">{stackRestoreQuestion(stack.members, t, lang)}</p>
+          {/* The server backs the stack up first for a paired phone. */}
+          {openedAsPairedPhone() && <p className="text-sm text-carbon-textSub">{t("stack.backupFirst")}</p>}
           <RestoreCheckPanel check={check} t={t} />
         </>
       )}

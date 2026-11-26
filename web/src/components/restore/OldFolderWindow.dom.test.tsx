@@ -38,6 +38,7 @@ const EMPTY: ForeignInventory = { containers: [], vms: [], fileSets: [], zfs: []
 let inventory: ForeignInventory = EMPTY;
 let missingNetwork = "";
 let localContainers: string[] = [];
+const session = { phone: false };
 
 const foreignOpen = vi.fn((location: string, key: string, creds?: unknown) => {
   void location;
@@ -87,6 +88,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     foreignRestore: (req: unknown) => foreignRestore(req),
     listForeignFiles: (...a: unknown[]) => listForeignFiles(...a),
     checkRestore: (req: unknown) => checkRestore(req),
+    openedAsPairedPhone: () => session.phone,
   };
 });
 
@@ -111,7 +113,7 @@ async function open() {
     view = render(
       <I18nProvider>
         <ToastProvider>
-          <OldFolderWindow hostMountRoot="/host/user" onClose={onClose} />
+          <OldFolderWindow hostMountRoot="/host/user" restoreFolders={{ restoreFolder: "user/restore" }} onClose={onClose} />
         </ToastProvider>
       </I18nProvider>
     );
@@ -169,6 +171,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  session.phone = false;
 });
 
 describe("connecting", () => {
@@ -406,5 +409,39 @@ describe("a dataset tree", () => {
     fireEvent.change(folder(row), { target: { value: "restore/plex" } });
     await press(button(en["recovery.foreignRestore"]));
     expect(lastRestore()).toMatchObject({ item: "cache/appdata/plex", paths: ["/mnt"], wholeTree: false });
+  });
+});
+
+describe("on a paired phone", () => {
+  beforeEach(() => {
+    session.phone = true;
+  });
+
+  it("looks for the old folder inside the restore folder and says why", async () => {
+    await open();
+    expect((screen.getByLabelText(en["oldFolder.folder"]) as HTMLInputElement).value).toBe("user/restore");
+    expect(document.body.textContent).toContain(en["oldFolder.phoneFolderHint"]);
+  });
+
+  it("restores a container's files into a new folder inside the restore folder instead of recreating it", async () => {
+    inventory = { ...EMPTY, containers: [{ name: "web", snapshots: [] }] };
+    await connect();
+    const row = await options();
+    expect(within(row).queryByRole("switch", { name: en["recovery.foreignOverwrite"] })).toBeNull();
+    expect(within(row).queryByLabelText(en["recovery.foreignAppdataDest"])).toBeNull();
+    await press(button(en["recovery.foreignRestore"]));
+    expect(lastRestore()).toMatchObject({ domain: "containers", item: "web", toFolder: true });
+    expect(lastRestore().overwrite).toBeUndefined();
+    expect(lastRestore().target).toMatch(/^user\/restore\/web-\d{8}-\d{6}$/);
+  });
+
+  it("restores a folder set into a new folder inside the restore folder and offers no other", async () => {
+    inventory = { ...EMPTY, fileSets: [{ name: "docs", snapshots: [] }] };
+    await connect();
+    const row = await options();
+    expect(within(row).queryByLabelText(en["recovery.foreignTargetFolder"])).toBeNull();
+    await press(button(en["recovery.foreignRestore"]));
+    expect(lastRestore()).toMatchObject({ domain: "files", item: "docs" });
+    expect(lastRestore().target).toMatch(/^user\/restore\/docs-\d{8}-\d{6}$/);
   });
 });

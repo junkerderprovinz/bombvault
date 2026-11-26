@@ -351,11 +351,11 @@ function DumpRow({
           <FormatPicker format={format} onChange={onFormat} t={t} />
           {onPhone ? (
             <p className="text-xs text-carbon-textSub wrap-anywhere">
-              {t("dbdump.phoneSaveTo").split("{path}")[0]}
+              {t("restore.phoneNewFolder").split("{path}")[0]}
               <bdi dir="ltr" className="font-mono">
                 {folder}
               </bdi>
-              {t("dbdump.phoneSaveTo").split("{path}")[1]}
+              {t("restore.phoneNewFolder").split("{path}")[1]}
             </p>
           ) : (
             <FolderBrowser

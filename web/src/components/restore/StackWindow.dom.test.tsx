@@ -16,6 +16,7 @@ const calls = vi.hoisted(() => ({
   getStackDir: vi.fn(),
   listRuns: vi.fn(),
   listOffsiteTargets: vi.fn(),
+  openedAsPairedPhone: vi.fn(() => false),
 }));
 
 vi.mock("../../lib/api", async (importOriginal) => ({
@@ -136,6 +137,22 @@ describe("the stack window", () => {
     expect(calls.checkRestore.mock.calls[0][0]).toEqual({ kind: "stack", name: "immich", source: "local" });
     expect(win().getByText(/^Restore all containers in this stack\?.*immich_postgres/)).toBeTruthy();
     expect(calls.restoreStack).not.toHaveBeenCalled();
+  });
+
+  it("says nothing of a backup first in the web", async () => {
+    await open();
+    await press("Next");
+    await waitFor(() => expect(calls.checkRestore).toHaveBeenCalledTimes(1));
+    expect(win().queryByText(en["stack.backupFirst"])).toBeNull();
+  });
+
+  it("says on a paired phone that the stack is backed up first", async () => {
+    calls.openedAsPairedPhone.mockReturnValue(true);
+    await open();
+    await press("Next");
+    await waitFor(() => expect(calls.checkRestore).toHaveBeenCalledTimes(1));
+    expect(win().getByText(en["stack.backupFirst"])).toBeTruthy();
+    calls.openedAsPairedPhone.mockReturnValue(false);
   });
 
   it("restores the stack, started in order, and shows its members", async () => {

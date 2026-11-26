@@ -41,10 +41,12 @@ import {
   listSharedOthers,
   openPulledCopy,
   openSharedOther,
+  openedAsPairedPhone,
   type BackupItem,
   type EmergencyState,
   type ForeignInventory,
   type PullSourceView,
+  type Settings,
   type SharedOtherServer,
 } from "../lib/api";
 import { ATTENTION_CHANGED_EVENT } from "../lib/attention";
@@ -60,6 +62,7 @@ import { findingsOf, parseEmergencyStep, parseEmergencyWay, recommend, recommend
 import { useToast } from "../lib/toast";
 import { useLongPress } from "../lib/useLongPress";
 import { useOpenAnomalies } from "../lib/useAnomalies";
+import { useOwnLogin } from "../lib/useOwnLogin";
 import { leaveLayers } from "../lib/useBackCloses";
 import { useEntry } from "../lib/useEntry";
 import { useTimeline } from "../lib/useTimeline";
@@ -377,6 +380,8 @@ export function Restore() {
   const [others, setOthers] = useState<SharedOtherServer[]>([]);
   const [otherOpen, setOtherOpen] = useState<{ server: SharedOtherServer; session: string; inventory: ForeignInventory } | null>(null);
   const [hostMountRoot, setHostMountRoot] = useState("/host/user");
+  const [restoreFolders, setRestoreFolders] = useState<Pick<Settings, "restoreFolder" | "restoreFolders">>();
+  const ownLogin = useOwnLogin();
   const [keyState, setKeyState] = useState<EmergencyState | null>(null);
   const [many, setMany] = useState<BackupItem[] | null>(null);
   const [stackOpen, setStackOpen] = useState<string | null>(null);
@@ -410,6 +415,7 @@ export function Restore() {
     getSettings()
       .then((res) => {
         if (res.ok && res.hostMountRoot) setHostMountRoot(res.hostMountRoot);
+        if (res.ok && res.settings) setRestoreFolders(res.settings);
       })
       .catch(() => undefined);
     listPullSources()
@@ -540,6 +546,13 @@ export function Restore() {
 
   const nextHue = hueCounter();
 
+  // The imports read a folder anywhere on the host, or create storage
+  // locations and sign-ins, which a paired phone does not reach.
+  function openImport(which: "appdata" | "tools") {
+    if (openedAsPairedPhone()) ownLogin.handled({ code: "own-login-needed" });
+    else setSource(which);
+  }
+
   return (
     <div className={PAGE_SHELL_RESPONSIVE}>
       <PageTitle>{t("nav.restore")}</PageTitle>
@@ -553,7 +566,9 @@ export function Restore() {
           onOldFolder={() => closeEmergency(() => setSource("oldFolder"))}
         />
       )}
-      {source === "oldFolder" && <OldFolderWindow hostMountRoot={hostMountRoot} onClose={() => setSource(null)} />}
+      {source === "oldFolder" && (
+        <OldFolderWindow hostMountRoot={hostMountRoot} restoreFolders={restoreFolders} onClose={() => setSource(null)} />
+      )}
       {fetchedOpen && (
         <OldFolderWindow
           hostMountRoot={hostMountRoot}
@@ -590,6 +605,7 @@ export function Restore() {
         <StackWindow stacks={stacks} initial={stackOpen} onClose={() => setStackOpen(null)} onStarted={load} />
       )}
       <NotStartedNotice />
+      {ownLogin.dialog}
 
       {failed ? (
         <div className="flex flex-col items-start gap-2">
@@ -756,13 +772,13 @@ export function Restore() {
               glyph={<IconDownload />}
               name={t("recovery.abTitle")}
               sub={t("restorePage.appdataHint")}
-              onOpen={() => setSource("appdata")}
+              onOpen={() => openImport("appdata")}
             />
             <Way
               glyph={<IconArchive />}
               name={t("toolImport.title")}
               sub={t("toolImport.hint")}
-              onOpen={() => setSource("tools")}
+              onOpen={() => openImport("tools")}
               newId="restore-tool-import"
             />
             {fetched.map((pull) => (

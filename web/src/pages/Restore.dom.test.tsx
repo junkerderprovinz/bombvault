@@ -43,6 +43,7 @@ vi.mock("../lib/api", async (importOriginal) => {
     restoreVM: vi.fn(),
     restoreFileSet: vi.fn(),
     getRclone: vi.fn(async () => ({ ok: false })),
+    openedAsPairedPhone: vi.fn(() => false),
   };
 });
 
@@ -416,6 +417,21 @@ describe("the other sources", () => {
     await press(screen.getByRole("button", { name: new RegExp(`^${en["recovery.abTitle"]}`) }));
     const appdata = screen.getByRole("dialog", { name: en["recovery.abTitle"] });
     expect(within(appdata).getByRole("button", { name: en["recovery.abScan"] })).toBeTruthy();
+  });
+
+  it("offer a paired phone the sign-in for the imports, which read folders it does not reach", async () => {
+    vi.mocked(api.openedAsPairedPhone).mockReturnValue(true);
+    await renderPage();
+    for (const name of [en["recovery.abTitle"], en["toolImport.title"]]) {
+      await press(screen.getByRole("button", { name: new RegExp(`^${name}`) }));
+      expect(screen.queryByRole("dialog", { name })).toBeNull();
+      const ask = screen.getAllByRole("dialog").at(-1)!;
+      expect(ask.textContent).toContain(en["secrets.ownLoginNeeded"]);
+      await press(within(ask).getByRole("button", { name: en["common.cancel"] }));
+    }
+    await press(screen.getByRole("button", { name: new RegExp(`^${en["restorePage.oldFolder"]}`) }));
+    expect(screen.getByRole("dialog", { name: en["restorePage.oldFolder"] })).toBeTruthy();
+    vi.mocked(api.openedAsPairedPhone).mockReturnValue(false);
   });
 
   it("name what this server fetched and open it with no key to enter", async () => {

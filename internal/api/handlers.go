@@ -6589,6 +6589,12 @@ func (h *Handler) handleForeignOpen(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	// A paired phone looks into no host folder beyond the restore folder, so a
+	// folder it opens lies there. A remote repository brings its own sign-in.
+	remote := restic.IsRemoteRepo(body.Location) || restic.LooksLikeUnprefixedRemote(body.Location)
+	if !remote && h.refusePairedFolder(w, r, "", body.Location) {
+		return
+	}
 	key, err := foreignKeyOf(body.Key, body.Kit, body.Identity)
 	if err != nil {
 		kitFail(w, err)
@@ -6657,6 +6663,9 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &body) {
 		return
 	}
+	if isPaired(r) && h.refuseForeignRestoreToPhone(w, r, body.Domain, body.Target, body.ToFolder, body.Overwrite, body.ZvolPool) {
+		return
+	}
 	var started bool
 	var err error
 	switch {
@@ -6678,6 +6687,19 @@ func (h *Handler) handleForeignRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"started": true}))
+}
+
+// refuseForeignRestoreToPhone answers a paired phone's foreign restore that does
+// not go into a new or empty folder inside the restore folder, and reports
+// whether it did. Recreating a container or a VM, overwriting and writing a
+// zvol all replace what is there, which the phone could not take back.
+func (h *Handler) refuseForeignRestoreToPhone(w http.ResponseWriter, r *http.Request, domain, target string, toFolder, overwrite bool, zvolPool string) bool {
+	recreates := (domain == "containers" || domain == "vms") && !toFolder
+	if recreates || overwrite || strings.TrimSpace(zvolPool) != "" || strings.TrimSpace(target) == "" || h.svc.targetHoldsFiles(target) {
+		refusePaired(w)
+		return true
+	}
+	return h.refusePairedFolder(w, r, domain, target)
 }
 
 // handleForeignFiles lists the files of one file set's snapshot in an open foreign

@@ -339,6 +339,7 @@ export const en = {
   "stack.startInOrder": "Start in dependency order after restore",
   "stack.restoreConfirm":
     "Restore all containers in this stack? Each is recreated from its latest backup.",
+  "stack.backupFirst": "BombVault backs up every container and the project folder first. If that fails, nothing is restored.",
   "stack.restoreFinished": "Stack restore finished. See the run history for per-container results.",
   "stack.memberRestored": "restored",
   "stack.memberStarted": "started",
@@ -1677,7 +1678,6 @@ export const en = {
   "dbdump.import": "Import into a fresh database",
   "dbdump.importConfirm": "Import this {engine} {version} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
   "dbdump.importBackupFirst": "BombVault backs up the container first. If that fails, nothing is imported.",
-  "dbdump.phoneSaveTo": "Goes into a new folder: {path}",
   "dbdump.importConfirmNoVersion": "Import this {engine} dump into {container}? BombVault stops the container, moves its data folder aside (it is kept, nothing is deleted), starts the container with an empty data folder and imports the dump. The applications using this database see its state from the time of the dump.",
   "dbdump.importNoVersion": "This dump does not record its database version. The import fails if the server cannot read it.",
   "dbdump.importStops":
@@ -4739,6 +4739,7 @@ export const en = {
   "stack.intro": "Restores containers that belong together at the same time, such as immich with its database and Redis.",
   "stack.orderHint": "Databases and caches first, then the app",
   "stack.useLocal": "Use Local",
+  "restore.phoneNewFolder": "Goes into a new folder: {path}",
   "restore.phoneFolderHint": "A paired phone restores into a new folder inside the restore folder. To pick another place, sign in at this instance's web interface.",
   "backups.zfsConnection": "ZFS connection to this server",
   "backups.zfs.viewConnection": "View connection",
@@ -5398,6 +5399,7 @@ export const en = {
   "oldFolder.intro": "Pulls single containers, VMs, folder sets or ZFS datasets out of another BombVault instance's backups. The other repository is only read, and your own settings stay untouched.",
   "oldFolder.browse": "Browse",
   "oldFolder.folder": "Folder",
+  "oldFolder.phoneFolderHint": "On this phone an old folder opens only from inside the restore folder. A repository on the network opens from anywhere.",
   "oldFolder.folderHint": "Mount the other server's backup share and point here",
   "oldFolder.remote": "Remote address",
   "oldFolder.remotePlaceholder": "s3:https://… or rest:https://…",
@@ -6412,6 +6414,7 @@ export const de: Translations = {
   "stack.startInOrder": "Nach der Wiederherstellung in Abhängigkeitsreihenfolge starten",
   "stack.restoreConfirm":
     "Alle Container dieses Stacks wiederherstellen? Jeder wird aus seiner letzten Sicherung neu erstellt.",
+  "stack.backupFirst": "BombVault sichert vorher jeden Container und den Projektordner. Klappt das nicht, wird nichts wiederhergestellt.",
   "stack.restoreFinished": "Stack-Wiederherstellung abgeschlossen: Ergebnisse je Container im Verlauf.",
   "stack.memberRestored": "wiederhergestellt",
   "stack.memberStarted": "gestartet",
@@ -7603,7 +7606,6 @@ export const de: Translations = {
   "dbdump.import": "In eine frische Datenbank importieren",
   "dbdump.importConfirm": "Diesen {engine}-{version}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
   "dbdump.importBackupFirst": "BombVault sichert vorher den Container. Klappt das nicht, wird nichts importiert.",
-  "dbdump.phoneSaveTo": "Kommt in einen neuen Ordner: {path}",
   "dbdump.importConfirmNoVersion": "Diesen {engine}-Dump in {container} importieren? BombVault stoppt den Container, schiebt seinen Datenordner zur Seite (er bleibt erhalten, nichts wird gelöscht), startet den Container mit leerem Datenordner und importiert den Dump. Die Anwendungen, die diese Datenbank nutzen, sehen danach ihren Stand vom Zeitpunkt des Dumps.",
   "dbdump.importNoVersion": "Dieser Dump hält seine Datenbankversion nicht fest. Der Import schlägt fehl, wenn der Server ihn nicht lesen kann.",
   "dbdump.importStops":
@@ -10582,6 +10584,7 @@ export const de: Translations = {
   "stack.intro": "Stellt zusammengehörige Container gemeinsam wieder her, etwa immich mit Datenbank und Redis.",
   "stack.orderHint": "Datenbanken und Caches zuerst, dann die App",
   "stack.useLocal": "Lokal verwenden",
+  "restore.phoneNewFolder": "Kommt in einen neuen Ordner: {path}",
   "restore.phoneFolderHint": "Ein gekoppeltes Handy stellt in einen neuen Ordner im Wiederherstellungsordner wieder her. Für einen anderen Ort melde dich an der Weboberfläche dieser Instanz an.",
   "backups.zfsConnection": "ZFS-Verbindung zu diesem Server",
   "backups.zfs.viewConnection": "Verbindung ansehen",
@@ -11241,6 +11244,7 @@ export const de: Translations = {
   "oldFolder.intro": "Holt einzelne Container, VMs, Ordner-Sets oder ZFS-Datasets aus den Sicherungen einer anderen BombVault-Instanz. Das andere Repository wird nur gelesen, deine eigenen Einstellungen bleiben unberührt.",
   "oldFolder.browse": "Durchstöbern",
   "oldFolder.folder": "Ordner",
+  "oldFolder.phoneFolderHint": "Auf diesem Handy öffnet sich ein alter Ordner nur aus dem Wiederherstellungsordner. Ein Speicherort im Netz geht von überall.",
   "oldFolder.folderHint": "Hänge die Sicherungsfreigabe des anderen Servers ein und zeig hierher",
   "oldFolder.remote": "Remote-Adresse",
   "oldFolder.remotePlaceholder": "s3:https://… oder rest:https://…",

@@ -41,7 +41,6 @@ func TestAPairedSessionIsRefusedARestoreItCouldNotUndo(t *testing.T) {
 		{"/api/zfs/datasets/abc/restore", map[string]any{"stamp": "s", "dataset": "tank/data", "confirm": true, "safetyOffConfirm": true}},
 		{"/api/containers/plex/restore-files", map[string]any{"snapshotId": "abc", "paths": []string{"/a"}, "confirm": true}},
 		{"/api/files/sets/abc/restore-files", map[string]any{"snapshotId": "abc", "paths": []string{"/a"}, "confirm": true}},
-		{"/api/stacks/media/restore", map[string]any{"confirm": true}},
 		{"/api/anomalies/release", map[string]any{"ids": []string{"abc"}}},
 	} {
 		code, out := in.do(t, http.MethodPost, route.path, route.body)

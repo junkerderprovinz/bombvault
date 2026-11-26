@@ -138,8 +138,18 @@ var pairedRoutes = map[string]bool{
 	"POST /api/files/sets/{id}/restore-files":     true,
 	"POST /api/zfs/datasets/{id}/restore":         true,
 	"POST /api/zfs/datasets/{id}/replica/restore": true,
+	"POST /api/stacks/{project}/restore":          true,
 	"GET /api/stacks/{project}/dir":               true,
 	"GET /api/browse":                             true,
+
+	// The repository of another instance, opened with its key for this session
+	// alone: a remote one with the sign-in the phone types, a folder only inside
+	// the restore folder, and restored only into a new folder there.
+	"POST /api/foreign/open":               true,
+	"POST /api/foreign/close":              true,
+	"POST /api/foreign/files":              true,
+	"POST /api/foreign/container-warnings": true,
+	"POST /api/foreign/restore":            true,
 
 	// A plugin and a database dump go back only once the flash or the
 	// container is backed up, and a dump is saved only into a new folder of

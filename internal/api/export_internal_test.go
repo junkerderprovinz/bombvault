@@ -3,6 +3,7 @@ package api
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -76,4 +77,10 @@ func TestAddToTarNeverEscapes(t *testing.T) {
 	if !sawFile {
 		t.Fatal(`expected entry "secret/f.txt" (re-rooted at the source base)`)
 	}
+}
+
+// PairedContextForTest marks ctx as the session of a paired phone, for the
+// api_test tests that start work the way a phone does.
+func PairedContextForTest(ctx context.Context) context.Context {
+	return context.WithValue(ctx, pairedKey{}, true)
 }

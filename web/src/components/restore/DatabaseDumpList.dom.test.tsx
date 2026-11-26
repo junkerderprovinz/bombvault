@@ -462,7 +462,7 @@ describe("the database dump list on a paired phone", () => {
     await waitFor(() => expect(saveDbDumpTo).toHaveBeenCalled());
     const [, , folder] = saveDbDumpTo.mock.calls[0] as unknown as [string, string, string];
     expect(folder).toMatch(/^user\/bombvault\/restore\/immich_postgres-\d{8}-\d{6}$/);
-    expect(document.body.textContent).toContain(filled("dbdump.phoneSaveTo", { path: folder }));
+    expect(document.body.textContent).toContain(filled("restore.phoneNewFolder", { path: folder }));
   });
 
   it("says before an import that the container is backed up first", async () => {

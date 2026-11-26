@@ -94,6 +94,8 @@ type stackMember struct {
 	// comesBackEmpty is a database a recreate brings back without its data,
 	// see memberComesBackEmpty.
 	comesBackEmpty bool
+	// folders are the ones the restore writes the member's data into.
+	folders []string
 }
 
 // volumeInspector finds a named volume on the host, with "" for one that is not
@@ -111,6 +113,11 @@ type stackRestorePlan struct {
 	// holds one: older backups bring the folder back with the first member.
 	dirSource string
 	hasDir    bool
+	// dir is the project folder the restore writes, as its backup records it.
+	dir string
+	// backupFirst backs up the members and the folder before anything is
+	// stopped or written, as a paired phone's restore always does.
+	backupFirst bool
 }
 
 // prepareRestoreStack validates a stack restore and lists its members, so a bad
@@ -179,8 +186,12 @@ func (s *Service) planStackRestore(ctx context.Context, project string, members 
 			return stackRestorePlan{}, fmt.Errorf("%s: %w", m.name, err)
 		}
 		m.comesBackEmpty = s.memberComesBackEmpty(ctx, m.name, source, plan)
+		m.folders = plan.appdataPaths
 	}
-	plan := stackRestorePlan{project: project, members: members, source: source, dirSource: cmp.Or(stackDirSource, source)}
+	plan := stackRestorePlan{
+		project: project, members: members, source: source, dirSource: cmp.Or(stackDirSource, source),
+		backupFirst: pairedContext(ctx),
+	}
 	d, err := s.latestStackDir(ctx, project, plan.dirSource)
 	if err != nil {
 		return stackRestorePlan{}, fmt.Errorf("restore stack %s: %w", project, err)
@@ -190,8 +201,28 @@ func (s *Service) planStackRestore(ctx context.Context, project string, members 
 		if err := s.guardStackDir(project, d); err != nil {
 			return stackRestorePlan{}, err
 		}
+		plan.dir = d.snap.Paths[0]
 	}
 	return plan, nil
+}
+
+// saveStackState backs up every member and the project folder as they are, the
+// way a restore in place of one container does before it writes.
+func (s *Service) saveStackState(ctx context.Context, plan stackRestorePlan) error {
+	ctx = WithBulkReplicateSuppressed(withBeforeRestore(ctx, ""))
+	for _, m := range plan.members {
+		if err := s.saveContainerState(ctx, m.name, m.folders); err != nil {
+			return fmt.Errorf("nothing was restored, because the backup of the current state of %s failed: %w", m.name, err)
+		}
+	}
+	// A folder that is gone has nothing to keep, and its restore is the point.
+	if plan.dir == "" || !dirExists(plan.dir) {
+		return nil
+	}
+	if err := s.backupStackDir(ctx, plan.project, stackFolder{dir: plan.dir, member: plan.members[0].name}); err != nil {
+		return fmt.Errorf("nothing was restored, because the backup of the current state of the project folder failed: %w", err)
+	}
+	return nil
 }
 
 // guardStackMember is what a member's restore refuses on once it has a plan.
@@ -336,6 +367,11 @@ func (s *Service) endStackBeforeMembers(members []stackMember, err error) StackR
 // own run, so the outcomes stay visible when this runs detached from the request.
 func (s *Service) runRestoreStack(ctx context.Context, plan stackRestorePlan, startAfter bool) StackRestoreResult {
 	members, source := plan.members, plan.source
+	if plan.backupFirst {
+		if err := s.saveStackState(ctx, plan); err != nil {
+			return s.endStackBeforeMembers(members, err)
+		}
+	}
 	var folderErr error
 	if plan.hasDir {
 		// The folder can hold a member's data as a bind mount, which must not

@@ -73,8 +73,13 @@ func seedStackTarget(t *testing.T, st *store.Repo, mountRoot, name, project, ser
 // root stays a Linux path for paths.Within.
 func stackTestService(t *testing.T, eng api.ResticEngine, d *fakeServiceDocker) (*api.Service, *store.Repo, string) {
 	t.Helper()
+	return stackTestServiceAt(t, eng, d, "/host/user")
+}
+
+// stackTestServiceAt is stackTestService with the host mount at mountRoot.
+func stackTestServiceAt(t *testing.T, eng api.ResticEngine, d *fakeServiceDocker, mountRoot string) (*api.Service, *store.Repo, string) {
+	t.Helper()
 	dir := t.TempDir()
-	const mountRoot = "/host/user"
 	cfg := config.Config{
 		AppKey:            strings.Repeat("a", 64),
 		DataDir:           dir,
