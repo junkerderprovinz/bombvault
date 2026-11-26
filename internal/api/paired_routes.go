@@ -102,6 +102,8 @@ var pairedRoutes = map[string]bool{
 	"POST /api/pull/sources/{id}/run":         true,
 	"POST /api/check/{domain}":                true,
 	"POST /api/verify/{domain}":               true,
+	"POST /api/checks/probe/{id}":             true,
+	"POST /api/checks/starttest/{id}":         true,
 	"POST /api/backup/cancel":                 true,
 
 	// Restoring and following a restore. The handlers back up what a restore

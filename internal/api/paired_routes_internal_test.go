@@ -530,8 +530,6 @@ var pairedRefused = []string{
 	"PATCH /api/zfs/datasets/{id}",
 	"PATCH /api/zfs/datasets/{id}/replica",
 	"POST /api/browse/mkdir",
-	"POST /api/checks/probe/{id}",
-	"POST /api/checks/starttest/{id}",
 	"POST /api/containers/schedule-include",
 	"POST /api/containers/{name}/excludes/preview",
 	"POST /api/containers/{name}/tag",
