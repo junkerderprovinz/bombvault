@@ -606,6 +606,8 @@ test("a backup is picked with the keys and by dragging the handle", async ({ pag
 
   const handle = page.getByTestId("rail-handle");
   await handle.scrollIntoViewIfNeeded();
+  // The handle glides to the row Home picked, so it is measured once it stops.
+  await settle(page);
   const from = (await handle.boundingBox())!;
   const to = (await rows(page).nth(3).boundingBox())!;
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
