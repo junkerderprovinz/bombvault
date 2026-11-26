@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   answerLost,
   checkDomain,
+  getSettings,
   listSnapshotFiles,
   listSnapshotFilesFileSet,
+  openedAsPairedPhone,
   restoreContainerFiles,
   restoreFileSetFiles,
 } from "../../lib/api";
@@ -24,6 +26,7 @@ import { loadErrorMessage } from "../../lib/errors";
 import { useConfirm } from "../../lib/useConfirm";
 import { useIsDesktop } from "../../lib/useMediaQuery";
 import { runRestorePath } from "../../lib/restoreRequest";
+import { phoneRestoreFolder, restoreFolderFor } from "../../lib/restorePlan";
 import { AnomalyWindow } from "../anomalies/AnomalyWindow";
 import { Badge } from "../Badge";
 import { Button } from "../Button";
@@ -334,6 +337,13 @@ function HistoryLogSection({ run }: { run: Run }) {
   return <LogList lines={lines} />;
 }
 
+/** phoneFolder is where a paired phone puts the files it restores from run:
+ *  the server takes nothing but a new folder inside the restore folder there. */
+async function phoneFolder(run: Run): Promise<string> {
+  const { settings } = await getSettings();
+  return phoneRestoreFolder(restoreFolderFor(settings, run.domain === "container" ? "container" : "files"), run.target, new Date());
+}
+
 export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore }: RunDetailSheetProps) {
   const { t } = useT();
   const browseId = useId();
@@ -477,10 +487,11 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
     setRestoreResult(null);
     try {
       const paths = [...selected];
+      const into = openedAsPairedPhone() ? await phoneFolder(run) : "";
       const res =
         run.domain === "container"
-          ? await restoreContainerFiles(run.target, run.snapshotId, paths, "", true)
-          : await restoreFileSetFiles(run.targetId, run.snapshotId, paths, "", true);
+          ? await restoreContainerFiles(run.target, run.snapshotId, paths, into, true)
+          : await restoreFileSetFiles(run.targetId, run.snapshotId, paths, into, true);
       if (restoreCancelledRef.current) return;
       // The server runs the restore detached, so the ack says it started and
       // nothing more. Claiming success here painted a green line over a

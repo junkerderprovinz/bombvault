@@ -55,21 +55,23 @@ const listingControl = vi.hoisted(() => {
 // Deferreds for the check/restore POSTs; tagged so a test with several in
 // flight can pick the right one.
 const apiControl = vi.hoisted(() => {
-  const pending: { resolve: (value: unknown) => void; reject: (err: unknown) => void; kind: string }[] = [];
+  const pending: { resolve: (value: unknown) => void; reject: (err: unknown) => void; kind: string; args: unknown[] }[] = [];
   return {
     pending,
-    deferred(kind: string) {
+    deferred(kind: string, args: unknown[] = []) {
       let resolve!: (value: unknown) => void;
       let reject!: (err: unknown) => void;
       const promise = new Promise((res, rej) => {
         resolve = res;
         reject = rej;
       });
-      pending.push({ resolve, reject, kind });
+      pending.push({ resolve, reject, kind, args });
       return promise;
     },
   };
 });
+
+const session = vi.hoisted(() => ({ phone: false }));
 
 vi.mock("../../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../lib/api")>();
@@ -78,8 +80,11 @@ vi.mock("../../lib/api", async (importOriginal) => {
     listSnapshotFiles: () => listingControl.deferred(),
     listSnapshotFilesFileSet: () => listingControl.deferred(),
     checkDomain: () => apiControl.deferred("check"),
-    restoreContainerFiles: () => apiControl.deferred("restore-container"),
-    restoreFileSetFiles: () => apiControl.deferred("restore-files"),
+    restoreContainerFiles: (...args: unknown[]) => apiControl.deferred("restore-container", args),
+    restoreFileSetFiles: (...args: unknown[]) => apiControl.deferred("restore-files", args),
+    openedAsPairedPhone: () => session.phone,
+    getSettings: () =>
+      Promise.resolve({ ok: true, settings: { restoreFolder: "user/restore", restoreFolders: { files: "user/restore/files" } } }),
   };
 });
 
@@ -747,6 +752,32 @@ describe("RunDetailSheet", () => {
     expect(started.className).toContain("text-carbon-textSub");
     expect(started.className).not.toContain("text-statusOk");
     expect(screen.getByRole("checkbox", { name: "/config/plex.ini" })).toBeTruthy();
+  });
+
+  it("restore on a paired phone goes into a new folder inside the restore folder", async () => {
+    session.phone = true;
+    try {
+      renderSheet(makeRun({ domain: "files", target: "photos", targetId: "set-1" }));
+      fireEvent.click(screen.getByRole("button", { name: en["recovery.foreignStepBrowse"] }));
+      await act(async () => {});
+      await act(async () => {
+        listingControl.pending.shift()!.resolve({ ok: true, files: [{ path: "/2026/a.jpg", type: "file", size: 12 }] });
+      });
+      fireEvent.click(screen.getByRole("checkbox", { name: "/2026/a.jpg" }));
+      fireEvent.click(screen.getByRole("button", { name: en["snapshots.restore"] }));
+      await act(async () => {});
+      const confirmButton = screen
+        .getAllByRole("button", { name: en["common.confirm"] })
+        .find((b) => b.closest("[role='dialog']") !== null);
+      await act(async () => {
+        fireEvent.click(confirmButton!);
+      });
+      const post = apiControl.pending.find((e) => e.kind === "restore-files");
+      expect(post).toBeDefined();
+      expect(post!.args[3]).toMatch(/^user\/restore\/files\/photos-\d{8}-\d{6}$/);
+    } finally {
+      session.phone = false;
+    }
   });
 
   it("restore with nothing selected only opens the tree, never fires the API and never closes it", async () => {
