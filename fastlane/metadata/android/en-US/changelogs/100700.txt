@@ -1,1 +1,1 @@
-BombVault 10.7.0 restores a run's files on the phone into a new folder, offers the phone only the restores it can start, and keeps your servers reachable for each other while one of them reconnects.
+BombVault 10.7.0 brings ZFS replicas, restores of Compose stacks, plugins and database dumps, anomaly actions, checks and the schedule switches to the app, and keeps your servers reachable while one of them reconnects.
