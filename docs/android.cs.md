@@ -41,7 +41,13 @@ Když je server otevřený, nahoře v jeho přehledu stojí jeho název a před 
 
 Telefon spárovaný s tvou skupinou otevře každý z jejích serverů rovnou přihlášený. Před načtením stránky si u daného serveru přes skupinu vyžádá relaci a server ji vydá jen členovi, který je telefonem.
 
-Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění a obnově, anomálie ke čtení a stránku Instance k prohlížení, bez přijatých repozitářů a zdrojů stahování jejích členů. Cíle a příkazy se vrací bez adres a tajemství. Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav. Obnova do složky jde do nové složky uvnitř složky pro obnovu nastavené v **Nastavení, Obnova** a okno jinou nenabídne. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje. Přes relay platí stejný seznam, i na serveru bez hesla.
+Spárovaný telefon nedostane všechno, co dává heslo. Jeho relace sahá k pevnému seznamu toho, co aplikace ukazuje: přehled, běhy a protokol aktivit, zálohy k prohlížení, spuštění, kontrole a obnově, anomálie, kontrolu aktualizací a stránku Instance k prohlížení, bez přijatých repozitářů a zdrojů stahování jejích členů. Na stránkách záloh a položek může také zařadit položku do plánu nebo ji z něj vyřadit, odmítnout ji, označit zálohu štítkem, odstranit zbylé snímky stromu ZFS a hledat položky v úložišti záloh. Přidání položky zůstává u webového rozhraní, protože nová položka se vybírá ze složek serveru. Cíle, servery ZFS a příkazy se vrací bez adres, přihlašovacích údajů a tajemství.
+
+Obnova, která nahrazuje originál, nejdřív zazálohuje aktuální stav: kontejner, VM, sadu složek, celý stack Compose s jeho složkou projektu, plugin flashe (zálohuje se flash) a výpis databáze importovaný do živé databáze (zálohuje se kontejner). Když se tato záloha nepovede, nic se nenahradí. Obnova do složky, stejně jako výpis databáze uložený do složky, jde do nové složky uvnitř složky pro obnovu nastavené v **Nastavení, Obnova** a okno jinou nenabídne.
+
+V **Další zdroje** otevře **Ze staré složky se zálohami** repozitář jiné instance s jejím klíčem nebo sadou pro obnovu. Repozitář v síti se otevře s přihlašovacími údaji, které zadáš: platí jen pro tuto relaci a nikdy se neposílají zpět. Složka na serveru se otevře jen zevnitř složky pro obnovu a každá položka se vrátí jako soubory v nové složce právě tam: kontejner ani VM se z telefonu znovu nevytvoří. **Import z pluginu Appdata.Backup** a **Úlohy z Duplicati nebo Duplicacy** potřebují přihlášení přímo na serveru, protože čtou složky kdekoli na serveru nebo vytvářejí cíle a přihlašovací údaje.
+
+Anomálie potvrzená nebo označená jako očekávaná na telefonu drží staré zálohy, dokud se někdo nepřihlásí heslem a nezvolí **Přestat uchovávat staré zálohy** mezi uzavřenými nálezy. Klíče, sada pro obnovu, úschova klíčů, nastavení a mazání záloh zůstávají u přihlášení přímo na serveru a všechno ostatní odpoví, že toto přihlášení potřebuje. Přes relay platí stejný seznam, i na serveru bez hesla.
 
 Každý telefon, který skupina pustila dovnitř, se přihlásí sám a žádný přepínač pro to není. Reset hesla odhlásí všechny telefony a ty se pak samy přihlásí znovu. Chceš-li jeden telefon nechat venku, odeber ho na stránce Instance.
 
@@ -72,7 +78,7 @@ Ozubené kolo vedle plusu otevře nastavení aplikace:
 
 ## Stahování a nahrávání {#files}
 
-Relace spárovaného telefonu neukládá žádné soubory, proto se nejdřív přihlas heslem na vlastní adrese serveru. Po takovém přihlášení se exporty, sady pro obnovu, ZIPy flashe a dumpy databází ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče, a import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá.
+Relace spárovaného telefonu ukládá jen jeden druh souboru: výpis databáze se stáhne do složky Stažené soubory v telefonu, když aplikace otevře server na jeho vlastní adrese. Pro všechno ostatní se nejdřív přihlas heslem na vlastní adrese serveru. Po takovém přihlášení se exporty, sady pro obnovu a ZIPy flashe ukládají do složky Stažené soubory v telefonu, stejně jako z prohlížeče, a import nastavení otevře výběr souborů v telefonu. Přes relay se nic neukládá.
 
 ## Na dotykové obrazovce {#touch}
 
