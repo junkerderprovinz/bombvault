@@ -214,12 +214,9 @@ func (h *Handler) fresh(w http.ResponseWriter, r *http.Request, action string) b
 	return done && err == nil
 }
 
-// The codes a 403 carries when a request needs more than its session: the
-// person has to sign in themselves, or a phone asks for a session while
-// pairing phones is switched off.
-const (
-	codeOwnLoginNeeded  = "own-login-needed"
-)
+// codeOwnLoginNeeded is the code a 403 carries when the person has to sign in
+// themselves, as a phone's session or a page without a password cannot.
+const codeOwnLoginNeeded = "own-login-needed"
 
 // importLogin hands the kit the login the version before kept: the password
 // hash, the second factor and its recovery codes, and the passkeys. Without
