@@ -15,7 +15,7 @@ function Box({ word, fresh = false }: { word: string; fresh?: boolean }) {
   return (
     <>
       <rect className={`glim-target-box${fresh ? " glim-target-box-fresh" : ""}`} x="-41" y="-11" width="82" height="22" rx="5" />
-      <text className="glim-target-word" y="3.4">
+      <text className={`glim-target-word${fresh ? " glim-target-word-fresh" : ""}`} y="3.4">
         {word}
       </text>
     </>

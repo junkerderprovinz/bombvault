@@ -6857,6 +6857,8 @@ a.glim-version-number {
   font-weight: 600;
   text-anchor: middle;
 }
+/* A fresh box is see-through, so on a picked tile its word stands on the accent. */
+.glim-active .glim-pic .glim-target-word-fresh { fill: var(--pic); }
 .glim-target-file {
   fill: var(--carbon-surface);
   stroke: var(--carbon-text-sub);
