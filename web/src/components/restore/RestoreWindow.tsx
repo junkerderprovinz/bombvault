@@ -449,6 +449,7 @@ function RestoreForm({
   const fileSnapshot = zfsItem ? (member?.snapshotId ?? "") : snapshotId;
 
   const [files, setFiles] = useState<FileEntry[]>([]);
+  const [filesRoot, setFilesRoot] = useState("");
   // The found path is ticked in the first listing only, so a backup picked
   // afterwards starts empty like any other.
   const foundPath = useRef(ask.path);
@@ -471,6 +472,7 @@ function RestoreForm({
       .then((res) => {
         if (!current) return;
         setFiles(res.ok ? (res.files ?? []) : []);
+        setFilesRoot(res.root ?? "");
         if (!res.ok) setFilesError(loadErrorMessage(res, t("files.loadFailed")));
         const found = foundPath.current;
         foundPath.current = undefined;
@@ -974,6 +976,7 @@ function RestoreForm({
                 error={filesError}
                 filter={filter}
                 onFilterChange={setFilter}
+                root={filesRoot}
                 selected={picked}
                 onToggle={(path) => {
                   const next = new Set(picked);

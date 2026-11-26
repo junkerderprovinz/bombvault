@@ -49,6 +49,7 @@ vi.mock("../../lib/api", async (importOriginal) => {
     zfsRestorePoints: vi.fn(),
     zfsHostDatasets: vi.fn(),
     listSnapshotFiles: vi.fn(),
+    listSnapshotFilesFileSet: vi.fn(),
     listDbDumps: vi.fn(),
     importDbDump: vi.fn(),
     listFlashPlugins: vi.fn(),
@@ -616,6 +617,24 @@ describe("a folder set", () => {
     expect(targets.length).toBeGreaterThan(0);
     expect(targets.map((r) => [r.disabled, r.getAttribute("aria-checked")])).toEqual(targets.map(() => [true, "false"]));
     expect(checkRestore).not.toHaveBeenCalled();
+  });
+
+  it("offers only the set's own folder and what lies below it to tick", async () => {
+    vi.mocked(api.listSnapshotFilesFileSet).mockResolvedValue({
+      ok: true,
+      root: "/host/user/photos",
+      files: [
+        { path: "/host", type: "dir", size: 0 },
+        { path: "/host/user", type: "dir", size: 0 },
+        { path: "/host/user/photos", type: "dir", size: 0 },
+        { path: "/host/user/photos/beach.jpg", type: "file", size: 10 },
+      ],
+    });
+    await open(entryOf("files"));
+    await press(within(dialog()).getByRole("tab", { name: en["restore.mode.files"] }));
+    expect(await within(dialog()).findByRole("checkbox", { name: "/host/user/photos" })).toBeTruthy();
+    expect(within(dialog()).queryByRole("checkbox", { name: "/host" })).toBeNull();
+    expect(within(dialog()).queryByRole("checkbox", { name: "/host/user" })).toBeNull();
   });
 
   it("only restores into a folder when it does not know where it came from", async () => {

@@ -6476,14 +6476,15 @@ func (h *Handler) handleRestoreFileSet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleListSnapshotFilesFileSet lists the files in a file-set snapshot for the
-// selective restore. GET /api/files/sets/{id}/files?snapshot=<id>&source=
+// selective restore, with the folder a pick has to lie in.
+// GET /api/files/sets/{id}/files?snapshot=<id>&source=
 func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.fileSetIDParam(w, r)
 	if !ok {
 		return
 	}
 	snapshot := r.URL.Query().Get("snapshot")
-	files, err := h.svc.ListSnapshotFilesFileSet(r.Context(), id, snapshot, sourceParam(r))
+	files, root, err := h.svc.ListSnapshotFilesFileSet(r.Context(), id, snapshot, sourceParam(r))
 	if err != nil {
 		restoreFail(w, sourceParam(r), err)
 		return
@@ -6491,7 +6492,7 @@ func (h *Handler) handleListSnapshotFilesFileSet(w http.ResponseWriter, r *http.
 	if files == nil {
 		files = []restic.FileEntry{}
 	}
-	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files}))
+	writeJSON(w, http.StatusOK, okEnvelope(map[string]any{"files": files, "root": root}))
 }
 
 // handleRestoreFileSetFiles starts a SELECTIVE file-set restore ON THE SERVER and

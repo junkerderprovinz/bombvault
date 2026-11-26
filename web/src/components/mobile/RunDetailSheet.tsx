@@ -360,6 +360,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
   // --- browse section (the SnapshotFileTree mount + its fetch state) --------
   const [browseOpen, setBrowseOpen] = useState(false);
   const [files, setFiles] = useState<FileEntry[]>([]);
+  const [filesRoot, setFilesRoot] = useState("");
   const [filesLoading, setFilesLoading] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -383,8 +384,10 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
     req
       .then((res) => {
         if (cancelled) return;
-        if (res.ok) setFiles(res.files ?? []);
-        else setFilesError(loadErrorMessage(res, t("files.loadFailed")));
+        if (res.ok) {
+          setFiles(res.files ?? []);
+          setFilesRoot(res.root ?? "");
+        } else setFilesError(loadErrorMessage(res, t("files.loadFailed")));
       })
       .catch(() => {
         if (cancelled) return;
@@ -551,6 +554,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
     if (open) return;
     setBrowseOpen(false);
     setFiles([]);
+    setFilesRoot("");
     setFilesLoading(false);
     setFilesError(null);
     setFilter("");
@@ -773,6 +777,7 @@ export function RunDetailSheet({ run, open, onClose, windowed = false, onRestore
               error={filesError}
               filter={filter}
               onFilterChange={setFilter}
+              root={filesRoot}
               selected={selected}
               onToggle={togglePath}
               t={t}

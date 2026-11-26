@@ -16779,38 +16779,48 @@ func (s *Service) SnapshotsFileSet(ctx context.Context, id, source string) ([]re
 	return out, nil
 }
 
-// ListSnapshotFilesFileSet lists the files in a file-set snapshot, for the
-// selective (pick-some-files) restore — the files counterpart of
-// ListSnapshotFiles. snapshotID must be valid hex and must belong to THIS set
-// (tag-scoped via SnapshotsFileSet + snapshotBelongs), so one set's file tree
-// can't be listed through another's route.
-func (s *Service) ListSnapshotFilesFileSet(ctx context.Context, id, snapshotID, source string) ([]restic.FileEntry, error) {
+// ListSnapshotFilesFileSet lists the files of one of the set's own snapshots
+// for a selective restore, and the folder a pick has to lie in. A snapshot of
+// another set is refused, so no set's tree is listed through another's route.
+func (s *Service) ListSnapshotFilesFileSet(ctx context.Context, id, snapshotID, source string) ([]restic.FileEntry, string, error) {
 	if !backup.ValidSnapshotID(snapshotID) {
-		return nil, backup.ErrInvalidSnapshotID
+		return nil, "", backup.ErrInvalidSnapshotID
 	}
 	snaps, err := s.SnapshotsFileSet(ctx, id, source)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if !snapshotBelongs(snaps, snapshotID) {
-		return nil, notInListing{snapshotID, "file set"}
+		return nil, "", notInListing{snapshotID, "file set"}
 	}
 	// Loaded for its repository override (#204): a set with its own repo is
 	// listed FROM that repo, and reading the domain's would report "snapshot
 	// not found" for a snapshot that exists.
 	set, err := s.store.GetFileSet(id)
 	if err != nil {
-		return nil, errFileSetNotFound
+		return nil, "", errFileSetNotFound
 	}
 	settings, err := s.store.GetSettings()
 	if err != nil {
-		return nil, fmt.Errorf("read settings: %w", err)
+		return nil, "", fmt.Errorf("read settings: %w", err)
 	}
 	repo, err := s.fileSetRepoFor(settings, set, source)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return s.lsSelfHeal(ctx, repo, snapshotID, s.repoModeFor(settings, "files", source, repo))
+	files, err := s.lsSelfHeal(ctx, repo, snapshotID, s.repoModeFor(settings, "files", source, repo))
+	return files, fileSetPickRoot(snaps, snapshotID), err
+}
+
+// fileSetPickRoot is the folder every path picked from a set's snapshot has to
+// lie in, the one buildFileSetFilesPlan holds a pick to. It is empty for a
+// snapshot that records no root, where anything may be picked.
+func fileSetPickRoot(snaps []restic.Snapshot, snapshotID string) string {
+	root := path.Clean(snapshotRestoreRoot(snaps, snapshotID))
+	if root == "." || root == "/" {
+		return ""
+	}
+	return root
 }
 
 // fileSetRestorePlan carries everything prepareRestoreFileSet validated and
@@ -17206,10 +17216,7 @@ func (s *Service) buildFileSetFilesPlan(ctx context.Context, snaps []restic.Snap
 	// recorded root fail this guard, with no other non-destructive route to it), NOT a
 	// recompute of set.Path — HostMountRoot may have changed since the backup. A
 	// "." or "/" clean means a path-less snapshot (degenerate discovered set).
-	subtree := path.Clean(snapshotRestoreRoot(snaps, snapshotID))
-	if subtree == "." || subtree == "/" {
-		subtree = ""
-	}
+	subtree := fileSetPickRoot(snaps, snapshotID)
 
 	plan := fileSetFilesRestorePlan{
 		repo:       repo,

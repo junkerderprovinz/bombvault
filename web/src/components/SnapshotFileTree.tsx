@@ -39,6 +39,12 @@ export function buildTree(files: FileEntry[]): TreeNode {
   return root;
 }
 
+// pickableIn reports whether p is root or lies below it, the only paths the
+// server restores from a snapshot that records root. An empty root allows any.
+export function pickableIn(root: string, p: string): boolean {
+  return root === "" || p === root || p.startsWith(root + "/");
+}
+
 // sortNodes puts directories first, then sorts by name.
 export function sortNodes(a: TreeNode, b: TreeNode): number {
   if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
@@ -74,19 +80,23 @@ function FileRow({
 }
 
 // TreeRow renders one node of the folder tree. Ticking a folder selects its
-// whole subtree.
+// whole subtree. The folders above root cannot be ticked and start open, so
+// the tree shows root at once.
 function TreeRow({
   node,
   depth,
+  root,
   selected,
   onToggle,
 }: {
   node: TreeNode;
   depth: number;
+  root: string;
   selected: Set<string>;
   onToggle: (p: string) => void;
 }) {
-  const [expanded, setExpanded] = useState(depth === 0);
+  const above = !pickableIn(root, node.path);
+  const [expanded, setExpanded] = useState(depth === 0 || (above && root.startsWith(node.path + "/")));
   const isDir = node.type === "dir";
   const kids = isDir ? Array.from(node.children.values()).sort(sortNodes) : [];
 
@@ -111,14 +121,18 @@ function TreeRow({
         ) : (
           <span className="w-4 shrink-0" />
         )}
-        <SelectMark checked={selected.has(node.path)} label={node.path} onChange={() => onToggle(node.path)} bare />
+        {above ? (
+          <span className="w-[18px] flex-none" />
+        ) : (
+          <SelectMark checked={selected.has(node.path)} label={node.path} onChange={() => onToggle(node.path)} bare />
+        )}
         <span className="flex shrink-0 text-carbon-textMuted [&>svg]:size-3.5" aria-hidden="true">{fileKindGlyph(node.name, isDir)}</span>
         <span dir="ltr" className="font-mono text-carbon-textSub flex-1 truncate text-start" title={node.path}>
           {node.name}
         </span>
       </div>
       {isDir && expanded && kids.map((c) => (
-        <TreeRow key={c.path} node={c} depth={depth + 1} selected={selected} onToggle={onToggle} />
+        <TreeRow key={c.path} node={c} depth={depth + 1} root={root} selected={selected} onToggle={onToggle} />
       ))}
     </div>
   );
@@ -135,6 +149,7 @@ export function SnapshotFileTree({
   onFilterChange,
   selected,
   onToggle,
+  root = "",
   t,
 }: {
   files: FileEntry[];
@@ -144,10 +159,12 @@ export function SnapshotFileTree({
   onFilterChange: (v: string) => void;
   selected: Set<string>;
   onToggle: (p: string) => void;
+  /** The folder every pick has to lie in, as the listing names it. */
+  root?: string;
   t: T;
 }) {
   const q = filter.trim().toLowerCase();
-  const matched = q ? files.filter((f) => f.path.toLowerCase().includes(q)) : files;
+  const matched = q ? files.filter((f) => pickableIn(root, f.path) && f.path.toLowerCase().includes(q)) : files;
   const shown = matched.slice(0, FILE_DISPLAY_CAP);
   const tree = useMemo(() => buildTree(files), [files]);
   const topLevel = Array.from(tree.children.values()).sort(sortNodes);
@@ -180,7 +197,7 @@ export function SnapshotFileTree({
       {!loading && !q && topLevel.length > 0 && (
         <div className="max-h-64 overflow-y-auto">
           {topLevel.map((n) => (
-            <TreeRow key={n.path} node={n} depth={0} selected={selected} onToggle={onToggle} />
+            <TreeRow key={n.path} node={n} depth={0} root={root} selected={selected} onToggle={onToggle} />
           ))}
         </div>
       )}

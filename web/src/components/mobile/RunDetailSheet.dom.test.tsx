@@ -766,6 +766,26 @@ describe("RunDetailSheet", () => {
     expect(listingControl.asked.at(-1)?.[0]).toBe("plex");
   });
 
+  it("offers a folder set's run only the set's own folder and what lies below it to tick", async () => {
+    renderSheet(makeRun({ domain: "files", target: "photos", targetId: "set-1" }));
+    fireEvent.click(screen.getByRole("button", { name: en["recovery.foreignStepBrowse"] }));
+    await act(async () => {});
+    await act(async () => {
+      listingControl.pending.shift()!.resolve({
+        ok: true,
+        root: "/host/user/photos",
+        files: [
+          { path: "/host", type: "dir", size: 0 },
+          { path: "/host/user", type: "dir", size: 0 },
+          { path: "/host/user/photos", type: "dir", size: 0 },
+        ],
+      });
+    });
+    expect(screen.getByRole("checkbox", { name: "/host/user/photos" })).toBeTruthy();
+    expect(screen.queryByRole("checkbox", { name: "/host" })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "/host/user" })).toBeNull();
+  });
+
   it("restore on a paired phone goes into a new folder inside the restore folder", async () => {
     session.phone = true;
     try {

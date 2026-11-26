@@ -199,6 +199,9 @@ export interface FileEntry {
 export interface ListFilesResponse {
   ok: boolean;
   files: FileEntry[];
+  /** The folder every pick has to lie in, from a folder set's listing. Empty
+   *  or missing where any path may be picked. */
+  root?: string;
   /** Present on {ok:false} (HTTP 200): the server's own scrubbed reason (a
    *  stale repo lock, an unmounted backup path, an expired foreign session,
    *  etc). Populated by every list-files endpoint, local and foreign alike —

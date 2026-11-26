@@ -754,6 +754,24 @@ func fileSetFilesRestoreService(t *testing.T, eng *fakeResticEngine) (*api.Servi
 	return svc, st, set.ID, root
 }
 
+// The folders above a set's own path are in the listing, and a pick among them
+// is refused, so the listing names the folder a pick has to lie in.
+func TestAFileSetListingNamesTheFolderAPickHasToLieIn(t *testing.T) {
+	eng := &fakeResticEngine{lsEntries: []restic.FileEntry{{Path: "/data", Type: "dir"}, {Path: "/data/docs/a.txt", Type: "file"}}}
+	svc, _, setID, root := fileSetFilesRestoreService(t, eng)
+
+	_, within, err := svc.ListSnapshotFilesFileSet(context.Background(), setID, "aaaa1111", "local")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if within != root+"/data/docs" {
+		t.Errorf("the listing names %q as the folder to pick in, want the set's own %q", within, root+"/data/docs")
+	}
+	if _, _, err := svc.StartRestoreFileSetFiles(context.Background(), setID, "local", "aaaa1111", []string{root + "/data"}, "restore/out", true); err == nil || !strings.Contains(err.Error(), "outside the file set snapshot") {
+		t.Errorf("a pick above that folder was not refused: %v", err)
+	}
+}
+
 // TestListSnapshotFilesFileSet pins the selective-restore file listing (#65): a
 // set can list the files of ITS OWN snapshot, a bad snapshot id is rejected
 // before any restic call, and another set's snapshot cannot be listed through
@@ -763,13 +781,13 @@ func TestListSnapshotFilesFileSet(t *testing.T) {
 	svc, _, setID, _ := fileSetFilesRestoreService(t, eng)
 	ctx := context.Background()
 
-	if files, err := svc.ListSnapshotFilesFileSet(ctx, setID, "aaaa1111", "local"); err != nil || len(files) != 1 {
+	if files, _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "aaaa1111", "local"); err != nil || len(files) != 1 {
 		t.Fatalf("own snapshot must list files: files=%v err=%v", files, err)
 	}
-	if _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "not-hex!", "local"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
+	if _, _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "not-hex!", "local"); !errors.Is(err, backup.ErrInvalidSnapshotID) {
 		t.Fatalf("expected ErrInvalidSnapshotID, got %v", err)
 	}
-	if _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "bbbb2222", "local"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+	if _, _, err := svc.ListSnapshotFilesFileSet(ctx, setID, "bbbb2222", "local"); err == nil || !strings.Contains(err.Error(), "does not belong") {
 		t.Fatalf("foreign snapshot must be refused, got %v", err)
 	}
 }
@@ -7764,7 +7782,7 @@ func TestListSnapshotFilesFileSetSelfHealsStaleLock(t *testing.T) {
 	}
 	svc, _, setID, _ := fileSetFilesRestoreService(t, eng)
 
-	files, err := svc.ListSnapshotFilesFileSet(context.Background(), setID, "aaaa1111", "local")
+	files, _, err := svc.ListSnapshotFilesFileSet(context.Background(), setID, "aaaa1111", "local")
 	if err != nil {
 		t.Fatalf("ListSnapshotFilesFileSet should self-heal a stale lock, got %v", err)
 	}
