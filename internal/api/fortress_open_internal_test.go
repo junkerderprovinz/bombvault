@@ -403,17 +403,33 @@ func atAddress(t *testing.T, in *instance) {
 	}
 }
 
+// atRefusingAddress announces an address of in that refuses every
+// connection, as one does while its server restarts.
+func atRefusingAddress(t *testing.T, in *instance) {
+	t.Helper()
+	srv := httptest.NewServer(in.router)
+	srv.Close()
+	if err := in.st.LearnGroupDirectURL(srv.URL); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestAMemberOpensAnotherWhileItReconnects(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		ownGroup bool
-	}{{"alone", false}, {"beside its own group", true}} {
+		refusing bool
+	}{{"alone", false, false}, {"beside its own group", true, false}, {"at an address that refuses", false, true}} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := newInstance(t, "cellar", strings.Repeat("a1", 32))
 			b := newInstance(t, "attic", strings.Repeat("b2", 32))
 			for _, in := range []*instance{a, b} {
 				servePages(in)
-				atAddress(t, in)
+				if tc.refusing {
+					atRefusingAddress(t, in)
+				} else {
+					atAddress(t, in)
+				}
 				if tc.ownGroup {
 					if _, out := in.do(t, http.MethodPost, "/api/group/phrase", nil); out["ok"] != true {
 						t.Fatalf("new phrase = %v", out)

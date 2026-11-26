@@ -8,7 +8,7 @@ require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
 	github.com/containerd/errdefs v1.0.0
-	github.com/junkerderprovinz/parleyport v1.3.7
+	github.com/junkerderprovinz/parleyport v1.3.8
 	github.com/klauspost/compress v1.20.5
 	github.com/moby/moby/api v1.57.0
 	github.com/moby/moby/client v0.6.3
