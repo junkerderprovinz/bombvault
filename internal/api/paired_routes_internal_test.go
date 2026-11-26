@@ -479,7 +479,6 @@ var pairedRefused = []string{
 	"POST /api/notify/test",
 	"POST /api/settings/import",
 	"POST /api/spike",
-	"POST /api/update-check",
 	"POST /api/vm/ssh/test",
 	"POST /api/vms/discover",
 	"POST /api/zfs/check",

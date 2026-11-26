@@ -52,3 +52,16 @@ func TestAPairedPhoneStartsARestoreProbeAndAStartTest(t *testing.T) {
 		t.Errorf("the ZFS access probe with a paired session: %d %v", code, out)
 	}
 }
+
+func TestAPairedPhoneChecksForAnUpdateAndReadsItsNotes(t *testing.T) {
+	fakeGitHub(t, http.StatusOK)
+	in := pairedInstance(t)
+	code, out := in.do(t, http.MethodPost, "/api/update-check", nil)
+	update, _ := out["update"].(map[string]any)
+	if code != http.StatusOK || update["updateAvailable"] != true || update["latest"] != "v99.0.0" {
+		t.Fatalf("the update check with a paired session: %d %v", code, out)
+	}
+	if code, out := in.do(t, http.MethodGet, "/api/release-notes?version=v99.0.0", nil); code != http.StatusOK || out["body"] != "## Added\n\n- v99.0.0" {
+		t.Errorf("the notes of the newer release with a paired session: %d %v", code, out)
+	}
+}

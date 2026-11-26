@@ -19,6 +19,8 @@ import (
 var pairedRoutes = map[string]bool{
 	// Signing out, and what the shell of every page reads. The settings hide
 	// every location's password from any caller and a hook from a paired session.
+	// The update check only reads the release feed, and its answer opens the
+	// notes of a newer release.
 	"POST /api/logout":                true,
 	"GET /api/settings":               true,
 	"GET /api/display-prefs":          true,
@@ -26,6 +28,7 @@ var pairedRoutes = map[string]bool{
 	"GET /api/release-notes":          true,
 	"GET /api/release-notes/versions": true,
 	"GET /api/versions":               true,
+	"POST /api/update-check":          true,
 
 	// The overview.
 	"GET /api/status":           true,
