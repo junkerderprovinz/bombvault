@@ -1342,6 +1342,7 @@ const pl: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (skompresowany)",
   "dbdump.downloadRefused": "Pobieranie zostało odrzucone",
+  "dbdump.downloadPlainOnPhone": "Telefon może pobrać zrzut tylko wtedy, gdy szyfrowanie eksportów jest włączone. Włącz {switch} w interfejsie webowym, w {where}.",
   "dbdump.saveToFolder": "Zapisz w folderze",
   "dbdump.saveHint": "Zapisuje zrzut jako plik w wybranym folderze na serwerze, z właścicielem nobody:users, żebyś mógł go otworzyć przez udział sieciowy. Plik zawiera wszystkie tabele i skróty haseł użytkowników bazy; trzymaj go tam, gdzie sięgasz tylko ty.",
   "dbdump.saveCancelHint": "Anulowanie zatrzymuje zapis i usuwa niedokończony plik.",

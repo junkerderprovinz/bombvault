@@ -1460,6 +1460,7 @@ const id: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (terkompresi)",
   "dbdump.downloadRefused": "Unduhan ditolak",
+  "dbdump.downloadPlainOnPhone": "Ponsel hanya bisa mengunduh dump jika enkripsi ekspor aktif. Aktifkan {switch} di antarmuka web, di {where}.",
   "dbdump.saveToFolder": "Simpan ke folder",
   "dbdump.saveHint": "Menulis dump sebagai berkas ke folder pilihan Anda di server, dengan pemilik nobody:users agar bisa Anda buka lewat berbagi jaringan. Berkas ini memuat seluruh tabel dan hash kata sandi pengguna basis data; simpan di tempat yang hanya Anda jangkau.",
   "dbdump.saveCancelHint": "Membatalkan menghentikan penyimpanan dan menghapus berkas yang belum selesai.",

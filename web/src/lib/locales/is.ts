@@ -1460,6 +1460,7 @@ const is: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (þjappað)",
   "dbdump.downloadRefused": "Niðurhalinu var hafnað",
+  "dbdump.downloadPlainOnPhone": "Sími getur aðeins sótt gagnagrunnsafrit þegar dulkóðun útflutnings er virk. Kveiktu á {switch} í vefviðmótinu undir {where}.",
   "dbdump.saveToFolder": "Vista í möppu",
   "dbdump.saveHint": "Skrifar afritið sem skrá í valda möppu á þjóninum, í eigu nobody:users svo þú getir opnað hana um netsameignina. Skráin inniheldur allar töflur og lykilorðatætur notenda gagnagrunnsins; geymdu hana þar sem aðeins þú kemst að.",
   "dbdump.saveCancelHint": "Að hætta við stöðvar vistunina og fjarlægir hálfkláruðu skrána.",

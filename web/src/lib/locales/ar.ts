@@ -1356,6 +1356,7 @@ const ar: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (مضغوط)",
   "dbdump.downloadRefused": "رُفض التنزيل",
+  "dbdump.downloadPlainOnPhone": "لا يمكن للهاتف تنزيل نسخة قاعدة بيانات إلا عندما يكون تشفير عمليات التصدير مفعّلًا. فعّل {switch} في واجهة الويب ضمن {where}.",
   "dbdump.saveToFolder": "الحفظ في مجلد",
   "dbdump.saveHint": "يكتب النسخة كملف في المجلد المختار على الخادم، بملكية nobody:users حتى يمكن فتحه عبر مشاركة الشبكة. يحتوي الملف على كل الجداول وعلى بصمات كلمات مرور مستخدمي قاعدة البيانات؛ يجب حفظه حيث لا يصل إليه أحد غير صاحبه.",
   "dbdump.saveCancelHint": "الإلغاء يوقف الحفظ ويزيل الملف غير المكتمل.",

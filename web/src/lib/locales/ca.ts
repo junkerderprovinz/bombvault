@@ -1460,6 +1460,7 @@ const ca: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (comprimit)",
   "dbdump.downloadRefused": "S'ha rebutjat la baixada",
+  "dbdump.downloadPlainOnPhone": "Un telèfon només pot baixar un bolcat quan el xifratge de les exportacions està activat. Activa {switch} a la interfície web, a {where}.",
   "dbdump.saveToFolder": "Desa en una carpeta",
   "dbdump.saveHint": "Escriu el bolcat com a fitxer a la carpeta triada del servidor, amb nobody:users com a propietari perquè el puguis obrir des del recurs compartit de xarxa. El fitxer conté totes les taules i els hash de contrasenya dels usuaris de la base de dades; desa'l on només hi arribis tu.",
   "dbdump.saveCancelHint": "Cancel·lar atura el desament i elimina el fitxer inacabat.",

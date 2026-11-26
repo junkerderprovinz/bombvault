@@ -1460,6 +1460,7 @@ const sk: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (komprimovaný)",
   "dbdump.downloadRefused": "Sťahovanie bolo odmietnuté",
+  "dbdump.downloadPlainOnPhone": "Telefón môže stiahnuť výpis len vtedy, keď je šifrovanie exportov zapnuté. Zapni {switch} vo webovom rozhraní v {where}.",
   "dbdump.saveToFolder": "Uložiť do priečinka",
   "dbdump.saveHint": "Zapíše výpis ako súbor do zvoleného priečinka na serveri, s vlastníkom nobody:users, aby si ho mohol otvoriť cez sieťové zdieľanie. Súbor obsahuje všetky tabuľky aj hashe hesiel používateľov databázy; drž ho tam, kam sa dostaneš len ty.",
   "dbdump.saveCancelHint": "Zrušenie ukladanie zastaví a nedokončený súbor odstráni.",

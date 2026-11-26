@@ -1460,6 +1460,7 @@ const gl: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (comprimido)",
   "dbdump.downloadRefused": "Rexeitouse a descarga",
+  "dbdump.downloadPlainOnPhone": "Un teléfono só pode descargar un volcado cando o cifrado das exportacións está activado. Activa {switch} na interface web, en {where}.",
   "dbdump.saveToFolder": "Gardar nun cartafol",
   "dbdump.saveHint": "Escribe o volcado como ficheiro no cartafol escollido do servidor, con nobody:users como dono para que poidas abrilo polo recurso compartido de rede. O ficheiro contén todas as táboas e os hash dos contrasinais dos usuarios da base; gárdao onde só chegues ti.",
   "dbdump.saveCancelHint": "Cancelar detén o gardado e retira o ficheiro sen rematar.",

@@ -1348,6 +1348,7 @@ const hu: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (tömörítve)",
   "dbdump.downloadRefused": "A letöltést elutasította",
+  "dbdump.downloadPlainOnPhone": "A telefon csak akkor tölthet le adatbázis-mentést, ha az exportok titkosítása be van kapcsolva. Kapcsold be ezt: {switch}, a webes felületen, itt: {where}.",
   "dbdump.saveToFolder": "Mentés mappába",
   "dbdump.saveHint": "A mentést fájlként írja a kiszolgálón kiválasztott mappába, nobody:users tulajdonossal, hogy a hálózati megosztásról megnyithasd. A fájl minden táblát és az adatbázis-felhasználók jelszó-hasheit tartalmazza; tartsd ott, ahová csak te férsz hozzá.",
   "dbdump.saveCancelHint": "A megszakítás leállítja a mentést, és eltávolítja a félkész fájlt.",

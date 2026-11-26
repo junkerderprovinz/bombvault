@@ -1460,6 +1460,7 @@ const hr: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (sažeto)",
   "dbdump.downloadRefused": "Preuzimanje je odbijeno",
+  "dbdump.downloadPlainOnPhone": "Mobitel može preuzeti ispis samo kad je šifriranje izvoza uključeno. Uključi {switch} u web sučelju pod {where}.",
   "dbdump.saveToFolder": "Spremi u mapu",
   "dbdump.saveHint": "Zapisuje ispis kao datoteku u odabranu mapu na poslužitelju, u vlasništvu nobody:users, da je možete otvoriti preko mrežnog dijeljenja. Datoteka sadrži sve tablice i hasheve lozinki korisnika baze; držite je ondje gdje dopirete samo vi.",
   "dbdump.saveCancelHint": "Odustajanje zaustavlja spremanje i uklanja nedovršenu datoteku.",

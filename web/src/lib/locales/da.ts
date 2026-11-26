@@ -1355,6 +1355,7 @@ const da: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (komprimeret)",
   "dbdump.downloadRefused": "Overførslen blev afvist",
+  "dbdump.downloadPlainOnPhone": "En telefon kan kun hente et dump, når kryptering af eksporter er slået til. Slå {switch} til i brugerfladen under {where}.",
   "dbdump.saveToFolder": "Gem i en mappe",
   "dbdump.saveHint": "Skriver dumpet som en fil i den valgte mappe på serveren, ejet af nobody:users, så du kan åbne den over netværksdelingen. Filen indeholder alle tabeller og adgangskodehashene for databasens brugere; gem den et sted, kun du kan nå.",
   "dbdump.saveCancelHint": "Afbryder du, standser gemningen, og den ufærdige fil fjernes.",

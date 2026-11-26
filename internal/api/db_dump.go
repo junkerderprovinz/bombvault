@@ -1137,6 +1137,14 @@ func DBDumpDownloadName(name string, v DBDumpView, gz, sealed bool) string {
 	return out
 }
 
+// codePhonePlainDump is the code of errPhonePlainDump, which the app words
+// with the place where export encryption is turned on.
+const codePhonePlainDump = "phone-plain-dump"
+
+// errPhonePlainDump refuses a paired phone a dump that would leave the server
+// unencrypted. The phone's words are all it takes to ask for one.
+var errPhonePlainDump = errors.New("a paired phone downloads a dump only with export encryption on; turn it on in the web interface under Settings, System")
+
 // DownloadDBDump streams one dump to w, gzip-compressed in the stream when
 // asked and age-sealed around that when export encryption is on. onResolved is
 // called with the dump once every refusal has passed, so the handler can name
@@ -1153,6 +1161,9 @@ func (s *Service) DownloadDBDump(ctx context.Context, name, source, snapshotID s
 	recipients, sealed, err := s.exportRecipients(settings)
 	if err != nil {
 		return err
+	}
+	if !sealed && pairedContext(ctx) {
+		return errPhonePlainDump
 	}
 	dump, src, err := s.dbDumpFor(ctx, settings, name, source, snapshotID)
 	if err != nil {

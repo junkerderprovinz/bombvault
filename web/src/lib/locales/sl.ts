@@ -1458,6 +1458,7 @@ const sl: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (stisnjeno)",
   "dbdump.downloadRefused": "Prenos je bil zavrnjen",
+  "dbdump.downloadPlainOnPhone": "Telefon lahko prenese izvoz baze le, ko je šifriranje izvozov vklopljeno. Vklopi {switch} v spletnem vmesniku pod {where}.",
   "dbdump.saveToFolder": "Shrani v mapo",
   "dbdump.saveHint": "Zapiše izvoz kot datoteko v izbrano mapo na strežniku, z lastnikom nobody:users, da jo lahko odpreš prek omrežne mape v skupni rabi. Datoteka vsebuje vse tabele in zgoščene vrednosti gesel uporabnikov baze; hrani jo tam, kamor sežeš samo ti.",
   "dbdump.saveCancelHint": "Preklic ustavi shranjevanje in odstrani nedokončano datoteko.",

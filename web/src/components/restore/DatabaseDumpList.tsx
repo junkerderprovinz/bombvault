@@ -191,7 +191,14 @@ function DumpRow({
     try {
       const res = await checkDbDumpDownload(containerName, dump.id, source);
       if (!res.ok) {
-        push(`${t("dbdump.downloadRefused")}: ${res.error ?? ""}`.trim(), "fail");
+        push(
+          res.code === "phone-plain-dump"
+            ? t("dbdump.downloadPlainOnPhone")
+                .replace("{switch}", t("export.encrypt.enable"))
+                .replace("{where}", `${t("nav.settings")} › ${t("settings.tab.system")}`)
+            : `${t("dbdump.downloadRefused")}: ${res.error ?? ""}`.trim(),
+          "fail",
+        );
         setShake((n) => n + 1);
         return;
       }

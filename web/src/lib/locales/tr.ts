@@ -1355,6 +1355,7 @@ const tr: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (sıkıştırılmış)",
   "dbdump.downloadRefused": "İndirme reddedildi",
+  "dbdump.downloadPlainOnPhone": "Bir telefon bir dökümü yalnızca dışa aktarma şifrelemesi açıkken indirebilir. Web arayüzünde {where} altında {switch} seçeneğini aç.",
   "dbdump.saveToFolder": "Bir klasöre kaydet",
   "dbdump.saveHint": "Dökümü sunucuda seçtiğin klasöre dosya olarak yazar; sahibi nobody:users olur, böylece ağ paylaşımından açabilirsin. Dosyada bütün tablolar ve veritabanı kullanıcılarının parola özetleri bulunur; yalnızca senin erişebildiğin bir yerde tut.",
   "dbdump.saveCancelHint": "Vazgeçmek kaydı durdurur ve yarım kalan dosyayı kaldırır.",

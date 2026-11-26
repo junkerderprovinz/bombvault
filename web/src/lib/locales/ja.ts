@@ -1338,6 +1338,7 @@ const ja: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (圧縮)",
   "dbdump.downloadRefused": "ダウンロードは拒否されました",
+  "dbdump.downloadPlainOnPhone": "電話からダンプをダウンロードできるのは、エクスポートの暗号化がオンのときだけです。Web インターフェイスの {where} で {switch} をオンにしてください。",
   "dbdump.saveToFolder": "フォルダーへ保存",
   "dbdump.saveHint": "ダンプをサーバー上の選んだフォルダーへファイルとして書き出します。所有者は nobody:users なので、ネットワーク共有から開けます。ファイルにはすべてのテーブルとデータベースユーザーのパスワードハッシュが入っています。自分だけが届く場所に置いてください。",
   "dbdump.saveCancelHint": "中止すると保存を止め、書きかけのファイルを削除します。",

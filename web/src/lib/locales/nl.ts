@@ -1344,6 +1344,7 @@ const nl: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (gecomprimeerd)",
   "dbdump.downloadRefused": "De download werd geweigerd",
+  "dbdump.downloadPlainOnPhone": "Een telefoon kan een dump alleen downloaden als versleuteling van exports aan staat. Zet {switch} aan in de webinterface, onder {where}.",
   "dbdump.saveToFolder": "Opslaan in een map",
   "dbdump.saveHint": "Schrijft de dump als bestand naar de gekozen map op de server, met nobody:users als eigenaar zodat je hem via de netwerkshare kunt openen. Het bestand bevat elke tabel en de wachtwoordhashes van de databasegebruikers; bewaar het waar alleen jij bij kunt.",
   "dbdump.saveCancelHint": "Annuleren stopt het opslaan en verwijdert het onafgemaakte bestand.",

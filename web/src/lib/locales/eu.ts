@@ -1460,6 +1460,7 @@ const eu: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (konprimituta)",
   "dbdump.downloadRefused": "Deskarga ukatu da",
+  "dbdump.downloadPlainOnPhone": "Telefono batek iraulketa bat deskargatu dezake soilik esportazioen zifratzea aktibatuta dagoenean. Aktibatu {switch} web interfazean, {where} atalean.",
   "dbdump.saveToFolder": "Gorde karpeta batean",
   "dbdump.saveHint": "Iraulketa fitxategi gisa idazten du zerbitzariko aukeratutako karpetan, nobody:users jabe dela, sareko partekatzetik ireki ahal izateko. Fitxategiak taula guztiak eta datu-baseko erabiltzaileen pasahitz-hashak ditu; gorde ezazu zuk bakarrik iristen zaren lekuan.",
   "dbdump.saveCancelHint": "Bertan behera uzteak gordetzea gelditzen du eta amaitu gabeko fitxategia kentzen du.",

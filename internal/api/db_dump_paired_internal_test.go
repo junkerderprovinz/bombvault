@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"filippo.io/age"
+
 	"github.com/junkerderprovinz/bombvault/internal/dockercli"
 )
 
@@ -76,6 +78,57 @@ func TestAPairedPhoneSavesNoDumpOutsideTheRestoreFolderOrIntoOneInUse(t *testing
 	kept, _ := filepath.Glob(filepath.Join(svc.cfg.HostMountRoot, filepath.FromSlash(inUse), "pg-*.sql"))
 	if len(saved)+len(kept) != 0 {
 		t.Errorf("a refused save wrote %v %v", saved, kept)
+	}
+}
+
+// pairedDownload asks for the dump of "pg" with the session of a paired phone.
+func pairedDownload(svc *Service, query string) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	dumpHandler(svc).handleDownloadDBDump(w, withPaired(dumpDownloadRequest("pg", "3f9c2a1be0d4aaaa", query)))
+	return w
+}
+
+func TestAPairedPhoneDownloadsNoPlainDump(t *testing.T) {
+	svc, _ := downloadFixture(t, []byte("-- dump\nSELECT 1;\n"))
+
+	var check map[string]any
+	if err := json.Unmarshal(pairedDownload(svc, "?check=1").Body.Bytes(), &check); err != nil {
+		t.Fatal(err)
+	}
+	if check["ok"] != false || check["code"] != codePhonePlainDump {
+		t.Errorf("the check before a phone's download answered %v, want the refusal with its code", check)
+	}
+
+	w := pairedDownload(svc, "")
+	if w.Code != http.StatusConflict {
+		t.Errorf("status = %d, want 409 for a phone's download of a plain dump", w.Code)
+	}
+	if got := w.Header().Get("Content-Disposition"); got != "" {
+		t.Errorf("a refused download carries Content-Disposition %q", got)
+	}
+	if strings.Contains(w.Body.String(), "SELECT 1") {
+		t.Error("the refusal carries the dump")
+	}
+}
+
+func TestAPairedPhoneDownloadsAnEncryptedDump(t *testing.T) {
+	payload := []byte("-- dump\nSELECT 1;\n")
+	svc, _ := downloadFixture(t, payload)
+	id, err := age.GenerateX25519Identity()
+	if err != nil {
+		t.Fatal(err)
+	}
+	enableExportSealing(t, svc, id.Recipient().String())
+
+	w := pairedDownload(svc, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want the encrypted dump: %s", w.Code, w.Body.String())
+	}
+	if got := w.Header().Get("Content-Disposition"); !strings.HasSuffix(got, `.sql.age"`) {
+		t.Errorf("Content-Disposition = %q, want the .sql.age name", got)
+	}
+	if got := ageRoundTripDecrypt(t, w.Body.Bytes(), id); string(got) != string(payload) {
+		t.Errorf("decrypted body = %q, want the dump", got)
 	}
 }
 

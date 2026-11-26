@@ -1460,6 +1460,7 @@ const et: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (pakitud)",
   "dbdump.downloadRefused": "Allalaadimine lükati tagasi",
+  "dbdump.downloadPlainOnPhone": "Telefon saab tõmmise alla laadida ainult siis, kui ekspordi krüpteerimine on sees. Lülita {switch} veebiliideses sisse, asukohas {where}.",
   "dbdump.saveToFolder": "Salvesta kausta",
   "dbdump.saveHint": "Kirjutab tõmmise failina valitud kausta serveris, omanikuks nobody:users, et saaksid selle võrgujagamise kaudu avada. Fail sisaldab kõiki tabeleid ja andmebaasi kasutajate paroolide räsisid; hoia seda kohas, kuhu pääsed ainult sina.",
   "dbdump.saveCancelHint": "Katkestamine peatab salvestamise ja eemaldab poolelioleva faili.",

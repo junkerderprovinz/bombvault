@@ -1344,6 +1344,7 @@ const pt: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (comprimido)",
   "dbdump.downloadRefused": "A transferência foi recusada",
+  "dbdump.downloadPlainOnPhone": "Um telemóvel só pode transferir um dump quando a cifragem das exportações está ativa. Ativa {switch} na interface web, em {where}.",
   "dbdump.saveToFolder": "Guardar numa pasta",
   "dbdump.saveHint": "Escreve o despejo como ficheiro na pasta escolhida no servidor, com nobody:users como dono para que o possas abrir pela partilha de rede. O ficheiro contém todas as tabelas e os hashes das palavras-passe dos utilizadores da base; guarda-o onde só tu chegues.",
   "dbdump.saveCancelHint": "Cancelar interrompe a gravação e remove o ficheiro por terminar.",

@@ -1355,6 +1355,7 @@ const fi: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (pakattu)",
   "dbdump.downloadRefused": "Lataus hylättiin",
+  "dbdump.downloadPlainOnPhone": "Puhelin voi ladata vedoksen vain, kun vientien salaus on käytössä. Ota {switch} käyttöön käyttöliittymässä kohdassa {where}.",
   "dbdump.saveToFolder": "Tallenna kansioon",
   "dbdump.saveHint": "Kirjoittaa vedoksen tiedostoksi valittuun kansioon palvelimella, omistajana nobody:users, jotta voit avata sen verkkojaon kautta. Tiedosto sisältää kaikki taulut ja tietokannan käyttäjien salasanatiivisteet; säilytä sitä paikassa, johon vain sinä yllät.",
   "dbdump.saveCancelHint": "Peruminen pysäyttää tallennuksen ja poistaa keskeneräisen tiedoston.",

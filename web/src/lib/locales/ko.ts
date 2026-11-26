@@ -1338,6 +1338,7 @@ const ko: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (압축)",
   "dbdump.downloadRefused": "내려받기가 거부되었습니다",
+  "dbdump.downloadPlainOnPhone": "휴대폰은 내보내기 암호화가 켜져 있을 때만 덤프를 내려받을 수 있습니다. 웹 화면의 {where}에서 {switch}를 켜세요.",
   "dbdump.saveToFolder": "폴더에 저장",
   "dbdump.saveHint": "덤프를 서버의 선택한 폴더에 파일로 씁니다. 소유자는 nobody:users이므로 네트워크 공유에서 열 수 있습니다. 파일에는 모든 테이블과 데이터베이스 사용자의 비밀번호 해시가 들어 있습니다. 본인만 닿는 곳에 두세요.",
   "dbdump.saveCancelHint": "취소하면 저장이 멈추고 완성되지 않은 파일은 제거됩니다.",

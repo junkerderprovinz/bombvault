@@ -1346,6 +1346,7 @@ const zh: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz（压缩）",
   "dbdump.downloadRefused": "下载被拒绝",
+  "dbdump.downloadPlainOnPhone": "只有在开启导出加密时，手机才能下载转储。请在网页界面的 {where} 中开启 {switch}。",
   "dbdump.saveToFolder": "保存到文件夹",
   "dbdump.saveHint": "把转储作为文件写入服务器上所选的文件夹，属主为 nobody:users，这样你可以通过网络共享打开它。该文件包含全部数据表以及数据库用户的口令散列；请放在只有你能取到的地方。",
   "dbdump.saveCancelHint": "取消会停止保存并删除未写完的文件。",

@@ -1346,6 +1346,7 @@ const vi: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (đã nén)",
   "dbdump.downloadRefused": "Việc tải xuống bị từ chối",
+  "dbdump.downloadPlainOnPhone": "Điện thoại chỉ tải được bản kết xuất khi đã bật mã hóa bản xuất. Hãy bật {switch} trong giao diện web, tại {where}.",
   "dbdump.saveToFolder": "Lưu vào một thư mục",
   "dbdump.saveHint": "Ghi bản kết xuất thành tệp vào thư mục bạn chọn trên máy chủ, do nobody:users sở hữu để bạn mở được qua chia sẻ mạng. Tệp chứa mọi bảng và các giá trị băm mật khẩu của người dùng cơ sở dữ liệu; hãy giữ nó ở nơi chỉ bạn tới được.",
   "dbdump.saveCancelHint": "Hủy sẽ dừng việc lưu và gỡ bỏ tệp còn dang dở.",

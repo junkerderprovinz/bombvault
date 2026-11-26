@@ -86,6 +86,9 @@ func failEnvelope(err error) map[string]any {
 	if code := busyCode(err); code != "" {
 		return codedFailEnvelope(err, code)
 	}
+	if errors.Is(err, errPhonePlainDump) {
+		return codedFailEnvelope(err, codePhonePlainDump)
+	}
 	return map[string]any{"ok": false, "error": scrubError(err)}
 }
 

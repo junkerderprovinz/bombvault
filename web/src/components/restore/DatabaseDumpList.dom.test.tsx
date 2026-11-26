@@ -186,6 +186,22 @@ describe("the database dump list", () => {
     expect(document.querySelector("a[download]")).toBeNull();
   });
 
+  it("tells a phone refused a plain dump where export encryption is turned on", async () => {
+    session.phone = true;
+    checkDbDumpDownload.mockResolvedValueOnce({ ok: false, error: "refused", code: "phone-plain-dump" } as { ok: boolean });
+    renderList();
+
+    fireEvent.click(await screen.findByRole("button", { name: en["dbdump.download"] }));
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(push.mock.calls[0][0]).toBe(
+      filled("dbdump.downloadPlainOnPhone", {
+        switch: en["export.encrypt.enable"],
+        where: `${en["nav.settings"]} › ${en["settings.tab.system"]}`,
+      }),
+    );
+    expect(document.querySelector("a[download]")).toBeNull();
+  });
+
   it("downloads through an anchor that carries the chosen format", async () => {
     const clicks: string[] = [];
     const click = vi

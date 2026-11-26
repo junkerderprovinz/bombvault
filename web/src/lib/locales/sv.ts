@@ -1355,6 +1355,7 @@ const sv: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (komprimerad)",
   "dbdump.downloadRefused": "Hämtningen nekades",
+  "dbdump.downloadPlainOnPhone": "En telefon kan bara hämta en dump när kryptering av exporter är på. Slå på {switch} i webbgränssnittet under {where}.",
   "dbdump.saveToFolder": "Spara i en mapp",
   "dbdump.saveHint": "Skriver dumpen som en fil till den valda mappen på servern, med nobody:users som ägare så att du kan öppna den över nätverksutdelningen. Filen innehåller alla tabeller och lösenordshasharna för databasens användare; förvara den där bara du når.",
   "dbdump.saveCancelHint": "Avbryter du stoppas sparandet och den halvfärdiga filen tas bort.",

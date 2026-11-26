@@ -1356,6 +1356,7 @@ const th: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (บีบอัด)",
   "dbdump.downloadRefused": "การดาวน์โหลดถูกปฏิเสธ",
+  "dbdump.downloadPlainOnPhone": "มือถือดาวน์โหลดดัมป์ได้เฉพาะเมื่อเปิดการเข้ารหัสการส่งออกไว้ เปิด {switch} ในหน้าเว็บที่ {where}",
   "dbdump.saveToFolder": "บันทึกลงโฟลเดอร์",
   "dbdump.saveHint": "เขียนดัมป์เป็นไฟล์ลงในโฟลเดอร์ที่เลือกบนเซิร์ฟเวอร์ เจ้าของคือ nobody:users คุณจึงเปิดผ่านแชร์เครือข่ายได้ ไฟล์นี้มีทุกตารางและแฮชรหัสผ่านของผู้ใช้ฐานข้อมูล เก็บไว้ในที่ที่มีเพียงคุณเข้าถึงได้",
   "dbdump.saveCancelHint": "การยกเลิกจะหยุดการบันทึกและลบไฟล์ที่ยังไม่เสร็จออก",

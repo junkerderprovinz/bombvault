@@ -1460,6 +1460,7 @@ const lv: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (saspiests)",
   "dbdump.downloadRefused": "Lejupielāde tika atteikta",
+  "dbdump.downloadPlainOnPhone": "Tālrunis var lejupielādēt izgāztuvi tikai tad, kad eksportu šifrēšana ir ieslēgta. Ieslēdz {switch} tīmekļa saskarnē sadaļā {where}.",
   "dbdump.saveToFolder": "Saglabāt mapē",
   "dbdump.saveHint": "Ieraksta izgāztuvi kā failu izvēlētajā mapē serverī, īpašnieks nobody:users, lai to varētu atvērt caur tīkla koplietojumu. Failā ir visas tabulas un datubāzes lietotāju paroļu jaucējvērtības; glabājiet to tur, kur piekļūstat tikai jūs.",
   "dbdump.saveCancelHint": "Atcelšana aptur saglabāšanu un noņem nepabeigto failu.",

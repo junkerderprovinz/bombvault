@@ -1345,6 +1345,7 @@ const ro: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (comprimat)",
   "dbdump.downloadRefused": "Descărcarea a fost refuzată",
+  "dbdump.downloadPlainOnPhone": "Un telefon poate descărca un dump doar când criptarea exporturilor este activată. Activează {switch} în interfața web, la {where}.",
   "dbdump.saveToFolder": "Salvează într-un dosar",
   "dbdump.saveHint": "Scrie copia ca fișier în dosarul ales de pe server, cu nobody:users ca proprietar, ca să o poți deschide prin partajarea de rețea. Fișierul conține toate tabelele și amprentele parolelor utilizatorilor bazei; ține-l unde ajungi doar tu.",
   "dbdump.saveCancelHint": "Renunțarea oprește salvarea și înlătură fișierul neterminat.",

@@ -1460,6 +1460,7 @@ const lt: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (suglaudinta)",
   "dbdump.downloadRefused": "Atsisiuntimas atmestas",
+  "dbdump.downloadPlainOnPhone": "Telefonas gali atsisiųsti išklotinę tik tada, kai įjungtas eksportų šifravimas. Įjunk {switch} saityno sąsajoje, skiltyje {where}.",
   "dbdump.saveToFolder": "Įrašyti į aplanką",
   "dbdump.saveHint": "Įrašo išklotinę kaip failą į pasirinktą aplanką serveryje, savininkas nobody:users, kad galėtum jį atverti per tinklo bendrinimą. Faile yra visos lentelės ir duomenų bazės naudotojų slaptažodžių maišos; laikyk jį ten, kur pasieki tik tu.",
   "dbdump.saveCancelHint": "Atsisakius įrašymas sustabdomas, o nebaigtas failas pašalinamas.",

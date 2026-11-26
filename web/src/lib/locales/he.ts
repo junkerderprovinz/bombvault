@@ -1347,6 +1347,7 @@ const he: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (דחוס)",
   "dbdump.downloadRefused": "ההורדה נדחתה",
+  "dbdump.downloadPlainOnPhone": "טלפון יכול להוריד דאמפ רק כשהצפנת הייצוא פעילה. הפעל את {switch} בממשק האינטרנט, תחת {where}.",
   "dbdump.saveToFolder": "שמירה לתיקייה",
   "dbdump.saveHint": "כותב את הגיבוי כקובץ לתיקייה שנבחרה בשרת, בבעלות nobody:users כדי שאפשר יהיה לפתוח אותו דרך שיתוף הרשת. הקובץ מכיל את כל הטבלאות ואת תמציות הסיסמאות של משתמשי מסד הנתונים; יש לשמור אותו במקום שאין לאחרים גישה אליו.",
   "dbdump.saveCancelHint": "ביטול עוצר את השמירה ומסיר את הקובץ הבלתי גמור.",

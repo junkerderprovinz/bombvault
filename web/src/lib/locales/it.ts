@@ -1337,6 +1337,7 @@ const it: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (compresso)",
   "dbdump.downloadRefused": "Il download è stato rifiutato",
+  "dbdump.downloadPlainOnPhone": "Un telefono può scaricare un dump solo quando la cifratura delle esportazioni è attiva. Attiva {switch} nell'interfaccia web, in {where}.",
   "dbdump.saveToFolder": "Salva in una cartella",
   "dbdump.saveHint": "Scrive il dump come file nella cartella scelta sul server, di proprietà di nobody:users così puoi aprirlo dalla condivisione di rete. Il file contiene tutte le tabelle e gli hash delle password degli utenti del database; tienilo dove arrivi solo tu.",
   "dbdump.saveCancelHint": "Annullare ferma il salvataggio e rimuove il file incompleto.",

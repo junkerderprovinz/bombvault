@@ -1460,6 +1460,7 @@ const ms: Partial<Translations> = {
   "dbdump.formatSql": ".sql",
   "dbdump.formatGz": ".sql.gz (dimampatkan)",
   "dbdump.downloadRefused": "Muat turun ditolak",
+  "dbdump.downloadPlainOnPhone": "Telefon hanya boleh memuat turun dump apabila penyulitan eksport dihidupkan. Hidupkan {switch} dalam antara muka web, di bawah {where}.",
   "dbdump.saveToFolder": "Simpan ke folder",
   "dbdump.saveHint": "Menulis dump sebagai fail ke folder pilihan pada pelayan, dimiliki nobody:users supaya anda boleh membukanya melalui perkongsian rangkaian. Fail ini mengandungi setiap jadual dan cincangan kata laluan pengguna pangkalan data; simpan di tempat yang hanya anda capai.",
   "dbdump.saveCancelHint": "Membatalkan akan menghentikan simpanan dan membuang fail yang belum siap.",
