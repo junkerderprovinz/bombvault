@@ -865,7 +865,7 @@ const et: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kaart „Seansid“ näitab iga sisselogitud brauserit. Saad neist ükskõik millise välja logida või kõik teised korraga.",
   "whatsNew.passwordCheck": "Kui logisid sisse rohkem kui kümme minutit tagasi, küsib BombVault enne muudatust, näiteks uut pääsuvõtit või sisselogimisteenust, sinu parooli. Selle lüliti on paroolikaardil.",
   "whatsNew.accounts": "Kes tuleb sisselogimisteenuse kaudu, saab konto. Kaart „Kontod“ muudab selle rolli, blokeerib selle või eemaldab selle, ja blokeerimine või eemaldamine lõpetab ka võtmed ja load, mille see lõi.",
-  "whatsNew.phonesAlwaysPair": "Telefon, mis teab sinu grupi kahtteist sõna, seotakse alati, ilma lülitita, mida peaksid enne sisse lülitama. Et mõnda eemal hoida, eemalda see lehel „Eksemplarid“.",
+  "whatsNew.phonesAlwaysPair": "Telefon, mille grupp on vastu võtnud, logib alati sisse, ilma lülitita, mida peaksid enne sisse lülitama. Et mõnda eemal hoida, eemalda see lehel „Eksemplarid“.",
   "whatsNew.passwordOptional": "BombVault töötab täiesti ilma sisselogimisparoolita, taastekomplektist sõlmede ja kindluse teiste rakendusteni. Sobib igas pikkuses parool, ja lühike saab ainult vihje.",
   "whatsNew.releaseNotesWindow": "Kui Otsi uuendusi leiab uuema versiooni, näitab kaardi Versioon nupp Uudised selle väljalaskemärkmeid aknas.",
   "whatsNew.appVersionCards": "Androidi rakenduse seaded näitavad selle versiooni ja seda, kust uuendused tulevad, ning jaotises Komponendid GlimStone'i versiooni.",

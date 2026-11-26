@@ -1146,7 +1146,7 @@ const pl: Partial<Translations> = {
   "whatsNew.sessionsCard": "Karta „Sesje” pokazuje każdą zalogowaną przeglądarkę. Możesz wylogować dowolną z nich albo wszystkie pozostałe naraz.",
   "whatsNew.passwordCheck": "Jeśli zalogowałeś się ponad dziesięć minut temu, BombVault pyta o hasło przed zmianą taką jak nowy klucz dostępu czy usługa logowania. Przełącznik do tego jest na karcie hasła.",
   "whatsNew.accounts": "Kto wchodzi przez usługę logowania, dostaje konto. Karta „Konta” zmienia jego rolę, blokuje je lub usuwa, a zablokowanie lub usunięcie kończy też klucze i zgody, które utworzyło.",
-  "whatsNew.phonesAlwaysPair": "Telefon, który zna dwanaście słów twojej grupy, zawsze się paruje, bez przełącznika, który trzeba najpierw włączyć. Aby trzymać któryś z dala, usuń go na stronie „Instancje”.",
+  "whatsNew.phonesAlwaysPair": "Telefon, który grupa wpuściła, zawsze się loguje, bez przełącznika, który trzeba najpierw włączyć. Aby trzymać któryś z dala, usuń go na stronie „Instancje”.",
   "whatsNew.passwordOptional": "BombVault działa w pełni bez hasła logowania, od zestawu odzyskiwania po węzły i pozostałe aplikacje twierdzy. Hasło dowolnej długości jest w porządku, a krótkie dostaje tylko podpowiedź.",
   "whatsNew.releaseNotesWindow": "Gdy Szukaj aktualizacji znajdzie nowszą wersję, Nowości na karcie Wersja pokazują jej informacje o wydaniu w oknie.",
   "whatsNew.appVersionCards": "Ustawienia aplikacji na Androida pokazują jej wersję i to, skąd przychodzą aktualizacje, a w sekcji Komponenty wersję GlimStone.",

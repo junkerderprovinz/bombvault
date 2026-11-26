@@ -865,7 +865,7 @@ const id: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kartu “Sesi” menampilkan setiap browser yang sedang masuk. Kamu bisa mengeluarkan salah satunya, atau semua yang lain sekaligus.",
   "whatsNew.passwordCheck": "Jika kamu masuk lebih dari sepuluh menit lalu, BombVault meminta kata sandimu sebelum perubahan seperti kunci sandi atau layanan masuk baru. Sakelarnya ada di kartu kata sandi.",
   "whatsNew.accounts": "Orang yang datang lewat layanan masuk mendapat akun. Kartu “Akun” mengubah perannya, memblokirnya, atau menghapusnya, dan memblokir atau menghapusnya juga mengakhiri kunci dan izin yang dibuatnya.",
-  "whatsNew.phonesAlwaysPair": "Ponsel yang tahu dua belas kata grupmu selalu tersambung, tanpa sakelar yang harus dinyalakan dulu. Untuk menjauhkan satu ponsel, hapus di halaman “Instance”.",
+  "whatsNew.phonesAlwaysPair": "Ponsel yang sudah diterima oleh grup selalu masuk, tanpa sakelar yang harus dinyalakan dulu. Untuk menjauhkan satu ponsel, hapus di halaman “Instance”.",
   "whatsNew.passwordOptional": "BombVault berjalan penuh tanpa kata sandi masuk, dari kit pemulihan sampai node dan aplikasi lain di benteng. Kata sandi sepanjang apa pun boleh, dan yang pendek hanya mendapat saran.",
   "whatsNew.releaseNotesWindow": "Saat Cari pembaruan menemukan rilis yang lebih baru, Yang baru di kartu Versi menampilkan catatan rilisnya di sebuah jendela.",
   "whatsNew.appVersionCards": "Pengaturan aplikasi Android menampilkan versinya dan asal pembaruannya, dengan versi GlimStone di bawah Komponen.",

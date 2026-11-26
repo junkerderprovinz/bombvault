@@ -865,7 +865,7 @@ const lv: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kartīte “Sesijas” rāda katru pārlūku, kurā ir pierakstīšanās. Vari izrakstīt jebkuru no tiem vai visus pārējos uzreiz.",
   "whatsNew.passwordCheck": "Ja pierakstījies vairāk nekā pirms desmit minūtēm, BombVault pirms tādām izmaiņām kā jauna piekļuves atslēga vai pierakstīšanās pakalpojums prasa tavu paroli. Slēdzis tam ir paroles kartītē.",
   "whatsNew.accounts": "Kas ienāk caur pierakstīšanās pakalpojumu, saņem kontu. Kartīte “Konti” maina tā lomu, bloķē to vai noņem, un bloķēšana vai noņemšana izbeidz arī tā izveidotās atslēgas un atļaujas.",
-  "whatsNew.phonesAlwaysPair": "Tālrunis, kas zina tavas grupas divpadsmit vārdus, vienmēr savienojas pārī, bez slēdža, kas vispirms jāieslēdz. Lai kādu turētu ārā, noņem to lapā “Instances”.",
+  "whatsNew.phonesAlwaysPair": "Tālrunis, ko grupa ir ielaidusi, vienmēr piesakās, bez slēdža, kas vispirms jāieslēdz. Lai kādu turētu ārā, noņem to lapā “Instances”.",
   "whatsNew.passwordOptional": "BombVault pilnībā darbojas bez pieteikšanās paroles, no atkopšanas komplekta līdz mezgliem un citām cietokšņa lietotnēm. Der jebkura garuma parole, un īsa saņem tikai padomu.",
   "whatsNew.releaseNotesWindow": "Kad Meklēt atjauninājumus atrod jaunāku versiju, kartītes Versija poga Jaunumi parāda tās laidiena piezīmes logā.",
   "whatsNew.appVersionCards": "Android lietotnes iestatījumi rāda tās versiju un to, no kurienes nāk atjauninājumi, kā arī GlimStone versiju sadaļā Komponenti.",

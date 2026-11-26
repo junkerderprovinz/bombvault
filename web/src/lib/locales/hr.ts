@@ -865,7 +865,7 @@ const hr: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kartica „Sesije” prikazuje svaki preglednik u kojem si prijavljen. Možeš odjaviti bilo koji od njih, ili sve ostale odjednom.",
   "whatsNew.passwordCheck": "Ako si se prijavio prije više od deset minuta, BombVault traži tvoju lozinku prije promjene kao što je novi pristupni ključ ili usluga za prijavu. Prekidač za to nalazi se u kartici lozinke.",
   "whatsNew.accounts": "Tko dođe preko usluge za prijavu, dobiva račun. Kartica „Računi” mijenja mu ulogu, blokira ga ili uklanja, a blokiranje ili uklanjanje prekida i ključeve i dozvole koje je napravio.",
-  "whatsNew.phonesAlwaysPair": "Telefon koji zna dvanaest riječi tvoje grupe uvijek se upari, bez prekidača koji prvo treba uključiti. Da neki zadržiš vani, ukloni ga na stranici „Instance”.",
+  "whatsNew.phonesAlwaysPair": "Telefon koji je grupa pustila unutra uvijek se prijavi, bez prekidača koji prvo treba uključiti. Da neki zadržiš vani, ukloni ga na stranici „Instance”.",
   "whatsNew.passwordOptional": "BombVault potpuno radi bez lozinke za prijavu, od kompleta za oporavak do čvorova i ostalih aplikacija utvrde. Lozinka bilo koje duljine je u redu, a kratka dobiva samo savjet.",
   "whatsNew.releaseNotesWindow": "Kad Potraži ažuriranja pronađe noviju verziju, Novosti na kartici Verzija prikazuju njezine bilješke o izdanju u prozoru.",
   "whatsNew.appVersionCards": "Postavke Android aplikacije prikazuju njezinu verziju i odakle dolaze ažuriranja, a pod Komponente verziju GlimStonea.",

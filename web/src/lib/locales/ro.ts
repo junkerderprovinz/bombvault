@@ -1149,7 +1149,7 @@ const ro: Partial<Translations> = {
   "whatsNew.sessionsCard": "Cardul „Sesiuni” arată fiecare browser conectat. Poți deconecta oricare dintre ele, sau pe toate celelalte deodată.",
   "whatsNew.passwordCheck": "Dacă te-ai conectat acum mai bine de zece minute, BombVault îți cere parola înaintea unei schimbări precum o cheie de acces sau un serviciu de conectare nou. Comutatorul pentru asta se află în cardul parolei.",
   "whatsNew.accounts": "Cine intră printr-un serviciu de conectare primește un cont. Cardul „Conturi” îi schimbă rolul, îl blochează sau îl elimină, iar blocarea sau eliminarea încheie și cheile și permisiunile pe care le-a creat.",
-  "whatsNew.phonesAlwaysPair": "Un telefon care știe cele douăsprezece cuvinte ale grupului tău se asociază mereu, fără un comutator pe care să-l pornești mai întâi. Ca să ții unul afară, elimină-l pe pagina „Instanțe”.",
+  "whatsNew.phonesAlwaysPair": "Un telefon pe care grupul l-a primit se conectează mereu, fără un comutator pe care să-l pornești mai întâi. Ca să ții unul afară, elimină-l pe pagina „Instanțe”.",
   "whatsNew.passwordOptional": "BombVault funcționează complet fără parolă de autentificare, de la kitul de recuperare până la noduri și celelalte aplicații ale fortăreței. Merge o parolă de orice lungime, iar una scurtă primește doar un sfat.",
   "whatsNew.releaseNotesWindow": "Când Caută actualizări găsește o versiune mai nouă, Noutăți de pe cardul Versiune îi arată notele într-o fereastră.",
   "whatsNew.appVersionCards": "Setările aplicației Android arată versiunea ei și de unde vin actualizările, cu versiunea GlimStone la Componente.",

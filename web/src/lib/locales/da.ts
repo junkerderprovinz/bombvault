@@ -1159,7 +1159,7 @@ const da: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kortet „Sessioner“ viser hver browser, der er logget ind. Du kan logge enhver af dem ud, eller alle de andre på én gang.",
   "whatsNew.passwordCheck": "Når du loggede ind for mere end ti minutter siden, beder BombVault om din adgangskode før en ændring som en ny adgangsnøgle eller logintjeneste. Kontakten til det sidder i kortet for adgangskoden.",
   "whatsNew.accounts": "Den, der kommer ind via en logintjeneste, får en konto. Kortet „Konti“ ændrer dens rolle, blokerer den eller fjerner den, og blokering eller fjernelse afslutter også de nøgler og tilladelser, den har oprettet.",
-  "whatsNew.phonesAlwaysPair": "En telefon, der kender din gruppes tolv ord, parres altid, uden en kontakt, du først skal slå til. Vil du holde en ude, så fjern den på siden „Instanser“.",
+  "whatsNew.phonesAlwaysPair": "En telefon, som gruppen har lukket ind, logger altid ind, uden en kontakt, du først skal slå til. Vil du holde en ude, så fjern den på siden „Instanser“.",
   "whatsNew.passwordOptional": "BombVault virker helt uden adgangskode til login, fra gendannelseskittet til noder og fæstningens andre apps. En adgangskode af enhver længde er fin, og en kort får kun et tip.",
   "whatsNew.releaseNotesWindow": "Når Søg efter opdateringer finder en nyere version, viser Nyheder på kortet Version dens udgivelsesnoter i et vindue.",
   "whatsNew.appVersionCards": "Android-appens indstillinger viser dens version, og hvor opdateringerne kommer fra, med GlimStones version under Komponenter.",

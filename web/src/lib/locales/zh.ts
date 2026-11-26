@@ -1150,7 +1150,7 @@ const zh: Partial<Translations> = {
   "whatsNew.sessionsCard": "“会话”卡片列出每个已登录的浏览器。你可以让其中任意一个退出登录，也可以一次让其他所有浏览器退出。",
   "whatsNew.passwordCheck": "如果你登录已超过十分钟，BombVault 会在新的通行密钥或登录服务这类更改之前询问你的密码。这个开关在密码卡片里。",
   "whatsNew.accounts": "通过登录服务进来的人会得到一个账户。“账户”卡片可以更改它的角色、封禁它或移除它，封禁或移除也会结束它创建的密钥和授权。",
-  "whatsNew.phonesAlwaysPair": "知道你群组十二个词的手机总能配对，无需先打开任何开关。要把某部手机挡在外面，请在“实例”页面上移除它。",
+  "whatsNew.phonesAlwaysPair": "群组已放行的手机总能登录，无需先打开任何开关。要把某部手机挡在外面，请在“实例”页面上移除它。",
   "whatsNew.passwordOptional": "BombVault 无需登录密码即可完整使用，从恢复工具包到节点和堡垒中的其他应用都是如此。密码长度不限，较短的密码只会收到一条提示。",
   "whatsNew.releaseNotesWindow": "当检查更新找到更新的版本时，版本卡片上的新功能会在窗口中显示该版本的发布说明。",
   "whatsNew.appVersionCards": "Android 应用的设置显示其版本和更新来源，并在组件下显示 GlimStone 的版本。",

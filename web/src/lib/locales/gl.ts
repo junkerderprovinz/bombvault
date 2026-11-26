@@ -865,7 +865,7 @@ const gl: Partial<Translations> = {
   "whatsNew.sessionsCard": "A tarxeta «Sesións» mostra cada navegador coa sesión iniciada. Podes pechar a sesión de calquera deles, ou de todos os demais á vez.",
   "whatsNew.passwordCheck": "Se iniciaches sesión hai máis de dez minutos, BombVault pídeche o contrasinal antes dun cambio como unha nova chave de acceso ou un novo servizo de inicio de sesión. O interruptor está na tarxeta do contrasinal.",
   "whatsNew.accounts": "Quen entra a través dun servizo de inicio de sesión recibe unha conta. A tarxeta «Contas» cambia o seu rol, bloquéaa ou elimínaa, e bloqueala ou eliminala tamén pon fin ás chaves e permisos que creou.",
-  "whatsNew.phonesAlwaysPair": "Un teléfono que coñece as doce palabras do teu grupo sempre se vincula, sen ningún interruptor que activar antes. Para deixar un fóra, elimínao na páxina «Instancias».",
+  "whatsNew.phonesAlwaysPair": "Un teléfono que o grupo deixou entrar sempre inicia sesión, sen ningún interruptor que activar antes. Para deixar un fóra, elimínao na páxina «Instancias».",
   "whatsNew.passwordOptional": "BombVault funciona por completo sen contrasinal de acceso, dende o kit de recuperación ata os nodos e as demais apps da fortaleza. Vale un contrasinal de calquera lonxitude, e un curto só recibe un aviso.",
   "whatsNew.releaseNotesWindow": "Cando Buscar actualizacións atopa unha versión máis recente, Novidades na tarxeta Versión mostra as súas notas da versión nunha xanela.",
   "whatsNew.appVersionCards": "A configuración da app de Android mostra a súa versión e de onde chegan as súas actualizacións, coa versión de GlimStone en Compoñentes.",

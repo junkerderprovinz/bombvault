@@ -865,7 +865,7 @@ const ms: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kad “Sesi” menyenaraikan setiap pelayar yang sedang log masuk. Anda boleh log keluar mana-mana satu, atau semua yang lain sekali gus.",
   "whatsNew.passwordCheck": "Jika anda log masuk lebih daripada sepuluh minit lalu, BombVault meminta kata laluan anda sebelum perubahan seperti kunci laluan atau perkhidmatan log masuk baharu. Suisnya ada dalam kad kata laluan.",
   "whatsNew.accounts": "Sesiapa yang masuk melalui perkhidmatan log masuk mendapat akaun. Kad “Akaun” menukar peranannya, menyekatnya atau membuangnya, dan menyekat atau membuangnya juga menamatkan kunci dan kebenaran yang dibuatnya.",
-  "whatsNew.phonesAlwaysPair": "Telefon yang tahu dua belas perkataan kumpulan anda sentiasa berpasangan, tanpa suis yang perlu dihidupkan dahulu. Untuk menghalang satu, buangnya di halaman “Instans”.",
+  "whatsNew.phonesAlwaysPair": "Telefon yang telah diterima oleh kumpulan sentiasa log masuk, tanpa suis yang perlu dihidupkan dahulu. Untuk menghalang satu, buangnya di halaman “Instans”.",
   "whatsNew.passwordOptional": "BombVault berfungsi sepenuhnya tanpa kata laluan log masuk, daripada kit pemulihan hingga nod dan aplikasi lain dalam kubu. Kata laluan sepanjang mana pun boleh, dan yang pendek hanya mendapat petua.",
   "whatsNew.releaseNotesWindow": "Apabila Cari kemas kini menemui keluaran yang lebih baharu, Apa yang baharu pada kad Versi menunjukkan nota keluarannya dalam tetingkap.",
   "whatsNew.appVersionCards": "Tetapan aplikasi Android menunjukkan versinya dan dari mana kemas kininya datang, dengan versi GlimStone di bawah Komponen.",

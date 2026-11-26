@@ -1152,7 +1152,7 @@ const hu: Partial<Translations> = {
   "whatsNew.sessionsCard": "A „Munkamenetek” kártya minden bejelentkezett böngészőt felsorol. Bármelyiket kijelentkeztetheted, vagy az összes többit egyszerre.",
   "whatsNew.passwordCheck": "Ha több mint tíz perce jelentkeztél be, a BombVault egy olyan módosítás előtt, mint egy új azonosítókulcs vagy bejelentkezési szolgáltatás, elkéri a jelszavadat. A kapcsoló ehhez a jelszó kártyáján van.",
   "whatsNew.accounts": "Aki bejelentkezési szolgáltatáson keresztül érkezik, fiókot kap. A „Fiókok” kártya módosítja a szerepkörét, letiltja vagy eltávolítja, és a letiltás vagy eltávolítás az általa létrehozott kulcsokat és engedélyeket is megszünteti.",
-  "whatsNew.phonesAlwaysPair": "Az a telefon, amely ismeri a csoportod tizenkét szavát, mindig párosodik, anélkül hogy előbb bármilyen kapcsolót be kellene kapcsolnod. Ha egyet kint akarsz tartani, távolítsd el a „Példányok” oldalon.",
+  "whatsNew.phonesAlwaysPair": "Az a telefon, amelyet a csoport beengedett, mindig bejelentkezik, anélkül hogy előbb bármilyen kapcsolót be kellene kapcsolnod. Ha egyet kint akarsz tartani, távolítsd el a „Példányok” oldalon.",
   "whatsNew.passwordOptional": "A BombVault teljesen működik belépési jelszó nélkül, a helyreállítási csomagtól a csomópontokig és az erőd többi alkalmazásáig. Bármilyen hosszú jelszó megfelel, a rövid csak egy tippet kap.",
   "whatsNew.releaseNotesWindow": "Ha a Frissítések keresése újabb verziót talál, a Verzió kártya Újdonságok gombja ablakban mutatja a kiadási megjegyzéseit.",
   "whatsNew.appVersionCards": "Az Android-alkalmazás beállításai mutatják a verzióját és azt, honnan jönnek a frissítések, az Összetevők alatt pedig a GlimStone verzióját.",

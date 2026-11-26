@@ -1142,7 +1142,7 @@ const ko: Partial<Translations> = {
   "whatsNew.sessionsCard": "'세션' 카드는 로그인된 모든 브라우저를 보여 줍니다. 그중 아무거나 로그아웃하거나, 나머지 모두를 한 번에 로그아웃할 수 있습니다.",
   "whatsNew.passwordCheck": "로그인한 지 10분이 넘었으면, 새 패스키나 로그인 서비스 같은 변경 전에 BombVault가 비밀번호를 묻습니다. 이 스위치는 비밀번호 카드에 있습니다.",
   "whatsNew.accounts": "로그인 서비스로 들어온 사람은 계정을 받습니다. '계정' 카드에서 역할을 바꾸거나 차단하거나 삭제할 수 있고, 차단하거나 삭제하면 그 계정이 만든 키와 권한도 끝납니다.",
-  "whatsNew.phonesAlwaysPair": "그룹의 열두 단어를 아는 휴대폰은 먼저 켜야 할 스위치 없이 항상 페어링됩니다. 하나를 막으려면 '인스턴스' 페이지에서 삭제하세요.",
+  "whatsNew.phonesAlwaysPair": "그룹이 들여보낸 휴대폰은 먼저 켜야 할 스위치 없이 항상 로그인됩니다. 하나를 막으려면 '인스턴스' 페이지에서 삭제하세요.",
   "whatsNew.passwordOptional": "BombVault는 로그인 비밀번호 없이도 복구 키트부터 노드, 요새의 다른 앱까지 모두 사용할 수 있습니다. 비밀번호 길이는 자유이며, 짧은 비밀번호에는 안내만 표시됩니다.",
   "whatsNew.releaseNotesWindow": "업데이트 확인에서 새 릴리스를 찾으면 버전 카드의 새로운 기능이 해당 릴리스 노트를 창으로 보여 줍니다.",
   "whatsNew.appVersionCards": "Android 앱 설정에 앱 버전과 업데이트를 받는 곳이 표시되고, 구성 요소에는 GlimStone 버전이 표시됩니다.",

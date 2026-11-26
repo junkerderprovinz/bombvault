@@ -1159,7 +1159,7 @@ const fi: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kortti ”Istunnot” näyttää jokaisen selaimen, jolla on kirjauduttu. Voit kirjata ulos minkä tahansa niistä tai kaikki muut kerralla.",
   "whatsNew.passwordCheck": "Kun kirjauduit yli kymmenen minuuttia sitten, BombVault kysyy salasanaasi ennen muutosta, kuten uutta pääsyavainta tai kirjautumispalvelua. Kytkin tähän on salasanakortissa.",
   "whatsNew.accounts": "Kirjautumispalvelun kautta tuleva saa tilin. Kortti ”Tilit” vaihtaa sen roolin, estää sen tai poistaa sen, ja esto tai poisto päättää myös sen luomat avaimet ja luvat.",
-  "whatsNew.phonesAlwaysPair": "Puhelin, joka tietää ryhmäsi kaksitoista sanaa, yhdistyy aina, eikä mitään kytkintä tarvitse ensin kääntää päälle. Jos haluat pitää jonkin ulkona, poista se sivulla ”Instanssit”.",
+  "whatsNew.phonesAlwaysPair": "Puhelin, jonka ryhmä on päästänyt mukaan, kirjautuu aina sisään, eikä mitään kytkintä tarvitse ensin kääntää päälle. Jos haluat pitää jonkin ulkona, poista se sivulla ”Instanssit”.",
   "whatsNew.passwordOptional": "BombVault toimii kokonaan ilman kirjautumissalasanaa palautuspaketista solmuihin ja linnoituksen muihin sovelluksiin. Minkä pituinen salasana tahansa käy, ja lyhyt saa vain vinkin.",
   "whatsNew.releaseNotesWindow": "Kun Hae päivityksiä löytää uudemman version, Versio-kortin Uutta näyttää sen julkaisutiedot ikkunassa.",
   "whatsNew.appVersionCards": "Android-sovelluksen asetukset näyttävät sen version ja mistä päivitykset tulevat, ja Komponentit-kohdassa GlimStonen version.",

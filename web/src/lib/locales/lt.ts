@@ -865,7 +865,7 @@ const lt: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kortelė „Seansai“ rodo kiekvieną prisijungusią naršyklę. Gali atjungti bet kurią iš jų arba visas kitas iš karto.",
   "whatsNew.passwordCheck": "Jei prisijungei daugiau nei prieš dešimt minučių, prieš pakeitimą, pavyzdžiui, naują prieigos raktą ar prisijungimo paslaugą, BombVault paklausia tavo slaptažodžio. Jungiklis tam yra slaptažodžio kortelėje.",
   "whatsNew.accounts": "Kas ateina per prisijungimo paslaugą, gauna paskyrą. Kortelė „Paskyros“ keičia jos vaidmenį, ją blokuoja arba pašalina, o blokavimas ar pašalinimas taip pat nutraukia jos sukurtus raktus ir leidimus.",
-  "whatsNew.phonesAlwaysPair": "Telefonas, žinantis dvylika tavo grupės žodžių, visada susiejamas, be jungiklio, kurį pirma reikėtų įjungti. Kad kurį nors laikytum lauke, pašalink jį puslapyje „Egzemplioriai“.",
+  "whatsNew.phonesAlwaysPair": "Telefonas, kurį grupė įsileido, visada prisijungia, be jungiklio, kurį pirma reikėtų įjungti. Kad kurį nors laikytum lauke, pašalink jį puslapyje „Egzemplioriai“.",
   "whatsNew.passwordOptional": "BombVault visiškai veikia be prisijungimo slaptažodžio, nuo atkūrimo rinkinio iki mazgų ir kitų tvirtovės programų. Tinka bet kokio ilgio slaptažodis, o trumpas gauna tik patarimą.",
   "whatsNew.releaseNotesWindow": "Kai Ieškoti atnaujinimų randa naujesnę versiją, kortelės Versija mygtukas Naujienos parodo jos išleidimo pastabas lange.",
   "whatsNew.appVersionCards": "Android programos nustatymai rodo jos versiją ir iš kur ateina atnaujinimai, o skiltyje Komponentai GlimStone versiją.",

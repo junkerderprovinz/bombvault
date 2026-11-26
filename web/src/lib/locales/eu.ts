@@ -865,7 +865,7 @@ const eu: Partial<Translations> = {
   "whatsNew.sessionsCard": "«Saioak» txartelak saioa hasita duen nabigatzaile bakoitza erakusten du. Edozeinen saioa itxi dezakezu, edo beste guztienak batera.",
   "whatsNew.passwordCheck": "Duela hamar minutu baino gehiago hasi bazenuen saioa, BombVaultek pasahitza eskatzen dizu aldaketa baten aurretik, hala nola sarbide-gako edo saio-hasierako zerbitzu berri baten aurretik. Horretarako etengailua pasahitzaren txartelean dago.",
   "whatsNew.accounts": "Saio-hasierako zerbitzu baten bidez sartzen denak kontu bat jasotzen du. «Kontuak» txartelak haren rola aldatzen du, blokeatzen du edo kentzen du, eta blokeatzeak edo kentzeak sortu zituen gakoak eta baimenak ere amaitzen ditu.",
-  "whatsNew.phonesAlwaysPair": "Zure taldearen hamabi hitzak ezagutzen dituen telefonoa beti parekatzen da, aurretik piztu beharreko etengailurik gabe. Bat kanpoan uzteko, kendu «Instantziak» orrian.",
+  "whatsNew.phonesAlwaysPair": "Taldeak sartzen utzi dion telefono batek beti hasten du saioa, aurretik piztu beharreko etengailurik gabe. Bat kanpoan uzteko, kendu «Instantziak» orrian.",
   "whatsNew.passwordOptional": "BombVault-ek saioa hasteko pasahitzik gabe funtzionatzen du osorik, berreskuratze-kitetik nodoetara eta gotorlekuaren beste aplikazioetaraino. Edozein luzeratako pasahitzak balio du, eta labur batek aholku bat besterik ez du jasotzen.",
   "whatsNew.releaseNotesWindow": "Bilatu eguneraketak aukerak bertsio berriago bat aurkitzen duenean, Bertsioa txarteleko Berritasunak botoiak haren bertsio-oharrak leiho batean erakusten ditu.",
   "whatsNew.appVersionCards": "Android aplikazioaren ezarpenek haren bertsioa eta eguneraketak nondik datozen erakusten dute, eta Osagaiak atalean GlimStone-ren bertsioa.",

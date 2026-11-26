@@ -1148,7 +1148,7 @@ const nl: Partial<Translations> = {
   "whatsNew.sessionsCard": "De kaart ‘Sessies’ toont elke browser die is ingelogd. Je kunt elk ervan uitloggen, of alle andere tegelijk.",
   "whatsNew.passwordCheck": "Als je meer dan tien minuten geleden bent ingelogd, vraagt BombVault om je wachtwoord voor een wijziging zoals een nieuwe passkey of inlogdienst. De schakelaar daarvoor zit in de wachtwoordkaart.",
   "whatsNew.accounts": "Wie via een inlogdienst binnenkomt, krijgt een account. De kaart ‘Accounts’ wijzigt de rol, blokkeert het of verwijdert het, en blokkeren of verwijderen beëindigt ook de sleutels en toestemmingen die het heeft gemaakt.",
-  "whatsNew.phonesAlwaysPair": "Een telefoon die de twaalf woorden van je groep kent, koppelt altijd, zonder schakelaar die je eerst moet aanzetten. Wil je er een buiten houden, verwijder hem dan op de pagina ‘Instanties’.",
+  "whatsNew.phonesAlwaysPair": "Een telefoon die de groep heeft toegelaten, meldt zich altijd aan, zonder schakelaar die je eerst moet aanzetten. Wil je er een buiten houden, verwijder hem dan op de pagina ‘Instanties’.",
   "whatsNew.passwordOptional": "BombVault werkt volledig zonder inlogwachtwoord, van de herstelkit tot nodes en de andere apps van de vesting. Een wachtwoord van elke lengte is goed, en een kort wachtwoord krijgt alleen een tip.",
   "whatsNew.releaseNotesWindow": "Vindt Zoeken naar updates een nieuwere versie, dan toont Nieuw op de kaart Versie de releasenotes in een venster.",
   "whatsNew.appVersionCards": "De instellingen van de Android-app tonen de versie en waar de updates vandaan komen, met de versie van GlimStone onder Onderdelen.",

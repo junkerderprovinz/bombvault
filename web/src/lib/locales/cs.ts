@@ -1157,7 +1157,7 @@ const cs: Partial<Translations> = {
   "whatsNew.sessionsCard": "Karta „Relace“ ukazuje každý přihlášený prohlížeč. Můžeš odhlásit kterýkoli z nich, nebo všechny ostatní najednou.",
   "whatsNew.passwordCheck": "Když ses přihlásil před více než deseti minutami, BombVault se před změnou, jako je nový přístupový klíč nebo přihlašovací služba, zeptá na heslo. Přepínač k tomu je v kartě hesla.",
   "whatsNew.accounts": "Kdo přijde přes přihlašovací službu, dostane účet. Karta „Účty“ mu mění roli, blokuje ho nebo ho odstraní, a zablokování nebo odstranění ukončí i klíče a oprávnění, které vytvořil.",
-  "whatsNew.phonesAlwaysPair": "Telefon, který zná dvanáct slov tvé skupiny, se spáruje vždy, bez přepínače, který bys musel nejdřív zapnout. Chceš-li některý nechat venku, odstraň ho na stránce „Instance“.",
+  "whatsNew.phonesAlwaysPair": "Telefon, který skupina pustila dovnitř, se vždy přihlásí, bez přepínače, který bys musel nejdřív zapnout. Chceš-li některý nechat venku, odstraň ho na stránce „Instance“.",
   "whatsNew.passwordOptional": "BombVault plně funguje bez přihlašovacího hesla, od sady pro obnovu po uzly a další aplikace pevnosti. Hodí se heslo jakékoli délky a krátké dostane jen tip.",
   "whatsNew.releaseNotesWindow": "Když Hledat aktualizace najde novější verzi, Novinky na kartě Verze ukážou její poznámky k vydání v okně.",
   "whatsNew.appVersionCards": "Nastavení aplikace pro Android ukazuje její verzi a odkud přicházejí aktualizace, a v části Komponenty verzi GlimStone.",

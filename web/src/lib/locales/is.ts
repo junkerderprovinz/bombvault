@@ -865,7 +865,7 @@ const is: Partial<Translations> = {
   "whatsNew.sessionsCard": "Kortið „Setur“ sýnir hvern vafra sem er skráður inn. Þú getur skráð hvern þeirra út, eða alla hina í einu.",
   "whatsNew.passwordCheck": "Ef þú skráðir þig inn fyrir meira en tíu mínútum spyr BombVault um lykilorðið þitt á undan breytingu eins og nýjum aðgangslykli eða innskráningarþjónustu. Rofinn fyrir það er í lykilorðskortinu.",
   "whatsNew.accounts": "Sá sem kemur inn í gegnum innskráningarþjónustu fær aðgang. Kortið „Aðgangar“ breytir hlutverki hans, lokar honum eða fjarlægir hann, og lokun eða fjarlæging bindur líka enda á lyklana og heimildirnar sem hann bjó til.",
-  "whatsNew.phonesAlwaysPair": "Sími sem kann tólf orð hópsins þíns parast alltaf, án rofa sem þú þarft fyrst að kveikja á. Til að halda einum úti, fjarlægðu hann á síðunni „Tilvik“.",
+  "whatsNew.phonesAlwaysPair": "Sími sem hópurinn hefur hleypt inn skráir sig alltaf inn, án rofa sem þú þarft fyrst að kveikja á. Til að halda einum úti, fjarlægðu hann á síðunni „Tilvik“.",
   "whatsNew.passwordOptional": "BombVault virkar að fullu án innskráningarlykilorðs, frá endurheimtarpakkanum til hnúta og hinna forrita vígisins. Lykilorð af hvaða lengd sem er dugar, og stutt lykilorð fær aðeins ábendingu.",
   "whatsNew.releaseNotesWindow": "Þegar Leita að uppfærslum finnur nýrri útgáfu sýnir Nýjungar á spjaldinu Útgáfa útgáfulýsingu hennar í glugga.",
   "whatsNew.appVersionCards": "Stillingar Android-forritsins sýna útgáfu þess og hvaðan uppfærslurnar koma, ásamt útgáfu GlimStone undir Íhlutir.",

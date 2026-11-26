@@ -1159,7 +1159,7 @@ const tr: Partial<Translations> = {
   "whatsNew.sessionsCard": "\"Oturumlar\" kartı giriş yapılmış her tarayıcıyı listeler. Herhangi birinin oturumunu kapatabilir ya da diğerlerinin hepsini bir kerede kapatabilirsin.",
   "whatsNew.passwordCheck": "On dakikadan uzun süre önce giriş yaptıysan BombVault, yeni bir geçiş anahtarı veya giriş hizmeti gibi bir değişiklikten önce parolanı sorar. Bunun anahtarı parola kartındadır.",
   "whatsNew.accounts": "Bir giriş hizmetiyle gelen kişi bir hesap alır. \"Hesaplar\" kartı hesabın rolünü değiştirir, onu engeller ya da kaldırır, engellemek ya da kaldırmak hesabın oluşturduğu anahtarları ve izinleri de sona erdirir.",
-  "whatsNew.phonesAlwaysPair": "Grubunun on iki kelimesini bilen bir telefon, önce açman gereken bir anahtar olmadan her zaman eşleşir. Birini dışarıda tutmak için onu \"Örnekler\" sayfasında kaldır.",
+  "whatsNew.phonesAlwaysPair": "Grubun içeri aldığı bir telefon, önce açman gereken bir anahtar olmadan her zaman oturum açar. Birini dışarıda tutmak için onu \"Örnekler\" sayfasında kaldır.",
   "whatsNew.passwordOptional": "BombVault, kurtarma kitinden düğümlere ve kalenin diğer uygulamalarına kadar giriş parolası olmadan tamamen çalışır. Her uzunlukta parola olur, kısa bir parola yalnızca bir ipucu alır.",
   "whatsNew.releaseNotesWindow": "Güncellemeleri ara daha yeni bir sürüm bulduğunda, Sürüm kartındaki Yenilikler onun sürüm notlarını bir pencerede gösterir.",
   "whatsNew.appVersionCards": "Android uygulamasının ayarları sürümünü ve güncellemelerin nereden geldiğini, Bileşenler altında da GlimStone sürümünü gösterir.",

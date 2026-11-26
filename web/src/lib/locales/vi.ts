@@ -1150,7 +1150,7 @@ const vi: Partial<Translations> = {
   "whatsNew.sessionsCard": "Thẻ “Phiên” liệt kê mọi trình duyệt đang đăng nhập. Bạn có thể đăng xuất bất kỳ trình duyệt nào, hoặc tất cả các trình duyệt khác cùng lúc.",
   "whatsNew.passwordCheck": "Nếu bạn đăng nhập hơn mười phút trước, BombVault sẽ hỏi mật khẩu trước một thay đổi như khóa truy cập hay dịch vụ đăng nhập mới. Công tắc cho việc này nằm trong thẻ mật khẩu.",
   "whatsNew.accounts": "Ai vào qua dịch vụ đăng nhập sẽ có một tài khoản. Thẻ “Tài khoản” đổi vai trò, chặn hoặc xóa tài khoản đó, và việc chặn hay xóa cũng chấm dứt các khóa và quyền mà tài khoản đã tạo.",
-  "whatsNew.phonesAlwaysPair": "Điện thoại biết mười hai từ của nhóm bạn luôn ghép đôi được, không cần bật công tắc nào trước. Để giữ một máy ở ngoài, hãy xóa nó trên trang “Phiên bản”.",
+  "whatsNew.phonesAlwaysPair": "Điện thoại mà nhóm đã cho vào luôn đăng nhập được, không cần bật công tắc nào trước. Để giữ một máy ở ngoài, hãy xóa nó trên trang “Phiên bản”.",
   "whatsNew.passwordOptional": "BombVault hoạt động đầy đủ mà không cần mật khẩu đăng nhập, từ bộ khôi phục đến các node và những ứng dụng khác trong pháo đài. Mật khẩu dài bao nhiêu cũng được, mật khẩu ngắn chỉ nhận một gợi ý.",
   "whatsNew.releaseNotesWindow": "Khi Tìm bản cập nhật thấy một bản phát hành mới hơn, Có gì mới trên thẻ Phiên bản hiển thị ghi chú phát hành của nó trong một cửa sổ.",
   "whatsNew.appVersionCards": "Phần cài đặt của ứng dụng Android hiển thị phiên bản của nó và nơi các bản cập nhật đến, cùng phiên bản GlimStone trong Thành phần.",
