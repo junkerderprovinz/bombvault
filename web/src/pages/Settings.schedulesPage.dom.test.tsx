@@ -84,8 +84,8 @@ vi.mock("../lib/api", async (importOriginal) => {
       itemsOnServer instanceof Error
         ? Promise.reject(itemsOnServer)
         : Promise.resolve({ ok: true, items: itemsOnServer, unlisted: [] }),
-    patchZFSDataset: (id: string, patch: unknown) => {
-      patches.push([id, patch]);
+    setEntryIncluded: (kind: string, key: string, included: boolean) => {
+      patches.push([`${kind}/${key}`, included]);
       return Promise.resolve({ ok: true });
     },
     getStatus: () => Promise.resolve({ ok: true }),
@@ -255,7 +255,7 @@ describe("scheduled entries", () => {
     const window = await screen.findByRole("dialog");
     expect(within(window).getByText("tank/appdata")).toBeTruthy();
     fireEvent.click(within(window).getByRole("switch", { name: `${en["entry.settings.inSchedule"]}: tank/appdata` }));
-    await waitFor(() => expect(patches).toEqual([["z1", { enabled: true }]]));
+    await waitFor(() => expect(patches).toEqual([["zfs/z1", true]]));
   });
 
   it("updates every container after its backup once switched on", async () => {
