@@ -1,5 +1,5 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { getEmergency, listRuns, type AnomalyView, type Run, type Settings } from "./api";
+import { getStatus, listRuns, type AnomalyView, type Run, type Settings } from "./api";
 import { ATTENTION_CHANGED_EVENT, AttentionContext, AttentionCountContext, FreshInstallContext, LocationsContext } from "./attention";
 import { forgetFirstSteps } from "./firstSteps";
 import { isFreshInstall, rememberInUse } from "./freshInstall";
@@ -54,11 +54,12 @@ export function AttentionProvider({ settings, children }: { settings: Settings |
   }, []);
 
   // A key locks when the server starts under another APP_KEY, and opens
-  // again when the emergency window takes it over anew.
+  // again when the emergency window takes it over anew. The status names it
+  // to a paired phone too, which is refused the emergency.
   const readKey = useCallback(() => {
-    getEmergency()
+    getStatus()
       .then((res) => {
-        if (res.ok && res.emergency) setKeyLocked(res.emergency.backupKey === "locked");
+        if (res.ok && res.backupKey) setKeyLocked(res.backupKey === "locked");
       })
       .catch(() => undefined);
   }, []);

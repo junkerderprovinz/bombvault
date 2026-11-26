@@ -384,6 +384,17 @@ describe("the status head", () => {
     expect(rows.map((row) => row.getAttribute("data-testid"))).toEqual(["need-key-locked", "need-recovery-kit"]);
   });
 
+  it("tells a paired phone that the key no longer opens", async () => {
+    server.phone = true;
+    server.domains = [domain()];
+    server.items = [item()];
+    server.keyLocked = true;
+    await renderPage();
+
+    const rows = within(cell("needs")).getAllByRole("listitem");
+    expect(rows.map((row) => row.getAttribute("data-testid"))).toEqual(["need-key-locked"]);
+  });
+
   it("takes the recovery kit off the list once it is stored", async () => {
     server.domains = [domain()];
     server.items = [item()];

@@ -272,10 +272,14 @@ export function stagedApi<M extends object>(actual: M): M {
     };
   return {
     ...actual,
-    getStatus: () => answer(server.domains, (domains) => ({ ok: true, domains })),
+    getStatus: () =>
+      answer(server.domains, (domains) => ({ ok: true, domains, backupKey: server.keyLocked ? "locked" : "own" })),
     openedAsPairedPhone: () => server.phone,
+    // A paired phone's session is refused the emergency.
     getEmergency: () =>
-      Promise.resolve({ ok: true, emergency: { backupKey: server.keyLocked ? "locked" : "own", undoable: false } }),
+      server.phone
+        ? Promise.reject(new Error("own-login-needed"))
+        : Promise.resolve({ ok: true, emergency: { backupKey: server.keyLocked ? "locked" : "own", undoable: false } }),
     listItems: () => answer(server.items, (items) => ({ ok: true, items, unlisted: [] })),
     listRuns: vi.fn(() => answer(server.runs, (runs) => ({ ok: true, runs }))),
     listStorageLocations: vi.fn(() => answer(server.locations, (locations) => ({ ok: true, locations }))),
