@@ -124,6 +124,8 @@ KINDS = {
     "zimaos":           (0, "zimaos", "#f4f4f4", "#1b1b1b", "ZimaOS", "Community store", "Install from the ZimaOS and CasaOS store"),
     # The tile Dashboard Icons sets Umbrel's mark on.
     "umbrel":           (0, "umbrel", "#5351f3", "#ffffff", "Umbrel", "Community store", "Install from the umbrelOS community app store"),
+    # The blue of TrueNAS's mark, where white holds 3.3:1, about as much as on MOS's green.
+    "truenas":          (0, "truenas", "#0095d5", "#ffffff", "TrueNAS", "App catalog", "Install from the TrueNAS app catalog"),
     # Proxmox's orange. White holds 3.0:1 on it, a little under Unraid's
     # orange, which is enough for type this large. It leads to the README's own
     # Proxmox section, so its link is an anchor on the page, and so do the
@@ -222,7 +224,7 @@ TITLES = {
 PHONES = "Phone"
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
-          "unraid.net", "mos-official.net", "github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
+          "unraid.net", "mos-official.net", "apps.truenas.com","github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
           "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget",
           "github.com/junkerderprovinz/tollroll")
 

@@ -27,13 +27,16 @@ ParleyPort's mark is its own logo, from
 TollRoll's mark is its own logo, from
 <https://github.com/junkerderprovinz/tollroll>, one path per shape.
 
+**Simple Icons** (<https://simpleicons.org>): TrueNAS, its `truenas.svg`.
+**CC0 1.0** for the path data.
+
 ## Trademarks
 
 Every platform mark here is a trademark of its owner. They are used the one way a
 trademark may be used without permission, which is to refer to the thing they
 name: each sits on a download button for that platform, unmodified, and nothing
-here claims endorsement by or affiliation with Docker, Google, F-Droid or Lime
-Technology. The ZIP and the book are no one's marks; they stand for the source
+here claims endorsement by or affiliation with Docker, Google, F-Droid, Lime
+Technology or iXsystems. The ZIP and the book are no one's marks; they stand for the source
 archive and the manual.
 
 ## Adding one

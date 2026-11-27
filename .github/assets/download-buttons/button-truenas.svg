@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the TrueNAS app catalog">
+  <title>Install from the TrueNAS app catalog</title>
+  <defs>
+    <clipPath id="edge">
+      <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z"/>
+    </clipPath>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="1"    stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <style>
+    @keyframes pass {
+      0%       { transform: translateX(-278.4px); }
+      7.75%   { transform: translateX(1120.3px); }
+      100%     { transform: translateX(1120.3px); }
+    }
+    .band { animation: pass 13.718s linear 2.899s infinite backwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .band { animation: none; opacity: 0; }
+    }
+  </style>
+  <path d="M38.2,0 H803.7 A38.2,38.2 0 0 1 841.9,38.2 V207.1 A38.2,38.2 0 0 1 803.7,245.3 H38.2 A38.2,38.2 0 0 1 0,207.1 V38.2 A38.2,38.2 0 0 1 38.2,0 Z" fill="#0095d5"/>
+  <g transform="translate(85.0 56.65) scale(5.5)" fill="#ffffff">
+    <path d="M24 10.049v5.114l-10.949 6.324v-5.114L24 10.049zm-24 0v5.114l10.956 6.324v-5.114L0 10.049zm12.004-.605l-4.433 2.559 4.433 2.559 4.429-2.559-4.429-2.559zm10.952-1.207l-9.905-5.723v5.118l5.473 3.164 4.432-2.559zm-12-.605V2.513L1.044 8.236l4.432 2.555 5.48-3.159z"/>
+  </g>
+  <text x="300" y="151" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="82" font-weight="700" fill="#ffffff">TrueNAS</text>
+  <g clip-path="url(#edge)">
+    <g class="band">
+      <rect x="0" y="-60" width="173.6" height="365.3"
+            fill="url(#sheen)" transform="skewX(-16)"/>
+    </g>
+  </g>
+</svg>

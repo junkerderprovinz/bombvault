@@ -11,6 +11,7 @@ BUTTONS = {
     "unraid": "https://ca.unraid.net/apps/bombvault-06cz2zq1itlcy2",
     "mos": "https://mos-official.net/apps.html?search=BombVault",
     "zimaos": "https://github.com/junkerderprovinz/zimaos-apps#bombvault",
+    "truenas": "https://apps.truenas.com/catalog/bombvault_community/",
     # A browser cannot download an image, so this opens the package page, which
     # carries the pull command and every tag.
     "compose": "https://raw.githubusercontent.com/junkerderprovinz/bombvault/main/deploy/docker-compose.generic.yml",
