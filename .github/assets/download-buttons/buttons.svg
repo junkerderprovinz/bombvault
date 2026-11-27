@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 15757 245.3">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 16621 245.3">
 <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1010.28 245.3" width="1010.28" height="245.3" role="img" aria-label="Read the documentation">
   <title>Read the documentation</title>
   <defs>
@@ -36,7 +36,7 @@
     </g>
   </g>
 </svg>
-<svg x="1035" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from Unraid&#x27;s Community Applications">
+<svg x="1083" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from Unraid&#x27;s Community Applications">
   <title>Install from Unraid&#x27;s Community Applications</title>
   <defs>
     <clipPath id="b1-edge">
@@ -72,7 +72,7 @@
     </g>
   </g>
 </svg>
-<svg x="1901" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the MOS Hub">
+<svg x="1997" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the MOS Hub">
   <title>Install from the MOS Hub</title>
   <defs>
     <clipPath id="b2-edge">
@@ -110,7 +110,7 @@
     </g>
   </g>
 </svg>
-<svg x="2767" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the ZimaOS and CasaOS store">
+<svg x="2911" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the ZimaOS and CasaOS store">
   <title>Install from the ZimaOS and CasaOS store</title>
   <defs>
     <clipPath id="b3-edge">
@@ -146,7 +146,7 @@
     </g>
   </g>
 </svg>
-<svg x="3633" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the TrueNAS app catalog">
+<svg x="3825" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Install from the TrueNAS app catalog">
   <title>Install from the TrueNAS app catalog</title>
   <defs>
     <clipPath id="b4-edge">
@@ -182,7 +182,7 @@
     </g>
   </g>
 </svg>
-<svg x="4499" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on Proxmox VE">
+<svg x="4739" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on Proxmox VE">
   <title>Run it on Proxmox VE</title>
   <defs>
     <clipPath id="b5-edge">
@@ -218,7 +218,7 @@
     </g>
   </g>
 </svg>
-<svg x="5365" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a Synology NAS">
+<svg x="5653" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a Synology NAS">
   <title>Run it on a Synology NAS</title>
   <defs>
     <clipPath id="b6-edge">
@@ -254,7 +254,7 @@
     </g>
   </g>
 </svg>
-<svg x="6231" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a QNAP NAS">
+<svg x="6567" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a QNAP NAS">
   <title>Run it on a QNAP NAS</title>
   <defs>
     <clipPath id="b7-edge">
@@ -290,7 +290,7 @@
     </g>
   </g>
 </svg>
-<svg x="7097" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a UGREEN NAS">
+<svg x="7481" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Run it on a UGREEN NAS">
   <title>Run it on a UGREEN NAS</title>
   <defs>
     <clipPath id="b8-edge">
@@ -326,7 +326,7 @@
     </g>
   </g>
 </svg>
-<svg x="7963" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Download the docker-compose file">
+<svg x="8395" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Download the docker-compose file">
   <title>Download the docker-compose file</title>
   <defs>
     <clipPath id="b9-edge">
@@ -362,7 +362,7 @@
     </g>
   </g>
 </svg>
-<svg x="8829" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get it on Google Play">
+<svg x="9309" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get it on Google Play">
   <title>Get it on Google Play</title>
   <defs>
     <clipPath id="b10-edge">
@@ -398,7 +398,7 @@
     </g>
   </g>
 </svg>
-<svg x="9695" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get it on F-Droid">
+<svg x="10223" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get it on F-Droid">
   <title>Get it on F-Droid</title>
   <defs>
     <clipPath id="b11-edge">
@@ -434,7 +434,7 @@
     </g>
   </g>
 </svg>
-<svg x="10561" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Download the Android app">
+<svg x="11137" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Download the Android app">
   <title>Download the Android app</title>
   <defs>
     <clipPath id="b12-edge">
@@ -470,7 +470,7 @@
     </g>
   </g>
 </svg>
-<svg x="11427" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get ParleyPort, the relay for apps that pair their instances">
+<svg x="12051" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get ParleyPort, the relay for apps that pair their instances">
   <title>Get ParleyPort, the relay for apps that pair their instances</title>
   <defs>
     <clipPath id="b13-edge">
@@ -525,7 +525,7 @@
     </g>
   </g>
 </svg>
-<svg x="12293" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get TollRoll, the tile for the Unraid dashboard">
+<svg x="12965" y="0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 245.3" width="841.9" height="245.3" role="img" aria-label="Get TollRoll, the tile for the Unraid dashboard">
   <title>Get TollRoll, the tile for the Unraid dashboard</title>
   <defs>
     <clipPath id="b14-edge">
@@ -585,7 +585,7 @@
     </g>
   </g>
 </svg>
-<svg x="13159" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="13879" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b15-edge">
@@ -621,7 +621,7 @@
     </g>
   </g>
 </svg>
-<svg x="14025" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="14793" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b16-edge">
@@ -657,7 +657,7 @@
     </g>
   </g>
 </svg>
-<svg x="14891" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+<svg x="15707" y="0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      version="1.1" viewBox="0 0 841.9 245.3" width="841.9" height="245.3">
   <defs>
     <clipPath id="b17-edge">

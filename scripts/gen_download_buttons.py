@@ -235,11 +235,12 @@ STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.goo
 # travel along the whole row, the same band as the donation row's. Its numbers
 # are in screen pixels, where the gap between buttons is measured.
 #
-# Each button stands on its own line with an `&nbsp;` on either side, so two
-# neighbours are `&nbsp;`, a collapsed newline and `&nbsp;` apart, 13.16px at
-# GitHub's 16px body text. A row that wraps breaks at the newline, and every line
-# keeps an `&nbsp;` at both ends, so it stays centred. The parts of the Windows
-# button are glued with nothing between them.
+# Each button stands on its own line, so two neighbours are a collapsed newline
+# apart, one space of GitHub's 16px body text. Clear space inside each image,
+# one space wide on either side, makes that 13.16px, three spaces. A space at
+# the end of a wrapped line takes no room, so every line stays centred. An
+# `&nbsp;` would not: Firefox breaks between it and an image and keeps it. The
+# parts of the Windows button are glued with nothing between them.
 BAND_PX = 33.0     # the band's width on screen
 SPEED = 250.0      # screen pixels per second
 GAP_PX = 13.16     # measured, see above
@@ -248,6 +249,7 @@ GAP_PX = 13.16     # measured, see above
 # lines of a row keep the distance its buttons keep beside each other.
 LINE_SLACK_PX = 5.5  # measured
 ROW_PAD_PX = (GAP_PX - LINE_SLACK_PX) / 2
+SIDE_PAD_PX = GAP_PX / 3
 # The donation buttons' width, so every button on the page is the same size.
 RENDER_PX = 160.0
 # Two segments and the gap they replace make one button's place. Whole pixels,
@@ -514,7 +516,9 @@ def button(part, delay, cycle):
     )
 
 
-SPRITE_GAP = 24
+# Room for both neighbours' side padding, and 24 units between it and the next
+# button's edge.
+SPRITE_GAP = 24 + 2 * math.ceil(SIDE_PAD_PX * SCALE)
 
 # The names a button document defines, each prefixed per button in the sprite. A
 # name left without a prefix is refused, since it would hand one button's delay
@@ -646,11 +650,11 @@ def place_docs(text):
 
 
 def row(rows, nl, url):
-    """One centred paragraph: a line per button, two spaces in, with the `&nbsp;`
-    on either side that GAP_PX was measured on, and a <br> between rows. The
-    rows of a group share the paragraph, so a phone that wraps every row sees
-    one even spacing instead of a paragraph gap after each. The parts of one
-    button share a line with nothing between them."""
+    """One centred paragraph: a line per button, two spaces in, and a <br>
+    between rows. The rows of a group share the paragraph, so a phone that wraps
+    every row sees one even spacing instead of a paragraph gap after each. The
+    parts of one button share a line with nothing between them, and only its
+    outer edges get side padding."""
     lines = ['<p align="center">']
     if isinstance(rows, Title):
         lines.append('  <picture><source media="(prefers-color-scheme: dark)" srcset="%s/%s-dark.svg"><img src="%s/%s.svg" alt="%s" width="100%%"></picture>'
@@ -662,13 +666,16 @@ def row(rows, nl, url):
             lines.append("  <br>")
         for parts in items:
             imgs = []
-            for href, alt, x, width, height, render in parts:
-                pad = ROW_PAD_PX * width / render
+            for index, (href, alt, x, width, height, render) in enumerate(parts):
+                units = width / render
+                top = ROW_PAD_PX * units
+                left = SIDE_PAD_PX * units if index == 0 else 0
+                right = SIDE_PAD_PX * units if index == len(parts) - 1 else 0
                 img = ('<img src="%s#svgView(viewBox(%s,%s,%s,%s))" alt="%s" width="%s" height="%s">'
-                       % (url, num(x), num(-pad), num(width), num(height + 2 * pad), escape(alt), num(render),
-                          num(render * (height + 2 * pad) / width)))
+                       % (url, num(x - left), num(-top), num(width + left + right), num(height + 2 * top),
+                          escape(alt), num((width + left + right) / units), num((height + 2 * top) / units)))
                 imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
-            lines.append("  &nbsp;" + "".join(imgs) + "&nbsp;")
+            lines.append("  " + "".join(imgs))
     lines.append("</p>")
     return nl.join(lines) + nl
 
