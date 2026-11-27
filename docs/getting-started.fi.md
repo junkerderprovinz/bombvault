@@ -51,7 +51,7 @@ Mikä on erilaista kuin Unraidissa:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault ei ole vielä TrueNASin sovelluskatalogissa, joten asenna se mukautettuna sovelluksena: **Apps, Discover Apps**, sitten **Install via YAML** valikossa **Custom App** -painikkeen vieressä. Alla oleva YAML noudattaa repon `truenas-apps`-kansion katalogimerkintää ja asettaa lisäksi Host Data -liitokselle `rslave`-propagoinnin, jota ZFS-tietojoukkojen varmuuskopiointi tarvitsee. Katalogin sovelluksesta se puuttuu, joten siinä ei ole ZFS-tietojoukkojen varmuuskopiointia. Korvaa `tank` poolillasi ja täytä `APP_KEY` kuten seuraava osa kuvaa.
+BombVault on TrueNASin sovelluskatalogissa: avaa **Apps, Discover Apps**, hae BombVault ja asenna se. Katalogin sovelluksessa ei ole ZFS-tietojoukkojen varmuuskopiointia, koska katalogi ei salli Host Data -liitokselle `rslave`-propagointia, jota varmuuskopiointi tarvitsee. Jos haluat sen, asenna BombVault sen sijaan mukautettuna sovelluksena: **Apps, Discover Apps**, sitten **Install via YAML** valikossa **Custom App** -painikkeen vieressä. Alla oleva YAML noudattaa repon `truenas-apps`-kansion katalogimerkintää ja asettaa lisäksi `rslave`-propagoinnin. Korvaa `tank` poolillasi ja täytä `APP_KEY` kuten seuraava osa kuvaa.
 
 ```yaml
 services:

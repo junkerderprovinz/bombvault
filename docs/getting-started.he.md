@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault עדיין לא בקטלוג האפליקציות של TrueNAS, ולכן מתקינים אותה כאפליקציה מותאמת: **Apps, Discover Apps**, ואז **Install via YAML** בתפריט לצד **Custom App**. ה-YAML שלהלן עוקב אחרי הערך בקטלוג בתיקיית `truenas-apps` של המאגר, ובנוסף קובע התפשטות `rslave` על Host Data, מה שגיבויי מערכי נתונים של ZFS צריכים. האפליקציה מהקטלוג משמיטה את זה, ולכן אין בה גיבויי מערכי נתונים של ZFS. מחליפים את `tank` במאגר שלך וממלאים את `APP_KEY` כפי שהסעיף הבא מתאר.
+BombVault נמצאת בקטלוג האפליקציות של TrueNAS: פותחים את **Apps, Discover Apps**, מחפשים את BombVault ומתקינים אותה. באפליקציה מהקטלוג אין גיבויי מערכי נתונים של ZFS, כי הקטלוג לא מתיר את התפשטות `rslave` על Host Data שהם צריכים. אם רוצים אותם, מתקינים את BombVault במקום זאת כאפליקציה מותאמת: **Apps, Discover Apps**, ואז **Install via YAML** בתפריט לצד **Custom App**. ה-YAML שלהלן עוקב אחרי הערך בקטלוג בתיקיית `truenas-apps` של המאגר, ובנוסף קובע `rslave`. מחליפים את `tank` במאגר שלך וממלאים את `APP_KEY` כפי שהסעיף הבא מתאר.
 
 ```yaml
 services:

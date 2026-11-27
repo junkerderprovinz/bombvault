@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault ليس في فهرس تطبيقات TrueNAS بعد، لذا ثبّته كتطبيق مخصص: **Apps, Discover Apps**، ثم **Install via YAML** في القائمة بجانب **Custom App**. يتبع YAML أدناه إدخال الفهرس في مجلد `truenas-apps` من المستودع، ويضبط أيضًا انتشار `rslave` على Host Data، وهو ما تحتاج إليه نسخ مجموعات بيانات ZFS. يُغفل تطبيق الفهرس ذلك، لذا ليس فيه نسخ مجموعات بيانات ZFS. استبدل `tank` بمجمّعك واملأ `APP_KEY` كما يصف القسم التالي.
+BombVault موجود في فهرس تطبيقات TrueNAS: افتح **Apps, Discover Apps**، وابحث عن BombVault وثبّته. ليس في تطبيق الفهرس نسخ مجموعات بيانات ZFS، لأن الفهرس لا يسمح بانتشار `rslave` على Host Data الذي تحتاج إليه. إن أردتها، فثبّت BombVault بدلًا من ذلك كتطبيق مخصص: **Apps, Discover Apps**، ثم **Install via YAML** في القائمة بجانب **Custom App**. يتبع YAML أدناه إدخال الفهرس في مجلد `truenas-apps` من المستودع، ويضبط أيضًا `rslave`. استبدل `tank` بمجمّعك واملأ `APP_KEY` كما يصف القسم التالي.
 
 ```yaml
 services:

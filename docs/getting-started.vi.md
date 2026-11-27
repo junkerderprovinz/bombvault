@@ -51,7 +51,7 @@ Khác gì so với Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault chưa có trong danh mục ứng dụng của TrueNAS, nên hãy cài nó như một ứng dụng tùy chỉnh: **Apps, Discover Apps**, rồi chọn **Install via YAML** trong menu bên cạnh **Custom App**. YAML dưới đây theo mục danh mục trong thư mục `truenas-apps` của kho mã và đặt thêm propagation `rslave` cho Host Data, điều mà sao lưu tập dữ liệu ZFS cần. Ứng dụng từ danh mục bỏ qua thiết lập này, nên nó không có sao lưu tập dữ liệu ZFS. Thay `tank` bằng pool của bạn và điền `APP_KEY` như phần tiếp theo mô tả.
+BombVault đã có trong danh mục ứng dụng của TrueNAS: mở **Apps, Discover Apps**, tìm BombVault rồi cài đặt. Ứng dụng từ danh mục không có sao lưu tập dữ liệu ZFS, vì danh mục không cho phép đặt propagation `rslave` cho Host Data mà các bản sao lưu này cần. Nếu cần chúng, hãy cài BombVault theo cách khác, như một ứng dụng tùy chỉnh: **Apps, Discover Apps**, rồi chọn **Install via YAML** trong menu bên cạnh **Custom App**. YAML dưới đây theo mục danh mục trong thư mục `truenas-apps` của kho mã và đặt thêm `rslave`. Thay `tank` bằng pool của bạn và điền `APP_KEY` như phần tiếp theo mô tả.
 
 ```yaml
 services:

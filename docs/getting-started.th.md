@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault ยังไม่อยู่ในแคตตาล็อกแอปของ TrueNAS จึงติดตั้งเป็นแอปกำหนดเอง: **Apps, Discover Apps** แล้ว **Install via YAML** ในเมนูข้าง **Custom App** YAML ด้านล่างทำตามรายการแคตตาล็อกในโฟลเดอร์ `truenas-apps` ของรีโป และตั้ง propagation แบบ `rslave` บน Host Data เพิ่มด้วย ซึ่งการสำรองชุดข้อมูล ZFS ต้องการ แอปจากแคตตาล็อกไม่มีการตั้งค่านี้ จึงไม่มีการสำรองชุดข้อมูล ZFS แทนที่ `tank` ด้วยพูลของคุณ และกรอก `APP_KEY` ตามที่หัวข้อถัดไปอธิบาย
+BombVault อยู่ในแคตตาล็อกแอปของ TrueNAS: เปิด **Apps, Discover Apps** ค้นหา BombVault แล้วติดตั้ง แอปจากแคตตาล็อกไม่มีการสำรองชุดข้อมูล ZFS เพราะแคตตาล็อกไม่อนุญาตให้ตั้ง propagation แบบ `rslave` บน Host Data ซึ่งการสำรองนี้ต้องการ ถ้าต้องการใช้ ให้ติดตั้ง BombVault เป็นแอปกำหนดเองแทน: **Apps, Discover Apps** แล้ว **Install via YAML** ในเมนูข้าง **Custom App** YAML ด้านล่างทำตามรายการแคตตาล็อกในโฟลเดอร์ `truenas-apps` ของรีโป และตั้ง `rslave` เพิ่มด้วย แทนที่ `tank` ด้วยพูลของคุณ และกรอก `APP_KEY` ตามที่หัวข้อถัดไปอธิบาย
 
 ```yaml
 services:

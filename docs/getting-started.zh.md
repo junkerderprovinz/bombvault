@@ -51,7 +51,7 @@
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault 还不在 TrueNAS 的应用目录里，所以请把它装成自定义应用：**Apps, Discover Apps**，然后在 **Custom App** 旁边的菜单里选 **Install via YAML**。下面的 YAML 沿用仓库 `truenas-apps` 文件夹里的目录条目，还在 Host Data 上设置了 `rslave` 传播，ZFS 数据集备份需要这一点。目录里的应用没有这项设置，所以它没有 ZFS 数据集备份。把 `tank` 换成你的存储池，`APP_KEY` 按下一节的说明填写。
+BombVault 已在 TrueNAS 的应用目录里：打开 **Apps, Discover Apps**，搜索 BombVault 并安装。目录里的应用没有 ZFS 数据集备份，因为目录不允许在 Host Data 上设置这些备份所需的 `rslave` 传播。如果需要这些备份，请改为把它装成自定义应用：**Apps, Discover Apps**，然后在 **Custom App** 旁边的菜单里选 **Install via YAML**。下面的 YAML 沿用仓库 `truenas-apps` 文件夹里的目录条目，还设置了 `rslave`。把 `tank` 换成你的存储池，`APP_KEY` 按下一节的说明填写。
 
 ```yaml
 services:

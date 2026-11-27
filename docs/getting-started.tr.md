@@ -51,7 +51,7 @@ Unraid'den farkı:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault henüz TrueNAS uygulama kataloğunda değil, bu yüzden özel bir uygulama olarak kur: **Apps, Discover Apps**, sonra **Custom App**'in yanındaki menüde **Install via YAML**. Aşağıdaki YAML, deponun `truenas-apps` klasöründeki katalog girdisini izler ve ayrıca Host Data üzerinde ZFS veri kümesi yedeklerinin ihtiyaç duyduğu `rslave` yayılımını ayarlar. Katalog uygulaması bunu atlar, bu yüzden onda ZFS veri kümesi yedekleri yoktur. `tank`'ı kendi havuzunla değiştir ve `APP_KEY`'i sonraki bölümde anlatıldığı gibi doldur.
+BombVault TrueNAS uygulama kataloğunda yer alıyor: **Apps, Discover Apps** bölümünü aç, BombVault'u ara ve kur. Katalog uygulamasında ZFS veri kümesi yedekleri yoktur, çünkü katalog bu yedeklerin ihtiyaç duyduğu `rslave` yayılımının Host Data üzerinde ayarlanmasına izin vermez. Bunları istiyorsan BombVault'u bunun yerine özel bir uygulama olarak kur: **Apps, Discover Apps**, sonra **Custom App**'in yanındaki menüde **Install via YAML**. Aşağıdaki YAML, deponun `truenas-apps` klasöründeki katalog girdisini izler ve `rslave` ayarını da yapar. `tank`'ı kendi havuzunla değiştir ve `APP_KEY`'i sonraki bölümde anlatıldığı gibi doldur.
 
 ```yaml
 services:

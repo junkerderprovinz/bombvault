@@ -51,7 +51,7 @@ What's different from Unraid:
 
 ### TrueNAS SCALE {#truenas}
 
-BombVault is not in the TrueNAS app catalog yet, so install it as a custom app: **Apps, Discover Apps**, then **Install via YAML** in the menu beside **Custom App**. The YAML below follows the catalog entry in the repository's `truenas-apps` folder and also sets `rslave` propagation on Host Data, which ZFS dataset backups need. The catalog app leaves that out, so it has no ZFS dataset backups. Replace `tank` with your pool and fill in `APP_KEY` as the next section describes.
+BombVault is in the TrueNAS app catalog: open **Apps, Discover Apps**, search for BombVault and install it. The catalog app has no ZFS dataset backups, because the catalog does not allow the `rslave` propagation on Host Data that they need. If you want them, install BombVault as a custom app instead: **Apps, Discover Apps**, then **Install via YAML** in the menu beside **Custom App**. The YAML below follows the catalog entry in the repository's `truenas-apps` folder and also sets `rslave`. Replace `tank` with your pool and fill in `APP_KEY` as the next section describes.
 
 ```yaml
 services:
