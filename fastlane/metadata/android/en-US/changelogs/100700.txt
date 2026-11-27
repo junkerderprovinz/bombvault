@@ -1,1 +1,1 @@
-BombVault 10.7.0 brings ZFS replicas, restores of Compose stacks, plugins and database dumps, anomaly actions, checks and the schedule switches to the app, and keeps your servers reachable while one of them reconnects.
+BombVault 10.7.0 also backs up servers it does not run on, looks after your ZFS, btrfs and VM snapshots and can sign you in through Pocket ID, authentik or another sign-in service. In the app you can start ZFS replicas, restore Compose stacks, plugins and database dumps, acknowledge anomalies and run checks, and What's new opens there without a connection too.

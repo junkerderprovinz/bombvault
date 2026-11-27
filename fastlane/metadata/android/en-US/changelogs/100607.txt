@@ -1,1 +1,0 @@
-BombVault 10.6.7 lets your nodes tag along: flip one switch and a node's backups take the same trip off site as this instance's own, to the same places, on the same schedule.

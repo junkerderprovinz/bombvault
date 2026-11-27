@@ -1,1 +1,0 @@
-BombVault 10.6.6 ist was für Einzelgänger: Eine Instanz ohne Kopplungsgruppe kann jetzt selbst einen Empfangsserver für ihre Knoten betreiben. Wähl ihn für einen Knoten, dann richtet ihn der Platzierungsschritt gleich dort ein. Später öffnet ihn deine eigene Karte unter Instanzen wieder.

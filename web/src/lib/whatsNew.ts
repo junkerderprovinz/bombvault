@@ -74,12 +74,7 @@ export const RELEASES: Release[] = [
       { id: "phone-key-and-updates", text: "whatsNew.phoneKeyAndUpdates" },
       { id: "app-settings", text: "whatsNew.appSettings" },
       { id: "app-release-notes", text: "whatsNew.appReleaseNotes" },
-    ],
-  },
-  {
-    version: "10.6.8",
-    // The sign-in tile is GlimStone's and carries no marks, so only the Address card beside it is placed.
-    changes: [
+      // The sign-in tile is GlimStone's and carries no marks, so only the Address card beside it is placed.
       { id: "signin-services", text: "whatsNew.signInServices" },
       {
         id: "instance-address",
@@ -93,11 +88,6 @@ export const RELEASES: Release[] = [
       { id: "password-check", text: "whatsNew.passwordCheck" },
       { id: "signin-accounts", text: "whatsNew.accounts" },
       { id: "phones-always-pair", text: "whatsNew.phonesAlwaysPair" },
-    ],
-  },
-  {
-    version: "10.6.7",
-    changes: [
       // The switch stands in the window Edit placement opens on a node's card.
       {
         id: "node-copy-onward",
@@ -107,21 +97,11 @@ export const RELEASES: Release[] = [
         unpaired: true,
         text: "whatsNew.nodeCopyOnward",
       },
-    ],
-  },
-  {
-    version: "10.6.5",
-    // None of the three brings an element of its own: the notes open from the
-    // Version card's What's new, and the phone's cards are the app's own.
-    changes: [
+      // None of the next three brings an element of its own: the notes open
+      // from the Version card's What's new, and the phone's cards are the app's own.
       { id: "password-optional", text: "whatsNew.passwordOptional" },
       { id: "release-notes-window", text: "whatsNew.releaseNotesWindow" },
       { id: "app-version-cards", text: "whatsNew.appVersionCards" },
-    ],
-  },
-  {
-    version: "10.6.4",
-    changes: [
       { id: "instances-add-node", page: "/instances", where: ["instances.title"], way: TO_INSTANCES, text: "whatsNew.nodes" },
       // The three places stand in the window that Add node opens.
       {
@@ -136,11 +116,6 @@ export const RELEASES: Release[] = [
       // Home takes a rebuilt node on again by itself, so no page has an
       // element for it.
       { id: "node-rebuilt", text: "whatsNew.nodeRebuilt" },
-    ],
-  },
-  {
-    version: "10.6.2",
-    changes: [
       {
         id: "settings-no-offsite",
         page: "/settings/storage",

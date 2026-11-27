@@ -1,1 +1,0 @@
-BombVault 10.6.5 no longer insists on a password. The recovery kit, nodes and the other apps of your fortress all work without one, and any length will do. A node that keeps its own backups now tells you which port to open instead of spinning for an hour. And the app's settings finally show which version you run and where your updates come from.

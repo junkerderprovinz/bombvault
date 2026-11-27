@@ -90,11 +90,11 @@ describe("the Version and Components cards", () => {
   it("list what the running release brought and leave out what a phone cannot open", async () => {
     render(
       <I18nProvider>
-        <Harness app={{ ...APP, version: "10.6.8" }} />
+        <Harness app={{ ...APP, version: "10.7.0" }} />
       </I18nProvider>,
     );
     fireEvent.click(card(words.versionCard.title).getByRole("button"));
-    const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", "10.6.8") });
+    const notes = await screen.findByRole("dialog", { name: en["whatsNew.windowTitle"].replace("{version}", "10.7.0") });
     expect(within(notes).getByText(en["whatsNew.signInServices"])).toBeTruthy();
     expect(within(notes).queryByText(en["whatsNew.instanceAddress"])).toBeNull();
   });

@@ -1,1 +1,0 @@
-BombVault 10.6.1 lights everything under the pointer in your own accent color, the focus ring included, and accent text reads well on every surface. Questions now go to GitHub or Discord, so the old mailbox can finally put its feet up.

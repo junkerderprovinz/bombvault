@@ -1,1 +1,0 @@
-BombVault 10.6.2 lets a server keep its backups at home on purpose. Switch on No off-site copies and the overview stops seeing red about it, while a failed or overdue backup still gets your attention.
