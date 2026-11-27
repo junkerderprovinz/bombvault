@@ -64,7 +64,7 @@ jobs:
   # weekly rebuild build what is already there.
   glimstone:
     if: github.ref_type == 'tag'
-    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@c5de9719d2e5cc47b1a74812fc23413bfaa9dd9f # main
+    uses: junkerderprovinz/junkerderprovinz/.github/workflows/glimstone-current.yml@f5937a675c3b6a983563f2c59ae05493a2efb8d5 # main
 
   # The build job waits for this, so an image that does not boot never reaches
   # the registry.
