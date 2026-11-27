@@ -8,7 +8,7 @@ the generator scale marks of different widths to one optical size.
 ## Source and licence
 
 **Font Awesome Free 6.7.2**, from <https://fontawesome.com>: Docker, Android
-and Google Play from the `brands` set; the ZIP (`file-zipper`) and the book
+and Google Play from the `brands` set, and the ZIP (`file-zipper`) and the book
 (`book`) from the `solid` set. The icons are **CC BY 4.0**, which asks for
 attribution and nothing else. Copyright 2024 Fonticons, Inc.
 
@@ -17,9 +17,10 @@ attribution and nothing else. Copyright 2024 Fonticons, Inc.
 out. **CC BY-SA 3.0** or **GPL-3.0-or-later**.
 
 **Dashboard Icons** (`homarr-labs/dashboard-icons`, <https://dashboardicons.com>):
-Unraid, its `unraid.svg` with the gradient left out, since the button draws it
-in one ink. **Apache-2.0**, whose licence text is beside this file as
-`LICENSE-dashboard-icons.txt`. Copyright the Homarr Labs team and contributors.
+Unraid and UGREEN, Unraid's `unraid.svg` with the gradient left out, since the
+button draws it in one ink. **Apache-2.0**, whose licence text is beside this
+file as `LICENSE-dashboard-icons.txt`. Copyright the Homarr Labs team and
+contributors.
 
 ParleyPort's mark is its own logo, from
 <https://github.com/junkerderprovinz/parleyport>, one path per shape.
@@ -27,8 +28,12 @@ ParleyPort's mark is its own logo, from
 TollRoll's mark is its own logo, from
 <https://github.com/junkerderprovinz/tollroll>, one path per shape.
 
-**Simple Icons** (<https://simpleicons.org>): TrueNAS, its `truenas.svg`.
+**Simple Icons** (<https://simpleicons.org>): Proxmox, Synology, QNAP and
+TrueNAS, from its `proxmox.svg`, `synology.svg`, `qnap.svg` and `truenas.svg`.
 **CC0 1.0** for the path data.
+
+MOS's mark is the `mos.svg` in mos-nas/mos-releases, and ZimaOS's the
+`zimaos-logo.svg` of its web interface.
 
 ## Trademarks
 
@@ -36,8 +41,9 @@ Every platform mark here is a trademark of its owner. They are used the one way 
 trademark may be used without permission, which is to refer to the thing they
 name: each sits on a download button for that platform, unmodified, and nothing
 here claims endorsement by or affiliation with Docker, Google, F-Droid, Lime
-Technology or iXsystems. The ZIP and the book are no one's marks; they stand for the source
-archive and the manual.
+Technology, MOS, IceWhale, Proxmox, Synology, QNAP, UGREEN or iXsystems. The ZIP
+and the book are no one's marks. They stand for the source archive and the
+manual.
 
 ## Adding one
 
