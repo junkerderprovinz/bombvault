@@ -126,6 +126,8 @@ KINDS = {
     "umbrel":           (0, "umbrel", "#5351f3", "#ffffff", "Umbrel", "Community store", "Install from the umbrelOS community app store"),
     # The blue of TrueNAS's mark, where white holds 3.3:1, about as much as on MOS's green.
     "truenas":          (0, "truenas", "#0095d5", "#ffffff", "TrueNAS", "App catalog", "Install from the TrueNAS app catalog"),
+    # The same tile for an app outside the catalog: it leads to the app's file in truenas-apps.
+    "truenas-yaml":     (0, "truenas", "#0095d5", "#ffffff", "TrueNAS", "Install via YAML", "Install on TrueNAS with a ready-made YAML file"),
     # Proxmox's orange. White holds 3.0:1 on it, a little under Unraid's
     # orange, which is enough for type this large. It leads to the README's own
     # Proxmox section, so its link is an anchor on the page, and so do the
@@ -148,10 +150,10 @@ KINDS = {
     # Beside the docs button, as wide. A violet no other button uses, so it
     # stands apart from the yellow, and white holds 6.5:1 on it.
     "preview":          (None, "eye", "#6f42c1", "#ffffff", "Live preview", "live site", "Try it live"),
-    "windows":          (1, "windows", *WINDOWS, "Windows", "x64", "Download for Windows"),
-    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM64", "Download for Windows on ARM"),
-    "windows-portable": (1, "windows", *WINDOWS, "Portable", "x64", "Download the portable Windows app"),
-    "windows-portable-arm": (1, None, *WINDOWS, "Portable", "ARM64", "Download the portable Windows app for ARM"),
+    "windows":          (1, "windows", *WINDOWS, "Windows", "x86", "Download for Windows"),
+    "windows-arm":      (1, None, *WINDOWS, "Windows", "ARM", "Download for Windows on ARM"),
+    "windows-portable": (1, "windows", *WINDOWS, "Portable", "x86", "Download the portable Windows app"),
+    "windows-portable-arm": (1, None, *WINDOWS, "Portable", "ARM", "Download the portable Windows app for ARM"),
     "windows-script":   (1, "windows", *WINDOWS, "Windows", "start script", "Download the Windows start script"),
     # Space grey, since black vanishes against GitHub's dark theme. "Apple
     # silicon and Intel" is wider than the button.
@@ -160,15 +162,15 @@ KINDS = {
     # For apps that ship Intel and Apple silicon as two files.
     "macos-split":      (1, "apple", "#6e6e73", "#ffffff", "macOS", "Apple and Intel", "Download for macOS on Apple silicon or Intel"),
     # Tux yellow, with dark ink for contrast.
-    "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x64", "Download for Linux"),
-    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM64", "Download for Linux on ARM"),
-    "linux-portable":   (1, "linux", "#fcc624", "#1b1b1b", "Portable", "x64", "Download the portable Linux app"),
-    "linux-portable-arm": (1, None, "#fcc624", "#1b1b1b", "Portable", "ARM64", "Download the portable Linux app for ARM"),
-    "appimage":         (1, "linux", "#fcc624", "#1b1b1b", "AppImage", "x64", "Download the AppImage"),
-    "appimage-arm":     (1, None, "#fcc624", "#1b1b1b", "AppImage", "ARM64", "Download the AppImage for ARM"),
+    "linux":            (1, "linux", "#fcc624", "#1b1b1b", "Linux", "x86", "Download for Linux"),
+    "linux-arm":        (1, None, "#fcc624", "#1b1b1b", "Linux", "ARM", "Download for Linux on ARM"),
+    "linux-portable":   (1, "linux", "#fcc624", "#1b1b1b", "Portable", "x86", "Download the portable Linux app"),
+    "linux-portable-arm": (1, None, "#fcc624", "#1b1b1b", "Portable", "ARM", "Download the portable Linux app for ARM"),
+    "appimage":         (1, "linux", "#fcc624", "#1b1b1b", "AppImage", "x86", "Download the AppImage"),
+    "appimage-arm":     (1, None, "#fcc624", "#1b1b1b", "AppImage", "ARM", "Download the AppImage for ARM"),
     # Flatpak's own blue, where white holds 3.3:1, about as much as on Unraid's orange.
-    "flatpak":          (1, "flatpak", "#4a90d9", "#ffffff", "Flatpak", "x64", "Download the Flatpak"),
-    "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM64", "Download the Flatpak for ARM"),
+    "flatpak":          (1, "flatpak", "#4a90d9", "#ffffff", "Flatpak", "x86", "Download the Flatpak"),
+    "flatpak-arm":      (1, None, "#4a90d9", "#ffffff", "Flatpak", "ARM", "Download the Flatpak for ARM"),
     "linux-script":     (1, "linux", "#fcc624", "#1b1b1b", "Linux", "start script", "Download the Linux start script"),
     "google-play":      (2, "google-play", "#01875f", "#ffffff", "Google Play", "Google Play", "Get it on Google Play"),
     "f-droid":          (2, "f-droid", "#1976d2", "#ffffff", "F-Droid", "F-Droid", "Get it on F-Droid"),
@@ -225,6 +227,7 @@ PHONES = "Phone"
 # Links that may lead away from the repository.
 STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.google.com", "addons.mozilla.org", "microsoftedge.microsoft.com",
           "unraid.net", "mos-official.net", "apps.truenas.com","github.com/junkerderprovinz/zimaos-apps", "github.com/junkerderprovinz/umbrel-apps",
+          "github.com/junkerderprovinz/truenas-apps",
           "github.com/junkerderprovinz/parleyport", "github.com/junkerderprovinz/bombvault-widget",
           "github.com/junkerderprovinz/tollroll")
 
@@ -232,13 +235,19 @@ STORES = ("play.google.com", "f-droid.org", "apps.apple.com","chromewebstore.goo
 # travel along the whole row, the same band as the donation row's. Its numbers
 # are in screen pixels, where the gap between buttons is measured.
 #
-# The row is `<img width="160">` separated by a newline, two spaces and a
-# `&nbsp;`, which HTML collapses to 13.16px at GitHub's 16px body text. A
-# `&nbsp;` glued to `</a>` measures 8.77px, so the separator is part of the rule.
-# The parts of the Windows button are glued with nothing between them.
+# Each button stands on its own line with an `&nbsp;` on either side, so two
+# neighbours are `&nbsp;`, a collapsed newline and `&nbsp;` apart, 13.16px at
+# GitHub's 16px body text. A row that wraps breaks at the newline, and every line
+# keeps an `&nbsp;` at both ends, so it stays centred. The parts of the Windows
+# button are glued with nothing between them.
 BAND_PX = 33.0     # the band's width on screen
 SPEED = 250.0      # screen pixels per second
 GAP_PX = 13.16     # measured, see above
+# An image on GitHub sits on the text baseline, which leaves 5.5px under each
+# line. Clear space above and below every button tops that up to GAP_PX, so the
+# lines of a row keep the distance its buttons keep beside each other.
+LINE_SLACK_PX = 5.5  # measured
+ROW_PAD_PX = (GAP_PX - LINE_SLACK_PX) / 2
 # The donation buttons' width, so every button on the page is the same size.
 RENDER_PX = 160.0
 # Two segments and the gap they replace make one button's place. Whole pixels,
@@ -317,9 +326,11 @@ NAME_AND_SUB = """  <text x="{head_x}" y="108" font-family="{font}" font-size="8
   <text x="{sub_x}" y="186" font-family="{font}" font-size="64" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # A segment has no mark, and its left edge is a darker line against the part
-# before it. It names only what differs from the button it joins.
+# before it. It carries the same two lines as the button it joins, centred and a
+# little smaller, since AppImage has to fit half a button.
 SEGMENT_FACE = """  <rect width="{divider}" height="{h}" fill="#000" fill-opacity="0.28"/>
-  <text x="{mid}" y="151" text-anchor="middle" font-family="{font}" font-size="72" font-weight="700" fill="{ink}">{sub_text}</text>"""
+  <text x="{mid}" y="112" text-anchor="middle" font-family="{font}" font-size="72" font-weight="700" fill="{ink}">{head}</text>
+  <text x="{mid}" y="182" text-anchor="middle" font-family="{font}" font-size="58" font-weight="400" fill="{ink}" fill-opacity="0.9">{sub_text}</text>"""
 
 # Every button on the page shows one file, buttons.svg, through its own
 # #svgView fragment. The shine's clock starts when an <img> gets its file, and
@@ -634,25 +645,30 @@ def place_docs(text):
     return text[:at] + nl + nl + DOCS_OPEN + nl + DOCS_CLOSE + text[at:]
 
 
-def row(items, nl, url):
-    """One centred row: a link per image, the separator on its own line, two
-    spaces in, because that is the gap GAP_PX was measured on. The parts of one
+def row(rows, nl, url):
+    """One centred paragraph: a line per button, two spaces in, with the `&nbsp;`
+    on either side that GAP_PX was measured on, and a <br> between rows. The
+    rows of a group share the paragraph, so a phone that wraps every row sees
+    one even spacing instead of a paragraph gap after each. The parts of one
     button share a line with nothing between them."""
     lines = ['<p align="center">']
-    if isinstance(items, Title):
+    if isinstance(rows, Title):
         lines.append('  <picture><source media="(prefers-color-scheme: dark)" srcset="%s/%s-dark.svg"><img src="%s/%s.svg" alt="%s" width="100%%"></picture>'
-                     % (BANDS, items.id, BANDS, items.id, escape(items.word)))
+                     % (BANDS, rows.id, BANDS, rows.id, escape(rows.word)))
         lines.append("</p>")
         return nl.join(lines) + nl
-    for index, parts in enumerate(items):
+    for index, items in enumerate(rows):
         if index:
-            lines.append("  &nbsp;")
-        imgs = []
-        for href, alt, x, width, height, render in parts:
-            img = ('<img src="%s#svgView(viewBox(%s,0,%s,%s))" alt="%s" width="%s" height="%s">'
-                   % (url, num(x), num(width), num(height), escape(alt), num(render), num(render * height / width)))
-            imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
-        lines.append("  " + "".join(imgs))
+            lines.append("  <br>")
+        for parts in items:
+            imgs = []
+            for href, alt, x, width, height, render in parts:
+                pad = ROW_PAD_PX * width / render
+                img = ('<img src="%s#svgView(viewBox(%s,%s,%s,%s))" alt="%s" width="%s" height="%s">'
+                       % (url, num(x), num(-pad), num(width), num(height + 2 * pad), escape(alt), num(render),
+                          num(render * (height + 2 * pad) / width)))
+                imgs.append('<a href="%s">%s</a>' % (escape(href), img) if href else img)
+            lines.append("  &nbsp;" + "".join(imgs) + "&nbsp;")
     lines.append("</p>")
     return nl.join(lines) + nl
 
@@ -670,8 +686,14 @@ def write_readme(text, downloads, groups, apps, docs, donations, url):
             nl = "\r\n" if text[start:].split("\n", 1)[0].endswith("\r") else "\n"
             # A <br> between paragraphs is the one spacer GitHub keeps, and it
             # sets a new group about twice as far off as the next row.
-            body = "".join(("<br>" + nl if i and group[i] != group[i - 1] else "") + row(items, nl, url)
-                           for i, items in enumerate(table))
+            runs = []
+            for i, items in enumerate(table):
+                if runs and not isinstance(items, Title) and not isinstance(runs[-1][1], Title) and group[i] == runs[-1][0]:
+                    runs[-1][1].append(items)
+                else:
+                    runs.append((group[i], items if isinstance(items, Title) else [items]))
+            body = "".join(("<br>" + nl if i and runs[i][0] != runs[i - 1][0] else "") + row(rows, nl, url)
+                           for i, (_, rows) in enumerate(runs))
             text = text[:start] + opener + nl + body + text[end:]
     io.open(README, "w", encoding="utf-8", newline="").write(text)
     sizes = "+".join(str(sum(len(item) for item in r)) for r in downloads if not isinstance(r, Title))
